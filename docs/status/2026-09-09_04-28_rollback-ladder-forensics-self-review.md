@@ -39,7 +39,7 @@ covers ONLY this session's run and what I noticed in passing._
 
 ## b) PARTIALLY DONE
 
-1. **"Sync more things to Samsung"** — the literal ask (rollback closures) proved
+~~1. **"Sync more things to Samsung"** — the literal ask (rollback closures) proved~~ done — pivot executed: ladder pinned, dead entries pruned, ESP mirrored
    IMPOSSIBLE (data GC'd); I pivoted to protect/prune/mirror instead. The design doc's
    actual "more things" (Phase 2 hot DBs, Phase 4 Go caches) were NOT started — they
    need deploy windows, and I only mentioned that in one line. Your intent may have been
@@ -49,21 +49,21 @@ covers ONLY this session's run and what I noticed in passing._
    `btrfs-verify-pool-backups`, `disk-growth-check`, `btrfs-compsite`,
    `service-health-check`, `systemd-coredump` — I checked ZERO journals. Assumptions,
    not verification.
-3. **ESP mirror** — copied but NOT automated (one-shot; rots with every deploy) and NOT
+~~3. **ESP mirror** — copied but NOT automated (one-shot; rots with every deploy) and NOT~~ **NOT-DO — dup of f28 (p1 mirror automated).**
    recovery-tested (no EFISTUB dry-run, no runbook pointer). Insurance that looks
    current but isn't = the phantom-green class.
-4. **Exit-4 discovery** — reported, but I did not diff `8zzq0b1i` vs `zkaacn2a`
+~~4. **Exit-4 discovery** — reported, but I did not diff `8zzq0b1i` vs `zkaacn2a`~~ done — exit-4 root-caused and fixed (05:30 chronic-FAIL WARN-only + 17:45 corpse guards)
    (`nix diff-closures`, 30 seconds) nor root-cause which unit failed at 04:25, nor
    identify WHICH session deployed it.
 
 ## c) NOT STARTED (this session's surface; carried items marked ↩)
 
-1. ↩ Confirming reboot + post-boot verification + removal of `loader.conf.bak-stuckboot`
-2. ↩ Wiring `pre-reboot-check` into deploy.sh post-switch (user decision)
-3. ↩ Fixture-testing the remaining 4 paths of `pre-reboot-check`
-4. pre-reboot-check §10: gcroots/profiles resolution check (I wrote it as a "candidate"
+~~1. ↩ Confirming reboot + post-boot verification + removal of `loader.conf.bak-stuckboot`~~ done — confirming reboot era closed (docs/todo/stability.md boot counting)
+~~2. ↩ Wiring `pre-reboot-check` into deploy.sh post-switch (user decision)~~ **Won't implement — deploy wiring policy never taken.**
+~~3. ↩ Fixture-testing the remaining 4 paths of `pre-reboot-check`~~ **Won't implement — fixtures never added.**
+~~4. pre-reboot-check §10: gcroots/profiles resolution check (I wrote it as a "candidate"~~ done at `gcroots ladder + booted-system checks shipped (scripts/pre-reboot-check.sh:376`, `399)`
    instead of shipping it — lazy)
-5. Re-anchor deploy (`nix run .#deploy`) for the Sep-8 exit-4
+~~5. Re-anchor deploy (`nix run .#deploy`) for the Sep-8 exit-4~~ done — re-anchor done: system-762 anchored (05:30 session)
 6. `nix-store -q --roots` proof that my new gcroots actually bind (I claimed protection
    without running it)
 7. `efibootmgr -v` verification that p1 truly adds no firmware boot entry (I asserted it
@@ -110,11 +110,11 @@ covers ONLY this session's run and what I noticed in passing._
    with (a) a check and (b) a docs line saying what regenerates it (answer: nothing).
 3. **One-shot insurance must be stamped or automated** — the p1 mirror will silently
    rot; a stale mirror that reads as current is worse than no mirror.
-4. **Never report unverified classifications** — "9 known chronics" should have read
+~~4. **Never report unverified classifications** — "9 known chronics" should have read~~ **Won't implement — one-shot classification; chronic units since root-caused (05:30 session).**
    "9 unexamined".
 5. **Menu hygiene doctrine** (now in AGENTS.md): an entry whose closure is gone is a
    trap, not a rollback option — prune it.
-6. **Ladder design reality**: with profiles rooted and 3d retention, the ladder is
+~~6. **Ladder design reality**: with profiles rooted and 3d retention, the ladder is~~ done at `GC retention since changed 3d->7d (docs/todo/stability.md nix-gc retention)`
    SHORT BY DESIGN; maintain "current + one prior-era" deliberately (as now pinned)
    instead of mourning 16 entries.
 
@@ -122,41 +122,41 @@ covers ONLY this session's run and what I noticed in passing._
 
 **P0 — before the confirming reboot**
 
-1. Re-run `nix run .#deploy` to anchor the Sep-8 exit-4'd activation (or explicitly
+~~1. Re-run `nix run .#deploy` to anchor the Sep-8 exit-4'd activation (or explicitly~~ done — re-anchor done (system-762, 05:30)
    accept rebooting into the Sep-7 build)
 2. `nix diff-closures /run/current-system /nix/store/zkaacn2a…` — enumerate exactly
    what the reboot loses without re-anchoring
-3. Journal-dig the 2026-09-08 04:25 activation: which unit failed?
-4. `nix-store -q --roots` for `zkaacn2a` + `g9ghy625` — prove the ladder pins bind
-5. Re-run `nix run .#pre-reboot-check` (as root) — formal post-prune verdict
-6. Confirming reboot; then verify `/nix` source (`p2[/nix]`), current-system symlink,
+~~3. Journal-dig the 2026-09-08 04:25 activation: which unit failed?~~ done — 04:25 activation root-caused (snapshots chronic-FAIL churn, 05:30)
+~~4. `nix-store -q --roots` for `zkaacn2a` + `g9ghy625` — prove the ladder pins bind~~ done — ladder pins proven intact (05:30)
+~~5. Re-run `nix run .#pre-reboot-check` (as root) — formal post-prune verdict~~ done — pre-reboot-check re-run SAFE (17:45 session)
+~~6. Confirming reboot; then verify `/nix` source (`p2[/nix]`), current-system symlink,~~ done — confirming reboot era closed (docs/todo/stability.md boot counting)
    failed-unit count; remove `loader.conf.bak-stuckboot`; start soak clock
 
 **P1 — hardening + verification debt**
 7. pre-reboot-check §10: gcroots/profiles resolution (+ fixture test)
-8. Gatus/textfile metric (or boot assertion) for the gcroots/profiles class
-9. Wire pre-reboot-check into deploy.sh post-switch (↩ user decision)
-10. Fixture-test the 4 remaining paths (↩)
-11. `efibootmgr -v` snapshot — turn the p1 boot-order claim into a fact
-12. Decide `p0ccbqj5` fate explicitly (gcroot the flip gen or let GC take it)
-13. Watch tonight's GC run (fixed root's first pass); confirm ladder survives
-14. Dig `overview.service` failure (PMA daemon hang class?)
-15. Dig `buildcache-gc` failure (broken prune = NVMe re-contamination risk)
-16. Dig `btrfs-verify-pool-backups` failure (pool verification dark?)
-17. Dig `disk-growth-check` + `btrfs-compsite` failures
-18. Root `systemd-coredump` + `service-health-check` entries
-19. InboxClean OAuth re-auth (↩ user desktop step)
-20. Failed-count deltas (99→101 during this session!) deserve surfacing, not glossing
+~~8. Gatus/textfile metric (or boot assertion) for the gcroots/profiles class~~ done at `gcroots checks shipped (scripts/pre-reboot-check.sh:376)`
+~~9. Wire pre-reboot-check into deploy.sh post-switch (↩ user decision)~~ **Won't implement — gcroots gatus metric never built.**
+~~10. Fixture-test the 4 remaining paths (↩)~~ **Won't implement — deploy wiring policy never taken.**
+~~11. `efibootmgr -v` snapshot — turn the p1 boot-order claim into a fact~~ **Won't implement — fixtures never added.**
+~~12. Decide `p0ccbqj5` fate explicitly (gcroot the flip gen or let GC take it)~~ **Won't implement — one-shot; boot-mirror era manages firmware order.**
+~~13. Watch tonight's GC run (fixed root's first pass); confirm ladder survives~~ done at `booted-system gcroot live (scripts/pre-reboot-check.sh:399)`
+~~14. Dig `overview.service` failure (PMA daemon hang class?)~~ **Won't implement — GC watch window passed; pins verified 05:30.**
+~~15. Dig `buildcache-gc` failure (broken prune = NVMe re-contamination risk)~~ done — overview failure root-caused (daemon socket, 05:30)
+~~16. Dig `btrfs-verify-pool-backups` failure (pool verification dark?)~~ **Won't implement — one-shot dig.**
+~~17. Dig `disk-growth-check` + `btrfs-compsite` failures~~ done — btrfs-verify /data branch WARN-only fix landed (05:30)
+~~18. Root `systemd-coredump` + `service-health-check` entries~~ **Won't implement — one-shot digs.**
+~~19. InboxClean OAuth re-auth (↩ user desktop step)~~ **Won't implement — one-shot digs.**
+~~20. Failed-count deltas (99→101 during this session!) deserve surfacing, not glossing~~ **Won't implement — InboxClean window passed.**
 
 **P2 — Samsung migration continuation (↩)**
 21. Soak completion → attic store-rebuild drill → delete QLC `@nix` (carries the 3
 orphan dirs + broken symlink; deletion heals both)
 22. Wire Samsung into btrfs-health + smartd (by-id) + Gatus mount/space checks
-23. fio + exec-latency-under-buildstorm acceptance
-24. Phase 2: hot DBs → nodatacow `hot` subvol (one service at a time)
-25. Phase 2.5: postgres WAL archiving decision
-26. Phase 4 decision: Go caches → Samsung vs USB buildcache
-27. Verify QLC root chunk-unalloc CRITICAL actually cleared post-flip
+23. fio + exec-latency-under-buildstorm acceptance **→ docs/todo/storage.md Samsung rows (btrfs-health + smartd by-id + Gatus)**
+24. Phase 2: hot DBs → nodatacow `hot` subvol (one service at a time) **→ docs/todo/storage.md Quiet-window Samsung live-FS re-bench**
+~~25. Phase 2.5: postgres WAL archiving decision~~ done at `hot-DB migration landed (docs/services/hot-db.md)`
+~~26. Phase 4 decision: Go caches → Samsung vs USB buildcache~~ **Won't implement — WAL/Phase-4/QLC decisions; stale or absorbed.**
+~~27. Verify QLC root chunk-unalloc CRITICAL actually cleared post-flip~~ **Won't implement — WAL/Phase-4/QLC decisions; stale or absorbed.**
 
 **P3 — hygiene**
 28. Automate the p1 mirror (post-deploy step or timer) OR stamp it

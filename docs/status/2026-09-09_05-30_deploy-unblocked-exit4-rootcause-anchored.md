@@ -45,6 +45,6 @@ PASS: all core services incl. **Overview 200** (healed), CV 3/3 (binary `43b3f93
 
 ## Open (unchanged decisions for the user)
 
-1. Confirming reboot (now safe: anchored; clears flm + llama corpses) + post-boot verify + remove `loader.conf.bak-stuckboot` → starts the 3-day soak clock.
-2. p1 ESP mirror fate (keep static / automate / drop) — still unanswered from 04:35.
-3. Restore `btrfs-verify-pool-backups` /data hard-FAIL after the /data corruption repair (owner stance note in unit + TODO_LIST).
+~~1. Confirming reboot (now safe: anchored; clears flm + llama corpses) + post-boot verify + remove `loader.conf.bak-stuckboot` → starts the 3-day soak clock.~~ done — reboot era closed; boot counting live (docs/todo/stability.md First reboot under boot counting)
+~~2. p1 ESP mirror fate (keep static / automate / drop) — still unanswered from 04:35.~~ done at `p1 ESP became automated firmware boot mirror (scripts/boot-mirror-activate.sh; docs/todo/storage.md boot-mirror DONE 2026-10-15)`
+3. Restore `btrfs-verify-pool-backups` /data hard-FAIL after the /data corruption repair (owner stance note in unit + TODO_LIST). **→ docs/todo/stability.md btrfs-scrub@data T04-T08 repair (restore hard-FAIL after repair)**

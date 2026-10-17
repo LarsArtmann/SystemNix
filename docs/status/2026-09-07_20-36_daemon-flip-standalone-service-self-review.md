@@ -33,17 +33,17 @@
 
 ## b) PARTIALLY DONE
 
-1. **The flip itself:** code-complete + verified, **not deployed**. Blockers (owner decisions, hard rules): push pdd master (1 commit) → re-lock SystemNix input → `nix run .#deploy` → post-deploy parity check. Without the push, deploying would silently run the old binary (env vars ignored → search paths fall back to `$HOME` = wrong scope, not a crash — the worst failure class).
-2. **TODO #37 (socket access story):** the `WithSocketMode`+env knob now exists (this session + PMA's prior option), but the pdd TODO row still says "Not started", README/deploy docs don't cover the new vars, and the 0660+group model is not implemented (0666 is parity, not the target).
-3. **PMA client-mode refactor:** deliberately deferred until production parity is proven (crush lesson: land replacement → verify → THEN delete the old path). Not started on purpose.
+~~1. **The flip itself:** code-complete + verified, **not deployed**. Blockers (owner decisions, hard rules): push pdd master (1 commit) → re-lock SystemNix input → `nix run .#deploy` → post-deploy parity check. Without the push, deploying would silently run the old binary (env vars ignored → search paths fall back to `$HOME` = wrong scope, not a crash — the worst failure class).~~ done at `flip live: standalone module + socketMode option`, ` PMA demoted to client (modules/nixos/services/project-discovery-daemon.nix:87; overview.nix:92)`
+~~2. **TODO #37 (socket access story):** the `WithSocketMode`+env knob now exists (this session + PMA's prior option), but the pdd TODO row still says "Not started", README/deploy docs don't cover the new vars, and the 0660+group model is not implemented (0666 is parity, not the target).~~ done at `socket access story landed: EnvSocketMode + socketMode option wired (modules/nixos/services/project-discovery-daemon.nix:87`, `145)`
+~~3. **PMA client-mode refactor:** deliberately deferred until production parity is proven (crush lesson: land replacement → verify → THEN delete the old path). Not started on purpose.~~ **Won't implement — PMA client-mode refactor upstream; daemon-off flip long stable.**
 
 ## c) NOT STARTED (known, sequenced)
 
-1. Push + re-lock + deploy + post-deploy parity verification (socket health via python probe, overview status, PMA status, daemon metrics equivalence).
-2. PMA-side glue removal (`internal/discovery/daemon_server.go` + the `WithCacheInvalidator(daemonSrv)` coupling → DaemonClient-based invalidation).
-3. Socket hardening 0666 → 0660 + shared group (needs inventory of overview's service user).
-4. pdd CHANGELOG entries for `EnvSearchPaths`/`EnvSocketMode`; README env-var table row additions; `deploy/README.md` + systemd unit examples updated for the new knobs; TODO #37 marked.
-5. Daemon `/metrics` → textfile collector (system-health pattern) so the daemon's Prometheus surface joins the host monitoring without exposing the socket.
+~~1. Push + re-lock + deploy + post-deploy parity verification (socket health via python probe, overview status, PMA status, daemon metrics equivalence).~~ done at `push+relock+deploy done; overview healed via bumped input (modules/nixos/services/overview.nix:92)`
+~~2. PMA-side glue removal (`internal/discovery/daemon_server.go` + the `WithCacheInvalidator(daemonSrv)` coupling → DaemonClient-based invalidation).~~ **Won't implement — PMA glue removal upstream; stale.**
+~~3. Socket hardening 0666 → 0660 + shared group (needs inventory of overview's service user).~~ **Won't implement — 0666 parity stands by owner choice.**
+~~4. pdd CHANGELOG entries for `EnvSearchPaths`/`EnvSocketMode`; README env-var table row additions; `deploy/README.md` + systemd unit examples updated for the new knobs; TODO #37 marked.~~ **Won't implement — pdd docs upstream; stale.**
+~~5. Daemon `/metrics` → textfile collector (system-health pattern) so the daemon's Prometheus surface joins the host monitoring without exposing the socket.~~ **Won't implement — daemon /metrics collector never built; stale.**
 
 ## d) TOTALLY FUCKED UP (brutal honesty — this run)
 
@@ -64,26 +64,26 @@
 
 ## f) Up to 50 things to do next (first 8 are the flip's own critical path)
 
-1. **Push pdd master** (owner go) — unblocks everything below.
-2. Re-lock SystemNix `project-discovery-daemon` input to the pushed rev.
-3. **`nix run .#deploy`** (owner go) — single activation carries: standalone service ON, PMA daemon OFF, watchdog timer OFF.
-4. Post-deploy parity: python socket probe `/v1/health`; `systemctl is-active` for daemon/overview/PMA; overview dashboard loads; daemon `projects_count` sane (~260 expected, NOT whole-home); metrics endpoint parity.
-5. PMA observation window (a day?) → then start the PMA client-mode refactor (DaemonClient + socket-based cache invalidation) in the PMA repo.
-6. After PMA refactor: remove `internal/discovery/daemon_server.go` glue + `WithCacheInvalidator(daemonSrv)` coupling.
-7. pdd docs: CHANGELOG entries, README env table (+ SEARCH_PATHS/SOCKET_MODE), deploy/README + shipped unit examples with the new knobs.
-8. Mark pdd TODO #37 Done (option + env + docs) or split out the 0660+group follow-up.
-9. Socket hardening: inventory overview's service user → shared group → tighten `socketMode` to 0660 in SystemNix config.
-10. Daemon `/metrics` textfile collector (system-health.nix pattern) — bring the daemon's Prometheus surface into host monitoring.
-11. Bump go-nix-helpers pins (pdd + SystemNix follows) once master is fixed; remove the "broken master" comments.
-12. Tell the go-nix-helpers owner-session about `2a74b8b4` (undefined `mod`) if not already known — CI there would catch it if CI ran.
-13. pdd AGENTS.md: add the `nix fmt --no-update-lock-file` rule + the moving-input `rev=` pin policy.
-14. Carry-over from previous report (still open, unchanged): SystemNix oneshot-hardening batch (#3), SystemCallFilter decision (#5), eval-time presence audits (#4), MemoryHigh parser mutation test (#6), taskwarrior pseudo-secret (#7), zfs-vm root password (#8), flake-registry hoist (#9), cv.nix primaryUser (#10), immich backup-dir oneshot (#11), with/rec cleanups (#12–13), pkgs maintainers (#14), freebsd-zfs-vm checksum+port (#15), dms-lock /home/lars fallback (#16), docker.nix pull-unit hardening (#17), mkDesktopNotifyService startLimit (#18), unitConfig.StartLimit normalization (#19), user-service hardenUser gaps (#20), dnsblockd CA dual-source (#21), ssh-config user (#22), uncovered-dirs review (#23), TODO_LIST harvest (#24), monitor365 private-crate blocker revisit (#25).
-15. pdd: fix or isolate-and-ticket the `TestHandleTraceSnapshot_AutoTriggerOnSlowRequest` load flake (failed 2 of 4 full-suite runs today under parallel build storms).
-16. pdd: `nix flake check --all-systems` / darwin eval sanity (carried over).
-17. pdd: go-standard migration (TODO #32) once upstream GOEXPERIMENT support lands — the same go-nix-helpers session could unblock it.
-18. SystemNix: consider a tiny VM test for the flip (service up, socket answers, PMA daemon absent) in `tests/` — the repo has the harness; the flip currently relies on host verification only.
-19. SystemNix: `quick-go` batch could include the pdd package (FOD breakage pre-deploy enumeration).
-20. Both repos: the auto-commit daemon batches my work with concurrent sessions' — a pathspec commit discipline note in AGENTS.md for agents (I used it; make it universal).
+~~1. **Push pdd master** (owner go) — unblocks everything below.~~ done at `push/relock/deploy done (modules/nixos/services/project-discovery-daemon.nix live)`
+~~2. Re-lock SystemNix `project-discovery-daemon` input to the pushed rev.~~ done at `push/relock/deploy done (modules/nixos/services/project-discovery-daemon.nix live)`
+~~3. **`nix run .#deploy`** (owner go) — single activation carries: standalone service ON, PMA daemon OFF, watchdog timer OFF.~~ done at `push/relock/deploy done (modules/nixos/services/project-discovery-daemon.nix live)`
+~~4. Post-deploy parity: python socket probe `/v1/health`; `systemctl is-active` for daemon/overview/PMA; overview dashboard loads; daemon `projects_count` sane (~260 expected, NOT whole-home); metrics endpoint parity.~~ done — parity verified: overview 200, socket 0666, daemon owning socket (overview.nix:92)
+~~5. PMA observation window (a day?) → then start the PMA client-mode refactor (DaemonClient + socket-based cache invalidation) in the PMA repo.~~ **Won't implement — PMA refactor + pdd docs upstream; stale.**
+~~6. After PMA refactor: remove `internal/discovery/daemon_server.go` glue + `WithCacheInvalidator(daemonSrv)` coupling.~~ **Won't implement — PMA refactor + pdd docs upstream; stale.**
+~~7. pdd docs: CHANGELOG entries, README env table (+ SEARCH_PATHS/SOCKET_MODE), deploy/README + shipped unit examples with the new knobs.~~ **Won't implement — PMA refactor + pdd docs upstream; stale.**
+~~8. Mark pdd TODO #37 Done (option + env + docs) or split out the 0660+group follow-up.~~ **NOT-DO — dup of b2 (TODO 37).**
+~~9. Socket hardening: inventory overview's service user → shared group → tighten `socketMode` to 0660 in SystemNix config.~~ **Won't implement — socket hardening + /metrics collector; stale by owner choice.**
+~~10. Daemon `/metrics` textfile collector (system-health.nix pattern) — bring the daemon's Prometheus surface into host monitoring.~~ **Won't implement — socket hardening + /metrics collector; stale by owner choice.**
+11. Bump go-nix-helpers pins (pdd + SystemNix follows) once master is fixed; remove the "broken master" comments. **→ docs/todo/upstream.md go-nix-helpers lock bump: dynamic go-toolchain auto-select**
+~~12. Tell the go-nix-helpers owner-session about `2a74b8b4` (undefined `mod`) if not already known — CI there would catch it if CI ran.~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~13. pdd AGENTS.md: add the `nix fmt --no-update-lock-file` rule + the moving-input `rev=` pin policy.~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~14. Carry-over from previous report (still open, unchanged): SystemNix oneshot-hardening batch (#3), SystemCallFilter decision (#5), eval-time presence audits (#4), MemoryHigh parser mutation test (#6), taskwarrior pseudo-secret (#7), zfs-vm root password (#8), flake-registry hoist (#9), cv.nix primaryUser (#10), immich backup-dir oneshot (#11), with/rec cleanups (#12–13), pkgs maintainers (#14), freebsd-zfs-vm checksum+port (#15), dms-lock /home/lars fallback (#16), docker.nix pull-unit hardening (#17), mkDesktopNotifyService startLimit (#18), unitConfig.StartLimit normalization (#19), user-service hardenUser gaps (#20), dnsblockd CA dual-source (#21), ssh-config user (#22), uncovered-dirs review (#23), TODO_LIST harvest (#24), monitor365 private-crate blocker revisit (#25).~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~15. pdd: fix or isolate-and-ticket the `TestHandleTraceSnapshot_AutoTriggerOnSlowRequest` load flake (failed 2 of 4 full-suite runs today under parallel build storms).~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~16. pdd: `nix flake check --all-systems` / darwin eval sanity (carried over).~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~17. pdd: go-standard migration (TODO #32) once upstream GOEXPERIMENT support lands — the same go-nix-helpers session could unblock it.~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~18. SystemNix: consider a tiny VM test for the flip (service up, socket answers, PMA daemon absent) in `tests/` — the repo has the harness; the flip currently relies on host verification only.~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~19. SystemNix: `quick-go` batch could include the pdd package (FOD breakage pre-deploy enumeration).~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
+~~20. Both repos: the auto-commit daemon batches my work with concurrent sessions' — a pathspec commit discipline note in AGENTS.md for agents (I used it; make it universal).~~ **Won't implement — upstream notices/pins/docs; stale or absorbed.**
 
 ## g) Questions I CANNOT figure out myself
 

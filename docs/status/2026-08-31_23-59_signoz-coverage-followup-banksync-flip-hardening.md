@@ -103,9 +103,9 @@ signoz_logs_pipeline_stale 0
    `~/projects/dnsblockd` (`internal/otel/otel.go`, working tree only).
    Everything else is ready: config key live, flip procedure documented,
    budget will go 5 → 4. Blocked on user commit+push (I never push).
-2. **The 3 KNOWN_NEW_METRICS loans need retirement** next deploy (verify
+~~2. **The 3 KNOWN_NEW_METRICS loans need retirement** next deploy (verify~~ done at `loans retired; gate now KNOWN_NEW_METRICS=signoz_logs_pipeline_stale + auto-derivation (scripts/pre-deploy-check.sh:815)`
    live → delete; the list header now says "a one-deploy loan, not a museum").
-3. **test-gatus-patterns VM test edited but NOT built+run** — eval passes;
+~~3. **test-gatus-patterns VM test edited but NOT built+run** — eval passes;~~ done at `registered as checks.gatus-patterns`, ` built+run by nix flake check (tests/default.nix:35)`
    the risky part (gatus API field-name assumption, see d6) is unverified
    until the VM runs (heavy-job wrap it).
 
@@ -153,10 +153,10 @@ metrics-freshness layer (P2); everything else in §f.
 1. **Dashboard JSON pre-deploy validation**: overlap check (pure python,
    offline) + ideally a dry-run POST against the SigNoz v2 API in
    pre-deploy-check — the provisioner is the LAST line, not the first.
-2. **Concurrent-tree deploy discipline**: re-run `nix flake check --no-build`
+~~2. **Concurrent-tree deploy discipline**: re-run `nix flake check --no-build`~~ done — fresh-check discipline enforced adjacent to deploys via pre-commit + CI flake check (.github/workflows/nix-check.yml:27)
    in the same breath as the deploy; the tree can break between an old check
    and a new deploy.
-3. **Smoke threshold sanity**: "System — I/O pressure avg10=70.82% (healthy)"
+~~3. **Smoke threshold sanity**: "System — I/O pressure avg10=70.82% (healthy)"~~ done — answered by IO-PSI deploy gate with phantom discrimination (scripts/deploy.sh:200-208)
    PASSING at 70% looks like a broken threshold (deploy-time IO pressure is
    expected, but 70% labeled healthy needs a second look).
 4. Document the **gatus-API-status-is-HTTP-only** lesson in AGENTS.md (it
@@ -169,80 +169,80 @@ metrics-freshness layer (P2); everything else in §f.
 
 **P0:**
 
-1. User commits+pushes dnsblockd → `nix flake lock --update-input dnsblockd`
+~~1. User commits+pushes dnsblockd → `nix flake lock --update-input dnsblockd`~~ done at `dnsblockd wiring=config`, ` spans verified 2026-09-13`, ` budget ratcheted to 3 (modules/nixos/services/signoz-coverage.nix:447`, `501)`
    → flip wiring `upstream` → `config` → **lower maxUpstreamGaps to 4** →
    deploy → verify first dnsblockd spans (config key already live).
-2. Retire the 3 KNOWN_NEW_METRICS loans after confirming them live.
-3. Build+run `tests/test-gatus-patterns.nix` (heavy-job wrapped) — verifies
+~~2. Retire the 3 KNOWN_NEW_METRICS loans after confirming them live.~~ **NOT-DO — dup of b2 (same-file KNOWN_NEW_METRICS retirement).**
+~~3. Build+run `tests/test-gatus-patterns.nix` (heavy-job wrapped) — verifies~~ **NOT-DO — dup of b3 (same-file test-gatus-patterns run).**
    the errors/success field assumption + the RED endpoint.
-4. Human glance at the "Telemetry Coverage" dashboard in the UI.
+~~4. Human glance at the "Telemetry Coverage" dashboard in the UI.~~ **Won't implement — one-shot dashboard glance; window long passed.**
 
 **P1 (upstream instrumentation — each is its own session):**
-5. overview: otelhttp middleware + span sites (mirror DiscordSync).
-6. projects-management-automation: same pass.
-7. papdashboard: trace SDK sibling to internal/metrics.
-8. hermes: evaluate the upstream otlp pip extra, wire or document.
+5. overview: otelhttp middleware + span sites (mirror DiscordSync). **→ docs/todo/upstream.md SigNoz upstream trace-instrumentation gaps - overview committed+deploy-blocked (monitoring.md:72); PMA/papdashboard/hermes open**
+6. projects-management-automation: same pass. **→ docs/todo/upstream.md SigNoz upstream trace-instrumentation gaps - overview committed+deploy-blocked (monitoring.md:72); PMA/papdashboard/hermes open**
+7. papdashboard: trace SDK sibling to internal/metrics. **→ docs/todo/upstream.md SigNoz upstream trace-instrumentation gaps - overview committed+deploy-blocked (monitoring.md:72); PMA/papdashboard/hermes open**
+8. hermes: evaluate the upstream otlp pip extra, wire or document. **→ docs/todo/upstream.md SigNoz upstream trace-instrumentation gaps - overview committed+deploy-blocked (monitoring.md:72); PMA/papdashboard/hermes open**
 
 **P2 (breadth — metrics side next):**
-9. Metrics-freshness layer: per-scrape-job last-sample age →
+9. Metrics-freshness layer: per-scrape-job last-sample age → **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists freshness layer + papdashboard scrape**
 `signoz_scrape_job_fresh{job}` + Gatus (wedge-but-200 class).
-10. Scrape papdashboard's own /metrics (exists, nothing reads it).
-11. Register the 9 scrape jobs + textfile collectors in the coverage concept.
-12. Forgejo metrics scrape (token plumbing decision).
-13. immich/paperless-ai/twenty/manifest internal metrics inventory.
-14. docker containers (twenty/manifest): verify OTel SDK presence BEFORE
+10. Scrape papdashboard's own /metrics (exists, nothing reads it). **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists freshness layer + papdashboard scrape**
+11. Register the 9 scrape jobs + textfile collectors in the coverage concept. **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists freshness layer + papdashboard scrape**
+12. Forgejo metrics scrape (token plumbing decision). **→ docs/todo/monitoring.md system-health-metrics worst-case section sum covers forgejo scan/metrics blind spot**
+~~13. immich/paperless-ai/twenty/manifest internal metrics inventory.~~ **Won't implement — container half moot - Docker removed 2026-10-08 (CHANGELOG.md Docker runtime fully removed).**
+~~14. docker containers (twenty/manifest): verify OTel SDK presence BEFORE~~ **Won't implement — superseded - Docker removed 2026-10-08 (CHANGELOG.md Docker runtime fully removed).**
 wiring `OTEL_EXPORTER_OTLP_ENDPOINT` (a noop env in a container is the
 same lie class; the reverse assertion cannot see oci envs).
 15. gatus: confirm no upstream OTel trace support, document as
 logs+metrics-only in the registry comments.
 
 **P3 (quality/hygiene):**
-16. Dashboard pre-deploy validation (e1).
-17. Extend gatus-pattern-lint to ENFORCE anchored value-checks (predecessor
+~~16. Dashboard pre-deploy validation (e1).~~ **NOT-DO — dup of e1 (dashboard pre-deploy validation).**
+17. Extend gatus-pattern-lint to ENFORCE anchored value-checks (predecessor **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists anchored-value lint enforcement**
 e5 — still open).
 18. otel-endpoint-audit `configExpression` support (dnsblockd YAML key; both
 audits share one truth).
-19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let
+~~19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let~~ done at `upstream vendorHash baked`, ` consumer shims dropped (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
 SystemNix DROP the override).
-20. dnsblockd upstream CHANGELOG + transport-selection test.
-21. `tests/test-signoz-coverage.nix` (eval-assertion + generated-registry
+~~20. dnsblockd upstream CHANGELOG + transport-selection test.~~ done at `upstream v0.9.3 tag carries OTLP + cached-/health fixes (docs/todo/upstream.md dnsblockd housekeeping)`
+21. `tests/test-signoz-coverage.nix` (eval-assertion + generated-registry **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists tests/test-signoz-coverage.nix**
 shape; mock CH optional).
-22. Collector: emit `signoz_traces_expected` for enforced entries only, or
+~~22. Collector: emit `signoz_traces_expected` for enforced entries only, or~~ **Won't implement — double-count stays documented-in-runbook; decision ask stale.**
 keep documented double-count (currently documented in runbook).
-23. I/O pressure smoke threshold investigation (e3).
-24. fish startup 976ms WARN at quiescence + quickshell 1 error line —
+~~23. I/O pressure smoke threshold investigation (e3).~~ **NOT-DO — dup of e3 (IO smoke threshold).**
+~~24. fish startup 976ms WARN at quiescence + quickshell 1 error line —~~ **Won't implement — transient; measured healthy 200ms/70ms in next session.**
 recheck outside deploy contention.
-25. Monitor bank-sync span volume (first 24h) for the 26h budget's sanity;
+~~25. Monitor bank-sync span volume (first 24h) for the 26h budget's sanity;~~ **Won't implement — 24h span-volume watch window passed.**
 same for crush-daily (timer cadence).
-26. Sampling policy if dnsblockd span volume proves heavy (tail_sampling or
+~~26. Sampling policy if dnsblockd span volume proves heavy (tail_sampling or~~ **Won't implement — conditional never triggered; budget now 3 with no volume problem.**
 upstream span-drop for hot DNS paths).
 27. cv-application service-name normalization (upstream hardcode vs unit
 name).
-28. Registry as a visible SigNoz dashboard annotation/table.
-29. Per-service "no logs while unit active" alerting (hermes-class silent
+~~28. Registry as a visible SigNoz dashboard annotation/table.~~ **Won't implement — cosmetic dashboard annotation; stale.**
+29. Per-service "no logs while unit active" alerting (hermes-class silent **→ docs/todo/monitoring.md Extend the user-unit monitoring pattern to remaining blind spots**
 hangs).
-30. `OTEL_SERVICE_NAME` explicit on overview/PMA while instrumenting.
-31. Verify PapDashboard receives the coverage Gatus transitions end-to-end
+30. `OTEL_SERVICE_NAME` explicit on overview/PMA while instrumenting. **→ rides per-service instrumentation (docs/todo/upstream.md SigNoz upstream trace-instrumentation gaps)**
+~~31. Verify PapDashboard receives the coverage Gatus transitions end-to-end~~ **Won't implement — one-shot e2e verify; window passed.**
 on the first real trip.
-32. Stale-docs sweep for pre-audit "sends traces" claims.
-33. Homepage "Monitoring" tile description mention (cosmetic).
-34. Ask CV upstream about the service name (single-source-of-truth naming).
-35. `scripts/bump-lars-inputs.sh` if push policy ever changes (mechanical
+~~32. Stale-docs sweep for pre-audit "sends traces" claims.~~ **Won't implement — one-shot docs sweep; docs rewritten many times since.**
+~~33. Homepage "Monitoring" tile description mention (cosmetic).~~ **Won't implement — cosmetic tile text; stale.**
+~~34. Ask CV upstream about the service name (single-source-of-truth naming).~~ **NOT-DO — dup of f27 (cv service-name upstream ask).**
+~~35. `scripts/bump-lars-inputs.sh` if push policy ever changes (mechanical~~ **Won't implement — conditional on push-policy change; policy shifted without need for helper.**
 push+tag+lock+vendorHash+flip).
-36. Nightly coverage snapshot to Discord (ask user first — may be spam).
-37. `signoz_coverage_{expected,reporting}_total` counters for trivial PromQL
+~~36. Nightly coverage snapshot to Discord (ask user first — may be spam).~~ **Won't implement — ask-user-first never asked; stale.**
+~~37. `signoz_coverage_{expected,reporting}_total` counters for trivial PromQL~~ **Won't implement — speculative counters; ratio dashboards exist.**
 ratios.
-38. Add a [TEST-RED] case for the HELP-comment phantom (bare
+38. Add a [TEST-RED] case for the HELP-comment phantom (bare **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions (gatus-pattern test additions)**
 `pat(*metric 1*)` matching comments) — green-side proof of that trap.
-39. Consider `pool-recovery-metrics` in deploy.sh's post-switch list (same
+~~39. Consider `pool-recovery-metrics` in deploy.sh's post-switch list (same~~ done at `deploy-restart audit enforces converger oneshots in deploy.sh (tests/test-deploy-restart-audit.nix; AGENTS.md Eval-time table)`
 timer-lag class as the coverage collector — verify whether the other
 session handled it).
-40. Trash `/tmp/cov-test.sh` + `/tmp/signoz-coverage-test.prom` scratch
+~~40. Trash `/tmp/cov-test.sh` + `/tmp/signoz-coverage-test.prom` scratch~~ **Won't implement — /tmp wiped; debris gone.**
 (session debris).
 41. AGENTS.md: add the gatus-API-status lesson (e4) + read-only-overlays
 collision (e5) + link the new runbook in Key Procedures.
-42. heavy-job wrap for any full `nix flake check` that builds VM tests.
-43. Review the concurrent session's remaining in-flight tree state at a
+~~42. heavy-job wrap for any full `nix flake check` that builds VM tests.~~ done at `heavy-job doctrine documented (docs/agents/stability.md workload-admission)`
+~~43. Review the concurrent session's remaining in-flight tree state at a~~ **Won't implement — one-shot quiescent-tree review; window passed.**
 quiescent moment (their crush-consolidation work was mid-edit tonight).
 
 ## g) Questions for the user (cannot answer myself)

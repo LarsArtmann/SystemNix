@@ -20,15 +20,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **Final verification depth** — eval + check-build level complete, but the **full evo-x2 toplevel was NOT rebuilt** after this session's edits (deploy.sh + bootstrap unit metadata only; no FOD/derivation-shape changes, wiring test + flake check cover the semantics). The real build proof lands with the next deploy. Risk assessed low, not zero.
-2. **Upstream docs for the strengthened check** — the module-eval strengthening is committed but CHANGELOG/TODO_LIST upstream were not updated for it (daemon-committed alongside parallel-session work).
-3. **Manual-pool observability** — deploy.sh now WARNs on `/tmp/tq`, but the actual cutover (kill -INT, optional journal copy) is documented, not executed; the manual serve keeps running (parallel session's process, evolved to `--allow-writes`).
+~~1. **Final verification depth** — eval + check-build level complete, but the **full evo-x2 toplevel was NOT rebuilt** after this session's edits (deploy.sh + bootstrap unit metadata only; no FOD/derivation-shape changes, wiring test + flake check cover the semantics). The real build proof lands with the next deploy. Risk assessed low, not zero.~~ done — deploys since proved the wiring; tq live (docs/services/tq.md:143)
+~~2. **Upstream docs for the strengthened check** — the module-eval strengthening is committed but CHANGELOG/TODO_LIST upstream were not updated for it (daemon-committed alongside parallel-session work).~~ **Won't implement — upstream CHANGELOG/TODO for the check never updated.**
+~~3. **Manual-pool observability** — deploy.sh now WARNs on `/tmp/tq`, but the actual cutover (kill -INT, optional journal copy) is documented, not executed; the manual serve keeps running (parallel session's process, evolved to `--allow-writes`).~~ **NOT-DO — dup of 23-48 b2 (cutover).**
 
 ## c) NOT STARTED (in-scope, deferred)
 
-1. **Mutation/bite-test of the house test** — no case was proven to FAIL against a broken invariant (e.g. re-adding `network-online.target` via a merging module would flip the bootstrap case to throw). Construction failures (lambda shape, missing sops attr) proved the eval is live, but not per-case bite. The `scripts/negative-test-lints.sh` harness exists for exactly this class and was not extended.
-2. **PIPESTATUS root-cause** — the first module-eval build printed BUILD-FAILED via `${PIPESTATUS[0]:-1}` in mvdan/sh, then a direct-`$?` rerun was green. Either mvdan/sh mishandles PIPESTATUS here or the go-modules FOD transiently failed then cached clean. Unresolved; switched to deterministic capture for the rest of the session.
-3. **Live verification of the tq Gatus body pattern + post-deploy smoke against the SYSTEMD serve unit** — pattern was live-verified against the MANUAL serve last session; the systemd unit has never run (deploy pending). First deploy is the real gate.
+~~1. **Mutation/bite-test of the house test** — no case was proven to FAIL against a broken invariant (e.g. re-adding `network-online.target` via a merging module would flip the bootstrap case to throw). Construction failures (lambda shape, missing sops attr) proved the eval is live, but not per-case bite. The `scripts/negative-test-lints.sh` harness exists for exactly this class and was not extended.~~ **Won't implement — mutation/bite test never executed; test stable since.**
+~~2. **PIPESTATUS root-cause** — the first module-eval build printed BUILD-FAILED via `${PIPESTATUS[0]:-1}` in mvdan/sh, then a direct-`$?` rerun was green. Either mvdan/sh mishandles PIPESTATUS here or the go-modules FOD transiently failed then cached clean. Unresolved; switched to deterministic capture for the rest of the session.~~ **Won't implement — PIPESTATUS question never resolved; capture standard adopted in scripts.**
+~~3. **Live verification of the tq Gatus body pattern + post-deploy smoke against the SYSTEMD serve unit** — pattern was live-verified against the MANUAL serve last session; the systemd unit has never run (deploy pending). First deploy is the real gate.~~ done at `systemd serve live + Gatus body pattern green (docs/services/tq.md:143)`
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -40,43 +40,43 @@
 
 ## e) WHAT WE SHOULD IMPROVE (structural, from this run)
 
-1. **Discovery: systemd `tq-serve` is now a FEATURE-DIVERGED unit** — upstream landed "admin writes" dashboard capability (commit `73e011a`); the manual serve runs `/tmp/tq serve --addr :8090 --auth-token <hex> --allow-writes`. The systemd serve unit ships `tq serve --addr 127.0.0.1:8100` — NO token, NO writes flag. Consequences: (a) writes are effectively OFF in the deployment (probably a safe default), (b) if the binary ever enables writes without an explicit token on a LAN-bypassed vHost, that's an unauthenticated write surface. The upstream module HAS a `serve.authTokenFile` option we never wired. Needs an explicit owner decision (question 3), and at pin-bump time a diff of upstream serve flags against our unit.
-2. **Eval-test mutation discipline** — every new pure-eval test should ship with at least one negative case executed through the real check derivation (extend `negative-test-lints.sh` or a sibling harness to eval tests).
-3. **Exit-code capture standard** — always `cmd > log 2>&1; rc=$?`, never `cmd | tail` + PIPESTATUS in this shell. One AGENTS.md line would prevent recurrence.
-4. **Pin-bump checklist** — when the pin eventually moves to `github:`/newer rev: re-run upstream module-eval AND diff `deploy/nixos/tq-agent-pool.nix` semantics + serve flag surface (the allow-writes drift shows module and CLI features drift independently of formatting).
-5. **Parallel-session fact flow** — the `--allow-writes` evolution was visible in `ps` output mid-session and only became a finding at report time; a habit of diffing observed process flags against the declared unit when they diverge would have surfaced it an hour earlier.
+~~1. **Discovery: systemd `tq-serve` is now a FEATURE-DIVERGED unit** — upstream landed "admin writes" dashboard capability (commit `73e011a`); the manual serve runs `/tmp/tq serve --addr :8090 --auth-token <hex> --allow-writes`. The systemd serve unit ships `tq serve --addr 127.0.0.1:8100` — NO token, NO writes flag. Consequences: (a) writes are effectively OFF in the deployment (probably a safe default), (b) if the binary ever enables writes without an explicit token on a LAN-bypassed vHost, that's an unauthenticated write surface. The upstream module HAS a `serve.authTokenFile` option we never wired. Needs an explicit owner decision (question 3), and at pin-bump time a diff of upstream serve flags against our unit.~~ **Won't implement — process lessons; absorbed.**
+~~2. **Eval-test mutation discipline** — every new pure-eval test should ship with at least one negative case executed through the real check derivation (extend `negative-test-lints.sh` or a sibling harness to eval tests).~~ **Won't implement — process lessons; absorbed.**
+~~3. **Exit-code capture standard** — always `cmd > log 2>&1; rc=$?`, never `cmd | tail` + PIPESTATUS in this shell. One AGENTS.md line would prevent recurrence.~~ **Won't implement — process lessons; absorbed.**
+~~4. **Pin-bump checklist** — when the pin eventually moves to `github:`/newer rev: re-run upstream module-eval AND diff `deploy/nixos/tq-agent-pool.nix` semantics + serve flag surface (the allow-writes drift shows module and CLI features drift independently of formatting).~~ **Won't implement — process lessons; absorbed.**
+~~5. **Parallel-session fact flow** — the `--allow-writes` evolution was visible in `ps` output mid-session and only became a finding at report time; a habit of diffing observed process flags against the declared unit when they diverge would have surfaced it an hour earlier.~~ **Won't implement — process lessons; absorbed.**
 
 ## f) Up to 50 next items
 
 **P0 — unblock the deployment (user-gated):**
 
-1. User runs `nix run .#deploy` (sudo blocked in agent shells).
-2. Cutover per `docs/services/tq.md` §Cutover: `kill -INT` the manual pool/serve, optionally copy `~/projects/go-taskqueue/tasks.db` → `/mnt/pool/services/tq/tq.db`.
-3. Post-deploy: verify tq-storage-dir/tq-bootstrap/tq-agent-pool/tq-serve active; `tq stats`; dashboard via `tq.home.lan`; Gatus both tq checks green.
-4. Answer the model question (see g) — pool currently pins `zai/glm-5.3-flash` per-repo via bootstrap.
-5. Decide serve writes/auth-token wiring (question 3).
+~~1. User runs `nix run .#deploy` (sudo blocked in agent shells).~~ done at `deployed (docs/services/tq.md:143)`
+~~2. Cutover per `docs/services/tq.md` §Cutover: `kill -INT` the manual pool/serve, optionally copy `~/projects/go-taskqueue/tasks.db` → `/mnt/pool/services/tq/tq.db`.~~ **NOT-DO — dup of 23-48 b2 (cutover).**
+~~3. Post-deploy: verify tq-storage-dir/tq-bootstrap/tq-agent-pool/tq-serve active; `tq stats`; dashboard via `tq.home.lan`; Gatus both tq checks green.~~ done — units + Gatus checks live (docs/services/tq.md:143)
+~~4. Answer the model question (see g) — pool currently pins `zai/glm-5.3-flash` per-repo via bootstrap.~~ **Won't implement — model taste question; pool still on zai pin.**
+~~5. Decide serve writes/auth-token wiring (question 3).~~ done — serve writes decision resolved to read-only (docs/services/tq.md:143 read-only dashboard)
 
 **P1 — close this session's debts:**
-6. Mutation/bite-test for `test-tq-agent-pool.nix` (merging-module breakage → throw must fire through the check).
-7. One-command verification of PIPESTATUS in mvdan/sh; if broken, add the AGENTS.md shell gotcha.
-8. Full evo-x2 toplevel rebuild (or accept the deploy as the proof) after this session's edits.
-9. Upstream CHANGELOG/TODO_LIST entries for the strengthened module-eval check.
-10. Investigate `serve.authTokenFile` wiring path (sops secret + protectedVHost interplay) ready for the decision.
-11. Wire serve writes decision once made (unit flag + token file + Caddy posture unchanged = Layer 2).
-12. Verify Gatus `tq Dashboard` body pattern against the SYSTEMD-served HTML on first deploy.
+~~6. Mutation/bite-test for `test-tq-agent-pool.nix` (merging-module breakage → throw must fire through the check).~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~7. One-command verification of PIPESTATUS in mvdan/sh; if broken, add the AGENTS.md shell gotcha.~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~8. Full evo-x2 toplevel rebuild (or accept the deploy as the proof) after this session's edits.~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~9. Upstream CHANGELOG/TODO_LIST entries for the strengthened module-eval check.~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~10. Investigate `serve.authTokenFile` wiring path (sops secret + protectedVHost interplay) ready for the decision.~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~11. Wire serve writes decision once made (unit flag + token file + Caddy posture unchanged = Layer 2).~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
+~~12. Verify Gatus `tq Dashboard` body pattern against the SYSTEMD-served HTML on first deploy.~~ **NOT-DO — dup of c1/c2/b1/f5 (mutation test, PIPESTATUS, toplevel, authTokenFile, writes wiring, Gatus verify).**
 
 **P2 — integration hardening:**
-13. Push go-taskqueue master to origin (owner action) → flip SystemNix input to `github:LarsArtmann/go-taskqueue?ref=master` → drop the `?rev=` interim pin.
-14. Re-add CI viability: `NIX_GITHUB_RO_TOKEN` secret (CI dark for git+file + private `github:` nodes).
-15. Re-run `scripts/check-templ-committed.sh`-class hygiene on go-taskqueue at pin-bump time (fresh worktrees + `*_templ.go`).
-16. At pin bump: diff upstream module semantics + vendorHash refresh protocol (`probe FOD lock-free first`, per AGENTS CV protocol).
-17. Homepage tile live check on first deploy (tile is enable-gated; confirm group placement).
-18. `system-health` monitoredServices alert path live-check for the 3 tq units on first deploy.
-19. btrbk-pool `services/tq` subvolume: confirm first nightly snapshot actually includes the journal (post-deploy).
-20. `backup-coordination` registration for the tq journal? (currently covered by btrbk-pool only — decide if the DB also needs a dump-style backup).
-21. Add tq journal WAL/SHM growth observation after a week of pool ticks (sqlite WAL on HDD pool).
-22. Confirm the pool's `alert-url` bridge actually delivers on first dead letter (PapDashboard ingest e2e).
-23. Gatus response-time baseline after a week (2s threshold may be tight with cold pool ticks).
+~~13. Push go-taskqueue master to origin (owner action) → flip SystemNix input to `github:LarsArtmann/go-taskqueue?ref=master` → drop the `?rev=` interim pin.~~ **Won't implement — upstream coordination items; never done.**
+~~14. Re-add CI viability: `NIX_GITHUB_RO_TOKEN` secret (CI dark for git+file + private `github:` nodes).~~ done at `NIX_GITHUB_RO_TOKEN wired (.github/workflows/nix-check.yml:27)`
+~~15. Re-run `scripts/check-templ-committed.sh`-class hygiene on go-taskqueue at pin-bump time (fresh worktrees + `*_templ.go`).~~ **Won't implement — upstream coordination items; never done.**
+~~16. At pin bump: diff upstream module semantics + vendorHash refresh protocol (`probe FOD lock-free first`, per AGENTS CV protocol).~~ **Won't implement — upstream coordination items; never done.**
+~~17. Homepage tile live check on first deploy (tile is enable-gated; confirm group placement).~~ **Won't implement — upstream coordination items; never done.**
+~~18. `system-health` monitoredServices alert path live-check for the 3 tq units on first deploy.~~ **Won't implement — upstream coordination items; never done.**
+~~19. btrbk-pool `services/tq` subvolume: confirm first nightly snapshot actually includes the journal (post-deploy).~~ **Won't implement — upstream coordination items; never done.**
+~~20. `backup-coordination` registration for the tq journal? (currently covered by btrbk-pool only — decide if the DB also needs a dump-style backup).~~ **Won't implement — upstream coordination items; never done.**
+~~21. Add tq journal WAL/SHM growth observation after a week of pool ticks (sqlite WAL on HDD pool).~~ **Won't implement — upstream coordination items; never done.**
+~~22. Confirm the pool's `alert-url` bridge actually delivers on first dead letter (PapDashboard ingest e2e).~~ **Won't implement — upstream coordination items; never done.**
+~~23. Gatus response-time baseline after a week (2s threshold may be tight with cold pool ticks).~~ **Won't implement — upstream coordination items; never done.**
 24. Post-cutover: `tq dlq` + `tq rescue` dry-run against the production journal (runbook rehearsal).
 25. Session var `TQ_DB` for lars: verify `tq stats` works from a user shell post-deploy.
 

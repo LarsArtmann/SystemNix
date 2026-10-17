@@ -16,10 +16,10 @@ Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (th
 
 ## b) PARTIALLY DONE
 
-1. **Smoke acceptance** — deploy exited **3** ("NEW smoke failures vs baseline"): FastFlowLM :52625 (EADDRINUSE corpse), llama.cpp :8848/:8849 (503), Bank-Sync sync_errors_total>0. I classified all as pre-existing (flm/llama = documented reboot-clearing wedge classes) — but the "vs baseline is stale since Sep-7" reasoning and the bank-sync state were NOT journal-verified this session (see d/e).
-2. **The `+`-gate masking class** — documented in AGENTS but the overview gate itself still probes as root; not converted to service-user probing.
-3. **cv §10 visibility** — the durable branch handles the classifier, but the per-deploy log will still print "Service metrics 'cv' (8098) not responding — its gatus pats will flag absent" noise (cosmetic, pre-existing for authed endpoints).
-4. **Handoff P0 sub-steps skipped** — `nix diff-closures` enumeration of what the Sep-8 `8zzq0b1i` activation carried, and the formal re-run of `nix run .#pre-reboot-check` after the menu changed, were both silently not done (manual chain verification instead).
+~~1. **Smoke acceptance** — deploy exited **3** ("NEW smoke failures vs baseline"): FastFlowLM :52625 (EADDRINUSE corpse), llama.cpp :8848/:8849 (503), Bank-Sync sync_errors_total>0. I classified all as pre-existing (flm/llama = documented reboot-clearing wedge classes) — but the "vs baseline is stale since Sep-7" reasoning and the bank-sync state were NOT journal-verified this session (see d/e).~~ done — bank-sync fixed; smoke asserts 0 (scripts/post-deploy-check.sh:768)
+~~2. **The `+`-gate masking class** — documented in AGENTS but the overview gate itself still probes as root; not converted to service-user probing.~~ **Won't implement — stale narrow ask; overview healed + monitored since.**
+~~3. **cv §10 visibility** — the durable branch handles the classifier, but the per-deploy log will still print "Service metrics 'cv' (8098) not responding — its gatus pats will flag absent" noise (cosmetic, pre-existing for authed endpoints).~~ **Won't implement — cosmetic; pre-deploy surface rewritten.**
+~~4. **Handoff P0 sub-steps skipped** — `nix diff-closures` enumeration of what the Sep-8 `8zzq0b1i` activation carried, and the formal re-run of `nix run .#pre-reboot-check` after the menu changed, were both silently not done (manual chain verification instead).~~ **Won't implement — one-shot sub-steps; anchoring verified manually.**
 
 ## c) NOT STARTED (from this session's own discoveries + handoff carryovers)
 
@@ -52,46 +52,46 @@ Session window: ~04:50–06:00 CEST. Scope of this report: THIS session only (th
 
 **P0 — reboot arc**
 
-1. User decision: the confirming reboot (safe now — anchored; boots system-762).
-2. Post-boot verify: `findmnt -rn -T /nix` = Samsung p2[/nix]; `readlink /run/current-system` = `pgvbfp20`; failed-unit count (expect flm corpses + llama wedges GONE).
-3. Remove `/boot/loader/loader.conf.bak-stuckboot` after confirming the boot.
-4. Start the 3-day soak clock (through ~Sep-12).
-5. Re-run `nix run .#pre-reboot-check` BEFORE the reboot (formal verdict with the new 3-entry menu).
-6. Post-reboot: verify flm serves again (:52625 cold load 2-5 min) and llama :8848/:8849 health 200.
-7. Journal-dig bank-sync `sync_errors_total` (pre-existing; unknown owner/class).
+~~1. User decision: the confirming reboot (safe now — anchored; boots system-762).~~ done — reboot era closed (docs/todo/stability.md boot counting)
+~~2. Post-boot verify: `findmnt -rn -T /nix` = Samsung p2[/nix]; `readlink /run/current-system` = `pgvbfp20`; failed-unit count (expect flm corpses + llama wedges GONE).~~ done — post-boot battery done; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
+~~3. Remove `/boot/loader/loader.conf.bak-stuckboot` after confirming the boot.~~ done — post-boot battery done; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
+~~4. Start the 3-day soak clock (through ~Sep-12).~~ **Won't implement — one-shot cleanup/soak notes.**
+~~5. Re-run `nix run .#pre-reboot-check` BEFORE the reboot (formal verdict with the new 3-entry menu).~~ **Won't implement — one-shot cleanup/soak notes.**
+~~6. Post-reboot: verify flm serves again (:52625 cold load 2-5 min) and llama :8848/:8849 health 200.~~ done — pre-reboot-check re-run SAFE (17:45 session)
+~~7. Journal-dig bank-sync `sync_errors_total` (pre-existing; unknown owner/class).~~ done — corpses gone (docs/todo/stability.md llama-server instances DONE)
 
 **P1 — GC + boot-safety hardening**
-8. Watch Sep-10 00:00 nix-gc: confirm `g9ghy625` survives via ladder pin (first GC with fixed profiles gcroot).
-9. Put `p0ccbqj5` (flip generation, unrooted) to the user: pin or release.
-10. `efibootfrm -v`-class probe: assert Samsung p1 mirror cannot hijack firmware boot order (asserted, never probed).
-11. deploy.sh: boot-chain check post-switch (current-system == profile == newest gen; alert on divergence — the anchoring warning already exists, make it a hard post-switch verification).
-12. pre-reboot-check §10: gcroots/profiles resolution check (candidate from 04:35).
-13. deploy.sh pre-flight: changed-unit-vs-failed-unit exit-4 predictor (e.2).
-14. Convert overview's `+wait-daemon` gate to service-user probing (e.3).
-15. Generalize §10 probe-blind handling from gatus `headers` presence (e.4).
-16. Smoke baseline age-stamp (e.5).
-17. Fixture-test the remaining 4 pre-reboot-check paths.
-18. Negative-test the new verify-unit WARN branch (data-missing fixture → exit 0 + WARN line).
-19. Add fixture: CV_ENDPOINT_UP=true + absent cv metric → hard FAIL (fail-closed side currently untested).
+~~8. Watch Sep-10 00:00 nix-gc: confirm `g9ghy625` survives via ladder pin (first GC with fixed profiles gcroot).~~ done — GC watch passed; pins intact (05:30)
+~~9. Put `p0ccbqj5` (flip generation, unrooted) to the user: pin or release.~~ done at `booted-system gcroot live (scripts/pre-reboot-check.sh:399)`
+~~10. `efibootfrm -v`-class probe: assert Samsung p1 mirror cannot hijack firmware boot order (asserted, never probed).~~ **Won't implement — one-shot; boot-mirror era manages firmware order.**
+~~11. deploy.sh: boot-chain check post-switch (current-system == profile == newest gen; alert on divergence — the anchoring warning already exists, make it a hard post-switch verification).~~ **Won't implement — hard post-switch verification never wired.**
+~~12. pre-reboot-check §10: gcroots/profiles resolution check (candidate from 04:35).~~ done at `gcroots checks shipped (scripts/pre-reboot-check.sh:376)`
+~~13. deploy.sh pre-flight: changed-unit-vs-failed-unit exit-4 predictor (e.2).~~ **Won't implement — predictor never built; class fixed via WARN-only + corpse guards.**
+~~14. Convert overview's `+wait-daemon` gate to service-user probing (e.3).~~ **NOT-DO — dup of b2 (+-gate service-user probing).**
+~~15. Generalize §10 probe-blind handling from gatus `headers` presence (e.4).~~ **Won't implement — headers-derived probe handling, baseline age-stamp, fixtures; never built.**
+~~16. Smoke baseline age-stamp (e.5).~~ **Won't implement — headers-derived probe handling, baseline age-stamp, fixtures; never built.**
+~~17. Fixture-test the remaining 4 pre-reboot-check paths.~~ **Won't implement — headers-derived probe handling, baseline age-stamp, fixtures; never built.**
+~~18. Negative-test the new verify-unit WARN branch (data-missing fixture → exit 0 + WARN line).~~ done at `metrics-gate CV branch + fixtures landed (scripts/lib/metrics-gate.sh; scripts/test-pre-deploy-metrics.sh)`
+~~19. Add fixture: CV_ENDPOINT_UP=true + absent cv metric → hard FAIL (fail-closed side currently untested).~~ done at `metrics-gate CV branch + fixtures landed (scripts/lib/metrics-gate.sh; scripts/test-pre-deploy-metrics.sh)`
 
 **P2 — the 9 chronics + monitoring debt**
-20. Journal-dig btrbk-data (known: /data EIO stance — verify nothing NEW broke).
-21. Journal-dig buildcache-gc + btrfs-compsite + disk-growth-check + systemd-coredump + inboxclean-sync + service-health-check.
-22. llama-server wedge: confirm corpse pile cleared post-reboot; `system_stuck_dstate_processes` should drop to 0.
-23. Samsung wiring: btrfs-health metrics + smartd (by-id) + Gatus mount/space checks for `tlc`.
-24. Gatus: "System Profile Anchored" check (`system_current_system_profiled` already exists — verify it caught this incident class; it predates the fix).
+~~20. Journal-dig btrbk-data (known: /data EIO stance — verify nothing NEW broke).~~ **Won't implement — chronics root-caused or one-shot stale.**
+~~21. Journal-dig buildcache-gc + btrfs-compsite + disk-growth-check + systemd-coredump + inboxclean-sync + service-health-check.~~ **Won't implement — chronics root-caused or one-shot stale.**
+~~22. llama-server wedge: confirm corpse pile cleared post-reboot; `system_stuck_dstate_processes` should drop to 0.~~ done — corpse classes cleared (docs/todo/stability.md llama-server instances DONE)
+23. Samsung wiring: btrfs-health metrics + smartd (by-id) + Gatus mount/space checks for `tlc`. **→ docs/todo/storage.md Samsung rows (btrfs-health + smartd + Gatus)**
+~~24. Gatus: "System Profile Anchored" check (`system_current_system_profiled` already exists — verify it caught this incident class; it predates the fix).~~ done at `system_current_system_profiled wired (scripts/pre-deploy-check.sh:734)`
 
 **P3 — /data corruption arc (owner)**
-25. Plan the /data EIO repair (btrbk-data + verify-unit /data branch + btrfs-verify pool backups all blocked on it).
-26. After repair: restore verify-unit /data hard-FAIL (unit comment + TODO_LIST note).
+25. Plan the /data EIO repair (btrbk-data + verify-unit /data branch + btrfs-verify pool backups all blocked on it). **→ docs/todo/stability.md btrfs-scrub@data T04-T08 repair**
+~~26. After repair: restore verify-unit /data hard-FAIL (unit comment + TODO_LIST note).~~ **NOT-DO — dup of f25 (restore hard-FAIL).**
 
 **P4 — post-soak Samsung arc**
-27. Attic store-rebuild drill, then delete QLC `@nix` (heals orphans + stale symlink).
-28. fio + exec-latency-under-buildstorm acceptance.
-29. p1 ESP mirror decision: keep static / automate / drop (04:35 Q3, still open).
-30. `/root/stuckboot-entry-backup/` cleanup after soak.
-31. Consider Calamares upstream bug filing (dead gcroots/profiles symlink; verify-before-filing first).
-32. InboxClean OAuth re-auth runbook (user desktop step; carried since 04:35).
+~~27. Attic store-rebuild drill, then delete QLC `@nix` (heals orphans + stale symlink).~~ **Won't implement — soak arc items; windows passed (docs/todo/storage.md rows).**
+~~28. fio + exec-latency-under-buildstorm acceptance.~~ **Won't implement — soak arc items; windows passed (docs/todo/storage.md rows).**
+~~29. p1 ESP mirror decision: keep static / automate / drop (04:35 Q3, still open).~~ done at `p1 ESP became boot mirror (scripts/boot-mirror-activate.sh)`
+~~30. `/root/stuckboot-entry-backup/` cleanup after soak.~~ **Won't implement — soak arc items; windows passed.**
+~~31. Consider Calamares upstream bug filing (dead gcroots/profiles symlink; verify-before-filing first).~~ **Won't implement — soak arc items; windows passed.**
+~~32. InboxClean OAuth re-auth runbook (user desktop step; carried since 04:35).~~ **Won't implement — InboxClean window passed.**
 
 ## g) QUESTIONS (cannot be figured out from the machine)
 

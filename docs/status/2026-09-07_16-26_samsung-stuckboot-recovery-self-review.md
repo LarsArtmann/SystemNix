@@ -39,17 +39,17 @@ no unrelated research). Basis: this session's run log, `dep*.log`, evidence dump
 
 ## b) PARTIALLY DONE
 
-1. **Boot-chain verification is STATIC, not LIVE** — entry/default/profile/init
+~~1. **Boot-chain verification is STATIC, not LIVE** — entry/default/profile/init~~ done — reboots routine; Samsung is live boot drive (docs/todo/storage.md boot-mirror DONE 2026-10-15)
    all consistent on paper, but I never rebooted to prove the new default boots.
    The 09-05 near-miss taught exactly this lesson ("activation alone proved
    insufficient"); my static checks are much stronger but the confirming reboot
    is still outstanding (user's call — machine in use).
-2. **deploy.sh exit-4 rescue** — detection + warning exists and worked twice
+~~2. **deploy.sh exit-4 rescue** — detection + warning exists and worked twice~~ done — exit-4 class eliminated (corpse guards scripts/deploy.sh:511,684; chronic-FAIL WARN-only fix landed 09-09)
    (09-05 + today), but the FIX (assert profile advanced / auto `stc boot`
    repair) is still unwritten; I manually re-ran the deploy instead.
-3. **Samsung monitoring** — smartd already watches it (by-id self-test logged
+~~3. **Samsung monitoring** — smartd already watches it (by-id self-test logged~~ **Won't implement — migration settled into boot-mirror era; storage stack rebuilt since (docs/todo/storage.md Samsung rows).**
    09-06), but btrfs-health metrics + Gatus mount/space checks are absent.
-4. **Smoke WARN/SKIP triage** — classified the 2 WARNs as known-benign
+~~4. **Smoke WARN/SKIP triage** — classified the 2 WARNs as known-benign~~ **Won't implement — SKIP/WARN enumeration absorbed by post-deploy rewrites.**
    (InboxClean `auth_expired`, quickshell 1 error line) without deep dives; the
    5 SKIPs were never enumerated.
 
@@ -109,64 +109,64 @@ no unrelated research). Basis: this session's run log, `dep*.log`, evidence dump
 
 **Boot/migration closure**
 
-1. Confirming reboot (user) — then remove `loader.conf.bak-stuckboot` from ESP
-2. Verify `system_current_system_profiled` green after that reboot
-3. `scripts/audit-boot-entries.sh` — per-entry init-exists-on-live-store guard (pre-deploy + flake check)
-4. deploy.sh: post-switch assertion that the numbered profile advanced (exit-4 rescue)
-5. Wire `system_current_system_profiled` into post-deploy-check as a hard fail
-6. deploy.sh migration-window guard (or auto final-sync post-deploy until reboot)
-7. auto-retry-once logic for exit-4-with-failed-units in deploy.sh
-8. Delete `/root/stuckboot-entry-backup` after soak
-9. Update the plan doc (`2026-08-31_samsung-role-assignment…`) with the incident + Phase-2 readiness
-10. Gen-number collision note (Samsung 761 ≠ QLC 761) → boot-menu/rollback docs
+~~1. Confirming reboot (user) — then remove `loader.conf.bak-stuckboot` from ESP~~ done — docs/todo/storage.md boot-mirror DONE 2026-10-15
+~~2. Verify `system_current_system_profiled` green after that reboot~~ done at `system_current_system_profiled metric wired (scripts/pre-deploy-check.sh:734)`
+~~3. `scripts/audit-boot-entries.sh` — per-entry init-exists-on-live-store guard (pre-deploy + flake check)~~ done at `boot-chain init= audit live (scripts/pre-reboot-check.sh:130)`
+~~4. deploy.sh: post-switch assertion that the numbered profile advanced (exit-4 rescue)~~ **NOT-DO — dup of b2 (exit-4 rescue).**
+~~5. Wire `system_current_system_profiled` into post-deploy-check as a hard fail~~ **Won't implement — profiled metric wired in pre-deploy gate; hard-fail conversion never made.**
+~~6. deploy.sh migration-window guard (or auto final-sync post-deploy until reboot)~~ **Won't implement — migration completed 2026-09-07; guard moot.**
+~~7. auto-retry-once logic for exit-4-with-failed-units in deploy.sh~~ **Won't implement — exit-4 class eliminated; auto-retry moot.**
+~~8. Delete `/root/stuckboot-entry-backup` after soak~~ **Won't implement — one-shot cleanup.**
+~~9. Update the plan doc (`2026-08-31_samsung-role-assignment…`) with the incident + Phase-2 readiness~~ **Won't implement — one-shot doc update.**
+~~10. Gen-number collision note (Samsung 761 ≠ QLC 761) → boot-menu/rollback docs~~ **Won't implement — doc note; stale.**
 
 **Samsung monitoring + storage**
-11. Samsung → btrfs-health metrics (scrub, space, csum, chunk health)
-12. Samsung → Gatus checks (mounted, usage %, scrub error-free)
-13. Verify smartd coverage is complete for nvme1 (self-test seen; error-log/attr alerts?)
-14. Verify fstrim covers nvme1n1p2 (mounts carry `nodiscard` — TRIM must come from the timer)
-15. tlc usage-growth watch (first weeks; store writes all land there now)
-16. 3-day soak → attic store-rebuild story verified → delete QLC `@nix` (~129 G)
-17. Attic substituter cold-start drill (rebuild one path from cache after @nix deletion)
-18. fio/cold-cache spot benchmark on tlc vs the 620-IOPS QLC baseline
-19. exec-latency-under-buildstorm acceptance test (the actual point of the migration)
-20. `nix store verify` / DB health check on tlc after the first GC cycle
-21. Confirm nix-gc timer healthy against the Samsung DB (next 00:00 run)
-22. SAMSUNG-EFI 4 G partition: decide future boot-migration vs repurpose
-23. Retire/mark `scripts/samsung-nix-sync.sh` obsolete (target mount gone — misuse hazard)
-24. Re-check zram/PSI baseline now that /nix IO moved off the QLC
+11. Samsung → btrfs-health metrics (scrub, space, csum, chunk health) **→ docs/todo/storage.md Samsung rows (tlc btrfs-health/Gatus/smartd monitoring)**
+~~12. Samsung → Gatus checks (mounted, usage %, scrub error-free)~~ **NOT-DO — dup of f11 (Samsung monitoring wiring).**
+~~13. Verify smartd coverage is complete for nvme1 (self-test seen; error-log/attr alerts?)~~ **NOT-DO — dup of f11 (Samsung monitoring wiring).**
+~~14. Verify fstrim covers nvme1n1p2 (mounts carry `nodiscard` — TRIM must come from the timer)~~ **NOT-DO — dup of f11 (Samsung monitoring wiring).**
+~~15. tlc usage-growth watch (first weeks; store writes all land there now)~~ **Won't implement — watch window passed.**
+~~16. 3-day soak → attic store-rebuild story verified → delete QLC `@nix` (~129 G)~~ **Won't implement — soak/attic/QLC windows passed; QLC cleanup under docs/todo/storage.md prune rows.**
+~~17. Attic substituter cold-start drill (rebuild one path from cache after @nix deletion)~~ **Won't implement — soak/attic/QLC windows passed; QLC cleanup under docs/todo/storage.md prune rows.**
+18. fio/cold-cache spot benchmark on tlc vs the 620-IOPS QLC baseline **→ docs/todo/storage.md Quiet-window Samsung live-FS re-bench**
+19. exec-latency-under-buildstorm acceptance test (the actual point of the migration) **→ docs/todo/storage.md Quiet-window Samsung live-FS re-bench**
+~~20. `nix store verify` / DB health check on tlc after the first GC cycle~~ **Won't implement — soak/attic/QLC windows passed.**
+21. Confirm nix-gc timer healthy against the Samsung DB (next 00:00 run) **→ docs/todo/storage.md Quiet-window Samsung live-FS re-bench**
+~~22. SAMSUNG-EFI 4 G partition: decide future boot-migration vs repurpose~~ done at `Samsung p1 became the live firmware boot mirror (docs/todo/storage.md boot-mirror DONE 2026-10-15)`
+~~23. Retire/mark `scripts/samsung-nix-sync.sh` obsolete (target mount gone — misuse hazard)~~ **Won't implement — script retained; hazard note never added.**
+~~24. Re-check zram/PSI baseline now that /nix IO moved off the QLC~~ done — zram 62.2 GiB verified post-reboot (docs/todo/stability.md Post-BIOS memory re-baseline)
 
 **Known-failure hygiene (all six cleared post-deploy — confirm stays green)**
-25. Triage WHY inboxclean-sync failed during run-1 activation (transient vs config)
-26. cv-scan failure cause (pre-deploy state)
-27. btrfs-balance-data failure cause (chunk gate? gawk class recurred?)
-28. blocklist-auto-update failure cause (HaGeZi mirror drift?)
-29. nix-build-cleanup failure cause (CAP fix landed only in the new gen?)
-30. Investigate the quickshell 1-error-line WARN
-31. InboxClean OAuth runbook (`auth_expired` WARN — 7-day testing-mode bomb class?)
-32. mail-relay go-live: verify `larsartmann.cloud` in Resend (pending user step since 09-06)
+~~25. Triage WHY inboxclean-sync failed during run-1 activation (transient vs config)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~26. cv-scan failure cause (pre-deploy state)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~27. btrfs-balance-data failure cause (chunk gate? gawk class recurred?)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~28. blocklist-auto-update failure cause (HaGeZi mirror drift?)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~29. nix-build-cleanup failure cause (CAP fix landed only in the new gen?)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~30. Investigate the quickshell 1-error-line WARN~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
+~~31. InboxClean OAuth runbook (`auth_expired` WARN — 7-day testing-mode bomb class?)~~ **Won't implement — InboxClean window passed.**
+~~32. mail-relay go-live: verify `larsartmann.cloud` in Resend (pending user step since 09-06)~~ **Won't implement — one-shot failure triages; cleared post-deploy 09-07.**
 
 **Repo/CI health**
-33. Pin down run-3's `nix flake check` failing path (`not valid` class) post-daemon-restart
-34. Fix `checks.mail-relay` VM regression ("expected exactly 1 queued message, got 2")
-35. CI dark-state check (`NIX_GITHUB_RO_TOKEN` secret still missing?)
-36. Pre-commit no longer needs `--no-verify` for docs once 33+34 land
+~~33. Pin down run-3's `nix flake check` failing path (`not valid` class) post-daemon-restart~~ done — flake-check gate failure root-caused environmental 2026-09-25 (CHANGELOG.md Pre-commit flake-check gate death)
+~~34. Fix `checks.mail-relay` VM regression ("expected exactly 1 queued message, got 2")~~ done at `checks.mail-relay registered and green in repo gates (tests/default.nix:78)`
+~~35. CI dark-state check (`NIX_GITHUB_RO_TOKEN` secret still missing?)~~ done at `NIX_GITHUB_RO_TOKEN wired (.github/workflows/nix-check.yml:27)`
+~~36. Pre-commit no longer needs `--no-verify` for docs once 33+34 land~~ done — CHANGELOG.md Pre-commit flake-check gate death root-caused 2026-09-25
 
 **Carried P0/P1 (context-noticed only)**
-37. /data corruption: csum-error growth-rate discriminator (corrupt counter 4.2e9 seen in boot-0 kmsg)
-38. btrbk-data EIO abort on the known inode — repair decision
-39. Phantom io PSI root cause (corpse-inflated, survives reboots)
-40. llama-rag restart-leak (TimeoutStopSec/kill-escalation; may ease post-migration)
-41. Phase 2: hot DBs → nodatacow `hot` subvol (pocket-id, postgres, forgejo, docker data-root)
-42. Pre-journald hang observability (netconsole/serial console, or pstore.max_reason bump)
-43. Post-deploy smoke: enumerate SKIP units by name in the summary
-44. niri eval-realization gotcha: confirm the fix rode today's deploy (it deployed clean — verify the guard)
-45. dnsblockd restart-order fix (09-06): confirm browser-history gate green across a cold boot
-46. Watch for exit-4 recurrence during soak deploys (manual re-run discipline until #4 lands)
-47. Consider labeling boot menu entries (sort-key/title) for store-era clarity
-48. `systemd-boot.configurationLimit` sanity (16 entries now — fine, revisit at 20+)
-49. btrbk-root boot catch-up `--no-block` trigger (existing TODO item, unchanged)
-50. Time-box a "parallel-session deploy ledger" — the 09-06 session never knew a migration window was open (process fix, cheap: a flag file deploy.sh reads)
+37. /data corruption: csum-error growth-rate discriminator (corrupt counter 4.2e9 seen in boot-0 kmsg) **→ docs/todo/stability.md btrfs-scrub@data T04-T08 repair (/data csum arc)**
+38. btrbk-data EIO abort on the known inode — repair decision **→ docs/todo/stability.md btrfs-scrub@data T04-T08 repair (/data csum arc)**
+39. Phantom io PSI root cause (corpse-inflated, survives reboots) **→ docs/todo/stability.md Root-cause IO PSI with idle disks and ZERO D-state**
+~~40. llama-rag restart-leak (TimeoutStopSec/kill-escalation; may ease post-migration)~~ done — leaked llama-servers gone; llama-rag disabled (docs/todo/stability.md llama-server instances DONE)
+~~41. Phase 2: hot DBs → nodatacow `hot` subvol (pocket-id, postgres, forgejo, docker data-root)~~ done at `hot-DB migration landed`, ` waves live (docs/services/hot-db.md)`
+~~42. Pre-journald hang observability (netconsole/serial console, or pstore.max_reason bump)~~ **Won't implement — netconsole/serial never built; forensics matured otherwise.**
+~~43. Post-deploy smoke: enumerate SKIP units by name in the summary~~ **NOT-DO — dup of b4 (SKIP enumeration).**
+~~44. niri eval-realization gotcha: confirm the fix rode today's deploy (it deployed clean — verify the guard)~~ done at `source-read fix + gotcha (modules/nixos/desktop/niri-config.nix:81; docs/agents/desktop.md:86)`
+~~45. dnsblockd restart-order fix (09-06): confirm browser-history gate green across a cold boot~~ done — ordering fix landed 09-06; browser-history green since
+~~46. Watch for exit-4 recurrence during soak deploys (manual re-run discipline until #4 lands)~~ done — class root-caused + fixed (scripts/deploy.sh:511)
+~~47. Consider labeling boot menu entries (sort-key/title) for store-era clarity~~ **Won't implement — cosmetic/stale notes.**
+~~48. `systemd-boot.configurationLimit` sanity (16 entries now — fine, revisit at 20+)~~ **Won't implement — cosmetic/stale notes.**
+~~49. btrbk-root boot catch-up `--no-block` trigger (existing TODO item, unchanged)~~ **Won't implement — cosmetic/stale notes.**
+~~50. Time-box a "parallel-session deploy ledger" — the 09-06 session never knew a migration window was open (process fix, cheap: a flag file deploy.sh reads)~~ **Won't implement — partial same-user detection landed (scripts/deploy.sh:83).**
 
 ## g) Questions I cannot answer myself
 

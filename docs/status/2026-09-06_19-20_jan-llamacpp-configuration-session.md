@@ -39,26 +39,26 @@ The task looked like "tune some settings." It was actually four stacked breakage
 
 ## b) PARTIALLY DONE
 
-1. **End-to-end generation NEVER tested.** Engine up, models listed, Vulkan mapped — but no actual model load + token generation ever happened (I deliberately skipped loading the 26B at 128k ctx to avoid slamming the box, but also never loaded a SMALL model to prove the load→generate path). The task's literal acceptance test is unproven.
-2. **`data_folder` persistence after relaunch unverified.** I wrote `/data/ai/models/jan` into both settings files, but never RE-read them after Jan started (Jan rewrites these files; if it normalized back to `~/.local/share/Jan/data` the setup still works via the symlink, but the canonical-form bulletproofing is gone).
-3. **nix-ld deployed but never exercised.** No foreign dynamic binary was run through the NEW nix-ld path post-deploy (my sandbox shell predates the session vars; a fresh login shell test was not performed).
-4. **Why Jan DIED at ~18:45 (during the deploy window) — unexplained.** I relaunched it and it stayed up; the death itself is root-caused NOWHERE. Candidates: nh-switch user-session churn, niri/DMS restart, OOM under the 66% IO-PSI noise — none verified.
-5. **dnsblockd restart at ~18:28 + :9090 wedge** — confirmed pre-existing (documented 2026-09-06 class, upstream fix exists unpushed in the dnsblockd checkout), but the restart trigger and current wedge duration are undiagnosed (sandbox lacks systemctl/journal access). Handed off as-is.
-6. **EIO-corrupt `/data/models/llm/gemma-4-31b-abliterated-Q8_0.gguf`** — triaged and filed (os error 5 at header, verified via Jan's validator AND `dd`), not repaired (re-download vs delete is a user decision tied to the /data bounded-damage repair doctrine).
-7. **Jan's log timezone** (app.log stamps UTC, 2h behind CEST wall clock) — noticed during correlation, never documented in the runbook. Cost me a false "nothing happened at 17:05" moment.
+~~1. **End-to-end generation NEVER tested.** Engine up, models listed, Vulkan mapped — but no actual model load + token generation ever happened (I deliberately skipped loading the 26B at 128k ctx to avoid slamming the box, but also never loaded a SMALL model to prove the load→generate path). The task's literal acceptance test is unproven.~~ **Won't implement — one-shot acceptance; Jan stable since; router/API documented (docs/services/jan.md).**
+~~2. **`data_folder` persistence after relaunch unverified.** I wrote `/data/ai/models/jan` into both settings files, but never RE-read them after Jan started (Jan rewrites these files; if it normalized back to `~/.local/share/Jan/data` the setup still works via the symlink, but the canonical-form bulletproofing is gone).~~ done — all three settings surfaces documented managed (docs/services/jan.md:63)
+~~3. **nix-ld deployed but never exercised.** No foreign dynamic binary was run through the NEW nix-ld path post-deploy (my sandbox shell predates the session vars; a fresh login shell test was not performed).~~ **Won't implement — one-shot; nix-ld live since.**
+~~4. **Why Jan DIED at ~18:45 (during the deploy window) — unexplained.** I relaunched it and it stayed up; the death itself is root-caused NOWHERE. Candidates: nh-switch user-session churn, niri/DMS restart, OOM under the 66% IO-PSI noise — none verified.~~ **Won't implement — one-shot; Jan stable since.**
+~~5. **dnsblockd restart at ~18:28 + :9090 wedge** — confirmed pre-existing (documented 2026-09-06 class, upstream fix exists unpushed in the dnsblockd checkout), but the restart trigger and current wedge duration are undiagnosed (sandbox lacks systemctl/journal access). Handed off as-is.~~ done — dnsblockd wedge fixed upstream + deployed (docs/todo/upstream.md dnsblockd v0.9.3)
+6. **EIO-corrupt `/data/models/llm/gemma-4-31b-abliterated-Q8_0.gguf`** — triaged and filed (os error 5 at header, verified via Jan's validator AND `dd`), not repaired (re-download vs delete is a user decision tied to the /data bounded-damage repair doctrine). **→ docs/todo/stability.md btrfs-scrub@data re-FAIL T04-T08 repair (/data damage set)**
+~~7. **Jan's log timezone** (app.log stamps UTC, 2h behind CEST wall clock) — noticed during correlation, never documented in the runbook. Cost me a false "nothing happened at 17:05" moment.~~ **Won't implement — doc nicety; runbook covers key ops (docs/services/jan.md).**
 
 ## c) NOT STARTED (observed in-session, deliberately left)
 
-1. **No automated test for the new `jan-data-link` activation** — the repo's own convention is regression tests for exactly this class (cf. test-hermes, test-cv). The activation's migration branch (real-dir + empty target), symlink idempotency, and stray-bin removal are manually verified ONCE, never machine-tested.
-2. **Jan's wayland app_id vs `niri-session-manager-apps.nix`** — the file lists `"Jan"` (from the Electron era); the Tauri app's actual app_id is unverified. If it differs, session-restore mislabels windows (split-brain risk, currently dormant).
-3. **Desktop-entry/launcher integration check** — whether the nixpkgs jan ships a .desktop file that DMS spotlight actually surfaces was never verified (the user launched Jan today somehow — mechanism unknown, see §g).
-4. **Jan DB/logs vs /data snapshot policy review** — `db/` is now live sqlite churn on /data (14d+4w local retention + pool sends; root receives kept forever). The repo has exactly this doctrine for why the nix store left `@` (extent pinning). 161M today, grows with threads. Never analyzed.
-5. **Model hygiene sweep** — old logs showed a stray root-level `model.yml` producing a "skipping model ''" warning (it was already gone when I looked); no systematic sweep of the other 13 model dirs for stragglers/invalid yml.
-6. **`llamacpp_env` hardening** (e.g. `GGML_VK_VISIBLE_DEVICES=0`) — left empty; single-GPU today, so cosmetic.
-7. **ctx_len 128000 + fit=off risk assessment for the selected gemma-4-26B-A4B** — the same log showed a 36GB KV estimate for a 4B model at high ctx; nobody has sanity-checked the user's chosen load parameters against GTT + zram reality. First real chat may OOM or thrash.
-8. **Provenance of the removed `~/.local/bin/jan`** — where the 4.9MB AppImage-extracted binary came from was never established (download? niri session-restore? manual copy at 17:57?). If there's a habit/source, it will regenerate the shadowing problem.
-9. **`"no such table: files"` DB warnings in Jan's log** (post-migration artifact, 3× in a row) — not investigated, not filed upstream.
-10. **Fresh engine download post-migration** — auto-update will write ~90MB into `/data/.../backends/` on the next llama.cpp release; the write path under bwrap was never exercised (bind exists, perms fine, but untested).
+~~1. **No automated test for the new `jan-data-link` activation** — the repo's own convention is regression tests for exactly this class (cf. test-hermes, test-cv). The activation's migration branch (real-dir + empty target), symlink idempotency, and stray-bin removal are manually verified ONCE, never machine-tested.~~ **Won't implement — never picked up; activation stable 6+ weeks.**
+~~2. **Jan's wayland app_id vs `niri-session-manager-apps.nix`** — the file lists `"Jan"` (from the Electron era); the Tauri app's actual app_id is unverified. If it differs, session-restore mislabels windows (split-brain risk, currently dormant).~~ **Won't implement — one-shot.**
+~~3. **Desktop-entry/launcher integration check** — whether the nixpkgs jan ships a .desktop file that DMS spotlight actually surfaces was never verified (the user launched Jan today somehow — mechanism unknown, see §g).~~ **Won't implement — one-shot.**
+~~4. **Jan DB/logs vs /data snapshot policy review** — `db/` is now live sqlite churn on /data (14d+4w local retention + pool sends; root receives kept forever). The repo has exactly this doctrine for why the nix store left `@` (extent pinning). 161M today, grows with threads. Never analyzed.~~ **Won't implement — owner question never answered; db small.**
+~~5. **Model hygiene sweep** — old logs showed a stray root-level `model.yml` producing a "skipping model ''" warning (it was already gone when I looked); no systematic sweep of the other 13 model dirs for stragglers/invalid yml.~~ **Won't implement — one-shot sweep.**
+~~6. **`llamacpp_env` hardening** (e.g. `GGML_VK_VISIBLE_DEVICES=0`) — left empty; single-GPU today, so cosmetic.~~ **Won't implement — cosmetic; single-GPU.**
+~~7. **ctx_len 128000 + fit=off risk assessment for the selected gemma-4-26B-A4B** — the same log showed a 36GB KV estimate for a 4B model at high ctx; nobody has sanity-checked the user's chosen load parameters against GTT + zram reality. First real chat may OOM or thrash.~~ **Won't implement — user-chosen params; stack since evolved.**
+~~8. **Provenance of the removed `~/.local/bin/jan`** — where the 4.9MB AppImage-extracted binary came from was never established (download? niri session-restore? manual copy at 17:57?). If there's a habit/source, it will regenerate the shadowing problem.~~ **Won't implement — one-shot.**
+~~9. **`"no such table: files"` DB warnings in Jan's log** (post-migration artifact, 3× in a row) — not investigated, not filed upstream.~~ **Won't implement — one-shot.**
+~~10. **Fresh engine download post-migration** — auto-update will write ~90MB into `/data/.../backends/` on the next llama.cpp release; the write path under bwrap was never exercised (bind exists, perms fine, but untested).~~ **Won't implement — one-shot.**
 
 ## d) TOTALLY FUCKED UP (honest list)
 
@@ -71,56 +71,56 @@ The task looked like "tune some settings." It was actually four stacked breakage
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Test-first for HM/activation changes**: even a pure-eval test (the repo's `tests/test-*.nix` pattern) asserting the activation script's text contains the migration guards, plus a VM test executing it against fixture dirs. The niri-session-config test is the template.
-2. **Kill-or-announce protocol**: when a task requires stopping a user's GUI app, state it BEFORE doing it and restore state after (relaunch + verify UP, not just "started").
-3. **Verification discipline**: wait-for-stability windows sized to the actual startup path (bwrap+Tauri ≈ 20-30s, not 14s); grep the tool output, not a snapshot taken mid-boot; prefer dig over nslookup; re-read files that the APP rewrites after the app has run (settings.json).
-4. **E2E acceptance over component checks**: "engine maps Vulkan" ≠ "configured well". A scripted small-model load (sentence-transformer-mini or a 4B quant) through the router API is the real acceptance test and is cheap (~2GB, seconds).
-5. **Runbook completeness**: add the log-TZ note (UTC stamps), the bwrap startup latency note, and the "Jan rewrites settings.json — re-verify after launch" note to `docs/services/jan.md`.
-6. **Session handoff hygiene**: the dnsblockd wedge + pending upstream fix belongs to another session's lane; a one-line pointer in the status report (this one) is the contract — done here, keep doing it.
-7. **Consider making `data_folder` fully declarative** (HM `home.file` for `~/.config/Jan/settings.json` with `backupFileExtension`) instead of hand-written once + guarded-by-symlink — removes the "did Jan rewrite it?" class entirely.
+~~1. **Test-first for HM/activation changes**: even a pure-eval test (the repo's `tests/test-*.nix` pattern) asserting the activation script's text contains the migration guards, plus a VM test executing it against fixture dirs. The niri-session-config test is the template.~~ **NOT-DO — dup of c1 (jan activation test).**
+~~2. **Kill-or-announce protocol**: when a task requires stopping a user's GUI app, state it BEFORE doing it and restore state after (relaunch + verify UP, not just "started").~~ **Won't implement — process lesson.**
+~~3. **Verification discipline**: wait-for-stability windows sized to the actual startup path (bwrap+Tauri ≈ 20-30s, not 14s); grep the tool output, not a snapshot taken mid-boot; prefer dig over nslookup; re-read files that the APP rewrites after the app has run (settings.json).~~ **Won't implement — process lesson.**
+~~4. **E2E acceptance over component checks**: "engine maps Vulkan" ≠ "configured well". A scripted small-model load (sentence-transformer-mini or a 4B quant) through the router API is the real acceptance test and is cheap (~2GB, seconds).~~ **NOT-DO — dup of b1 (E2E acceptance).**
+~~5. **Runbook completeness**: add the log-TZ note (UTC stamps), the bwrap startup latency note, and the "Jan rewrites settings.json — re-verify after launch" note to `docs/services/jan.md`.~~ **NOT-DO — dup of b7 (runbook notes).**
+~~6. **Session handoff hygiene**: the dnsblockd wedge + pending upstream fix belongs to another session's lane; a one-line pointer in the status report (this one) is the contract — done here, keep doing it.~~ **Won't implement — process lesson.**
+~~7. **Consider making `data_folder` fully declarative** (HM `home.file` for `~/.config/Jan/settings.json` with `backupFileExtension`) instead of hand-written once + guarded-by-symlink — removes the "did Jan rewrite it?" class entirely.~~ done — resolved via managed activation + symlinks, documented (docs/services/jan.md:63)
 
 ## f) NEXT (prioritized, session-scoped; impact vs effort ordered)
 
 **P0 — prove the thing works / stop active bleeding**
 
-1. E2E generation test: load a small model in Jan (or POST to the router's `/v1/chat/completions`), verify streamed tokens + Vulkan util. (30 min, closes §b1)
-2. Re-read both `settings.json` AFTER a Jan relaunch; if Jan rewrites `data_folder` to the default path, decide: accept (symlink covers it) or make it declarative (HM home.file + backupFileExtension). (15 min)
-3. Root-cause Jan's 18:45 death: `journalctl --user` around the deploy window; if nh-switch/activation kills user-launched apps, document + consider a `systemd-run --user` launch wrapper for Jan. (45 min)
-4. Push the dnsblockd cache-first `/health` fix (upstream checkout) + tag + SystemNix relock + deploy — kills the :9090 wedge class and the recurring smoke red. (other session's lane; ~1h)
-5. Re-download or delete the EIO-corrupt `gemma-4-31b-abliterated-Q8_0.gguf`; then `btrfs scrub` the affected range per the /data bounded-damage doctrine (USER decision on re-download source). (30 min)
+~~1. E2E generation test: load a small model in Jan (or POST to the router's `/v1/chat/completions`), verify streamed tokens + Vulkan util. (30 min, closes §b1)~~ **NOT-DO — dup of b1 (E2E generation test).**
+~~2. Re-read both `settings.json` AFTER a Jan relaunch; if Jan rewrites `data_folder` to the default path, decide: accept (symlink covers it) or make it declarative (HM home.file + backupFileExtension). (15 min)~~ done — settings persistence resolved and documented (docs/services/jan.md:63)
+~~3. Root-cause Jan's 18:45 death: `journalctl --user` around the deploy window; if nh-switch/activation kills user-launched apps, document + consider a `systemd-run --user` launch wrapper for Jan. (45 min)~~ **Won't implement — one-shot.**
+~~4. Push the dnsblockd cache-first `/health` fix (upstream checkout) + tag + SystemNix relock + deploy — kills the :9090 wedge class and the recurring smoke red. (other session's lane; ~1h)~~ done at `dnsblockd fix deployed (docs/todo/upstream.md dnsblockd v0.9.3 carries both fixes)`
+~~5. Re-download or delete the EIO-corrupt `gemma-4-31b-abliterated-Q8_0.gguf`; then `btrfs scrub` the affected range per the /data bounded-damage doctrine (USER decision on re-download source). (30 min)~~ **NOT-DO — dup of b6 (EIO gguf repair).**
 
 **P1 — close the correctness gaps this session created/left**
-6. Automated test for `jan-data-link` activation: VM or pure-eval — fixture real-dir migration, symlink idempotency, stray-bin removal, non-empty-target no-op. (2h)
-7. nix-ld E2E validation: in a FRESH login shell, run a foreign dynamic binary (e.g. b9967 `llama-server --version` outside FHS) and confirm NIX_LD/NIX_LD_LIBRARY_PATH resolve; then the manual /lib64 hack story is fully closed. (20 min)
-8. Verify Jan's actual wayland app_id (`niri msg --json windows` while Jan runs) vs the `"Jan"` entry in `niri-session-manager-apps.nix`; fix if mismatched. (10 min)
-9. Verify the nixpkgs jan .desktop entry is visible to DMS spotlight; if absent, add `xdg.desktopEntries.jan`. (10 min)
-10. Sweep the 13 model dirs for invalid/stray `model.yml` files (the `''`-named model class); fix or report. (20 min)
-11. Investigate the `"no such table: files"` DB warnings; if persistent across restarts, file upstream with the migration context. (30 min)
-12. Establish provenance of the removed `~/.local/bin/jan` (fish history `history delete --contains` check is NOT needed — no secret risk; just grep history for AppImage/jan download commands) so the shadowing habit doesn't regenerate. (15 min)
-13. Add the three runbook notes (log-TZ = UTC, bwrap startup ~30s, Jan rewrites settings.json) to `docs/services/jan.md`. (10 min)
-14. Review Jan `db/`+`logs/` on /data against snapshot pinning doctrine; options: accept (small), exclude via btrbk config, or split data folder (models /data, db NVMe). (1h, USER decision)
-15. Sanity-check the selected model's load params (ctx 128000, fit off, ngl 31) against measured GTT/zram; recommend fit=on or ctx floor if the KV math is ugly. (30 min)
+~~6. Automated test for `jan-data-link` activation: VM or pure-eval — fixture real-dir migration, symlink idempotency, stray-bin removal, non-empty-target no-op. (2h)~~ **NOT-DO — dup of c1.**
+~~7. nix-ld E2E validation: in a FRESH login shell, run a foreign dynamic binary (e.g. b9967 `llama-server --version` outside FHS) and confirm NIX_LD/NIX_LD_LIBRARY_PATH resolve; then the manual /lib64 hack story is fully closed. (20 min)~~ **NOT-DO — dup of b3.**
+~~8. Verify Jan's actual wayland app_id (`niri msg --json windows` while Jan runs) vs the `"Jan"` entry in `niri-session-manager-apps.nix`; fix if mismatched. (10 min)~~ **NOT-DO — dup of c2.**
+~~9. Verify the nixpkgs jan .desktop entry is visible to DMS spotlight; if absent, add `xdg.desktopEntries.jan`. (10 min)~~ **NOT-DO — dup of c3.**
+~~10. Sweep the 13 model dirs for invalid/stray `model.yml` files (the `''`-named model class); fix or report. (20 min)~~ **NOT-DO — dup of c5.**
+~~11. Investigate the `"no such table: files"` DB warnings; if persistent across restarts, file upstream with the migration context. (30 min)~~ **NOT-DO — dup of c9.**
+~~12. Establish provenance of the removed `~/.local/bin/jan` (fish history `history delete --contains` check is NOT needed — no secret risk; just grep history for AppImage/jan download commands) so the shadowing habit doesn't regenerate. (15 min)~~ **Won't implement — one-shot.**
+~~13. Add the three runbook notes (log-TZ = UTC, bwrap startup ~30s, Jan rewrites settings.json) to `docs/services/jan.md`. (10 min)~~ **NOT-DO — dup of b7.**
+~~14. Review Jan `db/`+`logs/` on /data against snapshot pinning doctrine; options: accept (small), exclude via btrbk config, or split data folder (models /data, db NVMe). (1h, USER decision)~~ **NOT-DO — dup of c4.**
+~~15. Sanity-check the selected model's load params (ctx 128000, fit off, ngl 31) against measured GTT/zram; recommend fit=on or ctx floor if the KV math is ugly. (30 min)~~ **NOT-DO — dup of c7.**
 
 **P2 — hygiene / resilience**
-16. Exercise a fresh engine auto-update download into /data (or simulate) to prove the bwrap write path post-migration. (30 min)
-17. Consider `llamacpp_env = GGML_VK_VISIBLE_DEVICES=0` pin for determinism once you ever add a second GPU (note-only today). (5 min)
-18. Decide engine auto-update policy: leave ON (current, ~90MB per llama.cpp release onto /data) or pin b9967 until manually bumped. (USER decision, 5 min)
-19. Sweep for remnants of the AppImage install (squashfs-root dirs, ~/Downloads, ~/.cache/appimage) and clean. (15 min)
-20. Add a TODO/gotcha line that `jan` on PATH must resolve to the HM profile wrapper (guard against future PATH shadows like the removed stray). Already in activation; consider a pre-commit-free check script. (15 min)
-21. Normalize status-report file naming + this session's report cross-link in TODO_LIST (done via the EIO row; add pointer to this report). (5 min)
-22. Consider declarative `settings.json` (HM home.file) — same as item 2's outcome, permanent fix. (30 min)
-23. Run `scripts/audit-shell-nullglob.sh`-style mental check on the new activation script (command-position vars: `$DRY_RUN_CMD` is fine; `ls -A` quoted) — document the review in the runbook. (10 min)
-24. Check whether Jan's updater (tauri_plugin_updater) tries to self-replace the AppImage-style binary and what that does under the nixpkgs wrapper (it showed a 0.8.4 release manifest in the log — if it self-updates INSIDE the FHS, where does it write?). Verify + document or disable in-app updates in favor of nixpkgs bumps. (45 min)
-25. Document the ephemeral router port doctrine in the monitoring gotchas (nothing may probe it) — already in runbook; mirror one line in AGENTS gatus section. (5 min)
+~~16. Exercise a fresh engine auto-update download into /data (or simulate) to prove the bwrap write path post-migration. (30 min)~~ **NOT-DO — dup of c10.**
+~~17. Consider `llamacpp_env = GGML_VK_VISIBLE_DEVICES=0` pin for determinism once you ever add a second GPU (note-only today). (5 min)~~ **NOT-DO — dup of c6.**
+~~18. Decide engine auto-update policy: leave ON (current, ~90MB per llama.cpp release onto /data) or pin b9967 until manually bumped. (USER decision, 5 min)~~ **Won't implement — engine auto-update policy; Jan stable on nixpkgs wrapper.**
+~~19. Sweep for remnants of the AppImage install (squashfs-root dirs, ~/Downloads, ~/.cache/appimage) and clean. (15 min)~~ **Won't implement — one-shot sweep.**
+~~20. Add a TODO/gotcha line that `jan` on PATH must resolve to the HM profile wrapper (guard against future PATH shadows like the removed stray). Already in activation; consider a pre-commit-free check script. (15 min)~~ done at `PATH guard note landed (platforms/common/packages/base.nix:139)`
+~~21. Normalize status-report file naming + this session's report cross-link in TODO_LIST (done via the EIO row; add pointer to this report). (5 min)~~ **Won't implement — meta.**
+~~22. Consider declarative `settings.json` (HM home.file) — same as item 2's outcome, permanent fix. (30 min)~~ done — activation-managed approach chosen + documented (docs/services/jan.md:63)
+~~23. Run `scripts/audit-shell-nullglob.sh`-style mental check on the new activation script (command-position vars: `$DRY_RUN_CMD` is fine; `ls -A` quoted) — document the review in the runbook. (10 min)~~ **Won't implement — one-shot review.**
+~~24. Check whether Jan's updater (tauri_plugin_updater) tries to self-replace the AppImage-style binary and what that does under the nixpkgs wrapper (it showed a 0.8.4 release manifest in the log — if it self-updates INSIDE the FHS, where does it write?). Verify + document or disable in-app updates in favor of nixpkgs bumps. (45 min)~~ **Won't implement — updater question stale; updates via nixpkgs.**
+~~25. Document the ephemeral router port doctrine in the monitoring gotchas (nothing may probe it) — already in runbook; mirror one line in AGENTS gatus section. (5 min)~~ **Won't implement — doc nicety.**
 
 **P3 — nice-to-have surfaced by this session**
-26. Give `docs/services/jan.md` a "restore from scratch" section (fresh-host migration path the activation now supports).
-27. Explore Jan MCP config (`mcp_config.json` in the data folder) — declarative wiring opportunity with crush's MCP pattern. (research-only)
-28. Check Jan's RAG/vector-db extension vs the existing llama-rag stack (:8848/:8849) — dedupe embedding engines if Jan ships its own. (research-only)
-29. Ask upstream/janhq whether the data-folder path guard could accept symlinks whose target is user-configured (the root cause of this whole session) — verify-before-filing first.
-30. Add `sentence-transformer-mini` (Jan's pre-installed fallback embedding model) to the model-hygiene sweep scope so it doesn't rot in the models dir unnoticed. (5 min)
-31. Consider a tiny `systemd-run --user` wrapper `jan` launcher (transient scope, survives parent death, restartable) if item 3 shows parent-death kills. (30 min)
-32. Track nixpkgs jan version bumps (0.8.4 today) — add to whatever review cadence watches desktop app packages. (5 min)
+~~26. Give `docs/services/jan.md` a "restore from scratch" section (fresh-host migration path the activation now supports).~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~27. Explore Jan MCP config (`mcp_config.json` in the data folder) — declarative wiring opportunity with crush's MCP pattern. (research-only)~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~28. Check Jan's RAG/vector-db extension vs the existing llama-rag stack (:8848/:8849) — dedupe embedding engines if Jan ships its own. (research-only)~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~29. Ask upstream/janhq whether the data-folder path guard could accept symlinks whose target is user-configured (the root cause of this whole session) — verify-before-filing first.~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~30. Add `sentence-transformer-mini` (Jan's pre-installed fallback embedding model) to the model-hygiene sweep scope so it doesn't rot in the models dir unnoticed. (5 min)~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~31. Consider a tiny `systemd-run --user` wrapper `jan` launcher (transient scope, survives parent death, restartable) if item 3 shows parent-death kills. (30 min)~~ **Won't implement — nice-to-have/research-only asks; stale.**
+~~32. Track nixpkgs jan version bumps (0.8.4 today) — add to whatever review cadence watches desktop app packages. (5 min)~~ **Won't implement — nice-to-have/research-only asks; stale.**
 
 (Items 33-50 intentionally left unfilled: nothing else session-scoped was observed; padding the list with non-observed work would be exactly the scope-creep trap. The list above is 32 concrete, evidence-backed items.)
 

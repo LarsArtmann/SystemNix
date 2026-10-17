@@ -35,43 +35,43 @@ stale vendorHash), 2 integration (dirty-tree lock pin, stale rev pin).
 
 ## b) PARTIALLY DONE
 
-1. **Live deployment (ROUND8 C4/C5)** — everything up to the switch is done;
+~~1. **Live deployment (ROUND8 C4/C5)** — everything up to the switch is done;~~ done at `tq pool live: units + dashboard + CLI documented (docs/services/tq.md:143)`
    `nix run .#deploy` is sudo-gated in this session. Not run.
-2. **Round-9 cutover** — runbook written (`docs/services/tq.md`) but the
+~~2. **Round-9 cutover** — runbook written (`docs/services/tq.md`) but the~~ done — cutover done: tq task queue has driven agent sessions since late Sept (docs/status/tasks/*)
    manual pool (`/tmp/tq` PIDs 55731 agent-pool + 682008 serve :8090) is
    STILL RUNNING (belongs to a parallel session; deliberately not killed).
    Until cutover, a deploy creates a SECOND pool (different DB) — double
    LLM spend on the go-taskqueue repo.
-3. **DB carry-over decision** — cutover steps support both fresh-journal and
+~~3. **DB carry-over decision** — cutover steps support both fresh-journal and~~ done — moot post-cutover; runbook path preserved (docs/services/tq.md Cutover)
    copy of the dogfood `tasks.db`; not executed, so nothing decided live.
-4. **PapDashboard bridge live-proof** — env + alert-url wired and the ingest
+~~4. **PapDashboard bridge live-proof** — env + alert-url wired and the ingest~~ **Won't implement — no tq dead-letter has flowed; watch item.**
    API is proven (gatus uses it), but no tq dead-letter has flowed yet.
 
 ## c) NOT STARTED (deliberate skips + gaps)
 
-1. **VM test (ROUND8 E3)** — skipped (plan tier "rest"); upstream bank-sync
+~~1. **VM test (ROUND8 E3)** — skipped (plan tier "rest"); upstream bank-sync~~ **Won't implement — plan-tier skip; house eval test landed instead (tests/default.nix:75).**
    ships one, go-taskqueue does not. Neither a SystemNix `tests/test-tq*.nix`
    nor an upstream `nixos-vm-test` exists.
-2. **`--discovery-addr` wiring** — the pool does a local scan; the
+~~2. **`--discovery-addr` wiring** — the pool does a local scan; the~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
    project-discovery-daemon (on this box, `/run/project-discovery/daemon.sock`)
    is not consumed. Skip rationale never documented in the module.
-3. **`--status-every N`** — upstream-owner-blocked (N not picked).
-4. **`tq api` write API** — not exposed/wired anywhere.
-5. **CQA bridge (`--cqa-url`)** — not wired (CQA not deployed here AFAIK).
-6. **`--budget-cmd`** — not wired.
-7. **Local-NPU model option (FastFlowLM)** — never wired or surfaced; the
+~~3. **`--status-every N`** — upstream-owner-blocked (N not picked).~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
+~~4. **`tq api` write API** — not exposed/wired anywhere.~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
+~~5. **CQA bridge (`--cqa-url`)** — not wired (CQA not deployed here AFAIK).~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
+~~6. **`--budget-cmd`** — not wired.~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
+~~7. **Local-NPU model option (FastFlowLM)** — never wired or surfaced; the~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
    pool pins the PAID zai/glm-5.3-flash per the upstream example. A free
    local option exists and was not evaluated.
-8. **DLQ/sidecar log-dir monitoring** — `~/.local/state/tq/logs` has
+~~8. **DLQ/sidecar log-dir monitoring** — `~/.local/state/tq/logs` has~~ **Won't implement — DLQ log-dir monitoring never built.**
    age-based retention (168h) but no size metric/alert.
-9. **AGENTS.md gotcha entry for the git+file dirtyRev lock trap** — the
+~~9. **AGENTS.md gotcha entry for the git+file dirtyRev lock trap** — the~~ done at `dirtyRev git+file gotcha landed (docs/agents/nix-flakes.md:114)`
    lesson lives only in the flake.nix input comment.
-10. **docs/services index check** — `docs/services/tq.md` may not be listed
+~~10. **docs/services index check** — `docs/services/tq.md` may not be listed~~ **Won't implement — services index never verified; stale.**
     in any index (unverified).
-11. **`withPapIngest` coverage of the 2 new Gatus endpoints** — assumed
+~~11. **`withPapIngest` coverage of the 2 new Gatus endpoints** — assumed~~ done at `verified eval-rendered: both tq endpoints carry pap ingest alertTypes (01:53 session; docs/services/tq.md:143)`
     (they sit in the same wrapped endpoints expression) but never verified
     that they actually receive the pap ingest alert block.
-12. **Pre-deploy check additions** — assumed check #12 (ExecStart existence)
+~~12. **Pre-deploy check additions** — assumed check #12 (ExecStart existence)~~ done at `verified: pre-deploy ExecStart enumeration lists all tq units (01:53 session)`
     auto-covers the 3 new units; not verified against the script.
 
 ## d) TOTALLY FUCKED UP (caught in-session; honest list)
@@ -104,29 +104,29 @@ stale vendorHash), 2 integration (dirty-tree lock pin, stale rev pin).
 
 ## e) WHAT WE SHOULD IMPROVE (design risks + process)
 
-1. **`tq-bootstrap` can block/annoy deploys**: it runs at every deploy as a
+~~1. **`tq-bootstrap` can block/annoy deploys**: it runs at every deploy as a~~ done at `bootstrap posture decided+implemented`, ` pinned by test (tests/test-tq-agent-pool.nix)`
    wanted unit and does git commits in 3 repos; a repo in a weird state
    (rebase, detached, conflicts) makes the oneshot fail → activation
    friction. Consider: failure tolerance for the oneshot (best-effort +
    alert, like the deploy.sh `|| true` provisioner pattern) or moving
    seeding fully into the runbook.
-2. **deploy.sh lacks a pre-check for the manual round-9 pool**: a deploy
+~~2. **deploy.sh lacks a pre-check for the manual round-9 pool**: a deploy~~ done at `double-pool guard live (scripts/deploy.sh:478)`
    without reading the runbook silently DOUBLE-RUNS pools. A WARN on live
    `/tmp/tq` processes would close it.
-3. **Budget/cost extrapolation**: calibrated knobs (budget 30/day,
+~~3. **Budget/cost extrapolation**: calibrated knobs (budget 30/day,~~ **Won't implement — live-tuning watches; months of operation since.**
    max-per-tick 3) were proven for ONE repo (go-taskqueue); I extrapolated
    to CV+SystemNix without live evidence. First live days need watching.
-4. **MemoryMax 8G for 2 crush agents is a guess** — crush (bun) + builds can
+~~4. **MemoryMax 8G for 2 crush agents is a guess** — crush (bun) + builds can~~ **Won't implement — live-tuning watches; months of operation since.**
    exceed it; OOM-killed agents retry and burn budget. Needs live tuning.
-5. **Journal on the one-USB-link DAS**: every fact append rides the
+~~5. **Journal on the one-USB-link DAS**: every fact append rides the~~ **Won't implement — live-tuning watches; months of operation since.**
    IO-storm-susceptible link (2026-09-06 class). Low volume, but worth an
    eye during pool sends/scrubs.
-6. **Single-machine source of truth**: the deployed binary's source (13+
+~~6. **Single-machine source of truth**: the deployed binary's source (13+~~ **Won't implement — push never done; pin still carries CI-dark note.**
    commits ahead of origin, owner-blocked push) exists ONLY on evo-x2. Disk
    loss = deployed-binary provenance loss.
-7. **module-eval check asserts fragments, not full ExecStarts** (see d2) —
+~~7. **module-eval check asserts fragments, not full ExecStarts** (see d2) —~~ done at `house test pins exact ExecStart binary (tests/test-tq-agent-pool.nix; tests/default.nix:75)`
    upstream check should pin the exact binary path.
-8. **House eval test absent** — upstream covers the module; nothing pins the
+~~8. **House eval test absent** — upstream covers the module; nothing pins the~~ **Won't implement — operational watches; stale.**
    SystemNix house layer (a `tests/test-tq-agent-pool.nix` minimal eval
    would, cheaply).
 
@@ -134,66 +134,66 @@ stale vendorHash), 2 integration (dirty-tree lock pin, stale rev pin).
 
 **P0 — go-live (user, sudo):**
 
-1. `nix run .#deploy`
-2. Cutover: stop `/tmp/tq` agent-pool (SIGINT, let it drain) + serve; copy dogfood `tasks.db` → `/mnt/pool/services/tq/tq.db` (optional) — exact block in `docs/services/tq.md`
-3. Verify: `systemctl status tq-{agent-pool,serve,bootstrap,storage-dir}`, `tq stats`, dashboard `https://tq.home.lan`, `journalctl -u tq-agent-pool -f` first harvest tick
-4. Confirm Gatus "tq Dashboard" + "tq Agent Pool Service" go green; Discord alert wiring
-5. Watch first agent completions end-to-end (agent → verify → review task) and daily-budget burn for 2-3 days
-6. Verify `.crushrc`/`.tq-verify` landed in CV/SystemNix/go-taskqueue (tq-bootstrap journal)
+~~1. `nix run .#deploy`~~ done at `deployed (docs/services/tq.md:143)`
+~~2. Cutover: stop `/tmp/tq` agent-pool (SIGINT, let it drain) + serve; copy dogfood `tasks.db` → `/mnt/pool/services/tq/tq.db` (optional) — exact block in `docs/services/tq.md`~~ **NOT-DO — dup of b2 (cutover).**
+~~3. Verify: `systemctl status tq-{agent-pool,serve,bootstrap,storage-dir}`, `tq stats`, dashboard `https://tq.home.lan`, `journalctl -u tq-agent-pool -f` first harvest tick~~ done — units + Gatus checks live (docs/services/tq.md:143)
+~~4. Confirm Gatus "tq Dashboard" + "tq Agent Pool Service" go green; Discord alert wiring~~ done — units + Gatus checks live (docs/services/tq.md:143)
+~~5. Watch first agent completions end-to-end (agent → verify → review task) and daily-budget burn for 2-3 days~~ **Won't implement — one-shot watches.**
+~~6. Verify `.crushrc`/`.tq-verify` landed in CV/SystemNix/go-taskqueue (tq-bootstrap journal)~~ **Won't implement — one-shot watches.**
 
 **P1 — close the gaps found above:**
-7. deploy.sh WARN on running `/tmp/tq` processes (double-pool guard)
-8. Decide + implement tq-bootstrap failure tolerance (or document accepted friction)
-9. Verify `withPapIngest` covers the 2 new endpoints (inspect generated gatus.yaml)
-10. Verify pre-deploy check #12 sees the 3 new units
-11. Upstream: module-eval check pins the exact ExecStart binary path
-12. SystemNix `tests/test-tq-agent-pool.nix` minimal eval (house layer negative+positive)
-13. Upstream or SystemNix VM test (ROUND8 E3) — boot the module, stub agent, `--once` drain
-14. AGENTS.md gotcha: "git+file inputs on churning repos MUST be rev-pinned (dirtyRev lock breaks every eval)" — generalize beyond this input
-15. docs/services index/README: add tq.md if an index exists
-16. Post-deploy smoke: add `tq doctor` (all-green) once it works against the pool DB
-17. Smoke robustness: retry/wait around `systemctl is-active tq-agent-pool` (deploy-restart race)
+~~7. deploy.sh WARN on running `/tmp/tq` processes (double-pool guard)~~ **NOT-DO — dup of e2 (deploy.sh WARN).**
+~~8. Decide + implement tq-bootstrap failure tolerance (or document accepted friction)~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~9. Verify `withPapIngest` covers the 2 new endpoints (inspect generated gatus.yaml)~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~10. Verify pre-deploy check #12 sees the 3 new units~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~11. Upstream: module-eval check pins the exact ExecStart binary path~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~12. SystemNix `tests/test-tq-agent-pool.nix` minimal eval (house layer negative+positive)~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~13. Upstream or SystemNix VM test (ROUND8 E3) — boot the module, stub agent, `--once` drain~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~14. AGENTS.md gotcha: "git+file inputs on churning repos MUST be rev-pinned (dirtyRev lock breaks every eval)" — generalize beyond this input~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~15. docs/services index/README: add tq.md if an index exists~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~16. Post-deploy smoke: add `tq doctor` (all-green) once it works against the pool DB~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
+~~17. Smoke robustness: retry/wait around `systemctl is-active tq-agent-pool` (deploy-restart race)~~ **Won't implement — cutover-era debts; executed or stale (bootstrap tolerance pinned by tests/test-tq-agent-pool.nix).**
 
 **P2 — upstream coordination:**
-18. Push go-taskqueue master to origin (owner decision) → flip SystemNix input to `github:…?ref=master` → CI coverage returns for this input
+~~18. Push go-taskqueue master to origin (owner decision) → flip SystemNix input to `github:…?ref=master` → CI coverage returns for this input~~ **Won't implement — push/v0.2.0/upstream smoke never done.**
 19. Cut v0.2.0 upstream (CHANGELOG [Unreleased] is fat); tq version stamp alignment
 20. Upstream TODO line 101: install smoke in `scripts/smoke/` (repo-level)
-21. Adopt `--discovery-addr` → project-discovery-daemon socket (kills the per-tick local scan); document socket permission needs for the lars-run pool
-22. `--status-every N` once owner picks N (status-loop reports → TODO_LIST appends)
-23. Consider `--prune-stale` upstream (zombie pending tasks on pool-down harvest)
+~~21. Adopt `--discovery-addr` → project-discovery-daemon socket (kills the per-tick local scan); document socket permission needs for the lars-run pool~~ **Won't implement — upstream knobs never wired.**
+~~22. `--status-every N` once owner picks N (status-loop reports → TODO_LIST appends)~~ **Won't implement — upstream knobs never wired.**
+~~23. Consider `--prune-stale` upstream (zombie pending tasks on pool-down harvest)~~ **Won't implement — upstream knobs never wired.**
 
 **P3 — operational polish:**
-24. Evaluate FastFlowLM (local, free) vs zai/glm-5.3-flash for agent quality/cost; possibly per-repo split (go-taskqueue=flash, CV=flm dry-runs)
-25. Tune MemoryMax/CPUQuota after first live week (agent OOM retry signature in journal)
-26. DLQ depth + sidecar log-dir size metric (textfile collector or tq stats cron)
-27. Budget spend visibility: `tq stats` budget card → Homepage/Gatus (upstream `--json` first: TODO line 89)
-28. `repo-interval` for CV/SystemNix once their volume is known
-29. Consider auth-token on serve (upstream option) if LAN trust model changes
-30. btrbk-pool restore drill for /mnt/pool/services/tq (journal restore = copy file back + watermarks intact)
-31. Wire `tq harvest` result into Overview/PMA dashboards if useful
-32. Register the journal in backup-coordination IF btrbk-pool freshness proves insufficient
-33. Document the agent-commit ↔ PMA auto-commit interaction (two committers on the same trees) if churn conflicts appear
-34. CQA bridge if/when CQA deploys here
-35. `tq api` exposure decision (write API behind Caddy? probably never — CLI is enough)
+~~24. Evaluate FastFlowLM (local, free) vs zai/glm-5.3-flash for agent quality/cost; possibly per-repo split (go-taskqueue=flash, CV=flm dry-runs)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~25. Tune MemoryMax/CPUQuota after first live week (agent OOM retry signature in journal)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~26. DLQ depth + sidecar log-dir size metric (textfile collector or tq stats cron)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~27. Budget spend visibility: `tq stats` budget card → Homepage/Gatus (upstream `--json` first: TODO line 89)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~28. `repo-interval` for CV/SystemNix once their volume is known~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~29. Consider auth-token on serve (upstream option) if LAN trust model changes~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~30. btrbk-pool restore drill for /mnt/pool/services/tq (journal restore = copy file back + watermarks intact)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~31. Wire `tq harvest` result into Overview/PMA dashboards if useful~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~32. Register the journal in backup-coordination IF btrbk-pool freshness proves insufficient~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~33. Document the agent-commit ↔ PMA auto-commit interaction (two committers on the same trees) if churn conflicts appear~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~34. CQA bridge if/when CQA deploys here~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
+~~35. `tq api` exposure decision (write API behind Caddy? probably never — CLI is enough)~~ **Won't implement — operational polish; stale or absorbed (repos already CV/SystemNix/go-taskqueue, docs/services/tq.md:143).**
 
 **P4 — SystemNix hygiene surfaced by this session:**
-36. The one pre-existing nullglob warning (flake.nix:815 `for m in $metrics`) — not this session's, but seen; ticket it
-37. Quick-go now includes tq: upstream go.mod bumps will redden the pre-deploy batch — expected, documented here
-38. CI remains dark for git+file inputs — the "CI cannot fetch" window is recorded in the flake comment; revisit on flip (item 18)
-39. `docs/status/README.md` index sync (upstream pattern) — check SystemNix has one for this report
-40. Consider a generic "rev-pinned local input" helper/warning eval-time (prevent the d3 class repo-wide)
+~~36. The one pre-existing nullglob warning (flake.nix:815 `for m in $metrics`) — not this session's, but seen; ticket it~~ **Won't implement — hygiene notes; stale.**
+~~37. Quick-go now includes tq: upstream go.mod bumps will redden the pre-deploy batch — expected, documented here~~ **Won't implement — hygiene notes; stale.**
+~~38. CI remains dark for git+file inputs — the "CI cannot fetch" window is recorded in the flake comment; revisit on flip (item 18)~~ **Won't implement — hygiene notes; stale.**
+~~39. `docs/status/README.md` index sync (upstream pattern) — check SystemNix has one for this report~~ **Won't implement — hygiene notes; stale.**
+~~40. Consider a generic "rev-pinned local input" helper/warning eval-time (prevent the d3 class repo-wide)~~ **Won't implement — hygiene notes; stale.**
 
 **P5 — monitor after live:**
-41. First `tq cancel --force` / DLQ rescue drill (runbook §misbehavior) once real dead letters exist
-42. Watermark behavior across pool restarts (`tq watermarks show` — upstream TODO line 84 audit applies to our deployment too)
-43. SSE dashboard through Caddy under load (fragment streaming, reconnect)
-44. Pool behavior during DAS outage (RequiresMountsFor fails loudly — verify the alert path)
-45. Interaction with memory-emergency-guard (pool at 8G Max is a candidate victim under storms — acceptable? document)
-46. Agent git identity/authorship in repo history (commits by agents vs daemon — attribution hygiene)
-47. Review-task loop health (`--review` mints a second agent per completion = 2x budget events; watch burn)
-48. go-taskqueue repo self-dogfood while SystemNix harvests it (both repos now feed the same pool — cross-contamination of sessions?)
-49. First `nix flake check --no-build` verify gate inside an agent task (SystemNix verify cmd) — measure wall time vs task-timeout 45m
-50. Retro: fold the "build the consuming flake BEFORE declaring a pin good" lesson into AGENTS.md deploy doctrine
+~~41. First `tq cancel --force` / DLQ rescue drill (runbook §misbehavior) once real dead letters exist~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~42. Watermark behavior across pool restarts (`tq watermarks show` — upstream TODO line 84 audit applies to our deployment too)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~43. SSE dashboard through Caddy under load (fragment streaming, reconnect)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~44. Pool behavior during DAS outage (RequiresMountsFor fails loudly — verify the alert path)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~45. Interaction with memory-emergency-guard (pool at 8G Max is a candidate victim under storms — acceptable? document)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~46. Agent git identity/authorship in repo history (commits by agents vs daemon — attribution hygiene)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~47. Review-task loop health (`--review` mints a second agent per completion = 2x budget events; watch burn)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~48. go-taskqueue repo self-dogfood while SystemNix harvests it (both repos now feed the same pool — cross-contamination of sessions?)~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~49. First `nix flake check --no-build` verify gate inside an agent task (SystemNix verify cmd) — measure wall time vs task-timeout 45m~~ **Won't implement — post-live monitors; absorbed by months of operation.**
+~~50. Retro: fold the "build the consuming flake BEFORE declaring a pin good" lesson into AGENTS.md deploy doctrine~~ **Won't implement — post-live monitors; absorbed by months of operation.**
 
 ## g) Questions I CANNOT answer myself
 

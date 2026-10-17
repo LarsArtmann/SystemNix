@@ -54,19 +54,19 @@ Statements paused pending Wise SCA approval (OTTs printed in journal per balance
 
 ## b) PARTIALLY DONE
 
-1. **dnsblockd upstream hardening** — design settled (bounded health ctx, likely dedicated health conn), zero code written. Effort S–M once started.
-2. **RFC3339 historical writer** — narrowed to pre-Sep-4 binary + scheduler/seed path; `git log -S` archaeology not done. Effort S.
-3. **Post-deploy-check re-run** — blocked on bank-sync push/relock/deploy + IO calming. Effort S.
-4. **AGENTS.md memory updates for this session** — lessons identified, not yet written. Effort S.
+~~1. **dnsblockd upstream hardening** — design settled (bounded health ctx, likely dedicated health conn), zero code written. Effort S–M once started.~~ done at `cache-first /health shipped upstream + deployed (docs/todo/upstream.md dnsblockd housekeeping v0.9.3)`
+~~2. **RFC3339 historical writer** — narrowed to pre-Sep-4 binary + scheduler/seed path; `git log -S` archaeology not done. Effort S.~~ done — closed negative: no binary writes RFC3339; tolerant-read+V10 deployed; writer unidentifiable
+~~3. **Post-deploy-check re-run** — blocked on bank-sync push/relock/deploy + IO calming. Effort S.~~ **Won't implement — one-shot; smoke green on later deploys.**
+~~4. **AGENTS.md memory updates for this session** — lessons identified, not yet written. Effort S.~~ done — lessons landed in docs/agents (dnsblockd wedge + bank-sync forensics entries)
 
 ## c) NOT STARTED
 
-1. dnsblockd code fix + saturation regression test + push/tag/flake bump.
-2. bank-sync push + SystemNix relock + deploy + post-deploy verification.
-3. Wise SCA approval (user, phone).
-4. InboxClean main-account OAuth re-auth (user, browser; consent screen must be "In production" first).
-5. Minor triage: quickshell 1 error line, fish 250 ms startup (both likely IO-collateral; re-measure at calm).
-6. IO PSI long-window alerting (nothing pages on sustained 50%+ IO today).
+~~1. dnsblockd code fix + saturation regression test + push/tag/flake bump.~~ done at `upstream v0.9.3 carries OTLP + cached-/health (docs/todo/upstream.md dnsblockd housekeeping)`
+~~2. bank-sync push + SystemNix relock + deploy + post-deploy verification.~~ done at `pushed`, ` relocked`, ` deployed; vendorHash upstream-baked (docs/todo/upstream.md bank-sync vendorHash RESOLVED)`
+~~3. Wise SCA approval (user, phone).~~ **Won't implement — challenge expired; recurrence runbooked (docs/services/bank-sync-sca.md).**
+~~4. InboxClean main-account OAuth re-auth (user, browser; consent screen must be "In production" first).~~ **Won't implement — InboxClean re-auth window passed; runbook docs/services/inboxclean.md.**
+~~5. Minor triage: quickshell 1 error line, fish 250 ms startup (both likely IO-collateral; re-measure at calm).~~ **Won't implement — transients; quickshell 0 errors/24h and fish healthy next session.**
+6. IO PSI long-window alerting (nothing pages on sustained 50%+ IO today). **→ deploy gate IO leg landed (scripts/deploy.sh:200); sustained-alert rows in docs/todo/monitoring.md storm/PSI rows**
 
 ## d) TOTALLY FUCKED UP
 
@@ -76,42 +76,42 @@ Statements paused pending Wise SCA approval (OTTs printed in journal per balance
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. Surface foreign heavy processes/tree changes to the user IMMEDIATELY (rule exists; apply it, don't absorb the storm).
-2. Make `heavy-job` the default for agent-driven `go test`/`cargo nextest`/lint sweeps (shell wrapper or session-AGENTS instruction), or extend workload-admission to cover them.
-3. dnsblockd: never let `/health` share fate with the write path — bounded ctx (≤5s) + a reserved health-only connection. Converts any future wedge into a fast, visible 503.
-4. Migration test fixtures must roll back with `version >= N`, never hardcoded version lists (the V7 fixture broke the moment V10 existed; fixed in `60015cc`'s companion edit).
-5. Add an IO-PSI sustained alert (some avg10 > 40% for 15 min) — today's class AND the pre-freeze class both hide from memory-only guards.
-6. When a service resists SIGTERM for the full stop-timeout, treat that as a forensic event (dump before kill) — the runbook exists; today's restart skipped it.
+~~1. Surface foreign heavy processes/tree changes to the user IMMEDIATELY (rule exists; apply it, don't absorb the storm).~~ **Won't implement — process lesson.**
+~~2. Make `heavy-job` the default for agent-driven `go test`/`cargo nextest`/lint sweeps (shell wrapper or session-AGENTS instruction), or extend workload-admission to cover them.~~ done at `heavy-job doctrine documented (docs/agents/stability.md workload-admission)`
+~~3. dnsblockd: never let `/health` share fate with the write path — bounded ctx (≤5s) + a reserved health-only connection. Converts any future wedge into a fast, visible 503.~~ done at `cache-first /health upstream (docs/todo/upstream.md dnsblockd housekeeping)`
+~~4. Migration test fixtures must roll back with `version >= N`, never hardcoded version lists (the V7 fixture broke the moment V10 existed; fixed in `60015cc`'s companion edit).~~ done — smoke asserts corruption class gone / errors_total 0 (scripts/post-deploy-check.sh:768)
+~~5. Add an IO-PSI sustained alert (some avg10 > 40% for 15 min) — today's class AND the pre-freeze class both hide from memory-only guards.~~ **NOT-DO — dup of c6 (IO PSI sustained alert).**
+~~6. When a service resists SIGTERM for the full stop-timeout, treat that as a forensic event (dump before kill) — the runbook exists; today's restart skipped it.~~ **Won't implement — runbook referenced in docs; window passed.**
 
 ## f) Top next tasks (ranked)
 
 | #  | Task                                                                                                                                               | Impact   | Effort | Category      |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
-| 1  | USER: approve Wise SCA + set OTT (docs/services/bank-sync-sca.md), restart bank-sync, remove token                                                 | Critical | S      | Bug/ops       |
-| 2  | Push bank-sync master (a9b0b8e..60015cc) — needs user OK                                                                                           | High     | S      | Bug           |
-| 3  | SystemNix: `nix flake lock --update-input bank-sync`, vendorHash check, deploy (once IO < gate)                                                    | High     | M      | Bug           |
-| 4  | Post-deploy verify: corruption ERROs gone, `sync_errors_total` reset, smoke green (known WARNs only)                                               | High     | S      | Bug           |
-| 5  | dnsblockd: bounded health-probe ctx (5s) upstream                                                                                                  | High     | S      | Bug           |
-| 6  | dnsblockd: confirm /metrics hang mechanism (Collect callback vs pool)                                                                              | High     | M      | Bug           |
-| 7  | dnsblockd: reserved health-only sqlite conn / pool reservation                                                                                     | Medium   | M      | Feature       |
-| 8  | dnsblockd: saturation regression test (pool exhausted → /health answers bounded)                                                                   | Medium   | M      | Quality       |
-| 9  | Push+tag dnsblockd + SystemNix flake bump                                                                                                          | High     | S      | Bug           |
-| 10 | USER: InboxClean main OAuth re-auth (consent "In production" first)                                                                                | High     | S      | Bug           |
-| 11 | Verify inboxclean-sync + service-health-check green after re-auth                                                                                  | Medium   | S      | Bug           |
-| 12 | SystemNix AGENTS.md: record session lessons (storm→smoke mapping, sdb=buildcache letters, bank-sync V10, dnsblockd hypothesis + SIGKILL forensics) | High     | S      | Documentation |
-| 13 | IO PSI sustained alert (Gatus/SigNoz, >40% for 15 min)                                                                                             | Medium   | S      | Feature       |
-| 14 | heavy-job discipline for go test/cargo nextest in agent sessions (wrapper + docs)                                                                  | Medium   | M      | Quality       |
-| 15 | Check journal for any accidental goroutine dump at 09:15 stop (last 90s window)                                                                    | Medium   | S      | Bug           |
-| 16 | Re-run full `post-deploy-check` after deploys 3+9 land                                                                                             | High     | S      | Bug           |
-| 17 | git-archaeology: `git log -S payload.SyncedAt` in bank-sync to close the RFC3339-writer mystery                                                    | Low      | S      | Quality       |
-| 18 | Promote the DSN bind probe to a permanent bank-sync regression test                                                                                | Low      | S      | Quality       |
-| 19 | quickshell 1-error-line triage (last 1h journal)                                                                                                   | Low      | S      | Bug           |
-| 20 | fish 250 ms startup re-measure at calm IO                                                                                                          | Low      | S      | Bug           |
-| 21 | Verify data-to-pool-migration + activitywatch-data-to-pool completed; pool consumers green                                                         | Medium   | S      | Ops           |
-| 22 | Watch load/PSI normalize once the current Go test suites finish                                                                                    | Medium   | S      | Ops           |
-| 23 | dnsblockd batch-writer flush ctx review (batchFlushTimeout actually bounding the txn?)                                                             | Medium   | M      | Quality       |
-| 24 | Consider deploy gate addition: IO PSI some avg10 (currently memory-only)                                                                           | Medium   | S      | Feature       |
-| 25 | HARVEST this report's tasks into TODO_LIST.md (docs-health)                                                                                        | Medium   | S      | Documentation |
+| ~~1~~ **Won't implement — challenge expired; runbook owns recurrence (docs/services/bank-sync-sca.md).** | ~~USER: approve Wise SCA + set OTT (docs/services/bank-sync-sca.md), restart bank-sync, remove token~~ | ~~Critical~~ | ~~S~~ | ~~Bug/ops~~ |
+| ~~2~~ done at `deployed; docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07` | ~~Push bank-sync master (a9b0b8e..60015cc) — needs user OK~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~3~~ done at `deployed; docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07` | ~~SystemNix: `nix flake lock --update-input bank-sync`, vendorHash check, deploy (once IO < gate)~~ | ~~High~~ | ~~M~~ | ~~Bug~~ |
+| ~~4~~ done at `deployed; docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07` | ~~Post-deploy verify: corruption ERROs gone, `sync_errors_total` reset, smoke green (known WARNs only)~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~5~~ done — smoke asserts bank_sync_sync_errors_total 0 post-deploy (scripts/post-deploy-check.sh:768) | ~~dnsblockd: bounded health-probe ctx (5s) upstream~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~6~~ done at `cache-first /health in upstream v0.9.3 (docs/todo/upstream.md dnsblockd housekeeping)` | ~~dnsblockd: confirm /metrics hang mechanism (Collect callback vs pool)~~ | ~~High~~ | ~~M~~ | ~~Bug~~ |
+| ~~7~~ **Won't implement — unproven mechanism; contained by 30s WriteTimeout; stale.** | ~~dnsblockd: reserved health-only sqlite conn / pool reservation~~ | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
+| ~~8~~ **Won't implement — superseded by cache-first /health.** | ~~dnsblockd: saturation regression test (pool exhausted → /health answers bounded)~~ | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| 9 **→ docs/todo/upstream.md Verify the dnsblockd /health cached-response regression tests ship upstream** | Push+tag dnsblockd + SystemNix flake bump | High | S | Bug |
+| ~~10~~ done at `v0.9.3 tag cut upstream; lock deployed (docs/todo/upstream.md dnsblockd tag rows)` | ~~USER: InboxClean main OAuth re-auth (consent "In production" first)~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~11~~ **Won't implement — InboxClean re-auth window passed.** | ~~Verify inboxclean-sync + service-health-check green after re-auth~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
+| ~~12~~ **Won't implement — one-shot verification rider.** | ~~SystemNix AGENTS.md: record session lessons (storm→smoke mapping, sdb=buildcache letters, bank-sync V10, dnsblockd hypothesis + SIGKILL forensics)~~ | ~~High~~ | ~~S~~ | ~~Documentation~~ |
+| ~~13~~ done — lessons in docs/agents (dnsblockd/bank-sync entries) | ~~IO PSI sustained alert (Gatus/SigNoz, >40% for 15 min)~~ | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
+| ~~14~~ **NOT-DO — dup of c6 (IO PSI sustained alert).** | ~~heavy-job discipline for go test/cargo nextest in agent sessions (wrapper + docs)~~ | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| ~~15~~ done at `docs/agents/stability.md workload-admission heavy-job` | ~~Check journal for any accidental goroutine dump at 09:15 stop (last 90s window)~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
+| ~~16~~ **Won't implement — one-shot journal check.** | ~~Re-run full `post-deploy-check` after deploys 3+9 land~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~17~~ **Won't implement — one-shot.** | ~~git-archaeology: `git log -S payload.SyncedAt` in bank-sync to close the RFC3339-writer mystery~~ | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~18~~ done — closed negative (writer unidentifiable; three-way proof) | ~~Promote the DSN bind probe to a permanent bank-sync regression test~~ | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~19~~ **Won't implement — bank-sync upstream; superseded by vendorHash-resolution era.** | ~~quickshell 1-error-line triage (last 1h journal)~~ | ~~Low~~ | ~~S~~ | ~~Bug~~ |
+| ~~20~~ **Won't implement — quickshell transient cleared.** | ~~fish 250 ms startup re-measure at calm IO~~ | ~~Low~~ | ~~S~~ | ~~Bug~~ |
+| ~~21~~ **Won't implement — measured healthy.** | ~~Verify data-to-pool-migration + activitywatch-data-to-pool completed; pool consumers green~~ | ~~Medium~~ | ~~S~~ | ~~Ops~~ |
+| ~~22~~ done — data-to-pool self-neutralized (verified in 17:28 session) | ~~Watch load/PSI normalize once the current Go test suites finish~~ | ~~Medium~~ | ~~S~~ | ~~Ops~~ |
+| ~~23~~ **Won't implement — one-shot watch.** | ~~dnsblockd batch-writer flush ctx review (batchFlushTimeout actually bounding the txn?)~~ | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| 24 **→ docs/todo/upstream.md dnsblockd startup-hang upstream (init-stall/sqlite contention)** | Consider deploy gate addition: IO PSI some avg10 (currently memory-only) | Medium | S | Feature |
+| ~~25~~ **Won't implement — meta; harvest passes since operated.** | ~~HARVEST this report's tasks into TODO_LIST.md (docs-health)~~ | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
 
 ## g) Top question
 

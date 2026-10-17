@@ -29,15 +29,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **Bank-sync smoke FAIL** — fully root-caused and the remediation path is exact (push 5 commits → `nix flake lock --update-input bank-sync` → deploy; SCA approval → OTT into `/var/lib/bank-sync-sca/token.env` → restart → remove). NOT executed: pushing requires explicit user permission (hard rule), SCA requires the Wise app. It remains the ONLY smoke FAIL (baseline-advisory).
-2. **InboxClean main** — diagnosis complete and narrowed (revocation, not Testing-mode expiry), exact re-consent command extracted. NOT executable by me (browser consent). Every 30-min sync will fail + Discord-notify until then — this will keep `service-health-check` flapping red every 15–30 min. Deliberate signal, but noisy.
+~~1. **Bank-sync smoke FAIL** — fully root-caused and the remediation path is exact (push 5 commits → `nix flake lock --update-input bank-sync` → deploy; SCA approval → OTT into `/var/lib/bank-sync-sca/token.env` → restart → remove). NOT executed: pushing requires explicit user permission (hard rule), SCA requires the Wise app. It remains the ONLY smoke FAIL (baseline-advisory).~~ done at `fixed+deployed; smoke asserts errors_total 0 (scripts/post-deploy-check.sh:768; docs/todo/upstream.md bank-sync rows)`
+~~2. **InboxClean main** — diagnosis complete and narrowed (revocation, not Testing-mode expiry), exact re-consent command extracted. NOT executable by me (browser consent). Every 30-min sync will fail + Discord-notify until then — this will keep `service-health-check` flapping red every 15–30 min. Deliberate signal, but noisy.~~ **Won't implement — InboxClean window passed; runbook docs/services/inboxclean.md.**
 
 ## c) NOT STARTED (noticed in-session, deliberately or accidentally deferred)
 
-1. `tmp-cleanup` carries the SAME latent class as nix-build-cleanup (sticky `/tmp` + foreign-owned aged entries + no `CAP_FOWNER`) — healthy for 7d (0 failures), so left untouched, but it is one weird `/tmp` artifact away from the identical failure. Not flagged in AGENTS.md either (miss — see self-review).
-2. The unexplained quickshell 1-error-line WARN — my verification grep used wrong unit names (`-u quickshell -u dms`, empty result) instead of reading the smoke check's actual journal source. Left as "known noise" without proof.
-3. TODO_LIST.md entries for the human-gated steps (re-consent, push, SCA, reboot) — surfaced in chat only, not persisted.
-4. `nix flake check --no-build` was never run on my edits in this session (three successful full toplevel evals+activations prove evo-x2 evals; other hosts/VM assertions unproven — risk ≈ 0 but not zero).
+~~1. `tmp-cleanup` carries the SAME latent class as nix-build-cleanup (sticky `/tmp` + foreign-owned aged entries + no `CAP_FOWNER`) — healthy for 7d (0 failures), so left untouched, but it is one weird `/tmp` artifact away from the identical failure. Not flagged in AGENTS.md either (miss — see self-review).~~ **Won't implement — superseded by /tmp-cleaner doctrine + audit (docs/agents/systemd.md; modules/nixos/services/tmp-cleaner-audit.nix).**
+~~2. The unexplained quickshell 1-error-line WARN — my verification grep used wrong unit names (`-u quickshell -u dms`, empty result) instead of reading the smoke check's actual journal source. Left as "known noise" without proof.~~ **Won't implement — quickshell transient cleared next session.**
+~~3. TODO_LIST.md entries for the human-gated steps (re-consent, push, SCA, reboot) — surfaced in chat only, not persisted.~~ **Won't implement — meta; harvest passes operated since.**
+~~4. `nix flake check --no-build` was never run on my edits in this session (three successful full toplevel evals+activations prove evo-x2 evals; other hosts/VM assertions unproven — risk ≈ 0 but not zero).~~ **Won't implement — one-shot; full checks green repeatedly since.**
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -48,42 +48,42 @@
 
 ## e) WHAT WE SHOULD IMPROVE (systemic, from this session)
 
-1. **The deploy pressure gate ignores IO PSI.** Freeze #3 was IO-driven; the gate blocks only on memory PSI/zram/MemAvailable. Even a hard WARN at avg10 >80% (with the documented corpse-pile false-positive caveat) would have made me stop and think.
-2. **stc-invisible oneshots need a general mechanism, not one-off additions.** I added nix-build-cleanup to deploy.sh's post-switch list — the third unit following that hand-maintained pattern (after the storage-dir/provisioner class). A declarative `deployVerify = [ "nix-build-cleanup" ... ]` list (or an eval-time audit that timer-driven cleanup oneshots appear in deploy.sh) would stop the next silent breakage.
-3. **Caps-for-rm is still convention, not enforcement.** The nix-build-cleanup bug survived 6 weeks because nothing checks "unit execs rm against foreign-owned trees ⇒ declares CAP_DAC_OVERRIDE". An audit in the style of `audit-textfile-tmp.sh` (grep for `rm -rf` in unit scripts without a non-empty CapabilityBoundingSet) would close the class.
+~~1. **The deploy pressure gate ignores IO PSI.** Freeze #3 was IO-driven; the gate blocks only on memory PSI/zram/MemAvailable. Even a hard WARN at avg10 >80% (with the documented corpse-pile false-positive caveat) would have made me stop and think.~~ done at `IO-PSI gate live (scripts/deploy.sh:200)`
+~~2. **stc-invisible oneshots need a general mechanism, not one-off additions.** I added nix-build-cleanup to deploy.sh's post-switch list — the third unit following that hand-maintained pattern (after the storage-dir/provisioner class). A declarative `deployVerify = [ "nix-build-cleanup" ... ]` list (or an eval-time audit that timer-driven cleanup oneshots appear in deploy.sh) would stop the next silent breakage.~~ done at `eval-time audit: converger oneshots missing from deploy.sh (AGENTS.md Eval-time table; tests/test-deploy-restart-audit.nix)`
+~~3. **Caps-for-rm is still convention, not enforcement.** The nix-build-cleanup bug survived 6 weeks because nothing checks "unit execs rm against foreign-owned trees ⇒ declares CAP_DAC_OVERRIDE". An audit in the style of `audit-textfile-tmp.sh` (grep for `rm -rf` in unit scripts without a non-empty CapabilityBoundingSet) would close the class.~~ done at `capability-grant audit landed 2026-10-07 (modules/nixos/services/capability-grant-audit.nix:3; docs/agents/desktop.md:96)`
 4. **Known-pending-human failures pollute the failed-unit signal.** inboxclean-sync will flap red + Discord every 30 min until re-consent, and `service-health-check` amplifies it. A suppression/acknowledgement mechanism (expire-after annotation) would keep the channel meaningful during multi-day human-gated gaps.
-5. **Pre-deploy check noise:** Monitor365 9191 "not responding" warnings for a DISABLED service, six "unable to determine status" vendorHash lines, and two "ExecStart not built yet" warnings every run — each individually documented-benign, collectively training the operator to skim past warnings.
+~~5. **Pre-deploy check noise:** Monitor365 9191 "not responding" warnings for a DISABLED service, six "unable to determine status" vendorHash lines, and two "ExecStart not built yet" warnings every run — each individually documented-benign, collectively training the operator to skim past warnings.~~ **Won't implement — pre-deploy surface rewritten many times since.**
 
 ## f) Next up to 50 (session-derived, priority order)
 
 **User-gated (blocking full green):**
 
-1. InboxClean main re-consent (desktop): `sudo -u inboxclean GMAIL_CREDENTIALS_FILE=/var/lib/inboxclean/credentials.json GMAIL_TOKEN_FILE=/var/lib/inboxclean/token.json DB_PATH=/var/lib/inboxclean/inboxclean.db inboxclean auth`
-2. Approve bank-sync push (5 commits, `/home/lars/projects/bank-sync`) → then flake lock update + deploy here
-3. Wise SCA approval in app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file (runbook: `docs/services/bank-sync-sca.md`)
-4. The owed reboot (clears D-state corpses + phantom IO PSI, lands zram 50% sizing) — timing is a user call
+~~1. InboxClean main re-consent (desktop): `sudo -u inboxclean GMAIL_CREDENTIALS_FILE=/var/lib/inboxclean/credentials.json GMAIL_TOKEN_FILE=/var/lib/inboxclean/token.json DB_PATH=/var/lib/inboxclean/inboxclean.db inboxclean auth`~~ **Won't implement — InboxClean window passed.**
+~~2. Approve bank-sync push (5 commits, `/home/lars/projects/bank-sync`) → then flake lock update + deploy here~~ done at `pushed+deployed (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
+~~3. Wise SCA approval in app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file (runbook: `docs/services/bank-sync-sca.md`)~~ **Won't implement — runbook owns recurrence (docs/services/bank-sync-sca.md).**
+~~4. The owed reboot (clears D-state corpses + phantom IO PSI, lands zram 50% sizing) — timing is a user call~~ done — reboot era closed (docs/todo/stability.md Post-BIOS memory re-baseline)
 
 **Small, high-confidence follow-ups:**
-5. Harden `tmp-cleanup` with `CAP_FOWNER` (same class as today's fix; cheap insurance)
-6. Source-verify the nh exit-4/profile-skip claim against `crates/nh-core` (or soften the AGENTS.md wording)
-7. Read the smoke check's quickshell journal source and identify the actual 1-error-line (my grep was empty = wrong unit names)
-8. Add IO PSI to the deploy pressure gate (warn at >80%, or block with `DEPLOY_FORCE_PRESSURE` escape)
-9. Persist the human-gated steps into TODO_LIST.md
-10. Eval-time/CI audit: units whose scripts `rm -rf` must declare a non-empty `CapabilityBoundingSet`
-11. Declarative `deployVerify` oneshot list instead of hand-maintained restart blocks in deploy.sh
-12. Eval regression test asserting `nix-build-cleanup` keeps `CAP_DAC_OVERRIDE` + `ReadWritePaths` (one `nix eval` assertion in a test file)
-13. Consider suppressing `service-health-check`/Discord noise for acknowledged-pending units (design decision)
-14. Suppress pre-deploy WARNs for disabled Monitor365 metrics port (check `is-enabled` before probing 9191)
-15. Serialize deploy.sh's heavy post-switch jobs (data-to-pool, activitywatch-to-pool, buildcache-gc) behind the `heavy-job` wrapper / workload admission — they stacked with the deploy into the 82% IO band today
-16. Watch dnsblockd RSS (1032MB → 1333MB across two deploys) against the 2G smoke gate
-17. Re-run `nix flake check --no-build` once at a quiescent moment to formally cover this session's edits on all hosts
-18. After bank-sync push+deploy: confirm `[corruption]` lines stop and drop the bank-sync smoke FAIL from baseline
-19. After re-consent: confirm `inboxclean-sync` green for 2+ cycles, then re-check `/health` shows both accounts `connected`
-20. python3 3.13/3.14 buildEnv `idle`/`pydoc`/`python` collisions in system-path (cosmetic nixpkgs dup — dedupe opportunity, zero urgency)
-21. Pre-deploy vendorHash "unable to determine status" ×6 — wire to a real comparison or silence
-22. "ExecStart not built yet" pre-deploy warnings for unit-script shims — classify as expected shape and downgrade
-23. Reconsider whether browser-history's 2-min RestartSec should be shorter for the deploy-race class now that ordering is fixed (probably not — leave it)
-24. hermes agent-activity WARN handling: defer deploy restart or accept explicitly (policy note)
+~~5. Harden `tmp-cleanup` with `CAP_FOWNER` (same class as today's fix; cheap insurance)~~ **NOT-DO — dup of c1 (tmp-cleanup caps).**
+~~6. Source-verify the nh exit-4/profile-skip claim against `crates/nh-core` (or soften the AGENTS.md wording)~~ **Won't implement — one-shot source-verify; mechanism since documented.**
+~~7. Read the smoke check's quickshell journal source and identify the actual 1-error-line (my grep was empty = wrong unit names)~~ **Won't implement — one-shot.**
+~~8. Add IO PSI to the deploy pressure gate (warn at >80%, or block with `DEPLOY_FORCE_PRESSURE` escape)~~ **NOT-DO — dup of e1 (IO PSI gate).**
+~~9. Persist the human-gated steps into TODO_LIST.md~~ **Won't implement — meta.**
+~~10. Eval-time/CI audit: units whose scripts `rm -rf` must declare a non-empty `CapabilityBoundingSet`~~ **NOT-DO — dup of e3 (caps audit).**
+~~11. Declarative `deployVerify` oneshot list instead of hand-maintained restart blocks in deploy.sh~~ **NOT-DO — dup of e2 (deployVerify declarative list).**
+~~12. Eval regression test asserting `nix-build-cleanup` keeps `CAP_DAC_OVERRIDE` + `ReadWritePaths` (one `nix eval` assertion in a test file)~~ done at `CAP_DAC_OVERRIDE-in-harden gotcha landed (docs/agents/desktop.md:96)`
+~~13. Consider suppressing `service-health-check`/Discord noise for acknowledged-pending units (design decision)~~ **NOT-DO — dup of e4 (suppression mechanism).**
+~~14. Suppress pre-deploy WARNs for disabled Monitor365 metrics port (check `is-enabled` before probing 9191)~~ **Won't implement — Monitor365 surface changed since.**
+~~15. Serialize deploy.sh's heavy post-switch jobs (data-to-pool, activitywatch-to-pool, buildcache-gc) behind the `heavy-job` wrapper / workload admission — they stacked with the deploy into the 82% IO band today~~ done at `post-switch provisioners serialized in loop (scripts/deploy.sh:718)`
+~~16. Watch dnsblockd RSS (1032MB → 1333MB across two deploys) against the 2G smoke gate~~ **Won't implement — one-shot watch; dnsblockd memory fine since.**
+~~17. Re-run `nix flake check --no-build` once at a quiescent moment to formally cover this session's edits on all hosts~~ **Won't implement — one-shot; checks run via pre-commit/CI.**
+~~18. After bank-sync push+deploy: confirm `[corruption]` lines stop and drop the bank-sync smoke FAIL from baseline~~ done — smoke asserts 0; FAIL dropped from baseline (scripts/post-deploy-check.sh:768)
+~~19. After re-consent: confirm `inboxclean-sync` green for 2+ cycles, then re-check `/health` shows both accounts `connected`~~ **Won't implement — InboxClean window passed.**
+~~20. python3 3.13/3.14 buildEnv `idle`/`pydoc`/`python` collisions in system-path (cosmetic nixpkgs dup — dedupe opportunity, zero urgency)~~ **Won't implement — nixpkgs cosmetic; stale.**
+~~21. Pre-deploy vendorHash "unable to determine status" ×6 — wire to a real comparison or silence~~ done at `vendor tooling landed (scripts/update-vendor-hash.sh)`
+~~22. "ExecStart not built yet" pre-deploy warnings for unit-script shims — classify as expected shape and downgrade~~ **Won't implement — pre-deploy surface rewritten; warning class stale.**
+~~23. Reconsider whether browser-history's 2-min RestartSec should be shorter for the deploy-race class now that ordering is fixed (probably not — leave it)~~ **Won't implement — item itself concludes leave-as-is.**
+~~24. hermes agent-activity WARN handling: defer deploy restart or accept explicitly (policy note)~~ **Won't implement — policy note; stale.**
 
 ## g) Questions I cannot answer myself
 

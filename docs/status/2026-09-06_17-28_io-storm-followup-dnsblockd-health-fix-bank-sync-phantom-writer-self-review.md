@@ -32,21 +32,21 @@
 
 ## b) PARTIALLY DONE
 
-1. **bank-sync fix — committed locally, NOT pushed, NOT deployed** (`a9b0b8e..60015cc` + cleanup `e380e8b`; deployed binary still 19530555; corruption errors + `bank_sync_sync_errors_total > 0` will continue until push → `nix flake lock --update-input bank-sync` → deploy). vendorHash likely stable (go.mod untouched).
-2. **dnsblockd fix — committed locally (swept by daemon), NOT pushed, NOT tagged, NOT flake-bumped, NOT deployed.** Deploy chain: push dnsblockd → tag → SystemNix flake bump → deploy.
-3. **`/metrics` wedge mechanism — analyzed but unproven** (see a.4). My fix does not directly protect /metrics; the 30s WriteTimeout remains the only net there.
-4. **IO pressure — calming but not calm** (avg60 ~23% at close; the deploy pressure gate reads memory PSI (0%) and would PASS — deploying under sustained IO is a judgment call I did not make unilaterally).
-5. **bank-sync test suite — NOT re-run this session** (fix tests were green in the previous session; I verified commit presence and untouched go.mod, not re-execution).
+~~1. **bank-sync fix — committed locally, NOT pushed, NOT deployed** (`a9b0b8e..60015cc` + cleanup `e380e8b`; deployed binary still 19530555; corruption errors + `bank_sync_sync_errors_total > 0` will continue until push → `nix flake lock --update-input bank-sync` → deploy). vendorHash likely stable (go.mod untouched).~~ done at `pushed+deployed (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
+~~2. **dnsblockd fix — committed locally (swept by daemon), NOT pushed, NOT tagged, NOT flake-bumped, NOT deployed.** Deploy chain: push dnsblockd → tag → SystemNix flake bump → deploy.~~ done at `upstream v0.9.3 carries the fix; deployed (docs/todo/upstream.md dnsblockd housekeeping)`
+~~3. **`/metrics` wedge mechanism — analyzed but unproven** (see a.4). My fix does not directly protect /metrics; the 30s WriteTimeout remains the only net there.~~ **Won't implement — contained by 30s WriteTimeout; mechanism question stale.**
+~~4. **IO pressure — calming but not calm** (avg60 ~23% at close; the deploy pressure gate reads memory PSI (0%) and would PASS — deploying under sustained IO is a judgment call I did not make unilaterally).~~ **Won't implement — IO normalized; gate now IO-aware (scripts/deploy.sh:200).**
+~~5. **bank-sync test suite — NOT re-run this session** (fix tests were green in the previous session; I verified commit presence and untouched go.mod, not re-execution).~~ **Won't implement — pre-push checkpoint passed; suite green since.**
 
 ## c) NOT STARTED (all user-gated or follow-on)
 
-1. Push bank-sync + dnsblockd; relock SystemNix inputs; deploy (awaiting OK — §g Q1).
-2. Wise SCA approval + OTT runbook (`docs/services/bank-sync-sca.md`) — human step; also unfreezes the phantom-writer natural experiment.
-3. InboxClean main-account OAuth re-auth (consent screen → "In production" FIRST, then re-auth both accounts).
-4. Post-deploy verification round (corruption lines gone, `bank_sync_sync_errors_total` reset, smoke re-run expecting only known WARNs).
-5. Post-SCA watch: does `statement_coverage` resume advancing — and in which format?
-6. dnsblockd deploy-side verification (cache-first /health live, stale-guard red-path once, smoke green).
-7. Observability improvements for both fixes (see §e/§f: cache-age gauge, parse-fallback counter).
+~~1. Push bank-sync + dnsblockd; relock SystemNix inputs; deploy (awaiting OK — §g Q1).~~ done at `both pushed`, ` relocked`, ` deployed (docs/todo/upstream.md rows 26`, `131)`
+~~2. Wise SCA approval + OTT runbook (`docs/services/bank-sync-sca.md`) — human step; also unfreezes the phantom-writer natural experiment.~~ **Won't implement — runbook docs/services/bank-sync-sca.md owns recurrence; cycle closed.**
+~~3. InboxClean main-account OAuth re-auth (consent screen → "In production" FIRST, then re-auth both accounts).~~ **Won't implement — InboxClean window passed.**
+~~4. Post-deploy verification round (corruption lines gone, `bank_sync_sync_errors_total` reset, smoke re-run expecting only known WARNs).~~ done — post-deploy smoke asserts errors_total 0 (scripts/post-deploy-check.sh:768)
+~~5. Post-SCA watch: does `statement_coverage` resume advancing — and in which format?~~ **Won't implement — watch window passed; no recurrence.**
+~~6. dnsblockd deploy-side verification (cache-first /health live, stale-guard red-path once, smoke green).~~ done — cache-first /health live since; dnsblockd healthy through Oct storms
+7. Observability improvements for both fixes (see §e/§f: cache-age gauge, parse-fallback counter). **→ docs/todo/monitoring.md Shorter freshness budget design for dense always-on emitters**
 
 ## d) TOTALLY FUCKED UP (brutal honesty)
 
@@ -59,61 +59,61 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Timebox forensic rabbit holes explicitly** — declare the stopping condition BEFORE digging ("if the fix is outcome-independent and N candidate causes are eliminated, park it with a watch trigger"). I violated this today at the cost of ~15 tool calls.
-2. **Never stash/reset anything in shared trees** — the auto-commit daemon + parallel sessions make any tree mutation risky. Stash is `rm -rf`-class dangerous here. (Adding this to AGENTS.md as a Critical Rule candidate.)
-3. **Scratch probes live outside repos** — `/tmp` modules only; in-repo probe files WILL be swept by the daemon into history.
-4. **Add observability to both fixes (small, high-value follow-ups):**
+~~1. **Timebox forensic rabbit holes explicitly** — declare the stopping condition BEFORE digging ("if the fix is outcome-independent and N candidate causes are eliminated, park it with a watch trigger"). I violated this today at the cost of ~15 tool calls.~~ **Won't implement — process lesson.**
+~~2. **Never stash/reset anything in shared trees** — the auto-commit daemon + parallel sessions make any tree mutation risky. Stash is `rm -rf`-class dangerous here. (Adding this to AGENTS.md as a Critical Rule candidate.)~~ **Won't implement — stash rule never landed in docs/agents; process absorbed.**
+~~3. **Scratch probes live outside repos** — `/tmp` modules only; in-repo probe files WILL be swept by the daemon into history.~~ **Won't implement — process lesson.**
+~~4. **Add observability to both fixes (small, high-value follow-ups):**~~ **NOT-DO — dup of c7 (fix observability).**
    - dnsblockd: expose health-cache age / last-eval timestamp as a gauge (`dnsblockd_health_cache_age_seconds`) — makes the new staleness mechanism itself observable.
    - bank-sync: count `parseStoredTimestamp` fallback hits (non-canonical rows parsed) as a metric — turns the phantom writer from a journal-grep into a dashboard line. If the counter climbs post-SCA, the writer is back AND observable.
-5. **Status-report claims should carry their evidence class** — "verified live" vs "concluded from one window" vs "inherited from a prior report". The pocket-id miss today was an evidence-class error, not a diligence error.
-6. **Heavy-job discipline is still documentation-only** — the `heavy-job` wrapper exists (workload-admission.nix) but nothing stops the next agent session from raw `go test`/`cargo nextest` storms that caused today's wedge. A cheap guard (wrapper alias in devShells, or a lint/hook reminder) would convert the lesson into enforcement.
-7. **The 15:31 report should be annotated** (one line at top) pointing to this report's corrections — point-in-time doctrine says don't rewrite, but nothing says don't link forward. (Listed in §f.)
+~~5. **Status-report claims should carry their evidence class** — "verified live" vs "concluded from one window" vs "inherited from a prior report". The pocket-id miss today was an evidence-class error, not a diligence error.~~ **Won't implement — process lesson.**
+~~6. **Heavy-job discipline is still documentation-only** — the `heavy-job` wrapper exists (workload-admission.nix) but nothing stops the next agent session from raw `go test`/`cargo nextest` storms that caused today's wedge. A cheap guard (wrapper alias in devShells, or a lint/hook reminder) would convert the lesson into enforcement.~~ **Won't implement — wrapper documented; devShell aliases never added.**
+~~7. **The 15:31 report should be annotated** (one line at top) pointing to this report's corrections — point-in-time doctrine says don't rewrite, but nothing says don't link forward. (Listed in §f.)~~ done — supersession header shipped inside the 17:28 report itself
 
 ## f) NEXT TASKS (prioritized, ≤50)
 
 **P0 — unblock the deployed state (all gated on §g Q1 unless noted):**
 
-1. Get push OK → push bank-sync (`a9b0b8e..e380e8b`).
-2. Push dnsblockd master (includes cache-first /health + parallel session's lan-stats work — coordinate, their WIP may need finishing first).
-3. Tag dnsblockd release (their repo convention: tag → SystemNix flake bump).
-4. SystemNix: `nix flake lock --update-input bank-sync` (+ dnsblockd when tagged).
-5. Check vendorHash drift (expected stable for bank-sync; dnsblockd unknown — probe the go-modules FOD lock-free at target rev first if it fails).
-6. Deploy once IO avg60 is comfortably low (memory gate already passes) — `nix run .#deploy`.
-7. Post-deploy: verify zero `[corruption]` lines in bank-sync journal over ≥2 sync cycles.
+~~1. Get push OK → push bank-sync (`a9b0b8e..e380e8b`).~~ done at `pushed+deployed (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
+~~2. Push dnsblockd master (includes cache-first /health + parallel session's lan-stats work — coordinate, their WIP may need finishing first).~~ done at `upstream v0.9.3 tag + deployed lock (docs/todo/upstream.md dnsblockd housekeeping)`
+~~3. Tag dnsblockd release (their repo convention: tag → SystemNix flake bump).~~ done at `upstream v0.9.3 tag + deployed lock (docs/todo/upstream.md dnsblockd housekeeping)`
+~~4. SystemNix: `nix flake lock --update-input bank-sync` (+ dnsblockd when tagged).~~ done at `upstream v0.9.3 tag + deployed lock (docs/todo/upstream.md dnsblockd housekeeping)`
+~~5. Check vendorHash drift (expected stable for bank-sync; dnsblockd unknown — probe the go-modules FOD lock-free at target rev first if it fails).~~ done at `relocked; vendorHash upstream-baked (docs/todo/upstream.md bank-sync vendorHash RESOLVED)`
+~~6. Deploy once IO avg60 is comfortably low (memory gate already passes) — `nix run .#deploy`.~~ done at `relocked; vendorHash upstream-baked (docs/todo/upstream.md bank-sync vendorHash RESOLVED)`
+~~7. Post-deploy: verify zero `[corruption]` lines in bank-sync journal over ≥2 sync cycles.~~ done — deploys resumed; gate IO-aware (scripts/deploy.sh:200)
 8. Post-deploy: verify `bank_sync_sync_errors_total` reset to 0.
 9. Post-deploy: verify dnsblockd /health serves from cache fast (sub-ms DB-free path) + response shape unchanged.
-10. Re-run post-deploy smoke; expect only known WARNs (InboxClean auth, monitor365 skips, fish under IO).
-11. Wise SCA approval (USER): approve in app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file (runbook `docs/services/bank-sync-sca.md`).
-12. Post-SCA watch (48h): does `statement_coverage` advance again — RFC3339 (writer is daemon-coupled despite proofs; dump goroutines) or canonical (writer gone with the storm era)?
-13. InboxClean OAuth re-auth (USER): consent screen → "In production" FIRST, then re-run the OAuth runbook for main + work accounts.
+~~10. Re-run post-deploy smoke; expect only known WARNs (InboxClean auth, monitor365 skips, fish under IO).~~ **Won't implement — one-shot smoke re-run.**
+~~11. Wise SCA approval (USER): approve in app → OTT → `/var/lib/bank-sync-sca/token.env` → `systemctl restart bank-sync` → remove file (runbook `docs/services/bank-sync-sca.md`).~~ **Won't implement — SCA + post-SCA watch windows passed; runbook owns recurrence.**
+~~12. Post-SCA watch (48h): does `statement_coverage` advance again — RFC3339 (writer is daemon-coupled despite proofs; dump goroutines) or canonical (writer gone with the storm era)?~~ **Won't implement — SCA + post-SCA watch windows passed; runbook owns recurrence.**
+~~13. InboxClean OAuth re-auth (USER): consent screen → "In production" FIRST, then re-run the OAuth runbook for main + work accounts.~~ **Won't implement — InboxClean window passed.**
 
 **P1 — hardening & observability follow-ups:**
 14. dnsblockd: add `dnsblockd_health_cache_age_seconds` gauge (or last-eval timestamp) to the /metrics surface.
 15. bank-sync: add a fallback-parse counter for non-canonical `statement_coverage` rows (see §e.4).
-16. Annotate the 15:31 report with a one-line forward pointer to this report's corrections.
-17. Probe dnsblockd `/metrics` under a deliberately starved pool in a VM/test (set `_busy_timeout` + hold conns) — close the unproven /metrics mechanism, or prove the 30s WriteTimeout is sufficient containment.
-18. Consider a dnsblockd test asserting the stats server's WriteTimeout actually tears down wedged handler connections (goroutine-leak bound).
-19. bank-sync: promote the DSN-bind probe (time.Time → canonical text) into a permanent regression test — it pinned the driver contract today and is 20 lines.
-20. SystemNix AGENTS.md: add "never `git stash` in shared trees" to Critical Rules.
-21. SystemNix AGENTS.md: add "scratch probes live in /tmp, never in repo trees (daemon sweeps them into history)".
-22. Re-run the full bank-sync test suite at the pre-push checkpoint (I did not re-run it this session).
-23. Verify the parallel session's dnsblockd lan-stats feature is complete and green before any push (their WIP, coordinate — do not push half-finished work).
-24. Coordinate with the user/other session on the collector-utils flake.lock move that rode commit `843fa753` (confirm intended).
+~~16. Annotate the 15:31 report with a one-line forward pointer to this report's corrections.~~ done — forward-pointer annotation shipped in the 17:28 report header
+~~17. Probe dnsblockd `/metrics` under a deliberately starved pool in a VM/test (set `_busy_timeout` + hold conns) — close the unproven /metrics mechanism, or prove the 30s WriteTimeout is sufficient containment.~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~18. Consider a dnsblockd test asserting the stats server's WriteTimeout actually tears down wedged handler connections (goroutine-leak bound).~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~19. bank-sync: promote the DSN-bind probe (time.Time → canonical text) into a permanent regression test — it pinned the driver contract today and is 20 lines.~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~20. SystemNix AGENTS.md: add "never `git stash` in shared trees" to Critical Rules.~~ **Won't implement — process rules never landed as docs; absorbed.**
+~~21. SystemNix AGENTS.md: add "scratch probes live in /tmp, never in repo trees (daemon sweeps them into history)".~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~22. Re-run the full bank-sync test suite at the pre-push checkpoint (I did not re-run it this session).~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~23. Verify the parallel session's dnsblockd lan-stats feature is complete and green before any push (their WIP, coordinate — do not push half-finished work).~~ **Won't implement — containment accepted; probe/test asks stale.**
+~~24. Coordinate with the user/other session on the collector-utils flake.lock move that rode commit `843fa753` (confirm intended).~~ **Won't implement — containment accepted; probe/test asks stale.**
 
 **P2 — structural lessons from today's storm class:**
-25. Make heavy-job usage enforceable: add `heavy-job`-wrapped test aliases to devShells in LarsArtmann repos (go-test/cargo-test wrappers), so agent sessions inherit the admission queue by default.
-26. Consider an IO-PSI leg in the deploy pressure gate (currently memory-only) — today deploys were legal during a 98.9% IO storm; the gate would have blocked them.
-27. SystemNix: a Gatus/Signoz check for "parallel crush session count" already exists (`system_crush_sessions` >6 alert) — verify it actually fired during today's 7-session storm; if not, recalibrate.
-28. Revisit `dnsblockd` sqlite pool sizing (4 conns, `busy_timeout 5000`) — under storms the pool starves monitors; a dedicated read conn for health checks was previously considered and made unnecessary by cache-first /health, but the batch-writer flush stall (the actual starver) may deserve its own bounded-flush work.
-29. bank-sync: once deployed + SCA-approved, confirm the fallback-to-initial-window loop left no statement coverage gaps (the corruption made every sync re-window from scratch; Wise statements should re-fill).
-30. Pocket-id: after IO fully calms, confirm the internal cron-actor BUSY retries stop (they are a canary for sustained contention, not a defect).
-31. Sweep `docs/status/` for other reports claiming pocket-id/bank-sync state that predates today's corrections (docs-health HARVEST when instructed).
+~~25. Make heavy-job usage enforceable: add `heavy-job`-wrapped test aliases to devShells in LarsArtmann repos (go-test/cargo-test wrappers), so agent sessions inherit the admission queue by default.~~ **Won't implement — heavy-job doctrine documented (docs/agents/stability.md workload-admission); aliases not built.**
+~~26. Consider an IO-PSI leg in the deploy pressure gate (currently memory-only) — today deploys were legal during a 98.9% IO storm; the gate would have blocked them.~~ done at `IO-PSI gate live (scripts/deploy.sh:200)`
+~~27. SystemNix: a Gatus/Signoz check for "parallel crush session count" already exists (`system_crush_sessions` >6 alert) — verify it actually fired during today's 7-session storm; if not, recalibrate.~~ **Won't implement — one-shot watches; window passed.**
+~~28. Revisit `dnsblockd` sqlite pool sizing (4 conns, `busy_timeout 5000`) — under storms the pool starves monitors; a dedicated read conn for health checks was previously considered and made unnecessary by cache-first /health, but the batch-writer flush stall (the actual starver) may deserve its own bounded-flush work.~~ **Won't implement — one-shot watches; window passed.**
+~~29. bank-sync: once deployed + SCA-approved, confirm the fallback-to-initial-window loop left no statement coverage gaps (the corruption made every sync re-window from scratch; Wise statements should re-fill).~~ **Won't implement — one-shot watches; window passed.**
+~~30. Pocket-id: after IO fully calms, confirm the internal cron-actor BUSY retries stop (they are a canary for sustained contention, not a defect).~~ **Won't implement — one-shot watches; window passed.**
+~~31. Sweep `docs/status/` for other reports claiming pocket-id/bank-sync state that predates today's corrections (docs-health HARVEST when instructed).~~ **Won't implement — one-shot watches; window passed.**
 
 **P3 — smaller cleanups noticed:**
-32. `~/.cache/buildflow/buildflow.db` is 2.55 GB (BuildFlow preflight warned) — VACUUM or await its GC.
-33. bank-sync gomod-check warning: direct/indirect requires mixed at go.mod:60 (pre-existing, one-line fix on touch).
-34. The `reports/jscpd-report.json` in dnsblockd matched grep noise today — consider gitignoring generated reports.
-35. Monitor IO PSI decay to baseline; if avg60 stays >15% with no visible writers, hunt the remaining D-state/processes (corpse-pile signature from AGENTS).
+~~32. `~/.cache/buildflow/buildflow.db` is 2.55 GB (BuildFlow preflight warned) — VACUUM or await its GC.~~ **Won't implement — one-shot cleanups; stale.**
+~~33. bank-sync gomod-check warning: direct/indirect requires mixed at go.mod:60 (pre-existing, one-line fix on touch).~~ **Won't implement — one-shot cleanups; stale.**
+~~34. The `reports/jscpd-report.json` in dnsblockd matched grep noise today — consider gitignoring generated reports.~~ **Won't implement — one-shot cleanups; stale.**
+~~35. Monitor IO PSI decay to baseline; if avg60 stays >15% with no visible writers, hunt the remaining D-state/processes (corpse-pile signature from AGENTS).~~ **Won't implement — one-shot cleanups; stale.**
 
 _(36–50 intentionally unused — no padding.)_
 

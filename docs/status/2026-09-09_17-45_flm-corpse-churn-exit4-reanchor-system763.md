@@ -91,11 +91,11 @@ the running system.
 
 ## Open items (user)
 
-1. Reboot whenever convenient (verdict: SAFE). Post-boot: flm :52625
+~~1. Reboot whenever convenient (verdict: SAFE). Post-boot: flm :52625~~ done — reboot era closed; flm corpse verified gone (docs/todo/stability.md flm :52626 corpse DONE-MOOT)
    serving after 2-5 min cold load, llama :8848/:8849 → 200, failed-unit
    count ~0, then remove `/boot/loader/loader.conf.bak-stuckboot`.
-2. Samsung p1 ESP mirror fate (keep static / automate / drop) — carried.
-3. Wise SCA approval + InboxClean main re-auth (both browser/app steps).
+~~2. Samsung p1 ESP mirror fate (keep static / automate / drop) — carried.~~ done at `p1 ESP became automated firmware boot mirror (scripts/boot-mirror-activate.sh; docs/todo/storage.md boot-mirror DONE 2026-10-15)`
+~~3. Wise SCA approval + InboxClean main re-auth (both browser/app steps).~~ **Won't implement — SCA runbook shipped (docs/services/bank-sync-sca.md); InboxClean window passed.**
 
 ## Addendum (same evening, 18:35–19:30): system-764 + guard validation + second re-armer
 

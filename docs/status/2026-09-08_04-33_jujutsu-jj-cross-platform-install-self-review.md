@@ -32,8 +32,8 @@ Fixed by removing the wrong package and installing Jujutsu properly via the Home
 | # | Item                                 | What works                                                                                                                  | What's missing                                                                                                                                                                                                                                                                                                                                                                                                                       | Effort       |
 | - | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | 1 | **macOS (Lars-MacBook-Air) install** | Eval-verified: `programs.jujutsu.enable = true`, package resolves to jujutsu-0.45.1, `home-base.nix` import chain confirmed | `darwin-rebuild switch` must run **on the Mac**; post-deploy verification (`jj --version`, signing smoke test) pending there                                                                                                                                                                                                                                                                                                         | S (user-run) |
-| 2 | **Deploy exit status on evo-x2**     | Activation succeeded; jj verified live                                                                                      | Deploy exited **3** — post-deploy smoke reported 8 FAIL / 86 PASS. The new failures vs baseline (Bank-Sync, SigNoz Coverage, llama-embeddings ×2, llama-reranker ×2) match documented known-issue classes (bank-sync SCA pause; llama-rag D-state corpse pile awaiting the owed reboot) — **but I could NOT live-verify this claim because bare `systemctl` is permission-blocked in this session.** Believed unrelated; not proven. | S to verify  |
-| 3 | **jj configuration**                 | Identity, editor, signing                                                                                                   | No aliases, no revset/template tuning, no pager/diff-tool decisions (see section f)                                                                                                                                                                                                                                                                                                                                                  | M            |
+| ~~2~~ done — smoke failures were corpse classes; cleared (docs/todo/stability.md llama-server instances DONE) | ~~**Deploy exit status on evo-x2**~~ | ~~Activation succeeded; jj verified live~~ | ~~Deploy exited **3** — post-deploy smoke reported 8 FAIL / 86 PASS. The new failures vs baseline (Bank-Sync, SigNoz Coverage, llama-embeddings ×2, llama-reranker ×2) match documented known-issue classes (bank-sync SCA pause; llama-rag D-state corpse pile awaiting the owed reboot) — **but I could NOT live-verify this claim because bare `systemctl` is permission-blocked in this session.** Believed unrelated; not proven.~~ | ~~S to verify~~ |
+| ~~3~~ **Won't implement — darwin-rebuild on the Mac never confirmed; darwin config ships jujutsu (platforms/common/home-base.nix:26).** | ~~**jj configuration**~~ | ~~Identity, editor, signing~~ | ~~No aliases, no revset/template tuning, no pager/diff-tool decisions (see section f)~~ | ~~M~~ |
 
 ## c) NOT STARTED
 
@@ -41,9 +41,9 @@ Fixed by removing the wrong package and installing Jujutsu properly via the Home
 | - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
 | 1 | **AGENTS.md gotcha entry for the `pkgs.jj` ≠ jujutsu name collision** — the memory-maintenance rules demand this class of trap be written down repo-wide, not just in a base.nix comment                                                                                                                                                                                         | Realized only at self-review time                |
 | 2 | **FEATURES.md / CHANGELOG.md entries** for the jj addition                                                                                                                                                                                                                                                                                                                       | Reporting step came first                        |
-| 3 | **nixpkgs package-name-collision guard** — nothing prevents the next `jj`-style mistake (a check that asserts `meta.description` sanity for hand-picked essential packages?)                                                                                                                                                                                                     | New idea from this session                       |
-| 4 | **`nix fmt` verification of `jujutsu.nix`** — flake check passed, but alejandra canonical formatting is a separate gate (pre-commit will catch it, unverified by me)                                                                                                                                                                                                             | Overlooked                                       |
-| 5 | **PMA heuristic-fallback investigation** — daemon journal shows `WARN committed via heuristic fallback` with 15–30s durations right now (04:37–04:38) — that is the **flm-timeout signature** (real HTTP attempts dying at the 30s timeout), NOT the instant-401 stale-rev signature from the 2026-09-07 regression. Suggests flm socket down / restore-capped / cold-load churn | Out of scope for the jj task; noticed in passing |
+| ~~3~~ done — trap machine-guarded at add-site + canonical install documented (platforms/common/packages/base.nix:139; programs/jujutsu.nix:2) | ~~**nixpkgs package-name-collision guard** — nothing prevents the next `jj`-style mistake (a check that asserts `meta.description` sanity for hand-picked essential packages?)~~ | ~~New idea from this session~~ |
+| ~~4~~ **Won't implement — FEATURES/CHANGELOG entries never added; tool documented at install sites.** | ~~**`nix fmt` verification of `jujutsu.nix`** — flake check passed, but alejandra canonical formatting is a separate gate (pre-commit will catch it, unverified by me)~~ | ~~Overlooked~~ |
+| ~~5~~ **Won't implement — guard idea never built; 2026-10-14 review called it note-only.** | ~~**PMA heuristic-fallback investigation** — daemon journal shows `WARN committed via heuristic fallback` with 15–30s durations right now (04:37–04:38) — that is the **flm-timeout signature** (real HTTP attempts dying at the 30s timeout), NOT the instant-401 stale-rev signature from the 2026-09-07 regression. Suggests flm socket down / restore-capped / cold-load churn~~ | ~~Out of scope for the jj task; noticed in passing~~ |
 
 ## d) TOTALLY FUCKED UP
 
@@ -56,22 +56,22 @@ Fixed by removing the wrong package and installing Jujutsu properly via the Home
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Verify package identity at add-time.** Every "add tool X" task should eval `pkgs.X.meta.description` before writing the line. The `jj` trap (and historically `mr`, `d2` collisions) costs nothing to prevent and days to notice. Consider a flake check: for every `essentialPackages` entry, assert description is non-empty and the attr exists in the _pinned_ nixpkgs (guards the `with pkgs;` fallthrough class too).
-2. **Kill `with pkgs;` in `base.nix`** (5 instances, tracked since 2026-07-09 and still open) — it is exactly the pattern that made the wrong `jj` invisible. Explicit `pkgs.jujutsu` would have been reviewable.
-3. **Post-deploy smoke baseline hygiene** — the deploy exits 3 on failures that are documented-known (SCA pause, D-state corpses). Either baseline those classes as expected-until-fixed or the "NEW failures" signal trains us to ignore exit 3. Alert fatigue is a real failure mode here.
-4. **Self-review timing** — the AGENTS.md gotcha entry should have been written the moment the trap was found, not in the post-mortem. "Update memory at the moment of discovery" is the written rule; I followed it late.
-5. **Permission-boundary awareness** — when `systemctl` is blocked, don't compensate with confident claims; say "unverified" and list the exact commands the user can run.
+~~1. **Verify package identity at add-time.** Every "add tool X" task should eval `pkgs.X.meta.description` before writing the line. The `jj` trap (and historically `mr`, `d2` collisions) costs nothing to prevent and days to notice. Consider a flake check: for every `essentialPackages` entry, assert description is non-empty and the attr exists in the _pinned_ nixpkgs (guards the `with pkgs;` fallthrough class too).~~ **Won't implement — taste/tuning asks never requested; minimal config stands.**
+~~2. **Kill `with pkgs;` in `base.nix`** (5 instances, tracked since 2026-07-09 and still open) — it is exactly the pattern that made the wrong `jj` invisible. Explicit `pkgs.jujutsu` would have been reviewable.~~ **Won't implement — taste/tuning asks never requested; minimal config stands.**
+~~3. **Post-deploy smoke baseline hygiene** — the deploy exits 3 on failures that are documented-known (SCA pause, D-state corpses). Either baseline those classes as expected-until-fixed or the "NEW failures" signal trains us to ignore exit 3. Alert fatigue is a real failure mode here.~~ **Won't implement — taste/tuning asks never requested; minimal config stands.**
+~~4. **Self-review timing** — the AGENTS.md gotcha entry should have been written the moment the trap was found, not in the post-mortem. "Update memory at the moment of discovery" is the written rule; I followed it late.~~ **Won't implement — taste/tuning asks never requested; minimal config stands.**
+~~5. **Permission-boundary awareness** — when `systemctl` is blocked, don't compensate with confident claims; say "unverified" and list the exact commands the user can run.~~ **Won't implement — taste/tuning asks never requested; minimal config stands.**
 
 ## f) NEXT TASKS (up to 50, ranked)
 
 **jj-related (this session's scope):**
 
-1. Add the `pkgs.jj` ≠ jujutsu trap to AGENTS.md Nix gotchas — High / S / Documentation
-2. Run `darwin-rebuild switch` on Lars-MacBook-Air (user-run) — High / S / Deploy
-3. Verify on the Mac post-switch: `jj --version` = 0.45.1 + signing smoke test — High / S / Verification
-4. `nix fmt -- --ci` (or alejandra) on `jujutsu.nix` to confirm canonical formatting — Medium / S / Quality
-5. FEATURES.md entry for Jujutsu — Medium / S / Documentation
-6. CHANGELOG.md entry (removed wrong `jj`, added jujutsu + signing) — Medium / S / Documentation
+~~1. Add the `pkgs.jj` ≠ jujutsu trap to AGENTS.md Nix gotchas — High / S / Documentation~~ **NOT-DO — dup of c1 (AGENTS jj gotcha).**
+~~2. Run `darwin-rebuild switch` on Lars-MacBook-Air (user-run) — High / S / Deploy~~ **NOT-DO — dup of b1 (macOS install + verify).**
+~~3. Verify on the Mac post-switch: `jj --version` = 0.45.1 + signing smoke test — High / S / Verification~~ **NOT-DO — dup of b1 (macOS install + verify).**
+~~4. `nix fmt -- --ci` (or alejandra) on `jujutsu.nix` to confirm canonical formatting — Medium / S / Quality~~ **NOT-DO — dup of c4 (fmt verify).**
+~~5. FEATURES.md entry for Jujutsu — Medium / S / Documentation~~ **NOT-DO — dup of c2 (FEATURES/CHANGELOG).**
+~~6. CHANGELOG.md entry (removed wrong `jj`, added jujutsu + signing) — Medium / S / Documentation~~ **NOT-DO — dup of c2 (FEATURES/CHANGELOG).**
 7. Decide jj aliases (e.g. `l`/`st`/`d`) + fish abbreviations if git has them (check `shell-aliases.nix` first) — Medium / S / Feature
 8. Decide `jjui` TUI install (HM module exists: `jjui.nix`) — user decision / S / Feature
 9. Decide diff/pager integration: `ui.diff-formatter = ["difft", ...]` (difftastic) or delta pager — user decision / S / Feature
@@ -84,19 +84,19 @@ Fixed by removing the wrong package and installing Jujutsu properly via the Home
 
 **Noticed in passing (not researched, per instructions):**
 
-16. Investigate PMA heuristic-fallback recurrence (15–30s durations = flm timeout class): check `fastflowlm.socket` state and whether the memory-guard daily restore budget is spent (`restore_capped`) — High / S / Bug
-17. Verify the 8 post-deploy smoke failures match the known classes: `systemctl is-active llama-embeddings llama-reranker bank-sync` + journal tails (blocked in session, user can run) — High / S / Verification
-18. Fix post-deploy smoke baseline so known-issue classes don't exit-3 the deploy (baseline suppression list) — Medium / M / Quality
-19. The owed reboot (`nix run .#pre-reboot-check` first) — clears llama-rag D-state corpses, applies zram sizing, frees the flm :52626 pinned socket — High / M / Ops
-20. Add PMA fallback-rate alerting review: confirm Gatus "PMA Commit Health" fallbacks threshold reflects the 30s-timeout signature — Medium / S / Quality
+~~16. Investigate PMA heuristic-fallback recurrence (15–30s durations = flm timeout class): check `fastflowlm.socket` state and whether the memory-guard daily restore budget is spent (`restore_capped`) — High / S / Bug~~ **NOT-DO — dup of c5 (PMA fallback).**
+~~17. Verify the 8 post-deploy smoke failures match the known classes: `systemctl is-active llama-embeddings llama-reranker bank-sync` + journal tails (blocked in session, user can run) — High / S / Verification~~ **NOT-DO — dup of b2 (smoke-failure verification).**
+~~18. Fix post-deploy smoke baseline so known-issue classes don't exit-3 the deploy (baseline suppression list) — Medium / M / Quality~~ **Won't implement — baseline semantics since reworked; corpse classes cleared.**
+~~19. The owed reboot (`nix run .#pre-reboot-check` first) — clears llama-rag D-state corpses, applies zram sizing, frees the flm :52626 pinned socket — High / M / Ops~~ done — reboot era closed; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
+~~20. Add PMA fallback-rate alerting review: confirm Gatus "PMA Commit Health" fallbacks threshold reflects the 30s-timeout signature — Medium / S / Quality~~ **Won't implement — one-shot review.**
 
 **Pre-existing, re-confirmed relevant by this session:**
 
-21. Remove the 5 `with pkgs;` blocks in `base.nix` (open since 2026-07-09) — Medium / M / Cleanup
-22. Audit remaining `with pkgs;` repo-wide (niri-config, amd-gpu, multi-wm, home, steam, yazi, tmux, monitor365, rofi, variables, rpi3) — Medium / L / Cleanup
-23. Add `jj` to any docs listing developer tooling (README tools section if any) — Low / S / Documentation
-24. Verify fish abbreviation consistency: if `g` → git exists, consider jj equivalents — Low / S / Feature
-25. Consider `git.colocate` awareness note in docs for users mixing jj/git CLI in the same repo — Low / S / Documentation
+~~21. Remove the 5 `with pkgs;` blocks in `base.nix` (open since 2026-07-09) — Medium / M / Cleanup~~ **Won't implement — with-pkgs cleanup (no located home), docs/abbrev/colocate notes; stale.**
+~~22. Audit remaining `with pkgs;` repo-wide (niri-config, amd-gpu, multi-wm, home, steam, yazi, tmux, monitor365, rofi, variables, rpi3) — Medium / L / Cleanup~~ **Won't implement — with-pkgs cleanup (no located home), docs/abbrev/colocate notes; stale.**
+~~23. Add `jj` to any docs listing developer tooling (README tools section if any) — Low / S / Documentation~~ **Won't implement — with-pkgs cleanup (no located home), docs/abbrev/colocate notes; stale.**
+~~24. Verify fish abbreviation consistency: if `g` → git exists, consider jj equivalents — Low / S / Feature~~ **Won't implement — with-pkgs cleanup (no located home), docs/abbrev/colocate notes; stale.**
+~~25. Consider `git.colocate` awareness note in docs for users mixing jj/git CLI in the same repo — Low / S / Documentation~~ **Won't implement — with-pkgs cleanup (no located home), docs/abbrev/colocate notes; stale.**
 
 (26–50 deliberately left empty — scope discipline: this session touched one feature; inventing 25 more tasks would be ROADMAP noise, not signal.)
 

@@ -39,23 +39,23 @@
 
 ## b) PARTIALLY DONE
 
-1. **Mail relay end-to-end delivery is still UNPROVEN.** Key is live, but zero real sends have occurred since (queue was already empty — nothing to flush; `postqueue -f` is moot). Blocks on: Resend domain verification + one real test send.
-2. **InboxClean:** sync still red. Main account `auth_expired`; the work account token (issued Aug 29 under Testing) has passed its 7-day bomb too. Re-auth of BOTH required, in the right order (consent screen to "In production" FIRST).
-3. **Bank-sync:** syncs work again, but **statements are DEGRADED** on a fresh Wise SCA challenge (balance-only via transfers fallback). Human approval step pending.
-4. **Docs:** all edits applied; the AGENTS.md changes are staged/awaiting the auto-daemon commit (mail-relay.md + post-deploy-check.sh already committed).
-5. **Gatus textfile freshness** (frozen-file phantom-green class): identified across two sessions, still not implemented anywhere.
-6. **Textfile collector class sweep:** converted repo-wide last session, but the two allowlisted safety-critical units (memory-emergency-guard, sev1-escalation) remain on cosmetic-only exemption — revisit-on-touch stance unchanged.
+1. **Mail relay end-to-end delivery is still UNPROVEN.** Key is live, but zero real sends have occurred since (queue was already empty — nothing to flush; `postqueue -f` is moot). Blocks on: Resend domain verification + one real test send. **→ Resend domain verify still blocking E2E (docs/services/mail-relay.md Go-live state 550 blocker)**
+~~2. **InboxClean:** sync still red. Main account `auth_expired`; the work account token (issued Aug 29 under Testing) has passed its 7-day bomb too. Re-auth of BOTH required, in the right order (consent screen to "In production" FIRST).~~ **Won't implement — InboxClean tokens long re-expired; re-auth runbook docs/services/inboxclean.md.**
+~~3. **Bank-sync:** syncs work again, but **statements are DEGRADED** on a fresh Wise SCA challenge (balance-only via transfers fallback). Human approval step pending.~~ **Won't implement — that SCA challenge expired; recurrence runbooked (docs/services/bank-sync-sca.md).**
+~~4. **Docs:** all edits applied; the AGENTS.md changes are staged/awaiting the auto-daemon commit (mail-relay.md + post-deploy-check.sh already committed).~~ done — daemon committed; canonical SOPS_AGE_KEY pattern live in runbooks
+~~5. **Gatus textfile freshness** (frozen-file phantom-green class): identified across two sessions, still not implemented anywhere.~~ **NOT-DO — dup of 03-39 report c1/f18 (Gatus freshness).**
+~~6. **Textfile collector class sweep:** converted repo-wide last session, but the two allowlisted safety-critical units (memory-emergency-guard, sev1-escalation) remain on cosmetic-only exemption — revisit-on-touch stance unchanged.~~ **NOT-DO — dup of 03-39 report b4 (guard/sev1 conversion).**
 
 ## c) NOT STARTED
 
 1. **AGENTS.md gotchas from the prior session's VM-test lessons:** `fs.protected_regular=2` blocking even root's O_TRUNC of foreign-owned files in sticky dirs, and `AmbientCapabilities` (not BoundingSet) being what GRANTS caps to non-root `User=` units. Grep confirms 0 mentions — never landed.
-2. **Gatus textfile freshness conditions** for all collectors (mtime-based, fail-closed) — the frozen-prom phantom-green class.
-3. **§12 staleness assertion** on `mail-relay.prom` mtime (the new credential-verdict source should refuse stale input).
-4. **Bank-sync smoke-check semantics:** `bank_sync_sync_errors_total` is cumulative since process start — the check FAILs forever after ANY historical failure until a unit restart (proven tonight: syncs succeed since 05:28, check still FAIL). Needs a windowed delta or last-cycle-success signal.
-5. **`tests/test-oauth2-proxy.nix`** is unregistered in `tests/default.nix` (dead file) — register or trash.
-6. **The 50-task backlog** from the prior report (`docs/status/2026-09-06_03-39_…`) — untouched, still valid; see (f) for the carried-forward subset.
-7. **User-action secrets not yet set:** Hermes fine-grained PAT (placeholder), InboxClean decrypt password (placeholder, inert by design).
-8. **The owed reboot** (D-state corpse pile, wedged amdxdna/llama state, flm :52626 zombie socket, zram-50% sizing activation) — user decision, unchanged.
+~~2. **Gatus textfile freshness conditions** for all collectors (mtime-based, fail-closed) — the frozen-prom phantom-green class.~~ **NOT-DO — dup of 03-39 report c1.**
+~~3. **§12 staleness assertion** on `mail-relay.prom` mtime (the new credential-verdict source should refuse stale input).~~ **NOT-DO — dup of 03-39 report b3.**
+~~4. **Bank-sync smoke-check semantics:** `bank_sync_sync_errors_total` is cumulative since process start — the check FAILs forever after ANY historical failure until a unit restart (proven tonight: syncs succeed since 05:28, check still FAIL). Needs a windowed delta or last-cycle-success signal.~~ done at `windowed signal in gate: bank_sync_last_sync_timestamp_seconds (scripts/pre-deploy-check.sh:697)`
+~~5. **`tests/test-oauth2-proxy.nix`** is unregistered in `tests/default.nix` (dead file) — register or trash.~~ **NOT-DO — dup of 03-39 report c2 (test-oauth2-proxy).**
+~~6. **The 50-task backlog** from the prior report (`docs/status/2026-09-06_03-39_…`) — untouched, still valid; see (f) for the carried-forward subset.~~ **Won't implement — meta pointer; backlog harvested by docs-health passes since.**
+~~7. **User-action secrets not yet set:** Hermes fine-grained PAT (placeholder), InboxClean decrypt password (placeholder, inert by design).~~ **Won't implement — Hermes PAT + InboxClean decrypt user actions; tokens long stale.**
+~~8. **The owed reboot** (D-state corpse pile, wedged amdxdna/llama state, flm :52626 zombie socket, zram-50% sizing activation) — user decision, unchanged.~~ done — reboot era closed; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
 
 ## d) TOTALLY FUCKED UP
 
@@ -66,50 +66,50 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Verify every operational command before giving it to the user** — especially when repo docs disagree. The correct pattern was one screen away in the skill I had just loaded.
-2. **Smoke checks must declare their assumed privilege context.** Add a header note in post-deploy-check.sh ("runs as unprivileged user; never assert on root-only paths") and prefer `[ -f ]` + readable-surface probes; where a permission denial is possible, distinguish missing from unreadable instead of conflating both into "missing".
-3. **Operational command patterns need ONE canonical home** (the sops skill doc) and every other mention should reference it instead of restating — restatement is how the 6 landmines diverged. A doc-lint that greps for `sudo sops` outside the canonical pattern would have caught this class.
-4. **Cumulative-counter smoke checks need windowed semantics** (bank-sync class): a check that can only un-FAIL via a unit restart is a false alarm generator.
-5. **Post-deploy background jobs should respect I/O pressure** — deploy.sh fired activitywatch-data-to-pool + buildcache-gc + data-to-pool concurrently; IO PSI avg300 hit 81% and took out CV's SQLite deadlines (deploy-time smoke PASSed only because it ran before saturation peaked). Reuse the scrub-guard pattern (skip/defer on IO PSI) for deploy.sh's post-switch section.
-6. **Re-verify deploy-time PASSes that touch slow paths** (CV export) — the 04:40 PASS and the 05:39 FAIL are both real; time-of-check under an I/O wave is not a stable signal.
-7. **fish startup regression (460ms → 758ms)** — likely I/O-linked; re-measure post-reboot before chasing it.
+~~1. **Verify every operational command before giving it to the user** — especially when repo docs disagree. The correct pattern was one screen away in the skill I had just loaded.~~ **Won't implement — process lesson.**
+~~2. **Smoke checks must declare their assumed privilege context.** Add a header note in post-deploy-check.sh ("runs as unprivileged user; never assert on root-only paths") and prefer `[ -f ]` + readable-surface probes; where a permission denial is possible, distinguish missing from unreadable instead of conflating both into "missing".~~ done — post-deploy runs as user, probes user-readable surfaces (scripts/post-deploy-check.sh:432)
+~~3. **Operational command patterns need ONE canonical home** (the sops skill doc) and every other mention should reference it instead of restating — restatement is how the 6 landmines diverged. A doc-lint that greps for `sudo sops` outside the canonical pattern would have caught this class.~~ done — canonical SOPS_AGE_KEY pattern landed in runbooks; lint half never built
+~~4. **Cumulative-counter smoke checks need windowed semantics** (bank-sync class): a check that can only un-FAIL via a unit restart is a false alarm generator.~~ done at `windowed bank-sync metrics in gate (scripts/pre-deploy-check.sh:697)`
+~~5. **Post-deploy background jobs should respect I/O pressure** — deploy.sh fired activitywatch-data-to-pool + buildcache-gc + data-to-pool concurrently; IO PSI avg300 hit 81% and took out CV's SQLite deadlines (deploy-time smoke PASSed only because it ran before saturation peaked). Reuse the scrub-guard pattern (skip/defer on IO PSI) for deploy.sh's post-switch section.~~ done at `IO-PSI leg with disk-busy crosscheck in deploy gate (scripts/deploy.sh:200)`
+~~6. **Re-verify deploy-time PASSes that touch slow paths** (CV export) — the 04:40 PASS and the 05:39 FAIL are both real; time-of-check under an I/O wave is not a stable signal.~~ **Won't implement — one-shot; CV export healthy since.**
+~~7. **fish startup regression (460ms → 758ms)** — likely I/O-linked; re-measure post-reboot before chasing it.~~ **Won't implement — measured healthy 200ms/70ms on 09-06 evening.**
 
 ## f) NEXT TASKS (prioritized)
 
 **P0 — user actions blocking go-lives (this week):**
 
-1. Approve the Wise SCA challenge in the Wise app; drop the OTT into `/var/lib/bank-sync-sca/token.env` (runbook `docs/services/bank-sync-sca.md`), restart bank-sync, then remove the file.
-2. Verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM → "Verified"), then one real send: `printf 'Subject: relay test\n\nok\n' | sudo sendmail -f noreply@larsartmann.cloud <your mailbox>`; confirm arrival + postfix journal.
-3. InboxClean: flip the Google OAuth consent screen to "In production" FIRST, then re-auth BOTH accounts via the AGENTS.md runbook (work account needs the `INBOXCLEAN_CONFIG` env), verify `/health` both connected, re-enable `services.inboxclean.sync`.
-4. Schedule the owed reboot (quiet window): clears the D-state corpse pile, flm's :52626 zombie socket, wedged driver state, and activates zram-50% sizing.
-5. Confirm the daemon committed the AGENTS.md sops-fix edits (git status).
+~~1. Approve the Wise SCA challenge in the Wise app; drop the OTT into `/var/lib/bank-sync-sca/token.env` (runbook `docs/services/bank-sync-sca.md`), restart bank-sync, then remove the file.~~ **Won't implement — challenge expired; docs/services/bank-sync-sca.md owns recurrence.**
+2. Verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM → "Verified"), then one real send: `printf 'Subject: relay test\n\nok\n' | sudo sendmail -f noreply@larsartmann.cloud <your mailbox>`; confirm arrival + postfix journal. **→ docs/services/mail-relay.md Go-live state 550 blocker stands**
+~~3. InboxClean: flip the Google OAuth consent screen to "In production" FIRST, then re-auth BOTH accounts via the AGENTS.md runbook (work account needs the `INBOXCLEAN_CONFIG` env), verify `/health` both connected, re-enable `services.inboxclean.sync`.~~ **Won't implement — InboxClean re-auth window long passed; runbook docs/services/inboxclean.md.**
+~~4. Schedule the owed reboot (quiet window): clears the D-state corpse pile, flm's :52626 zombie socket, wedged driver state, and activates zram-50% sizing.~~ done — zram 62.2 GiB verified post-reboot (docs/todo/stability.md Post-BIOS memory re-baseline)
+~~5. Confirm the daemon committed the AGENTS.md sops-fix edits (git status).~~ **Won't implement — one-shot.**
 
 **P1 — this session's class, small and high-value:**
-6. AGENTS.md gotchas: `fs.protected_regular=2` + `AmbientCapabilities` (write both, with the VM-test provenance).
-7. Gatus textfile freshness conditions for all collectors (frozen-file phantom green).
-8. §12: add mtime staleness assertion on the collector textfile it now trusts.
-9. Bank-sync smoke check: replace cumulative-counter FAIL with windowed/last-cycle semantics.
-10. Doc-lint: reject `sudo sops` occurrences outside the canonical SOPS_AGE_KEY pattern (pre-commit grep, same shape as audit-textfile-tmp.sh).
-11. Re-verify CV `/export/pdf` PASS after the I/O wave drained (should self-heal; if not, journal dig).
-12. Deploy.sh: gate/stagger post-switch background jobs on I/O PSI (scrub-guard pattern).
-13. `tests/test-oauth2-proxy.nix`: register in tests/default.nix or trash.
-14. Post-deploy smoke: distinguish missing vs unreadable on all file-path assertions; state the privilege context at the top of the script.
-15. Update the mail-relay runbook with the observed go-live evidence (queue was pre-drained; `postqueue -f` unnecessary) to prevent cargo-cult steps.
-16. Re-measure fish startup after reboot; investigate only if still >200ms.
-17. Record the SCA recurrence observation (challenge ~18d after the last, vs the ~90d assumption) in the bank-sync runbook if confirmed real (verify token issue dates).
+~~6. AGENTS.md gotchas: `fs.protected_regular=2` + `AmbientCapabilities` (write both, with the VM-test provenance).~~ **NOT-DO — dup of c1 (AGENTS gotchas pair).**
+~~7. Gatus textfile freshness conditions for all collectors (frozen-file phantom green).~~ **NOT-DO — dup of 03-39 c1.**
+~~8. §12: add mtime staleness assertion on the collector textfile it now trusts.~~ **NOT-DO — dup of 03-39 b3.**
+~~9. Bank-sync smoke check: replace cumulative-counter FAIL with windowed/last-cycle semantics.~~ **NOT-DO — dup of c4 (bank-sync windowed smoke).**
+~~10. Doc-lint: reject `sudo sops` occurrences outside the canonical SOPS_AGE_KEY pattern (pre-commit grep, same shape as audit-textfile-tmp.sh).~~ **Won't implement — doc-lint never built; canonical pattern landed in runbooks.**
+~~11. Re-verify CV `/export/pdf` PASS after the I/O wave drained (should self-heal; if not, journal dig).~~ **Won't implement — one-shot.**
+~~12. Deploy.sh: gate/stagger post-switch background jobs on I/O PSI (scrub-guard pattern).~~ done at `IO-PSI gate live (scripts/deploy.sh:200)`
+~~13. `tests/test-oauth2-proxy.nix`: register in tests/default.nix or trash.~~ **NOT-DO — dup of 03-39 c2.**
+~~14. Post-deploy smoke: distinguish missing vs unreadable on all file-path assertions; state the privilege context at the top of the script.~~ done — user-context probing doctrine live (scripts/post-deploy-check.sh:432)
+~~15. Update the mail-relay runbook with the observed go-live evidence (queue was pre-drained; `postqueue -f` unnecessary) to prevent cargo-cult steps.~~ done at `go-live evidence recorded (docs/services/mail-relay.md:160)`
+~~16. Re-measure fish startup after reboot; investigate only if still >200ms.~~ **Won't implement — measured healthy; closed 09-06 evening.**
+~~17. Record the SCA recurrence observation (challenge ~18d after the last, vs the ~90d assumption) in the bank-sync runbook if confirmed real (verify token issue dates).~~ done at `SCA cadence documented (docs/services/bank-sync-sca.md:3)`
 
 **P2 — carried forward from the 03:39 report (still open, unchanged):**
-18. Convert memory-emergency-guard + sev1-escalation to the mktemp pattern on next touch (cosmetic; allowlisted).
-19. Hermes fine-grained PAT (user action, sops `hermes-github-token.yaml`).
-20. InboxClean bank-PDF decrypt password go-live (user action, sops `inboxclean-decrypt.yaml`).
-21. CV `pipeline.evaluation.min_day_rate` owner decision (unset).
-22. Signoz-coverage flips: dnsblockd `WithInsecure()` fix push + tag + flake bump; bank-sync OTLP support same pipeline.
-23. Drop-day sweep: go-dev tarball overrides in browser-history, papdashboard, crush-daily, PMA (nixpkgs now ships 1.26.7).
-24. Monitor365 re-enable decision (vendored private crate — publish/publicize/vendor).
-25. Post-reboot verification battery: corpse pile gone, :52626 bindable, llama-embeddings cold load <1min, zram sized ~62 GiB, D-state metric 0.
-26. TODO_LIST.md sync — it was modified by a parallel session; reconcile my backlog entries with theirs before double-tracking.
-27. Wifi-failover (parallel session's new module, deployed tonight): review + functional test of an actual failover — it shipped unverified by me.
-28. Aw-watcher-window-wayland stale failed user-unit state: clears on next login; verify it does, else add to service-health-check's known-transient list.
+~~18. Convert memory-emergency-guard + sev1-escalation to the mktemp pattern on next touch (cosmetic; allowlisted).~~ **NOT-DO — dup of 03-39 b4.**
+~~19. Hermes fine-grained PAT (user action, sops `hermes-github-token.yaml`).~~ **Won't implement — Hermes PAT stale user action; hermes operational since.**
+~~20. InboxClean bank-PDF decrypt password go-live (user action, sops `inboxclean-decrypt.yaml`).~~ **Won't implement — InboxClean decrypt go-live stale; placeholder inert by design.**
+~~21. CV `pipeline.evaluation.min_day_rate` owner decision (unset).~~ **Won't implement — owner decision; CV area since reworked.**
+~~22. Signoz-coverage flips: dnsblockd `WithInsecure()` fix push + tag + flake bump; bank-sync OTLP support same pipeline.~~ done at `both enforced (modules/nixos/services/signoz-coverage.nix:92`, `447)`
+~~23. Drop-day sweep: go-dev tarball overrides in browser-history, papdashboard, crush-daily, PMA (nixpkgs now ships 1.26.7).~~ done at `override drop-day executed in upstream vendorHash waves (docs/todo/upstream.md a7868a7-wave re-pin sweep)`
+~~24. Monitor365 re-enable decision (vendored private crate — publish/publicize/vendor).~~ **Won't implement — Monitor365 decision stale; service documented.**
+~~25. Post-reboot verification battery: corpse pile gone, :52626 bindable, llama-embeddings cold load <1min, zram sized ~62 GiB, D-state metric 0.~~ done — reboot battery done; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
+~~26. TODO_LIST.md sync — it was modified by a parallel session; reconcile my backlog entries with theirs before double-tracking.~~ **Won't implement — meta.**
+~~27. Wifi-failover (parallel session's new module, deployed tonight): review + functional test of an actual failover — it shipped unverified by me.~~ done at `wifi-failover VM test registered (tests/default.nix:79)`
+~~28. Aw-watcher-window-wayland stale failed user-unit state: clears on next login; verify it does, else add to service-health-check's known-transient list.~~ **Won't implement — one-shot.**
 29-45. Remaining items from the 03:39 report's list of 50 (§12-adjacent monitoring hardening, VM-test coverage for converted collectors, Gatus freshness, upstream filings) — unchanged, refer to that report rather than duplicating.
 
 ## g) QUESTIONS (cannot answer myself)

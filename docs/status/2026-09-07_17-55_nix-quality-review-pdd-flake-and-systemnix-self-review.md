@@ -31,18 +31,18 @@
 
 ## b) PARTIALLY DONE
 
-1. **SystemNix post-fix verification:** full `nix flake check` (with VM-test builds) was run BEFORE my edits (all green); after my edits I ran `--no-build` + both host toplevel evals (green). Then the pre-commit hook ran the FULL check at commit time and **`checks.x86_64-linux.pool-recovery` FAILED**: `/dev/disk/by-label/pool` device job timed out after 5min on BOTH nodes → `mnt-pool.mount` never started. Triaged: none of my 8 edits touch mounts/storage (the test uses no harden/MemoryHigh surface); the concurrent session's flake.nix change (sudo pkg removal, unrelated check) is mount-neutral; the same suite passed 35min earlier. Suspected VM-test flake under heavy parallel build load — NOT yet isolated (`nix build .#checks.x86_64-linux.pool-recovery` alone pending). Flake vs regression: UNRESOLVED.
-2. **Concurrent-session files (SystemNix: flake.nix, scripts/pre-reboot-check.sh; pdd: AGENTS.md paragraph) were reviewed for conflicts but NOT co-verified** — per AGENTS.md rule, my green checks only cover my files.
-3. **pdd go-standard migration:** analyzed and documented as TODO #32 — blocked upstream (go-nix-helpers needs GOEXPERIMENT support for its apps and the go-modules FOD). Analysis done, migration not attempted (correctly).
-4. **SystemNix TODO_LIST harvest:** my reported-not-fixed findings (see f) are in THIS report but NOT yet routed into TODO_LIST.md (docs-health HARVEST pending owner go-ahead — user instructed report-then-wait).
+~~1. **SystemNix post-fix verification:** full `nix flake check` (with VM-test builds) was run BEFORE my edits (all green); after my edits I ran `--no-build` + both host toplevel evals (green). Then the pre-commit hook ran the FULL check at commit time and **`checks.x86_64-linux.pool-recovery` FAILED**: `/dev/disk/by-label/pool` device job timed out after 5min on BOTH nodes → `mnt-pool.mount` never started. Triaged: none of my 8 edits touch mounts/storage (the test uses no harden/MemoryHigh surface); the concurrent session's flake.nix change (sudo pkg removal, unrelated check) is mount-neutral; the same suite passed 35min earlier. Suspected VM-test flake under heavy parallel build load — NOT yet isolated (`nix build .#checks.x86_64-linux.pool-recovery` alone pending). Flake vs regression: UNRESOLVED.~~ done — resolved same-day: load-induced VM flake; full check green on identical tree (in-file post-commit resolution)
+~~2. **Concurrent-session files (SystemNix: flake.nix, scripts/pre-reboot-check.sh; pdd: AGENTS.md paragraph) were reviewed for conflicts but NOT co-verified** — per AGENTS.md rule, my green checks only cover my files.~~ **Won't implement — one-shot co-verification.**
+3. **pdd go-standard migration:** analyzed and documented as TODO #32 — blocked upstream (go-nix-helpers needs GOEXPERIMENT support for its apps and the go-modules FOD). Analysis done, migration not attempted (correctly). **→ docs/todo/upstream.md Satellite GOEXPERIMENT sweep (21 repos)**
+~~4. **SystemNix TODO_LIST harvest:** my reported-not-fixed findings (see f) are in THIS report but NOT yet routed into TODO_LIST.md (docs-health HARVEST pending owner go-ahead — user instructed report-then-wait).~~ **Won't implement — meta; docs-health harvest passes operated since.**
 
 ## c) NOT STARTED (known, deliberately deferred — owner decisions or out of scope)
 
-1. The ~25 SystemNix root oneshots/watchdogs lacking `harden`/`serviceOneshotDefaults`/`startLimit*` (pocket-id provisioners, monitor365 watchdogs, overview/pma watchdogs, forgejo-runner, gatus/postfix/cv-server, mkDesktopNotifyService factory gap).
+~~1. The ~25 SystemNix root oneshots/watchdogs lacking `harden`/`serviceOneshotDefaults`/`startLimit*` (pocket-id provisioners, monitor365 watchdogs, overview/pma watchdogs, forgejo-runner, gatus/postfix/cv-server, mkDesktopNotifyService factory gap).~~ done at `eval-time systemd shape/lifecycle/oneshot audits live (AGENTS.md Eval-time table; tests/test-systemd-shape-audit.nix)`
 2. `SystemCallFilter` fleet-wide decision (absent from `harden()`).
 3. taskwarrior `hashString` pseudo-secret → sops; zfs-vm plaintext root password.
 4. flake-registry duplication hoist (darwin/nixos mirror); `with pkgs;` ×14 + `rec` ×8 cleanup; pkgs/ `maintainers` meta ×10.
-5. pdd: CI-on-nix decision; dprint-vs-nixfmt formatter arbitration for non-nix files in checks; the 140 golangci-lint findings (pre-existing, not mine).
+~~5. pdd: CI-on-nix decision; dprint-vs-nixfmt formatter arbitration for non-nix files in checks; the 140 golangci-lint findings (pre-existing, not mine).~~ **Won't implement — pdd-repo decisions; out of SystemNix scope.**
 
 ## d) TOTALLY FUCKED UP (brutal honesty — my own mistakes this session)
 
@@ -55,65 +55,65 @@
 
 ## e) WHAT WE SHOULD IMPROVE (how to be less stupid)
 
-1. **Make the startLimit/harden/oneshot rules eval-enforced, not convention-enforced.** The repo already has the audit-module pattern (start-limit-audit, timeout-audit, otel-endpoint-audit) and it demonstrably works (zero violations repo-wide for placement). Presence (not just placement) of `startLimit*` and `harden`/`serviceOneshotDefaults` per unit class is the exact same shape of guard — ~25 current gaps prove convention alone drifted.
-2. **Add a negative test for the MemoryHigh derivation** (lib/systemd.nix now parses strings — it deserves the same mutation-test treatment as gatus-pattern-lint; `tests/` has the harness pattern).
-3. **Re-run the FULL flake check (VM tests) after any modules/ or lib/ change** — make it the session-end rule, not the session-start one.
-4. **Kill the remaining triple-source-of-truth classes on sight** (this session: statsPort ×3, ClickHouse 8123, dnsblockd CA cert dual-source still open) — each is a future desync incident waiting for its date stamp.
-5. **pdd: adopt SystemNix's `--no-update-lock-file` fmt discipline** in its AGENTS.md (it has moving-ref inputs now).
-6. **Route review findings into TODO_LIST immediately** (docs-health HARVEST) instead of letting them live only in a timestamped report.
+~~1. **Make the startLimit/harden/oneshot rules eval-enforced, not convention-enforced.** The repo already has the audit-module pattern (start-limit-audit, timeout-audit, otel-endpoint-audit) and it demonstrably works (zero violations repo-wide for placement). Presence (not just placement) of `startLimit*` and `harden`/`serviceOneshotDefaults` per unit class is the exact same shape of guard — ~25 current gaps prove convention alone drifted.~~ **NOT-DO — dup of c1 (presence audits).**
+~~2. **Add a negative test for the MemoryHigh derivation** (lib/systemd.nix now parses strings — it deserves the same mutation-test treatment as gatus-pattern-lint; `tests/` has the harness pattern).~~ done at `harden-lifecycle check registered (tests/default.nix:64)`
+~~3. **Re-run the FULL flake check (VM tests) after any modules/ or lib/ change** — make it the session-end rule, not the session-start one.~~ **Won't implement — process rule; checks run via pre-commit/CI since.**
+~~4. **Kill the remaining triple-source-of-truth classes on sight** (this session: statsPort ×3, ClickHouse 8123, dnsblockd CA cert dual-source still open) — each is a future desync incident waiting for its date stamp.~~ done at `port-registry audits live (AGENTS.md Eval-time table; tests/test-port-registry-audit.nix)`
+~~5. **pdd: adopt SystemNix's `--no-update-lock-file` fmt discipline** in its AGENTS.md (it has moving-ref inputs now).~~ **Won't implement — pdd upstream.**
+~~6. **Route review findings into TODO_LIST immediately** (docs-health HARVEST) instead of letting them live only in a timestamped report.~~ **Won't implement — meta.**
 
 ## f) Up to 50 things to do next (brainstorm-ranked, both repos; first ~10 are the Pareto slice)
 
-1. Deploy SystemNix (`nix run .#deploy`) to activate the 8 fixes — MemoryHigh + dozzle digest + port registry take effect only then.
-2. Re-run FULL `nix flake check` (VM tests) post-edit as the deploy gate — **IMMEDIATELY: pool-recovery is currently red (see b.1); isolate `nix build .#checks.x86_64-linux.pool-recovery` to classify flake vs regression before ANY deploy**.
-3. SystemNix: harden the ~25 raw oneshots/watchdogs (batch by risk: root+systemctl ones first).
-4. SystemNix: add eval-time "presence" audits (startLimit*, harden-or-justify per unit class) — turns d)/e) class into guard.
+~~1. Deploy SystemNix (`nix run .#deploy`) to activate the 8 fixes — MemoryHigh + dozzle digest + port registry take effect only then.~~ done — deploys routine; fixes long live
+~~2. Re-run FULL `nix flake check` (VM tests) post-edit as the deploy gate — **IMMEDIATELY: pool-recovery is currently red (see b.1); isolate `nix build .#checks.x86_64-linux.pool-recovery` to classify flake vs regression before ANY deploy**.~~ **Won't implement — one-shot.**
+~~3. SystemNix: harden the ~25 raw oneshots/watchdogs (batch by risk: root+systemctl ones first).~~ **NOT-DO — dup of c1.**
+~~4. SystemNix: add eval-time "presence" audits (startLimit*, harden-or-justify per unit class) — turns d)/e) class into guard.~~ done at `AGENTS.md Eval-time audit table (systemd shapes`, ` lifecycle keys`, ` ports)`
 5. SystemNix: decide + implement SystemCallFilter policy for `harden()` (document decision either way).
-6. SystemNix: mutation test for MemoryHigh parser (tests/test-harden-memory.nix).
-7. SystemNix: taskwarrior sync secret → sops (requires server-side rotation — coordinated change).
-8. SystemNix: zfs-vm root → hashedPasswordFile or documented throwaway exception.
-9. SystemNix: hoist flake-registry settings into platforms/common/nix-settings.nix (delete the darwin/nixos mirror).
-10. SystemNix: fix cv.nix hardcoded `User = "lars"` → primary-user mechanism (careful: CV area is hot).
+~~6. SystemNix: mutation test for MemoryHigh parser (tests/test-harden-memory.nix).~~ **NOT-DO — dup of e2 (MemoryHigh mutation test).**
+~~7. SystemNix: taskwarrior sync secret → sops (requires server-side rotation — coordinated change).~~ **NOT-DO — dup of c3 (taskwarrior sops; zfs-vm password).**
+~~8. SystemNix: zfs-vm root → hashedPasswordFile or documented throwaway exception.~~ **NOT-DO — dup of c3 (taskwarrior sops; zfs-vm password).**
+~~9. SystemNix: hoist flake-registry settings into platforms/common/nix-settings.nix (delete the darwin/nixos mirror).~~ **NOT-DO — dup of c4 (flake-registry hoist).**
+~~10. SystemNix: fix cv.nix hardcoded `User = "lars"` → primary-user mechanism (careful: CV area is hot).~~ **NOT-DO — dup of c2 (SystemCallFilter).**
 11. SystemNix: immich-db-backup ReadWritePaths dir → mount-gated creator oneshot (the documented 226 class).
-12. SystemNix: `with pkgs;` ×14 cleanup (mechanical, eval-verified).
-13. SystemNix: `rec` ×8 cleanup in lib/images.nix + theme.nix + rocm.nix.
-14. SystemNix: pkgs/ maintainers meta ×10; dms-lock + freebsd-zfs-vm meta at all.
-15. SystemNix: freebsd-zfs-vm — checksum the runtime curl download; port 2222 → ports registry.
-16. SystemNix: dms-lock `/home/lars` fallback → parameter or loud failure.
-17. SystemNix: lib/docker.nix `${name}-pull` unit → harden + oneshot defaults.
-18. SystemNix: mkDesktopNotifyService factory → add startLimit* (inherits to all consumers).
-19. SystemNix: normalize 6 units using unitConfig.StartLimit* to top-level options (convention consistency; audit already blesses both).
-20. SystemNix: user services with raw serviceConfig (sev1-overlay, smart-audio, shutdown-overlay, dnsblockd-cert-trust user) → hardenUser.
-21. SystemNix: dnsblockd CA cert dual-source (inline pki + sops) → single source or eval-time equality assertion.
-22. SystemNix: ssh-config.nix common `user = "lars"` → `config.home.username`.
-23. SystemNix: deep-review the dirs no agent covered: scripts/, tests/ (beyond 2 files), systems/zfs-vm.nix, legacy/, templates/, versions/, docs/ drift.
-24. SystemNix: TODO_LIST HARVEST from this report (owner-approved slice).
-25. SystemNix: sub-agent reported `quick-go` excluded monitor365 — revisit whether the private-crate 404 blocker got fixed upstream since 2026-08-12.
-26. pdd: fix the 140 golangci-lint findings or consciously re-baseline `.golangci.yml` (TODO #23 said "must stay green" — it drifted red).
-27. pdd: run actionlint on ci.yml (existing TODO #28) — I bumped go-version without it.
-28. pdd: decide CI-on-nix vs setup-go (needs private-dep auth story for git+ssh inputs in CI).
-29. pdd: add `checks.format` for dprint-managed files (md/json) or document treefmt as the single arbiter.
-30. pdd: `nix flake check --all-systems` / darwin eval sanity (currently linux-only checked).
+~~12. SystemNix: `with pkgs;` ×14 cleanup (mechanical, eval-verified).~~ **NOT-DO — dup of c4 (with pkgs; rec cleanups).**
+~~13. SystemNix: `rec` ×8 cleanup in lib/images.nix + theme.nix + rocm.nix.~~ **NOT-DO — dup of c4 (with pkgs; rec cleanups).**
+~~14. SystemNix: pkgs/ maintainers meta ×10; dms-lock + freebsd-zfs-vm meta at all.~~ **Won't implement — cosmetic/niche cleanups; stale.**
+~~15. SystemNix: freebsd-zfs-vm — checksum the runtime curl download; port 2222 → ports registry.~~ **Won't implement — cosmetic/niche cleanups; stale.**
+~~16. SystemNix: dms-lock `/home/lars` fallback → parameter or loud failure.~~ **Won't implement — cosmetic/niche cleanups; stale.**
+~~17. SystemNix: lib/docker.nix `${name}-pull` unit → harden + oneshot defaults.~~ **Won't implement — superseded - Docker removed 2026-10-08 (CHANGELOG.md Docker runtime fully removed).**
+~~18. SystemNix: mkDesktopNotifyService factory → add startLimit* (inherits to all consumers).~~ **NOT-DO — dup of c1 (startLimit normalization).**
+~~19. SystemNix: normalize 6 units using unitConfig.StartLimit* to top-level options (convention consistency; audit already blesses both).~~ **Won't implement — audit blesses both forms.**
+~~20. SystemNix: user services with raw serviceConfig (sev1-overlay, smart-audio, shutdown-overlay, dnsblockd-cert-trust user) → hardenUser.~~ **NOT-DO — dup of c1 (hardenUser gaps).**
+21. SystemNix: dnsblockd CA cert dual-source (inline pki + sops) → single source or eval-time equality assertion. **→ docs/todo/services.md Verify dnsblockd CA parity**
+~~22. SystemNix: ssh-config.nix common `user = "lars"` → `config.home.username`.~~ **Won't implement — niche/pdd items; stale.**
+~~23. SystemNix: deep-review the dirs no agent covered: scripts/, tests/ (beyond 2 files), systems/zfs-vm.nix, legacy/, templates/, versions/, docs/ drift.~~ **Won't implement — niche/pdd items; stale.**
+~~24. SystemNix: TODO_LIST HARVEST from this report (owner-approved slice).~~ **Won't implement — niche/pdd items; stale.**
+~~25. SystemNix: sub-agent reported `quick-go` excluded monitor365 — revisit whether the private-crate 404 blocker got fixed upstream since 2026-08-12.~~ **Won't implement — niche/pdd items; stale.**
+~~26. pdd: fix the 140 golangci-lint findings or consciously re-baseline `.golangci.yml` (TODO #23 said "must stay green" — it drifted red).~~ **Won't implement — niche/pdd items; stale.**
+~~27. pdd: run actionlint on ci.yml (existing TODO #28) — I bumped go-version without it.~~ **Won't implement — niche/pdd items; stale.**
+~~28. pdd: decide CI-on-nix vs setup-go (needs private-dep auth story for git+ssh inputs in CI).~~ **Won't implement — niche/pdd items; stale.**
+~~29. pdd: add `checks.format` for dprint-managed files (md/json) or document treefmt as the single arbiter.~~ **Won't implement — niche/pdd items; stale.**
+~~30. pdd: `nix flake check --all-systems` / darwin eval sanity (currently linux-only checked).~~ **Won't implement — niche/pdd items; stale.**
 31. pdd: bump go-nix-helpers input once GOEXPERIMENT support lands, then execute TODO #32 (go-standard migration, ~100 lines saved).
 32. pdd: AGENTS.md — add the `--no-update-lock-file` fmt rule (see d.3).
 33. pdd: consider `lintAsCheck`-style hermetic lint check once lint is green (CI parity).
 34. pdd: sdk-version consistency guard — eval-time assertion comparing go.mod SDK version to the flake input comment/rev (the lockstep rule, enforced).
 35. pdd: wire `nix flake check` into a pre-push hook or CI job.
-36. SystemNix: gatus checks for dozzle (was the only unpinned image — is it even monitored? verify).
-37. SystemNix: `systemd-timer-monitor.nix` shebang relies on ambient PATH (buildInputs no-op in stdenvNoCC) — patchShebangs or wrap.
-38. SystemNix: openseo meta mainProgram or documented absence.
-39. SystemNix: fastflowlm `dontStrip` comment/code mismatch (no-op attr).
-40. SystemNix: normalize the 3 pkgs files with `{ pkgs }` umbrella signatures to per-dependency args.
-41. SystemNix: `with python3Packages;` / `with lib;` in pkgs/ meta — qualified refs.
-42. Both repos: adopt "verify raw summaries, not filtered tails" as a session-end checklist item (my d.1 mistake).
-43. SystemNix: document MemoryHigh-derivation in AGENTS.md Non-Obvious Gotchas (the % vs absolute RAM trap is exactly that class).
-44. SystemNix: zfs-vm deprecated `system =` + `# #` comment prefix cleanup.
-45. SystemNix: rpi3 firewall 53 → ports.dns-blocker (missed low-priority sibling of the statsPort fix).
-46. SystemNix: overview/gatus hardcoded-port sweep is done — add a grep-guard lint (like audit-shell-nullglob) for `127.0.0.1:[0-9]+` in modules/.
-47. pdd: FEATURES.md — add the flake/hermetic-build feature entry (docs claim set updated everywhere except FEATURES).
-48. pdd: CHANGELOG entry for the flake fix (broken build → hermetic green).
-49. Both repos: status-report + docs-health cadence — this report's (f) should not age two cycles like the "no flake.nix" claim did.
-50. Both repos: cross-repo go-nix-helpers improvements (GOEXPERIMENT support in go-standard apps/FOD) unblock pdd TODO #32 AND likely simplify several SystemNix Go inputs — one upstream investment, two consumers.
+~~36. SystemNix: gatus checks for dozzle (was the only unpinned image — is it even monitored? verify).~~ **Won't implement — superseded - Dozzle removed with Docker 2026-10-08 (CHANGELOG.md Docker runtime fully removed).**
+~~37. SystemNix: `systemd-timer-monitor.nix` shebang relies on ambient PATH (buildInputs no-op in stdenvNoCC) — patchShebangs or wrap.~~ **Won't implement — niche items; stale.**
+~~38. SystemNix: openseo meta mainProgram or documented absence.~~ **Won't implement — niche items; stale.**
+~~39. SystemNix: fastflowlm `dontStrip` comment/code mismatch (no-op attr).~~ **Won't implement — niche items; stale.**
+~~40. SystemNix: normalize the 3 pkgs files with `{ pkgs }` umbrella signatures to per-dependency args.~~ **Won't implement — niche items; stale.**
+~~41. SystemNix: `with python3Packages;` / `with lib;` in pkgs/ meta — qualified refs.~~ **Won't implement — niche items; stale.**
+~~42. Both repos: adopt "verify raw summaries, not filtered tails" as a session-end checklist item (my d.1 mistake).~~ **Won't implement — niche items; stale.**
+~~43. SystemNix: document MemoryHigh-derivation in AGENTS.md Non-Obvious Gotchas (the % vs absolute RAM trap is exactly that class).~~ **Won't implement — derivation documented in code; docs/agents entry never added.**
+~~44. SystemNix: zfs-vm deprecated `system =` + `# #` comment prefix cleanup.~~ **Won't implement — niche items; stale.**
+~~45. SystemNix: rpi3 firewall 53 → ports.dns-blocker (missed low-priority sibling of the statsPort fix).~~ **Won't implement — niche items; stale.**
+~~46. SystemNix: overview/gatus hardcoded-port sweep is done — add a grep-guard lint (like audit-shell-nullglob) for `127.0.0.1:[0-9]+` in modules/.~~ done at `port-literal lint in Eval-time audit table (AGENTS.md Eval-time (Nix); tests/test-port-registry-audit.nix)`
+~~47. pdd: FEATURES.md — add the flake/hermetic-build feature entry (docs claim set updated everywhere except FEATURES).~~ **Won't implement — pdd items; stale.**
+~~48. pdd: CHANGELOG entry for the flake fix (broken build → hermetic green).~~ **Won't implement — pdd items; stale.**
+~~49. Both repos: status-report + docs-health cadence — this report's (f) should not age two cycles like the "no flake.nix" claim did.~~ **Won't implement — pdd items; stale.**
+50. Both repos: cross-repo go-nix-helpers improvements (GOEXPERIMENT support in go-standard apps/FOD) unblock pdd TODO #32 AND likely simplify several SystemNix Go inputs — one upstream investment, two consumers. **→ docs/todo/upstream.md go-nix-helpers lock bump: dynamic go-toolchain auto-select**
 
 ## g) Questions I CANNOT figure out myself
 
