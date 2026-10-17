@@ -66,8 +66,10 @@ _: {
         # Defensive security tools only
         environment.systemPackages = [
           # polkit_gnome removed — DankMaterialShell provides its own polkit agent
-          pkgs.gnome-keyring
-
+          # gnome-keyring removed from this list 2026-10-17: the
+          # services.gnome.gnome-keyring.enable below already adds the
+          # package to environment.systemPackages (nixpkgs module) — the
+          # explicit copy was redundant.
           pkgs.pamtester
           pkgs.openssl
           pkgs.gnupg

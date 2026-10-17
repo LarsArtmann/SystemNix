@@ -196,8 +196,6 @@ _: {
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
-          inherit (dnsGate) after;
-          inherit (dnsGate) wants;
           # DNS alone is not readiness: the clone needs Caddy listening on
           # :443 and the forgejo backend behind it (comment header). Plain
           # wants (not requires) — a down Caddy degrades to the probe/clone
@@ -230,7 +228,7 @@ _: {
               # protocol-fixed (HTTPS), deliberately not a lib/ports.nix
               # entry; the /dev/tcp slash form is audit-invisible by design.
               ExecStartPre = [
-                "+${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>"/dev/tcp/${cfg.host}/443") 2>/dev/null; do if [ "$$SECONDS" -ge "$$deadline" ]; then echo "architecture-catalog-sync: https endpoint ${cfg.host}:443 not reachable within 120s — proceeding (git clone will surface the real error)" >&2; exit 0; fi; sleep 1; done'
+                "+${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/${cfg.host}/443\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"architecture-catalog-sync: https endpoint ${cfg.host}:443 not reachable within 120s - proceeding (git clone will surface the real error)\" >&2; exit 0; fi; sleep 1; done'
               ];
               TimeoutStartSec = lib.mkForce "6min";
             }

@@ -332,6 +332,7 @@ in
 
                   FAILED=""
                   GATED=""
+                  PENDING=""
                   TOTAL=0
 
                   check_service() {
@@ -378,6 +379,50 @@ in
                       return 1
                   }
 
+                  # Acute vs chronic (2026-10-17 boot-race class): a failed
+                  # oneshot whose timer has NOT re-fired since the failure is
+                  # simply waiting for its own scheduled retry — the boot-
+                  # order races (architecture-catalog-sync, cv-scan, …) self-
+                  # heal on the next tick. Report those as PENDING (journal
+                  # only), not FAILED: per-failure alerting already rides each
+                  # unit's own OnFailure= hook and outcome-level coverage
+                  # lives in Gatus. Chronic (FAIL) = no timer, timer not
+                  # active, timestamps that refuse to parse (fail closed — a
+                  # real breakage must never be silenced), or the failure is
+                  # older than 24h (a refailer that never clears escalates;
+                  # 24h > the widest timer interval in play, cv-scan 6h).
+                  # $2 = "user" classifies against the user manager.
+                  # shellcheck disable=SC2317
+                  is_pending_retry() {
+                      if [ "$2" = "user" ]; then
+                          systemctl --user is-active --quiet "$1.timer" 2>/dev/null || return 1
+                          last_trigger="$(systemctl --user show "$1.timer" -p LastTriggerUSec --value 2>/dev/null)"
+                          failed_at="$(systemctl --user show "$1" -p InactiveEnterTimestamp --value 2>/dev/null)"
+                      else
+                          systemctl is-active --quiet "$1.timer" 2>/dev/null || return 1
+                          last_trigger="$(systemctl show "$1.timer" -p LastTriggerUSec --value 2>/dev/null)"
+                          failed_at="$(systemctl show "$1" -p InactiveEnterTimestamp --value 2>/dev/null)"
+                      fi
+                      [ -n "$failed_at" ] || return 1
+                      case "$last_trigger" in
+                          ""|"n/a")
+                              # Timer armed but never fired since: retry owed.
+                              lt=0
+                              ;;
+                          *)
+                              lt="$(date -d "$last_trigger" +%s 2>/dev/null)" || return 1
+                              ;;
+                      esac
+                      fa="$(date -d "$failed_at" +%s 2>/dev/null)" || return 1
+                      # A trigger AT/AFTER the failure timestamp means the
+                      # retry already ran and the unit failed AGAIN (or never
+                      # cleared) — chronic.
+                      [ "$lt" -lt "$fa" ] || return 1
+                      # Age cap: older than 24h escalates to chronic.
+                      now_epoch="$(date +%s)"
+                      [ "$now_epoch" -lt "$((fa + 86400))" ]
+                  }
+
                   # === Critical system services — must be running ===
                   ${builtins.concatStringsSep "\n" (map checkBlock criticalSystemServices)}
 
@@ -390,9 +435,13 @@ in
                           ${ignorePattern})
                               ;;
                           *)
-                              if ! echo -e "$FAILED" | grep -qF "  $svc"; then
+                              if ! echo -e "$FAILED" | grep -qF "  $svc" && ! echo -e "$PENDING" | grep -qF "  $svc"; then
                                   TOTAL=$((TOTAL + 1))
-                                  FAILED="$FAILED\n  $svc (failed)"
+                                  if is_pending_retry "$svc"; then
+                                      PENDING="$PENDING\n  $svc (failed, timer retry pending)"
+                                  else
+                                      FAILED="$FAILED\n  $svc (failed)"
+                                  fi
                               fi
                               ;;
                       esac
@@ -404,9 +453,13 @@ in
                           ${ignorePattern})
                               ;;
                           *)
-                              if ! echo -e "$FAILED" | grep -qF "  $svc (user)"; then
+                              if ! echo -e "$FAILED" | grep -qF "  $svc (user)" && ! echo -e "$PENDING" | grep -qF "  $svc (user)"; then
                                   TOTAL=$((TOTAL + 1))
-                                  FAILED="$FAILED\n  $svc (user, failed)"
+                                  if is_pending_retry "$svc" user; then
+                                      PENDING="$PENDING\n  $svc (user, failed, timer retry pending)"
+                                  else
+                                      FAILED="$FAILED\n  $svc (user, failed)"
+                                  fi
                               fi
                               ;;
                       esac
@@ -416,12 +469,18 @@ in
                   if [ -n "$FAILED" ]; then
                       notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
                       echo "FAILED:$(echo -e "$FAILED")"
+                      if [ -n "$PENDING" ]; then
+                          echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
+                      fi
                       if [ -n "$GATED" ]; then
                           echo -e "GATED (expected down):$GATED"
                       fi
                       exit 1
                   else
                       echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
+                      if [ -n "$PENDING" ]; then
+                          echo -e "PENDING (timer retry owed, self-heals on next tick):$PENDING"
+                      fi
                       if [ -n "$GATED" ]; then
                           echo -e "GATED (expected down):$GATED"
                       fi

@@ -154,6 +154,36 @@ in
       };
     };
 
+    # D-Bus duplicate-name hygiene (2026-10-17): nixpkgs structurally
+    # double-registers every package that sits in BOTH
+    # environment.systemPackages AND services.dbus.packages — the xdg
+    # portal, gnome-keyring and dconf modules each add their package to
+    # both lists, and services/dbus.nix always registers config.system.path
+    # as a servicedir while ALSO linking /share/dbus-1 into the system
+    # path. dbus-broker then logs "Ignoring duplicate name" at ERROR
+    # priority for every such name on every bus start (~40 lines/boot,
+    # 2026-10-17 boot journal). Drop exactly those service files from the
+    # system-path copy: D-Bus activation keeps working through each
+    # package's own <servicedir> entry (same store path, same Exec), and
+    # packages that live ONLY in systemPackages (GameMode, nautilus
+    # FileManager1, obex-data-server) keep their files untouched.
+    environment.extraSetup =
+      let
+        dbusDoubleRegistered =
+          lib.filter (p: lib.elem p config.services.dbus.packages)
+            config.environment.systemPackages;
+      in
+      ''
+        for p in ${toString dbusDoubleRegistered}; do
+          if [ -d "$p/share/dbus-1/services" ]; then
+            for f in "$p"/share/dbus-1/services/*.service; do
+              [ -e "$f" ] || continue
+              rm -f "$out/share/dbus-1/services/$(basename "$f")"
+            done
+          fi
+        done
+      '';
+
     security.wrappers.fusermount3 = {
       source = "${pkgs.fuse3}/bin/fusermount3";
       owner = "root";
