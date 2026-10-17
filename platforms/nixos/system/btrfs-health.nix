@@ -33,6 +33,7 @@
 let
   inherit (import ../../../lib/default.nix lib)
     harden
+    ioTier
     serviceOneshotDefaults
     onFailure
     mkStateDir
@@ -751,6 +752,12 @@ in
           })
           {
             Type = "oneshot";
+            # IO-admission gate (2026-10-17 compsize battery): the 23:29
+            # boot's OnBootSec=30min fire landed the full-dataset walk
+            # INSIDE the boot storm (io PSI some avg10 ~87% at 23:57) — the
+            # exact class the balance/gc fleet already refuses. Same
+            # contract: a skipped collection is free, the 6h timer refires.
+            ExecStartPre = "${lib.getExe pkgs.maintenance-entry-gate} --name btrfs-compsize";
             ExecStart = lib.getExe btrfsCompsizeMetrics;
             # 10min: 120s timed out at boot+5min (2026-10-12: 530ms CPU over
             # 2m08s wall — pure IO-wait under the boot storm). The walk is
@@ -758,6 +765,10 @@ in
             # contention, not race it.
             TimeoutStartSec = "10min";
           }
+          # idle class (fstrim pattern, the row's prescription): the gate
+          # above already refuses storms, so idle only yields to admitted
+          # post-boot traffic; starvation self-heals at the next 6h fire.
+          ioTier.maintenance
         ];
       };
 
