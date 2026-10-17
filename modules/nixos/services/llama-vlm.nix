@@ -256,8 +256,8 @@ _: {
               # Deliberately NOT wantedBy multi-user.target — socket activation
               # keeps RAM free until first request; the socket re-arms after
               # idle-stop.
-              after = [ "network-online.target" ];
-              wants = [ "network-online.target" ];
+              # NO network-online.target: local-model backend with no outbound
+              # at start (network-online sweep 2026-10-17).
               serviceConfig = lib.mkMerge [
                 {
                   Type = "exec";

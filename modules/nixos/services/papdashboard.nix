@@ -799,8 +799,9 @@
         systemd.services.papdashboard = {
           description = "PapDashboard — alert hub with NPU insight enricher";
           wantedBy = [ "multi-user.target" ];
-          after = [ "network-online.target" ];
-          wants = [ "network-online.target" ];
+          # NO network-online.target: loopback binder + local icon pack;
+          # Discord paging is runtime outbound, never a start-path dep
+          # (network-online sweep 2026-10-17).
           inherit onFailure;
 
           startLimitBurst = 5;

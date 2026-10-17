@@ -59,14 +59,10 @@ _: {
         systemd.services.systemd-graph = {
           description = "systemd-graph — live systemd dependency graph web UI";
           wantedBy = [ "multi-user.target" ];
-          after = [
-            "dbus.service"
-            "network-online.target"
-          ];
-          wants = [
-            "dbus.service"
-            "network-online.target"
-          ];
+          # NO network-online.target: reads the local dbus + journal, no
+          # outbound at start (network-online sweep 2026-10-17).
+          after = [ "dbus.service" ];
+          wants = [ "dbus.service" ];
           inherit onFailure;
           restartTriggers = [ cfg.package ];
 

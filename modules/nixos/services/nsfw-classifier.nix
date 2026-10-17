@@ -197,8 +197,8 @@
           systemd.services.nsfw-classifier = {
             description = "nsfw-classifier — NSFW image server (browser-extension backend, full ensemble)";
             wantedBy = [ "multi-user.target" ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
+            # NO network-online.target: loopback-only binder behind Caddy, all
+            # 17 ONNX models local on disk (network-online sweep 2026-10-17).
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
             # Cold start loads 17 ONNX models on CPU — the global 3-min

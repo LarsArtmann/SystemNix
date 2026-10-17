@@ -318,11 +318,9 @@ _: {
           # pulled up exclusively by the proxy's after/wants on first
           # connection, and re-armed after idle-stop by the (still-listening)
           # socket.
-          after = [
-            "network-online.target"
-            "data.mount"
-          ];
-          wants = [ "network-online.target" ];
+          # NO network-online.target: mmap'd local model on data.mount, no
+          # outbound at start (network-online sweep 2026-10-17).
+          after = [ "data.mount" ];
 
           # Service user needs `video` group for /dev/accel/accel0 (root:video 0660).
           # memlock unlimited is required for NPU DMA.

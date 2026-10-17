@@ -425,11 +425,10 @@ _: {
 
           systemd.services.llama-embeddings = {
             description = "llama.cpp embeddings server (bge-m3, ROCm GPU)";
-            after = [
-              "network-online.target"
-              "llama-rag-model-fetch.service"
-            ];
-            wants = [ "network-online.target" ];
+            # NO network-online.target: loopback-only binder, models already
+            # local via the required model-fetch oneshot (the fetch unit
+            # alone keeps the gate — network-online sweep 2026-10-17).
+            after = [ "llama-rag-model-fetch.service" ];
             wantedBy = [ "multi-user.target" ];
             requires = [ "llama-rag-model-fetch.service" ];
 
@@ -458,11 +457,9 @@ _: {
 
           systemd.services.llama-reranker = lib.mkIf cfg.reranker.enable {
             description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
-            after = [
-              "network-online.target"
-              "llama-rag-model-fetch.service"
-            ];
-            wants = [ "network-online.target" ];
+            # NO network-online.target: same loopback-only/local-models
+            # shape as llama-embeddings (network-online sweep 2026-10-17).
+            after = [ "llama-rag-model-fetch.service" ];
             wantedBy = [ "multi-user.target" ];
             requires = [ "llama-rag-model-fetch.service" ];
 
