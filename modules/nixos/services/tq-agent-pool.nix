@@ -73,33 +73,19 @@ _: {
       # Freeze-25 IO discipline (2026-10-14 task queue): the pool's 3 yolo
       # agents read ~864 GB across five zone-6 trip windows in one morning
       # (guard io.stat: +191/+128/+90/+272/+183 GB). Two legs:
-      #   1. PSI entry gate (this script) — refuse the unit start while
-      #      io-PSI some avg10 >= 30% (the same band the migrate-_ entry
-      #      gate row uses): starting a harvest/agent battery into a storm
-      #      is the crash-loop amplifier class (freezes #20-#22, six
-      #      post-crash re-fires).
+      #   1. PSI entry gate — refuse the unit start while io-PSI some avg10
+      #      >= 30% (the same band the migrate-_ entry gates use): starting
+      #      a harvest/agent battery into a storm is the crash-loop
+      #      amplifier class (freezes #20-#22, six post-crash re-fires).
+      #      2026-10-17 (M10): the inline tq-pool-psi-gate script was folded
+      #      into the SHARED pkgs.maintenance-entry-gate (dedup; same PSI
+      #      band, trip-window deliberately 0 — enabling the 60-min guard
+      #      trip window would need the startLimitBurst re-sized for the
+      #      longer refusal tail).
       #   2. tq-pool-io-metrics (below) — cumulative cgroup read/write
       #      accounting + per-device io.stat + live agent count + newest
       #      task log, so the next "~864 GB" morning answers WHICH agent
       #      on WHICH disk in ONE Prom query.
-      tqPoolPsiGate = pkgs.writeShellApplication {
-        name = "tq-pool-psi-gate";
-        runtimeInputs = [
-          pkgs.coreutils
-          pkgs.gawk
-        ];
-        text = ''
-          threshold="${toString psiGatePercent}"
-          line=$(awk '/^some /{print $2}' /proc/pressure/io 2>/dev/null || true)
-          avg10="''${line#avg10=}"; avg10="''${avg10%%.*}"
-          case "$avg10" in '''|*[!0-9]*) avg10=0 ;; esac
-          if [ "$avg10" -ge "$threshold" ]; then
-            echo "tq-pool-psi-gate: REFUSING to start: io PSI some avg10=''${avg10}% >= ''${threshold}% — the box is already tripping (freeze-25 class: agent batteries read hundreds of GB into trip windows; a fresh harvest start here is the crash-loop amplifier). The next unit (re)start retries the gate." >&2
-            exit 1
-          fi
-          echo "tq-pool-psi-gate: io PSI some avg10=''${avg10}% < ''${threshold}% — entry allowed"
-        '';
-      };
 
       tqPoolIoMetrics = pkgs.writeShellApplication {
         name = "tq-pool-io-metrics";
@@ -187,8 +173,7 @@ _: {
       # pool start. 30% matches the migrate-_ entry-gate row (the storm is
       # already self-sustaining at that band; freeze-25's plateau sat at
       # ~34 under a wedged sdb1).
-      psiGatePercent = 30;
-    in
+      psiGatePercent = 30;    in
     {
       config = lib.mkIf cfg.enable {
         services.tq-agent-pool = {
@@ -386,7 +371,7 @@ _: {
           after = [ "tq-storage-dir.service" ];
           wants = [ "tq-storage-dir.service" ];
           # docs/agents/integration-registry.md step 5: start-limit bounds + onFailure on every service.
-          # Sized for the tq-pool-psi-gate contract below: at RestartSec=30s,
+          # Sized for the PSI entry gate contract below: at RestartSec=30s,
           # burst 5 / 300s (upstream's) exhausted in one 2.5-min PSI storm and
           # left the pool dead until the next deploy (live 2026-10-14 12:41).
           # 40 retries / 30 min ≈ 20 min of gate-retry headroom, still bounded
@@ -414,10 +399,15 @@ _: {
               MemoryMax = "8G";
               CPUQuota = "400%";
               # Freeze-25 IO discipline: cumulative cgroup accounting feeds
-              # tq-pool-io-metrics; the entry gate refuses starts into a
-              # live io-PSI storm (crash-loop amplifier class).
+              # tq-pool-io-metrics; the SHARED entry gate refuses starts into
+              # a live io-PSI storm (crash-loop amplifier class). Behavior-
+              # preserving consolidation 2026-10-17: same band (30), trip
+              # window off — flip --trip-window-min to 60 only together with
+              # a startLimitBurst re-size (see the header comment).
               IOAccounting = true;
-              ExecStartPre = [ (lib.getExe tqPoolPsiGate) ];
+              ExecStartPre = [
+                "${lib.getExe pkgs.maintenance-entry-gate} --name tq-agent-pool --psi-max ${toString psiGatePercent} --trip-window-min 0"
+              ];
             }
             ioTier.build
           ];

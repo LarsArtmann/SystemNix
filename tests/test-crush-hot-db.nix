@@ -186,6 +186,14 @@ in
   testScript = ''
     machine.start()
     machine.wait_for_unit("multi-user.target")
+    # The 2026-10-06 restructure made the unit timer-pulled (OnBootSec=2min,
+    # no multi-user gating): a fresh VM carries no timer stamp, so the first
+    # fire is 2 min after timers.target — wait_for_unit would sit on an
+    # inactive unit. Start it explicitly: the start job honors the same
+    # unit-level after/wants fixture ordering, and the boot-trigger coverage
+    # lives in the is-enabled shape assertions below (the run itself is
+    # byte-identical regardless of trigger).
+    machine.succeed("systemctl start crush-hot-db-migrate.service")
     machine.wait_for_unit("crush-hot-db-migrate.service")
 
     # ---- Regressions 1: enablement shape (2026-10-06 restructure) ----
