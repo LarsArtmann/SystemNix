@@ -53,17 +53,11 @@
       # same day). Same shape as the 2026-10-10 shim. Drop when upstream
       # re-pins or the lock moves past an upstream-fixed rev
       # (paste-upstream → push → re-lock → re-drop, docs/todo/upstream.md).
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        # fleet-wave 2026-10-15: the lock floated 0ad2a6b → 0750bd6 (go-sum
-        # GUARD failure, consumer-unfixable) → aa637cbf (guard GONE — upstream
-        # tidied; plain hash mismatch). Got p7sOpco6… first-hand (fakeHash
-        # probe at aa637cbf). Class comment: lib/lars-packages.nix
-        # flakePkgShim.
-        # 2026-10-17 wave: be4aa55 (got 8OAMcaF1…, shimmed 08:26) → a743f03
-        # (blanket re-float; got mnvM9S+l… first-hand keep-going enumeration,
-        # /tmp/toplevel-reeval-20261017b.log).
-        vendorHash = "sha256-mnvM9S+lyjzjh/hqh2u+N5JZZCEWxS6pephVwcqtKGk=";
-      };
+      # SHIM DROPPED (2026-10-17 wave): upstream cv nix/packages.nix:70 at
+      # tip 0ec5eac3 (== lock) bakes the last shim value mnvM9S+l… (the CV
+      # session pasted it upstream themselves). Re-add ONLY via
+      # nix-hash-fix evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [

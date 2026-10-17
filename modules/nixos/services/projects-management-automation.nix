@@ -59,11 +59,12 @@
           # first-hand got-hash from the 02:46 nh enumeration at locked
           # rev 3149585c; class comment: lib/lars-packages.nix
           # flakePkgShim — same value as the lars-packages surface)
+          # DROPPED AGAIN (2026-10-17 wave): upstream flake.nix:111 at tip
+          # 849573de bakes the shim's own 5WOy3BHv… value — bit-neutral
+          # override (lock == tip; lars-packages surface dropped in the
+          # same pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
           package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-5WOy3BHvtQzhjN87X/lS82TA0RZHfIDyTHKbQqiTi5E=";
-              };
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

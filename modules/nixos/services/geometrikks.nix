@@ -296,10 +296,14 @@
       '';
 
       # Offset-delta ssh pulls of remote access logs (cfg.logPulls).
-      # Root units on purpose: auth rides root's default ssh identity
-      # (the pbx-backup-pull kit's live-proven pattern — the remote
-      # authorizes this host's root key). ProtectHome=read-only keeps
-      # /root/.ssh readable and nothing else writable.
+      # Per-pull user (default root): auth rides THAT user's default ssh
+      # identity resolution. The pbx pull runs as the primary user — the
+      # pbx-backup-pull kit's live-proven pattern (the PBX authorizes
+      # lars@evo-x2's key; /root/.ssh on this host carries NO private key,
+      # so the original root-unit premise never authenticated — 0
+      # successful runs 2026-10-16→17, journal-proven "Permission denied
+      # (publickey)" every fire). ProtectHome=read-only keeps the identity's
+      # ~/.ssh readable and nothing else writable.
       geometrikksLogPullUnits = lib.listToAttrs (
         map (
           pull:
@@ -347,11 +351,12 @@
               (serviceOneshotDefaults { })
               {
                 Type = "oneshot";
-                User = "root";
+                User = pull.user;
                 ExecStart = "${pullScript}";
                 StateDirectory = "geometrikks-remote-logs";
                 StateDirectoryMode = "0700";
                 UMask = "0077";
+                ProtectHome = "read-only";
                 TimeoutStartSec = "90s";
               }
               (harden {
@@ -459,7 +464,17 @@
                 };
                 sshTarget = lib.mkOption {
                   type = lib.types.str;
-                  description = "ssh target to pull from (e.g. root@host). Auth rides root's default ssh identity resolution — the pbx-backup-pull kit pattern.";
+                  description = "ssh target to pull from (e.g. root@host).";
+                };
+                user = lib.mkOption {
+                  type = lib.types.str;
+                  default = "root";
+                  description = ''
+                    Local user whose default ssh identity authenticates the
+                    pull. Use the primary user for targets that authorize
+                    this host's user key (the pbx — pbx-backup-pull pattern);
+                    root only for targets that authorize a root key.
+                  '';
                 };
                 remotePath = lib.mkOption {
                   type = lib.types.str;

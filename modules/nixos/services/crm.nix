@@ -91,9 +91,11 @@
       # commit touches no go.mod/go.sum, and a first-hand FOD build of the
       # full chain (prepared-source → go-modules → kith-crm) went green
       # with this exact hash — no re-pin needed.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-R9ui8Fb7LMg5THOullEsoBYrQa1zH3qrfwb3K5acuVE=";
-      };
+      # SHIM DROPPED (2026-10-17 wave): upstream crm flake.nix:82 at tip
+      # d3f740b (== lock) bakes the shim's own R9ui8Fb7… value — the
+      # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
+      # never by hand.
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
       twentyEnabled = config.services.twenty.enable or false;
     in
     {

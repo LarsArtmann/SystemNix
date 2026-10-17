@@ -121,14 +121,12 @@
       # upstream stays llama-chat — only the base URL changes; the minted
       # proxy key arrives via EnvironmentFile on the -web unit below).
       aiMeterEnabled = config.services.ai-meter.enable or false;
-      # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave, first-hand
-      # got-hash from the 02:46 nh enumeration at locked rev 7e23ec6; class
-      # comment: lib/lars-packages.nix flakePkgShim)
-      inboxcleanPkg =
-        inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-          {
-            vendorHash = "sha256-6lPAB08xgr+wXcZWLPaIq/A/E0c6elfFWetCuKAudWM=";
-          };
+      # TEMPORARY vendorHash shim DROPPED (2026-10-15 fleet wave → 2026-10-17
+      # drop): upstream vendorHash.nix at tip 9796ae91 bakes the shim's own
+      # 6lPAB08x… value (go.sum verified identical tip-vs-measured); the
+      # lock re-locks b601473 → tip in the same pass. Re-add ONLY via
+      # nix-hash-fix evidence, never by hand.
+      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];

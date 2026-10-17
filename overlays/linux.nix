@@ -269,9 +269,10 @@ let
     crush-daily = prev.crush-daily.overrideAttrs {
       vendorHash = "sha256-AAXq+KGA17u2aUdmahn3OE8NZr4KcdK4j1lqmZ3Wt5o=";
     };
-    overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-+WMj7c5UHyQQNwrMLdB5AQ5ErWqlLocZT0WlWwoakzE=";
-    };
+    # overview shim DROPPED (2026-10-17 wave): upstream vendorHash.nix at
+    # tip 966465e (== lock) bakes the shim's own +WMj7c5U… value — the
+    # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
+    # never by hand.
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
       vendorHash = "sha256-nN2cwwLQCekdM+7kRUS7uFTVCvjL/Akg3PnIFFE9Qmg=";
     };

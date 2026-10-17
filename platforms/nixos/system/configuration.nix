@@ -1312,6 +1312,10 @@ in
             name = "pbx";
             sshTarget = "root@pbx.artmann.tech";
             remotePath = "/var/log/nginx/geometrikks.log";
+            # The PBX authorizes lars@evo-x2's key (pbx-backup-pull pattern);
+            # /root/.ssh here carries no private key, so root auth never
+            # worked (0 successful runs 2026-10-16 to 10-17).
+            user = "lars";
           }
         ];
         # Pin the pbx source's map home to Helsinki (Hetzner hel1) —
