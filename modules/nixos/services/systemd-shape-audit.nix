@@ -51,6 +51,19 @@
 #    A runtime dir has exactly ONE owning unit; consumers connect to the
 #    socket, they never co-declare the directory.
 #
+# 7. Boot-blocking Type=oneshot units (wantedBy multi-user/graphical) with
+#    an UNBOUNDED TimeoutStartSec (unset = systemd's INFINITE default for
+#    oneshots, or explicitly "infinity"). A wedged oneshot then holds the
+#    boot transaction open forever — netbird-evox2-login's unguarded
+#    `until … sleep 1` login poll kept FinishTimestampMonotonic=0 for 55+
+#    min (2026-10-17), and the pbx's netbird-provision sat activating for
+#    hours behind a dead management the same morning. nixpkgs-generated
+#    units are IN scope (the login oneshot was one). The house floor rides
+#    serviceOneshotDefaults (mkDefault 5min); long-leg units declare their
+#    own value. Deliberate exceptions go in
+#    services.systemd-shape-audit.allowUnboundedOneshot WITH a
+#    justification comment at the definition site.
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -182,6 +195,31 @@
               );
         in
         lib.filterAttrs (_dir: owners: builtins.length owners > 1) (builtins.foldl' addUnitDirs { } units);
+
+      # --- class 7: boot-blocking oneshots with unbounded TimeoutStartSec ---
+      # unset == systemd's INFINITE oneshot default; "infinity" is explicit.
+      # Scope: wantedBy multi-user.target / graphical.target (units inside the
+      # boot transaction). nixpkgs-generated units included.
+      bootBlockingTargets = [
+        "multi-user.target"
+        "graphical.target"
+      ];
+      oneshotTimeoutOffenders =
+        let
+          bad = lib.filterAttrs (
+            name: svc:
+            svc.enable
+            && (svc.serviceConfig.Type or null) == "oneshot"
+            && builtins.any (w: builtins.elem w bootBlockingTargets) (svc.wantedBy or [ ])
+            && (
+              !(svc.serviceConfig ? TimeoutStartSec)
+              || svc.serviceConfig.TimeoutStartSec == null
+              || svc.serviceConfig.TimeoutStartSec == "infinity"
+            )
+            && !builtins.elem name cfg.allowUnboundedOneshot
+          ) config.systemd.services;
+        in
+        lib.attrNames bad;
     in
     {
       options.services.systemd-shape-audit = {
@@ -193,6 +231,16 @@
             a bounded rapid-retry (e.g. 3x5s) that self-extinguishes via
             start-limit long before the next timer fire. Every entry MUST
             carry a justification comment where it is set.
+          '';
+        };
+        allowUnboundedOneshot = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Boot-blocking (wantedBy multi-user/graphical) Type=oneshot units
+            whose unbounded TimeoutStartSec is deliberate. Every entry MUST
+            carry a justification comment where it is set, plus the condition
+            under which it should gain a bound.
           '';
         };
       };
@@ -279,6 +327,22 @@
             A runtime dir has exactly ONE owning unit; consumers connect to
             the socket, they never co-declare the directory. Clear the
             non-owner with RuntimeDirectory = lib.mkForce [ ];
+          '';
+        }
+        {
+          assertion = oneshotTimeoutOffenders == [ ];
+          message = ''
+            systemd-shape-audit: boot-blocking Type=oneshot unit(s) with unbounded TimeoutStartSec:
+            ${lib.concatStringsSep ", " oneshotTimeoutOffenders}
+            A oneshot start job defaults to an INFINITE timeout — a wedged unit
+            holds the boot transaction open forever (netbird-evox2-login kept
+            FinishTimestampMonotonic=0 for 55+ min, 2026-10-17).
+            Fix: serviceOneshotDefaults (5min mkDefault floor) or an explicit
+            TimeoutStartSec matching the unit's longest legitimate leg
+            (llama-rag-model-fetch: 20min).
+            Deliberate exception:
+              services.systemd-shape-audit.allowUnboundedOneshot = [ "<unit>" ];
+            with a justification comment.
           '';
         }
       ];
