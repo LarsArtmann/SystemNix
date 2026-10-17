@@ -34,22 +34,22 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." 2>/dev/null && pwd)"
 # points into /nix/store, and the repo root must come from the env (or the
 # canonical clone path).
 if [[ ! -f "$REPO_ROOT/flake.nix" ]]; then
-	REPO_ROOT="$HOME/projects/SystemNix"
+  REPO_ROOT="$HOME/projects/SystemNix"
 fi
 FLAKE_REF="${SYSTEMNIX_FLAKE:-$REPO_ROOT}"
 
 if [[ ! -f "$FLAKE_REF/flake.nix" ]]; then
-	echo "ERROR [catalog-inventory]: no flake.nix at $FLAKE_REF (set SYSTEMNIX_FLAKE)" >&2
-	exit 1
+  echo "ERROR [catalog-inventory]: no flake.nix at $FLAKE_REF (set SYSTEMNIX_FLAKE)" >&2
+  exit 1
 fi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 eval_host() {
-	local attr="$1" host="$2" platform="$3"
-	echo "==> evaluating $host ($attr)" >&2
-	if nix eval --json "$FLAKE_REF#$attr.config" --apply "
+  local attr="$1" host="$2" platform="$3"
+  echo "==> evaluating $host ($attr)" >&2
+  if nix eval --json "$FLAKE_REF#$attr.config" --apply "
 		c: {
 			host = \"$host\";
 			platform = \"$platform\";
@@ -64,12 +64,12 @@ eval_host() {
 			catalog = c.services.catalog or {};
 		}
 	" >"$tmp/$host.json" 2>"$tmp/$host.err"; then
-		:
-	else
-		echo "WARN [catalog-inventory]: eval failed for $host — skipping host (see stderr below); its deployments will be missing" >&2
-		cat "$tmp/$host.err" >&2
-		echo "null" >"$tmp/$host.json"
-	fi
+    :
+  else
+    echo "WARN [catalog-inventory]: eval failed for $host — skipping host (see stderr below); its deployments will be missing" >&2
+    cat "$tmp/$host.err" >&2
+    echo "null" >"$tmp/$host.json"
+  fi
 }
 
 eval_host nixosConfigurations.evo-x2 evo-x2 nixos

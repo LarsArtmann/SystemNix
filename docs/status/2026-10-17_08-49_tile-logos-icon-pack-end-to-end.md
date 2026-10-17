@@ -59,7 +59,7 @@ The logo capability died with the **2026-09-18 homepage-dashboard merge**: homep
 
 | # | Item | Done | Missing |
 | --- | --- | --- | --- |
-| b1 | **Delivery to the user's eyeballs** | feature complete + locally proven end-to-end | **not pushed, not deployed ⇒ `dash.home.lan` still shows monograms today.** Blocked by design (agents never push / never deploy here) |
+| b1 | **Delivery to the user's eyeballs** | feature complete + locally proven end-to-end | **not pushed, not deployed ⇒ `dash.home.lan` still shows monograms today.** Blocked by design (agents never push / never deploy here). Independent second blocker found by the parallel session: the deploy **entry gate refused all 4 attempts** on the I/O storm (buildcache origin) — see `docs/status/2026-10-17_08-50_papdashboard-services-tile-merge-icon-gate-unblock-deploy-blocked.md` |
 | b2 | **Pin bump** | follow-up queued (`docs/todo/upstream.md:13`) | `nix flake lock --update-input papdashboard` + deploy + live verify |
 | b3 | **Deploy-time observation** | nothing | `post-deploy-check.sh` has **no icon probe** (the queued item requires adding it in the same change as the bump) |
 | b4 | **Negative-test harness** | gates negative-tested ad-hoc via `extendModules`/`--expr` (evidence in §a19) | no permanent legs in `scripts/negative-test-lints.sh` (repo doctrine wants every eval audit negative-tested) — queue item filed |
@@ -96,9 +96,10 @@ The logo capability died with the **2026-09-18 homepage-dashboard merge**: homep
 4. **I misread an empty `git status --short` in PapDashboard as "my edits are gone"** before checking `git log` (the daemon had already committed them). Wrong instinct; `git log` first, always.
 5. **I nearly configured the wrong upstream rev retro-activity**: my first pack candidate rev was nixpkgs' 2025-07 pin (cache-friendly) and I only switched to a fresh master rev after checking which services actually had icons. Right call, but the first instinct was "use whatever nixpkgs has", which would have shipped missing logos for 2026-era services.
 6. **I did not notice for a long time that another agent session was editing the same files** (`papdashboard.nix`, `systemd-graph.nix`, `systemd-timer-monitor.nix`, AGENTS.md). I only caught it via a "file modified since last read" rejection. I then had to *overwrite* their deliberate choice (they removed `mdi-*` icons → monogram tiles) with real icons — a substantive disagreement I resolved unilaterally (defensible: the owner asked for logos; flagged here and to the owner).
-7. **My first negative test was wrong** (asserted 404 for `/icons/../services.json`; the mux canonicalizes to a 307 → 401 through auth). I fixed the spec to assert the real invariant (never serves out-of-pack content), but I shipped the wrong assertion first.
-8. **The `iconCacheControl` comment I wrote was factually wrong** ("content-stable for a given store path… arrives with a deploy" — it does not, the URL is the file name). Fixed in-session, but it should never have been written that way.
-9. **I never validated the feature in a browser** — so "logos render, look right, and the fallback reveals the monogram on failure" is proven only at the HTML/HTTP level, not visually.
+7. **My multi-step edits transiently BROKE the shared tree for the parallel session** (they observed `attribute 'icon' missing` and had to wait it out): I wired `tileJson`'s `t.icon != null` consumer BEFORE adding the `icon` option to the built-in groups' tile submodule. Correct order is declaration-then-consumer (or `t.icon or null` everywhere) — I used `or null` in the new assertion/`packIconNames` but not in the pre-existing `tileJson` line I edited.
+8. **My first negative test was wrong** (asserted 404 for `/icons/../services.json`; the mux canonicalizes to a 307 → 401 through auth). I fixed the spec to assert the real invariant (never serves out-of-pack content), but I shipped the wrong assertion first.
+9. **The `iconCacheControl` comment I wrote was factually wrong** ("content-stable for a given store path… arrives with a deploy" — it does not, the URL is the file name). Fixed in-session, but it should never have been written that way.
+10. **I never validated the feature in a browser** — so "logos render, look right, and the fallback reveals the monogram on failure" is proven only at the HTML/HTTP level, not visually.
 
 ---
 
@@ -165,7 +166,7 @@ Dispatchable/queued items are marked **[QUEUED]** (with their library) or **[QUE
 45. Add an icon-count/`icons-ok` line to the deploy verification script output so the operator sees "39/39 logos" in the deploy log.
 46. Review whether the 39-icon subset should include a "default/fallback" glyph for unknown tiles (a box/generic mark) instead of a monogram for the long tail.
 47. Re-run the owner-facing check after the bump (`/api/services` shows `icon` for all tiles; fragment shows 39 imgs) and record it in the CHANGELOG entry (currently the entry is honest that it is not live).
-48. Add a `docs/status/` cross-link from the CHANGELOG entry to this report.
+48. ~~Add a `docs/status/` cross-link from the CHANGELOG entry to this report.~~ **DONE 2026-10-17 08:53** (CHANGELOG §Added entry now links this report).
 49. Harvest the follow-ups from this report's §f into the queue/library at the next docs-health pass (items 5-12, 18-20 are the substantive ones).
 50. Re-read this report at the next `dash.home.lan` session and close it out with live evidence (the session that pushes should own the close-out).
 
