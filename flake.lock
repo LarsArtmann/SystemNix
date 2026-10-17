@@ -7083,11 +7083,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792220093,
-        "narHash": "sha256-3TRnAdAcAUDinhG98RsWDGnlBpVf2heW/DA/Xmi4g8g=",
+        "lastModified": 1792280595,
+        "narHash": "sha256-lhjSYjvMczbQzNmXdvzxYeij53KdWUNz5iH/P7HpWSw=",
         "owner": "LarsArtmann",
         "repo": "PapDashboard",
-        "rev": "a1a505f556af6486769c7ffd3948db5495b55a0a",
+        "rev": "d96ee6ea753468f3c2a54bc3b6b795a929ad7a7d",
         "type": "github"
       },
       "original": {

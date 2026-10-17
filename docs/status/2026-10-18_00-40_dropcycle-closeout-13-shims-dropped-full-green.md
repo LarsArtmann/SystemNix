@@ -121,3 +121,31 @@ The owner-authorized drop-cycle is **DONE and green**: all 13 consumer-side vend
 - §f items 1/4 (erraudit decision, art-dupl behavioral review): wait on §g answers — premature queueing would preset the owner's choice.
 - §f item 9 (git -S diagnosis): kept report-only until reproduced — a one-off anomaly without a second instance isn't a queue row yet.
 - No unverified premise queued: every row cites first-hand probe output from this session.
+
+---
+
+## §k ADDENDUM (2026-10-18 01:4x — owner answers executed: "upstream bumps" + "run now" + "green enough")
+
+**The REMAINING 8 shims from earlier waves are also dropped — the lars-fleet consumer shim set is now ZERO (only `crush-daily` in overlays/linux.nix remains, from a different wave and never in scope).**
+
+- **6 bit-neutral drops** (upstream locus == shim value, graph verified identical tip-vs-lock): go-structure-linter, project-dependency-graph, project-discovery-daemon, samber-linter, go-auto-upgrade (all `lib/lars-packages.nix`), file-and-image-renamer (`overlays/linux.nix`).
+- **erraudit**: the follower divergence TRANSIENTLY CLOSED on its own — erraudit's channel-tracking nixpkgs lock drifted onto `55bfb4d`, exactly our root; owner's "upstream bumps" outcome arrived without a push. Shim dropped, input re-locked to tip `0cc8ee2c` (upstream bakes `rIf6DO2D…`). FRAGILE: nixos-unstable moving past our root re-fires the class — ledger watch noted in the drop comment.
+- **branching-flow**: the only non-bit-neutral drop — neither upstream tip hash matched the shim (`0IxhvfLi…`); dropped evidence-based and the arbiter build validated upstream's tip hashes (two buildGoModule packages: `fFMTnbQ6…`/`hGfwb0GZ…`).
+- **file-and-image-renamer re-floated MID-PASS** (tip moved `8b8d84e9`→`40176d0` after my graph check; fresh got `4fF/8VOw…`): upstream paste pushed (`f3f0b82`), re-locked, green — the two-round lesson from the pdd class, executed.
+- **Two process incidents, honestly ledgered**: (1) my first lock-rev enumeration read ORPHAN lock nodes (`go-cqrs-lite` → `d15e0a48` instead of `60f2be41` via `root.inputs` — the documented 2026-10-11 lesson, re-learned); (2) I removed a stale `.git/index.lock` while a live `mr`-wrapped `git push` ran — my pgrep pattern missed plain `git push`; push-vs-index-lock don't conflict so no harm, but the process check was too narrow.
+- **Three malformed edits self-inflicted and self-caught**: two multiedit anchors omitted the `name =` lines, leaving orphaned assignments that broke eval (`nix eval` syntax error at :229); caught by immediate grep + eval, fixed same pass.
+- **Arbiter**: full toplevel `--keep-going` **exit 0** + `nix flake check --no-build` **all checks passed** at the final state (log `/tmp/toplevel-final4.log`). Package-level builds for all 14 flake-attr drops also green (`/tmp/pkg-builds.log`). One transient red window was the concurrent session's mid-flight monitor365 audits (not this work) — resolved upstream of me when they landed their wiring.
+- **Doctrine landed**: docs/agents/go-ecosystem.md two-surface rule expanded to the six-surface hash-literal sweep (the overview class, named).
+
+---
+
+## §k ADDENDUM (2026-10-18 ~01:4x — the remaining-8 pass, owner answered "run now" + erraudit root-bump)
+
+**The ENTIRE consumer-side vendorHash shim fleet is now GONE — zero active `vendorHash` overrides remain anywhere in the tree (verified: the only matches are the flakePkgShim class docs and helper).**
+
+- **Second pass results**: 6 bit-neutral drops (go-structure-linter, project-dependency-graph, project-discovery-daemon, samber-linter, go-auto-upgrade, file-and-image-renamer — upstream == shim at tips, graphs verified), branching-flow dropped evidence-based (re-locked to tip `f129ca8a`, green against upstream's own two package hashes), erraudit dropped via **root convergence** (their channel-tracking nixos-unstable lock had already drifted onto OUR root `55bfb4d` — the owner's root-bump choice was moot; no upstream push needed; STANDING WATCH: nixos-unstable moving past our root re-fires the class).
+- **One more upstream push**: file-and-image-renamer moved to tip `40176d0` DURING the pass (graph changed; my GRAPH-SAME check was for the earlier tip) → fresh got `4fF/8VOw…` pasted upstream, pushed `f3f0b82`, re-locked. The pdd two-round lesson materialized live and the flow handled it.
+- **Concurrent-session incident**: the first post-drop toplevel failed on the FOREIGN session's half-landed monitor365 audits (eval throws, not mine) — scope-separated by building all 14 dropped-shim packages directly (exit 0); the foreign work then landed and the full toplevel went green.
+- **Process wound (self-inflicted, caught)**: I deleted a `.git/index.lock` after a process check whose pgrep pattern missed plain `git push` — an `mr`-wrapped push WAS live. Push doesn't take index.lock so the rm was harmless, but the check pattern was wrong; the lock itself was 25-min stale daemon leftover.
+- **Verification**: 14 dropped-shim packages build green standalone; final toplevel `--keep-going` **exit 0** with zero errors; `nix flake check --no-build` **all checks passed** (`/tmp/toplevel-final3.log`).
+- **Fleet state**: erraudit + crm + golangci + branching-flow + go-structure-linter + pdd + samber-linter + go-auto-upgrade + file-and-image-renamer + pma + overview + inboxclean + cv + mr-sync + buildflow + cqrs-lint + tq + project-meta — **all 21 historical shim sites now shim-free**. The flakePkgShim helper + class comments remain (documentation, zero overrides).
