@@ -38,11 +38,13 @@ evo-x2/rpi3-dns/Lars-MacBook-Air into `inventory.json` (74 services /
 66 deployments / 9 zero-deploy at introduction), committed to the hub by
 `scripts/generate-inventory.sh` (LOCAL regeneration — CI never evals
 SystemNix, private flake inputs). Regeneration is AUTOMATED
-(2026-10-17): the `catalog-inventory-sync` daily timer (module
-`modules/nixos/services/catalog-inventory-sync.nix`, 04:47 + jitter,
+(2026-10-17): the `catalog-inventory-sync` HOURLY timer (module
+`modules/nixos/services/catalog-inventory-sync.nix`, :47 + 15min jitter,
 niced/idle-IO, `CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1` so a failed host
 eval aborts instead of shrinking the union) rewrites `inventory.json` in
-the hub checkout; the hub's auto-commit daemon commits it, and the owner
+the hub checkout — the write path NO-OPS on content-identical exports
+while the committed stamp is <24h old (hourly cadence without 24
+no-op commits/day); the hub's auto-commit daemon commits it, and the owner
 push carries it into CI. Hub-side staleness gate
 (`scripts/check-inventory-staleness.sh`, WARN at 14d) rides both
 build.sh and CI. Hub CI renders the committed file
@@ -142,12 +144,14 @@ debug targets.
 - **Manual sync:** `sudo systemctl start architecture-catalog-sync` (idempotent;
   a fresh generation every run, pruned to `maxGenerations`).
 - **Inventory regeneration:** AUTOMATIC — the `catalog-inventory-sync`
-  timer (04:47 + 15min jitter) rewrites the hub checkout's
-  `inventory.json` and the hub auto-commit daemon commits it (the owner
+  HOURLY timer (:47 + 15min jitter) rewrites the hub checkout's
+  `inventory.json` when content changed (no-op otherwise, ≤1 stamp
+  refresh/day) and the hub auto-commit daemon commits it (the owner
   push carries it into CI; agents never push). Manual/immediate:
   `bash ~/projects/eventcatalog-hub/scripts/generate-inventory.sh`
-  (`--check` = drift probe). A failed host eval in the timer is FATAL by
-  design (`CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1`) — the committed union
+  (`--check` = drift probe, `--self-test` = guard fixtures). A failed
+  host eval in the timer is FATAL by design
+  (`CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1`) — the committed union
   never silently shrinks; the unit's `onFailure` fires instead.
 - **Rollback:** `sudo ln -s generations/<older-stamp> /var/lib/architecture-catalog/.current.tmp && sudo mv -T /var/lib/architecture-catalog/.current.tmp /var/lib/architecture-catalog/current`
   — same atomic-rename shape the sync uses; `current` must stay a RELATIVE

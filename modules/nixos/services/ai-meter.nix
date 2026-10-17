@@ -282,24 +282,27 @@ _: {
             }
           );
           default = {
-            # Both zai models are covered by the GLM Coding Plan (Max
-            # Yearly, confirmed 2026-10-17): the plan bills credits, not
-            # tokens, so the marginal USD cost per request is $0. Prices
-            # stay 0.0 so spend panels report real spend, not fabricated
-            # pay-as-you-go spend. PAYG reference prices if the plan ever
-            # lapses (glm-5.3-flash mirrors the crushrc model declaration):
-            # input 0.15 / output 0.5 / cachedInput 0.03. Extend per model
-            # as consumers adopt them; unknown models meter tokens exactly
-            # and cost $0.
+            # PAYG reference prices (docs.z.ai/guides/overview/pricing,
+            # verified 2026-10-17). NOTE: both models are covered by the
+            # GLM Coding Plan (Max Yearly), which bills credits, not
+            # tokens — real marginal spend is $0. These entries are
+            # deliberate REFERENCE costs (what the traffic would cost
+            # pay-as-you-go), chosen by the owner 2026-10-17 for
+            # visibility; spend panels therefore overstate real
+            # subscription spend by design. glm-5.3-flash mirrors the
+            # crushrc model declaration (crush-config model add
+            # zai/glm-5.3-flash --price-input 0.15 --price-output 0.5
+            # --price-cache-hit 0.03). Extend per model as consumers adopt
+            # them; unknown models meter tokens exactly and cost $0.
             "glm-5.3" = {
-              input = 0.0;
-              output = 0.0;
-              cachedInput = 0.0;
+              input = 1.4;
+              output = 4.4;
+              cachedInput = 0.26;
             };
             "glm-5.3-flash" = {
-              input = 0.0;
-              output = 0.0;
-              cachedInput = 0.0;
+              input = 0.15;
+              output = 0.5;
+              cachedInput = 0.03;
             };
           };
           description = "Per-model cost table (USD per 1M tokens). Best-effort: tokens are always exact, cost only for known models.";

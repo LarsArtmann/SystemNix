@@ -1304,7 +1304,7 @@ in
       };
 
       # Platform-inventory producer leg (2026-10-17 owner directive):
-      # daily regeneration of the hub's committed inventory.json from this
+      # HOURLY regeneration of the hub's committed inventory.json from this
       # repo's registry (services.catalog ∪ services.integration, all real
       # hosts). The hub's auto-commit daemon commits the rewrite; the owner
       # push carries it into CI. No port, no daemon — one niced oneshot +
