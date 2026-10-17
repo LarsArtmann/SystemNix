@@ -29,13 +29,24 @@ let
     if pkg == null then null else pkg.overrideAttrs { vendorHash = hash; };
 in
 lib.filterAttrs (_: v: v != null) {
-  # art-dupl shim DROPPED (2026-09-29): its drop condition ("lock moves past
-  # a pushed upstream-fixed rev") is met — the lock holds f6355c24 (pushed),
-  # whose flake bakes vendorHash ts4RN6Z0… (the same "got" hash the 09-29
-  # blanket update's FOD produced; the old shim pinned the stale fmLiSd6d…
-  # and re-broke the FOD it existed to fix — the buildflow-shim lifecycle
-  # class). Re-add ONLY via nix-hash-fix evidence, never by hand.
-  art-dupl = flakePkg inputs.art-dupl;
+  # art-dupl source-rename shim (2026-10-17): the locked fork rev f8724119
+  # commits a HAND-WRITTEN printer/actionability/actionability_templ.go
+  # (defines isTemplChildrenIdiom), but upstream's preBuild runs bare
+  # `templ generate`, which claims the *_templ.go name as its generated-output
+  # namespace — the clean build then fails `undefined: isTemplChildrenIdiom`
+  # (first-hand: evo-x2 toplevel --keep-going 2026-10-17 05:41, drv
+  # cvzvrblb…; the file IS tracked at f8724119 via 4095c7bf). The rename
+  # moves it out of templ's namespace; semantics identical. DROP when
+  # upstream renames the file and pushes (re-lock past that rev).
+  art-dupl = (flakePkg inputs.art-dupl).overrideAttrs (old: {
+    postPatch =
+      (old.postPatch or "")
+      + ''
+        if [ -f printer/actionability/actionability_templ.go ]; then
+          mv printer/actionability/actionability_templ.go printer/actionability/actionability_templ_idioms.go
+        fi
+      '';
+  });
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
   # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2
@@ -113,7 +124,12 @@ lib.filterAttrs (_: v: v != null) {
     let
       pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
     in
-    if pkg == null then null else pkg;
+    # vendorHash shim (2026-10-17): the 02:55 lock bump moved go-cqrs-lite
+    # to 60f2be41, whose upstream-baked hash no longer reproduces under the
+    # followed graph — first-hand keep-going enumeration: specified
+    # Zfte0X5r… got J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM=.
+    # Drop when upstream bakes the got hash or the lock moves past it.
+    if pkg == null then null else pkg.overrideAttrs { vendorHash = "sha256-J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM="; };
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
   # specified hash /D4X81jj… no longer reproduces under the followed
