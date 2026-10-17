@@ -860,6 +860,7 @@
                 name = "Browser History";
                 group = "Sync & Backup";
                 description = "Browsing Analytics & Productivity Insights";
+                icon = "firefox.png";
               };
               # DB dump freshness (browser-history-backup.timer, 02:15) —
               # gated so pool-less hosts register no phantom backup row.

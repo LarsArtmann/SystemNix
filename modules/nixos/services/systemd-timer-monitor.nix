@@ -137,9 +137,11 @@ _: {
               name = "systemd-timer-monitor";
               group = "Review Tools";
               description = "Systemd Services & Timers Audit";
-              # No icon: the dashboard-icons pack has no systemd/timer glyph
-              # (verified at the pinned pack rev 2026-10-17) and mdi-* names
-              # fail the papdashboard icon gate — monogram tile.
+              # No systemd-brand glyph exists in the dashboard-icons pack, so
+              # this is the nearest semantic one (a cron/job monitor): the
+              # tile audits services + timers. mdi-* names fail the
+              # papdashboard icon gate — never revert to those.
+              icon = "healthchecks.png";
             };
           };
         };

@@ -311,6 +311,10 @@
                 max_per_pass = 5;
                 strategy = "nudge";
                 send_on_approve = true;
+                # Drain-burst guard (funnel.md): skip sends for approvals
+                # older than 7 days when the driver flips live — the 379
+                # queued dry-run-era approvals must NOT all fire at once.
+                max_approval_age_days = 7;
                 never_reapply_rejected_companies = true;
               };
               # Reply loop + calendar feed (interview replies → /pipeline
@@ -1092,6 +1096,7 @@
               name = "CV";
               group = "Development";
               description = "Resume Generator & Career Pipeline";
+              icon = "open-resume.png";
             };
             backup = {
               # Nightly online .backup of the pipeline event store

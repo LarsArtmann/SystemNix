@@ -441,6 +441,7 @@
                   name = "Kith CRM";
                   group = "Productivity";
                   description = "Event-sourced personal CRM (passkey)";
+                  icon = "monica.png";
                 };
             # Native OIDC (Pocket ID) beside the passkey login — the CV
             # pattern: the login page renders the provider button, success

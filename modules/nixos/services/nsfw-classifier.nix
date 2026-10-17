@@ -295,6 +295,7 @@
                 name = "NSFW Filter";
                 group = "AI";
                 description = "Image NSFW classifier — browser-extension backend";
+                icon = "frigate.png";
               };
             };
           };

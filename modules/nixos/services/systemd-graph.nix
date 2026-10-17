@@ -119,9 +119,11 @@ _: {
               name = "systemd-graph";
               group = "Review Tools";
               description = "Live systemd Dependency Graph";
-              # No icon: the dashboard-icons pack has no systemd/graph glyph
-              # (verified at the pinned pack rev 2026-10-17) and mdi-* names
-              # fail the papdashboard icon gate — monogram tile.
+              # No systemd-brand glyph exists in the dashboard-icons pack, so
+              # this is the nearest semantic one (a diagramming tool): the
+              # tile is a live dependency-graph visualizer. mdi-* names fail
+              # the papdashboard icon gate — never revert to those.
+              icon = "diagrams-net.png";
             };
           };
         };
