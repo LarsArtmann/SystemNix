@@ -119,7 +119,8 @@ _: {
             args = [
               healBin
               "stdout"
-            ] ++ healArgs;
+            ]
+            ++ healArgs;
           };
 
           # 3) From a live session, wheel may restart the display manager

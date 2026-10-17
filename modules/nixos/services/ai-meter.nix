@@ -17,8 +17,11 @@
 #
 # Secrets doctrine:
 #   - UPSTREAM provider keys: sops-declared COPIES owned by the ai-meter
-#     user (crush.yaml's zai/gemini/kimi + openseo.yaml's openrouter via
-#     key-remap — independent of the source blocks' enablement).
+#     user (crush.yaml's zai/gemini/kimi — independent of the source
+#     blocks' enablement). openrouter upstream dropped 2026-10-17: its
+#     openrouter_api_key was never set in openseo.yaml, so the sops
+#     manifest validation refused the copy — re-add only after setting
+#     that key.
 #   - CLIENT keys: RUNTIME-MINTED by the ai-meter-keys oneshot
 #     (openssl rand, /run/ai-meter-keys, 0400 per consumer user) — the
 #     bank-sync runtime-mint pattern; NO client key ever exists in the
@@ -79,11 +82,6 @@ _: {
           name = "kimi";
           base_url = "https://api.moonshot.ai/v1";
           api_key = "${config.sops.placeholder.ai-meter-kimi-key}";
-        }
-        {
-          name = "openrouter";
-          base_url = "https://openrouter.ai/api/v1";
-          api_key = "${config.sops.placeholder.ai-meter-openrouter-key}";
         }
         {
           # NATIVE Google transport (crush's gemini provider rides
@@ -338,11 +336,6 @@ _: {
               {
                 name = "gemini";
                 key = "gemini_api_key";
-              }
-              {
-                name = "openrouter";
-                sopsFile = ../../../platforms/nixos/secrets/openseo.yaml;
-                key = "openrouter_api_key";
               }
             ]
         );

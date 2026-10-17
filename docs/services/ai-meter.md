@@ -24,14 +24,14 @@ crush provider gemini      → http://127.0.0.1:8107/v1/gemini/v1beta/models/<m>
                            → https://generativelanguage.googleapis.com (NATIVE genai protocol, X-Goog-Api-Key)
 paperless-gpt             → http://127.0.0.1:8107/v1/fastflowlm/chat/completions  → 127.0.0.1:52625 (FastFlowLM)
 inboxclean chat           → http://127.0.0.1:8107/v1/llama-chat/chat/completions  → 127.0.0.1:8850 (llama.cpp)
-(+ openrouter, llama-embeddings upstreams declared; unused ones cost nothing)
+(+ llama-embeddings upstream declared; unused ones cost nothing; openrouter dropped 2026-10-17 — `openrouter_api_key` was never set in sops)
 ```
 
 The proxy is TRANSPARENT: bodies pass through untouched except one opt-in injection — `stream_options.include_usage: true` on streaming requests that lack it, so the final SSE chunk carries the usage block the metering needs. `inject_stream_usage: false` in the rendered config disables it. Native genai traffic is exempt from the injection (genai bodies would reject the foreign field); its usage comes from `usageMetadata` instead (genai.go adapter, 2026-10-17).
 
 ## Secrets & clients
 
-- **Upstream provider keys**: sops COPIES owned by the `ai-meter` user (`ai-meter-{zai,kimi,gemini,openrouter}-key` → crush.yaml / openseo.yaml keys). Independent of the source blocks' enablement.
+- **Upstream provider keys**: sops COPIES owned by the `ai-meter` user (`ai-meter-{zai,kimi,gemini}-key` → crush.yaml keys). Independent of the source blocks' enablement. The openrouter copy was dropped 2026-10-17: `openrouter_api_key` was never set in `openseo.yaml`, which made sops manifest validation refuse the whole deploy — re-add only after setting that key.
 - **Client keys**: RUNTIME-MINTED by the `ai-meter-keys` oneshot (`openssl rand -hex 24` → `/run/ai-meter-keys/<client>`, 0400, owned by the consumer's user). Never in the repo, never in sops. Keys live for the boot; existing keys are NEVER regenerated (a silent rotation would 401 running consumers).
 - **Two-copy mint (2026-10-17)**: the daemon (`ai-meter` user) cannot read consumer-owned 0400 files — the first VM run start-looped on exactly that. Each key therefore ALSO exists as an `ai-meter`-owned 0400 mirror at `/run/ai-meter-keys/config/<client>` (dir 0700); the proxy config points ONLY at the mirrors, and the mint re-syncs each mirror (`install`) on every run so the pair can never diverge.
 
