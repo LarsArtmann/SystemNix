@@ -59,7 +59,10 @@
         # tidied; plain hash mismatch). Got p7sOpco6… first-hand (fakeHash
         # probe at aa637cbf). Class comment: lib/lars-packages.nix
         # flakePkgShim.
-        vendorHash = "sha256-8OAMcaF1rGMknRq53We7TCbgmfiqKMZkKGd6LbyLWBI=";
+        # 2026-10-17 wave: be4aa55 (got 8OAMcaF1…, shimmed 08:26) → a743f03
+        # (blanket re-float; got mnvM9S+l… first-hand keep-going enumeration,
+        # /tmp/toplevel-reeval-20261017b.log).
+        vendorHash = "sha256-mnvM9S+lyjzjh/hqh2u+N5JZZCEWxS6pephVwcqtKGk=";
       };
     in
     {

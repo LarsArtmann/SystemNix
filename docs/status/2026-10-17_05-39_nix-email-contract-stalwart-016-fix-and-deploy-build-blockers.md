@@ -1,8 +1,10 @@
 # Status: nix-email contract fix (Stalwart 0.16) + evo-x2 deploy build-blocker inventory
 
-**When:** 2026-10-17 05:39 CEST
+**When:** session work 2026-10-17 05:06-05:39 CEST; report finalized ~10:40 CEST (wall-clock gap: the dispatch arrived hours after the fix turn — filename keeps the 05-39 work-window stamp; harvest citations depend on it)
 **Session scope:** one `fix!` dispatch (eval-surface repair) + this status turn. Written from THIS session's runs and observations only — no out-of-scope research, per dispatch instruction.
 **Format note:** `.md` per the dispatch's explicit path demand (status-report skill is HTML-canonical; explicit user format wins — recorded, not propagated).
+
+> **2026-10-17 ~10:45 ANNOTATION (post-dispatch verification, user-directed):** sections §b1/§d1/§d2/§f below were written from the 05:06 enumeration and are now PARTIALLY STALE — sibling sessions re-greened most of the wave between 06:30 and 08:38 (commits `04c90efa`, `a751dcd4`): 11/12 go-module got-hashes shimmed, the art-dupl break root-caused and shimmed (rename, not missing upstream code), signoz `pnpmDeps` hash updated. Remaining at annotation time: `overview` (unshimmed, got `+WMj7c5U…`), go-taskqueue triage, and the build-level proof. See §i for the live re-verification result.
 
 ---
 
