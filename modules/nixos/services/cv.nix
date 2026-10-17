@@ -801,6 +801,17 @@
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
+              # Boot-race close (2026-10-17): cv-server is Type=simple —
+              # systemd marks it Started at fork, ~15s before the Go app
+              # binds ${toString cfg.port} (2026-10-17 boot: cv-scan curl
+              # exit-7 at 18:14:18 while the listener came up 18:14:31 —
+              # after/wants alone cannot close that gap). Bounded fail-open
+              # /dev/tcp wait, same idiom as the crm-server wait above: if
+              # cv-server is genuinely down the curls below fail loudly
+              # (that is the unit's job), and 60s stays under the 90s
+              # systemd start-timeout default.
+              ExecStartPre = "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 60)); until (exec 3<>\"/dev/tcp/127.0.0.1/${toString cfg.port}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"cv-scan: cv-server 127.0.0.1:${toString cfg.port} not reachable within 60s — proceeding (curl will fail loudly if it is really down)\" >&2; exit 0; fi; sleep 1; done'";
+              TimeoutStartSec = 180;
               # Same sops template the server reads — the systemd manager
               # injects it, so the hardened sandbox never touches the
               # secret file itself.

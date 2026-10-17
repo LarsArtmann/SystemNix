@@ -23,6 +23,16 @@
 #   - mkDnsGate: the clone needs dnsblockd answering forgejo.home.lan —
 #     at boot that is ~2min away (blocklist load), so the gate budget is
 #     the default 180s (TimeoutStartSec floor 4min via the fragment).
+#   - after/wants caddy + forgejo (2026-10-17): the clone goes over
+#     HTTPS to forgejo.home.lan:443, which is Caddy in front of the
+#     forgejo backend. At the 2026-10-17 boot DNS was ready at 18:14:00
+#     but Caddy only bound :443 at 18:14:07 — the sync failed into
+#     start-limit noise while a 7s ordering gap was the whole story.
+#     The ExecStartPre /dev/tcp probe below closes the remaining
+#     started-but-not-yet-binding gap (same idiom as cv-server's
+#     crm-server wait); TimeoutStartSec is raised to 6min so the DNS
+#     gate (180s) + endpoint probe (120s) both fit (gate-timeout-audit
+#     floor is 4min).
 #   - No deploy.sh provisioner entry: `architecture-catalog-sync` matches
 #     no converger pattern, and the hourly Persistent timer converges
 #     after every boot/deploy anyway.
@@ -188,6 +198,18 @@ _: {
           startLimitIntervalSec = 300;
           inherit (dnsGate) after;
           inherit (dnsGate) wants;
+          # DNS alone is not readiness: the clone needs Caddy listening on
+          # :443 and the forgejo backend behind it (comment header). Plain
+          # wants (not requires) — a down Caddy degrades to the probe/clone
+          # failing loudly, never a dead sync unit chain.
+          after = dnsGate.after ++ [
+            "caddy.service"
+            "forgejo.service"
+          ];
+          wants = dnsGate.wants ++ [
+            "caddy.service"
+            "forgejo.service"
+          ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -200,6 +222,18 @@ _: {
             (serviceOneshotDefaults { })
             ioTier.background
             dnsGate.serviceConfig
+            {
+              # Bounded fail-open endpoint wait AFTER the DNS gate (mkMerge
+              # appends to the gate's ExecStartPre list): if forgejo.home.lan
+              # never answers :443 the git clone below surfaces the real
+              # error — the probe only closes the boot ordering gap. 443 is
+              # protocol-fixed (HTTPS), deliberately not a lib/ports.nix
+              # entry; the /dev/tcp slash form is audit-invisible by design.
+              ExecStartPre = [
+                "+${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>"/dev/tcp/${cfg.host}/443") 2>/dev/null; do if [ "$$SECONDS" -ge "$$deadline" ]; then echo "architecture-catalog-sync: https endpoint ${cfg.host}:443 not reachable within 120s — proceeding (git clone will surface the real error)" >&2; exit 0; fi; sleep 1; done'
+              ];
+              TimeoutStartSec = lib.mkForce "6min";
+            }
           ];
         };
 
