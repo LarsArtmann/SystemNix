@@ -519,8 +519,7 @@ eval_case tileicons legacy-mdi-icon fail 'tile icon\(s\) must be a dashboard-ico
 # must pass the eval and fail the dashboardIcons copy — realized through
 # PAP_ICONS_DIR's string context (the unit-env reference that makes the
 # gate unskippable on a real deploy).
-build_case tileicons pack-missing-icon fail "is not in the dashboard-icons pack" \
-  'config.systemd.services.papdashboard.environment.PAP_ICONS_DIR' \
+build_case tileicons pack-missing-icon 'config.systemd.services.papdashboard.environment.PAP_ICONS_DIR' fail "is not in the dashboard-icons pack" \
   'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"pocket-id-not-in-any-pack.png"|'
 
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
