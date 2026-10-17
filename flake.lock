@@ -932,11 +932,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792223812,
-        "narHash": "sha256-NB3MuyW/KSfBnZvWlfhItsZ8FRm8tI2ZU8R4+stBaqI=",
+        "lastModified": 1792227255,
+        "narHash": "sha256-2Npc5+wnuhGple8g7CayntODlytmp9fiAoYATDBUMcU=",
         "owner": "LarsArtmann",
         "repo": "CV",
-        "rev": "a743f032e011baaa010b2854e66dd04ab6b80391",
+        "rev": "0ec5eac3cad222af356baa5e32ead7045f49d823",
         "type": "github"
       },
       "original": {

@@ -1112,7 +1112,7 @@ if $papdashboard_enabled; then
     *) report_fail "PapDashboard - /icons/ cache contract broken: '$pap_icon_cache' (expected immutable)" ;;
     esac
   else
-    report_fail "PapDashboard - fragment has ZERO <img src=\"/icons/...\"> tiles (icon pack not wired: stale flake pin predating the icon feature, or PAP_ICONS_DIR unset on the unit)"
+    report_fail 'PapDashboard - fragment has ZERO <img src="/icons/..."> tiles (icon pack not wired: stale flake pin predating the icon feature, or PAP_ICONS_DIR unset on the unit)'
   fi
 else
   report_skip "PapDashboard - service disabled (units absent from systemd)"
