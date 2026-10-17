@@ -12,12 +12,18 @@
 #     /healthz stays unauthenticated for Gatus (crm main.go: "always 200
 #     while the process can serve at all ... deliberately OUTSIDE the
 #     auth gate")
-#   - NATIVE OIDC (2026-10-10): Pocket ID sign-in rides BESIDE the
-#     passkeys (Layer 1 in docs/agents/sso-dns.md — the oauth2-proxy
-#     Layer 2 gate bypasses LAN clients, and crm.<domain> IS a LAN
-#     hostname, so only in-app OIDC covers them). Passkeys stay as the
-#     break-glass path; an unreachable Pocket ID at boot degrades to
-#     passkey-only (crm-server logs loudly, stays up).
+#   - NATIVE OIDC (2026-10-10), PASSKEYS OFF (2026-10-17): Pocket ID is
+#     the ONLY sign-in method (Layer 1 in docs/agents/sso-dns.md — the
+#     oauth2-proxy Layer 2 gate bypasses LAN clients, and crm.<domain> IS
+#     a LAN hostname, so only in-app OIDC covers them). -passkeys=false
+#     leaves the WebAuthn provider unconfigured upstream: the login page
+#     serves the Pocket ID button alone, ceremonies 401, and the passkey
+#     settings page turns off. NO DEGRADE PATH: an unreachable IdP or a
+#     missing client secret fails the boot (no second sign-in method
+#     exists to fall back to) — Gatus catches the 502; fix Pocket ID and
+#     restart. Escape hatches: the -api-token bearer surface stays
+#     outside the session gate (CV sync keeps working), and
+#     services.crm-server.auth.enable = false + redeploy lifts the gate.
 #   - the -api-token bearer gate (the Twenty-compatible /rest surface the
 #     CV pipeline sync mirrors into) is INDEPENDENT of the passkey session
 #     gate (api.go: "called OUTSIDE the CRM's session gate") — the CV
@@ -96,7 +102,7 @@
           services.catalog.crm = {
             subdomain = "crm";
             port = ports.crm;
-            description = "Kith CRM (event-sourced, passkey-authed)";
+            description = "Kith CRM (event-sourced, Pocket ID auth)";
             healthPath = "/healthz";
           };
         }
@@ -119,13 +125,15 @@
             type = lib.types.bool;
             default = true;
             description = ''
-              WebAuthn passkey auth (-auth): every CRM route rides the
-              cqrs-htmx identity session gate; /healthz and the bearer
-              -api-token surface stay independent. First visit registers
-              the sole passkey (MaxUsers=1 closes registration). Escape
-              hatch if the ceremony is ever locked out: set to false and
-              redeploy (docs/ops/PASSKEY-RECOVERY.md documents the API
-              path in the crm repo).
+              Session gate (-auth): every CRM route rides the cqrs-htmx
+              identity session gate; /healthz and the bearer -api-token
+              surface stay independent. Sign-in is Pocket ID OIDC only
+              (-passkeys=false, 2026-10-17): passkey ceremonies 401, the
+              passkey settings page is off, registered credentials stay
+              dormant in the identity db. Escape hatch if Pocket ID is
+              unreachable long-term: set to false and redeploy (the
+              bearer API keeps working; the crm repo's
+              docs/ops/PASSKEY-RECOVERY.md documents re-enabling).
             '';
           };
         };
@@ -189,16 +197,20 @@
                   ]
                   ++ lib.optionals cfg.auth.enable [
                     "-auth"
-                    "-rpid crm.${domain}"
-                    "-origin https://crm.${domain}"
+                    # Pocket ID OIDC is the ONLY sign-in method
+                    # (2026-10-17): -passkeys=false leaves the WebAuthn
+                    # provider unconfigured upstream — no -rpid/-origin
+                    # (they only shaped the passkey ceremony).
+                    "-passkeys=false"
                     # HTTPS posture: Secure on session+CSRF cookies (the
                     # vHost serves TLS; loopback HTTP is not used).
                     "-secure true"
                   ]
                   ++ lib.optionals pocketIdProvisioned [
-                    # Native OIDC (Pocket ID beside the passkey login).
-                    # The client secret rides CRM_OIDC_CLIENT_SECRET from
-                    # the crm-oidc-env bridge (environment, never argv).
+                    # Native OIDC — the only sign-in method since
+                    # -passkeys=false. The client secret rides
+                    # CRM_OIDC_CLIENT_SECRET from the crm-oidc-env bridge
+                    # (environment, never argv).
                     "-oidc-issuer https://auth.${domain}"
                     "-oidc-client-id ${crmOidcClientId}"
                     "-oidc-redirect-url https://crm.${domain}/auth/oauth/pocket-id/callback"
@@ -211,25 +223,30 @@
               (lib.mkIf pocketIdProvisioned {
                 # EXTENDS the sops env file with the OIDC bridge's secret
                 # file (cv-server mkForce pattern). A MISSING file (the
-                # bridge removed it: no secret provisioned) is a systemd
-                # warning, not a start failure — OIDC degrades off and the
-                # passkey path keeps working.
+                # bridge removed it: no secret provisioned) is only a
+                # systemd warning HERE — but with -passkeys=false the
+                # empty CRM_OIDC_CLIENT_SECRET leaves crm-server's -oidc-*
+                # family partial and the server REFUSES to boot (no
+                # fallback sign-in method). Loud by design; fix the
+                # provisioner.
                 EnvironmentFile = lib.mkForce [
                   config.sops.templates."crm-server-env".path
                   oidcEnvFile
                 ];
                 # Boot/deploy-race gate (2026-10-12): OIDC discovery runs once
                 # at startup; a start before auth.<domain> is RESOLVABLE
-                # silently degraded crm.<domain> to passkey-only for days
-                # (never retried). Both observed failure modes were
-                # `lookup … no such host` (boot ordering AND the deploy's own
-                # dnsblockd restart window), so the gate waits on local DNS —
-                # NOT a TCP probe: :1411 (Pocket ID loopback) is not the
-                # served surface (Caddy :443 is) and a :1411 probe burned its
-                # full 120s while discovery succeeded (first attempt, fixed
-                # same day). Bounded, fail-open (cv-server's wait idiom).
+                # failed discovery — pre-2026-10-17 that silently degraded
+                # crm.<domain> to passkey-only for days; since -passkeys=false
+                # it fails the BOOT, so the gate matters more. Both observed
+                # failure modes were `lookup … no such host` (boot ordering
+                # AND the deploy's own dnsblockd restart window), so the gate
+                # waits on local DNS — NOT a TCP probe: :1411 (Pocket ID
+                # loopback) is not the served surface (Caddy :443 is) and a
+                # :1411 probe burned its full 120s while discovery succeeded
+                # (first attempt, fixed same day). Bounded, fail-open
+                # (cv-server's wait idiom).
                 ExecStartPre = [
-                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until ${pkgs.getent}/bin/getent hosts auth.${domain} >/dev/null 2>&1; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: auth.${domain} not resolvable within 120s — starting anyway (OIDC will degrade to passkey-only; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
+                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until ${pkgs.getent}/bin/getent hosts auth.${domain} >/dev/null 2>&1; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: auth.${domain} not resolvable within 120s — starting anyway (sign-in needs Pocket ID; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
                 ];
                 # The wait window lives under the default 90s start budget
                 # (systemd.md: ExecStartPre-heavy units need an explicit
@@ -248,9 +265,10 @@
 
           # Bridges the Pocket ID client secret into the env file
           # crm-server consumes (cv-oidc-env pattern). When the secret is
-          # missing the unit exits 0 WITHOUT writing the env file, so OIDC
-          # sign-in stays off instead of blocking the service (passkey
-          # login is the break-glass path and always works).
+          # missing the unit exits 0 WITHOUT writing the env file; with
+          # -passkeys=false that leaves crm-server's -oidc-* family
+          # partial, so the server refuses to boot until the provisioner
+          # is fixed — no silent no-sign-in degrade.
           crm-oidc-env = lib.mkIf pocketIdProvisioned {
             description = "Kith CRM — Pocket ID OIDC client secret provisioning";
             after = [ "pocket-id-provision.service" ];
@@ -404,8 +422,8 @@
         # Service-integration registry entry: ONE declaration fans out to
         # Caddy vHost, Gatus checks, dashboard tile, backup freshness, and
         # system-health monitored-unit metrics. Layer "plain": the Kith
-        # carries its OWN auth — WebAuthn passkeys plus NATIVE Pocket ID
-        # OIDC (the oidc entry below; a "protected" Layer 2 gate would
+        # carries its OWN auth — Pocket ID OIDC ONLY since 2026-10-17
+        # (-passkeys=false upstream; a "protected" Layer 2 gate would
         # double-auth and bypasses LAN clients anyway).
         # The vHost + tile stay dormant while Twenty owns the subdomain
         # (see the cutover note in the module header); the loopback health
@@ -440,12 +458,12 @@
                 {
                   name = "Kith CRM";
                   group = "Productivity";
-                  description = "Event-sourced personal CRM (passkey)";
+                  description = "Event-sourced personal CRM (Pocket ID)";
                   icon = "monica.png";
                 };
-            # Native OIDC (Pocket ID) beside the passkey login — the CV
-            # pattern: the login page renders the provider button, success
-            # mints the app session. The secret lands in
+            # Native OIDC (Pocket ID) — the ONLY sign-in method since
+            # 2026-10-17: the login page renders the provider button
+            # alone, success mints the app session. The secret lands in
             # /var/lib/pocket-id/client-secrets/crm and reaches the server
             # via the crm-oidc-env bridge (above). PKCE S256 enforced.
             oidc = {

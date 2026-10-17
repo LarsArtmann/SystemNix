@@ -823,11 +823,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792194454,
-        "narHash": "sha256-gZ1MkiyhvoHnT9A0y9mwdL121KXc6mvih+S8zTgANkM=",
+        "lastModified": 1792219601,
+        "narHash": "sha256-d2QRFUkx7kk+fQeqXmLyEkhhZ+1U6lGYhl2PAqbpUvE=",
         "owner": "LarsArtmann",
         "repo": "crm",
-        "rev": "56bdd4c22ab083f0abc59ff2b1628acbf8411542",
+        "rev": "d3f740ba8a2188ef1c6dfd65eae1dc62674bf396",
         "type": "github"
       },
       "original": {
