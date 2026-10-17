@@ -389,6 +389,8 @@
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+- [ ] [ready] **Extend systemd-shape-audit class 5: boot-blocking Type=oneshot units must carry a finite TimeoutStartSec** (wantedBy multi-user/graphical + no timeout = the 2026-10-17 infinite-boot class; nixpkgs-generated units included — netbird-evox2-login held FinishTimestampMonotonic=0 for 55+ min via an unguarded `until…sleep 1` login loop; allowlist option + negative-test-lints.sh selftest per house pattern) → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-17 19:1x infinite-boot live session; module fix landed same session)
+- [ ] [ready] **Fix visionreviewd's OnFailure no-op** — `serviceConfig.OnFailure` renders under [Service] where systemd ignores it (verified live vs /etc unit); move to unit-level `onFailure` so failures reach notify-failure@ → [docs/todo/services.md](docs/todo/services.md) (Source: same session)
 - [ ] [ready] **discordsync hotloop triage (§18 class: 2812 journal lines/min, exit 69)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-16_02-15_pastebot-parity-clipboard-snippets-status.md §d.2)
 
 - [ ] [ready] **Diagnose (then fix or consciously tolerate) the `lars/auto-deduplicate` PRUNE failure — the only live forgejo notice generator** (every ~2.5h since 09-24, credential-prompt class, mirror otherwise healthy; verify against the DEPLOYED forgejo source first) → [docs/todo/services.md](docs/todo/services.md) (Source: 2026-10-16 full notices review, docs/services/forgejo.md §dead-mirror)

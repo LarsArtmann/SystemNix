@@ -18,7 +18,10 @@ _: {
     }:
     let
       cfg = config.services.netbird-client;
-      inherit (import ../../../lib/default.nix lib) ports;
+      inherit (import ../../../lib/default.nix lib)
+        onFailure
+        ports
+        ;
     in
     {
       # Unconditional catalog entry (ADR-008): "what exists" — no DNS
@@ -114,7 +117,34 @@ _: {
         # NeedsLogin-guarded no-op once enrolled. deploy.sh's converger
         # loop re-runs it after every deploy (stale-key re-enrollment
         # path).
-        systemd.services."netbird-evox2-login".wantedBy = [ "multi-user.target" ];
+        #
+        # NEVER boot-blocking + finite start budget (2026-10-17 infinite-boot
+        # incident): the nixpkgs login script waits in an UNGUARDED
+        # `until netbird status | grep -q ': Connected\|NeedsLogin'; do
+        # sleep 1` loop — while the daemon cycles Connecting/Disconnected
+        # (control plane slow/unreachable) NEITHER pattern ever matches, and
+        # get_status's `2>&1 || :` swallows exec errors, so a dead/missing
+        # wrapper binary loops silently once per second forever. Type=oneshot
+        # defaults TimeoutStartSec to INFINITY, and a multi-user.target.wants
+        # unit with no After= on that target keeps its start job in the
+        # target's wait set → multi-user.target + graphical.target + the
+        # repo's own boot-metrics-emit sat "waiting" for 55+ min with the
+        # desktop fully up, FinishTimestampMonotonic stayed 0 (systemd-analyze
+        # plot refuses; the stuck unit never appears in blame — completed
+        # units only), and deploy.sh's converger restart parked behind it.
+        # Two bounds: After=multi-user.target moves the unit PAST the
+        # target's job-completion set (canonical post-boot start), and a 2min
+        # TimeoutStartSec turns a wedged login into a loud notify-failure +
+        # converger retry instead of an immortal loop.
+        systemd.services."netbird-evox2-login" = {
+          wantedBy = [ "multi-user.target" ];
+          after = [ "multi-user.target" ];
+          # Unit-level (NOT serviceConfig): OnFailure is a [Unit] key —
+          # serviceConfig.OnFailure renders under [Service] where systemd
+          # silently ignores it (visionreviewd ships that latent no-op).
+          onFailure = onFailure;
+          serviceConfig.TimeoutStartSec = "2min";
+        };
 
         # State hygiene (2026-10-06): the phase-2 deploy's string-form
         # "ManagementUrl" fragment poisoned /var/lib/netbird-evox2/config.json,
