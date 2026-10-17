@@ -642,8 +642,25 @@ if nix run .#pre-deploy-check; then
   elif [ -n "$new_gen" ]; then
     echo "ℹ No new profile generation (system-${new_gen} unchanged — config already active)"
   fi
+  # Anchor SELF-REPAIR (2026-10-17 root-cause mitigation): nh's profile-write
+  # leg (`sudo nix build --no-link --profile /nix/var/nix/profiles/system …`,
+  # visible in _COMM=sudo for the 19:36 deploy) silently vanished from later
+  # deploys — 19:57/20:10/20:20/20:38 all switched /run/current-system with
+  # NO new generation, leaving exit-14 reboot-revertible states that needed
+  # the owner's manual sudo dance (nh/nixos-rebuild-ng root cause still open,
+  # docs/todo/pipeline.md). Deploy.sh already elevates: repair INLINE — write
+  # the profile to the SWITCHED toplevel (never the reverse: the running
+  # system is the activated truth) and re-arm the boot entries. The final
+  # exit-14 assertion stays as the backstop if this repair itself fails.
   if [ -n "$new_gen" ] && [ "$(readlink /run/current-system 2>/dev/null)" != "$(readlink "/nix/var/nix/profiles/system-${new_gen}-link" 2>/dev/null)" ]; then
-    echo "⚠ /run/current-system is NOT anchored to the newest generation (system-${new_gen}) — manual activation detected; a REBOOT WILL REVERT. Re-run: nix run .#deploy"
+    cur_system="$(readlink /run/current-system 2>/dev/null)"
+    echo "⚠ anchor mismatch (profile system-${new_gen} != running system) — self-repairing profile to ${cur_system}"
+    if sudo nix build --no-link --profile /nix/var/nix/profiles/system "$cur_system"; then
+      sudo "$cur_system/bin/switch-to-configuration" boot
+      echo "✓ anchor repaired: system profile now points at the running system"
+    else
+      echo "❌ anchor self-repair FAILED — the final exit-14 assertion will block; manual repair per AGENTS.md deploy-anchor discipline"
+    fi
   fi
 
   # Start critical services that deploy may have left in inactive/dead state.
