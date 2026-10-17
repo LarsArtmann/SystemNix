@@ -1130,11 +1130,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1792261378,
-        "narHash": "sha256-1eulsGaiFARn0aGSMExGdamgH/zQIeA/2VFqUeqfVcg=",
+        "lastModified": 1792273273,
+        "narHash": "sha256-UgV+pbd7fENNkvSibX34MRkTwRabwrNrOnTOcRdW/YE=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "99f38943f002e0ee8cdc967c49c49c9b5be21d1d",
+        "rev": "f88f504eb4fe5c606f4f52b32e1ee87d081aa7fa",
         "type": "github"
       },
       "original": {

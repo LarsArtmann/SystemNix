@@ -705,6 +705,7 @@ in
       uploaded=0
       in_sync=0
       failed=0
+      skipped=0
 
       # $1=label $2=GitHub avatar_url $3=forgejo api url (GET .avatar_url /
       # POST avatar). Per-target failures WARN and count; the unit fails AFTER
@@ -729,6 +730,22 @@ in
         cp "$AVATAR_TMP" "$GH_AVATAR_TMP"
         fj_url=$(curl -s -H "Authorization: token $FORGEJO_TOKEN" "$fj_api" \
           | jq -r '.avatar_url // empty' || true)
+        if [[ -z "$fj_url" ]]; then
+          # An org with nothing mirrored under it has no local twin (orgs are
+          # created create-if-missing by the MIRROR phase, repo by repo) — the
+          # avatar POST would 404 and fail the unit every hour for an org
+          # that legitimately has nothing here (org:vonArtmann since
+          # 2026-10-17, live-404-proven). Distinguish absent-target (skip,
+          # converges automatically once a repo under it gets mirrored)
+          # from a real push failure.
+          local exists
+          exists=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: token $FORGEJO_TOKEN" "$fj_api")
+          if [[ "$exists" == "404" ]]; then
+            echo "  skip: $label: no local twin (nothing mirrored under it) — avatar converges when one is"
+            skipped=$((skipped + 1))
+            return 0
+          fi
+        fi
         if [[ -n "$fj_url" ]] \
           && fetch_avatar "$fj_url" "$FORGEJO_TOKEN" \
           && [[ -s "$AVATAR_TMP" ]]; then
@@ -764,6 +781,8 @@ in
           echo "forgejo_avatar_in_sync $in_sync"
           echo "# TYPE forgejo_avatar_failed gauge"
           echo "forgejo_avatar_failed $failed"
+          echo "# TYPE forgejo_avatar_skipped gauge"
+          echo "forgejo_avatar_skipped $skipped"
           echo "forgejo_avatar_last_run_timestamp_seconds $(date +%s)"
         } > "$tmp"
         chmod 644 "$tmp"
@@ -807,7 +826,7 @@ in
         fi
       fi
 
-      echo "=== Avatar sync summary: targets=$targets updated=$uploaded in-sync=$in_sync failed=$failed"
+      echo "=== Avatar sync summary: targets=$targets updated=$uploaded in-sync=$in_sync failed=$failed skipped=$skipped"
       publish_metrics
       # Fail loud AFTER the full pass (reinterval doctrine): the next hourly
       # timer run retries the misses.
