@@ -58,7 +58,7 @@
           # class comment: lib/lars-packages.nix flakePkgShim — same value
           # as the lars-packages surface)
           default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=";
+            vendorHash = "sha256-KaDlWefEw3DZHR5SGGBHqaY+3tT7MoSeGKApRYxmBpg=";
           };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";

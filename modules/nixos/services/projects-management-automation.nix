@@ -62,7 +62,7 @@
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
+                vendorHash = "sha256-5WOy3BHvtQzhjN87X/lS82TA0RZHfIDyTHKbQqiTi5E=";
               };
           user = primaryUser;
           group = "users";

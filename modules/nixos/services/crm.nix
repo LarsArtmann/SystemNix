@@ -82,7 +82,7 @@
       # (measured at a410024b) was the SPECIFIED hash in the 02:46 nh
       # mismatch. Got WOZ2Iwqw… first-hand. Drop per the standing conditions.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-WOZ2IwqwAaI+Y7EBZyWGRfMPZ13p8rGWaHrMTDOxcE0=";
+        vendorHash = "sha256-R9ui8Fb7LMg5THOullEsoBYrQa1zH3qrfwb3K5acuVE=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

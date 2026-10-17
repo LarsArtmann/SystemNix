@@ -94,7 +94,7 @@ lib.filterAttrs (_: v: v != null) {
   buildflow =
     flakePkgShim inputs.buildflow "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment)
-      "sha256-cCl3IWhufWYGlRncOOKKvUwaOBceF7aapUXCwoyk2lA=";
+      "sha256-5OQbyOHyoCMh1vNV1QRrRpP0G7wu1Wto+5WrpCZsVa4=";
   # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
@@ -167,7 +167,10 @@ lib.filterAttrs (_: v: v != null) {
   go-humanize-linter =
     flakePkgShim inputs.go-humanize-linter "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment)
-      "sha256-ZenhGNkklhWD/Ej4WZhZwtD16suWdQ0c2n+Lmf2J4ME=";
+      # RE-PINNED 2026-10-17 (the 02:55 lock bump): specified ZenhGNkk…
+      # no longer reproduces — got /2zA0kMS… from the first-hand evo-x2
+      # toplevel --keep-going enumeration at 06:19.
+      "sha256-/2zA0kMSs11mumZc8S34My1gxGs4te/fQFhxJcoJqns=";
   go-structure-linter =
     flakePkgShim inputs.go-structure-linter "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment)
@@ -190,7 +193,7 @@ lib.filterAttrs (_: v: v != null) {
       pkg.overrideAttrs {
         # fleet-wave 2026-10-15 re-pin: EgfteIUmqz… re-staled at 104b54e6
         # (see flakePkgShim class comment)
-        vendorHash = "sha256-YmWGO9br4TEiWZ22pCI6+hQBbjYHK2K9K53SuFTY2pw=";
+        vendorHash = "sha256-IGt6NehaKqho31wFnaWw2SvtUfvbWA6SdZ33udl8aeE=";
       };
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
@@ -201,7 +204,7 @@ lib.filterAttrs (_: v: v != null) {
   library-policy =
     flakePkgShim inputs.library-policy "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment)
-      "sha256-LNKl6MJs31DOTzZ1ThMIfvJ3+XOgFlS2KhXWKL2ncMY=";
+      "sha256-SIbgnu0y+2GpqjugkXxin2nlal6jJqt5BoobywJStd4=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -231,7 +234,7 @@ lib.filterAttrs (_: v: v != null) {
     flakePkgShim inputs.mr-sync "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment; the module
       # default in modules/nixos/services/mr-sync.nix carries the same value)
-      "sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=";
+      "sha256-KaDlWefEw3DZHR5SGGBHqaY+3tT7MoSeGKApRYxmBpg=";
   # vendorHash shim DROPPED (2026-10-10): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 7567b4ec, whose
   # flake bakes vendorHash HWYco+tb… (the same "got" hash the stale shim
@@ -241,7 +244,7 @@ lib.filterAttrs (_: v: v != null) {
   project-meta =
     flakePkgShim inputs.project-meta "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment)
-      "sha256-RxJS6cpJ3x9VTvcroUeA2gMRNdbcD8xuRTzNUDSGYd0=";
+      "sha256-paiQbA3xU6V1JEKsXj9W3ryE7SB57yJPODdtc+v3wxk=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
@@ -265,7 +268,7 @@ lib.filterAttrs (_: v: v != null) {
     flakePkgShim inputs.projects-management-automation "default"
       # fleet-wave 2026-10-15 (see flakePkgShim class comment; the service
       # config in projects-management-automation.nix carries the same value)
-      "sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=";
+      "sha256-5WOy3BHvtQzhjN87X/lS82TA0RZHfIDyTHKbQqiTi5E=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -307,5 +310,10 @@ lib.filterAttrs (_: v: v != null) {
       inputs.nixpkgs.legacyPackages.${system}.git
     ];
     doCheck = false;
+    # vendorHash re-pin (2026-10-17 fleet wave, 02:55 lock bump): upstream
+    # arnwDFCs no longer reproduces - got rYQJIQB from the first-hand
+    # toplevel --keep-going enumeration at 06:19. Drop per the standing
+    # nix-hash-fix protocol.
+    vendorHash = "sha256-rYQJIQB+4xKX/sh6DVjcSbmzx9ZsnDz0ad5Eznk3vhU=";
   });
 }

@@ -270,7 +270,7 @@ let
       vendorHash = "sha256-AAXq+KGA17u2aUdmahn3OE8NZr4KcdK4j1lqmZ3Wt5o=";
     };
     overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=";
+      vendorHash = "sha256-+WMj7c5UHyQQNwrMLdB5AQ5ErWqlLocZT0WlWwoakzE=";
     };
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
       vendorHash = "sha256-nN2cwwLQCekdM+7kRUS7uFTVCvjL/Akg3PnIFFE9Qmg=";

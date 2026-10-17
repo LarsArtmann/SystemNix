@@ -59,7 +59,7 @@
         # tidied; plain hash mismatch). Got p7sOpco6… first-hand (fakeHash
         # probe at aa637cbf). Class comment: lib/lars-packages.nix
         # flakePkgShim.
-        vendorHash = "sha256-p7sOpco67lp1UtbwD21q0HxVHrITLuwVzCxeDo1EzTM=";
+        vendorHash = "sha256-8OAMcaF1rGMknRq53We7TCbgmfiqKMZkKGd6LbyLWBI=";
       };
     in
     {
