@@ -179,15 +179,15 @@ in
     # servicedir would kill its D-Bus activation.
     environment.extraSetup =
       let
-        dbusPrunePkgs =
-          [ pkgs.xdg-desktop-portal ]
-          ++ config.xdg.portal.extraPortals
-          ++ lib.optionals config.services.gnome.gnome-keyring.enable [ pkgs.gnome-keyring ]
-          ++ lib.optionals config.programs.dconf.enable [ pkgs.dconf ]
-          ++ lib.optionals config.hardware.bluetooth.enable (
-            [ pkgs.bluez ]
-            ++ lib.optionals config.services.blueman.enable [ pkgs.blueman ]
-          );
+        dbusPrunePkgs = [
+          pkgs.xdg-desktop-portal
+        ]
+        ++ config.xdg.portal.extraPortals
+        ++ lib.optionals config.services.gnome.gnome-keyring.enable [ pkgs.gnome-keyring ]
+        ++ lib.optionals config.programs.dconf.enable [ pkgs.dconf ]
+        ++ lib.optionals config.hardware.bluetooth.enable (
+          [ pkgs.bluez ] ++ lib.optionals config.services.blueman.enable [ pkgs.blueman ]
+        );
       in
       ''
         for p in ${toString dbusPrunePkgs}; do

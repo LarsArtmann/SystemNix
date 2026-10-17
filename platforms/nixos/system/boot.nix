@@ -31,9 +31,20 @@ in
   boot = {
     # Systemd boot configuration
     loader = {
-      timeout = 2;
+      timeout = 1; # Owner-decided 2026-10-17 (was 2); holding a key during the menu still interrupts
       systemd-boot.enable = true;
       systemd-boot.configurationLimit = 50; # Limit to 50 generations to prevent /boot full
+      # Automatic boot assessment: fresh entries carry a +tries counter the
+      # loader decrements on each boot of the BOOTED ESP (the Samsung mirror);
+      # a generation that exhausts it is skipped in favour of the previous one,
+      # and a boot that reaches boot-complete.target gets blessed (counter
+      # removed). Pairs with the 30s hardware watchdog below: a hung boot never
+      # pets the WDT -> reset -> counter converges -> unattended rollback.
+      # boot-mirror-sync reverse-propagates the loader's counter renames.
+      systemd-boot.bootCounting = {
+        enable = true;
+        tries = 3;
+      };
       efi.canTouchEfiVariables = true;
     };
 

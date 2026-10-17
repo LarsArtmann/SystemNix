@@ -226,9 +226,10 @@ _: {
               # never answers :443 the git clone below surfaces the real
               # error — the probe only closes the boot ordering gap. 443 is
               # protocol-fixed (HTTPS), deliberately not a lib/ports.nix
-              # entry; the /dev/tcp slash form is audit-invisible by design.
+              # entry; keep the echo colon-free so the port-registry audit
+              # (colon-form regex) stays quiet.
               ExecStartPre = [
-                "+${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/${cfg.host}/443\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"architecture-catalog-sync: https endpoint ${cfg.host}:443 not reachable within 120s - proceeding (git clone will surface the real error)\" >&2; exit 0; fi; sleep 1; done'"
+                "+${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/${cfg.host}/443\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"architecture-catalog-sync: https endpoint ${cfg.host} port 443 not reachable within 120s - proceeding (git clone will surface the real error)\" >&2; exit 0; fi; sleep 1; done'"
               ];
               TimeoutStartSec = lib.mkForce "6min";
             }

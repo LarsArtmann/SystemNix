@@ -19,6 +19,15 @@
 # run `nix run .#boot-mirror-activate` once — it creates the boot entry and
 # orders the Samsung first, leaving every QLC entry as fallback. Reboots on
 # this box are deliberate events; NVRAM order must not fight the operator.
+#
+# Boot counting (2026-10-17): the loader mutates the ESP it BOOTS — the
+# Samsung — renaming entry files per attempt (nixos-<hash>+T-K.conf) and
+# stripping the suffix on a blessed (successful) boot. The sync therefore
+# REVERSE-PROPAGATES that loader-owned state Samsung -> QLC before rsyncing;
+# a plain forward mirror would --delete the renames, silently resetting a
+# converging counter or un-blessing a good entry. NixOS content still flows
+# QLC -> Samsung only — filenames are content-hashed, so the two flows can
+# never collide.
 {
   lib,
   pkgs,
@@ -61,14 +70,39 @@ let
       #    entries straight into loader/entries/, no token dir).
       bootctl --esp-path="${mirrorPath}" --variables=no --make-entry-directory=no install
 
-      # 2. Full tree mirror (entries, kernels, initrds, loader.conf).
+      # 2. Reverse-propagate loader-owned state (Samsung -> QLC) BEFORE the
+      #    forward mirror. systemd-boot boots the Samsung ESP, so its boot
+      #    counting renames (nixos-<hash>+T.conf -> +T-K.conf per attempt) and
+      #    blessings (suffix stripped once boot-complete.target is reached)
+      #    land ONLY there. Matching the QLC twin to the mirror's state makes
+      #    rsync see identical filenames: counters survive the mirror, the
+      #    diff gate stays green, and a partial-hang boot (multi-user reached,
+      #    boot-complete never) still converges to fallback instead of being
+      #    counter-reset by this very sync.
+      find /boot/loader/entries -maxdepth 1 -type f -name '*+*.conf' -printf '%f\n' |
+        while IFS= read -r entry; do
+          if ! [[ $entry =~ ^(.*)\+[0-9]+(-[0-9]+)?\.conf$ ]]; then
+            continue # not a boot-counting entry — builder only writes +T names
+          fi
+          stem=''${BASH_REMATCH[1]}
+          if [ -e "${mirrorPath}/loader/entries/''${stem}.conf" ]; then
+            rm -f "/boot/loader/entries/''${entry}" # blessed on the booted ESP: drop the stale counting twin
+          else
+            matched=$(find "${mirrorPath}/loader/entries" -maxdepth 1 -type f -name "''${stem}+*.conf" -printf '%f\n' | head -n 1)
+            if [ -n "$matched" ]; then
+              mv -f "/boot/loader/entries/''${entry}" "/boot/loader/entries/''${matched}"
+            fi
+          fi
+        done
+
+      # 3. Full tree mirror (entries, kernels, initrds, loader.conf).
       rsync \
         --archive --no-owner --no-group --no-perms --modify-window=2 \
         --delete \
         --exclude=/loader/random-seed \
         /boot/ "${mirrorPath}/"
 
-      # 3. Verification gate — the 2nd boot disk must be tree-identical to
+      # 4. Verification gate — the 2nd boot disk must be tree-identical to
       #    the ESP the system actually manages, or it is a lie. Any drift
       #    (failed copy, partial write, manual edit) fails the unit loudly
       #    instead of arming a stale-boot trap. "System Volume Information"
@@ -78,7 +112,8 @@ let
         exit 1
       fi
 
-      echo "boot-mirror-sync: OK — $(find ${mirrorPath}/loader/entries -maxdepth 1 -name 'nixos-*.conf' -type f | wc -l) entries, $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
+      counters=$(find ${mirrorPath}/loader/entries -maxdepth 1 -name '*+*.conf' -type f -printf '%f\n' | tr '\n' ' ')
+      echo "boot-mirror-sync: OK — $(find ${mirrorPath}/loader/entries -maxdepth 1 -name 'nixos-*.conf' -type f | wc -l) entries, counters[${"counters:-none"}], $(du -sh ${mirrorPath} 2>/dev/null | cut -f1) mirrored"
     '';
   };
 in
@@ -117,7 +152,11 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = lib.getExe syncScript;
-        ReadWritePaths = [ mirrorPath ];
+        # /boot: the counter reverse-propagation renames entry files there
+        ReadWritePaths = [
+          "/boot"
+          mirrorPath
+        ];
         TimeoutStartSec = "5min";
       }
     ];
