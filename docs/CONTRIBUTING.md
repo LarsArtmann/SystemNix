@@ -201,6 +201,34 @@ made this a rule. Before ANY `nix run .#deploy`:
 The tooling (intent-lock helper + jitter wrapper) is queued in
 docs/todo/pipeline.md; until it lands, steps 1-4 are manual discipline.
 
+## Concurrent-edit discipline (shared tree, 2026-10-17 tile-logos harvest)
+
+The deploy-intent convention covers SWITCHES; these rules cover FILE EDITS,
+where a half-landed change breaks every parallel session's eval:
+
+1. **Declaration before consumer.** When a change spans "declare an option /
+   field" + "use it" (e.g. the `icon` tile option and the module reading
+   it), land the DECLARATION side first — one session's half-landed
+   consumer-before-declaration edit broke a parallel session's
+   `nix flake check` mid-run on 2026-10-17. If both halves are in one file,
+   stage them as one edit; across files, edit the declaring file first.
+2. **Capability-vs-data merge checklist.** When adopting or merging a
+   module, check every VALUE the old config carried against the FEATURES the
+   new one implements — a merge that carries the data but drops the feature
+   is a bug with a paper trail (the 2026-09-18 homepage → PapDashboard merge
+   shipped `icon` values with a "accepted but ignored" comment and left the
+   dashboard monogram-only for a month). Before deleting a "we don't
+   support X" comment, grep who still sets X.
+3. **Never kill by broad pattern.** `pkill -f <substring>` matches the
+   PRODUCTION unit's ExecStart too (2026-10-17: `pkill -f papdashboard-`
+   targeted the live unit; it failed only because the unit is root-owned —
+   a user-owned service would have died). Kill by explicit PID resolved
+   from `ss -ltnp` / `pgrep -af`, and only after reading the full command
+   line of what you are about to signal.
+4. **Re-read before every edit.** The daemon and parallel sessions commit
+   continuously; a file modified since your last read is a race signal, not
+   a stale-cache annoyance. The edit tools enforce this — let them.
+
 ## Verification
 
 ```bash
