@@ -158,6 +158,32 @@
               touch $out
             '';
 
+        # catalog-inventory selftest: fixture host docs through the REAL
+        # union filter — name-union + alphabetical order, first-non-null
+        # field precedence (catalog beats integration, any host order),
+        # deployments only from enable=true rows with per-host URLs and
+        # the deploying host's port, zero-deploy shapes, service-less host
+        # in the hosts list. The 3 live eval legs stay live-only (they are
+        # the script's value); the jq assembly is the silently-regressible
+        # part. Feeds catalog.home.lan's deployment chips.
+        catalog-inventory-selftest =
+          pkgs.runCommand "catalog-inventory-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                jq
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/catalog-inventory.sh "$scratch/catalog-inventory.sh"
+              # /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/catalog-inventory.sh"
+              ${pkgs.bash}/bin/bash "$scratch/catalog-inventory.sh" --self-test
+              touch $out
+            '';
+
         # Pre-vacuum evidence-gate selftest: fixture-tests the pure helpers
         # (boot-id/date extraction, hex-boundary evidence grep, open-row date
         # matching against UNCHECKED rows only) plus a static tripwire that
