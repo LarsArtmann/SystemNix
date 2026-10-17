@@ -214,3 +214,42 @@ Critical path: P0.1 -> P1.x -> P2.x -> P3.5 (first served song). P0.3 runs in pa
 
 - Earlier chat answers said spotDL pulls "256 kbps AAC": only with YT Music Premium; regular YouTube = 128 kbps (README-verified 2026-10-16). Storage math above updated accordingly.
 - Earlier chat suggested Jellyfin for serving; the repo decision (TODO_LIST.md:924) is Navidrome. This plan follows the ratified decision.
+
+## 10. Appendix: gray-zone capture ideas (owner-curated, not executed by default)
+
+Options that trade ToS/DRM-circumvention exposure for source fidelity. All are PRIVATE-USE captures on the owner's own accounts. The plan's hard line: **never distribute or share captured audio** (enforcement history targets distribution, not possession). Not legal advice: in Germany, §95a UrhG prohibits circumventing effective technical protection measures regardless of private-use intent, and §53 Privatkopie covers CD rips, not DRM circumvention.
+
+### 10.1 Zotify protocol capture (the primary gray path)
+
+Capture Spotify's own decrypted transcodes with your own Premium account via librespot-lineage tooling.
+
+| Aspect | Detail | Status |
+| ------ | ------ | ------ |
+| Tool | Fork `Googolplexed0/zotify` (actively maintained per its repo title; original zotify-dev stale; nixpkgs removed `zotify` 2025-09-26 "lack of upstream maintenance") | VERIFIED (fork README + nixpkgs aliases, fetched 2026-10-16) |
+| Output ceiling | 320 kbps Ogg Vorbis (`DOWNLOAD_QUALITY=very_high`, Premium-only; free = 160), codec `copy` = no remux, real Spotify track lists/tags/art/lyrics (no YouTube mismatch problem) | VERIFIED (fork README) |
+| Pacing flags | Old `--download-real-time` (zotify-dev) is GONE in the fork: now `--download-rate-limiter <0..1>` (1.0 = real-time, default 0 = off) + `--bulk-wait-time` (FAQ: 30s negates audio-key denials, citing the zotify-dev#186 analysis) | VERIFIED (fork README) |
+| Ban reality | Fork FAQ: two reported suspensions ever, both after days of non-stop use; recommended posture = reasonable batches (+ optionally a burner account) | VERIFIED as the fork's OWN CLAIM (not independently confirmed) |
+| Auth | OAuth login flow (no password on CLI); `credentials.json` lands in `~/.local/share/zotify/` and must stay out of any repo (fish_history rule) | VERIFIED (fork README) |
+| Packaging | Pin the fork by rev in a small `buildPythonApplication` derivation or flake input; no ad-hoc pip drift | plan decision |
+| Practical math | 10k tracks at limiter 1.0 = ~580h (~24 days continuous) -> use limiter ~0.3-0.5 + batched evenings = days instead of weeks, risk still small | derived |
+
+**Plan delta if adopted:** replaces phases P1.1-P1.4 (spotDL waves + mismatch triage); beets shrinks to optional cleanup (output is already structured/tagged; `SKIP_PREVIOUSLY_DOWNLOADED` + `SKIP_BY_ISRC` give resume/dedupe); P0, P2.3, P3, P4 unchanged. Navidrome plays Ogg Vorbis.
+
+### 10.2 Other gray ideas (ranked by usefulness)
+
+| Idea | What / why | Risk / cost | Status |
+| ---- | ---------- | ----------- | ------ |
+| **Burner-account sharding** | Run capture on a dedicated (or Family-plan spare) account so the MAIN account (playlists, history) is insulated from any flag; also spreads bulk volume | Extra subscription cost; ToS household clauses | common practice, effectiveness unverified |
+| **Loopback capture ("analog hole", digital)** | Record the audio device (PipeWire monitor) during normal playback; defeats ANY DRM including lossless clients, survives all tool breakage | Quality ceiling = client output (resampled); no tags (rebuild from the metadata ledger); clunky at scale; circumvention-adjacent legally | generic technique, no specific tool endorsed |
+| **Desktop-cache forensics** | Historical tooling decrypted the client's local cache blobs using keys dumped from process memory | Believed obsolete against current clients | UNVERIFIED, likely dead - do not rely on it |
+| **Lossless watch** | librespot models FLAC formats (16/17/22/24) but no capture path is wired; if someone wires it, real-FLAC capture becomes possible | None today | VERIFIED absence (sourcegraph, 2026-10-16); keep as watch item |
+| **Pacing camouflage hygiene** | Human-pattern usage: batched sessions, nonzero fetch delays, no continuous day-long runs, don't hammer from parallel accounts on one IP | Convenience cost only | fork FAQ guidance |
+
+### 10.3 What the plan deliberately does NOT do
+
+- No distribution/sharing/upload of captured audio (the actual enforcement surface).
+- No shared/stolen credentials; capture only ever uses the owner's own accounts.
+- No torrent seeding of copyrighted audio (torrent infra stays out of scope entirely).
+- No gray tool running unattended as a systemd service with the MAIN account: gray capture is owner-initiated, batched, supervised. The automated recurring pipeline (P4.1) stays spotDL/owned-files backup only.
+
+Decision gate: gray-path adoption is an OWNER call per run, not a queue-harvestable `[ready]` item - it carries account risk, so it stays `[blocked:user]` by convention.
