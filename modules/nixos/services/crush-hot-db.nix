@@ -214,8 +214,29 @@
                   continue
                 fi
                 if [ -e "$target" ]; then
-                  echo "skip $name: target $target already exists (manual merge needed)"
-                  continue
+                  # Empty-target auto-heal (storage.md row: the legal-cases
+                  # class): a target dir with NOTHING inside is interrupted-
+                  # run residue (root-owned 0700, left by the freeze-hit first
+                  # run) — nothing to merge, safe to rmdir and migrate into.
+                  # A POPULATED target (or a non-dir/symlink) keeps the
+                  # manual-merge refusal: it may hold real session data.
+                  if [ -d "$target" ] && [ ! -L "$target" ] && [ -z "$(find "$target" -mindepth 1 -print -quit 2>/dev/null)" ]; then
+                    if [ -n "$dryRun" ]; then
+                      echo "dry-run: would heal empty target $target and migrate $name"
+                      migrated=$((migrated + 1))
+                      continue
+                    fi
+                    if rmdir "$target"; then
+                      echo "healed empty target $target"
+                    else
+                      echo "FAILED to heal empty target $target" >&2
+                      failed=$((failed + 1))
+                      continue
+                    fi
+                  else
+                    echo "skip $name: target $target already exists (manual merge needed)"
+                    continue
+                  fi
                 fi
                 if [ -n "$dryRun" ]; then
                   echo "dry-run: would migrate $name → $target"

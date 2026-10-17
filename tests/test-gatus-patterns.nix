@@ -118,6 +118,15 @@ let
     # HELP papdashboard_services_json_tiles Dashboard tiles in the rendered services.json
     # TYPE papdashboard_services_json_tiles gauge
     papdashboard_services_json_tiles 37
+    # Tile-icon coverage pair (2026-10-17 icon-pack go-live): same
+    # anchored-pair discipline, HELP comment carries the "icons_ok 0"
+    # trap text so a bare value-glob cannot phantom-green on it.
+    # HELP papdashboard_services_json_icons Tiles carrying a tile icon
+    # TYPE papdashboard_services_json_icons gauge
+    papdashboard_services_json_icons 37
+    # HELP papdashboard_services_json_icons_ok 0 when any tile lost its icon coverage; 1 when every tile carries an icon
+    # TYPE papdashboard_services_json_icons_ok gauge
+    papdashboard_services_json_icons_ok 1
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {
@@ -368,6 +377,8 @@ in
               "[STATUS] == 200"
               "[BODY] != pat(*papdashboard_services_json_ok 0\n*)"
               "[BODY] == pat(*\npapdashboard_services_json_ok *)"
+              "[BODY] != pat(*papdashboard_services_json_icons_ok 0\n*)"
+              "[BODY] == pat(*\npapdashboard_services_json_icons_ok *)"
             ];
           }
           {
@@ -381,6 +392,18 @@ in
             conditions = [
               "[STATUS] == 200"
               "[BODY] == pat(*\npapdashboard_services_json_ok 0\n*)"
+            ];
+          }
+          {
+            # INVERSE for the icon-coverage pair: the anchored reject-half
+            # must match a REAL "icons_ok 0" emission and must NOT match the
+            # healthy body (icons_ok 1) — non-vacuousness of the new pair.
+            name = "[TEST-RED] PapDashboard icon-coverage reject-half non-vacuous";
+            url = "http://127.0.0.1:9100/metrics";
+            interval = "5s";
+            conditions = [
+              "[STATUS] == 200"
+              "[BODY] == pat(*\npapdashboard_services_json_icons_ok 0\n*)"
             ];
           }
         ];

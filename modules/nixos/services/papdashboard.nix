@@ -256,6 +256,8 @@
           ok=0
           groups=0
           tiles=0
+          icons=0
+          icons_ok=0
           # Single parse gate: jq -e exits non-zero on invalid JSON or a
           # false expression, so the counting jq below only runs on a
           # verified-parsable file (set -e would abort the unit on an
@@ -263,8 +265,14 @@
           if [ -r "$CFG" ] && jq -e '(.groups | type == "array") and (.groups | length > 0)' "$CFG" >/dev/null 2>&1; then
             groups="$(jq -r '.groups | length' "$CFG" 2>/dev/null || echo 0)"
             tiles="$(jq -r '[.groups[]? | (.tiles // []) | length] | add // 0' "$CFG" 2>/dev/null || echo 0)"
+            icons="$(jq -r '[.groups[]? | (.tiles // [])[] | select(.icon != null and .icon != "")] | length' "$CFG" 2>/dev/null || echo 0)"
             if [ "$groups" -gt 0 ] && [ "$tiles" -gt 0 ]; then
               ok=1
+            fi
+            # Icon coverage (the 2026-10-17 "logos went dark" class): the
+            # capability is healthy only when EVERY tile resolves a logo.
+            if [ "$tiles" -gt 0 ] && [ "$icons" -eq "$tiles" ]; then
+              icons_ok=1
             fi
           fi
 
@@ -278,6 +286,12 @@
             echo "# HELP papdashboard_services_json_tiles Dashboard tiles in the rendered services.json"
             echo "# TYPE papdashboard_services_json_tiles gauge"
             echo "papdashboard_services_json_tiles $tiles"
+            echo "# HELP papdashboard_services_json_icons Tiles carrying a tile icon"
+            echo "# TYPE papdashboard_services_json_icons gauge"
+            echo "papdashboard_services_json_icons $icons"
+            echo "# HELP papdashboard_services_json_icons_ok 1 when every tile carries an icon (coverage complete)"
+            echo "# TYPE papdashboard_services_json_icons_ok gauge"
+            echo "papdashboard_services_json_icons_ok $icons_ok"
           } >"$TMP"
 
           mv "$TMP" "$OUT"
@@ -911,13 +925,18 @@
                 # != 0 arm is line-anchored on the trailing newline so a
                 # HELP comment can never phantom-green it, and the == arm
                 # proves the metric line exists at all — a dead collector
-                # fails closed instead of freezing at its last values.
+                # fails closed instead of freezing at its last values. The
+                # icons_ok pair re-applies the same rules to tile-icon
+                # coverage (a tile losing its logo goes red within 5 min
+                # instead of silently rendering monograms).
                 conditions = [
                   "[STATUS] == 200"
                   "[BODY] != pat(*papdashboard_services_json_ok 0\n*)"
                   "[BODY] == pat(*\npapdashboard_services_json_ok *)"
+                  "[BODY] != pat(*papdashboard_services_json_icons_ok 0\n*)"
+                  "[BODY] == pat(*\npapdashboard_services_json_icons_ok *)"
                 ];
-                alert = "PapDashboard services.json drift — rendered config missing, unparsable, or empty, so the Services tab serves no tiles until the unit restarts. Check: systemctl status papdashboard-services-json-check; ls -la /etc/papdashboard/services.json";
+                alert = "PapDashboard services.json drift — rendered config missing, unparsable, empty, or a tile lost its icon coverage, so the Services tab serves no (or logo-less) tiles until the unit restarts. Check: systemctl status papdashboard-services-json-check; ls -la /etc/papdashboard/services.json; curl -s localhost:9100/metrics | grep papdashboard_services_json_icons";
               }
             ];
           };

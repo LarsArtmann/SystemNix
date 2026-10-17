@@ -68,6 +68,22 @@ icon = null                   →  monogram fallback only
 - The pack is a **fixed pin in this module** (`iconPackSrc`: homarr-labs/dashboard-icons
   rev + `nix-prefetch-url --unpack` hash) — not a flake input, so the flake-input pin audit
   does not cover it; bump the rev and hash together deliberately.
+- **Pack bump procedure (executable without re-deriving anything):**
+  1. Pick the new upstream rev (the pack moves slowly; no cadence watcher exists — bump
+     when a needed icon is missing from the pinned rev, or quarterly at most).
+  2. `nix-prefetch-url --unpack https://github.com/homarr-labs/dashboard-icons/archive/<rev>.tar.gz`
+     → SRI-encode: `nix hash to-sri --type sha256 <hash-from-stdout>`.
+  3. Update BOTH `rev` and `hash` in `iconPackSrc` (modules/nixos/services/papdashboard.nix)
+     in one commit — a half-bump fails the FOD with a hash mismatch by design.
+  4. `nix build .#nixosConfigurations.evo-x2.config.services.papdashboard.package` — the
+     `dashboardIcons` subset build re-runs and IS the existence gate for every icon the
+     config references.
+  5. Deploy; the post-deploy icon probes (fragment `src="/icons/` + route 200 + immutable)
+     verify the new pack serves.
+- **No generic fallback glyph in the subset — deliberate (2026-10-17):** the monogram is
+  the fallback layer (kept in the DOM, promoted client-side when an `<img>` fails), so a
+  missing icon degrades to the monogram everywhere, deterministically. Authoring a cyan
+  neutral set remains the owner's open question (docs/todo/services.md).
 - `dashboardIcons` copies **only the icons the rendered config asks for** (~40 files, ~1.2 MB
   instead of the full 85 MB pack) and is exported as `PAP_ICONS_DIR`. Referencing it in the
   unit env is what makes it part of the system closure, so the copy IS the missing-icon gate:
@@ -81,6 +97,19 @@ icon = null                   →  monogram fallback only
 - Registry tiles set their icon in the service module's
   `services.integration.<name>.homepage.icon` (bundled pack name); the built-in groups'
   icons live in this module's `dashboard.groups` defaults.
+- **Off-LAN determination (2026-10-17, no bypass needed):** `dash.home.lan` is a Layer-2
+  **protected** vHost whose template applies `forward_auth` to EVERY path — there is no
+  path matcher, so `/icons/*` is intercepted off-LAN like everything else (live-rendered
+  Caddyfile verified: `@external not remote_ip 127.0.0.1/8 192.168.1.0/24` → forward_auth
+  arm; `handle` arm = direct proxy). Consequences: **on-LAN, no auth anywhere** — tile
+  logos load with no cookie (live-probed: `GET /icons/caddy.png` through the vHost → 200 +
+  immutable, no auth header). **Off-LAN, an authenticated browser's session cookie rides
+  the `<img>` subresource requests** (same-origin, domain-scoped), so logos still load; an
+  unauthenticated client never sees the dashboard at all (the page itself redirects to
+  SSO). The only degraded shape is a session expiring mid-view → icon requests 302 →
+  `dashboard.js` drops the failed `<img>`s → monogram fallback, the designed degradation.
+  A `handle_path /icons/*` bypass would make tile artwork world-readable to unauthenticated
+  off-LAN clients for zero functional gain — do not add one.
 
 ## Tile dot semantics (read before "fixing" a wrong-looking dot)
 
@@ -152,6 +181,21 @@ rollback restores BOTH at once.
 - homepage-dashboard unit absent, port 8082 free.
 
 ---
+
+## Deploy evidence (2026-10-17 icon-pack go-live, live-verified)
+
+- Running unit: `papdashboard-a1a505f5` (store path `276sx5y4…`), restarted with the
+  2026-10-17 evening deploy wave; `/api/health` 200.
+- Fragment probe: **39 `src="/icons/…"` `<img>`s** served by `/api/fragments/services`.
+- Through the Caddy vHost, no cookie (protected-vHost LAN bypass):
+  `GET /icons/{caddy,miniflux,open-webui}.png` → **200 + `Cache-Control: public,
+  max-age=604800, immutable`** + `Content-Type: image/png`.
+- Served service worker: `pap-v9` (the icon-era cache generation).
+- Deploy-anchor: the wave's raw-stc activation had left `/run/current-system` unanchored
+  (profile stuck on gen 926); repaired to gen 927 = the running toplevel, boot entry
+  re-armed — a reboot boots the verified state.
+- Regression protection live: post-deploy icon probes + pre-deploy §16 inventory
+  (fail-closed, both negative-tested), negative-test harness legs `tileicons/*`.
 
 ## Agent Notes (migrated from AGENTS.md 2026-10-01)
 

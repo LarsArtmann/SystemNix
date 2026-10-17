@@ -35,6 +35,11 @@
 #      converges it via an explicit restart block; this test pins the new
 #      shape (service static + timer enabled) so a silent [Install]
 #      regression still fails loudly here.
+#   8. empty-target auto-heal (the legal-cases class, 2026-10-17): a
+#      root-owned EMPTY target dir (interrupted-run residue) is rmdir'd
+#      and migrated into; a POPULATED foreign target keeps the
+#      manual-merge refusal. Dry-run reports the would-heal, never
+#      performs it.
 #
 # /mnt/hot is a tmpfs stand-in (virtualisation.fileSystems — plain
 # fileSystems silently vanish in VM tests, test-cv 2026-09-02); the module's
@@ -75,7 +80,9 @@ let
         "$projects/archived/repo-b/.crush" \
         "$projects/spaced repo/.crush" \
         "$projects/deep/group/repo/.crush" \
-        "$projects/recent/.crush"
+        "$projects/recent/.crush" \
+        "$projects/healempty/.crush" \
+        "$projects/healfull/.crush"
 
       echo payload-root > "$projects/.crush/crush.db"
       echo payload-top > "$projects/repo-a/.crush/crush.db"
@@ -84,6 +91,8 @@ let
       echo payload-spaced > "$projects/spaced repo/.crush/crush.db"
       echo payload-deep > "$projects/deep/group/repo/.crush/crush.db"
       echo payload-fresh > "$projects/recent/.crush/crush.db"
+      echo payload-healempty > "$projects/healempty/.crush/crush.db"
+      echo payload-healfull > "$projects/healfull/.crush/crush.db"
 
       touch -d '@1000000000' \
         "$projects/.crush/crush.db" \
@@ -91,7 +100,17 @@ let
         "$projects/repo-a/.crush/crush.db-wal" \
         "$projects/archived/repo-b/.crush/crush.db" \
         "$projects/spaced repo/.crush/crush.db" \
-        "$projects/deep/group/repo/.crush/crush.db"
+        "$projects/deep/group/repo/.crush/crush.db" \
+        "$projects/healempty/.crush/crush.db" \
+        "$projects/healfull/.crush/crush.db"
+
+      # Interrupted-run residue (the legal-cases class): the migrate run
+      # as ROOT creates these root-owned — an EMPTY target must auto-heal
+      # (rmdir + migrate), a POPULATED one must keep the manual-merge
+      # refusal. Created before the unit starts via the After= ordering.
+      mkdir -p /mnt/hot/crush/healempty
+      mkdir -p /mnt/hot/crush/healfull
+      echo foreign-payload > /mnt/hot/crush/healfull/keep.db
     '';
   };
   # A real binary whose PROCESS NAME (comm) is `crush`: the liveness
@@ -187,11 +206,13 @@ in
         "ProtectHome=read-only" in unit
     ), "ProtectHome must be read-only: harden{}'s `true` default maps to systemd yes = inaccessible-and-EMPTY /home, so every find ENOENTs (round-4 trap)"
 
-    # ---- Boot-run outcome: exactly the 4 migratable fixtures relocated ----
+    # ---- Boot-run outcome: exactly the 5 migratable fixtures relocated ----
+    # (4 original + healempty via the empty-target auto-heal; healfull is
+    # correctly refused — populated target, manual merge.)
     boot_log = machine.succeed(
         "journalctl -b -u crush-hot-db-migrate.service --output cat"
     )
-    assert "4 project(s) relocated" in boot_log, boot_log
+    assert "5 project(s) relocated" in boot_log, boot_log
 
     # ---- Depth-4 tripwire: the deep fixture surfaces a WARN ----
     assert "deeper than discovery depth 3" in boot_log, boot_log
@@ -221,6 +242,22 @@ in
     # Space-in-name checkout.
     machine.succeed("test -L '/home/lars/projects/spaced repo/.crush'")
     machine.succeed("grep -q payload-spaced '/mnt/hot/crush/spaced repo/crush.db'")
+
+    # ---- Empty-target auto-heal (legal-cases class) ----
+    assert "healed empty target /mnt/hot/crush/healempty" in boot_log, boot_log
+    machine.succeed("test -L /home/lars/projects/healempty/.crush")
+    machine.succeed(
+        'test "$(readlink /home/lars/projects/healempty/.crush)" = /mnt/hot/crush/healempty'
+    )
+    machine.succeed("grep -q payload-healempty /mnt/hot/crush/healempty/crush.db")
+    # Populated foreign target: refusal preserved, source untouched.
+    assert (
+        "skip healfull: target /mnt/hot/crush/healfull already exists (manual merge needed)"
+        in boot_log
+    ), boot_log
+    machine.fail("test -L /home/lars/projects/healfull/.crush")
+    machine.succeed("test -f /home/lars/projects/healfull/.crush/crush.db")
+    machine.succeed("grep -q foreign-payload /mnt/hot/crush/healfull/keep.db")
 
     # ---- Left in place: depth cap + fresh-write skip ----
     machine.fail("test -L /home/lars/projects/deep/group/repo/.crush")
@@ -258,6 +295,9 @@ in
         "mkdir -p /home/lars/projects/dryproj/.crush"
         " && echo payload-dry > /home/lars/projects/dryproj/.crush/crush.db"
         " && touch -d '@1000000000' /home/lars/projects/dryproj/.crush/crush.db"
+        " && mkdir -p /home/lars/projects/dryheal/.crush /mnt/hot/crush/dryheal"
+        " && echo payload-dryheal > /home/lars/projects/dryheal/.crush/crush.db"
+        " && touch -d '@1000000000' /home/lars/projects/dryheal/.crush/crush.db"
     )
     machine.succeed(
         "systemctl set-environment CRUSH_HOT_DB_DRY_RUN=1"
@@ -267,8 +307,11 @@ in
         "journalctl -b -u crush-hot-db-migrate.service --output cat"
     )
     assert "dry-run: would migrate dryproj" in dry_log, dry_log
-    assert "would relocate 1 project(s)" in dry_log, dry_log
+    assert "dry-run: would heal empty target /mnt/hot/crush/dryheal" in dry_log, dry_log
+    assert "would relocate 2 project(s)" in dry_log, dry_log
     machine.fail("test -L /home/lars/projects/dryproj/.crush")
+    machine.fail("test -L /home/lars/projects/dryheal/.crush")
+    machine.succeed("test -d /mnt/hot/crush/dryheal")
     machine.succeed("systemctl unset-environment CRUSH_HOT_DB_DRY_RUN")
 
     # Guard gone → the next run converges the pending projects.
@@ -278,6 +321,8 @@ in
     machine.succeed("grep -q payload-late /mnt/hot/crush/late/crush.db")
     machine.succeed("test -L /home/lars/projects/dryproj/.crush")
     machine.succeed("grep -q payload-dry /mnt/hot/crush/dryproj/crush.db")
+    machine.succeed("test -L /home/lars/projects/dryheal/.crush")
+    machine.succeed("grep -q payload-dryheal /mnt/hot/crush/dryheal/crush.db")
 
     # ---- Idempotent re-run: symlinks skipped, 0 relocated ----
     machine.succeed("systemctl restart crush-hot-db-migrate.service")
