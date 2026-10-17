@@ -31,12 +31,21 @@ Actions, nightly 03:23 UTC = 05:23 CEST (cron `23 3 * * *` is TZ-less UTC — co
 
 **Platform inventory leg (owner directive 2026-10-17: EVERYTHING in
 catalog.home.lan + known deployment locations, zero included):** SystemNix
-`scripts/catalog-inventory.sh` (flake app `catalog-inventory`) evals the
+`scripts/catalog-inventory.sh` (flake app `catalog-inventory`; `--self-test`
+fixtures the jq union — `checks.catalog-inventory-selftest`) evals the
 union of `services.catalog` + `services.integration` across
 evo-x2/rpi3-dns/Lars-MacBook-Air into `inventory.json` (74 services /
 66 deployments / 9 zero-deploy at introduction), committed to the hub by
 `scripts/generate-inventory.sh` (LOCAL regeneration — CI never evals
-SystemNix, private flake inputs). Hub CI renders it
+SystemNix, private flake inputs). Regeneration is AUTOMATED
+(2026-10-17): the `catalog-inventory-sync` daily timer (module
+`modules/nixos/services/catalog-inventory-sync.nix`, 04:47 + jitter,
+niced/idle-IO, `CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1` so a failed host
+eval aborts instead of shrinking the union) rewrites `inventory.json` in
+the hub checkout; the hub's auto-commit daemon commits it, and the owner
+push carries it into CI. Hub-side staleness gate
+(`scripts/check-inventory-staleness.sh`, WARN at 14d) rides both
+build.sh and CI. Hub CI renders the committed file
 (`render-inventory.py`, merged LAST — first-source-wins bodies, deployment
 badges union through merge.py: green chip per host, orange "not deployed"
 at zero). Adding a SystemNix service + one regeneration = it appears on
@@ -132,6 +141,14 @@ debug targets.
 
 - **Manual sync:** `sudo systemctl start architecture-catalog-sync` (idempotent;
   a fresh generation every run, pruned to `maxGenerations`).
+- **Inventory regeneration:** AUTOMATIC — the `catalog-inventory-sync`
+  timer (04:47 + 15min jitter) rewrites the hub checkout's
+  `inventory.json` and the hub auto-commit daemon commits it (the owner
+  push carries it into CI; agents never push). Manual/immediate:
+  `bash ~/projects/eventcatalog-hub/scripts/generate-inventory.sh`
+  (`--check` = drift probe). A failed host eval in the timer is FATAL by
+  design (`CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1`) — the committed union
+  never silently shrinks; the unit's `onFailure` fires instead.
 - **Rollback:** `sudo ln -s generations/<older-stamp> /var/lib/architecture-catalog/.current.tmp && sudo mv -T /var/lib/architecture-catalog/.current.tmp /var/lib/architecture-catalog/current`
   — same atomic-rename shape the sync uses; `current` must stay a RELATIVE
   symlink (it is swapped via `mv -T`, never edited in place).

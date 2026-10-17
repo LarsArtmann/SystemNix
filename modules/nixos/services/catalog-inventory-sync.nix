@@ -27,8 +27,7 @@
 # batteries — this one stays a background citizen). Persistent: downtime
 # catches up on the next boot. No port, no daemon, no deploy.sh converger —
 # the timer converges on its own after every boot/deploy.
-_:
-{
+_: {
   flake.nixosModules.catalog-inventory-sync =
     {
       config,

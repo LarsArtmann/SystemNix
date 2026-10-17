@@ -40,6 +40,10 @@
 #
 # jq note: short options only; this is a child script so the direnv
 # DIRENV_DIFF jq-arg trap does not reach it (verified 2026-10-17).
+# UNION_FILTER's single quotes trip SC2016 — the $-names inside are JQ
+# variables ($hs/$g/$stamp), not shell expansions; the quotes are the
+# mechanism.
+# shellcheck disable=SC2016
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -235,7 +239,7 @@ eval_host() {
 		}
 	" >"$tmp/$host.json" 2>"$tmp/$host.err"; then
     :
-  elif [[ "${CATALOG_INVENTORY_REQUIRE_ALL_HOSTS:-}" == "1" ]]; then
+  elif [[ ${CATALOG_INVENTORY_REQUIRE_ALL_HOSTS:-} == "1" ]]; then
     echo "ERROR [catalog-inventory]: eval failed for $host and CATALOG_INVENTORY_REQUIRE_ALL_HOSTS=1 — aborting WITHOUT shrinking the union (a missing host would silently drop its deployments)" >&2
     cat "$tmp/$host.err" >&2
     exit 1
