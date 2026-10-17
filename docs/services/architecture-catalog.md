@@ -29,6 +29,20 @@ Actions, nightly 03:23 UTC = 05:23 CEST (cron `23 3 * * *` is TZ-less UTC — co
 `dist/`, pushes the `dist` branch of `lars/eventcatalog-hub-dist` (dedicated plain repo — the hub repo is a read-only mirror) → the sync unit pulls it hourly, gates on
 `index.html`, atomically swaps `current`, prunes to 3 generations.
 
+**Platform inventory leg (owner directive 2026-10-17: EVERYTHING in
+catalog.home.lan + known deployment locations, zero included):** SystemNix
+`scripts/catalog-inventory.sh` (flake app `catalog-inventory`) evals the
+union of `services.catalog` + `services.integration` across
+evo-x2/rpi3-dns/Lars-MacBook-Air into `inventory.json` (74 services /
+66 deployments / 9 zero-deploy at introduction), committed to the hub by
+`scripts/generate-inventory.sh` (LOCAL regeneration — CI never evals
+SystemNix, private flake inputs). Hub CI renders it
+(`render-inventory.py`, merged LAST — first-source-wins bodies, deployment
+badges union through merge.py: green chip per host, orange "not deployed"
+at zero). Adding a SystemNix service + one regeneration = it appears on
+catalog.home.lan; no hub-side hand edits. Verified end-to-end locally
+2026-10-17: full EC build 602 pages, chips render in dist HTML.
+
 ## Go-live checklist (owner steps, in order)
 
 0. Deploy the SystemNix generation carrying the runner PATH fix (nix, jq,

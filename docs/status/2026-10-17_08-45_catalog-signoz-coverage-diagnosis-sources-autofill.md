@@ -79,3 +79,21 @@
 ---
 
 **Surfaces touched this session:** hub repo (sources.json [generated], sources.manual.json [new], scripts/generate-sources.sh [new], README.md, AGENTS.md, TODO_LIST.md), bank-sync + cqrs-htmx (`.eventcatalog-hub.json` [new, untracked]), SystemNix (AGENTS.md jq bullet, docs/todo/services.md row, this report). Nothing committed; nothing pushed; no deploys; SystemNix config surface untouched.
+
+---
+
+## h) ADDENDUM (same session, ~09:15): the platform-inventory leg — §g.1 answered "everything"
+
+Owner answered g.1: **everything** in catalog.home.lan, every page stating **known deployment locations (zero allowed)**. Implemented end-to-end and verified with a full local EventCatalog build:
+
+| # | Piece | Evidence |
+|---|-------|----------|
+| h.1 | **SystemNix `scripts/catalog-inventory.sh` + flake app `catalog-inventory`** (apps.nix) — evals `services.catalog` ∪ `services.integration` across evo-x2/rpi3-dns/Lars-MacBook-Air (darwin legitimately contributes zero: imports no service modules; `or {}` guards keep it a live fact; zfs-vm excluded as test scaffold) | live run: **74 services, 66 deployments (65 evo-x2 + 1 rpi3-dns), 9 zero-deploy**; bank-sync spot-check carries url/port/layer |
+| h.2 | **Hub `scripts/generate-inventory.sh`** → committed `inventory.json` (`--check` ignores `generatedAt`) | real generation + idempotent `--check` PASS |
+| h.3 | **Hub `scripts/render-inventory.py`** — inventory → EventCatalog service pages: green badge chip per deployment host, orange "not deployed" chip + body table at zero; YAML-safe scalars (`yaml_str()` — the crowdsec `summary: …: …` build breaker, caught by the real build) | `--self-test` PASS (incl. slug gate); 74 pages rendered |
+| h.4 | **merge.py badges union** (`extract_badge_blocks`) — deployment chips survive collisions with go-exported pages (first-source body wins, badges union by content) | `merge.py --selftest` PASS (2 new cases); real-collision test: bank-sync page keeps `sends:` + gains the `evo-x2` chip |
+| h.5 | **Build wiring** — build.sh + build.yml render the committed inventory.json into `work/out/systemnix` and merge it LAST | both files patched (parity) |
+| h.6 | **DECISIVE end-to-end**: merged union (real CI content + inventory) into a throwaway EC project → `npm run build` → **602 pages, link-validation green**; `evo-x2` green chip + `not deployed` orange chip verified in the built dist HTML | /mnt/buildcache scratch build (trashed after) |
+| h.7 | Docs: hub README "Platform inventory" section + AGENTS.md (contract bullet + ops-table row); SystemNix runbook architecture-catalog.md inventory leg; services.md push row widened to cover both legs | edits landed (daemon-swept) |
+
+Honest residuals: the EC render was verified on a LOCAL build only — the nightly CI run on the pushed tree is the remaining proof (blocked:push, services.md row). Badge color tokens (`green`/`orange`) render correctly in the built CSS vars. Zero-deploy pages include 9 services (alerts, auth, crm, dnsblock, monitor365, monitor365-server + 3 more) — several look like registry drift worth an owner glance (e.g. `dnsblock` vs the deployed `dnsblockd`).
