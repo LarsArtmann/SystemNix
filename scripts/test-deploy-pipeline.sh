@@ -70,8 +70,11 @@ assert_eq "single: one unit, separator-safe" "$single_out" "only.service"
 echo "B. content-addressed flake-check stamp (check #1)"
 
 # Tripwire: the key pipeline + 12h window must stay in pre-deploy-check.sh.
+# The window count is TWO since 2026-10-17 evening (M13): check #1 (flake
+# check) and check #2 (toplevel eval + manifest cache) each pin their own
+# stamp with the same 12h expiry.
 assert_contains "pre-deploy-check.sh pins the stamp key pipeline" "$(grep -c 'flakecheck_key=$(' "$PDC_SH")" "1"
-assert_contains "pre-deploy-check.sh keeps the 12h expiry window" "$(grep -c -- '-mmin +720' "$PDC_SH")" "1"
+assert_contains "pre-deploy-check.sh keeps the 12h expiry window (check #1 + check #2)" "$(grep -c -- '-mmin +720' "$PDC_SH")" "2"
 
 fixture_repo=$(mktemp -d)
 trap 'rm -rf "$fixture_repo" "$shim_dir"' EXIT

@@ -745,7 +745,12 @@ if nix run .#pre-deploy-check; then
     # Kith journal snapshot dir (cv-backup-dir pattern).
     # (netbird-evox2-login lives in the explicit block below — indirect
     # pull + is-enabled flake mid-switch.)
-    if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
+    # timeout 10 (2026-10-17, M13): during a wedged boot transaction
+    # (netbird-evox2-login infinite-boot class) a systemctl query against
+    # the Manager can HANG indefinitely — one hung is-enabled stalled the
+    # whole convergence phase. A timeout here reads as "not enabled" (skip):
+    # correct under the gate's semantics, self-heals on the next deploy.
+    if timeout 10 systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       # Heavy convergence units get a bigger budget (model fetches and DB
       # schema migrations legitimately run minutes; the job continues

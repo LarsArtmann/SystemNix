@@ -243,15 +243,42 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   # eval instead of paying a second deep `nix eval` after the battery —
   # forcing toplevel.drvPath already forces every unit, so attrNames rides
   # along nearly free. Single-line JSON; deploy.sh parses it without jq.
+  # Stamp (2026-10-17 evening, M13): same content-keyed skip as check #1 —
+  # the toplevel eval is the SECOND most expensive item, and the identical-
+  # tree re-run path (failed deploy retried minutes later) paid it again.
+  # The manifest variant caches its own sidecar file: a hit copies it into
+  # $DEPLOY_UNIT_MANIFEST so deploy.sh still gets its units list for free.
+  evalcheck_stamp=""
+  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    evalcheck_key=$({
+      git rev-parse HEAD 2>/dev/null
+      git diff HEAD 2>/dev/null | sha256sum
+    } | sha256sum | cut -c1-16)
+    evalcheck_stamp="/tmp/systemnix-predeploy-evalcheck-${evalcheck_key}"
+  fi
+  evalcheck_hit() {
+    [ -n "$evalcheck_stamp" ] && [ -e "$evalcheck_stamp" ] && [ -z "$(find "$evalcheck_stamp" -mmin +720 2>/dev/null)" ]
+  }
   if [ -n "${DEPLOY_UNIT_MANIFEST:-}" ]; then
-    if nix eval --json .#nixosConfigurations.evo-x2 --apply 'c: { drv = c.config.system.build.toplevel.drvPath; units = builtins.attrNames c.config.systemd.services; }' >"$DEPLOY_UNIT_MANIFEST" 2>/dev/null; then
+    evalcheck_manifest_cache="${evalcheck_stamp}.manifest"
+    if evalcheck_hit && [ -s "$evalcheck_manifest_cache" ]; then
+      cp "$evalcheck_manifest_cache" "$DEPLOY_UNIT_MANIFEST"
+      pass "nixosConfigurations.evo-x2 evaluates (cached — identical tracked tree passed within 12h; race-detector unit manifest replayed)"
+    elif nix eval --json .#nixosConfigurations.evo-x2 --apply 'c: { drv = c.config.system.build.toplevel.drvPath; units = builtins.attrNames c.config.systemd.services; }' >"$DEPLOY_UNIT_MANIFEST" 2>/dev/null; then
       pass "nixosConfigurations.evo-x2 evaluates (race-detector unit manifest emitted)"
+      if [ -n "$evalcheck_stamp" ]; then
+        : >"$evalcheck_stamp"
+        cp "$DEPLOY_UNIT_MANIFEST" "$evalcheck_manifest_cache"
+      fi
     else
       rm -f "$DEPLOY_UNIT_MANIFEST"
       fail "nixosConfigurations.evo-x2 evaluation failed"
     fi
+  elif evalcheck_hit; then
+    pass "nixosConfigurations.evo-x2 evaluates (cached — identical tracked tree passed within 12h)"
   elif nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
     pass "nixosConfigurations.evo-x2 evaluates"
+    if [ -n "$evalcheck_stamp" ]; then : >"$evalcheck_stamp"; fi
   else
     fail "nixosConfigurations.evo-x2 evaluation failed"
   fi
