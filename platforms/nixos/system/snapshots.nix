@@ -5,7 +5,12 @@
   ...
 }:
 let
-  inherit (import ../../../lib/default.nix lib) harden onFailure serviceOneshotDefaults;
+  inherit (import ../../../lib/default.nix lib)
+    harden
+    ioTier
+    onFailure
+    serviceOneshotDefaults
+    ;
   rootDevice = config.fileSystems."/".device;
   primaryUser = config.users.primaryUser;
   # Forgejo dedicated-subvolume storage (forgejo.nix option): the 8h btrbk
@@ -437,18 +442,24 @@ in
           "/mnt/pool"
           "/mnt/btrfs-root"
         ];
-        serviceConfig = {
-          TimeoutStartSec = "24h";
-          # btrbk-data oom lesson (2026-08-21): a full-tree send charges its
-          # page cache to this unit's cgroup — root re-sends are live since
-          # the 2026-09-12 snapshot-loss scenario, so the same 20.6G class
-          # applies. MemoryHigh throttles reclaim instead of letting oomd
-          # kill a send that was making progress; OOMScoreAdjust = -250
-          # keeps the restart-expensive nightly send out of oomd's preferred
-          # victims (flm at +300 stays the designated sacrifice).
-          MemoryHigh = "4G";
-          OOMScoreAdjust = -250;
-        };
+        # ioTier.background (BE/6): nightly sends must finish (never idle —
+        # borg precedent) but always yield to interactive/desktop work
+        # (io-tiers doctrine, 2026-10-17 definition-site tiering).
+        serviceConfig = lib.mkMerge [
+          ioTier.background
+          {
+            TimeoutStartSec = "24h";
+            # btrbk-data oom lesson (2026-08-21): a full-tree send charges its
+            # page cache to this unit's cgroup — root re-sends are live since
+            # the 2026-09-12 snapshot-loss scenario, so the same 20.6G class
+            # applies. MemoryHigh throttles reclaim instead of letting oomd
+            # kill a send that was making progress; OOMScoreAdjust = -250
+            # keeps the restart-expensive nightly send out of oomd's preferred
+            # victims (flm at +300 stays the designated sacrifice).
+            MemoryHigh = "4G";
+            OOMScoreAdjust = -250;
+          }
+        ];
         inherit onFailure;
       };
       btrbk-data = {
@@ -456,42 +467,48 @@ in
           "/mnt/pool"
           "/data"
         ];
-        serviceConfig = {
-          TimeoutStartSec = "24h";
-          # EIO repair gate (see btrbkDataGate above): fails the unit in
-          # ~seconds while /data/.repair-done is absent — OnFailure semantics
-          # preserved, the ~258G full-tree send read never starts. Any future
-          # unit-file churn that makes stc restart this chronically-failing
-          # unit also now costs seconds, not a 3h re-send (2026-09-09
-          # exit-4 class, bounded but not eliminated — the failure stance is
-          # deliberate).
-          ExecStartPre = "${lib.getExe btrbkDataGate}";
-          # oom-kill containment (2026-08-21 incident): the full-tree send
-          # charged 20.6G of PAGE CACHE to this unit's cgroup, making btrbk-data
-          # the largest /system.slice consumer — systemd-oomd picked it under
-          # pressure and killed a send that was otherwise making progress.
-          # MemoryHigh (not MemoryMax) throttles: the kernel reclaims the
-          # unit's own page cache early, bounding the cgroup without ever
-          # killing the send. OOMScoreAdjust = -250 keeps a restart-expensive
-          # nightly job (a killed send = hours of QLC re-reads re-paid) out of
-          # oomd's preferred victims — flm (+300) remains the designated
-          # global-OOM sacrifice.
-          MemoryHigh = "4G";
-          OOMScoreAdjust = -250;
-        };
+        serviceConfig = lib.mkMerge [
+          ioTier.background
+          {
+            TimeoutStartSec = "24h";
+            # EIO repair gate (see btrbkDataGate above): fails the unit in
+            # ~seconds while /data/.repair-done is absent — OnFailure semantics
+            # preserved, the ~258G full-tree send read never starts. Any future
+            # unit-file churn that makes stc restart this chronically-failing
+            # unit also now costs seconds, not a 3h re-send (2026-09-09
+            # exit-4 class, bounded but not eliminated — the failure stance is
+            # deliberate).
+            ExecStartPre = "${lib.getExe btrbkDataGate}";
+            # oom-kill containment (2026-08-21 incident): the full-tree send
+            # charged 20.6G of PAGE CACHE to this unit's cgroup, making btrbk-data
+            # the largest /system.slice consumer — systemd-oomd picked it under
+            # pressure and killed a send that was otherwise making progress.
+            # MemoryHigh (not MemoryMax) throttles: the kernel reclaims the
+            # unit's own page cache early, bounding the cgroup without ever
+            # killing the send. OOMScoreAdjust = -250 keeps a restart-expensive
+            # nightly job (a killed send = hours of QLC re-reads re-paid) out of
+            # oomd's preferred victims — flm (+300) remains the designated
+            # global-OOM sacrifice.
+            MemoryHigh = "4G";
+            OOMScoreAdjust = -250;
+          }
+        ];
         inherit onFailure;
       };
       btrbk-pool = {
         unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-        serviceConfig = {
-          TimeoutStartSec = "1h";
-          # Same treatment as btrbk-data (the nightly walk over services/*
-          # charges page cache to this cgroup): throttle early, never become
-          # the oomd victim. A snapshot-only run never approaches 4G — the
-          # ceiling is pure insurance.
-          MemoryHigh = "4G";
-          OOMScoreAdjust = -250;
-        };
+        serviceConfig = lib.mkMerge [
+          ioTier.background
+          {
+            TimeoutStartSec = "1h";
+            # Same treatment as btrbk-data (the nightly walk over services/*
+            # charges page cache to this cgroup): throttle early, never become
+            # the oomd victim. A snapshot-only run never approaches 4G — the
+            # ceiling is pure insurance.
+            MemoryHigh = "4G";
+            OOMScoreAdjust = -250;
+          }
+        ];
         inherit onFailure;
       };
       btrbk-forgejo = lib.mkIf forgejoDedicated {
@@ -499,17 +516,20 @@ in
           "/mnt/pool"
           "/mnt/hot"
         ];
-        serviceConfig = {
-          # First run seeds the whole forgejo tree over the DAS USB link
-          # (size unknown until the M17 measurement; 6h covers a worst-case
-          # multi-GiB seed at DAS-realistic throughput). 8h incrementals
-          # finish in seconds-to-minutes and never approach the ceiling.
-          TimeoutStartSec = "6h";
-          # btrbk-data oom lesson: page cache of the send is charged to this
-          # cgroup — throttle early instead of becoming an oomd victim.
-          MemoryHigh = "4G";
-          OOMScoreAdjust = -250;
-        };
+        serviceConfig = lib.mkMerge [
+          ioTier.background
+          {
+            # First run seeds the whole forgejo tree over the DAS USB link
+            # (size unknown until the M17 measurement; 6h covers a worst-case
+            # multi-GiB seed at DAS-realistic throughput). 8h incrementals
+            # finish in seconds-to-minutes and never approach the ceiling.
+            TimeoutStartSec = "6h";
+            # btrbk-data oom lesson: page cache of the send is charged to this
+            # cgroup — throttle early instead of becoming an oomd victim.
+            MemoryHigh = "4G";
+            OOMScoreAdjust = -250;
+          }
+        ];
         inherit onFailure;
       };
 
@@ -629,9 +649,9 @@ in
             Group = "btrbk";
             StateDirectory = "btrbk";
             Nice = 10;
-            IOSchedulingClass = "best-effort";
             TimeoutStartSec = "30min";
           }
+          ioTier.background
           (serviceOneshotDefaults { })
         ];
         script = ''
