@@ -31,6 +31,7 @@
 {
   lib,
   pkgs,
+  config,
   ...
 }:
 let
@@ -173,8 +174,62 @@ in
     inherit onFailure;
   };
 
+  # 2026-10-17 stale-boot class: the sync only ran on deploy.sh's provisioner
+  # restart and at boot — ANY other gen-install path (raw
+  # switch-to-configuration/stc, a manual bootctl call) left the Samsung ESP
+  # serving yesterday's generation while NVRAM pointed at it (the gen-922
+  # stale boot, 2026-10-17 morning). A path unit on the entries dir closes
+  # the class for every writer: inotify sees new/removed .conf files and
+  # re-triggers the (RemainAfterExit) service. restartTriggers would NOT do
+  # — that fires on NIX config changes, not runtime ESP writes. The sync's
+  # own reverse-propagation writes into the same dir and can re-arm the
+  # trigger once; the second run converges (no further /boot writes), so
+  # there is no loop. An unmounted Samsung stays a clean condition-skip:
+  # the path unit activates the service, the service's
+  # ConditionPathIsMountPoint skips it — wants-not-requires preserved.
+  systemd.paths.boot-mirror-sync = {
+    description = "Re-mirror /boot when loader entries change (any gen-install path)";
+    wantedBy = [ "multi-user.target" ];
+    pathConfig = {
+      PathChanged = [ "/boot/loader/entries" ];
+      Unit = "boot-mirror-sync.service";
+    };
+  };
+
   # Mirror staleness must be visible: a failed sync unit pages via the
   # standard notify-failure routing and shows in system-health (which also
   # catches the Condition-skipped-forever class via freshness checks).
   services.system-health.extraMonitoredServices = [ "boot-mirror-sync" ];
+
+  # Self-pinned contract (2026-10-17): the path trigger + the
+  # wants-not-requires posture are the two halves of the stale-boot fix —
+  # a regression of either must fail eval, not wait for the next stale boot.
+  assertions = [
+    {
+      assertion =
+        (config.systemd.paths.boot-mirror-sync.pathConfig.PathChanged or null)
+        == [ "/boot/loader/entries" ];
+      message = "boot-mirror-sync.path: must watch /boot/loader/entries (PathChanged) — without it, non-deploy gen-installs leave the Samsung ESP stale";
+    }
+    {
+      assertion =
+        (config.systemd.paths.boot-mirror-sync.pathConfig.Unit or null)
+        == "boot-mirror-sync.service";
+      message = "boot-mirror-sync.path: must trigger boot-mirror-sync.service";
+    }
+    {
+      assertion = builtins.elem "multi-user.target" config.systemd.paths.boot-mirror-sync.wantedBy;
+      message = "boot-mirror-sync.path: must be wantedBy multi-user.target so the watch arms at boot";
+    }
+    {
+      assertion =
+        (config.systemd.services.boot-mirror-sync.unitConfig.ConditionPathIsMountPoint or null)
+        == mirrorPath;
+      message = "boot-mirror-sync.service: the mount condition must stay — a path-unit trigger with an unmounted Samsung must condition-skip, never fail";
+    }
+    {
+      assertion = builtins.elem "nofail" config.fileSystems.${mirrorPath}.options;
+      message = "boot-mirror: the mirror filesystem must stay nofail (wants-not-requires: a detached Samsung degrades, never blocks boot)";
+    }
+  ];
 }

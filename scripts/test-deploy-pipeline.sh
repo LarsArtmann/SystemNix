@@ -119,11 +119,11 @@ echo "C. deploy_restart (extracted live from deploy.sh)"
 shim_dir=$(mktemp -d)
 mkdir -p "$shim_dir/bin"
 cat >"$shim_dir/bin/sudo" <<'EOS'
-#!/usr/bin/env bash
+#!/bin/sh
 exec "$@"
 EOS
 cat >"$shim_dir/bin/systemctl" <<'EOS'
-#!/usr/bin/env bash
+#!/bin/sh
 # slow-unit fixture: sleeps past any small budget -> timeout kills it -> 124
 sleep 30
 EOS
@@ -141,7 +141,7 @@ assert_contains "rc-124 path warns with the unit name" "$dr_out" "wedged-unit.se
 assert_contains "rc-124 warn carries the journal pointer" "$dr_out" "journalctl -u wedged-unit.service"
 
 cat >"$shim_dir/bin/systemctl" <<'EOS'
-#!/usr/bin/env bash
+#!/bin/sh
 exit 0
 EOS
 chmod +x "$shim_dir/bin/systemctl"
@@ -158,7 +158,7 @@ if [ -n "$probe_src" ]; then ok "probe_endpoint extracted from pre-deploy-check.
 
 probe_dir=$(mktemp -d)
 cat >"$shim_dir/bin/curl" <<'EOS'
-#!/usr/bin/env bash
+#!/bin/sh
 # fixture curl: succeed for port 9001 writing -o target, fail otherwise
 out=""
 url=""

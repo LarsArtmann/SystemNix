@@ -78,6 +78,9 @@
           cp ${root}/scripts/test-deploy-pipeline.sh "$scratch/scripts/test-deploy-pipeline.sh"
           cp ${root}/scripts/deploy.sh "$scratch/scripts/deploy.sh"
           cp ${root}/scripts/pre-deploy-check.sh "$scratch/scripts/pre-deploy-check.sh"
+          # git is a buildInput, not an assumption: the stamp-key fixture
+          # group builds a throwaway repo and hashes its tracked state.
+          export PATH=${pkgs.git}/bin:$PATH
           ${pkgs.bash}/bin/bash "$scratch/scripts/test-deploy-pipeline.sh"
           touch $out
         '';

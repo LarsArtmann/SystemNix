@@ -472,3 +472,25 @@ never fetches proxy.golang.org on miss). First module:
 - Expansion path (owner: "one day lars.software"): vanity import meta tags +
   this registry = self-hosted module distribution; blocked only on a public
   ingress story.
+
+## Org-namespace push mirrors (2026-10-17)
+
+Repos canonical on forgejo that belong to a GitHub ORG cannot use the
+declarative canonicalRepos path — forgejo-push-mirror (phase 3 of
+forgejo-github-sync) hardcodes the remote as `$GITHUB_USER/<name>` and
+cannot target an org namespace. `scripts/forgejo-attach-org-push-mirrors.sh`
+fills the gap: enumerates an org's repos at RUNTIME (GitHub API + forgejo
+API), attaches `interval 8h` + `sync_on_commit` push mirrors idempotently,
+refuses pull mirrors, stores the PAT as the push credential (same secret
+class as pull migrations). NO repo or org names are hardcoded in the script
+— the org is passed as argv and the names come from the APIs — because org
+repo names are private and this repo is public.
+
+Live state (2026-10-17): one org onboarded (17 repos, all natively pushed
+via git push-to-create, mirrors attached + initial sync verified — GitHub
+HEADs equal forgejo HEADs on all 17). Local checkouts for that org live
+under `~/projects/games/` with origin = forgejo. The org is deliberately
+NOT listed anywhere in this repo's tracked files (name-leak avoidance; the
+org name itself appears only in already-leaked history — see the
+2026-10-17 status report for the leak inventory). Declarative org-namespace
+support in forgejo-github-sync would subsume this script eventually.
