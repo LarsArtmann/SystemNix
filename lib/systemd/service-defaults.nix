@@ -75,12 +75,14 @@ in
   # their own value and win the merge; the 5min floor only catches units
   # that never stated a need. Enforced repo-wide by systemd-shape-audit
   # class 7 for boot-blocking (multi-user/graphical) oneshots.
-  serviceOneshotDefaults = (mkDefaults true "no") // {
-    TimeoutStartSec = lib.mkDefault "5min";
-  };
-  serviceOneshotDefaultsUser = (mkDefaults false "no") // {
-    TimeoutStartSec = lib.mkDefault "5min";
-  };
+  serviceOneshotDefaults =
+    args: (mkDefaults true "no" args) // {
+      TimeoutStartSec = lib.mkDefault "5min";
+    };
+  serviceOneshotDefaultsUser =
+    args: (mkDefaults false "no" args) // {
+      TimeoutStartSec = lib.mkDefault "5min";
+    };
 
   # onFailure handler — route service failures to the notify-failure template
   onFailure = [ "notify-failure@%n.service" ];
