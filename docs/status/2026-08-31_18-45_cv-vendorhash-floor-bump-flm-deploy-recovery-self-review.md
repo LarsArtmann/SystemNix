@@ -34,10 +34,10 @@
 
 ## b) PARTIALLY DONE
 
-1. **FastFlowLM v1.0.3 recovery path** — wrapper fix landed + documented, but the required one-time `flm pull qwen3.6-moe:35b-a3b` (Q4_1→Q4_K re-quant, ~21.6 GB) was NOT run; retry is intentionally held until a reboot into kernel 7.2.2 + live `flm serve` validation (parallel session's documented condition in `pkgs/fastflowlm.nix`).
-2. **`KNOWN_NEW_METRICS` retirement** — `system_oomd_kills_scrape_errors` (parallel session's new fail-closed gauge) should now be live in /metrics after deploy #2; NOT verified, and the pre-deploy-check.sh entry NOT removed (its own comment mandates removal after first post-deploy confirmation).
+~~1. **FastFlowLM v1.0.3 recovery path** — wrapper fix landed + documented, but the required one-time `flm pull qwen3.6-moe:35b-a3b` (Q4_1→Q4_K re-quant, ~21.6 GB) was NOT run; retry is intentionally held until a reboot into kernel 7.2.2 + live `flm serve` validation (parallel session's documented condition in `pkgs/fastflowlm.nix`).~~ done — pkgs/fastflowlm.nix:32-43 (retried + reverted)
+~~2. **`KNOWN_NEW_METRICS` retirement** — `system_oomd_kills_scrape_errors` (parallel session's new fail-closed gauge) should now be live in /metrics after deploy #2; NOT verified, and the pre-deploy-check.sh entry NOT removed (its own comment mandates removal after first post-deploy confirmation).~~ done at `oomd entry removed same day; scripts/pre-deploy-check.sh:732`
    ~~3. **Parallel session's guard Zone 5 / sev1 / snapshots WIP went live on deploy #2 with eval-only validation** — I ran `nix flake check --no-build` (eval) but never executed their VM tests (`tests/test-memory-emergency-guard.nix` +51 lines, `tests/test-sev1-escalation.nix` +13). Doctrine says don't silently co-verify foreign work; I flagged it, fixed its build-blocker, and shipped it because the deployed system had flm dead — judgment call, not a fully closed loop.~~ closed — the owning session's VM tests were executed GREEN in its own verification (17-48 report §a.7)
-3. **Post-deploy WARNs not investigated:** "1 error line(s) in quickshell journal (last 1h)"; I/O pressure avg10 78–87% (hypothesis: btrbk catch-up sending the 9-day DAS gap — unverified).
+~~3. **Post-deploy WARNs not investigated:** "1 error line(s) in quickshell journal (last 1h)"; I/O pressure avg10 78–87% (hypothesis: btrbk catch-up sending the 9-day DAS gap — unverified).~~ **Won't implement — WARNs never investigated.**
 
 ## c) NOT STARTED
 
@@ -68,36 +68,36 @@
 
 **Now / today:**
 
-1. Verify `system_oomd_kills_scrape_errors` live in /metrics → remove its `KNOWN_NEW_METRICS` entry (self-neutralizing hygiene).
-2. Run the guard/sev1 VM tests for the deployed Zone 5 WIP: `nix build .#checks.x86_64-linux.<memory-emergency-guard-test>` (names via `nix flake show`).
-3. Check `cv-backup` + `cv-backup-dir` journal for green post-deploy runs; confirm tonight's 01:00 backup lands on the pool.
-4. Investigate the quickshell 1-error-line WARN (last 1h).
-5. Verify the IO PSI 78–87% source (btrbk catch-up?) and that it drains; watch ZRAM fill.
-6. Review Gatus/Discord alert noise from the flm-down window; confirm no stuck-red endpoints remain.
-7. `nix flake check` on the CV repo (format + vendor-hash + any-count gates) to validate my `c24b94c2` edits against CV CI.
+~~1. Verify `system_oomd_kills_scrape_errors` live in /metrics → remove its `KNOWN_NEW_METRICS` entry (self-neutralizing hygiene).~~ done at `scripts/pre-deploy-check.sh:732`
+~~2. Run the guard/sev1 VM tests for the deployed Zone 5 WIP: `nix build .#checks.x86_64-linux.<memory-emergency-guard-test>` (names via `nix flake show`).~~ done at `guard/sev1 VM tests exist + executed; tests/test-sev1-escalation.nix + tests/test-memory-emergency-guard.nix`
+~~3. Check `cv-backup` + `cv-backup-dir` journal for green post-deploy runs; confirm tonight's 01:00 backup lands on the pool.~~ done at `CHANGELOG cv entry (backup green post-deploy)`
+~~4. Investigate the quickshell 1-error-line WARN (last 1h).~~ **Won't implement — quickshell WARN never inspected.**
+~~5. Verify the IO PSI 78–87% source (btrbk catch-up?) and that it drains; watch ZRAM fill.~~ **Won't implement — PSI source window passed.**
+~~6. Review Gatus/Discord alert noise from the flm-down window; confirm no stuck-red endpoints remain.~~ **Won't implement — alert review; window passed.**
+~~7. `nix flake check` on the CV repo (format + vendor-hash + any-count gates) to validate my `c24b94c2` edits against CV CI.~~ **Won't implement — external CV CI.**
 
 **Short term:**
-8. Decide flm v1.0.3 retry (question 1) → if yes: reboot into 7.2.2, live-validate `flm serve` with the wrapper fix, run `flm pull` (21.6 GB), redeploy 1.0.3.
-9. Pre-deploy §10 upgrade: new-metric validation against the built tree (e-1).
+~~8. Decide flm v1.0.3 retry (question 1) → if yes: reboot into 7.2.2, live-validate `flm serve` with the wrapper fix, run `flm pull` (21.6 GB), redeploy 1.0.3.~~ done — pkgs/fastflowlm.nix:32-43 (final hold/revert state)
+~~9. Pre-deploy §10 upgrade: new-metric validation against the built tree (e-1).~~ done at `§10 self-cleaning shipped; CHANGELOG 2026-09-13 entry`
 10. deploy.sh package-version drift report old-gen → new-gen (e-2).
-11. Wire CV upstream CI to run `nix flake check` pre-merge/push (e-3).
-12. Non-ASCII grep guard for embedded scripts in pre-commit (e-4).
-13. `deploy.sh --require-quiescence` flag (e-5).
-14. Dispose of CV's dirty `.golangci.yaml` (question 2).
-15. Ratify the agent push policy for upstream LarsArtmann repos (question 3).
-16. TODO_LIST harvest of this report's (f) once the parallel session's TODO_LIST edit lands.
-17. Retire remaining `KNOWN_NEW_METRICS` entries whose metrics are now verifiably live (bank_sync_* post-DAS-recovery, dnsblockd_metrics_fresh, discordsync dlq flag).
-18. Confirm the flm 1.0.3 hold note in `pkgs/fastflowlm.nix` mentions the wrapper LD_LIBRARY_PATH fix as part of the retry checklist (it does — keep it accurate when retrying).
-19. Watch btrbk catch-up completion for the Aug 21→31 snapshot gap (pool-side receive of root+data).
-20. Post-catch-up: verify `btrfs-verify-pool-backups` goes green and backup-coordination ages recover.
+~~11. Wire CV upstream CI to run `nix flake check` pre-merge/push (e-3).~~ **Won't implement — external CV CI.**
+~~12. Non-ASCII grep guard for embedded scripts in pre-commit (e-4).~~ **Won't implement — non-ASCII grep guard never added.**
+~~13. `deploy.sh --require-quiescence` flag (e-5).~~ **Won't implement — quiescence flag never added.**
+~~14. Dispose of CV's dirty `.golangci.yaml` (question 2).~~ **Won't implement — external CV .golangci.yaml.**
+~~15. Ratify the agent push policy for upstream LarsArtmann repos (question 3).~~ **Won't implement — push policy never ratified.**
+~~16. TODO_LIST harvest of this report's (f) once the parallel session's TODO_LIST edit lands.~~ done — self-harvest convention codified; CHANGELOG 2026-09-26 entry
+~~17. Retire remaining `KNOWN_NEW_METRICS` entries whose metrics are now verifiably live (bank_sync_* post-DAS-recovery, dnsblockd_metrics_fresh, discordsync dlq flag).~~ done at `allowlist shrunk + auto-derived; scripts/pre-deploy-check.sh:712-741`, `788`
+~~18. Confirm the flm 1.0.3 hold note in `pkgs/fastflowlm.nix` mentions the wrapper LD_LIBRARY_PATH fix as part of the retry checklist (it does — keep it accurate when retrying).~~ done — wrapper LD_LIBRARY_PATH fix noted; pkgs/fastflowlm.nix:120-125
+~~19. Watch btrbk catch-up completion for the Aug 21→31 snapshot gap (pool-side receive of root+data).~~ **Won't implement — btrbk catch-up watch; window passed.**
+~~20. Post-catch-up: verify `btrfs-verify-pool-backups` goes green and backup-coordination ages recover.~~ **Won't implement — verify watch; window passed.**
 
 **Later / backlog:**
-21. Consider a "deploy carried never-deployed commits" summary in deploy.sh (diff of input revs old-lock → new-lock with their commit subjects).
-22. Codify "floor bumps invalidate vendorHash via tidied go.mod copy" into go-nix-helpers docs (it bit CV twice now).
-23. flm cold-load under high PSI: consider making the post-deploy E2E smoke skip when IO PSI > threshold (the deploy pressure gate covers pre-switch, not the smoke).
-24. SystemNix AGENTS.md: the FastFlowLM section still describes v1.0.2 weights sizes/lessons — refresh with the v1.0.3 hold state + retry runbook pointer.
-25. Audit other consumers of the old `KNOWN_NEW_METRICS` comment block for entries that can never retire (documented-unverifiable bank_sync ones post-DAS).
-26. Consider gatus maintenance window / alert dedup for known deploy-restart transients (flm/vHost blips during switches).
+~~21. Consider a "deploy carried never-deployed commits" summary in deploy.sh (diff of input revs old-lock → new-lock with their commit subjects).~~ **Won't implement — carried-commits summary never built.**
+~~22. Codify "floor bumps invalidate vendorHash via tidied go.mod copy" into go-nix-helpers docs (it bit CV twice now).~~ done — floor-bump lesson canonized; docs/agents/go-ecosystem.md Go wave section
+~~23. flm cold-load under high PSI: consider making the post-deploy E2E smoke skip when IO PSI > threshold (the deploy pressure gate covers pre-switch, not the smoke).~~ **Won't implement — smoke PSI-skip superseded by retry windows.**
+~~24. SystemNix AGENTS.md: the FastFlowLM section still describes v1.0.2 weights sizes/lessons — refresh with the v1.0.3 hold state + retry runbook pointer.~~ done — flm as-built runbook; docs/services/fastflowlm.md
+~~25. Audit other consumers of the old `KNOWN_NEW_METRICS` comment block for entries that can never retire (documented-unverifiable bank_sync ones post-DAS).~~ done at `allowlist trimmed to 1 + auto-derivation; scripts/pre-deploy-check.sh:788`
+26. Consider gatus maintenance window / alert dedup for known deploy-restart transients (flm/vHost blips during switches). **→ docs/todo/monitoring.md gatus alerting dedup row (maintenance-window/dedup)**
 
 ## g) Questions I can NOT figure out myself
 

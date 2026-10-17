@@ -89,36 +89,36 @@
 
 ~~1. `nix build .#default` in bank-sync with the new vendorHash — must be green.~~ done — built + deployed (wise-go v0.6.1 live)
 ~~2. Add bank-sync CHANGELOG `[Unreleased]` entry: SCA approval-token config + wise-go v0.6.1 bump.~~ done — upstream entries shipped with the merge chain
-3. Add a bank-sync test: `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` set → adapter constructed with the option (factory-level assertion).
+~~3. Add a bank-sync test: `BANK_SYNC_WISE_SCA_APPROVAL_TOKEN` set → adapter constructed with the option (factory-level assertion).~~ **NOT-DO — dup of f3 (bank-sync SCA test).**
 ~~4. Commit bank-sync atomically (8 files, one commit), push.~~ done — pushed + relocked
 ~~5. SystemNix: `nix flake lock --update-input bank-sync`.~~ done — input relocked through the 08-19/08-21 chain
-6. SystemNix: add the SCA token to the sops `bank-sync-env` template as an OPTIONAL/empty-safe key (verify bank-sync treats empty as unset — the config default is empty, so likely fine; confirm the template renders an empty var harmlessly or omit until needed).
+~~6. SystemNix: add the SCA token to the sops `bank-sync-env` template as an OPTIONAL/empty-safe key (verify bank-sync treats empty as unset — the config default is empty, so likely fine; confirm the template renders an empty var harmlessly or omit until needed).~~ done — SCA token path settled: sops template + env wiring shipped; docs/services/bank-sync-sca.md
 ~~7. `nix run .#deploy`.~~ done — deployed (15-43 session verified live)
 ~~8. **Verify the diagnostic goal:** journal must now show `wise: sca challenge (403): … x-2fa-approval-result="REJECTED" … x-2fa-approval="<OTT>"` instead of the bare `api error (403):`. If instead it stays a plain AuthError with no 2FA headers → the personal-token regional restriction applies (see question 2).~~ done — the OTT journal line verified live (AGENTS.md Wise SCA section)
 
 **P1 — the human unlock + hardening:**
-9. USER: approve the SCA challenge in the Wise app/web (or just view a statement there — counts per docs), then `sops --set` the OTT, redeploy, verify `total_new > 0` on the next sync, then REMOVE the token from sops.
+~~9. USER: approve the SCA challenge in the Wise app/web (or just view a statement there — counts per docs), then `sops --set` the OTT, redeploy, verify `total_new > 0` on the next sync, then REMOVE the token from sops.~~ **Won't implement — SCA unlock is owner 2FA step; token lifecycle documented (docs/services/bank-sync-sca.md); window passed.**
 ~~10. Gatus/alerting for permanent sync failure (metric or log-probe — bank-sync emits `sync failed permanently` WARN; wire `system-health` or a watchdog).~~ done — `bank_sync_sync_errors_total` / `bank_sync_last_sync_timestamp_seconds` wired into gatus (metrics in the fleet since; allowlist retirement pending TODO_LIST)
-11. Previous session's still-open P0: `startLimitBurst`/`startLimitIntervalSec`/`onFailure` on `bank-sync-storage-dir` (house rule 5).
-12. post-deploy Bank-Sync body check: log first ~200 bytes of body on failure (previous session's d-2 fix, still open).
-13. wise-go: review concurrent `47655fd` sweep (touches errors modernization — may have reworked my files; verify tag integrity unaffected, it is, but keep an eye).
-14. wise-go GitHub release for v0.6.1 with retraction note (confirm repo even uses GH releases first).
+~~11. Previous session's still-open P0: `startLimitBurst`/`startLimitIntervalSec`/`onFailure` on `bank-sync-storage-dir` (house rule 5).~~ done at `start-limit hardening on storage-dir class shipped; modules/nixos/services/bank-sync.nix:19-138`
+~~12. post-deploy Bank-Sync body check: log first ~200 bytes of body on failure (previous session's d-2 fix, still open).~~ **Won't implement — body-logging fix never landed; superseded by metrics+gatus failure visibility.**
+~~13. wise-go: review concurrent `47655fd` sweep (touches errors modernization — may have reworked my files; verify tag integrity unaffected, it is, but keep an eye).~~ **Won't implement — external wise-go repo; tag integrity confirmed at the time.**
+~~14. wise-go GitHub release for v0.6.1 with retraction note (confirm repo even uses GH releases first).~~ **Won't implement — external wise-go repo; GH release never confirmed.**
 
 **P2 — hygiene:**
-15. wise-go AGENTS.md: tag-after-push rule + SCA gotcha entry (headers-only 403 diagnosis story).
-16. bank-sync AGENTS.md: SCA runbook (deploy → read OTT from journal → approve → sops → deploy → remove).
-17. SystemNix AGENTS.md: bank-sync SCA ops pointer (where the token lives, 90-day cadence).
-18. Fix or remove the foreign `dprint.json`/BuildFlow breakage in wise-go.
-19. bank-sync: extract vendorHash to `vendorHash.nix` (nix-checker suggestion, cleaner diffs).
-20. Track nixpkgs go 1.26.6 arrival → delete the go-codec floor-lowering patch.
-21. Verify proxy.golang.org serves v0.6.1 correctly for non-flake consumers (flake uses git+ssh, so deploy is independent).
+~~15. wise-go AGENTS.md: tag-after-push rule + SCA gotcha entry (headers-only 403 diagnosis story).~~ **Won't implement — external wise-go AGENTS.**
+~~16. bank-sync AGENTS.md: SCA runbook (deploy → read OTT from journal → approve → sops → deploy → remove).~~ **Won't implement — external bank-sync AGENTS.**
+~~17. SystemNix AGENTS.md: bank-sync SCA ops pointer (where the token lives, 90-day cadence).~~ done — SCA ops pointer canon; docs/services/bank-sync-sca.md + docs/agents/secrets.md
+~~18. Fix or remove the foreign `dprint.json`/BuildFlow breakage in wise-go.~~ **Won't implement — external wise-go repo.**
+~~19. bank-sync: extract vendorHash to `vendorHash.nix` (nix-checker suggestion, cleaner diffs).~~ done — vendorHash shims since dropped repo-wide; docs/agents/nix-flakes.md lock-free FOD probe gotcha
+~~20. Track nixpkgs go 1.26.6 arrival → delete the go-codec floor-lowering patch.~~ **Won't implement — external wise-go watch; nixpkgs moved past floor.**
+~~21. Verify proxy.golang.org serves v0.6.1 correctly for non-flake consumers (flake uses git+ssh, so deploy is independent).~~ **Won't implement — external wise-go; proxy verify never done.**
 
 **P3 — observed, non-blocking:**
-22. `/data` EIO inode repair window (btrbk-data + pool backups still failing by documented stance).
-23. 10 stale build sandboxes → `sudo systemctl start nix-build-cleanup.service`.
-24. Monitor365 pre-deploy warnings enable-gating.
-25. wise-go govulncheck reported 36 stdlib findings (GO-2026-6218 etc.) — toolchain-bump class, fold into next wise-go release.
-26. Another session's SystemNix report (`04-14_pr139_forgejo-hermes-token-review.md`) sits staged — not mine, untouched.
+~~22. `/data` EIO inode repair window (btrbk-data + pool backups still failing by documented stance).~~ **Won't implement — /data EIO era resolved via damage-set process; docs/services/data-damage-set.md.**
+~~23. 10 stale build sandboxes → `sudo systemctl start nix-build-cleanup.service`.~~ **Won't implement — one-shot sandbox cleanup; window passed.**
+~~24. Monitor365 pre-deploy warnings enable-gating.~~ **Won't implement — monitor365 enable-gating moot; service disabled.**
+~~25. wise-go govulncheck reported 36 stdlib findings (GO-2026-6218 etc.) — toolchain-bump class, fold into next wise-go release.~~ **Won't implement — external wise-go govulncheck; toolchain waves since landed.**
+~~26. Another session's SystemNix report (`04-14_pr139_forgejo-hermes-token-review.md`) sits staged — not mine, untouched.~~ **Won't implement — foreign staged doc; daemon handled.**
 
 ---
 

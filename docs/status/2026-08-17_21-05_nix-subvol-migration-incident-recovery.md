@@ -57,15 +57,15 @@
 
 ## e) WHAT WE SHOULD IMPROVE (systemic, from this session)
 
-1. **Eval-time guard for empty-subvol mounts**: a NixOS assertion/activation check that a `subvol=@x` mount for `/nix` has non-empty `store/` at activation time (or switch-to-configuration pre-flight in deploy.sh). This class of incident is cheap to prevent, expensive to live through.
-2. **deploy.sh pre-flight**: before `nh os switch`, diff current fstab subvols vs new; if a NEW subvol mount appears, verify the subvol exists AND is populated; abort with instructions otherwise.
-3. **Script testing discipline**: I wrote a sudo-root migration script and let the user run it without a dry-run/shellcheck pass. The rsync flag error would have been caught by `shellcheck`-adjacent review or testing the copy line standalone first.
-4. **Quiescence check = point-in-time lie**: `pgrep nix build` shows a snapshot; nh queues. Deploy-safety checks must look at nh/nix-daemon job state, not just running PIDs (or simply never race a migration with the PMA auto-deploy daemon — disable it during surgery).
-5. **btrbk observability**: a 6h-timeout-killed receive left a corrupt subvol on the pool silently. Add a post-receive verification (btrfs subvolume show + du compare) or btrbk's own resume handling; alert on "aborted" lines (the OnFailure fired but nobody looked until 16h later).
-6. **TimeoutStartSec sizing for seed-sized jobs**: the 6h timeout was tuned for one seed; catch-up runs of 3 snapshots could exceed it. Make it `infinity`-with-journal-heartbeat or sized per-job-class.
-7. **Docs-before-reality anti-pattern**: status/AGENTS entries describing migrations should be written AFTER the pivot/verify step, or explicitly marked PENDING. The auto-commit daemon makes premature docs permanent.
-8. **Recovery playbook**: the loader trick (`ld.so --library-path` + absolute store paths via `/mnt/btrfs-root/@/nix`) worked perfectly and is worth a gotcha entry — it's the universal "store is shadowed but disk is fine" tool. Ditto: power-button clean shutdown when binaries are gone.
-9. **Single-path communication under stress**: user got 4 different one-liners across messages (some with typos — a missing space `--library-path"..."` in the run0 paste). Under incident conditions, emit ONE canonical command block per step, nothing inline-fragile.
+1. **Eval-time guard for empty-subvol mounts**: a NixOS assertion/activation check that a `subvol=@x` mount for `/nix` has non-empty `store/` at activation time (or switch-to-configuration pre-flight in deploy.sh). This class of incident is cheap to prevent, expensive to live through. **→ docs/todo/pipeline.md Eval-time audits for unit-shape contracts (mount/subvol class)**
+~~2. **deploy.sh pre-flight**: before `nh os switch`, diff current fstab subvols vs new; if a NEW subvol mount appears, verify the subvol exists AND is populated; abort with instructions otherwise.~~ **NOT-DO — dup of e.1 (same pipeline.md row).**
+~~3. **Script testing discipline**: I wrote a sudo-root migration script and let the user run it without a dry-run/shellcheck pass. The rsync flag error would have been caught by `shellcheck`-adjacent review or testing the copy line standalone first.~~ done at `shellcheck pre-commit hook landed; CHANGELOG Post-deploy check hardening entry`
+~~4. **Quiescence check = point-in-time lie**: `pgrep nix build` shows a snapshot; nh queues. Deploy-safety checks must look at nh/nix-daemon job state, not just running PIDs (or simply never race a migration with the PMA auto-deploy daemon — disable it during surgery).~~ done at `concurrent-deploy flock guard; scripts/deploy.sh:63`
+~~5. **btrbk observability**: a 6h-timeout-killed receive left a corrupt subvol on the pool silently. Add a post-receive verification (btrfs subvolume show + du compare) or btrbk's own resume handling; alert on "aborted" lines (the OnFailure fired but nobody looked until 16h later).~~ **NOT-DO — dup of f19 (struck done).**
+~~6. **TimeoutStartSec sizing for seed-sized jobs**: the 6h timeout was tuned for one seed; catch-up runs of 3 snapshots could exceed it. Make it `infinity`-with-journal-heartbeat or sized per-job-class.~~ **NOT-DO — dup of f10 (struck done; 24h timeout live).**
+~~7. **Docs-before-reality anti-pattern**: status/AGENTS entries describing migrations should be written AFTER the pivot/verify step, or explicitly marked PENDING. The auto-commit daemon makes premature docs permanent.~~ **Won't implement — docs-before-reality process rule never canonized.**
+~~8. **Recovery playbook**: the loader trick (`ld.so --library-path` + absolute store paths via `/mnt/btrfs-root/@/nix`) worked perfectly and is worth a gotcha entry — it's the universal "store is shadowed but disk is fine" tool. Ditto: power-button clean shutdown when binaries are gone.~~ **NOT-DO — dup of f20.**
+~~9. **Single-path communication under stress**: user got 4 different one-liners across messages (some with typos — a missing space `--library-path"..."` in the run0 paste). Under incident conditions, emit ONE canonical command block per step, nothing inline-fragile.~~ **Won't implement — single-path-comms process ask never canonized.**
 
 ## f) NEXT — up to 50 items, ordered
 
@@ -81,51 +81,51 @@
 **Short-term (tomorrow):**
 ~~7. After tonight's 23:00 snapshot lands: delete local 0814, 0813, 0815, 0816 (pool-verified)~~ done — superseded by btrbk's own pruning (retention 3d+1w since 2026-08-21); pool-verified receives confirmed
 8. ~~Confirm tonight's btrbk 0817 snapshot EXCLUDES @nix extents (first slim snapshot — the whole point)~~ done at `d4a59d4d`
-9. `nix store gc` manual pass post-verify (zombie path sweep if any)
+~~9. `nix store gc` manual pass post-verify (zombie path sweep if any)~~ **Won't implement — one-shot GC pass; window passed.**
 10. ~~Fix `btrbk-root` TimeoutStartSec for catch-up-class runs~~ done at `e5edf0bd`
-11. Verify `fstrim` ran overnight (journalctl) — expect longer run (real deletions happened)
-12. Re-check `btrfs filesystem usage` — target metadata < 90%
-13. Check `system_gatus_meta_scrape_errors`/Gatus didn't fire phantom alerts during the outage window (16:35–19:00); annotate if so
-14. Audit WHICH deploy raced (PMA auto-commit daemon? user?) — the hardware-configuration.nix edit went out with an auto-commit; confirm the daemon didn't ALSO deploy it independently
-15. Mark `docs/planning/2026-08-17_rustfs-evaluation.md` untouched-by-me (it was in git status pre-session — not mine)
+~~11. Verify `fstrim` ran overnight (journalctl) — expect longer run (real deletions happened)~~ **Won't implement — one-shot fstrim verify; window passed.**
+~~12. Re-check `btrfs filesystem usage` — target metadata < 90%~~ done at `metadata relief verified; CHANGELOG chunk-unalloc gate CLEARED 222 GiB 2026-09-02`
+~~13. Check `system_gatus_meta_scrape_errors`/Gatus didn't fire phantom alerts during the outage window (16:35–19:00); annotate if so~~ **Won't implement — one-shot usage recheck; window passed.**
+~~14. Audit WHICH deploy raced (PMA auto-commit daemon? user?) — the hardware-configuration.nix edit went out with an auto-commit; confirm the daemon didn't ALSO deploy it independently~~ **Won't implement — one-shot deploy-race forensics; window passed.**
+~~15. Mark `docs/planning/2026-08-17_rustfs-evaluation.md` untouched-by-me (it was in git status pre-session — not mine)~~ **Won't implement — one-shot doc attribution mark; window passed.**
 
 **This week:**
 16. ~~After 2–3 stable boots: `sudo rm -rf /mnt/btrfs-root/@/nix` (old dir) — the 102 G unpinned-from-future-snapshots milestone~~ done (AGENTS.md: old @/nix deleted post-verification)
-17. Add eval-time/activation guard for unpopulated subvol mounts (see e.1)
-18. deploy.sh pre-flight subvol-population check (see e.2)
+17. Add eval-time/activation guard for unpopulated subvol mounts (see e.1) **→ docs/todo/pipeline.md Eval-time audits for unit-shape contracts**
+~~18. deploy.sh pre-flight subvol-population check (see e.2)~~ **NOT-DO — dup of e.1.**
 19. ~~btrbk post-receive verification + OnFailure alert routing to Discord (not just journal)~~ done at `184c6599`
 20. Write gotcha entries: (a) loader trick, (b) power-button shutdown when binaries dead, (c) mount-new-subvol-before-populate incident, (d) docker cp host-write confinement, (e) run0 needs TTY+agent
 21. ~~Reconcile AGENTS.md `/nix` bullet with ACTUAL state once pivot done (remove premature "migrated" claim if pivot slips)~~ done at `d4a59d4d`
 22. ~~Verify pool-side 0812/0813 still intact post-catch-up (`btrfs subvolume show`, du spot-check)~~ done at `e5edf0bd`
 23. ~~Cache-subvol reclaim batch (deferred): `@cargo/registry/src` (1.6 G), `@npm`, `@cache-home` — only if disk pressure persists~~ done at `71256d6f`
 ~~24. Old `/rust-cache` partition (98 GiB raw) deletion + root-partition grow (pre-existing TODO_LIST item)~~ done (verified 2026-08-31) — p9 deleted, tail now hosts the ClickHouse XFS partition; grow-root was never physically possible (non-adjacent)
-25. Revisit `@home` subvol split (flat-layout recommendation from wikis, deferred at install)
+~~25. Revisit `@home` subvol split (flat-layout recommendation from wikis, deferred at install)~~ **Won't implement — @home split never adopted; superseded by Samsung hot-tier storage doctrine.**
 26. ~~Balance check after deletions settle (`btrfs balance status`; the Monday 04:00 `-musage=50` will consolidate)~~ done at `d4a59d4d`
-27. Consider `nix.settings.min-free` raise during migration windows (we run min-free 5 G; 97% full breached comfort)
+~~27. Consider `nix.settings.min-free` raise during migration windows (we run min-free 5 G; 97% full breached comfort)~~ **Won't implement — min-free stayed 5G; docs/todo/monitoring.md cites it as standing backstop.**
 28. ~~ZRAM fill + memory pressure sanity check post-incident (25 G peak RSS in btrbk runs per journal — heavy)~~ done at `8ffb2762`
-29. Review the SECOND racing deploy's output (PID 2096307 built to completion — its closure may be a GC-able orphan; check `nix-store --gc --print-orphans` equivalent post-pivot)
-30. Status-report self-review pass (docs/status/2026-08-17_16-33* was modified pre-session — not mine, leave alone)
+~~29. Review the SECOND racing deploy's output (PID 2096307 built to completion — its closure may be a GC-able orphan; check `nix-store --gc --print-orphans` equivalent post-pivot)~~ **Won't implement — one-shot orphan sweep; window passed.**
+~~30. Status-report self-review pass (docs/status/2026-08-17_16-33* was modified pre-session — not mine, leave alone)~~ **Won't implement — one-shot self-review; window passed.**
 
 **Later / backlog alignment:**
 31. ~~Gatus check for "btrbk pool target freshness" (currently only root+data local freshness alert exists — extend to pool sends)~~ done at `e5edf0bd`
-32. Docs: this incident deserves a `docs/gotchas-archive.md` full narrative entry (timestamps, PIDs, the shadow mechanics, recovery decision tree)
-33. Test the systemd-boot generation-select procedure ONCE calmly (while system healthy) so it's muscle memory — document in gotchas
-34. Pre-create a "surgery mode": `systemctl stop projects-management-automation` (or timer mask) before any filesystem surgery — the auto-deploy daemon is a live wire during migrations
-35. `scripts/migrate-nix-subvol.sh`: add final self-verification (compare store path counts old vs new, diff var profiles) before printing "Done"
-36. Consider making hardware-configuration changes require TWO-stage review (config branch + explicit populate step) — social/CI guard, even a reminder banner
-37. The pool `btrbk-pool` instance (23:45) snapshotting pool-side `services/*` — verify unaffected by the corrupt-0814 dance
-38. Pool-side retention: 0812 is 30d/12w-locked — if user cares about it specifically, note its expiry (mid-Sept) and consider a longer-tagged archive copy
-39. `backup-coordination` registration: nothing new to register (no new backup dirs created this session), but VERIFY the module didn't alert on missing snapshots during the chaos
-40. Kernel `sysrq=1` — consider tightening to a safer mask now that we know it's our last-resort reboot (mask 1 = all; 176 is the safer common set) — or leave as-is deliberately (homelab, single user)
-41. Double-deploy prevention: nh lockfile/nix-daemon queueing means two simultaneous `nh os switch` can interleave builds — consider `flock` in deploy.sh around the whole build+switch
-42. Document that `switch-to-configuration` on the NEW closure is the pivot mechanism deploy can't safely do pre-population — link from the migration script header
+~~32. Docs: this incident deserves a `docs/gotchas-archive.md` full narrative entry (timestamps, PIDs, the shadow mechanics, recovery decision tree)~~ done — narrative captured; docs/gotchas-archive.md:65 (reflink-flag bug + migration)
+~~33. Test the systemd-boot generation-select procedure ONCE calmly (while system healthy) so it's muscle memory — document in gotchas~~ **Won't implement — generation-select procedure doc never written; era passed.**
+~~34. Pre-create a "surgery mode": `systemctl stop projects-management-automation` (or timer mask) before any filesystem surgery — the auto-deploy daemon is a live wire during migrations~~ **Won't implement — superseded by deploy.sh flock/queue serialization (scripts/deploy.sh:63).**
+~~35. `scripts/migrate-nix-subvol.sh`: add final self-verification (compare store path counts old vs new, diff var profiles) before printing "Done"~~ **Won't implement — migration complete; one-shot script historical.**
+~~36. Consider making hardware-configuration changes require TWO-stage review (config branch + explicit populate step) — social/CI guard, even a reminder banner~~ **Won't implement — two-stage review never adopted; flock guard covers the race class.**
+~~37. The pool `btrbk-pool` instance (23:45) snapshotting pool-side `services/*` — verify unaffected by the corrupt-0814 dance~~ **Won't implement — one-shot verify; window passed.**
+~~38. Pool-side retention: 0812 is 30d/12w-locked — if user cares about it specifically, note its expiry (mid-Sept) and consider a longer-tagged archive copy~~ **Won't implement — retention expiry passed mid-Sept; archive never requested.**
+~~39. `backup-coordination` registration: nothing new to register (no new backup dirs created this session), but VERIFY the module didn't alert on missing snapshots during the chaos~~ **Won't implement — one-shot verify; window passed.**
+~~40. Kernel `sysrq=1` — consider tightening to a safer mask now that we know it's our last-resort reboot (mask 1 = all; 176 is the safer common set) — or leave as-is deliberately (homelab, single user)~~ **Won't implement — sysrq mask decision never taken.**
+~~41. Double-deploy prevention: nh lockfile/nix-daemon queueing means two simultaneous `nh os switch` can interleave builds — consider `flock` in deploy.sh around the whole build+switch~~ done at `flock around whole build+switch; scripts/deploy.sh:63`
+~~42. Document that `switch-to-configuration` on the NEW closure is the pivot mechanism deploy can't safely do pre-population — link from the migration script header~~ **Won't implement — migration complete; doc note moot.**
 43. ~~Post-pivot: run `nix flake check --no-build` from repo to confirm no eval drift after the day's churn~~ done (full flake checks green in subsequent sessions)
-44. Check Forgejo-runner/CI didn't fire builds into the broken window (16:35–19:00) — orphans/cache pollution possible
-45. Monitor next 2-3 btrbk runs for correct parent selection post-snapshot-deletions (btrbk bookkeeping can re-seed if confused — watch for "resume" lines)
-46. The `@.20260814T2300` corrupt copy taught: pool `TimeoutStartSec=6h` interacts with `x-systemd.device-timeout` on USB — document interplay in gotchas if it recurs
+~~44. Check Forgejo-runner/CI didn't fire builds into the broken window (16:35–19:00) — orphans/cache pollution possible~~ **Won't implement — one-shot forgejo-runner check; window passed.**
+~~45. Monitor next 2-3 btrbk runs for correct parent selection post-snapshot-deletions (btrbk bookkeeping can re-seed if confused — watch for "resume" lines)~~ **Won't implement — watch item; window passed.**
+~~46. The `@.20260814T2300` corrupt copy taught: pool `TimeoutStartSec=6h` interacts with `x-systemd.device-timeout` on USB — document interplay in gotchas if it recurs~~ **Won't implement — conditional never recurred.**
 47. ~~User's `/mnt/@` manual mount evaporated mid-session (idle timeout) — standardize on `/mnt/btrfs-root` (automount-managed) in ALL docs/scripts (migration script already does)~~ done (AGENTS.md standardizes on /mnt/btrfs-root)
 48. ~~Verify `home-manager-lars` activation ran clean on next deploy (the shadow window could have left stale HM state)~~ done (subsequent deploys activated HM clean)
-49. If pivot goes smoothly: close out `docs/planning` migration notes; if it doesn't boot-menu rollback remains gens 678-682 — all verified SAFE fstab
+~~49. If pivot goes smoothly: close out `docs/planning` migration notes; if it doesn't boot-menu rollback remains gens 678-682 — all verified SAFE fstab~~ **Won't implement — planning close-out; window passed.**
 50. Celebrate appropriately. The store survived a mount-over with zero data loss, reflinks made the whole recovery possible, and the pool had a verified-full copy before anything was deleted.
 
 ## g) Questions I cannot answer myself

@@ -26,21 +26,21 @@
 
 ## b) PARTIALLY DONE
 
-1. **Nothing deployed.** All changes are committed (auto-commit daemon: `e34a1a52`, `c121f8cf`, `2893fd3f`) but `nix run .#deploy` has NOT run. Until it does, the LIVE gatus keeps the never-matching patterns (7 checks permanently red + alert noise risk) and the DAS-link check doesn't exist.
+~~1. **Nothing deployed.** All changes are committed (auto-commit daemon: `e34a1a52`, `c121f8cf`, `2893fd3f`) but `nix run .#deploy` has NOT run. Until it does, the LIVE gatus keeps the never-matching patterns (7 checks permanently red + alert noise risk) and the DAS-link check doesn't exist.~~ **NOT-DO — dup of f2 (struck done).**
 
-2. **`nix flake check --no-build` / `nix fmt`: GREEN** — ran after committing: "all checks passed" (the aarch64-darwin omission is the expected Linux-only-input warning), treefmt reports 0 changed. The eval gates confirm the whole batch; deployment remains the open half.
+~~2. **`nix flake check --no-build` / `nix fmt`: GREEN** — ran after committing: "all checks passed" (the aarch64-darwin omission is the expected Linux-only-input warning), treefmt reports 0 changed. The eval gates confirm the whole batch; deployment remains the open half.~~ **NOT-DO — dup of f2.**
 
-3. **AGENTS.md Gatus documentation:** the anchored-form + real-newline requirement is documented in the lint failure message, but the AGENTS.md "Gatus Health Check Design Patterns" section still teaches the anchored form without the newline-escaping trap.
+~~3. **AGENTS.md Gatus documentation:** the anchored-form + real-newline requirement is documented in the lint failure message, but the AGENTS.md "Gatus Health Check Design Patterns" section still teaches the anchored form without the newline-escaping trap.~~ **NOT-DO — dup of f10 (struck done).**
 
 ## c) NOT STARTED (planned quick wins, blocked by session end)
 
-1. FastFlowLM smoke: assert the model NAME in `/v1/models` body (site read, edit not applied — `post-deploy-check.sh:227`).
-2. Enable-gated `crm.$DOMAIN` external vHost check in `post-deploy-check.sh`.
-3. Pre-deploy-check §10: flag `pat(*<metric> 1*)` on HELP-emitting metrics (the lint covers eval time; the pre-deploy layer stays uncovered).
-4. `file-and-image-renamer.inputs.go-nix-helpers.follows` (verified missing — flake.nix:229 has only nixpkgs/flake-parts follows).
-5. `start-limit-audit.nix` eval-time guard (StartLimitBurst-in-[Service] silently-ignored class).
-6. TODO_LIST truth-upkeep: `forgejo-oidc-setup` race item is STALE (mkOidcGate wired, forgejo.nix:83), `PapDashboard coverage` item is STALE (post-deploy checks exist, post-deploy-check.sh:456-473), `Pool-usage Gatus alert` item is STALE (`pool_usage_over_threshold` check live, gatus-config.nix:1370). None marked yet.
-7. Lint hardening: a third `gatus-pattern-lint` trap rejecting literal `\\n` inside `pat()` in the nix source (currently only the message documents it).
+~~1. FastFlowLM smoke: assert the model NAME in `/v1/models` body (site read, edit not applied — `post-deploy-check.sh:227`).~~ **NOT-DO — dup of f3.**
+~~2. Enable-gated `crm.$DOMAIN` external vHost check in `post-deploy-check.sh`.~~ **NOT-DO — dup of f7 (struck done).**
+~~3. Pre-deploy-check §10: flag `pat(*<metric> 1*)` on HELP-emitting metrics (the lint covers eval time; the pre-deploy layer stays uncovered).~~ **NOT-DO — dup of f8 (struck done).**
+~~4. `file-and-image-renamer.inputs.go-nix-helpers.follows` (verified missing — flake.nix:229 has only nixpkgs/flake-parts follows).~~ **NOT-DO — dup of f12 (struck done).**
+~~5. `start-limit-audit.nix` eval-time guard (StartLimitBurst-in-[Service] silently-ignored class).~~ **NOT-DO — dup of f13 (struck done).**
+~~6. TODO_LIST truth-upkeep: `forgejo-oidc-setup` race item is STALE (mkOidcGate wired, forgejo.nix:83), `PapDashboard coverage` item is STALE (post-deploy checks exist, post-deploy-check.sh:456-473), `Pool-usage Gatus alert` item is STALE (`pool_usage_over_threshold` check live, gatus-config.nix:1370). None marked yet.~~ **NOT-DO — dup of f14 (struck done).**
+~~7. Lint hardening: a third `gatus-pattern-lint` trap rejecting literal `\\n` inside `pat()` in the nix source (currently only the message documents it).~~ **NOT-DO — dup of f9 (struck done).**
 
 ## d) TOTALLY FUCKED UP
 
@@ -49,30 +49,30 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **The regression class is "escaping layers", not "glob semantics".** Two consecutive sessions got the anchored form wrong in different ways. The durable guard is the VM test (added) + a lint trap for literal `\\n` (not yet added) + the pre-deploy §10 extension (not yet added) — three layers, one currently live.
-2. **Pre-deploy §10 and the gatus-pattern-lint overlap but don't cover the same moment**: eval-time lint catches source patterns; a pre-deploy flag would catch hand-edited/allowlisted escapes. Cheap, still missing.
-3. **20 truthful live-reds are sitting in the exporter right now** (memory-pressure family, `btrfs_health_critical 1`, DAS down, discordsync/bank-sync absent metrics). Post-fix these alert honestly — the alert-noise question (dedup, one-cause-one-alert) is now live, not theoretical.
+~~1. **The regression class is "escaping layers", not "glob semantics".** Two consecutive sessions got the anchored form wrong in different ways. The durable guard is the VM test (added) + a lint trap for literal `\\n` (not yet added) + the pre-deploy §10 extension (not yet added) — three layers, one currently live.~~ **NOT-DO — dup of f9 (third trap landed).**
+~~2. **Pre-deploy §10 and the gatus-pattern-lint overlap but don't cover the same moment**: eval-time lint catches source patterns; a pre-deploy flag would catch hand-edited/allowlisted escapes. Cheap, still missing.~~ **NOT-DO — dup of f8.**
+~~3. **20 truthful live-reds are sitting in the exporter right now** (memory-pressure family, `btrfs_health_critical 1`, DAS down, discordsync/bank-sync absent metrics). Post-fix these alert honestly — the alert-noise question (dedup, one-cause-one-alert) is now live, not theoretical.~~ **NOT-DO — dup of f16.**
 
 ## f) NEXT UP TO 50 THINGS (prioritized, session-scoped)
 
 1. ~~`nix fmt` + `nix flake check --no-build` (running) — confirm green.~~ DONE — both green (see b.2).
    ~~2. `nix run .#deploy` — ships the never-matching-pattern fix; the 7 checks start evaluating truthfully.~~ done — deployed 2026-08-22 (anchored real-newline forms live)
    ~~3. Post-deploy: verify gatus journal shows the anchored conditions evaluating (green where healthy, red only for real outages).~~ done — honestly red through the DAS outage, green after recovery
-2. Check Discord/gatus alert history for noise from the broken-red window since the 01:46 deploy (ack/resolve after fix).
+~~2. Check Discord/gatus alert history for noise from the broken-red window since the 01:46 deploy (ack/resolve after fix).~~ **Won't implement — one-shot alert-history check; window passed.**
    ~~5. Run `tests/test-gatus-patterns.nix` VM test (new anchored regression case).~~ done — test wired into flake checks; executed by pre-commit's full `nix flake check` (CI did NOT execute it: `--no-build` until the 2026-09-02 trap-lint step, which builds only the pure runCommand lints)
-3. FastFlowLM smoke: assert model name in `/v1/models` (c.1).
+~~3. FastFlowLM smoke: assert model name in `/v1/models` (c.1).~~ done at `FastFlowLM model-name smoke shipped; CHANGELOG FastFlowLM dead-endpoint entry (smoke included)`
    ~~7. `crm.$DOMAIN` enable-gated external check (c.2).~~ done 2026-08-22 — External vHost section
    ~~8. Pre-deploy §10 `pat(*<metric> 1*)` flag (c.3).~~ done 2026-08-22 — §10 mirrors both lint traps
    ~~9. `gatus-pattern-lint`: third trap rejecting literal `\\n` in `pat()` (c.7).~~ done — all three escape traps rejected by the lint
    ~~10. AGENTS.md Gatus section: real-newline requirement + `!`-literal + HELP-collision + `system_das_link_present` note (b.3).~~ done 2026-08-22
-4. Link `docs/dnsblockd-oidc-recovery.md` from AGENTS.md DNS section.
+~~4. Link `docs/dnsblockd-oidc-recovery.md` from AGENTS.md DNS section.~~ done — dnsblockd recovery doc lives at docs/services/dnsblockd.md; AGENTS Knowledge Routing
    ~~12. `file-and-image-renamer` go-nix-helpers follows + lock re-encode (c.4).~~ done 2026-08-22 (follows declared) + subtree relocked (verified `ace31ba8`, 2026-08-31)
    ~~13. `start-limit-audit.nix` (c.5).~~ done — module fails eval on StartLimitBurst-in-[Service]
    ~~14. TODO_LIST: mark the three stale items + today's completed ones (c.6).~~ done — swept by the 2026-08-24 harvest + 2026-08-31 verification/audit passes
    ~~15. Dozzle post-deploy: `docker inspect dozzle` → confirm 256m + no-new-privileges + cap-drop landed (container recreated).~~ done 2026-08-22 — live container verified (mem=268435456, capdrop=ALL, no-new-privileges)
-5. Consider gatus alert dedup / cause-vs-consequence grouping now that cause alerts exist (e.3).
+5. Consider gatus alert dedup / cause-vs-consequence grouping now that cause alerts exist (e.3). **→ docs/todo/monitoring.md gatus alerting dedup row**
    ~~17. Re-check `system_signoz_alert_rules_healthy 0` (live-red — real rules regression or collector port drift after the concurrent session's signoz work).~~ done — resolved by the 2026-08-27 phantom-purge round (26 rules converged; the meta-metric's structural limits documented in AGENTS.md)
-6. Sweep remaining Priority-3 quick wins from the session's original list (niri blur schema check, das-link-recovery script).
+~~6. Sweep remaining Priority-3 quick wins from the session's original list (niri blur schema check, das-link-recovery script).~~ done at `niri blur shipped (CHANGELOG 2026-09-19 window-rule entry) + das-link script shipped`
 
 (19-50 intentionally unpopulated — the 18 above are real, ordered, and session-grounded.)
 

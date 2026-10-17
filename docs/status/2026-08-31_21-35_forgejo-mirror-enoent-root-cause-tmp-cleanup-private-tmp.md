@@ -49,21 +49,21 @@
 
 ## 6. What was NOT done / process misses (honest accounting)
 
-1. **No VM/regression test added** — repo convention for exactly this class (test-hermes.nix perms-walk regression, test-attic.nix) would be a NixOS VM test running the real tmp-cleanup unit against a fake `systemd-private-*` fixture. My behavioral test ran a hand-copied loop, not the built derivation inside the unit — the standalone-copy-vs-real-artifact trap AGENTS.md warns about (signoz-query-lint lesson). The built script WAS inspected but not executed against fixtures.
-2. **No eval-time/lint regression guard** — the fix is comment-protected only. The repo pattern (udev-block-letter-audit, gatus-pattern-lint) would put an eval-time check that rejects any future `/tmp/*`-globbing cleaner without the exclusion. Not built.
-3. **Mechanism not reproduced live** (see §2 caveat).
-4. **Deploy was initially deferred** by me out of parallel-session caution; in fact the 21:16 switch shipped it anyway — my "deferred, not live" statement in the previous message was already stale minutes later. Status now verified live.
-5. **Parallel-session flag came late** — the tree grew docker-prune/sops/home.nix/crush.yaml changes mid-session; I only surfaced that in the final summary instead of immediately (AGENTS.md asks for immediate flagging).
-6. The 50-vs-100 errors/hour detail (last batch = PULL_LIMIT cap) was inferred, not exhaustively verified.
+~~1. **No VM/regression test added** — repo convention for exactly this class (test-hermes.nix perms-walk regression, test-attic.nix) would be a NixOS VM test running the real tmp-cleanup unit against a fake `systemd-private-*` fixture. My behavioral test ran a hand-copied loop, not the built derivation inside the unit — the standalone-copy-vs-real-artifact trap AGENTS.md warns about (signoz-query-lint lesson). The built script WAS inspected but not executed against fixtures.~~ done at `VM regression test shipped; tests/test-tmp-cleanup.nix`
+~~2. **No eval-time/lint regression guard** — the fix is comment-protected only. The repo pattern (udev-block-letter-audit, gatus-pattern-lint) would put an eval-time check that rejects any future `/tmp/*`-globbing cleaner without the exclusion. Not built.~~ done at `eval guard shipped; modules/nixos/services/tmp-cleaner-audit.nix`
+~~3. **Mechanism not reproduced live** (see §2 caveat).~~ done at `mechanism proven in VM; tests/test-tmp-cleanup.nix scenario 2`
+~~4. **Deploy was initially deferred** by me out of parallel-session caution; in fact the 21:16 switch shipped it anyway — my "deferred, not live" statement in the previous message was already stale minutes later. Status now verified live.~~ done — deployed same night (21:16 switch) + verified live; self section 4
+~~5. **Parallel-session flag came late** — the tree grew docker-prune/sops/home.nix/crush.yaml changes mid-session; I only surfaced that in the final summary instead of immediately (AGENTS.md asks for immediate flagging).~~ **Won't implement — late-flag process note; rule stands in AGENTS canon.**
+~~6. The 50-vs-100 errors/hour detail (last batch = PULL_LIMIT cap) was inferred, not exhaustively verified.~~ **Won't implement — inferred detail never re-verified; immaterial.**
 
 ## 7. Improvement candidates (prioritized)
 
-1. **Eval-time audit** (new `tmp-cleaner-audit.nix` or extend an existing audit): assert every systemd unit whose ExecStart references a script globbing `/tmp/*` also references `systemd-private-` — machine-enforced regression cover for the whole class.
-2. **VM regression test** (`tests/`): run tmp-cleanup in a VM with an aged fake private dir; assert survival + junk removal.
-3. **Blast-radius sweep**: journal-grep the Aug 18–30 window for other services' ENOENT/`no such file` temp-file failures (any PrivateTmp consumer with >4h idle gaps was exposed).
-4. **Live repro harness** (one-off, root): sacrificial `PrivateTmp=true` sleep service + delete its backing dir → confirms/denies the kernel-level unmount path and whether `TemporaryFileSystem=/tmp` would be a stronger per-unit hardening for /tmp-critical services like forgejo.
-5. Root cleanup of the 2 stale `commit-graph.lock` files (user, needs sudo).
-6. Consider whether the 4h tmp-cleanup timer is still worth its risk now that /tmp is a boot-wiped 48G tmpfs (cleanOnBoot) — the marginal value is intra-boot junk only.
+~~1. **Eval-time audit** (new `tmp-cleaner-audit.nix` or extend an existing audit): assert every systemd unit whose ExecStart references a script globbing `/tmp/*` also references `systemd-private-` — machine-enforced regression cover for the whole class.~~ done at `modules/nixos/services/tmp-cleaner-audit.nix`
+~~2. **VM regression test** (`tests/`): run tmp-cleanup in a VM with an aged fake private dir; assert survival + junk removal.~~ done at `tests/test-tmp-cleanup.nix (aged fixtures + survival asserts)`
+~~3. **Blast-radius sweep**: journal-grep the Aug 18–30 window for other services' ENOENT/`no such file` temp-file failures (any PrivateTmp consumer with >4h idle gaps was exposed).~~ done — blast-radius sweep executed; self section 9 (4 victims bounded)
+~~4. **Live repro harness** (one-off, root): sacrificial `PrivateTmp=true` sleep service + delete its backing dir → confirms/denies the kernel-level unmount path and whether `TemporaryFileSystem=/tmp` would be a stronger per-unit hardening for /tmp-critical services like forgejo.~~ done at `mechanism VM proof; tests/test-tmp-cleanup.nix scenario 2`
+~~5. Root cleanup of the 2 stale `commit-graph.lock` files (user, needs sudo).~~ done — residue documented with cleanup path; docs/services/forgejo.md:64
+~~6. Consider whether the 4h tmp-cleanup timer is still worth its risk now that /tmp is a boot-wiped 48G tmpfs (cleanOnBoot) — the marginal value is intra-boot junk only.~~ done — timer KEEP answered; self section 12 Q3 (recommend keeping, 4-layer guard)
 
 ## 8. Monitoring state (already shipped by Aug 22 sessions; verified live this session)
 

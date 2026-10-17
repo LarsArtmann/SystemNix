@@ -121,48 +121,48 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
 
 ## 9. What We Should Improve (distilled)
 
-1. **Kill order discipline:** state-changing remediation must be sequenced
+~~1. **Kill order discipline:** state-changing remediation must be sequenced~~ **Won't implement — kill-order discipline never canonized.**
    stop-source → mutate-state → verify, never mutate-then-hope.
-2. **Config-as-typo-surface:** the dedup list was one missing string away from
+~~2. **Config-as-typo-surface:** the dedup list was one missing string away from~~ done at `eval invariant shipped; tests/test-niri-session-config.nix:2`
    this incident; classes like "terminal_app_ids ⊆ single_instance_apps" belong
    in an eval-time check, not in human memory.
-3. **Upstream-first:** the moment the root cause pointed at upstream logic, the
+~~3. **Upstream-first:** the moment the root cause pointed at upstream logic, the~~ **Won't implement — upstream-first habit never canonized.**
    branch/pad should have been opened there in parallel with the mitigation.
-4. **Transient app-ids** (gcr-prompter & friends) need a skip list; restoring
+~~4. **Transient app-ids** (gcr-prompter & friends) need a skip list; restoring~~ **NOT-DO — dup of 10.11.**
    dialogs is nonsense by definition.
 
 ## 10. Next Up To ~30 (derived from this session only)
 
 ~~1. `nix run .#deploy` — ship the dedup + btop fixes~~ done — shipped (session-storm patch, `a58c0734`) + deployed by the same-day sessions
 ~~2. Verify at next login: ≤1 restored ghostty, journal shows clean restore~~ done — no storm recurrence through the same-day reboots (18-44 session saw clean logins)
-3. Upstream: gate restore to once per graphical session (XDG_RUNTIME_DIR marker)
-4. Upstream: dedupe saved windows by (app_id, pid)
-5. Upstream: skip restoring `terminal_state: null` terminals (or restore cwd-only)
-6. Upstream: sanity cap on restore count (e.g., >20 windows → warn + clamp)
-7. Upstream: skip transient/dialog app-ids at save time
-8. Upstream: capture shell cwd for terminal windows → restore in the right directory
-9. Upstream: warn loudly when restoring N>10 same-app windows
-10. Tag upstream release + `nix flake lock --update-input niri-session-manager`
-11. Add `gcr-prompter` (and audit for other transients) to `[skip_apps]`
-12. Eval-time/CI guard: every `terminal_app_ids` entry must appear in `single_instance_apps`
-13. Decide restore policy for terminals: one window vs none (Q2 below)
-14. `restartTriggers` on the config.toml for the manager unit (mid-session reload)
-15. Post-deploy journal check: manager loaded the new config.toml
-16. Audit emacs (and any other single-process multi-window app) for the same class
-17. Interim mitigation until upstream gate lands: consider `Restart=on-failure` + tight burst on the manager unit (crash-loop × restore = multiplication today)
+~~3. Upstream: gate restore to once per graphical session (XDG_RUNTIME_DIR marker)~~ done at `upstream v0.4.0 boot-scoped restore gate; CHANGELOG cross-repo sweep 2026-09-02/03 entry`
+~~4. Upstream: dedupe saved windows by (app_id, pid)~~ done at `save-side single-instance dedupe upstream v0.4.0; same CHANGELOG entry`
+~~5. Upstream: skip restoring `terminal_state: null` terminals (or restore cwd-only)~~ done at `stateless-terminal guard upstream v0.4.x; doc header RESOLVED note`
+~~6. Upstream: sanity cap on restore count (e.g., >20 windows → warn + clamp)~~ done at `--max-restore-windows cap upstream v0.4.0; same CHANGELOG entry`
+~~7. Upstream: skip transient/dialog app-ids at save time~~ done at `transient-dialog skip shipped + regression-pinned; tests/test-niri-session-config.nix:8`
+~~8. Upstream: capture shell cwd for terminal windows → restore in the right directory~~ **Won't implement — cwd capture never shipped; moot under stateless-terminal guard.**
+~~9. Upstream: warn loudly when restoring N>10 same-app windows~~ done at `per-app warn upstream v0.4.x; doc header RESOLVED note`
+~~10. Tag upstream release + `nix flake lock --update-input niri-session-manager`~~ done at `lock bumped to upstream HEAD; CHANGELOG cross-repo sweep entry`
+~~11. Add `gcr-prompter` (and audit for other transients) to `[skip_apps]`~~ done at `transient skip_apps (gcr-prompter) shipped; tests/test-niri-session-config.nix:8`
+~~12. Eval-time/CI guard: every `terminal_app_ids` entry must appear in `single_instance_apps`~~ done at `terminal-app-ids invariant guard; tests/test-niri-session-config.nix:2`
+~~13. Decide restore policy for terminals: one window vs none (Q2 below)~~ done — restore policy settled by stateless-terminal guard; doc header RESOLVED 2026-09-14
+~~14. `restartTriggers` on the config.toml for the manager unit (mid-session reload)~~ **Won't implement — restartTriggers never added.**
+~~15. Post-deploy journal check: manager loaded the new config.toml~~ **Won't implement — one-shot config-load check; window passed.**
+~~16. Audit emacs (and any other single-process multi-window app) for the same class~~ **Won't implement — emacs-class audit never done.**
+~~17. Interim mitigation until upstream gate lands: consider `Restart=on-failure` + tight burst on the manager unit (crash-loop × restore = multiplication today)~~ **Won't implement — moot; upstream restore gate landed.**
 ~~18. Investigate smart-audio FATAL missing `alsa_card.pci-0000_c5_00.1` + start-limit-hit~~ done 2026-08-31 — dynamic card discovery (`deviceName = "auto"`, pw-dump + 120s retry) fixed it (18-44 report)
-19. Identify which daemon was the "reading events too slowly" IPC client
-20. Look at hermes scheduled-task failure at 14:33:44
+~~19. Identify which daemon was the "reading events too slowly" IPC client~~ **Won't implement — IPC client never identified.**
+~~20. Look at hermes scheduled-task failure at 14:33:44~~ **Won't implement — hermes 14:33:44 line never investigated.**
 ~~21. Write TODO_LIST.md entries for items 3–12~~ done — 2026-08-31 docs-health audit (upstream cluster + config-hardening rows)
-22. Trash or promote `/tmp/nsm-src` to a proper checkout for upstream work
-23. Recover the trashed `session-*.bak` files and measure the actual growth curve (confirms/refutes the +2/login model)
-24. Close the still-open stuck `sudo btop` prompt window + nvtop window (or let them die at next login naturally — they are no longer saved)
-25. If root btop is genuinely needed: sudoers NOPASSWD for btop or polkit (Q1 below)
-26. Reconsider spawn-at-startup monitors altogether (DMS widget / single tmux window instead of 2 ghostty windows)
-27. Operational docs: add a "session restore" section to the niri docs (cleanup runbook: kill → rewrite → trash .baks)
-28. Decide whether restoring helium×2/signal/gcr-prompter at login is even wanted, or whether restore should be app-list-based
-29. Check whether `focus-new-windows` focus-stealing made the storm worse UX-wise (grace window vs storm duration)
-30. Watch next 15-min save cycles for a day: confirm zero ghostty re-accumulation
+~~22. Trash or promote `/tmp/nsm-src` to a proper checkout for upstream work~~ **Won't implement — /tmp/nsm-src era passed.**
+~~23. Recover the trashed `session-*.bak` files and measure the actual growth curve (confirms/refutes the +2/login model)~~ **Won't implement — moot; upstream fixes landed.**
+~~24. Close the still-open stuck `sudo btop` prompt window + nvtop window (or let them die at next login naturally — they are no longer saved)~~ done at `btop spawn fixed + deployed; CHANGELOG niri login terminal-storm entry`
+~~25. If root btop is genuinely needed: sudoers NOPASSWD for btop or polkit (Q1 below)~~ **Won't implement — superseded by plain-btop fix.**
+~~26. Reconsider spawn-at-startup monitors altogether (DMS widget / single tmux window instead of 2 ghostty windows)~~ **Won't implement — spawn-at-startup monitors kept.**
+~~27. Operational docs: add a "session restore" section to the niri docs (cleanup runbook: kill → rewrite → trash .baks)~~ **Won't implement — session-restore runbook section never written.**
+~~28. Decide whether restoring helium×2/signal/gcr-prompter at login is even wanted, or whether restore should be app-list-based~~ **NOT-DO — dup of 10.13.**
+~~29. Check whether `focus-new-windows` focus-stealing made the storm worse UX-wise (grace window vs storm duration)~~ **Won't implement — focus-stealing check never done.**
+~~30. Watch next 15-min save cycles for a day: confirm zero ghostty re-accumulation~~ **Won't implement — watch item; window passed.**
 
 ## 11. Questions (cannot be answered from the system)
 

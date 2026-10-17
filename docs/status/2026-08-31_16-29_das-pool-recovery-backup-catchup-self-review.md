@@ -36,18 +36,18 @@ The JMS567 bridge wedge (Aug 22 00:59 → Aug 31 14:30 boot) left `/mnt/pool` ab
 
 ## b) PARTIALLY DONE
 
-1. **Fixes are NOT deployed** — sudo/systemctl blocked in this shell; deployment is the user's call (also entangled with the parallel session's uncommitted edits riding the same tree). Until deployed (or `sudo mkdir -p /mnt/pool/backups/cv`), **tonight's 03:17 cv-backup fails 226 again**.
-2. **btrbk-data outcome unconfirmed** — the full re-send of the Jul 26 snapshot was still streaming at 16:29 (last write 16:06). It may complete, oom-kill (20.6G page-cache class), or abort on the known /data EIO inode. Each outcome is handled (24h timeout, `btrbk-pool-clean` after, onFailure alerts), but I did not stay to observe the end state.
-3. **Verification of tonight's convergence** — by definition happens tonight: 23:00 root send, 01:30 paperless export, 03:17 cv, then `backup_all_healthy`/`btrfs-verify-pool-backups` should flip green tomorrow morning. Not yet observed.
+~~1. **Fixes are NOT deployed** — sudo/systemctl blocked in this shell; deployment is the user's call (also entangled with the parallel session's uncommitted edits riding the same tree). Until deployed (or `sudo mkdir -p /mnt/pool/backups/cv`), **tonight's 03:17 cv-backup fails 226 again**.~~ **NOT-DO — dup of f1 (struck done).**
+~~2. **btrbk-data outcome unconfirmed** — the full re-send of the Jul 26 snapshot was still streaming at 16:29 (last write 16:06). It may complete, oom-kill (20.6G page-cache class), or abort on the known /data EIO inode. Each outcome is handled (24h timeout, `btrbk-pool-clean` after, onFailure alerts), but I did not stay to observe the end state.~~ **NOT-DO — dup of f3 (struck done).**
+~~3. **Verification of tonight's convergence** — by definition happens tonight: 23:00 root send, 01:30 paperless export, 03:17 cv, then `backup_all_healthy`/`btrfs-verify-pool-backups` should flip green tomorrow morning. Not yet observed.~~ **NOT-DO — dup of f2 (struck done).**
 
 ## c) NOT STARTED
 
-1. VM regression test for the cv fix (repo culture: `tests/test-attic.nix` step 9 tests the exact ConditionPathIsMountPoint skip class; cv deserves the same).
-2. Eval-time audit "ReadWritePaths under /mnt/pool ⇒ RequiresMountsFor" (same class as `otel-endpoint-audit.nix` / `udev-block-letter-audit.nix`) — would have caught the cv bug at eval time.
-3. TODO_LIST.md entries for follow-ups.
-4. Lint pass on my own edits (deadnix/statix/alejandra via pre-commit) — flake check passed but house lints were not run before the auto-commit daemon may batch this.
-5. Fix the stale comment in configuration.nix ("01:30 + randomized delay" — the deployed timer has NO RandomizedDelaySec; either add the delay or fix the comment).
-6. Cleanup of shadowed root-fs copies under the `/mnt/pool` mountpoint (the cv shadow dir; likely also `backups/{root,data}` from the `-`-suffixed tmpfiles rules).
+~~1. VM regression test for the cv fix (repo culture: `tests/test-attic.nix` step 9 tests the exact ConditionPathIsMountPoint skip class; cv deserves the same).~~ done at `ReadWritePaths mount-gating audit; modules/nixos/services/mount-gating-audit.nix (docs/agents/systemd.md ReadWritePaths bullet)`
+2. Eval-time audit "ReadWritePaths under /mnt/pool ⇒ RequiresMountsFor" (same class as `otel-endpoint-audit.nix` / `udev-block-letter-audit.nix`) — would have caught the cv bug at eval time. **→ docs/todo/pipeline.md Eval-time audits row (backup-timer Persistent lint)**
+~~3. TODO_LIST.md entries for follow-ups.~~ **NOT-DO — dup of f7 (struck done).**
+~~4. Lint pass on my own edits (deadnix/statix/alejandra via pre-commit) — flake check passed but house lints were not run before the auto-commit daemon may batch this.~~ **Won't implement — one-shot lint pass; window passed.**
+~~5. Fix the stale comment in configuration.nix ("01:30 + randomized delay" — the deployed timer has NO RandomizedDelaySec; either add the delay or fix the comment).~~ **Won't implement — Persistent half landed (modules/nixos/services/paperless.nix:584); randomized-delay half dropped.**
+~~6. Cleanup of shadowed root-fs copies under the `/mnt/pool` mountpoint (the cv shadow dir; likely also `backups/{root,data}` from the `-`-suffixed tmpfiles rules).~~ done — cv shadow tmpfiles rule removed 2026-09-02; CHANGELOG CV September chain entry
 
 ## d) TOTALLY FUCKED UP
 
@@ -69,30 +69,30 @@ Nothing new destroyed this session — but two honest admissions:
 ## f) NEXT THINGS (ranked, session-derived)
 
 ~~1. Deploy the fixes: `nix run .#deploy` (or first `sudo mkdir -p /mnt/pool/backups/cv && sudo chmod 755 /mnt/pool/backups/cv` for immediate convergence; optionally `sudo systemctl start cv-backup.service` to prove the path before 03:17).~~ done — deployed 20:04+ (the mkdir shortcut retracted by the addendum: the declarative cv-backup-dir path shipped instead)
-2. Tomorrow morning: confirm `@.20260831T2300` received pool-side, `btrfs-verify-pool-backups` green, `backup_all_healthy 1`, cv healthy.
+~~2. Tomorrow morning: confirm `@.20260831T2300` received pool-side, `btrfs-verify-pool-backups` green, `backup_all_healthy 1`, cv healthy.~~ **Won't implement — convergence confirm; window passed (later reports green).**
 ~~3. Observe `btrbk-data` end state (EIO abort / oom-kill / completion) — journal + `btrbk-pool-clean` result (stray `data.20260721T2330` removal).~~ done — FAILED ~17:02 (known EIO class); pool-clean removed BOTH incomplete receives (17-22 report)
 ~~4. VM test: cv-backup-dir creates dir after mount; cv-backup does not 226 (extend or mirror `tests/test-attic.nix`).~~ done — `tests/test-cv.nix` steps 9-10 GREEN (17-22 report; caught the third DAC bug on first run)
-5. Eval-time audit: ReadWritePaths under `/mnt/pool` ⇒ RequiresMountsFor.
-6. Eval-time/flake lint: backup-related timers must set `Persistent=true`.
+~~5. Eval-time audit: ReadWritePaths under `/mnt/pool` ⇒ RequiresMountsFor.~~ **NOT-DO — dup of c.2.**
+~~6. Eval-time/flake lint: backup-related timers must set `Persistent=true`.~~ **NOT-DO — dup of c.3.**
 ~~7. TODO_LIST.md entries for items 4–6 + the rest of this list that survives triage.~~ done — 2026-08-31 docs-health audit
-8. Run pre-commit lints over cv.nix / paperless.nix / deploy.sh edits before/with the next commit.
-9. /data EIO P0 (since Aug 18): schedule the corruption repair decision — every `btrbk-data` run since July has failed pool-side; this is the ONLY backup that never converges.
-10. btrbk-data oom-kill containment (page-cache class, 20.6G peak) — separate from the EIO fix.
-11. Add `RandomizedDelaySec` to paperless-exporter (or fix the lying comment in configuration.nix).
-12. Clean shadowed root-fs dirs under `/mnt/pool` (cv + check root/data tmpfiles shadows).
-13. Consider a boot-catch-up/`--no-block` start for `btrbk-root` in deploy.sh.
-14. Check whether `/var/lib/cv/data/pipeline.sqlite` now exists (sudo) — predicts whether tonight is cv's FIRST real backup.
-15. `backup_ever_succeeded` metric in backup-coordination (never-worked vs stale).
+~~8. Run pre-commit lints over cv.nix / paperless.nix / deploy.sh edits before/with the next commit.~~ **Won't implement — one-shot lints; window passed.**
+~~9. /data EIO P0 (since Aug 18): schedule the corruption repair decision — every `btrbk-data` run since July has failed pool-side; this is the ONLY backup that never converges.~~ done — /data EIO managed; docs/services/data-damage-set.md (repair gates T06-T09)
+~~10. btrbk-data oom-kill containment (page-cache class, 20.6G peak) — separate from the EIO fix.~~ done at `btrbk-data oom containment; CHANGELOG 2026-09-17 MemoryHigh/OOMScoreAdjust entry`
+~~11. Add `RandomizedDelaySec` to paperless-exporter (or fix the lying comment in configuration.nix).~~ **NOT-DO — dup of f11.**
+~~12. Clean shadowed root-fs dirs under `/mnt/pool` (cv + check root/data tmpfiles shadows).~~ **NOT-DO — dup of c.6.**
+~~13. Consider a boot-catch-up/`--no-block` start for `btrbk-root` in deploy.sh.~~ **Won't implement — btrbk-root boot trigger never added; nightly cadence accepted.**
+~~14. Check whether `/var/lib/cv/data/pipeline.sqlite` now exists (sudo) — predicts whether tonight is cv's FIRST real backup.~~ **Won't implement — moot; cv backup proven working.**
+~~15. `backup_ever_succeeded` metric in backup-coordination (never-worked vs stale).~~ done at `backup_ever_succeeded gauge; modules/nixos/services/backup-coordination.nix:77`
 16. `scripts/backup-catchup-report.sh` (stamps vs schedules + prom diff + btrbk dry-run).
-17. Add btrbk receive-freshness (root+data) to `backups.prom` (25h granularity) — currently only the daily 3d-threshold verify guard covers it.
-18. btrbk-pool snapshot freshness (`/mnt/pool/.snapshots/services/*`) is unmonitored — consider a check.
+17. Add btrbk receive-freshness (root+data) to `backups.prom` (25h granularity) — currently only the daily 3d-threshold verify guard covers it. **→ docs/todo/storage.md Root pool-receive freshness row**
+18. btrbk-pool snapshot freshness (`/mnt/pool/.snapshots/services/*`) is unmonitored — consider a check. **→ docs/todo/storage.md snapshot_preserve explicit-policy row**
 19. Consider local `snapshot_preserve` widening (3d→e.g. 7d) — the outage showed the NVMe rollback window collapses to zero while the pool is down (space tradeoff on QLC; user decision).
 20. ~~google-sync: go-live or mark dormant in AGENTS.~~ done at `9bcf79d9`
-21. Tomorrow: confirm local pruning resumed (Aug 17–19 dailies dropped per 3d+1w).
-22. Verify Gatus pool/backup endpoints all resolved after tonight (no lingering outage-era reds).
-23. Investigate the odd `btrfs send -p @.20260816T2231 @.20260814T2300` journal line (low priority).
-24. Cross-reference the 226 AGENTS systemd gotcha with the cv case (second live instance).
-25. Aug 14/15 pool history gap is permanent (sources pruned; garbage-removal-only) — documented, nothing to do; do not re-attempt.
+~~21. Tomorrow: confirm local pruning resumed (Aug 17–19 dailies dropped per 3d+1w).~~ **Won't implement — prune confirm; window passed.**
+~~22. Verify Gatus pool/backup endpoints all resolved after tonight (no lingering outage-era reds).~~ **Won't implement — gatus endpoint confirm; window passed.**
+~~23. Investigate the odd `btrfs send -p @.20260816T2231 @.20260814T2300` journal line (low priority).~~ **Won't implement — journal curiosity never resolved.**
+~~24. Cross-reference the 226 AGENTS systemd gotcha with the cv case (second live instance).~~ done — 226 class canonized; docs/agents/systemd.md ReadWritePaths/226 bullets
+~~25. Aug 14/15 pool history gap is permanent (sources pruned; garbage-removal-only) — documented, nothing to do; do not re-attempt.~~ done — self-answered in item (documented, nothing to do)
 
 ## g) QUESTIONS (cannot be answered from here)
 

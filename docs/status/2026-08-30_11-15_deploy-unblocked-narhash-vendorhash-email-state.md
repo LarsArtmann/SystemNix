@@ -19,19 +19,19 @@ Four stacked blockers were found and fixed in sequence. Two of my own mistakes w
 
 ## b) PARTIALLY DONE
 
-1. **Post-deploy verification** — 70 PASS but 9 FAIL remain: Immich ×2, Attic, Paperless, Bank-Sync ×4 (all `/mnt/pool`-dependent, documented "fail as designed" while the DAS is detached) + the Browser History transient (resolved, above). Not zero, but every remaining fail is classified.
-2. **Gatus green-state verification** — config verified deployed + body verified matching, but I never read gatus's own RESULTS for the endpoint: `/var/lib/private/gatus/gatus.db` is root-only and sudo is unavailable in my shell. The system-health gauge fallback (node-exporter textfile `system_gatus_*`) was available and I didn't use it. Status: inferred green, not observed green.
-3. **CV commit hygiene** — my one-file fix landed, but the commit ALSO swept 12 already-staged files from a concurrent session (see d). Pushed and disclosed; not undone.
-4. **Discord alert-window risk** — between activation #3 (~09:47) and activation #4 (~10:00), live gatus ran the dead `email_states` pattern. Alert math: `failure-threshold = 3` × 5m interval = 15 min to page; the window was ~10-13 min, so a page PROBABLY did not fire — but I could not verify (no Discord access from session).
+~~1. **Post-deploy verification** — 70 PASS but 9 FAIL remain: Immich ×2, Attic, Paperless, Bank-Sync ×4 (all `/mnt/pool`-dependent, documented "fail as designed" while the DAS is detached) + the Browser History transient (resolved, above). Not zero, but every remaining fail is classified.~~ **NOT-DO — dup of f1 (struck done).**
+~~2. **Gatus green-state verification** — config verified deployed + body verified matching, but I never read gatus's own RESULTS for the endpoint: `/var/lib/private/gatus/gatus.db` is root-only and sudo is unavailable in my shell. The system-health gauge fallback (node-exporter textfile `system_gatus_*`) was available and I didn't use it. Status: inferred green, not observed green.~~ **NOT-DO — dup of f8.**
+~~3. **CV commit hygiene** — my one-file fix landed, but the commit ALSO swept 12 already-staged files from a concurrent session (see d). Pushed and disclosed; not undone.~~ **Won't implement — external CV repo; disclosed at the time.**
+~~4. **Discord alert-window risk** — between activation #3 (~09:47) and activation #4 (~10:00), live gatus ran the dead `email_states` pattern. Alert math: `failure-threshold = 3` × 5m interval = 15 min to page; the window was ~10-13 min, so a page PROBABLY did not fire — but I could not verify (no Discord access from session).~~ **Won't implement — one-shot Discord check; window passed.**
 
 ## c) NOT STARTED
 
-1. **Structural §10 fix** — my exclusion is a hardcode; the root defect is that the extractor loses URL context (any `pat()` on a non-`/metrics` URL with a lowercase word will false-positive again). URL-aware extraction not implemented.
-2. **KNOWN_NEW_METRICS retirement** — I SAW `system_dnsblockd_metrics_fresh` pass as ✓ PRESENT in §10 while still sitting in the allowlist (direct evidence it's stale) and did not remove it. `bank_sync_*` entries remain legitimately blocked on the first post-DAS deploy.
-3. **Tests for the two script fixes** — no regression test added for the guard prefix comparison, none for the JSON-field pattern class (`tests/test-gatus-patterns.nix` covers escaping traps, not this).
-4. **Individual triage of the 5 failed units** — I classified them as a group (see d3).
-5. **InboxClean sync.enable state check** — `/health` shows BOTH gmail accounts `connected`; per AGENTS.md the sync flip may or may not have happened. Not checked.
-6. **cv-scan first tick / funnel freshness observation** — this deploy carried 5d88b4ab (6h scan timer, freshness check) live for the first time; nobody has watched the first tick yet.
+1. **Structural §10 fix** — my exclusion is a hardcode; the root defect is that the extractor loses URL context (any `pat()` on a non-`/metrics` URL with a lowercase word will false-positive again). URL-aware extraction not implemented. **→ docs/todo/pipeline.md Structural §10 URL-aware extraction row**
+~~2. **KNOWN_NEW_METRICS retirement** — I SAW `system_dnsblockd_metrics_fresh` pass as ✓ PRESENT in §10 while still sitting in the allowlist (direct evidence it's stale) and did not remove it. `bank_sync_*` entries remain legitimately blocked on the first post-DAS deploy.~~ done at `KNOWN_NEW_METRICS self-cleaning; scripts/pre-deploy-check.sh:712-741`
+3. **Tests for the two script fixes** — no regression test added for the guard prefix comparison, none for the JSON-field pattern class (`tests/test-gatus-patterns.nix` covers escaping traps, not this). **→ docs/todo/pipeline.md §10 row (regression tests half)**
+~~4. **Individual triage of the 5 failed units** — I classified them as a group (see d3).~~ **Won't implement — one-shot triage; window passed.**
+~~5. **InboxClean sync.enable state check** — `/health` shows BOTH gmail accounts `connected`; per AGENTS.md the sync flip may or may not have happened. Not checked.~~ done — InboxClean re-consent landed 2026-10-04; docs/todo/services.md InboxClean row
+~~6. **cv-scan first tick / funnel freshness observation** — this deploy carried 5d88b4ab (6h scan timer, freshness check) live for the first time; nobody has watched the first tick yet.~~ **Won't implement — cv-scan watch; window passed (hardening continued 2026-10-17).**
 
 ## d) TOTALLY FUCKED UP!
 
@@ -53,32 +53,32 @@ Four stacked blockers were found and fixed in sequence. Two of my own mistakes w
 
 ~~1. **[USER] DAS physical recovery** — front USB4-C replug, cable AND enclosure power pulled ≥60 s (JMS567 runs off USB VBUS; enclosure-off alone is a fake power cycle). Unblocks 8 post-deploy fails, 4 pool-tied failed units, nightly pool backups.~~ done 2026-08-31 — 9-day outage closed (root cause chain in AGENTS.md)
 ~~2. **Verify `/dev/disk/by-label/pool` on first DAS return** — the 2026-08-27 by-label mount change has NEVER been exercised (DAS detached since).~~ done 2026-08-31 — live-proven on the recovery boot
-3. First post-DAS deploy: confirm `bank_sync_*` in `:8097/metrics`, then RETIRE both entries from KNOWN_NEW_METRICS.
-4. RETIRE `system_dnsblockd_metrics_fresh` from KNOWN_NEW_METRICS (confirmed present this session).
-5. Check `discordsync_projection_dlq_legacy_unchanged` presence in `:8085/metrics`; retire if live.
-6. Per-unit triage of the 5 failed units — start with `website-deploy-monitor` (possible real stale-site signal).
-7. Structural §10 fix (URL-aware extraction) + shrink the exclusion regex.
-8. Read gatus results for `InboxClean Projections Ready` via node-exporter `system_gatus_*` gauges — close the "inferred green" gap.
-9. Confirm no Discord pages fired 09:30–10:10 (user/CI check).
-10. Regression test for the convergence-guard prefix comparison.
-11. Add a `tests/test-gatus-patterns.nix` case for JSON-field body patterns (the email_state class).
-12. Watch the first `cv-scan.timer` tick + "CV Funnel Freshness" gatus check (first live since 5d88b4ab).
-13. Check `services.inboxclean.sync.enable` — both accounts show `connected`; flip if runbook completed.
-14. Verify the "InboxClean work Inbox Renders" per-account probe went green post-deploy.
-15. Decide on enabling `services.cv-server.profileProbe` (T23 follow-up, OFF by default).
-16. Add restart-race tolerance (retry) to the Browser History smoke check.
-17. Document the node-exporter-gauge fallback for gatus verification (AGENTS.md monitoring section).
-18. Self-cleaning allowlist check (flag KNOWN_NEW entries already present in /metrics).
-19. §11 vendorHash freshness: 6 of 6 Go pkgs report "unable to determine status" — wire real FOD dry-run checks for mkLarsPackages-built packages.
-20. `fish` startup 1211 ms WARN in final run (174 ms in the first) — recheck at quiescence; deploy-pressure artifact?
-21. Inspect the quickshell 1-error-line WARN.
-22. CV: drop the inline go tarball override when nixpkgs floor ≥ 1.26.6 (recheck; nixpkgs now 1.26.7).
-23. CV session handoff: the other session's unstaged WIP (`internal/*.go`) remains untouched in its tree — confirm it landed as that session intended.
-24. Verify the auto-commit daemon attributes this session's 6 SystemNix file changes correctly.
-25. Re-run full post-deploy-check after DAS recovery; target: zero non-DAS fails.
-26. The /data EIO inode corruption repair (pre-existing TODO_LIST P0; root sends healthy, data sends dead since 2026-08-20, also oom-kills).
-27. Pathspec-commit mechanic added to AGENTS.md concurrent-session rules.
-28. Gatus sqlite: consider a root-run read-only helper exposed to deploy tooling for unprivileged verification.
+~~3. First post-DAS deploy: confirm `bank_sync_*` in `:8097/metrics`, then RETIRE both entries from KNOWN_NEW_METRICS.~~ done at `bank_sync metrics live + auto-derived; scripts/pre-deploy-check.sh:720`
+~~4. RETIRE `system_dnsblockd_metrics_fresh` from KNOWN_NEW_METRICS (confirmed present this session).~~ done at `dnsblockd_metrics_fresh auto-derived; scripts/pre-deploy-check.sh:728`
+~~5. Check `discordsync_projection_dlq_legacy_unchanged` presence in `:8085/metrics`; retire if live.~~ done at `discordsync dlq flag retired/auto-derived; scripts/pre-deploy-check.sh:712-718`
+~~6. Per-unit triage of the 5 failed units — start with `website-deploy-monitor` (possible real stale-site signal).~~ **Won't implement — per-unit triage; window passed.**
+~~7. Structural §10 fix (URL-aware extraction) + shrink the exclusion regex.~~ **NOT-DO — dup of c.1.**
+~~8. Read gatus results for `InboxClean Projections Ready` via node-exporter `system_gatus_*` gauges — close the "inferred green" gap.~~ done — sqlite-read method canon; docs/agents/monitoring.md Monitoring-the-monitor section
+~~9. Confirm no Discord pages fired 09:30–10:10 (user/CI check).~~ **Won't implement — one-shot Discord confirm; window passed.**
+10. Regression test for the convergence-guard prefix comparison. **→ docs/todo/pipeline.md §10 row (convergence-guard regression test)**
+11. Add a `tests/test-gatus-patterns.nix` case for JSON-field body patterns (the email_state class). **→ docs/todo/pipeline.md §10 row (JSON-field body-pattern case)**
+~~12. Watch the first `cv-scan.timer` tick + "CV Funnel Freshness" gatus check (first live since 5d88b4ab).~~ **Won't implement — cv-scan watch; window passed.**
+~~13. Check `services.inboxclean.sync.enable` — both accounts show `connected`; flip if runbook completed.~~ done — docs/todo/services.md InboxClean re-consent row (sync live)
+~~14. Verify the "InboxClean work Inbox Renders" per-account probe went green post-deploy.~~ done — docs/todo/services.md InboxClean row (archiving verified)
+~~15. Decide on enabling `services.cv-server.profileProbe` (T23 follow-up, OFF by default).~~ done — profileProbe option shipped; modules/nixos/services/cv.nix:86 (enable = owner knob)
+~~16. Add restart-race tolerance (retry) to the Browser History smoke check.~~ done at `restart-race retry windows; scripts/post-deploy-check.sh:712`
+~~17. Document the node-exporter-gauge fallback for gatus verification (AGENTS.md monitoring section).~~ done — gauge/sqlite fallback documented; docs/agents/monitoring.md:27
+~~18. Self-cleaning allowlist check (flag KNOWN_NEW entries already present in /metrics).~~ done at `KNOWN_NEW_METRICS self-cleaning; CHANGELOG 2026-09-13 entry`
+19. §11 vendorHash freshness: 6 of 6 Go pkgs report "unable to determine status" — wire real FOD dry-run checks for mkLarsPackages-built packages. **→ TODO_LIST §11 vendorHash freshness row (carried in CHANGELOG open-rows)**
+~~20. `fish` startup 1211 ms WARN in final run (174 ms in the first) — recheck at quiescence; deploy-pressure artifact?~~ done at `fish startup check pressure-aware; CHANGELOG 2026-09-19 entry`
+~~21. Inspect the quickshell 1-error-line WARN.~~ **Won't implement — quickshell WARN never inspected.**
+~~22. CV: drop the inline go tarball override when nixpkgs floor ≥ 1.26.6 (recheck; nixpkgs now 1.26.7).~~ done — CV tarball override dropped upstream; CHANGELOG 2026-08-31 CV go-floor/vendorHash entry
+~~23. CV session handoff: the other session's unstaged WIP (`internal/*.go`) remains untouched in its tree — confirm it landed as that session intended.~~ **Won't implement — external CV repo WIP.**
+~~24. Verify the auto-commit daemon attributes this session's 6 SystemNix file changes correctly.~~ **Won't implement — one-shot attribution check; window passed.**
+~~25. Re-run full post-deploy-check after DAS recovery; target: zero non-DAS fails.~~ **Won't implement — one-shot re-run; window passed.**
+~~26. The /data EIO inode corruption repair (pre-existing TODO_LIST P0; root sends healthy, data sends dead since 2026-08-20, also oom-kills).~~ done — /data EIO managed; docs/services/data-damage-set.md
+~~27. Pathspec-commit mechanic added to AGENTS.md concurrent-session rules.~~ **Won't implement — pathspec rule not canonized post-AGENTS-restructure; mechanic practiced.**
+~~28. Gatus sqlite: consider a root-run read-only helper exposed to deploy tooling for unprivileged verification.~~ done — answered differently: collector reads sqlite directly; docs/agents/monitoring.md:27
 
 ## g) Questions I cannot answer myself
 

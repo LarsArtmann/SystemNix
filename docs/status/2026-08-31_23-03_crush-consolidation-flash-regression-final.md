@@ -32,29 +32,29 @@
 > **RESOLUTION (23:40):** items 1 and 2 are DONE — the parallel session's `f00a33ec` ("deploy/smoke hardening" among others) resolved the §10 gate and a deploy landed (`/run/current-system` → `74nx21dm…`); the flash + llamacpp crushrc is LIVE (`crush models` lists `zai/glm-5.3-flash`), and the user confirmed their running session is served by glm-5.3-flash — the exact model-identity end-to-end proof the original verification lacked. The daemon swept the flash fix into `f00a33ec`. Items 3-6 below remain as stated.
 
 1. ~~**Deploy 3 (llamacpp + flash) is BLOCKED**~~ — RESOLVED: gate cleared by the pool-recovery session's hardening work; deploy landed. The §10 chicken-and-egg class (task f12) is still worth the regression case.
-2. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.
-3. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).
-4. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.
-5. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.
+~~2. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.~~ **NOT-DO — dup of f6 (probes done in close-out).**
+~~3. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).~~ **Won't implement — reclaim wait resolved by snapshot rotation.**
+~~4. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.~~ **NOT-DO — dup of c.3.**
+~~5. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.~~ done — AGENTS merge settled by 2026-10-01 restructure; CHANGELOG entry
 
 ## c) NOT STARTED
 
-1. §10 "new check" escape hatch (pending-new metrics allowlist or emitter-existence rule) + regression case for the pool_usb_recovery pair.
-2. Per-provider functional probes for gemini / minimax / kimi.
+~~1. §10 "new check" escape hatch (pending-new metrics allowlist or emitter-existence rule) + regression case for the pool_usb_recovery pair.~~ done at `superseded by self-cleaning §10 (CHANGELOG 2026-09-13); emitter rule deferred by close-out item 2`
+~~2. Per-provider functional probes for gemini / minimax / kimi.~~ done — 4/4 provider probes done; self CLOSE-OUT item 1
 3. Key rotation (user cost/timing decision) → then vacuum both session DBs to physically evict residue.
 4. Removing the encrypted `mimo_api_key` placeholder line from crush.yaml (needs interactive sudo sops).
 5. Upstream question: charm's zai catalog lacks glm-5.3-flash — file issue/PR (after verifying z.ai's current lineup; `aihubmix` already lists it).
 6. macOS (darwin) crush parity audit — the plaintext-store class was only fixed on evo-x2.
-7. `:8899` llama-server service decision (systemd unit + port registration + Gatus, or stay ad-hoc).
-8. `TODO_LIST.md` backfill of this session's follow-ups (file currently owned by the parallel session's sweep).
-9. `docs/services/crush.md` runbook (provider onboarding, rotation steps, store-strip verification).
+~~7. `:8899` llama-server service decision (systemd unit + port registration + Gatus, or stay ad-hoc).~~ done — superseded by llama-chat service (llama.home.lan live); CHANGELOG 2026-10-12 entry
+~~8. `TODO_LIST.md` backfill of this session's follow-ups (file currently owned by the parallel session's sweep).~~ done — TODO system rebuilt 2026-09-19 (queue + libraries)
+~~9. `docs/services/crush.md` runbook (provider onboarding, rotation steps, store-strip verification).~~ done at `docs/services/crush.md shipped (close-out item 4)`
 10. `scripts/sops-new-secret.sh` (RAM staging + explicit recipient + path-rule pre-check).
 11. Catalog hygiene decision (40+ providers with unset `$ENV` keys; `disable_provider_auto_update` / pruning).
-12. GOTOOLCHAIN doctrine conflict: fish guard flips `local`→`auto`, home.nix sets `local`, old crush.json pinned gopls to `auto` — one deliberate answer needed.
-13. `~/.config/go/env.local` fate (GOENV pin was dropped from LSP config; who still reads it?).
-14. `~/tmp` 23G residue sweep (thousands of stale `chrome-pdf-profile-*` / `org.chromium.Chromium.*` dirs — user files, user call).
-15. SystemNix `.crush/crush.db` is **2.55 GB** — growth/retention never investigated (noticed this session).
-16. Stale mimo doc in `~/.local/share/crush/docs/status/` (machine dir, May 4).
+~~12. GOTOOLCHAIN doctrine conflict: fish guard flips `local`→`auto`, home.nix sets `local`, old crush.json pinned gopls to `auto` — one deliberate answer needed.~~ done at `GOTOOLCHAIN settled; CHANGELOG 2026-09-29 local-pin removal + pre-commit guard entries`
+~~13. `~/.config/go/env.local` fate (GOENV pin was dropped from LSP config; who still reads it?).~~ done — env.local has no references; self CLOSE-OUT item 8
+~~14. `~/tmp` 23G residue sweep (thousands of stale `chrome-pdf-profile-*` / `org.chromium.Chromium.*` dirs — user files, user call).~~ **Won't implement — user-files sweep never done.**
+~~15. SystemNix `.crush/crush.db` is **2.55 GB** — growth/retention never investigated (noticed this session).~~ done — crush DBs moved off QLC root; docs/todo/storage.md crush-session-DBs DONE row
+~~16. Stale mimo doc in `~/.local/share/crush/docs/status/` (machine dir, May 4).~~ done — stale mimo doc trashed; self CLOSE-OUT item 8
 
 ## d) TOTALLY FUCKED UP
 
@@ -65,68 +65,68 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Entity inventory before any config-file deletion** — `crush models` (or the domain equivalent) before/after as a hard gate; "file looks redundant" ≠ "every entity in it has another source".
-2. **Model-identity assertion in crush smoke tests** — assert provider/model served, never just the completion text.
-3. **§10 pending-new escape hatch** — same-commit check+emitter pairs can never pass today's gate; this will bite every future "new service with monitoring" change.
-4. **Land-then-remove sequencing as a Critical Rule** — the replacement must be live before the old source is deleted; I knew this pattern (mount-gated oneshots) and still violated it.
-5. **Cross-session pre-flight glance** — before ANY deploy, diff shared surfaces (gatus-config, pre-deploy §10 inputs) against live state, not just my own files.
-6. **Per-session commit hygiene for the auto-commit daemon** — today's history has docker-prune + crush-sops + pool-recovery interleaved in single commits.
-7. **Scratch-harness as the standard rc test method** — `XDG_CONFIG_HOME=<tmp> crush …` proved excellent (caught nothing to fix this time, but the harness is how rc syntax/flag questions get answered without deploys); make it a script.
-8. **Upstream-first for catalog gaps** — flash belongs in charm's zai catalog; a local `model add` is a stopgap that must be revisited if the catalog adds it (merge is "yours win", so ours would shadow upstream fixes).
+~~1. **Entity inventory before any config-file deletion** — `crush models` (or the domain equivalent) before/after as a hard gate; "file looks redundant" ≠ "every entity in it has another source".~~ done at `entity-inventory Critical Rule; self CLOSE-OUT item 7`
+~~2. **Model-identity assertion in crush smoke tests** — assert provider/model served, never just the completion text.~~ done — model-identity assertion in runbook 4-step suite
+~~3. **§10 pending-new escape hatch** — same-commit check+emitter pairs can never pass today's gate; this will bite every future "new service with monitoring" change.~~ **NOT-DO — dup of 91.**
+~~4. **Land-then-remove sequencing as a Critical Rule** — the replacement must be live before the old source is deleted; I knew this pattern (mount-gated oneshots) and still violated it.~~ **NOT-DO — dup of 98.**
+~~5. **Cross-session pre-flight glance** — before ANY deploy, diff shared surfaces (gatus-config, pre-deploy §10 inputs) against live state, not just my own files.~~ **Won't implement — pre-flight glance habit never canonized.**
+~~6. **Per-session commit hygiene for the auto-commit daemon** — today's history has docker-prune + crush-sops + pool-recovery interleaved in single commits.~~ **Won't implement — per-session daemon commits never implemented.**
+~~7. **Scratch-harness as the standard rc test method** — `XDG_CONFIG_HOME=<tmp> crush …` proved excellent (caught nothing to fix this time, but the harness is how rc syntax/flag questions get answered without deploys); make it a script.~~ **NOT-DO — dup of 111.**
+~~8. **Upstream-first for catalog gaps** — flash belongs in charm's zai catalog; a local `model add` is a stopgap that must be revisited if the catalog adds it (merge is "yours win", so ours would shadow upstream fixes).~~ **Won't implement — upstream-first habit; catalog PR never filed.**
 9. **Verification suite definition for crush changes** — `crush models` diff + per-provider key probe + one identity-asserted run + rc bash syntax; write it down in the runbook, not in session memory.
 
 ## f) NEXT TASKS (prioritized)
 
-1. Coordinate/wait for pool-recovery §10 unblock → `nix run .#deploy` (carries llamacpp + flash).
-2. Post-deploy gate: `crush models | grep glm-5.3-flash` and `| grep llamacpp` — the checks that were missing.
-3. One live run asserting the serving model is flash (not just output text).
-4. Restart running crush sessions (config loads only at session start — flash/llamacpp invisible until then).
-5. Verify flash picker shows X-High tiers and xhigh-effort requests succeed against z.ai.
-6. Per-provider key probes: gemini, minimax, kimi (one trivial completion each).
-7. Rotation decision + execution for the four relocated keys (makes session-DB residue inert).
-8. Post-rotation: vacuum/rebuild `~/.{config,local/share}/crush/.crush/crush.db`.
-9. Interactive sudo `sops platforms/nixos/secrets/crush.yaml` → delete the `mimo_api_key` placeholder line.
-10. Verify-before-filing, then file charm issue/PR: zai catalog missing glm-5.3-flash.
-11. Decide: pin `model large zai/glm-5.3-flash` in crushrc (deterministic) vs user-driven slot selection.
-12. §10 regression case + escape-hatch implementation in `scripts/pre-deploy-check.sh` (coordinate with pool-recovery session).
-13. TODO_LIST backfill of items 1-16 from section c.
-14. Write `docs/services/crush.md` runbook (onboarding, rotation, verification suite).
-15. Write `scripts/sops-new-secret.sh` (RAM staging, explicit recipient, path-rule pre-check).
-16. Darwin crush parity audit (own store, own keys, own age recipient).
-17. `:8899` llama-server decision: unit + `lib/ports.nix` + Gatus + ioTier, or drop the provider line.
-18. Catalog hygiene: prune to the 6 used providers or `disable_provider_auto_update`.
-19. AGENTS.md Critical Rules: add land-then-remove + entity-inventory-before-deletion.
-20. Resolve GOTOOLCHAIN doctrine conflict (guard `auto` vs config `local`) in one documented answer.
-21. Week-long watch: auth store stays api_key-free (recent_models rewrite path held).
-22. Confirm ~30G frees on NVMe as snapshots expire (df check ~Sep 3-7).
-23. Wrapper canary: `~/tmp/go-lint` must stay empty while buildcache is alive (if it grows, the fallback is misfiring).
-24. Live LSP diagnostics test under the new no-env crushrc entries (gopls, oxlint, golangci_lint_ls).
-25. Investigate the 2.55 GB SystemNix `.crush/crush.db` (retention/growth).
-26. Archive-or-delete the stale `~/.config/crush/.crush/crush.db` (dead `syn_` key + store-era bytes).
-27. Trash-empty policy for the trashed wrapper + crush.json (recoverable window).
-28. Decide `~/.config/go/env.local` fate (GOEXPERIMENT still needed by anything?).
-29. Remove stale mimo doc from `~/.local/share/crush/docs/status/`.
-30. Post-reorg merge-shake: after the parallel session's docs sweep lands, re-run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build`.
+~~1. Coordinate/wait for pool-recovery §10 unblock → `nix run .#deploy` (carries llamacpp + flash).~~ **NOT-DO — dup of b.1 (resolved; struck).**
+~~2. Post-deploy gate: `crush models | grep glm-5.3-flash` and `| grep llamacpp` — the checks that were missing.~~ done at `flash+llamacpp live; self RESOLUTION (crush models lists flash; user session served by it)`
+~~3. One live run asserting the serving model is flash (not just output text).~~ done at `model-identity proof done; self RESOLUTION`
+~~4. Restart running crush sessions (config loads only at session start — flash/llamacpp invisible until then).~~ **Won't implement — sessions restarted naturally.**
+~~5. Verify flash picker shows X-High tiers and xhigh-effort requests succeed against z.ai.~~ done at `xhigh verified in scratch harness; self a10 + RESOLUTION`
+~~6. Per-provider key probes: gemini, minimax, kimi (one trivial completion each).~~ **NOT-DO — dup of 43.**
+~~7. Rotation decision + execution for the four relocated keys (makes session-DB residue inert).~~ **NOT-DO — dup of 44.**
+~~8. Post-rotation: vacuum/rebuild `~/.{config,local/share}/crush/.crush/crush.db`.~~ **NOT-DO — dup of 44.**
+~~9. Interactive sudo `sops platforms/nixos/secrets/crush.yaml` → delete the `mimo_api_key` placeholder line.~~ **NOT-DO — dup of 45.**
+~~10. Verify-before-filing, then file charm issue/PR: zai catalog missing glm-5.3-flash.~~ **NOT-DO — dup of 46.**
+~~11. Decide: pin `model large zai/glm-5.3-flash` in crushrc (deterministic) vs user-driven slot selection.~~ **Won't implement — model-large pin never decided.**
+~~12. §10 regression case + escape-hatch implementation in `scripts/pre-deploy-check.sh` (coordinate with pool-recovery session).~~ done at `§10 self-cleaning shipped; CHANGELOG 2026-09-13 (emitter rule deferred close-out 2)`
+~~13. TODO_LIST backfill of items 1-16 from section c.~~ **NOT-DO — dup of 49.**
+~~14. Write `docs/services/crush.md` runbook (onboarding, rotation, verification suite).~~ done at `docs/services/crush.md`
+~~15. Write `scripts/sops-new-secret.sh` (RAM staging, explicit recipient, path-rule pre-check).~~ **NOT-DO — dup of 51.**
+~~16. Darwin crush parity audit (own store, own keys, own age recipient).~~ **NOT-DO — dup of 47.**
+~~17. `:8899` llama-server decision: unit + `lib/ports.nix` + Gatus + ioTier, or drop the provider line.~~ **NOT-DO — dup of 48.**
+~~18. Catalog hygiene: prune to the 6 used providers or `disable_provider_auto_update`.~~ **NOT-DO — dup of 52.**
+~~19. AGENTS.md Critical Rules: add land-then-remove + entity-inventory-before-deletion.~~ done at `land-then-remove + entity-inventory Critical Rules; self CLOSE-OUT item 7 (AGENTS canon)`
+~~20. Resolve GOTOOLCHAIN doctrine conflict (guard `auto` vs config `local`) in one documented answer.~~ **Won't implement — watch item; window passed.**
+~~21. Week-long watch: auth store stays api_key-free (recent_models rewrite path held).~~ **Won't implement — df check; window passed.**
+~~22. Confirm ~30G frees on NVMe as snapshots expire (df check ~Sep 3-7).~~ done — canary explained; self CLOSE-OUT item 6
+~~23. Wrapper canary: `~/tmp/go-lint` must stay empty while buildcache is alive (if it grows, the fallback is misfiring).~~ **Won't implement — LSP live test never run.**
+~~24. Live LSP diagnostics test under the new no-env crushrc entries (gopls, oxlint, golangci_lint_ls).~~ **NOT-DO — dup of 56.**
+~~25. Investigate the 2.55 GB SystemNix `.crush/crush.db` (retention/growth).~~ **Won't implement — old crush.db never dispositioned.**
+~~26. Archive-or-delete the stale `~/.config/crush/.crush/crush.db` (dead `syn_` key + store-era bytes).~~ **Won't implement — trash policy never set.**
+~~27. Trash-empty policy for the trashed wrapper + crush.json (recoverable window).~~ **NOT-DO — dup of 54.**
+~~28. Decide `~/.config/go/env.local` fate (GOEXPERIMENT still needed by anything?).~~ **NOT-DO — dup of 57.**
+~~29. Remove stale mimo doc from `~/.local/share/crush/docs/status/`.~~ **Won't implement — post-reorg gates ran routinely in later sessions.**
+~~30. Post-reorg merge-shake: after the parallel session's docs sweep lands, re-run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build`.~~ done — daemon swept flash into shared commit; self RESOLUTION
 31. Confirm the daemon sweeps the flash fix + AGENTS.md lines into a commit cleanly.
-32. Scratch-harness script (`crush-rc-test.sh`) generalizing the `XDG_CONFIG_HOME` trick for future rc edits.
-33. Document the provider reality (6 providers + hyper OAuth) in the runbook.
-34. Check nh transient-failure recurrence; second occurrence ⇒ full error capture + investigation.
-35. Consider `reasoning_levels` support request upstream (model add cannot express tier lists; flash's picker falls back to default handling).
-36. Verify recent_models' dangling flash entry self-heals post-deploy (else clean it in the store).
-37. After upstream adds flash to the catalog: re-evaluate whether our `model add` still wins correctly ("yours win") or should be dropped.
-38. Add the flash-canary (item 2's grep) to post-deploy-check.sh? — NO: crush is interactive-only by design; document the exclusion instead.
-39. Review `hyper.json` in the data dir (OAuth state file, hourly rotation) for any retention/cleanup need.
-40. Confirm `/mnt/buildcache/golangci-lint-analysis` gets created on first wrapper use and lands on the buildcache, not NVMe.
-41. Re-check that no other tooling referenced `~/.config/crush/crush.json` (grep user scripts/dotfiles — only assumed so far).
-42. Document "session restart required" for crush config changes in AGENTS.md (known for MCP; generalize to providers/LSP).
-43. Evaluate Gatus-check noise reduction for providers (none exist today; decide consciously: none needed).
-44. Consider exposing `crush stats`/`crush logs` locations in the runbook for future debugging.
-45. Ensure `crush.yaml` purpose is documented OUTSIDE the file (its comments are encrypted — sops fileinfo lists nothing human-readable).
-46. Sanitize `fish_history` check: confirm no provider keys live in shell history (gitleaks covers git, not history files).
-47. Decide whether recent_models pruning for dead mimo models is needed in the store (cosmetic).
-48. After rotation, re-run the masked key-residue sweep over both session DBs and the store to prove zero live-key bytes at rest.
-49. Optional: `crush update-providers` cadence note (catalog auto-update behavior observed live this session).
-50. Close-out: when deploy 3 lands, update this report's b1/b2 to done and mark the session complete.
+~~32. Scratch-harness script (`crush-rc-test.sh`) generalizing the `XDG_CONFIG_HOME` trick for future rc edits.~~ done at `scripts/crush-rc-test.sh shipped (close-out item 3)`
+~~33. Document the provider reality (6 providers + hyper OAuth) in the runbook.~~ done — provider table + suite in docs/services/crush.md (close-out item 4)
+~~34. Check nh transient-failure recurrence; second occurrence ⇒ full error capture + investigation.~~ **Won't implement — nh transient never recurred.**
+~~35. Consider `reasoning_levels` support request upstream (model add cannot express tier lists; flash's picker falls back to default handling).~~ done — reasoning_levels limitation documented; docs/services/crush.md gotchas
+~~36. Verify recent_models' dangling flash entry self-heals post-deploy (else clean it in the store).~~ done — flash served user session post-deploy; self RESOLUTION
+~~37. After upstream adds flash to the catalog: re-evaluate whether our `model add` still wins correctly ("yours win") or should be dropped.~~ **Won't implement — catalog re-eval trigger never pulled.**
+~~38. Add the flash-canary (item 2's grep) to post-deploy-check.sh? — NO: crush is interactive-only by design; document the exclusion instead.~~ done — exclusion decision + runbook; docs/services/crush.md
+~~39. Review `hyper.json` in the data dir (OAuth state file, hourly rotation) for any retention/cleanup need.~~ done — hyper OAuth by design; self a6 + AGENTS doctrine
+~~40. Confirm `/mnt/buildcache/golangci-lint-analysis` gets created on first wrapper use and lands on the buildcache, not NVMe.~~ done — analysis cache confirmed on buildcache; self CLOSE-OUT item 6
+~~41. Re-check that no other tooling referenced `~/.config/crush/crush.json` (grep user scripts/dotfiles — only assumed so far).~~ done — no live references to crush.json; self CLOSE-OUT item 8
+~~42. Document "session restart required" for crush config changes in AGENTS.md (known for MCP; generalize to providers/LSP).~~ done at `session-restart note in AGENTS crush section; self CLOSE-OUT item 7`
+~~43. Evaluate Gatus-check noise reduction for providers (none exist today; decide consciously: none needed).~~ done — none-needed decision recorded; self f43 answer
+~~44. Consider exposing `crush stats`/`crush logs` locations in the runbook for future debugging.~~ **NOT-DO — dup of 112.**
+~~45. Ensure `crush.yaml` purpose is documented OUTSIDE the file (its comments are encrypted — sops fileinfo lists nothing human-readable).~~ done — crush.yaml purpose covered by runbook onboarding section
+~~46. Sanitize `fish_history` check: confirm no provider keys live in shell history (gitleaks covers git, not history files).~~ done — fish_history purged + doctrine; self CLOSE-OUT item 5
+~~47. Decide whether recent_models pruning for dead mimo models is needed in the store (cosmetic).~~ done — no mimo entries in recent_models; self CLOSE-OUT item 8
+~~48. After rotation, re-run the masked key-residue sweep over both session DBs and the store to prove zero live-key bytes at rest.~~ **NOT-DO — dup of 44.**
+~~49. Optional: `crush update-providers` cadence note (catalog auto-update behavior observed live this session).~~ **Won't implement — cadence note never added.**
+~~50. Close-out: when deploy 3 lands, update this report's b1/b2 to done and mark the session complete.~~ done — report closed via RESOLUTION + CLOSE-OUT
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

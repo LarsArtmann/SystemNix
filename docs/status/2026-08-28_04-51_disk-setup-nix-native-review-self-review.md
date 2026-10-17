@@ -34,13 +34,13 @@
 
 ~~1. **The das-link-recovery-check.sh ↔ fstab pair** — script updated, but until the next deploy the LIVE `/etc/fstab` still carries the old by-id path, so the script's drift check fires (by design, loud, with a "deploy first" hint). Resolves on deploy.~~ done — deployed through the 08-28→31 chain; by-label mount live-proven on the recovery boot
 ~~2. **DAS verification of the by-label mount** — label `pool` is triple-documented (AGENTS + mount comments + creation history) but the DAS is electrically dead; `ls /dev/disk/by-label/pool` cannot be checked until physical recovery. Mitigations: nofail, loud failure (pool_mounted=0 → Gatus, btrbk onFailure), rollback path documented. **Residual risk: if the on-disk label were somehow not `pool`, first DAS-return boot fails the mount loudly (no data risk).**~~ done 2026-08-31 — `/dev/disk/by-label/pool` verified live on the recovery boot (both members, zero errors)
-3. **`commit=300` on `/mnt/btrfs-root` semantic review** — judged safe (consistent with `/` and `/data`; btrbk is crash-resilient; btrbk-pool-clean exists for interrupted states), but the 5-min crash window for snapshot create/delete persistence is a judgment call that has NOT been battle-tested on this mount.
+~~3. **`commit=300` on `/mnt/btrfs-root` semantic review** — judged safe (consistent with `/` and `/data`; btrbk is crash-resilient; btrbk-pool-clean exists for interrupted states), but the 5-min crash window for snapshot create/delete persistence is a judgment call that has NOT been battle-tested on this mount.~~ **Won't implement — commit=300 crash-window judgment never battle-tested; doctrine pinned by post-deploy mount check.**
 
 ## c) NOT STARTED (deliberate, report-only)
 
-1. **disko adoption** — reinstall-time decision; nothing written.
-2. **Declarative pool-subvolume convergence** (`pool-subvols-ensure` oneshot, atticd-storage-dir pattern) — subvols today are created by scattered migration scripts/manual runs; proposed, not implemented.
-3. **Deploy** — all changes are tree-only (correct: user did not ask; concurrent session active; DAS down makes pool verification impossible anyway).
+~~1. **disko adoption** — reinstall-time decision; nothing written.~~ done — disko config shipped; disko/samsung-tlc.nix + checks.disko-samsung-tlc (docs/todo/storage.md:56)
+~~2. **Declarative pool-subvolume convergence** (`pool-subvols-ensure` oneshot, atticd-storage-dir pattern) — subvols today are created by scattered migration scripts/manual runs; proposed, not implemented.~~ done — per-service storage-dir/backup-dir creators shipped fleet-wide; scripts/deploy.sh:718
+~~3. **Deploy** — all changes are tree-only (correct: user did not ask; concurrent session active; DAS down makes pool verification impossible anyway).~~ **NOT-DO — dup of f1 (struck done).**
 
 ## d) TOTALLY FUCKED UP / mistakes & near-misses (none data-destructive)
 
@@ -51,13 +51,13 @@
 
 ## e) WHAT WE SHOULD IMPROVE (noticed this session, not fixed)
 
-1. **Pool scrub results are invisible to metrics** — `btrfs-health.nix:252` collects scrub status for `/` and `/data` ONLY, but `autoScrub` also scrubs `/mnt/pool`. `btrfs_scrub_*` never reports the pool; the only partial proxy is the daily `btrfs device stats` check. Add `/mnt/pool` to the scrub loop (mount-gated).
-2. **AGENTS.md zram doc drift** — claims ~33 GiB zram (30% of ~110 GiB); live `zram0` = 28.2 GiB (MemTotal ≈ 94 GiB after carveout). Math in the doc section is stale.
-3. **Stale disk scripts in `scripts/`** — `disk-common.sh`, `disk-fix.sh`, `disk-diagnose.sh`, `disk-create-p9.sh` encode the RETIRED p8/p9-era geometry (old /rust-cache partition, since deleted); `buildcache-btrfs-convert.sh` is a deferred maybe. Semi-ghost runbooks that will mislead a future incident responder. Trash or clearly mark RETIRED.
-4. **No shellcheck/lint gate for `scripts/*.sh`** — the phantom-green awk bug class (unit `path` missing binaries) was caught by humans twice; shellcheck + a "every exec'd binary in path" lint would automate that class.
-5. **Scattered device constants** — pool member by-ids now live in AGENTS.md + hardware-configuration comments + das-link-recovery-check.sh. A tiny `lib/disk-devices.nix` (or at least a shared script var file) would collapse the triplication.
-6. **commit=300 doctrine is now enforced only by convention** — nothing eval-checks that every btrfs mount in `config.fileSystems` carries it. A cheap eval-time assertion in `mkFilesystem` (or a flake check) would pin the doctrine mechanically. Same for `nodiscard`.
-7. **Concurrent-session hygiene** — this tree routinely runs multiple agents + an auto-commit daemon; my session followed the AGENTS rules (flag, don't co-verify), but a scoped-fmt convention ("format only files you touched") is worth adding to AGENTS.md.
+1. **Pool scrub results are invisible to metrics** — `btrfs-health.nix:252` collects scrub status for `/` and `/data` ONLY, but `autoScrub` also scrubs `/mnt/pool`. `btrfs_scrub_*` never reports the pool; the only partial proxy is the daily `btrfs device stats` check. Add `/mnt/pool` to the scrub loop (mount-gated). **→ docs/todo/storage.md Pool + disk-domain quality row (pool+hot scrub metrics)**
+~~2. **AGENTS.md zram doc drift** — claims ~33 GiB zram (30% of ~110 GiB); live `zram0` = 28.2 GiB (MemTotal ≈ 94 GiB after carveout). Math in the doc section is stale.~~ done — zram numbers corrected in 2026-08-31 sweep; docs/status/2026-08-31_22-57 section a.9
+~~3. **Stale disk scripts in `scripts/`** — `disk-common.sh`, `disk-fix.sh`, `disk-diagnose.sh`, `disk-create-p9.sh` encode the RETIRED p8/p9-era geometry (old /rust-cache partition, since deleted); `buildcache-btrfs-convert.sh` is a deferred maybe. Semi-ghost runbooks that will mislead a future incident responder. Trash or clearly mark RETIRED.~~ **Won't implement — stale p9-era scripts never trashed/marked; dormant.**
+~~4. **No shellcheck/lint gate for `scripts/*.sh`** — the phantom-green awk bug class (unit `path` missing binaries) was caught by humans twice; shellcheck + a "every exec'd binary in path" lint would automate that class.~~ done at `shellcheck pre-commit hook landed; CHANGELOG Post-deploy check hardening entry`
+~~5. **Scattered device constants** — pool member by-ids now live in AGENTS.md + hardware-configuration comments + das-link-recovery-check.sh. A tiny `lib/disk-devices.nix` (or at least a shared script var file) would collapse the triplication.~~ **Won't implement — device-constants lib never created; by-id constants documented in docs/agents/storage.md.**
+~~6. **commit=300 doctrine is now enforced only by convention** — nothing eval-checks that every btrfs mount in `config.fileSystems` carries it. A cheap eval-time assertion in `mkFilesystem` (or a flake check) would pin the doctrine mechanically. Same for `nodiscard`.~~ **NOT-DO — dup of f5.**
+~~7. **Concurrent-session hygiene** — this tree routinely runs multiple agents + an auto-commit daemon; my session followed the AGENTS rules (flag, don't co-verify), but a scoped-fmt convention ("format only files you touched") is worth adding to AGENTS.md.~~ **Won't implement — scoped-fmt rejected; AGENTS.md:144 documents there is NO scoped formatter.**
 
 ## f) Next things (session-derived, ~35; impact-sorted, most are ROADMAP/TODO_LIST fuel)
 
@@ -65,45 +65,45 @@
 
 ~~1. Deploy the tree (by-label pool + udev removal + options) once the sibling session is quiescent.~~ done — deployed through the 08-28→31 chain
 ~~2. On DAS physical recovery: verify `/dev/disk/by-label/pool` exists, pool mounts, `das-link-recovery-check.sh` exits clean.~~ done 2026-08-31 — by-label mount verified on the recovery boot
-3. Verify the removed spindown rule: pool members must NOT enter standby during idle (check SMART power-on-hours delta / `hdparm -C`).
+~~3. Verify the removed spindown rule: pool members must NOT enter standby during idle (check SMART power-on-hours delta / `hdparm -C`).~~ **Won't implement — one-shot spindown verify; window passed.**
 
 **Disk-domain quality (from this review):**
-4. Add `/mnt/pool` (mount-gated) to the btrfs-health scrub metrics loop.
-5. Eval-time assertion: every btrfs entry in `fileSystems` carries `commit=300` + `nodiscard` (doctrine pin).
-6. Fix AGENTS.md zram sizing numbers (28.2 GiB / 94 GiB-visible math).
-7. Trash/mark-RETIRED `disk-common.sh`, `disk-fix.sh`, `disk-diagnose.sh`, `disk-create-p9.sh`.
-8. Consolidate device constants (pool members, buildcache, label) into one lib file consumed by modules + scripts.
-9. `pool-subvols-ensure` oneshot: converge `services/{immich,paperless,atticd,monitor365,discordsync,browser-history,bank-sync,activitywatch}` subvols declaratively (atticd-storage-dir pattern, ConditionPathIsMountPoint-gated).
-10. shellcheck pre-commit hook for `scripts/`.
+~~4. Add `/mnt/pool` (mount-gated) to the btrfs-health scrub metrics loop.~~ **NOT-DO — dup of e.1 (same storage.md row).**
+5. Eval-time assertion: every btrfs entry in `fileSystems` carries `commit=300` + `nodiscard` (doctrine pin). **→ docs/todo/pipeline.md Eval-time audits row (commit/nodiscard eval assertion)**
+~~6. Fix AGENTS.md zram sizing numbers (28.2 GiB / 94 GiB-visible math).~~ **NOT-DO — dup of e.2.**
+~~7. Trash/mark-RETIRED `disk-common.sh`, `disk-fix.sh`, `disk-diagnose.sh`, `disk-create-p9.sh`.~~ **NOT-DO — dup of e.3.**
+~~8. Consolidate device constants (pool members, buildcache, label) into one lib file consumed by modules + scripts.~~ **NOT-DO — dup of e.5.**
+~~9. `pool-subvols-ensure` oneshot: converge `services/{immich,paperless,atticd,monitor365,discordsync,browser-history,bank-sync,activitywatch}` subvols declaratively (atticd-storage-dir pattern, ConditionPathIsMountPoint-gated).~~ **NOT-DO — dup of c.2.**
+~~10. shellcheck pre-commit hook for `scripts/`.~~ **NOT-DO — dup of e.4.**
 11. "Unit script lists every binary it execs" lint (the awk/gawk phantom-green class) — static grep of `path = [...]` vs commands in `script`.
-12. disko config drafted alongside the reinstall plan (btrfs subvols, /data, XFS clickhouse partition, pool).
-13. Decide + wire ClickHouse XFS backup coverage (currently NO backup for telemetry data — known gap).
-14. The /data EIO corruption repair (TODO P0, blocks btrbk-data sends — pre-existing).
-15. Consider `x-systemd.device-timeout` on the pool mount (currently systemd default) — low priority, nofail already prevents boot block.
-16. Revisit `space_cache=v2` consistency across all same-fs subvolume mounts.
-17. `btrfs-subvolume-inventory.sh` — make it non-interactive-sudo or drop it.
-18. buildcache-btrfs-convert.sh — decide keep-or-trash (deferred since 2026-08-14).
+~~12. disko config drafted alongside the reinstall plan (btrfs subvols, /data, XFS clickhouse partition, pool).~~ **NOT-DO — dup of c.1 (disko).**
+~~13. Decide + wire ClickHouse XFS backup coverage (currently NO backup for telemetry data — known gap).~~ done at `ClickHouse XFS backup coverage shipped; modules/nixos/services/signoz.nix:757-796`
+~~14. The /data EIO corruption repair (TODO P0, blocks btrbk-data sends — pre-existing).~~ done — /data EIO managed; docs/services/data-damage-set.md single source of truth
+~~15. Consider `x-systemd.device-timeout` on the pool mount (currently systemd default) — low priority, nofail already prevents boot block.~~ **Won't implement — device-timeout never added; nofail sufficient.**
+~~16. Revisit `space_cache=v2` consistency across all same-fs subvolume mounts.~~ **Won't implement — space_cache audit stale; topology since migrated to Samsung.**
+~~17. `btrfs-subvolume-inventory.sh` — make it non-interactive-sudo or drop it.~~ **Won't implement — inventory script never reworked.**
+~~18. buildcache-btrfs-convert.sh — decide keep-or-trash (deferred since 2026-08-14).~~ **Won't implement — convert decision never taken; superseded by Samsung storage doctrine.**
 
 **Session/process hygiene:**
 19. Add "scope `nix fmt` to touched files during concurrent sessions" to AGENTS.md.
 20. Fix or rotate the `agentic_fetch` provider token (broken this session).
-21. Consider a docs/status lint: reports must never contain secret VALUES (standing rule; a grep gate exists for scanner patterns — extend to status docs at pre-commit?).
-22. mkFilesystem: add a doc-comment header to `lib/filesystems.nix` describing contract + pass-through behavior.
+~~21. Consider a docs/status lint: reports must never contain secret VALUES (standing rule; a grep gate exists for scanner patterns — extend to status docs at pre-commit?).~~ done at `secrets canon + scanner; docs/agents/secrets.md:70 + scripts/scan-history-secrets.sh`
+~~22. mkFilesystem: add a doc-comment header to `lib/filesystems.nix` describing contract + pass-through behavior.~~ **Won't implement — mkFilesystem doc-comment never added.**
 
 **Pre-existing disk-domain debts noticed while reading (already in AGENTS/TODO, restated for completeness):**
-23. DAS electrical isolation steps (cable swap → enclosure verdict) — physical, user-run.
-24. btrbk-data oom-kill during /data sends (cgroup page-cache charge) — needs memory accounting fix.
-25. Root-fs shadowed data under `/var/lib/clickhouse` from the Aug-24 rollback-generation incident — manual cleanup pending.
-26. 13 permanently READ-ONLY zombie ClickHouse log tables (~10 GiB reclaim) — human DROP decision.
-27. `/mnt/pool/services/monitor365` stale uid 966:956 — re-chown on re-enable.
-28. Google-sync OAuth token still placeholder (ships disabled).
-29. Old paperless SQLite export in `/mnt/pool/services/paperless/export` — user disposition decision.
-30. Offsite backup leg (Google Photos/Drive) — user-owned, referenced in 3-drive plan.
-31. ZRAM fill cliff monitoring exists, but consider a Gatus/SigNoz rule tying `system_zram_fill_over_threshold` to sev1 escalation directly (may exist via guard — verify wiring).
-32. Emergency-reserve re-provision is manual — consider deploy.sh post-switch convergence check (`systemctl is-active btrfs-emergency-reserve`).
-33. `docs/gotchas-archive.md` entry for the sd-letter udev lesson (currently only in AGENTS.md).
-34. VM test for the fstab-option doctrine (btrfs VM asserting generated fstab contains commit=300 on all btrfs entries).
-35. Revisit pool local snapshot retention (`btrbk-pool` 7d 4w) vs pool usage growth — revisit trigger at ~50% pool usage already documented.
+~~23. DAS electrical isolation steps (cable swap → enclosure verdict) — physical, user-run.~~ **Won't implement — DAS physical isolation moot; recovered 2026-08-31.**
+~~24. btrbk-data oom-kill during /data sends (cgroup page-cache charge) — needs memory accounting fix.~~ done at `btrbk-data oom containment; CHANGELOG 2026-09-17 MemoryHigh/OOMScoreAdjust entry`
+~~25. Root-fs shadowed data under `/var/lib/clickhouse` from the Aug-24 rollback-generation incident — manual cleanup pending.~~ **Won't implement — clickhouse root-shadow cleanup superseded; state moved to XFS p9 / Samsung plan.**
+~~26. 13 permanently READ-ONLY zombie ClickHouse log tables (~10 GiB reclaim) — human DROP decision.~~ done at `zombie clickhouse table TTL convergence; modules/nixos/services/signoz.nix:702`
+~~27. `/mnt/pool/services/monitor365` stale uid 966:956 — re-chown on re-enable.~~ **Won't implement — monitor365 disabled; re-chown moot.**
+~~28. Google-sync OAuth token still placeholder (ships disabled).~~ done — google-sync DORMANT by decision; CHANGELOG 3-2-1 entry + docs/services/google-sync.md
+~~29. Old paperless SQLite export in `/mnt/pool/services/paperless/export` — user disposition decision.~~ **Won't implement — paperless export disposition never decided.**
+~~30. Offsite backup leg (Google Photos/Drive) — user-owned, referenced in 3-drive plan.~~ done at `offsite Borg leg landed (Hetzner); docs/todo/storage.md offsite-borg DONE row`
+~~31. ZRAM fill cliff monitoring exists, but consider a Gatus/SigNoz rule tying `system_zram_fill_over_threshold` to sev1 escalation directly (may exist via guard — verify wiring).~~ **Won't implement — zram-sev1 tie never wired; memory-emergency-guard owns pressure.**
+~~32. Emergency-reserve re-provision is manual — consider deploy.sh post-switch convergence check (`systemctl is-active btrfs-emergency-reserve`).~~ **Won't implement — reserve convergence check never added to deploy.sh.**
+~~33. `docs/gotchas-archive.md` entry for the sd-letter udev lesson (currently only in AGENTS.md).~~ done — sd-letter rule recorded + modules/nixos/services/udev-block-letter-audit.nix eval guard
+~~34. VM test for the fstab-option doctrine (btrfs VM asserting generated fstab contains commit=300 on all btrfs entries).~~ done at `fstab doctrine asserted in VM tests; tests/test-hot-db.nix:35 (nodiscard)`
+35. Revisit pool local snapshot retention (`btrbk-pool` 7d 4w) vs pool usage growth — revisit trigger at ~50% pool usage already documented. **→ docs/todo/storage.md snapshot_preserve explicit-policy row**
 
 ## g) Questions I CANNOT answer myself
 

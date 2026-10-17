@@ -31,20 +31,20 @@ I owned that leading with `sudo mkdir` was the wrong answer, built the NixOS VM 
 
 ## b) PARTIALLY DONE
 
-1. **Deploy activation — still THE blocker.** Everything above exists only in the tree; production still has the missing pool dir, the 226, the no-op, and the non-Persistent paperless timer. Tonight 03:17 cv-backup fails 226 again unless deployed first.
-2. **btrbk-data observation closed but outcome negative:** the 14:30 full re-send FAILED (~17:02, expected EIO class); the clean pass worked perfectly (both incomplete subvols removed — first live proof the garbled-receive GC handles exactly this). The tier remains the only backup that has NEVER completed pool-side (P0 since Aug 18).
-3. **Test fidelity gaps:** the VM seed creates a ROOT-owned `pipeline.sqlite`; prod DB is cv-owned (same cap covers both, but the test proves the weaker case). The cv-server-DOWN edge (03:17 with server stopped: sqlite may need to write `-shm`/`-wal` into the cv-owned dir → EACCES loud failure) is reasoned, not tested.
+~~1. **Deploy activation — still THE blocker.** Everything above exists only in the tree; production still has the missing pool dir, the 226, the no-op, and the non-Persistent paperless timer. Tonight 03:17 cv-backup fails 226 again unless deployed first.~~ **NOT-DO — dup of f1 (struck done).**
+~~2. **btrbk-data observation closed but outcome negative:** the 14:30 full re-send FAILED (~17:02, expected EIO class); the clean pass worked perfectly (both incomplete subvols removed — first live proof the garbled-receive GC handles exactly this). The tier remains the only backup that has NEVER completed pool-side (P0 since Aug 18).~~ **NOT-DO — dup of f3 (struck done).**
+~~3. **Test fidelity gaps:** the VM seed creates a ROOT-owned `pipeline.sqlite`; prod DB is cv-owned (same cap covers both, but the test proves the weaker case). The cv-server-DOWN edge (03:17 with server stopped: sqlite may need to write `-shm`/`-wal` into the cv-owned dir → EACCES loud failure) is reasoned, not tested.~~ **Won't implement — test-fidelity gaps never closed.**
 
 ## c) NOT STARTED
 
-1. Repo-wide sweep for the silent-noop class (hardened root oneshots reading/`-f`-checking paths under foreign-owned dirs — this is the THIRD DAC incident: attic chown EPERM 2026-08-18, backup-health-metrics cap, now cv-backup).
-2. Eval-time audit: `ReadWritePaths` under `/mnt/pool` ⇒ `RequiresMountsFor` + a declared creator.
-3. Backup-timer `Persistent=true` lint (flake check).
+~~1. Repo-wide sweep for the silent-noop class (hardened root oneshots reading/`-f`-checking paths under foreign-owned dirs — this is the THIRD DAC incident: attic chown EPERM 2026-08-18, backup-health-metrics cap, now cv-backup).~~ **Won't implement — repo-wide silent-noop sweep never run; class fixed per-incident (forgejo cap fix 2026-10-16).**
+~~2. Eval-time audit: `ReadWritePaths` under `/mnt/pool` ⇒ `RequiresMountsFor` + a declared creator.~~ **NOT-DO — dup of f5.**
+~~3. Backup-timer `Persistent=true` lint (flake check).~~ **NOT-DO — dup of f6.**
    ~~4. `TODO_LIST.md` migration of the durable items (still not done across two reports!).~~ done — 2026-08-31 docs-health audit (eval-audit cluster rows)
-4. `backup_ever_succeeded` metric (never-worked vs stale distinction — today proved the difference matters: cv rode "all red" outage noise for days while being never-green since birth).
-5. paperless `RandomizedDelaySec` (or fix the lying comment in configuration.nix).
-6. Prod shadow-dir cleanup under `/mnt/pool` (cv + root/data tmpfiles shadows).
-7. `btrbk-root` post-deploy/`--no-block` catch-up trigger.
+~~4. `backup_ever_succeeded` metric (never-worked vs stale distinction — today proved the difference matters: cv rode "all red" outage noise for days while being never-green since birth).~~ done at `backup_ever_succeeded; modules/nixos/services/backup-coordination.nix:77`
+~~5. paperless `RandomizedDelaySec` (or fix the lying comment in configuration.nix).~~ **NOT-DO — dup of f15.**
+~~6. Prod shadow-dir cleanup under `/mnt/pool` (cv + root/data tmpfiles shadows).~~ **NOT-DO — dup of f16.**
+~~7. `btrbk-root` post-deploy/`--no-block` catch-up trigger.~~ **NOT-DO — dup of f14.**
 8. `scripts/backup-catchup-report.sh`.
 
 ## d) TOTALLY FUCKED UP (honest ledger)
@@ -63,20 +63,20 @@ I owned that leading with `sudo mkdir` was the wrong answer, built the NixOS VM 
 
 ## f) NEXT (ranked; merged with surviving items from the 16:29 report)
 
-1. **Deploy** (`nix run .#deploy`) — activates all three fixes; deploy.sh restarts cv-backup-dir at switch time, so the dir exists the moment the deploy finishes.
-2. Post-deploy prod proof: `test -f /mnt/pool/backups/cv/pipeline-*` + `backups.prom` cv healthy + optionally `systemctl start cv-backup` for immediate confirmation.
-3. Tomorrow morning: pool `@.20260831T2300` received (23:00 send), paperless export fresh (01:30), cv backup landed (03:17), `backup_all_healthy 1`, `btrfs-verify-pool-backups` green.
-4. Repo-wide silent-noop sweep (hardened root oneshots vs foreign-owned paths).
-5. Eval-time audit: pool-path ReadWritePaths ⇒ RequiresMountsFor + creator.
-6. Backup-timer Persistent lint.
-7. `TODO_LIST.md` migration (both reports' durable items).
-8. `backup_ever_succeeded` metric.
-9. Test-cv fidelity: seed as `cv` user; add cv-server-stopped edge case.
-10. Decide cv-backup identity model (root+cap vs User=cv) — follow-up refactor.
-11. AGENTS: single canonical DAC gotcha entry in the systemd section, cross-ref the three incidents; split the mega-bullet for readability.
-12. /data EIO P0: schedule the repair decision — tonight's 23:30 retry will fail again by design.
-13. btrbk-data oom containment (page-cache class, 20.6G).
-14. `btrbk-root` post-deploy `--no-block` catch-up trigger.
+~~1. **Deploy** (`nix run .#deploy`) — activates all three fixes; deploy.sh restarts cv-backup-dir at switch time, so the dir exists the moment the deploy finishes.~~ **Won't implement — deploy proof; window passed.**
+~~2. Post-deploy prod proof: `test -f /mnt/pool/backups/cv/pipeline-*` + `backups.prom` cv healthy + optionally `systemctl start cv-backup` for immediate confirmation.~~ **Won't implement — prod proof; window passed.**
+~~3. Tomorrow morning: pool `@.20260831T2300` received (23:00 send), paperless export fresh (01:30), cv backup landed (03:17), `backup_all_healthy 1`, `btrfs-verify-pool-backups` green.~~ **Won't implement — morning confirm; window passed.**
+~~4. Repo-wide silent-noop sweep (hardened root oneshots vs foreign-owned paths).~~ **Won't implement — sweep never run.**
+~~5. Eval-time audit: pool-path ReadWritePaths ⇒ RequiresMountsFor + creator.~~ **NOT-DO — dup of f5.**
+~~6. Backup-timer Persistent lint.~~ **NOT-DO — dup of f6.**
+~~7. `TODO_LIST.md` migration (both reports' durable items).~~ done — TODO system rebuilt 2026-09-19 (queue + 10 libraries); self-harvest convention codified
+~~8. `backup_ever_succeeded` metric.~~ **NOT-DO — dup of c.4.**
+~~9. Test-cv fidelity: seed as `cv` user; add cv-server-stopped edge case.~~ **Won't implement — fidelity gaps never closed.**
+~~10. Decide cv-backup identity model (root+cap vs User=cv) — follow-up refactor.~~ **Won't implement — identity-model decision moot; CAP_DAC_READ_SEARCH fix shipped (CHANGELOG cv 3-bug entry).**
+~~11. AGENTS: single canonical DAC gotcha entry in the systemd section, cross-ref the three incidents; split the mega-bullet for readability.~~ done at `DAC gotcha canonized; docs/agents/systemd.md caps bullets`
+~~12. /data EIO P0: schedule the repair decision — tonight's 23:30 retry will fail again by design.~~ done — /data EIO; docs/services/data-damage-set.md
+~~13. btrbk-data oom containment (page-cache class, 20.6G).~~ **NOT-DO — dup of f13.**
+~~14. `btrbk-root` post-deploy `--no-block` catch-up trigger.~~ **NOT-DO — dup of 44.**
 15. paperless RandomizedDelaySec / comment fix.
 16. Prod shadow-dir cleanup under /mnt/pool.
 17. `scripts/backup-catchup-report.sh`.

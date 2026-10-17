@@ -27,24 +27,24 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 
 ## b) PARTIALLY DONE
 
-1. **Deploy #2 of the reworked architecture** — pre-deploy passed after adding two legitimate bypasses; **currently activating** (`/tmp/deploy-flm3.log`, PATHS 4113→4114). Activation result, post-switch steps (provisioner restarts, buildcache-usb-recovery, buildcache-gc), and the new E2E smoke all **unverified at report time**.
-2. **Cross-session KNOWN_NEW_METRICS bypasses added** — `niri_zombie` (emitter tracked in niri-config.nix, riding this deploy) and `btrfs_health_critical` (emitter tracked in btrfs-health.nix, riding this deploy). Both go live with this deploy; **both entries must be removed after verifying the metrics are live** — same discipline as item a8.
-3. **Runtime verification of the new architecture** — cold load through the socat bridge, chat completion, idle-TTL stop, re-activation: all **pending deploy completion**. Backend from the 12:47 test was still running at deploy time, so the first post-deploy connection may hit a warm backend — a true cold-load E2E needs the idle-stop first.
+~~1. **Deploy #2 of the reworked architecture** — pre-deploy passed after adding two legitimate bypasses; **currently activating** (`/tmp/deploy-flm3.log`, PATHS 4113→4114). Activation result, post-switch steps (provisioner restarts, buildcache-usb-recovery, buildcache-gc), and the new E2E smoke all **unverified at report time**.~~ **NOT-DO — dup of f1 (struck done).**
+~~2. **Cross-session KNOWN_NEW_METRICS bypasses added** — `niri_zombie` (emitter tracked in niri-config.nix, riding this deploy) and `btrfs_health_critical` (emitter tracked in btrfs-health.nix, riding this deploy). Both go live with this deploy; **both entries must be removed after verifying the metrics are live** — same discipline as item a8.~~ **NOT-DO — dup of f6 (struck done).**
+~~3. **Runtime verification of the new architecture** — cold load through the socat bridge, chat completion, idle-TTL stop, re-activation: all **pending deploy completion**. Backend from the 12:47 test was still running at deploy time, so the first post-deploy connection may hit a warm backend — a true cold-load E2E needs the idle-stop first.~~ **NOT-DO — dup of f3 (struck done).**
 
 ## c) NOT STARTED
 
-1. Post-deploy verification suite: `nix run .#post-deploy-check` (now includes the fastflowlm E2E smoke).
-2. Idle-TTL lifecycle test (backend stops after 1h idle, socket persists, next connection re-activates — with socat bridge this time).
-3. Verification that `niri_zombie` + `btrfs_health_critical` are live in `/metrics` → remove both from `KNOWN_NEW_METRICS`.
-4. Gatus FastFlowLM endpoints green-state check.
-5. Deliberate commit of the socat rework (auto-daemon will otherwise bury it).
-6. AGENTS.md fastflowlm section rewrite (socat architecture, nixpkgs socket-proxyd absence, flm 10-connection limit).
-7. Annotate yesterday's status report + planning doc banner + TODO_LIST:185 — all three still claim "socket activation via systemd-socket-proxyd", which is now false.
-8. CHANGELOG entry.
-9. `systemd-analyze security fastflowlm-proxy@` review of the new template unit.
-10. PMA `OPENAI_BASE_URL` wire-up verification (carried over from yesterday).
-11. After 48h stable: retire hand install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, `.bashrc` exports).
-12. Investigation of yesterday's deploy #2 `Signal(9)` (journal window 16:20–16:40) — untouched.
+~~1. Post-deploy verification suite: `nix run .#post-deploy-check` (now includes the fastflowlm E2E smoke).~~ **NOT-DO — dup of f2 (struck done).**
+~~2. Idle-TTL lifecycle test (backend stops after 1h idle, socket persists, next connection re-activates — with socat bridge this time).~~ **NOT-DO — dup of f4 (struck done).**
+~~3. Verification that `niri_zombie` + `btrfs_health_critical` are live in `/metrics` → remove both from `KNOWN_NEW_METRICS`.~~ **NOT-DO — dup of f6 (struck done).**
+~~4. Gatus FastFlowLM endpoints green-state check.~~ **NOT-DO — dup of f5 (struck done).**
+~~5. Deliberate commit of the socat rework (auto-daemon will otherwise bury it).~~ **NOT-DO — dup of f8 (struck done).**
+~~6. AGENTS.md fastflowlm section rewrite (socat architecture, nixpkgs socket-proxyd absence, flm 10-connection limit).~~ **NOT-DO — dup of f9 (struck done).**
+~~7. Annotate yesterday's status report + planning doc banner + TODO_LIST:185 — all three still claim "socket activation via systemd-socket-proxyd", which is now false.~~ **NOT-DO — dup of f11/f12 (struck done).**
+~~8. CHANGELOG entry.~~ **NOT-DO — dup of f13 (struck done).**
+~~9. `systemd-analyze security fastflowlm-proxy@` review of the new template unit.~~ done — hardened per-connection unit as-built; docs/services/fastflowlm.md (64M cap + harden)
+~~10. PMA `OPENAI_BASE_URL` wire-up verification (carried over from yesterday).~~ **NOT-DO — dup of f22.**
+~~11. After 48h stable: retire hand install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, `.bashrc` exports).~~ **NOT-DO — dup of f26.**
+~~12. Investigation of yesterday's deploy #2 `Signal(9)` (journal window 16:20–16:40) — untouched.~~ **NOT-DO — dup of f21 (struck done).**
 
 ## d) TOTALLY FUCKED UP (own goals, honestly listed)
 
@@ -55,11 +55,11 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 
 ## e) WHAT WE SHOULD IMPROVE (process, this session)
 
-1. **Pre-deploy phantom-metric check should auto-classify "tracked emitter in this build"** — the failure mode is mechanical: new Gatus `pat()` metric + emitter in the to-be-deployed tree = goes-live-with-deploy. The script could diff target-config metric names against the running `/metrics` and auto-warn instead of hard-failing on every cross-session ride-along. Today cost two manual bypass edits; it will recur every time two sessions share this repo.
-2. **The deploy-time E2E smoke pins the model — make that explicit policy.** Every `nix run .#deploy` now cold-loads a 13.6 GB model for up to `keepAlive` (1h). Correct trade (silent dead endpoints are worse), but it should be a documented decision, not an emergent one — and idle-stop timing matters if deploys cluster.
-3. **Two concurrent sessions are editing one repo and riding each other's WIP into production.** Worked out today (both ride-alongs were coherent tracked changes), but nothing structural prevents a half-finished tracked change from deploying. Consider: deploy only from committed state, or a session banner in AGENTS.md declaring "repo in use".
-4. **"Endpoint-level" checks for every public port we own** — Gatus can't probe :52625 by design, which left it unwatched for hours. The post-deploy smoke closes the gap at deploy time; an idle-safe alternative (e.g. a metric emitted by the socket unit's connection counter) could close it continuously.
-5. **nixpkgs gap worth reporting upstream** — `systemd-socket-proxyd` is a standard systemd component that nixpkgs simply doesn't build. An upstream issue (nixpkgs) would fix this for everyone; the socat design is arguably better here anyway, but the absence deserves to be known.
+~~1. **Pre-deploy phantom-metric check should auto-classify "tracked emitter in this build"** — the failure mode is mechanical: new Gatus `pat()` metric + emitter in the to-be-deployed tree = goes-live-with-deploy. The script could diff target-config metric names against the running `/metrics` and auto-warn instead of hard-failing on every cross-session ride-along. Today cost two manual bypass edits; it will recur every time two sessions share this repo.~~ **NOT-DO — dup of f16.**
+~~2. **The deploy-time E2E smoke pins the model — make that explicit policy.** Every `nix run .#deploy` now cold-loads a 13.6 GB model for up to `keepAlive` (1h). Correct trade (silent dead endpoints are worse), but it should be a documented decision, not an emergent one — and idle-stop timing matters if deploys cluster.~~ done — cold-pin smoke policy documented; docs/services/fastflowlm.md + FEATURES.md FastFlowLM row
+~~3. **Two concurrent sessions are editing one repo and riding each other's WIP into production.** Worked out today (both ride-alongs were coherent tracked changes), but nothing structural prevents a half-finished tracked change from deploying. Consider: deploy only from committed state, or a session banner in AGENTS.md declaring "repo in use".~~ **Won't implement — ride-along policy never adopted; deploys serialized by flock (scripts/deploy.sh:63).**
+~~4. **"Endpoint-level" checks for every public port we own** — Gatus can't probe :52625 by design, which left it unwatched for hours. The post-deploy smoke closes the gap at deploy time; an idle-safe alternative (e.g. a metric emitted by the socket unit's connection counter) could close it continuously.~~ **NOT-DO — dup of f24.**
+~~5. **nixpkgs gap worth reporting upstream** — `systemd-socket-proxyd` is a standard systemd component that nixpkgs simply doesn't build. An upstream issue (nixpkgs) would fix this for everyone; the socat design is arguably better here anyway, but the absence deserves to be known.~~ **NOT-DO — dup of f15.**
 
 ## f) NEXT TASKS (prioritized, up to 50)
 
@@ -81,22 +81,22 @@ The P0 cold-load E2E test — the one thing yesterday's session never did — **
 12. ~~Correct planning doc banner (`2026-08-15_19-22_…`) and TODO_LIST:185 wording: socket-proxyd → socat as-built.~~ done (planning doc carries the EXECUTED banner; TODO item closed with as-built amendment)
 13. ~~CHANGELOG entry for the rework.~~ done (CHANGELOG Unreleased: FastFlowLM dead public endpoint entry)
 14. ~~docs-health HARVEST pass over the 2026-08-17 report (items 1–7 of its P0 are now done/superseded).~~ done (docs-health pass 2026-08-18)
-15. File nixpkgs issue: request `systemd-socket-proxyd` build (or document the gap locally forever).
+~~15. File nixpkgs issue: request `systemd-socket-proxyd` build (or document the gap locally forever).~~ done — gap documented locally (the ask's own alternative); docs/services/fastflowlm.md:11
 
 **P2 — hardening & carried-over work**
-16. Pre-deploy-check: auto-classify phantom metrics whose emitter exists in the target tree (see e1).
-17. `systemd-analyze security fastflowlm-proxy@.service` — review the template unit's hardening (64M cap, harden {}).
-18. Concurrency test: 8+ parallel clients through :52625 (MaxConnections vs flm's 10 — does PMA's worker pattern risk queuing?).
-19. deploy.sh PATH self-hardening (yesterday's e2, still open).
+~~16. Pre-deploy-check: auto-classify phantom metrics whose emitter exists in the target tree (see e1).~~ done at `superseded by self-cleaning §10 auto-derivation; CHANGELOG 2026-09-13 entry`
+~~17. `systemd-analyze security fastflowlm-proxy@.service` — review the template unit's hardening (64M cap, harden {}).~~ done — template unit hardening as-built; docs/services/fastflowlm.md
+~~18. Concurrency test: 8+ parallel clients through :52625 (MaxConnections vs flm's 10 — does PMA's worker pattern risk queuing?).~~ **Won't implement — one-shot concurrency test; window passed.**
+~~19. deploy.sh PATH self-hardening (yesterday's e2, still open).~~ done at `deploy.sh PATH hardening landed; docs/gotchas-archive.md restricted-PATH entry (docs/todo/pipeline.md:93)`
 ~~20. Pre-deploy load/PSI gate (yesterday's e3, still open).~~ done — deploy pressure gate shipped with the 2026-08-22 stability plan
 21. ~~Investigate yesterday's deploy #2 `Signal(9)` (16:20–16:40 journal window).~~ done (diagnosed by the 19-56 session (global-OOM pile-drive; OOMScoreAdjust=300 + RestartSec=60 deployed))
-22. PMA `OPENAI_BASE_URL=http://127.0.0.1:52625/v1` end-to-end: verify go-commit ≥ v0.8.0 generates commit messages via the local model.
-23. Consider `warmCalendar` pre-load option if cold load proves annoying (original planning §7).
-24. Consider a socket-connection-count metric (continuous endpoint liveness without keepalive — see e4).
-25. Update `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` to the systemd path (after stability).
-26. After 48h stable: retire `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, `.bashrc` LD_LIBRARY_PATH exports (AGENTS.md instruction).
-27. VM test for socket-activation wiring class (Accept=true + template + socat) — the static checks cannot catch it.
-28. Sweep remaining `systemd-socket-proxyd` references repo-wide (docs, comments) for staleness.
+~~22. PMA `OPENAI_BASE_URL=http://127.0.0.1:52625/v1` end-to-end: verify go-commit ≥ v0.8.0 generates commit messages via the local model.~~ done at `PMA wired to flm OpenAI endpoint; modules/nixos/services/projects-management-automation.nix:87`
+~~23. Consider `warmCalendar` pre-load option if cold load proves annoying (original planning §7).~~ **Won't implement — warmCalendar never implemented; documented as future option (fastflowlm.nix:46).**
+~~24. Consider a socket-connection-count metric (continuous endpoint liveness without keepalive — see e4).~~ **Won't implement — connection-count metric never built; deploy-time smoke covers the gap.**
+~~25. Update `~/projects/anime-comic-pipeline/docs/npu-fastflowlm-llm-server.md` to the systemd path (after stability).~~ **Won't implement — external-repo (anime-comic-pipeline) doc never updated.**
+~~26. After 48h stable: retire `~/.local/share/fastflowlm/`, `~/.local/bin/flm`, `.bashrc` LD_LIBRARY_PATH exports (AGENTS.md instruction).~~ done — hand install retired; flm is the nix wrapper; pkgs/fastflowlm.nix:16
+~~27. VM test for socket-activation wiring class (Accept=true + template + socat) — the static checks cannot catch it.~~ done — socket-activation/idle class VM-covered; tests/test-fastflowlm-idle.nix
+~~28. Sweep remaining `systemd-socket-proxyd` references repo-wide (docs, comments) for staleness.~~ done — remaining refs are deliberate WHY-records; fastflowlm.nix:27 + docs/services/fastflowlm.md:11
 
 ## g) QUESTIONS (cannot determine myself)
 

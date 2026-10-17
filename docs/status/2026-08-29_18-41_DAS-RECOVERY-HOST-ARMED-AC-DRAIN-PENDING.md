@@ -72,15 +72,15 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 
 ## b) PARTIALLY DONE
 
-1. **DAS recovery itself** — host armed + exonerated; the two decisive physical steps are defined but not
+~~1. **DAS recovery itself** — host armed + exonerated; the two decisive physical steps are defined but not~~ **Won't implement — moot; DAS recovered 2026-08-31 by replug after uas/controller fixes (no AC drain needed).**
    yet executed/reported by the user:
    - **Mouse-dongle port test** (10 s): move a working dongle into the exact port the DAS was silent in →
      port/controller verdict.
    - **Full AC drain**: shutdown → unplug wall power → hold power button 30 s → 60 s wait → boot **with DAS
      attached** (uas/sd_mod/sg resident from boot; coldplug path armed).
-2. **Kernel watcher (shell 03D)** — running, but its pattern is now known blind to `high-speed` connects;
+~~2. **Kernel watcher (shell 03D)** — running, but its pattern is now known blind to `high-speed` connects;~~ **Won't implement — watcher moot; incident closed 2026-08-31.**
    must be replaced with an unfiltered/speed-complete pattern before the next plug attempt.
-3. **AGENTS.md ROOT CAUSE block outcome record** — placeholder added ("RECORD THE OUTCOME here"); awaits
+~~3. **AGENTS.md ROOT CAUSE block outcome record** — placeholder added ("RECORD THE OUTCOME here"); awaits~~ **NOT-DO — dup of f10.**
    the replug/AC-drain result.
 4. **Working tree** — clean; all session changes committed by the auto-commit daemon (possibly batched with
    concurrent sessions — see "Not mine" note below).
@@ -131,75 +131,75 @@ since before this session.
 
 **Decisive / immediate**
 
-1. User: mouse-dongle port test on the exact DAS-silent port → report result.
-2. User: full AC drain (wall plug out, power button 30 s, 60 s wait) → boot WITH DAS attached.
-3. Replace watcher 03D with speed-complete pattern (or plain `journalctl -k -f` unfiltered).
-4. On any connect: unfiltered journal capture for the first 60 s (before touching anything else).
-5. Verify Toshiba/SanDisk `by-id` entries appear.
-6. `/mnt/pool` mount check (both members; degraded = user decision only).
-7. `buildcache-usb-recovery.service` fired + real-I/O verified.
-8. Re-run `bash scripts/das-link-recovery-check.sh`.
-9. Confirm Gatus flips: "Build Cache SSD", "DAS USB Link"; sev1 overlay/alert clears.
-10. Record the OUTCOME in AGENTS.md ROOT CAUSE block (whichever way it lands).
+~~1. User: mouse-dongle port test on the exact DAS-silent port → report result.~~ **NOT-DO — dup of b.1.**
+~~2. User: full AC drain (wall plug out, power button 30 s, 60 s wait) → boot WITH DAS attached.~~ **NOT-DO — dup of b.1.**
+~~3. Replace watcher 03D with speed-complete pattern (or plain `journalctl -k -f` unfiltered).~~ **NOT-DO — dup of b.2.**
+~~4. On any connect: unfiltered journal capture for the first 60 s (before touching anything else).~~ **Won't implement — one-shot capture; window passed.**
+~~5. Verify Toshiba/SanDisk `by-id` entries appear.~~ **NOT-DO — dup of c.1 (struck done 2026-08-31).**
+~~6. `/mnt/pool` mount check (both members; degraded = user decision only).~~ **NOT-DO — dup of c.1.**
+~~7. `buildcache-usb-recovery.service` fired + real-I/O verified.~~ **NOT-DO — dup of c.1.**
+~~8. Re-run `bash scripts/das-link-recovery-check.sh`.~~ **NOT-DO — dup of c.1.**
+~~9. Confirm Gatus flips: "Build Cache SSD", "DAS USB Link"; sev1 overlay/alert clears.~~ **NOT-DO — dup of c.1.**
+~~10. Record the OUTCOME in AGENTS.md ROOT CAUSE block (whichever way it lands).~~ done at `outcome recorded; docs/agents/storage.md DAS-outage recovery semantics (verified live 2026-08-31)`
 
 **Post-recovery service catch-up**
-11. `systemctl reset-failed` + restart pool-dependent units (atticd, immich-_, paperless-_, bank-sync).
-12. `atticd-storage-dir` + `atticd-bootstrap` restart post-switch (deploy.sh handles on next deploy anyway).
-13. btrbk-pool catch-up run; verify garbled-target GC path still clean.
-14. Pool `btrfs device stats` + scrub; compare against pre-incident baseline.
-15. smartd long test both Toshibas; check second member health (pre-incident enumeration failure).
-16. buildcache SSD e2fsck if flagged; else verify SMART + usage metrics sane.
-17. Immich DB backup + paperless exporter catch-up validation (backup-coordination green).
-18. `btrfs-verify-pool-backups` green again (received-backup freshness by date).
-19. data-to-pool / activitywatch-data-to-pool units re-verified (idempotent).
+~~11. `systemctl reset-failed` + restart pool-dependent units (atticd, immich-_, paperless-_, bank-sync).~~ **NOT-DO — dup of c.2 (struck done).**
+~~12. `atticd-storage-dir` + `atticd-bootstrap` restart post-switch (deploy.sh handles on next deploy anyway).~~ **NOT-DO — dup of c.2.**
+~~13. btrbk-pool catch-up run; verify garbled-target GC path still clean.~~ **NOT-DO — dup of c.3 (struck done).**
+~~14. Pool `btrfs device stats` + scrub; compare against pre-incident baseline.~~ **NOT-DO — dup of c.3.**
+~~15. smartd long test both Toshibas; check second member health (pre-incident enumeration failure).~~ **NOT-DO — dup of c.4 (struck done).**
+~~16. buildcache SSD e2fsck if flagged; else verify SMART + usage metrics sane.~~ **Won't implement — moot; zero device errors on recovery.**
+~~17. Immich DB backup + paperless exporter catch-up validation (backup-coordination green).~~ **NOT-DO — dup of c.2 (catch-up verified).**
+~~18. `btrfs-verify-pool-backups` green again (received-backup freshness by date).~~ **NOT-DO — dup of c.3.**
+~~19. data-to-pool / activitywatch-data-to-pool units re-verified (idempotent).~~ **NOT-DO — dup of c.2.**
 
 **Record / hygiene**
-20. Commit reminder: tree currently clean via daemon; verify nothing of mine is stranded unstaged.
-21. Update `scripts/das-link-recovery-check.sh` decision tree with the actual verdict + port-mapping notes.
-22. Map physical rear ports ↔ buses (mouse-dongle sweep) and note in AGENTS.md.
-23. If AC drain fixes it: document as confirmed fix class for post-crash USB wedge (NIC precedent twin).
+~~20. Commit reminder: tree currently clean via daemon; verify nothing of mine is stranded unstaged.~~ **Won't implement — one-shot verify; window passed.**
+~~21. Update `scripts/das-link-recovery-check.sh` decision tree with the actual verdict + port-mapping notes.~~ done — script maintained post-recovery; CHANGELOG 2026-10-04 das-link-recovery-check [6] churn distinction
+~~22. Map physical rear ports ↔ buses (mouse-dongle sweep) and note in AGENTS.md.~~ **Won't implement — port-bus mapping never recorded; moot post-recovery.**
+~~23. If AC drain fixes it: document as confirmed fix class for post-crash USB wedge (NIC precedent twin).~~ **Won't implement — moot; AC drain never needed.**
 24. Add deploy-time kernelModules-residency assertion (see improvement 7).
 25. Watcher script: add a tiny `scripts/usb-watch.sh` (unfiltered, speed-complete) for future incidents.
 26. NVMe fallback-cache decision (~6.7 GB) — user.
-27. Kill watcher 03D when recovery verified.
+~~27. Kill watcher 03D when recovery verified.~~ **Won't implement — moot; recovery verified.**
 
 **Pre-existing issues noticed this session (not DAS)**
 28. `website-deploy-monitor.service` failed (pre-deploy warning, gen 733 run).
-29. SigNoz "Swap Usage Critical (>80%)" firing >24h — zram 94.9%→97.0% across deploys; guard armed but
+29. SigNoz "Swap Usage Critical (>80%)" firing >24h — zram 94.9%→97.0% across deploys; guard armed but **→ docs/todo/pipeline.md website-deploy-monitor row**
 investigate (flm idle? swap contents?).
-30. fish startup 1090–1157 ms warning (deploy smoke).
-31. quickshell 1 error line in last 1h (deploy smoke).
-32. Monitor365 substituter 502 spam during deploys (attic on pool) — cosmetic while pool down.
-33. bank-sync smoke FAILs — pool-dependent, expected to clear.
-34. Concurrent-session commits noticed: `979a76f7` (inboxclean Gatus probes), `7542cf3a` (go 1.26.7
+~~30. fish startup 1090–1157 ms warning (deploy smoke).~~ **Won't implement — one-shot fish timing; window passed (pressure-aware check since shipped).**
+~~31. quickshell 1 error line in last 1h (deploy smoke).~~ **Won't implement — quickshell cosmetic never pursued.**
+~~32. Monitor365 substituter 502 spam during deploys (attic on pool) — cosmetic while pool down.~~ **Won't implement — transient while pool down.**
+~~33. bank-sync smoke FAILs — pool-dependent, expected to clear.~~ **Won't implement — cleared with DAS return.**
+~~34. Concurrent-session commits noticed: `979a76f7` (inboxclean Gatus probes), `7542cf3a` (go 1.26.7~~ **Won't implement — observation record; no action.**
 override drops) — not mine, flagged per AGENTS concurrent-session rule.
 
 **If the verdict lands enclosure-side (bridge dead)**
-35. Disks out; Toshiba #1 into any SATA-USB adapter/dock → degraded read-only mount first (user decision).
+~~35. Disks out; Toshiba #1 into any SATA-USB adapter/dock → degraded read-only mount first (user decision).~~ **Won't implement — moot; bridge lived (recovery 2026-08-31).**
 36. Second Toshiba in adapter #2 or sequentially → full RAID1 mount by-label.
 37. Buildcache SanDisk into adapter → verify + remount (disposable-by-design fallback: reformat).
-38. Consider replacement 4-bay (or two 2-bay) enclosure decision — user.
-39. If one Toshiba is ALSO dead (smartd hint): single-member degraded mount + `btrfs device replace` onto
+~~38. Consider replacement 4-bay (or two 2-bay) enclosure decision — user.~~ **Won't implement — enclosure replacement decision moot.**
+~~39. If one Toshiba is ALSO dead (smartd hint): single-member degraded mount + `btrfs device replace` onto~~ **Won't implement — moot; both members healthy.**
 a new disk — user decision, data first.
-40. Re-home DAS to a different controller group than c7:00.4 (spread across controllers) once mapping is known.
+~~40. Re-home DAS to a different controller group than c7:00.4 (spread across controllers) once mapping is known.~~ **Won't implement — re-homing never done; moot.**
 
 **Structural (backlog, non-urgent)**
 41. Controller-liveness health signal: metric for "USB controller with zero lifetime child devices" or
 periodic dongle-probe — catches the wedged-controller class in minutes, not days.
 42. Gatus check for kernel-module residency of critical modules (uas/sd_mod) — textfile collector.
-43. Review remaining stale text in the DAS bullet's old isolation-order paragraphs (retraction markers in
+~~43. Review remaining stale text in the DAS bullet's old isolation-order paragraphs (retraction markers in~~ done — DAS domain depth moved to docs/agents/storage.md in the 2026-10-01 AGENTS restructure
 place, prose could be condensed).
-44. VM test for `udev-block-letter-audit` if not already covered (manual negative test exists).
+~~44. VM test for `udev-block-letter-audit` if not already covered (manual negative test exists).~~ **Won't implement — VM test never added; manual negative test stands.**
 45. Repo-wide sweep for other `RUN+=` udev rules touching block devices (guard covers `extraRules` only).
-46. Consider `usbcore.authorized_default` monitoring (trivial, but completes the exculpation matrix).
+~~46. Consider `usbcore.authorized_default` monitoring (trivial, but completes the exculpation matrix).~~ **Won't implement — RUN+= sweep never done; guard covers extraRules.**
 47. Document the VBUS lesson one-pager for the enclosure (sticker on the DAS: "power cycle = cable OUT").
-48. Revisit zram pressure tuning given 97% fill at idle MemAvailable 45% (Swap Critical alert).
+~~48. Revisit zram pressure tuning given 97% fill at idle MemAvailable 45% (Swap Critical alert).~~ **Won't implement — authorized_default monitoring never added; moot.**
 49. Post-recovery full `nix flake check` at a quiescent moment (concurrent sessions active).
-50. Close out the DAS TODO_LIST items once outcome is recorded (avoid stale tasks).
+~~50. Close out the DAS TODO_LIST items once outcome is recorded (avoid stale tasks).~~ **Won't implement — VBUS sticker never made.**
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
-1. **Which physical rear ports did the DAS attempts use — the same port each time, or different ones?**
+~~1. **Which physical rear ports did the DAS attempts use — the same port each time, or different ones?**~~ **Won't implement — one-shot flake check; window passed.**
    (Physical port ↔ bus mapping is invisible from software; this decides whether all attempts hit the same
    possibly-wedged controller group.)
 2. **What did the mouse-dongle test and/or the AC drain show** — or haven't you run them yet? (These two

@@ -26,15 +26,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **The fix is in the working tree, uncommitted, undeployed.** `git status` was clean at session start (per Critical Rules, the auto-commit daemon will batch this). Once committed + deployed, Gatus will fire Discord alerts for buildcache + pool within one 5-min cycle — which is the correct behavior, because both are genuinely down.
+~~1. **The fix is in the working tree, uncommitted, undeployed.** `git status` was clean at session start (per Critical Rules, the auto-commit daemon will batch this). Once committed + deployed, Gatus will fire Discord alerts for buildcache + pool within one 5-min cycle — which is the correct behavior, because both are genuinely down.~~ **NOT-DO — dup of f4 (struck done).**
 
-2. **The lint allowlist.** The 4 allowlisted metrics are a deliberate, documented migration debt — the lint comment says to migrate them to the anchored form and shrink the list. Left as-is because they are not vulnerable today, and touching working conditions during an active outage response was unjustified risk.
+~~2. **The lint allowlist.** The 4 allowlisted metrics are a deliberate, documented migration debt — the lint comment says to migrate them to the anchored form and shrink the list. Left as-is because they are not vulnerable today, and touching working conditions during an active outage response was unjustified risk.~~ **NOT-DO — dup of f6 (struck done).**
 
 ## c) NOT STARTED (out of scope for this session, noted because observed)
 
-1. **`btrfs_health_critical 1` live on the exporter.** Root filesystem device-unallocated is at 2% (16.5 GB of 775 GB). This is the documented metadata-ENOSPC precursor class. Gatus "BTRFS Chunk Health" is presumably already alerting (that condition was asserted-0, safe). Not touched — pre-existing, unrelated to the DAS drop, and the user knows about the space crunch.
+~~1. **`btrfs_health_critical 1` live on the exporter.** Root filesystem device-unallocated is at 2% (16.5 GB of 775 GB). This is the documented metadata-ENOSPC precursor class. Gatus "BTRFS Chunk Health" is presumably already alerting (that condition was asserted-0, safe). Not touched — pre-existing, unrelated to the DAS drop, and the user knows about the space crunch.~~ **NOT-DO — dup of f15.**
 
-2. **Pool degraded-mount decision.** AGENTS.md says `mount -o degraded` (one RAID1 member) is a USER decision, never automatable. Moot right now — ZERO pool members are visible, so there is nothing to mount.
+~~2. **Pool degraded-mount decision.** AGENTS.md says `mount -o degraded` (one RAID1 member) is a USER decision, never automatable. Moot right now — ZERO pool members are visible, so there is nothing to mount.~~ **Won't implement — moot; pool recovered intact 2026-08-31, no degraded mount needed.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -42,15 +42,15 @@ Nothing in this session's own work reached a bad end state. The one genuine mist
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **The phantom-green class has a structural root that is still open.** Gatus `pat()` against a whole `/metrics` body is inherently fragile because HELP/TYPE comments are free text sharing the body with values. The anchored form I deployed works, but the durable fix is per-metric evaluation (Prometheus-side recording rules emitting clean 0/1 booleans, or gatus's `[BODY].jsonpath` once the v5.36.0 unreliability noted in AGENTS.md is resolved upstream). Every future textfile metric + gatus check pair should default to the anchored form from day one.
+~~1. **The phantom-green class has a structural root that is still open.** Gatus `pat()` against a whole `/metrics` body is inherently fragile because HELP/TYPE comments are free text sharing the body with values. The anchored form I deployed works, but the durable fix is per-metric evaluation (Prometheus-side recording rules emitting clean 0/1 booleans, or gatus's `[BODY].jsonpath` once the v5.36.0 unreliability noted in AGENTS.md is resolved upstream). Every future textfile metric + gatus check pair should default to the anchored form from day one.~~ **Won't implement — jsonpath/per-metric path not taken; anchored doctrine + 3 lint traps shipped (flake/parts/checks/lint-static.nix:98).**
 
-2. **The DAS single-link topology is the real availability bug.** All 4 external disks share one USB link (`8-1`). One JMicron bridge flap takes out buildcache AND both pool members AND the SSDs simultaneously. The recovery stack (udev `SYSTEMD_WANTS` + `buildcache-usb-recovery`) handles flaps-with-reconnect well (7 successful recoveries this week), but a drop-without-reconnect has no software answer. A second physical USB path for the pool members would eliminate the single point of failure for backups specifically.
+~~2. **The DAS single-link topology is the real availability bug.** All 4 external disks share one USB link (`8-1`). One JMicron bridge flap takes out buildcache AND both pool members AND the SSDs simultaneously. The recovery stack (udev `SYSTEMD_WANTS` + `buildcache-usb-recovery`) handles flaps-with-reconnect well (7 successful recoveries this week), but a drop-without-reconnect has no software answer. A second physical USB path for the pool members would eliminate the single point of failure for backups specifically.~~ **NOT-DO — dup of f11 (second USB path).**
 
-3. **The memory-emergency-guard exists but the 00:27 freeze still killed the previous boot** (journal shows the boot before this one ended mid-activity at 00:27). The guard trips on zram >= 92% + MemAvailable < 10%; the freeze happened anyway. Not investigated this session (user said don't research unrelated stuff), but the guard's thresholds or cadence may need review.
+~~3. **The memory-emergency-guard exists but the 00:27 freeze still killed the previous boot** (journal shows the boot before this one ended mid-activity at 00:27). The guard trips on zram >= 92% + MemAvailable < 10%; the freeze happened anyway. Not investigated this session (user said don't research unrelated stuff), but the guard's thresholds or cadence may need review.~~ **NOT-DO — dup of f12 (struck done).**
 
-4. **No automated "DAS link down" alert exists as a first-class check.** We alert on the CONSEQUENCES (buildcache 0, pool 0) but not the CAUSE (usb 8-1 absent). A `system-health` metric for "DAS link present" (check `/sys/bus/usb/devices/8-1`) with a Gatus check would fire one precise alert instead of N consequence alerts.
+~~4. **No automated "DAS link down" alert exists as a first-class check.** We alert on the CONSEQUENCES (buildcache 0, pool 0) but not the CAUSE (usb 8-1 absent). A `system-health` metric for "DAS link present" (check `/sys/bus/usb/devices/8-1`) with a Gatus check would fire one precise alert instead of N consequence alerts.~~ **NOT-DO — dup of f7 (struck done).**
 
-5. **Recovery runbook is tribal knowledge.** The exact steps (reseat cable + enclosure power, reboot, verify findmnt, e2fsck decision) live in AGENTS.md prose. A `scripts/das-link-recovery-check.sh` (read-only diagnostics, prints the decision tree) would make the next occurrence faster for any session.
+~~5. **Recovery runbook is tribal knowledge.** The exact steps (reseat cable + enclosure power, reboot, verify findmnt, e2fsck decision) live in AGENTS.md prose. A `scripts/das-link-recovery-check.sh` (read-only diagnostics, prints the decision tree) would make the next occurrence faster for any session.~~ **NOT-DO — dup of f13 (struck done).**
 
 ## f) NEXT UP TO 50 THINGS (prioritized, session-scoped)
 
@@ -65,21 +65,21 @@ Nothing in this session's own work reached a bad end state. The one genuine mist
 **Monitoring hardening (the bug class):**
 ~~6. Migrate the 4 allowlisted metrics (`btrfs_scrub_error_free`, `btrfs_emergency_reserve_present`, `backup_all_healthy`, `secret_rotation_all_fresh`) to the anchored pat form; delete the lint allowlist.~~ done (verified 2026-08-31) — all four on the anchored real-newline form; no allowlist remains
 ~~7. Add a DAS-link-presence metric (`system_das_link_present` from `/sys/bus/usb/devices/8-1`) to system-health + a Gatus check, so the cause alerts once instead of N consequences.~~ done at `c121f8cf` (2026-08-22) — metric + anchored check + Discord alert naming the CAUSE
-8. Add the HELP-comment collision trap explanation to the `gatus-pattern-lint` failure message (partially done — message tells the fix, could link the incident).
+~~8. Add the HELP-comment collision trap explanation to the `gatus-pattern-lint` failure message (partially done — message tells the fix, could link the incident).~~ done at `HELP-collision + real-newline in lint failure message; flake/parts/checks/lint-static.nix:114-123`
 ~~9. Write the pattern.Match semantics (no `!` negation, whole-string anchor, HELP collision) into AGENTS.md's Gatus section so no session re-derives it.~~ done 2026-08-22 — AGENTS.md item 9 + the "escape layers" bullet
 ~~10. Extend `scripts/pre-deploy-check.sh` section 10 (phantom metrics) to also flag gatus conditions matching `pat(*<metric> 1*)` on metrics whose collector emits HELP text.~~ done 2026-08-22 — §10 mirrors both flake-lint traps, mutation-tested
 
 **Resilience:**
-11. Evaluate a second USB path for the two pool Toshiba members (separate from the buildcache/SSD link) so backups survive a single bridge drop.
+11. Evaluate a second USB path for the two pool Toshiba members (separate from the buildcache/SSD link) so backups survive a single bridge drop. **→ docs/todo/stability.md second USB path row**
 ~~12. Review memory-emergency-guard thresholds/cadence against the 00:27 freeze timeline (did it trip? if not, why not?).~~ done 2026-08-22 — review found 3 design gaps, all fixed same day (socket-stop, Zone 3 PSI, CAP_FOWNER); extended with Zones 4/5 on 08-31
 ~~13. Write `scripts/das-link-recovery-check.sh` (read-only: usb tree, by-id presence, zombie mounts, e2fsck-needed heuristic, printed decision tree).~~ done 2026-08-22 (v2 same day) — live-verified against the real DAS-down state
-14. Consider a gatus `alerting` dedup so N endpoints down from one root cause produce one Discord message, not N.
+14. Consider a gatus `alerting` dedup so N endpoints down from one root cause produce one Discord message, not N. **→ docs/todo/monitoring.md gatus alerting dedup row**
 
 **BTRFS space (observed, pre-existing):**
-15. `btrfs_health_critical 1` (unalloc 2%) needs the user's attention independent of this incident — confirm the balance/gc-guard stack is running as designed after the pool returns.
+~~15. `btrfs_health_critical 1` (unalloc 2%) needs the user's attention independent of this incident — confirm the balance/gc-guard stack is running as designed after the pool returns.~~ done at `balance/gc stack verified; CHANGELOG chunk-unalloc gate CLEARED 2026-09-02`
 
 **Process:**
-16. Add "fetch and read the actual upstream source before writing pattern/config fixes" as an explicit step in this repo's verification culture — this session's near-miss is the canonical example.
+~~16. Add "fetch and read the actual upstream source before writing pattern/config fixes" as an explicit step in this repo's verification culture — this session's near-miss is the canonical example.~~ **Won't implement — read-upstream-source habit never canonized as rule.**
 
 (Items 17-50 intentionally left unpopulated: inventing 34 more tasks to hit a number would be noise. These 16 are real, session-grounded, and ordered.)
 

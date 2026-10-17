@@ -28,20 +28,20 @@ Loaded the docs-health skill + 3 references, inventoried all **154 unarchived `2
 
 ## b) PARTIALLY DONE
 
-1. **"View ALL files"** — deep-read ~35 files; the other ~120 got inventory-level views (line counts, marker scans, forward-section extracts) rather than full-text reads. The 08-20→08-24 deep 50-item self-review lists (05-19, 05-30, 09-45, 09-46, 10-45, 20-50, 23-25, 21-02-38, 04-50, 21-16, 21-43, 23-35, 01-51, 01-56, 02-46, 02-53, 03-49, 05-30×2, 06-05×2, 06-12, 07-01, 08-52, 08-55, 17-31, 08-00×2) retain unannotated brainstorm items — their signal was already routed by the 2026-08-24 harvest, and unmarked = honestly open, but per-item verdicts were NOT produced.
-2. **FEATURES.md** — targeted row updates only; sections 4-6 (packages table), 11 (Architecture Patterns), and the Darwin section were never read; the TODO row "(README + FEATURES updated by the 2026-08-31 docs-health audit)" slightly overclaims — it was a targeted update, not full verification.
-3. **Quality gate** — `nix flake check` NOT run (all edits markdown-only; pre-commit will run it at daemon-commit time). Stated but skipped, which the skill's VERIFY step 6 says not to do without saying so explicitly — this report says so.
-4. **Archived planning docs** went in WITHOUT EXECUTED/resolution banners (except fastflowlm, which already carried one). Archiving first, annotating never.
-5. **The 3 brand-new concurrent-session reports** (21:33×2, 21:35 — crush-config sops migration, signoz-trace-coverage audit, forgejo-mirror-ENOENT root cause) were correctly left untouched — but flagged to the user only in one passing line of the health report, weaker than the AGENTS "flag immediately" rule intends.
+~~1. **"View ALL files"** — deep-read ~35 files; the other ~120 got inventory-level views (line counts, marker scans, forward-section extracts) rather than full-text reads. The 08-20→08-24 deep 50-item self-review lists (05-19, 05-30, 09-45, 09-46, 10-45, 20-50, 23-25, 21-02-38, 04-50, 21-16, 21-43, 23-35, 01-51, 01-56, 02-46, 02-53, 03-49, 05-30×2, 06-05×2, 06-12, 07-01, 08-52, 08-55, 17-31, 08-00×2) retain unannotated brainstorm items — their signal was already routed by the 2026-08-24 harvest, and unmarked = honestly open, but per-item verdicts were NOT produced.~~ **NOT-DO — dup of f7.**
+~~2. **FEATURES.md** — targeted row updates only; sections 4-6 (packages table), 11 (Architecture Patterns), and the Darwin section were never read; the TODO row "(README + FEATURES updated by the 2026-08-31 docs-health audit)" slightly overclaims — it was a targeted update, not full verification.~~ **NOT-DO — dup of f5.**
+~~3. **Quality gate** — `nix flake check` NOT run (all edits markdown-only; pre-commit will run it at daemon-commit time). Stated but skipped, which the skill's VERIFY step 6 says not to do without saying so explicitly — this report says so.~~ **Won't implement — one-shot gate run; standing pre-commit flake gate covers it since.**
+~~4. **Archived planning docs** went in WITHOUT EXECUTED/resolution banners (except fastflowlm, which already carried one). Archiving first, annotating never.~~ **NOT-DO — dup of f4.**
+~~5. **The 3 brand-new concurrent-session reports** (21:33×2, 21:35 — crush-config sops migration, signoz-trace-coverage audit, forgejo-mirror-ENOENT root cause) were correctly left untouched — but flagged to the user only in one passing line of the health report, weaker than the AGENTS "flag immediately" rule intends.~~ **Won't implement — process note (flagging under-played).**
 
 ## c) NOT STARTED (deliberately or deferred)
 
-1. `docs/DOMAIN_LANGUAGE.md` existence — never checked/flagged (skill lists it as a must-have; judgment: an infra-config repo arguably doesn't need one, but the judgment was never stated in the report).
-2. Annotating the 11 appendix-only ARCHIVED reports (pre-existing TODO row, untouched).
-3. gotchas-archive narratives (pre-existing rows, untouched).
-4. AGENTS.md compression session (~263KB — grew this session).
-5. CHANGELOG entry for THIS docs-health session itself (repo precedent: harvest sessions sometimes get one; docs-only sessions usually don't).
-6. `qmd` re-index after the mass doc changes (another session's TODO row).
+~~1. `docs/DOMAIN_LANGUAGE.md` existence — never checked/flagged (skill lists it as a must-have; judgment: an infra-config repo arguably doesn't need one, but the judgment was never stated in the report).~~ done — DECIDED no DOMAIN_LANGUAGE.md; self Resolution 2026-09-02 block (line 90)
+~~2. Annotating the 11 appendix-only ARCHIVED reports (pre-existing TODO row, untouched).~~ **Won't implement — archival hygiene never done; corpus since archived.**
+~~3. gotchas-archive narratives (pre-existing rows, untouched).~~ **Won't implement — gotchas narratives never written; specific entries own their rows.**
+~~4. AGENTS.md compression session (~263KB — grew this session).~~ done at `AGENTS restructured to 34KB lean core; CHANGELOG 2026-10-01 entry`
+~~5. CHANGELOG entry for THIS docs-health session itself (repo precedent: harvest sessions sometimes get one; docs-only sessions usually don't).~~ **Won't implement — cosmetic self-CHANGELOG entry never added.**
+~~6. `qmd` re-index after the mass doc changes (another session's TODO row).~~ **Won't implement — qmd re-index never done.**
 
 ## d) TOTALLY FUCKED UP (honest column)
 
@@ -53,31 +53,31 @@ Loaded the docs-health skill + 3 references, inventoried all **154 unarchived `2
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Multi-line item strikes**: wrap the full logical item (through its last continuation line), or convert to a Status-column/appendix-table form for wrapped lists. A tiny helper that detects the item's extent would have prevented d.1.
+~~1. **Multi-line item strikes**: wrap the full logical item (through its last continuation line), or convert to a Status-column/appendix-table form for wrapped lists. A tiny helper that detects the item's extent would have prevented d.1.~~ **Won't implement — strike-extent helper never built.**
 2. **Empty markers must be a lint**: grep `~~[^~]+~~ *$` over docs/ catches the d.2 class.
-3. **Strike-marker precision rule**: a "done" marker may only claim what its evidence proves (CI-executed vs CI-evaluated are different claims — d.3 is the canonical example).
-4. **Flag concurrent sessions in the FIRST line of any final report** when the tree grew foreign work mid-session, not in a footnote.
-5. **Pre-annotation for archives**: annotate-then-archive, even for record docs (one banner line: what this file was, why it's historical, where the live knowledge now lives).
-6. **Run the quality gate anyway** (even when "markdown-only") — it costs one command and the skill demands the canonical check; `nix flake check --no-build` would also have caught nothing, but the discipline is the point.
-7. **Mega-row discipline in TODO_LIST**: several of my harvested rows pack 8-12 sub-items into one bullet (docker-prune follow-through, pool+disk quality). Defensible for cohesion, but they're mini-brainstorms — a future harvest should split them when the first sub-items close.
-8. **State the DOMAIN_LANGUAGE judgment explicitly** (either "infra repo, no domain glossary needed — recorded" or create a minimal one).
+~~3. **Strike-marker precision rule**: a "done" marker may only claim what its evidence proves (CI-executed vs CI-evaluated are different claims — d.3 is the canonical example).~~ **Won't implement — strike-precision rule never canonized.**
+~~4. **Flag concurrent sessions in the FIRST line of any final report** when the tree grew foreign work mid-session, not in a footnote.~~ **Won't implement — flag-first-line convention never canonized.**
+~~5. **Pre-annotation for archives**: annotate-then-archive, even for record docs (one banner line: what this file was, why it's historical, where the live knowledge now lives).~~ **Won't implement — annotate-then-archive superseded by later archive practice.**
+~~6. **Run the quality gate anyway** (even when "markdown-only") — it costs one command and the skill demands the canonical check; `nix flake check --no-build` would also have caught nothing, but the discipline is the point.~~ **Won't implement — discipline point; pre-commit now runs the gate every commit.**
+~~7. **Mega-row discipline in TODO_LIST**: several of my harvested rows pack 8-12 sub-items into one bullet (docker-prune follow-through, pool+disk quality). Defensible for cohesion, but they're mini-brainstorms — a future harvest should split them when the first sub-items close.~~ done — mega-row problem structurally resolved; TODO split into queue + libraries (CHANGELOG 2026-09-19)
+~~8. **State the DOMAIN_LANGUAGE judgment explicitly** (either "infra repo, no domain glossary needed — recorded" or create a minimal one).~~ **NOT-DO — dup of 39.**
 
 ## f) NEXT — up to 50 (from THIS session's observations only)
 
 1. Fix the 9 partial strikethroughs (extend `~~` over continuation lines; files+items listed in d.1).
-2. Fix the empty-marker strike in 28-04-51 (evidence or revert).
-3. Correct the 03-58 item-5 marker ("in checks; CI executes lints only after the CI-executes-lints row lands").
-4. Add EXECUTED banners to the 7 archived planning docs (one line each).
-5. Read + verify FEATURES sections 4-6, 10 (rest), 11; fix the overclaiming TODO row wording ("targeted update" not "updated").
-6. Decide + record the DOMAIN_LANGUAGE stance.
-7. Second-pass annotation of the 08-20→08-24 brainstorm lists (the ~1,300 unmarked items) — evidence exists in the 08-31 verification sweep markers.
-8. Annotate the 11 appendix-only archived reports (pre-existing row).
-9. AGENTS.md compression session (now ~263KB).
-10. `qmd` re-index after the mass markdown changes.
-11. Verify the daemon's commits of this session attribute the 69-file annotation sweep sanely (batched with the 21:33 sessions').
-12. Check the 21:33/21:35 concurrent reports' follow-ups for TODO overlap when they quiesce (crush sops migration, signoz trace coverage, forgejo ENOENT — the last likely supersedes my TODO's forgejo-filing row).
-13. Confirm pre-commit passes on the daemon's commit (first real `nix flake check` over the combined tree).
-14. Link-checker rewrite (the d.4 bug) — resolve-path test with correct sed.
+~~2. Fix the empty-marker strike in 28-04-51 (evidence or revert).~~ **Won't implement — empty-marker strike never fixed; corpus archived.**
+~~3. Correct the 03-58 item-5 marker ("in checks; CI executes lints only after the CI-executes-lints row lands").~~ done — 03-58 f5 marker corrected in place (now carries CI-vs-eval nuance)
+~~4. Add EXECUTED banners to the 7 archived planning docs (one line each).~~ **Won't implement — EXECUTED banners never added.**
+~~5. Read + verify FEATURES sections 4-6, 10 (rest), 11; fix the overclaiming TODO row wording ("targeted update" not "updated").~~ **Won't implement — FEATURES sections never fully verified; maintained by later waves.**
+~~6. Decide + record the DOMAIN_LANGUAGE stance.~~ **NOT-DO — dup of 39.**
+~~7. Second-pass annotation of the 08-20→08-24 brainstorm lists (the ~1,300 unmarked items) — evidence exists in the 08-31 verification sweep markers.~~ **Won't implement — second-pass superseded; corpus archived + living-docs-only process.**
+~~8. Annotate the 11 appendix-only archived reports (pre-existing row).~~ **NOT-DO — dup of 40.**
+~~9. AGENTS.md compression session (now ~263KB).~~ **NOT-DO — dup of 42.**
+~~10. `qmd` re-index after the mass markdown changes.~~ **NOT-DO — dup of 44.**
+~~11. Verify the daemon's commits of this session attribute the 69-file annotation sweep sanely (batched with the 21:33 sessions').~~ **Won't implement — one-shot attribution check; window passed.**
+~~12. Check the 21:33/21:35 concurrent reports' follow-ups for TODO overlap when they quiesce (crush sops migration, signoz trace coverage, forgejo ENOENT — the last likely supersedes my TODO's forgejo-filing row).~~ **Won't implement — overlap check done implicitly; forgejo report superseded the TODO row.**
+~~13. Confirm pre-commit passes on the daemon's commit (first real `nix flake check` over the combined tree).~~ **Won't implement — one-shot pre-commit confirm; window passed.**
+~~14. Link-checker rewrite (the d.4 bug) — resolve-path test with correct sed.~~ done at `scripts/check-doc-links.sh shipped`
 
 (14 real items — padding to 50 would invent work.)
 

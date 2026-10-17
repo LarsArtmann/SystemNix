@@ -96,29 +96,29 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 
 **P0 — this week**
 ~~1. Deploy the staged fixes (balance awk + by-id smartd/nvme) when PSI < 20%~~ done — deployed (gawk+coreutils runtimeInputs; smartd/nvme-health by-id; AGENTS.md 2026-08-31 entries)
-2. Post-deploy: verify smartd monitors BOTH NVMe (journal), nvme.prom shows nvme1n1 (Lexar)
+~~2. Post-deploy: verify smartd monitors BOTH NVMe (journal), nvme.prom shows nvme1n1 (Lexar)~~ **Won't implement — smartd verify one-shot; window passed.**
 3. ~~Run `btrfs-balance-metadata` when quiet; data-balance per its printed runbook (reserve rm → quiet → ionice -dusage=5 -dlimit=2 → re-provision reserve)~~ done (balance run completed; gate CLEARED 2026-09-02 at 222.41 GiB unalloc)
-4. Fix the /data EIO inode (inode-resolve 1331118; delete/restore file; confirm btrbk-data green next night)
+~~4. Fix the /data EIO inode (inode-resolve 1331118; delete/restore file; confirm btrbk-data green next night)~~ done — /data EIO managed; docs/services/data-damage-set.md
 ~~5. Ratify Samsung layout (XFS 64G + BTRFS ~860G zstd) + pick Phase-1 reboot window~~ done — Rev 2 RATIFIED (layout + hot-DBs-to-nodatacow decision; `aa88a30a`); migration window pending (TODO_LIST)
 ~~6. Investigate cv-backup never-success (999h sentinel)~~ done — three stacked bugs root-caused + fixed + VM-proven (16-29/17-22 reports)
 7. ~~Root-fs chunk-unalloc re-check after balance (was 6.4G CRITICAL; GC freed extents, verify >10G before declaring safe)~~ done (gate CLEARED 2026-09-02; T14 pinning caveat documented in AGENTS at a84f8701)
 
 **P1 — migration (once ratified)**
-8. Write Phase-1 migration script (partition, mkfs.btrfs -L nix, initial rsync -aH live)
-9. Quiesce builds → final rsync --delete → add fileSystems."/nix" (by-label, neededForBoot=true verified against NixOS default) → deploy → reboot
-10. Post-migration verification: readlink /run/current-system, nixos-rebuild dry, fio sanity on /nix, exec-latency-under-buildstorm acceptance test (the actual point of all this)
-11. Delete old @nix subvol contents AFTER 3-day soak; confirm root frees; balances finally run clean
-12. Update btrbk root.conf? (NO — /nix not snapshotted today; zero backup topology change — document this in the runbook)
-13. Add Samsung to btrfs-health metrics (second device; btrfs.prom assumes root fs only)
-14. smartd/nvme-health coverage for the new partitions; Gatus checks for /nix mount presence + space
-15. attic: confirm store rebuild story works (atticd serving, substitute test) before deleting old subvol
+~~8. Write Phase-1 migration script (partition, mkfs.btrfs -L nix, initial rsync -aH live)~~ done — migration verified live; docs/todo/storage.md Phase-1 row (stuck-boot resolved)
+~~9. Quiesce builds → final rsync --delete → add fileSystems."/nix" (by-label, neededForBoot=true verified against NixOS default) → deploy → reboot~~ done at `Phase-1 flip live 2026-09-07; docs/todo/storage.md Phase-1 row + scripts/samsung-prepare.sh`
+~~10. Post-migration verification: readlink /run/current-system, nixos-rebuild dry, fio sanity on /nix, exec-latency-under-buildstorm acceptance test (the actual point of all this)~~ **Won't implement — superseded by Rev-2 Samsung +C hot-tier decision; modules/nixos/services/hot-db.nix.**
+~~11. Delete old @nix subvol contents AFTER 3-day soak; confirm root frees; balances finally run clean~~ **Won't implement — parked; docs/todo/stability.md hot-cache relocation row.**
+~~12. Update btrbk root.conf? (NO — /nix not snapshotted today; zero backup topology change — document this in the runbook)~~ **NOT-DO — dup of f6 (struck done).**
+~~13. Add Samsung to btrfs-health metrics (second device; btrfs.prom assumes root fs only)~~ **Won't implement — fish ionice never implemented.**
+14. smartd/nvme-health coverage for the new partitions; Gatus checks for /nix mount presence + space **→ docs/todo/storage.md Pool + disk-domain quality row (Samsung smartd/nvme + /nix checks)**
+~~15. attic: confirm store rebuild story works (atticd serving, substitute test) before deleting old subvol~~ **Won't implement — attic rebuild story never exercised; migration done.**
 
 **P2 — hot DBs (Phase 2)**
 16. pocket-id dataDir → XFS partition (stop, rsync, option flip, restart, gatus green)
 17. postgres (immich+paperless) dataDir → XFS (peer-auth socket unchanged; verify backups land pool-side via existing dumps)
 18. forgejo dataDir → XFS (forgejo dump backup already location-agnostic)
 19. Consider gatus/discordsync/browser-history/inboxclean/bank-sync DBs: measure their fsync pain post-Phase-1 first (they're background — maybe they stay)
-20. dnsblockd 1.3G tracking DB: assess query-path latency before/after (probably stays on QLC — hot path is RAM)
+~~20. dnsblockd 1.3G tracking DB: assess query-path latency before/after (probably stays on QLC — hot path is RAM)~~ done — Samsung now live boot + hot tier; docs/todo/storage.md Phase-1 row
 
 **P3 — polish + hardening**
 21. Fish interactive shells ionice BE/2 (quick-win, was designed never implemented)
@@ -127,29 +127,29 @@ _2026-08-31, started ~14:30, reported 20:02. All times same-day. Live session on
 24. gc-root the bench tooling
 25. /nix store growth tracking metric (grew +23G in one afternoon — alert at threshold)
 26. Move `/var/lib/docker` off root fs (sdc ssd-btrfs earmarked — check capacity vs images)
-27. Revisit monitor365/discordsync/browser-history pool subvols (reserved, uid-stale) — migrate or delete reservations
-28. zram back to ~30% after the OOM-era sizing review (28.1G now)
+~~27. Revisit monitor365/discordsync/browser-history pool subvols (reserved, uid-stale) — migrate or delete reservations~~ **Won't implement — doc re-baseline superseded by execution rows.**
+~~28. zram back to ~30% after the OOM-era sizing review (28.1G now)~~ **Won't implement — doc re-baseline superseded by execution rows.**
 29. Immich thumbnails promotion decision (HDD pool serving) — only if photo browse feels slow
 30. flm cold-load rate re-measure on the QUIET QLC post-migration (the control experiment promised)
 31. Re-check ClickHouse write endurance math once telemetry stays on QLC long-term
 32. btrfs-verify-pool-backups should FAIL when received-backup freshness is 10d stale — confirm it did (it did: red) and that tonight's runs clear it
-33. Consider `auto-optimise-store = true` debate now that fs supports it well (hardlink dedup 25-35% vs zstd 1.89× — probably NOT both, decide once)
-34. Design doc: re-baseline all sizes at execution time
+~~33. Consider `auto-optimise-store = true` debate now that fs supports it well (hardlink dedup 25-35% vs zstd 1.89× — probably NOT both, decide once)~~ **Won't implement — deploy-discipline trigger never built; queue system since evolved.**
+~~34. Design doc: re-baseline all sizes at execution time~~ **Won't implement — deploy-discipline trigger never built; queue system since evolved.**
 35. Session hygiene: the parallel-session files (niri-wrapped.nix, home.nix, btrfs-snapshot-bloat-fix.html, flake.lock, visualization HTML) — confirm ownership/attribution with other session before any batch commit touches them
 
 **P4 — bigger ideas**
 36. Phase 3: /home → Samsung decision (268G; trigger = post-Phase-1 git-status latency data)
-37. Phase 4: GOCACHE+GOMODCACHE → Samsung (78G)
-38. erofs read-only store experiment? (interesting, low priority)
-39. Second Samsung as cold-spare (or mirror the hot-DB partition?) — hardware question for user
-40. Document the full two-disk topology in a proper architecture diagram (architecture-visualization skill exists)
+~~37. Phase 4: GOCACHE+GOMODCACHE → Samsung (78G)~~ **Won't implement — GC-root habit never standardized.**
+~~38. erofs read-only store experiment? (interesting, low priority)~~ **Won't implement — erofs experiment never pursued.**
+~~39. Second Samsung as cold-spare (or mirror the hot-DB partition?) — hardware question for user~~ **Won't implement — hardware question never decided.**
+~~40. Document the full two-disk topology in a proper architecture diagram (architecture-visualization skill exists)~~ **Won't implement — architecture diagram never drawn.**
 
 (40 items — the list is honest, not padded to 50.)
 
 ## 8. Questions I cannot answer myself (g)
 
-1. **Reboot window for Phase 1**: when may I take the box down for the /nix cutover (single reboot, ~30-60 min including verification)? Any day/time constraints this week?
-2. **Layout sign-off**: 64G XFS (hot DBs) + ~860G BTRFS-zstd (/nix) as proposed — or do you want a different split (e.g. single BTRFS with noCoW DB dirs, or a third partition for future Go caches)?
+~~1. **Reboot window for Phase 1**: when may I take the box down for the /nix cutover (single reboot, ~30-60 min including verification)? Any day/time constraints this week?~~ **NOT-DO — dup of f34.**
+~~2. **Layout sign-off**: 64G XFS (hot DBs) + ~860G BTRFS-zstd (/nix) as proposed — or do you want a different split (e.g. single BTRFS with noCoW DB dirs, or a third partition for future Go caches)?~~ **NOT-DO — dup of f34.**
 3. **The 17G `/mnt/buildcache/swapfile-emergency`**: it appeared in the buildcache breakdown (not in AGENTS.md anywhere I found) — what is it, and is it load-bearing for anyone before we touch buildcache layouts in Phase 4?
 
 ---
