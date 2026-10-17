@@ -177,8 +177,10 @@
               declare -A liveCrushDirs=()
               for pidDir in /proc/[0-9]*; do
                 [ "$(cat "$pidDir/comm" 2>/dev/null)" = "crush" ] || continue
+                echo "DBG: scanning crush pid $pidDir yama=$(cat /proc/sys/kernel/yama/ptrace_scope 2>/dev/null) fdls=[$(ls "$pidDir/fd" 2>&1 | head -3 | tr '\n' ' ')]" >&2
                 for link in "$pidDir"/fd/* "$pidDir"/cwd; do
                   openPath="$(readlink "$link" 2>/dev/null)" || continue
+                  echo "DBG: fd $link -> $openPath" >&2
                   case "$openPath" in
                     "$projects"/.crush|"$projects"/.crush/*|"$projects"/*/.crush|"$projects"/*/.crush/*)
                       liveCrushDirs["''${openPath%%/.crush*}/.crush"]=1
