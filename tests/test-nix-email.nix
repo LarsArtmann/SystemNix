@@ -156,15 +156,18 @@ let
         relayCfg.services.stalwart.credentials."mail-server-relay" == "/run/secrets/stalwart-relay-password"
     ) "relay credential not wired from the sops secret path")
 
-    (throwIfNot (
-      let
-        relay = relayCfg.services.stalwart.provision.objects.MtaRoute.objects."smarthost";
-      in
+    (throwIfNot
+      (
+        let
+          relay = relayCfg.services.stalwart.provision.objects.MtaRoute.objects."smarthost";
+        in
         relay.address == "smtp.resend.com"
         && relay.authUsername == "resend"
         && relay.authSecret."@type" == "File"
         && relay.authSecret.filePath == "/run/credentials/stalwart.service/mail-server-relay"
-    ) "generated MtaRoute relay object missing or wrong (expected smarthost Relay with authUsername + File authSecret)")
+      )
+      "generated MtaRoute relay object missing or wrong (expected smarthost Relay with authUsername + File authSecret)"
+    )
 
     (throwIfNot (
       relayCfg.services.stalwart.provision.singletons.MtaOutboundStrategy.route."else" == "'smarthost'"
