@@ -51,7 +51,7 @@ Prometheus families on :8108 (job `ai-meter`, SigNoz collector):
 
 - `ai_meter_requests_total{client,upstream,model,code}`
 - `ai_meter_tokens_total{client,upstream,model,kind=prompt|completion|cached}`
-- `ai_meter_cost_usd_total{client,upstream,model}` — from `services.ai-meter.costs` (USD per 1M tokens; zai models are deliberately $0: plan-covered by the GLM Coding Plan Max Yearly, which bills credits not tokens — PAYG reference prices preserved in a comment in `ai-meter.nix`; unknown/local models cost $0 but meter tokens exactly)
+- `ai_meter_cost_usd_total{client,upstream,model}` — from `services.ai-meter.costs` (USD per 1M tokens; zai entries are PAYG REFERENCE prices — docs.z.ai/guides/overview/pricing: glm-5.3 1.4/4.4/0.26, glm-5.3-flash 0.15/0.5/0.03, the latter mirroring the crushrc — even though the Max Yearly coding plan bills credits, not tokens, so real marginal spend is $0; owner chose reference visibility 2026-10-17, spend panels overstate by design; unknown/local models cost $0 but meter tokens exactly)
 - `ai_meter_request_seconds_{sum,count}`, `ai_meter_ttft_seconds_{sum,count}` (streaming only), `ai_meter_active_requests`, `ai_meter_unauthorized_total`, `ai_meter_metering_errors_total` (recording failures that did NOT fail live traffic — watch this: nonzero means usage blocks are going missing)
 
 Durable ledger: `/var/lib/ai-meter/usage.jsonl` — one JSON object per call (the true-up source; Prometheus counters reset on restart, the ledger does not).

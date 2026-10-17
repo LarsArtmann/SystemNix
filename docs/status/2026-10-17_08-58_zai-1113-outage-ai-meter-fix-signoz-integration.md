@@ -153,9 +153,9 @@ dirty laundry:
 8. Extend `telemetry-coverage.json` with the ai-meter job (doctrine compliance).
 9. Update `docs/services/ai-meter.md` runbook: coding vs general endpoint, 1113 semantics,
    incident timeline, verification commands.
-10. ~~Add glm-5.3 cost-table entry~~ DONE 2026-10-17: both zai models carry explicit
-    plan-covered $0 entries in `services.ai-meter.costs` (PAYG reference prices preserved
-    in a comment). Dashboard annotation dropped — the runbook documents the $0 semantics.
+10. ~~Add glm-5.3 cost-table entry~~ DONE 2026-10-17: glm-5.3 added at official PAYG
+    reference prices (1.4/4.4/0.26, docs.z.ai/guides/overview/pricing); semantics per g3 —
+    reference visibility, real marginal spend is plan-covered $0.
 11. Canary probe per cloud upstream (cron/systemd timer → 1-token request; alert on non-200)
     so idle hosts still detect dead accounts.
 12. ai-meter: per-upstream circuit breaker / error rewriting (fail fast, name the upstream).
@@ -233,16 +233,16 @@ dirty laundry:
    (docs.z.ai/devpack/overview: Max = 28,000 credits/5h, 140,000/week) and the plan covers
    exactly glm-5.3 + glm-5.3-flash (glm-4.7 auto-routes to flash) — both crush models, so
    ~17 instances is a concurrency question, not a model-coverage one.
-3. **Cost semantics for glm-5.3 — DECIDED 2026-10-17 (pending veto): plan-covered $0.**
-   With a Max Yearly subscription the marginal cost per request is genuinely $0 (billed in
-   credits, not tokens), so both zai entries in `services.ai-meter.costs` now carry 0.0
-   with the PAYG reference prices (flash 0.15/0.5/0.03) preserved in a comment. This stops
-   spend panels fabricating pay-as-you-go spend; flip the floats back if reference-cost
-   visibility is preferred instead.
+3. **Cost semantics for glm-5.3 — DECIDED 2026-10-17: PAYG reference prices.** Owner
+   chose reference-cost visibility over plan-covered $0: `services.ai-meter.costs` carries
+   glm-5.3 1.4/4.4/0.26 and glm-5.3-flash 0.15/0.5/0.03 (official rate card:
+   docs.z.ai/guides/overview/pricing). Spend panels show what the traffic WOULD cost
+   pay-as-you-go — real marginal spend on Max Yearly is $0 (billed in credits, not
+   tokens), so reference spend overstates by design.
 
 ---
 
 *Point-in-time snapshot. Report format: `.md` at explicit user demand (skill default is HTML);
 written to SystemNix (where all session work lives), not the session's cwd repo. Committed by
-the auto-commit daemon per harness rules. **REMAINING DECISION: deploy timing (g1). Answers
-g2 (Max Yearly) and g3 (plan-covered $0) are folded into the staged config.***
+the auto-commit daemon per harness rules. **ALL THREE QUESTIONS RESOLVED 2026-10-17: g2 =
+Max Yearly, g3 = PAYG reference prices, g1 = deploy approved and executed.***

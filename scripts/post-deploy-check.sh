@@ -1086,6 +1086,34 @@ if $papdashboard_enabled; then
   else
     report_pass "PapDashboard - fragment free of inline handlers"
   fi
+  # Tile-icon pack (2026-10-17 icon-pack go-live). Both legs fail CLOSED:
+  # zero `src="/icons/` refs = the deployed binary predates the icon feature
+  # or PAP_ICONS_DIR is unset (the exact "capability dropped in a merge"
+  # class that took the logos dark for a month), and a non-200 or broken
+  # cache contract on the route = the pack dir is missing/broken on the
+  # unit. The probed file is derived from the fragment itself, so the probe
+  # tracks the config with no hardcoded icon name. sed (not head -1) closes
+  # the pipe: under pipefail a head that exits early SIGPIPEs the grep.
+  if grep -q 'src="/icons/' /tmp/.smoke-body 2>/dev/null; then
+    pap_icon_imgs=$(grep -o 'src="/icons/' /tmp/.smoke-body | wc -l)
+    report_pass "PapDashboard - fragment carries $pap_icon_imgs tile icon <img>s"
+    pap_icon_path=$(grep -o 'src="/icons/[^"]*"' /tmp/.smoke-body | sed -n '1p' | sed 's/^src="//; s/"$//')
+    pap_icon_url="http://127.0.0.1:8088${pap_icon_path}"
+    pap_icon_code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "$pap_icon_url" 2>/dev/null) || true
+    if [ "$pap_icon_code" = "200" ]; then
+      report_pass "PapDashboard - /icons/ route serves the pack ($pap_icon_path)"
+    else
+      report_fail "PapDashboard - /icons/ route returned $pap_icon_code for $pap_icon_path (PAP_ICONS_DIR unset on the unit, or a stale flake pin predating the icon feature)"
+    fi
+    pap_icon_cache=$(curl -sI --max-time 10 "$pap_icon_url" 2>/dev/null | tr -d '\r' | grep -i '^cache-control:' | sed -n '1p')
+    case "$pap_icon_cache" in
+    *immutable*) report_pass "PapDashboard - /icons/ cache contract immutable ($pap_icon_cache)" ;;
+    "") report_fail "PapDashboard - /icons/ response carries no Cache-Control header" ;;
+    *) report_fail "PapDashboard - /icons/ cache contract broken: '$pap_icon_cache' (expected immutable)" ;;
+    esac
+  else
+    report_fail "PapDashboard - fragment has ZERO <img src=\"/icons/...\"> tiles (icon pack not wired: stale flake pin predating the icon feature, or PAP_ICONS_DIR unset on the unit)"
+  fi
 else
   report_skip "PapDashboard - service disabled (units absent from systemd)"
 fi
