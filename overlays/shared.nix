@@ -56,6 +56,9 @@
     # IO-pressure + guard-trip admission gate for heavy maintenance (the
     # freeze #19/#20/#21 migrate-* class; btrfs-gc-guard delegates to it too).
     maintenance-entry-gate = prev.callPackage ../pkgs/maintenance-entry-gate.nix { };
+    # Waiting twin for must-come-up services (socket-activated cold model
+    # loads): waits out IO storms, never refuses (PARETO M10.3).
+    psi-wait-gate = prev.callPackage ../pkgs/psi-wait-gate.nix { };
   })
 
   (

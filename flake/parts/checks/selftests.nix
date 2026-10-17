@@ -97,6 +97,16 @@
           touch $out
         '';
 
+        # psi-wait-gate selftest: the waiting twin's 9-scenario fixture run
+        # (first-check admit, band boundary, budget-exhaustion-proceeds,
+        # storm→calm re-check, trip-window hold, fail-open PSI-less) — the
+        # M16 socket-activation ordering primitive. Same store-artifact
+        # proof shape as the gate above.
+        psi-wait-gate-selftest = pkgs.runCommand "psi-wait-gate-selftest" { } ''
+          ${pkgs.psi-wait-gate}/bin/psi-wait-gate selftest
+          touch $out
+        '';
+
         # thermal-pstate-guard.sh flips the amd_pstate driver mode
         # (active<->guided) on hysteresis over hwmon sensors — the
         # freeze #8-#14 thermal-ceiling family's enforcement leg (a

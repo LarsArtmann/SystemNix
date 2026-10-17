@@ -147,3 +147,35 @@ The `fix!` dispatch landed on a RED `nix flake check --no-build`: the `nix-email
 **Deliberately NOT harvested, and why:**
 - §f items 6-24 (deploy chain, CI-restoration execution, hardening ideas): either sequenced behind the harvested wave (premature queueing = the premature-row class), owned by EXISTING open rows (CI-restoration, `nix fmt` scoping, hermes watch row — queue duplicates would drift), or owner-process suggestions (e5) with no fix locus in this repo. The existing rows already carry them; this report is their Source citation when dispatched.
 - No premise-verified config claim was queued unverified: the three harvested rows were spot-checked this session (a4) per the queue-author rule.
+
+---
+
+## §i LIVE RE-VERIFICATION (post-dispatch, user-directed "investigate art-dupl" + "check exclusivity")
+
+**Final state at authoring time: `nix flake check --no-build` = "all checks passed!", evo-x2 toplevel `--keep-going` build = exit 0 / zero errors, both re-stamped at HEAD `bff6528d` (2026-10-17 ~23:2x CEST, including sibling sessions' post-verdict Nix changes to `systemd-shape-audit.nix` + `boot-metrics.nix`). The tree is DEPLOY-READY; the actual deploy stays owner-run (`nix run .#deploy` + anchor check + post-deploy battery).**
+
+### Timeline of the wave (one continuous story, five actors)
+
+| When (CEST) | Actor | Event |
+|---|---|---|
+| 05:06 | owner | `nix flake update` + `nh os switch --keep-going`: 15 build failures enumerated (12 go-module hashes + signoz pnpmDeps + art-dupl compile + go-taskqueue modules) |
+| 05:10-05:39 | this session | Eval-surface fix: nix-email contract test → Stalwart 0.16 shape (daemon commit `bbae6986`); flake check green; deploy still RED |
+| 06:30-09:53 | sibling sessions | The wave's build layer, mostly closed: 11/12 got-hash shims + signoz `pnpmDeps` fix (commits `04c90efa` 06:30, `fbfe234e` 08:26 incl. cv `8OAMcaF1` paste, `a751dcd4` 08:38 incl. art-dupl rename shim, `d29acac0` 09:53) |
+| ~10:4x | this session | Status report + harvest (§b/§d written from the 05:06 enumeration — already stale at write time); user directive: investigate art-dupl, check exclusivity |
+| ~10:45 | this session | Exclusivity check: 5 crush PIDs in this tree, foreign commits (`e7459ae3` music-plan), foreign mid-edit files — but NO session driving the wave (`lars-packages.nix`/`crm.nix`/`cv.nix` clean). Verdict: wave unowned |
+| ~10:5x | this session | Re-enumeration: 14/15 legs green (siblings held); ONE root left — cv re-floated past its 08:26 shim (`be4aa55`→`a743f03`). Pasted new got `mnvM9S+l…` (cv.nix:62). Toplevel exit 0 |
+| ~11:0x | CV session | Re-locked CV `a743f03`→`0ec5eac3` mid-verification (its own repo session). This session verified `go.sum` IDENTICAL between the two revs → the fresh shim HOLDS (no action needed) |
+| ~11:05 | this session | `flake check` all-passed + toplevel exit 0 on the `0ec5eac3` lock; all 6 harvested rows (3 queue + 3 library) ticked with evidence |
+| ~23:2x | this session | Post-gap re-stamp at `bff6528d` (siblings had since changed `systemd-shape-audit.nix` +28, `boot-metrics.nix` +82): check all-passed, toplevel exit 0 — verdict holds |
+
+### Disposition of §d's three "fucked up" items
+
+1. **d1 (15 build failures)**: RESOLVED. 11 hashes + signoz by siblings; cv by this session (third shim generation for the same input in one day — the re-float treadmill is real-time when the owning repo's session works in parallel); final build green.
+2. **d2 (art-dupl compile)**: RESOLVED by sibling shim, and my §d2 root-cause framing is CORRECTED: the identifier was never missing — fork rev `f8724119` tracks a HAND-WRITTEN `actionability_templ.go` (added `4095c7bf`) that bare `templ generate` claims as its generated-output namespace, skipping the defining file. Fix = rename shim (`lib/lars-packages.nix:41`); 2 store outputs prove the build. The owner "investigate" directive is satisfied with the corrected mechanism.
+3. **d3 (go-taskqueue modules)**: RESOLVED by re-float — lock moved past the broken rev to `8d434737`, package builds (store output present, zero taskqueue failures in the final enumeration).
+
+### Flags (honesty ledger)
+
+- **Foreign mid-edit work witnessed, untouched**: `scripts/bench-samsung-livefs.sh` (184-line diff, the queued quiet-window re-bench task) + `scripts/post-deploy-check.sh` + several docs — another session's live work, swept by daemon `cb83dd17`. NOTE: my scoped `nix fmt` pass processed 28 cached files and reformatted 2 — the fmt-scoping anomaly (queued pipeline row) means those 2 may have been the foreign scripts mid-edit; the content is theirs, the normalization is canonical treefmt style.
+- **§f disposition update**: items 1-5 (wave) = done as above; item 6 (deploy + anchor check) = ready, owner-run; item 10 (hermes watch row) = still open (the blanket update moved the pin `e76fb95`→`be4aa48a`-lineage check-green; toplevel now ALSO green, so the row's forward-move gate is satisfied — tick it per the re-dispatch protocol when re-scoped); the rest unchanged.
+- **Nothing was committed directly by this session** (harness rule): every landed change rode daemon sweeps (`bbae6986`, `cb83dd17`, `eee869de`, …).
