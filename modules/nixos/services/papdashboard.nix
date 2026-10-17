@@ -92,9 +92,69 @@
       # to services.integration.searxng.homepage).
       searxEnabled = config.services.searx.enable or false;
 
+      # Service icon pack for the dashboard tiles. Same upstream pack the
+      # retired homepage-dashboard bundled (homarr-labs/dashboard-icons);
+      # PapDashboard serves the copy below from PAP_ICONS_DIR at /icons/.
+      # Rev/hash are pinned for the fixed-output source (hash prefetched with
+      # `nix-prefetch-url --unpack`, 2026-10-17) — this is not a flake input,
+      # so the flake-input pin audit does not apply.
+      iconPackSrc = pkgs.fetchFromGitHub {
+        owner = "homarr-labs";
+        repo = "dashboard-icons";
+        rev = "6d31345986eba2067a63eb41c1a5a87d4e8e850a";
+        hash = "sha256-5Kf5QlzLpLQUVarqzmtRH7ZLqdPUM8VPvQG7viv/RPk=";
+      };
+
+      # Every tile the rendered config can emit (built-in groups + registry
+      # fan-out), used for the icon gates below.
+      allTiles = builtins.concatLists (map (g: g.tiles) cfg.dashboard.groups) ++ cfg.extraTiles;
+
+      # A tile icon is legal as an absolute http(s) URL or as a pack file
+      # name; anything else (mdi-*, si-*, a bare word) cannot resolve to a
+      # file. PapDashboard rejects it at startup — the whole dashboard would
+      # refuse to start on the next restart — so it fails the eval instead.
+      iconIsValid =
+        icon:
+        icon == null
+        || builtins.match "https?://.+" icon != null
+        || builtins.match "[A-Za-z0-9][A-Za-z0-9._-]*\\.(png|svg|webp|jpg|jpeg|gif|avif)" icon != null;
+
+      invalidIconTiles = builtins.filter (t: !(iconIsValid (t.icon or null))) allTiles;
+
+      # Pack-relative icon names (absolute URLs are external references and
+      # stay unverified). Unique so the derivation is input-order independent.
+      packIconNames = lib.unique (
+        builtins.filter (icon: icon != null && !(lib.hasPrefix "http" icon)) (
+          map (t: t.icon or null) allTiles
+        )
+      );
+
+      # The icons the dashboard actually references, copied out of the pack.
+      # Building this IS the missing-icon gate: a name the pack does not
+      # carry fails the deploy's toplevel build (the unit env references this
+      # path, so the gate cannot be skipped) instead of shipping a tile with
+      # a broken logo.
+      dashboardIcons = pkgs.runCommand "papdashboard-icons" { } ''
+        mkdir -p $out
+        for name in ${lib.escapeShellArgs packIconNames}; do
+          if [ -f "${iconPackSrc}/png/$name" ]; then
+            cp "${iconPackSrc}/png/$name" "$out/$name"
+          elif [ -f "${iconPackSrc}/svg/$name" ]; then
+            cp "${iconPackSrc}/svg/$name" "$out/$name"
+          else
+            echo "papdashboard: icon '$name' is not in the dashboard-icons pack — pick an existing name under ${
+              iconPackSrc
+            }/png or use an absolute URL" >&2
+            exit 1
+          fi
+        done
+        cp "${iconPackSrc}/LICENSE" "$out/dashboard-icons-LICENSE"
+      '';
+
       # Extra tile from the services.integration registry fan-out. `icon` is
-      # accepted for registry-shape compatibility but ignored: PapDashboard
-      # renders monogram tiles, not an icon pack.
+      # the tile logo: a file name from the bundled dashboard-icons pack
+      # (served by PapDashboard from PAP_ICONS_DIR) or an absolute image URL.
+      # Names are verified against the pack at build time (dashboardIcons).
       tileJson =
         t:
         {
@@ -102,7 +162,8 @@
         }
         // lib.optionalAttrs (t.href != null) { inherit (t) href; }
         // lib.optionalAttrs (t.description != null) { inherit (t) description; }
-        // lib.optionalAttrs (t.checkUrl != null) { inherit (t) checkUrl; };
+        // lib.optionalAttrs (t.checkUrl != null) { inherit (t) checkUrl; }
+        // lib.optionalAttrs (t.icon != null) { inherit (t) icon; };
 
       # Registry fan-out fold: a tile lands in the group whose name matches,
       # or opens a new group at the end. Mirrors homepage.nix's addTile so
@@ -314,9 +375,11 @@
                   type = lib.types.nullOr lib.types.str;
                   default = null;
                   description = ''
-                    Registry-shape compatibility with services.integration
-                    (…homepage tiles); accepted but ignored — PapDashboard
-                    renders monogram tiles.
+                    Tile logo: a file name from the bundled dashboard-icons
+                    pack (e.g. "miniflux.png"; served at /icons/) or an
+                    absolute http(s) image URL. Null renders the tile
+                    monogram. Names are checked against the pack at build
+                    time — see dashboardIcons in this module.
                   '';
                 };
                 checkUrl = lib.mkOption {
@@ -443,6 +506,15 @@
                             default = null;
                             description = "Override probe URL (default: href)";
                           };
+                          icon = lib.mkOption {
+                            type = lib.types.nullOr lib.types.str;
+                            default = null;
+                            description = ''
+                              Tile logo (dashboard-icons pack file name or an
+                              absolute image URL); null renders the monogram.
+                              Same contract as extraTiles' icon.
+                            '';
+                          };
                         };
                       }
                     );
@@ -481,6 +553,17 @@
                     name = "Redis";
                     description = "Cache (Immich)";
                   }
+                  # Single DNS-blocker tile (merged 2026-10-17): the daemon
+                  # is core network infra, not a media app. href opens the
+                  # stats UI (Caddy proxies dnsblock.home.lan to the stats
+                  # port); checkUrl probes the daemon directly so a dead
+                  # daemon reds the dot even while Caddy still answers.
+                  {
+                    name = "DNS Blocker";
+                    href = svcUrl "dnsblock";
+                    description = "DNS Block Stats";
+                    checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
+                  }
                 ];
               }
               # Kept (even when empty) so registry tiles land in their
@@ -502,11 +585,6 @@
                     name = "Paperless";
                     href = svcUrl "paperless";
                     description = "Document Management (OCR, Office/E-Mail, AI, Archive)";
-                  }
-                  {
-                    name = "DNS Blocker";
-                    href = svcUrl "dnsblock";
-                    description = "DNS Block Stats";
                   }
                 ];
               }
@@ -532,15 +610,12 @@
                     description = "System Metrics (CPU, RAM, Disk, Network)";
                     checkUrl = "http://127.0.0.1:${toString nodeExporterPort}/metrics";
                   }
-                  {
-                    name = "dnsblockd";
-                    description = "Block-page HTTP server (localhost-only)";
-                    checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
-                  }
-                  {
-                    name = "EMEET PIXY";
-                    description = "Webcam Auto-Management Daemon";
-                  }
+                  # dnsblockd and EMEET PIXY tiles REMOVED 2026-10-17: both
+                  # were probe-only/decorative halves of tiles that exist
+                  # elsewhere. dnsblockd merged into the linked Infrastructure
+                  # "DNS Blocker" tile above; EMEET PIXY arrives via the
+                  # services.integration registry fan-out (emeet-pixyd.nix
+                  # homepage, Infrastructure, with href).
                 ];
               }
               {
