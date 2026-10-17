@@ -38,22 +38,53 @@ options services.papdashboard.dashboard.*   (module defaults: groups, tiles, sea
   → tileJson/addTile fold → pkgs.formats.json → render
   → environment.etc."papdashboard/services.json"
   → unit env PAP_SERVICES_CONFIG (+ restartTriggers = [servicesConfig])
+  + PAP_ICONS_DIR = dashboardIcons          (the icon subset the tiles ask for)
 ```
 
 - `title` — defaults to `hostName`.
 - `search` — SearXNG-gated (`services.searxng.enable` → `https://search.${domain}/search?q=`), else DuckDuckGo.
 - `system.disks` — stat-strip disk list (default `/`, `/data`, `/mnt/pool`), temp warn range 30–95 °C.
-- `groups[].tiles[]` — `name`, `description`, `url` (also the default probe target), optional `checkUrl`
-  for metrics-only tiles, optional `icon` (accepted, ignored).
+- `groups[].tiles[]` — `name`, `description`, `href` (also the default probe target), optional `checkUrl`
+  for metrics-only tiles, optional `icon` (tile logo — see below).
 - `bookmarks[]` — link groups, no status.
 - The registry key for the module itself is still `homepage` (historical name kept to avoid a
   ~20-module rename; the value's `subdomain` is `dash`). A rename is planned as registry cleanup.
 
-Invalid config = **startup fails loudly** (unit won't start) — there is no silent-degrade mode.
+Invalid config = **startup fails loudly** (unit won't start) — there is no silent-degrade mode
+(since 2026-10-17 that includes tile icons: a name that is neither a pack file nor an http(s)
+URL aborts startup, so `mdi-*`/`si-*` homepage-era names can never come back silently).
+
+## Tile logos (icon pack)
+
+Every tile renders a logo. `icon` is either a file name from the bundled
+`homarr-labs/dashboard-icons` pack or an absolute image URL:
+
+```
+icon = "<pack file>.png"      →  /icons/<pack file>.png  (served by PapDashboard)
+icon = "https://cdn/…/x.svg"  →  used verbatim
+icon = null                   →  monogram fallback only
+```
+
+- The pack is a **fixed pin in this module** (`iconPackSrc`: homarr-labs/dashboard-icons
+  rev + `nix-prefetch-url --unpack` hash) — not a flake input, so the flake-input pin audit
+  does not cover it; bump the rev and hash together deliberately.
+- `dashboardIcons` copies **only the icons the rendered config asks for** (~40 files, ~1.2 MB
+  instead of the full 85 MB pack) and is exported as `PAP_ICONS_DIR`. Referencing it in the
+  unit env is what makes it part of the system closure, so the copy IS the missing-icon gate:
+  a typo fails the toplevel build with the name and the pack path.
+- Two gates, both fail before a deploy can land a logo-less tab: eval-time (**icon FORM**;
+  `config.assertions` on `invalidIconTiles`) and build-time (**icon EXISTS** in the pack,
+  `dashboardIcons`).
+- Upstream PapDashboard mounts `GET /icons/` only when `PAP_ICONS_DIR` is set, serves it
+  public + immutable-cached, and keeps the monogram in the DOM as the fallback layer — a lost
+  image is dropped client-side by `dashboard.js`, never shown as a broken-image glyph.
+- Registry tiles set their icon in the service module's
+  `services.integration.<name>.homepage.icon` (bundled pack name); the built-in groups'
+  icons live in this module's `dashboard.groups` defaults.
 
 ## Tile dot semantics (read before "fixing" a wrong-looking dot)
 
-- The PapDashboard server probes every tile's `checkUrl` (default `url`) **server-side every 30s**.
+- The PapDashboard server probes every tile's `checkUrl` (default `href`) **server-side every 30s**.
 - **up** = the route answered < 500 **through the Caddy vhost, including an SSO redirect**. A
   login page (302 → Pocket ID) is `up` — that is by design: it proves the route is alive.
 - **down** = HTTP ≥ 500, TLS failure, or timeout (e.g. caddy answers 502 because the backend is dead).
