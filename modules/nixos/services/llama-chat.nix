@@ -73,6 +73,7 @@ _: {
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
+        ioTier
         ports
         ;
       inherit (config.users) primaryUser;
@@ -192,7 +193,23 @@ _: {
 
         systemd.services.llama-chat = {
           description = "llama.cpp chat server (${cfg.alias}, CPU MoE, native tool calls)";
-          after = [ "network-online.target" ];
+          # Model load is APPLICATION READINESS, not boot work (owner ruling
+          # 2026-10-17, closes session §g.1): the 23.4 GB GGUF cold page-in +
+          # readiness probe ran INSIDE the boot transaction (10m49s on the
+          # 2026-10-17 storm boot — the single largest bounded contributor to
+          # FinishTimestamp, and the gatus boot-userspace regression line's
+          # "usual suspect"). After=multi-user.target moves the unit PAST the
+          # target's wait set (same post-boot pattern as netbird-evox2-login):
+          # boot finishes without the load; the server then maps at its own
+          # pace with the same start contract ("Started" == /health 200) and
+          # the 10-min ensure-timer converging a skipped load. Consumers see
+          # connection-refused until ready — InboxClean chat/ai-meter degrade
+          # gracefully (no gatus check probes llama-chat directly; verified
+          # 2026-10-17 before this move).
+          after = [
+            "network-online.target"
+            "multi-user.target"
+          ];
           wants = [ "network-online.target" ];
           wantedBy = [ "multi-user.target" ];
           unitConfig.ConditionPathExists = cfg.modelPath;
@@ -239,6 +256,12 @@ _: {
             # reply timed out at 45s with 46k throttle events). The ceiling
             # MUST flow into harden so both watermarks agree.
             (harden { MemoryMax = cfg.memoryMax; })
+            # BE/5 (heavyDB tier, session row 8): user-facing inference —
+            # ahead of the BE/6 background daemons (rag/enrichers), behind
+            # desktop BE/3. Only shapes the cold-load window + steady-state
+            # checkpoint writes; serving itself is anon-memory (KV cache),
+            # barely any IO.
+            ioTier.heavyDB
           ];
 
           startLimitBurst = 5;
