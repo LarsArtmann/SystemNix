@@ -65,16 +65,21 @@
         ports
         ;
 
-      # TEMPORARY vendorHash shim ADDED (2026-10-15 fleet wave; got-hash
+      # TEMPORARY vendorHash shim (2026-10-15 fleet wave; got-hash
       # CzxGeRnc measured first-hand at locked rev c8d0cf92 via the 02:46
       # enumeration and RE-VERIFIED at rev 5a6794db after the input was
       # floated past upstream's broken-syntax commit c8d0cf92 — the 5a6794db
       # probe got the identical content hash while upstream still declares
-      # pg/a63hg. Class comment: lib/lars-packages.nix flakePkgShim)
+      # pg/a63hg. Class comment: lib/lars-packages.nix flakePkgShim).
+      # Re-measured 2026-10-17 for the tile-logo bump (rev 96ad5a23 →
+      # a1a505f5): the nested go-daemon/go-nix-helpers inputs moved in the
+      # same `nix flake lock --update-input papdashboard`, so the dep set —
+      # and with it the hash — changed (first-hand FOD build, got-hash
+      # ZNTUWEuj…). Drop the shim when upstream bakes the got hash.
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=";
+            vendorHash = "sha256-ZNTUWEujoZzRfbod3Oj1iml618yZCzzK81/v4rI87co=";
           };
 
       checkEnv = mkSecretCheck pkgs {
