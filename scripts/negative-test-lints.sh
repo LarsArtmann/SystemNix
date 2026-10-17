@@ -238,6 +238,66 @@ eval_case() {
 
 SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
+# build_config_path <dir> <attr-path> — realize a config attribute whose
+# value is a store path or a string with derivation context. The
+# papdashboard icon BUILD gate's enforcement surface: PAP_ICONS_DIR carries
+# the dashboardIcons derivation in its string context (the unit-env
+# reference that makes the gate unskippable on a real deploy), so realizing
+# it builds the pack copy and surfaces the missing-icon error.
+build_config_path() {
+  local dir="$1" attr="$2"
+  nix build --impure -L --no-link --print-out-paths \
+    --expr "(builtins.getFlake \"path:$dir\").nixosConfigurations.\"evo-x2\".$attr" 2>&1
+}
+
+# build_case <group> <name> <attr-path> <expect: fail|pass> <marker> <mutation...>
+# Same contract as run_case/eval_case, but the enforcement surface is
+# BUILDING a config attribute (a derivation whose failure IS the gate).
+build_case() {
+  local group="$1" name="$2" attr="$3" expect="$4" marker="$5"
+  shift 5
+
+  if [ -n "$FILTER" ] && [[ ",$FILTER," != *",$group,"* ]]; then
+    return 0
+  fi
+
+  local dir
+  dir=$(make_copy "$group-$name")
+  apply_mutations "$dir" "$@" || {
+    failed=$((failed + 1))
+    return 0
+  }
+
+  local out status=0
+  out=$(build_config_path "$dir" "$attr") || status=$?
+
+  case "$expect" in
+  fail)
+    if [ "$status" -eq 0 ]; then
+      say "FAIL [$group/$name]: mutation PASSED the $attr build — phantom-green gate (marker: $marker)"
+      failed=$((failed + 1))
+    elif ! grep -qE "$marker" <<<"$out"; then
+      say "FAIL [$group/$name]: build failed but marker '$marker' absent — caught by EVAL accident, not the gate:"
+      grep -m3 'error:' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    else
+      say "PASS [$group/$name]: $attr build failed with the expected marker"
+      passed=$((passed + 1))
+    fi
+    ;;
+  pass)
+    if [ "$status" -eq 0 ]; then
+      say "PASS [$group/$name]: $attr build correctly stayed green"
+      passed=$((passed + 1))
+    else
+      say "FAIL [$group/$name]: $attr build should have stayed green but failed:"
+      grep -m3 -E 'error:|FAIL' <<<"$out" | sed 's/^/    /'
+      failed=$((failed + 1))
+    fi
+    ;;
+  esac
+}
+
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
   for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract; do
@@ -269,6 +329,24 @@ if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,
     passed=$((passed + 1))
   else
     say "FAIL [controls]: evo-x2 toplevel eval fails on the pristine copy — fix the tree first:"
+    grep -m3 -E 'error:' <<<"$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  fi
+  unset status
+fi
+
+# Build control for build_case (same discipline as the eval control): the
+# PAP_ICONS_DIR pack copy must build green on the pristine copy. Also pulled
+# in by CASES=tileicons so the group never runs without its control.
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,tileicons,* ]]; then
+  dir=$(make_copy "pristine-pap-icons")
+  out=$(build_config_path "$dir" "config.systemd.services.papdashboard.environment.PAP_ICONS_DIR") || status=$? || true
+  status=${status:-0}
+  if [ "$status" -eq 0 ]; then
+    say "PASS [controls]: PAP_ICONS_DIR pack copy builds green on pristine copy"
+    passed=$((passed + 1))
+  else
+    say "FAIL [controls]: PAP_ICONS_DIR does not build on the pristine copy — fix the tree first:"
     grep -m3 -E 'error:' <<<"$out" | sed 's/^/    /'
     failed=$((failed + 1))
   fi
@@ -427,6 +505,23 @@ eval_case inputpin sha-path-pin fail 'go-taskqueue: hard REV pin' \
 eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
   'sed:flake.nix:s|github:LarsArtmann/bank-sync/67dd64526e5a55d86ff40ab49ce4a07794922962|github:LarsArtmann/bank-sync?ref=refs/heads/master|' \
   'jq:flake.lock:.nodes["bank-sync"].original = {"owner":"LarsArtmann","ref":"refs/heads/master","repo":"bank-sync","type":"github"}'
+
+# ── papdashboard tile-icon gates: the 2026-10-17 "logos went dark" class ──
+# The module ships two gates; each leg mutates ONE tile icon in the
+# built-in group defaults (the first group tile, pocket-id.png) and proves
+# the matching gate fires.
+# Gate 1 (FORM, eval assertion): a legacy homepage-era mdi-* name must
+# throw the assertion that names the tile — the exact shape that survived
+# the 2026-09-18 homepage merge unnoticed.
+eval_case tileicons legacy-mdi-icon fail 'tile icon\(s\) must be a dashboard-icons pack file name' \
+  'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"mdi-sitemap"|'
+# Gate 2 (EXISTS, build gate): a FORM-VALID name the pack does not carry
+# must pass the eval and fail the dashboardIcons copy — realized through
+# PAP_ICONS_DIR's string context (the unit-env reference that makes the
+# gate unskippable on a real deploy).
+build_case tileicons pack-missing-icon fail "is not in the dashboard-icons pack" \
+  'config.systemd.services.papdashboard.environment.PAP_ICONS_DIR' \
+  'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"pocket-id-not-in-any-pack.png"|'
 
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the
