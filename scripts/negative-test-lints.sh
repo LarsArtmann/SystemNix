@@ -577,7 +577,7 @@ eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside se
   'sed:modules/nixos/services/visionreviewd.nix:s|systemd.services.visionreviewd.onFailure = onFailure;|systemd.services.visionreviewd.serviceConfig.OnFailure = onFailure;|'
 
 # ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
-# The llama-chat/compssize class (untiered bulk boot I/O on the QLC). Leg 1
+# The llama-chat/compsize class (untiered bulk boot I/O on the QLC). Leg 1
 # strips a landed tier from a boot-gated unit (boot-mirror-sync); leg 2
 # removes an allowlist entry (gatus — steady daemon, justified exemption).
 # Both must throw the audit marker; the legs also prove the audit module is
