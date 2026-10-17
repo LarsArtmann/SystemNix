@@ -75,7 +75,14 @@ _: {
       upstreams = [
         {
           name = "zai";
-          base_url = "https://api.z.ai/api/paas/v4";
+          # Coding-plan endpoint, NOT the general /api/paas/v4 one: the
+          # account bills via a GLM Coding Plan resource package that only
+          # applies here. The general endpoint has zero pay-as-you-go
+          # balance, so it 429s with code 1113 "Insufficient balance or
+          # no resource package" (verified 2026-10-17; coding endpoint
+          # returned 200 for glm-5.3 and glm-5.3-flash, general 1113).
+          # This also matches crush's built-in zai provider default.
+          base_url = "https://api.z.ai/api/coding/paas/v4";
           api_key = "${config.sops.placeholder.ai-meter-zai-key}";
         }
         {
