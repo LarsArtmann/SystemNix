@@ -107,14 +107,14 @@ record where the evidence contradicted it. No deploys, no config changes this se
 1. **Positive-control journal filters**: before ruling anything out via journalctl,
    prove the filter matches a KNOWN event of that source (the `-u` vs syslog-id
    artifact has now bitten twice).
-2. **Enumerate all actors** when documenting "what starts/re-arms X" — one observed
+~~2. **Enumerate all actors** when documenting "what starts/re-arms X" — one observed~~ **Won't implement — stale: two-re-armer enumeration completed in-doc; corpse class cleared (docs/todo/stability.md corpse row DONE-MOOT 2026-09-30).**
    mechanism is a hypothesis, not a complete model.
 3. **llama wedge tripwire**: port-liveness is green during mid-load wedges; add a
    duration-based check (`/health` 503 for >15 min = wedge) rather than
    point-in-time status checks.
 4. **Corpse-aware guard restore (P1 candidate, documented)**: restore branch should
    skip when the backend journal shows recent `bind: Address already in use`.
-5. **pre-reboot-check §10 candidate**: gcroots/profiles resolution check (from
+~~5. **pre-reboot-check §10 candidate**: gcroots/profiles resolution check (from~~ done at `in-doc DONE 2026-09-10 marker; scripts/pre-reboot-check.sh carries the 3-way anchor`, ` exit-4 predictor and GC-anchoring sections`
    session-3 forensics); **smoke-baseline age-stamp**; **exit-4 predictor** =
    changed-unit ∩ failed-unit set (the "3 failed units arm the next deploy" advisory
    is only true for units whose FILES change — the 18:35 deploy activated cleanly
@@ -128,7 +128,7 @@ record where the evidence contradicted it. No deploys, no config changes this se
    silently skips §2. Fixture-tested via BOOT_DIR (f1–f5) + live-verified
    (18 PASS / 0 FAIL; predictor correctly names inboxclean-sync +
    service-health-check, correctly absolves fastflowlm).
-6. **No silent pipelines**: every verification probe should assert its own output is
+~~6. **No silent pipelines**: every verification probe should assert its own output is~~ done — no-silent-pipeline class landed as fail-closed scrape_errors pattern across collectors (modules/nixos/services/system-health.nix:1429)
    non-empty.
 
 ## Self-critique — forgot / could-have-done-better / still-improvable
@@ -146,74 +146,74 @@ record where the evidence contradicted it. No deploys, no config changes this se
 
 **Core, reboot-gated (do first):**
 
-1. Await user reboot (SAFE verdict at gen 764).
-2. Post-boot: verify `readlink /run/current-system` = `50z91iw1…`, `/nix` source =
+~~1. Await user reboot (SAFE verdict at gen 764).~~ **Won't implement — stale one-shot: await reboot - multiple reboots since Sep-09.**
+~~2. Post-boot: verify `readlink /run/current-system` = `50z91iw1…`, `/nix` source =~~ **Won't implement — stale one-shot post-boot anchor verify; anchoring later machine-enforced (CHANGELOG 2026-10-17 deploy anchor self-repair).**
    Samsung p2, `uname -r` = 7.2.3, booted gcroot flipped off `p0ccbqj5`.
-3. Post-boot: after 2–5 min cold load, flm :52625 `/v1/models` 200 + llama
+~~3. Post-boot: after 2–5 min cold load, flm :52625 `/v1/models` 200 + llama~~ **Won't implement — stale: flm corpse verified GONE 2026-09-30 (docs/todo/stability.md corpse row).**
    :8848/:8849 `/health` 200 — expect corpse + wedge classes GONE.
-4. Post-boot: failed-unit count ~0; remove `/boot/loader/loader.conf.bak-stuckboot`.
-5. Post-boot: `p0ccbqj5` pin-or-release decision (user).
-6. Post-boot: one `nix run .#deploy` → refresh smoke baseline (expect 7→≤2 FAILs:
+~~4. Post-boot: failed-unit count ~0; remove `/boot/loader/loader.conf.bak-stuckboot`.~~ **Won't implement — stale one-shot: failed-unit check + loader.conf.bak removal; boot path superseded by Samsung boot-mirror era (CHANGELOG 2026-09-18-20).**
+~~5. Post-boot: `p0ccbqj5` pin-or-release decision (user).~~ **Won't implement — stale decision on long-GC'd generation p0ccbqj5.**
+~~6. Post-boot: one `nix run .#deploy` → refresh smoke baseline (expect 7→≤2 FAILs:~~ **Won't implement — stale one-shot baseline refresh; baseline fully triaged 2026-10-08 (docs/todo/services.md baseline-14 row).**
    bank-sync SCA + signoz upstream).
-7. Start 3-day soak clock (→ ~Sep-12); journal soak observations.
-8. Watch Sep-10 00:00 nix-gc: `g9ghy625` survives via ladder pin; `p0ccbqj5`
+~~7. Start 3-day soak clock (→ ~Sep-12); journal soak observations.~~ **Won't implement — stale: soak clock window (Sep-12) long passed; flip recorded live in docs/todo/storage.md Phase-1 row.**
+~~8. Watch Sep-10 00:00 nix-gc: `g9ghy625` survives via ladder pin; `p0ccbqj5`~~ **Won't implement — stale GC watch; retention later changed to 7d (docs/agents/nix-flakes.md gcroots entry).**
    collectability changes only after reboot.
 
 **Robustness / monitoring (post-soak P1):**
-9. Corpse-aware memory-guard restore (skip on recent EADDRINUSE) — upstream edit in
+~~9. Corpse-aware memory-guard restore (skip on recent EADDRINUSE) — upstream edit in~~ **NOT-DO — dup of e4 corpse-aware guard restore.**
 memory-emergency-guard.nix + VM-test negative case.
-10. llama mid-load wedge tripwire (503 >15 min) in Gatus or textfile collector.
-11. pre-reboot-check §10: gcroots/profiles resolution; smoke-baseline age-stamp;
+~~10. llama mid-load wedge tripwire (503 >15 min) in Gatus or textfile collector.~~ **NOT-DO — dup of e3 llama wedge tripwire.**
+~~11. pre-reboot-check §10: gcroots/profiles resolution; smoke-baseline age-stamp;~~ **NOT-DO — dup of e5 pre-reboot-check work (already DONE-annotated).**
 changed-unit ∩ failed-unit exit-4 predictor. **(DONE 2026-09-10 — see §e5.)**
-12. `nix diff-closures 8zzq0b1i… pgvbfp20…` — what the Sep-8 unanchored era actually
+~~12. `nix diff-closures 8zzq0b1i… pgvbfp20…` — what the Sep-8 unanchored era actually~~ **Won't implement — stale one-shot diff-closures across deleted QLC-era generations (@nix deleted 2026-09-20).**
 changed (06-02 §f).
-13. Sweep journal for ALL unexplained fastflowlm.socket "Listening on" events
+~~13. Sweep journal for ALL unexplained fastflowlm.socket "Listening on" events~~ **Won't implement — stale journal sweep; corpse class cleared 2026-09-30.**
 (completeness proof for the two-re-armer model).
-14. Verify Gatus/Discord fired for tonight's llama+flm reds (monitoring trust
+~~14. Verify Gatus/Discord fired for tonight's llama+flm reds (monitoring trust~~ **Won't implement — stale one-shot alert verification for that night's reds.**
 check).
-15. hermes health + session-drain review after the 18:35 restart.
+~~15. hermes health + session-drain review after the 18:35 restart.~~ **Won't implement — stale one-shot hermes drain review after 18:35 restart.**
 
 **Samsung phase-1 tail (from TODO_LIST):**
-16. Post-soak: delete old `@nix` (QLC) after attic store-rebuild story verified.
-17. attic store-rebuild on Samsung verification.
-18. exec-latency-under-buildstorm acceptance + fio sanity run.
-19. Add Samsung to btrfs-health metrics + smartd + Gatus mount/space checks.
-20. Samsung p1 ESP mirror fate: keep static / automate / drop (user decision).
-21. Pre-reboot-check candidate: ESP-mirror staleness warning if kept.
+~~16. Post-soak: delete old `@nix` (QLC) after attic store-rebuild story verified.~~ done — old QLC @nix deleted 2026-09-20 (docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2 T22 row done)
+17. attic store-rebuild on Samsung verification. **→ attic rebuild re-verify still tracked (docs/todo/pipeline.md attic old-drv rebuild watch row)**
+~~18. exec-latency-under-buildstorm acceptance + fio sanity run.~~ done — acceptance ran: fsync/bench suite executed in Samsung role eval (docs/todo/storage.md Phase-2 fsync-matrix row; scripts/fsync-bench.sh)
+19. Add Samsung to btrfs-health metrics + smartd + Gatus mount/space checks. **→ Samsung scrub/smartd partly covered (docs/todo/storage.md pool-quality row); /nix usage gap tracked (docs/todo/monitoring.md gap-check row)**
+~~20. Samsung p1 ESP mirror fate: keep static / automate / drop (user decision).~~ done — ESP-mirror fate DECIDED: automated (platforms/nixos/system/boot-mirror.nix; CHANGELOG 2026-09-18-20 + 2026-10-17 path trigger)
+~~21. Pre-reboot-check candidate: ESP-mirror staleness warning if kept.~~ done — pre-reboot-check grew boot-mirror section: 22-pass grade incl mirror-first checks (CHANGELOG 2026-09-30 boot-mirror-activate entry)
 
 **User steps (browser/app only):**
-22. Wise SCA approval (OTT runbook `docs/services/bank-sync-sca.md`) → restart
+22. Wise SCA approval (OTT runbook `docs/services/bank-sync-sca.md`) → restart **→ Wise SCA approval still pending user action (docs/todo/services.md bank-sync sentinel row; docs/services/bank-sync-sca.md)**
 bank-sync → remove token file.
-23. InboxClean main re-auth (`inboxclean auth` runbook; consent screen is In-
+23. InboxClean main re-auth (`inboxclean auth` runbook; consent screen is In- **→ InboxClean re-auth carried by service rows (docs/todo/services.md InboxClean section; docs/services/inboxclean.md runbook)**
 production now).
-24. Resend: verify `larsartmann.cloud` domain (mail relay go-live pending since
+24. Resend: verify `larsartmann.cloud` domain (mail relay go-live pending since **→ Resend domain verification still open (docs/todo/services.md mail-relay go-live row; docs/todo/security.md)**
 2026-09-06; journal `status=bounced` is the signal).
-25. tq pool cutover decision (manual `:8090` pool vs systemd pool — double-run
+25. tq pool cutover decision (manual `:8090` pool vs systemd pool — double-run **→ tq pool posture tracked (docs/todo/upstream.md tq pool rows; docs/todo/services.md tq pool units)**
 guard currently WARNs every deploy).
-26. Git-history purge push decision (rotation done; push held indefinitely — flip?).
+26. Git-history purge push decision (rotation done; push held indefinitely — flip?). **→ purge push decision tracked (docs/todo/security.md purge row)**
 
 **Upstream repos (LarsArtmann, fix at source):**
-27. InboxClean: Paperless "demote auto tag gmail" PATCH rejected
+~~27. InboxClean: Paperless "demote auto tag gmail" PATCH rejected~~ **Won't implement — superseded: InboxClean-Paperless Gmail-attachment archiving wired upstream-style 2026-09-02 (CHANGELOG; rejected patch moot).**
 (`rejection:paperless.client_error`) — repo fix candidate (noticed in baseline).
-28. dnsblockd: push the health-cache fix (working tree 2026-09-06, unpushed) +
+~~28. dnsblockd: push the health-cache fix (working tree 2026-09-06, unpushed) +~~ done — dnsblockd health-cache fix landed+deployed (lock 94c9cb93, deployed binary; docs/todo/upstream.md covers residual upstream verify)
 flake bump; wire `scripts/dnsblockd-goroutine-dump.sh` into the wedge runbook.
-29. hermes/PMA/overview/papdashboard OTel span gaps → flip `wiring = "upstream"` →
+29. hermes/PMA/overview/papdashboard OTel span gaps → flip `wiring = "upstream"` → **→ OTel span-gap flips tracked (docs/todo/upstream.md SigNoz trace-gaps row)**
 enforced as instrumentation lands (signoz_traces_missing 3).
 
 **Known long-tail (tracked, not this session's work):**
-30. /data EIO corruption repair (P0 — btrbk-data sends abort nightly; oom-kill'd
+30. /data EIO corruption repair (P0 — btrbk-data sends abort nightly; oom-kill'd **→ /data EIO repair tracked (docs/todo/storage.md P0 row)**
 since 2026-08-20).
-31. btrbk-data oom-kill containment (20.6G page-cache peak in cgroup).
-32. monitor365 enable decision (private crate: publish/public/vendor — owner call).
-33. `pipeline.evaluation.min_day_rate` CV setting (owner value decision, CV repo
+~~31. btrbk-data oom-kill containment (20.6G page-cache peak in cgroup).~~ done — btrbk-data oom containment landed (CHANGELOG verification-closures batch: btrbk-data MemoryHigh/OOMScoreAdjust)
+32. monitor365 enable decision (private crate: publish/public/vendor — owner call). **→ monitor365 enable decision tracked (docs/todo/services.md monitor365 rows; DORMANT banner per docs/todo/pipeline.md)**
+~~33. `pipeline.evaluation.min_day_rate` CV setting (owner value decision, CV repo~~ done — min_day_rate DECIDED 600 EUR/day 2026-09-03, live in modules/nixos/services/cv.nix (docs/todo/services.md)
 proposed 600).
 34. ClickHouse telemetry backup coverage (btrbk excludes XFS by design).
 35. ClickHouse zombie read-only log tables: human DROP decision (~10 GiB).
 36. Paperless old SQLite export recovery decision (`/mnt/pool/.../export`).
-37. Old `/data` bounded-damage repair: gemma-4-31b EIO-corrupt GGUF re-download.
+37. Old `/data` bounded-damage repair: gemma-4-31b EIO-corrupt GGUF re-download. **→ corrupt /data model artifacts covered by repair row (docs/todo/storage.md incl re-downloadable inventory)**
 38. ActivityWatch 13GB pre-decimation backup deletion after settling.
-39. Secret-purge: GitHub support GC request (if push ever happens).
-40. pre-reboot-check: fold "failed units that WILL exit-4" advisory into a hard
+39. Secret-purge: GitHub support GC request (if push ever happens). **→ purge/GC-request decision tracked (docs/todo/security.md)**
+~~40. pre-reboot-check: fold "failed units that WILL exit-4" advisory into a hard~~ **Won't implement — declined in-doc: predictor hard-gate fold rejected, stays advisory (deploy.sh reset-failed owns exit-4).**
 gate once predictor (item 11) exists. **(Predictor shipped 2026-09-10; hard-gate
 fold deliberately DECLINED — exit-4 is a deploy concern that deploy.sh
 reset-failed already recovers from, not a boot-safety one; stays advisory.)**

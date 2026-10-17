@@ -133,6 +133,12 @@
           default = [
             "atticd.service"
             "atticd-bootstrap.service"
+            # monitor365 agent buffers events on the pool
+            # (/mnt/pool/services/monitor365, RequiresMountsFor-gated) —
+            # re-enabled 2026-10-18, converged here like the immich roster.
+            # NOTE: this default is NOT concat-merged — a wrapper-side
+            # definition of restartUnits REPLACES this list wholesale.
+            "monitor365.service"
             "immich-server.service"
             # ML is pool-bound too (RequiresMountsFor /mnt/pool/services/immich)
             # and the 2026-10-04 remount stopped it with everything else — but

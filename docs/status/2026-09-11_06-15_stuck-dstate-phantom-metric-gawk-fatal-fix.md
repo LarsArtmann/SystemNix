@@ -110,44 +110,44 @@ VM test assertions: (1) bug form emits NOTHING on a vanished entry (deterministi
 
 **Blocking / immediate:**
 
-1. Run `nix run .#deploy && nix run .#pre-reboot-check` (user; toplevel is cached).
-2. Post-deploy: confirm §10 green across ≥3 collector cycles AND `system_stuck_dstate_processes 0` present.
-3. The owed reboot — clears the flm EADDRINUSE corpse (:52626 pinned by Z+X thread pair), historical D-state corpses, and re-arms clean socket activation. Run pre-reboot-check first (it exists for exactly this).
-4. Root-fs chunk headroom: `btrfs_health_critical 1` live (unalloc 4% now; was 0% at 03:22 when gc-guard aborted). Emergency-reserve runbook (rm reserve → quiet → bounded balance → re-provision) — coordinate with the parallel `/data` session first.
-5. InboxClean main account: re-consent via OAuth runbook (`docs/services/inboxclean.md`); sync has been failing `gmail.token_revoked` every 30-min tick.
+~~1. Run `nix run .#deploy && nix run .#pre-reboot-check` (user; toplevel is cached).~~ done — fix landed + metric emitted (modules/nixos/services/system-health.nix:1496-1498); deployed via later waves
+~~2. Post-deploy: confirm §10 green across ≥3 collector cycles AND `system_stuck_dstate_processes 0` present.~~ **Won't implement — stale multi-cycle verify.**
+~~3. The owed reboot — clears the flm EADDRINUSE corpse (:52626 pinned by Z+X thread pair), historical D-state corpses, and re-arms clean socket activation. Run pre-reboot-check first (it exists for exactly this).~~ **Won't implement — superseded: corpse moot 2026-09-30 (docs/todo/stability.md).**
+~~4. Root-fs chunk headroom: `btrfs_health_critical 1` live (unalloc 4% now; was 0% at 03:22 when gc-guard aborted). Emergency-reserve runbook (rm reserve → quiet → bounded balance → re-provision) — coordinate with the parallel `/data` session first.~~ **Won't implement — superseded: recovery + balance automation since; unalloc healthy.**
+5. InboxClean main account: re-consent via OAuth runbook (`docs/services/inboxclean.md`); sync has been failing `gmail.token_revoked` every 30-min tick. **→ InboxClean re-consent carried by service rows (docs/todo/services.md InboxClean section)**
 
 **Monitoring integrity (from this session's evidence):**
-6. Add fail-visible scrape-error gauge for the stuck-dstate section (see (e)1).
-7. Fix SIGTERM tmp-leak in system-health collector ((e)2).
-8. Tame pocket-id busy journal scan timeouts ((e)3).
-9. `niri.prom.tmp` (lars-owned, zero-byte, **Sep 3**) still sits in the textfile dir — the exact foreign-owned-leftover class that wedged collectors before; clean it and let the audit script own the class.
-10. Stale `monitor365-backup.prom` (Aug 2, `monitor365_backup_age_hours 999`) from the long-disabled service — remove the file or the backup-coordination entry so `backup_all_healthy` isn't forever orange-adjacent.
-11. `btrfs_scrub_status 3` (interrupted) on BOTH `/` and `/data` — frequent-unsafe-shutdown class; verify next weekly scrub completes or re-run manually post-reboot.
-12. Gatus: verify the "Stuck D-State Processes" check flips green post-deploy (it was the permanently-red consumer of the phantom metric).
-13. `service-health-check.service` failed = it reports the other 3 failures; will self-resolve as they do — verify, don't debug it directly (documented trap).
+6. Add fail-visible scrape-error gauge for the stuck-dstate section (see (e)1). **→ stuck-dstate fail-visible gauge + section budgets tracked (docs/todo/monitoring.md budgets + collector decomposition)**
+7. Fix SIGTERM tmp-leak in system-health collector ((e)2). **→ SIGTERM tmp-leak leg tracked (docs/todo/monitoring.md textfile .tmp audit)**
+~~8. Tame pocket-id busy journal scan timeouts ((e)3).~~ done — pocket-id busy scan now fail-visible (system-health.nix:1429 system_pocket_id_busy_scrape_errors)
+~~9. `niri.prom.tmp` (lars-owned, zero-byte, **Sep 3**) still sits in the textfile dir — the exact foreign-owned-leftover class that wedged collectors before; clean it and let the audit script own the class.~~ done — textfile tmp class owned by scripts/audit-textfile-tmp.sh
+~~10. Stale `monitor365-backup.prom` (Aug 2, `monitor365_backup_age_hours 999`) from the long-disabled service — remove the file or the backup-coordination entry so `backup_all_healthy` isn't forever orange-adjacent.~~ **Won't implement — stale leftover-file cleanup.**
+~~11. `btrfs_scrub_status 3` (interrupted) on BOTH `/` and `/data` — frequent-unsafe-shutdown class; verify next weekly scrub completes or re-run manually post-reboot.~~ **Won't implement — stale; scrub now checked via staleness/incomplete checks (gatus-config.nix:890-929).**
+~~12. Gatus: verify the "Stuck D-State Processes" check flips green post-deploy (it was the permanently-red consumer of the phantom metric).~~ **Won't implement — stale; Stuck D-State check moved to infra check set (docs/agents/integration-registry.md).**
+~~13. `service-health-check.service` failed = it reports the other 3 failures; will self-resolve as they do — verify, don't debug it directly (documented trap).~~ **Won't implement — stale; self-resolved long since.**
 
 **Hardware/filesystem signals noticed in the metrics dump (not investigated this session):**
-14. `node_btrfs_device_errors_total{device="nvme1n1p2",type="corruption"} 12` — the Samsung `/nix` member; trend it.
-15. `nvme0n1p8 (/data) corruption = 1.84e19` (UINT64_MAX read-error sentinel) — the known /data EIO inode P0; the parallel session owns repair.
-16. `nvme0n1p6 (root) corruption = 1` — single, likely bounded; check scrub delta next cycle (bounded-vs-progressing doctrine).
-17. PSI memory some avg60 = 11.5% sustained-ish — under trip zones but unusually high baseline; watch post-reboot.
-18. zram 71.9% at 53.7% MemAvailable — healthy per doctrine; no action, listed to prevent someone "fixing" it.
-19. memory-emergency-guard totals: 67 trips / 16 restores lifetime — busy box; Zone 2 (35) dominates → shmem-unevictable class; post-reboot baseline comparison would be informative.
-20. Deploy start showed `eval-cache-v6 … sqlite is busy` — parallel-session eval cache contention; benign but a sign N sessions hammer the same eval cache.
+14. `node_btrfs_device_errors_total{device="nvme1n1p2",type="corruption"} 12` — the Samsung `/nix` member; trend it. **→ Samsung corruption-counter triage tracked (docs/todo/storage.md)**
+15. `nvme0n1p8 (/data) corruption = 1.84e19` (UINT64_MAX read-error sentinel) — the known /data EIO inode P0; the parallel session owns repair. **→ /data sentinel rides storage.md repair + corruption rows**
+~~16. `nvme0n1p6 (root) corruption = 1` — single, likely bounded; check scrub delta next cycle (bounded-vs-progressing doctrine).~~ **Won't implement — stale point-in-time metric observations.**
+~~17. PSI memory some avg60 = 11.5% sustained-ish — under trip zones but unusually high baseline; watch post-reboot.~~ **Won't implement — stale point-in-time metric observations.**
+~~18. zram 71.9% at 53.7% MemAvailable — healthy per doctrine; no action, listed to prevent someone "fixing" it.~~ **Won't implement — stale point-in-time metric observations.**
+~~19. memory-emergency-guard totals: 67 trips / 16 restores lifetime — busy box; Zone 2 (35) dominates → shmem-unevictable class; post-reboot baseline comparison would be informative.~~ **Won't implement — stale point-in-time metric observations.**
+~~20. Deploy start showed `eval-cache-v6 … sqlite is busy` — parallel-session eval cache contention; benign but a sign N sessions hammer the same eval cache.~~ **Won't implement — stale point-in-time metric observations.**
 
 **Hardening / class-prevention:**
 21. Static audit script for glob→awk file-arg patterns (pre-commit + CI) ((e)4).
-22. Consider `timeout 10` around the STUCK_DSTATE scan itself (procfs is fast, but the class deserves a ceiling like every other IO-capable section).
-23. Extend `audit-textfile-tmp.sh` to also flag zero-length `.prom.*` leftovers older than N hours (early warning of collector kills).
-24. Document in CONTRIBUTING that new textfile-collector sections MUST pair with a scrape-error gauge (eval-time or lint-enforced if possible).
-25. GC the two other zero-length `system_health.prom.*` leftovers after fixing the trap (they're inert but clutter + confusing during forensics — as this session proved).
+22. Consider `timeout 10` around the STUCK_DSTATE scan itself (procfs is fast, but the class deserves a ceiling like every other IO-capable section). **→ STUCK_DSTATE timeout ceiling rides section-budget row (docs/todo/monitoring.md)**
+~~23. Extend `audit-textfile-tmp.sh` to also flag zero-length `.prom.*` leftovers older than N hours (early warning of collector kills).~~ done — zero-length leftover detection owned by scripts/audit-textfile-tmp.sh
+~~24. Document in CONTRIBUTING that new textfile-collector sections MUST pair with a scrape-error gauge (eval-time or lint-enforced if possible).~~ **Won't implement — process note never adopted.**
+~~25. GC the two other zero-length `system_health.prom.*` leftovers after fixing the trap (they're inert but clutter + confusing during forensics — as this session proved).~~ **Won't implement — stale tmp-file GC.**
 
 **Debt / hygiene from this session:**
-26. `docs/services/inboxclean.md`: add the "token revoked AGAIN within ~7 days of the 09-04 fix" recurrence note — either the consent screen reverted to Testing, or the user revoked access; needs the GCP console check (question g1).
-27. Consider whether the §10 gate should distinguish "collector intermittently absent" (retry-once-with-sleep) from "permanently absent" (hard fail) — one transient cycle blocking a full deploy is expensive; the retry would have unblocked the user's original run without any fix.
-28. AGENTS.md: correct "(2026-09-11 … 05:41)" precision to "~05:41 (inferred)" — one-line annotation when next touching that bullet.
-29. The parallel session's `data-corruption-repair.sh` landed on master via daemon batch — verify it was intended to be committed before building on it.
-30. Re-check `docs/gotchas-archive.md` cross-link for the gawk-fatal incident (full narrative belongs there per the repo's doc layout; AGENTS has the rule, archive has the story).
+~~26. `docs/services/inboxclean.md`: add the "token revoked AGAIN within ~7 days of the 09-04 fix" recurrence note — either the consent screen reverted to Testing, or the user revoked access; needs the GCP console check (question g1).~~ **Won't implement — stale runbook annotation.**
+~~27. Consider whether the §10 gate should distinguish "collector intermittently absent" (retry-once-with-sleep) from "permanently absent" (hard fail) — one transient cycle blocking a full deploy is expensive; the retry would have unblocked the user's original run without any fix.~~ **Won't implement — never implemented; single transient class.**
+~~28. AGENTS.md: correct "(2026-09-11 … 05:41)" precision to "~05:41 (inferred)" — one-line annotation when next touching that bullet.~~ **Won't implement — trivial annotation.**
+~~29. The parallel session's `data-corruption-repair.sh` landed on master via daemon batch — verify it was intended to be committed before building on it.~~ **Won't implement — stale commit-provenance check.**
+~~30. Re-check `docs/gotchas-archive.md` cross-link for the gawk-fatal incident (full narrative belongs there per the repo's doc layout; AGENTS has the rule, archive has the story).~~ **Won't implement — stale cross-link; archive carries gawk narratives.**
 
 # g) Questions I can NOT figure out myself
 

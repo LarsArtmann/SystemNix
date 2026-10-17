@@ -173,7 +173,8 @@ _: {
       # pool start. 30% matches the migrate-_ entry-gate row (the storm is
       # already self-sustaining at that band; freeze-25's plateau sat at
       # ~34 under a wedged sdb1).
-      psiGatePercent = 30;    in
+      psiGatePercent = 30;
+    in
     {
       config = lib.mkIf cfg.enable {
         services.tq-agent-pool = {

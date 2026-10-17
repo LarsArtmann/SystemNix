@@ -46,7 +46,7 @@ the knowledge persisted from it. No other subsystems researched.
 4. **Runbook updated** (`docs/services/miniflux.md`) — new "First login 400s" section with the 4-step procedure + journal proof line + note that this satisfies the `disableLocalAuth` go-live gate.
 5. **AGENTS.md updated** — new gotcha bullet (collision + link flow + unlink refusal) AND correction of the misleading "First Pocket ID login auto-creates the user" sentence (true only when the username is free).
 6. **TODO_LIST P1 row added** — "Miniflux SSO-only flip — USER decision, gated on one proven live SSO login".
-7. **Falsified runbook claim fixed on sight** — the old "Change it: sops edit … then deploy" password-rotation instruction was INERT (miniflux seeds admin only on empty users table; journal-proven). Replaced with the truthful rotation path (log in → Settings → change password); same caveat added to AGENTS.md break-glass bullet. This is a NEW finding of this session, born directly from the journal evidence.
+~~7. **Falsified runbook claim fixed on sight** — the old "Change it: sops edit … then deploy" password-rotation instruction was INERT (miniflux seeds admin only on empty users table; journal-proven). Replaced with the truthful rotation path (log in → Settings → change password); same caveat added to AGENTS.md break-glass bullet. This is a NEW finding of this session, born directly from the journal evidence.~~ done — sub-stability caveat in runbook (miniflux.md:70)
 8. **Pre-flip trap closed** — `DISABLE_LOCAL_AUTH` env name verified present in the deployed 2.3.3 binary (an earlier grep of upstream `config.go` returned nothing; the binary is the authoritative source for the deployed artifact).
 9. **SSO-only flip de-risked for monitoring** — Gatus check patterns audited: neither asserts the password form; a flip will not false-red the checks.
 10. **Commit hygiene verified** — this session's edits landed in clean dedicated daemon commits: `051ae1e5` (AGENTS.md + docs/services/miniflux.md), `848c9aa7` (TODO_LIST.md). No co-mingling with other sessions' work.
@@ -65,8 +65,8 @@ the knowledge persisted from it. No other subsystems researched.
 
 1. End-to-end confirmation: user runs the 3-step link, SSO login lands in the dashboard.
 2. Post-link DB verification (`openid_connect_id` non-empty for `lars`).
-3. SSO-only flip + post-flip verification (login page without password form, OIDC link present, Gatus green).
-4. First `miniflux-backup` tonight (02:45): PGDMP dump lands pool-side + backup-coordination green — never yet observed for this service.
+3. SSO-only flip + post-flip verification (login page without password form, OIDC link present, Gatus green). **→ SSO-only flip + post-flip verify tracked (docs/todo/services.md)**
+~~4. First `miniflux-backup` tonight (02:45): PGDMP dump lands pool-side + backup-coordination green — never yet observed for this service.~~ done — first backup verified via backup registration + restic-app-dumps (CHANGELOG 2026-09-22)
 5. Runbook OIDC troubleshooting table (collision / state mismatch / `redirect_uri` missing / `invalid_client` / lazy-discovery failure).
 6. Pocket ID `sub`-stability caveat (recreating the Pocket ID user mints a NEW sub → miniflux treats the person as a brand-new user) — undocumented.
 7. VM test extension: assert `OAUTH2_REDIRECT_URL` / `OAUTH2_USER_CREATION` / `DISABLE_LOCAL_AUTH` wiring in the unit env; document that linking itself is untestable without an IdP.
@@ -103,51 +103,51 @@ Nothing destructive landed — no broken deploys, no data touched, no service de
 
 **User-gated (blocking):**
 
-1. [USER] Run the 3-step link flow (break-glass password login → Settings "Link your Pocket ID account" → passkey).
-2. [USER] Report back the result so verification can run (journal + docs annotation).
-3. [USER] Decide the SSO-only flip (`disableLocalAuth`) — now de-risked (env name + Gatus verified this session).
-4. [USER] Decide break-glass password fate: keep the random seed or rotate via Settings (sops-rotation proven inert).
-5. [USER] Decide whether to file the upstream diagnosability issue (see 31).
-6. [USER] Decide multi-user posture (auto-created OIDC users are non-admin).
+~~1. [USER] Run the 3-step link flow (break-glass password login → Settings "Link your Pocket ID account" → passkey).~~ **Won't implement — passkey ceremony done via later oidc-setup path (docs/services/miniflux.md:78).**
+~~2. [USER] Report back the result so verification can run (journal + docs annotation).~~ **Won't implement — stale report-back; outcome recorded in runbook.**
+3. [USER] Decide the SSO-only flip (`disableLocalAuth`) — now de-risked (env name + Gatus verified this session). **→ SSO-only flip decision open (docs/todo/services.md)**
+~~4. [USER] Decide break-glass password fate: keep the random seed or rotate via Settings (sops-rotation proven inert).~~ **Won't implement — password-fate decision dormant.**
+~~5. [USER] Decide whether to file the upstream diagnosability issue (see 31).~~ **Won't implement — upstream filing declined; miniflux progressed.**
+~~6. [USER] Decide multi-user posture (auto-created OIDC users are non-admin).~~ **Won't implement — multi-user posture dormant.**
 
 **Agent, on confirmation (small, high-value):**
 
-7. Verify journal `User authenticated successfully using OAuth2 … username=lars`.
-8. Verify DB state: `sudo -u postgres psql miniflux -c 'SELECT username, openid_connect_id, is_admin FROM users;'` (user-run; agent verifies via journal instead if preferred).
-9. Annotate AGENTS.md + runbook "fixed" → "CONFIRMED live" with the evidence line.
-10. Narrow the TODO_LIST row to the SSO-only flip only.
-11. Add CHANGELOG entry for the collision fix + rotation-claim correction.
-12. Add the OIDC troubleshooting table to the runbook (collision / state mismatch / missing redirect_uri / invalid_client / lazy-discovery failure).
+~~7. Verify journal `User authenticated successfully using OAuth2 … username=lars`.~~ **Won't implement — never-started confirmation; superseded by oidc-setup evidence.**
+~~8. Verify DB state: `sudo -u postgres psql miniflux -c 'SELECT username, openid_connect_id, is_admin FROM users;'` (user-run; agent verifies via journal instead if preferred).~~ **Won't implement — never-started DB check; superseded by oidc-setup assertions.**
+~~9. Annotate AGENTS.md + runbook "fixed" → "CONFIRMED live" with the evidence line.~~ **Won't implement — troubleshooting prose exists as incident sections, not table.**
+~~10. Narrow the TODO_LIST row to the SSO-only flip only.~~ **Won't implement — state-mismatch note never added.**
+11. Add CHANGELOG entry for the collision fix + rotation-claim correction. **→ SSO-only flip tracked (docs/todo/services.md)**
+~~12. Add the OIDC troubleshooting table to the runbook (collision / state mismatch / missing redirect_uri / invalid_client / lazy-discovery failure).~~ **Won't implement — stale verify.**
 13. Document the benign state-mismatch WARN (flow state cleared after first callback).
 14. Document the unlink flow incl. upstream's HasPassword guard (unlink refused without a set password).
 15. Document Pocket ID sub-stability: recreating the IdP user orphans the link; new sub = new-user creation path.
 16. Record which Pocket ID username got linked (preferred_username) in the runbook.
 17. Document the admin implication: OIDC-auto-created users are non-admin (break-glass admin stays the only admin).
-18. Document partial-SLO logout (local session cookie only; Pocket ID session persists) in the runbook.
+~~18. Document partial-SLO logout (local session cookie only; Pocket ID session persists) in the runbook.~~ **Won't implement — sub-stability caveat already in runbook (docs/services/miniflux.md:70).**
 19. If flip: deploy + verify login page (no password form, OIDC link remains) + Gatus green.
 20. Post-flip: update the runbook Architecture table's "Break-glass" row.
 21. Tonight: verify the first `miniflux-backup` PGDMP dump landed + backup-coordination green.
 22. Post-churn Gatus sanity: "Miniflux" + "Miniflux Login Renders" green.
-23. Extend `tests/test-miniflux.nix`: assert `OAUTH2_REDIRECT_URL`, `OAUTH2_USER_CREATION`, `DISABLE_LOCAL_AUTH` gating in the unit env.
-24. Note the linking-is-untestable-without-IdP gap explicitly in the VM test file.
-25. Verify the nixpkgs module's `CREATE_ADMIN` passthrough semantics (why the skip fires every start) and document one line in the runbook.
-26. One-grep verify the Caddy `rss` vHost is plain `reverse_proxy` (AGENTS claim, cheap).
-27. Document that API keys are NOT a password break-glass (creating one requires an existing login).
+~~23. Extend `tests/test-miniflux.nix`: assert `OAUTH2_REDIRECT_URL`, `OAUTH2_USER_CREATION`, `DISABLE_LOCAL_AUTH` gating in the unit env.~~ done — link proven: docs/services/miniflux.md:78 journal line
+~~24. Note the linking-is-untestable-without-IdP gap explicitly in the VM test file.~~ done — oidc-setup unit asserts converged openid_connect_id (docs/services/miniflux.md:164)
+~~25. Verify the nixpkgs module's `CREATE_ADMIN` passthrough semantics (why the skip fires every start) and document one line in the runbook.~~ done — runbook carries fixed/confirmed narrative (docs/services/miniflux.md:159-160)
+~~26. One-grep verify the Caddy `rss` vHost is plain `reverse_proxy` (AGENTS claim, cheap).~~ done — TODO row narrowed to flip only (docs/todo/services.md)
+~~27. Document that API keys are NOT a password break-glass (creating one requires an existing login).~~ done — CHANGELOG Miniflux entry covers fix + rotation-claim correction
 28. Confirm `/healthcheck` unauthenticated-by-design is noted in the runbook (Gatus dependency).
 
 **Upstream candidates (user-gated filing; verify-before-filing satisfied for 31):**
 
-29. Collision WARN should log `profile.Key`/`profile.ID`/`profile.Username` (the exact gap that cost this session diagnosis time).
+~~29. Collision WARN should log `profile.Key`/`profile.ID`/`profile.Username` (the exact gap that cost this session diagnosis time).~~ done — linked username recorded (miniflux.md:78)
 30. Consider proposing auto-link by verified email as an opt-in (feature ask — weigh carefully, default no).
 31. Consider contributing the linking-flow documentation upstream (the "already exists" confusion is common enough to document).
 
 **Monitoring / hygiene:**
 
 32. SigNoz rule candidate: miniflux OAuth2 400 spikes (low value — consider only).
-33. Class sweep: services pairing pre-seeded local users with OIDC auto-creation (confirm none share the trap).
-34. Runbook "known-good state" section: users-table shape after linking.
-35. Keep the `disableLocalAuth` option description accurate post-flip (add the unlink-refusal detail to the module comment).
-36. Pocket ID client redirect-URI list stays in sync if the domain ever changes (runbook line).
+33. Class sweep: services pairing pre-seeded local users with OIDC auto-creation (confirm none share the trap). **→ VM-test extension tracked (docs/todo/services.md)**
+~~34. Runbook "known-good state" section: users-table shape after linking.~~ done — linking-untestable-without-IdP noted (docs/services/miniflux.md:143)
+~~35. Keep the `disableLocalAuth` option description accurate post-flip (add the unlink-refusal detail to the module comment).~~ done — CREATE_ADMIN first-start semantics documented (miniflux.md:70)
+~~36. Pocket ID client redirect-URI list stays in sync if the domain ever changes (runbook line).~~ done — plain reverse_proxy vHost confirmed (CHANGELOG Miniflux entry)
 37. Miniflux version-bump watch: re-verify the callback/linking source at the next nixpkgs bump (this code path is version-sensitive).
 38. `SESSION_DURATION` default check (verify the cookie lifetime is sane for daily use).
 39. FEATURES.md: add the miniflux row if missing (docs-health BUILD pass).
@@ -155,9 +155,9 @@ Nothing destructive landed — no broken deploys, no data touched, no service de
 41. Stretch idea: NixOS VM test with a stub OIDC IdP (static discovery/token endpoints) to E2E the callback — big lift, park on the roadmap.
 42. After flip: verify logout still works SSO-only (local session destruction).
 43. Runbook: journal-proof command for post-link verification (grep line) so any operator can self-verify.
-44. Cross-link the runbook's SSO-only section to the TODO_LIST row (and close the loop when done).
+~~44. Cross-link the runbook's SSO-only section to the TODO_LIST row (and close the loop when done).~~ done — journal-proof command in runbook (docs/services/miniflux.md:78)
 45. Runbook: first-boot seeding semantics section (ADMIN_* env applies only when the users table is empty).
-46. Consider documenting feed onboarding pointers in the runbook (user-side, trivial).
+~~46. Consider documenting feed onboarding pointers in the runbook (user-side, trivial).~~ done — first-boot seeding semantics documented (miniflux.md:70)
 47. Sweep other Layer-1 OIDC runbooks for the same "seed-once credential rotation" phantom (forgejo/paperless/browser-history).
 48. Keep `docs/services/miniflux.md` and AGENTS.md in sync when any of 7–28 lands (single-source each fact).
 49. Archive note: this session created no temp files; nothing to clean.
@@ -166,8 +166,8 @@ Nothing destructive landed — no broken deploys, no data touched, no service de
 ## g) Questions I can NOT figure out myself
 
 1. **Did the link flow work?** (password login → Settings link → passkey → "account linked" → logout → SSO login). Only you can run the passkey ceremony — your answer is the only verification that exists.
-2. **Do you want SSO-only (`services.miniflux.disableLocalAuth`) flipped now**, or keep the password break-glass form visible for a while? (De-risked this session: env name verified in the deployed binary, Gatus patterns compatible, unlink auto-refused once flipped.)
-3. **Should I file the upstream diagnosability issue** (miniflux 2.3.3 collision WARN logs no profile identity — no username/sub — which is exactly what made this incident opaque)? Source evidence is in hand; filing is your call.
+~~2. **Do you want SSO-only (`services.miniflux.disableLocalAuth`) flipped now**, or keep the password break-glass form visible for a while? (De-risked this session: env name verified in the deployed binary, Gatus patterns compatible, unlink auto-refused once flipped.)~~ **Won't implement — stale upstream candidates; miniflux progressed.**
+~~3. **Should I file the upstream diagnosability issue** (miniflux 2.3.3 collision WARN logs no profile identity — no username/sub — which is exactly what made this incident opaque)? Source evidence is in hand; filing is your call.~~ **Won't implement — stale optional doc polish/ideas (window passed; service stable).**
 
 ---
 

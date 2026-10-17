@@ -32,7 +32,7 @@
 
 1. **Fish guard automation** — manual /tmp tests only; nothing in `tests/` persists the behavior, so a future fish.nix refactor can silently rot the guard.
 2. **Guard coverage gaps (known, unfixed)** — (i) btrfs GLOBAL flags between `btrfs` and `subvolume` (`sudo btrfs -q sub del …`) break the token-walk detection; (ii) flags AFTER the delete token (e.g. `--verbose`) get listed as "paths" (cosmetic); (iii) `sudo -i` / `sudo -s` drop into an unguarded root bash — inherent, can only be narrowed, never closed; (iv) clearing the flag itself (`sudo chattr -a /mnt/btrfs-root/.rescue`) is unguarded — that's the disarm step of the whole tier.
-3. **Deploy-time convergence of the rescue unit** — boot-run proven in the VM; deploy-time start relies on stc starting newly-wanted multi-user units (same pattern as btrfs-emergency-reserve) — reasoned, not yet observed live. First deploy verifies.
+~~3. **Deploy-time convergence of the rescue unit** — boot-run proven in the VM; deploy-time start relies on stc starting newly-wanted multi-user units (same pattern as btrfs-emergency-reserve) — reasoned, not yet observed live. First deploy verifies.~~ done — deploy-convergence question settled via OnBootSec timers (CHANGELOG 2026-10-06 boot critical-path; docs/todo/stability.md)
 4. **Alert delivery for the 5-day reserve red** — confirmed the CHECK evaluates red; did NOT confirm Discord delivery or why the user never noticed.
 
 ## c) NOT STARTED (identified this session, deliberately deferred)
@@ -65,29 +65,29 @@
 
 **P0 — user actions / tonight:**
 
-1. `nix run .#deploy` (activates the whole stack; rescue tier converges at activation)
-2. Post-deploy verify: `systemctl status btrfs-rescue-snapshot` (active, stamp=1), `ls /mnt/btrfs-root/.rescue/` (≥1), metrics present; open a NEW fish terminal and dry-run the guard
-3. EXPECT exactly one red window: "BTRFS Snapshot Canary" until 23:00 (true state, self-heals)
-4. Tomorrow: verify the 23:00 full send + chain re-anchor (`journalctl -u btrbk-root --since "2026-09-12 23:00"`, incremental `>>>` lines)
-5. `sudo systemctl start btrfs-emergency-reserve` (5 days absent; check confirmed red over it)
-6. Attic store-rebuild sanity → `sudo btrfs subvolume delete /mnt/btrfs-root/@nix` (118G)
-7. Confirm the reserve alert actually DELIVERED to Discord over the last 5 days (gatus journal vs channel)
+~~1. `nix run .#deploy` (activates the whole stack; rescue tier converges at activation)~~ done — protection stack deployed (CHANGELOG 2026-09-12; live per CHANGELOG 2026-10-06 OnBootSec)
+~~2. Post-deploy verify: `systemctl status btrfs-rescue-snapshot` (active, stamp=1), `ls /mnt/btrfs-root/.rescue/` (≥1), metrics present; open a NEW fish terminal and dry-run the guard~~ **Won't implement — stale deploy-night verify steps.**
+~~3. EXPECT exactly one red window: "BTRFS Snapshot Canary" until 23:00 (true state, self-heals)~~ **Won't implement — stale deploy-night verify steps.**
+~~4. Tomorrow: verify the 23:00 full send + chain re-anchor (`journalctl -u btrbk-root --since "2026-09-12 23:00"`, incremental `>>>` lines)~~ **Won't implement — stale deploy-night verify steps.**
+~~5. `sudo systemctl start btrfs-emergency-reserve` (5 days absent; check confirmed red over it)~~ done — reserve provisioned on-boot by config (io-tier-coverage-audit.nix:132)
+~~6. Attic store-rebuild sanity → `sudo btrfs subvolume delete /mnt/btrfs-root/@nix` (118G)~~ done — @nix deleted 2026-09-20 (planning T22 done)
+~~7. Confirm the reserve alert actually DELIVERED to Discord over the last 5 days (gatus journal vs channel)~~ **NOT-DO — dup of b4 alert delivery.**
 
 **P1 — hardening this stack:**
 8. Fish guard: chattr -a/-i disarm confirmation on `.rescue`/`.snapshots`
 9. Fish guard: tolerate btrfs global flags before the subcommand; filter post-delete flags from the path list
-10. Fish guard test harness (build-time; source the hook text into fish -c cases)
+~~10. Fish guard test harness (build-time; source the hook text into fish -c cases)~~ **NOT-DO — dup of b1 fish guard harness.**
 11. /data + pool snapshot legs: count canaries first (`btrfs_data_snapshots`, `btrfs_pool_snapshots`), rescue tier for /data if wanted
 12. post-deploy-check.sh §: rescue unit active + `.rescue` non-empty + stamp=1 + fish hook present in rendered config
 13. `scripts/audit-embedded-shell.sh` pre-commit gate (SC2010 + unescaped `${` classes)
-14. Observe + document whether stc starts the rescue unit at deploy (b.3) — if not, add to deploy.sh restart list per AGENTS rule
+~~14. Observe + document whether stc starts the rescue unit at deploy (b.3) — if not, add to deploy.sh restart list per AGENTS rule~~ done — stc-at-deploy question settled via OnBootSec (CHANGELOG 2026-10-06)
 15. system-health `monitoredServices` += btrfs-rescue-snapshot
 
 **P2 — polish/observability:**
 16. SigNoz panel (snapshot counts + append-only gauge history)
 17. `.rescue` extent-size metric (`compsite`-based) to quantify the pinning cost of keep=2
 18. Consider keep=3 after observing a week of rotation
-19. Alert-fatigue audit: enumerate checks red >48h (one-off script) — the reserve case is the template
+~~19. Alert-fatigue audit: enumerate checks red >48h (one-off script) — the reserve case is the template~~ **Won't implement — meta re-check of superseded questions.**
 20. docs runbook: fold the rescue tier + guard + canary into a `docs/services/btrfs.md` (currently the knowledge lives in AGENTS.md only)
 21. Re-check the three prior-session open questions' status in TODO (deleted-contents inventory, timing, go/no-go — #3 now answered by this session)
 

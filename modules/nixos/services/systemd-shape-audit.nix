@@ -232,8 +232,9 @@
       # --- class 8: OnFailure nested inside serviceConfig ---
       # OnFailure is a [Unit] key; rendered under [Service] systemd ignores
       # it with a journal warning and failure escalation never arms.
-      onFailureInServiceConfigOffenders =
-        lib.attrNames (lib.filterAttrs (_n: svc: svc.serviceConfig ? OnFailure) config.systemd.services);
+      onFailureInServiceConfigOffenders = lib.attrNames (
+        lib.filterAttrs (_n: svc: svc.serviceConfig ? OnFailure) config.systemd.services
+      );
     in
     {
       options.services.systemd-shape-audit = {

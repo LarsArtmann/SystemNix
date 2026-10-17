@@ -45,11 +45,12 @@
           # module import in systems/evo-x2.nix, not mkLarsPackages;
           # the old vendorHash-override exclusion reason died with the
           # override itself, dropped 2026-09-03 — the daemon build is
-          # exercised by every `nixos-rebuild switch`), monitor365 (its
-          # wireguard-collector git dep is a PRIVATE crate that 404s on
-          # anonymous fetch — the documented reason the service is
-          # disabled since 2026-08-12; a permanent red, not drift —
-          # first quick-go run proved exactly this), cv (built with its
+          # exercised by every `nixos-rebuild switch`), monitor365 (master-
+          # tracking heavy Rust workspace — kept out of the Go-focused
+          # batch after the 2026-10-18 service re-enable: the toplevel
+          # build/§11 dry-run surfaces its FODs at deploy time; a full
+          # Rust rebuild inside every pre-deploy batch is freeze-class
+          # build load, not early signal), cv (built with its
           # real module-level package by checks.x86_64-linux.cv), hermes
           # (Python/uv2nix, not a vendorHash class).
           quick-go = pkgs.symlinkJoin {
@@ -65,13 +66,15 @@
           };
         }
         // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-          # monitor365 REMOVED 2026-09-15: nix flake check derivationStrict's
-          # every package, and monitor365's prepared source is permanently
-          # unbuildable (private wireguard-collector crate — the 2026-08-12
-          # disable reason). The entry only ever passed via a stale
-          # store-cached drv; the first input bump after cache eviction
-          # hard-blocked every deploy at pre-deploy check 1.
+          # monitor365 back on the surface 2026-10-18 — the 2026-09-15
+          # removal premise ("prepared source permanently unbuildable,
+          # private wireguard-collector crate") is obsolete: upstream
+          # restructured to the preparedSrc pattern (family crates as flake
+          # inputs fetched OUTSIDE the sandbox), locked here since
+          # 2026-10-16 (d2c77df8c). Still excluded from quick-go (see
+          # comment above).
           inherit (pkgs)
+            monitor365
             openaudible
             openseo
             dnsblockd

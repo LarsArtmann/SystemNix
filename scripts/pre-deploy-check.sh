@@ -550,10 +550,10 @@ probe_endpoint() {
   code=$(curl -s --compressed --max-time 5 -o "$PROBE_DIR/$1.body" -w '%{http_code}' "http://127.0.0.1:$2/metrics" 2>/dev/null) || code=000
   printf '%s\n' "$code" >"$PROBE_DIR/$1.code"
   case "$code" in
-    # Mirror of the old `curl -sf`: no ok-marker on transport failure
-    # (000) or HTTP error statuses (4xx/5xx).
-    000 | [45][0-9][0-9]) ;;
-    *) : >"$PROBE_DIR/$1.ok" ;;
+  # Mirror of the old `curl -sf`: no ok-marker on transport failure
+  # (000) or HTTP error statuses (4xx/5xx).
+  000 | [45][0-9][0-9]) ;;
+  *) : >"$PROBE_DIR/$1.ok" ;;
   esac
 }
 

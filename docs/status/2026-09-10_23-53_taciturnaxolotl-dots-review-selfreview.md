@@ -20,19 +20,19 @@
 
 ## b) PARTIALLY DONE 🟡
 
-1. **Crash-sweep completeness**: journalctl-based sweeps are clean, but `systemctl show nix-daemon -p NRestarts` was BLOCKED (session security policy denies systemctl) and `coredumpctl` was inconclusive (blocked/timed out). The zero-hits claim rests on journal evidence only. Labeled as such in the research doc.
-2. **"Our outage modes fail fast" chain**: the NXDOMAIN path is live-documented (2026-09-02 incident, AGENTS.md); the Caddy-502 path is REASONED from documented behavior (atticd is mount-gated per AGENTS) but not live-tested this session. Honest label: plausible-from-documented-behavior.
-3. **TODO_LIST dedupe**: I read P0/P1/P1.5 in full before adding the new row but NOT P2–P7 (huge file, session kept scope tight) — duplicate risk against P3 Infrastructure/Prevention rows is unverified.
-4. **dots tree coverage ~60%**: ghrpc internals, pbnj docs, bore-auth Go source, build-iso.yml, secrets.md, per-machine home configs were skimmed via their AGENTS/README, not read. Enough for the stated conclusions; not exhaustive.
-5. **(f)-list routing**: per the status-report skill, section (f) is HARVEST fuel for TODO_LIST/ROADMAP — deliberately NOT bulk-harvested now (user said report-then-wait; most items below are one-liners or user decisions, and blind harvesting risks the same dedupe gap as (3)).
+~~1. **Crash-sweep completeness**: journalctl-based sweeps are clean, but `systemctl show nix-daemon -p NRestarts` was BLOCKED (session security policy denies systemctl) and `coredumpctl` was inconclusive (blocked/timed out). The zero-hits claim rests on journal evidence only. Labeled as such in the research doc.~~ **Won't implement — stale sweep gap; zero abort hits ever observed.**
+~~2. **"Our outage modes fail fast" chain**: the NXDOMAIN path is live-documented (2026-09-02 incident, AGENTS.md); the Caddy-502 path is REASONED from documented behavior (atticd is mount-gated per AGENTS) but not live-tested this session. Honest label: plausible-from-documented-behavior.~~ **Won't implement — stale point-in-time reasoning; attic behavior re-audited 2026-09-13.**
+~~3. **TODO_LIST dedupe**: I read P0/P1/P1.5 in full before adding the new row but NOT P2–P7 (huge file, session kept scope tight) — duplicate risk against P3 Infrastructure/Prevention rows is unverified.~~ **Won't implement — stale dedupe one-shot; docs-health queue passes own dedupe.**
+~~4. **dots tree coverage ~60%**: ghrpc internals, pbnj docs, bore-auth Go source, build-iso.yml, secrets.md, per-machine home configs were skimmed via their AGENTS/README, not read. Enough for the stated conclusions; not exhaustive.~~ **Won't implement — stale review-coverage one-shot.**
+~~5. **(f)-list routing**: per the status-report skill, section (f) is HARVEST fuel for TODO_LIST/ROADMAP — deliberately NOT bulk-harvested now (user said report-then-wait; most items below are one-liners or user decisions, and blind harvesting risks the same dedupe gap as (3)).~~ done — harvest landed: manifest-audit row exists citing dots (docs/todo/pipeline.md)
 
 ## c) NOT STARTED ⬜
 
-1. **nix 2.34 daemon patch adoption decision** — deliberately deferred: zero observed hits, patching means carrying a nix overlay + from-source build. Encoded as knowledge with a "adopt on first occurrence" stance; proactive adoption is a user risk-appetite call (question g.1).
-2. **Service-completeness manifest audit implementation** — TODO row exists; no code (flake check / script / CI step) written.
+~~1. **nix 2.34 daemon patch adoption decision** — deliberately deferred: zero observed hits, patching means carrying a nix overlay + from-source build. Encoded as knowledge with a "adopt on first occurrence" stance; proactive adoption is a user risk-appetite call (question g.1).~~ **Won't implement — superseded: reactive stance held; nixpkgs moved past 2.34.**
+2. **Service-completeness manifest audit implementation** — TODO row exists; no code (flake check / script / CI step) written. **→ manifest audit open and tracked (docs/todo/pipeline.md)**
 3. **`!`-prefix narrowing sweep** of our existing `+`-prefixed ExecStartPre uses (crush-daily, clickhouse ownership-heal, browser-history/overview gates) — identified as a least-privilege improvement, not executed.
-4. **Line-number → section-anchor citations** in the research doc (fragile as written; see §d.3).
-5. **Cross-linking the sibling session's paepckehh-hardening study** — landed 4 min before this report; likely overlapping conclusions (hardening adoption from an external repo), natural to cross-reference both research docs once theirs settles.
+~~4. **Line-number → section-anchor citations** in the research doc (fragile as written; see §d.3).~~ **Won't implement — stale citation cleanup on a research doc.**
+~~5. **Cross-linking the sibling session's paepckehh-hardening study** — landed 4 min before this report; likely overlapping conclusions (hardening adoption from an external repo), natural to cross-reference both research docs once theirs settles.~~ **Won't implement — stale cross-link one-shot.**
 
 ## d) TOTALLY FUCKED UP 💥 (all caught and corrected/flagged; nothing shipped broken)
 
@@ -47,40 +47,40 @@
 ## e) WHAT WE SHOULD IMPROVE 🔧
 
 1. **"Does not exist anywhere" claims require a full-repo search** — `gh search code --repo <r> <term>` is one command; grep-of-a-few-files is not existence proof. Fold into personal application of verify-external-claims.
-2. **Durable docs cite anchors, not line numbers.**
-3. **Read the whole TODO_LIST before adding rows** (or grep it for keywords — `rg -i "manifest|completeness|registry" TODO_LIST.md` would have been the 5-second version).
-4. **Apply our own journalctl discipline from command #1** — `--grep` + `--since` + `timeout` should be muscle memory in this repo, not a correction after backgrounding.
-5. **Skill-load timing was right this session** (verify-external-claims before encoding; status-report before this report) — keep the discipline; the failure in §d.2 was APPLICATION, not loading.
-6. **Session-env restrictions**: internalize the tool denylist (ssh/systemctl/sudo denied) at session start; plan read-only alternatives (local checks, journalctl) before the first blocked round trip.
-7. **Fast-flap detection nuance noticed**: gatus 60s cadence + `system_service_restart_churn` may MISS a single fast SIGABRT→socket-restart cycle of nix-daemon. If the abort class ever fires, a dedicated churn/failure-counter sensitivity check may be wanted — noted, not actioned (no observed hits).
+~~2. **Durable docs cite anchors, not line numbers.**~~ **Won't implement — discipline note only.**
+~~3. **Read the whole TODO_LIST before adding rows** (or grep it for keywords — `rg -i "manifest|completeness|registry" TODO_LIST.md` would have been the 5-second version).~~ done — TODO-drift now mechanized: scripts/check-todo-system.sh pairing_check
+~~4. **Apply our own journalctl discipline from command #1** — `--grep` + `--since` + `timeout` should be muscle memory in this repo, not a correction after backgrounding.~~ done — journalctl bounded --grep discipline landed repo-wide (CHANGELOG IO-heavy journalctl elimination)
+~~5. **Skill-load timing was right this session** (verify-external-claims before encoding; status-report before this report) — keep the discipline; the failure in §d.2 was APPLICATION, not loading.~~ **Won't implement — skill discipline; no repo artifact.**
+~~6. **Session-env restrictions**: internalize the tool denylist (ssh/systemctl/sudo denied) at session start; plan read-only alternatives (local checks, journalctl) before the first blocked round trip.~~ **Won't implement — session-env note; superseded by harness docs.**
+~~7. **Fast-flap detection nuance noticed**: gatus 60s cadence + `system_service_restart_churn` may MISS a single fast SIGABRT→socket-restart cycle of nix-daemon. If the abort class ever fires, a dedicated churn/failure-counter sensitivity check may be wanted — noted, not actioned (no observed hits).~~ **Won't implement — conditional on an abort event that never occurred.**
 
 ## f) Things to get done next (session-scoped; ~30 — the rest is deliberately left to the standing TODO_LIST backlog)
 
-1. **USER DECISION**: adopt the nix 2.34 daemon patch proactively (overlay `appendPatches`, from-source nix build + maintenance) vs on-first-hit (current stance) — see question g.1.
-2. Implement the **service-completeness manifest audit** (TODO row added): cross-reference enabled services ⇒ Gatus + Homepage + backup-coordination + docs/services; vehicle: flake check assertion or CI script (start by extending `gatus-config.nix`'s existing endpoint list evaluation).
-3. **Dedupe-check** the new TODO row against TODO_LIST P2–P7 (grep "manifest|completeness").
-4. Convert research-doc line citations to **section anchors**.
-5. Check `nix-daemon` **NRestarts + coredumpctl** via a permitted path (root-run script or next sudo-capable session) to close the sweep gap (b.1).
-6. **Live-test the Caddy-502 substituter path** inside `tests/test-attic.nix` (attic down ⇒ fast-fail, not hang) — turns the §b.2 reasoning into a regression test for the abort-precondition.
-7. **`!` vs `+` audit**: enumerate all `+`-prefixed ExecStartPre in the repo; narrow to `!` where root identity suffices and the bounding set allows.
+~~1. **USER DECISION**: adopt the nix 2.34 daemon patch proactively (overlay `appendPatches`, from-source nix build + maintenance) vs on-first-hit (current stance) — see question g.1.~~ **Won't implement — superseded: reactive patch stance upheld; no overlay ever carried.**
+2. Implement the **service-completeness manifest audit** (TODO row added): cross-reference enabled services ⇒ Gatus + Homepage + backup-coordination + docs/services; vehicle: flake check assertion or CI script (start by extending `gatus-config.nix`'s existing endpoint list evaluation). **→ manifest audit tracked (docs/todo/pipeline.md)**
+~~3. **Dedupe-check** the new TODO row against TODO_LIST P2–P7 (grep "manifest|completeness").~~ **NOT-DO — dup of b3 dedupe.**
+~~4. Convert research-doc line citations to **section anchors**.~~ **NOT-DO — dup of c4 anchors.**
+~~5. Check `nix-daemon` **NRestarts + coredumpctl** via a permitted path (root-run script or next sudo-capable session) to close the sweep gap (b.1).~~ **NOT-DO — dup of b1 sweep gap.**
+~~6. **Live-test the Caddy-502 substituter path** inside `tests/test-attic.nix` (attic down ⇒ fast-fail, not hang) — turns the §b.2 reasoning into a regression test for the abort-precondition.~~ done — attic VM test exists + attic chain re-verified 2026-09-13 (docs/todo/pipeline.md attic rows)
+~~7. **`!` vs `+` audit**: enumerate all `+`-prefixed ExecStartPre in the repo; narrow to `!` where root identity suffices and the bounding set allows.~~ **NOT-DO — dup of c3 `!` sweep.**
 8. **stopUnits-equivalent** metadata for multi-unit services in backup-coordination (paperless/cv/immich class) — dots validated the pattern independently.
 9. Cross-link the **sibling paepckehh-hardening study** with this review once it settles (shared "external repo adoption verdict" framing).
-10. Watch **nix#3768 / nix#12871** for an upstream fix; when released, add a drop-condition to the AGENTS gotcha (it already points at dots' "drop once upstream lands a fix").
-11. Revisit dots in ~3-6 months: the nix patch status and their deploy workflow comments (dead-socket keepalives) are the two artifacts worth re-reading.
+~~10. Watch **nix#3768 / nix#12871** for an upstream fix; when released, add a drop-condition to the AGENTS gotcha (it already points at dots' "drop once upstream lands a fix").~~ **Won't implement — watch item; nixpkgs advanced past affected 2.34 line.**
+~~11. Revisit dots in ~3-6 months: the nix patch status and their deploy workflow comments (dead-socket keepalives) are the two artifacts worth re-reading.~~ **Won't implement — revisit window passed; artifacts documented.**
 12. **nixdoc-style doc comments** for `lib/default.nix` helpers (`harden`, `serviceDefaults`, `mkOidcGate`, `ioTier`…) enabling generated reference docs, dots-style.
 13. Consider a **`services-manifest` flake output** for SystemNix anyway (machine × service × port × docs-link JSON) — cheap eval, feeds item 2 and possibly Homepage layout derivation.
 14. **Restart-churn sensitivity**: verify `system_service_restart_churn` would catch a nix-daemon abort-restart cycle (e.7) — read the churn window in system-health.nix.
-15. Add the **research-doc convention** to docs-health VERIFY scope: research docs must carry verification-status tables when they encode external claims (this one does; make it a pattern).
-16. If item 1 decides PROACTIVE patching: port dots' patch verbatim (it is self-contained: `FdSink::allowInterrupts` + `processConnection`), pin via overlay in `overlays/linux.nix`, add a VM/eval check that the patched nix builds, and document the drop condition.
-17. **Session-env allowlist awareness**: record in memory that this session class denies ssh/systemctl/sudo — future sessions plan accordingly (first-tool-call economy).
-18. Sweep OUR AGENTS.md for other claims stated without a verification marker that could get the §d.2 treatment (candidates: any "X does not support Y" one-liners) — spot-check the top 5 most load-bearing ones.
-19. The dots **`ExecStartPre`-with-`!` belt-and-suspenders dir creation** pattern vs our mount-gated oneshots: document when each is correct (tmpfiles + `!` for plain dirs; oneshot + RequiresMountsFor for pool-backed ReadWritePaths) — one paragraph in the Adding-a-Service procedure.
-20. Their **`concurrency: group: deploy-<x>`** workflow pattern → if SystemNix ever gets CI deploy jobs, serialize per-host the same way; note in the deploy-runbook doc, not code.
-21. **mdBook/libdoc evaluation** (P6-grade): is a generated docs book worth it for SystemNix, or does the AGENTS.md+docs/ tree suffice? Lean: suffice — but the decision costs one reading of `nix build .#docs` effort estimates.
-22. Confirm the **auto-commit daemon** picked up this session's 4 files cleanly (no interleaving with the miniflux session's staged files — PATHSPEC-commit discipline is theirs to apply; just verify the next batch).
-23. **gatus-config.nix:1075-1078** recovery text says "Likely killed by systemd-oomd" — now there is a SECOND known kill cause (the abort bug); update the alert text to mention both (one-line edit, next touch of the file).
-24. If/when the attic VM test (item 6) lands green, add a **"substituter fast-fail"** assertion to pre-deploy-check §1's narinfo-error classification (infra-noise filter already exists there).
-25. **Do NOT** adopt: git-pull deploys, per-service sudo, Cloudflare-DNS public TLS, Caddy ratelimit plugin — recorded rationale in the research doc §7; revisit only if SystemNix's threat model changes.
+~~15. Add the **research-doc convention** to docs-health VERIFY scope: research docs must carry verification-status tables when they encode external claims (this one does; make it a pattern).~~ done — research doc carries verification-status tables (docs/research/2026-09-10_taciturnaxolotl-dots-review-vs-systemnix.md)
+~~16. If item 1 decides PROACTIVE patching: port dots' patch verbatim (it is self-contained: `FdSink::allowInterrupts` + `processConnection`), pin via overlay in `overlays/linux.nix`, add a VM/eval check that the patched nix builds, and document the drop condition.~~ **Won't implement — conditional on declined proactive patching.**
+~~17. **Session-env allowlist awareness**: record in memory that this session class denies ssh/systemctl/sudo — future sessions plan accordingly (first-tool-call economy).~~ **Won't implement — session-env note.**
+~~18. Sweep OUR AGENTS.md for other claims stated without a verification marker that could get the §d.2 treatment (candidates: any "X does not support Y" one-liners) — spot-check the top 5 most load-bearing ones.~~ done — claims-sweep class owned by docs-health VERIFY passes (CHANGELOG 2026-09-30/09-21)
+~~19. The dots **`ExecStartPre`-with-`!` belt-and-suspenders dir creation** pattern vs our mount-gated oneshots: document when each is correct (tmpfiles + `!` for plain dirs; oneshot + RequiresMountsFor for pool-backed ReadWritePaths) — one paragraph in the Adding-a-Service procedure.~~ done — `+`-prefix escape-hatch semantics documented (docs/agents/systemd.md)
+~~20. Their **`concurrency: group: deploy-<x>`** workflow pattern → if SystemNix ever gets CI deploy jobs, serialize per-host the same way; note in the deploy-runbook doc, not code.~~ **Won't implement — no CI deploys exist; local doctrine.**
+~~21. **mdBook/libdoc evaluation** (P6-grade): is a generated docs book worth it for SystemNix, or does the AGENTS.md+docs/ tree suffice? Lean: suffice — but the decision costs one reading of `nix build .#docs` effort estimates.~~ **Won't implement — lean-no decision; never pursued.**
+~~22. Confirm the **auto-commit daemon** picked up this session's 4 files cleanly (no interleaving with the miniflux session's staged files — PATHSPEC-commit discipline is theirs to apply; just verify the next batch).~~ **Won't implement — stale daemon confirm.**
+~~23. **gatus-config.nix:1075-1078** recovery text says "Likely killed by systemd-oomd" — now there is a SECOND known kill cause (the abort bug); update the alert text to mention both (one-line edit, next touch of the file).~~ **Won't implement — stale one-line alert edit; gatus surface restructured 2026-09-15 (module-owned checks).**
+~~24. If/when the attic VM test (item 6) lands green, add a **"substituter fast-fail"** assertion to pre-deploy-check §1's narinfo-error classification (infra-noise filter already exists there).~~ **Won't implement — conditional pre-deploy leg; infra-noise classification already present.**
+~~25. **Do NOT** adopt: git-pull deploys, per-service sudo, Cloudflare-DNS public TLS, Caddy ratelimit plugin — recorded rationale in the research doc §7; revisit only if SystemNix's threat model changes.~~ done — do-not-adopt list recorded (docs/research/2026-09-10_taciturnaxolotl-dots-review-vs-systemnix.md)
 
 ## g) Questions I can NOT figure out myself (3 max)
 

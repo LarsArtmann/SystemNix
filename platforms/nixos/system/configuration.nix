@@ -1419,14 +1419,14 @@ in
       };
 
       # Monitor365 unified agent — system + desktop collectors
-      # DISABLED since 2026-08-12 (a941f88d): the wireguard-collector git
-      # dependency is a PRIVATE repo (github.com/LarsArtmann/wireguard-collector),
-      # so the Nix sandbox can never fetch it — the build fails at git fetch
-      # with "could not read Username", no hash fix can help. Re-enable only
-      # after the crate is published to crates.io, the repo made public, or
-      # the crate vendored into the monitor365 workspace (owner decision).
+      # RE-ENABLED 2026-10-18 (owner decision): the 2026-08-12 (a941f88d)
+      # disable — private wireguard-collector git dep unfetchable in-sandbox
+      # ("could not read Username") — is obsolete: upstream restructured to
+      # the preparedSrc pattern (collector-utils family fetched as flake
+      # inputs OUTSIDE the sandbox, path deps rewritten in-tree), locked
+      # here since 2026-10-16 (d2c77df8c).
       monitor365 = {
-        enable = false;
+        enable = true;
         settings.collectors = {
           # Headless collectors
           network.enabled = lib.mkDefault true;
@@ -1453,8 +1453,8 @@ in
       };
 
       # storage-collector — long-term filesystem capacity tracking (JSONL).
-      # The storage-trend data source that works while monitor365 is
-      # disabled above: tracks /, /data, /mnt/pool, /tmp, ... every cycle,
+      # Independent storage-trend data source alongside monitor365: tracks
+      # /, /data, /mnt/pool, /tmp, ... every cycle,
       # rotating JSONL under /var/lib/storage-collector (~60 MiB bounded),
       # threshold events at 85 % with 80 % re-arm hysteresis.
       storage-collector = {
@@ -1465,10 +1465,10 @@ in
         package = inputs.storage-collector.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
 
-      # Monitor365 server (dashboard + API) runs on the same machine
-      # Same private-git-dep blocker as the agent above (wireguard-collector).
+      # Monitor365 server (dashboard + API) runs on the same machine.
+      # RE-ENABLED 2026-10-18 with the agent — same preparedSrc unblock.
       monitor365-server = {
-        enable = false;
+        enable = true;
         # DuckDB is the sole store on local-only BTRFS (#1 data-loss risk).
         # Local nightly backup is the prerequisite for any future offsite sync.
         backup = {

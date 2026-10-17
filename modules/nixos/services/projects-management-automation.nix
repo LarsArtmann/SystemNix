@@ -63,8 +63,7 @@
           # 849573de bakes the shim's own 5WOy3BHv… value — bit-neutral
           # override (lock == tip; lars-packages surface dropped in the
           # same pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
-          package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

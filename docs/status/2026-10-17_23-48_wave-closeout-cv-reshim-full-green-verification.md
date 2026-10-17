@@ -111,3 +111,18 @@ The 2026-10-17 deploy wave is **CLOSED**: all 15 build failures resolved (11 has
 - §f items 2/3 (deploy + battery): owner-run sequencing, gated on §g1 — premature queueing before the owner's timing answer.
 - §f items 4-14, 16-20: owned by EXISTING open rows (CI-restoration, fmt-scoping, hermes watch row, drop-cycle class) or dispatched only after §g answers — duplicate rows would drift; this report is their Source citation.
 - No unverified premise was queued: the overview row's claims are all first-hand probe outputs; the cv/go.sum claims cite the diff run.
+
+---
+
+## §j ADDENDUM (2026-10-18 00:3x — owner-ordered shim drop-cycle, "do it all including commit and push")
+
+**The consumer-side shim fleet is GONE — 13 shims dropped, 5 inputs re-locked to tips, 1 upstream fix pushed, everything green.**
+
+- **Upstream state discovery**: the sibling sessions had ALREADY baked the got-hashes upstream in 10 of 12 repos (verified per-repo: go.sum AND go.mod compared tip-vs-measured-rev; every `vendorHash` locus read first-hand). The 10-15 report's "11 pending transcriptions" were largely landed already. Only ONE upstream fix was needed this pass: go-cqrs-lite's cqrs-lint hash (`Zfte0X5r…`→`J7gNXzrV…` at tip `7fe2e0ad`; the go.mod graph changed at tip and upstream hadn't refreshed; pushed as `853c9161` from a detached worktree — the main checkout carries a live foreign session's dirty catalog files, so a pathspec-worktree commit was the co-edit-safe route; `--no-verify` per the go-ecosystem-upgrade skill, the hook's tree-root detection cannot see go.work in worktrees).
+- **art-dupl**: the owner "investigate" directive closed with the upstream RENAME pushed (`41980118` on fork — hand-written `actionability_templ.go` → `actionability_templ_idioms.go`, out of templ's output namespace), consumer rename shim dropped, re-locked.
+- **Drops** (all bit-neutral-verified before removal: shim value == upstream locus value at the locked rev): lars-packages.nix ×9 (art-dupl, buildflow, cqrs-lint, go-humanize-linter, golangci, library-policy, mr-sync, project-meta, pma) + tq's vendorHash line (kept git/doCheck legs) + overlays/linux.nix overview + crm.nix + cv.nix + inboxclean.nix + mr-sync.nix (second surface) + pma service (second surface).
+- **Re-locks**: inboxclean `b601473→9796ae91`, buildflow `ba0a40cb→ef32fa02`, go-cqrs-lite `60f2be41→853c9161`, art-dupl `f8724119→41980118`, go-taskqueue `8d434737→tip-chain`.
+- **Arbiter**: first post-drop build flagged exactly ONE root failure (cqrs-lint, as predicted by the go.mod diff); after the upstream paste + re-lock: toplevel `--keep-going` **exit 0**, `nix flake check --no-build` **all checks passed** (log `/tmp/toplevel-dropcycle-final.log`).
+- **§d1 RESOLVED — misdiagnosis**: the overview FOD "mystery" was MY grep coverage gap: the shim lived in `overlays/linux.nix:272` since 06:30 (`04c90efa`). No nondeterminism; the harvested determinism-probe row is ticked as misdiagnosis-resolved. Sweep-surface lesson recorded: `overlays/` + `systems/` + `flake/parts/` join modules/ in the two-surface doctrine.
+- **Remaining shim inventory after the pass**: erraudit (root-nixpkgs-follower class — cannot converge while the two roots differ; row updated to a terminal-state owner decision), branching-flow, go-structure-linter, project-dependency-graph, project-discovery-daemon, samber-linter, go-auto-upgrade, file-and-image-renamer (earlier waves, untouched — each drops via its own evidence cycle).
+- **§f disposition update**: #5 (shim ledger) still open and now MORE valuable (13 fewer shims, cleaner baseline); #6 (drop-cycle fleet) DONE for today's wave; #1 (overview determinism) closed as misdiagnosis.

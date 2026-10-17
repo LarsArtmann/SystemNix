@@ -37,10 +37,10 @@ All knowledge is persisted in `AGENTS.md` (new section "Kernel & Network Hardeni
 
 ## b) PARTIALLY DONE
 
-1. **Deployment** — changes are in the working tree, evaluated, and formatted, but NOT activated (`nix run .#deploy` not run — deliberate). Note: sysctls apply at switch; the modprobe install-false entries are fully effective only after next boot for any already-loaded modules (none of the 14 are loaded — `lsmod` expected clean).
-2. **Consider-later items** — disko / Forgejo-mirror inputs / allowed-users / YubiKey PAM are documented decisions, not implementations. Each needs an owner call.
-3. **Shared-surface green caveat** — the passing `nix flake check` evaluated a tree containing ANOTHER session's in-flight edits (flake.nix, deploy.sh, pre-reboot-check.sh). Green is a point-in-time snapshot of a shared tree, not a guarantee of the other session's final state.
-4. **TODO_LIST harvest** — the (f) list below lives in this report; per the docs-health rule it should be harvested into TODO_LIST.md (not entombed here). Not yet done.
+~~1. **Deployment** — changes are in the working tree, evaluated, and formatted, but NOT activated (`nix run .#deploy` not run — deliberate). Note: sysctls apply at switch; the modprobe install-false entries are fully effective only after next boot for any already-loaded modules (none of the 14 are loaded — `lsmod` expected clean).~~ done — hardening landed: platforms/nixos/system/boot.nix:264 modprobe install-false + sysctls; networking.nix:84 knownHosts.github
+2. **Consider-later items** — disko / Forgejo-mirror inputs / allowed-users / YubiKey PAM are documented decisions, not implementations. Each needs an owner call. **→ consider-later split: disko DONE (docs/todo/storage.md), YubiKey decision open (docs/todo/desktop.md)**
+~~3. **Shared-surface green caveat** — the passing `nix flake check` evaluated a tree containing ANOTHER session's in-flight edits (flake.nix, deploy.sh, pre-reboot-check.sh). Green is a point-in-time snapshot of a shared tree, not a guarantee of the other session's final state.~~ **Won't implement — stale shared-tree snapshot caveat.**
+~~4. **TODO_LIST harvest** — the (f) list below lives in this report; per the docs-health rule it should be harvested into TODO_LIST.md (not entombed here). Not yet done.~~ done — harvest landed: docs/todo rows + docs-health HARVEST passes institutionalized (CHANGELOG 2026-09-19/09-30 sweeps)
 5. **WiFi-failover regression proof** — rp_filter=2 was chosen specifically to not break `wifi-failover`, but the VM test (`tests/test-wifi-failover.nix`) was NOT extended to assert cross-interface packet flow under loose rp_filter. Reasoned-safe, not test-proven.
 
 ---
@@ -71,14 +71,14 @@ All knowledge is persisted in `AGENTS.md` (new section "Kernel & Network Hardeni
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Prove rp_filter=2 is failover-safe, don't argue it** — extend `tests/test-wifi-failover.nix` to assert cross-interface flow under loose mode.
+~~1. **Prove rp_filter=2 is failover-safe, don't argue it** — extend `tests/test-wifi-failover.nix` to assert cross-interface flow under loose mode.~~ **NOT-DO — dup of b5 rp_filter test.**
 2. **Guard the host-key pin** — eval-time assertion (pin exists + key matches expectation) so a refactor can't silently drop it.
 3. **Post-deploy verification for kernel-hardening changes** — extend `scripts/post-deploy-check.sh` with live sysctl + `modprobe -n sctp` effective checks.
 4. **Rotation runbook** — a short `docs/` note: "git+ssh to github suddenly fails host-key verification → check api.github.com/meta → update pin in networking.nix."
 5. **Close the SSH intent gap** — firewall allows port 22 but no sshd runs. Either enable+harden (paepckehh's sshd block is a good starting shape) or close the port.
-6. **Harvest discipline** — run docs-health HARVEST on section (f) so items land in TODO_LIST.md/ROADMAP.md instead of a timestamped snapshot.
+~~6. **Harvest discipline** — run docs-health HARVEST on section (f) so items land in TODO_LIST.md/ROADMAP.md instead of a timestamped snapshot.~~ done — harvest discipline institutionalized (CHANGELOG docs-health sweeps 2026-09-19/30)
 7. **"Learn from X" method** — this session's live-grounding pattern (probe live system → adopt/reject per item → write down rejections) worked well; worth a reusable checklist in AGENTS.md for future external-study sessions.
-8. **Stale-comment sweep in touched files** — the 512 MiB drift survived inside a heavily-commented file; a periodic AGENTS↔code comment consistency check would catch the class (docs-health VERIFY mode territory).
+~~8. **Stale-comment sweep in touched files** — the 512 MiB drift survived inside a heavily-commented file; a periodic AGENTS↔code comment consistency check would catch the class (docs-health VERIFY mode territory).~~ done — stale-comment class owned by docs-health VERIFY/ANNOTATE sweeps (CHANGELOG 2026-09-21/19)
 
 ---
 
@@ -88,64 +88,64 @@ All knowledge is persisted in `AGENTS.md` (new section "Kernel & Network Hardeni
 
 **Session follow-ups (deploy/verify the work just done)**
 
-1. Deploy the hardening changes (`nix run .#deploy`) — coordinate with the parallel session's in-flight flake.nix/deploy.sh edits first.
-2. Post-deploy: verify live sysctls (`accept_redirects=0` v4+v6, `rp_filter=2`, `tcp_rfc1337=1`) and modprobe entries effective (`modprobe sctp` must fail).
-3. Add eval-time assertion + negative test for the `knownHosts.github` pin.
-4. Extend `tests/test-wifi-failover.nix` for rp_filter=2 cross-interface flow.
-5. Host-key rotation runbook in `docs/`.
-6. Re-run `post-deploy-check` after the deploy; watch journal for unexpected rp_filter drops.
-7. Confirm the auto-commit daemon's batch didn't mix my 3 files with the parallel session's 5 (pathspec hygiene).
-8. Verify no currently-loaded module collides with the 14-name blacklist (`lsmod | grep -E 'sctp|tipc|rds|dccp|x25'` — expect empty).
-9. Decide IPsec stance: if esp4/esp6 are never wanted, blacklist them too (I kept them deliberately).
-10. After the parallel session lands: full `nix flake check` re-run on the quiescent tree (shared-surface rule).
+~~1. Deploy the hardening changes (`nix run .#deploy`) — coordinate with the parallel session's in-flight flake.nix/deploy.sh edits first.~~ done — deployed with the Sep-10/11 wave; hardening live in boot.nix/networking.nix
+~~2. Post-deploy: verify live sysctls (`accept_redirects=0` v4+v6, `rp_filter=2`, `tcp_rfc1337=1`) and modprobe entries effective (`modprobe sctp` must fail).~~ **Won't implement — stale one-shot live-sysctl verification.**
+~~3. Add eval-time assertion + negative test for the `knownHosts.github` pin.~~ **NOT-DO — dup of e2 knownHosts guard.**
+~~4. Extend `tests/test-wifi-failover.nix` for rp_filter=2 cross-interface flow.~~ **NOT-DO — dup of b5 rp_filter test.**
+~~5. Host-key rotation runbook in `docs/`.~~ **NOT-DO — dup of e4 rotation runbook.**
+~~6. Re-run `post-deploy-check` after the deploy; watch journal for unexpected rp_filter drops.~~ **Won't implement — stale one-shot post-deploy-check rerun.**
+~~7. Confirm the auto-commit daemon's batch didn't mix my 3 files with the parallel session's 5 (pathspec hygiene).~~ **Won't implement — stale daemon-batch pathspec confirm.**
+~~8. Verify no currently-loaded module collides with the 14-name blacklist (`lsmod | grep -E 'sctp|tipc|rds|dccp|x25'` — expect empty).~~ **Won't implement — stale one-shot lsmod collision check.**
+~~9. Decide IPsec stance: if esp4/esp6 are never wanted, blacklist them too (I kept them deliberately).~~ **Won't implement — deliberate keep documented in boot.nix comments; no work.**
+~~10. After the parallel session lands: full `nix flake check` re-run on the quiescent tree (shared-surface rule).~~ **Won't implement — stale quiescent-tree flake check.**
 
 **Owner decisions documented but not made**
-11. disko: declarative disk-layout documentation for all 3 disks (document-only, never applied live).
+~~11. disko: declarative disk-layout documentation for all 3 disks (document-only, never applied live).~~ done — disko landed: disko/samsung-tlc.nix + checks.disko-samsung-tlc (docs/todo/storage.md DONE 2026-09-23)
 12. Autoinstaller ISO for evo-x2 (disko + iso target, paired with #11).
 13. Point selected flake inputs at existing Forgejo mirrors for GitHub-outage immunity (hagezi-404 precedent; tradeoff: builds need Forgejo up).
 14. `nix.settings.allowed-users = ["@wheel"]` (lars verified in wheel; tq-agent pool runs as lars — compatible).
-15. YubiKey PAM (u2f) for sudo/login.
+15. YubiKey PAM (u2f) for sudo/login. **→ YubiKey second-authenticator decision tracked (docs/todo/desktop.md)**
 16. YubiKey (age-plugin-yubikey) backup for the sops age identity — disaster recovery.
-17. Pin the Forgejo/git.home.lan host key for LAN git+ssh.
-18. SSH on evo-x2: enable+harden or close port 22 (firewall currently allows it, nothing listens).
-19. If IPsec ever needed: document that esp4/esp6 were deliberately kept loadable.
-20. Re-evaluate `security.protectKernelImage` only after verifying kdump preload ordering (documented rejection is order-dependent).
+~~17. Pin the Forgejo/git.home.lan host key for LAN git+ssh.~~ **Won't implement — LAN git uses forgejo tokens; host-key pin for git.home.lan never needed.**
+~~18. SSH on evo-x2: enable+harden or close port 22 (firewall currently allows it, nothing listens).~~ **NOT-DO — dup of e5 SSH intent.**
+~~19. If IPsec ever needed: document that esp4/esp6 were deliberately kept loadable.~~ **Won't implement — in-code rationale in boot.nix blacklist comments; no separate doc.**
+~~20. Re-evaluate `security.protectKernelImage` only after verifying kdump preload ordering (documented rejection is order-dependent).~~ **Won't implement — documented rejection stands (kdump ordering).**
 
 **Noticed during the session (SystemNix observations)**
-21. `TODO_LIST.md` is dirty from the parallel session — after it lands, docs-health VERIFY on hardening-related entries.
-22. journald cap is 8G; the 7.2G-journal-walk incidents suggest evaluating 4G + vacuum policy.
-23. `perf_event_paranoid` stays 2 — revisit only if perf-based profiling becomes a workflow.
-24. Consider `nix.settings.http-connections` / `stalled-download-timeout` tuning (marginal; paepckehh pins them).
+~~21. `TODO_LIST.md` is dirty from the parallel session — after it lands, docs-health VERIFY on hardening-related entries.~~ **Won't implement — stale TODO_LIST dirty-state check.**
+~~22. journald cap is 8G; the 7.2G-journal-walk incidents suggest evaluating 4G + vacuum policy.~~ **Won't implement — superseded: journal moved to Samsung hot subvol 2026-09-30 (CHANGELOG journal-hot).**
+~~23. `perf_event_paranoid` stays 2 — revisit only if perf-based profiling becomes a workflow.~~ **Won't implement — standing no-action (perf paranoid 2 by design).**
+~~24. Consider `nix.settings.http-connections` / `stalled-download-timeout` tuning (marginal; paepckehh pins them).~~ **Won't implement — marginal tuning idea never pursued.**
 25. Evaluate the `verified-fetches` experimental Nix feature (supply-chain hardening for git inputs).
-26. build-dir-on-tmpfs evaluated and rejected (RAM pressure with flm/zram history) — record in AGENTS rejected-list (was in my analysis, NOT yet written down — gap).
+~~26. build-dir-on-tmpfs evaluated and rejected (RAM pressure with flm/zram history) — record in AGENTS rejected-list (was in my analysis, NOT yet written down — gap).~~ **Won't implement — rejected design; rationale recorded in this report.**
 27. siteconfig-style central site attrset could reduce hostname/domain scattering across platforms/* (big churn, low priority).
-28. `install <mod> /bin/false` is the reusable pattern for any future "disable module class" ask — already in AGENTS ✓; cite it in future reviews.
-29. Boot-flags duplicate-check: SystemNix uses `module_blacklist=serial8250` kernel param AND now modprobe install-false — do not double-implement for new modules.
-30. `ssh.github.com` (port 443) pinned too — consider documenting it as the corporate-firewall fallback path.
+~~28. `install <mod> /bin/false` is the reusable pattern for any future "disable module class" ask — already in AGENTS ✓; cite it in future reviews.~~ done — pattern documented at platform/nixos/system/boot.nix:264 (install /bin/false + rationale)
+~~29. Boot-flags duplicate-check: SystemNix uses `module_blacklist=serial8250` kernel param AND now modprobe install-false — do not double-implement for new modules.~~ **Won't implement — advisory note; no work item.**
+~~30. `ssh.github.com` (port 443) pinned too — consider documenting it as the corporate-firewall fallback path.~~ **Won't implement — cosmetic doc note; pin exists (networking.nix:84).**
 
 **Hygiene / process**
-31. Turn the live-grounding external-study method into an AGENTS checklist entry.
-32. Consider annotating (not rewriting) older status reports that mention "no kernel hardening" once this deploys (docs-health ANNOTATE).
-33. FEATURES.md: hardening additions are config, not features — no update needed (checked, skipped deliberately).
-34. SignNoz coverage: no new OTel services added — nothing to register (verified mentally against the registry rule).
-35. Gatus: no new endpoints — nothing to add (modprobe/sysctl effects aren't HTTP-checkable; post-deploy script owns it).
-36. The parallel session's pre-reboot-check work + my boot.nix changes both touch the boot chain — run `nix run .#pre-reboot-check` before the next planned reboot.
-37. After deploy, confirm `/run/current-system` == numbered profile (anchoring rule) — deploy.sh already warns, keep the habit.
-38. Add the 14-module list + rationale to the next AGENTS.md touch if wording unclear (already done — re-check readability at next edit).
+~~31. Turn the live-grounding external-study method into an AGENTS checklist entry.~~ **NOT-DO — dup of e7 external-study checklist.**
+~~32. Consider annotating (not rewriting) older status reports that mention "no kernel hardening" once this deploys (docs-health ANNOTATE).~~ done — annotation passes ran (CHANGELOG docs-health 2026-09-21: 26 reports annotated)
+~~33. FEATURES.md: hardening additions are config, not features — no update needed (checked, skipped deliberately).~~ **Won't implement — checked-and-skipped in-doc; no work.**
+~~34. SignNoz coverage: no new OTel services added — nothing to register (verified mentally against the registry rule).~~ **Won't implement — no-op by audit (nothing to register).**
+~~35. Gatus: no new endpoints — nothing to add (modprobe/sysctl effects aren't HTTP-checkable; post-deploy script owns it).~~ **Won't implement — no-op by audit (nothing HTTP-checkable).**
+~~36. The parallel session's pre-reboot-check work + my boot.nix changes both touch the boot chain — run `nix run .#pre-reboot-check` before the next planned reboot.~~ **Won't implement — stale one-shot pre-reboot run (became standing doctrine).**
+~~37. After deploy, confirm `/run/current-system` == numbered profile (anchoring rule) — deploy.sh already warns, keep the habit.~~ done — anchoring machine-enforced: CHANGELOG 2026-10-17 deploy anchor self-repair
+~~38. Add the 14-module list + rationale to the next AGENTS.md touch if wording unclear (already done — re-check readability at next edit).~~ done — module blacklist + rationale live in boot.nix:264 area
 39. Consider CI guard: reject `install .* /bin/false` entries for modules in a keep-list (esp4/esp6, k10temp, uas, bfq, i2c-dev...) — cheap negative test.
-40. When GitHub's key rotates (eventually): the fix is one line in networking.nix — make sure the runbook (#5) names that file.
+~~40. When GitHub's key rotates (eventually): the fix is one line in networking.nix — make sure the runbook (#5) names that file.~~ **NOT-DO — dup of e4 rotation runbook.**
 
 **Roadmap fuel (bigger, exploratory)**
-41. External-study #2: disko upstream patterns for the Samsung `/nix` BTRFS layout (pairs with #11).
-42. External-study #3: nix-community hardening profiles vs our per-service harden{} (likely confirms our approach; cheap to check).
-43. Evaluate their `srv-full` golden-build idea vs SystemNix's VM tests (likely rejected — VM tests stronger; document if so).
-44. Evaluate journald-upload (systemd-journal-remote with mTLS) as a SigNoz-independent journal backup — likely overkill with OTel pipeline.
-45. Their `openwrt/` firmware builder — only relevant if a NixOS-built router firmware ever becomes interesting.
-46. Their `pki/` smallstep CA vs sops-managed Caddy TLS — owner-decision scale; not now.
-47. Wazuh/EDR class — rejected for a personal box; revisit only if threat model changes.
-48. Consider a `docs/research/` entry summarizing this external study (AGENTS section is the durable part; a research doc adds the survey narrative).
-49. Sweep AGENTS.md for other code-comment contradictions like the 512 MiB one (docs-health VERIFY on boot.nix-adjacent claims).
-50. Schedule the rp_filter monitoring check for a week post-deploy (nftables drop counters + journal grep) before declaring it done-done.
+~~41. External-study #2: disko upstream patterns for the Samsung `/nix` BTRFS layout (pairs with #11).~~ **Won't implement — superseded: disko config landed 2026-09-23 (docs/todo/storage.md).**
+~~42. External-study #3: nix-community hardening profiles vs our per-service harden{} (likely confirms our approach; cheap to check).~~ **Won't implement — exploratory study never pursued.**
+~~43. Evaluate their `srv-full` golden-build idea vs SystemNix's VM tests (likely rejected — VM tests stronger; document if so).~~ **Won't implement — exploratory, expected-rejected idea never pursued.**
+~~44. Evaluate journald-upload (systemd-journal-remote with mTLS) as a SigNoz-independent journal backup — likely overkill with OTel pipeline.~~ **Won't implement — likely-overkill idea never pursued.**
+~~45. Their `openwrt/` firmware builder — only relevant if a NixOS-built router firmware ever becomes interesting.~~ **Won't implement — out of scope (no router-firmware interest).**
+~~46. Their `pki/` smallstep CA vs sops-managed Caddy TLS — owner-decision scale; not now.~~ **Won't implement — owner-scale idea declined by inaction (sops TLS in place).**
+~~47. Wazuh/EDR class — rejected for a personal box; revisit only if threat model changes.~~ **Won't implement — rejected for personal box (2026-10-16 wazuh doc is research-only).**
+~~48. Consider a `docs/research/` entry summarizing this external study (AGENTS section is the durable part; a research doc adds the survey narrative).~~ **Won't implement — optional narrative never created; AGENTS hardening section is durable record.**
+~~49. Sweep AGENTS.md for other code-comment contradictions like the 512 MiB one (docs-health VERIFY on boot.nix-adjacent claims).~~ done — docs-health VERIFY sweeps ran (CHANGELOG 2026-09-30 audit + 2026-09-21 round 2)
+~~50. Schedule the rp_filter monitoring check for a week post-deploy (nftables drop counters + journal grep) before declaring it done-done.~~ **Won't implement — stale week-post-deploy monitoring window.**
 
 ---
 

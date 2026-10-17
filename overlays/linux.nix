@@ -273,9 +273,10 @@ let
     # tip 966465e (== lock) bakes the shim's own +WMj7c5U… value — the
     # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
     # never by hand.
-    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-nN2cwwLQCekdM+7kRUS7uFTVCvjL/Akg3PnIFFE9Qmg=";
-    };
+    # file-and-image-renamer shim DROPPED (2026-10-18): upstream flake.nix
+    # at tip bakes the shim's own nN2cwwLQ… value — bit-neutral override
+    # (graph verified identical tip-vs-lock). Re-add ONLY via nix-hash-fix
+    # evidence, never by hand.
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY

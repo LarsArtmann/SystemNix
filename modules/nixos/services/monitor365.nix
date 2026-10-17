@@ -300,6 +300,15 @@
           systemd.services.monitor365-server.environment = {
             OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "http://localhost:${toString ports.signoz-otlp-grpc}";
           };
+          # Upstream build enables the otel cargo feature (--features otel,
+          # upstream flake.nix commonArgs), so spans actually flow — register
+          # the unit in the signoz-coverage census (reverse assertion refuses
+          # env-var silent noops). Request-driven budget: 26h.
+          services.signoz-coverage.expected.monitor365-server = {
+            serviceName = "monitor365-server";
+            wiring = "env";
+            maxAgeHours = 26;
+          };
         })
 
         # Schema migration: add 'version' column to tenants table for existing DBs.
@@ -324,10 +333,14 @@
             serviceConfig = {
               Type = "oneshot";
               RemainAfterExit = true;
+              # Boot-blocking oneshot: bound it (systemd-shape-audit) — the
+              # migration is a two-statement DuckDB ALTER/UPDATE, 5min is a
+              # generous ceiling for a wedged-DB worst case.
+              TimeoutStartSec = "5min";
               User = "monitor365-server";
               Group = "monitor365-server";
               StateDirectory = "monitor365-server";
-            };
+            } // ioTier.maintenance;
             script = lib.getExe schemaMigrateScript;
           };
           systemd.services.monitor365-server = {
@@ -463,6 +476,13 @@
                 CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
                 MemoryMax = lib.mkForce "4G";
                 MemoryHigh = lib.mkForce "3G";
+                # Upstream bakes StartLimitBurst/StartLimitIntervalSec into
+                # serviceConfig (server-module.nix), where systemd 261+
+                # silently ignores them (start-limit-audit) — null them here
+                # and carry the real values via the typed top-level options
+                # above, which land in [Unit].
+                StartLimitBurst = lib.mkForce null;
+                StartLimitIntervalSec = lib.mkForce null;
               }
               ioTier.heavyDB
             ];

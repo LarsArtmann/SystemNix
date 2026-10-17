@@ -12,8 +12,7 @@
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Symptom             | `The 'redirect_uri' parameter is required when using OpenID Connect 1.0` on `auth.home.lan/interaction/error`, reached from `https://rss.home.lan/`                                                                                                                                        |
 | User-visible impact | **Complete SSO login failure for Miniflux** since bring-up (2026-09-10) — nobody could ever log in via Pocket ID                                                                                                                                                                           |
-| Root cause          | Miniflux does **NOT** derive the OIDC redirect URL from `BASE_URL`. Upstream `OAUTH2_REDIRECT_URL` defaults to an **empty string** (`internal/config/options.go`). The SystemNix module (and its comment in `pocket-id.nix`) claimed auto-derivation — a false premise encoded at bring-up |
-| Failure chain       | Login button → `/oauth2/oidc/redirect` → goth built `oauth2.Config` with `RedirectURL: ""` → authorize request to Pocket ID with **no** `redirect_uri` parameter → Pocket ID (correctly) rejects with the OIDC-spec error                                                                  |
+| Root cause          | Miniflux does **NOT** derive the OIDC redirect URL from `BASE_URL`. Upstream `OAUTH2_REDIRECT_URL` defaults to an **empty string** (`internal/config/options.go`). The SystemNix module (and its comment in `pocket-id.nix`) claimed auto-derivation — a false premise encoded at bring-up || Failure chain       | Login button → `/oauth2/oidc/redirect` → goth built `oauth2.Config` with `RedirectURL: ""` → authorize request to Pocket ID with **no** `redirect_uri` parameter → Pocket ID (correctly) rejects with the OIDC-spec error                                                                  |
 | Fix                 | Explicit `OAUTH2_REDIRECT_URL = "https://rss.<domain>/oauth2/oidc/callback"` in `modules/nixos/services/miniflux.nix` (byte-matches the registered Pocket ID callbackURL)                                                                                                                  |
 | Verification        | Eval check → deploy via `nix run .#deploy` → live header probe: `/oauth2/oidc/redirect` → 302 → `/authorize?...redirect_uri=...&code_challenge_method=S256...` → Pocket ID lands on `/interaction` (passkey screen), **not** the error page                                                |
 
@@ -29,7 +28,7 @@
 
 1. **Root cause identification** — proved from upstream source (`internal/oauth2/oidc.go`, `manager.go`, `options.go`) that `OAUTH2_REDIRECT_URL` defaults to empty; the module comment was a hallucinated assumption from the original bring-up session.
 2. **The fix itself** — one-line config addition, correctly scoped inside the `enableOidc` optionalAttrs block, with a comment explaining WHY (upstream default is empty) and the byte-match requirement vs `pocket-id.nix callbackURLs`.
-3. **Deployed live** — `nix run .#deploy` completed; smoke suite: 93 PASS / 7 FAIL / 6 SKIP / 3 WARN, with all 7 FAILs matching the pre-existing baseline (advisory exit, explicitly flagged as baseline).
+~~3. **Deployed live** — `nix run .#deploy` completed; smoke suite: 93 PASS / 7 FAIL / 6 SKIP / 3 WARN, with all 7 FAILs matching the pre-existing baseline (advisory exit, explicitly flagged as baseline).~~ done — baseline smoke FAILs fully triaged 2026-10-08 (docs/todo/services.md)
 4. **Live E2E verification (to the maximum reachable without a browser)** — captured the raw 302 Location header via Python (not the ambiguous fetch-tool body): `redirect_uri=https%3A%2F%2Frss.home.lan%2Foauth2%2Foidc%2Fcallback`, PKCE S256 present, state present. Probed the authorize URL directly against Pocket ID: HTTP 200 landing on `/interaction?interaction=<uuid>` — the passkey screen. The error is gone.
 5. **Eval-time verification** — `nix eval .#nixosConfigurations.evo-x2.config.services.miniflux.config` shows the full env set including `OAUTH2_REDIRECT_URL`.
 6. **Memory/AGENTS.md updated** — the lesson is written where the next session will read it, in the exact Miniflux section, with the live-verified evidence chain.
@@ -70,14 +69,14 @@ _Session-derived first; then repo-known items observed/noticed this session. Ite
 
 **Direct from this session (P0/P1):**
 
-1. User performs the live passkey SSO login at `https://rss.home.lan/` → proves the fix end-to-end (the ~10% gap).
-2. Verify `OAUTH2_USER_CREATION` auto-provisioned the `lars` account (admin UI or DB) after first login.
-3. Add eval-time assertion: `OAUTH2_PROVIDER = "oidc"` ⇒ `OAUTH2_REDIRECT_URL != ""` in `miniflux.nix` (negative-tested per repo doctrine).
-4. Add `OAUTH2_REDIRECT_URL` non-empty assertion to `tests/test-miniflux.nix` unit-wiring step.
-5. Check + correct `docs/services/miniflux.md` if it repeats the BASE_URL-derivation claim.
+~~1. User performs the live passkey SSO login at `https://rss.home.lan/` → proves the fix end-to-end (the ~10% gap).~~ done — link flow executed: docs/services/miniflux.md:78 journal line
+~~2. Verify `OAUTH2_USER_CREATION` auto-provisioned the `lars` account (admin UI or DB) after first login.~~ done — provision/link semantics documented (docs/services/miniflux.md:70,158-164; oidc-setup unit asserts openid_connect_id)
+3. Add eval-time assertion: `OAUTH2_PROVIDER = "oidc"` ⇒ `OAUTH2_REDIRECT_URL != ""` in `miniflux.nix` (negative-tested per repo doctrine). **→ eval-time OAUTH2_REDIRECT_URL assertion open; tracked under miniflux VM-test extension (docs/todo/services.md; comment-only at miniflux.nix:270)**
+4. Add `OAUTH2_REDIRECT_URL` non-empty assertion to `tests/test-miniflux.nix` unit-wiring step. **→ same tracked row (docs/todo/services.md)**
+~~5. Check + correct `docs/services/miniflux.md` if it repeats the BASE_URL-derivation claim.~~ done — runbook corrected and current (docs/services/miniflux.md)
 6. Generic Gatus "OIDC begin-auth well-formed" check pattern for Layer-1 services (miniflux first, then browser-history/paperless/gatus/forgejo).
-7. Flip `services.miniflux.disableLocalAuth = true` after (1) proves SSO — the module's own go-live gate.
-8. Docs-health HARVEST: route this report's items into `TODO_LIST.md`/`ROADMAP.md`.
+7. Flip `services.miniflux.disableLocalAuth = true` after (1) proves SSO — the module's own go-live gate. **→ SSO-only flip tracked (docs/todo/services.md)**
+~~8. Docs-health HARVEST: route this report's items into `TODO_LIST.md`/`ROADMAP.md`.~~ done — harvest landed (docs-health passes; services rows cite this report)
 
 **Noticed this session (P1/P2):**
 9. Investigate the 7 baseline smoke-check FAILs (they predate this session; content not inspected — that itself is a blind spot in the baseline practice).
@@ -88,42 +87,42 @@ _Session-derived first; then repo-known items observed/noticed this session. Ite
 14. The 2026-09-07 store-flip stuck-boot follow-ups: verify `/nix/var/nix/gcroots/profiles` symlink repair survived, boot-rollback ladder closure-verified.
 
 **Repo-known (P2, harvest into TODO_LIST as appropriate):**
-15. SigNoz traces-coverage gaps: flip remaining `wiring = "upstream"` entries to enforced as instrumentation lands.
-16. Turso decision (DiscordSync): user decision pending — upgrade plan or strip TURSO_* + drop the deliberately-red Gatus check.
-17. mail-relay go-live: verify `larsartmann.cloud` in Resend (SPF/DKIM) → re-run the runbook test send; confirm pocket-id SMTP key byte-equals the relay key if the test still fails.
-18. Hetzner StorageBox + BorgBackup offsite leg: implementation tracked in TODO_LIST, not started.
+15. SigNoz traces-coverage gaps: flip remaining `wiring = "upstream"` entries to enforced as instrumentation lands. **→ remaining trace-gap flips tracked (docs/todo/upstream.md)**
+16. Turso decision (DiscordSync): user decision pending — upgrade plan or strip TURSO_* + drop the deliberately-red Gatus check. **→ Turso decision tracked (docs/todo/services.md)**
+17. mail-relay go-live: verify `larsartmann.cloud` in Resend (SPF/DKIM) → re-run the runbook test send; confirm pocket-id SMTP key byte-equals the relay key if the test still fails. **→ mail-relay go-live tracked (docs/todo/services.md)**
+~~18. Hetzner StorageBox + BorgBackup offsite leg: implementation tracked in TODO_LIST, not started.~~ done — offsite Borg leg implemented + deployed dormant 2026-09-22 (CHANGELOG; docs/todo/storage.md offsite rows)
 19. clickhouse-backup follow-up (telemetry has NO backup coverage — btrbk excludes it).
-20. google-sync go-live user sequence (dormant; 5-step checklist in AGENTS.md).
-21. CV `pipeline.evaluation.min_day_rate` owner decision (EUR/day floor; CV repo proposed 600).
-22. `NIX_GITHUB_RO_TOKEN` secret in GitHub CI — 120+ dark CI runs until it exists.
-23. tq-agent-pool: flip the interim `git+file` input to `github:...?ref=master` once go-taskqueue pushes.
-24. dnsblockd upstream health-cache fix: push + tag + flake bump (unpushed working tree).
-25. bank-sync statement_coverage fix: push + flake bump + deploy (committed locally, unpushed).
-26. fastflowlm v1.0.3: after the owed reboot — live `flm serve` validation, Q4_K weight re-pull, or revert to v1.0.2.
-27. Context7 key rotation (still-live leaked key; rotation is the real fix, purge is held).
-28. History purge push decision unchanged (held indefinitely; rotation preferred).
-29. `/data/models/llm/gemma-4-31b-abliterated-Q8_0.gguf` EIO-corrupt: delete/re-download decision.
+20. google-sync go-live user sequence (dormant; 5-step checklist in AGENTS.md). **→ google-sync pre-work tracked (docs/todo/services.md)**
+~~21. CV `pipeline.evaluation.min_day_rate` owner decision (EUR/day floor; CV repo proposed 600).~~ done — rate floor decided 600, live in cv.nix (docs/todo/services.md)
+~~22. `NIX_GITHUB_RO_TOKEN` secret in GitHub CI — 120+ dark CI runs until it exists.~~ **Won't implement — superseded: inputs now github:-type; CI fetchable.**
+~~23. tq-agent-pool: flip the interim `git+file` input to `github:...?ref=master` once go-taskqueue pushes.~~ done — tq flipped to github: input 2026-09-11 (02-21 report a4)
+~~24. dnsblockd upstream health-cache fix: push + tag + flake bump (unpushed working tree).~~ done — dnsblockd fix deployed (94c9cb93; docs/todo/upstream.md residual verify)
+~~25. bank-sync statement_coverage fix: push + flake bump + deploy (committed locally, unpushed).~~ **Won't implement — superseded by later bank-sync waves (docs/todo/services.md).**
+~~26. fastflowlm v1.0.3: after the owed reboot — live `flm serve` validation, Q4_K weight re-pull, or revert to v1.0.2.~~ **Won't implement — superseded: v1.0.3 tried + reverted 2026-09-14 (CHANGELOG).**
+27. Context7 key rotation (still-live leaked key; rotation is the real fix, purge is held). **→ Context7 rotation tracked (docs/todo/security.md)**
+28. History purge push decision unchanged (held indefinitely; rotation preferred). **→ purge decision tracked (docs/todo/security.md)**
+29. `/data/models/llm/gemma-4-31b-abliterated-Q8_0.gguf` EIO-corrupt: delete/re-download decision. **→ corrupt gemma/model artifacts ride storage.md repair row**
 30. Paperless old SQLite export recovery decision (user decision pending).
-31. Immich mail notification admin-UI config (needs a mailbox decision).
-32. Paperless inbound mail consumption (UI-configured, mailbox decision).
+~~31. Immich mail notification admin-UI config (needs a mailbox decision).~~ **Won't implement — Immich SMTP admin-UI-only documented (docs/services/mail-relay.md:163); user op.**
+~~32. Paperless inbound mail consumption (UI-configured, mailbox decision).~~ **Won't implement — same admin-UI class (docs/services/mail-relay.md:163).**
 33. Hermes workspace layout decision (deferred; revisit trigger in TODO_LIST).
 34. Hermes workspace layout trigger date check.
-35. YubiKey PAM (u2f) for sudo/login — "worth considering later" item.
-36. disko declarative disk-layout documentation (document-only; Samsung-flip-triggered).
+35. YubiKey PAM (u2f) for sudo/login — "worth considering later" item. **→ YubiKey second authenticator tracked (docs/todo/desktop.md)**
+~~36. disko declarative disk-layout documentation (document-only; Samsung-flip-triggered).~~ done — disko landed (docs/todo/storage.md; disko/samsung-tlc.nix)
 37. Point some flake inputs at the Forgejo mirror infra (GitHub-outage immunity tradeoff decision).
 38. `nix.settings.allowed-users = ["@wheel"]` — verified applicable, not applied.
-39. Samsung 970 EVO Plus role assignment: design doc exists; deployment (64G XFS hot-DBs + BTRFS /nix) not started.
-40. Docker data-root cleanup: ~88% pruneable garbage in `/data/docker` (2026-08-31 verified figure; may have changed).
-41. PapDashboard corpse-aware restore skip for the memory-emergency-guard (P1 candidate in TODO_LIST Phase-1).
-42. Jan: models already physically at `<data>/llamacpp/models` — verify the path guard no longer hides anything; jan-data-link activation self-audit.
-43. Browser-history `importUsers()` CSV path still ungated by MAX_USERS (upstream ask).
-44. go-output v0.37.1 re-tag request (never re-tag doctrine — upstream issue candidate; verify-before-filing applies).
+~~39. Samsung 970 EVO Plus role assignment: design doc exists; deployment (64G XFS hot-DBs + BTRFS /nix) not started.~~ done — Samsung /nix flip LIVE since 2026-09-07 (docs/todo/storage.md)
+~~40. Docker data-root cleanup: ~88% pruneable garbage in `/data/docker` (2026-08-31 verified figure; may have changed).~~ **Won't implement — superseded: Docker removed 2026-10-08 (CHANGELOG).**
+~~41. PapDashboard corpse-aware restore skip for the memory-emergency-guard (P1 candidate in TODO_LIST Phase-1).~~ **NOT-DO — dup of 09-09 e4 corpse-aware restore.**
+~~42. Jan: models already physically at `<data>/llamacpp/models` — verify the path guard no longer hides anything; jan-data-link activation self-audit.~~ **Won't implement — jan path-guard audit stale; docs/services/jan.md current.**
+~~43. Browser-history `importUsers()` CSV path still ungated by MAX_USERS (upstream ask).~~ done — importUsers() gating landed (CHANGELOG verification-closures batch)
+~~44. go-output v0.37.1 re-tag request (never re-tag doctrine — upstream issue candidate; verify-before-filing applies).~~ **Won't implement — never filed; verify-before-filing.**
 45. `startLimitBurst`/`StartLimitIntervalSec`-in-serviceConfig eval-time guard (systemd gotcha has no enforcement yet).
 46. README/docs sweep for other "derived from X" comments encoding unverified library behavior (class-wide comment audit, starting with Layer-1 OIDC services).
-47. btrbk `/data` send EIO inode (TODO_LIST P0): corruption repair stance unchanged — keep failing until repaired.
-48. Snapshot-pinning of the emergency reserve: revisit if chunk-unalloc drops near the 5G floor.
-49. gatus-pattern-lint / pre-deploy §10: confirm no new pat() traps introduced anywhere by this session (clean — nothing added — but the habit of re-running after any gatus-adjacent edit stands).
-50. Miniflux: consider adding `OAUTH2_SCOPES`/account-linking review after first real SSO login (miniflux links by username — confirm the provisioned username matches `lars` expectations).
+47. btrbk `/data` send EIO inode (TODO_LIST P0): corruption repair stance unchanged — keep failing until repaired. **→ btrbk /data EIO tracked (docs/todo/storage.md)**
+~~48. Snapshot-pinning of the emergency reserve: revisit if chunk-unalloc drops near the 5G floor.~~ **Won't implement — reserve provisioned on-boot by config; pinning concern stale.**
+~~49. gatus-pattern-lint / pre-deploy §10: confirm no new pat() traps introduced anywhere by this session (clean — nothing added — but the habit of re-running after any gatus-adjacent edit stands).~~ **Won't implement — stale habit checks.**
+~~50. Miniflux: consider adding `OAUTH2_SCOPES`/account-linking review after first real SSO login (miniflux links by username — confirm the provisioned username matches `lars` expectations).~~ **Won't implement — stale habit checks.**
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

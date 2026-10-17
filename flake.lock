@@ -204,11 +204,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792208472,
-        "narHash": "sha256-P9ysOeItGFtmpELzwOOvrYJmfD9+x01BYc2DgG82eQk=",
+        "lastModified": 1792218444,
+        "narHash": "sha256-1/i1mUyNsg/KAiCA34aVWMj0Ipd4uZcTvjdE2GvpiJw=",
         "owner": "LarsArtmann",
         "repo": "branching-flow",
-        "rev": "55e54261c2ebe97cfa7c9b11b58e4863f6436964",
+        "rev": "f129ca8accdbf0aa1a322a4525c1d268d298499a",
         "type": "github"
       },
       "original": {
@@ -1259,11 +1259,11 @@
         "samber-do-auditlog": "samber-do-auditlog_3"
       },
       "locked": {
-        "lastModified": 1792208757,
-        "narHash": "sha256-DIpAat2zYM1+lJa5WUeVTWEPyl4AIqS3o5IbkhJhj4M=",
+        "lastModified": 1792210969,
+        "narHash": "sha256-bnj7ZOZ4gbe/qMl95+GGbq/sMYfZXxDvMDv/aqk2zHw=",
         "owner": "LarsArtmann",
         "repo": "erraudit",
-        "rev": "98827233a0ba4b33b6958db3e1e06703a4e20f56",
+        "rev": "0cc8ee2c5f6b08a213bd0f1353bd59d9c2b9afee",
         "type": "github"
       },
       "original": {
@@ -1303,11 +1303,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1792147006,
-        "narHash": "sha256-LxU0K3q8K6GpLNMVArm+QY1i0hjeTRyM+txsI6wuQQs=",
+        "lastModified": 1792276740,
+        "narHash": "sha256-lSbClKk4+NWLeXDoH1xtSyc6UO1Hdyj7wT1TFV32jpw=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "891150f11d6446ee88f71b5ae0254740aa004704",
+        "rev": "40176d0d0d1a851ed9586d489eb01525d5eac76c",
         "type": "github"
       },
       "original": {
@@ -3649,11 +3649,11 @@
     "go-filewatcher": {
       "flake": false,
       "locked": {
-        "lastModified": 1792148637,
-        "narHash": "sha256-SpWVWpYCrsJGk2fQEjltxOHB5NDODyjlaq5i/7Yk158=",
+        "lastModified": 1792201144,
+        "narHash": "sha256-x6grJkK7d3mzliq20Wrt2QXfTaX13D8elqT23vb/0aE=",
         "owner": "LarsArtmann",
         "repo": "go-filewatcher",
-        "rev": "4bd95be4ad5a68a404b9be9bbf3b009135d6a803",
+        "rev": "54aa4101039a5d26fc10555b8da5a0e23a3ccecf",
         "type": "github"
       },
       "original": {

@@ -31,13 +31,13 @@
 
 ## b) PARTIALLY DONE
 
-1. **Feature-surface audit**: `verify_closure`/`version_constraints` confirmed at lib level (config.rs), but module-option plumbing only greped — README documents `verifyClosure` (line 174) while my module.nix grep found nothing for it; inconclusive, not chased. Does not affect the verdict.
-2. **verify-before-filing skill content**: builtin `crush://skills/verify-before-filing/SKILL.md` returned "Builtin file not found" via the View tool (both with and without suffix). I proceeded on the skill's description mandate alone. Resolution failure unreported at the time it happened — reported here instead.
+~~1. **Feature-surface audit**: `verify_closure`/`version_constraints` confirmed at lib level (config.rs), but module-option plumbing only greped — README documents `verifyClosure` (line 174) while my module.nix grep found nothing for it; inconclusive, not chased. Does not affect the verdict.~~ **Won't implement — stale: module-plumbing audit moot - tool REJECTED (AGENTS.md decision record).**
+~~2. **verify-before-filing skill content**: builtin `crush://skills/verify-before-filing/SKILL.md` returned "Builtin file not found" via the View tool (both with and without suffix). I proceeded on the skill's description mandate alone. Resolution failure unreported at the time it happened — reported here instead.~~ **Won't implement — stale session-env skill-resolution issue; env-specific one-shot.**
 
 ## c) NOT STARTED (deliberately, per user scoping "just report based on this session")
 
-1. **TODO_LIST.md harvest** of the revisit trigger (status-report skill mandates HARVEST after writing; user scoped this session to reporting only — pending user instruction).
-2. Alternatives-ecosystem survey (flake-checker, etc.) — our actual need is already covered by `nixpkgs-compat.yml` daily CI + nixos-unstable jobset; deliberately not researched.
+~~1. **TODO_LIST.md harvest** of the revisit trigger (status-report skill mandates HARVEST after writing; user scoped this session to reporting only — pending user instruction).~~ done — revisit trigger persisted in AGENTS.md nix-cache-pin decision record (canon per this report a2)
+~~2. Alternatives-ecosystem survey (flake-checker, etc.) — our actual need is already covered by `nixpkgs-compat.yml` daily CI + nixos-unstable jobset; deliberately not researched.~~ **Won't implement — deliberate no; need covered by .github/workflows/nixpkgs-compat.yml daily CI.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -50,24 +50,24 @@
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Source-clone BEFORE verdict** for any "should we adopt X" evaluation — the README-first pass had a 40% claim error rate this session. Clone is cheap; corrections in doctrine files are not.
-2. **Apply verify-before-filing's gate to AGENTS.md writes too** — it currently gates outbound issues; writing a false claim into the repo's own doctrine file is arguably worse (it propagates to every future session). Candidate hard rule: no claim enters AGENTS.md without file:line or command evidence captured in the same session.
-3. **Report tool/skill resolution failures immediately** (the crush:// builtin-not-found), not in the eventual status report.
-4. Chat-table verdicts should carry confidence labels (README-derived vs source-verified) so the user can see which rows are load-bearing guesses.
+~~2. **Apply verify-before-filing's gate to AGENTS.md writes too** — it currently gates outbound issues; writing a false claim into the repo's own doctrine file is arguably worse (it propagates to every future session). Candidate hard rule: no claim enters AGENTS.md without file:line or command evidence captured in the same session.~~ **NOT-DO — dup of e1 source-verify protocol.**
+~~3. **Report tool/skill resolution failures immediately** (the crush:// builtin-not-found), not in the eventual status report.~~ **Won't implement — session discipline ask; no repo artifact.**
+~~4. Chat-table verdicts should carry confidence labels (README-derived vs source-verified) so the user can see which rows are load-bearing guesses.~~ **Won't implement — confidence-label convention never adopted; docs-only ask.**
 
 ## f) Next things to get done (session-scoped; honest count, not padded to 50)
 
 > The user scoped this report to this session's work — a true 50-item list would require repo-wide research that was explicitly ruled out ("DO NOT RESEARCH OTHER STUFF UNRELATED"). These are the real items this session generated:
 
-1. Harvest the nix-cache-pin revisit trigger into `TODO_LIST.md` (docs-health HARVEST) — pending user go-ahead.
-2. Fix/verify the `verify-before-filing` builtin skill resolution (crush:// path not found via View) — crush-config territory.
-3. Add an "external tool evaluation protocol" mini-rule to AGENTS.md: clone + source-verify before verdict + before doctrine writes.
-4. Verify our own attic (`cache.home.lan`) serves unauthenticated narinfo reads — the tool's caches option does plain GETs with no auth-token support; relevant IF we ever adopt.
-5. Decide: GitHub watch on caniko/nix-cache-pin for maturity signals, or a quarterly manual re-check entry.
-6. If a GPU-overlay nixpkgs input ever lands (pkgsRocm/pkgsCuda style), re-run this evaluation with `lockOnly = true` and the attic in `caches`.
-7. Optionally send the author a PR (issues disabled): document `caches`/Attic support more prominently in the README intro — the Hydra-heavy intro is what misled this session's first pass.
-8. Optionally PR: remove/fix the "crates.io-ready" badge while the crate 404s.
-9. Confirm the auto-commit daemon lands the two AGENTS.md edits + this report cleanly (shared-tree doctrine).
-10. Consider a confidence-label convention for evaluation tables in future status docs (README-derived vs source-verified).
+~~1. Harvest the nix-cache-pin revisit trigger into `TODO_LIST.md` (docs-health HARVEST) — pending user go-ahead.~~ done — harvest moot: decision recorded in AGENTS.md canon (same as c1)
+~~2. Fix/verify the `verify-before-filing` builtin skill resolution (crush:// path not found via View) — crush-config territory.~~ **Won't implement — stale crush:// skill env issue.**
+~~3. Add an "external tool evaluation protocol" mini-rule to AGENTS.md: clone + source-verify before verdict + before doctrine writes.~~ **NOT-DO — dup of e1 external-eval protocol.**
+~~4. Verify our own attic (`cache.home.lan`) serves unauthenticated narinfo reads — the tool's caches option does plain GETs with no auth-token support; relevant IF we ever adopt.~~ **Won't implement — conditional attic narinfo check moot: tool rejected.**
+~~5. Decide: GitHub watch on caniko/nix-cache-pin for maturity signals, or a quarterly manual re-check entry.~~ **Won't implement — watch/quarterly re-check superseded by rejection decision record.**
+~~6. If a GPU-overlay nixpkgs input ever lands (pkgsRocm/pkgsCuda style), re-run this evaluation with `lockOnly = true` and the attic in `caches`.~~ **Won't implement — conditional on GPU-overlay input that never landed.**
+~~7. Optionally send the author a PR (issues disabled): document `caches`/Attic support more prominently in the README intro — the Hydra-heavy intro is what misled this session's first pass.~~ **Won't implement — upstream docs PR to non-adopted tool declined.**
+~~8. Optionally PR: remove/fix the "crates.io-ready" badge while the crate 404s.~~ **Won't implement — upstream badge PR to non-adopted tool declined.**
+~~9. Confirm the auto-commit daemon lands the two AGENTS.md edits + this report cleanly (shared-tree doctrine).~~ **Won't implement — stale daemon-batch confirm; AGENTS restructured 2026-10-01 since.**
+~~10. Consider a confidence-label convention for evaluation tables in future status docs (README-derived vs source-verified).~~ **Won't implement — never adopted.**
 
 ## g) Questions I cannot figure out myself
 

@@ -17,7 +17,7 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 1. **Full diagnosis of the ENOSPC cliff** (read-only, verified live): device/chunk state, `btrfs_health_critical 1` confirmed in the textfile collector, `nix-gc` failure at 00:00 (gc-guard floor, working as designed), weekly balance last run Sep 7, emergency reserve file absent (deleted post-Sep-7, never re-provisioned; `btrfs_emergency_reserve_present 0`).
 2. **Subvolume list fully decoded**: `@home` = empty Dec-2025 Calamares leftover (never mounted; `/home` is a dir inside `@`); `@cache-home.regular-dir-bak` = Jul-14 leftover; `@nix` = dead pre-flip store, measured **118G** via `du`; `srv`/`var/lib/{portables,machines}`/`tmp`/`var/tmp` = normal defaults.
 3. **Gen-column mystery solved (hypothesis corrected by evidence)**: snapshot `gen` values are non-monotonic vs names — initially hypothesized clock skew, **disproven via journal** (every snapshot created at 23:00 on its named day; Aug-31 run even shows the 9-day-outage catch-up send). Truth: `gen` = root-item generation, rewritten by metadata ops (relocation/balance; note `@nix` and `@.20260831T2300` share gen 1965548 — same transaction, the Sep-9 forensics window). Creation order is provable only via journal/otime.
-4. **Retention decode from the live config** (`/etc/btrbk/root.conf`): `snapshot_preserve_min 2d` (keep-all floor) + `snapshot_preserve 3d 1w` (first-of-day for 3d + first-of-week for 1w). Observed local set {Aug 31, Sep 6} weeklies + {Sep 8–11} dailies is exactly correct behavior; pool keeps all receives forever (`target_preserve_min all`).
+~~4. **Retention decode from the live config** (`/etc/btrbk/root.conf`): `snapshot_preserve_min 2d` (keep-all floor) + `snapshot_preserve 3d 1w` (first-of-day for 3d + first-of-week for 1w). Observed local set {Aug 31, Sep 6} weeklies + {Sep 8–11} dailies is exactly correct behavior; pool keeps all receives forever (`target_preserve_min all`).~~ **Won't implement — superseded: retention reconciled (CHANGELOG 2026-09-25); GC retention 7d decided 2026-09-29.**
 5. **Incident verification (snapshot glob loss)**: all 6 deleted snapshots verified present on `/mnt/pool/backups/root/` (IDs 334/394/414/425/436/447 from the pool subvol list); user calmed with honest impact statement: lost local rollback window + send parents, zero unique data.
 6. **Deep research verdict on restoring incremental send** (sources: digint/btrbk `doc/btrbk.conf.5.asciidoc`, `doc/FAQ.md`, `ChangeLog`, main source; kdave/btrfs-progs `Documentation/btrfs-receive.rst`, `cmds/send.c` — all read 2026-09-12):
    - Send parents are **source-side only** (candidate lists `sro/srn/sao/san/aro/arn` resolve on the sending fs; `btrfs send -p` resolves root-ids on the send mount).
@@ -29,9 +29,9 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 
 ## b) PARTIALLY DONE
 
-1. **Space recovery**: user executed snapshot deletions (accidental, glob), ~205G of their own deletions (contents unidentified — open question), and balance rounds (unalloc 5GiB → 68.5GiB). **`@nix` (118G) still exists**; emergency reserve still absent.
-2. **Protection stack against recurrence**: fully designed (rescue snapshot dir + `chattr +a`, snapshot-count tripwire, safe-delete fish wrapper, btrbk-free anchor) and offered — **zero of it implemented** (user noticed: "I do not see ANY .rescue/ folders!").
-3. **Operational guidance**: recovery command sequence delivered (rescue snapshot → `@nix` delete → supervised btrbk → balance → reserve re-provision); partially executed by user, order not confirmed.
+~~1. **Space recovery**: user executed snapshot deletions (accidental, glob), ~205G of their own deletions (contents unidentified — open question), and balance rounds (unalloc 5GiB → 68.5GiB). **`@nix` (118G) still exists**; emergency reserve still absent.~~ done — @nix deleted 2026-09-20 (docs/planning/2026-09-14_13-27 T22 done)
+~~2. **Protection stack against recurrence**: fully designed (rescue snapshot dir + `chattr +a`, snapshot-count tripwire, safe-delete fish wrapper, btrbk-free anchor) and offered — **zero of it implemented** (user noticed: "I do not see ANY .rescue/ folders!").~~ done — protection stack landed same day (btrfs-rescue + tripwire + fish guard; CHANGELOG 2026-09-12 rescue tier)
+~~3. **Operational guidance**: recovery command sequence delivered (rescue snapshot → `@nix` delete → supervised btrbk → balance → reserve re-provision); partially executed by user, order not confirmed.~~ **Won't implement — stale ops-guidance window.**
 
 ## c) NOT STARTED
 
@@ -50,7 +50,7 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 3. **Clock-skew hypothesis over-asserted** mid-investigation before journal evidence disproved it (self-corrected one step later, but a confident wrong hypothesis costs trust).
 4. **Phantom `.rescue/` expectation**: I published a recovery plan whose step 1 created a rescue snapshot; user later believed it existed. Recommendation ≠ state — I never confirmed execution or implemented the module.
 5. **Memory-protocol violation**: hours of hard-won findings (gen semantics, retention decode, uuid verdict, reserve lifecycle, AGENTS doc drift) exist only in chat. AGENTS.md and TODO_LIST.md untouched all session.
-6. **AGENTS.md doc drift found but not fixed on sight** (contra the proactive-maintenance rule): "Local retention 3d+1w" is imprecise (actual: min 2d + preserve 3d 1w); "`/nix` and `/home` live INSIDE `@`" is stale (`@nix` top-level since Aug 17; `@home` exists as leftover).
+~~6. **AGENTS.md doc drift found but not fixed on sight** (contra the proactive-maintenance rule): "Local retention 3d+1w" is imprecise (actual: min 2d + preserve 3d 1w); "`/nix` and `/home` live INSIDE `@`" is stale (`@nix` top-level since Aug 17; `@home` exists as leftover).~~ done — AGENTS drift fixed (05-54 report a8)
 7. **Background jobs abandoned**: journal grep for the reserve-deletion culprit (job 012) and the `/home/lars` du (job 014) never harvested — their answers are lost to the session.
 
 ## Self-Review (the literal questions)
@@ -72,29 +72,29 @@ The QLC root filesystem hit the ENOSPC cliff overnight (99.76% data chunks full,
 
 ## f) Next actions (session-derived, impact-sorted)
 
-1. Delete QLC `@nix` (118G) — after the 1-min attic sanity check (its own planned precondition).
-2. Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve`.
-3. Verify tonight's 23:00 btrbk **full send** completes and the chain re-anchors (expect ~240G read, ~1h at observed ~80MB/s).
-4. Build the rescue-snapshot module (timer + rotation + `chattr +a` on the rescue dir) in `snapshots.nix` + VM-test the append-only/creation interplay first.
-5. Build snapshot-count==0 tripwire (collector + Gatus) — catches zero-local states before the nightly run pays the full-send tax.
-6. Build safe-delete fish wrapper (preview + `y/N` on multi-target or `.snapshots` paths).
-7. Verify/create the Gatus emergency-reserve check (see e.4 — phantom-alert suspicion).
-8. Update TODO_LIST.md Phase 1: soak passed Sep-10; record the `@nix` deletion when done.
-9. Document session lessons in AGENTS.md: glob-delete class, gen≠creation-order, btrbk 2d/3d/1w decode, uuid-chain/one-full-send doctrine, reserve lifecycle, `incremental strict` rejection.
-10. Identify the ~205G the user deleted post-incident (space accounting + confirm nothing precious).
-11. Forensics: find who deleted `/btrfs-emergency-reserve` post-Sep-7 (journal grep from this session was abandoned).
-12. Re-run bounded balance rounds only if consolidating further (670G allocated holds 378G used — ~290G of chunk consolidation headroom; automation's ≥10G bounce-room gate is now satisfied, Monday's units can take over).
-13. Confirm `nix-gc` unblocks tonight (guard floor 5GiB — now 68.5GiB, comfortable).
-14. Delete empty `@home` leftover subvol (cosmetic, subvol-metadata only).
-15. Decide + clean `@cache-home.regular-dir-bak` (Jul-14 leftover; contents unexamined).
-16. Watch for IO stacking Monday: weekly scrub + balance units post-cleanup on a churning fs (the freeze-#3 episodic-stall class).
-17. Consider supervised manual `systemctl start btrbk-root.service` earlier than 23:00 if tonight's send should be watched.
-18. Verify `backup_all_healthy` / pool freshness check passes after tonight's full send.
-19. AGENTS.md drift fixes (retention wording; `/home`-inside-`@` claim).
-20. Re-run the `/home/lars` du (abandoned job) for the space-composition record.
-21. Record the "chain break costs exactly one full send, never data" doctrine next to the btrbk config in AGENTS.md.
+~~1. Delete QLC `@nix` (118G) — after the 1-min attic sanity check (its own planned precondition).~~ done — @nix deleted 2026-09-20 (planning T22 done)
+~~2. Re-provision emergency reserve: `sudo systemctl start btrfs-emergency-reserve`.~~ done — reserve provisioned on-boot by config (io-tier-coverage-audit.nix:132 tracks unit; CHANGELOG reserve entry)
+~~3. Verify tonight's 23:00 btrbk **full send** completes and the chain re-anchors (expect ~240G read, ~1h at observed ~80MB/s).~~ **Won't implement — stale send watch.**
+~~4. Build the rescue-snapshot module (timer + rotation + `chattr +a` on the rescue dir) in `snapshots.nix` + VM-test the append-only/creation interplay first.~~ done — btrfs-rescue module shipped (platforms/nixos/system/btrfs-rescue.nix; CHANGELOG 2026-09-12)
+~~5. Build snapshot-count==0 tripwire (collector + Gatus) — catches zero-local states before the nightly run pays the full-send tax.~~ done — snapshot-count tripwire shipped (btrfs_root_snapshots canary + Gatus; CHANGELOG 2026-09-12)
+~~6. Build safe-delete fish wrapper (preview + `y/N` on multi-target or `.snapshots` paths).~~ done — safe-delete fish guard shipped (CHANGELOG 2026-09-12; 05-54 report a5)
+~~7. Verify/create the Gatus emergency-reserve check (see e.4 — phantom-alert suspicion).~~ done — reserve Gatus check confirmed live+red (05-54 report a10)
+~~8. Update TODO_LIST.md Phase 1: soak passed Sep-10; record the `@nix` deletion when done.~~ done — TODO Phase-1 updated (05-54 report a9)
+~~9. Document session lessons in AGENTS.md: glob-delete class, gen≠creation-order, btrbk 2d/3d/1w decode, uuid-chain/one-full-send doctrine, reserve lifecycle, `incremental strict` rejection.~~ done — AGENTS lessons landed (05-54 report a8; CHANGELOG 2026-09-12 doctrine block)
+~~10. Identify the ~205G the user deleted post-incident (space accounting + confirm nothing precious).~~ **Won't implement — stale forensics; pool retains all deleted content.**
+~~11. Forensics: find who deleted `/btrfs-emergency-reserve` post-Sep-7 (journal grep from this session was abandoned).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~12. Re-run bounded balance rounds only if consolidating further (670G allocated holds 378G used — ~290G of chunk consolidation headroom; automation's ≥10G bounce-room gate is now satisfied, Monday's units can take over).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~13. Confirm `nix-gc` unblocks tonight (guard floor 5GiB — now 68.5GiB, comfortable).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~14. Delete empty `@home` leftover subvol (cosmetic, subvol-metadata only).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~15. Decide + clean `@cache-home.regular-dir-bak` (Jul-14 leftover; contents unexamined).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~16. Watch for IO stacking Monday: weekly scrub + balance units post-cleanup on a churning fs (the freeze-#3 episodic-stall class).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~17. Consider supervised manual `systemctl start btrbk-root.service` earlier than 23:00 if tonight's send should be watched.~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~18. Verify `backup_all_healthy` / pool freshness check passes after tonight's full send.~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~19. AGENTS.md drift fixes (retention wording; `/home`-inside-`@` claim).~~ **Won't implement — stale operational watches/one-shots from the recovery night.**
+~~20. Re-run the `/home/lars` du (abandoned job) for the space-composition record.~~ **Won't implement — stale cosmetic subvol cleanup.**
+~~21. Record the "chain break costs exactly one full send, never data" doctrine next to the btrbk config in AGENTS.md.~~ **Won't implement — stale leftover decision.**
 22. Optional: revisit TODO_LIST line 107 (3d→7d local widening) now informed by this incident — pool depth argument got stronger.
-23. Standing items _noticed_ this session (not caused): /data EIO repair (P0), btrbk-data marker-gate, flm :52626 corpse reboot, nix-daemon substituter-timeout abort exposure.
+~~23. Standing items _noticed_ this session (not caused): /data EIO repair (P0), btrbk-data marker-gate, flm :52626 corpse reboot, nix-daemon substituter-timeout abort exposure.~~ **NOT-DO — dup of tracked rows: storage.md /data P0, corpse moot (stability.md), nix-daemon abort superseded.**
 
 (23 high-quality items — padding to 50 would be brainstorm filler; the rest belongs to ROADMAP via docs-health HARVEST.)
 
