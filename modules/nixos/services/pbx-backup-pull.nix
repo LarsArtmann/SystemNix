@@ -47,6 +47,12 @@ _: {
       # VERBATIM from pbx-artmann/backups/evo-x2/pbx-backup-pull.sh — do
       # not diverge without updating that repo (and its Go test
       # internal/backuppull, which pins the script's --check contract).
+      # Synced 2026-10-17 evening (M11): the pbx repo had evolved
+      # (--chmod=D700 + sweep-before-pull, the RestrictSUIDSGID EPERM fix)
+      # while THIS copy stayed on the old text — 31 failed pulls since
+      # 10-01 (code 23) with .last-success never written, live-proven again
+      # 2026-10-17 06:20/18:17. The drift itself is queued (verbatim-sync
+      # check idea) in docs/todo/services.md.
       pullScript = pkgs.writeShellApplication {
         name = "pbx-backup-pull";
         # SC2029 (info): both ssh legs expand '$SRC' on the CLIENT side ON
@@ -110,7 +116,23 @@ _: {
           DEST="$DEST_ROOT/$STAMP"
           mkdir -p "$DEST"
 
-          rsync -aHAX --numeric-ids --timeout=300 "$HOST:$SRC" "$DEST"
+          # --chmod=D700: normalize every DIRECTORY to 0700. The PBX's
+          # staged tree carries FreeSWITCH/voicemail dir modes with setgid bits, and
+          # rsync -a's dir chmod to such a mode dies with EPERM inside this unit's
+          # RestrictSUIDSGID= seccomp filter (any chmod whose TARGET mode has
+          # suid/sgid is blocked; proven 2026-10-06 via a systemd-run scope). The
+          # pull then exited 23, .last-success froze at the Oct 2 snapshot, and the
+          # retention sweep (then BELOW the failure point) never ran, so top-level
+          # snapshot dirs accumulated without bound. Files keep their source perms
+          # (-p from -a; locally re-proven: secrets 0600, wavs 0644). The sweep runs
+          # BEFORE the pull now so a failed pull can no longer skip it.
+          sweep_old() {
+          	find "$DEST_ROOT" -mindepth 1 -maxdepth 1 -type d -name '20*' -printf '%T@ %p\n' |
+          		sort -rn | tail -n +"$((KEEP + 1))" | cut -d ' ' -f2- | xargs -r rm -rf --
+          }
+          sweep_old
+
+          rsync -aHAX --numeric-ids --timeout=300 --chmod=D700 "$HOST:$SRC" "$DEST"
 
           # record what we got, then verify the freshest snapshot is inside
           latest_remote="$(ssh "$HOST" "ls -1t '$SRC' | head -1")"
@@ -124,9 +146,9 @@ _: {
           fi
           touch "$DEST_ROOT/.last-success"
 
-          # retention: keep the newest $KEEP snapshot dirs (RAID1 pool holds them)
-          find "$DEST_ROOT" -mindepth 1 -maxdepth 1 -type d -name '20*' -printf '%T@ %p\n' |
-          	sort -rn | tail -n +"$((KEEP + 1))" | cut -d' ' -f2- | xargs -r rm -rf --
+          # retention: keep the newest $KEEP snapshot dirs (RAID1 pool holds them);
+          # sweep_old also runs pre-pull so a failed pull cannot skip it
+          sweep_old
 
           echo "pbx-backup-pull: ok -> $DEST (freshest: $latest_remote)"
         '';
