@@ -1474,7 +1474,7 @@ in
       #    (invalid tokens are rejected by the auth middleware before routing).
       #    NO early exit on the valid path: the collaborator sweep below must
       #    run on EVERY run so newly created repos converge.
-      WANT_SCOPE=write:repository
+      WANT_SCOPE=write:repository,write:user  # 2026-10-16 owner decision: +write:user so hermes-agent can sync its own avatar
       SCOPE_MARKER=${stateDir}/hermes-agent.token.scope
       MARKER_SCOPE=""
       if [ -f "$SCOPE_MARKER" ]; then
