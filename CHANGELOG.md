@@ -6,6 +6,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ---
 
+- **fail2ban REMOVED (2026-10-17, owner directive)** — the only jail (sshd, aggressive) guarded a keys-only SSH surface (`ssh-server.passwordAuthentication = false` + `allowRootLogin = false`, verified in `platforms/nixos/system/configuration.nix`) — nothing to brute-force. Removal also kills the fail2ban 1.1.1/python3.14 `filtersystemd` crash-loop (`AttributeError NoneType.wait` every 2s since two boots, never fixed upstream) and its now-obsolete queued audit (boot-failure-triage §f.8, closed). Touched: `security-hardening.nix` (service block + broad `ignoreip` 10/8+172/16 binding deleted, restoration note inlined), FEATURES.md row, monitoring-runbook SSH-brute-force section, TODO_LIST + docs/todo/services.md rows. Residue: `/var/lib/fail2ban` (bans DB) awaits owner reclaim — trivial, no secrets. The internet-facing PBX keeps ITS fail2ban (separate host repo); CrowdSec on evo-x2 is the successor class for any future password-auth surface.
+
 ## [Unreleased]
 
 ### Added

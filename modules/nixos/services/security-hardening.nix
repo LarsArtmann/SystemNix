@@ -1,4 +1,4 @@
-# Security hardening: polkit, PAM, fail2ban, ClamAV, defensive security tools
+# Security hardening: polkit, PAM, ClamAV, defensive security tools
 # Auditd blocked by NixOS 26.05 bug: https://github.com/NixOS/nixpkgs/issues/483085
 _: {
   flake.nixosModules.security-hardening =
@@ -11,11 +11,10 @@ _: {
     let
       cfg = config.services.security-hardening;
       inherit (import ../../../lib/default.nix lib) onFailure ioTier;
-      ignoreIpList = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
     in
     {
       options.services.security-hardening = {
-        enable = lib.mkEnableOption "Comprehensive security hardening (polkit, PAM, fail2ban, ClamAV, security tools)";
+        enable = lib.mkEnableOption "Comprehensive security hardening (polkit, PAM, ClamAV, security tools)";
       };
 
       config = lib.mkIf cfg.enable {
@@ -46,25 +45,12 @@ _: {
             implementation = "broker";
           };
           gnome.gnome-keyring.enable = true;
-          fail2ban = {
-            enable = true;
-            daemonSettings = {
-              Definition.loglevel = "INFO";
-              DEFAULT.ignoreip = ignoreIpList;
-            };
-            jails = {
-              sshd.settings = {
-                enabled = true;
-                port = "ssh";
-                filter = "sshd";
-                mode = "aggressive";
-                maxretry = 3;
-                findtime = 600;
-                bantime = 3600;
-                ignoreip = ignoreIpList;
-              };
-            };
-          };
+          # fail2ban REMOVED 2026-10-17 (owner): SSH is keys-only auth
+          # (ssh-server.passwordAuthentication = false) — nothing to
+          # brute-force. Its 1.1.1/python3.14 systemd backend was also
+          # crash-looping (AttributeError NoneType.wait every 2s). If it
+          # ever returns for password-auth surfaces, re-add with a file
+          # backend and scoped ignoreip (never the broad 10/8+172/16).
           clamav.daemon.enable = true;
           clamav.updater.enable = true;
         };

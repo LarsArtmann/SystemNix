@@ -218,11 +218,6 @@ When an alert fires, find the service name below and follow the steps.
 - **Fix:** Check `immich-db-backup`, `manifest-db-backup`, `twenty-db-backup` services
 - **Manual:** `sudo systemctl start immich-db-backup.service`
 
-### SSH brute-force detected
-
-- **Impact:** fail2ban has banned IPs — legitimate access may be blocked
-- **Fix:** `sudo fail2ban-client status sshd` to see banned IPs, `sudo fail2ban-client set sshd unbanip <ip>` to unblock
-
 ### GPU VRAM metrics missing
 
 - **Impact:** Blind to GPU memory pressure (the GPUActive crisis)
