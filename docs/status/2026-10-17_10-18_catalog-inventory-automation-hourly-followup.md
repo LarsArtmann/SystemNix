@@ -193,3 +193,17 @@ no-op guard working as designed.
 no secret values anywhere; every emitter carries a self-test; TODO queue +
 library rows updated at authoring time (new: hub CI-selftest row; stamped:
 push/deploy rows); prose cites short revs where applicable.
+
+---
+
+**Addendum ~10:40 — §g Q1 answered, first cohort onboarded.** Owner:
+"They are actually all my projects" — the confidentiality gate is cleared
+for every excluded repo. Executed: Zlota44 onboarded as source #5
+(convention file + live-verified export + sources.json regen; gate clean).
+The merge gate immediately caught a real class bug — quoted-empty
+`version: ""` poisoning merge.py's bare-ref upgrade pass (`svc-""` ghost
+refs) — fixed via `norm_version` with a selftest regression case. Remaining
+cohort: Rolls-Royce-mtuGoHelpCenter-golang needs a source-side CLI export
+(indirect consumer); sec + SwettySwipperWeb are not cloned locally. CI
+prereq stamped into the push row: re-run setup-forgejo.sh so the
+lars/zlota44 mirror exists before the first nightly including it.
