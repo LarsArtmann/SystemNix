@@ -279,6 +279,10 @@
             }/bin/crush-daily-backfill";
             meta.description = "Backfill crush-daily reports for zero-data or missing dates";
           };
+          catalog-inventory = mkApp "catalog-inventory"
+            "Export the full platform service inventory (services.catalog + services.integration across all hosts, per-service deployment locations, zero-deploy included) as JSON for catalog.home.lan"
+            [ pkgs.nix pkgs.jq ]
+            (root + "/scripts/catalog-inventory.sh");
         };
     };
 }

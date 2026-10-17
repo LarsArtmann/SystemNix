@@ -2089,9 +2089,12 @@ sh_post_deploy "$STH_UNIT" "$STH_TIMER" "$STH_PROM"
 # deploy smoke checked liveness (200 = "fixed", report §d.4) while the
 # headline feature stayed off. crm.nix now gates starts on local DNS; a
 # remaining "disabled" line after that gate means Pocket ID itself failed
-# discovery (true positive, not a race). The LAST oidc line since boot is
-# the verdict: enabled → PASS, disabled → FAIL (restart hint), no line
-# with OIDC flags deployed → WARN, OIDC not provisioned → SKIP.
+# discovery (true positive, not a race). Since 2026-10-17 (-passkeys=false)
+# there is NO passkey fallback: a failed discovery is BOOT-FATAL, so the
+# realistic bad state is a missing line + restart-looping unit (WARN below
+# → check the journal tail). The LAST oidc line since boot is the verdict:
+# enabled → PASS, disabled → FAIL (restart hint; legacy binaries only), no
+# line with OIDC flags deployed → WARN, OIDC not provisioned → SKIP.
 echo ""
 echo "=== §20 Kith CRM OIDC readiness (crm-server) ==="
 CRM_UNIT_FILE="/etc/systemd/system/crm-server.service"
@@ -2109,7 +2112,7 @@ else
     report_fail "Kith CRM OIDC - sign-in DISABLED (passkey-only degrade live) — restart crm-server once auth.home.lan DNS+Pocket ID are up (run: journalctl -u crm-server -b | grep 'oidc sign-in')"
     ;;
   "")
-    report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — verify unit actually restarted (run: journalctl -u crm-server -b | tail -20)"
+    report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — with -passkeys=false this usually means the unit is restart-looping on OIDC init (run: journalctl -u crm-server -b | tail -20)"
     ;;
   *)
     report_warn "Kith CRM OIDC - unrecognized readiness line: $crm_oidc_line"

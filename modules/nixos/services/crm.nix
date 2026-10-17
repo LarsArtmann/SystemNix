@@ -87,6 +87,10 @@
       # overnight lock float landed crm on a0341a0; the shim's AtAQS…
       # (measured at a410024b) was the SPECIFIED hash in the 02:46 nh
       # mismatch. Got WOZ2Iwqw… first-hand. Drop per the standing conditions.
+      # VERIFIED UNCHANGED at d3f740b (2026-10-17, passkeys-off flip): the
+      # commit touches no go.mod/go.sum, and a first-hand FOD build of the
+      # full chain (prepared-source → go-modules → kith-crm) went green
+      # with this exact hash — no re-pin needed.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-R9ui8Fb7LMg5THOullEsoBYrQa1zH3qrfwb3K5acuVE=";
       };
