@@ -10,8 +10,13 @@
 # of the encrypted YAML at eval time.
 #
 # Scope:
-#   - top-level keys only (every secret in this repo is top-level; secrets
-#     with a nested `key = "a.b"` are skipped)
+#   - top-level keys; remapped FLAT keys (`key = "yaml_key"`) are checked
+#     against the same scan — only dotted nested keys (`key = "a.b"`) are
+#     skipped (out of scope for a top-level scan). The old blanket
+#     `key != name → skip` left every remapped copy unverified: the
+#     2026-10-17 ai-meter openrouter incident (declared copy pointed at a
+#     key never set in openseo.yaml; eval gate stayed green, deploy died
+#     at the manifest FOD).
 #   - secrets whose sopsFile is unreadable at eval time are skipped (runtime
 #     paths like /run/secrets/sops-nix-age-key — quickshell.nix)
 #
@@ -45,17 +50,24 @@
           # tryEval alone cannot catch the pure-eval absolute-path error.
           parsed =
             if builtins.isPath secret.sopsFile then builtins.tryEval (topLevelKeys secret.sopsFile) else null;
+          # The YAML key this secret maps to (secret name by default, or the
+          # remapped `key`). Flat remaps are verifiable with the top-level
+          # scan — only dotted nested keys (a.b) stay out of scope. The old
+          # blanket `key != name → skip` left every remapped copy unchecked
+          # (2026-10-17 ai-meter openrouter incident).
+          targetKey = secret.key;
+          isNested = builtins.match ".*[.].*" targetKey != null;
         in
         if parsed == null then
           null
-        else if secret.key != name then
+        else if isNested then
           null
-        else if builtins.elem name parsed.value then
+        else if builtins.elem targetKey parsed.value then
           null
         else
           {
             assertion = false;
-            message = "sops-key-audit: secret '${name}' is declared but its key is MISSING from ${toString secret.sopsFile}. The deploy would fail at activation with \"sops-install-secrets: manifest is not valid\". Add the key to the encrypted file (sudo sops <file> from the repo root, or SOPS_AGE_KEY=... sops <file>) or remove the declaration.";
+            message = "sops-key-audit: secret '${name}' (key '${targetKey}') is declared but the key is MISSING from ${toString secret.sopsFile}. The deploy would fail at activation with \"sops-install-secrets: manifest is not valid\". Add the key to the encrypted file (sudo sops <file> from the repo root, or SOPS_AGE_KEY=... sops <file>) or remove the declaration.";
           };
 
       declaredSecrets = if config ? sops && config.sops ? secrets then config.sops.secrets else { };

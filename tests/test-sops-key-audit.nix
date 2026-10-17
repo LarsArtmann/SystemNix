@@ -6,8 +6,14 @@
 #
 #   1. A declared key missing from the sopsFile FAILS the assertion (named).
 #   2. A present key passes (no false positive on the happy path).
-#   3. A nested `key = "..."` secret is skipped (out of scope by design).
-#   4. A runtime sopsFile (/run/secrets/...) is skipped (unreadable at eval).
+#   3. A flat remap (`key = "present_key"`) to an EXISTING key passes.
+#   4. A flat remap to a MISSING key FAILS, naming secret AND key — the
+#      2026-10-17 ai-meter openrouter incident shape (remapped sops copy
+#      pointing at a key never set in the encrypted file; the old blanket
+#      `key != name → skip` made this shape invisible to the guard).
+#   5. A nested `key = "a.b"` secret is skipped (out of scope by design —
+#      the scan is top-level only).
+#   6. A runtime sopsFile (/run/secrets/...) is skipped (unreadable at eval).
 #
 # The no-false-positives half against the REAL config (every real secret key
 # present in its real encrypted file) is enforced by `nix flake check` itself
@@ -70,13 +76,42 @@ let
         ]) == [ ];
     }
     {
-      name = "nested-key-not-skipped";
+      name = "flat-remap-present-falsely-flagged";
       pass =
         failing (evalAssertions [
           {
             sops.secrets.other_name = {
               sopsFile = fixture;
               key = "present_key";
+            };
+          }
+        ]) == [ ];
+    }
+    {
+      name = "remapped-missing-key-not-caught";
+      pass =
+        let
+          f = failing (evalAssertions [
+            {
+              sops.secrets.ai_meter_copy = {
+                sopsFile = fixture;
+                key = "absent_remap_key";
+              };
+            }
+          ]);
+        in
+        f != [ ]
+        && lib.hasInfix "ai_meter_copy" (builtins.head f).message
+        && lib.hasInfix "absent_remap_key" (builtins.head f).message;
+    }
+    {
+      name = "nested-key-falsely-flagged";
+      pass =
+        failing (evalAssertions [
+          {
+            sops.secrets.nested_thing = {
+              sopsFile = fixture;
+              key = "present_key.nested";
             };
           }
         ]) == [ ];
