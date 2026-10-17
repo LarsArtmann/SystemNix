@@ -569,5 +569,11 @@ say ""
 # lib default were dropped (any one of them suffices as the marker).
 eval_case shapeaudit oneshot-unbounded fail 'boot-blocking Type=oneshot unit\(s\) with unbounded TimeoutStartSec' \
   'sed:modules/nixos/services/boot-oneshot-bounds.nix:s|      "cpufreq"|      "cpufreq-renamed"|'
+# ── systemd-shape-audit class 8: OnFailure nested inside serviceConfig ──
+# The visionreviewd no-op class (journal-proven "Unknown key 'OnFailure' in
+# section [Service], ignoring" every boot, 2026-10-17). Mutation: push the
+# landed unit-level onFailure back into serviceConfig — the audit must throw.
+eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside serviceConfig' \
+  'sed:modules/nixos/services/visionreviewd.nix:s|systemd.services.visionreviewd.onFailure = onFailure;|systemd.services.visionreviewd.serviceConfig.OnFailure = onFailure;|'
 say "=== negative-test-lints: $passed passed, $failed failed ==="
 [ "$failed" -eq 0 ]

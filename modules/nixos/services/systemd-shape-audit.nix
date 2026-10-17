@@ -64,6 +64,14 @@
 #    services.systemd-shape-audit.allowUnboundedOneshot WITH a
 #    justification comment at the definition site.
 #
+# 8. OnFailure nested inside serviceConfig. OnFailure is a [Unit] key; a
+#    freeform serviceConfig serializes it verbatim under [Service], where
+#    systemd logs "Unknown key 'OnFailure' in section [Service], ignoring"
+#    on every boot and the failure-escalation intent silently never arms
+#    (visionreviewd, journal-proven 2026-10-17 — notify-failure@%n never
+#    fired despite the config claiming it). Unit-level keys go at the unit
+#    top level (sibling of after/wants), not inside serviceConfig.
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -220,6 +228,12 @@
           ) config.systemd.services;
         in
         lib.attrNames bad;
+
+      # --- class 8: OnFailure nested inside serviceConfig ---
+      # OnFailure is a [Unit] key; rendered under [Service] systemd ignores
+      # it with a journal warning and failure escalation never arms.
+      onFailureInServiceConfigOffenders =
+        lib.attrNames (lib.filterAttrs (_n: svc: svc.serviceConfig ? OnFailure) config.systemd.services);
     in
     {
       options.services.systemd-shape-audit = {
@@ -343,6 +357,20 @@
             Deliberate exception:
               services.systemd-shape-audit.allowUnboundedOneshot = [ "<unit>" ];
             with a justification comment.
+          '';
+        }
+        {
+          assertion = onFailureInServiceConfigOffenders == [ ];
+          message = ''
+            systemd-shape-audit: OnFailure nested inside serviceConfig for:
+            ${lib.concatStringsSep ", " onFailureInServiceConfigOffenders}
+            OnFailure is a [Unit] key — inside the freeform serviceConfig it
+            renders under [Service], where systemd logs "Unknown key
+            'OnFailure' in section [Service], ignoring" on every boot and the
+            failure-escalation intent silently never arms (visionreviewd,
+            journal-proven 2026-10-17).
+            Fix: hoist it to the unit TOP LEVEL:
+              systemd.services.<name>.onFailure = [ "notify-failure@%n.service" ];
           '';
         }
       ];
