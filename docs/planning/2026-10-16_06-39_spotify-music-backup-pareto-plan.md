@@ -99,6 +99,7 @@ Storage math (10k tracks): AAC 128 ~40 GB, AAC 256 ~77 GB, true 16/44.1 FLAC ~25
 | P0.1 | Exportify: "Export All" (every playlist + liked songs) -> zip of CSVs | 30m | OWNER (browser) | CRITICAL: irreplaceable catalog | - |
 | P0.2 | Stage CSVs -> `/mnt/pool/services/music/_meta/playlists/`; verify track counts vs Spotify app | 30m | OWNER+agent | CRITICAL | P0.1 |
 | P0.3 | Start GDPR "extended streaming history" download request in Spotify account settings | 15m | OWNER (browser) | CRITICAL: the "ever listened" ledger; time-gated | - |
+| P0.4 | **Continuous metadata collector (WAVE 1 - starts the ledger clock, owner's stated starting point 2026-10-16)**: `multi-scrobbler` (nixpkgs 0.16.5, Spotify source OAuth via web UI :9078) -> ListenBrainz offsite mirror; optional self-hosted Maloja later (imports the GDPR zip directly as backfill); weekly playlist/liked JSON snapshot timer into `_meta/snapshots/` | 100m | agent | CRITICAL: Spotify's recently-played API window is shallow - every day without the collector loses history permanently | - |
 | P1.1 | spotdl smoke test: nix-shell spotdl, download 1 playlist (first 5 tracks), inspect tags/art | 30m | agent | HIGH | P0.2 |
 | P1.2 | Script CSV -> track-URI lists; create one `.spotdl` sync file per playlist in `_meta/sync/` | 45m | agent | HIGH | P1.1 |
 | P1.3 | Bulk download all playlists -> `staging/` (unattended; rate-limit friendly; monitor) | 100m+ | agent (unattended) | HIGH | P1.2 |
@@ -168,6 +169,13 @@ Storage math (10k tracks): AAC 128 ~40 GB, AAC 256 ~77 GB, true 16/44.1 FLAC ~25
 | M44 | Owner: install Symfonium/Tempo, log into music.home.lan, enable offline cache for a playlist | 12m | P4.3 | OWNER |
 | M45 | Owner: verify airplane-mode playback from offline cache | 5m | P4.3 | OWNER |
 | M46 | Owner: draft buy-list top-20 from history replay counts | 12m | P4.5 | OWNER |
+| M47 | Agent: grep `lib/ports.nix` for 9078 collisions; add `multi-scrobbler = 9078` + module skeleton (nixpkgs pkg, systemd, harden) | 12m | P0.4 | agent |
+| M48 | Agent: sops `multi_scrobbler` env template (Spotify dev-app id/secret + ListenBrainz token as PLACEHOLDERS; no values in repo) | 12m | P0.4 | agent |
+| M49 | Owner: create Spotify developer app in dashboard; enter secrets via `sops` editor, never CLI | 10m | P0.4 | OWNER |
+| M50 | Agent: deploy; owner completes Spotify OAuth via web UI :9078; verify first scrobble lands in ListenBrainz | 12m | P0.4 | agent+OWNER |
+| M51 | Agent: playlist/liked weekly snapshot oneshot+timer (Web API JSON -> `_meta/snapshots/`) + Gatus staleness check | 12m | P0.4 | agent |
+| M52 | Owner decision: self-host Maloja (own derivation; imports GDPR zip as backfill) vs ListenBrainz-only v1 | 10m | P0.4 | OWNER |
+| M53 | Agent: when GDPR zip arrives, run the backfill import (Maloja import folder or scripted JSON conversion) - feeds P4.2 | 12m | P0.4 | agent |
 
 ## 6. Sequencing / execution graph
 
@@ -187,7 +195,7 @@ flowchart TD
   P42 --> P45["P4.5 buy-list (OWNER)"]
 ```
 
-Critical path: P0.1 -> P1.x -> P2.x -> P3.5 (first served song). P0.3 runs in parallel (Spotify prepares the export asynchronously).
+Critical path: **P0.4 (collector - wave 1, starts immediately)** -> P0.1 -> P1.x -> P2.x -> P3.5 (first served song). P0.3 runs in parallel (Spotify prepares the export asynchronously).
 
 ## 7. Do-not-Verschlimmbessern guardrails
 
@@ -208,6 +216,8 @@ Critical path: P0.1 -> P1.x -> P2.x -> P3.5 (first served song). P0.3 runs in pa
 | Auth for music.home.lan | Follow existing SSO doctrine (protectedVHost + Pocket ID/oauth2-proxy) |
 | Where bought FLAC lands | Same `library/` tree (beets-managed), flagged `media_format=flac` in tags |
 | Sync cadence | Weekly timer; manual trigger after big Spotify sessions |
+| Audio source default for P1 (UPDATED 2026-10-16) | RECOMMENDATION: **Zotify primary** (batched moderate pacing, 320k Ogg, correct track lists - best archival fidelity; owner consciously accepts the Sec.10 account-risk tradeoff), spotDL as fallback for gap-filling, buy-list for favorites |
+| Offsite 3-2-1 for the library | Once the library exists, include it in the dormant offsite-Borg job at go-live (owner-held inputs pending, `docs/services/offsite-borg.md`) - irreplaceable data deserves the third copy; same-chassis pool survives NVMe death, not the house |
 | What happens to Spotify account afterward | Out of scope; the library removes the hostage situation |
 
 ## 9. Errata / corrections to prior session claims
@@ -253,3 +263,7 @@ Capture Spotify's own decrypted transcodes with your own Premium account via lib
 - No gray tool running unattended as a systemd service with the MAIN account: gray capture is owner-initiated, batched, supervised. The automated recurring pipeline (P4.1) stays spotDL/owned-files backup only.
 
 Decision gate: gray-path adoption is an OWNER call per run, not a queue-harvestable `[ready]` item - it carries account risk, so it stays `[blocked:user]` by convention.
+
+### 10.4 Revision log
+
+- **v2 (2026-10-16, this session):** plan re-audited against the owner's stated goals after the gray-appendix and metadata-collector discussion. Added P0.4 continuous metadata collector as WAVE 1 (multi-scrobbler -> ListenBrainz, playlist snapshot timer, GDPR backfill), M47-M53 micro-tasks, the offsite 3-2-1 tie-in for the library, and flipped the P1 audio-source recommendation to Zotify-primary (Sec. 8) - archival fidelity plus correct track matching outweigh YouTube-sourcing convenience now that the owner has surfaced the tradeoff deliberately.
