@@ -13,6 +13,7 @@ _: {
         harden
         serviceDefaults
         serviceOneshotDefaults
+        ioTier
         onFailure
         ports
         ;
@@ -108,6 +109,9 @@ _: {
                 ProtectSystem = lib.mkForce false;
               })
               (serviceDefaults { RestartSec = "10s"; })
+              # BE/5 heavyDB: bulk ONNX model loads at boot (the llama-chat
+              # page-in class) then latency-sensitive inference serving.
+              (ioTier.heavyDB)
               {
                 Environment = lib.mkForce [ "HOME=/var/lib/immich" ];
               }

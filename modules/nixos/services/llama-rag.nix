@@ -406,19 +406,25 @@ _: {
               pkgs.coreutils
             ];
             unitConfig.ConditionPathIsDirectory = cfg.modelDir;
-            serviceConfig = {
-              Type = "oneshot";
-              User = cfg.user;
-              Group = cfg.group;
-              ExecStart = "${fetchScript}";
-              # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
-              # (the global 3min default cannot cover a cold first fetch).
-              TimeoutStartSec = "20min";
-              # Stay active after success: the servers' Requires= pulls must be
-              # no-ops — re-running this fetch per server restart piled up starts
-              # past the burst limit and exit-4'd activations (2026-09-18).
-              RemainAfterExit = true;
-            };
+            serviceConfig = lib.mkMerge [
+              # BE/6 background: multi-GB GGUF downloads + writes on the cold
+              # first fetch — bulk data movement that must finish but never
+              # contends with interactive tiers (btrbk-send precedent).
+              (ioTier.background)
+              {
+                Type = "oneshot";
+                User = cfg.user;
+                Group = cfg.group;
+                ExecStart = "${fetchScript}";
+                # Two ~1.2 GB downloads from HuggingFace; slow links need headroom
+                # (the global 3min default cannot cover a cold first fetch).
+                TimeoutStartSec = "20min";
+                # Stay active after success: the servers' Requires= pulls must be
+                # no-ops — re-running this fetch per server restart piled up starts
+                # past the burst limit and exit-4'd activations (2026-09-18).
+                RemainAfterExit = true;
+              }
+            ];
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
           };

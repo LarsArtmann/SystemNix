@@ -516,9 +516,18 @@ probe_endpoint() {
   # $1 = probe id (filesystem-safe), $2 = port. Body + ok-marker per probe:
   # concurrent `>>` into ONE file interleaves mid-line; separate files keep
   # each body intact and the post-pass concatenation deterministic.
-  if curl -sf --compressed --max-time 5 "http://127.0.0.1:$2/metrics" -o "$PROBE_DIR/$1.body" 2>/dev/null; then
-    : >"$PROBE_DIR/$1.ok"
-  fi
+  # The HTTP status is recorded alongside: a 401 means the endpoint is UP
+  # but auth-gated (cv by design) — distinguishable from a dead port only
+  # by the code, not by curl's exit status alone.
+  local code
+  code=$(curl -s --compressed --max-time 5 -o "$PROBE_DIR/$1.body" -w '%{http_code}' "http://127.0.0.1:$2/metrics" 2>/dev/null) || code=000
+  printf '%s\n' "$code" >"$PROBE_DIR/$1.code"
+  case "$code" in
+    # Mirror of the old `curl -sf`: no ok-marker on transport failure
+    # (000) or HTTP error statuses (4xx/5xx).
+    000 | [45][0-9][0-9]) ;;
+    *) : >"$PROBE_DIR/$1.ok" ;;
+  esac
 }
 
 # All endpoint probes run in ONE parallel batch (2026-10-17): these were
@@ -529,8 +538,22 @@ probe_endpoint() {
 # wall time is max(single probe) ≈ 5s worst case. Verdicts, state vars, and
 # output order are resolved in the sequential post-pass below — semantics
 # identical to the old sequential loop.
+# monitor365 (agent + server) is deliberately disabled since 2026-08-12
+# (private-git-dep blocker — the wireguard-collector crate can't be fetched
+# in the Nix sandbox; storage-collector covers storage trends meanwhile).
+# Probe :9191 only when the DEPLOYED generation actually ships its units,
+# else every deploy pays a permanent "not responding" warn for a service
+# that cannot be up. One-deploy lag on re-enable is fine: the warn is
+# non-fatal, and the re-enabling deploy's NEXT run sees the new units.
+MONITOR365_DEPLOYED=false
+if ls /run/current-system/etc/systemd/system/monitor365*.service >/dev/null 2>&1; then
+  MONITOR365_DEPLOYED=true
+fi
+
 probe_endpoint node-exporter "${NODE_EXPORTER_PORT}" &
-probe_endpoint monitor365 "${MONITOR365_PORT}" &
+if [ "$MONITOR365_DEPLOYED" = true ]; then
+  probe_endpoint monitor365 "${MONITOR365_PORT}" &
+fi
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
   printf '%s\n' "${port_num:-}" >"$PROBE_DIR/svc-$port_name.port"
@@ -552,7 +575,7 @@ if [ -e "$PROBE_DIR/monitor365.ok" ]; then
   # shellcheck disable=SC2034
   MONITOR365_UP=true
   cat "$PROBE_DIR/monitor365.body" >>"$METRICS_FILE"
-else
+elif [ "$MONITOR365_DEPLOYED" = true ]; then
   warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
 fi
 
@@ -577,6 +600,16 @@ for port_name in $GATUS_SERVICE_METRIC_PORTS; do
       # shellcheck disable=SC2034
       BANKSYNC_UP=true
     fi
+  elif
+    [ "${port_name}" = "cv" ] &&
+      [ "$(cat "$PROBE_DIR/svc-cv.code" 2>/dev/null || true)" = "401" ]
+  then
+    # cv /metrics is X-API-Key gated by design: 401 proves the endpoint (and
+    # service) is UP — the authenticated gatus check owns metric visibility.
+    # Without this branch every deploy paid a false "not responding" warn
+    # for a healthy auth-gated service (observed on every run since the
+    # 2026-09-09 gating).
+    pass "Service metrics 'cv' (port ${port_num}) auth-gated: 401 — endpoint UP, gatus X-API-Key check owns visibility"
   else
     warn "Service metrics '${port_name}' (port ${port_num:-unresolved}) not responding — its gatus pats will flag absent"
   fi

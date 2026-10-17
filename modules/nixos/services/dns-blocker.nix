@@ -30,6 +30,7 @@ _: {
         harden
         serviceDefaults
         serviceOneshotDefaults
+        ioTier
         onFailure
         mkStateDir
         ports
@@ -1298,6 +1299,11 @@ _: {
                     AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
                   })
                   (serviceDefaults { RestartSec = "3s"; })
+                  # BE/5 heavyDB: the boot-time 3.9M-entry blocklist build is a
+                  # bulk read (the 2026-08-31 gate class: ~2min under IO load)
+                  # and the resolver is latency-sensitive while it serves —
+                  # exactly the heavyDB contract (llama-chat/clickhouse tier).
+                  (ioTier.heavyDB)
                   {
                     Type = "simple";
                     # OOM-kill immunity for the sole DNS resolver. dnsblockd was

@@ -37,6 +37,7 @@
 let
   inherit (import ../../../lib/default.nix lib)
     harden
+    ioTier
     onFailure
     serviceOneshotDefaults
     ;
@@ -159,6 +160,10 @@ in
     serviceConfig = lib.mkMerge [
       (harden { })
       (serviceOneshotDefaults { })
+      # BE/6 background: the sync is a ~250 MB bulk copy (rsync + diff -r
+      # verify) that must finish but never contends with interactive I/O —
+      # fires at boot, on entry-tree changes, and on deploy restarts.
+      (ioTier.background)
       {
         Type = "oneshot";
         RemainAfterExit = true;
