@@ -17,23 +17,24 @@ _: {
   flake.nixosModules.boot-oneshot-bounds =
     { lib, ... }:
     {
-      systemd.services = lib.genAttrs
-        [
-          # nixpkgs/foreign-rendered boot setup oneshots
-          "cpufreq"
-          "sshd-keygen"
-          "logrotate-checkconf"
-          "linger-users"
-          "post-boot"
-          # in-repo factories that do not route through serviceOneshotDefaults
-          "inboxclean-backup-dir"
-          "mglru-thrash-protection"
-          "restic-app-dumps-setup"
-          "restic-storage-history-setup"
-          "signoz-clickhouse-log-ttl"
-        ]
-        (_name: {
-          serviceConfig.TimeoutStartSec = lib.mkDefault "5min";
-        });
+      systemd.services =
+        lib.genAttrs
+          [
+            # nixpkgs/foreign-rendered boot setup oneshots
+            "cpufreq"
+            "sshd-keygen"
+            "logrotate-checkconf"
+            "linger-users"
+            "post-boot"
+            # in-repo factories that do not route through serviceOneshotDefaults
+            "inboxclean-backup-dir"
+            "mglru-thrash-protection"
+            "restic-app-dumps-setup"
+            "restic-storage-history-setup"
+            "signoz-clickhouse-log-ttl"
+          ]
+          (_name: {
+            serviceConfig.TimeoutStartSec = lib.mkDefault "5min";
+          });
     };
 }

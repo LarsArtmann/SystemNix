@@ -213,8 +213,7 @@ in
     }
     {
       assertion =
-        (config.systemd.paths.boot-mirror-sync.pathConfig.Unit or null)
-        == "boot-mirror-sync.service";
+        (config.systemd.paths.boot-mirror-sync.pathConfig.Unit or null) == "boot-mirror-sync.service";
       message = "boot-mirror-sync.path: must trigger boot-mirror-sync.service";
     }
     {

@@ -847,6 +847,49 @@
             ''
           );
 
+        # Boot-mirror path-trigger contract (2026-10-17 gen-922 stale-boot
+        # class): the sync unit must be re-triggered by /boot/loader/entries
+        # changes so ANY gen-install path (raw switch-to-configuration/stc,
+        # not just deploy.sh's provisioner restart) refreshes the Samsung
+        # ESP — and an unmounted mirror must stay a condition-skip, never a
+        # boot failure (wants-not-requires: nofail mount +
+        # ConditionPathIsMountPoint on the service). The module's own
+        # assertions fire only at toplevel build; this check forces the
+        # rendered values on every `nix flake check` (incl. --no-build).
+        # Negative-proven by scripts/negative-test-lints.sh (bootmirror
+        # group).
+        boot-mirror-path-trigger =
+          let
+            cfg = inputs.self.nixosConfigurations.evo-x2.config;
+            pathCfg = cfg.systemd.paths.boot-mirror-sync.pathConfig;
+            svcCfg = cfg.systemd.services.boot-mirror-sync;
+            contractGuards =
+              lib.throwIfNot (pathCfg.PathChanged or null == [ "/boot/loader/entries" ])
+                "boot-mirror-path-trigger: PathChanged must watch /boot/loader/entries — without it, non-deploy gen-installs leave the Samsung ESP stale (gen-922 class)"
+                (
+                  lib.throwIfNot (pathCfg.Unit or null == "boot-mirror-sync.service")
+                    "boot-mirror-path-trigger: path unit must trigger boot-mirror-sync.service"
+                    (
+                      lib.throwIfNot (lib.elem "multi-user.target" cfg.systemd.paths.boot-mirror-sync.wantedBy)
+                        "boot-mirror-path-trigger: path unit must be wantedBy multi-user.target so the watch arms at boot"
+                        (
+                          lib.throwIfNot (svcCfg.unitConfig.ConditionPathIsMountPoint or null == "/boot-mirror")
+                            "boot-mirror-path-trigger: service must keep ConditionPathIsMountPoint — a path-unit trigger with an unmounted Samsung must condition-skip, never fail"
+                            (
+                              lib.throwIfNot (lib.elem "nofail" cfg.fileSystems."/boot-mirror".options)
+                                "boot-mirror-path-trigger: mirror filesystem must stay nofail (a detached Samsung degrades, never blocks boot)"
+                                true
+                            )
+                        )
+                    )
+                );
+          in
+          builtins.deepSeq contractGuards (
+            pkgs.runCommand "boot-mirror-path-trigger-check" { } ''
+              echo "boot-mirror path-trigger contract OK (PathChanged watch, boot-armed, condition-skip posture)" > $out
+            ''
+          );
+
         # Gitleaks positive-coverage selftest (2026-09-15, closes the
         # 40-hex saga): turns the retracted TODO rows 357/361 claims
         # into tested invariants. CORRECTED ATTRIBUTION (the harvested

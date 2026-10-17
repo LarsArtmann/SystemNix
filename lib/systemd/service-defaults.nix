@@ -76,11 +76,15 @@ in
   # that never stated a need. Enforced repo-wide by systemd-shape-audit
   # class 7 for boot-blocking (multi-user/graphical) oneshots.
   serviceOneshotDefaults =
-    args: (mkDefaults true "no" args) // {
+    args:
+    (mkDefaults true "no" args)
+    // {
       TimeoutStartSec = lib.mkDefault "5min";
     };
   serviceOneshotDefaultsUser =
-    args: (mkDefaults false "no" args) // {
+    args:
+    (mkDefaults false "no" args)
+    // {
       TimeoutStartSec = lib.mkDefault "5min";
     };
 

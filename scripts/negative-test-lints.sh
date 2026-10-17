@@ -540,6 +540,24 @@ eval_case pastebot bind-repointed fail 'pastebot-parity-audit: niri bind' \
 eval_case pastebot plugin-dropped fail 'pastebot-parity-audit: the paste-snippets DMS launcher plugin' \
   'sed:platforms/nixos/desktop/quickshell.nix:s|programs.dms-paste.enable = true;|programs.dms-paste.enable = false;|'
 
+# ── boot-mirror-path-trigger: the 2026-10-17 gen-922 stale-boot class ──
+# The check (selftests.nix) pins the rendered path-unit trigger + the
+# wants-not-requires posture. Each mutation recreates one regression shape
+# and proves the matching leg fires. Mutations keep eval valid so the
+# CHECK's guard fires (not an eval accident).
+# Leg 1: the raw-stc bypass itself — the watcher pointed at a dead dir
+# (any gen-install outside deploy.sh leaves the Samsung ESP stale).
+run_case bootmirror watcher-dropped boot-mirror-path-trigger fail 'PathChanged must watch /boot/loader/entries' \
+  'sed:platforms/nixos/system/boot-mirror.nix:s|"/boot/loader/entries"|"/boot/loader/entriez"|'
+# Leg 2: the condition-skip posture — a trigger with an unmounted Samsung
+# must condition-skip, never fail (this would boot-break nofail's promise).
+run_case bootmirror condition-dropped boot-mirror-path-trigger fail 'must condition-skip, never fail' \
+  'sed:platforms/nixos/system/boot-mirror.nix:s|ConditionPathIsMountPoint = mirrorPath;|ConditionPathIsMountPoint = "/boot";|'
+# Leg 3: the nofail half of wants-not-requires — a detached Samsung must
+# degrade, never block boot.
+run_case bootmirror nofail-dropped boot-mirror-path-trigger fail 'must stay nofail' \
+  'sed:platforms/nixos/system/boot-mirror.nix:s|"nofail"|"nofail-mutated"|'
+
 say ""
 say "=== negative-test-lints: $passed passed, $failed failed ==="
 [ "$failed" -eq 0 ]
