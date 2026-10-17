@@ -206,11 +206,14 @@ _: {
           # connection-refused until ready — InboxClean chat/ai-meter degrade
           # gracefully (no gatus check probes llama-chat directly; verified
           # 2026-10-17 before this move).
-          after = [
-            "network-online.target"
-            "multi-user.target"
-          ];
-          wants = [ "network-online.target" ];
+          #
+          # NO network-online.target (owner catch 2026-10-17): loopback-only
+          # binder (host assertion) + local GGUF + loopback probe — `lo` is
+          # up before multi-user on every boot (redis/postgres bind loopback
+          # with no network gating). network-online would order the load
+          # behind NM-wait-online's FULL-link verdict — minutes-long during
+          # wifi-failover windows, for zero benefit.
+          after = [ "multi-user.target" ];
           wantedBy = [ "multi-user.target" ];
           unitConfig.ConditionPathExists = cfg.modelPath;
 
