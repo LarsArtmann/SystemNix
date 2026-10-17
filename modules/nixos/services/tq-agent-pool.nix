@@ -508,7 +508,7 @@ _: {
               group = "AI";
               href = "https://tq.${domain}";
               description = "TODO_LIST Harvest + Headless Crush Agents";
-              icon = "mdi-checkbox-marked-circle-outline";
+              icon = "opencode.png";
             };
           };
           tq-serve = {

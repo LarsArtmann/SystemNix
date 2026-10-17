@@ -885,7 +885,7 @@
               name = "GeoMetrikks";
               group = "Infrastructure";
               description = "Access-log geo analytics (live world map)";
-              icon = "mdi-earth";
+              icon = "openstreetmap.png";
             };
             backup = {
               directory = poolBackupDir;

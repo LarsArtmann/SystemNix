@@ -378,7 +378,7 @@ _: {
               name = "Architecture Catalog";
               group = "Development";
               description = "Federated EventCatalog of all services";
-              icon = "mdi-sitemap";
+              icon = "backstage.png";
             };
             unit = "architecture-catalog-sync";
             monitored = true;

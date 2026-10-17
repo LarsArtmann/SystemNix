@@ -185,7 +185,7 @@
               name = "health";
               group = "Monitoring";
               description = "Federated go-health hub";
-              icon = "mdi-heart-pulse";
+              icon = "beszel.png";
             };
             monitored = true;
           };

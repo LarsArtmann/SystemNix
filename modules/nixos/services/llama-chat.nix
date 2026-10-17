@@ -300,7 +300,7 @@ _: {
               name = "llama.cpp Chat";
               group = "AI";
               description = "Qwen3.6 35B-A3B brain — OpenAI-compatible, native tool calls";
-              icon = "ollama.png";
+              icon = "open-webui.png";
               checkUrl = "http://127.0.0.1:${toString cfg.port}/health";
             };
           };

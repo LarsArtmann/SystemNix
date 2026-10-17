@@ -167,7 +167,7 @@
               name = "index";
               group = "Development";
               description = "Project docs index";
-              icon = "mdi-file-table-box-multiple-outline";
+              icon = "meilisearch.png";
             };
             monitored = true;
           };

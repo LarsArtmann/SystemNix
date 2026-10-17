@@ -119,7 +119,9 @@ _: {
               name = "systemd-graph";
               group = "Review Tools";
               description = "Live systemd Dependency Graph";
-              icon = "mdi-graph-outline";
+              # No icon: the dashboard-icons pack has no systemd/graph glyph
+              # (verified at the pinned pack rev 2026-10-17) and mdi-* names
+              # fail the papdashboard icon gate — monogram tile.
             };
           };
         };

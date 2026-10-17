@@ -137,7 +137,9 @@ _: {
               name = "systemd-timer-monitor";
               group = "Review Tools";
               description = "Systemd Services & Timers Audit";
-              icon = "mdi-timer-outline";
+              # No icon: the dashboard-icons pack has no systemd/timer glyph
+              # (verified at the pinned pack rev 2026-10-17) and mdi-* names
+              # fail the papdashboard icon gate — monogram tile.
             };
           };
         };

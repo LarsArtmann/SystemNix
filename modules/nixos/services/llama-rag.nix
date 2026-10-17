@@ -578,7 +578,7 @@ _: {
                 name = "llama.cpp RAG";
                 group = "AI";
                 description = "Embeddings + Reranking (bge-m3, bge-reranker-v2-m3)";
-                icon = "ollama.png";
+                icon = "hugging-face.png";
               };
             };
             llama-embeddings = {

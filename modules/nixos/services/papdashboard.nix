@@ -532,11 +532,13 @@
                     name = "Pocket ID";
                     href = svcUrl "auth";
                     description = "Passkey OIDC Provider";
+                    icon = "pocket-id.png";
                   }
                   {
                     name = "Caddy";
                     description = "Reverse Proxy";
                     checkUrl = "http://127.0.0.1:${toString ports.caddy-metrics}/metrics";
+                    icon = "caddy.png";
                   }
                   # PostgreSQL and Redis are decorative tiles: neither exposes
                   # a public HTTP health endpoint (pg_isready is TCP-only;
@@ -548,10 +550,12 @@
                   {
                     name = "PostgreSQL";
                     description = "Database Server";
+                    icon = "postgres.png";
                   }
                   {
                     name = "Redis";
                     description = "Cache (Immich)";
+                    icon = "redis.png";
                   }
                   # Single DNS-blocker tile (merged 2026-10-17): the daemon
                   # is core network infra, not a media app. href opens the
@@ -563,6 +567,7 @@
                     href = svcUrl "dnsblock";
                     description = "DNS Block Stats";
                     checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
+                    icon = "blocky.png";
                   }
                 ];
               }
@@ -580,11 +585,13 @@
                     name = "Immich";
                     href = svcUrl "immich";
                     description = "Photo & Video Management";
+                    icon = "immich.png";
                   }
                   {
                     name = "Paperless";
                     href = svcUrl "paperless";
                     description = "Document Management (OCR, Office/E-Mail, AI, Archive)";
+                    icon = "paperless-ngx.png";
                   }
                 ];
               }
@@ -595,6 +602,7 @@
                     name = "Forgejo";
                     href = svcUrl "forgejo";
                     description = "Git Forge (GitHub Sync)";
+                    icon = "forgejo.png";
                   }
                 ];
               }
@@ -609,6 +617,7 @@
                     name = "Node Exporter";
                     description = "System Metrics (CPU, RAM, Disk, Network)";
                     checkUrl = "http://127.0.0.1:${toString nodeExporterPort}/metrics";
+                    icon = "prometheus.png";
                   }
                   # dnsblockd and EMEET PIXY tiles REMOVED 2026-10-17: both
                   # were probe-only/decorative halves of tiles that exist
@@ -625,11 +634,13 @@
                     name = "Taskwarrior";
                     href = svcUrl "tasks";
                     description = "Task Sync Server (TaskChampion)";
+                    icon = "taskcafe.png";
                   }
                   {
                     name = "OpenSEO";
                     href = svcUrl "seo";
                     description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
+                    icon = "google-search-console.png";
                   }
                 ];
               }
@@ -766,6 +777,20 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # Eval-time gate on the tile-icon FORM (existence is checked by
+        # building dashboardIcons): PapDashboard validates icons at startup
+        # and refuses to start on anything that is neither an http(s) URL nor
+        # a pack file name, so a stale mdi-*/bare-word icon would take the
+        # whole dashboard down at the next restart.
+        assertions = [
+          {
+            assertion = invalidIconTiles == [ ];
+            message = "services.papdashboard: tile icon(s) must be a dashboard-icons pack file name (e.g. \"miniflux.png\") or an http(s) URL. Offending tiles: ${
+              lib.concatStringsSep "; " (map (t: "${t.name} → ${toString (t.icon or null)}") invalidIconTiles)
+            }";
+          }
+        ];
+
         systemd.services.papdashboard = {
           description = "PapDashboard — alert hub with NPU insight enricher";
           wantedBy = [ "multi-user.target" ];
@@ -793,6 +818,10 @@
             # read at startup; restartTriggers below restarts the unit when
             # the rendered config changes.
             PAP_SERVICES_CONFIG = "/etc/papdashboard/services.json";
+            # Service tile logos: the pack subset the rendered config asks
+            # for, served by the app at /icons/<file>. Referencing the path
+            # here is what forces the missing-icon gate to build on deploy.
+            PAP_ICONS_DIR = "${dashboardIcons}";
           };
 
           serviceConfig = lib.mkMerge [

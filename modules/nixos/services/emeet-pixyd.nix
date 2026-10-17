@@ -101,7 +101,7 @@
               name = "EMEET PIXY";
               group = "Infrastructure";
               description = "Webcam auto-activation daemon (tracking, privacy, presets)";
-              icon = "mdi-webcam";
+              icon = "camera-ui.png";
             };
             # Deliberately NOT monitored=true: emeet-pixyd.service is a
             # USER unit — node_exporter's systemd collector (system bus)
