@@ -89,7 +89,17 @@ let
             rm -f "/boot/loader/entries/''${entry}" # blessed on the booted ESP: drop the stale counting twin
           else
             matched=$(find "${mirrorPath}/loader/entries" -maxdepth 1 -type f -name "''${stem}+*.conf" -printf '%f\n' | head -n 1)
-            if [ -n "$matched" ] && [ "$matched" != "$entry" ]; then
+            # 2026-10-17 live failure: the pair reached mv as byte-different
+            # names that resolve to the SAME file on case-insensitive vfat —
+            # GNU mv died "are the same file", aborting the sync BEFORE the
+            # rsync leg and leaving the mirror stale (pre-reboot-check
+            # blocker). A converged twin is a correct NO-OP: the -ef inode
+            # test is exactly mv's own same-file predicate, so skip instead
+            # of crash.
+            if
+              [ -n "$matched" ] && [ "$matched" != "''${entry}" ] \
+                && ! [ "/boot/loader/entries/''${entry}" -ef "/boot/loader/entries/''${matched}" ]
+            then
               mv -f "/boot/loader/entries/''${entry}" "/boot/loader/entries/''${matched}"
             fi
           fi

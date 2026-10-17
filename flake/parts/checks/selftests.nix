@@ -64,6 +64,24 @@
           touch $out
         '';
 
+        # The 2026-10-17 deploy-pipeline optimizations (deploy_restart
+        # timeout bounds, content-addressed check-#1 stamp, the
+        # race-detector manifest fold, the parallel probe batch) shipped
+        # with zero persisted tests — one silent regression reintroduces
+        # the 27-min provisioner hang or the use-before-set probe batch.
+        # Same staging doctrine as pre-deploy-metrics-selftest: the test
+        # extracts the LIVE function texts from the deployed scripts, so
+        # it always exercises what ships.
+        deploy-pipeline-selftest = pkgs.runCommand "deploy-pipeline-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts"
+          cp ${root}/scripts/test-deploy-pipeline.sh "$scratch/scripts/test-deploy-pipeline.sh"
+          cp ${root}/scripts/deploy.sh "$scratch/scripts/deploy.sh"
+          cp ${root}/scripts/pre-deploy-check.sh "$scratch/scripts/pre-deploy-check.sh"
+          ${pkgs.bash}/bin/bash "$scratch/scripts/test-deploy-pipeline.sh"
+          touch $out
+        '';
+
         # maintenance-entry-gate selftest: runs the BUILT gate binary's
         # 10-scenario fixture selftest (PSI band boundaries, trip-recency
         # window, fail-open PSI-less kernel, clock-skew) — the freeze
