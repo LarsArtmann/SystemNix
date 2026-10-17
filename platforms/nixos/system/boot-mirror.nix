@@ -89,7 +89,7 @@ let
             rm -f "/boot/loader/entries/''${entry}" # blessed on the booted ESP: drop the stale counting twin
           else
             matched=$(find "${mirrorPath}/loader/entries" -maxdepth 1 -type f -name "''${stem}+*.conf" -printf '%f\n' | head -n 1)
-            if [ -n "$matched" ]; then
+            if [ -n "$matched" ] && [ "$matched" != "$entry" ]; then
               mv -f "/boot/loader/entries/''${entry}" "/boot/loader/entries/''${matched}"
             fi
           fi
