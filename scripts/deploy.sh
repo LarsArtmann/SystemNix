@@ -49,6 +49,17 @@ deploy_restart() {
   return 0
 }
 
+# Phase timing (2026-10-17): "why does the deploy take so long" was
+# unanswerable from scrollback — the build itself was 11s while the pipeline
+# around it ate minutes. Every major boundary now prints elapsed-phase /
+# total wall seconds so the next optimization targets measurements, not
+# vibes. Phase boundaries only (sub-steps keep their own === headers).
+PHASE_LAST=$SECONDS
+phase() {
+  echo "=== $1 (+$((SECONDS - PHASE_LAST))s phase / ${SECONDS}s total) ==="
+  PHASE_LAST=$SECONDS
+}
+
 # Concurrent-deploy guard (T13, 2026-09-04): flock BEFORE any build or check
 # runs. Two overlapping deploys double the build I/O and the loser dies at the
 # switch step (exit 11, "Could not acquire lock") after minutes of wasted
@@ -271,14 +282,26 @@ deploy_trip_recency_gate() {
   fi
 }
 
-echo "=== ENTRY gates: pressure + guard-trip recency (freeze #22 — BEFORE the validation battery) ==="
+phase "ENTRY gates: pressure + guard-trip recency (freeze #22 — BEFORE the validation battery) ==="
 deploy_pressure_gate
 deploy_trip_recency_gate
 
-echo "=== Pre-Deploy Validation ==="
+# Race-detector unit manifest (2026-10-17 eval-dedup): when HEAD is fresh
+# (<15 min — see the race-detector block below) the detector needs the
+# unit-name list; pre-deploy-check folds that harvest into its check-#2
+# toplevel eval when this env var names a path, saving the detector's own
+# ~25s deep `nix eval` in exactly the window where it always runs (the
+# auto-commit daemon keeps HEAD <15 min old most of the day).
+race_head_ts_manifest=$(git log -1 --format=%ct 2>/dev/null || echo 0)
+DEPLOY_UNIT_MANIFEST="/tmp/systemnix-deploy-units-$$.json"
+if [ $(( $(date +%s) - race_head_ts_manifest )) -lt 900 ]; then
+  export DEPLOY_UNIT_MANIFEST
+fi
+
+phase "Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
-  echo "=== Resetting failed units ==="
+  phase "Resetting failed units ==="
   # Clear start-limit-hit state so switch-to-configuration can restart changed units.
   # Without this, units that crash-looped at boot block activation with exit code 4.
   sudo systemctl reset-failed 2>/dev/null || true
@@ -518,7 +541,17 @@ if nix run .#pre-deploy-check; then
   race_head_age=$(($(date +%s) - race_head_ts))
   if [ "$race_head_age" -lt 900 ]; then
     echo "⚠ HEAD is ${race_head_age}s old (<15 min) — parallel-session window open; checking first-activation units"
-    race_new_units=$(nix eval --raw .#nixosConfigurations.evo-x2.config.systemd.services --apply 'attrs: builtins.concatStringsSep "\n" (builtins.attrNames attrs)' 2>/dev/null | sort -u || true)
+    race_new_units=""
+    if [ -s "${DEPLOY_UNIT_MANIFEST:-}" ]; then
+      # Single-line JSON emitted by pre-deploy-check's check-#2 manifest
+      # eval; parsed without jq (not guaranteed in the app PATH). Systemd
+      # unit attr names cannot contain quotes, brackets, or commas, so the
+      # sed split is exact.
+      race_new_units=$(sed -e 's/^.*"units":\[//' -e 's/\]}\?$//' -e 's/","/\n/g' -e 's/"//g' -e '/^$/d' "$DEPLOY_UNIT_MANIFEST" 2>/dev/null | sort -u || true)
+    fi
+    if [ -z "$race_new_units" ]; then
+      race_new_units=$(nix eval --raw .#nixosConfigurations.evo-x2.config.systemd.services --apply 'attrs: builtins.concatStringsSep "\n" (builtins.attrNames attrs)' 2>/dev/null | sort -u || true)
+    fi
     race_running_units=""
     for rf in /run/current-system/etc/systemd/system/*.service; do
       [ -e "$rf" ] || continue
@@ -540,7 +573,7 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
-  echo "=== Deploying NixOS config to evo-x2 ==="
+  phase "Deploying NixOS config to evo-x2 ==="
   latest_system_generation() {
     local link num
     for link in /nix/var/nix/profiles/system-*-link; do
@@ -664,6 +697,7 @@ if nix run .#pre-deploy-check; then
   # consumer to services.ai-meter.clients must mint its /run/ai-meter-keys
   # entry before the restarted daemon references it (stc never re-runs
   # oneshots; existing keys are never regenerated, so re-runs converge).
+  phase "Provisioner convergence (restart oneshots) ==="
   for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
@@ -1024,7 +1058,7 @@ if nix run .#pre-deploy-check; then
   fi
 
   echo ""
-  echo "=== Waiting 10s for services to settle ==="
+  phase "Waiting 10s for services to settle ==="
   sleep 10
 
   echo ""
@@ -1032,7 +1066,7 @@ if nix run .#pre-deploy-check; then
   systemctl --failed --no-pager 2>/dev/null || true
 
   echo ""
-  echo "=== Post-Deploy Smoke Test ==="
+  phase "Post-Deploy Smoke Test ==="
   smoke_rc=0
   if nix run .#post-deploy-check; then
     echo "✅ Post-deploy smoke test passed"

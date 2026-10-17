@@ -95,7 +95,26 @@ done
 if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   # 1. Flake syntax check
   echo "1. Flake syntax validation"
-  FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
+  # Content-addressed skip (2026-10-17): `nix flake check --no-build` is the
+  # most expensive eval in the battery, and the failed-deploy RE-RUN path
+  # paid it again for an IDENTICAL tree minutes later. The eval surface
+  # sees exactly HEAD + tracked modifications (untracked files are invisible
+  # to flake evals — the tracked-files trap works FOR the stamp here), so a
+  # key of rev+diff is sound. Stamps live on tmpfs (cleared every reboot)
+  # and expire after 12h; only deploy-proceeding verdicts get stamped.
+  flakecheck_stamp=""
+  flakecheck_cached=false
+  if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    flakecheck_key=$({ git rev-parse HEAD 2>/dev/null; git diff HEAD 2>/dev/null | sha256sum; } | sha256sum | cut -c1-16)
+    flakecheck_stamp="/tmp/systemnix-predeploy-flakecheck-${flakecheck_key}"
+  fi
+  if [ -n "$flakecheck_stamp" ] && [ -e "$flakecheck_stamp" ] && [ -z "$(find "$flakecheck_stamp" -mmin +720 2>/dev/null)" ]; then
+    pass "nix flake check --no-build (cached — identical tracked tree passed within 12h)"
+    flakecheck_cached=true
+    FLAKE_CHECK_OUTPUT=""
+  else
+    FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
+  fi
 
   # Filter out known-benign error classes:
   # - "path is not valid": mkPreparedSource (go-nix-helpers) and similar
@@ -142,13 +161,17 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   # Grep for 'error:' keeps only the headline, so a real eval failure can
   # surface as a context-free `error:` (blocked a deploy 2026-09-05 with
   # zero diagnostic output). Always print raw tail in the fail branch.
-  if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
+  if [ "$flakecheck_cached" = true ]; then
+    :
+  elif [ -z "$FLAKE_CHECK_OUTPUT" ]; then
     pass "nix flake check --no-build"
+    if [ -n "$flakecheck_stamp" ]; then : > "$flakecheck_stamp"; fi
   elif [ -n "$REAL_ERRORS" ]; then
     fail "nix flake check --no-build — fix syntax errors before deploying"
     echo "$FLAKE_CHECK_OUTPUT" | tail -30
   else
     warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
+    if [ -n "$flakecheck_stamp" ]; then : > "$flakecheck_stamp"; fi
   fi
 
   # 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
@@ -212,7 +235,19 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   # 2. Eval the system configuration
   echo ""
   echo "2. Configuration evaluation"
-  if nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
+  # Manifest fold (2026-10-17 eval-dedup): when deploy.sh expects a
+  # race-detector manifest (fresh HEAD), harvest the unit-name list in THIS
+  # eval instead of paying a second deep `nix eval` after the battery —
+  # forcing toplevel.drvPath already forces every unit, so attrNames rides
+  # along nearly free. Single-line JSON; deploy.sh parses it without jq.
+  if [ -n "${DEPLOY_UNIT_MANIFEST:-}" ]; then
+    if nix eval --json .#nixosConfigurations.evo-x2 --apply 'c: { drv = c.config.system.build.toplevel.drvPath; units = builtins.attrNames c.config.systemd.services; }' >"$DEPLOY_UNIT_MANIFEST" 2>/dev/null; then
+      pass "nixosConfigurations.evo-x2 evaluates (race-detector unit manifest emitted)"
+    else
+      rm -f "$DEPLOY_UNIT_MANIFEST"
+      fail "nixosConfigurations.evo-x2 evaluation failed"
+    fi
+  elif nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
     pass "nixosConfigurations.evo-x2 evaluates"
   else
     fail "nixosConfigurations.evo-x2 evaluation failed"
@@ -435,7 +470,8 @@ extract_gatus_metrics() {
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
 # failures when one endpoint is down but metrics from it are checked anyway.
 METRICS_FILE=$(mktemp)
-trap 'rm -f "$METRICS_FILE"' EXIT
+PROBE_DIR=$(mktemp -d)
+trap 'rm -f "$METRICS_FILE"; rm -rf "$PROBE_DIR"' EXIT
 
 # Read by the sourced metrics-gate.sh (sandbox shellcheck cannot follow it).
 # shellcheck disable=SC2034
@@ -449,20 +485,6 @@ MONITOR365_UP=false
 CV_ENDPOINT_UP=false
 # shellcheck disable=SC2034
 CV_METRICS="cv_autoapply_passes cv_autoapply_pass_errors"
-
-if curl -sf --compressed --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
-  pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
-else
-  warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — node-exporter metrics will be skipped"
-fi
-
-if curl -sf --compressed --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
-  pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
-  # shellcheck disable=SC2034
-  MONITOR365_UP=true
-else
-  warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
-fi
 
 # Per-service /metrics endpoints that gatus pats() probe DIRECTLY (bank-sync
 # :8097, discordsync-api :8085, …). Without fetching these, every gatus body
@@ -478,6 +500,7 @@ fi
 # is load-bearing: under set -euo pipefail a zero-match grep (future URL-form
 # drift) previously killed the whole gate mid-section with rc 1 and no
 # summary (live 2026-09-15: silent deploy block, verdict never printed).
+# Computed BEFORE the probe batch below — the batch launch iterates it.
 # shellcheck disable=SC2034
 GATUS_SERVICE_METRIC_PORTS=$(
   grep -rhoE '(localhost|127\.0\.0\.1):\$\{toString ports\.[a-zA-Z0-9_-]+\}/metrics' \
@@ -485,14 +508,60 @@ GATUS_SERVICE_METRIC_PORTS=$(
     sed -E 's/.*ports\.([a-zA-Z0-9_-]+)\}.*/\1/' |
     sort -u || true
 )
+
+probe_endpoint() {
+  # $1 = probe id (filesystem-safe), $2 = port. Body + ok-marker per probe:
+  # concurrent `>>` into ONE file interleaves mid-line; separate files keep
+  # each body intact and the post-pass concatenation deterministic.
+  if curl -sf --compressed --max-time 5 "http://127.0.0.1:$2/metrics" -o "$PROBE_DIR/$1.body" 2>/dev/null; then
+    : > "$PROBE_DIR/$1.ok"
+  fi
+}
+
+# All endpoint probes run in ONE parallel batch (2026-10-17): these were
+# sequential curls with --max-time 5, so every DEAD endpoint burned its full
+# 5s — three dead endpoints (monitor365 ×2, cv, during the 2026-10-17
+# control-plane outage window) cost 15+s of pure timeout before a single
+# check ran. Loopback answers in milliseconds when alive, so the batch's
+# wall time is max(single probe) ≈ 5s worst case. Verdicts, state vars, and
+# output order are resolved in the sequential post-pass below — semantics
+# identical to the old sequential loop.
+probe_endpoint node-exporter "${NODE_EXPORTER_PORT}" &
+probe_endpoint monitor365 "${MONITOR365_PORT}" &
+for port_name in $GATUS_SERVICE_METRIC_PORTS; do
+  port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
+  printf '%s\n' "${port_num:-}" > "$PROBE_DIR/svc-$port_name.port"
+  if [ -n "$port_num" ]; then
+    probe_endpoint "svc-$port_name" "$port_num" &
+  fi
+done
+wait
+
+if [ -e "$PROBE_DIR/node-exporter.ok" ]; then
+  pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
+  cat "$PROBE_DIR/node-exporter.body" >>"$METRICS_FILE"
+else
+  warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — node-exporter metrics will be skipped"
+fi
+
+if [ -e "$PROBE_DIR/monitor365.ok" ]; then
+  pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
+  # shellcheck disable=SC2034
+  MONITOR365_UP=true
+  cat "$PROBE_DIR/monitor365.body" >>"$METRICS_FILE"
+else
+  warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
+fi
+
 # Read by the sourced metrics-gate.sh.
 # shellcheck disable=SC2034
 DISCORDSYNC_API_UP=false
 BANKSYNC_UP=false
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
-  port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
-  if [ -n "$port_num" ] && curl -sf --compressed --max-time 5 "http://127.0.0.1:${port_num}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
+  port_num=$(cat "$PROBE_DIR/svc-$port_name.port" 2>/dev/null || echo "")
+  if [ -n "$port_num" ] && [ -e "$PROBE_DIR/svc-$port_name.ok" ]; then
     pass "Service metrics '${port_name}' (port ${port_num}) responding"
+    cat "$PROBE_DIR/svc-$port_name.body" >>"$METRICS_FILE"
     if [ "${port_name}" = "discordsync-api" ]; then
       # shellcheck disable=SC2034
       DISCORDSYNC_API_UP=true
