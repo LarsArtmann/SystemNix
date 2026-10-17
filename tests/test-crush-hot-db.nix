@@ -199,8 +199,12 @@ in
     # ---- Regressions 1: enablement shape (2026-10-06 restructure) ----
     # Timer-pulled static service + enabled timer: the OnBootSec/Persistent
     # boot fires converge, deploy.sh owns deploy-time restarts explicitly.
+    # The service reads "indirect" on this systemd (enabled only THROUGH the
+    # enabled timer — the 2026-10-06 header said "static", never executed
+    # until 2026-10-17); the load-bearing assertion is NOT "enabled" (no
+    # direct multi-user boot gating — the llama-chat lesson).
     machine.succeed(
-        'test "$(systemctl is-enabled crush-hot-db-migrate.service)" = static'
+        'test "$(systemctl is-enabled crush-hot-db-migrate.service)" != enabled'
     )
     machine.succeed(
         'test "$(systemctl is-enabled crush-hot-db-migrate.timer)" = enabled'
