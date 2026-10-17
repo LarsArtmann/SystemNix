@@ -283,19 +283,18 @@
                   provider = "remoteok";
                 }
               ];
-              # One-click funnel tail. STAGED FLIP (2026-09-17, gate Q1):
-              # enabled=true + send_on_approve=true while autosend_driver
-              # stays DRY-RUN (the honest dry-run contract: Success:false,
-              # records NOTHING). The funnel moves end-to-end — tailor →
-              # approve — and every approval holds honestly at
-              # approved-pending-send with ZERO email risk.
-              # THE TRANSPORT IS THE GATE, not send_on_approve: the real
-              # go-live is the driver flip to agentmail (+ sops cv-env
-              # creds, see the agentmail comment below), and it DRAINS
-              # every approved-pending-send in one sweep. Before flipping
-              # the driver: land pipeline.autoapply.max_approval_age_days
-              # (staleness cap) and review per-row pending-send ages —
-              # decision table in owner-gate-package-going-live.md gate Q1.
+              # One-click funnel tail. LIVE 2026-10-17 (gate Q1 decided:
+              # local-relay SMTP, not agentmail — the AgentMail API key was
+              # never provisioned and the shared mail relay needs zero new
+              # secrets; see the autosend_driver comment below):
+              # enabled=true + send_on_approve=true with autosend_driver
+              # "smtp". Approvals now send real email, bounded by
+              # max_per_pass=5 per sweep and the max_approval_age_days=7
+              # staleness cap (the 379 dry-run-era approvals older than 7
+              # days stay approved-pending-send, never fire).
+              # THE TRANSPORT IS THE GATE, not send_on_approve. First-send
+              # probe evidence lands in owner-gate-package-going-live.md
+              # gate Q1 (A2: recipient inbox + From/Reply-To + PDF).
               # After the flip, the cv-scan timer's auto-apply POST
               # activates on its next tick.
               autoapply = {
@@ -316,6 +315,28 @@
                 # queued dry-run-era approvals must NOT all fire at once.
                 max_approval_age_days = 7;
                 never_reapply_rejected_companies = true;
+                # Recruiter replies must not hit the no-reply From (the
+                # relay's sending domain has no inbound mailbox) — route
+                # them to the live agentmail inbox (gate Q3 identity).
+                reply_to = "lars.artmann@agentmail.to";
+              };
+              # Send transport: SMTP through the LOCAL postfix null client
+              # (127.0.0.1:25, loopback-trusted, no AUTH) → smtp.resend.com
+              # (mail-relay module, live since 2026-09-18: real key,
+              # test send `status=sent (250)`, larsartmann.cloud verified
+              # via the send./rsend. CNAMEs). NO sops secret rides the CV
+              # unit — apps never hold the upstream credential (that is
+              # the whole point of the shared relay).
+              # AgentMail stays the REPLY surface (reply_to above +
+              # replyloop creds below), not the send transport — its API
+              # key was never provisioned, and the relay path needs zero.
+              autosend_driver = "smtp";
+              smtp = {
+                host = "127.0.0.1";
+                port = 25;
+                username = "";
+                password = "";
+                from = "noreply@larsartmann.cloud";
               };
               # Reply loop + calendar feed (interview replies → /pipeline
               # Interviews stage → /calendar/interviews.ics). enabled=true
@@ -330,17 +351,19 @@
                 # Same inertness as replyloop itself — no creds, no polls.
                 alert_router = true;
               };
-              # Gate Q1 flip (do ALL of it in one change):
-              #   1. sops cv-env template += CV_PIPELINE_AUTOSEND_DRIVER=agentmail
+              # AgentMail keys stay empty: the SEND transport is the local
+              # relay (see autosend_driver above — zero CV-side secrets).
+              # These become live ONLY for the reply loop READER, if the
+              # owner later provisions an AgentMail API key:
+              #   1. sops cv-env template +=
               #      CV_PIPELINE_AGENTMAIL_API_KEY=<am_...>
               #      CV_PIPELINE_AGENTMAIL_INBOX_ID=<inbox id>
-              #      (identity: lars.artmann@agentmail.to — PERMANENT, gate Q3:
-              #      switching it later orphans SentTo reply matching)
-              #   2. settings: pipeline.autoapply.enabled = true
-              #   3. rebuild; verify boot log "Application sender: AgentMail"
-              #   4. first real send probe per gate-package A2, then done.
-              # Keys stay empty here so env overrides win and no secret
-              # ever lands in the nix store.
+              #      (identity: lars.artmann@agentmail.to — PERMANENT, gate
+              #      Q3: switching it later orphans SentTo reply matching;
+              #      it is already the reply_to target on every send)
+              #   2. rebuild; the poller self-enables (inert without creds)
+              # Until then replies land in the agentmail inbox and are read
+              # via the agentmail web UI / gun.io flows, not folded by CV.
               agentmail = {
                 api_key = "";
                 inbox_id = "";
@@ -825,9 +848,10 @@
                 # anything un-approved (send_on_approve: the dashboard
                 # Approve click IS the send confirmation).
                 post_funnel_tail "$base/api/pipeline/auto-apply"
-                # (staged flip 2026-09-17: the tail now runs every tick —
-                # dry-run transport holds approvals at approved-pending-
-                # send; NOTHING emails until the agentmail driver lands.)
+                # (LIVE 2026-10-17: the tail now tailors AND drains
+                # approved-pending-send through the local-relay SMTP
+                # transport — bounded by max_per_pass=5 + the 7-day
+                # staleness cap.)
               '';
             }
             (harden { })
