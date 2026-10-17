@@ -277,6 +277,18 @@ let
     # at tip bakes the shim's own nN2cwwLQ… value — bit-neutral override
     # (graph verified identical tip-vs-lock). Re-add ONLY via nix-hash-fix
     # evidence, never by hand.
+    # file-and-image-renamer shim RE-ADDED (2026-10-18, hours later):
+    # nix-hash-fix evidence — the 00:39 lock float moved the input to
+    # 40176d0, whose own edits postdate upstream's 2026-10-10 re-pin, so
+    # upstream's baked nN2cwwLQ… is stale TOO; first-hand keep-going FOD
+    # run (this session's toplevel build) mismatched specified nN2cwwLQ…
+    # vs got 4fF/8VOw… at drv
+    # 5pbh840dkyvi88yqzmm6mf9ly3gk04zn-…-40176d0-go-modules.drv.
+    # Upstream needs the same re-pin ritual (vendorHash.nix ritual,
+    # family bump runbook) — drop again once upstream bakes 4fF/8VOw….
+    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
+      vendorHash = "sha256-4fF/8VOwhVSm+gOMRiVVlmF5ZPeVqWustlMidHijfEU=";
+    };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
