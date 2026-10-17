@@ -294,7 +294,7 @@ deploy_trip_recency_gate
 # auto-commit daemon keeps HEAD <15 min old most of the day).
 race_head_ts_manifest=$(git log -1 --format=%ct 2>/dev/null || echo 0)
 DEPLOY_UNIT_MANIFEST="/tmp/systemnix-deploy-units-$$.json"
-if [ $(( $(date +%s) - race_head_ts_manifest )) -lt 900 ]; then
+if [ $(($(date +%s) - race_head_ts_manifest)) -lt 900 ]; then
   export DEPLOY_UNIT_MANIFEST
 fi
 
@@ -734,9 +734,9 @@ if nix run .#pre-deploy-check; then
       # schema migrations legitimately run minutes; the job continues
       # server-side either way — the budget only bounds the deploy's wait).
       case "$provisioner" in
-        llama-rag-model-fetch) deploy_restart "$provisioner" 600 ;;
-        monitor365-schema-migrate) deploy_restart "$provisioner" 300 ;;
-        *) deploy_restart "$provisioner" ;;
+      llama-rag-model-fetch) deploy_restart "$provisioner" 600 ;;
+      monitor365-schema-migrate) deploy_restart "$provisioner" 300 ;;
+      *) deploy_restart "$provisioner" ;;
       esac
     fi
   done

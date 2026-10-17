@@ -11,7 +11,6 @@
 # included as a fallback for resilience when dnsblockd is down or slow.
 # 127.0.0.1 MUST be first so local names (*.home.lan) resolve correctly.
 {
-  config,
   lib,
   ...
 }:
@@ -33,15 +32,19 @@
   networking.resolvconf.enable = false;
 
   # Static, immutable resolv.conf (Nix store symlink — cannot be overwritten).
+  # Deliberately NO `search` line (2026-10-17): with the *.home.lan wildcard
+  # local record live, search-domain completion resolved any failed public
+  # name (offline, or typo'd/NXDOMAIN while online) through the wildcard onto
+  # this host — offline connectivity checks read "up" and public-name typos
+  # landed on the LAN. Accepted loss: bare-label typing (`ping forge`) stops
+  # resolving; measured usage on these hosts was zero (shell history + config
+  # sweep). Full diagnosis: docs/services/dnsblockd.md.
   environment.etc."resolv.conf" = {
-    text = lib.concatStringsSep "\n" (
-      [
-        "nameserver 127.0.0.1"
-        "nameserver 9.9.9.9"
-      ]
-      ++ lib.optional (config.networking.domain != "") "search ${config.networking.domain}"
-      ++ [ "options edns0 trust-ad" ]
-    );
+    text = lib.concatStringsSep "\n" [
+      "nameserver 127.0.0.1"
+      "nameserver 9.9.9.9"
+      "options edns0 trust-ad"
+    ];
     mode = "0444";
   };
 }

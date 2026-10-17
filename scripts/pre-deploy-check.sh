@@ -105,7 +105,10 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
   flakecheck_stamp=""
   flakecheck_cached=false
   if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    flakecheck_key=$({ git rev-parse HEAD 2>/dev/null; git diff HEAD 2>/dev/null | sha256sum; } | sha256sum | cut -c1-16)
+    flakecheck_key=$({
+      git rev-parse HEAD 2>/dev/null
+      git diff HEAD 2>/dev/null | sha256sum
+    } | sha256sum | cut -c1-16)
     flakecheck_stamp="/tmp/systemnix-predeploy-flakecheck-${flakecheck_key}"
   fi
   if [ -n "$flakecheck_stamp" ] && [ -e "$flakecheck_stamp" ] && [ -z "$(find "$flakecheck_stamp" -mmin +720 2>/dev/null)" ]; then
@@ -165,13 +168,13 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
     :
   elif [ -z "$FLAKE_CHECK_OUTPUT" ]; then
     pass "nix flake check --no-build"
-    if [ -n "$flakecheck_stamp" ]; then : > "$flakecheck_stamp"; fi
+    if [ -n "$flakecheck_stamp" ]; then : >"$flakecheck_stamp"; fi
   elif [ -n "$REAL_ERRORS" ]; then
     fail "nix flake check --no-build — fix syntax errors before deploying"
     echo "$FLAKE_CHECK_OUTPUT" | tail -30
   else
     warn "nix flake check --no-build — only known-benign error classes ('path is not valid' --no-build limitation, substituter narinfo unreachability); toplevel eval is authoritative"
-    if [ -n "$flakecheck_stamp" ]; then : > "$flakecheck_stamp"; fi
+    if [ -n "$flakecheck_stamp" ]; then : >"$flakecheck_stamp"; fi
   fi
 
   # 1b. Tracked-files trap — flakes only see TRACKED files: a NEW module under
@@ -514,7 +517,7 @@ probe_endpoint() {
   # concurrent `>>` into ONE file interleaves mid-line; separate files keep
   # each body intact and the post-pass concatenation deterministic.
   if curl -sf --compressed --max-time 5 "http://127.0.0.1:$2/metrics" -o "$PROBE_DIR/$1.body" 2>/dev/null; then
-    : > "$PROBE_DIR/$1.ok"
+    : >"$PROBE_DIR/$1.ok"
   fi
 }
 
@@ -530,7 +533,7 @@ probe_endpoint node-exporter "${NODE_EXPORTER_PORT}" &
 probe_endpoint monitor365 "${MONITOR365_PORT}" &
 for port_name in $GATUS_SERVICE_METRIC_PORTS; do
   port_num=$(sed -nE "s/^[[:space:]]*${port_name} = ([0-9]+);.*/\1/p" lib/ports.nix | head -1)
-  printf '%s\n' "${port_num:-}" > "$PROBE_DIR/svc-$port_name.port"
+  printf '%s\n' "${port_num:-}" >"$PROBE_DIR/svc-$port_name.port"
   if [ -n "$port_num" ]; then
     probe_endpoint "svc-$port_name" "$port_num" &
   fi
