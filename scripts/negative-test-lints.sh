@@ -559,5 +559,15 @@ run_case bootmirror nofail-dropped boot-mirror-path-trigger fail 'must stay nofa
   'sed:platforms/nixos/system/boot-mirror.nix:s|"nofail"|"nofail-mutated"|'
 
 say ""
+
+# ── systemd-shape-audit class 7: unbounded boot-blocking oneshots ──
+# The 2026-10-17 infinite-boot class (netbird-evox2-login held the boot
+# transaction 55+ min). Mutation: rename a bounds-module list entry so a
+# foreign-rendered unit (cpufreq) loses its floor — the audit must throw.
+# The serviceOneshotDefaults mkDefault floor's own coverage is pinned by
+# the ~25 helper-using units that would fire the same assertion if the
+# lib default were dropped (any one of them suffices as the marker).
+eval_case shapeaudit oneshot-unbounded fail 'boot-blocking Type=oneshot unit\(s\) with unbounded TimeoutStartSec' \
+  'sed:modules/nixos/services/boot-oneshot-bounds.nix:s|      "cpufreq"|      "cpufreq-renamed"|'
 say "=== negative-test-lints: $passed passed, $failed failed ==="
 [ "$failed" -eq 0 ]

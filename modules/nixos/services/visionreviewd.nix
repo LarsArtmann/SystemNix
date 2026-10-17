@@ -52,7 +52,12 @@
 
         # Route unit failures into the notify-failure template (every other
         # long-running service does this; upstream ships no OnFailure).
-        systemd.services.visionreviewd.serviceConfig.OnFailure = onFailure;
+        # UNIT-level, never serviceConfig: OnFailure is a [Unit] key —
+        # nested in [Service] systemd logs "Unknown key 'OnFailure' in
+        # section [Service], ignoring" on every boot and the escalation
+        # silently never arms (live since the 2026-10-06 wiring; journal
+        # evidence in docs/status/2026-10-06_22-18 §e.4).
+        systemd.services.visionreviewd.onFailure = onFailure;
 
         services.integration = lib.optionalAttrs (options ? services.integration) {
           visionreviewd = {
