@@ -157,24 +157,40 @@ in
     # D-Bus duplicate-name hygiene (2026-10-17): nixpkgs structurally
     # double-registers every package that sits in BOTH
     # environment.systemPackages AND services.dbus.packages — the xdg
-    # portal, gnome-keyring and dconf modules each add their package to
-    # both lists, and services/dbus.nix always registers config.system.path
-    # as a servicedir while ALSO linking /share/dbus-1 into the system
-    # path. dbus-broker then logs "Ignoring duplicate name" at ERROR
-    # priority for every such name on every bus start (~40 lines/boot,
-    # 2026-10-17 boot journal). Drop exactly those service files from the
-    # system-path copy: D-Bus activation keeps working through each
-    # package's own <servicedir> entry (same store path, same Exec), and
-    # packages that live ONLY in systemPackages (GameMode, nautilus
-    # FileManager1, obex-data-server) keep their files untouched.
+    # portal, gnome-keyring, dconf, bluez and blueman modules each add
+    # their package to both lists, and services/dbus.nix always registers
+    # config.system.path as a servicedir while ALSO linking /share/dbus-1
+    # into the system path. dbus-broker then logs "Ignoring duplicate
+    # name" at ERROR priority for every such name on every bus start
+    # (~40 lines/boot, 2026-10-17 boot journal). Drop exactly those
+    # service files from the system-path copy: D-Bus activation keeps
+    # working through each package's own <servicedir> entry (same store
+    # path, same Exec), and packages that live ONLY in systemPackages
+    # (GameMode, nautilus FileManager1, obex-data-server) keep their
+    # files untouched.
+    #
+    # The set is derived from the OWNING module options (not
+    # config.services.dbus.packages — reading that option forces
+    # config.system.path, whose postBuild embeds extraSetup → infinite
+    # recursion, live 2026-10-17). INVARIANT: every package listed here
+    # must be one whose module ALSO adds it to services.dbus.packages
+    # (own <servicedir> in the generated session.conf — verified against
+    # the live 2026-10-17 dump); pruning a package that lacks its own
+    # servicedir would kill its D-Bus activation.
     environment.extraSetup =
       let
-        dbusDoubleRegistered =
-          lib.filter (p: lib.elem p config.services.dbus.packages)
-            config.environment.systemPackages;
+        dbusPrunePkgs =
+          [ pkgs.xdg-desktop-portal ]
+          ++ config.xdg.portal.extraPortals
+          ++ lib.optionals config.services.gnome.gnome-keyring.enable [ pkgs.gnome-keyring ]
+          ++ lib.optionals config.programs.dconf.enable [ pkgs.dconf ]
+          ++ lib.optionals config.hardware.bluetooth.enable (
+            [ pkgs.bluez ]
+            ++ lib.optionals config.services.blueman.enable [ pkgs.blueman ]
+          );
       in
       ''
-        for p in ${toString dbusDoubleRegistered}; do
+        for p in ${toString dbusPrunePkgs}; do
           if [ -d "$p/share/dbus-1/services" ]; then
             for f in "$p"/share/dbus-1/services/*.service; do
               [ -e "$f" ] || continue
