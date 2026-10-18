@@ -109,3 +109,41 @@ activation was the parallel session's deploy; the repair is this session's, per 
    arrival after the NEXT deploy — pap-v9 is live today).
 4. **Parallel-session CHANGELOG attribution** — recorded in §e2; no action.
 5. **Pack staleness [watch]** row — already filed in `docs/todo/services.md` (E6.2).
+
+## g) Addendum (second executor instance, 02:2x — mutual-reconciliation note)
+
+This plan was executed by TWO instances of the same resumed conversation concurrently
+(identical trajectory: both built `build_case`+`tileicons`, both hit the FileServer
+prefix bug, both appended to the same upstream files — §e's "parallel session" is the
+other instance). The interleaved daemon commits carry both. Reconciled state, closing
+this report's open items:
+
+1. **`gatus-patterns` full VM run: GREEN** (§f2 is closed, not queued) — `nix build
+   .#checks.x86_64-linux.gatus-patterns` exit 0 at ~02:05 on the derivation carrying
+   the `icons_ok` mock body + green/RED legs (drv `cpp8w2n2…`); the icons_ok legs pass
+   against real gatus, not just eval. A 02:2x re-run went rc=1 on
+   `undefined variable 'monitor365BackupScript'` — a consumer-before-declaration edit
+   landing live from the OTHER in-flight session (monitor365.nix), unrelated to this
+   wave; the tree discipline in docs/CONTRIBUTING.md "Concurrent-edit discipline" §1
+   is exactly this class.
+2. **Negative-test sweep (full, ~02:1x): 49→51/52 green** after this instance fixed the
+   `inputpin/lifted-pin-stale-allowlist` anchor (bank-sync's pin was lifted FOR REAL
+   2026-10-16, no-op'ing the mutation; re-anchored on qmd's tag pin — same
+   lift-stale-allowlist shape, verified green). **2 failures remain, both one root
+   cause and NOT this wave's:** `controls/signoz-query-lint` is red on the pristine
+   tree — `ai_meter_ttft_seconds_sum/_count` (underscore histogram-suffix class) in
+   `modules/nixos/services/dashboards/ai-meter.json` + the emitter in `pkgs/ai-meter/
+   metrics.go` bakes the suffixed names — which also cascades
+   `signoz/comment-ignored` red (the lint fails before the mutation can matter).
+   The ai-meter surfaces are another session's active work; flagged, not silently
+   fixed. Until renamed, CI's negative-tests nightly stays red on exactly these.
+3. **E10 rules landed** (this instance): AGENTS.md live-probe set gained the
+   never-`pkill -f`-production rule; docs/CONTRIBUTING.md gained "Concurrent-edit
+   discipline" (declaration-before-consumer, capability-vs-data merge checklist,
+   PID-only kills, re-read-before-edit) and the daemon-swept-public-history
+   no-squash rule (E13.2); AGENTS.md pre-deploy row bumped 15→16 numbered checks
+   with the §16 cell.
+4. **Formatter:** `nix fmt` walked the tree (known) — one canonical reformat landed in
+   `monitor365.nix` (`} // ioTier.x` → newline form); churn is canonical, anchor text
+   for the withpkgs negative cases intact.
+5. **Nothing else open on this wave.** The next deploy carries everything queued in §f1.
