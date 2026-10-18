@@ -505,7 +505,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum by (model) (rate(ai_meter_ttft_seconds.sum[5m])) / clamp_min(sum by (model) (rate(ai_meter_ttft_seconds.count[5m])), 1e-9)",
+                    "query": "sum by (model) (rate(ai_meter_ttft_seconds_sum[5m])) / clamp_min(sum by (model) (rate(ai_meter_ttft_seconds_count[5m])), 1e-9)",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

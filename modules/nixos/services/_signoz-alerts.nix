@@ -592,7 +592,14 @@ in
     "signoz/rules/forgejo-mirror-backlog.json".source = mkRule {
       name = "Forgejo Mirror Sync Backlog (>20 stale)";
       description = "20+ pull mirrors have no sync attempt for 4h+ — the mirror update queue is wedged (restart forgejo.service; the unique queue dedup-skips silently after a hard freeze) or a post-outage backlog is not draining";
-      query = "system_forgejo_mirror_sync_stale.count";
+      # STORE-TRUTH (2026-10-18 04:3x CH probe): the live series is the
+      # UNDERSCORE form (type Gauge, 43 series, fresh) — the emitter
+      # publishes a standalone gauge, not a histogram family, so the
+      # receiver stores the name verbatim. The dotted form has ZERO
+      # series; the 2026-10-17 dotted "fix" here was reverted same day.
+      # Histogram families (caddy/dnsblockd) are the dotted class; see
+      # docs/agents/monitoring.md "exporter names vs store names".
+      query = "system_forgejo_mirror_sync_stale_count";
       target = 20;
       interval = "5m";
       severity = "warning";
