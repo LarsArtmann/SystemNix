@@ -28,7 +28,10 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SYSTEM="$(uname -m)-linux"
-WORK="$(mktemp -d /tmp/negative-test-lints.XXXXXX)"
+# Scratch lives under XDG_CACHE, NOT /tmp — tmpfiles wipes lost harness runs
+# mid-sequence twice on 2026-10-17 (the /tmp/e2-test class). KEEP=1 dirs are
+# durable for triage; normal runs still trap-remove.
+WORK="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/negative-test-lints.XXXXXX")"
 [ "${KEEP:-0}" = "1" ] || trap 'rm -rf "$WORK"' EXIT
 
 FILTER="${CASES:-}"
@@ -36,7 +39,13 @@ FILTER="${CASES:-}"
 passed=0
 failed=0
 
-say() { printf '%s\n' "$*"; }
+# Per-case log OUTSIDE the (trap-removed) WORK dir — /tmp is volatile on this
+# box (2026-10-17 wipe class); failures must survive job-output truncation.
+LOG="${CASES_LOG:-$HOME/.cache/negative-test-lints/cases.log}"
+mkdir -p "$(dirname "$LOG")"
+: >"$LOG"
+
+say() { printf '%s\n' "$*"; printf '%s\n' "$*" >>"$LOG"; }
 
 # make_copy <name> — git-tracked set with working-tree contents, no .git.
 make_copy() {
@@ -97,6 +106,10 @@ run_case() {
       grep -m3 -E 'error:|FAIL' <<<"$out" | sed 's/^/    /'
       failed=$((failed + 1))
     fi
+    ;;
+  *)
+    say "FAIL [$group/$name]: harness bug — unknown expect value '$expect' (the 2026-10-18 silent fall-through class: an unknown value matched NO branch and the case counted nothing)"
+    failed=$((failed + 1))
     ;;
   esac
 }
@@ -233,6 +246,10 @@ eval_case() {
       failed=$((failed + 1))
     fi
     ;;
+  *)
+    say "FAIL [$group/$name]: harness bug — unknown expect value '$expect' (silent fall-through class)"
+    failed=$((failed + 1))
+    ;;
   esac
 }
 
@@ -294,6 +311,10 @@ build_case() {
       grep -m3 -E 'error:|FAIL' <<<"$out" | sed 's/^/    /'
       failed=$((failed + 1))
     fi
+    ;;
+  *)
+    say "FAIL [$group/$name]: harness bug — unknown expect value '$expect' (silent fall-through class)"
+    failed=$((failed + 1))
     ;;
   esac
 }
@@ -364,6 +385,13 @@ run_case signoz dead-metric signoz-query-lint fail "dead metric '" \
   "append:$SIGNALERTS:EVIL_MUTATION node_amdgpu_gpu_temp_celsius"
 run_case signoz comment-ignored signoz-query-lint pass '' \
   "append:$SIGNALERTS:# EVIL_MUTATION job=\"gatus\" (commented — must be ignored)"
+# 2026-10-18 store-truth legs: standalone counters/gauges are stored verbatim
+# UNDERSCORE (the allowlist must NOT let trap 2 flag them), and the DOTTED
+# form of such a metric is the 0-series phantom (trap 4 must flag it).
+run_case signoz underscore-allowlisted signoz-query-lint pass '' \
+  "append:$SIGNALERTS:EVIL_MUTATION ai_meter_ttft_seconds_sum > 10"
+run_case signoz dotted-phantom-dead signoz-query-lint fail "dead metric '" \
+  "append:$SIGNALERTS:EVIL_MUTATION system_forgejo_mirror_sync_stale.count"
 # Dashboard layout overlap (2026-09-16 incident shape): a panel moved onto an
 # occupied grid cell must fail the lint the same way the SigNoz v2 validator
 # 400s the provisioner. The mutation shifts a row-y so its rectangles collide.
@@ -589,5 +617,5 @@ eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:platforms/nixos/system/boot-mirror.nix:s|      (ioTier.background)|      # tier stripped for negative test|'
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
-say "=== negative-test-lints: $passed passed, $failed failed ==="
+say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]

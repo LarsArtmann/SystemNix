@@ -40,6 +40,10 @@ clickhouse-client --query "SELECT serviceName, round(count()/24,1) AS spans_per_
 
 # Does a metric EXIST at all (phantom-metric sweep)? Swap metric_name.
 clickhouse-client --query "SELECT metric_name, temporality, count() FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name LIKE 'PREFIX%' GROUP BY metric_name, temporality"
+# Same probe wrapped with type + verdict (exit 1 = phantom): use this before
+# writing ANY query name — the dotted-vs-underscore form is decided by the
+# exporter's TYPE declaration, never by name shape (2026-10-18 regression).
+scripts/metric-exists.sh 'PREFIX%'
 
 # Is a series PromQL-visible? (DELTA-blindness: delta-temporality metrics
 # return 0 series via the v1 API despite fresh samples — see below)

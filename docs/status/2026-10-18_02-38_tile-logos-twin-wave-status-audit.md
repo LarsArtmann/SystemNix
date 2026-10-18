@@ -147,3 +147,7 @@ One interruption: the successor SUPERB plan file was requested-then-interrupted 
 1. **Deploy timing** — the wave is verified and waiting; IO was 40–58% all evening and it is 02:40. Deploy now, or wait for a calm morning window?
 2. **E9 tile-logo style** — accept the current semantic pack glyphs (Crush Daily→openai, tq→opencode, llama.cpp→open-webui/hugging-face, …), or commission the neutral cyan line-icon set (~100 min)?
 3. **Twin instances** — was running two concurrent instances of this conversation intentional and expected to recur? If yes: hard-rule the plan-execution tombstone (f/29), or go further (flock lock)?
+
+---
+
+**Harvest disposition (2026-10-18):** §f mirrors the 02-32 closeout's list — harvested identically into the successor plan (docs/planning/2026-10-18_02-36_SUPERB-tile-logos-deploy-and-closure.md); note its item 1 ("both dotted-query fixes") was REFUTED post-authoring by the store-truth sweep and reverted — the successor plan's E4 carried the correction. Owner-gated tail (deploy, E9, phone probe) deliberately not harvested.

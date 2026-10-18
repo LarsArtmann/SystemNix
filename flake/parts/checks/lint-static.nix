@@ -397,7 +397,31 @@
             let
               alerts = root + "/modules/nixos/services/_signoz-alerts.nix";
               dashboards = root + "/modules/nixos/services/dashboards";
-              deadMetrics = [ "node_amdgpu_gpu_temp_celsius" ];
+              # Store-verified 0-series names (clickhouse-client probe of
+              # signoz_metrics.distributed_time_series_v4). 2026-10-18
+              # store-truth sweep: the DOTTED forms are the phantoms for
+              # standalone counters/gauges — ai-meter and forgejo emit
+              # `x_sum`/`x_count` as type Sum/Gauge, and the receiver
+              # stores those verbatim UNDERSCORE. Dotting applies to
+              # histogram FAMILIES only (caddy/dnsblockd class); see
+              # docs/agents/monitoring.md "exporter names vs store names".
+              deadMetrics = [
+                "node_amdgpu_gpu_temp_celsius"
+                "ai_meter_ttft_seconds.sum"
+                "ai_meter_ttft_seconds.count"
+                "system_forgejo_mirror_sync_stale.count"
+              ];
+              # Store-verified LIVE underscore names (the same sweep):
+              # standalone counters/gauges that trap 2 must NOT flag —
+              # the dotted "correction" of these is itself the phantom
+              # (the 2026-10-17 regression this allowlist closes).
+              underscoreLive = [
+                "ai_meter_ttft_seconds_sum"
+                "ai_meter_ttft_seconds_count"
+                "ai_meter_request_seconds_sum"
+                "ai_meter_request_seconds_count"
+                "system_forgejo_mirror_sync_stale_count"
+              ];
             in
             pkgs.runCommand "signoz-query-lint"
               {
@@ -405,6 +429,7 @@
                 # verify additions via
                 #   clickhouse-client --query "SELECT count() FROM signoz_metrics.distributed_time_series_v4 WHERE metric_name='X'"
                 metrics = toString deadMetrics;
+                allowNames = toString underscoreLive;
               }
               ''
                                     fail=0
@@ -447,10 +472,23 @@
                                           # 2. underscore histogram/summary suffixes are stored DOTTED
                                           # (googleapis_com exemption: GCP-native metric names like
                                           # storage_googleapis_com_api_request_count END in _count by
-                                          # GCP convention — not Prometheus histogram components).
-                                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -v 'googleapis_com' >lint_hits; then
+                                          # GCP convention — not Prometheus histogram components;
+                                          # underscoreLive exemption: store-verified standalone
+                                          # counters/gauges stored verbatim — dotting them is the
+                                          # 2026-10-17 regression class).
+                                          strip_allow() {
+                                            if [ -n "$allowNames" ]; then
+                                              grep -vE "\b$(echo "$allowNames" | tr ' ' '|')\b"
+                                            else
+                                              cat
+                                            fi
+                                          }
+                                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -v 'googleapis_com' | strip_allow >lint_hits; then
                                             echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
-                                            echo "  SigNoz stores suffixes DOTTED: metric.sum, metric.count, metric.bucket."
+                                            echo "  SigNoz stores suffixes DOTTED for histogram FAMILIES: metric.sum,"
+                                            echo "  metric.count, metric.bucket. A STANDALONE counter/gauge ending in"
+                                            echo "  _sum/_count is stored verbatim — verify against the store before"
+                                            echo "  dotting (clickhouse probe; see docs/agents/monitoring.md)."
                                             echo "  The underscore form matches zero series (caddy/dns dashboards 2026-08-27)."
                                             echo "  Query as {__name__=\"metric.suffix\"} instead."
                                             sed 's/^/    /' lint_hits
@@ -468,9 +506,11 @@
                                             fail=1
                                           fi
 
-                                          # 4. known-dead metric names
+                                          # 4. known-dead metric names (dots escaped: a dotted dead
+                                          # name must not silently match lookalike tokens)
                                           for m in $metrics; do
-                                            if stream "$f" | grep -nE "\b$m\b" >lint_hits; then
+                                            esc_m=$(printf '%s' "$m" | sed 's/\./\\./g')
+                                            if stream "$f" | grep -nE "\b$esc_m\b" >lint_hits; then
                                               echo "FAIL [$label] $f: dead metric '$m' (verified 0 series in the store)."
                                               sed 's/^/    /' lint_hits
                                               fail=1

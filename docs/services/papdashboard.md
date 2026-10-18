@@ -68,6 +68,11 @@ icon = null                   →  monogram fallback only
 - The pack is a **fixed pin in this module** (`iconPackSrc`: homarr-labs/dashboard-icons
   rev + `nix-prefetch-url --unpack` hash) — not a flake input, so the flake-input pin audit
   does not cover it; bump the rev and hash together deliberately.
+- **Metric-name naming rule for any SigNoz query you add near this service:** the suffix
+  form (dotted vs underscore) is decided by the exporter's TYPE declaration — see
+  [docs/agents/monitoring.md](../agents/monitoring.md) "Exporter names vs store names"
+  (the 2026-10-17 dotted-query regression was exactly a wrong assumption here; the
+  `papdashboard_services_json_*` gauges are plain gauges stored verbatim).
 - **Pack bump procedure (executable without re-deriving anything):**
   1. Pick the new upstream rev (the pack moves slowly; no cadence watcher exists — bump
      when a needed icon is missing from the pinned rev, or quarterly at most).
@@ -137,9 +142,11 @@ flake pin or `PAP_ICONS_DIR` unset), the route must serve a fragment-derived ico
 fragment itself, so the probe tracks the config with no hardcoded name). The pre-deploy
 counterpart is **§16 of `scripts/pre-deploy-check.sh`**: every pack-relative icon in the
 to-be-deployed rendered config must exist in the pinned pack subset (eval of
-`dashboard.groups` + `extraTiles` vs `PAP_ICONS_DIR`), zero pack icons fails too, and the
-leg follows the §13/§14 anti-blind-skip discipline (only the module-disabled eval shape may
-SKIP). Manual deep-dive:
+`dashboard.groups` + `extraTiles` vs `PAP_ICONS_DIR`), zero pack icons fails too, and
+since 2026-10-18 COVERAGE fails as well — icons < tiles (a monogram-falling tile) blocks
+the deploy, mirroring the runtime `icons_ok` gauge; `--section-16-only` iterates the leg
+cheaply. The leg follows the §13/§14 anti-blind-skip discipline (only the module-disabled
+eval shape may SKIP). Manual deep-dive:
 
 ```bash
 journalctl -u papdashboard -n 50          # boot order: listener bind BEFORE first probe cycle

@@ -4,6 +4,8 @@
 **Predecessors:** [2026-10-18_02-08 execution report](2026-10-18_02-08_tile-logos-go-live-verification-full-followthrough.md) (§g = instance 2's addendum, §h = mine) · [plan](../planning/2026-10-17_09-27_SUPERB-tile-logos-go-live.md)
 **Trigger:** owner directive: execute the WHOLE plan, then report what was forgotten / botched / next.
 
+> **CORRECTION (2026-10-18 04:4x, store-truth sweep):** the §a row "On-sight fix (third session's regression): … underscore form … receiver stores suffixes DOTTED" is **REFUTED for these two metrics**. The ClickHouse store holds `ai_meter_ttft_seconds_sum` (type Sum, 45 series) and `system_forgejo_mirror_sync_stale_count` (type Gauge, 43 series) LIVE, fresh to the minute — the dotted forms (`…seconds.sum`, `…stale.count`) have ZERO series. Dotting applies only to histogram-FAMILY metrics (caddy/dnsblockd declare `# TYPE x histogram`); standalone counters/gauges are stored verbatim underscore. The 02:4x "fix" moved two live queries onto phantoms; both were REVERTED to underscore, `signoz-query-lint` gained a store-verified `underscoreLive` allowlist + the dotted forms in `deadMetrics`, and the doctrine is rewritten in docs/agents/monitoring.md "Exporter names vs store names". The §b5 "live-metric truth" gap-filler this correction rode in on is the sweep itself: E4 of the successor plan. Surfaces corrected: `dashboards/ai-meter.json`, `_signoz-alerts.nix`, `flake/parts/checks/lint-static.nix`, `scripts/negative-test-lints.sh`, docs/agents/monitoring.md, docs/todo/monitoring.md row, TODO_LIST.md:1521 + docs/todo/services.md wave rows, docs/services/papdashboard.md.
+
 ## TL;DR
 
 The logos are **live** (39 through Caddy, verified 23:2x). Every agent-actionable epic
@@ -135,3 +137,7 @@ evidence. Tree evals green; all gates green; both repos pushed and gitleaks-clea
 1. **Deploy now?** The wave (lock 88156eb + metrics + probes + §16 + two dotted-query fixes) is verified and waiting; IO was 40–58% all evening and it is 02:30. Deploy into the calm, or wait for morning?
 2. **E9 — tile-logo style:** accept the current semantic pack glyphs for internal/agentic tiles (Crush Daily→openai, tq→opencode, NSFW→frigate, llama.cpp→open-webui/hugging-face, …), or commission the neutral cyan line-icon set (~100 min authoring + overlay dir)?
 3. **The twin-executor run:** was running two instances of this conversation intentional (and should I expect it again)? If yes, do you want the cheap plan-execution tombstone convention (write an EXECUTING marker into the plan file before starting; f)18) made a hard rule — or even an flock lock — so future waves don't duplicate epics?
+
+---
+
+**Harvest disposition (2026-10-18):** §f's ~50 items are HARVESTED as the successor plan (docs/planning/2026-10-18_02-36_SUPERB-tile-logos-deploy-and-closure.md §1–§3: Pareto P1–P8 + epics E1–E16 with steps); the owner-gated tail (§g1 deploy timing, §g2 E9 style, §g3 twin-intent) stays owner-gated by design — not harvested into agent-actionable rows. Post-authoring execution of this session's successor-plan lane is recorded in the plan's EXECUTING marker + the eventual closure report. Deliberately NOT harvested: nothing beyond the owner-gated tail.

@@ -183,3 +183,7 @@ the store-form proof both instances lacked at flag time:
 4. Attribution: the ai-meter/monitor365 wave belongs to the THIRD in-flight session
    (their CHANGELOG entry, deploy pending); this instance's fix touches only the two
    query strings — no behavior change to their emitter or enablement work.
+
+---
+
+**Harvest disposition (2026-10-18):** §f items were harvested at authoring time into TODO_LIST.md + docs/todo/{services,monitoring,pipeline,upstream}.md and decomposed into the successor plan (docs/planning/2026-10-18_02-36_SUPERB-tile-logos-deploy-and-closure.md, E1–E16). CORRECTION 2026-10-18 04:4x: the §g2/§h dotted-query "fix" claims were REFUTED by the store-truth sweep — the underscore forms are the live series; both queries reverted. Full correction + corrected surfaces: docs/status/2026-10-18_02-32_tile-logos-wave-closeout-and-twin-executor-audit.md (banner).
