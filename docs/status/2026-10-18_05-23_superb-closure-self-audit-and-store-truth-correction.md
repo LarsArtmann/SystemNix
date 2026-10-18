@@ -1,0 +1,98 @@
+# SUPERB Closure Execution + the Store-Truth Correction (Self-Audit)
+
+**Session:** 2026-10-18 04:23 → 05:23 CEST · **Instance:** resuming instance 1 of the tile-logos wave (the twin from 2026-10-17 22:30)
+**Trigger:** standing instruction: break the successor plan into actionable steps, execute and verify one at a time, keep going until done — then this self-audit (what was forgotten / could be better / can still improve).
+**Plan executed:** [docs/planning/2026-10-18_02-36_SUPERB-tile-logos-deploy-and-closure.md](../planning/2026-10-18_02-36_SUPERB-tile-logos-deploy-and-closure.md) (agent-actionable epics; owner-gated ones untouched by design)
+**Predecessors:** [closeout + twin audit 02-32](2026-10-18_02-32_tile-logos-wave-closeout-and-twin-executor-audit.md) · [pre-deploy unblock 04-02](2026-10-18_04-02_pre-deploy-unblock-and-two-boot-path-defects.md) (the FOURTH session, 03:32–04:05, unblocked the deploy mid-flight) · [its status update 04-18](2026-10-18_04-18_status-update-pre-deploy-unblock-boot-path-defects.md)
+**Commits (this session):** `3db1a58fb` (store-truth revert group, 14 files) · `6aad0720b` (§16 coverage arm) · `86db3813d` (tombstone doctrine + process helpers) — plus my tombstone flip carried by the fifth session's `3d551284a`. PapDashboard: `420db15` (daemon-carried CI memo). Both repos pushed, HEAD == origin/master.
+
+## TL;DR
+
+Nine epics executed and verified (E4–E8, E11, E14–E16), two gate-blocked (E12/E13, IO storm), five owner-gated (E1–E3, E9, E10 — unchanged). The session's product is a **correction, not just progress**: the E4 store-truth sweep (104 metric tokens probed against ClickHouse) refuted the previous session's dotted-query "fix" — the store holds `ai_meter_ttft_seconds_sum` (type Sum) and `system_forgejo_mirror_sync_stale_count` (type Gauge) LIVE as underscore, fresh to the minute; the dotted forms have ZERO series. Dotting applies to histogram FAMILIES only. Both queries were reverted (and verified at the PromQL layer too), the lint got the root-cause fix, and the doctrine was rewritten everywhere the wrong story had landed. Forgetting this check yesterday cost the wave a dead TTFT panel and an un-fireable backlog rule; catching it today cost ~15 minutes.
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+| --- | --- | --- |
+| a1 | **Tombstone FIRST** (guardrail 1): EXECUTING marker written into the plan header before any edit; twin-progress re-check (found the 4th session's unblock commits + two fresh reports; HEAD re-pinned `987f60451`→`f9429d360`) | plan header; flipped to EXECUTED at 04:47 |
+| a2 | **E4 store-truth sweep** — extracted 113 metric tokens from every dashboard + alert query, probed each against `signoz_metrics.distributed_time_series_v4`: 78 live, 26 zero-series | `~/.cache/tilelogos/extract_metrics.py` + `sweep.txt` |
+| a3 | **Zero-series triage**: 2 phantoms were MY OWN prior fix (the dotted pair); 4 REAL pre-existing phantoms (`discordsync_immich_lookup_total` alerts, `io_disk_busy_percent_max` + `io_psi_some_avg60_percent` overview, `reallocated_events` pool-storage); GCP families = expected-absent (receiver containment-disabled, FEATURES row); `log_records`/`metric_points` = tokenizer splits of LIVE `otelcol_receiver_refused_*` names; rest = label values | sweep + targeted `%`-family probes |
+| a4 | **Both dotted queries REVERTED** to the live underscore forms; surgical diffs (1 line each); verified at BOTH layers: CH series exist AND PromQL `count()` → 1 for underscore / ERR for dotted | `dashboards/ai-meter.json`, `_signoz-alerts.nix` (committed by daemon `11d07e094` carrying exactly those 2 files — exclusivity verified) |
+| a5 | **E7 lint root-cause fix**: `underscoreLive` allowlist (5 store-verified names, trap 2 skips), dotted phantoms INTO `deadMetrics`, dot-escaping in the dead-metric grep, trap-2 message rewritten to the type-decides lesson | `flake/parts/checks/lint-static.nix`; lint builds green |
+| a6 | **E7 harness hardening**: `*)` guards on all three case runners (silent fall-through class), per-case log to `~/.cache/negative-test-lints/cases.log`, two NEW legs (`underscore-allowlisted` pass, `dotted-phantom-dead` fail) | `scripts/negative-test-lints.sh`; **CASES=signoz,controls → 19/19 PASS** |
+| a7 | **E8 §16 coverage arm**: icons < tiles FAILs (deploy-time mirror of runtime `icons_ok`), pack/URL split in the pass line, body extracted to `pap_section16()`, new `--section-16-only` flag | positive **40/40 PASS**; negative hand-probe (icon-less tile in a tree copy + subset build): **coverage 39/40 → FAIL, exit 1**; shellcheck clean; AGENTS.md §16 cell + papdashboard.md updated |
+| a8 | **E5 tombstone doctrine**: AGENTS.md Session Discipline rule, CONTRIBUTING cross-link, `scripts/plan-marker.sh` (start/done, functional-tested: start→done→re-start idempotence on a copy; its own test caught a sed-delimiter bug pre-release) | helper shellcheck-clean |
+| a9 | **E11 process helpers**: `scripts/lib/process.sh` — `pid_of_port` (live-proven on a throwaway :18991 listener; correctly empty for root-owned sockets), `kill_pid` (TERM→5s→KILL via coreutils binary), `harness_scratch`; the two bench scripts refactored to `kill_pid`; THREE /tmp scratch sites migrated to XDG_CACHE (negative-test-lints WORK, crush-rc-test, paperless-stage0 token) | shellcheck ×4 clean |
+| a10 | **E14 receiver pin check**: NO `translation_strategy` knob exists in the collector config — the dotted/verbatim behavior is the receiver's inherent family parsing (ai-meter IS scraped by the same receiver as caddy — same job pool, so the form difference is purely exporter TYPE). Drift vectors: otel-collector lock bumps, exporter TYPE changes. Tripwires delivered: `scripts/metric-exists.sh` (exit 0/1/2 with type+temporality, tested 3 ways) + pin-risk paragraph in monitoring.md + signoz.md cheat-sheet line | signoz.nix scrape-config read; helper live-tested |
+| a11 | **E6 docs completion**: monitoring.md "Exporter names vs store names" (type-decides doctrine + the regression case study) + icons_ok pat() worked example (the two-leg anchored shape); FEATURES.md tile-logo row; the monitoring todo row REOPENED with the correction (its "only queries needed dots" text was itself wrong); TODO_LIST:1521 + services.md wave rows carry the revert; pack-staleness row dated (next review 2027-01-17); signoz.md + papdashboard.md cross-links | all edited + committed |
+| a12 | **E15 CI memos**: PapDashboard TODO row 104 — repair-vs-retire decision memo (facts: silent since 2026-07-15, billing blocker, consumer-gate caught 3 real regressions this wave; recommendation: RETIRE); SystemNix pipeline.md row — weekly lint-findings baseline-diff proposal | both repos |
+| a13 | **E16 queue hygiene**: dedupe (wave rows 1+1 = sanctioned mirror pair); premise-drift sweep (ZERO surviving wrong "dotted" claims in queue surfaces); the 4 pre-existing phantoms queued as a [ready] row with evidence; harvest dispositions appended to the three wave reports (unharvested WARN 67→65; remainder = deliberate backlog incl. the 04-18 report's own note); `check-todo-system.sh` structure OK | checker output |
+| a14 | **Corrections propagated to prior reports** (surface-named per doctrine): correction banner + harvest disposition in 02-32; harvest notes in 02-08/02-38 flagging the refuted §g2/§h claims; the "could never fire since 2026-10-16" premise marked UNPROVEN | the three reports |
+| a15 | **Concurrent-session coordination worked**: the 4th session landed its unblock + a 5th session landed the nsfw CLI work mid-flight (HEAD moved twice, index.lock held ~60s, my services.md edits were clobbered by a stale-copy rewrite) — tombstone + re-read-before-edit + pathspec commits meant zero duplicated work and zero foreign content in my commits | commit exclusivity checks (each `git show --stat` reviewed) |
+| a16 | Session report (this file) authored with self-harvest (§f contract below) | this file |
+
+## b) PARTIALLY DONE
+
+| # | Item | Works | Missing | Blocker | Effort |
+| --- | --- | --- | --- | --- | --- |
+| b1 | **Full-tree verification on the FINAL tree** | My entire delta is covered green: signoz-query-lint build, gatus-pattern-lint (controls), §16 40/40, toplevel-eval pristine control | A whole-tree `nix flake check --no-build` + full pre-deploy battery re-run (last full-green 104/6/0 at 03:52, BEFORE my lint/dashboard/alert edits) | Not a blocker — deferral: load 305 / PSI avg10 75 makes even evals crawl; queued as an (f) item | ~5 min at calm |
+| b2 | **E12 papdashboard VM test** | Skeleton approach sketched (module co-import, pack dir from the subset) | Nothing implemented | **IO gate** — a VM build under the storm that produced three freezes is the exact guardrail-3 violation | 90 min + calm |
+| b3 | **E13 shim-fleet sweep** (erraudit/crm/golangci) | Census method known | Nothing probed — per-repo upstream FOD builds are heavy-build class; also needs upstream pushes | **IO gate** + build-before-push policy | 60 min + calm |
+| b4 | **Neuter-proof of the new dead-metric leg** | The fail-leg asserts the trap-4-only marker (specificity proven by construction: the marker string exists only in trap 4's echo); the pass-leg proves the allowlist directly | The literal "remove the deadMetrics entry → case goes red" mutation run | Judged redundant (marker uniqueness argument); noted honestly here rather than silently skipped | 5 min if wanted |
+| b5 | **E1.1 pre-flight** | §16 re-verified 40/40; tree clean; deploy-intent lock NOT written (the deploy is the owner's act and the IO gate makes timing moot tonight) | The intent lock + IO-gate check happen at the owner's actual deploy moment | owner timing | 5 min |
+
+## c) NOT STARTED
+
+1. **The deploy** (⛔ owner) — now carries the dotted-query REVERT; the wave as queued at 02:4x would have shipped a dead TTFT panel and an un-fireable forgejo backlog rule.
+2. **E2 first-fire battery** (post-deploy) — plan §3 E2 steps; note step E2.6's expectation is now the UNDERSCORE provisioned query.
+3. **E3 browser visual pass** (⛔ owner browser) — unchanged.
+4. **E9 icon-style decision** (⛔ owner) — unchanged; services.md row.
+5. **E10 off-LAN phone probe** (⛔ owner phone) — unchanged.
+6. **PapDashboard CI decision** — memo awaits the owner (upstream TODO row 104).
+7. **Post-lock-bump dashboard sweep automation** — the E4 sweep ran from `~/.cache/tilelogos/extract_metrics.py` (durable but not a repo script); promoting it + the probe into one repo-native sweep command is queued as an (f) item, not done.
+
+## d) TOTALLY FUCKED UP (all caught; radical honesty)
+
+| # | What | Severity | Root cause | Caught by / mitigation |
+| --- | --- | --- | --- | --- |
+| d1 | **I (as yesterday's session) shipped the wrong fix confidently, and today's session initially reinforced it.** The closeout even FLAGGED the exact gap (§b5 "did NOT query the store API directly") and then… didn't act on it before writing the doctrine rows. The E4 sweep existed in the plan precisely to close §b5 — and it reversed the fix instead of confirming it. | HIGH (a shipped dead panel + dead rule, caught pre-deploy) | The lint lesson ("suffixes are DOTTED") was generalized from ONE metric class to ALL `_sum/_count` names on the evidence of one dashboard (caddy); the store probe was skipped because the exporter probe + precedent felt sufficient | Today's sweep; corrected same-session. Standing fix: the doctrine now REQUIRES the store probe before ANY naming decision + `metric-exists.sh` makes it one command + the lint's allowlist/deadMetrics make both known-wrong forms machine-checked |
+| d2 | **First lint edit had a nix-interpolation syntax error** (`esc_m=${m//./…}` inside an indented string — `${` interpolates in nix), failing EVERY case AND every pristine control with `syntax error, unexpected '.'` | MEDIUM (would have blocked everything) | Bash brace-parameter syntax collides with nix interpolation — a recurring trap this repo has dodged before via `$x`-without-braces | The harness's pristine CONTROLS in one run (exactly what they exist for); fixed with a sed form; 19/19 after |
+| d3 | **plan-marker.sh shipped with a sed delimiter bug** — the marker regex contains `|` (the `ING|ED` alternation) which terminates a `s|…|` expression | MEDIUM (tool broken on first real use) | Delimiter chosen without scanning the payload for it | The helper's own functional test (start→done→re-start on a copy); `@` delimiter + full test |
+| d4 | **My services.md edits were CLOBBERED off disk** mid-session (a parallel session rewrote the file from its stale copy; my two edits — wave-row correction + dated review — vanished; `git log -1` showed only the old commit) | MEDIUM (silent loss class, the 04-18 report's e.11 specimen again) | Concurrent sessions rewriting the same doc; my edit-verify-commit window was ~30 min wide | Post-commit content-pin sweep (`grep -c` for my inserted strings) found count=0; re-applied ATOMICALLY (python, assert-once) and committed within minutes. Second specimen of the e.11 class — strengthens the docs-ownership-convention case |
+| d5 | **Negative-probe first attempt failed for the WRONG reason** (PAP_ICONS_DIR "does not exist" — the copy's pack subset was never built) and I briefly had a failing gate I couldn't interpret | LOW (5 min) | `nix eval` doesn't realize derivations; the copy tree's subset path was never built | Built the subset first, re-proved 39/40 properly; the probe's verdict is now honest |
+| d6 | **A git index.lock stall ate ~2 min** (daemon mid-operation; I polled instead of killing — correct call) | LOW | Shared tree, continuous daemon | Patience; the daemon's `11d07e094` then carried exactly my two revert files (verified before proceeding) |
+| d7 | **My commit `4cd4cdab0` was amended away by a parallel session** into `3d551284a` (which carries my tombstone flip + their nsfw go-live docs) | LOW (content preserved; attribution blurred) | Two sessions committing concurrently on one branch | Content verified present in the successor commit; left as-is per the no-squash-foreign-content rule |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Store probe before name, ALWAYS — and make it impossible to skip.** Done as doctrine + one-command tooling, but the stronger version is mechanical: a `CASES=metricnames` harness leg that runs the whole extraction+probe sweep and fails on any query whose store form mismatches. That converts today's manual sweep into a gate. (Queued, (f)3.)
+2. **Pristine controls are the highest-value harness feature.** The d2 syntax error would have read as "the lint is broken" without them; they localized it to "the tree is broken" in one run. Every new enforcement surface should ship with its control leg the same commit.
+3. **The lesson-generalization failure mode needs a name in doctrine.** Yesterday's bug: one dashboard precedent (caddy) → "ALL underscore suffixes are dotted" → a lint message that TAUGHT the wrong rule. The fix pattern: scope the lesson to its evidence class in the lint message itself (done — trap 2 now says "histogram FAMILIES") and require the store probe for anything outside it. Worth a gotchas-archive row (queued, (f)4).
+4. **Docs-file ownership for concurrent sessions** — second live specimen today (d4). The 04-18 session proposed it; my instance strengthens the case (content-pin + atomic re-apply + fast commit limited the damage to ~30 min). A cheap convention: before editing a doc, `git log -1 --format=%h -- <file>` + re-read; after editing, `grep -c` your inserted markers BEFORE the commit window closes. Formalize in CONTRIBUTING (queued, (f)5).
+5. **Plan-marker adoption worked exactly as designed** — tombstone + HEAD re-pinning + pathspec commits meant two other active sessions produced zero duplicated work and zero clobbered commits. The one gap: markers only guard if committed FAST (mine rode a daemon commit within 6 min). The rule "commit the marker immediately" is now in the AGENTS.md bullet.
+6. **Ephemeral harness code lives in `~/.cache` — fine — but repo-native sweep tooling should not stay ephemeral.** `extract_metrics.py` did its job from `~/.cache/tilelogos/`; promoting the extract+sweep into `scripts/` (or a check) is the difference between "a session did this once" and "the tree does this always" ((f)3).
+7. **The IO gate held, and that is the improvement.** Two heavy epics (E12/E13) were deferred instead of forced into the storm that already froze the box three times tonight. The gate is a judgment call agents get right when the evidence (PSI, load, freeze reports) is in front of them — keep reporting the numbers in the handoff so the next session doesn't re-litigate.
+
+## f) FOLLOW-UPS (self-harvest at authoring time, per the §f contract)
+
+**HARVESTED NOW (1 new surface):**
+
+| # | Item | Surface |
+| --- | --- | --- |
+| 1 | **Re-run the full pre-deploy battery + `nix flake check --no-build` on the final tree at an IO-calm window, before the owner deploy** (last full-green 104/6/0 at 03:52 predates the revert + lint edits; my delta is lint-covered but the whole-tree run is the deploy-proceeding verdict) | `docs/todo/services.md` [ready] row + `TODO_LIST.md` mirror (added at this report's authoring) |
+
+**Deliberately NOT harvested (already on surfaces):**
+
+- E2 first-fire battery, E3 browser pass, E9 decision, E10 phone probe, the deploy itself — all live as the successor plan's §3 steps + the existing owner-gated rows (TODO_LIST:1521, services.md:619/13/15). Harvesting them again would duplicate, not dispatch.
+- E12/E13 — pending epics IN the successor plan with steps + DoD; my session's tombstone records the gate-blocked state. A separate queue row would drift from the plan.
+- PapDashboard CI decision — upstream TODO row 104 (the memo IS the surface).
+- Weekly lint baseline-diff CI — pipeline.md [ready] row (harvested in-session).
+- 4 pre-existing metric phantoms — monitoring.md [ready] row (harvested in-session).
+- `extract_metrics.py` promotion + `CASES=metricnames` sweep leg (e.1/e.6) — deliberately NOT harvested as separate rows: they are refinements of the pipeline.md baseline-diff proposal row and the monitoring sweep row that exist; folding them there at execution time avoids a third overlapping surface. If the owner wants them as standalone rows, say so and they get queued.
+- The 65 remaining unharvested §f reports — pre-existing backlog (04-18 d7), not this session's class.
+
+## g) Questions I CANNOT answer myself (max 3)
+
+1. **Deploy go-ahead + timing?** The wave is verified and now includes the correction; the box is three freezes deep tonight (storm: PSI avg10 75, load 305 at 04:45). Do you want the full battery re-run + deploy in the next calm window (I can do the battery; the deploy is your sudo), and is "wait for calm" the right reading, or is there a reason to go sooner?
+2. **The forgejo-mirror-backlog rule's history**: with the underscore series proven live since before 2026-10-16, the rule was probably fireable all along — my "it could never fire" claim yesterday is unproven. Do you recall it ever firing (or NOT firing during a known backlog)? That decides whether the 2026-10-16 provisioning needs a separate post-mortem or whether this closes clean.
+3. **PapDashboard CI: repair or retire?** The memo (upstream TODO row 104) recommends retiring the dead workflows and codifying the consumer-side gate as the verification path; your call.
