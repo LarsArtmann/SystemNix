@@ -147,3 +147,29 @@ this report's open items:
    `monitor365.nix` (`} // ioTier.x` → newline form); churn is canonical, anchor text
    for the withpkgs negative cases intact.
 5. **Nothing else open on this wave.** The next deploy carries everything queued in §f1.
+
+## h) Addendum (first executor instance, 02:3x — E11 outcome + the lint fix instance 2 flagged)
+
+Instance 2's §g2 "flagged, not silently fixed" item is now FIXED on the evidence, with
+the store-form proof both instances lacked at flag time:
+
+1. **The underscore queries were REAL phantoms, fixed to the dotted store form.**
+   The decisive precedent sits in the repo's own WORKING dashboard:
+   `dashboards/caddy.json` queries `caddy_http_response_duration_seconds.sum` (dotted) —
+   the OTel receiver stores histogram suffixes dotted, exactly the 2026-08-27 lesson the
+   lint encodes. The exporter-side names are genuinely real
+   (`ai_meter_ttft_seconds_sum` live on :8108/metrics with 2574 samples — the emitter's
+   underscore form is CORRECT Prometheus exporter convention; only the QUERY layer
+   translates). Fixed: `dashboards/ai-meter.json` (TTFT p50-ish panel →
+   `ai_meter_ttft_seconds.sum/.count`) and `_signoz-alerts.nix` forgejo-mirror-backlog
+   rule (`system_forgejo_mirror_sync_stale.count` — that alert had matched ZERO series
+   since it landed 2026-10-16, i.e. it could never fire).
+2. **Post-fix verification:** `signoz-query-lint` builds green;
+   `CASES=tileicons` 3/3 green (the run-2 collapse was instance-3's transient
+   `monitor365BackupScript` consumer-before-declaration window, already self-healed);
+   `nix flake check --no-build` all-green.
+3. **§f2 (gatus-patterns VM run) is CLOSED by instance 2's §g1** — accepted, their run
+   green on the same derivation this instance eval-verified.
+4. Attribution: the ai-meter/monitor365 wave belongs to the THIRD in-flight session
+   (their CHANGELOG entry, deploy pending); this instance's fix touches only the two
+   query strings — no behavior change to their emitter or enablement work.
