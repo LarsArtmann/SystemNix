@@ -55,6 +55,7 @@
 4. **The multi-agent daemon-commit reality makes per-file immediate commits the only race-free pattern** — batched edits guarantee absorption into heuristic commits.
 
 ## f) NEXT THINGS (ranked, in-lane first)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 1. **[ready] Run `checks.x86_64-linux.memory-emergency-guard` VM test in the first sustained quiet window** (avg60 < 25 for ≥5 min), then commit the close-out with the task footer. Everything else in this report is already in-tree.
 2. **[ready] Deploy** (owner): carries the corrected churn list, the template-mounted scrubGuard, the re-arm exclusion. Watch the first post-deploy Zone-6 trip with an active scrub: `btrfs scrub status` must show CANCELLED (proves the ExecStop cancel end-to-end).

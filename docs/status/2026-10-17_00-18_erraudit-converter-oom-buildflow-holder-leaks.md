@@ -70,6 +70,7 @@
 8. **Concurrent-session awareness worked but should be recorded**: a parallel session committed `docs/status/2026-10-17_00-17_ai-meter-build-session-status.html` mid-session and owns the working-tree `ai-meter` changes; this report deliberately does not touch or attribute those.
 
 ## f) Up to 50 things to get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 *Operator cap: 50. This is a brainstorm ranked by impact, not a commitment list — harvest (with routing rigor) is deferred until the owner says go. Suggested routing in brackets, SystemNix domains per TODO system; erraudit/BuildFlow items belong in THOSE repos.*
 

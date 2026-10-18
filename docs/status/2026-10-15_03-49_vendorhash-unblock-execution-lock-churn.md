@@ -43,6 +43,7 @@
 5. The overlay third-surface class (`mkPackageOption pkgs` + input overlays) is undocumented in the two-surface sweep guidance — `docs/agents/go-ecosystem.md:20` should say "THREE surfaces" (harvested to the report record; row update queued below).
 
 ## f) Next things (execution ladder — most are continuations of the 03:05 report's §f; new/changed items flagged)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 1. [CONTINUES #1] Lock-quiescence check: no lock commits + unchanged mtime for ≥10 min (g/Q1 decides whether to wait or chase).
 2. [CONTINUES #1-2] ONE toplevel `--keep-going` pass → complete specified/got table at a single lock state.

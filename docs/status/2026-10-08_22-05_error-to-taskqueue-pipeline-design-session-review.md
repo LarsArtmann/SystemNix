@@ -72,6 +72,7 @@ Nothing shipped, nothing broken in a runtime sense, no secret touched, no tree d
 6. **Fingerprinting ownership:** decide up front whether grouping lives in the reporter, in tq, or is deferred to SigNoz links — one owner, not two.
 
 ## f) Next things (brainstorm-graded, grouped; owner picks)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED into SystemNix queue surfaces — §f items belong to go-taskqueue's own TODO system (domain-routing rule; rationale above).
 
 _Deliberately NOT harvested into SystemNix `TODO_LIST.md`/`docs/todo/*`: every actionable item below belongs to **go-taskqueue's** TODO system (the fix lives in that repo — domain-routing rule), and the top 3 are owner-gated questions anyway. Recorded here per the self-harvest rule's escape hatch. If ratified, they should be filed in go-taskqueue's `TODO_LIST.md` in that repo, not here._
 

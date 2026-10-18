@@ -52,6 +52,7 @@
 7. **Verify-before-edit remains the highest-yield habit in this repo** — re-verifying all 35 items against the live tree at session start prevented ~15 duplicate/restored-wrong rows (13 session-2 items already landed; 12 of 21 deleted rows already closed; #25 already landed; isDarwin sweep already covered). Every batch this session built on that first-pass verification.
 
 ## f) Up to 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 Session-derived (this run surfaced them; dispositions per the harvest note in §b3 — items 1-9 are NEW, nothing harvested yet pending your §g ruling):
 

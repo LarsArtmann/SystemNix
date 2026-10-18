@@ -46,6 +46,7 @@ Nothing destroyed, no config breakage, both VM runs isolated, every commit hook-
 5. **VM checks need quiet windows but not fear:** the first run's ~34-min wall was closure-building under an IO storm; the test itself is 33 s. Deferral-to-quiet-window (fire-2b's choice) was right for build cost, but "deferred" must not become "skipped" — it took a third fire.
 
 ## f) What to get done next (ranked, session-scoped; ★ = born this session)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 1. ★ **Deploy the guard chain** (scrub instance churn-stop + re-arm exclusion + ordering fix) in the next calm window — until then the host emits a stale churn metric on catch-up grants and the cancel path stays VM-proven only. Rides the existing batch-deploy row; BLOCKED on the deploy-authority decision.
 2. ★ **Live-fire the cancel path** [watch]: during the next weekly scrub window (~Oct 5) or the next storm-trip-during-scrub, confirm the journal shows the instance churn-stop + disclosure line and btrfs-health shows the never-finished scrub (the Gatus-visible coverage gap).

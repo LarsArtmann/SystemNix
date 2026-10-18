@@ -54,6 +54,7 @@
 6. **Cross-session awareness:** the 03:53 storm-mode pass on the same script I was editing was invisible until a tool rejection forced a re-read. A cheap `git log --since` on target files before editing (content-pin discipline) would surface it proactively instead of reactively.
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT (brainstorm, sorted by impact; `[H]` = harvested into TODO_LIST + library this session, `[Q]` = already queued from earlier sessions, `[R]` = report-only)
+> **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 1. `[H]` Triage the 10 runtime-throttled units (memory.current vs MemoryMax vs working set; fix undersized, justify designed).
 2. `[H]` Continuous throttle observability: `high`-counter textfile metric + SigNoz rule + allowlist for designed throttle-only units.

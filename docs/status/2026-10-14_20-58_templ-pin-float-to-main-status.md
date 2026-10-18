@@ -97,6 +97,7 @@
 6. **`nix flake update` UX** — raw GitHub 422 JSON for a wrong branch name is a sharp edge; a repo wrapper could translate the common failure classes (422 branch, 404 repo, tarball regression) into fix-it hints (§f.27).
 
 ## f) Things to get done next (27 honest items — under the 50 cap; padding to 50 would mean inventing work)
+> **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 Routing: `[ready]` = queue-harvestable · `[watch]` = monitor · `[decision]` = owner call · `[roadmap]` = ROADMAP fuel. Items 1–9 are THIS session's direct aftermath; 10–18 carried open from the prior session; 19–27 noticed pre-existing (NOT acted on by me).
 

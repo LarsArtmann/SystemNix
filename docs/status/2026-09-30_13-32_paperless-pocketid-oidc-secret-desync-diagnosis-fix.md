@@ -77,6 +77,7 @@ Paperless SSO (`paperless.home.lan`, Layer 1 native OIDC via Pocket ID) failed a
 6. **Successful-login observability** — raise paperless social-login successes to a greppable level (or emit a metric) so "when did SSO last work" is answerable.
 
 ## f) NEXT TASKS (brainstorm, impact-ranked — §f harvest deferred per owner's wait instruction; larger-N items are ROADMAP fuel per skill guidance)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 | #  | Task                                                                                                                                                 | Impact   | Effort | Category      |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |

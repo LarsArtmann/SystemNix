@@ -75,6 +75,7 @@
 8. **Post-build, pre-report binary smoke is cheap** (`.version` probes on the built packages) and would have upgraded b.6's "answered by build" into an asserted fact.
 
 ## f) Up to 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 _Session-direct (this fix's tail), highest priority first:_
 

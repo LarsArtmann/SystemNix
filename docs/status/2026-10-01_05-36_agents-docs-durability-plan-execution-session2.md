@@ -39,6 +39,7 @@
 - Noticed on sight, deliberately NOT fixed (foreign in-flight scope): (i) the dns-blocker session's dirty `docs/todo/services.md` edit contains a run-together line — the new `[blocked:push]` M18 row starts mid-line after `…§M18-` without a newline; (ii) their staged-uncommitted 05-17 report sits in the shared index (their commit mechanics likely hit the same daemon race).
 
 ## f) Direct follow-ups (harvest at closeout; owner may also dispatch)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 1. [ready] Close `pipeline.md:220` + TODO_LIST:459 (wire-into-gate) as DONE — pre-commit leg (`f21be80a`) + CI scan (`c630b064`) both live. CHECK FIRST whether the tq session's `3819027a` pipeline.md edit already closed it (avoid double-close).
 2. [ready] Close `pipeline.md:221` (anchor validation) as DONE via `3cc72123`; close `pipeline.md:222` (CHANGELOG) as DONE via `99449fda`.

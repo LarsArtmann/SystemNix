@@ -45,6 +45,7 @@
 4. **Push-policy observation:** a parallel session's push carried my commits to origin mid-session — coordination by side-effect. Fine under the shared-tree model, but it means "never push" and "work is public anyway" now coexist; the §g2 question is about making this explicit rather than accidental.
 
 ## f) Next (remaining plan work; deliberately NOT harvested into the queue at authoring time per the user's write-and-wait instruction — the plan doc + existing backfill/fold/decision rows are the canonical tracking; harvest on resume)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 1. T4a: pocket-id runbook (module + sso-dns/secrets knowledge; layout/ops/traps).
 2. T4b: oauth2-proxy runbook (Layer-2 forward-auth, whitelist-domain, partOf provision).

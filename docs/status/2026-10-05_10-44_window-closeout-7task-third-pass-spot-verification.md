@@ -55,6 +55,7 @@ Nothing new since the 09:58/10:30 accounting — its findings stand, re-confirme
 5. **Keep self-harvest at authoring** — the 01-27/02-39 pattern (explicit per-item disposition) prevented orphaned follow-ups; the 02-59 deferral resolved safely into row 616.
 
 ## f) NEXT THINGS
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 **Zero new queue items appended this pass.** Every follow-up from the window's seven §f inventories is already queued; several have since landed (parity-leg live-fire: row 20 `[x]`; BLOCKED-marker lint: row 759 `[x]`; the four owner questions: rows 785–788). Dedup-checked candidates — run-gated tag, tail-section legality, no-op closure, parent-ticket parking, premise gate, verbosity guard — all have live unchecked rows; appending would mint fresh dedup keys for existing work.
 

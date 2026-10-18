@@ -44,6 +44,7 @@
 4. **Portable tool packages** — we package LarsArtmann Go tools via `mkLarsPackages`, but have no "self-contained interactive tool" pattern (neovim with baked LSPs is the exemplar). A `pkgs/portable/` convention could make any machine instantly productive.
 
 ## f) Up to 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 Ranked by impact. **Harvest status: deliberately NOT harvested into TODO_LIST.md at authoring time** — the user explicitly said "report, then wait for instructions"; every item below is a _proposal_ derived from one reference repo and needs the user's pick before queueing (queueing all 50 against an undecided idea-set would poison the dispatch queue). Items 1–5 are the ones I would harvest immediately on approval; the rest are ROADMAP fuel.
 

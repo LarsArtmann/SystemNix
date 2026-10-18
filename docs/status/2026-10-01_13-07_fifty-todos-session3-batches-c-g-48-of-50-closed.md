@@ -45,6 +45,7 @@
 4. **Queue-row marking in the same commit as content** (house rule) worked cleanly across 6 commits — zero "code landed, row open" drift introduced this session; the pre-existing 63-drift backlog is the pairing check's separate sweep (master-plan P1b, queued).
 
 ## f) Up to 50 next things
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 1–3. Owner: run the deploy window for the batch-G config edits (golines, preferStaticEmulators) + the standing hot-db/caddy-logs waves — then trash `~/go/bin/golines`.
 4. Owner: the scrub-exit @data [decision] row (stability.md) — `SuccessExitStatus [1 3]` vs keep-FAIL before the next Oct 5 weekly fire re-parks the unit.

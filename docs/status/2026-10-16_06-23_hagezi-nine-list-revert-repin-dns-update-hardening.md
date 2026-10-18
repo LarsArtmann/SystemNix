@@ -65,6 +65,7 @@
 6. **Selective re-pin comments work** — the hoster/dyndns precedent comments are what made the oscillation discoverable today. Keep them for non-obvious cases (reverts, security-adjacent, protocol changes); skip them for routine advances to avoid comment noise.
 
 ## f) Top things to get done next (ranked; impact / effort / category)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 In-scope first (this session's surfaces), then the cross-cutting items this window re-confirmed. The crowdsec/geo wave backlog is deliberately NOT duplicated here — it lives in the 06-19 report's §f and the todo libraries.
 

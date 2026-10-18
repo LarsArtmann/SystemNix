@@ -77,6 +77,7 @@
 7. **Prior-artifact reading:** the 2026-09-23 13-26 session-3 status report is the primary source for this workstream; I relied on AGENTS.md + §9 summaries instead of reading it (user's no-unrelated-research constraint). Acceptable here; would not be for a deeper session.
 
 ## f) Next things to get done (up to 50, ranked; impact/effort/category per status-report guide)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 **Owner-gated go-live chain (blocks everything below):**
 

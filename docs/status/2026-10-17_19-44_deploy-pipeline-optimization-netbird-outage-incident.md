@@ -66,6 +66,7 @@
 7. **Ghost systems check**: none created (all new code is wired and deployed). **Split brains found (small)**: (i) dual timeout bounds for netbird-evox2-login (unit 2min vs deploy 180s) with no cross-referencing comment — safe today (min governs) but drift-prone; (ii) the manifest JSON is an implicit two-file contract (producer/consumer) documented only in paired comments — acceptable, worth a pinning test. **Tests**: existing suites still pass; new code has zero persisted tests (§e.1). **Scope creep**: none — the pbx remote action was inside the unstick mandate. **Removed useful things**: nothing.
 
 ## f) Next tasks (ranked; feeds docs-health HARVEST)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 | # | Task | Impact | Effort | Category |
 | --- | --- | --- | --- | --- |

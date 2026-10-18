@@ -59,6 +59,7 @@
 | e.6 | **`result` symlink lifecycle is invisible** — it flips between sessions' builds without any record; my own §c.3 draft called it "stale" minutes before a parallel build re-pointed it at my own toplevel | Low (confusion cost only) | Treat `result` as always-provisional: never attribute, never clean except at quiescence; never use `result` as evidence (always `--print-out-paths`) |
 
 ## f) NEXT — up to 50 (grounded in this session; N kept honest instead of padded)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 Ranked by impact. Format: Task — Impact / Effort / Category. Harvest disposition table below.
 

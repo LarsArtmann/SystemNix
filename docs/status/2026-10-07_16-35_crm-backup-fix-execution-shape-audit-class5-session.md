@@ -100,6 +100,7 @@ claimed by another session's report, not independently verified.
    (docs-health ANNOTATE shape). Not done; noted.
 
 ## f) Things to get done next (ranked; [new] = harvested this report, [tracked] = already queued)
+> **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 | #  | Task                                                                                                                                                                                  | Tag                         |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |

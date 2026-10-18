@@ -122,6 +122,7 @@ _(planned, zero work done — waiting on owner/reboot)_
 - **Nested-automount policy:** `~/.cache/nix` is an autofs nested inside the `~/.cache` autofs, backed by the same Samsung fs as `/nix` — two fragile couplings (nix's eval cache + hot tier) in one mount chain. Revisit placement (§f 26).
 
 ## f) Top 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 _(ranked by impact; Critical/High/Medium/Low · S <30 min / M 30 min–2 h / L >2 h · Category)_
 

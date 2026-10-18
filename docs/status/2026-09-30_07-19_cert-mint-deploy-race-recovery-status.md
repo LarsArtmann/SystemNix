@@ -69,6 +69,7 @@
 6. **Canonical textfile-collector path cost a failed grep.** `/var/lib/prometheus-node-exporter/textfile_collectors` is nowhere in AGENTS.md; I probed two wrong paths first. One line in AGENTS.md ends that class.
 
 ## f) Next tasks (up to 50, session-grounded, ranked; ★ = queue-worthy, rest are ROADMAP fuel)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 | #  | Task                                                                                                                                                                                                         | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------- |

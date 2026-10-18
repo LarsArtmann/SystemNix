@@ -68,6 +68,7 @@
 5. **Failed probes get retried with a different method,** not abandoned (the empty openssl output should have been an immediate agentic_fetch retry).
 
 ## f) NEXT (session-derived; NEW harvested + tracked pointers)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 **New this session (landed in TODO_LIST.md + docs/todo/services.md / CHANGELOG):**
 

@@ -59,6 +59,7 @@ The error→auto-fix pipeline from the 22-05 design is now REAL CODE inside go-t
 6. **Don't defer smelled-wrong semantics to documentation.**
 
 ## f) Next things (owner-gated marked ⚠; go-taskqueue items belong in ITS TODO_LIST at harvest time)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED into SystemNix queue surfaces — §f items belong to go-taskqueue's own TODO system (domain-routing rule; rationale above).
 
 1. ⚠ Squash the 4 heuristic daemon commits into one proper feature commit (history rewrite → run the full verification checklist from SystemNix docs/agents/git.md).
 2. Run the FULL gate battery: root build/vet/test, journal module gate, facade parity, test-cmd-tq.sh, lint-baseline, dprint fmt, check-doc-refs, check-agents-size, check-go-mods, vendor-sync, ci-local.sh.

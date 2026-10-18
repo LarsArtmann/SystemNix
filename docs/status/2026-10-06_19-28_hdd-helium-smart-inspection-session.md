@@ -51,6 +51,7 @@ Nothing was broken — the session was read-only, made zero mutations, and touch
 5. **Helium attr knowledge is tribal right now.** "MG08 helium = attrs 23/24, Pre-fail, THRESH 75, raw 0 = sealed" exists nowhere in the repo. It belongs in `docs/agents/storage.md` the next time that file is touched.
 
 ## f) NEXT (session-derived, up to 50 — brainstorm awaiting triage, sorted by impact)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 Impact: Critical/High/Medium/Low · Effort: S <30min, M 30min–2h, L >2h
 

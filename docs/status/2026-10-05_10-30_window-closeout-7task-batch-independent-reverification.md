@@ -51,6 +51,7 @@ Nothing new since the 09:58 accounting — its findings stand and were re-verifi
 5. **Duplicate done-prompts are now a real pattern**: this window received TWO close-out prompts (09:58 and this one). The dispatcher should dedup done-prompts per task set the same way it (fails to) dedup work dispatches — otherwise every close-out batch doubles in close-out cost.
 
 ## f) NEXT THINGS
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 Every follow-up from the window's seven §f inventories is already queued and several have since landed (parity-leg live-fire: row 20 `[x]`; BLOCKED-marker lint: row 759 `[x]`; premise-gate: 613; verbosity guard: 611; rename-proof: 104; 4th drift shape: 105; `[x]` prune pass: 766). The four genuinely new owner questions were appended by the 09:58 close-out as rows **780–783** (time-gated harvest tag, tail-section legality, no-op fire closure, park the KNOWN_CACHE_ENTRIES parent). **This report appends ZERO new queue items** — every candidate duplicates an existing unchecked row, and minting fresh dedup keys for queued work is the exact re-fire pathology this window documented.
 

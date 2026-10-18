@@ -70,6 +70,7 @@ Nothing data-destroying, but three real stumbles, ranked:
 6. **`nh os switch` bypasses the repo's pre/post-deploy checks.** The SystemNix rule is `nix run .#deploy` (deploy.sh runs pre-deploy-check + post-switch steps). The user's original command skipped §1–§14 pre-deploy checks; worth noting every time it happens.
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 Grouped; impact-ordered within groups. Items 1–8 are this-incident follow-ups, the rest are adjacent findings from this session (ROADMAP fuel — most are NOT for the dispatch queue).
 

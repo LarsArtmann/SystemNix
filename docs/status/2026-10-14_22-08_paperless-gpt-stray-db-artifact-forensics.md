@@ -53,6 +53,7 @@
 5. **The identify-unknown-artifact flow worked and is repeatable** — file → `stat` → schema dump → `git check-ignore` → upstream source verification → crush.db timeline. Worth codifying as a repo script or a cross-project lesson entry (by commit) so the next unknown artifact costs minutes, not a session.
 
 ## f) Up to 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 Ranked by impact. Effort: S <30 min, M 30 min–2 h, L >2 h.
 

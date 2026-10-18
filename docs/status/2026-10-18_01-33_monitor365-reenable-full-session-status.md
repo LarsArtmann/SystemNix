@@ -73,6 +73,7 @@ Nothing I broke is STILL broken — but all three of these really happened, and 
 8. **Bootstrap-SSO-era X11 dead weight in the wrapper:** `runtimeDeps` still ships xdotool/xprintidle/scrot/wmctrl marked "non-functional on niri (Wayland-only)" — 5 packages of known-dead weight in every unit PATH. Prune when upstream's Wayland support lands, or prune now with an upstream-tracking row (f38).
 
 ## f) NEXT TASKS (up to 50, ranked by impact — HARVEST PENDING OWNER INSTRUCTION)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 | # | Task | Impact | Effort | Category |
 |---|------|--------|--------|----------|

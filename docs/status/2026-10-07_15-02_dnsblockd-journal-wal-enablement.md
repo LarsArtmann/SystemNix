@@ -113,6 +113,7 @@ Nothing destructive. Honest waste:
    "enable one flag" and "ship a week of upstream" rode together silently here.
 
 ## f) NEXT (realistic, deduplicated — not padded to 50)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 1. Deploy when IO PSI drains (`nix run .#deploy`; watcher 044 may already have done it —
    CHECK FIRST: `head -1 /proc/pressure/io`, then `git log`, then live unit ExecStart).

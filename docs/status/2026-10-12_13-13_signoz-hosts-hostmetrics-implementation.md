@@ -58,6 +58,7 @@ Nothing this session authored is broken. Two adjacent discoveries that ARE ugly:
 6. **BuildFlow**: `.buildflow.yml` exists; I loaded the skill and ran project-native gates per project AGENTS.md. Defensible, but the choice should be stated up front in future sessions, not implicit.
 
 ## f) WHAT WE SHOULD GET DONE NEXT (impact-ordered; brainstorm per skill norm — harvest with rigor)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 1. **Verify hostmetrics live data + Hosts page populated** (this task's close-out; blocked only on ClickHouse convergence post-reboot).
 2. **Determine 13:05 reboot nature** (clean vs freeze) — journal `journalctl -b -1 -e`, PSI/PSI-memory around 13:04, niri DRM error cause.

@@ -76,6 +76,7 @@ All planned follow-ups from this session's observations — nothing written yet 
 ---
 
 ## f) NEXT TASKS (session-derived, ranked — 18 real items, not padded to 50)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 | #  | Task                                                                                                                                          | Impact   | Effort | Category      |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |

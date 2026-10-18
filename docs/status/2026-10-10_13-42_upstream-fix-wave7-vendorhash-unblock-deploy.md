@@ -75,6 +75,7 @@ The deploy is **unblocked and live**: evo-x2 runs generation **system-860** (was
 ---
 
 ## f) Up to 50 things we should get done next
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
 **Brainstorm list per your instruction — NOT yet harvested into TODO_LIST.md (deliberately: you asked me to wait for instructions; items marked 🎯 are direct session follow-ups already queued in `docs/todo/upstream.md` or trivially actionable; the rest are candidate scope for you to pick from).**
 
