@@ -5,7 +5,7 @@
 # Usage: test-drive-paperless.sh <ingest-main> <ingest-batch1> <ingest-cap1> <google-sync-config-check>
 #
 # The three ingest variants are the REAL rendered wrappers (writeShellApplication,
-# shellcheck already ran at build time) with (a) the curl wrapper-PATH entry
+# lint already ran at build time) with (a) the curl wrapper-PATH entry
 # sed-prepended with a stub bin dir (controlled API responses, arg logging,
 # failure injection) and (b) the baked /mnt/pool source paths sed-rewritten
 # onto scratch trees (discordsync-attachments-migrate fixture pattern).
@@ -161,15 +161,15 @@ for i in 1 2 3 4; do
   reset_log
   env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
     DRIVE_PAPERLESS_STATE="$state2" CURL_LOG="$log" CURL_COUNTER="$counter" \
-    bash "$scratch/batch1.sh" >"$scratch/batch1-$i.out" 2>&1 \
-    || fail "leg2: run $i exited non-zero: $(cat "$scratch/batch1-$i.out")"
+    bash "$scratch/batch1.sh" >"$scratch/batch1-$i.out" 2>&1 ||
+    fail "leg2: run $i exited non-zero: $(cat "$scratch/batch1-$i.out")"
   [ "$(docs_uploaded)" -eq 1 ] || fail "leg2: run $i must upload exactly 1, got $(docs_uploaded)"
 done
 reset_log
 env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
   DRIVE_PAPERLESS_STATE="$state2" CURL_LOG="$log" CURL_COUNTER="$counter" \
-  bash "$scratch/batch1.sh" >"$scratch/batch1-5.out" 2>&1 \
-  || fail "leg2: run 5 exited non-zero"
+  bash "$scratch/batch1.sh" >"$scratch/batch1-5.out" 2>&1 ||
+  fail "leg2: run 5 exited non-zero"
 [ "$(docs_uploaded)" -eq 0 ] || fail "leg2: run 5 must upload 0 (queue drained)"
 [ "$(wc -l <"$state2/journal.tsv")" -eq 4 ] || fail "leg2: journal must hold 4 after drain"
 
@@ -179,8 +179,8 @@ mkdir -p "$state3"
 reset_log
 env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
   DRIVE_PAPERLESS_STATE="$state3" CURL_LOG="$log" CURL_COUNTER="$counter" \
-  bash "$scratch/cap1.sh" >"$scratch/cap1.out" 2>&1 \
-  || fail "leg3: run exited non-zero: $(cat "$scratch/cap1.out")"
+  bash "$scratch/cap1.sh" >"$scratch/cap1.out" 2>&1 ||
+  fail "leg3: run exited non-zero: $(cat "$scratch/cap1.out")"
 grep -q 'toolarge' "$log" && fail "leg3: oversized file must be skipped"
 
 echo "== leg 4: upload failure =="
@@ -189,8 +189,8 @@ mkdir -p "$state4"
 reset_log
 env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
   DRIVE_PAPERLESS_STATE="$state4" CURL_LOG="$log" CURL_COUNTER="$counter" \
-  CURL_FAIL_DOCUMENT=1 bash "$scratch/main.sh" >"$scratch/fail.out" 2>&1 \
-  && fail "leg4: run must exit non-zero when uploads fail"
+  CURL_FAIL_DOCUMENT=1 bash "$scratch/main.sh" >"$scratch/fail.out" 2>&1 &&
+  fail "leg4: run must exit non-zero when uploads fail"
 [ -f "$state4/last_success" ] && fail "leg4: last_success must NOT be touched on failures"
 [ -s "$state4/failed.log" ] || fail "leg4: failed.log must record failures"
 [ "$(wc -l <"$state4/journal.tsv" 2>/dev/null || echo 0)" -eq 0 ] || fail "leg4: journal must stay empty on failures"
@@ -227,8 +227,8 @@ type = drive
 team_drive = 0AAFake
 token = {"access_token":"x"}
 EOF
-RCLONE_CONFIG_PATH="$gsok" "$GS_CONFIG_CHECK" >"$scratch/gs2.out" 2>&1 \
-  || fail "leg6: valid 3-remote config must pass: $(cat "$scratch/gs2.out")"
+RCLONE_CONFIG_PATH="$gsok" "$GS_CONFIG_CHECK" >"$scratch/gs2.out" 2>&1 ||
+  fail "leg6: valid 3-remote config must pass: $(cat "$scratch/gs2.out")"
 
 gsmiss="$scratch/rclone-missing.conf"
 cat >"$gsmiss" <<'EOF'

@@ -11,11 +11,17 @@
 #   scripts/plan-marker.sh docs/planning/<file>.md done  [instance-note]
 set -euo pipefail
 
-[ $# -ge 2 ] || { echo "usage: $0 <plan-file> start|done [instance-note]" >&2; exit 2; }
+[ $# -ge 2 ] || {
+  echo "usage: $0 <plan-file> start|done [instance-note]" >&2
+  exit 2
+}
 plan=$1
 mode=$2
 note=${3:-instance-?}
-[ -f "$plan" ] || { echo "plan file not found: $plan" >&2; exit 1; }
+[ -f "$plan" ] || {
+  echo "plan file not found: $plan" >&2
+  exit 1
+}
 
 ts=$(date +"%Y-%m-%d %H:%M %Z")
 short=$(git rev-parse --short HEAD 2>/dev/null || echo "no-git")

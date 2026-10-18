@@ -317,3 +317,7 @@ VISION path exceeds 10 MINUTES per 32x32 image (mmproj processing as
 configured; n_slots=4 CPU split suspected) — do NOT wire it into any vision
 pipeline without a slot/parallelism retune; the captioner is the vision
 workhorse. Both sockets survived sustained load without wedge (24 min soak).
+
+## Incoming: Google Drive bulk import (2026-10-19, dormant)
+
+The `services.drive-paperless` module (runbook: [google-sync.md → Drive → Paperless ingest](./google-sync.md)) will feed Drive-sourced documents into this instance hourly once the google-sync OAuth go-live completes: PDFs + office/text/email/e-book formats with correspondent = account (Google Drive (private) / Google Workspace), tags = `google-drive` + per-account, title = filename stem, created = Drive modified time. Byte-identical duplicates are rejected server-side (sha256). Expect a LONG consumption tail after the first big batch: OCR + AI classification process serially in the task queue — watch the paperless_tasks collector (failed tasks alert fires if the load breaks something). Raster images are excluded by default (photos belong in Immich).

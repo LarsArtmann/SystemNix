@@ -236,9 +236,9 @@ Legend: ☐ todo · ☑ done this session · ⛔ blocked (owner/IO).
 
 | # | Step | min | Status |
 | --- | --- | --- | --- |
-| E13.1 | Watch for upstream baking the got-hash → drop the shim | 8 | ☐ |
-| E13.2 | Record the daemon-commit etiquette note for PapDashboard's already-pushed heuristic messages (history is public now; a follow-up squash is NOT safe — note the rule instead) | 8 | ☐ |
-| E13.3 | `docs/agents/integration-registry.md`: icon contract in the "Adding a Service" checklist | 6 | ☐ |
+| E13.1 | Watch for upstream baking the got-hash → drop the shim | 8 | ☑ (2026-10-19 verify: upstream `vendorHash.nix` = `ZNTUWEuj…` baked at `d96ee6e`, SystemNix shim DROPPED 2026-10-17 — papdashboard.nix comment; lock now at `420db15` = upstream HEAD) |
+| E13.2 | Record the daemon-commit etiquette note for PapDashboard's already-pushed heuristic messages (history is public now; a follow-up squash is NOT safe — note the rule instead) | 8 | ☑ (2026-10-19: "Daemon-commit history etiquette" block added to PapDashboard AGENTS.md ## CI) |
+| E13.3 | `docs/agents/integration-registry.md`: icon contract in the "Adding a Service" checklist | 6 | ☑ (landed with the tile-logos wave — step 6 "Tile icon (2026-10-17)" sentence: pack file name or http(s) URL, eval+build gates, monogram fallback) |
 | E13.4 | Verify the plan's todo harvest is complete (pipeline/services/upstream rows exist) | 5 | ☑ |
 
 ---

@@ -45,7 +45,10 @@ LOG="${CASES_LOG:-$HOME/.cache/negative-test-lints/cases.log}"
 mkdir -p "$(dirname "$LOG")"
 : >"$LOG"
 
-say() { printf '%s\n' "$*"; printf '%s\n' "$*" >>"$LOG"; }
+say() {
+  printf '%s\n' "$*"
+  printf '%s\n' "$*" >>"$LOG"
+}
 
 # make_copy <name> — git-tracked set with working-tree contents, no .git.
 make_copy() {

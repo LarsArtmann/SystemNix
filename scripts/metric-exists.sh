@@ -13,7 +13,10 @@
 # Exit: 0 = series exist (rows printed), 1 = zero series, 2 = usage/CH error.
 set -euo pipefail
 
-[ $# -eq 1 ] || { echo "usage: $0 <metric-name-or-LIKE-pattern>" >&2; exit 2; }
+[ $# -eq 1 ] || {
+  echo "usage: $0 <metric-name-or-LIKE-pattern>" >&2
+  exit 2
+}
 pattern=$1
 case "$pattern" in
 *%*) where_clause="metric_name LIKE '$pattern'" ;;
@@ -24,7 +27,10 @@ rows=$(clickhouse-client --query "SELECT metric_name, type, temporality, count()
   FROM signoz_metrics.distributed_time_series_v4
   WHERE $where_clause
   GROUP BY metric_name, type, temporality
-  ORDER BY metric_name" 2>&1) || { echo "CH query failed: $rows" >&2; exit 2; }
+  ORDER BY metric_name" 2>&1) || {
+  echo "CH query failed: $rows" >&2
+  exit 2
+}
 
 if [ -z "$rows" ]; then
   echo "ZERO-SERIES: $pattern (phantom — no dashboard/alert may query it)"

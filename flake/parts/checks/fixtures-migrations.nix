@@ -169,7 +169,9 @@
               }
               case "${dbHealth.serviceConfig.IOSchedulingClass or ""}" in
                 idle) ;;
-                *) echo "FAIL: db-health expected ioTier.maintenance (idle), got: ${dbHealth.serviceConfig.IOSchedulingClass or ""}" >&2; exit 1 ;;
+                *) echo "FAIL: db-health expected ioTier.maintenance (idle), got: ${
+                  dbHealth.serviceConfig.IOSchedulingClass or ""
+                }" >&2; exit 1 ;;
               esac
               bash ${root}/scripts/test-hermes-migrate-state.sh "${lib.removePrefix "+" migrateEntry}"
               bash ${root}/scripts/test-hermes-db-health.sh "${dbHealth.serviceConfig.ExecStart}"

@@ -72,11 +72,10 @@
                 }
               ];
             };
-            gsConfigCheck = lib.findFirst (
-              e: lib.hasInfix "google-sync-config-check" e
-            ) (throw "google-sync ExecStartPre carries no config-check") (
-              gsEval.config.systemd.services.google-sync.serviceConfig.ExecStartPre
-            );
+            gsConfigCheck =
+              lib.findFirst (e: lib.hasInfix "google-sync-config-check" e)
+                (throw "google-sync ExecStartPre carries no config-check")
+                (gsEval.config.systemd.services.google-sync.serviceConfig.ExecStartPre);
 
             evalPins =
               let
@@ -86,9 +85,7 @@
               in
               ''
                 echo "${
-                  lib.concatMapStringsSep " " (
-                    e: if lib.hasInfix "drive-paperless" e then e else ""
-                  ) svc.after
+                  lib.concatMapStringsSep " " (e: if lib.hasInfix "drive-paperless" e then e else "") svc.after
                 }" | grep -q "drive-paperless-token.service" || {
                   echo "FAIL: ingest unit not ordered after the token mint" >&2; exit 1; }
                 echo "${toString svc.requires}" | grep -q "drive-paperless-token" || {

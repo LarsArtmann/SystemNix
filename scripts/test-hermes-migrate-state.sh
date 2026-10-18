@@ -51,7 +51,7 @@ chmod +x "$scratch/sqlite3-stub"
 # has them baked) — they keep the script runnable in both modes.
 render() {
   sed -e "s|^NEW=.*|NEW=\"$STATE\"|" \
-    -e "s|\${cfg.user}|hermes|g" -e "s|\${cfg.group}|hermes|g" \
+    -e 's|${cfg.user}|hermes|g' -e 's|${cfg.group}|hermes|g' \
     -e "s|sqlite3 \"|$scratch/sqlite3-stub \"|g" "$MIGRATE_BIN"
 }
 RENDERED="$scratch/migrate.sh"
@@ -145,7 +145,7 @@ mkdir -p "$OLDSTATE"
 echo payload >"$OLDSTATE/legacy.txt"
 head -c 4096 /dev/zero >"$OLDSTATE/state.db"
 sed -e "s|for OLD in .*; do|for OLD in \"$OLDSTATE\"; do|" \
-  -e "s|\${cfg.user}|hermes|g" -e "s|\${cfg.group}|hermes|g" \
+  -e 's|${cfg.user}|hermes|g' -e 's|${cfg.group}|hermes|g' \
   "$RENDERED" >"$scratch/migrate-old.sh"
 rm -f "$STATE"/state.db*
 bash "$scratch/migrate-old.sh" >"$scratch/out8" 2>&1

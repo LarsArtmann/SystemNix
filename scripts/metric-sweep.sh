@@ -152,11 +152,17 @@ main() {
   live_file=""
   trap 'rm -f "$names_file" ${live_file:++"$live_file"}' EXIT
 
-  { extract_dashboard_queries; extract_alert_queries; } | extract_names | sort -u >"$names_file"
+  {
+    extract_dashboard_queries
+    extract_alert_queries
+  } | extract_names | sort -u >"$names_file"
 
   if [ -n "${SWEEP_INJECT:-}" ]; then
     case "$SWEEP_INJECT" in
-    *[!a-zA-Z0-9_.:]*) echo "SWEEP_INJECT charset violation (a-zA-Z0-9_.: only): $SWEEP_INJECT" >&2; exit 2 ;;
+    *[!a-zA-Z0-9_.:]*)
+      echo "SWEEP_INJECT charset violation (a-zA-Z0-9_.: only): $SWEEP_INJECT" >&2
+      exit 2
+      ;;
     esac
     printf '%s\n' "$SWEEP_INJECT" >>"$names_file"
     sort -u -o "$names_file" "$names_file"
