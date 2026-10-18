@@ -571,8 +571,18 @@
           systemd.services.bank-sync-qonto-import = {
             description = "Bank-Sync Qonto historical CSV import (idempotent, convergent)";
             wantedBy = [ "multi-user.target" ];
-            after = [ "bank-sync-storage-dir.service" ];
-            wants = [ "bank-sync-storage-dir.service" ];
+            # After the daemon: a switch that restarts bank-sync.service has
+            # its own journal catch-up — the import waits so the two
+            # projection hosts never replay the same uncheckpointed events
+            # in the same activation window.
+            after = [
+              "bank-sync-storage-dir.service"
+              "bank-sync.service"
+            ];
+            wants = [
+              "bank-sync-storage-dir.service"
+              "bank-sync.service"
+            ];
             unitConfig = {
               RequiresMountsFor = [ cfg.dataDir ];
               ConditionPathExists = [
