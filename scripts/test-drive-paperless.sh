@@ -77,7 +77,7 @@ STUB
 chmod +x "$stub/bin/curl"
 
 inv_count() { grep -c '^INV BEGIN' "$log" 2>/dev/null || echo 0; }
-docs_uploaded() { grep -B8 '^INV END' "$log" 2>/dev/null | grep -c 'post_document' || echo 0; }
+docs_uploaded() { grep -c 'ARG \[http://127.0.0.1:1/api/documents/post_document/\]' "$log" 2>/dev/null || echo 0; }
 reset_log() { : >"$log"; }
 
 # prep <script> <out>: PATH-stub + source-path rewrite onto scratch
@@ -131,7 +131,7 @@ grep -q 'ARG \[title=b\]' "$log" || fail "leg1: title=b (stem) missing"
 grep -Eq 'ARG \[created=[0-9]{4}-[0-9]{2}-[0-9]{2}\]' "$log" || fail "leg1: created date field missing"
 grep -Eq 'ARG \[correspondent=[0-9]+\]' "$log" || fail "leg1: correspondent field missing"
 # two tags per upload (global + source)
-tag_args=$(grep -c 'ARG \[tags=[0-9]+\]' "$log" || true)
+tag_args=$(grep -Ec 'ARG \[tags=[0-9]+\]' "$log" || true)
 [ "$tag_args" -ge 6 ] || fail "leg1: expected >=6 tags args (3 docs x 2), got $tag_args"
 # skips: image, video, zip, newline-name
 grep -q 'photo.jpg' "$log" && fail "leg1: photo.jpg must be skipped (images off)"
@@ -200,7 +200,7 @@ echo "$out" | grep -q 'uploaded=1' || fail "leg5: expected uploaded=1 for revise
 
 echo "== leg 6: google-sync config-check =="
 gsbad="$scratch/rclone-placeholder.conf"
-cat >"$gsbad" <<EOF
+cat >"$gsbad" <<'EOF'
 [gdrive]
 token = REPLACE_WITH_TOKEN_JSON
 EOF
@@ -210,7 +210,7 @@ fi
 grep -q 'OAuth placeholders' "$scratch/gs1.out" || fail "leg6: failure must point at the go-live checklist"
 
 gsok="$scratch/rclone-ok.conf"
-cat >"$gsok" <<EOF
+cat >"$gsok" <<'EOF'
 [gdrive]
 token = {"access_token":"x"}
 [gdrive-shared]
@@ -224,7 +224,7 @@ RCLONE_CONFIG_PATH="$gsok" "$GS_CONFIG_CHECK" >"$scratch/gs2.out" 2>&1 \
   || fail "leg6: valid 3-remote config must pass: $(cat "$scratch/gs2.out")"
 
 gsmiss="$scratch/rclone-missing.conf"
-cat >"$gsmiss" <<EOF
+cat >"$gsmiss" <<'EOF'
 [gdrive]
 token = {"access_token":"x"}
 [gdrive-shared]
