@@ -78,6 +78,12 @@
           ${pkgs.gnugrep}/bin/grep -qE '^BANK_SYNC_SECURITY_ENCRYPTION_KEY=..' "$secret_path"
         '';
       };
+      # Frozen Qonto CSV statement exports (pre-Wise era, 2022-12 →
+      # 2023-05) in the bank-sync repo checkout on this host. Referenced
+      # by the qonto import + archival oneshots below; ConditionPathExists
+      # turns an absent checkout into a silent skip, never a boot failure.
+      qontoCsvTech = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/technologies_gmbh.csv";
+      qontoCsvHolding = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/holding_gmbh.csv";
     in
     {
       options.services.bank-sync.paperlessArchive = {
@@ -525,6 +531,226 @@
                   Persistent = true;
                   RandomizedDelaySec = "30m";
                 };
+              };
+
+          # ── Qonto historical statements: import + Paperless archival ──
+          #
+          # The pre-Wise era lives as Qonto CSV exports in the bank-sync
+          # repo checkout (data/historical/qonto/transactions/, frozen
+          # 2022-12 → 2023-05 exports). Two convergent oneshots make the
+          # live deployment serve them:
+          #
+          #   1. bank-sync-qonto-import: `bank-sync import` (idempotent —
+          #      deterministic FNV-1a transaction IDs, stable derived
+          #      profile/balance IDs; re-runs skip already-known rows) into
+          #      the daemon's real data.db. EXPLICIT BANK_SYNC_DATABASE_PATH
+          #      — the 2026-10-17 side-DB trap (a bare CLI run minted a
+          #      bank-sync.db twin next to data.db). Safe while the daemon
+          #      runs: SQLite WAL serializes writers, the import process's
+          #      own projection host applies the read tables the daemon
+          #      queries, and qonto streams are never touched by the Wise
+          #      sync (no aggregate conflicts). The trailing junk row in
+          #      the technologies export (line 106, date-only, no amount)
+          #      is skipped with errors=1 in the log — the source file is
+          #      a frozen export and stays untouched.
+          #   2. bank-sync-qonto-paperless: uploads BOTH statement CSVs to
+          #      Paperless-ngx with canonical metadata (correspondent
+          #      Qonto, type Bank Statement, tags bank-sync+qonto, created
+          #      = period end). Marker-gated in the dataDir; Paperless's
+          #      checksum dedup absorbs any re-upload after a partial
+          #      failure. Reuses the archival pair's runtime-minted token.
+          #
+          # Qonto ATTACHMENT receipts (paperless --provider qonto
+          # --receipts) need Qonto Business API credentials that do not
+          # exist yet — see docs/services/bank-sync.md §Qonto.
+          #
+          # The CSV paths reference the owner's repo checkout on this
+          # host (see the let bindings above): ConditionPathExists turns a
+          # moved/absent checkout into a silent skip (fresh hosts,
+          # relocated repos), never a boot failure.
+          systemd.services.bank-sync-qonto-import = {
+            description = "Bank-Sync Qonto historical CSV import (idempotent, convergent)";
+            wantedBy = [ "multi-user.target" ];
+            after = [ "bank-sync-storage-dir.service" ];
+            wants = [ "bank-sync-storage-dir.service" ];
+            unitConfig = {
+              RequiresMountsFor = [ cfg.dataDir ];
+              ConditionPathExists = [
+                qontoCsvTech
+                qontoCsvHolding
+              ];
+            };
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "bank-sync";
+                Group = "bank-sync";
+                # One ExecStart per org: profile names are permanent (they
+                # derive stable IDs), so they are the legal entity names.
+                ExecStart = [
+                  "${lib.getExe cfg.package} import --file ${qontoCsvTech} --profile \"Artmann Technologies GmbH\" --account \"Hauptkonto\" --currency EUR"
+                  "${lib.getExe cfg.package} import --file ${qontoCsvHolding} --profile \"Artmann Holding GmbH\" --account \"Hauptkonto\" --currency EUR"
+                ];
+                Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
+                # Encryption key (events are encrypted at rest; the Wise
+                # key rides along harmlessly and keeps the unit honest if
+                # the import ever grows an API leg).
+                EnvironmentFile = [ envTemplate.path ];
+                TimeoutStartSec = "5min";
+              }
+              (harden {
+                # The CSVs live under /home/lars — readable, never written.
+                ProtectHome = false;
+                # Journal + read tables land next to the DB.
+                ReadWritePaths = [ cfg.dataDir ];
+              })
+              (serviceOneshotDefaults { })
+              # One-time historical load on the HDD pool: never compete
+              # with the daemon or the desktop for I/O.
+              ioTier.maintenance
+            ];
+          };
+
+          systemd.services.bank-sync-qonto-paperless =
+            lib.mkIf (config.services.bank-sync.paperlessArchive.enable && paperlessEnabled)
+              {
+                description = "Bank-Sync Qonto statement CSVs -> Paperless-ngx archival (one-time, marker-gated)";
+                wantedBy = [ "multi-user.target" ];
+                after = [
+                  "network-online.target"
+                  "bank-sync-storage-dir.service"
+                  "bank-sync-paperless-token.service"
+                ];
+                wants = [
+                  "network-online.target"
+                  "bank-sync-storage-dir.service"
+                ];
+                requires = [ "bank-sync-paperless-token.service" ];
+                unitConfig = {
+                  RequiresMountsFor = [ cfg.dataDir ];
+                  ConditionPathExists = [
+                    qontoCsvTech
+                    qontoCsvHolding
+                  ];
+                };
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                path = [
+                  pkgs.curl
+                  pkgs.jq
+                  pkgs.coreutils
+                ];
+                # Metadata is canonical at upload: correspondent/type/tags
+                # are ensured find-or-create (the bank-sync SDK's own
+                # ensure calls find the same objects later — same names);
+                # created dates are the statement period ends (verified
+                # against the frozen CSVs: tech 2023-01-04→2023-03-20,
+                # holding 2022-12-07→2023-05-18).
+                script = ''
+                  set -euo pipefail
+
+                  marker="${cfg.dataDir}/qonto-paperless-import.done"
+                  if [ -e "$marker" ]; then
+                    echo "bank-sync-qonto-paperless: marker present - statements already archived, no-op"
+                    exit 0
+                  fi
+
+                  base="$BANK_SYNC_PAPERLESS_URL"
+                  token="$BANK_SYNC_PAPERLESS_TOKEN"
+
+                  api() {
+                    curl -fsS --retry 3 --retry-delay 2 -H "Authorization: Token $token" "$@"
+                  }
+
+                  # ensure_named <endpoint> <name> -> id (find-or-create by
+                  # exact case-insensitive name). DRF name__iexact needs
+                  # URL encoding for names with spaces (-G --data-urlencode).
+                  ensure_named() {
+                    endpoint="$1"
+                    name="$2"
+                    id=$(api -G --data-urlencode "name__iexact=$name" "$base/api/$endpoint/" | jq -r '.results[0].id // empty')
+                    if [ -z "$id" ]; then
+                      id=$(api -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$name\"}" "$base/api/$endpoint/" | jq -r '.id')
+                      echo "bank-sync-qonto-paperless: created $endpoint '$name' (id $id)"
+                    fi
+                    printf '%s' "$id"
+                  }
+
+                  correspondent_id=$(ensure_named correspondents Qonto)
+                  doctype_id=$(ensure_named document_types "Bank Statement")
+                  tag_banksync=$(ensure_named tags bank-sync)
+                  tag_qonto=$(ensure_named tags qonto)
+                  echo "bank-sync-qonto-paperless: correspondent=$correspondent_id doctype=$doctype_id tags=$tag_banksync,$tag_qonto"
+
+                  # upload <file> <title> <created YYYY-MM-DD>
+                  upload() {
+                    echo "bank-sync-qonto-paperless: uploading $1 (created $3)"
+                    api -X POST \
+                      -F "document=@$1" \
+                      -F "title=$2" \
+                      -F "created=$3" \
+                      -F "correspondent=$correspondent_id" \
+                      -F "document_type=$doctype_id" \
+                      -F "tags=$tag_banksync" \
+                      -F "tags=$tag_qonto" \
+                      "$base/api/documents/post_document/"
+                  }
+
+                  upload "${qontoCsvTech}" \
+                    "Qonto Statement - Artmann Technologies GmbH (Hauptkonto EUR, 2023-01-04 to 2023-03-20)" \
+                    "2023-03-20"
+                  upload "${qontoCsvHolding}" \
+                    "Qonto Statement - Artmann Holding GmbH (Hauptkonto EUR, 2022-12-07 to 2023-05-18)" \
+                    "2023-05-18"
+
+                  # Consumption is asynchronous: poll until both documents
+                  # are queryable by title + correspondent (paperless's own
+                  # dedup/delete would leave a re-run's duplicates out of
+                  # the count — the marker makes re-runs impossible anyway).
+                  count=0
+                  for _ in $(seq 1 30); do
+                    count=$(api -G \
+                      --data-urlencode "title__icontains=Qonto Statement" \
+                      --data-urlencode "correspondent=$correspondent_id" \
+                      "$base/api/documents/" | jq -r '.count')
+                    if [ "$count" -ge 2 ]; then
+                      break
+                    fi
+                    sleep 2
+                  done
+
+                  if [ "$count" -lt 2 ]; then
+                    echo "bank-sync-qonto-paperless: only $count/2 Qonto statements visible after the poll window - not writing the marker" >&2
+                    exit 1
+                  fi
+
+                  echo "bank-sync-qonto-paperless: verified $count Qonto statement documents in the archive"
+                  touch "$marker"
+                  echo "bank-sync-qonto-paperless: marker written ($marker)"
+                '';
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "bank-sync";
+                    Group = "bank-sync";
+                    Environment = [ "BANK_SYNC_PAPERLESS_URL=http://127.0.0.1:${toString ports.paperless}" ];
+                    # Runtime-minted DRF token from the archival pair.
+                    EnvironmentFile = [ "/run/bank-sync-paperless/env" ];
+                    TimeoutStartSec = "5min";
+                  }
+                  (harden {
+                    # Statement CSVs under /home/lars: read-only access.
+                    ProtectHome = false;
+                    # The completion marker lands in the dataDir.
+                    ReadWritePaths = [ cfg.dataDir ];
+                  })
+                  (serviceOneshotDefaults { })
+                  ioTier.service
+                ];
               };
         })
         # Service-integration registry entry: fans out to the Caddy vHost
