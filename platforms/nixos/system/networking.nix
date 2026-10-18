@@ -172,9 +172,12 @@
   services.printing.enable = true;
   services.printing.drivers = [ pkgs.gutenprint ];
 
-  # Enable SANE for scanning (Canon PIXMA MG2500 scanner)
+  # Enable SANE for scanning (Canon PIXMA MG2500 scanner, Brother ADS-1800W)
   hardware.sane.enable = true;
   hardware.sane.extraBackends = [ pkgs.sane-backends ];
+  # Brother ADS-1800W (USB): not in sane-backends, all four USB interfaces are
+  # vendor-proprietary (no IPP-USB, so no eSCL route) — requires brscan5.
+  hardware.sane.brscan5.enable = true;
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 
