@@ -805,14 +805,16 @@ if [ -s "$METRICS_FILE" ]; then
   # BOTH sets confirmed live in their textfiles post-switch on 2026-09-13 —
   # retired same day. The list is empty; re-add ONLY when a deploy introduces
   # metrics the running generation's collector cannot yet emit.
-  # 2026-10-17: signoz_logs_pipeline_stale — added to the EXISTING
-  # signoz-coverage collector while its gatus check was ALREADY deployed
-  # (the running gatus.yaml references it), so the gatus-config-diff
+  # 2026-10-17: signoz_logs_pipeline_stale — loaned while it was added to
+  # the EXISTING signoz-coverage collector and its gatus check was ALREADY
+  # deployed (the running gatus.yaml references it), so the gatus-config-diff
   # auto-loan cannot see it (no config delta) and the running collector
-  # cannot emit it yet — version-skew class. Retire once the textfile
-  # shows the metric live.
+  # cannot emit it yet — version-skew class.
+  # RETIRED 2026-10-18: §10 reports the metric present in /metrics (the
+  # loan's own self-cleaning branch flagged it as stale), so keeping it
+  # would only mask a phantom regression under that name.
   # shellcheck disable=SC2034
-  KNOWN_NEW_METRICS="signoz_logs_pipeline_stale"
+  KNOWN_NEW_METRICS=""
   # Auto-derivation (2026-09-13, replaces the error-prone manual loan):
   # metrics referenced by the TO-BE-DEPLOYED gatus config but ABSENT from
   # the RUNNING generation's config cannot be visible to the running system
