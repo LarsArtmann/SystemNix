@@ -40,6 +40,7 @@
 4. The daemon-race discipline (assert lineage count, atomic chain, verify contents) worked exactly as designed under live-daemon conditions — keep it.
 
 ## §f — Next items
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 1-6: exactly §c's queue rows (all previously harvested with sources; nothing new to harvest from this segment — the §b2 observation is deliberately not a row, and the corrections are already committed).
 7. (Optional, owner-gated) reword the three deeper heuristic commits at a quiet window (see §g).

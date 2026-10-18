@@ -43,6 +43,7 @@
 4. **Staggered fallback builds are cheap insurance:** a second detached `nix build` blocked on a drv lock costs one eval and converts "killer timer fires mid-build = restart from zero" into "automatic takeover at higher -j". Worth institutionalizing for any >1h build racing a known-risk window.
 
 ## §f) Next (session-derived, ranked — up to 50, actual: 16)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 1. Collect the `nix flake check --no-build` verdict (background job; re-run standalone if the daemon raced it).
 2. Monitor via `/tmp/toplevel-watch.log` (5-min samples): parallel attempt (2713630) + attempt #4 (3058115) + killer windows ~15:27 / ~19:29.

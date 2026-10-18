@@ -34,5 +34,6 @@ Session 2 of the adoption-audit arc (`docs/planning/2026-10-15_19-35_BROWSER-HIS
 - Harness cleanup verified: zero stray procs/ports (after the kill-builtin lesson)
 
 ## e) Self-harvest (§f contract)
+> **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 Every follow-up already lives in a row — nothing new to harvest: the deploy bundle + post-deploy verifies = services.md lock-bump row (updated with the bundle + render-rule series check); owner ceremony = rows 77/79/87 (blocked:user) + the P13 runbook section; stop-window = row 500 (blocked:user) with the runbook recipe; remaining runbook-polish residue = trimmed TODO_LIST row (c)(e). Deliberately NOT harvested: nothing.
