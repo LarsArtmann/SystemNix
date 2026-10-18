@@ -1209,6 +1209,7 @@
         ./flake/parts/checks/fixtures-forgejo.nix
         ./flake/parts/checks/fixtures-storage.nix
         ./flake/parts/checks/fixtures-migrations.nix
+        ./flake/parts/checks/fixtures-drive-ingest.nix
         ./flake/parts/checks/selftests.nix
         ./flake/parts/checks/vm-tests.nix
       ]

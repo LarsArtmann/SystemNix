@@ -486,14 +486,15 @@ _: {
 
         # Freshness sentinel (google-sync pattern): a stale last_success
         # trips the global backup_all_healthy Gatus check within 25h —
-        # hourly runs + catch-up make 25h generous. Guarded for eval
-        # scopes that import this module without backup-coordination.
-        services.backup-coordination = lib.optionalAttrs (options ? services.backup-coordination) {
-          backups.drive-paperless = {
-            directory = stateDir;
-            filePattern = "last_success";
-            maxAgeHours = 25;
-          };
+        # hourly runs + catch-up make 25h generous. UNGUARDED like
+        # google-sync's row: eval scopes (VM tests, fixture checks) that
+        # enable this module MUST co-import backup-coordination.nix — an
+        # options?-guard does not survive the mkIf push-down (documented
+        # integration.nix trap, 2026-09-15).
+        services.backup-coordination.backups.drive-paperless = {
+          directory = stateDir;
+          filePattern = "last_success";
+          maxAgeHours = 25;
         };
       };
     };
