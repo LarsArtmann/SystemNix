@@ -49,12 +49,14 @@ EOF
 chmod +x "$scratch/systemctl-stub"
 
 # Render a runnable copy: scratch state dir, stubbed sqlite3, stubbed
-# (baked-store-path) systemctl, seamed PSI file.
+# systemctl (both forms: the baked store path of a real extraction AND the
+# literal ${pkgs.systemd} of a raw Nix-text extraction), seamed PSI file.
 PSI_FILE="$scratch/psi"
 render() {
   sed -E -e "s|^NEW=.*|NEW=\"$STATE\"|" \
     -e "s|sqlite3 \"|$scratch/sqlite3-stub \"|g" \
     -e "s|/nix/store/[a-z0-9]+-systemd-[^\"]*/bin/systemctl|$scratch/systemctl-stub|g" \
+    -e "s|\$\{pkgs\.systemd\}/bin/systemctl|$scratch/systemctl-stub|g" \
     "$HEALTH_BIN"
 }
 RENDERED="$scratch/db-health.sh"
