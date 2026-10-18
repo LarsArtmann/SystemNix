@@ -165,7 +165,7 @@ _: {
                 esac
                 size="$(stat -c %s -- "$f")"
                 line="$(printf '%s\t%s\t%s' ${lib.escapeShellArg src.tag} "$rel" "$size")"
-                if grep -qxF "$line" "${journal}" 2>/dev/null; then
+                if grep -qxF "$line" "$journal" 2>/dev/null; then
                   continue
                 fi
                 title="$(basename -- "$f")"
@@ -182,7 +182,7 @@ _: {
                 echo "drive-paperless: uploading [${src.tag}] $rel"
                 if curl -fsS -H "Authorization: Token $TOKEN" \
                   -X POST "$BASE/api/documents/post_document/" "''${args_post[@]}"; then
-                  printf '%s\n' "$line" >>"${journal}"
+                  printf '%s\n' "$line" >>"$journal"
                   uploaded=$((uploaded + 1))
                 else
                   echo "drive-paperless: upload FAILED for $rel (not journaled; retried next run)" >&2

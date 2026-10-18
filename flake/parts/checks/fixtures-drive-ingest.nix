@@ -103,12 +103,12 @@
                   echo "FAIL: dedicated system user expected" >&2; exit 1; }
                 [ "${timer.timerConfig.OnCalendar}" = "hourly" ] || {
                   echo "FAIL: timer expected hourly" >&2; exit 1; }
-                [ "${toString timer.timerConfig.Persistent}" = "true" ] || {
+                [ "${lib.boolToString timer.timerConfig.Persistent}" = "true" ] || {
                   echo "FAIL: timer must catch up (Persistent)" >&2; exit 1; }
-                echo "${lib.concatStringsSep " " token.serviceConfig.ExecStartPost}" \
+                echo "${toString token.serviceConfig.ExecStartPost}" \
                   | grep -q "^+.*drive-paperless-token-chown" || {
                   echo "FAIL: mint handover must run as root (+ prefix)" >&2; exit 1; }
-                [ "${token.serviceConfig.RuntimeDirectoryPreserve}" = "true" ] || {
+                [ "${lib.boolToString token.serviceConfig.RuntimeDirectoryPreserve}" = "true" ] || {
                   echo "FAIL: mint RuntimeDirectory must survive until the ingest reads it" >&2; exit 1; }
               '';
           in
