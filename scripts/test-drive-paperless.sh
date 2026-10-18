@@ -45,8 +45,10 @@ counter="$scratch/id-counter"
 mkdir -p "$stub/bin" "$mirror/sub" "$state"
 
 # --- stub curl: logs one INV line per call, serves canned responses -------
+# Shebang is rewritten to the sandbox bash (/usr/bin/env does not exist in
+# the nix build sandbox — proven live 2026-10-19).
 cat >"$stub/bin/curl" <<'STUB'
-#!/usr/bin/env bash
+#!/STUB_SHEBANG_PLACEHOLDER
 log="${CURL_LOG:?stub curl needs CURL_LOG}"
 {
   printf 'INV BEGIN\n'
@@ -75,9 +77,10 @@ fi
 printf 'ok\n'
 STUB
 chmod +x "$stub/bin/curl"
+sed -i "1s|.*|#!$(command -v bash)|" "$stub/bin/curl"
 
-inv_count() { grep -c '^INV BEGIN' "$log" 2>/dev/null || echo 0; }
-docs_uploaded() { grep -c 'ARG \[http://127.0.0.1:1/api/documents/post_document/\]' "$log" 2>/dev/null || echo 0; }
+inv_count() { grep -c '^INV BEGIN' "$log" 2>/dev/null || true; }
+docs_uploaded() { grep -c 'ARG \[http://127.0.0.1:1/api/documents/post_document/\]' "$log" 2>/dev/null || true; }
 reset_log() { : >"$log"; }
 
 # prep <script> <out>: PATH-stub + source-path rewrite onto scratch
@@ -117,11 +120,11 @@ head -c 2097152 /dev/zero >"$mirror/toolarge.pdf" 2>/dev/null || dd if=/dev/zero
 
 echo "== leg 1: happy path =="
 out="$(run_ingest "$scratch/main.sh")" || fail "leg1: run exited non-zero: $out"
-echo "$out" | grep -q 'uploaded=3' || fail "leg1: expected uploaded=3, got: $out"
+echo "$out" | grep -q 'uploaded=4' || fail "leg1: expected uploaded=4 (incl. 2MB toolarge.pdf under the 100MB cap), got: $out"
 echo "$out" | grep -q 'failed=0' || fail "leg1: expected failed=0"
 echo "$out" | grep -q 'missing_source=1' || fail "leg1: expected missing_source=1 (absent gwork source)"
 [ -f "$state/last_success" ] || fail "leg1: last_success not touched"
-[ "$(wc -l <"$state/journal.tsv")" -eq 3 ] || fail "leg1: journal must have 3 lines, has $(wc -l <"$state/journal.tsv")"
+[ "$(wc -l <"$state/journal.tsv")" -eq 4 ] || fail "leg1: journal must have 4 lines, has $(wc -l <"$state/journal.tsv")"
 grep -q $'gdrive\ta.pdf\t' "$state/journal.tsv" || fail "leg1: a.pdf not journaled"
 # uploads in sorted order, correct fields
 grep -q 'ARG \[document=@'"$mirror"'/a.pdf\]' "$log" || fail "leg1: a.pdf not uploaded"
@@ -132,7 +135,7 @@ grep -Eq 'ARG \[created=[0-9]{4}-[0-9]{2}-[0-9]{2}\]' "$log" || fail "leg1: crea
 grep -Eq 'ARG \[correspondent=[0-9]+\]' "$log" || fail "leg1: correspondent field missing"
 # two tags per upload (global + source)
 tag_args=$(grep -Ec 'ARG \[tags=[0-9]+\]' "$log" || true)
-[ "$tag_args" -ge 6 ] || fail "leg1: expected >=6 tags args (3 docs x 2), got $tag_args"
+[ "$tag_args" -ge 8 ] || fail "leg1: expected >=8 tags args (4 docs x 2), got $tag_args"
 # skips: image, video, zip, newline-name
 grep -q 'photo.jpg' "$log" && fail "leg1: photo.jpg must be skipped (images off)"
 grep -q 'video.mp4' "$log" && fail "leg1: video.mp4 must be skipped"
@@ -154,7 +157,7 @@ echo "$out" | grep -q 'uploaded=0' || fail "leg1b: expected uploaded=0, got: $ou
 echo "== leg 2: batch cap =="
 state2="$scratch/state-batch1"
 mkdir -p "$state2"
-for i in 1 2 3; do
+for i in 1 2 3 4; do
   reset_log
   env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
     DRIVE_PAPERLESS_STATE="$state2" CURL_LOG="$log" CURL_COUNTER="$counter" \
@@ -165,10 +168,10 @@ done
 reset_log
 env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
   DRIVE_PAPERLESS_STATE="$state2" CURL_LOG="$log" CURL_COUNTER="$counter" \
-  bash "$scratch/batch1.sh" >"$scratch/batch1-4.out" 2>&1 \
-  || fail "leg2: run 4 exited non-zero"
-[ "$(docs_uploaded)" -eq 0 ] || fail "leg2: run 4 must upload 0 (queue drained)"
-[ "$(wc -l <"$state2/journal.tsv")" -eq 3 ] || fail "leg2: journal must hold 3 after drain"
+  bash "$scratch/batch1.sh" >"$scratch/batch1-5.out" 2>&1 \
+  || fail "leg2: run 5 exited non-zero"
+[ "$(docs_uploaded)" -eq 0 ] || fail "leg2: run 5 must upload 0 (queue drained)"
+[ "$(wc -l <"$state2/journal.tsv")" -eq 4 ] || fail "leg2: journal must hold 4 after drain"
 
 echo "== leg 3: size cap =="
 state3="$scratch/state-cap1"
@@ -202,6 +205,7 @@ echo "== leg 6: google-sync config-check =="
 gsbad="$scratch/rclone-placeholder.conf"
 cat >"$gsbad" <<'EOF'
 [gdrive]
+type = drive
 token = REPLACE_WITH_TOKEN_JSON
 EOF
 if RCLONE_CONFIG_PATH="$gsbad" "$GS_CONFIG_CHECK" >"$scratch/gs1.out" 2>&1; then
@@ -212,11 +216,14 @@ grep -q 'OAuth placeholders' "$scratch/gs1.out" || fail "leg6: failure must poin
 gsok="$scratch/rclone-ok.conf"
 cat >"$gsok" <<'EOF'
 [gdrive]
+type = drive
 token = {"access_token":"x"}
 [gdrive-shared]
+type = drive
 shared_with_me = true
 token = {"access_token":"x"}
 [gwork]
+type = drive
 team_drive = 0AAFake
 token = {"access_token":"x"}
 EOF
@@ -226,8 +233,10 @@ RCLONE_CONFIG_PATH="$gsok" "$GS_CONFIG_CHECK" >"$scratch/gs2.out" 2>&1 \
 gsmiss="$scratch/rclone-missing.conf"
 cat >"$gsmiss" <<'EOF'
 [gdrive]
+type = drive
 token = {"access_token":"x"}
 [gdrive-shared]
+type = drive
 token = {"access_token":"x"}
 EOF
 if RCLONE_CONFIG_PATH="$gsmiss" "$GS_CONFIG_CHECK" >"$scratch/gs3.out" 2>&1; then

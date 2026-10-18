@@ -572,6 +572,21 @@ in
           user = "dmarc@larsartmann.cloud";
         };
       };
+      # Google Drive → HDD pool mirror (rclone) + Drive → Paperless ingest
+      # (the 2026-10-19 Drive-to-paperless migration). DORMANT until the
+      # OAuth go-live checklist completes (docs/services/google-sync.md):
+      # (1) Google Cloud OAuth client with Drive API, publishing status
+      # "In production" (testing-mode tokens die after 7 days), (2)
+      # `rclone authorize "drive"` per account (gdrive, gdrive-shared,
+      # gwork), (3) fill the sops rclone.conf scaffold
+      # (platforms/nixos/secrets/google-sync.yaml), (4) flip
+      # google-sync.enable below + deploy — drive-paperless rides the SAME
+      # flip (its sources default 1:1 from google-sync.mirrors), (5) verify
+      # the ~1.9 TB seed + first ingest run. Fill tokens BEFORE flipping:
+      # the config-check ExecStartPre fails fast with the checklist pointer
+      # while placeholders remain.
+      google-sync.enable = false;
+      drive-paperless.enable = config.services.google-sync.enable;
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
       # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
       # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each

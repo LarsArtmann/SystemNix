@@ -208,6 +208,11 @@ _: {
         ];
         text = ''
           set -euo pipefail
+          # Without this, failures inside $( ) command substitutions do NOT
+          # propagate (bash default) — a dead API would yield empty
+          # correspondent/tag ids and uploads with blank metadata. Proven
+          # by the fixture's broken-stub leg (2026-10-19).
+          shopt -s inherit_errexit
 
           BASE="''${DRIVE_PAPERLESS_URL:?DRIVE_PAPERLESS_URL not set}"
           TOKEN="''${DRIVE_PAPERLESS_TOKEN:?DRIVE_PAPERLESS_TOKEN not set}"
