@@ -53,6 +53,16 @@ script, guarded on "no deploy in flight" + "current-system unchanged since diagn
 profile → gen 927 = the running toplevel, boot entry re-armed. **Attribution: the raw-stc
 activation was the parallel session's deploy; the repair is this session's, per doctrine.**
 
+
+**Repair follow-through (02:4x):** the repair's entry rewrite made the mirror diverge, and
+the deployed `boot-mirror-sync` unit could not converge it — its `ProtectSystem` RO-bind
+made the counter reverse-propagation `mv` fail EROFS on /boot (the exact class another
+instance already fixed in-tree with `harden { ProtectSystem = false; }`, deploy pending;
+the mount was genuinely rw per /proc/mounts — the sandbox was read-only, not the fs).
+Converged by running the pinned sync script directly via sudo (same logic, no namespace):
+50 entries mirrored, diff gate clean, counters carried
+(`nixos-d4bbce86…+2-1.conf` blessed twin preserved). `nix run .#pre-reboot-check` after:
+**16 passed, 0 failed — SAFE TO REBOOT.**
 ## d) Mistakes this session made and fixed (self-review)
 
 1. **`build_case` argument order** — first invocation passed `(group name expect marker
