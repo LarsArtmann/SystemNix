@@ -194,6 +194,12 @@
         })
 
         (lib.mkIf cfg.enable {
+          # The unified CLI on PATH: `nsfw` (classify/benchmark/evaluate/...)
+          # resolves to the SAME package the unit runs, so interactive
+          # subcommands share its ROCm/CPU ONNX Runtime wrapping. bin also
+          # carries the nsfw-server/nsfw-classify/... compat shims.
+          environment.systemPackages = [ cfg.package ];
+
           systemd.services.nsfw-classifier = {
             description = "nsfw-classifier — NSFW image server (browser-extension backend, full ensemble)";
             wantedBy = [ "multi-user.target" ];

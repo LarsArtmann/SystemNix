@@ -11,6 +11,8 @@ Post-re-enable runtime residue (2026-10-18):
 - **Stale textfile collector file** — `monitor365-backup.prom` (Aug 2, `monitor365_backup_age_hours 999`) refreshes once the 03:00 backup first fires; gatus may flag it orange until then.
 - **Server watchdog + agent watchdog** return with the units; post-deploy-check un-SKIPs automatically once units exist.
 
+**Backup quiesce (2026-10-18):** upstream's backup opens the live DuckDB while the unit orders `After+Wants` the server — DuckDB is single-writer, so every fire died "Conflicting lock is held" and no backup was ever produced. The wrapper overrides `monitor365-server-backup` to stop the server (watchdog timer paused first — its is-active check auto-starts an inactive server and would re-grab the lock mid-export), run the export, and restore both via an EXIT trap. ~1min dashboard outage at 03:00 and at boot catch-up. Proper upstream fix (HTTP admin backup endpoint from the running server) queued in docs/todo/upstream.md.
+
 - **Package alias trap** — `pkgs.monitor365` = agent (CLI), NOT server. Server is `monitor365-server` (symlinkJoin with WASM UI).
 - **No JIT SSO provisioning** — Users MUST be pre-provisioned via bootstrap or `create-admin` CLI. SSO login fails if email doesn't match existing user.
 - **DuckDB not SQLite** — Uses `.duckdb` extension. `normalize_db_path` converts `.db` → `.duckdb` as safety net.
