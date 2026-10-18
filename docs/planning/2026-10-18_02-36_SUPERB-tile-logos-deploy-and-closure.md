@@ -1,6 +1,7 @@
 # SUPERB — Tile-Logos Wave: Deploy, Closure, and Fleet Hygiene
 
 **Created:** 2026-10-18 02:36 CEST · **Owner trigger:** "execute the whole plan; then plan what we should REALLY do (Pareto)"
+**EXECUTING (instance 1, 2026-10-18 04:23 CEST, HEAD `f9429d360`):** agent-actionable epics E4–E8, E11, E14–E16 now; E12/E13 behind the IO gate (PSI avg10 49 at start); E1/E2/E3/E9/E10 stay owner-gated. Deploy remains the owner's act (battery 104/6/0 per the 04-02 unblock report).
 **Predecessors:** [execution report](../status/2026-10-18_02-08_tile-logos-go-live-verification-full-followthrough.md) (§g instance 2, §h instance 1) · [closeout audit](../status/2026-10-18_02-32_tile-logos-wave-closeout-and-twin-executor-audit.md) · [go-live plan](2026-10-17_09-27_SUPERB-tile-logos-go-live.md)
 **Scope:** everything pending from the tile-logos wave + the directly-related fleet hygiene it surfaced. The wider backlog domains (services.md 429 rows, pipeline.md 464, monitoring.md 113, upstream.md 154) are explicitly OUT of scope except where they intersect items below.
 
