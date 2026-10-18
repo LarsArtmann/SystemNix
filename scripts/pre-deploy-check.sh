@@ -81,10 +81,12 @@ echo ""
 # FOD-preview gate (real-build verdicts; see scripts/lib/vendor-freshness.sh).
 SECTION10_ONLY=false
 SECTION11_ONLY=false
+SECTION16_ONLY=false
 for arg in "$@"; do
   case "$arg" in
   --section-10-only) SECTION10_ONLY=true ;;
   --section-11-only) SECTION11_ONLY=true ;;
+  --section-16-only) SECTION16_ONLY=true ;;
   *)
     echo "unknown option: $arg" >&2
     exit 64
@@ -92,7 +94,7 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ]; then
+if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION16_ONLY" != true ]; then
   # 1. Flake syntax check
   echo "1. Flake syntax validation"
   # Content-addressed skip (2026-10-17): `nix flake check --no-build` is the
@@ -441,6 +443,84 @@ if [ "$SECTION11_ONLY" = true ]; then
   fi
   echo ""
   echo "✅ §11-only run passed — safe (full gate still runs inside nix run .#deploy)"
+  exit 0
+fi
+
+# §16 body shared by the --section-16-only cheap loop and the full battery
+# (same extraction pattern as vendor_freshness_run_gate).
+pap_section16() {
+  echo ""
+  echo "16. PapDashboard tile icons resolve in the pinned pack (coverage + existence)"
+  PAP_EVAL_ERR=$(mktemp)
+  PAP_ENV=""
+  PAP_ENV=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment 2>"$PAP_EVAL_ERR") || true
+  if [ -n "$PAP_ENV" ]; then
+    PAP_ICONS_DIR_VAL=$(printf '%s' "$PAP_ENV" | jq -r '."PAP_ICONS_DIR" // empty')
+    if [ -z "$PAP_ICONS_DIR_VAL" ]; then
+      fail "papdashboard unit has NO PAP_ICONS_DIR — the icon pack is not wired into the to-be-deployed config (stale module? partial revert?)"
+    elif [ ! -d "$PAP_ICONS_DIR_VAL" ]; then
+      fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory"
+    else
+      PAP_ICON_NAMES=$(
+        {
+          nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.dashboard.groups --apply 'gs: builtins.concatMap (g: map (t: t.icon or null) g.tiles) gs' 2>/dev/null || true
+          nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.extraTiles --apply 'ts: map (t: t.icon or null) ts' 2>/dev/null || true
+        } | jq -r '.[]'
+      )
+      # Coverage arm (2026-10-18): every tile yields exactly one stream entry
+      # (its icon or null) — so the line count IS the tile count, and
+      # pack+URL == tiles is the deploy-time mirror of the runtime icons_ok.
+      pap_tiles_total=$(printf '%s\n' "$PAP_ICON_NAMES" | grep -c '.') || true
+      pap_pack_total=0
+      pap_url_total=0
+      pap_missing=0
+      while IFS= read -r pap_icon; do
+        { [ -z "$pap_icon" ] || [ "$pap_icon" = "null" ]; } && continue
+        case "$pap_icon" in
+        http://* | https://*)
+          pap_url_total=$((pap_url_total + 1))
+          continue
+          ;;
+        esac
+        pap_pack_total=$((pap_pack_total + 1))
+        if [ ! -f "$PAP_ICONS_DIR_VAL/$pap_icon" ]; then
+          fail "tile icon '$pap_icon' not in the pack subset $PAP_ICONS_DIR_VAL (build gate should have caught this — investigate the pin)"
+          pap_missing=$((pap_missing + 1))
+        fi
+      done <<EOF
+$PAP_ICON_NAMES
+EOF
+      pap_with_icon=$((pap_pack_total + pap_url_total))
+      if [ "$pap_tiles_total" -eq 0 ]; then
+        fail "rendered config carries ZERO tiles/icons — the tile-logo capability is dropped from the to-be-deployed config (the 2026-10-17 regression class this gate exists for)"
+      elif [ "$pap_with_icon" -ne "$pap_tiles_total" ]; then
+        fail "tile-icon coverage $pap_with_icon/$pap_tiles_total (pack $pap_pack_total + URL $pap_url_total) — $((pap_tiles_total - pap_with_icon)) tile(s) fall back to monograms; the capability is partially dropped (2026-10-17 class)"
+      elif [ "$pap_pack_total" -eq 0 ] && [ "$pap_url_total" -eq 0 ]; then
+        fail "rendered config carries ZERO tile icons — the tile-logo capability is dropped from the to-be-deployed config (the 2026-10-17 regression class this gate exists for)"
+      elif [ "$pap_missing" -eq 0 ]; then
+        pass "all $pap_tiles_total tiles carry icons ($pap_pack_total pack + $pap_url_total URL); all $pap_pack_total pack icons exist in $PAP_ICONS_DIR_VAL"
+      fi
+    fi
+  elif grep -q "does not provide attribute" "$PAP_EVAL_ERR" && grep -q "papdashboard" "$PAP_EVAL_ERR"; then
+    warn "papdashboard not rendered (module disabled) — icon inventory skipped"
+  else
+    fail "papdashboard §16 eval failed — NOT the known disabled shape; refusing to blind-skip (raw error follows):"
+    tail -5 "$PAP_EVAL_ERR"
+  fi
+  rm -f "$PAP_EVAL_ERR"
+}
+
+if [ "$SECTION16_ONLY" = true ]; then
+  pap_section16
+  echo ""
+  echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
+  if [ "$FAIL" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOY BLOCKED — fix failures above before deploying"
+    exit 1
+  fi
+  echo ""
+  echo "✅ §16-only run passed — safe (full gate still runs inside nix run .#deploy)"
   exit 0
 fi
 
@@ -1057,50 +1137,10 @@ fi
 # also fails: that shape is the capability dropped, not a choice. Same
 # anti-blind-skip discipline as §13/§14: only the exact attribute-missing
 # shape (module disabled) may SKIP; any other eval failure fails LOUD.
-echo ""
-echo "16. PapDashboard tile icons resolve in the pinned pack"
-PAP_EVAL_ERR=$(mktemp)
-PAP_ENV=""
-PAP_ENV=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment 2>"$PAP_EVAL_ERR") || true
-if [ -n "$PAP_ENV" ]; then
-  PAP_ICONS_DIR_VAL=$(printf '%s' "$PAP_ENV" | jq -r '."PAP_ICONS_DIR" // empty')
-  if [ -z "$PAP_ICONS_DIR_VAL" ]; then
-    fail "papdashboard unit has NO PAP_ICONS_DIR — the icon pack is not wired into the to-be-deployed config (stale module? partial revert?)"
-  elif [ ! -d "$PAP_ICONS_DIR_VAL" ]; then
-    fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory"
-  else
-    PAP_ICON_NAMES=$(
-      {
-        nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.dashboard.groups --apply 'gs: builtins.concatMap (g: map (t: t.icon or null) g.tiles) gs' 2>/dev/null || true
-        nix eval --json .#nixosConfigurations.evo-x2.config.services.papdashboard.extraTiles --apply 'ts: map (t: t.icon or null) ts' 2>/dev/null || true
-      } | jq -r '.[]'
-    )
-    pap_pack_total=0
-    pap_missing=0
-    while IFS= read -r pap_icon; do
-      { [ -z "$pap_icon" ] || [ "$pap_icon" = "null" ]; } && continue
-      case "$pap_icon" in http://* | https://*) continue ;; esac
-      pap_pack_total=$((pap_pack_total + 1))
-      if [ ! -f "$PAP_ICONS_DIR_VAL/$pap_icon" ]; then
-        fail "tile icon '$pap_icon' not in the pack subset $PAP_ICONS_DIR_VAL (build gate should have caught this — investigate the pin)"
-        pap_missing=$((pap_missing + 1))
-      fi
-    done <<EOF
-$PAP_ICON_NAMES
-EOF
-    if [ "$pap_pack_total" -eq 0 ]; then
-      fail "rendered config carries ZERO tile icons — the tile-logo capability is dropped from the to-be-deployed config (the 2026-10-17 regression class this gate exists for)"
-    elif [ "$pap_missing" -eq 0 ]; then
-      pass "all $pap_pack_total pack-relative tile icons exist in $PAP_ICONS_DIR_VAL"
-    fi
-  fi
-elif grep -q "does not provide attribute" "$PAP_EVAL_ERR" && grep -q "papdashboard" "$PAP_EVAL_ERR"; then
-  warn "papdashboard not rendered (module disabled) — icon inventory skipped"
-else
-  fail "papdashboard §16 eval failed — NOT the known disabled shape; refusing to blind-skip (raw error follows):"
-  tail -5 "$PAP_EVAL_ERR"
-fi
-rm -f "$PAP_EVAL_ERR"
+# 2026-10-18: coverage arm added — icons < tiles fails (deploy-time mirror
+# of the runtime icons_ok). Body lives in pap_section16() above so
+# --section-16-only can loop it cheaply.
+pap_section16
 
 # Summary
 echo ""
