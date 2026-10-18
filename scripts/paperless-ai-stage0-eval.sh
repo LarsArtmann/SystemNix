@@ -47,7 +47,7 @@ if [ "$(id -u)" -ne 0 ]; then
   exit 77
 fi
 
-TOKEN_FILE=$(mktemp /tmp/paperless-stage0-token.XXXXXX)
+TOKEN_FILE=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/paperless-stage0-token.XXXXXX") # /tmp is volatile (2026-10-17 wipe class)
 trap 'rm -f "$TOKEN_FILE"' EXIT
 chmod 600 "$TOKEN_FILE"
 

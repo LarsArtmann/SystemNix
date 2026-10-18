@@ -78,7 +78,8 @@ F="$D/fio.bin"
 SAMPLER=0
 cleanup() {
   if [ "$SAMPLER" -ne 0 ]; then
-    kill "$SAMPLER" 2>/dev/null || true
+    kill_pid "$SAMPLER"
+
   fi
   if [ "$KEEP_RAW" = "1" ]; then
     echo "KEEP_RAW=1 — raw artifacts left in $D"

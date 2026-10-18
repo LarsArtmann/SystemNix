@@ -141,7 +141,9 @@ TLOG="$BASE/temps.log"
   sleep 2
 done) &
 SAMPLER=$!
-trap 'kill $SAMPLER 2>/dev/null || true' EXIT
+# shellcheck source=scripts/lib/process.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/process.sh"
+trap 'kill_pid "$SAMPLER"' EXIT
 idle_temp=$(temp_read)
 t0=$(date +%s%3N)
 qlc0=$(qlc_ticks)

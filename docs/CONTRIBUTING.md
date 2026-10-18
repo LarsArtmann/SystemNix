@@ -204,7 +204,11 @@ docs/todo/pipeline.md; until it lands, steps 1-4 are manual discipline.
 ## Concurrent-edit discipline (shared tree, 2026-10-17 tile-logos harvest)
 
 The deploy-intent convention covers SWITCHES; these rules cover FILE EDITS,
-where a half-landed change breaks every parallel session's eval:
+where a half-landed change breaks every parallel session's eval. For the
+PLAN-EXECUTION twin class (two instances of one conversation running the same
+plan file), AGENTS.md Session Discipline "Plan-execution tombstone" +
+`scripts/plan-marker.sh` cover it — write the EXECUTING marker before the
+first edit of any `docs/planning/` plan:
 
 1. **Declaration before consumer.** When a change spans "declare an option /
    field" + "use it" (e.g. the `icon` tile option and the module reading

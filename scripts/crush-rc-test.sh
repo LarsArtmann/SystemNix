@@ -77,7 +77,7 @@ fi
 echo "PASS: bash -n"
 
 # 2. isolated load
-T="$(mktemp -d /tmp/crush-rc-test.XXXXXX)"
+T="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/crush-rc-test.XXXXXX")" # /tmp is volatile (2026-10-17 wipe class)
 trap 'rm -rf "$T"' EXIT
 mkdir -p "$T/crush"
 cp "$RC_FILE" "$T/crush/crushrc"
