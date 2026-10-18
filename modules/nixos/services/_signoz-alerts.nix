@@ -592,7 +592,7 @@ in
     "signoz/rules/forgejo-mirror-backlog.json".source = mkRule {
       name = "Forgejo Mirror Sync Backlog (>20 stale)";
       description = "20+ pull mirrors have no sync attempt for 4h+ — the mirror update queue is wedged (restart forgejo.service; the unique queue dedup-skips silently after a hard freeze) or a post-outage backlog is not draining";
-      query = "system_forgejo_mirror_sync_stale_count";
+      query = "system_forgejo_mirror_sync_stale.count";
       target = 20;
       interval = "5m";
       severity = "warning";
