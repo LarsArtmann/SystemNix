@@ -16,14 +16,14 @@
 # every other consume-dir user, and rides the bank-sync-paperless runtime
 # token-mint pattern (drf_create_token, tmpfs-only, zero sops steps).
 #
-# Idempotence: an append-only TSV journal (<source>tab<path>tab<size>) per
-# state dir gates re-uploads; paperless itself dedups byte-identical content
-# server-side, so a journal miss is harmless (worst case: one rejected
-# duplicate task). A file whose SIZE changed (new Drive revision synced by
-# rclone) misses its journal line and uploads as a new document version.
+# Idempotence: an append-only TSV journal (source TAB path TAB size) gates
+# re-uploads; paperless itself dedups byte-identical content server-side,
+# so a journal miss is harmless (worst case: one rejected duplicate task).
+# A file whose SIZE changed (new Drive revision synced by rclone) misses
+# its journal line and uploads as a new document version.
 #
 # Storm discipline: bounded batch per run (default 200) + hourly timer +
-# ioTier.background — the 1.9 TB private account can hold six-digit file
+# ioTier.background — the ~1.9 TB private account can hold six-digit file
 # counts and this box's IO-storm history (PSI freezes) forbids unbounded
 # directory walks + uploads in one transaction. Uploads of large files are
 # disk-read-bound on the HDD pool.
@@ -66,12 +66,13 @@ _: {
       googleSyncPresent = options ? services.google-sync;
       correspondentFor =
         remote:
-        {
-          gdrive = "Google Drive (private)";
-          gdrive-shared = "Google Drive (shared with me)";
-          gwork = "Google Workspace";
-        }
-        ?${remote} or "Google Drive (${remote})";
+        (
+          {
+            gdrive = "Google Drive (private)";
+            gdrive-shared = "Google Drive (shared with me)";
+            gwork = "Google Workspace";
+          }
+        ).${remote} or "Google Drive (${remote})";
       defaultSources =
         if googleSyncPresent then
           map
@@ -112,28 +113,28 @@ _: {
         "gif"
       ];
       allExtensions = docExtensions ++ lib.optionals cfg.ingestImages imageExtensions;
-      extRegex = lib.concatStringsSep "|" (map lib.escapeRegex allExtensions);
+      extRegex = lib.concatStringsSep "|" allExtensions;
+
+      # Shell-safe identifier for per-source variable names; the assertion
+      # below guarantees tags are already in this alphabet so two distinct
+      # tags can never collide after sanitization.
+      slug = tag: tag;
 
       mintChownScript = pkgs.writeShellScript "drive-paperless-token-chown" ''
         chown ${cfg.user}:${cfg.group} ${runEnv}
         chmod 0400 ${runEnv}
       '';
 
-      # One ensure-metadata block per source, baked at build time (the
-      # syncScript pattern): resolves/creates the correspondent + tags via
-      # the API and prints "cid<space>tid1 tid2" consumed by the scan block.
+      # Resolve-or-create correspondent + tags ONCE per source, before any
+      # scanning (fail loud here if paperless is unreachable).
       ensureBlock =
-        src:
-        let
-          slug = lib.strings.sanitizeDerivationName src.tag;
-        in
-        ''
+        src: ''
           echo "drive-paperless: ensuring metadata for source ${src.tag}"
-          meta_$slug="$(
-            cid="$(ensure_id correspondents ${lib.escapeShellArg src.correspondent})" || exit 1
+          meta_${slug src.tag}="$(
+            cid="$(ensure_id correspondents ${lib.escapeShellArg src.correspondent})"
             tids=""
             for tag_name in ${lib.escapeShellArg cfg.globalTag} ${lib.escapeShellArg src.tag}; do
-              tid="$(ensure_id tags "$tag_name")" || exit 1
+              tid="$(ensure_id tags "$tag_name")"
               tids="$tids $tid"
             done
             printf '%s %s\n' "$cid" "$tids"
@@ -141,61 +142,59 @@ _: {
         '';
 
       scanBlock =
-        src:
-        let
-          slug = lib.strings.sanitizeDerivationName src.tag;
-        in
-        ''
+        src: ''
           root="${src.path}"
-          if [ ! -d "$root" ]; then
-            echo "drive-paperless: source dir $root missing — skipping (first seed not run?)" >&2
-            continue_sources=1
-            continue
-          fi
-          read -r cid tids <<<"$(cat "$meta_file_${slug}")"
-          find "$root" -xdev -type f -size +0c -size -${toString (cfg.maxFileSizeMB * 1024 * 1024)}c \
-            -regextype posix-extended -iregex '.*\.(${extRegex})' -print0 \
-          | LC_ALL=C sort -z \
-          | while IFS= read -r -d '' f; do
+          if [ -d "$root" ]; then
+            read -r cid tids <<<"''${meta_${slug src.tag}}"
+            # Loop reads from process substitution, NOT a pipeline —
+            # `find | while` forks the loop into a subshell and silently
+            # drops the uploaded/failed/cap_hit counters the summary and
+            # the fail-loud exit below depend on.
+            while IFS= read -r -d ''' f; do
               if [ "$uploaded" -ge "$BATCH" ]; then
-                echo "drive-paperless: batch cap ($BATCH) reached — more files pending for ${src.tag}"
+                echo "drive-paperless: batch cap ($BATCH) reached — more files pending for ${src.tag}" >&2
+                cap_hit=1
                 break
               fi
-              rel="${"\${f#\"$root\"/}"}"
-              case "$rel" in
-                *$'\n'*)
-                  echo "drive-paperless: skipping newline-in-name file: $rel" >&2
+              rel="''${f#"$root"/}"
+                case "$rel" in
+                  *$'\n'*)
+                    echo "drive-paperless: skipping newline-in-name file: $rel" >&2
+                    continue
+                    ;;
+                esac
+                size="$(stat -c %s -- "$f")"
+                line="$(printf '%s\t%s\t%s' ${lib.escapeShellArg src.tag} "$rel" "$size")"
+                if grep -qxF "$line" "${journal}" 2>/dev/null; then
                   continue
-                  ;;
-              esac
-              size="$(stat -c %s -- "$f")"
-              line="$(printf '%s\t%s\t%s' ${lib.escapeShellArg src.tag} "$rel" "$size")"
-              if grep -qxF "$line" "${journal}" 2>/dev/null; then
-                continue
-              fi
-              title="$(basename -- "$f")"
-              title="${"\${title%.*}"}"
-              title="$(printf '%.128s' "$title")"
-              created="$(date -u -d @"$(stat -c %Y -- "$f")" +%Y-%m-%d 2>/dev/null || true)"
-              args_post=(-F "document=@$f" -F "title=$title" -F "correspondent=$cid")
-              if [ -n "$created" ]; then
-                args_post+=(-F "created=$created")
-              fi
-              for tid in $tids; do
-                args_post+=(-F "tags=$tid")
-              done
-              echo "drive-paperless: uploading [${
-                lib.escapeShellArg src.tag
-              }] $rel"
-              if curl -fsS -H "Authorization: Token $TOKEN" \
-                -X POST "$BASE/api/documents/post_document/" "''${args_post[@]}"; then
-                printf '%s\n' "$line" >>"${journal}"
-                uploaded=$((uploaded + 1))
-              else
-                echo "drive-paperless: upload FAILED for $rel (not journaled; retried next run)" >&2
-                failed=$((failed + 1))
-              fi
-            done
+                fi
+                title="$(basename -- "$f")"
+                title="''${title%.*}"
+                title="$(printf '%.128s' "$title")"
+                created="$(date -u -d @"$(stat -c %Y -- "$f")" +%Y-%m-%d 2>/dev/null || true)"
+                args_post=(-F "document=@$f" -F "title=$title" -F "correspondent=$cid")
+                if [ -n "$created" ]; then
+                  args_post+=(-F "created=$created")
+                fi
+                for tid in $tids; do
+                  args_post+=(-F "tags=$tid")
+                done
+                echo "drive-paperless: uploading [${src.tag}] $rel"
+                if curl -fsS -H "Authorization: Token $TOKEN" \
+                  -X POST "$BASE/api/documents/post_document/" "''${args_post[@]}"; then
+                  printf '%s\n' "$line" >>"${journal}"
+                  uploaded=$((uploaded + 1))
+                else
+                  echo "drive-paperless: upload FAILED for $rel (not journaled; retried next run)" >&2
+                  printf '%s\n' "$line" >>"$failed_log"
+                  failed=$((failed + 1))
+                fi
+              done < <(find "$root" -xdev -type f -size +0c -size -${toString (cfg.maxFileSizeMB * 1024 * 1024)}c \
+              -regextype posix-extended -iregex '.*\.(${extRegex})' -print0 | LC_ALL=C sort -z)
+          else
+            echo "drive-paperless: source dir $root missing — skipped (first seed not run yet?)" >&2
+            missing_source=1
+          fi
         '';
 
       ingestScript = pkgs.writeShellApplication {
@@ -206,7 +205,6 @@ _: {
           pkgs.coreutils
           pkgs.findutils
           pkgs.gnugrep
-          pkgs.bash
         ];
         text = ''
           set -euo pipefail
@@ -215,15 +213,23 @@ _: {
           TOKEN="''${DRIVE_PAPERLESS_TOKEN:?DRIVE_PAPERLESS_TOKEN not set}"
           STATE="''${DRIVE_PAPERLESS_STATE:?DRIVE_PAPERLESS_STATE not set}"
           BATCH=${toString cfg.batchSize}
+          journal="$STATE/journal.tsv"
+          failed_log="$STATE/failed.log"
           uploaded=0
           failed=0
+          cap_hit=0
+          missing_source=0
           mkdir -p "$STATE"
+          : >"$failed_log"
 
           api() {
             curl -fsS -H "Authorization: Token $TOKEN" "$@"
           }
 
-          # ensure_id <correspondents|tags> <name> -> id (created if missing)
+          # ensure_id <correspondents|tags> <name> -> id (created if missing).
+          # Both endpoints support ?name__iexact= (verified in the pinned
+          # paperless-ngx 3.3.1 filters.py CHAR_KWARGS); creation POSTs
+          # {name}.
           ensure_id() {
             kind="$1"
             name="$2"
@@ -239,26 +245,17 @@ _: {
               | jq -r '.id'
           }
 
-          # Per-source metadata snapshots: each source writes its resolved
-          # "cid tids" to a state file so the (subshell-free) scan blocks
-          # read them without re-calling the API per file.
           ${
-            lib.concatMapStringsSep "\n" (src: ''
-              meta_file_${lib.strings.sanitizeDerivationName src.tag}="$STATE/meta_${lib.strings.sanitizeDerivationName src.tag}"
-            '') cfg.sources
-          }
-          continue_sources=0
-          ${
-            lib.concatMapStringsSep "\n " (src: ensureBlock src) cfg.sources
+            lib.concatMapStringsSep "\n" (src: ensureBlock src) cfg.sources
           }
 
           ${
-            lib.concatMapStringsSep "\n " (src: scanBlock src) cfg.sources
+            lib.concatMapStringsSep "\n" (src: scanBlock src) cfg.sources
           }
 
-          echo "drive-paperless: run complete — uploaded=$uploaded failed=$failed"
+          echo "drive-paperless: run complete — uploaded=$uploaded failed=$failed cap_hit=$cap_hit missing_source=$missing_source"
           if [ "$failed" -gt 0 ]; then
-            echo "drive-paperless: $failed upload(s) failed — NOT touching last_success; unit fails so onFailure alerts" >&2
+            echo "drive-paperless: $failed upload(s) failed (see $failed_log) — NOT touching last_success; unit fails so onFailure alerts" >&2
             exit 1
           fi
           touch "$STATE/last_success"
@@ -359,8 +356,8 @@ _: {
             message = "drive-paperless: source tags must be unique (they key the journal)";
           }
           {
-            assertion = lib.all (s: lib.strings.hasPrefix "/" s.path) cfg.sources;
-            message = "drive-paperless: source paths must be absolute";
+            assertion = lib.all (s: lib.strings.match "[a-zA-Z0-9_-]+" s.tag != null) cfg.sources;
+            message = "drive-paperless: source tags must match [a-zA-Z0-9_-]+ (they become shell variable names)";
           }
           {
             assertion = lib.all (s: lib.strings.hasPrefix "/mnt/" s.path) cfg.sources;
@@ -437,11 +434,11 @@ _: {
           description = "Google Drive mirror → Paperless-ngx ingest";
           after =
             [ "drive-paperless-token.service" ]
-            ++ lib.optionals (config.systemd ? services && config.systemd.services ? paperless-web) [ "paperless-web.service" ]
+            ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
             ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [ "google-sync.service" ];
           wants =
             [ "drive-paperless-token.service" ]
-            ++ lib.optionals (config.systemd ? services && config.systemd.services ? paperless-web) [ "paperless-web.service" ]
+            ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
             ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [ "google-sync.service" ];
           # Token must exist before every run (convergent mint).
           requires = [ "drive-paperless-token.service" ];
@@ -489,7 +486,8 @@ _: {
 
         # Freshness sentinel (google-sync pattern): a stale last_success
         # trips the global backup_all_healthy Gatus check within 25h —
-        # hourly runs + catch-up make 25h generous.
+        # hourly runs + catch-up make 25h generous. Guarded for eval
+        # scopes that import this module without backup-coordination.
         services.backup-coordination = lib.optionalAttrs (options ? services.backup-coordination) {
           backups.drive-paperless = {
             directory = stateDir;

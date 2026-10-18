@@ -1014,6 +1014,25 @@ _: {
             fi
           fi
 
+          # === thermal-pstate-guard collector freshness (2026-10-19, freeze
+          # #29 census gap) === Same phantom-green class as the two above:
+          # the guard's .prom freezes on guard death and node_exporter serves
+          # the last content forever, so the deep-throttle presence pats stay
+          # green while the guard is DEAD — freeze #29's terminal storm
+          # starved the guard SILENT for 3h20m (zero ticks 22:57:23 → cut)
+          # and the death-window thermal census is empty BECAUSE of it, while
+          # the memory guard's equivalent freeze DID alarm (307s sev1 at
+          # 23:14). Same mtime composite: the guard rewrites its .prom every
+          # 30 s tick; 300 s = the same 10-missed-ticks budget.
+          THERMAL_GUARD_FRESH=0
+          THERMAL_GUARD_PROM="${textfileDir}/thermal-pstate-guard.prom"
+          if [ -f "$THERMAL_GUARD_PROM" ]; then
+            thermal_guard_age=$(( $(date +%s) - $(stat -c %Y "$THERMAL_GUARD_PROM" 2>/dev/null || echo 0) ))
+            if [ "$thermal_guard_age" -ge 0 ] && [ "$thermal_guard_age" -le 300 ]; then
+              THERMAL_GUARD_FRESH=1
+            fi
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal in the
@@ -1541,6 +1560,12 @@ _: {
               echo "# HELP system_niri_metrics_fresh 1 if the niri-health-metrics textfile was rewritten within 300s (collector ALIVE), 0 if frozen/stale (compositor observability DEAD — node_exporter serves the last content forever, so the niri presence pats cannot see collector death)"
               echo "# TYPE system_niri_metrics_fresh gauge"
               echo "system_niri_metrics_fresh ''${NIRI_FRESH}"
+            fi
+
+            if [ -f "$THERMAL_GUARD_PROM" ]; then
+              echo "# HELP system_thermal_guard_metrics_fresh 1 if the thermal-pstate-guard textfile was rewritten within 300s (guard ALIVE), 0 if frozen/stale (thermal pre-crash protection DEAD — freeze #29's terminal storm starved it silent 3h20m and only the memory guard's equivalent freeze alarmed; the death-window thermal census is empty because of exactly this gap)"
+              echo "# TYPE system_thermal_guard_metrics_fresh gauge"
+              echo "system_thermal_guard_metrics_fresh ''${THERMAL_GUARD_FRESH}"
             fi
 
             echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
@@ -2640,6 +2665,34 @@ _: {
                       "[BODY] == pat(*\nsystem_memory_guard_metrics_fresh *)"
                     ];
                     alert = "memory-emergency-guard metrics are FROZEN (no rewrite within 300s) — the automated pre-freeze protection is DOWN (crash-looped, wedged, or its timer died). The desktop channel already got the sev1 MEMORY GUARD DEAD notify. Check: systemctl status memory-emergency-guard memory-emergency-guard.timer, journalctl -u memory-emergency-guard -n 30.";
+                  }
+                ]
+            ++
+              lib.optionals
+                (
+                  (config.services.system-health.enable or false)
+                  && (config.services.thermal-pstate-guard.enable or false)
+                )
+                [
+                  {
+                    name = "Thermal Guard Collector Fresh";
+                    group = "Monitoring";
+                    # Freeze #29 census gap (2026-10-19): the guard's .prom
+                    # freezes on guard death and node_exporter serves the last
+                    # content forever, so the deep-throttle presence pats stay
+                    # green while the guard is DEAD — #29's terminal storm
+                    # starved it silent for 3h20m with zero thermal telemetry
+                    # in the death window while the memory guard's equivalent
+                    # freeze DID alarm. Same mtime-composite shape as the
+                    # memory-guard check above (300s = 10 missed 30s ticks).
+                    url = "http://localhost:${toString nodePort}/metrics";
+                    interval = "2m";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[BODY] != pat(*system_thermal_guard_metrics_fresh 0\n*)"
+                      "[BODY] == pat(*\nsystem_thermal_guard_metrics_fresh *)"
+                    ];
+                    alert = "thermal-pstate-guard metrics are FROZEN (no rewrite within 300s) — the thermal pre-crash protection is DOWN (crash-looped, wedged, or its timer died). Terminal IO/thermal storms are the historical killer (freeze #29: 3h20m silent before the cut). Check: systemctl status thermal-pstate-guard thermal-pstate-guard.timer, journalctl -u thermal-pstate-guard -n 30.";
                   }
                 ];
           };
