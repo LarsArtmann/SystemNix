@@ -65,6 +65,7 @@
               modules = [
                 inputs.self.nixosModules.google-sync
                 inputs.self.nixosModules.backup-coordination
+                inputs.self.nixosModules.integration
                 (root + "/tests/mock-sops.nix")
                 {
                   services.google-sync.enable = true;
