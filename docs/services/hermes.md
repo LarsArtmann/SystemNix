@@ -62,6 +62,21 @@ bounded to `/home/hermes`; never write into `./projects` (EROFS by design).
    is NOT sufficient — a same-filesystem bind (BTRFS subvol) shares st_dev;
    the `-prune` on the exact path is the real guard.
 3. `+hermes-migrate-state` — SQLite integrity check + legacy state migration.
+   The census is WAL-gated (runs only on the unclean-shutdown signal, a
+   present `-wal`) and BOUNDED (60s, `HERMES_DB_CHECK_BUDGET`): a
+   storm-timeout drops `state.db.integrity-pending` and STARTS the gateway
+   anyway (sqlite recovers the wal on open) instead of burning the unit's
+   3min start budget — the 2026-10-18 boot -1 class burned it twice
+   (SIGKILLed mid-walk, gateway down ~8min on restart retries). The
+   deferred census converges post-start via `hermes-db-health` (wants-pulled
+   on every hermes start, After= the gateway, ioTier.maintenance, 15min
+   budget): waits (bounded) for an IO-calm window, then a clean census
+   clears the marker, a locked-window retry keeps it, and a malformed
+   verdict backs the db up (`state.db.malformed-<ts>`) and restarts the
+   gateway fresh — the same fail-closed-to-fresh contract the start-path
+   census always had. Fixture-tested by `checks.hermes-migrate-fixture`
+   (clean-skip / wal+ok / wal+timeout-deferral / malformed / marker
+   convergence / legacy rsync legs + the db-health converger legs).
 4. `hermes-merge-env` (as hermes) — strips deprecated keys from `.env`.
 5. `hermes-lsp-bin-heal` (as hermes) — restores exec bits on
    `<stateDir>/lsp/bin/*` and `<stateDir>/lsp/node_modules/.bin/*`. The OLD
