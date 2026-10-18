@@ -499,12 +499,15 @@ eval_case memory hm-user-trap fail 'memory-watermark-audit' \
 eval_case inputpin sha-path-pin fail 'go-taskqueue: hard REV pin' \
   'sed:flake.nix:s|github:LarsArtmann/go-taskqueue?ref=master|github:LarsArtmann/go-taskqueue/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa|' \
   'jq:flake.lock:.nodes["go-taskqueue"].original = {"owner":"LarsArtmann","repo":"go-taskqueue","rev":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","type":"github"}'
-# Leg 2: the lift-forcing teeth — bank-sync's documented ceiling pin is
+# Leg 2: the lift-forcing teeth — a TAG-PINNED allowlisted input (qmd) is
 # lifted in BOTH surfaces while its allowlist row remains; the stale row
-# must fail eval (never let the allowlist rot silently).
+# must fail eval (never let the allowlist rot silently). Anchor note: the
+# original bank-sync anchor died 2026-10-16 when that pin was lifted
+# FOR REAL (the case's own subject) — qmd is the current stable tag pin;
+# refresh the anchor if this failure class reappears.
 eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
-  'sed:flake.nix:s|github:LarsArtmann/bank-sync/67dd64526e5a55d86ff40ab49ce4a07794922962|github:LarsArtmann/bank-sync?ref=refs/heads/master|' \
-  'jq:flake.lock:.nodes["bank-sync"].original = {"owner":"LarsArtmann","ref":"refs/heads/master","repo":"bank-sync","type":"github"}'
+  'sed:flake.nix:s|github:tobi/qmd/v2.8.3|github:tobi/qmd|' \
+  'jq:flake.lock:.nodes["qmd"].original = {"owner":"tobi","repo":"qmd","type":"github"}'
 
 # ── papdashboard tile-icon gates: the 2026-10-17 "logos went dark" class ──
 # The module ships two gates; each leg mutates ONE tile icon in the

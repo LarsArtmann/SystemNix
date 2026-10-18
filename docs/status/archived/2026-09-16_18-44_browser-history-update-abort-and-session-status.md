@@ -85,8 +85,8 @@ deployed, one doctrine learned the hard way (FOD probe ≠ compile check).
 | ~~12~~ **NOT-DO — dup of 13-06 f3 (h).** | ~~Deploy when quiet (or user-approved `DEPLOY_FORCE_PRESSURE=1`)~~ |
 | ~~13~~ **NOT-DO — dup of 13-06 f4/f5 (w/h).** | ~~Post-deploy: trash staged `~/.local/bin` deletions (buildflow×2, flm, himalaya suite, node shim, shfmt, uv/uvx, env fish files, print-safe, llamacpp-server)~~ |
 | 14 **→ docs/todo/pipeline.md deploy.sh---when-calm-mode row** | Post-deploy verify: `which uv shfmt node buildflow print-safe llamacpp-server flm` → nix paths; `sessionPath` live in fresh fish |
-| 15 | Smoke: `PRINT_SAFE_DRY_RUN=1 print-safe <pdf>`; brief `llamacpp-server` launch (crush provider :8899), then kill                                             |
-| 16 | `scripts/deploy-when-quiet.sh` (poll PSI + disk-busy corroboration, then exec deploy)                                                                        |
+| ~~15~~ **Won't implement — one-shot smoke; window passed (print-safe live via ai-stack.nix:102-105).** | ~~Smoke: `PRINT_SAFE_DRY_RUN=1 print-safe <pdf>`; brief `llamacpp-server` launch (crush provider :8899), then kill~~ |
+| 16 **→ docs/todo/pipeline.md deploy.sh---when-calm-mode row** | `scripts/deploy-when-quiet.sh` (poll PSI + disk-busy corroboration, then exec deploy) |
 
 **Docs/planning (P1):**
 
@@ -94,20 +94,20 @@ deployed, one doctrine learned the hard way (FOD probe ≠ compile check).
 | -- | -------------------------------------------------------------------------------------------------------- |
 | ~~17~~ **Won't implement — storm-era manual tq process; gone.** | ~~HARVEST 13-06 §f + this report's §f into TODO_LIST/ROADMAP (docs-health)~~ |
 | ~~18~~ **NOT-DO — dup of 13-06 f15 (r - pipeline.md branching-flow SSH row).** | ~~`scripts/audit-flake-pins.sh` + eval-time PIN-REASON lint (13-06 parked)~~ |
-| 19 | Review foreign doc swept into commit `9e251ef4` (13-06 flagged, unreviewed)                              |
-| 20 | tq-redesign cutover (parallel process on :18472 double-run warning recurs every deploy)                  |
+| ~~19~~ **Won't implement — one-shot foreign-doc review; window passed.** | ~~Review foreign doc swept into commit `9e251ef4` (13-06 flagged, unreviewed)~~ |
+| ~~20~~ done — tq cutover executed; pool live (docs/services/tq.md) | ~~tq-redesign cutover (parallel process on :18472 double-run warning recurs every deploy)~~ |
 | ~~21~~ done at `docs/todo/upstream.md signoz rows (2026-09-18 bump + pnpmDeps re-derivations)` | ~~CI verification: git+ssh trio (BuildFlow/branching-flow/file-and-image-renamer deploy keys) at next push~~ |
 
 **Pin/flock maintenance (P1-P2):**
 
 | #  | Task                                                                                               |
 | -- | -------------------------------------------------------------------------------------------------- |
-| 22 | signoz + signoz-otel-collector: migration-review bump (schema-migrator scope, not a hash chore)    |
+| ~~22~~ done — signoz bumped 2026-09-18 + pnpmDeps re-derivations (docs/todo/upstream.md signoz rows) | ~~signoz + signoz-otel-collector: migration-review bump (schema-migrator scope, not a hash chore)~~ |
 | ~~23~~ done — waves reconciled art-dupl fork - docs/todo/upstream.md a7868a7 rows | ~~art-dupl-src (bare master) vs art-dupl (fork) divergence check~~ |
-| 24 | go-taskqueue: flip interim `git+file?rev=` to `github:` after upstream push                        |
-| 25 | DiscordSync pin: re-probe after upstream fixes vendorHash (+129 commits, c0604e46 doctrine intact) |
-| 26 | overview (+7), PMA (+9), library-policy (+47), go-auto-upgrade (+31): same re-probe cycle          |
-| 27 | md-go-validator / todo-list-ai / go-nix-helpers flips: confirm CI green post-flip                  |
+| ~~24~~ done at `tq flipped to github:?ref=master - flake.nix:383` | ~~go-taskqueue: flip interim `git+file?rev=` to `github:` after upstream push~~ |
+| ~~25~~ done — discordsync master-ref upgrade landed 2026-09-18 (docs/todo/upstream.md wave rows) | ~~DiscordSync pin: re-probe after upstream fixes vendorHash (+129 commits, c0604e46 doctrine intact)~~ |
+| ~~26~~ done — fleet re-probes executed Oct - docs/todo/upstream.md a7868a7 wave rows | ~~overview (+7), PMA (+9), library-policy (+47), go-auto-upgrade (+31): same re-probe cycle~~ |
+| ~~27~~ done — fleet flips executed Oct - docs/todo/upstream.md a7868a7 wave rows | ~~md-go-validator / todo-list-ai / go-nix-helpers flips: confirm CI green post-flip~~ |
 
 **Stability/infra (P1-P2, from AGENTS.md standing items I noticed during the session):**
 
@@ -134,18 +134,18 @@ deployed, one doctrine learned the hard way (FOD probe ≠ compile check).
 | 41 **→ docs/todo/services.md Paperless-statement-decryption row (retro-decrypt repair)** | History-purge push decision (held indefinitely since 2026-08-18) |
 | ~~42~~ **Won't implement — himalaya removed; decision overtaken.** | ~~Wise SCA approval watch → bank-sync RFC3339 phantom-writer watch post-approval~~ |
 | ~~43~~ **Won't implement — deferred layout decision; window passed.** | ~~InboxClean retro-decrypt repair deployment (needs upstream push + flake bump)~~ |
-| 44 | himalaya: delete vs nixify (open since 13-06)                                       |
-| 45 | Hermes workspace layout decision (deferred, revisit trigger in TODO_LIST)           |
+| ~~44~~ **Won't implement — superseded: himalaya removed from the fleet.** | ~~himalaya: delete vs nixify (open since 13-06)~~ |
+| 45 **→ docs/todo/services.md Hermes workspace strategy row** | Hermes workspace layout decision (deferred, revisit trigger in TODO_LIST) |
 
 **Smaller cleanups (P2-P3):**
 
 | #  | Task                                                                                                   |
 | -- | ------------------------------------------------------------------------------------------------------ |
 | ~~46~~ **NOT-DO — self-superseding (this list replaces the 13-06 queue).** | ~~`/tmp/flake.lock.pre-bh-update` backup file (harmless; disposable)~~ |
-| 47 | print-safe host-coupled CUPS filter paths: consider an eval-time guard or VM-test                      |
-| 48 | niri-session-manager upstream hazards (restore re-runs on every process start) — upstream fix tracking |
-| 49 | crush-daily UPDATE_GOLDENS flow: document the parallel-session golden-file race repair as a checklist  |
-| 50 | 13-06's remaining open question queue: fold surviving items here (this list supersedes it)             |
+| ~~47~~ **Won't implement — idea; window passed (print-safe as-built without CUPS guard).** | ~~print-safe host-coupled CUPS filter paths: consider an eval-time guard or VM-test~~ |
+| ~~48~~ **Won't implement — upstream tracked; niri progressed past the hazard class.** | ~~niri-session-manager upstream hazards (restore re-runs on every process start) — upstream fix tracking~~ |
+| 49 **→ docs/todo/services.md crush-daily golden-file row** | crush-daily UPDATE_GOLDENS flow: document the parallel-session golden-file race repair as a checklist |
+| ~~50~~ **NOT-DO — self-superseding note (this list supersedes the 13-06 queue by design).** | ~~13-06's remaining open question queue: fold surviving items here (this list supersedes it)~~ |
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER
 
