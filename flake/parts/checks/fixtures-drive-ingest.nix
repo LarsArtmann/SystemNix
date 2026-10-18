@@ -23,12 +23,11 @@
                 system = "x86_64-linux";
                 modules = [
                   inputs.self.nixosModules.drive-paperless
+                  inputs.self.nixosModules.backup-coordination
+                  inputs.self.nixosModules.integration
                   paperlessModule
                   {
-                    services.paperless = {
-                      enable = true;
-                      secretKeyFile = "/run/dummy-paperless-secret";
-                    };
+                    services.paperless.enable = true;
                     services.drive-paperless = {
                       enable = true;
                       sources = [
@@ -83,7 +82,7 @@
               let
                 svc = main.config.systemd.services.drive-paperless;
                 token = main.config.systemd.services.drive-paperless-token;
-                timer = main.config.timers.drive-paperless;
+                timer = main.config.systemd.timers.drive-paperless;
               in
               ''
                 echo "${
@@ -97,14 +96,14 @@
                 echo "${toString svc.unitConfig.RequiresMountsFor}" \
                   | grep -q "/mnt/pool/backups/google-drive-work" || {
                   echo "FAIL: RequiresMountsFor must gate every source path" >&2; exit 1; }
-                echo "${lib.concatStringsSep " " svc.Environment}" \
+                echo "${lib.concatStringsSep " " svc.serviceConfig.Environment}" \
                   | grep -q "DRIVE_PAPERLESS_URL=http://127.0.0.1:2892" || {
                   echo "FAIL: URL must derive from ports.nix (paperless=2892)" >&2; exit 1; }
                 [ "${svc.serviceConfig.User}" = "drive-paperless" ] || {
                   echo "FAIL: dedicated system user expected" >&2; exit 1; }
                 [ "${timer.timerConfig.OnCalendar}" = "hourly" ] || {
                   echo "FAIL: timer expected hourly" >&2; exit 1; }
-                [ "${timer.timerConfig.Persistent}" = "true" ] || {
+                [ "${toString timer.timerConfig.Persistent}" = "true" ] || {
                   echo "FAIL: timer must catch up (Persistent)" >&2; exit 1; }
                 echo "${lib.concatStringsSep " " token.serviceConfig.ExecStartPost}" \
                   | grep -q "^+.*drive-paperless-token-chown" || {
