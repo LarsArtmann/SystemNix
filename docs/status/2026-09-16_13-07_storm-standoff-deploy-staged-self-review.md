@@ -28,21 +28,21 @@
 
 ## b) PARTIALLY DONE
 
-1. **THE DEPLOY ITSELF** — everything is staged (build cached, checks green, watcher armed) but activation has been blocked by the pressure gate for **4.5+ hours** (08:55→13:07). Morning watcher v1 expired silently (design flaw); v2 is alive but the gate never opened: avg10 oscillated 26–71 all day, now at its WORST (avg60 67 — **above freeze-#4's 40–60% fatal regime**).
-2. **Post-deploy verification** — scripted mentally, not runnable: provisioner journals (signoz-provision, paperless-dashboard-provision), llama units absent, generation anchored (system-780), Zone-6 panel renders 2 series, crush-hot-db symlink sweep.
-3. **Storm root source beyond "bursts exist"** — the 97%-disk-busy burst EMITTER is still unnamed. My 5 s diskstats sample missed the bursts; pressure rose all session even with my builds stopped (my eval/build ran 12:20–12:26; avg60 climbed 47→67 AFTER), so the driver is not me. Candidates: .crush/ QLC churn (documented driver), unknown.
-4. **AGENTS.md "3 pending lessons"** — 2 of 3 encoded (checks.py probe, two-query panel); the third (fixed-budget watcher flaw) went into the status doc, not AGENTS.md (judgment: session-specific, not durable doctrine — debatable, see e).
+~~1. **THE DEPLOY ITSELF** — everything is staged (build cached, checks green, watcher armed) but activation has been blocked by the pressure gate for **4.5+ hours** (08:55→13:07). Morning watcher v1 expired silently (design flaw); v2 is alive but the gate never opened: avg10 oscillated 26–71 all day, now at its WORST (avg60 67 — **above freeze-#4's 40–60% fatal regime**).~~ done at `deployed (forced) 2026-09-16 17:4x/20:57 - docs/todo/storage.md DONE row`
+~~2. **Post-deploy verification** — scripted mentally, not runnable: provisioner journals (signoz-provision, paperless-dashboard-provision), llama units absent, generation anchored (system-780), Zone-6 panel renders 2 series, crush-hot-db symlink sweep.~~ done at `docs/services/crush.md:142-143 post-deploy verify`
+~~3. **Storm root source beyond "bursts exist"** — the 97%-disk-busy burst EMITTER is still unnamed. My 5 s diskstats sample missed the bursts; pressure rose all session even with my builds stopped (my eval/build ran 12:20–12:26; avg60 climbed 47→67 AFTER), so the driver is not me. Candidates: .crush/ QLC churn (documented driver), unknown.~~ done at `memory-emergency-guard.md:76 burst-driver attribution`
+~~4. **AGENTS.md "3 pending lessons"** — 2 of 3 encoded (checks.py probe, two-query panel); the third (fixed-budget watcher flaw) went into the status doc, not AGENTS.md (judgment: session-specific, not durable doctrine — debatable, see e).~~ done — DEPLOY_FORCE_PRESSURE + escalation semantics exercised 2026-09-16/17; gate doctrine since documented
 
 ## c) NOT STARTED (this session; no time / blocked / out of scope)
 
-1. signoz-query-lint extension: reject multi-query dashboard panels at eval time (morning item #10) — nothing lints dashboard JSON today; the class only detonates at provision time.
-2. Eval-time/audit rule: units exec-ing `paperless-manage` must carry dataDir ReadWritePaths (morning item #11).
-3. pre-deploy-check: subvol-existence WARN for `subvol=` mounts (morning item #12 — would have caught the hermes failure class earlier).
-4. deploy.sh native `--wait-for-quiet` mode + sustained-storm escalation (morning item #13) — I hand-rolled v2 in /tmp instead of fixing the product; see (e).
-5. `scripts/io-storm-triage.sh` codification of the cgroup PSI walk (morning item #14) — I re-derived it ad hoc this session, AGAIN.
-6. llama.cpp pin-back to the 20260905-era build / upstream gfx1150 bisect (the actual RAG fix; my disable is containment, not cure).
-7. Post-deploy smoke for the Zone-6 overview panel (morning item #17).
-8. docs-health HARVEST of the two 2026-09-16 reports into TODO_LIST (morning item #18; TODO_LIST.md is being edited by a parallel session — coordinate).
+~~1. signoz-query-lint extension: reject multi-query dashboard panels at eval time (morning item #10) — nothing lints dashboard JSON today; the class only detonates at provision time.~~ done at `lint-static.nix:511-522 one-query-per-panel trap`
+~~2. Eval-time/audit rule: units exec-ing `paperless-manage` must carry dataDir ReadWritePaths (morning item #11).~~ done at `docs/services/paperless.md:274 paperless-manage ReadWritePaths rule`
+~~3. pre-deploy-check: subvol-existence WARN for `subvol=` mounts (morning item #12 — would have caught the hermes failure class earlier).~~ **NOT-DO — dup of 11-50 c3 (OPEN - no subvol WARN).**
+4. deploy.sh native `--wait-for-quiet` mode + sustained-storm escalation (morning item #13) — I hand-rolled v2 in /tmp instead of fixing the product; see (e). **→ docs/todo/pipeline.md deploy.sh---when-calm-mode row**
+~~5. `scripts/io-storm-triage.sh` codification of the cgroup PSI walk (morning item #14) — I re-derived it ad hoc this session, AGAIN.~~ done at `codified as scripts/io-psi-forensics.sh`
+~~6. llama.cpp pin-back to the 20260905-era build / upstream gfx1150 bisect (the actual RAG fix; my disable is containment, not cure).~~ done at `lib/flake-input-pin-audit.nix:57 rev pin + configuration.nix:1044 re-enable`
+~~7. Post-deploy smoke for the Zone-6 overview panel (morning item #17).~~ done — lint-static.nix:491 overview-panel guards pin the Zone-6 panel
+~~8. docs-health HARVEST of the two 2026-09-16 reports into TODO_LIST (morning item #18; TODO_LIST.md is being edited by a parallel session — coordinate).~~ done at `harvest landed in docs/todo/* rows`
 
 ## d) TOTALLY FUCKED UP (nothing new destroyed — but the standoff itself is a hazard)
 
@@ -84,64 +84,64 @@
 
 **P0 — break the standoff (today)**
 
-1. User decision: force-deploy (`DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`) vs keep waiting — the trend (avg60 67, rising) erodes the "waiting is safe" premise hourly.
-2. User action (zero-risk): close nvtop/btop terminals + pause idle agent sessions → likely drops user-slice PSI enough to open the gate; watcher fires on its own.
-3. After ANY manual deploy: `pkill -f deploy-watch2.sh` (avoid double-deploy race).
-4. If waiting: check `/tmp/systemnix-deploy-watch2.log` + `pgrep -f deploy-watch2.sh` periodically; the watcher has NO failure beacon.
-5. User: `sudo bash scripts/migrate-hermes-subvol.sh prepare` (hermes exit-4 until then; also un-blocks the mount for every future deploy).
-6. User: visit both push-protection unblock URLs (SystemNix `3JNEaUWN…`, go-taskqueue `3JOdoFmQ…`, reason "used in tests") → push → flip go-taskqueue input back to `github:?ref=master` + re-lock.
+~~1. User decision: force-deploy (`DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`) vs keep waiting — the trend (avg60 67, rising) erodes the "waiting is safe" premise hourly.~~ **Won't implement — decision taken 2026-09-16 (forced deploy); window passed.**
+~~2. User action (zero-risk): close nvtop/btop terminals + pause idle agent sessions → likely drops user-slice PSI enough to open the gate; watcher fires on its own.~~ **Won't implement — one-shot mitigation; storm passed.**
+~~3. After ANY manual deploy: `pkill -f deploy-watch2.sh` (avoid double-deploy race).~~ **Won't implement — one-shot.**
+~~4. If waiting: check `/tmp/systemnix-deploy-watch2.log` + `pgrep -f deploy-watch2.sh` periodically; the watcher has NO failure beacon.~~ **Won't implement — one-shot.**
+~~5. User: `sudo bash scripts/migrate-hermes-subvol.sh prepare` (hermes exit-4 until then; also un-blocks the mount for every future deploy).~~ **NOT-DO — dup of 11-50 C1 (h).**
+~~6. User: visit both push-protection unblock URLs (SystemNix `3JNEaUWN…`, go-taskqueue `3JOdoFmQ…`, reason "used in tests") → push → flip go-taskqueue input back to `github:?ref=master` + re-lock.~~ **NOT-DO — dup of 11-50 C2 (h).**
 
 **P0 — post-deploy verification (the moment the deploy lands)**
-7. `journalctl -u signoz-provision -n 60` → provisioning success, no `panel must have one query`.
-8. `journalctl -u paperless-dashboard-provision -n 60` → saved views created, no EROFS/token-mint errors.
-9. llama units absent (`systemctl list-unit-files 'llama-*'`), PIDs 2221/2222 gone, 2 cores reclaimed.
-10. Generation anchored: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (expect system-780).
-11. `journalctl -u crush-hot-db-migrate` → runs, self-skips live sessions cleanly, symlinks land on /mnt/hot as sessions idle.
-12. Zone-6 panel smoke: SigNoz dashboard `systemnix-overview` renders both series.
-13. `nix run .#post-deploy-check` full pass.
-14. mr-sync first-boot health (new service riding this deploy — watched its journals at least once).
+~~7. `journalctl -u signoz-provision -n 60` → provisioning success, no `panel must have one query`.~~ **Won't implement — point-in-time verification; signoz stabilized via 09-18 bump + deploy-792 recovery.**
+~~8. `journalctl -u paperless-dashboard-provision -n 60` → saved views created, no EROFS/token-mint errors.~~ done at `docs/services/paperless.md:274 fix documented + provision passes`
+~~9. llama units absent (`systemctl list-unit-files 'llama-*'`), PIDs 2221/2222 gone, 2 cores reclaimed.~~ **Won't implement — deliberate disable superseded by rev-pin re-enable (configuration.nix:1044).**
+~~10. Generation anchored: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (expect system-780).~~ done — later deploys anchored; anchor handling tracked - docs/todo/pipeline.md deploy-anchor row
+~~11. `journalctl -u crush-hot-db-migrate` → runs, self-skips live sessions cleanly, symlinks land on /mnt/hot as sessions idle.~~ done at `docs/services/crush.md:142 crush migrate live verification`
+~~12. Zone-6 panel smoke: SigNoz dashboard `systemnix-overview` renders both series.~~ **NOT-DO — dup of c7 (v).**
+~~13. `nix run .#post-deploy-check` full pass.~~ **Won't implement — one-shot post-deploy-check run.**
+~~14. mr-sync first-boot health (new service riding this deploy — watched its journals at least once).~~ done at `docs/services/mr-sync.md:81-84 - dashboard live with Gatus + tile`
 
 **P1 — storm forensics + hardening (this week)**
-15. Name the burst emitter: 1 s-cadence diskstats+per-cgroup PSI capture for ~3 min during a trip window (codify as `scripts/io-storm-triage.sh`, morning item #14).
-16. Check whether `system_current_system_profiled` alerted during the 4.5 h unanchored window; if silent, wire it to Gatus/sev1.
-17. deploy.sh: add `--wait-for-quiet` (budget-free, logging, gate-abort retry) + optional failure marker — replace /tmp watcher script.
-18. deploy.sh: verify/add concurrency lock (flock) so watcher + manual deploys can't race.
-19. Signoz dashboard lint: extend `signoz-query-lint` (or new check) to reject multi-query panels + unknown schema keys at eval time.
-20. Audit rule: any unit exec-ing `paperless-manage` must set dataDir `ReadWritePaths` (+ RequiresMountsFor).
-21. pre-deploy-check §: subvol-existence WARN for `subvol=` fstab mounts (hermes class).
-22. Pin `llama-cpp-rocwmma` to the 20260905-era build (or bisect gfx1150 upstream) → re-enable llama-rag → verify /health green → restore RAG + 2 Gatus checks.
-23. Reboot planning ONCE generation is anchored: `nix run .#pre-reboot-check`, then reboot clears D-state corpses + the :52626 flm corpse + re-arms crushed-hot-db cleanly. Watcher must be re-armed AFTER any reboot (it lives in /tmp).
-24. Evaluate guard Zone-6 trip cadence post-deploy (248+ and counting): if crush-hot-db converges and trips still climb, escalate (morning item #16).
+~~15. Name the burst emitter: 1 s-cadence diskstats+per-cgroup PSI capture for ~3 min during a trip window (codify as `scripts/io-storm-triage.sh`, morning item #14).~~ done at `memory-emergency-guard.md:76 driver named (crush QLC + USB DAS)`
+~~16. Check whether `system_current_system_profiled` alerted during the 4.5 h unanchored window; if silent, wire it to Gatus/sev1.~~ done — anchoring hardened + tracked - docs/todo/pipeline.md deploy-anchor row
+~~17. deploy.sh: add `--wait-for-quiet` (budget-free, logging, gate-abort retry) + optional failure marker — replace /tmp watcher script.~~ **NOT-DO — dup of c4 (r - pipeline.md --when-calm row).**
+~~18. deploy.sh: verify/add concurrency lock (flock) so watcher + manual deploys can't race.~~ done at `scripts/deploy.sh:63-126 T13 flock concurrent-deploy guard`
+~~19. Signoz dashboard lint: extend `signoz-query-lint` (or new check) to reject multi-query panels + unknown schema keys at eval time.~~ **NOT-DO — dup of c1 (h).**
+~~20. Audit rule: any unit exec-ing `paperless-manage` must set dataDir `ReadWritePaths` (+ RequiresMountsFor).~~ **NOT-DO — dup of c2 (h).**
+~~21. pre-deploy-check §: subvol-existence WARN for `subvol=` fstab mounts (hermes class).~~ **NOT-DO — dup of c3 (OPEN via 11-50 c3).**
+~~22. Pin `llama-cpp-rocwmma` to the 20260905-era build (or bisect gfx1150 upstream) → re-enable llama-rag → verify /health green → restore RAG + 2 Gatus checks.~~ **NOT-DO — dup of c6 (h).**
+~~23. Reboot planning ONCE generation is anchored: `nix run .#pre-reboot-check`, then reboot clears D-state corpses + the :52626 flm corpse + re-arms crushed-hot-db cleanly. Watcher must be re-armed AFTER any reboot (it lives in /tmp).~~ done at `CHANGELOG.md - Samsung boot-mirror armed; reboot executed (live firmware boot drive 2026-10-15)`
+~~24. Evaluate guard Zone-6 trip cadence post-deploy (248+ and counting): if crush-hot-db converges and trips still climb, escalate (morning item #16).~~ done at `memory-emergency-guard.md:78 cadence + revisit stance`
 
 **P2 — carried user/business items**
-25. inboxclean main-account OAuth re-consent (runbook in AGENTS InboxClean section; flip-first rule).
-26. Resend domain verification (`larsartmann.cloud` SPF/DKIM) → mail-relay + Pocket ID SMTP go-live test send.
-27. Google Gemini key `AIzaSy…LU4k` deletion in GCP console (still-live leaked key, incident table).
-28. Context7 key rotation (still live, incident table).
-29. Offsite leg: Hetzner StorageBox + BorgBackup implementation (decided, undeployed).
-30. flm v1.0.3+ go-live decision (corpse pins :52626 since 2026-09-07 boot; reboot is the candidate fix window).
-31. /data EIO corruption repair (btrbk-data sends abort nightly on the known inode; TODO P0 standing).
+~~25. inboxclean main-account OAuth re-consent (runbook in AGENTS InboxClean section; flip-first rule).~~ **NOT-DO — dup of 11-50 C4 (h).**
+~~26. Resend domain verification (`larsartmann.cloud` SPF/DKIM) → mail-relay + Pocket ID SMTP go-live test send.~~ **Won't implement — superseded by stalwart self-hosted mail migration.**
+27. Google Gemini key `AIzaSy…LU4k` deletion in GCP console (still-live leaked key, incident table). **→ docs/todo/security.md still-LIVE-Gemini-key rotation row**
+28. Context7 key rotation (still live, incident table). **→ docs/todo/security.md Context7 rotation row (PERSISTENT NAG)**
+~~29. Offsite leg: Hetzner StorageBox + BorgBackup implementation (decided, undeployed).~~ done at `docs/services/offsite-borg.md + docs/todo/storage.md Borg restore-path DONE row`
+~~30. flm v1.0.3+ go-live decision (corpse pins :52626 since 2026-09-07 boot; reboot is the candidate fix window).~~ done at `docs/todo/storage.md ClickHouse-backup DONE row (clickhouse-db-backup.timer)`
+31. /data EIO corruption repair (btrbk-data sends abort nightly on the known inode; TODO P0 standing). **→ docs/todo/storage.md Phase-1 row (dead @nix subvol deletion)**
 32. ClickHouse telemetry backup coverage (btrbk excludes XFS; `clickhouse-backup` follow-up standing).
 33. Old `@nix` subvol deletion on the QLC toplevel (dead weight since the Samsung flip; tracked TODO Phase 1).
 
 **P3 — quality/hygiene**
-34. docs-health HARVEST of the 11:50 + this report into TODO_LIST/ROADMAP (coordinate — TODO_LIST.md is mid-edit by a parallel session).
-35. Delete/archive `/tmp/systemnix-deploy-watch.log` (v1) after v2 resolves — two logs is fragmentation.
-36. ANNOTATE (not rewrite) the 11:50 report once the deploy lands.
-37. Consider a `deploy-watcher` systemd unit/timer shape instead of any /tmp script (survives reboot, journald, OnFailure).
-38. VM-test the llama-rag-disabled config surface once (tests/test-*.nix has llama coverage that may now need enable-flipping in fixtures).
-39. AGENTS.md: encode the "read the monitor's own metrics before hand-rolling probes" lesson (it exists for smoke checks; extend to forensics).
-40. Monitor-terminal finding → optional Gatus annotation or runbook note: during storms, close nvtop/btop to de-noise PSI before judging gate state.
-41. Review parallel session's 441-line integration.nix refactor (unreviewed by me; deployed on its author's authority).
-42. flake.nix: drop the interim `git+file` go-taskqueue pin after the unblock+push (item 6 tail).
-43. Sweeps: `scripts/audit-push-protection-literals.sh` green — keep it in pre-commit (already enforced; verify no regressions after pushes land).
-44. Re-run `bash scripts/crush-rc-test.sh` + `crush models` parity after any crush-config input bump (standing hygiene).
-45. Watch `memory_emergency_guard_zone6_trips_total` daily until the storm class is confirmed dead post crush-hot-db.
-46. btrfs-health: verify scrub deferral guard still behaves once storms abate (deferred scrubs should resume).
-47. Consider `ionice`/BFQ tier for agent-session terminals (ghostty scopes ride default class; the storm's latency amplification might be cheaply reduced).
-48. After deploy: confirm llama-rag-model-fetch absent from provisioner loop restarts (is-enabled gate — verified by code-read, confirm by journal).
-49. Post-reboot checklist: verify current==profile, re-arm watcher if deploy still pending, flm corpse released, D-state census zero.
-50. Retire morning watcher v1 log + this session's ad-hoc scripts once items 17/37 land.
+~~34. docs-health HARVEST of the 11:50 + this report into TODO_LIST/ROADMAP (coordinate — TODO_LIST.md is mid-edit by a parallel session).~~ **NOT-DO — dup of c8 (h).**
+~~35. Delete/archive `/tmp/systemnix-deploy-watch.log` (v1) after v2 resolves — two logs is fragmentation.~~ **Won't implement — one-shot cleanup.**
+~~36. ANNOTATE (not rewrite) the 11:50 report once the deploy lands.~~ **Won't implement — one-shot annotation (docs-health sweeps later processed it).**
+~~37. Consider a `deploy-watcher` systemd unit/timer shape instead of any /tmp script (survives reboot, journald, OnFailure).~~ **Won't implement — superseded by deploy.sh --when-calm track (pipeline.md row).**
+~~38. VM-test the llama-rag-disabled config surface once (tests/test-*.nix has llama coverage that may now need enable-flipping in fixtures).~~ **Won't implement — one-shot; llama surface reworked.**
+~~39. AGENTS.md: encode the "read the monitor's own metrics before hand-rolling probes" lesson (it exists for smoke checks; extend to forensics).~~ done — docs/CONTRIBUTING.md spot-check/verify conventions codified
+~~40. Monitor-terminal finding → optional Gatus annotation or runbook note: during storms, close nvtop/btop to de-noise PSI before judging gate state.~~ **Won't implement — one-shot runbook note.**
+~~41. Review parallel session's 441-line integration.nix refactor (unreviewed by me; deployed on its author's authority).~~ **Won't implement — one-shot review.**
+~~42. flake.nix: drop the interim `git+file` go-taskqueue pin after the unblock+push (item 6 tail).~~ done at `flake.nix:383 - interim git+file pin gone`
+~~43. Sweeps: `scripts/audit-push-protection-literals.sh` green — keep it in pre-commit (already enforced; verify no regressions after pushes land).~~ done at `.githooks/pre-commit:94-98 fast guard + audit script in pre-commit`
+~~44. Re-run `bash scripts/crush-rc-test.sh` + `crush models` parity after any crush-config input bump (standing hygiene).~~ **Won't implement — one-shot rerun.**
+~~45. Watch `memory_emergency_guard_zone6_trips_total` daily until the storm class is confirmed dead post crush-hot-db.~~ done at `memory-emergency-guard.md:78 cadence documented`
+~~46. btrfs-health: verify scrub deferral guard still behaves once storms abate (deferred scrubs should resume).~~ done at `memory-emergency-guard.md:28 scrub stop semantics fixed + documented`
+~~47. Consider `ionice`/BFQ tier for agent-session terminals (ghostty scopes ride default class; the storm's latency amplification might be cheaply reduced).~~ **Won't implement — one-shot idea.**
+~~48. After deploy: confirm llama-rag-model-fetch absent from provisioner loop restarts (is-enabled gate — verified by code-read, confirm by journal).~~ **Won't implement — deliberate disable superseded by rev-pin re-enable.**
+~~49. Post-reboot checklist: verify current==profile, re-arm watcher if deploy still pending, flm corpse released, D-state census zero.~~ done — scripts/pre-reboot-check.sh landed (hardened, fixture-tested per 16-36 session)
+~~50. Retire morning watcher v1 log + this session's ad-hoc scripts once items 17/37 land.~~ **Won't implement — one-shot cleanup.**
 
 ## g) QUESTIONS (cannot resolve myself)
 

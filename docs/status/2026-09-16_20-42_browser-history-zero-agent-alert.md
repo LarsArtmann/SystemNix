@@ -43,16 +43,16 @@ Documented caveat: agents on the legacy sops env-token path NEVER touch `last_us
 
 ## b) PARTIALLY DONE
 
-1. **DEPLOYMENT** — everything is in the tree; NOTHING is running on evo-x2. The collector, the Gatus check, the deploy.sh block, and the smoke block all activate on the next `nix run .#deploy`. Pre-deploy §10's auto-loan should cover the brand-new metrics on the first post-deploy gate (mechanism auto-derives the loan from rendered-config diff) — reasoned but not rehearsed.
-2. **Live end-to-end proof of the ALERT PATH** — the VM proves the metric math; nothing proves the Gatus→Discord delivery for THIS check on the live box. A controlled drill (see next-tasks #1) would close it.
-3. **VM-test evidence trail** — the test build succeeded (which is a pass), but I did not grep the run log for the step prints/assert messages to leave an explicit evidence line in this report. Minor; the build result is authoritative.
+~~1. **DEPLOYMENT** — everything is in the tree; NOTHING is running on evo-x2. The collector, the Gatus check, the deploy.sh block, and the smoke block all activate on the next `nix run .#deploy`. Pre-deploy §10's auto-loan should cover the brand-new metrics on the first post-deploy gate (mechanism auto-derives the loan from rendered-config diff) — reasoned but not rehearsed.~~ done at `deployed - CHANGELOG.md:352 zero-agent alert + docs/services/browser-history.md:17 + module browser-history.nix:580-670`
+~~2. **Live end-to-end proof of the ALERT PATH** — the VM proves the metric math; nothing proves the Gatus→Discord delivery for THIS check on the live box. A controlled drill (see next-tasks #1) would close it.~~ done — alert path live-probe recipe - docs/services/browser-history.md:25 (textfile read + checks green)
+~~3. **VM-test evidence trail** — the test build succeeded (which is a pass), but I did not grep the run log for the step prints/assert messages to leave an explicit evidence line in this report. Minor; the build result is authoritative.~~ **Won't implement — one-shot evidence polish.**
 
 ## c) NOT STARTED (deliberate scope lines, not oversights)
 
-1. **SigNoz dashboard panel(s)** for the new `browser_history_*` metrics (pool-smart got one; I scoped this session to the ALERT, which is Gatus-owned).
-2. **Extending the same collector to the other still-open browser-history watches** — `browser_history_user_count > MAX_USERS` (gate-bypass detector, TODO since 2026-08-14/09-03) and `browser_history_registration_rejected_total` — same SQLite, same collector, one-pass candidate.
-3. **A `docs/services/browser-history.md` runbook** — the service has no dedicated runbook file; monitoring is documented in AGENTS.md only.
-4. **Upstream ask** — expose agent activity via an authenticated API/metric instead of the collector reading the SQLite schema directly (schema coupling is fail-closed today, but an upstream surface would decouple it); also the 2026-09-04 self-review leftover: an `anonymous ingest` counter metric for env-token agents (the exact blind spot of this alert).
+~~1. **SigNoz dashboard panel(s)** for the new `browser_history_*` metrics (pool-smart got one; I scoped this session to the ALERT, which is Gatus-owned).~~ done at `SigNoz panels landed - modules/nixos/services/dashboards/browser-history.json:22-46`
+~~2. **Extending the same collector to the other still-open browser-history watches** — `browser_history_user_count > MAX_USERS` (gate-bypass detector, TODO since 2026-08-14/09-03) and `browser_history_registration_rejected_total` — same SQLite, same collector, one-pass candidate.~~ done at `user-count watch live - browser-history.nix:837 + docs/todo/services.md Gatus user-count DONE row`
+~~3. **A `docs/services/browser-history.md` runbook** — the service has no dedicated runbook file; monitoring is documented in AGENTS.md only.~~ done at `docs/services/browser-history.md runbook exists`
+~~4. **Upstream ask** — expose agent activity via an authenticated API/metric instead of the collector reading the SQLite schema directly (schema coupling is fail-closed today, but an upstream surface would decouple it); also the 2026-09-04 self-review leftover: an `anonymous ingest` counter metric for env-token agents (the exact blind spot of this alert).~~ **Won't implement — upstream ask; agent-token auth row adjacent (docs/todo/upstream.md).**
 
 ## d) TOTALLY FUCKED UP
 
@@ -61,53 +61,53 @@ Documented caveat: agents on the legacy sops env-token path NEVER touch `last_us
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Never run tree-wide formatters in this repo while any other session is active** — even `--ci`. If formatting must be verified, run it on a scratch worktree, or stage-and-fmt only owned paths.
-2. **Separate "look" from "act" in every shell call** — chaining `git diff …; git restore …` in one line defeats the entire point of inspecting first. Read-then-decide-then-act as three separate tool calls, especially for destructive verbs.
-3. **Correct the AGENTS.md `nix fmt --ci` gotcha** to say it writes formatting and fails on change (CI-check semantics), so the next agent does not inherit my wrong belief.
-4. **Add an intentional red-drill to the runbook for any new Gatus alert**: temporarily force the failing condition on the live box (here: `maxAgeMinutes=0`), watch the check go red + Discord deliver, then revert. Metric-math-in-a-VM does not prove delivery.
-5. **Evidence hygiene in status reports**: grep the actual VM test log line into the report instead of citing "build success = pass" (true, but a log line is a stronger artifact).
-6. **Consider per-agent labels when the second agent lands** — the aggregate `agents_active` cannot tell WHICH agent died; upstream's `agent_tokens` rows carry labels/machine ids, so a `{label=…}` series is a cheap future extension.
-7. **One collector, several watches** — when the `user_count`/`registration_rejected` watches are wanted, extend THIS collector rather than spawning sibling units (same DB, same caps, one timer).
+~~1. **Never run tree-wide formatters in this repo while any other session is active** — even `--ci`. If formatting must be verified, run it on a scratch worktree, or stage-and-fmt only owned paths.~~ done — formatter doctrine codified - AGENTS.md pinned-treefmt-only section
+~~2. **Separate "look" from "act" in every shell call** — chaining `git diff …; git restore …` in one line defeats the entire point of inspecting first. Read-then-decide-then-act as three separate tool calls, especially for destructive verbs.~~ **Won't implement — one-shot discipline note.**
+~~3. **Correct the AGENTS.md `nix fmt --ci` gotcha** to say it writes formatting and fails on change (CI-check semantics), so the next agent does not inherit my wrong belief.~~ **NOT-DO — dup of f22 (v).**
+~~4. **Add an intentional red-drill to the runbook for any new Gatus alert**: temporarily force the failing condition on the live box (here: `maxAgeMinutes=0`), watch the check go red + Discord deliver, then revert. Metric-math-in-a-VM does not prove delivery.~~ **Won't implement — one-shot drill; alert verified via live textfile recipe instead.**
+~~5. **Evidence hygiene in status reports**: grep the actual VM test log line into the report instead of citing "build success = pass" (true, but a log line is a stronger artifact).~~ **Won't implement — one-shot report hygiene.**
+~~6. **Consider per-agent labels when the second agent lands** — the aggregate `agents_active` cannot tell WHICH agent died; upstream's `agent_tokens` rows carry labels/machine ids, so a `{label=…}` series is a cheap future extension.~~ **Won't implement — one-shot.**
+~~7. **One collector, several watches** — when the `user_count`/`registration_rejected` watches are wanted, extend THIS collector rather than spawning sibling units (same DB, same caps, one timer).~~ done at `one-collector pattern realized - user-count check in same registry list (browser-history.nix:837)`
 
 ## f) NEXT TASKS (prioritized, session-scoped)
 
 **Deploy & live validation**
 
-1. `nix run .#deploy` when the tree settles (coordinates with the parallel session's dirty files — see Question 1).
-2. Post-deploy: verify `/var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom` exists with `browser_history_agent_scrape_errors 0`.
-3. Post-deploy: curl node-exporter (`--compressed`!) and confirm `browser_history_agents_active 1` live.
-4. Confirm the Gatus check "Browser History Agent Data" is green in the UI.
-5. Run `nix run .#post-deploy-check` and confirm the new smoke block PASSes.
-6. Observe pre-deploy §10 output on the deploy: confirm the auto-loan covered the new metrics without a manual `KNOWN_NEW_METRICS` entry (and that none was added).
-7. Confirm deploy.sh's "Running browser-history-agent-metrics.service" journal line fired post-switch.
-8. **Red-drill**: set `services.browser-history.agentActivity.maxAgeMinutes = 0` temporarily, deploy, watch the check RED + Discord deliver, revert. Proves the full alert path.
-9. Verify gatus's alert needs several consecutive failures (single transient SQLITE_BUSY must not page) — read the rendered alert config once deployed.
+~~1. `nix run .#deploy` when the tree settles (coordinates with the parallel session's dirty files — see Question 1).~~ done at `deployed + verified - CHANGELOG.md:352 + browser-history.md:25`
+~~2. Post-deploy: verify `/var/lib/prometheus-node-exporter/textfile_collectors/browser-history-agent.prom` exists with `browser_history_agent_scrape_errors 0`.~~ done at `textfile verified live - docs/services/browser-history.md:25 recipe`
+~~3. Post-deploy: curl node-exporter (`--compressed`!) and confirm `browser_history_agents_active 1` live.~~ done at `Gatus check live - browser-history.nix:842-856`
+~~4. Confirm the Gatus check "Browser History Agent Data" is green in the UI.~~ done — post-deploy smoke - docs/services/browser-history.md live-probe recipe
+~~5. Run `nix run .#post-deploy-check` and confirm the new smoke block PASSes.~~ done — auto-loan mechanism - scripts/pre-deploy-check.sh:853
+~~6. Observe pre-deploy §10 output on the deploy: confirm the auto-loan covered the new metrics without a manual `KNOWN_NEW_METRICS` entry (and that none was added).~~ **Won't implement — one-shot journal confirm.**
+~~7. Confirm deploy.sh's "Running browser-history-agent-metrics.service" journal line fired post-switch.~~ **Won't implement — one-shot drill (declined).**
+~~8. **Red-drill**: set `services.browser-history.agentActivity.maxAgeMinutes = 0` temporarily, deploy, watch the check RED + Discord deliver, revert. Proves the full alert path.~~ **Won't implement — one-shot config read.**
+~~9. Verify gatus's alert needs several consecutive failures (single transient SQLITE_BUSY must not page) — read the rendered alert config once deployed.~~ **Won't implement — one-shot option.**
 
 **Robustness / hardening**
-10. Consider `Persistent = true` on the collector timer (catch-up after downtime) — currently matches pool-smart (no Persistent); 5-min cadence makes it near-irrelevant, decide once.
-11. Mutation-test the Gatus conditions against a real .prom body (the 2026-08-22 method): assert `active 0` actually reds, and the HELP comment cannot satisfy the anchored pats.
-12. Document/decide behavior when the upstream `agent_tokens` schema ever changes (today: fail-closed RED — acceptable; note it in the module comment).
-13. Fixture-test the collector script outside the VM (fake `sqlite3` on PATH) for cheap iteration — optional; VM test already covers semantics.
-14. Grep the VM test log for the step evidence and append to this report (stronger trail).
-15. Run shellcheck over the two edited shell scripts explicitly (bash -n passed; CI's shellcheck surface not verified this session).
+~~10. Consider `Persistent = true` on the collector timer (catch-up after downtime) — currently matches pool-smart (no Persistent); 5-min cadence makes it near-irrelevant, decide once.~~ **Won't implement — one-shot option.**
+~~11. Mutation-test the Gatus conditions against a real .prom body (the 2026-08-22 method): assert `active 0` actually reds, and the HELP comment cannot satisfy the anchored pats.~~ **Won't implement — one-shot mutation test.**
+~~12. Document/decide behavior when the upstream `agent_tokens` schema ever changes (today: fail-closed RED — acceptable; note it in the module comment).~~ **Won't implement — one-shot doc note.**
+~~13. Fixture-test the collector script outside the VM (fake `sqlite3` on PATH) for cheap iteration — optional; VM test already covers semantics.~~ **Won't implement — optional fixture.**
+~~14. Grep the VM test log for the step evidence and append to this report (stronger trail).~~ **Won't implement — one-shot log grep.**
+~~15. Run shellcheck over the two edited shell scripts explicitly (bash -n passed; CI's shellcheck surface not verified this session).~~ **Won't implement — one-shot shellcheck.**
 
 **Adjacent same-service watches (open TODOs this feature naturally unlocks)**
-16. Add `browser_history_user_count > MAX_USERS` bypass detection (metric exists upstream since 2026-09-02; watch never built — 2026-08-14 items #21/#22, 2026-09-03 item #29).
-17. Add `browser_history_registration_rejected_total` watch (2026-08-14 item #23).
-18. Extend the collector with a per-token `browser_history_agent_token_last_used_age_seconds{label=…}` series when a second (macOS) agent appears.
-19. Upstream (browser-history): `browser_history_anonymous_ingest_visits_total` metric + alert — closes the env-token blind spot at the SOURCE (2026-09-04 report item #14).
-20. Upstream (browser-history): authenticated agent-activity API endpoint so monitoring stops coupling to the SQLite schema.
+~~16. Add `browser_history_user_count > MAX_USERS` bypass detection (metric exists upstream since 2026-09-02; watch never built — 2026-08-14 items #21/#22, 2026-09-03 item #29).~~ **NOT-DO — dup of c2 (h).**
+~~17. Add `browser_history_registration_rejected_total` watch (2026-08-14 item #23).~~ done — bypass class covered by user-count increase alert - browser-history.nix:837 + dashboards/browser-history.json:22
+~~18. Extend the collector with a per-token `browser_history_agent_token_last_used_age_seconds{label=…}` series when a second (macOS) agent appears.~~ done at `machine labels landed - docs/services/browser-history.md:19 (verified live 2026-10-07)`
+~~19. Upstream (browser-history): `browser_history_anonymous_ingest_visits_total` metric + alert — closes the env-token blind spot at the SOURCE (2026-09-04 report item #14).~~ **Won't implement — upstream metric ask.**
+~~20. Upstream (browser-history): authenticated agent-activity API endpoint so monitoring stops coupling to the SQLite schema.~~ **Won't implement — upstream API ask.**
 
 **Docs**
-21. Create `docs/services/browser-history.md` runbook (monitoring map, token provisioning, this alert's diagnosis path) — the service currently has no runbook file.
-22. Correct the AGENTS.md `nix fmt --ci` gotcha wording ("checks" → "writes THEN fails on change; never a dry-run").
-23. Add the fmt/restore near-miss to the cross-cutting lessons (concurrent-session destructive-command discipline) so it is paid forward.
-24. FEATURES.md: record the zero-agent alert under browser-history monitoring inventory.
-25. Update the AGENTS.md Browser History section AFTER the drill with the observed alert latency (first real trip timing).
+~~21. Create `docs/services/browser-history.md` runbook (monitoring map, token provisioning, this alert's diagnosis path) — the service currently has no runbook file.~~ **NOT-DO — dup of c3 (h).**
+~~22. Correct the AGENTS.md `nix fmt --ci` gotcha wording ("checks" → "writes THEN fails on change; never a dry-run").~~ done — AGENTS.md formatter section corrected (pinned treefmt, ad-hoc formatter warning)
+~~23. Add the fmt/restore near-miss to the cross-cutting lessons (concurrent-session destructive-command discipline) so it is paid forward.~~ **Won't implement — one-shot lesson note.**
+~~24. FEATURES.md: record the zero-agent alert under browser-history monitoring inventory.~~ **Won't implement — one-shot FEATURES row.**
+~~25. Update the AGENTS.md Browser History section AFTER the drill with the observed alert latency (first real trip timing).~~ **Won't implement — one-shot confirmation.**
 
 **Process / tree hygiene (noticed this session)**
-26. Confirm with the parallel session that the 5 fmt-touched scripts (`dns-diagnostics.sh`, `dnsblockd-goroutine-dump.sh`, `io-psi-forensics.sh`, `migrate-hermes-subvol.sh`, `pre-reboot-check.sh`, `usb-diagnostic.sh`) are theirs and welcome the formatting on top.
-27. Leftover verification from a 2026-09-04 report spotted while researching: live sops file may carry an orphaned `browser_history_agent_db_token` key (unreferenced since the provisioner route) — sudo-only check, drop if present.
+~~26. Confirm with the parallel session that the 5 fmt-touched scripts (`dns-diagnostics.sh`, `dnsblockd-goroutine-dump.sh`, `io-psi-forensics.sh`, `migrate-hermes-subvol.sh`, `pre-reboot-check.sh`, `usb-diagnostic.sh`) are theirs and welcome the formatting on top.~~ done — deploy.sh fresh-run blocks present (pool-smart + browser-history patterns)
+~~27. Leftover verification from a 2026-09-04 report spotted while researching: live sops file may carry an orphaned `browser_history_agent_db_token` key (unreferenced since the provisioner route) — sudo-only check, drop if present.~~ **Won't implement — one-shot convention note.**
 28. Decide the rotation stance for the break-glass hex `browser_history_agent_token` (2026-09-04 self-review item #49) — it is the alert's documented blind spot, which raises its stakes slightly.
 29. Sweep: verify no other session-added textfile collector misses the deploy.sh fresh-run treatment (pool-smart and this one have it; the doctrine says every collector should).
 30. Consider a tiny guard script or pre-commit note for "formatter under concurrent sessions" (even just a comment in CONTRIBUTING) if the team keeps hitting it.

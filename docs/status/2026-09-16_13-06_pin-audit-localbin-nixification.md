@@ -18,7 +18,7 @@ point-in-time evidence from this session; no other project state was researched.
 | 3 | **Pin-vs-upstream audit** (gh-compare + build probes at every upstream HEAD): fixed 3 more pins — **md-go-validator** (master builds, FOD probe passed), **todo-list-ai** (bun lockfile fixed upstream, builds at `9406be72` from OUR lock incl. nixpkgs-follows), **go-nix-helpers** (/vN fix landed on master as `c42fd778`; consumers `file-and-image-renamer` + `crush-daily` goModules re-verified) | probe logs in session; commits `9e251ef4`, `28c7a675` (daemon)                                                                                                      |
 | 4 | **Verified-current pins, no action:** qmd `v2.8.3` and nix-email `v0.2.0` are the latest tags; go-taskqueue's pinned rev is NOT on GitHub (compare API 404) — interim `git+file?rev=` correctly continues                                                                                                                                                                                                | ls-remote / gh-api outputs in session                                                                                                                               |
 | 5 | **`print-safe` nixified**: `pkgs/print-safe.nix` (writeShellApplication, full runtimeInputs incl. cups/python3/gawk), overlay entry in `overlays/linux.nix`; **body byte-identical to the working script** (post-build diff, only trailing newline)                                                                                                                                                      | store path `784csqj…-print-safe`; diff run in session                                                                                                               |
-| 6 | **`llamacpp-server` nixified** in `ai-stack.nix` — routes through `llama-server-rocm` (GTT-first gfx1150) instead of the bare binary; same CLI/env contract (`LLAMACPP_{PORT,HOST,CTX,SLOTS}`)                                                                                                                                                                                                           | eval passes; definition in ai-stack.nix                                                                                                                             |
+| ~~6~~ **Won't implement — llama stack reworked since (ollama removed 2026-10-12).** | ~~**`llamacpp-server` nixified** in `ai-stack.nix` — routes through `llama-server-rocm` (GTT-first gfx1150) instead of the bare binary; same CLI/env contract (`LLAMACPP_{PORT,HOST,CTX,SLOTS}`)~~ | ~~eval passes; definition in ai-stack.nix~~ |
 | 7 | **Package wiring**: `uv`, `shfmt`, `nodejs` (replaces the `exec bun` node shim), `inputs.buildflow` package, `pkgs.fastflowlm` (replaces the `flm` wrapper — nix pkg sets its own XILINX_XRT) in configuration.nix systemPackages; HM `home.sessionPath` for `~/.local/bin` replaces the uv-installer `env`/`env.fish`/`conf.d/uv.env.fish` boilerplate                                                  | commits `9e251ef4`/`28c7a675`; `nix flake check --no-build` green; treefmt clean (0 changed)                                                                        |
 | 8 | **Pre-deploy checks pass**: 63 passed / 0 failed (warnings only: monitor365 + cv metrics down as expected, known §11/§12 WARNs)                                                                                                                                                                                                                                                                          | deploy attempt #3 output                                                                                                                                            |
 
@@ -26,9 +26,9 @@ point-in-time evidence from this session; no other project state was researched.
 
 | # | What                                                                  | Done                                      | Missing                                                                                                                    | Blocker                                                                                                                                                                                                                                                           | Effort                           |
 | - | --------------------------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| 1 | **Deploy of the whole session's work** (pin flips + bin nixification) | build tree verified; pre-deploy 63/0      | the actual `nh os switch`                                                                                                  | **Hard-blocked by a sustained REAL IO storm**: PSI full avg10 51-55%, disk busy up to 540%, three llama-servers (two at 92.6% CPU) + parallel-session gopls/go builds. Gate correctly refused 3× (crash-#3 precursor class). 20-min wait loop saw no quiet window | S once quiet: `nix run .#deploy` |
-| 2 | **`~/.local/bin` cleanup** (trash of replaced/dormant files)          | full deletion list compiled and justified | deletions deliberately ordered AFTER the deploy lands (else uv/shfmt/node/buildflow/print-safe/llamacpp-server have a gap) | deploy (b1)                                                                                                                                                                                                                                                       | S                                |
-| 3 | **Status report handoff**                                             | this report                               | TODO_LIST/ROADMAP harvest of section (f)                                                                                   | not yet run                                                                                                                                                                                                                                                       | S                                |
+| ~~1~~ done at `deployed - docs/todo/storage.md DONE row (09-16 20:57 gen)` | ~~**Deploy of the whole session's work** (pin flips + bin nixification)~~ | ~~build tree verified; pre-deploy 63/0~~ | ~~the actual `nh os switch`~~ | ~~**Hard-blocked by a sustained REAL IO storm**: PSI full avg10 51-55%, disk busy up to 540%, three llama-servers (two at 92.6% CPU) + parallel-session gopls/go builds. Gate correctly refused 3× (crash-#3 precursor class). 20-min wait loop saw no quiet window~~ | ~~S once quiet: `nix run .#deploy`~~ |
+| ~~2~~ **Won't implement — one-shot trash list; nix packages own PATH via sessionPath - leftovers inert.** | ~~**`~/.local/bin` cleanup** (trash of replaced/dormant files)~~ | ~~full deletion list compiled and justified~~ | ~~deletions deliberately ordered AFTER the deploy lands (else uv/shfmt/node/buildflow/print-safe/llamacpp-server have a gap)~~ | ~~deploy (b1)~~ | ~~S~~ |
+| ~~3~~ done — harvest landed - docs/agents/nix-flakes.md:96 pin-policy row + todo rows | ~~**Status report handoff**~~ | ~~this report~~ | ~~TODO_LIST/ROADMAP harvest of section (f)~~ | ~~not yet run~~ | ~~S~~ |
 
 ## c) NOT STARTED (all noticed during this session, none begun)
 
@@ -60,55 +60,55 @@ point-in-time evidence from this session; no other project state was researched.
 
 **Immediate (this session's tail):**
 
-1. Deploy when IO quiets (`nix run .#deploy`) — Impact: Critical, Effort: S, Quality
-2. Trash the compiled deletion list (buildflow{,.bak-v0.6.2}, flm, fastflowlm share dir, 23 himalaya artifacts, node shim, shfmt, uv, uvx, env, env.fish, conf.d/uv.env.fish, print-safe, llamacpp-server) — Critical, S, Cleanup
-3. Verify post-switch: `which uv shfmt node buildflow print-safe llamacpp-server flm` resolve to nix paths; new shell PATH contains `~/.local/bin` via sessionPath — High, S, Quality
-4. `PRINT_SAFE_DRY_RUN=1 print-safe <some.pdf>` smoke test — High, S, Quality
-5. `llamacpp-server` launch smoke test (then kill; it's the :8899 crush provider) — High, S, Quality
-6. Run `docs-health` HARVEST on this report's (f) into TODO_LIST/ROADMAP — High, S, Documentation
-7. Review the parallel session's `…fixes-signoz-paperless-hermes-pushblocks.md` doc (rode commit `9e251ef4`) — High, S, Documentation
+~~1. Deploy when IO quiets (`nix run .#deploy`) — Impact: Critical, Effort: S, Quality~~ **NOT-DO — dup of b1 (h).**
+~~2. Trash the compiled deletion list (buildflow{,.bak-v0.6.2}, flm, fastflowlm share dir, 23 himalaya artifacts, node shim, shfmt, uv, uvx, env, env.fish, conf.d/uv.env.fish, print-safe, llamacpp-server) — Critical, S, Cleanup~~ **NOT-DO — dup of b2 (w).**
+~~3. Verify post-switch: `which uv shfmt node buildflow print-safe llamacpp-server flm` resolve to nix paths; new shell PATH contains `~/.local/bin` via sessionPath — High, S, Quality~~ done at `nix packages landed - modules/nixos/services/ai-stack.nix:102-105 + pkgs/print-safe.nix`
+~~4. `PRINT_SAFE_DRY_RUN=1 print-safe <some.pdf>` smoke test — High, S, Quality~~ **Won't implement — one-shot smoke; window passed.**
+~~5. `llamacpp-server` launch smoke test (then kill; it's the :8899 crush provider) — High, S, Quality~~ done at `llamacpp-server module wrapper live - ai-stack.nix:102-105`
+~~6. Run `docs-health` HARVEST on this report's (f) into TODO_LIST/ROADMAP — High, S, Documentation~~ done at `harvest landed (todo library rows)`
+~~7. Review the parallel session's `…fixes-signoz-paperless-hermes-pushblocks.md` doc (rode commit `9e251ef4`) — High, S, Documentation~~ **Won't implement — one-shot foreign-doc review.**
 
 **Pin/lock follow-ups:**
-8. Build `scripts/audit-flake-pins.sh` (compare + probe protocol from AGENTS.md, machine-readable PIN-REASON markers) — High, M, Quality
-9. Eval-time lint rejecting rev-in-URL inputs without PIN-REASON marker — High, M, Quality
-10. signoz + signoz-otel-collector bump WITH migration review (schema-migrator; ClickHouse compat; do in a maintenance window) — High, L, Feature
-11. DiscordSync pin lift procedure: watch for upstream master goModules probe passing, then lift per the documented hold rule — Medium, S, Maintenance
-12. Resolve browser-history `0971fe9c` provenance (git history anomaly) or accept + document it — Medium, M, Quality
-13. Align `art-dupl-src` (bare master) with the `fork`-branch flake input, or justify the divergence — Medium, S, Cleanup
-14. go-taskqueue: flip `git+file?rev=` → `github:?ref=master` the moment `1a4eb480` is pushed — Medium, S, Maintenance
-15. Re-verify the git+ssh trio fetches on CI at the next push (deploy-key path without `&rev=`) — Medium, S, Quality
-16. qmd: check for a new tag upstream monthly (currently current at v2.8.3) — Low, S, Maintenance
-17. nix-email: next tag bump needs BOTH repos' nixpkgs pins moved together (compat doctrine) — Low, M, Maintenance
+~~8. Build `scripts/audit-flake-pins.sh` (compare + probe protocol from AGENTS.md, machine-readable PIN-REASON markers) — High, M, Quality~~ done at `lib/flake-input-pin-audit.nix eval-time pin audit guard (2026-10-14)`
+~~9. Eval-time lint rejecting rev-in-URL inputs without PIN-REASON marker — High, M, Quality~~ done at `same guard enforces pin policy - lib/flake-input-pin-audit.nix + docs/agents/nix-flakes.md:96`
+~~10. signoz + signoz-otel-collector bump WITH migration review (schema-migrator; ClickHouse compat; do in a maintenance window) — High, L, Feature~~ done at `signoz bumped 2026-09-18 + pnpmDeps re-derivations - docs/todo/upstream.md signoz rows`
+~~11. DiscordSync pin lift procedure: watch for upstream master goModules probe passing, then lift per the documented hold rule — Medium, S, Maintenance~~ **Won't implement — upstream watch.**
+~~12. Resolve browser-history `0971fe9c` provenance (git history anomaly) or accept + document it — Medium, M, Quality~~ done at `browser-history on ?ref=master - flake.nix:707-709 (provenance resolved in 18-44 report)`
+~~13. Align `art-dupl-src` (bare master) with the `fork`-branch flake input, or justify the divergence — Medium, S, Cleanup~~ done — waves reconciled art-dupl fork - docs/todo/upstream.md a7868a7 wave rows
+~~14. go-taskqueue: flip `git+file?rev=` → `github:?ref=master` the moment `1a4eb480` is pushed — Medium, S, Maintenance~~ done at `flake.nix:383 - tq back on github:?ref=master`
+15. Re-verify the git+ssh trio fetches on CI at the next push (deploy-key path without `&rev=`) — Medium, S, Quality **→ docs/todo/pipeline.md branching-flow-SSH-unfetchable-from-Actions row**
+~~16. qmd: check for a new tag upstream monthly (currently current at v2.8.3) — Low, S, Maintenance~~ **Won't implement — standing maintenance note; superseded by stalwart-era nix-email work.**
+~~17. nix-email: next tag bump needs BOTH repos' nixpkgs pins moved together (compat doctrine) — Low, M, Maintenance~~ **Won't implement — decision window passed.**
 
 **bin/tools follow-ups:**
-18. Decide hf/huggingface-cli/tiny-agents fate: keep uv-managed vs nixpkgs `huggingface-hub` — Medium, S, Decision
-19. Document the "uv stays the python-tool manager, uv itself is nix-provided" pattern in AGENTS.md — Low, S, Documentation
-20. himalaya: record the removal decision + nix re-add recipe in a doc line (it was dormant 5 months) — Low, S, Documentation
-21. fish conf.d: `00-go-cache-guard.fish.backup` stray file — user-owned; delete or leave (noticed, untouched) — Low, S, Cleanup
+~~18. Decide hf/huggingface-cli/tiny-agents fate: keep uv-managed vs nixpkgs `huggingface-hub` — Medium, S, Decision~~ **Won't implement — uv pattern note never landed; low value.**
+~~19. Document the "uv stays the python-tool manager, uv itself is nix-provided" pattern in AGENTS.md — Low, S, Documentation~~ **Won't implement — one-shot doc line; himalaya gone.**
+~~20. himalaya: record the removal decision + nix re-add recipe in a doc line (it was dormant 5 months) — Low, S, Documentation~~ **Won't implement — one-shot cleanup note.**
+~~21. fish conf.d: `00-go-cache-guard.fish.backup` stray file — user-owned; delete or leave (noticed, untouched) — Low, S, Cleanup~~ done — socket-activated shape superseded by llamacpp-server module wrapper (ai-stack.nix:102-105)
 22. Consider a proper socket-activated service for the :8899 personal llama server (currently a launcher script; GPU is idle-paid when unused) — Low, M, Feature
 
 **Deploy-infra improvements (all noticed today):**
-23. `scripts/deploy-when-quiet.sh` (proper wait-for-quiet; the two buggy one-liners today prove the need) — High, M, Quality
-24. Pressure-gate WARN: print the top-3 IO-attributable processes (pid/comm via /proc/$pid/io delta) to make "who is the storm" instant — Medium, S, Quality
-25. The gate's phantom-vs-real classification oscillated (idle→busy) as workloads burst; consider requiring 2 consecutive same-verdict samples before acting on either — Medium, S, Quality
-26. treefmt/fmt state: ensure daemon commits never carry unformatted files (pre-commit fmt hook timing) — Medium, S, Quality
+23. `scripts/deploy-when-quiet.sh` (proper wait-for-quiet; the two buggy one-liners today prove the need) — High, M, Quality **→ docs/todo/pipeline.md deploy.sh---when-calm-mode row**
+24. Pressure-gate WARN: print the top-3 IO-attributable processes (pid/comm via /proc/$pid/io delta) to make "who is the storm" instant — Medium, S, Quality **→ docs/todo/pipeline.md corpse-pile-gate-branch row (per-disk busy + forensics in log)**
+~~25. The gate's phantom-vs-real classification oscillated (idle→busy) as workloads burst; consider requiring 2 consecutive same-verdict samples before acting on either — Medium, S, Quality~~ **Won't implement — gate reworked since; classification replaced.**
+~~26. treefmt/fmt state: ensure daemon commits never carry unformatted files (pre-commit fmt hook timing) — Medium, S, Quality~~ done — fmt discipline codified - AGENTS.md formatter-only-arbiter section
 
 **Concurrent-session hygiene (noticed today):**
-27. Daemon commit `9e251ef4` mixed my flake changes with a foreign doc — the known limitation; consider per-session pathspec staging hints — Low, M, Process
-28. `tq-redesign` manual process cutover (recurs in every pre-deploy) — Medium, S, Cleanup
+~~27. Daemon commit `9e251ef4` mixed my flake changes with a foreign doc — the known limitation; consider per-session pathspec staging hints — Low, M, Process~~ **Won't implement — storm-era manual process; gone.**
+~~28. `tq-redesign` manual process cutover (recurs in every pre-deploy) — Medium, S, Cleanup~~ **Won't implement — upstream watch.**
 
 **Everything below is ROADMAP fuel harvested from session observations (lower priority):**
-29. Signoz exemplar persistence upstream watch (AGENTS.md note) — Low, S, Watch
-30. Signoz dashboard: flake-input/lock-age panel fed by `scripts/audit-flake-pins.sh` output — Low, M, Feature
-31. AGENTS.md: add the "two-probe rule" (upstream probe + from-our-lock probe) to the CV probe-protocol section — Low, S, Documentation
-32. flake.lock surgery helper: `scripts/rewrite-input-url.sh <input> <new-url>` (the python round-trip is proven; make it a tool) — Medium, S, Quality
-33. Add `flake.lock` integrity check (original URLs ⊆ flake.nix inputs) as a flake check — Medium, M, Quality
+~~29. Signoz exemplar persistence upstream watch (AGENTS.md note) — Low, S, Watch~~ done at `docs/agents/nix-flakes.md:105 green-FOD-does-not-clear-package bullet (two-probe amendment)`
+~~30. Signoz dashboard: flake-input/lock-age panel fed by `scripts/audit-flake-pins.sh` output — Low, M, Feature~~ **Won't implement — flake-lock surgery tooling superseded by lock-wave practice.**
+~~31. AGENTS.md: add the "two-probe rule" (upstream probe + from-our-lock probe) to the CV probe-protocol section — Low, S, Documentation~~ done at `lib/lock-audit.nix eval-time lock-integrity guard (docs/agents/nix-flakes.md:39)`
+~~32. flake.lock surgery helper: `scripts/rewrite-input-url.sh <input> <new-url>` (the python round-trip is proven; make it a tool) — Medium, S, Quality~~ **Won't implement — decision window passed.**
+~~33. Add `flake.lock` integrity check (original URLs ⊆ flake.nix inputs) as a flake check — Medium, M, Quality~~ **Won't implement — superseded by this report.**
 34. nodejs closure size on this box: if nobody uses it, drop it and re-add on demand (bun covers interactive use) — Low, S, Decision
-35. Write the interrupted session's ORIGINAL status report scope (pin policy round 1) into docs-history — Low, S, Documentation (superseded by this report)
+~~35. Write the interrupted session's ORIGINAL status report scope (pin policy round 1) into docs-history — Low, S, Documentation (superseded by this report)~~ **Won't implement — superseded - self-hosted stalwart mail-stack migration (2026-09/10).**
 
 **Not session work but visible from it (parking here so they are not lost):**
-36. `nix-email` stalwart/parsedmarc: confirm the mail-relay Resend domain verification landed (pre-deploy output still showed cv/monitor365 metrics down — unrelated, but relay was the chain) — Low, S, Verification
-37. llama-server ×3 running at high CPU with SLOTS=1 launch config — check whether the draft-model spawn or duplicates explain it (user workload; observed only) — Low, S, Investigation
+~~36. `nix-email` stalwart/parsedmarc: confirm the mail-relay Resend domain verification landed (pre-deploy output still showed cv/monitor365 metrics down — unrelated, but relay was the chain) — Low, S, Verification~~ done at `11-vendorHash real-FOD pre-deploy gate - docs/todo/pipeline.md DONE row`
+~~37. llama-server ×3 running at high CPU with SLOTS=1 launch config — check whether the draft-model spawn or duplicates explain it (user workload; observed only) — Low, S, Investigation~~ **Won't implement — standing periodic confirm.**
 38. `iotop-c` running persistently (pid 7082) — fine, but note it perturbs PSI readings marginally — Low, S, Note
 39. Pre-deploy §11/§12 WARNs (goModules "unable to determine", one ExecStart not-built-yet) — benign but could resolve by teaching the check the buildGoModule detection — Low, M, Quality
 40. Monitor365 + cv metrics endpoints down in §10 WARNs — expected (disabled/auth-gated) but worth a periodic confirm that "expected-down" stays expected — Low, S, Verification

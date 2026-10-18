@@ -68,30 +68,30 @@ Session began as a nixpkgs question (`pkgs/by-name/cr/crush`), expanded into a c
 
 ## f) NEXT UP TO 50 (rough order)
 
-1. Print variant B's full error text (no filters) — identify where «primop head» becomes a value.
-2. Deeper bisect: force-print `anchors` / `foldState.rules` / `resolvedRules` via a debug assertion or nix repl against the fixture.
-3. Fix the `age:` ref-pollution (accept only `*anchor` / `age1…` refs).
+~~1. Print variant B's full error text (no filters) — identify where «primop head» becomes a value.~~ done at `rescued green same day (16-36 session) - modules/nixos/services/sops-recipient-audit.nix + tests registered`
+~~2. Deeper bisect: force-print `anchors` / `foldState.rules` / `resolvedRules` via a debug assertion or nix repl against the fixture.~~ **NOT-DO — dup of f1-f6 rescue (h).**
+~~3. Fix the `age:` ref-pollution (accept only `*anchor` / `age1…` refs).~~ **NOT-DO — dup of f1-f6 rescue (h).**
 4. Re-run `nix build .#checks.x86_64-linux.sops-recipient-audit` to green.
 5. Run `checks.x86_64-linux.module-shape-lint` + `checks.x86_64-linux.sops-key-audit` (regression).
 6. Full `nix flake check` (or `--no-build`) — confirm repo-wide green again.
 7. Verify `nixosConfigurations.rpi3-dns` evals with both new audit imports (and its assertions pass).
 8. alejandra-format the new/edited files; confirm no unrelated reformat.
 9. Add the unresolved-anchor fixture case to the negative test.
-10. Update AGENTS.md guard table (eval-time row: add recipient-drift class + file).
-11. Update AGENTS.md "Sops + Age" section: updatekeys doctrine, guard reference, candidate-key caveat.
+~~10. Update AGENTS.md guard table (eval-time row: add recipient-drift class + file).~~ done — docs/agents/secrets.md carries sops/gitleaks coverage table + doctrine
+~~11. Update AGENTS.md "Sops + Age" section: updatekeys doctrine, guard reference, candidate-key caveat.~~ done — guard documented via module + docs/agents/secrets.md; AGENTS prevention-layer rows
 12. TODO_LIST.md: rpi3 recipient-completion runbook entry (verify candidate on-Pi → add key to `.sops.yaml` → `sops updatekeys` the 3 rpi3 files → flip creation rule → guard enforces).
 13. TODO_LIST.md: P0 3-2-1 host-key backup entry (ADR-004 mandate, 6 months overdue).
-14. Refresh `.sops.yaml` rpi3 comment with the candidate recipient + runbook pointer.
+~~14. Refresh `.sops.yaml` rpi3 comment with the candidate recipient + runbook pointer.~~ done — .sops.yaml:3-5 refreshed rpi3 comment present (candidate key still unverified)
 15. USER (on-Pi, 30s): `ssh-to-age < /etc/ssh/ssh_host_ed25519_key.pub` — confirm/deny `age1q95uej…`.
 16. USER (sudo, in-session): the `sops updatekeys` one-liners for dns-failover.yaml + dnsblockd-certs.yaml + dnsblockd-auth.yaml.
-17. Consider a per-file recipient design: second creation_rule for the rpi3-consumed trio only (blast-radius: Pi key should NOT decrypt github/hermes/bank secrets).
-18. Consider extending the audit: warn when a rule has zero age recipients (pgp-only/inert).
-19. Consider a host-imports-the-audits assertion (Gap-3 regression guard).
-20. nixpkgs PR (if green-lit): fork, branch `crush-0.94.2`, version+hashes+`buildGo127Module`, local `nix-build -A crush`, `nixpkgs-review`, commit with `Assisted-by: Crush <glm-5.3>` trailer + PR-body disclosure.
-21. Post-PR: watch ofborg, respond to review, `backport` labels only if maintainers ask.
-22. Long-term: revisit whether Charm-NUR freshness + a source-built nixpkgs fallback can coexist (overlay fallback when NUR lags).
-23. Sweep: are there OTHER hosts (zfs-vm) importing `nixosModules.sops` without the audits? (zfs-vm had no sops imports found this session — verify intentionally.)
-24. Long-term: revisit ADR-004 "no rotation" — the stale-recipient half of the new guard makes rotation enforcement cheap now.
+~~17. Consider a per-file recipient design: second creation_rule for the rpi3-consumed trio only (blast-radius: Pi key should NOT decrypt github/hermes/bank secrets).~~ **NOT-DO — dup of f12 cluster (OPEN - rpi3 recipient completion).**
+~~18. Consider extending the audit: warn when a rule has zero age recipients (pgp-only/inert).~~ **Won't implement — nice-to-have guard extension.**
+19. Consider a host-imports-the-audits assertion (Gap-3 regression guard). **→ docs/todo/pipeline.md Eval-guard-additions row (cross-host audit-parity class)**
+~~20. nixpkgs PR (if green-lit): fork, branch `crush-0.94.2`, version+hashes+`buildGo127Module`, local `nix-build -A crush`, `nixpkgs-review`, commit with `Assisted-by: Crush <glm-5.3>` trailer + PR-body disclosure.~~ **NOT-DO — dup of c-item nixpkgs PR (w - altruistic, window passed).**
+~~21. Post-PR: watch ofborg, respond to review, `backport` labels only if maintainers ask.~~ **NOT-DO — dup of f20 (w).**
+~~22. Long-term: revisit whether Charm-NUR freshness + a source-built nixpkgs fallback can coexist (overlay fallback when NUR lags).~~ **Won't implement — idea; Charm-NUR path retained.**
+23. Sweep: are there OTHER hosts (zfs-vm) importing `nixosModules.sops` without the audits? (zfs-vm had no sops imports found this session — verify intentionally.) **→ docs/todo/pipeline.md Retire-stale-ZFS-VM-scripts row**
+24. Long-term: revisit ADR-004 "no rotation" — the stale-recipient half of the new guard makes rotation enforcement cheap now. **→ docs/todo/security.md PERSISTENT-NAG rotation rows + docs/security/rotations.md ledger**
 
 ## g) QUESTIONS (cannot resolve myself)
 

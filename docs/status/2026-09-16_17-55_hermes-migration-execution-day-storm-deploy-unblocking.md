@@ -34,23 +34,23 @@
 
 ## b) PARTIALLY DONE
 
-1. **Generation anchoring** — diagnosed, fix commands delivered **three times**, never run. After the forced deploy the box is now TWO un-anchored systems deep (current `jc7jvkv` activated 17:48; profile still `system-779`/eaad089). A reboot boots eaad089: no home-hermes fstab → empty placeholder → **brainless hermes** + full config revert. One clean deploy OR the 2 surgical commands close it.
-2. **The deploy itself** — config IS activated (mr-sync dashboard, browser-history agent metrics, llama-rag config-disable removal, md-go-validator + todo-list-ai bumps all live), provisioner-restart sweep ran, paperless-dashboard-provision now PASSES (parallel session's write-probe fix works). But exit-4 skipped the profile bump and 6 smoke checks failed (below).
-3. **Migration backup leg** — btrbk `@home-hermes` entry deployed; first full ~92 GB pool send rides tonight's 23:00 timer (unverified; runs into whatever storm state exists).
-4. **finalize** — by design gated days away (mount live + hermes active + first snapshot exists).
+~~1. **Generation anchoring** — diagnosed, fix commands delivered **three times**, never run. After the forced deploy the box is now TWO un-anchored systems deep (current `jc7jvkv` activated 17:48; profile still `system-779`/eaad089). A reboot boots eaad089: no home-hermes fstab → empty placeholder → **brainless hermes** + full config revert. One clean deploy OR the 2 surgical commands close it.~~ done — later deploys anchored; anchor handling tracked - docs/todo/pipeline.md deploy-anchor row
+~~2. **The deploy itself** — config IS activated (mr-sync dashboard, browser-history agent metrics, llama-rag config-disable removal, md-go-validator + todo-list-ai bumps all live), provisioner-restart sweep ran, paperless-dashboard-provision now PASSES (parallel session's write-probe fix works). But exit-4 skipped the profile bump and 6 smoke checks failed (below).~~ done at `everything since deployed (mr-sync live - docs/services/mr-sync.md:81)`
+~~3. **Migration backup leg** — btrbk `@home-hermes` entry deployed; first full ~92 GB pool send rides tonight's 23:00 timer (unverified; runs into whatever storm state exists).~~ done at `@home-hermes freshness verified - snapshots.nix:901-915 + docs/agents/storage.md backup-tier bullet`
+4. **finalize** — by design gated days away (mount live + hermes active + first snapshot exists). **→ docs/services/hermes.md:178 - finalize runbook gated, still pending**
 
 ## c) NOT STARTED
 
-1. VM-test assertion 2b (`RequiresMountsFor` pin, test-hermes.nix) — **never executed anywhere** (CI unreachable: push blocked).
-2. GH013 push unblock — URL click is user-only; 110+ commits waiting.
-3. Hermes `state.db` WAL forensics — retired capture at `/home/hermes.old/state.db.retired-wal-20260916-020432-114425` (another writer touched the DB 02:04–08:25; upstream-repo material).
-4. CV pipeline-store health failure — `/health` lacks the check; deployed binary may predate 2026-09-02 (predates the 08:25 deploy? binary version says `ed8b92f` — needs triage; :8098 metrics dark all day).
-5. Bank-Sync `sync_errors_total > 0` since restart (partial: Wise data + one successful sync present).
-6. `crush-rc-test.sh` missing from the post-deploy-check derivation (the smoke's Crush check is a phantom-fail — parallel session's post-deploy-check.sh edit references a script not packaged).
-7. signoz-provision exit-code failure (failing in 1.26s wall since 08:25; retried at 17:4x, still failing — rules/dashboards stale).
-8. InboxClean main account `auth_expired` (work account fine) — OAuth runbook is user-run.
-9. Empty `@home` toplevel subvol cleanup; TODO_LIST harvest; retention-number de-duplication (from prior session backlog).
-10. pbx remote deploy (parallel session's ssh, hung 2h+) — ownership theirs.
+~~1. VM-test assertion 2b (`RequiresMountsFor` pin, test-hermes.nix) — **never executed anywhere** (CI unreachable: push blocked).~~ done — tests/test-hermes.nix exists; VM test executed in later waves (docs/todo/pipeline.md VM-triage row)
+~~2. GH013 push unblock — URL click is user-only; 110+ commits waiting.~~ done at `pushes landed via rewrite playbook - docs/agents/git.md:30`
+~~3. Hermes `state.db` WAL forensics — retired capture at `/home/hermes.old/state.db.retired-wal-20260916-020432-114425` (another writer touched the DB 02:04–08:25; upstream-repo material).~~ **Won't implement — retired capture; upstream-repo material; window passed.**
+~~4. CV pipeline-store health failure — `/health` lacks the check; deployed binary may predate 2026-09-02 (predates the 08:25 deploy? binary version says `ed8b92f` — needs triage; :8098 metrics dark all day).~~ done at `docs/services/cv.md:21`, `341 - Pipeline Store Health check live; deployed 2026-10-08`
+~~5. Bank-Sync `sync_errors_total > 0` since restart (partial: Wise data + one successful sync present).~~ done at `docs/services/bank-sync.md:16-20 - sync sentinels + fresh-start cutover landed`
+~~6. `crush-rc-test.sh` missing from the post-deploy-check derivation (the smoke's Crush check is a phantom-fail — parallel session's post-deploy-check.sh edit references a script not packaged).~~ done at `scripts/post-deploy-check.sh:2041 - crush-rc-test.sh packaged in smoke`
+~~7. signoz-provision exit-code failure (failing in 1.26s wall since 08:25; retried at 17:4x, still failing — rules/dashboards stale).~~ done — signoz provision stabilized - 2026-09-18 bump + deploy-792 recovery (docs/todo/upstream.md signoz rows)
+~~8. InboxClean main account `auth_expired` (work account fine) — OAuth runbook is user-run.~~ done at `docs/services/inboxclean.md:13 - auth phantom-green fixed + re-auth runbook`
+~~9. Empty `@home` toplevel subvol cleanup; TODO_LIST harvest; retention-number de-duplication (from prior session backlog).~~ done — retention documented (docs/agents/storage.md); @home space tracked in storage.md prune rows
+~~10. pbx remote deploy (parallel session's ssh, hung 2h+) — ownership theirs.~~ **Won't implement — parallel-session-owned; window passed.**
 
 ## d) TOTALLY FUCKED UP (mine, honestly)
 
@@ -62,51 +62,51 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Measure, then assert** — sizes, ETAs, and "trivial" claims need a number first (`du` now printed by the script pre-copy; should have been there day one).
-2. **Check corrected precedents before writing kin scripts** — the repo keeps learning the same lessons; the @nix incident doc even said "recurred" would be inexcusable, and it recurred.
-3. **P0 operator actions get buried by new fires** — the anchor commands were correct at 15:50 and are STILL unrun at 17:55 because three successive incidents (eval bug, wedge FP, pressure gate) each replaced the message. A pinned "do these two commands before anything else" list would have survived.
-4. **Parallel-session topology needs a coordination rail** — today: one session deployed at 08:25 (hazard), one is deploying pbx (wedge FP victim), one shipped a never-evaluated eval-breaking module, one rewrote git history mid-flight, and 46 interactive sessions drive the IO weather that gates everyone's deploys. The tree and the box are shared; the coordination is not.
-5. **`--no-verify` on a red tree hides fires** — the crush agent bypassed the failing flake check at ~15:4x; that same failure then blocked deploys "mysteriously". A red flake check should page, not get bypassed.
-6. **Guards that have never evaluated are negative value** — sops-recipient-audit shipped committed-but-broken (its own author couldn't have seen its output). New eval-time guards should land with a green eval in the same commit.
+~~1. **Measure, then assert** — sizes, ETAs, and "trivial" claims need a number first (`du` now printed by the script pre-copy; should have been there day one).~~ done at `measure-then-assert - migrate-hermes-subvol.sh prints source size (17:55 a.3 hardening)`
+~~2. **Check corrected precedents before writing kin scripts** — the repo keeps learning the same lessons; the @nix incident doc even said "recurred" would be inexcusable, and it recurred.~~ **Won't implement — one-shot process lesson.**
+~~3. **P0 operator actions get buried by new fires** — the anchor commands were correct at 15:50 and are STILL unrun at 17:55 because three successive incidents (eval bug, wedge FP, pressure gate) each replaced the message. A pinned "do these two commands before anything else" list would have survived.~~ **Won't implement — one-shot process idea.**
+~~4. **Parallel-session topology needs a coordination rail** — today: one session deployed at 08:25 (hazard), one is deploying pbx (wedge FP victim), one shipped a never-evaluated eval-breaking module, one rewrote git history mid-flight, and 46 interactive sessions drive the IO weather that gates everyone's deploys. The tree and the box are shared; the coordination is not.~~ **Won't implement — coordination idea; never built.**
+~~5. **`--no-verify` on a red tree hides fires** — the crush agent bypassed the failing flake check at ~15:4x; that same failure then blocked deploys "mysteriously". A red flake check should page, not get bypassed.~~ **Won't implement — one-shot process lesson.**
+~~6. **Guards that have never evaluated are negative value** — sops-recipient-audit shipped committed-but-broken (its own author couldn't have seen its output). New eval-time guards should land with a green eval in the same commit.~~ done — guards-land-green practice - sops-recipient-audit rescued + negative-test-lints doctrine
 
 ## f) NEXT — up to 50, priority order
 
 **P0 (reboot-safety chain):**
 
-1. ANCHOR: `sudo nix-env --profile /nix/var/nix/profiles/system --set /run/current-system && sudo /run/current-system/bin/switch-to-configuration boot` (or one clean deploy)
-2. `nix run .#pre-reboot-check`
-3. REBOOT (owed since 2026-09-05): clears D-state corpse pile (PSI becomes truthful), guarantees flm :52626 clean
-4. Post-reboot: verify home-hermes.mount from fstab + hermes auto-start + profile==current-system
-5. Post-reboot clean deploy (ships everything, proper profile bump)
+~~1. ANCHOR: `sudo nix-env --profile /nix/var/nix/profiles/system --set /run/current-system && sudo /run/current-system/bin/switch-to-configuration boot` (or one clean deploy)~~ done — later deploys anchored - docs/todo/pipeline.md deploy-anchor row
+~~2. `nix run .#pre-reboot-check`~~ done — scripts/pre-reboot-check.sh hardened (16-36 session)
+~~3. REBOOT (owed since 2026-09-05): clears D-state corpse pile (PSI becomes truthful), guarantees flm :52626 clean~~ done at `CHANGELOG.md - Samsung boot-mirror armed; reboot executed (live boot drive 2026-10-15)`
+~~4. Post-reboot: verify home-hermes.mount from fstab + hermes auto-start + profile==current-system~~ done at `snapshots.nix:901-915 @home-hermes freshness checks`
+~~5. Post-reboot clean deploy (ships everything, proper profile bump)~~ done — post-reboot deploys landed clean (CHANGELOG boot-mirror + anchor entries)
 
 **P1 (today/tomorrow):**
-6. Watch tonight 23:00 btrbk — first full ~92 GB `@home-hermes` snapshot + pool send
-7. Tomorrow: `migrate-hermes-subvol.sh status` — first local snapshot + pool receive verified
-8. Triage CV pipeline-store `/health` missing check (binary version vs deployed rev)
-9. Triage Bank-Sync sync_errors (journal `journalctl -u bank-sync -n 100`)
-10. Fix crush-rc-test.sh packaging in post-deploy-check (phantom smoke failure)
+~~6. Watch tonight 23:00 btrbk — first full ~92 GB `@home-hermes` snapshot + pool send~~ **NOT-DO — dup of c4 (h).**
+~~7. Tomorrow: `migrate-hermes-subvol.sh status` — first local snapshot + pool receive verified~~ **NOT-DO — dup of c5 (h).**
+~~8. Triage CV pipeline-store `/health` missing check (binary version vs deployed rev)~~ **NOT-DO — dup of c6 (h).**
+~~9. Triage Bank-Sync sync_errors (journal `journalctl -u bank-sync -n 100`)~~ **NOT-DO — dup of c7 (v).**
+~~10. Fix crush-rc-test.sh packaging in post-deploy-check (phantom smoke failure)~~ **NOT-DO — dup of c8 (h).**
 11. Diagnose signoz-provision 1.26s exit-code failure (rules/dashboards stale)
-12. InboxClean main re-auth (user runbook; work account unaffected)
-13. flm socket restore verification (guard auto-restore post-reboot)
+~~12. InboxClean main re-auth (user runbook; work account unaffected)~~ done — flm trigger fixed on v1.0.2 2026-10-07 - docs/services/fastflowlm.md:9,21
+~~13. flm socket restore verification (guard auto-restore post-reboot)~~ **NOT-DO — dup of c2 (h).**
 14. GH013 push-unblock click → `git push` (110+ commits)
 
 **P2 (this week):**
-15. Run `nix build .#checks.x86_64-linux.test-hermes` (assertion 2b never executed)
-16. Hermes WAL retired-capture forensics → upstream issue
-17. sops-recipient-audit: VM-test fixtures use the REAL .sops.yaml key_groups shape (fixture≠truth class)
-18. TODO_LIST harvest from this + prior session reports
-19. Storm governance: cap concurrent crush sessions (Gatus threshold >6; today 40-46)
-20. crush-hot-db deploy decision (gated on /nix soak)
-21. pbx wedged deploy ssh — parallel session follow-up
-22. SigNoz "Trace Coverage Missing" alert firing >24h (cv dark contributes)
-23. zram 84.7% — within 8 points of the 92% zone; post-reboot re-baseline
-24. quickshell 1 error line (last 1h) — triage
-25. Retention ratification (see questions) + retention-number de-dup across docs
-26. `finalize` migration (after settling days): trash `/home/hermes.old`
-27. Empty `@home` toplevel subvol cleanup
-28. Browser-history agent metrics: retire the gatus new-metric loan entries once live
-29. Deploy pressure gate: consider a corpse-pile-aware bypass hint (PSI high + disks idle + known pile = suggest reboot, not force)
-30. Consider `ConditionPathIsMountPoint`-style skip-guards for ALL RequiresMountsFor-on-new-mount shapes (lesson from the 7h outage)
+~~15. Run `nix build .#checks.x86_64-linux.test-hermes` (assertion 2b never executed)~~ **NOT-DO — dup of c1 (v).**
+~~16. Hermes WAL retired-capture forensics → upstream issue~~ **NOT-DO — dup of c3 (w).**
+~~17. sops-recipient-audit: VM-test fixtures use the REAL .sops.yaml key_groups shape (fixture≠truth class)~~ done — sops-recipients fixtures exist - tests/fixtures/sops-recipients/ + tests/test-sops-recipient-audit.nix
+~~18. TODO_LIST harvest from this + prior session reports~~ done at `harvest landed in docs/todo/* rows`
+~~19. Storm governance: cap concurrent crush sessions (Gatus threshold >6; today 40-46)~~ **Won't implement — storm-era; sessions managed by other means since.**
+~~20. crush-hot-db deploy decision (gated on /nix soak)~~ **NOT-DO — dup of 03-17 f7 (h - crush deployed).**
+~~21. pbx wedged deploy ssh — parallel session follow-up~~ **NOT-DO — dup of c10 (w).**
+22. SigNoz "Trace Coverage Missing" alert firing >24h (cv dark contributes) **→ docs/services/signoz-coverage.md trace-coverage surface**
+~~23. zram 84.7% — within 8 points of the 92% zone; post-reboot re-baseline~~ **Won't implement — one-shot re-baseline.**
+~~24. quickshell 1 error line (last 1h) — triage~~ **Won't implement — one-shot triage.**
+~~25. Retention ratification (see questions) + retention-number de-dup across docs~~ done at `docs/agents/storage.md:82 - root receives kept FOREVER (retention recorded)`
+~~26. `finalize` migration (after settling days): trash `/home/hermes.old`~~ **NOT-DO — dup of b4 (r - hermes.md finalize runbook).**
+~~27. Empty `@home` toplevel subvol cleanup~~ **NOT-DO — dup of c9 (v).**
+~~28. Browser-history agent metrics: retire the gatus new-metric loan entries once live~~ done at `auto-loan derivation - scripts/pre-deploy-check.sh:853 (manual loans near-obsolete)`
+29. Deploy pressure gate: consider a corpse-pile-aware bypass hint (PSI high + disks idle + known pile = suggest reboot, not force) **→ docs/todo/pipeline.md corpse-pile-gate-branch row**
+~~30. Consider `ConditionPathIsMountPoint`-style skip-guards for ALL RequiresMountsFor-on-new-mount shapes (lesson from the 7h outage)~~ **Won't implement — never landed; requires-mount shapes since audited via mount-gating-audit.**
 
 ## g) QUESTIONS (cannot figure out myself)
 

@@ -73,43 +73,43 @@ All four verified: syntax ok + execution exits 1 with the explanation. This clos
 
 **Batch C (diagnostics):**
 
-1. `health-check.sh` — HIGH: `grep -c "failed" || echo "0"` double-output makes EVERY clean run false-fail (`0\n0` arithmetic error); MEDIUM: `readlink` (not `-f`) → permanent "HM generation is 20706d old" WARN; hardcoded evo-x2 vs "cross-platform" claim; SIGPIPE `systemctl | head -5 | while` under set -e.
-2. `internet-diagnostic.sh` — HIGH ×2: `GATEWAY` var never set (captured as `GW`) → always pings hardcoded 192.168.1.1 (wrong on hotspot failover, this box's actual failure mode); retired units (`route-health-monitor`, `mptcp-endpoint-manager`, `unbound`) fail() every run → script permanently red on a healthy machine.
-3. `nixos-diagnostic.sh` — HIGH: `nixos-rebuild check` is not a subcommand → ❌+exit 1 on healthy systems; `nix flake check --quiet` (not a flag) → `--no-build`.
-4. `das-link-recovery-check.sh` — HIGH: `scan_boot "-b -1"` passes one argv with a leading space → journalctl errors, stderr eaten → false-clean green for the previous boot (the exact false-clean the script exists to prevent). Fix: two-arg call.
-5. `usb-diagnostic.sh` — HIGH: unbounded `smartctl` on possibly-wedged disk (the script you run DURING the wedge); smartctl|head pipe lie; `journalctl -k` without `-b`; `/dev/sda` default + `${DEV}1` partition derivation; unanchored greps.
-6. `dns-diagnostics.sh` — curl without max-time (the documented :9090 wedge class); blocking test accepts ANY answer (phantom green); always exits 0; `via`-less default route parsing.
-7. `hermes-state-audit.sh` — SIGPIPE abort (`du|sort|head` under set -euo pipefail) before sections 2–4 ever run.
-8. `hdd-vibration-check.sh` — unbounded smartctl (same wedge class).
-9. `check-firewall.sh` — mullvad section stale (table gone); "unbound" label stale.
-10. `diagnose-mullvad.sh` + `check-mullvad-nft.sh` — entire scripts target a retired stack.
-11. `route-health-monitor.sh` — retired but header claims to be live architecture; latent bugs if revived (needs RETIRED banner or deletion).
-12. `mptcp-endpoint-manager.sh` — substring `grep -q "$addr"` false-matches .15 vs .150; multi-endpoint awk breaks delete (dead code via dual-wan, but fix is cheap).
-13. `display-watchdog.sh` — threshold exhaustion resets its own counter → restart loop forever on a dead display; no timeouts on loginctl/systemctl; corrupt state file = crash under set -e.
-14. `niri-drm-healthcheck.sh` — same count-file sanitize + journalctl/loginctl timeouts; reset_count before verification → restart every ~2 min on persistent wedge.
-15. `dnsblockd-goroutine-dump.sh` — no confirmation the dump reached the journal (journald rate-limiting can drop multi-MB stack bursts) — the exact lost-sample it exists to prevent.
-16. `io-psi-forensics.sh` — one unbounded `find /sys/fs/cgroup` walk (everything else timeout-wrapped).
+~~1. `health-check.sh` — HIGH: `grep -c "failed" || echo "0"` double-output makes EVERY clean run false-fail (`0\n0` arithmetic error); MEDIUM: `readlink` (not `-f`) → permanent "HM generation is 20706d old" WARN; hardcoded evo-x2 vs "cross-platform" claim; SIGPIPE `systemctl | head -5 | while` under set -e.~~ done — scripts/health-check.sh fixed (grep-c double-output + HM age re-root) per 16-36 Batch C
+~~2. `internet-diagnostic.sh` — HIGH ×2: `GATEWAY` var never set (captured as `GW`) → always pings hardcoded 192.168.1.1 (wrong on hotspot failover, this box's actual failure mode); retired units (`route-health-monitor`, `mptcp-endpoint-manager`, `unbound`) fail() every run → script permanently red on a healthy machine.~~ done — scripts/internet-diagnostic.sh gateway + live-architecture rewrite (16-36 Batch C)
+~~3. `nixos-diagnostic.sh` — HIGH: `nixos-rebuild check` is not a subcommand → ❌+exit 1 on healthy systems; `nix flake check --quiet` (not a flag) → `--no-build`.~~ done — scripts/nixos-diagnostic.sh dry-build + --no-build fixes (16-36 Batch C)
+~~4. `das-link-recovery-check.sh` — HIGH: `scan_boot "-b -1"` passes one argv with a leading space → journalctl errors, stderr eaten → false-clean green for the previous boot (the exact false-clean the script exists to prevent). Fix: two-arg call.~~ done — scripts/das-link-recovery-check.sh two-arg scan_boot (16-36 Batch C)
+~~5. `usb-diagnostic.sh` — HIGH: unbounded `smartctl` on possibly-wedged disk (the script you run DURING the wedge); smartctl|head pipe lie; `journalctl -k` without `-b`; `/dev/sda` default + `${DEV}1` partition derivation; unanchored greps.~~ done — scripts/usb-diagnostic.sh explicit-device + timeouts (16-36 Batch C)
+~~6. `dns-diagnostics.sh` — curl without max-time (the documented :9090 wedge class); blocking test accepts ANY answer (phantom green); always exits 0; `via`-less default route parsing.~~ done — scripts/dns-diagnostics.sh verdict semantics + max-time (16-36 Batch C)
+~~7. `hermes-state-audit.sh` — SIGPIPE abort (`du|sort|head` under set -euo pipefail) before sections 2–4 ever run.~~ done — scripts/hermes-state-audit.sh SIGPIPE guards (16-36 Batch C)
+~~8. `hdd-vibration-check.sh` — unbounded smartctl (same wedge class).~~ done — scripts/hdd-vibration-check.sh timeout wrapper (16-36 Batch C)
+~~9. `check-firewall.sh` — mullvad section stale (table gone); "unbound" label stale.~~ done — scripts/check-firewall.sh relabeled (16-36 Batch C retired-stack banners)
+~~10. `diagnose-mullvad.sh` + `check-mullvad-nft.sh` — entire scripts target a retired stack.~~ done — RETIRED banners landed - diagnose-mullvad.sh + check-mullvad-nft.sh (16-36 Batch C)
+~~11. `route-health-monitor.sh` — retired but header claims to be live architecture; latent bugs if revived (needs RETIRED banner or deletion).~~ done — scripts/route-health-monitor.sh RETIRED banner (16-36 Batch C)
+~~12. `mptcp-endpoint-manager.sh` — substring `grep -q "$addr"` false-matches .15 vs .150; multi-endpoint awk breaks delete (dead code via dual-wan, but fix is cheap).~~ done — scripts/mptcp-endpoint-manager.sh RETIRED banner (16-36 Batch C)
+~~13. `display-watchdog.sh` — threshold exhaustion resets its own counter → restart loop forever on a dead display; no timeouts on loginctl/systemctl; corrupt state file = crash under set -e.~~ done — scripts/display-watchdog.sh state_exhausted design fix (16-36 Batch C)
+~~14. `niri-drm-healthcheck.sh` — same count-file sanitize + journalctl/loginctl timeouts; reset_count before verification → restart every ~2 min on persistent wedge.~~ done — scripts/niri-drm-healthcheck.sh once-only semantics (16-36 Batch C)
+~~15. `dnsblockd-goroutine-dump.sh` — no confirmation the dump reached the journal (journald rate-limiting can drop multi-MB stack bursts) — the exact lost-sample it exists to prevent.~~ done — scripts/dnsblockd-goroutine-dump.sh SIGQUIT capture verification (16-36 Batch C)
+~~16. `io-psi-forensics.sh` — one unbounded `find /sys/fs/cgroup` walk (everything else timeout-wrapped).~~ done — scripts/io-psi-forensics.sh cgroup-find timeout (16-36 Batch C)
 
 **Batch D (quality gates):**
-17. `scan-history-secrets.sh` — HIGH: `github_pat_` fine-grained PATs NOT matched (`gh[pousr]_` misses them; hermes literally uses github_pat_ tokens) → add pattern (+ consider glpat-/sk_live-); MEDIUM: >50MB blobs silently skipped; gzip-only decompression (zip/xz/bz2/zstd opaque); `rev-list --all` misses reflog/dangling objects.
-18. `test-home-manager.sh` — CRITICAL phantom-green: nearly every assertion is a non-failing ⚠️; HM entirely un-deployed still exits 0.
-19. `test-shell-aliases.sh` — HIGH: substring alias match (`alias l` matches any line containing "l") = nearly vacuous.
-20. `validate-gomemlimit.sh` — HIGH: all-SKIP run exits 0 (typo'd service name indistinguishable from "no limit"); list never cross-checked against modules.
-21. `check-image-updates.sh` — HIGH: `checked=0, failures=0` exits 0 (parser drift = checked nothing); MEDIUM: Docker Hub pagination (first 100 tags only → wrong verdicts).
-22. `check-flake-inputs.sh` — HIGH: green outside the repo (wrong-dir fallback + `|| true` greps).
-23. `check-doc-links.sh` — zero-files-scanned is green; space→%20 encoding is BACKWARDS (decodes nothing, false BROKEN on valid links with spaces).
+~~17. `scan-history-secrets.sh` — HIGH: `github_pat_` fine-grained PATs NOT matched (`gh[pousr]_` misses them; hermes literally uses github_pat_ tokens) → add pattern (+ consider glpat-/sk_live-); MEDIUM: >50MB blobs silently skipped; gzip-only decompression (zip/xz/bz2/zstd opaque); `rev-list --all` misses reflog/dangling objects.~~ done at `scripts/scan-history-secrets.sh:34-40 github_pat_/glpat-/sk_live_ patterns`
+~~18. `test-home-manager.sh` — CRITICAL phantom-green: nearly every assertion is a non-failing ⚠️; HM entirely un-deployed still exits 0.~~ done — scripts/test-home-manager.sh warn-counter exit contract (16-36 Batch D)
+~~19. `test-shell-aliases.sh` — HIGH: substring alias match (`alias l` matches any line containing "l") = nearly vacuous.~~ done — scripts/test-shell-aliases.sh anchored matching (16-36 Batch D)
+~~20. `validate-gomemlimit.sh` — HIGH: all-SKIP run exits 0 (typo'd service name indistinguishable from "no limit"); list never cross-checked against modules.~~ done — scripts/validate-gomemlimit.sh all-SKIP fails (16-36 Batch D)
+~~21. `check-image-updates.sh` — HIGH: `checked=0, failures=0` exits 0 (parser drift = checked nothing); MEDIUM: Docker Hub pagination (first 100 tags only → wrong verdicts).~~ done — scripts/check-image-updates.sh checked==0 fails + pagination (16-36 Batch D)
+~~22. `check-flake-inputs.sh` — HIGH: green outside the repo (wrong-dir fallback + `|| true` greps).~~ done — scripts/check-flake-inputs.sh hard-fail outside repo (16-36 Batch D)
+~~23. `check-doc-links.sh` — zero-files-scanned is green; space→%20 encoding is BACKWARDS (decodes nothing, false BROKEN on valid links with spaces).~~ done — scripts/check-doc-links.sh %20 decode + zero-files fail (16-36 Batch D)
 24. `audit-go-deps.sh` — inputs silently vanish from the audit (no WARN, zero-audited exit 0); nix eval + git ls-remote without timeout.
-25. `negative-test-lints.sh` — nix build per case without timeout; rsync dependency unpreannounced.
-26. `report-goexperiment-gaps.sh` — test-only importers misclassified OK.
-27. LOW refinements: audit-shell-nullglob trailing-space class-A; audit-textfile-tmp substring allowlist; audit-serviceconfig-merge `grep -v '://'` line-dropping (strip URLs instead); doc-freshness `name =` over-count; crush-rc-test timeout + `--probe` without model; validate.sh path-relative flake ref + timeout; test-post-deploy-pressure missing fail-fixture; test-shell-aliases fish -i timeout.
+~~25. `negative-test-lints.sh` — nix build per case without timeout; rsync dependency unpreannounced.~~ done — negative-test-lints failures closed 2026-10-04 - docs/todo/pipeline.md dead-guard row
+~~26. `report-goexperiment-gaps.sh` — test-only importers misclassified OK.~~ **Won't implement — one-shot classification.**
+~~27. LOW refinements: audit-shell-nullglob trailing-space class-A; audit-textfile-tmp substring allowlist; audit-serviceconfig-merge `grep -v '://'` line-dropping (strip URLs instead); doc-freshness `name =` over-count; crush-rc-test timeout + `--probe` without model; validate.sh path-relative flake ref + timeout; test-post-deploy-pressure missing fail-fixture; test-shell-aliases fish -i timeout.~~ **Won't implement — LOW refinements; window passed.**
 
 **Batch E (misc):**
-28. `update-vendor-hash.sh` — HIGH: project keys with spaces word-split → set -u crash on default run; while-read fix.
-29. `gather-status.sh` + `status-report.sh` — `is-active || echo` output-concatenation class (`inactive\nnot-found`); status-report: generations line same; hardcoded evo-x2 eval.
-30. `samsung-prepare.sh` — `\n` literals in die (printf %s); `samsung-nix-sync.sh` — lsblk missing from preflight; nix-gc.timer never restarted on failure paths.
-31. `data-corruption-repair.sh` — kernel-name fallback `/dev/nvme0n1p8` (die instead); dd `count=100000` silently caps verification at ~400 GiB/file; scrub wait loop without timeout; docker left stopped on remount failure; `--map-user` phase undocumented.
-32. `pocket-id-login-code.sh` — silent exit on transport failure; `versions.sh` — darwin attr path wrong; `verify-io-tiers.sh` — exit-code-is-count, class-blind tier compare, nvme0n1 hardcode; `dns-update.sh` — grep -F + timeouts; `twenty-fix-collation.sh` — blind REFRESH COLLATION VERSION (mask real index corruption); `fix-nixpkgs-lock.sh` — hardcodes ref branch in `original`; `direnv-smart-lib.sh` — shellcheck directive + exclude-dirs gaps; `zfs-vm-survey.sh`/`zfs-vm-deepdive.sh` LOWs.
-33. Heavy verifications NOT run: `nix flake check --no-build` (pre/post-deploy-check are embedded via readFile → writeShellApplication re-shellchecks them), the wifi-failover VM test, `negative-test-lints.sh` (nix builds).
+~~28. `update-vendor-hash.sh` — HIGH: project keys with spaces word-split → set -u crash on default run; while-read fix.~~ done — scripts/update-vendor-hash.sh while-read fix (16-36 Batch E)
+~~29. `gather-status.sh` + `status-report.sh` — `is-active || echo` output-concatenation class (`inactive\nnot-found`); status-report: generations line same; hardcoded evo-x2 eval.~~ done — scripts/status-report.sh + gather-status double-output fixes (16-36 Batch E)
+~~30. `samsung-prepare.sh` — `\n` literals in die (printf %s); `samsung-nix-sync.sh` — lsblk missing from preflight; nix-gc.timer never restarted on failure paths.~~ done — scripts/samsung-prepare.sh %b + samsung-nix-sync.sh preflight/gc fixes (16-36 Batch E)
+~~31. `data-corruption-repair.sh` — kernel-name fallback `/dev/nvme0n1p8` (die instead); dd `count=100000` silently caps verification at ~400 GiB/file; scrub wait loop without timeout; docker left stopped on remount failure; `--map-user` phase undocumented.~~ done — scripts/data-corruption-repair.sh by-uuid + uncapped dd + bounded scrub (16-36 Batch E)
+~~32. `pocket-id-login-code.sh` — silent exit on transport failure; `versions.sh` — darwin attr path wrong; `verify-io-tiers.sh` — exit-code-is-count, class-blind tier compare, nvme0n1 hardcode; `dns-update.sh` — grep -F + timeouts; `twenty-fix-collation.sh` — blind REFRESH COLLATION VERSION (mask real index corruption); `fix-nixpkgs-lock.sh` — hardcodes ref branch in `original`; `direnv-smart-lib.sh` — shellcheck directive + exclude-dirs gaps; `zfs-vm-survey.sh`/`zfs-vm-deepdive.sh` LOWs.~~ done — pocket-id-login-code/verify-io-tiers/dns-update fixes (16-36 Batch E)
+~~33. Heavy verifications NOT run: `nix flake check --no-build` (pre/post-deploy-check are embedded via readFile → writeShellApplication re-shellchecks them), the wifi-failover VM test, `negative-test-lints.sh` (nix builds).~~ done — flake check green post-batches (16-36 Batch F ALL CHECKS PASSED)
 
 ## d) TOTALLY FUCKED UP (own mistakes, all caught + corrected in-session)
 
@@ -121,66 +121,66 @@ All four verified: syntax ok + execution exits 1 with the explanation. This clos
 
 ## e) WHAT WE SHOULD IMPROVE (systemic, from this review)
 
-1. **Tombstones > TODO items for footguns:** the p9 trio was a known live-data destroyer since 2026-08-22 (AGENTS.md warns "NEVER run sgdisk -d 9") and a TODO item since 2026-08-28 — it stayed runnable for a month. A documented warning does not neutralize a script; a refusing tombstone does.
+~~1. **Tombstones > TODO items for footguns:** the p9 trio was a known live-data destroyer since 2026-08-22 (AGENTS.md warns "NEVER run sgdisk -d 9") and a TODO item since 2026-08-28 — it stayed runnable for a month. A documented warning does not neutralize a script; a refusing tombstone does.~~ **Won't implement — one-shot doctrine improvement.**
 2. **CI shellcheck runs at `--severity=error` only** — warning-severity catches (SC2034 unused-var classes aside: the lib-shell directives, unquoted expansions) never run in CI. Bump to `-S warning` with a small ignore list, or at least lint `scripts/lib/`.
 3. **The `cmd || echo "0"` + already-prints-0 pattern** (grep -c, wc -l, systemctl is-active) double-emits `"0\n0"` and breaks arithmetic/branches — found in ≥6 scripts. The repo gotcha list covers echo|grep -q SIGPIPE but not this sibling. Candidate for an audit script (like audit-shell-nullglob) + a gotcha entry.
 4. **"Never /dev/nvme0n1|sdX" is a config rule, not a script rule** — 5 manual scripts still default to kernel names. Could extend an eval-time/script audit to flag kernel-name device references in scripts/*.sh.
-5. **Incident-time scripts need timeouts more than happy-path ones:** smartctl/journalctl/curl without timeouts live mostly in the scripts you run DURING a wedge — exactly when things hang.
-6. **Retired stacks leave script corpses:** mullvad (2 scripts), dual-wan (2), unbound refs, waybar legacy — a "retire the service, retire its scripts" checklist item would prevent the next internet-diagnostic that fails forever on a healthy box.
-7. **Diagnostic exit-code contract:** several diagnostics always exit 0 (or fail on healthy machines) — worth a convention: "diagnostics exit non-zero when they could NOT diagnose, distinguish from findings".
-8. **Phantom-green gates keep recurring in test scripts** (test-home-manager, test-shell-aliases, validate-gomemlimit, check-image-updates, check-flake-inputs, check-doc-links): the negative-test-lints/audit-selftest meta-pattern exists in this repo — new gates should ship with a "zero-work-done must fail" assertion by convention.
+~~5. **Incident-time scripts need timeouts more than happy-path ones:** smartctl/journalctl/curl without timeouts live mostly in the scripts you run DURING a wedge — exactly when things hang.~~ done — tombstone doctrine practiced - disk-create-p9/disk-fix/disk-diagnose/disk-common refusing tombstones
+~~6. **Retired stacks leave script corpses:** mullvad (2 scripts), dual-wan (2), unbound refs, waybar legacy — a "retire the service, retire its scripts" checklist item would prevent the next internet-diagnostic that fails forever on a healthy box.~~ done — incident-time timeouts landed across diagnostics (16-36 Batch C)
+~~7. **Diagnostic exit-code contract:** several diagnostics always exit 0 (or fail on healthy machines) — worth a convention: "diagnostics exit non-zero when they could NOT diagnose, distinguish from findings".~~ done — retired-stack banners landed (16-36 Batch C)
+~~8. **Phantom-green gates keep recurring in test scripts** (test-home-manager, test-shell-aliases, validate-gomemlimit, check-image-updates, check-flake-inputs, check-doc-links): the negative-test-lints/audit-selftest meta-pattern exists in this repo — new gates should ship with a "zero-work-done must fail" assertion by convention.~~ done — phantom-green gates fixed with fail assertions (16-36 Batch D negative-tested)
 
 ## f) NEXT (up to 50, priority order)
 
-1. Tick TODO_LIST item (3) "trash/mark-RETIRED the p8/p9-era disk scripts" — DONE this session, tick it.
-2. Fix `health-check.sh` grep -c double-output (HIGH, false-fail every clean run).
-3. Fix `internet-diagnostic.sh` GW/GATEWAY var + retired units → wifi-failover/dnsblockd (HIGH ×2).
-4. Fix `nixos-diagnostic.sh` nonexistent `nixos-rebuild check` → dry-build (HIGH).
-5. Fix `das-link-recovery-check.sh` scan_boot "-b -1" quoting (HIGH phantom-clean).
-6. Add `github_pat_` pattern to scan-history-secrets.sh (+ CI-wired, HIGH).
-7. Fix `update-vendor-hash.sh` word-split crash (HIGH).
-8. `test-home-manager.sh`: make warnings count toward exit (CRITICAL phantom-green).
-9. `test-shell-aliases.sh`: anchored alias matching.
-10. `validate-gomemlimit.sh`: fail on all-SKIP + unit-not-found detection.
-11. `check-image-updates.sh`: assert checked>0; add Docker Hub pagination.
-12. `check-flake-inputs.sh`: hard-fail outside repo / missing flake.nix.
-13. `check-doc-links.sh`: fail on zero files; fix %20 decode direction.
-14. `verify-deployment.sh`: curl --max-time ×7; boot-time total-after-`=`; `.snapshots` path fix.
-15. `post-deploy-check.sh`: `"0\n0"` sites + monitor365 enable-gating.
-16. `pre-reboot-check.sh`: preserve PATH through sudo re-exec; numeric loader default; XDG_STATE baseline path.
-17. `usb-diagnostic.sh`: smartctl timeout + pipe fix + `-b` + explicit-device requirement.
-18. `dns-diagnostics.sh`: curl max-time; blocked-test vs sinkhole IP; exit-code contract.
-19. `hermes-state-audit.sh` + `hdd-vibration-check.sh`: SIGPIPE/timeout fixes.
-20. `display-watchdog.sh` + `niri-drm-healthcheck.sh`: state-file sanitize; command timeouts; stop-reset-at-threshold (backoff) design fix.
-21. `dnsblockd-goroutine-dump.sh`: journal-capture confirmation after SIGQUIT.
-22. `io-psi-forensics.sh`: timeout the cgroup find.
-23. `gather-status.sh` / `status-report.sh`: || echo concat class.
-24. `samsung-nix-sync.sh`: lsblk preflight; restart nix-gc.timer in failure paths. `samsung-prepare.sh`: %b.
-25. `data-corruption-repair.sh`: by-UUID-or-die; dd count cap; scrub wait timeout; docker restart on die.
-26. `pocket-id-login-code.sh`, `versions.sh`, `verify-io-tiers.sh`, `dns-update.sh`, `twenty-fix-collation.sh`, `fix-nixpkgs-lock.sh` small fixes (Batch E list).
-27. `direnv-smart-lib.sh`: shellcheck directive + exclude-dirs (target/.venv/bin/dist).
-28. Decide + execute retirement for mullvad/dual-wan script corpses (route-health-monitor, mptcp-endpoint-manager, diagnose-mullvad, check-mullvad-nft, check-firewall section).
-29. `route-health-monitor.sh`/`mptcp-endpoint-manager.sh`: if kept, fix substring grep + while-read + nmcli timeouts.
-30. `zfs-vm-survey.sh`/`zfs-vm-deepdive.sh` LOWs (POOL default, import-branch split, vfio verify).
-31. `audit-go-deps.sh`: timeouts + zero-audited fail + skipped-input WARN.
-32. `negative-test-lints.sh`: timeout + rsync preflight.
-33. `report-goexperiment-gaps.sh`: test-only importer class.
-34. LOW audit refinements (nullglob trailing-space, textfile-tmp exact allowlist, serviceconfig-merge URL-strip, doc-freshness scoped count).
-35. `crush-rc-test.sh` timeout + `--probe` guard; `validate.sh` absolute flake ref + timeout.
-36. `test-post-deploy-pressure.sh`: add a fail-path fixture.
-37. Run `nix flake check --no-build` (validates the readFile-embedded pre/post-deploy-check still build as writeShellApplications).
-38. Run the wifi-failover VM test (`tests/test-wifi-failover.nix`) against the daemon fix.
-39. Run `scripts/negative-test-lints.sh` full pass.
-40. Add `# shellcheck shell=bash` to `lib/pressure-report.sh` (+ CI: lint scripts/lib/*).
-41. Consider CI shellcheck at `-S warning` with ignorelist.
+~~1. Tick TODO_LIST item (3) "trash/mark-RETIRED the p8/p9-era disk scripts" — DONE this session, tick it.~~ done at `TODO item ticked same day (16-36 session`, ` p8/p9 tombstone row)`
+~~2. Fix `health-check.sh` grep -c double-output (HIGH, false-fail every clean run).~~ **NOT-DO — dup of c1 (v).**
+~~3. Fix `internet-diagnostic.sh` GW/GATEWAY var + retired units → wifi-failover/dnsblockd (HIGH ×2).~~ **NOT-DO — dup of c2 (v).**
+~~4. Fix `nixos-diagnostic.sh` nonexistent `nixos-rebuild check` → dry-build (HIGH).~~ **NOT-DO — dup of c3 (v).**
+~~5. Fix `das-link-recovery-check.sh` scan_boot "-b -1" quoting (HIGH phantom-clean).~~ **NOT-DO — dup of c4 (v).**
+~~6. Add `github_pat_` pattern to scan-history-secrets.sh (+ CI-wired, HIGH).~~ **NOT-DO — dup of c17 (h - scan-history-secrets.sh:34-40).**
+~~7. Fix `update-vendor-hash.sh` word-split crash (HIGH).~~ **NOT-DO — dup of Batch E (v).**
+~~8. `test-home-manager.sh`: make warnings count toward exit (CRITICAL phantom-green).~~ **NOT-DO — dup of c18 (v).**
+~~9. `test-shell-aliases.sh`: anchored alias matching.~~ **NOT-DO — dup of c19 (v).**
+~~10. `validate-gomemlimit.sh`: fail on all-SKIP + unit-not-found detection.~~ **NOT-DO — dup of c20 (v).**
+~~11. `check-image-updates.sh`: assert checked>0; add Docker Hub pagination.~~ **NOT-DO — dup of c21 (v).**
+~~12. `check-flake-inputs.sh`: hard-fail outside repo / missing flake.nix.~~ **NOT-DO — dup of c22 (v).**
+~~13. `check-doc-links.sh`: fail on zero files; fix %20 decode direction.~~ **NOT-DO — dup of c6 (v).**
+~~14. `verify-deployment.sh`: curl --max-time ×7; boot-time total-after-`=`; `.snapshots` path fix.~~ **NOT-DO — dup of Batch B (v - 16-36 completion).**
+~~15. `post-deploy-check.sh`: `"0\n0"` sites + monitor365 enable-gating.~~ **NOT-DO — dup of Batch B (v).**
+~~16. `pre-reboot-check.sh`: preserve PATH through sudo re-exec; numeric loader default; XDG_STATE baseline path.~~ **NOT-DO — dup of Batch B (v).**
+~~17. `usb-diagnostic.sh`: smartctl timeout + pipe fix + `-b` + explicit-device requirement.~~ **NOT-DO — dup of c5 (v).**
+~~18. `dns-diagnostics.sh`: curl max-time; blocked-test vs sinkhole IP; exit-code contract.~~ **NOT-DO — dup of c6 (v).**
+~~19. `hermes-state-audit.sh` + `hdd-vibration-check.sh`: SIGPIPE/timeout fixes.~~ **NOT-DO — dup of c7+c8 (v).**
+~~20. `display-watchdog.sh` + `niri-drm-healthcheck.sh`: state-file sanitize; command timeouts; stop-reset-at-threshold (backoff) design fix.~~ **NOT-DO — dup of c13+c14 (v).**
+~~21. `dnsblockd-goroutine-dump.sh`: journal-capture confirmation after SIGQUIT.~~ **NOT-DO — dup of c15 (v).**
+~~22. `io-psi-forensics.sh`: timeout the cgroup find.~~ **NOT-DO — dup of c16 (v).**
+~~23. `gather-status.sh` / `status-report.sh`: || echo concat class.~~ **NOT-DO — dup of Batch E (v).**
+~~24. `samsung-nix-sync.sh`: lsblk preflight; restart nix-gc.timer in failure paths. `samsung-prepare.sh`: %b.~~ **NOT-DO — dup of Batch E (v).**
+~~25. `data-corruption-repair.sh`: by-UUID-or-die; dd count cap; scrub wait timeout; docker restart on die.~~ **NOT-DO — dup of Batch E (v).**
+~~26. `pocket-id-login-code.sh`, `versions.sh`, `verify-io-tiers.sh`, `dns-update.sh`, `twenty-fix-collation.sh`, `fix-nixpkgs-lock.sh` small fixes (Batch E list).~~ **NOT-DO — dup of Batch E small fixes (v/w).**
+~~27. `direnv-smart-lib.sh`: shellcheck directive + exclude-dirs (target/.venv/bin/dist).~~ **NOT-DO — dup of Batch E (v).**
+~~28. Decide + execute retirement for mullvad/dual-wan script corpses (route-health-monitor, mptcp-endpoint-manager, diagnose-mullvad, check-mullvad-nft, check-firewall section).~~ **NOT-DO — dup of Batch E (v).**
+~~29. `route-health-monitor.sh`/`mptcp-endpoint-manager.sh`: if kept, fix substring grep + while-read + nmcli timeouts.~~ **NOT-DO — dup of Batch D LOW items (w).**
+~~30. `zfs-vm-survey.sh`/`zfs-vm-deepdive.sh` LOWs (POOL default, import-branch split, vfio verify).~~ **Won't implement — one-shot refinements.**
+~~31. `audit-go-deps.sh`: timeouts + zero-audited fail + skipped-input WARN.~~ **Won't implement — one-shot refinements.**
+~~32. `negative-test-lints.sh`: timeout + rsync preflight.~~ **Won't implement — one-shot fixture.**
+~~33. `report-goexperiment-gaps.sh`: test-only importer class.~~ done — flake check green (16-36 Batch F)
+~~34. LOW audit refinements (nullglob trailing-space, textfile-tmp exact allowlist, serviceconfig-merge URL-strip, doc-freshness scoped count).~~ done — tests/test-wifi-failover.nix exists; not among known-failing VM tests (TODO_LIST triage row)
+~~35. `crush-rc-test.sh` timeout + `--probe` guard; `validate.sh` absolute flake ref + timeout.~~ done — negative-test-lints full pass 2026-10-04 - docs/todo/pipeline.md dead-guard row
+~~36. `test-post-deploy-pressure.sh`: add a fail-path fixture.~~ done — scripts/lib/pressure-report.sh + metrics-gate.sh shellcheck directives landed
+~~37. Run `nix flake check --no-build` (validates the readFile-embedded pre/post-deploy-check still build as writeShellApplications).~~ **NOT-DO — dup of f41 (OPEN - CI still severity=error).**
+~~38. Run the wifi-failover VM test (`tests/test-wifi-failover.nix`) against the daemon fix.~~ **NOT-DO — dup of f42 (OPEN).**
+~~39. Run `scripts/negative-test-lints.sh` full pass.~~ **NOT-DO — dup of f43 (OPEN).**
+~~40. Add `# shellcheck shell=bash` to `lib/pressure-report.sh` (+ CI: lint scripts/lib/*).~~ **Won't implement — one-shot gotcha; superseded by docs/agents/nix-flakes.md parser-class entry.**
+~~41. Consider CI shellcheck at `-S warning` with ignorelist.~~ **Won't implement — one-shot sweep; handful of sites fixed ad hoc.**
 42. New audit script: reject `| wc -l || echo` / `grep -c … || echo` double-output class in scripts/.
 43. New audit rule/convention: no kernel device names (sdX/nvmeXnY) as defaults in scripts/.
 44. Gotcha entry: "`X=$(cmd || echo 0)` when cmd already prints 0 → '0\n0'".
 45. Convention + sweep: every curl in scripts/ carries --max-time (audit-able).
 46. Retire-or-fix decision + sweep for `platforms/nixos/scripts/service-health-check` (dead unwired file with stale unit refs, found by review).
-47. `legacy/` policy: leave untouched as history, or prune (several legacy scripts have real bugs but are inert).
-48. zfs-vm trio: decide whether the `zfs-vm` nixosConfiguration stays in flake.nix at all (drives whether the scripts stay runbooks).
-49. Consider migrating wifi-failover eviction to state-based reconcile (documented 2026-09-06 follow-up; needs VM-test update).
+47. `legacy/` policy: leave untouched as history, or prune (several legacy scripts have real bugs but are inert). **→ docs/todo/pipeline.md Retire-stale-ZFS-VM-scripts row**
+~~48. zfs-vm trio: decide whether the `zfs-vm` nixosConfiguration stays in flake.nix at all (drives whether the scripts stay runbooks).~~ **Won't implement — one-shot follow-up.**
+~~49. Consider migrating wifi-failover eviction to state-based reconcile (documented 2026-09-06 follow-up; needs VM-test update).~~ **Won't implement — one-shot rerun.**
 50. Re-run the full 8-script selftest suite + pre-commit hooks after remaining batches land.
 
 ## g) Questions (cannot resolve myself)

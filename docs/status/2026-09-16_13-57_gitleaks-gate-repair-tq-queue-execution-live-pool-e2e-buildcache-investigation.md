@@ -121,64 +121,64 @@ Read-only probe of the same primitive the check uses (`git merge-base --is-ances
 
 **Owner decisions (blocked on you, everything else can follow):**
 
-1. Delete `/mnt/buildcache/swapfile-emergency` (16 GiB, zero refs) — recommended yes.
-2. `cargo clean` on `/mnt/buildcache/rust/monitor365` in a quiet window (~100G reclaim, sccache-warmed rebuild) — recommended yes; needs a "builds are quiet" call only you can make.
-3. Row 566 verdict: shrink `FailureEvidence.Tail` to the 512-byte excerpt + evidence path (recommend yes) — then implement.
-4. Row 565 verdict: citation-check visibility surface — journal fact, harvest counter, or both (recommend both: counter for dashboards, fact for the journal trail).
-5. Row 551/568: adopt the mkIf-survivable shape? If yes, the 12 test co-imports retire and the probe matrix folds into `tests/test-integration.nix`.
-6. The three dead `tq-e2e` tasks + evidence file: keep as validation evidence or dismiss/clean?
-7. Permission to run live-pool agent tasks (crush quota) for future E2E validations without per-run asking.
+1. Delete `/mnt/buildcache/swapfile-emergency` (16 GiB, zero refs) — recommended yes. **→ docs/todo/storage.md swapfile-emergency provenance decision row**
+2. `cargo clean` on `/mnt/buildcache/rust/monitor365` in a quiet window (~100G reclaim, sccache-warmed rebuild) — recommended yes; needs a "builds are quiet" call only you can make. **→ docs/todo/storage.md buildcache-capacity decision row (monitor365 target)**
+~~3. Row 566 verdict: shrink `FailureEvidence.Tail` to the 512-byte excerpt + evidence path (recommend yes) — then implement.~~ **NOT-DO — dup of c.2 (r - upstream.md row).**
+~~4. Row 565 verdict: citation-check visibility surface — journal fact, harvest counter, or both (recommend both: counter for dashboards, fact for the journal trail).~~ **NOT-DO — dup of b.2 (r).**
+~~5. Row 551/568: adopt the mkIf-survivable shape? If yes, the 12 test co-imports retire and the probe matrix folds into `tests/test-integration.nix`.~~ **NOT-DO — dup of c.3 (r - pipeline.md mkIf row).**
+~~6. The three dead `tq-e2e` tasks + evidence file: keep as validation evidence or dismiss/clean?~~ **Won't implement — storm-era test pollution; window passed.**
+~~7. Permission to run live-pool agent tasks (crush quota) for future E2E validations without per-run asking.~~ **Won't implement — one-shot permission.**
 
 **Immediate follow-ups from this session (high value, low cost):**
-8. Root-cause the task-2 evidence-file anomaly (controlled single-claimant run; env-propagation audit through the `tq worker` stack).
-9. File the go-taskqueue preflight row: `userGlobalCrushConfig()` must also accept `~/.config/crush/crushrc` (post-HM-migration reality; currently preflight-unreachable on this machine).
-10. AGENTS.md: append the walker-skip + rule-override lesson to the 2026-09-15 GH013 bullet.
-11. Add 2 mutation-harness cases: `positive-sourcegraph-local` drift + `negative-hex-with-keyword` corrupt.
+~~8. Root-cause the task-2 evidence-file anomaly (controlled single-claimant run; env-propagation audit through the `tq worker` stack).~~ **Won't implement — one-shot anomaly chase.**
+~~9. File the go-taskqueue preflight row: `userGlobalCrushConfig()` must also accept `~/.config/crush/crushrc` (post-HM-migration reality; currently preflight-unreachable on this machine).~~ **Won't implement — upstream preflight ask; crush-config since moved to flake input.**
+~~10. AGENTS.md: append the walker-skip + rule-override lesson to the 2026-09-15 GH013 bullet.~~ **NOT-DO — dup of c.5 (h).**
+~~11. Add 2 mutation-harness cases: `positive-sourcegraph-local` drift + `negative-hex-with-keyword` corrupt.~~ done at `gitleaks mutation cases in flake/parts/checks/lint-static.nix:628-633 (negative-fixture-corrupt)`
 12. New flake check / lint: reject `paths` allowlists matching root config files in `.gitleaks.toml` (codifies the walker-skip lesson).
-13. Check CI status of post-fix commits (`gh run list` — nix-check, secret-history-scan).
-14. E2E part A: enqueue one real SystemNix agent task → confirm the verify-gate passes through the deployed binary.
-15. Investigate why zero SystemNix `agent`-type tasks harvested in 30 h (review-only) — harvest health question.
-16. Investigate the merge-base timing discrepancy (13.7 s first sweep vs 0.4 s second — cold object misses? commit-graph? daemon IO?).
-17. Annotate row 566 with the recommendation (pending decision).
-18. Clean the 03:30 test-pollution files in `~/.local/state/tq/logs` (`.verify-failure.log`, `test-task-1.verify-failure.log`, `000001a0fixedid…log`, `t-cap.log`).
-19. Verify `trash` on /mnt/buildcache is a same-FS rename (precondition for the swapfile deletion rec).
-20. Quantify my three E2E crush runs' quota cost; record in the report follow-up.
+~~13. Check CI status of post-fix commits (`gh run list` — nix-check, secret-history-scan).~~ **NOT-DO — dup of c.4 (r).**
+~~14. E2E part A: enqueue one real SystemNix agent task → confirm the verify-gate passes through the deployed binary.~~ **NOT-DO — dup of b.1 (w).**
+~~15. Investigate why zero SystemNix `agent`-type tasks harvested in 30 h (review-only) — harvest health question.~~ **Won't implement — one-shot harvest-health question.**
+~~16. Investigate the merge-base timing discrepancy (13.7 s first sweep vs 0.4 s second — cold object misses? commit-graph? daemon IO?).~~ **Won't implement — one-shot measurement.**
+~~17. Annotate row 566 with the recommendation (pending decision).~~ **NOT-DO — dup of c.2 (r).**
+~~18. Clean the 03:30 test-pollution files in `~/.local/state/tq/logs` (`.verify-failure.log`, `test-task-1.verify-failure.log`, `000001a0fixedid…log`, `t-cap.log`).~~ **Won't implement — one-shot cleanup.**
+~~19. Verify `trash` on /mnt/buildcache is a same-FS rename (precondition for the swapfile deletion rec).~~ **Won't implement — one-shot precondition.**
+~~20. Quantify my three E2E crush runs' quota cost; record in the report follow-up.~~ **Won't implement — one-shot quantification.**
 
 **go-taskqueue (post-release-cut):**
-21. Cut v0.3.1 (sidecar + citation check + CHANGELOG now aligned) — release-cut session has everything it needs.
-22. After the tag: flip SystemNix's flake input from the interim `git+file:///…?rev=1a4eb48` back to `github:LarsArtmann/go-taskqueue?ref=master` (CI cannot fetch git+file; the ?rev= pin is interim by design).
-23. Confirm the `redact_test.go` fake-Slack-token purge is durable on origin (the filter-branch motive) and no push-protection block recurs on the next push.
-24. Add cross-item memoization of citation probes per harvest pass (cheap win once the visibility surface lands).
-25. Consider a `--repos` scope flag for ad-hoc `tq worker` runs to prevent claim-theft races against the pool (observed this session).
-26. Document the E2E reproducer recipe in `docs/services/tq.md` (scratch repo + `.crushrc` + enqueue payload shape + expected fact shape).
-27. Consider an upstream gitleaks issue for the keyword-armed bare-hex false-positive class (verify-before-filing gate first).
-28. Unit-level redaction check: assert `redactBytes` actually neutralizes a token-shaped fixture inside the evidence sidecar (my test output was random base64 — redaction untested end-to-end).
+~~21. Cut v0.3.1 (sidecar + citation check + CHANGELOG now aligned) — release-cut session has everything it needs.~~ done at `tq now at 0.3.4 - docs/todo/upstream.md go-taskqueue 0.3.4 row`
+~~22. After the tag: flip SystemNix's flake input from the interim `git+file:///…?rev=1a4eb48` back to `github:LarsArtmann/go-taskqueue?ref=master` (CI cannot fetch git+file; the ?rev= pin is interim by design).~~ done at `flake.nix:383 - input back on github:?ref=master`
+~~23. Confirm the `redact_test.go` fake-Slack-token purge is durable on origin (the filter-branch motive) and no push-protection block recurs on the next push.~~ done — purge durable + pushes since landed - docs/agents/git.md:30 playbook record
+~~24. Add cross-item memoization of citation probes per harvest pass (cheap win once the visibility surface lands).~~ **Won't implement — micro-optimization idea.**
+~~25. Consider a `--repos` scope flag for ad-hoc `tq worker` runs to prevent claim-theft races against the pool (observed this session).~~ **Won't implement — upstream feature idea.**
+~~26. Document the E2E reproducer recipe in `docs/services/tq.md` (scratch repo + `.crushrc` + enqueue payload shape + expected fact shape).~~ **Won't implement — one-shot doc addition.**
+~~27. Consider an upstream gitleaks issue for the keyword-armed bare-hex false-positive class (verify-before-filing gate first).~~ **NOT-DO — dup of c.6 (OPEN).**
+~~28. Unit-level redaction check: assert `redactBytes` actually neutralizes a token-shaped fixture inside the evidence sidecar (my test output was random base64 — redaction untested end-to-end).~~ **Won't implement — upstream redaction check.**
 
 **SystemNix housekeeping (noticed in passing):**
-29. Check the ZRAM SWAP CRITICAL sev1 gate state at 93% fill (combined-gated — confirm it's notify-tier, not silently firing).
-30. Check the Buildcache SSD Gatus check at 91% (>85% alert threshold) — firing or suppressed?
-31. Add `cargo-sweep`-style stale-artifact pruning for the monitor365 target as an alternative to full `cargo clean` (keep warm artifacts, drop dead dep-versions).
-32. buildcache-gc: consider a size-triggered per-project rust-tier cap with mtime grace (the row-560 option (b)) — needs upstream gc changes.
-33. Review sccache cap policy: it sat at its 32G cap, then dropped to 5.4G by other hands — is 32G still the right size?
-34. `tq-serve` dashboard: confirm the `tq-e2e` project renders sanely (test-pollution visibility for the owner).
-35. `tq stats` pollution check after any dismissal of the e2e tasks.
-36. CV: the dead verify-gate task (`000001a0a7c8`, integration test FAIL ×3) — flag to the CV repo session/owner; master's integration suite is red independently of the queue.
-37. Add a TODO row: "heuristic daemon commits that carry real fixes get a mapping note in the next status report" (systematizes b.4).
-38. Consider annotating `15614064`'s content in `docs/` (commit archaeology aid) since its message can't be reworded safely.
-39. Sweep for other `/tmp` git worktrees left by prior sessions (`/tmp/pre-mig` is not mine — ask its owner session or leave).
-40. Re-verify `~/.local/state/tq/logs` retention sweeps actually age out `.verify-failure.log` files (the sweep globs `*.log` — suffix was chosen for this; confirm live).
+~~29. Check the ZRAM SWAP CRITICAL sev1 gate state at 93% fill (combined-gated — confirm it's notify-tier, not silently firing).~~ **Won't implement — one-shot alert check.**
+30. Check the Buildcache SSD Gatus check at 91% (>85% alert threshold) — firing or suppressed? **→ docs/todo/storage.md buildcache decision rows**
+31. Add `cargo-sweep`-style stale-artifact pruning for the monitor365 target as an alternative to full `cargo clean` (keep warm artifacts, drop dead dep-versions). **→ docs/todo/storage.md buildcache-capacity row (sweep alternative)**
+32. buildcache-gc: consider a size-triggered per-project rust-tier cap with mtime grace (the row-560 option (b)) — needs upstream gc changes. **→ docs/todo/storage.md buildcache-capacity row (rust-tier cap option)**
+33. Review sccache cap policy: it sat at its 32G cap, then dropped to 5.4G by other hands — is 32G still the right size? **→ docs/todo/storage.md buildcache-capacity row (sccache cap question)**
+~~34. `tq-serve` dashboard: confirm the `tq-e2e` project renders sanely (test-pollution visibility for the owner).~~ **Won't implement — one-shot dashboard check.**
+~~35. `tq stats` pollution check after any dismissal of the e2e tasks.~~ **Won't implement — one-shot stats check.**
+~~36. CV: the dead verify-gate task (`000001a0a7c8`, integration test FAIL ×3) — flag to the CV repo session/owner; master's integration suite is red independently of the queue.~~ **Won't implement — CV-repo-owned; window passed.**
+~~37. Add a TODO row: "heuristic daemon commits that carry real fixes get a mapping note in the next status report" (systematizes b.4).~~ done — docs/CONTRIBUTING.md DONE-stamp convention + pipeline.md commit-mapping watch row
+~~38. Consider annotating `15614064`'s content in `docs/` (commit archaeology aid) since its message can't be reworded safely.~~ **Won't implement — one-shot annotation.**
+~~39. Sweep for other `/tmp` git worktrees left by prior sessions (`/tmp/pre-mig` is not mine — ask its owner session or leave).~~ **Won't implement — one-shot sweep.**
+~~40. Re-verify `~/.local/state/tq/logs` retention sweeps actually age out `.verify-failure.log` files (the sweep globs `*.log` — suffix was chosen for this; confirm live).~~ **Won't implement — one-shot verify.**
 
 **Larger tracks (touched, not moved):**
-41. mkIf-survivable implementation (row 568) once adopted — ~42-module migration, forced-field-eval constraint documented in the evaluation report.
-42. The owed evo-x2 reboot (flm `:52626` corpse) — unchanged, still the structural fix for the flm/llama class; run `nix run .#pre-reboot-check` first.
-43. Citation-check visibility surface implementation (after decision) + tests.
-44. `FailureEvidence.Tail` shrink implementation (after decision) — `tq show`/DLQ surfaces + tests.
-45. E2E: repeat the verify-failure validation after any go-taskqueue release bump to the pool binary (regeneration of the live-journal proof on the new pin).
-46. gitleaks-coverage-selftest: consider asserting the override is PRESENT (guard against a future `.gitleaks.toml` edit re-introducing the default rule's bare-hex behavior) — partially covered by the negative-hex-with-keyword clean assertion; an explicit "rule text contains sgp_-only regex" assertion would be belt.
-47. Sweep docs/status for other heuristic-commit-buried fixes lacking mapping notes (pattern: this session's b.4).
-48. Consider a `tq enqueue --verify-file` convenience (payload JSON quoting burned an iteration this session — a file-based payload input would remove the class).
-49. buildcache: after remediation, re-baseline the Gatus 85% threshold against the post-clean steady state.
-50. Closeout discipline: file this report's f-list survivors into TODO_LIST rows (only a.1–a.7 changes are durably row-stamped so far; the f-list itself is not).
+41. mkIf-survivable implementation (row 568) once adopted — ~42-module migration, forced-field-eval constraint documented in the evaluation report. **→ docs/todo/pipeline.md mkIf-survivable decision + follow-up rows**
+~~42. The owed evo-x2 reboot (flm `:52626` corpse) — unchanged, still the structural fix for the flm/llama class; run `nix run .#pre-reboot-check` first.~~ **NOT-DO — dup of 13-07 f23 (h - reboot executed).**
+~~43. Citation-check visibility surface implementation (after decision) + tests.~~ **NOT-DO — dup of b.2 (r).**
+~~44. `FailureEvidence.Tail` shrink implementation (after decision) — `tq show`/DLQ surfaces + tests.~~ **NOT-DO — dup of c.2 (r).**
+~~45. E2E: repeat the verify-failure validation after any go-taskqueue release bump to the pool binary (regeneration of the live-journal proof on the new pin).~~ **Won't implement — one-shot revalidation.**
+~~46. gitleaks-coverage-selftest: consider asserting the override is PRESENT (guard against a future `.gitleaks.toml` edit re-introducing the default rule's bare-hex behavior) — partially covered by the negative-hex-with-keyword clean assertion; an explicit "rule text contains sgp_-only regex" assertion would be belt.~~ done — gitleaks-coverage-selftest asserts override behavior - flake/parts/checks/lint-static.nix:598-640
+~~47. Sweep docs/status for other heuristic-commit-buried fixes lacking mapping notes (pattern: this session's b.4).~~ **Won't implement — one-shot sweep.**
+~~48. Consider a `tq enqueue --verify-file` convenience (payload JSON quoting burned an iteration this session — a file-based payload input would remove the class).~~ **Won't implement — upstream feature idea.**
+49. buildcache: after remediation, re-baseline the Gatus 85% threshold against the post-clean steady state. **→ docs/todo/storage.md buildcache re-baseline (in capacity decision row)**
+~~50. Closeout discipline: file this report's f-list survivors into TODO_LIST rows (only a.1–a.7 changes are durably row-stamped so far; the f-list itself is not).~~ done — survivors landed as rows - docs/todo/upstream.md:81-82 + storage.md:101-102
 
 ## g) QUESTIONS (that I cannot answer myself)
 

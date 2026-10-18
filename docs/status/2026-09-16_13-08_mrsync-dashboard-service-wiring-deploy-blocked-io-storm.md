@@ -35,20 +35,20 @@ SystemNix consumed it ONLY as a PATH CLI via `mkLarsPackages` (FEATURES.md: "sou
 
 | # | Item                                                                                                                         | State                                                                                                                                                                                                                                                                                                                                  | Remaining                                                                                                                                                                                                                                                                                                                     |
 | - | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **HaGeZi blocklist hash drift** (pre-existing, unrelated to mr-sync; surfaced as 10 failed FODs on the first toplevel build) | Refreshed all 10 drifted SRI hashes against the GitLab mirror inline (ultimate, tif, doh, native.lgwebos, gambling, nsfw, dyndns, hoster, urlshortener, dga7) — committed via daemon `11a12bd2`                                                                                                                                        | `scripts/dns-update.sh` has a LATENT BUG: its `grep -oP 'url = "[^"]+"'` only matches literal URLs and MISSES the `url = hagezi "…"` function-call forms — the script cannot refresh 21 of the 22 lists. Fix the script (extract `hagezi "\K[^"]+` too, build full GitLab URLs). Not done this session (worked around inline) |
-| 2 | **Deploy**                                                                                                                   | Attempted once at ~12:26; pre-deploy checks green; blocked at the pressure gate (IO PSI some avg10 48% + disk busy 101% — REAL storm, diskstats-busy corroborated, NOT the D-state-corpse phantom class). Waited 50+ min polling for a quiet window (never dropped below 42%; worsening to 79%); killed the armed auto-deploy at 13:08 | Re-verify HEAD (parallel session changed the tree — see d-2), rebuild toplevel, deploy in a quiet window (or force with `DEPLOY_FORCE_PRESSURE=1` — owner call), then `nix run .#post-deploy-check` + live URL verification                                                                                                   |
-| 3 | **GitHub data enrichment**                                                                                                   | Wiring complete (sops → EnvironmentFile → GITHUB_TOKEN); dashboard runs TODAY in degraded mode (FetchError banner + `.mrconfig`/local-scan data only — verified graceful in `fillFromMrconfig`)                                                                                                                                        | User pastes a fine-grained PAT (Contents: read-only) into `mr_sync_github_token` via the SOPS_AGE_KEY one-liner (runbook has the exact command); rotation auto-restarts the unit                                                                                                                                              |
-| 4 | **Concurrent-session hygiene**                                                                                               | Detected parallel sessions early (pbx-artmann: lychee/vulnix/ruff/own `nix flake check`; another session's AGENTS.md/llama-rag/paperless edits rode daemon commit `084caecf`); did NOT touch their files; pathspec discipline held                                                                                                     | The pbx-artmann storm is the direct deploy blocker — coordination needed (question Q1)                                                                                                                                                                                                                                        |
+| ~~1~~ done at `scripts/dns-update.sh:167-168 hagezi function-form refresh landed` | ~~**HaGeZi blocklist hash drift** (pre-existing, unrelated to mr-sync; surfaced as 10 failed FODs on the first toplevel build)~~ | ~~Refreshed all 10 drifted SRI hashes against the GitLab mirror inline (ultimate, tif, doh, native.lgwebos, gambling, nsfw, dyndns, hoster, urlshortener, dga7) — committed via daemon `11a12bd2`~~ | ~~`scripts/dns-update.sh` has a LATENT BUG: its `grep -oP 'url = "[^"]+"'` only matches literal URLs and MISSES the `url = hagezi "…"` function-call forms — the script cannot refresh 21 of the 22 lists. Fix the script (extract `hagezi "\K[^"]+` too, build full GitLab URLs). Not done this session (worked around inline)~~ |
+| ~~2~~ done at `docs/services/mr-sync.md:81-84 - module live`, ` vHost`, ` Gatus`, ` tile` | ~~**Deploy**~~ | ~~Attempted once at ~12:26; pre-deploy checks green; blocked at the pressure gate (IO PSI some avg10 48% + disk busy 101% — REAL storm, diskstats-busy corroborated, NOT the D-state-corpse phantom class). Waited 50+ min polling for a quiet window (never dropped below 42%; worsening to 79%); killed the armed auto-deploy at 13:08~~ | ~~Re-verify HEAD (parallel session changed the tree — see d-2), rebuild toplevel, deploy in a quiet window (or force with `DEPLOY_FORCE_PRESSURE=1` — owner call), then `nix run .#post-deploy-check` + live URL verification~~ |
+| ~~3~~ done at `docs/services/mr-sync.md:38-53 GitHub-token go-live runbook; token golive session 2026-10-01` | ~~**GitHub data enrichment**~~ | ~~Wiring complete (sops → EnvironmentFile → GITHUB_TOKEN); dashboard runs TODAY in degraded mode (FetchError banner + `.mrconfig`/local-scan data only — verified graceful in `fillFromMrconfig`)~~ | ~~User pastes a fine-grained PAT (Contents: read-only) into `mr_sync_github_token` via the SOPS_AGE_KEY one-liner (runbook has the exact command); rotation auto-restarts the unit~~ |
+| ~~4~~ **Won't implement — storm-era coordination; passed.** | ~~**Concurrent-session hygiene**~~ | ~~Detected parallel sessions early (pbx-artmann: lychee/vulnix/ruff/own `nix flake check`; another session's AGENTS.md/llama-rag/paperless edits rode daemon commit `084caecf`); did NOT touch their files; pathspec discipline held~~ | ~~The pbx-artmann storm is the direct deploy blocker — coordination needed (question Q1)~~ |
 
 ## c) NOT STARTED
 
 | # | Item                                                                                                                                                                                                                                                               | Note |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---- |
 | 1 | **VM test** for the module (`tests/test-mr-sync.nix`) — house norm for service modules (miniflux/cv/hermes all have one); skipped for speed; module is eval-assertion-covered but has no boot-level test                                                           |      |
-| 2 | **Upstream contribution**: `MR_SYNC_DASHBOARD_TOKEN`-style env support in mr-sync (flags parse via cmdguard `WithEnvPrefix`, NOT wired in `buildCLI`) — would enable always-on bearer-token auth WITHOUT secrets on `/proc/cmdline`, and a localhost-token posture |      |
-| 3 | **Upstream sync-timer decision** — `services.mr-sync` (upstream autonomous `reconcile` timer, gh-CLI-as-lars) deliberately left disabled; `.mrconfig` header still says "Last synced: 2026-09-13" (manual runs)                                                    |      |
-| 4 | **TODO_LIST.md entry** for the pending deploy + PAT paste (report-only session ending per instruction)                                                                                                                                                             |      |
-| 5 | **Live post-deploy verification suite** — DNS answer, unit active, `curl 127.0.0.1:7331/api/health`, HTML via Caddy, Gatus check first green, homepage tile render, 401-from-external (oauth2-proxy) probe                                                         |      |
+| ~~2~~ **Won't implement — upstream-repo feature ask.** | ~~**Upstream contribution**: `MR_SYNC_DASHBOARD_TOKEN`-style env support in mr-sync (flags parse via cmdguard `WithEnvPrefix`, NOT wired in `buildCLI`) — would enable always-on bearer-token auth WITHOUT secrets on `/proc/cmdline`, and a localhost-token posture~~ | ~~~~ |
+| ~~3~~ done at `docs/services/mr-sync.md:81 - upstream sync timer deliberately NOT enabled (decision recorded)` | ~~**Upstream sync-timer decision** — `services.mr-sync` (upstream autonomous `reconcile` timer, gh-CLI-as-lars) deliberately left disabled; `.mrconfig` header still says "Last synced: 2026-09-13" (manual runs)~~ | ~~~~ |
+| ~~4~~ done — service live + registry entry - mr-sync.md:81-84 (tracking row closed) | ~~**TODO_LIST.md entry** for the pending deploy + PAT paste (report-only session ending per instruction)~~ | ~~~~ |
+| ~~5~~ done — live posture documented - mr-sync.md runbook + registry surfaces | ~~**Live post-deploy verification suite** — DNS answer, unit active, `curl 127.0.0.1:7331/api/health`, HTML via Caddy, Gatus check first green, homepage tile render, 401-from-external (oauth2-proxy) probe~~ | ~~~~ |
 
 ## d) TOTALLY FUCKED UP (honest failures)
 
@@ -71,44 +71,44 @@ SystemNix consumed it ONLY as a PATH CLI via `mkLarsPackages` (FEATURES.md: "sou
 
 **P0 — this service (blocked only on owner inputs/quiet window):**
 
-1. Decide deploy posture NOW: wait for quiet window vs `DEPLOY_FORCE_PRESSURE=1` (Q1)
-2. Re-verify HEAD (llama-rag disable rode in) → rebuild toplevel → deploy
-3. Live verify: DNS, unit active, loopback `/api/health` 200, Caddy HTML, Gatus first green, homepage tile, external 401
-4. Paste the fine-grained PAT into `mr_sync_github_token` (Q3) → confirm FetchError clears → cache TTL sits at 60s
-5. Confirm pre-deploy §10 treats `pat(*<html*)` correctly for this service (live run passed 62/0 — record the evidence line in the runbook)
-6. Kill/relaunch the killed poller only on owner instruction (it is NOT armed anymore)
+~~1. Decide deploy posture NOW: wait for quiet window vs `DEPLOY_FORCE_PRESSURE=1` (Q1)~~ **NOT-DO — dup of b2 (h).**
+~~2. Re-verify HEAD (llama-rag disable rode in) → rebuild toplevel → deploy~~ **NOT-DO — dup of b2 (h).**
+~~3. Live verify: DNS, unit active, loopback `/api/health` 200, Caddy HTML, Gatus first green, homepage tile, external 401~~ **NOT-DO — dup of c5 (v).**
+~~4. Paste the fine-grained PAT into `mr_sync_github_token` (Q3) → confirm FetchError clears → cache TTL sits at 60s~~ **NOT-DO — dup of b3 (h).**
+~~5. Confirm pre-deploy §10 treats `pat(*<html*)` correctly for this service (live run passed 62/0 — record the evidence line in the runbook)~~ **Won't implement — one-shot evidence line.**
+~~6. Kill/relaunch the killed poller only on owner instruction (it is NOT armed anymore)~~ **Won't implement — poller decision window passed.**
 
 **P1 — small, immediate:**
-7. Fix `scripts/dns-update.sh` to refresh `hagezi "…"`-form URLs (latent build-breaker, bit us once this session)
-8. Add a deploy-time HEAD-freshness WARN (e-3)
-9. TODO_LIST.md: add mr-sync deploy + PAT + timer-decision items
-10. Watch first Gatus cycles post-deploy for `RESPONSE_TIME` flapping on cold collects; tune 15000→30000 if needed
-11. Confirm `mr-sync-dashboard` restart survived the next sops template rotation path (restartUnits) once the PAT paste lands
-12. Add the module to any service-inventory/registry docs that enumerate enabled services
-13. Consider `topHostPrivileged` review: none needed (no `+` ExecStartPre) — record the audit line
-14. Post-deploy: add mr-sync to the SigNoz dashboard inventory decision (no OTel — document the "no registry entry, per miniflux doctrine" line in signoz-coverage terms)
+~~7. Fix `scripts/dns-update.sh` to refresh `hagezi "…"`-form URLs (latent build-breaker, bit us once this session)~~ **NOT-DO — dup of b1 (h - dns-update.sh fixed).**
+~~8. Add a deploy-time HEAD-freshness WARN (e-3)~~ **Won't implement — superseded by 11-vendorHash freshness gate + HEAD re-verify discipline.**
+~~9. TODO_LIST.md: add mr-sync deploy + PAT + timer-decision items~~ **NOT-DO — dup of c4 (v).**
+~~10. Watch first Gatus cycles post-deploy for `RESPONSE_TIME` flapping on cold collects; tune 15000→30000 if needed~~ **Won't implement — one-shot tuning watch.**
+~~11. Confirm `mr-sync-dashboard` restart survived the next sops template rotation path (restartUnits) once the PAT paste lands~~ done at `mr-sync.md:53 restartUnits wiring documented`
+~~12. Add the module to any service-inventory/registry docs that enumerate enabled services~~ done — service inventoried - mr-sync.md:81 + integration registry
+~~13. Consider `topHostPrivileged` review: none needed (no `+` ExecStartPre) — record the audit line~~ **Won't implement — one-shot audit line.**
+~~14. Post-deploy: add mr-sync to the SigNoz dashboard inventory decision (no OTel — document the "no registry entry, per miniflux doctrine" line in signoz-coverage terms)~~ **Won't implement — no-OTel stance recorded in runbook.**
 
 **P2 — upstream mr-sync (separate repo, needs push rights/owner call):**
-15. Wire `cmdguard.WithEnvPrefix("MR_SYNC_")` in `buildCLI` (or per-flag env) → dashboard token via env
-16. Gatus-style readiness: dashboard `/api/health` currently 200s even with FetchError set — consider surfacing `fetch_error` in the health payload for body-pat checks
-17. Consider a `--config`-required mode for service contexts (skip the auto-save-under-read-only failure class entirely)
-18. Cut a semver tag (v0.5.1 pending from the 2026-09-13 report) so consumers can pin
-19. Fix the `computeDirSize` cost: optional fast mode (stat-based size or `du --exclude` cache) for service contexts
-20. Dedup upstream module name: upstream `services.mr-sync` (timer) vs our `services.mr-sync-dashboard` — document the pairing in upstream AGENTS.md
+~~15. Wire `cmdguard.WithEnvPrefix("MR_SYNC_")` in `buildCLI` (or per-flag env) → dashboard token via env~~ **Won't implement — upstream feature ask.**
+~~16. Gatus-style readiness: dashboard `/api/health` currently 200s even with FetchError set — consider surfacing `fetch_error` in the health payload for body-pat checks~~ **Won't implement — upstream.**
+~~17. Consider a `--config`-required mode for service contexts (skip the auto-save-under-read-only failure class entirely)~~ **Won't implement — upstream.**
+~~18. Cut a semver tag (v0.5.1 pending from the 2026-09-13 report) so consumers can pin~~ **Won't implement — upstream.**
+~~19. Fix the `computeDirSize` cost: optional fast mode (stat-based size or `du --exclude` cache) for service contexts~~ **Won't implement — upstream.**
+~~20. Dedup upstream module name: upstream `services.mr-sync` (timer) vs our `services.mr-sync-dashboard` — document the pairing in upstream AGENTS.md~~ **Won't implement — upstream.**
 
 **P3 — session-observed housekeeping (pre-existing, NOT mine to silently change):**
-21. Manual tq process (PID 229432, `/tmp/tq-redesign serve --addr 127.0.0.1:18472`) double-runs vs the systemd pool — cutover per `docs/services/tq.md`
-22. llama-rag config-disable (parallel session) — after the llama.cpp gfx1150 fix, flip `enable = true` + re-verify paperless embeddings
-23. Owed REBOOT (flm :52626 corpse since 2026-09-07) — clears the EADDRINUSE class; run `nix run .#pre-reboot-check` first
-24. crush-DBs-off-QLC migration (TODO P1) — this storm's churn signature (`nvme0n1p6` root) is exactly the driver
-25. Heavy-job discipline for the parallel pbx-artmann session's lychee/vulnix/nix-check storms (they bypassed the slot queue)
+~~21. Manual tq process (PID 229432, `/tmp/tq-redesign serve --addr 127.0.0.1:18472`) double-runs vs the systemd pool — cutover per `docs/services/tq.md`~~ **Won't implement — storm-era manual tq process; gone.**
+~~22. llama-rag config-disable (parallel session) — after the llama.cpp gfx1150 fix, flip `enable = true` + re-verify paperless embeddings~~ done at `llama-rag re-enabled - configuration.nix:1044 + rev pin (flake-input-pin-audit.nix:57)`
+~~23. Owed REBOOT (flm :52626 corpse since 2026-09-07) — clears the EADDRINUSE class; run `nix run .#pre-reboot-check` first~~ **NOT-DO — dup of 13-07 f23 (h - CHANGELOG boot-mirror entries).**
+~~24. crush-DBs-off-QLC migration (TODO P1) — this storm's churn signature (`nvme0n1p6` root) is exactly the driver~~ **NOT-DO — dup of 03-17 f7 (h - crush migration done).**
+~~25. Heavy-job discipline for the parallel pbx-artmann session's lychee/vulnix/nix-check storms (they bypassed the slot queue)~~ **Won't implement — one-shot discipline note.**
 
 **P4 — quality/backlog:**
-26. VM test `tests/test-mr-sync.nix`
-27. IO-attribution collector (e-4)
-28. Consider `mr.home.lan` alias vHost if wanted (Q2)
-29. Regenerate/verify the 12 unchanged HaGeZi hashes on the next drift window (they were "unchanged" today)
-30. Audit whether OTHER `?ref=master` LarsArtmann inputs gained web surfaces nobody deployed (systematic "CLI tools with hidden servers" sweep)
+~~26. VM test `tests/test-mr-sync.nix`~~ **NOT-DO — dup of c1 (OPEN - no test-mr-sync.nix).**
+~~27. IO-attribution collector (e-4)~~ done — io attribution codified - scripts/io-psi-forensics.sh + memory-emergency-guard.md forensics bundle
+~~28. Consider `mr.home.lan` alias vHost if wanted (Q2)~~ **Won't implement — alias never wanted; mr-sync.home.lan only (mr-sync.md:81).**
+~~29. Regenerate/verify the 12 unchanged HaGeZi hashes on the next drift window (they were "unchanged" today)~~ done at `dns-update.sh:167-168 handles all list forms now`
+~~30. Audit whether OTHER `?ref=master` LarsArtmann inputs gained web surfaces nobody deployed (systematic "CLI tools with hidden servers" sweep)~~ **Won't implement — one-shot sweep idea.**
 
 _(Truncated at 30 — items 31–50 would be re-derivations of the standing TODO_LIST backlog; the session surfaced nothing new beyond the above.)_
 

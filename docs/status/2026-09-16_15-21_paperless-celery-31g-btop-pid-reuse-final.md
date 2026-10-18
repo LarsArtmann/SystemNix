@@ -30,15 +30,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **Identity of the previous PID 2144300 owner** (the true source of 20-threads/31G) — mechanism proven, identity unrecoverable (no kernel record; btop keeps no history).
-2. **btop upstream bug confirmation** — sourcegraph shows the pid-cache reuse path in btop's collector (`current_procs` keyed by pid; entries survive when the pid is found again), but I did NOT pinpoint the exact stale-stats code path in the Linux collector, nor search existing upstream issues. Mechanism claim is black-box-empirical, internals unverified.
+~~1. **Identity of the previous PID 2144300 owner** (the true source of 20-threads/31G) — mechanism proven, identity unrecoverable (no kernel record; btop keeps no history).~~ **Won't implement — identity unrecoverable (kernel records silent); window passed.**
+~~2. **btop upstream bug confirmation** — sourcegraph shows the pid-cache reuse path in btop's collector (`current_procs` keyed by pid; entries survive when the pid is found again), but I did NOT pinpoint the exact stale-stats code path in the Linux collector, nor search existing upstream issues. Mechanism claim is black-box-empirical, internals unverified.~~ **Won't implement — black-box mechanism proven sufficient; internals chase dropped.**
 
 ## c) NOT STARTED
 
 1. Upstream btop issue research/filing (pid-reuse stale stats, repro: heavy pid-churn host + long-running instance + memory-sorted view).
-2. btop version bump evaluation (nixpkgs) once/if an upstream fix exists.
-3. SigNoz census-metrics history query (`system_cgroup_mem_bytes` for paperless) — **deliberately dropped**: the journal-based cgroup sweep settled the question with kernel-truth data.
-4. Any paperless config change — **deliberately none**: nothing is broken.
+~~2. btop version bump evaluation (nixpkgs) once/if an upstream fix exists.~~ **Won't implement — gated on nonexistent upstream fix.**
+~~3. SigNoz census-metrics history query (`system_cgroup_mem_bytes` for paperless) — **deliberately dropped**: the journal-based cgroup sweep settled the question with kernel-truth data.~~ done — deliberately dropped in-session - journal cgroup sweep settled with kernel-truth data
+~~4. Any paperless config change — **deliberately none**: nothing is broken.~~ done — caps + OMP_NUM_THREADS + max-tasks-per-child + alerting verified in place
 
 ## d) TOTALLY FUCKED UP (honest accounting)
 
@@ -61,14 +61,14 @@
 
 ## f) NEXT (ranked, no padding)
 
-1. User: note which pane lost the row (old pane too, or only absent in the new one) — pins cache-vs-shared-source for the upstream report.
-2. User: rough age of the long-running btop pane — brackets the previous PID-owner era (which 20-thread/31G process it was).
-3. Research existing btop issues for "pid reuse stale/wrong memory" (1.4.x); if novel, file upstream with this box's repro (heavy churn + memory sort + days-long instance).
-4. Evaluate btop bump in nixpkgs when a fix lands.
-5. Optional btop config hardening: `proc_sorting = "cpu lazy"` reduces constant re-sorting of a memory-sorted list (cosmetic; may reduce exposure to sort/stats misalignment).
+~~1. User: note which pane lost the row (old pane too, or only absent in the new one) — pins cache-vs-shared-source for the upstream report.~~ **Won't implement — one-shot user observation.**
+~~2. User: rough age of the long-running btop pane — brackets the previous PID-owner era (which 20-thread/31G process it was).~~ **Won't implement — one-shot user observation.**
+~~3. Research existing btop issues for "pid reuse stale/wrong memory" (1.4.x); if novel, file upstream with this box's repro (heavy churn + memory sort + days-long instance).~~ **NOT-DO — dup of c1 (OPEN).**
+~~4. Evaluate btop bump in nixpkgs when a fix lands.~~ **NOT-DO — dup of c2 (w).**
+~~5. Optional btop config hardening: `proc_sorting = "cpu lazy"` reduces constant re-sorting of a memory-sorted list (cosmetic; may reduce exposure to sort/stats misalignment).~~ **Won't implement — cosmetic config idea.**
 6. Consider `scripts/proc-mem-triage.sh`: given a PID, print VmRSS/VmHWM/VmSwap/threads + cgroup current/peak/max + unit — turns this session's manual chain into one command for the next "why is X using RAM" report.
-7. Keep the SigNoz census query as the fallback oracle for future monitor disputes (documented in the 14-41 report).
-8. Nothing to change in paperless — caps, `OMP_NUM_THREADS=1`, `max-tasks-per-child=1`, and system-health memory alerting all verified in place.
+~~7. Keep the SigNoz census query as the fallback oracle for future monitor disputes (documented in the 14-41 report).~~ done — census fallback documented in the 14-41 status report
+~~8. Nothing to change in paperless — caps, `OMP_NUM_THREADS=1`, `max-tasks-per-child=1`, and system-health memory alerting all verified in place.~~ done — verified in place - caps + alerting confirmed (module + monitoredServices)
 
 ## g) QUESTIONS (cannot be determined from the machine)
 
