@@ -319,7 +319,13 @@ in
       };
     in
     {
-      after = deps;
+      # after (not wants) multi-user.target: every consumer is application
+      # readiness — its start must not hold the boot transaction open while it
+      # waits out dnsblockd's ~2min blocklist load (the 2026-10-18 multi-user
+      # family audit: miniflux was the boot-0 critical-chain gate at 91s; the
+      # llama-chat 2026-10-17 owner ruling is the precedent). Units stay in
+      # multi-user.wants, so deploy coverage is unchanged.
+      after = deps ++ [ "multi-user.target" ];
       wants = deps;
       serviceConfig = {
         ExecStartPre = [ "+${lib.getExe script}" ];
@@ -372,9 +378,12 @@ in
       };
     in
     {
+      # Same post-gate ordering as mkOidcGate above (application readiness,
+      # never a boot gate).
       after = [
         "network-online.target"
         "dnsblockd.service"
+        "multi-user.target"
       ];
       wants = [
         "network-online.target"

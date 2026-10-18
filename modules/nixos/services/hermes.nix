@@ -635,6 +635,14 @@
           description = "Hermes Agent Gateway - Messaging Platform Integration";
           wantedBy = [ "multi-user.target" ];
           after = [
+            # Post-gate (application readiness, llama-chat owner-ruling
+            # shape): the 2026-10-18 family audit caught hermes holding
+            # multi-user for its FULL 3min TimeoutStartSec and then failing
+            # (hermes-migrate-state sqlite walk, 1.6G read under post-boot
+            # IO, boot -1) — the worst gate in the family. The migrate
+            # start-budget problem is its own row; this only stops it
+            # gating the boot.
+            "multi-user.target"
             "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
