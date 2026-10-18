@@ -83,6 +83,7 @@
 
 _Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fold are ROADMAP fuel)._
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                            | Impact   | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
 | ~~1~~ done at `CHANGELOG deploys 2026-09-16+` | ~~Land the deploy (`nix run .#deploy`) in a quiet window — all gates verified green~~ | ~~Critical~~ | ~~S~~ | ~~Ops~~ |
@@ -94,12 +95,12 @@ _Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fo
 | ~~7~~ done at `scripts/test-pre-deploy-metrics.sh (Fixture H)` | ~~Persisted fixture for §10 port enumeration (zero-match must warn, multi-file scan)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | 8 **→ docs/todo/pipeline.md deploy-gate verdict rows** | Gate verdict contract: pre-deploy-check prints Summary on every exit path; deploy.sh names summary-less exits | High | S | Quality |
 | 9 **→ docs/todo/services.md failed-units sweep incl inboxclean-sync** | Triage inboxclean-sync OnFailure (still failing 01:46 tonight — invalid_grant vs transient) | High | S | Bug |
-| 10 | Triage the 2 systemd-coredump units (PIDs 2527885/2669309)                                                                                      | High     | S      | Bug           |
+| ~~10~~ **Won't implement — one-shot triage; window passed.** | ~~Triage the 2 systemd-coredump units (PIDs 2527885/2669309)~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
 | ~~11~~ **Won't implement — routine.** | ~~Verify gatus CV funnel checks green post-deploy (funnelStale, pipeline-store health)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
 | ~~12~~ done at `docs/services/llama-rag.md:29` | ~~AGENTS.md: correct the llama-rag containment claim (did not hold)~~ | ~~High~~ | ~~S~~ | ~~Documentation~~ |
 | ~~13~~ done at `CHANGELOG 2026-09-19 dark guard` | ~~Containment tripwire metric for "stopped as containment" units (llama, flm socket)~~ | ~~High~~ | ~~M~~ | ~~Feature~~ |
 | ~~14~~ done — docs/services/memory-emergency-guard.md (live-documented zones) | ~~Verify zram/sev1 guard zones are armed and tripping correctly during storms (zram hit 88%)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
-| 15 | Audit what PMA `buildflow --fix --semantic` wrote (~40 GB across projects)                                                                      | High     | M      | Quality       |
+| ~~15~~ **Won't implement — one-shot audit; window passed (buildflow lock healthy since).** | ~~Audit what PMA `buildflow --fix --semantic` wrote (~40 GB across projects)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~16~~ **Won't implement — already executed (flake.nix monitor365 removal); ratification moot.** | ~~Ratify monitor365 packages-surface removal (owner decision; rationale in flake.nix)~~ | ~~Medium~~ | ~~S~~ | ~~Decision~~ |
 | ~~17~~ done at `scripts/migrate-hermes-subvol.sh:66` | ~~heavy-job wrapper adoption for VM-test builds (stalwart-e2e ran bare in the storm)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~18~~ done — docs/todo/stability.md corpse row | ~~The owed reboot (flm corpse, D-state corpses, llama spin) — `pre-reboot-check` first~~ | ~~High~~ | ~~M~~ | ~~Ops~~ |
@@ -111,7 +112,7 @@ _Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fo
 | 24 **→ docs/todo/services.md crush-daily golden file row** | crush-daily post-bump: golden-file drift check (UPDATE_GOLDENS class) | Medium | S | Quality |
 | ~~25~~ **Won't implement — routine.** | ~~cv-scan timer + cv-backup oneshot green post-deploy~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
 | ~~26~~ done at `docs/CONTRIBUTING.md` | ~~Session artifact doctrine: /var/log/sessionnix/ for deploy/chain logs (never bare /tmp)~~ | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
-| 27 | `nix run .#probe-bumped-inputs` command (goModules probe per changed lock node)                                                                 | Medium   | M      | Feature       |
+| ~~27~~ **Won't implement — superseded by §11 FOD toplevel preview (scripts/lib/vendor-freshness.sh).** | ~~`nix run .#probe-bumped-inputs` command (goModules probe per changed lock node)~~ | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
 | 28 **→ docs/todo/pipeline.md deploy.sh pressure-gate rows** | deploy.sh pressure-gate message: print top-3 IO offenders | Medium | S | Feature |
 | 29 **→ docs/todo/pipeline.md concurrent-edit row** | Cross-session BLOCKERS surface (shared file every session reads at start) | Medium | S | Process |
 | ~~30~~ **Won't implement — routine.** | ~~metrics-gate.sh endpoint-down WARN branches: re-verify against post-refactor §10 env flow~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |

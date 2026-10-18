@@ -156,6 +156,61 @@
           fi
         '';
       };
+
+      # Server DB backup, quiesced. Upstream's backup (admin_cmd.rs
+      # run_backup) opens the live DuckDB directly, and DuckDB is
+      # single-writer-per-file — while the upstream unit orders
+      # After+Wants monitor365-server.service, so EVERY fire dies with
+      # "Conflicting lock is held" (2026-10-18 01:42 deploy failure).
+      # DuckDB has no read-only side door against a writer's lock, so the
+      # only consistent export is server-stopped (discordsync-migrate
+      # idiom). ~1min dashboard outage at 03:00 / boot catch-up.
+      monitor365BackupScript = pkgs.writeShellApplication {
+        name = "monitor365-server-backup-quiesced";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.systemd
+        ];
+        text = ''
+          STATE_DIR="${serverCfg.stateDir}"
+          SERVER="monitor365-server.service"
+          WATCHDOG_TIMER="monitor365-server-watchdog.timer"
+          KEEP="${toString serverCfg.backup.keep}"
+
+          cd "$STATE_DIR"
+
+          # Pause the watchdog first: its is-active check auto-STARTS an
+          # inactive server, which would re-grab the DuckDB lock mid-backup.
+          if ! systemctl stop "$WATCHDOG_TIMER"; then
+            echo "monitor365-server-backup: WATCHDOG PAUSE FAILED — refusing to stop the server (backup skipped)"
+            exit 1
+          fi
+          if ! systemctl stop "$SERVER"; then
+            echo "monitor365-server-backup: SERVER STOP FAILED — aborting before any DB access; restarting watchdog"
+            systemctl start "$WATCHDOG_TIMER" || true
+            exit 1
+          fi
+          restore() {
+            systemctl start "$SERVER" \
+              || echo "monitor365-server-backup: CRITICAL — server RESTART FAILED; start $SERVER manually"
+            systemctl start "$WATCHDOG_TIMER" || true
+          }
+          trap restore EXIT TERM INT
+
+          ${lib.getExe serverCfg.package} \
+            --database-url "$STATE_DIR/monitor365.duckdb" \
+            --jwt-secret "$(cat /run/secrets/server_jwt_secret)" \
+            backup --output-dir "$STATE_DIR"
+
+          # Retain only the newest KEEP backups (upstream's ls -t prune,
+          # re-expressed with find for the nullglob audit).
+          find "$STATE_DIR" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null \
+            | sort -rn | tail -n +"$((KEEP + 1))" | cut -f2- | xargs -r rm -f
+
+          echo "monitor365-server-backup: backup complete, server restored"
+        '';
+      };
     in
     {
       imports = [

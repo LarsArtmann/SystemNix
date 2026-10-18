@@ -123,13 +123,14 @@ Sorted by impact; the first block is decision-gated, the rest are executable. It
 | ~~14~~ done — tests/fixtures/gitleaks (uniform templates) | ~~Sweep for other two-consumer template patterns like a8 (any check that scans fixtures for both must-detect and must-clean classes)~~ |
 | ~~15~~ done — CHANGELOG 2026-09-16+ entries | ~~CHANGELOG entries: harness phantoms (a8/a9), compsize conversion, forensics fix, doc repairs~~ |
 | ~~16~~ done at `CHANGELOG 2026-09-19 split` | ~~HARVEST both reports' section-f lists into TODO_LIST/ROADMAP (docs-health)~~ |
-| 17 | Check whether Gatus pats `btrfs_compression_ratio_pct` — if yes, compsize needs a §10 endpoint-down WARN branch like BANKSYNC                                                                                                                                   |
+| 17 **→ docs/todo/monitoring.md btrfs_compression_ratio_pct pat-audit row (harvested 2026-10-17)** | Check whether Gatus pats `btrfs_compression_ratio_pct` — if yes, compsize needs a §10 endpoint-down WARN branch like BANKSYNC |
 | ~~18~~ **Won't implement — superseded: gate repaired 2026-09-16.** | ~~Verify secret-scan failure output post-push contains ONLY the known literals (no NEW leak hiding behind the expected red)~~ |
 | ~~19~~ done at `tests/test-nix-email.nix:1` | ~~nix-email check — coordinate with owning session once its WIP lands~~ |
 | 20 **→ docs/todo/pipeline.md full flake check with builds row** | Full `nix flake check` (build mode) at tree quiescence |
 
 **Carry-over, high impact (previously identified, untouched this session):**
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                  |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 21 **→ docs/todo/stability.md Zone 6 row** | crush-hot-db deploy at soak gate (~09-17) — the structural fix for the QLC churn driving Zone 6 (99 trips/1.5d) |
@@ -140,23 +141,23 @@ Sorted by impact; the first block is decision-gated, the rest are executable. It
 | ~~26~~ done at `docs/services/hot-db.md:3 (services.hot-db Phase-2 landed)` | ~~Delete the dead `@nix` QLC subvol at `/mnt/btrfs-root` (TODO P1, post-reboot)~~ |
 | 27 **→ docs/todo/services.md Resend domain verify row** | Fold `crush-hot-db` interim module into the ratified `services.hot-db` Phase-2 module |
 | ~~28~~ done at `docs/todo/storage.md (Borg leg implemented) + docs/services/offsite-borg.md` | ~~Verify `larsartmann.cloud` in Resend (SPF/DKIM) — completes mail-relay go-live AND Pocket ID SMTP delivery~~ |
-| 29 | Implement Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11; blueprint in docs/research/)                                                               |
+| ~~29~~ done at `Hetzner StorageBox + Borg landed 2026-09-22 (docs/services/offsite-borg.md)` | ~~Implement Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11; blueprint in docs/research/)~~ |
 | 30 **→ docs/todo/storage.md /data corruption row** | clickhouse-backup coverage (telemetry has NO backup leg) |
 | 31 | Repair the known /data EIO inode (P0; btrbk-data keeps failing by decided stance until repaired)                                                                      |
 | ~~32~~ done at `.github/workflows/negative-tests.yml:35 (nightly build-mode)` | ~~DiscordSync Turso decision: plan upgrade vs permanent local-only (remove TURSO env + retire the deliberately-red check)~~ |
-| 33 | CI: make one nightly workflow run BUILD-mode `nix flake check` so tree-wide lint reds (dead-guard-lint class) surface within a day, not on push                       |
+| 33 **→ docs/todo/storage.md /data corruption row** | CI: make one nightly workflow run BUILD-mode `nix flake check` so tree-wide lint reds (dead-guard-lint class) surface within a day, not on push |
 | ~~34~~ done — docs/services/hot-db.md:79 (per-service subvol doctrine + waves executed) | ~~PMA lock-drift CI guard: assert PMA's flake.lock go-commit rev ≥ `22f0e4c` (TODO_LIST carries the upstream CI item)~~ |
 | ~~35~~ done — docs/services/memory-emergency-guard.md:46 | ~~Per-service btrfs subvolume doctrine: turn the 2026-09-15 analysis into per-service decisions (A/B/C classes)~~ |
-| 36 | Annotate the 19:27 report's forgotten-items list with resolutions (docs-health ANNOTATE convention)                                                                   |
+| ~~36~~ done at `.github/workflows/negative-tests.yml:35 (nightly build-mode)` | ~~Annotate the 19:27 report's forgotten-items list with resolutions (docs-health ANNOTATE convention)~~ |
 | 37 **→ docs/todo/stability.md Zone 6 row** | Annotate older reports' `zone6_churn_units_stopped` naming ghost (one-line rename pointer) |
-| 38 | Review sev1 notify-tier actual rate during the current storm (cooldown 30min, `last_trip_recent`-keyed) — is the desktop being notified per-trip? alert-fatigue check |
+| ~~38~~ **Won't implement — superseded by this sweep (19-27 report annotated 2026-10-17).** | ~~Review sev1 notify-tier actual rate during the current storm (cooldown 30min, `last_trip_recent`-keyed) — is the desktop being notified per-trip? alert-fatigue check~~ |
 | ~~39~~ done — modules/nixos/services/gatus-config.nix:884-905 | ~~Go deps audit workflow: add a name to `FATAL: nix eval` failures pointing at the input-fetch root cause (today it read as an unrelated failure)~~ |
-| 40 | Consider `dead-guard-lint` coverage for `scripts/*.sh` (currently .nix-only; shell captures in scripts/ are unlinted)                                                 |
+| ~~40~~ **Won't implement — storm-era one-shot; window passed.** | ~~Consider `dead-guard-lint` coverage for `scripts/*.sh` (currently .nix-only; shell captures in scripts/ are unlinted)~~ |
 | ~~41~~ done — .gitleaks.toml:110 | ~~Gatus: watch first post-deploy cycle of the split btrfs checks (Errors/Incomplete) for the 2-check grace period behavior~~ |
 | ~~42~~ done at `.github/workflows/negative-tests.yml:35` | ~~`tests/fixtures/gitleaks` naming: the fixtures now carry TEMPLATE semantics — rename or comment the files so the template contract is discoverable at the file~~ |
-| 43 | Add `scripts/negative-test-lints.sh` to the CI nightly matrix (not pre-commit — too slow)                                                                             |
+| ~~43~~ done — dead-guard-lint v2 landed 2026-10-04 covering scripts (docs/todo/pipeline.md dead-guard row) | ~~Add `scripts/negative-test-lints.sh` to the CI nightly matrix (not pre-commit — too slow)~~ |
 | ~~44~~ **Won't implement — superseded: workspace doc surface moved to docs/services/hermes.md.** | ~~Inventory: which TODO_LIST rows still say "Deploy-pending" from prior sessions — build the single deploy-debt checklist from section e9~~ |
-| 45 | Hermes workspace-doc v3 candidate: teach the agent about the new sev1 tiers + guard churn semantics it will observe in journals                                       |
+| ~~45~~ done at `.github/workflows/negative-tests.yml:35 runs nightly` | ~~Hermes workspace-doc v3 candidate: teach the agent about the new sev1 tiers + guard churn semantics it will observe in journals~~ |
 | 46 **→ docs/todo/upstream.md rows** | Upstream: propose gitleaks rule test-harness pattern (fixture-template + dual expansion) — only after verify-before-filing |
 | ~~47~~ **Won't implement — superseded: pre-deploy §1 rewritten block-level (02-13 report a.5).** | ~~Upstream go-taskqueue: the 4 upstream tasks from the 19:27 report (unblocked once pool deploys)~~ |
 | ~~48~~ **Won't implement — one-shot annotation.** | ~~Re-check `system_local_dns_resolves` + pre-deploy §1 narinfo filter behavior after the next deploy (resolv.conf rewrite path)~~ |
