@@ -45,6 +45,11 @@ clickhouse-client --query "SELECT metric_name, temporality, count() FROM signoz_
 # exporter's TYPE declaration, never by name shape (2026-10-18 regression).
 scripts/metric-exists.sh 'PREFIX%'
 
+# Whole-tree store-truth sweep: every dashboard+alert metric reference vs the
+# store in one batched probe; fails on any zero-series name off the allowlist
+# (scripts/metric-sweep-expected-absent.txt). Harness legs: CASES=metricnames.
+scripts/metric-sweep.sh
+
 # Is a series PromQL-visible? (DELTA-blindness: delta-temporality metrics
 # return 0 series via the v1 API despite fresh samples — see below)
 python3 -c "import urllib.request,json,urllib.parse; print(len(json.load(urllib.request.urlopen('http://localhost:8080/api/v1/query?'+urllib.parse.urlencode({'query':'count(METRIC_NAME')})))['data']['result']))"
