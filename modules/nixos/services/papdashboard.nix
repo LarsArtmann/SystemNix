@@ -65,22 +65,15 @@
         ports
         ;
 
-      # TEMPORARY vendorHash shim (2026-10-15 fleet wave; got-hash
-      # CzxGeRnc measured first-hand at locked rev c8d0cf92 via the 02:46
-      # enumeration and RE-VERIFIED at rev 5a6794db after the input was
-      # floated past upstream's broken-syntax commit c8d0cf92 — the 5a6794db
-      # probe got the identical content hash while upstream still declares
-      # pg/a63hg. Class comment: lib/lars-packages.nix flakePkgShim).
-      # Re-measured 2026-10-17 for the tile-logo bump (rev 96ad5a23 →
-      # a1a505f5): the nested go-daemon/go-nix-helpers inputs moved in the
-      # same `nix flake lock --update-input papdashboard`, so the dep set —
-      # and with it the hash — changed (first-hand FOD build, got-hash
-      # ZNTUWEuj…). Drop the shim when upstream bakes the got hash.
-      papdashboardPkg =
-        inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
-          {
-            vendorHash = "sha256-ZNTUWEujoZzRfbod3Oj1iml618yZCzzK81/v4rI87co=";
-          };
+      # The vendorHash shim that rode this pin since the 2026-10-15 fleet
+      # wave (re-measured ZNTUWEuj… on 2026-10-17 for the tile-logo bump)
+      # is DROPPED 2026-10-17: upstream bakes the correct hash now
+      # (PapDashboard vendorHash.nix = ZNTUWEuj…, commit d96ee6e), so the
+      # override was a no-op re-stating upstream's own value. Re-add the
+      # shim pattern only when a future lock bump hits a fresh FOD mismatch
+      # upstream has not baked yet (class comment: lib/lars-packages.nix
+      # flakePkgShim).
+      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server;
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";

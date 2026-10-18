@@ -89,70 +89,70 @@ Nothing catastrophic — no data touched (all writes were new `derived/` paths +
 
 **Immediate (sweep-dependent chain, this session if instructed):**
 
-1. Wait for sweep phase 1 completion; confirm 591/591 sha OK.
-2. Let phases 2-4 finish; read `summary.txt` verdict + investigate ANY TRUNCATED/DECODE_ERROR/SHA_MISMATCH file individually.
-3. Reconcile index.csv duration drift list (expected: size-quantized durations drift a few seconds).
-4. Launch real FLAC encode (phase flac, background, heavy-job).
-5. Launch opus phase (reads the 18 GB flac leg, not the WAVs).
-6. Launch verify phase (full-decode MD5 of every flac).
-7. Compare resulting sizes vs the "~18 GB" TODO estimate; record real numbers.
-8. Generate the real web archive; verify every data.js audio path resolves on the real tree.
-9. Real RAG `init` from the sweep manifest; import the finn transcript; run a real `ask`.
-10. Investigate the 0-segment 10.7 s call (silence detection or batch-time classification).
-11. Create `contacts/incoming/` on the real root.
-12. Pool README "Derived artifacts" section (paths, regeneration commands, whisper runbook pointer).
-13. TODO_LIST: mark rows 470/471/473 (and partially 470's sweep) with proof + status.
-14. AGENTS.md: pixel6-archive section (tooling paths, io doctrine used, gotchas: `_transfer-artifacts` substring trap, `.part` muxer, first-wins imports, whisper GPU default).
-15. Write per-task status docs or fold into this one's successor.
+~~1. Wait for sweep phase 1 completion; confirm 591/591 sha OK.~~ **Won't implement — superseded: pipeline executed then rehomed to ucr-archive v0.1.0 2026-10-15 (CHANGELOG; docs/todo/pixel6.md).**
+~~2. Let phases 2-4 finish; read `summary.txt` verdict + investigate ANY TRUNCATED/DECODE_ERROR/SHA_MISMATCH file individually.~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~3. Reconcile index.csv duration drift list (expected: size-quantized durations drift a few seconds).~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~4. Launch real FLAC encode (phase flac, background, heavy-job).~~ **Won't implement — superseded: ucr encode in sibling repo (parity-verified).**
+~~5. Launch opus phase (reads the 18 GB flac leg, not the WAVs).~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~6. Launch verify phase (full-decode MD5 of every flac).~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~7. Compare resulting sizes vs the "~18 GB" TODO estimate; record real numbers.~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~8. Generate the real web archive; verify every data.js audio path resolves on the real tree.~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~9. Real RAG `init` from the sweep manifest; import the finn transcript; run a real `ask`.~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~10. Investigate the 0-segment 10.7 s call (silence detection or batch-time classification).~~ **Won't implement — one-shot anomaly; archive stable.**
+~~11. Create `contacts/incoming/` on the real root.~~ **Won't implement — superseded by ucr-archive rehoming.**
+~~12. Pool README "Derived artifacts" section (paths, regeneration commands, whisper runbook pointer).~~ **Won't implement — superseded: ucr-archive README-VERIFICATION.md is the record.**
+~~13. TODO_LIST: mark rows 470/471/473 (and partially 470's sweep) with proof + status.~~ done at `TODO rows closed with SHIPPED/REHOMED banners (docs/todo/pixel6.md)`
+~~14. AGENTS.md: pixel6-archive section (tooling paths, io doctrine used, gotchas: `_transfer-artifacts` substring trap, `.part` muxer, first-wins imports, whisper GPU default).~~ done — archive state carried by library (docs/todo/pixel6.md, device decommissioned 2026-10-01)
+~~15. Write per-task status docs or fold into this one's successor.~~ **Won't implement — superseded by ucr-archive rehoming.**
 
 **Whisper batch (row 114 — the RAG payoff):**
-16. Batch wrapper script (queue over 591 calls, resume, per-call isolation, 16k mono conversion, json+txt outputs to `derived/transcripts/`).
-17. Model decision: base (proven here, rough German) vs small/medium (better German, proportionally slower).
-18. CPU vs GPU decision (`--no-gpu` default while GPU stack is in regression; measure both).
-19. Language policy: `-l auto` vs per-call heuristic; handle empty-segment outputs as "no speech" class.
-20. Runtime measurement → realistic ETA (52 h audio; base CPU ≈ 1-2× realtime with 4 threads → scale-out plan over 32 cores).
-21. Then: bulk `ucr-rag.py import` + real coverage stats + web-archive transcript integration.
-22. `ucr-rag.py embed` once :8848 is healthy + true semantic E2E test (only degradation-tested so far).
+16. Batch wrapper script (queue over 591 calls, resume, per-call isolation, 16k mono conversion, json+txt outputs to `derived/transcripts/`). **→ whisper batch; docs/todo/pixel6.md ready row**
+~~17. Model decision: base (proven here, rough German) vs small/medium (better German, proportionally slower).~~ **NOT-DO — dup of line 109 (same row/plan).**
+~~18. CPU vs GPU decision (`--no-gpu` default while GPU stack is in regression; measure both).~~ **NOT-DO — dup of line 109.**
+~~19. Language policy: `-l auto` vs per-call heuristic; handle empty-segment outputs as "no speech" class.~~ **NOT-DO — dup of line 109.**
+~~20. Runtime measurement → realistic ETA (52 h audio; base CPU ≈ 1-2× realtime with 4 threads → scale-out plan over 32 cores).~~ **NOT-DO — dup of line 109.**
+~~21. Then: bulk `ucr-rag.py import` + real coverage stats + web-archive transcript integration.~~ **NOT-DO — dup of line 109.**
+~~22. `ucr-rag.py embed` once :8848 is healthy + true semantic E2E test (only degradation-tested so far).~~ **NOT-DO — dup of line 109 (embed rides whisper row output).**
 
 **Contacts completion (row 472 tail):**
-23. User: on-phone VCF export → `contacts/incoming/` → `decode-vcf` run.
-24. Cross-link: after VCF lands, re-derive registry and reconcile named vs number-only contacts (235 number-only should collapse).
-25. Person dedupe (e.g. "Assi Loser 🐶🦴 (Finn Artmann)" vs "Finn Artmann" likely one person — needs the VCF as authority).
-26. `contacts-evidence.html` browsable registry (pre-VCF stopgap).
+~~23. User: on-phone VCF export → `contacts/incoming/` → `decode-vcf` run.~~ **Won't implement — user VCF export impossible: device decommissioned 2026-10-01 (docs/todo/pixel6.md).**
+~~24. Cross-link: after VCF lands, re-derive registry and reconcile named vs number-only contacts (235 number-only should collapse).~~ **NOT-DO — dup of line 118.**
+~~25. Person dedupe (e.g. "Assi Loser 🐶🦴 (Finn Artmann)" vs "Finn Artmann" likely one person — needs the VCF as authority).~~ **NOT-DO — dup of line 118.**
+~~26. `contacts-evidence.html` browsable registry (pre-VCF stopgap).~~ **Won't implement — superseded: ucr contacts in sibling repo.**
 
 **Archive hygiene (adjacent rows touched by findings):**
-27. Trash-or-keep decision: the 9 stale duplicate WAVs in `_transfer-artifacts/` (README already marks the dir deletable).
-28. Row 106: SHA256SUMS for Signal + WhatsApp + Cube ACR sets (same pattern as UCR's).
-29. Row 105/103: call-log XML pull → enrich the 523 anonymous calls (would rename half the archive's Unknowns).
-30. Row 115: UCR prefix decode (0×428 / 1×68 / 3×4 / 5×91 semantics) — sizes/directions may already hint.
-31. Row 108: `backups/pixel6` into btrbk-pool snapshots + backup-coordination freshness (now includes `derived/`).
+~~27. Trash-or-keep decision: the 9 stale duplicate WAVs in `_transfer-artifacts/` (README already marks the dir deletable).~~ **Won't implement — trash decision; archive stable; dormant.**
+28. Row 106: SHA256SUMS for Signal + WhatsApp + Cube ACR sets (same pattern as UCR's). **→ SHA256SUMS for sibling sets; docs/todo/pixel6.md row**
+29. Row 105/103: call-log XML pull → enrich the 523 anonymous calls (would rename half the archive's Unknowns). **→ call-log XML enrichment; docs/todo/pixel6.md rows**
+30. Row 115: UCR prefix decode (0×428 / 1×68 / 3×4 / 5×91 semantics) — sizes/directions may already hint. **→ prefix decode; docs/todo/pixel6.md row**
+31. Row 108: `backups/pixel6` into btrbk-pool snapshots + backup-coordination freshness (now includes `derived/`). **→ btrbk-pool snapshots for pixel6; docs/todo/pixel6.md row**
 
 **Navidrome + web serving (rows 113/471 tail):**
-32. `modules/nixos/services/navidrome.nix` (port registry, harden + ioTier.background, MusicFolder=`derived/flac`, RequiresMountsFor, protectedVHost "music", homepage tile, Gatus login-body check, integration-registry entry — full AGENTS procedure).
-33. Decision: serve the static web archive via Caddy (Layer 2) or keep it file://-only.
-34. Navidrome tag/folder-shape acceptance test against the real flac leg.
-35. Clients setup notes (Tempo/Symfonium/Feishin) in the runbook.
+32. `modules/nixos/services/navidrome.nix` (port registry, harden + ioTier.background, MusicFolder=`derived/flac`, RequiresMountsFor, protectedVHost "music", homepage tile, Gatus login-body check, integration-registry entry — full AGENTS procedure). **→ Navidrome module; docs/todo/pixel6.md ready row (decided over Jellyfin)**
+~~33. Decision: serve the static web archive via Caddy (Layer 2) or keep it file://-only.~~ **NOT-DO — dup of line 131 (serving decision part of navidrome plan).**
+~~34. Navidrome tag/folder-shape acceptance test against the real flac leg.~~ **NOT-DO — dup of line 131.**
+~~35. Clients setup notes (Tempo/Symfonium/Feishin) in the runbook.~~ **NOT-DO — dup of line 131.**
 
 **Repo-quality for this session's scripts:**
-36. Flake apps: `ucr-ffprobe-sweep`, `ucr-mirror-encode`, `ucr-web-archive`, `pixel6-contacts`, `ucr-rag`.
-37. `tests/test-scripts.nix` fixtures: sweep verdict classification, vCard QP/base64 round-trip, whisper-json/srt/vtt parsing, RAG earliest-mention ordering, first-wins import.
-38. shellcheck the bash entry script; ruff/pyflakes the four python scripts.
-39. Explicit per-task commits if authorized (auto-daemon batches otherwise).
+~~36. Flake apps: `ucr-ffprobe-sweep`, `ucr-mirror-encode`, `ucr-web-archive`, `pixel6-contacts`, `ucr-rag`.~~ **Won't implement — superseded by rehoming.**
+~~37. `tests/test-scripts.nix` fixtures: sweep verdict classification, vCard QP/base64 round-trip, whisper-json/srt/vtt parsing, RAG earliest-mention ordering, first-wins import.~~ **Won't implement — superseded by rehoming.**
+~~38. shellcheck the bash entry script; ruff/pyflakes the four python scripts.~~ **Won't implement — superseded by rehoming.**
+~~39. Explicit per-task commits if authorized (auto-daemon batches otherwise).~~ **Won't implement — superseded by rehoming.**
 40. `scripts/README` or runbook doc linking the whole pixel6 pipeline in execution order.
 
 **RAG depth (post-transcription):**
-41. Per-segment FTS ranking tuning (bm25 boosts, phrase vs term fallback when 0 hits — currently phrase-only).
-42. Cross-language query support (DE calls vs EN queries — bge-m3 semantic leg covers this once embeddings run; FTS won't).
-43. Web-archive transcript panel + transcript hits in the browser search (CLI-only today).
+~~41. Per-segment FTS ranking tuning (bm25 boosts, phrase vs term fallback when 0 hits — currently phrase-only).~~ **Won't implement — dormant.**
+~~42. Cross-language query support (DE calls vs EN queries — bge-m3 semantic leg covers this once embeddings run; FTS won't).~~ **Won't implement — dormant.**
+~~43. Web-archive transcript panel + transcript hits in the browser search (CLI-only today).~~ **Won't implement — dormant.**
 44. "When did we STOP talking about X" / date-range query flags.
 45. Optional: call-level summaries (rides flm/llama stack decision — currently dead GPU/LLM paths).
 
 **Ops:**
-46. Re-check io PSI before each heavy phase launch (encode/opus/verify).
-47. Clean `/tmp/whisper-smoke` (200 MB model) or move model to `/data/ai/models/whisper/` for the batch.
+~~46. Re-check io PSI before each heavy phase launch (encode/opus/verify).~~ **Won't implement — ops one-shot; superseded.**
+~~47. Clean `/tmp/whisper-smoke` (200 MB model) or move model to `/data/ai/models/whisper/` for the batch.~~ **Won't implement — ops one-shot; superseded.**
 48. Clean `/tmp/ucr-sweep-test` fixture.
 49. Monitor that the auto-daemon's commits of these scripts stay clean (pathspec discipline per AGENTS).
-50. Post-batch: re-run sweep-phase-5 style reconciliation for `derived/transcripts/` coverage (591 expected).
+~~50. Post-batch: re-run sweep-phase-5 style reconciliation for `derived/transcripts/` coverage (591 expected).~~ **Won't implement — one-shot; superseded.**
 
 ## g) QUESTIONS (cannot self-answer)
 

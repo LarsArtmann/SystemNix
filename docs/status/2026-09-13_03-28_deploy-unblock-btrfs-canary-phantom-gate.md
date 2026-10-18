@@ -88,13 +88,13 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Make §10 new-in-deploy detection automatic.** Concrete: at gate time, diff each gatus-referenced metric against the RUNNING generation's emitting unit script store paths; if the to-be-deployed unit's script drv differs (or the unit is new), classify absence as new-in-deploy automatically. Impact: kills a two-in-a-row deploy-blocker class. Effort: M.
-2. **Ship-time guard:** an eval-time check (or CI grep) that any metric name referenced in `gatus-config.nix` is either (a) emitted by a collector whose script is unchanged vs the deployed generation, (b) listed in `KNOWN_NEW_METRICS`, or (c) covered by an endpoint exception. Turns "remember the loan list" into "cannot forget". Effort: M.
+~~1. **Make §10 new-in-deploy detection automatic.** Concrete: at gate time, diff each gatus-referenced metric against the RUNNING generation's emitting unit script store paths; if the to-be-deployed unit's script drv differs (or the unit is new), classify absence as new-in-deploy automatically. Impact: kills a two-in-a-row deploy-blocker class. Effort: M.~~ done at `§10 auto-detection landed: AUTO_NEW_METRICS derived from gatus-config diff (pre-deploy-check.sh:825)`
+~~2. **Ship-time guard:** an eval-time check (or CI grep) that any metric name referenced in `gatus-config.nix` is either (a) emitted by a collector whose script is unchanged vs the deployed generation, (b) listed in `KNOWN_NEW_METRICS`, or (c) covered by an endpoint exception. Turns "remember the loan list" into "cannot forget". Effort: M.~~ **NOT-DO — dup of line 91 (same structural fix covers ship-time guard class).**
 3. **Baseline aging for the post-deploy smoke.** "All FAILs match baseline — advisory" is doing its job, but two consecutive baselines containing llama FAILs means accepted rot. Add: baseline entries older than N deploys/days escalate from advisory to "investigate before next deploy". Effort: S.
-4. **Verify check RESULTS, not just sources, for newly shipped Gatus checks** — post-deploy probe of the actual check states (sqlite read pattern already exists in system-health). Effort: S.
-5. **Personal discipline: never pipe deploy output through `tail`.** Tee to a file; grep the file. Effort: trivial.
-6. **AGENTS.md:** add the version-skew lesson (new block in an EXISTING collector trips §10 exactly like a new collector does) next to the pool_smart precedent. Effort: S.
-7. **Loan-list comment hygiene:** the retirement note now documents both incidents in one place — keep the "re-add ONLY when…" rule visible at the assignment site (done this session; keep it that way).
+~~4. **Verify check RESULTS, not just sources, for newly shipped Gatus checks** — post-deploy probe of the actual check states (sqlite read pattern already exists in system-health). Effort: S.~~ **Won't implement — design idea; sources verified live instead; sqlite probe pattern exists in system-health; dormant.**
+~~5. **Personal discipline: never pipe deploy output through `tail`.** Tee to a file; grep the file. Effort: trivial.~~ **Won't implement — personal discipline note; trivial.**
+~~6. **AGENTS.md:** add the version-skew lesson (new block in an EXISTING collector trips §10 exactly like a new collector does) next to the pool_smart precedent. Effort: S.~~ done — version-skew/loan doctrine documented (docs/agents/nix-flakes.md, post-restructure home)
+~~7. **Loan-list comment hygiene:** the retirement note now documents both incidents in one place — keep the "re-add ONLY when…" rule visible at the assignment site (done this session; keep it that way).~~ **Won't implement — loan-list comments gone entirely with auto-derivation; moot.**
 
 ## f) Top 50 things we should get done next
 
@@ -102,70 +102,70 @@
 
 **Immediate ops (this box, this week)**
 
-1. Reboot evo-x2 — boot chain audited SAFE (19/0). Critical, S, Ops.
-2. Post-reboot: verify flm backend starts clean (no `bind: Address already in use`), `:52625` serves, failed-unit count stays 0. Critical, S, Ops.
-3. Post-reboot: confirm `system_stuck_dstate_processes` → 0 (amdxdna corpse pile reclaimed). High, S, Ops.
-4. Post-reboot: probe llama `:8848/health`, `:8849/health` + `/v1/embeddings`, `/v1/rerank` functional; if still down, run the investigation. Critical, S–M, Bug.
-5. Investigate llama-embeddings/reranker root cause if reboot doesn't clear (journal, cgroup, GPU enumeration). High, M, Bug.
-6. flm v1.0.3 live-serve validation post-reboot (staged; kernel premise falsified; LD wrapper fix unvalidated). High, M, Feature.
-7. If v1.0.3 enumerates the NPU: one-time Q4_K weight re-pull + MemoryMax/deadline re-check; else revert to v1.0.2 per the staged plan. High, L, Feature.
-8. Verify "BTRFS Snapshot Canary" + "BTRFS Rescue Snapshots" Gatus checks green (sqlite read). Medium, S, Quality.
-9. Confirm second rescue snapshot appears on the rescue unit's next scheduled run (keep=2). Medium, S, Quality.
-10. Probe tq-serve dashboard + tq-agent-pool state on the new `0feb937d` binary. Medium, S, Quality.
-11. Verify GitHub Actions green for the pushed lock bump (`ed20df61` + daemon commits). High, S, Quality.
-12. Post-reboot re-run `nix run .#post-deploy-check`; refresh the smoke-fail baseline (reboot-clearable classes should drop). Medium, S, Quality.
-13. Watch memory PSI avg10 (was 18.93%) post-reboot; escalate only if persistent above ~20%. Low, S, Ops.
-14. _(context)_ After reboot proves flm stable: delete obsolete hand-install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, bashrc exports). Low, S, Cleanup.
+~~1. Reboot evo-x2 — boot chain audited SAFE (19/0). Critical, S, Ops.~~ **Won't implement — reboot long since done (system-796 09-22, gen-914 10-16); corpse era closed.**
+~~2. Post-reboot: verify flm backend starts clean (no `bind: Address already in use`), `:52625` serves, failed-unit count stays 0. Critical, S, Ops.~~ **Won't implement — one-shot post-reboot check; window passed.**
+~~3. Post-reboot: confirm `system_stuck_dstate_processes` → 0 (amdxdna corpse pile reclaimed). High, S, Ops.~~ **Won't implement — one-shot; window passed.**
+~~4. Post-reboot: probe llama `:8848/health`, `:8849/health` + `/v1/embeddings`, `/v1/rerank` functional; if still down, run the investigation. Critical, S–M, Bug.~~ done — llama-rag re-enabled 2026-10-10 embeddings-only on pinned build (docs/todo/ai-stack.md); reranker leg dropped
+~~5. Investigate llama-embeddings/reranker root cause if reboot doesn't clear (journal, cgroup, GPU enumeration). High, M, Bug.~~ **NOT-DO — dup of line 108 (resolved by re-enable).**
+~~6. flm v1.0.3 live-serve validation post-reboot (staged; kernel premise falsified; LD wrapper fix unvalidated). High, M, Feature.~~ **Won't implement — flm v1.0.3 staging era passed; fastflowlm since reworked (docs/services/fastflowlm.md).**
+~~7. If v1.0.3 enumerates the NPU: one-time Q4_K weight re-pull + MemoryMax/deadline re-check; else revert to v1.0.2 per the staged plan. High, L, Feature.~~ **NOT-DO — dup of line 110.**
+~~8. Verify "BTRFS Snapshot Canary" + "BTRFS Rescue Snapshots" Gatus checks green (sqlite read). Medium, S, Quality.~~ **Won't implement — one-shot Gatus read-back; window passed.**
+~~9. Confirm second rescue snapshot appears on the rescue unit's next scheduled run (keep=2). Medium, S, Quality.~~ **Won't implement — one-shot; window passed.**
+~~10. Probe tq-serve dashboard + tq-agent-pool state on the new `0feb937d` binary. Medium, S, Quality.~~ **Won't implement — one-shot tq probe; window passed.**
+~~11. Verify GitHub Actions green for the pushed lock bump (`ed20df61` + daemon commits). High, S, Quality.~~ **Won't implement — one-shot CI glance; window passed.**
+~~12. Post-reboot re-run `nix run .#post-deploy-check`; refresh the smoke-fail baseline (reboot-clearable classes should drop). Medium, S, Quality.~~ **Won't implement — one-shot; window passed.**
+~~13. Watch memory PSI avg10 (was 18.93%) post-reboot; escalate only if persistent above ~20%. Low, S, Ops.~~ **Won't implement — one-shot PSI watch; window passed.**
+~~14. _(context)_ After reboot proves flm stable: delete obsolete hand-install (`~/.local/share/fastflowlm/`, `~/.local/bin/flm`, bashrc exports). Low, S, Cleanup.~~ **Won't implement — hand-install flm era passed; module-owned now (docs/services/fastflowlm.md).**
 
 **Deploy-gate / tooling hardening (this repo)**
-15. Implement §10 durable new-in-deploy auto-detection (drv-diff vs deployed generation). High, M, Quality.
-16. Eval-time/CI guard: gatus-referenced metric must be covered (unchanged collector / loan list / endpoint exception). Medium, M, Quality.
-17. Fixture-test the auto-detection (negative: phantom still fails; positive: version-skew warns). High, S, Quality.
-18. Baseline aging for smoke-fail advisory (escalate stale entries). Medium, S, Quality.
-19. Post-deploy: auto-verify newly shipped Gatus check RESULTS (not just metric sources). Medium, S, Quality.
-20. AGENTS.md: record the existing-collector version-skew lesson. Medium, S, Docs.
-21. Consider moving the loan-list narrative into a short `docs/` runbook so the "one-deploy loan" rule survives comment churn. Low, S, Docs.
+~~15. Implement §10 durable new-in-deploy auto-detection (drv-diff vs deployed generation). High, M, Quality.~~ **NOT-DO — dup of line 91 (same auto-detection).**
+~~16. Eval-time/CI guard: gatus-referenced metric must be covered (unchanged collector / loan list / endpoint exception). Medium, M, Quality.~~ **NOT-DO — dup of line 91 (guard superseded by auto-derivation).**
+~~17. Fixture-test the auto-detection (negative: phantom still fails; positive: version-skew warns). High, S, Quality.~~ done — fixture suite exists and green: scripts/test-pre-deploy-metrics.sh (09-14_01-13 a.2 fixture D2)
+~~18. Baseline aging for smoke-fail advisory (escalate stale entries). Medium, S, Quality.~~ **NOT-DO — dup of line 93 (baseline aging; open).**
+~~19. Post-deploy: auto-verify newly shipped Gatus check RESULTS (not just metric sources). Medium, S, Quality.~~ **NOT-DO — dup of line 94.**
+~~20. AGENTS.md: record the existing-collector version-skew lesson. Medium, S, Docs.~~ **NOT-DO — dup of line 96.**
+~~21. Consider moving the loan-list narrative into a short `docs/` runbook so the "one-deploy loan" rule survives comment churn. Low, S, Docs.~~ **Won't implement — loan-list runbook moot (list retired).**
 
 **Upstream pushes pending (owner-gated)**
-22. _(context)_ Push dnsblockd health-cache fix + tag + SystemNix flake bump (kills the :9090 wedge class). High, M, Bug.
-23. _(context)_ Push bank-sync tolerant-read + V10 canonicalization (`a9b0b8e..60015cc`) + flake bump + deploy. High, M, Bug.
-24. _(context)_ Push InboxClean retro-decrypt repair + flake bump; then run the manual `--backfill --decrypt-repair` per runbook. Medium, L, Feature.
-25. _(context)_ go-output: cut v0.37.1 (never re-tag doctrine) to retire the locked-tree comment workaround. Medium, S, Cleanup.
-26. _(context)_ flm: file upstream issue ONLY if v1.0.3 still fails post-LD-fix (verify-before-filing gate). Low, S, Docs.
+~~22. _(context)_ Push dnsblockd health-cache fix + tag + SystemNix flake bump (kills the :9090 wedge class). High, M, Bug.~~ done — dnsblockd: upstream v0.9.3 carries fixes; SystemNix lock deployed v0.9.3-73 (docs/todo/upstream.md)
+~~23. _(context)_ Push bank-sync tolerant-read + V10 canonicalization (`a9b0b8e..60015cc`) + flake bump + deploy. High, M, Bug.~~ done — bank-sync lock refreshed past tolerant-read fixes 2026-10-07 (docs/todo/upstream.md)
+24. _(context)_ Push InboxClean retro-decrypt repair + flake bump; then run the manual `--backfill --decrypt-repair` per runbook. Medium, L, Feature. **→ InboxClean retro-decrypt push+run; docs/todo/services.md row**
+25. _(context)_ go-output: cut v0.37.1 (never re-tag doctrine) to retire the locked-tree comment workaround. Medium, S, Cleanup. **→ go-output v0.37.1 never-re-tag; docs/todo/upstream.md row**
+~~26. _(context)_ flm: file upstream issue ONLY if v1.0.3 still fails post-LD-fix (verify-before-filing gate). Low, S, Docs.~~ **Won't implement — contingent on v1.0.3 failure; era passed.**
 
 **Backup / resilience**
-27. _(context)_ Implement Hetzner StorageBox + BorgBackup offsite leg per blueprint. High, L, Feature.
-28. _(context)_ ClickHouse telemetry backup coverage (btrbk excludes XFS). High, M, Feature.
-29. _(context)_ memory-emergency-guard corpse-aware restore skip (P1: guard re-arms a doomed socket between deploys). Medium, M, Bug.
-30. _(context)_ Delete dead QLC `@nix` subvol + `/mnt/btrfs-root` leftovers (TODO_LIST Phase 1). Medium, S, Cleanup.
-31. Verify btrbk local root snapshots rebuilt to steady retention post glob-delete (canary went 0→1; expect the normal cadence to repopulate). Medium, S, Ops.
+~~27. _(context)_ Implement Hetzner StorageBox + BorgBackup offsite leg per blueprint. High, L, Feature.~~ done at `Hetzner StorageBox + Borg landed 2026-09-22 (CHANGELOG; docs/services/offsite-borg.md; docs/agents/storage.md)`
+~~28. _(context)_ ClickHouse telemetry backup coverage (btrbk excludes XFS). High, M, Feature.~~ done at `ClickHouse backup landed 2026-09-23: clickhouse-db-backup.timer (docs/todo/storage.md DONE row)`
+~~29. _(context)_ memory-emergency-guard corpse-aware restore skip (P1: guard re-arms a doomed socket between deploys). Medium, M, Bug.~~ **Won't implement — guard family heavily reworked since (trip persistence, admission control); design superseded.**
+30. _(context)_ Delete dead QLC `@nix` subvol + `/mnt/btrfs-root` leftovers (TODO_LIST Phase 1). Medium, S, Cleanup. **→ QLC @nix subvol deletion; docs/todo/storage.md Phase-1 QLC cleanup rows**
+~~31. Verify btrbk local root snapshots rebuilt to steady retention post glob-delete (canary went 0→1; expect the normal cadence to repopulate). Medium, S, Ops.~~ **Won't implement — one-shot retention confirmation; window passed.**
 
 **Mail / SSO / services**
-32. _(context)_ User: verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM), then re-run the relay test send. High, S, Ops (user).
-33. _(context)_ After #32: sudo-check whether Pocket ID SMTP key byte-equals the relay key; re-paste if the test send still fails. Medium, S, Ops.
-34. _(context)_ Miniflux: complete one proven SSO login, then flip `disableLocalAuth` go-live gate. Medium, S, Ops (user).
-35. _(context)_ Google-sync go-live checklist (OAuth "In production" + `rclone authorize` ×3 + sops fill + enable) — still dormant. Low, L, Feature (user).
-36. _(context)_ monitor365 re-enable owner decision (publish crate / public repo / vendor). Low, S, Decision (user).
+32. _(context)_ User: verify `larsartmann.cloud` in Resend (Domains → SPF/DKIM), then re-run the relay test send. High, S, Ops (user). **→ Resend domain verify; docs/todo/services.md row**
+33. _(context)_ After #32: sudo-check whether Pocket ID SMTP key byte-equals the relay key; re-paste if the test send still fails. Medium, S, Ops. **→ Pocket ID SMTP key compare; docs/todo/security.md exact ask**
+34. _(context)_ Miniflux: complete one proven SSO login, then flip `disableLocalAuth` go-live gate. Medium, S, Ops (user). **→ Miniflux SSO flip gate; docs/todo/services.md exact ask**
+35. _(context)_ Google-sync go-live checklist (OAuth "In production" + `rclone authorize` ×3 + sops fill + enable) — still dormant. Low, L, Feature (user). **→ google-sync go-live checklist; docs/todo/services.md row**
+~~36. _(context)_ monitor365 re-enable owner decision (publish crate / public repo / vendor). Low, S, Decision (user).~~ done — monitor365 back: module live, metrics collected (monitor365.nix; docs/todo/services.md)
 
 **Quality / documentation**
-37. Harvest this report's §f into TODO_LIST/ROADMAP (docs-health HARVEST) once instructed. Medium, S, Docs.
-38. Annotate the 2026-09-12 glob-delete status report: canary + rescue tier now LIVE and verified (append, don't rewrite). Low, S, Docs.
-39. Sweep docs/status for claims invalidated by this deploy (canary metrics "absent" statements). Low, S, Docs.
-40. Add a one-line deploy-gate note to the tq runbook documenting the `aea63da→b37117d→0feb937` same-day double bump. Low, S, Docs.
+~~37. Harvest this report's §f into TODO_LIST/ROADMAP (docs-health HARVEST) once instructed. Medium, S, Docs.~~ done at `harvested: pipeline/monitoring/security/services rows cite these reports`
+~~38. Annotate the 2026-09-12 glob-delete status report: canary + rescue tier now LIVE and verified (append, don't rewrite). Low, S, Docs.~~ **Won't implement — annotation one-shot; reports archived with resolution banners instead; superseded by archive policy.**
+~~39. Sweep docs/status for claims invalidated by this deploy (canary metrics "absent" statements). Low, S, Docs.~~ **Won't implement — one-shot docs sweep; archive supersession covers it.**
+~~40. Add a one-line deploy-gate note to the tq runbook documenting the `aea63da→b37117d→0feb937` same-day double bump. Low, S, Docs.~~ **Won't implement — runbook note; churn window passed.**
 
 **Longer-term / ROADMAP fuel**
-41. §10 endpoint-exception registry: replace hard-coded MONITOR365/DISCORDSYNC/CV lists with data-driven per-endpoint health→absence mapping. Low, M, Quality.
-42. Generalize textfile-collector self-verification (append-only self-test pattern from btrfs-rescue) to other fail-closed protections. Low, M, Quality.
-43. Consider a `nix run .#verify-metrics` app that cross-checks gatus-config ↔ collector scripts ↔ live textfiles in one command. Medium, M, Quality.
-44. Evaluate gatus sqlite-based check-history freshness alert (system-health already reads the DB — reuse for "check evaluated but never green since ship"). Low, M, Quality.
-45. Dream: single `nix run .#doctor` = pre-deploy + post-deploy + pre-reboot + metric cross-check with one shared report format. Low, L, Feature.
+~~41. §10 endpoint-exception registry: replace hard-coded MONITOR365/DISCORDSYNC/CV lists with data-driven per-endpoint health→absence mapping. Low, M, Quality.~~ **Won't implement — hardcoded down-endpoint exceptions still service the need (pre-deploy-check.sh:632); registry idea dormant.**
+~~42. Generalize textfile-collector self-verification (append-only self-test pattern from btrfs-rescue) to other fail-closed protections. Low, M, Quality.~~ **Won't implement — pattern-generalization idea; self-verification precedent not extended; dormant.**
+~~43. Consider a `nix run .#verify-metrics` app that cross-checks gatus-config ↔ collector scripts ↔ live textfiles in one command. Medium, M, Quality.~~ **Won't implement — verify-metrics app superseded by §13 + §10 auto-derivation coverage.**
+~~44. Evaluate gatus sqlite-based check-history freshness alert (system-health already reads the DB — reuse for "check evaluated but never green since ship"). Low, M, Quality.~~ **Won't implement — design idea; sqlite read exists in system-health; never wired.**
+~~45. Dream: single `nix run .#doctor` = pre-deploy + post-deploy + pre-reboot + metric cross-check with one shared report format. Low, L, Feature.~~ **Won't implement — doctor mega-tool dream; dropped.**
 
 **Small cleanups noticed in session output**
-46. §12 pre-deploy: `mandb`, `network-local-commands`, `pocket-id-provision`, pool-smart, btrfs-health "not built yet" warnings are benign — consider annotating the check output to say so (reduces alarm fatigue). Low, S, Quality.
-47. §11 vendorHash probe prints 6 "unable to determine" warnings every deploy — same alarm-fatigue class; annotate or narrow. Low, S, Quality.
-48. Pre-deploy §6 prints the full failed-unit table even when all entries are the known flm class — consider summarizing known classes. Low, S, Quality.
-49. cv `/metrics` 401 handling works (CV_ENDPOINT_UP branch) — sanity-check it still classifies correctly after the next cv bump. Low, S, Quality.
-50. Retire the pool_smart/btrfs loan-list historical comments once a month passes incident-free (comment archaeology cost grows). Low, S, Docs.
+~~46. §12 pre-deploy: `mandb`, `network-local-commands`, `pocket-id-provision`, pool-smart, btrfs-health "not built yet" warnings are benign — consider annotating the check output to say so (reduces alarm fatigue). Low, S, Quality.~~ **Won't implement — alarm-fatigue annotation nicety; dropped.**
+~~47. §11 vendorHash probe prints 6 "unable to determine" warnings every deploy — same alarm-fatigue class; annotate or narrow. Low, S, Quality.~~ done — §11 rewritten: FOD dry-run preview with real verdicts replaced the warning spam (scripts/lib/vendor-freshness.sh)
+~~48. Pre-deploy §6 prints the full failed-unit table even when all entries are the known flm class — consider summarizing known classes. Low, S, Quality.~~ **Won't implement — alarm-fatigue nicety; dropped.**
+~~49. cv `/metrics` 401 handling works (CV_ENDPOINT_UP branch) — sanity-check it still classifies correctly after the next cv bump. Low, S, Quality.~~ **Won't implement — one-shot cv sanity; window passed.**
+~~50. Retire the pool_smart/btrfs loan-list historical comments once a month passes incident-free (comment archaeology cost grows). Low, S, Docs.~~ **Won't implement — loan-list comments gone; moot.**
 
 ## g) Questions I cannot answer myself
 

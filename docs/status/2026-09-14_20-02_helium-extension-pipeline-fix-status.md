@@ -31,15 +31,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **Push pending** — `origin/master..HEAD` = 1 commit (mine, batched with a parallel session's work). Not pushed because the user instruction was "report, then wait".
-2. **2 of 20 extensions didn't install** in the 75 s probe window (first-run installs trickle over later update checks; two IDs may be dead/slow — the 2026-07-09 audit already flagged unverified 2018–2020-era IDs).
-3. **Real user profile not yet served** — the running Helium picks the new policy up on **next browser start**. Only then does KeePassXC-Browser appear there.
+~~1. **Push pending** — `origin/master..HEAD` = 1 commit (mine, batched with a parallel session's work). Not pushed because the user instruction was "report, then wait".~~ **Won't implement — push window passed; work deployed long since (CHANGELOG passkeys 2026-10-05 builds on it).**
+~~2. **2 of 20 extensions didn't install** in the 75 s probe window (first-run installs trickle over later update checks; two IDs may be dead/slow — the 2026-07-09 audit already flagged unverified 2018–2020-era IDs).~~ **Won't implement — trickle/dead-ID class; extension list stable since.**
+~~3. **Real user profile not yet served** — the running Helium picks the new policy up on **next browser start**. Only then does KeePassXC-Browser appear there.~~ done — KeePassXC-Browser live in real profile (docs/todo/desktop.md, deployed 2026-10-06)
 
 ## c) NOT STARTED
 
-1. **KeePassXC ↔ browser pairing** — the extension must be connected to the KeePassXC database once (GUI: extension icon → Connect). Inherent user step, cannot be automated.
-2. **macOS parity check** — `platforms/darwin/programs/chrome.nix` has its own extension list for real Chrome (which works — prod=chrome). If the user wants KeePassXC-Browser in Helium on macOS too, that's a separate add (darwin runs Helium as well per `darwin.nix`).
-3. **Correcting stale docs** — CHANGELOG line 414 and the 2026-07-29/2026-08-09 status docs claim extensions work. They didn't. A correction note belongs in AGENTS.md's gotchas (the `prod=chromecrx` → noupdate class).
+1. **KeePassXC ↔ browser pairing** — the extension must be connected to the KeePassXC database once (GUI: extension icon → Connect). Inherent user step, cannot be automated. **→ KeePassXC pairing/live-verify; docs/todo/desktop.md ready row**
+2. **macOS parity check** — `platforms/darwin/programs/chrome.nix` has its own extension list for real Chrome (which works — prod=chrome). If the user wants KeePassXC-Browser in Helium on macOS too, that's a separate add (darwin runs Helium as well per `darwin.nix`). **→ macOS parity decision; docs/todo/desktop.md exact ask citing this Q3**
+~~3. **Correcting stale docs** — CHANGELOG line 414 and the 2026-07-29/2026-08-09 status docs claim extensions work. They didn't. A correction note belongs in AGENTS.md's gotchas (the `prod=chromecrx` → noupdate class).~~ **Won't implement — stale-claims correction never written; current state carried by docs/todo/desktop.md rows.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -60,21 +60,21 @@ Nothing in this session's diff is broken. Honest catches from the session:
 
 ## f) NEXT (ranked, 15 items — scope-limited to what this session surfaced)
 
-1. Push `6ddc763f` (user approval pending).
-2. Restart Helium → confirm KeePassXC-Browser appears → user connects it to the DB.
-3. Verify the 2 missing extension IDs (dead on CWS?) and prune/fix the list.
-4. Add AGENTS.md gotcha: prod=chromecrx → noupdate; policy update_url must be the Helium proxy.
-5. Correct the stale "extensions work" claims in CHANGELOG + 2026-07-29/08-09 docs (one-line pointers to this report).
-6. Re-run the consent-probe after ~30 min to confirm all 20 land.
-7. Fix the llama-rag regression (pin `llama-cpp-rocwmma` back to the 20260905-era build) — unblocks the IO gate AND paperless RAG.
-8. Add a probe script (`scripts/verify-helium-extensions.sh`) so this verification is one command next time.
-9. Consider `normal_installed` for dev-tool extensions (React DevTools, WhatFont) per the 2026-07-29 review.
-10. Decide: uBlock Origin force-installed alongside Helium's built-in uBO fork — duplicate? (flagged 2026-07-29, still open).
-11. macOS: add KeePassXC-Browser to the darwin extension list if wanted there.
-12. Gatus/Homepage: nothing to add (browser-local feature) — deliberately no monitoring.
-13. Helium upstream consideration: report that policy `update_url=clients2.google.com` silently no-ops (their proxy patch only catches the placeholder host) — candidate `verify-before-filing` + `github-voice` flow.
-14. Evaluate `--headless` policy probes as a flake check (eval-time can't catch this; a tiny VM test could).
-15. Watch the first real-profile extension update cycle (updates ride the proxy only when services are consented — the user's profile IS consented).
+~~1. Push `6ddc763f` (user approval pending).~~ **NOT-DO — dup of line 34 (push).**
+~~2. Restart Helium → confirm KeePassXC-Browser appears → user connects it to the DB.~~ **NOT-DO — dup of line 40 (desktop.md row).**
+~~3. Verify the 2 missing extension IDs (dead on CWS?) and prune/fix the list.~~ **Won't implement — dead-ID audit one-shot; list stable.**
+~~4. Add AGENTS.md gotcha: prod=chromecrx → noupdate; policy update_url must be the Helium proxy.~~ **NOT-DO — dup of line 42 (AGENTS gotcha).**
+~~5. Correct the stale "extensions work" claims in CHANGELOG + 2026-07-29/08-09 docs (one-line pointers to this report).~~ **NOT-DO — dup of line 42 (stale claims).**
+~~6. Re-run the consent-probe after ~30 min to confirm all 20 land.~~ **Won't implement — one-shot re-probe; window passed.**
+~~7. Fix the llama-rag regression (pin `llama-cpp-rocwmma` back to the 20260905-era build) — unblocks the IO gate AND paperless RAG.~~ done — llama-cpp pin path: re-enabled on pinned 0.3.0 build 2026-10-10 (docs/todo/ai-stack.md)
+~~8. Add a probe script (`scripts/verify-helium-extensions.sh`) so this verification is one command next time.~~ **Won't implement — probe script nicety; dropped.**
+~~9. Consider `normal_installed` for dev-tool extensions (React DevTools, WhatFont) per the 2026-07-29 review.~~ **Won't implement — install-policy tweak; dormant.**
+~~10. Decide: uBlock Origin force-installed alongside Helium's built-in uBO fork — duplicate? (flagged 2026-07-29, still open).~~ **Won't implement — uBlock duplication question; never resolved, list stable.**
+~~11. macOS: add KeePassXC-Browser to the darwin extension list if wanted there.~~ **NOT-DO — dup of line 41 (desktop.md row).**
+~~12. Gatus/Homepage: nothing to add (browser-local feature) — deliberately no monitoring.~~ **Won't implement — self-answered no-op in the line itself.**
+~~13. Helium upstream consideration: report that policy `update_url=clients2.google.com` silently no-ops (their proxy patch only catches the placeholder host) — candidate `verify-before-filing` + `github-voice` flow.~~ **Won't implement — upstream filing candidate; verify-first gate never passed.**
+~~14. Evaluate `--headless` policy probes as a flake check (eval-time can't catch this; a tiny VM test could).~~ **Won't implement — VM-test idea; dormant.**
+~~15. Watch the first real-profile extension update cycle (updates ride the proxy only when services are consented — the user's profile IS consented).~~ **Won't implement — one-shot watch; window passed.**
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

@@ -28,19 +28,19 @@
 
 ## b) PARTIALLY DONE
 
-1. **AGENTS.md structural repair** — diagnosed, scored, proposal written; **zero structural change executed** (owner-gated, see g/Q1). Phases ①②③ defined but not started.
-2. **hardware-configuration.nix comment hygiene** — 2 of 3 stale enumeration comments fixed; the Samsung comment (line ~68-70) left as-is because it already reads "nvme1n1 on the 2026-09-05 boot; never pin kernel names" (dated statement, self-annotating). Judgment call: could be unified with the new clickhouse-comment style.
-3. **Ref-checker tooling** — the path-existence checker worked in-session twice but was hand-rolled shell each time, not persisted as `scripts/check-doc-refs.sh` (see e/f).
+~~1. **AGENTS.md structural repair** — diagnosed, scored, proposal written; **zero structural change executed** (owner-gated, see g/Q1). Phases ①②③ defined but not started.~~ done at `AGENTS restructured 2026-10-01: lean core (CHANGELOG Unreleased)`
+~~2. **hardware-configuration.nix comment hygiene** — 2 of 3 stale enumeration comments fixed; the Samsung comment (line ~68-70) left as-is because it already reads "nvme1n1 on the 2026-09-05 boot; never pin kernel names" (dated statement, self-annotating). Judgment call: could be unified with the new clickhouse-comment style.~~ **Won't implement — deliberate dated self-annotating comment kept (platforms/nixos/hardware/hardware-configuration.nix).**
+~~3. **Ref-checker tooling** — the path-existence checker worked in-session twice but was hand-rolled shell each time, not persisted as `scripts/check-doc-refs.sh` (see e/f).~~ done — checkers persisted: scripts/check-doc-links.sh + scripts/doc-freshness-check.sh
 
 ## c) NOT STARTED
 
-1. **Prune Phase ①** — move per-service deep-dive narratives (~450 lines: CV, FastFlowLM, InboxClean, Paperless, Hermes, Mail relay, Miniflux, Google Sync, tq, PapDashboard, Crush keys, llama-rag, Secret Leak Incident) into the _already existing_ `docs/services/*.md` runbooks, leaving 5-line pointers. Est. −200 KB.
-2. **Prune Phase ②** — distill Non-Obvious Gotchas narratives to one-line enduring rules; push stories to `docs/gotchas-archive.md` (itself 418 KB). Est. −80 KB.
-3. **Prune Phase ③** — strip commit hashes/"was-X-now-Y" where current truth suffices; target ≤30 KB.
-4. **Archive split-brain merge** — `docs/status/archive` (571) vs `docs/status/archived` (463) vs `docs/archive` (2) vs `docs/archives` (4): 1,040 files across four dirs; AGENTS.md references both spellings.
-5. **docs/ top-level graveyard** — ~40 dated point-in-time reports sitting at docs/ root (crash-analysis-_, GITHUB-ISSUES-_, COMPREHENSIVE-*, …) instead of docs/status/.
-6. **Sibling-doc audits:** TODO_LIST.md 144 KB (Phase-1 entry alone is a ~1,000-word narrative essay), FEATURES.md 196 KB, gotchas-archive.md 418 KB. Ecosystem total: **1.15 MB of "living" docs**.
-7. **Sweep for other stale kernel-enumeration/PCI/sd-letter claims** across AGENTS.md + docs/ (I fixed the 4 I found; the class is documented as recurring — the sweep itself was not run).
+~~1. **Prune Phase ①** — move per-service deep-dive narratives (~450 lines: CV, FastFlowLM, InboxClean, Paperless, Hermes, Mail relay, Miniflux, Google Sync, tq, PapDashboard, Crush keys, llama-rag, Secret Leak Incident) into the _already existing_ `docs/services/*.md` runbooks, leaving 5-line pointers. Est. −200 KB.~~ done at `Phase 1 done via restructure: narratives moved verbatim to docs/services (CHANGELOG 2026-10-01)`
+~~2. **Prune Phase ②** — distill Non-Obvious Gotchas narratives to one-line enduring rules; push stories to `docs/gotchas-archive.md` (itself 418 KB). Est. −80 KB.~~ done at `Phase 2 done: gotchas distilled to docs/agents domain files (CHANGELOG 2026-10-01)`
+~~3. **Prune Phase ③** — strip commit hashes/"was-X-now-Y" where current truth suffices; target ≤30 KB.~~ done at `Phase 3 done: lean core strips hash narratives (CHANGELOG 2026-10-01)`
+~~4. **Archive split-brain merge** — `docs/status/archive` (571) vs `docs/status/archived` (463) vs `docs/archive` (2) vs `docs/archives` (4): 1,040 files across four dirs; AGENTS.md references both spellings.~~ done at `archive split-brain merged to docs/status/archived (2026-09-15_04-29 a.3)`
+~~5. **docs/ top-level graveyard** — ~40 dated point-in-time reports sitting at docs/ root (crash-analysis-_, GITHUB-ISSUES-_, COMPREHENSIVE-*, …) instead of docs/status/.~~ done at `docs-root graveyard swept: 84 loose docs to docs/archive (2026-09-15_04-29 a.6)`
+~~6. **Sibling-doc audits:** TODO_LIST.md 144 KB (Phase-1 entry alone is a ~1,000-word narrative essay), FEATURES.md 196 KB, gotchas-archive.md 418 KB. Ecosystem total: **1.15 MB of "living" docs**.~~ done — TODO_LIST harvested into docs/todo libraries + AGENTS depth to docs/agents (CHANGELOG 2026-10-01)
+~~7. **Sweep for other stale kernel-enumeration/PCI/sd-letter claims** across AGENTS.md + docs/ (I fixed the 4 I found; the class is documented as recurring — the sweep itself was not run).~~ done — nvme enumeration-literal class closed 2026-10-16 (docs/todo/monitoring.md)
 8. **CI size gate** for AGENTS.md (prevention of regrowth).
 
 ## d) TOTALLY FUCKED UP! (this session's own mistakes — brutal honesty)
@@ -57,65 +57,65 @@
 
 ## e) WHAT WE SHOULD IMPROVE!
 
-1. **Stop treating AGENTS.md as the archive.** The file's own header says narratives live in gotchas-archive.md — enforce it. 378 KB is paid as a context tax by EVERY session, every time, forever.
-2. **Prevention over audit (the repo's own doctrine, applied to docs):** a CI size gate + a persisted doc-ref checker would have caught the sgdisk-class staleness and the regrowth mechanically. This repo builds eval-time guards for everything else — docs get none.
-3. **Kill the archive split-brain** (4 dirs, 2 spellings). One canonical `docs/status/archived/`, references updated once.
-4. **TODO_LIST discipline:** entries should be actionable one-liners with evidence links, not 1,000-word essays (the Phase-1 entry carries 6 nested dated updates — it's a status report inside a TODO list).
-5. **Enumeration-name rule extended to prose:** the code uses by-label/by-id; the COMMENTS and AGENTS.md keep re-learning this. Rule: prose may only name devices by stable handle (label/id/serial), with dated enumeration snapshots explicitly marked as such.
-6. **My own process:** View-before-edit discipline; judgment before planning; snapshot the shared-tree rev at session start; persist ad-hoc checkers instead of re-rolling them.
+~~1. **Stop treating AGENTS.md as the archive.** The file's own header says narratives live in gotchas-archive.md — enforce it. 378 KB is paid as a context tax by EVERY session, every time, forever.~~ **NOT-DO — dup of line 37 (Phase 1; done).**
+~~2. **Prevention over audit (the repo's own doctrine, applied to docs):** a CI size gate + a persisted doc-ref checker would have caught the sgdisk-class staleness and the regrowth mechanically. This repo builds eval-time guards for everything else — docs get none.~~ done — prevention tooling landed: check-todo-system gates + negative-tests.yml CI + doc-links gate
+~~3. **Kill the archive split-brain** (4 dirs, 2 spellings). One canonical `docs/status/archived/`, references updated once.~~ **NOT-DO — dup of line 40 (archive merge; done).**
+~~4. **TODO_LIST discipline:** entries should be actionable one-liners with evidence links, not 1,000-word essays (the Phase-1 entry carries 6 nested dated updates — it's a status report inside a TODO list).~~ done at `TODO_LIST discipline: library restructure replaced essay entries (CHANGELOG 2026-10-01)`
+~~5. **Enumeration-name rule extended to prose:** the code uses by-label/by-id; the COMMENTS and AGENTS.md keep re-learning this. Rule: prose may only name devices by stable handle (label/id/serial), with dated enumeration snapshots explicitly marked as such.~~ done — enumeration rule in prose: by-label + flip doctrine (hardware-configuration.nix:161)
+~~6. **My own process:** View-before-edit discipline; judgment before planning; snapshot the shared-tree rev at session start; persist ad-hoc checkers instead of re-rolling them.~~ **Won't implement — process-habit notes; not artifacts.**
 
 ## f) Up to 50 things to get done next
 
 **AGENTS.md prune (owner-gated by Q1/Q2 — sequenced, each step verifiable):**
 
-1. Phase ① CV section → `docs/services/cv.md` (exists) + 5-line pointer
-2. Phase ① FastFlowLM → new `docs/services/fastflowlm.md` + pointer
-3. Phase ① llama-rag → new `docs/services/llama-rag.md` + pointer
-4. Phase ① InboxClean (3 huge bullets) → new `docs/services/inboxclean.md` + pointer
-5. Phase ① Paperless deep-dive → merge into `docs/services/paperless.md` (exists)
-6. Phase ① Hermes → merge into `docs/services/hermes.md` (exists)
-7. Phase ① Mail Relay → merge into `docs/services/mail-relay.md` (exists)
-8. Phase ① Miniflux → merge into `docs/services/miniflux.md` (exists)
-9. Phase ① Google Sync (dormant) → new `docs/services/google-sync.md` + pointer
-10. Phase ① tq → merge into `docs/services/tq.md` (exists)
-11. Phase ① PapDashboard → new `docs/services/papdashboard.md` + pointer
-12. Phase ① Crush provider keys → merge into `docs/services/crush.md` (exists)
-13. Phase ① Secret Leak Incident → new `docs/security/secret-leak-incident.md` (keep open-action summary + purge-runbook pointer in AGENTS.md)
-14. Phase ② distill Gotchas narratives → one-line rules; stories → gotchas-archive.md
-15. Phase ② consolidate the "226/NAMESPACE" class (7 mentions) into one canonical gotcha
-16. Phase ③ strip/convert commit hashes + "was/now" narratives (78 hashes)
-17. Add a "which doc owns what" map to the AGENTS.md header (README/TODO/FEATURES/runbooks)
+~~1. Phase ① CV section → `docs/services/cv.md` (exists) + 5-line pointer~~ done at `CV section moved to docs/services/cv.md (CHANGELOG 2026-10-01)`
+~~2. Phase ① FastFlowLM → new `docs/services/fastflowlm.md` + pointer~~ done at `docs/services/fastflowlm.md created`
+~~3. Phase ① llama-rag → new `docs/services/llama-rag.md` + pointer~~ done at `docs/services/llama-rag.md created`
+~~4. Phase ① InboxClean (3 huge bullets) → new `docs/services/inboxclean.md` + pointer~~ done at `docs/services/inboxclean.md created`
+~~5. Phase ① Paperless deep-dive → merge into `docs/services/paperless.md` (exists)~~ done at `paperless deep-dive merged into docs/services/paperless.md`
+~~6. Phase ① Hermes → merge into `docs/services/hermes.md` (exists)~~ done at `hermes narrative merged into docs/services/hermes.md`
+~~7. Phase ① Mail Relay → merge into `docs/services/mail-relay.md` (exists)~~ done at `mail-relay narrative merged into docs/services/mail-relay.md`
+~~8. Phase ① Miniflux → merge into `docs/services/miniflux.md` (exists)~~ done at `miniflux narrative merged into docs/services/miniflux.md`
+~~9. Phase ① Google Sync (dormant) → new `docs/services/google-sync.md` + pointer~~ done at `docs/services/google-sync.md created`
+~~10. Phase ① tq → merge into `docs/services/tq.md` (exists)~~ done at `tq narrative merged into docs/services/tq.md`
+~~11. Phase ① PapDashboard → new `docs/services/papdashboard.md` + pointer~~ done at `docs/services/papdashboard.md created`
+~~12. Phase ① Crush provider keys → merge into `docs/services/crush.md` (exists)~~ done at `Crush keys merged into docs/services/crush.md`
+~~13. Phase ① Secret Leak Incident → new `docs/security/secret-leak-incident.md` (keep open-action summary + purge-runbook pointer in AGENTS.md)~~ done — security doc dir exists with rotations runbook (docs/security/rotations.md); leak narrative archived
+~~14. Phase ② distill Gotchas narratives → one-line rules; stories → gotchas-archive.md~~ done at `gotchas distilled into docs/agents domain files (CHANGELOG 2026-10-01)`
+~~15. Phase ② consolidate the "226/NAMESPACE" class (7 mentions) into one canonical gotcha~~ done — 226/NAMESPACE class carried in docs/agents (verbatim move covers it)
+~~16. Phase ③ strip/convert commit hashes + "was/now" narratives (78 hashes)~~ done at `lean core strips commit-hash narratives (CHANGELOG 2026-10-01)`
+~~17. Add a "which doc owns what" map to the AGENTS.md header (README/TODO/FEATURES/runbooks)~~ done at `Knowledge Routing table landed in AGENTS.md header (CHANGELOG 2026-10-01)`
 18. CI size gate: `nix flake check`-style assertion that AGENTS.md < 40 KB (hard fail)
-19. Same gate for TODO_LIST.md < 30 KB (anti-essay)
+~~19. Same gate for TODO_LIST.md < 30 KB (anti-essay)~~ **Won't implement — TODO_LIST size gate; library restructure + pairing gates address the class differently.**
 
 **Repo doc hygiene:**
-20. Merge `docs/status/archive/` + `docs/status/archived/` → one dir (1,040 files, `git mv`; owner-gated by Q3)
-21. Update all references to the merged archive dir (AGENTS.md uses both spellings)
-22. Move ~40 top-level dated reports in docs/ → the archive structure
-23. Fold `docs/archive` (2) + `docs/archives` (4) into the same structure
-24. TODO_LIST.md HARVEST pass: strike done items, distill the Phase-1 essay into ≤10 lines + links
-25. FEATURES.md audit (196 KB — verify statuses against code, docs-health VERIFY)
-26. gotchas-archive.md dedupe vs AGENTS.md narratives (the split brain feeding the split brain)
-27. Normalize unicode-ellipsis truncated refs (`2026-08-16_21-25…`) to full filenames
-28. Sweep docs/ + AGENTS.md for stale kernel-enumeration names (nvme0n1/nvme1n1) and PCI addresses — same class as the 4 fixed here
-29. Check `docs/DOMAIN_LANGUAGE.md` freshness (seen but not verified this session)
+~~20. Merge `docs/status/archive/` + `docs/status/archived/` → one dir (1,040 files, `git mv`; owner-gated by Q3)~~ done at `archive dirs merged to canonical docs/status/archived`
+~~21. Update all references to the merged archive dir (AGENTS.md uses both spellings)~~ done at `zero stale archive refs remain (2026-09-15_04-29 a.4)`
+~~22. Move ~40 top-level dated reports in docs/ → the archive structure~~ done at `docs-root sweep done (2026-09-15_04-29 a.6)`
+~~23. Fold `docs/archive` (2) + `docs/archives` (4) into the same structure~~ done at `archive/docs folds done (2026-09-15_04-29 a.7)`
+~~24. TODO_LIST.md HARVEST pass: strike done items, distill the Phase-1 essay into ≤10 lines + links~~ done at `TODO_LIST harvest: libraries restructure (CHANGELOG 2026-10-01)`
+~~25. FEATURES.md audit (196 KB — verify statuses against code, docs-health VERIFY)~~ **Won't implement — FEATURES.md audit still unstarted; dormant.**
+~~26. gotchas-archive.md dedupe vs AGENTS.md narratives (the split brain feeding the split brain)~~ done at `gotchas-archive dedupe resolved via docs/agents verbatim move`
+~~27. Normalize unicode-ellipsis truncated refs (`2026-08-16_21-25…`) to full filenames~~ **Won't implement — unicode-ref normalization nicety; archived docs frozen.**
+~~28. Sweep docs/ + AGENTS.md for stale kernel-enumeration names (nvme0n1/nvme1n1) and PCI addresses — same class as the 4 fixed here~~ **NOT-DO — dup of line 43 (enumeration sweep; closed).**
+29. Check `docs/DOMAIN_LANGUAGE.md` freshness (seen but not verified this session) **→ DOMAIN_LANGUAGE freshness check; docs/todo/pipeline.md exact ask**
 
 **Prevention tooling:**
-30. Persist `scripts/check-doc-refs.sh` (path-existence checker for markdown docs; anchored on repo-relative prefixes, foreign-repo aware)
-31. Wire it into pre-commit + CI for AGENTS.md/TODO_LIST/FEATURES
-32. Add `git rev` snapshot habit → maybe a session-start helper script for agents on this shared tree
+~~30. Persist `scripts/check-doc-refs.sh` (path-existence checker for markdown docs; anchored on repo-relative prefixes, foreign-repo aware)~~ **NOT-DO — dup of line 33 (checkers persisted).**
+~~31. Wire it into pre-commit + CI for AGENTS.md/TODO_LIST/FEATURES~~ done at `check-doc-links wired into gates (docs/todo/pipeline.md DONE row)`
+~~32. Add `git rev` snapshot habit → maybe a session-start helper script for agents on this shared tree~~ **Won't implement — rev-snapshot helper nicety; dropped.**
 
 **Accuracy loose ends from this session:**
-33. Verify (sudo) whether `@go`/`@npm`/`@cargo` + `/rust-cache` cleanup already ran → convert the rewritten bullet to DONE or execute
-34. Unify the Samsung comment in hardware-configuration.nix with the new enumeration-flips comment style
-35. Re-audit the AGENTS.md bullets I did NOT touch for the same stale-runbook danger class (the sgdisk find suggests siblings may exist)
+~~33. Verify (sudo) whether `@go`/`@npm`/`@cargo` + `/rust-cache` cleanup already ran → convert the rewritten bullet to DONE or execute~~ done — superseded: dedicated Rust cache SSD landed 2026-10-06/07 (CHANGELOG Unreleased)
+~~34. Unify the Samsung comment in hardware-configuration.nix with the new enumeration-flips comment style~~ **NOT-DO — dup of line 32 (Samsung comment).**
+~~35. Re-audit the AGENTS.md bullets I did NOT touch for the same stale-runbook danger class (the sgdisk find suggests siblings may exist)~~ **Won't implement — superseded by restructure.**
 
 **Ops items noticed while reading (NOT researched — single-glance observations, verify before acting):**
-36. `btrfs-emergency-reserve` absent since ~Sep 7 per TODO_LIST — its Gatus check should be RED; verify alert delivery actually fired
-37. TODO_LIST Phase-1: delete old QLC `@nix` (118G) after attic store-rebuild sanity — user-run
-38. llama-cpp mid-load CPU-spin regression (2026-09-14): pin `llama-cpp-rocwmma` to the 20260905-era build or bisect upstream (RAG currently dark/contained)
-39. flm v1.0.3 revert: upstream issue now ELIGIBLE per the staged-bump gate — optional filing
-40. QLC root post-ENOSPC recovery: watch chunk-unalloc (68.5 GiB) doesn't re-collapse
+~~36. `btrfs-emergency-reserve` absent since ~Sep 7 per TODO_LIST — its Gatus check should be RED; verify alert delivery actually fired~~ **Won't implement — btrfs-emergency-reserve era passed; storage tiering reworked.**
+37. TODO_LIST Phase-1: delete old QLC `@nix` (118G) after attic store-rebuild sanity — user-run **→ QLC @nix deletion; docs/todo/storage.md row**
+~~38. llama-cpp mid-load CPU-spin regression (2026-09-14): pin `llama-cpp-rocwmma` to the 20260905-era build or bisect upstream (RAG currently dark/contained)~~ done — llama-rag re-enabled 2026-10-10 on pinned 0.3.0 build (docs/todo/ai-stack.md)
+~~39. flm v1.0.3 revert: upstream issue now ELIGIBLE per the staged-bump gate — optional filing~~ **Won't implement — contingent flm upstream filing; era passed.**
+~~40. QLC root post-ENOSPC recovery: watch chunk-unalloc (68.5 GiB) doesn't re-collapse~~ **Won't implement — one-shot watch; window passed.**
 
 _(40 items — items 1-19 sequenced, 20+ independent; 36-40 are notice-only, each needs its own verification pass before execution.)_
 

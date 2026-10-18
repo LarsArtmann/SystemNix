@@ -25,19 +25,19 @@
 
 ## b) PARTIALLY DONE
 
-1. **Inbox second pass** — only pre-Aug-31 files swept; the remaining 97 include many finished Sep 1-14 reports. Deliberately conservative, not complete.
-2. **Micro-dir consolidation** — only single-file dirs folded; `complaints/`(3), `prompts/`(3), `reviews/`(3), `audits/`(3), `learnings/`(3), `brainstorming/`(7), `verification/`(11), `troubleshooting/`(13) left as-is (thematic, judged low-value-to-move).
-3. **`docs/analysis/` + `docs/execution/`** — appeared in the topology listing; contents NEVER inspected (no orphan check run on them).
-4. **Formatter-stack review** — noted `dprint.json` + `.prettierignore` + `statix.toml` + `treefmt` overlap in research, then skipped (ONE-arbiter doctrine holds for nix; non-nix formatters layered but functional). Analysis not written down anywhere until now.
-5. **Purge-list extension (D4)** — dead history blobs identified and queued in TODO_LIST, but the runbook file itself (`AGENTS.md` purge section) was not edited (decision-first doctrine).
+~~1. **Inbox second pass** — only pre-Aug-31 files swept; the remaining 97 include many finished Sep 1-14 reports. Deliberately conservative, not complete.~~ done — inbox passes done 2026-09-19/21: 1,352 archived (docs/status/archived/README.md)
+~~2. **Micro-dir consolidation** — only single-file dirs folded; `complaints/`(3), `prompts/`(3), `reviews/`(3), `audits/`(3), `learnings/`(3), `brainstorming/`(7), `verification/`(11), `troubleshooting/`(13) left as-is (thematic, judged low-value-to-move).~~ **Won't implement — micro-dirs judged low-value deliberately (report b.2); left as-is.**
+~~3. **`docs/analysis/` + `docs/execution/`** — appeared in the topology listing; contents NEVER inspected (no orphan check run on them).~~ **Won't implement — analysis/ + execution/ still untriaged; minor; dormant.**
+~~4. **Formatter-stack review** — noted `dprint.json` + `.prettierignore` + `statix.toml` + `treefmt` overlap in research, then skipped (ONE-arbiter doctrine holds for nix; non-nix formatters layered but functional). Analysis not written down anywhere until now.~~ **Won't implement — nix one-arbiter doctrine holds; non-nix stack functional; dropped.**
+~~5. **Purge-list extension (D4)** — dead history blobs identified and queued in TODO_LIST, but the runbook file itself (`AGENTS.md` purge section) was not edited (decision-first doctrine).~~ **Won't implement — held purge is decision-gated; no library row found.**
 
 ## c) NOT STARTED
 
-1. **D1-D6 owner decisions** (minecraft, visionreviewd, hook-stack consolidation, history-diet paths, `data/` DB relocation, flake-update gate) — queued in TODO_LIST P3, zero execution by design.
-2. **`docs/status/archived/README.md` update** — I noticed mid-execution it claims "organized by year and month" (files are flat) and describes only Dec-2025 archiving; I rewrote `docs/archive/README.md` but FORGOT this one — arguably the more important README (1,300 files live there now).
-3. **`docs/README.md` + `FEATURES.md` layout-prose review** — link-checker green (no broken targets), but I never read their prose for stale structure claims.
-4. **CI verification of the pushed commits** — origin runs with fresh daemons; I did not check the nix-check run outcome.
-5. **nix-daemon restart** — the documented fix for the current `-source` invalid-path eval red (sudo, user-owned).
+1. **D1-D6 owner decisions** (minecraft, visionreviewd, hook-stack consolidation, history-diet paths, `data/` DB relocation, flake-update gate) — queued in TODO_LIST P3, zero execution by design. **→ D-rows residual: flake-update gate docs/todo/pipeline.md; visionreviewd enabled 09-22; hooks landed; minecraft still off**
+~~2. **`docs/status/archived/README.md` update** — I noticed mid-execution it claims "organized by year and month" (files are flat) and describes only Dec-2025 archiving; I rewrote `docs/archive/README.md` but FORGOT this one — arguably the more important README (1,300 files live there now).~~ done at `archived README rewritten flat/append-only (docs/status/archived/README.md)`
+3. **`docs/README.md` + `FEATURES.md` layout-prose review** — link-checker green (no broken targets), but I never read their prose for stale structure claims. **→ docs/README + FEATURES prose review; docs/todo/pipeline.md exact ask**
+~~4. **CI verification of the pushed commits** — origin runs with fresh daemons; I did not check the nix-check run outcome.~~ **Won't implement — one-shot CI glance; CI state tracked in pipeline.md.**
+~~5. **nix-daemon restart** — the documented fix for the current `-source` invalid-path eval red (sudo, user-owned).~~ **Won't implement — sudo op; eval red era passed.**
 
 ## d) TOTALLY FUCKED UP (owning it)
 
@@ -61,41 +61,41 @@
 
 **Quick wins (≤15 min):**
 
-1. Rewrite `docs/status/archived/README.md` for the canonical flat layout + 2026-09-14 consolidation provenance
-2. Read + fix stale layout prose in `docs/README.md`
-3. Read + fix stale layout prose in `FEATURES.md`
-4. `sudo systemctl restart nix-daemon` (USER) → re-run `nix flake check --no-build` (expect green; the `-source` invalid-path class)
-5. Check the CI nix-check run on the pushed commits
-6. Fix the plan doc's size figure (~130 MB packed-claim vs ~190 MB uncompressed blobs — pick one basis and label it)
-7. One-liner audit: confirm zero `docs/status/archive/` references remain repo-wide in living docs (I verified AGENTS+TODO only)
+~~1. Rewrite `docs/status/archived/README.md` for the canonical flat layout + 2026-09-14 consolidation provenance~~ **NOT-DO — dup of line 37 (README rewrite; done).**
+~~2. Read + fix stale layout prose in `docs/README.md`~~ **NOT-DO — dup of line 38 (pipeline.md row).**
+~~3. Read + fix stale layout prose in `FEATURES.md`~~ **NOT-DO — dup of line 38.**
+~~4. `sudo systemctl restart nix-daemon` (USER) → re-run `nix flake check --no-build` (expect green; the `-source` invalid-path class)~~ **NOT-DO — dup of line 40 (daemon restart).**
+~~5. Check the CI nix-check run on the pushed commits~~ **NOT-DO — dup of line 39 (CI).**
+~~6. Fix the plan doc's size figure (~130 MB packed-claim vs ~190 MB uncompressed blobs — pick one basis and label it)~~ **Won't implement — plan-doc figure; stale.**
+~~7. One-liner audit: confirm zero `docs/status/archive/` references remain repo-wide in living docs (I verified AGENTS+TODO only)~~ done — zero stale archive refs verified (2026-09-15_04-29 a.4)
 8. Quantify dangling relative links inside `docs/archive/` moved files (one rg pass)
 
 **Decisions (owner, queued as TODO_LIST P3):**
 9. D1: `minecraft.nix` keep-or-remove (476 lines, `enable = false`)
-10. D2: `visionreviewd` module + package keep-or-remove
-11. D3: hook-stack consolidation (`.githooks` vs `.pre-commit-config.yaml`)
-12. D4: add history-diet paths to the HELD purge `--invert-paths` list
-13. D5: relocate live `data/crush-daily.db` to the service StateDirectory
-14. Link-policy decision: extend `check-doc-links.sh` with an archive mode OR codify the exemption in the script header
+~~10. D2: `visionreviewd` module + package keep-or-remove~~ **NOT-DO — dup of line 36 (D1 minecraft; still off).**
+~~11. D3: hook-stack consolidation (`.githooks` vs `.pre-commit-config.yaml`)~~ **NOT-DO — dup of line 36 (D2; visionreviewd enabled 09-22).**
+~~12. D4: add history-diet paths to the HELD purge `--invert-paths` list~~ **NOT-DO — dup of line 36 (D3; hooks landed).**
+~~13. D5: relocate live `data/crush-daily.db` to the service StateDirectory~~ **NOT-DO — dup of line 32 (D4 purge).**
+~~14. Link-policy decision: extend `check-doc-links.sh` with an archive mode OR codify the exemption in the script header~~ **NOT-DO — dup of line 36 (D5).**
 
 **Docs health:**
 15. Second inbox pass: Sep 1-14 finished reports (reference-index + judgment)
 16. Inspect + triage `docs/analysis/` and `docs/execution/` (never seen)
 17. Triage remaining micro-dirs (`complaints`, `prompts`, `reviews`, `audits`, `learnings`)
-18. Consider an "auto-archive after 14d" inbox convention documented in the status README
-19. Codify the docs topology rule (ONE status archive; ONE non-status archive) in `docs/CONTRIBUTING.md` so the 3-way split cannot regrow
+~~18. Consider an "auto-archive after 14d" inbox convention documented in the status README~~ **Won't implement — convention nicety; dropped.**
+~~19. Codify the docs topology rule (ONE status archive; ONE non-status archive) in `docs/CONTRIBUTING.md` so the 3-way split cannot regrow~~ done — one-archive topology documented (docs/status/archived/README.md)
 
 **Repo hygiene:**
-20. `pkgs/.systemd-timer-monitor/` hidden dir — what is it, still needed?
-21. `pkgs/jscpd-pnpm-lock.yaml` — stray lockfile in pkgs?
-22. `templates/go-flake-parts/` — only CHANGELOG references; confirm wanted
-23. `systems/zfs-vm.nix` + `pkgs/freebsd-zfs-vm.nix` — usage decision (rarely-driven VM)
-24. Root `.config/metadata.yaml` — verify consumer before assuming keeper status
-25. Formatter-stack note: document the dprint/prettier/treefmt division of labor somewhere (or collapse)
+~~20. `pkgs/.systemd-timer-monitor/` hidden dir — what is it, still needed?~~ **Won't implement — micro hygiene; dormant.**
+~~21. `pkgs/jscpd-pnpm-lock.yaml` — stray lockfile in pkgs?~~ **Won't implement — micro hygiene; dormant.**
+~~22. `templates/go-flake-parts/` — only CHANGELOG references; confirm wanted~~ **Won't implement — micro hygiene; dormant.**
+~~23. `systems/zfs-vm.nix` + `pkgs/freebsd-zfs-vm.nix` — usage decision (rarely-driven VM)~~ **Won't implement — micro hygiene; dormant.**
+~~24. Root `.config/metadata.yaml` — verify consumer before assuming keeper status~~ **Won't implement — micro hygiene; dormant.**
+~~25. Formatter-stack note: document the dprint/prettier/treefmt division of labor somewhere (or collapse)~~ **Won't implement — micro hygiene; dormant.**
 
 **Test/CI follow-through:**
-26. Watch first CI run building the new `mkfilesystem` check (eval-green locally; build is trivial runCommand)
-27. Sibling session's `integration-registry` test: confirm `timers.home.lan` vHost landed with it (their commit `4dcc70da` — my hook failure was pre-fix)
+~~26. Watch first CI run building the new `mkfilesystem` check (eval-green locally; build is trivial runCommand)~~ done — timers vHost landed with integration registry (integration.nix; docs/agents/integration-registry.md)
+~~27. Sibling session's `integration-registry` test: confirm `timers.home.lan` vHost landed with it (their commit `4dcc70da` — my hook failure was pre-fix)~~ **Won't implement — one-shot; window passed.**
 28. If the daemon-restart does NOT clear the eval red: identify the exact input (`--show-trace`) before anything else
 
 **Attribution/process:**

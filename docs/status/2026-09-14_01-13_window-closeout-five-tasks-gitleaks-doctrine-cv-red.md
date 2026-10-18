@@ -17,12 +17,12 @@
 
 ## b) PARTIALLY DONE
 
-1. **The gitleaks false doctrine is annotated but not yet retracted in TODO_LIST** — rows 357 ("no full-length 40-char hex literals… gitleaks scans the whole exported index") and 361 still stand as open items built on the fabricated premise. TODO_LIST is append-only under this task's contract, so retraction items were APPENDED (see below) rather than rewording; a future pass with edit rights should strike them.
-2. **The `checks.x86_64-linux.cv` VM test is RED on master and blocks every full-gate commit** (root cause verified in-tree this pass: `cv.nix` now sets `oidc.enabled = true` with `client_secret` empty-by-design (rides the `cv-oidc-env` bridge), while the test fixture seeds no `CV_OIDC_CLIENT_SECRET` → cv-server config validation rejects → `wait_for_open_port(8098)` times out). Every docs commit in the window rode `--no-verify` (justified in-commit each time). The fixture fix is queued; until then the hook's flake-check leg exercises nothing.
-3. **niri-session-manager release is cut but unpublished** — tag v0.5.0 + 4 commits local-only (verified against `git ls-remote` this pass). The deployed binary already carries the cures, so the gap is nominally cosmetic + ecosystem-naming, but a release that exists only locally can rot.
-4. **Task 1's fix is committed but NOT deployed** — the deployed `website-deploy-monitor` still runs the dead-guard script until the next `nix run .#deploy`; the incident class is live until then.
-5. **§10 auto-derivation verified component-wise, not end-to-end** — every piece tested in isolation + fixture; the full 13-section pre-deploy path gets exercised for free at the next real deploy.
-6. **The git-identity audit is historical-only** — author identities counted, but pushed-vs-local classification, committer-vs-author, and per-repo `.mailmap` coverage were not separated.
+~~1. **The gitleaks false doctrine is annotated but not yet retracted in TODO_LIST** — rows 357 ("no full-length 40-char hex literals… gitleaks scans the whole exported index") and 361 still stand as open items built on the fabricated premise. TODO_LIST is append-only under this task's contract, so retraction items were APPENDED (see below) rather than rewording; a future pass with edit rights should strike them.~~ **NOT-DO — dup of 2026-09-13_04-22 b.1; TODO restructure 2026-10-01 removed the rows.**
+~~2. **The `checks.x86_64-linux.cv` VM test is RED on master and blocks every full-gate commit** (root cause verified in-tree this pass: `cv.nix` now sets `oidc.enabled = true` with `client_secret` empty-by-design (rides the `cv-oidc-env` bridge), while the test fixture seeds no `CV_OIDC_CLIENT_SECRET` → cv-server config validation rejects → `wait_for_open_port(8098)` times out). Every docs commit in the window rode `--no-verify` (justified in-commit each time). The fixture fix is queued; until then the hook's flake-check leg exercises nothing.~~ done at `cv fixture fixed: tests/test-cv.nix:43 seeds CV_OIDC_CLIENT_SECRET`
+3. **niri-session-manager release is cut but unpublished** — tag v0.5.0 + 4 commits local-only (verified against `git ls-remote` this pass). The deployed binary already carries the cures, so the gap is nominally cosmetic + ecosystem-naming, but a release that exists only locally can rot. **→ nsm v0.5.0 push + relock; docs/todo/upstream.md blocked:push row**
+~~4. **Task 1's fix is committed but NOT deployed** — the deployed `website-deploy-monitor` still runs the dead-guard script until the next `nix run .#deploy`; the incident class is live until then.~~ done — triage fixes deployed; current-state runbook docs/services/website-deploy-monitor.md
+~~5. **§10 auto-derivation verified component-wise, not end-to-end** — every piece tested in isolation + fixture; the full 13-section pre-deploy path gets exercised for free at the next real deploy.~~ done — §10 exercised end-to-end by real deploys since + fixture suite (scripts/test-pre-deploy-metrics.sh)
+~~6. **The git-identity audit is historical-only** — author identities counted, but pushed-vs-local classification, committer-vs-author, and per-repo `.mailmap` coverage were not separated.~~ **NOT-DO — dup of 2026-09-14_00-45 b.1.**
 
 ## c) NOT STARTED (by this window)
 
@@ -44,14 +44,14 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **"Reachable" is the verification unit, never "the object exists"** — after any amend/rebase/filter-branch: `git merge-base --is-ancestor <new> HEAD`, `git log --all --grep=<claim>`, `git for-each-ref | grep <old>`. Write the checklist into AGENTS.
-2. **No tool-behavior claim in any commit message, report, or TODO row without a run command from the same session** — three review passes in two days each killed one fabricated prose claim; the pattern is now the finding itself.
-3. **Containment radius priced into the first fix**: when a fix falsifies a claim, grep for its other holders in the same run and enumerate them — the gitleaks saga needed four passes because each pass fixed one holder.
-4. **Split the pre-commit gate** (eval-only in hook, VM tests in CI) AND fix the cv fixture — together they end the `--no-verify` habit rather than moralizing about it.
-5. **Verify the deployed surface, not just the lock** — the niri task's most valuable check (reading the running unit's ExecStart store path) took 30 seconds and converted "repo done" into "user protected".
-6. **Task items should state push policy explicitly** ("tag + flake input bump" vs "never push" collided twice this window).
-7. **The queue agent's verify command must carry the session env contracts** (`GOEXPERIMENT=jsonv2`) or every Go task on an affected repo dead-letters regardless of work quality — cheap `.tq-verify`/bootstrap fix.
-8. **Invert identity audits**: whitelist the canonical set, report everything else (grep-for-the-known-bad found one of five cohorts in August; the inverted search found all of them).
+~~1. **"Reachable" is the verification unit, never "the object exists"** — after any amend/rebase/filter-branch: `git merge-base --is-ancestor <new> HEAD`, `git log --all --grep=<claim>`, `git for-each-ref | grep <old>`. Write the checklist into AGENTS.~~ done at `reachable-checklist codified: docs/agents/git.md History-rewrite verification checklist`
+~~2. **No tool-behavior claim in any commit message, report, or TODO row without a run command from the same session** — three review passes in two days each killed one fabricated prose claim; the pattern is now the finding itself.~~ **NOT-DO — dup of 04-22 c.4.**
+~~3. **Containment radius priced into the first fix**: when a fix falsifies a claim, grep for its other holders in the same run and enumerate them — the gitleaks saga needed four passes because each pass fixed one holder.~~ **Won't implement — process lesson; not an actionable artifact.**
+~~4. **Split the pre-commit gate** (eval-only in hook, VM tests in CI) AND fix the cv fixture — together they end the `--no-verify` habit rather than moralizing about it.~~ done at `both halves landed: docs-only skip 2026-09-28 (CHANGELOG) + cv fixture (tests/test-cv.nix:43)`
+~~5. **Verify the deployed surface, not just the lock** — the niri task's most valuable check (reading the running unit's ExecStart store path) took 30 seconds and converted "repo done" into "user protected".~~ done — deployed-surface verification codified in CONTRIBUTING conventions (CHANGELOG 2026-09-27 re-dispatch protocol)
+~~6. **Task items should state push policy explicitly** ("tag + flake input bump" vs "never push" collided twice this window).~~ done — push policy codified: blocked:push tag legend (docs/todo/upstream.md)
+~~7. **The queue agent's verify command must carry the session env contracts** (`GOEXPERIMENT=jsonv2`) or every Go task on an affected repo dead-letters regardless of work quality — cheap `.tq-verify`/bootstrap fix.~~ **Won't implement — go1.27 era passed; GOEXPERIMENT verify-env class closed.**
+~~8. **Invert identity audits**: whitelist the canonical set, report everything else (grep-for-the-known-bad found one of five cohorts in August; the inverted search found all of them).~~ **NOT-DO — dup of 00-45 e.2 (inverted audits).**
 
 ## f) NEXT THINGS (harvested to TODO_LIST; impact-ordered, this window's blast radius)
 

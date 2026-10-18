@@ -30,9 +30,9 @@ One honest gap: I verified the old rev was broken and the new rev is green, but 
 
 | # | Work                                                                                                                                                                                                                                                                                                                                                                                          | State                            |
 | - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| 1 | **Lock-update commit attribution** — the daemon committed the lock refresh inside a `chore: auto-commit 3 changed file(s)` batch (`bd1712ab`). The change is IN, but not in a self-describing commit. Per AGENTS.md concurrent-session doctrine I did not pathspec-recommit (daemon owns the cadence); acceptable, but the audit trail for "why did the lock move" lives only in this report. | done, weakly attributed          |
-| 2 | **Root-cause of the stale drift** — I refreshed the lock but did NOT establish WHY it had drifted 102 commits/1 month (no TODO item, no CI guard, no staleness check exists for this input; earlier sessions' recurring pattern: notice drift → fix → forget). The systemic fix is open.                                                                                                      | fixed symptom, cause unaddressed |
-| 3 | **Local checkout hygiene** — mr-sync local master sits 1 unpushed auto-commit ahead of origin (`228a6d3`). Left alone (never push without explicit ask). Flagging here so it doesn't silently grow.                                                                                                                                                                                           | observed, not resolved           |
+| ~~1~~ **Won't implement — bookkeeping one-shot; daemon-batch attribution accepted per doctrine.** | ~~**Lock-update commit attribution** — the daemon committed the lock refresh inside a `chore: auto-commit 3 changed file(s)` batch (`bd1712ab`). The change is IN, but not in a self-describing commit. Per AGENTS.md concurrent-session doctrine I did not pathspec-recommit (daemon owns the cadence); acceptable, but the audit trail for "why did the lock move" lives only in this report.~~ | ~~done, weakly attributed~~ |
+| 2 **→ docs/todo/pipeline.md lock-staleness CI check row (harvested 2026-10-17)** | **Root-cause of the stale drift** — I refreshed the lock but did NOT establish WHY it had drifted 102 commits/1 month (no TODO item, no CI guard, no staleness check exists for this input; earlier sessions' recurring pattern: notice drift → fix → forget). The systemic fix is open. | fixed symptom, cause unaddressed |
+| ~~3~~ **Won't implement — owner-side unpushed auto-commit; never push unasked.** | ~~**Local checkout hygiene** — mr-sync local master sits 1 unpushed auto-commit ahead of origin (`228a6d3`). Left alone (never push without explicit ask). Flagging here so it doesn't silently grow.~~ | ~~observed, not resolved~~ |
 
 ## c) NOT STARTED (noticed, deliberately out of scope this session)
 
@@ -50,47 +50,47 @@ Nothing in this session. Closest misses, for honesty:
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Lock-staleness guard** — a CI check (or `nix-check.yml` step) that, for each `?ref=master` input, compares the locked rev against the GitHub head and opens an issue/warns when drift exceeds N commits or N days. mr-sync drifted 102 commits for ~a month with the locked tests already red — invisible until someone built the package.
+~~1. **Lock-staleness guard** — a CI check (or `nix-check.yml` step) that, for each `?ref=master` input, compares the locked rev against the GitHub head and opens an issue/warns when drift exceeds N commits or N days. mr-sync drifted 102 commits for ~a month with the locked tests already red — invisible until someone built the package.~~ **NOT-DO — dup of line 34 (staleness guard).**
 2. **Batch Go-package build probe** — the 2026-08-12 precedent (`nix build .#mr-sync …` in the batch list) exists but nothing runs it routinely. A weekly "build all mkLarsPackages" CI job would have caught this class for ALL 20+ LarsArtmann tools, not just mr-sync.
-3. **Upstream test hygiene** — `TestErrorTemplatesMatchDataContracts` reads a repo doc via a relative `../../docs/` path: works locally, breaks in any sandbox/nix build at older revs. Should use `runtime.GOROOT`-independent embedding (`go:embed` or locate via `go.mod`). Fix belongs upstream in mr-sync (it may already be fixed — unverified which commit).
-4. **Upstream release discipline** — CHANGELOG cut for v0.5.1 with no tag; consumers on `ref=master` can't pin semver. Cut the tag upstream.
-5. **This session's report-before-instructions cadence** — fine; noting the earlier turn ended with "WAIT FOR INSTRUCTIONS" repeated, which cost one redundant user message.
+~~3. **Upstream test hygiene** — `TestErrorTemplatesMatchDataContracts` reads a repo doc via a relative `../../docs/` path: works locally, breaks in any sandbox/nix build at older revs. Should use `runtime.GOROOT`-independent embedding (`go:embed` or locate via `go.mod`). Fix belongs upstream in mr-sync (it may already be fixed — unverified which commit).~~ **Won't implement — superseded: sandbox tests green at locked rev since 91bcb4c refresh (report a.6).**
+~~4. **Upstream release discipline** — CHANGELOG cut for v0.5.1 with no tag; consumers on `ref=master` can't pin semver. Cut the tag upstream.~~ **Won't implement — mr-sync moved far past v0.5.1 era; ref=master policy makes tags moot.**
+~~5. **This session's report-before-instructions cadence** — fine; noting the earlier turn ended with "WAIT FOR INSTRUCTIONS" repeated, which cost one redundant user message.~~ **Won't implement — process note; no action.**
 
 ## f) Up to 50 Things To Do Next (prioritized, mr-sync-adjacent first)
 
 **P0 — direct fallout of this session**
 
-1. Cut `v0.5.1` tag in mr-sync upstream (CHANGELOG already cut) so consumers can pin semver.
-2. Add the lock-staleness CI check for `?ref=master` inputs (SystemNix `nix-check.yml`).
-3. Add a weekly CI job building all `mkLarsPackages` outputs (the 2026-08-12 batch list, automated).
-4. Verify which upstream mr-sync commit fixed `TestErrorTemplatesMatchDataContracts`; if the `../../docs/` relative-path pattern still exists anywhere, fix it with `go:embed` upstream.
-5. Push or discard the 1 unpushed auto-commit on mr-sync local master (user decision — I cannot push unasked).
-6. Deploy or leave the lock bump: decide whether `nix run .#deploy` should ride now or with the next change batch (the package is a PATH tool, not a service — no urgency).
-7. Update SystemNix CHANGELOG with an entry documenting the lock refresh + the two now-unblocked upstream test fixes.
+~~1. Cut `v0.5.1` tag in mr-sync upstream (CHANGELOG already cut) so consumers can pin semver.~~ **Won't implement — superseded by pin policy + repo moved on.**
+~~2. Add the lock-staleness CI check for `?ref=master` inputs (SystemNix `nix-check.yml`).~~ **NOT-DO — dup of line 34 (staleness check).**
+~~3. Add a weekly CI job building all `mkLarsPackages` outputs (the 2026-08-12 batch list, automated).~~ **NOT-DO — dup of line 54 (build-probe CI).**
+~~4. Verify which upstream mr-sync commit fixed `TestErrorTemplatesMatchDataContracts`; if the `../../docs/` relative-path pattern still exists anywhere, fix it with `go:embed` upstream.~~ **Won't implement — curiosity bisect; lock long past.**
+~~5. Push or discard the 1 unpushed auto-commit on mr-sync local master (user decision — I cannot push unasked).~~ **NOT-DO — dup of line 35 (unpushed commit).**
+~~6. Deploy or leave the lock bump: decide whether `nix run .#deploy` should ride now or with the next change batch (the package is a PATH tool, not a service — no urgency).~~ **Won't implement — one-shot deploy decision; deploys long since rode.**
+~~7. Update SystemNix CHANGELOG with an entry documenting the lock refresh + the two now-unblocked upstream test fixes.~~ **Won't implement — changelog append-only; stale ask.**
 
 **P1 — same class, other inputs**
-8. Run the same three-way drift audit (local / origin / lock) for the other `?ref=master` LarsArtmann inputs (crush-daily, md-go-validator, branching-flow, go-structure-linter, todo-list-ai, file-and-image-renamer, …) — expect at least one more stale-broken lock.
-9. For each moving-ref input, decide: semver-pin vs keep-master, and record the decision (2026-08-12 self-review item 13 "pin instead of ref=master" was never executed).
-10. Consider converting mr-sync input to a tag URL once v0.5.1 exists.
-11. Sweep archived docs' superseded "pinned to X" claims into a single current-state table (FEATURES.md already has one — keep it authoritative).
+~~8. Run the same three-way drift audit (local / origin / lock) for the other `?ref=master` LarsArtmann inputs (crush-daily, md-go-validator, branching-flow, go-structure-linter, todo-list-ai, file-and-image-renamer, …) — expect at least one more stale-broken lock.~~ done — input governance enforced: pin-audit fixtures + lib/lock-audit.nix + pin policy (docs/agents/nix-flakes.md)
+~~9. For each moving-ref input, decide: semver-pin vs keep-master, and record the decision (2026-08-12 self-review item 13 "pin instead of ref=master" was never executed).~~ done at `pin-vs-master decided 2026-09-16: ref=master default (docs/agents/nix-flakes.md)`
+~~10. Consider converting mr-sync input to a tag URL once v0.5.1 exists.~~ **Won't implement — policy answer is ref=master; tag URL moot.**
+~~11. Sweep archived docs' superseded "pinned to X" claims into a single current-state table (FEATURES.md already has one — keep it authoritative).~~ **Won't implement — archive claims sweep; archived docs frozen by policy.**
 
 **P2 — upstream mr-sync product work (from its own docs/TODO, not researched this session — verify before executing)**
-12. Add the integration test for the FULL sync flow (open item from 2026-07-29 report, item 37 — status unknown, verify).
-13. Confirm `proxyVendor = true` in mr-sync package.nix is still needed post-dep-bump (open item 38 from same report).
-14. Run `deadnix` on mr-sync flake.nix (open item 19).
-15. Add the CI check for mr-sync vendorHash drift (open item 17).
-16. Update mr-sync's own AGENTS.md with the go-atomic-write flock-creates-file gotcha (open item 20).
-17. Audit mr-sync for "Unknown Author"/`unknown@example` fallbacks (2026-08-06 item: grep across mr-sync was recommended, never confirmed done).
-18. Check mr-sync's BuildFlow CI status (2026-08-05: 1 failing step — never confirmed fixed).
+~~12. Add the integration test for the FULL sync flow (open item from 2026-07-29 report, item 37 — status unknown, verify).~~ **Won't implement — upstream mr-sync product item; other repo.**
+~~13. Confirm `proxyVendor = true` in mr-sync package.nix is still needed post-dep-bump (open item 38 from same report).~~ **Won't implement — upstream; other repo.**
+~~14. Run `deadnix` on mr-sync flake.nix (open item 19).~~ **Won't implement — upstream; other repo.**
+~~15. Add the CI check for mr-sync vendorHash drift (open item 17).~~ **Won't implement — upstream; other repo.**
+~~16. Update mr-sync's own AGENTS.md with the go-atomic-write flock-creates-file gotcha (open item 20).~~ **Won't implement — upstream; other repo.**
+~~17. Audit mr-sync for "Unknown Author"/`unknown@example` fallbacks (2026-08-06 item: grep across mr-sync was recommended, never confirmed done).~~ **Won't implement — upstream; other repo.**
+~~18. Check mr-sync's BuildFlow CI status (2026-08-05: 1 failing step — never confirmed fixed).~~ **Won't implement — upstream; other repo.**
 
 **P3 — SystemNix standing items I touched peripherally**
-19. The `nixpkgs` tarball-registry / lock-hygiene family: confirm `fix-nixpkgs-lock.sh` still current.
-20. `nix flake check` runtime cost: the batch-build CI idea (#3) must ride the `heavy-job` wrapper doctrine (workload-admission) — design before implementing.
-21. Vendored `vendor/` dir exists in ~/projects/mr-sync checkout — confirm upstream intends vendor/ committed (AGENTS doctrine says vendor dirs are usually not; if committed, note the go mod vendor regeneration trap from 2026-07-29).
-22. Document in SystemNix AGENTS.md (Consuming LarsArtmann Flakes section) that source-only flake inputs get NO CI signal — pointing at the new staleness check once it exists.
-23. Post-deploy smoke does not cover `.#mr-sync` (CLI tool, no service) — decide if PATH tools need any deploy verification at all (probably not; document the decision).
-24. mr-sync `--version` reports full 40-char rev — fine for a tool (AGENTS rule about short versions applies to store-path names; store name is also full rev here — consider `shortRev` for the derivation name per the versioning doctrine).
-25. Ensure the lock-bump rides the next deploy's pre-deploy-check cleanly (§10 metric-presence unaffected — no metrics for this package; nothing to do, just noted).
+~~19. The `nixpkgs` tarball-registry / lock-hygiene family: confirm `fix-nixpkgs-lock.sh` still current.~~ **Won't implement — micro confirmation; script still present (scripts/fix-nixpkgs-lock.sh).**
+~~20. `nix flake check` runtime cost: the batch-build CI idea (#3) must ride the `heavy-job` wrapper doctrine (workload-admission) — design before implementing.~~ done — heavy-job/workload-admission doctrine landed (workload-admission.nix; deploy pressure gates)
+~~21. Vendored `vendor/` dir exists in ~/projects/mr-sync checkout — confirm upstream intends vendor/ committed (AGENTS doctrine says vendor dirs are usually not; if committed, note the go mod vendor regeneration trap from 2026-07-29).~~ **Won't implement — upstream intent question; dormant.**
+~~22. Document in SystemNix AGENTS.md (Consuming LarsArtmann Flakes section) that source-only flake inputs get NO CI signal — pointing at the new staleness check once it exists.~~ done — ecosystem consumption docs live: docs/agents/nix-flakes.md (pin policy + input doctrine)
+~~23. Post-deploy smoke does not cover `.#mr-sync` (CLI tool, no service) — decide if PATH tools need any deploy verification at all (probably not; document the decision).~~ **Won't implement — design decision never needed; CLI tools stable via PATH.**
+~~24. mr-sync `--version` reports full 40-char rev — fine for a tool (AGENTS rule about short versions applies to store-path names; store name is also full rev here — consider `shortRev` for the derivation name per the versioning doctrine).~~ **Won't implement — cosmetic versioning nicety; dropped.**
+~~25. Ensure the lock-bump rides the next deploy's pre-deploy-check cleanly (§10 metric-presence unaffected — no metrics for this package; nothing to do, just noted).~~ **Won't implement — no-op note; nothing to do.**
 
 _(25 concrete items; the remainder of the 50 would be generic SystemNix TODO_LIST items already tracked there — deliberately not duplicated per the "right file" doctrine.)_
 
