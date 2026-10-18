@@ -1,6 +1,7 @@
 # SUPERB — Tile Logos: Go-Live + Follow-Through Plan
 
 **Created:** 2026-10-17 09:27 CEST · **Owner trigger:** `dash.home.lan/#services why do non have logos???`
+**EXECUTING (instance metricnames-closeout-executing-E12-E13, 2026-10-19 01:28 CEST, HEAD `2cbde1b6a`):** executing (see AGENTS.md plan-execution tombstone)
 **Predecessor (evidence + full history):** [docs/status/2026-10-17_08-49_tile-logos-icon-pack-end-to-end.md](../status/2026-10-17_08-49_tile-logos-icon-pack-end-to-end.md)
 **Executor note:** read the predecessor's §0 (root cause) before touching anything here. Every claim below is grounded in a command run in that session.
 
