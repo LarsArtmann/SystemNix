@@ -593,16 +593,21 @@
           done
           echo "hermes-db-health: running deferred integrity census on $DB (io calm after $n of $WAIT_CYCLES wait cycles)"
 
-          INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1) || INTEGRITY="error: $(printf '%s' "$INTEGRITY")"
+          INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1) || true
           if [ "$INTEGRITY" = "ok" ]; then
             rm -f "$MARKER"
             echo "hermes-db-health: census converged ok — marker cleared"
-          elif [[ "$INTEGRITY" == error:* ]]; then
-            # sqlite could not even complete the read (or timed out at the
-            # OS layer). Leave the marker; the next hermes start retries.
-            echo "hermes-db-health: census could not complete this run — marker kept: $INTEGRITY" >&2
+          elif printf '%s' "$INTEGRITY" | grep -qi "database is locked"; then
+            # Transient: the live gateway holds the db (WAL readers usually
+            # coexist; a checkpoint window does not). Keep the marker — the
+            # next hermes start re-pulls this unit and retries.
+            echo "hermes-db-health: census hit a lock window — marker kept, retrying on next start"
             exit 1
           else
+            # Anything ≠ ok is the malformed verdict (integrity_check
+            # reports violations as rows with exit 0; sqlite-level errors
+            # are corruption-class too) — the same fail-closed-to-fresh
+            # contract the start-path census always had.
             BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
             echo "hermes-db-health: SQLite database malformed — backing up to $BACKUP and restarting hermes onto a fresh state"
             mv "$DB" "$BACKUP"

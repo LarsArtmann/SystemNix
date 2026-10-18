@@ -33,6 +33,10 @@ case "${SQLITE_STUB_MODE:-ok}" in
     echo "Page 4: never used"
     exit 1
     ;;
+  locked)
+    echo "Error: database is locked" >&2
+    exit 1
+    ;;
   *) echo "unknown stub mode" >&2; exit 70 ;;
 esac
 EOF
@@ -136,18 +140,20 @@ run >"$scratch/out6" 2>&1
 grep -q "clearing stale marker" "$scratch/out6" || fail "leg6: stale marker not cleared, got: $(cat "$scratch/out6")"
 [ ! -e "$STATE/state.db.integrity-pending" ] || fail "leg6: marker survives"
 
-# --- leg 7: census cannot complete (stub errors without a malformed
-# verdict shape is still malformed; use the unknown-mode hard error) ->
-# unit fails, marker kept, NO restart (retry owns it).
+# --- leg 7: census hits a lock window (live gateway checkpoint) ->
+# transient class: marker kept, NO restart, unit fails (retry next start).
 make_db
+: >"$STATE/state.db-wal"
+: >"$STATE/state.db-shm"
 : >"$STATE/state.db.integrity-pending"
 psi 5.00
 : >"$scratch/systemctl-calls"
-if SQLITE_STUB_MODE=bogus run >"$scratch/out7" 2>&1; then
+if SQLITE_STUB_MODE=locked run >"$scratch/out7" 2>&1; then
   fail "leg7: expected nonzero exit"
 fi
-grep -q "could not complete" "$scratch/out7" || fail "leg7: no retry line, got: $(cat "$scratch/out7")"
+grep -q "lock window" "$scratch/out7" || fail "leg7: no lock-window line, got: $(cat "$scratch/out7")"
 [ -e "$STATE/state.db.integrity-pending" ] || fail "leg7: marker not kept"
-[ ! -s "$scratch/systemctl-calls" ] || fail "leg7: restart on an inconclusive census"
+[ -e "$STATE/state.db" ] || fail "leg7: db must survive a lock window"
+[ ! -s "$scratch/systemctl-calls" ] || fail "leg7: restart on a lock window"
 
 echo "hermes-db-health fixture: all legs green"

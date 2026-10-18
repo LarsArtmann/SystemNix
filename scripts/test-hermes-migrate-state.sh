@@ -46,9 +46,13 @@ EOF
 chmod +x "$scratch/sqlite3-stub"
 
 # Render a runnable copy: bake the scratch state dir over the interpolated
-# NEW= and point both sqlite3 call sites at the stub.
+# NEW= and point both sqlite3 call sites at the stub. The cfg.user/group
+# substitutions only fire on a RAW Nix-text extraction (the store copy
+# has them baked) — they keep the script runnable in both modes.
 render() {
-  sed -e "s|^NEW=.*|NEW=\"$STATE\"|" -e "s|sqlite3 \"|$scratch/sqlite3-stub \"|g" "$MIGRATE_BIN"
+  sed -e "s|^NEW=.*|NEW=\"$STATE\"|" \
+    -e "s|\${cfg.user}|hermes|g" -e "s|\${cfg.group}|hermes|g" \
+    -e "s|sqlite3 \"|$scratch/sqlite3-stub \"|g" "$MIGRATE_BIN"
 }
 RENDERED="$scratch/migrate.sh"
 render >"$RENDERED"
@@ -139,7 +143,9 @@ assert_no_marker "leg7"
 OLDSTATE="$scratch/oldstate"
 mkdir -p "$OLDSTATE"
 echo payload >"$OLDSTATE/legacy.txt"
-sed "s|for OLD in .*; do|for OLD in \"$OLDSTATE\"; do|" "$RENDERED" >"$scratch/migrate-old.sh"
+sed -e "s|for OLD in .*; do|for OLD in \"$OLDSTATE\"; do|" \
+  -e "s|\${cfg.user}|hermes|g" -e "s|\${cfg.group}|hermes|g" \
+  "$RENDERED" >"$scratch/migrate-old.sh"
 rm -f "$STATE"/state.db*
 bash "$scratch/migrate-old.sh" >"$scratch/out8" 2>&1
 grep -q "migration complete" "$scratch/out8" || fail "leg8: migration did not complete, got: $(cat "$scratch/out8")"
