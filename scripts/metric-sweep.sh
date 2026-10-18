@@ -134,6 +134,9 @@ extract_names() {
 is_expected_absent() {
   local name=$1 entry
   while IFS= read -r entry; do
+    # Glob match is the point: allowlist entries are *-patterns (e.g.
+    # *_googleapis_*), matched against the metric name.
+    # shellcheck disable=SC2254
     case "$name" in
     $entry) return 0 ;;
     esac

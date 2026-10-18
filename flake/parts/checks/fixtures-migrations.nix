@@ -116,6 +116,66 @@
         # never exercised for real. Same stub-fixture pattern as the
         # hot-db sibling: PATH stubs for the root-bound commands,
         # real rsync/find/tar, aux-mount faked by symlink.
+        # hermes-migrate-state (ExecStartPre) + hermes-db-health
+        # (post-start converger): the WAL-gated sqlite integrity branches
+        # had ZERO test coverage since the 2026-10-06 restructure
+        # (docs/todo/pipeline.md row 944), and the 2026-10-18 boot -1
+        # storm burned hermes' FULL 3min start budget TWICE on the census
+        # before the 2026-10-19 bounded-census rework. Both scripts are
+        # store-extracted from the evaluated evo-x2 config (hermes'
+        # writeShellApplication lets are not unit scripts), sed-rewritten
+        # onto scratch trees (sqlite3 → env-switched stub; the baked
+        # systemctl store path → arg-logging stub; NEW= → scratch state)
+        # and run for real. Legs: clean-shutdown skip, wal+ok census,
+        # wal+TIMEOUT deferral (marker), wal+malformed backup, marker
+        # convergence/storm-again, stale marker, legacy rsync migration;
+        # db-health: no-marker fast path, PSI calm-wait loop (seamed
+        # /proc/pressure/io), ok convergence, mid-loop calm break,
+        # malformed hot-swap + restart, stale marker, inconclusive retry.
+        hermes-migrate-fixture =
+          let
+            sys = inputs.self.nixosConfigurations.evo-x2;
+            hermesSvc = sys.config.systemd.services.hermes;
+            dbHealth = sys.config.systemd.services.hermes-db-health;
+            migrateEntry = builtins.head (
+              builtins.filter (lib.hasInfix "hermes-migrate-state") hermesSvc.serviceConfig.ExecStartPre
+            );
+          in
+          pkgs.runCommand "hermes-migrate-fixture"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils-full
+                rsync
+                gnugrep
+                gnused
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              # Eval-side pins: the wiring this whole design rests on.
+              echo "wants: ${toString hermesSvc.wants}"
+              echo "wants: ${toString hermesSvc.wants}" | grep -q "hermes-db-health.service" || {
+                echo "FAIL: hermes.service does not pull hermes-db-health" >&2
+                exit 1
+              }
+              [ "${toString dbHealth.after}" = "hermes.service" ] || {
+                echo "FAIL: db-health After mismatch: ${toString dbHealth.after}" >&2
+                exit 1
+              }
+              [ "${dbHealth.serviceConfig.User or ""}" = "root" ] || {
+                echo "FAIL: db-health must run as root (restart + mv across owners)" >&2
+                exit 1
+              }
+              case "${dbHealth.serviceConfig.IOSchedulingClass or ""}" in
+                idle) ;;
+                *) echo "FAIL: db-health expected ioTier.maintenance (idle), got: ${dbHealth.serviceConfig.IOSchedulingClass or ""}" >&2; exit 1 ;;
+              esac
+              bash ${root}/scripts/test-hermes-migrate-state.sh "${lib.removePrefix "+" migrateEntry}"
+              bash ${root}/scripts/test-hermes-db-health.sh "${dbHealth.serviceConfig.ExecStart}"
+              touch $out
+            '';
+
         migrate-caddy-logs-fixture =
           pkgs.runCommand "migrate-caddy-logs-fixture"
             {

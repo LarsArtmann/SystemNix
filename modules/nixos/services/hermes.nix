@@ -481,6 +481,20 @@
           fi
 
           DB="$NEW/state.db"
+          MARKER="$DB.integrity-pending"
+          # Start-path budget for the integrity census (env seam for tests +
+          # ops). The census runs ONLY on the unclean-shutdown signal (a
+          # PRESENT -wal) or when a previous boot deferred it (marker) — and
+          # those are exactly the storm boots where the 1.4 GB walk does not
+          # fit any start budget (boot -1 2026-10-18: two FULL 3min
+          # TimeoutStartSec timeouts, SIGKILLed mid-walk, gateway down ~8min
+          # until a third retry's walk finished in 103s). So the start-path
+          # attempt is now BOUNDED: on timeout it drops a marker, starts the
+          # gateway anyway (sqlite recovers the wal on open; the census is a
+          # corruption census, not a recovery step), and hermes-db-health
+          # converges the verdict post-start.
+          CHECK_BUDGET="''${HERMES_DB_CHECK_BUDGET:-60s}"
+          rc=0
           # Integrity check ONLY after an unclean shutdown: with
           # journal_mode=WAL, sqlite deletes state.db-wal when the last
           # connection closes cleanly, so a PRESENT -wal file is the
@@ -490,16 +504,22 @@
           # multi-user.target (2026-10-06 boot research) — and a no-op after
           # every clean stop. journal_mode is persistent in the db header,
           # so the clean path needs no pragma re-assert either.
-          if [ -f "$DB" ] && [ -f "$DB-wal" ]; then
-            INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1 || echo "error")
-            if [ "$INTEGRITY" != "ok" ]; then
+          if [ -f "$DB" ] && { [ -f "$DB-wal" ] || [ -f "$MARKER" ]; }; then
+            INTEGRITY=$(timeout "$CHECK_BUDGET" sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1) || rc=$?
+            if [ "$rc" -eq 124 ]; then
+              touch "$MARKER"
+              echo "hermes-migrate: integrity census exceeded ''${CHECK_BUDGET} under boot IO — deferred to hermes-db-health (marker: $MARKER); starting without the verdict"
+            elif [ "$INTEGRITY" != "ok" ]; then
               BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
               echo "hermes-migrate: SQLite database malformed (unclean shutdown), backing up to $BACKUP"
               mv "$DB" "$BACKUP"
-              rm -f "$DB-wal" "$DB-shm"
+              rm -f "$DB-wal" "$DB-shm" "$MARKER"
             else
               sqlite3 "$DB" "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;" 2>/dev/null || true
+              rm -f "$MARKER"
             fi
+          elif [ ! -f "$DB" ] && [ -f "$MARKER" ]; then
+            rm -f "$MARKER"
           fi
 
           if [ -f "$NEW/state.db" ] && [ "$(stat -c%s "$NEW/state.db" 2>/dev/null)" -gt 1048576 ]; then
@@ -518,6 +538,80 @@
           done
 
           echo "hermes-migrate: no old state found, skipping migration"
+        '';
+      };
+
+      # Converges the integrity census that hermes-migrate-state DEFERRED
+      # (marker: state.db.integrity-pending) once the boot IO storm has
+      # drained. Runs post-start on every hermes start (boot + deploy
+      # restarts) — off the boot critical path, hermes-perms-heal wiring
+      # shape. The gateway is already up and serving when this runs: a
+      # clean census just clears the marker; a malformed one moves the db
+      # aside and restarts the gateway onto a fresh state (the same
+      # fail-closed-to-fresh contract the start-path census always had —
+      # serving on an unverified db for the storm minutes beats a gateway
+      # start-limit-dead for the whole boot).
+      hermesDbHealthScript = pkgs.writeShellApplication {
+        name = "hermes-db-health";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gawk
+          pkgs.gnugrep
+          pkgs.sqlite
+          pkgs.systemd
+        ];
+        text = ''
+          NEW="${cfg.stateDir}"
+          DB="$NEW/state.db"
+          MARKER="$DB.integrity-pending"
+          PSI_FILE="''${HERMES_DB_HEALTH_PSI_FILE:-/proc/pressure/io}"
+          PSI_LIMIT="''${HERMES_DB_HEALTH_PSI_LIMIT:-20}"
+          # Wait cap before the census runs regardless: 12 × 30s = 6 min,
+          # inside the unit's own 15min start budget (a cold 1.4 GB census
+          # takes ~2-5 min once calm).
+          WAIT_CYCLES="''${HERMES_DB_HEALTH_WAIT_CYCLES:-12}"
+          POLL_SEC="''${HERMES_DB_HEALTH_POLL_SEC:-30}"
+
+          if [ ! -f "$MARKER" ]; then
+            echo "hermes-db-health: no pending integrity census — nothing to do"
+            exit 0
+          fi
+          if [ ! -f "$DB" ]; then
+            echo "hermes-db-health: $DB gone (fresh state) — clearing stale marker"
+            rm -f "$MARKER"
+            exit 0
+          fi
+
+          n=0
+          while [ "$n" -lt "$WAIT_CYCLES" ]; do
+            avg10=$(grep '^some ' "$PSI_FILE" 2>/dev/null | grep -o 'avg10=[0-9.]*' | cut -d= -f2 || echo 0)
+            if awk -v a="''${avg10:-0}" -v l="$PSI_LIMIT" 'BEGIN { exit !(a < l) }'; then
+              break
+            fi
+            n=$((n + 1))
+            sleep "$POLL_SEC"
+          done
+          echo "hermes-db-health: running deferred integrity census on $DB (io calm after $n of $WAIT_CYCLES wait cycles)"
+
+          INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1) || INTEGRITY="error: $(printf '%s' "$INTEGRITY")"
+          if [ "$INTEGRITY" = "ok" ]; then
+            rm -f "$MARKER"
+            echo "hermes-db-health: census converged ok — marker cleared"
+          elif [[ "$INTEGRITY" == error:* ]]; then
+            # sqlite could not even complete the read (or timed out at the
+            # OS layer). Leave the marker; the next hermes start retries.
+            echo "hermes-db-health: census could not complete this run — marker kept: $INTEGRITY" >&2
+            exit 1
+          else
+            BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
+            echo "hermes-db-health: SQLite database malformed — backing up to $BACKUP and restarting hermes onto a fresh state"
+            mv "$DB" "$BACKUP"
+            rm -f "$DB-wal" "$DB-shm" "$MARKER"
+            # A crash-looping gateway may have burned its start-limit budget
+            # on the corrupt db — clear it so the restart is admitted.
+            ${pkgs.systemd}/bin/systemctl reset-failed hermes.service 2>/dev/null || true
+            ${pkgs.systemd}/bin/systemctl restart hermes.service
+          fi
         '';
       };
     in
@@ -660,6 +754,10 @@
             # deploy restart) — see hermes-perms-heal below for why the
             # walk no longer lives in ExecStartPre.
             "hermes-perms-heal.service"
+            # Same cadence for the deferred integrity census (marker set by
+            # the bounded ExecStartPre check on storm boots) — see
+            # hermes-db-health below.
+            "hermes-db-health.service"
           ];
           inherit onFailure;
           startLimitIntervalSec = 600;
@@ -762,8 +860,11 @@
               # full 3min, 2026-10-06 boot -1 hit the full 6min and paid a
               # restart retry). Both scans left ExecStartPre 2026-10-06
               # (perms walk → hermes-perms-heal post-start; integrity check
-              # → WAL-gated in the migrate script). 3min still absorbs the
-              # remaining steps under a boot IO storm.
+              # → WAL-gated in the migrate script). The census is BOUNDED
+              # since 2026-10-19 (boot -1 2026-10-18 burned the full 3min
+              # TWICE on it): a storm-timeout defers to hermes-db-health
+              # post-start instead of failing the unit, so 3min now absorbs
+              # only genuinely-start-shaped work.
               TimeoutStartSec = "3min";
               ExecReload = "/bin/kill -USR1 $MAINPID";
               StandardOutput = "journal";
@@ -846,6 +947,50 @@
               TimeoutStartSec = "10min";
             }
             ioTier.build
+          ];
+        };
+
+        # Converges the storm-deferred sqlite integrity census (marker left
+        # by the bounded ExecStartPre attempt in hermes-migrate-state).
+        # Wiring mirrors hermes-perms-heal: Wanted by hermes.service, After=
+        # it — runs on every boot AND deploy restart, off the boot critical
+        # path; failure does not fail hermes (Wants, not Requires). The
+        # census waits (bounded) for an IO-calm window first — deferral
+        # exists precisely because the walk cannot compete with boot storms
+        # (freezes #19-#22 class). A malformed verdict moves the db aside
+        # and restarts the gateway fresh: the same contract the start-path
+        # census always had, executed when it can actually run.
+        systemd.services.hermes-db-health = {
+          description = "Hermes deferred SQLite integrity census (post-start)";
+          after = [ "hermes.service" ];
+          inherit onFailure;
+          startLimitBurst = 3;
+          startLimitIntervalSec = 3600;
+          unitConfig = {
+            # Same loud-failure mount gate as hermes.service.
+            RequiresMountsFor = [ (toString cfg.stateDir) ];
+          };
+          serviceConfig = lib.mkMerge [
+            (serviceOneshotDefaults { })
+            (harden {
+              # mv/rm on hermes-owned db files (CAP_FOWNER + dir traversal
+              # CAP_DAC_OVERRIDE); systemctl talks to the manager socket
+              # (bank-sync-rev-drift precedent: no cap needed for it).
+              CapabilityBoundingSet = "CAP_CHOWN CAP_DAC_OVERRIDE CAP_FOWNER";
+              ProtectHome = false;
+              ReadWritePaths = [ cfg.stateDir ];
+            })
+            {
+              Type = "oneshot";
+              User = "root";
+              ExecStart = lib.getExe hermesDbHealthScript;
+              # 6min calm-wait cap + a cold 1.4 GB census (~2-5 min) fit
+              # with headroom.
+              TimeoutStartSec = "15min";
+            }
+            # The census is pure deferred maintenance I/O — idle class is
+            # exactly the tier for it (fstrim pattern).
+            ioTier.maintenance
           ];
         };
 
