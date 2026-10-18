@@ -137,6 +137,28 @@
             METRICS="$(mktemp)"
             scrape_errors=0
 
+            # Age of an OPEN boot transaction: seconds past graphical.target
+            # activation (falls back to uptime when graphical has not been
+            # reached yet). systemctl show is in-repo-precedented under
+            # harden{} (btrfs-verify-snapshots probes unit state the same
+            # way); a missing/unparseable property degrades to uptime.
+            # DEFINED ABOVE ITS FIRST CALL SITE (the retry loop below): a
+            # helper defined after the call is not yet a command when the
+            # loop body runs, and the 127 takes `set -e` down with it — the
+            # 2026-10-18 failure where the open-transaction gauge this loop
+            # exists to emit was never written on exactly the boots it is
+            # for (systemd-analyze refusing).
+            open_age_secs() {
+              local up ge
+              up="$(awk '{ printf "%.0f", $1 }' /proc/uptime)"
+              ge="$(systemctl show graphical.target -p ActiveEnterTimestampMonotonic 2>/dev/null | grep -oE '[0-9]+' || true)"
+              if [ -n "$ge" ] && [ "$ge" -gt 0 ] 2>/dev/null; then
+                awk -v n="$up" -v g="$ge" 'BEGIN { d = n - g / 1000000; if (d < 0) d = n; printf "%.0f", d }'
+              else
+                printf '%s\n' "$up"
+              fi
+            }
+
             # ── systemd-analyze with bounded retry for storm boots ──────────
             analysis=""
             attempt=0
@@ -192,22 +214,6 @@
                   ;;
               esac
               awk -v h="$hrs" -v m="$mins" -v s="''${t%s}" 'BEGIN { printf "%.3f", h * 3600 + m * 60 + s }'
-            }
-
-            # Age of an OPEN boot transaction: seconds past graphical.target
-            # activation (falls back to uptime when graphical has not been
-            # reached yet). systemctl show is in-repo-precedented under
-            # harden{} (btrfs-verify-snapshots probes unit state the same
-            # way); a missing/unparseable property degrades to uptime.
-            open_age_secs() {
-              local up ge
-              up="$(awk '{ printf "%.0f", $1 }' /proc/uptime)"
-              ge="$(systemctl show graphical.target -p ActiveEnterTimestampMonotonic 2>/dev/null | grep -oE '[0-9]+' || true)"
-              if [ -n "$ge" ] && [ "$ge" -gt 0 ] 2>/dev/null; then
-                awk -v n="$up" -v g="$ge" 'BEGIN { d = n - g / 1000000; if (d < 0) d = n; printf "%.0f", d }'
-              else
-                printf '%s\n' "$up"
-              fi
             }
 
             emit_phase() {
