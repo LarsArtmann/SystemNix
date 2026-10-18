@@ -8,10 +8,11 @@
 # monitoring row); no series ever lands, the queries are dormant by design.
 *_googleapis_*
 
-# QUEUED PHANTOMS — [ready] row "4 REAL pre-existing phantoms" in
-# docs/todo/monitoring.md (2026-10-18 E4.5 harvest): fix or delete each query,
-# then DELETE the matching line here.
+# QUEUED PHANTOM — [ready] row in docs/todo/monitoring.md (2026-10-18 E4.5
+# harvest, CORRECTED 2026-10-19: of the "4 phantoms" only this one is real —
+# the io_* pair was a P(a|b) regex-matcher split (the FULL
+# memory_emergency_guard_* names are LIVE Gauges, 713 series) and
+# reallocated_events was a label VALUE inside attr=~"..."; the repo-native
+# scanner expands/strips those classes, so they no longer surface): fix or
+# delete the query, then DELETE this line.
 discordsync_immich_lookup_total
-io_disk_busy_percent_max
-io_psi_some_avg60_percent
-reallocated_events

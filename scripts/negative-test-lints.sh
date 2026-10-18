@@ -617,5 +617,35 @@ eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:platforms/nixos/system/boot-mirror.nix:s|      (ioTier.background)|      # tier stripped for negative test|'
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
+
+# ── metricnames: LIVE store-truth sweep (opt-in ONLY — CI has no store access) ──
+# The nightly workflow sets no CASES, so this group never runs in CI: it needs
+# the LAN ClickHouse store. Run it after any otel-collector lock bump, exporter
+# TYPE change, or dashboard/alert query edit:
+#   CASES=metricnames bash scripts/negative-test-lints.sh
+# Leg 1 (pass): the real sweep green — every zero-series name in the tree sits
+#   on the store-justified expected-absent allowlist.
+# Leg 2 (fail): SWEEP_INJECT pushes a guaranteed-absent name through the SAME
+#   extraction->CH-probe->classification path; the sweep must exit 1 naming it
+#   (never trust an exit-0 gate you did not watch fail — probe-type edition).
+if [[ ",${CASES:-}," == *,metricnames,* ]]; then
+  if out=$(bash "$REPO_ROOT/scripts/metric-sweep.sh" 2>&1); then
+    say "PASS [metricnames]: live store sweep green ($(grep -o '[0-9]* live' <<<"$out" | head -1))"
+    passed=$((passed + 1))
+  else
+    say "FAIL [metricnames]: live store sweep found unallowlisted phantoms:"
+    grep 'PHANTOM' <<<"$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  fi
+  out=$(SWEEP_INJECT=sweep_selftest_phantom_probe bash "$REPO_ROOT/scripts/metric-sweep.sh" 2>&1) && status=1 || status=$?
+  if [ "$status" -eq 1 ] && grep -q 'sweep_selftest_phantom_probe' <<<"$out"; then
+    say "PASS [metricnames]: injected phantom FAILs the sweep (fail path proven end-to-end)"
+    passed=$((passed + 1))
+  else
+    say "FAIL [metricnames]: injected phantom did not trip the sweep (exit=$status) — gate cannot catch phantoms"
+    failed=$((failed + 1))
+  fi
+  unset status
+fi
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]
