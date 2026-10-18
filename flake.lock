@@ -6918,11 +6918,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792191219,
-        "narHash": "sha256-Y9/8aoWw4j7+k4jqAJ00FHPkoWMd82MoF2H1y0TQjrc=",
+        "lastModified": 1792284869,
+        "narHash": "sha256-Eqb6bzsl7eiZ7AKSa2yIOuPSBoxFZ70qaaXc+1etTjo=",
         "owner": "LarsArtmann",
         "repo": "nsfw-classifier",
-        "rev": "2a88f3e6788258449447b1f993c477a0f30a1a48",
+        "rev": "405840bcaf03bcf4defe09311ba0d3a78395694f",
         "type": "github"
       },
       "original": {
