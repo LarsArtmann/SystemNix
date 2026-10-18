@@ -111,10 +111,17 @@ extract_names() {
     {
       line = $0
       while (match(line, /__name__=~?"([^"]*)"/, m) > 0) {
+        rs = RSTART; rl = RLENGTH  # harvest->tokenize calls match() and CLOBBERS
+                                   # the globals — snapshot before the call (the
+                                   # 2026-10-19 infinite-loop bug: line never shrank)
         harvest(m[1])
-        line = substr(line, 1, RSTART - 1) substr(line, RSTART + RLENGTH)
+        line = substr(line, 1, rs - 1) substr(line, rs + rl)
       }
       gsub(/(by|without|on|ignoring|group_left|group_right)[ \t]*\([^()]*\)/, " ", line)
+      gsub(/\{[^}]*\}/, " ", line)  # remaining selectors are pure label matchers
+                                    # ({service_name="x"} — bare label NAMES are
+                                    # not metric tokens; __name__ refs were
+                                    # harvested above)
       gsub(/"[^"]*"/, " ", line)
       tokenize(line)
     }
@@ -135,9 +142,12 @@ is_expected_absent() {
 }
 
 main() {
-  local names_file live missing name
+  # NOTE: names_file/live_file stay SCRIPT-scoped (no `local`) — the EXIT trap
+  # fires after main returns and `set -u` would trip on a vanished local.
+  local live missing name
   names_file=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/metric-sweep.names.XXXXXX")
-  trap 'rm -f "$names_file"' EXIT
+  live_file=""
+  trap 'rm -f "$names_file" ${live_file:++"$live_file"}' EXIT
 
   { extract_dashboard_queries; extract_alert_queries; } | extract_names | sort -u >"$names_file"
 
@@ -170,7 +180,6 @@ main() {
     exit 2
   }
 
-  local live_file
   live_file=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/metric-sweep.live.XXXXXX")
   printf '%s\n' "$live" | sort -u >"$live_file"
 
