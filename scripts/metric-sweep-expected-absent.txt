@@ -1,0 +1,17 @@
+# metric-sweep expected-absent allowlist — entries are exact names or *-globs.
+# Every line needs a store-truth justification in a comment above it.
+# Fixing a queued phantom = DELETE its line (the sweep then guards the fix).
+# Adding a line to make a red sweep green WITHOUT evidence is the 2026-10-17
+# regression class — probe first (scripts/metric-exists.sh), allowlist second.
+
+# GCP receiver families — collectors run containment-disabled (FEATURES.md
+# monitoring row); no series ever lands, the queries are dormant by design.
+*_googleapis_*
+
+# QUEUED PHANTOMS — [ready] row "4 REAL pre-existing phantoms" in
+# docs/todo/monitoring.md (2026-10-18 E4.5 harvest): fix or delete each query,
+# then DELETE the matching line here.
+discordsync_immich_lookup_total
+io_disk_busy_percent_max
+io_psi_some_avg60_percent
+reallocated_events
