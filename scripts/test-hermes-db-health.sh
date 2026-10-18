@@ -56,7 +56,7 @@ render() {
   sed -E -e "s|^NEW=.*|NEW=\"$STATE\"|" \
     -e "s|sqlite3 \"|$scratch/sqlite3-stub \"|g" \
     -e "s|/nix/store/[a-z0-9]+-systemd-[^\"]*/bin/systemctl|$scratch/systemctl-stub|g" \
-    -e "s|\$\{pkgs\.systemd\}/bin/systemctl|$scratch/systemctl-stub|g" \
+    -e "s|\\\$\{pkgs\.systemd\}/bin/systemctl|$scratch/systemctl-stub|g" \
     "$HEALTH_BIN"
 }
 RENDERED="$scratch/db-health.sh"

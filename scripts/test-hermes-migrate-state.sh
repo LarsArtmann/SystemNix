@@ -143,6 +143,7 @@ assert_no_marker "leg7"
 OLDSTATE="$scratch/oldstate"
 mkdir -p "$OLDSTATE"
 echo payload >"$OLDSTATE/legacy.txt"
+head -c 4096 /dev/zero >"$OLDSTATE/state.db"
 sed -e "s|for OLD in .*; do|for OLD in \"$OLDSTATE\"; do|" \
   -e "s|\${cfg.user}|hermes|g" -e "s|\${cfg.group}|hermes|g" \
   "$RENDERED" >"$scratch/migrate-old.sh"
@@ -151,6 +152,7 @@ bash "$scratch/migrate-old.sh" >"$scratch/out8" 2>&1
 grep -q "migration complete" "$scratch/out8" || fail "leg8: migration did not complete, got: $(cat "$scratch/out8")"
 [ -e "$STATE/legacy.txt" ] || fail "leg8: rsync did not land the legacy file"
 [ -e "$STATE/state.db" ] || fail "leg8: legacy db not migrated"
+[ "$(stat -c%s "$STATE/state.db")" = "4096" ] || fail "leg8: migrated db size mismatch"
 
 # --- eval-side pin: the OLD list interpolation must remain a single `for
 # OLD in` line (leg 8's sed depends on it) and the marker/budget seams
