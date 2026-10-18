@@ -335,7 +335,11 @@ _: {
           miniflux-oidc-setup = {
             description = "Link miniflux user to Pocket ID (openid_connect_id)";
             wantedBy = [ "multi-user.target" ];
+            # Post-gate explicit (the 2026-10-18 family audit's final
+            # critical-chain hop was this unit; transitive After=miniflux
+            # already lands post-gate — kept self-evident, mkOidcGate doctrine).
             after = [
+              "multi-user.target"
               "miniflux.service"
               "pocket-id.service"
             ];
