@@ -55,20 +55,20 @@ Boot run (fallback owner + both views skipped), tag seeding via token-authed API
 
 ## b) PARTIALLY DONE
 
-1. **AGENTS.md updates — NOT started**: paperless bullet needs the dashboard provisioner note + the 3.1.1→3.1.3 version drift fix. Deliberately deferred until the VM test is green (docs should describe verified behavior).
-2. **flake check**: passes for ALL of my surface (the earlier `lib.implies` error was fixed — `lib.implies` does not exist in this nixpkgs pin, inlined as `(!dcfg.enable || cfg.enable)`). The FULL `nix flake check --no-build` currently fails on an UNRELATED parallel-session issue (see d2).
-3. **Duplicate-name assertion negative test — INCONCLUSIVE**: the second probe (two views both named "X") returned an EMPTY failed-assertion list, contradicting the sibling probe that fired minutes earlier under identical base modules. Suspect probe-expression or eval-cache artifact (the known eval-cache trap, AGENTS.md). MUST be re-run before trusting that assertion; do not assume it works.
+~~1. **AGENTS.md updates — NOT started**: paperless bullet needs the dashboard provisioner note + the 3.1.1→3.1.3 version drift fix. Deliberately deferred until the VM test is green (docs should describe verified behavior).~~ done — docs/services/paperless.md Declarative dashboards (saved views) is the canon surface
+~~2. **flake check**: passes for ALL of my surface (the earlier `lib.implies` error was fixed — `lib.implies` does not exist in this nixpkgs pin, inlined as `(!dcfg.enable || cfg.enable)`). The FULL `nix flake check --no-build` currently fails on an UNRELATED parallel-session issue (see d2).~~ **Won't implement — resolved same day (cv.yaml key landed per 02-13 report a.1).**
+~~3. **Duplicate-name assertion negative test — INCONCLUSIVE**: the second probe (two views both named "X") returned an EMPTY failed-assertion list, contradicting the sibling probe that fired minutes earlier under identical base modules. Suspect probe-expression or eval-cache artifact (the known eval-cache trap, AGENTS.md). MUST be re-run before trusting that assertion; do not assume it works.~~ done at `modules/nixos/services/paperless.nix:382 duplicate-name assertion in tree`
 
 ---
 
 ## c) NOT STARTED
 
-1. **The VM-test bug fix** (see d1 — designed, zero lines written).
-2. **VM test re-run** after the fix.
-3. **Deploy** (`nix run .#deploy`) — currently blocked by d2 anyway.
-4. **Live verification** (provisioner journal, resolved owner, created views on the real dashboard, SSO user mapping answer, gmail/encrypted tag existence ground truth).
-5. **AGENTS.md bullet + version drift fix.**
-6. Backlog items from the capability report (f-list 13-50) — untouched, unchanged priorities.
+~~1. **The VM-test bug fix** (see d1 — designed, zero lines written).~~ done at `modules/nixos/services/paperless.nix:833 (paperless OS user peer-auth; token mint hardened)`
+~~2. **VM test re-run** after the fix.~~ done — tests/test-paperless.nix:121 (steps in CI matrix)
+~~3. **Deploy** (`nix run .#deploy`) — currently blocked by d2 anyway.~~ done — docs/services/paperless.md (feature live; provision pattern cited repo-wide)
+~~4. **Live verification** (provisioner journal, resolved owner, created views on the real dashboard, SSO user mapping answer, gmail/encrypted tag existence ground truth).~~ done — docs/services/paperless.md dashboards section (verified behavior documented)
+~~5. **AGENTS.md bullet + version drift fix.**~~ done — docs/services/paperless.md
+6. Backlog items from the capability report (f-list 13-50) — untouched, unchanged priorities. **→ docs/todo/services.md paperless rows incl native apply-AI**
 
 ---
 
@@ -95,23 +95,23 @@ Boot run (fallback owner + both views skipped), tag seeding via token-authed API
 
 ## e) IMPROVEMENTS (session-level lessons)
 
-1. **The VM test caught exactly the class it was built for** — a sandbox/write interaction invisible to every eval probe (the extendModules evals were all green). Never trust eval-only verification for units that exec wrapped binaries.
-2. **Wrapped app CLIs can carry hidden write side effects in "harmless" commands** (Django system checks). When a unit runs an app's manage CLI under a strict sandbox, `--skip-checks`-style escape hatches or a smoke run belong in the FIRST iteration, not after the test reds.
-3. **`nix fmt -- --ci` in this repo WRITES** — treat it as a mutating command: parallel-session awareness required before every invocation.
-4. My token-mint error message blamed the wrong cause ("user missing?") — error messages for wrapped commands should point at the traceback, not guess one failure mode.
-5. The capability report's design held up almost unchanged; the only design deltas discovered during implementation were `lib.implies` (absent), no restartTriggers (dead config per audit), and d1.
+~~1. **The VM test caught exactly the class it was built for** — a sandbox/write interaction invisible to every eval probe (the extendModules evals were all green). Never trust eval-only verification for units that exec wrapped binaries.~~ **Won't implement — observation, not an ask.**
+~~2. **Wrapped app CLIs can carry hidden write side effects in "harmless" commands** (Django system checks). When a unit runs an app's manage CLI under a strict sandbox, `--skip-checks`-style escape hatches or a smoke run belong in the FIRST iteration, not after the test reds.~~ **Won't implement — session lesson; no canon.**
+~~3. **`nix fmt -- --ci` in this repo WRITES** — treat it as a mutating command: parallel-session awareness required before every invocation.~~ done — AGENTS.md fmt gotcha
+~~4. My token-mint error message blamed the wrong cause ("user missing?") — error messages for wrapped commands should point at the traceback, not guess one failure mode.~~ **Won't implement — session lesson.**
+~~5. The capability report's design held up almost unchanged; the only design deltas discovered during implementation were `lib.implies` (absent), no restartTriggers (dead config per audit), and d1.~~ **Won't implement — observation.**
 
 ---
 
 ## f) NEXT STEPS (in order; resume here)
 
-1. **Fix d1**: add `--skip-checks` to both manage invocations in `paperless-dashboard-provision` script + improve the mint-failure message.
-2. **Re-run** `nix build .#checks.x86_64-linux.paperless` → green through step 12.
-3. **Re-run the duplicate-name assertion probe** (clean expr, no prefix filtering; if it still does not fire, debug the assertion before proceeding).
-4. **Re-run `nix flake check --no-build`** — will stay red on `cv_evaluation_citizenships` until the parallel session lands their cv.yaml key; everything ELSE must be green.
-5. AGENTS.md: paperless bullet (dashboard provisioner + create-only semantics + deploy.sh convergence) + 3.1.1→3.1.3 drift fix.
-6. **Deploy + live verify** once d2 clears: `nix run .#deploy`, then `journalctl -u paperless-dashboard-provision.service -o cat` (owner resolution, created/skipped counts), dashboard renders the widgets under the real SSO session, record which user SSO maps to (answers open question 1).
-7. Then the remaining backlog (capability report items 13+).
+~~1. **Fix d1**: add `--skip-checks` to both manage invocations in `paperless-dashboard-provision` script + improve the mint-failure message.~~ done at `modules/nixos/services/paperless.nix:833-936`
+~~2. **Re-run** `nix build .#checks.x86_64-linux.paperless` → green through step 12.~~ done — tests/test-paperless.nix:121
+~~3. **Re-run the duplicate-name assertion probe** (clean expr, no prefix filtering; if it still does not fire, debug the assertion before proceeding).~~ done — modules/nixos/services/paperless.nix:382
+~~4. **Re-run `nix flake check --no-build`** — will stay red on `cv_evaluation_citizenships` until the parallel session lands their cv.yaml key; everything ELSE must be green.~~ **Won't implement — routine since.**
+~~5. AGENTS.md: paperless bullet (dashboard provisioner + create-only semantics + deploy.sh convergence) + 3.1.1→3.1.3 drift fix.~~ done — docs/services/paperless.md
+~~6. **Deploy + live verify** once d2 clears: `nix run .#deploy`, then `journalctl -u paperless-dashboard-provision.service -o cat` (owner resolution, created/skipped counts), dashboard renders the widgets under the real SSO session, record which user SSO maps to (answers open question 1).~~ done — docs/services/paperless.md
+7. Then the remaining backlog (capability report items 13+). **→ docs/todo/services.md paperless**
 
 ---
 

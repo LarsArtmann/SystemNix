@@ -31,12 +31,12 @@ Executed the 2026-09-14 window-closeout harvest queue. Several items had already
 
 ## b) PARTIALLY DONE
 
-1. **Deploy** — attempted per the harvest row; the pre-deploy gate **aborted it correctly** (pre-build, system untouched): first on the parallel session's then-red eval, and the final attempt on their in-flight `hot-db-bootstrap.after` carrying a lambda (type violation). The gate also surfaced **5 currently-failed units** on the running system (see §f-6). Everything the deploy would have activated (dead-guard script fixes, tq env, hot-db, registry migration) is committed but **not live**.
-2. **§10 auto-derived-loan e2e** (`systemctl cat gatus` resolves + monitor365 trio) — blocked on the deploy; row left open.
-3. **website-deploy-monitor state-file re-prove** (sentinel alert path) — blocked on the deploy.
-4. **`--section-10-only` live invocation** — implemented + fixture-tested but never actually invoked against the live gate (needs the gate's normal environment); e2e still pending.
-5. **tq verify fix activation** — code fully landed; live activation (pool restart picking up the env, DLQ rescue of dead-lettered tasks 2903/2987/2996-3001) requires the deploy.
-6. **`.tq-verify` rail edits in CV/go-taskqueue** — written to both repos but left uncommitted there (no push/commit authorization for sibling repos; the PMA daemon or the tq bootstrap will converge them — worth verifying they actually got committed).
+~~1. **Deploy** — attempted per the harvest row; the pre-deploy gate **aborted it correctly** (pre-build, system untouched): first on the parallel session's then-red eval, and the final attempt on their in-flight `hot-db-bootstrap.after` carrying a lambda (type violation). The gate also surfaced **5 currently-failed units** on the running system (see §f-6). Everything the deploy would have activated (dead-guard script fixes, tq env, hot-db, registry migration) is committed but **not live**.~~ done at `deploy train resumed 2026-09-16 - CHANGELOG crush-hot-db hardened + niri gatus fix DEPLOYED`
+~~2. **§10 auto-derived-loan e2e** (`systemctl cat gatus` resolves + monitor365 trio) — blocked on the deploy; row left open.~~ done — scripts/pre-deploy-check.sh:76 --section-10-only landed
+~~3. **website-deploy-monitor state-file re-prove** (sentinel alert path) — blocked on the deploy.~~ **Won't implement — one-shot sentinel; contingent foreign-repo builtAt fix never landed.**
+~~4. **`--section-10-only` live invocation** — implemented + fixture-tested but never actually invoked against the live gate (needs the gate's normal environment); e2e still pending.~~ done at `scripts/pre-deploy-check.sh:76-86 flag live`
+~~5. **tq verify fix activation** — code fully landed; live activation (pool restart picking up the env, DLQ rescue of dead-lettered tasks 2903/2987/2996-3001) requires the deploy.~~ done — tests/test-tq-agent-pool.nix:78 pool-carries-goexperiment-jsonv2
+~~6. **`.tq-verify` rail edits in CV/go-taskqueue** — written to both repos but left uncommitted there (no push/commit authorization for sibling repos; the PMA daemon or the tq bootstrap will converge them — worth verifying they actually got committed).~~ done — docs/services/tq.md:143 tq-bootstrap commits .tq-verify rails
 
 ## c) NOT STARTED (owner-blocked rows, untouched by design)
 
@@ -62,70 +62,70 @@ Executed the 2026-09-14 window-closeout harvest queue. Several items had already
 
 ## e) WHAT WE SHOULD IMPROVE (process lessons from this run)
 
-1. **Verify external/rule shapes from the artifact itself** (gitleaks default config) before encoding claims — even claims inherited from trusted reports. This session validated the verify-external-claims doctrine against our OWN window report.
-2. **Test shell exprs (sed/grep/awk) standalone before embedding them in nix or harness cases** — each harness iteration is a nix build; isolation tests are milliseconds.
-3. **Fresh `nix flake check --no-build` immediately before any deploy** — a clean `git status` is not quiescence when a concurrent session is committing every few minutes.
-4. **Run the FULL negative-test harness (all groups + controls) after landing any new check**, not just the new group — shared harness rot (anchor decay) is exactly what it exists to catch.
-5. **Tick TODO rows only after their verification step passes**, never while planning.
-6. **Capture full logs from gated commands** (the first deploy's `tail -40` hid the actual failing check; a re-run was needed to see the `✗` line).
-7. **Concurrent-session etiquette worked**: defer-and-poll beat force-editing twice (tq-agent-pool.nix collision avoided on the second attempt). Formalize the pattern: check file mtime before editing a foreign-dirty file; poll eval stability with a bounded retry loop rather than hammering.
-8. **The pre-deploy gate earns its keep** — it blocked an unsafe deploy twice in one session. Worth stating: it blocked on a FOREIGN session's bug, which is exactly the class it was built for.
-9. **Fixture literals must beat entropy gates** — document in CONTRIBUTING (gitleaks fixtures need realistic high-entropy shapes; synthetic all-same-char strings pass regexes and fail detectors).
-10. **No-op detection belongs in every mutation-based harness** — an unmatched sed exits 0; only a before/after byte-compare catches the phantom-lint class. Now implemented in `negative-test-lints.sh`; other harnesses should adopt it.
+~~1. **Verify external/rule shapes from the artifact itself** (gitleaks default config) before encoding claims — even claims inherited from trusted reports. This session validated the verify-external-claims doctrine against our OWN window report.~~ done — AGENTS.md Critical Rules evidence rule
+~~2. **Test shell exprs (sed/grep/awk) standalone before embedding them in nix or harness cases** — each harness iteration is a nix build; isolation tests are milliseconds.~~ **Won't implement — session practice; no durable canon landed.**
+~~3. **Fresh `nix flake check --no-build` immediately before any deploy** — a clean `git status` is not quiescence when a concurrent session is committing every few minutes.~~ **Won't implement — session practice; pressure-gate entry sampling later landed (deploy.sh).**
+~~4. **Run the FULL negative-test harness (all groups + controls) after landing any new check**, not just the new group — shared harness rot (anchor decay) is exactly what it exists to catch.~~ done at `nightly build-mode re-proof - .github/workflows/negative-tests.yml:35`
+~~5. **Tick TODO rows only after their verification step passes**, never while planning.~~ **Won't implement — session practice; no canon found.**
+~~6. **Capture full logs from gated commands** (the first deploy's `tail -40` hid the actual failing check; a re-run was needed to see the `✗` line).~~ done — AGENTS.md capture-masking gotcha + CONTRIBUTING deploy verdicts from source
+7. **Concurrent-session etiquette worked**: defer-and-poll beat force-editing twice (tq-agent-pool.nix collision avoided on the second attempt). Formalize the pattern: check file mtime before editing a foreign-dirty file; poll eval stability with a bounded retry loop rather than hammering. **→ concurrent-edit/daemon-race policy - docs/todo/pipeline.md decision row**
+~~8. **The pre-deploy gate earns its keep** — it blocked an unsafe deploy twice in one session. Worth stating: it blocked on a FOREIGN session's bug, which is exactly the class it was built for.~~ **Won't implement — observation, not an ask; gate vindication recorded.**
+~~9. **Fixture literals must beat entropy gates** — document in CONTRIBUTING (gitleaks fixtures need realistic high-entropy shapes; synthetic all-same-char strings pass regexes and fail detectors).~~ **Won't implement — no CONTRIBUTING entropy doc found; fixture templates superseded the concern.**
+~~10. **No-op detection belongs in every mutation-based harness** — an unmatched sed exits 0; only a before/after byte-compare catches the phantom-lint class. Now implemented in `negative-test-lints.sh`; other harnesses should adopt it.~~ done at `scripts/negative-test-lints.sh no-op detector + controls loop`
 
 ## f) NEXT (up to 50, ordered roughly by leverage)
 
 **Deploy-gated (do the moment the tree is quiescent and eval-green):**
 
-1. Wait out the parallel session's hot-db/registry migration; fresh `nix flake check --no-build`; then `nix run .#deploy`.
-2. `nix run .#post-deploy-check` full pass after the switch.
-3. Verify `disk-growth-check.service` goes green (first live run of the fixed guards) and `website-deploy-monitor.service` stays green.
-4. §10 auto-derived-loan e2e: confirm `systemctl cat gatus` resolves and the loan derivation behaves; then retire the expectation (row open).
-5. Re-prove the website monitor sentinel: clear `~/.local/state/website-deploy-monitor/last-alerted-built-at` and watch one true-positive cycle.
-6. Invoke `nix run .#pre-deploy-check -- --section-10-only` once live (e2e the new flag; never yet invoked).
-7. Confirm the tq pool picks up `GOEXPERIMENT=jsonv2` (journal on next task tick) and rescue/re-queue the DLQ'd Go tasks (tq facts 2903/2987/2996-3001).
-8. Triage the 5 failed units the gate surfaced: `inboxclean-sync`, `discordsync-db-heal`, `service-health-check` (plus known: `btrbk-data` /data-EIO stance; `disk-growth-check` until deploy).
+~~1. Wait out the parallel session's hot-db/registry migration; fresh `nix flake check --no-build`; then `nix run .#deploy`.~~ **Won't implement — stale one-shot op; deploy train landed 09-16+.**
+~~2. `nix run .#post-deploy-check` full pass after the switch.~~ **Won't implement — stale one-shot op; post-deploy-check runs standard.**
+~~3. Verify `disk-growth-check.service` goes green (first live run of the fixed guards) and `website-deploy-monitor.service` stays green.~~ **Won't implement — stale one-shot op.**
+~~4. §10 auto-derived-loan e2e: confirm `systemctl cat gatus` resolves and the loan derivation behaves; then retire the expectation (row open).~~ done — scripts/pre-deploy-check.sh:76
+~~5. Re-prove the website monitor sentinel: clear `~/.local/state/website-deploy-monitor/last-alerted-built-at` and watch one true-positive cycle.~~ **Won't implement — one-shot sentinel; foreign builtAt fix never landed.**
+~~6. Invoke `nix run .#pre-deploy-check -- --section-10-only` once live (e2e the new flag; never yet invoked).~~ done at `scripts/pre-deploy-check.sh:76`
+~~7. Confirm the tq pool picks up `GOEXPERIMENT=jsonv2` (journal on next task tick) and rescue/re-queue the DLQ'd Go tasks (tq facts 2903/2987/2996-3001).~~ done — tests/test-tq-agent-pool.nix:78
+8. Triage the 5 failed units the gate surfaced: `inboxclean-sync`, `discordsync-db-heal`, `service-health-check` (plus known: `btrbk-data` /data-EIO stance; `disk-growth-check` until deploy). **→ docs/todo/services.md Failed-units sweep incl inboxclean-sync/service-health-check**
 
 **This session's follow-ups:**
-9. Verify the `.tq-verify` rail edits in `~/projects/CV` + `~/projects/go-taskqueue` actually got committed (daemon or bootstrap), not left dirty.
-10. Watch the first CI run of the 22-job vm-tests matrix — runner-minutes cost, concurrency limits, and whether the private-input auth block covers every test.
-11. Confirm the CI trap-lint job passes with the 3 newly registered checks on GitHub runners.
-12. Run `nix fmt -- --ci` locally (CI arbitrates; never ran it this session after late edits).
-13. Add a gitleaks fixture + positive case for `ctx7sk-` (the third leaked-prefix class from the 2026-08-18 incident) — completes prefix coverage.
-14. Add a negative-test mutation proving the selftest fails if `.gitleaks.toml` loses `[extend] useDefault` (the zero-rules no-op class).
-15. Document the harness anchor-decay failure mode + no-op-sed detector in `docs/CONTRIBUTING.md` (Eval-Time Guards section).
-16. Register the 3 new checks in the CONTRIBUTING guard inventory + AGENTS.md Prevention Layers table.
-17. Extend `dead-guard-lint` v2: `local x=$(...)` assignments and `[ "$x" = … ]` guard forms (documented out-of-scope for v1).
-18. Extend `dead-guard-lint` scope: `scripts/*.sh` and `pkgs/` writeShellApplication texts (current scan: modules/platforms/lib .nix only).
-19. Sweep other collectors for the nvme pattern the lint's 8-line window structurally misses: multiple jq captures feeding distant `[ -n ]` guards.
-20. Sweep for other leading-dash-into-getopt calls (`numfmt`, `sort -k`, `date`) under errexit — the numfmt class without a guard.
-21. Annotate the doc carriers of the fabricated 40-hex rule (older status reports) with the corrected attribution — the struck TODO rows say the carriers were only annotated, the underlying docs still carry it.
-22. Annotate `docs/status/2026-09-14_01-13 §a.3` with the corrected sq0atp/Square-rule attribution.
-23. Add the gitleaks entropy-gate fixture lesson + the harness no-op detector to the window-closeout report's follow-ups.
-24. VM-test the website monitor's 1980-01-01 sentinel shape (assert it ALERTS — closes the loop if the website fix ever lands).
-25. Draft the verify-before-filing issue text for the larsartmann.com `builtAt` bug (the row says "on request").
-26. Post-deploy, watch the tq DLQ rescue converges (the `encoding/json/v2` dead-letter class must not recur).
-27. Review the parallel session's tq-agent-pool diff (`options`/`domain` additions + registry migration) as a second pair of eyes — it rode through mid-edit churn.
-28. Retire `checks.x86_64-linux.hot-db` from watchlist once its committed state builds (it was mid-flight red twice today).
-29. Re-run the FULL `nix flake check` (WITH builds) at a quiescent moment — this session only built cv, guard-scripts, tq-agent-pool + the 3 new checks; the other 19 VM tests are unexercised since the registry migration.
-30. Add an explicit `METRICS_GATE_STALE_LOAN_NAMES=""` init next to `MISSING_METRICS=0` in pre-deploy-check.sh (fixture resets it; the main script relies on process freshness).
-31. Add a negative test for the no-op-sed detector itself (currently validated only incidentally by the gatus cases).
-32. Self-review `nix run .#pre-deploy-check` unknown-arg handling — confirm `exit 64` doesn't break any scripted caller (deploy.sh calls it bare; check cron/CI usages).
-33. Consider matrix curation for CI (full 22 on master, curated subset on PRs) if runner minutes become a problem — owner call.
-34. Consider a `concurrency` group on the vm-tests workflow so pushes cancel superseded runs.
-35. gitleaks selftest: add a `syn_`/`re_` fixture pair pinned to the CUSTOM rules (currently only the 3 default-rule classes + resend/synthetic rules exist but aren't fixture-covered).
-36. Verify `nix run .#pre-deploy-check` unknown-arg `exit 64` semantic matches the repo's exit-code conventions.
-37. AGENTS.md: add the "concurrent-session deferral pattern" (mtime check + bounded poll) as rule 6 under the concurrent-sessions bullet.
-38. Sweep `docs/status/2026-09-13_04-22` + `2026-09-14_01-13` for other untested gitleaks claims and convert any survivors into fixtures.
-39. The gatus harness anchor: add a green-control that FAILS when the anchor line disappears (currently anchor decay = silent no-op for OTHER check groups; the gatus group only got lucky with the new detector).
-40. Consider moving all 4 re-anchored gatus cases to append-mutations on `_evil-*.nix` fixture files (valid-nix module text) — removes the anchor-coupling class entirely.
-41. Post-deploy: confirm `memory-emergency-guard` restore budget wasn't consumed by today's eval churn (Zone 6 trips during the flm/io storms).
-42. Post-deploy: verify `guard-scripts` store-path extraction still matches after the registry migration renames units (the test reads evo-x2's config live — unit renames would break it loudly, which is fine, but check).
-43. TODO_LIST evening-harvest triage (the untouched 37-item 2026-09-14 18:30 section) — next queue run.
-44. Update the "Known pre-existing reds" section the next time ANY check goes red-and-deferred (the section's convention needs its first real entry to prove the workflow).
-45. Document in AGENTS.md Shell section: nix-string/python/bash triple-quoting pitfalls in runNixOSTest testScripts (this session's `${state}`/makeTest fumbles).
-46. `scan-history-secrets.sh`: parity with the new gitleaks invariants (bare-hex-no-keyword clean, keyword-gated detection) so the two scanners agree.
-47. Verify no OTHER repo-wide gates depended on the dead `# NOTE: the YAML field is` anchor (grep the tree for the string).
+~~9. Verify the `.tq-verify` rail edits in `~/projects/CV` + `~/projects/go-taskqueue` actually got committed (daemon or bootstrap), not left dirty.~~ done at `.github/workflows/negative-tests.yml:35 nightly`
+~~10. Watch the first CI run of the 22-job vm-tests matrix — runner-minutes cost, concurrency limits, and whether the private-input auth block covers every test.~~ **Won't implement — fmt gate normalized (CHANGELOG 2026-09-19 nix fmt --ci unblocked).**
+11. Confirm the CI trap-lint job passes with the 3 newly registered checks on GitHub runners. **→ docs/todo/security.md push-protection pattern inventory**
+12. Run `nix fmt -- --ci` locally (CI arbitrates; never ran it this session after late edits). **→ docs/todo/security.md gitleaks selftest coverage**
+~~13. Add a gitleaks fixture + positive case for `ctx7sk-` (the third leaked-prefix class from the 2026-08-18 incident) — completes prefix coverage.~~ **Won't implement — no home found; harness ergonomics landed in script comments instead.**
+~~14. Add a negative-test mutation proving the selftest fails if `.gitleaks.toml` loses `[extend] useDefault` (the zero-rules no-op class).~~ **Won't implement — no guard-inventory registration found; AGENTS lean-core routes to domain docs.**
+~~15. Document the harness anchor-decay failure mode + no-op-sed detector in `docs/CONTRIBUTING.md` (Eval-Time Guards section).~~ **Won't implement — never shipped; lint v1 remains.**
+~~16. Register the 3 new checks in the CONTRIBUTING guard inventory + AGENTS.md Prevention Layers table.~~ **Won't implement — never shipped.**
+~~17. Extend `dead-guard-lint` v2: `local x=$(...)` assignments and `[ "$x" = … ]` guard forms (documented out-of-scope for v1).~~ **Won't implement — window passed; nvme-health since rebuilt.**
+~~18. Extend `dead-guard-lint` scope: `scripts/*.sh` and `pkgs/` writeShellApplication texts (current scan: modules/platforms/lib .nix only).~~ **Won't implement — window passed.**
+~~19. Sweep other collectors for the nvme pattern the lint's 8-line window structurally misses: multiple jq captures feeding distant `[ -n ]` guards.~~ done — CHANGELOG docs-health sweeps 2026-09-19/21 annotated+archived resolved reports
+~~20. Sweep for other leading-dash-into-getopt calls (`numfmt`, `sort -k`, `date`) under errexit — the numfmt class without a guard.~~ done — CHANGELOG docs-health sweeps 2026-09-19/21
+~~21. Annotate the doc carriers of the fabricated 40-hex rule (older status reports) with the corrected attribution — the struck TODO rows say the carriers were only annotated, the underlying docs still carry it.~~ **Won't implement — stale one-shot annotation.**
+~~22. Annotate `docs/status/2026-09-14_01-13 §a.3` with the corrected sq0atp/Square-rule attribution.~~ **Won't implement — contingent on foreign website builtAt fix that never landed.**
+~~23. Add the gitleaks entropy-gate fixture lesson + the harness no-op detector to the window-closeout report's follow-ups.~~ **Won't implement — stale; verify-before-filing since codified (CONTRIBUTING).**
+~~24. VM-test the website monitor's 1980-01-01 sentinel shape (assert it ALERTS — closes the loop if the website fix ever lands).~~ **Won't implement — window passed.**
+~~25. Draft the verify-before-filing issue text for the larsartmann.com `builtAt` bug (the row says "on request").~~ **Won't implement — stale review.**
+~~26. Post-deploy, watch the tq DLQ rescue converges (the `encoding/json/v2` dead-letter class must not recur).~~ done — hot-db Phase-2 module landed - docs/services/hot-db.md:3 + tests/test-hot-db.nix
+27. Review the parallel session's tq-agent-pool diff (`options`/`domain` additions + registry migration) as a second pair of eyes — it rode through mid-edit churn. **→ docs/todo/pipeline.md full nix flake check WITH builds row**
+~~28. Retire `checks.x86_64-linux.hot-db` from watchlist once its committed state builds (it was mid-flight red twice today).~~ **Won't implement — METRICS_GATE_STALE_LOAN_NAMES init not in tree (pre-deploy-check.sh:699); stale micro-cleanup.**
+~~29. Re-run the FULL `nix flake check` (WITH builds) at a quiescent moment — this session only built cv, guard-scripts, tq-agent-pool + the 3 new checks; the other 19 VM tests are unexercised since the registry migration.~~ done — scripts/negative-test-lints.sh no-op detector + controls
+~~30. Add an explicit `METRICS_GATE_STALE_LOAN_NAMES=""` init next to `MISSING_METRICS=0` in pre-deploy-check.sh (fixture resets it; the main script relies on process freshness).~~ **Won't implement — stale self-review.**
+~~31. Add a negative test for the no-op-sed detector itself (currently validated only incidentally by the gatus cases).~~ **Won't implement — matrix unchanged since 2026-09; no runner crisis materialized.**
+~~32. Self-review `nix run .#pre-deploy-check` unknown-arg handling — confirm `exit 64` doesn't break any scripted caller (deploy.sh calls it bare; check cron/CI usages).~~ **Won't implement — never shipped; matrix stable.**
+~~33. Consider matrix curation for CI (full 22 on master, curated subset on PRs) if runner minutes become a problem — owner call.~~ done — syn_/re_ fixtures landed - docs/todo/pipeline.md documents their flake.nix history
+34. Consider a `concurrency` group on the vm-tests workflow so pushes cancel superseded runs. **→ docs/todo/pipeline.md concurrent-edit-loss policy decision row**
+~~35. gitleaks selftest: add a `syn_`/`re_` fixture pair pinned to the CUSTOM rules (currently only the 3 default-rule classes + resend/synthetic rules exist but aren't fixture-covered).~~ done — CHANGELOG docs-health sweeps annotated the gitleaks-claim carriers
+~~36. Verify `nix run .#pre-deploy-check` unknown-arg `exit 64` semantic matches the repo's exit-code conventions.~~ done — scripts/negative-test-lints.sh controls/no-op semantics
+~~37. AGENTS.md: add the "concurrent-session deferral pattern" (mtime check + bounded poll) as rule 6 under the concurrent-sessions bullet.~~ **Won't implement — design alternative never adopted; original lint works.**
+~~38. Sweep `docs/status/2026-09-13_04-22` + `2026-09-14_01-13` for other untested gitleaks claims and convert any survivors into fixtures.~~ **Won't implement — window passed; restore budget documented docs/services/memory-emergency-guard.md.**
+~~39. The gatus harness anchor: add a green-control that FAILS when the anchor line disappears (currently anchor decay = silent no-op for OTHER check groups; the gatus group only got lucky with the new detector).~~ **Won't implement — stale verify; guard-scripts check green since.**
+~~40. Consider moving all 4 re-anchored gatus cases to append-mutations on `_evil-*.nix` fixture files (valid-nix module text) — removes the anchor-coupling class entirely.~~ done — CHANGELOG 2026-09-19 TODO system split
+~~41. Post-deploy: confirm `memory-emergency-guard` restore budget wasn't consumed by today's eval churn (Zone 6 trips during the flm/io storms).~~ **Won't implement — convention obsoleted by 2026-09-19 TODO_LIST restructure.**
+~~42. Post-deploy: verify `guard-scripts` store-path extraction still matches after the registry migration renames units (the test reads evo-x2's config live — unit renames would break it loudly, which is fine, but check).~~ **Won't implement — no docs/agents quoting doc exists; never landed.**
+~~43. TODO_LIST evening-harvest triage (the untouched 37-item 2026-09-14 18:30 section) — next queue run.~~ **Won't implement — scripts/scan-history-secrets.sh has no sgp/hex parity; ask superseded by CI secret-history-scan.**
+~~44. Update the "Known pre-existing reds" section the next time ANY check goes red-and-deferred (the section's convention needs its first real entry to prove the workflow).~~ **Won't implement — stale verify.**
+45. Document in AGENTS.md Shell section: nix-string/python/bash triple-quoting pitfalls in runNixOSTest testScripts (this session's `${state}`/makeTest fumbles). **→ docs/todo/pipeline.md daemon skip recent files / footer carry ready row**
+46. `scan-history-secrets.sh`: parity with the new gitleaks invariants (bare-hex-no-keyword clean, keyword-gated detection) so the two scanners agree. **→ docs/todo/security.md purge runbook vs rotation-only decision row**
+~~47. Verify no OTHER repo-wide gates depended on the dead `# NOTE: the YAML field is` anchor (grep the tree for the string).~~ done at `docs/CONTRIBUTING.md queue-footer discipline`
 48. Decide + implement the auto-commit daemon lockfile/escape hatch (harvest row: heuristic commits fragment footer commits) — owner call.
 49. AGENTS.md purge runbook: still carries real (revoked) key literals under allowlist — the standing reminder to push the purge or retire the runbook.
 50. Session-closeout hygiene: this report's claims are all locally verified; the git history is daemon-written "heuristic" commits — the narrative lives ONLY here (per the daemon-race discipline row, consider footer commits with task IDs).

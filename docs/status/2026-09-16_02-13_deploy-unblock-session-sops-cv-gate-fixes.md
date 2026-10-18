@@ -68,16 +68,16 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Persisted gate selftests** — every fix to `pre-deploy-check.sh` should come with a fixture in the same commit (repo already has the pattern). The §1 awk and §10 enumeration are currently regression-protected only by this report.
-2. **Gate verdict contract** — `pre-deploy-check.sh` must print `=== Summary: … ===` on EVERY exit path; deploy.sh should treat "non-zero exit without a summary" as its own named failure.
-3. **Monitor scripts need parse self-tests** — the PSI poll bug class. A monitor that can silently report a constant is worse than no monitor.
-4. **Session artifact location doctrine** — anything needed for later verification goes to `/var/log/sessionnix/` or similar, never bare `/tmp` (4h cleaner).
+1. **Persisted gate selftests** — every fix to `pre-deploy-check.sh` should come with a fixture in the same commit (repo already has the pattern). The §1 awk and §10 enumeration are currently regression-protected only by this report. **→ docs/todo/pipeline.md deploy-gate selftest rows**
+2. **Gate verdict contract** — `pre-deploy-check.sh` must print `=== Summary: … ===` on EVERY exit path; deploy.sh should treat "non-zero exit without a summary" as its own named failure. **→ docs/todo/pipeline.md deploy-gate verdict rows**
+~~3. **Monitor scripts need parse self-tests** — the PSI poll bug class. A monitor that can silently report a constant is worse than no monitor.~~ done at `scripts/test-post-deploy-pressure.sh + scripts/test-pre-deploy-metrics.sh`
+~~4. **Session artifact location doctrine** — anything needed for later verification goes to `/var/log/sessionnix/` or similar, never bare `/tmp` (4h cleaner).~~ done at `docs/CONTRIBUTING.md (/var/log/systemnix-deploys + journal tag)`
 5. **Probe-bumps-before-deploy as a command** — a `nix run .#probe-bumped-inputs` that goModules-probes every changed lock node would replace today's ad-hoc single-input probe and the deferred-to-keep-going gamble.
-6. **heavy-job adoption enforcement** — VM-test builds (`stalwart-e2e`) ran bare during the storm; the wrapper exists precisely for this.
-7. **Containment tripwires** — anything documented as "stopped as containment" (llama units, flm socket) needs a metric that alerts when it re-arms; `systemctl stop` does not survive deploys/reboots on this box (flm re-arm precedent).
-8. **Cross-session blocker escalation** — a shared, checked-in `BLOCKERS.md` (or TODO_LIST section) that every session reads at start, instead of per-session status reports that nobody re-reads.
-9. **Pressure-gate message with offenders** — the exit-12 message should print the top-3 IO writers (lars-readable `/proc/*/io` scan worked fine) to cut triage to seconds.
-10. **First-command smoke of pipelines** — in this shell, `PIPESTATUS` lies and `cmd | tail -N` hides verdicts; default to full-file capture + targeted grep of the file.
+~~6. **heavy-job adoption enforcement** — VM-test builds (`stalwart-e2e`) ran bare during the storm; the wrapper exists precisely for this.~~ done at `scripts/migrate-hermes-subvol.sh:66 (heavy-job wrap adopted)`
+~~7. **Containment tripwires** — anything documented as "stopped as containment" (llama units, flm socket) needs a metric that alerts when it re-arms; `systemctl stop` does not survive deploys/reboots on this box (flm re-arm precedent).~~ done at `CHANGELOG 2026-09-19 AI-stack guard batch: llama-rag dark guard`
+8. **Cross-session blocker escalation** — a shared, checked-in `BLOCKERS.md` (or TODO_LIST section) that every session reads at start, instead of per-session status reports that nobody re-reads. **→ docs/todo/pipeline.md concurrent-edit-loss/BLOCKERS policy row**
+9. **Pressure-gate message with offenders** — the exit-12 message should print the top-3 IO writers (lars-readable `/proc/*/io` scan worked fine) to cut triage to seconds. **→ docs/todo/stability.md deploy-gate corpse-scan upgrade row**
+~~10. **First-command smoke of pipelines** — in this shell, `PIPESTATUS` lies and `cmd | tail -N` hides verdicts; default to full-file capture + targeted grep of the file.~~ done — docs/CONTRIBUTING.md
 
 ## f) Top 50 things to get done next
 
@@ -85,56 +85,56 @@ _Brainstorm list, impact-ranked; feeds `docs-health` HARVEST (items below the fo
 
 | #  | Task                                                                                                                                            | Impact   | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
-| 1  | Land the deploy (`nix run .#deploy`) in a quiet window — all gates verified green                                                               | Critical | S      | Ops           |
-| 2  | Run full `post-deploy-check.sh` smoke after the switch                                                                                          | Critical | S      | Quality       |
-| 3  | Verify cv-server env carries `CV_EVALUATION_CITIZENSHIPS=DE` (unit env + one journal evidence line)                                             | Critical | S      | Quality       |
-| 4  | Re-stop llama-embeddings + llama-reranker (spin regression, ~2 cores for ~17h) and make the stop survive (config-disable or pin)                | Critical | M      | Bug           |
-| 5  | Sweep remaining same-day bumped inputs' goModules FODs (bank-sync, dnsblockd, go-taskqueue, crush-daily, inboxclean) before/with `--keep-going` | High     | M      | Ops           |
-| 6  | Persisted selftest for §1 block-level benign classification (4-class fixture)                                                                   | High     | M      | Quality       |
-| 7  | Persisted fixture for §10 port enumeration (zero-match must warn, multi-file scan)                                                              | High     | M      | Quality       |
-| 8  | Gate verdict contract: pre-deploy-check prints Summary on every exit path; deploy.sh names summary-less exits                                   | High     | S      | Quality       |
-| 9  | Triage inboxclean-sync OnFailure (still failing 01:46 tonight — invalid_grant vs transient)                                                     | High     | S      | Bug           |
+| ~~1~~ done at `CHANGELOG deploys 2026-09-16+` | ~~Land the deploy (`nix run .#deploy`) in a quiet window — all gates verified green~~ | ~~Critical~~ | ~~S~~ | ~~Ops~~ |
+| ~~2~~ **Won't implement — routine.** | ~~Run full `post-deploy-check.sh` smoke after the switch~~ | ~~Critical~~ | ~~S~~ | ~~Quality~~ |
+| ~~3~~ done at `scripts/check-cv-oidc-gate.sh + deploy.sh cv sha gate (CHANGELOG 2026-10-03/04)` | ~~Verify cv-server env carries `CV_EVALUATION_CITIZENSHIPS=DE` (unit env + one journal evidence line)~~ | ~~Critical~~ | ~~S~~ | ~~Quality~~ |
+| ~~4~~ done at `docs/services/llama-rag.md:29 (disable/re-enable + DARK guard resolved the class)` | ~~Re-stop llama-embeddings + llama-reranker (spin regression, ~2 cores for ~17h) and make the stop survive (config-disable or pin)~~ | ~~Critical~~ | ~~M~~ | ~~Bug~~ |
+| ~~5~~ **Won't implement — window passed; §11 vendorHash gate since landed.** | ~~Sweep remaining same-day bumped inputs' goModules FODs (bank-sync, dnsblockd, go-taskqueue, crush-daily, inboxclean) before/with `--keep-going`~~ | ~~High~~ | ~~M~~ | ~~Ops~~ |
+| 6 **→ docs/todo/pipeline.md deploy-gate selftests** | Persisted selftest for §1 block-level benign classification (4-class fixture) | High | M | Quality |
+| ~~7~~ done at `scripts/test-pre-deploy-metrics.sh (Fixture H)` | ~~Persisted fixture for §10 port enumeration (zero-match must warn, multi-file scan)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| 8 **→ docs/todo/pipeline.md deploy-gate verdict rows** | Gate verdict contract: pre-deploy-check prints Summary on every exit path; deploy.sh names summary-less exits | High | S | Quality |
+| 9 **→ docs/todo/services.md failed-units sweep incl inboxclean-sync** | Triage inboxclean-sync OnFailure (still failing 01:46 tonight — invalid_grant vs transient) | High | S | Bug |
 | 10 | Triage the 2 systemd-coredump units (PIDs 2527885/2669309)                                                                                      | High     | S      | Bug           |
-| 11 | Verify gatus CV funnel checks green post-deploy (funnelStale, pipeline-store health)                                                            | High     | S      | Quality       |
-| 12 | AGENTS.md: correct the llama-rag containment claim (did not hold)                                                                               | High     | S      | Documentation |
-| 13 | Containment tripwire metric for "stopped as containment" units (llama, flm socket)                                                              | High     | M      | Feature       |
-| 14 | Verify zram/sev1 guard zones are armed and tripping correctly during storms (zram hit 88%)                                                      | High     | S      | Quality       |
+| ~~11~~ **Won't implement — routine.** | ~~Verify gatus CV funnel checks green post-deploy (funnelStale, pipeline-store health)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| ~~12~~ done at `docs/services/llama-rag.md:29` | ~~AGENTS.md: correct the llama-rag containment claim (did not hold)~~ | ~~High~~ | ~~S~~ | ~~Documentation~~ |
+| ~~13~~ done at `CHANGELOG 2026-09-19 dark guard` | ~~Containment tripwire metric for "stopped as containment" units (llama, flm socket)~~ | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~14~~ done — docs/services/memory-emergency-guard.md (live-documented zones) | ~~Verify zram/sev1 guard zones are armed and tripping correctly during storms (zram hit 88%)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
 | 15 | Audit what PMA `buildflow --fix --semantic` wrote (~40 GB across projects)                                                                      | High     | M      | Quality       |
-| 16 | Ratify monitor365 packages-surface removal (owner decision; rationale in flake.nix)                                                             | Medium   | S      | Decision      |
-| 17 | heavy-job wrapper adoption for VM-test builds (stalwart-e2e ran bare in the storm)                                                              | High     | M      | Quality       |
-| 18 | The owed reboot (flm corpse, D-state corpses, llama spin) — `pre-reboot-check` first                                                            | High     | M      | Ops           |
-| 19 | dnsblockd post-bump: verify OTLP spans flowing (`signoz_traces_reporting{service="dnsblockd"} 1`)                                               | Medium   | S      | Quality       |
-| 20 | bank-sync post-bump: statement_coverage RFC3339 writer watch post-SCA                                                                           | Medium   | S      | Bug           |
-| 21 | go-taskqueue lock node: confirm github-flip (no `dirtyRev` interim left)                                                                        | Medium   | S      | Quality       |
-| 22 | inboxclean post-bump: sync + paperless archive auth checks green                                                                                | Medium   | S      | Quality       |
-| 23 | wallpapers-src bump (12b453d): verify dms-wallpaper-init no dangling path (53fe554 class)                                                       | Medium   | S      | Bug           |
-| 24 | crush-daily post-bump: golden-file drift check (UPDATE_GOLDENS class)                                                                           | Medium   | S      | Quality       |
-| 25 | cv-scan timer + cv-backup oneshot green post-deploy                                                                                             | Medium   | S      | Quality       |
-| 26 | Session artifact doctrine: /var/log/sessionnix/ for deploy/chain logs (never bare /tmp)                                                         | Medium   | S      | Cleanup       |
+| ~~16~~ **Won't implement — already executed (flake.nix monitor365 removal); ratification moot.** | ~~Ratify monitor365 packages-surface removal (owner decision; rationale in flake.nix)~~ | ~~Medium~~ | ~~S~~ | ~~Decision~~ |
+| ~~17~~ done at `scripts/migrate-hermes-subvol.sh:66` | ~~heavy-job wrapper adoption for VM-test builds (stalwart-e2e ran bare in the storm)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~18~~ done — docs/todo/stability.md corpse row | ~~The owed reboot (flm corpse, D-state corpses, llama spin) — `pre-reboot-check` first~~ | ~~High~~ | ~~M~~ | ~~Ops~~ |
+| ~~19~~ **Won't implement — routine.** | ~~dnsblockd post-bump: verify OTLP spans flowing (`signoz_traces_reporting{service="dnsblockd"} 1`)~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| 20 **→ docs/todo/services.md bank-sync rows** | bank-sync post-bump: statement_coverage RFC3339 writer watch post-SCA | Medium | S | Bug |
+| ~~21~~ done — flake.nix:377 (interim flip comment) | ~~go-taskqueue lock node: confirm github-flip (no `dirtyRev` interim left)~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~22~~ **Won't implement — routine.** | ~~inboxclean post-bump: sync + paperless archive auth checks green~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~23~~ **Won't implement — stale one-shot.** | ~~wallpapers-src bump (12b453d): verify dms-wallpaper-init no dangling path (53fe554 class)~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
+| 24 **→ docs/todo/services.md crush-daily golden file row** | crush-daily post-bump: golden-file drift check (UPDATE_GOLDENS class) | Medium | S | Quality |
+| ~~25~~ **Won't implement — routine.** | ~~cv-scan timer + cv-backup oneshot green post-deploy~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~26~~ done at `docs/CONTRIBUTING.md` | ~~Session artifact doctrine: /var/log/sessionnix/ for deploy/chain logs (never bare /tmp)~~ | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
 | 27 | `nix run .#probe-bumped-inputs` command (goModules probe per changed lock node)                                                                 | Medium   | M      | Feature       |
-| 28 | deploy.sh pressure-gate message: print top-3 IO offenders                                                                                       | Medium   | S      | Feature       |
-| 29 | Cross-session BLOCKERS surface (shared file every session reads at start)                                                                       | Medium   | S      | Process       |
-| 30 | metrics-gate.sh endpoint-down WARN branches: re-verify against post-refactor §10 env flow                                                       | Medium   | S      | Quality       |
-| 31 | Signoz trace-coverage ratchet intact post-bump (dnsblockd wiring "config")                                                                      | Medium   | S      | Quality       |
-| 32 | flm :52626 corpse state check post-storm (EADDRINUSE class)                                                                                     | Medium   | S      | Bug           |
-| 33 | CV repo AGENTS.md: document publicDeps-vs-rev-pinned-input rule (proxy-served ⇒ publicDeps)                                                     | Medium   | S      | Documentation |
-| 34 | CV: land the internal/httpx security-headers refactor cleanly (parallel session WIP: 6 modified files)                                          | Medium   | M      | Feature       |
-| 35 | CV CI doctrine decision: dead Actions minutes — probe-before-lock forever vs restore minutes                                                    | Medium   | S      | Decision      |
-| 36 | crush-hot-db deploy — still gated on /nix soak (~09-17)                                                                                         | Medium   | M      | Feature       |
-| 37 | node-exporter textfile freshness post-storm (my state greps returned empty — verify `*_scrape_errors` = 0)                                      | Medium   | S      | Quality       |
-| 38 | Mirror §1/§10 gate fixes into docs/CONTRIBUTING.md "Eval-Time Guards" inventory                                                                 | Low      | S      | Documentation |
-| 39 | Clean `/tmp/cv-verify` worktree from the CV repo                                                                                                | Low      | S      | Cleanup       |
-| 40 | Move the PSI-drain-then-deploy chain into a documented app (`.#deploy-wait`) instead of ad-hoc scripts                                          | Low      | M      | Feature       |
-| 41 | shellcheck/bash -n pre-commit coverage for scripts/pre-deploy-check.sh (verify it exists)                                                       | Low      | S      | Quality       |
-| 42 | Attribute the foreign 1-line AGENTS.md edit that was pending at session start                                                                   | Low      | S      | Process       |
-| 43 | Confirm cv.yaml committed correctly despite secrets/ gitignore pattern (tracked-file status)                                                    | Low      | S      | Quality       |
-| 44 | Session census (31 "users" logged in — crush agents; confirm nothing foreign)                                                                   | Low      | S      | Security      |
-| 45 | gatus-pattern-lint + port-registry-audit coverage over service-module-authored conditions (ran green — confirm no exemptions needed)            | Low      | S      | Quality       |
-| 46 | History purge runbook: still HELD at push-time re-filter (periodic nag)                                                                         | Low      | S      | Ops           |
-| 47 | Overnight daemon-commit attribution sweep (12+ auto-commits 09-15 evening → 09-16)                                                              | Low      | S      | Process       |
-| 48 | Consider CI job: daily goModules probe of all changed lock nodes (replaces manual pre-flight)                                                   | Low      | L      | Feature       |
-| 49 | how-to-golang skill: mirror the "proxy-served ⇒ publicDeps" rule for new LarsArtmann deps                                                       | Low      | S      | Documentation |
-| 50 | TODO_LIST HARVEST of this report's section (f) within 24h                                                                                       | Low      | S      | Process       |
+| 28 **→ docs/todo/pipeline.md deploy.sh pressure-gate rows** | deploy.sh pressure-gate message: print top-3 IO offenders | Medium | S | Feature |
+| 29 **→ docs/todo/pipeline.md concurrent-edit row** | Cross-session BLOCKERS surface (shared file every session reads at start) | Medium | S | Process |
+| ~~30~~ **Won't implement — routine.** | ~~metrics-gate.sh endpoint-down WARN branches: re-verify against post-refactor §10 env flow~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~31~~ done — CHANGELOG 2026-09-13 signoz-coverage enforced | ~~Signoz trace-coverage ratchet intact post-bump (dnsblockd wiring "config")~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~32~~ done — docs/todo/stability.md corpse row | ~~flm :52626 corpse state check post-storm (EADDRINUSE class)~~ | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
+| ~~33~~ **Won't implement — sibling repo (CV).** | ~~CV repo AGENTS.md: document publicDeps-vs-rev-pinned-input rule (proxy-served ⇒ publicDeps)~~ | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
+| ~~34~~ **Won't implement — sibling repo; later CV waves landed.** | ~~CV: land the internal/httpx security-headers refactor cleanly (parallel session WIP: 6 modified files)~~ | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
+| ~~35~~ **Won't implement — sibling repo; CI dead.** | ~~CV CI doctrine decision: dead Actions minutes — probe-before-lock forever vs restore minutes~~ | ~~Medium~~ | ~~S~~ | ~~Decision~~ |
+| ~~36~~ done at `docs/todo/storage.md` | ~~crush-hot-db deploy — still gated on /nix soak (~09-17)~~ | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
+| ~~37~~ done — docs/services/memory-emergency-guard.md | ~~node-exporter textfile freshness post-storm (my state greps returned empty — verify `*_scrape_errors` = 0)~~ | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| 38 **→ docs/todo/pipeline.md deploy-gate docs rows** | Mirror §1/§10 gate fixes into docs/CONTRIBUTING.md "Eval-Time Guards" inventory | Low | S | Documentation |
+| ~~39~~ **Won't implement — stale.** | ~~Clean `/tmp/cv-verify` worktree from the CV repo~~ | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| 40 **→ docs/todo/pipeline.md deploy-queue systemd unit row** | Move the PSI-drain-then-deploy chain into a documented app (`.#deploy-wait`) instead of ad-hoc scripts | Low | M | Feature |
+| ~~41~~ **Won't implement — routine (shellcheck + pre-commit standard).** | ~~shellcheck/bash -n pre-commit coverage for scripts/pre-deploy-check.sh (verify it exists)~~ | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~42~~ **Won't implement — stale.** | ~~Attribute the foreign 1-line AGENTS.md edit that was pending at session start~~ | ~~Low~~ | ~~S~~ | ~~Process~~ |
+| ~~43~~ **Won't implement — resolved same session (a.1).** | ~~Confirm cv.yaml committed correctly despite secrets/ gitignore pattern (tracked-file status)~~ | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~44~~ **Won't implement — stale.** | ~~Session census (31 "users" logged in — crush agents; confirm nothing foreign)~~ | ~~Low~~ | ~~S~~ | ~~Security~~ |
+| ~~45~~ done — tests/test-gatus-patterns.nix (lint green routinely) | ~~gatus-pattern-lint + port-registry-audit coverage over service-module-authored conditions (ran green — confirm no exemptions needed)~~ | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| 46 **→ docs/todo/security.md purge row** | History purge runbook: still HELD at push-time re-filter (periodic nag) | Low | S | Ops |
+| 47 **→ docs/todo/pipeline.md Task-Queue-ID row** | Overnight daemon-commit attribution sweep (12+ auto-commits 09-15 evening → 09-16) | Low | S | Process |
+| 48 **→ docs/todo/pipeline.md vendorHash refresher watch row** | Consider CI job: daily goModules probe of all changed lock nodes (replaces manual pre-flight) | Low | L | Feature |
+| ~~49~~ **Won't implement — sibling skill.** | ~~how-to-golang skill: mirror the "proxy-served ⇒ publicDeps" rule for new LarsArtmann deps~~ | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~50~~ done at `CHANGELOG 2026-09-19 TODO system split` | ~~TODO_LIST HARVEST of this report's section (f) within 24h~~ | ~~Low~~ | ~~S~~ | ~~Process~~ |
 
 ## g) Questions I cannot answer myself
 

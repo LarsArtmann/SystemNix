@@ -340,12 +340,33 @@
               User = "monitor365-server";
               Group = "monitor365-server";
               StateDirectory = "monitor365-server";
-            } // ioTier.maintenance;
+            }
+            // ioTier.maintenance;
             script = lib.getExe schemaMigrateScript;
           };
           systemd.services.monitor365-server = {
             after = [ "monitor365-schema-migrate.service" ];
             requires = [ "monitor365-schema-migrate.service" ];
+          };
+        })
+
+        # Backup unit override: quiesce the server around the DuckDB export
+        # (see monitor365BackupScript). Root-run because the script drives
+        # systemctl; StateDirectory dropped — with User=root systemd would
+        # chown the state dir away from the server user (root:root) and the
+        # next server start would be unable to write its own DB.
+        (lib.mkIf (serverCfg.enable && serverCfg.backup.enable) {
+          systemd.services.monitor365-server-backup = {
+            restartTriggers = [ (lib.getExe monitor365BackupScript) ];
+            serviceConfig = lib.mkMerge [
+              {
+                ExecStart = lib.mkForce (lib.getExe monitor365BackupScript);
+                User = lib.mkForce "root";
+                Group = lib.mkForce "root";
+                StateDirectory = lib.mkForce null;
+                TimeoutStartSec = "10min";
+              }
+            ];
           };
         })
 

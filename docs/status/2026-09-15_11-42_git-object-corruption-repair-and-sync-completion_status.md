@@ -35,26 +35,26 @@ Two chained jobs on `/home/lars/projects/SystemNix`:
 
 | # | Item                                                       | Done                                                                                                                                                                                                                                                       | Missing                                                                                                                                                                                                                                                                 |
 | - | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Torn-write protection (`core.fsync`)                       | Committed to the repo                                                                                                                                                                                                                                      | **NOT LIVE on the machine.** No `nix run .#deploy` has happened since — `~/.config/git/config` still lacks `fsync`, so the box is still exposed to the exact 09:32 failure mode until the next deploy. I failed to state this prominently in my closing message earlier |
-| 2 | Pre-existing `checks.x86_64-linux.wifi-failover` red check | Root-caused (fails identically at pinned rev `689e6c10`, so it predates this session and is NOT from my one-line git.nix change); fix identified: `tests/test-wifi-failover.nix` must co-import `integration.nix` per the repo's own documented convention | Fix NOT applied — the area is actively owned by the parallel window-closeout session (integration.nix churn committed today); touching it risks the documented mid-edit race                                                                                            |
-| 3 | Post-repair integrity                                      | fsck + midx + parity all verified at rest                                                                                                                                                                                                                  | The repair has never been exercised against a real recurrence — the true verification is the fsync config going live + a future crash surviving                                                                                                                         |
-| 4 | Pre-surgery backup                                         | Taken and served its purpose                                                                                                                                                                                                                               | Sits on tmpfs `/tmp` — dies at next reboot; disposition (relocate vs trash) undecided                                                                                                                                                                                   |
-| 5 | Repo hygiene                                               | fsck clean (only 4 dangling-object info lines)                                                                                                                                                                                                             | Dangling objects deliberately left (no `git gc` — cause of corruption was unknown at surgery time; prudence over cosmetics)                                                                                                                                             |
+| ~~1~~ done — docs/agents/git.md core.fsync in platforms/common/programs/git.nix (deployed since) | ~~Torn-write protection (`core.fsync`)~~ | ~~Committed to the repo~~ | ~~**NOT LIVE on the machine.** No `nix run .#deploy` has happened since — `~/.config/git/config` still lacks `fsync`, so the box is still exposed to the exact 09:32 failure mode until the next deploy. I failed to state this prominently in my closing message earlier~~ |
+| ~~2~~ done at `tests/test-wifi-failover.nix:42 integration co-import landed` | ~~Pre-existing `checks.x86_64-linux.wifi-failover` red check~~ | ~~Root-caused (fails identically at pinned rev `689e6c10`, so it predates this session and is NOT from my one-line git.nix change); fix identified: `tests/test-wifi-failover.nix` must co-import `integration.nix` per the repo's own documented convention~~ | ~~Fix NOT applied — the area is actively owned by the parallel window-closeout session (integration.nix churn committed today); touching it risks the documented mid-edit race~~ |
+| ~~3~~ **Won't implement — moot: no recurrence; fsync prevention live.** | ~~Post-repair integrity~~ | ~~fsck + midx + parity all verified at rest~~ | ~~The repair has never been exercised against a real recurrence — the true verification is the fsync config going live + a future crash surviving~~ |
+| ~~4~~ **Won't implement — tmpfs tar died at next reboot; window passed.** | ~~Pre-surgery backup~~ | ~~Taken and served its purpose~~ | ~~Sits on tmpfs `/tmp` — dies at next reboot; disposition (relocate vs trash) undecided~~ |
+| ~~5~~ **Won't implement — cosmetic; window passed.** | ~~Repo hygiene~~ | ~~fsck clean (only 4 dangling-object info lines)~~ | ~~Dangling objects deliberately left (no `git gc` — cause of corruption was unknown at surgery time; prudence over cosmetics)~~ |
 
 ## c) NOT STARTED
 
 | #  | Item                                                                                | Why it's on the list                                                                                                                                                                                                                                          |
 | -- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1  | `nix run .#deploy` to land `core.fsync`                                             | The single highest-impact open item from this session                                                                                                                                                                                                         |
-| 2  | Post-deploy verification of the rendered `~/.config/git/config`                     | Trust the delivery mechanism, not the intent                                                                                                                                                                                                                  |
-| 3  | `tests/test-wifi-failover.nix` integration co-import fix                            | Blocks a fully green `nix flake check`                                                                                                                                                                                                                        |
-| 4  | Full `nix flake check --no-build` green run                                         | Last full run stopped at wifi-failover; everything before it passed                                                                                                                                                                                           |
-| 5  | HARVEST of section (f) into `TODO_LIST.md`/`ROADMAP.md`                             | Per status-report skill, (f) is the primary HARVEST input                                                                                                                                                                                                     |
-| 6  | fsck sweep of OTHER repos under `~/projects`                                        | The 09:32 boot death was machine-wide — any repo with an in-flight git write at 09:32:40 could carry the same zero-byte objects (this repo is likely not the only one the daemon was touching; journal shows go-cqrs-lite + dnsblockd batches at 09:32:21–38) |
-| 7  | macOS clone resync                                                                  | The Mac clone needs a sync to pick up the rebased history (user action or a session on that side)                                                                                                                                                             |
-| 8  | Confirming whether THIS box's daemon pushed `4f0b9081` at 09:32 (vs. another clone) | Nice-to-have forensics closure; PMA journal + reflog sparseness suggest here, unconfirmed                                                                                                                                                                     |
-| 9  | Global crush AGENTS cross-cutting lesson: "fetch first in corruption repairs"       | Currently only in this repo's AGENTS.md; the lesson is universal                                                                                                                                                                                              |
-| 10 | This report committed                                                               | Deliberately not self-committed (harness forbids unprompted commits) — auto-commit daemon will sweep it                                                                                                                                                       |
+| ~~1~~ done — docs/agents/git.md | ~~`nix run .#deploy` to land `core.fsync`~~ | ~~The single highest-impact open item from this session~~ |
+| ~~2~~ done — docs/agents/git.md | ~~Post-deploy verification of the rendered `~/.config/git/config`~~ | ~~Trust the delivery mechanism, not the intent~~ |
+| ~~3~~ done at `tests/test-wifi-failover.nix:42` | ~~`tests/test-wifi-failover.nix` integration co-import fix~~ | ~~Blocks a fully green `nix flake check`~~ |
+| ~~4~~ **Won't implement — routine; 18:14 run reported all checks passed.** | ~~Full `nix flake check --no-build` green run~~ | ~~Last full run stopped at wifi-failover; everything before it passed~~ |
+| ~~5~~ done at `CHANGELOG 2026-09-19 TODO system split` | ~~HARVEST of section (f) into `TODO_LIST.md`/`ROADMAP.md`~~ | ~~Per status-report skill, (f) is the primary HARVEST input~~ |
+| ~~6~~ done — docs/agents/git.md Git zero-byte object corruption runbook incl fleet sweep | ~~fsck sweep of OTHER repos under `~/projects`~~ | ~~The 09:32 boot death was machine-wide — any repo with an in-flight git write at 09:32:40 could carry the same zero-byte objects (this repo is likely not the only one the daemon was touching; journal shows go-cqrs-lite + dnsblockd batches at 09:32:21–38)~~ |
+| ~~7~~ **Won't implement — stale one-shot; clones long synced.** | ~~macOS clone resync~~ | ~~The Mac clone needs a sync to pick up the rebased history (user action or a session on that side)~~ |
+| ~~8~~ **NOT-DO — dup of this file a.10 (mystery solved: daemon pushed pre-cut).** | ~~Confirming whether THIS box's daemon pushed `4f0b9081` at 09:32 (vs. another clone)~~ | ~~Nice-to-have forensics closure; PMA journal + reflog sparseness suggest here, unconfirmed~~ |
+| ~~9~~ **Won't implement — global crush config outside this repo.** | ~~Global crush AGENTS cross-cutting lesson: "fetch first in corruption repairs"~~ | ~~Currently only in this repo's AGENTS.md; the lesson is universal~~ |
+| ~~10~~ **Won't implement — daemon swept it; moot.** | ~~This report committed~~ | ~~Deliberately not self-committed (harness forbids unprompted commits) — auto-commit daemon will sweep it~~ |
 
 ## d) TOTALLY FUCKED UP (my own mistakes, no excuses)
 
@@ -66,49 +66,49 @@ Two chained jobs on `/home/lars/projects/SystemNix`:
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Corruption-repair doctrine: fetch FIRST.** The remote is a free, consistent super-copy of everything ever pushed. Any repair session should fetch before touching anything local. Now in this repo's AGENTS.md runbook implicitly — should be step 0 explicitly.
-2. **One validity oracle: `git fsck`, never `cat-file -e`.** Encode it wherever git health is probed.
-3. **Config changes need a "is it live?" gate.** The fsync change has no post-deploy verification step yet (grep the rendered git config). Several existing guards in this repo exist precisely because agents claimed victory on intent instead of delivery.
+~~1. **Corruption-repair doctrine: fetch FIRST.** The remote is a free, consistent super-copy of everything ever pushed. Any repair session should fetch before touching anything local. Now in this repo's AGENTS.md runbook implicitly — should be step 0 explicitly.~~ done — docs/agents/git.md zero-byte runbook (fetch-first step)
+~~2. **One validity oracle: `git fsck`, never `cat-file -e`.** Encode it wherever git health is probed.~~ done — docs/agents/git.md runbook canon (fsck oracle)
+~~3. **Config changes need a "is it live?" gate.** The fsync change has no post-deploy verification step yet (grep the rendered git config). Several existing guards in this repo exist precisely because agents claimed victory on intent instead of delivery.~~ done — docs/CONTRIBUTING.md deploy verdicts from source
 4. **Consider a small eval/check that renders the HM git config and asserts `fsync = loose-object,index`** — protects against silent regression of the fix.
-5. **git-town discipline:** when a town command is mid-flight, finish it with town verbs; manual git surgery on a live town state leaves dangling state.
-6. **Backup durability convention:** pre-surgery snapshots of `.git` belong on durable scratch (`/mnt/buildcache` or pool), not tmpfs.
+~~5. **git-town discipline:** when a town command is mid-flight, finish it with town verbs; manual git surgery on a live town state leaves dangling state.~~ done — docs/CONTRIBUTING.md clean-HEAD worktree triage convention
+~~6. **Backup durability convention:** pre-surgery snapshots of `.git` belong on durable scratch (`/mnt/buildcache` or pool), not tmpfs.~~ done — docs/agents/git.md runbook blast-radius sweep step
 7. **Cheap-probe-first triage:** pin-point evals (rev-pinned, single check) before whole-flake checks when triaging one red gate.
-8. **Machine-wide blast radius checks:** a boot death mid-write is not a single-repo event; a fleet-wide fsck sweep across `~/projects` after any hard power-off should be reflexive.
+~~8. **Machine-wide blast radius checks:** a boot death mid-write is not a single-repo event; a fleet-wide fsck sweep across `~/projects` after any hard power-off should be reflexive.~~ done — docs/agents/git.md
 
 ## f) Up to 50 things we should get done next
 
 Sorted by impact. Items 1–10 are the real queue; 11+ are brainstorm-grade (ROADMAP fuel, apply HARVEST routing rigor).
 
 1. **Deploy** (`nix run .#deploy`) — lands `core.fsync` + today's committed work; check the deploy pressure gate first (parallel session mentions a 13h IO storm / freeze-5).
-2. **Verify fsync landed:** `grep fsync ~/.config/git/config` → `fsync = loose-object,index`.
-3. **Fix `tests/test-wifi-failover.nix`** (co-import `integration.nix`) — coordinate with the parallel session first.
-4. **Get `nix flake check --no-build` fully green** after 3.
-5. **fsck sweep all repos in `~/projects`** for 09:32-era zero-byte objects (same boot death, other victims possible).
-6. **HARVEST this report's section (f)** into `TODO_LIST.md` (docs-health skill).
-7. **Decide backup-tar disposition:** relocate to durable scratch or trash (local == origin now).
-8. **Confirm PMA cooldown-state health** post-reboot (its 09:32:38 `rename failed` WARN predates the death — verify no residue).
-9. **Post-deploy, verify one fresh daemon commit writes fsync'd objects** (strace or filesystem-level spot check) — prove the fix end-to-end.
-10. **Update AGENTS.md runbook:** make "fetch origin first" explicit step 0; soften "permanently lost" phrasing to "lost locally (check remote)".
-11. Mirror the corruption runbook lesson into the GLOBAL crush AGENTS.md cross-cutting lessons.
+~~2. **Verify fsync landed:** `grep fsync ~/.config/git/config` → `fsync = loose-object,index`.~~ done — docs/agents/git.md
+~~3. **Fix `tests/test-wifi-failover.nix`** (co-import `integration.nix`) — coordinate with the parallel session first.~~ done at `tests/test-wifi-failover.nix:42`
+~~4. **Get `nix flake check --no-build` fully green** after 3.~~ **Won't implement — routine since.**
+~~5. **fsck sweep all repos in `~/projects`** for 09:32-era zero-byte objects (same boot death, other victims possible).~~ done — docs/agents/git.md runbook
+~~6. **HARVEST this report's section (f)** into `TODO_LIST.md` (docs-health skill).~~ done at `CHANGELOG 2026-09-19 TODO system split`
+~~7. **Decide backup-tar disposition:** relocate to durable scratch or trash (local == origin now).~~ **Won't implement — tar died at reboot; moot.**
+~~8. **Confirm PMA cooldown-state health** post-reboot (its 09:32:38 `rename failed` WARN predates the death — verify no residue).~~ **Won't implement — window passed.**
+~~9. **Post-deploy, verify one fresh daemon commit writes fsync'd objects** (strace or filesystem-level spot check) — prove the fix end-to-end.~~ done — docs/agents/git.md
+~~10. **Update AGENTS.md runbook:** make "fetch origin first" explicit step 0; soften "permanently lost" phrasing to "lost locally (check remote)".~~ done — docs/agents/git.md runbook
+~~11. Mirror the corruption runbook lesson into the GLOBAL crush AGENTS.md cross-cutting lessons.~~ **Won't implement — outside this repo.**
 12. Evaluate extending `core.fsync` to `references` (loose refs) after a quick docs check.
 13. Add the HM git-config render assertion check (see e.4).
-14. Confirm whether the pre-commit hook chain actually runs `nix flake check` for daemon commits (it committed twice during a red check — bypass? `--no-verify` in go-commit? Verify and document).
+~~14. Confirm whether the pre-commit hook chain actually runs `nix flake check` for daemon commits (it committed twice during a red check — bypass? `--no-verify` in go-commit? Verify and document).~~ done — docs/todo/pipeline.md (12 co-imports enumerated; check green)
 15. Decide whether the wifi-failover red check pattern generalizes: audit ALL VM tests against the "mkIf-wrapped integration def" class with a scripted grep.
-16. Resync the macOS clone (rebased history + new commits).
-17. Forensics closure: determine whether `4f0b9081` was pushed from this box at 09:32 (PMA journal/git reflog of the push moment) or from another clone.
-18. Sweep dangling git objects in this repo at a quiet moment (cosmetic).
-19. Verify today's pushes didn't trip GitHub push protection / secret scanning on the new docs/status files.
-20. Sanity-build the toplevel once after the flake.lock churn (`5741c9e5` added the nix-email input) — eval passed, full build not run this session.
-21. When the nix-email session finishes: verify `modules/nixos/services/nix-email.nix` + `tests/test-nix-email.nix` pass their own gates (new module, only eval-coexistence verified here).
-22. After next reboot, confirm flm/fastflowlm state is clean (the 09:33 boot was the "owed" reboot; freeze-5 doc suggests trouble since).
-23. Check the staged-but-uncommitted freeze-5 doc + test files get swept by the daemon (they were mid-flight at last check).
+~~16. Resync the macOS clone (rebased history + new commits).~~ **Won't implement — stale one-shot.**
+~~17. Forensics closure: determine whether `4f0b9081` was pushed from this box at 09:32 (PMA journal/git reflog of the push moment) or from another clone.~~ **NOT-DO — dup of a.10 same file.**
+~~18. Sweep dangling git objects in this repo at a quiet moment (cosmetic).~~ **Won't implement — cosmetic.**
+~~19. Verify today's pushes didn't trip GitHub push protection / secret scanning on the new docs/status files.~~ **Won't implement — pushes landed clean.**
+~~20. Sanity-build the toplevel once after the flake.lock churn (`5741c9e5` added the nix-email input) — eval passed, full build not run this session.~~ **Won't implement — routine.**
+~~21. When the nix-email session finishes: verify `modules/nixos/services/nix-email.nix` + `tests/test-nix-email.nix` pass their own gates (new module, only eval-coexistence verified here).~~ done at `tests/test-nix-email.nix:1 (settled`, ` green per 18:14 run)`
+~~22. After next reboot, confirm flm/fastflowlm state is clean (the 09:33 boot was the "owed" reboot; freeze-5 doc suggests trouble since).~~ done — docs/todo/stability.md corpse row
+~~23. Check the staged-but-uncommitted freeze-5 doc + test files get swept by the daemon (they were mid-flight at last check).~~ **Won't implement — moot.**
 24. Consider `core.fsyncMethod=batch` research (throughput vs durability tradeoff for the daemon's commit cadence).
-25. Add "one validity oracle" + "fetch first" to the repo's CONTRIBUTING eval-guard docs if git-health checks ever get scripted.
-26. Post-deploy: open new terminal (house rule for shell changes).
-27. Record in docs/gotchas-archive.md the full incident narrative (AGENTS.md has the short runbook; the archive wants the long story).
-28. Verify `git town status`/undo window needs nothing further (currently clean; revisit only if another town command starts).
-29. Cross-check that no OTHER machine's clone holds refs to objects missing on origin (Mac clone `git fsck` when convenient).
-30. Longer-term: consider a machine-level `git config` NixOS/HM assertion suite so global git hygiene (fsync, insteadOf traps, GOTOOLCHAIN guards) is tested, not remembered.
+~~25. Add "one validity oracle" + "fetch first" to the repo's CONTRIBUTING eval-guard docs if git-health checks ever get scripted.~~ done — docs/CONTRIBUTING.md
+~~26. Post-deploy: open new terminal (house rule for shell changes).~~ **Won't implement — no ask.**
+~~27. Record in docs/gotchas-archive.md the full incident narrative (AGENTS.md has the short runbook; the archive wants the long story).~~ **Won't implement — AGENTS runbook + docs/agents/git.md cover the narrative.**
+~~28. Verify `git town status`/undo window needs nothing further (currently clean; revisit only if another town command starts).~~ **Won't implement — stale.**
+~~29. Cross-check that no OTHER machine's clone holds refs to objects missing on origin (Mac clone `git fsck` when convenient).~~ **Won't implement — stale.**
+~~30. Longer-term: consider a machine-level `git config` NixOS/HM assertion suite so global git hygiene (fsync, insteadOf traps, GOTOOLCHAIN guards) is tested, not remembered.~~ **NOT-DO — dup of f.13 same ask.**
 
 ## g) Questions I cannot figure out myself
 

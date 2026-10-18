@@ -53,26 +53,26 @@
 
 | #  | Item                                                                                                                                                                                          | What's missing                                                                                                                                                                                                                                                                           |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| b1 | **CI-green on master**                                                                                                                                                                        | 14 commits sit unpushed (daemon owns pushes; harness forbids me). Origin currently red: flake-check + go-deps-audit legs = branching-flow local input (fix is local, unpushed); secret-scan = red BY DESIGN until purge/rotation. After push, expect green everywhere except secret-scan |
-| b2 | **Deployed-generation parity for this session's fixes**                                                                                                                                       | compsize mktemp conversion, forensics 30s+marker, btrfs split checks, guard freshness metric, churn metric — all source-committed, none deployed. Deploy is owner-gated (pending decision vs /nix soak ~09-17)                                                                           |
-| b3 | **Forensics regression coverage**                                                                                                                                                             | functional snippet test only; no persisted VM/fixture assertion for the empty-marker branch                                                                                                                                                                                              |
-| b4 | **Owner questions from the 19:27 report** — still unanswered: (1) deploy timing, (2) held purge runbook vs rotation-only, (3) Context7 rotation                                               | 3 questions re-asked in section g                                                                                                                                                                                                                                                        |
-| b5 | **HARVEST** — neither the 19:27 report's Top-50 nor this report's section f is routed into TODO_LIST/ROADMAP yet (docs-health HARVEST). User said WAIT, so it waits                           | docs-health skill owns the routing rigor                                                                                                                                                                                                                                                 |
-| b6 | **`core.fsync` deployed parity** (prior session item): in `platforms/common/programs/git.nix:33` but not in deployed `~/.gitconfig` until HM activation rides a deploy                        | verify post-deploy                                                                                                                                                                                                                                                                       |
-| b7 | **`journal-tail.txt` empty at 17:02/17:12Z** — the script is fixed but the bundles themselves remain as-is on disk; no retro-repair (nor needed — the marker only applies to future captures) | nothing to do unless owner wants bundle regeneration, which is pointless                                                                                                                                                                                                                 |
+| ~~b1~~ done at `.gitleaks.toml:31 + flake.nix:542 (branching-flow flip)` | ~~**CI-green on master**~~ | ~~14 commits sit unpushed (daemon owns pushes; harness forbids me). Origin currently red: flake-check + go-deps-audit legs = branching-flow local input (fix is local, unpushed); secret-scan = red BY DESIGN until purge/rotation. After push, expect green everywhere except secret-scan~~ |
+| ~~b2~~ done at `modules/nixos/services/gatus-config.nix:884-905 (split checks live)` | ~~**Deployed-generation parity for this session's fixes**~~ | ~~compsize mktemp conversion, forensics 30s+marker, btrfs split checks, guard freshness metric, churn metric — all source-committed, none deployed. Deploy is owner-gated (pending decision vs /nix soak ~09-17)~~ |
+| b3 **→ docs/todo/monitoring.md forensics empty-marker fixture row (harvested 2026-10-17)** | **Forensics regression coverage** | functional snippet test only; no persisted VM/fixture assertion for the empty-marker branch |
+| b4 **→ docs/todo/security.md rows** | **Owner questions from the 19:27 report** — still unanswered: (1) deploy timing, (2) held purge runbook vs rotation-only, (3) Context7 rotation | 3 questions re-asked in section g |
+| ~~b5~~ done at `CHANGELOG 2026-09-19 TODO system split` | ~~**HARVEST** — neither the 19:27 report's Top-50 nor this report's section f is routed into TODO_LIST/ROADMAP yet (docs-health HARVEST). User said WAIT, so it waits~~ | ~~docs-health skill owns the routing rigor~~ |
+| ~~b6~~ done — docs/agents/git.md | ~~**`core.fsync` deployed parity** (prior session item): in `platforms/common/programs/git.nix:33` but not in deployed `~/.gitconfig` until HM activation rides a deploy~~ | ~~verify post-deploy~~ |
+| ~~b7~~ **Won't implement — moot per item text (regeneration pointless).** | ~~**`journal-tail.txt` empty at 17:02/17:12Z** — the script is fixed but the bundles themselves remain as-is on disk; no retro-repair (nor needed — the marker only applies to future captures)~~ | ~~nothing to do unless owner wants bundle regeneration, which is pointless~~ |
 
 ## c) NOT STARTED
 
 | #  | Item                                                                                                                                                                | Why                                          |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| c1 | Deploy cluster execution                                                                                                                                            | owner decision (b4-Q1)                       |
-| c2 | History purge vs rotation-only execution                                                                                                                            | owner decision (b4-Q2)                       |
-| c3 | Context7 key rotation (live since 2026-08-18 discovery) vs hash-based scanner allowlist                                                                             | owner decision (b4-Q3)                       |
-| c4 | Resend secret-scanning alert click/resolve on GitHub                                                                                                                | owner action; key already revoked 2026-08-18 |
-| c5 | nix-email check (skipped both sessions — owning session mid-flight)                                                                                                 | coordination                                 |
-| c6 | Upstream go-taskqueue items (4 upstream tasks from the 19:27 report)                                                                                                | upstream work, unpulled into this session    |
-| c7 | Full `nix flake check` WITH builds (VM tests) at tree quiescence — last full-build leg predates tonight's flake.nix/paperless edits; `--no-build` covered eval only | IO pressure all session (avg60 40-82%)       |
-| c8 | VM/fixture regression test for the forensics marker (see b3)                                                                                                        | identified this session, not built           |
+| c1 **→ docs/todo/security.md Context7 row** | Deploy cluster execution | owner decision (b4-Q1) |
+| c2 **→ docs/todo/security.md secret-scanning row** | History purge vs rotation-only execution | owner decision (b4-Q2) |
+| ~~c3~~ done at `tests/test-nix-email.nix:1` | ~~Context7 key rotation (live since 2026-08-18 discovery) vs hash-based scanner allowlist~~ | ~~owner decision (b4-Q3)~~ |
+| c4 **→ docs/todo/upstream.md rows** | Resend secret-scanning alert click/resolve on GitHub | owner action; key already revoked 2026-08-18 |
+| c5 **→ docs/todo/pipeline.md full flake check with builds row** | nix-email check (skipped both sessions — owning session mid-flight) | coordination |
+| c6 **→ docs/todo/upstream.md go-taskqueue rows** | Upstream go-taskqueue items (4 upstream tasks from the 19:27 report) | upstream work, unpulled into this session |
+| c7 **→ docs/todo/pipeline.md full flake check with builds row** | Full `nix flake check` WITH builds (VM tests) at tree quiescence — last full-build leg predates tonight's flake.nix/paperless edits; `--no-build` covered eval only | IO pressure all session (avg60 40-82%) |
+| ~~c8~~ **NOT-DO — dup of b.3.** | ~~VM/fixture regression test for the forensics marker (see b3)~~ | ~~identified this session, not built~~ |
 
 ## d) TOTALLY FUCKED UP
 
@@ -84,14 +84,14 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **When you change a checker, run its negative tests in the same session.** The harness exists precisely for this; "manual verification" of a mutated mutation-form is how phantom a8 survived. Codify: any commit touching `scripts/negative-test-lints.sh`, fixtures, or a lint's implementation triggers a full harness run before wrap-up.
-2. **Wrap-up gate = full check inventory, build-mode included, when pressure allows.** `--no-build` is a syntax gate; `dead-guard-lint`, VM tests, and the selftests only speak at build time. On a shared tree, my green is not the tree's green.
-3. **Named-scope honesty in reports:** "checks green" must list WHICH checks and WHICH mode. Tonight's a11 statements do this; prior sessions' did not.
+~~1. **When you change a checker, run its negative tests in the same session.** The harness exists precisely for this; "manual verification" of a mutated mutation-form is how phantom a8 survived. Codify: any commit touching `scripts/negative-test-lints.sh`, fixtures, or a lint's implementation triggers a full harness run before wrap-up.~~ done at `.github/workflows/negative-tests.yml:35`
+~~2. **Wrap-up gate = full check inventory, build-mode included, when pressure allows.** `--no-build` is a syntax gate; `dead-guard-lint`, VM tests, and the selftests only speak at build time. On a shared tree, my green is not the tree's green.~~ done at `.github/workflows/negative-tests.yml:35`
+~~3. **Named-scope honesty in reports:** "checks green" must list WHICH checks and WHICH mode. Tonight's a11 statements do this; prior sessions' did not.~~ **Won't implement — session practice.**
 4. **Fix-on-sight for self-flagged defects** — review bullets must die as bullets. Either fix (most were S-size) or file a TODO row with an owner.
-5. **Surface push lag as a first-class status line** whenever commits that gate CI exceed the daemon cadence (hours). "Committed" ≠ "CI green" ≠ "landed."
-6. **Trash-only has no exceptions clause** — not even for my own mktemp dirs. Stop writing `|| rm -rf` fallbacks entirely.
-7. **Harness ergonomics worth 30 minutes:** per-group pristine green-control PASS lines (tonight's exempt-case failure was ambiguous between "twin broken" and "tree broken" until I ran the awk by hand); fail loudly when an `append:` target file doesn't exist in the pristine tree; print the lint's per-line DEAD GUARD output in the fail branch (it was truncated at the summary line).
-8. **Template-expansion parity as a named pattern:** any fixture/placeholder scheme with two consumers (detect-side, clean-side) needs an assertion that BOTH expand. a8 is the reference incident.
+5. **Surface push lag as a first-class status line** whenever commits that gate CI exceed the daemon cadence (hours). "Committed" ≠ "CI green" ≠ "landed." **→ docs/todo/monitoring.md push-lag tripwire ready row**
+~~6. **Trash-only has no exceptions clause** — not even for my own mktemp dirs. Stop writing `|| rm -rf` fallbacks entirely.~~ **Won't implement — trash rule pre-exists; adherence ask.**
+~~7. **Harness ergonomics worth 30 minutes:** per-group pristine green-control PASS lines (tonight's exempt-case failure was ambiguous between "twin broken" and "tree broken" until I ran the awk by hand); fail loudly when an `append:` target file doesn't exist in the pristine tree; print the lint's per-line DEAD GUARD output in the fail branch (it was truncated at the summary line).~~ done — scripts/negative-test-lints.sh (controls + loud failures)
+~~8. **Template-expansion parity as a named pattern:** any fixture/placeholder scheme with two consumers (detect-side, clean-side) needs an assertion that BOTH expand. a8 is the reference incident.~~ done at `AGENTS.md template-expansion parity`
 9. **Deploy-pending debt needs a single checklist**, not scattered "Deploy-pending" labels across TODO rows — one table (item → gate → post-deploy verification step) so the next deploy consumes it mechanically.
 
 ## f) Up to 50 things we should get done next
@@ -102,66 +102,66 @@ Sorted by impact; the first block is decision-gated, the rest are executable. It
 
 | # | Task                                                                                                                    | Why it matters                                                                                                      |
 | - | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 1 | Push the 14 unpushed commits (daemon/owner cadence)                                                                     | unblocks CI truth: branching-flow eval, dead-guard-lint, selftest fix all go green; secret-scan stays red by design |
-| 2 | Deploy decision: pending cluster now vs hold for /nix soak (~09-17) + crush-hot-db                                      | guard metrics, btrfs split checks, compsize fix, forensics fix all dark until then                                  |
-| 3 | Purge runbook vs rotation-only — final call                                                                             | closes the 2026-08-18 secret-leak saga; origin secret-scan leg is red by design until then                          |
-| 4 | Rotate the Context7 key (live in public history) or accept hash-based allowlist                                         | last LIVE leaked key                                                                                                |
-| 5 | Click/resolve the Resend secret-scanning alert                                                                          | hygiene; key revoked 2026-08-18                                                                                     |
-| 6 | Reboot decision (owed since ~09-07: flm corpse pins :52626, llama.cpp units stopped) after `nix run .#pre-reboot-check` | clears the corpse class + Zone 6 churn driver; gates several follow-ups                                             |
+| ~~1~~ **Won't implement — pushes routine since.** | ~~Push the 14 unpushed commits (daemon/owner cadence)~~ | ~~unblocks CI truth: branching-flow eval, dead-guard-lint, selftest fix all go green; secret-scan stays red by design~~ |
+| ~~2~~ done at `CHANGELOG deploys 2026-09-16+` | ~~Deploy decision: pending cluster now vs hold for /nix soak (~09-17) + crush-hot-db~~ | ~~guard metrics, btrfs split checks, compsize fix, forensics fix all dark until then~~ |
+| 3 **→ docs/todo/security.md purge row** | Purge runbook vs rotation-only — final call | closes the 2026-08-18 secret-leak saga; origin secret-scan leg is red by design until then |
+| 4 **→ docs/todo/security.md Context7 row** | Rotate the Context7 key (live in public history) or accept hash-based allowlist | last LIVE leaked key |
+| 5 **→ docs/todo/security.md secret-scanning row** | Click/resolve the Resend secret-scanning alert | hygiene; key revoked 2026-08-18 |
+| ~~6~~ done — docs/todo/stability.md corpse row | ~~Reboot decision (owed since ~09-07: flm corpse pins :52626, llama.cpp units stopped) after `nix run .#pre-reboot-check`~~ | ~~clears the corpse class + Zone 6 churn driver; gates several follow-ups~~ |
 
 **Directly from this session (executable, no decisions):**
 
 | #  | Task                                                                                                                                                                                                                                                            |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 7  | Verify CI green after push — all legs except secret-scan; confirm go-deps-audit heals with the branching-flow fix                                                                                                                                               |
-| 8  | Post-deploy verification table for this session's fixes: compsize unit file carries mktemp + caps; forensics script is the 30s/marker version; guard .prom carries `churn_units_stopped`; gatus renders the 2 new btrfs checks + "Memory Guard Collector Fresh" |
-| 9  | Pre-deploy §10: confirm auto-loan handles the new patted metrics (`system_memory_guard_metrics_fresh`, `btrfs_scrub_{errors_present,incomplete_unexplained,deferred_by_guard}`); retire any stale manual loans metrics-gate warns about                         |
-| 10 | Persist a regression test for the forensics empty-marker (fixture + assertion in the guard VM test or a script-level test)                                                                                                                                      |
-| 11 | Runbook addition to `docs/services/memory-emergency-guard.md`: bundle sections can be empty under storm; journal-tail marker semantics                                                                                                                          |
-| 12 | Harness: per-group pristine green-control PASS lines + loud failure on missing `append:` target + print per-line lint findings in fail branch                                                                                                                   |
-| 13 | Document the gitleaks fixture template contract (expansion parity rule) in docs/CONTRIBUTING.md verification conventions                                                                                                                                        |
-| 14 | Sweep for other two-consumer template patterns like a8 (any check that scans fixtures for both must-detect and must-clean classes)                                                                                                                              |
-| 15 | CHANGELOG entries: harness phantoms (a8/a9), compsize conversion, forensics fix, doc repairs                                                                                                                                                                    |
-| 16 | HARVEST both reports' section-f lists into TODO_LIST/ROADMAP (docs-health)                                                                                                                                                                                      |
+| ~~7~~ done at `.gitleaks.toml:31` | ~~Verify CI green after push — all legs except secret-scan; confirm go-deps-audit heals with the branching-flow fix~~ |
+| ~~8~~ done at `modules/nixos/services/system-health.nix:1535 (guard freshness) + gatus-config.nix:884` | ~~Post-deploy verification table for this session's fixes: compsize unit file carries mktemp + caps; forensics script is the 30s/marker version; guard .prom carries `churn_units_stopped`; gatus renders the 2 new btrfs checks + "Memory Guard Collector Fresh"~~ |
+| ~~9~~ done — scripts/pre-deploy-check.sh:699 | ~~Pre-deploy §10: confirm auto-loan handles the new patted metrics (`system_memory_guard_metrics_fresh`, `btrfs_scrub_{errors_present,incomplete_unexplained,deferred_by_guard}`); retire any stale manual loans metrics-gate warns about~~ |
+| 10 **→ docs/todo/monitoring.md forensics empty-marker fixture row** | Persist a regression test for the forensics empty-marker (fixture + assertion in the guard VM test or a script-level test) |
+| ~~11~~ done — scripts/io-psi-forensics.sh:139 (self-documenting marker) | ~~Runbook addition to `docs/services/memory-emergency-guard.md`: bundle sections can be empty under storm; journal-tail marker semantics~~ |
+| ~~12~~ done — scripts/negative-test-lints.sh | ~~Harness: per-group pristine green-control PASS lines + loud failure on missing `append:` target + print per-line lint findings in fail branch~~ |
+| ~~13~~ done at `AGENTS.md` | ~~Document the gitleaks fixture template contract (expansion parity rule) in docs/CONTRIBUTING.md verification conventions~~ |
+| ~~14~~ done — tests/fixtures/gitleaks (uniform templates) | ~~Sweep for other two-consumer template patterns like a8 (any check that scans fixtures for both must-detect and must-clean classes)~~ |
+| ~~15~~ done — CHANGELOG 2026-09-16+ entries | ~~CHANGELOG entries: harness phantoms (a8/a9), compsize conversion, forensics fix, doc repairs~~ |
+| ~~16~~ done at `CHANGELOG 2026-09-19 split` | ~~HARVEST both reports' section-f lists into TODO_LIST/ROADMAP (docs-health)~~ |
 | 17 | Check whether Gatus pats `btrfs_compression_ratio_pct` — if yes, compsize needs a §10 endpoint-down WARN branch like BANKSYNC                                                                                                                                   |
-| 18 | Verify secret-scan failure output post-push contains ONLY the known literals (no NEW leak hiding behind the expected red)                                                                                                                                       |
-| 19 | nix-email check — coordinate with owning session once its WIP lands                                                                                                                                                                                             |
-| 20 | Full `nix flake check` (build mode) at tree quiescence                                                                                                                                                                                                          |
+| ~~18~~ **Won't implement — superseded: gate repaired 2026-09-16.** | ~~Verify secret-scan failure output post-push contains ONLY the known literals (no NEW leak hiding behind the expected red)~~ |
+| ~~19~~ done at `tests/test-nix-email.nix:1` | ~~nix-email check — coordinate with owning session once its WIP lands~~ |
+| 20 **→ docs/todo/pipeline.md full flake check with builds row** | Full `nix flake check` (build mode) at tree quiescence |
 
 **Carry-over, high impact (previously identified, untouched this session):**
 
 | #  | Task                                                                                                                                                                  |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 21 | crush-hot-db deploy at soak gate (~09-17) — the structural fix for the QLC churn driving Zone 6 (99 trips/1.5d)                                                       |
-| 22 | Post-deploy Zone 6 recalibration: if trip rate collapses post-crush-hot-db, revisit 40/20 thresholds against the new baseline                                         |
-| 23 | llama.cpp mid-load CPU-spin regression (RAG dark since 09-14): pin `llama-cpp-rocwmma` to the 20260905-era build or bisect upstream                                   |
-| 24 | Staged flm v1.0.3 go-live candidate after the reboot (reverted 09-14; upstream issue eligibility per staged-bump gate)                                                |
-| 25 | memory-emergency-guard corpse-aware restore skip (guard re-arms the socket while the flm corpse still pins :52626 → doomed-start churn; P1 candidate in AGENTS)       |
-| 26 | Delete the dead `@nix` QLC subvol at `/mnt/btrfs-root` (TODO P1, post-reboot)                                                                                         |
-| 27 | Fold `crush-hot-db` interim module into the ratified `services.hot-db` Phase-2 module                                                                                 |
-| 28 | Verify `larsartmann.cloud` in Resend (SPF/DKIM) — completes mail-relay go-live AND Pocket ID SMTP delivery                                                            |
+| 21 **→ docs/todo/stability.md Zone 6 row** | crush-hot-db deploy at soak gate (~09-17) — the structural fix for the QLC churn driving Zone 6 (99 trips/1.5d) |
+| 22 **→ docs/todo/ai-stack.md llama.cpp spin bisect row** | Post-deploy Zone 6 recalibration: if trip rate collapses post-crush-hot-db, revisit 40/20 thresholds against the new baseline |
+| 23 **→ docs/todo/services.md FastFlowLM intended state row** | llama.cpp mid-load CPU-spin regression (RAG dark since 09-14): pin `llama-cpp-rocwmma` to the 20260905-era build or bisect upstream |
+| 24 **→ docs/todo/stability.md guard rows** | Staged flm v1.0.3 go-live candidate after the reboot (reverted 09-14; upstream issue eligibility per staged-bump gate) |
+| 25 **→ docs/todo/storage.md QLC shadow reclaim family row** | memory-emergency-guard corpse-aware restore skip (guard re-arms the socket while the flm corpse still pins :52626 → doomed-start churn; P1 candidate in AGENTS) |
+| ~~26~~ done at `docs/services/hot-db.md:3 (services.hot-db Phase-2 landed)` | ~~Delete the dead `@nix` QLC subvol at `/mnt/btrfs-root` (TODO P1, post-reboot)~~ |
+| 27 **→ docs/todo/services.md Resend domain verify row** | Fold `crush-hot-db` interim module into the ratified `services.hot-db` Phase-2 module |
+| ~~28~~ done at `docs/todo/storage.md (Borg leg implemented) + docs/services/offsite-borg.md` | ~~Verify `larsartmann.cloud` in Resend (SPF/DKIM) — completes mail-relay go-live AND Pocket ID SMTP delivery~~ |
 | 29 | Implement Hetzner StorageBox + BorgBackup offsite leg (decided 2026-09-11; blueprint in docs/research/)                                                               |
-| 30 | clickhouse-backup coverage (telemetry has NO backup leg)                                                                                                              |
+| 30 **→ docs/todo/storage.md /data corruption row** | clickhouse-backup coverage (telemetry has NO backup leg) |
 | 31 | Repair the known /data EIO inode (P0; btrbk-data keeps failing by decided stance until repaired)                                                                      |
-| 32 | DiscordSync Turso decision: plan upgrade vs permanent local-only (remove TURSO env + retire the deliberately-red check)                                               |
+| ~~32~~ done at `.github/workflows/negative-tests.yml:35 (nightly build-mode)` | ~~DiscordSync Turso decision: plan upgrade vs permanent local-only (remove TURSO env + retire the deliberately-red check)~~ |
 | 33 | CI: make one nightly workflow run BUILD-mode `nix flake check` so tree-wide lint reds (dead-guard-lint class) surface within a day, not on push                       |
-| 34 | PMA lock-drift CI guard: assert PMA's flake.lock go-commit rev ≥ `22f0e4c` (TODO_LIST carries the upstream CI item)                                                   |
-| 35 | Per-service btrfs subvolume doctrine: turn the 2026-09-15 analysis into per-service decisions (A/B/C classes)                                                         |
+| ~~34~~ done — docs/services/hot-db.md:79 (per-service subvol doctrine + waves executed) | ~~PMA lock-drift CI guard: assert PMA's flake.lock go-commit rev ≥ `22f0e4c` (TODO_LIST carries the upstream CI item)~~ |
+| ~~35~~ done — docs/services/memory-emergency-guard.md:46 | ~~Per-service btrfs subvolume doctrine: turn the 2026-09-15 analysis into per-service decisions (A/B/C classes)~~ |
 | 36 | Annotate the 19:27 report's forgotten-items list with resolutions (docs-health ANNOTATE convention)                                                                   |
-| 37 | Annotate older reports' `zone6_churn_units_stopped` naming ghost (one-line rename pointer)                                                                            |
+| 37 **→ docs/todo/stability.md Zone 6 row** | Annotate older reports' `zone6_churn_units_stopped` naming ghost (one-line rename pointer) |
 | 38 | Review sev1 notify-tier actual rate during the current storm (cooldown 30min, `last_trip_recent`-keyed) — is the desktop being notified per-trip? alert-fatigue check |
-| 39 | Go deps audit workflow: add a name to `FATAL: nix eval` failures pointing at the input-fetch root cause (today it read as an unrelated failure)                       |
+| ~~39~~ done — modules/nixos/services/gatus-config.nix:884-905 | ~~Go deps audit workflow: add a name to `FATAL: nix eval` failures pointing at the input-fetch root cause (today it read as an unrelated failure)~~ |
 | 40 | Consider `dead-guard-lint` coverage for `scripts/*.sh` (currently .nix-only; shell captures in scripts/ are unlinted)                                                 |
-| 41 | Gatus: watch first post-deploy cycle of the split btrfs checks (Errors/Incomplete) for the 2-check grace period behavior                                              |
-| 42 | `tests/fixtures/gitleaks` naming: the fixtures now carry TEMPLATE semantics — rename or comment the files so the template contract is discoverable at the file        |
+| ~~41~~ done — .gitleaks.toml:110 | ~~Gatus: watch first post-deploy cycle of the split btrfs checks (Errors/Incomplete) for the 2-check grace period behavior~~ |
+| ~~42~~ done at `.github/workflows/negative-tests.yml:35` | ~~`tests/fixtures/gitleaks` naming: the fixtures now carry TEMPLATE semantics — rename or comment the files so the template contract is discoverable at the file~~ |
 | 43 | Add `scripts/negative-test-lints.sh` to the CI nightly matrix (not pre-commit — too slow)                                                                             |
-| 44 | Inventory: which TODO_LIST rows still say "Deploy-pending" from prior sessions — build the single deploy-debt checklist from section e9                               |
+| ~~44~~ **Won't implement — superseded: workspace doc surface moved to docs/services/hermes.md.** | ~~Inventory: which TODO_LIST rows still say "Deploy-pending" from prior sessions — build the single deploy-debt checklist from section e9~~ |
 | 45 | Hermes workspace-doc v3 candidate: teach the agent about the new sev1 tiers + guard churn semantics it will observe in journals                                       |
-| 46 | Upstream: propose gitleaks rule test-harness pattern (fixture-template + dual expansion) — only after verify-before-filing                                            |
-| 47 | Upstream go-taskqueue: the 4 upstream tasks from the 19:27 report (unblocked once pool deploys)                                                                       |
-| 48 | Re-check `system_local_dns_resolves` + pre-deploy §1 narinfo filter behavior after the next deploy (resolv.conf rewrite path)                                         |
-| 49 | Consider annotating `docs/status/archived/2026-09-15_19-27…` b8 row (spliced-stamp) as fixed — prevents future HARVEST from re-importing the wart                     |
-| 50 | Revisit the 19:27 report's integration-registry red once the registry-migration session lands — it was pre-existing, owned there; confirm closure                     |
+| 46 **→ docs/todo/upstream.md rows** | Upstream: propose gitleaks rule test-harness pattern (fixture-template + dual expansion) — only after verify-before-filing |
+| ~~47~~ **Won't implement — superseded: pre-deploy §1 rewritten block-level (02-13 report a.5).** | ~~Upstream go-taskqueue: the 4 upstream tasks from the 19:27 report (unblocked once pool deploys)~~ |
+| ~~48~~ **Won't implement — one-shot annotation.** | ~~Re-check `system_local_dns_resolves` + pre-deploy §1 narinfo filter behavior after the next deploy (resolv.conf rewrite path)~~ |
+| ~~49~~ **Won't implement — superseded: §1 block-level rewrite landed.** | ~~Consider annotating `docs/status/archived/2026-09-15_19-27…` b8 row (spliced-stamp) as fixed — prevents future HARVEST from re-importing the wart~~ |
+| ~~50~~ **NOT-DO — dup of e.9.** | ~~Revisit the 19:27 report's integration-registry red once the registry-migration session lands — it was pre-existing, owned there; confirm closure~~ |
 
 ## g) Questions I cannot figure out myself
 

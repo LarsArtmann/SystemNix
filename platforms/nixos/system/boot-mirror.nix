@@ -152,13 +152,28 @@ in
     # a nonexistent unit. unitConfig.RequiresMountsFor below already implies
     # Requires=+After= on the real mount.
     unitConfig = {
-      RequiresMountsFor = [ mirrorPath ];
+      # Gate BOTH ESPs: without /boot, a pre-mount namespace view (the empty
+      # rootfs shadow dir under the mountpoint) would be rsync --delete'd
+      # onto the mirror — wiping the Samsung ESP. Mount-gating applies to
+      # the READ source, not just write targets (226-class doctrine).
+      RequiresMountsFor = [
+        "/boot"
+        mirrorPath
+      ];
       ConditionPathIsMountPoint = mirrorPath;
     };
     startLimitBurst = 5;
     startLimitIntervalSec = 300;
     serviceConfig = lib.mkMerge [
-      (harden { })
+      # ProtectSystem=false (2026-10-18 EROFS class): every ProtectSystem
+      # level below "strict" RO-binds /boot ("true" already includes it),
+      # and the ReadWritePaths rw-remount of that bind left /boot RENAMES
+      # failing "Read-only file system" — the counter reverse-propagation
+      # mv died at 00:42 AND 01:42 while non-namespaced bootctl wrote
+      # /boot seconds earlier; the bind-remount was read-only, not the fs.
+      # The unit is a repo-pinned root oneshot; /usr write exposure is not
+      # in its threat model.
+      (harden { ProtectSystem = false; })
       (serviceOneshotDefaults { })
       # BE/6 background: the sync is a ~250 MB bulk copy (rsync + diff -r
       # verify) that must finish but never contends with interactive I/O —
@@ -168,11 +183,6 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStart = lib.getExe syncScript;
-        # /boot: the counter reverse-propagation renames entry files there
-        ReadWritePaths = [
-          "/boot"
-          mirrorPath
-        ];
         TimeoutStartSec = "5min";
       }
     ];

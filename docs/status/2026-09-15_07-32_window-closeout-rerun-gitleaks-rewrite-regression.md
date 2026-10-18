@@ -28,16 +28,16 @@ All five cited SHAs are UNREACHABLE from HEAD (verified `git merge-base --is-anc
 
 ## b) PARTIALLY DONE
 
-1. **Zone 6 verification gaps remain open by design (harvested, not lost):** isolated VM-test rebuild, liveness probe of the three new `memory_emergency_guard_*` metrics, and deployed-generation parity on evo-x2 are TODO_LIST items under "Added 2026-09-15 06:10" (sourced from the archived 02-48 report §b.1). "Fix exists in git" and "fix protects the machine" are still different done-states.
-2. **Provenance is split-brained and the cited SHAs are dead.** The window's five commits are unreachable; content reached history via daemon/replayed counterparts with partial message fidelity (the PSI code landed under a "heuristic" daemon message in `be2ead2a`). `git log --grep Task-Queue-ID` cannot fully reconstruct this window. Annotated, not fixable retroactively.
-3. **The first closeout run (06:10) delivered its artifacts only via the daemon.** Its tq lifecycle shows the agent failed exit 1 right after "Writing the status report" (fact 3520); the 06:14 daemon commit (`47b0585e`) is what actually committed the report + TODO appends. The closeout contract's "commit" step has no verification loop.
+~~1. **Zone 6 verification gaps remain open by design (harvested, not lost):** isolated VM-test rebuild, liveness probe of the three new `memory_emergency_guard_*` metrics, and deployed-generation parity on evo-x2 are TODO_LIST items under "Added 2026-09-15 06:10" (sourced from the archived 02-48 report §b.1). "Fix exists in git" and "fix protects the machine" are still different done-states.~~ done at `see 06-10 b.1 - tests/test-memory-emergency-guard.nix + docs/services/memory-emergency-guard.md:40-48`
+~~2. **Provenance is split-brained and the cited SHAs are dead.** The window's five commits are unreachable; content reached history via daemon/replayed counterparts with partial message fidelity (the PSI code landed under a "heuristic" daemon message in `be2ead2a`). `git log --grep Task-Queue-ID` cannot fully reconstruct this window. Annotated, not fixable retroactively.~~ done at `SHA annotations landed in-tree; systemic footer convention still open - docs/todo/pipeline.md`
+~~3. **The first closeout run (06:10) delivered its artifacts only via the daemon.** Its tq lifecycle shows the agent failed exit 1 right after "Writing the status report" (fact 3520); the 06:14 daemon commit (`47b0585e`) is what actually committed the report + TODO appends. The closeout contract's "commit" step has no verification loop.~~ done at `codified - docs/CONTRIBUTING.md verify the footer commit landed before TQ_RESULT`
 
 ## c) NOT STARTED (skipped, still open)
 
-1. **Repo-generic CI do-analyzer** (provide/invoke type-parameter pairing across all Go repos) — named future hardening in the sweep report; TODO_LIST item exists (branching-flow's `doanalyzerv2` is the seed).
-2. **Zone 6 threshold recalibration**, `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, trip-tier routing check, runbook entry, backup-staleness tripwire while btrbk is guard-stopped — all harvested as TODO items, none started.
-3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.
-4. _In passing (adjacent, not this window's five):_ sibling batch task `000001a09d06cf0bc…` (enqueued 01:07:44) dead-lettered after 3 failed verify runs on go-taskqueue's own suite (`internal/session` package build failure) — flagged for the go-taskqueue owner.
+1. **Repo-generic CI do-analyzer** (provide/invoke type-parameter pairing across all Go repos) — named future hardening in the sweep report; TODO_LIST item exists (branching-flow's `doanalyzerv2` is the seed). **→ docs/todo/upstream.md Repo-generic CI do-analyzer ready row**
+2. **Zone 6 threshold recalibration**, `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, trip-tier routing check, runbook entry, backup-staleness tripwire while btrbk is guard-stopped — all harvested as TODO items, none started. **→ recalibration open - docs/todo/stability.md Zone-6 row; churn metric/runbook/panel/backup-staleness landed (memory-emergency-guard.md)**
+~~3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.~~ done — flm corpse DONE-MOOT 2026-09-30 - docs/todo/stability.md corpse row
+~~4. _In passing (adjacent, not this window's five):_ sibling batch task `000001a09d06cf0bc…` (enqueued 01:07:44) dead-lettered after 3 failed verify runs on go-taskqueue's own suite (`internal/session` package build failure) — flagged for the go-taskqueue owner.~~ **Won't implement — upstream one-shot flag; go-taskqueue verify/sidecar work since superseded it.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -49,11 +49,11 @@ All five cited SHAs are UNREACHABLE from HEAD (verified `git merge-base --is-anc
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Git-state claims need at-write-time verification, and RE-verification after any intervening history operation.** The §d.1/§d.2 pair is the same lesson landing twice in 36 hours. Ancestry checks are one command; both failures were skip-able in 5 seconds.
-2. **Citation durability:** cite reachable SHAs; when a lineage is abandoned, sweep citing reports and annotate counterparts (done here for the live reports). Prefer "message + date + reachable SHA" over bare SHAs in reports about recent, unpushed work.
-3. **Stop attempting local history rewrites while the push is held.** The purge runbook already prescribes re-filter at push time; the 09-14 rewrite was duplicative work that could never survive an origin resync. AGENTS.md's history-rewrite checklist is extended this pass with the origin-resync resurrection case.
-4. **Queue contract:** a dirty-tolerant lane (`require_clean=false`) for docs-only tasks, or a docs-only preflight; and closeout runs must verify the footer commit actually landed (`git log -1 --grep Task-Queue-ID`) before emitting TQ_RESULT.
-5. **Provenance (standing):** the daemon footer convention item remains the systemic fix for "meaningful code in heuristic commits" (the PSI code in `be2ead2a`).
+~~1. **Git-state claims need at-write-time verification, and RE-verification after any intervening history operation.** The §d.1/§d.2 pair is the same lesson landing twice in 36 hours. Ancestry checks are one command; both failures were skip-able in 5 seconds.~~ done at `codified - docs/CONTRIBUTING.md`
+~~2. **Citation durability:** cite reachable SHAs; when a lineage is abandoned, sweep citing reports and annotate counterparts (done here for the live reports). Prefer "message + date + reachable SHA" over bare SHAs in reports about recent, unpushed work.~~ done at `codified - docs/CONTRIBUTING.md cite reachable SHAs; annotate dangling`
+~~3. **Stop attempting local history rewrites while the push is held.** The purge runbook already prescribes re-filter at push time; the 09-14 rewrite was duplicative work that could never survive an origin resync. AGENTS.md's history-rewrite checklist is extended this pass with the origin-resync resurrection case.~~ done — docs/agents/git.md history-rewrite checklist incl origin-resync resurrection case
+4. **Queue contract:** a dirty-tolerant lane (`require_clean=false`) for docs-only tasks, or a docs-only preflight; and closeout runs must verify the footer commit actually landed (`git log -1 --grep Task-Queue-ID`) before emitting TQ_RESULT. **→ docs/todo/upstream.md dirty-tolerant lane decision row + footer contract row**
+5. **Provenance (standing):** the daemon footer convention item remains the systemic fix for "meaningful code in heuristic commits" (the PSI code in `be2ead2a`). **→ docs/todo/pipeline.md Task-Queue-ID decision row**
 
 ## f) NEXT THINGS
 

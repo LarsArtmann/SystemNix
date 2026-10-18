@@ -51,17 +51,17 @@ Plus the one-USB-link class at death: `usb-storage` kthread stuck in `usb_sg_wai
 
 ## b) PARTIALLY DONE / open threads
 
-1. **Storm composition by hour for the dead boot** is cumulative-only (cgroup io.stat counters): the night's peak attribution (which of hermes/tq/agent-sessions dominated at which hours) would need SigNoz PSI/disk telemetry history — not pulled this session.
-2. **The 238 GB `session-257.scope`** was identified as the top single cgroup but never mapped to its SSH session/agent (session records rotated).
-3. **Why boot -2 ended at 20:11:57**: same abrupt-journal-cut signature (no shutdown record) — either a second unclean death ~5 min before the user reset, or a reset-into-reboot. Not investigated further.
-4. **btrfs post-crash fallout not swept** (unclean-shutdown scrub/csum check, DAS link re-verify, `system_lan_nic_present`) — the post-crash peripheral-instability doctrine runbook was not run this session.
+~~1. **Storm composition by hour for the dead boot** is cumulative-only (cgroup io.stat counters): the night's peak attribution (which of hermes/tq/agent-sessions dominated at which hours) would need SigNoz PSI/disk telemetry history — not pulled this session.~~ **Won't implement — window passed; that boot's journal long vacuumed.**
+~~2. **The 238 GB `session-257.scope`** was identified as the top single cgroup but never mapped to its SSH session/agent (session records rotated).~~ **Won't implement — session records rotated; window passed.**
+~~3. **Why boot -2 ended at 20:11:57**: same abrupt-journal-cut signature (no shutdown record) — either a second unclean death ~5 min before the user reset, or a reset-into-reboot. Not investigated further.~~ **Won't implement — window passed.**
+4. **btrfs post-crash fallout not swept** (unclean-shutdown scrub/csum check, DAS link re-verify, `system_lan_nic_present`) — the post-crash peripheral-instability doctrine runbook was not run this session. **→ docs/todo/stability.md freeze post-crash hardware checks row**
 
 ## c) NOT STARTED (deliberately or by constraint)
 
-1. **llama-rag declarative disable** — still not deployed (3rd re-armed boot); `systemctl` policy-blocked for the agent; needs `services.llama-rag.enable = false` (or mask) + deploy.
-2. **crush-hot-db migration** — built, gated on the /nix soak (~2026-09-17); the largest single structural driver (`.crush` DBs on QLC root) stays in place until then.
-3. **Samsung-as-boot-drive migration** — assessed only; no runbook written, no execution.
-4. **AGENTS.md freeze-#5 entry** — this report is the source material.
+~~1. **llama-rag declarative disable** — still not deployed (3rd re-armed boot); `systemctl` policy-blocked for the agent; needs `services.llama-rag.enable = false` (or mask) + deploy.~~ done at `docs/services/llama-rag.md:29 (config-disable 2026-09-16; DARK guard since)`
+~~2. **crush-hot-db migration** — built, gated on the /nix soak (~2026-09-17); the largest single structural driver (`.crush` DBs on QLC root) stays in place until then.~~ done at `docs/services/crush.md:192 + docs/todo/storage.md (first migrate run 2026-09-18)`
+~~3. **Samsung-as-boot-drive migration** — assessed only; no runbook written, no execution.~~ done at `CHANGELOG Samsung 970 EVO Plus = the LIVE firmware boot drive (2026-10-15)`
+~~4. **AGENTS.md freeze-#5 entry** — this report is the source material.~~ done — docs/agents/stability.md freeze taxonomy + sev1 layer
 
 ## d) TOTALLY FUCKED UP (lessons, not excuses)
 

@@ -35,18 +35,18 @@
 
 ## b) PARTIALLY DONE
 
-1. **Push unblock** — diagnosed, path chosen, URL delivered; execution pending (user-side click or programmatic bypass attempt). The 32-commit backlog stays stuck until then.
-2. **Fixture-class hardening** — sourcegraph templated; the Square fixture (`sq0atp-…`, NOT flagged by GitHub today) and the two hex fixtures (bare hex, not flagged) remain literals. Deliberate minimal scope, but the mechanism is now non-uniform (documented inconsistency).
-3. **Knowledge capture** — AGENTS.md bullet done; no runbook doc, no TODO_LIST harvest, no annotation of the parallel session's 08:50 closeout doc (which has **zero** push-protection mentions — verified by grep).
+~~1. **Push unblock** — diagnosed, path chosen, URL delivered; execution pending (user-side click or programmatic bypass attempt). The 32-commit backlog stays stuck until then.~~ done — push landed 2026-09-15; unblock playbook canon - docs/agents/git.md GitHub push protection
+~~2. **Fixture-class hardening** — sourcegraph templated; the Square fixture (`sq0atp-…`, NOT flagged by GitHub today) and the two hex fixtures (bare hex, not flagged) remain literals. Deliberate minimal scope, but the mechanism is now non-uniform (documented inconsistency).~~ done at `tests/fixtures/gitleaks/positive-square.txt:1 sq0atp- template`
+~~3. **Knowledge capture** — AGENTS.md bullet done; no runbook doc, no TODO_LIST harvest, no annotation of the parallel session's 08:50 closeout doc (which has **zero** push-protection mentions — verified by grep).~~ done at `AGENTS.md push-protection gotcha + unblock playbook`
 
 ## c) NOT STARTED
 
-1. Secret-scan of the exact unpushed range with the repo's own gzip-aware scanner (`scripts/scan-history-secrets.sh`) before re-push.
-2. Programmatic unblock probe via `gh api` (secret-scanning push-protection-bypasses endpoint).
-3. The new class guard (reject push-protection-pattern literals in tracked files, pre-commit + CI).
-4. Post-push CI watch + secret-scanning alert closure.
-5. TODO_LIST harvest of this report's section (f).
-6. GH013 runbook doc.
+~~1. Secret-scan of the exact unpushed range with the repo's own gzip-aware scanner (`scripts/scan-history-secrets.sh`) before re-push.~~ **Won't implement — superseded: push landed; post-hoc scans + CI secret-history-scan cover.**
+~~2. Programmatic unblock probe via `gh api` (secret-scanning push-protection-bypasses endpoint).~~ **Won't implement — superseded: push landed same day.**
+~~3. The new class guard (reject push-protection-pattern literals in tracked files, pre-commit + CI).~~ done at `scripts/audit-push-protection-literals.sh (pre-commit + CI wired)`
+4. Post-push CI watch + secret-scanning alert closure. **→ docs/todo/security.md GitHub secret-scanning alert closure PERSISTENT NAG**
+~~5. TODO_LIST harvest of this report's section (f).~~ done at `CHANGELOG 2026-09-19 TODO system split (harvest executed)`
+~~6. GH013 runbook doc.~~ done — docs/agents/git.md GitHub push protection playbook
 
 ## d) TOTALLY FUCKED UP
 
@@ -55,55 +55,55 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Second-scanner awareness:** every allowlist/fixture decision must enumerate ALL scanners that see the bytes — gitleaks (repo config), GitHub push protection (raw patterns), GitHub partner scanning, gitleaks-history CI. An allowlist is a per-scanner contract, not a global one.
-2. **Fixture-token doctrine (now documented):** detector fixtures derive tokens from deterministic sha256 seeds at scan time; a tracked literal that matches ANY production secret pattern is a push-block waiting to happen.
-3. **"Safe to push" claims need the repo's own authoritative scanner over the exact push range** — one scanner's pass (GitHub's block message listing 1 secret) is not an exhaustive audit; gitleaks' gzip-blindness history proves the point.
-4. **Formatter discipline on a shared tree:** path-scope formatting verification to files I authored (`alejandra --check <my files>`); never repo-wide while other sessions hold in-flight edits.
-5. **Verify before asserting GitHub platform behavior** — I asserted unblock semantics (one unblock covers all 4 locations; allowlist persists) from platform knowledge, not docs. Flagged below as unverified; verify when executing.
-6. **Harness completeness:** I re-verified only the touched check group (`CASES=gitleaks`); full-harness runs belong at quiescent moments before a push.
+~~1. **Second-scanner awareness:** every allowlist/fixture decision must enumerate ALL scanners that see the bytes — gitleaks (repo config), GitHub push protection (raw patterns), GitHub partner scanning, gitleaks-history CI. An allowlist is a per-scanner contract, not a global one.~~ done at `AGENTS.md second-scanner doctrine`
+~~2. **Fixture-token doctrine (now documented):** detector fixtures derive tokens from deterministic sha256 seeds at scan time; a tracked literal that matches ANY production secret pattern is a push-block waiting to happen.~~ done at `AGENTS.md runtime-derived template doctrine`
+~~3. **"Safe to push" claims need the repo's own authoritative scanner over the exact push range** — one scanner's pass (GitHub's block message listing 1 secret) is not an exhaustive audit; gitleaks' gzip-blindness history proves the point.~~ done at `.github/workflows/secret-history-scan.yml institutionalized`
+~~4. **Formatter discipline on a shared tree:** path-scope formatting verification to files I authored (`alejandra --check <my files>`); never repo-wide while other sessions hold in-flight edits.~~ done — AGENTS.md fmt gotcha (--ci formats in place)
+~~5. **Verify before asserting GitHub platform behavior** — I asserted unblock semantics (one unblock covers all 4 locations; allowlist persists) from platform knowledge, not docs. Flagged below as unverified; verify when executing.~~ **Won't implement — one-shot; unblock executed.**
+~~6. **Harness completeness:** I re-verified only the touched check group (`CASES=gitleaks`); full-harness runs belong at quiescent moments before a push.~~ **Won't implement — nightly negative-tests workflow covers the practice.**
 
 ## f) THINGS TO GET DONE NEXT (30, impact-sorted; brainstorm per skill — harvest with routing rigor)
 
 **P0 — unblock the artery**
 
-1. Attempt programmatic unblock via `gh api` (push-protection-bypasses; reason "used in tests") — fall back to the manual URL click.
-2. Run `scripts/scan-history-secrets.sh` over the unpushed range (or full repo) BEFORE re-push — no second GH013 surprise.
-3. Owner decision on push scope: the 32 commits carry parallel sessions' mid-flight work (hot-db Phase-2, pocket-id, system-health, pre-deploy-check) — push all, or wait for those sessions to settle.
-4. Re-push master after unblock; verify acceptance.
-5. Verify unblock semantics empirically (all 4 locations cleared by one allowlist entry; future pushes with the same value pass) and record the observed behavior in the AGENTS.md bullet.
-6. Post-push: close the GitHub secret-scanning alert for the token (false positive / used in tests).
-7. Post-push: watch the CI run green (secret-history-scan, nix-check, go-deps-audit).
+~~1. Attempt programmatic unblock via `gh api` (push-protection-bypasses; reason "used in tests") — fall back to the manual URL click.~~ **Won't implement — superseded: push landed.**
+~~2. Run `scripts/scan-history-secrets.sh` over the unpushed range (or full repo) BEFORE re-push — no second GH013 surprise.~~ **Won't implement — superseded: push landed; scans routine.**
+~~3. Owner decision on push scope: the 32 commits carry parallel sessions' mid-flight work (hot-db Phase-2, pocket-id, system-health, pre-deploy-check) — push all, or wait for those sessions to settle.~~ **Won't implement — superseded: push landed as-is.**
+~~4. Re-push master after unblock; verify acceptance.~~ done — push landed; docs/agents/git.md playbook
+~~5. Verify unblock semantics empirically (all 4 locations cleared by one allowlist entry; future pushes with the same value pass) and record the observed behavior in the AGENTS.md bullet.~~ done at `AGENTS.md records the semantics`
+6. Post-push: close the GitHub secret-scanning alert for the token (false positive / used in tests). **→ docs/todo/security.md**
+~~7. Post-push: watch the CI run green (secret-history-scan, nix-check, go-deps-audit).~~ **Won't implement — one-shot; CI runs nightly since.**
 
 **P1 — fixture/selftest hardening**
-8. Template the Square fixture too (`sq0atp-@HEX40@`) — one mechanism, future-proof; green control proves the Square rule accepts hex.
-9. Decide the two hex fixtures (keyword+hex / bare hex): template for uniformity or leave (not GitHub-flagged) and document why.
-10. Selftest tripwire: assert the expanded fixture actually contains the sha-derived token (guards against silent sed no-op).
-11. Harness case: placeholder-leak tripwire (a mutation that kills the substitution must flip the pristine control red).
-12. Narrow the fixtures-dir allowlist comment to state exactly which fixtures still need it and why.
-13. Full `bash scripts/negative-test-lints.sh` (all groups) at a quiescent moment — this session ran only the gitleaks group.
-14. `nix flake check --no-build` tree-wide at a quiescent moment before any push (shared-surface eval; parallel sessions active all morning).
+~~8. Template the Square fixture too (`sq0atp-@HEX40@`) — one mechanism, future-proof; green control proves the Square rule accepts hex.~~ done at `tests/fixtures/gitleaks/positive-square.txt:1`
+~~9. Decide the two hex fixtures (keyword+hex / bare hex): template for uniformity or leave (not GitHub-flagged) and document why.~~ done at `tests/fixtures/gitleaks/negative-bare-hex.txt:1`
+~~10. Selftest tripwire: assert the expanded fixture actually contains the sha-derived token (guards against silent sed no-op).~~ done at `tests/fixtures/gitleaks/positive-sourcegraph.txt:1 + selftest substitution`
+~~11. Harness case: placeholder-leak tripwire (a mutation that kills the substitution must flip the pristine control red).~~ done — scripts/negative-test-lints.sh gitleaks drift/corrupt mutations
+~~12. Narrow the fixtures-dir allowlist comment to state exactly which fixtures still need it and why.~~ done at `.gitleaks.toml:110 fixtures allowlist documented`
+~~13. Full `bash scripts/negative-test-lints.sh` (all groups) at a quiescent moment — this session ran only the gitleaks group.~~ done — scripts/negative-test-lints.sh (22/22 runs; nightly CI)
+~~14. `nix flake check --no-build` tree-wide at a quiescent moment before any push (shared-surface eval; parallel sessions active all morning).~~ **Won't implement — routine since.**
 
 **P1 — class guard**
-15. New lint: reject push-protection-pattern literals in tracked files (seed list: `sgp_[0-9a-f]{40}`; extensible table) — pre-commit + CI + flake check.
-16. Negative-test the new lint through `negative-test-lints.sh` (fail + pass cases, per repo convention).
-17. Lint fixture under `tests/fixtures/` (allowlisted) + `docs/CONTRIBUTING.md` guard-inventory row.
-18. Consider a repo-side gitleaks rule mirroring GitHub's patterns so a local scan catches the class before a push attempt.
+~~15. New lint: reject push-protection-pattern literals in tracked files (seed list: `sgp_[0-9a-f]{40}`; extensible table) — pre-commit + CI + flake check.~~ done at `scripts/audit-push-protection-literals.sh`
+~~16. Negative-test the new lint through `negative-test-lints.sh` (fail + pass cases, per repo convention).~~ done — scripts/negative-test-lints.sh gitleaks group
+~~17. Lint fixture under `tests/fixtures/` (allowlisted) + `docs/CONTRIBUTING.md` guard-inventory row.~~ done — .gitleaks.toml:110 fixture allowlist comment
+~~18. Consider a repo-side gitleaks rule mirroring GitHub's patterns so a local scan catches the class before a push attempt.~~ done at `.gitleaks.toml:31 sgp_-only rule override (bare-hex class dropped 2026-09-16)`
 
 **P2 — docs**
-19. GH013 runbook (provenance check → unblock used-in-tests → re-push → close alert → record behavior) — short doc or AGENTS.md pointer.
-20. Annotate the 08:50 gitleaks-coverage closeout doc with the push-protection gap (docs-health ANNOTATE, inline, non-destructive).
-21. TODO_LIST harvest from this report (docs-health HARVEST, with routing rigor — most P2 items are ROADMAP fuel).
-22. AGENTS.md empirical correction: `nix fmt -- --ci` formats in place in this repo's wrapper (observed 09:02, 9 files rewritten) — update the existing fmt gotcha.
+~~19. GH013 runbook (provenance check → unblock used-in-tests → re-push → close alert → record behavior) — short doc or AGENTS.md pointer.~~ done — docs/agents/git.md playbook
+~~20. Annotate the 08:50 gitleaks-coverage closeout doc with the push-protection gap (docs-health ANNOTATE, inline, non-destructive).~~ **Won't implement — one-shot annotation; AGENTS canon supersedes.**
+~~21. TODO_LIST harvest from this report (docs-health HARVEST, with routing rigor — most P2 items are ROADMAP fuel).~~ done at `CHANGELOG 2026-09-19 TODO system split`
+~~22. AGENTS.md empirical correction: `nix fmt -- --ci` formats in place in this repo's wrapper (observed 09:02, 9 files rewritten) — update the existing fmt gotcha.~~ done — AGENTS.md fmt gotcha
 
 **P2 — hygiene**
-23. Spot-check the daemon commits of my remaining two files (flake.nix substitution block, AGENTS.md bullet) — fixture `6da903c2` and harness `d1f8126c` already verified intact.
-24. Confirm the gitleaks group still passes AFTER the day's later daemon commits (fmt churn touched no fixture files, but re-run once at a quiescent moment).
-25. If the history purge ever runs: optionally add the sgp_ token to the `--replace-text` list (token is fake — optional, only if alert noise justifies).
-26. Doctrine for future detector fixtures: seed-derived tokens from day one (now in AGENTS.md — keep it enforced via item 15's lint).
-27. Check the unblock reason taxonomy against GitHub docs when executing (used_in_tests vs false_positive) and record which was picked.
-28. Evaluate a pre-push hook running the pattern lint (integration point next to the existing pre-commit stack).
-29. Verify `crushrc`-style config stores hold no copy of the crafted hex (session DB sweep, one grep) — expect clean, cheap to prove.
-30. After the eventual reboot/deploys resume: nothing in this incident touches deployed systems — confirm no deploy was attempted during the block window and no profile-anchoring drift resulted.
+~~23. Spot-check the daemon commits of my remaining two files (flake.nix substitution block, AGENTS.md bullet) — fixture `6da903c2` and harness `d1f8126c` already verified intact.~~ **Won't implement — stale spot-check.**
+~~24. Confirm the gitleaks group still passes AFTER the day's later daemon commits (fmt churn touched no fixture files, but re-run once at a quiescent moment).~~ **Won't implement — nightly CI covers.**
+~~25. If the history purge ever runs: optionally add the sgp_ token to the `--replace-text` list (token is fake — optional, only if alert noise justifies).~~ **Won't implement — moot (token fake; purge pending decision).**
+~~26. Doctrine for future detector fixtures: seed-derived tokens from day one (now in AGENTS.md — keep it enforced via item 15's lint).~~ done at `AGENTS.md seed-derived doctrine`
+~~27. Check the unblock reason taxonomy against GitHub docs when executing (used_in_tests vs false_positive) and record which was picked.~~ **Won't implement — superseded: unblock executed.**
+~~28. Evaluate a pre-push hook running the pattern lint (integration point next to the existing pre-commit stack).~~ done at `scripts/audit-push-protection-literals.sh in pre-commit`
+~~29. Verify `crushrc`-style config stores hold no copy of the crafted hex (session DB sweep, one grep) — expect clean, cheap to prove.~~ **Won't implement — stale one-shot.**
+~~30. After the eventual reboot/deploys resume: nothing in this incident touches deployed systems — confirm no deploy was attempted during the block window and no profile-anchoring drift resulted.~~ **Won't implement — moot.**
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

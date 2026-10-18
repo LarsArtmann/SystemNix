@@ -14,19 +14,19 @@
 
 ## b) PARTIALLY DONE
 
-1. **The third run's TODO_LIST harvest is MISSING.** Its report claims "New this run (appended to TODO_LIST, 5 work items + 2 blocked questions)" — grep of TODO_LIST for any of the five (GH013 unblock, pre-push history scan, purge-runnable check, `.tq-verify` rail commit check, second-scanner lint) returns **zero matches**; the last dated sections are "Added 2026-09-15 06:10" and "Added 2026-09-15 07:32". The report landed; the appends did not. This run re-appends them (adapted to the post-push reality — the unblock item is now a verification item, not an action item).
-2. **Zone 6 deployed-state verification** remains open exactly as the 06:10 run harvested it (parity, metric liveness, VM-test rebuild, counter-reset tolerance, notify-tier routing — all still open in TODO_LIST, all still valid).
-3. **`17acfe3d` is not on origin** — it carries the third-run report, the AGENTS corruption runbook, the `core.fsync` prevention, and (mixed in by the daemon) a parallel session's `modules/nixos/services/nix-email.nix`. The next push carries all of it.
-4. **The 08:50 session's tq env fix is still committed-but-not-live** (pool restart + DLQ rescue gated on the next deploy / `/nix` soak ~2026-09-17); sibling dead-letter `000001a09d2b6d052` still awaits it.
-5. **The held gitleaks purge** (the fabricated `120ada36` sentence): re-verified `git merge-base --is-ancestor 120ada36 origin/master` → **true** — the sentence is now on ORIGIN, which is expected (the push moved normal history; only a push-time re-filter or key rotation kills it), but it means the purge decision is now live-facing rather than theoretical. Unchanged doctrine: rotation is the real fix.
+~~1. **The third run's TODO_LIST harvest is MISSING.** Its report claims "New this run (appended to TODO_LIST, 5 work items + 2 blocked questions)" — grep of TODO_LIST for any of the five (GH013 unblock, pre-push history scan, purge-runnable check, `.tq-verify` rail commit check, second-scanner lint) returns **zero matches**; the last dated sections are "Added 2026-09-15 06:10" and "Added 2026-09-15 07:32". The report landed; the appends did not. This run re-appends them (adapted to the post-push reality — the unblock item is now a verification item, not an action item).~~ done — CHANGELOG 2026-09-19 TODO system split (lost appends re-landed then routinized)
+~~2. **Zone 6 deployed-state verification** remains open exactly as the 06:10 run harvested it (parity, metric liveness, VM-test rebuild, counter-reset tolerance, notify-tier routing — all still open in TODO_LIST, all still valid).~~ done at `docs/services/memory-emergency-guard.md (live runbook`, ` calibration evidence`, ` 2026-09-28/29 fixes)`
+~~3. **`17acfe3d` is not on origin** — it carries the third-run report, the AGENTS corruption runbook, the `core.fsync` prevention, and (mixed in by the daemon) a parallel session's `modules/nixos/services/nix-email.nix`. The next push carries all of it.~~ **Won't implement — stale one-shot; pushes routine since.**
+~~4. **The 08:50 session's tq env fix is still committed-but-not-live** (pool restart + DLQ rescue gated on the next deploy / `/nix` soak ~2026-09-17); sibling dead-letter `000001a09d2b6d052` still awaits it.~~ done — tests/test-tq-agent-pool.nix:78
+5. **The held gitleaks purge** (the fabricated `120ada36` sentence): re-verified `git merge-base --is-ancestor 120ada36 origin/master` → **true** — the sentence is now on ORIGIN, which is expected (the push moved normal history; only a push-time re-filter or key rotation kills it), but it means the purge decision is now live-facing rather than theoretical. Unchanged doctrine: rotation is the real fix. **→ docs/todo/security.md purge vs rotation-only decision row**
 
 ## c) NOT STARTED (skipped; none owned by the window's five tasks)
 
-1. Repo-generic CI do-analyzer (provide/invoke pairing lint) — TODO item open, untouched.
-2. Zone 6 threshold recalibration, `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, runbook entry — all harvested, none started.
-3. The owed evo-x2 reboot (flm :52626 corpse) — untouched, correctly.
-4. The llama.cpp gfx1150 mid-load-spin pin-back/bisect (RAG dark since 2026-09-14) — untouched.
-5. The deploy of the scrub-mechanism fix (`lib.getExe scrubGuard`) + the /data gate-(b) scrub — still deploy-gated.
+1. Repo-generic CI do-analyzer (provide/invoke pairing lint) — TODO item open, untouched. **→ docs/todo/upstream.md Repo-generic CI do-analyzer row**
+2. Zone 6 threshold recalibration, `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, runbook entry — all harvested, none started. **→ docs/todo/stability.md Zone 6 trip watch row**
+~~3. The owed evo-x2 reboot (flm :52626 corpse) — untouched, correctly.~~ done — docs/todo/stability.md corpse row
+4. The llama.cpp gfx1150 mid-load-spin pin-back/bisect (RAG dark since 2026-09-14) — untouched. **→ docs/todo/ai-stack.md llama.cpp spin bisect row**
+5. The deploy of the scrub-mechanism fix (`lib.getExe scrubGuard`) + the /data gate-(b) scrub — still deploy-gated. **→ docs/todo/storage.md /data corruption repair row**
 
 ## d) TOTALLY FUCKED UP
 
@@ -37,25 +37,25 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Closeout runs must verify their own writes post-commit** (grep TODO_LIST for the claimed appends; `git show --stat` the footer commit) — the 09:22 run is the cautionary tale, this run is the pattern.
-2. **Delta-first closeouts:** this fourth run cost ~1/3 of the third run's effort by re-reading instead of re-deriving. The queue-level dedupe question (owner) becomes more valuable with every run.
-3. **tq preflight needs a corrupted-repo lane:** on `git status` failing with object errors, requeue-with-delay + a distinct reason (or alert) instead of hot-looping claims every 3–14 minutes.
-4. **Multi-writer commits need per-file provenance:** `17acfe3d` mixes the closeout report, the corruption runbook, and a parallel session's `nix-email.nix` — the daemon-footer convention item (still open) covers the class.
-5. **Post-push secret verification:** the push landed without the pre-push history scan the third run planned; a post-hoc run of `scripts/scan-history-secrets.sh` over the pushed range closes the gap retroactively (appended).
+~~1. **Closeout runs must verify their own writes post-commit** (grep TODO_LIST for the claimed appends; `git show --stat` the footer commit) — the 09:22 run is the cautionary tale, this run is the pattern.~~ done at `docs/CONTRIBUTING.md`
+~~2. **Delta-first closeouts:** this fourth run cost ~1/3 of the third run's effort by re-reading instead of re-deriving. The queue-level dedupe question (owner) becomes more valuable with every run.~~ **Won't implement — practice note; dedup decision covers the class.**
+3. **tq preflight needs a corrupted-repo lane:** on `git status` failing with object errors, requeue-with-delay + a distinct reason (or alert) instead of hot-looping claims every 3–14 minutes. **→ docs/todo/upstream.md corrupted-repo preflight lane ready row**
+4. **Multi-writer commits need per-file provenance:** `17acfe3d` mixes the closeout report, the corruption runbook, and a parallel session's `nix-email.nix` — the daemon-footer convention item (still open) covers the class. **→ docs/todo/pipeline.md Task-Queue-ID row**
+~~5. **Post-push secret verification:** the push landed without the pre-push history scan the third run planned; a post-hoc run of `scripts/scan-history-secrets.sh` over the pushed range closes the gap retroactively (appended).~~ **Won't implement — superseded: CI secret-history-scan + post-hoc scans.**
 
 ## f) NEXT THINGS (delta only — the 06:10/07:32 sections above remain open and are not duplicated)
 
 Appended to TODO_LIST as "Added 2026-09-15 10:45" (7 work items + 2 blocked questions):
 
-1. Verify post-push CI is green and close the GitHub secret-scanning alerts for the four templated-fixture locations.
-2. Post-hoc `scripts/scan-history-secrets.sh` over the pushed range (the pre-push scan never ran).
-3. Verify the `.tq-verify` rail edits in `~/projects/CV` + `~/projects/go-taskqueue` actually got committed.
-4. Mechanical second-scanner lint (pre-commit + CI) rejecting tracked literals matching known push-protection patterns unless templated; template the two remaining literal fixtures.
-5. Reconcile the corruption timeline (AGENTS says runbook executed; tq shows the wedge until ~10:30) and confirm `core.fsync` reaches the deployed gitconfig (needs a deploy).
-6. Confirm the held purge runbook is now executable at the push point — or formally retire it (blocked, owner).
-7. Confirm the third run's own report/append pair is complete on origin once `17acfe3d` pushes.
-8. (blocked) Push scope settled itself (the push landed as-is) — the remaining owner question is whether the next push waits for the nix-email session to stage its flake.nix/flake.lock edits.
-9. (blocked) Closeout dedupe/rate-limit at the queue level — now four runs.
+1. Verify post-push CI is green and close the GitHub secret-scanning alerts for the four templated-fixture locations. **→ docs/todo/security.md**
+~~2. Post-hoc `scripts/scan-history-secrets.sh` over the pushed range (the pre-push scan never ran).~~ done — .github/workflows/secret-history-scan.yml
+~~3. Verify the `.tq-verify` rail edits in `~/projects/CV` + `~/projects/go-taskqueue` actually got committed.~~ done — docs/services/tq.md:143
+~~4. Mechanical second-scanner lint (pre-commit + CI) rejecting tracked literals matching known push-protection patterns unless templated; template the two remaining literal fixtures.~~ done at `scripts/audit-push-protection-literals.sh + templated fixtures`
+~~5. Reconcile the corruption timeline (AGENTS says runbook executed; tq shows the wedge until ~10:30) and confirm `core.fsync` reaches the deployed gitconfig (needs a deploy).~~ done — docs/agents/git.md core.fsync prevention landed
+6. Confirm the held purge runbook is now executable at the push point — or formally retire it (blocked, owner). **→ docs/todo/security.md purge row**
+~~7. Confirm the third run's own report/append pair is complete on origin once `17acfe3d` pushes.~~ **Won't implement — stale one-shot.**
+~~8. (blocked) Push scope settled itself (the push landed as-is) — the remaining owner question is whether the next push waits for the nix-email session to stage its flake.nix/flake.lock edits.~~ **Won't implement — push scope moot; pushes routine.**
+9. (blocked) Closeout dedupe/rate-limit at the queue level — now four runs. **→ docs/todo/upstream.md closeout dedup/rate-limit decision row**
 
 ## g) QUESTIONS FOR THE OWNER
 
