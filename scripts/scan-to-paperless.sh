@@ -111,6 +111,14 @@ frame_stats() {
   printf '%s mean=%s std=%s' "$( [ "$(blank_flag "$mean" "$std")" -eq 1 ] && echo BLANK-SUSPECT || echo ok)" "$mean" "$std"
 }
 
+frame_is_blank() {
+  local meanstd mean std
+  meanstd=$(magick "$1" -colorspace gray -format "%[fx:mean] %[fx:standard_deviation]" info:)
+  mean=${meanstd%% *}
+  std=${meanstd#* }
+  blank_flag "$mean" "$std"
+}
+
 # Scans one ADF batch into a fresh staging dir. Globals set: batch_rc,
 # batch_dir, frames (array). Never dies on scanimage failure.
 scan_batch() {
@@ -184,10 +192,20 @@ process_batch() {
       sheet="$prefix-$ts-$(printf '%02d' "$n").pdf"
       products+=("$sheet")
       if [ $((i + 1)) -lt ${#frames[@]} ]; then
-        magick "${frames[$i]}" "${frames[$((i + 1))]}" "$STAGING/out/$sheet"
-        s1=$(frame_stats "${frames[$i]}")
-        s2=$(frame_stats "${frames[$((i + 1))]}")
-        log "   $sheet (frames $((i + 1))+$((i + 2))): face1=$s1 face2=$s2"
+        first=${frames[$i]}
+        second=${frames[$((i + 1))]}
+        s1=$(frame_stats "$first")
+        s2=$(frame_stats "$second")
+        b1=$(frame_is_blank "$first")
+        b2=$(frame_is_blank "$second")
+        note=""
+        if [ "$b1" -eq 1 ] && [ "$b2" -eq 0 ]; then
+          first=${frames[$((i + 1))]}
+          second=${frames[$i]}
+          note=" [reordered: blank face moved to page 2]"
+        fi
+        magick "$first" "$second" "$STAGING/out/$sheet"
+        log "   $sheet (frames $((i + 1))+$((i + 2))): face1=$s1 face2=$s2$note"
       else
         magick "${frames[$i]}" "$STAGING/out/$sheet"
         s1=$(frame_stats "${frames[$i]}")
