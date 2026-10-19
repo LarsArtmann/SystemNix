@@ -66,7 +66,9 @@ lib.filterAttrs (_: v: v != null) {
   # branching-flow shim RE-ADDED (2026-10-19): upstream flake at the locked
   # rev carries a raw fakeHash placeholder (specified sha256-AAAA…), so the
   # probe was mandatory; got r/LYNVd+….
-  branching-flow = flakePkgShim inputs.branching-flow "default" "sha256-r/LYNVd+eGLWyVEpTQxk53Lkzo06kq8nixpHi0fkndc=";
+  branching-flow =
+    flakePkgShim inputs.branching-flow "default"
+      "sha256-r/LYNVd+eGLWyVEpTQxk53Lkzo06kq8nixpHi0fkndc=";
   # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
@@ -107,7 +109,9 @@ lib.filterAttrs (_: v: v != null) {
   # probe build arbitrates (go.mod differs at tip → hash may re-stale;
   # if so, `nix run .#update-vendor-hash` upstream is the blessed path).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  buildflow = flakePkgShim inputs.buildflow "default" "sha256-9y4NBzy3H8EYw5+TMnNIJYma5hCFrF4TlK3qWNRNXHg=";
+  buildflow =
+    flakePkgShim inputs.buildflow "default"
+      "sha256-9y4NBzy3H8EYw5+TMnNIJYma5hCFrF4TlK3qWNRNXHg=";
   # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
@@ -185,7 +189,9 @@ lib.filterAttrs (_: v: v != null) {
   # at tip 25b9f6a7 bakes the shim's own O2hpYHSc… value — bit-neutral
   # override (graph verified identical tip-vs-lock). Re-add ONLY via
   # nix-hash-fix evidence, never by hand.
-  go-structure-linter = flakePkgShim inputs.go-structure-linter "default" "sha256-cYR8eZnXCST90Pc2xGA0uO4tspIrkGIG2cVKPeyRRAw=";
+  go-structure-linter =
+    flakePkgShim inputs.go-structure-linter "default"
+      "sha256-cYR8eZnXCST90Pc2xGA0uO4tspIrkGIG2cVKPeyRRAw=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
   # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
@@ -199,7 +205,9 @@ lib.filterAttrs (_: v: v != null) {
   # shim's own IGt6Neha… value ("Managed by buildflow nix-checker") —
   # bit-neutral override. Re-add ONLY via nix-hash-fix evidence, never by
   # hand.
-  golangci-lint-auto-configure = flakePkgShim inputs.golangci-lint-auto-configure "default" "sha256-0VvVtsy3kjSoqtplM9p6SwR+OMRwVwKqOa5DI9NeCnE=";
+  golangci-lint-auto-configure =
+    flakePkgShim inputs.golangci-lint-auto-configure "default"
+      "sha256-0VvVtsy3kjSoqtplM9p6SwR+OMRwVwKqOa5DI9NeCnE=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT). Pure interactive tool: no daemon, no port, no
   # service module. Upstream repo is PRIVATE (github: input + CI deploy
@@ -241,10 +249,14 @@ lib.filterAttrs (_: v: v != null) {
   # vendorHash.nix at tip f341c715 bakes the shim's own lSE3snyu… value —
   # bit-neutral override (graph verified identical tip-vs-lock). Re-add
   # ONLY via nix-hash-fix evidence, never by hand.
-  project-dependency-graph = flakePkgShim inputs.project-dependency-graph "default" "sha256-ZuiValdTRHYZZJ6OSXPSrrFIg9k+eyk4JxvQ/McTHdY=";
+  project-dependency-graph =
+    flakePkgShim inputs.project-dependency-graph "default"
+      "sha256-ZuiValdTRHYZZJ6OSXPSrrFIg9k+eyk4JxvQ/McTHdY=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
-  mr-sync = flakePkgShim inputs.mr-sync "default" "sha256-yB73mr06xZTAzAx5M1qyBmM75umJ7baOuPo+RcokFOg=";
+  mr-sync =
+    flakePkgShim inputs.mr-sync "default"
+      "sha256-yB73mr06xZTAzAx5M1qyBmM75umJ7baOuPo+RcokFOg=";
   # mr-sync shim DROPPED (2026-10-17 wave): upstream flake.nix:126 at tip
   # 71d6b0d4 bakes the shim's own KaDlWefE… value — bit-neutral override
   # (lock == tip; module surface dropped in the same pass). Re-add ONLY
@@ -273,7 +285,9 @@ lib.filterAttrs (_: v: v != null) {
   # override (graph verified identical tip-vs-lock; value identity makes
   # provenance moot even though pdd does not follow our pins). Re-add ONLY
   # via nix-hash-fix evidence, never by hand.
-  project-discovery-daemon = flakePkgShim inputs.project-discovery-daemon "default" "sha256-jLpz/NzHqndZbeHYX/afHaXif/u/70iBuqkGPtPy0oo=";
+  project-discovery-daemon =
+    flakePkgShim inputs.project-discovery-daemon "default"
+      "sha256-jLpz/NzHqndZbeHYX/afHaXif/u/70iBuqkGPtPy0oo=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim

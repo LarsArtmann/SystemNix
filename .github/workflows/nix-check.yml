@@ -43,6 +43,7 @@ jobs:
           # auth is transport-level — the agent key serves any fetch depth).
           NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH }}
           NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK }}
+          NIX_DEPLOY_KEY_JOURNAL: ${{ secrets.NIX_DEPLOY_KEY_JOURNAL }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
@@ -52,6 +53,7 @@ jobs:
           printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_JOURNAL" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
@@ -238,6 +240,7 @@ jobs:
           NIX_DEPLOY_KEY_BUILDFLOW: ${{ secrets.NIX_DEPLOY_KEY_BUILDFLOW }}
           NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH }}
           NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK }}
+          NIX_DEPLOY_KEY_JOURNAL: ${{ secrets.NIX_DEPLOY_KEY_JOURNAL }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
           printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
@@ -247,6 +250,7 @@ jobs:
           printf '%s\n' "$NIX_DEPLOY_KEY_BUILDFLOW" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH" | ssh-add -
           printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEY_JOURNAL" | ssh-add -
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"

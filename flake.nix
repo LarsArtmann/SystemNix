@@ -870,6 +870,11 @@
     inboxclean.inputs.git-hooks.follows = "git-hooks";
     library-policy.inputs.git-hooks.follows = "git-hooks";
     index.inputs.flake-parts.follows = "flake-parts";
+    journal.inputs.flake-parts.follows = "flake-parts";
+    # journal nixpkgs deliberately NOT followed (FOD-governing go
+    # toolchain — deliberate table entry in lib/lock-audit.nix). Deep
+    # treefmt copy via its own go-nix-helpers pin (eval-only dep).
+    journal.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     monitor365.inputs.flake-parts.follows = "flake-parts";
     monitor365.inputs.treefmt-nix.follows = "treefmt-nix";
     nsfw-classifier.inputs.flake-parts.follows = "flake-parts";
