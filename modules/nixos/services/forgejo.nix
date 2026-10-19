@@ -647,6 +647,27 @@ _: {
           };
         };
 
+        # nixpkgs-rendered family units (the dump/secrets sub-options of
+        # services.forgejo) consume the DB/config inside the dedicated
+        # subvol, so the forgejo-family-condition-audit construction rule
+        # applies to them the same as to every hand-written family unit:
+        # gate on .subvol-migrated + pull the mount (2026-10-19 — the new
+        # audit flagged them the moment it landed; without the gate a
+        # dedicated generation deployed before finalize would run the dump
+        # against an empty/stale subvol).
+        systemd.services.forgejo-dump = lib.mkIf dedicated {
+          unitConfig = {
+            RequiresMountsFor = [ stateDir ];
+            ConditionPathExists = subvolMigratedCondition;
+          };
+        };
+        systemd.services.forgejo-secrets = lib.mkIf dedicated {
+          unitConfig = {
+            RequiresMountsFor = [ stateDir ];
+            ConditionPathExists = subvolMigratedCondition;
+          };
+        };
+
         # --- Staged-primary Phase 1 capability units (plan M05-M08) ---
 
         # Operator-run flip (plan M06): converts a disposable pull mirror to
