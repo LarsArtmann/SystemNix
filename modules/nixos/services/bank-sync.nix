@@ -771,7 +771,7 @@
                       echo "bank-sync-qonto-paperless: created $endpoint '$name' (id $id)" >&2
                     fi
                     case "$id" in
-                      ''|*[!0-9]*)
+                      ""|*[!0-9]*)
                         echo "bank-sync-qonto-paperless: ensure_named($endpoint, '$name') produced a non-numeric id '$id' — refusing to upload with it" >&2
                         exit 1
                         ;;
