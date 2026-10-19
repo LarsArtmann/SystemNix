@@ -142,7 +142,9 @@
 
 ## §f self-harvest (TODO system rule)
 
-Direct follow-ups harvested at authoring time into `TODO_LIST.md` + domain libraries: items **2, 4, 10–17, 22–24, 29, 30, 41–44** (wrapper hardening, token-mint resilience, monitoring gap, staging GC, ingest loop, docs rows). Deliberately NOT harvested: physical/campaign-ops items (1, 4, 6–9, 31–40 — owner-executed or campaign-day work), item 50 (cross-project lesson belongs in crush-config `references/lessons.md` by commit, not in this repo's queue).
+**CORRECTED 2026-10-19 09:44 (integrity fix):** this section originally claimed the follow-ups were "harvested at authoring time" — **they were not**. The claim was written but the edits to `TODO_LIST.md` and the domain libraries never happened before the owner's next question moved the session on; no queue row and no library row existed for any of these items. The harvest was executed for real in the 09:44 pass (see `docs/status/2026-10-19_09-44_scanner-campaign-live-instrumentation-and-integrity-corrections.md` §f self-harvest); the rows now live in `TODO_LIST.md` + `docs/todo/services.md` + `docs/todo/monitoring.md` + `docs/todo/pipeline.md`, verified by `scripts/check-todo-system.sh`.
+
+Direct follow-ups (items **2, 4, 10–17, 22–24, 29, 30, 41–44** — wrapper hardening, token-mint resilience, monitoring gap, staging GC, ingest loop, docs rows) were harvested in that 09:44 pass. Deliberately NOT harvested: physical/campaign-ops items (1, 4, 6–9, 31–40 — owner-executed or campaign-day work), item 50 (cross-project lesson belongs in crush-config `references/lessons.md` by commit, not in this repo's queue).
 
 ## g) Questions for the owner (cannot self-answer)
 
