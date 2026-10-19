@@ -62,6 +62,14 @@
 
 **Harvest note:** per the standing "THEN WAIT FOR INSTRUCTIONS", §f is NOT harvested into TODO_LIST/domain libraries; deferral recorded here (TODO-system rule). The 02:16 report's deferral stands unharvested as well.
 
+**DEFERRAL LIFTED + TRIAGED 2026-10-19 11:0x (scanner-campaign session):** the campaign resumed (the user reported the scanner "scanning nothing" — a dead watch loop, fixed the same session), so the deferral is spent. Triage of all 25 items:
+
+- **Done:** #1–#6 (Wave-6 restore executed by the owner 07:21–07:31 and verified; post-restore chain green; duplicate policy answered = keep `DELETE_DUPLICATES=true`; first timed batch measured; scan profile codified in `scripts/scan-to-paperless.sh`; simplex/duplex-per-media confirmed — receipts simplex, invoices duplex).
+- **Already covered by other rows (no duplicate created):** #7 calm-post-deploy smoke re-run (pipeline.md), #8 Monitor365 agent CB deadlock + #9 node_exporter/paperless-web journal spam (monitoring.md / stability.md rows from the parallel sessions), #11 nsfw-classifier CPU (stability.md/pipeline.md), #12 FastFlowLM `:52625` (monitoring.md "patch the socket's ActiveState" row).
+- **Resolved by probe, not by work:** #10 "textfile collector rejects `paperless_tasks.prom` (value-less lines)" — re-read live at 11:05 2026-10-19: the file is well-formed (HELP/TYPE + samples only, fresh mtime), so the value-less-line emission did not survive the DB restore; the residual risk is a *second* occurrence going unnoticed, which the new monitoring.md FAILED-backlog row covers.
+- **Harvested now:** #13 runbook → done via `docs/services/scanner.md` (remainder tracked in the queue); #14 FEATURES/CHANGELOG → done; #15 AGENTS routing line → declined, recorded in the queue row; #23 date-extraction spot-check → merged with the 02:16 §f20-21 row (services.md); #24 post-campaign export/restic → storage.md `[watch]`; #25 Canon PIXMA provenance → services.md `[ready]`.
+- **Deliberately NOT harvested, with reason:** #16 candidate eval-time lint (chmod/chown in non-`+` preStart) — already a live pipeline.md row from the 09-44 harvest; #17–#20 training milestone / carrier sheet / PATCH-T separators / thermal-fade test — deduped into the 02:16 report's rows above so the same ask is not queued twice; #21 jam-recovery procedure → folded into the docs-refresh remainder row; #22 WiFi route → covered by the transport `[decision]` row.
+
 ---
 
 ## f) NEXT THINGS (impact-sorted; `[d]` dispatch-grade, `[r]` roadmap/decision; owner = this session unless marked)
