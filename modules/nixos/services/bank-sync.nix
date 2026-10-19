@@ -745,21 +745,37 @@
                   base="$BANK_SYNC_PAPERLESS_URL"
                   token="$BANK_SYNC_PAPERLESS_TOKEN"
 
+                  # --fail-with-body: a rejected upload must print the API's
+                  # own error body to the journal (curl -f alone discards
+                  # it — the 04:03 400 was opaque until this lesson).
                   api() {
-                    curl -fsS --retry 3 --retry-delay 2 -H "Authorization: Token $token" "$@"
+                    curl -fsS --fail-with-body --retry 3 --retry-delay 2 -H "Authorization: Token $token" "$@"
                   }
 
                   # ensure_named <endpoint> <name> -> id (find-or-create by
                   # exact case-insensitive name). DRF name__iexact needs
                   # URL encoding for names with spaces (-G --data-urlencode).
+                  # Diagnostics go to STDERR ONLY: this helper's stdout is
+                  # consumed by $() capture — a create-echo on stdout
+                  # pollutes the id with a multiline diagnostic and the
+                  # upload then sends garbage form values (the 04:03
+                  # HTTP-400 root cause: "correspondent=<created ...>"
+                  # instead of a numeric id). The numeric guard makes any
+                  # future pollution a loud unit failure, not a bad upload.
                   ensure_named() {
                     endpoint="$1"
                     name="$2"
                     id=$(api -G --data-urlencode "name__iexact=$name" "$base/api/$endpoint/" | jq -r '.results[0].id // empty')
                     if [ -z "$id" ]; then
                       id=$(api -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$name\"}" "$base/api/$endpoint/" | jq -r '.id')
-                      echo "bank-sync-qonto-paperless: created $endpoint '$name' (id $id)"
+                      echo "bank-sync-qonto-paperless: created $endpoint '$name' (id $id)" >&2
                     fi
+                    case "$id" in
+                      ''|*[!0-9]*)
+                        echo "bank-sync-qonto-paperless: ensure_named($endpoint, '$name') produced a non-numeric id '$id' — refusing to upload with it" >&2
+                        exit 1
+                        ;;
+                    esac
                     printf '%s' "$id"
                   }
 

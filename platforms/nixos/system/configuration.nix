@@ -682,6 +682,34 @@ in
           cow = true;
           unit = "dnsblockd.service";
         };
+        # Wave 6 (2026-10-19, owner-directed window): the SHARED PostgreSQL
+        # cluster (immich + paperless + miniflux + geometrikks co-tenants,
+        # cluster declared in geometrikks.nix) → Samsung TLC. cow=false is the
+        # RATIFIED value (hot-db.md snippet + storage.md verdict: large-file
+        # fragmentation rationale; WAL provides integrity; dump-only RPO —
+        # the cluster leaves @ snapshot coverage with this wave, all four
+        # pg_dump legs are the fast restore path). Mounts the PARENT
+        # /var/lib/postgresql: postgresql.service carries
+        # StateDirectory=postgresql postgresql/17 → both implicit
+        # RequiresMountsFor paths resolve through the parent mount (fail-
+        # closed — a detached Samsung can never shadow-write WAL to the QLC
+        # root). extraUnits = all four pg_dump legs (each reads the cluster
+        # over the socket; the anti-shadow wiring keeps them from running
+        # unmounted). Prepared + cut over BEFORE this entry landed (the
+        # empty-subvol shadow-split landmine cannot spring). Bank-sync +
+        # paperless-gpt ride plain postgresql.service ordering — no dataDir
+        # file access (hot-db.md snippet note).
+        entries.postgres = {
+          path = "/var/lib/postgresql";
+          cow = false;
+          unit = "postgresql.service";
+          extraUnits = [
+            "immich-db-backup.service"
+            "miniflux-backup.service"
+            "paperless-db-backup.service"
+            "geometrikks-db-backup.service"
+          ];
+        };
       };
       # User cache subvolumes → Samsung TLC (2026-09-18/19 IO-audit
       # relocation): the nix fetch cache (~8.7 G gitv3+tarballs) leaves the
