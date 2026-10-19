@@ -887,7 +887,10 @@
                 );
               };
             in
-            pkgs.runCommand "forgejo-family-condition-selftest" { inherit legs; } ''
+            # `legs` (not { inherit legs; }): runCommand's env attrset takes
+            # the per-leg JSON strings directly — the inherit form coerced
+            # the whole attrset to a string and failed check eval.
+            pkgs.runCommand "forgejo-family-condition-selftest" legs ''
               set -u
               fail() { echo "SELFTEST FAIL: $1"; exit 1; }
               [ "$clean" = "[]" ] || fail "compliant family flagged: $clean"
