@@ -255,11 +255,14 @@ verify_product() {
 
 # Copies only the named products (never a directory glob — re-delivering a
 # leftover file is silently discarded by the duplicate policy) and drops each
-# one from staging once it is safely in consume.
+# one from staging once it is safely in consume. The explicit chmod matters:
+# the consumer runs as another user, and a delivered file without read
+# permission is skipped silently and forever (a mode-600 phone photo sat
+# unread in consume for 2h20m on 2026-10-19).
 deliver_out() {
   local f rc=0
   for f in "$@"; do
-    if cp "$STAGING/out/$f" "$CONSUME/"; then
+    if cp "$STAGING/out/$f" "$CONSUME/" && chmod 0644 "$CONSUME/$f"; then
       rm -f "$STAGING/out/$f"
     else
       fail "failed copying $f into consume (ACL/group write?)"
