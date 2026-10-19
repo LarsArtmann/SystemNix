@@ -26,7 +26,7 @@
 ## b) PARTIALLY DONE
 
 1. **The migration itself has NOT run** — the structural fix is deployed but inert: `/mnt/hot` hosts only `nix/` (no `crush/`), and `~/projects/.crush` is still a REAL dir with `crush.db`. Expected cause: the pgrep guard — live crush sessions (this report's own agent + the tq pool) block every run, and the convergence windows are scarce (observed live on 2026-09-16). The 2026-09-14 storm driver is STILL LIVE until the first migration completes.
-2. **PSI before/after measurement impossible until b1 happens** (`node_psi_io_some_avg60` vs the 40-60% baseline; Zone-6 trip count watch).
+~~2. **PSI before/after measurement impossible until b1 happens** (`node_psi_io_some_avg60` vs the 40-60% baseline; Zone-6 trip count watch).~~ done — PSI before/after DONE 2026-09-29: storage.md:106
 3. **No runtime evidence for the unit at all** — 4 review fixes, zero real executions anywhere (VM test + fixtures only). The unit's first real run is also its first untested-in-production moment (~42 GiB payload estimate).
 4. **Niri fix deployed but incident-path-unconfirmed**: no replay of the 2026-08-24 bounce cadence against the live collector, and no real SDDM login confirmation yet (user action).
 5. **The unbuilt-check debt item closed mid-window** (the VM test was built in the 05-44 verification session), but the "build every NEW check before it can block a deploy" policy was never written down.
@@ -56,7 +56,7 @@
 2. **Commit staged work IMMEDIATELY after staging** (before doc writing) to shrink the daemon's race window, and pre-settle known-red gates (replicated staged-tree gitleaks scan) before the first commit attempt — the informed `--no-verify` on attempt one beats a blocked attempt.
 3. **"Build every NEW check once before it can block a deploy"** belongs in the pre-deploy checklist; "pressure-aware verification policy" (PSI ≥20% ⇒ eval/fmt/fixture only, no VM builds) belongs in CONTRIBUTING.md.
 4. **Persist a rendered-script fixture runner** for the migrate unit (extract + standard env patches in ONE file) so fast-loop testing doesn't drift from unit reality.
-5. **Provisioner-loop membership ⇒ unit must be enabled** should be an eval-time guard (deploy-restart-audit extension), not a reviewer catch.
+~~5. **Provisioner-loop membership ⇒ unit must be enabled** should be an eval-time guard (deploy-restart-audit extension), not a reviewer catch.~~ done — storage.md:124 review fixes verified 2026-09-29
 6. **Daemon footer carry** (queue reads a per-task file/env and appends the Task-Queue-ID to swept commits) would end the remap dance — user-owned infra.
 7. **Flag passingly-noticed defects immediately** (the silent-exit-0 + no-alerting shape sat unflagged for a session); write self-referential commit-mapping claims only about commits that already exist.
 

@@ -25,6 +25,127 @@ in
     path: mode: user: group:
     "d ${path} ${mode} ${user} ${group} -";
 
+  # mkPoolDirUnit: the cv-backup-dir pattern (2026-09-04) as a unit generator
+  # — the ONLY sanctioned creator of a directory that lives under a removable
+  # mount (/mnt/pool). Supersedes the per-module copy of this shape in
+  # cv/miniflux/browser-history/geometrikks/signoz/paperless/discordsync.
+  #
+  # Invariants baked in (do not relax at call sites):
+  #   - root oneshot, RemainAfterExit, wantedBy multi-user — mkdir/chown/chmod
+  #     are idempotent, so every boot/deploy re-runs safely
+  #   - RequiresMountsFor AND ReadWritePaths target the MOUNT ROOT, never the
+  #     leaf: on a fresh pool nothing creates the leaf before this unit's
+  #     namespace is set up, and a ReadWritePaths entry under the mountpoint
+  #     aborts with 226/NAMESPACE before the script can mkdir
+  #   - NEVER replace with a tmpfiles rule: pre-mount creation lands on the
+  #     root fs and shadows the pool copy (the 9-day DAS shadow-dir incident)
+  #   - chown to a service user needs CAP_CHOWN (harden{}'s empty default
+  #     bounding set strips it); CAP_FOWNER covers the follow-up chmod on the
+  #     then-foreign-owned dir (2026-09-22 EPERM class); CAP_DAC_OVERRIDE
+  #     covers traversal. Owner omitted → dir stays root-owned, no caps needed.
+  #
+  # Returns a full systemd service attrset:
+  #   systemd.services.foo-backup-dir = mkPoolDirUnit {
+  #     description = "Create Foo backup directory on the HDD pool";
+  #     directory = backupDir;
+  #     owner = "postgres";   # omit → root-owned (chmod-only)
+  #   };
+  mkPoolDirUnit =
+    {
+      description,
+      directory,
+      owner ? null,
+      group ? owner,
+      mode ? "0755",
+      mountRoot ? "/mnt/pool",
+      memoryMax ? "128M",
+    }:
+    {
+      inherit description;
+      wantedBy = [ "multi-user.target" ];
+      unitConfig.RequiresMountsFor = [ mountRoot ];
+      serviceConfig = lib.mkMerge [
+        {
+          Type = "oneshot";
+          User = "root";
+          RemainAfterExit = true;
+        }
+        (harden (
+          {
+            inherit memoryMax;
+            ReadWritePaths = [ mountRoot ];
+          }
+          // lib.optionalAttrs (owner != null) {
+            CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+          }
+        ))
+        (serviceOneshotDefaults { })
+      ];
+      script = lib.concatStringsSep "\n" (
+        [ "mkdir -p ${directory}" ]
+        ++ lib.optional (owner != null) "chown ${owner}:${group} ${directory}"
+        ++ [ "chmod ${mode} ${directory}" ]
+      );
+    };
+
+  # unitExecText: a unit's Exec* line texts + Environment entries as one
+  # concatenated string — the shared scan surface of the port-registry and
+  # gatus-coverage eval audits (identical scanner, zero drift: a new Exec
+  # key or Environment form added here lands in BOTH audits at once).
+  # " \n " separator keeps line-position info for error messages.
+  unitExecText =
+    svc:
+    let
+      scanKeys = [
+        "ExecStart"
+        "ExecStartPre"
+        "ExecStartPost"
+        "ExecStop"
+        "ExecStopPost"
+        "ExecReload"
+        "ExecCondition"
+      ];
+      envToString =
+        env:
+        if builtins.isAttrs env then
+          lib.mapAttrsToList (k: v: "${k}=${toString v}") env
+        else
+          map toString (lib.toList env);
+    in
+    lib.concatStringsSep " \n " (
+      (map (
+        k:
+        if svc.serviceConfig ? ${k} then
+          (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k}))
+        else
+          ""
+      ) scanKeys)
+      ++ (lib.optionals (svc.serviceConfig ? Environment) (envToString svc.serviceConfig.Environment))
+    );
+
+  # extractPortLiterals: port numbers from unit Exec/Environment text in the
+  # three forms this repo actually writes them:
+  #   host-form   127.0.0.1:8099 / localhost 25 / 0.0.0.0:53
+  #   colon-form  <non-alnum>:<digits>   (listen=:8100, http://host:8080/x)
+  #   flag-form   --port 8100 / --port=8100
+  # Trailing boundary excludes letters so model-tag lookalikes
+  # ("qwen3.6-moe:35b-a3b" — live false positive on first deploy of the
+  # port-registry guard) never match; "--port=8100abc" is not a port literal.
+  # KNOWN LIMITATION: word:NNN tokens ("DELAY:300") are lexically
+  # indistinguishable from host:port ("resend.com:587" — letters before the
+  # colon are legitimate hostnames) and DO extract when NNN is in the 2-65535
+  # range; per-audit allowPorts is the sanctioned escape.
+  extractPortLiterals =
+    text:
+    let
+      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9a-zA-Z]|$))";
+      parts = builtins.split portRegex text;
+      digitGroups = builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null) (
+        lib.flatten (map (x: if builtins.isList x then x else [ ]) parts)
+      );
+    in
+    lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups));
+
   mkSecretCheck =
     pkgs:
     {

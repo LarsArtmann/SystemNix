@@ -44,6 +44,7 @@ in
       packages = mkPackages pkgs;
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkPoolDirUnit
         serviceDefaults
         serviceOneshotDefaults
         serviceTypes
@@ -751,34 +752,10 @@ in
               # Pool leaf via the cv/miniflux dir-oneshot shape; the
               # .last_success sentinel feeds backup-coordination (a dir-style
               # backup has no single dump file to stat).
-              systemd.services.clickhouse-db-backup-dir = {
+              systemd.services.clickhouse-db-backup-dir = mkPoolDirUnit {
                 description = "Create ClickHouse backup directory on the HDD pool";
-                wantedBy = [ "multi-user.target" ];
-                unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-                serviceConfig = lib.mkMerge [
-                  {
-                    Type = "oneshot";
-                    User = "root";
-                    RemainAfterExit = true;
-                  }
-                  (harden {
-                    MemoryMax = "128M";
-                    # Targets the MOUNT ROOT (cv-backup-dir 226/NAMESPACE
-                    # lesson): on a fresh pool the leaf does not exist yet.
-                    ReadWritePaths = [ "/mnt/pool" ];
-                    # chown to clickhouse so the server-side backup writer
-                    # (running inside clickhouse.service as User=clickhouse)
-                    # can create the run directories; harden{}'s empty
-                    # bounding set would strip CAP_CHOWN.
-                    CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-                  })
-                  (serviceOneshotDefaults { })
-                ];
-                script = ''
-                  mkdir -p ${chBackupDir}
-                  chown clickhouse:clickhouse ${chBackupDir}
-                  chmod 0755 ${chBackupDir}
-                '';
+                directory = chBackupDir;
+                owner = "clickhouse";
               };
 
               systemd.services.clickhouse-db-backup = {

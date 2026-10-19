@@ -33,6 +33,7 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         mkOidcGate
+        mkPoolDirUnit
         onFailure
         ports
         serviceOneshotDefaults
@@ -682,31 +683,9 @@
         # the pool (RequiresMountsFor), which is host-shaped — evo-x2 opts
         # in via configuration.nix (profileProbe precedent).
         (lib.mkIf (cfg.enable && cfg.dbBackup.enable) {
-          systemd.services.browser-history-backup-dir = {
+          systemd.services.browser-history-backup-dir = mkPoolDirUnit {
             description = "Create Browser History DB backup directory on the HDD pool";
-            wantedBy = [ "multi-user.target" ];
-            unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                User = "root";
-                RemainAfterExit = true;
-              }
-              # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
-              # a fresh pool has no backups/ leaf yet, and a ReadWritePaths
-              # entry under the mountpoint would abort with 226/NAMESPACE
-              # before the script can mkdir.
-              (harden {
-                MemoryMax = "128M";
-                ReadWritePaths = [ "/mnt/pool" ];
-                CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
-              })
-              (serviceOneshotDefaults { })
-            ];
-            script = ''
-              mkdir -p ${backupDir}
-              chmod 0755 ${backupDir}
-            '';
+            directory = backupDir;
           };
 
           systemd.services.browser-history-backup = {

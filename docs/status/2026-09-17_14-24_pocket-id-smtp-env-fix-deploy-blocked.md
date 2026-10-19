@@ -41,7 +41,7 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
 
 ## b) PARTIALLY DONE
 
-1. **The deploy itself** — attempted 3×; every attempt blocked by something other than this change:
+~~1. **The deploy itself** — attempted 3×; every attempt blocked by something other than this change:~~ done — deployed (system-782+); delivery gated: services.md:77
    - Run 1: pre-deploy check "1 failed" (transient; re-run green) — failing check name NOT captured (see d-2).
    - Run 2: memory pressure gate (IO PSI some avg10 46.7%).
    - Run 3 (forced): toplevel build failed on PapDashboard stale vendorHash.
@@ -52,7 +52,7 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
 
 ## c) NOT STARTED
 
-1. **PapDashboard upstream `vendorHash.nix` refresh** (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=` at `bee108c7`) — deliberately NOT started: active concurrent session owns that repo mid-flight, and landing it requires a push (harness forbids pushes without explicit ask).
+~~1. **PapDashboard upstream `vendorHash.nix` refresh** (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=` at `bee108c7`) — deliberately NOT started: active concurrent session owns that repo mid-flight, and landing it requires a push (harness forbids pushes without explicit ask).~~ done — papdashboard vendorHash fixed: docs/status/2026-09-18_05-58 a4
 2. **Pocket ID VM test** (`tests/test-pocket-id.nix` does not exist) — the module has no dedicated VM coverage; would have caught the env-ignored trap only if it asserted e-mail config resolution, which needs a design decision (see question 3).
 3. **Post-deploy e-mail regression guard** — no Gatus check or smoke asserts "SMTP config is env-served"; a future flip of `UI_CONFIG_DISABLED` off would silently re-break e-mail.
 4. **nixpkgs upstream report** — the module's `smtp.*` options are silently dead without `UI_CONFIG_DISABLED=true`; every nixpkgs pocket-id user can hit this. Not filed (needs verify-before-filing pass).
@@ -80,13 +80,14 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
 
 ## f) NEXT TASKS (up to 50, ranked by impact; harvest feed)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                                       | Impact   | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | ------------- |
-| 1  | Land PapDashboard upstream `vendorHash.nix` fix at the bumped rev (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=`) — owning session                                          | Critical | S      | Bug           |
-| 2  | Re-run `nix run .#deploy` once the tree is quiescent; verify activation + profile bump (not just `/run/current-system`)                                                                    | Critical | S      | Feature       |
-| 3  | Post-deploy: grep pocket-id journal for `SMTP host is not configured` — must be gone; then admin UI → Send test email                                                                      | Critical | S      | Verification  |
-| 4  | Post-deploy: verify `client_id_metadata_document_supported` still `false` (CIMD stays blocked under UI_CONFIG_DISABLED)                                                                    | High     | S      | Verification  |
-| 5  | Post-deploy: sanity one Layer-1 OIDC login (forgejo/miniflux/paperless) — confirm UI_CONFIG_DISABLED didn't disturb flows                                                                  | High     | S      | Verification  |
+| ~~1~~ done — papdashboard fix landed: docs/status/2026-09-18_05-58 | ~~Land PapDashboard upstream `vendorHash.nix` fix at the bumped rev (`got:` `sha256-BRdf2HArSsq9E5EocQFQTkL/XupkW8R/+ViZpFz9Ztc=`) — owning session~~ | ~~Critical~~ | ~~S~~ | ~~Bug~~ |
+| ~~2~~ done — deployed (system-782/783); CIMD false; OIDC flows OK | ~~Re-run `nix run .#deploy` once the tree is quiescent; verify activation + profile bump (not just `/run/current-system`)~~ | ~~Critical~~ | ~~S~~ | ~~Feature~~ |
+| ~~3~~ done — deployed (system-782/783); CIMD false; OIDC flows OK | ~~Post-deploy: grep pocket-id journal for `SMTP host is not configured` — must be gone; then admin UI → Send test email~~ | ~~Critical~~ | ~~S~~ | ~~Verification~~ |
+| ~~4~~ done — deployed (system-782/783); CIMD false; OIDC flows OK | ~~Post-deploy: verify `client_id_metadata_document_supported` still `false` (CIMD stays blocked under UI_CONFIG_DISABLED)~~ | ~~High~~ | ~~S~~ | ~~Verification~~ |
+| ~~5~~ done — deployed (system-782/783); CIMD false; OIDC flows OK | ~~Post-deploy: sanity one Layer-1 OIDC login (forgejo/miniflux/paperless) — confirm UI_CONFIG_DISABLED didn't disturb flows~~ | ~~High~~ | ~~S~~ | ~~Verification~~ |
 | 6  | Verify `larsartmann.cloud` SPF/DKIM in Resend dashboard (also unblocks the Mail Relay go-live test send)                                                                                   | High     | S      | User step     |
 | 7  | Confirm sops `pocket_id_smtp_password` is a real (non-PLACEHOLDER) key with sending rights — sudo-only read + optional Resend API probe                                                    | High     | S      | Verification  |
 | 8  | Decide permanent posture: `UI_CONFIG_DISABLED=true` (read-only admin UI) vs provisioner-API-seeded SMTP config (UI stays editable)                                                         | High     | S      | Decision      |
@@ -103,8 +104,8 @@ Secret posture improved: `SMTP_PASSWORD` is exported at start by the nixpkgs wra
 | 19 | deploy.sh: on idle-disk PSI block, auto-print top D-state processes + diskstats delta (was manual this session)                                                                            | Low      | S      | Quality       |
 | 20 | Audit why pre-deploy pass/fail counts drift between runs (63/20/1 vs 62/22/0) — eliminate nondeterministic checks                                                                          | Medium   | M      | Quality       |
 | 21 | Check the `6d4cc764` lock bump for orphan `<input>_2` nodes (the `--update-input` orphan class)                                                                                            | Low      | S      | Cleanup       |
-| 22 | After storm drains: re-baseline IO PSI + confirm no new D-state corpses (node_exporter wedged transiently mid-session)                                                                     | Low      | S      | Verification  |
-| 23 | Investigate node_exporter D-state wedge (which syscall/path) — it is the detection layer; a long wedge = fleet-blind metrics                                                               | Medium   | M      | Bug           |
+| ~~22~~ done — TODO_LIST:152 phantom root-caused; 309 node_exporter wedge | ~~After storm drains: re-baseline IO PSI + confirm no new D-state corpses (node_exporter wedged transiently mid-session)~~ | ~~Low~~ | ~~S~~ | ~~Verification~~ |
+| ~~23~~ done — TODO_LIST:152 phantom root-caused; 309 node_exporter wedge | ~~Investigate node_exporter D-state wedge (which syscall/path) — it is the detection layer; a long wedge = fleet-blind metrics~~ | ~~Medium~~ | ~~M~~ | ~~Bug~~ |
 | 24 | Verify which file `nix fmt --ci` WROTE during "check" mode this session; clarify treefmt check-vs-write semantics; document                                                                | Low      | S      | Cleanup       |
 | 25 | Consider excluding generated `docs/status/*.html` reports from treefmt/prettier (recurring malformed-HTML CI breakers)                                                                     | Low      | S      | Cleanup       |
 | 26 | Document the DEPLOY_FORCE_PRESSURE justification protocol (what evidence suffices) in AGENTS.md deploy section                                                                             | Low      | S      | Documentation |

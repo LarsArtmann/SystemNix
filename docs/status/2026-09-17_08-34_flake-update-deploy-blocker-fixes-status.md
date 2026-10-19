@@ -42,11 +42,11 @@ This session fixed the blockers across SystemNix + 6 upstream repos. **The deplo
 
 ## REMAINING (blocked / next)
 
-1. Push browser-history f3561fd → re-lock SystemNix input → **final keep-going build** (also verifies the `dontUsePytestCheck` django-polymorphic fix).
-2. **`nix run .#deploy`** — never ran yet (3 enumeration builds so far).
+~~1. Push browser-history f3561fd → re-lock SystemNix input → **final keep-going build** (also verifies the `dontUsePytestCheck` django-polymorphic fix).~~ done — browser-history pushed + relocked: TODO_LIST:500 lock history
+~~2. **`nix run .#deploy`** — never ran yet (3 enumeration builds so far).~~ done — deploy landed: docs/status/2026-09-18_05-58 (system-782)
 3. Post-deploy: verify inboxclean papersync heals the `gmail` AUTO tag (first tick), smoke checks.
 4. **USER STEP**: inboxclean `main` OAuth re-consent on the desktop (runbook in AGENTS.md InboxClean section; consent screen must be "In production" first).
-5. CV re-bump deferred to the parallel CV session (vendorHash + dev-source shebang fix needed upstream).
+~~5. CV re-bump deferred to the parallel CV session (vendorHash + dev-source shebang fix needed upstream).~~ done — CV lock forward: TODO_LIST:581 (b2cab45 Oct 8)
 
 ## What I forgot / could have done better
 

@@ -23,22 +23,9 @@
 }:
 let
   lib = inputs.nixpkgs.lib;
-
-  # Wrapper modules are flake-parts modules — `_: { flake.nixosModules.X = …; }`
-  # functions; a few are plain attrsets or take inputs. Handle all shapes.
-  mod =
-    file: name:
-    let
-      imported = import ../modules/nixos/services/${file};
-      wrapper =
-        if !builtins.isFunction imported then
-          imported
-        else if (builtins.functionArgs imported) ? inputs then
-          imported { inherit inputs; }
-        else
-          imported { };
-    in
-    wrapper.flake.nixosModules.${name};
+  shared = import ./shared.nix lib;
+  mod = shared.mod inputs;
+  inherit (shared) portStubs siblingEnableStubs;
 
   # Throwaway CA standing in for the sops'd dnsblockd CA. Generated at
   # BUILD time; the fixture unit below installs it over the mock-sops
@@ -55,98 +42,16 @@ let
 
   # Minimal stubs for options the real caddy module reads unconditionally
   # from siblings that are not part of this test's import set
-  # (test-integration.nix precedent).
-  stubs = {
-    networking.local.subnet = lib.mkOption {
-      type = lib.types.str;
-      default = "192.168.1.0/24";
-    };
-    # The split-horizon option (normally from platforms/nixos/system/
-    # local-network.nix). Declaring it here satisfies caddy.nix's
-    # options-guard; the node sets it to enable mint mode.
+  # (test-integration.nix precedent), plus the split-horizon option. The
+  # cloudDomain declaration (normally from platforms/nixos/system/
+  # local-network.nix) satisfies caddy.nix's options-guard; the node sets it
+  # to enable mint mode.
+  stubs = lib.recursiveUpdate shared.baseStubs {
     networking.local.cloudDomain = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
     };
-    services.oauth2-proxy-config.port = lib.mkOption {
-      type = lib.types.port;
-      default = 4180;
-    };
-    services.dns-blocker.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.dns-blocker.blockInterface = lib.mkOption {
-      type = lib.types.str;
-      default = "lo";
-    };
   };
-
-  # Port-shaped options the unconditional caddy base vHosts force.
-  portStubs = {
-    services.signoz.settings.queryService.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8080;
-    };
-    services.openseo.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8084;
-    };
-    services.crush-daily.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8085;
-    };
-    services.dns-blocker.statsPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8086;
-    };
-    services.dns-blocker.blockIP = lib.mkOption {
-      type = lib.types.str;
-      default = "0.0.0.0";
-    };
-  };
-
-  enableStubs = names: {
-    services = lib.listToAttrs (
-      map (
-        n:
-        lib.nameValuePair n {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-          };
-        }
-      ) names
-    );
-  };
-
-  siblingEnableStubs = enableStubs [
-    "ai-stack"
-    "attic-config"
-    "bank-sync"
-    "buildcache"
-    "browser-history"
-    "crush-daily"
-    "cv-server"
-    "discordsync"
-    "fastflowlm"
-    "file-and-image-renamer"
-    "google-sync"
-    "hermes"
-    "inboxclean"
-    "llama-rag"
-    "mail-relay"
-    "monitor365"
-    "monitor365-server"
-    "overview"
-    "pool-recovery"
-    "pool-smart-metrics"
-    "projects-management-automation"
-    "signoz"
-    "systemd-graph"
-    "systemd-timer-monitor"
-    "tq-agent-pool"
-  ];
 in
 {
   name = "caddy-mint";

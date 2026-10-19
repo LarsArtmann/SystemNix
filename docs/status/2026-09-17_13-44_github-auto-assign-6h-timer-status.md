@@ -43,21 +43,21 @@ Design decisions worth remembering:
 
 ## b) PARTIALLY DONE
 
-1. **The real backfill — RUNNING at report time.** Started ~13:16 from this session (script executed manually, real mode). Timeline of true counts (`gh search ... --limit 1000 --jq length`):
+~~1. **The real backfill — RUNNING at report time.** Started ~13:16 from this session (script executed manually, real mode). Timeline of true counts (`gh search ... --limit 1000 --jq length`):~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
    - Before: **≥1000 issues (cap hit, true total unknown-but-larger) + 339 PRs** unassigned.
    - 13:45: **459 issues remain → ~541+ issues assigned so far; PR loop not started yet (340 — one new PR appeared during the run).**
    - Running as background shell `00F`; output pipes through `tail -80` so nothing prints until completion (cosmetic — progress verified via the search counts above).
-2. **DEPLOYMENT — GATE-BLOCKED, NOT SWITCHED.** `nix run .#deploy` (bg shell `015`) passed all pre-deploy checks, then the memory-pressure gate fired:
+~~2. **DEPLOYMENT — GATE-BLOCKED, NOT SWITCHED.** `nix run .#deploy` (bg shell `015`) passed all pre-deploy checks, then the memory-pressure gate fired:~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
    - `io PSI some avg10 = 46.37% (>= 20%)` → exit, suggesting wait/force.
    - **Root-caused (not the corpse-pile phantom the message suggests):** `ps` showed **0 D-state processes**; the real driver is a PARALLEL session's build storm (`nix` 151%, `ld` 166%, two `link`, two `go` — sustained 45-70% PSI for 25+ min as of 13:44).
    - **Disk reality check (10s diskstats delta):** QLC root `nvme1n1` = 33 ticks/10s ≈ **3.3% busy** (idle); Samsung `/nix` store `nvme0n1` = 673 ticks/10s ≈ **67% busy**. This is CPU-bound build work on the FAST TLC store, not the freeze-class full-root-reader pattern (freeze incidents #1-#4).
    - A bounded 5-min wait loop (bg shell `01D`) was armed; plan: if PSI stays ≥20% when it expires, re-run with `DEPLOY_FORCE_PRESSURE=1` and the documented rationale above (checks green, toplevel already built, root disk idle, Zone-6 guard armed as backstop).
-3. **Monitoring wiring** — eval-verified only; goes live with the deploy.
+~~3. **Monitoring wiring** — eval-verified only; goes live with the deploy.~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
 
 ## c) NOT STARTED
 
-1. **Post-deploy verification** — `systemctl start github-auto-assign`, journal review, `systemctl list-timers` next-fire check, profile-anchor check (the exit-4/unanchored-generation class). Nothing has ever run as a systemd unit yet.
-2. **Live unit proof** — my manual run is consuming the backlog, so the unit's first run will find little to do (weak verification). Proper proof: unassign one known issue → `systemctl start` → watch the journal re-assign it.
+~~1. **Post-deploy verification** — `systemctl start github-auto-assign`, journal review, `systemctl list-timers` next-fire check, profile-anchor check (the exit-4/unanchored-generation class). Nothing has ever run as a systemd unit yet.~~ done — post-deploy verification done: 2026-09-18_05-58 (a9-a12)
+~~2. **Live unit proof** — my manual run is consuming the backlog, so the unit's first run will find little to do (weak verification). Proper proof: unassign one known issue → `systemctl start` → watch the journal re-assign it.~~ done — post-deploy verification done: 2026-09-18_05-58 (a9-a12)
 3. **AGENTS.md section** — repo doctrine (memory maintenance) not yet done; planned content: the ProtectHome-for-gh-auth trick, the 1000-cap self-convergence, fork-inclusion caveat, OnFailure-only monitoring story.
 4. **Any automated test** — no fixture test (a fake-`gh` PATH-shim test in the `tests/test-scripts.nix` style was possible and not written). No VM test (justified, but the script-level test was skippable-only-by-choice).
 5. **Prototype cleanup** — `/tmp/gh-autoassign-test/` still holds the dev script.
@@ -84,11 +84,11 @@ Design decisions worth remembering:
 
 **This feature, blocking:**
 
-1. Resolve the deploy: when `01D` expires — force with `DEPLOY_FORCE_PRESSURE=1` + rationale (root NVMe 3% busy, checks green) or keep waiting; then confirm clean activation + profile anchored (the exit-4/unanchored-generation check).
-2. Wait for backfill `00F` to finish; verify final state: 0 unassigned PRs, issues ≤ remaining-cap remainder; capture the script's own `done: assigned=N failed=M` line.
-3. If `failed > 0` in the final line: triage each WARN URL (expected classes: none known — investigate before ignoring).
-4. Post-deploy: `systemctl start github-auto-assign.service` once + journal check + `systemctl list-timers github-auto-assign` (next fire ~18:00+10min jitter).
-5. Live-proof the unit: unassign one test issue → start unit → journal shows `assigned issue: <url>`.
+~~1. Resolve the deploy: when `01D` expires — force with `DEPLOY_FORCE_PRESSURE=1` + rationale (root NVMe 3% busy, checks green) or keep waiting; then confirm clean activation + profile anchored (the exit-4/unanchored-generation check).~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
+~~2. Wait for backfill `00F` to finish; verify final state: 0 unassigned PRs, issues ≤ remaining-cap remainder; capture the script's own `done: assigned=N failed=M` line.~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
+~~3. If `failed > 0` in the final line: triage each WARN URL (expected classes: none known — investigate before ignoring).~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
+~~4. Post-deploy: `systemctl start github-auto-assign.service` once + journal check + `systemctl list-timers github-auto-assign` (next fire ~18:00+10min jitter).~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
+~~5. Live-proof the unit: unassign one test issue → start unit → journal shows `assigned issue: <url>`.~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
 6. AGENTS.md section for the service (the five bullets from c.3).
 7. Answer Question 1 (forks) and, if "exclude": add `includeForks = false` (classify via `gh repo list --json isFork` set-diff or search `-fork:true` qualifier — verify the qualifier works) + mass-cleanup the already-assigned fork items.
 8. Answer Question 2 (repo exclusions) → optional `excludeRepos` option filtering `template-*`, `testing`, `.hermes` if wanted.
@@ -96,8 +96,8 @@ Design decisions worth remembering:
 10. `flock` single-flight in the script (repo converger pattern).
 11. Fixture test with a fake `gh` shim (assert: search failure → exit 1; dry-run assigns nothing; failure-ratio logic; the singular/plural regression I actually hit).
 12. Cleanup `/tmp/gh-autoassign-test/` (trash).
-13. Confirm the auto-commit daemon lands my two files in a sane commit (pathspec concern; AGENTS.md is dirty from ANOTHER session — do not absorb it).
-14. Next-deploy sanity: pre-deploy §10 with the new `extraMonitoredServices` entry (passed this time; watch once more), and check `system_service_state_failed{service="github-auto-assign"}` appears in `/metrics` (collector missing-unit-tolerant while disabled).
+~~13. Confirm the auto-commit daemon lands my two files in a sane commit (pathspec concern; AGENTS.md is dirty from ANOTHER session — do not absorb it).~~ done — deploy+backfill+live proof: docs/status/2026-09-18_05-58
+~~14. Next-deploy sanity: pre-deploy §10 with the new `extraMonitoredServices` entry (passed this time; watch once more), and check `system_service_state_failed{service="github-auto-assign"}` appears in `/metrics` (collector missing-unit-tolerant while disabled).~~ done — §10/collector live: deployed gen-782
 15. Consider `--sort created-asc` on the searches so >1000-item backlogs converge oldest-first instead of best-match-arbitrary.
 
 **Observability nice-to-haves:**

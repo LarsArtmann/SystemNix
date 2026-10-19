@@ -36,70 +36,22 @@
     }:
     let
       cfg = config.services.port-registry-audit;
+      inherit (import ../../../lib/default.nix lib)
+        unitExecText
+        extractPortLiterals
+        ;
 
       registeredPorts = builtins.attrValues (import ../../../lib/ports.nix).ports;
       allowedPorts = registeredPorts ++ cfg.allowPorts;
-
-      scanKeys = [
-        "ExecStart"
-        "ExecStartPre"
-        "ExecStartPost"
-        "ExecStop"
-        "ExecStopPost"
-        "ExecReload"
-        "ExecCondition"
-      ];
-
-      # host-form | colon-form | flag-form (see header). Leading class
-      # excludes digits (clock times "2:30", uid:gid never match); trailing
-      # boundary for the colon-form excludes letters so model-tag lookalikes
-      # ("qwen3.6-moe:35b-a3b" — live false positive on first deploy of this
-      # guard) never match; the flag-form carries the same non-letter
-      # trailing boundary ("--port=8100abc" is not a port literal). KNOWN
-      # LIMITATION: a word:NNN token ("DELAY:300") is lexically
-      # indistinguishable from host:port ("resend.com:587" — letters before
-      # the colon are legitimate hostnames) and DOES fire when NNN is
-      # unregistered; allowPorts is the escape.
-      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9a-zA-Z]|$))";
-
-      extractPorts =
-        text:
-        let
-          parts = builtins.split portRegex text;
-          digitGroups = builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null) (
-            lib.flatten (map (x: if builtins.isList x then x else [ ]) parts)
-          );
-        in
-        lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups));
-
-      envToString =
-        env:
-        if builtins.isAttrs env then
-          lib.mapAttrsToList (k: v: "${k}=${toString v}") env
-        else
-          map toString (lib.toList env);
-
-      unitText =
-        svc:
-        lib.concatStringsSep " \n " (
-          (map (
-            k:
-            if svc.serviceConfig ? ${k} then
-              (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k}))
-            else
-              ""
-          ) scanKeys)
-          ++ (lib.optionals (svc.serviceConfig ? Environment) (envToString svc.serviceConfig.Environment))
-        );
 
       # tryEval: a unit whose Exec text cannot be coerced (exotic
       # self-referential config) must never break eval — it is skipped.
       offenders = lib.filterAttrs (
         _name: svc:
         let
-          text = builtins.tryEval (unitText svc);
+          text = builtins.tryEval (unitExecText svc);
           unregistered =
-            if !text.success then [ ] else lib.subtractLists allowedPorts (extractPorts text.value);
+            if !text.success then [ ] else lib.subtractLists allowedPorts (extractPortLiterals text.value);
         in
         unregistered != [ ]
       ) config.systemd.services;
@@ -108,8 +60,8 @@
         lib.mapAttrsToList (
           name: svc:
           let
-            text = builtins.tryEval (unitText svc);
-            unregistered = lib.subtractLists allowedPorts (extractPorts text.value);
+            text = builtins.tryEval (unitExecText svc);
+            unregistered = lib.subtractLists allowedPorts (extractPortLiterals text.value);
           in
           "  ${name}: ${lib.concatStringsSep ", " (map toString unregistered)}"
         ) offenders

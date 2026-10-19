@@ -20,11 +20,11 @@
 
 ## b) PARTIALLY DONE
 
-1. **Three fixes are stacked UNDEPLOYED** — Zone 6 re-arm (`2fc4db64`), btrbk-data cgroup sizing (`c51cb4c1`), and the buildcache reap-list unit half (`buildcache.nix`; the deploy.sh half is live on next deploy regardless). Production still exhibits the +24h backup slip on every Zone 6 trip today. The Sep 17 23:00 btrbk-root window is the first that could benefit; the Sep 19 00:28 `btrfs-verify-pool-backups` freshness check FAILs if one more storm-eaten send slips through. **Deploy latency is the single biggest live risk this window produced.**
-2. **The actual backup-pipeline outcome is unproven**: nothing yet demonstrates a re-armed send LANDS pool-side (the re-arm is proven at unit level only), and tonight's 23:00 receive confirmation is time-gated (~20h away). The DAS-watch task remains open in a structural BLOCKED loop (harvested at midnight twice; its only check completes at 23:00).
-3. **BuildFlow debris not yet reaped**: the ~6.6 GB (`gobuild` 468M, `gocache` 2.7G, `gomod` 3.4G, live-measured 02:52) still sits on the QLC root until the next deploy/recovery event.
-4. **dnsblockd close is lock/source-level, not runtime**: no live probe of the cached `/health` behavior on the deployed daemon (sandbox-gated; the standing 09-13 post-deploy row remains the right home).
-5. **The oom containment is config-verified, not incident-verified** — the real proof (a full-tree send surviving memory pressure) is gated behind the /data EIO repair (P0), which also fast-fails the send today.
+~~1. **Three fixes are stacked UNDEPLOYED** — Zone 6 re-arm (`2fc4db64`), btrbk-data cgroup sizing (`c51cb4c1`), and the buildcache reap-list unit half (`buildcache.nix`; the deploy.sh half is live on next deploy regardless). Production still exhibits the +24h backup slip on every Zone 6 trip today. The Sep 17 23:00 btrbk-root window is the first that could benefit; the Sep 19 00:28 `btrfs-verify-pool-backups` freshness check FAILs if one more storm-eaten send slips through. **Deploy latency is the single biggest live risk this window produced.**~~ done — deploys landed (CHANGELOG:355/361); TODO_LIST:83; 540; P0
+~~2. **The actual backup-pipeline outcome is unproven**: nothing yet demonstrates a re-armed send LANDS pool-side (the re-arm is proven at unit level only), and tonight's 23:00 receive confirmation is time-gated (~20h away). The DAS-watch task remains open in a structural BLOCKED loop (harvested at midnight twice; its only check completes at 23:00).~~ done — deploys landed (CHANGELOG:355/361); TODO_LIST:83; 540; P0
+~~3. **BuildFlow debris not yet reaped**: the ~6.6 GB (`gobuild` 468M, `gocache` 2.7G, `gomod` 3.4G, live-measured 02:52) still sits on the QLC root until the next deploy/recovery event.~~ done — deploys landed (CHANGELOG:355/361); TODO_LIST:83; 540; P0
+~~4. **dnsblockd close is lock/source-level, not runtime**: no live probe of the cached `/health` behavior on the deployed daemon (sandbox-gated; the standing 09-13 post-deploy row remains the right home).~~ done — deploys landed (CHANGELOG:355/361); TODO_LIST:83; 540; P0
+~~5. **The oom containment is config-verified, not incident-verified** — the real proof (a full-tree send surviving memory pressure) is gated behind the /data EIO repair (P0), which also fast-fails the send today.~~ done — deploys landed (CHANGELOG:355/361); TODO_LIST:83; 540; P0
 
 ## c) NOT STARTED
 
@@ -55,15 +55,15 @@
 
 ## f) NEXT THINGS (impact-ordered; appended to TODO_LIST.md this pass)
 
-1. Deploy the stacked fixes (Zone 6 re-arm + btrbk-data MemoryHigh/OOMScoreAdjust + buildcache reap unit) in a quiet-IO window BEFORE the Sep 17 23:00 btrbk-root window — the Sep 19 00:28 freshness check is the deadline.
-2. After the Sep 17 23:00 window: confirm the root incremental lands pool-side (`@.20260917T2300` in `/mnt/pool/backups/root`) and `backup_all_healthy`/verify stay green — closes the DAS-watch task.
-3. Post-deploy: verify the guard `.prom` carries `churn_rearms_total`, the deployed unit carries the re-arm block, and `buildcache-usb-recovery` carries the six-name reap list.
-4. Post-deploy: verify `~/.cache/{gobuild,gocache,gomod}` are reaped and the HM symlinks intact.
-5. After the first real post-deploy Zone 6 trip: verify the re-arm journal line AND that the resumed send lands; record trip → drain → re-arm → send-complete timing in `docs/services/memory-emergency-guard.md`.
-6. Extend the btrbk-root + btrbk-pool services with the same MemoryHigh/OOMScoreAdjust treatment (same full-tree send class; root re-sends are live via the 2026-09-12 snapshot-loss scenario).
-7. Add an eval-time assertion that every `btrfs send`-carrying unit declares a MemoryHigh (class guard, harden{}-throw pattern).
-8. Add a WARN-tier boundary at 2 days to `btrfs-verify-pool-backups` (today's single 3-day FAIL is too late to act on).
-9. Build a post-23:30 self-verifying receive-freshness probe (textfile metric `root_receive_age_hours` + Gatus check) so nightly convergence no longer depends on midnight agent sessions.
+~~1. Deploy the stacked fixes (Zone 6 re-arm + btrbk-data MemoryHigh/OOMScoreAdjust + buildcache reap unit) in a quiet-IO window BEFORE the Sep 17 23:00 btrbk-root window — the Sep 19 00:28 freshness check is the deadline.~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~2. After the Sep 17 23:00 window: confirm the root incremental lands pool-side (`@.20260917T2300` in `/mnt/pool/backups/root`) and `backup_all_healthy`/verify stay green — closes the DAS-watch task.~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~3. Post-deploy: verify the guard `.prom` carries `churn_rearms_total`, the deployed unit carries the re-arm block, and `buildcache-usb-recovery` carries the six-name reap list.~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~4. Post-deploy: verify `~/.cache/{gobuild,gocache,gomod}` are reaped and the HM symlinks intact.~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~5. After the first real post-deploy Zone 6 trip: verify the re-arm journal line AND that the resumed send lands; record trip → drain → re-arm → send-complete timing in `docs/services/memory-emergency-guard.md`.~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~6. Extend the btrbk-root + btrbk-pool services with the same MemoryHigh/OOMScoreAdjust treatment (same full-tree send class; root re-sends are live via the 2026-09-12 snapshot-loss scenario).~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~7. Add an eval-time assertion that every `btrfs send`-carrying unit declares a MemoryHigh (class guard, harden{}-throw pattern).~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~8. Add a WARN-tier boundary at 2 days to `btrfs-verify-pool-backups` (today's single 3-day FAIL is too late to act on).~~ done — deployed; receives; CHANGELOG:355/361 + storage.md:31
+~~9. Build a post-23:30 self-verifying receive-freshness probe (textfile metric `root_receive_age_hours` + Gatus check) so nightly convergence no longer depends on midnight agent sessions.~~ done — snapshots.nix:492-530 (root/pool sized)
 10. Consider a second nightly btrbk-root window (e.g. 04:00 retry) so a storm-eaten 23:00 send self-heals independent of the guard.
 11. Read the guard's own journal (`memory-emergency-guard-check` syslog id) for trips #298–#300 and correlate each with btrbk-root send attempts — quantify how many of the last N nightly sends were churn-stopped.
 12. Wire `churn_rearms_total` into a Gatus check or the SigNoz guard dashboard (forensics-only vs threshold is a user call — see §g).

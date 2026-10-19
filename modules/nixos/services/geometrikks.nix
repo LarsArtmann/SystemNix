@@ -19,6 +19,7 @@
       inherit (libHelpers)
         harden
         ioTier
+        mkPoolDirUnit
         serviceOneshotDefaults
         onFailure
         serviceTypes
@@ -800,28 +801,11 @@
             # RequiresMountsFor + ReadWritePaths on the MOUNT ROOT so a
             # fresh pool's missing leaf cannot 226 the namespace; deploy.sh
             # provisioner-restarted).
-            geometrikks-backup-dir = {
+            geometrikks-backup-dir = mkPoolDirUnit {
               description = "GeoMetrikks backup directory (pool leaf)";
-              wantedBy = [ "multi-user.target" ];
-              unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-              serviceConfig = lib.mkMerge [
-                {
-                  Type = "oneshot";
-                  User = "root";
-                  RemainAfterExit = true;
-                }
-                (harden {
-                  MemoryMax = "128M";
-                  ReadWritePaths = [ "/mnt/pool" ];
-                  CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-                })
-                (serviceOneshotDefaults { })
-              ];
-              script = ''
-                mkdir -p ${poolBackupDir}
-                chown postgres:postgres ${poolBackupDir}
-                chmod 0750 ${poolBackupDir}
-              '';
+              directory = poolBackupDir;
+              owner = "postgres";
+              mode = "0750";
             };
 
             # Nightly pg_dump on the native cluster (peer auth as postgres).

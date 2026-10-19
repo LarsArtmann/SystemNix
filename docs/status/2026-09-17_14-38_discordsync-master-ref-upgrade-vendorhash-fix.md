@@ -59,9 +59,10 @@
 
 ## b) PARTIALLY DONE
 
+<!-- check-rows:ledger -->
 | # | Item                               | State                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | - | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **THE DEPLOY**                     | Pre-deploy: 62 passed / 19 warnings / 0 failed — blocked ONLY by the memory-pressure gate (IO PSI some avg10 60% + disk busy 102%, real storm from parallel sessions building `.#installer-standin-initrd` + linkers + golangci-lint + 10-core zstd). My PSI-wait retry chain had a field-parsing bug (gated avg60, not avg10) and was KILLED before misfiring; no deploy fired (profile still `781-link`, zero switch processes). **Deployed discordsync binary is still c0604e4-era.** |
+| ~~1~~ done — deployed: docs/status/2026-09-18_05-58 (discordsync 5fe2af13) | ~~**THE DEPLOY**~~ | ~~Pre-deploy: 62 passed / 19 warnings / 0 failed — blocked ONLY by the memory-pressure gate (IO PSI some avg10 60% + disk busy 102%, real storm from parallel sessions building `.#installer-standin-initrd` + linkers + golangci-lint + 10-core zstd). My PSI-wait retry chain had a field-parsing bug (gated avg60, not avg10) and was KILLED before misfiring; no deploy fired (profile still `781-link`, zero switch processes). **Deployed discordsync binary is still c0604e4-era.**~~ |
 | 2 | `packages.cqrs-lint` upstream      | FOD hash fixed (green), but the package build still fails AFTER the FOD: `updates to go.mod needed` — go-cqrs-lite `cmd/cqrs-lint` module inconsistency with DiscordSync's locked input pins. Diagnosed, NOT fixed (needs tidy/tag upstream or a package drop — owner decision). SystemNix does not consume it.                                                                                                                                                                          |
 | 3 | Post-deploy verification           | Not run (blocked on deploy): post-deploy-check, deployed-rev probe, Gatus checks, `TURSO_SYNC_MONTHLY_BUDGET_BYTES` in the rendered unit, `/run/current-system` anchoring.                                                                                                                                                                                                                                                                                                               |
 | 4 | Content review of the +131 commits | Stat-level only (206 files, +10,057/−2,686; turso-sync views, monitoring/alerts.yml +43, web churn). Not reviewed line-by-line.                                                                                                                                                                                                                                                                                                                                                          |
@@ -96,12 +97,12 @@ Honest assessment: **nothing is irreversibly broken.** The lock state, upstream 
 
 **Deploy completion**
 
-1. Retry `nix run .#deploy` in a genuinely quiet window (PSI some avg10 < 20% — verify by reading `/proc/pressure/io` directly; today's storm was driven by parallel sessions' `installer-standin-initrd` builds; two sibling status files from 14:16/14:24 show they were deploy-blocked too).
-2. `nix run .#post-deploy-check` after the switch.
-3. Verify the deployed binary is `discordsync-df1a2bf` (unit ExecStart store path / `go version -m`).
-4. Verify Gatus DiscordSync checks go green and stay green through one sync cycle.
-5. Confirm `TURSO_SYNC_MONTHLY_BUDGET_BYTES=2500000000` rendered in the deployed unit (new env).
-6. Anchoring check: `/run/current-system` matches the numbered profile (exit-4 skip class) — profile was `781-link` pre-deploy.
+~~1. Retry `nix run .#deploy` in a genuinely quiet window (PSI some avg10 < 20% — verify by reading `/proc/pressure/io` directly; today's storm was driven by parallel sessions' `installer-standin-initrd` builds; two sibling status files from 14:16/14:24 show they were deploy-blocked too).~~ done — deploy cluster done: docs/status/2026-09-18_05-58
+~~2. `nix run .#post-deploy-check` after the switch.~~ done — deploy cluster done: docs/status/2026-09-18_05-58
+~~3. Verify the deployed binary is `discordsync-df1a2bf` (unit ExecStart store path / `go version -m`).~~ done — deploy cluster done: docs/status/2026-09-18_05-58
+~~4. Verify Gatus DiscordSync checks go green and stay green through one sync cycle.~~ done — deploy cluster done: docs/status/2026-09-18_05-58
+~~5. Confirm `TURSO_SYNC_MONTHLY_BUDGET_BYTES=2500000000` rendered in the deployed unit (new env).~~ done — deploy cluster done: docs/status/2026-09-18_05-58
+~~6. Anchoring check: `/run/current-system` matches the numbered profile (exit-4 skip class) — profile was `781-link` pre-deploy.~~ done — deploy cluster done: docs/status/2026-09-18_05-58
 7. Decide explicit `tursoSyncMonthlyBudgetBytes` for our config vs the 2.5 GB default (interacts with the local-first Turso stance).
 
 **Upstream DiscordSync follow-ups**

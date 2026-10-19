@@ -72,6 +72,9 @@ in
         pocketIdConfigMock
         ./mock-sops.nix
         ./test-helpers.nix
+        # Real mounted HDD pool (tests/shared.nix poolDiskFixture — the
+        # test-cv recipe; the mkVMOverride trap is documented there).
+        (import ./shared.nix lib).poolDiskFixture
       ];
 
       system.stateVersion = "25.11";
@@ -122,39 +125,6 @@ in
       # Neuter ONLY the probe; the LoadCredential/OAUTH2 assertions below
       # still pin the real wiring.
       systemd.services.miniflux.serviceConfig.ExecStartPre = lib.mkForce [ ];
-
-      # Real mounted HDD pool (test-cv recipe): MUST be virtualisation.fileSystems
-      # — qemu-vm.nix replaces the whole `fileSystems` option at priority 900.
-      boot.supportedFilesystems = [ "btrfs" ];
-      virtualisation.emptyDiskImages = [ 512 ];
-      virtualisation.fileSystems."/mnt/pool" = {
-        device = "/dev/disk/by-label/pool";
-        fsType = "btrfs";
-        options = [ "nofail" ];
-      };
-      systemd.services.pool-fmt = {
-        description = "Format the virtio disk as btrfs label pool (test-only)";
-        wantedBy = [ "local-fs.target" ];
-        before = [
-          "mnt-pool.mount"
-          "local-fs.target"
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          User = "root";
-        };
-        path = [
-          pkgs.btrfs-progs
-          pkgs.util-linux
-          pkgs.systemd
-        ];
-        script = ''
-          if ! blkid /dev/vdb | grep -q 'LABEL="pool"'; then
-            mkfs.btrfs -f -L pool /dev/vdb
-          fi
-          udevadm settle
-        '';
-      };
     };
 
   testScript = ''

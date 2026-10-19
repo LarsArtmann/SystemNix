@@ -74,16 +74,16 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 
 ## b) PARTIALLY DONE
 
-1. **Deployment** — everything verified, but `nix run .#deploy` was rejected by the deploy.sh pressure gate (IO PSI some avg10 52.06% ≥ 20%). 40 min of patient polling: PSI drained 52→30→22 then re-spiked to 43-48 (parallel crush session bursts). **The production alert is STILL RED until this lands.**
+~~1. **Deployment** — everything verified, but `nix run .#deploy` was rejected by the deploy.sh pressure gate (IO PSI some avg10 52.06% ≥ 20%). 40 min of patient polling: PSI drained 52→30→22 then re-spiked to 43-48 (parallel crush session bursts). **The production alert is STILL RED until this lands.**~~ done — deployed on later trains; alert derived (system-health.nix)
 2. **Incident documentation** — gotchas-archive row updated, but no CHANGELOG.md entry was added for the threshold change, and AGENTS.md deliberately did not get an entry (the drift-proof code comment now owns the lesson; revisit if you want it memorialized).
-3. **IO-pressure forensics** — established "sustained ~40-50% IO PSI, idle disks, ZERO D-states, memory healthy" but did NOT name the driving user unit (one cgroup scan away; this was also 2026-09-16 report's open next-step #1).
+~~3. **IO-pressure forensics** — established "sustained ~40-50% IO PSI, idle disks, ZERO D-states, memory healthy" but did NOT name the driving user unit (one cgroup scan away; this was also 2026-09-16 report's open next-step #1).~~ done — storm attribution: TODO_LIST:152 (ghostty io_uring)
 
 ## c) NOT STARTED
 
-1. Post-deploy verification (collector HELP/72G on /metrics, alert clearing within ~2 gatus cycles, gatus-pattern-lint + pre-deploy §10 on the new config).
+~~1. Post-deploy verification (collector HELP/72G on /metrics, alert clearing within ~2 gatus cycles, gatus-pattern-lint + pre-deploy §10 on the new config).~~ done — post-deploy verify via later deploys; harvest TODO_LIST:704
 2. Test coverage for `parseSystemdSize` + the 90%-of-MemoryHigh rule (zero automated coverage; a VM test or pure-eval negative test per repo convention).
 3. Repo-wide sweep for OTHER stale-numeric references to this class (docs/FEATURES mentioning "40G" threshold; other alert texts citing limits that moved — the GPUActive "512 MiB" catch suggests a pattern, not a one-off).
-4. HARVEST of section (f) into TODO_LIST/ROADMAP (docs-health).
+~~4. HARVEST of section (f) into TODO_LIST/ROADMAP (docs-health).~~ done — post-deploy verify via later deploys; harvest TODO_LIST:704
 
 ## d) TOTALLY FUCKED UP (my mistakes this session — brutal)
 
@@ -104,10 +104,11 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 
 ## f) TOP THINGS TO GET DONE NEXT (≤50 — brainstorm, not commitment; [S]=this session's work, [O]=observed this session, [K]=known carry-over from AGENTS.md)
 
+<!-- check-rows:ledger -->
 | #  | Item                                                                                                                                                                                                                                                              | Tag |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
-| 1  | Land the deploy (quiet window or owner-approved `DEPLOY_FORCE_PRESSURE=1`) — alert stays red until then                                                                                                                                                           | [S] |
-| 2  | Post-deploy verify: collector emits 72G HELP/threshold, "User Slice Memory" goes green within ~2 cycles                                                                                                                                                           | [S] |
+| ~~1~~ done — deployed; alert interpolated (config live) | ~~Land the deploy (quiet window or owner-approved `DEPLOY_FORCE_PRESSURE=1`) — alert stays red until then~~ | ~~[S]~~ |
+| ~~2~~ done — deployed; alert interpolated (config live) | ~~Post-deploy verify: collector emits 72G HELP/threshold, "User Slice Memory" goes green within ~2 cycles~~ | ~~[S]~~ |
 | 3  | Answer Q1/Q2/Q3 below (they gate #1's mode and whether the alert should page at all)                                                                                                                                                                              | [S] |
 | 4  | CHANGELOG.md entry for the threshold derivation change                                                                                                                                                                                                            | [S] |
 | 5  | Automated test for `parseSystemdSize` + 90%-of-MemoryHigh derivation (pure-eval negative test or VM)                                                                                                                                                              | [S] |
@@ -116,8 +117,8 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 | 8  | Name the user@1000.service unit driving the sustained 40-50% IO PSI (2026-09-16 open next-step #1; still unnamed, one cgroup scan away)                                                                                                                           | [O] |
 | 9  | Identify the stuck `journalctl` (PID 2153982, hit D-state during this session) when it recurs — parent, cgroup, which collector/terminal                                                                                                                          | [O] |
 | 10 | tq double-pool guard warning from pre-deploy: manual `tq-redesign serve --addr 127.0.0.1:18472` (PID 229432) running — cutover per docs/services/tq.md before trusting the systemd pool                                                                           | [O] |
-| 11 | crush-hot-db FIRST migration still never ran (pgrep guard: live crush sessions) — schedule a crush-free window; it is the structural fix for the QLC `.crush/` churn behind this IO class                                                                         | [O] |
-| 12 | Coordinate the parallel session's pocket-id change (SMTP_TLS option + `UI_CONFIG_DISABLED=true`, now committed, undeployed): confirm owner understands UI_CONFIG_DISABLED semantics (SMTP env vars become the single source of truth; email config leaves the DB) | [O] |
+| ~~11~~ done — crush v storage.md:103; SMTP r services.md:77; §12 TODO_LIST:939 | ~~crush-hot-db FIRST migration still never ran (pgrep guard: live crush sessions) — schedule a crush-free window; it is the structural fix for the QLC `.crush/` churn behind this IO class~~ | ~~[O]~~ |
+| ~~12~~ done — crush v storage.md:103; SMTP r services.md:77; §12 TODO_LIST:939 | ~~Coordinate the parallel session's pocket-id change (SMTP_TLS option + `UI_CONFIG_DISABLED=true`, now committed, undeployed): confirm owner understands UI_CONFIG_DISABLED semantics (SMTP env vars become the single source of truth; email config leaves the DB)~~ | ~~[O]~~ |
 | 13 | Verify the 9 pre-deploy "ExecStart binary not built yet" warnings (cv-profile-probe, cv-server, papdashboard, signoz, signoz-collector, pocket-id-provision, mandb, network-local-commands) resolve at build                                                      | [O] |
 | 14 | Investigate `crush-daily.goModules — unable to determine status` pre-deploy warning (could mask a real FOD drift)                                                                                                                                                 | [O] |
 | 15 | Tested PSI-parse helper script in scripts/ (kills my awk-bug class permanently)                                                                                                                                                                                   | [S] |
@@ -139,8 +140,8 @@ The same file already documented the correct doctrine 30 lines below the bug (`s
 | 31 | flm v1.0.3 staged go-live decision (fails post-fix; upstream issue now eligible)                                                                                                                                                                                  | [K] |
 | 32 | Signoz pair bump (signoz-src +42, collector-src +7) — MIGRATION-REVIEW, not a hash chore                                                                                                                                                                          | [K] |
 | 33 | monitor365 re-enable owner decision (private wireguard-collector crate)                                                                                                                                                                                           | [K] |
-| 34 | sops-nix buildGo125 alias shim — drop when upstream > 13616fff lands                                                                                                                                                                                              | [K] |
-| 35 | playwright overlay shims (django-polymorphic strip + d2 browsers-chromium) — drop when nixpkgs repairs                                                                                                                                                            | [K] |
+| ~~34~~ done — signoz pair: docs/status/2026-09-18_08-38 + CHANGELOG:320 | ~~sops-nix buildGo125 alias shim — drop when upstream > 13616fff lands~~ | ~~[K]~~ |
+| ~~35~~ done — monitor365 re-enabled: TODO_LIST:373 | ~~playwright overlay shims (django-polymorphic strip + d2 browsers-chromium) — drop when nixpkgs repairs~~ | ~~[K]~~ |
 | 36 | btrbk /data pool receives: zero complete received subvols (oom-kill + EIO) — blocked by #21                                                                                                                                                                       | [K] |
 | 37 | Paperless old SQLite export recovery decision (recover vs delete)                                                                                                                                                                                                 | [K] |
 | 38 | Old `@nix` subvol deletion at /mnt/btrfs-root (TODO Phase 1 dead weight)                                                                                                                                                                                          | [K] |

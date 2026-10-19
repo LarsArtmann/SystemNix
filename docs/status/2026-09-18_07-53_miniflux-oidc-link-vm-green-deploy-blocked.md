@@ -91,7 +91,7 @@ still dead**, proving the dependency is gone entirely.
 
 ## b) PARTIALLY DONE
 
-1. **DEPLOY** — attempted 2026-09-17 ~20:50 via `heavy-job nix run .#deploy`;
+~~1. **DEPLOY** — attempted 2026-09-17 ~20:50 via `heavy-job nix run .#deploy`;~~ done — deployed; miniflux-oidc-setup live: TODO_LIST:162/324
    the pre-deploy pressure gate BLOCKED it (exit 12): IO PSI some avg10 =
    44.18% with near-idle disks (2.2% busy) — the gate itself flagged the
    D-state corpse-pile signature (one kworker/u130:3+events_unbound in D).
@@ -100,12 +100,12 @@ still dead**, proving the dependency is gone entirely.
    11 D-state threads — consistent with the permanent corpse-pile +
    monitor-amplifier class documented 2026-09-16 (only the owed reboot
    reclaims the phantom component), possibly plus real morning activity.
-2. **Cleanup** — worktree `/tmp/mf-bisect` (detached at `52e44d4e`, contains
+~~2. **Cleanup** — worktree `/tmp/mf-bisect` (detached at `52e44d4e`, contains~~ **Won't implement — /tmp worktree mooted by 2026-10-15 reboots.**
    the discarded debug instrumentation) still present. All background shells
    from the session have completed. `git worktree remove --force /tmp/mf-bisect`
    is the pending one-liner. (Two other worktrees, `/tmp/pre-mig` and
    `/tmp/sysnix-base`, belong to other sessions — not touching.)
-3. **Production verification** — journal proof (`linked miniflux user 'lars'
+~~3. **Production verification** — journal proof (`linked miniflux user 'lars'~~ done — production verify via deployed chain: TODO_LIST:162
    -> Pocket ID sub …` or `already linked`), post-deploy-check, and the live
    SSO login all await the deploy.
 
@@ -168,21 +168,21 @@ severity:
 
 **This feature (in order):**
 
-1. Decide deploy: force now (`DEPLOY_FORCE_PRESSURE=1` — evidence says
+~~1. Decide deploy: force now (`DEPLOY_FORCE_PRESSURE=1` — evidence says~~ done — deploy chain landed; SSO login step r services.md:74
    phantom) vs wait for reboot/quiet window.
-2. Deploy → verify `journalctl -u miniflux-oidc-setup` (expect `linked …
+~~2. Deploy → verify `journalctl -u miniflux-oidc-setup` (expect `linked …~~ done — deploy chain landed; SSO login step r services.md:74
    'lars' -> Pocket ID sub <uuid>` or `already linked`) + `getent passwd
    miniflux` (static user present) + miniflux healthy on :8101.
-3. `nix run .#post-deploy-check` (miniflux §smoke is enable-gated and will
+~~3. `nix run .#post-deploy-check` (miniflux §smoke is enable-gated and will~~ done — deploy chain landed; SSO login step r services.md:74
    run).
-4. User performs ONE live SSO login at `https://rss.home.lan` (journal proof
+~~4. User performs ONE live SSO login at `https://rss.home.lan` (journal proof~~ done — deploy chain landed; SSO login step r services.md:74
    `User authenticated successfully using OAuth2 … username=lars`).
-5. Owner decision: flip `services.miniflux.disableLocalAuth = true` (SSO-only
+~~5. Owner decision: flip `services.miniflux.disableLocalAuth = true` (SSO-only~~ done — deploy chain landed; SSO login step r services.md:74
    posture) after 4.
-6. `git worktree remove --force /tmp/mf-bisect && git worktree prune`.
-7. If the user DID run the manual paste with a wrong sub: confirm the
+~~6. `git worktree remove --force /tmp/mf-bisect && git worktree prune`.~~ done — deploy chain landed; SSO login step r services.md:74
+~~7. If the user DID run the manual paste with a wrong sub: confirm the~~ done — deploy chain landed; SSO login step r services.md:74
    provisioner converged it (its converge-on-different-sub branch rewrites).
-8. Update the 2026-09-17_15-13 status report with a "RESOLVED" pointer to
+~~8. Update the 2026-09-17_15-13 status report with a "RESOLVED" pointer to~~ done — deploy chain landed; SSO login step r services.md:74
    this doc (the old doc's open questions 1-3 are answered here).
 
 **VM/infra class (from this session's findings):**
@@ -240,18 +240,18 @@ metrics-gate.sh WARNs, if any are active.
 
 ## g) QUESTIONS (I cannot answer these myself)
 
-1. **Did you already run the manual sudo paste** (deriving the sub from
+~~1. **Did you already run the manual sudo paste** (deriving the sub from~~ done — provisioner converges; deployed; username set
    Pocket ID's SQLite and `UPDATE users SET openid_connect_id=… WHERE
    username='lars'`)? If yes with the CORRECT sub, the provisioner will
    report `already linked`; if with a WRONG value, it will converge (rewrite)
    — either outcome is safe, I just want to predict the journal for
    verification.
-2. **Deploy decision:** the PSI looks like the permanent corpse-pile phantom
+~~2. **Deploy decision:** the PSI looks like the permanent corpse-pile phantom~~ done — provisioner converges; deployed; username set
    (disks near-idle, D-state corpses, avg300 sustained ~48% this morning).
    Force now (`DEPLOY_FORCE_PRESSURE=1`), wait for a quiet window, or fold
    the deploy into the owed reboot? Until deployed, `rss.home.lan` SSO keeps
    400ing.
-3. **Is your Pocket ID username exactly `lars`** (email prefix `lars@…`)? If
+~~3. **Is your Pocket ID username exactly `lars`** (email prefix `lars@…`)? If~~ done — provisioner converges; deployed; username set
    it differs, tell me the actual username — I'll change the one
    `oidcLink.username` line before deploying. (I cannot read Pocket ID's DB
    without root, and the provisioner's loud-failure journal would only show

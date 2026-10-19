@@ -47,6 +47,29 @@ _: {
           port = ports.openseo;
           description = "OpenSEO toolkit (GSC callback exempt from forward-auth)";
         };
+        # pbx.artmann.tech family (2026-10-19): services that run on the
+        # Hetzner VPS from OTHER LarsArtmann repos (pbx-artmann deployment
+        # flake + nix-international-telephony stack) — no SystemNix service
+        # module owns them, so the platform registry is their catalog home
+        # (same "what exists, deployed off-fleet" shape as auth). Zero
+        # deployments is the honest state: the harvest only sees SystemNix
+        # hosts; the descriptions carry the real location.
+        pbx = {
+          subdomain = null;
+          description = "FreeSWITCH PBX at pbx.artmann.tech (nix-international-telephony telephony stack)";
+        };
+        pbx-lens = {
+          subdomain = null;
+          description = "Unified call-history index over FreeSWITCH CDRs, Telnyx, and receiver webhooks (pbx.artmann.tech)";
+        };
+        webphone = {
+          subdomain = null;
+          description = "Unified-communications web app: calls, messages, fax, voicemail, contacts (pbx.artmann.tech)";
+        };
+        mail-server = {
+          subdomain = null;
+          description = "Stalwart mail stack (SMTP/IMAP/JMAP/CardDAV) at mail.artmann.tech (nix-email) — CardDAV contacts are a mirror planned to be fed from Kith CRM (the contacts source of truth)";
+        };
       };
     };
 }

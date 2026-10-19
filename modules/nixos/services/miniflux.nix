@@ -27,6 +27,7 @@ _: {
       cfg = config.services.miniflux;
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkPoolDirUnit
         serviceOneshotDefaults
         onFailure
         ioTier
@@ -370,32 +371,10 @@ _: {
           # Nightly backup of the whole Miniflux state (PostgreSQL only — the
           # app is stateless). pg_dump custom format as the postgres superuser
           # over peer auth; cv-backup dir-oneshot pattern for the pool leaf.
-          miniflux-backup-dir = {
+          miniflux-backup-dir = mkPoolDirUnit {
             description = "Create Miniflux backup directory on the HDD pool";
-            wantedBy = [ "multi-user.target" ];
-            unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                User = "root";
-                RemainAfterExit = true;
-              }
-              # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir 226/NAMESPACE
-              # lesson): on a fresh pool the leaf does not exist yet.
-              (harden {
-                MemoryMax = "128M";
-                ReadWritePaths = [ "/mnt/pool" ];
-                # chown to postgres so the dumper (User=postgres) can write;
-                # harden{}'s empty bounding set would strip CAP_CHOWN.
-                CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-              })
-              (serviceOneshotDefaults { })
-            ];
-            script = ''
-              mkdir -p ${backupDir}
-              chown postgres:postgres ${backupDir}
-              chmod 0755 ${backupDir}
-            '';
+            directory = backupDir;
+            owner = "postgres";
           };
 
           miniflux-backup = {

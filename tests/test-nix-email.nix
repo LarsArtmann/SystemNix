@@ -38,6 +38,10 @@ let
     ((import ../modules/nixos/services/nix-email.nix) { inherit inputs; }).flake.nixosModules.nix-email;
   integrationModule =
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
+  # Co-import (ADR-008): the wrapper's unconditional services.catalog entry
+  # needs the option declared, exactly like host evals get it via the
+  # auto-discovered catalog module.
+  catalogModule = (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog;
 
   evalConfig =
     extra:
@@ -47,6 +51,7 @@ let
       modules = [
         nixEmailModule
         integrationModule
+        catalogModule
         ./mock-sops.nix
         extra
       ];

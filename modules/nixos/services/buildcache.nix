@@ -46,6 +46,7 @@
       # scripts/lib/buildcache-reap-names.sh (shared with deploy.sh and the
       # home.nix activation reap; never keep a private name copy here).
       reapNames = import ../../../lib/buildcache-cache-names.nix lib;
+      cacheSsd = import ../../../lib/cache-ssd.nix lib;
 
       cfg = config.services.buildcache;
 
@@ -75,17 +76,10 @@
         "playwright"
       ];
 
-      # ID_SERIAL of the cache SSD, parsed from the by-id device path
-      # ("ata-<model>_<serial>-partN"). null for non-by-id devices - the udev
-      # recovery trigger is then skipped (x-systemd.device-bound still
-      # protects the mount).
-      deviceSerialMatch = builtins.match "(ata|scsi|usb|virtio)-(.+)-part[0-9]+" (baseNameOf cfg.device);
-      deviceSerial = if deviceSerialMatch == null then null else builtins.elemAt deviceSerialMatch 1;
-
-      # systemd unit names for the mountpoint's .mount/.automount units
-      # ("/mnt/buildcache" → "mnt-buildcache"). Valid for paths without
-      # dots; systemd-escape of '.' differs.
-      mountUnitName = lib.concatStringsSep "-" (lib.tail (lib.splitString "/" cfg.mountPoint));
+      # ID_SERIAL of the cache SSD and the mountpoint's systemd unit name —
+      # shared cache-SSD helpers (lib/cache-ssd.nix).
+      deviceSerial = cacheSsd.deviceSerialFromDevice cfg.device;
+      mountUnitName = cacheSsd.mountUnitNameFor cfg.mountPoint;
     in
     {
       options.services.buildcache = {
@@ -414,72 +408,14 @@
             })
             (serviceOneshotDefaults { })
           ];
-          script = ''
-            set -eu
-            OUT="${textfileDir}/buildcache.prom"
-            # Unique tmp per run (mktemp): a fixed .tmp name collides with
-            # stale foreign-owned leftovers in the sticky 1777 textfile dir
-            # (mail-relay 2026-09-02..06 outage class).
-            mkdir -p "${textfileDir}"
-            TMP="$(mktemp "${textfileDir}/buildcache.prom.XXXXXX")"
-            chmod 644 "$TMP"
-            trap 'rm -f "$TMP"' EXIT
-            mnt="${cfg.mountPoint}"
-            dev="${cfg.wholeDiskDevice}"
-            threshold=${toString cfg.usageThresholdPercent}
-
-            # Mount-table presence is not health: a hot-unplugged USB drive
-            # leaves a zombie VFS entry (stale device major:minor) that still
-            # satisfies findmnt while every read returns EIO. Gate on real I/O
-            # so a dead mount reports 0 and Gatus alerts, not phantom green.
-            mounted=0
-            if
-              findmnt -n -o TARGET "$mnt" 2>/dev/null | grep -qx "$mnt" \
-                && timeout 15 ls -A "$mnt" >/dev/null 2>&1
-            then
-              mounted=1
-            fi
-
-            smart_healthy=0
-            if smartctl -d sat -H "$dev" 2>/dev/null | grep -q "PASSED"; then
-              smart_healthy=1
-            fi
-
-            usage=0
-            over=0
-            free_bytes=0
-            total_bytes=0
-            if [ "$mounted" = 1 ]; then
-              usage="$(df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9')"
-              free_bytes="$(df -B1 --output=avail "$mnt" | tail -n1 | tr -dc '0-9')"
-              total_bytes="$(df -B1 --output=size "$mnt" | tail -n1 | tr -dc '0-9')"
-              if [ "''${usage:-0}" -ge "$threshold" ] 2>/dev/null; then
-                over=1
-              fi
-            fi
-
-            cat > "$TMP" <<METRICS
-            # HELP buildcache_mounted 1 if the build cache SSD is mounted, 0 otherwise
-            # TYPE buildcache_mounted gauge
-            buildcache_mounted ''${mounted}
-            # HELP buildcache_smart_healthy 1 if SMART overall-health self-assessment is PASSED
-            # TYPE buildcache_smart_healthy gauge
-            buildcache_smart_healthy ''${smart_healthy}
-            # HELP buildcache_usage_percent Build cache filesystem usage percentage (0-100)
-            # TYPE buildcache_usage_percent gauge
-            buildcache_usage_percent ''${usage}
-            # HELP buildcache_usage_over_threshold 1 if usage >= ${toString cfg.usageThresholdPercent}%
-            # TYPE buildcache_usage_over_threshold gauge
-            buildcache_usage_over_threshold ''${over}
-            # HELP buildcache_free_bytes Free bytes on the build cache filesystem
-            # TYPE buildcache_free_bytes gauge
-            buildcache_free_bytes ''${free_bytes}
-            # HELP buildcache_total_bytes Total bytes on the build cache filesystem
-            # TYPE buildcache_total_bytes gauge
-            buildcache_total_bytes ''${total_bytes}
-            METRICS
-            mv "$TMP" "$OUT"
-          '';
+          script = cacheSsd.metricsScript {
+            prefix = "buildcache_";
+            promName = "buildcache.prom";
+            mnt = cfg.mountPoint;
+            inherit (cfg) wholeDiskDevice;
+            threshold = cfg.usageThresholdPercent;
+            inherit textfileDir;
+          };
         };
 
         systemd.timers.buildcache-metrics = {

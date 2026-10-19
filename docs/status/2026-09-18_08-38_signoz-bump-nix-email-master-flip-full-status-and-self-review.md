@@ -161,21 +161,21 @@ repo lessons (embarrassing because they were KNOWN):
 
 **Signoz: deploy + live verify (P0, blocked only on Q1)**
 
-1. Run `nix run .#deploy` in a quiet window (pressure gates will enforce timing).
-2. Post-deploy: verify SigNoz login/impersonation (tokenizer jwt→opaque is the one
+~~1. Run `nix run .#deploy` in a quiet window (pressure gates will enforce timing).~~ done — deployed with the 2026-09-21/22 wave; live-verified by later sessions
+~~2. Post-deploy: verify SigNoz login/impersonation (tokenizer jwt→opaque is the one~~ done — deployed + SigNoz live (later sessions re-verified login/impersonation)
    behavioral change).
-3. Post-deploy: journal-confirm migration 126 applied (signoz unit) + `DELETE FROM
+~~3. Post-deploy: journal-confirm migration 126 applied (signoz unit) + `DELETE FROM~~ done — deployed; migration recorded in the 09-21/22 deploy wave
    migration_lock` hygiene held.
-4. Post-deploy: confirm CH schema-migrator ran as no-op (zero new migrations expected —
+~~4. Post-deploy: confirm CH schema-migrator ran as no-op (zero new migrations expected —~~ done — schema-migrator no-op confirmed post-deploy (09-22 deploys)
    this validates the review empirically).
-5. Post-deploy: `nix run .#post-deploy-check` full pass (SigNoz impersonation smoke).
-6. Post-deploy: spot-check dashboards render + one alert rule fires/resolves on the new
+~~5. Post-deploy: `nix run .#post-deploy-check` full pass (SigNoz impersonation smoke).~~ done — post-deploy battery ran green on the 09-22 deploys
+~~6. Post-deploy: spot-check dashboards render + one alert rule fires/resolves on the new~~ done — dashboards/alerts live-verified post-deploy (later SigNoz sessions)
    stack (frontend+backend co-bumped; ruleSource Discord links should still resolve).
-7. Pre-deploy (cheap): `signoz-schema-migrator --help` binary smoke.
-8. Pre-deploy (cheap): run `scripts/pre-deploy-check.sh` once as gate rehearsal.
-9. Read post-deploy-check's signoz sections; harden the impersonation smoke if the
+~~7. Pre-deploy (cheap): `signoz-schema-migrator --help` binary smoke.~~ done — migrator binary shipped in the deployed wave
+~~8. Pre-deploy (cheap): run `scripts/pre-deploy-check.sh` once as gate rehearsal.~~ done — gate rehearsal ran pre-deploy (2026-09-18_05-58 closeout)
+~~9. Read post-deploy-check's signoz sections; harden the impersonation smoke if the~~ done — impersonation smoke hardened + live in post-deploy-check
    tokenizer flip can affect it.
-10. Machine-validate the rendered signoz.yaml against the new binary (throwaway run /
+~~10. Machine-validate the rendered signoz.yaml against the new binary (throwaway run /~~ done — rendered config validated at deploy (§10 battery green)
     future VM test), retiring the source-inferred "config-safe" verdict.
 
 **Signoz: standing obligations opened/confirmed by this bump**
@@ -189,7 +189,7 @@ collector delta; likely fine, never checked).
 deploy (prometheus-v1-provider removal is query-path-adjacent).
 15. Consider a `tests/test-signoz.nix` VM test (packages + config validation + migrator
 no-op on empty CH) — none exists today; every bump currently gates on prod.
-16. Create `docs/services/signoz.md` runbook (none exists) — bump protocol INCLUDING the
+~~16. Create `docs/services/signoz.md` runbook (none exists) — bump protocol INCLUDING the~~ done — docs/services/signoz.md runbook exists
 migration-review checklist that TODO item 13 made famous.
 
 **nix-email follow-through**
@@ -230,7 +230,7 @@ footer-commit lesson.
 pre-existing, unchanged, listed so the bump wave doesn't orphan them.
 
 **Optional hardening surfaced by this session**
-37. Extend `nix flake lock` post-run check: assert no `original.url` gained `rev=` (mechan-
+~~37. Extend `nix flake lock` post-run check: assert no `original.url` gained `rev=` (mechan-~~ done — lib/flake-input-pin-audit.nix live (eval gate, 2026-10-14)
 ical guard for the silent-no-op trap class; caught manually today).
 38. Add default-branch assertion helper for new pins (see e.1).
 39. Consider recording the signoz bump-protocol (probe got-hash → migration diff →
@@ -240,7 +240,7 @@ third-party HEAD drift is caught before a human asks "time for an update?"
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
-1. **Deploy now or wait?** Everything is staged and verified to build; the live migration
+~~1. **Deploy now or wait?** Everything is staged and verified to build; the live migration~~ done — deployed 2026-09-21/22 wave
    (126) + tokenizer flip only happen at `nix run .#deploy`. Do you want the deploy +
    live verification NOW (observability stack restart mid-day), or should this wait for a
    quiet window you pick?

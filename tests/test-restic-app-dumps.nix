@@ -42,6 +42,8 @@ in
         .flake.nixosModules.backup-coordination
         ./mock-sops.nix
         ./test-helpers.nix
+        # --- pool simulation (tests/shared.nix poolDiskFixture, test-cv pattern) ---
+        (import ./shared.nix pkgs.lib).poolDiskFixture
       ];
 
       services.restic-app-dumps = {
@@ -57,41 +59,6 @@ in
       # Direct CLI assertions (snapshot listing) alongside the module's own
       # `restic-app-dumps` wrapper.
       environment.systemPackages = [ pkgs.restic ];
-
-      # --- pool simulation (test-cv.nix pattern, verbatim semantics) ---
-      boot.supportedFilesystems = [ "btrfs" ];
-      virtualisation.emptyDiskImages = [ 512 ];
-      virtualisation.fileSystems."/mnt/pool" = {
-        device = "/dev/disk/by-label/pool";
-        fsType = "btrfs";
-        options = [ "nofail" ];
-      };
-      systemd.services.pool-fmt = {
-        description = "Format the virtio disk as btrfs label pool (test-only)";
-        # Must complete BEFORE mnt-pool.mount starts (its by-label device
-        # unit only exists once mkfs has run) — a sibling under
-        # local-fs.target with no ordering races the mount.
-        wantedBy = [ "local-fs.target" ];
-        before = [
-          "mnt-pool.mount"
-          "local-fs.target"
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          User = "root";
-        };
-        path = [
-          pkgs.btrfs-progs
-          pkgs.util-linux
-          pkgs.systemd
-        ];
-        script = ''
-          if ! blkid /dev/vdb | grep -q 'LABEL="pool"'; then
-            mkfs.btrfs -f -L pool /dev/vdb
-          fi
-          udevadm settle
-        '';
-      };
     };
 
   testScript = ''

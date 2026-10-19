@@ -37,48 +37,13 @@
     }:
     let
       cfg = config.services.gatus-coverage-audit;
+      inherit (import ../../../lib/default.nix lib)
+        unitExecText
+        extractPortLiterals
+        ;
 
       registeredPorts = builtins.attrValues (import ../../../lib/ports.nix).ports;
       allowed = registeredPorts ++ cfg.allowPorts;
-
-      portRegex = "((127\\.0\\.0\\.1|localhost|0\\.0\\.0\\.0)[: ]([0-9]{2,5})([^0-9]|$))|([^0-9]:([0-9]{2,5})([^0-9a-zA-Z]|$))|(--port[ =]([0-9]{2,5})([^0-9]|$))";
-      extractPorts =
-        text:
-        let
-          parts = builtins.split portRegex text;
-          digitGroups = builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null) (
-            lib.flatten (map (x: if builtins.isList x then x else [ ]) parts)
-          );
-        in
-        lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups));
-
-      scanKeys = [
-        "ExecStart"
-        "ExecStartPre"
-        "ExecStartPost"
-        "ExecStop"
-        "ExecStopPost"
-        "ExecReload"
-        "ExecCondition"
-      ];
-      envToString =
-        env:
-        if builtins.isAttrs env then
-          lib.mapAttrsToList (k: v: "${k}=${toString v}") env
-        else
-          map toString (lib.toList env);
-      unitText =
-        svc:
-        lib.concatStringsSep " \n " (
-          (map (
-            k:
-            if svc.serviceConfig ? ${k} then
-              (lib.concatMapStringsSep " " toString (lib.toList svc.serviceConfig.${k}))
-            else
-              ""
-          ) scanKeys)
-          ++ (lib.optionals (svc.serviceConfig ? Environment) (envToString svc.serviceConfig.Environment))
-        );
 
       # (a) in-use ports with owning units, restricted to registered ones
       # (registry membership was already enforced by port-registry-audit;
@@ -92,7 +57,7 @@
             lib.mapAttrsToList (
               name: svc:
               let
-                t = builtins.tryEval (unitText svc);
+                t = builtins.tryEval (unitExecText svc);
               in
               if !t.success then
                 [ ]
@@ -100,7 +65,7 @@
                 map (p: {
                   port = p;
                   owner = name;
-                }) (builtins.filter (p: builtins.elem p registeredPorts) (extractPorts t.value))
+                }) (builtins.filter (p: builtins.elem p registeredPorts) (extractPortLiterals t.value))
             ) config.systemd.services
           )
         );

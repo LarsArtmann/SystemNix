@@ -20,145 +20,20 @@
 }:
 let
   lib = inputs.nixpkgs.lib;
-
-  # Wrapper modules are flake-parts modules — `_: { flake.nixosModules.X = …; }`
-  # functions — while a few are plain attrsets; handle both shapes. Function
-  # modules that take `inputs` (e.g. papdashboard.nix) get the flake inputs;
-  # their input-dependent values stay lazy unless the test forces them.
-  mod =
-    file: name:
-    let
-      imported = import ../modules/nixos/services/${file};
-      wrapper =
-        if !builtins.isFunction imported then
-          imported
-        else if (builtins.functionArgs imported) ? inputs then
-          imported { inherit inputs; }
-        else
-          imported { };
-    in
-    wrapper.flake.nixosModules.${name};
+  shared = import ./shared.nix lib;
+  mod = shared.mod inputs;
+  inherit (shared)
+    portStubs
+    siblingEnableStubs
+    ;
 
   # Minimal stubs for options the real consumer modules read unconditionally
   # from siblings that are NOT part of this test's import set (test-paperless
-  # precedent — cheaper than importing the full sibling closure).
-  stubs = {
-    networking.local.subnet = lib.mkOption {
-      type = lib.types.str;
-      default = "192.168.1.0/24";
-    };
-    services.oauth2-proxy-config.port = lib.mkOption {
-      type = lib.types.port;
-      default = 4180;
-    };
-    services.dns-blocker.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.dns-blocker.blockInterface = lib.mkOption {
-      type = lib.types.str;
-      default = "lo";
-    };
-    # caddy.nix / gatus-config.nix / system-health.nix read
-    # these sibling services' enable UNGUARDED (they are always co-imported on
-    # evo-x2); stub them so the test import stays light. Generated from:
-    #   grep -oE "config\.services\.[a-zA-Z0-9_-]+\.enable" <imported modules> | grep -v "or false"
-    services.browser-history.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.monitor365.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.monitor365-server.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.discordsync.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.overview.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-    services.file-and-image-renamer.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-    };
-  };
-
-  # Bulk `.enable` stubs for sibling namespaces read unguarded by the real
-  # consumer modules (all default false — the test enables none of them).
-  enableStubs = names: {
-    # Nested option paths — a flat "services.<n>.enable" STRING key would
-    # declare a literally-named option, not the path config reads.
-    services = lib.listToAttrs (
-      map (
-        n:
-        lib.nameValuePair n {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-          };
-        }
-      ) names
-    );
-  };
-
-  siblingEnableStubs = enableStubs [
-    "ai-stack"
-    "attic-config"
-    "bank-sync"
-    "buildcache"
-    "browser-history"
-    "crush-daily"
-    "cv-server"
-    "discordsync"
-    "fastflowlm"
-    "file-and-image-renamer"
-    "google-sync"
-    "hermes"
-    "inboxclean"
-    "llama-rag"
-    "mail-relay"
-    "monitor365"
-    "monitor365-server"
-    "overview"
-    "pool-recovery"
-    "pool-smart-metrics"
-    "projects-management-automation"
-    "signoz"
-    "systemd-graph"
-    "systemd-timer-monitor"
-    "tq-agent-pool"
-  ];
-
-  # Port-shaped options the UNCONDITIONAL caddy base vHosts force
-  # (signoz/taskchampion/openseo/crush-daily/dns-blocker ports).
-  portStubs = {
-    services.signoz.settings.queryService.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8080;
-    };
-    services.openseo.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8084;
-    };
-    services.crush-daily.port = lib.mkOption {
-      type = lib.types.port;
-      default = 8085;
-    };
-    services.dns-blocker.statsPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8086;
-    };
-    services.dns-blocker.blockIP = lib.mkOption {
-      type = lib.types.str;
-      default = "0.0.0.0";
-    };
-  };
+  # precedent — cheaper than importing the full sibling closure). The sibling
+  # `.enable` stubs these modules read unguarded (browser-history, monitor365,
+  # monitor365-server, discordsync, overview, file-and-image-renamer, …) come
+  # from shared.siblingEnableStubs below.
+  stubs = shared.baseStubs;
 
   baseModules = [
     inputs.sops-nix.nixosModules.sops

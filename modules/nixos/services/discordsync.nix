@@ -22,6 +22,7 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         mkStateDir
+        mkPoolDirUnit
         ports
         onFailure
         ioTier
@@ -702,45 +703,18 @@
         };
 
         # Pool attachment archive wiring (attachmentsDir != null only).
-        systemd.services.discordsync-attachments-dir = lib.mkIf (cfg.attachmentsDir != null) {
-          description = "Create DiscordSync attachment directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
-            # on a fresh pool nothing pre-exists under the mountpoint, and a
-            # ReadWritePaths leaf entry would abort with 226/NAMESPACE before
-            # the script can mkdir. RequiresMountsFor guarantees /mnt/pool is
-            # mounted, so the root scope always resolves.
-            (harden {
-              MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool" ];
-              # chown to the service user flips the path non-root-owned; the
-              # follow-up chmod then needs CAP_FOWNER (2026-09-20 lesson —
-              # CAP_DAC_OVERRIDE does NOT cover chmod on foreign-owned paths).
-              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            # chmod while the dir is still root-owned (no CAP_FOWNER needed),
-            # then hand over to the service user. chmod AFTER the chown flip
-            # EPERM'd live on 2026-09-22 despite CAP_FOWNER in the bounding
-            # set — this order is idempotent and cap-independent. 0770, NOT
-            # 2770: setting the setgid bit on a group outside the sandbox's
-            # groups needs CAP_FSETID (not in the bounding set) — and the bit
-            # is decorative anyway (the writer runs as the dir's owner/user).
-            mkdir -p ${cfg.attachmentsDir}
-            chown root:root ${cfg.attachmentsDir}
-            chmod 0770 ${cfg.attachmentsDir}
-            chown ${cfg.user}:${cfg.group} ${cfg.attachmentsDir}
-          '';
-        };
+        # Single-phase chown (mkPoolDirUnit default) reaches the same final
+        # state as the old root-flip two-phase: user:group + 0770, with
+        # CAP_CHOWN/FOWNER/DAC_OVERRIDE in the bounding set the whole way.
+        systemd.services.discordsync-attachments-dir = lib.mkIf (cfg.attachmentsDir != null) (
+          mkPoolDirUnit {
+            description = "Create DiscordSync attachment directory on the HDD pool";
+            directory = cfg.attachmentsDir;
+            owner = cfg.user;
+            group = cfg.group;
+            mode = "0770";
+          }
+        );
 
         # One-time move of the in-state attachment archive onto the pool
         # (activitywatch-data-to-pool pattern): runs only while the legacy
@@ -880,32 +854,12 @@
         # browser-history-backup pattern: mount-gated pool leaf creator +
         # online sqlite .backup. The raw intermediate is gzip -1'd in place
         # (message text compresses ~3x; the restic repo dedups further).
-        systemd.services.discordsync-db-backup-dir = lib.mkIf cfg.dbBackup.enable {
-          description = "Create DiscordSync DB backup directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            # ReadWritePaths targets the MOUNT ROOT (cv-backup-dir pattern):
-            # a fresh pool has no backups/ leaf yet, and a ReadWritePaths
-            # entry under the mountpoint would abort with 226/NAMESPACE
-            # before the script can mkdir.
-            (harden {
-              MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool" ];
-              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_OVERRIDE";
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            mkdir -p ${dbBackupDir}
-            chmod 0755 ${dbBackupDir}
-          '';
-        };
+        systemd.services.discordsync-db-backup-dir = lib.mkIf cfg.dbBackup.enable (
+          mkPoolDirUnit {
+            description = "Create DiscordSync DB backup directory on the HDD pool";
+            directory = dbBackupDir;
+          }
+        );
 
         systemd.services.discordsync-db-backup = lib.mkIf cfg.dbBackup.enable {
           description = "DiscordSync event-store backup (online sqlite .backup, gzipped)";

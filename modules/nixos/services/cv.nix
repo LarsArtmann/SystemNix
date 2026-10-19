@@ -25,6 +25,7 @@
         onFailure
         harden
         ioTier
+        mkPoolDirUnit
         serviceOneshotDefaults
         ;
       cfg = config.services.cv-server;
@@ -658,41 +659,12 @@
 
         # Mount-gated creator for the pool-side backup dir (atticd-storage-dir
         # pattern). cv-backup's ReadWritePaths requires the path to EXIST
-        # before namespace setup: during the 9-day DAS outage a root-fs shadow
-        # dir under /mnt/pool let cv-backup pass setup while early-exiting
-        # ("no pipeline.sqlite yet"); the 2026-08-31 pool remount then failed
-        # the boot catch-up run with 226/NAMESPACE because the POOL filesystem
-        # never had the dir. tmpfiles must NOT create it either — pre-mount it
-        # would land on the root fs and shadow the pool copy.
-        systemd.services.cv-backup-dir = {
+        # The only sanctioned creator of the pool leaf (mkPoolDirUnit carries
+        # the full 226/NAMESPACE + tmpfiles-shadow doctrine; gate resolves to
+        # the /mnt/pool mount prefix either way).
+        systemd.services.cv-backup-dir = mkPoolDirUnit {
           description = "Create CV backup directory on the HDD pool";
-          wantedBy = [ "multi-user.target" ];
-          unitConfig.RequiresMountsFor = [ backupDir ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = "root";
-              RemainAfterExit = true;
-            }
-            # ReadWritePaths targets the MOUNT ROOT (/mnt/pool), not a
-            # subdirectory: on a FRESH pool nothing creates /mnt/pool/backups
-            # before this unit's namespace is set up, and a ReadWritePaths
-            # entry under it aborts with 226/NAMESPACE before the script can
-            # mkdir (2026-09-04: caught by the VM test after the 2026-09-02
-            # tmpfiles removal left cv-backup-dir as "the only sanctioned
-            # creator" of a path its own namespace setup required to
-            # pre-exist). RequiresMountsFor guarantees /mnt/pool is mounted,
-            # so the root scope always resolves; the script mkdirs the leaf.
-            (harden {
-              MemoryMax = "128M";
-              ReadWritePaths = [ "/mnt/pool" ];
-            })
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            mkdir -p ${backupDir}
-            chmod 0755 ${backupDir}
-          '';
+          directory = backupDir;
         };
 
         # Pipeline event-store backup: the tracked-applications state

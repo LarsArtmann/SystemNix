@@ -47,7 +47,23 @@
       stalwartUnit = if lib.versionOlder msCfg.stateVersion "26.05" then "stalwart-mail" else "stalwart";
     in
     {
-      imports = [ inputs.nix-email.nixosModules.default ];
+      imports = [
+        inputs.nix-email.nixosModules.default
+        {
+          # Unconditional catalog entry (ADR-008): "what exists" — the DMARC
+          # collector is declared and pre-wired here but runs nowhere until
+          # the mail go-live flip (its integration entry appears with
+          # enable). Hosts importing this module MUST co-import
+          # nixosModules.catalog (loud eval failure otherwise — deliberate);
+          # tests/test-nix-email.nix co-imports it for the same reason.
+          services.catalog = {
+            dmarc-monitor = {
+              subdomain = null;
+              description = "parsedmarc DMARC/TLS-RPT aggregate-report collector (polls dmarc@larsartmann.cloud on the Stalwart server)";
+            };
+          };
+        }
+      ];
 
       config = lib.mkMerge [
         (lib.mkIf cfg.enable {

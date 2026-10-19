@@ -68,11 +68,12 @@
 
 ## f) NEXT TASKS (30 grounded items — user asked "up to 50"; padding to 50 would be fabricated filler, so 30 honest ones, most are S-effort; per skill, items past #25 are ROADMAP-fuel and HARVEST must route rigorously)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                   | Impact | Effort | Category      |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 1  | Fix pocket-id-backup-dir shadow-dir class: replace tmpfiles rule with mount-gated oneshot (cv-backup-dir pattern)                                                      | High   | S      | Bug           |
 | 2  | User-run check for an existing shadow dir under the /mnt/pool mountpoint (bind-view trick; root fs)                                                                    | High   | S      | Bug           |
-| 3  | **Review the parallel session's `github-auto-assign.nix`** (+164 lines, enabled in configuration.nix, commit `7c7e9be7`) — author flagged below in (g3)                | High   | S–M    | Quality       |
+| ~~3~~ done — auto-assign reviewed+deployed live: docs/status/2026-09-18_05-58 | ~~**Review the parallel session's `github-auto-assign.nix`** (+164 lines, enabled in configuration.nix, commit `7c7e9be7`) — author flagged below in (g3)~~ | ~~High~~ | ~~S–M~~ | ~~Quality~~ |
 | 4  | Evaluate multi-secret OIDC clients (#1679) for provisioner rotation + the pocket-id-secret-rotation check                                                              | High   | M      | Feature       |
 | 5  | Verify provisioner secret API assumptions vs the 2.14 multi-secret surface (`pocket-id.nix:100-101` comment)                                                           | High   | S      | Quality       |
 | 6  | Verify `scripts/pocket-id-login-code.sh` against the 2.14 one-time-code length change                                                                                  | High   | S      | Quality       |
@@ -99,7 +100,7 @@
 | 27 | Document the sudo-blocked limitation + sanctioned live-probe paths for root-only surfaces                                                                              | Medium | S      | Documentation |
 | 28 | Habit: cross-check UI-reported versions against the nixpkgs lock rev                                                                                                   | Low    | S      | Process       |
 | 29 | Harvest this section (f) into TODO_LIST/ROADMAP via docs-health                                                                                                        | Medium | S      | Process       |
-| 30 | Split the AGENTS.md SSO/OIDC section per-domain (navigation hazard at current length)                                                                                  | Low    | M      | Documentation |
+| ~~30~~ **Won't implement — SSO section split mooted by AGENTS restructure: CHANGELOG:154.** | ~~Split the AGENTS.md SSO/OIDC section per-domain (navigation hazard at current length)~~ | ~~Low~~ | ~~M~~ | ~~Documentation~~ |
 
 ---
 
@@ -107,7 +108,7 @@
 
 1. **CIMD pin stance — arbitrate:** the module now carries the explicit pin `CIMD_URL_ALLOWLIST = "[]"` (my stance: insurance against upstream changing the default; commit `51cb393a`), while an earlier same-day doc note preferred leaving it UNSET and trusting the fail-closed default. Runtime-identical today; I reconciled the docs to state both. Which stance do you want as the permanent one? _(I could not decide: two sessions picked opposite answers, and the difference is pure policy.)_
 2. **Do you have a concrete near-term MCP-over-OAuth consumer** (Hermes mcp extras, ToolHive, Claude-style MCP clients) that would authenticate against Pocket ID? This is the single fact that flips the keep-disabled decision — the feature exists precisely for that case, and I cannot know your product roadmap.
-3. **`github-auto-assign.nix` (+164 lines, enabled in configuration.nix, commit `7c7e9be7`) landed from a parallel session mid-conversation — yours/intentional?** Per the tree-sharing doctrine I flag it and don't co-verify it; if intentional, do you want a review pass (tests, eval guards, deployment state) scheduled for it?
+~~3. **`github-auto-assign.nix` (+164 lines, enabled in configuration.nix, commit `7c7e9be7`) landed from a parallel session mid-conversation — yours/intentional?** Per the tree-sharing doctrine I flag it and don't co-verify it; if intentional, do you want a review pass (tests, eval guards, deployment state) scheduled for it?~~ done — auto-assign intentional + live-verified: 2026-09-18_05-58
 
 ---
 

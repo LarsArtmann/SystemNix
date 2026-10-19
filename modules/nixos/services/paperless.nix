@@ -34,6 +34,7 @@ _: {
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkPoolDirUnit
         ioTier
         onFailure
         ports
@@ -639,16 +640,25 @@ _: {
                     CPUQuota = "200%";
                   }
                   oidcEnvFragment
+                  {
+                    # Group-writable consume dir: interactive scan drops (lars
+                    # is in the paperless group) land as lars-owned files the
+                    # paperless user can still read+unlink for ingest. MUST run
+                    # as root — the "+" ExecStartPre prefix — because the
+                    # sandboxed paperless-user preStart gets EPERM on this
+                    # chmod, which start-limit-killed the consumer for 30 min
+                    # (live 2026-10-19 04:37, boot journal). Existence-guarded:
+                    # on a very first boot the upstream preStart mkdir may not
+                    # have run yet; perms then apply on the next consumer
+                    # restart instead of failing the unit. Deliberately a unit
+                    # hook, not tmpfiles: tmpfiles can fire before the pool
+                    # mount and create the path on the root-fs mountpoint
+                    # instead.
+                    ExecStartPre = [
+                      "+${pkgs.runtimeShell} -c 'if [ -d ${dataDir}/consume ]; then chmod 2775 ${dataDir}/consume; fi'"
+                    ];
+                  }
                 ];
-                # Group-writable consume dir: interactive scan drops (lars is in
-                # the paperless group) land as lars-owned files the paperless
-                # user can still read+unlink for ingest. mkAfter runs this AFTER
-                # the upstream preStart mkdir (first-boot safe). Deliberately a
-                # unit hook, not tmpfiles: tmpfiles can fire before the pool
-                # mount and create the path on the root-fs mountpoint instead.
-                preStart = lib.mkAfter ''
-                  chmod 2775 ${dataDir}/consume
-                '';
               };
 
               # One-time SQLite → PostgreSQL engine migration (2026-08-18 switch
@@ -1076,28 +1086,10 @@ _: {
               # manifest-based exporter becomes importer-only — the DB dump is
               # the fast restore path. miniflux-backup pattern; pool leaf via
               # the cv-backup dir-oneshot shape.
-              paperless-db-backup-dir = {
+              paperless-db-backup-dir = mkPoolDirUnit {
                 description = "Create Paperless PG backup directory on the HDD pool";
-                wantedBy = [ "multi-user.target" ];
-                unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-                serviceConfig = lib.mkMerge [
-                  {
-                    Type = "oneshot";
-                    User = "root";
-                    RemainAfterExit = true;
-                  }
-                  (harden {
-                    MemoryMax = "128M";
-                    ReadWritePaths = [ "/mnt/pool" ];
-                    CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
-                  })
-                  (serviceOneshotDefaults { })
-                ];
-                script = ''
-                  mkdir -p ${pgBackupDir}
-                  chown postgres:postgres ${pgBackupDir}
-                  chmod 0755 ${pgBackupDir}
-                '';
+                directory = pgBackupDir;
+                owner = "postgres";
               };
 
               paperless-db-backup = {

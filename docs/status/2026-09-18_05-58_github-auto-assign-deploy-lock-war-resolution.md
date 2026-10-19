@@ -28,15 +28,15 @@
 
 1. **papdashboard flaky test** — the first package build exit-1'd (log tail = DI service-shutdown INFO lines mid-teardown); direct rebuild passed clean. I documented "retry once" but did **not** identify WHICH test is flaky — and I `rm`'d the only full log before harvesting the name.
 2. **inboxclean triage** — root cause identified (`invalid_grant`, the documented testing-mode token-expiry class; needs interactive `inboxclean auth`), but I did not determine which account(s) died (`main` vs `work`), when the token actually died, or whether the `work` account (alive-past-7d as of the 2026-09-12 correction) is still healthy.
-3. **Pocket ID smoke failure in deploy-1** — failed then, passed in deploys #2/#3. Presumed transient (caught mid-restart at smoke time) but never explicitly confirmed.
-4. **Live-proof bookkeeping** — I marked the todo "completed" at session end while the systemd layer was still unproven (script layer only). Reality self-corrected overnight (item a9), but the bookkeeping was wrong when made.
+~~3. **Pocket ID smoke failure in deploy-1** — failed then, passed in deploys #2/#3. Presumed transient (caught mid-restart at smoke time) but never explicitly confirmed.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
+~~4. **Live-proof bookkeeping** — I marked the todo "completed" at session end while the systemd layer was still unproven (script layer only). Reality self-corrected overnight (item a9), but the bookkeeping was wrong when made.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
 5. **Attribution of my lock fixes** — staged-only (no-commit mandate honored), so my fixes ride heuristic daemon commits (`57f6a7f3` swept the browser-history rollback). History doesn't cleanly attribute this work.
 6. **`collectorVendorHash = ""`** (`_signoz-packages.nix:96`, signoz collector + schema-migrator) — noticed at ~21:00, flagged in the final message, NOT fixed. Unpinned FOD = silent nondeterminism if the store output is ever GC'd. Fix is ~2 minutes (hash the realized `5lj1zrhw…` FOD, paste).
 
 ## c) NOT STARTED
 
-1. Upstream browser-history issue filing — name the exact offending commit range `0971fe9..f3561fd8` (I never opened the upstream repo's log).
-2. CV upstream one-liner (`goPkgAttr = "go_1_27"`, the library-policy precedent) to lift the cv hold.
+~~1. Upstream browser-history issue filing — name the exact offending commit range `0971fe9..f3561fd8` (I never opened the upstream repo's log).~~ done — browser-history regression gone: TODO_LIST:500; CV TODO_LIST:581
+~~2. CV upstream one-liner (`goPkgAttr = "go_1_27"`, the library-policy precedent) to lift the cv hold.~~ done — browser-history regression gone: TODO_LIST:500; CV TODO_LIST:581
 3. SignoZ/Gatus alert-lifecycle check for the ~46-min browser-history outage window (~21:53–22:39): did TRIGGERED **and** RESOLVED both reach Discord?
 4. Repo-wide audit for other discovery-mode `vendorHash = ""` leftovers.
 5. Fork mass-unassignment — user decision still open (19:39 report Question 2).
@@ -66,9 +66,9 @@
 
 **Upstream fixes (lift the two holds):**
 
-1. Browser-history: identify the checkpoint-feature commit in `0971fe9..f3561fd8`, write the upstream issue (readonly regression + repro + journal evidence), then fix upstream → re-lift hold per the documented protocol.
-2. CV: upstream `goPkgAttr = "go_1_27"` one-liner (library-policy precedent, nixpkgs ships 1.27.1) → probe `#default.goModules` → push → `nix flake lock --update-input cv` → delete the hold note.
-3. papdashboard: reproduce + name the flaky test (DI teardown race?), fix upstream or bound it (deterministic port/tempdir); if sandbox-inherent, justify `doCheck = false` upstream.
+~~1. Browser-history: identify the checkpoint-feature commit in `0971fe9..f3561fd8`, write the upstream issue (readonly regression + repro + journal evidence), then fix upstream → re-lift hold per the documented protocol.~~ done — upstream fixes landed: TODO_LIST:500,581; collectorVendorHash TODO_LIST:979
+~~2. CV: upstream `goPkgAttr = "go_1_27"` one-liner (library-policy precedent, nixpkgs ships 1.27.1) → probe `#default.goModules` → push → `nix flake lock --update-input cv` → delete the hold note.~~ done — upstream fixes landed: TODO_LIST:500,581; collectorVendorHash TODO_LIST:979
+~~3. papdashboard: reproduce + name the flaky test (DI teardown race?), fix upstream or bound it (deterministic port/tempdir); if sandbox-inherent, justify `doCheck = false` upstream.~~ done — upstream fixes landed: TODO_LIST:500,581; collectorVendorHash TODO_LIST:979
 4. Pin signoz `collectorVendorHash` (line 96) from the realized `5lj1zrhw…` FOD — kills the discovery-mode nondeterminism.
 5. Repo-wide grep for other `vendorHash = ""` discovery-mode leftovers; pin or justify each.
 
@@ -83,8 +83,8 @@
 11. Which inboxclean account(s) died + `work` account health (the 2026-09-12 correction said work was alive-past-7d; check `token-work.json` refresh activity).
 12. Confirm discordsync-db-heal succeeded once post-IO-quiet (its FAIL state exit-4s any future deploy that touches its unit file).
 13. Full `nix flake check` at a quiescent moment to validate every input surface post-wave (only toplevel + deploy gates were run).
-14. Deployed-binary equivalence: first timer fire used system-782's closure build; the live-proof used the pre-deploy store build — content-identical code, but note the store paths differ; no action, just awareness.
-15. Verify Pocket ID smoke failure was transient (deploy-1) — check oauth2-proxy/Pocket ID journal around 21:50 for a real blip vs restart-timing.
+~~14. Deployed-binary equivalence: first timer fire used system-782's closure build; the live-proof used the pre-deploy store build — content-identical code, but note the store paths differ; no action, just awareness.~~ done — awareness notes closed
+~~15. Verify Pocket ID smoke failure was transient (deploy-1) — check oauth2-proxy/Pocket ID journal around 21:50 for a real blip vs restart-timing.~~ done — awareness notes closed
 
 **Hardening / hygiene:**
 16. `excludeForks` fork-list cap: `gh repo list --fork --limit 1000` — silently under-covers beyond 1000 forks; assert or paginate.

@@ -108,7 +108,7 @@
           services.catalog.crm = {
             subdomain = "crm";
             port = ports.crm;
-            description = "Kith CRM (event-sourced, Pocket ID auth)";
+            description = "Kith CRM (event-sourced, Pocket ID auth) — the contacts source of truth; Stalwart CardDAV is a planned mirror fed from it";
             healthPath = "/healthz";
           };
         }
