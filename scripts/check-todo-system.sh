@@ -163,11 +163,15 @@ selftest() {
   exit 0
 }
 
-# Verbatim duplicate open rows: extract each unchecked row's title (text of
-# the first **…** span; an untitled row compares by its full line) and fail
-# on any title that appears more than once. Gate mode sweeps the target plus
-# every docs/todo/ library (the rows share one shape across both surfaces);
-# --scan-file passes only its target so selftest fixtures stay hermetic.
+# Verbatim duplicate open rows: extract each unchecked row's title — the bold
+# span immediately after the optional lifecycle tag; a row whose first bold
+# span sits mid-row (status stamps like **CODE LANDED …**) or that has none
+# compares by its full line. Fail on any repeated title. The literal
+# "Source:" title (the title-less lost-harvest artifact) is excluded — that
+# class belongs to the title-less-row leg. Gate mode sweeps the target plus
+# every docs/todo/ library (rows share one shape across both surfaces, but
+# queue↔library title identity is the DESIGNED pairing — dedup is per
+# surface, never cross-surface); --scan-file stays hermetic to its target.
 duplicate_check() {
   local f="$1" dup_targets=() target dup_hits
   dup_targets+=("$f")
@@ -176,15 +180,27 @@ duplicate_check() {
       [ -f "$target" ] && dup_targets+=("$target")
     done
   fi
-  dup_hits=$(cat "${dup_targets[@]}" |
-    grep -E '^- \[ \] ' |
-    sed -E 's/^- \[ \] ([^*]*\*\*)?([^*]+)\*\*.*/\2/' |
-    sort | uniq -d)
-  if [ -n "$dup_hits" ]; then
-    echo "FAIL: duplicate open row title(s) across the queue/libraries — dedupe (verbatim-duplicate class, 2026-10-06):"
-    printf '%s\n' "$dup_hits" | sed 's/^/  /' | cut -c1-200
-    fail=1
-  fi
+  for target in "${dup_targets[@]}"; do
+    dup_hits=$(grep -E '^- \[ \] ' "$target" |
+      awk '{
+        if (match($0, /^- \[ \] (\[[^]]*\] )?\*\*[^*]+\*\*/)) {
+          title = substr($0, RSTART, RLENGTH)
+          sub(/^- \[ \] */, "", title)
+          sub(/^\[[^]]*\] */, "", title)
+          sub(/^\*\*/, "", title)
+          sub(/\*\*$/, "", title)
+        } else {
+          title = $0
+        }
+        if (title != "Source:") print title
+      }' |
+      sort | uniq -d)
+    if [ -n "$dup_hits" ]; then
+      echo "FAIL: duplicate open row title(s) in ${target#"$REPO_ROOT"/} — dedupe (verbatim-duplicate class, 2026-10-06):"
+      printf '%s\n' "$dup_hits" | sed 's/^/  /' | cut -c1-200
+      fail=1
+    fi
+  done
 }
 
 scan_file() {
