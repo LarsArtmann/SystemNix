@@ -47,3 +47,14 @@ The pre-Wise era (2022-12 → 2023-05) lives as frozen Qonto CSV exports in the 
 Split-brain note: the import writes events + read tables as a second process against the running daemon's SQLite (WAL-serialized, qonto streams never touched by Wise syncs) — the same proven-safe shape as the 2026-10-17 CLI import; the dashboard serves the rows without a daemon restart. The sync-state counter cosmetic (counter vs read model after non-daemon imports) applies to qonto balances too.
 
 **Qonto ATTACHMENT receipts are NOT archived:** `bank-sync paperless --provider qonto --receipts` (transaction attachments via the Qonto Business API, `https://thirdparty.qonto.com`) needs `BANK_SYNC_QONTO_ORGANIZATION` / `BANK_SYNC_QONTO_SECRET` / `BANK_SYNC_QONTO_IBAN` — no credentials exist in sops yet (owner mints them in Qonto's Business API credentials page; see bank-sync's `docs/runbooks/paperless.md` §Qonto). Until then only the statement CSVs are in the archive; wiring the weekly archival unit to also run `--provider qonto --receipts` must wait for the creds (running it unconfigured fails the weekly run by design).
+
+### Post-restore standby: firing + verifying the Qonto statement upload (2026-10-19)
+
+The upload unit is deployed and correct; it is blocked only by the Wave-6 paperless-DB incident (see the P0 row in docs/todo/services.md). After the DB is restored (pg_restore from the pool dump), run ONE activation (`nix run .#deploy` — gate rules as usual; the toplevel is cached) or wait for the Sunday 03:00 timer, then verify from the journal ONLY (never hand-curl with the token):
+
+```console
+journalctl -u bank-sync-qonto-paperless -n 40    # expect: uploads x2, "verified 2 Qonto statement documents", marker written
+journalctl -u bank-sync-qonto-paperless | rg 'created (correspondents|tags)'   # first-run object creation ids
+```
+
+Expected metadata (asserted by the unit script itself): correspondent "Qonto", document type "Bank Statement", tags bank-sync + qonto, created 2023-03-20 / 2023-05-18, titles carrying the org + period spans. Re-runs are marker-gated no-ops ("marker present" line).
