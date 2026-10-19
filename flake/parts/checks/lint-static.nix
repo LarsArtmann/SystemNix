@@ -835,6 +835,74 @@
                 touch $out
               '';
 
+          # forgejo-family-condition selftest (2026-10-19): proves the
+          # freeze-18 family-gate scanner (lib/forgejo-family-condition-audit.nix)
+          # flags every ungated forgejo*/gitea* unit class and stays quiet on
+          # compliant/exempt/non-family ones. Mirrors the lock-audit-selftest
+          # pattern: pure-Nix fixtures evaluated at CHECK EVAL time, bash only
+          # asserts the precomputed verdicts.
+          forgejo-family-condition-selftest =
+            let
+              audit = import (root + "/lib/forgejo-family-condition-audit.nix");
+              marker = "/var/lib/forgejo/.subvol-migrated";
+              gated = {
+                unitConfig.ConditionPathExists = [ marker ];
+              };
+              otherCondition = {
+                unitConfig.ConditionPathExists = [ "/some/other/condition" ];
+              };
+              unconditioned = { };
+              run =
+                units:
+                audit {
+                  lib = pkgs.lib;
+                  inherit units;
+                  stateDir = "/var/lib/forgejo";
+                  exemptUnits = [ "forgejo-census" ];
+                };
+              legs = {
+                clean = builtins.toJSON (
+                  (run {
+                    "forgejo-app" = gated;
+                    "gitea-runner-evo-x2" = gated;
+                  }).offenders
+                );
+                offender = builtins.toJSON (
+                  (run {
+                    "forgejo-app" = gated;
+                    "gitea-runner-evo-x2" = unconditioned;
+                  }).offenders
+                );
+                wrongMarker = builtins.toJSON ((run { "forgejo-backup" = otherCondition; }).offenders);
+                exempt = builtins.toJSON ((run { "forgejo-census" = unconditioned; }).offenders);
+                nonFamily = builtins.toJSON ((run { "paperless-web" = unconditioned; }).offenders);
+                customStateDir = builtins.toJSON (
+                  (audit {
+                    lib = pkgs.lib;
+                    units = {
+                      "forgejo-app" = gated;
+                    };
+                    stateDir = "/data/forgejo";
+                  }).offenders
+                );
+              };
+            in
+            pkgs.runCommand "forgejo-family-condition-selftest" { inherit legs; } ''
+              set -u
+              fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+              [ "$clean" = "[]" ] || fail "compliant family flagged: $clean"
+              echo "$offender" | grep -q 'gitea-runner-evo-x2' \
+                || fail "ungated gitea-runner-class unit not flagged (the freeze-18 miss): $offender"
+              echo "$wrongMarker" | grep -q 'forgejo-backup' \
+                || fail "unit with a non-marker condition not flagged: $wrongMarker"
+              [ "$exempt" = "[]" ] || fail "exempted unit flagged: $exempt"
+              [ "$nonFamily" = "[]" ] || fail "non-family unit flagged: $nonFamily"
+              echo "$customStateDir" | grep -q 'forgejo-app' \
+                || fail "marker not derived from stateDir (stale-path gate): $customStateDir"
+              echo "forgejo-family-condition: 6 legs green (clean, ungated-offender, wrong-marker, exempt, non-family, stateDir-derived-marker)"
+              touch $out
+            '';
+
           # Recursive chown/chmod walks in modules that also configure
           # Bind*Paths: systemd builds the mount namespace BEFORE any
           # ExecStartPre, so a recursive ownership walk descends into the
