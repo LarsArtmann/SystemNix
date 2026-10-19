@@ -233,8 +233,12 @@ watch)
     else
       consec_fail=$((consec_fail + 1))
       err_line=$(tail -1 "$batch_dir/scanimage.err" 2>/dev/null || true)
-      log "WARN: scan attempt failed rc=$batch_rc (consecutive #$consec_fail, empty_streak was #$empty_streak) sane says: ${err_line:-<no stderr>}; half-seated sheets flap the sensor (rc=4 is this class)"
-      sleep "$(( WATCH_FAIL_SLEEP * consec_fail < WATCH_FAIL_SLEEP_MAX ? WATCH_FAIL_SLEEP * consec_fail : WATCH_FAIL_SLEEP_MAX ))"
+      log "WARN: scan attempt failed rc=$batch_rc (consecutive #$consec_fail, empty_streak was #$empty_streak) sane says: ${err_line:-<no stderr>}; rc=4 = paper at feeder not yet at the pick rollers — push the sheet in until it stops"
+      if [ "$batch_rc" -eq 4 ]; then
+        sleep 3
+      else
+        sleep "$(( WATCH_FAIL_SLEEP * consec_fail < WATCH_FAIL_SLEEP_MAX ? WATCH_FAIL_SLEEP * consec_fail : WATCH_FAIL_SLEEP_MAX ))"
+      fi
     fi
   done
   ;;
