@@ -375,6 +375,10 @@ _: {
                   name = "SigNoz";
                   link = "https://signoz.${domain}";
                 }
+                {
+                  name = "Logs";
+                  link = "https://logs.${domain}";
+                }
               ];
             };
             # Smart-alerting fast path #2: every endpoint ALSO POSTs its
