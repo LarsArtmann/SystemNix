@@ -7638,11 +7638,11 @@
         "samber-do-auditlog": "samber-do-auditlog_9"
       },
       "locked": {
-        "lastModified": 1792182620,
-        "narHash": "sha256-HZKHnZmD/QE9rHbdT/XrenoKzcchKsCTI1rcva3/JJ8=",
+        "lastModified": 1792375499,
+        "narHash": "sha256-2rMb/IQuiJ02wrNZJF51jrC8ehYsaDRoAoRLrD9sNcU=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "849573ded472e38601c644634d040a2b333e961e",
+        "rev": "f3dd9f2cde315a8c28243ce106aedbe53acabcd2",
         "type": "github"
       },
       "original": {
