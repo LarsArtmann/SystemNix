@@ -58,7 +58,13 @@
           # the shim's own KaDlWefE… value (lock == tip, bit-neutral
           # override; lars-packages surface dropped in the same pass).
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
-          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # RE-ADDED 2026-10-19 wave: keep-going toplevel enumeration
+          # (/tmp/toplevel-build-20261019.log) mismatched upstream-baked
+          # KaDlWefE… at locked rev d409f9f; got yB73mr06… (same value as
+          # the re-pinned lars-packages surface).
+          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-yB73mr06xZTAzAx5M1qyBmM75umJ7baOuPo+RcokFOg=";
+          };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";
         };

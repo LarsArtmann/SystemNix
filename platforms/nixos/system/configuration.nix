@@ -369,8 +369,10 @@ in
       # realized with the same value). Second surface — the first lives in
       # lib/lars-packages.nix. Drop when upstream declares cCl3IWhu at this
       # or a later rev (verify via nix build .#buildflow).
+      # RE-STALE 2026-10-19 wave: both surfaces re-pinned to got
+      # 9y4NBzy3… (/tmp/toplevel-build-20261019.log, locked rev cf606f8).
       (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-5OQbyOHyoCMh1vNV1QRrRpP0G7wu1Wto+5WrpCZsVa4=";
+        vendorHash = "sha256-9y4NBzy3H8EYw5+TMnNIJYma5hCFrF4TlK3qWNRNXHg=";
       })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own

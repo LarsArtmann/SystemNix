@@ -55,11 +55,14 @@ _: {
           # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave,
           # first-hand got-hash from the 02:46 nh enumeration at locked
           # rev df32945; class comment: lib/lars-packages.nix
-          # flakePkgShim — same value as the lars-packages surface)
+          # flakePkgShim — same value as the lars-packages surface).
+          # RE-STALE 2026-10-19 wave: keep-going toplevel enumeration
+          # (/tmp/toplevel-build-20261019.log) mismatched this shim's own
+          # nNKXDH5N… at locked rev d4443ff; got jLpz/NzH….
           default =
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=";
+                vendorHash = "sha256-jLpz/NzHqndZbeHYX/afHaXif/u/70iBuqkGPtPy0oo=";
               };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
