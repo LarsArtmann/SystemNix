@@ -289,6 +289,9 @@ in
         "render"
         "lp"
         "scanner"
+        # Paperless consume-dir scan drops (dir is 2775 paperless:paperless via
+        # the paperless-consumer unit's preStart)
+        "paperless"
       ];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys

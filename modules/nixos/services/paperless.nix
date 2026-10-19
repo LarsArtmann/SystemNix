@@ -640,6 +640,15 @@ _: {
                   }
                   oidcEnvFragment
                 ];
+                # Group-writable consume dir: interactive scan drops (lars is in
+                # the paperless group) land as lars-owned files the paperless
+                # user can still read+unlink for ingest. mkAfter runs this AFTER
+                # the upstream preStart mkdir (first-boot safe). Deliberately a
+                # unit hook, not tmpfiles: tmpfiles can fire before the pool
+                # mount and create the path on the root-fs mountpoint instead.
+                preStart = lib.mkAfter ''
+                  chmod 2775 ${dataDir}/consume
+                '';
               };
 
               # One-time SQLite → PostgreSQL engine migration (2026-08-18 switch
