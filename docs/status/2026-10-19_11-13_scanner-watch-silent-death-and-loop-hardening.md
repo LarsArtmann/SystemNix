@@ -46,9 +46,10 @@
 5. **The rc explanation is unconditional.** My WARN appends "rc=4 = paper at the feeder with the pick rollers not yet engaged" to *every* non-4 code. Live counter-example in the old log: three failures at 09:04:28–09:04:35 with **rc=6** (SANE `JAMMED`) were labelled with the rc=4 explanation. I inherited the flaw and did not fix it. (S)
 6. **Docs refresh is a remainder, not complete.** Still missing from `scanner.md`: the blank-face reorder rule, the USB-stability evidence (two enumerations this boot, `power/control=on`), the bad-scan protocol (delete in UI → re-feed; a re-scan is never byte-identical so dedup will NOT catch it), and the physical-storage doctrine. (S)
 7. **The campaign's own corpus curation is untouched.** Today's ~59 test documents (checklists, KBA, Biedronka, Signal photo, the reordered-before-fix ones) are in Paperless as-is — keep/merge/delete and the deletion of the bad scans is still pending, and it is the prerequisite for a clean training run. (M)
-8. **The numbering/ASN layer is designed but unstarted** — and still blocked on three owner answers (see (g)). (L)
-9. **bank-sync-paperless is still undiagnosed** (every upload rejected `rejection:paperless.client_error`; the token mint succeeds on restart, the main unit logs nothing further). Not touched this session. (M)
-10. **`nix flake check` was not run this session.** No `.nix` file changed (script + docs only) and `check-todo-system.sh`/`check-doc-links.sh` were green, but the repo's own eval gate was not exercised after these edits. (S)
+8. **The GC runs only at startup, so a straggler can outlive it.** The sweep is `-mmin +60` at process start, and the loop never restarts on its own: the 10:01 failure's batch dir was **58 min old** at the 10:59:35 sweep, so it survived and had to be removed by hand (`raw/batch-bYCSHI`, trashed 11:1x). Per-batch cleanup now covers every path the fixed wrapper can take, so no *new* stragglers appear — but a periodic in-loop sweep (every N polls) would put a belt on the per-batch braces and is not implemented. (S)
+9. **The numbering/ASN layer is designed but unstarted** — and still blocked on three owner answers (see (g)). (L)
+10. **bank-sync-paperless is still undiagnosed** (every upload rejected `rejection:paperless.client_error`; the token mint succeeds on restart, the main unit logs nothing further). Not touched this session. (M)
+11. **`nix flake check` was not run this session.** No `.nix` file changed (script + docs only) and `check-todo-system.sh`/`check-doc-links.sh` were green, but the repo's own eval gate was not exercised after these edits. (S)
 
 ---
 
@@ -183,7 +184,7 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category** Bug/Feature/Quali
 ### Harvest status of this section
 
 - **Already queued (no new row needed):** 3, 4, 5, 6, 7, 8, 11, 13, 14, 15, 16, 17, 18, 19, 22, 26, 27, 28, 30, 31, 32, 39.
-- **Harvested as part of this report:** 1, 2, 9, 12, 23, 33, 36, 41, 43, 50 (the direct, dispatch-grade follow-ups) — routed to `TODO_LIST.md` + `docs/todo/services.md` / `docs/todo/monitoring.md` / `docs/todo/pipeline.md` with `**Source:**` pointing here.
+- **Harvested as part of this report:** 1, 2, 9, 12, 23, 33, 36, 41, 43 (the direct, dispatch-grade follow-ups) — routed to `TODO_LIST.md` + `docs/todo/services.md` (1, 2, 12, 23, 33, 36, 43) and `docs/todo/pipeline.md` (9, 41), each with `**Source:**` pointing at this report. Item 50 was fixed on sight instead of being queued (the exploratory scratch files `prev-frame-*.jpg`, `preview.jpg`, `b.png`, `r.png`, `t.pdf` were trashed; `~/.cache/scan-to-paperless/` now holds only the lifecycle-managed `raw/`, `out/`, `skipped/` and `watch.log`).
 - **Deliberately NOT harvested (recorded here, per the TODO-system rule):** 10 (covered by the existing standalone-lint row — verify before creating anything), 20, 21, 24, 25, 29, 34, 35, 37, 38, 40, 42, 44, 45, 46, 47, 48, 49 — these are either sub-parts of a harvested item, ROADMAP-grade ideas, or low-value nits. They are not commitments; do not dispatch them by default.
 
 ---
