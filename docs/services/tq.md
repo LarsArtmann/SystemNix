@@ -36,6 +36,26 @@ INTERIM (upstream master is ahead of origin, owner-blocked push). Flip to
 fetch git+file inputs until then. `go-nix-helpers` is deliberately not
 followed (bank-sync vendorHash FOD trap).
 
+## Boot placement & PSI entry gate
+
+The pool orders itself `After=multi-user.target` (2026-10-19, stability trio
+item 1) while staying wanted-by it (upstream) — the post-gate pattern from
+llama-chat/netbird-evox2-login. Why: the house `ExecStartPre` entry gate
+(`maintenance-entry-gate --psi-max 30`, the freeze-19/20/21 storm protection)
+REFUSES starts into a live io-PSI storm, and upstream's
+`Restart=on-failure`/`RestartSec=30s` then refires until a refusal passes —
+on boot 0 (2026-10-18) that loop held the boot transaction ~2min because each
+auto-restart kept the unit "activating" inside multi-user.target's wait set.
+Post-gate, the churn runs outside the boot; a calm boot starts the pool
+seconds after the target. Two bounds keep the churn sane at ANY start
+attempt: the 2026-10-14 `startLimitBurst` 40/1800s headroom (a storm longer
+than ~20min still terminates with OnFailure → PapDashboard alert, pool down
+until the next deploy or a manual `systemctl start` once calm) and the gate
+itself (a refusal is free — no work enters the storm). Do NOT replace the
+ExecStartPre gate with `ExecCondition`: a skip would silently forgo the
+retry-until-calm at deploy time and leave the pool down with no refire.
+Ordering + want-edge + gate are pinned by `tests/test-tq-agent-pool.nix`.
+
 ## Cutover from the manual round-9 pool (one-time)
 
 The pre-systemd dogfood pool ran `/tmp/tq agent-pool` + `/tmp/tq serve :8090`

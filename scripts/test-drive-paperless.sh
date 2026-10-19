@@ -23,6 +23,13 @@
 #   5  changed file size re-uploads (Drive revision semantics)
 #   6  google-sync config-check: placeholder INI fails with checklist
 #      pointer, valid 3-remote INI passes, missing remote fails
+#   7  images→Immich routing (ingestImages variant incl. the hyphenated
+#      gdrive-shared tag — the slug bash-identifier pin): preflight
+#      (ping + /api/users/me key check), photo routed to /api/assets with
+#      x-api-key + ISO fileCreatedAt/fileModifiedAt + filename, doc still
+#      goes to paperless, journal idempotence, immich failure injection
+#      fails the run
+#   8  PLACEHOLDER immich key rejected with the runbook pointer
 set -euo pipefail
 
 fail() {
@@ -30,19 +37,21 @@ fail() {
   exit 1
 }
 
-MAIN_SCRIPT="${1:?usage: test-drive-paperless.sh <main> <batch1> <cap1> <gs-config-check>}"
+MAIN_SCRIPT="${1:?usage: test-drive-paperless.sh <main> <batch1> <cap1> <images1> <gs-config-check>}"
 BATCH1_SCRIPT="${2:?}"
 CAP1_SCRIPT="${3:?}"
-GS_CONFIG_CHECK="${4:?}"
+IMAGES1_SCRIPT="${4:?}"
+GS_CONFIG_CHECK="${5:?}"
 
 scratch="$(mktemp -d)"
 trap 'rm -rf -- "$scratch"' EXIT
 stub="$scratch/stub"
 mirror="$scratch/mirror"
+mirror_img="$scratch/mirror-img"
 state="$scratch/state"
 log="$scratch/curl-invocations.log"
 counter="$scratch/id-counter"
-mkdir -p "$stub/bin" "$mirror/sub" "$state"
+mkdir -p "$stub/bin" "$mirror/sub" "$mirror_img" "$state"
 
 # --- stub curl: logs one INV line per call, serves canned responses -------
 # Shebang is rewritten to the sandbox bash (/usr/bin/env does not exist in
@@ -63,6 +72,25 @@ if [[ "$*" == *"post_document"* ]]; then
   printf 'ok\n'
   exit 0
 fi
+if [[ "$*" == *"/api/assets"* ]] && [[ "$*" == *"-X POST"* ]]; then
+  if [ -n "${CURL_FAIL_ASSETS:-}" ]; then
+    echo "stub curl: injected immich failure" >&2
+    exit 22
+  fi
+  n="$(cat "${CURL_COUNTER:?stub curl needs CURL_COUNTER}" 2>/dev/null || echo 100)"
+  n=$((n + 1))
+  echo "$n" >"$CURL_COUNTER"
+  printf '{"id": "asset-%d", "status": "created"}\n' "$n"
+  exit 0
+fi
+if [[ "$*" == *"/api/users/me"* ]]; then
+  printf '200\n'
+  exit 0
+fi
+if [[ "$*" == *"/api/server/ping"* ]]; then
+  printf 'pong\n'
+  exit 0
+fi
 if [[ "$*" == *"-X POST"* ]]; then
   n="$(cat "${CURL_COUNTER:?stub curl needs CURL_COUNTER}" 2>/dev/null || echo 100)"
   n=$((n + 1))
@@ -79,8 +107,8 @@ STUB
 chmod +x "$stub/bin/curl"
 sed -i "1s|.*|#!$(command -v bash)|" "$stub/bin/curl"
 
-inv_count() { grep -c '^INV BEGIN' "$log" 2>/dev/null || true; }
 docs_uploaded() { grep -c 'ARG \[http://127.0.0.1:1/api/documents/post_document/\]' "$log" 2>/dev/null || true; }
+assets_uploaded() { grep -c 'ARG \[http://127.0.0.1:1/api/assets\]' "$log" 2>/dev/null || true; }
 reset_log() { : >"$log"; }
 
 # prep <script> <out>: PATH-stub + source-path rewrite onto scratch
@@ -114,6 +142,18 @@ touch -d '2024-03-05 12:00' "$mirror/a.pdf"
 prep "$MAIN_SCRIPT" "$scratch/main.sh"
 prep "$BATCH1_SCRIPT" "$scratch/batch1.sh"
 prep "$CAP1_SCRIPT" "$scratch/cap1.sh"
+# images variant scans its OWN tree (earlier legs' files must not ride
+# along); sed rewrites google-drive-work → nonexistent-gwork FIRST, then
+# google-drive-shared → nonexistent-shared, then the bare google-drive
+# prefix → $mirror_img (order matters — shared is a prefix collision).
+prep_images() {
+  sed -e "s|^export PATH=\"|export PATH=\"$stub/bin:|" \
+    -e "s|/mnt/pool/backups/google-drive-work|$scratch/nonexistent-gwork|g" \
+    -e "s|/mnt/pool/backups/google-drive-shared|$scratch/nonexistent-shared|g" \
+    -e "s|/mnt/pool/backups/google-drive|$mirror_img|g" "$1" >"$2"
+  chmod +x "$2"
+}
+prep_images "$IMAGES1_SCRIPT" "$scratch/images1.sh"
 
 # big file for the size-cap variant (2MB > 1MB cap)
 head -c 2097152 /dev/zero >"$mirror/toolarge.pdf" 2>/dev/null || dd if=/dev/zero of="$mirror/toolarge.pdf" bs=1024 count=2048 status=none
@@ -194,7 +234,6 @@ env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
 [ -f "$state4/last_success" ] && fail "leg4: last_success must NOT be touched on failures"
 [ -s "$state4/failed.log" ] || fail "leg4: failed.log must record failures"
 [ "$(wc -l <"$state4/journal.tsv" 2>/dev/null || echo 0)" -eq 0 ] || fail "leg4: journal must stay empty on failures"
-
 echo "== leg 5: changed size re-uploads =="
 printf '%%PDF-1.4 test a REVISED longer content' >"$mirror/a.pdf"
 reset_log
@@ -243,5 +282,71 @@ if RCLONE_CONFIG_PATH="$gsmiss" "$GS_CONFIG_CHECK" >"$scratch/gs3.out" 2>&1; the
   fail "leg6: config missing a configured remote must fail"
 fi
 grep -q "remote 'gwork:' missing" "$scratch/gs3.out" || fail "leg6: failure must name the missing remote"
+
+echo "== leg 7: images route to immich =="
+state7="$scratch/state-images1"
+mkdir -p "$state7"
+reset_log
+printf 'photo bytes v1' >"$mirror_img/photo.jpg"
+printf 'heic bytes' >"$mirror_img/snap.heic"
+printf '%%PDF-1.4 business doc' >"$mirror_img/report.pdf"
+run7() {
+  env \
+    DRIVE_PAPERLESS_URL="http://127.0.0.1:1" \
+    DRIVE_PAPERLESS_TOKEN="testtoken" \
+    DRIVE_PAPERLESS_STATE="$state7" \
+    IMMICH_URL="http://127.0.0.1:1" \
+    IMMICH_API_KEY="testkey" \
+    CURL_LOG="$log" \
+    CURL_COUNTER="$counter" \
+    bash "$1"
+}
+out="$(run7 "$scratch/images1.sh")" || fail "leg7: run exited non-zero: $out"
+echo "$out" | grep -q 'uploaded=3 (docs=1 images=2)' || fail "leg7: expected uploaded=3 (docs=1 images=2), got: $out"
+echo "$out" | grep -q 'missing_source=2' || fail "leg7: expected missing_source=2 (gwork + gdrive-shared dirs absent), got: $out"
+# preflight ran before any upload
+first_asset=$(grep -n 'ARG \[http://127.0.0.1:1/api/assets\]' "$log" | head -1 | cut -d: -f1)
+first_me=$(grep -n 'ARG \[http://127.0.0.1:1/api/users/me\]' "$log" | head -1 | cut -d: -f1)
+[ -n "$first_me" ] && [ -n "$first_asset" ] && [ "$first_me" -lt "$first_asset" ] || fail "leg7: key preflight must precede uploads"
+grep -q 'ARG \[x-api-key: testkey\]' "$log" || fail "leg7: immich calls must carry the x-api-key header"
+grep -q 'ARG \[assetData=@'"$mirror_img"'/photo.jpg\]' "$log" || fail "leg7: photo.jpg not uploaded to immich"
+grep -q 'ARG \[filename=photo.jpg\]' "$log" || fail "leg7: filename field missing"
+grep -Eq 'ARG \[fileCreatedAt=[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z\]' "$log" || fail "leg7: fileCreatedAt ISO field missing"
+grep -Eq 'ARG \[fileModifiedAt=[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z\]' "$log" || fail "leg7: fileModifiedAt ISO field missing"
+grep -q 'ARG \[assetData=@'"$mirror_img"'/snap.heic\]' "$log" || fail "leg7: heic must route to immich"
+# the doc still goes to paperless, NOT immich; the images never hit paperless
+[ "$(assets_uploaded)" -eq 2 ] || fail "leg7: exactly 2 immich uploads expected, got $(assets_uploaded)"
+grep -q 'ARG \[document=@'"$mirror_img"'/report.pdf\]' "$log" || fail "leg7: report.pdf must still go to paperless"
+grep -q 'ARG \[document=@'"$mirror_img"'/photo.jpg\]' "$log" && fail "leg7: photo.jpg must NOT go to paperless"
+[ -f "$state7/last_success" ] || fail "leg7: last_success not touched"
+[ "$(wc -l <"$state7/journal.tsv")" -eq 3 ] || fail "leg7: journal must hold 3 lines"
+# idempotent second run
+reset_log
+out="$(run7 "$scratch/images1.sh")" || fail "leg7b: second run exited non-zero"
+echo "$out" | grep -q 'uploaded=0 ' || fail "leg7b: expected uploaded=0, got: $out"
+# immich failure injection: run fails, no last_success, journal stays at 3
+state7f="$scratch/state-images-fail"
+mkdir -p "$state7f"
+printf 'another photo' >"$mirror_img/extra.png"
+reset_log
+env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
+  DRIVE_PAPERLESS_STATE="$state7f" IMMICH_URL="http://127.0.0.1:1" IMMICH_API_KEY=t \
+  CURL_LOG="$log" CURL_COUNTER="$counter" CURL_FAIL_ASSETS=1 \
+  bash "$scratch/images1.sh" >"$scratch/images-fail.out" 2>&1 &&
+  fail "leg7c: run must exit non-zero when immich uploads fail"
+[ -f "$state7f/last_success" ] && fail "leg7c: last_success must NOT be touched on immich failures"
+[ -s "$state7f/failed.log" ] || fail "leg7c: failed.log must record immich failures"
+
+echo "== leg 8: placeholder immich key rejected =="
+state8="$scratch/state-images-ph"
+mkdir -p "$state8"
+reset_log
+out="$(env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
+  DRIVE_PAPERLESS_STATE="$state8" IMMICH_URL="http://127.0.0.1:1" \
+  IMMICH_API_KEY=PLACEHOLDER-create-immich-api-key \
+  CURL_LOG="$log" CURL_COUNTER="$counter" \
+  bash "$scratch/images1.sh" 2>&1)" && fail "leg8: PLACEHOLDER key must fail the run"
+echo "$out" | grep -q 'PLACEHOLDER' || fail "leg8: failure must explain the placeholder + runbook pointer"
+[ "$(assets_uploaded)" -eq 0 ] || fail "leg8: no immich uploads may happen with a placeholder key"
 
 echo "PASS: drive-paperless fixture all legs green"

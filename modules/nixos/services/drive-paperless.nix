@@ -2,12 +2,17 @@
 # Google Drive mirror → Paperless-ngx archival pipeline.
 #
 # Scans the google-sync mirror trees on the HDD pool (or any configured
-# source directory), filters to document types (PDFs, office documents,
-# text/email/e-book formats), and uploads new/changed files into
-# Paperless-ngx via the DRF API with per-account metadata:
+# source directory), routes DOCUMENT types (PDFs, office documents,
+# text/email/e-book formats) into Paperless-ngx via the DRF API with
+# per-account metadata:
 #   correspondent = per-source (Google Drive / Google Workspace),
 #   tags          = global import tag + per-source remote tag,
 #   title         = filename stem, created = Drive modified time (mtime).
+# With ingestImages = true, raster images (jpg/png/heic/webp/…) route to
+# IMMICH instead (POST /api/assets — contract verified against the deployed
+# immich 3.3.3 source: multipart assetData + required ISO
+# fileCreatedAt/fileModifiedAt, x-api-key auth; byte-identical duplicates
+# return 200 status=duplicate and are harmless).
 #
 # Why API upload instead of the consume directory: the API sets metadata
 # atomically at upload (PostDocumentView accepts correspondent/tags/title/
@@ -64,6 +69,9 @@ _: {
       # its mirror list 1:1 — one google-sync enable flip brings up mirror
       # AND ingest with no second config edit.
       googleSyncPresent = options ? services.google-sync;
+      # Image-routing target (ingestImages): same eval-optional treatment —
+      # isolated checks co-import the nixpkgs immich module.
+      immichPresent = options ? services.immich;
       correspondentFor =
         remote:
         ({
@@ -107,14 +115,23 @@ _: {
         "tif"
         "webp"
         "gif"
+        "heic"
+        "heif"
+        "avif"
+        "bmp"
       ];
       allExtensions = docExtensions ++ lib.optionals cfg.ingestImages imageExtensions;
       extRegex = lib.concatStringsSep "|" allExtensions;
+      imageExtPattern = lib.concatStringsSep "|" imageExtensions;
 
-      # Shell-safe identifier for per-source variable names; the assertion
-      # below guarantees tags are already in this alphabet so two distinct
-      # tags can never collide after sanitization.
-      slug = tag: tag;
+      # Shell-safe identifier for per-source variable names: '-' is legal in
+      # the tag alphabet but NOT in bash identifiers — gdrive-shared must
+      # become meta_gdrive_shared or every reference is a bad-substitution
+      # error at runtime (caught 2026-10-19: the identity no-op version broke
+      # the default-derived gdrive-shared source; fixtures only used
+      # hyphen-free tags until the images leg added one). Uniqueness is
+      # asserted on SLUGS so tags differing only in -/_ cannot collide.
+      slug = lib.replaceStrings [ "-" ] [ "_" ];
 
       mintChownScript = pkgs.writeShellScript "drive-paperless-token-chown" ''
         chown ${cfg.user}:${cfg.group} ${runEnv}
@@ -162,26 +179,49 @@ _: {
               if grep -qxF "$line" "$journal" 2>/dev/null; then
                 continue
               fi
-              title="$(basename -- "$f")"
-              title="''${title%.*}"
-              title="$(printf '%.128s' "$title")"
-              created="$(date -u -d @"$(stat -c %Y -- "$f")" +%Y-%m-%d 2>/dev/null || true)"
-              args_post=(-F "document=@$f" -F "title=$title" -F "correspondent=$cid")
-              if [ -n "$created" ]; then
-                args_post+=(-F "created=$created")
-              fi
-              for tid in $tids; do
-                args_post+=(-F "tags=$tid")
-              done
-              echo "drive-paperless: uploading [${src.tag}] $rel"
-              if curl -fsS -H "Authorization: Token $TOKEN" \
-                -X POST "$BASE/api/documents/post_document/" "''${args_post[@]}"; then
-                printf '%s\n' "$line" >>"$journal"
-                uploaded=$((uploaded + 1))
+              lower="''${rel,,}"
+              if [ "$IMAGES_ENABLED" = "1" ] && [[ "$lower" =~ \.(${imageExtPattern})$ ]]; then
+                # Drive image → Immich (contract verified against the
+                # deployed immich 3.3.3 source: byte-identical duplicates
+                # answer 200 status=duplicate — a journal miss is harmless).
+                iso="$(date -u -d @"$(stat -c %Y -- "$f")" +%Y-%m-%dT%H:%M:%SZ)"
+                echo "drive-paperless: uploading [${src.tag}] $rel → immich"
+                if immich -X POST "$IMMICH_URL/api/assets" \
+                  -F "assetData=@$f" \
+                  -F "filename=$(basename -- "$f")" \
+                  -F "fileCreatedAt=$iso" \
+                  -F "fileModifiedAt=$iso"; then
+                  printf '%s\n' "$line" >>"$journal"
+                  uploaded=$((uploaded + 1))
+                  images=$((images + 1))
+                else
+                  echo "drive-paperless: immich upload FAILED for $rel (not journaled; retried next run)" >&2
+                  printf '%s\n' "$line" >>"$failed_log"
+                  failed=$((failed + 1))
+                fi
               else
-                echo "drive-paperless: upload FAILED for $rel (not journaled; retried next run)" >&2
-                printf '%s\n' "$line" >>"$failed_log"
-                failed=$((failed + 1))
+                title="$(basename -- "$f")"
+                title="''${title%.*}"
+                title="$(printf '%.128s' "$title")"
+                created="$(date -u -d @"$(stat -c %Y -- "$f")" +%Y-%m-%d 2>/dev/null || true)"
+                args_post=(-F "document=@$f" -F "title=$title" -F "correspondent=$cid")
+                if [ -n "$created" ]; then
+                  args_post+=(-F "created=$created")
+                fi
+                for tid in $tids; do
+                  args_post+=(-F "tags=$tid")
+                done
+                echo "drive-paperless: uploading [${src.tag}] $rel"
+                if curl -fsS -H "Authorization: Token $TOKEN" \
+                  -X POST "$BASE/api/documents/post_document/" "''${args_post[@]}"; then
+                  printf '%s\n' "$line" >>"$journal"
+                  uploaded=$((uploaded + 1))
+                  docs=$((docs + 1))
+                else
+                  echo "drive-paperless: upload FAILED for $rel (not journaled; retried next run)" >&2
+                  printf '%s\n' "$line" >>"$failed_log"
+                  failed=$((failed + 1))
+                fi
               fi
             done < <(find "$root" -xdev -type f -size +0c -size -${
               toString (cfg.maxFileSizeMB * 1024 * 1024)
@@ -189,7 +229,7 @@ _: {
             -regextype posix-extended -iregex '.*\.(${extRegex})' -print0 | LC_ALL=C sort -z)
         else
           echo "drive-paperless: source dir $root missing — skipped (first seed not run yet?)" >&2
-          missing_source=1
+          missing_source=$((missing_source + 1))
         fi
       '';
 
@@ -214,9 +254,14 @@ _: {
           TOKEN="''${DRIVE_PAPERLESS_TOKEN:?DRIVE_PAPERLESS_TOKEN not set}"
           STATE="''${DRIVE_PAPERLESS_STATE:?DRIVE_PAPERLESS_STATE not set}"
           BATCH=${toString cfg.batchSize}
+          # bash 0/1 flag — lib.boolToString renders "true"/"false", useless
+          # for [ x = "1" ] comparisons.
+          IMAGES_ENABLED=${if cfg.ingestImages then "1" else "0"}
           journal="$STATE/journal.tsv"
           failed_log="$STATE/failed.log"
           uploaded=0
+          docs=0
+          images=0
           failed=0
           cap_hit=0
           missing_source=0
@@ -226,6 +271,33 @@ _: {
           api() {
             curl -fsS -H "Authorization: Token $TOKEN" "$@"
           }
+
+          immich() {
+            curl -fsS -H "x-api-key: $IMMICH_API_KEY" "$@"
+          }
+
+          if [ "$IMAGES_ENABLED" = "1" ]; then
+            IMMICH_URL="''${IMMICH_URL:?IMMICH_URL not set (ingestImages requires Immich)}"
+            IMMICH_API_KEY="''${IMMICH_API_KEY:?IMMICH_API_KEY not set (ingestImages requires the drive_paperless_immich_api_key sops secret)}"
+            case "$IMMICH_API_KEY" in
+              PLACEHOLDER*)
+                echo "drive-paperless: IMMICH_API_KEY is still a PLACEHOLDER — create an Immich API key (Account Settings → API Keys, scope asset.read + asset.upload) and sops --set it into platforms/nixos/secrets/drive-paperless-immich.yaml (runbook: docs/services/google-sync.md)" >&2
+                exit 1
+                ;;
+            esac
+            # Preflight: docs + images are ONE pipeline — an unreachable or
+            # key-rejecting Immich fails the whole run loudly (onFailure)
+            # instead of silently skipping half the payload.
+            if ! curl -fsS --max-time 10 "$IMMICH_URL/api/server/ping" >/dev/null 2>&1; then
+              echo "drive-paperless: Immich unreachable at $IMMICH_URL — failing the run (docs + images are one pipeline; availability is also Gatus-owned, but a dead Immich must not pass silently)" >&2
+              exit 1
+            fi
+            key_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "x-api-key: $IMMICH_API_KEY" "$IMMICH_URL/api/users/me" || echo 000)"
+            if [ "$key_code" != "200" ]; then
+              echo "drive-paperless: Immich rejected the API key (HTTP $key_code) — wrong secret or missing asset.read/asset.upload scope; see drive-paperless-immich.yaml" >&2
+              exit 1
+            fi
+          fi
 
           # ensure_id <correspondents|tags> <name> -> id (created if missing).
           # Both endpoints support ?name__iexact= (verified in the pinned
@@ -250,7 +322,7 @@ _: {
 
           ${lib.concatMapStringsSep "\n" (src: scanBlock src) cfg.sources}
 
-          echo "drive-paperless: run complete — uploaded=$uploaded failed=$failed cap_hit=$cap_hit missing_source=$missing_source"
+          echo "drive-paperless: run complete — uploaded=$uploaded (docs=$docs images=$images) failed=$failed cap_hit=$cap_hit missing_source=$missing_source"
           if [ "$failed" -gt 0 ]; then
             echo "drive-paperless: $failed upload(s) failed (see $failed_log) — NOT touching last_success; unit fails so onFailure alerts" >&2
             exit 1
@@ -300,10 +372,15 @@ _: {
           type = lib.types.bool;
           default = false;
           description = ''
-            Also ingest raster images (jpg/png/tiff/webp/gif). OFF by default:
-            camera photos belong in Immich, and a photo-heavy Drive would
-            flood the document archive with misclassified pictures. Enable
-            only for scanned-document image collections.
+            Route raster images (jpg/png/heic/webp/gif/tiff/avif/bmp) to
+            Immich via its /api/assets endpoint instead of skipping them;
+            documents keep going to Paperless and images NEVER land in
+            Paperless through this pipeline. OFF by default: requires the
+            drive_paperless_immich_api_key sops secret
+            (platforms/nixos/secrets/drive-paperless-immich.yaml) to carry a
+            real key — Immich → Account Settings → API Keys, scope
+            asset.read + asset.upload. The run fails loudly while the
+            secret still holds its PLACEHOLDER.
           '';
         };
 
@@ -349,16 +426,22 @@ _: {
             message = "drive-paperless: sources must not be empty (default derives from services.google-sync.mirrors when in scope)";
           }
           {
-            assertion = (lib.unique (map (s: s.tag) cfg.sources)) == (map (s: s.tag) cfg.sources);
-            message = "drive-paperless: source tags must be unique (they key the journal)";
+            assertion = (lib.unique (map (s: slug s.tag) cfg.sources)) == (map (s: slug s.tag) cfg.sources);
+            message = "drive-paperless: source tags must be unique after '-'→'_' sanitization (they key per-source shell variables)";
           }
           {
             assertion = lib.all (s: lib.strings.match "[a-zA-Z0-9_-]+" s.tag != null) cfg.sources;
-            message = "drive-paperless: source tags must match [a-zA-Z0-9_-]+ (they become shell variable names)";
+            message = "drive-paperless: source tags must match [a-zA-Z0-9_-]+ (they become shell variable names post slug-sanitization)";
           }
           {
             assertion = lib.all (s: lib.strings.hasPrefix "/mnt/" s.path) cfg.sources;
             message = "drive-paperless: source paths must live under /mnt/ (mount-gating doctrine — never scan a root-fs shadow of a detached pool)";
+          }
+        ]
+        ++ lib.optionals cfg.ingestImages [
+          {
+            assertion = immichPresent && config.services.immich.enable;
+            message = "drive-paperless.ingestImages requires services.immich.enable: images upload via its /api/assets endpoint authenticated by the drive_paperless_immich_api_key sops secret";
           }
         ];
 
@@ -428,11 +511,14 @@ _: {
         };
 
         systemd.services.drive-paperless = lib.mkIf paperlessEnabled {
-          description = "Google Drive mirror → Paperless-ngx ingest";
+          description = "Google Drive mirror → Paperless/Immich ingest";
           after = [
             "drive-paperless-token.service"
           ]
           ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
+          ++ lib.optionals (cfg.ingestImages && immichPresent && config.services.immich.enable) [
+            "immich-server.service"
+          ]
           ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [
             "google-sync.service"
           ];
@@ -440,6 +526,9 @@ _: {
             "drive-paperless-token.service"
           ]
           ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
+          ++ lib.optionals (cfg.ingestImages && immichPresent && config.services.immich.enable) [
+            "immich-server.service"
+          ]
           ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [
             "google-sync.service"
           ];
@@ -459,8 +548,26 @@ _: {
               Environment = [
                 "DRIVE_PAPERLESS_URL=http://127.0.0.1:${toString ports.paperless}"
                 "DRIVE_PAPERLESS_STATE=${stateDir}"
+              ]
+              ++ lib.optionals cfg.ingestImages [
+                "IMMICH_URL=http://127.0.0.1:${toString ports.immich}"
               ];
-              EnvironmentFile = [ runEnv ];
+              # sops path read by PID 1 (EnvironmentFile semantics) — the
+              # secret is declared gated in sops.nix; isolated evals
+              # co-import tests/mock-sops.nix and declare it (google-sync
+              # pattern).
+              EnvironmentFile = [
+                runEnv
+              ]
+              ++ lib.optionals cfg.ingestImages [
+                config.sops.secrets.drive_paperless_immich_api_key.path
+              ];
+              # systemd creates + owns /var/lib/drive-paperless (pre-namespace,
+              # before ReadWritePaths processing — the 226 class). Without
+              # this, the first live run dies at mkdir against root-owned
+              # /var/lib (fixture missed it because the fixture injects STATE
+              # into a scratch dir; found in the 2026-10-19 self-review §d.1).
+              StateDirectory = "drive-paperless";
               # A full batch of max-size files is disk-read-bound on the
               # HDD pool; give the walk + upload room beyond the 5min floor.
               TimeoutStartSec = "30min";

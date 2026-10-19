@@ -443,6 +443,24 @@ in
                 restartUnits = [ "google-sync.service" ];
               } [ "google_sync_rclone_config" ]
             )
+            //
+              lib.optionalAttrs
+                ((svcEnabled "drive-paperless") && (config.services.drive-paperless.ingestImages or false))
+                (
+                  # Immich API key for the Drive-image route (drive-paperless
+                  # ingestImages): x-api-key auth against POST /api/assets, scope
+                  # asset.read + asset.upload. Own encrypted file (split-file
+                  # precedent: discordsync-immich.yaml) so agent sessions can
+                  # scaffold it with the public age key. Root-owned — PID 1 reads
+                  # the EnvironmentFile, the ingest user never opens the file.
+                  # Ships as PLACEHOLDER; the ingest run fails loudly with the
+                  # runbook pointer until the real key is sops-set.
+                  mkSecrets "drive-paperless-immich.yaml" {
+                    owner = "root";
+                    group = "root";
+                    restartUnits = [ "drive-paperless.service" ];
+                  } [ "drive_paperless_immich_api_key" ]
+                )
             // lib.optionalAttrs (svcEnabled "mail-relay") (
               # Upstream submission credential for the Postfix null client
               # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an

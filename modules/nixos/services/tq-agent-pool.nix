@@ -369,7 +369,30 @@ _: {
         };
 
         systemd.services.tq-agent-pool = {
-          after = [ "tq-storage-dir.service" ];
+          after = [
+            "tq-storage-dir.service"
+            "multi-user.target"
+            # Boot-transaction bound (2026-10-19, stability trio item 1):
+            # boot 0 (2026-10-18) held the boot ~2min because the PSI entry
+            # gate REFUSED into the upstream Restart=on-failure contract
+            # (RestartSec=30s refire ×5 until a refusal passed) and each
+            # auto-restart kept this unit "activating" INSIDE
+            # multi-user.target's wait set. After=multi-user.target moves
+            # the pool PAST the transaction (llama-chat 2026-10-17 /
+            # netbird-evox2-login 2026-10-17 pattern): wantedBy stays
+            # upstream (deploy restart coverage unchanged), the gate still
+            # refuses storm entries at EVERY start attempt (boot, deploy,
+            # manual), and the refuse-and-refire churn now runs outside the
+            # boot — bounded by the startLimitBurst headroom below with
+            # OnFailure on terminal give-up. Rejected alternatives:
+            # RestartSec backoff holds the transaction LONGER (gaps
+            # overshoot the calm window) and delays pool start;
+            # ExecCondition-skip silently skips deploy-time storm entries
+            # (losing the retry-until-calm the freeze-19/20/21 protection
+            # rides) and strands a boot-pulled unit DOWN until the next
+            # deploy unless a re-pull leg is built (more machinery, worse
+            # deploy-under-storm behavior, no gain over post-gate).
+          ];
           wants = [ "tq-storage-dir.service" ];
           # docs/agents/integration-registry.md step 5: start-limit bounds + onFailure on every service.
           # Sized for the PSI entry gate contract below: at RestartSec=30s,

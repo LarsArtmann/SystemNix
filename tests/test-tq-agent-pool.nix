@@ -48,6 +48,19 @@ let
         # "tq-agent-pool" (evo-x2 scope); minimal stand-in so the module's
         # EnvironmentFile reference evaluates in this bare eval.
         { sops.templates."tq-agent-pool-env" = { }; }
+        # The house pool unit embeds pkgs.maintenance-entry-gate in
+        # ExecStartPre (overlays/shared.nix provides it in the REAL host
+        # eval); stand in a stub so the
+        # pool-entry-gate-execstartpre-preserved leg can assert the gate's
+        # presence without dragging the whole shared overlay into this
+        # hermetic harness.
+        {
+          nixpkgs.overlays = [
+            (_final: prev: {
+              maintenance-entry-gate = prev.writeShellScriptBin "maintenance-entry-gate" "exit 0";
+            })
+          ];
+        }
         { services.tq-agent-pool.enable = enableFlag; }
       ];
     }).config;
@@ -90,6 +103,33 @@ let
     {
       name = "pool-ordered-after-storage-dir";
       pass = builtins.elem "tq-storage-dir.service" (pool.after or [ ]);
+    }
+    {
+      # Boot-transaction bound (2026-10-19): the PSI entry-gate REFUSE loop
+      # (upstream Restart=on-failure, RestartSec=30s) kept boot 0
+      # (2026-10-18) open ~2min while the gate refired ×5 INSIDE
+      # multi-user.target's wait set. The unit must order itself PAST the
+      # target so the churn runs outside the boot transaction.
+      name = "pool-post-gate-multi-user-ordering";
+      pass = builtins.elem "multi-user.target" (pool.after or [ ]);
+    }
+    {
+      # The ordering is only safe while the want-edge stays: wantedBy
+      # (upstream-owned) keeps the unit in stc's deploy-restart set and in
+      # the deploy-restart-audit's name coverage.
+      name = "pool-still-wanted-by-multi-user";
+      pass = pool.wantedBy or [ ] == [ "multi-user.target" ];
+    }
+    {
+      # The bound MOVES the refuse-and-refire churn, it does not remove the
+      # storm gate: a refusal must keep FAILING the start attempt
+      # (ExecStartPre, exit 1) so the upstream Restart= contract refires
+      # until calm — the freeze-19/20/21 protection. An ExecCondition or a
+      # deleted gate would silently skip storm entries instead.
+      name = "pool-entry-gate-execstartpre-preserved";
+      pass = builtins.any (lib.hasInfix "maintenance-entry-gate") (
+        pool.serviceConfig.ExecStartPre or [ ]
+      );
     }
     {
       # Suffix match, not full-string equality: the module's ExecStart embeds
