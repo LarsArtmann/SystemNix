@@ -200,6 +200,13 @@ lib.filterAttrs (_: v: v != null) {
   # bit-neutral override. Re-add ONLY via nix-hash-fix evidence, never by
   # hand.
   golangci-lint-auto-configure = flakePkgShim inputs.golangci-lint-auto-configure "default" "sha256-0VvVtsy3kjSoqtplM9p6SwR+OMRwVwKqOa5DI9NeCnE=";
+  # journal — the accounting kernel CLI (chart, double-entry journal,
+  # reconciliation, VAT). Pure interactive tool: no daemon, no port, no
+  # service module. Upstream repo is PRIVATE (github: input + CI deploy
+  # key, see flake.nix). Non-follower class: builds under its own lock —
+  # probe-verified 2026-10-19 (ba60fe0d, no shim needed). Rides PATH via
+  # base.nix attrValues (both hosts) + the quick-go §11 pre-deploy batch.
+  journal = flakePkg inputs.journal;
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale

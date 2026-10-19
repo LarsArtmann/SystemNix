@@ -365,6 +365,20 @@
       url = "github:LarsArtmann/bank-sync?ref=refs/heads/master";
     };
 
+    # journal — the accounting kernel: chart of accounts, double-entry
+    # journal, bank reconciliation against invoices, period close, VAT
+    # (PRIVATE repo: github: URL + CI deploy key, cv/crm pattern). Pure
+    # interactive CLI over a local SQLite journal — no daemon, no port, no
+    # registry entry; consumes bank-sync's transactions.v1 exports.
+    # NON-FOLLOWER class (own nixpkgs/go-nix-helpers lock, go.mod floor
+    # 1.27.2): upstream's baked vendorHash reproduces under its own
+    # validated build env (first-hand probe 2026-10-19 at ba60fe0d), so no
+    # follows overrides and no consumer-side shim. Its lock's only private
+    # dep node is go-cqrs-lite (CI key already exists).
+    journal = {
+      url = "github:LarsArtmann/journal?ref=refs/heads/master";
+    };
+
     # index — project documentation indexer; the docs-archive-stats
     # home-manager timer records the dated-docs history TSV (which lives in
     # the index repo and rides its auto-commit) daily at 06:15.
