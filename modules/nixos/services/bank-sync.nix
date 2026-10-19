@@ -79,11 +79,20 @@
         '';
       };
       # Frozen Qonto CSV statement exports (pre-Wise era, 2022-12 →
-      # 2023-05) in the bank-sync repo checkout on this host. Referenced
-      # by the qonto import + archival oneshots below; ConditionPathExists
-      # turns an absent checkout into a silent skip, never a boot failure.
+      # 2023-05) in the bank-sync repo checkout on this host. The checkout
+      # lives under DAC-private /home/lars, so service users can never read
+      # it directly (the 2026-10-19 first-deploy lesson: ProtectHome=false
+      # lifts only the sandbox layer, not file permissions) — the root
+      # bank-sync-qonto-stage oneshot COPIES them into the dataDir below
+      # and every consumer reads the staged copies. ConditionPathExists on
+      # the SOURCES turns an absent checkout into a silent skip, never a
+      # boot failure.
       qontoCsvTech = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/technologies_gmbh.csv";
       qontoCsvHolding = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/holding_gmbh.csv";
+      # Staged copies (bank-sync-readable, btrbk-pool snapshotted with the
+      # DB). The stage unit converges them on every activation/boot.
+      qontoStageTech = "${cfg.dataDir}/qonto-import/technologies_gmbh.csv";
+      qontoStageHolding = "${cfg.dataDir}/qonto-import/holding_gmbh.csv";
     in
     {
       options.services.bank-sync.paperlessArchive = {
@@ -568,6 +577,57 @@
           # host (see the let bindings above): ConditionPathExists turns a
           # moved/absent checkout into a silent skip (fresh hosts,
           # relocated repos), never a boot failure.
+          # Root stage-copy: /home/lars is DAC-private, so the bank-sync
+          # user cannot traverse to the repo checkout regardless of the
+          # unit sandbox (live lesson 2026-10-19 02:51, first deploy:
+          # import.open_file permission denied). Root reads the sources and
+          # converges bank-sync-owned 0640 copies into the dataDir; every
+          # consumer below reads the staged paths. Convergent on re-run;
+          # never deletes; sources stay untouched.
+          systemd.services.bank-sync-qonto-stage = {
+            description = "Bank-Sync Qonto CSV stage-copy into the dataDir (root, convergent)";
+            wantedBy = [ "multi-user.target" ];
+            before = [
+              "bank-sync-qonto-import.service"
+              "bank-sync-qonto-paperless.service"
+            ];
+            after = [ "bank-sync-storage-dir.service" ];
+            wants = [ "bank-sync-storage-dir.service" ];
+            unitConfig = {
+              RequiresMountsFor = [ cfg.dataDir ];
+              ConditionPathExists = [
+                qontoCsvTech
+                qontoCsvHolding
+              ];
+            };
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            path = [ pkgs.coreutils ];
+            script = ''
+              install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvTech}" "${qontoStageTech}"
+              install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvHolding}" "${qontoStageHolding}"
+              echo "bank-sync-qonto-stage: staged both Qonto CSVs into ${cfg.dataDir}/qonto-import/"
+            '';
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = "root";
+                TimeoutStartSec = "2min";
+              }
+              (harden {
+                # Root must traverse the private /home/lars to read the
+                # sources and needs chown/chmod on the staged files
+                # (storage-dir capability precedent).
+                ProtectHome = false;
+                CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+                ReadWritePaths = [ cfg.dataDir ];
+              })
+              (serviceOneshotDefaults { })
+              ioTier.maintenance
+            ];
+          };
+
           systemd.services.bank-sync-qonto-import = {
             description = "Bank-Sync Qonto historical CSV import (idempotent, convergent)";
             wantedBy = [ "multi-user.target" ];
@@ -578,16 +638,19 @@
             after = [
               "bank-sync-storage-dir.service"
               "bank-sync.service"
+              "bank-sync-qonto-stage.service"
             ];
             wants = [
               "bank-sync-storage-dir.service"
               "bank-sync.service"
+              "bank-sync-qonto-stage.service"
             ];
             unitConfig = {
               RequiresMountsFor = [ cfg.dataDir ];
+              # Staged copies, not the repo checkout (see the stage unit).
               ConditionPathExists = [
-                qontoCsvTech
-                qontoCsvHolding
+                qontoStageTech
+                qontoStageHolding
               ];
             };
             inherit onFailure;
@@ -601,8 +664,8 @@
                 # One ExecStart per org: profile names are permanent (they
                 # derive stable IDs), so they are the legal entity names.
                 ExecStart = [
-                  "${lib.getExe cfg.package} import --file ${qontoCsvTech} --profile \"Artmann Technologies GmbH\" --account \"Hauptkonto\" --currency EUR"
-                  "${lib.getExe cfg.package} import --file ${qontoCsvHolding} --profile \"Artmann Holding GmbH\" --account \"Hauptkonto\" --currency EUR"
+                  "${lib.getExe cfg.package} import --file ${qontoStageTech} --profile \"Artmann Technologies GmbH\" --account \"Hauptkonto\" --currency EUR"
+                  "${lib.getExe cfg.package} import --file ${qontoStageHolding} --profile \"Artmann Holding GmbH\" --account \"Hauptkonto\" --currency EUR"
                 ];
                 Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
                 # Encryption key (events are encrypted at rest; the Wise
@@ -612,9 +675,8 @@
                 TimeoutStartSec = "5min";
               }
               (harden {
-                # The CSVs live under /home/lars — readable, never written.
-                ProtectHome = false;
-                # Journal + read tables land next to the DB.
+                # Staged CSVs live inside the dataDir — no /home access
+                # needed anymore. Journal + read tables land next to the DB.
                 ReadWritePaths = [ cfg.dataDir ];
               })
               (serviceOneshotDefaults { })
