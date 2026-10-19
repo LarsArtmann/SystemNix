@@ -450,6 +450,14 @@
                 script = ''
                   MINT_OUT=/run/bank-sync-paperless/env
                   umask 077
+                  # Unlink the previous run's env file FIRST: the root
+                  # ExecStartPost hands it to bank-sync (0400 bank-sync),
+                  # and opening a foreign-owned 0400 file for truncation
+                  # EPERMs as the paperless user — the 2026-10-19 02:50
+                  # second-run failure (the Oct 18 first run minted clean,
+                  # every later run died). Unlink needs only directory
+                  # write, and paperless owns the 0711 RuntimeDirectory.
+                  rm -f "$MINT_OUT"
                   token="$(${config.services.paperless.manage}/bin/paperless-manage drf_create_token admin)"
                   hex="$(printf '%s\n' "$token" | grep -oE '[0-9a-f]{40}' | head -n1)"
                   if [ -z "$hex" ]; then
@@ -695,17 +703,20 @@
                   "network-online.target"
                   "bank-sync-storage-dir.service"
                   "bank-sync-paperless-token.service"
+                  "bank-sync-qonto-stage.service"
                 ];
                 wants = [
                   "network-online.target"
                   "bank-sync-storage-dir.service"
+                  "bank-sync-qonto-stage.service"
                 ];
                 requires = [ "bank-sync-paperless-token.service" ];
                 unitConfig = {
                   RequiresMountsFor = [ cfg.dataDir ];
+                  # Staged copies, not the repo checkout (see the stage unit).
                   ConditionPathExists = [
-                    qontoCsvTech
-                    qontoCsvHolding
+                    qontoStageTech
+                    qontoStageHolding
                   ];
                 };
                 inherit onFailure;
@@ -772,10 +783,10 @@
                       "$base/api/documents/post_document/"
                   }
 
-                  upload "${qontoCsvTech}" \
+                  upload "${qontoStageTech}" \
                     "Qonto Statement - Artmann Technologies GmbH (Hauptkonto EUR, 2023-01-04 to 2023-03-20)" \
                     "2023-03-20"
-                  upload "${qontoCsvHolding}" \
+                  upload "${qontoStageHolding}" \
                     "Qonto Statement - Artmann Holding GmbH (Hauptkonto EUR, 2022-12-07 to 2023-05-18)" \
                     "2023-05-18"
 
@@ -815,10 +826,9 @@
                     TimeoutStartSec = "5min";
                   }
                   (harden {
-                    # Statement CSVs under /home/lars: read-only access.
-                    ProtectHome = false;
-                    # The completion marker lands in the dataDir.
-                    ReadWritePaths = [ cfg.dataDir ];
+                  # Staged CSVs live inside the dataDir — no /home access
+                  # needed anymore. The completion marker lands in the dataDir.
+                  ReadWritePaths = [ cfg.dataDir ];
                   })
                   (serviceOneshotDefaults { })
                   ioTier.service
