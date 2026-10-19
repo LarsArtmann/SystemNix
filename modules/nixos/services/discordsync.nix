@@ -41,7 +41,12 @@
       # Re-add ONLY via nix-hash-fix evidence, never by hand (class comment:
       # lib/lars-packages.nix flakePkgShim; drop-first protocol:
       # docs/agents/nix-flakes.md).
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # RE-ADDED 2026-10-19 wave: keep-going toplevel enumeration
+      # (/tmp/toplevel-build-20261019.log) mismatched the upstream-baked
+      # 3dje+f7T… at the new locked rev e88c0d8; got 1O/b94qj….
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-1O/b94qjAysB41hXQN2Bujd3NmIgicBqEQ4RYvoVJQo=";
+      };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       dbBackupDir = "/mnt/pool/backups/discordsync";

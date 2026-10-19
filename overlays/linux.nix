@@ -266,28 +266,27 @@ let
   # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence, never by
   # hand.
   fleetVendorHashShims = _final: prev: {
+    # crush-daily hash RE-STALE 2026-10-19 (third wave for this tool):
+    # first-hand keep-going toplevel run (/tmp/toplevel-build-20261019.log)
+    # mismatched the 2026-10-15 shim value AAXq+KGA… vs got s37MeZuL….
     crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-AAXq+KGA17u2aUdmahn3OE8NZr4KcdK4j1lqmZ3Wt5o=";
+      vendorHash = "sha256-s37MeZuLMcAkxq6N582qlU6zwldlF8BJNIr5ezjWWb8=";
     };
-    # overview shim DROPPED (2026-10-17 wave): upstream vendorHash.nix at
-    # tip 966465e (== lock) bakes the shim's own +WMj7c5U… value — the
-    # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
-    # never by hand.
-    # file-and-image-renamer shim DROPPED (2026-10-18): upstream flake.nix
-    # at tip bakes the shim's own nN2cwwLQ… value — bit-neutral override
-    # (graph verified identical tip-vs-lock). Re-add ONLY via nix-hash-fix
-    # evidence, never by hand.
-    # file-and-image-renamer shim RE-ADDED (2026-10-18, hours later):
-    # nix-hash-fix evidence — the 00:39 lock float moved the input to
-    # 40176d0, whose own edits postdate upstream's 2026-10-10 re-pin, so
-    # upstream's baked nN2cwwLQ… is stale TOO; first-hand keep-going FOD
-    # run (this session's toplevel build) mismatched specified nN2cwwLQ…
-    # vs got 4fF/8VOw… at drv
-    # 5pbh840dkyvi88yqzmm6mf9ly3gk04zn-…-40176d0-go-modules.drv.
-    # Upstream needs the same re-pin ritual (vendorHash.nix ritual,
-    # family bump runbook) — drop again once upstream bakes 4fF/8VOw….
+    # overview shim RE-ADDED (2026-10-19 wave): the lock float moved past
+    # the 2026-10-17 bit-neutral drop (tip 966465e == lock then); keep-going
+    # enumeration at the new locked rev got NQ0ICMtk… vs specified
+    # +WMj7c5U….
+    overview = prev.overview.overrideAttrs {
+      vendorHash = "sha256-NQ0ICMtk+bY9fQDcLR8AkVEVaOv6/jmXv3kQHjS5dMM=";
+    };
+    # file-and-image-renamer history: DROPPED 2026-10-18 as bit-neutral
+    # (upstream baked nN2cwwLQ…), RE-ADDED hours later when the 00:39 lock
+    # float hit 40176d0 (first-hand FOD drv 5pbh840d… mismatched; upstream
+    # needs the vendorHash.nix re-pin ritual). RE-STALE 2026-10-19: the
+    # re-added 4fF/8VOw… mismatched at the newest locked rev; got
+    # uwurhA+9… (/tmp/toplevel-build-20261019.log).
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-4fF/8VOwhVSm+gOMRiVVlmF5ZPeVqWustlMidHijfEU=";
+      vendorHash = "sha256-uwurhA+97zTkx0PN7ue/3/hAQ209ICNK1U/yGQ9SSMk=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
