@@ -230,7 +230,7 @@ Legend: ☐ todo · ☑ done this session · ⛔ blocked (owner/IO).
 | E12.3 | Verify SW `pap-v9` arrives (cache name in the browser) | 6 | ⛔ |
 | E12.4 | Confirm an intentionally-broken icon degrades to the monogram (devtools override) | 8 | ⛔ |
 | E12.5 | CHANGELOG ↔ report ↔ plan cross-links | 5 | ☑ (report ↔ CHANGELOG done; plan added now) |
-| E12.6 | Close the loop in a status report with live evidence | 10 | ⛔ |
+| E12.6 | Close the loop in a status report with live evidence | 10 | ☑ (2026-10-19: post-deploy-check carries the live icon evidence on every run — fragment 40 icon `<img>`s, `/icons/` pack route 200 + immutable cache contract; reports 03-26 + 03-55 close the loop; the remaining E12 browser steps stay owner-gated) |
 
 ### E13 — Hygiene (P4)
 
