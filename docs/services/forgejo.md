@@ -494,3 +494,47 @@ NOT listed anywhere in this repo's tracked files (name-leak avoidance; the
 org name itself appears only in already-leaked history — see the
 2026-10-17 status report for the leak inventory). Declarative org-namespace
 support in forgejo-github-sync would subsume this script eventually.
+
+## New forgejo-native repo (user namespace) — order matters (2026-10-19)
+
+**Native FIRST, GitHub second.** Reversing the order breaks the repo's
+primary-ness: the moment a same-named GitHub repo exists, the hourly
+`forgejo-mirror-github` (phase 1) creates a **pull** mirror, the repo becomes
+GitHub-primary and read-only on forgejo, and repairing it needs
+`forgejo-flip@<name>` (delete + re-import). Nothing enforces the order today —
+the 2026-10-19 `company-master-data` setup avoided the trap by reasoning alone
+(a near-miss; a reserved-native guard is queued).
+
+Procedure (verified end-to-end 2026-10-19 on `lars/company-master-data`):
+
+1. In the local clone, add the forgejo remote and push-to-create:
+   `git remote add origin forgejo@evo-x2.home.lan:lars/<name>.git` then
+   `git push origin <branch>`. `repository.ENABLE_PUSH_CREATE_USER=true` plus
+   `DEFAULT_PUSH_CREATE_PRIVATE=true` create the repo **private** with no API
+   call. The pushed branch becomes the default branch — the
+   `repository.DEFAULT_BRANCH = "main"` setting does NOT apply to
+   push-to-create (every fleet repo is `master` for this reason).
+2. Create the GitHub side: `gh repo create LarsArtmann/<name> --private …`, add
+   it as the `github` remote, push.
+3. Add the repo name to `forgejo.canonicalRepos` in
+   `platforms/nixos/system/configuration.nix`, then deploy. Phase 5 attaches the
+   push mirror (`interval 8h` + `sync_on_commit`) idempotently and owns it from
+   then on.
+4. Verify: `git push origin <branch>`, then poll `git ls-remote github` until
+   the ref matches. The 2026-10-19 round-trip propagated in ~12 s via
+   `sync_on_commit`; an 8h interval means the timer alone would hide failures
+   for hours.
+
+Hand-attaching before a deploy lands (the `company-master-data` fallback):
+`POST /api/v1/repos/<owner>/<repo>/push_mirrors` with `remote_address`,
+`remote_username`, `remote_password` and `interval` — `interval` is mandatory
+(`8h0m0s`), plus `sync_on_commit=true`. Needs the admin token (root-only).
+
+Known gaps (queued in `docs/todo/services.md`):
+
+- No user-namespace equivalent of `scripts/forgejo-attach-org-push-mirrors.sh`;
+  a hand attach is a raw API POST today.
+- No reserved-native guard in phase 1 (the step-order rule above).
+- The push-mirror credential is the sops `GITHUB_TOKEN` (repo scope). A repo
+  that gains `.github/workflows/*` gets its mirror pushes rejected for missing
+  `workflow` scope — the class that froze `domains` for 96 commits.
