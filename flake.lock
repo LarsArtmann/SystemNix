@@ -1303,11 +1303,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1792388495,
-        "narHash": "sha256-JR8ju2zUHV3w+JIU0KWK4MUBV8yIPaXxPKC/4qaJ24I=",
+        "lastModified": 1792390543,
+        "narHash": "sha256-uu90wRDe4XVtxc6kU8ShoE8sqPzuSCY0Khpc9YWKxLQ=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "6ac4b4a38f89c7ef6c09145c25531c08eb1d3ef8",
+        "rev": "77fb4f2c6b40dbd87c8f38bfbf03578ec5f43983",
         "type": "github"
       },
       "original": {
