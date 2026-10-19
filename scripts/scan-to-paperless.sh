@@ -42,7 +42,7 @@ WATCH_FAIL_SLEEP_MAX=15
 BLANK_MEAN=0.93
 BLANK_STDDEV=0.06
 
-log() { printf '%s\n' "$*"; }
+log() { printf '%s %s\n' "$(date +%H:%M:%S)" "$*"; }
 die() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
@@ -123,7 +123,7 @@ scan_batch() {
     --source "$source" \
     --AutoDocumentSize=yes \
     --AutoDeskew=yes \
-    --batch="$batch_dir/frame-%04d.pnm" 2>/dev/null
+    --batch="$batch_dir/frame-%04d.pnm" 2>"$batch_dir/scanimage.err"
   batch_rc=$?
   set -e
   shopt -s nullglob
@@ -210,6 +210,7 @@ case "$mode" in
 watch)
   total_docs=0
   consec_fail=0
+  empty_streak=0
   log "== WATCH mode start $(date +%H:%M:%S) duplex=1 dry_run=$dry_run — feed paper any time; stop: touch $STAGING/STOP"
   while true; do
     [ -f "$STAGING/STOP" ] && {
@@ -221,12 +222,18 @@ watch)
     if [ "${#frames[@]}" -gt 0 ]; then
       process_batch && total_docs=$((total_docs + 1))
       consec_fail=0
+      empty_streak=0
       sleep 2
     elif [ "$batch_rc" -eq 7 ] || [ "$batch_rc" -eq 0 ]; then
+      empty_streak=$((empty_streak + 1))
+      if [ $((empty_streak % 15)) -eq 1 ]; then
+        log "idle: ADF empty rc=$batch_rc (empty streak #$empty_streak since last capture)"
+      fi
       sleep "$WATCH_EMPTY_SLEEP"
     else
       consec_fail=$((consec_fail + 1))
-      log "WARN: scan attempt failed rc=$batch_rc (consecutive #$consec_fail) — retrying; half-seated sheets flap the sensor (rc=4 is this class)"
+      err_line=$(tail -1 "$batch_dir/scanimage.err" 2>/dev/null || true)
+      log "WARN: scan attempt failed rc=$batch_rc (consecutive #$consec_fail, empty_streak was #$empty_streak) sane says: ${err_line:-<no stderr>}; half-seated sheets flap the sensor (rc=4 is this class)"
       sleep "$(( WATCH_FAIL_SLEEP * consec_fail < WATCH_FAIL_SLEEP_MAX ? WATCH_FAIL_SLEEP * consec_fail : WATCH_FAIL_SLEEP_MAX ))"
     fi
   done
