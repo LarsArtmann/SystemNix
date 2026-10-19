@@ -484,6 +484,12 @@ in
       forgejo.canonicalRepos = [
         "domains"
         "eventcatalog-hub"
+        # Native-since-inception (2026-10-19): the repo was created PRIVATE on
+        # Forgejo via SSH push-to-create (default private) and its GitHub twin
+        # was created PRIVATE too; phase 5 attaches the push mirror on the
+        # next deploy. No .github/workflows in the repo, so the repo-scoped
+        # sync PAT suffices (the `workflow` scope is not needed).
+        "company-master-data"
       ];
       immich.enable = true;
       paperless.enable = true;
