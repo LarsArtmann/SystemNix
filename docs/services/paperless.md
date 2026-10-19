@@ -310,6 +310,58 @@ workflow (A4 gate).
 (new suggestion targets?), paperless-gpt release notes (upstream is ACTIVE),
 flm consumer count vs the connection budget in `docs/services/fastflowlm.md`.
 
+## Accounting field extraction on scanned invoices (2026-10-19 go-live)
+
+The owner's accounting pilot (manually tagged `Accounting` + `faktura` docs,
+fields `Brutto in PLN`/`VAT in PLN` monetary, `VAT percentages`/`NIP`/
+`Payment status` select) is now extracted automatically by paperless-gpt:
+
+- **Fields added via API (create-only):** `Invoice number` (string, id
+  1000012) + `Issue date` (date, id 1000013). Selected for extraction:
+  Brutto in PLN (1000006), VAT in PLN (1000003), Invoice number, Issue date —
+  `settings.json` `custom_fields_enable=true`, `custom_fields_write_mode=
+  "append"`. Monetary values carry the currency prefix (`PLN86.84`), matching
+  both the extraction prompt contract and the owner's manual pilot values.
+- **Select-type fields are DELIBERATELY excluded** from LLM extraction
+  (NIP/VAT percentages/Payment status): paperless stores select values as
+  option IDs (opaque tokens), an LLM answer can't match them, and paperless-gpt
+  has no label→id mapping — those stay manual/workflow-assigned.
+- **Pipeline:** tag `paperless-gpt-auto` (id 1000010) → gpt background poll
+  → suggestions → Append-mode apply → `paperless-gpt-auto-complete`;
+  failures → `paperless-gpt-failed` (terminal).
+
+**Live traps (2026-10-19, all hit and recovered):**
+
+1. **The retry cap is faster than any LLM outage.** The auto poll runs every
+   ~10 s and `AUTO_TAG_MAX_RETRIES=3` counts poll cycles (in-memory tracker,
+   resets only on daemon restart) — ~30–60 s of flm unavailability
+   terminal-fails EVERY queued document. NEVER leave auto-tagged docs queued
+   while flm is down: remove the auto tag first, re-tag when the LLM serves.
+   Recovery: remove `paperless-gpt-failed`, re-add `paperless-gpt-auto` with
+   the FULL tag set, restart gpt if the tracker is saturated.
+2. **Consumption workflows in 3.3.1 can match UNTYPED documents.** The
+   "Queue Bills for AI field extraction" workflow (id 1000003,
+   `filter_has_any_document_types=[Bill]`, type=CONSUMPTION) auto-tagged
+   SEVEN untyped scans (`document_type=null`) within minutes of its creation —
+   gpt's `modification_history.db` records `[new paperless-gpt-auto]` as the
+   tag set it saw at pickup. Master `matching.py` would reject (the
+   `allowed_document_type_ids` guard excludes `None`); 3.3.1 evidently
+   evaluates differently. The workflow is DISABLED; re-enable only after a
+   one-scan re-test, or tag-gate it (`has_tags: Accounting`) instead of the
+   doctype filter. Evidence: docs/todo/services.md row "workflow matching
+   anomaly".
+3. **`PATCH /api/documents/<id>/` REPLACES the whole tag set** (DRF
+   semantics): always send the complete desired tag list or you wipe tags.
+   This wiped the pilot docs' Accounting/faktura tags during the incident;
+   restored from gpt's modification history + tag-listing evidence.
+4. **Everything rides flm** — guard-capped restores (3/day) plus an IO-storm
+   afternoon leaves extraction dark exactly like the native AI. The
+   memory-emergency-guard runbook owns that lifecycle; do NOT race a trip
+   zone with the 21.6 GB cold load.
+
+Statement fields (IBAN/amount/period, A9 scope) remain future work: the
+bank-sync statement uploads are already metadata-complete at upload time.
+
 ## llama-vlm live verification (A15, 2026-10-02)
 
 First verified inferences since system-796: :8128 (Qwen3-VL-8B captioner) —
