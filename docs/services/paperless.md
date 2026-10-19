@@ -4,6 +4,8 @@
 
 **State since 2026-09-02: SSO-ONLY login via Pocket ID.** User decision: "I do not like password logins." Regular (username/password) login is disabled while the OIDC bridge is healthy and AUTOMATICALLY restored as break-glass when it degrades.
 
+**Physical intake:** the Brother ADS-1800W scanner feeds this instance via the consume dir — runbook [scanner.md](./scanner.md) (incl. the scanimage-PNM mime trap).
+
 ---
 
 ## Architecture
