@@ -139,15 +139,15 @@ verify_pnm() {
 }
 
 deliver_out() {
-  local out
-  for out in "$STAGING/out"/*; do
-    [ -e "$out" ] || return 0
-    cp "$out" "$CONSUME/" || die "failed copying $out into consume (ACL/group write?)"
+  local f
+  for f in "$@"; do
+    cp "$STAGING/out/$f" "$CONSUME/" || die "failed copying $f into consume (ACL/group write?)"
   done
 }
 
 process_batch() {
   local start_s n i sheet s1 s2 elapsed
+  local -a products=()
   [ "${#frames[@]}" -eq 0 ] && return 1
   verify_pnm
   log "-- ${#frames[@]} frame(s) captured (scanimage rc=$batch_rc; 0 = ok, 7 = drained)"
@@ -158,6 +158,7 @@ process_batch() {
     for f in "${frames[@]}"; do
       n=$((n + 1))
       out_name="receipt-$ts-$(printf '%02d' "$n").png"
+      products+=("$out_name")
       magick "$f" "$STAGING/out/$out_name"
       meanstd=$(magick "$STAGING/out/$out_name" -colorspace gray -format "%[fx:mean] %[fx:standard_deviation]" info:)
       mean=${meanstd%% *}
@@ -181,6 +182,7 @@ process_batch() {
     while [ $i -lt ${#frames[@]} ]; do
       n=$((n + 1))
       sheet="$prefix-$ts-$(printf '%02d' "$n").pdf"
+      products+=("$sheet")
       if [ $((i + 1)) -lt ${#frames[@]} ]; then
         magick "${frames[$i]}" "${frames[$((i + 1))]}" "$STAGING/out/$sheet"
         s1=$(frame_stats "${frames[$i]}")
@@ -198,7 +200,7 @@ process_batch() {
   if [ "$dry_run" -eq 1 ]; then
     log "== DRY RUN: output staged in $STAGING/out (nothing consumed)"
   else
-    deliver_out
+    deliver_out "${products[@]}"
     log "== delivered $n document(s) to $CONSUME (convert+deliver ${elapsed}s)"
   fi
   return 0
