@@ -34,6 +34,13 @@
 #      makes it a gate). Historical timestamp mentions ("notifying at
 #      08:36", "nightly … 03:00" schedule context) are NOT matches — the
 #      signals are the wait-imperative forms only.
+#   6. Verbatim duplicate open rows (2026-10-06): a double-applied edit
+#      shipped byte-identical queue rows past this gate — it returned
+#      "structure clean" WITH the duplicates present; caught only because
+#      the NEXT edit errored on non-unique old_string. uniq -d over the
+#      extracted titles: a titled open row compares by title, an untitled
+#      one by its full line. Gate mode also sweeps the docs/todo/ libraries
+#      (same row shape there); --scan-file stays hermetic to its target.
 #
 # Scope v1: grep-judgeable shapes only. Semantic dedup/priority are
 # review work, not a grep gate.
@@ -130,8 +137,54 @@ selftest() {
     echo "SELFTEST FAIL: BLOCKED-marked time-gated row must not be flagged"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt) + time-gated [ready] rows (marker-exempt)"
+  # duplicate-row leg: a verbatim-duplicated open row must FAIL (the 2026-10-06
+  # "structure clean with duplicates present" class) …
+  tmp=$(mktemp)
+  cp "$TODO" "$tmp"
+  printf -- '- [ ] [ready] **Selftest duplicate row** → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' >>"$tmp"
+  printf -- '- [ ] [ready] **Selftest duplicate row** → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' >>"$tmp"
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
+  rm -f "$tmp"
+  if [ "$rc" -eq 0 ] || ! printf '%s\n' "$out" | grep -q 'FAIL: duplicate'; then
+    echo "SELFTEST FAIL: duplicate-row detection must fail on a verbatim-duplicated row"
+    exit 1
+  fi
+  # … and a single instance must NOT be flagged
+  tmp=$(mktemp)
+  cp "$TODO" "$tmp"
+  printf -- '- [ ] [ready] **Selftest duplicate row (compliant)** → [docs/todo/pipeline.md](docs/todo/pipeline.md)\n' >>"$tmp"
+  out=$(CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
+  rm -f "$tmp"
+  if printf '%s\n' "$out" | grep -q 'FAIL: duplicate'; then
+    echo "SELFTEST FAIL: single-instance row must not be flagged as duplicate"
+    exit 1
+  fi
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt) + time-gated [ready] rows (marker-exempt) + duplicate open rows"
   exit 0
+}
+
+# Verbatim duplicate open rows: extract each unchecked row's title (text of
+# the first **…** span; an untitled row compares by its full line) and fail
+# on any title that appears more than once. Gate mode sweeps the target plus
+# every docs/todo/ library (the rows share one shape across both surfaces);
+# --scan-file passes only its target so selftest fixtures stay hermetic.
+duplicate_check() {
+  local f="$1" dup_targets=() target dup_hits
+  dup_targets+=("$f")
+  if [ "$f" = "$TODO" ]; then
+    for target in "$REPO_ROOT"/docs/todo/[a-z0-9-]*.md; do
+      [ -f "$target" ] && dup_targets+=("$target")
+    done
+  fi
+  dup_hits=$(cat "${dup_targets[@]}" |
+    grep -E '^- \[ \] ' |
+    sed -E 's/^- \[ \] ([^*]*\*\*)?([^*]+)\*\*.*/\2/' |
+    sort | uniq -d)
+  if [ -n "$dup_hits" ]; then
+    echo "FAIL: duplicate open row title(s) across the queue/libraries — dedupe (verbatim-duplicate class, 2026-10-06):"
+    printf '%s\n' "$dup_hits" | sed 's/^/  /' | cut -c1-200
+    fail=1
+  fi
 }
 
 scan_file() {
@@ -152,6 +205,7 @@ scan_file() {
     printf '%s\n' "$timegate_hits" | sed 's/^/  /' | cut -c1-200
     fail=1
   fi
+  duplicate_check "$f"
   # verify every referenced library file exists
   local lib
   while IFS= read -r lib; do
