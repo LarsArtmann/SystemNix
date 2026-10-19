@@ -110,7 +110,6 @@ _: {
         # the same labels; this line keeps config the source of truth for
         # when registration is retired.
         runner.labels = runnerLabels;
-        container.network = "host";
       };
       runnerConfigFile = (pkgs.formats.yaml { }).generate "runner-config.yaml" runnerSettings;
 
