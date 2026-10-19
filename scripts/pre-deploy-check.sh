@@ -285,15 +285,14 @@ if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION
     fail "nixosConfigurations.evo-x2 evaluation failed"
   fi
 
-  # 3. Check no Podman/Docker split-brain
+  # 3. Docker-reintroduction tripwire (Docker removed 2026-10-08)
   echo ""
   echo "3. Container runtime consistency"
-  BACKEND=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.oci-containers.backend 2>/dev/null || echo "podman")
   DOCKER_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.virtualisation.docker.enable 2>/dev/null || echo "false")
-  if [ "$DOCKER_ENABLED" = "true" ] && [ "$BACKEND" = "podman" ]; then
-    fail "oci-containers backend is podman but docker is enabled — split-brain"
+  if [ "$DOCKER_ENABLED" = "true" ]; then
+    fail "Docker is enabled again — reintroduction tripwire (removed 2026-10-08; if deliberate, re-establish the image policy: pin tag+digest, never float, and see AGENTS.md)"
   else
-    pass "Single container runtime (docker=$DOCKER_ENABLED, backend=$BACKEND)"
+    pass "No container runtime reintroduced (docker=$DOCKER_ENABLED)"
   fi
 
   # 4. Check mount options for nofail on non-critical mounts
