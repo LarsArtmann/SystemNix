@@ -850,11 +850,15 @@
                   while IFS= read -r -d $'\0' f; do
                     rel="''${f#"${qontoStageStatements}/"}"
                     org_dir="''${rel%%/*}"
-                    base="''${rel##*/}"
+                    # NB: NOT named `base` — that is the paperless API
+                    # base URL used by upload()/api() (the 2026-10-20 09:52
+                    # shadowing bug made curl resolve the filename as a
+                    # host after the first iteration).
+                    fname="''${rel##*/}"
                     # First 7 chars: YYYY-MM. (A ''${base%%-*} expansion
                     # strips from the FIRST hyphen and yields only the year
                     # - the 2026-10-20 09:13 activation failure.)
-                    month=$(printf '%s' "$base" | cut -c1-7)
+                    month=$(printf '%s' "$fname" | cut -c1-7)
                     case "$org_dir" in
                       artmann-holding-gmbh) org="Artmann Holding GmbH" ;;
                       artmann-technologies-gmbh) org="Artmann Technologies GmbH" ;;
@@ -866,7 +870,7 @@
                     case "$month" in
                       [0-9][0-9][0-9][0-9]-[0-9][0-9]) ;;
                       *)
-                        echo "bank-sync-qonto-paperless: cannot derive YYYY-MM statement month from '$base' - refusing" >&2
+                        echo "bank-sync-qonto-paperless: cannot derive YYYY-MM statement month from '$fname' - refusing" >&2
                         exit 1
                         ;;
                     esac
