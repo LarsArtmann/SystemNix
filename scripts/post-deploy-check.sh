@@ -186,11 +186,19 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/service-sanity-sweep.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/lib/storage-history-smoke.sh"
 # shellcheck source=scripts/lib/browser-history-registration-smoke.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/browser-history-registration-smoke.sh"
+# Shared CRM OIDC readiness §20 smoke logic (fixture-tested by
+# scripts/test-crm-oidc-smoke.sh + the crm-oidc-smoke-selftest flake check
+# — the negative branches shipped unexercised: a live FAIL rehearsal
+# would need Pocket ID actually down).
+# shellcheck source=scripts/lib/crm-oidc-smoke.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/crm-oidc-smoke.sh"
 # Read by the sourced libs (sandbox shellcheck cannot follow them).
 # shellcheck disable=SC2034
 OB_PASS=report_pass OB_FAIL=report_fail OB_WARN=report_warn OB_SKIP=report_skip
 # shellcheck disable=SC2034
 STH_PASS=report_pass STH_FAIL=report_fail STH_WARN=report_warn
+# shellcheck disable=SC2034
+CRM_PASS=report_pass CRM_FAIL=report_fail CRM_WARN=report_warn CRM_SKIP=report_skip
 
 # Storm-mode gate (2026-10-09 §f6 triage class): a parallel build saturating
 # the disk false-FAILs the load-sensitive checks on every busy deploy, and
@@ -2153,28 +2161,10 @@ sh_post_deploy "$STH_UNIT" "$STH_TIMER" "$STH_PROM"
 # line with OIDC flags deployed → WARN, OIDC not provisioned → SKIP.
 echo ""
 echo "=== §20 Kith CRM OIDC readiness (crm-server) ==="
-CRM_UNIT_FILE="/etc/systemd/system/crm-server.service"
-if [ ! -f "$CRM_UNIT_FILE" ]; then
-  report_skip "Kith CRM OIDC - crm-server unit absent (service not deployed)"
-elif ! grep -q '\-oidc-issuer' "$CRM_UNIT_FILE"; then
-  report_skip "Kith CRM OIDC - OIDC not provisioned (passkey-only unit by design)"
-else
-  crm_oidc_line="$(journalctl -u crm-server -b --no-pager 2>/dev/null | grep 'oidc sign-in' | tail -1 || true)"
-  case "$crm_oidc_line" in
-  *"oidc sign-in enabled"*)
-    report_pass "Kith CRM OIDC - Pocket ID sign-in enabled (last start: $crm_oidc_line)"
-    ;;
-  *"oidc sign-in disabled"*)
-    report_fail "Kith CRM OIDC - sign-in DISABLED (passkey-only degrade live) — restart crm-server once auth.home.lan DNS+Pocket ID are up (run: journalctl -u crm-server -b | grep 'oidc sign-in')"
-    ;;
-  "")
-    report_warn "Kith CRM OIDC - OIDC flags deployed but no readiness line since boot — with -passkeys=false this usually means the unit is restart-looping on OIDC init (run: journalctl -u crm-server -b | tail -20)"
-    ;;
-  *)
-    report_warn "Kith CRM OIDC - unrecognized readiness line: $crm_oidc_line"
-    ;;
-  esac
-fi
+# The unit path is env-overridable so the fixture harness
+# (scripts/test-crm-oidc-smoke.sh) drives the REAL lib, not a copy.
+CRM_UNIT_FILE="${CRM_UNIT_FILE:-/etc/systemd/system/crm-server.service}"
+crm_oidc_smoke "$CRM_UNIT_FILE"
 
 # --- Summary ---
 echo ""
