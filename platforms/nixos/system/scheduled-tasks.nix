@@ -226,6 +226,91 @@ in
         };
       };
 
+      # Discord path for P0 units — wire via lib onFailureP0 (= the desktop
+      # toast of notify-failure@ PLUS this). The 2026-10-12 8-min
+      # sole-resolver outage's ONLY signal was one rate-limited normal-
+      # urgency desktop toast (DND-suppressible, and the desktop shares the
+      # failure domain with the units it watches); dnsblockd / gatus /
+      # signoz / clickhouse additionally page the Discord webhook the gatus
+      # checks already use — DIRECTLY, not via gatus, because gatus is
+      # itself P0 (its 2026-10-12 OIDC-gate death left its own checks
+      # unexecuted for the whole window). The webhook arrives via the
+      # dedicated sops template notify-failure-p0-env (ONLY
+      # DISCORD_WEBHOOK_URL — tq-agent-pool-env doctrine: a multi-key env
+      # file must not leak into a unit that fires for arbitrary failing
+      # units).
+      "notify-failure-p0@" = {
+        description = "Notify Discord on failure of %i (P0 units)";
+        serviceConfig = {
+          Type = "oneshot";
+          User = primaryUser;
+          # Webhook env rides the dedicated sops template. Optional (empty
+          # list) when sops-nix isn't loaded at all — minimal VM fixtures
+          # import this platform file without it; the script then logs the
+          # missing-DISCORD_WEBHOOK_URL warning and exits 0. On a real host
+          # with the unit, sops.nix always renders the template (its
+          # condition keys on this very unit's existence).
+          EnvironmentFile =
+            lib.optionals
+              (((config.sops or { }).templates or { }) ? "notify-failure-p0-env")
+              [ config.sops.templates."notify-failure-p0-env".path ];
+          ExecStart =
+            let
+              notifyFailureP0 = pkgs.writeShellApplication {
+                name = "notify-failure-p0";
+                runtimeInputs = [
+                  pkgs.coreutils
+                  pkgs.util-linux
+                  pkgs.curl
+                ];
+                text = ''
+                  UNIT="''${1:-unknown}"
+                  # Rate-limit: ONE Discord post per unit per hour — same
+                  # containment as the desktop toast in notify-failure@ (a
+                  # crash-loop restarts every RestartUSec and must not
+                  # webhook-storm). The slot is reserved BEFORE the post so a
+                  # Discord-side outage cannot turn the next failure into a
+                  # burst; suppressed/failed sends still land in the journal
+                  # via logger.
+                  STATE_DIR="''${XDG_STATE_HOME:-$HOME/.local/state}/notify-failure-p0"
+                  mkdir -p "$STATE_DIR"
+                  STATE_FILE="$STATE_DIR/''${UNIT//\//_}.last"
+                  NOW=$(date +%s)
+                  LAST=$(stat -c %Y "$STATE_FILE" 2>/dev/null || echo 0)
+                  if [ $(( NOW - LAST )) -lt 3600 ]; then
+                    logger -t "$UNIT" -p user.info "P0 unit failure — Discord notify suppressed (rate limit 1/h) — check journalctl -u $UNIT"
+                    exit 0
+                  fi
+                  if [ -z "''${DISCORD_WEBHOOK_URL:-}" ]; then
+                    logger -t "$UNIT" -p user.err "P0 unit failure — DISCORD_WEBHOOK_URL missing (sops template notify-failure-p0-env not rendered?) — check journalctl -u $UNIT"
+                    exit 0
+                  fi
+                  touch "$STATE_FILE"
+                  HOST=$(uname -n)
+                  PAYLOAD=$(printf '{"content":"P0 unit FAILED on %s: `%s` — check `journalctl -u %s` (notify-failure-p0, rate limit 1/h)"}' "$HOST" "$UNIT" "$UNIT")
+                  # 3 attempts x 10s cap: a failure during boot (link not yet
+                  # up) still lands once the network arrives; a dead network
+                  # exhausts in ~35s and logs. Best-effort by contract — a
+                  # notifier must never present ITSELF as a failed unit.
+                  for _ in 1 2 3; do
+                    if curl -fsS --max-time 10 -H 'Content-Type: application/json' -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL" >/dev/null 2>&1; then
+                      logger -t "$UNIT" -p user.info "P0 unit failure — Discord notify sent — check journalctl -u $UNIT"
+                      exit 0
+                    fi
+                    sleep 5
+                  done
+                  logger -t "$UNIT" -p user.err "P0 unit failure — Discord notify FAILED after 3 attempts (webhook unreachable?) — check journalctl -u $UNIT"
+                  exit 0
+                '';
+              };
+            in
+            "${notifyFailureP0}/bin/notify-failure-p0 %i";
+          TimeoutSec = "90s";
+          StandardOutput = "journal";
+          StandardError = "journal";
+        };
+      };
+
       crush-update-providers = {
         description = "Update Crush AI providers";
         inherit onFailure;

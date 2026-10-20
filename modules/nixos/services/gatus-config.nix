@@ -15,6 +15,7 @@ _: {
         harden
         serviceDefaults
         onFailure
+        onFailureP0
         serviceTypes
         mkHttpCheck
         mkSecretCheck
@@ -1327,7 +1328,7 @@ _: {
             };
           in
           {
-            inherit onFailure;
+            onFailure = onFailureP0;
             after = [
               "network-online.target"
               "dnsblockd.service"

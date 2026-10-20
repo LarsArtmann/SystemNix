@@ -231,6 +231,117 @@
     '';
   };
 
+  # 2026-10-20 line-763 class (4th whole-file rejection of system_health.prom):
+  # the census emitted systemd's RAW cgroup-name escapes (\x2d for '-') into a
+  # prometheus label value; the text format only allows \\ \" and \n escapes,
+  # so node_exporter discarded the WHOLE file and every system_* metric went
+  # blind — including the brand-new system_local_dns_resolves, whose SigNoz
+  # rule had provisioned green against a series that no longer existed.
+  # Artifact-level: slice the census section out of the REAL evo-x2 collector
+  # script, run it against a fixture cgroup tree carrying the exact offending
+  # name, and validate the emitted .prom with the REAL prometheus parser
+  # (promtool), plus a mutation leg proving the raw form is genuinely rejected.
+  prom-escape-census =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      collector = evo.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+      probe = pkgs.writeShellApplication {
+        name = "prom-escape-census-probe";
+        # SC2016: the census-slice grep anchors are DELIBERATE literals ($ and
+        # all) — they must match the collector script's source text exactly.
+        excludeShellChecks = [ "SC2016" ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.findutils
+          pkgs.gawk
+          pkgs.gnugrep
+          pkgs.gnused
+          # promtool lives in the `cli` output since prometheus 3.x (the
+          # default output ships only the server binary).
+          pkgs.prometheus.cli
+        ];
+        text = ''
+          set -euo pipefail
+          SCRIPT="''${1:?collector store path required}"
+
+          # Fixture cgroup tree: the exact 2026-10-20 offender (systemd writes
+          # unit cgroup dirs with its byte-value escapes intact) plus a
+          # plain-named control cgroup.
+          mkdir -p '/tmp/sysfix/system.slice/gitea-runner-evo\x2dx2.service'
+          printf '44361195520\n' > '/tmp/sysfix/system.slice/gitea-runner-evo\x2dx2.service/memory.current'
+          printf 'anon 30110000000\nshmem 900000000\nunevictable 4096\n' > '/tmp/sysfix/system.slice/gitea-runner-evo\x2dx2.service/memory.stat'
+          mkdir -p '/tmp/sysfix/system.slice/signoz.service'
+          printf '123456789\n' > '/tmp/sysfix/system.slice/signoz.service/memory.current'
+          printf 'anon 100000000\nshmem 2000000\nunevictable 0\n' > '/tmp/sysfix/system.slice/signoz.service/memory.stat'
+
+          # Slice the census section out of the REAL script; /sys/fs/cgroup is
+          # the ONLY substitution (fixture redirect).
+          start=$(grep -n 'CENSUS_ENTRIES=$(' "$SCRIPT" | cut -d: -f1)
+          end=$(grep -n -F 'done <<<"$CENSUS_ENTRIES"' "$SCRIPT" | cut -d: -f1)
+          [ -n "$start" ] && [ -n "$end" ] || { echo "census section not found in collector script"; exit 1; }
+          sed -n "''${start},''${end}p" "$SCRIPT" > /tmp/census-slice.sh
+          sed -i 's|/sys/fs/cgroup|/tmp/sysfix|g' /tmp/census-slice.sh
+
+          bash -c 'set -euo pipefail; source /tmp/census-slice.sh; printf %s "$CENSUS_SAMPLE" > /tmp/out.prom'
+
+          # Production shape: the collector emits the census HELP/TYPE block
+          # into the assembled .prom (system-health.nix .prom-emit section) —
+          # without it promtool's lint stage exits 3 on "no help text".
+          {
+            printf '%s\n' \
+              '# HELP system_cgroup_mem_bytes memory.current of the top cgroups by usage (who is holding RAM)' \
+              '# TYPE system_cgroup_mem_bytes gauge' \
+              '# HELP system_cgroup_mem_anon_bytes anonymous memory (memory.stat anon) of the same top cgroups' \
+              '# TYPE system_cgroup_mem_anon_bytes gauge' \
+              '# HELP system_cgroup_mem_shmem_bytes shared/tmpfs/shmem memory (memory.stat shmem) of the same top cgroups' \
+              '# TYPE system_cgroup_mem_shmem_bytes gauge' \
+              '# HELP system_cgroup_mem_unevictable_bytes mlocked/unevictable memory of the same top cgroups' \
+              '# TYPE system_cgroup_mem_unevictable_bytes gauge'
+            cat /tmp/out.prom
+          } > /tmp/out-with-help.prom
+          mv /tmp/out-with-help.prom /tmp/out.prom
+
+          # The escaped form must be present: doubled backslash in the bytes.
+          grep -F 'system_cgroup_mem_bytes{cgroup="system.slice_gitea-runner-evo\\x2dx2.service"} 44361195520' /tmp/out.prom
+          grep -F 'system_cgroup_mem_anon_bytes{cgroup="system.slice_gitea-runner-evo\\x2dx2.service"} 30110000000' /tmp/out.prom
+          # The raw single-backslash form must be GONE (this was the bug).
+          if grep -F 'evo\x2dx2' /tmp/out.prom; then
+            printf '%s\n' "raw \\x2d label survived unescaped"
+            exit 1
+          fi
+          # Control cgroup still present with its plain name.
+          grep -F 'system_cgroup_mem_bytes{cgroup="system.slice_signoz.service"} 123456789' /tmp/out.prom
+
+          # The REAL parser must accept the emitted file…
+          promtool check metrics < /tmp/out.prom
+          # …and REJECT the raw form (mutation leg: proves the check bites).
+          printf '%s\n' 'system_cgroup_mem_bytes{cgroup="system.slice_gitea-runner-evo\x2dx2.service"} 44361195520' > /tmp/raw.prom
+          if promtool check metrics < /tmp/raw.prom >/dev/null 2>&1; then
+            printf '%s\n' "MUTATION: raw \\x2d label accepted by prometheus parser"
+            exit 1
+          fi
+
+          # Tripwire: the escaping transform must stay in the artifact.
+          grep -qF 'label//\\/\\\\}' "$SCRIPT"
+
+          echo "PASS: census escapes cgroup label values; promtool accepts output, rejects raw form"
+        '';
+      };
+    in
+    pkgs.testers.runNixOSTest {
+      name = "prom-escape-census";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("${probe}/bin/prom-escape-census-probe ${collector}")
+      '';
+    };
+
   # Artifact-level verification of the two fixed dead-guard scripts (the
   # 2026-09-13 closeout ask: "the run tested faithful bash reconstructions,
   # not the artifacts"). Executes the REAL writeShellApplication store

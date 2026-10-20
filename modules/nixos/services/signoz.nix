@@ -49,6 +49,7 @@ in
         serviceOneshotDefaults
         serviceTypes
         onFailure
+        onFailureP0
         mkStateDir
         ports
         ioTier
@@ -648,7 +649,9 @@ in
                 (mkStateDir "/var/log/clickhouse-server" "0755" "clickhouse" "clickhouse")
               ];
               systemd.services.clickhouse = {
-                inherit onFailure;
+                # P0: Discord page alongside the desktop toast — the SigNoz
+                # backend's death must not depend on the desktop session.
+                onFailure = onFailureP0;
                 startLimitBurst = 5;
                 startLimitIntervalSec = 300;
                 # extraServerConfig lands as an etc file; the nixpkgs module has
@@ -958,7 +961,9 @@ in
                 description = "SigNoz Observability Platform";
                 after = lib.optional cfg.components.clickhouse "clickhouse.service";
                 requires = lib.optional cfg.components.clickhouse "clickhouse.service";
-                inherit onFailure;
+                # P0: Discord page alongside the desktop toast (the rules
+                # engine cannot page for its own death — direct webhook).
+                onFailure = onFailureP0;
                 wantedBy = [ "signoz.target" ];
                 startLimitBurst = 5;
                 startLimitIntervalSec = 300;

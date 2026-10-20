@@ -880,6 +880,17 @@ _: {
           while read -r cur name; do
             [ -n "$name" ] || continue
             label=$(echo "$name" | tr '/' '_')
+            # Prometheus label-value escaping — \ " and newline are the only
+            # escapable chars, and an UNESCAPED backslash makes the parser
+            # reject the WHOLE file. systemd cgroup names carry raw \xNN
+            # byte escapes (gitea-runner-evo\x2dx2.service), so every census
+            # run with such a unit in the top-8 blinded every system_*
+            # metric at node_exporter (2026-10-20 09:27 line-763 class,
+            # 4th incident — incl. the brand-new system_local_dns_resolves).
+            # Backslash FIRST so the pairs inserted below are not doubled.
+            label=''${label//\\/\\\\}
+            label=''${label//\"/\\\"}
+            label=''${label//$'\n'/\\n}
             cgdir="/sys/fs/cgroup/$name"
             anon=$(awk '$1 == "anon" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || anon=0
             shmem=$(awk '$1 == "shmem" {print $2}' "$cgdir/memory.stat" 2>/dev/null) || shmem=0

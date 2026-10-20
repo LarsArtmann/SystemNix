@@ -32,6 +32,7 @@ _: {
         serviceOneshotDefaults
         ioTier
         onFailure
+        onFailureP0
         mkStateDir
         ports
         ;
@@ -434,6 +435,18 @@ _: {
           }
         )
       );
+
+      # dnsblockd-wait-listener poll budget (seconds) — the ExecStartPost
+      # readiness gate below. 150s is JOURNAL-MEASURED, not a guess: healthy
+      # storm-profile starts routinely run the 3.9M-entry blocklist load past
+      # 60s (2026-10-19 04:05 boot: ~115.5s start→listeners, server_init
+      # 109.8s; four more 61-79s starts on 10-18/10-19), so the original 60s
+      # budget sat INSIDE the healthy distribution and would have killed the
+      # resolver mid-load → restart churn → StartLimitBurst → sole-resolver
+      # downtime caused by its own guard. 150s = observed worst +34.5s
+      # headroom, strictly inside the start-job envelope (assertion pins it).
+      listenerWaitBudgetSec = 150;
+      timeoutStartBudgetSec = 180;
     in
     {
       options.services.dns-blocker = {
@@ -1036,6 +1049,15 @@ _: {
             message = "services.dns-blocker.dnsRateLimitBurst must be > 0 when dnsRateLimitPerSec is enabled.";
           }
           {
+            # The wait-listener gate must stay strictly inside the start-job
+            # envelope: ExecStartPre + poll share TimeoutStartSec, and a poll
+            # budget at/over the envelope turns a healthy-but-slow boot into
+            # a timeout kill (sole-resolver downtime from its own guard —
+            # the 2026-10-20 budget-verification finding in reverse).
+            assertion = listenerWaitBudgetSec < timeoutStartBudgetSec;
+            message = "dnsblockd-wait-listener poll budget (${toString listenerWaitBudgetSec}s) must stay strictly inside TimeoutStartSec (${toString timeoutStartBudgetSec}s) — a poll that can outlive the envelope kills healthy slow boots.";
+          }
+          {
             assertion = !cfg.dnsTLSEnabled || cfg.dnsTLSPort != cfg.dnsDOHPort || !cfg.dnsDOHEnabled;
             message = "services.dns-blocker.dnsTLSPort and dnsDOHPort must differ to avoid bind conflict.";
           }
@@ -1257,7 +1279,9 @@ _: {
               ]
               ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
               wantedBy = [ "multi-user.target" ];
-              inherit onFailure;
+              # P0: Discord page alongside the desktop toast — the sole
+              # resolver's death must not depend on the desktop session.
+              onFailure = onFailureP0;
               restartTriggers = [
                 dnsblockdConfigFile
                 pkgs.dnsblockd
@@ -1295,13 +1319,24 @@ _: {
                   # listeners_start, and with Type=simple the unit reads
                   # "active" immediately so TimeoutStartSec NEVER fires — the
                   # resolver died silently for 8+ minutes host-wide. Bounded
-                  # poll (60s, well inside TimeoutStartSec=3min which still
-                  # owns the ~2min blocklist load): no listener = fail the
+                  # poll (listenerWaitBudgetSec, journal-sized — see the
+                  # module let): no listener = fail the
                   # start job → Restart=always retries + OnFailure alerts,
                   # instead of an invisible outage. If the probe tooling
                   # itself cannot run inside the sandbox, fail OPEN (warn) —
                   # a monitoring blind spot must never kill the sole DNS
                   # resolver.
+                  # Poll budget: 150s, JOURNAL-MEASURED (2026-10-20 task-queue
+                  # verification of the original 60s guess — which sat INSIDE
+                  # the healthy-but-slow distribution and would have killed
+                  # the resolver mid-load: the 2026-10-19 04:05 boot needed
+                  # ~115.5s start→listeners (server_init 109.8s, the 3.9M-
+                  # entry blocklist load), plus four more 61-79s storm starts
+                  # on 10-18/10-19). A killed healthy start restart-churns to
+                  # StartLimitBurst = sole-resolver downtime caused by its own
+                  # guard — the exact heavyDB-gate class this budget had to
+                  # respect. Binding + envelope relationship live at the
+                  # module let (listenerWaitBudgetSec/timeoutStartBudgetSec).
                   listenerWait = pkgs.writeShellApplication {
                     name = "dnsblockd-wait-listener";
                     runtimeInputs = [
@@ -1313,14 +1348,14 @@ _: {
                         echo "WARNING: ss probe unavailable in sandbox — listener smoke skipped" >&2
                         exit 0
                       fi
-                      for _ in $(seq 1 60); do
+                      for _ in $(seq 1 ${toString listenerWaitBudgetSec}); do
                         if printf '%s\n' "$listeners" | grep -q ":${toString cfg.blockPort} "; then
                           exit 0
                         fi
                         sleep 1
                         listeners="$(ss -ltn 2>/dev/null)" || true
                       done
-                      echo "ERROR: no :${toString cfg.blockPort} listener after 60s — init wedged before listeners_start (discriminator: journalctl -u dnsblockd | grep 'startup phase complete' — 3 of 5 phases = hung)" >&2
+                      echo "ERROR: no :${toString cfg.blockPort} listener after ${toString listenerWaitBudgetSec}s — init wedged before listeners_start (discriminator: journalctl -u dnsblockd | grep 'startup phase complete' — 3 of 5 phases = hung)" >&2
                       exit 1
                     '';
                   };
@@ -1392,7 +1427,10 @@ _: {
                       "${lib.getExe secretCheck}"
                     ];
                     ExecStartPost = [ "${lib.getExe listenerWait}" ];
-                    TimeoutStartSec = "3min";
+                    # Rendered from timeoutStartBudgetSec (the wait-listener
+                    # poll's envelope ceiling — assertion below keeps the two
+                    # coherent). 180s = the former literal "3min".
+                    TimeoutStartSec = "${toString timeoutStartBudgetSec}s";
                     ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                     StateDirectory = "dnsblockd";
                     WorkingDirectory = "/var/lib/dnsblockd";

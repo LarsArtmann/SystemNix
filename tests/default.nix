@@ -57,6 +57,7 @@ in
   integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };
   cloud-domain = import ./test-cloud-domain.nix { inherit pkgs inputs system; };
   dns-blocker-render = import ./test-dns-blocker-render.nix { inherit pkgs inputs system; };
+  notify-p0-render = import ./test-notify-p0.nix { inherit pkgs inputs; };
   catalog = import ./test-catalog.nix { inherit pkgs inputs system; };
   systemd-shape-audit = import ./test-systemd-shape-audit.nix { inherit pkgs inputs system; };
   stray-unit-audit = import ./test-stray-unit-audit.nix { inherit pkgs inputs system; };

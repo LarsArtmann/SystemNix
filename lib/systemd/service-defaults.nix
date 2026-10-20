@@ -54,6 +54,9 @@ let
       Restart = if useMkForce then lib.mkForce Restart else Restart;
       RestartSec = if useMkForce then lib.mkForce RestartSec else RestartSec;
     };
+
+  toastOnFailure = "notify-failure@%n.service";
+  discordOnFailure = "notify-failure-p0@%n.service";
 in
 {
   # System services (valid with mkForce)
@@ -89,5 +92,12 @@ in
     };
 
   # onFailure handler — route service failures to the notify-failure template
-  onFailure = [ "notify-failure@%n.service" ];
+  onFailure = [ toastOnFailure ];
+
+  # P0 units additionally page the Discord webhook (notify-failure-p0@,
+  # platforms/nixos/system/scheduled-tasks.nix) — DIRECTLY, not via gatus,
+  # because gatus itself is a P0 unit (2026-10-12: the 8-min sole-resolver
+  # outage's only signal was one DND-suppressible desktop toast, and gatus's
+  # own checks died with its OIDC gate in the same window).
+  onFailureP0 = [ toastOnFailure discordOnFailure ];
 }

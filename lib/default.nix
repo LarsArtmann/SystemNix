@@ -7,6 +7,7 @@ let
     serviceOneshotDefaults
     serviceOneshotDefaultsUser
     onFailure
+    onFailureP0
     ;
 in
 {
@@ -18,6 +19,7 @@ in
     serviceOneshotDefaults
     serviceOneshotDefaultsUser
     onFailure
+    onFailureP0
     ;
   serviceTypes = import ./types.nix lib;
 

@@ -48,7 +48,8 @@ journalctl -u dnsblockd \
   UDP+TCP, block page `:80`/`:443`, stats `:9090`) up ~16s after ExecStart.
 - **0-3 phases = THIS start is wedged or still climbing** (`config_load`,
   `otel_setup`, `extras_and_validation` only, plus the "started data
-  retention cleanup loop" line, then silence past ~60s): `:53` dead,
+  retention cleanup loop" line, then silence past ~150s — the wait-listener
+  budget kills the start job there): `:53` dead,
   `ss -lun | grep :53` empty, no error logged. Working hypothesis (unproven,
   deliberately unreproduced — each attempt risks another host-wide DNS
   window): retention-cleanup sqlite contention during init.
@@ -67,15 +68,19 @@ journalctl -u dnsblockd \
    own `oidc_issuer`) need their OWN restart to re-run discovery; gatus
    un-freezes when `auth.home.lan` resolves again.
 
-**Structural gate (2026-10-20, closes the silent-window class):**
-`dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls `ss -ltn` for
-the blockPort listener, 60s bounded (inside `TimeoutStartSec=3min`, which
-still owns the legit ~2min blocklist load), fail-OPEN if the probe tooling
-cannot run in the sandbox — a monitoring blind spot must never kill the sole
-resolver. A wedged init now FAILS the start job → `Restart=always` (3s)
-retries + `notify-failure@` desktop toast + the SigNoz `DNS Blocker Down`
-rule (unit-state based) fires. The discriminator stays as the tripwire for
-recurrence-despite-gate.
+**Structural gate (2026-10-20, closes the silent-window class; budget re-sized
+same day):** `dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls
+`ss -ltn` for the blockPort listener, 150s bounded (inside
+`TimeoutStartSec=180s`; an eval assertion pins budget < envelope), fail-OPEN
+if the probe tooling cannot run in the sandbox — a monitoring blind spot must
+never kill the sole resolver. The budget is JOURNAL-MEASURED, not a guess:
+the original 60s sat INSIDE the healthy-but-slow distribution (2026-10-19
+04:05 boot: ~115.5s start→listeners, `server_init` 109.8s blocklist load;
+four more 61-79s storm starts on 10-18/10-19) and would have killed the
+resolver mid-load → restart churn → StartLimitBurst. A wedged init now FAILS
+the start job → `Restart=always` (3s) retries + `notify-failure@` desktop
+toast + the SigNoz `DNS Blocker Down` rule (unit-state based) fires. The
+discriminator stays as the tripwire for recurrence-despite-gate.
 
 **Monitoring coverage (what catches this):** gatus probes the resolver three
 ways — "DNS Resolver" (DNS query via `127.0.0.1`), "DNS Resolver TCP"
