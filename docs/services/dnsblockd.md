@@ -21,3 +21,67 @@
   - **2026-09-02 incident (the class, proven live):** during a NIC-vanish DNS outage the user `sudo nano`'d resolv.conf to `1.1.1.1` as a workaround; after the NIC self-recovered (03:24, no reboot) the leftover edit killed `*.home.lan` for ~10h while dnsblockd was HEALTHY on :53 — gatus stayed green because its "DNS Resolver" check probes `127.0.0.1` directly, never the system-resolver path (blind spot). Cascade: attic substituter `cache.home.lan` unresolvable → `nix flake check --no-build` prints `error: unable to download ... .narinfo` → pre-deploy gate step 1 greps ANY `error:` → **deploy blocked by the very deploy that would fix DNS (chicken-and-egg)**. Fixes shipped: (1) gate filter excludes narinfo-unreachability errors (infra noise, never syntax); (2) `system_local_dns_resolves` textfile metric (getent `auth.home.lan` through the SYSTEM resolver) + anchored gatus check "Local DNS System Resolver" closes the blind spot. Recovery runbook for the class: verify dnsblockd health first (`dig cache.home.lan @127.0.0.1 +short` must answer), then `nix run .#deploy` (activation rewrites resolv.conf) — never hand-edit it back under pressure without confirming dnsblockd actually resolves
 - **Dashboard auth token via sops env** — `auth_token` is passed via `DNSBLOCKD_AUTH_TOKEN` EnvironmentFile (koanf env override), NOT the nix-store config YAML. The sops secret `dnsblockd_auth_token` is owned by `primaryUser:users` so the DMS DnsStatsWidget can read it for its `Authorization: Bearer` header. The sops template `dnsblockd-auth-env` (root-owned) feeds the systemd EnvironmentFile. Two renderings of the same key, different owners, different consumers. Protected routes: `/stats`, `/api/allow`, `/api/report`, `/api/cache/flush`. Unprotected: `/health`, `/metrics`, `/dashboard`, `/api/dashboard-data` (cookie-gated).
 - **HaGeZi blocklists come from the GitLab mirror** (`gitlab.com/hagezi/mirror`), NOT GitHub — GitHub's automated fraud detection repeatedly locks `hagezi/dns-blocklists` (404s all 22 fetch derivations, blocking every deploy). Lists track the mirror's mutable `main` branch with SRI-hash pinning: content drift fails the build loudly; fresh blocklists require periodic hash refreshes
+
+## Startup hang — 5-phase discriminator + playbook (2026-10-12 13:06 incident)
+
+dnsblockd init logs `startup phase complete` after each of FIVE phases. A
+wedged init stops silently mid-sequence: the process stays up, the unit reads
+"active" (Type=simple marks active immediately after fork, so TimeoutStartSec
+NEVER fires), retention/tracking keep running, and `:53` is dead host-wide —
+with ZERO error lines. Silence is the symptom. Live instance: PID 4478 logged
+phases 1-3 at 13:06:10 and nothing more until the manual restart 8 min later.
+
+**Discriminator** — count phases since the last start:
+
+```console
+journalctl -u dnsblockd -b --no-pager | grep 'startup phase complete' | tail -5
+```
+
+- **5 phases = healthy.** Reference timings (recovery start 13:14:05, PID
+  101150): `config_load` 0-1ms → `otel_setup` 1ms → `extras_and_validation`
+  ~1.6s → `server_init` ~10.5s → `listeners_start` ~3.9s; all listeners (`:53`
+  UDP+TCP, block page `:80`/`:443`, stats `:9090`) up ~16s after ExecStart.
+- **3 phases = HUNG** (`config_load`, `otel_setup`, `extras_and_validation`
+  only, plus the "started data retention cleanup loop" line): `:53` dead,
+  `ss -lun | grep :53` empty, no error logged. Working hypothesis (unproven,
+  deliberately unreproduced — each attempt risks another host-wide DNS
+  window): retention-cleanup sqlite contention during init.
+
+**Playbook:**
+
+1. Confirm: discriminator count = 3 + no `:53` listener. Host-wide symptom
+   check: `getent hosts auth.home.lan` empty; OIDC consumers degrade (crm
+   passkey-only), gatus crash-loops on its OIDC gate (see below).
+2. Forensics BEFORE restarting (the 13:06 instance left zero clues):
+   `scripts/dnsblockd-goroutine-dump.sh` — same doctrine as the stats-wedge
+   wedge (2026-09-06: runbook not used, evidence lost).
+3. `sudo systemctl restart dnsblockd` — manual restart verified clean
+   (13:14:05 → 5/5 phases, listeners up in ~16s).
+4. Heal the collateral: one-shot OIDC discoverers (crm-server, dnsblockd's
+   own `oidc_issuer`) need their OWN restart to re-run discovery; gatus
+   un-freezes when `auth.home.lan` resolves again.
+
+**Structural gate (2026-10-20, closes the silent-window class):**
+`dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls `ss -ltn` for
+the blockPort listener, 60s bounded (inside `TimeoutStartSec=3min`, which
+still owns the legit ~2min blocklist load), fail-OPEN if the probe tooling
+cannot run in the sandbox — a monitoring blind spot must never kill the sole
+resolver. A wedged init now FAILS the start job → `Restart=always` (3s)
+retries + `notify-failure@` desktop toast + the SigNoz `DNS Blocker Down`
+rule (unit-state based) fires. The discriminator stays as the tripwire for
+recurrence-despite-gate.
+
+**Monitoring coverage (what catches this):** gatus probes the resolver three
+ways — "DNS Resolver" (DNS query via `127.0.0.1`), "DNS Resolver TCP"
+(`tcp://127.0.0.1:53`), and the anchored "Local DNS System Resolver" check on
+the `system_local_dns_resolves` textfile metric (system-health collector;
+catches resolv.conf drift the direct probes cannot) — plus the SigNoz
+`DNS Blocker Stats API Wedged` rule (fires when the `:9090` scrape dies) and
+`DNS Blocker Down` (unit failed). CAVEAT proven live 2026-10-12: gatus gates
+its own start on OIDC (`auth.home.lan`) resolution, so a sole-resolver hang
+kills the watcher with the watched — gatus ran ZERO checks during the 8-min
+window (start attempt 13:06:08 → OIDC wait 300s → exit 13:11:09 → ready only
+13:14:26, after the manual dnsblockd restart), and the SigNoz rule evaluator
+went silent 13:03→13:17 (restart riding the same deploy). Only
+`notify-failure@gatus.service` fired (one desktop toast, 13:11:10).
+
