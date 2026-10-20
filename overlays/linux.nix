@@ -284,9 +284,11 @@ let
     # float hit 40176d0 (first-hand FOD drv 5pbh840d… mismatched; upstream
     # needs the vendorHash.nix re-pin ritual). RE-STALE 2026-10-19: the
     # re-added 4fF/8VOw… mismatched at the newest locked rev; got
-    # uwurhA+9… (/tmp/toplevel-build-20261019.log).
+    # uwurhA+9… (/tmp/toplevel-build-20261019.log). RE-STALE AGAIN
+    # 2026-10-20 (the lock floated past another renamer rev): got
+    # 9759Ak4d… (first-hand, deploy build failure log).
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-uwurhA+97zTkx0PN7ue/3/hAQ209ICNK1U/yGQ9SSMk=";
+      vendorHash = "sha256-9759Ak4dHxgBow0RxaUB6j1PVXon9EKZo2dYYwn3sco=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
