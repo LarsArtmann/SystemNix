@@ -660,6 +660,30 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz upstream trace-gap budget exceeded — a new silent-noop service entered the registry. Instrument it upstream and flip its wiring, or consciously raise services.signoz-coverage.maxUpstreamGaps (the ratchet goes DOWN as gaps close)";
                 })
+                # Evaluator deadman (signoz-evaluator-deadman.nix): the only
+                # watcher that pages when the SigNoz rule EVALUATOR goes
+                # silently dark (2026-10-12: 13.5 min silent, unit still
+                # "active", every SigNoz rule blind, no self-watch possible).
+                # Lives on gatus deliberately — an independent process with an
+                # independent Discord path, so the alert fires exactly when
+                # the evaluator cannot. Two-leg anchored pats (presence +
+                # not-the-bad-value); absence (file rejected/collector dead)
+                # fails the presence legs fail-closed.
+                (mkHttpCheck {
+                  name = "SigNoz Evaluator Deadman";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_signoz_evaluator_alive *)"
+                    "[BODY] != pat(*\nsystem_signoz_evaluator_alive 0*)"
+                    "[BODY] == pat(*\nsystem_signoz_evaluator_scrape_errors *)"
+                    "[BODY] != pat(*\nsystem_signoz_evaluator_scrape_errors [1-9]*)"
+                    "[BODY] == pat(*\nsystem_signoz_evaluator_log_age_seconds *)"
+                  ];
+                  alerts = discordAlert "SigNoz rule evaluator silent for 10+ min (deadman) — EVERY SigNoz rule is blind and none can fire; alerting rides gatus because the dead evaluator cannot page for itself. Check: journalctl -u signoz -n 50 (eval lines), systemctl status signoz-evaluator-deadman, cat /var/lib/prometheus-node-exporter/textfile_collectors/signoz-evaluator-deadman.prom";
+                })
                 # Twenty CRM check moved to its owning module
                 # (services.integration.twenty.checks).
                 {

@@ -1193,6 +1193,13 @@ in
         enable = true;
       };
 
+      # 2026-10-20 evaluator deadman: external journal-recency heartbeat for
+      # the SigNoz rule evaluator (silent evaluator = every SigNoz rule
+      # blind; pages via gatus, which survives evaluator death).
+      signoz-evaluator-deadman = {
+        enable = true;
+      };
+
       gpu-active = {
         enable = true;
       };
