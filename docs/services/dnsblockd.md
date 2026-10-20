@@ -109,6 +109,8 @@ system_health textfile — DARK while the recurring invalid-escape rejection
 class (line-763 `\x2d` cgroup label, 4th incident 2026-10-20) is unfixed,
 so the rule is provisioned-but-vacuous until then.
 
+**Second-host coverage (rpi3-dns) — enumerated 2026-10-21, no second host needed today:** rpi3-dns runs the same dns-blocker module but has NO own gatus (gatus-config.nix is not imported there), NO own textfile collector (`system-health.nix` is not imported; SigNoz scrapes evo-x2 loopback only, so `system_local_dns_resolves` exists ONLY for evo-x2). What DOES watch rpi3's resolution path is `dns-failover.nix`'s keepalived `chk_dns` VRRP script — `host google.com 127.0.0.1` every 5s (fall 3 / rise 2) — but its only consumer is VRRP priority: rpi3 resolution death DEMOTES it and the VIP fails over to evo-x2, silently, with no page. The two-host contract this yields: (a) rpi3-only failure self-heals via failover and is deliberately unpaged; (b) sole-resolver death (both hosts, or evo-x2 alone as primary) IS paged by the `Local DNS Resolution Dead` rule on evo-x2's metric. Residual gap: `chk_dns` probes `google.com @127.0.0.1` directly, so a resolv.conf DRIFT on rpi3 (the 2026-09-02 class) trips nothing — no VRRP demotion, no telemetry, and rpi3's own processes lose `*.home.lan` while failover clients stay fine. Owner decision tracked as the [decision] row in docs/todo/monitoring.md (rpi3-local drift watch vs accepted gap).
+
 > Section authored by the 2026-10-20 task-queue dispatch
 > (Task-Queue-ID: 000001a156f950c763a19396d72200000000); the section body
 > itself landed via daemon sweep `44b8339bb` mid-flight — re-associated here.
