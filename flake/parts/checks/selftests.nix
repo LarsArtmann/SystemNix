@@ -705,6 +705,27 @@
               touch $out
             '';
 
+        # Post-deploy §20 CRM OIDC readiness verdicts (extracted lib +
+        # fixture, 2026-10-12 §b.2: the check shipped with only the PASS
+        # branch live-exercised — the disabled→FAIL branch needs Pocket ID
+        # actually down and the no-line→WARN branch a restart-looping unit,
+        # so the fixture harness is the only cheap exercise those branches
+        # get). Runs the SAME scripts/lib/crm-oidc-smoke.sh post-deploy
+        # §20 sources (never a drifted copy).
+        crm-oidc-smoke-selftest =
+          pkgs.runCommand "crm-oidc-smoke-selftest"
+            {
+              nativeBuildInputs = [ ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts/lib"
+              cp ${root}/scripts/test-crm-oidc-smoke.sh "$scratch/scripts/test-crm-oidc-smoke.sh"
+              cp ${root}/scripts/lib/crm-oidc-smoke.sh "$scratch/scripts/lib/crm-oidc-smoke.sh"
+              ${pkgs.bash}/bin/bash "$scratch/scripts/test-crm-oidc-smoke.sh"
+              touch $out
+            '';
+
         # Fixture selftest for the pre-commit formatter memo
         # (scripts/lib/precommit-eval-cache.sh — sourced by the hook
         # and scripts/fmt-cached.sh, never a drifted copy). Proves the

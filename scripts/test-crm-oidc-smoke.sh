@@ -91,15 +91,20 @@ printf '%s\n' \
   "Oct 12 13:24:47 evo-x2 crm-server[900]: time=2026-10-12T13:24:47+02:00 level=INFO msg=\"oidc sign-in enabled\" provider=pocket-id" \
   >"$SCRATCH/journal-enabled"
 reset
-FIX_JOURNAL="$SCRATCH/journal-enabled" crm_oidc_smoke "$UNIT_OK"
+FIX_JOURNAL="$SCRATCH/journal-enabled"
+export FIX_JOURNAL
+crm_oidc_smoke "$UNIT_OK"
 expect "PASS" "last oidc line enabled → PASS"
 
 printf '%s\n' \
   "Oct 12 13:08:10 evo-x2 crm-server[812]: time=2026-10-12T13:08:10+02:00 level=INFO msg=\"oidc sign-in disabled: provider init failed: ... no such host\"" \
   >"$SCRATCH/journal-disabled"
 reset
-FIX_JOURNAL="$SCRATCH/journal-disabled" crm_oidc_smoke "$UNIT_OK"
+FIX_JOURNAL="$SCRATCH/journal-disabled"
+export FIX_JOURNAL
+crm_oidc_smoke "$UNIT_OK"
 expect "FAIL" "last oidc line disabled → FAIL (passkey-only degrade live)"
+unset FIX_JOURNAL
 
 reset
 crm_oidc_smoke "$UNIT_OK"
@@ -109,7 +114,9 @@ printf '%s\n' \
   "Oct 12 13:09:00 evo-x2 crm-server[812]: time=2026-10-12T13:09:00+02:00 level=INFO msg=\"oidc sign-in pending\" provider=pocket-id" \
   >"$SCRATCH/journal-unrecognized"
 reset
-FIX_JOURNAL="$SCRATCH/journal-unrecognized" crm_oidc_smoke "$UNIT_OK"
+FIX_JOURNAL="$SCRATCH/journal-unrecognized"
+export FIX_JOURNAL
+crm_oidc_smoke "$UNIT_OK"
 expect "WARN" "unrecognized oidc line → WARN (forward-compat catch)"
 
 printf '%s\n' \
@@ -117,8 +124,11 @@ printf '%s\n' \
   "Oct 12 13:24:47 evo-x2 crm-server[900]: time=2026-10-12T13:24:47+02:00 level=INFO msg=\"oidc sign-in enabled\" provider=pocket-id" \
   >"$SCRATCH/journal-healed"
 reset
-FIX_JOURNAL="$SCRATCH/journal-healed" crm_oidc_smoke "$UNIT_OK"
+FIX_JOURNAL="$SCRATCH/journal-healed"
+export FIX_JOURNAL
+crm_oidc_smoke "$UNIT_OK"
 expect "PASS" "disabled then enabled (restart healed) → PASS (the LAST line is the verdict)"
+unset FIX_JOURNAL
 
 echo ""
 if [ "$TEST_FAILURES" -eq 0 ]; then
