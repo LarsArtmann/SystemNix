@@ -120,6 +120,7 @@ Services are self-contained flake-parts modules in `modules/nixos/services/` (or
 5. Add a Gatus health check in `modules/nixos/services/gatus-config.nix`.
 6. Add a Homepage tile in `modules/nixos/services/homepage.nix` if user-facing.
 7. See `docs/agents/integration-registry.md` for the full service-adding checklist and non-obvious gotchas.
+8. If the unit declares an `ExecStartPre`/`ExecStartPost` gate script, DRY-FIRE it before deploy: render via `nix eval --json .#nixosConfigurations.<host>.config.systemd.services.<unit>.serviceConfig.ExecStartPre`, de-escape (`$$`→`$`), execute standalone, assert pass and timeout behavior. Full procedure: [docs/agents/systemd.md](./docs/agents/systemd.md) (2026-10-12 crm OIDC gate — two v1 defects, one deploy cycle wasted).
 
 Module template:
 
