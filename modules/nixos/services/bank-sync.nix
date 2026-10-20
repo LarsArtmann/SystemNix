@@ -851,7 +851,10 @@
                     rel="''${f#"${qontoStageStatements}/"}"
                     org_dir="''${rel%%/*}"
                     base="''${rel##*/}"
-                    month="''${base%%-*}"
+                    # First 7 chars: YYYY-MM. (A ''${base%%-*} expansion
+                    # strips from the FIRST hyphen and yields only the year
+                    # - the 2026-10-20 09:13 activation failure.)
+                    month=$(printf '%s' "$base" | cut -c1-7)
                     case "$org_dir" in
                       artmann-holding-gmbh) org="Artmann Holding GmbH" ;;
                       artmann-technologies-gmbh) org="Artmann Technologies GmbH" ;;
