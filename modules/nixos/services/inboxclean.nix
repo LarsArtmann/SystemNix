@@ -210,16 +210,26 @@
           };
         };
 
-        # Fleet baseline only: MemoryMax 512M (harden default) and the
-        # GOMEMLIMIT=384MiB / start-limit guards now ship upstream with
-        # identical mkDefault values; ReadWritePaths=dataDir likewise.
+        # Fleet baseline WAS MemoryMax 512M (harden default); raised to 1G
+        # 2026-10-21 (task queue, §17 review): live cgroup showed RSS 424M
+        # parked at the 410M MemoryHigh with 1.58M memory.events high
+        # entries — continuous reclaim against a ceiling the Go runtime
+        # cannot stay under (GOMEMLIMIT governs the heap, not runtime
+        # overhead). Counters reset on restart, so that number understates
+        # steady-state thrash. Upstream's own default is 1G; staying
+        # explicit per the inboxclean-sync fail-closed note.
         systemd.services.inboxclean-web = {
           after = [ "sops-nix.service" ] ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           wants = [ "sops-nix.service" ] ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
-            (harden { })
+            # mkForce (priority-50 override) rides INSIDE harden{} so the
+            # derived MemoryHigh tracks the 1G ceiling — upstream module.nix
+            # also declares MemoryMax 512M at default priority, and a plain
+            # raise collides at eval time (memory-watermark-audit throws on
+            # an outside-Max merge with a stale derived High).
+            (harden { MemoryMax = lib.mkForce "1G"; })
             (serviceDefaults { })
             ioTier.background
             (lib.mkIf aiMeterEnabled {

@@ -671,7 +671,13 @@
 
               serviceConfig = lib.mkMerge [
                 (harden {
-                  MemoryMax = "2G";
+                  # 3G since 2026-10-21 (task queue, §17 review): at 2G the
+                  # steady-state RSS (~1.4G) sat just under the derived
+                  # MemoryHigh (1.6G) with 13.9k memory.events high entries
+                  # and 5 sock_throttled — continuous reclaim for a workload
+                  # that legitimately needs ~1.4G. Counter is since-restart,
+                  # so that understates the run-rate.
+                  MemoryMax = "3G";
                   # Reads Caddy's 0750 caddy:caddy dir + 0600 access logs
                   # read-only under ProtectSystem=full. AmbientCapabilities
                   # is what GRANTS the cap to a non-root User= — the
