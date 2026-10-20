@@ -265,7 +265,7 @@ in
                 ];
                 text = ''
                   UNIT="''${1:-unknown}"
-                  # Rate-limit: ONE Discord post per unit per hour — same
+                  # Rate-limit: ONE Discord post per unit per hour, same
                   # containment as the desktop toast in notify-failure@ (a
                   # crash-loop restarts every RestartUSec and must not
                   # webhook-storm). The slot is reserved BEFORE the post so a
@@ -278,28 +278,36 @@ in
                   NOW=$(date +%s)
                   LAST=$(stat -c %Y "$STATE_FILE" 2>/dev/null || echo 0)
                   if [ $(( NOW - LAST )) -lt 3600 ]; then
-                    logger -t "$UNIT" -p user.info "P0 unit failure — Discord notify suppressed (rate limit 1/h) — check journalctl -u $UNIT"
+                    logger -t "$UNIT" -p user.info "P0 unit failure, Discord notify suppressed (rate limit 1/h), check journalctl -u $UNIT"
                     exit 0
                   fi
                   if [ -z "''${DISCORD_WEBHOOK_URL:-}" ]; then
-                    logger -t "$UNIT" -p user.err "P0 unit failure — DISCORD_WEBHOOK_URL missing (sops template notify-failure-p0-env not rendered?) — check journalctl -u $UNIT"
+                    logger -t "$UNIT" -p user.err "P0 unit failure, DISCORD_WEBHOOK_URL missing (sops template notify-failure-p0-env not rendered?), check journalctl -u $UNIT"
                     exit 0
                   fi
                   touch "$STATE_FILE"
                   HOST=$(uname -n)
-                  PAYLOAD=$(printf '{"content":"P0 unit FAILED on %s: `%s` — check `journalctl -u %s` (notify-failure-p0, rate limit 1/h)"}' "$HOST" "$UNIT" "$UNIT")
+                  # ASCII-only script body: the writeShellApplication shellcheck
+                  # stage prints the file whenever it has a finding, and its
+                  # output encoder dies on non-ASCII text under the build
+                  # locale (a U+2014 em dash in this body killed the build,
+                  # 2026-10-20). Backticks are likewise dropped from the
+                  # payload: backticks inside the single-quoted printf format
+                  # trip SC2016, which is exactly what makes shellcheck print
+                  # the file at all.
+                  PAYLOAD=$(printf '{"content":"P0 unit FAILED on %s: %s (check journalctl -u %s; notify-failure-p0, rate limit 1/h)"}' "$HOST" "$UNIT" "$UNIT")
                   # 3 attempts x 10s cap: a failure during boot (link not yet
                   # up) still lands once the network arrives; a dead network
-                  # exhausts in ~35s and logs. Best-effort by contract — a
+                  # exhausts in ~35s and logs. Best-effort by contract, a
                   # notifier must never present ITSELF as a failed unit.
                   for _ in 1 2 3; do
                     if curl -fsS --max-time 10 -H 'Content-Type: application/json' -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL" >/dev/null 2>&1; then
-                      logger -t "$UNIT" -p user.info "P0 unit failure — Discord notify sent — check journalctl -u $UNIT"
+                      logger -t "$UNIT" -p user.info "P0 unit failure, Discord notify sent, check journalctl -u $UNIT"
                       exit 0
                     fi
                     sleep 5
                   done
-                  logger -t "$UNIT" -p user.err "P0 unit failure — Discord notify FAILED after 3 attempts (webhook unreachable?) — check journalctl -u $UNIT"
+                  logger -t "$UNIT" -p user.err "P0 unit failure, Discord notify FAILED after 3 attempts (webhook unreachable?), check journalctl -u $UNIT"
                   exit 0
                 '';
               };
