@@ -437,16 +437,21 @@ _: {
       );
 
       # dnsblockd-wait-listener poll budget (seconds) — the ExecStartPost
-      # readiness gate below. 150s is JOURNAL-MEASURED, not a guess: healthy
-      # storm-profile starts routinely run the 3.9M-entry blocklist load past
-      # 60s (2026-10-19 04:05 boot: ~115.5s start→listeners, server_init
-      # 109.8s; four more 61-79s starts on 10-18/10-19), so the original 60s
-      # budget sat INSIDE the healthy distribution and would have killed the
-      # resolver mid-load → restart churn → StartLimitBurst → sole-resolver
-      # downtime caused by its own guard. 150s = observed worst +34.5s
-      # headroom, strictly inside the start-job envelope (assertion pins it).
-      listenerWaitBudgetSec = 150;
-      timeoutStartBudgetSec = 180;
+      # readiness gate below. 300s is JOURNAL-MEASURED, not a guess: healthy
+      # storm-profile starts routinely run the 3.9M-entry blocklist load far
+      # past the original 60s guess — observed healthy tail (start→listeners
+      # wall time): 255.5s (2026-10-18 01:42:40 boot, server_init 246.4s),
+      # 115.5s (2026-10-19 04:05:12 boot, server_init 109.8s), plus a 61-79s
+      # cluster on 10-18/10-19. Both the original 60s AND a 150s first re-size
+      # sat INSIDE the healthy distribution and would have killed the resolver
+      # mid-load → restart churn → StartLimitBurst → sole-resolver downtime
+      # caused by its own guard. 300s = observed worst +44.5s (~17%) headroom,
+      # strictly inside the start-job envelope (assertion pins it). The gate
+      # still converts a NEVER-completing init (the 2026-10-12 wedged class:
+      # server_init never logs) into restart churn + alerts; wedge PAGING is
+      # the gatus/SigNoz legs (~1-2 min), not this budget.
+      listenerWaitBudgetSec = 300;
+      timeoutStartBudgetSec = 330;
     in
     {
       options.services.dns-blocker = {
@@ -1326,13 +1331,14 @@ _: {
                   # itself cannot run inside the sandbox, fail OPEN (warn) —
                   # a monitoring blind spot must never kill the sole DNS
                   # resolver.
-                  # Poll budget: 150s, JOURNAL-MEASURED (2026-10-20 task-queue
+                  # Poll budget: 300s, JOURNAL-MEASURED (2026-10-20 task-queue
                   # verification of the original 60s guess — which sat INSIDE
                   # the healthy-but-slow distribution and would have killed
-                  # the resolver mid-load: the 2026-10-19 04:05 boot needed
-                  # ~115.5s start→listeners (server_init 109.8s, the 3.9M-
-                  # entry blocklist load), plus four more 61-79s storm starts
-                  # on 10-18/10-19). A killed healthy start restart-churns to
+                  # the resolver mid-load: observed healthy tail spans 61.5s
+                  # to 255.5s start→listeners (worst: the 2026-10-18 01:42:40
+                  # boot, server_init 246.4s, the 3.9M-entry blocklist load;
+                  # second-worst 115.5s on 2026-10-19 04:05). A killed healthy
+                  # start restart-churns to
                   # StartLimitBurst = sole-resolver downtime caused by its own
                   # guard — the exact heavyDB-gate class this budget had to
                   # respect. Binding + envelope relationship live at the
@@ -1429,7 +1435,8 @@ _: {
                     ExecStartPost = [ "${lib.getExe listenerWait}" ];
                     # Rendered from timeoutStartBudgetSec (the wait-listener
                     # poll's envelope ceiling — assertion below keeps the two
-                    # coherent). 180s = the former literal "3min".
+                    # coherent). 330s = above the measured 255.5s healthy tail
+                    # so the POLL, not the envelope, is what expires first.
                     TimeoutStartSec = "${toString timeoutStartBudgetSec}s";
                     ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                     StateDirectory = "dnsblockd";

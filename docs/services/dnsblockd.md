@@ -48,7 +48,7 @@ journalctl -u dnsblockd \
   UDP+TCP, block page `:80`/`:443`, stats `:9090`) up ~16s after ExecStart.
 - **0-3 phases = THIS start is wedged or still climbing** (`config_load`,
   `otel_setup`, `extras_and_validation` only, plus the "started data
-  retention cleanup loop" line, then silence past ~150s — the wait-listener
+  retention cleanup loop" line, then silence past ~300s — the wait-listener
   budget kills the start job there): `:53` dead,
   `ss -lun | grep :53` empty, no error logged. Working hypothesis (unproven,
   deliberately unreproduced — each attempt risks another host-wide DNS
@@ -69,17 +69,22 @@ journalctl -u dnsblockd \
    un-freezes when `auth.home.lan` resolves again.
 
 **Structural gate (2026-10-20, closes the silent-window class; budget re-sized
-same day):** `dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls
-`ss -ltn` for the blockPort listener, 150s bounded (inside
-`TimeoutStartSec=180s`; an eval assertion pins budget < envelope), fail-OPEN
+same day twice — 60s → 150s → 300s, each re-size journal-forced):**
+`dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls
+`ss -ltn` for the blockPort listener, 300s bounded (inside
+`TimeoutStartSec=330s`; an eval assertion pins budget < envelope), fail-OPEN
 if the probe tooling cannot run in the sandbox — a monitoring blind spot must
 never kill the sole resolver. The budget is JOURNAL-MEASURED, not a guess:
-the original 60s sat INSIDE the healthy-but-slow distribution (2026-10-19
-04:05 boot: ~115.5s start→listeners, `server_init` 109.8s blocklist load;
-four more 61-79s storm starts on 10-18/10-19) and would have killed the
-resolver mid-load → restart churn → StartLimitBurst. A wedged init now FAILS
+the healthy start→listeners tail spans 61.5s to **255.5s** (2026-10-18
+01:42:40 boot, `server_init` 246.4s blocklist load; second-worst 115.5s,
+2026-10-19 04:05:12, `server_init` 109.8s; plus a 61-79s cluster on
+10-18/10-19) — both the original 60s AND a first 150s re-size sat INSIDE that
+distribution and would have killed the resolver mid-load → restart churn →
+StartLimitBurst. A wedged init now FAILS
 the start job → `Restart=always` (3s) retries + `notify-failure@` desktop
-toast + the SigNoz `DNS Blocker Down` rule (unit-state based) fires. The
+toast + `notify-failure-p0@` Discord page + the SigNoz `DNS Blocker Down`
+rule (unit-state based) fires — wedge paging stays on the gatus/SigNoz legs
+(~1-2 min), so the longer gate budget costs no paging latency. The
 discriminator stays as the tripwire for recurrence-despite-gate.
 
 **Monitoring coverage (what catches this):** gatus probes the resolver three
