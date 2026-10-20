@@ -30,9 +30,7 @@
 let
   marker = "${stateDir}/.subvol-migrated";
 
-  isFamilyUnit =
-    name:
-    lib.hasPrefix "forgejo" name || lib.hasPrefix "gitea" name;
+  isFamilyUnit = name: lib.hasPrefix "forgejo" name || lib.hasPrefix "gitea" name;
 
   # ConditionPathExists is option-merged to a list on real units, but
   # unitConfig is free-form attrsOf — tolerate a bare string too.
@@ -46,10 +44,7 @@ let
   offenders = lib.sort (a: b: a < b) (
     lib.filter (name: !lib.elem name exemptUnits) (
       lib.attrNames (
-        lib.filterAttrs (
-          name: unit:
-            isFamilyUnit name && !lib.elem marker (conditionsOf unit)
-        ) units
+        lib.filterAttrs (name: unit: isFamilyUnit name && !lib.elem marker (conditionsOf unit)) units
       )
     )
   );

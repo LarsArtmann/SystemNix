@@ -154,6 +154,18 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category**. Ticked = already
 **Paperless-side quality**
 
 32. ☑ **Re-enable paperless-gpt-auto** with the corrected filter. · M · M · Bug
+    **CORRECTION (2026-10-20 02:55, live post-state probe):** the filter was
+    NEVER rebuilt — workflow 1000003 still carried `filter_has_any_document_types=[Bill]`
+    with NO tag gate when re-enabled, and it matched UNTYPED campaign receipts
+    all afternoon/evening while flm was guard-down, burning **70 documents to
+    `paperless-gpt-failed`** (gpt journal: 210 auto-processing attempts, 0
+    successes). The workflow was re-disabled 02:45 and all 70 tags bulk-cleaned
+    via `POST /api/documents/bulk_edit/` `modify_tags`/`parameters.remove_tags`
+    (the legacy `remove_tag`+`parameter` shape 400s "tag not specified" on
+    3.3.1). Full evidence + recovery: docs/services/paperless.md §Accounting
+    field extraction trap 2 + docs/todo/services.md row "Re-enable (or rebuild
+    tag-gated)". The claim-vs-live-state gap here is the exact class the
+    commit-message evidence rule exists for.
 33. ☑ **`pol` in OCR_LANGUAGE** for the Polish share. · M · M · Feature
 34. ☑ **Date-extraction + FLM classification spot-checks.** · H · M · Quality
 35. ☑ **Post-restore SSO login round-trip.** · M · S · Quality

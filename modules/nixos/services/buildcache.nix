@@ -115,7 +115,7 @@
         };
 
         gc = {
-          enable = lib.mkEnableOption "weekly build cache garbage collection (npm/pnpm prune, high-watermark go clean)";
+          enable = lib.mkEnableOption "daily build cache garbage collection (npm/pnpm prune, high-watermark go clean)";
 
           highWatermarkPercent = lib.mkOption {
             type = lib.types.int;
@@ -132,8 +132,15 @@
 
           calendar = lib.mkOption {
             type = lib.types.str;
-            default = "Sun *-*-* 05:00:00";
-            description = "OnCalendar for the GC timer (default: Sunday 05:00 - after btrbk 23:00/23:30, before Monday BTRFS balances, idle I/O tier).";
+            # 2026-10-20: weekly → daily. The mount went 75% → 100% (0 bytes
+            # free) in ONE day between two Sunday runs — the watermark guard
+            # only fires DURING a run, so a weekly cadence let the disk sit
+            # wedged at 100% for up to six days, ENOSPC-ing every env-less Go
+            # build (~/.cache/go-build converges here). Daily keeps the
+            # "never wedge" promise; the prunes are cheap (npm verify + pnpm
+            # prune ≈ 13 min) and go clean -cache still only fires at ≥90%.
+            default = "*-*-* 05:00:00";
+            description = "OnCalendar for the GC timer (default: daily 05:00 - after btrbk 23:00/23:30, idle I/O tier).";
           };
         };
       };
@@ -428,7 +435,9 @@
           };
         };
 
-        # Weekly cache GC. Runs as the primary user (all cache dirs are
+        # Daily cache GC (weekly 2026-08-15..2026-10-20 — the mount wedged at
+        # 100% for days between Sunday runs; see the calendar default above).
+        # Runs as the primary user (all cache dirs are
         # user-owned). rm on stale rust targets instead of trash is deliberate:
         # trashing 30G of rebuildable cache would write it to the NVMe trash -
         # the exact I/O this SSD exists to keep OFF the NVMe. Cache data only,
@@ -542,7 +551,7 @@
         };
 
         systemd.timers.buildcache-gc = lib.mkIf cfg.gc.enable {
-          description = "Weekly build cache garbage collection";
+          description = "Daily build cache garbage collection";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = cfg.gc.calendar;

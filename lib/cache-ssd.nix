@@ -5,8 +5,7 @@
 # differ, so only the mechanically identical pieces live here: the by-id
 # serial parser, the systemd unit-name escape, and the textfile metrics
 # script. Anything domain-specific stays in its module.
-lib:
-{
+lib: {
   # ID_SERIAL parsed from a by-id device path ("ata-<model>_<serial>-partN").
   # null for non-by-id devices — callers skip the udev recovery trigger then
   # (x-systemd.device-bound still protects the mount).

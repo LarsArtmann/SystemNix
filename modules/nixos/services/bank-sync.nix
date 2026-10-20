@@ -842,9 +842,9 @@
                     TimeoutStartSec = "5min";
                   }
                   (harden {
-                  # Staged CSVs live inside the dataDir — no /home access
-                  # needed anymore. The completion marker lands in the dataDir.
-                  ReadWritePaths = [ cfg.dataDir ];
+                    # Staged CSVs live inside the dataDir — no /home access
+                    # needed anymore. The completion marker lands in the dataDir.
+                    ReadWritePaths = [ cfg.dataDir ];
                   })
                   (serviceOneshotDefaults { })
                   ioTier.service

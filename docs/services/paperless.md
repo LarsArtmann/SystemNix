@@ -349,7 +349,18 @@ fields `Brutto in PLN`/`VAT in PLN` monetary, `VAT percentages`/`NIP`/
    evaluates differently. The workflow is DISABLED; re-enable only after a
    one-scan re-test, or tag-gate it (`has_tags: Accounting`) instead of the
    doctype filter. Evidence: docs/todo/services.md row "workflow matching
-   anomaly".
+   anomaly". **Second occurrence 2026-10-19 evening:** the scanner session
+   re-enabled it believing the filter had been rebuilt (its wrap report item
+   32) — the live filter was unchanged and it burned 70 campaign receipts
+   overnight (210 gpt attempts, 0 successes). Re-disabled 2026-10-20 02:45;
+   all 70 cleaned via `POST /api/documents/bulk_edit/` with
+   `{"method":"modify_tags","parameters":{"remove_tags":[<tagId>]}}` (the
+   legacy `remove_tag`+`parameter` shape 400s "tag not specified" on 3.3.1).
+   Recovery of burned docs = remove `paperless-gpt-failed`, then when flm
+   serves: `systemctl start fastflowlm.socket`, wait for a 200 chat completion
+   through ai-meter `:8107/v1/fastflowlm` (cold load 2-5 min), THEN re-add
+   `paperless-gpt-auto` to the docs (full tag sets) — extraction lands within
+   ~10 s per doc via the background poll.
 3. **`PATCH /api/documents/<id>/` REPLACES the whole tag set** (DRF
    semantics): always send the complete desired tag list or you wipe tags.
    This wiped the pilot docs' Accounting/faktura tags during the incident;

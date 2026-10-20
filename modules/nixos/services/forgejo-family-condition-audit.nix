@@ -28,9 +28,13 @@ _: {
       # Standalone-eval safe (VM tests may import this module alone): the
       # option-presence guard tolerates a missing forgejo module instead of
       # assuming it (the browser-history:256 brick class).
-      dedicated = options ? services.forgejo.dedicatedSubvolume && config.services.forgejo.dedicatedSubvolume;
+      dedicated =
+        options ? services.forgejo.dedicatedSubvolume && config.services.forgejo.dedicatedSubvolume;
       stateDir =
-        if options ? services.forgejo.stateDir then config.services.forgejo.stateDir else "/var/lib/forgejo";
+        if options ? services.forgejo.stateDir then
+          config.services.forgejo.stateDir
+        else
+          "/var/lib/forgejo";
       audit = import ../../../lib/forgejo-family-condition-audit.nix;
       result = audit {
         inherit lib stateDir;

@@ -1290,6 +1290,40 @@ _: {
                       exit 1
                     '';
                   };
+                  # Readiness smoke for the 2026-10-12 13:06 startup-hang class:
+                  # a wedged init logs phases 1-3 then never reaches
+                  # listeners_start, and with Type=simple the unit reads
+                  # "active" immediately so TimeoutStartSec NEVER fires — the
+                  # resolver died silently for 8+ minutes host-wide. Bounded
+                  # poll (60s, well inside TimeoutStartSec=3min which still
+                  # owns the ~2min blocklist load): no listener = fail the
+                  # start job → Restart=always retries + OnFailure alerts,
+                  # instead of an invisible outage. If the probe tooling
+                  # itself cannot run inside the sandbox, fail OPEN (warn) —
+                  # a monitoring blind spot must never kill the sole DNS
+                  # resolver.
+                  listenerWait = pkgs.writeShellApplication {
+                    name = "dnsblockd-wait-listener";
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.iproute2
+                    ];
+                    text = ''
+                      if ! listeners="$(ss -ltn 2>/dev/null)"; then
+                        echo "WARNING: ss probe unavailable in sandbox — listener smoke skipped" >&2
+                        exit 0
+                      fi
+                      for _ in $(seq 1 60); do
+                        if printf '%s\n' "$listeners" | grep -q ":${toString cfg.blockPort} "; then
+                          exit 0
+                        fi
+                        sleep 1
+                        listeners="$(ss -ltn 2>/dev/null)" || true
+                      done
+                      echo "ERROR: no :${toString cfg.blockPort} listener after 60s — init wedged before listeners_start (discriminator: journalctl -u dnsblockd | grep 'startup phase complete' — 3 of 5 phases = hung)" >&2
+                      exit 1
+                    '';
+                  };
                 in
                 lib.mkMerge [
                   (harden {
@@ -1303,7 +1337,7 @@ _: {
                   # bulk read (the 2026-08-31 gate class: ~2min under IO load)
                   # and the resolver is latency-sensitive while it serves —
                   # exactly the heavyDB contract (llama-chat/clickhouse tier).
-                  (ioTier.heavyDB)
+                  ioTier.heavyDB
                   {
                     Type = "simple";
                     # OOM-kill immunity for the sole DNS resolver. dnsblockd was
@@ -1357,6 +1391,7 @@ _: {
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"
                     ];
+                    ExecStartPost = [ "${lib.getExe listenerWait}" ];
                     TimeoutStartSec = "3min";
                     ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                     StateDirectory = "dnsblockd";

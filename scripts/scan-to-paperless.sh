@@ -103,7 +103,10 @@ case "$STAGING" in
 "$HOME"/.cache/*) ;;
 *) die "refusing to run: STAGING is not under \$HOME/.cache ($STAGING)" ;;
 esac
-if [ "$mode" = "status" ]; then status; exit 0; fi
+if [ "$mode" = "status" ]; then
+  status
+  exit 0
+fi
 [ -n "$mode" ] || die "usage: scan-to-paperless.sh watch|receipts|invoices [--dry-run]"
 
 duplex=0
@@ -152,7 +155,7 @@ frame_stats() {
   meanstd=$(magick "$1" -colorspace gray -format "%[fx:mean] %[fx:standard_deviation]" info:)
   mean=${meanstd%% *}
   std=${meanstd#* }
-  printf '%s mean=%s std=%s' "$( [ "$(blank_flag "$mean" "$std")" -eq 1 ] && echo BLANK-SUSPECT || echo ok)" "$mean" "$std"
+  printf '%s mean=%s std=%s' "$([ "$(blank_flag "$mean" "$std")" -eq 1 ] && echo BLANK-SUSPECT || echo ok)" "$mean" "$std"
 }
 
 frame_is_blank() {
@@ -206,7 +209,7 @@ verify_frames() {
       break
     fi
   done
-  dropped=$(( ${#frames[@]} - ${#kept[@]} ))
+  dropped=$((${#frames[@]} - ${#kept[@]}))
   if [ "$dropped" -gt 0 ]; then
     log "WARN: dropped $dropped unusable frame(s) — truncated PNM, scan aborted (rc=$batch_rc)"
   fi
@@ -291,7 +294,7 @@ process_batch() {
       meanstd=$(magick "$STAGING/out/$out_name" -colorspace gray -format "%[fx:mean] %[fx:standard_deviation]" info: || true)
       mean=${meanstd%% *}
       std=${meanstd#* }
-      s1="$( [ "$(blank_flag "$mean" "$std")" -eq 1 ] && echo BLANK-SUSPECT || echo ok)"
+      s1="$([ "$(blank_flag "$mean" "$std")" -eq 1 ] && echo BLANK-SUSPECT || echo ok)"
       verdict=" (mean=$mean std=$std)"
       if [ "$s1" = "BLANK-SUSPECT" ]; then
         verdict=" <== BLANK-SUSPECT (mean=$mean std=$std)"
@@ -305,7 +308,7 @@ process_batch() {
       log "   $out_name$verdict"
     done
   else
-    if [ $(( ${#frames[@]} % 2 )) -ne 0 ]; then
+    if [ $((${#frames[@]} % 2)) -ne 0 ]; then
       log "WARN: odd frame count ${#frames[@]} in duplex mode — last frame emitted as single-page PDF (possible multifeed: ADF multi-feed detection is inactive on this device)"
     fi
     i=0
@@ -343,7 +346,7 @@ process_batch() {
       i=$((i + 2))
     done
   fi
-  elapsed=$(( $(date +%s) - start_s ))
+  elapsed=$(($(date +%s) - start_s))
   if [ "${#products[@]}" -eq 0 ]; then
     fail "nothing deliverable in this batch (${#frames[@]} frame(s) scanned, conversion or verification failed)"
     return 1
@@ -410,7 +413,7 @@ watch)
       if [ "$batch_rc" -eq 4 ]; then
         sleep 3
       else
-        sleep "$(( WATCH_FAIL_SLEEP * consec_fail < WATCH_FAIL_SLEEP_MAX ? WATCH_FAIL_SLEEP * consec_fail : WATCH_FAIL_SLEEP_MAX ))"
+        sleep "$((WATCH_FAIL_SLEEP * consec_fail < WATCH_FAIL_SLEEP_MAX ? WATCH_FAIL_SLEEP * consec_fail : WATCH_FAIL_SLEEP_MAX))"
       fi
     fi
   done

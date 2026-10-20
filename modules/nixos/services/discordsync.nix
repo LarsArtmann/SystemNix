@@ -706,15 +706,15 @@
         # Single-phase chown (mkPoolDirUnit default) reaches the same final
         # state as the old root-flip two-phase: user:group + 0770, with
         # CAP_CHOWN/FOWNER/DAC_OVERRIDE in the bounding set the whole way.
-        systemd.services.discordsync-attachments-dir = lib.mkIf (cfg.attachmentsDir != null) (
-          mkPoolDirUnit {
-            description = "Create DiscordSync attachment directory on the HDD pool";
-            directory = cfg.attachmentsDir;
-            owner = cfg.user;
-            group = cfg.group;
-            mode = "0770";
-          }
-        );
+        systemd.services.discordsync-attachments-dir =
+          lib.mkIf (cfg.attachmentsDir != null)
+            (mkPoolDirUnit {
+              description = "Create DiscordSync attachment directory on the HDD pool";
+              directory = cfg.attachmentsDir;
+              owner = cfg.user;
+              group = cfg.group;
+              mode = "0770";
+            });
 
         # One-time move of the in-state attachment archive onto the pool
         # (activitywatch-data-to-pool pattern): runs only while the legacy
@@ -854,12 +854,10 @@
         # browser-history-backup pattern: mount-gated pool leaf creator +
         # online sqlite .backup. The raw intermediate is gzip -1'd in place
         # (message text compresses ~3x; the restic repo dedups further).
-        systemd.services.discordsync-db-backup-dir = lib.mkIf cfg.dbBackup.enable (
-          mkPoolDirUnit {
-            description = "Create DiscordSync DB backup directory on the HDD pool";
-            directory = dbBackupDir;
-          }
-        );
+        systemd.services.discordsync-db-backup-dir = lib.mkIf cfg.dbBackup.enable (mkPoolDirUnit {
+          description = "Create DiscordSync DB backup directory on the HDD pool";
+          directory = dbBackupDir;
+        });
 
         systemd.services.discordsync-db-backup = lib.mkIf cfg.dbBackup.enable {
           description = "DiscordSync event-store backup (online sqlite .backup, gzipped)";
