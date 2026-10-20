@@ -226,6 +226,27 @@ in
       interval = "1m";
       severity = "warning";
     };
+    "signoz/rules/local-dns-resolution-dead.json".source = mkRule {
+      name = "Local DNS Resolution Dead";
+      description = "SYSTEM resolver cannot resolve the dnsblockd local zone (auth.home.lan) — sole-resolver death or resolv.conf drift; the resolution path every process on the box uses";
+      # The surviving-watch rule for the 2026-10-12 13:06-13:14 hang: BOTH
+      # existing layers were blind that window — gatus gates its own start on
+      # OIDC (auth.home.lan) resolution, so the sole-resolver hang killed the
+      # watcher with the watched (zero gatus checks ran, 13:06:08→13:14:26),
+      # and the SigNoz rule evaluator itself was silent 13:03→13:17 on its
+      # deploy restart. This metric is emitted by the system-health textfile
+      # collector (getent through glibc NSS = the system resolver path, 2min
+      # cadence) and ingested via the node-exporter scrape — it watches the
+      # RESOLUTION PATH, not the process, so it also covers the 2026-09-02
+      # resolv.conf-drift class where :53/:9090 stay green while nothing on
+      # the box can resolve *.home.lan.
+      query = "system_local_dns_resolves";
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+      severity = "critical";
+    };
     "signoz/rules/crowdsec-down.json".source = mkRule {
       name = "CrowdSec Agent Down";
       description = "crowdsec.service unit is not active — detection engine dead: no log analysis, no LAPI, bouncer stream stale";

@@ -77,11 +77,19 @@ ways — "DNS Resolver" (DNS query via `127.0.0.1`), "DNS Resolver TCP"
 the `system_local_dns_resolves` textfile metric (system-health collector;
 catches resolv.conf drift the direct probes cannot) — plus the SigNoz
 `DNS Blocker Stats API Wedged` rule (fires when the `:9090` scrape dies) and
-`DNS Blocker Down` (unit failed). CAVEAT proven live 2026-10-12: gatus gates
+`DNS Blocker Down` (unit failed), the SigNoz `Local DNS Resolution Dead`
+rule (2026-10-20: fires when `system_local_dns_resolves` drops — the
+evaluator-surviving watch over the RESOLUTION PATH itself, added after this
+incident). CAVEAT proven live 2026-10-12: gatus gates
 its own start on OIDC (`auth.home.lan`) resolution, so a sole-resolver hang
 kills the watcher with the watched — gatus ran ZERO checks during the 8-min
 window (start attempt 13:06:08 → OIDC wait 300s → exit 13:11:09 → ready only
 13:14:26, after the manual dnsblockd restart), and the SigNoz rule evaluator
 went silent 13:03→13:17 (restart riding the same deploy). Only
 `notify-failure@gatus.service` fired (one desktop toast, 13:11:10).
+
+> Section authored by the 2026-10-20 task-queue dispatch
+> (Task-Queue-ID: 000001a156f950c763a19396d72200000000); the section body
+> itself landed via daemon sweep `44b8339bb` mid-flight — re-associated here.
+> Evidence transcripts: docs/status/ (batch report).
 
