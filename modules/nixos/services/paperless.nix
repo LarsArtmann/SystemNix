@@ -74,11 +74,13 @@ _: {
       # paperless keeps Django's inert localhost default (EMAIL_ENABLED false).
       mailRelayEnabled = config.services.mail-relay.enable or false;
       paperlessUnits = [
-        "paperless-consumer.service"
-        "paperless-scheduler.service"
-        "paperless-task-queue.service"
-        "paperless-web.service"
+      "paperless-consumer.service"
+      "paperless-scheduler.service"
+      "paperless-task-queue.service"
+      "paperless-web.service"
       ];
+
+      rcfg = config.services.paperless-db-restore;
 
       # Provider config WITHOUT the secret (store-safe); the
       # paperless-oidc-setup bridge injects the secret at runtime via jq.
@@ -366,6 +368,25 @@ _: {
             }
           ];
           description = "Saved views to provision on the owner's dashboard.";
+        };
+      };
+
+      # Incident-remediation surface (2026-10-19 Wave-6: the hot-db flip left
+      # the paperless database schema-empty while every co-tenant stayed
+      # healthy). Opt-in by design: a schema-check guard refuses to touch any
+      # DB that still has its tables, so the unit can stay declared for a
+      # window and be dropped again once the restore is verified.
+      options.services.paperless-db-restore = {
+        enable = lib.mkEnableOption "one-shot paperless DB restore from a pg_dump custom archive (marker + schema guarded)";
+
+        dumpFile = lib.mkOption {
+          type = lib.types.str;
+          description = ''
+            pg_dump custom-format archive to restore when (and only when) the
+            paperless schema is missing. Must be readable by the postgres
+            user. A plain string, not a path: absolute host paths are pure-eval
+            forbidden in flake checks.
+          '';
         };
       };
 
@@ -691,6 +712,66 @@ _: {
                 # per boot while db.sqlite3 still exists.
                 serviceConfig.RemainAfterExit = true;
                 script = "rm -f '${dataDir}/superuser-state' '${dataDir}/src-version'";
+              };
+
+              # Wave-6 remediation (2026-10-19): the hot-db flip mounted the
+              # new cluster with the paperless database schema-empty. Runs
+              # BEFORE any paperless unit (before/wantedBy all four), and only
+              # ever acts when the config table is genuinely absent AND the
+              # marker is missing — a healthy DB is never clobbered. Drop
+              # services.paperless-db-restore.enable from configuration.nix
+              # after the restore is verified live.
+              paperless-db-restore = lib.mkIf rcfg.enable {
+                description = "Paperless DB restore from pg_dump (Wave-6 incident, one-shot, guarded)";
+                unitConfig.ConditionPathExists = [ rcfg.dumpFile ];
+                before = paperlessUnits;
+                wantedBy = paperlessUnits;
+                after = [ "postgresql.service" ];
+                wants = [ "postgresql.service" ];
+                path = [
+                  config.services.postgresql.package
+                  pkgs.util-linux
+                  pkgs.coreutils
+                  config.systemd.package
+                ];
+                serviceConfig = {
+                  Type = "oneshot";
+                  # Same re-pull lesson as the migration unit above.
+                  RemainAfterExit = true;
+                  User = "root";
+                  StateDirectory = "paperless-db-restore";
+                  TimeoutStartSec = "10min";
+                };
+                script = ''
+                  set -euo pipefail
+                  marker=/var/lib/paperless-db-restore/restored.done
+                  dump='${rcfg.dumpFile}'
+                  if [ -e "$marker" ]; then
+                    echo "paperless-db-restore: marker present - restore already done, no-op"
+                    exit 0
+                  fi
+                  # Schema check: refuse to touch any DB that still has its
+                  # tables (fresh install mid-migration included — that is
+                  # exactly the state this unit must NOT clobber).
+                  schema=$(runuser -u postgres -- psql -d paperless -Atc \
+                    "select 1 from information_schema.tables where table_schema='public' and table_name='paperless_applicationconfiguration' limit 1")
+                  if [ -n "$schema" ]; then
+                    echo "paperless-db-restore: schema present - DB not empty, nothing to restore (drop the enable flag)"
+                    exit 0
+                  fi
+                  # Dump sanity: non-empty AND a readable custom-format
+                  # archive, BEFORE dropping anything.
+                  [ -s "$dump" ]
+                  runuser -u postgres -- pg_restore --list "$dump" > /dev/null
+                  echo "paperless-db-restore: schema missing + dump verified - restoring"
+                  systemctl stop paperless-web.service paperless-scheduler.service paperless-task-queue.service paperless-consumer.service || true
+                  runuser -u postgres -- dropdb --if-exists paperless
+                  runuser -u postgres -- createdb -O paperless paperless
+                  runuser -u postgres -- pg_restore --dbname=paperless --no-owner "$dump"
+                  systemctl start paperless-consumer.service paperless-scheduler.service paperless-task-queue.service paperless-web.service
+                  touch "$marker"
+                  echo "paperless-db-restore: restore complete, marker written"
+                '';
               };
 
               # Tika (Java + tesseract subprocess for OCR'd attachments) and

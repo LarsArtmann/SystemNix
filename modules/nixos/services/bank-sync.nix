@@ -89,10 +89,22 @@
       # boot failure.
       qontoCsvTech = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/technologies_gmbh.csv";
       qontoCsvHolding = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/holding_gmbh.csv";
+      # Full-history corpus (owner's Drive exports, 2025-02-24): OFX-converted
+      # Qonto CSVs (Tech 2023-01-04→2025-02-24 x963, Holding
+      # 2022-12-07→2025-02-05 x117; the 132 fragment rows above are bridged
+      # onto their original UUIDs inside these files, so the idempotent
+      # import skips them) + the 40 monthly statement PDFs the archival unit
+      # uploads to Paperless (source of truth: repo commit 0ccc3a9b).
+      qontoCsvTechFull = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/technologies_gmbh_full_2025-02-24.csv";
+      qontoCsvHoldingFull = "/home/lars/projects/bank-sync/data/historical/qonto/transactions/holding_gmbh_full_2025-02-24.csv";
+      qontoStatementsSrc = "/home/lars/projects/bank-sync/data/historical/qonto/statements";
       # Staged copies (bank-sync-readable, btrbk-pool snapshotted with the
       # DB). The stage unit converges them on every activation/boot.
       qontoStageTech = "${cfg.dataDir}/qonto-import/technologies_gmbh.csv";
       qontoStageHolding = "${cfg.dataDir}/qonto-import/holding_gmbh.csv";
+      qontoStageTechFull = "${cfg.dataDir}/qonto-import/technologies_gmbh_full_2025-02-24.csv";
+      qontoStageHoldingFull = "${cfg.dataDir}/qonto-import/holding_gmbh_full_2025-02-24.csv";
+      qontoStageStatements = "${cfg.dataDir}/qonto-import/statements";
     in
     {
       options.services.bank-sync.paperlessArchive = {
@@ -606,16 +618,34 @@
               ConditionPathExists = [
                 qontoCsvTech
                 qontoCsvHolding
+                qontoCsvTechFull
+                qontoCsvHoldingFull
+                "${qontoStatementsSrc}/artmann-holding-gmbh"
+                "${qontoStatementsSrc}/artmann-technologies-gmbh"
               ];
             };
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
-            path = [ pkgs.coreutils ];
+            path = [ pkgs.coreutils pkgs.findutils ];
             script = ''
               install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvTech}" "${qontoStageTech}"
               install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvHolding}" "${qontoStageHolding}"
-              echo "bank-sync-qonto-stage: staged both Qonto CSVs into ${cfg.dataDir}/qonto-import/"
+              install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvTechFull}" "${qontoStageTechFull}"
+              install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvHoldingFull}" "${qontoStageHoldingFull}"
+              # Statement PDFs: preserve the <org>/<year>/ tree — the
+              # archival unit derives org + statement month from the path
+              # and the YYYY-MM filename prefix.
+              # NUL-delimited find -print0 loop: the usual -d with an empty
+              # argument cannot be spelled inside a Nix indented string (the
+              # empty-string delimiter syntax is two single quotes, which is
+              # the Nix escape prefix), so use the ANSI-C NUL form instead.
+              while IFS= read -r -d $'\0' src; do
+                rel="${qontoStatementsSrc}/"
+                install -D -m 0640 -o bank-sync -g bank-sync "$src" "${qontoStageStatements}/''${src#$rel}"
+              done < <(find "${qontoStatementsSrc}" -type f -name '*.pdf' -print0)
+              staged=$(find "${qontoStageStatements}" -type f | wc -l)
+              echo "bank-sync-qonto-stage: staged 4 Qonto CSVs + $staged statement PDFs into ${cfg.dataDir}/qonto-import/"
             '';
             serviceConfig = lib.mkMerge [
               {
@@ -659,6 +689,8 @@
               ConditionPathExists = [
                 qontoStageTech
                 qontoStageHolding
+                qontoStageTechFull
+                qontoStageHoldingFull
               ];
             };
             inherit onFailure;
@@ -671,9 +703,13 @@
                 Group = "bank-sync";
                 # One ExecStart per org: profile names are permanent (they
                 # derive stable IDs), so they are the legal entity names.
+                # Fragments first, then the full-history exports: the
+                # importer skips the 132 UUID-bridged overlap idempotently.
                 ExecStart = [
                   "${lib.getExe cfg.package} import --file ${qontoStageTech} --profile \"Artmann Technologies GmbH\" --account \"Hauptkonto\" --currency EUR"
                   "${lib.getExe cfg.package} import --file ${qontoStageHolding} --profile \"Artmann Holding GmbH\" --account \"Hauptkonto\" --currency EUR"
+                  "${lib.getExe cfg.package} import --file ${qontoStageTechFull} --profile \"Artmann Technologies GmbH\" --account \"Hauptkonto\" --currency EUR"
+                  "${lib.getExe cfg.package} import --file ${qontoStageHoldingFull} --profile \"Artmann Holding GmbH\" --account \"Hauptkonto\" --currency EUR"
                 ];
                 Environment = [ "BANK_SYNC_DATABASE_PATH=${cfg.dataDir}/data.db" ];
                 # Encryption key (events are encrypted at rest; the Wise
@@ -697,7 +733,7 @@
           systemd.services.bank-sync-qonto-paperless =
             lib.mkIf (config.services.bank-sync.paperlessArchive.enable && paperlessEnabled)
               {
-                description = "Bank-Sync Qonto statement CSVs -> Paperless-ngx archival (one-time, marker-gated)";
+                description = "Bank-Sync Qonto statement PDFs -> Paperless-ngx archival (one-time, marker-gated)";
                 wantedBy = [ "multi-user.target" ];
                 after = [
                   "network-online.target"
@@ -713,11 +749,8 @@
                 requires = [ "bank-sync-paperless-token.service" ];
                 unitConfig = {
                   RequiresMountsFor = [ cfg.dataDir ];
-                  # Staged copies, not the repo checkout (see the stage unit).
-                  ConditionPathExists = [
-                    qontoStageTech
-                    qontoStageHolding
-                  ];
+                  # Staged statements tree (see the stage unit).
+                  ConditionPathExists = [ "${qontoStageStatements}" ];
                 };
                 inherit onFailure;
                 startLimitBurst = 5;
@@ -729,10 +762,13 @@
                 ];
                 # Metadata is canonical at upload: correspondent/type/tags
                 # are ensured find-or-create (the bank-sync SDK's own
-                # ensure calls find the same objects later — same names);
-                # created dates are the statement period ends (verified
-                # against the frozen CSVs: tech 2023-01-04→2023-03-20,
-                # holding 2022-12-07→2023-05-18).
+                # ensure calls find the same objects later — same names).
+                # Per-statement metadata derives from the staged tree shape
+                # <org-dir>/<year>/YYYY-MM-*.pdf: title "Qonto Statement -
+                # <legal entity> - YYYY-MM", created = first day of the
+                # statement month. The org directory names are validated —
+                # an unexpected tree is a loud failure, not a misfiled
+                # archive document.
                 script = ''
                   set -euo pipefail
 
@@ -799,31 +835,58 @@
                       "$base/api/documents/post_document/"
                   }
 
-                  upload "${qontoStageTech}" \
-                    "Qonto Statement - Artmann Technologies GmbH (Hauptkonto EUR, 2023-01-04 to 2023-03-20)" \
-                    "2023-03-20"
-                  upload "${qontoStageHolding}" \
-                    "Qonto Statement - Artmann Holding GmbH (Hauptkonto EUR, 2022-12-07 to 2023-05-18)" \
-                    "2023-05-18"
+                  # Statement set: every staged PDF, sorted for a
+                  # deterministic journal. Process substitution (not a pipe)
+                  # keeps the counter in the main shell and exit fatal.
+                  uploaded=0
+                  while IFS= read -r -d $'\0' f; do
+                    rel="''${f#"${qontoStageStatements}/"}"
+                    org_dir="''${rel%%/*}"
+                    base="''${rel##*/}"
+                    month="''${base%%-*}"
+                    case "$org_dir" in
+                      artmann-holding-gmbh) org="Artmann Holding GmbH" ;;
+                      artmann-technologies-gmbh) org="Artmann Technologies GmbH" ;;
+                      *)
+                        echo "bank-sync-qonto-paperless: unknown org directory '$org_dir' in staged tree ($rel) - refusing" >&2
+                        exit 1
+                        ;;
+                    esac
+                    case "$month" in
+                      [0-9][0-9][0-9][0-9]-[0-9][0-9]) ;;
+                      *)
+                        echo "bank-sync-qonto-paperless: cannot derive YYYY-MM statement month from '$base' - refusing" >&2
+                        exit 1
+                        ;;
+                    esac
+                    upload "$f" "Qonto Statement - $org - $month" "''${month}-01"
+                    uploaded=$((uploaded + 1))
+                  done < <(find "${qontoStageStatements}" -type f -name '*.pdf' -print0 | sort -z)
 
-                  # Consumption is asynchronous: poll until both documents
-                  # are queryable by title + correspondent (paperless's own
+                  if [ "$uploaded" -lt 1 ]; then
+                    echo "bank-sync-qonto-paperless: no statement PDFs found under ${qontoStageStatements} - not writing the marker" >&2
+                    exit 1
+                  fi
+
+                  # Consumption is asynchronous (OCR + task queue, 2
+                  # workers): poll until every uploaded statement is
+                  # queryable by title + correspondent (paperless's own
                   # dedup/delete would leave a re-run's duplicates out of
                   # the count — the marker makes re-runs impossible anyway).
                   count=0
-                  for _ in $(seq 1 30); do
+                  for _ in $(seq 1 60); do
                     count=$(api -G \
                       --data-urlencode "title__icontains=Qonto Statement" \
                       --data-urlencode "correspondent=$correspondent_id" \
                       "$base/api/documents/" | jq -r '.count')
-                    if [ "$count" -ge 2 ]; then
+                    if [ "$count" -ge "$uploaded" ]; then
                       break
                     fi
-                    sleep 2
+                    sleep 3
                   done
 
-                  if [ "$count" -lt 2 ]; then
-                    echo "bank-sync-qonto-paperless: only $count/2 Qonto statements visible after the poll window - not writing the marker" >&2
+                  if [ "$count" -lt "$uploaded" ]; then
+                    echo "bank-sync-qonto-paperless: only $count/$uploaded Qonto statements visible after the poll window - not writing the marker" >&2
                     exit 1
                   fi
 
@@ -839,7 +902,7 @@
                     Environment = [ "BANK_SYNC_PAPERLESS_URL=http://127.0.0.1:${toString ports.paperless}" ];
                     # Runtime-minted DRF token from the archival pair.
                     EnvironmentFile = [ "/run/bank-sync-paperless/env" ];
-                    TimeoutStartSec = "5min";
+                    TimeoutStartSec = "10min";
                   }
                   (harden {
                     # Staged CSVs live inside the dataDir — no /home access
