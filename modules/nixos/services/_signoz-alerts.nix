@@ -247,6 +247,27 @@ in
       interval = "1m";
       severity = "critical";
     };
+    "signoz/rules/gatus-down.json".source = mkRule {
+      name = "Gatus Down";
+      description = "gatus.service unit is not active — the watcher itself is dead: zero endpoint checks running and every Gatus-owned coverage blind";
+      # Unit-state-gauge pattern (DNS Blocker Down / CrowdSec Agent Down):
+      # process liveness from the systemd collector, never a job label (the
+      # phantom-green up{job=...} class — no series carries a `job` label).
+      # During the 2026-10-12 13:06-13:14 sole-resolver hang the OIDC start
+      # gate (mkOidcGate) kept gatus in 300s ExecStartPre waits — the unit
+      # sat in "activating", NOT "active", so this gauge read 0 for the
+      # whole crash-loop and nothing else noticed the watcher was gone.
+      # Mirror image of the SigNoz Evaluator Deadman gatus check (gatus
+      # watching SigNoz); this is SigNoz watching gatus, and it can only
+      # fire while the evaluator itself is alive — the dual-blind window
+      # (both monitors dead together) stays an accepted residual pending
+      # the owner decision on the OIDC-gate fail-open (docs/todo/monitoring.md).
+      query = ''node_systemd_unit_state{name="gatus.service",state="active"}'';
+      step = 60;
+      op = "below";
+      target = 1;
+      interval = "1m";
+    };
     "signoz/rules/crowdsec-down.json".source = mkRule {
       name = "CrowdSec Agent Down";
       description = "crowdsec.service unit is not active — detection engine dead: no log analysis, no LAPI, bouncer stream stale";
