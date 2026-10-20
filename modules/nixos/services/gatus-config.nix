@@ -1190,17 +1190,26 @@ _: {
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "30s";
+                  # 2026-10-21: the 2026-10-08 "fired at memory PSI 0.06%" false
+                  # CRITICAL was NOT a wrong-PSI-file read (the metric is
+                  # memory-derived, verified at _signoz-metrics.nix) — the
+                  # unset gatus HTTP timeout (5s default) let the big
+                  # node_exporter /metrics scrape time out under the io-PSI
+                  # storm, failing the check. Pin 15s so storm-slowed scrapes
+                  # still complete and only a genuine alert=1 fails.
+                  client.timeout = "15s";
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_memory_alert 0*)"
                   ];
-                  alerts = discordAlert "Memory pressure CRITICAL — node_psi_memory_alert is 1 (some avg10 >50 or full avg10 >10, kernel PERCENT values — NOT 0-1 fractions) OR the metric/scrape is unreachable (storm-timeout class: verify psi.prom freshness before diagnosing memory). Risk of OOM cascade. Check Helium/Electron processes.";
+                  alerts = discordAlert "Memory pressure CRITICAL — node_psi_memory_alert is 1 (some avg10 >50 or full avg10 >10, kernel PERCENT values — NOT 0-1 fractions) OR the metric/scrape is unreachable even with a 15s budget (storm-timeout class: verify psi.prom freshness before diagnosing memory). Risk of OOM cascade. Check Helium/Electron processes.";
                 })
                 (mkHttpCheck {
                   name = "I/O Stall Rate";
                   group = "Filesystem";
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "1m";
+                  client.timeout = "15s";
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_io_alert 0*)"
