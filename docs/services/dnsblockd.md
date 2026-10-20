@@ -31,18 +31,24 @@ NEVER fires), retention/tracking keep running, and `:53` is dead host-wide —
 with ZERO error lines. Silence is the symptom. Live instance: PID 4478 logged
 phases 1-3 at 13:06:10 and nothing more until the manual restart 8 min later.
 
-**Discriminator** — count phases since the last start:
+**Discriminator** — count phases of the CURRENT start (anchored on the unit's
+own ActiveEnterTimestamp so restart-retries can't interleave phase lines —
+a bare `| tail -5` over the boot reads FALSE-HEALTHY when the
+wait-listener gate produces 3-phase failed starts next to retries):
 
 ```console
-journalctl -u dnsblockd -b --no-pager | grep 'startup phase complete' | tail -5
+journalctl -u dnsblockd \
+  --since "$(systemctl show -p ActiveEnterTimestamp --value dnsblockd)" \
+  --no-pager | grep -c 'startup phase complete'
 ```
 
 - **5 phases = healthy.** Reference timings (recovery start 13:14:05, PID
   101150): `config_load` 0-1ms → `otel_setup` 1ms → `extras_and_validation`
   ~1.6s → `server_init` ~10.5s → `listeners_start` ~3.9s; all listeners (`:53`
   UDP+TCP, block page `:80`/`:443`, stats `:9090`) up ~16s after ExecStart.
-- **3 phases = HUNG** (`config_load`, `otel_setup`, `extras_and_validation`
-  only, plus the "started data retention cleanup loop" line): `:53` dead,
+- **0-3 phases = THIS start is wedged or still climbing** (`config_load`,
+  `otel_setup`, `extras_and_validation` only, plus the "started data
+  retention cleanup loop" line, then silence past ~60s): `:53` dead,
   `ss -lun | grep :53` empty, no error logged. Working hypothesis (unproven,
   deliberately unreproduced — each attempt risks another host-wide DNS
   window): retention-cleanup sqlite contention during init.
@@ -87,6 +93,11 @@ window (start attempt 13:06:08 → OIDC wait 300s → exit 13:11:09 → ready on
 13:14:26, after the manual dnsblockd restart), and the SigNoz rule evaluator
 went silent 13:03→13:17 (restart riding the same deploy). Only
 `notify-failure@gatus.service` fired (one desktop toast, 13:11:10).
+`Local DNS Resolution Dead` provisioned LIVE 2026-10-20 09:32:20 (HTTP 200,
+signoz-provision, rode the 09:26 deploy); its metric rides the
+system_health textfile — DARK while the recurring invalid-escape rejection
+class (line-763 `\x2d` cgroup label, 4th incident 2026-10-20) is unfixed,
+so the rule is provisioned-but-vacuous until then.
 
 > Section authored by the 2026-10-20 task-queue dispatch
 > (Task-Queue-ID: 000001a156f950c763a19396d72200000000); the section body
