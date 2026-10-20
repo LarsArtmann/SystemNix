@@ -627,7 +627,10 @@
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
-            path = [ pkgs.coreutils pkgs.findutils ];
+            path = [
+              pkgs.coreutils
+              pkgs.findutils
+            ];
             script = ''
               install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvTech}" "${qontoStageTech}"
               install -D -m 0640 -o bank-sync -g bank-sync "${qontoCsvHolding}" "${qontoStageHolding}"
@@ -772,9 +775,14 @@
                 script = ''
                   set -euo pipefail
 
-                  marker="${cfg.dataDir}/qonto-paperless-import.done"
+                  # Per-set marker: the ORIGINAL unit uploaded the two span
+                  # CSV extracts under qonto-paperless-import.done (2026-10-19
+                  # 08:59, after the owner's manual DB restore) — this
+                  # statements-only set carries its own marker so the 40
+                  # monthly PDFs are not skipped by the old set's completion.
+                  marker="${cfg.dataDir}/qonto-statements-paperless.done"
                   if [ -e "$marker" ]; then
-                    echo "bank-sync-qonto-paperless: marker present - statements already archived, no-op"
+                    echo "bank-sync-qonto-paperless: statements marker present - already archived, no-op"
                     exit 0
                   fi
 

@@ -493,13 +493,11 @@ in
       ];
       immich.enable = true;
       paperless.enable = true;
-      # Wave-6 incident remediation (2026-10-19): restore the schema-empty
-      # paperless DB from the 02:01 pg_dump. The unit is schema-guarded and
-      # marker-gated; DROP this flag once the restore is verified live.
-      paperless-db-restore = {
-        enable = true;
-        dumpFile = "/mnt/pool/backups/paperless/paperless-db-2026-10-19.dump";
-      };
+      # Wave-6 remediation flag DROPPED 2026-10-20: the owner restored the DB
+      # manually at 2026-10-19 07:31 (pg_restore from the 02:01 dump); the
+      # schema-guarded oneshot verified "schema present, nothing to restore"
+      # on its first and only activation. The option + unit stay in
+      # paperless.nix (off by default) for future incidents.
       # Declarative dashboards: saved views provisioned via the REST API
       # (create-only; defaults = Gmail Archive + Encrypted views). Owner
       # auto-resolves to the Pocket ID SSO user (fallback admin). Runbook:
