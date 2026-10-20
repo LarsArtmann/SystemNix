@@ -9,6 +9,7 @@
 - [Infra follows & lock hygiene (2026-10-02)](#infra-follows--lock-hygiene-2026-10-02)
 - [flake/parts structure (2026-10-09)](#flakeparts-structure-2026-10-09)
 - [Cross-platform eval coverage](#cross-platform-eval-coverage-2026-09-28)
+- [flake-check memory profile + targeted-eval alternative](#flake-check-memory-profile--the-targeted-eval-alternative-2026-10-12)
 - [Nix & Nixpkgs gotchas](#nix--nixpkgs)
 - [Packaging, store & CI cache notes](#packaging-store--ci-cache-notes)
 - [Safe verification of a disabled service (never force-enable)](#safe-verification-of-a-disabled-service-never-force-enable)
@@ -55,6 +56,18 @@ The 4023-line flake.nix was split into flake-parts modules (2026-10-09). flake.n
 **Verification doctrine for output-preserving splits:** drvPath fingerprint parity against a pinned-baseline git worktree with the SAME flake.lock copied into both sides (isolating the refactor as the only variable) — packages/devShells/former hosts were byte-identical; drvs embedding the flake SOURCE path differ BY DESIGN (the tree content changed, so whole-tree source store hashes rehash — verify via name-set diff of the etc-derivation store paths: zero names appearing/vanishing means no package changed anywhere). Full evidence: `docs/status/2026-10-09_21-58_flake-split-perSystem-extraction.md`.
 
 **Downstream consumers to remember:** the pre-commit formatter memo's content key covers `flake/parts/*.nix` since 2026-10-09 (`scripts/lib/precommit-eval-cache.sh` — the formatter moved there, so the key had to follow; `precommit-eval-cache-selftest` pins it). The Linux-only gating blocks (rule 1 below) live in `flake/parts/{apps,devshells,packages}.nix`.
+
+## flake-check memory profile + the targeted-eval alternative (2026-10-12)
+
+`nix flake check --no-build` on this flake peaks ~20GB RAM and ~6-7min (measured 2026-10-12, completed and passed): it forces EVERY output — all 3 host toplevels + darwin + every auto-discovered `nixosModules.<name>` standalone + vm-test/fixtures/selftests + mkLarsPackages go graphs + the audit layers' unit-text forcing — and the memoized eval lives until process exit. `--no-build` skips builds, not evaluation.
+
+For single-module changes, the cheap equivalent is a single-host toplevel eval:
+
+```bash
+nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath
+```
+
+seconds instead of minutes, a fraction of the memory, and it runs the SAME host-level eval audits (port-registry, systemd-shape, mount-gating, deploy-restart, pool-recovery, …) because those fire on the host assembly. Eval `rpi3-dns` too when the change touches `platforms/common/` or a module both hosts consume. Full `nix flake check` remains mandatory as the pre-deploy/CI gate and before any eval-structure refactor — the targeted eval proves only the host(s) you asked about.
 
 ## Cross-platform eval coverage (2026-09-28)
 
