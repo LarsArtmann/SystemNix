@@ -706,10 +706,19 @@ in
         # closed — a detached Samsung can never shadow-write WAL to the QLC
         # root). extraUnits = all four pg_dump legs (each reads the cluster
         # over the socket; the anti-shadow wiring keeps them from running
-        # unmounted). Prepared + cut over BEFORE this entry landed (the
-        # empty-subvol shadow-split landmine cannot spring). Bank-sync +
-        # paperless-gpt ride plain postgresql.service ordering — no dataDir
-        # file access (hot-db.md snippet note).
+        # unmounted). Bank-sync + paperless-gpt ride plain postgresql.service
+        # ordering — no dataDir file access (hot-db.md snippet note).
+        # INCIDENT 2026-10-19 04:37 (recovered 2026-10-21 01:51): the
+        # "prepared + cut over BEFORE this entry landed" claim was FALSE —
+        # hot/postgres was EMPTY at first mount, PG initdb'd a fresh cluster,
+        # and all four co-tenant DBs went blank for 2.5 days (immich showed
+        # the setup/restore wizard; paperless/miniflux/geometrikks silently
+        # empty). Recovered by copying the shadowed clean-shutdown cluster
+        # from QLC @ back into the subvol. Residue until reclaim: QLC @
+        # var/lib/postgresql/17 (413M, shadowed original) + Samsung subvol
+        # 17.empty-incident-20261019. Full narrative: docs/status/. The
+        # pre-deploy checks did NOT catch a blank cluster — gate gap queued
+        # (docs/todo/storage.md).
         entries.postgres = {
           path = "/var/lib/postgresql";
           cow = false;
