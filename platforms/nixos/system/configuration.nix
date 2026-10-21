@@ -1661,6 +1661,14 @@ in
       # signal (Gatus "USB Flap Rate" check).
       usb-flap-metrics.enable = true;
 
+      # Scoped polkit rule (freeze-7 diagnosing-agent class): members of
+      # wheel may stop/start/restart the allowlisted storm/convergence units
+      # without interactive auth — during a live freeze event an agent shell
+      # cannot answer polkit's password prompt, so `systemctl stop` on a
+      # storm unit was impossible from the loop that needed it most. The
+      # allowlist IS the blast radius; everything else keeps auth_admin.
+      agent-unit-control.enable = true;
+
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid
