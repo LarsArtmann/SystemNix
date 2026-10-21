@@ -1,3 +1,8 @@
+## Live pool addendum (2026-10-21 03:30)
+
+New live report: `2026-10-21_03-30_health-notifications-review.md`
+— full review of every health-notification surface (gatus Discord/PapDashboard alerts, SigNoz rules, SEV1 bridge, failed units, textfile freshness) against live state amid the immich-incident aftermath + an active IO storm: 25 gatus endpoints in sustained error, 6/46 SigNoz rules firing (all true positives), 10 failed units root-caused each (fastflowlm heap crash, monitor365 SQLite-pool wedge + SIGKILL, catalog-inventory-sync missing bash, ci-watchdog GitHub billing, bless-boot race re-confirmed, tmpfiles CANTCREAT, signoz-provision transient 500s, deliberate btrbk tripwire), 2 active SEV1s at notify-only, alert-noise findings (boot alert-storm ×~25 endpoints, 89+73 flap burns), and 10 follow-ups harvested + 2 existing rows corroborated/extended.
+
 ## Live pool addendum (2026-10-17 00:40)
 
 New live report: `2026-10-17_00-40_window-closeout-five-task-window-20261014-16.md`
