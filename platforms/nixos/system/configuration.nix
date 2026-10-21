@@ -1655,6 +1655,12 @@ in
       # ride the same sample (Gatus "Boot *" checks).
       boot-metrics.enable = true;
 
+      # USB flap-counter metrics (kernel disconnect events → textfile): makes
+      # the DAS link-churn RATE observable (2026-08-16 storm, 2026-08-22
+      # JMS567 wedge class) so enclosure/hardware fixes get a before/after
+      # signal (Gatus "USB Flap Rate" check).
+      usb-flap-metrics.enable = true;
+
       # Cross-service backup health monitoring. Checks all backup dirs for
       # freshness and writes Prometheus metrics. Gatus alerts on Discord
       # when any backup is stale (>25h). Schedules are staggered to avoid

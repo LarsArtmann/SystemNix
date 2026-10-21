@@ -823,6 +823,19 @@ _: {
                   alerts = discordAlert "zram swap over 90% full — with zram as the ONLY swap the kernel falls back to page-cache reclaim once full, the BTRFS I/O storm precursor. Free memory NOW (systemd-cgtop, smem) before the device hits 100%. Metric: system_zram_swap_fill_percent (node_exporter textfile collector, updated every 2min)";
                 })
                 (mkHttpCheck {
+                  name = "USB Flap Rate";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*usb_flap_disconnects_total*)"
+                    "[BODY] == pat(*usb_flap_rate_over_threshold 0*)"
+                    "[BODY] == pat(*usb_flap_scrape_errors 0*)"
+                  ];
+                  alerts = discordAlert "USB disconnect storm — the rolling-hour flap rate crossed the threshold (2026-08-16 enclosure-storm / 2026-08-22 JMS567-wedge class). Inspect before it wedges: journalctl -g 'USB disconnect' (NO -k — cross-boot), bash scripts/das-link-recovery-check.sh, cat /var/lib/prometheus-node-exporter/textfile_collectors/usb-flap.prom. Physical fix is cable/power reseat (VBUS!), never automatable";
+                })
+                (mkHttpCheck {
                   name = "Root Disk Space";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
