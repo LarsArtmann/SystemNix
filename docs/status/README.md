@@ -1,3 +1,8 @@
+## Live pool addendum (2026-10-22 02:16)
+
+New live report: `2026-10-22_02-16_health-notifications-review-self-review.md`
+— brutal self-review of the 2026-10-21 03:30 health-notifications review: 23 h drift check (storm WORSE — PSI avg300 87%, 25→32 failing endpoints, monitor365 still down, none of the P0/P1 remediations executed), one overclaim fixed in-source (the "zero phantom-greens" sweep scope), process failures named (session-start docs/status pre-read skipped, busctl escape botch), 22 next-things with harvest state, 3 owner questions (FLM decision, SEV1 escalation policy, GitHub billing intent).
+
 ## Live pool addendum (2026-10-21 03:30)
 
 New live report: `2026-10-21_03-30_health-notifications-review.md`

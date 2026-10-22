@@ -65,7 +65,7 @@ The memory-emergency guard has already intervened: it **stopped** `crush-hot-db-
 | CPU Thermal Ceiling (≥95 °C 30m) | critical | TRUE POSITIVE | §1 — live, at the pre-crash band |
 | Thermal Guard Trip Rate (>1.5/h 2h) | warning | TRUE POSITIVE | 5 trips/2h — same storm |
 
-**Zero phantom-greens or false fires found in the SigNoz layer** — a first: the 2026-08-27 phantom-job-label class and the 2026-10-18 dotted-suffix phantoms are all clean tonight. Route policies verified converged by tonight's provisioner log ("OK 46 route policies — exact one-per-rule, zero orphans"), so Discord delivery for these six is intact.
+**Zero false fires found among the FIRING SigNoz rules** — all six verified true-positive. (Scope note, amended in the 2026-10-22 self-review: this says nothing about phantom-greens among the 40 NON-firing rules — their query liveness was not re-probed this round; the `signoz-query-lint` deadMetrics/underscoreLive tripwires and the post-lock-bump E4 sweep own that surface.) Route policies verified converged by tonight's provisioner log ("OK 46 route policies — exact one-per-rule, zero orphans"), so Discord delivery for these six is intact.
 
 ---
 
@@ -147,4 +147,4 @@ Harvested to TODO_LIST.md (queue one-liners) + domain libraries (full rows): the
 - **Gatus itself**: alive, scraping (`system_gatus_results_stale 0`, meta scrape errors 0), config valid.
 - **Paperless, GeoMetrikks, InboxClean, papdashboard, health-dashboard hub**: all serving; tonight's alerts on them were incident/storm transients.
 - **Memory**: 86G available, zram 32%, no OOMD kills — the "Memory/ZRAM" alert bursts were storm-window transients.
-- **The monitoring system caught everything real**: every one of the 6 firing SigNoz rules and every sustained gatus failure maps to a verified live fault. No phantom-green found anywhere tonight — the hard-won lessons (job-label class, dotted suffixes, delta-blindness) are all holding.
+- **No false positives among the six firing rules** (scope-amended 2026-10-22: non-firing query liveness not probed this round — see §2).
