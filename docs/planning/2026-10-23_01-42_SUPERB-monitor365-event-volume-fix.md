@@ -1,6 +1,6 @@
 # SUPERB: Monitor365 Event-Volume Fix — Retention + Volume-Engine Cutoff
 
-**EXECUTING (instance crush glm-5.3 session, executing full batch now, 2026-10-23 01:43 CEST, HEAD `310220e20`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance batch executed + pushed (0ab1e42e0); deploy DEFERRED by F17 PSI gate (some avg10 67% > 30%) - next calm window, owner or next session, 2026-10-23 01:56 CEST, HEAD `0ab1e42e0`):** execution finished
 
 - **Author session:** 2026-10-23 01:42 CEST (follows docs/status/2026-10-23_01-09_monitor365-db-io-diagnosis-self-review.md + owner "Go fix it")
 - **Workstream:** monitor365 produces ~5.3M events/day (597M accumulated Apr 21→Oct 18 into a 25.1 GB DuckDB) with zero retention; the current IO storm era made the cost visible.
