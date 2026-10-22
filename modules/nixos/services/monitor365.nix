@@ -65,6 +65,17 @@
       # uid.
       agentStoragePath = "/mnt/pool/services/monitor365";
 
+      # Event retention (2026-10-23): the server ingested ~5.3M events/day
+      # (597M backlog era average) with NO upstream retention — the DuckDB
+      # hit 25.1 GB. DELETE-by-age runs nightly inside the quiesced backup
+      # window; VACUUM (file rewrite — DuckDB never truncates after deletes)
+      # runs weekly, stamp-gated + disk-headroom-guarded. Raise/lower the
+      # window here; 90d balances dashboard history vs DB size (~2-6 GB
+      # steady-state at post-cut collection rates).
+      retentionDays = 90;
+      vacuumIntervalSeconds = 604800; # 7 days
+      vacuumHeadroomBytes = 5368709120; # 5 GiB free required on top of DB size
+
       systemAgentCfg = config.services.monitor365;
       serverCfg = config.services.monitor365-server;
 
@@ -171,6 +182,7 @@
           pkgs.coreutils
           pkgs.findutils
           pkgs.systemd
+          pkgs.duckdb
         ];
         text = ''
           STATE_DIR="${serverCfg.stateDir}"
@@ -207,6 +219,46 @@
           # re-expressed with find for the nullglob audit).
           find "$STATE_DIR" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null \
             | sort -rn | tail -n +"$((KEEP + 1))" | cut -f2- | xargs -r rm -f
+
+          # ── Event retention (2026-10-23) ─────────────────────────────
+          # Runs INSIDE the quiesce window (server stopped = the only
+          # single-writer slot), AFTER the export above — the backup just
+          # written is the rollback copy for tonight's DELETE. DuckDB
+          # never truncates the file after deletes, hence the weekly
+          # VACUUM; it rewrites the whole file, so it is stamp-gated AND
+          # disk-headroom-guarded (never ENOSPC the root at 03:00 — the
+          # btrfs-gc-guard lesson).
+          DB="$STATE_DIR/monitor365.duckdb"
+          if [ -f "$DB" ] && [ -s "$DB" ]; then
+            CUTOFF=$(date -d "-${toString retentionDays} days" '+%Y-%m-%d %H:%M:%S')
+            BEFORE=$(duckdb "$DB" -noheader -list -c "SELECT COUNT(*) FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null || echo "?")
+            if duckdb "$DB" -c "DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null; then
+              echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; window ${toString retentionDays}d)"
+            else
+              echo "monitor365-retention: WARNING — DELETE failed (DB left as-is; tonight's export above is intact)"
+            fi
+            REMAINING=$(duckdb "$DB" -noheader -list -c "SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
+            echo "monitor365-retention: rows remaining: $REMAINING"
+
+            STAMP="$STATE_DIR/.retention-vacuum-stamp"
+            NOW_S=$(date +%s)
+            LAST_S=$(cat "$STAMP" 2>/dev/null || echo 0)
+            if [ $((NOW_S - LAST_S)) -ge ${toString vacuumIntervalSeconds} ]; then
+              DB_BYTES=$(stat -c %s "$DB")
+              AVAIL_BYTES=$(df -B1 --output=avail "$STATE_DIR" | tail -1)
+              NEEDED_BYTES=$((DB_BYTES + ${toString vacuumHeadroomBytes}))
+              if [ "$AVAIL_BYTES" -gt "$NEEDED_BYTES" ]; then
+                if duckdb "$DB" -c "VACUUM;" 2>/dev/null; then
+                  date +%s > "$STAMP"
+                  echo "monitor365-retention: VACUUM done — file $DB_BYTES -> $(stat -c %s "$DB") bytes"
+                else
+                  echo "monitor365-retention: WARNING — VACUUM failed (stamp NOT updated; retries next window)"
+                fi
+              else
+                echo "monitor365-retention: WARNING — VACUUM skipped, headroom $AVAIL_BYTES < needed $NEEDED_BYTES; retries next window"
+              fi
+            fi
+          fi
 
           echo "monitor365-server-backup: backup complete, server restored"
         '';
@@ -419,8 +471,20 @@
                 User = lib.mkForce "root";
                 Group = lib.mkForce "root";
                 StateDirectory = lib.mkForce null;
-                TimeoutStartSec = "10min";
+                # The export + retention + weekly VACUUM window: observed
+                # exports ran 2.5-6 min; a 25 GB VACUUM on the QLC root
+                # needs the rest of the budget.
+                TimeoutStartSec = "30min";
+                # Observed memory peaks 7.4-20.8 GB across the 2026-10-19
+                # ..23 fires (systemd Consumed lines) — the root-run
+                # override previously carried NO cap at 03:00 while other
+                # nightly jobs run. 8G/12G keeps the watermark coherent
+                # (MemoryHigh >= 50% of MemoryMax, memory-watermark-audit)
+                # with headroom above the 10.2 GB observed peak.
+                MemoryHigh = "8G";
+                MemoryMax = "12G";
               }
+              ioTier.background
             ];
           };
         })

@@ -13,6 +13,8 @@ Post-re-enable runtime residue (2026-10-18):
 
 **Backup quiesce (2026-10-18):** upstream's backup opens the live DuckDB while the unit orders `After+Wants` the server — DuckDB is single-writer, so every fire died "Conflicting lock is held" and no backup was ever produced. The wrapper overrides `monitor365-server-backup` to stop the server (watchdog timer paused first — its is-active check auto-starts an inactive server and would re-grab the lock mid-export), run the export, and restore both via an EXIT trap. ~1min dashboard outage at 03:00 and at boot catch-up. Proper upstream fix (HTTP admin backup endpoint from the running server) queued in docs/todo/upstream.md.
 
+**NVMe safety copy EXISTS (2026-10-22, T04 of the /data repair plan):** `/mnt/pool/archive/monitor365-nvme-safety/` — owner-run `sudo rsync -a /var/lib/monitor365-server/` (33m57s), taken from the QUIESCED DB (server down in the 2026-10-21 pool-acquire wedge window — no lock/WAL in flight). Verified landed: dir present (rsync-preserved 750 `monitor365-server:monitor365-server`) + pool avail dropped 39.21 GB across the copy window. Contents root-only readable (750 preserved) — the nightly backup wrapper's own exports live in the same source dir on the same NVMe, so this is the ONLY off-NVMe copy of the DuckDB. The original T04 two-leg 54G premise was stale: the 31G `/data/monitor365` leg had already moved pool-side 2026-08-18 (`data-to-pool-migration.service`).
+
 - **Package alias trap** — `pkgs.monitor365` = agent (CLI), NOT server. Server is `monitor365-server` (symlinkJoin with WASM UI).
 - **No JIT SSO provisioning** — Users MUST be pre-provisioned via bootstrap or `create-admin` CLI. SSO login fails if email doesn't match existing user.
 - **DuckDB not SQLite** — Uses `.duckdb` extension. `normalize_db_path` converts `.db` → `.duckdb` as safety net.
@@ -22,3 +24,18 @@ Post-re-enable runtime residue (2026-10-18):
 - **Graphical collectors need** — `input`/`video` groups, `ProtectProc = "default"` (not `invisible`), `%t` (not `$XDG_RUNTIME_DIR`) in ExecStart.
 - **utoipa-swagger-ui overlay** — `overlays/linux.nix` deletes 0444 zip between cargo check/build. Remove when upstream fixes `fs::copy`.
 - **libspa-sys vendored Cargo.tomls** — ALWAYS strip `[lints]` sections when regenerating vendor patches. `workspace = true` fails in sandbox.
+
+## Event volume + retention (2026-10-23)
+
+**Diagnosis** (docs/status/2026-10-23_01-09_monitor365-db-io-diagnosis-self-review.md + planning/2026-10-23_01-42_SUPERB-monitor365-event-volume-fix.md): the DB grew <1 GB → 25.1 GB in 4 days when the 597M-event backlog drained (Oct 18–21); `system_monitor365_buffer_pressure` has been 1 since ~Oct 19 (25.1 GB file vs MemoryMax 4G). The 597M came from the Apr 21 → Aug 12 collection era: the integrity-hash serialization bug rejected ~every upload (fixed upstream 2026-07-18), so the agent buffered everything (~61 events/sec average). The four volume engines (ground truth = rendered config): **mouse** (realtime, per-movement), **keystrokes** (realtime, per-keypress), **fs_event** (1 s interval = flat 86,400/day), **process** (one event per start AND exit, cmdline+environ payloads — kept: core dashboard feature).
+
+**Fixes (live at the next `nix run .#deploy`):**
+
+1. **Volume-engine cuts** — configuration.nix `settings.collectors`: `keystrokes.enabled = false`, `mouse.enabled = false` (afk_status already covers idle detection), `fs_event.interval_seconds = 60` (1.4% of prior volume). EFFECTIVE ONLY AT THE NEXT AGENT START — the agent unit is owner-stopped since 2026-10-21 03:10; the collector cut does nothing until then.
+2. **Nightly retention** — the quiesced backup script (monitor365.nix `monitor365BackupScript`) now runs, INSIDE the server-stopped window and AFTER the export: `DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '<now-90d>'` (validated on DuckDB 1.5.5 against both TIMESTAMP and VARCHAR columns + malformed rows — try_cast skips them). The export that precedes it each night is the rollback copy; the 2026-10-22 owner NVMe safety copy above is the belt-and-suspenders pre-retention snapshot. Window = `retentionDays` (90) in monitor365.nix; raise/lower there.
+3. **Weekly VACUUM** — DuckDB never truncates the file after deletes; a stamp-gated (`$STATE_DIR/.retention-vacuum-stamp`, 7 d) `VACUUM;` reclaims the ~15 GB bloat. Headroom-guarded: skipped with a loud WARN if free space on the state dir < DB size + 5 GiB (never ENOSPC the root at 03:00). First fire after deploy VACUUMs immediately (no stamp) — expect the 03:00 window to run long ONCE (~10-20 min on the QLC root), then ~6 min/night.
+4. **Backup unit hardening** — MemoryHigh 8G / MemoryMax 12G (observed peaks 7.4–20.8 GB uncapped), ioTier.background, TimeoutStartSec 30min.
+
+**First-fire expectations** (first calm night post-deploy): journal shows `monitor365-retention:` lines (deleted-boundary count ≈ Apr–Jul era events, likely 400M+), rows-remaining, and a VACUUM line with the 25.1 GB → ~7-10 GB shrink. If DELETE or VACUUM fails, the script WARNs and leaves the DB as-is (that night's export is intact); the server still comes back via the EXIT trap. Rollback ladder: prior night's `*.backup_*.db` (heal-script restore path) → the NVMe safety copy.
+
+**Successors deliberately not done here:** upstream archive-to-Parquet-then-delete (the `archival` crate exists), server-native retention, DuckDB hot-tier move, agent restart decision (owner) — queued in docs/todo/{services,upstream}.md.

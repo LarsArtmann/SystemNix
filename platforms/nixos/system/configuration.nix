@@ -1509,7 +1509,14 @@ in
           system_info.enabled = lib.mkDefault true;
           process.enabled = lib.mkDefault true;
           location.enabled = lib.mkDefault true;
-          fs_event.enabled = lib.mkDefault true;
+          # Volume-engine cut (2026-10-23, the 597M-event / 25.1 GB DB
+          # diagnosis): fs_event at the 1s module default is a flat
+          # 86,400 events/day firehose; 60s keeps the capability at
+          # 1.4% of that volume.
+          fs_event = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 60;
+          };
           # bluetooth disabled (zbus::blocking panics inside tokio)
           bluetooth.enabled = lib.mkDefault false;
           # Desktop collectors (skip gracefully if no graphical session)
@@ -1518,8 +1525,14 @@ in
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 3600; # 1h minimum enforced by validation
           };
-          keystrokes.enabled = lib.mkDefault true;
-          mouse.enabled = lib.mkDefault true;
+          # Volume-engine cuts (2026-10-23): mouse + keystrokes are
+          # REALTIME per-event streams (~10-100 ev/s while active) that
+          # dominated the 61 events/sec collection-era average behind the
+          # 597M backlog; afk_status already covers idle detection.
+          # OFF until someone misses them — flipping back is a one-line
+          # change + agent restart.
+          keystrokes.enabled = lib.mkDefault false;
+          mouse.enabled = lib.mkDefault false;
           clipboard.enabled = lib.mkDefault true;
           notifications.enabled = lib.mkDefault true;
           app_usage.enabled = lib.mkDefault true;
