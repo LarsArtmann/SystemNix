@@ -28,19 +28,10 @@ for arg in "$@"; do
 done
 
 TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
-UNITS="
-fastflowlm.socket
-fastflowlm.service
-llama-chat.service
-llama-embeddings.service
-llama-reranker.service
-llama-vlm-e4b.socket
-llama-vlm-e4b.service
-llama-vlm-cap.socket
-llama-vlm-cap.service
-memory-emergency-guard.service
-memory-emergency-guard.timer
-"
+# single-line on purpose: `read -a` below consumes only the FIRST line of a
+# herestring — a leading newline would silently produce an empty unit list
+# (live-caught: every unit read not-found with a green systemctl call)
+UNITS="fastflowlm.socket fastflowlm.service llama-chat.service llama-embeddings.service llama-reranker.service llama-vlm-e4b.socket llama-vlm-e4b.service llama-vlm-cap.socket llama-vlm-cap.service memory-emergency-guard.service memory-emergency-guard.timer"
 
 red_reasons=()
 
@@ -72,14 +63,25 @@ for i in $(seq 0 $((n_ports - 1))); do
   port=$(jq -r ".[$i].port" <<<"$ports_json")
   owner=$(jq -r ".[$i].owner" <<<"$ports_json")
   label=$(jq -r ".[$i].label" <<<"$ports_json")
-  line="$(grep -E "^[A-Z]+ +[0-9]+ +[0-9]+ [^ ]*:${port} " <<<"$ss_out" | head -1 || true)"
+  # ss pads columns with runs of spaces — anchor on the port token followed
+  # by whitespace (the Peer column), never on column positions
+  line="$(grep -E ":${port}[[:space:]]" <<<"$ss_out" | grep -E '^LISTEN' | head -1 || true)"
   if [ -z "$line" ]; then
     verdict="free"
     holder="-"
   else
     pid="$(sed -n 's/.*pid=\([0-9]*\).*/\1/p' <<<"$line" | head -1)"
     if [ -z "$pid" ]; then
-      holder="pid-hidden(root-owned?)" verdict="held"
+      # ss hides pids of sockets our user cannot ptrace (root-held incl.
+      # systemd's own socket listeners). A hidden holder is FINE on an
+      # ACTIVE socket unit (that is PID 1 holding the listening fd), but
+      # on anything else it is an unattributable holder = the rogue class.
+      if [[ "$owner" == *.socket ]] && [ "${unit_state2[$owner]:-}" = "active" ]; then
+        holder="systemd (socket)" verdict="systemd(socket)"
+      else
+        holder="pid-hidden" verdict="HELD-UNVERIFIED"
+        red_reasons+=(":$port held by an UNVERIFIABLE listener (owning unit ${unit_state2[$owner]:-not-found}, not an active socket) - the 2026-09-18 rogue class; run: sudo ss -ltnp 'sport = :$port'")
+      fi
     else
       cg="$(cat "/proc/$pid/cgroup" 2>/dev/null || echo unreadable)"
       holder="pid $pid (${cg##*/})"
