@@ -148,7 +148,9 @@ lib.filterAttrs (_: v: v != null) {
   # whole enumeration; everything else cascaded from it. DROP when upstream
   # bakes the got hash or the lock moves past an upstream-fixed rev; re-add
   # ONLY via nix-hash-fix evidence, never by hand.
-  cqrs-lint = flakePkgShim inputs.go-cqrs-lite "cqrs-lint" "sha256-EQe80wmzlsTM1PjjLKcsOPW/oEXJG4mV3dsJhR9+ZOE=";
+  cqrs-lint =
+    flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
+      "sha256-EQe80wmzlsTM1PjjLKcsOPW/oEXJG4mV3dsJhR9+ZOE=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
   # specified hash /D4X81jj… no longer reproduces under the followed
@@ -306,10 +308,12 @@ lib.filterAttrs (_: v: v != null) {
   # pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
   # projects-management-automation shim RE-ADDED (2026-10-23 lock float):
   # first-hand keep-going probe got sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0
-  # (specified U9F6gATv, got NBQcjrwD). Drop when upstream bakes this value.
+  # (specified U9F6gATv, got NBQcjrwD). VALUE LIVES IN lib/vendor-shims.nix
+  # (2026-10-23 dedup): the module's service surface carries the same shim, and
+  # two hand-synced literals drift. Drop when upstream bakes this value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0=";
+      (import ./vendor-shims.nix).projects-management-automation;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

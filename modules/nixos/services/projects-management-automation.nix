@@ -64,12 +64,16 @@
           # override (lock == tip; lars-packages surface dropped in the
           # same pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
           # RE-ADDED 2026-10-23 (lock float): first-hand keep-going probe got
-          # sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0 (specified
-          # U9F6gATv, got NBQcjrwD). The lars-packages shim alone did NOT
-          # land because this module consumes the flake's own package attr.
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0=";
-          };
+          # sha256-NBQcjrwD… (specified U9F6gATv). The VALUE lives in
+          # lib/vendor-shims.nix (2026-10-23 dedup) because the lars-packages
+          # surface shims the same hash — the module needs its own override
+          # only because it consumes the flake's own package attr, which never
+          # sees the lars-packages one. One value, two consumers.
+          package =
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = (import ../../../lib/vendor-shims.nix).projects-management-automation;
+              };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";
