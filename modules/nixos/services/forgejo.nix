@@ -105,44 +105,13 @@ _: {
         # say `runs-on: native` (the 2026-10-11 run-1 block was build.yml
         # requesting "native:host", not a runner-config gap). These config
         # labels are DefaultLabels (config.go: applied only to connections
-        # without labels — the connection below deliberately omits labels
-        # and inherits these).
+        # without labels) — the legacy .runner registration (deprecated in
+        # v13, still used by the register ExecStartPre) currently supplies
+        # the same labels; this line keeps config the source of truth for
+        # when registration is retired.
         runner.labels = runnerLabels;
       };
-      # ── forgejo-runner v13 connections flow (2026-10-23 migration) ──
-      # Source-verified against v13.2.0:
-      #   - daemon.go:57 — the daemon REQUIRES ≥1 server connection; the
-      #     .runner-only legacy flow survives only via config.FromRegistration
-      #     (registration.go:32), which ERRORS if the config already carries
-      #     connections ("server connection conflict").
-      #   - config.go:443-484 — connection token via token_url requires a
-      #     `file:` URL (ResolveSecretURL rejects bare paths); uuid must parse
-      #     as a UUID at config load.
-      #   - register.go — `act_runner register` still writes the .runner file
-      #     (deprecated but functional) — kept as the FRESH-HOST fallback.
-      # Identity: the uuid Forgejo knows is carried from the pre-migration
-      # gitea-runner state dir (forgejo-runner-carry-identity, root step) and
-      # rendered into the daemon config at start (@RUNNER_UUID@ → sed) — the
-      # upstream nixos test's replace-secret pattern, minus the secret (the
-      # uuid is identity, not a credential).
-      # runner.file points at a path that NEVER exists so FromRegistration
-      # stays a no-op for the daemon (a stray .runner next to a
-      # connections-carrying config is a hard daemon error).
-      daemonRunnerSettings = runnerSettings // {
-        runner.file = "/nonexistent/.runner";
-        server.connections.default = {
-          url = forgejoUrl;
-          uuid = "@RUNNER_UUID@";
-          token_url = "file:/run/forgejo-runner/token.bare";
-        };
-      };
-      # register-time config: identical shape but runner.file targets the
-      # registration/ subdir (register writes cfg.Runner.File; the daemon
-      # never loads THIS yaml).
-      registerSettings = runnerSettings // {
-        runner.file = "registration/.runner";
-      };
-      runnerConfigFile = (pkgs.formats.yaml { }).generate "runner-config.yaml" registerSettings;
+      runnerConfigFile = (pkgs.formats.yaml { }).generate "runner-config.yaml" runnerSettings;
 
       inherit
         (import ./_forgejo-scripts.nix {
@@ -177,7 +146,6 @@ _: {
         hermesForgejoTokenDeliver
         hermesCfg
         genRunnerToken
-        carryRunnerIdentity
         registerRunner
         oidcSetupScript
         addKeysScript
@@ -1303,27 +1271,15 @@ _: {
           };
         };
 
-        # 2026-10-23 lock-wave migration: services.gitea-actions-runner was
-        # REMOVED by nixpkgs (assertion at eval) — services.forgejo-runner
-        # replaces it. Unit renames gitea-runner-<escaped> → forgejo-runner-
-        # <escaped> and StateDirectory moves gitea-runner/<name> →
-        # forgejo-runner/<name>: the .runner identity is PRESERVED by the
-        # forgejo-runner-carry-identity root ExecStartPre (uuid copy — no
-        # re-registration, no orphaned Forgejo entity).
-        # Deliberately NO url/labels/name/tokenFile here: the module's rename
-        # compat would create a server.connections entry that hard-requires
-        # a token secret templated via LoadCredential — incompatible with
-        # the LoadCredential = mkForce [] tmpfs fix below (gen-runner-token
-        # writes the file INSIDE the start, after systemd's credential
-        # setup — the 2026-10-16 start-limit class). The daemon keeps the
-        # legacy .runner flow: register-runner carries --instance itself and
-        # runnerSettings.runner.labels stays the label source of truth
-        # (act_runner compat symlink verified present in 13.2.0).
-        services.forgejo-runner = {
+        services.gitea-actions-runner = {
           package = pkgs.forgejo-runner;
           instances.${hostName} = {
             enable = true;
-            settings = daemonRunnerSettings;
+            name = hostName;
+            url = "${forgejoUrl}";
+            tokenFile = "/run/forgejo-runner/token";
+            labels = runnerLabels;
+            settings = runnerSettings;
           };
         };
 
@@ -1339,7 +1295,7 @@ _: {
         # never silent churn).
         users.groups.gitea-runner-cache = { };
 
-        systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}" = {
+        systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
           startLimitBurst = 5;
@@ -1386,35 +1342,24 @@ _: {
               # Go cache init EROFS despite 2770 group perms; mount gating via
               # unitConfig.RequiresMountsFor is already in place)
               ReadWritePaths = [ "/mnt/buildcache/ci-runner-cache" ];
-              # The module's LoadCredential is mkForce-cleared: its
-              # token_url templating resolves through $CREDENTIALS_DIRECTORY,
-              # but systemd sets up credentials BEFORE ExecStartPre and /run
-              # is tmpfs — gen-runner-token writes the file INSIDE the start
-              # (the 2026-10-16 start-limit class: every boot failed the
-              # CREDENTIALS step into start-limit-hit; the runner was DOWN
-              # from the 2026-10-16 00:07 boot until this line). The v13
-              # connection instead uses a direct file: URL
-              # (/run/forgejo-runner/token.bare) resolved by the daemon
-              # itself at config load — no credentials involved. The env
-              # TOKEN file survives only as the fallback-register input
-              # (sourced by forgejo-register-runner, not the unit).
-              LoadCredential = lib.mkForce [ ];
+              EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
-                # Identity carry-over BEFORE register: preserves the uuid
-                # Forgejo knows across the gitea-runner → forgejo-runner
-                # StateDirectory rename (root step — old dir is 0700 under
-                # the previous DynamicUser's random uid).
-                ("+" + lib.getExe carryRunnerIdentity)
                 (lib.getExe registerRunner)
               ];
               TimeoutStartSec = "3min";
               MemoryMax = "16G";
               SupplementaryGroups = [ "gitea-runner-cache" ];
-              # The module's rendered config carries @RUNNER_UUID@ — the
-              # daemon must run the RENDERED copy (registerRunner's output,
-              # upstream nixos-test pattern), not the store template.
-              ExecStart = lib.mkForce "${lib.getExe pkgs.forgejo-runner} daemon --config \"\${STATE_DIRECTORY}/config.yaml\"";
+              # Kill the nixpkgs module's LoadCredential=token:<tokenFile>
+              # (nixpkgs lock 55bfb4d added it): systemd sets up credentials
+              # BEFORE ExecStartPre, but /run is tmpfs and gen-runner-token
+              # writes the file INSIDE the start — every boot failed the
+              # CREDENTIALS step ("No such file or directory") into
+              # start-limit-hit; the runner was DOWN from the 2026-10-16
+              # 00:07 boot until this line (hub Actions runs sat "waiting";
+              # the 00:07 triage queued the class, this closes it). TOKEN
+              # reaches the daemon via EnvironmentFile instead.
+              LoadCredential = lib.mkForce [ ];
             }
             ioTier.build
           ];

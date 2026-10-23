@@ -48,7 +48,6 @@ _: {
         mkDnsGate
         harden
         serviceOneshotDefaults
-        ioTier
         ;
 
       # The gate hostname is the hub index host `cscli hub update` fetches
@@ -101,11 +100,9 @@ _: {
 
       yaml = pkgs.formats.yaml { };
       # Same content as the upstream module's own configFile (generated from
-      # the MERGED settings.config, defaults included) — cscli must see the
+      # the MERGED settings.general, defaults included) — cscli must see the
       # identical db_config/paths or the repair could touch the wrong DB.
-      # (2026-10-23: general → config — the nixpkgs crowdsec module rewrite
-      # (PR #446307) tracks crowdsec's own config.yaml restructure.)
-      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.config;
+      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.general;
 
       # Upstream gap (live 2026-10-14): `machine add --auto` writes the DB row
       # FIRST and the credentials file SECOND — when the file write fails, the
@@ -270,28 +267,24 @@ _: {
 
         services.crowdsec = {
           # LAPI on loopback (upstream default 8080 collides with SigNoz).
-          # 2026-10-23 migration (nixpkgs PR #446307, crowdsec config.yaml
-          # restructure): settings.general.* → settings.config.* and
-          # settings.lapi.credentialsFile → settings.config.api.client.
-          # credentials_path; localConfig → settings.{acquisitions,parsers}.
-          settings.config = {
+          settings.general = {
             api.server = {
               enable = true;
               listen_uri = "127.0.0.1:${toString ports.crowdsec-lapi}";
             };
             prometheus.listen_port = ports.crowdsec-metrics;
-            # REQUIRED once the LAPI server is enabled: the upstream setup
-            # script interpolates this path (machine add --auto writes it).
-            # Lives under ReadWritePaths.
-            api.client.credentials_path = lapiCredentialsFile;
           };
+          # REQUIRED once the LAPI server is enabled: the upstream setup
+          # script interpolates this path (machine add --auto writes it) —
+          # null is an eval-time failure. Lives under ReadWritePaths.
+          settings.lapi.credentialsFile = lapiCredentialsFile;
 
           hub.collections = [
             "crowdsecurity/linux" # syslog + geoip + sshd scenarios
             "crowdsecurity/caddy" # caddy-logs parser + base-http-scenarios
           ];
 
-          settings = {
+          localConfig = {
             acquisitions = [
               {
                 source = "journalctl";
@@ -354,24 +347,6 @@ _: {
             # 180s gate budget + margin (gate-timeout-audit floor is 4min).
             TimeoutStartSec = "4min";
           };
-        };
-
-        systemd.services.crowdsec-setup = {
-          # The rewritten upstream module (nixpkgs PR #446307, landed with
-          # the 2026-10-23 lock wave) ships crowdsec-setup — hub
-          # install/upgrade + machine register (+ console enroll when
-          # configured) — as a boot-transaction oneshot directly wanted by
-          # multi-user.target. House wiring the upstream unit lacks: a
-          # bounded TimeoutStartSec (netbird-evox2-login infinite-boot
-          # class), the background IO tier (hub download is small but the
-          # freeze-history doctrine tiers every boot unit), and the
-          # scripts/deploy.sh provisioner-loop entry ("-setup$" converger
-          # class: hub collection changes must re-converge on deploy —
-          # stc never restarts oneshots).
-          serviceConfig = lib.mkMerge [
-            (serviceOneshotDefaults { })
-            ioTier.background
-          ];
         };
 
         systemd.services.crowdsec = {
