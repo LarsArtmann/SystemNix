@@ -66,12 +66,39 @@ _: {
     }:
     let
       cfg = config.services.fastflowlm;
-      inherit (import ../../../lib/default.nix lib)
+      libHelpers = import ../../../lib/default.nix lib;
+      inherit (libHelpers)
         harden
         ports
         ioTier
+        mkPortGuard
         ;
       inherit (config.users) primaryUser;
+
+      # Release-verified port handoff on the BACKEND port (berth pattern,
+      # 2026-10-23): the :52626 EADDRINUSE class recurred 5× (zombie corpse
+      # pinning the port 2026-09-04/05/07, orphan ESTABLISHED pair 09-30,
+      # rogue orphans 09-18) with zero automated defense — the ephemeral-port
+      # reservation only covers the collision class, not a holder process.
+      # Kills any :52626 listener outside fastflowlm.service's cgroup,
+      # verifies the release, and fails the start NAMING an unkillable holder
+      # (bind-blocked) instead of letting flm die on an opaque EADDRINUSE.
+      # Spares the backend's own cgroup so a restart-window drainer is never
+      # killed. Runs `+`-privileged: rogues run as foreign users (root needed
+      # both to signal them and to see their pids in ss output).
+      #
+      # WHY NOT :52625 (the public socket): fastflowlm.socket owns that
+      # listener — PID 1 holds the bind while the socket unit is active, so a
+      # foreign bind is impossible (kernel EADDRINUSE at THEIR bind), and when
+      # the socket stops systemd closes the fd itself. There is no
+      # process-level holder to guard against; a guard there could only kill
+      # systemd's own listener.
+      portGuard = mkPortGuard {
+        inherit pkgs;
+        name = "fastflowlm-port-guard";
+        logTag = "fastflowlm";
+        ownerUnits = [ "fastflowlm.service" ];
+      };
 
       # Per-connection bridge (inetd-style, spawned per client connection by
       # the Accept=true socket): wait until :52626 accepts a TCP connection,
@@ -344,6 +371,9 @@ _: {
               ExecStart =
                 "${lib.getExe cfg.package} serve ${cfg.model} --host ${cfg.host} --port ${toString cfg.backendPort} --pmode ${cfg.pmode}"
                 + (lib.optionalString cfg.loadAsr " --asr 1");
+
+              # Release-verified :52626 handoff — see portGuard binding above.
+              ExecStartPre = "+${portGuard} ${toString cfg.backendPort}";
 
               Environment = [
                 "HOME=/var/lib/fastflowlm"

@@ -23,6 +23,12 @@ in
     ;
   serviceTypes = import ./types.nix lib;
 
+  # Release-verified port handoff for `+`-privileged ExecStartPre use (the
+  # berth pattern; see ./port-guard.nix for the full contract). Callers:
+  # llama-rag.nix (extracted from its proven portGuardScript 2026-09-18),
+  # fastflowlm.nix (:52626 corpse/rogue class, 5 recurrences unguarded).
+  mkPortGuard = import ./port-guard.nix lib;
+
   mkStateDir =
     path: mode: user: group:
     "d ${path} ${mode} ${user} ${group} -";

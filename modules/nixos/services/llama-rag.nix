@@ -171,25 +171,21 @@ _: {
       # `+`-privileged (root) because the rogue runs as a foreign user;
       # spares anything inside this module's own unit cgroups. Idempotent:
       # after the kill the port is free and the real server binds.
-      portGuardScript = pkgs.writeShellScript "llama-rag-port-guard.sh" ''
-        set -euo pipefail
-        port="$1"
-        pids="$("${pkgs.iproute2}/bin/ss" -tlnp "sport = :$port" 2>/dev/null \
-          | "${pkgs.gnused}/bin/sed" -n 's/.*pid=\([0-9]*\).*/\1/p' \
-          | "${pkgs.coreutils}/bin/sort" -u || true)"
-        for pid in $pids; do
-          cgroup="$("${pkgs.coreutils}/bin/cat" "/proc/$pid/cgroup" 2>/dev/null || true)"
-          case "$cgroup" in
-            *llama-embeddings.service*|*llama-reranker.service*) ;;
-            *)
-              echo "llama-rag: stale listener on :$port (pid $pid, foreign cgroup) - killing"
-              "${pkgs.coreutils}/bin/kill" "$pid" 2>/dev/null || true
-              "${pkgs.coreutils}/bin/sleep" 2
-              "${pkgs.coreutils}/bin/kill" -9 "$pid" 2>/dev/null || true
-              ;;
-          esac
-        done
-      '';
+      #
+      # EXTRACTED into the shared lib helper 2026-10-23 (berth-patterns plan
+      # T1: this proven script — live since 2026-09-18 — became
+      # lib/port-guard.nix, gaining PID start-time identity + release
+      # verification; fastflowlm consumes the same helper). Single source of
+      # the pattern; do not fork a copy back in here.
+      portGuardScript = libHelpers.mkPortGuard {
+        inherit pkgs;
+        name = "llama-rag-port-guard";
+        logTag = "llama-rag";
+        ownerUnits = [
+          "llama-embeddings.service"
+          "llama-reranker.service"
+        ];
+      };
 
       # Leak monitor (2026-09-02 incident: 10 leaked llama-server pairs in
       # D-state up to 55h, each restart under QLC saturation stranding
