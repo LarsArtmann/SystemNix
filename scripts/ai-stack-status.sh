@@ -45,21 +45,14 @@ memory-emergency-guard.timer
 red_reasons=()
 
 # --- unit states (batched: one systemctl call for all) ---
-declare -A unit_state
-while IFS='=' read -r key val; do
-  [ -n "${key:-}" ] || continue
-  unit_state["$key"]="$val"
-done < <(systemctl show $(tr '\n' ' ' <<<"$UNITS") -p Id -p ActiveState 2>/dev/null | paste -d= - - 2>/dev/null || true)
-# paste pairing is fragile across systemd versions; re-parse robustly:
 declare -A unit_state2
 last_id=""
-while -r IFS= read -r line; do
+while IFS= read -r line; do
   case "$line" in
     Id=*) last_id="${line#Id=}" ;;
     ActiveState=*) [ -n "$last_id" ] && unit_state2["$last_id"]="${line#ActiveState=}" ;;
   esac
 done < <(systemctl show $(tr '\n' ' ' <<<"$UNITS") -p Id -p ActiveState 2>/dev/null || true)
-unit_state=("${unit_state2[@]}")
 
 for u in $UNITS; do
   st="${unit_state2[$u]:-not-found}"
@@ -111,7 +104,6 @@ dark_prom="$TEXTFILE_DIR/llama-rag-dark.prom"
 guard_fresh="absent"
 if [ -f "$guard_prom" ]; then
   age=$(( $(date +%s) - $(stat -c %Y "$guard_prom") ))
-  last_run="$(prom_field "$guard_prom" memory_emergency_guard_last_run_timestamp_seconds)"
   if [ "$age" -le 300 ]; then guard_fresh="fresh(${age}s)"; else guard_fresh="STALE(${age}s)"; red_reasons+=("memory-emergency-guard metrics STALE (${age}s) — RAM broker unwatched"); fi
 fi
 restore_capped="$(prom_field "$guard_prom" memory_emergency_guard_restore_capped)"

@@ -81,7 +81,7 @@
           inherit onFailure;
 
           # Clean skip on hosts without books — never a failed unit.
-          conditionPathExists = [ "${cfg.booksDir}/journal.yaml" ];
+          unitConfig.ConditionPathExists = [ "${cfg.booksDir}/journal.yaml" ];
 
           serviceConfig = lib.mkMerge [
             (harden {

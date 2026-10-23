@@ -1,3 +1,8 @@
+## Live pool addendum (2026-10-23 07:49)
+
+New live reports: `2026-10-23_07-55_monitor365-data-governance-batch.md` (named ~7 min ahead of wall clock — committed 07:35), `2026-10-23_07-05`→plan not report, `2026-10-23_04-20_monitor365-session-self-review-status.md`, `2026-10-23_03-55_monitor365-rendered-fixture-deploy-deferral-3.md`
+— the monitor365 data-governance arc under the owner's IO/s steer: rendered-artifact retention fixture green ×2 + row 446 closed (03:55); self-review owning the `;`-chain push, assert-before-verify regex, and the missed post-push gate re-run that let a foreign-wave eval-red go unnoticed 25 min (04:20); the governance batch — collector cadence set landed inert (process 5 s sampling / network+battery 300 s / location 900 s), tenant-cap governor doctrine pinned everywhere (rec 250 k/day, owner sets it), papdashboard nested-treefmt follows healing the lock-audit red, 4 upstream rows (bounded queue, environ opt-in, rollups, cap observability), deploy force-deferred DOUBLE (PSI + wave-red: hermes IFD + crowdsec-via-unfetched-nixpkgs) (07:55/07:49).
+
 ## Live pool addendum (2026-10-23 06:37)
 
 New live report: `2026-10-23_06-37_t04-done-inboxclean-driver-unmasked-self-review.md`
