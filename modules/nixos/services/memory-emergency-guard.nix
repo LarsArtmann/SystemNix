@@ -1102,6 +1102,14 @@ _: {
             # no-resume exclusions).
             "crush-hot-db-migrate.service"
             "discordsync-db-heal.service"
+            # InboxClean dashboard (2026-10-23): the 2026-10-20..23 storm's
+            # top unit reader (+13-26 GB per 10-min window) — every page
+            # load rescans a 1.5 GB SQLite living on the HDD pool, and the
+            # poller re-fires the moment the previous query is canceled.
+            # Zone 6 stopped flm/backups for 2.4 days without ever touching
+            # the actual driver. Restart-converges (plain web service), so
+            # the generic re-arm path restores it once io PSI drains.
+            "inboxclean-web.service"
           ];
           description = "Resumable I/O churn units stopped on ANY trip (Zone 6's real mitigation: crash #3 was stacked full-disk readers). RE-ARMED (systemctl start, best-effort) by the guard once sustained io PSI drains under the trip threshold — without the re-arm a mid-receive stop pushed the nightly btrbk send a full +24h (the timer had already fired), and a second storm in the 3-day freshness window FAILED the backup check (2026-09-16 23:00 trip #299 class). btrfs-scrub@* instances are deliberately NOT re-armed: btrfs scrub has no resume, so restarting one re-reads the whole filesystem (the freeze-#7 restart loop) — they stay dead until their own weekly timer window. Each unit's own pre-start guards decide whether it is safe to run; an interrupted receive is healed by btrbk-pool-clean. Stopping an inactive unit is a no-op";
         };
