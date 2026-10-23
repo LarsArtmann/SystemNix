@@ -52,6 +52,46 @@
           fi
         '';
       };
+      # Emit-then-sweep crash-orphan pre-start (monitoring.md:127): every
+      # `.state.json.*.tmp` under the data dir is the residue of a writer
+      # that died mid-atomic-rename — a free crash-count signal. The count
+      # is recorded durably (journal lines + a dedicated textfile gauge)
+      # BEFORE the sweep deletes the evidence. Journal lines age out under
+      # vacuum pressure; the gauge survives until the next daemon start
+      # rewrites it.
+      crashOrphanSweep = pkgs.writeShellApplication {
+        name = "storage-collector-crash-orphan-sweep";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.findutils
+        ];
+        text = ''
+          dataDir="${cfg.dataDir}"
+          promFile="${textfileDir}/storage-collector-crash-orphans.prom"
+
+          mapfile -t orphans < <(find "$dataDir" -maxdepth 1 -name '.state.json.*.tmp' -print)
+          count=''${#orphans[@]}
+
+          if (( count > 0 )); then
+            echo "storage-collector: $count crash-orphaned state tmp file(s) found (writer died mid-atomic-rename):"
+            printf '  %s\n' "''${orphans[@]}"
+          fi
+
+          # Explicit 0644: the unit's UMask=0077 stands (crate-side
+          # doctrine) and node_exporter must be able to read the gauge.
+          tmp="$promFile.$$.tmp"
+          {
+            echo "# HELP storage_collector_crash_orphans_total Crash-orphaned .state.json tmp files found at daemon start (emit-then-sweep)"
+            echo "# TYPE storage_collector_crash_orphans_total gauge"
+            printf 'storage_collector_crash_orphans_total %d %s\n' "$count" "$(date +%s)"
+          } > "$tmp"
+          chmod 0644 "$tmp"
+          mv -f "$tmp" "$promFile"
+
+          find "$dataDir" -maxdepth 1 -name '.state.json.*.tmp' -delete
+          echo "storage-collector: crash-orphan sweep complete ($count removed, gauge emitted)"
+        '';
+      };
       inherit (import ../../../lib/default.nix lib)
         harden
         onFailure
@@ -94,16 +134,17 @@
           # must point at a storage-collector revision containing the
           # explicit-0644 textfile write (landed 2026-10-12) BEFORE this
           # deploys, else the .prom regresses to 0600 until the bump.
-          # Crash-orphan sweep (2026-10-12): the atomic state rewrite
-          # (tmp + rename) leaves `.state.json.*.tmp` behind whenever the
-          # process dies mid-write — three live orphans (Sep 19 ×2 + the
-          # Oct 10 23:22 crash cut, journal-attributed boot) proved nothing
-          # else cleans them; one orphan per crash doubles as a free
-          # crash-count signal. Best-effort (`-` prefix): a DynamicUser UID
-          # rotation could leave an old orphan undeletable, which must
-          # never block the daemon from starting.
+          # Crash-orphan sweep (2026-10-12) — emit-first since 2026-10-23:
+          # the atomic state rewrite (tmp + rename) leaves
+          # `.state.json.*.tmp` behind whenever the process dies mid-write
+          # — three live orphans (Sep 19 ×2 + the Oct 10 23:22 crash cut,
+          # journal-attributed boot) proved nothing else cleans them; one
+          # orphan per crash doubles as a free crash-count signal, so the
+          # sweep counts and records it before deleting. Best-effort (`-`
+          # prefix): a DynamicUser UID rotation could leave an old orphan
+          # undeletable, which must never block the daemon from starting.
           ExecStartPre = [
-            "-${pkgs.findutils}/bin/find ${cfg.dataDir} -maxdepth 1 -name '.state.json.*.tmp' -delete"
+            "-${lib.getExe crashOrphanSweep}"
           ];
         };
 

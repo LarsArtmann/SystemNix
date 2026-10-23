@@ -146,6 +146,7 @@ _: {
         hermesForgejoTokenDeliver
         hermesCfg
         genRunnerToken
+        carryRunnerIdentity
         registerRunner
         oidcSetupScript
         addKeysScript
@@ -1271,14 +1272,26 @@ _: {
           };
         };
 
-        services.gitea-actions-runner = {
+        # 2026-10-23 lock-wave migration: services.gitea-actions-runner was
+        # REMOVED by nixpkgs (assertion at eval) — services.forgejo-runner
+        # replaces it. Unit renames gitea-runner-<escaped> → forgejo-runner-
+        # <escaped> and StateDirectory moves gitea-runner/<name> →
+        # forgejo-runner/<name>: the .runner identity is PRESERVED by the
+        # forgejo-runner-carry-identity root ExecStartPre (uuid copy — no
+        # re-registration, no orphaned Forgejo entity).
+        # Deliberately NO url/labels/name/tokenFile here: the module's rename
+        # compat would create a server.connections entry that hard-requires
+        # a token secret templated via LoadCredential — incompatible with
+        # the LoadCredential = mkForce [] tmpfs fix below (gen-runner-token
+        # writes the file INSIDE the start, after systemd's credential
+        # setup — the 2026-10-16 start-limit class). The daemon keeps the
+        # legacy .runner flow: register-runner carries --instance itself and
+        # runnerSettings.runner.labels stays the label source of truth
+        # (act_runner compat symlink verified present in 13.2.0).
+        services.forgejo-runner = {
           package = pkgs.forgejo-runner;
           instances.${hostName} = {
             enable = true;
-            name = hostName;
-            url = "${forgejoUrl}";
-            tokenFile = "/run/forgejo-runner/token";
-            labels = runnerLabels;
             settings = runnerSettings;
           };
         };
@@ -1295,7 +1308,7 @@ _: {
         # never silent churn).
         users.groups.gitea-runner-cache = { };
 
-        systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
+        systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
           startLimitBurst = 5;
@@ -1345,6 +1358,11 @@ _: {
               EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
+                # Identity carry-over BEFORE register: preserves the uuid
+                # Forgejo knows across the gitea-runner → forgejo-runner
+                # StateDirectory rename (root step — old dir is 0700 under
+                # the previous DynamicUser's random uid).
+                ("+" + lib.getExe carryRunnerIdentity)
                 (lib.getExe registerRunner)
               ];
               TimeoutStartSec = "3min";

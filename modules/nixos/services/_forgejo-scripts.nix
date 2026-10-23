@@ -1709,6 +1709,39 @@ in
     '';
   };
 
+  # 2026-10-23: the forgejo-runner module renames the runner's StateDirectory
+  # gitea-runner/<name> → forgejo-runner/<name>. Without this carry-over the
+  # legacy .runner identity (uuid the Forgejo server knows) would be orphaned
+  # and the daemon would re-register as a NEW entity, leaving the old
+  # registration offline in the UI forever. Runs as a "+"-prefixed (root)
+  # ExecStartPre BEFORE forgejo-register-runner: the old dir is 0700 owned by
+  # the PREVIOUS DynamicUser's random uid — only root can read it. Copies are
+  # chmod 644 so the NEW dynamic uid can read them (systemd's StateDirectory
+  # re-own pass at next start normalizes ownership; the 0700 dir protects the
+  # token-bearing .runner meanwhile). Idempotent: skips files already present
+  # in the new dir, silent no-op once the old dir is reclaimed.
+  carryRunnerIdentity = pkgs.writeShellApplication {
+    name = "forgejo-runner-carry-identity";
+    runtimeInputs = [ pkgs.coreutils ];
+    text = ''
+      OLD="/var/lib/gitea-runner/${hostName}"
+      NEW="''${STATE_DIRECTORY:-/var/lib/forgejo-runner/${hostName}}"
+
+      if [ ! -d "$OLD" ]; then
+        exit 0
+      fi
+
+      for f in .runner .labels .forgejo-migrated; do
+        if [ -f "$OLD/$f" ] && [ ! -e "$NEW/$f" ]; then
+          mkdir -p "$NEW"
+          cp "$OLD/$f" "$NEW/$f.carry-tmp" && mv "$NEW/$f.carry-tmp" "$NEW/$f"
+          chmod 644 "$NEW/$f"
+          echo "carried $f from $OLD (gitea-runner → forgejo-runner state rename)"
+        fi
+      done
+    '';
+  };
+
   registerRunner = pkgs.writeShellApplication {
     name = "forgejo-register-runner";
     runtimeInputs = [
@@ -1716,15 +1749,16 @@ in
       pkgs.forgejo-runner
     ];
     text = ''
-      # STATE_DIRECTORY is a colon-joined LIST since nixpkgs 55bfb4d (the
-      # gitea-actions-runner module now declares StateDirectory =
-      # [ "gitea-runner" "gitea-runner/<name>" ]); the naive
-      # "$STATE_DIRECTORY/${hostName}" interpolation produced the bogus path
-      # /var/lib/gitea-runner:/… (mkdir EROFS in the sandboxed ExecStartPre,
-      # 5 rapid failures → start-limit-hit, 2026-10-15 20:10 switch). Take
-      # the FIRST list entry — the instance dir lives under it, matching the
-      # module's own WorkingDirectory = /var/lib/gitea-runner/<name>.
-      export INSTANCE_DIR="''${STATE_DIRECTORY%%:*}/${hostName}"
+      # 2026-10-23: the forgejo-runner module (successor of the removed
+      # gitea-actions-runner) declares a SINGLE StateDirectory entry
+      # ("forgejo-runner/<name>") — STATE_DIRECTORY IS the instance dir.
+      # (The old module's two-entry list form made the naive
+      # "$STATE_DIRECTORY/${hostName}" interpolation produce the bogus
+      # /var/lib/gitea-runner:/… path — mkdir EROFS, 5 rapid failures →
+      # start-limit-hit, 2026-10-15 20:10 switch. Under the new single-entry
+      # shape a %%:* + /${hostName} suffix would DOUBLE the hostName:
+      # /var/lib/forgejo-runner/<name>/<name> — use the value as-is.)
+      export INSTANCE_DIR="$STATE_DIRECTORY"
       mkdir -vp "$INSTANCE_DIR"
       cd "$INSTANCE_DIR"
 
