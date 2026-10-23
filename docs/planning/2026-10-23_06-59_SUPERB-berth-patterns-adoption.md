@@ -2,7 +2,7 @@
 
 **Status: PLANNED — not executing.** Dispatch goes through `TODO_LIST.md` (rows queued in the same commit as this plan). No plan-execution tombstone applies until an executor picks a row up.
 
-**Authored:** 2026-10-23 06:59 CEST · **Trigger:** owner question "What can we learn from [T-Crypt/berth](https://github.com/T-Crypt/berth) for our AI deployments?"
+**Created:** 2026-10-23 06:59 CEST · **Trigger:** owner question "What can we learn from [T-Crypt/berth](https://github.com/T-Crypt/berth) for our AI deployments?"
 
 ---
 

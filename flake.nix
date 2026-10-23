@@ -885,7 +885,11 @@
     offline-banner.inputs.nixpkgs.follows = "nixpkgs";
     offline-banner.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.flake-parts.follows = "flake-parts";
-    papdashboard.inputs.treefmt-nix.follows = "treefmt-nix";
+    # treefmt-nix arrives NESTED under papdashboard's own go-nix-helpers
+    # pin (no direct input — the flat line here was a no-op override that
+    # left the real edge unfollowed and lock-audit red, 2026-10-23;
+    # journal.inputs.go-nix-helpers.inputs.treefmt-nix is the precedent).
+    papdashboard.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     papdashboard.inputs.nixpkgs.follows = "nixpkgs";
     overview.inputs.git-hooks.follows = "git-hooks";
     project-meta.inputs.git-hooks.follows = "git-hooks";
