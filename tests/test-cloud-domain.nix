@@ -3,8 +3,11 @@
 # the REAL evo-x2 + rpi3-dns configurations (inputs.self) — no stubs, so this
 # also guards the integrated host eval, not an isolated reconstruction.
 #
-#   1. dnsblockd serves BOTH zones on BOTH DNS hosts; every subdomain has a
-#      cloud twin record (no wildcard — sdns ignores them).
+#   1. dnsblockd carries cloud twin RECORDS on BOTH DNS hosts (no wildcard
+#      record — explicit aliases by design), but the cloud zone is NOT a
+#      closed localZone: since 2026-10-23 unknown cloud names FORWARD to the
+#      encrypted upstreams (Unbound local-zone "transparent" semantics —
+#      records win, misses resolve normally). home.lan stays closed.
 #   2. Caddy mirrors every home.lan vHost under the cloud domain, plus a
 #      cloud catch-all serving the branded 404 page (both zones).
 #   3. TLS comes from the boot-minted dual-zone cert: vHosts reference
@@ -40,10 +43,11 @@ let
   rpi3MissingCloud = builtins.filter (
     s: !rpi3.services.dns-blocker.localRecords ? "${s}.${cloud}."
   ) subdomains;
-  # The authoritative cloud zone shadows public records: every entry in
-  # dns-local.nix cloudPublicRecords (the NetBird control plane on pbx)
-  # MUST exist as an explicit local record on BOTH hosts, or the name
-  # NXDOMAINs on the LAN/VPN while resolving publicly (found 2026-10-02).
+  # Public hosts pinned as explicit records (see dns-local.nix
+  # cloudPublicRecords): auth is load-bearing (its alias twin would shadow
+  # the public pbx record — found live 2026-10-12); netbird/relay are
+  # redundant since the 2026-10-23 boundary drop (forwarding answers them)
+  # but stay pinned as explicit intent.
   missingPublicCloud = builtins.filter (
     s: !(dnsRecords ? "${s}.${cloud}.") || dnsRecords."${s}.${cloud}." != cloudPublic.${s}
   ) (builtins.attrNames cloudPublic);
@@ -55,17 +59,23 @@ let
   rpi3ZonesOk =
     rpi3.services.dns-blocker.localZones == [
       "${home}."
-      "${cloud}."
     ];
 
   checks = [
     {
-      ok =
-        zones == [
-          "${home}."
-          "${cloud}."
-        ];
-      msg = "evo-x2 dnsblockd localZones must contain both zones";
+      # 2026-10-23 invariant: home.lan closed, cloud zone GONE from the
+      # closed boundaries (records + forwarding instead — the NXDOMAIN
+      # burn class and the MX defect died with the boundary; re-adding
+      # it needs a conscious revert of this pin and the rationale in
+      # dns-blocker-config.nix).
+      ok = zones == [
+        "${home}."
+      ];
+      msg = "evo-x2 dnsblockd localZones must be home.lan ONLY — the cloud zone rides records + forwarding (adding it back re-opens the NXDOMAIN/MX burn class)";
+    }
+    {
+      ok = !builtins.elem "${cloud}." zones && !builtins.elem "${cloud}." rpi3.services.dns-blocker.localZones;
+      msg = "the cloud zone must NOT be a closed localZone on either host (records win, misses forward — since 2026-10-23)";
     }
     {
       ok = missingDnsRecords == [ ];
@@ -77,7 +87,7 @@ let
     }
     {
       ok = missingPublicCloud == [ ] && rpi3MissingPublicCloud == [ ];
-      msg = "public cloud records shadowed by the alias zone (evo-x2: ${toString missingPublicCloud}, rpi3: ${toString rpi3MissingPublicCloud}) — netbird/relay would NXDOMAIN on the LAN/VPN";
+      msg = "cloudPublicRecords drift (evo-x2: ${toString missingPublicCloud}, rpi3: ${toString rpi3MissingPublicCloud}) — auth's alias twin would shadow the public pbx record";
     }
     {
       ok = mirroredFrom == [ ];

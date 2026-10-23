@@ -152,10 +152,22 @@ in
         }
         # Split-horizon alias zone (brainstorming 2026-09-30): the same
         # service set under the cloud domain so VPN clients get one
-        # namespace everywhere. No wildcard entry — explicit records only,
-        # by design (unknown cloud names NXDOMAIN; a wildcard WOULD work
-        # since dnsblockd d5a22a4b, but a deliberately closed alias zone
-        # beats typos silently landing on the catch-all page).
+        # namespace everywhere. Explicit records only — no wildcard entry
+        # (a wildcard WOULD work since dnsblockd d5a22a4b, but explicit
+        # aliases beat typos silently landing on the catch-all page).
+        # ZONE POLICY (2026-10-23, offline-proven against the live engine):
+        # the cloud zone is NOT registered in localZones below — records
+        # win (Unbound local-data semantics hold regardless of zone
+        # registration), and unknown cloud names FORWARD to the encrypted
+        # upstreams instead of NXDOMAINing. That is Unbound local-zone
+        # "transparent" behaviour, and it kills the closed-zone burn class
+        # at its root: the 2026-10-02 netbird/relay and 2026-10-12 auth
+        # NXDOMAINs, and the live MX defect (LAN/VPN senders could not
+        # resolve the larsartmann.cloud mail exchanger — probed rcode=3
+        # 2026-10-23). New public cloud names now answer via upstream with
+        # NO cloudPublicRecords mirror; typos still die (public authority
+        # NXDOMAINs names that do not exist). home.lan stays a CLOSED zone:
+        # genuinely private, must never leak upstream.
         // builtins.listToAttrs (
           map (subdomain: {
             name = "${subdomain}.${cloudDomain}.";
@@ -165,18 +177,23 @@ in
         // {
           "${cloudDomain}." = serverIP;
         }
-        # Public hosts inside the authoritative cloud zone (see
-        # dns-local.nix cloudPublicRecords): the NetBird control plane on
-        # pbx must resolve to its public IP instead of being
-        # shadow-NXDOMAINed by the alias zone. Without this, evo-x2 cannot
-        # reach netbird.larsartmann.cloud at all — client enrollment AND
-        # Gatus checks die on DNS (found live 2026-10-02).
+        # Public hosts that must NOT be shadowed by the alias twins above
+        # (see dns-local.nix cloudPublicRecords). auth is LOAD-BEARING:
+        # "auth" is also a localSubdomain, so its alias twin would shadow
+        # the public pbx record (found live 2026-10-12 — LAN/VPN browsers
+        # hit the wrong box and every pbx gate login from the LAN died);
+        # the explicit entry wins. netbird/relay are redundant-but-kept
+        # since the 2026-10-23 boundary drop (forwarding answers them
+        # identically) — they document intent and pin the answers offline.
         // lib.mapAttrs' (
           sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip
         ) dnsLocal.cloudPublicRecords;
+      # Closed NXDOMAIN boundaries — home.lan ONLY. The cloud zone rides
+      # records + forwarding (see the alias-zone comment above); it must
+      # NOT reappear here without re-accepting the closed-zone burn class
+      # (pinned by tests/test-cloud-domain.nix since 2026-10-23).
       localZones = [
         "${domain}."
-        "${cloudDomain}."
       ];
       allowedNetworks = [
         "127.0.0.0/8"

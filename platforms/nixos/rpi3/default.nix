@@ -122,7 +122,12 @@ in
           "${domain}." = lanIP;
         }
         # Split-horizon alias zone — mirrors evo-x2 (dns-blocker-config.nix)
-        # so failover clients resolve the cloud namespace too.
+        # so failover clients resolve the cloud namespace too. Zone policy
+        # mirrors evo-x2 since 2026-10-23: the cloud zone is records +
+        # forwarding (unknown names answer from the encrypted upstreams),
+        # NOT a closed boundary — the NXDOMAIN burn class and the live MX
+        # defect died with the boundary (offline-proven against the engine,
+        # see dns-blocker-config.nix for the full rationale).
         // builtins.listToAttrs (
           map (subdomain: {
             name = "${subdomain}.${cloudDomain}.";
@@ -132,18 +137,18 @@ in
         // {
           "${cloudDomain}." = lanIP;
         }
-        # Public hosts inside the authoritative cloud zone (see
-        # dns-local.nix cloudPublicRecords) — mirrors evo-x2. Critical here
-        # twice over: failover clients resolve via rpi3, AND the phase-1
-        # NetBird DNS nameserver group points VPN clients at this host —
-        # without the records, netbird.larsartmann.cloud NXDOMAINs inside
-        # the VPN itself (found live 2026-10-02).
+        # Public hosts that must not be shadowed by the alias twins (see
+        # dns-local.nix cloudPublicRecords) — mirrors evo-x2. auth is
+        # load-bearing (its alias twin would shadow the public pbx record);
+        # netbird/relay are redundant-but-kept since the boundary drop.
         // lib.mapAttrs' (
           sub: ip: lib.nameValuePair "${sub}.${cloudDomain}." ip
         ) dnsLocal.cloudPublicRecords;
+      # Closed NXDOMAIN boundaries — home.lan ONLY (cloud zone rides
+      # records + forwarding; must NOT reappear here, test-cloud-domain
+      # pins this since 2026-10-23).
       localZones = [
         "${domain}."
-        "${cloudDomain}."
       ];
       allowedNetworks = [
         "127.0.0.0/8"
