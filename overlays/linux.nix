@@ -203,6 +203,9 @@ let
           prev.monitor365-ui
         ];
         nativeBuildInputs = [ final.makeWrapper ];
+        # lib.getExe (services.monitor365-server unit scripts) warns on every
+        # eval without this (nixpkgs assumes the bin name, deprecated).
+        meta.mainProgram = "monitor365-server";
         postBuild = ''
           mkdir -p $out/share/monitor365/ui
           cp -r ${prev.monitor365-ui}/* $out/share/monitor365/ui/

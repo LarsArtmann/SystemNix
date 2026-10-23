@@ -52,7 +52,7 @@ let
       inherit (finalAttrs) src sourceRoot pname;
       pnpm = pkgs.pnpm_10;
       fetcherVersion = 3;
-      hash = "";
+      hash = "sha256-6yhnUvjOeQTWt0vLZK5Rz3CN7vKHTnzqslkAgozb3RA=";
     };
 
     nativeBuildInputs = [
