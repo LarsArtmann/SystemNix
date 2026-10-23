@@ -112,9 +112,9 @@ pkgs.runCommand "test-port-guard"
     # stat fixture: "<pid> (comm) R <18 fillers> <starttime>" — after the
     # last ') ' the starttime is field 20 (state=1, fillers=2..19, start=20).
     mkstat() {
-      local pid="$1" start="$2" dir="$FIX/proc/$1"
+      local pid="$1" start="$2" dir="$FIX/proc/$1" i
       mkdir -p "$dir"
-      { printf '%s (rogue-proc) R' "$pid"; seq 1 18 | tr '\n' ' '; printf '%s 999999 999999\n' "$start"; } > "$dir/stat"
+      { printf '%s (rogue-proc) R' "$pid"; for i in $(seq 1 18); do printf ' %s' "$i"; done; printf ' %s 999999 999999\n' "$start"; } > "$dir/stat"
     }
     mkcgroup() { mkdir -p "$FIX/proc/$1"; printf '%s' "$2" > "$FIX/proc/$1/cgroup"; }
     listener() { printf 'LISTEN 0 128 127.0.0.1:%s 0.0.0.0:* users:(("rogue",pid=%s,fd=8))\n' "$1" "$2"; }
@@ -128,7 +128,7 @@ pkgs.runCommand "test-port-guard"
     }
 
     # 1. foreign-killed -----------------------------------------------------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 52626 111 > "$FIX/ss-first"; : > "$FIX/ss-verify"
     mkstat 111 1000; mkcgroup 111 "$FOREIGN_CGROUP"
     : > "$KILLLOG"
@@ -139,7 +139,7 @@ pkgs.runCommand "test-port-guard"
     echo "PASS: foreign listener TERM+KILLed, port verified free"
 
     # 2. owner-spared (the LIVE case the dry-fire proved) --------------------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 52626 222 > "$FIX/ss-first"; listener 52626 222 > "$FIX/ss-verify"
     mkstat 222 2000; mkcgroup 222 "/system.slice/fastflowlm.service"
     : > "$KILLLOG"
@@ -149,7 +149,7 @@ pkgs.runCommand "test-port-guard"
     echo "PASS: owner-cgroup listener spared (both enumeration and verify)"
 
     # 3. pid-reuse: starttime flips between enumeration and signal -----------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 52626 333 > "$FIX/ss-first"; listener 52626 333 > "$FIX/ss-verify"
     mkstat 333 3000; mkcgroup 333 "$FOREIGN_CGROUP"
     mkdir -p "$FIX/proc/333"; printf '%s' "$(cat "$FIX/proc/333/stat" | sed 's/ 3000 / 3999 /')" > "$FIX/proc/333/stat2"
@@ -159,32 +159,32 @@ pkgs.runCommand "test-port-guard"
     unset RECYCLE
     expect_rc 1 "$rc" "pid-reuse"
     [ -s "$KILLLOG" ] && { echo "FAIL: pid-reuse: kill was called on a recycled pid"; exit 1; }
-    grep -q "RECYCLED" <<<"$out" || { echo "FAIL: pid-reuse: no RECYCLED log"; exit 1; }
-    grep -q "BIND-BLOCKED" <<<"$out" || { echo "FAIL: pid-reuse: no BIND-BLOCKED verdict"; exit 1; }
+    grep -q "RECYCLED" <<<"$res" || { echo "FAIL: pid-reuse: no RECYCLED log"; exit 1; }
+    grep -q "BIND-BLOCKED" <<<"$res" || { echo "FAIL: pid-reuse: no BIND-BLOCKED verdict"; exit 1; }
     echo "PASS: recycled PID spares the new occupant, start fails named (bind-blocked)"
 
     # 4. port-free -----------------------------------------------------------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     : > "$FIX/ss-first"; : > "$FIX/ss-verify"
     : > "$KILLLOG"
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 0 "$rc" "port-free"
-    [ -n "$out" ] && { echo "FAIL: port-free: unexpected output: $out"; exit 1; }
+    [ -n "$res" ] && { echo "FAIL: port-free: unexpected output: $res"; exit 1; }
     echo "PASS: free port is inert (rc 0, silent)"
 
     # 5. unkillable corpse (kill is a no-op, listener persists) --------------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 52626 444 > "$FIX/ss-first"; listener 52626 444 > "$FIX/ss-verify"
     mkstat 444 4000; mkcgroup 444 "/user.slice/user-1000.slice/flm-zombie.scope"
     : > "$KILLLOG"
     rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 1 "$rc" "unkillable"
-    grep -q "BIND-BLOCKED" <<<"$out" || { echo "FAIL: unkillable: no BIND-BLOCKED verdict"; exit 1; }
-    grep -q "pid 444" <<<"$out" || { echo "FAIL: unkillable: holder pid not named"; exit 1; }
+    grep -q "BIND-BLOCKED" <<<"$res" || { echo "FAIL: unkillable: no BIND-BLOCKED verdict"; exit 1; }
+    grep -q "pid 444" <<<"$res" || { echo "FAIL: unkillable: holder pid not named"; exit 1; }
     echo "PASS: unkillable holder named, start fails fast (flm 09-04 zombie class)"
 
     # 6. owner-lingering at verify ------------------------------------------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 52626 555 > "$FIX/ss-first"; listener 52626 222 > "$FIX/ss-verify"
     mkstat 555 5000; mkcgroup 555 "$FOREIGN_CGROUP"
     mkstat 222 2000; mkcgroup 222 "/system.slice/fastflowlm.service"
@@ -192,11 +192,11 @@ pkgs.runCommand "test-port-guard"
     rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 0 "$rc" "owner-lingering"
     grep -q "KILL 555" "$KILLLOG" || { echo "FAIL: owner-lingering: foreign not killed"; exit 1; }
-    grep -q "owner-unit pid 222" <<<"$out" || { echo "FAIL: owner-lingering: no draining log"; exit 1; }
+    grep -q "owner-unit pid 222" <<<"$res" || { echo "FAIL: owner-lingering: no draining log"; exit 1; }
     echo "PASS: owner draining at verify is not a blocker"
 
     # 7. llama-rag guard: same helper, different owners (spare list) ---------
-    rm -rf "$FIX"; mkdir -p "$FIX"
+    rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
     listener 8848 666 > "$FIX/ss-first"; listener 8848 777 > "$FIX/ss-verify"
     mkstat 666 6000; mkcgroup 666 "/system.slice/llama-embeddings.service"
     mkstat 777 7000; mkcgroup 777 "$FOREIGN_CGROUP"
@@ -204,7 +204,7 @@ pkgs.runCommand "test-port-guard"
     rc=0; out="$("$work/rag-guard" 8848 2>&1)" || rc=$?
     expect_rc 1 "$rc" "rag-owners"
     [ -s "$KILLLOG" ] && { echo "FAIL: rag guard killed its own embeddings listener"; exit 1; }
-    grep -q "BIND-BLOCKED.*777" <<<"$out" || { echo "FAIL: rag guard missed foreign 777 at verify"; exit 1; }
+    grep -q "BIND-BLOCKED.*777" <<<"$res" || { echo "FAIL: rag guard missed foreign 777 at verify"; exit 1; }
     echo "PASS: llama-rag spare list matches its own units, flags foreign at verify"
 
     echo "ALL PORT-GUARD LEGS PASSED"
