@@ -6613,11 +6613,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1792735941,
-        "narHash": "sha256-RQ19jErYF8txCH7wrXUNoLLQOixiBNSsqSoMriuu2bY=",
+        "lastModified": 1792736501,
+        "narHash": "sha256-iFPOL/Pk1riPuC+JGAhZu+FyP2nLYpOX89WNmSaK86I=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "7693d4fdd2030635b00b27e51fde0baf149fe3a6",
+        "rev": "7253ce410fa5d325c970218b16f63c3012c55675",
         "type": "github"
       },
       "original": {
