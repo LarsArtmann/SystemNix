@@ -182,7 +182,9 @@ in
     # the identical clean pass, and systemd-tmpfiles at debug level logs
     # every rule/path it processes - the journal then names the exact
     # un-creatable path (the ask of the original diagnosis row).
-    units."systemd-tmpfiles-clean.service".dropins."10-cantcreat-debug.conf".text = ''
+    # systemd-tmpfiles-clean is upstream-shipped (not a config.systemd.services
+    # entry), so the OnFailure arms via a drop-in under /etc/systemd/system.
+    environment.etc."systemd/system/systemd-tmpfiles-clean.service.d/10-cantcreat-debug.conf".text = ''
       [Unit]
       OnFailure=tmpfiles-clean-debug.service
     '';

@@ -244,7 +244,12 @@
             # sustained storm rate of the 2026-10-20..23 window (16-26 GB per
             # 10-min guard trip), so dashboard queries still complete while
             # the cancel-retry scan loop can no longer monopolize the disk.
-            IOReadBandwidthMax = [
+            {
+              IOReadBandwidthMax = [
+                "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C_1 20M"
+                "/dev/disk/by-id/nvme-Lexar_SSD_NQ790_2TB_QBC838R010854P220C_1-part6 20M"
+              ];
+            }
             (lib.mkIf aiMeterEnabled {
               # Runtime-minted proxy key (ai-meter-keys oneshot); its
               # OPENAI_API_KEY also satisfies key-required clients.
