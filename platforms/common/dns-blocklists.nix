@@ -23,7 +23,7 @@ in
     {
       name = "HaGeZi-doh";
       url = hagezi "hosts/doh.txt";
-      hash = "sha256-z00/JP8zQiCjlo3gdtgPzLgyz5WrWRSc2OKnEjb/Qmo=";
+      hash = "sha256-25TZ0K+MI/9ZYyaS5zoJJN2zepMBxh7M7vgnl22s8EA=";
     }
     {
       name = "HaGeZi-native-apple";
