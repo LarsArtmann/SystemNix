@@ -21,9 +21,12 @@ set -uo pipefail
 FORMAT="text"
 for arg in "$@"; do
   case "$arg" in
-    --format) ;;
-    json) FORMAT="json" ;;
-    *) echo "ai-stack-status: unknown argument: $arg (usage: [--format json])" >&2; exit 2 ;;
+  --format) ;;
+  json) FORMAT="json" ;;
+  *)
+    echo "ai-stack-status: unknown argument: $arg (usage: [--format json])" >&2
+    exit 2
+    ;;
   esac
 done
 
@@ -41,8 +44,8 @@ last_id=""
 read -r -a unit_args <<<"$UNITS"
 while IFS= read -r line; do
   case "$line" in
-    Id=*) last_id="${line#Id=}" ;;
-    ActiveState=*) [ -n "$last_id" ] && unit_state2["$last_id"]="${line#ActiveState=}" ;;
+  Id=*) last_id="${line#Id=}" ;;
+  ActiveState=*) [ -n "$last_id" ] && unit_state2["$last_id"]="${line#ActiveState=}" ;;
   esac
 done < <(systemctl show "${unit_args[@]}" -p Id -p ActiveState 2>/dev/null || true)
 
@@ -76,7 +79,7 @@ for i in $(seq 0 $((n_ports - 1))); do
       # systemd's own socket listeners). A hidden holder is FINE on an
       # ACTIVE socket unit (that is PID 1 holding the listening fd), but
       # on anything else it is an unattributable holder = the rogue class.
-      if [[ "$owner" == *.socket ]] && [ "${unit_state2[$owner]:-}" = "active" ]; then
+      if [[ $owner == *.socket ]] && [ "${unit_state2[$owner]:-}" = "active" ]; then
         holder="systemd (socket)" verdict="systemd(socket)"
       else
         holder="pid-hidden" verdict="HELD-UNVERIFIED"
@@ -86,9 +89,12 @@ for i in $(seq 0 $((n_ports - 1))); do
       cg="$(cat "/proc/$pid/cgroup" 2>/dev/null || echo unreadable)"
       holder="pid $pid (${cg##*/})"
       case "$cg" in
-        *"$owner"*) verdict="owner" ;;
-        *init.scope*|*/system.slice/systemd*) verdict="systemd(socket)" ;;
-        *) verdict="FOREIGN"; red_reasons+=(":$port held by FOREIGN $holder") ;;
+      *"$owner"*) verdict="owner" ;;
+      *init.scope* | */system.slice/systemd*) verdict="systemd(socket)" ;;
+      *)
+        verdict="FOREIGN"
+        red_reasons+=(":$port held by FOREIGN $holder")
+        ;;
       esac
     fi
   fi
@@ -106,8 +112,11 @@ dark_prom="$TEXTFILE_DIR/llama-rag-dark.prom"
 
 guard_fresh="absent"
 if [ -f "$guard_prom" ]; then
-  age=$(( $(date +%s) - $(stat -c %Y "$guard_prom") ))
-  if [ "$age" -le 300 ]; then guard_fresh="fresh(${age}s)"; else guard_fresh="STALE(${age}s)"; red_reasons+=("memory-emergency-guard metrics STALE (${age}s) — RAM broker unwatched"); fi
+  age=$(($(date +%s) - $(stat -c %Y "$guard_prom")))
+  if [ "$age" -le 300 ]; then guard_fresh="fresh(${age}s)"; else
+    guard_fresh="STALE(${age}s)"
+    red_reasons+=("memory-emergency-guard metrics STALE (${age}s) — RAM broker unwatched")
+  fi
 fi
 restore_capped="$(prom_field "$guard_prom" memory_emergency_guard_restore_capped)"
 sacrificed="$(prom_field "$guard_prom" memory_emergency_guard_sacrifice_socket_active)"

@@ -74,10 +74,10 @@ _: {
       # paperless keeps Django's inert localhost default (EMAIL_ENABLED false).
       mailRelayEnabled = config.services.mail-relay.enable or false;
       paperlessUnits = [
-      "paperless-consumer.service"
-      "paperless-scheduler.service"
-      "paperless-task-queue.service"
-      "paperless-web.service"
+        "paperless-consumer.service"
+        "paperless-scheduler.service"
+        "paperless-task-queue.service"
+        "paperless-web.service"
       ];
 
       rcfg = config.services.paperless-db-restore;

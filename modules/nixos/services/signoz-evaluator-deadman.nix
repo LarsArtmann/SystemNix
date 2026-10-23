@@ -130,7 +130,7 @@
 
           mv -f "$TMP" "$OUT"
           trap - EXIT
-          '';
+        '';
       };
     in
     {

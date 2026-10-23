@@ -595,20 +595,17 @@
         # to avoid this fallback path.
         (lib.mkIf serverCfg.enable {
           systemd.services.monitor365-server = {
-            startLimitBurst = 5;
-            startLimitIntervalSec = 600; # 10 min — generous for watchdog recovery
+            # 2026-10-23 lock-float migration: upstream server-module now
+            # sets the typed top-level StartLimit* itself (1200s/5, with the
+            # 150s-secret-retry rationale — systemd 261+ ignores them in
+            # serviceConfig), so the SystemNix workaround values (600/5 +
+            # serviceConfig mkForce-nulls) are gone; a plain duplicate here
+            # made startLimitIntervalSec a conflicting-definition eval error.
             serviceConfig = lib.mkMerge [
               {
                 CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
                 MemoryMax = lib.mkForce "4G";
                 MemoryHigh = lib.mkForce "3G";
-                # Upstream bakes StartLimitBurst/StartLimitIntervalSec into
-                # serviceConfig (server-module.nix), where systemd 261+
-                # silently ignores them (start-limit-audit) — null them here
-                # and carry the real values via the typed top-level options
-                # above, which land in [Unit].
-                StartLimitBurst = lib.mkForce null;
-                StartLimitIntervalSec = lib.mkForce null;
               }
               ioTier.heavyDB
             ];

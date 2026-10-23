@@ -102,42 +102,41 @@
             backupExecStart =
               inputs.self.nixosConfigurations.evo-x2.config.systemd.services.monitor365-server-backup.serviceConfig.ExecStart;
           in
-          pkgs.runCommand "monitor365-retention-rendered" { }
-            ''
-              export PATH="${pkgs.duckdb}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
-              backup="${backupExecStart}"
+          pkgs.runCommand "monitor365-retention-rendered" { } ''
+            export PATH="${pkgs.duckdb}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+            backup="${backupExecStart}"
 
-              # Call-site contract: every retention constant must render
-              # as a quoted numeric — a bare var, an empty string, or a
-              # wrong key renders differently and fails here.
-              for kv in RETENTION_DAYS VACUUM_INTERVAL_S VACUUM_HEADROOM_B; do
-                grep -qE "$kv=\"[0-9]+\"" "$backup" \
-                  || { echo "FAIL: $kv not a quoted numeric in the rendered backup script"; exit 1; }
-              done
+            # Call-site contract: every retention constant must render
+            # as a quoted numeric — a bare var, an empty string, or a
+            # wrong key renders differently and fails here.
+            for kv in RETENTION_DAYS VACUUM_INTERVAL_S VACUUM_HEADROOM_B; do
+              grep -qE "$kv=\"[0-9]+\"" "$backup" \
+                || { echo "FAIL: $kv not a quoted numeric in the rendered backup script"; exit 1; }
+            done
 
-              # No uninterpolated Nix may survive rendering: the backup
-              # script legitimately contains zero literal dollar-brace
-              # sequences (shell params use "$var" style; a future shell
-              # expansion must be escaped in the module and re-checked).
-              if grep -q '[$]{' "$backup"; then
-                grep -n '[$]{' "$backup" | head -3
-                echo "FAIL: uninterpolated Nix expression left in the rendered backup script"
-                exit 1
-              fi
+            # No uninterpolated Nix may survive rendering: the backup
+            # script legitimately contains zero literal dollar-brace
+            # sequences (shell params use "$var" style; a future shell
+            # expansion must be escaped in the module and re-checked).
+            if grep -q '[$]{' "$backup"; then
+              grep -n '[$]{' "$backup" | head -3
+              echo "FAIL: uninterpolated Nix expression left in the rendered backup script"
+              exit 1
+            fi
 
-              # The call site must reference the rendered retention
-              # script, and that wrapper must carry its own runtimeInputs —
-              # a dropped duckdb from the writeShellApplication would die
-              # at 03:00 even though the harness PATH here masks it.
-              retention=$(grep -oE '/nix/store/[a-z0-9]+-monitor365-retention/bin/monitor365-retention' "$backup" | head -n1)
-              [ -x "$retention" ] || { echo "FAIL: no executable rendered retention script in the call site"; exit 1; }
-              grep -qE '/nix/store/[a-z0-9]+-duckdb[^/ ]*/bin' "$retention" \
-                || { echo "FAIL: rendered retention wrapper lacks its own duckdb runtimeInput"; exit 1; }
+            # The call site must reference the rendered retention
+            # script, and that wrapper must carry its own runtimeInputs —
+            # a dropped duckdb from the writeShellApplication would die
+            # at 03:00 even though the harness PATH here masks it.
+            retention=$(grep -oE '/nix/store/[a-z0-9]+-monitor365-retention/bin/monitor365-retention' "$backup" | head -n1)
+            [ -x "$retention" ] || { echo "FAIL: no executable rendered retention script in the call site"; exit 1; }
+            grep -qE '/nix/store/[a-z0-9]+-duckdb[^/ ]*/bin' "$retention" \
+              || { echo "FAIL: rendered retention wrapper lacks its own duckdb runtimeInput"; exit 1; }
 
-              # Execute the RENDERED script through the same toy-DB legs.
-              MONITOR365_RETENTION_SCRIPT="$retention" bash ${root}/scripts/test-monitor365-retention.sh
-              touch $out
-            '';
+            # Execute the RENDERED script through the same toy-DB legs.
+            MONITOR365_RETENTION_SCRIPT="$retention" bash ${root}/scripts/test-monitor365-retention.sh
+            touch $out
+          '';
 
         # The 2026-10-17 deploy-pipeline optimizations (deploy_restart
         # timeout bounds, content-addressed check-#1 stamp, the

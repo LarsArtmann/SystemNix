@@ -1159,12 +1159,12 @@ for zm_mnt in $(findmnt -rn -o TARGET 2>/dev/null | grep -E '^/mnt/' | sort -u |
   zm_src="$(findmnt -nro SOURCE -t btrfs,ext4,ext3,ext2,xfs,vfat,ntfs3,fuseblk "$zm_mnt" 2>/dev/null | tail -1 || true)"
   zm_dev="${zm_src%%\[*}"
   case "$zm_dev" in
-    /dev/*)
-      if [ ! -e "$zm_dev" ]; then
-        fail "ZOMBIE MOUNT $zm_mnt: source $zm_dev no longer exists (device-letter reassignment after USB flap) — recovery: sudo umount -l $zm_mnt && sudo systemctl restart the target's .automount unit, then reboot if it persists (see docs/agents/storage.md 'Stale mountinfo after USB hot-plug')"
-        ZM_TRIPPED=1
-      fi
-      ;;
+  /dev/*)
+    if [ ! -e "$zm_dev" ]; then
+      fail "ZOMBIE MOUNT $zm_mnt: source $zm_dev no longer exists (device-letter reassignment after USB flap) — recovery: sudo umount -l $zm_mnt && sudo systemctl restart the target's .automount unit, then reboot if it persists (see docs/agents/storage.md 'Stale mountinfo after USB hot-plug')"
+      ZM_TRIPPED=1
+    fi
+    ;;
   esac
   # Real-IO probe: the phantom-green killer. A zombie or shutdown-superblock
   # fs answers findmnt but fails every read (EIO). Own shell cd'd into the

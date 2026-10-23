@@ -250,10 +250,9 @@ in
           # missing-DISCORD_WEBHOOK_URL warning and exits 0. On a real host
           # with the unit, sops.nix always renders the template (its
           # condition keys on this very unit's existence).
-          EnvironmentFile =
-            lib.optionals
-              (((config.sops or { }).templates or { }) ? "notify-failure-p0-env")
-              [ config.sops.templates."notify-failure-p0-env".path ];
+          EnvironmentFile = lib.optionals (
+            ((config.sops or { }).templates or { }) ? "notify-failure-p0-env"
+          ) [ config.sops.templates."notify-failure-p0-env".path ];
           ExecStart =
             let
               notifyFailureP0 = pkgs.writeShellApplication {

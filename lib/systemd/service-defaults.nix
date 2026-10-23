@@ -99,5 +99,8 @@ in
   # because gatus itself is a P0 unit (2026-10-12: the 8-min sole-resolver
   # outage's only signal was one DND-suppressible desktop toast, and gatus's
   # own checks died with its OIDC gate in the same window).
-  onFailureP0 = [ toastOnFailure discordOnFailure ];
+  onFailureP0 = [
+    toastOnFailure
+    discordOnFailure
+  ];
 }

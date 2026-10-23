@@ -291,15 +291,51 @@
               # port-agnostic and the registry stays the single source.
               p = (import (root + "/lib/ports.nix")).ports;
               portsTable = builtins.toJSON [
-                { label = "flm public (socket)"; port = p.fastflowlm; owner = "fastflowlm.socket"; }
-                { label = "flm backend"; port = p.fastflowlm-backend; owner = "fastflowlm.service"; }
-                { label = "llama-chat"; port = p.llama-chat; owner = "llama-chat.service"; }
-                { label = "llama embeddings"; port = p.llama-embeddings; owner = "llama-embeddings.service"; }
-                { label = "llama reranker (reserved)"; port = p.llama-reranker; owner = "llama-reranker.service"; }
-                { label = "vlm e4b (socket)"; port = p.llama-vlm-e4b; owner = "llama-vlm-e4b.socket"; }
-                { label = "vlm e4b backend"; port = p.llama-vlm-e4b-backend; owner = "llama-vlm-e4b.service"; }
-                { label = "vlm cap (socket)"; port = p.llama-vlm-cap; owner = "llama-vlm-cap.socket"; }
-                { label = "vlm cap backend"; port = p.llama-vlm-cap-backend; owner = "llama-vlm-cap.service"; }
+                {
+                  label = "flm public (socket)";
+                  port = p.fastflowlm;
+                  owner = "fastflowlm.socket";
+                }
+                {
+                  label = "flm backend";
+                  port = p.fastflowlm-backend;
+                  owner = "fastflowlm.service";
+                }
+                {
+                  label = "llama-chat";
+                  port = p.llama-chat;
+                  owner = "llama-chat.service";
+                }
+                {
+                  label = "llama embeddings";
+                  port = p.llama-embeddings;
+                  owner = "llama-embeddings.service";
+                }
+                {
+                  label = "llama reranker (reserved)";
+                  port = p.llama-reranker;
+                  owner = "llama-reranker.service";
+                }
+                {
+                  label = "vlm e4b (socket)";
+                  port = p.llama-vlm-e4b;
+                  owner = "llama-vlm-e4b.socket";
+                }
+                {
+                  label = "vlm e4b backend";
+                  port = p.llama-vlm-e4b-backend;
+                  owner = "llama-vlm-e4b.service";
+                }
+                {
+                  label = "vlm cap (socket)";
+                  port = p.llama-vlm-cap;
+                  owner = "llama-vlm-cap.socket";
+                }
+                {
+                  label = "vlm cap backend";
+                  port = p.llama-vlm-cap-backend;
+                  owner = "llama-vlm-cap.service";
+                }
               ];
             in
             {

@@ -38,7 +38,9 @@ lib:
   logTag,
   ownerUnits,
 }:
-assert lib.assertMsg (builtins.length ownerUnits > 0) "mkPortGuard: ownerUnits must name at least one unit whose listeners are legitimate";
+assert lib.assertMsg (
+  builtins.length ownerUnits > 0
+) "mkPortGuard: ownerUnits must name at least one unit whose listeners are legitimate";
 pkgs.writeShellScript "${name}.sh" ''
   set -euo pipefail
   port="$1"

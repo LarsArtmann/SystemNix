@@ -1,9 +1,9 @@
 # Berth-Patterns Adoption — Release-Verified AI-Stack Handoffs
 
-**Status: EXECUTING — in progress (tombstone below).** Dispatch came via owner paste; rows stay in `TODO_LIST.md` and are ticked there as each task lands.
+**Status: EXECUTED 2026-10-23 — all tasks closed.** Rows ticked in `TODO_LIST.md`; narrative: docs/status/2026-10-23_08-05_berth-patterns-execution.md
 
 **Created:** 2026-10-23 06:59 CEST · **Trigger:** owner question "What can we learn from [T-Crypt/berth](https://github.com/T-Crypt/berth) for our AI deployments?"
-**EXECUTING (instance crush, owner-paste dispatch, HEAD f21152d64, 2026-10-23 07:09 CEST, HEAD `4cf457561`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance crush, all T1-T8 closed, 2026-10-23 08:06 CEST, HEAD `09108bf55`):** execution finished
 
 ---
 

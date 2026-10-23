@@ -636,21 +636,21 @@ in
           # each notification's process environment. Gated on BOTH the unit
           # existing (platform layer) and the secret being declared (hosts
           # without signoz/gatus/discordsync/papdashboard have neither).
-          // lib.optionalAttrs
-            (
-              config.systemd.services ? "notify-failure-p0@"
-              && config.sops.secrets ? "discord_alert_webhook_url"
-            )
-            {
-              "notify-failure-p0-env" = {
-                owner = "root";
-                group = "root";
-                mode = "0400";
-                content = lib.generators.toKeyValue { } {
-                  DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+          //
+            lib.optionalAttrs
+              (
+                config.systemd.services ? "notify-failure-p0@" && config.sops.secrets ? "discord_alert_webhook_url"
+              )
+              {
+                "notify-failure-p0-env" = {
+                  owner = "root";
+                  group = "root";
+                  mode = "0400";
+                  content = lib.generators.toKeyValue { } {
+                    DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+                  };
                 };
-              };
-            }
+              }
           // lib.optionalAttrs (svcEnabled "papdashboard") {
             "papdashboard-env" = {
               owner = "root";
