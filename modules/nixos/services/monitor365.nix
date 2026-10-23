@@ -176,6 +176,19 @@
       # DuckDB has no read-only side door against a writer's lock, so the
       # only consistent export is server-stopped (discordsync-migrate
       # idiom). ~1min dashboard outage at 03:00 / boot catch-up.
+      monitor365RetentionScript = pkgs.writeShellApplication {
+        name = "monitor365-retention";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.duckdb
+        ];
+        # Standalone + repo-file-backed so the fixture
+        # (checks.monitor365-retention-selftest) executes the SAME text
+        # the 03:00 window runs — eval cannot see interpolation or logic
+        # bugs in unattended-window scripts.
+        text = builtins.readFile ../../../scripts/monitor365-retention.sh;
+      };
+
       monitor365BackupScript = pkgs.writeShellApplication {
         name = "monitor365-server-backup-quiesced";
         runtimeInputs = [
@@ -223,42 +236,15 @@
           # ── Event retention (2026-10-23) ─────────────────────────────
           # Runs INSIDE the quiesce window (server stopped = the only
           # single-writer slot), AFTER the export above — the backup just
-          # written is the rollback copy for tonight's DELETE. DuckDB
-          # never truncates the file after deletes, hence the weekly
-          # VACUUM; it rewrites the whole file, so it is stamp-gated AND
-          # disk-headroom-guarded (never ENOSPC the root at 03:00 — the
-          # btrfs-gc-guard lesson).
-          DB="$STATE_DIR/monitor365.duckdb"
-          if [ -f "$DB" ] && [ -s "$DB" ]; then
-            CUTOFF=$(date -d "-${toString retentionDays} days" '+%Y-%m-%d %H:%M:%S')
-            BEFORE=$(duckdb "$DB" -noheader -list -c "SELECT COUNT(*) FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null || echo "?")
-            if duckdb "$DB" -c "DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null; then
-              echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; window ${toString retentionDays}d)"
-            else
-              echo "monitor365-retention: WARNING — DELETE failed (DB left as-is; tonight's export above is intact)"
-            fi
-            REMAINING=$(duckdb "$DB" -noheader -list -c "SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
-            echo "monitor365-retention: rows remaining: $REMAINING"
-
-            STAMP="$STATE_DIR/.retention-vacuum-stamp"
-            NOW_S=$(date +%s)
-            LAST_S=$(cat "$STAMP" 2>/dev/null || echo 0)
-            if [ $((NOW_S - LAST_S)) -ge ${toString vacuumIntervalSeconds} ]; then
-              DB_BYTES=$(stat -c %s "$DB")
-              AVAIL_BYTES=$(df -B1 --output=avail "$STATE_DIR" | tail -1)
-              NEEDED_BYTES=$((DB_BYTES + ${toString vacuumHeadroomBytes}))
-              if [ "$AVAIL_BYTES" -gt "$NEEDED_BYTES" ]; then
-                if duckdb "$DB" -c "VACUUM;" 2>/dev/null; then
-                  date +%s > "$STAMP"
-                  echo "monitor365-retention: VACUUM done — file $DB_BYTES -> $(stat -c %s "$DB") bytes"
-                else
-                  echo "monitor365-retention: WARNING — VACUUM failed (stamp NOT updated; retries next window)"
-                fi
-              else
-                echo "monitor365-retention: WARNING — VACUUM skipped, headroom $AVAIL_BYTES < needed $NEEDED_BYTES; retries next window"
-              fi
-            fi
-          fi
+          # written is the rollback copy for tonight's DELETE. Logic +
+          # guards live in scripts/monitor365-retention.sh (fixture-
+          # tested); WARN-not-die by design so this EXIT trap still
+          # restores the server.
+          STATE_DIR="$STATE_DIR" \
+          RETENTION_DAYS="${toString retentionDays}" \
+          VACUUM_INTERVAL_S="${toString vacuumIntervalSeconds}" \
+          VACUUM_HEADROOM_B="${toString vacuumHeadroomBytes}" \
+          ${lib.getExe monitor365RetentionScript}
 
           echo "monitor365-server-backup: backup complete, server restored"
         '';
