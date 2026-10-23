@@ -1509,10 +1509,14 @@ in
           system_info.enabled = lib.mkDefault true;
           process.enabled = lib.mkDefault true;
           location.enabled = lib.mkDefault true;
-          # Volume-engine cut (2026-10-23, the 597M-event / 25.1 GB DB
-          # diagnosis): fs_event at the 1s module default is a flat
-          # 86,400 events/day firehose; 60s keeps the capability at
-          # 1.4% of that volume.
+          # fs_event (2026-10-23): watch_paths is EMPTY — the notify
+          # watcher registers zero inodes and the collector emits ZERO
+          # events today (verified from upstream source: interval is
+          # only the channel-DRAIN cadence, not a debounce). The 60s
+          # interval is future-proofing: at the 1s module default a
+          # busy watched tree would flood (and the 100-slot bridge
+          # channel drops mid-burst anyway — pick paths deliberately
+          # before relying on this collector).
           fs_event = {
             enabled = lib.mkDefault true;
             interval_seconds = lib.mkDefault 60;
