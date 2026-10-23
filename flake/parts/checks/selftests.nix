@@ -70,21 +70,23 @@
         # scripts (the 2026-10-23 vacuumHeadroomBytes bare-var class,
         # caught only by reread). Executes the SAME repo file the
         # monitor365BackupScript calls, against real toy DuckDBs.
-        monitor365-retention-selftest = pkgs.runCommand "monitor365-retention-selftest"
-          {
-            env.PATH = lib.makeBinPath [
-              pkgs.bash
-              pkgs.coreutils
-              pkgs.duckdb
-            ];
-          }
-          ''
-            scratch=$(mktemp -d)
-            cp ${root}/scripts/monitor365-retention.sh "$scratch/monitor365-retention.sh"
-            cp ${root}/scripts/test-monitor365-retention.sh "$scratch/test-monitor365-retention.sh"
-            bash "$scratch/test-monitor365-retention.sh"
-            touch $out
-          '';
+        monitor365-retention-selftest =
+          pkgs.runCommand "monitor365-retention-selftest"
+            {
+              # NOTE: stdenv's setup re-sets PATH in the builder, so the
+              # tool list must be exported INSIDE the script body — an
+              # env.PATH attr is silently clobbered (proven by the check's
+              # own first failing run: "duckdb: command not found").
+              duckdb = pkgs.duckdb;
+            }
+            ''
+              export PATH="${pkgs.duckdb}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/monitor365-retention.sh "$scratch/monitor365-retention.sh"
+              cp ${root}/scripts/test-monitor365-retention.sh "$scratch/test-monitor365-retention.sh"
+              bash "$scratch/test-monitor365-retention.sh"
+              touch $out
+            '';
 
         # The 2026-10-17 deploy-pipeline optimizations (deploy_restart
         # timeout bounds, content-addressed check-#1 stamp, the
