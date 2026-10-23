@@ -73,7 +73,13 @@
       # shim pattern only when a future lock bump hits a fresh FOD mismatch
       # upstream has not baked yet (class comment: lib/lars-packages.nix
       # flakePkgShim).
-      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server;
+      # RE-ADDED 2026-10-23 (15:17 lock float): the new rev ships a go.sum
+      # whose vendor output no longer matches its baked hash — first-hand
+      # keep-going probe got sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w
+      # (specified g6Q8jl4X, got mi1+rwiO). Drop when upstream bakes it.
+      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs {
+        vendorHash = "sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w=";
+      };
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";

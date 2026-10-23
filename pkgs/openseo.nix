@@ -39,7 +39,7 @@ stdenv.mkDerivation (finalAttrs: {
     # changed with the nixpkgs bump; src/lockfile unchanged at v0.1.1).
     # 2026-10-05: re-measured for the a7868a7 flake-update wave (same class;
     # src/lockfile unchanged).
-    hash = "sha256-U5kmGreIloSOGwPJxvy9/EF4vWBCbS2A+uQlrRjdjF8=";
+    hash = "sha256-UvKL0upwjn0hudX+Pnwby2i6gGYclO/spdTv0SGGeGw=";
   };
 
   # Provide native libraries at build time so vite/wrangler/workerd can load native addons.

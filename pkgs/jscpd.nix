@@ -46,7 +46,7 @@ stdenv.mkDerivation (finalAttrs: {
     # computed at commit time. Pin the measured content hash.
     # 2026-10-05: re-measured for the a7868a7 flake-update wave (nixpkgs
     # fetchPnpmDeps drift; src/lockfile unchanged).
-    hash = "sha256-XrKNAT/xV7BT0Kd5aZZUnyTyRqozrotrk1arUIV5eX4=";
+    hash = "sha256-S+4toZOxvEBkXzUSNNSI56zyfagSxxdt9wfLnBwee60=";
   };
 
   dontBuild = true;

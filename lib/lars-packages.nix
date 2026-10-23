@@ -225,7 +225,12 @@ lib.filterAttrs (_: v: v != null) {
   # at tip aab411b9 bakes the shim's own SIbgnu0y… value — bit-neutral
   # override (lock == tip). Re-add ONLY via nix-hash-fix evidence, never
   # by hand.
-  library-policy = flakePkg inputs.library-policy;
+  # library-policy shim RE-ADDED (2026-10-23 lock float): the 15:17 float
+  # moved the input past the tip whose baked hash matched our locked rev;
+  # first-hand keep-going probe got sha256-7EyJHHnw83kphWvvpSNgo7hoRhtNdMpdc9Sb3LkrMdo
+  # (specified JKl9E1Rg, got 7EyJHHnw). Drop when upstream bakes this value.
+  library-policy = flakePkgShim inputs.library-policy "default"
+    "sha256-7EyJHHnw83kphWvvpSNgo7hoRhtNdMpdc9Sb3LkrMdo=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -298,7 +303,11 @@ lib.filterAttrs (_: v: v != null) {
   # flake.nix:111 at tip 849573de bakes the shim's own 5WOy3BHv… value —
   # bit-neutral override (lock == tip; service surface dropped in the same
   # pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
-  projects-management-automation = flakePkg inputs.projects-management-automation;
+  # projects-management-automation shim RE-ADDED (2026-10-23 lock float):
+  # first-hand keep-going probe got sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0
+  # (specified U9F6gATv, got NBQcjrwD). Drop when upstream bakes this value.
+  projects-management-automation = flakePkgShim inputs.projects-management-automation "default"
+    "sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

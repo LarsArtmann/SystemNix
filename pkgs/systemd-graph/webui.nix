@@ -34,7 +34,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     fetcherVersion = 4;
     # 2026-10-05: re-measured for the a7868a7 flake-update wave (nixpkgs
     # fetchPnpmDeps drift; src/lockfile unchanged).
-    hash = "sha256-SnGeF0rOPyRGx7h1eS1YAWtdN2B721Ma9qDL6dEOy20=";
+    hash = "sha256-MkUfxSvFwesc65UIp2wNg2WQhgvZbNwvVY8G4xP3Mtg=";
   };
 
   # pnpmConfigHook (in nativeBuildInputs) runs in postConfigure and handles
