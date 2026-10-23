@@ -1,6 +1,7 @@
 # SUPERB Backlog Masterplan — all 1,752 open TODOs scheduled
 
-**Authored:** 2026-10-23 09:53 CEST · **HEAD:** 56b602185 · **Status:** PLAN (not executing — `scripts/plan-marker.sh` marker owed before any execution session)
+**Created:** 2026-10-23 09:53 CEST · **HEAD:** 56b602185 · **Status:** PLAN (not executing — `scripts/plan-marker.sh` marker owed before any execution session)
+**EXECUTING (instance superb-masterplan-exec-1, 2026-10-23 11:24 CEST, HEAD `58bc5522e`):** executing (see AGENTS.md plan-execution tombstone)
 **Source inventory:** the 10 domain libraries (`docs/todo/{storage,stability,services,pipeline,monitoring,upstream,ai-stack,desktop,pixel6,security}.md`), open `- [ ]` rows only. The `TODO_LIST.md` queue mirrors the `[ready]` subset and is NOT double-counted.
 
 ## 1. What this is
