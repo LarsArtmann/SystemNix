@@ -173,6 +173,34 @@ in
       };
     };
 
+    # tmpfiles-clean CANTCREAT diagnosis (2026-10-23, task queue): the
+    # 2026-10-20 15:13 run (15 min after the incident-era 14:58 boot) failed
+    # status=73/CANTCREAT with NO failing line at the default log level and
+    # has NOT recurred (10-21/22/23 runs all green), so a manual verbose
+    # rerun today would pass and prove nothing. Instead the NEXT failure
+    # captures its own evidence: OnFailure triggers a debug-level rerun of
+    # the identical clean pass, and systemd-tmpfiles at debug level logs
+    # every rule/path it processes - the journal then names the exact
+    # un-creatable path (the ask of the original diagnosis row).
+    units."systemd-tmpfiles-clean.service".dropins."10-cantcreat-debug.conf".text = ''
+      [Unit]
+      OnFailure=tmpfiles-clean-debug.service
+    '';
+
+    services.tmpfiles-clean-debug = {
+      description = "Debug-level re-run of systemd-tmpfiles --clean to name the path that made systemd-tmpfiles-clean fail (CANTCREAT diagnosis)";
+      serviceConfig = {
+        Type = "oneshot";
+        # Boot-order correlation is the leading candidate (a tmpfiles rule
+        # touching a hot-tier/DAS path in the post-incident boot sequence),
+        # so the rerun must also survive a wedged path without hanging a
+        # failure chain indefinitely.
+        TimeoutStartSec = "10min";
+        Environment = [ "SYSTEMD_LOG_LEVEL=debug" ];
+        ExecStart = "${pkgs.systemd}/bin/systemd-tmpfiles --clean";
+      };
+    };
+
     services = {
       # Reusable failure notification template — use via `OnFailure = "notify-failure@%n.service"`
       "notify-failure@" = {

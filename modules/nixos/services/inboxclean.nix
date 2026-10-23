@@ -232,6 +232,19 @@
             (harden { MemoryMax = lib.mkForce "1G"; })
             (serviceDefaults { })
             ioTier.background
+            # InboxClean disposition, DECIDED 2026-10-23 (task queue):
+            # io.max throttle over stop-and-hold. A bare stop is not durable
+            # anyway (socket re-arm + the guard RESTORE branch are documented
+            # re-armers, the 2026-09-09 flm precedent) AND pauses email
+            # processing; the upstream query fix (docs/todo/upstream.md) is
+            # the real cure, this caps the blast radius until it lands.
+            # Reads pinned to the Lexar via by-id paths (whole namespace +
+            # root partition) so the known nvme0/nvme1 boot-to-boot name flip
+            # cannot orphan the cap; 20M/s = roughly half the 27-43 MB/s
+            # sustained storm rate of the 2026-10-20..23 window (16-26 GB per
+            # 10-min guard trip), so dashboard queries still complete while
+            # the cancel-retry scan loop can no longer monopolize the disk.
+            IOReadBandwidthMax = [
             (lib.mkIf aiMeterEnabled {
               # Runtime-minted proxy key (ai-meter-keys oneshot); its
               # OPENAI_API_KEY also satisfies key-required clients.
