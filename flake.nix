@@ -318,8 +318,14 @@
     # branch is main, no master exists). Watch: templ CLI ahead of
     # inboxclean/overview go.mod runtime v0.3.1070 = regen-skew warning
     # class (2026-10-06 break) — upstream row pins CLI ≥ runtime.
+    # REV-PINNED at 8bbdcac9 (2026-10-16) since 2026-10-23: the ?ref=main
+    # float moved templ's generated runtime past what overview's go.mod
+    # expects, so the overview build died with
+    # `templruntime.NewAttributeExpression` undefined. CLI-vs-runtime skew,
+    # not a code defect. LIFT: bump templ only together with an overview
+    # (and inboxclean) regen whose `nix build .#overview --no-link` passes.
     templ = {
-      url = "github:a-h/templ?ref=refs/heads/main";
+      url = "github:a-h/templ/8bbdcac97f59cd4fef43a834a9357b68da243d71";
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
