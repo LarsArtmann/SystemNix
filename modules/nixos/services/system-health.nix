@@ -799,6 +799,31 @@ _: {
             walk_journal "$WALK_DIR/pocket-id" pocket-id.service "-24h" "database is locked" 30 &
           fi
 
+          # === Kernel memcg OOM kills (freeze-#28 class) ===
+          # KERNEL hard-limit kills (CONSTRAINT_MEMCG) — the userspace
+          # systemd-oomd counter above sees "Marked for killing" only. The
+          # kernel line format (preserved freeze-#28 evidence, 2026-10-12):
+          #   oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,
+          #   mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,
+          #   task_memcg=...,task=nix,pid=...,uid=...
+          # walk_journal only counts; this section needs the RAW lines for
+          # per-memcg grouping, so it captures to a file in the same parallel
+          # window (journalctl exit 1 = no kills = valid empty; >=2/timeout
+          # fails VISIBLE via scrape_errors).
+          collect_memcg_oom=${lib.boolToString cfg.collectMemcgOom}
+          MEMCG_OOM_TOTAL=""
+          MEMCG_OOM_SCRAPE_ERRORS=1
+          MEMCG_OOM_RAW="$WALK_DIR/memcg-oom.raw"
+          MEMCG_OOM_STATUS_FILE="$WALK_DIR/memcg-oom.status"
+          if [ "$collect_memcg_oom" = "true" ]; then
+            MEMCG_OOM_SCRAPE_ERRORS=0
+            MEMCG_OOM_WALK_LAUNCHED=1
+            (
+              timeout 30 journalctl -k --since "-24h" --grep "oom-kill:constraint=CONSTRAINT_MEMCG" --output cat --no-pager > "$MEMCG_OOM_RAW" 2>/dev/null
+              echo "\$?" > "$MEMCG_OOM_STATUS_FILE"
+            ) &
+          fi
+
           # === Root disk usage ===
           collect_disk_usage=${lib.boolToString cfg.collectDiskUsage}
           DISK_USAGE=0
@@ -1239,6 +1264,24 @@ _: {
                 POCKET_ID_BUSY_SCRAPE_ERRORS=1
               fi
             fi
+
+            # memcg OOM consume (parallel raw capture from the launch block):
+            # status <=1 (incl. exit-1-no-match) is a valid scan; >=2/timeout
+            # fails visible. The per-memcg breakdown is emitted at emission
+            # time straight from the raw file (label escaping must match the
+            # census \xNN class — kernel cgroup paths carry systemd's byte
+            # escapes, e.g. gitea-runner-evo\x2dx2.service).
+            if [ "''${MEMCG_OOM_WALK_LAUNCHED:-0}" = 1 ]; then
+              memcg_oom_status=2
+              read -r memcg_oom_status < "$MEMCG_OOM_STATUS_FILE" 2>/dev/null || memcg_oom_status=2
+              if [ "''${memcg_oom_status:-2}" -le 1 ] && [ -f "$MEMCG_OOM_RAW" ]; then
+                MEMCG_OOM_TOTAL=$(grep -c . "$MEMCG_OOM_RAW" 2>/dev/null) || MEMCG_OOM_TOTAL=0
+              else
+                echo "system-health: memcg oom journal scan failed (status ''${memcg_oom_status:-?})" >&2
+                MEMCG_OOM_TOTAL=""
+                MEMCG_OOM_SCRAPE_ERRORS=1
+              fi
+            fi
           fi
 
           {
@@ -1534,6 +1577,34 @@ _: {
               echo "# HELP system_pocket_id_busy_over_threshold 1 when SQLITE_BUSY events reach the sustained-contention threshold (${toString pocketIdBusyEventThreshold}/24h), 0 otherwise"
               echo "# TYPE system_pocket_id_busy_over_threshold gauge"
               echo "system_pocket_id_busy_over_threshold ''${POCKET_ID_BUSY_OVER}"
+            fi
+
+            if [ "$collect_memcg_oom" = "true" ]; then
+              echo "# HELP system_memcg_oom_scrape_errors Scrape status of the kernel memcg-OOM journal scan: 0 = OK, 1 = journalctl failed/timeout (fail-closed)"
+              echo "# TYPE system_memcg_oom_scrape_errors gauge"
+              echo "system_memcg_oom_scrape_errors ''${MEMCG_OOM_SCRAPE_ERRORS}"
+            fi
+            # Absent total + scrape_errors=1 is the same fail-closed contract
+            # as pocket-id above. Per-memcg series emit only for memcgs that
+            # actually killed (a 0-kill memcg has no series — absence of ALL
+            # series with total 0 is the healthy shape).
+            if [ -n "$MEMCG_OOM_TOTAL" ]; then
+              echo "# HELP system_memcg_oom_kills_total_24h KERNEL oom-kill events (CONSTRAINT_MEMCG) in the last 24h across all memcgs — the hard-limit killer, complement to the userspace oomd counter"
+              echo "# TYPE system_memcg_oom_kills_total_24h gauge"
+              echo "system_memcg_oom_kills_total_24h ''${MEMCG_OOM_TOTAL}"
+
+              # Per-memcg breakdown from the raw capture: oom_memcg=<path>,…
+              # Label = cgroup path minus the leading slash; backslashes are
+              # doubled for the prometheus text format (kernel paths carry
+              # systemd's \xNN byte escapes — the census label class).
+              grep -oE 'oom_memcg=[^,]*' "$MEMCG_OOM_RAW" 2>/dev/null \
+                | sed 's|^oom_memcg=/||' \
+                | sort | uniq -c \
+                | awk '{
+                    label = $2
+                    gsub(/\\/, "\\\\", label)
+                    printf "system_memcg_oom_kills_24h{memcg=\"%s\"} %d\n", label, $1
+                  }'
             fi
 
             echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
@@ -1918,6 +1989,21 @@ _: {
           description = "Collect systemd-oomd kill events from journal";
         };
 
+        collectMemcgOom = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Collect per-memcg KERNEL oom-kill counters (journal kernel lines
+            `oom-kill:constraint=CONSTRAINT_MEMCG,...,oom_memcg=<cgroup>`)
+            over 24h, labeled by the owning cgroup. Turns "which service's
+            memcg ate its victims during a freeze" into one query instead of
+            a boot-scoped journal dig (the freeze-#28 tq-agent-pool class,
+            where nix/chromium died inside the pool's memcg while the guard
+            stopped OTHER units). Complements collectOomdKills (userspace
+            systemd-oomd) — this is the kernel-side hard-limit killer.
+          '';
+        };
+
         enabledInactiveAllowlist = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [
@@ -2232,6 +2318,23 @@ _: {
                   "[BODY] == pat(*system_service_memory_over_threshold{service=\"projects-management-automation\"} 0*)"
                 ];
                 alert = "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
+              }
+              {
+                name = "Memcg OOM Collector";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                # Fail-closed presence contract for the kernel memcg-OOM
+                # counter (freeze-#28 class): scrape failure or a missing
+                # total fails the check; kill COUNTS are forensic — no
+                # value alert here (a kill is per-incident evidence, and the
+                # owning service's own memory checks page on the cause).
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nsystem_memcg_oom_scrape_errors 0\n*)"
+                  "[BODY] == pat(*\nsystem_memcg_oom_kills_total_24h *\n*)"
+                ];
+                alert = "The kernel memcg-OOM collector is broken (scrape error or missing total) — per-memcg kill attribution during freezes goes dark. Check: journalctl -u system-health-metrics -n 30, journalctl -k --since -24h --grep CONSTRAINT_MEMCG for raw evidence.";
               }
               {
                 name = "PMA Commit Health";

@@ -621,4 +621,111 @@
         machine.succeed("${probe}/bin/flm-crash-trigger-pair-probe ${collector} ${../modules/nixos/services/system-health.nix}")
       '';
     };
+
+  # Kernel memcg-OOM collector (2026-10-23, monitoring.md row — freeze-#28
+  # class): the per-memcg breakdown pipeline (grep oom_memcg -> sed strip ->
+  # sort|uniq -c -> awk label-escape+emit) is sliced from the REAL rendered
+  # collector and run against the EXACT preserved freeze-#28 kernel lines,
+  # including a cgroup carrying systemd's \xNN byte escape (the census label
+  # class). promtool must accept the output and reject the raw-backslash
+  # mutation. Static tripwires pin the journalctl pattern + scrape_errors
+  # emission + anchored Gatus conditions to the module source.
+  memcg-oom-collector =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      collector = evo.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+      probe = pkgs.writeShellApplication {
+        name = "memcg-oom-collector-probe";
+        # SC2016: slice anchors are deliberate literals; SC1091: the sliced
+        # pipeline is a runtime artifact; SC1012: the printf '\n' is passed
+        # through bash -c to printf itself (deliberate).
+        excludeShellChecks = [
+          "SC2016"
+          "SC1091"
+          "SC1012"
+        ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnused
+          pkgs.gnugrep
+          pkgs.gawk
+          pkgs.prometheus.cli
+        ];
+        text = ''
+          set -euo pipefail
+          SCRIPT="''${1:?collector store path required}"
+          MODULE="''${2:?module source path required}"
+          mkdir -p /tmp/memcgtest
+
+          # Fixture: the EXACT freeze-#28 evidence line shape (preserved
+          # 2026-10-12) plus an \xNN-escaped cgroup name (census class) and
+          # a second plain memcg for grouping.
+          cat > /tmp/memcgtest/raw <<'FIXTURE'
+          Oct 12 00:35:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3156072,uid=1000
+          Oct 12 02:15:30 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=chromium,pid=3240198,uid=1000
+          Oct 12 02:15:31 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice_gitea-runner-evo\x2dx2.service/task_2dfoo.service,task_memcg=...,task=go,pid=1,uid=0
+          Oct 12 03:00:00 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/llama-chat.service,task_memcg=...,task=llama-server,pid=2,uid=1000
+          FIXTURE
+
+          # Slice the emission pipeline out of the REAL rendered collector:
+          # from the oom_memcg grep line through the awk closing brace-quote.
+          start=$(grep -n -F "grep -oE 'oom_memcg=[^,]*'" "$SCRIPT" | head -1 | cut -d: -f1)
+          [ -n "$start" ] || { echo "oom_memcg pipeline not found in collector script"; exit 1; }
+          tail -n +"$start" "$SCRIPT" | sed -n "1,/}'/p" > /tmp/memcgtest/pipeline.sh
+
+          # Production shape: HELP/TYPE header + total, then the sliced
+          # pipeline against the fixture raw file.
+          MEMCG_OOM_RAW=/tmp/memcgtest/raw bash -c '
+            export MEMCG_OOM_RAW
+            {
+              printf '%s\n' \
+                "# HELP system_memcg_oom_kills_24h per-memcg kernel oom kills (24h)" \
+                "# TYPE system_memcg_oom_kills_24h gauge"
+              source /tmp/memcgtest/pipeline.sh
+            } > /tmp/memcgtest/out.prom
+          '
+
+          # Grouping + label form: leading slash stripped, counts grouped.
+          grep -Fq 'system_memcg_oom_kills_24h{memcg="system.slice/tq-agent-pool.service"} 2' /tmp/memcgtest/out.prom
+          grep -Fq 'system_memcg_oom_kills_24h{memcg="system.slice/llama-chat.service"} 1' /tmp/memcgtest/out.prom
+          # \xNN escape must be DOUBLED for the text format (census class).
+          grep -Fq 'system_memcg_oom_kills_24h{memcg="system.slice_gitea-runner-evo\\x2dx2.service/task_2dfoo.service"} 1' /tmp/memcgtest/out.prom
+
+          # The REAL parser accepts it...
+          promtool check metrics < /tmp/memcgtest/out.prom
+          # ...and rejects the raw single-backslash mutation.
+          printf '%s\n' 'system_memcg_oom_kills_24h{memcg="a\x2db.service"} 1' > /tmp/memcgtest/raw-label.prom
+          if promtool check metrics < /tmp/memcgtest/raw-label.prom >/dev/null 2>&1; then
+            echo "MUTATION: raw single-backslash label accepted by prometheus parser"
+            exit 1
+          fi
+
+          # Static tripwires on the module source.
+          grep -qF 'oom-kill:constraint=CONSTRAINT_MEMCG' "$MODULE" || {
+            echo "module lost the kernel memcg oom journalctl pattern"; exit 1;
+          }
+          grep -qF 'system_memcg_oom_scrape_errors' "$MODULE" || {
+            echo "module lost the scrape_errors emission"; exit 1;
+          }
+          grep -qF '\nsystem_memcg_oom_kills_total_24h *\n' "$MODULE" || {
+            echo "module lost the anchored Gatus presence condition"; exit 1;
+          }
+
+          echo "PASS: memcg oom collector — pipeline groups + escapes correctly, promtool accepts output, rejects raw form"
+        '';
+      };
+    in
+    pkgs.testers.runNixOSTest {
+      name = "memcg-oom-collector";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("${probe}/bin/memcg-oom-collector-probe ${collector} ${../modules/nixos/services/system-health.nix}")
+      '';
+    };
 }
