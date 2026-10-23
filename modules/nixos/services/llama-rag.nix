@@ -203,12 +203,32 @@ _: {
         chmod 644 "$TMP"
         trap 'rm -f "$TMP"' EXIT
 
+        # /proc/<pid>/stat field 22 (starttime) — after the LAST ') ' of
+        # comm it is field 20 of the remainder (berth PID identity, plan T3).
+        stat22() {
+          local stat rem
+          stat="$(${pkgs.coreutils}/bin/cat "/proc/$1/stat" 2>/dev/null || true)"
+          [ -n "$stat" ] || return 0
+          rem="''${stat##*) }"
+          printf '%s' "$rem" | ${pkgs.gawk}/bin/awk '{print $20}'
+        }
+
         scrape_errors=1
         leaks=""
         if ss_out="$(timeout 10 ${pkgs.iproute2}/bin/ss -tlnp 2>/dev/null)"; then
           scrape_errors=0
           leaks=0
           for pid in $(${pkgs.procps}/bin/pgrep -x llama-server 2>/dev/null || true); do
+            # berth identity (2026-10-23, plan T3): bind the leak verdict to
+            # (pid, starttime). A pid recycled between pgrep and the ss match
+            # can borrow the NEW process's listener (false-green) or lend its
+            # own (false-red) — a start-time change voids the verdict for
+            # this pid this cycle (skip + journal, never guess).
+            st0="$(stat22 "$pid")"
+            if [ -n "$st0" ] && [ "$st0" != "$(stat22 "$pid")" ]; then
+              echo "llama-rag: leak check skipped pid $pid (pid recycled mid-scan - verdict void)" >&2
+              continue
+            fi
             if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${activePortRegex})[^0-9]"; then
               leaks=$((leaks + 1))
             fi
@@ -254,11 +274,33 @@ _: {
         chmod 644 "$TMP"
         trap 'rm -f "$TMP"' EXIT
 
+        # /proc/<pid>/stat field 22 (starttime) — same shape as the leak
+        # collector (berth PID identity, plan T3).
+        stat22() {
+          local stat rem
+          stat="$(${pkgs.coreutils}/bin/cat "/proc/$1/stat" 2>/dev/null || true)"
+          [ -n "$stat" ] || return 0
+          rem="''${stat##*) }"
+          printf '%s' "$rem" | ${pkgs.gawk}/bin/awk '{print $20}'
+        }
+
         rogues=""
         scrape_errors=1
-        if ss_out="$(timeout 10 ${pkgs.iproute2}/bin/ss -tln 2>/dev/null)"; then
+        if ss_out="$(timeout 10 ${pkgs.iproute2}/bin/ss -tlnp 2>/dev/null)"; then
           scrape_errors=0
           rogues="$(grep -cE ":(${toString cfg.embeddingsPort}|${toString cfg.rerankerPort})[^0-9]" <<<"$ss_out")" || rogues=0
+          # berth identity (2026-10-23, plan T3): the socket COUNT stays the
+          # signal, but every rogue now gets a forensic journal line (pid,
+          # starttime, cgroup) — the 2026-09-18 hermes-cron class took 8h to
+          # attribute with nothing but a port number. -tlnp (was -tln): the
+          # pids are the evidence.
+          while IFS= read -r line; do
+            rpid="$(printf '%s' "$line" | ${pkgs.gnused}/bin/sed -n 's/.*pid=\([0-9]*\).*/\1/p' | ${pkgs.coreutils}/bin/head -1)"
+            [ -n "$rpid" ] || continue
+            rcg="$(${pkgs.coreutils}/bin/cat "/proc/$rpid/cgroup" 2>/dev/null || true)"
+            rst="$(stat22 "$rpid")"
+            echo "llama-rag dark-guard: rogue listener pid $rpid (starttime ''${rst:-gone}, cgroup ''${rcg:-unreadable}): $line" >&2
+          done <<<"$(grep -E ":(${toString cfg.embeddingsPort}|${toString cfg.rerankerPort})[^0-9]" <<<"$ss_out" || true)"
         fi
 
         {

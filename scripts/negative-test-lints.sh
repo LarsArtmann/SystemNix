@@ -621,6 +621,23 @@ eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
 
+# ── portguard: the shared release-verified port guard (berth-patterns plan T2) ──
+# The artifact check (tests/test-port-guard.nix) asserts seven decision paths
+# against the SHIPPED guards; these legs mutate lib/port-guard.nix so the
+# check's own legs must FAIL — proving it is not phantom-green. Both
+# mutations keep eval valid (the harness rejects eval-accident catches).
+# Leg 1: drop the start-time recheck — the pid-reuse leg must catch the
+# recycled PID being signalled (berth identity regressed).
+run_case portguard starttime-recheck-dropped port-guard-check fail 'pid-reuse: kill was called on a recycled pid' \
+  'sed:lib/port-guard.nix:s|if _same_process "\$pid" "\$st0"; then|if true; then|g'
+# Leg 2: break the owner-spare case dispatch — nothing ever matches the spare
+# arms, so the guard would kill its OWN draining instance.
+run_case portguard owner-spare-broken port-guard-check fail 'owner-spared: kill was called' \
+  'sed:lib/port-guard.nix:s|case "\$cgroup" in|case "broken-for-negative-test" in|g'
+# Green control on the pristine copy: the check must pass unmutated.
+run_case portguard green-control port-guard-check pass 'never-matches' \
+  'append:README.md:portguard green control ran'
+
 # ── metricnames: LIVE store-truth sweep (opt-in ONLY — CI has no store access) ──
 # The nightly workflow sets no CASES, so this group never runs in CI: it needs
 # the LAN ClickHouse store. Run it after any otel-collector lock bump, exporter
