@@ -132,7 +132,7 @@ pkgs.runCommand "test-port-guard"
     listener 52626 111 > "$FIX/ss-first"; : > "$FIX/ss-verify"
     mkstat 111 1000; mkcgroup 111 "$FOREIGN_CGROUP"
     : > "$KILLLOG"
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 0 "$rc" "foreign-killed"
     grep -q "KILL 111" "$KILLLOG" || { echo "FAIL: foreign-killed: no TERM logged"; exit 1; }
     grep -q "KILL -9 111" "$KILLLOG" || { echo "FAIL: foreign-killed: no KILL logged"; exit 1; }
@@ -143,7 +143,7 @@ pkgs.runCommand "test-port-guard"
     listener 52626 222 > "$FIX/ss-first"; listener 52626 222 > "$FIX/ss-verify"
     mkstat 222 2000; mkcgroup 222 "/system.slice/fastflowlm.service"
     : > "$KILLLOG"
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 0 "$rc" "owner-spared"
     [ -s "$KILLLOG" ] && { echo "FAIL: owner-spared: kill was called"; exit 1; }
     echo "PASS: owner-cgroup listener spared (both enumeration and verify)"
@@ -155,7 +155,7 @@ pkgs.runCommand "test-port-guard"
     mkdir -p "$FIX/proc/333"; printf '%s' "$(cat "$FIX/proc/333/stat" | sed 's/ 3000 / 3999 /')" > "$FIX/proc/333/stat2"
     : > "$KILLLOG"
     export RECYCLE=333
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     unset RECYCLE
     expect_rc 1 "$rc" "pid-reuse"
     [ -s "$KILLLOG" ] && { echo "FAIL: pid-reuse: kill was called on a recycled pid"; exit 1; }
@@ -177,7 +177,7 @@ pkgs.runCommand "test-port-guard"
     listener 52626 444 > "$FIX/ss-first"; listener 52626 444 > "$FIX/ss-verify"
     mkstat 444 4000; mkcgroup 444 "/user.slice/user-1000.slice/flm-zombie.scope"
     : > "$KILLLOG"
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 1 "$rc" "unkillable"
     grep -q "BIND-BLOCKED" <<<"$res" || { echo "FAIL: unkillable: no BIND-BLOCKED verdict"; exit 1; }
     grep -q "pid 444" <<<"$res" || { echo "FAIL: unkillable: holder pid not named"; exit 1; }
@@ -189,7 +189,7 @@ pkgs.runCommand "test-port-guard"
     mkstat 555 5000; mkcgroup 555 "$FOREIGN_CGROUP"
     mkstat 222 2000; mkcgroup 222 "/system.slice/fastflowlm.service"
     : > "$KILLLOG"
-    rc=0; out="$("$work/flm-guard" 52626 2>&1)" || rc=$?
+    rc=0; res="$("$work/flm-guard" 52626 2>&1)" || rc=$?
     expect_rc 0 "$rc" "owner-lingering"
     grep -q "KILL 555" "$KILLLOG" || { echo "FAIL: owner-lingering: foreign not killed"; exit 1; }
     grep -q "owner-unit pid 222" <<<"$res" || { echo "FAIL: owner-lingering: no draining log"; exit 1; }
@@ -201,7 +201,7 @@ pkgs.runCommand "test-port-guard"
     mkstat 666 6000; mkcgroup 666 "/system.slice/llama-embeddings.service"
     mkstat 777 7000; mkcgroup 777 "$FOREIGN_CGROUP"
     : > "$KILLLOG"
-    rc=0; out="$("$work/rag-guard" 8848 2>&1)" || rc=$?
+    rc=0; res="$("$work/rag-guard" 8848 2>&1)" || rc=$?
     expect_rc 1 "$rc" "rag-owners"
     [ -s "$KILLLOG" ] && { echo "FAIL: rag guard killed its own embeddings listener"; exit 1; }
     grep -q "BIND-BLOCKED.*777" <<<"$res" || { echo "FAIL: rag guard missed foreign 777 at verify"; exit 1; }

@@ -1,7 +1,7 @@
 # SUPERB: Monitor365 IO/s-First Data Governance — Governor, Cadence, Activation
 
 **Created:** 2026-10-23 07:05 CEST
-**EXECUTING (instance session 1, executing M1-M7 immediately; M2 deploy is PSI-gated; M3 first fire tonight 03:00, 2026-10-23 07:02 CEST, HEAD `707f0b0c9`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance M1(in-scope)+M4+M5+M6+M7 done; M2 forced-defer (PSI + foreign wave eval-red); M3 watch stands until deploy, 2026-10-23 07:34 CEST, HEAD `f4db1ce8b`):** execution finished
 
 **Author session:** 2026-10-23 07:05 CEST. Owner steer (verbatim intent): *"we need to get better with storing the right kind of data in the right intervals in the first place, then come up with stupid retention windows … I care about IO/s not as much total storage."* Ratified direction from the 04:2x design exchange.
 
@@ -93,6 +93,17 @@ flowchart TD
 5. **Deploy gate stays hard** — sustained some avg10 < 30%, never "probably calm"; the storm (three ghostty batteries) has run 61–87 avg10 tonight; a deferred deploy costs a day, a storm deploy can cost a wedged switch.
 6. **Parallel sessions are LIVE** (inboxclean session committed at ~06:xx, tree dirty on todo/status files) — re-read before every edit, pathspec commits, shared-surface evals only at quiescent moments.
 7. **The 03:00 window is sacred** — nothing in this batch touches the quiesce ordering; no deploy inside 03:00±15 min.
+
+## Errata / standing assumptions
+
+**Execution record (2026-10-23 07:5x):**
+- M1 DONE-IN-SCOPE: papdashboard nested follows landed (4cf457561, flake.lock byte-identical, lock-audit gate passes). The wave's OTHER reds (hermes bf0203a IFD class + crowdsec-via-unfetched-nixpkgs, root nixpkgs unchanged) are foreign fallout — documented in the pipeline lock-heal [decision] row; not fixable without touching the sacred flake.lock.
+- M2 FORCED-DEFER (double-blocked): PSI storm AND toplevel-eval red (deploy.sh validation would fail). Watch rows updated on both surfaces.
+- M4 DONE (1d2583c39): process 5s / network+battery 300s / location 900s, scoped evals verified 5/300/300/900/60 + mouse=false. Cloud sync/batch pin DROPPED after live-TOML verification (defaults already render [cloud] sync 60/batch 100 — pinning would add surface for zero effect).
+- M6 DONE (verdict): the tenant cap is admin-JWT-gated by design (/health is the only unauthenticated route, live-probed); verification + SET are owner-gated — row updated with the admin path + 250k/day rec.
+- M5 DONE: four upstream rows appended (bounded queue, environ opt-in, rollups, cap observability).
+- M3: watch stands (first post-deploy 03:00 fire — no deploy yet, so next OLD-script fire is tonight 2026-10-24 03:00).
+- Daemon raced the cadence commit (swept with the berth session's test file; amended forward, rider noted in the message). Twin-executor marker discipline observed working: the berth-patterns session's tombstone (37f1e866e) was visible before my commits.
 
 ## Errata / standing assumptions
 
