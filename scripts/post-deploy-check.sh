@@ -214,6 +214,28 @@ if storm_read="$(systemnix_io_storm_active)"; then
   echo ""
 fi
 
+# Battery cooldown banner (2026-10-23): the battery itself is load (flm cold
+# loads, chromium renders, model probes) - back-to-back runs on a storming box
+# re-verify nothing and add PSI (the 2026-10-23 double-battery mistake).
+# Record every run START in the state dir and surface the previous battery's
+# age when it began <60 min ago. Advisory only: a deliberate re-run after a
+# fix stays possible - the banner just makes the overlap visible at decision
+# time instead of in the post-mortem.
+battery_state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/systemnix"
+battery_marker="$battery_state_dir/post-deploy-last-run.epoch"
+if [ -f "$battery_marker" ]; then
+  _prev_battery_start="$(cat "$battery_marker" 2>/dev/null || echo 0)"
+  if [ "${_prev_battery_start:-0}" -gt 0 ] 2>/dev/null; then
+    _battery_age_min=$(( ($(date +%s) - _prev_battery_start) / 60 ))
+    if [ "$_battery_age_min" -lt 60 ]; then
+      echo -e "${YELLOW}NOTE${NC} another battery started ${_battery_age_min} min ago - load-sensitive results overlap that window (each run is itself load: flm cold loads, chromium renders); a fresh run adds storm, not signal"
+      echo ""
+    fi
+  fi
+fi
+mkdir -p "$battery_state_dir"
+date +%s > "$battery_marker"
+
 # Storm-replacement verdict for a load-sensitive leg whose FAIL branch is
 # being suppressed: counts and prints ONLY. Never touches FAIL or the fail
 # set - the caller's if/elif structure simply never recorded a FAIL (the
@@ -448,9 +470,35 @@ if $flm_enabled; then
   # that context - rc=124, zero output). Max staleness is the collector's
   # cadence (~2min); a corpse persists for hours, so that is fine.
   flm_prom=/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom
+  # Guard-awareness (2026-10-23): the memory-emergency guard deliberately
+  # stops fastflowlm(.socket) as its designated sacrifice on sustained
+  # io/memory PSI (zone 4/5/6 trips). While the guard holds that state the
+  # socket is EXPECTED dead and connecting would re-arm the exact 21.6 GB
+  # cold-load churn the guard exists to prevent - so this is a WARN, never
+  # a FAIL or a baseline entry. Attribution is conservative: the sacrifice
+  # only explains the dead socket when the guard ALSO reports a trip within
+  # the last 30 min or an exhausted restore budget; an unexplained dead
+  # socket (guard quiet) falls through to the probe and fails honestly.
+  # Same machine-readable source as the corpse gate above (journalctl for
+  # system units hangs in this user context, rc=124, zero output).
+  flm_guard_prom=/var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom
+  flm_guard_sacrifice=0
+  flm_guard_capped=0
+  if grep -q '^memory_emergency_guard_sacrifice_socket_active 0' "$flm_guard_prom" 2>/dev/null &&
+    { grep -q '^memory_emergency_guard_restore_capped 1' "$flm_guard_prom" 2>/dev/null ||
+      grep -q '^memory_emergency_guard_last_trip_recent 1' "$flm_guard_prom" 2>/dev/null; }; then
+    flm_guard_sacrifice=1
+    if grep -q '^memory_emergency_guard_restore_capped 1' "$flm_guard_prom" 2>/dev/null; then
+      flm_guard_capped=1
+    fi
+  fi
   if grep -q 'system_service_start_limit_hit{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null ||
     grep -q 'system_service_state_failed{service="fastflowlm"} 1' "$flm_prom" 2>/dev/null; then
     report_fail "FastFlowLM - unit failed/start-limit-hit per system_health.prom (corpse class: connecting would re-pay a 21.6 GB cold load into a doomed start) - reboot is the only clean recovery; :52625 probe skipped"
+  elif [ "$flm_guard_sacrifice" = 1 ] && [ "$flm_guard_capped" = 1 ]; then
+    report_warn "FastFlowLM - :52625 probe skipped: memory guard holds the sacrifice AND the daily restore budget is exhausted (restore_capped=1) - socket stays down until a manual restart or the midnight budget reset (owner handoff per the guard contract); guard by design, not a deploy regression"
+  elif [ "$flm_guard_sacrifice" = 1 ]; then
+    report_warn "FastFlowLM - :52625 probe skipped: memory guard sacrifice active (sustained io/memory PSI zone trip within the last 30 min) - socket self-restores once pressure clears past the guard margin; guard by design, not a deploy regression"
   elif curl -s --compressed --max-time 480 -o /tmp/.smoke-flm "http://127.0.0.1:52625/v1/models" 2>/dev/null; then
     # Assert the BOUND model id, not just a JSON envelope: a stale/wrong model
     # file (the v1.0.2 re-pull incident: old weights hash-mismatch the new

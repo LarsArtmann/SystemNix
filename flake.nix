@@ -11,7 +11,26 @@
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # REV-PINNED at fe13242 (2026-10-15) — the rev generation 939 was built
+    # from. ROLLBACK (2026-10-23): the 2026-10-20 tip 02c087f3 broke the
+    # toplevel build in five independent places at once — aw-core
+    # (peewee==3.* unsatisfied by 4.4.0), the linux-7.3 r8125.ko.cer module
+    # path convention, signoz-src patch context, templ runtime/source drift
+    # (templruntime.NewAttributeExpression undefined), and dms-shell 2.0.0
+    # installPhase. Ten stale FOD hashes and four vendorHash mismatches were
+    # downstream of the same float. Path-form rev pin is deliberate (a
+    # `?rev=` query is eval-guard-blocked and re-pins backward on lock
+    # churn): `nix flake update` is now a SILENT NO-OP for nixpkgs, which is
+    # the point — neither the weekly flake-update PR nor an ad-hoc agent
+    # `nix flake update` can re-break the tree unattended. The daily
+    # nixpkgs-compat workflow keeps working because it overrides this URL
+    # with `--override-input` (a bare `nix flake update nixpkgs` here would
+    # be a silent no-op and the early-warning check would pass forever).
+    # LIFT: forward-re-float to nixos-unstable and require
+    # `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel
+    # --keep-going --no-link` to exit 0 with aw-core AND linux-7.3-modules
+    # realized — all five defects above genuinely fixed upstream.
+    nixpkgs.url = "github:NixOS/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
     # REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (the last build
     # proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin
     # regression, live 2026-09-14). Consumed ONLY by services/llama-rag.nix.
@@ -134,8 +153,15 @@
     # (metadata DB) runs at signoz start, the collector's ClickHouse
     # schema-migrator runs pre-start — review new migrations before
     # deploying a moved rev.
+    # REV-PINNED at 375b3f83 (2026-10-16) since 2026-10-23. The ?ref=main
+    # float pulled revs whose go.mod moved the sonic version context, so the
+    # Go-1.26 patches in modules/nixos/services/patches/ stopped applying
+    # (`signoz-…-patched` failed its hunks) and the pnpm deps hash re-staled.
+    # LIFT: bump to a rev where those patches apply unchanged (or where
+    # sonic >= 1.15 makes them obsolete), then rebuild
+    # `nix build .#signozPkg --no-link`.
     signoz-src = {
-      url = "github:SigNoz/signoz?ref=main";
+      url = "github:SigNoz/signoz/375b3f8305720b236a83b50955269c60d96e1f9e";
       flake = false;
     };
     signoz-collector-src = {
