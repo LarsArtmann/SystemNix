@@ -2,13 +2,16 @@
 # Fixture for scripts/monitor365-retention.sh — executed via
 # checks.monitor365-retention-selftest so the 03:00 window is never the
 # script's first run. Needs duckdb + coreutils on PATH.
+# MONITOR365_RETENTION_SCRIPT overrides the script under test: the
+# rendered-fixture check points it at the store writeShellApplication
+# output the 03:00 call site actually invokes.
 set -uo pipefail
 
 FAILURES=0
 pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; FAILURES=$((FAILURES + 1)); }
 
-SCRIPT="$(dirname "$0")/monitor365-retention.sh"
+SCRIPT="${MONITOR365_RETENTION_SCRIPT:-$(dirname "$0")/monitor365-retention.sh}"
 
 make_db() {
   # $1 = db path, $2 = timestamp column type
