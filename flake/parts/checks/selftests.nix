@@ -119,8 +119,8 @@
               # script legitimately contains zero literal dollar-brace
               # sequences (shell params use "$var" style; a future shell
               # expansion must be escaped in the module and re-checked).
-              if grep -q '''${' "$backup"; then
-                grep -n '''${' "$backup" | head -3
+              if grep -q '[$]{' "$backup"; then
+                grep -n '[$]{' "$backup" | head -3
                 echo "FAIL: uninterpolated Nix expression left in the rendered backup script"
                 exit 1
               fi
@@ -131,7 +131,7 @@
               # at 03:00 even though the harness PATH here masks it.
               retention=$(grep -oE '/nix/store/[a-z0-9]+-monitor365-retention/bin/monitor365-retention' "$backup" | head -n1)
               [ -x "$retention" ] || { echo "FAIL: no executable rendered retention script in the call site"; exit 1; }
-              grep -q '/duckdb' "$retention" \
+              grep -qE '/nix/store/[a-z0-9]+-duckdb[^/ ]*/bin' "$retention" \
                 || { echo "FAIL: rendered retention wrapper lacks its own duckdb runtimeInput"; exit 1; }
 
               # Execute the RENDERED script through the same toy-DB legs.
