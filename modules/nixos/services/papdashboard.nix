@@ -77,9 +77,11 @@
       # whose vendor output no longer matches its baked hash — first-hand
       # keep-going probe got sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w
       # (specified g6Q8jl4X, got mi1+rwiO). Drop when upstream bakes it.
-      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs {
-        vendorHash = "sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w=";
-      };
+      papdashboardPkg =
+        inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
+          {
+            vendorHash = "sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w=";
+          };
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";

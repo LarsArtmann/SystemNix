@@ -49,18 +49,33 @@ in
     };
 
     # Use latest kernel for Ryzen AI Max+ support
-    # v4l2loopback DEPMOD shim (2026-10-23): the kernel 7.3 `modules_install` target
-    # runs depmod (kmod sits in the module build env) and writes modules.alias/dep/…
-    # INTO the out-of-tree package output, which then collides with the kernel's own
-    # modules tree in pkgs.aggregateModules' buildEnv (`linux-7.3-modules` build,
-    # exit 25 — blocked the 2026-10-23 deploy). Upstream convention for out-of-tree
-    # modules (amneziawg, vmm_clock) is `DEPMOD=true`; v4l2loopback 0.15.4 still
-    # carries only the old `sed '/depmod/d'`, which cannot reach the KERNEL Makefile
-    # that now runs depmod. Drop once nixpkgs patches v4l2loopback.
+    # Out-of-tree module shims (2026-10-23, blocked the deploy at
+    # `linux-7.3-modules`): this nixpkgs wave changed the out-of-tree contract —
+    # the kernel's `modules_install` now signs via kmodigest (per-module
+    # `.ko.cer` next to the `.ko`) and runs depmod itself, and
+    # pkgs.aggregateModules (buildEnv + postBuild cert-merge) HARD-FAILS unless
+    # every extraModulePackage follows that convention.
+    #   - v4l2loopback 0.15.4 still carries only the old `sed '/depmod/d'`, which
+    #     cannot reach the KERNEL Makefile: depmod wrote modules.alias/dep/… INTO
+    #     its output → buildEnv collision with the kernel's own modules tree.
+    #     `DEPMOD=true` is upstream's own convention for out-of-tree modules
+    #     (amneziawg, vmm_clock). Its cert flows naturally through the kernel
+    #     install (verified: updates/v4l2loopback.ko.cer present).
+    #   - r8125's hand-rolled installPhase (plain `cp r8125.ko`) skips
+    #     modules_install entirely → no .ko.cer → aggregate cert-merge dies
+    #     (`cat: …/r8125.ko.cer: No such file or directory`). Route the install
+    #     through the upstream Makefile's `install` target — nixpkgs' preBuild
+    #     patch already directs its modules_install at $out, and DEPMOD=true
+    #     stops the kernel-run depmod.
+    # Drop whichever shim once nixpkgs patches the matching package.
     kernelPackages = pkgs.linuxPackages_latest.extend (
       _: super: {
         v4l2loopback = super.v4l2loopback.overrideAttrs (old: {
           makeFlags = old.makeFlags ++ [ "DEPMOD=true" ];
+        });
+        r8125 = super.r8125.overrideAttrs (old: {
+          installTargets = [ "install" ];
+          installFlags = (old.installFlags or [ ]) ++ [ "DEPMOD=true" ];
         });
       }
     );

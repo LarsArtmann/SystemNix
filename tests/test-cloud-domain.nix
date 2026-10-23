@@ -68,13 +68,15 @@ let
       # burn class and the MX defect died with the boundary; re-adding
       # it needs a conscious revert of this pin and the rationale in
       # dns-blocker-config.nix).
-      ok = zones == [
-        "${home}."
-      ];
+      ok =
+        zones == [
+          "${home}."
+        ];
       msg = "evo-x2 dnsblockd localZones must be home.lan ONLY — the cloud zone rides records + forwarding (adding it back re-opens the NXDOMAIN/MX burn class)";
     }
     {
-      ok = !builtins.elem "${cloud}." zones && !builtins.elem "${cloud}." rpi3.services.dns-blocker.localZones;
+      ok =
+        !builtins.elem "${cloud}." zones && !builtins.elem "${cloud}." rpi3.services.dns-blocker.localZones;
       msg = "the cloud zone must NOT be a closed localZone on either host (records win, misses forward — since 2026-10-23)";
     }
     {
