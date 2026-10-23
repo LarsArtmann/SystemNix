@@ -1,6 +1,6 @@
 # SUPERB: Monitor365 Closeout Hardening — Verify, Fixture, Deploy
 
-**EXECUTING (instance crush glm-5.3 continuation session, 2026-10-23 02:26 CEST, HEAD `6c69e461b`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance all M1-M7 executed + pushed (daemon-swept 5737cdc02..846c03478); deploy DEFERRED again by PSI gate (avg60 back to 74% at 02:49 after a transient 32% lull - the sustained-30% gate held); first-fire watch row stays armed, 2026-10-23 02:49 CEST, HEAD `846c03478`):** execution finished
 
 - **Author session:** 2026-10-23 02:26 CEST (follows the executed volume-fix batch `0ab1e42e0` + self-review docs/status/2026-10-23_02-00)
 - **Owner questions g.1–g.3 unanswered → standing defaults:** 90 d retention window stands (one-liner to change, queue row open); deploy proceeds at the plan's PSI gate (NOT immediately); agent stays stopped (owner-gated).
