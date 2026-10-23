@@ -138,6 +138,36 @@
             touch $out
           '';
 
+        # flake-lock-audit selftest (2026-10-23): pins the running-vs-pinned
+        # comparison contract — match, mismatch, and the two unknown
+        # branches (empty running rev, empty locked rev) plus nixos-version
+        # JSON field extraction. The LIVE probe needs /run/current-system, so
+        # this fixture run is the whole testable contract; the script also
+        # carries the advisory-vs-blocking exit semantics pre-deploy §0 uses.
+        flake-lock-audit-selftest = pkgs.runCommand "flake-lock-audit-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts"
+          cp ${root}/scripts/flake-lock-audit.sh "$scratch/scripts/flake-lock-audit.sh"
+          export PATH=${pkgs.jq}/bin:${pkgs.git}/bin:${pkgs.bash}/bin:$PATH
+          ${pkgs.bash}/bin/bash "$scratch/scripts/flake-lock-audit.sh" --selftest
+          touch $out
+        '';
+
+        # fod-hash-diff selftest (2026-10-23): pins the batch stale-FOD
+        # patcher's parser (specified/got pairs from a keep-going log) and its
+        # site classification — a literal in real code is live, the same
+        # literal in a full-line comment is history and must NOT be rewritten.
+        # Both legs run against throwaway fixture trees via FHD_ROOT, so they
+        # do not drift with this repo's shim inventory.
+        fod-hash-diff-selftest = pkgs.runCommand "fod-hash-diff-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts"
+          cp ${root}/scripts/fod-hash-diff.sh "$scratch/scripts/fod-hash-diff.sh"
+          export PATH=${pkgs.gnugrep}/bin:${pkgs.gnused}/bin:${pkgs.gawk}/bin:${pkgs.coreutils}/bin:${pkgs.bash}/bin:$PATH
+          ${pkgs.bash}/bin/bash "$scratch/scripts/fod-hash-diff.sh" --selftest
+          touch $out
+        '';
+
         # The 2026-10-17 deploy-pipeline optimizations (deploy_restart
         # timeout bounds, content-addressed check-#1 stamp, the
         # race-detector manifest fold, the parallel probe batch) shipped
