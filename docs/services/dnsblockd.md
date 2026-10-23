@@ -116,3 +116,23 @@ so the rule is provisioned-but-vacuous until then.
 > itself landed via daemon sweep `44b8339bb` mid-flight — re-associated here.
 > Evidence transcripts: docs/status/ (batch report).
 
+**NetBird tunnel-IP :53 hijack — queries addressed to the VPN IP never reach
+dnsblockd (proven live 2026-10-23):** the netbird client (v0.77.1) runs its own
+DNS-management layer that intercepts every `:53` packet DESTINED to the tunnel
+address (`100.112.252.86`) — its embedded resolver serves only the
+dashboard-configured matched domains and REFUSES everything else. Proof
+matrix: `src=192.168.1.150 → dst=100.112.252.86 example.com` = REFUSED
+(source-independent — even an allowlisted LAN source is refused), while
+`src=100.112.252.86 → dst=192.168.1.200 example.com` = NOERROR with recursion
+(dnsblockd happily serves 100.x sources). Consequences: (a) NetBird dashboard
+nameserver groups must point at the LAN dnsblockd address (`192.168.1.53` VRRP
+or `.150`) — the ratified split-horizon plan D5 was right — never at the
+tunnel IP; (b) `dns_allowed_networks` gained `100.64.0.0/10`
+(dns-blocker-config.nix, deployed 2026-10-23) so VPN queries routed WITHOUT
+masquerade (phone's 100.x source preserved) pass the recursion ACL — with
+masquerade they arrive as `.150` regardless; (c) netbird's host-manager leg
+logs a harmless ERRO on every DNS update (`server.go:779`, cannot back up the
+read-only NixOS `/etc/resolv.conf`) — the interception itself still works via
+the firewall path; the errors are noise, not breakage (fired all day
+2026-10-23 while the dashboard DNS config was being edited).
+

@@ -2074,7 +2074,7 @@ if systemctl cat architecture-catalog-sync.service >/dev/null 2>&1; then
   _cat_root=/var/lib/architecture-catalog/current
   if [ -f "$_cat_root/index.html" ]; then
     check "Architecture Catalog (HTTPS)" "https://catalog.$DOMAIN/" "200" "" 2>/dev/null || true
-    if grep -q '<title>EventCatalog' "$_cat_root/index.html"; then
+    if grep -q '<title>LarsArtmann Architecture Catalog' "$_cat_root/index.html"; then
       report_pass "Architecture Catalog - served index carries the EventCatalog title marker"
     else
       report_fail "Architecture Catalog - served index.html lacks the EventCatalog title marker (dist branch content drift — probe which entity served it: curl -sk https://catalog.$DOMAIN/ | head -20)"

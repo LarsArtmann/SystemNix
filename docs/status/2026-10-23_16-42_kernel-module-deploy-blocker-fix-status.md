@@ -119,3 +119,44 @@ The deploy blocker in the owner's pasted log is **fixed, committed, and build-ve
 | Format override | owner prompt | `.md` at explicit path (status-report skill default is HTML; explicit instruction wins, flagged per skill contract) |
 
 **HARVEST note (docs-health contract):** §f items 1–3 self-harvested at authoring time into `TODO_LIST.md` + `docs/todo/stability.md`. §f items 4–10, 22–23 deliberately NOT harvested: the live parallel session owns them and its 16:06 report + existing queue rows already cover them — re-queueing would duplicate. Items 11–21, 24–25 are new; harvest them from this file if this session does not continue.
+
+---
+
+## Second pass (17:10–18:00) — tree green, deploy landed (gen-939), post-deploy triage complete
+
+Owner steer after this report: "keep going until everything works". Continuation findings, all verified live:
+
+### What happened
+
+1. **The parallel session rolled the flake.lock BACK to the running rev** (`fe13242`, commit `3949c3d87` 17:06 — its route (a)) and adapted crowdsec/forgejo to it (`c42f4bd15`). Consequence: `linuxPackages_latest` resolves to **7.2.10** (the running kernel) — the linux-7.3-modules blocker does not exist on this rev, and the four 02c087f3-wave defects (node-26 segfault, aw-core/peewee, dms-shell, signoz-patched) vanished with the rollback. My boot.nix shims are **dormant no-ops here, load-bearing on the next forward move**.
+2. **Toplevel builds green**: `nix build …toplevel --keep-going --no-link` → exit 0 (my pass 2, 17:14–17:25).
+3. **Pre-deploy battery: 103 passed / 0 failed** (13 warnings, all advisory).
+4. **Deploy executed by the parallel session** (`nh os switch`, 17:34–17:48). I held off per twin-executor doctrine. Anchor verified: `readlink /run/current-system` == `system-939-link` → `z38nwd…-nixos-system-evo-x2-26.11.20261015.fe13242`. **Trap hit**: a mid-deploy snapshot read as the UNANCHORED class (profile still at system-938/Oct-20 while current-system already flipped) — nix-env `--set` lands LATE in the nh flow; never verdict the anchor before the deploy process tree is fully gone (verify with `pgrep -f 'nh os switch|switch-to-configuration'`, not a single PID `kill -0` loop — that loop also misfired once).
+5. **Post-deploy battery: 13 FAIL first run → 5 FAIL second run, ALL matching the pre-deploy baseline file** (`~/.local/state/systemnix/smoke-fail-baseline.txt`) — zero new regressions. monitor365 agent reconnected ("connected (1 devices)" — the agent-watchdog's circuit-breaker restart worked at 17:48:02, AFTER the check's grace window; the two batteries each restarted the agent themselves, visible in the journal as the 17:39/17:41/17:46 cycle).
+
+### Post-deploy triage table (the 5 baseline FAILs)
+
+| Check | Verdict | Evidence |
+| --- | --- | --- |
+| FastFlowLM :52625 | **By design** — memory-emergency guard Zone-6 sacrificed the socket at 17:36:42 (PSI ~50% deploy storm, "stacked full-disk readers" class); module docs: guard RESTORES the socket once memory recovers past margin | `journalctl --since 17:36:35 --until 17:36:50` + fastflowlm.nix:27-36 |
+| Architecture Catalog marker | **Stale check** — the dist rebranded (`<title>LarsArtmann Architecture Catalog`, fresh gen 20261023-170000); check expected old `<title>EventCatalog`. FIXED in post-deploy-check.sh this pass | local grep of `/var/lib/architecture-catalog/current/index.html` + live openssl probe agree |
+| SigNoz Coverage (4 dark: hermes, monitor365-server, papdashboard, PMA) | **Pre-existing** — in the baseline before the deploy; monitor365-server just restarted (may light up), hermes/papdashboard/PMA dark since before today | `:9100/metrics` signoz_traces_reporting + baseline file |
+| Service Sanity CPU (nsfw 206%, tq-pool 289%) | **Storm transients** — tq-agent-pool's storm gate admitted it post-settle (harvest startup scan); nsfw-classifier is lars's Helium browser extension, calm at 0.8% when re-probed | ps before/after |
+| Service Sanity journal (node-exporter/cv/crm) | **Restart backlogs draining** — cv's CRM re-sync (opportunities ×hundreds + 404 WARNs) + crm startup burst | journalctl -u cv-server |
+
+### Live fixes this pass (beyond docs)
+
+- **Killed the dev-cv port squatter** (`go run ./cmd/cv serve` + buildcache child, up since 01:29, holding `*:8201` — the CV syncer base_url port; the 2026-10-19 astro-preview class). Needed `/run/current-system/sw/bin/kill` — **`kill` is an unsupported builtin in the tool shell** (typed kill -9 silently no-ops with rc=2; AGENTS.md updated).
+- **post-deploy-check.sh dnsblockd threshold**: was hardcoded 2G; deployed `MemoryMax` is 4G (module storm-tuning) and the 17:4x reading of 3276MB was a restart page-cache spike (steady state ~1G, memory.current counts FILE cache). Check now derives the limit from the deployed unit. shellcheck-clean.
+- **`stdenv.isLinux` eval warning ATTRIBUTED** (§f.12 closed): hermes-agent input, `nix/hermes-agent.nix` `runtimeDeps` (`lib.optionals stdenv.isLinux [wl-clipboard xclip]`), reached via the dbus-broker user-unit text forced by our session-boot-audit assertions (NIX_ABORT_ON_WARN + `--show-trace`, throwaway extendModules eval neutralizing the deliberate warnings). **Fixed in the local clone** (~/projects/hermes-agent: both hermes-agent.nix sites + packages.nix matrix leg → `stdenv.hostPlatform.isLinux`; local eval = 0 warnings). Queued upstream row: owner push + `--update-input hermes-agent` clears it.
+- **`'system'` rename warning bisected** (§f.11 enriched, still open): fires when forcing `config.systemd.services`/`systemd.units`, NOT in user units / systemPackages — the access sits in a SYSTEM unit's eval. Next move documented in the pipeline.md row.
+
+### Docs landed this pass
+
+CHANGELOG entry for the shims; AGENTS.md status-report pre-read line + kill-builtin trap; CONTRIBUTING daemon-race clause (7) HEAD-age-bounded amend; gotchas-archive two-session-convergence entry; stability.md row premise-corrected (gen-939 did NOT carry kernel 7.3 — live module-file probes deferred to the next forward lock move); upstream.md hermes-agent row; pipeline.md 'system'-warning bisect enrichment.
+
+### Owner flags (cannot answer myself)
+
+1. **monitor365 agent is RUNNING again** (deploy restarted the enabled unit; watchdog cycling it healthy). The 2026-10-21 owner stop made agent restarts owner-gated pending the tenant event-cap restore (still 1B/day vs rec 250k). Collectors are cut (mouse/keystrokes off), so volume is far below the 597M era — but confirm the re-enable was intended.
+2. **hermes-agent local fix needs a push** (yours) + SystemNix lock bump to clear the eval warning.
+3. The 5 baseline FAILs are tracked above; the flm socket self-restores when the storm clears — verify `ss -ltn | grep 52625` later.

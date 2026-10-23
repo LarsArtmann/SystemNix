@@ -147,3 +147,28 @@ Getting there required a **nixpkgs rollback** (02c087f3/2026-10-20 → fe13242/2
 | Input pins | `--override-input signoz-src/dankMaterialShell/overview/templ` | eval green |
 | Final build | `nix build … --keep-going --no-link` | exit 0 |
 | Deploy | `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` | running at 17:13 (pre-deploy battery) |
+
+---
+
+## Deploy outcome (appended 17:55)
+
+**The deploy DID activate.** `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` passed the full battery (103 passed / 0 failed), switched, and created **generation 939**:
+
+- `/run/current-system` → `/nix/store/z38nwdbirsmnqjkxpw6nkaq95w4sx15i-nixos-system-evo-x2-26.11.20261015.fe13242`
+- `/nix/var/nix/profiles/system` → `system-939-link` (same store path) — **anchor verified, no exit-14 class**.
+
+The deploy exits **3**, not 0: the post-deploy sweep reports **154 PASS / 6 FAIL / 12 WARN**, and one of the failures is "NEW vs baseline":
+
+| Check | Verdict |
+| --- | --- |
+| Monitor365 API `/health` | **NEW vs baseline**, but transient: the server was mid-restart; `/health` returns `200` continuously since (journal, 17:49:21 / 17:49:37), port 3001 listening. Not a regression from this session's changes. |
+| FastFlowLM `:52625` | Guard zone-6 stopped it (trip #4188 at 17:46); socket re-arms on PSI drain (re-arm #373 at 17:47:48). Storm collateral, not breakage. |
+| SigNoz Coverage `traces_missing 1` | Service dark; needs its own triage (existed before the deploy in the 12:38 paste as monitor365 metrics, different check). |
+| Architecture Catalog title marker | Dist-branch content drift; pre-existing freshness warning alongside it (stamp age 288,111 s). |
+| Service Sanity CPU | `nsfw-classifier` 206 %, `tq-agent-pool` 117 % — storm-window load, advisory. |
+| Service Sanity journal | node-exporter 599/min, cv-server 642/min, crm-server 1043/min — storm-window journal rate, advisory. |
+
+**Live verification of this session's changes:**
+- the running guard script contains `inboxclean-web` (`/nix/store/19qlmz64…-memory-emergency-guard-check/bin/memory-emergency-guard-check`) — the zone-6 fix is live;
+- `monitor365-server-backup` carries `TimeoutStartSec = mkForce "30min"` in this generation;
+- the icon pack resolved for §16 (`/nix/store/jr9ajyyp…-papdashboard-icons`, 40/40 tiles).
