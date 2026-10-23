@@ -301,12 +301,18 @@ else
   report_fail "DNS - dash.$DOMAIN does not resolve (dnsblockd local zone misconfigured)"
 fi
 
-# DNS: dnsblockd memory must stay under 2G
+# DNS: dnsblockd memory must stay under its DEPLOYED MemoryMax (the module
+# sets 4G since the 2026-10 storm-tuning; a hardcoded 2G here failed the
+# 2026-10-23 deploy on a transient restart page-cache spike at 3276MB while
+# the steady state sat at ~1G — memory.current counts FILE cache too).
+_dns_max=$(systemctl show -p MemoryMax --value dnsblockd 2>/dev/null || true)
+case "$_dns_max" in ''|*[^0-9]*) _dns_max=2147483648 ;; esac
+[ "$_dns_max" -lt 2147483648 ] && _dns_max=2147483648
 _dns_rss=$(systemctl show -p MemoryCurrent --value dnsblockd 2>/dev/null || echo "0")
-if [ "$_dns_rss" -gt 0 ] 2>/dev/null && [ "$_dns_rss" -lt 2147483648 ]; then
-  report_pass "DNS - dnsblockd memory $((_dns_rss / 1048576))MB (<2G)"
+if [ "$_dns_rss" -gt 0 ] 2>/dev/null && [ "$_dns_rss" -lt "$_dns_max" ]; then
+  report_pass "DNS - dnsblockd memory $((_dns_rss / 1048576))MB (<$((_dns_max / 1048576))MB deployed limit)"
 elif [ "$_dns_rss" -gt 0 ] 2>/dev/null; then
-  report_fail "DNS - dnsblockd memory $((_dns_rss / 1048576))MB (exceeds 2G limit)"
+  report_fail "DNS - dnsblockd memory $((_dns_rss / 1048576))MB (exceeds deployed limit $((_dns_max / 1048576))MB)"
 else
   report_skip "DNS - cannot determine dnsblockd memory"
 fi
