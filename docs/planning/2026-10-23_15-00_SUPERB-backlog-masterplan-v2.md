@@ -1,6 +1,7 @@
 # SUPERB Backlog Masterplan v2 — all 1,760 open TODOs scheduled
 
 **Created:** 2026-10-23 15:00 CEST · **HEAD:** af0b2b249 · **Status:** PLAN (not executing — `scripts/plan-marker.sh` marker owed before any execution session)
+**EXECUTING (instance superb-masterplan-v2-exec-1, 2026-10-23 16:06 CEST, HEAD `1da4ccec9`):** executing (see AGENTS.md plan-execution tombstone)
 **Supersedes:** `docs/planning/2026-10-23_09-53_SUPERB-backlog-masterplan.md` (v1, census 1,752 — kept for provenance; its instance `superb-masterplan-exec-1` ran 3 sprints T-001/T-029/T-033 before this re-baseline). Census drift since v1: +8 lock-wave rows (forgejo-runner migration, eval gate on lock floats, crowdsec-setup audits, monitor365 mainProgram, …), +2 session-1 harvested lessons, −3 rows closed by session 1.
 **Source inventory:** the 10 domain libraries (`docs/todo/{storage,stability,services,pipeline,monitoring,upstream,ai-stack,desktop,pixel6,security}.md`), open `- [ ]` rows only. The `TODO_LIST.md` queue mirrors the `[ready]` subset and is NOT double-counted.
 

@@ -74,6 +74,10 @@ in
           makeFlags = old.makeFlags ++ [ "DEPMOD=true" ];
         });
         r8125 = super.r8125.overrideAttrs (old: {
+          # null → drops the base derivation's custom `cp r8125.ko` installPhase,
+          # restoring the stdenv default `make $installTargets`, which runs the
+          # upstream Makefile's `install` target (kernel modules_install at $out).
+          installPhase = null;
           installTargets = [ "install" ];
           installFlags = (old.installFlags or [ ]) ++ [ "DEPMOD=true" ];
         });
