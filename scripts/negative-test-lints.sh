@@ -631,8 +631,9 @@ eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an I
 run_case portguard starttime-recheck-dropped port-guard-check fail 'pid-reuse: kill was called on a recycled pid' \
   'sed:lib/port-guard.nix:s|if _same_process "\$pid" "\$st0"; then|if true; then|g'
 # Leg 2: break the owner-spare case dispatch — nothing ever matches the spare
-# arms, so the guard would kill its OWN draining instance.
-run_case portguard owner-spare-broken port-guard-check fail 'owner-spared: kill was called' \
+# arms, so the guard would kill its OWN draining instance (the rc assertion
+# fires first: owner listener becomes a BIND-BLOCKED foreign at verify).
+run_case portguard owner-spare-broken port-guard-check fail 'owner-spared' \
   'sed:lib/port-guard.nix:s|case "\$cgroup" in|case "broken-for-negative-test" in|g'
 # Green control on the pristine copy: the check must pass unmutated.
 run_case portguard green-control port-guard-check pass 'never-matches' \

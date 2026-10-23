@@ -111,6 +111,26 @@ _: {
       # live incident 2026-08-18). Deadline 480 s (2026-08-21): v1.0.2
       # re-quantized weights grew the mmap from 13.6 GB to 21.6 GB — worst-case
       # cold read is now ~5 min; each refused probe closes instantly and consumes no slot.
+      # Refusal-with-reason (berth pattern, plan T5 — ships DARK: the
+      # FLM_REFUSAL_REASON env defaults unset, so nothing below changes
+      # behavior until an owner flips it in the unit environment).
+      #
+      # Reason vocabulary (design note, plan subtask 5.1):
+      #   cold-loading  backend bind pending or model loading — clients HOLD
+      #                 (kernel backlog queues them; this is the DEFAULT
+      #                 behavior, not a refusal: an immediate 503 here would
+      #                 DEFEAT socket activation — the arriving connection IS
+      #                 the backend's wake-up trigger. A cold-loading reason
+      #                 requires an HTTP-aware proxy hop, not this TCP bridge)
+      #   sacrificed    memory-emergency-guard stopped the backend AND spent
+      #                 the daily restore budget (restore_capped 1): queueing
+      #                 480 s is pointless — the guard may kill the restore
+      #                 anyway. THIS is the implemented refusal.
+      #   bind-blocked  a foreign holder pins :52626 (port-guard BIND-BLOCKED
+      #                 journal line). Future: requires reading the guard's
+      #                 verdict before the wait loop starts.
+      # HTTP shape: 503 + {"reason":..., "retry_after":...}; retry_after is
+      # null for sacrificed (owner action or next guard restore, not a timer).
       proxyConn = pkgs.writeShellApplication {
         name = "fastflowlm-proxy-conn";
         runtimeInputs = [ pkgs.coreutils ];
@@ -118,6 +138,16 @@ _: {
           host="127.0.0.1"
           port="${toString cfg.backendPort}"
           deadline=$((SECONDS + 480))
+          if [ "''${FLM_REFUSAL_REASON:-0}" = "1" ]; then
+            if ! (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; then
+              if grep -q 'memory_emergency_guard_restore_capped 1' \
+                /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom 2>/dev/null; then
+                printf 'HTTP/1.1 503 Service Unavailable\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{"reason":"sacrificed","retry_after":null}'
+                echo "fastflowlm-proxy: refused (sacrificed): guard restore budget spent" >&2
+                exit 0
+              fi
+            fi
+          fi
           until (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; do
             if [ "$SECONDS" -ge "$deadline" ]; then
               echo "fastflowlm-proxy: backend $host:$port not reachable within 480 s" >&2
@@ -193,6 +223,22 @@ _: {
           type = lib.types.bool;
           default = false;
           description = "Also load whisper-v3 for ASR (--asr 1).";
+        };
+
+        refusalReason = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Refusal-with-reason at the engine boundary (berth pattern, plan
+            T5; SHIPS DARK). When true, per-connection bridges answer
+            503 + JSON immediately instead of queueing through the 480 s
+            wait — but ONLY for the sacrificed case (memory-emergency-guard
+            restore budget spent): an immediate refusal on a merely
+            cold-loading backend would defeat socket activation (the
+            arriving connection IS the wake-up trigger). See the design
+            note above proxyConn for the full reason vocabulary
+            (cold-loading | sacrificed | bind-blocked).
+          '';
         };
 
         pmode = lib.mkOption {
@@ -328,6 +374,11 @@ _: {
               # fastflowlm_failed/crash-loop metrics own real alerting.
               SuccessExitStatus = [ 143 ];
             }
+            (lib.optionalAttrs cfg.refusalReason {
+              # Refusal-with-reason flag (plan T5, default OFF — absent env
+              # keeps the bridge bytes and behavior identical).
+              Environment = "FLM_REFUSAL_REASON=1";
+            })
             (harden {
               # socat holds one TCP stream; the harden default of 512M is
               # 100x what it needs. Tighten to catch runaway behavior.
