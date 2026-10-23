@@ -81,6 +81,15 @@
       imports = [ inputs.overview.nixosModules.default ];
 
       config = lib.mkIf cfg.enable {
+        # vendorHash shim for the pinned 10-16 rev (2026-10-23): rolling the
+        # input back to 4b48040 needs its own go-modules hash under the
+        # fe13242 nixpkgs. First-hand keep-going probe: specified NQ0ICMtk,
+        # got NXdLbWt+.
+        services.overview.package =
+          inputs.overview.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=";
+          };
+
         assertions = lib.optional daemonMode {
           assertion =
             (config.services.project-discovery-daemon.enable or false)
