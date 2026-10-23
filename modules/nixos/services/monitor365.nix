@@ -459,8 +459,10 @@
                 StateDirectory = lib.mkForce null;
                 # The export + retention + weekly VACUUM window: observed
                 # exports ran 2.5-6 min; a 25 GB VACUUM on the QLC root
-                # needs the rest of the budget.
-                TimeoutStartSec = "30min";
+                # needs the rest of the budget. mkForce: upstream
+                # server-module.nix hard-sets 10min, which a bare
+                # definition turns into a conflicting-definition eval error.
+                TimeoutStartSec = lib.mkForce "30min";
                 # Observed memory peaks 7.4-20.8 GB across the 2026-10-19
                 # ..23 fires (systemd Consumed lines) — the root-run
                 # override previously carried NO cap at 03:00 while other
