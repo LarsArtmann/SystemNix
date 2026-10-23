@@ -41,10 +41,11 @@ pkgs.runCommand "test-port-guard"
     export STUBS="$work/stubs" FIX="$work/fix" KILLLOG="$work/killlog"
 
     inject() {
-      # <exec-string> <out-file>: strip the leading '+' and argv, stub the
-      # baked store binaries. Assert every stub site took before running.
+      # <exec-string> <out-file>: strip the leading '+', the port argv, and
+      # stub the baked store binaries. Assert every stub site took first.
       local src out n
       src="''${1#+}"
+      src="''${src%% *}"
       out="$2"
       sed -e 's|/nix/store/[^ ]*/bin/ss|$STUBS/ss|g' \
           -e 's|/nix/store/[^ ]*/bin/cat|$STUBS/cat|g' \
@@ -80,7 +81,8 @@ pkgs.runCommand "test-port-guard"
       #!/usr/bin/env bash
       path="$1"
       if [[ "$path" == */cgroup ]]; then
-        cat "$FIX/proc/''${path##*/proc/}/cgroup" 2>/dev/null || true
+        pid="''${path#/proc/}"; pid="''${pid%/cgroup}"
+        cat "$FIX/proc/$pid/cgroup" 2>/dev/null || true
         exit 0
       fi
       if [[ "$path" == */stat ]]; then

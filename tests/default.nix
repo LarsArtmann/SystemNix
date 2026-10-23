@@ -91,5 +91,6 @@ in
   nix-email-contract = import ./test-nix-email.nix { inherit pkgs inputs system; };
   nsfw-classifier = import ./test-nsfw-classifier.nix { inherit pkgs inputs system; };
   fastflowlm-idle-check = import ./test-fastflowlm-idle.nix { inherit pkgs self; };
+  port-guard-check = import ./test-port-guard.nix { inherit pkgs self; };
 }
 // (import ./test-scripts.nix { inherit pkgs self; })
