@@ -1704,34 +1704,41 @@ in
           exit 1
         }
 
+      # env format: fallback-register input (sourced by forgejo-register-runner)
       printf 'TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
       chmod 644 "$TOKEN_FILE"
+      # bare format: the v13 connection's file: URL target — the daemon
+      # reads this file VERBATIM at config load (config.go ResolveSecretURL;
+      # no KEY= prefix allowed). 2026-10-23 connections-flow migration.
+      printf '%s\n' "$TOKEN" > "''${TOKEN_FILE}.bare"
+      chmod 644 "''${TOKEN_FILE}.bare"
     '';
   };
 
   # 2026-10-23: the forgejo-runner module renames the runner's StateDirectory
   # gitea-runner/<name> → forgejo-runner/<name>. Without this carry-over the
-  # legacy .runner identity (uuid the Forgejo server knows) would be orphaned
-  # and the daemon would re-register as a NEW entity, leaving the old
-  # registration offline in the UI forever. Runs as a "+"-prefixed (root)
-  # ExecStartPre BEFORE forgejo-register-runner: the old dir is 0700 owned by
-  # the PREVIOUS DynamicUser's random uid — only root can read it. Copies are
-  # chmod 644 so the NEW dynamic uid can read them (systemd's StateDirectory
-  # re-own pass at next start normalizes ownership; the 0700 dir protects the
-  # token-bearing .runner meanwhile). Idempotent: skips files already present
-  # in the new dir, silent no-op once the old dir is reclaimed.
+  # .runner identity (uuid the Forgejo server knows) would be orphaned and
+  # the daemon would register as a NEW entity, leaving the old registration
+  # offline in the UI forever. Runs as a "+"-prefixed (root) ExecStartPre
+  # BEFORE forgejo-register-runner: the old dir is 0700 owned by the
+  # PREVIOUS DynamicUser's random uid — only root can read it. Copies land
+  # under registration/ (the daemon config points runner.file at a
+  # nonexistent path — a .runner next to a connections-carrying config is a
+  # hard daemon error, registration.go "server connection conflict").
+  # Idempotent: skips files already present, silent no-op once the old dir
+  # is reclaimed.
   carryRunnerIdentity = pkgs.writeShellApplication {
     name = "forgejo-runner-carry-identity";
     runtimeInputs = [ pkgs.coreutils ];
     text = ''
       OLD="/var/lib/gitea-runner/${hostName}"
-      NEW="''${STATE_DIRECTORY:-/var/lib/forgejo-runner/${hostName}}"
+      NEW="''${STATE_DIRECTORY:-/var/lib/forgejo-runner/${hostName}}/registration"
 
       if [ ! -d "$OLD" ]; then
         exit 0
       fi
 
-      for f in .runner .labels .forgejo-migrated; do
+      for f in .runner .labels; do
         if [ -f "$OLD/$f" ] && [ ! -e "$NEW/$f" ]; then
           mkdir -p "$NEW"
           cp "$OLD/$f" "$NEW/$f.carry-tmp" && mv "$NEW/$f.carry-tmp" "$NEW/$f"
@@ -1742,51 +1749,64 @@ in
     '';
   };
 
+  # 2026-10-23 connections-flow rewrite: register is now the FRESH-HOST
+  # FALLBACK only (identity normally arrives via the carry step); the main
+  # job is rendering the daemon config — substituting @RUNNER_UUID@ with
+  # the uuid from registration/.runner into a working-dir copy of the
+  # module's rendered config (the upstream nixos-test replace-secret
+  # pattern; the uuid is identity, not a credential, so sed suffices).
+  # The daemon then runs `--config config.yaml` (WorkingDirectory) with a
+  # complete connection: url + uuid + file:token_url — .runner is never
+  # read by the daemon (registration.go errors on .runner + connections
+  # coexisting, hence the registration/ subdir + the nonexistent
+  # runner.file in daemonRunnerSettings).
   registerRunner = pkgs.writeShellApplication {
     name = "forgejo-register-runner";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gnused
       pkgs.forgejo-runner
     ];
     text = ''
-      # 2026-10-23: the forgejo-runner module (successor of the removed
-      # gitea-actions-runner) declares a SINGLE StateDirectory entry
-      # ("forgejo-runner/<name>") — STATE_DIRECTORY IS the instance dir.
-      # (The old module's two-entry list form made the naive
-      # "$STATE_DIRECTORY/${hostName}" interpolation produce the bogus
-      # /var/lib/gitea-runner:/… path — mkdir EROFS, 5 rapid failures →
-      # start-limit-hit, 2026-10-15 20:10 switch. Under the new single-entry
-      # shape a %%:* + /${hostName} suffix would DOUBLE the hostName:
-      # /var/lib/forgejo-runner/<name>/<name> — use the value as-is.)
+      # SINGLE StateDirectory entry ("forgejo-runner/<name>") —
+      # STATE_DIRECTORY IS the instance dir (old module's two-entry list
+      # made naive interpolation land on the parent; see the 2026-10-15
+      # start-limit incident).
       export INSTANCE_DIR="$STATE_DIRECTORY"
-      mkdir -vp "$INSTANCE_DIR"
+      mkdir -vp "$INSTANCE_DIR/registration"
       cd "$INSTANCE_DIR"
 
       # shellcheck source=/dev/null
       source /run/forgejo-runner/token
 
-      if [ ! -f "$INSTANCE_DIR/.forgejo-migrated" ]; then
-        echo "Forcing runner re-registration (Gitea→Forgejo migration)"
-        rm -f "$INSTANCE_DIR/.runner"
-        touch "$INSTANCE_DIR/.forgejo-migrated"
-      fi
-
-      export LABELS_FILE="$INSTANCE_DIR/.labels"
+      export LABELS_FILE="registration/.labels"
       LABELS_WANTED="$(echo ${lib.escapeShellArg (lib.concatStringsSep "\n" runnerLabels)} | sort)"
       LABELS_CURRENT="$(cat "$LABELS_FILE" 2>/dev/null || echo "")"
 
-      if [ ! -e "$INSTANCE_DIR/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ]; then
-        rm -f "$INSTANCE_DIR/.runner"
-
+      # Fresh-host fallback: no carried .runner → register one (writes
+      # registration/.runner via the register-config's runner.file).
+      if [ ! -e "registration/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ]; then
+        rm -f "registration/.runner"
         act_runner register --no-interactive \
           --instance ${lib.escapeShellArg forgejoUrl} \
           --token "$TOKEN" \
           --name ${lib.escapeShellArg hostName} \
           --labels ${lib.escapeShellArg (lib.concatStringsSep "," runnerLabels)} \
           --config ${runnerConfigFile}
-
         echo "$LABELS_WANTED" > "$LABELS_FILE"
       fi
+
+      # Render the daemon config: module template + real uuid.
+      UUID="$(sed -n 's/.*"uuid"[[:space:]]*:[[:space:]]*"\([0-9a-f-]*\)".*/\1/p' registration/.runner)"
+      if [ -z "$UUID" ]; then
+        echo "ERROR: no runner uuid in registration/.runner (register failed?)" >&2
+        exit 1
+      fi
+      sed "s|@RUNNER_UUID@|$UUID|g" \
+        ${config.services.forgejo-runner.instances."${hostName}".configFile} \
+        > config.yaml.rendered
+      mv config.yaml.rendered config.yaml
+      echo "runner config rendered (uuid ''${UUID%%-*}…)"
     '';
   };
 
