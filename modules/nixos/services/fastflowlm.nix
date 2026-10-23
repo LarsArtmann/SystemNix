@@ -139,6 +139,8 @@ _: {
           port="${toString cfg.backendPort}"
           deadline=$((SECONDS + 480))
           if [ "''${FLM_REFUSAL_REASON:-0}" = "1" ]; then
+            # probe in a SUBSHELL: fd 3 dies with it, the parent never holds
+            # a second backend connection (flm's hard 10-slot budget)
             if ! (exec 3<>"/dev/tcp/$host/$port") 2>/dev/null; then
               if grep -q 'memory_emergency_guard_restore_capped 1' \
                 /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom 2>/dev/null; then

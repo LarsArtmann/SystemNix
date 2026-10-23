@@ -1438,6 +1438,15 @@ in
         enable = true;
       };
 
+      # Nightly GoBD backup of the journal accounting kernel's books
+      # (~/books). The timer is the deployment-owned piece the journal
+      # repo's month-end runbook assigns to NixOS; everything else about
+      # journal is an interactive CLI (no daemon, no port). Append-only
+      # VACUUM INTO + doctor verify. Runbook: docs/services/journal.md.
+      journal-backup = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
