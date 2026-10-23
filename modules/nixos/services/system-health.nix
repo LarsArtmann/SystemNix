@@ -92,8 +92,14 @@ _: {
       # 60 GiB in kB — GPUActive threshold (AGENTS.md: GPUActive can consume 51+ GiB)
       gpuActiveThresholdKb = 60 * 1024 * 1024;
 
-      # monitor365 DuckDB buffer pressure: alert when DB exceeds 80% of server MemoryMax (2G default)
-      monitor365BufferThreshold = 1600000000; # ~1.6 GB
+      # monitor365 DuckDB buffer pressure: keyed on the server cgroup's
+      # REAL memory signals (memory.current vs memory.max, plus any OOM
+      # kill this boot), NOT on the DB file size — a DuckDB does not map
+      # its whole file, so a 25 GB file at 389 MB RSS tripped the old
+      # 1.6 GB file-size flag forever (and the flag would stay 1 even
+      # after the 2026-10-23 retention shrink). File size stays a gauge
+      # (telemetry); pressure means memory pressure now.
+      monitor365MemPressurePct = 90; # % of cgroup memory.max
 
       # CPU alert threshold: average CPU% over collection interval that triggers alert
       cpuAlertThreshold = 150;
@@ -488,7 +494,19 @@ _: {
             if [ -f "$DUCKDB_PATH" ]; then
               DUCKDB_SIZE=$(stat -c %s "$DUCKDB_PATH" 2>/dev/null) || DUCKDB_SIZE=0
               DUCKDB_SIZE="''${DUCKDB_SIZE:-0}"
-              if [ "$DUCKDB_SIZE" -gt ${toString monitor365BufferThreshold} ] 2>/dev/null; then
+            fi
+            M365_CG=/sys/fs/cgroup/system.slice/monitor365-server.service
+            if [ -d "$M365_CG" ]; then
+              MEM_CUR=$(cat "$M365_CG/memory.current" 2>/dev/null) || MEM_CUR=0
+              MEM_MAX=$(cat "$M365_CG/memory.max" 2>/dev/null) || MEM_MAX=0
+              OOM_KILLS=$(awk '/^oom_kill/ {print $2}' "$M365_CG/memory.events" 2>/dev/null) || OOM_KILLS=0
+              MEM_CUR="''${MEM_CUR:-0}"; MEM_MAX="''${MEM_MAX:-0}"; OOM_KILLS="''${OOM_KILLS:-0}"
+              if [ "$MEM_MAX" -gt 0 ] && [ "$MEM_CUR" -gt 0 ]; then
+                if [ $((MEM_CUR * 100 / MEM_MAX)) -ge ${toString monitor365MemPressurePct} ]; then
+                  BUFFER_PRESSURE=1
+                fi
+              fi
+              if [ "$OOM_KILLS" -gt 0 ] 2>/dev/null; then
                 BUFFER_PRESSURE=1
               fi
             fi
@@ -1320,7 +1338,7 @@ _: {
             echo "# TYPE system_monitor365_duckdb_bytes gauge"
             echo "system_monitor365_duckdb_bytes ''${DUCKDB_SIZE}"
 
-            echo "# HELP system_monitor365_buffer_pressure 1 if DuckDB exceeds buffer threshold, 0 otherwise"
+            echo "# HELP system_monitor365_buffer_pressure 1 if the server cgroup shows real memory pressure (>=90% of memory.max or any OOM kill this boot), 0 otherwise"
             echo "# TYPE system_monitor365_buffer_pressure gauge"
             echo "system_monitor365_buffer_pressure ''${BUFFER_PRESSURE}"
 

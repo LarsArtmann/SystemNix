@@ -64,6 +64,28 @@
           touch $out
         '';
 
+        # monitor365 event retention: the 03:00 unattended window must
+        # never be the retention script's first execution — eval is
+        # structurally blind to logic/interpolation bugs inside shell
+        # scripts (the 2026-10-23 vacuumHeadroomBytes bare-var class,
+        # caught only by reread). Executes the SAME repo file the
+        # monitor365BackupScript calls, against real toy DuckDBs.
+        monitor365-retention-selftest = pkgs.runCommand "monitor365-retention-selftest"
+          {
+            env.PATH = lib.makeBinPath [
+              pkgs.bash
+              pkgs.coreutils
+              pkgs.duckdb
+            ];
+          }
+          ''
+            scratch=$(mktemp -d)
+            cp ${root}/scripts/monitor365-retention.sh "$scratch/monitor365-retention.sh"
+            cp ${root}/scripts/test-monitor365-retention.sh "$scratch/test-monitor365-retention.sh"
+            bash "$scratch/test-monitor365-retention.sh"
+            touch $out
+          '';
+
         # The 2026-10-17 deploy-pipeline optimizations (deploy_restart
         # timeout bounds, content-addressed check-#1 stamp, the
         # race-detector manifest fold, the parallel probe batch) shipped
