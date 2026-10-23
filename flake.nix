@@ -1223,7 +1223,9 @@
           || throw ''
             flake.nix carries hardcoded version pins in input URLs:
               ${lib.concatStringsSep "\n  " flakeInputPinAudit.violations}
-            Fix: pin via ?ref=master / ?ref=refs/heads/master (lock updates then track the branch), or — ONLY for a documented rollback/FOD-freeze reason — register the input in lib/flake-input-pin-audit.nix `allowlist` with the reason + LIFT condition.
+            Do not edit flake.lock by hand to work around this.
+            Pin policy: ?ref=master / ?ref=refs/heads/master (lock updates then track the branch), or — ONLY for a documented rollback/FOD-freeze reason — register the input in lib/flake-input-pin-audit.nix `allowlist` with the reason + LIFT condition.
+            A rev-in-URL pin is only durable when the ROOT-referenced lock node carries the same rev; a split lock (an orphan node at a different rev) is a violation, not a warning.
           '';
         if flakeInputPinAudit.warnings == [ ] then
           true

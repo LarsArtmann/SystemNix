@@ -33,8 +33,12 @@ jobs:
         id: update-check
         continue-on-error: true
         run: |
-          # Temporarily update nixpkgs to latest
-          nix flake update nixpkgs --no-use-registries
+          # nixpkgs is REV-PINNED in flake.nix (2026-10-23 deploy rollback), so
+          # a bare `nix flake update nixpkgs` is a SILENT NO-OP and this whole
+          # check would pass forever on the pinned rev — a dead early-warning
+          # system. --override-input bypasses the declared URL and evaluates
+          # against the live nixos-unstable tip, which is the signal we want.
+          nix flake lock --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable --no-use-registries
 
           # Verify it didn't regress to tarball
           type=$(nix eval --impure --json --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); in lock.nodes.nixpkgs.original.type or "unknown"' 2>/dev/null | tr -d '"')
@@ -73,9 +77,13 @@ jobs:
                 'A package was likely removed, renamed, or an option changed.',
                 '',
                 '**Action required:**',
-                '1. Run `nix flake update nixpkgs --no-use-registries` locally',
+                '1. Reproduce with `nix flake lock --override-input nixpkgs github:NixOS/nixpkgs/nixos-unstable --no-use-registries`',
+                '   (a plain `nix flake update nixpkgs` is a no-op while nixpkgs is rev-pinned)',
                 '2. Run `nix flake check --no-build` to see the error',
-                '3. Fix the breakage before the next deploy',
+                '3. Fix the breakage before the next deploy. NOTE: this check FAILING is expected while the',
+                '   2026-10-23 rollback pin is in force — the pin exists precisely because the tip is broken.',
+                '   Do not lift the pin (`lib/flake-input-pin-audit.nix` → nixpkgs LIFT condition) to silence',
+                '   this issue; lift it only once the toplevel build is green against the tip.',
                 '',
                 '[View workflow run](' + context.serverUrl + '/' + context.repo.owner + '/' + context.repo.repo + '/actions/runs/' + context.runId + ')'
               ].join('\n'),

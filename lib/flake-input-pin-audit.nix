@@ -39,6 +39,13 @@
 #     inline-guard parity — hand lock surgery). Original ref/rev fields
 #     are deliberately NOT scanned: a stale lock lags lifted declarations
 #     and would false-fire during every pin lift.
+#   - LOCK INTEGRITY (2026-10-23, surface 3): for every declared
+#     rev-in-URL pin, the node the ROOT actually references must carry
+#     that exact rev. Born from a real split brain — `nodes.nixpkgs` sat
+#     ORPHANED at the broken tip 02c087f3 while root resolved to
+#     `nixpkgs_4` (the pinned fe13242), and both the pre-commit tarball
+#     guard and the CI compat step probed the orphan. Blind guards on a
+#     split lock are worse than no guards, because they read green.
 # Findings are deduplicated per input across surfaces.
 #
 # `git+file:` inputs are EXEMPT (interim local-checkout pins per
@@ -160,7 +167,7 @@ let
   # closer). Both declaration forms: `    name.url = "…";` (dotted,
   # 4-space) and `    name = {` opener + `      url = "…";` (6-space).
 
-  declaredFindings =
+  declaredInputs =
     let
       lines = filter builtins.isString (split "\n" flakeSource);
       step =
@@ -199,20 +206,60 @@ let
         in
         state';
     in
-    concatLists (
-      map
-        (
-          f:
-          map (detail: {
-            inherit (f) name;
-            inherit detail;
-          }) (classifyUrl f.url)
-        )
-        (foldl' step {
-          current = null;
-          findings = [ ];
-        } lines).findings
-    );
+    (foldl' step {
+      current = null;
+      findings = [ ];
+    } lines).findings;
+
+  declaredFindings = concatLists (
+    map
+      (
+        f:
+        map (detail: {
+          inherit (f) name;
+          inherit detail;
+        }) (classifyUrl f.url)
+      )
+      declaredInputs
+  );
+
+  # ── surface 3: declared rev pin vs the node root ACTUALLY resolves ───
+  # A rev-in-URL pin is only durable if the node the ROOT references carries
+  # that rev. 2026-10-23 split brain (this surface's origin): the lock held
+  # `nodes.nixpkgs` — an ORPHAN at the broken tip 02c087f3 — alongside
+  # `nixpkgs_4`, the node root resolved to (the pinned fe13242). Both the
+  # pre-commit tarball guard and the CI compat step probed `nodes.nixpkgs`,
+  # i.e. a node nothing builds from, so a regression on the LIVE node was
+  # invisible. This surface also catches a lock hand-edited to a rev that is
+  # not the declared one. Eval-enforced, so no script/CI wiring can drift.
+
+  declaredRev =
+    url:
+    let
+      m = match "(github|gitlab|sourcehut):[^/]+/[^/?#]+/([0-9a-f]{40})" url;
+    in
+    if m == null then null else elemAt m 1;
+
+  rootNodeKey = inputName: lock.nodes.${lock.root}.inputs.${inputName} or null;
+
+  lockIntegrityViolations = filter (v: v != null) (
+    map (
+      f:
+      let
+        rev = declaredRev f.url;
+        nodeKey = rootNodeKey f.name;
+        lockedRev = lock.nodes.${nodeKey}.locked.rev or null;
+      in
+      if rev == null then
+        null
+      else if nodeKey == null then
+        "${f.name}: declared as a rev-in-URL pin but is not a root input of flake.lock"
+      else if lockedRev != rev then
+        "${f.name}: flake.nix pins rev ${rev} but the root-referenced lock node '${nodeKey}' is at ${if lockedRev == null then "no rev" else lockedRev} — the lock is split or stale; run `nix flake lock` and commit the result"
+      else
+        null
+    ) declaredInputs
+  );
 
   # ── surface 2: flake.lock originals (?rev= class only — old inline-guard
   # parity; original ref/rev fields are skipped so a stale lock lagging a
@@ -249,7 +296,8 @@ let
   ) { } (declaredFindings ++ lockFindings);
 
   violations =
-    map (name: "${name}: ${concatStringsSep "; " findingsByInput.${name}}") (
+    lockIntegrityViolations
+    ++ map (name: "${name}: ${concatStringsSep "; " findingsByInput.${name}}") (
       filter (name: !hasAttr name allowlist) (attrNames findingsByInput)
     )
     ++ map (
@@ -262,5 +310,5 @@ let
   );
 in
 {
-  inherit violations warnings;
+  inherit violations warnings lockIntegrityViolations;
 }

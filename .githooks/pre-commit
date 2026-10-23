@@ -30,8 +30,15 @@ source scripts/lib/precommit-eval-cache.sh
 # Fast guard: reject tarball-type nixpkgs before running the slower nix flake check.
 # The global Nix registry rewrites nixpkgs/nixos-unstable to channels.nixos.org,
 # which is often months stale and breaks deploys.
+#
+# Reads the ROOT-REFERENCED node, not `nodes.nixpkgs` (fixed 2026-10-23). After
+# the 2026-10-23 rollback the lock holds TWO nixpkgs nodes: `nodes.nixpkgs` is
+# an ORPHAN still at the broken tip 02c087f3, while root actually resolves to
+# `nixpkgs_4` (the pinned fe13242). Probing `nodes.nixpkgs` inspected a node
+# nothing builds from, so a real tarball regression on the live node would
+# have passed this guard. Resolve through `lock.root.inputs.nixpkgs`.
 if [ -f "flake.lock" ]; then
-    nixpkgs_type=$(nix eval --impure --json --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); in lock.nodes.nixpkgs.original.type or "unknown"' 2>/dev/null | tr -d '"' || echo "unknown")
+    nixpkgs_type=$(nix eval --impure --json --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); node = lock.nodes.${lock.nodes.${lock.root}.inputs.nixpkgs}; in node.original.type or "unknown"' 2>/dev/null | tr -d '"' || echo "unknown")
     if [ "$nixpkgs_type" != "github" ]; then
         log_error "nixpkgs flake.lock regression: original type is '$nixpkgs_type', expected 'github'."
         log_error "The global Nix registry rewrote nixpkgs to a tarball. Fix flake.lock and retry."
@@ -456,6 +463,42 @@ else
         cat /tmp/nix-check.log
         all_passed=false
     fi
+fi
+
+# Build gate for flake.lock (2026-10-23). The eval leg above is structurally
+# BLIND to stale fixed-output hashes: `nix flake check --no-build` never
+# realizes a FOD, so a lock bump that re-stales ten vendorHash/pnpm hashes
+# passes every gate in this repo and only fails at deploy time. That is
+# exactly how the 2026-10-23 five-hour recovery happened (7 lock floats, 10
+# stale FODs, 4 vendorHash mismatches, 3 broken builds, 2 reverted
+# migrations). So: when flake.lock is part of the commit, realize the real
+# toplevel. Only fires on lock commits, so the cost lands where the risk is.
+#
+# Bypass (documented, for a verified-broken-by-design lock or an offline
+# host): PRECOMMIT_LOCK_BUILD=0 git commit …
+# Non-Linux hosts skip it: the evo-x2 toplevel does not evaluate off Linux,
+# and the Darwin host is not the deploy target for this gate.
+if git diff --cached --name-only | grep -qx 'flake.lock'; then
+    if [ "$(uname -s)" != "Linux" ]; then
+        log_info "flake.lock staged on $(uname -s) — skipping the toplevel build gate (Linux deploy target only)."
+    elif [ "${PRECOMMIT_LOCK_BUILD:-1}" = "0" ]; then
+        log_warn "PRECOMMIT_LOCK_BUILD=0 — skipping the flake.lock toplevel build gate."
+        log_warn "Stale FOD hashes will then surface at DEPLOY time, not here."
+    else
+        log_info "flake.lock staged — realizing the evo-x2 toplevel (FOD/build gate; this can take minutes on a cold store)..."
+        if nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link > /tmp/lock-build.log 2>&1; then
+            log_success "flake.lock toplevel build gate passed (FODs realized, not just evaluated)."
+        else
+            log_error "flake.lock toplevel build gate FAILED — the lock does not build."
+            log_error "  This is the check eval cannot do: stale vendorHash/pnpm/FOD hashes only fail on realization."
+            log_error "  Full log: /tmp/lock-build.log"
+            tail -40 /tmp/lock-build.log
+            log_error "  Fix the hashes, or bypass deliberately with: PRECOMMIT_LOCK_BUILD=0 git commit …"
+            all_passed=false
+        fi
+    fi
+else
+    log_info "No staged flake.lock — skipping the toplevel build gate."
 fi
 
 if [ "$all_passed" = true ]; then
