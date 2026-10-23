@@ -1503,12 +1503,45 @@ in
       monitor365 = {
         enable = true;
         settings.collectors = {
+          # Data-governance cadence set (2026-10-23, owner IO/s directive:
+          # "the right kind of data in the right intervals" beats retention
+          # windows): upstream types.rs treats interval_seconds null/0 as
+          # REALTIME mode, and the module defaults leave several pollers
+          # unbounded. Explicit intervals below bound the unbounded ones;
+          # collectors already rendering sane module defaults (system_info
+          # 60s, screenshots 300s, camera 3600s) are left untouched. The
+          # server-side tenant daily event cap is the IO/s governor
+          # (upstream default 10k/day; lifted to 1B for the 2026-10-18..21
+          # backlog drain) — RESTORE it before any agent restart
+          # (recommendation 250k/day; owner sets it via admin API, never
+          # agent-side). A cap with chatty collectors buffers agent-side
+          # (the 113-day/597M backlog mechanism) — this cadence set is
+          # what makes the cap safe. Upload batching already renders
+          # correctly ([cloud] sync_interval_seconds=60, verified in the
+          # live TOML) and is deliberately NOT re-pinned here.
           # Headless collectors
-          network.enabled = lib.mkDefault true;
-          battery.enabled = lib.mkDefault true;
+          network = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 300;
+          };
+          battery = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 300;
+          };
           system_info.enabled = lib.mkDefault true;
-          process.enabled = lib.mkDefault true;
-          location.enabled = lib.mkDefault true;
+          # process: kept (core dashboard feature) but SAMPLED — 5s scan
+          # bounds the per-start/exit event stream (cmdline+environ rows);
+          # processes that start AND exit within one scan vanish unseen,
+          # an accepted trade (volume over completeness for short-lived
+          # build helpers). This is sampling, NOT debouncing.
+          process = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 5;
+          };
+          location = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 900;
+          };
           # fs_event (2026-10-23): watch_paths is EMPTY — the notify
           # watcher registers zero inodes and the collector emits ZERO
           # events today (verified from upstream source: interval is
@@ -1537,6 +1570,12 @@ in
           # change + agent restart.
           keystrokes.enabled = lib.mkDefault false;
           mouse.enabled = lib.mkDefault false;
+          # clipboard/notifications/afk_status: realtime BY DECISION —
+          # event-driven, human-paced (tens of events/day), so the event
+          # itself IS the right granularity; forcing intervals here would
+          # only add latency. app_usage: broken upstream (gen_app Binder
+          # Error every 5 min; row queued) — left enabled, cadence moot
+          # until the fix.
           clipboard.enabled = lib.mkDefault true;
           notifications.enabled = lib.mkDefault true;
           app_usage.enabled = lib.mkDefault true;
