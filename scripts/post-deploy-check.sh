@@ -422,6 +422,14 @@ m365_enabled=false
 systemctl list-unit-files 'monitor365*' --no-legend 2>/dev/null | grep -q monitor365 && m365_enabled=true
 
 if $m365_enabled; then
+  # Deploy-time warmup (2026-10-23): the deploy's switch restarts monitor365,
+  # and /health answers non-200 for the first seconds while its DuckDB store
+  # opens. A one-shot probe here turned an otherwise green deploy (154 PASS /
+  # 6 FAIL / 12 WARN) into exit 3 via one "NEW vs baseline" failure while the
+  # endpoint returned 200 continuously afterwards. Poll to readiness first,
+  # then keep the one-shot functional verdict unchanged — same discipline as
+  # the Pocket ID and bank-sync probes above.
+  wait_for_200 "http://localhost:3001/health" 3 2 || true
   check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
   check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
 else
