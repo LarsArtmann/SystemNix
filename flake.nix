@@ -679,10 +679,13 @@
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
     overview = {
-      # ?ref=master since 2026-09-17: upstream a0cfbc2 refreshed the stale
-      # vendorHash (FOD + package verified). Bumps flow via
-      # `nix flake lock --update-input overview --refresh`.
-      url = "github:LarsArtmann/overview?ref=refs/heads/master";
+      # REV-PINNED at 4b480406 (2026-10-16) since 2026-10-23: the ?ref
+      # float pulled a rev built against a newer templ runtime than the one
+      # this flake pins (see the templ input above) — the build failed on
+      # `templruntime.NewAttributeExpression` being undefined. LIFT: bump
+      # only together with the templ input, and only when
+      # `nix build .#overview --no-link` exits 0.
+      url = "github:LarsArtmann/overview/4b480406030c37ef6b21d697fe271aac2d95850e";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -779,8 +782,13 @@
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
     # Brings quickshell transitively — no separate quickshell input needed
+    # REV-PINNED at 4a87e822 (2026-10-16) since 2026-10-23: the `stable`
+    # float pulled dms-shell 2.0.0, whose installPhase dies silently on this
+    # tree (1.6.3 installs clean). LIFT: bump to a 2.x rev whose
+    # `nix build .#dms-shell --no-link` exits 0, then re-verify the HM
+    # module (homeModules + lib.patchDms consumers) on a fresh session.
     dankMaterialShell = {
-      url = "github:AvengeMedia/DankMaterialShell/stable";
+      url = "github:AvengeMedia/DankMaterialShell/4a87e8227daf0840b3376fd5e7f891f5900165a6";
     };
 
     # dms-paste — PasteBot-style paste workflow for DMS (snippets launcher
