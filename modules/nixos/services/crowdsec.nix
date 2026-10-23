@@ -48,6 +48,7 @@ _: {
         mkDnsGate
         harden
         serviceOneshotDefaults
+        ioTier
         ;
 
       # The gate hostname is the hub index host `cscli hub update` fetches
@@ -353,6 +354,24 @@ _: {
             # 180s gate budget + margin (gate-timeout-audit floor is 4min).
             TimeoutStartSec = "4min";
           };
+        };
+
+        systemd.services.crowdsec-setup = {
+          # The rewritten upstream module (nixpkgs PR #446307, landed with
+          # the 2026-10-23 lock wave) ships crowdsec-setup — hub
+          # install/upgrade + machine register (+ console enroll when
+          # configured) — as a boot-transaction oneshot directly wanted by
+          # multi-user.target. House wiring the upstream unit lacks: a
+          # bounded TimeoutStartSec (netbird-evox2-login infinite-boot
+          # class), the background IO tier (hub download is small but the
+          # freeze-history doctrine tiers every boot unit), and the
+          # scripts/deploy.sh provisioner-loop entry ("-setup$" converger
+          # class: hub collection changes must re-converge on deploy —
+          # stc never restarts oneshots).
+          serviceConfig = lib.mkMerge [
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
         };
 
         systemd.services.crowdsec = {

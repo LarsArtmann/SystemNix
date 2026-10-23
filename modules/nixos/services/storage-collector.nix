@@ -79,7 +79,11 @@
 
           # Explicit 0644: the unit's UMask=0077 stands (crate-side
           # doctrine) and node_exporter must be able to read the gauge.
-          tmp="$promFile.$$.tmp"
+          # mktemp + trap per audit-textfile-tmp.sh class A: a fixed tmp
+          # name can collide with a foreign-owned leftover in the sticky
+          # 1777 dir (CAP_FOWNER on the unit covers the final rename).
+          tmp="$(mktemp "${textfileDir}/storage-collector-crash-orphans.prom.XXXXXX")"
+          trap 'rm -f "$tmp"' EXIT
           {
             echo "# HELP storage_collector_crash_orphans_total Crash-orphaned .state.json tmp files found at daemon start (emit-then-sweep)"
             echo "# TYPE storage_collector_crash_orphans_total gauge"
@@ -87,6 +91,7 @@
           } > "$tmp"
           chmod 0644 "$tmp"
           mv -f "$tmp" "$promFile"
+          trap - EXIT
 
           find "$dataDir" -maxdepth 1 -name '.state.json.*.tmp' -delete
           echo "storage-collector: crash-orphan sweep complete ($count removed, gauge emitted)"
