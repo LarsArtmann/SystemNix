@@ -137,18 +137,18 @@ lib.filterAttrs (_: v: v != null) {
   # queued paste-upstream → push cycle is thereby closed upstream-side:
   # no go-cqrs-lite edit was needed. Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  cqrs-lint =
-    let
-      pkg = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
-    in
-    # vendorHash shim DROPPED (2026-10-17): the lock re-locks past 60f2be41
-    # to tip 7fe2e0ad, whose upstream flake bakes 9y6O/R2f… — the shim's
-    # J7gNXzrV… (measured at 60f2be41) does not govern the new rev; the
-    # probe build arbitrates. go.mod differs tip-vs-measured → if upstream's
-    # value goes stale under the followed graph, paste the fresh got
-    # upstream and push (non-follower class). Re-add ONLY via nix-hash-fix
-    # evidence, never by hand.
-    if pkg == null then null else pkg;
+  # cqrs-lint vendorHash shim RE-ADDED (2026-10-23, first-hand FOD evidence):
+  # the nixpkgs rollback fe13242 → (away from 02c087f3) re-tooled the
+  # go-modules builder graph, so upstream's baked J7gNXzrV… at the locked rev
+  # a7a033c no longer reproduces. Probe: `cqrs-lint-a7a033c…-go-modules` in
+  # the evo-x2 toplevel --keep-going enumeration, specified
+  # sha256-J7gNXzrVQ4cPdAXBHTjwu7mvvHZskDsFYIURJuoBIEM= vs got
+  # sha256-EQe80wmzlsTM1PjjLKcsOPW/oEXJG4mV3dsJhR9+ZOE= (narHash matched →
+  # toolchain drift, not source drift). This was the SOLE root failure of the
+  # whole enumeration; everything else cascaded from it. DROP when upstream
+  # bakes the got hash or the lock moves past an upstream-fixed rev; re-add
+  # ONLY via nix-hash-fix evidence, never by hand.
+  cqrs-lint = flakePkgShim inputs.go-cqrs-lite "cqrs-lint" "sha256-EQe80wmzlsTM1PjjLKcsOPW/oEXJG4mV3dsJhR9+ZOE=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
   # specified hash /D4X81jj… no longer reproduces under the followed

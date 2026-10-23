@@ -88,6 +88,22 @@ in
     }
   ];
 
+  # tmpfiles-clean CANTCREAT diagnosis (2026-10-23, task queue): the
+  # 2026-10-20 15:13 run (15 min after the incident-era 14:58 boot) failed
+  # status=73/CANTCREAT with NO failing line at the default log level and
+  # has NOT recurred (10-21/22/23 runs all green), so a manual verbose
+  # rerun today would pass and prove nothing. Instead the NEXT failure
+  # captures its own evidence: OnFailure triggers a debug-level rerun of
+  # the identical clean pass, and systemd-tmpfiles at debug level logs
+  # every rule/path it processes - the journal then names the exact
+  # un-creatable path (the ask of the original diagnosis row).
+  # systemd-tmpfiles-clean is upstream-shipped (not a config.systemd.services
+  # entry), so the OnFailure arms via a drop-in under /etc/systemd/system.
+  environment.etc."systemd/system/systemd-tmpfiles-clean.service.d/10-cantcreat-debug.conf".text = ''
+    [Unit]
+    OnFailure=tmpfiles-clean-debug.service
+  '';
+
   systemd = {
     timers = {
       crush-update-providers = {
@@ -172,22 +188,6 @@ in
         wantedBy = [ "timers.target" ];
       };
     };
-
-    # tmpfiles-clean CANTCREAT diagnosis (2026-10-23, task queue): the
-    # 2026-10-20 15:13 run (15 min after the incident-era 14:58 boot) failed
-    # status=73/CANTCREAT with NO failing line at the default log level and
-    # has NOT recurred (10-21/22/23 runs all green), so a manual verbose
-    # rerun today would pass and prove nothing. Instead the NEXT failure
-    # captures its own evidence: OnFailure triggers a debug-level rerun of
-    # the identical clean pass, and systemd-tmpfiles at debug level logs
-    # every rule/path it processes - the journal then names the exact
-    # un-creatable path (the ask of the original diagnosis row).
-    # systemd-tmpfiles-clean is upstream-shipped (not a config.systemd.services
-    # entry), so the OnFailure arms via a drop-in under /etc/systemd/system.
-    environment.etc."systemd/system/systemd-tmpfiles-clean.service.d/10-cantcreat-debug.conf".text = ''
-      [Unit]
-      OnFailure=tmpfiles-clean-debug.service
-    '';
 
     services.tmpfiles-clean-debug = {
       description = "Debug-level re-run of systemd-tmpfiles --clean to name the path that made systemd-tmpfiles-clean fail (CANTCREAT diagnosis)";
