@@ -110,3 +110,30 @@ Session: continuation of `docs/status/2026-10-23_16-42_kernel-module-deploy-bloc
 | kill builtin trap | typed `kill -9` ×3 | `kill: unsupported builtin`, rc=2, no signal delivered |
 
 **HARVEST note (docs-health contract):** items f)1–2 + f)23 queued into TODO_LIST.md at authoring time; f)3 landed as `[blocked:user]` in docs/todo/services.md; f)6 appended to the monitor365 upstream family; f)4/5 already queued (upstream.md / pipeline.md — enriched earlier this pass); f)7–8 landed in AGENTS.md at authoring time; f)14 candidate noted for monitoring.md harvest; [LIVE] items deliberately NOT re-queued (the 17:13 report owns them — recorded here as "deliberately not harvested because live session owns it").
+
+---
+
+## Follow-through pass (18:10–18:3x, same conversation, user-directed "keep going")
+
+Executed the remaining [ready] §f items that needed no owner input and no calm box:
+
+| §f | Item | State | Evidence |
+| --- | --- | --- | --- |
+| f.1 | flm guard-awareness | **DONE** | post-deploy-check.sh flm block now reads `memory-emergency-guard.prom`: `sacrifice_socket_active 0` AND (`last_trip_recent 1` OR `restore_capped 1`) → WARN, two distinct messages (self-restore vs budget-exhausted owner-handoff). Conservative attribution: an unexplained dead socket falls through to the probe and FAILs honestly. `bash -n` + shellcheck clean; live dry-run against the real .prom (sacrifice=1 capped=1) fired the capped branch. Rows ticked (TODO_LIST:1705 + pipeline.md). |
+| f.19 | battery cooldown banner | **DONE** | Every battery start stamps `~/.local/state/systemnix/post-deploy-last-run.epoch`; a start <60 min after the previous prints the overlap NOTE. Advisory-only by design (the lockfile/cooldown [decision] f.18 stays owner-gated). |
+| f.17 | probe-masking helper | **DONE** | `scripts/redact-argv.sh` (flag-with-value + env-assignment shapes, conservative over-mask doctrine) + `scripts/test-redact-argv.sh` selftest (12 shapes, all hold) + AGENTS.md probe bullet now NAMES the script. Live-verified against real argv: `monitor365-server --jwt-secret=REDACTED`, `crm-server -api-token=REDACTED`, keyword-free argv byte-identical. |
+| f.15 | CHANGELOG tag refresh | **DONE** | Shims entry retagged: deployed in gen-939 on the rolled-back lock (fe13242, kernel 7.2.10) — shims DORMANT, activate on the next forward lock move. The OTHER ~7 "(…, deploy pending)" entries (lines 17-53) were left to their owning sessions — mass-retagging needs per-entry activation verification (owner-gated agent restarts etc.), not a blanket stamp. |
+| f.23 | monitor365 runbook grace-window | **DONE** | Bullet added to docs/services/monitor365.md (SSE reconnect ≤~2 min after any restart; FAIL inside window expected — re-probe or read the watchdog journal). Rows ticked (TODO_LIST:1707 + services.md:748). |
+| f.2 | third battery | **PARTIAL — deferred with substance** | Storm-safe targeted probes replaced the full run (see below); full battery + §f.30 diff capture stays queued. PSI avg10 hit 80% at 18:2x under THREE parallel nix builds (`tls-vm-test`, `checks.build --keep-going`, `nix flake check`) + Go tests + the monitor365-ui FOD — running the battery then would be the §d.5 double-battery failure class, now banner-guarded by f.19. |
+
+Targeted probe results (the battery's substance without its load):
+
+| Probe | Result |
+| --- | --- |
+| dnsblockd memory (check fix 1) | **PASS** — 926MB < 4096MB deployed limit, read via cgroup `memory.max`/`memory.current` (typed `systemctl` is guard-blocked). Honest caveat: today's steady state passes under the OLD check too; the fix's discriminating case was the 3276MB transient — the fix is verified STRUCTURALLY (derivation reads the deployed 4G). |
+| Catalog marker (check fix 2) | **PASS** — `<title>LarsArtmann Architecture Catalog` present in the served index. Legitimate companion WARN: `architecture_catalog_fresh 0` (hub sync stale in the storm window — the check's WARN message points at `architecture-catalog-sync`; worth a look when calm, not a regression). |
+| flm guard-awareness (check fix 3, this pass) | WARN branch confirmed live: `sacrifice_socket_active 0` + `restore_capped 1` (141 restores total, 5 zone-6 trips in the last hour at 18:2x). **The socket will NOT self-restore today** — daily budget exhausted; owner handoff or midnight reset (f.16 watch row updated via the battery row note). |
+| dev-cv zombies 3758025/3758499 | **gone** — both reaped. |
+| tq-pool | **stable** — `tq serve` + `tq agent-pool` running, :8081 listening, a tq done-prompt reporter actively working. |
+
+Coordination notes: CHANGELOG.md and the todo surfaces showed foreign mid-session modifications (parallel sessions + daemon sweeps at 18:10-18:11) — every edit was re-read before re-applying; TODO gate (`check-todo-system.sh`) rc=0 after all row edits. The untracked `docs/status/2026-10-23_18-09_dnsblockd-via-netbird-phone-dns-session.md` belongs to its own session (its B5 deliberately left the battery to this queue — honored).
