@@ -4472,11 +4472,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792735881,
-        "narHash": "sha256-q7jgpiTeTXiHytkez9bVeDcZwL8PEHNLnkMAtsrqNGM=",
+        "lastModified": 1792736747,
+        "narHash": "sha256-FL5SoooQFCT5RCglJ60x3kGjoTajYA/yf9PDwObYAQo=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "e87e6264632de990fd75cb734f7d7a5dbf930c9a",
+        "rev": "63454bbcff499c2818c71b9e3ad0c5308dde511d",
         "type": "github"
       },
       "original": {
@@ -6141,11 +6141,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792733630,
-        "narHash": "sha256-1GyCuL2PKAri+GewdhuZmPrnNearyyOxz/QM88G0pqs=",
+        "lastModified": 1792736699,
+        "narHash": "sha256-8qbzrXuzIabcRnS57XH0KkWjMmSG3LkeCdhDDVc8D7M=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "fab9b01c915a3118cc8daa6cc1b18c15b3f982d0",
+        "rev": "67491b50f7e5ef8be6e591d745b32758aa60c33e",
         "type": "github"
       },
       "original": {
