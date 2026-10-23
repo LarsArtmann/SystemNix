@@ -47,12 +47,13 @@ red_reasons=()
 # --- unit states (batched: one systemctl call for all) ---
 declare -A unit_state2
 last_id=""
+read -r -a unit_args <<<"$UNITS"
 while IFS= read -r line; do
   case "$line" in
     Id=*) last_id="${line#Id=}" ;;
     ActiveState=*) [ -n "$last_id" ] && unit_state2["$last_id"]="${line#ActiveState=}" ;;
   esac
-done < <(systemctl show $(tr '\n' ' ' <<<"$UNITS") -p Id -p ActiveState 2>/dev/null || true)
+done < <(systemctl show "${unit_args[@]}" -p Id -p ActiveState 2>/dev/null || true)
 
 for u in $UNITS; do
   st="${unit_state2[$u]:-not-found}"

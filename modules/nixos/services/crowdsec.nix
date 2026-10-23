@@ -100,9 +100,11 @@ _: {
 
       yaml = pkgs.formats.yaml { };
       # Same content as the upstream module's own configFile (generated from
-      # the MERGED settings.general, defaults included) — cscli must see the
+      # the MERGED settings.config, defaults included) — cscli must see the
       # identical db_config/paths or the repair could touch the wrong DB.
-      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.general;
+      # (2026-10-23: general → config — the nixpkgs crowdsec module rewrite
+      # (PR #446307) tracks crowdsec's own config.yaml restructure.)
+      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.config;
 
       # Upstream gap (live 2026-10-14): `machine add --auto` writes the DB row
       # FIRST and the credentials file SECOND — when the file write fails, the
@@ -267,24 +269,28 @@ _: {
 
         services.crowdsec = {
           # LAPI on loopback (upstream default 8080 collides with SigNoz).
-          settings.general = {
+          # 2026-10-23 migration (nixpkgs PR #446307, crowdsec config.yaml
+          # restructure): settings.general.* → settings.config.* and
+          # settings.lapi.credentialsFile → settings.config.api.client.
+          # credentials_path; localConfig → settings.{acquisitions,parsers}.
+          settings.config = {
             api.server = {
               enable = true;
               listen_uri = "127.0.0.1:${toString ports.crowdsec-lapi}";
             };
             prometheus.listen_port = ports.crowdsec-metrics;
+            # REQUIRED once the LAPI server is enabled: the upstream setup
+            # script interpolates this path (machine add --auto writes it).
+            # Lives under ReadWritePaths.
+            api.client.credentials_path = lapiCredentialsFile;
           };
-          # REQUIRED once the LAPI server is enabled: the upstream setup
-          # script interpolates this path (machine add --auto writes it) —
-          # null is an eval-time failure. Lives under ReadWritePaths.
-          settings.lapi.credentialsFile = lapiCredentialsFile;
 
           hub.collections = [
             "crowdsecurity/linux" # syslog + geoip + sshd scenarios
             "crowdsecurity/caddy" # caddy-logs parser + base-http-scenarios
           ];
 
-          localConfig = {
+          settings = {
             acquisitions = [
               {
                 source = "journalctl";
