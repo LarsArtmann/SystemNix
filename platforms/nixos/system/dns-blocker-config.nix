@@ -199,6 +199,7 @@ in
         "127.0.0.0/8"
         "::1/128"
         "${config.networking.local.subnet}"
+        "100.64.0.0/10"
       ];
       dnsIPv6Enabled = false; # evo-x2 has no global IPv6
 
