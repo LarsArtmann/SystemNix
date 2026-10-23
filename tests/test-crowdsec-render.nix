@@ -44,9 +44,7 @@ let
 
   restartTriggers = map toString (cs.crowdsec.restartTriggers or [ ]);
 
-  # 2026-10-23: localConfig → settings.acquisitions (nixpkgs crowdsec
-  # module rewrite, PR #446307 — see crowdsec.nix migration note).
-  acquisJson = builtins.toJSON crowdsec.settings.acquisitions;
+  acquisJson = builtins.toJSON crowdsec.localConfig.acquisitions;
 
   # Caddy vhost logFormat override (caddy.nix mapAttrs): every vhost's log
   # block must carry mode 0640 — the group-read leg of the caddy acquis fix.
