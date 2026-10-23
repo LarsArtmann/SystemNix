@@ -94,6 +94,25 @@ for arg in "$@"; do
   esac
 done
 
+# 0. Running-vs-pinned rev audit (2026-10-23) — ADVISORY, never blocks, and
+# it runs in EVERY mode (before the section-only gate) because it re-frames
+# whatever the other sections report. Every gate below measures the PINNED
+# builder graph; if the live system was built from a different nixpkgs, each
+# hash verdict answers a question about a graph nobody is running. Four hours
+# of the 2026-10-23 recovery went to exactly that mismatch. Cheap: two file
+# reads plus jq.
+echo "0. Running-vs-pinned rev audit (advisory)"
+if lock_audit_out=$(scripts/flake-lock-audit.sh --advisory 2>&1); then
+  if printf '%s' "$lock_audit_out" | grep -q "VERDICT: MISMATCH"; then
+    warn "running nixpkgs != pinned nixpkgs — this battery probes the WRONG graph"
+    printf '%s\n' "$lock_audit_out" | sed 's/^/     /'
+  else
+    pass "running nixpkgs == pinned nixpkgs (probes measure the live graph)"
+  fi
+else
+  warn "running-vs-pinned audit could not run (non-fatal)"
+fi
+
 if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION16_ONLY" != true ]; then
   # 1. Flake syntax check
   echo "1. Flake syntax validation"

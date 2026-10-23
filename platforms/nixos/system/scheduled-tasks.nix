@@ -98,13 +98,27 @@ in
   # every rule/path it processes - the journal then names the exact
   # un-creatable path (the ask of the original diagnosis row).
   # systemd-tmpfiles-clean is upstream-shipped (not a config.systemd.services
-  # entry), so the OnFailure arms via a drop-in under /etc/systemd/system.
-  environment.etc."systemd/system/systemd-tmpfiles-clean.service.d/10-cantcreat-debug.conf".text = ''
-    [Unit]
-    OnFailure=tmpfiles-clean-debug.service
-  '';
-
+  # entry), so the OnFailure arms via a DROP-IN — see the
+  # systemd.services.systemd-tmpfiles-clean block below for why
+  # environment.etc."systemd/system/…" must NOT be used (2026-10-23: it was a
+  # silent no-op, then a hard build failure).
   systemd = {
+    # NOT environment.etc."systemd/system/…": /etc/systemd/system is a symlink
+    # to /etc/static/systemd/system, whose systemd/system is itself a symlink
+    # to the immutable system-units store path, so the etc builder cannot mkdir
+    # inside it. Before that became a hard build failure it was a SILENT
+    # NO-OP — verifiable on gen 939, where
+    # /etc/systemd/system/systemd-tmpfiles-clean.service.d did not exist, i.e.
+    # the CANTCREAT self-diagnosis this block exists for never armed.
+    # overrideStrategy="asDropin" emits
+    # systemd-tmpfiles-clean.service.d/overrides.conf, which systemd MERGES
+    # with the packaged unit (a plain systemd.services entry would write a
+    # unit file with no ExecStart, shadowing the real one).
+    services.systemd-tmpfiles-clean = {
+      overrideStrategy = "asDropin";
+      unitConfig.OnFailure = "tmpfiles-clean-debug.service";
+    };
+
     timers = {
       crush-update-providers = {
         description = "Daily Crush AI provider update";
