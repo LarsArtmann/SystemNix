@@ -219,19 +219,35 @@ _: {
           scrape_errors=0
           leaks=0
           for pid in $(${pkgs.procps}/bin/pgrep -x llama-server 2>/dev/null || true); do
-            # berth identity (2026-10-23, plan T3): bind the leak verdict to
-            # (pid, starttime). A pid recycled between pgrep and the ss match
-            # can borrow the NEW process's listener (false-green) or lend its
-            # own (false-red) — a start-time change voids the verdict for
-            # this pid this cycle (skip + journal, never guess).
-            st0="$(stat22 "$pid")"
-            if [ -n "$st0" ] && [ "$st0" != "$(stat22 "$pid")" ]; then
-              echo "llama-rag: leak check skipped pid $pid (pid recycled mid-scan - verdict void)" >&2
-              continue
-            fi
-            if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${activePortRegex})[^0-9]"; then
-              leaks=$((leaks + 1))
-            fi
+            cgroup="$(${pkgs.coreutils}/bin/cat "/proc/$pid/cgroup" 2>/dev/null || true)"
+            case "$cgroup" in
+              *llama-embeddings.service*|*llama-reranker.service*)
+                # Module-owned instance (berth identity triple: cgroup + pid
+                # + starttime, plan T3): a leak is one of OUR processes that
+                # holds no listener on a module port. A pid recycled between
+                # pgrep and the ss match voids the verdict (skip + journal).
+                st0="$(stat22 "$pid")"
+                if [ -n "$st0" ] && [ "$st0" != "$(stat22 "$pid")" ]; then
+                  echo "llama-rag: leak check skipped pid $pid (pid recycled mid-scan - verdict void)" >&2
+                  continue
+                fi
+                if ! grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${activePortRegex})[^0-9]"; then
+                  leaks=$((leaks + 1))
+                fi
+                ;;
+              *)
+                # Foreign-cgroup llama-server (llama-chat, hermes): NOT this
+                # module's leak - counting it made the live metric read 3 with
+                # leaks_present 1 since llama-chat landed (standing RED on the
+                # Gatus check, found live 2026-10-23). But a foreign listener
+                # ON a module port while the module is ENABLED is the rogue
+                # class (the 2026-09-18 hermes-cron orphan; the dark-guard
+                # only runs when disabled): journal it every cycle.
+                if grep -F "pid=''${pid}," <<<"$ss_out" | grep -Eq ":(${activePortRegex})[^0-9]"; then
+                  echo "llama-rag: FOREIGN llama-server pid $pid (cgroup ''${cgroup:-unknown}) holds a module port - rogue class, dark-guard does not run while enabled" >&2
+                fi
+                ;;
+            esac
           done
         fi
 
