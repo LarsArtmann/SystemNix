@@ -63,7 +63,13 @@
           # 849573de bakes the shim's own 5WOy3BHv… value — bit-neutral
           # override (lock == tip; lars-packages surface dropped in the
           # same pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # RE-ADDED 2026-10-23 (lock float): first-hand keep-going probe got
+          # sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0 (specified
+          # U9F6gATv, got NBQcjrwD). The lars-packages shim alone did NOT
+          # land because this module consumes the flake's own package attr.
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0=";
+          };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";
