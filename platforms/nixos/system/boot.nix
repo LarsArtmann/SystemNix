@@ -49,7 +49,21 @@ in
     };
 
     # Use latest kernel for Ryzen AI Max+ support
-    kernelPackages = pkgs.linuxPackages_latest;
+    # v4l2loopback DEPMOD shim (2026-10-23): the kernel 7.3 `modules_install` target
+    # runs depmod (kmod sits in the module build env) and writes modules.alias/dep/…
+    # INTO the out-of-tree package output, which then collides with the kernel's own
+    # modules tree in pkgs.aggregateModules' buildEnv (`linux-7.3-modules` build,
+    # exit 25 — blocked the 2026-10-23 deploy). Upstream convention for out-of-tree
+    # modules (amneziawg, vmm_clock) is `DEPMOD=true`; v4l2loopback 0.15.4 still
+    # carries only the old `sed '/depmod/d'`, which cannot reach the KERNEL Makefile
+    # that now runs depmod. Drop once nixpkgs patches v4l2loopback.
+    kernelPackages = pkgs.linuxPackages_latest.extend (
+      _: super: {
+        v4l2loopback = super.v4l2loopback.overrideAttrs (old: {
+          makeFlags = old.makeFlags ++ [ "DEPMOD=true" ];
+        });
+      }
+    );
 
     # Verbose boot — surface activation/initrd errors on console instead of silent hang
     initrd.verbose = true;

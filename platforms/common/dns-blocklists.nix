@@ -104,7 +104,7 @@ in
       # upstream is oscillating and the list needs a commit-pinned URL
       # instead of hash bumps. Probed STABLE twice 20s apart via
       # nix store prefetch-file before this edit.
-      hash = "sha256-msvz1YA+TtLril0jY2SUpogtEPiAtpCxNE+lxjDG56E=";
+      hash = "sha256-yb9EEGbSJ2wRwgUW0MqrU1PlCg7oPouVk2+EbPxun3E=";
     }
     {
       name = "HaGeZi-hoster";
@@ -112,7 +112,7 @@ in
       # Re-pinned 2026-10-14: upstream content update broke the build with a
       # hash mismatch (old yq5KLUId…); new content probed STABLE twice 20s
       # apart via nix store prefetch-file before this edit.
-      hash = "sha256-xiO3b1plZhSRR1+BfGlhUivcAneiJ6oApdiJX9g0qDc=";
+      hash = "sha256-mME4che8QdZZEfVj9ia/0M0gFjfctR972kh1KkXr0GU=";
     }
     {
       name = "HaGeZi-urlshortener";
