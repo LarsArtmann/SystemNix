@@ -97,3 +97,17 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
 | Node 24 | store binary | runs |
 | r8125 | build log | `cat: …/r8125.ko.cer: No such file or directory` |
 | Lock churn | `git log -- flake.lock` | 7 floats today, all heuristic commits |
+
+---
+
+## Third pass (16:20–16:30) — the "bump nixpkgs" route is unavailable, and the causes are now pinned down
+
+**`nix flake lock --update-input nixpkgs` is a no-op**: our input is `nixos-unstable` and it is already at the tip (`02c087f3`; the registry resolves to the same rev). There is no newer nixpkgs to bump to tonight — and a bump would not have fixed the node problem anyway:
+
+1. **`node-26.12.1` is not a nixpkgs build.** It is a *prebuilt npm-distributed tarball* (`node-v26.12.1-linux-x64`) fetched by the hermes-agent flake's binary-fetch machinery (derivation `node-26.12.1.drv`: `dontBuild=1`, install script handles `uv-…`, `node-v26.12.1-linux-x64`, `package/`). The binary segfaults on startup here (exit 139, also with `setarch -R`), while nixpkgs' own `nodejs_26` (26.12.0) runs. No nixpkgs revision can touch it; only the hermes input can.
+2. **`aw-core` fails on a nixpkgs packaging regression**: `peewee==3.* not satisfied by version 4.4.0` (our pinned nixpkgs ships peewee 4.4.0). The running system was built from `26.11.20261015.fe13242`; the tree is pinned to `26.11.20261020.02c087f3` — the gap between those two dates is where the packaging broke.
+3. **`dms-shell`**: the older `1.6.3+date=2026-10-07_4a87e82` derivation builds clean; `2.0.0+date=2026-10-20_9b41329` dies in `installPhase` with no error line.
+4. **`signoz-…-patched`**: same silent `installPhase` failure after patches apply with large offsets.
+5. **`linux-7.3-modules` / r8125**: another Crush session committed `9a5e59a97` at 16:11 documenting the **kmodigest/modules_install convention change** that broke it and queued the remaining work. Do not duplicate that fix from here.
+
+**Consequence:** a clean build needs either (a) nixpkgs rolled back to the running rev `fe13242` (which would re-open the crowdsec module rewrite that today's work was built for), (b) local patches for five upstream/nixpkgs defects, or (c) disabling the affected services (`activitywatch`, `signoz`, `dms-shell`, `hermes`, `overview`) in this generation.

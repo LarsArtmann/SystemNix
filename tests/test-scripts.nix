@@ -481,4 +481,144 @@
       print("PASS: lsblk PARTN column contract held")
     '';
   };
+
+  # flm crash-trigger composite (2026-10-23, monitoring.md row — the
+  # 2026-10-07 SIGABRT class): PMA generate-timeout journal walks ×
+  # fastflowlm coredump walks feeding a conjunction gauge the PMA Commit
+  # Health Gatus check asserts 0. Artifact-level: the REAL walk_journal
+  # from the rendered evo-x2 collector runs against a stubbed journalctl
+  # (count/status semantics incl. the exit-1-no-match and timeout cases),
+  # the REAL pair-arithmetic slice from the same script runs through the
+  # four cell combinations, and static tripwires pin the walk patterns +
+  # emission + anchored Gatus condition to the module source.
+  flm-crash-trigger-pair =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      collector = evo.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+      probe = pkgs.writeShellApplication {
+        name = "flm-crash-trigger-pair-probe";
+        # SC2016: slice anchors are deliberate literals; SC1091: the sliced
+        # collector sections are runtime artifacts by design.
+        excludeShellChecks = [
+          "SC2016"
+          "SC1091"
+        ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnused
+          pkgs.gnugrep
+          pkgs.bash
+        ];
+        text = ''
+          set -euo pipefail
+          SCRIPT="''${1:?collector store path required}"
+          MODULE="''${2:?module source path required}"
+          mkdir -p /tmp/pairtest/bin /tmp/pairtest/walks
+
+          # Stub journalctl: dispatches on the --grep pattern value. The
+          # three live behaviors + the two failure shapes the walk must
+          # classify (exit 1 = no match = valid empty; timeout kill = 124).
+          cat > /tmp/pairtest/bin/journalctl <<'STUB'
+          #!/usr/bin/env bash
+          pattern=""
+          prev=""
+          for arg in "$@"; do
+            if [ "$prev" = "--grep" ]; then pattern="$arg"; fi
+            prev="$arg"
+          done
+          case "$pattern" in
+            *commit.generate*context\ deadline\ exceeded*)
+              printf '%s\n' "Oops: commit failed timeout 1" "Oops: commit failed timeout 2" "Oops: commit failed timeout 3"
+              exit 0
+              ;;
+            *Main\ process\ exited,\ code=dumped*)
+              printf '%s\n' "fastflowlm.service: Main process exited, code=dumped, status=6/ABRT" "fastflowlm.service: Main process exited, code=dumped, status=11/SEGV"
+              exit 0
+              ;;
+            *no-match-pattern*)
+              exit 1
+              ;;
+            *slow-pattern*)
+              sleep 5
+              exit 0
+              ;;
+            *)
+              echo "stub journalctl: unexpected pattern: $pattern" >&2
+              exit 9
+              ;;
+          esac
+          STUB
+          chmod +x /tmp/pairtest/bin/journalctl
+          export PATH="/tmp/pairtest/bin:$PATH"
+
+          # ── 1) REAL walk_journal against the stub ──────────────────────
+          # Slice the function out of the rendered collector; the printf to
+          # $outfile is its last body line.
+          sed -n '/walk_journal() {/,/printf .*"\$outfile"/p' "$SCRIPT" > /tmp/pairtest/wj.sh
+          echo "}" >> /tmp/pairtest/wj.sh
+          # Reproduce the writeShellApplication strictness the real script
+          # runs under — pipefail is what turns journalctl's exit 1 into the
+          # walk's status word.
+          set -o pipefail
+          source /tmp/pairtest/wj.sh
+
+          walk_journal /tmp/pairtest/walks/pma-timeouts projects-management-automation.service "-24h" "commit.generate.*context deadline exceeded" 60
+          read -r st cnt < /tmp/pairtest/walks/pma-timeouts
+          [ "$st" = 0 ] && [ "$cnt" = 3 ] || { echo "timeout walk: expected '0 3', got '$st $cnt'"; exit 1; }
+
+          walk_journal /tmp/pairtest/walks/flm-coredumps fastflowlm.service "-24h" "Main process exited, code=dumped" 60
+          read -r st cnt < /tmp/pairtest/walks/flm-coredumps
+          [ "$st" = 0 ] && [ "$cnt" = 2 ] || { echo "coredump walk: expected '0 2', got '$st $cnt'"; exit 1; }
+
+          walk_journal /tmp/pairtest/walks/nomatch x.service "-24h" "no-match-pattern" 60
+          read -r st cnt < /tmp/pairtest/walks/nomatch
+          [ "$st" = 1 ] && [ "$cnt" = 0 ] || { echo "no-match walk: expected '1 0', got '$st $cnt'"; exit 1; }
+
+          walk_journal /tmp/pairtest/walks/slow x.service "-24h" "slow-pattern" 1
+          read -r st cnt < /tmp/pairtest/walks/slow
+          [ "$st" = 124 ] && [ "$cnt" = 0 ] || { echo "slow walk: expected '124 0', got '$st $cnt'"; exit 1; }
+
+          # ── 2) REAL pair arithmetic, four cells ────────────────────────
+          sed -n '/FLM_CRASH_TRIGGER_PAIR=0$/,/FLM_CRASH_TRIGGER_PAIR=1$/p' "$SCRIPT" > /tmp/pairtest/pair.sh
+          echo "fi" >> /tmp/pairtest/pair.sh
+          check_pair() {
+            got=$(bash -c 'export PMA_GENERATE_TIMEOUTS_24H="$1" FLM_COREDUMPS_24H="$2"; source /tmp/pairtest/pair.sh; echo "$FLM_CRASH_TRIGGER_PAIR"' _ "$1" "$2")
+            [ "$got" = "$3" ] || { echo "pair($1,$2): expected $3, got $got"; exit 1; }
+          }
+          check_pair 0 0 0
+          check_pair 2 0 0
+          check_pair 0 1 0
+          check_pair 3 2 1
+
+          # ── 3) Static tripwires on the module source ───────────────────
+          grep -qF 'walk_journal "$WALK_DIR/pma-timeouts" projects-management-automation.service "-24h" "commit.generate.*context deadline exceeded" 60' "$MODULE" || {
+            echo "module lost the pma-timeouts walk"; exit 1;
+          }
+          grep -qF 'walk_journal "$WALK_DIR/flm-coredumps" fastflowlm.service "-24h" "Main process exited, code=dumped" 60' "$MODULE" || {
+            echo "module lost the flm-coredumps walk"; exit 1;
+          }
+          grep -qF 'system_flm_crash_trigger_pair_24h' "$MODULE" || {
+            echo "module lost the pair metric emission"; exit 1;
+          }
+          grep -qF '\nsystem_flm_crash_trigger_pair_24h 0\n' "$MODULE" || {
+            echo "module lost the anchored Gatus condition"; exit 1;
+          }
+
+          echo "PASS: flm crash-trigger pair — walks classify stubbed journal correctly, pair arithmetic holds, wiring pinned"
+        '';
+      };
+    in
+    pkgs.testers.runNixOSTest {
+      name = "flm-crash-trigger-pair";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("${probe}/bin/flm-crash-trigger-pair-probe ${collector} ${../modules/nixos/services/system-health.nix}")
+      '';
+    };
 }

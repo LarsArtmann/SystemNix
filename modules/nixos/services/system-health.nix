@@ -745,6 +745,9 @@ _: {
           PMA_COMMITS_24H=""
           PMA_COMMIT_RATIO_OVER=""
           PMA_COMMIT_RATIO_PCT=""
+          PMA_GENERATE_TIMEOUTS_24H=""
+          FLM_COREDUMPS_24H=""
+          FLM_CRASH_TRIGGER_PAIR=""
           PMA_COMMIT_SCRAPE_ERRORS=1
           if [ "$collect_pma_commits" = "true" ]; then
             PMA_COMMIT_SCRAPE_ERRORS=0
@@ -753,6 +756,19 @@ _: {
             PMA_WALKS_LAUNCHED=1
             walk_journal "$WALK_DIR/pma-fail" projects-management-automation.service "-1h" "commit failed" 60 &
             walk_journal "$WALK_DIR/pma-fb" projects-management-automation.service "-24h" "committed via heuristic fallback" 60 &
+            # flm crash-trigger composite (2026-10-23, monitoring.md row:
+            # the 2026-10-07 SIGABRT class): a PMA generate request whose
+            # client timeout expires (the 28-32s band pre-fix; with
+            # OPENAI_TIMEOUT=10m wired, ANY deadline-exceeded generate
+            # failure means a consumer still carries a wrong budget)
+            # disconnecting into flm's cancel path crashed its heap. The
+            # pair (timeouts × coredumps, same 24h window) is the
+            # alertable signature; each component is rare post-fix, so the
+            # same-window conjunction has no steady-state false-positive
+            # path. code=dumped covers both observed statuses (6/ABRT and
+            # 11/SEGV).
+            walk_journal "$WALK_DIR/pma-timeouts" projects-management-automation.service "-24h" "commit.generate.*context deadline exceeded" 60 &
+            walk_journal "$WALK_DIR/flm-coredumps" fastflowlm.service "-24h" "Main process exited, code=dumped" 60 &
             # Success line for the ratio denominator. The negative lookahead
             # keeps fallback lines out of the count EVEN IF the fallback
             # journal text also contains "committed changes" — the exact
@@ -1160,16 +1176,28 @@ _: {
               pma_fail_status=2
               pma_fb_status=2
               pma_commits_status=2
+              pma_to_status=2
+              flm_core_status=2
               PMA_COMMIT_FAILURES_1H=""
               PMA_HEURISTIC_FALLBACKS_24H=""
               PMA_COMMITS_24H=""
+              PMA_GENERATE_TIMEOUTS_24H=""
+              FLM_COREDUMPS_24H=""
               read -r pma_fail_status PMA_COMMIT_FAILURES_1H < "$WALK_DIR/pma-fail" 2>/dev/null || { pma_fail_status=2; PMA_COMMIT_FAILURES_1H=""; }
               read -r pma_fb_status PMA_HEURISTIC_FALLBACKS_24H < "$WALK_DIR/pma-fb" 2>/dev/null || { pma_fb_status=2; PMA_HEURISTIC_FALLBACKS_24H=""; }
               read -r pma_commits_status PMA_COMMITS_24H < "$WALK_DIR/pma-commits" 2>/dev/null || { pma_commits_status=2; PMA_COMMITS_24H=""; }
-              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ] && [ "''${pma_commits_status:-2}" -le 1 ]; then
+              read -r pma_to_status PMA_GENERATE_TIMEOUTS_24H < "$WALK_DIR/pma-timeouts" 2>/dev/null || { pma_to_status=2; PMA_GENERATE_TIMEOUTS_24H=""; }
+              read -r flm_core_status FLM_COREDUMPS_24H < "$WALK_DIR/flm-coredumps" 2>/dev/null || { flm_core_status=2; FLM_COREDUMPS_24H=""; }
+              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ] && [ "''${pma_commits_status:-2}" -le 1 ] && [ "''${pma_to_status:-2}" -le 1 ] && [ "''${flm_core_status:-2}" -le 1 ]; then
                 PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
                 PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
                 PMA_COMMITS_24H="''${PMA_COMMITS_24H:-0}"
+                PMA_GENERATE_TIMEOUTS_24H="''${PMA_GENERATE_TIMEOUTS_24H:-0}"
+                FLM_COREDUMPS_24H="''${FLM_COREDUMPS_24H:-0}"
+                FLM_CRASH_TRIGGER_PAIR=0
+                if [ "$PMA_GENERATE_TIMEOUTS_24H" -gt 0 ] 2>/dev/null && [ "$FLM_COREDUMPS_24H" -gt 0 ] 2>/dev/null; then
+                  FLM_CRASH_TRIGGER_PAIR=1
+                fi
                 PMA_COMMIT_FAILURES_OVER=0
                 [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
                 PMA_HEURISTIC_FALLBACKS_OVER=0
@@ -1186,10 +1214,13 @@ _: {
                   [ "$PMA_COMMIT_RATIO_PCT" -ge ${toString pmaCommitRatioPercentThreshold} ] 2>/dev/null && PMA_COMMIT_RATIO_OVER=1
                 fi
               else
-                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?} commits=''${pma_commits_status:-?})" >&2
+                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?} commits=''${pma_commits_status:-?} timeouts=''${pma_to_status:-?} flm-coredumps=''${flm_core_status:-?})" >&2
                 PMA_COMMIT_FAILURES_1H=""
                 PMA_HEURISTIC_FALLBACKS_24H=""
                 PMA_COMMITS_24H=""
+                PMA_GENERATE_TIMEOUTS_24H=""
+                FLM_COREDUMPS_24H=""
+                FLM_CRASH_TRIGGER_PAIR=""
                 PMA_COMMIT_SCRAPE_ERRORS=1
               fi
             fi
@@ -1471,6 +1502,21 @@ _: {
                 echo "# TYPE system_pma_commit_fallback_ratio_percent gauge"
                 echo "system_pma_commit_fallback_ratio_percent ''${PMA_COMMIT_RATIO_PCT}"
               fi
+
+              # flm crash-trigger composite (2026-10-23): the components are
+              # emitted on every successful scan so absence = scrape failure,
+              # never a quiet day (fail-closed via the Gatus anchored pair).
+              echo "# HELP system_pma_generate_timeouts_24h PMA commit-generation requests whose client timeout expired (journal commit.generate deadline-exceeded lines) in the last 24h — with OPENAI_TIMEOUT=10m wired, any occurrence means a consumer still carries a wrong timeout budget"
+              echo "# TYPE system_pma_generate_timeouts_24h gauge"
+              echo "system_pma_generate_timeouts_24h ''${PMA_GENERATE_TIMEOUTS_24H}"
+
+              echo "# HELP system_flm_coredumps_24h fastflowlm main-process core dumps in the last 24h (code=dumped — the cancel-path SIGABRT/SEGV heap-corruption class)"
+              echo "# TYPE system_flm_coredumps_24h gauge"
+              echo "system_flm_coredumps_24h ''${FLM_COREDUMPS_24H}"
+
+              echo "# HELP system_flm_crash_trigger_pair_24h 1 when PMA generate-timeouts AND flm coredumps both occurred in the last 24h — the 2026-10-07 crash-trigger signature (a timed-out client disconnecting into flm cancel path), 0 otherwise"
+              echo "# TYPE system_flm_crash_trigger_pair_24h gauge"
+              echo "system_flm_crash_trigger_pair_24h ''${FLM_CRASH_TRIGGER_PAIR}"
             fi
 
             if [ "$collect_pocket_id_busy" = "true" ]; then
@@ -2205,8 +2251,9 @@ _: {
                   "[BODY] == pat(*\nsystem_pma_commit_failures_over_threshold 0\n*)"
                   "[BODY] == pat(*\nsystem_pma_commit_fallbacks_over_threshold 0\n*)"
                   "[BODY] == pat(*\nsystem_pma_commit_fallback_ratio_over_threshold 0\n*)"
+                  "[BODY] == pat(*\nsystem_flm_crash_trigger_pair_24h 0\n*)"
                 ];
-                alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. The ratio flag fires at >=90% fallback share once 3+ commits/24h exist — the low-volume dead-LLM class the count thresholds miss. Check the provider chain (FastFlowLM :52625 socket, minimax/zai keys) before it becomes a backlog.";
+                alert = "PMA commits are failing or riding heuristic fallbacks — the auto-commit pipeline is degraded (2026-08-22..09-02: 11 days, ~3,800 failed commits on a dead AI provider, invisible to liveness). Failures: journalctl -u projects-management-automation --since -1h --grep 'commit failed'. Fallbacks: same with 'heuristic fallback'. The ratio flag fires at >=90% fallback share once 3+ commits/24h exist — the low-volume dead-LLM class the count thresholds miss. A nonzero system_flm_crash_trigger_pair_24h is the 2026-10-07 crash-trigger signature: a PMA generate request timed out (wrong consumer budget — OPENAI_TIMEOUT not effective) and flm coredumped in the same window (cancel-path heap crash). Correlate: journalctl -u fastflowlm --since -24h --grep 'code=dumped' against PMA deadline-exceeded lines, then check the deployed go-commit timeout wiring.";
               }
               {
                 name = "Enabled-but-Inactive Units";
