@@ -1,3 +1,8 @@
+## Live pool addendum (2026-10-23 06:37)
+
+New live report: `2026-10-23_06-37_t04-done-inboxclean-driver-unmasked-self-review.md`
+— BTRFS repair lane advanced: T04 safety copy EXECUTED by owner (33m57s, quiesced-DB window) and agent-verified (−39.21 GB pool delta; storage.md P0 row + monitor365.md runbook annotated), with the stale 54G two-leg premise corrected (/data leg pool-side since 2026-08-18); the IO storm's primary driver unmasked as inboxclean-web (3.28 TB read since the 10-20 boot, 1.5 GB DB rescanned ~38×/h via canceled dashboard queries, 6× forgejo's reads — the 10-21 review's "victim" classification overturned); guard blind-spot found (zone-6 action set never touches the top reader); self-review owns two precision failures (whole-Lexar devt misattribution, unstable bare-stop recommendation) + attribution-order lesson; 4 rows harvested (stability ×2, services, upstream).
+
 ## Live pool addendum (2026-10-22 02:16)
 
 New live report: `2026-10-22_02-16_health-notifications-review-self-review.md`
