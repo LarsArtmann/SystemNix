@@ -1,7 +1,7 @@
 # SUPERB — Docs-Truth: Closeout Residuals + October Wave
 
 **Created:** 2026-10-24 16:43 CEST · **Owner:** Lars · **Author:** docs-health closeout session (self-review executor)
-**EXECUTING (instance T1-T5 residuals now; T6+ owner-gated (Q2), 2026-10-24 16:51 CEST, HEAD `57cd0de9b`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (T1–T4, 2026-10-24 19:28 CEST; remainder superseded by `2026-10-24_19-28_SUPERB-docs-truth-remainder-*.md`):** T1 census `dc7c057b0` · T2 hand-drops `e6f8a58b9` · T3 gate `9a8ed187a`+`61d35c7ce` · T4 rows `43bca64f4`; evidence: `docs/status/2026-10-24_19-14_*`
 **Trigger:** user dispatch — Pareto decomposition (1%/4%/20%/other-20%) + two-level task tables (30–100 min + ≤12 min) + execution graph + commit + push, plan first.
 **Mission:** convert the docs-health mission's residual unverified surfaces into verified truth (3 tiny follow-ups), finish the living-docs row-depth pass, then carry the 9×-proven pipeline across the 2026-10 wave (442 root + 57 tasks reports) so the ENTIRE status corpus reaches truth — with the tooling upstreamed so the next wave doesn't re-pay the friction. Zero intent-loss, zero false history, zero Verschlimmbesserung.
 
@@ -19,9 +19,9 @@
 | Surface | Count | State |
 |---|---|---|
 | Unverified WARN composition ("81, all-October" inherited claim) | 81 reports | **T1 VERIFIED 2026-10-24: 81 = 22 Sept stragglers (09-26→09-30, ~480 bare §f items) + 59 Oct — "all-October" REFUTED; flipper = daemon `f12302830` (R091 archive of `2026-09-30_07-42_architecture-catalog-golive-prep-continuation.md`, 11:49, between the prune measure and the 12-04 commit); census + seed persisted `~/.cache/docshealth/t1-warn-census.txt`; Sept folded into the wave seed (pipeline.md [decision] row updated)** |
-| Hand-dropped contradictory w-verdicts (b03/b09) | 2 rows | bare, never re-adjudicated |
-| Standing doc-counts gate | 0 | README asserts 131/228/46 with no eval gate enforcing them |
-| README service-table rows + FEATURES row statuses | 30 + ~120 rows | counts verified 2026-10-24; rows NOT claim-verified |
+| Hand-dropped contradictory w-verdicts (b03/b09) | 2 rows | **T2 EXECUTED 2026-10-24 (`e6f8a58b9`): description was wrong — actual residue = v NOOVERLAP line-targeting error (01-14:93, struck v on owners-frontmatter evidence) + v BADPATH filename-typo (13-34:143, struck v on runbook evidence) + bonus 05-55:23 empty-evidence w strike w/ 0x02 byte (restored); 12-04 §a.6 corrected** |
+| Standing doc-counts gate | 0 | **T3 EXECUTED 2026-10-24 (`9a8ed187a`+`61d35c7ce` daemon-swept): `checks.doc-counts` live — eval truth vs README/FEATURES anchors, throws at eval time, 3 negative legs + control, harness 15/0** |
+| README service-table rows + FEATURES row statuses | 30 + ~120 rows | **T4 EXECUTED 2026-10-24 (`43bca64f4`): all 33 README rows verified vs ports registry + live caddy eval + live gen + pgrep; 7 rows + FEATURES indexer-web fixed; ✅-row residue re-queued (TODO_LIST:1485)** |
 | `docs/status/archived/` manifest | 1,457 files | no dir-level manifest (planning archive got one) |
 | 2026-10 root wave | 442 reports | never swept; the 81-WARN surface lives here |
 | 2026-10 tasks/ wave | 57 tq reports | never swept (queue-footer close-out convention) |
