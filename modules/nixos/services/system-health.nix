@@ -749,6 +749,14 @@ _: {
           FLM_COREDUMPS_24H=""
           FLM_CRASH_TRIGGER_PAIR=""
           PMA_COMMIT_SCRAPE_ERRORS=1
+          # flm coredump walk is UNCONDITIONAL (2026-10-24 decoupling): the
+          # coredump count is fastflowlm telemetry that stands alone —
+          # launching it under collect_pma_commits silently killed the
+          # metric, the composite, and the Gatus anchored check whenever PMA
+          # is disabled. The pair still needs both walks' outputs; with PMA
+          # off it degrades to a standing 0 (see the flm consume block).
+          FLM_WALKS_LAUNCHED=1
+          walk_journal "$WALK_DIR/flm-coredumps" fastflowlm.service "-24h" "Main process exited, code=dumped" 60 &
           if [ "$collect_pma_commits" = "true" ]; then
             PMA_COMMIT_SCRAPE_ERRORS=0
             # Both walks run in PARALLEL (walk_journal); consumed after the
@@ -768,7 +776,6 @@ _: {
             # path. code=dumped covers both observed statuses (6/ABRT and
             # 11/SEGV).
             walk_journal "$WALK_DIR/pma-timeouts" projects-management-automation.service "-24h" "commit.generate.*context deadline exceeded" 60 &
-            walk_journal "$WALK_DIR/flm-coredumps" fastflowlm.service "-24h" "Main process exited, code=dumped" 60 &
             # Success line for the ratio denominator. The negative lookahead
             # keeps fallback lines out of the count EVEN IF the fallback
             # journal text also contains "committed changes" — the exact
@@ -1202,27 +1209,19 @@ _: {
               pma_fb_status=2
               pma_commits_status=2
               pma_to_status=2
-              flm_core_status=2
               PMA_COMMIT_FAILURES_1H=""
               PMA_HEURISTIC_FALLBACKS_24H=""
               PMA_COMMITS_24H=""
               PMA_GENERATE_TIMEOUTS_24H=""
-              FLM_COREDUMPS_24H=""
               read -r pma_fail_status PMA_COMMIT_FAILURES_1H < "$WALK_DIR/pma-fail" 2>/dev/null || { pma_fail_status=2; PMA_COMMIT_FAILURES_1H=""; }
               read -r pma_fb_status PMA_HEURISTIC_FALLBACKS_24H < "$WALK_DIR/pma-fb" 2>/dev/null || { pma_fb_status=2; PMA_HEURISTIC_FALLBACKS_24H=""; }
               read -r pma_commits_status PMA_COMMITS_24H < "$WALK_DIR/pma-commits" 2>/dev/null || { pma_commits_status=2; PMA_COMMITS_24H=""; }
               read -r pma_to_status PMA_GENERATE_TIMEOUTS_24H < "$WALK_DIR/pma-timeouts" 2>/dev/null || { pma_to_status=2; PMA_GENERATE_TIMEOUTS_24H=""; }
-              read -r flm_core_status FLM_COREDUMPS_24H < "$WALK_DIR/flm-coredumps" 2>/dev/null || { flm_core_status=2; FLM_COREDUMPS_24H=""; }
-              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ] && [ "''${pma_commits_status:-2}" -le 1 ] && [ "''${pma_to_status:-2}" -le 1 ] && [ "''${flm_core_status:-2}" -le 1 ]; then
+              if [ "''${pma_fail_status:-2}" -le 1 ] && [ "''${pma_fb_status:-2}" -le 1 ] && [ "''${pma_commits_status:-2}" -le 1 ] && [ "''${pma_to_status:-2}" -le 1 ]; then
                 PMA_COMMIT_FAILURES_1H="''${PMA_COMMIT_FAILURES_1H:-0}"
                 PMA_HEURISTIC_FALLBACKS_24H="''${PMA_HEURISTIC_FALLBACKS_24H:-0}"
                 PMA_COMMITS_24H="''${PMA_COMMITS_24H:-0}"
                 PMA_GENERATE_TIMEOUTS_24H="''${PMA_GENERATE_TIMEOUTS_24H:-0}"
-                FLM_COREDUMPS_24H="''${FLM_COREDUMPS_24H:-0}"
-                FLM_CRASH_TRIGGER_PAIR=0
-                if [ "$PMA_GENERATE_TIMEOUTS_24H" -gt 0 ] 2>/dev/null && [ "$FLM_COREDUMPS_24H" -gt 0 ] 2>/dev/null; then
-                  FLM_CRASH_TRIGGER_PAIR=1
-                fi
                 PMA_COMMIT_FAILURES_OVER=0
                 [ "$PMA_COMMIT_FAILURES_1H" -ge ${toString pmaCommitFailureThreshold} ] 2>/dev/null && PMA_COMMIT_FAILURES_OVER=1
                 PMA_HEURISTIC_FALLBACKS_OVER=0
@@ -1239,14 +1238,30 @@ _: {
                   [ "$PMA_COMMIT_RATIO_PCT" -ge ${toString pmaCommitRatioPercentThreshold} ] 2>/dev/null && PMA_COMMIT_RATIO_OVER=1
                 fi
               else
-                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?} commits=''${pma_commits_status:-?} timeouts=''${pma_to_status:-?} flm-coredumps=''${flm_core_status:-?})" >&2
+                echo "system-health: pma commit journal scan failed (fail=''${pma_fail_status:-?} fallback=''${pma_fb_status:-?} commits=''${pma_commits_status:-?} timeouts=''${pma_to_status:-?})" >&2
                 PMA_COMMIT_FAILURES_1H=""
                 PMA_HEURISTIC_FALLBACKS_24H=""
                 PMA_COMMITS_24H=""
                 PMA_GENERATE_TIMEOUTS_24H=""
-                FLM_COREDUMPS_24H=""
-                FLM_CRASH_TRIGGER_PAIR=""
                 PMA_COMMIT_SCRAPE_ERRORS=1
+              fi
+            fi
+
+            # flm composite consume (unconditional walk, 2026-10-24): the
+            # pair needs BOTH sides valid; with PMA collection off or its
+            # scan failed, PMA_GENERATE_TIMEOUTS_24H is empty/unset and the
+            # pair degrades to a standing 0 — the flm coredump count itself
+            # stays live telemetry either way. Walk failure keeps the metric
+            # absent (fail-closed via the Gatus anchored patterns).
+            if [ "''${FLM_WALKS_LAUNCHED:-0}" = 1 ]; then
+              flm_core_status=2
+              read -r flm_core_status FLM_COREDUMPS_24H < "$WALK_DIR/flm-coredumps" 2>/dev/null || { flm_core_status=2; FLM_COREDUMPS_24H=""; }
+              if [ "''${flm_core_status:-2}" -le 1 ]; then
+                FLM_COREDUMPS_24H="''${FLM_COREDUMPS_24H:-0}"
+                FLM_CRASH_TRIGGER_PAIR=0
+                if [ "''${PMA_GENERATE_TIMEOUTS_24H:-}" -gt 0 ] 2>/dev/null && [ "$FLM_COREDUMPS_24H" -gt 0 ] 2>/dev/null; then
+                  FLM_CRASH_TRIGGER_PAIR=1
+                fi
               fi
             fi
 
@@ -1546,18 +1561,24 @@ _: {
                 echo "system_pma_commit_fallback_ratio_percent ''${PMA_COMMIT_RATIO_PCT}"
               fi
 
-              # flm crash-trigger composite (2026-10-23): the components are
-              # emitted on every successful scan so absence = scrape failure,
-              # never a quiet day (fail-closed via the Gatus anchored pair).
+              # flm crash-trigger composite (2026-10-23): the PMA-side
+              # component, emitted on every successful scan so absence =
+              # scrape failure, never a quiet day.
               echo "# HELP system_pma_generate_timeouts_24h PMA commit-generation requests whose client timeout expired (journal commit.generate deadline-exceeded lines) in the last 24h — with OPENAI_TIMEOUT=10m wired, any occurrence means a consumer still carries a wrong timeout budget"
               echo "# TYPE system_pma_generate_timeouts_24h gauge"
               echo "system_pma_generate_timeouts_24h ''${PMA_GENERATE_TIMEOUTS_24H}"
+            fi
 
+            # flm composite emission (unconditional walk, 2026-10-24): own
+            # gate — a valid flm scan emits both lines even when PMA
+            # collection is off; a FAILED flm walk emits neither (absence =
+            # fail-closed via the Gatus anchored patterns).
+            if [ -n "$FLM_COREDUMPS_24H" ]; then
               echo "# HELP system_flm_coredumps_24h fastflowlm main-process core dumps in the last 24h (code=dumped — the cancel-path SIGABRT/SEGV heap-corruption class)"
               echo "# TYPE system_flm_coredumps_24h gauge"
               echo "system_flm_coredumps_24h ''${FLM_COREDUMPS_24H}"
 
-              echo "# HELP system_flm_crash_trigger_pair_24h 1 when PMA generate-timeouts AND flm coredumps both occurred in the last 24h — the 2026-10-07 crash-trigger signature (a timed-out client disconnecting into flm cancel path), 0 otherwise"
+              echo "# HELP system_flm_crash_trigger_pair_24h 1 when PMA generate-timeouts AND flm coredumps both occurred in the last 24h — the 2026-10-07 crash-trigger signature (a timed-out client disconnecting into flm cancel path), 0 otherwise; standing 0 when PMA collection is off"
               echo "# TYPE system_flm_crash_trigger_pair_24h gauge"
               echo "system_flm_crash_trigger_pair_24h ''${FLM_CRASH_TRIGGER_PAIR}"
             fi
