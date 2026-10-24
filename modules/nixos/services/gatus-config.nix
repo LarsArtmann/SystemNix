@@ -1344,10 +1344,13 @@ _: {
               # T-007: the relay gate sits on every Discord alert's path —
               # its death means gatus keeps evaluating but every send
               # fails silently (gatus does not retry provider sends).
-              # The systemd onFailureP0 hook pages independently; this
-              # check catches a wedged-but-running relay (healthz not
-              # answering) and rides the papdashboard custom provider
-              # (direct localhost ingest) even when the relay is down.
+              # Coverage is split: unit DEATH pages via the systemd
+              # onFailureP0 hook (independent path); a WEDGED-but-running
+              # relay is caught here — but this check's own Discord alert
+              # rides the dead relay, so wedged-relay paging comes only
+              # from the papdashboard ingest leg (custom provider posts
+              # direct-to-localhost, bypassing the relay — when papdashboard
+              # is enabled) plus the red dashboard state.
               ++ lib.optionals relayEnabled [
                 (mkHttpCheck {
                   name = "Gatus Alert Relay";

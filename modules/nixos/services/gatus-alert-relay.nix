@@ -144,7 +144,12 @@ _: {
             ioTier.service
             {
               EnvironmentFile = config.sops.templates."gatus-env".path;
-              ExecStart = "${lib.getExe pkg} -listen 127.0.0.1:${toString cfg.port} -boot-grace ${toString cfg.bootGraceSeconds}s -flap-window ${toString cfg.flapWindowSeconds}s -flap-max ${toString cfg.flapMaxTriggers} -flap-quiet ${toString cfg.flapQuietSeconds}s -rearm-guard ${toString cfg.rearmGuardSeconds}s -sev1-freshness ${toString cfg.sev1FreshnessSeconds}s -sev1-mute ${lib.concatStringsSep "," cfg.sev1MuteEndpoints}";
+              # argv: the mute list MUST stay one quoted token — systemd
+              # word-splits ExecStart on spaces, so an unquoted list truncates
+              # at the first space and the SEV1 mute silently degrades to the
+              # first word (found 2026-10-24 by rendering the unit; no eval
+              # guard validates argv shape).
+              ExecStart = "${lib.getExe pkg} -listen 127.0.0.1:${toString cfg.port} -boot-grace ${toString cfg.bootGraceSeconds}s -flap-window ${toString cfg.flapWindowSeconds}s -flap-max ${toString cfg.flapMaxTriggers} -flap-quiet ${toString cfg.flapQuietSeconds}s -rearm-guard ${toString cfg.rearmGuardSeconds}s -sev1-freshness ${toString cfg.sev1FreshnessSeconds}s -sev1-mute \"${lib.concatStringsSep "," cfg.sev1MuteEndpoints}\"";
             }
           ];
         };
