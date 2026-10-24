@@ -13,9 +13,9 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                                                                                                                                                                     |
 | **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only)                                                                                                                |
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), Paperless-ngx (documents + AI), SigNoz (observability), SearXNG (privacy search), Pocket ID (SSO), Hermes AI, Gatus, PapDashboard (alert hub + services dashboard), Browser History, InboxClean (Gmail assistant), CV server, Crush Daily, Attic (binary cache), Miniflux (RSS) |
-| **AI/ML**                | FastFlowLM (Qwen MoE on AMD NPU), llama-rag (embeddings + reranking on GPU), Ollama (ROCm), llama.cpp, AMD XDNA NPU driver                                                                                                                                                                                      |
+| **AI/ML**                | FastFlowLM (Qwen MoE on AMD NPU), llama-rag (embeddings + reranking on GPU), llama.cpp, AMD XDNA NPU driver                                                                                                                                                                                                      |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                                                                                                                                       |
-| **Monitoring**           | SigNoz (31 alert rules, 6 dashboards), Gatus (133 health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                                                                                                                  |
+| **Monitoring**           | SigNoz (47 alert rules, 10 dashboards), Gatus (228 health checks, Discord alerting), system-health textfile collectors, sev1 desktop escalation                                                                                                                                                                  |
 | **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 3.9M+ blocked domains                                                                                                                                                                                      |
 | **Storage**              | BTRFS with btrbk snapshots (daily, sent to a 2×16TB RAID1 HDD pool), ZRAM swap (~62 GiB at 50% of visible RAM), weekly scrub, daily fstrim                                                                                                                                                                      |
 
@@ -51,14 +51,14 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 70 NixOS service modules (auto-discovered by filename)
-├── modules/nixos/desktop/      # 10 desktop modules (auto-discovered)
+├── modules/nixos/services/     # 118 NixOS service modules (auto-discovered by filename)
+├── modules/nixos/desktop/      # 13 desktop modules (auto-discovered)
 ├── pkgs/                        # Custom packages (fastflowlm, systemd-graph, dms-plugins/ with 13 widgets + 2 community)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
-├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
+├── lib/                         # 15 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
-│   │   ├── home-base.nix        # Home Manager base (19 program modules)
+│   │   ├── home-base.nix        # Home Manager base (20 program modules)
 │   │   ├── programs/            # Fish, Zsh, Bash, Starship, Git, tmux, ...
 │   │   ├── packages/            # Cross-platform packages & fonts
 │   │   └── environment/         # Nix daemon settings
@@ -79,7 +79,7 @@ SystemNix/
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (133 health checks) + SigNoz (31 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (228 health checks) + SigNoz (47 alert rules, 10 dashboards). Counts re-derived 2026-10-24 (`nix eval .#nixosModules` → 131; `nix eval .#nixosConfigurations.evo-x2.config.services.gatus.settings.endpoints --apply 'x: builtins.length x'` → 228; 47 `mkRule` sites + 10 dashboard JSONs in `modules/nixos/services/_signoz-alerts.nix`):
 
 | Service             | Port             | URL                  | Description                                                                                                                                               |
 | ------------------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
