@@ -70,7 +70,7 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 
 ## b) PARTIALLY DONE
 
-1. **The flip itself** — activation advanced `/run/current-system` but the numbered profile
+~~1. **The flip itself** — activation advanced `/run/current-system` but the numbered profile~~ done — deploy landed + service went native live 2026-09-29/30 (TODO_LIST:440; storm-closeout deploy anchored 23:53; CHANGELOG:450)
    did NOT bump (**UNANCHORED — a reboot right now would REVERT to system-800**). Some unit(s)
    failed inside the switch transaction (exit-4). Prime suspects (unverified): the
    `postgresql.service` restart (preload change) cascading paperless/immich/miniflux start
@@ -78,7 +78,7 @@ auto-commit daemon, heuristic messages) but **not pushed**.
    to that restart, and/or `geometrikks.service` first start (alembic-on-fresh-DB within the
    5min TimeoutStartSec). The deploy's own last line prescribes the fix: **re-run
    `nix run .#deploy`** after the failing units are understood.
-2. **Live verification** — NONE performed yet: `/health` + `/health/ready` on :8102, docker
+~~2. **Live verification** — NONE performed yet: `/health` + `/health/ready` on :8102, docker~~ done — verified live by 2026-10-01: SSO live + ingestion-dead findings (2026-10-01_03-32 report) + allowlist fix (2026-10-01_01-04)
    containers gone (`docker ps`), gatus cycle green, OIDC redirect 302→auth.home.lan, Pocket
    ID client created, sibling DBs (paperless/immich/miniflux) recovered post-PG-restart,
    alembic journal, geo-degraded banner present. The DoD checklist in the plan is untested.
@@ -89,12 +89,12 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 
 ## c) NOT STARTED
 
-1. Post-deploy live verification battery (above).
+~~1. Post-deploy live verification battery (above).~~ **NOT-DO — NOT-DO — dup (§b2, verdicted above).**
 2. `scripts/post-deploy-check.sh` geometrikks section — **I never checked whether the docker
    era had smoke entries that are now stale, nor added native ones** (the "when a service is
    retired/merged, sweep the smoke probes in the SAME change" rule — possibly violated; the 4
    baseline FAILs may even be related, unverified).
-3. VM/eval test for the module (`tests/test-geometrikks.nix` never existed; the 2026-09-20
+~~3. VM/eval test for the module (`tests/test-geometrikks.nix` never existed; the 2026-09-20~~ done — tests/test-geometrikks-caps.nix → checks.geometrikks-caps (tests/default.nix:66; services.md:413 [x] DONE 2026-10-07)
    self-review already flagged the missing bring-up test for the docker era — my migration
    re-introduced a never-ran-on-this-runtime first start with no test).
 4. Gatus OIDC-redirect check (skipped by design — initiation endpoint path unverified; manual
@@ -165,14 +165,14 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 3. Fix the failing unit(s) at root cause (likely ordering/wait, not code).
 4. Re-run `nix run .#deploy` (pressure-gate aware; phantom corpse-PSI may persist → force
    only with the same idle-disk corroboration).
-5. Verify anchoring: profile bumped, current-system == profile.
+~~5. Verify anchoring: profile bumped, current-system == profile.~~ done — storm-closeout deploy anchored (2026-09-29_23-53) + generations advanced (system-801+ through Oct)
 6. `curl -s http://127.0.0.1:8102/health` + `/health/ready` → 200.
 7. `docker ps -a | grep -i geometrikks` → no containers (compose down ran on swap).
 8. Gatus "GeoMetrikks" first green cycle post-flip.
 9. Verify `geometrikks-db-provision` journal: role pw set, both extensions created.
 10. Verify alembic ran (app journal: migration lines; `alembic_version` table exists).
 11. Verify paperless/immich/miniflux healthy after the shared-PG restart.
-12. Verify Pocket ID client `geometrikks` provisioned (PKCE + exact callback URL).
+~~12. Verify Pocket ID client `geometrikks` provisioned (PKCE + exact callback URL).~~ done — proven live: token+userinfo succeeded, logins reached the allow list (CHANGELOG:624 journal evidence)
 13. Verify `geometrikks-oidc-env` wrote `/var/lib/geometrikks-oidc/oidc.env` (bridge active).
 14. Verify vHost: `curl -k https://geo.home.lan` serves the SPA over PLAIN proxy (no oauth2 hop).
 15. OIDC initiation probe: find the login-initiation endpoint in the app (source) and curl it
@@ -184,10 +184,10 @@ auto-commit daemon, heuristic messages) but **not pushed**.
     contract) + push (P10, still owed).
 
 **P1 — hardening/follow-through:**
-19. User's first SSO login at geo.home.lan (go-live step 1; allow-list email-vs-sub fallback
+~~19. User's first SSO login at geo.home.lan (go-live step 1; allow-list email-vs-sub fallback~~ done — SSO live 2026-10-01 (03-32 report) after the subject-id allowlist fix (CHANGELOG:624)
 documented).
 20. MaxMind + CARTO key pastes (existing user-gated todo).
-21. Add `tests/test-geometrikks.nix` minimal VM/eval test (enable → unit shapes, PG extensions
+~~21. Add `tests/test-geometrikks.nix` minimal VM/eval test (enable → unit shapes, PG extensions~~ done — tests/test-geometrikks-caps.nix landed 2026-10-07 (checks.geometrikks-caps; services.md:413)
 wiring, registry flip) — closes the never-ran-class gap.
 22. Consider a Gatus check asserting the OIDC redirect (once the endpoint is known from #15).
 23. Watch first nightly `geometrikks-db-backup` (05:15) → dump lands pool-side, backup-
@@ -220,7 +220,7 @@ is the first in-tree) — CONTRIBUTING section for the next Python service.
 (they're public; should be clean — confirm on the push).
 39. Watch for the catalog eval WARNING list shrinking (geo left the missing-catalog list —
 confirm in next flake check output).
-40. upstream (GilbN/geometrikks): file an issue/PR with the native-packaging findings
+~~40. upstream (GilbN/geometrikks): file an issue/PR with the native-packaging findings~~ done — both filed 2026-10-07: upstream.md:144 [x] — issues #301 + #302
 (shebang rewrites hit any sandboxed builder; `.python-version`/lock pinning praise,
 license file missing) — goodwill + license clarity.
 41. Monitoring: a textfile metric for ingestion lag/degraded state if upstream exposes one

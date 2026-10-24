@@ -57,12 +57,12 @@ Nothing destroyed. **Process misses, honestly:**
 
 **Complete this feature (P0):**
 
-1. `nix run .#deploy` (user/root session) — carries receivers + key + whitelist.
+~~1. `nix run .#deploy` (user/root session) — carries receivers + key + whitelist.~~ done — receivers went LIVE on the first deploy (falsified, then contained) — monitoring.md:72 + signoz.md:31
 2. Post-deploy checklist (runbook §verification): journal 403s absent, `dig +short monitoring.googleapis.com @127.0.0.1` returns Google IP, Metrics Explorer `run_googleapis_com_request_count`, GCP Fleet panels fill (~10 min; bucket-size panels ≤24h).
 3. Verify live metric names + label keys; fix `gcp.json` queries if mangled forms differ.
 4. Refine request_latencies panel from `.sum` to quantiles once histogram suffixes verified.
 5. SigNoz data-freshness alert rule ("GCP metrics stale", `count(...) or vector(0)` pattern) after names verified.
-6. CHANGELOG.md entry.
+~~6. CHANGELOG.md entry.~~ done — CHANGELOG.md:448
 7. VM test `tests/test-signoz-gcp.nix` (collector starts with receivers + placeholder key; no assertion regressions; gatus check shape).
 8. post-deploy-check.sh §: rendered collector.yaml carries GOOGLE_APPLICATION_CREDENTIALS + receiver count matches config.
 9. Verify dnsblockd restart semantics for whitelist changes (does the filtered-blocklist path change restart the unit? if not, manual restart note in runbook).

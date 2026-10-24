@@ -63,15 +63,15 @@ system.slice **9.89 TB** total, of which `system-btrfs-scrub.slice` **5.90 TB (6
 
 ## f) Next things (session-derived; harvested to TODO_LIST + docs/todo/stability.md)
 
-1. **[ready] Zone 6 re-arm: exclude the three scrub units** — a guard-killed scrub stays dead until its own timer window; implement in the guard's churn re-arm set, VM-test the excluded shape.
-2. **[ready] Scrub timers `Persistent = false`** — missed weekly windows must not catch-up-fire into a cold-cache boot (this boot: 3 scrub starts 24 s after boot).
-3. **[ready] Serialize + stagger the three scrubs** (`After=` chain, one filesystem at a time, root first) — three concurrent full-disk readers is the freeze-#3 signature repeating.
+~~1. **[ready] Zone 6 re-arm: exclude the three scrub units** — a guard-killed scrub stays dead until its own timer window; implement in the guard's churn re-arm set, VM-test the excluded shape.~~ done — memory-emergency-guard.nix:764/781 btrfs-scrub@* re-arm exclusion + disclosure line; stability.md:86 [x] DONE 2026-09-29
+~~2. **[ready] Scrub timers `Persistent = false`** — missed weekly windows must not catch-up-fire into a cold-cache boot (this boot: 3 scrub starts 24 s after boot).~~ done — snapshots.nix:1037 `timers."btrfs-scrub@".timerConfig.Persistent = lib.mkForce false;` (f21be80a; stability.md:102)
+~~3. **[ready] Serialize + stagger the three scrubs** (`After=` chain, one filesystem at a time, root first) — three concurrent full-disk readers is the freeze-#3 signature repeating.~~ done — snapshots.nix:579-585 After= chain root→data→pool; pinned by checks.scrub-exit-contract (stability.md:102)
 4. **[decision] Drop `/mnt/pool` from autoScrub entirely?** — pool scrub rides the ONE flaky JMS567 USB link shared with buildcache; RAID1 + SMART + btrbk verify already cover pool integrity.
 5. **[ready] Root-cause guard silence this boot** — started 09:58:29, 0 trips at IO PSI avg60 79%; check io-ticks baseline staleness (state files stamped 09:50, boot -1) vs zone-6 eval blindness.
 6. **[ready] Verify the current storm actually drains** — PSI probe cadence until avg10 < 20%; identify/stop remaining drivers (project-discovery-daemon, the nix-daemon build, hermes startup churn).
 7. **[ready] Add project-discovery-daemon to `ioChurnUnits`** (or heavy-job-gate its scans) — 7.1 GB read in the first 7 min of every boot, cold-cache du-walks.
 8. **[ready] Backup-starvation audit Sep 27–29** — correlate 432 trips vs btrbk send attempts; check whether the 2026-09-28 backup-catchup slot fired, protected, or re-stormed.
-9. **[ready] Scrub completion tracking metric** — `btrfs_scrub_last_completed_timestamp` per fs + Gatus staleness; a scrub that never completes must be visible as such.
+~~9. **[ready] Scrub completion tracking metric** — `btrfs_scrub_last_completed_timestamp` per fs + Gatus staleness; a scrub that never completes must be visible as such.~~ done — gatus-config.nix:962 "BTRFS Scrub Staleness" + btrfs-health.nix:309 btrfs_scrub_stale; landed 2026-10-01 (stability.md:116, CHANGELOG:432)
 10. **[ready] Guard trip-rate page** — `trips_last_hour ≥ N` or `>X/boot` escalates to notify: "guard is load-bearing, root-cause the storm" (zone-6 alert-fatigue row exists; this is the concrete mechanism).
 11. **[ready] Investigate Sep 27 afternoon instability** — boot -3 ended 17:54, boot -2 lasted 2.5 h; were those crashes too? (Pattern may predate the Sep 28 scrub window.)
 12. **[ready] Quickshell Qt-fatal coredump at death (09:51)** — `init_platform` failure mid-storm: victim or canary? If the desktop shell dies first during storms, a sev1 "desktop died during IO storm" signal exists for free.
@@ -79,7 +79,7 @@ system.slice **9.89 TB** total, of which `system-btrfs-scrub.slice` **5.90 TB (6
 14. **[ready] llama-rag-dark-guard timeout this boot** — `Failed with result 'timeout'` in the current boot's journal; unrelated to the freeze but noticed and unowned.
 15. **[watch] Hermes cold-boot read audit** — 3.3 GB in the first boot minutes; what does it re-read at start (state dir? projects bind?) and can it be deferred/serialized?
 16. **[watch] nix-daemon build admission during storms** — a build was running at 59% CPU through the whole live incident; should heavy builds be pause-able under Zone-6-active (heavy-job slot integration)?
-17. **[ready] AGENTS.md freeze-#7 entry** — add the scrub-restart-loop to the freeze list once the fix approach is owner-confirmed.
+~~17. **[ready] AGENTS.md freeze-#7 entry** — add the scrub-restart-loop to the freeze list once the fix approach is owner-confirmed.~~ done — stability.md:102 [x] CLOSED 2026-10-23 — full Freeze #7 entry in docs/agents/stability.md since 2026-10-01
 18. **[ready] Guard `cgroup-io.last` is cumulative-boot, journal lines are per-trip top-3** — persist per-trip top-8 snapshots to the state dir for post-mortem (this session had to reconstruct attribution from one snapshot).
 
 (Items 1–3, 5–10, 12–14, 17–18 harvested to the queue; 4, 15, 16 → library with their lifecycle tags.)

@@ -209,9 +209,9 @@ Grouped; ✅ = already harvested this session (location noted).
 4. ✅ Provision Stalwart: domains, `dmarc@artmann.tech` (principal NAME =
    address), personal mailbox (runbook §5).
 5. ✅ Outbound smoke via Resend, `From lars@larsartmann.cloud` (runbook §6).
-6. ✅ Post-unblock: MX + `rua=mailto:dmarc@artmann.tech` on both `_dmarc`
+~~6. ✅ Post-unblock: MX + `rua=mailto:dmarc@artmann.tech` on both `_dmarc`~~ **Won't implement — superseded 2026-10-16 — Stalwart natively renders DMARC reports; "nothing to do on evo-x2" (docs/todo/services.md:226 [x] SUPERSEDED).**
    records (runbook §4).
-7. ✅ SystemNix flip: sops-paste `dmarc-imap-password`, `enable = true`,
+~~7. ✅ SystemNix flip: sops-paste `dmarc-imap-password`, `enable = true`,~~ **Won't implement — superseded 2026-10-16 — dmarc-monitor flip row closed SUPERSEDED (services.md:226).**
    deploy, verify parsedmarc + backup freshness (runbook §7; harvested ✅
    docs/todo/services.md).
 

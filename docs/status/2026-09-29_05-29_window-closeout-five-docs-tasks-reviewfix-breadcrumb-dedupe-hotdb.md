@@ -42,11 +42,11 @@
 
 ## b) PARTIALLY DONE
 
-1. **Guard fixes are build-verified, not behavior-verified.** Script derivation builds (shellcheck pass), `bash -n` pass, artifact surfaces confirmed — but the VM regression test is NOT extended/run for the new state machine (starvation→grant, slot-protection through a trip, `CGROUP_IO_SRC` attribution). TODO_LIST:130 ("Guard VM-test extensions") is the tracking row and now covers these surfaces. Deploy also pending (user window).
+~~1. **Guard fixes are build-verified, not behavior-verified.** Script derivation builds (shellcheck pass), `bash -n` pass, artifact surfaces confirmed — but the VM regression test is NOT extended/run for the new state machine (starvation→grant, slot-protection through a trip, `CGROUP_IO_SRC` attribution). TODO_LIST:130 ("Guard VM-test extensions") is the tracking row and now covers these surfaces. Deploy also pending (user window).~~ done — stability.md:48: VM test EXECUTED green 2026-09-30 incl. the backup-catchup scenario (+ sibling bug fixed)
 2. **go-taskqueue master is still UNPUSHED (ahead 7).** The verify-gate classification exists only in the local checkout; production `tq` still burns attempts on environmental gate failures. The `[blocked:push]` row (upstream.md:13) + consumption row (TODO_LIST:216) are staged and waiting on the owner push. This remains the single highest-leverage item in the chain.
 3. **The `/run/binfmt` durable fixes are in-tree but UNDEPLOYED** (host gen 797-era): a reboot before the next deploy re-manifests the boot cycle. VM-test run + deploy + reboot-verify owed (TODO_LIST:134).
 4. **`ea36b448`'s own queue closure is broken** (see §d1): its work landed, its task ended DEAD.
-5. **The 04-46 correction pass left the storage.md f2 stale clause unfixed** — deliberately harvested as row 430 rather than edited in that docs-only task; still open.
+~~5. **The 04-46 correction pass left the storage.md f2 stale clause unfixed** — deliberately harvested as row 430 rather than edited in that docs-only task; still open.~~ done — storage.md:181 [x] DONE 2026-10-17
 
 ## c) NOT STARTED (deliberately; correctly routed, none lost)
 
@@ -81,13 +81,13 @@
 
 **New this pass (appended below, 7 rows + 3 owner questions):**
 
-1. Fix the broken `naming-review` SKILL.md frontmatter (~/projects/SKILLS) + the go-cqrs-lite over-length description — the every-invocation WARN tax with real requeue costs (§d2).
+~~1. Fix the broken `naming-review` SKILL.md frontmatter (~/projects/SKILLS) + the go-cqrs-lite over-length description — the every-invocation WARN tax with real requeue costs (§d2).~~ done — fixed same-day by the autofs session: 2026-09-29_20-21 report §a7 (both skills fixed + validated)
 2. Triage the 5 DLQ tasks: rescue-and-verify-close `ea36b448` (work landed), root-cause the 4 foreign verify-dead before any blind rescue (§d1/d).
 3. Measure the zai 429 rate-limit tax and pick a mitigation (§d3).
 4. Decide the preflight-vs-parallel-churn policy (ignore-list for untracked docs/status reports vs require_clean) (§d6).
-5. Add the §f self-audit step to the report protocol in CONTRIBUTING (closes the 20-15 report's last open item; prevents the finding class at authoring time).
+~~5. Add the §f self-audit step to the report protocol in CONTRIBUTING (closes the 20-15 report's last open item; prevents the finding class at authoring time).~~ done — CONTRIBUTING.md:323 "§f self-audit at report time (2026-09-28 convention, two live fires)"
 6. go-taskqueue upstream: emit `task.reprioritized` journal facts — band-drift accountability is currently structurally impossible (§h).
-7. Kill/legitimize the hermes-cron-resurrected llama-servers + decide the durable guard (§d7; sudo window for the kill).
+~~7. Kill/legitimize the hermes-cron-resurrected llama-servers + decide the durable guard (§d7; sudo window for the kill).~~ **Won't implement — moot — instances died on their own 2026-09-30 (stability.md:105 [x] DONE self-resolved).**
 
 **Already tracked, highest-value (pointers only — no duplication):** push go-taskqueue master + consumption chain (upstream.md:13 / row 216); guard VM-test extensions + deploy (row 130, §b1); `/run/binfmt` durable-fix deploy (row 134); wire the breadcrumb into runbook step 1 (row 135); duplicate-dispatch fixes (rows 427/344/338); verification-verb template (row 428); monitoring-evidence standard (row 429); report-claim surface rule promotion (row 431); legal-cases rmdir heal + empty-target auto-heal (storage.md); Phase-2 hot-db fold (storage.md `[watch]`); llama-rag spin bisect (row 168) — still THE gate for the paperless RAG leg.
 

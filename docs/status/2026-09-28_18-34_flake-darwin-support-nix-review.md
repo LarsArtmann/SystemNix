@@ -94,12 +94,12 @@ Everything in §f (by instruction: report, then wait).
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ |
 | 1  | Harvest this report's §f into TODO_LIST.md + domain libraries per doctrine                                                                                                  | doctrine    | 15m          |
 | 2  | Push + watch the first CI run with `--all-systems` (must be green; triage if not)                                                                                           | closes loop | 10m          |
-| 3  | `boot.zfs.forceImportRoot`: set explicitly (nixpkgs warns "reduce the risk of data loss")                                                                                   | high        | 15m          |
+| ~~3~~ **Won't implement — owner voided ZFS advisories 2026-10-04 — "ZFS no longer in use, rows removed, do not re-harvest" (2026-10-04_10-47 + 2026-10-04_06-45 reports).** | ~~`boot.zfs.forceImportRoot`: set explicitly (nixpkgs warns "reduce the risk of data loss")~~ | ~~high~~ | ~~15m~~ |
 | 4  | Wire `--all-systems` into `nixpkgs-compat.yml` daily job (same blind-spot class closed in nix-check.yml; verify what it runs first)                                         | high        | 20m          |
 | 5  | Fix the `'system' has been renamed` warning at its source (proven pre-existing; locate via `--show-trace` on full check — likely a test/config using the deprecated option) | medium      | 30m          |
 | 6  | Decide `check-flake-inputs.sh` fate: delete orphan vs. wire + exempt interactive shell-config GOTOOLCHAIN hits                                                              | medium      | 20m          |
-| 7  | zfs `latestCompatibleLinuxPackages` deprecation: pin kernel explicitly                                                                                                      | medium      | 20m          |
-| 8  | `programs.zsh.initExtra` → `initContent` migration                                                                                                                          | low         | 20m          |
+| ~~7~~ **Won't implement — same owner voiding 2026-10-04 (rows dropped from storage.md/TODO_LIST).** | ~~zfs `latestCompatibleLinuxPackages` deprecation: pin kernel explicitly~~ | ~~medium~~ | ~~20m~~ |
+| ~~8~~ done — platforms/common/programs/zsh.nix:54 `initContent = ''`; zero zsh initExtra matches remain in platforms/ | ~~`programs.zsh.initExtra` → `initContent` migration~~ | ~~low~~ | ~~20m~~ |
 | 9  | `stdenv.isLinux/isDarwin` → `stdenv.hostPlatform.*` sweep (grep count first)                                                                                                | low         | 30m          |
 | 10 | Catalog migration tail: add catalog entries for the 24 listed subdomains (ADR-008)                                                                                          | medium      | 2-4h         |
 | 11 | llama-vlm soak-test reminder: run the soak or retire the module assertion warning                                                                                           | medium      | 1h           |
@@ -115,9 +115,9 @@ Everything in §f (by instruction: report, then wait).
 | 21 | Add `docs/INTERIM-INPUT-PINS.md` note that go-cqrs-lite systems-follow is gone (if that file tracks such things)                                                            | hygiene     | 10m          |
 | 22 | Consider promoting the per-attr "force every attr of every system" sweep into a one-liner script (`scripts/check-all-systems-attrs.sh`) for future reviews                  | nice        | 30m          |
 | 23 | Review whether `checks`' ungated cross-platform set should document its platform-independence expectation in AGENTS.md (pattern for new checks)                             | nice        | 20m          |
-| 24 | Run `nix fmt -- --fail-on-change` once over the whole tree to confirm zero global drift                                                                                     | hygiene     | 10m          |
+| ~~24~~ done — 2026-09-29_23-13 §a12: "nix fmt -- --ci clean (0 changed)" — whole-tree zero-drift confirmed | ~~Run `nix fmt -- --fail-on-change` once over the whole tree to confirm zero global drift~~ | ~~hygiene~~ | ~~10m~~ |
 | 25 | browser-history (sibling repo): confirm its flake's systems list vs. actual darwin needs (pattern check only)                                                               | nice        | 15m          |
-| 26 | Re-run `scripts/test-precommit-shellcheck.sh` after the NEXT hook edit to keep the mutation-negative honest                                                                 | standing    | 5m           |
+| ~~26~~ done — selftest now standing CI: nix-check.yml:103 builds checks.precommit-shellcheck-leg-selftest every run (hook edited 2026-09-30, CI re-runs it) | ~~Re-run `scripts/test-precommit-shellcheck.sh` after the NEXT hook edit to keep the mutation-negative honest~~ | ~~standing~~ | ~~5m~~ |
 
 (26 items — all real, zero padding. Items 1-6 are the 20% delivering 80%.)
 

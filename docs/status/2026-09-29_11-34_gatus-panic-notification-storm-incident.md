@@ -33,15 +33,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **Deploy** — the one step that heals everything. Not executed (`nix run .#deploy`). All fixes sit committed in the tree.
-2. **gatus still down.** Failure mode now mixed: config panic whenever prestart passes, PLUS intermittent `gatus-wait-oidc` 300s timeouts (auth.home.lan/pocket-id flapping under load-60 post-boot churn — separate symptom, same dead unit).
-3. **Storm quieted on its own (not by me):** 0 Notify calls in a 10s sample at 11:34. Cause unverified: either the ~305s OIDC-wait cycle time (max 1 popup/5min) or `notify-failure@gatus` hitting its own start limit. Worst case it is a slow drip, not silence.
+~~1. **Deploy** — the one step that heals everything. Not executed (`nix run .#deploy`). All fixes sit committed in the tree.~~ done — same file §i: deploy #13 exited rc=0, profile bumped to system-801 (anchored)
+~~2. **gatus still down.** Failure mode now mixed: config panic whenever prestart passes, PLUS intermittent `gatus-wait-oidc` 300s timeouts (auth.home.lan/pocket-id flapping under load-60 post-boot churn — separate symptom, same dead unit).~~ done — same file §h.3: gatus self-healed 11:43:29, "Validated 180 endpoints", up since
+~~3. **Storm quieted on its own (not by me):** 0 Notify calls in a 10s sample at 11:34. Cause unverified: either the ~305s OIDC-wait cycle time (max 1 popup/5min) or `notify-failure@gatus` hitting its own start limit. Worst case it is a slow drip, not silence.~~ done — same file §h: post-reboot zero panics + 0 Notify calls in dbus samples (verified state 12:00)
 
 ## c) NOT STARTED
 
-1. **"Hide This Kind of Notification for X" button** — the user's feature request. Research only (see e.2/e.3). Zero implementation.
-2. gatus-config parse guard as a flake check (render yaml → run real binary → fail check on panic).
-3. Post-deploy verification of this incident.
+~~1. **"Hide This Kind of Notification for X" button** — the user's feature request. Research only (see e.2/e.3). Zero implementation.~~ done — same file §i.2: timed mute implemented upstream (DankMaterialShell PR #3628) + DMS per-app mute
+~~2. gatus-config parse guard as a flake check (render yaml → run real binary → fail check on panic).~~ done — flake/parts/checks/lint-static.nix:178 checks.gatus-config-parse (positive AND negative proven per §h.5)
+~~3. Post-deploy verification of this incident.~~ done — same file §i: deploy anchored, gatus active, checks green, 0 storm — verified
 4. Sweep of ALL other gatus alert descriptions for the same quote/backslash class (gatus reports only the FIRST invalid endpoint — a sibling could be hiding behind this one).
 
 ## d) TOTALLY FUCKED UP (honest)
@@ -61,18 +61,18 @@
 
 ## f) NEXT (ranked)
 
-1. `nix run .#deploy` — ships both fixes; gatus self-heals on the next restart cycle. rc=12 = pressure gate (load ~60) → retry when calmer; rc=14 = activation failed units → fix and re-run.
-2. Post-deploy verify: `journalctl -u gatus -f` shows no panic; gatus active; dbus-monitor 30s → 0 storm; https://status.home.lan answers; checks green again.
+~~1. `nix run .#deploy` — ships both fixes; gatus self-heals on the next restart cycle. rc=12 = pressure gate (load ~60) → retry when calmer; rc=14 = activation failed units → fix and re-run.~~ done — §i: deploy #13 rc=0, system-801 anchored, fixes live
+~~2. Post-deploy verify: `journalctl -u gatus -f` shows no panic; gatus active; dbus-monitor 30s → 0 storm; https://status.home.lan answers; checks green again.~~ done — §i.1: storm class closed at three layers; gatus active since 11:43
 3. Confirm whether `notify-failure@gatus` was start-limit-blocked (deploy's reset-failed handles it; verify no residual).
 4. Sweep all gatus alert descriptions for `"`/`\` (second invalid endpoint would resurface after the first fix lands).
-5. Build `checks.gatus-config-parse` (e.1).
-6. Decide + implement "Hide This Kind for X" (see g.2).
-7. DMS DND expires ~13:03 — confirm normal notifications resume; disable earlier if user wants.
-8. pocket-id provisioner atomic secret write (e.4).
+~~5. Build `checks.gatus-config-parse` (e.1).~~ done — flake/parts/checks/lint-static.nix:178 + §h.5 (permanent flake check, negative-proven)
+~~6. Decide + implement "Hide This Kind for X" (see g.2).~~ done — §i.2: DMS PR #3628 (1h/4h/forever timed mute) landed
+~~7. DMS DND expires ~13:03 — confirm normal notifications resume; disable earlier if user wants.~~ done — §i residual note: DND expiry 12:46 CEST — normal notifications resumed automatically
+~~8. pocket-id provisioner atomic secret write (e.4).~~ done — §i.5: "pocket-id.nix atomic secret writes (mktemp+mv)" landed
 9. Investigate pocket-id/auth.home.lan flap under load (300s OIDC wait failures) — distinct from the config bug; load-correlated.
-10. AGENTS.md + docs/services/gatus.md gotcha entries: gatus alert-description charset; DMS DND critical bypass; notify-failure@ now rate-limited/normal.
+~~10. AGENTS.md + docs/services/gatus.md gotcha entries: gatus alert-description charset; DMS DND critical bypass; notify-failure@ now rate-limited/normal.~~ done — §i.5 AGENTS gotchas landed; docs/agents/monitoring.md:19 carries the description-charset gotcha + check
 11. Watch load avg (62 at 10:08) against the freeze-class thresholds; heavy IO risk while movie streams off this box.
-12. If deploy stays blocked by pressure: surface to user rather than forcing `DEPLOY_FORCE_PRESSURE=1` mid-movie.
+~~12. If deploy stays blocked by pressure: surface to user rather than forcing `DEPLOY_FORCE_PRESSURE=1` mid-movie.~~ **Won't implement — moot — deploy landed (§i, system-801).**
 
 ## g) QUESTIONS
 

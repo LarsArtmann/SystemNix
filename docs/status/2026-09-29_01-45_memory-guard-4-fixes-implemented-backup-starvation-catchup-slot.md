@@ -64,23 +64,23 @@
 
 ## f) NEXT (ranked, this session's scope only)
 
-1. Gatus check "Memory Guard Backup Starved" (Monitoring group, niri-pattern anchored pat).
-2. Extend `tests/test-memory-emergency-guard.nix`: dummy `btrbk-root` unit; reset_state += 6 new state files; scenario 9 (starve epoch 7h + io avg60=45 → grant, prune, metrics), 9b (trip action during slot keeps btrbk-root running, balance re-stopped, cooldown-line dedup asserted), 9c (attribution from `CGROUP_IO_SRC=/tmp/cgt` fixture + seeded snapshot).
-3. Run the VM test (quiet window or `heavy-job`; NOT during an active storm).
+~~1. Gatus check "Memory Guard Backup Starved" (Monitoring group, niri-pattern anchored pat).~~ done — gatus-config.nix:1148 "Memory Guard Backup Starved" check (verified 2026-09-29_05-29 §a)
+~~2. Extend `tests/test-memory-emergency-guard.nix`: dummy `btrbk-root` unit; reset_state += 6 new state files; scenario 9 (starve epoch 7h + io avg60=45 → grant, prune, metrics), 9b (trip action during slot keeps btrbk-root running, balance re-stopped, cooldown-line dedup asserted), 9c (attribution from `CGROUP_IO_SRC=/tmp/cgt` fixture + seeded snapshot).~~ done — stability.md:48: backup-catchup scenario in test, EXECUTED green 2026-09-30 (+ sibling metric bug found & fixed); 2026-09-30_06-25 scenario9 report
+~~3. Run the VM test (quiet window or `heavy-job`; NOT during an active storm).~~ done — stability.md:48 RE-FIRE-3 evidence: "EXECUTED for the first time and is GREEN end-to-end (33.02s)"
 4. `nix fmt --no-update-lock-file -- modules/nixos/services/memory-emergency-guard.nix tests/test-memory-emergency-guard.nix`.
-5. Runbook + AGENTS.md sentence for the catch-up slot.
+~~5. Runbook + AGENTS.md sentence for the catch-up slot.~~ done — AGENTS.md guard bullet (line 1152, verified 2026-09-29_05-29 §a) + CHANGELOG:452 catch-up-slot entry
 6. Deploy (user-run); then verify `memory_emergency_guard_backup_starved` appears and watch the first grant.
-7. Tonight's 23:00 btrbk-root outcome with the fix live (first catch-up candidate if avg60 < 50).
+~~7. Tonight's 23:00 btrbk-root outcome with the fix live (first catch-up candidate if avg60 < 50).~~ **Won't implement — one-shot; window passed (fix undeployed that night — the audit lives in the still-open backup-starvation row).**
 8. Verify pool receives land (`@.20260926T2300+` catch-up chain, ~3 incrementals).
-9. User decision: kill the hermes llama-servers (`sudo systemctl stop`… they live in a cron scope — `sudo pkill -f 'llama-server.*884'` as the user-run verb) or re-enable llama-rag legitimately.
+~~9. User decision: kill the hermes llama-servers (`sudo systemctl stop`… they live in a cron scope — `sudo pkill -f 'llama-server.*884'` as the user-run verb) or re-enable llama-rag legitimately.~~ **Won't implement — moot — leaked llama-servers died on their own 2026-09-30 (stability.md:105 [x] DONE self-resolved).**
 10. Identify the spawning hermes cron job (needs sudo/user: hermes state 2770).
-11. Investigate scrub-stop phantom (e) #2 — maybe make the guard run `btrfs scrub cancel` for scrub units.
-12. Root-cause `btrfs-scrub@-/@data` FAILED state (exit 1 after "no errors found") + clear; exit-4 hazard check before next unit churn.
+~~11. Investigate scrub-stop phantom (e) #2 — maybe make the guard run `btrfs scrub cancel` for scrub units.~~ **Won't implement — decided-against — guard-side `btrfs scrub cancel` rejected (unit lacks CAP_SYS_ADMIN); template ExecStop cancel instead (stability.md:48).**
+~~12. Root-cause `btrfs-scrub@-/@data` FAILED state (exit 1 after "no errors found") + clear; exit-4 hazard check before next unit churn.~~ done — stability.md:49 [x] DONE 2026-09-29: manual cancels root-caused; SuccessExitStatus=[1] fix (snapshots.nix:567), FAILED cleared by deploy
 13. sev1 notify-tier for backup_starved.
 14. Resurrection detector (port-holder metric + Gatus).
 15. /mnt/hot one-line "commit stays default (TLC)" comment for symmetry.
 16. Post-mortem the Sep 26-28 storm drivers once quiet (scrub + sessions + nix).
-17. Harvest items 1-16 into TODO_LIST.md + docs/todo/{stability,monitoring}.md.
+~~17. Harvest items 1-16 into TODO_LIST.md + docs/todo/{stability,monitoring}.md.~~ done — harvest landed — 2026-09-29_05-29 §b1 confirms TODO_LIST:130 tracking row + stability rows cover the surfaces
 18. Coordinate flake.nix working-tree state with the parallel session before any commit-sensitive step.
 19. Watch the first real attribution line in the guard journal post-deploy; sanity-check its top-3 against a forensics bundle.
 20. Check the attribution walk's real cost at trip time on the host (maxdepth-4 cgroup tree, timeout 10).

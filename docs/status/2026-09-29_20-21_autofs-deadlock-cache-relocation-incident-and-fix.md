@@ -26,10 +26,10 @@
 
 ## b) PARTIALLY DONE
 
-1. **Full-flake validation** (`nix flake check --no-build`, running with cache redirect since ~20:19): still running at report time. Parse checks + module eval + full VM-test derivation eval: green. Flake-wide result (covers forgejo.nix + evo-x2 config + geometryGuards assertions): **pending**.
+~~1. **Full-flake validation** (`nix flake check --no-build`, running with cache redirect since ~20:19): still running at report time. Parse checks + module eval + full VM-test derivation eval: green. Flake-wide result (covers forgejo.nix + evo-x2 config + geometryGuards assertions): **pending**.~~ done — 2026-09-29_23-14 §a3: "Full nix flake check --no-build: ALL CHECKS PASSED (4th pass)" incl. hot-user-caches rewrite
 2. **VM test executed**: only _evaluated_, not _run_ (QEMU on a load-86 box = bad idea; also all nix-build work needs the XDG_CACHE_HOME workaround). Must run post-recovery.
-3. **Deployment**: fix is in the repo (auto-committed by the daemon: `477f9c8f`, `17dc3916`, `0bd8cd59`) but **NOT deployed** — `nh os switch` / `nix run .#deploy` requires a working nix environment (or redirect) and ideally post-recovery.
-4. **Live-system recovery**: exact commands delivered twice (cancel job → start mount; or reboot). NOT executed — user went to bed; wedge persists (84 D procs, load 86.91 at 20:21).
+~~3. **Deployment**: fix is in the repo (auto-committed by the daemon: `477f9c8f`, `17dc3916`, `0bd8cd59`) but **NOT deployed** — `nh os switch` / `nix run .#deploy` requires a working nix environment (or redirect) and ideally post-recovery.~~ done — 2026-09-29_23-14 TL;DR: "proper fix is DEPLOYED (generation 26.11.20260928.7a0f122)"; closure diff removes the bootstrap unit
+~~4. **Live-system recovery**: exact commands delivered twice (cancel job → start mount; or reboot). NOT executed — user went to bed; wedge persists (84 D procs, load 86.91 at 20:21).~~ done — 2026-09-29_23-14 §a7: "LIVE RECOVERY EXECUTED — no reboot… D-procs 84→0, load 86→~15"
 
 ## c) NOT STARTED
 
@@ -41,7 +41,7 @@
 6. Fleet-wide `x-systemd.mount-timeout` on all automount fstab entries (snapshots.nix family lacks it).
 7. Boot-transaction watchdog alerting ("jobs stuck > 10 min" / sustained load > 20 gatus checks) — would have caught this on Sep 24 instead of Sep 29.
 8. Post-deploy verification that the cache relocation actually delivers the IO-audit goal (nvme0n1 QLC write reduction measurement).
-9. `docs/gotchas-archive.md` full narrative entry (AGENTS.md gotcha points there; archive not yet updated).
+~~9. `docs/gotchas-archive.md` full narrative entry (AGENTS.md gotcha points there; archive not yet updated).~~ done — full narrative lives in docs/agents/systemd.md:83 (doctrine home post-restructure): umount2→autofs_wait chain, incident history, recipe
 
 ## d) TOTALLY FUCKED UP!
 
@@ -64,14 +64,14 @@
 
 **Recovery & deploy (do these first)**
 
-1. Run recovery: `sudo systemctl cancel <bootstrap-job-id>` then `sudo systemctl start home-lars-.cache-nix.mount` — or simply reboot (run `nix run .#pre-reboot-check` first per house rule)
-2. Deploy the fix: `cd ~/projects/SystemNix && nh os switch`
-3. Post-recovery: verify `systemctl list-jobs` empties, load < 10 within minutes
+~~1. Run recovery: `sudo systemctl cancel <bootstrap-job-id>` then `sudo systemctl start home-lars-.cache-nix.mount` — or simply reboot (run `nix run .#pre-reboot-check` first per house rule)~~ done — 2026-09-29_23-14 §a7: job canceled, mount started, targets reached
+~~2. Deploy the fix: `cd ~/projects/SystemNix && nh os switch`~~ done — 2026-09-29_23-14: deploy green, fix live in the closure diff
+~~3. Post-recovery: verify `systemctl list-jobs` empties, load < 10 within minutes~~ done — 2026-09-29_23-14 §a7: "systemd job queue empty", load falling
 4. Post-recovery: the 3 stuck `nix flake check`, 1 stuck `nh os switch`, 3 stuck direnv `print-dev-env`, `trash count` should complete or die — verify none linger
-5. Post-deploy: `ls ~/.cache/nix` mounts instantly; `findmnt /home/lars/.cache/nix` shows the tlc subvol
-6. Post-deploy: `nix flake check` works WITHOUT the XDG_CACHE_HOME redirect
+~~5. Post-deploy: `ls ~/.cache/nix` mounts instantly; `findmnt /home/lars/.cache/nix` shows the tlc subvol~~ done — 2026-09-29_23-14 §a7: "`ls ~/.cache/nix` instant"
+~~6. Post-deploy: `nix flake check` works WITHOUT the XDG_CACHE_HOME redirect~~ done — 2026-09-29_23-14 §a7: "nix works WITHOUT the XDG_CACHE_HOME prefix"
 7. Run the VM test for real: `nix build .#checks.x86_64-linux.hot-user-caches` (or buildflow)
-8. Confirm the residual D-zombie (PID 10158) is gone after reboot
+~~8. Confirm the residual D-zombie (PID 10158) is gone after reboot~~ done — 2026-09-29_23-14 §a7: "PID 10158 gone"
 
 **Verification & measurement**
 9. Measure the original goal: nvme0n1 (QLC root) write pressure with caches on tlc — did relocation deliver?
@@ -106,9 +106,9 @@
 32. Verify skill fix survives symlink redeployment (~/.config/crush/skills → project repos)
 
 **Forensics leftovers (optional, before reboot erases evidence)**
-33. Read `/proc/10158/mem` to extract the exact umount path string (confirm it was `/home/lars/.cache/nix` and not `.cache`)
-34. Dump stacks of 2–3 of the ~45 other D services (psi-metrics, storage-collector) to confirm they share the identical autofs_wait stack — closes the "why did ALL metrics services hang" question with the same rigor as the bootstrap
-35. Capture `journalctl -b 0 > /var/tmp/boot-wedge-journal.txt` before reboot for the archive
+~~33. Read `/proc/10158/mem` to extract the exact umount path string (confirm it was `/home/lars/.cache/nix` and not `.cache`)~~ **Won't implement — moot — 23-14 §b3: optional forensics extras "dropped as moot after D-procs cleared" (stack already captured).**
+~~34. Dump stacks of 2–3 of the ~45 other D services (psi-metrics, storage-collector) to confirm they share the identical autofs_wait stack — closes the "why did ALL metrics services hang" question with the same rigor as the bootstrap~~ **Won't implement — moot — same §b3 disposition (recovery completed without them).**
+~~35. Capture `journalctl -b 0 > /var/tmp/boot-wedge-journal.txt` before reboot for the archive~~ done — 2026-09-29_23-14 §a5: /var/tmp/boot-wedge-journal.txt (78M, complete) + wedge-10158.stack captured and verified
 
 **Go-build PARKED integration (documented in module)**
 36. Design the HM-symlink-gated go-build cache relocation (needs boot ordering that never loads the automount while the symlink exists)
