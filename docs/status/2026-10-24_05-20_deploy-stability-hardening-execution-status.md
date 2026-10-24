@@ -185,6 +185,8 @@ Scope of this report: **only this session's run** (executing the 2026-10-23 hard
 
 ## Harvest log
 
+**HARVEST STATUS: the inventory rows above are HARVESTED; the §f list is deliberately NOT HARVESTED as queue rows** (reasons per group below, so the queue does not inherit items that are owner-gated, deploy-gated, or idea-grade).
+
 **Landed in domain libraries during this session (not deferred):**
 
 - 6 new rows in `docs/todo/upstream.md` — rollback tenure `[decision]`, and `[blocked:push]` rows for the hermes `node-26` prebuilt segfault, `aw-core`/peewee, templ runtime skew, dms-shell 2.0.0, and the `cqrs-lint` upstream hash paste.
