@@ -28,7 +28,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **The boot-mirror feature:** sync leg ✅ live since 09-19; activation ✅ done 09-30 ~12:50; **reboot + post-reboot proof remain** (owner-decided timing; then agent read-only verify: `LoaderDevicePartUUID` == `023f66c0-3677-4c15-9ce7-f9e1f1457edb`, `BootCurrent` == `000C`, §10 gcroot flip).
+~~1. **The boot-mirror feature:** sync leg ✅ live since 09-19; activation ✅ done 09-30 ~12:50; **reboot + post-reboot proof remain** (owner-decided timing; then agent read-only verify: `LoaderDevicePartUUID` == `023f66c0-3677-4c15-9ce7-f9e1f1457edb`, `BootCurrent` == `000C`, §10 gcroot flip).~~ done — reboot + post-reboot proof done 2026-10-15 (storage.md:42; 2026-10-16_00-56: LoaderDevicePartUUID = Samsung ESP)
 2. **T14 monitoring runtime legs:** the textfile half is LIVE-verified (storage.md row 161, closed 04:50: `hot-db.prom` emitting `hot_tier_mounted 1`, `hot_db_scrape_errors 0` on deployed system-804) — but the **live Gatus-check-green leg** (the check evaluating against the real gatus instance) was never probed (root-only gatus sqlite, OIDC-gated API; `systemctl` blocked in agent sandboxes). Config-side + rendered-side only.
 3. **`discordsync-db-backup` first-nightly proof:** units + timer are in the deployed tree (row 161), but the day-1 `.sql.gz` landing in `/mnt/pool/backups/discordsync` + `backup_all_healthy 1` + restic pickup after a 02:30 window (Persistent catch-up) remains an open `[watch]` residual **with no queue surface** — harvested this pass (§f item 2).
 4. **The review-fix habit's sibling sweep was skipped a second consecutive time** (09-46 report §b1, self-reported): the 01-15 §e3 habit row already covers it; this report is the evidence trail, no new row.
@@ -63,20 +63,20 @@
 2. **NEW — Prove the first `discordsync-db-backup` nightly dump:** after a 02:30 window (Persistent catch-up covers a miss), assert `discordsync-db-*.sql.gz` in `/mnt/pool/backups/discordsync`, `backup_all_healthy 1`, and restic-app-dumps pickup. Row 161's open `[watch]` residual had no queue surface. (Source: storage.md row 161 residual)
 3. **NEW — Fold `hot_db_entry_mounted{name="gatus"}` presence into the wave-1 cutover smoke** (runbook step 6) so the first entry's check is proven green at cutover, not discovered red later. (Source: 12-34 §f.22)
 4. **NEW — Document where `nix run .#boot-mirror-activate` logs its runs** (owner shell vs system journal) in the AGENTS boot-mirror section — post-activation audits currently have no canonical evidence path (the 11-39 run's journal grep dead-ended). (Source: 11-39 §f.4)
-5. **NEW — Re-stamp stale BLOCKED reasons on every re-dispatch** (one sentence in CONTRIBUTING's re-dispatch protocol; the 11-39 run found row 33's BLOCKED reason describing pre-landing state a full day after the deploy). (Source: 11-39 §e2)
+~~5. **NEW — Re-stamp stale BLOCKED reasons on every re-dispatch** (one sentence in CONTRIBUTING's re-dispatch protocol; the 11-39 run found row 33's BLOCKED reason describing pre-landing state a full day after the deploy). (Source: 11-39 §e2)~~ done — CONTRIBUTING re-dispatch protocol step 5 "Re-stamp stale BLOCKED reasons" (cites the 2026-09-30 11:39 run)
 6. **NEW — Fix the fixture's mechanical assertion-count command** (`grep -c 'ok "'` = 23: it counts the `ok()` helper body; call sites = 22) — rename the helper or count call sites, and correct the command citation that row 79 and the 12-54 report carry. (Source: this closeout §d2)
-7. Owner: run the reboot (gate green — pre-reboot-check 22/0, §11 FAIL-grade), then the read-only post-reboot verify (loader PARTUUID `023f66c0…`, `BootCurrent 000C`, §10 gcroot). Also clears the flm corpse classes + D-state piles. (TODO row 21)
+~~7. Owner: run the reboot (gate green — pre-reboot-check 22/0, §11 FAIL-grade), then the read-only post-reboot verify (loader PARTUUID `023f66c0…`, `BootCurrent 000C`, §10 gcroot). Also clears the flm corpse classes + D-state piles. (TODO row 21)~~ done — reboot + verify done 2026-10-15 (storage.md:42)
 8. Hot-db wave 1 (gatus) — now unblocked; then waves 2-5, one per maintenance window. (storage.md row 34)
 9. `/mnt/hot` scrub family + metrics (45 GiB unscrubbed since 09-18). (storage.md row 39(1))
 10. Fold `crush-hot-db` into `services.hot-db`. (AGENTS hot-db section)
-11. Scrub timers `Persistent=false` + serialization (freeze-#7 remaining half). (stability rows)
+~~11. Scrub timers `Persistent=false` + serialization (freeze-#7 remaining half). (stability rows)~~ done — snapshots.nix:1037 + serial drop-ins; CHANGELOG 2026-10-01
 12. Carried-radar spot-verify of the 00-42 §f.21–50 rows (named by two review rounds). (TODO 444)
-13. `check-todo-system.sh` report→queue harvest coverage lint — the systemic fix for the unharvested-§f class (4 round-trips paid). (TODO 445)
-14. Soft-reset-split daemon-race docs in CONTRIBUTING. (TODO 446)
+~~13. `check-todo-system.sh` report→queue harvest coverage lint — the systemic fix for the unharvested-§f class (4 round-trips paid). (TODO 445)~~ done — harvest_check() landed (CHANGELOG 2026-10-01 "TODO-system drift gates" item 2)
+~~14. Soft-reset-split daemon-race docs in CONTRIBUTING. (TODO 446)~~ done — CONTRIBUTING.md:315 "Soft-reset split — the exclusivity-FAIL repair"; pipeline.md:276 [x] DONE 2026-10-01
 15. Task-ID dedup gate in harvest/dispatch (row 435) — this window alone had 2 completed-work re-dispatches.
 16. Read-only `systemctl`/gatus-probe sandbox allowlist (row 437) — would have closed the 12-34 §b1 residual without a sudo session.
 17. Answer the NVRAM sub-question: why BootOrder never led with Samsung between 09-19 and 09-30 (firmware reset vs `-o` never run) — decides whether a persistence guard is worth building. (12-58 §b; owner memory)
-18. InboxClean chain (not this window's scope, flagged by §9 in passing): pre-deploy unblock (`token.json` → `.expired-*`) + consent-screen "In production" flip + re-consent + upstream push → lock bump → deploy. (TODO row 214 + upstream row 253)
+~~18. InboxClean chain (not this window's scope, flagged by §9 in passing): pre-deploy unblock (`token.json` → `.expired-*`) + consent-screen "In production" flip + re-consent + upstream push → lock bump → deploy. (TODO row 214 + upstream row 253)~~ done — re-consent landed 2026-10-04 (services.md:79); input bumped + deployed (running inboxclean-e067cb5b, 10-12 report §a.5)
 19. Hot-db + crush-hot-db VM-test rebuild on the current tree (PSI-gated). (TODO 20)
 20. Retire the duplication this window's reports fed: consolidate the three 00-42-family reports (TODO 436) — every consolidation day-delayed adds one more stale-SHA surface.
 

@@ -27,7 +27,7 @@
 
 1. **Live post-deploy verification not possible from an agent sandbox:** the cancel path is proven by unit-file reading + VM test, but a real Zone-6 trip cancelling a REAL running scrub on the host needs the deploy (owner-run) + one trip with an active scrub. Escape condition documented in the close-out (§ Deploy notes).
 2. **Session hygiene under the daemon race:** every file edit got absorbed by the auto-commit daemon within ~10 min; only the final footer commit carries my message. History is correct but attribution is diff-archaeology, not `git log` prose. Partially mitigated by embedding the Task-Queue-ID inside the TODO row texts themselves.
-3. **The stray-unit lint I queued is only an idea** (backlog row + design caveat); zero code exists.
+~~3. **The stray-unit lint I queued is only an idea** (backlog row + design caveat); zero code exists.~~ **NOT-DO — NOT-DO — dup of §f.1 (verified closed).**
 
 ## c) NOT STARTED
 
@@ -53,25 +53,25 @@
 
 ## f) NEXT THINGS (in-lane first; ~50, several already queued in the library — listed for completeness)
 
-1. Stray-unit eval lint (queued this session): non-template service definitions with no wantedBy and no referencing timer/unit → warning.
+~~1. Stray-unit eval lint (queued this session): non-template service definitions with no wantedBy and no referencing timer/unit → warning.~~ done — modules/nixos/services/stray-unit-audit.nix + CHANGELOG 2026-10-01 "stray-unit audit lint" (warning-grade, 8-case negative test)
 2. Deploy the landed fix (owner) and watch the first Zone-6 trip: `btrfs scrub status` must show the scrub CANCELLED (proves ExecStop cancel end-to-end on real hardware).
 3. Post-deploy: verify the re-arm path restores btrbk/balance but NOT scrubs; confirm the disclosure line appears once.
 4. Post-deploy: confirm the stray unit files (`btrfs-scrub--.service` etc.) disappear from `/etc/systemd/system` after the switch.
-5. Scrub timers `Persistent = false` (queued) — boot catch-up fired all three scrubs 24 s into the 09:56 boot.
-6. Serialize/stagger the three scrubs (`After=` chain, root first) (queued).
+~~5. Scrub timers `Persistent = false` (queued) — boot catch-up fired all three scrubs 24 s into the 09:56 boot.~~ done — snapshots.nix:1037 Persistent = mkForce false; CHANGELOG 2026-10-01 scrub-timers de-fused entry
+~~6. Serialize/stagger the three scrubs (`After=` chain, root first) (queued).~~ done — snapshots.nix serial After= drop-ins (btrfs-scrub@data after root, @mnt\x2dpool after data); CHANGELOG 2026-10-01
 7. Scrub completion metric (`btrfs_scrub_last_completed` per fs) + Gatus staleness (queued).
 8. Guard trip-rate escalation page (`trips_last_hour`/per-boot threshold → notify "guard is load-bearing") (queued).
 9. Root-cause guard silence in the 09:56 boot (0 trips at avg60 79%; stale io-ticks baseline vs eval blindness) (queued).
 10. Post-freeze storm-drain verification + remaining drivers (project-discovery 7.1 GB/7 min, nix-daemon build, hermes 3.3 GB) (queued).
 11. project-discovery-daemon into `ioChurnUnits` or heavy-job-gate its du-walks (queued).
 12. Backup-starvation audit Sep 27–29 (432 trips vs btrbk sends; catch-up slot behavior) (queued).
-13. Root-cause the `btrfs-scrub@data` exit-1-after-"no errors found" FAILED state + clear it (parallel lane now carries `SuccessExitStatus` follow-up) (queued).
+~~13. Root-cause the `btrfs-scrub@data` exit-1-after-"no errors found" FAILED state + clear it (parallel lane now carries `SuccessExitStatus` follow-up) (queued).~~ done — root-caused: MANUAL sudo btrfs scrub cancel from lars TTYs (00-42 report; 08-55 §a.2); SuccessExitStatus=[1] landed + pinned by checks.scrub-exit-contract (CHANGELOG 2026-10-01)
 14. `btrfs-scrub@data` re-FAILs weekly on exit 3 while the known csum errors persist — decide alarm vs accept until T04–T08 (queued [decision]).
 15. Guard Zone 6 flm-exemption design (owner decision) (queued).
 16. Zone 6 alert fatigue — Discord cooldown/escalation-context half remains open (queued, PARTIAL).
 17. Kill or legitimize the hermes-cron-resurrected llama-servers + durable guard (queued).
-18. ExecPrint the ioChurnUnits list at guard start into the journal (drift detection: a future rename silently no-ops stops again — the exact class fixed here).
-19. Guard-side assertion that every `ioChurnUnits` entry matches a unit file that a timer/template actually references (module-level, cheaper than the general lint, catches this class for the guard specifically).
+~~18. ExecPrint the ioChurnUnits list at guard start into the journal (drift detection: a future rename silently no-ops stops again — the exact class fixed here).~~ done — churn-list drift check landed: memory-emergency-guard.nix:482-501 per-tick systemctl cat probe + GUARD CHURN-LIST DRIFT warn (CHANGELOG 2026-10-01 P2 #10)
+~~19. Guard-side assertion that every `ioChurnUnits` entry matches a unit file that a timer/template actually references (module-level, cheaper than the general lint, catches this class for the guard specifically).~~ done — same drift check: memory-emergency-guard.nix:497 probes systemctl cat per baked ioChurnUnits entry (CHANGELOG 2026-10-01 P2 #10)
 20. VM test: scenario for a guard stop while a scrub unit is FAILED (stop resets failed→inactive; assert no exit-4 interaction).
 21. VM test: scenario asserting the ExecStop marker is written when the guard stops the instance DURING the cooldown window (stop still fires outside the 600 s action cooldown — verify semantics).
 22. Consider `OnFailure` on the scrub template instances? (upstream-owned; evaluate whether a failed scrub should page via service-health only — current state OK, document it).
@@ -80,7 +80,7 @@
 25. Docs: one "scrub lifecycle" section (template → deferral wrapper → churn stop → cancel → re-arm exclusion → weekly resume) — single owner for the whole chain (see e.6).
 26. Make `scripts/wait-io-calm.sh` (repo PSI gate, fixture-tested) so agent sessions stop hand-rolling pollers (see e.3).
 27. Add the poller lessons (string-vs-number compare; empty-value false-positives) to `docs/CONTRIBUTING.md` "Verification conventions" or the lessons file.
-28. Sweep other `systemd.services` overrides for the same stray-attrname class (manual grep + eval of every `serviceConfig.*` override vs instantiated units) — one-time audit, likely finds nothing, cheap insurance.
+~~28. Sweep other `systemd.services` overrides for the same stray-attrname class (manual grep + eval of every `serviceConfig.*` override vs instantiated units) — one-time audit, likely finds nothing, cheap insurance.~~ done — stray-unit-audit.nix renders the class eval-wide (27-entry allowlist, eval-silent evo-x2 + rpi3-dns — sweep ran, nothing new); CHANGELOG 2026-10-01
 29. Queue-drift check: confirm the stability-library row for the f.12 FAILED-state item and the re-fire-3 report agree on status (I did not reconcile; different lane).
 30. Confirm `docs/services/memory-emergency-guard.md` "How to re-arm btrbk manually" section still accurate post-exclusion (it never mentioned scrubs; now also mention the scrub manual-resume command exists there — I added it; verify it renders).
 31. After deploy, watch one full weekly scrub window: all three scrubs should now DEFER under pressure and run cleanly in quiet windows (the first time the deferral guard has ever actually run).

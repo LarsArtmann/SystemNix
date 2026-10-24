@@ -26,9 +26,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **The d22ccd48 loss is closed only for the two re-landed entries** — the other ~19 deleted open rows remain missing from `docs/todo/pipeline.md` (restoration queued, TODO_LIST.md:416).
+~~1. **The d22ccd48 loss is closed only for the two re-landed entries** — the other ~19 deleted open rows remain missing from `docs/todo/pipeline.md` (restoration queued, TODO_LIST.md:416).~~ done — restored 2026-10-01 (fifty-todos #43) — pipeline.md:314 restoration note
 2. **The 23-20 report's honest "not dispositioned" §f scope is landed as a disclosure, not a disposition** — the full-table sweep of Source-report items 1–10/13–15/17–20 is queued (TODO_LIST pipeline, Source 08-32 §f1), not executed.
-3. **The 23-20 report still describes pre-correction state** (its §c2/§f1 predate the RE-FIRE-3 manual-cancel root cause and the executed-green VM test) — the ANNOTATE pass is queued (Source 08-32 §f2), not run.
+~~3. **The 23-20 report still describes pre-correction state** (its §c2/§f1 predate the RE-FIRE-3 manual-cancel root cause and the executed-green VM test) — the ANNOTATE pass is queued (Source 08-32 §f2), not run.~~ done — 23-20 report annotated 2026-10-01 ("Post-authoring landings" header note)
 4. **Queue-idempotency discipline** — the re-dispatch protocol exists in CONTRIBUTING and was executed correctly by the 23-20 session, but its discoverability still depends on workers reading archived reports; the worker-facing contract pointer is queued, not landed.
 
 ## c) NOT STARTED (observed open; all already queued with live rows — listed for window completeness, not re-harvested)
@@ -62,16 +62,16 @@
 
 ## f) NEXT THINGS (window-derived; non-duplicates queued this session — see TODO_LIST for the live rows)
 
-1. Land the §a-vs-§f report self-consistency check as a one-line CONTRIBUTING report convention (Source: 01-15 §e1).
-2. Ban bare `TODO_LIST:<line>` cites from status reports; cite row title + Source anchor (Source: 01-15 §d2/§e2, proven at 14 sites).
+~~1. Land the §a-vs-§f report self-consistency check as a one-line CONTRIBUTING report convention (Source: 01-15 §e1).~~ done — CONTRIBUTING.md:325 "Report self-consistency gate (2026-09-30 clause)" — the 00-42 class
+~~2. Ban bare `TODO_LIST:<line>` cites from status reports; cite row title + Source anchor (Source: 01-15 §d2/§e2, proven at 14 sites).~~ done — CONTRIBUTING.md:327 "Ban bare TODO_LIST:<line> cites (2026-09-30 convention; 14 sites converted, proven)"
 3. Make the pre-commit hook honest on an EMPTY staged set (print "nothing staged — no legs ran") — design owner-gated (Source: 08-32 §e2/§d2 + §g2).
-4. Add the 60-second same-class sibling sweep to the review-fix habit (grep the touched report family; fix on sight when trivial) (Source: 01-15 §e3).
-5. Journal a guard cooldown-disclosure line when a churn-stop is skipped by action-cooldown — the 02:27 attribution ambiguity cost a corrected narrative (Source: 00-42 §f11).
+~~4. Add the 60-second same-class sibling sweep to the review-fix habit (grep the touched report family; fix on sight when trivial) (Source: 01-15 §e3).~~ done — CONTRIBUTING.md:329 "60-second same-class sibling sweep (2026-09-30 habit clause)"; pipeline.md:270 [x] DONE 2026-10-01
+~~5. Journal a guard cooldown-disclosure line when a churn-stop is skipped by action-cooldown — the 02:27 attribution ambiguity cost a corrected narrative (Source: 00-42 §f11).~~ done — guard cooldown heartbeat landed: memory-emergency-guard.nix:517-521 (zone + seconds remaining, "NOT a new action" — guard-vs-operator attribution); CHANGELOG 2026-10-01 P2 #10
 6. Audit-label `btrfs scrub cancel` invocations (agent- vs operator-initiated breadcrumb) so forensics don't need pts archaeology next time (Source: 00-42 §f10).
 7. Split the bundled stability.md "Guard/crash-forensics follow-ups" row into atomic rows (PSI-gate nix-gc, smartd liveness, is-active lint, crash2 cascade triage — violates one-ask-per-row) (Source: 23-20 §f15).
-8. Restore the ~19 d22ccd48-deleted pipeline backlog rows (already queued this window — listed here as the highest-value open item the window surfaced).
+~~8. Restore the ~19 d22ccd48-deleted pipeline backlog rows (already queued this window — listed here as the highest-value open item the window surfaced).~~ **NOT-DO — NOT-DO — dup of §b.1 (verified closed).**
 9. Execute the queued disposition sweep of the 01-45 Source report's unswept §f items (most of it is bookkeeping; several items appear already landed).
-10. Execute the queued ANNOTATE pass on the 23-20 report (superseded root cause, executed-green VM test, §f18 live-proof status).
+~~10. Execute the queued ANNOTATE pass on the 23-20 report (superseded root cause, executed-green VM test, §f18 live-proof status).~~ **NOT-DO — NOT-DO — dup of §b.3 (verified closed).**
 
 (Beyond these, the standing stability/pipeline rows are the authoritative remainder — not duplicated here per the no-drift rule.)
 

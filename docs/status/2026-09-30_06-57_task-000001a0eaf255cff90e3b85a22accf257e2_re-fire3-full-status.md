@@ -20,11 +20,11 @@
 1. **Protocol compliance came LATE:** the re-dispatch protocol + the existing-reports check (`ls docs/status/ | grep <task-id>`) ran mid-session, after ~40 minutes of re-deriving an already-landed fix. Executed fully eventually (footers → live spot-checks → item-scoped §f sweep → footer-bearing landing), but the order was wrong.
 2. **Queue-surface closure is terminal-by-removal, not by my hand:** the TODO_LIST one-liner was pruned/removed by the parallel queue passes between 01:13 and 05:06 (never pruned to CHANGELOG as a named row — the curated CHANGELOG format doesn't take per-row entries; the guard's entry was refreshed instead). Library row is `[x]` with full evidence. Consistent with the file's own convention (done rows must not persist); documented, not re-added.
 3. **Live-fire proof of the kernel-cancel path is VM-only:** no scrub was running during the post-deploy trips, so the cancel path has no host-journal evidence yet — next weekly window (~Oct 5) or the next storm-trip-during-scrub provides it.
-4. **Host runs the pre-ordering-fix guard script until deploy:** in-tree only; until then a catch-up grant run emits one stale `churn_units_stopped` metric (cosmetic-but-wrong telemetry during exactly the storms the guard serves).
+~~4. **Host runs the pre-ordering-fix guard script until deploy:** in-tree only; until then a catch-up grant run emits one stale `churn_units_stopped` metric (cosmetic-but-wrong telemetry during exactly the storms the guard serves).~~ done — 2026-09-30 07:00 deploy landed (system-805, docs/status/2026-09-30_07-19 §timeline); ordering fix in-tree since 06:27 (9d9c17ea/bd4d4078) rode that HEAD; fire-1 fix already LIVE 09-29 (06-25 report: deployed guard script, trips #1463-68)
 
 ## c) NOT STARTED (this session's scope)
 
-1. **Deploy** — owner-gated; the deploy-authority queue row has been BLOCKED through 3+ closeouts. This chain (scrub churn-stop + re-arm exclusion + ordering fix) waits on it.
+~~1. **Deploy** — owner-gated; the deploy-authority queue row has been BLOCKED through 3+ closeouts. This chain (scrub churn-stop + re-arm exclusion + ordering fix) waits on it.~~ **NOT-DO — NOT-DO — dup of §f.1 (verified closed).**
 2. **The fleet-wide VM-scenario execution sweep** — queued by this session (queue + library), not run.
 3. **§f items of the source report beyond item scope** — owned by their own queued rows (stray-unit lint, scrub timer serialization, exit-3 policy, …); sweep scope stated as item-derived in the 06-25 report.
 
@@ -48,17 +48,17 @@ Nothing destroyed, no config breakage, both VM runs isolated, every commit hook-
 ## f) What to get done next (ranked, session-scoped; ★ = born this session)
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
-1. ★ **Deploy the guard chain** (scrub instance churn-stop + re-arm exclusion + ordering fix) in the next calm window — until then the host emits a stale churn metric on catch-up grants and the cancel path stays VM-proven only. Rides the existing batch-deploy row; BLOCKED on the deploy-authority decision.
+~~1. ★ **Deploy the guard chain** (scrub instance churn-stop + re-arm exclusion + ordering fix) in the next calm window — until then the host emits a stale churn metric on catch-up grants and the cancel path stays VM-proven only. Rides the existing batch-deploy row; BLOCKED on the deploy-authority decision.~~ done — 2026-09-30 07:00 deploy (system-805) landed hours later per 07-19 report §timeline; guard chain in-tree since 06:27; later deploys (10-01 deploy-813+) all carry it
 2. ★ **Live-fire the cancel path** [watch]: during the next weekly scrub window (~Oct 5) or the next storm-trip-during-scrub, confirm the journal shows the instance churn-stop + disclosure line and btrfs-health shows the never-finished scrub (the Gatus-visible coverage gap).
 3. ★ **Fleet sweep: execute every VM-test check derivation once** in a quiet window (my new queue row + pipeline.md entry) — the guard scenario sat unexecuted ~1 day; expect more reds of this class.
 4. **@data exit-3 policy decision before Oct 5** (already queued, stability:32/queue:84): the scrub re-FAILs weekly while the 129,533 static csum errors persist (chronic-FAIL exit-4 deploy hazard) — SuccessExitStatus `[1 3]` + Gatus-owns-errors, or keep-FAIL tripwire.
 5. **SuccessExitStatus negative-test probe** (stability:33) — cheap extendModules drift guard; pairs with 4.
 6. **Scrub catch-up slot decision for the canceled / + /data scrubs** (stability decision row; coverage stale since the Sep 28 manual cancels).
-7. **Eval-time stray-unit lint** (stability:72) — the class that caused this whole item; warning-grade, already designed.
-8. **Scrub timers `Persistent=false` + serialization** (stability:64) — the freeze-#7 remaining half.
+~~7. **Eval-time stray-unit lint** (stability:72) — the class that caused this whole item; warning-grade, already designed.~~ done — modules/nixos/services/stray-unit-audit.nix exists; CHANGELOG 2026-10-01 "stray-unit audit lint" (27-entry allowlist, 8-case negative test, both hosts eval-silent)
+~~8. **Scrub timers `Persistent=false` + serialization** (stability:64) — the freeze-#7 remaining half.~~ done — platforms/nixos/system/snapshots.nix:1037 (Persistent = mkForce false) + serial After= drop-ins; CHANGELOG 2026-10-01 "Scrub timers de-fused" (checks.scrub-exit-contract)
 9. ★ **Land queue row 411** (dispatch-prompt → protocol pointer) — this session is the third cost proof.
 10. ★ **Row 412 sweep** (footer-less `[x]` rows) — this session added two more footer-less daemon batches (`9d9c17ea`, `24e50878`).
-11. ★ **Codify "VM-tested requires an executed run"** in CONTRIBUTING verification conventions (one paragraph; the fire-2 false claim is the motivating incident).
+~~11. ★ **Codify "VM-tested requires an executed run"** in CONTRIBUTING verification conventions (one paragraph; the fire-2 false claim is the motivating incident).~~ **Won't implement — moot — already codified before the report: CONTRIBUTING 3-step probe step 2 "BUILT AND RUN… eval-cache hit is NOT execution" (2026-09-15 harvest).**
 
 (The wider repo backlog is untouched and not duplicated here — see TODO_LIST.)
 

@@ -95,14 +95,14 @@ addendum), pbx `docs/runbooks/netbird-deploy.md`.
 7. First dashboard login (password in `~/.pbx-prod-secrets/netbird_dex_admin_password`) → password manager
 
 **P1 — enrollment chain (from 05-42 §f 14–28):**
-8. Create setup key (reusable, 30d) → 9. sops `netbird.yaml` (exact snippet in net-vpn.md) →
-10. `services.netbird-client.enable = true` + evo-x2 deploy → 11. post-deploy ladder
+~~8. Create setup key (reusable, 30d) → 9. sops `netbird.yaml` (exact snippet in net-vpn.md) →~~ **NOT-DO — NOT-DO — dup of §f.5 chain (closed 2026-10-10/15).**
+~~10. `services.netbird-client.enable = true` + evo-x2 deploy → 11. post-deploy ladder~~ **NOT-DO — NOT-DO — dup of §f.5 chain (closed 2026-10-10/15).**
 (dig/s_client/curl + gatus) → 12. `netbird status` Connected → 13. route approval →
 14. DNS nameserver group → 15. ACL review → 16. MacBook → 17. Motorola + CA import →
 18. phone-on-LTE E2E → 19. `rels://relay.larsartmann.cloud` in status → 20. burn-in → 21. Tailscale retire
 
 **P2 — hardening:**
-22. Gatus checks (management reachability from evo-x2, relay STUN 3479/udp)
+~~22. Gatus checks (management reachability from evo-x2, relay STUN 3479/udp)~~ done — gatus-config.nix:150-196 netbirdControlPlaneChecks (Dashboard, Management API, Dex IdP, Relay)
 23. pbx backup.nix: netbird state + /var/lib/dex
 24. RAM headroom check on pbx (telephony+mail+netbird+dex on 4GB)
 25. Alert-drill ritual (e5.4) + wire the alert relay's real channel
@@ -115,7 +115,7 @@ addendum), pbx `docs/runbooks/netbird-deploy.md`.
 **P3 — mail phase (separate window):**
 31. Hetzner port-25 request (start the clock) → 32. MX/SPF/DKIM/DMARC terraform (coordinate
 with the in-flight dmarc_rua edits) → 33. Stalwart admin-over-VPN once mesh is up →
-34. parsedmarc → 35. mail go-live runbook
+~~34. parsedmarc → 35. mail go-live runbook~~ done — 08-06 report §a.8: pbx-artmann runbook rewritten (§0 installer-first, §4 DMARC, §6 relay decision), commits bef58bd/0d22030
 
 **P4 — strategic (owner):**
 36. Apex story for larsartmann.cloud (still → hetzner-0) · 37. evo-x2 workstation/server split ·

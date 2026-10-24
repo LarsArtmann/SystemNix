@@ -82,7 +82,7 @@ Paperless SSO (`paperless.home.lan`, Layer 1 native OIDC via Pocket ID) failed a
 | #  | Task                                                                                                                                                 | Impact   | Effort | Category      |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
 | 1  | Owner confirms paperless passkey login post-fix (closes/refutes the whole incident)                                                                  | Critical | S      | Bug           |
-| 2  | TIME-SENSITIVE: copy the 04:00 `pocket-id-backup` DB snapshot aside (sudo) before retention rotates it — it holds the only pre-fix mismatch evidence | Critical | S      | Bug           |
+| ~~2~~ **Won't implement — one-shot; window passed — no record it was captured; backup retention rotates.** | ~~TIME-SENSITIVE: copy the 04:00 `pocket-id-backup` DB snapshot aside (sudo) before retention rotates it — it holds the only pre-fix mismatch evidence~~ | ~~Critical~~ | ~~S~~ | ~~Bug~~ |
 | 3  | Owner tests ONE other OIDC client login (e.g. a Layer-2 service or forgejo/miniflux) to split "paperless-only" from "fleet-wide DB-side"             | Critical | S      | Bug           |
 | 4  | Forensic compare on the preserved backup: paperless client secret rows vs the (remembered/none) file state; pin cause (a)/(b)/(c)                    | High     | M      | Bug           |
 | 5  | Find the Sep 29 2.16.0→2.14.0 revert commit/deploy; record WHO/WHY next to the pin decision                                                          | High     | S      | Cleanup       |

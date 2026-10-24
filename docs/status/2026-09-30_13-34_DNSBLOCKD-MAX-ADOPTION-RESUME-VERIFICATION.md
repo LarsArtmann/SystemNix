@@ -110,52 +110,52 @@ extendModules bug (fixed with `mkForce`).
 
 1. Read `scripts/post-deploy-check.sh` dnsblockd section in full (the §-numbered block
    containing the memory check).
-2. Insert `_dns_*` probes: extract deployed config path via
+~~2. Insert `_dns_*` probes: extract deployed config path via~~ done — shipped in post-deploy-check.sh (commit 4ba06298) — SESSION3 §a.5
    `systemctl show -p ExecStart --value dnsblockd` → `/nix/store/…-dnsblockd-config.yaml`.
-3. Assert `"allowlist_path":"/var/lib/dnsblockd/allowlist"` in the deployed YAML.
-4. Assert `"csrf_enabled":true` (config-level — the ONLY csrf signal that cannot
+~~3. Assert `"allowlist_path":"/var/lib/dnsblockd/allowlist"` in the deployed YAML.~~ done — one of the 7 config-key greps, harness-verified — SESSION3 §a.5
+~~4. Assert `"csrf_enabled":true` (config-level — the ONLY csrf signal that cannot~~ done — config-level grep shipped (cannot phantom-green) — SESSION3 §a.5
    phantom-green).
-5. Assert device registry rendered (`"id":"evo-x2"`, `"id":"pixel6"` …) and
+~~5. Assert device registry rendered (`"id":"evo-x2"`, `"id":"pixel6"` …) and~~ done — device + user greps shipped — SESSION3 §a.5
    `"name":"Lars"` user.
-6. Assert rate-limit 50/100 and log_sampling 500/100 keys present.
-7. Discriminating csrf probe: POST to the allow endpoint WITHOUT token → expect 403
+~~6. Assert rate-limit 50/100 and log_sampling 500/100 keys present.~~ done — rate/log_sampling greps shipped — SESSION3 §a.5
+~~7. Discriminating csrf probe: POST to the allow endpoint WITHOUT token → expect 403~~ done — behavioral 403/401 probe shipped config-gated — SESSION3 §a.5
    (pre-validated only after M11 deploys csrf on; ship as config-gated).
 8. Keep `report_pass/report_fail/report_skip` + skip-cleanly-on-absent-unit semantics.
-9. `bash -n` the whole script; pathspec commit; amend fast.
-10. Negative-proof the new greps against the OLD deployed config
+~~9. `bash -n` the whole script; pathspec commit; amend fast.~~ done — bash -n OK + commit 4ba06298 — SESSION3 §a.5
+~~10. Negative-proof the new greps against the OLD deployed config~~ done — negative test vs p6s93ln6 FAILs listing all 7 keys — SESSION3 §a.5
     (`p6s93ln6…`) — they must FAIL there (proving they discriminate).
 11. Decide WARN-vs-FAIL semantics for probes whose keys appear only post-M11 (they
     should fail only once the deploying generation carries them).
 
 **Verification hygiene:**
-12. Run `nix fmt --no-update-lock-file -- --ci`; fix drift on touched files only.
-13. Standalone statix/deadnix on the three touched .nix files (daemon-amend bypass).
-14. `nix flake check --no-build` at current HEAD (parallel sessions moved the tree).
-15. `git show --stat b9310217` — confirm the absorbing daemon commit carried only
+~~12. Run `nix fmt --no-update-lock-file -- --ci`; fix drift on touched files only.~~ done — 0 changed — SESSION3 §a.6
+~~13. Standalone statix/deadnix on the three touched .nix files (daemon-amend bypass).~~ done — deadnix clean; statix pre-existing non-gating warning — SESSION3 §a.6
+~~14. `nix flake check --no-build` at current HEAD (parallel sessions moved the tree).~~ done — flake check green on the M10 commit (pre-commit + session) — SESSION3 §a.5/§a.6
+~~15. `git show --stat b9310217` — confirm the absorbing daemon commit carried only~~ done — audited: flake.lock ONLY (30 lines) — SESSION3 §a.2
 flake.lock.
 
 **M12 — docs sweep:**
-16. Fix stale recursion comment `dns-blocker-config.nix:14-17` (T299 fixed in tree;
+~~16. Fix stale recursion comment `dns-blocker-config.nix:14-17` (T299 fixed in tree;~~ done — rewritten with T299 facts (commit 6dfcf827) — SESSION3 §a.8
 forwarders are now a choice — keep them, update the comment).
-17. Verify + fix blocklist count claim (25→23) in the header comment.
-18. AGENTS.md dnsblockd section: deployed-rev claims (75b4ce9 until M11), allowlist
+~~17. Verify + fix blocklist count claim (25→23) in the header comment.~~ done — 25→23 + ~4M+ domains (eval-verified) — SESSION3 §a.8
+~~18. AGENTS.md dnsblockd section: deployed-rev claims (75b4ce9 until M11), allowlist~~ done — rev claim corrected + DEPLOYED-LIVE bullet — SESSION3 §a.8
 persistence note, tracking-dial memo pointer, devices/users options.
 19. `docs/services/dnsblockd.md` runbook: new options, smoke-probe inventory, memo link.
 
 **M13 — TODO reconciliation:**
-20. Annotate the 5 TODO_LIST.md queue rows + `docs/todo/services.md` library entries
+~~20. Annotate the 5 TODO_LIST.md queue rows + `docs/todo/services.md` library entries~~ done — M13 executed by SESSION4 (2026-10-01_02-30)
 as "in-tree, awaiting M11 deploy" (do NOT mark `[x]` pre-deploy).
-21. Re-check queue/library drift after annotations (edit-both rule).
+~~21. Re-check queue/library drift after annotations (edit-both rule).~~ done — M13 executed by SESSION4 (2026-10-01_02-30)
 
 **W7 — remaining upstream surface (author + inert defaults, owner-gated activation):**
-22. M14: `policies` option in the wrapper (caps: 64 policies / 512 domains,
+~~22. M14: `policies` option in the wrapper (caps: 64 policies / 512 domains,~~ done — M14 complete (tests + negative proofs) — SESSION5 §a.1
 lowercase-slug name assertions).
 23. M14: shadow-mode probe doc (observe policy hits before enforcement).
-24. M15: `blocklistTrialUrls` option + PERSISTENT `blocklistCacheDir` (PrivateTmp eats
+~~24. M15: `blocklistTrialUrls` option + PERSISTENT `blocklistCacheDir` (PrivateTmp eats~~ done — M15 landed — SESSION5 §a.3
 /tmp — T197 shadow-only trap).
 25. M15: StateDirectory/ReadWritePaths audit for the cache dir.
-26. M16: ECS options (`dns_ecs_enabled`, ipv4 prefix 24 / ipv6 56) — inert defaults.
-27. M17: `tls_h3_enabled` option — inert default + UDP-443 check design.
+~~26. M16: ECS options (`dns_ecs_enabled`, ipv4 prefix 24 / ipv6 56) — inert defaults.~~ done — M16 ECS options landed INERT — SESSION5 §a.4
+~~27. M17: `tls_h3_enabled` option — inert default + UDP-443 check design.~~ done — M17 DONE (option + render + negative proof; UDP-443 already satisfied) — SESSION6 §a.2
 28. Extend the render test for every new option (negative-proof via worktree mutation).
 
 **W8 — upstream-module migration (LAST):**

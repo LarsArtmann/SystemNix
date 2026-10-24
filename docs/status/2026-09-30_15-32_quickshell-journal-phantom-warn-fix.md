@@ -53,7 +53,7 @@ See §e and §f — the headline items: a mechanical repo-wide audit for the pla
 
 ## b) PARTIALLY DONE
 
-1. **Fix applied, final gate-proof pending.** Block-level + synthetic verification is green; the remaining step is observing the new `PASS` line in a real `nix run .#post-deploy-check` run (next deploy or manual run). Effort S; no blocker.
+~~1. **Fix applied, final gate-proof pending.** Block-level + synthetic verification is green; the remaining step is observing the new `PASS` line in a real `nix run .#post-deploy-check` run (next deploy or manual run). Effort S; no blocker.~~ done — fixed check observed live in a real run: "quickshell-family 290 error lines (WARN)" — true-count output (2026-10-03_15-05 report, line 112)
 2. **Harvest obligations deferred, documented.** Repo rule requires §f direct follow-ups harvested into `TODO_LIST.md` + domain library at authoring time, or explicitly recorded as deliberately not harvested. **Deliberately not harvested: a parallel session owns `TODO_LIST.md`, `AGENTS.md`, and `docs/todo/*` mid-flight right now** — editing them invites the mid-edit race class. The 3 direct follow-ups that belong in the queue (marked 🎯 in §f) should be harvested on the next quiescent pass; this section is the sanctioned deferral record.
 3. **Old-report annotation identified, not applied**: `docs/status/2026-08-31_18-45_...self-review.md` (item 3 "Post-deploy WARNs not investigated") and `docs/status/archived/2026-08-14_20-35_...` (§53 + §81, blamed the shutdown-overlay portal error) are both resolved-by-phantom. Annotation pass queued in §f.
 
@@ -88,7 +88,7 @@ See §e and §f — the headline items: a mechanical repo-wide audit for the pla
 
 | #  | Task                                                                                                                                                                                                                    | Impact | Effort | Category        |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | --------------- |
-| 1  | 🎯 Run `nix run .#post-deploy-check` (or next deploy) and confirm the new `PASS: Desktop - no errors in quickshell-family journal (last 1h)` line appears                                                               | High   | S      | Quality         |
+| ~~1~~ **NOT-DO — NOT-DO — dup of §b.1 (verified closed).** | ~~🎯 Run `nix run .#post-deploy-check` (or next deploy) and confirm the new `PASS: Desktop - no errors in quickshell-family journal (last 1h)` line appears~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
 | 2  | 🎯 Repo-wide audit guard: reject default-format `journalctl --no-pager … \| wc -l` without `-q`/`--output cat` (pre-commit script + negative test, `audit-textfile-tmp.sh` shape)                                       | High   | M      | Quality         |
 | 3  | 🎯 Add fixture test for this leg: empty journal → PASS; seeded err line → WARN with true count (copy `scripts/test-pre-deploy-metrics.sh` pattern)                                                                      | Medium | M      | Quality         |
 | 4  | Annotate `docs/status/2026-08-31_18-45_…self-review.md` item 3 + archived 2026-08-14 report §53/§81 as resolved-by-phantom (docs-health ANNOTATE, inline, non-destructive)                                              | Medium | S      | Documentation   |

@@ -24,7 +24,7 @@ The index flake had exactly one more deployable surface beyond the already-deplo
 
 ## b) PARTIALLY DONE
 
-1. **THE DEPLOY** — pre-deploy checks passed 70/0 three separate times, but `nh os switch` never started: blocked 4× by the PSI gate, once by the guard-trip recency gate (needs ≥60 trip-free min), across ~2.5 h of gated retries (including a 75-min compound waiter). trips decayed 5→3 over the window but fresh trips kept landing (brief bursts between 30s samples). **Change is committed and one command from live**; post-deploy verification (smoke, Gatus green, coverage gauge) not executable until then.
+~~1. **THE DEPLOY** — pre-deploy checks passed 70/0 three separate times, but `nh os switch` never started: blocked 4× by the PSI gate, once by the guard-trip recency gate (needs ≥60 trip-free min), across ~2.5 h of gated retries (including a 75-min compound waiter). trips decayed 5→3 over the window but fresh trips kept landing (brief bursts between 30s samples). **Change is committed and one command from live**; post-deploy verification (smoke, Gatus green, coverage gauge) not executable until then.~~ done — deployed via the 2026-10-05 train: indexer-web live (10-05_13-52 post-deploy triage, "now-live service"); serving 200s Oct 06/07 journal (boot-evidence-backfill)
 2. **TODO rows for the newly-identified gaps** — queued in both surfaces at report-authoring time (this report's §f items 1-4), but the items themselves are open work.
 3. **Multi-agent bookkeeping** — the daemon swept my work into heuristic commits (`7be1ffcf`, `a338e3d9`, `c353200c`); contents verified, foreign files (another session's catalog status doc + a 204k-line disk-layout HTML blob) rode along and were left intact per the "never revert changes you didn't author" rule. My remaining 2 dirty files were swept by later daemon commits (row presence verified in HEAD by grep).
 
@@ -58,7 +58,7 @@ Nothing at the "destroyed work / wrong premise" level. The honest list:
 
 **Immediate (this service):**
 
-1. Deploy indexer-web when `memory_emergency_guard_trips_last_hour == 0` and io PSI drains: `nix run .#deploy` → `nix run .#post-deploy-check`.
+~~1. Deploy indexer-web when `memory_emergency_guard_trips_last_hour == 0` and io PSI drains: `nix run .#deploy` → `nix run .#post-deploy-check`.~~ **NOT-DO — NOT-DO — dup of §b.1 (verified closed).**
 2. Post-deploy smoke + live bring-up verification (unit start, `/` HTML + `pat(*<html*)` live check, admin 401/200 with `/var/lib/indexer-web-keys/admin-key`, coverage gauge) — QUEUED.
 3. ioTier assignment for the scan unit — QUEUED.
 4. `[RESPONSE_TIME]` condition on the UI Gatus check — QUEUED.
@@ -67,7 +67,7 @@ Nothing at the "destroyed work / wrong premise" level. The honest list:
 7. Confirm `pat(*<html*)` matches the live templ body case-sensitively (Gatus globs are case-sensitive; templ renders lowercase `<html` — expected fine, unverified).
 8. Check actual RSS after first real scan; retune `MemoryMax = 1G` if the scanner's working set differs.
 9. Watch the first `indexer_projection_lag_seconds` values in SigNoz; decide if lag warrants its own Gatus condition later.
-10. Evaluate the index flake input bump (lock holds indexer **2.8.1**; upstream HEAD is **2.9.0** — branch-ref governed, so a routine `nix flake lock --update-input index` when convenient).
+~~10. Evaluate the index flake input bump (lock holds indexer **2.8.1**; upstream HEAD is **2.9.0** — branch-ref governed, so a routine `nix flake lock --update-input index` when convenient).~~ done — lock long since bumped past 2.9.0 — running pkg indexer-2.11.0 by 2026-10-05 (10-05_13-52 report §f.33)
 11. Confirm `LarsArtmann/index` is PUBLIC — if private, the `github:` lock node is in the CI-dark class (needs `NIX_GITHUB_RO_TOKEN`; local evals work via the user token). The input predates this session but my module deepens the dependency.
 12. Consider a SigNoz collector scrape job for indexer-web `/metrics` (currently only Gatus pats it) — deliberately NOT queued: Gatus owns alerting; this is optional polish.
 13. After deploy: flip the AGENTS.md section header from "deploy pending" state to live + record the store-path/generation.

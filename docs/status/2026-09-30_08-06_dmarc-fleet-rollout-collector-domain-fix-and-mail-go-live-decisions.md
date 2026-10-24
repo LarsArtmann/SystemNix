@@ -102,11 +102,11 @@ the rest of the go-live ladder remain owner-run.
 
 ## b) PARTIALLY DONE
 
-1. **The DMARC fleet rollout is WIRED, not APPLIED** — DNS is unchanged until
+~~1. **The DMARC fleet rollout is WIRED, not APPLIED** — DNS is unchanged until~~ **NOT-DO — NOT-DO — dup of §f.5 (verified closed).**
    the owner runs `nix run .#plan` → `.#apply` → `.#dns-audit` in
    `~/projects/domains`. Until then: no rua anywhere live, no MX on
    larsartmann.cloud, no verification TXTs.
-2. **dmarc-monitor on evo-x2: still `enable = false`** — correct-by-design;
+~~2. **dmarc-monitor on evo-x2: still `enable = false`** — correct-by-design;~~ **Won't implement — superseded — Stalwart-native DMARC report analysis; flip row closed SUPERSEDED 2026-10-16 (services.md:226).**
    the flip remains the FINAL go-live step (runbook §7) after the
    `dmarc@larsartmann.cloud` mailbox exists.
 3. **TLS-RPT silently dropped from runbook §4 during my rewrite** — the old
@@ -224,7 +224,7 @@ assistant-executable, then hardening/polish)
 4. Add `A` `mail.artmann.tech` → VPS IP in the domains repo and apply JUST
    that (see item 33 for the split), then deploy pbx (user-run) and verify
    `acme-mail.artmann.tech.service` + `stalwart.service` active.
-5. Apply the DMARC fleet rollout: `nix run .#plan` → review → `.#apply` →
+~~5. Apply the DMARC fleet rollout: `nix run .#plan` → review → `.#apply` →~~ done — applied — live dig @1.1.1.1 (2026-10-12_08-30 §a.1) confirms MX 10 mail.artmann.tech + SPF -all + DMARC p=reject + rua=dmarc@larsartmann.cloud
    `nix run .#dns-audit` (ordering vs the Hetzner unblock: item 33/question g1).
 6. Provision Stalwart over the SSH tunnel: domains `artmann.tech` +
    `larsartmann.cloud`; account principal NAME `dmarc@larsartmann.cloud`;
@@ -232,10 +232,10 @@ assistant-executable, then hardening/polish)
 7. Outbound smoke `From: lars@larsartmann.cloud` → journal + Resend dashboard.
 8. Resend scoping decision for `@artmann.tech` envelopes (verify artmann.tech
    in Resend or commit to larsartmann.cloud as the sole sending identity).
-9. Paste `dmarc-imap-password` into SystemNix sops
+~~9. Paste `dmarc-imap-password` into SystemNix sops~~ **Won't implement — superseded — parsedmarc flip abandoned; Stalwart renders DMARC reports natively (services.md:226, 2026-10-16).**
    `platforms/nixos/secrets/nix-email.yaml`, flip
    `services.dmarc-monitor.enable = true`, `nix run .#deploy` (FINAL).
-10. Verify end-to-end: parsedmarc active; first report parsed into
+~~10. Verify end-to-end: parsedmarc active; first report parsed into~~ **Won't implement — superseded — same Stalwart-native supersession (services.md:226).**
     `/var/lib/parsedmarc/reports`; dmarc-monitor backup-freshness row green.
 11. Watch the Resend daily-send volume against the ~80/day revisit trigger
     encoded in runbook §6.
@@ -243,7 +243,7 @@ assistant-executable, then hardening/polish)
     Google Cloud DNS manually (verification TXT already wired, inert).
 
 **Assistant-executable (queued/ready):**
-13. Split-or-annotate the domains rollout so the larsartmann.cloud MX carries
+~~13. Split-or-annotate the domains rollout so the larsartmann.cloud MX carries~~ **Won't implement — moot — owner ruled "Apply everything NOW" (report §Answers 08:15); early apply blessed in runbook §4 + pbx TODO.**
 an explicit "apply only post-unblock" marker (commit split or loud TODO
 note + plan-time comment).
 14. Verify the RFC 7489 §7.1 record name format against the RFC text before
@@ -259,7 +259,7 @@ collector-domain supersession per docs-health doctrine.
 `tests/test-nix-email.nix` shape).
 19. ACME-bootstrap alerting: OnFailure on `acme-mail.artmann.tech.service`
 (today a typo'd DNS record is silent ~5-min journal noise forever).
-20. Post-cutover Gatus external checks on evo-x2
+~~20. Post-cutover Gatus external checks on evo-x2~~ done — gatus-config.nix:222-234 "Mail MX STARTTLS" + "Mail IMAPS" checks exist as the red-by-design go-live tracker (confirmed 2026-10-12_08-30 §a.1)
 (`starttls://mail.artmann.tech:25`, `tls://mail.artmann.tech:993`,
 `CERTIFICATE_EXPIRATION > 720h`) — add ONLY after MX lands (red-until-live
 by design).
@@ -288,10 +288,10 @@ now, required the day direct-MX is ever revisited).
 helpless.ai / jetpackx.io / skylines.one `p=none` → quarantine candidates.
 32. Same review for the 4 forwarding domains (`p=none` → quarantine) + decide
 whether forwarding SPF/SRS investment is ever worth it (question g3).
-33. If g1 answers "split": carve the MX record into its own commit gated on
+~~33. If g1 answers "split": carve the MX record into its own commit gated on~~ done — apply-now branch executed — runbook §4 + pbx TODO row updated to bless early apply (report §Answers, 2026-09-30 08:15)
 the unblock; if "apply now": fix the runbook TODO wording to bless early
 apply explicitly.
-34. Sweep `docs/` + both repos' AGENTS.md for any remaining
+~~34. Sweep `docs/` + both repos' AGENTS.md for any remaining~~ **Won't implement — superseded — the flip it was gated on was superseded by Stalwart-native DMARC handling (services.md:226).**
 `dmarc@artmann.tech` references once the flip is done (the historical
 status report keeps them by design; nothing else should).
 35. pbx TODO row 153 (Resend scoping) closes with item 8's decision — link

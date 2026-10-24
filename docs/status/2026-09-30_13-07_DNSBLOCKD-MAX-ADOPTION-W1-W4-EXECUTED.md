@@ -54,18 +54,18 @@
 
 **Immediate (pre-deploy):**
 
-1. Redesign M10 csrf probe: config-key grep + POST-without-token→403 (the discriminating shape)
-2. Write M10 smoke additions (allowlist wiring, devices render, csrf) + `bash -n` + commit
-3. Run `nix fmt --no-update-lock-file -- --ci` over the tree; fix any drift on my files
-4. Standalone statix/deadnix on `dns-blocker.nix`, `dns-blocker-config.nix`, `test-dns-blocker-render.nix` (daemon-amend lint doctrine)
+~~1. Redesign M10 csrf probe: config-key grep + POST-without-token→403 (the discriminating shape)~~ done — 403/401 discriminator source-verified (csrf.go) + live-validated; config-key greps shipped — SESSION3 (10-01 02-11) §a.4/§a.5
+~~2. Write M10 smoke additions (allowlist wiring, devices render, csrf) + `bash -n` + commit~~ done — 50 lines in post-deploy-check.sh, commit 4ba06298; harness PASS×2 + negative + skip tests — SESSION3 §a.5
+~~3. Run `nix fmt --no-update-lock-file -- --ci` over the tree; fix any drift on my files~~ done — 0 changed — SESSION3 §a.6
+~~4. Standalone statix/deadnix on `dns-blocker.nix`, `dns-blocker-config.nix`, `test-dns-blocker-render.nix` (daemon-amend lint doctrine)~~ done — deadnix clean; statix one pre-existing non-gating warning — SESSION3 §a.6
 5. Pre-build toplevel (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`) so the user deploy window hits a warm cache
 6. Check if dnsblockd has a config-validate/dry-run CLI mode for pre-deploy binary acceptance of the new keys (devices/csrf/allowlist) — if yes, add to pre-deploy-check
 7. Commit/mark plan file M01–M09 status (plan doc self-truth)
 
 **M11 user window (deploy + live verify):**
-8. USER: `nix run .#deploy` → anchor check (`readlink` both pointers, F43)
+~~8. USER: `nix run .#deploy` → anchor check (`readlink` both pointers, F43)~~ done — M11 already deployed: system-810, running dnsblockd-f625cfe, all W1-W4 keys in the deployed YAML (SESSION3 §a.3 headline)
 9. Verify allowlist persistence E2E: "Always allow" a domain → restart unit → allow survives
-10. POST to /api/allow without csrf token → expect 403 (real csrf-active proof)
+~~10. POST to /api/allow without csrf token → expect 403 (real csrf-active proof)~~ done — behavioral probe shipped + live-validated (403=armed / 401=off) — SESSION3 §a.4/§a.5
 11. Dashboard walk: devices named in Top Clients, attribution working
 12. Confirm pixel6 (.29) / lg-tv (.62) identity in dashboard activity (owner-confirm loop)
 13. Verify DMS DnsStatsWidget unaffected by csrf (Bearer flow — reasoned safe, verify live)
@@ -75,20 +75,20 @@
 17. Verify OIDC login flow with csrf on (dashboard forms)
 
 **Post-deploy hygiene (W6):**
-18. M12: fix `dns-blocker-config.nix:14-17` recursion comment (T299 landed in tree — forwarders now a choice, not a necessity)
-19. M12: AGENTS.md dnsblockd section — deployed-rev claims (post-deploy: f625cfe), tracking-dial pointer, allowlist note
-20. M12: blocklist count comment 25→23 in dns-blocker-config.nix header
-21. M12: runbook pointer to the tracking-dial memo
-22. M13: mark the 5 TODO queue rows `[x]` + prune to CHANGELOG per todo-system rules; update library entries
-23. M13: verify queue/library non-drift (edit both surfaces)
+~~18. M12: fix `dns-blocker-config.nix:14-17` recursion comment (T299 landed in tree — forwarders now a choice, not a necessity)~~ done — recursion comment rewritten with T299 facts (commit 6dfcf827) — SESSION3 §a.8
+~~19. M12: AGENTS.md dnsblockd section — deployed-rev claims (post-deploy: f625cfe), tracking-dial pointer, allowlist note~~ done — stale rev claim corrected + "Max-adoption wave DEPLOYED LIVE" bullet — SESSION3 §a.8
+~~20. M12: blocklist count comment 25→23 in dns-blocker-config.nix header~~ done — 25→23 + coverage ~4M+ verified by eval — SESSION3 §a.8
+~~21. M12: runbook pointer to the tracking-dial memo~~ done — runbook pointers landed (AGENTS bullet references memo + plan) — SESSION3 §a.8
+~~22. M13: mark the 5 TODO queue rows `[x]` + prune to CHANGELOG per todo-system rules; update library entries~~ done — M13 executed by SESSION4 (2026-10-01_02-30 DNSBLOCKD SESSION4 M13-M14)
+~~23. M13: verify queue/library non-drift (edit both surfaces)~~ done — M13 executed by SESSION4 (2026-10-01_02-30)
 24. Update deep-dive HTML report with a "landed" addendum + re-rate adoption (62 → ~75+)
 25. Push (owner call — many unpushed commits incl. parallel sessions')
 
 **W7 second wave (post-M11, paced):**
-26. M14: policies option (name/groups/devices/block/allow/schedule) + shadow-mode probe doc
-27. M15: `blocklist_trial_urls` + PERSISTENT `blocklist_cache_dir` + ReadWritePaths audit (PrivateTmp trap)
+~~26. M14: policies option (name/groups/devices/block/allow/schedule) + shadow-mode probe doc~~ done — M14 policies option complete with build-proven tests + worktree negative proofs — SESSION5 (10-01 03-47) §a.1
+~~27. M15: `blocklist_trial_urls` + PERSISTENT `blocklist_cache_dir` + ReadWritePaths audit (PrivateTmp trap)~~ done — M15 trial blocklists + persistent URL cache dir landed — SESSION5 §a.3
 28. M16: ECS decision — owner nod pending (`dns_ecs_enabled` + /24; forwarders see client /24)
-29. M17: h3 block pages (`tls_h3_enabled`) + UDP-443 firewall check
+~~29. M17: h3 block pages (`tls_h3_enabled`) + UDP-443 firewall check~~ done — M17 tlsH3Enabled DONE (option + render + negative proof); UDP-443 already open host-wide — SESSION6 (10-01 05-30) §a.2
 30. DHCP-lease discovery probe: `GET /api/devices/candidates` once devices are live (find uncovered leases)
 31. Re-inventory LAN after a week (phone DHCP drift; pixel6 may move off .29)
 
