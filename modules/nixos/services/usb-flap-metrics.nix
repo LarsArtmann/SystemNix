@@ -21,6 +21,11 @@
 # mktemp in the sticky textfile dir + CAP_FOWNER (mail-relay 2026-09-02..06
 # foreign-owned-prom class); journal read needs no extra caps (adm group via
 # systemd-journal group membership is granted by running as root).
+#
+# The collector BODY lives in scripts/usb-flap-collector.sh so the fixture
+# selftest (scripts/test-usb-flap-collector.sh + the
+# usb-flap-metrics-selftest flake check) exercises the SAME file the unit
+# runs — never a grep of its own copy.
 {
   flake.nixosModules.usb-flap-metrics =
     {
@@ -91,92 +96,12 @@
             (serviceOneshotDefaults { })
           ];
           script = ''
-            set -eu
-            OUT="${textfileDir}/usb-flap.prom"
-            mkdir -p "${textfileDir}"
-            TMP="$(mktemp "${textfileDir}/usb-flap.prom.XXXXXX")"
-            chmod 644 "$TMP"
-            STATE_DIR="''${STATE_DIRECTORY:-/var/lib/usb-flap-metrics}"
-            STATE="$STATE_DIR/state"
-            STATE_TMP="$(mktemp)"
-            trap 'rm -f "$TMP" "$STATE_TMP"' EXIT
-
-            THRESHOLD=${toString cfg.alertThreshold}
-            WINDOW=${toString cfg.windowSeconds}
-            NOW="$(date +%s)"
-
-            scrape_errors=0
-            delta=0
-            total=0
-            last_epoch=0
-
-            # Resume from the stored journal timestamp; first run reads only
-            # the current boot so a fresh deployment does not replay the
-            # entire persistent history into one giant delta.
-            since=0
-            if [ -f "$STATE" ]; then
-              read -r total since < "$STATE" 2>/dev/null || true
-              total="''${total:-0}"
-              since="''${since:-0}"
-            else
-              since="$(journalctl -k --output=short-unix -n 1 2>/dev/null | tail -1 | awk '{ print $1 }' | cut -d. -f1 || true)"
-              case "$since" in ""|*[!0-9]*) since="$NOW" ;; esac
-            fi
-
-            EVENTS="$(mktemp)"
-            trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS"' EXIT
-            # grep exits 1 on a zero-match window — healthy, not an error.
-            journalctl -k --output=short-unix --since "@$since" --until "@$NOW" 2>/dev/null \
-              | grep -E 'usb [0-9]+-[0-9.]+: USB disconnect' > "$EVENTS" || true
-            # Fail-closed probe: journalctl itself must still answer.
-            if ! journalctl -k -n 1 >/dev/null 2>&1; then
-              scrape_errors=1
-            fi
-            delta="$(wc -l < "$EVENTS")"
-            case "$delta" in *[!0-9]*) delta=0; scrape_errors=1 ;; esac
-
-            if [ "$delta" -gt 0 ]; then
-              last_epoch="$(head -1 "$EVENTS" | awk '{ print $1 }' | cut -d. -f1)"
-              case "$last_epoch" in *[!0-9]*|"") last_epoch="$NOW" ;; esac
-            fi
-
-            # Rolling-hour window: event epochs, one per line, pruned each run.
-            WINDOW_FILE="$STATE_DIR/window"
-            WINDOW_TMP="$(mktemp)"
-            trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS" "$WINDOW_TMP"' EXIT
-            cat "$EVENTS" | awk '{ print $1 }' | cut -d. -f1 >> "$WINDOW_FILE" 2>/dev/null || true
-            awk -v cutoff="$((NOW - WINDOW))" '$1 >= cutoff' "$WINDOW_FILE" > "$WINDOW_TMP" 2>/dev/null || true
-            mv "$WINDOW_TMP" "$WINDOW_FILE"
-            last_hour="$(wc -l < "$WINDOW_FILE")"
-            case "$last_hour" in *[!0-9]*|"") last_hour=0; scrape_errors=1 ;; esac
-            rate_over=0
-            [ "$last_hour" -ge "$THRESHOLD" ] && rate_over=1 || true
-
-            total=$((total + delta))
-
-            {
-              echo "# HELP usb_flap_disconnects_total Cumulative kernel USB disconnect events across boots (state-persisted)"
-              echo "# TYPE usb_flap_disconnects_total counter"
-              echo "usb_flap_disconnects_total $total"
-              echo "# HELP usb_flap_disconnects_delta Disconnects observed since the previous collector run"
-              echo "# TYPE usb_flap_disconnects_delta gauge"
-              echo "usb_flap_disconnects_delta $delta"
-              echo "# HELP usb_flap_disconnects_last_hour Disconnects inside the rolling ${toString cfg.windowSeconds}s window"
-              echo "# TYPE usb_flap_disconnects_last_hour gauge"
-              echo "usb_flap_disconnects_last_hour $last_hour"
-              echo "# HELP usb_flap_rate_over_threshold 1 when the rolling-hour rate meets the alert threshold (the 2026-08-16 storm class)"
-              echo "# TYPE usb_flap_rate_over_threshold gauge"
-              echo "usb_flap_rate_over_threshold $rate_over"
-              echo "# HELP usb_flap_last_disconnect_epoch Unix epoch of the most recent observed disconnect (0 = none in window)"
-              echo "# TYPE usb_flap_last_disconnect_epoch gauge"
-              echo "usb_flap_last_disconnect_epoch $last_epoch"
-              echo "# HELP usb_flap_scrape_errors Nonzero when the journal read itself failed (fail-closed)"
-              echo "# TYPE usb_flap_scrape_errors gauge"
-              echo "usb_flap_scrape_errors $scrape_errors"
-            } > "$TMP"
-            mv "$TMP" "$OUT"
-            echo "$total $NOW" > "$STATE_TMP"
-            mv "$STATE_TMP" "$STATE"
+            OUT="${textfileDir}/usb-flap.prom" \
+            TEXTFILE_DIR="${textfileDir}" \
+            STATE_DIR="''${STATE_DIRECTORY:-/var/lib/usb-flap-metrics}" \
+            THRESHOLD=${toString cfg.alertThreshold} \
+            WINDOW=${toString cfg.windowSeconds} \
+            exec ${pkgs.bash}/bin/bash ${../../../scripts/usb-flap-collector.sh}
           '';
         };
 

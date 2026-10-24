@@ -64,6 +64,18 @@
           touch $out
         '';
 
+        # usb-flap-metrics collector fixture selftest (2026-10-24): state
+        # resume, delta math, rolling-window pruning, threshold flip, and
+        # the fail-closed probe, driven through a stub journalctl against
+        # the SAME repo file the unit runs (never a grep of its own copy).
+        usb-flap-metrics-selftest = pkgs.runCommand "usb-flap-metrics-selftest" { } ''
+          scratch=$(mktemp -d)
+          cp ${root}/scripts/usb-flap-collector.sh "$scratch/usb-flap-collector.sh"
+          cp ${root}/scripts/test-usb-flap-collector.sh "$scratch/test-usb-flap-collector.sh"
+          ${pkgs.bash}/bin/bash "$scratch/test-usb-flap-collector.sh"
+          touch $out
+        '';
+
         # monitor365 event retention: the 03:00 unattended window must
         # never be the retention script's first execution — eval is
         # structurally blind to logic/interpolation bugs inside shell

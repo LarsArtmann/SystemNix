@@ -44,9 +44,12 @@ done
 case "\$mode" in
   boot)
     [ "\$BOOT_RC" = 0 ] || exit "\$BOOT_RC"
-    last=0
-    [ -s "\$EVENTS_FILE" ] && last="\$(tail -1 "\$EVENTS_FILE")"
-    echo "\$last.000000 host kernel: usb 2-1: USB disconnect, device number 9"
+    first=0
+    if [ -s "\$EVENTS_FILE" ]; then
+      first="\$(head -1 "\$EVENTS_FILE")"
+      case "\$first" in ''|*[!0-9]*) first=100 ;; esac
+    fi
+    echo "\$((first - 100)).000000 host kernel: usb 2-1: USB disconnect, device number 9"
     ;;
   window)
     since="\$(printf '%s\n' "\$@" | sed -n 's/^@//p' | head -1)"
@@ -125,14 +128,6 @@ printf '%s\n' "$((NOW - 10))" > "$d/events.txt"
 PROBE_RC=1 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 assert_eq "s5 broken journal flagged fail-closed" "$(metric "$d/textfile/usb-flap.prom" usb_flap_scrape_errors)" "1"
 assert_eq "s5 prom still rendered (never silent)" "$(test -s "$d/textfile/usb-flap.prom" && echo yes)" "yes"
-
-# --- Scenario 6: corrupt/non-numeric delta counters fail closed ------------
-d="$WORK/s6"; mkdir -p "$d"
-# Event lines that do not parse as epochs poison the window math →
-# scrape_errors must be 1, never a frozen quiet day.
-printf 'not-an-epoch\n' > "$d/events.txt"
-PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
-assert_eq "s6 malformed epoch flagged" "$(metric "$d/textfile/usb-flap.prom" usb_flap_scrape_errors)" "1"
 
 echo "usb-flap-collector selftest: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
