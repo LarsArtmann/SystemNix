@@ -1,7 +1,7 @@
 # SUPERB — Docs-Health Corpus Closeout & October Wave
 
 **Created:** 2026-10-24 12:11 CEST · **Owner:** Lars · **Author:** docs-health redispatch session (batch 01–09 executor)
-**EXECUTING (instance closeout spine M1-M7; Oct wave M8-M13 owner-gated, 2026-10-24 12:35 CEST, HEAD `07848ff8f`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTING (instance closeout spine M1-M7; Oct wave M8-M13 owner-gated, 2026-10-24 12:35 CEST, HEAD `07848ff8f`):** spine M1-M7 COMPLETE 2026-10-24 13:50 (closeout status docs/status/2026-10-24_13-50; commits 40e71f0b1 through the M3 close); M8-M13 await owner gates Q1/Q2 (pipeline.md [decision] row); still executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch — Pareto decomposition + two-level task tables + execution graph, plan only.
 **Mission:** finish the tracked docs-health 2026-0* corpus mission to a fully closed, gate-green state (closeout spine + living docs), then carry the SAME proven pipeline across the 2026-10 wave (442 root + 57 tasks reports) so the entire status corpus reaches truth. Zero intent-loss, zero false history, zero Verschlimmbesserung.
 
