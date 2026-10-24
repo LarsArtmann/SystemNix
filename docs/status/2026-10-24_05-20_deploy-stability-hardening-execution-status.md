@@ -180,3 +180,22 @@ Scope of this report: **only this session's run** (executing the 2026-10-23 hard
 - `.git/index.lock` was held for **15 minutes** by another session's `git commit` inside its pre-commit hook; I polled rather than clearing it, and the lock released after ~105 s more. A stale-looking lock is not necessarily stale — `pgrep -af "git commit"` decides.
 - **HEAD moved under me mid-eval** at least four times, changing `nixos-version`'s `configurationRevision` and therefore the toplevel drv path (three distinct drv paths for one tree).
 - My `nix fmt -- --ci` run reformatted four files owned by other sessions; restored from the index. Their staged work was preserved and verified intact.
+
+---
+
+## Harvest log
+
+**Landed in domain libraries during this session (not deferred):**
+
+- 6 new rows in `docs/todo/upstream.md` — rollback tenure `[decision]`, and `[blocked:push]` rows for the hermes `node-26` prebuilt segfault, `aw-core`/peewee, templ runtime skew, dms-shell 2.0.0, and the `cqrs-lint` upstream hash paste.
+- 1 corrected row in `docs/todo/stability.md` — the CANTCREAT row now records that its self-diagnosis drop-in had never armed and is fixed in-tree.
+- 2 corrected rows in `docs/todo/pipeline.md` — the crowdsec migration claim (now records the revert + why) and the lock-gate row (now records that a stronger build gate exists and what remains).
+- 1 appended row in `docs/todo/services.md` — the ci-watchdog row now records the live billing-block confirmation so it is not re-triaged as a bug.
+
+**Deliberately NOT harvested as queue rows (§f), and why:**
+
+- Items 1–3 and 6–10 of §f are gated on the owner answers in §g (deploy window, `crm.nixpkgs` shape, rollback tenure) or on a deploy having happened at all. Creating queue rows for them now would put un-actionable items into the dispatch queue, which `TODO_LIST.md` is explicitly not for.
+- Items 11–21 (§f) overlap rows that already exist for the failed-unit triage and the InboxClean work; this report is the planning source, and duplicating them would create the queue↔library drift the convention exists to prevent.
+- Items 22–50 are tooling/doc improvements below the dispatch threshold (`[watch]`/idea-grade). They stay here as the next-pass source rather than as 29 new backlog rows.
+
+**No `TODO_LIST.md` (queue) edit was made this session.** That is a known gap in §d.10/§f.40: the library side was updated but the queue was not, and the queue↔library drift rule expects both.
