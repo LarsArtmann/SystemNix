@@ -57,30 +57,30 @@ All 49 micro tasks from the plan (§5, sorted by phase/impact) + 1 new from this
 | 1  | 0.1  | Export two fixture trees into one scratch catalog                | 12  | P0    |
 | 2  | 0.2  | Scratch build; record relationship/collision findings            | 12  | P0    |
 | 3  | 0.3  | Define domain-scoping convention if collisions                   | 10  | P0    |
-| 4  | 1.1  | `formatEventCatalog` flag in bank-sync catalog cmd               | 12  | P0    |
-| 5  | 1.2  | Wire exporter in `renderCatalog` (+resolve output-subdir layout) | 12  | P0    |
-| 6  | 1.3  | Golden/fixture test for new format                               | 10  | P0    |
-| 7  | 1.4  | Run export; inspect tree                                         | 10  | P0    |
-| 8  | 1.5  | Commit generated tree + gitignore decision                       | 8   | P0    |
+| ~~4~~ done — T1 done: `--format eventcatalog` pushed upstream 64993f77 (2026-09-23_04-28 report §a T1) | ~~1.1~~ | ~~`formatEventCatalog` flag in bank-sync catalog cmd~~ | ~~12~~ | ~~P0~~ |
+| ~~5~~ done — exporter writes `<out>/eventcatalog/`; excluded from `all` by test (04-28 report §a T1) | ~~1.2~~ | ~~Wire exporter in `renderCatalog` (+resolve output-subdir layout)~~ | ~~12~~ | ~~P0~~ |
+| ~~6~~ done — catalog_eventcatalog_test.go green (tree shape, pin, determinism, churn guard) — 04-28 report §a T1 | ~~1.3~~ | ~~Golden/fixture test for new format~~ | ~~10~~ | ~~P0~~ |
+| ~~7~~ done — real bank-sync export built 99 pages headless (04-28 report §a T2) | ~~1.4~~ | ~~Run export; inspect tree~~ | ~~10~~ | ~~P0~~ |
+| ~~8~~ **Won't implement — decided-against — REV 3 #2: generated project trees live in the hub, not committed (locked by TestCLI_CatalogAllExcludesEventCatalog).** | ~~1.5~~ | ~~Commit generated tree + gitignore decision~~ | ~~8~~ | ~~P0~~ |
 | 9  | 2.1  | `npm run dev` smoke on bank-sync tree (Node 22 check)            | 10  | P0    |
 | 10 | 2.2  | Inventory bootstrap files hub-vs-source                          | 10  | P0    |
-| 11 | 3.1  | Create hub repo `architecture-catalog` (OWNER GO)                | 10  | P0    |
-| 12 | 3.2  | Pin `@eventcatalog/core` v4; document why                        | 8   | P0    |
-| 13 | 3.3  | Sources layout (`sources/<name>/`)                               | 12  | P0    |
-| 14 | 3.4  | Hub README: contract, layout, upgrade path                       | 10  | P0    |
-| 15 | 4.1  | Forgejo Actions: mirrors → copy → build                          | 12  | P0    |
-| 16 | 4.2  | Publish `dist/` (artifact or branch)                             | 12  | P0    |
-| 17 | 4.3  | Source-push trigger + nightly fallback                           | 12  | P0    |
+| ~~11~~ **Won't implement — superseded — hub repo created as LarsArtmann/eventcatalog-hub (2026-09-23 05-06 report §a.1).** | ~~3.1~~ | ~~Create hub repo `architecture-catalog` (OWNER GO)~~ | ~~10~~ | ~~P0~~ |
+| ~~12~~ done — hub package.json pins @eventcatalog/core ^4.6.3 (04-28/05-06 reports) | ~~3.2~~ | ~~Pin `@eventcatalog/core` v4; document why~~ | ~~8~~ | ~~P0~~ |
+| ~~13~~ done — sources.json + sources layout in hub repo (04-28 report §a T3) | ~~3.3~~ | ~~Sources layout (`sources/<name>/`)~~ | ~~12~~ | ~~P0~~ |
+| ~~14~~ done — hub README landed with contract/merge semantics/versioning/federation triggers (04-28 §a T3; 05-06 §a.1) | ~~3.4~~ | ~~Hub README: contract, layout, upgrade path~~ | ~~10~~ | ~~P0~~ |
+| ~~15~~ done — .forgejo/workflows/build.yml live; hub CI on Forgejo native runner (CHANGELOG:369, go-live 2026-10-12) | ~~4.1~~ | ~~Forgejo Actions: mirrors → copy → build~~ | ~~12~~ | ~~P0~~ |
+| ~~16~~ done — CI publishes dist to lars/eventcatalog-hub-dist repo (CHANGELOG:369) | ~~4.2~~ | ~~Publish `dist/` (artifact or branch)~~ | ~~12~~ | ~~P0~~ |
+| ~~17~~ done — nightly 03:23 UTC + push-triggered CI (architecture-catalog.nix:407 alert text) | ~~4.3~~ | ~~Source-push trigger + nightly fallback~~ | ~~12~~ | ~~P0~~ |
 | 18 | 4.4  | CI cache + cold-build timing (verify runner Node 22)             | 10  | P0    |
-| 19 | 5.1  | `catalog` DNS entry                                              | 5   | P1    |
-| 20 | 5.2  | Caddy `file_server` vHost (layer none)                           | 12  | P1    |
-| 21 | 5.3  | Registry entry `services.integration.catalog`                    | 12  | P1    |
-| 22 | 5.4  | `architecture-catalog-sync` oneshot, atomic swap                 | 12  | P1    |
+| ~~19~~ done — platforms/common/dns-local.nix:35 "catalog" | ~~5.1~~ | ~~`catalog` DNS entry~~ | ~~5~~ | ~~P1~~ |
+| ~~20~~ done — catalog.home.lan serving the CI-built dist (CHANGELOG:369, go-live 2026-10-12) | ~~5.2~~ | ~~Caddy `file_server` vHost (layer none)~~ | ~~12~~ | ~~P1~~ |
+| ~~21~~ done — architecture-catalog.nix:360 registry block (checks, vHost) | ~~5.3~~ | ~~Registry entry `services.integration.catalog`~~ | ~~12~~ | ~~P1~~ |
+| ~~22~~ done — architecture-catalog.nix:63-128 sync unit (generation swap, keep-3) | ~~5.4~~ | ~~`architecture-catalog-sync` oneshot, atomic swap~~ | ~~12~~ | ~~P1~~ |
 | 23 | 5.5  | Sync timer (re-time: daily, mirror-dominated) + deploy.sh entry  | 10  | P1    |
 | 24 | 5.6  | `nix flake check --no-build` green                               | 12  | P1    |
-| 25 | 5.7  | Deploy + smoke                                                   | 12  | P1    |
-| 26 | 6.1  | Build stamp + Gatus freshness                                    | 10  | P1    |
-| 27 | 6.2  | post-deploy-check section                                        | 10  | P1    |
+| ~~25~~ done — go-live 2026-10-12 (CHANGELOG:369) + post-deploy-check.sh §15 smoke section | ~~5.7~~ | ~~Deploy + smoke~~ | ~~12~~ | ~~P1~~ |
+| ~~26~~ done — build-stamp.json + architecture_catalog_fresh metric + Gatus checks (architecture-catalog.nix:294-307, 403-407) | ~~6.1~~ | ~~Build stamp + Gatus freshness~~ | ~~10~~ | ~~P1~~ |
+| ~~27~~ done — post-deploy-check.sh:2126-2159 §15 Architecture Catalog section | ~~6.2~~ | ~~post-deploy-check section~~ | ~~10~~ | ~~P1~~ |
 | 28 | 7.1  | Export cqrs-htmx demo tree                                       | 12  | P1    |
 | 29 | 7.2  | Add as source #2; rebuild                                        | 8   | P1    |
 | 30 | 7.3  | Verify cross-source graph on live hub                            | 10  | P1    |
@@ -100,7 +100,7 @@ All 49 micro tasks from the plan (§5, sorted by phase/impact) + 1 new from this
 | 44 | 13.3 | Route via go-cqrs-lite TODO_LIST                                 | 8   | P3    |
 | 45 | 14.1 | Evaluate architecture-change-detection                           | 12  | P3    |
 | 46 | 14.2 | PR pipeline-gate recipe                                          | 12  | P3    |
-| 47 | 15.1 | Hub runbook `docs/services/architecture-catalog.md`              | 12  | P3    |
+| ~~47~~ done — docs/services/architecture-catalog.md exists on tree | ~~15.1~~ | ~~Hub runbook `docs/services/architecture-catalog.md`~~ | ~~12~~ | ~~P3~~ |
 | 48 | 15.2 | SystemNix AGENTS.md hub section                                  | 12  | P3    |
 | 49 | 15.3 | Plan handoff: ANNOTATE phases done                               | 8   | P3    |
 | 50 | NEW  | Render-validate the plan's mermaid graph; fix if broken          | 5   | P0    |

@@ -18,19 +18,19 @@
 
 ## b) PARTIALLY DONE
 
-1. **Runtime is ZERO across the entire window — everything is eval-true, not runtime-true.** The running generation (`system-792`, `dj5k7ykb`, nixpkgs-20260919 era) predates ALL of this window's work. `paperless-db-backup`, `restic-app-dumps`, the three cache symlinks, the hot-db shared-unit wiring, the crush-hot-db guard upgrades: none exist on the booted host. The deploy was correctly refused by the pressure gate throughout (io PSI some avg10 62→99% for 25+ min stretches; parallel monitor365 DuckDB build identified as one driver). Every "done" in (a) is one `nix run .#deploy` away from being real, and the batch keeps growing (it now also carries the browser-history dbBackup leg, the discordsync ~40G attachments migration, the vendorHash wave, boot-mirror sync).
+~~1. **Runtime is ZERO across the entire window — everything is eval-true, not runtime-true.** The running generation (`system-792`, `dj5k7ykb`, nixpkgs-20260919 era) predates ALL of this window's work. `paperless-db-backup`, `restic-app-dumps`, the three cache symlinks, the hot-db shared-unit wiring, the crush-hot-db guard upgrades: none exist on the booted host. The deploy was correctly refused by the pressure gate throughout (io PSI some avg10 62→99% for 25+ min stretches; parallel monitor365 DuckDB build identified as one driver). Every "done" in (a) is one `nix run .#deploy` away from being real, and the batch keeps growing (it now also carries the browser-history dbBackup leg, the discordsync ~40G attachments migration, the vendorHash wave, boot-mirror sync).~~ done — superseded by events — system-796 landed 2026-09-22 13:04-15:06, runtime-zero cleared (CHANGELOG:471)
 2. **The pool-quality pointer row (`…2dd3c` as a whole) stays open** — two `[ready]` library items remain: the `hot-db`/`crush-hot-db` VM-test rebuild (PSI-gated, measured 68% avg10 at session time, gate <20%) and the mountPoint-vs-HM-symlink eval guard (deferred to its own run). The queue row carries the honest BLOCKED note.
-3. **The review-fix task's own follow-up (the 12-26 report's second `82d4fa4a` misattribution site) was NOT fixed by the session that queued it — and the 2026-09-21 corpus-sweep round 2 then CLAIMED it fixed without the fix existing.** Verified this pass: `git log --follow` shows exactly one commit (`5653e907`, creation) ever touched `docs/status/2026-09-20_12-26_deploy-chain-rescue-….md`, and its line 17 still credits `82d4fa4a` for the config-layer fix. Annotated with the correction in this pass (see d.1).
+~~3. **The review-fix task's own follow-up (the 12-26 report's second `82d4fa4a` misattribution site) was NOT fixed by the session that queued it — and the 2026-09-21 corpus-sweep round 2 then CLAIMED it fixed without the fix existing.** Verified this pass: `git log --follow` shows exactly one commit (`5653e907`, creation) ever touched `docs/status/2026-09-20_12-26_deploy-chain-rescue-….md`, and its line 17 still credits `82d4fa4a` for the config-layer fix. Annotated with the correction in this pass (see d.1).~~ done — fixed 2026-09-22 05:10 in 2a818fe1 with inline annotation (05-55 closeout §a.1)
 4. **The restic dedup premise is unproven** — "forgejo zips share ~0 extents" is the motivating claim, but dedup ratio is unmeasurable until ≥3 nightly runs exist (deploy-gated). The re-dispatch report correctly flags that eval-green is the weakest signal for a backup pipeline.
 5. **Paperless DR chain is half-built:** dump exists (eval), but no restore drill, no post-deploy smoke entry, no dump-size/pool-growth observation, and dump-integrity is exit-0-trust-based (no `pg_restore --list` gate).
 
 ## c) NOT STARTED
 
-1. **The deploy itself** — the single gate everything in this window sits behind (owner/queue authority question, see g.1).
+~~1. **The deploy itself** — the single gate everything in this window sits behind (owner/queue authority question, see g.1).~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
 2. **Restore drills** — paperless `pg_restore` into a scratch cluster (nothing analogous exists for paperless), restic one-file restore smoke, the older twenty/manifest drill (pre-existing storage item).
 3. **The mountPoint-vs-HM-symlink eval-time guard** (autofs-in-autofs at unit load — the hot-user-caches go-build class) — library row ready, never built.
 4. **The SHA-citation verifier script** (`scripts/verify-status-citations.sh`, from review-fix task 1 §f.3) — now doubly motivated by d.1.
-5. **The `~/.npm` convergence** (103M stale real-dir fallback found by the sweep, deliberately not acted on in-run) and the `~/tmp/go-lint` (1.8G live) reclamation path — both filed, neither built.
+~~5. **The `~/.npm` convergence** (103M stale real-dir fallback found by the sweep, deliberately not acted on in-run) and the `~/tmp/go-lint` (1.8G live) reclamation path — both filed, neither built.~~ done — ~/.npm symlink → /mnt/buildcache/npm (home.nix:480, 2026-10-10) + go-lint tmpfs fallback (home.nix:505)
 6. **The wide storage backlog** (Borg offsite leg implementation, ClickHouse backup, /data repair chain, SSD-2 tenant, boot-mirror activation) — untouched, correctly out of these five tasks' scope.
 
 ## d) TOTALLY FUCKED UP
@@ -52,15 +52,15 @@
 
 ## f) NEXT THINGS (most valuable, concrete; queue-shaped subset appended to TODO_LIST)
 
-1. Fire the batch deploy in the first calm window (io avg10 <20%, no Zone-6 trip in 60 min) — it carries restic-app-dumps, paperless-db-backup, the discordsync attachments leg, browser-history dbBackup, the cache symlinks, crush-hot-db guards, hot-db shared-unit fix, boot-mirror sync, and the vendorHash wave; expect the known exit-4 classes, fix-forward.
+~~1. Fire the batch deploy in the first calm window (io avg10 <20%, no Zone-6 trip in 60 min) — it carries restic-app-dumps, paperless-db-backup, the discordsync attachments leg, browser-history dbBackup, the cache symlinks, crush-hot-db guards, hot-db shared-unit fix, boot-mirror sync, and the vendorHash wave; expect the known exit-4 classes, fix-forward.~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
 2. Post-deploy verification chain: anchor check (`/run/current-system` == profile), restic first run + `restic check` + one-file restore smoke + dedup-ratio measurement, paperless first 02:00 dump + `backup_all_healthy` green + dump-size note, cache-symlink resolution + activation-journal check, discordsync attachments migration watch to completion.
 3. `pg_restore` drill for the paperless dump into a scratch cluster (assert document counts); record as the DR proof in the paperless runbook.
 4. Stub/fixture test for the destructive `discordsync-attachments-migrate` oneshot BEFORE the deploy that triggers it (row-25 doctrine; already filed as library row 87).
 5. Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (PSI-gated, heavy-job) — the unrealized test drvs are the deploy-confidence gap.
 6. Eval-time guard: reject `fileSystems` mountPoints resolving through HM out-of-store symlinks into automounted parents.
-7. Converge `~/.npm` onto the buildcache (symlink + reap-list entry) — closes the sweep's one leftover real dir.
-8. Reclamation path for `~/tmp/go-lint` (1.8G live, zero gc coverage).
-9. GOTOOLCHAIN guard selftest (pin the FP + both violation shapes).
+~~7. Converge `~/.npm` onto the buildcache (symlink + reap-list entry) — closes the sweep's one leftover real dir.~~ **NOT-DO — NOT-DO — dup (of c.5, verified closed: home.nix:480).**
+~~8. Reclamation path for `~/tmp/go-lint` (1.8G live, zero gc coverage).~~ **NOT-DO — NOT-DO — dup (of c.5, verified closed: home.nix tmpfs fallback).**
+~~9. GOTOOLCHAIN guard selftest (pin the FP + both violation shapes).~~ done — scripts/test-gotoolchain-guard.sh + hook + CI step (744f3882, same day 06:48 report)
 10. `scripts/verify-status-citations.sh` (SHA-citation verifier, WARN-grade).
 11. Add a `pg_restore --list` integrity gate (or checksum sidecar) inside the paperless-db-backup unit — exit-0 alone is trust-based.
 12. Decide smoke-coverage ownership for the new dump freshness (post-deploy-check entry vs backup-coordination) — one owner only, no double-alerting.

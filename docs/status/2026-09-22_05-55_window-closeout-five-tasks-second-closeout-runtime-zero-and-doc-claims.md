@@ -20,7 +20,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Runtime is ZERO across the entire window.** The running generation (`system-792`, `dj5k7ykb`, nixpkgs-20260919 era) predates ALL of this window's work; the deploy was correctly refused by the pressure gate throughout (sustained 62→99% io-PSI storms, parallel monitor365 DuckDB build identified as one driver). Every "done" in (a) is one `nix run .#deploy` away from being real, and the batch keeps growing (restic, paperless-db, discordsync attachments, browser-history dbBackup, cache symlinks, hot-db shared-unit fix, scrub-mechanism fix, vendorHash wave, boot-mirror sync, crush-hot-db guards).
+~~1. **Runtime is ZERO across the entire window.** The running generation (`system-792`, `dj5k7ykb`, nixpkgs-20260919 era) predates ALL of this window's work; the deploy was correctly refused by the pressure gate throughout (sustained 62→99% io-PSI storms, parallel monitor365 DuckDB build identified as one driver). Every "done" in (a) is one `nix run .#deploy` away from being real, and the batch keeps growing (restic, paperless-db, discordsync attachments, browser-history dbBackup, cache symlinks, hot-db shared-unit fix, scrub-mechanism fix, vendorHash wave, boot-mirror sync, crush-hot-db guards).~~ **Won't implement — .**
 2. **The pool-quality pointer row stays open** (TODO_LIST row 21): the `hot-db`/`crush-hot-db` VM-test rebuild is PSI-gated (measured 68% avg10 at session time, gate <20%) and the mountPoint-vs-HM-symlink eval guard is deferred to its own run. Both are `[ready]` in the storage library.
 3. **The restic dedup premise is unproven** — "forgejo zips share ~0 extents" motivates the repo, but the dedup ratio is unmeasurable until ≥3 nightly runs exist (deploy-gated). Eval-green is the weakest signal for a backup pipeline.
 4. **Paperless DR chain is half-built:** the dump exists (eval), but no restore drill, no post-deploy smoke entry, no dump-size/pool-growth observation, and dump integrity is exit-0-trust-based (no `pg_restore --list` gate).
@@ -28,13 +28,13 @@
 
 ## c) NOT STARTED (deliberately out of the five tasks' scope, still open)
 
-1. **The deploy itself** — the single gate everything in this window sits behind (authority question, g.1).
+~~1. **The deploy itself** — the single gate everything in this window sits behind (authority question, g.1).~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
 2. **Restore drills:** paperless `pg_restore` into a scratch cluster; restic one-file restore smoke; the older twenty/manifest drill.
 3. **The mountPoint-vs-HM-symlink eval-time guard** (autofs-in-autofs at unit load — the hot-user-caches go-build class).
 4. **The SHA-citation verifier** (`scripts/verify-status-citations.sh`) — now triply motivated (d.1, d.6, and the original review-fix finding).
-5. **`~/.npm` convergence (103M stale fallback) and the `~/tmp/go-lint` (1.8G, live) reclamation path** — filed by the sweep, never built.
-6. **buildcache-init does NOT provision the new targets** (`pnpm-cache`, `pnpm-state`, `cargo/registry` are absent from `buildcacheDirs`) — after a mount recovery the HM symlinks dangle ENOENT until the next deploy (found by the 05:31 review-fix report).
-7. **Reap-list single-sourcing** — the name set now lives in FOUR hand-maintained places (deploy.sh `.cache` loop, deploy.sh non-`.cache` loop, usb-recovery step 2.5 both loops, home.nix activation); nothing enforces parity.
+~~5. **`~/.npm` convergence (103M stale fallback) and the `~/tmp/go-lint` (1.8G, live) reclamation path** — filed by the sweep, never built.~~ done — ~/.npm symlink (home.nix:480, 2026-10-10) + go-lint tmpfs fallback + gc (home.nix:505)
+~~6. **buildcache-init does NOT provision the new targets** (`pnpm-cache`, `pnpm-state`, `cargo/registry` are absent from `buildcacheDirs`) — after a mount recovery the HM symlinks dangle ENOENT until the next deploy (found by the 05:31 review-fix report).~~ done — buildcache.nix:74-75 buildcacheDirs entries (af9b3ef2, deployed; live-verified 2026-10-07)
+~~7. **Reap-list single-sourcing** — the name set now lives in FOUR hand-maintained places (deploy.sh `.cache` loop, deploy.sh non-`.cache` loop, usb-recovery step 2.5 both loops, home.nix activation); nothing enforces parity.~~ done — scripts/lib/buildcache-reap-names.sh + lib/buildcache-cache-names.nix; all four surfaces consume it (0fdbf2d7)
 8. **Stub/fixture test for the destructive `discordsync-attachments-migrate` oneshot** before the deploy that triggers it.
 9. **The wide storage backlog:** offsite Borg leg implementation, ClickHouse backup coverage, /data repair chain (scrub-mechanism fix must deploy first), SSD-2 tenant, boot-mirror reboot proof.
 
@@ -62,22 +62,22 @@
 
 ## f) NEXT THINGS (most valuable, concrete; 10 appended to TODO_LIST, marked ⭐)
 
-1. ⭐ **Fire the batch deploy in the first calm window** (io avg10 <20%, no Zone-6 trip in 60 min) — carries restic-app-dumps, paperless-db-backup, discordsync attachments leg, browser-history dbBackup, the three cache symlinks, hot-db shared-unit fix, scrub-mechanism fix, vendorHash wave, boot-mirror sync, crush-hot-db guards; expect the known exit-4 classes, fix-forward.
-2. ⭐ **buildcache-init provisioning gap:** add `pnpm-cache`/`pnpm-state`/`cargo/registry` to `buildcacheDirs` (or equivalent creator) so a mount recovery doesn't leave dangling HM symlinks until the next deploy.
-3. ⭐ **Single-source the reap inventories** (deploy.sh ×2 + usb-recovery step 2.5 + home.nix activation) with a parity assertion.
-4. ⭐ **Negative-test the pre-commit GOTOOLCHAIN guard** (pin the interactive-fish FP + both violation shapes).
+~~1. ⭐ **Fire the batch deploy in the first calm window** (io avg10 <20%, no Zone-6 trip in 60 min) — carries restic-app-dumps, paperless-db-backup, discordsync attachments leg, browser-history dbBackup, the three cache symlinks, hot-db shared-unit fix, scrub-mechanism fix, vendorHash wave, boot-mirror sync, crush-hot-db guards; expect the known exit-4 classes, fix-forward.~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
+~~2. ⭐ **buildcache-init provisioning gap:** add `pnpm-cache`/`pnpm-state`/`cargo/registry` to `buildcacheDirs` (or equivalent creator) so a mount recovery doesn't leave dangling HM symlinks until the next deploy.~~ **NOT-DO — NOT-DO — dup (of c.6, verified closed: af9b3ef2).**
+~~3. ⭐ **Single-source the reap inventories** (deploy.sh ×2 + usb-recovery step 2.5 + home.nix activation) with a parity assertion.~~ **NOT-DO — NOT-DO — dup (of c.7, verified closed: 0fdbf2d7).**
+~~4. ⭐ **Negative-test the pre-commit GOTOOLCHAIN guard** (pin the interactive-fish FP + both violation shapes).~~ done — scripts/test-gotoolchain-guard.sh (3 catch + 3 pass shapes) wired hook + CI (744f3882)
 5. ⭐ **`scripts/verify-status-citations.sh` + the post-edit verification gate** in the docs-health contract (CI WARN first).
 6. ⭐ **Restic post-deploy proof chain:** first run, `restic check`, one-file restore smoke, dedup-ratio measurement, post-deploy smoke block.
 7. ⭐ **Paperless DR completion:** `pg_restore` drill into a scratch cluster, `pg_restore --list` integrity gate, dump-size/pool-growth note after the first 02:00 run.
 8. ⭐ **Stub/fixture test for `discordsync-attachments-migrate` BEFORE the deploy that triggers it** (stop → rsync → verify → `rm -rf` 40 GB → restart currently has zero automated coverage).
-9. ⭐ **Converge `~/.npm` and give `~/tmp/go-lint` (1.8G, live) a reclamation path** (gc trim or tmpfs fallback — owner preference recorded as a question in the sweep report).
+~~9. ⭐ **Converge `~/.npm` and give `~/tmp/go-lint` (1.8G, live) a reclamation path** (gc trim or tmpfs fallback — owner preference recorded as a question in the sweep report).~~ **NOT-DO — NOT-DO — dup (of c.5, verified closed).**
 10. ⭐ **Re-splice the inflated disk-layout HTML** (7.9 MB on tree vs 3.6 MB bundle) and verify with `bash scripts/verify-html-diagrams.sh`.
 11. Rebuild `hot-db` + `crush-hot-db` VM tests green on the current tree (PSI-gated, heavy-job) — the unrealized test drvs are the deploy-confidence gap (already a queue row).
 12. Eval-time mountPoint-vs-HM-symlink guard (already a `[ready]` library row behind the pointer).
-13. Post-deploy: verify the three new HM symlinks resolved and the migration activation journaled clean (storage.md `[watch]` row).
+~~13. Post-deploy: verify the three new HM symlinks resolved and the migration activation journaled clean (storage.md `[watch]` row).~~ done — verified live 2026-09-22 13:04 (02-01 closeout appendix)
 14. Root pool-receive freshness watch through storm lulls (2-day WARN live, 3-day FAIL at the 00:28 verify).
 15. After the scrub fix deploys: /data scrub delta in a quiet window → unlock the /data repair decision chain (10 files, ~49G, all re-downloadable).
-16. Offsite Borg leg (Hetzner StorageBox BX11) implementation — decided 2026-09-11, not built.
+~~16. Offsite Borg leg (Hetzner StorageBox BX11) implementation — decided 2026-09-11, not built.~~ done — implemented + deployed dormant 2026-09-22 (CHANGELOG:470)
 17. ClickHouse backup coverage (the XFS telemetry partition has no backup leg).
 18. Fold `crush-hot-db` into the Phase-2 `services.hot-db` module once its first migration completes (delete the interim module + deploy.sh entry in the same change).
 19. `/mnt/hot` free-space trend + alert threshold now that crush (45G) + forgejo subvol share the Samsung.

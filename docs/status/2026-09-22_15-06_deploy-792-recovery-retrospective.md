@@ -83,9 +83,9 @@
 | 1  | P0 | Root-context repro of the sandbox setgid/setattr EPERM (systemd-run with same sandbox, `chmod 2770` on foreign-group dir); file systemd/kernel issue if confirmed      |
 | 2  | P1 | Fix deploy.sh profile-anchoring check (generation-number vs store-path comparison; the "config already active" false positive)                                         |
 | 3  | P1 | Post-migration DiscordSync attachment-fetch smoke (serve one real attachment from the pool path)                                                                       |
-| 4  | P1 | Watch flm today: restore budget exhausted (3/3) — any new Zone-6 trip leaves the socket down until tomorrow or a manual `systemctl start fastflowlm.socket`            |
+| ~~4~~ **Won't implement — one-shot; window passed (2026-09-22 flm watch-day; guard restored flm same session).** | ~~P1~~ | ~~Watch flm today: restore budget exhausted (3/3) — any new Zone-6 trip leaves the socket down until tomorrow or a manual `systemctl start fastflowlm.socket`~~ |
 | 5  | P1 | Retire stale entries in the smoke fail-baseline (`~/.local/state/systemnix/smoke-fail-baseline.txt`)                                                                   |
-| 6  | P1 | Verify hermes health + no drained agent sessions from the 6 deploy restarts                                                                                            |
+| ~~6~~ **Won't implement — one-shot; window passed — six restarts on 2026-09-22, no completion record since.** | ~~P1~~ | ~~Verify hermes health + no drained agent sessions from the 6 deploy restarts~~ |
 | 7  | P2 | Socket-presence liveness for project-discovery-daemon (alive-but-unlinked = dark; WatchdogSec only proves process liveness)                                            |
 | 8  | P2 | Root-cause the 13:04 `/run/project-discovery` socket deletion (grep tmpfiles rules + activation scripts for that path)                                                 |
 | 9  | P2 | Consider the ownership-heal ExecStartPre pattern for gatus / papdashboard / dnsblockd                                                                                  |
@@ -93,14 +93,14 @@
 | 11 | P2 | VM test for the discordsync migration script's perm-tolerance branch (fixture: rsync stub emitting perm-only errors → must converge; one real stderr line → must fail) |
 | 12 | P2 | Upstream (browser-history): consider fixing uid drift at the source (static service user or file-ownership migration on start)                                         |
 | 13 | P2 | Document the DynamicUser-uid-drift + symlink-heal lesson in the Systemd gotchas of any consumer repos that run browser-history-style services                          |
-| 14 | P2 | Check whether the 2026-09-17 browser-history "regression" rollback (0971fe9c hold) can now be superseded by the heal (same class, likely misattributed)                |
+| ~~14~~ done — heal is live (browser-history.nix ownership-heal ExecStartPre); AGENTS 09-17 hold narrative corrected same day (15-06 §a.9) | ~~P2~~ | ~~Check whether the 2026-09-17 browser-history "regression" rollback (0971fe9c hold) can now be superseded by the heal (same class, likely misattributed)~~ |
 | 15 | P3 | quickshell 1 error line in last hour (pre-existing WARN)                                                                                                               |
 | 16 | P3 | inboxclean-sync `auth_expired` main account (user-gated OAuth runbook)                                                                                                 |
 | 17 | P3 | service-health-check failing unit (reports other failures — debug its list)                                                                                            |
-| 18 | P3 | Monitor restic-app-dumps first seed (05:45 tonight, 12h budget)                                                                                                        |
+| ~~18~~ **Won't implement — one-shot; window passed — first nightly fired 05:45 2026-09-23 (09-30 report).** | ~~P3~~ | ~~Monitor restic-app-dumps first seed (05:45 tonight, 12h budget)~~ |
 | 19 | P3 | Offsite Borg go-live once owner provides hostname/username                                                                                                             |
 | 20 | P3 | crush-hot-db → hot-db Phase-2 fold                                                                                                                                     |
-| 21 | P3 | BuildCache 2-device btrfs merge (window-gated)                                                                                                                         |
+| ~~21~~ **Won't implement — superseded — merge plan dropped 2026-10-06; SSD2 → dedicated rust-cache (docs/agents/storage.md:84).** | ~~P3~~ | ~~BuildCache 2-device btrfs merge (window-gated)~~ |
 | 22 | P3 | Add `verify-html-diagrams.sh`-style render gate to CI for new status HTML artifacts (already local-only today)                                                         |
 | 23 | P3 | Consider a "deploy counter-budget" for recovery sessions: >3 deploys/hour should force a pause-and-reassess                                                            |
 | 24 | P3 | Pre-deploy-check §12: assert the anchor (current-system == profile) BEFORE smoke, not only after                                                                       |

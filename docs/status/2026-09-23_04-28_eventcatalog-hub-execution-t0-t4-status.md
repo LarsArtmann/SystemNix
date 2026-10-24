@@ -50,8 +50,8 @@ Fresh hub (hub-owned config+package.json only) + real bank-sync export as sole s
 
 ## b) PARTIALLY DONE
 
-1. **T3 remaining**: hub repo is LOCAL AND UNCOMMITTED. No GitHub repo created (`gh repo view` confirms name free), nothing pushed.
-2. **T4 remaining**: workflow authored but **never run**. Missing: forgejo mirror of the hub repo (created by the 6h `forgejo-github-sync` timer — not yet fired for a repo that doesn't exist), `GIT_CLONE_TOKEN` Actions secret, Actions enabled on the repo, first green run, dist branch existence, cold-build timing (4.4). Untested assumptions inside the workflow: forgejo runner's `actions/upload-artifact@v3` compat, `GITHUB_TOKEN` availability in job containers for the dist push, schedule-trigger support.
+~~1. **T3 remaining**: hub repo is LOCAL AND UNCOMMITTED. No GitHub repo created (`gh repo view` confirms name free), nothing pushed.~~ done — T3 complete: squashed root commit 75b9312 pushed to LarsArtmann/eventcatalog-hub (05-06 report §a.1)
+~~2. **T4 remaining**: workflow authored but **never run**. Missing: forgejo mirror of the hub repo (created by the 6h `forgejo-github-sync` timer — not yet fired for a repo that doesn't exist), `GIT_CLONE_TOKEN` Actions secret, Actions enabled on the repo, first green run, dist branch existence, cold-build timing (4.4). Untested assumptions inside the workflow: forgejo runner's `actions/upload-artifact@v3` compat, `GITHUB_TOKEN` availability in job containers for the dist push, schedule-trigger support.~~ done — hub CI live on Forgejo (runner PATH + token fixes CHANGELOG:443; go-live CHANGELOG:369)
 3. **Plan/TODO bookkeeping**: SystemNix `docs/todo/services.md` entries not yet updated with execution state; plan doc not annotated (that's T15.3, but T0's findings deserve capture sooner).
 
 ---
@@ -82,26 +82,26 @@ T5 (NixOS serving: DNS/vHost/registry/Gatus/tile/sync timer/deploy), T6 (freshne
 
 ## f) NEXT UP TO 50 (rough execution order)
 
-1. Commit hub skeleton (pathspec) in `~/projects/eventcatalog-hub`
-2. `gh repo create LarsArtmann/eventcatalog-hub --private` + push
-3. Trigger/wait for forgejo-github-sync to mirror the new repo (a SystemNix deploy also triggers it)
-4. Mint read-scoped Forgejo token (house `forgejo-generate-token` pattern) — pending Q1
-5. Store `GIT_CLONE_TOKEN` as hub repo Actions secret (Forgejo API `PUT /repos/…/actions/secrets/…`)
+~~1. Commit hub skeleton (pathspec) in `~/projects/eventcatalog-hub`~~ done — committed + pushed (75b9312, 05-06 report §a.1)
+~~2. `gh repo create LarsArtmann/eventcatalog-hub --private` + push~~ done — repo live on GitHub (05-06 report §a.1)
+~~3. Trigger/wait for forgejo-github-sync to mirror the new repo (a SystemNix deploy also triggers it)~~ done — Forgejo mirror + CI live (CHANGELOG:369: hub CI on forgejo.home.lan/lars/eventcatalog-hub)
+~~4. Mint read-scoped Forgejo token (house `forgejo-generate-token` pattern) — pending Q1~~ done — CI cloning works — token minted/handed off (CHANGELOG:443 token handoff; go-live 369)
+~~5. Store `GIT_CLONE_TOKEN` as hub repo Actions secret (Forgejo API `PUT /repos/…/actions/secrets/…`)~~ done — prerequisite of live CI — done (CHANGELOG:369/443)
 6. Enable Actions on the hub repo
-7. First CI run: export job (debug jq install, clone auth, go build in container)
-8. First CI run: publish job (npm, artifact, dist push)
-9. Verify `dist` branch exists + contains `build-stamp.json`
+~~7. First CI run: export job (debug jq install, clone auth, go build in container)~~ done — CI green — export leg runs (CHANGELOG:369 go-live; runner PATH contract CHANGELOG:443)
+~~8. First CI run: publish job (npm, artifact, dist push)~~ done — publish leg live — dist pushed to lars/eventcatalog-hub-dist (CHANGELOG:369)
+~~9. Verify `dist` branch exists + contains `build-stamp.json`~~ done — dist repo exists + build-stamp consumed by sync/alerts (architecture-catalog.nix build-stamp wiring; CHANGELOG:369)
 10. CI cold-build timing; add node_modules caching if slow (4.4)
 11. Verify forgejo schedule trigger actually fires nightly
-12. **T5.1** `catalog` DNS entry in `platforms/common/dns-local.nix`
-13. **T5.2** Layer 2 vHost — `protectedVHost` for a static root (extend helper if needed; OpenSEO/systemd-timer-monitor precedent)
-14. **T5.3** Registry entry `services.integration.catalog` (checks, tile, monitored; no backup)
-15. **T5.4** `architecture-catalog-sync` oneshot: `git fetch dist` → atomic swap into serving root
+~~12. **T5.1** `catalog` DNS entry in `platforms/common/dns-local.nix`~~ done — dns-local.nix:35 "catalog"
+~~13. **T5.2** Layer 2 vHost — `protectedVHost` for a static root (extend helper if needed; OpenSEO/systemd-timer-monitor precedent)~~ done — catalog.home.lan serving behind auth (architecture-catalog.nix vHost; CHANGELOG:369)
+~~14. **T5.3** Registry entry `services.integration.catalog` (checks, tile, monitored; no backup)~~ done — architecture-catalog.nix:360 registry block
+~~15. **T5.4** `architecture-catalog-sync` oneshot: `git fetch dist` → atomic swap into serving root~~ done — sync unit + atomic generation swap in module (architecture-catalog.nix:63-128)
 16. **T5.5** Hourly sync timer + ioTier.background + deploy.sh provisioner entry
 17. **T5.6** `nix flake check --no-build` + all eval audits green
-18. **T5.7** Deploy (coordinate — see Q3) + smoke: DNS answers, vHost 200 behind auth, Gatus green
-19. **T6.1** Freshness: textfile metric for build-stamp age + Gatus check (stamp age < ~30h)
-20. **T6.2** `post-deploy-check.sh` section: hub HTML body + stamp age
+~~18. **T5.7** Deploy (coordinate — see Q3) + smoke: DNS answers, vHost 200 behind auth, Gatus green~~ done — go-live 2026-10-12 (CHANGELOG:369) + §15 smoke in post-deploy-check.sh
+~~19. **T6.1** Freshness: textfile metric for build-stamp age + Gatus check (stamp age < ~30h)~~ done — architecture-catalog-metrics collector + Gatus freshness checks (module :256-343, 403-407)
+~~20. **T6.2** `post-deploy-check.sh` section: hub HTML body + stamp age~~ done — post-deploy-check.sh:2126-2159 (§15: body marker + freshness flags)
 21. **T7.0** cqrs-htmx: add headless export flag to catalog-demo (upstream change)
 22. **T7.1** Export cqrs-htmx demo tree; **T7.2** add as hub source #2; **T7.3** verify cross-source graph end-to-end on the deployed hub
 23. **T8.1** go-cqrs-lite `catalog/README.md` feeding-the-hub section
@@ -119,7 +119,7 @@ T5 (NixOS serving: DNS/vHost/registry/Gatus/tile/sync timer/deploy), T6 (freshne
 35. **T13.3** Route T13 via go-cqrs-lite TODO_LIST
 36. **T14.1** Evaluate `architecture-change-detection` for the hub
 37. **T14.2** PR pipeline-gate recipe doc
-38. **T15.1** `docs/services/architecture-catalog.md` runbook (SystemNix)
+~~38. **T15.1** `docs/services/architecture-catalog.md` runbook (SystemNix)~~ done — runbook exists (docs/services/architecture-catalog.md)
 39. **T15.2** SystemNix AGENTS.md hub section
 40. **T15.3** Annotate plan phases done + update `docs/todo/services.md` entries
 41. Render-validate the plan's mermaid §6 graph (status-report item #50)

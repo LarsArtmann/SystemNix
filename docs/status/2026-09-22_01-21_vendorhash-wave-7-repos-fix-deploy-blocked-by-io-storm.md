@@ -29,14 +29,14 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 
 ## b) PARTIALLY DONE
 
-1. **THE DEPLOY ITSELF.** `nix run .#deploy` got through all pre-deploy gates, then was refused by the memory-pressure gate: io PSI avg10 62% with disk busy 101% — REAL storm class (crash-#3 precursor). Correctly did NOT `DEPLOY_FORCE_PRESSURE=1`. Polled 40 min: PSI worsened from 60-90% to **sustained 99%** (25+ min straight). Driver identified: a parallel session's monitor365 debug build (DuckDB `libduckdb-sys` C++ compilation, cc1plus/`as` in D-state) — NOT my load, NOT my call to kill. The deploy is safe to re-run the moment IO drains (toplevel is already fully built, so the switch will be light).
-2. **Activation/anchor/smoke verification** — impossible until the deploy activates. After it lands: check `readlink /nix/var/nix/profiles/system` == `/run/current-system`, then `nix run .#post-deploy-check`.
+~~1. **THE DEPLOY ITSELF.** `nix run .#deploy` got through all pre-deploy gates, then was refused by the memory-pressure gate: io PSI avg10 62% with disk busy 101% — REAL storm class (crash-#3 precursor). Correctly did NOT `DEPLOY_FORCE_PRESSURE=1`. Polled 40 min: PSI worsened from 60-90% to **sustained 99%** (25+ min straight). Driver identified: a parallel session's monitor365 debug build (DuckDB `libduckdb-sys` C++ compilation, cc1plus/`as` in D-state) — NOT my load, NOT my call to kill. The deploy is safe to re-run the moment IO drains (toplevel is already fully built, so the switch will be light).~~ done — forced 13:04, recovered to anchored system-796 (CHANGELOG:471; 15-06 retrospective)
+~~2. **Activation/anchor/smoke verification** — impossible until the deploy activates. After it lands: check `readlink /nix/var/nix/profiles/system` == `/run/current-system`, then `nix run .#post-deploy-check`.~~ done — profile anchored system-796, smoke 112 PASS / 0 FAIL, post-deploy check green (15-06 report live-state table)
 
 ## c) NOT STARTED
 
 1. **AGENTS.md memory updates** (multiple; see e/f) — session ended mid-deploy-wait.
 2. **Fleet vendorHash audit tooling** — after round 2 of "fix 3, discover 3 more", it is obvious we need a script that probes ALL LarsArtmann inputs' goModules FODs at their lock revs and reports stale ones in ONE pass (would have made this a 1-round fix).
-3. **Why ONE wave broke 7 repos at once** — not investigated. All 7 carry the nixpkgs-bump-era churn; a shared dep-sweep/agent pattern landing lock+go.mod bumps without hash dances is the suspected systemic cause (the 2026-09-05 PMA dep-sweep precedent). Needs root-cause before the next nixpkgs bump repeats this.
+~~3. **Why ONE wave broke 7 repos at once** — not investigated. All 7 carry the nixpkgs-bump-era churn; a shared dep-sweep/agent pattern landing lock+go.mod bumps without hash dances is the suspected systemic cause (the 2026-09-05 PMA dep-sweep precedent). Needs root-cause before the next nixpkgs bump repeats this.~~ done — root-caused 2026-10-15: master-tracking inputs float onto stale upstream masters; no upstream Nix-build CI (2026-10-15_03-05 diagnosis §a)
 4. **Upstream CI health check on the 7 pushed repos** — several have CI floors (bank-sync pins go-version 1.26 vs floor 1.27.1) that will go red on these pushes.
 
 ## d) TOTALLY FUCKED UP (own mistakes, honestly)
@@ -62,9 +62,9 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 
 **Immediate (deploy-critical):**
 
-1. Re-run `nix run .#deploy` when io-PSI avg10 < 20% sustained ~3 min (toplevel already built; switch is light).
-2. Verify anchor after deploy: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (exit-4 → re-run rule).
-3. `nix run .#post-deploy-check` (smoke: bank-sync, papdashboard, inboxclean, renamer endpoints).
+~~1. Re-run `nix run .#deploy` when io-PSI avg10 < 20% sustained ~3 min (toplevel already built; switch is light).~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796 landed).**
+~~2. Verify anchor after deploy: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (exit-4 → re-run rule).~~ **NOT-DO — NOT-DO — dup (of b.2, verified closed: 15-06 anchor check).**
+~~3. `nix run .#post-deploy-check` (smoke: bank-sync, papdashboard, inboxclean, renamer endpoints).~~ **NOT-DO — NOT-DO — dup (of b.2; post-deploy check "All checks passed" 15-06).**
 4. Confirm bank-sync canary/pipeline green (the failing unit that started this).
 5. Watch the deploy's Hermes/tq warnings already printed (agent activity + manual tq tmp processes — pre-existing, per docs/services/tq.md).
 
@@ -76,7 +76,7 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 
 **Prevent the next wave (systemic):**
 10. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): for every LarsArtmann input, probe `#default.goModules` at the LOCK rev; print stale ones in one pass; wire into pre-deploy §11 or a flake check.
-11. Root-cause the wave: diff the 7 repos' recent commits for a shared actor (PMA dep-sweep daemon? mass agent session?) that lands go.mod/lock bumps without the hash dance.
+~~11. Root-cause the wave: diff the 7 repos' recent commits for a shared actor (PMA dep-sweep daemon? mass agent session?) that lands go.mod/lock bumps without the hash dance.~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: 2026-10-15 diagnosis).**
 12. Pre-deploy §11 prints "unable to determine status" for 6 flakePkg inputs — extend it to cover upstream-flake packages (it currently only understands local buildGoModule shapes).
 13. Encode the vendorHash-wave playbook in AGENTS.md: wave → fleet audit → fix upstream → `--update-input --refresh` → build-from-our-lock.
 14. AGENTS.md: record the BuildFlow hook auto-repair flip-flop trap (never run that hook on a floor-sensitive tree mid-operation; go straight to --no-verify).

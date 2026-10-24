@@ -25,16 +25,16 @@
 
 ## b) PARTIALLY DONE
 
-1. **typst single-sourcing** — config in tree, **not deployed** (see b2). Profile still carries typst; profile not yet empty. Post-deploy step: `nix profile remove typst`.
-2. **The deploy itself** — blocked by the pressure gate, correctly. First attempt: gate PSI 36.4% w/ idle disks. 35-min naive poller → fired into a rebound (gate re-tripped at 28.08%). Second, strict poller (2× consecutive sub-20% **and** `guard_trips_last_hour == 0` **and** lock-still-7e1fbfe sanity): **90 minutes, zero calm windows** — gave up with breadcrumb at 01:55. The tree's changes activate on the next successful deploy by any session.
-3. **Deploy-blocker fix** — verified at derivation level only; **not production-verified** (no activation has run it).
+~~1. **typst single-sourcing** — config in tree, **not deployed** (see b2). Profile still carries typst; profile not yet empty. Post-deploy step: `nix profile remove typst`.~~ done — typst in base.nix:259 "moved from imperative nix profile 2026-09-22"; deployed with system-796+
+~~2. **The deploy itself** — blocked by the pressure gate, correctly. First attempt: gate PSI 36.4% w/ idle disks. 35-min naive poller → fired into a rebound (gate re-tripped at 28.08%). Second, strict poller (2× consecutive sub-20% **and** `guard_trips_last_hour == 0` **and** lock-still-7e1fbfe sanity): **90 minutes, zero calm windows** — gave up with breadcrumb at 01:55. The tree's changes activate on the next successful deploy by any session.~~ done — deploy landed 2026-09-22 13:04 → system-796 (CHANGELOG:471)
+~~3. **Deploy-blocker fix** — verified at derivation level only; **not production-verified** (no activation has run it).~~ done — deployed era passed: lock moved forward, shim DROPPED 2026-09-23 (lib/lars-packages.nix:78)
 4. **Sibling coordination** — a parallel session independently hit the same nixpkgs-move class and committed an art-dupl vendorHash shim (`5f5650d6`); neither their shim nor mine has deployed. Consistent diagnoses; no coordination channel used.
 
 ## c) NOT STARTED
 
 1. **`~/go/bin` non-shadow strays** (11 remain: actionlint, crush-tmux, getting-started, goal-shaped-app, golines, gosec, govulncheck, metaengine-quickstart, readme-quickstart, scheduler-otel-status, taskmanager) — offered to user, not executed; usage evidence not yet gathered.
-2. **Fleet-wide FOD enumeration after the nixpkgs move** — the repo HAS a pre-deploy batch build ("ONE command surfaces every stale vendorHash / FOD breakage", flake.nix ~line 941) purpose-built for exactly this; I did not run it. Buildflow + art-dupl are the two KNOWN casualties; more may lurk.
-3. **Upstream BuildFlow repair** — owned by a parallel session (dirty tree + 2 unpushed commits past broken master); deliberately not touched.
+~~2. **Fleet-wide FOD enumeration after the nixpkgs move** — the repo HAS a pre-deploy batch build ("ONE command surfaces every stale vendorHash / FOD breakage", flake.nix ~line 941) purpose-built for exactly this; I did not run it. Buildflow + art-dupl are the two KNOWN casualties; more may lurk.~~ done — enumerations ran repeatedly; 2026-10-15 wave diagnosis enumerated 23 FOD failures (2026-10-15_03-05 §a.2)
+~~3. **Upstream BuildFlow repair** — owned by a parallel session (dirty tree + 2 unpushed commits past broken master); deliberately not touched.~~ done — master healed; multiple lock moves + shim-drop records (lars-packages.nix:78,101,106)
 4. **templ codegen-parity verification** — interactive `templ` switched from a Jul-12 go-install to nixpkgs `v0.3.1020`; no check yet that `*_templ.go` output doesn't churn in the go-cqrs-lite fleet.
 5. **PSI accounting anomaly root-cause** — IO PSI 25-50% for hours with ~1-23% disk busy and ZERO D-state processes; the gate's heuristic blames a corpse pile that no longer exists. Something stalls without disk IO or D-state — unexplained.
 
@@ -57,13 +57,13 @@
 
 ## f) NEXT (session-derived brainstorm, ~30 — impact-ordered, not commitments)
 
-1. Deploy when calm lands: verify anchor, then `nix profile remove typst`, verify profile EMPTY, verify `/run/current-system/sw/bin/typst`.
-2. Run the repo's **pre-deploy batch build** to enumerate ALL nixpkgs-move FOD breakages (buildflow + art-dupl known; count unknown).
-3. When BuildFlow master compiles clean: `nix flake lock --update-input buildflow --refresh` → `nix build .#buildflow` → **drop the shim** (same change, per its drop-condition).
+~~1. Deploy when calm lands: verify anchor, then `nix profile remove typst`, verify profile EMPTY, verify `/run/current-system/sw/bin/typst`.~~ done — deployed system-796+; typst declarative in base.nix:259 (profile migration recorded)
+~~2. Run the repo's **pre-deploy batch build** to enumerate ALL nixpkgs-move FOD breakages (buildflow + art-dupl known; count unknown).~~ done — run across later waves (10-15 diagnosis: 22 FOD mismatches + 1 cv guard enumerated)
+~~3. When BuildFlow master compiles clean: `nix flake lock --update-input buildflow --refresh` → `nix build .#buildflow` → **drop the shim** (same change, per its drop-condition).~~ done — shim dropped at lock move 2026-09-23 per its drop-condition (lars-packages.nix:78)
 4. Probe BuildFlow upstream with `#default` (package), not just `#default.goModules` — bc999b4's failure was PAST the FOD.
 5. Add flake check / pre-commit: user `nix profile list` must be empty (doctrine enforcement, WARN-grade).
 6. Add check: `~/go/bin` contains no binary whose name exists in system path (shadow detector); allowlist golines.
-7. Migrate `golines` into base.nix → `~/go/bin` can then be empty entirely.
+~~7. Migrate `golines` into base.nix → `~/go/bin` can then be empty entirely.~~ done — base.nix:240 pkgs.golines "moved from stray ~/go/bin 2026-10-01, fifty-todos #45"
 8. Decide + purge the 11 `~/go/bin` non-shadow strays (usage-evidence pass over fish_history + scripts first).
 9. Root-cause the idle-disk/no-D-state PSI anomaly (autofs? accounting bug? per-cgroup?) — the pressure gate's corpse-pile heuristic is stale and mislabels this class.
 10. Turn the ad-hoc deploy-queue poller into a small systemd user unit/timer so queued deploys survive sessions (2026-09-19 lesson recurred tonight).
@@ -76,7 +76,7 @@
 17. Lock-move guard idea: probe `nix build .#<input>` before a lock commit moves any LarsArtmann Go input (tonight's chain chased a broken master 3 revs deep).
 18. Nightly timer or CI leg running the pre-deploy batch build so FOD drift surfaces before deploy night, not during.
 19. After deploy: run `post-deploy-check.sh` and confirm zero smoke regressions from the base.nix addition.
-20. Coordinate with the BuildFlow-owning session: push/verify their 2 unpushed commits; unblock master; retire both shims.
+~~20. Coordinate with the BuildFlow-owning session: push/verify their 2 unpushed commits; unblock master; retire both shims.~~ done — upstream master unblocked; both shims retired (lars-packages.nix drop records :78,:101,:106)
 21. Cross-check the art-dupl sibling shim vs mine for pattern consistency (one shared comment block explaining the 2026-09-22 nixpkgs-move wave).
 22. Add one AGENTS.md line cross-referencing the nixpkgs-move FOD-invalidation wave (both buildflow + art-dupl, same night) to the browser-history lesson.
 23. Prune the flake.nix hold-comment historical narrative once the shim drops (keep it truth-current).

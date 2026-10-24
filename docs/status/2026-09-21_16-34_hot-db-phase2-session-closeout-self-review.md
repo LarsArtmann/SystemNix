@@ -25,11 +25,11 @@
 ## c) NOT STARTED (all owner-gated or later-wave; nothing agent-side left for this item)
 
 1. Wave 1-3 migration windows: pocket-id → postgres → discordsync (runbook ready).
-2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.
-3. Docker data-root move (~20 G, own window).
+~~2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.~~ done — implemented 9546e7a1 (paperless.nix paperless-db-backup 02:00 timer); verified 2026-09-22_05-07 closeout §a.3; tests/test-paperless.nix steps 8+13
+~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:84).**
 4. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.
 5. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail.
-6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.
+~~6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.~~ done — hot-db.nix:393-495 hot-db-metrics collector + per-entry Gatus (T14, 2026-09-30; CHANGELOG:439); VM failure-transition test green
 7. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green.
 
 ## d) TOTALLY FUCKED UP (honest list)
@@ -57,25 +57,25 @@
 
 **Waves & windows (owner)**
 
-1. `[owner]` Execute Wave 1 (pocket-id) per the 00-25 report §e — snippet + commands ready; ~30 min window.
-2. `[owner-decision first]` Paperless PG-level dump job (or ratify exporter-only RPO) — queued `[ready]`, agent-executable.
+~~1. `[owner]` Execute Wave 1 (pocket-id) per the 00-25 report §e — snippet + commands ready; ~30 min window.~~ done — pocket-id LIVE on tlc since 2026-10-14 wave 3 (docs/services/hot-db.md:47,135)
+~~2. `[owner-decision first]` Paperless PG-level dump job (or ratify exporter-only RPO) — queued `[ready]`, agent-executable.~~ **NOT-DO — NOT-DO — dup (of c.2, verified closed via 9546e7a1).**
 3. `[owner]` Wave 2 (postgres cluster) after 1-2; include `immich-db-backup`/`miniflux-backup` in extraUnits.
-4. `[owner]` Wave 3 (discordsync, cow=true, db-heal wired).
-5. `[owner]` Docker data-root move (~20 G, daemon.json flip) — still ratified "moves here"; see question Q3.
+~~4. `[owner]` Wave 3 (discordsync, cow=true, db-heal wired).~~ done — discordsync LIVE on tlc since 2026-10-12 wave 5 (docs/services/hot-db.md:31,137)
+~~5. `[owner]` Docker data-root move (~20 G, daemon.json flip) — still ratified "moves here"; see question Q3.~~ **Won't implement — decided-against — Docker earmark dropped; data-root verified /data/docker (docs/agents/storage.md:84).**
 6. `[owner]` Wave-2 candidates: dnsblockd + papdashboard entries (plan T12).
-7. `[owner]` gatus entry, cow=true, only if monitoring latency ever justifies it (plan T13).
-8. Post-wave: clean shadowed originals; confirm `@` snapshot deltas shrink (existing [watch] rows).
+~~7. `[owner]` gatus entry, cow=true, only if monitoring latency ever justifies it (plan T13).~~ done — gatus LIVE on tlc since 2026-10-14 wave 1 (docs/services/hot-db.md:133)
+~~8. Post-wave: clean shadowed originals; confirm `@` snapshot deltas shrink (existing [watch] rows).~~ **Won't implement — decided against cleaning — shadowed QLC originals kept as recovery source (hot-db.md RECOVERY-SOURCE HOLD 2026-10-15).**
 
 **Agent-executable engineering**
 9. Quiet-window re-measure of the fsync matrix (clean-idle baselines + loaded rows) to replace the storm-bound numbers before/after wave 1 (acceptance-criteria §2 vehicle).
 10. fsync-bench v2: per-device diskstats attribution + `--json` output (§e.4).
 11. Re-realize `tests/test-hot-db.nix` + `tests/test-crush-hot-db.nix` on a quiet machine (VM builds were storm-blocked).
-12. Paperless PG dump job implementation (miniflux-backup pattern + backup-coordination row) — if Q-ratified over exporter-only.
+~~12. Paperless PG dump job implementation (miniflux-backup pattern + backup-coordination row) — if Q-ratified over exporter-only.~~ **NOT-DO — NOT-DO — dup (of c.2, verified closed via 9546e7a1).**
 13. RPO review (T15): per-DB dump cadence/restore-time inventory table + WAL-archiving recommendation note.
-14. Monitoring wiring (T14): `hot_db_mount_present{entry}` fail-closed textfile metric + per-entry Gatus checks.
+~~14. Monitoring wiring (T14): `hot_db_mount_present{entry}` fail-closed textfile metric + per-entry Gatus checks.~~ **NOT-DO — NOT-DO — dup (of c.6, verified closed: hot-db.nix T14 collector).**
 15. `/mnt/hot` scrub-coverage decision (verification round's gap): add Samsung to autoScrub or document the nodatacow-tier exclusion explicitly.
-16. Fix `scripts/bench-disk.sh` stale pinned fio path.
-17. migrate-hot-db.sh: sister-unit stop list for windows (§e.8).
+~~16. Fix `scripts/bench-disk.sh` stale pinned fio path.~~ done — bench-disk.sh:34-35 pinned path now guarded by `[ -x ]` check + `command -v fio` fallback
+~~17. migrate-hot-db.sh: sister-unit stop list for windows (§e.8).~~ done — migrate-hot-db.sh takes extra unit args (fixture exercises fixture.service + extra.timer; §i addendum wired pocket-id-provision/discordsync-db-heal)
 18. Compaction pass on the storage.md Phase-2 row (harvest narratives to status reports).
 19. Verify/correct the item's "20-02 §f.16-19" source pointer.
 20. Functional d2 0.9.0 smoke: re-render one disk-visualization artifact end-to-end (my d2 verification was eval-level only).

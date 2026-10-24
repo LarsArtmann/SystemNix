@@ -18,7 +18,7 @@
 
 ## b) Partially done
 
-1. **T4 remaining (owner-gated, not code):** run `sudo bash scripts/setup-forgejo.sh` on evo-x2 → first green Forgejo CI run → `dist` branch exists. This session cannot execute it: **`sudo` and `systemctl` are hard-blocked in the agent shell** (see d4). Every step needed is in the script + README.
+~~1. **T4 remaining (owner-gated, not code):** run `sudo bash scripts/setup-forgejo.sh` on evo-x2 → first green Forgejo CI run → `dist` branch exists. This session cannot execute it: **`sudo` and `systemctl` are hard-blocked in the agent shell** (see d4). Every step needed is in the script + README.~~ done — CI live: setup executed, first green runs + dist publishing (CHANGELOG:369, 2026-10-12 go-live)
 2. **Hub repo hygiene (known, 2-line fix):** `.eventcatalog-core/` (npm install working dir) is not in `.gitignore`; the local build left it + deleted-file noise that the daemon will heuristic-commit. Also `dist/` title renders as `EventCatalog | EventCatalog` (not the config title) — the T5 Gatus body pattern must use a verified stable marker.
 
 ## c) Not started
@@ -47,15 +47,15 @@
 ## f) Next up (priority order; 1–8 are code-executable next session, 9–10 are owner-gated)
 
 1. Hub repo hygiene: `.eventcatalog-core/` into `.gitignore`; pick + verify the Gatus body marker from real `dist/`.
-2. T5: `catalog` DNS in `platforms/common/dns-local.nix`; extend `caddy-config` extraVHosts with a static `root` option (render `root * <path>` + `file_server`, protected layer composes); registry entry `services.integration.catalog` (subdomain, absolute-URL checks, tile, no backup/port); `architecture-catalog-sync` oneshot (root + harden + ioTier.background: fetch `dist` branch → generation dir → atomic symlink swap `current`, keep 3) + hourly Persistent timer; tmpfiles rule for `/var/lib/architecture-catalog` (must pre-exist for ReadWritePaths); sops `architecture-catalog.yaml` token (PLACEHOLDER-inert — encryptable without sudo); `nix flake check --no-build` + evo-x2 eval green.
-3. T6: `architecture-catalog-metrics` textfile collector (stamp age → `architecture_catalog_fresh` flag, fail-closed) + Gatus freshness check + `post-deploy-check.sh` section (marker-gated: WARN until first sync).
+~~2. T5: `catalog` DNS in `platforms/common/dns-local.nix`; extend `caddy-config` extraVHosts with a static `root` option (render `root * <path>` + `file_server`, protected layer composes); registry entry `services.integration.catalog` (subdomain, absolute-URL checks, tile, no backup/port); `architecture-catalog-sync` oneshot (root + harden + ioTier.background: fetch `dist` branch → generation dir → atomic symlink swap `current`, keep 3) + hourly Persistent timer; tmpfiles rule for `/var/lib/architecture-catalog` (must pre-exist for ReadWritePaths); sops `architecture-catalog.yaml` token (PLACEHOLDER-inert — encryptable without sudo); `nix flake check --no-build` + evo-x2 eval green.~~ done — modules/nixos/services/architecture-catalog.nix landed + go-live 2026-10-12 (CHANGELOG:369)
+~~3. T6: `architecture-catalog-metrics` textfile collector (stamp age → `architecture_catalog_fresh` flag, fail-closed) + Gatus freshness check + `post-deploy-check.sh` section (marker-gated: WARN until first sync).~~ done — architecture-catalog-metrics unit + fail-closed fresh flag in module (:256-343)
 4. T7: cqrs-htmx catalog-demo headless export flag (upstream), add as source #2, local cross-source build verify.
 5. T8: go-cqrs-lite `catalog/README.md` + `cmd/` example + versioning guidance.
 6. T9: run `npx eventcatalog lint` locally on the hub → if free, add CI step.
 7. T10–T15: owners/teams, llms.txt verify + EventCatalog MCP (crush-config repo + SystemNix lock bump), federation GO/NO-GO note, upstream `catalog.index.json` + skip-bootstrap (route via go-cqrs-lite TODO_LIST), change-detection eval + PR-gate recipe, runbook `docs/services/architecture-catalog.md` + SystemNix AGENTS.md section + plan annotation + `docs/todo/services.md` updates.
 8. Render-validate plan mermaid §6; keep `/mnt/buildcache/scratch/eventcatalog-t0/` until hub live.
-9. **OWNER (gates the live CI):** run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` → watch first run at `https://forgejo.home.lan/lars/eventcatalog-hub/actions` → expect green + `dist` branch.
-10. **OWNER (gates serving):** paste the sync token into sops (`architecture-catalog.yaml`) via the SOPS_AGE_KEY one-liner, then deploy T5+ (`nix run .#deploy`).
+~~9. **OWNER (gates the live CI):** run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` → watch first run at `https://forgejo.home.lan/lars/eventcatalog-hub/actions` → expect green + `dist` branch.~~ done — hub CI live with nightly + push-triggered runs (CHANGELOG:369)
+~~10. **OWNER (gates serving):** paste the sync token into sops (`architecture-catalog.yaml`) via the SOPS_AGE_KEY one-liner, then deploy T5+ (`nix run .#deploy`).~~ done — sops architecture-catalog.yaml + sync unit deployed; catalog.home.lan live (CHANGELOG:369)
 
 ## g) Questions for the owner (unblock-able only by you)
 

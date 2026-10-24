@@ -30,18 +30,18 @@ This session (12:35-12:54):
 
 ## b) PARTIALLY DONE
 
-1. **THE DEPLOY — 11.5h and counting.** Original block: honest rc=12 storm refusal (correct). Current block: PSI ~52% (still ≥ the 20% gate) AND the toplevel needs a rebuild that now includes foreign work. Every hour it ages, the diff between the running system and HEAD grows — today's deploy will activate, in one switch: my 7-repo fix + the offsite-Borg module + sops/configuration/deploy.sh changes. Co-deploying foreign work is expected in this shared-tree model, but it raises the blast radius of this deploy beyond my fix.
-2. **Post-deploy verification** (anchor + smoke + bank-sync canary) — blocked on the deploy.
+~~1. **THE DEPLOY — 11.5h and counting.** Original block: honest rc=12 storm refusal (correct). Current block: PSI ~52% (still ≥ the 20% gate) AND the toplevel needs a rebuild that now includes foreign work. Every hour it ages, the diff between the running system and HEAD grows — today's deploy will activate, in one switch: my 7-repo fix + the offsite-Borg module + sops/configuration/deploy.sh changes. Co-deploying foreign work is expected in this shared-tree model, but it raises the blast radius of this deploy beyond my fix.~~ done — resolved ~13:04: forced deploy, exit-4, recovered to anchored system-796 by 15:06 (15-06 retrospective)
+~~2. **Post-deploy verification** (anchor + smoke + bank-sync canary) — blocked on the deploy.~~ done — anchor verified, smoke 112 PASS/0 FAIL, post-deploy check green (15-06 live-state table)
 3. **User questions:** Q1 answered (moot). **Q2 (renamer landing `e4f29a6` sanction) and Q3 (force-policy standing call) still open** — both now re-framed by the tree churn (see g).
 
 ## c) NOT STARTED
 
 1. **AGENTS.md memory updates** — the full set from the night report (f13-19): vendorHash-wave playbook, BuildFlow hook auto-repair trap, never-truncate-enumerations, abandoned-work landing protocol, bank-sync/go-auto-upgrade pin notes.
 2. **Fleet vendorHash audit tooling** (`scripts/vendorhash-fleet-audit.sh`) — one-pass probe of all LarsArtmann input FODs; would have made the 7-repo wave a 1-round fix.
-3. **Root-cause of the 7-repo wave** — shared actor (PMA dep-sweep / mass agent session) landing lock+go.mod bumps without hash dances. Uninvestigated.
+~~3. **Root-cause of the 7-repo wave** — shared actor (PMA dep-sweep / mass agent session) landing lock+go.mod bumps without hash dances. Uninvestigated.~~ done — root-caused: master-tracking inputs float to stale upstream masters, no upstream Nix CI (2026-10-15_03-05 diagnosis)
 4. **Upstream CI repair on the 7 pushed repos** — bank-sync CI pins go 1.26 vs floor 1.27.1 (red on push), etc.
 5. **This session added nothing new to start** — correct behavior for a verification pass; listed for completeness.
-6. **Review of the foreign offsite-Borg work** — NOT mine, NOT started, and NOT blocked-by-anyone: it rides my deploy regardless (see g, Q1-new).
+~~6. **Review of the foreign offsite-Borg work** — NOT mine, NOT started, and NOT blocked-by-anyone: it rides my deploy regardless (see g, Q1-new).~~ done — verified end-to-end by the 12-42 re-dispatch + 02-01 closeout §a.3; deployed dormant in system-796
 
 ## d) TOTALLY FUCKED UP (own mistakes, honestly)
 
@@ -71,14 +71,14 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 
 **Immediate (deploy-critical, updated for tree churn):**
 
-1. Decide deploy posture (user): wait for PSI <20% then normal deploy (rebuild of `fj0qxm71` included), or force. See g/Q3.
-2. Read the foreign `deploy.sh` diff (4 lines) BEFORE any deploy — deploy.sh is the mechanism every post-switch step rides; foreign edits to it are load-bearing for my deploy too.
-3. Check the foreign sops.nix additions (+35 lines) against `sops-key-audit` — if the Borg leg declares new secret keys, my deploy either carries them or eval-fails at the audit; know which before building.
-4. Skim-review `platforms/nixos/system/backup.nix` (+268) for deploy-blocking classes (eval assertions, systemd shapes, unit names colliding with deploy.sh's provisioner list — deploy-restart-audit WILL cross-reference its oneshots against deploy.sh, and the foreign deploy.sh edit may or may not cover it).
-5. Rebuild toplevel (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going`) once — enumerates any breakage the foreign work introduced WITH my fix, one pass, before the pressure gate is even in play.
-6. Deploy when gate allows (or per user's force call).
-7. Verify anchor: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (exit-4 → re-run rule).
-8. `nix run .#post-deploy-check` — now must also smoke the new offsite-Borg units (they're in the generation).
+~~1. Decide deploy posture (user): wait for PSI <20% then normal deploy (rebuild of `fj0qxm71` included), or force. See g/Q3.~~ **Won't implement — one-shot; window passed — deploy forced 2026-09-22 13:04 and recovered (15-06).**
+~~2. Read the foreign `deploy.sh` diff (4 lines) BEFORE any deploy — deploy.sh is the mechanism every post-switch step rides; foreign edits to it are load-bearing for my deploy too.~~ **Won't implement — one-shot; window passed — that deploy completed 2026-09-22 (system-796).**
+~~3. Check the foreign sops.nix additions (+35 lines) against `sops-key-audit` — if the Borg leg declares new secret keys, my deploy either carries them or eval-fails at the audit; know which before building.~~ **Won't implement — one-shot; window passed — batch deployed green, sops-key-audit in flake check passed since.**
+~~4. Skim-review `platforms/nixos/system/backup.nix` (+268) for deploy-blocking classes (eval assertions, systemd shapes, unit names colliding with deploy.sh's provisioner list — deploy-restart-audit WILL cross-reference its oneshots against deploy.sh, and the foreign deploy.sh edit may or may not cover it).~~ done — reviewed + eval/assertion-verified by the 12-42 re-dispatch (enabled-shape eval, tripwire, dormant leak-check)
+~~5. Rebuild toplevel (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going`) once — enumerates any breakage the foreign work introduced WITH my fix, one pass, before the pressure gate is even in play.~~ **Won't implement — one-shot; window passed — toplevel rebuilt + deployed 2026-09-22 (system-796).**
+~~6. Deploy when gate allows (or per user's force call).~~ **NOT-DO — NOT-DO — dup (of b.1, verified closed: system-796).**
+~~7. Verify anchor: `readlink /nix/var/nix/profiles/system` == `/run/current-system` (exit-4 → re-run rule).~~ **NOT-DO — NOT-DO — dup (of b.2, verified closed: 15-06 anchor check).**
+~~8. `nix run .#post-deploy-check` — now must also smoke the new offsite-Borg units (they're in the generation).~~ **NOT-DO — NOT-DO — dup (of b.2; post-deploy check all-green 15-06).**
 9. Confirm bank-sync canary/pipeline units green (the unit that started this whole wave).
 10. Get Q2 answered (renamer `e4f29a6` sanction) — it rides this deploy either way.
 
@@ -92,7 +92,7 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 **Prevent the next wave (systemic):**
 
 15. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): probe all LarsArtmann inputs' `#default.goModules` at lock revs in one pass; wire into pre-deploy §11 or a flake check.
-16. Root-cause the wave: diff the 7 repos' recent commits for the shared actor landing bumps without hash dances.
+~~16. Root-cause the wave: diff the 7 repos' recent commits for the shared actor landing bumps without hash dances.~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: 2026-10-15 diagnosis).**
 17. Extend pre-deploy §11 to cover upstream-flake package inputs (currently prints "unable to determine" for 6 flakePkg inputs).
     18-23. AGENTS.md set (from night report f13-19, unchanged): wave playbook; BuildFlow hook trap; abandoned-work protocol; never-truncate rule; bank-sync floor 1.27.1 + hash `q1XZ…` + `a70aaca1` note; go-auto-upgrade master-riding note; 44a9189-wave record. **Plus one new entry: the no-unattended-waits doctrine (d1/e1).**
 
@@ -115,7 +115,7 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 35. Deploy-coordination: adopt/announce a convention for multi-session deploy races (rc=13 exists; nobody's using it as a queue). Maybe a `~/.local/state/systemnix/deploy-claim` convention.
 36. Session-resume protocol: first actions = anchor check + IO check + `git log` delta + toplevel re-eval (codify what I did right this session; make it the documented first four calls).
 37. Consider marking the 01-21 report's §b2 "light switch" claim annotated (docs-health ANNOTATE) — its premise expired at ~08:56 with commit `c35e73ff`.
-38. The `6398b256` verification-pass report claims "offsite Borg leg already complete" — after MY deploy lands, verify that claim against the deployed generation (units exist, timer enabled, smoke passes). Until then it is a foreign session's claim, not a fact.
+~~38. The `6398b256` verification-pass report claims "offsite Borg leg already complete" — after MY deploy lands, verify that claim against the deployed generation (units exist, timer enabled, smoke passes). Until then it is a foreign session's claim, not a fact.~~ done — verified: deployed dormant in system-796 + 02-01 closeout §a.3 re-verification
 
 **Noticed in passing (pre-existing, small):**
 

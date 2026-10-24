@@ -24,7 +24,7 @@
 2. **Restic feature is deploy-true but not yet backup-true.** Password 0600 verified live; the first nightly run fires 05:45 on 2026-09-23 (after this report). The dedup premise ("per-service dumps share ~0 extents") remains unproven until ≥3 runs; the VM test (`tests/test-restic-app-dumps.nix`, written + eval-verified) has still never executed — PSI-gated since writing.
 3. **Offsite Borg leg is dormant by design with open pre-go-live gaps:** no VM test for `backup.nix` (every other backup-producing service has one), no post-deploy smoke, recovery-copy policy undecided, restore drill (TODO_LIST §storage) untouched. Go-live is owner-gated on StorageBox hostname/username + `ssh-keyscan -p 23` host-key pin.
 4. **The reap-discipline cluster is fixed but unguarded.** All four reap surfaces now agree (the deploy ran the reap live at 13:04 — the symlinks exist), but the name set still lives in four hand-kept lists with no parity enforcement, no regression test for either reap site, and `buildcache-init` still does not provision the three new targets (post-USB-recovery the symlinks dangle until the next deploy).
-5. **Lineage closure (06-21 report §b.3):** storage.md rows 80/82 and the TODO_LIST:21 parent note still do not cite `d60d598c` as the review-fix completion (storage.md is outside this pass's write scope; queued).
+~~5. **Lineage closure (06-21 report §b.3):** storage.md rows 80/82 and the TODO_LIST:21 parent note still do not cite `d60d598c` as the review-fix completion (storage.md is outside this pass's write scope; queued).~~ done — lineage cited on storage.md rows 2026-10-01 (TODO_LIST:81)
 
 ## c) NOT STARTED (the window skipped; still open)
 
@@ -34,7 +34,7 @@
    - a THIRD red is now visible on recent pushes: **`secret-history-scan` fails on the scanner's own canaries** — the historical `leak-canary.tmp.md` blob and the `sk-00000…` fixture shapes quoted in `docs/status/2026-09-15_07-32_window-closeout-rerun-gitleaks-rewrite-regression.md` (verified in run `35799069770` logs).
    - Master CI has therefore provided zero signal for ≥2 days while commits kept landing.
 2. **GOTOOLCHAIN predicate single-sourcing:** the CI "Flake input hygiene" step (`nix-check.yml:156`) and the orphan `scripts/check-flake-inputs.sh:37` still carry the OLD bare `GOTOOLCHAIN.*auto` grep that false-positives home.nix's fish session override — the exact class `744f3882` fixed in the hook. Three copies of the predicate, two stale.
-3. **Offsite Borg restore drill** (TODO_LIST line 28) — "a backup you have never restored is Schrödinger's backup".
+~~3. **Offsite Borg restore drill** (TODO_LIST line 28) — "a backup you have never restored is Schrödinger's backup".~~ done — runbook + timed drill landed 2026-09-23 (CHANGELOG:468)
 4. **Restic post-deploy proof chain** (TODO_LIST line 43) — first run + `restic check` + one-file restore smoke + dedup measurement.
 5. **Queue re-dispatch idempotency** — the window contained THREE re-dispatches of already-closed work (…f06434, …81acf, …faaa9), each costing a full session to conclude "already done". Owner-side queue work (TODO_LIST lines 167/174/260 track it).
 6. **`buildcache-init` provisioning, reap single-sourcing + parity gate, mountPoint-vs-HM-symlink eval guard, buildcache VM-test rebuild** — all still open in TODO_LIST §storage (lines 41/42/34 + the library).
@@ -59,24 +59,24 @@
 
 ## f) UP TO 50 NEXT THINGS (top items; harvested into TODO_LIST — see the ticked/appended rows there)
 
-1. Fix the statix finding in `hot-user-caches.nix` (`inherit (cfg) device;` shape) — unblocks ALL skipped CI gates. **[queued]**
-2. Fix the branching-flow ssh fetch in CI VM jobs + audit CV/go-cqrs-lite deploy keys for the same gap. **[queued]**
+~~1. Fix the statix finding in `hot-user-caches.nix` (`inherit (cfg) device;` shape) — unblocks ALL skipped CI gates. **[queued]**~~ done — hot-user-caches.nix:127 `inherit (cfg) device;`
+~~2. Fix the branching-flow ssh fetch in CI VM jobs + audit CV/go-cqrs-lite deploy keys for the same gap. **[queued]**~~ done — NIX_DEPLOY_KEY_BRANCHING_FLOW + ssh-add wired in the vm-tests job (nix-check.yml:238,248)
 3. Converge the GOTOOLCHAIN predicate: CI hygiene step + orphan `check-flake-inputs.sh` onto the hook's predicate (or delete the orphan). **[queued]**
 4. Allowlist the secret-scanner's own canaries (canary marker convention, GH013-safe synthetic shapes). **[queued]**
 5. Consecutive-red CI tripwire (≥3 red `nix-check.yml` runs → page). **[queued]**
 6. Eval-time audit: reject secret-looking-path redirects without UMask/chmod (restic class → flake-check failure). **[queued]**
 7. VM test for `backup.nix` (tripwire/shape/marker) before Borg go-live. **[queued]**
 8. Regression test for both env-less cache reap sites (real-dir/symlink/absent fixtures). **[queued]**
-9. storage.md lineage annotations: cite `d60d598c` on rows 80/82; tick row 82's [watch] (symlinks verified resolved 13:04). **[queued]**
+~~9. storage.md lineage annotations: cite `d60d598c` on rows 80/82; tick row 82's [watch] (symlinks verified resolved 13:04). **[queued]**~~ **NOT-DO — NOT-DO — dup (of b.5, verified closed: TODO_LIST:81).**
 10. End-to-end staged-file drill for the GOTOOLCHAIN guard block (closes "patterns proven, plumbing unexercised"). **[queued]**
 11. Restic first-nightly proof chain (05:45 run): unit green, `.last_success`, `restic check`, one-file restore smoke, dedup ratio. (TODO_LIST line 43)
 12. Retire the restic script-comment drift ("umask 077" → "unit UMask 0077") on next touch. (07-40 §f5)
 13. Borg go-live chain once owner inputs arrive: host-key pin → `borg list` probe → enable → first-run watch. (docs/services/offsite-borg.md)
 14. Borg repo-size projection against the BX11 1 TB quota before the first WAN seed. (12-42 §f5)
 15. `backup_ever_succeeded` integration + ioTier.background on the borg unit + pre/post-deploy smoke entries. (TODO_LIST line 29)
-16. Restore drill runbook + first timed restore. (TODO_LIST line 28)
-17. `buildcache-init` provisions the three new targets (dangling-ENOENT window). (TODO_LIST line 41)
-18. Reap-list single-sourcing + consistency gate. (TODO_LIST line 42)
+~~16. Restore drill runbook + first timed restore. (TODO_LIST line 28)~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: CHANGELOG:468).**
+~~17. `buildcache-init` provisions the three new targets (dangling-ENOENT window). (TODO_LIST line 41)~~ done — buildcache.nix:74-75 (af9b3ef2, deployed + live-verified 2026-10-07)
+~~18. Reap-list single-sourcing + consistency gate. (TODO_LIST line 42)~~ done — single-sourcing landed (0fdbf2d7); symlink-parity assertion remains queued — core ask closed
 19. mountPoint-vs-HM-symlink eval guard. (storage.md library)
 20. Rebuild hot-db/crush-hot-db/buildcache/restic/paperless VM tests in the first calm window (`heavy-job`, io avg10 <20%). (TODO_LIST lines 34, 121, 122 + library)
 21. Decide `$DRY_RUN_CMD` for HM activation `rm -rf` (blocks the audit design). (08-03 g3)
@@ -97,8 +97,8 @@
 36. Socket-presence liveness for project-discovery-daemon (15-06 §c).
 37. Root-context repro of the sandbox setattr EPERM mechanism (chmod 2770 + CAP_FSETID class). (AGENTS 2026-09-22)
 38. btrbk /data EIO repair (P0; blocks the data backup leg since August). (storage.md library)
-39. ClickHouse backup coverage before the next SigNoz upgrade. (TODO_LIST line 26)
-40. 2-disk buildcache btrfs merge window (module flip + reformat same window). (storage.md library)
+~~39. ClickHouse backup coverage before the next SigNoz upgrade. (TODO_LIST line 26)~~ done — clickhouse-db-backup live in signoz.nix (2026-09-23_04-00 §a)
+~~40. 2-disk buildcache btrfs merge window (module flip + reformat same window). (storage.md library)~~ **Won't implement — superseded — merge plan dropped 2026-10-06; SSD2 → dedicated rust-cache (docs/agents/storage.md:84).**
 41. llama-rag spin root-cause (soak under real units ≥10 min before any re-enable). (TODO_LIST §ai-stack)
 42. Owed evo-x2 reboot (flm corpse :52626; `nix run .#pre-reboot-check` first). (AGENTS)
 43. Health Hub fetch-load decision + cadence/timeout module options. (TODO_LIST line 134)
