@@ -54,41 +54,49 @@ last_epoch=0
 # history into one giant delta.
 since=0
 if [ -f "$STATE" ]; then
-  read -r total since < "$STATE" 2>/dev/null || true
+  read -r total since <"$STATE" 2>/dev/null || true
   total="${total:-0}"
   since="${since:-0}"
 else
   since="$("$JOURNALCTL" -k --output=short-unix -n 1 2>/dev/null | tail -1 | awk '{ print $1 }' | cut -d. -f1 || true)"
-  case "$since" in ""|*[!0-9]*) since="$NOW" ;; esac
+  case "$since" in "" | *[!0-9]*) since="$NOW" ;; esac
 fi
 
 EVENTS="$(mktemp)"
 trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS"' EXIT
 
 # grep exits 1 on a zero-match window — healthy, not an error.
-"$JOURNALCTL" -k --output=short-unix --since "@$since" --until "@$NOW" 2>/dev/null \
-  | grep -E 'usb [0-9]+-[0-9.]+: USB disconnect' > "$EVENTS" || true
+"$JOURNALCTL" -k --output=short-unix --since "@$since" --until "@$NOW" 2>/dev/null |
+  grep -E 'usb [0-9]+-[0-9.]+: USB disconnect' >"$EVENTS" || true
 # Fail-closed probe: journalctl itself must still answer.
 if ! "$JOURNALCTL" -k -n 1 >/dev/null 2>&1; then
   scrape_errors=1
 fi
-delta="$(wc -l < "$EVENTS")"
-case "$delta" in *[!0-9]*) delta=0; scrape_errors=1 ;; esac
+delta="$(wc -l <"$EVENTS")"
+case "$delta" in *[!0-9]*)
+  delta=0
+  scrape_errors=1
+  ;;
+esac
 
 if [ "$delta" -gt 0 ]; then
   last_epoch="$(head -1 "$EVENTS" | awk '{ print $1 }' | cut -d. -f1)"
-  case "$last_epoch" in *[!0-9]*|"") last_epoch="$NOW" ;; esac
+  case "$last_epoch" in *[!0-9]* | "") last_epoch="$NOW" ;; esac
 fi
 
 # Rolling-hour window: event epochs, one per line, pruned each run.
 WINDOW_FILE="$STATE_DIR/window"
 WINDOW_TMP="$(mktemp)"
 trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS" "$WINDOW_TMP"' EXIT
-cat "$EVENTS" | awk '{ print $1 }' | cut -d. -f1 >> "$WINDOW_FILE" 2>/dev/null || true
-awk -v cutoff="$((NOW - WINDOW))" '$1 >= cutoff' "$WINDOW_FILE" > "$WINDOW_TMP" 2>/dev/null || true
+cat "$EVENTS" | awk '{ print $1 }' | cut -d. -f1 >>"$WINDOW_FILE" 2>/dev/null || true
+awk -v cutoff="$((NOW - WINDOW))" '$1 >= cutoff' "$WINDOW_FILE" >"$WINDOW_TMP" 2>/dev/null || true
 mv "$WINDOW_TMP" "$WINDOW_FILE"
-last_hour="$(wc -l < "$WINDOW_FILE")"
-case "$last_hour" in *[!0-9]*|"") last_hour=0; scrape_errors=1 ;; esac
+last_hour="$(wc -l <"$WINDOW_FILE")"
+case "$last_hour" in *[!0-9]* | "")
+  last_hour=0
+  scrape_errors=1
+  ;;
+esac
 rate_over=0
 [ "$last_hour" -ge "$THRESHOLD" ] && rate_over=1 || true
 
@@ -113,7 +121,7 @@ total=$((total + delta))
   echo "# HELP usb_flap_scrape_errors Nonzero when the journal read itself failed (fail-closed)"
   echo "# TYPE usb_flap_scrape_errors gauge"
   echo "usb_flap_scrape_errors $scrape_errors"
-} > "$TMP"
+} >"$TMP"
 mv "$TMP" "$OUT"
-echo "$total $NOW" > "$STATE_TMP"
+echo "$total $NOW" >"$STATE_TMP"
 mv "$STATE_TMP" "$STATE"

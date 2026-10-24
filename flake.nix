@@ -1276,6 +1276,7 @@
         ./flake/parts/checks/fixtures-migrations.nix
         ./flake/parts/checks/fixtures-drive-ingest.nix
         ./flake/parts/checks/selftests.nix
+        ./flake/parts/checks/doc-counts.nix
         ./flake/parts/checks/vm-tests.nix
       ]
       ++ discoveredModulePaths;

@@ -324,7 +324,7 @@ build_case() {
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract doc-counts; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -638,6 +638,19 @@ run_case portguard owner-spare-broken port-guard-check fail 'owner-spared' \
 # Green control on the pristine copy: the check must pass unmutated.
 run_case portguard green-control port-guard-check pass 'never-matches' \
   'append:README.md:portguard green control ran'
+
+# ── doc-counts: README/FEATURES asserted counts vs eval truth (16-43 plan T3) ──
+# The 55-vs-131 drift class: a stale number in EITHER surface must fail the
+# eval gate with its own marker (not an eval accident). The gate compares
+# doc-extracted assertions against flake-eval truth — never assert-against-assert.
+run_case doccounts readme-modules doc-counts fail 'doc-counts: README nixosModules asserts' \
+  'sed:README.md:s|`nix eval .#nixosModules` → 131;|`nix eval .#nixosModules` → 130;|'
+run_case doccounts features-packages doc-counts fail 'doc-counts: FEATURES packages asserts' \
+  'sed:FEATURES.md:s|46 packages in|45 packages in|'
+# Anchor-missing leg: a non-numeric stamp kills the anchor regex entirely —
+# the "anchor missing" branch must fire (never silently pass).
+run_case doccounts anchor-missing doc-counts fail 'doc-counts: README gatus endpoints assertion anchor missing' \
+  'sed:README.md:s|` → 228;|` → two-hundred;|'
 
 # ── metricnames: LIVE store-truth sweep (opt-in ONLY — CI has no store access) ──
 # The nightly workflow sets no CASES, so this group never runs in CI: it needs

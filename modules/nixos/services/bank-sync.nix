@@ -809,7 +809,7 @@
                   ensure_named() {
                     endpoint="$1"
                     name="$2"
-                    id=$(api -G --data-urlencode "name__iexact=$name" "$base/api/$endpoint/" | jq -r '.results[0].id // empty')
+                    id=$(api -G --data-urlencode "name__iexact=$name" "$base/api/$endpoint/" | jq -r '.results[0].id // empty' || true)
                     if [ -z "$id" ]; then
                       id=$(api -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$name\"}" "$base/api/$endpoint/" | jq -r '.id')
                       echo "bank-sync-qonto-paperless: created $endpoint '$name' (id $id)" >&2

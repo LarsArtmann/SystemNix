@@ -86,9 +86,10 @@
         # fe13242 nixpkgs. First-hand keep-going probe: specified NQ0ICMtk,
         # got NXdLbWt+.
         services.overview.package =
-          inputs.overview.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=";
-          };
+          inputs.overview.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+            {
+              vendorHash = "sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=";
+            };
 
         assertions = lib.optional daemonMode {
           assertion =

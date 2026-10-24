@@ -754,7 +754,7 @@ _: {
                   # tables (fresh install mid-migration included — that is
                   # exactly the state this unit must NOT clobber).
                   schema=$(runuser -u postgres -- psql -d paperless -Atc \
-                    "select 1 from information_schema.tables where table_schema='public' and table_name='paperless_applicationconfiguration' limit 1")
+                    "select 1 from information_schema.tables where table_schema='public' and table_name='paperless_applicationconfiguration' limit 1" || true)
                   if [ -n "$schema" ]; then
                     echo "paperless-db-restore: schema present - DB not empty, nothing to restore (drop the enable flag)"
                     exit 0

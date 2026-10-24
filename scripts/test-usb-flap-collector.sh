@@ -14,7 +14,10 @@ COLLECTOR="$HERE/usb-flap-collector.sh"
 PASS=0
 FAIL=0
 ok() { PASS=$((PASS + 1)); }
-fail() { FAIL=$((FAIL + 1)); echo "FAIL: $*" >&2; }
+fail() {
+  FAIL=$((FAIL + 1))
+  echo "FAIL: $*" >&2
+}
 assert_eq() { # desc got want
   if [ "$2" = "$3" ]; then ok; else fail "$1: got '$2' want '$3'"; fi
 }
@@ -26,13 +29,14 @@ trap 'rm -rf "$WORK"' EXIT
 # Env: EVENTS_FILE (canned event epochs, one per line), PROBE_RC,
 #      BOOT_RC (first-run boot-timestamp call), plus collector env.
 run_collector() {
-  local dir="$1"; shift
+  local dir="$1"
+  shift
   local stub="$dir/bin"
   mkdir -p "$stub"
   # Absolute-bash shebang: the nix sandbox has no /usr/bin/env.
   local bash_abs
   bash_abs="$(command -v bash)"
-  cat > "$stub/journalctl" <<STUB
+  cat >"$stub/journalctl" <<STUB
 #!$bash_abs
 EVENTS_FILE='${dir}/events.txt'
 PROBE_RC='$PROBE_RC'
@@ -73,7 +77,7 @@ STUB
     export STATE_DIR="$dir/state"
     export THRESHOLD="$THRESHOLD"
     export WINDOW="$WINDOW"
-  bash "$COLLECTOR"
+    bash "$COLLECTOR"
   )
 }
 
@@ -84,8 +88,9 @@ metric() { # prom name
 NOW="$(date +%s)"
 
 # --- Scenario 1: first run, fresh-boot mode (no state replay) -------------
-d="$WORK/s1"; mkdir -p "$d"
-printf '%s\n' "$((NOW - 10))" "$((NOW - 5))" > "$d/events.txt"
+d="$WORK/s1"
+mkdir -p "$d"
+printf '%s\n' "$((NOW - 10))" "$((NOW - 5))" >"$d/events.txt"
 PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 assert_eq "s1 first-run total (boot-only window)" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_total)" "2"
 assert_eq "s1 delta" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_delta)" "2"
@@ -95,39 +100,43 @@ assert_eq "s1 last epoch" "$(metric "$d/textfile/usb-flap.prom" usb_flap_last_di
 assert_eq "s1 scrape_errors clean" "$(metric "$d/textfile/usb-flap.prom" usb_flap_scrape_errors)" "0"
 
 # --- Scenario 2: state resume + delta math across runs --------------------
-d="$WORK/s2"; mkdir -p "$d"
-printf '%s\n' "$((NOW - 100))" > "$d/events.txt"
+d="$WORK/s2"
+mkdir -p "$d"
+printf '%s\n' "$((NOW - 100))" >"$d/events.txt"
 PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 # Second run: state exists (resume since=NOW-100... state since = first-run
 # NOW; fake events all >= since? since stored is first run's NOW, so make
 # the second window contain 2 newer events by lowering the resume point.
-printf '7 %s\n' "$((NOW - 100))" > "$d/state/state"
-printf '%s\n' "$((NOW - 60))" "$((NOW - 30))" "$((NOW - 200))" > "$d/events.txt"
+printf '7 %s\n' "$((NOW - 100))" >"$d/state/state"
+printf '%s\n' "$((NOW - 60))" "$((NOW - 30))" "$((NOW - 200))" >"$d/events.txt"
 PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 assert_eq "s2 total = 7 + 2 resumed" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_total)" "9"
 assert_eq "s2 delta counts only the new window" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_delta)" "2"
 
 # --- Scenario 3: window pruning --------------------------------------------
-d="$WORK/s3"; mkdir -p "$d"
+d="$WORK/s3"
+mkdir -p "$d"
 # Pre-seed the window file with a stale event (older than WINDOW=60) and a
 # fresh one; the fresh run adds two more fresh events, prunes the stale.
 mkdir -p "$d/state"
-printf '%s\n' "$((NOW - 600))" "$((NOW - 10))" > "$d/state/window"
-printf '3 %s\n' "$((NOW - 600))" > "$d/state/state"
-printf '%s\n' "$((NOW - 20))" "$((NOW - 5))" > "$d/events.txt"
+printf '%s\n' "$((NOW - 600))" "$((NOW - 10))" >"$d/state/window"
+printf '3 %s\n' "$((NOW - 600))" >"$d/state/state"
+printf '%s\n' "$((NOW - 20))" "$((NOW - 5))" >"$d/events.txt"
 PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=60 run_collector "$d"
 assert_eq "s3 stale event pruned, fresh kept" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_last_hour)" "3"
 
 # --- Scenario 4: threshold flip --------------------------------------------
-d="$WORK/s4"; mkdir -p "$d"
-for i in 1 2 3 4 5; do printf '%s\n' "$((NOW - i))" >> "$d/events.txt"; done
+d="$WORK/s4"
+mkdir -p "$d"
+for i in 1 2 3 4 5; do printf '%s\n' "$((NOW - i))" >>"$d/events.txt"; done
 PROBE_RC=0 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 assert_eq "s4 rate_over flips at threshold" "$(metric "$d/textfile/usb-flap.prom" usb_flap_rate_over_threshold)" "1"
 assert_eq "s4 last_hour" "$(metric "$d/textfile/usb-flap.prom" usb_flap_disconnects_last_hour)" "5"
 
 # --- Scenario 5: fail-closed side probe ------------------------------------
-d="$WORK/s5"; mkdir -p "$d"
-printf '%s\n' "$((NOW - 10))" > "$d/events.txt"
+d="$WORK/s5"
+mkdir -p "$d"
+printf '%s\n' "$((NOW - 10))" >"$d/events.txt"
 PROBE_RC=1 BOOT_RC=0 THRESHOLD=5 WINDOW=3600 run_collector "$d"
 assert_eq "s5 broken journal flagged fail-closed" "$(metric "$d/textfile/usb-flap.prom" usb_flap_scrape_errors)" "1"
 assert_eq "s5 prom still rendered (never silent)" "$(test -s "$d/textfile/usb-flap.prom" && echo yes)" "yes"

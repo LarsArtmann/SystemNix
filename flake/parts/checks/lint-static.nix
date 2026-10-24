@@ -197,14 +197,14 @@
                 exit 1
               fi
               ${lib.optionalString relayEnabled ''
-              # T-007 regression guard: the relay gate is on the Discord path
-              # only while gatus actually points at it — a reverted
-              # webhook-url silently bypasses every suppression rule.
-              if ! grep -q "webhook-url: http://127.0.0.1:${relayPort}/hook" ${configFile}; then
-                echo "FAIL: gatus-alert-relay is enabled but the rendered gatus config does not point its Discord webhook at the relay:"
-                grep -n "webhook-url" ${configFile} || echo "(no webhook-url line at all)"
-                exit 1
-              fi
+                # T-007 regression guard: the relay gate is on the Discord path
+                # only while gatus actually points at it — a reverted
+                # webhook-url silently bypasses every suppression rule.
+                if ! grep -q "webhook-url: http://127.0.0.1:${relayPort}/hook" ${configFile}; then
+                  echo "FAIL: gatus-alert-relay is enabled but the rendered gatus config does not point its Discord webhook at the relay:"
+                  grep -n "webhook-url" ${configFile} || echo "(no webhook-url line at all)"
+                  exit 1
+                fi
               ''}
               echo "OK: gatus validated the rendered config:"
               grep -E 'Validated [0-9]+ endpoints' validate.log | head -1
