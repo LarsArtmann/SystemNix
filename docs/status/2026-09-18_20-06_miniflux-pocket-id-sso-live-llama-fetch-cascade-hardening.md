@@ -25,9 +25,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **Deploy of the fetch-unit hardening — QUEUED, deliberately not run.** IO storm live during the session (PSI some avg60 peaked ~71%, load 27, 5+ `crush -y` agent sessions churning — the freeze-5 driver class; a second abrupt boot transition at ~19:28→19:31 happened mid-session). Racing a deploy into that is exactly what died at 15:27 today. The tree change is committed; it lands with the next `nix run .#deploy` once the storm drains. Storm was ALREADY draining at report time (avg10 42→, avg60 32).
+~~1. **Deploy of the fetch-unit hardening — QUEUED, deliberately not run.** IO storm live during the session (PSI some avg60 peaked ~71%, load 27, 5+ `crush -y` agent sessions churning — the freeze-5 driver class; a second abrupt boot transition at ~19:28→19:31 happened mid-session). Racing a deploy into that is exactly what died at 15:27 today. The tree change is committed; it lands with the next `nix run .#deploy` once the storm drains. Storm was ALREADY draining at report time (avg10 42→, avg60 32).~~ done — landed with system-786/787 2026-09-20 (docs/status/2026-09-20_15-30 M1)
 2. **End-to-end SSO proof** — everything programmatically verifiable is green, but the actual passkey login needs the user's browser (no non-interactive way to mint an OIDC code). The 19:31 boot-time provisioner run proving the link + green healthcheck is the strongest signal available without the user.
-3. **19:31 reboot nature** — previous boot's journal ends MID-ACTIVITY at 19:28:11 (signoz rule evals, niri metrics — no shutdown sequence), which matches the freeze signature; but `last -x` through my truncated view showed no conclusive `crash` record, and I did NOT run full freeze forensics (out of scope per "don't research unrelated"). Flagged, not diagnosed.
+~~3. **19:31 reboot nature** — previous boot's journal ends MID-ACTIVITY at 19:28:11 (signoz rule evals, niri metrics — no shutdown sequence), which matches the freeze signature; but `last -x` through my truncated view showed no conclusive `crash` record, and I did NOT run full freeze forensics (out of scope per "don't research unrelated"). Flagged, not diagnosed.~~ done — diagnosed as freeze #6 crash (AGENTS.md freeze-#6 bullet; docs/status/2026-09-18_20-06_freeze-6-diagnosis a1)
 
 ## c) NOT STARTED
 
@@ -57,9 +57,9 @@ Nothing. Honest blemishes, all self-caught within one step:
 
 1. Retry SSO login at `https://rss.home.lan` — proves the fix end-to-end.
 2. InboxClean: flip Google OAuth consent screen to "In production" FIRST, then re-consent `main` (runbook in AGENTS.md InboxClean section); verify `/health` shows both accounts `connected`.
-3. When PSI drains: `nix run .#deploy` → lands the fetch hardening (+ whatever else the daemon batched).
+~~3. When PSI drains: `nix run .#deploy` → lands the fetch hardening (+ whatever else the daemon batched).~~ done — deploy landed (docs/status/2026-09-20_15-30 M1)
 4. Post-deploy: verify `llama-rag-model-fetch` shows `active (exited)` and a server restart doesn't re-run it (journal).
-5. Determine whether the ~19:31 boot was a crash (check `last -x` reboot records properly, guard Zone-6 trip counters around 19:28, wtmp) — if crash, run the freeze-forensics template.
+~~5. Determine whether the ~19:31 boot was a crash (check `last -x` reboot records properly, guard Zone-6 trip counters around 19:28, wtmp) — if crash, run the freeze-forensics template.~~ done — freeze #6 root-caused (docs/status/2026-09-18_20-06_freeze-6-diagnosis a1)
 6. After ONE proven SSO login: set miniflux `disableLocalAuth` (go-live gate per runbook).
 7. Update `docs/services/miniflux.md` runbook status line: link converged 2026-09-17, SSO live 2026-09-18.
 8. Check `buildcache-usb-recovery` post-deploy (it failed "still failing I/O" at the 19:31 boot but the mount answered real I/O 8 min later; deploy.sh re-runs it — confirm it converges or the enclosure flapped again).
@@ -72,20 +72,20 @@ Nothing. Honest blemishes, all self-caught within one step:
 13. Add the "sudo/systemctl blocked → use journalctl/unit-files/nix eval" verification recipe to AGENTS.md on next touch.
 14. VM-test note for the fetch unit: pin `RemainAfterExit = true` in `tests/test-*` if a llama-rag test exists, so the amplifier can't silently return.
 15. Re-check `inboxclean-sync` exit-75/OnFailure noise AFTER re-consent (it pages every 30-min tick until then — expect Discord noise).
-16. When llama-rag is re-enabled (post root-cause): the new RemainAfterExit + burst-5 wiring goes live; re-run the unit-context soak discipline from AGENTS.md (direct-run green is NOT unit evidence).
+~~16. When llama-rag is re-enabled (post root-cause): the new RemainAfterExit + burst-5 wiring goes live; re-run the unit-context soak discipline from AGENTS.md (direct-run green is NOT unit evidence).~~ done — re-enabled 2026-10-10, wiring live (docs/services/llama-rag.md:19)
 17. Root-cause the 2026-09-18 llama.cpp spin (ROCm/kernel/GPU-state suspect per AGENTS.md) — prerequisite for re-enabling llama-rag at all.
 18. Miniflux: after go-live, consider retiring the sops break-glass ADMIN_PASSWORD rotation docs to "rotation = UI only" (env rotation is inert for existing users).
 
 **Standing items I noticed but did not touch (scope discipline):**
 19. `/var/lib/forgejo/repositories/lars/{golangci-lint,DynamicMinecraftNetwork}.git` stale commit-graph.lock cleanup (needs forgejo user).
-20. Forgejo mirror: the 2 transferred-to-org repos (DarkBlocks, DialogesWebInterface) still need the owner decision (delete or re-mirror).
+~~20. Forgejo mirror: the 2 transferred-to-org repos (DarkBlocks, DialogesWebInterface) still need the owner decision (delete or re-mirror).~~ done — resolved: kept + re-covered under org (docs/status/2026-10-11_02-17 §7)
 21. CV branch-ref-governed hold — `nix build github:LarsArtmann/CV/master#default.goModules` probe when upstream moves.
 22. Two Artmann-Minecraft transfers + 32 archived-only mirrors: pool-size measurement after first mass migration (forgejo user needed).
 23. Pocket ID groq key decision (ChatService warn is owner-visible in AGENTS.md; no paging) — wire key or disable provider.
 24. Resend domain verification (SPF include replace, not add) — gates paperless/forgejo outbound mail beyond owner-address.
-25. Offsite leg (Hetzner BX11 + BorgBackup) — decided, not deployed.
+~~25. Offsite leg (Hetzner BX11 + BorgBackup) — decided, not deployed.~~ done — implemented 2026-09-22 (docs/services/offsite-borg.md)
 26. TODO_LIST P0: /data EIO inode repair (btrbk-data still aborts on it).
-27. Crush-hot-db: confirm first migration ran post-storm (symlink sweep + PSI baseline vs 40-60%).
+~~27. Crush-hot-db: confirm first migration ran post-storm (symlink sweep + PSI baseline vs 40-60%).~~ done — ran + converged (docs/services/crush.md:101; docs/status/2026-09-29_01-35)
 28. `nixpkgs-llama-rag` pin retirement path: document the ROCm-runtime bisect plan once the spin is root-caused.
 29. Old crush session DBs with pre-migration key residue — inert until rotation; rotation tracked in the persistent-nag TODO.
 30. Sweep `scripts/post-deploy-check.sh` for any remaining probes of retired services (homepage smoke was removed; do a one-pass audit on next touch).

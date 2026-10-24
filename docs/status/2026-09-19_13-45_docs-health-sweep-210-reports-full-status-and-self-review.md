@@ -46,7 +46,7 @@
 | 1 | qmd re-index                                                                                              | The MCP returned file-not-found for the freshest reports during this session — the sweep corpus is unsearchable until re-indexed (flagged by earlier sweeps too)           |
 | 2 | `docs/status/archived/README.md` rewrite                                                                  | Stale layout claims flagged 2026-09-15, still open; my 34 moves add to the dir it describes                                                                                |
 | 3 | Persisted fixture + flake-check registration for `check-todo-system.sh`                                   | Repo convention is committed negative tests (test-scripts.nix style); my selftest is inline-only                                                                           |
-| 4 | `docs/planning/` triage + the superseded 2026-08-31 forgejo plan annotation (flagged by the 17-28 report) | Existing TODO row; adjacent to this sweep's archive work                                                                                                                   |
+| ~~4~~ done — planning triage COMPLETED (docs/status/2026-09-21_16-32 a5) | ~~`docs/planning/` triage + the superseded 2026-08-31 forgejo plan annotation (flagged by the 17-28 report)~~ | ~~Existing TODO row; adjacent to this sweep's archive work~~ |
 | 5 | Sweep-manifest persistence                                                                                | The per-file extraction tables exist ONLY in this conversation — a `docs/status/` manifest (or /tmp ledger) would make sweeps auditable and diffs comparable across sweeps |
 | 6 | Stale-count TODO rows refresh                                                                             | "Consolidate archived (571 files…)" → now 1341; "second-pass annotation (~30 files)" premise changed shape after this sweep                                                |
 
@@ -77,7 +77,7 @@ Nothing shipped broken in the end state: all gates green, both defects fixed bef
 
 1. Wire `check-todo-system.sh` into CI (`nix-check.yml`) — parity with the other script gates
 2. Register it as a flake check + committed fixture in `tests/` (repo convention: persisted negative tests)
-3. Verify the boot-mirror deploy (queue v3, in flight 10:37 during my session) actually LANDED — I never confirmed its outcome
+~~3. Verify the boot-mirror deploy (queue v3, in flight 10:37 during my session) actually LANDED — I never confirmed its outcome~~ done — deploy landed system-786/787 (docs/status/2026-09-20_15-30 M1)
 4. Read back the sed-hunk edits in `AGENTS.md` + `docs/services/forgejo.md` (blanket path replacement inside long prose — verify no narrative distortion)
 5. Reconcile the queue-count arithmetic (279 at the 10:17 split → 212 now: −63 broken +2 harvest = 218 ≠ 212 — parallel sessions pruned rows; confirm nothing was lost)
 6. Persist the sweep manifest (per-file classifications) for auditability + next-sweep diffing
@@ -95,7 +95,7 @@ Nothing shipped broken in the end state: all gates green, both defects fixed bef
 16. Annotate the appendix-only files already IN `docs/status/archived/` (existing row; corpus grew by 34)
 17. Rewrite `docs/status/archived/README.md` (stale layout claims, open since 2026-09-15)
 18. Codify the archive-annotation standard (banner+strike vs per-item) in docs/CONTRIBUTING so the next sweep doesn't re-decide it
-19. `docs/planning/` triage + supersede-annotate the 2026-08-31 forgejo primary plan (flagged by the 17-28 report)
+~~19. `docs/planning/` triage + supersede-annotate the 2026-08-31 forgejo primary plan (flagged by the 17-28 report)~~ done — COMPLETED 2026-09-21 (docs/status/2026-09-21_16-32 a5)
 20. Post-hoc sampling: end-to-end re-read 3 of the 34 archived verdicts (one DONE, one REFERENCE, one superseded-chain) as a quality probe
 
 **Tier 3 — living-docs depth (the VERIFY half I only sampled):**

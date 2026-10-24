@@ -26,7 +26,7 @@
 ## b) PARTIALLY DONE
 
 1. **Niri blur (the headline item)** — _implemented and machine-verified, but invisible until deploy + re-login, and the LOOK is unverified._ niri-flake's typed settings have NO options for niri 26.04's `background-effect` nodes (checked upstream `main` — only a shadow-docstring mentions blur), so `niri-wrapped.nix` appends a catch-all `window-rule { background-effect { blur true } }` to the rendered `programs.niri.finalConfig` and re-validates the whole file with `niri validate` at build (same gate niri-flake itself uses — a bad KDL fails the build, not the session). Xray defaults ON with blur active (wallpaper blurred once per output and reused — the cheap path). **Open halves:** (a) deploy; (b) visual verification by a human (filed as `[blocked:deploy]` in desktop.md); (c) global blur params left at niri defaults (passes 3 / offset 3 / noise 0.02 / saturation 1.5) — untuned; (d) DMS/quickshell **layer-rule** blur deliberately NOT wired — the layer namespace is unverified and I refused to guess an app-id/namespace.
-2. **Everything else in §a is config-complete but DEPLOY-GATED** — the gatus anchors, collector timeouts, audio removal, and fish check all ride the next switch. Until then the deployed generation still runs the old bare patterns / unbounded journalctl / static audio rules.
+~~2. **Everything else in §a is config-complete but DEPLOY-GATED** — the gatus anchors, collector timeouts, audio removal, and fish check all ride the next switch. Until then the deployed generation still runs the old bare patterns / unbounded journalctl / static audio rules.~~ done — deployed at system-787 2026-09-20 (docs/status/2026-09-20_16-31 §1.1)
 3. **Live verification of the niri gatus surface** — item extended (anchored siblings must stay green post-deploy) but still `[blocked:user]`: the bounce-cadence replay and a real SDDM login are owner-performed.
 4. **Roadmap/feature docs** — CHANGELOG updated, but `ROADMAP.md` still lists "Niri blur" as an open idea (now stale — the HM-module-absence rationale is superseded by the KDL-append approach) and `FEATURES.md` has no niri-blur row. Not done this session; listed in §f.
 
@@ -84,8 +84,8 @@
 
 **Immediate — unblock and land this session's work (1–6):**
 
-1. Clear the two foreign toplevel breakers (owner sessions): `system-health-metrics` SC2034 (system-health.nix, `collectEnabledInactive` block) and `systemd-graph-webui-pnpm-deps` hash refresh (`pkgs/systemd-graph`) — OR get owner confirmation they're abandoned and fix them.
-2. `nix run .#deploy` once green — carries: 4 anchored gatus checks, collector timeouts, audio.nix removal, blur KDL, pressure-aware fish check.
+~~1. Clear the two foreign toplevel breakers (owner sessions): `system-health-metrics` SC2034 (system-health.nix, `collectEnabledInactive` block) and `systemd-graph-webui-pnpm-deps` hash refresh (`pkgs/systemd-graph`) — OR get owner confirmation they're abandoned and fix them.~~ done — both cleared: webui hash fixed (docs/status/2026-09-19_16-53 a2-a3); system-health refactor shipped live (docs/status/2026-09-20_16-31 §1.2)
+~~2. `nix run .#deploy` once green — carries: 4 anchored gatus checks, collector timeouts, audio.nix removal, blur KDL, pressure-aware fish check.~~ done — deployed system-787 (docs/status/2026-09-20_16-31 §1.1)
 3. Post-deploy §10: confirm the metric auto-loans show no stale entries (§f26 of the 2026-09-17 closeout — no metrics changed this session, but verify the WARN-free pass).
 4. Post-deploy: `nix run .#post-deploy-check` end-to-end — confirm the new fish labels render (pressure-attributed vs real-regression) and nothing else regressed.
 5. Re-login once and visually verify blur (terminals at 0.88 opacity should show frosted wallpaper) — the filed `[blocked:deploy]` item.

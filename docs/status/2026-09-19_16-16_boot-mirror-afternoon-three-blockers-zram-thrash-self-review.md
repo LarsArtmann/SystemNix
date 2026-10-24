@@ -44,8 +44,8 @@ _Sequence: continuation of `2026-09-19_10-44_boot-mirror-deploy-queue-v3-two-lla
 
 ## Next Steps (awaiting instructions, queue keeps running autonomously)
 
-1. Queue v3c keeps polling; on green×2 it deploys (validation ~15 min, build+switch, then SUCCESS verification: profile ≠ system-785, `/boot-mirror` mounted UUID `4F53-C156`).
-2. After deploy: F06–F13 per the 10-48 plan (mirror verify → pre-reboot-check WARN → `boot-mirror-activate` → pre-reboot-check FAIL).
-3. Then CHANGELOG + plan-doc ticks + pathspec commit + push (authorized), final report with both table views, reboot handed to user.
+~~1. Queue v3c keeps polling; on green×2 it deploys (validation ~15 min, build+switch, then SUCCESS verification: profile ≠ system-785, `/boot-mirror` mounted UUID `4F53-C156`).~~ done — deploy landed system-786 (docs/status/2026-09-20_15-30 M1)
+~~2. After deploy: F06–F13 per the 10-48 plan (mirror verify → pre-reboot-check WARN → `boot-mirror-activate` → pre-reboot-check FAIL).~~ done — M2-M5 all done (docs/status/2026-09-20_15-30)
+~~3. Then CHANGELOG + plan-doc ticks + pathspec commit + push (authorized), final report with both table views, reboot handed to user.~~ done — commit 541fab97 pushed + reports + reboot handoff (docs/status/2026-09-20_15-57 a8-a10)
 
 _Ops state: log at `~/.local/state/boot-mirror-deploy.log` (v3c loop, deadline 19:52). Profile `system-785`. No units touched by this session besides the tree fixes above._

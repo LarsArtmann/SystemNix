@@ -117,19 +117,19 @@
 
 **Immediate (finish batch 1):**
 
-1. Re-run functional smoke test on the CURRENT drv (`9wl0y8x4…`) — assert `system_units_enabled_inactive 0` with the allowlist active.
-2. Run `nix flake check --no-build` (full eval surface incl. assertions; the sops-nix gotcha requires ALSO an evo-x2 eval — both were green mid-session, re-run at quiescence).
-3. `nix fmt --no-update-lock-file -- --ci` check on the four touched files (respecting the parallel-session fmt rule).
+~~1. Re-run functional smoke test on the CURRENT drv (`9wl0y8x4…`) — assert `system_units_enabled_inactive 0` with the allowlist active.~~ done — overhauled collector deployed live at 787 (docs/status/2026-09-20_16-31 §1.2 reads its live output)
+~~2. Run `nix flake check --no-build` (full eval surface incl. assertions; the sops-nix gotcha requires ALSO an evo-x2 eval — both were green mid-session, re-run at quiescence).~~ done — all checks passed (docs/status/2026-09-19_13-45 a14)
+~~3. `nix fmt --no-update-lock-file -- --ci` check on the four touched files (respecting the parallel-session fmt rule).~~ done — tree-wide green (docs/status/2026-09-19_12-02 A7)
 4. Verify the daemon's "+1 other file" halves of `9624ca20`/`d4416e52` (what ELSE got committed alongside my files).
 5. Root cleanup one-liner for the user (sudo-blocked for me): `sudo find /var/lib/prometheus-node-exporter/textfile_collectors -maxdepth 1 -name 'system_health.prom.??????' -mmin +120 -delete` + `sudo rm` … the `buildcache.prom.bKDc8n` corpse (or `trash` it as root).
 6. `trash /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom.tmp` (user-owned, deletable now).
-7. Decide + execute `nix run .#deploy` (owner call — see questions) and run the post-deploy checklist from e.8.
+~~7. Decide + execute `nix run .#deploy` (owner call — see questions) and run the post-deploy checklist from e.8.~~ done — deployed system-787 (docs/status/2026-09-20_16-31 §1.1)
 8. TODO/CHANGELOG housekeeping for completed items: prune #36, #37, #38, #39, #41, I/O-Stall review, .tmp-audit observe-half into `CHANGELOG.md`; re-sync `TODO_LIST.md` monitoring queue; fix the 17 malformed queue rows.
 9. File `searxng-secret-key Type=oneshot` under `docs/todo/services.md` (domain owns the fix).
 
 **Batch 2 (backup observability — designs already done):**
 10. Implement `services.backup-coordination.snapshotSets` (directory/prefix/maxAgeHours/enforced) in `backup-coordination.nix`.
-11. Emit `backup_ever_succeeded{backup}` in the existing per-backup loop (MTIME≠0 gate).
+~~11. Emit `backup_ever_succeeded{backup}` in the existing per-backup loop (MTIME≠0 gate).~~ done — live: backup-coordination.nix:77 emits backup_ever_succeeded (MTIME≠0 gate)
 12. Emit per-set `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with FULL `YYYYMMDDTHHMM` name-parse (mtime fallback) — never day-only (the 26h false-stale trap).
 13. Aggregate `btrbk_snapshots_all_fresh` over `enforced=true` sets only (data-received stays gauge-visible, check-invisible).
 14. Populate the sets from `snapshots.nix` (root `@`, hermes `@home-hermes` conditional on `services.hermes.enable`, data `data` enforced=false, pool-services prefix `*` — basename naming live-confirmed) + forgejo-subvol deliberately skipped (owned by `forgejo_subvol_backup_fresh`, 12h — duplicate alerting avoided).

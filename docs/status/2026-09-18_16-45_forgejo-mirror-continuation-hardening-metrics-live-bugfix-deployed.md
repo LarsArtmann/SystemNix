@@ -74,8 +74,8 @@ The previous session left all fixes committed but UNDEPLOYED and 3 questions ope
 
 | # | Task                                                                                                                                                                                             | Impact | Effort |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ |
-| 1 | `sudo -u forgejo du -sh /var/lib/forgejo` — measure post-migration size + project btrbk root-snapshot growth (the 07:43 (e)1 lesson: measure BEFORE enabling mass ops; do it now that it's done) | High   | S      |
-| 2 | Owner decision: Artmann-Minecraft 2 transfers (delete vs org re-mirror)                                                                                                                          | Medium | S      |
+| ~~1~~ done — du gate measured 67G QLC in the G1 window (docs/status/2026-10-11_02-17 §4) | ~~`sudo -u forgejo du -sh /var/lib/forgejo` — measure post-migration size + project btrbk root-snapshot growth (the 07:43 (e)1 lesson: measure BEFORE enabling mass ops; do it now that it's done)~~ | ~~High~~ | ~~S~~ |
+| ~~2~~ done — owner decision recorded: kept, re-covered under org namespace (docs/status/2026-10-11_02-17 §7) | ~~Owner decision: Artmann-Minecraft 2 transfers (delete vs org re-mirror)~~ | ~~Medium~~ | ~~S~~ |
 | 3 | Owner decision: 32 frozen archives keep-all (default) or prune                                                                                                                                   | Low    | S      |
 | 4 | Collapse `forgejo-ensure-repos` declarative list (split brain with the general listing)                                                                                                          | Low    | S      |
 | 5 | Glance at 1–2 natural 6h reconcile ticks (classification stays clean, pending-deletes don't flap)                                                                                                | Medium | S      |
@@ -87,9 +87,9 @@ The previous session left all fixes committed but UNDEPLOYED and 3 questions ope
 
 | #  | Task                                                                                                                                                                                                                                                    | Impact | Effort |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 9  | llama-rag pinned-build spin regression is LIVE on :8848/:8849 since 14:12 (other session's 14:01 report documents the triggered escape condition; the two spinners ran all through this session) — the config-disable deploy is the pending containment | High   | M      |
+| ~~9~~ done — containment landed: disable deployed+verified (docs/status/2026-09-19_00-19 a1/a3); re-enabled 2026-10-10 | ~~llama-rag pinned-build spin regression is LIVE on :8848/:8849 since 14:12 (other session's 14:01 report documents the triggered escape condition; the two spinners ran all through this session) — the config-disable deploy is the pending containment~~ | ~~High~~ | ~~M~~ |
 | 10 | A ~15:5x–16:30 deploy attempt by another actor produced NO switch (no activation journal, no generation) — if that session believes it deployed, it didn't                                                                                              | Medium | S      |
-| 11 | IO storms remain chronic (34–65% avg10 for hours) whenever parallel agent sessions build; the deploy gate correctly blocked mine — the structural fix (crush-DBs-off-QLC migration finishing) is tracked in TODO_LIST                                   | High   | L      |
+| ~~11~~ done — structural fix finished: crush-hot-db migration ran 2026-09-18 (docs/services/crush.md:101) | ~~IO storms remain chronic (34–65% avg10 for hours) whenever parallel agent sessions build; the deploy gate correctly blocked mine — the structural fix (crush-DBs-off-QLC migration finishing) is tracked in TODO_LIST~~ | ~~High~~ | ~~L~~ |
 
 ## g) Questions I cannot answer myself
 

@@ -28,14 +28,14 @@ The session converted "Forgejo becomes my primary" into a gated, staged, committ
 
 | # | Item                                              | What remains                                                                                                                                                                                                                                                                                                |
 | - | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **Gate G1 (Phase-0 activation)**                  | Owner-run: deploy inert batch → prebuild toplevel → `migrate-forgejo-subvol.sh prepare` + `finalize` (quiet-IO window) → I flip `dedicatedSubvolume = true` → deploy → verify (mount live, 2 consecutive 8h sends, Gatus green, drill OK). Everything is code-complete, nothing is live.                    |
-| 2 | **Plan F05**                                      | "Enable option in configuration.nix" — deliberately NOT done (enablement is gated on G1 by design); the plan's wording ("ship inert first") was ambiguous and should have been written as "enablement happens AT gate F23".                                                                                 |
+| ~~1~~ done — G1 EXECUTED 2026-10-11: migrate+flip+deploy system-864 verified (docs/status/2026-10-11_02-17) | ~~**Gate G1 (Phase-0 activation)**~~ | ~~Owner-run: deploy inert batch → prebuild toplevel → `migrate-forgejo-subvol.sh prepare` + `finalize` (quiet-IO window) → I flip `dedicatedSubvolume = true` → deploy → verify (mount live, 2 consecutive 8h sends, Gatus green, drill OK). Everything is code-complete, nothing is live.~~ |
+| ~~2~~ done — live: configuration.nix:471 forgejo.dedicatedSubvolume = true | ~~**Plan F05**~~ | ~~"Enable option in configuration.nix" — deliberately NOT done (enablement is gated on G1 by design); the plan's wording ("ship inert first") was ambiguous and should have been written as "enablement happens AT gate F23".~~ |
 | 3 | **Report-back tables**                            | Medium table delivered in full; fine table delivered grouped/abbreviated in chat (full text in the plan doc) — acceptable, but the chat version omitted est/dep columns per-row.                                                                                                                            |
-| 4 | **M08 overlap discovery**                         | Mid-session I noticed the parallel session already shipped `system_forgejo_mirror_sync_stalled` (fleet-level). My plan's M07 (per-repo dead candidates) remains valuable but the plan doc does NOT acknowledge the overlap — M07 should read "complements the fleet-stall metric with per-repo divergence". |
-| 5 | **Runbook extensions (F10 partial)**              | The migration script carries its own runbook-as-header; `docs/services/forgejo.md` not yet extended with the subvol/flip/drill/shim sections (planned M19/F73 — not started this session by design, listed here for honesty because the script header is not a substitute).                                 |
+| ~~4~~ done — plan-doc sync incl. M07-overlap note landed (docs/status/2026-09-18_20-10 a8) | ~~**M08 overlap discovery**~~ | ~~Mid-session I noticed the parallel session already shipped `system_forgejo_mirror_sync_stalled` (fleet-level). My plan's M07 (per-repo dead candidates) remains valuable but the plan doc does NOT acknowledge the overlap — M07 should read "complements the fleet-stall metric with per-repo divergence".~~ |
+| ~~5~~ done — runbook + AGENTS staged-primary sections written (docs/status/2026-09-18_20-10 a9) | ~~**Runbook extensions (F10 partial)**~~ | ~~The migration script carries its own runbook-as-header; `docs/services/forgejo.md` not yet extended with the subvol/flip/drill/shim sections (planned M19/F73 — not started this session by design, listed here for honesty because the script header is not a substitute).~~ |
 | 6 | **Pre-deploy §10 awareness**                      | New metrics (`forgejo_subvol_backup_*`) will be auto-loaned by the auto-derived mechanism (verified reading the AGENTS §10 notes) — but I did not RUN the pre-deploy check against the new config; first real deploy will prove it.                                                                         |
 | 7 | **The 5 open questions from the goal discussion** | Only the staged-approach question was answered (implicitly). GitHub-issues post-flip policy, off-LAN, public-repo scope, backup shape, both-ways priority → all parked in the plan's owner-decision packet (M18). Not lost, but also not answered.                                                          |
-| 8 | **Annotating the 2026-08-31 plan**                | The new plan doc says "supersedes" and explains the stale premise; the OLD plan file itself carries no pointer back (that's plan F76, not started — should ideally have landed with the plan commit).                                                                                                       |
+| ~~8~~ done — F76 supersede annotation landed (docs/status/2026-09-18_20-10 a7) | ~~**Annotating the 2026-08-31 plan**~~ | ~~The new plan doc says "supersedes" and explains the stale premise; the OLD plan file itself carries no pointer back (that's plan F76, not started — should ideally have landed with the plan commit).~~ |
 
 ## c) NOT STARTED (from this session's plan; nothing outside it)
 
@@ -78,40 +78,40 @@ The session converted "Forgejo becomes my primary" into a gated, staged, committ
 
 | #  | Task                                                                                                                  | Impact | Effort |
 | -- | --------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1  | Owner: `nix run .#deploy` (ship Phase-0 inert batch)                                                                  | High   | S      |
-| 2  | Owner: prebuild toplevel in a quiet-IO window (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`) | High   | S      |
-| 3  | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh prepare`                                                             | High   | S      |
-| 4  | Owner: `sudo ./scripts/migrate-forgejo-subvol.sh finalize --dry-run` then real `finalize`                             | High   | S      |
-| 5  | Me: flip `services.forgejo.dedicatedSubvolume = true` on your go                                                      | High   | S      |
-| 6  | Owner: deploy; verify mount + forgejo healthy + mirrors syncing                                                       | High   | S      |
+| ~~1~~ done — inert batch shipped (deploys 785-787); flip deployed system-864 (docs/status/2026-10-11_02-17 §5) | ~~Owner: `nix run .#deploy` (ship Phase-0 inert batch)~~ | ~~High~~ | ~~S~~ |
+| ~~2~~ done — build ran in the G1 sequence (docs/status/2026-10-11_02-17 §4: build → prepare → finalize → deploy) | ~~Owner: prebuild toplevel in a quiet-IO window (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`)~~ | ~~High~~ | ~~S~~ |
+| ~~3~~ done — executed: prepare 71.75G @ 200 MB/s (docs/status/2026-10-11_02-17 §4) | ~~Owner: `sudo ./scripts/migrate-forgejo-subvol.sh prepare`~~ | ~~High~~ | ~~S~~ |
+| ~~4~~ done — executed: finalize clean, rename-only swap (docs/status/2026-10-11_02-17 §4) | ~~Owner: `sudo ./scripts/migrate-forgejo-subvol.sh finalize --dry-run` then real `finalize`~~ | ~~High~~ | ~~S~~ |
+| ~~5~~ done — live: configuration.nix:471 | ~~Me: flip `services.forgejo.dedicatedSubvolume = true` on your go~~ | ~~High~~ | ~~S~~ |
+| ~~6~~ done — system-864: API 200, mount subvol=hot/forgejo subvolid 260 (docs/status/2026-10-11_02-17 §5) | ~~Owner: deploy; verify mount + forgejo healthy + mirrors syncing~~ | ~~High~~ | ~~S~~ |
 | 7  | Verify 2 consecutive 8h btrbk receives pool-side + freshness Gatus green                                              | High   | S      |
 | 8  | First restore-drill run (or `systemctl start forgejo-restore-drill`) — proves/fixes the d6 zip-layout assumption      | High   | S      |
-| 9  | `sudo -u forgejo du -sh /var/lib/forgejo` (M17) + pool growth projection                                              | Med    | S      |
+| ~~9~~ done — du gate 67G measured (docs/status/2026-10-11_02-17 §4) | ~~`sudo -u forgejo du -sh /var/lib/forgejo` (M17) + pool growth projection~~ | ~~Med~~ | ~~S~~ |
 | 10 | Burn-in window (≥24h): watch subvol backup + mirror sync + no IO-storm interaction with the 8h sends                  | High   | —      |
 
 **Session-quality debts (from d/e — do these before M05):**
 
 | #  | Task                                                                                              | Impact | Effort |
 | -- | ------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 11 | Fixture-test `migrate-forgejo-subvol.sh` guard branches (stubbed rsync/systemctl/btrfs)           | High   | M      |
-| 12 | `systemd-analyze calendar '*-*-* 05,13,21:40:00'` — prove the comma-hour parse                    | Med    | S      |
+| ~~11~~ done — 7-branch fixture green (docs/status/2026-09-18_20-10 a5) | ~~Fixture-test `migrate-forgejo-subvol.sh` guard branches (stubbed rsync/systemctl/btrfs)~~ | ~~High~~ | ~~M~~ |
+| ~~12~~ done — proven: normalizes, 3 slots 8h apart (docs/status/2026-09-18_20-10 a6) | ~~`systemd-analyze calendar '*-*-* 05,13,21:40:00'` — prove the comma-hour parse~~ | ~~Med~~ | ~~S~~ |
 | 13 | Verify forgejo dump zip layout (forgejo source or first drill run) + fix drill discovery if wrong | High   | S      |
-| 14 | Sync plan doc F19 (+F05 wording, M07 overlap note, F16 dryrun-timing note)                        | Med    | S      |
-| 15 | Annotate the 2026-08-31 plan with the supersede pointer (F76)                                     | Low    | S      |
+| ~~14~~ done — plan-doc sync landed (docs/status/2026-09-18_20-10 a8) | ~~Sync plan doc F19 (+F05 wording, M07 overlap note, F16 dryrun-timing note)~~ | ~~Med~~ | ~~S~~ |
+| ~~15~~ done — F76 landed (docs/status/2026-09-18_20-10 a7) | ~~Annotate the 2026-08-31 plan with the supersede pointer (F76)~~ | ~~Low~~ | ~~S~~ |
 | 16 | Extract collector/drill scripts or document the shellcheck gap                                    | Low    | S      |
 
 **Phase 1 — Capability (after G1):**
 
 | #  | Task                                                                                                     | Impact | Effort |
 | -- | -------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 17 | M05: `canonicalRepos` option + `forgejo-push-mirror` script (interval "8h", clobber-refuse)              | High   | M      |
-| 18 | M05: fold as phase-3 of `forgejo-github-sync`, fixture-tested                                            | High   | M      |
-| 19 | M06: `forgejo-flip-repo` — preconditions + dry-run                                                       | High   | M      |
-| 20 | M06: delete-mirror → full re-migrate (issues/PRs/labels/milestones/releases/wiki) → push mirror → verify | High   | L      |
-| 21 | M06: fixtures incl. mid-flip failure recovery                                                            | High   | M      |
-| 22 | M06: lossiness notes (reactions/reviews/cross-refs) → runbook                                            | Med    | S      |
-| 23 | M07: per-repo dead-mirror collector (updated_at divergence, complements fleet-stall) + Gatus             | High   | M      |
-| 24 | M08: live-forge census (native/mirror split, runner, workflows, LFS) → runbook                           | Med    | S      |
+| ~~17~~ done — shipped inert, fixture-tested (docs/status/2026-09-18_20-10 a1) | ~~M05: `canonicalRepos` option + `forgejo-push-mirror` script (interval "8h", clobber-refuse)~~ | ~~High~~ | ~~M~~ |
+| ~~18~~ done — phase-3 gating + interval:"8h" fixture (docs/status/2026-09-18_20-10 a1) | ~~M05: fold as phase-3 of `forgejo-github-sync`, fixture-tested~~ | ~~High~~ | ~~M~~ |
+| ~~19~~ done — shipped (docs/status/2026-09-18_20-10 a2) | ~~M06: `forgejo-flip-repo` — preconditions + dry-run~~ | ~~High~~ | ~~M~~ |
+| ~~20~~ done — flip mechanics complete incl. post-verify (docs/status/2026-09-18_20-10 a2) | ~~M06: delete-mirror → full re-migrate (issues/PRs/labels/milestones/releases/wiki) → push mirror → verify~~ | ~~High~~ | ~~L~~ |
+| ~~21~~ done — mid-flip migrate-failure fixture (docs/status/2026-09-18_20-12 a2) | ~~M06: fixtures incl. mid-flip failure recovery~~ | ~~High~~ | ~~M~~ |
+| ~~22~~ done — F35 lossiness doc in runbook (docs/status/2026-09-18_20-10 a2) | ~~M06: lossiness notes (reactions/reviews/cross-refs) → runbook~~ | ~~Med~~ | ~~S~~ |
+| ~~23~~ done — redesigned notice-table collector + Gatus live (docs/status/2026-09-18_20-10 a3) | ~~M07: per-repo dead-mirror collector (updated_at divergence, complements fleet-stall) + Gatus~~ | ~~High~~ | ~~M~~ |
+| ~~24~~ done — forgejo-census oneshot + runbook section (docs/status/2026-09-18_20-10 a4) | ~~M08: live-forge census (native/mirror split, runner, workflows, LFS) → runbook~~ | ~~Med~~ | ~~S~~ |
 | 25 | G2: deploy P1 batch + live push-mirror POST 201 proof                                                    | High   | S      |
 
 **Phase 2 — Pilot:**

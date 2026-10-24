@@ -31,13 +31,13 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 
 ## (c) PARTIALLY DONE / in flight
 
-1. **THE DEPLOY (queue v3b, shell 065)**: fired 10:37:01 on gate-green x2 (io 16–17%). In pre-deploy validation (§1 at 10:44; the previous validation pass took ~15 min under load — expect build+switch by ~11:00–11:15). Expected outcome: §12 now warns-not-fails on llama-vlm (`llama-server` store path "not built yet" = WARN class), everything else unchanged from the 10:21 run (61 passed).
-2. After deploy SUCCESS: verify mirror live → pre-reboot-check §11 (WARN-grade) → `nix run .#boot-mirror-activate` → pre-reboot-check again (§11 FAIL-grade green) → CHANGELOG + plan ticks 6/7/9 → hand reboot decision to user.
+~~1. **THE DEPLOY (queue v3b, shell 065)**: fired 10:37:01 on gate-green x2 (io 16–17%). In pre-deploy validation (§1 at 10:44; the previous validation pass took ~15 min under load — expect build+switch by ~11:00–11:15). Expected outcome: §12 now warns-not-fails on llama-vlm (`llama-server` store path "not built yet" = WARN class), everything else unchanged from the 10:21 run (61 passed).~~ done — system-786/787 landed+anchored (docs/status/2026-09-20_15-30 M1)
+~~2. After deploy SUCCESS: verify mirror live → pre-reboot-check §11 (WARN-grade) → `nix run .#boot-mirror-activate` → pre-reboot-check again (§11 FAIL-grade green) → CHANGELOG + plan ticks 6/7/9 → hand reboot decision to user.~~ done — full chain M2-M6 done (docs/status/2026-09-20_15-30)
 
 ## (d) NOT STARTED
 
-1. Item 8 (reboot + BootCurrent verification) — user-gated by design.
-2. CHANGELOG entry + plan-doc checklist ticks — deliberately sequenced AFTER deploy/activation so they record real outcomes (generation number, BootOrder).
+~~1. Item 8 (reboot + BootCurrent verification) — user-gated by design.~~ done — DONE 2026-10-15: Samsung live boot drive, decode-verified (docs/todo/storage.md:42)
+~~2. CHANGELOG entry + plan-doc checklist ticks — deliberately sequenced AFTER deploy/activation so they record real outcomes (generation number, BootOrder).~~ done — landed (docs/status/2026-09-20_15-30 M6)
 3. Post-deploy §15 mirror-freshness assert + system-health mirror-age metric (plan-doc items 13/14 — optional hardening, unchanged stance).
 
 ## (e) What I fucked up / got wrong (self-review)
@@ -54,14 +54,14 @@ _Sequence: continuation of `2026-09-19_09-48_samsung-boot-mirror-queue-recovery-
 
 ## (g) Next things (prioritized; not all mine)
 
-1. Deploy completes → verify `/boot-mirror` mount (by-uuid `4F53-C156`), `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi`, kernel entries, ESP df
-2. `nix run .#pre-reboot-check` → §11 WARN-grade green, exit 0
-3. `nix run .#boot-mirror-activate` → must print the ✓ line; QLC stays second
-4. pre-reboot-check again → §11 FAIL-grade green
-5. CHANGELOG entry (boot-mirror + both llama-vlm fixes + deploy rc 12/13 doctrine)
-6. Plan-doc ticks 6, 7, 9 (leave 8 unchecked until reboot)
+~~1. Deploy completes → verify `/boot-mirror` mount (by-uuid `4F53-C156`), `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi`, kernel entries, ESP df~~ done — verified: UUID 4F53-C156, 312M mirrored (docs/status/2026-09-20_15-30 M2)
+~~2. `nix run .#pre-reboot-check` → §11 WARN-grade green, exit 0~~ done — green (docs/status/2026-09-20_15-30 M3)
+~~3. `nix run .#boot-mirror-activate` → must print the ✓ line; QLC stays second~~ done — activation succeeded (docs/status/2026-09-20_15-30 M4)
+~~4. pre-reboot-check again → §11 FAIL-grade green~~ done — 23/0 (docs/status/2026-09-20_15-30 M5)
+~~5. CHANGELOG entry (boot-mirror + both llama-vlm fixes + deploy rc 12/13 doctrine)~~ done — 2 entries (docs/status/2026-09-20_15-30 M6)
+~~6. Plan-doc ticks 6, 7, 9 (leave 8 unchecked until reboot)~~ done — (docs/status/2026-09-20_15-30 M6)
 7. Ask user: reboot timing
-8. Post-reboot: `bootctl status` Current Boot Loader PARTUUID `023f66c0-…`, pre-reboot-check green, QLC fallback intact
+~~8. Post-reboot: `bootctl status` Current Boot Loader PARTUUID `023f66c0-…`, pre-reboot-check green, QLC fallback intact~~ done — verified 2026-10-15 (docs/todo/storage.md:42)
 9. Watch first nightly sync for drift alerts
 10. Optional: deliberate firmware-menu QLC fallback boot test
 11. ESP growth watch (configurationLimit 50 × mirrored kernels)

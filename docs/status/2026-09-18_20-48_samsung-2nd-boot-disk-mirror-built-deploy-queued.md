@@ -60,15 +60,15 @@ Everything code-side is BUILT, evaluated, shellcheck-clean, logic-fixture-tested
 
 ## (g) NEXT 50-ish (this feature's ladder, impact-ordered)
 
-1. Deploy when the gate opens (queued job does this) — watch activation for the new mount+unit start
-2. `journalctl -u boot-mirror-sync` — must show `OK — N entries` (or fail loudly)
-3. `findmnt /boot-mirror` + `df -h` + `bootctl --esp-path=/boot-mirror is-installed` (via §11)
-4. `nix run .#pre-reboot-check` — §11 WARN-grade green (pre-activation)
-5. `nix run .#boot-mirror-activate` — verify printed BootOrder: Samsung entry first
-6. `nix run .#pre-reboot-check` again — §11 FAIL-grade green
-7. REBOOT (user decision — kills sessions)
-8. Post-reboot: `bootctl status` Current Boot Loader partition = `023f66c0-…`; `efibootmgr | BootCurrent`; three-way anchor; failed-unit sweep; gatus/system-health green
-9. CHANGELOG.md entry + plan-doc checkboxes closed
+~~1. Deploy when the gate opens (queued job does this) — watch activation for the new mount+unit start~~ done — system-786/787 deployed+anchored 2026-09-20 (docs/status/2026-09-20_15-30 M1)
+~~2. `journalctl -u boot-mirror-sync` — must show `OK — N entries` (or fail loudly)~~ done — "OK — 8 entries, 312M mirrored" (docs/status/2026-09-20_15-30 M2)
+~~3. `findmnt /boot-mirror` + `df -h` + `bootctl --esp-path=/boot-mirror is-installed` (via §11)~~ done — F06-F09 verified live (docs/status/2026-09-20_15-30 M2)
+~~4. `nix run .#pre-reboot-check` — §11 WARN-grade green (pre-activation)~~ done — exit 0 WARN-grade (docs/status/2026-09-20_15-30 M3)
+~~5. `nix run .#boot-mirror-activate` — verify printed BootOrder: Samsung entry first~~ done — activation succeeded, Samsung first (docs/status/2026-09-20_15-30 M4)
+~~6. `nix run .#pre-reboot-check` again — §11 FAIL-grade green~~ done — 23 pass/0 fail strict grade (docs/status/2026-09-20_15-30 M5)
+~~7. REBOOT (user decision — kills sessions)~~ done — DONE 2026-10-15: Samsung is live boot drive (docs/todo/storage.md:42)
+~~8. Post-reboot: `bootctl status` Current Boot Loader partition = `023f66c0-…`; `efibootmgr | BootCurrent`; three-way anchor; failed-unit sweep; gatus/system-health green~~ done — verified: BootCurrent 000C, LoaderDevicePartUUID 023f66c0 across ≥2 boots (docs/todo/storage.md:42)
+~~9. CHANGELOG.md entry + plan-doc checkboxes closed~~ done — CHANGELOG 2 entries + plan ticks 6/7/9 (docs/status/2026-09-20_15-30 M6)
 10. Watch first nightly: sync re-run at boot/deploy only — confirm no drift alerts
 11. Confirm QLC fallback still boots (optional: one deliberate firmware-menu boot test)
 12. ESP growth watch: configurationLimit 50 × ~2 ESPs of kernels — revisit limit if usage climbs

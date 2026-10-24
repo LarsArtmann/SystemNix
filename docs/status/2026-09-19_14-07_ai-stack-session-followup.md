@@ -32,18 +32,18 @@
 
 ## b) PARTIALLY DONE (unchanged, with revisions)
 
-6. flm smoke model-name assertion — already in tree (post-deploy-check.sh:287-299, another session); idle-check test still to write (§f.1).
-7. PMA recalibration — count threshold verified tripping live (1337/24h, 19/1h); ratio metric designed, not implemented; line-text pre-verification now explicitly root-gated (§3 above).
-8. Rogue defense — motivation proven live (2 orphans, 8.4h, >2h CPU burned, intermittent spin); full design complete with the §2 sampling corrections; not implemented.
-9. Paperless-RAG-dark visibility — design complete, not implemented.
-10. Corpse gate — design REVISED to the textfile gate (finding 1); not implemented.
-11. Bisect harness — designed; sampler spec corrected to CPU-delta windows (finding 2); not written; execution root+owner-gated.
-12. Pin-expiry probe — designed, not written.
+~~6. flm smoke model-name assertion — already in tree (post-deploy-check.sh:287-299, another session); idle-check test still to write (§f.1).~~ done — idle-check test landed (docs/status/2026-09-19_17-47 a4)
+~~7. PMA recalibration — count threshold verified tripping live (1337/24h, 19/1h); ratio metric designed, not implemented; line-text pre-verification now explicitly root-gated (§3 above).~~ done — ratio metric landed (docs/status/2026-09-19_17-47 a2)
+~~8. Rogue defense — motivation proven live (2 orphans, 8.4h, >2h CPU burned, intermittent spin); full design complete with the §2 sampling corrections; not implemented.~~ done — dark-guard landed (docs/status/2026-09-19_17-47 a1)
+~~9. Paperless-RAG-dark visibility — design complete, not implemented.~~ done — landed (docs/status/2026-09-19_17-47 a1)
+~~10. Corpse gate — design REVISED to the textfile gate (finding 1); not implemented.~~ done — textfile corpse gate landed (docs/status/2026-09-19_17-47 a3)
+~~11. Bisect harness — designed; sampler spec corrected to CPU-delta windows (finding 2); not written; execution root+owner-gated.~~ done — shipped (docs/status/2026-09-19_17-47 a5)
+~~12. Pin-expiry probe — designed, not written.~~ done — shipped (docs/status/2026-09-19_17-47 a6)
 
 ## c) NOT STARTED (unchanged)
 
-13. All code edits (llama-rag.nix dark-guard; system-health.nix ratio; post-deploy-check.sh corpse gate; tests/test-fastflowlm-idle.nix; scripts/llama-rag-soak.sh; .github/workflows/llama-rag-pin-expiry.yml).
-14. Todo bookkeeping: `docs/todo/ai-stack.md` closures/retags, `TODO_LIST.md` queue sync, CHANGELOG pruning.
+~~13. All code edits (llama-rag.nix dark-guard; system-health.nix ratio; post-deploy-check.sh corpse gate; tests/test-fastflowlm-idle.nix; scripts/llama-rag-soak.sh; .github/workflows/llama-rag-pin-expiry.yml).~~ done — all six landed (docs/status/2026-09-19_17-47 a1-a6)
+~~14. Todo bookkeeping: `docs/todo/ai-stack.md` closures/retags, `TODO_LIST.md` queue sync, CHANGELOG pruning.~~ done — (docs/status/2026-09-19_17-47 a7)
 15. Verification gates (nothing to verify yet).
 16. `[watch]`/`[decision]` items — untouched by design.
 
@@ -62,12 +62,12 @@
 
 ## f) NEXT (updated order; full mechanical designs in the 12:31 report §f, with these revisions)
 
-1. Idle-check stub-injection test (unchanged design, 12:31 §f.1).
-2. PMA ratio metric (12:31 §f.2) — plus the root-gated line-text verification from §3 above (fold into the deploy-verification or hand the user a one-liner).
-3. **llama-rag dark-guard (12:31 §f.3) — now the HIGHEST-urgency item: it detects the two live rogues and the paperless capability loss in one deploy.** Revisions: rogue alert text says "intermittent-spin orphan class (2h+ CPU burned across 8h)"; no point-in-time CPU claims.
-4. **Corpse gate — REVISED (finding 1):** inside the flm smoke block of post-deploy-check.sh, BEFORE the curl: read `system_health.prom` (path verified live: `/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`, world-readable); if `system_service_start_limit_hit{service="fastflowlm"} 1` or `system_service_state_failed{service="fastflowlm"} 1` → `report_fail` fast (no curl, no doomed start, no 480s stall). No journal, no timeout stall. Message keeps the reboot-only guidance.
-5. Soak harness (12:31 §f.5) — sampler corrected to CPU-delta windows (finding 2).
-6. Pin-expiry monthly CI probe (12:31 §f.6, unchanged).
+~~1. Idle-check stub-injection test (unchanged design, 12:31 §f.1).~~ done — landed (docs/status/2026-09-19_17-47 a4)
+~~2. PMA ratio metric (12:31 §f.2) — plus the root-gated line-text verification from §3 above (fold into the deploy-verification or hand the user a one-liner).~~ done — landed (docs/status/2026-09-19_17-47 a2)
+~~3. **llama-rag dark-guard (12:31 §f.3) — now the HIGHEST-urgency item: it detects the two live rogues and the paperless capability loss in one deploy.** Revisions: rogue alert text says "intermittent-spin orphan class (2h+ CPU burned across 8h)"; no point-in-time CPU claims.~~ done — landed (docs/status/2026-09-19_17-47 a1)
+~~4. **Corpse gate — REVISED (finding 1):** inside the flm smoke block of post-deploy-check.sh, BEFORE the curl: read `system_health.prom` (path verified live: `/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`, world-readable); if `system_service_start_limit_hit{service="fastflowlm"} 1` or `system_service_state_failed{service="fastflowlm"} 1` → `report_fail` fast (no curl, no doomed start, no 480s stall). No journal, no timeout stall. Message keeps the reboot-only guidance.~~ done — landed (docs/status/2026-09-19_17-47 a3)
+~~5. Soak harness (12:31 §f.5) — sampler corrected to CPU-delta windows (finding 2).~~ done — shipped (docs/status/2026-09-19_17-47 a5)
+~~6. Pin-expiry monthly CI probe (12:31 §f.6, unchanged).~~ done — shipped (docs/status/2026-09-19_17-47 a6)
    7-11. Owner-gated (unchanged): kill rogues 995413/995415 (re-verify PIDs first; note PID-reuse risk grows with time) + hermes-cron root question; bisect execution; /data EIO triage; root gatus-sqlite history check; pressure-gated deploy of items 1-6.
    12-15. Bookkeeping + verification (12:31 §f.12-15, unchanged).
 7. **NEW small item:** add the "evidence commands carry DIRECT_RC, no pipe-masking" convention to docs/CONTRIBUTING verification patterns (pairs with §e.20).

@@ -25,17 +25,17 @@
 
 1. **Storm-driver attribution** — strong but not airtight: (i) the live 60-second rate measurement was interrupted, so the headline 15.8 MB/s figure carries a caveat (cgroup io.stat RESETS on unit restart — the 11:28 restart means bundle-delta math may mix restart artifacts in); (ii) the storm ALSO raged Sep 16–17 while llama-rag was nominally disabled — the driver of THAT window (trips #299–#337; crush sessions? discordsync?) has NOT been attributed from the older bundles yet.
 2. **Diskstats analysis** — direction correct (QLC root `nvme0n1p6` saturated with reads; Samsung `nvme1n1p2` at 21% busy; DAS disks idle; `/data` model partition ~0 reads — so the spin does NOT re-read model files), but my parse produced **impossible busy percentages (5950%)** — field misalignment vs the bundle format; needs a live re-parse before any number from it is cited.
-3. **Prior session's working-tree changes** still present, still undeployed, still carrying the known exit-4 hazard: `snapshots.nix` verify-gate fix (eval-verified, +7/−1), `AGENTS.md` gotcha bullet, the two 09-17 status reports.
+~~3. **Prior session's working-tree changes** still present, still undeployed, still carrying the known exit-4 hazard: `snapshots.nix` verify-gate fix (eval-verified, +7/−1), `AGENTS.md` gotcha bullet, the two 09-17 status reports.~~ done — deployed with system-786 chain 2026-09-20 (docs/status/2026-09-20_15-30 M1)
 
 ## c) NOT STARTED (this session)
 
-1. **The guard fix — all four items**: staged catch-up re-arm for `btrbk-*`, backup-starvation escalation metric + alerting, restore-capped log dedup, top-IO-offender line in trip messages. The guard module (~800 lines) is STILL not read in full — mandatory before editing.
-2. **Backup seed handoff** — and while the storm ran, a manual `btrbk-root` start would have been guard-killed anyway (correctly).
-3. **Mount options fix** — `/nix` + `/mnt/hot` still lack `commit=300` + `nodiscard` (doctrine violation found 09-17).
-4. **oomd attribution** for the Sep 17 04:01 hermes SIGKILL (one journalctl command, still not run).
+~~1. **The guard fix — all four items**: staged catch-up re-arm for `btrbk-*`, backup-starvation escalation metric + alerting, restore-capped log dedup, top-IO-offender line in trip messages. The guard module (~800 lines) is STILL not read in full — mandatory before editing.~~ done — all 4 implemented (docs/status/2026-09-29_01-45 a4)
+~~2. **Backup seed handoff** — and while the storm ran, a manual `btrbk-root` start would have been guard-killed anyway (correctly).~~ done — obsolete: hermes receives landed Sep 18 (docs/status/2026-09-29_01-45 a2)
+~~3. **Mount options fix** — `/nix` + `/mnt/hot` still lack `commit=300` + `nodiscard` (doctrine violation found 09-17).~~ **Won't implement — .**
+~~4. **oomd attribution** for the Sep 17 04:01 hermes SIGKILL (one journalctl command, still not run).~~ **Won't implement — .**
 5. **The three owed answers** (now owed 3+ turns): `/mnt/hot` naming, DiscordSync-first per-service migration design, disk-layout "what you're missing" synthesis. Evidence gathered across sessions; no answer delivered.
-6. **Generation check** — which generation deployed the llama-rag re-enable; `/run/current-system` anchoring state (interrupted before running).
-7. Post-receive steps: verify-posture decision, hermes subvol finalize.
+~~6. **Generation check** — which generation deployed the llama-rag re-enable; `/run/current-system` anchoring state (interrupted before running).~~ done — verified: system-785 anchored (docs/status/2026-09-19_00-19 a2)
+~~7. Post-receive steps: verify-posture decision, hermes subvol finalize.~~ done — leg proven end-to-end + verify gate green (docs/status/2026-09-18_22-17)
 
 ## d) TOTALLY FUCKED UP!
 
@@ -60,32 +60,32 @@
 
 **P0 — unblock backups + storm closure:**
 
-1. Owner decision on llama-rag (question g)1): re-disable until the ROCm/kernel root-cause lands, or keep the parallel session's experiment running. Highest-leverage storm control; last night proved the cost of inaction (2nd missed backup).
-2. Guard fix 1/4: staged catch-up re-arm — resume `btrbk-*` churn units on a sustained quiet streak (e.g. io avg60 < 25% for 3 consecutive runs) while balances/scrubs keep the strict <40% full-drain gate; tonight's 23:00 timer is the first live test candidate.
-3. Guard fix 2/4: `memory_emergency_guard_backup_starved` metric (churn window open > 6 h with btrbk units stopped) + Gatus check + sev1 notify consumer — makes the silent +24 h backup slip class page.
-4. Guard fix 3/4: restore-capped log dedup (log once per state change, not every 30 s run).
-5. Guard fix 4/4: top-IO-offender line in trip journal messages (per-cgroup io.stat delta tracking in the guard state dir).
-6. Read `memory-emergency-guard.nix` IN FULL before any of the above (still pending).
+~~1. Owner decision on llama-rag (question g)1): re-disable until the ROCm/kernel root-cause lands, or keep the parallel session's experiment running. Highest-leverage storm control; last night proved the cost of inaction (2nd missed backup).~~ done — resolved: re-enabled 2026-10-10 on pinned build (docs/services/llama-rag.md:19)
+~~2. Guard fix 1/4: staged catch-up re-arm — resume `btrbk-*` churn units on a sustained quiet streak (e.g. io avg60 < 25% for 3 consecutive runs) while balances/scrubs keep the strict <40% full-drain gate; tonight's 23:00 timer is the first live test candidate.~~ done — backup catch-up slot implemented (docs/status/2026-09-29_01-45 a4(i))
+~~3. Guard fix 2/4: `memory_emergency_guard_backup_starved` metric (churn window open > 6 h with btrbk units stopped) + Gatus check + sev1 notify consumer — makes the silent +24 h backup slip class page.~~ done — landed + Gatus "Memory Guard Backup Starved" (docs/status/2026-09-29_01-45 a4(ii); gatus-config.nix:1148)
+~~4. Guard fix 3/4: restore-capped log dedup (log once per state change, not every 30 s run).~~ done — landed (docs/status/2026-09-29_01-45 a4(iii))
+~~5. Guard fix 4/4: top-IO-offender line in trip journal messages (per-cgroup io.stat delta tracking in the guard state dir).~~ done — landed (docs/status/2026-09-29_01-45 a4(iv))
+~~6. Read `memory-emergency-guard.nix` IN FULL before any of the above (still pending).~~ done — (docs/status/2026-09-29_01-45 a3)
 7. Deploy the guard fix (user-run `nix run .#deploy`) and verify the catch-up path fires on the first quiet streak.
-8. Backup seed once quiet holds: `sudo systemctl start btrbk-root.service` (user-run); verify `@home-hermes` + `@.20260916T2300`+ receives land in `/mnt/pool/backups/root/`.
+~~8. Backup seed once quiet holds: `sudo systemctl start btrbk-root.service` (user-run); verify `@home-hermes` + `@.20260916T2300`+ receives land in `/mnt/pool/backups/root/`.~~ **Won't implement — .**
 9. Verify tonight's (Sep 18) 23:00 btrbk outcome tomorrow — with PSI already at 33% and llama gone, it has its first real chance in three nights.
 10. snapshots.nix verify-gate posture: implement WARN-until-first-receive (self-resolving: fatal only once a `@home-hermes` receive has ever landed) — removes the exit-4 deploy hazard AND the open question in one shape.
 11. Finish the interrupted live-rate measurement (60 s `/proc` deltas) to lock the attribution beyond the restart-artifact caveat.
 12. Attribute the Sep 16–17 window (trips #299–#337) from older bundles — llama-rag was disabled then; if discordsync/crush dominated, they need their own containment.
-13. `journalctl -u systemd-oomd --since "2026-09-17 03:50"` — attribute the 04:01 hermes SIGKILL.
-14. Generation check: which generation deployed the re-enable; is `/run/current-system` anchored (reboot-revert risk).
+~~13. `journalctl -u systemd-oomd --since "2026-09-17 03:50"` — attribute the 04:01 hermes SIGKILL.~~ **Won't implement — .**
+~~14. Generation check: which generation deployed the re-enable; is `/run/current-system` anchored (reboot-revert risk).~~ done — verified (docs/status/2026-09-19_00-19 a2)
 
 **P1 — owed answers + hardening:**
 15. Deliver the disk-layout "what you're missing" synthesis (mount-opts gap; Samsung single-device + zero SMART/monitoring; root 77% + 118 G dead `@nix`; subvolid=5 toplevel can't snapshot; offsite leg absent; reboot owed).
 16. Deliver the `/mnt/hot` naming proposal (candidates `/mnt/fast`, `/mnt/state`, `/mnt/tlc`; interacts with Phase-2 `hot/<svc>` subvol naming — decide ONCE).
 17. Deliver the per-service migration design (DiscordSync first as Set C; fsync measurement first; Samsung tier).
-18. Resolve the 0.4.0-vs-0.3.0 build discrepancy (d)4) — was the rev pin bypassed?
-19. Mount options: add `commit=300` + `nodiscard` to `/nix` and `/mnt/hot` declarations; note remount/reboot implications.
+~~18. Resolve the 0.4.0-vs-0.3.0 build discrepancy (d)4) — was the rev pin bypassed?~~ **Won't implement — .**
+~~19. Mount options: add `commit=300` + `nodiscard` to `/nix` and `/mnt/hot` declarations; note remount/reboot implications.~~ **Won't implement — .**
 20. discordsync at 9 MB/s sustained — journal peek (reconcile/backfill?); if chronic, its Samsung migration becomes urgent.
 21. Coredump hygiene: 561 MB llama core + 207 GB cumulative coredump-slice IO — check size limits/rotation.
 22. quickshell SIGABRT every ~2 h (ScriptModel UAF) — raise restart resilience or fix.
-23. Extend/add the guard VM test for all four new behaviors (check `tests/` for the existing Zone-5-era guard test first).
-24. Resurrection detector: eval- or runtime-tripwire when a config-disabled service's unit runs.
+~~23. Extend/add the guard VM test for all four new behaviors (check `tests/` for the existing Zone-5-era guard test first).~~ done — scenario 9 green (docs/status/2026-09-30_06-25)
+~~24. Resurrection detector: eval- or runtime-tripwire when a config-disabled service's unit runs.~~ done — llama-rag dark-guard detects port rogues (docs/status/2026-09-19_17-47 a1)
 25. Crush-hot-db migration NEVER ran (276 `.crush` dirs, ~42 GiB on QLC) — run it in a quiet window; it is the structural storm fix for the session-DB class.
 26. hermes subvol finalize after first receive + deploy (`migrate-hermes-subvol.sh status` → root-diff shadowed dirs → finalize).
 27. Delete the dead `@nix` subvol (118 G) — user action, queued since 09-12; root at 77%.

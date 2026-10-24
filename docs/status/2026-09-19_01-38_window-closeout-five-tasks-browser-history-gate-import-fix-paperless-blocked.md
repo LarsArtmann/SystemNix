@@ -19,7 +19,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Hermes `-v` + smoke: in-tree, DEPLOY REQUIRED.** Until `nix run .#deploy`, the new smoke assertion FAILS red on hermes-enabled hosts (a loud true-positive: the deployed unit emits no connectivity signal). Both changes ride the same deploy so the red window is ~zero — unless the script is cherry-picked alone. Positive live proof of the `Connected as` line is still pending the deploy restart.
+~~1. **Hermes `-v` + smoke: in-tree, DEPLOY REQUIRED.** Until `nix run .#deploy`, the new smoke assertion FAILS red on hermes-enabled hosts (a loud true-positive: the deployed unit emits no connectivity signal). Both changes ride the same deploy so the red window is ~zero — unless the script is cherry-picked alone. Positive live proof of the `Connected as` line is still pending the deploy restart.~~ done — deployed: smoke 103 PASS at system-787 incl. hermes leg (docs/status/2026-09-20_16-31 §1.1)
 2. **Import-gate fix: upstream-local, NOT pushed, NOT consumed.** `68a2cd68` is not an ancestor of cqrs-htmx `origin/master` (verified in the 04-47 report) — agent sessions never push. The full chain (push → tag v4 sub-modules → browser-history go.mod → goModules FOD probe → SystemNix input bump → live import-over-cap rejection) is queued as TODO line 44 and is the 80% of the remaining work. **The deployed browser-history still carries hole #3.**
 3. **Paperless E2E: the live-call half is blocked, by design.** Remaining: an embedding request actually completing against a serving :8848, the `paperless_appconfig` DB-vs-env effective check (sudo-gated), and journal corroboration. Effort S once the llama-rag bisect gate (§f1) passes. The reranker wiring clause is correctly MOOT (paperless 3.1.3 has zero reranker support, source-verified).
 4. **OAuth2-first-login live rejection: still unverified** — code-level inference only (shared `registrationMu` + count check). The sibling task converted this into an explicit UNVERIFIED qualification in the close-out + a new P2 user-run passkey-ceremony item (TODO line 73). Correct, but the measurement itself remains open.
@@ -55,14 +55,14 @@
 **Appended to TODO_LIST this closeout (dedup-checked against all 445 open rows):**
 
 1. Bisect the llama.cpp 0.3.0 spin upstream + the ≥10-min REAL-unit soak acceptance gate — THE llama-rag re-enable gate (unblocks paperless RAG; freeze-5's root driver).
-2. Post-deploy smoke for the registration gate using the CSRF double-submit dance (403-closed vs csrf-wall distinguishable).
-3. Gatus check: `browser_history_user_count` decrease/exceed-baseline alert (count-gap exploitation detector).
-4. Post-deploy hermes `-v` verification bundle: `Connected as` positive proof + one-day journal-volume measurement with revert path + version-dependency note in the smoke's fail message.
-5. Paperless RAG degradation visibility ("expects embeddings, :8848 dark") metric/Gatus signal.
+~~2. Post-deploy smoke for the registration gate using the CSRF double-submit dance (403-closed vs csrf-wall distinguishable).~~ done — DONE 2026-10-15 P09: CSRF dance live-proven + wired post-deploy leg (docs/todo/services.md:197)
+~~3. Gatus check: `browser_history_user_count` decrease/exceed-baseline alert (count-gap exploitation detector).~~ done — DONE 2026-10-15 P06 "Browser History User Count" check (docs/todo/services.md:198)
+~~4. Post-deploy hermes `-v` verification bundle: `Connected as` positive proof + one-day journal-volume measurement with revert path + version-dependency note in the smoke's fail message.~~ done — smoke green at 787 (docs/status/2026-09-20_16-31 §1.1)
+~~5. Paperless RAG degradation visibility ("expects embeddings, :8848 dark") metric/Gatus signal.~~ done — landed: paperless_rag_embeddings_dark + Gatus (docs/status/2026-09-19_17-47 a1)
 6. Pre-commit: classify `path ... is not valid` as loud WARN + repair hint (end the orphan-class `--no-verify` habit).
 7. CONTRIBUTING convention: boot-scoped vs window-scoped journal assertions.
-8. Rogue-listener defense for :8848/:8849 while llama-rag is disabled (the 2026-09-18 orphan class can phantom-pass smokes).
-9. Registration-surface audit: `/auth/import` unauthenticated-unreachable on the deployed path + sibling user-creation-path sweep in cqrs-htmx (close the unknown-third-bypass-class question).
+~~8. Rogue-listener defense for :8848/:8849 while llama-rag is disabled (the 2026-09-18 orphan class can phantom-pass smokes).~~ done — landed: llama-rag-dark-guard (docs/status/2026-09-19_17-47 a1)
+~~9. Registration-surface audit: `/auth/import` unauthenticated-unreachable on the deployed path + sibling user-creation-path sweep in cqrs-htmx (close the unknown-third-bypass-class question).~~ done — DONE 2026-10-15 P09 live + code evidence (docs/todo/services.md:200)
 10. Queue intake freshness rule: live-state claims reconcile against the relevant AGENTS.md section before execution.
     11–13. (Blocked questions, also appended): Caddy fence on `/auth/register` as interim mitigation? Gate acceptance re-run timing (post-fix vs post-cleanup reprobe)? Hermes global `-v` permanent posture vs upstream adapter-scoped/env-var ask?
 

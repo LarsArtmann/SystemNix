@@ -29,18 +29,18 @@ At 09:46 the IO-pressure gate went green for the first time (avg10 13–18 %) an
 
 ## b) PARTIALLY DONE
 
-1. **Deploy** — gate green at 09:46, fired, hit rc=13 (lock held by parallel deploy, still running at 09:47, ~7 min elapsed). Outcome pending observer `04B`. If the parallel deploy succeeds, our module ships with it (tree HEAD carries everything); if it fails, re-queue.
-2. **Live mirror verification** — blocked on that deploy completing (findmnt, unit journal, tree parity, SAMSUNG-EFI by-uuid mount).
-3. **CHANGELOG.md entry** — not started (deliberately last, after post-reboot proof).
+~~1. **Deploy** — gate green at 09:46, fired, hit rc=13 (lock held by parallel deploy, still running at 09:47, ~7 min elapsed). Outcome pending observer `04B`. If the parallel deploy succeeds, our module ships with it (tree HEAD carries everything); if it fails, re-queue.~~ done — system-786/787 anchored 2026-09-20 (docs/status/2026-09-20_15-30 M1)
+~~2. **Live mirror verification** — blocked on that deploy completing (findmnt, unit journal, tree parity, SAMSUNG-EFI by-uuid mount).~~ done — F06-F09 live-verified (docs/status/2026-09-20_15-30 M2)
+~~3. **CHANGELOG.md entry** — not started (deliberately last, after post-reboot proof).~~ done — CHANGELOG 2 entries (docs/status/2026-09-20_15-30 M6)
 
 ## c) NOT STARTED
 
-1. `nix run .#boot-mirror-activate` (NVRAM: create `Linux Boot Manager (Samsung)`, BootOrder mirror-first) — needs deployed unit first.
-2. `nix run .#pre-reboot-check` runs (§11 WARN-grade pre-activation, FAIL-grade post-activation).
-3. Reboot (user decision — 3 questions from yesterday still unanswered).
-4. Post-reboot verification (`bootctl status` → Current = Samsung PARTUUID `023f66c0-…`; chain green).
-5. Plan-doc checklist items 6–9 closeout.
-6. AGENTS.md gotcha entries for today's lessons (see d/e).
+~~1. `nix run .#boot-mirror-activate` (NVRAM: create `Linux Boot Manager (Samsung)`, BootOrder mirror-first) — needs deployed unit first.~~ done — executed; Samsung first in BootOrder (docs/status/2026-09-20_15-30 M4; 2026-09-30_12-58)
+~~2. `nix run .#pre-reboot-check` runs (§11 WARN-grade pre-activation, FAIL-grade post-activation).~~ done — WARN + strict grades green (docs/status/2026-09-20_15-30 M3/M5)
+~~3. Reboot (user decision — 3 questions from yesterday still unanswered).~~ done — DONE 2026-10-15: Samsung live boot drive (docs/todo/storage.md:42)
+~~4. Post-reboot verification (`bootctl status` → Current = Samsung PARTUUID `023f66c0-…`; chain green).~~ done — verified green ≥2 boots (docs/todo/storage.md:42)
+~~5. Plan-doc checklist items 6–9 closeout.~~ done — ticks 6/7/9 landed (docs/status/2026-09-20_15-30 M6)
+~~6. AGENTS.md gotcha entries for today's lessons (see d/e).~~ done — AGENTS +2 bullets written 10:15 (docs/status/2026-09-19_10-44 a4)
 
 ## d) TOTALLY FUCKED UP (own goals, no external blame)
 
@@ -61,31 +61,31 @@ At 09:46 the IO-pressure gate went green for the first time (avg10 13–18 %) an
 ## f) Next — up to 50, scoped to this workstream
 
 1. Wait for parallel deploy (observer `04B` logging to `~/.local/state/boot-mirror-deploy.log`)
-2. On completion: check deploy rc + `system-786+` profile exists
-3. Verify anchoring: `readlink /run/current-system` == `readlink /nix/var/nix/profiles/system` (exit-4 skip-profile class)
-4. `findmnt /boot-mirror` — mounted, by-uuid `4F53-C156`, vfat
-5. Confirm `boot-mirror-sync.service` ran (deploy.sh provisioner loop restarts it post-switch)
-6. Spot-check mirror tree: `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi` present (the stale Sep-9 copy had neither)
-7. Full drift gate proof: unit's own `diff -r` passed (journal) — no manual diff needed
-8. Check `\EFI\BOOT\BOOTX64.EFI` now exists on mirror (bootctl fallback path → the inert `UEFI OS` 0x000B entry becomes a bonus third boot path)
-9. ESP free space on Samsung p1 (4 G, kernels duplicated from QLC ESP)
+~~2. On completion: check deploy rc + `system-786+` profile exists~~ done — system-786+ exists anchored (docs/status/2026-09-20_15-30 M1)
+~~3. Verify anchoring: `readlink /run/current-system` == `readlink /nix/var/nix/profiles/system` (exit-4 skip-profile class)~~ done — three-way anchor verified (docs/status/2026-09-20_15-30 M1/F05)
+~~4. `findmnt /boot-mirror` — mounted, by-uuid `4F53-C156`, vfat~~ done — verified (docs/status/2026-09-20_15-30 M2)
+~~5. Confirm `boot-mirror-sync.service` ran (deploy.sh provisioner loop restarts it post-switch)~~ done — ran green, diff gate PASS (docs/status/2026-09-20_15-30 M2)
+~~6. Spot-check mirror tree: `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi` present (the stale Sep-9 copy had neither)~~ done — mirror contents verified (docs/status/2026-09-20_15-30 M2)
+~~7. Full drift gate proof: unit's own `diff -r` passed (journal) — no manual diff needed~~ done — diff-gate PASS journaled (docs/status/2026-09-20_15-57 a3)
+~~8. Check `\EFI\BOOT\BOOTX64.EFI` now exists on mirror (bootctl fallback path → the inert `UEFI OS` 0x000B entry becomes a bonus third boot path)~~ done — §11 tree-identity green incl. bootctl install fallback (docs/status/2026-09-30_12-58 a)
+~~9. ESP free space on Samsung p1 (4 G, kernels duplicated from QLC ESP)~~ done — df 312M/4.0G recorded (docs/status/2026-09-20_15-30)
 10. Record current nvme0/nvme1 mapping for the report (they flip; findmnt truth only)
-11. Run `nix run .#pre-reboot-check` — §11 WARN-grade green (mirror present, not yet first)
+~~11. Run `nix run .#pre-reboot-check` — §11 WARN-grade green (mirror present, not yet first)~~ done — exit 0 (docs/status/2026-09-20_15-30 M3)
 12. Dump `efibootmgr -v` (read-only) for the pre-activation baseline
-13. Run `nix run .#boot-mirror-activate` — must end "✓ firmware now boots the Samsung mirror first"
-14. Verify BootOrder: Samsung entry first, QLC `Linux Boot Manager` 0x0001 preserved as second
-15. Re-run `pre-reboot-check` — §11 now FAIL-grade and green
-16. **USER: reboot decision** (3 unanswered questions below)
-17. Post-reboot: `bootctl status` — Current Boot Loader = PARTUUID `023f66c0-…`
+~~13. Run `nix run .#boot-mirror-activate` — must end "✓ firmware now boots the Samsung mirror first"~~ done — succeeded (docs/status/2026-09-20_15-30 M4)
+~~14. Verify BootOrder: Samsung entry first, QLC `Linux Boot Manager` 0x0001 preserved as second~~ done — 000C first, 0001 second (docs/status/2026-09-20_15-30 M4)
+~~15. Re-run `pre-reboot-check` — §11 now FAIL-grade and green~~ done — 23/0 strict (docs/status/2026-09-20_15-30 M5)
+~~16. **USER: reboot decision** (3 unanswered questions below)~~ done — rebooted; Samsung live boot drive 2026-10-15 (docs/todo/storage.md:42)
+~~17. Post-reboot: `bootctl status` — Current Boot Loader = PARTUUID `023f66c0-…`~~ done — verified (docs/todo/storage.md:42; docs/status/2026-10-16_00-56 a1/a2)
 18. Post-reboot: `pre-reboot-check` green end-to-end
 19. Post-reboot: `post-deploy-check` optional full sweep
 20. Post-reboot: one-time firmware boot-menu test that QLC fallback entry still boots (F8/F11/F12)
 21. Watch guard Zone 6 during any switch in residual storm (btrbk churn re-arm semantics)
-22. CHANGELOG.md entry
-23. Tick plan-doc checklist items 6–9 (`docs/planning/2026-09-18_19-53_…PARETO-PLAN.md`)
-24. AGENTS.md: tmp-cleaner recurrence lesson + queue-v2 pattern (persistent log, retry set, observer)
-25. AGENTS.md: llama-vlm eval-blocker class (types.path vs absolute /data literals)
-26. Add pointer from the 2026-09-18 report to this one (its "In flight" section references the dead /tmp script)
+~~22. CHANGELOG.md entry~~ done — landed (docs/status/2026-09-20_15-30 M6)
+~~23. Tick plan-doc checklist items 6–9 (`docs/planning/2026-09-18_19-53_…PARETO-PLAN.md`)~~ done — (docs/status/2026-09-20_15-30 M6)
+~~24. AGENTS.md: tmp-cleaner recurrence lesson + queue-v2 pattern (persistent log, retry set, observer)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
+~~25. AGENTS.md: llama-vlm eval-blocker class (types.path vs absolute /data literals)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
+~~26. Add pointer from the 2026-09-18 report to this one (its "In flight" section references the dead /tmp script)~~ done — annotated SUPERSEDED/DEAD with pointers (docs/status/2026-09-19_10-44 a)
 27. Evaluate: mirror freshness Gatus check vs system-health unit monitoring (extraMonitoredServices may suffice — the unit's diff gate fails LOUD via onFailure)
 28. If parallel deploy FAILED: re-queue (queue v2 one-liner, log path known) after diagnosing whose failure
 29. If parallel deploy exit-4'd on boot-mirror-sync start: fix module, re-deploy (known recoverable risk from yesterday's report)

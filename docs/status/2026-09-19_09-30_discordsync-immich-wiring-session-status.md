@@ -30,20 +30,20 @@
 | # | Item                                | Gap                                                                                                                                                           |
 | - | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | End-to-end proof of the integration | Verified eval + build + script-logic fixture, but **not** the live round trip (needs deploy + real key)                                                       |
-| 2 | Toplevel build                      | My derivations (units, script, etc.) build clean; the FULL toplevel fails on **pre-existing, unrelated** FOD drift (see c-1)                                  |
-| 3 | Repo formatting hygiene             | My two touched files are formatter-clean (`0 changed` on scoped re-check); the tree still carries 4 files unformatted **at HEAD** (pre-existing, see f-15/16) |
+| ~~2~~ done — toplevel green at system-786/787 (docs/status/2026-09-20_15-30 M1) | ~~Toplevel build~~ | ~~My derivations (units, script, etc.) build clean; the FULL toplevel fails on **pre-existing, unrelated** FOD drift (see c-1)~~ |
+| ~~3~~ done — tree-wide fmt --ci green 2262 files (docs/status/2026-09-19_12-02 A7) | ~~Repo formatting hygiene~~ | ~~My two touched files are formatter-clean (`0 changed` on scoped re-check); the tree still carries 4 files unformatted **at HEAD** (pre-existing, see f-15/16)~~ |
 
 ## c) NOT STARTED
 
 | # | Item                                                                                                                                                                           | Why                                                                                                                  |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| 1 | Repair the FOD hash drift that blocks deploy: `jscpd`/`openseo`/`systemd-graph-webui` pnpm-deps FODs (+ `emeet-pixyd`/`erraudit` go-modules FODs seen failing at the baseline) | Out of task scope; **proven pre-existing** via baseline worktree at `8ddda419` failing with the same hash mismatches |
-| 2 | Deploy evo-x2                                                                                                                                                                  | Blocked by c-1; also IO PSI avg10 was 27% (>20% pressure gate) during the session                                    |
+| ~~1~~ done — all five FODs green — single root failure was nodejs (docs/status/2026-09-20_12-26 a3-a4) | ~~Repair the FOD hash drift that blocks deploy: `jscpd`/`openseo`/`systemd-graph-webui` pnpm-deps FODs (+ `emeet-pixyd`/`erraudit` go-modules FODs seen failing at the baseline)~~ | ~~Out of task scope; **proven pre-existing** via baseline worktree at `8ddda419` failing with the same hash mismatches~~ |
+| ~~2~~ done — deployed 2026-09-20 (docs/status/2026-09-20_15-30 M1) | ~~Deploy evo-x2~~ | ~~Blocked by c-1; also IO PSI avg10 was 27% (>20% pressure gate) during the session~~ |
 | 3 | Real Immich API key creation + paste (user step)                                                                                                                               | Requires Immich UI access                                                                                            |
 | 4 | Post-deploy verification (verify unit "verified" journal line, no `ErrImmichConfigIncomplete`, toggle E2E with a known asset, secret perms on disk)                            | Needs 2+3                                                                                                            |
 | 5 | Persisted regression test (eval-level positive/negative, `tests/`-style)                                                                                                       | Deliberately deferred — session relied on hand-run probes; repo culture would want it persisted                      |
 | 6 | post-deploy-check.sh smoke step asserting the verify unit is not failed post-switch                                                                                            | Not attempted                                                                                                        |
-| 7 | TODO_LIST persistent-nag entry for the key paste                                                                                                                               | Documented in 3 places (docs, AGENTS.md, configuration.nix comment) but not TODO_LIST                                |
+| ~~7~~ done — harvested into services.md + queue (docs/status/2026-09-19_13-45 a4) | ~~TODO_LIST persistent-nag entry for the key paste~~ | ~~Documented in 3 places (docs, AGENTS.md, configuration.nix comment) but not TODO_LIST~~ |
 | 8 | Running the **actual built verify binary** against the **live** rendered template (pre-deploy smoke I missed — see d)                                                          | Missed in-session                                                                                                    |
 
 ## d) TOTALLY FUCKED UP (honest fumbles, this session)
@@ -70,13 +70,13 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 
 **Tier 1 — unblocks deploy (this work ships only after these):**
 
-1. Repair `jscpd` pnpm-deps FOD hash
-2. Repair `openseo` pnpm-deps FOD hash
-3. Repair `systemd-graph-webui` pnpm-deps FOD hash
-4. Repair `emeet-pixyd` go-modules FOD (paste got-hash upstream → push → re-lock, per ecosystem doctrine)
-5. Repair `erraudit` go-modules FOD (same dance)
-6. Re-verify toplevel builds green end-to-end
-7. Deploy evo-x2 once the pressure gate opens (carries this session's change)
+~~1. Repair `jscpd` pnpm-deps FOD hash~~ done — toplevel built green at 786 — no FOD failures remained (docs/status/2026-09-20_12-26 a3)
+~~2. Repair `openseo` pnpm-deps FOD hash~~ done — fixed 2026-09-19 13:52, FOD verified (docs/status/2026-09-19_16-16 §3)
+~~3. Repair `systemd-graph-webui` pnpm-deps FOD hash~~ done — fixed 2026-09-19 15:07, both hash slots correct (docs/status/2026-09-19_16-53 a2-a3)
+~~4. Repair `emeet-pixyd` go-modules FOD (paste got-hash upstream → push → re-lock, per ecosystem doctrine)~~ done — toplevel built green at 786 (docs/status/2026-09-20_12-26 a3)
+~~5. Repair `erraudit` go-modules FOD (same dance)~~ done — toplevel built green at 786 (docs/status/2026-09-20_12-26 a3)
+~~6. Re-verify toplevel builds green end-to-end~~ done — green at system-786 (docs/status/2026-09-20_15-30 M1)
+~~7. Deploy evo-x2 once the pressure gate opens (carries this session's change)~~ done — landed (docs/status/2026-09-20_15-30 M1)
 8. USER: create Immich API key scoped `asset.read`+`asset.upload`; `sops` it into `discordsync-immich.yaml`
 9. Post-deploy: confirm `discordsync-immich-verify` journal says `Immich API key verified`
 10. Post-deploy: confirm journal has NO `ErrImmichConfigIncomplete`
@@ -85,11 +85,11 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 13. Post-deploy: confirm the API key never appears in journald (log-leak sweep)
 
 **Tier 2 — hardening this change (cheap, high value):**
-14. Add TODO_LIST persistent-nag entry for the key paste
+~~14. Add TODO_LIST persistent-nag entry for the key paste~~ done — harvested (docs/status/2026-09-19_13-45 a4)
 15. post-deploy-check.sh: add a step asserting `discordsync-immich-verify` is not failed post-switch
 16. Persist the eval-level regression test (conditional template rendering + unit/secret/timer absence when disabled)
 17. Run the built verify binary against the live rendered template NOW (the missed pre-deploy smoke)
-18. Re-run `nix flake check --no-build` at a quiescent moment AFTER the parallel session's `llama-vlm.nix`/`configuration.nix` edits land (my green is point-in-time)
+~~18. Re-run `nix flake check --no-build` at a quiescent moment AFTER the parallel session's `llama-vlm.nix`/`configuration.nix` edits land (my green is point-in-time)~~ done — all checks passed (docs/status/2026-09-19_13-45 a14)
 19. Timer: `OnCalendar=daily` fires at 00:00:00 (nix-gc collision) — add `RandomizedDelaySec` or move it (cosmetic; 2s probe)
 20. Confirm the first scheduled timer fire (tomorrow 00:00) runs green on cadence
 21. docs: add explicit rollback path (`immich.enable = false`) to the runbook
@@ -105,13 +105,13 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 29. Consider contributing the verify-oneshot pattern upstream as an optional module feature
 
 **Tier 4 — hygiene noticed during the session:**
-30. Tree-wide fmt pass at a quiescent moment, ONE owning session (4 files unformatted at HEAD: `flake.nix`, `boot-mirror-activate.sh`, `migrate-forgejo-subvol.sh`, `pre-reboot-check.sh`)
+~~30. Tree-wide fmt pass at a quiescent moment, ONE owning session (4 files unformatted at HEAD: `flake.nix`, `boot-mirror-activate.sh`, `migrate-forgejo-subvol.sh`, `pre-reboot-check.sh`)~~ done — fmt --ci green 2262 files 0 changed (docs/status/2026-09-19_12-02 A7)
 31. Investigate why the CI fmt gate tolerates those 4 unformatted files (gate scope vs daemon commits)
 32. Audit daemon batch `8efbbd60` (42 files) for contents — confirm nothing unrelated/unsafe rode it
 33. Coordinate (not co-verify) the parallel session's in-flight `llama-vlm.nix` + `configuration.nix` edits
 34. `git fsck --full` once post-session (zero-byte loose-object gotcha; box has crash history — cheap insurance)
 35. Confirm worktree `/home/lars/.cache/immich-audit/nixtest/sn-base` (at `e7cf78d0`, not mine) is still wanted or stale
-36. docs-health HARVEST: route Tier 1–2 items into TODO_LIST.md, Tier 3–4 into ROADMAP (skill-mandated follow-up; this report alone entombs them)
+~~36. docs-health HARVEST: route Tier 1–2 items into TODO_LIST.md, Tier 3–4 into ROADMAP (skill-mandated follow-up; this report alone entombs them)~~ done — harvested (docs/status/2026-09-19_13-45 a4)
 37. Confirm `discordsync` Gatus trio + Immich Gatus check all green post-deploy (availability + the deliberately-red Turso check stays red by design)
 38. Re-check that no OTHER host consumes discordsync with immich semantics that need review (flake check covers eval; this is a config review)
 39. Sweep my AGENTS.md bullet into the next docs-health VERIFY pass (claims match code)

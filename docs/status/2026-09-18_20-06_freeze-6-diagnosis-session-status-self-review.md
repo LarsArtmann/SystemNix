@@ -57,10 +57,10 @@ The auto-commit daemon already committed both session files (git clean).
 
 ## c) NOT STARTED (all from this session's own recommendations)
 
-1. Guard `ioChurnUnits` extension (`crush-hot-db-migrate`,
+~~1. Guard `ioChurnUnits` extension (`crush-hot-db-migrate`,~~ done — live: memory-emergency-guard.nix:1103-1104
    `discordsync-db-heal`).
-2. `discordsync-db-heal` boot-cadence gating / timeout policy.
-3. Post-migration verification per the crush-hot-db module's own
+~~2. `discordsync-db-heal` boot-cadence gating / timeout policy.~~ done — resolved by 20min budget (discordsync.nix:509-514)
+~~3. Post-migration verification per the crush-hot-db module's own~~ done — DONE 2026-09-29: symlink sweep + PSI profile recorded (docs/todo/storage.md:110; docs/status/2026-09-29_01-35)
    contract: symlink sweep (`find ~/projects -mindepth 1 -maxdepth 3
    -name .crush`, no `-type d`) + `node_psi_io_some_avg60` vs the
    40-60% baseline (should now COLLAPSE — this is the structural fix
@@ -116,17 +116,17 @@ Nothing destructive. Two honest failures:
 
 1. Add outcome postscript to the freeze-6 report (migration done,
    PSI drained, flm restore pending).
-2. Verify ioChurnUnits in `memory-emergency-guard.nix` source.
-3. Extend ioChurnUnits with the two recovery readers + negative/VM
+~~2. Verify ioChurnUnits in `memory-emergency-guard.nix` source.~~ done — verified + extended (memory-emergency-guard.nix:1103-1104)
+~~3. Extend ioChurnUnits with the two recovery readers + negative/VM~~ done — extended (memory-emergency-guard.nix:1103-1104) + VM scenario-9 green (docs/status/2026-09-30_06-25)
    test coverage (`tests/` guard suite).
-4. Gate `discordsync-db-heal` (dirty-shutdown marker or longer
+~~4. Gate `discordsync-db-heal` (dirty-shutdown marker or longer~~ done — resolved as timeout-stretch (discordsync.nix:514)
    timeout + ionice idle) — owner decision on posture (see g).
-5. Run the crush-hot-db post-first-run verification (symlink sweep +
+~~5. Run the crush-hot-db post-first-run verification (symlink sweep +~~ done — DONE 2026-09-29 (docs/todo/storage.md:110)
    PSI baseline comparison) and record the delta.
 6. Verify flm socket auto-restore + one consumer round-trip.
 7. Check btrbk 23:00/23:30 sends land; run `btrbk-pool-clean` if
    garbled targets remain from the churn-kills.
-8. Add "Zone 6 tripped in last hour → queue deploy" awareness to
+~~8. Add "Zone 6 tripped in last hour → queue deploy" awareness to~~ done — live: deploy.sh carries trip-recency gate (docs/status/2026-10-10_08-02 e1: three gates incl. trip-recency)
    deploy.sh beyond the avg10 gate (avg300/last-trip check).
 9. Wire freeze-6 follow-ups into `TODO_LIST.md`.
 10. Consider `ConditionPathExists=!<clean-shutdown-marker>`-style

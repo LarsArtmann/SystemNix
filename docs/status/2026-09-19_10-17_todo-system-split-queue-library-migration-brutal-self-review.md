@@ -18,20 +18,20 @@
 
 ## b) PARTIALLY DONE
 
-1. **ROADMAP graduation** — done but defective: see section d. The mechanic worked; the diligence (grep-for-existing-bullet BEFORE inserting) was done for Pi 3/auditd only, not for the 5 inserted items.
-2. **Queue/library duality discipline** — rule documented ("edit both so they cannot drift") in AGENTS.md + tq.md, but **no mechanical enforcement** (see e/1).
+~~1. **ROADMAP graduation** — done but defective: see section d. The mechanic worked; the diligence (grep-for-existing-bullet BEFORE inserting) was done for Pi 3/auditd only, not for the 5 inserted items.~~ done — duplicates merged, rejection reason corrected (docs/status/2026-09-19_13-45 a6)
+~~2. **Queue/library duality discipline** — rule documented ("edit both so they cannot drift") in AGENTS.md + tq.md, but **no mechanical enforcement** (see e/1).~~ done — enforced by standing gate in pre-commit (docs/status/2026-09-19_13-45 a10)
 3. **"Blocked items leave the harvest path"** — true for the file layout, but I did NOT audit which of the 279 queue items already hold active/finished/cancelled TQ tasks; new one-liner text = new dedup keys = the pool will re-dispatch everything dispatchable (~9 days at 30 enqueues/day), including items whose work is already sitting unpushed in working trees.
 
 ## c) NOT STARTED
 
-1. **Standing gate script** (`check-todo-system.sh`: reject `[x]` rows, invalid tags, queue entries whose bold title matches no library entry, dated harvest sections) — designed in conversation, explicitly promised as "the repo's doctrine is standing gates", not built.
+~~1. **Standing gate script** (`check-todo-system.sh`: reject `[x]` rows, invalid tags, queue entries whose bold title matches no library entry, dated harvest sections) — designed in conversation, explicitly promised as "the repo's doctrine is standing gates", not built.~~ done — live: scripts/check-todo-system.sh + pre-commit wiring (docs/status/2026-09-19_13-45 a10)
 2. **Priority signal in the queue** — within-domain prioritized-first ordering exists, but there is no cross-domain P0/P1 marker and no "Top items" section; the old file's global priority reading is gone.
 3. **"Decisions pending" digest** — 47 `[decision]` items are now library-only; the owner's "what do you need from me" view got WEAKER, not better (previously P2/decision items sat in the one file).
 4. **Semantic dedup pass** — only 2 merges done. Known remaining near-dupes carried verbatim: the "deploy the stacked work" family (old lines 288/336/407/613 + decision 657, all in `pipeline.md`, all with passed deadlines), the journald/baseline family, mail-relay rows.
 5. **Stale-premise VERIFY pass** — items with expired time gates ("BEFORE the 2026-09-17 23:00 window", "soak ~2026-09-17") migrated verbatim; several are now factually stale on their face.
 6. **Tag-calibration review** — judgment calls not second-passed: e.g. 149 (recreate docker containers via docker-group = restarts prod stacks, tagged `[ready]` — should an agent do that autonomously?), 661 (llama bisect `[ready]` but the ≥10-min REAL-unit soak needs root), cqrs-htmx fixes `[ready]` though their value only lands after a user push.
 7. **Global docs-health skill alignment** — the user-level skill's HARVEST mode still routes "bounded → TODO_LIST.md" and could resurrect dated sections; project AGENTS.md should win, but nothing guarantees a future skill-driven session reads it that way.
-8. **`nix fmt --no-update-lock-file -- --ci`** on the 7 comment-edited .nix files (comments shouldn't affect the formatter, but unverified).
+~~8. **`nix fmt --no-update-lock-file -- --ci`** on the 7 comment-edited .nix files (comments shouldn't affect the formatter, but unverified).~~ done — tree-wide fmt --ci green same day (docs/status/2026-09-19_12-02 A7)
 9. **docs/README.md / AGENTS architecture tree** — neither checked/updated for the new `docs/todo/` directory.
 
 ## d) TOTALLY FUCKED UP (all confirmed by fresh greps during this self-review, NOT caught in the session close-out)
@@ -54,9 +54,9 @@
 
 **Repairs for this session's defects:**
 
-1. Fix ROADMAP: delete my duplicate AppArmor bullet (or merge with line 45) and correct the rejection context; delete duplicate "Disabled service triage" (line 68) or merge with line 56.
-2. Fix `systems/rpi3-dns.nix` pointer: mark the old reference stale (no item exists) instead of pointing at a fabricated one.
-3. Write + wire `scripts/check-todo-system.sh` (no `[x]` rows anywhere in queue/libraries; tags ∈ vocabulary; every queue bold-title matches exactly one library entry; no `## Added YYYY-MM-DD` sections in TODO_LIST.md) into pre-commit + CI.
+~~1. Fix ROADMAP: delete my duplicate AppArmor bullet (or merge with line 45) and correct the rejection context; delete duplicate "Disabled service triage" (line 68) or merge with line 56.~~ done — (docs/status/2026-09-19_13-45 a6)
+~~2. Fix `systems/rpi3-dns.nix` pointer: mark the old reference stale (no item exists) instead of pointing at a fabricated one.~~ done — replaced with honest stale-marker (docs/status/2026-09-19_13-45 a7)
+~~3. Write + wire `scripts/check-todo-system.sh` (no `[x]` rows anywhere in queue/libraries; tags ∈ vocabulary; every queue bold-title matches exactly one library entry; no `## Added YYYY-MM-DD` sections in TODO_LIST.md) into pre-commit + CI.~~ done — shipped + wired (docs/status/2026-09-19_13-45 a10)
 4. Add the "what will the pool do" note + decide the re-dispatch stance (see question g/1) — possibly tag clearly-in-flight items `[watch]` until their TQ tasks settle.
 
 **Queue/library hardening:**
@@ -71,19 +71,19 @@
 13. Align the global docs-health skill's HARVEST routing with project TODO systems (project-override note or skill patch).
 14. One-line note in AGENTS/CHANGELOG: archived status reports contain now-dead `TODO_LIST.md:<line>` references (frozen by policy, expected).
 15. Update AGENTS architecture tree + docs/README (if it lists docs layout) with `docs/todo/`.
-16. Run `nix fmt --no-update-lock-file -- --ci` over the 7 comment-edited .nix files.
+~~16. Run `nix fmt --no-update-lock-file -- --ci` over the 7 comment-edited .nix files.~~ **NOT-DO — NOT-DO — dup.**
 
 **Highest-value REAL work now visible in the queue** (was buried in dated sections before):
-17. storage: `services.hot-db` Phase-2 module (the Samsung hot-DB tier).
-18. storage: offsite Borg leg implementation (+ restore drill runbook).
+~~17. storage: `services.hot-db` Phase-2 module (the Samsung hot-DB tier).~~ done — live: modules/nixos/services/hot-db.nix + Oct hot-db waves
+~~18. storage: offsite Borg leg implementation (+ restore drill runbook).~~ done — implemented 2026-09-22 (docs/services/offsite-borg.md + offsite-borg-restore.md)
 19. stability: `systemd-analyze verify` sweep + `Upholds=` mount-consumer evaluation + enabled-but-inactive detection net (the pool-boot-dropout class).
-20. monitoring: `signoz_traces_missing` never-seen vs went-dark split + coverage dashboard panel + `tests/test-signoz-coverage.nix`.
+~~20. monitoring: `signoz_traces_missing` never-seen vs went-dark split + coverage dashboard panel + `tests/test-signoz-coverage.nix`.~~ done — resolved by event-wiring flips (docs/status/2026-09-19_12-11 a1: resolves #36/#37)
 21. pipeline: eval-guard follow-ups batch (17-49 §f.2-18: monitoredServices coverage, ReadWritePaths mount-gating, deploy-restart lint, port-audit extensions).
 22. pipeline: pre-commit fast path for docs-only diffs + orphan-path WARN classification (`path … is not valid`).
 23. services: root-cause the InboxClean→Paperless `gmail` tag PATCH rejection.
 24. services: forgejo issue-filing one-liners + `docs/services/discordsync.md` + Turso check self-documentation.
 25. upstream: cqrs-htmx count-gap fix + lost-user-restart regression test (the browser-history gate family).
-26. upstream: dnsblockd release tag decision (expires the rev-pin justification).
+~~26. upstream: dnsblockd release tag decision (expires the rev-pin justification).~~ done — upstream v0.9.3 carries both fixes (docs/todo/upstream.md:89)
 27. monitoring: buildcache-gc observability + generic displaced-cache detector (>1G non-HM `~/.cache/*`).
 28. storage: btrbk-root/pool MemoryHigh extension + eval assertion for `btrfs send` units.
 29. monitoring: postfix `status=bounced` textfile metric (mail-relay invisible-failure class).

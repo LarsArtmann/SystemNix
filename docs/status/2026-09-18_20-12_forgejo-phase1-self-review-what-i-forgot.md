@@ -52,14 +52,14 @@
 
 **Gates & owner decisions**
 
-1. ★ G1 storage migration window + execution (migrate-forgejo-subvol.sh header, 4 steps)
+~~1. ★ G1 storage migration window + execution (migrate-forgejo-subvol.sh header, 4 steps)~~ done — executed 2026-10-11 (docs/status/2026-10-11_02-17)
 2. ★ Answer Q2: GitHub-issues policy post-flip (freeze vs one-way import) — gates M06 usage
 3. ★ Answer Q3: off-LAN stance (re-open or confirm LAN-only)
 4. ★ G2 deploy of the P1 batch + scratch-repo push-mirror 201 probe + census run → runbook
 5. ★ Notices-table growth policy (NEW this session): frozen mirrors write ~1.6k notice rows/day forever — periodic admin purge acceptable, or resolve the frozen set (delete 32 archives / re-home 2 transfers) first?
 
 **Session-debt closeout (next session, no owner needed)**
-6. Fixture-assert `known-stale.txt` persistence in the reconcile path (extend forgejo-scripts-fixture)
+~~6. Fixture-assert `known-stale.txt` persistence in the reconcile path (extend forgejo-scripts-fixture)~~ done — live: flake/parts/checks/fixtures-forgejo.nix:406-409 asserts known-stale persistence
 7. Full rendered-unit eyeball: `forgejo-flip@` complete serviceConfig (EnvironmentFile + harden merge) via nix eval
 8. Mutation-negative pass: break one branch per script, confirm both fixtures go red, revert
 9. First-deploy watch: confirm §10 auto-loans `forgejo_mirror_dead_candidates`/`health_scrape_errors`; expect ONE red dead-mirror cycle until the first reconcile publishes known-stale.txt — pre-brief the Discord channel

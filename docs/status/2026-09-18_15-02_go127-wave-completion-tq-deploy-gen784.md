@@ -27,12 +27,12 @@
 
 ## b) PARTIALLY DONE
 
-1. **llama-rag** — re-enabled in-tree by the parallel session (pinned `llama-cpp-0.3.0` via `nixpkgs-llama-rag`, `TimeoutStopSec=2min`, leak-metrics collector). My gen-784 deploy restarted both servers **under the sustained io-PSI ~55% storm and they wedged mid-load again** (both `:8848/:8849` → 503 "Loading model", 94% CPU spin, 22+ min at last check). The pin itself was live-verified upstream of me; the wedge is the documented 2026-09-02 restart-under-saturation class. Needs a quiet-window manual `systemctl restart llama-embeddings llama-reranker` + re-verify. TODO_LIST updated with the exact steps.
-2. **CV resting state is a rollback** — SystemNix locks `93cf5bc0` (the parallel session's choice, builds green), but upstream master now carries go 1.27 floors + my toolchain fix **without a matching go.sum tidy**; the FOD guard (`go mod tidy inside the vendor FOD changed committed go.sum semantics`) will fire the moment the lock moves forward. Local `go mod tidy` (1.26 AND 1.27, `GOWORK=off`) is a no-op because the divergence comes from the prepared-source's local replaces — a real fix needs the FOD-graph-replicating tidy upstream. CV's own `refresh-vendor-hash` helper also probed a stale rev (93cf5bc0), so the helper itself may need a look.
+~~1. **llama-rag** — re-enabled in-tree by the parallel session (pinned `llama-cpp-0.3.0` via `nixpkgs-llama-rag`, `TimeoutStopSec=2min`, leak-metrics collector). My gen-784 deploy restarted both servers **under the sustained io-PSI ~55% storm and they wedged mid-load again** (both `:8848/:8849` → 503 "Loading model", 94% CPU spin, 22+ min at last check). The pin itself was live-verified upstream of me; the wedge is the documented 2026-09-02 restart-under-saturation class. Needs a quiet-window manual `systemctl restart llama-embeddings llama-reranker` + re-verify. TODO_LIST updated with the exact steps.~~ done — re-enabled healthy 2026-10-10 on pinned 0.3.0 (docs/status/2026-10-10_08-02 a2; configuration.nix:1115)
+~~2. **CV resting state is a rollback** — SystemNix locks `93cf5bc0` (the parallel session's choice, builds green), but upstream master now carries go 1.27 floors + my toolchain fix **without a matching go.sum tidy**; the FOD guard (`go mod tidy inside the vendor FOD changed committed go.sum semantics`) will fire the moment the lock moves forward. Local `go mod tidy` (1.26 AND 1.27, `GOWORK=off`) is a no-op because the divergence comes from the prepared-source's local replaces — a real fix needs the FOD-graph-replicating tidy upstream. CV's own `refresh-vendor-hash` helper also probed a stale rev (93cf5bc0), so the helper itself may need a look.~~ done — lock moved past 93cf5bc0: flake.lock cv rev 028118f0; FOD verify deploy-complete docs/status/2026-10-07_16-55
 3. **overview push state** — SystemNix locks `34217c23` and it builds, but at last check upstream master had unpushed local commits (`19d9a10` on top). If the locked revs are not all pushed, **CI fetch will 404**. I did not push them (not mine, session likely still active at the time).
-4. **SystemNix origin sync** — master carries unpushed commits (observed `fca69359` early in the session; more daemon commits since). CI (nix-check, secret scan) runs only on push. I did not push — no explicit instruction.
-5. **post-deploy CV `/admin` red** — smoke shows `goto: net::ERR_ABORTED at /admin` while the rest of CV renders (cv page, pipeline dashboard, PDF export all PASS). I assumed an auth-redirect class and did NOT verify whether the 93cf5bc0 rollback changed admin routing. Unresolved.
-6. **`nix flake check` never run at final state** — I ran full builds (stronger for FODs) but not the eval-only check (assertions, guards). The pre-commit hook's flake-check leg passed on my doc commit, which covers eval of the tree at commit time — weaker than a deliberate full run.
+~~4. **SystemNix origin sync** — master carries unpushed commits (observed `fca69359` early in the session; more daemon commits since). CI (nix-check, secret scan) runs only on push. I did not push — no explicit instruction.~~ done — pushed 2026-09-20 (docs/status/2026-09-20_15-57 F16: push 4b0c6153..541fab97)
+~~5. **post-deploy CV `/admin` red** — smoke shows `goto: net::ERR_ABORTED at /admin` while the rest of CV renders (cv page, pipeline dashboard, PDF export all PASS). I assumed an auth-redirect class and did NOT verify whether the 93cf5bc0 rollback changed admin routing. Unresolved.~~ done — /admin 200 live fetch (docs/status/2026-09-20_16-31 §1.4); render smoke green docs/status/2026-10-10_08-02 a1
+~~6. **`nix flake check` never run at final state** — I ran full builds (stronger for FODs) but not the eval-only check (assertions, guards). The pre-commit hook's flake-check leg passed on my doc commit, which covers eval of the tree at commit time — weaker than a deliberate full run.~~ done — green ×2 same evening (docs/status/2026-09-18_20-10 a10)
 
 ## c) NOT STARTED
 
@@ -62,32 +62,32 @@
 
 **Immediate (this wave's loose ends)**
 
-1. Quiet-window `systemctl restart llama-embeddings llama-reranker`; verify `:8848/:8849` /health 200 + ~4s load; then run the TODO_LIST paperless-RAG end-to-end item.
+~~1. Quiet-window `systemctl restart llama-embeddings llama-reranker`; verify `:8848/:8849` /health 200 + ~4s load; then run the TODO_LIST paperless-RAG end-to-end item.~~ done — superseded by disable→re-enable 2026-10-10 (docs/status/2026-10-10_08-02; docs/services/llama-rag.md:19)
 2. Push the parallel session's unpushed overview commits (or confirm their session still owns the repo) — SystemNix CI 404s on unpushed locked revs.
 3. Same check for papdashboard (`c7442fe` was locked while their local master moved on) and any other input locked ahead of origin.
-4. Push SystemNix master (multiple daemon commits ahead) so nix-check/secret-scan CI runs again.
-5. CV: do the real go-1.27 FOD-graph tidy upstream (replicate mkPreparedSource replaces), refresh `vendorHash` (fix the `refresh-vendor-hash` helper's stale rev pin too), then move the SystemNix lock past 93cf5bc0.
-6. Verify CV `/admin` ERR_ABORTED — regression from the rollback vs auth-redirect-by-design; fix or re-baseline the smoke.
+~~4. Push SystemNix master (multiple daemon commits ahead) so nix-check/secret-scan CI runs again.~~ done — pushed 2026-09-20 (docs/status/2026-09-20_15-57 F16)
+~~5. CV: do the real go-1.27 FOD-graph tidy upstream (replicate mkPreparedSource replaces), refresh `vendorHash` (fix the `refresh-vendor-hash` helper's stale rev pin too), then move the SystemNix lock past 93cf5bc0.~~ done — lock at 028118f0 with FOD green deploy (flake.lock:939; docs/status/2026-10-07_16-55)
+~~6. Verify CV `/admin` ERR_ABORTED — regression from the rollback vs auth-redirect-by-design; fix or re-baseline the smoke.~~ done — /admin renders 200 (docs/status/2026-09-20_16-31 §1.4)
 7. Diagnose why the deployed-store also contains a go1.25.14-built `signoz-otel-collector-d3bd524` (parallel-session build? wrong go pin somewhere?) even though the deployed unit's `a1d8ac3` is correct go1.26.7.
 8. Sweep every still-locked 1.27-floor repo for the three-wiring-point trap (module-lambda `goPkg` vs `goPkgAttr` vs direct `buildGoModule.override`) before the next `nix flake update` re-trips them: overview's own deps, buildflow, branching-flow, go-cqrs-lite consumers.
-9. `nix flake check --no-build` at the final tree state (never run post-wave).
+~~9. `nix flake check --no-build` at the final tree state (never run post-wave).~~ done — green ×2 (docs/status/2026-09-18_20-10 a10)
 10. Update the AGENTS.md 2026-09-16 pin-audit table (overview/library-policy/go-auto-upgrade/papdashboard/renamer flips + the CV 93cf5bc0 rollback with its guard class).
 11. Triage the foreign `signoz-coverage.nix` edit the daemon committed mid-session (confirm it was formatter-only, no behavior change).
 12. Consider making `deploy.sh` post-switch stop (or gate) llama-rag restarts when io-PSI > threshold at switch time (generalize the flm corpse-guard pattern; TODO_LIST already carries the generalization item).
-13. Re-run `scripts/pre-deploy-check.sh` post-wave to confirm §10 metric gates are green with the new deployed config (loan list may have stale entries to retire).
+~~13. Re-run `scripts/pre-deploy-check.sh` post-wave to confirm §10 metric gates are green with the new deployed config (loan list may have stale entries to retire).~~ done — full battery ran on the 785-787 deploy chain (docs/status/2026-09-20_16-31 §1.1)
 14. Verify the `nixpkgs-llama-rag` rev-pin input (parallel session's new pin) carries the push-protection-safe fixture discipline and a comment documenting its drop condition (llama.cpp ≥0.4.0 fixed upstream).
 15. mr-sync: confirm its lock rev upstream-push state (CI cannot fetch unpushed locks; same class as item 2).
 
 **Known TODO_LIST debt touched or adjacent to this session**
 16. Corpse-aware restore skip in memory-emergency-guard (P1, TODO_LIST Phase-1).
-17. crush-hot-db: verify the first `.crush/` migration ran post-quiescence + PSI delta vs the 40-60% baseline (TODO_LIST 2026-09-16 20:57 entry).
-18. dnsblockd: cut a release tag carrying the cached-response healthHandler + OTLP scheme fix (tag-pinned consumers currently rely on master).
+~~17. crush-hot-db: verify the first `.crush/` migration ran post-quiescence + PSI delta vs the 40-60% baseline (TODO_LIST 2026-09-16 20:57 entry).~~ done — migration ran 2026-09-18, integrity OK 09-21 (docs/services/crush.md:101; docs/todo/storage.md:110)
+~~18. dnsblockd: cut a release tag carrying the cached-response healthHandler + OTLP scheme fix (tag-pinned consumers currently rely on master).~~ done — upstream v0.9.3 (2026-09-30) carries both fixes; lock at v0.9.3-73 (docs/todo/upstream.md:89)
 19. Turso decision for DiscordSync (upgrade plan vs permanent local-only — removes the standing-red Gatus check).
 20. Resend domain verification (SPF/DKIM) — completes mail-relay go-live + Pocket ID SMTP delivery.
-21. FastFlowLM: the reboot still owed (EADDRINUSE corpse pins :52626); staged v1.0.3 go-live decision after it.
+~~21. FastFlowLM: the reboot still owed (EADDRINUSE corpse pins :52626); staged v1.0.3 go-live decision after it.~~ done — corpse GONE after reboot — "reboot owed state resolved" (docs/status/2026-09-20_16-31 §1.4)
 22. `/data` EIO inode (TODO_LIST P0) — btrbk-data full re-send still aborting until repaired.
 23. QLC `@nix` dead-weight deletion at `/mnt/btrfs-root/@nix` (TODO_LIST Phase 1).
-24. Offsite leg: Hetzner StorageBox + BorgBackup implementation (blueprint exists in `docs/research/`).
+~~24. Offsite leg: Hetzner StorageBox + BorgBackup implementation (blueprint exists in `docs/research/`).~~ done — implemented 2026-09-22, module+secrets+job+monitoring in-tree (docs/services/offsite-borg.md "What exists")
 25. History purge (pending push-time re-filter runbook; keys already rotated where applicable).
 26. Context7 key: confirm rotation completed (incident table says rotate; verify live 200/401 state).
 27. `go-auto-upgrade`: add the upstream CI guard that the PMA go-commit pin ≥22f0e0c (TODO_LIST carries it; now that go-auto-upgrade builds again it's implementable).
@@ -113,8 +113,8 @@
 43. tq: after the version flip, confirm the tq-agent-pool journal shows the new binary picked up (module pinned per-repo `.crushrc` — model/config unchanged expected).
 
 **Documentation**
-44. Update `docs/services/tq.md` with the deployed 0.3.0/go1.27.1 state (runbook references the interim pin).
-45. `docs/services/llama-rag` (or its section): the re-enable + wedge-timeline + restart runbook (mirrors the TODO_LIST entry).
+~~44. Update `docs/services/tq.md` with the deployed 0.3.0/go1.27.1 state (runbook references the interim pin).~~ done — live: docs/services/tq.md:168 documents deployed tq 0.3.0, go1.27.1
+~~45. `docs/services/llama-rag` (or its section): the re-enable + wedge-timeline + restart runbook (mirrors the TODO_LIST entry).~~ done — live: docs/services/llama-rag.md RE-ENABLED paragraph + rogue-orphan/wedge timeline
 46. Write the CV guard class ("go mod tidy inside the vendor FOD changed committed go.sum semantics") into the gotchas-archive with the 93cf5bc0 rollback as the case study.
 47. Archive this wave's `/tmp/toplevel-build{1..7}.log` insights into the FOD-harvest runbook (round-count economics: what a quiescence check would have saved).
 

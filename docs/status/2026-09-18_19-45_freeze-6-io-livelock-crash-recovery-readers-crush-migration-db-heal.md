@@ -90,10 +90,10 @@ Zone 6 fired 16× and changed nothing.
    discordsync-db-heal` — both are idempotent/next-run-converges. The
    migration is the fix, but finishing it on a calm box beats crash-
    looping through it.
-2. **Guard: extend `ioChurnUnits`** with `crush-hot-db-migrate.service`
+~~2. **Guard: extend `ioChurnUnits`** with `crush-hot-db-migrate.service`~~ done — live: memory-emergency-guard.nix:1103-1104 carries both units
    and `discordsync-db-heal.service` (both resumable oneshots — exactly
    the churn contract) so Zone 6 can actually drain this storm class.
-3. **discordsync-db-heal cadence:** a full 11G integrity check at EVERY
+~~3. **discordsync-db-heal cadence:** a full 11G integrity check at EVERY~~ done — posture decided: TimeoutStartSec 20min (discordsync.nix:509-514 with 2026-09-20 rationale)
    boot is a standing crash-amplifier under load. Gate it (ConditionPath
    exists on a dirty-shutdown marker, or stretch TimeoutStartSec and
    accept the delay) — decide in the discordsync module.
