@@ -180,6 +180,8 @@
               sys = inputs.self.nixosConfigurations.evo-x2;
               configFile = sys.config.services.gatus.configFile;
               gatus = sys.config.services.gatus.package;
+              relayEnabled = sys.config.services.gatus-alert-relay.enable or false;
+              relayPort = toString (sys.config.services.gatus-alert-relay.port or 9111);
             in
             pkgs.runCommand "gatus-config-parse-check" { nativeBuildInputs = [ gatus ]; } ''
               GATUS_OIDC_CLIENT_SECRET=check-dummy GATUS_CONFIG_PATH=${configFile} \
@@ -194,6 +196,16 @@
                 cat validate.log
                 exit 1
               fi
+              ${lib.optionalString relayEnabled ''
+              # T-007 regression guard: the relay gate is on the Discord path
+              # only while gatus actually points at it — a reverted
+              # webhook-url silently bypasses every suppression rule.
+              if ! grep -q "webhook-url: http://127.0.0.1:${relayPort}/hook" ${configFile}; then
+                echo "FAIL: gatus-alert-relay is enabled but the rendered gatus config does not point its Discord webhook at the relay:"
+                grep -n "webhook-url" ${configFile} || echo "(no webhook-url line at all)"
+                exit 1
+              fi
+              ''}
               echo "OK: gatus validated the rendered config:"
               grep -E 'Validated [0-9]+ endpoints' validate.log | head -1
               cp validate.log $out

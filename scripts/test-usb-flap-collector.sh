@@ -29,8 +29,11 @@ run_collector() {
   local dir="$1"; shift
   local stub="$dir/bin"
   mkdir -p "$stub"
+  # Absolute-bash shebang: the nix sandbox has no /usr/bin/env.
+  local bash_abs
+  bash_abs="$(command -v bash)"
   cat > "$stub/journalctl" <<STUB
-#!/usr/bin/env bash
+#!$bash_abs
 EVENTS_FILE='${dir}/events.txt'
 PROBE_RC='$PROBE_RC'
 BOOT_RC='$BOOT_RC'

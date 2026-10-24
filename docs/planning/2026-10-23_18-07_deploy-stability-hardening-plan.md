@@ -2,6 +2,8 @@
 
 _2026-10-23 18:07 CEST · author: Crush session after the 12:38→17:55 deploy recovery · status: PLAN ONLY, nothing below is executed yet._
 
+**PARTIALLY EXECUTED (Crush session 2026-10-24 05:2x, HEAD f9d1114ec, base 38d4488bb):** T1, T1.5, T2, T3, T4 (mechanism only), T5 (census), T8, T9, T10, T13 (in part), T14, T16, T17 are done and verified. T6/T7 (InboxClean DB move) and T12 (crowdsec/forgejo re-apply) were deliberately NOT executed — destructive/owner-gated. T11 (upstream issue) not filed. T15 partial. **Nothing was deployed**, so every service-side fix in this batch is in-tree and deploy-owed. The marker was written AFTER execution, which is a discipline miss; the status report `docs/status/2026-10-24_05-20_deploy-stability-hardening-execution-status.md` carries the line-by-line ledger._
+
 Context lives in three reports written today:
 `docs/status/2026-10-23_12-38_deploy-blocker-triage-status.md`,
 `docs/status/2026-10-23_16-06_deploy-build-blockers-followup.md`,
