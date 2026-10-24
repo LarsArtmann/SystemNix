@@ -31,7 +31,7 @@ All five queue IDs closed `[x]` in TODO_LIST.md with DONE notes; `scripts/check-
 2. **Damage-set victim rows are doc-derived, not live-re-probed** (inventory report §b1): the 10 live victims are transcribed from the 2026-09-11 T05 round; no fresh `stat -c %i` sweep this window. Gate (b) is still "formally pending" as of 2026-09-11 evidence.
 3. **Shellcheck coverage is layered-partial:** `scripts/lib/*.sh` (the deploy-gate lib at the center of the 2026-09-24 §13/§16 incident) is only ever checked when staged, at the warning bar — CI's error-level job uses the top-level `scripts/*.sh` glob. Currently clean, structurally blind (07-31 report §b1, item N1 below).
 4. **flm cross-link covers one of two discovery surfaces:** the "Known crash" bullet repeats the re-pull discipline without the doctrine pointer (10-41 report §b1) — judged out of scope for a one-line task, logged as follow-up.
-5. **CONTRIBUTING.md does not yet teach the override recipe** the AGENTS.md gotcha encodes (mkOverride-50 template, throwaway-eval command, priority ladder) — queued work, deliberately not folded into task 1.
+~~5. **CONTRIBUTING.md does not yet teach the override recipe** the AGENTS.md gotcha encodes (mkOverride-50 template, throwaway-eval command, priority ladder) — queued work, deliberately not folded into task 1.~~ done — DONE — CONTRIBUTING.md:395 full extendModules/mkOverride 50 probe recipe (pipeline.md:215 [x])
 
 ## c) NOT STARTED (window skips — all routed in (f) / TODO_LIST)
 
@@ -66,7 +66,7 @@ All five queue IDs closed `[x]` in TODO_LIST.md with DONE notes; `scripts/check-
 3. **One-sweep AGENTS.md pointer audit**: grep every service bullet mentioning in-place overwrite/delete of /data-resident artifacts for a missing snapshot-pinning doctrine pointer; fix all in one commit (subsumes the second flm "Known crash" bullet).
 4. **Inventory hardening**: add inline re-verification one-liners (`stat -c %i` per victim) + a freshness tripwire to `docs/services/data-damage-set.md`.
 5. **Reconcile the "~12 journal pairs vs 11 enumerated" residual** in the /data P0 row or downgrade the "~12" wording.
-6. **Add the extendModules override recipe to CONTRIBUTING.md's Eval-Time Guards** (mkOverride-50 template, throwaway-eval command, priority ladder) — pairs with queued row 184's guard-pattern note.
+~~6. **Add the extendModules override recipe to CONTRIBUTING.md's Eval-Time Guards** (mkOverride-50 template, throwaway-eval command, priority ladder) — pairs with queued row 184's guard-pattern note.~~ done — DONE — pipeline.md:215 [x]; CONTRIBUTING.md:395-397
 7. **CI early warning: scheduled clean-HEAD `nix flake check --no-build`** — the /run/binfmt gate death would have been caught in hours, not days.
 8. **Shared queue-agent pre-run preamble**: PSI-threshold probe + docs-only-delta check as a small script.
 9. **Promote `boot.binfmt.preferStaticEmulators = true`** to a queued item after the deploy proves the ordering fix — removes `/run/binfmt` from extra-sandbox-paths, killing the whole class.

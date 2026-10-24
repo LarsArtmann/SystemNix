@@ -23,9 +23,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **The deploy itself — NOT landed.** Attempt 1 (bg shell 00C, 2026-09-23 14:23) died at the architecture-catalog shellcheck failure ("nh os switch FAILED — config NOT activated"). The fix is in and single-drv-verified, but a full toplevel build on the fixed tree has **not completed**.
-2. **--keep-going enumeration build (bg shell 015) STILL RUNNING** — started 2026-09-23 ~14:25, now >26h with zero visible output (piped through `tail`, which buffers until exit). Either a legitimately massive rebuild wave (hermes v0.21.4 uv2nix env + every bumped Go FOD: bank-sync, buildflow `6617d65`, go-cqrs-lite consumers, mr-sync, nix-email, PMA + signoz pnpm) or wedged — **unverified which**. This is the single most important open item.
-3. **Post-deploy smoke + profile anchoring check** — never reached (deploy didn't activate).
+~~1. **The deploy itself — NOT landed.** Attempt 1 (bg shell 00C, 2026-09-23 14:23) died at the architecture-catalog shellcheck failure ("nh os switch FAILED — config NOT activated"). The fix is in and single-drv-verified, but a full toplevel build on the fixed tree has **not completed**.~~ done — deploy carrying the wave landed by 2026-09-30 — theme live-verified (CHANGELOG.md:433); toplevel builds (docs/status/2026-09-25_04-45 §c treats only the sandbox casualty as blocker)
+~~2. **--keep-going enumeration build (bg shell 015) STILL RUNNING** — started 2026-09-23 ~14:25, now >26h with zero visible output (piped through `tail`, which buffers until exit). Either a legitimately massive rebuild wave (hermes v0.21.4 uv2nix env + every bumped Go FOD: bank-sync, buildflow `6617d65`, go-cqrs-lite consumers, mr-sync, nix-email, PMA + signoz pnpm) or wedged — **unverified which**. This is the single most important open item.~~ **Won't implement — superseded — 2026-09-24_16-58 preflight enumerated the full blocker set; tree buildable by 2026-09-25 (04-45 report).**
+~~3. **Post-deploy smoke + profile anchoring check** — never reached (deploy didn't activate).~~ done — deploy landed; post-deploy checks ran (2026-10-11_02-17 "smoke: theme asset 200"); anchoring is deploy.sh rc=14 discipline
 
 ## c) NOT STARTED
 
@@ -51,15 +51,15 @@
 
 ## f) NEXT (ordered)
 
-1. Check bg shell 015: alive or wedged (journal nix-daemon activity); kill + restart fresh `nix build …toplevel --keep-going` on the fixed tree if stale.
-2. Re-run `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`; expect the arch-catalog failure gone; watch remaining FODs.
-3. If FOD failures: refresh vendorHashes upstream per doctrine (probe got-hash at exact rev; never paste from dirty worktrees).
+~~1. Check bg shell 015: alive or wedged (journal nix-daemon activity); kill + restart fresh `nix build …toplevel --keep-going` on the fixed tree if stale.~~ **Won't implement — one-shot; window passed — session bg shell gone; superseded by 16-58's fresh enumeration.**
+~~2. Re-run `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`; expect the arch-catalog failure gone; watch remaining FODs.~~ done — deploy landed by 2026-09-30 with the arch-catalog fix (theme live, CHANGELOG.md:433); no recurrence of the SC2012 failure
+~~3. If FOD failures: refresh vendorHashes upstream per doctrine (probe got-hash at exact rev; never paste from dirty worktrees).~~ done — 11-FOD wave repaired — toplevel buildable 2026-09-25 (04-45 report) and deploy landed 2026-09-30 (CHANGELOG.md:433)
 4. Signoz `370b278f→cad93a80` migration review (or roll signoz inputs back to reviewed pins before deploying).
-5. Post-deploy: smoke verdict (rc=3 = new failures), profile anchoring (`readlink /nix/var/nix/profiles/system` vs `/run/current-system`), generation number.
-6. Verify `architecture_catalog_fresh` / `architecture_catalog_scrape_errors` metrics land (retire the §10 loan).
-7. User: inboxclean `main` re-consent (13 days dark, main-account Gmail archiving stale).
+~~5. Post-deploy: smoke verdict (rc=3 = new failures), profile anchoring (`readlink /nix/var/nix/profiles/system` vs `/run/current-system`), generation number.~~ done — post-deploy checks ran on the landed deploy (2026-10-11_02-17 smoke green); anchoring per deploy.sh
+~~6. Verify `architecture_catalog_fresh` / `architecture_catalog_scrape_errors` metrics land (retire the §10 loan).~~ done — metric live: docs/status/2026-10-23_18-08 reads `architecture_catalog_fresh` live (WARN = staleness, not absence); collector in architecture-catalog.nix
+~~7. User: inboxclean `main` re-consent (13 days dark, main-account Gmail archiving stale).~~ done — DONE 2026-10-04 07:45 — docs/status/2026-10-04_08-32_inboxclean-reconsent-reconnect-slug-bug-session.md; docs/todo/services.md:79 "RE-CONSENT LANDED"
 8. User: `sudo systemctl start btrfs-balance-metadata.service` in a quiet window; confirm metadata drops below 90%; nix-build-cleanup then self-heals + 4 stale sandboxes clear.
-9. Check `cv` :8098 metrics endpoint after deploy (pre-deploy warning, unexplained).
+~~9. Check `cv` :8098 metrics endpoint after deploy (pre-deploy warning, unexplained).~~ done — probe-verified UP (401 unauthenticated) — docs/todo/pipeline.md:307
 10. Hermes: confirm hindsight memory provider (now lazy/plugin-installed) degrades gracefully in the sealed uv2nix venv — or explicitly accept its loss if unused.
 11. Add the two shellcheck gotchas to AGENTS.md (§ Nix & Nixpkgs or a new Shell & DevTools bullet).
 12. CONTRIBUTING: add "build new writeShellApplication drvs standalone" to the module-authoring checklist.

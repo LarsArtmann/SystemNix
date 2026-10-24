@@ -33,12 +33,12 @@
 
 ## b) PARTIALLY DONE
 
-1. **LG monitor recovery** — diagnosis complete, remediation advised, **outcome never confirmed** (see "What I forgot" #1). Status: UNKNOWN whether it shows picture now.
+~~1. **LG monitor recovery** — diagnosis complete, remediation advised, **outcome never confirmed** (see "What I forgot" #1). Status: UNKNOWN whether it shows picture now.~~ **Won't implement — one-shot owner observation; window passed, no record in repo.**
 2. **AGENTS.md tmpfiles bullet** — the existing ordering-cycle bullet lists `/run/binfmt`, sev1, lock, lvm, emeet-pixyd but NOT the `/tmp/.X11-unix` → greeter-dead → "no display input" chain (the actual symptom that motivated this session). I added the audio bullet; the display symptom clause is still missing.
 
 ## c) NOT STARTED
 
-1. **Deploy of the ordering-cycle fix** — told the user, never ran it. The reboot-rebreak gap is LIVE: next boot on the current generation re-trashes tmpfiles (same no-display + broken-builds class).
+~~1. **Deploy of the ordering-cycle fix** — told the user, never ran it. The reboot-rebreak gap is LIVE: next boot on the current generation re-trashes tmpfiles (same no-display + broken-builds class).~~ done — deployed — fix chain in-tree and riding deploys from 2026-09-26 (CHANGELOG.md:462); bootstrap removed 2026-09-29
 2. **Dialogue Boost filter-chain** (TV-targeted virtual sink: HPF ~100 Hz, 1.5–4 kHz presence lift, gentle SC4 compressor) — spec'd and offered twice, no green light, not built.
 3. **`boot.binfmt.preferStaticEmulators = true`** — the AGENTS.md follow-up that would drop `/run/binfmt` from `extra-sandbox-paths` and make builds immune to this entire tmpfiles class. Not touched.
 4. **Deployed swayidle DPMS-timeout verification** — AGENTS.md has a pending "verify the deployed generation carries 4h not 20min" item (`/run/current-system` unit file is readable without systemctl); directly relevant to display-black complaints, never checked.
@@ -62,10 +62,10 @@ Nothing destructive. Process fumbles only:
 
 ## f) NEXT — GET DONE (session-scoped, ranked)
 
-1. `nix run .#deploy` — land the ordering-cycle fix; closes the reboot-rebreak gap (P0)
-2. Post-deploy: verify deployed unit shows `WantedBy=home-lars-.cache-nix.mount` (not `.automount`)
-3. Confirm LG monitor status; if black: power-cycle → OSD input → replug DP → swap cables vs TV to isolate
-4. If cable-swap proves monitor dead/dying: owner decision on replacement
+~~1. `nix run .#deploy` — land the ordering-cycle fix; closes the reboot-rebreak gap (P0)~~ done — deploys landed from 2026-09-26 (theme live 2026-09-30 CHANGELOG.md:433; hot-db waves CHANGELOG.md:449)
+~~2. Post-deploy: verify deployed unit shows `WantedBy=home-lars-.cache-nix.mount` (not `.automount`)~~ **Won't implement — superseded — the bootstrap unit was removed entirely 2026-09-29 (tests/test-hot-user-caches.nix header).**
+~~3. Confirm LG monitor status; if black: power-cycle → OSD input → replug DP → swap cables vs TV to isolate~~ **Won't implement — one-shot owner observation; window passed, no record.**
+~~4. If cable-swap proves monitor dead/dying: owner decision on replacement~~ **Won't implement — moot/one-shot — conditional on the unrecorded monitor outcome; window passed.**
 5. Decide + build the Dialogue Boost filter-chain (offer stands, spec ready)
 6. Add the `/tmp/.X11-unix` → greeter → "no display input" chain to the AGENTS.md tmpfiles bullet (one clause)
 7. Run `nix run .#pre-reboot-check`, then reboot to live-prove the boot-time cycle is gone (regression test exists; one real boot is the ultimate proof)
