@@ -31,7 +31,9 @@ STATE_DIR="${STATE_DIR:?STATE_DIR required}"
 THRESHOLD="${THRESHOLD:?THRESHOLD required}"
 WINDOW="${WINDOW:?WINDOW required}"
 
-journalctl() { "${JOURNALCTL:-journalctl}" "$@"; }
+# Resolved once: naming a shell function "journalctl" would shadow the
+# binary inside its own body (infinite recursion, SIGSEGV).
+: "${JOURNALCTL:=journalctl}"
 
 mkdir -p "${TEXTFILE_DIR}"
 TMP="$(mktemp "${TEXTFILE_DIR}/usb-flap.prom.XXXXXX")"
@@ -56,7 +58,7 @@ if [ -f "$STATE" ]; then
   total="${total:-0}"
   since="${since:-0}"
 else
-  since="$(journalctl -k --output=short-unix -n 1 2>/dev/null | tail -1 | awk '{ print $1 }' | cut -d. -f1 || true)"
+  since="$("$JOURNALCTL" -k --output=short-unix -n 1 2>/dev/null | tail -1 | awk '{ print $1 }' | cut -d. -f1 || true)"
   case "$since" in ""|*[!0-9]*) since="$NOW" ;; esac
 fi
 
@@ -64,10 +66,10 @@ EVENTS="$(mktemp)"
 trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS"' EXIT
 
 # grep exits 1 on a zero-match window — healthy, not an error.
-journalctl -k --output=short-unix --since "@$since" --until "@$NOW" 2>/dev/null \
+"$JOURNALCTL" -k --output=short-unix --since "@$since" --until "@$NOW" 2>/dev/null \
   | grep -E 'usb [0-9]+-[0-9.]+: USB disconnect' > "$EVENTS" || true
 # Fail-closed probe: journalctl itself must still answer.
-if ! journalctl -k -n 1 >/dev/null 2>&1; then
+if ! "$JOURNALCTL" -k -n 1 >/dev/null 2>&1; then
   scrape_errors=1
 fi
 delta="$(wc -l < "$EVENTS")"
@@ -81,7 +83,7 @@ fi
 # Rolling-hour window: event epochs, one per line, pruned each run.
 WINDOW_FILE="$STATE_DIR/window"
 WINDOW_TMP="$(mktemp)"
-trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS" "$RAW" "$WINDOW_TMP"' EXIT
+trap 'rm -f "$TMP" "$STATE_TMP" "$EVENTS" "$WINDOW_TMP"' EXIT
 cat "$EVENTS" | awk '{ print $1 }' | cut -d. -f1 >> "$WINDOW_FILE" 2>/dev/null || true
 awk -v cutoff="$((NOW - WINDOW))" '$1 >= cutoff' "$WINDOW_FILE" > "$WINDOW_TMP" 2>/dev/null || true
 mv "$WINDOW_TMP" "$WINDOW_FILE"

@@ -49,7 +49,7 @@ case "\$mode" in
     echo "\$last.000000 host kernel: usb 2-1: USB disconnect, device number 9"
     ;;
   window)
-    since="\$(printf '%s\n' "\$@" | sed -n 's/^@//p' | tail -1)"
+    since="\$(printf '%s\n' "\$@" | sed -n 's/^@//p' | head -1)"
     while read -r e; do
       case "\$e" in ''|*[!0-9]*) continue ;; esac
       [ "\$e" -ge "\$since" ] && echo "\$e.000000 host kernel: usb 2-1.1: USB disconnect, device number 5"
