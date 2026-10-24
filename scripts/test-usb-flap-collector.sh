@@ -51,6 +51,7 @@ case "\$mode" in
   window)
     since="\$(printf '%s\n' "\$@" | sed -n 's/^@//p' | tail -1)"
     while read -r e; do
+      case "\$e" in ''|*[!0-9]*) continue ;; esac
       [ "\$e" -ge "\$since" ] && echo "\$e.000000 host kernel: usb 2-1.1: USB disconnect, device number 5"
     done < "\$EVENTS_FILE"
     ;;
@@ -66,8 +67,7 @@ STUB
     export STATE_DIR="$dir/state"
     export THRESHOLD="$THRESHOLD"
     export WINDOW="$WINDOW"
-    cp "${dir}/events.txt" "${dir}/events.txt" # noop keep file present
-    bash "$COLLECTOR"
+  bash "$COLLECTOR"
   )
 }
 
