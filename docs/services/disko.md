@@ -1,6 +1,6 @@
 # disko — Reinstall/Rescue Runbook (evo-x2, Samsung `tlc`)
 
-Status: **document-only.** disko is a provisioning-time tool; destructive modes are RESCUE-ONLY and never run on disks with data (house doctrine, AGENTS.md + the Phase-2 plan). This page is the T24 rescue-path decision one-pager from `docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`.
+Status: **document-only.** disko is a provisioning-time tool; destructive modes are RESCUE-ONLY and never run on disks with data (house doctrine, AGENTS.md + the Phase-2 plan). This page is the T24 rescue-path decision one-pager from `docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`.
 
 ## What exists
 

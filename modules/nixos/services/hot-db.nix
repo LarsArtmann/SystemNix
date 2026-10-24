@@ -2,7 +2,7 @@
 # hot-db — the declarative mechanism for the Samsung hot-DB tier
 # (Samsung 970 EVO Plus TLC, Phase 2 of the ratified design).
 #
-# Plan: docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md
+# Plan: docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md
 # (T3 module core, T4 bootstrap oneshot, T7 eval-time assertions).
 #
 # Design (Rev 3 amendment): each hot entry is a BTRFS subvolume

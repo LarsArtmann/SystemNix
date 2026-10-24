@@ -5,7 +5,7 @@
 # modes). This is an eval-checked executable spec of the LIVE layout —
 # a reinstall/rescue reference (destructive disko is rescue-only, never on
 # disks with data). Plan:
-# docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md
+# docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md
 # (T16); live-geometry source of truth: /etc/fstab (subvol=nix, hot
 # toplevel) + platforms/nixos/system/boot-mirror.nix (SAMSUNG-EFI).
 #

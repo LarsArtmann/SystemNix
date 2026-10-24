@@ -1,6 +1,6 @@
 # Architecture-Catalog Go-Live Prep — Continuation 2 + Overnight Outcome (2026-10-01 02:11 CEST)
 
-Continuation of `docs/status/2026-09-30_07-42_architecture-catalog-golive-prep-continuation.md`
+Continuation of `docs/status/archived/2026-09-30_07-42_architecture-catalog-golive-prep-continuation.md (path updated 2026-10-24: file archived)`
 (itself continuing the 05-43 report). Session window: Sep 30 06:25 → 08:57
 (active), then the session sat idle ~16h, resumed Oct 1 02:08 to find the
 world had moved.

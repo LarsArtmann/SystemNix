@@ -4,7 +4,7 @@
 # pkgs/geometrikks.nix (uv2nix venv + bun frontend), served by a native
 # systemd unit, DB on the host's shared PostgreSQL cluster (TimescaleDB +
 # PostGIS), SSO via native Pocket ID OIDC (Layer 1 plain vHost).
-# Plan + rationale: docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md
+# Plan + rationale: docs/planning/archived/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md
 { inputs, ... }: {
   flake.nixosModules.geometrikks =
     {

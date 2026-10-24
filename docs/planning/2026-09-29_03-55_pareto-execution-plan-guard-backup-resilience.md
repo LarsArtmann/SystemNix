@@ -1,5 +1,7 @@
 # SystemNix Pareto Execution Plan — Guard Hardening, Backup Resilience, Storm-Class Closure
 
+> **SUPERSEDED (2026-10-24):** tiers executed 2026-09-30 (see `docs/status/2026-10-01_13-42_*`); the remaining backlog was absorbed by the 2026-09-30 two-day master plan and its successors. Historical snapshot.
+
 **Authored:** 2026-09-29 03:55 CEST · **Source universe:** 860 open TODO rows (TODO_LIST.md queue 328 + 10 domain libraries; queue mirrors libraries ≈ ~460 unique items) + this session's findings (`docs/status/2026-09-29_01-45_*`).
 **Live context while authoring:** IO storm active (load spiked 118 at 03:43, io PSI avg60 ≈55%), guard at trip #1385+, pool receives starved 3 nights (stop at Sep 25) — the plan's 1% tier is literally at the 3-day freshness cliff.
 

@@ -6,7 +6,7 @@ geo-events in TimescaleDB (+PostGIS), and serves a live MapLibre world map +
 searchable log database. Upstream: github:GilbN/geometrikks.
 **Native Nix service since 2026-09-29** (Docker→Nix migration; the former
 `mkDockerService` deployment with the timescaledb-ha sidecar is gone — plan:
-`docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`).
+`docs/planning/archived/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`).
 
 **Auth = OAuth-only (2026-10-16, owner ask)**: `APP_ADMIN_PASSWORD` removed
 from the env template — upstream `server/auth.py` then logs
@@ -292,7 +292,7 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 ### GeoMetrikks (access-log geo analytics, NATIVE since 2026-09-29)
 
-**Module:** `modules/nixos/services/geometrikks.nix` (`services.geometrikks`) — **fully native Nix service** (the 2026-09-29 Docker→Nix migration; the mkDockerService deployment + timescaledb-ha sidecar are GONE). Tails every Caddy per-vhost JSON access log, geolocates via MaxMind GeoLite2, stores geo-events in TimescaleDB+PostGIS on the **shared PG17 cluster**, UI at `geo.home.lan` (**Layer 1 plain** vHost — native Pocket ID OIDC, auth-code + PKCE), port 8102, DNS `geo`. Plan: `docs/planning/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`; runbook: `docs/services/geometrikks.md`.
+**Module:** `modules/nixos/services/geometrikks.nix` (`services.geometrikks`) — **fully native Nix service** (the 2026-09-29 Docker→Nix migration; the mkDockerService deployment + timescaledb-ha sidecar are GONE). Tails every Caddy per-vhost JSON access log, geolocates via MaxMind GeoLite2, stores geo-events in TimescaleDB+PostGIS on the **shared PG17 cluster**, UI at `geo.home.lan` (**Layer 1 plain** vHost — native Pocket ID OIDC, auth-code + PKCE), port 8102, DNS `geo`. Plan: `docs/planning/archived/2026-09-29_21-41_GEOMETRIKKS-NATIVE-NIX-MIGRATION.md`; runbook: `docs/services/geometrikks.md`.
 
 - **Package** `pkgs/geometrikks.nix` (pinned tag v0.19.0, exposed as `.#geometrikks`): Python venv via **uv2nix** (inputs `uv2nix`/`pyproject-nix`/`pyproject-build-systems` at `pyproject-nix/*`; wheel-preferred — geohash2/ipy legacy sdists need `resolveBuildSystem` setuptools injection) + **bun FOD** (nixpkgs has NO fetchBunDeps): bun rewrites `#!/usr/bin/env` shebangs to sandbox store paths (playwright-core .sh class) and packages ship flake.lock store pins — the FOD scrubs both and self-tests rc-gated (a broken grep cannot phantom-green it); the FOD outputs a DETERMINISTIC TAR (a directory output tripped the FOD no-store-refs check even with clean bytes). Frontend build patchShebangs the bins (sandbox has no /usr/bin/env). Bump = tag + 2 hashes.
 - **Runtime layout mirrors the Dockerfile**: ExecStartPre stamp-gated copy of `share/geometrikks/{public,migrations,alembic.ini}` into `/var/lib/geometrikks` (app writes `.litestar.json` + logs in CWD; alembic resolves `migrations/` relative to CWD; `DB_MIGRATE_ON_STARTUP=true` runs migrations in-app at startup).

@@ -1,6 +1,6 @@
 # Boot-Mirror Deploy — Full Session Status Report (2026-09-20 10:38)
 
-_Sequence: continuation of `2026-09-19_10-44_…` and `2026-09-19_16-16_…` reports. Covers 2026-09-19 10:50 → 2026-09-20 10:38 (the storm afternoon, the overnight reboot, and this morning's two fleet-wide eval fixes). Deploy is BUILDING as of writing. Per user instruction: comprehensive self-review, then WAIT FOR INSTRUCTIONS._
+_Sequence: continuation of `2026-09-19_10-44_…` and `2026-09-19_16-16_…` reports (the 16-16 file has since moved to docs/status/archived/). Covers 2026-09-19 10:50 → 2026-09-20 10:38 (the storm afternoon, the overnight reboot, and this morning's two fleet-wide eval fixes). Deploy is BUILDING as of writing. Per user instruction: comprehensive self-review, then WAIT FOR INSTRUCTIONS._
 
 ## Headline
 

@@ -45,7 +45,7 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 ## b) PARTIALLY DONE
 
 1. **`@cache-home` → Samsung migration** — planned in detail, zero execution steps. Deliberately gated behind the hermes prerequisite (user's call, correct order: the plan leaned on the house migrate-script pattern whose one open wrinkle was the unproven backup leg).
-~~2. **High io-PSI mystery** — observed 42–56% avg60 across the evening with sparse actual disk IO in my (flawed, see §d) samples; never root-caused. Matters because Zone-6 guard trust (and tonight's autonomous send) ride on PSI semantics.~~ done — root-caused 2026-09-19: zram refault thrash, idle disks (docs/status/2026-09-19_16-16 §2)
+~~2. **High io-PSI mystery** — observed 42–56% avg60 across the evening with sparse actual disk IO in my (flawed, see §d) samples; never root-caused. Matters because Zone-6 guard trust (and tonight's autonomous send) ride on PSI semantics.~~ done — root-caused 2026-09-19: zram refault thrash, idle disks (docs/status/2026-09-19_16-16 §2 — moved to docs/status/archived/ 2026-10-24)
 3. **Operational knowledge capture** — the btrbk gotchas landed in AGENTS.md (one line each); no proper runbook exists in `docs/services/` for manual btrbk operations (silent-send progress, clean heal, ionice tradeoff).
 
 ## c) NOT STARTED
@@ -97,7 +97,7 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 16. Watch the Zone-6 interplay: today's elevated PSI vs the guard's disk-corroboration requirement — confirm phantom-PSI alone doesn't kill the send.
 17. Verify hermes local-snapshot retention pruning (volume-level 2d / 3d 1w) actually prunes hermes snaps.
 18. Verify pool-side hermes retention (7d min / 14d 4w) at the first 7d boundary (~Sep 23).
-~~19. Root-cause the unknown io-PSI driver (45-56% avg60 with sparse disk activity) — or instrument it (PSI + real-disk-busy composite metric in system-health).~~ done — zram refault thrash root-caused (docs/status/2026-09-19_16-16 §2)
+~~19. Root-cause the unknown io-PSI driver (45-56% avg60 with sparse disk activity) — or instrument it (PSI + real-disk-busy composite metric in system-health).~~ done — zram refault thrash root-caused (docs/status/2026-09-19_16-16 §2 — moved to docs/status/archived/ 2026-10-24)
 20. Decide storm-resilience design: second-chance btrbk send window (e.g. 03:00 retry) vs current +24h-push doctrine — needs an owner call.
 21. Write the btrbk ops runbook (`docs/services/` or append to hermes.md): silent sends, journal progress, clean-heal, manual-run ionice tradeoff.
 22. Document the monitoring split: dump-style backups ride backup-coordination; subvol-send freshness rides `btrfs-verify-pool-backups` prefixes (hermes is the second prefix user).

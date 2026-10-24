@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-15 · **Status:** ANALYSIS — no immediate action; decision framework for service onboarding and the Samsung Phase-2 waves
 **Scope:** Whether (and when) each service's state on evo-x2 should live in its own BTRFS subvolume instead of plain directories under a snapshotted parent. Covers QLC root `@`, `/data`, Samsung `tlc`, and the HDD pool.
-**Sources:** This repo's BTRFS doctrine (AGENTS.md BTRFS section) · `docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md` (qgroup/nodatacow/CoW consensus rows) · `docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md` (ratified Rev-2 `nodatacow` hot tier — this doc's "Set C" already half-decided) · incident history: engine-switch bootstrap trap, google-sync/cv-backup/atticd 226 class, btrbk "exists, but is not a receive target", 2026-09-12 glob-delete incident, five completed per-service relocations.
+**Sources:** This repo's BTRFS doctrine (AGENTS.md BTRFS section) · `docs/research/2026-09-05_btrfs-internet-sweep-vs-systemnix.md` (qgroup/nodatacow/CoW consensus rows) · `docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md` (ratified Rev-2 `nodatacow` hot tier — this doc's "Set C" already half-decided) · incident history: engine-switch bootstrap trap, google-sync/cv-backup/atticd 226 class, btrbk "exists, but is not a receive target", 2026-09-12 glob-delete incident, five completed per-service relocations.
 
 ---
 

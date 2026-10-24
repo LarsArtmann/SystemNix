@@ -159,7 +159,7 @@ DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — verified 2
 `services.system-health.extraMonitoredServices` and the DEPLOYED system-health collector).
 
 Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
-(`docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
+(`docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
 
 ## crush-debug (error-to-agent launcher, 2026-09-29)
 

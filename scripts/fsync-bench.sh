@@ -3,7 +3,7 @@
 # DIRECTORY, for the hot-DB tier before/after comparisons.
 #
 # Why not bench-disk.sh: that one characterizes a RAW device (root, destructive).
-# The hot-DB waves (docs/planning/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md)
+# The hot-DB waves (docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md)
 # need the DB-shaped number on the LIVE filesystems — fsync-per-write of small
 # appends, the SQLite/PG WAL commit shape — on the QLC root (where gatus,
 # discordsync, browser-history, inboxclean DBs sit today) vs the Samsung tlc

@@ -1,6 +1,6 @@
 # Samsung 970 EVO Plus as 2nd boot disk — full ESP mirror of /boot.
 #
-# Layout after this module (design: docs/planning/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md):
+# Layout after this module (design: docs/planning/archived/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md):
 #   QLC p7 (by-uuid 80A3-73A9)  -> /boot        NixOS-managed ESP (sd-boot builder writes here)
 #   Samsung p1 (SAMSUNG-EFI)    -> /boot-mirror verified byte-mirror + bootctl-installed loader
 #
@@ -178,7 +178,7 @@ in
       # BE/6 background: the sync is a ~250 MB bulk copy (rsync + diff -r
       # verify) that must finish but never contends with interactive I/O —
       # fires at boot, on entry-tree changes, and on deploy restarts.
-      (ioTier.background)
+      ioTier.background
       {
         Type = "oneshot";
         RemainAfterExit = true;

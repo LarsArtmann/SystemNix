@@ -71,7 +71,7 @@ Nothing shipped broken. No data loss. No secret exposure (PLACEHOLDER only on co
 **Tier 1 — unblocks deploy (this work ships only after these):**
 
 ~~1. Repair `jscpd` pnpm-deps FOD hash~~ done — toplevel built green at 786 — no FOD failures remained (docs/status/2026-09-20_12-26 a3)
-~~2. Repair `openseo` pnpm-deps FOD hash~~ done — fixed 2026-09-19 13:52, FOD verified (docs/status/2026-09-19_16-16 §3)
+~~2. Repair `openseo` pnpm-deps FOD hash~~ done — fixed 2026-09-19 13:52, FOD verified (docs/status/2026-09-19_16-16 §3 — moved to docs/status/archived/ 2026-10-24)
 ~~3. Repair `systemd-graph-webui` pnpm-deps FOD hash~~ done — fixed 2026-09-19 15:07, both hash slots correct (docs/status/2026-09-19_16-53 a2-a3)
 ~~4. Repair `emeet-pixyd` go-modules FOD (paste got-hash upstream → push → re-lock, per ecosystem doctrine)~~ done — toplevel built green at 786 (docs/status/2026-09-20_12-26 a3)
 ~~5. Repair `erraudit` go-modules FOD (same dance)~~ done — toplevel built green at 786 (docs/status/2026-09-20_12-26 a3)
