@@ -91,20 +91,20 @@ switch time). Everything left is owner-gated (§3).
 
 ## 3. Owner sequence (deterministic, runbook-mirrored)
 
-1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`
+~~1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`~~ done — setup-forgejo green 3rd run; go-live complete
    (idempotent; mints CI + sync tokens; sync token lands root-only at
    `/var/lib/forgejo/.eventcatalog-hub-setup/sync-token`).
-2. Watch the first CI run (`forgejo.home.lan/lars/eventcatalog-hub/actions`)
+~~2. Watch the first CI run (`forgejo.home.lan/lars/eventcatalog-hub/actions`)~~ done — run 38 fully green; dist run 51
    to green + `dist` branch. Watch-list: nix-daemon reachability for the
    DynamicUser runner, `npm` in job env, job-token push (`PUSH_TOKEN`
    fallback documented).
-3. `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age
+~~3. `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age~~ done — owner sops-paste 2026-10-12 (services.md:217)
    -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml` —
    paste `ARCHITECTURE_CATALOG_SYNC_TOKEN=<hex>` from
    `sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token`.
-4. Deploy (if the watcher didn't already land the runner-PATH generation)
+~~4. Deploy (if the watcher didn't already land the runner-PATH generation)~~ done — deploy landed same day; sync restarted (services.md:217)
    — sops rotation restarts the sync unit.
-5. `sudo systemctl start architecture-catalog-sync`; verify: journal
+~~5. `sudo systemctl start architecture-catalog-sync`; verify: journal~~ done — sync converged; catalog.home.lan serving (CHANGELOG go-live 2026-10-12)
    "serving generation", `current/index.html` + `build-stamp.json`,
    collector `dist_present 1`/`fresh 1`, three Gatus checks green,
    post-deploy §15 stops warning.
