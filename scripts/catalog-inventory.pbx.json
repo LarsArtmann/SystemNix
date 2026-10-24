@@ -1,0 +1,29 @@
+{
+  "host": "pbx.artmann.tech",
+  "platform": "nixos",
+  "domain": "artmann.tech",
+  "integration": {
+    "pbx": {
+      "enable": true,
+      "subdomain": "pbx",
+      "port": null,
+      "layer": "app",
+      "description": null
+    },
+    "webphone": {
+      "enable": true,
+      "subdomain": "pbx",
+      "port": null,
+      "layer": "app",
+      "description": null
+    },
+    "pbx-lens": {
+      "enable": true,
+      "subdomain": "lens",
+      "port": null,
+      "layer": "app",
+      "description": null
+    }
+  },
+  "catalog": {}
+}

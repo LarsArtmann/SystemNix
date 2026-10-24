@@ -15,6 +15,19 @@
 # today; the `or {}` guards keep that a LIVE fact, not an assumption).
 # zfs-vm is EXCLUDED: a VM test scaffold is not a deployment location.
 #
+# Fourth host, CURATED (not evaled): pbx.artmann.tech. It is not a SystemNix
+# host — the deployment lives in the private pbx-artmann flake — so its
+# descriptor is DATA: scripts/catalog-inventory.pbx.json, same shape an
+# eval produces, copied into the union below. Curation rule (private-repo
+# hygiene): service names, subdomains, and the host name only — never
+# DIDs, account names, IPs, or any other pbx-artmann fact. Currently
+# curated: pbx + webphone (both served at https://pbx.artmann.tech by the
+# telephony stack's front) and pbx-lens (https://lens.artmann.tech). The
+# netbird control plane and mail stack also run there but are NOT
+# curated yet: the SystemNix "netbird" entry means the CLIENT, and the
+# mail service needs its own subdomain curation — add them when their
+# public hostnames are pinned the same way.
+#
 # Output (stdout, JSON, deterministic apart from generatedAt): { generatedAt,
 #   hosts: [ {host, platform} ], services: [ { name, description, owner,
 #   subdomain, port, healthPath, layer, deployments: [ { host,
@@ -253,6 +266,16 @@ eval_host() {
 eval_host nixosConfigurations.evo-x2 evo-x2 nixos
 eval_host nixosConfigurations.rpi3-dns rpi3-dns nixos
 eval_host darwinConfigurations.Lars-MacBook-Air Lars-MacBook-Air darwin
+
+# The curated pbx.artmann.tech descriptor rides the same union (see the
+# header's curation rule). A missing file is an error, not a skip: a
+# silently dropped host silently drops its deployments.
+if [[ -f "$SCRIPT_DIR/catalog-inventory.pbx.json" ]]; then
+  cp "$SCRIPT_DIR/catalog-inventory.pbx.json" "$tmp/pbx.artmann.tech.json"
+else
+  echo "ERROR [catalog-inventory]: curated descriptor $SCRIPT_DIR/catalog-inventory.pbx.json is missing — aborting WITHOUT shrinking the union" >&2
+  exit 1
+fi
 
 stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
