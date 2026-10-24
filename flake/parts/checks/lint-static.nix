@@ -866,36 +866,38 @@
               unconditioned = { };
               run =
                 units:
-                audit {
-                  lib = pkgs.lib;
+                builtins.getAttr "offenders" (audit {
+                  inherit (pkgs) lib;
                   inherit units;
                   stateDir = "/var/lib/forgejo";
                   exemptUnits = [ "forgejo-census" ];
-                };
+                });
               legs = {
-                clean = builtins.toJSON (
-                  (run {
-                    "forgejo-app" = gated;
-                    "gitea-runner-evo-x2" = gated;
-                  }).offenders
-                );
-                offender = builtins.toJSON (
-                  (run {
-                    "forgejo-app" = gated;
-                    "gitea-runner-evo-x2" = unconditioned;
-                  }).offenders
-                );
-                wrongMarker = builtins.toJSON ((run { "forgejo-backup" = otherCondition; }).offenders);
-                exempt = builtins.toJSON ((run { "forgejo-census" = unconditioned; }).offenders);
-                nonFamily = builtins.toJSON ((run { "paperless-web" = unconditioned; }).offenders);
+                clean = builtins.toJSON (run {
+                  "forgejo-app" = gated;
+                  "gitea-runner-evo-x2" = gated;
+                });
+                offender = builtins.toJSON (run {
+                  "forgejo-app" = gated;
+                  "gitea-runner-evo-x2" = unconditioned;
+                });
+                wrongMarker = builtins.toJSON (run {
+                  "forgejo-backup" = otherCondition;
+                });
+                exempt = builtins.toJSON (run {
+                  "forgejo-census" = unconditioned;
+                });
+                nonFamily = builtins.toJSON (run {
+                  "paperless-web" = unconditioned;
+                });
                 customStateDir = builtins.toJSON (
-                  (audit {
-                    lib = pkgs.lib;
+                  builtins.getAttr "offenders" (audit {
+                    inherit (pkgs) lib;
                     units = {
                       "forgejo-app" = gated;
                     };
                     stateDir = "/data/forgejo";
-                  }).offenders
+                  })
                 );
               };
             in

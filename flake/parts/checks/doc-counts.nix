@@ -52,8 +52,12 @@
                 "doc-counts: ${label} asserts ${got}, eval truth is ${toString want} — re-derive with the README-embedded commands and re-stamp the doc (the 55-vs-131 drift class)"
                 got;
 
-          readmeText = builtins.readFile "${root}/README.md";
-          featuresText = builtins.readFile "${root}/FEATURES.md";
+          # path + string keeps this a PATH (no string-context store-path
+          # coercion — "${root}/x" would capture the flake's random-named
+          # working-tree copy in the derivation context and fail flake
+          # check's derivationStrict with "path …-source is not valid").
+          readmeText = builtins.readFile (root + "/README.md");
+          featuresText = builtins.readFile (root + "/FEATURES.md");
         in
         {
           doc-counts =
