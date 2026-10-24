@@ -96,6 +96,13 @@
           ai-meter = pkgs.callPackage (root + "/pkgs/ai-meter.nix") {
             src = lib.sources.cleanSource (root + "/pkgs/ai-meter");
           };
+          # gatus-alert-relay — in-tree Go source (pkgs/gatus-alert-relay/),
+          # stdlib only, vendorHash = null forever (ai-meter doctrine).
+          # Gates gatus' Discord webhook: boot grace, SEV1 parent-incident
+          # mute, flap collapse, re-arm guard (T-007, 2026-10-24).
+          gatusAlertRelay = pkgs.callPackage (root + "/pkgs/gatus-alert-relay.nix") {
+            src = lib.sources.cleanSource (root + "/pkgs/gatus-alert-relay");
+          };
           freebsd-zfs-vm = import (root + "/pkgs/freebsd-zfs-vm.nix") { inherit pkgs; };
           # Native GeoMetrikks (uv2nix + bun frontend; the Docker→native
           # migration pilot — see docs/planning/2026-09-29_*GEOMETRIKKS*).

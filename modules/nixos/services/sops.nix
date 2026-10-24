@@ -599,7 +599,12 @@ in
             "gatus-env" = {
               owner = "root";
               group = "root";
-              restartUnits = [ "gatus.service" ];
+              # gatus-alert-relay reads the SAME env file (DISCORD_WEBHOOK_URL
+              # is its upstream) — a webhook rotation must restart it too.
+              restartUnits = [
+                "gatus.service"
+                "gatus-alert-relay.service"
+              ];
               content = lib.generators.toKeyValue { } (
                 {
                   DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;

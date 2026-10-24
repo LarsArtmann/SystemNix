@@ -794,6 +794,9 @@ in
       niri-session-manager.enable = true;
       security-hardening.enable = true;
       gatus-config.enable = true;
+      # Gate on gatus' Discord webhook: boot-window alert storms, SEV1
+      # parent-incident mute, flap collapse, re-arm guard (T-007).
+      gatus-alert-relay.enable = true;
       website-deploy-monitor.enable = true;
       multi-wm.enable = true;
       # Review-only systemd tooling (LAN bypass, no auth) — disabled by

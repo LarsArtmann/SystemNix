@@ -47,6 +47,8 @@
     taskchampion = 10222;
 
     gatus = 9110;
+    # Local Discord-webhook gate for gatus alerts (loopback only; T-007).
+    gatusAlertRelay = 9111;
 
     emeet-pixyd = 8090;
 

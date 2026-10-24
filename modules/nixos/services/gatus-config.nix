@@ -40,6 +40,18 @@ _: {
       # type — without this pass, nothing would reach /api/ingest.
       papIngestEnabled = config.services.papdashboard.enable or false;
 
+      # T-007 (2026-10-24): when the alert relay gate is enabled, gatus'
+      # Discord provider posts to the LOCAL relay instead of Discord
+      # directly. The relay re-posts to the real webhook (from the same
+      # gatus-env secret) applying boot-grace / SEV1-mute / flap-collapse /
+      # re-arm-guard shaping. Provider-level URL, NOT part of gatus' alert
+      # checksum — switching over does NOT wipe persisted triggered-alert
+      # state (no re-fire storm at deploy).
+      relayEnabled = config.services.gatus-alert-relay.enable or false;
+      relayPort = config.services.gatus-alert-relay.port or ports.gatusAlertRelay;
+      discordWebhookUrl =
+        if relayEnabled then "http://127.0.0.1:${toString relayPort}/hook" else "$DISCORD_WEBHOOK_URL";
+
       withPapIngest =
         ep:
         let
@@ -392,7 +404,7 @@ _: {
             # validates a present-but-empty custom provider as ErrURLNotSet.
             alerting = {
               discord = {
-                webhook-url = "$DISCORD_WEBHOOK_URL";
+                webhook-url = discordWebhookUrl;
                 default-alert = {
                   failure-threshold = 3;
                   success-threshold = 2;
@@ -1327,6 +1339,26 @@ _: {
                     "[BODY] == pat(*\nstorage_collector_health 0\n*)"
                   ];
                   alerts = discordAlert "storage-collector unhealthy (health gauge != 0) or its textfile vanished — filesystem capacity + IO gauge observability is DOWN and the verify timer just lost its subject. Check: systemctl status storage-collector storage-collector-verify.timer; journalctl -u storage-collector -n 30; ls -la /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom";
+                })
+              ]
+              # T-007: the relay gate sits on every Discord alert's path —
+              # its death means gatus keeps evaluating but every send
+              # fails silently (gatus does not retry provider sends).
+              # The systemd onFailureP0 hook pages independently; this
+              # check catches a wedged-but-running relay (healthz not
+              # answering) and rides the papdashboard custom provider
+              # (direct localhost ingest) even when the relay is down.
+              ++ lib.optionals relayEnabled [
+                (mkHttpCheck {
+                  name = "Gatus Alert Relay";
+                  group = "Monitoring";
+                  url = "http://127.0.0.1:${toString relayPort}/healthz";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*forwarded*)"
+                  ];
+                  alerts = discordAlert "Gatus Discord alert relay down or wedged — all gatus Discord alerts are being DROPPED while it is dead (gatus does not retry webhook sends; the queue is in-memory and dies with it). Check: systemctl status gatus-alert-relay, journalctl -u gatus-alert-relay -n 30 (relay decision= lines).";
                 })
               ]
               ++ map mkWebsiteCheck ossWebsites
