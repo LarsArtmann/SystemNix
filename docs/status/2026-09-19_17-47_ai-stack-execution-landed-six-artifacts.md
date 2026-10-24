@@ -25,11 +25,11 @@
 10. **The PMA success-line pattern is syntax-validated by nothing.** The PCRE2 lookahead has never matched a real journal line (root-gated). If the real success line lacks "committed changes" entirely, `PMA_COMMITS_24H` = 0 forever → ratio silently decorative (metric still emits 0, Gatus still green — no false alarm, but no coverage either). Post-deploy root verification is REQUIRED (one-liner: `journalctl -u projects-management-automation --since -24h --grep '^(?!.*heuristic).*committed changes' --output cat | wc -l` as root; expect ≥1 on a normal day).
 11. **Soak harness unexercised end-to-end** (root-gated by design). Argument parsing, guard, and exit codes verified only on the non-root path. First REAL run must validate the `systemd-run` property string (`--property='DeviceAllow=/dev/dri/'` quoting under systemd-run's parser) — untested assumption.
 12. **`llama-rag-soak.sh` has no flake app registration** (design said "optional"). Deliberate skip (an app would run as the invoking user and mislead — the harness self-requires root), but the decision is documented only in the script header, nowhere in the todo/design trail.
-13. **The dead-guard deployment state:** everything in §a.1-6 is DEPLOY REQUIRED and NOT deployed (owner-gated). Expected first-deploy signals: "Port Rogues" RED (2 live rogues = correct), paperless-dark RED by design, §10 auto-loan covers the 4 new metrics.
+~~13. **The dead-guard deployment state:** everything in §a.1-6 is DEPLOY REQUIRED and NOT deployed (owner-gated). Expected first-deploy signals: "Port Rogues" RED (2 live rogues = correct), paperless-dark RED by design, §10 auto-loan covers the 4 new metrics.~~ done — deployed gen-786/787 2026-09-20; dark-guard collector live, leaked_instances 2 (docs/status/2026-09-20_15-57 §a.3)
 
 ## c) NOT STARTED
 
-14. **Deploy of the batch** — owner-gated (pressure-gated `nix run .#deploy`); piles up with the parallel sessions' llama-vlm + niri-blur + immich 3.2.2 work in the same window.
+~~14. **Deploy of the batch** — owner-gated (pressure-gated `nix run .#deploy`); piles up with the parallel sessions' llama-vlm + niri-blur + immich 3.2.2 work in the same window.~~ **NOT-DO — NOT-DO — dup of §b.13 (same deploy ask, verified closed).**
 15. **Kill the live rogues** (PIDs 995413/:8848 intermittent-spin + 995415/:8849 idle, uid 975 hermes orphans) — owner/root-gated; PID-reuse risk grows.
 16. **The hermes-cron ROOT question** (why cron workers spawn llama-server at all) — lives in the hermes workspace; unowned by any tracked item (carried from 12:31 §e.20).
 17. **Bisect execution** — harness shipped; the run needs root + a quiet-IO window + owner consent.
@@ -67,7 +67,7 @@
 
 **Owner decisions first (block the most):**
 
-1. Deploy the batch (pressure-gated; expect 2 deliberately-red AI checks + §10 loans for 4 new metrics).
+~~1. Deploy the batch (pressure-gated; expect 2 deliberately-red AI checks + §10 loans for 4 new metrics).~~ done — deployed 2026-09-20; dark-guard metrics + checks live (docs/status/2026-09-20_13-58 §a.12, 15-57 §a.3)
 2. Kill rogues 995413/995415 (re-verify identity first: `ps -o user:16 -p <pid>` + `/proc/<pid>/cgroup` must say hermes cron scope + llama-cpp-0.4.0 path).
 3. Decide hermes-cron llama-server ban at source (hermes workspace cron definitions).
 4. MiniMax quota: upgrade / PAYG / keep disabled (carried ×5).
@@ -85,7 +85,7 @@
 **Small hardening (agent-actionable, ≤30 min each):**
 13. Write the DIRECT_RC/`rc()` convention into docs/CONTRIBUTING.md + a pre-commit grep for `rc=$?` on piped lines (§e.29).
 14. Add the extendModules probe recipe to docs/CONTRIBUTING.md (§e.31).
-15. Tighten the idle-test `show` stub: exit 64 on unknown MODE (§e.32).
+~~15. Tighten the idle-test `show` stub: exit 64 on unknown MODE (§e.32).~~ done — live: tests/test-fastflowlm-idle.nix:89 exits 64 on unknown MODE
 16. Update AGENTS.md llama-rag section: dark guard existence, first-deploy red expectations, corpse-gate skip behavior (§c.20).
 17. Update AGENTS.md Critical Rules with the pipeline-masking recurrence count + the `rc()` helper reference once (13) lands.
 18. Consider `allowUnits`-style eval-time lint: reject any future `system_service_*` greps in scripts/ that don't carry a `2>/dev/null` + missing-file fallback (the corpse-gate pattern) — one more guard, low priority.

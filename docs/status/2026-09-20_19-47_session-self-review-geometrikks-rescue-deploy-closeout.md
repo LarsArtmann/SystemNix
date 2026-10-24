@@ -68,9 +68,9 @@
 
 ## f) Up to 50 things to get done next (session-derived; ranked, ~30 honest ones)
 
-1. USER: reboot (M7) — armed + audited + mirror-synced through system-791; F18–F20 proofs follow it (Critical, S, Gate)
+~~1. USER: reboot (M7) — armed + audited + mirror-synced through system-791; F18–F20 proofs follow it (Critical, S, Gate)~~ done — reboot + Samsung-boot proof verified 2026-10-15 (docs/todo/storage.md:42; docs/status/2026-10-16_00-56)
 2. USER: kill rogue llamas `sudo kill 805159 805161` — idle, 4.2G RAM; they respawn daily 05:40 via hermes cron `ed3fc8b089d7` (High, S, Gate)
-3. USER: InboxClean OAuth — flip client to "In production" FIRST, then `inboxclean auth` both accounts (High, S, Gate)
+~~3. USER: InboxClean OAuth — flip client to "In production" FIRST, then `inboxclean auth` both accounts (High, S, Gate)~~ done — 2026-10-04: main+work connected (docs/status/2026-10-04_08-32 §a.1)
 4. USER: `bank-sync sca approve` — clears the bank-sync smoke FAIL + statement sync (High, S, Gate)
 5. Verify GeoMetrikks alert DELIVERY: did Discord page during 14:39→19:0x? If silent, the alert channel has a hole (High, S, Verify)
 6. Regression fixture for the `init_db` entrypoint script — d.1's penance; stub psql, assert `-d postgres` present + both branches (High, S, Quality)
@@ -79,7 +79,7 @@
 9. "Build flake apps before green" derivation check (the unshipped half of the lsblk lesson) (Medium, S, Quality)
 10. Exposition-syntax validator as flake check/smoke step (routed; productize the deploy-review session's ad-hoc python validator) (Medium, S, Feature)
 11. Gatus check for `node_textfile_scrape_error` (routed to monitoring.md) (Medium, S, Feature)
-12. Investigate the quickshell "1 error line" standing WARN — never looked at, three sessions running (Medium, S, Bug)
+~~12. Investigate the quickshell "1 error line" standing WARN — never looked at, three sessions running (Medium, S, Bug)~~ done — phantom root-caused + fixed (docs/status/2026-09-30_15-32)
 13. FOWNER-chmod eval lint (routed to pipeline.md) (Medium, S, Feature)
 14. mountPoint-vs-HM-symlink eval guard (routed to storage.md) (Medium, M, Feature)
 15. Smoke-baseline staleness stamps (routed to pipeline.md) (Medium, S, Feature)

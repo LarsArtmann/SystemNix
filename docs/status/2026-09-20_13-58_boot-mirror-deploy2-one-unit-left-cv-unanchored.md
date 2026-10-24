@@ -24,9 +24,9 @@ The 11:25 deploy exited rc=3 with an un-anchored profile. Diagnosis this session
 
 ## b) PARTIALLY DONE (in progress)
 
-1. **Deploy #2 anchoring**: build ✓, activation advanced `/run/current-system` to the newest config, but the profile stayed `system-785` because `cv-server.service` alone still fails during the transaction (exit 4 → bump skipped). The smoke was still running at report time; predicted outcome: the failure set equals the 11:53 baseline (CV ×4 + FastFlowLM, with browser-history 503 now same-as-baseline) → rc=0 → the queue enters its documented retry loop (redeploy every ~5 min re-attempts cv-server; each cycle restarts the provisioner set; deadline 21:39).
+~~1. **Deploy #2 anchoring**: build ✓, activation advanced `/run/current-system` to the newest config, but the profile stayed `system-785` because `cv-server.service` alone still fails during the transaction (exit 4 → bump skipped). The smoke was still running at report time; predicted outcome: the failure set equals the 11:53 baseline (CV ×4 + FastFlowLM, with browser-history 503 now same-as-baseline) → rc=0 → the queue enters its documented retry loop (redeploy every ~5 min re-attempts cv-server; each cycle restarts the provisioner set; deadline 21:39).~~ done — system-786 anchored 14:08 (docs/status/2026-09-20_15-02)
 2. **Browser History: deadlock broken, degradation remains** — the agent now RUNS through the 503, but with quiet browsing it reports `no new visits to send` and sends NOTHING → the server's freshness (which counts only successful pushes) stays degraded. Functional data path is healthy; the 503 will clear on the first real browsing session (or an upstream empty-batch heartbeat).
-3. **cv-server: heal deployed + running but NOT converging** — `cv-state-perms.service` (parallel session's fix) runs and "Finished" on every cv-server start attempt (13:50:40/45/50 ✓), but the upstream content-sync still hits `rm: cannot remove` EACCES ×90. Suspected: the heal's FAST PATH checks ownership only (`! -user cv -o ! -group cv`) and exits 0 when ownership is converged, never running the `chmod u+w` walk — a mode problem (dir without write bit) would persist invisible. Needs ONE root-side inspection to confirm (see question 1).
+~~3. **cv-server: heal deployed + running but NOT converging** — `cv-state-perms.service` (parallel session's fix) runs and "Finished" on every cv-server start attempt (13:50:40/45/50 ✓), but the upstream content-sync still hits `rm: cannot remove` EACCES ×90. Suspected: the heal's FAST PATH checks ownership only (`! -user cv -o ! -group cv`) and exits 0 when ownership is converged, never running the `chmod u+w` walk — a mode problem (dir without write bit) would persist invisible. Needs ONE root-side inspection to confirm (see question 1).~~ done — fast-path `-perm -u+w` fix (fc49dbe5); cv-server started clean 14:08:25 (docs/status/2026-09-20_15-02)
 4. **Queue v7 lifecycle**: running as user unit `boot-mirror-deploy-v7.service`; I cannot stop it without `systemctl` (banned in my shell). If the user wants the cycling stopped: `systemctl --user stop boot-mirror-deploy-v7`.
 
 ## c) NOT STARTED
@@ -60,31 +60,31 @@ The 11:25 deploy exited rc=3 with an un-anchored profile. Diagnosis this session
 
 ## f) NEXT UP TO 50 THINGS (ordered)
 
-1. Answer question 1 (root inspection of `/var/lib/cv/assets`) → confirm heal fast-path hypothesis.
-2. Patch `cv-state-perms` fast-path per e.1 (2-line change) OR hand the finding to the owning parallel session.
-3. Watch queue v7: next cycle re-attempts cv-server → if the heal is patched, activation goes clean → profile bumps past system-785 (F05 COMPLETE).
-4. Verify anchor after next clean activation: `readlink /nix/var/nix/profiles/system` ≠ system-785 AND == `/run/current-system`.
-5. Confirm the deploy #2 smoke verdict + queue state (predicted rc=0 retry loop; verify in log).
+~~1. Answer question 1 (root inspection of `/var/lib/cv/assets`) → confirm heal fast-path hypothesis.~~ **Won't implement — superseded — hypothesis proven via the predicate-delta fix without root access (docs/status/2026-09-20_15-02 §root-cause).**
+~~2. Patch `cv-state-perms` fast-path per e.1 (2-line change) OR hand the finding to the owning parallel session.~~ done — landed as fc49dbe5 (docs/status/2026-09-20_15-02 §fix)
+~~3. Watch queue v7: next cycle re-attempts cv-server → if the heal is patched, activation goes clean → profile bumps past system-785 (F05 COMPLETE).~~ done — system-786 anchored on the next cycle 14:08 (docs/status/2026-09-20_15-02)
+~~4. Verify anchor after next clean activation: `readlink /nix/var/nix/profiles/system` ≠ system-785 AND == `/run/current-system`.~~ done — three-way anchor verified at system-787 (docs/status/2026-09-20_15-02 addendum)
+~~5. Confirm the deploy #2 smoke verdict + queue state (predicted rc=0 retry loop; verify in log).~~ done — reconciled: rc=3 STOP at 14:00, Bank-Sync NEW-fail (docs/status/2026-09-20_15-57 §a.12/§d.4)
 6. Decide the rogue llamas (question 2) — killing them frees 4.2G + 20% CPU + reopens the pressure gate headroom.
-7. F06: `findmnt /boot-mirror` UUID `4F53-C156`, rw, vfat (queue SUCCESS block auto-logs this).
-8. F07: `ls /boot-mirror` loader/EFI/entries (queue SUCCESS block; else via pre-reboot-check §11).
-9. F08: `df -h /boot-mirror` sane vs 4G.
-10. F09: `boot-mirror-sync` ran clean (§11 output).
-11. F10: `nix run .#pre-reboot-check` → exit 0, §11 WARN-grade.
-12. F11: `nix run .#boot-mirror-activate` → ✓ line.
-13. F12: BootOrder Samsung FIRST, QLC `0x0001` SECOND (activate output).
-14. F13: re-run pre-reboot-check → exit 0, §11 FAIL-grade.
-15. F14: CHANGELOG entries — this session's 5 fixes + deploy #2 narrative (re-read CHANGELOG.md fresh first; parallel sessions keep it dirty).
-16. F15: tick `docs/planning/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md` items 6 (line 34), 7 (line 35), 9 (line 37); leave 8 (reboot).
-17. F16: fold proper messages into the daemon commits (`git show --stat HEAD` first — amend ONLY if the commit is exactly my file set; else a `git commit --amend` on the right HEAD or note attribution in the push) → `git push` (authorized).
-18. F17: final report with BOTH M1-M12 + F01-F27 tables (`docs/planning/2026-09-19_10-48_…` lines 48-95) + reboot handoff + post-reboot proof steps (`bootctl status` Current Boot Loader PARTUUID `023f66c0-…`).
+~~7. F06: `findmnt /boot-mirror` UUID `4F53-C156`, rw, vfat (queue SUCCESS block auto-logs this).~~ done — docs/status/2026-09-20_15-57 §a.3
+~~8. F07: `ls /boot-mirror` loader/EFI/entries (queue SUCCESS block; else via pre-reboot-check §11).~~ done — docs/status/2026-09-20_15-57 §a.3
+~~9. F08: `df -h /boot-mirror` sane vs 4G.~~ done — 312M/4.0G (docs/status/2026-09-20_15-57 §a.3)
+~~10. F09: `boot-mirror-sync` ran clean (§11 output).~~ done — sync journal green + diff-gate PASS (docs/status/2026-09-20_15-57 §a.3)
+~~11. F10: `nix run .#pre-reboot-check` → exit 0, §11 WARN-grade.~~ done — docs/status/2026-09-20_15-57 §a.4
+~~12. F11: `nix run .#boot-mirror-activate` → ✓ line.~~ done — CHANGELOG 2026-09-30 boot-mirror ACTIVATED (durable)
+~~13. F12: BootOrder Samsung FIRST, QLC `0x0001` SECOND (activate output).~~ done — BootOrder 000C,0001 (CHANGELOG 2026-09-30 entry)
+~~14. F13: re-run pre-reboot-check → exit 0, §11 FAIL-grade.~~ done — 23/0 strict grade (docs/status/2026-09-20_15-30)
+~~15. F14: CHANGELOG entries — this session's 5 fixes + deploy #2 narrative (re-read CHANGELOG.md fresh first; parallel sessions keep it dirty).~~ done — docs/status/2026-09-20_15-57 §a.7
+~~16. F15: tick `docs/planning/2026-09-18_19-53_SAMSUNG-2ND-BOOT-DISK-PARETO-PLAN.md` items 6 (line 34), 7 (line 35), 9 (line 37); leave 8 (reboot).~~ done — ticks 6/7/9 landed (docs/status/2026-09-20_15-57 §a.8)
+~~17. F16: fold proper messages into the daemon commits (`git show --stat HEAD` first — amend ONLY if the commit is exactly my file set; else a `git commit --amend` on the right HEAD or note attribution in the push) → `git push` (authorized).~~ done — pathspec commit 541fab97 + push (docs/status/2026-09-20_15-57 §a.9)
+~~18. F17: final report with BOTH M1-M12 + F01-F27 tables (`docs/planning/2026-09-19_10-48_…` lines 48-95) + reboot handoff + post-reboot proof steps (`bootctl status` Current Boot Loader PARTUUID `023f66c0-…`).~~ done — docs/status/2026-09-20_15-30 report + handoff
 19. Verify browser-history recovers to 200 on the user's next browsing session (or ship the upstream heartbeat first).
-20. File the upstream browser-history heartbeat issue/PR (e.2) in `~/projects/browser-history`.
-21. Confirm with user: was the 11:06 root nixpkgs bump (`8253c632`, e554fab → 20b1ddd) deliberate (unanswered since 12:15).
+~~20. File the upstream browser-history heartbeat issue/PR (e.2) in `~/projects/browser-history`.~~ done — issue #26 filed (docs/status/2026-09-20_15-57 §a.11)
+~~21. Confirm with user: was the 11:06 root nixpkgs bump (`8253c632`, e554fab → 20b1ddd) deliberate (unanswered since 12:15).~~ done — answered: parallel deploy session's lock update, daemon-committed 8253c632 (docs/status/2026-09-20_19-47 §a.9)
 22. Confirm with user: was the 04:17 reboot user-initiated or a crash (forensics if crash; unanswered since 12:15).
 23. Ask user for reboot timing (question 3) — the system is reboot-revertible until anchored.
-24. After anchor + activate: hand the reboot to the user (F17/M7 — always user-owned).
-25. Post-reboot (user-gated): F18 `bootctl status` PARTUUID proof.
+~~24. After anchor + activate: hand the reboot to the user (F17/M7 — always user-owned).~~ done — reboot handoff delivered (docs/status/2026-09-20_15-30 "Reboot handoff")
+~~25. Post-reboot (user-gated): F18 `bootctl status` PARTUUID proof.~~ done — verified 2026-10-15: BootCurrent 000C, LoaderDevicePartUUID 023f66c0 across ≥2 boots (docs/todo/storage.md:42; 2026-10-16_00-56)
 26. Post-reboot: F19 pre-reboot-check green from booted state.
 27. Post-reboot: F20 QLC fallback still second (+ optional firmware-menu fallback boot test).
 28. Next morning: F21 first-nightly drift watch (boot-mirror-sync re-ran, no diff drift).
@@ -98,7 +98,7 @@ The 11:25 deploy exited rc=3 with an un-anchored profile. Diagnosis this session
 36. `nix log` empty-output mystery from the morning session (low priority).
 37. Attic/cache.home.lan substitution coverage spot-check (was partial in the morning build).
 38. Note nvme enumeration drift: mirror ESP now `nvme1n1p1` (was nvme0n1p1 at handoff) — always derive by UUID `4F53-C156`; consider an AGENTS.md line if not already implied.
-39. Watch the llama-rag-dark-guard Gatus check: it should be RED on the 8848/8849 rogues (working as designed) — confirm it fired.
+~~39. Watch the llama-rag-dark-guard Gatus check: it should be RED on the 8848/8849 rogues (working as designed) — confirm it fired.~~ done — confirmed live: leaked_instances 2, RED check = alert working (docs/status/2026-09-20_15-30 Open threads §2)
 40. If rogues are killed: confirm the dark-guard check clears and mem PSI drops below 20 sustained.
 41. Review whether the queue's mem<20 gate should correlate with io PSI + zram (the freeze calibration) rather than raw memory PSI — the 69%-available box was deploy-blocked for 5 min by reclaim churn (owner doctrine decision, NOT a unilateral change).
 42. Consider `Type=notify`/`sd_notify` support gaps: none — skip (no change needed; listed for completeness of the audit backlog).

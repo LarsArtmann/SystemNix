@@ -41,12 +41,12 @@
 ## c) NOT STARTED
 
 1. Guard in `crush-hot-db.nix` (blocked on Q1 design decision)
-2. Un-symlink `.crush` / restore real dir (blocked on Q1 + quiet window)
-3. Git restore of `.crush/.gitignore` + `SKILL.md` as a follow-up commit (no history rewrite) (blocked on Q2)
+~~2. Un-symlink `.crush` / restore real dir (blocked on Q1 + quiet window)~~ done — .crush is a real dir again — docs/status/2026-10-16_06-19 §a.9: ".crush/skills/.../SKILL.md (real dir, not a symlink)"
+~~3. Git restore of `.crush/.gitignore` + `SKILL.md` as a follow-up commit (no history rewrite) (blocked on Q2)~~ done — skill file present in-repo and edited by later sessions (docs/status/2026-10-16_06-19 T21)
 4. Fleet sweep of other repos for the same class
 5. AGENTS.md write-back of the incident (should NOT have waited — see d-4/e-2)
 6. `corrupt 12` triage on the hot disk (noticed, deliberately not researched per instruction — Q3)
-7. Pending first-migration verification from AGENTS.md (symlink sweep + `node_psi_io_some_avg60` vs 40-60% baseline) — now unblocked, still undone
+~~7. Pending first-migration verification from AGENTS.md (symlink sweep + `node_psi_io_some_avg60` vs 40-60% baseline) — now unblocked, still undone~~ done — executed: 279-symlink sweep + IO-PSI/Zone-6 baseline verdict (docs/status/2026-09-29_00-45)
 8. Regression test for the guard (`tests/test-crush-hot-db.nix` tracked-file fixture)
 
 ## d) TOTALLY FUCKED UP

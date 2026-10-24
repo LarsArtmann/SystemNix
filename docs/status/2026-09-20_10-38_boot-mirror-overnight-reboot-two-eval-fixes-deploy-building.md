@@ -39,19 +39,19 @@ _Sequence: continuation of `2026-09-19_10-44_…` and `2026-09-19_16-16_…` rep
 
 ## b) PARTIALLY DONE
 
-1. **THE DEPLOY** — building now (8/35, nodejs-slim is the long pole). Everything after it (F06–F17) is defined, scripted, waiting
-2. CHANGELOG entry — drafted mentally, lands after deploy outcome is known (parallel sessions keep the file dirty; re-read + pathspec at commit time)
-3. Push — authorized, deferred to the F16 batch (post-deploy, post-activation)
+~~1. **THE DEPLOY** — building now (8/35, nodejs-slim is the long pole). Everything after it (F06–F17) is defined, scripted, waiting~~ done — system-786 anchored 2026-09-20 14:08 (docs/status/2026-09-20_15-02)
+~~2. CHANGELOG entry — drafted mentally, lands after deploy outcome is known (parallel sessions keep the file dirty; re-read + pathspec at commit time)~~ done — CHANGELOG Added+Fixed entries landed (docs/status/2026-09-20_15-57 §a.7)
+~~3. Push — authorized, deferred to the F16 batch (post-deploy, post-activation)~~ done — pushed 4b0c6153..541fab97 (docs/status/2026-09-20_15-57 §a.9)
 
 ## c) NOT STARTED (all gated on the deploy landing)
 
-1. F06–F09 mirror verification (findmnt/contents/df/unit state)
-2. F10 pre-reboot-check WARN-grade
-3. F11–F12 `boot-mirror-activate` + BootOrder verification
-4. F13 pre-reboot-check FAIL-grade
-5. F14–F15 CHANGELOG + plan-doc checklist ticks 6/7/9
-6. F16 pathspec commits + push
-7. F17 final report + reboot handoff
+~~1. F06–F09 mirror verification (findmnt/contents/df/unit state)~~ done — docs/status/2026-09-20_15-57 §a.3 (F06-F09 evidence all captured)
+~~2. F10 pre-reboot-check WARN-grade~~ done — exit 0, 21 pass (docs/status/2026-09-20_15-57 §a.4)
+~~3. F11–F12 `boot-mirror-activate` + BootOrder verification~~ done — CHANGELOG 2026-09-30 boot-mirror ACTIVATED (durable BootOrder 000C,0001 — the 09-20 flip was later found reverted)
+~~4. F13 pre-reboot-check FAIL-grade~~ done — 23/0 strict grade (docs/status/2026-09-20_15-30)
+~~5. F14–F15 CHANGELOG + plan-doc checklist ticks 6/7/9~~ done — docs/status/2026-09-20_15-57 §a.7/§a.8
+~~6. F16 pathspec commits + push~~ done — commit 541fab97 + push (docs/status/2026-09-20_15-57 §a.9)
+~~7. F17 final report + reboot handoff~~ done — docs/status/2026-09-20_15-30 (M/F tables + reboot handoff section)
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -69,20 +69,20 @@ _Sequence: continuation of `2026-09-19_10-44_…` and `2026-09-19_16-16_…` rep
 
 ## f) NEXT (up to 50, ordered)
 
-1. Wait for build completion (nodejs-slim ~2h15m unless cached by a parallel build)
-2. On rc=0: verify profile ≠ system-785 + anchored (F05)
-3. F06 findmnt /boot-mirror → UUID `4F53-C156`, vfat rw
-4. F07 ls /boot-mirror → loader/loader.conf, EFI/systemd/systemd-bootx64.efi, EFI/BOOT/BOOTX64.EFI, generation entries
-5. F08 df -h /boot-mirror (4G ESP)
-6. F09 unit state of boot-mirror-sync (via pre-reboot-check §11 output — systemctl banned in my shell)
-7. F10 `nix run .#pre-reboot-check` → exit 0 (§11 WARN-grade)
-8. F11 `nix run .#boot-mirror-activate` → Samsung first in BootOrder
-9. F12 verify BootOrder (Samsung `Linux Boot Manager (Samsung)` first, QLC 0x0001 second)
-10. F13 re-run pre-reboot-check → §11 FAIL-grade green
-11. F14 CHANGELOG `### Added` entry (boot-mirror shipped + the four blockers fixed + queue doctrine)
-12. F15 tick plan-doc items 6/7/9 (leave 8=reboot unchecked)
-13. F16 pathspec commits + `git push` (authorized)
-14. F17 final report with M1–M12 + F01–F27 tables + reboot handoff
+~~1. Wait for build completion (nodejs-slim ~2h15m unless cached by a parallel build)~~ done — chain completed after nodejs-slim fix; deploys green 2026-09-20 (docs/status/2026-09-20_12-26 §a.3-4)
+~~2. On rc=0: verify profile ≠ system-785 + anchored (F05)~~ done — system-786 anchored (docs/status/2026-09-20_15-02)
+~~3. F06 findmnt /boot-mirror → UUID `4F53-C156`, vfat rw~~ **NOT-DO — NOT-DO — dup of §c.1.**
+~~4. F07 ls /boot-mirror → loader/loader.conf, EFI/systemd/systemd-bootx64.efi, EFI/BOOT/BOOTX64.EFI, generation entries~~ **NOT-DO — NOT-DO — dup of §c.1.**
+~~5. F08 df -h /boot-mirror (4G ESP)~~ **NOT-DO — NOT-DO — dup of §c.1.**
+~~6. F09 unit state of boot-mirror-sync (via pre-reboot-check §11 output — systemctl banned in my shell)~~ **NOT-DO — NOT-DO — dup of §c.1.**
+~~7. F10 `nix run .#pre-reboot-check` → exit 0 (§11 WARN-grade)~~ **NOT-DO — NOT-DO — dup of §c.2.**
+~~8. F11 `nix run .#boot-mirror-activate` → Samsung first in BootOrder~~ **NOT-DO — NOT-DO — dup of §c.3.**
+~~9. F12 verify BootOrder (Samsung `Linux Boot Manager (Samsung)` first, QLC 0x0001 second)~~ **NOT-DO — NOT-DO — dup of §c.3.**
+~~10. F13 re-run pre-reboot-check → §11 FAIL-grade green~~ **NOT-DO — NOT-DO — dup of §c.4.**
+~~11. F14 CHANGELOG `### Added` entry (boot-mirror shipped + the four blockers fixed + queue doctrine)~~ **NOT-DO — NOT-DO — dup of §c.5.**
+~~12. F15 tick plan-doc items 6/7/9 (leave 8=reboot unchecked)~~ **NOT-DO — NOT-DO — dup of §c.5.**
+~~13. F16 pathspec commits + `git push` (authorized)~~ **NOT-DO — NOT-DO — dup of §c.6.**
+~~14. F17 final report with M1–M12 + F01–F27 tables + reboot handoff~~ **NOT-DO — NOT-DO — dup of §c.7.**
 15. Post-activation: tell user the reboot proof (`bootctl status` Current Boot Loader PARTUUID `023f66c0-…`)
 16. Sweep other `allowUnits`-style option defaults for the replace-trap (mount-gating-audit, gatus-coverage allowPorts, systemd-shape-audit allowTimerRestart)
 17. Propose eval-battery precheck (flake check + evo-x2 toplevel + targeted evals) before future deploy queues

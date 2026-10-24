@@ -116,12 +116,12 @@ Nothing destructive this session or in batch 1 — no data loss, no broken evals
 11. Hand the user the root cleanup one-liners (corpses + `buildcache.prom.bKDc8n`); run `trash …/niri.prom.tmp` user-side myself.
 12. Prune completed monitoring TODOs → CHANGELOG.md (#36 missing-3 flip, #37 split-semantics, #38 maxUpstreamGaps grep, #39 freshness budgets, #41 pattern verify, I/O-stall review, .tmp-audit observe half, btrfs-compression healthy).
 13. Re-sync the monitoring queue section in `TODO_LIST.md` (queue one-liners ↔ library entries must not drift).
-14. Fix the 17 malformed `- [ ] **Source:** →` rows across domain files.
+~~14. Fix the 17 malformed `- [ ] **Source:** →` rows across domain files.~~ done — grep docs/todo/*.md for '- [ ] **Source' → 0 matches remain; check-todo-system OK (docs/status/2026-09-21_16-32 §a.11)
 15. File `searxng-secret-key` Type=simple→oneshot fix under `docs/todo/services.md` (services domain owns the fix, not monitoring).
 16. CHANGELOG entry for the whole batch-1 (collector overhaul + registry flips + new check).
 
 **Batch 2 — backup observability (design complete, code zero):**
-17. Add `backup_ever_succeeded{backup}` (MTIME≠0) to the existing backup-coordination loop.
+~~17. Add `backup_ever_succeeded{backup}` (MTIME≠0) to the existing backup-coordination loop.~~ done — live: modules/nixos/services/backup-coordination.nix:77 emits backup_ever_succeeded; docs/todo/monitoring.md:34 records the metric half landed 2026-09-23
 18. Declare the `snapshotSets` option (`directory, prefix, maxAgeHours, enforced`) in backup-coordination.nix.
 19. Implement per-set gauges `btrbk_snapshot_{newest_timestamp,age_hours,ever_succeeded,fresh}` with full `YYYYMMDDTHHMM` parse + mtime fallback.
 20. Aggregate `btrbk_snapshots_all_fresh` over enforced sets ONLY.
@@ -149,7 +149,7 @@ Nothing destructive this session or in batch 1 — no data loss, no broken evals
 40. Extract the shared textfile mktemp+reap+CAP_FOWNER helper; convert remaining collectors.
 
 **Owner-gated / deferred (blocked, do not start):**
-41. Deploy (`nix run .#deploy`) — Q1 below; everything green-post-flip hangs on it.
+~~41. Deploy (`nix run .#deploy`) — Q1 below; everything green-post-flip hangs on it.~~ done — deployed 2026-09-20: system-786 anchored 14:08 (docs/status/2026-09-20_15-02 §timeline)
 42. Post-deploy verification plan: traces check green, enabled-inactive check green, §10 pass, §10 new-metric loan correct.
 43. searxng-secret-key Type fix implementation — Q2 below.
 44. 6 h budget acceptability confirmation — Q3 below.

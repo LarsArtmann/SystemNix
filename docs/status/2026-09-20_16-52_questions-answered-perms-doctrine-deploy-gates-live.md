@@ -85,7 +85,7 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 
 ## b) PARTIALLY DONE
 
-1. **The re-anchor deploy** — the whole point of the new rc=14 instruction, NOT yet executed:
+~~1. **The re-anchor deploy** — the whole point of the new rc=14 instruction, NOT yet executed:~~ done — landed rc=0 18:43, system-791 three-way anchored (docs/status/2026-09-20_19-47 §a.7)
    deploy #1 (16:17:57) activated `g118vva3…` but **exit-4'd on a hermes start-timeout**
    (16:34:02, `hermes-migrate-state` SIGKILLed at the budget under the deploy's own IO churn —
    io PSI avg10 hit 26.8% during activation/smoke) → profile stayed **system-787 = UNANCHORED**.
@@ -108,14 +108,14 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 
 ## c) NOT STARTED
 
-1. The re-anchor `nix run .#deploy` itself (window-gated, ~17:46+; second run should not
+~~1. The re-anchor `nix run .#deploy` itself (window-gated, ~17:46+; second run should not~~ **NOT-DO — NOT-DO — dup of §b.1.**
    restart hermes — unit file unchanged vs current-system — so it should anchor cleanly).
 2. Root-side post-heal confirmation snapshot (`sudo find /var/lib/cv -xdev \( ! -user cv -o
    ! -group cv -o ! -perm -u+w \) -print | head` — expect empty; needs sudo).
 3. cv-scan green verification at the 18:23 tick; tonight's 03:30 cv-backup pool receive.
 4. The CV flake lock move (owned by the ACTIVE CV-repo session: vendorHash refresh at their
    final rev → push → my recorded probe protocol → `nix flake lock --update-input cv`).
-5. Idle-window `nix run .#post-deploy-check` to freeze a new baseline (the Hermes NEW-fail
+~~5. Idle-window `nix run .#post-deploy-check` to freeze a new baseline (the Hermes NEW-fail~~ done — smoke 106 PASS / 2 known-FAIL (docs/status/2026-09-20_19-47 §b)
    ages out; expect CV to drop out once the 18:23 scan runs green).
 6. Hermes smoke start-grace (deploy.sh's 10s settle is structurally too short when stc
    restarts hermes — 5-8min start) — design candidate only, see e.3.
@@ -168,13 +168,13 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 
 ## f) Up to 50 things to get done next (prioritized, scoped to this session's threads)
 
-1. **Re-run `nix run .#deploy` in a trip-free 60-min window (earliest ~17:46)** — second run
+~~1. **Re-run `nix run .#deploy` in a trip-free 60-min window (earliest ~17:46)** — second run~~ **NOT-DO — NOT-DO — dup of §b.1.**
    carries no hermes unit-file change → no restart → should anchor cleanly; verify profile
    bumps past system-787 and rc=0 (or rc=3-only).
-2. After anchor: confirm three-way anchor (profile == current-system == default boot entry).
-3. Verify the 18:23 cv-scan runs green (first funnel tick on the healed server).
+~~2. After anchor: confirm three-way anchor (profile == current-system == default boot entry).~~ done — readlink trio = system-791 (docs/status/2026-09-20_19-47 §a.7)
+~~3. Verify the 18:23 cv-scan runs green (first funnel tick on the healed server).~~ done — green (docs/status/2026-09-20_19-47 §a.15)
 4. Verify tonight's 03:30 cv-backup pool receive (cv-server healthy since 14:08).
-5. Idle-window `nix run .#post-deploy-check` → new baseline (Hermes ages out, CV drops if
+~~5. Idle-window `nix run .#post-deploy-check` → new baseline (Hermes ages out, CV drops if~~ **NOT-DO — NOT-DO — dup of §c.5.**
    scan green).
 6. Root-side cv heal confirmation snapshot (c.2) — user or privileged session.
 7. CV session handoff: they refresh vendorHash at their final rev → re-probe →
@@ -189,20 +189,20 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
     recurring dark-port pressure source.
 13. Post-reboot (user): `bootctl status` PARTUUID proof + pre-reboot-check green + flm
     :52625 corpse cleared + FastFlowLM smoke PASS (baseline shrinks again).
-14. Post-reboot: go-build automount absence re-verified (entry removed — no unit should exist).
+~~14. Post-reboot: go-build automount absence re-verified (entry removed — no unit should exist).~~ **Won't implement — moot — entry removed; nothing to verify (15-02 addendum §Q2).**
 15. File the browser-history empty-batch heartbeat upstream (the `[ready]` todo row).
 16. xdg-desktop-portal flap triage (owner look at which dependency fails; watch row exists).
 17. Watch guard Zone-6 behavior overnight: trips #650-655 all today — if the cadence holds
     after the crush-hot-db migration completes, revisit `ioChurnUnits` coverage (the
     recovery-reader class from freeze #6).
-18. inboxclean main-account re-consent (user-gated, standing since Sep 4 — every 30-min tick
+~~18. inboxclean main-account re-consent (user-gated, standing since Sep 4 — every 30-min tick~~ done — 2026-10-04 (docs/status/2026-10-04_08-32 §a.1)
     fails; the only remaining cause of service-health-check reds).
 19. Consider a `system_hermes_start_duration_seconds` textfile metric (start-budget trend was
     invisible until it bit — the 12:26 warning was a one-off measurement).
 20. Sweep other heal/fast-path pairs for the symmetry rule (forgejo-subvol-bootstrap,
     clickhouse-xfs-ownership-heal, atticd-storage-dir) — doctrine is in AGENTS.md now; audit
     is mechanical.
-21. The parallel session's `storage-collector.nix` UMask fix rode my deploy — verify the
+~~21. The parallel session's `storage-collector.nix` UMask fix rode my deploy — verify the~~ done — storage_collector_health present post-deploy (docs/status/2026-09-20_19-47 §a.6)
     storage textfile lands 0644 and `node_textfile_scrape_error` stays 0 (their thread, one
     observation from me post-deploy).
 22. Bank-Sync SCA approval (user, ~90-day class) — clears the standing baseline fail.

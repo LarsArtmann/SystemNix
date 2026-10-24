@@ -28,7 +28,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Deployment** — everything built, pushed, eval-proven; system activation pending (needs sudo, which this session's sandbox forbids). No half-deployed state exists; the switch simply hasn't run.
+~~1. **Deployment** — everything built, pushed, eval-proven; system activation pending (needs sudo, which this session's sandbox forbids). No half-deployed state exists; the switch simply hasn't run.~~ done — deployed 2026-09-20 (health-dashboard activates first time in that generation; docs/status/2026-09-20_12-26 §b.2)
 2. **Real-remote federation** — hub verified against the mock example probe only. CV (the actual configured remote) was never pulled through the hub's HTML/JSON paths. CV's check keys are giant Go type strings (`*github.com/larsartmann/go-sse.Broadcaster[...]`); they will namespace fine (`cv/<key>`) but the card rendering was never eyeballed.
 3. **DNS resolution** — the record ships in config, but dnsblockd's pickup of changed `localRecords` (hot-reload vs unit restart on switch) is unverified.
 4. **Commit hygiene** — final tree content is correct and pushed, but most SystemNix wiring landed in daemon heuristic commits (`chore: auto-commit`), not intent commits. One intent commit survived (dashboard AGENTS.md); the daemon won every other race.
@@ -66,7 +66,7 @@ Nothing deployed is broken (nothing is deployed yet), and no data or history was
 
 **Deploy + verify (blocking value):**
 
-1. Run `nix run .#deploy` on evo-x2 (sudo; the only step this session couldn't do).
+~~1. Run `nix run .#deploy` on evo-x2 (sudo; the only step this session couldn't do).~~ **NOT-DO — NOT-DO — dup of §b.1 (deployment, verified closed).**
 2. Post-deploy smoke: `curl 127.0.0.1:8103/healthz`, `/readyz`, `/health` (HTML eyeball).
 3. `dig @127.0.0.1 health.home.lan` after the switch — confirm dnsblockd serves the new record (learn whether it hot-reloads or needed the restart).
 4. Verify `https://health.home.lan` end to end: caddy TLS + oauth2-proxy gate + tile click-through from PapDashboard.

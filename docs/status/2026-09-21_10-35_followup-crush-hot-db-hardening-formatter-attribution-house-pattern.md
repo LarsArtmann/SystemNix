@@ -23,7 +23,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **crush-hot-db upgrade is DEPLOY-PENDING** — code verified, NOT live. Deliberate: the IO storm never ended (avg60 was ~77% at 00:40, still **55% at 10:35** — 15+ h of Zone-6 territory; the deploy pressure gate would exit 12). Until deployed: the OLD blanket-skip binary keeps running, `legal-cases` stays on the QLC root, and no failure paging exists.
+~~1. **crush-hot-db upgrade is DEPLOY-PENDING** — code verified, NOT live. Deliberate: the IO storm never ended (avg60 was ~77% at 00:40, still **55% at 10:35** — 15+ h of Zone-6 territory; the deploy pressure gate would exit 12). Until deployed: the OLD blanket-skip binary keeps running, `legal-cases` stays on the QLC root, and no failure paging exists.~~ done — deployed — per-project guard LIVE since the 09-22 generation (docs/status/2026-10-01_13-42 §a.2; 09-29_04-46 §b.1)
 2. **VM test rewritten but NEVER RUN** — `tests/test-crush-hot-db.nix` carries a new fd-holding fake-crush binary (argv[1] open), per-project guard assertions with both controls (late held / late2 migrates), dry-run + tripwire assertions. Eval-green only. Building qemu VMs mid-storm = storm amplification, so it was deferred — but it means the rewritten test is UNPROVEN, and the next full-build pre-commit/CI will be its first execution.
 3. **PSI before/after comparison (row 55)** — blocked-by-design: mid-storm avg60 numbers are meaningless as a post-migration baseline. Still open.
 4. **df `/` growth noted, not diagnosed:** 570G (81%) at 00:35 vs 545G right after the @nix deletion — +25G in ~32h, attributed by reasoning (storm-era builds/VM tests; `@nix` was a sibling subvol so no snapshot pinning) but never measured per-consumer.
@@ -55,15 +55,15 @@
 
 **Unblock-first (this session's output is inert until these):**
 
-1. DEPLOY when Zone 6 calms (`nix run .#deploy`) — activates the crush-hot-db upgrade + parallel session's work; first post-deploy migrate run converges `legal-cases`
+~~1. DEPLOY when Zone 6 calms (`nix run .#deploy`) — activates the crush-hot-db upgrade + parallel session's work; first post-deploy migrate run converges `legal-cases`~~ done — deployed 2026-09-22 generation (docs/status/2026-10-01_13-42 §a.2)
 2. After that deploy: run `tests/test-crush-hot-db.nix` (first real execution of the rewritten test) — `nix build .#checks.x86_64-linux.test-crush-hot-db` in a quiet window
-3. Post-deploy journal check: new skip lines per `docs/services/crush.md` + `systemctl status system-health` shows the monitored unit + one dry-run rehearsal via `systemctl set-environment`
+~~3. Post-deploy journal check: new skip lines per `docs/services/crush.md` + `systemctl status system-health` shows the monitored unit + one dry-run rehearsal via `systemctl set-environment`~~ done — live skip lines verified on the 2026-09-27 run (docs/status/2026-09-29_03-31 §b.2)
 4. Watch the 2026-09-21 23:00 btrbk-root window (storm lull needed) — else `btrfs-verify-pool-backups` FAILS at Sep 22 00:28 (3-day threshold); consider the manual early-send option (sudo) if the storm persists into the evening
-5. `chmod +x scripts/verify-html-diagrams.sh`
+~~5. `chmod +x scripts/verify-html-diagrams.sh`~~ done — (this file §h; docs/status/2026-09-21_16-16 §a.2)
 
 **Small [ready] rows I scoped then dropped (do-or-requeue):**
-6. `btrfs-verify-pool-backups` 2-day WARN boundary (storage row 74)
-7. btrbk-root/pool MemoryHigh + OOMScoreAdjust (row 73 — pattern already on data/forgejo legs)
+~~6. `btrfs-verify-pool-backups` 2-day WARN boundary (storage row 74)~~ done — landed + functionally verified (docs/status/2026-09-21_16-16 §a.4)
+~~7. btrbk-root/pool MemoryHigh + OOMScoreAdjust (row 73 — pattern already on data/forgejo legs)~~ done — landed (docs/status/2026-09-21_16-16 §a.3)
 8. Shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (row 30/46)
 9. `pool-subvols-ensure` declarative oneshot (row 31)
 10. Device-constants consolidation into one lib file (row 32)
@@ -86,7 +86,7 @@
 25. HTML deliverable refresh pass: fold the new live facts (migration ran, reserve present, boot-mirror shipped) into the 2026-09-20 visualization's snapshot-claims where they drifted (b.2-adjacent, low priority — it's a dated snapshot)
 
 **Verification debt + hygiene:**
-26. Re-check `df /` after the storm (the +25G growth attribution is reasoned, not measured)
+~~26. Re-check `df /` after the storm (the +25G growth attribution is reasoned, not measured)~~ done — 570G/81% measured 2026-09-21 00:35 (docs/status/2026-09-20_16-26 §h #48)
 27. TODO-system pass: prune the new `[x]` rows to CHANGELOG (house rule — I updated rows, did not run the pruning pass)
 28. Consider wiring `verify-html-diagrams.sh` into pre-commit for `docs/planning/*.html` (the formatter-incident tripwire at hook time)
 29. Confirm alert DELIVERY for the reserve check (Gatus should have been red during the "absent" belief window — was it? The metric says present since Sep 13; if Gatus was red anyway, the check itself lies)

@@ -27,7 +27,7 @@ Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-
 ## b) PARTIALLY DONE
 
 1. **hot-db Phase 2 is partial BY DESIGN:** mechanism shipped dormant; every actual migration wave (pocket-id → postgres → discordsync; docker data-root) is an owner sudo window. The `crush-hot-db` interim module is NOT yet folded in (documented debt; the 2026-09-21 10:35 session's per-project-guard upgrade is code-complete but deploy-pending behind the IO storm). The two hot-related VM tests are unrealized on the current tree (queued as TODO_LIST storage row "Rebuild `hot-db` + `crush-hot-db` VM tests green").
-2. **The probe-purge close-out chain is half-consumed.** The deletion executed (a.3), but the 04:57-handoff's second half — "remove the `probeRegistrationCleanup` block (self-neutralizing debt)" — never ran: the option + script + fixture + configuration.nix wiring are still in-tree (`browser-history.nix:198/368-387`, `configuration.nix:519`), now dead code, and `docs/todo/services.md:21` still carries the item as `[blocked:user]` although nothing is blocked anymore (annotated this pass).
+~~2. **The probe-purge close-out chain is half-consumed.** The deletion executed (a.3), but the 04:57-handoff's second half — "remove the `probeRegistrationCleanup` block (self-neutralizing debt)" — never ran: the option + script + fixture + configuration.nix wiring are still in-tree (`browser-history.nix:198/368-387`, `configuration.nix:519`), now dead code, and `docs/todo/services.md:21` still carries the item as `[blocked:user]` although nothing is blocked anymore (annotated this pass).~~ done — probeRegistrationCleanup block REMOVED — grep modules/*.nix for it → 0 matches
 3. **The OAuth2 live rejection remains UNVERIFIED** (user passkey ceremony, `docs/todo/services.md:28`) — correctly qualified by the window's review fix, still open by design.
 4. **The review-fix report's own §a.4-style residue:** none — the CORRECTED annotation landed. Nothing partial left in that orbit.
 
@@ -57,10 +57,10 @@ Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-
 
 ## f) NEXT THINGS (harvested; the actionable ones are appended to TODO_LIST this pass)
 
-1. Remove the self-neutralized `probeRegistrationCleanup` block (`configuration.nix:519`, option/script/fixture per the keep-or-rip answer) — unblocked by the executed purge; **appended**.
-2. Fix the user-count metric-name drift (`browser_history_users` live) in `docs/todo/services.md:95` + `configuration.nix:511` BEFORE landing the Gatus check; **appended**.
+~~1. Remove the self-neutralized `probeRegistrationCleanup` block (`configuration.nix:519`, option/script/fixture per the keep-or-rip answer) — unblocked by the executed purge; **appended**.~~ **NOT-DO — NOT-DO — dup of §b.2 (removal, verified closed).**
+~~2. Fix the user-count metric-name drift (`browser_history_users` live) in `docs/todo/services.md:95` + `configuration.nix:511` BEFORE landing the Gatus check; **appended**.~~ done — fixed at TODO_LIST:122, services.md:29, configuration.nix:511 (docs/status/2026-09-21_16-32 §a.8)
 3. Resolve the `/health` 503-degraded false-alarm class (Gatus condition vs upstream poll-counts-as-freshness) + sweep the post-deploy smoke that polls `/health`; **appended**.
-4. T14 hot-db monitoring: `/mnt/hot` + per-entry mount-presence textfile metric (fail-closed) + Gatus checks — flagged un-queued by the 2026-09-21 01:39 sibling run; **appended**.
+~~4. T14 hot-db monitoring: `/mnt/hot` + per-entry mount-presence textfile metric (fail-closed) + Gatus checks — flagged un-queued by the 2026-09-21 01:39 sibling run; **appended**.~~ done — CHANGELOG 2026-09-30 "Hot-db T14 monitoring review-hardened" entry
 5. `migrate-hot-db.sh` stub-fixture test before its first user-run window (untested destructive script); **appended**.
 6. Update the Phase-2 plan doc's T-task table with completion status so the plan stops lying; **appended**.
 7. Nix `--json` deprecation sweep over scripts/docs call sites (carried from the hermes chain); **appended**.

@@ -50,19 +50,19 @@
 
 ## b) PARTIALLY DONE
 
-1. **Toplevel build for the deploy** — build #1 failed (1 dependency failed, details lost to my output masking); build #2 (`--keep-going`, full log at `~/.local/state/deploy-geometrikks/build2.log`) RUNNING at report time. The build is REQUIRED for deploy and its result gates everything below.
-2. **The deploy itself** — blocked by the pressure gate for ~6.5h. Correctly queued, not raced. Needs: build #2 green + io PSI avg10 <20 + MemAvailable comfortably >10% (ideally >20%) at the same moment.
-3. **Post-deploy verification battery** — fully specified (prior session §"Exact next steps" + this session's eval-verified expectations) but zero items executable until containers exist.
-4. **crush-hot-db structural storm fix** — partially migrated; blocked on live crush sessions by design. The QLC `.crush/` churn class continues until it completes.
+~~1. **Toplevel build for the deploy** — build #1 failed (1 dependency failed, details lost to my output masking); build #2 (`--keep-going`, full log at `~/.local/state/deploy-geometrikks/build2.log`) RUNNING at report time. The build is REQUIRED for deploy and its result gates everything below.~~ done — root-caused (nodejs-slim test EPERM) + fixed; deploys green 2026-09-20 (docs/status/2026-09-20_12-26 §a.3-4)
+~~2. **The deploy itself** — blocked by the pressure gate for ~6.5h. Correctly queued, not raced. Needs: build #2 green + io PSI avg10 <20 + MemAvailable comfortably >10% (ideally >20%) at the same moment.~~ done — system-786 anchored 2026-09-20 14:08 (docs/status/2026-09-20_15-02)
+~~3. **Post-deploy verification battery** — fully specified (prior session §"Exact next steps" + this session's eval-verified expectations) but zero items executable until containers exist.~~ done — executed 2026-09-20 (docs/status/2026-09-20_19-47 §a.3)
+~~4. **crush-hot-db structural storm fix** — partially migrated; blocked on live crush sessions by design. The QLC `.crush/` churn class continues until it completes.~~ done — completed + converged across reboots (docs/status/2026-09-21_10-35 §a.6)
 5. **fastflowlm re-arm** — socket stays DOWN (restore capped 3/3 today, per guard journal). Re-arm is a post-storm manual step (`systemctl start fastflowlm.socket`), user-gated or next-session.
 
 ## c) NOT STARTED
 
-1. Post-deploy: container health verification (`docker ps` — `geometrikks-app-1` + `geometrikks-timescale_db-1` healthy; images pre-pulled so no pull IO).
-2. Post-deploy: `/health/ready` probe via python urllib (curl is sandbox-banned) expecting 200.
+~~1. Post-deploy: container health verification (`docker ps` — `geometrikks-app-1` + `geometrikks-timescale_db-1` healthy; images pre-pulled so no pull IO).~~ done — docs/status/2026-09-20_19-47 §a.3 ("Up 44 minutes (healthy)")
+~~2. Post-deploy: `/health/ready` probe via python urllib (curl is sandbox-banned) expecting 200.~~ done — docs/status/2026-09-20_19-47 §a.3 (probe 19:0x + 19:47 → 200)
 3. Post-deploy: `/var/lib/geometrikks/.env` exists, root 0600, sops-rendered (placeholders resolved to real secrets or inert empties).
 4. Post-deploy: ingestion proof — gatus' 30s probes against all vhosts should produce parse events within ~1 min; check app logs; if auto-detect fails, pin `LOGPARSER_LOG_FORMATS=caddy-json` + redeploy (runbook has the one-liner).
-5. Post-deploy: Gatus "GeoMetrikks" check green (probe the endpoint directly; the gatus DB route needs root).
+~~5. Post-deploy: Gatus "GeoMetrikks" check green (probe the endpoint directly; the gatus DB route needs root).~~ done — docs/status/2026-09-20_19-47 §a.3 (Gatus success=true, first green ever)
 6. Post-deploy: `geo.home.lan` serves the login page on LAN (protected layer bypasses oauth2-proxy locally).
 7. Post-deploy: PapDashboard tile + services.json contains GeoMetrikks; system-health `monitored` row live.
 8. Post-deploy: backup proof — `geometrikks-db-backup.service` start (systemctl is sandbox-banned for me → user command or next deploy's provisioner loop), `.sql` lands in `/mnt/pool/backups/geometrikks/`, backup-coordination freshness row (maxAge 31h).
@@ -70,7 +70,7 @@
 10. GeoMetrikks smoke block in `scripts/post-deploy-check.sh` (so future deploys self-verify the service).
 11. Caddy per-vhost `roll_keep_for 168h` retention decision (100MiB×10 rolls currently; geo analytics make retention a user call).
 12. `deploy-when-green` helper (see §e/§f — three watchers have now died of short horizons).
-13. MaxMind GeoLite2 signup + key paste via sops (user-gated, carried from prior report).
+~~13. MaxMind GeoLite2 signup + key paste via sops (user-gated, carried from prior report).~~ done — keys pasted 2026-10-06 (docs/status/2026-10-06_22-08 §a.5)
 14. CARTO basemap key paste (user-gated, carried).
 15. First admin login (`admin` + password from sops) + visual map sanity check (user-gated, carried).
 
@@ -94,15 +94,15 @@
 
 **Deployment path (critical path, in order):**
 
-1. Read build #2 result from `~/.local/state/deploy-geometrikks/build2.log` when job 068 completes; if the "1 dependency failed" recurs, enumerate ALL failures via `--keep-going` output and fix root-cause (suspects: hermes 0.21.3 layout §12 warned about; health-dashboard's new input; anything the `e554fab` nixpkgs bump shifted).
+~~1. Read build #2 result from `~/.local/state/deploy-geometrikks/build2.log` when job 068 completes; if the "1 dependency failed" recurs, enumerate ALL failures via `--keep-going` output and fix root-cause (suspects: hermes 0.21.3 layout §12 warned about; health-dashboard's new input; anything the `e554fab` nixpkgs bump shifted).~~ done — failure enumerated + fixed (nodejs-slim CI_SKIP_TESTS, nixpkgs 20b1ddd); builds green 2026-09-20 (docs/status/2026-09-20_12-26 §a.3-4)
 2. If build #2 is green: verify the toplevel contains `docker-geometrikks.service`, the rendered compose, and both sops secrets (`geometrikks.yaml` keys pass `sops-key-audit` — already proven at eval).
 3. Launch the LONG-HORIZON deploy watcher (≥6h, green rule: 3 consecutive polls of io avg10 <15 AND MemAvailable >20%, 2-min cadence, heartbeat + `DEPLOY-EXIT` capture to `~/.local/state/deploy-geometrikks/`) — or implement §e.1 first if the user approves the helper.
-4. On deploy exit 0: confirm `/run/current-system` advanced AND `/nix/var/nix/profiles/system` anchored (the exit-4 unanchored-generation trap; was `system-785` / `qg1ijnzj…b1b8759`).
-5. `docker ps` — both containers `Up (healthy)`; no image pulls (pre-pulled).
-6. `python3 -c urllib` probe `http://127.0.0.1:8102/health/ready` → 200.
+~~4. On deploy exit 0: confirm `/run/current-system` advanced AND `/nix/var/nix/profiles/system` anchored (the exit-4 unanchored-generation trap; was `system-785` / `qg1ijnzj…b1b8759`).~~ done — system-786 anchored + three-way verified (docs/status/2026-09-20_15-02 + addendum: 787 three-way)
+~~5. `docker ps` — both containers `Up (healthy)`; no image pulls (pre-pulled).~~ **NOT-DO — NOT-DO — dup of §c.1.**
+~~6. `python3 -c urllib` probe `http://127.0.0.1:8102/health/ready` → 200.~~ **NOT-DO — NOT-DO — dup of §c.2.**
 7. Verify `/var/lib/geometrikks/.env` (0600 root, rendered — placeholders resolved; empty MaxMind/CARTO keys = geo-degraded banner, NOT a crash).
 8. Ingestion proof: app logs show parse activity from Caddy JSON logs within ~1 min of gatus traffic; if auto-detect misfires, pin `LOGPARSER_LOG_FORMATS=caddy-json` in the sops template + redeploy (runbook §gotchas).
-9. Gatus "GeoMetrikks" green within ~1 min of service up (endpoint probe + journal `status=200` from gatus itself — the only trustworthy signal per repo doctrine).
+~~9. Gatus "GeoMetrikks" green within ~1 min of service up (endpoint probe + journal `status=200` from gatus itself — the only trustworthy signal per repo doctrine).~~ **NOT-DO — NOT-DO — dup of §c.5.**
 10. `geo.home.lan` login page on LAN (unverified-TLS urllib probe, expect the app's sign-in HTML).
 11. PapDashboard services.json contains the GeoMetrikks tile; dashboard probes it server-side.
 12. system-health: `geometrikks` in `system_service_state` textfile (registry `monitored=true` fan-out).
@@ -111,21 +111,21 @@
 15. Post-deploy regression sweep: confirm NO collateral from the batch deploy (the deploy carries dnsblockd re-lock `e0f74cd9` + nixpkgs `e554fab` + health-dashboard session's work — watch `systemctl --failed`, gatus fleet checks, and the dnsblockd health check specifically).
 
 **User-gated go-live (carried, unchanged):**
-16. MaxMind GeoLite2 free signup → paste `geometrikks_maxmind_user_id` + `geometrikks_maxmind_license_key` via the sops one-liner (runbook §go-live) → redeploy or restart unit.
+~~16. MaxMind GeoLite2 free signup → paste `geometrikks_maxmind_user_id` + `geometrikks_maxmind_license_key` via the sops one-liner (runbook §go-live) → redeploy or restart unit.~~ **NOT-DO — NOT-DO — dup of §c.13.**
 17. Optional CARTO basemap key (`geometrikks_carto_api_key`) — without it the map tiles use the degraded basemap.
 18. First login as `admin` (password via the Sops + Age one-liner from `platforms/nixos/secrets/geometrikks.yaml`) + visual world-map sanity check.
 19. Caddy access-log retention decision: current roll 100MiB/keep 10/90d vs proposed `roll_keep_for 168h` per-vhost (geo analytics value vs disk).
 
 **Infra hygiene surfaced tonight:**
 20. Implement `deploy-when-green` helper (§e.1 spec) so the fourth storm doesn't kill a fourth watcher.
-21. crush-hot-db migration completion: needs a window with <N live crush sessions; consider a nightly 04:10 re-run is already wired — verify it fires tomorrow and finishes (structure fix for the QLC `.crush/` churn class).
+~~21. crush-hot-db migration completion: needs a window with <N live crush sessions; consider a nightly 04:10 re-run is already wired — verify it fires tomorrow and finishes (structure fix for the QLC `.crush/` churn class).~~ **NOT-DO — NOT-DO — dup of §b.4.**
 22. Re-arm `fastflowlm.socket` once the storm drains AND MemAvailable >25% (guard restore capped 3/3 today; manual `systemctl start fastflowlm.socket`; flm v1.0.2 held — do not bump as part of this).
 23. Watch zram: 82% fill + 6% MemAvailable tonight was the closest approach to the freeze cliff since the guard was built; if the guard logged any Zone 1–5 trip tonight, review thresholds vs the three-concurrent-builds pattern (new load class).
 24. Verify the health-dashboard parallel session's service survives the shared deploy (it initially exported no packages and broke evals mid-afternoon; its `health-hub-543a5b7f` now evals — my deploy will be the first SWITCH carrying it).
-25. Confirm `storage_collector_health` (auto-loaned new metric in §10) appears in `/metrics` post-switch, then retire the loan entry if metrics-gate warns.
+~~25. Confirm `storage_collector_health` (auto-loaned new metric in §10) appears in `/metrics` post-switch, then retire the loan entry if metrics-gate warns.~~ done — present-with-value post-deploy (docs/status/2026-09-20_19-47 §a.6)
 26. nixpkgs `e554fab` bump: batch-verify critical packages post-deploy (sops-nix shim status — the `buildGo125Module` alias overlay; check whether the bump dropped it or it's still needed).
 27. dnsblockd re-lock `e0f74cd9` ("go 1.27.1 toolchain wiring"): post-deploy verify dnsblockd health + its go-modules FOD actually built (this rode our deploy without its own session's verification of the SYSTEM-level build — build #2 will prove it).
-28. Two daemon commits landed during build (`f270ca9c`, `eb8cc186`) — diff them before the deploy fires to know exactly what the switch will carry (`git show --stat`).
+~~28. Two daemon commits landed during build (`f270ca9c`, `eb8cc186`) — diff them before the deploy fires to know exactly what the switch will carry (`git show --stat`).~~ done — in the 00:00 delta report §a.4 ("was §f-item-28 todo" — retired)
 29. Post-storm: re-check `docs/todo/stability.md` Zone-6 items against tonight's MemAvailable-6% data point (concurrent-builds as a new storm driver class worth a bullet).
 30. SigNoz: after deploy, confirm the new geometrikks containers' logs flow via docker journald driver (CONTAINER_NAME resource attribute) — nothing to wire, just verify visibility.
 
@@ -140,7 +140,7 @@
 **Process/docs:**
 37. Append tonight's "concurrent nix builds as storm driver" data point to `docs/services/memory-emergency-guard.md` (Zone 6 corroboration worked as designed; the guard's message text already names crash-#3 class).
 38. Runbook addendum: `docs/services/geometrikks.md` — add the storm-queue reality (deploys may wait hours; the deploy-when-green watcher is the sanctioned path; NEVER force at MemAvailable <15%).
-39. AGENTS.md GeoMetrikks section: add post-deploy-verified state + first-incident notes once verification completes (currently written pre-deploy).
+~~39. AGENTS.md GeoMetrikks section: add post-deploy-verified state + first-incident notes once verification completes (currently written pre-deploy).~~ done — AGENTS.md geometrikks section updated with incident classes 2026-09-20 (docs/status/2026-09-20_19-47 §a.13)
 40. `docs/todo/services.md`: update the GeoMetrikks row from `[blocked:user]` go-live to reflect deploy-done state once it happens (keep the MaxMind/CARTO/login rows user-gated).
 41. Retire `/tmp/deploy-geometrikks2.log` pattern: prior session wrote deploy logs to /tmp (this session's watcher would have); tonight's report is the reminder that ops logs belong in `~/.local/state/` (tmp-cleaner lesson, applied to build2.log, should apply to future deploy logs).
 

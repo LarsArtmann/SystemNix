@@ -94,13 +94,13 @@
 
 **Immediate (this machine, today):**
 
-1. `nix run .#deploy` → land the guard + UMask + rofi fixes; confirm `node_textfile_scrape_error` returns 0 within ~2 min of the switch.
-2. Verify the 7 previously-dark metrics present again (zram fill, stuck-dstate, niri-fresh, signoz-rules, emeet, storage_collector_health, …) and the associated Gatus checks green.
-3. Push the 5 unpushed commits (origin parity for CI/deploys).
+~~1. `nix run .#deploy` → land the guard + UMask + rofi fixes; confirm `node_textfile_scrape_error` returns 0 within ~2 min of the switch.~~ done — deployed system-788→791; node_textfile_scrape_error 0 (docs/status/2026-09-20_19-47 §a.6)
+~~2. Verify the 7 previously-dark metrics present again (zram fill, stuck-dstate, niri-fresh, signoz-rules, emeet, storage_collector_health, …) and the associated Gatus checks green.~~ done — storage_collector_health present + scrape_error 0 (docs/status/2026-09-20_19-47 §a.6)
+~~3. Push the 5 unpushed commits (origin parity for CI/deploys).~~ done — pushed, origin parity verified twice (docs/status/2026-09-20_19-47 §a.4/§a.14)
 4. Approve Wise SCA via the bank-sync dashboard (or `bank-sync sca approve`) → bank_sync_sync_errors clears; statements resume.
 5. `systemctl start fastflowlm.socket` (corpse gone, memory healthy) — or hold for the v1.0.6 decision, owner's call.
 6. Browse one page in Helium → BH agent ingests → browser-history /health 200 → smoke FAIL clears.
-7. After 1–6: prune the smoke-fail baseline to zero (or annotate) so the next real regression is visible.
+~~7. After 1–6: prune the smoke-fail baseline to zero (or annotate) so the next real regression is visible.~~ done — baseline pruned to 2 identified known-FAILs (docs/status/2026-09-20_19-47 §b)
 
 **Repo hardening (me, next session):**
 8. Add `tests/` regression for the nrestarts integer guards (fixture: poisoned state file → collector renders 0s).
@@ -131,9 +131,9 @@
 29. Rofi: verify the `settings` migration actually renders on next Sway-fallback use — or delete rofi.nix entirely if Sway backup WM is dead weight (YAGNI).
 30. Verify health-dashboard's `[not set]` row turns into a real value once health-hub deploys (guard now emits 0 meanwhile).
 31. Verify mr-sync-dashboard's nrestarts reads a real number post-deploy (it was in the poisoned set while supposedly running — worth one look at why NRestarts was `[not set]` for an active unit).
-32. Quickshell journal error line (smoke WARN) — identify and classify.
+~~32. Quickshell journal error line (smoke WARN) — identify and classify.~~ done — root-caused as double-phantom + check fixed in post-deploy-check.sh:1524 (docs/status/2026-09-30_15-32)
 33. Re-measure fish startup on a calm IO window (773ms was pressure-attributed; calm baseline 60–70ms).
-34. crush-hot-db-migrate keeps skipping with 18–22 crush sessions active — consider a quiet-window trigger or confirm convergence-on-idle is acceptable.
+~~34. crush-hot-db-migrate keeps skipping with 18–22 crush sessions active — consider a quiet-window trigger or confirm convergence-on-idle is acceptable.~~ done — per-project guard live since the 2026-09-22 generation (docs/status/2026-10-01_13-42 §a.2)
 35. Fold `crush-hot-db` interim module into the ratified `services.hot-db` Phase-2 (still pending in AGENTS).
 36. Stagger deploy.sh's provisioner restart burst to shave the deploy IO spike (candidate against the storm class).
 37. Consider a "post-deploy collector convergence" step: after switch, force-run the textfile collectors once and assert `node_textfile_scrape_error=0` in the smoke (closes today's gap mechanically).

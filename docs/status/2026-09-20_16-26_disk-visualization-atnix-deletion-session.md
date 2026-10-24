@@ -53,8 +53,8 @@
 
 **User-gated (root/hands):**
 
-1. `sudo systemctl start btrfs-emergency-reserve` (absent since ~Sep 7; Gatus should be red over it — verify alert delivery)
-2. Boot-mirror activation: `nix run .#boot-mirror-activate` + planned reboot (module deployed 09-19)
+~~1. `sudo systemctl start btrfs-emergency-reserve` (absent since ~Sep 7; Gatus should be red over it — verify alert delivery)~~ **Won't implement — moot — reserve was already PRESENT since 2026-09-13; stale-check artifact (this file §h; 10-35 §a.6).**
+~~2. Boot-mirror activation: `nix run .#boot-mirror-activate` + planned reboot (module deployed 09-19)~~ done — durably activated 2026-09-30 (CHANGELOG); first Samsung boot verified 2026-10-15 (docs/todo/storage.md:42)
 3. /data EIO repair execution (T04–T08) — the only never-completed backup leg
 4. First `hot-db` Phase-2 migration window (pocket-id first per plan)
 5. Decide go-build hot-cache design (HM symlink canonicalization trap — needs gating design)
@@ -65,23 +65,23 @@
 10. Docker PG-volume NOCOW standalone change (decided 09-05, still open)
 11. Delete `/mnt/buildcache/swapfile-emergency` (16G, owner-approved deletion pending)
 12. monitor365 `cargo clean` (~100G reclaim on buildcache, owner window)
-13. btrbk-root/pool MemoryHigh/OOMScoreAdjust hardening (ready)
+~~13. btrbk-root/pool MemoryHigh/OOMScoreAdjust hardening (ready)~~ done — landed row 73: MemoryHigh=4G, OOMScoreAdjust=-250 in snapshots.nix (docs/status/2026-09-21_16-16 §a.3)
 14. `snapshot_preserve` widening 3d→7d decision (DAS-outage lesson)
 
 **Agent-actionable [ready] (from docs/todo/storage.md, not touched this session):**
-15. Wire `crush-hot-db-migrate` onFailure alerting + monitoredServices entry
+~~15. Wire `crush-hot-db-migrate` onFailure alerting + monitoredServices entry~~ done — landed (docs/status/2026-09-21_10-35 §a.5) + deployed 09-22 generation
 16. Add `--dry-run` to migrate-hot-db / crush-hot-db scripts
-17. Depth-cap tripwire for `.crush` dirs deeper than maxdepth 3
-18. Per-project liveness guard in crush-hot-db (open-fd check)
-19. `btrfs-verify-pool-backups` 2-day WARN boundary
-20. Second nightly btrbk-root retry window (04:00) decision
+~~17. Depth-cap tripwire for `.crush` dirs deeper than maxdepth 3~~ done — depth-4 WARN tripwire shipped (docs/status/2026-09-21_10-35 §a.5)
+~~18. Per-project liveness guard in crush-hot-db (open-fd check)~~ done — per-project live-writer guard shipped (docs/status/2026-09-21_10-35 §a.5)
+~~19. `btrfs-verify-pool-backups` 2-day WARN boundary~~ done — landed row 74: WARN_AGE_DAYS=2, functionally verified (docs/status/2026-09-21_16-16 §a.4)
+~~20. Second nightly btrbk-root retry window (04:00) decision~~ **Won't implement — decided-against — owner rejected row 79 (docs/status/2026-09-21_16-16 §a.7).**
 21. restic repo on pool for app dumps (dedup; forgejo zips share ~0 extents)
-22. discordsync + browser-history NVMe→pool migrations (subvols reserved empty)
+~~22. discordsync + browser-history NVMe→pool migrations (subvols reserved empty)~~ **Won't implement — superseded — Phase-2 verdicts re-scoped: discordsync → Samsung hot tier, BH stays (docs/status/2026-09-21_00-25 §d).**
 23. Browser-history DB backup (folds into #22)
 24. Offsite Borg implementation once #6 lands (backup.nix module per blueprint)
 25. Offsite Borg restore runbook + timed drill
 26. Borg monitoring extras (`backup_ever_succeeded`, ioTier, pre/post-deploy smoke)
-27. ClickHouse backup before next SigNoz upgrade
+~~27. ClickHouse backup before next SigNoz upgrade~~ done — clickhouse-db-backup landed + verified (docs/status/2026-09-23_14-55 §a.1)
 28. `/data` damage-set inventory doc (single source of truth)
 29. Codify single-victim /data repair recipe
 30. Shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse`
@@ -97,15 +97,15 @@
 40. `docs/services/das-recovery.md` runbook
 41. Sweep other cache-minting tools (pnpm/cargo/sccache/pip) symlink/mount convergence
 42. hot-db fold: delete interim crush-hot-db module in the same change when Phase-2 lands
-43. Post-migration `PRAGMA integrity_check` on one migrated crush DB
-44. Verify migrate unit journal SKIP lines while sessions live; capture in docs/services/crush.md
+~~43. Post-migration `PRAGMA integrity_check` on one migrated crush DB~~ done — ok on the migrated DB (docs/status/2026-09-21_10-35 §a.6)
+~~44. Verify migrate unit journal SKIP lines while sessions live; capture in docs/services/crush.md~~ done — docs/services/crush.md rewritten with expected-journal-lines block (docs/status/2026-09-21_10-35 §a.7)
 
 **This-session follow-ups:**
-45. Identify the 16:07 HTML formatter (§e.1) before it mutates another artifact
-46. Make headless-render verification a `scripts/verify-html-diagrams.sh`
-47. Consider a docs/planning size lint or big-HTML policy note in AGENTS.md
-48. Re-verify `df /` after tonight's btrbk cycle (confirm 545G holds with no surprise pin)
-49. Update the 2026-08-31 Samsung visualization HTML or mark it SUPERSEDED by the new page (two "current" visualizations now exist)
+~~45. Identify the 16:07 HTML formatter (§e.1) before it mutates another artifact~~ done — attributed: prettier-family run by parallel-session tooling (this file §h.1; 10-35 §a.1)
+~~46. Make headless-render verification a `scripts/verify-html-diagrams.sh`~~ done — written + tested + negative-probed (docs/status/2026-09-21_10-35 §a.4)
+~~47. Consider a docs/planning size lint or big-HTML policy note in AGENTS.md~~ done — big-HTML house pattern codified in AGENTS.md (docs/status/2026-09-21_10-35 §a.2)
+~~48. Re-verify `df /` after tonight's btrbk cycle (confirm 545G holds with no surprise pin)~~ done — 570G/81% measured 2026-09-21 00:35 (this file §h #48)
+~~49. Update the 2026-08-31 Samsung visualization HTML or mark it SUPERSEDED by the new page (two "current" visualizations now exist)~~ done — SUPERSEDED banner added; verify script passes both (this file §h #49)
 50. Post-reboot (when it happens): confirm `@nix` absence didn't orphan anything (it can't, but the boot-menu screenshot closes the loop)
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF

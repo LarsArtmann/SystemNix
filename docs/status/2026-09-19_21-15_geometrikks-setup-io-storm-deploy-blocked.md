@@ -60,7 +60,7 @@ pre-pulled, so the switch will be short once pressure drains.
 
 ## b) PARTIALLY DONE
 
-1. **DEPLOY — blocked, queued.** First `nix run .#deploy` exited 12
+~~1. **DEPLOY — blocked, queued.** First `nix run .#deploy` exited 12~~ done — deployed + rescued 2026-09-20: app Up(healthy), first Gatus green ever (docs/status/2026-09-20_19-47 §a.3)
    (pressure gate: io avg10 34.55% + disk busy 101%). The storm persisted
    ~4h (avg10 27–98.97%, avg60 ~47–85%, disk busy 100% peaks, MemAvailable
    22–28%, zram 0%, memory fine). Zone-6-class guard lines confirmed
@@ -70,7 +70,7 @@ pre-pulled, so the switch will be short once pressure drains.
    green polls (<15 avg10) — still waiting at report time (21:13:
    58.31/53.10). `nix flake check` + toplevel build are DONE and cached, so
    the eventual switch is short.
-2. **Post-deploy verification — not yet possible**: `/health/ready` probe,
+~~2. **Post-deploy verification — not yet possible**: `/health/ready` probe,~~ done — docs/status/2026-09-20_19-47 §a.3 (:8102/health/ready 200, Gatus success=true)
    login render, ingestion proof (gatus traffic ⇒ events within minutes),
    Gatus check green, tile, backup dir, `docker compose ps` health states.
    All steps are written down (runbook); zero thinking left for that phase.
@@ -140,10 +140,10 @@ pre-pulled, so the switch will be short once pressure drains.
 
 ## f) NEXT THINGS (prioritized)
 
-1. Verify pressure drained → complete the deploy (`nix run .#deploy`) and
+~~1. Verify pressure drained → complete the deploy (`nix run .#deploy`) and~~ **NOT-DO — NOT-DO — dup of §b.1 (deploy, verified closed).**
    confirm profile anchoring (`readlink /run/current-system` vs numbered
    profile).
-2. Post-deploy verification battery: `docker compose ps` (both healthy),
+~~2. Post-deploy verification battery: `docker compose ps` (both healthy),~~ **NOT-DO — NOT-DO — dup of §b.2 (post-deploy verification, verified closed).**
    `/health/ready` 200 via loopback, login page renders, DB initialized,
    events flowing within ~1 min (gatus traffic), Gatus "GeoMetrikks" green,
    tile renders, `geo.home.lan` resolves + vHost serves (LAN bypass).
@@ -157,15 +157,15 @@ pre-pulled, so the switch will be short once pressure drains.
    auto-detect failed, pin `LOGPARSER_LOG_FORMATS=caddy-json` and redeploy).
 7. Watch the first rotation cycle (100MiB) for tail-follow survival across
    Caddy's rename-rotation.
-8. User: MaxMind signup + key paste (go-live row in todo/services.md).
+~~8. User: MaxMind signup + key paste (go-live row in todo/services.md).~~ done — user pasted MaxMind keys 2026-10-06 (docs/status/2026-10-06_22-08 §a.5: keys into geometrikks.yaml, user-confirmed done)
 9. User: optional CARTO key paste.
 10. User: first login + visual map sanity (browser session).
 11. Add post-deploy smoke block for GeoMetrikks (§e.6).
 12. Decide Caddy per-vhost `roll_keep_for 168h` override (§e.3).
 13. Decide the deploy-when-green helper (§e.5).
-14. Re-check crush-hot-db first-migration status (§e.1) — structural fix
+~~14. Re-check crush-hot-db first-migration status (§e.1) — structural fix~~ done — established: first migration RAN 2026-09-18, converged — 279 symlinks, 45 GiB, PRAGMA integrity ok (docs/status/2026-09-21_10-35 §a.6)
     for the whole queue-blocked class.
-15. Update AGENTS.md after first live deploy with the deployed-generation
+~~15. Update AGENTS.md after first live deploy with the deployed-generation~~ done — AGENTS.md geometrikks entries landed 2026-09-20 (docs/status/2026-09-20_19-47 §a.13)
     note + any runtime surprises (rotation behavior, parse evidence).
 16. Harvest this report per docs-health (VERIFY items against code next
     pass; `[ready]` items already filed).

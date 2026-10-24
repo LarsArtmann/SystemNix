@@ -38,10 +38,10 @@
 
 ## b) PARTIALLY DONE
 
-1. **Build #2** — running ~40 min. `--keep-going` + full log at `~/.local/state/deploy-geometrikks/build2.log`. Longer than a normal toplevel build because the `e554fab` nixpkgs bump invalidates a large shared closure AND the box is contended (qemu-aarch64 + webphone build). Not stuck — PID alive, daemon has slots busy.
-2. **The deploy** — still blocked (io avg10 21.1 > 20 gate) AND — the real gap — **currently UNQUEUED**: watcher #3 is dead, no watcher is running, nothing will fire the deploy if the box quiets while nobody is looking. I held off launching a replacement because your directive was "wait for instructions" and §g-1 (force authority) + §g-2 (parallel-build gating) shape what a correct watcher gates on. Flagging loudly: **right now, if the storm drains at 00:30, nothing happens automatically.**
-3. **crush-hot-db migration** — still incomplete (pgrep guard vs live crush sessions); tomorrow's 04:10 timer is the next natural window.
-4. **Post-deploy verification battery** — fully specified, zero items executable.
+~~1. **Build #2** — running ~40 min. `--keep-going` + full log at `~/.local/state/deploy-geometrikks/build2.log`. Longer than a normal toplevel build because the `e554fab` nixpkgs bump invalidates a large shared closure AND the box is contended (qemu-aarch64 + webphone build). Not stuck — PID alive, daemon has slots busy.~~ done — nodejs root-cause landed; deploys green 2026-09-20 (docs/status/2026-09-20_12-26 §a.3-4)
+~~2. **The deploy** — still blocked (io avg10 21.1 > 20 gate) AND — the real gap — **currently UNQUEUED**: watcher #3 is dead, no watcher is running, nothing will fire the deploy if the box quiets while nobody is looking. I held off launching a replacement because your directive was "wait for instructions" and §g-1 (force authority) + §g-2 (parallel-build gating) shape what a correct watcher gates on. Flagging loudly: **right now, if the storm drains at 00:30, nothing happens automatically.**~~ done — system-786/787 anchored 2026-09-20; geometrikks live (docs/status/2026-09-20_19-47 §a.3)
+~~3. **crush-hot-db migration** — still incomplete (pgrep guard vs live crush sessions); tomorrow's 04:10 timer is the next natural window.~~ done — completed + converged (docs/status/2026-09-21_10-35 §a.6)
+~~4. **Post-deploy verification battery** — fully specified, zero items executable.~~ done — executed 2026-09-20 (docs/status/2026-09-20_19-47 §a.3)
 5. **User-gated go-live** (MaxMind/CARTO keys, first admin login) — untouched, needs you.
 
 ## c) NOT STARTED
@@ -70,14 +70,14 @@
 
 **Critical path (in order):**
 
-1. ★ **Launch the green-gated long-horizon deploy watcher** (§e.1) — the deploy is currently unprotected against a quiet window with nobody watching.
-2. **Read build #2 result** from `~/.local/state/deploy-geometrikks/build2.log` when job 068 exits; enumerate/fix any real failure (suspects: hermes 0.21.3 layout from pre-deploy §12 warning; health-dashboard's input; anything the `e554fab` nixpkgs bump shifted).
-3. **Deploy on green** → confirm `/run/current-system` advanced AND profile anchored (exit-4 unanchored-generation trap; baseline `system-785` / `qg1ijnzj…b1b8759`).
-4. `docker ps`: `geometrikks-app-1` + `geometrikks-timescale_db-1` healthy (images pre-pulled).
-5. `/health/ready` → 200 (python urllib; curl banned in sandbox).
+~~1. ★ **Launch the green-gated long-horizon deploy watcher** (§e.1) — the deploy is currently unprotected against a quiet window with nobody watching.~~ **Won't implement — superseded — deploy landed 2026-09-20 via queue/user deploys (system-786 anchored 14:08; docs/status/2026-09-20_15-02).**
+~~2. **Read build #2 result** from `~/.local/state/deploy-geometrikks/build2.log` when job 068 exits; enumerate/fix any real failure (suspects: hermes 0.21.3 layout from pre-deploy §12 warning; health-dashboard's input; anything the `e554fab` nixpkgs bump shifted).~~ done — root-caused (nodejs-slim) + fixed; deploys green 2026-09-20 (docs/status/2026-09-20_12-26 §a.3-4)
+~~3. **Deploy on green** → confirm `/run/current-system` advanced AND profile anchored (exit-4 unanchored-generation trap; baseline `system-785` / `qg1ijnzj…b1b8759`).~~ done — system-786 anchored 14:08 (docs/status/2026-09-20_15-02)
+~~4. `docker ps`: `geometrikks-app-1` + `geometrikks-timescale_db-1` healthy (images pre-pulled).~~ done — docs/status/2026-09-20_19-47 §a.3
+~~5. `/health/ready` → 200 (python urllib; curl banned in sandbox).~~ done — docs/status/2026-09-20_19-47 §a.3
 6. `/var/lib/geometrikks/.env` exists, 0600 root, rendered.
 7. Ingestion proof within ~1 min (gatus traffic); fallback = pin `LOGPARSER_LOG_FORMATS=caddy-json` + redeploy.
-8. Gatus "GeoMetrikks" green (trust the journal `status=200` from gatus itself).
+~~8. Gatus "GeoMetrikks" green (trust the journal `status=200` from gatus itself).~~ done — docs/status/2026-09-20_19-47 §a.3
 9. `geo.home.lan` serves login on LAN (unverified-TLS urllib).
 10. PapDashboard services.json tile + system-health monitored row.
 11. Backup proof: trigger `geometrikks-db-backup.service` (user or provisioner loop), dated `.sql` in `/mnt/pool/backups/geometrikks/`, backup-coordination green (maxAge 31h).
@@ -85,14 +85,14 @@
 13. Post-deploy collateral sweep: the deploy carries dnsblockd re-lock + nixpkgs `e554fab` + health-dashboard's module — watch `systemctl --failed`, fleet Gatus, dnsblockd health specifically, and confirm `storage_collector_health` appears (§10 auto-loan), then retire the loan.
 
 **User-gated go-live (unchanged):**
-14. MaxMind GeoLite2 signup + key paste (sops one-liner in runbook) → redeploy/restart.
+~~14. MaxMind GeoLite2 signup + key paste (sops one-liner in runbook) → redeploy/restart.~~ done — keys pasted 2026-10-06 (docs/status/2026-10-06_22-08 §a.5)
 15. Optional CARTO key.
 16. First admin login + visual map check.
 17. Caddy per-vhost log retention decision (100MiB×10/90d vs `roll_keep_for 168h`).
 
 **Infra hygiene:**
 18. `deploy-when-green` durable helper (fold the watcher into it).
-19. crush-hot-db migration completion watch (04:10 timer tomorrow).
+~~19. crush-hot-db migration completion watch (04:10 timer tomorrow).~~ **NOT-DO — NOT-DO — dup of §b.3.**
 20. Re-arm `fastflowlm.socket` post-storm (restore capped 3/3 today; user call per §g-3).
 21. Guard review: tonight's MemAvailable-6% dip under a NEW load class (3 concurrent nix builds + qemu emulation) — worth a Zone-threshold look in `docs/services/memory-emergency-guard.md` + `docs/todo/stability.md`.
 22. Health-dashboard parallel session: my deploy is the first SWITCH carrying their service — watch its units in the collateral sweep (item 13).

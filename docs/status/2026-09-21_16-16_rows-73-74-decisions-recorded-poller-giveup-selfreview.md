@@ -25,7 +25,7 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 ## b) PARTIALLY DONE
 
 1. **VM test `crush-hot-db`** — everything except the run: correct attr found, proven unbuilt locally, CI proven signal-less, calm-window automation built and exercised, exact batch command recorded (`heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db`). The run itself waits on a calm window that never came (see d.5).
-2. **Deploy batch** — tree is ready and verified, but not deployed (owner authority + storm). It carries: crush-hot-db upgrade (per-project guard, failure paging, dry-run, tripwire), boot-mirror chain, MemoryHigh ceilings (row 73), 2-day WARN boundary (row 74), plus other sessions' landed work (treefmt HTML excludes, d2 overlay fix, hot-db Phase-2). First deploy also triggers the first per-project-guard migrate (`legal-cases` → Samsung).
+~~2. **Deploy batch** — tree is ready and verified, but not deployed (owner authority + storm). It carries: crush-hot-db upgrade (per-project guard, failure paging, dry-run, tripwire), boot-mirror chain, MemoryHigh ceilings (row 73), 2-day WARN boundary (row 74), plus other sessions' landed work (treefmt HTML excludes, d2 overlay fix, hot-db Phase-2). First deploy also triggers the first per-project-guard migrate (`legal-cases` → Samsung).~~ done — deployed — crush-hot-db guard live since the 09-22 generation (docs/status/2026-10-01_13-42 §a.2)
 3. **Decision records** — landed, then self-review caught wrong timestamps (11:40 vs actual ~13:55) — corrected in storage.md + the §h report during THIS pass (see d.1).
 
 ## c) NOT STARTED (in-scope, known)
@@ -33,7 +33,7 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 1. The other 3 small rows the previous session dropped: shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6); `pool-subvols-ensure` declarative oneshot (item 5); device-constants lib consolidation (item 4).
 2. Row 79 (conditional 04:00 btrbk retry window) — deliberately NOT started (owner rejected-for-now; revisit if tonight's window also dies).
 3. TODO pruning pass ([x] rows → CHANGELOG) — inherited debt, not touched.
-4. Post-storm `df /` re-measurement (the +25G growth attribution is still reasoned, not measured).
+~~4. Post-storm `df /` re-measurement (the +25G growth attribution is still reasoned, not measured).~~ done — measured: 570G/81% at 2026-09-21 00:35 (docs/status/2026-09-20_16-26 §h #48)
 5. btrbk-root 23:00 outcome check + Sep 22 00:28 verify result — time-gated to tomorrow.
 
 ## d) TOTALLY FUCKED UP (honest list; all bounded)
@@ -59,11 +59,11 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 
 ## f) NEXT (ranked; ~24 real items — not padded to 50)
 
-1. Fix owner-decision timestamps (DONE during this self-review — listed for the record)
+~~1. Fix owner-decision timestamps (DONE during this self-review — listed for the record)~~ done — completed during the self-review pass (this file §a.7 + line text)
 2. **User: create NIX_GITHUB_RO_TOKEN** (fine-grained PAT, Contents:Read-only) + `gh secret set` → revive CI (g.1)
-3. **User: deploy in a calm window** (`nix run .#deploy`) — batch: crush-hot-db upgrade, boot-mirror, MemoryHigh ceilings, WARN boundary, other sessions' work
+~~3. **User: deploy in a calm window** (`nix run .#deploy`) — batch: crush-hot-db upgrade, boot-mirror, MemoryHigh ceilings, WARN boundary, other sessions' work~~ done — deployed 2026-09-22 generation (docs/status/2026-10-01_13-42 §a.2)
 4. **Batch the VM test into that window:** `heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db` — first execution of the rewritten test; failure = previous session's bug
-5. Post-deploy: verify first per-project-guard migrate (journal `skip <project>: live crush session holds it open`; `legal-cases/.crush` becomes a symlink; `crush-hot-db-migrate` monitored in system-health) — runbook in docs/services/crush.md
+~~5. Post-deploy: verify first per-project-guard migrate (journal `skip <project>: live crush session holds it open`; `legal-cases/.crush` becomes a symlink; `crush-hot-db-migrate` monitored in system-health) — runbook in docs/services/crush.md~~ done — verified 2026-09-29: journal skip lines live, 279 symlinks, legal-cases root-caused blocked (docs/status/2026-09-29_01-25)
 6. Post-deploy: confirm row 73/74 live (`systemctl show btrbk-root -p MemoryHigh,OOMScoreAdjust`; next verify run journals the boundary WARN only when stale)
 7. Tomorrow: check the 23:00 btrbk-root outcome + the Sep 22 00:28 verify verdict (FAIL expected if storm ate it — by-design Discord page)
 8. **Identify the 42h storm's driver** (cheap IO-delta probes); if it's resumable readers, apply freeze-6 stop rules
@@ -73,7 +73,7 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 12. `pool-subvols-ensure` declarative oneshot (item 5)
 13. Device-constants lib consolidation — pool by-ids live in 3 places (item 4)
 14. TODO pruning pass: [x] rows → CHANGELOG (incl. this round's, once they flip)
-15. Post-storm `df /` re-measurement — attribute the +25G properly
+~~15. Post-storm `df /` re-measurement — attribute the +25G properly~~ **NOT-DO — NOT-DO — dup of §c.4.**
 16. Fix row 16's stale "reserve STILL PENDING" tail (metric says present since Sep 13)
 17. Owner decision: big-mermaid-HTML carriers — keep in-repo (current pattern) vs. out-of-repo bundle at `~/.local/state` + script-injection (g.3)
 18. Wire `verify-html-diagrams.sh` into pre-commit for `docs/planning/*.html` (inherited item 28 — the formatter-incident tripwire at hook time)

@@ -28,20 +28,20 @@ The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV 
 
 ## b) PARTIALLY DONE
 
-1. **cv-server repair** — root-caused, fix DESIGNED, not implemented: plan is a SystemNix-side ownership-heal ExecStartPre on `cv-server` (`lib.mkBefore [ "+${lib.getExe cvOwnershipHeal}" ]` — mkBefore is load-bearing because plain list-merge would append AFTER the upstream sync that dies first), script = `find /var/lib/cv ! -user cv -print -quit`-gated `chown -R cv:cv /var/lib/cv`, the exact `clickhouse-xfs-ownership-heal` pattern, `+` prefix per the escape-hatch doctrine. cv.nix's cv-server serviceConfig block (375-445) is read and ready for the edit. cv-server sits at start-limit-hit since 11:52:18 — it will start cleanly once the heal lands and the unit restarts.
-2. **The deploy itself** — the eval blocker is fixed (§a.1) and the build blocker is fixed (§a.4), my stop-phase fixes are in-tree, but NO clean profile-anchoring activation has happened yet: profile is still `system-785-link` while `/run/current-system` is the `20b1ddd` toplevel (UNANCHORED — a reboot right now reverts to 785). A parallel session's 12:15 status doc (`boot-mirror-deploy-live-unanchored-smoke-regression-rc3.md`, their file — left untouched) shows they are on the same unanchored state. My deploy must go AFTER theirs (lock) and carries: my hermes/discordsync unit changes (which on the NEXT activation trigger a restart of both now-RUNNING services — exactly the path the two fixes cure).
+~~1. **cv-server repair** — root-caused, fix DESIGNED, not implemented: plan is a SystemNix-side ownership-heal ExecStartPre on `cv-server` (`lib.mkBefore [ "+${lib.getExe cvOwnershipHeal}" ]` — mkBefore is load-bearing because plain list-merge would append AFTER the upstream sync that dies first), script = `find /var/lib/cv ! -user cv -print -quit`-gated `chown -R cv:cv /var/lib/cv`, the exact `clickhouse-xfs-ownership-heal` pattern, `+` prefix per the escape-hatch doctrine. cv.nix's cv-server serviceConfig block (375-445) is read and ready for the edit. cv-server sits at start-limit-hit since 11:52:18 — it will start cleanly once the heal lands and the unit restarts.~~ done — heal landed (4cedd16d + fc49dbe5 `-perm -u+w` predicate fix); cv-server started clean 14:08 (docs/status/2026-09-20_15-02)
+~~2. **The deploy itself** — the eval blocker is fixed (§a.1) and the build blocker is fixed (§a.4), my stop-phase fixes are in-tree, but NO clean profile-anchoring activation has happened yet: profile is still `system-785-link` while `/run/current-system` is the `20b1ddd` toplevel (UNANCHORED — a reboot right now reverts to 785). A parallel session's 12:15 status doc (`boot-mirror-deploy-live-unanchored-smoke-regression-rc3.md`, their file — left untouched) shows they are on the same unanchored state. My deploy must go AFTER theirs (lock) and carries: my hermes/discordsync unit changes (which on the NEXT activation trigger a restart of both now-RUNNING services — exactly the path the two fixes cure).~~ done — system-786 anchored 2026-09-20 14:08 (docs/status/2026-09-20_15-02)
 3. **browser-history unhealthy (`/health` 503 since ~11:34, agent paging every 5-min tick)** — root-caused to one journal line: `unable to create schema link for type visit.Visit : reflect: embedded type with methods not implemented if type is not first field`. Same code (input still at the rolled-back `0971fe9c`) was healthy through gen 785; the day's root-nixpkgs bump rebuilt it against a new Go toolchain, and this go-cqrs-lite reflection path is toolchain-sensitive. This is UPSTREAM-fix territory per doctrine ("fix application bugs upstream, not in SystemNix") — the fix belongs in go-cqrs-lite/browser-history, not in a Nix shim. Neither unit restarts during MY activation (unit files unchanged vs current-system), so it does not block the deploy, but the agent pages via OnFailure every tick.
-4. **inboxclean-sync chronic failure** (10:26, 10:56, 11:26, 11:56 — every 30-min tick) — the KNOWN main-account `invalid_grant` (testing-mode 7-day expiry, dead since Sep 4); user-gated re-consent; documented; not deploy-blocking (unit file stable, never restarted by stc). It keeps `service-health-check` red, which is the checker correctly reporting the list, not a new fault.
+~~4. **inboxclean-sync chronic failure** (10:26, 10:56, 11:26, 11:56 — every 30-min tick) — the KNOWN main-account `invalid_grant` (testing-mode 7-day expiry, dead since Sep 4); user-gated re-consent; documented; not deploy-blocking (unit file stable, never restarted by stc). It keeps `service-health-check` red, which is the checker correctly reporting the list, not a new fault.~~ done — re-consent executed 2026-10-04 — main connected, sync green (docs/status/2026-10-04_08-32 §a.1)
 
 ## c) NOT STARTED
 
-1. The cv ownership-heal edit (designed, §b.1).
-2. Committing my two stop-phase fixes (not authorized; also the daemon may batch them — a PATHSPEC commit is the recommended shape when authorized).
-3. Post-fix deploy + anchoring verification (`readlink /run/current-system` == a numbered profile; per pre-reboot-check §"profile anchoring" the current unanchored state must be closed BEFORE any reboot).
-4. Any verification that the hot-user-caches caps fix actually heals the bootstrap (next deploy restarts it — it is in the deploy.sh provisioner loop, so the next activation is the test; if it still fails it exit-4s that activation too).
-5. Any fix for the `go-build` automount start-limit residue (expected to self-heal once the bootstrap succeeds; not re-verified).
+~~1. The cv ownership-heal edit (designed, §b.1).~~ **NOT-DO — NOT-DO — dup of §b.1.**
+~~2. Committing my two stop-phase fixes (not authorized; also the daemon may batch them — a PATHSPEC commit is the recommended shape when authorized).~~ done — committed (daemon e0f287ab) + shipped in deploy #2 (docs/status/2026-09-20_13-58 §a)
+~~3. Post-fix deploy + anchoring verification (`readlink /run/current-system` == a numbered profile; per pre-reboot-check §"profile anchoring" the current unanchored state must be closed BEFORE any reboot).~~ done — system-786 anchored 14:08 (docs/status/2026-09-20_15-02)
+~~4. Any verification that the hot-user-caches caps fix actually heals the bootstrap (next deploy restarts it — it is in the deploy.sh provisioner loop, so the next activation is the test; if it still fails it exit-4s that activation too).~~ done — proved live at 13:50:24 (docs/status/2026-09-20_15-02 §a.5)
+~~5. Any fix for the `go-build` automount start-limit residue (expected to self-heal once the bootstrap succeeds; not re-verified).~~ **Won't implement — moot — go-build cache entry removed entirely 2026-09-20 (docs/status/2026-09-20_15-02 addendum §Q2; 16-52 §a.3).**
 6. Anything about the gkr-pam keyring noise (dozens of `systemd-stdio-bridge ... couldn't unlock the login keyring` per second around 11:34) — noticed in passing, deliberately not researched per session scope.
-7. A post-anchoring run of post-deploy-check (geometrikks + health-dashboard activate for the first time in this deploy generation — their first-start behavior is unobserved).
+~~7. A post-anchoring run of post-deploy-check (geometrikks + health-dashboard activate for the first time in this deploy generation — their first-start behavior is unobserved).~~ done — deploy review ran: smoke 103 PASS/4 baseline FAIL (docs/status/2026-09-20_16-31 §1.1)
 
 ## d) TOTALLY FUCKED UP (honest list)
 
@@ -67,23 +67,23 @@ The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV 
 
 **Immediate (this deploy chain):**
 
-1. Implement the cv ownership-heal ExecStartPre (design in §b.1) — unblocks cv-server's start-limit-hit.
-2. Run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build` over my two uncommitted fixes (§d.6 — they have never passed a gate).
-3. Deploy (after the parallel session's deploy releases the lock) and verify: profile anchored (current-system == a numbered profile), hermes restart lands on `SuccessExitStatus` (stop → clean), discordsync stop drains ≤5min, cv-server starts, hot-user-caches-nix-bootstrap passes with the caps fix, go-build automount recovers.
-4. Commit my two fixes as a PATHSPEC commit when authorized (`git commit -m … -- modules/nixos/services/hermes.nix modules/nixos/services/discordsync.nix`) — the daemon-race rule applies.
-5. Close the unanchored-generation window: the reboot-revert hazard (current-system ahead of profile) stands until a clean activation; coordinate with the parallel session's 12:15 doc owner.
+~~1. Implement the cv ownership-heal ExecStartPre (design in §b.1) — unblocks cv-server's start-limit-hit.~~ **NOT-DO — NOT-DO — dup of §b.1.**
+~~2. Run `nix fmt --no-update-lock-file -- --ci` + `nix flake check --no-build` over my two uncommitted fixes (§d.6 — they have never passed a gate).~~ done — flake check GREEN incl. test-cv co-import fix (docs/status/2026-09-20_13-58 §a.7-8)
+~~3. Deploy (after the parallel session's deploy releases the lock) and verify: profile anchored (current-system == a numbered profile), hermes restart lands on `SuccessExitStatus` (stop → clean), discordsync stop drains ≤5min, cv-server starts, hot-user-caches-nix-bootstrap passes with the caps fix, go-build automount recovers.~~ done — deploy #2 13:44 + clean anchor 14:08 (docs/status/2026-09-20_13-58 §a, 15-02)
+~~4. Commit my two fixes as a PATHSPEC commit when authorized (`git commit -m … -- modules/nixos/services/hermes.nix modules/nixos/services/discordsync.nix`) — the daemon-race rule applies.~~ **Won't implement — superseded — daemon heuristic commit e0f287ab carried the fixes (docs/status/2026-09-20_13-58 Ops state).**
+~~5. Close the unanchored-generation window: the reboot-revert hazard (current-system ahead of profile) stands until a clean activation; coordinate with the parallel session's 12:15 doc owner.~~ done — system-786 anchored 14:08 (docs/status/2026-09-20_15-02)
 6. Verify geometrikks + health-dashboard first-start on the next successful activation (first deploy carrying them — TimeoutStartSec 15min on the image pull, Gatus checks red-until-first-run is expected for the dead-mirror-class checks).
-7. Post-deploy: run `nix run .#post-deploy-check` (per §c.7).
-8. Confirm hot-user-caches-go-build-bootstrap also converged (its sibling; the mount failures were downstream of the nix one).
+~~7. Post-deploy: run `nix run .#post-deploy-check` (per §c.7).~~ **NOT-DO — NOT-DO — dup of §c.7.**
+~~8. Confirm hot-user-caches-go-build-bootstrap also converged (its sibling; the mount failures were downstream of the nix one).~~ **Won't implement — moot — go-build entry removed (docs/status/2026-09-20_15-02 addendum §Q2).**
 
 **cv-server / upstream CV:**
-9. Land the ownership heal, then file/verify the upstream CV fix for the bare `rm -rf assets` (make it match the data/-dir best-effort pattern) — upstream can't reach us while the lock is held, but the fix should exist for when the floor clears.
+~~9. Land the ownership heal, then file/verify the upstream CV fix for the bare `rm -rf assets` (make it match the data/-dir best-effort pattern) — upstream can't reach us while the lock is held, but the fix should exist for when the floor clears.~~ done — upstream fix already on CV master (best-effort rm/cp + chmod -R u+w post-copy; docs/status/2026-09-20_16-52 §a.2)
 10. When the cv go-floor hold lifts (upstream adopts go_1_27 or drops the floor), re-evaluate whether the heal should be retired (it is harmless idempotent — probably keep it anyway as foreign-file insurance).
-11. Probe `nix build github:LarsArtmann/CV/master#default.goModules` opportunistically — the 2026-09-17 hold says nixpkgs DOES ship go_1_27; if upstream's one-line `goPkgAttr` fix landed, the lock can move and the heal's upstream twin comes with it.
+~~11. Probe `nix build github:LarsArtmann/CV/master#default.goModules` opportunistically — the 2026-09-17 hold says nixpkgs DOES ship go_1_27; if upstream's one-line `goPkgAttr` fix landed, the lock can move and the heal's upstream twin comes with it.~~ done — probed at 048b10733 — passed the go floor (docs/status/2026-09-20_16-52 §a.2)
 
 **browser-history:**
 12. File the go-cqrs-lite/browser-history issue for `unable to create schema link for type visit.Visit` (embedded-type-with-methods reflection break, toolchain-correlated: healthy on the pre-bump Go, 503 after) — verify-before-filing first: reproduce against both toolchains.
-13. Decide the interim stance for bh-server 503 (it pages via the agent's OnFailure every 5 min until fixed): accept the noise, or silence the agent unit until upstream lands (config-disable is NOT neutral here — it stops a working ingest path for a health-check regression).
+~~13. Decide the interim stance for bh-server 503 (it pages via the agent's OnFailure every 5 min until fixed): accept the noise, or silence the agent unit until upstream lands (config-disable is NOT neutral here — it stops a working ingest path for a health-check regression).~~ done — resolved: readiness gate now proceeds on any 1xx-5xx status — paging stopped (docs/status/2026-09-20_13-58 §a.2)
 14. Check whether the bh Gatus checks are red and whether the 503 is the schema link or a second cause (only one warning line was inspected).
 
 **hermes / discordsync:**
@@ -94,15 +94,15 @@ The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV 
 19. Sweep for units with NO explicit `TimeoutStopSec` whose stop drains (discordsync was found by 4 SIGKILLs; the journal class `State 'stop-sigterm' timed out` across 7 days would name any siblings).
 
 **hot-user-caches (parallel session's module, deploy-blocking until proven):**
-20. Verify the caps fix heals the bootstrap on the next activation; if `chmod 0700` still EPERMs, check whether the dir is on a nodatacow/subvol with different ownership semantics before touching the module (it's theirs — coordinate, don't race).
-21. Confirm `/mnt/buildcache/go-build` automount recovers (mount → start-limit-hit residue) and that nix builds' GOCACHE path is healthy again.
+~~20. Verify the caps fix heals the bootstrap on the next activation; if `chmod 0700` still EPERMs, check whether the dir is on a nodatacow/subvol with different ownership semantics before touching the module (it's theirs — coordinate, don't race).~~ done — live proof at 13:50:24 (docs/status/2026-09-20_15-02 §a.5)
+~~21. Confirm `/mnt/buildcache/go-build` automount recovers (mount → start-limit-hit residue) and that nix builds' GOCACHE path is healthy again.~~ **Won't implement — moot — entry removed (docs/status/2026-09-20_15-02 addendum §Q2).**
 22. If the bootstrap keeps failing, it exit-4s EVERY deploy (provisioner-list member) — that would need an allowUnits/caps/script decision with the owning session.
 
 **Process / hygiene:**
 23. Persist the exit-4 triage runbook (§e.2) and the stop-phase class bullet (§e.3) into AGENTS.md.
 24. Add the pre-flight lock/process check to the deploy workflow docs (§e.1).
 25. Consider a gitleaks-safe note that `SuccessExitStatus` trades systemd-level crash visibility for clean stops (the restart-churn metric is the compensating control) — future audits will ask.
-26. After anchoring: run pre-reboot-check before ANY planned reboot (the unanchored window makes reboots generation-reverting until closed).
+~~26. After anchoring: run pre-reboot-check before ANY planned reboot (the unanchored window makes reboots generation-reverting until closed).~~ done — 23/0 "SAFE TO REBOOT" (docs/status/2026-09-20_15-30)
 27. Sweep the day's other chronic reds into their owners' queues: inboxclean re-consent (user), service-health-check (goes green when its list does).
 28. When commit authorization arrives: PATHSPEC-commit the two fixes, verify the daemon didn't batch foreign files (git show --stat first, the 2026-09-14 amend rule).
 29. The parallel session's status doc (12:15, untracked) — coordinate so the boot-mirror deploy sequencing question (their f.33) and my deploy don't interleave activations.
@@ -113,7 +113,7 @@ The `rm -rf` is in the **UPSTREAM** `cv-server-content-sync` script that the CV 
 32. The 11:30 spurious hermes OnFailure page (the exit-1-on-stop fired the alert path once) — with SuccessExitStatus landed it stops; no action.
 33. cv-backup will fail while cv-server is start-limit-hit (its data/ gating) — self-heals with the heal.
 34. The orphan pre-bump `nix build` (PID 617590, started 11:11) was doomed by its eval snapshot (pre-20b1ddd tree → broken nodejs); it died with the settle window — no action, but it wasted ~40 min of IO.
-35. InboxClean `invalid_grant` fix is one interactive Google consent away (runbook in AGENTS.md) — user-gated, unchanged since Sep 4.
+~~35. InboxClean `invalid_grant` fix is one interactive Google consent away (runbook in AGENTS.md) — user-gated, unchanged since Sep 4.~~ done — re-consent done 2026-10-04 (docs/status/2026-10-04_08-32 §a.1)
 
 ## g) Questions I cannot answer myself
 

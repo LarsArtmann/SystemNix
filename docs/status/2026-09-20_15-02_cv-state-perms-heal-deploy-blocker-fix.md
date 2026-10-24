@@ -82,13 +82,13 @@ delta is `-perm -u+w`.
 
 ## c) NOT STARTED
 
-1. AGENTS.md gotcha entry for the general lesson: **a perms-heal fast path must check exactly
+~~1. AGENTS.md gotcha entry for the general lesson: **a perms-heal fast path must check exactly~~ done — doctrine bullet added same day (15-02 addendum item 3; docs/status/2026-09-20_16-52 §a.7)
    the predicate set its heal repairs** (ownership-only probes go phantom-green against
    mode-drift; same shape as the gatus phantom-metric class). The in-code comment documents it;
    the project memory does not.
-2. Pre-deploy Zone-6 trip-history check (see d) — not performed, not documented.
+~~2. Pre-deploy Zone-6 trip-history check (see d) — not performed, not documented.~~ done — deploy.sh trip-recency gate landed (docs/status/2026-09-20_16-52 §a.8)
 3. Baseline smoke-fail triage into TODO_LIST.
-4. Upstream CV-repo check of the sync's copy flags (recurrence question).
+~~4. Upstream CV-repo check of the sync's copy flags (recurrence question).~~ done — source-verified: plain cp -r + upstream chmod -R u+w fix on master (15-02 addendum Q1; 19-47 §a.10)
 5. Post-deploy gatus check-state sweep for the CV group.
 
 ## d) TOTALLY FUCKED UP (honest mistakes)
@@ -131,22 +131,22 @@ delta is `-perm -u+w`.
 
 1. `sudo find /var/lib/cv -xdev \( ! -user cv -o ! -group cv -o ! -perm -u+w \) -print | head`
    — post-heal confirmation snapshot (expect empty now).
-2. Check CV repo content-sync copy flags (`cp -a`/`rsync -a`?) → answers recurrence (b.2);
+~~2. Check CV repo content-sync copy flags (`cp -a`/`rsync -a`?) → answers recurrence (b.2);~~ **NOT-DO — NOT-DO — dup of §c.4.**
    if structural, consider upstream post-copy chmod OR accept per-start heal.
-3. `sudo systemctl start hot-user-caches-go-build-bootstrap.service` → verify chmod 700 lands.
-4. Observe `cv-scan` at the next `:23` tick — green proves the CV stack end-to-end.
+~~3. `sudo systemctl start hot-user-caches-go-build-bootstrap.service` → verify chmod 700 lands.~~ **Won't implement — moot — unit/entry removed 2026-09-20 (15-02 addendum §Q2).**
+~~4. Observe `cv-scan` at the next `:23` tick — green proves the CV stack end-to-end.~~ done — 18:23 tick green, 96ms scan (docs/status/2026-09-20_19-47 §a.15)
 5. Verify `inboxclean-sync` last exit + timer state.
-6. Re-run `post-deploy-check` once idle: CV should drop out of the fail baseline (7 → fewer).
-7. Read the current baseline fails (Bank-Sync, Browser History, FastFlowLM) and route each to
+~~6. Re-run `post-deploy-check` once idle: CV should drop out of the fail baseline (7 → fewer).~~ done — baseline shrank to 2 known-FAILs, CV gone (docs/status/2026-09-20_19-47 §b)
+~~7. Read the current baseline fails (Bank-Sync, Browser History, FastFlowLM) and route each to~~ done — routed: BH [ready] row; SCA + flm already tracked (docs/status/2026-09-20_16-52 §a.9)
    `docs/todo/{services,monitoring}.md`.
-8. Add AGENTS.md one-liner: fast-path/heal symmetry rule (c.1).
-9. deploy.sh: add Zone-6 trip-recency check to the pressure gate (e.1).
-10. deploy.sh: add post-switch anchoring assertion step (e.2).
-11. deploy.sh: on `Exited(4)`, dump the transaction's failed-unit list inline (e.4).
-12. cv-state-perms: journal a heal summary (count/sample) (e.6).
+~~8. Add AGENTS.md one-liner: fast-path/heal symmetry rule (c.1).~~ done — 15-02 addendum item 3 (AGENTS.md doctrine bullet)
+~~9. deploy.sh: add Zone-6 trip-recency check to the pressure gate (e.1).~~ done — landed + live-validated (docs/status/2026-09-20_16-52 §a.8)
+~~10. deploy.sh: add post-switch anchoring assertion step (e.2).~~ done — landed — exit 14 on unanchored (docs/status/2026-09-20_16-52 §a.8)
+~~11. deploy.sh: on `Exited(4)`, dump the transaction's failed-unit list inline (e.4).~~ done — landed (docs/status/2026-09-20_16-52 §a.8)
+~~12. cv-state-perms: journal a heal summary (count/sample) (e.6).~~ done — landed (docs/status/2026-09-20_16-52 §a.5)
 13. Baseline file: stamp entries with last-seen (e.5).
 14. Investigate `xdg-desktop-portal` dependency flaps (user manager, ~14:09–14:14).
-15. Check the `fastflowlm@` exit-code instance at 14:12 (cold-load timeout class?).
+~~15. Check the `fastflowlm@` exit-code instance at 14:12 (cold-load timeout class?).~~ done — closed: normal per-connection socket lifecycle (docs/status/2026-09-20_16-52 §a.13)
 16. Sweep gatus CV group checks green post-14:08.
 17. Watch `node_psi_io_some_avg60` — if the storm persists, identify readers (crush sessions,
     project-discovery du-walks) per freeze-#5/#6 doctrine.
@@ -154,8 +154,8 @@ delta is `-perm -u+w`.
 19. After next reboot: confirm go-build bootstrap green + automount mounts the subvol.
 20. Consider whether the cv-state-perms heal should also enforce u+x on dirs (currently u+w
     only — sufficient for rm/cp, not proven sufficient for every future upstream op).
-21. Confirm `cv` smoke checks exit the baseline on the NEXT deploy (item 6's long-term check).
-22. Sweep whether any OTHER `*-perms` fast path in the tree has the same ownership-only
+~~21. Confirm `cv` smoke checks exit the baseline on the NEXT deploy (item 6's long-term check).~~ done — 2 known-FAILs only, CV dropped (docs/status/2026-09-20_19-47 §b)
+~~22. Sweep whether any OTHER `*-perms` fast path in the tree has the same ownership-only~~ done — hermes sibling closed + VM-tested green (docs/status/2026-09-20_16-52 §a.6)
     blindspot (`hermes-perms` is the sibling pattern — check its probe covers modes).
 23. The parallel session's `mkIf` value-guard for `deploy-restart-audit.allowUnits`: add a
     one-line comment in test-cv.nix explaining WHY the co-import is load-bearing (it has one;
