@@ -18,7 +18,7 @@
 
 | Surface | Count | State |
 |---|---|---|
-| Unverified WARN composition ("81, all-October" inherited claim) | 81 reports | never self-enumerated; 82→81 flipper unidentified |
+| Unverified WARN composition ("81, all-October" inherited claim) | 81 reports | **T1 VERIFIED 2026-10-24: 81 = 22 Sept stragglers (09-26→09-30, ~480 bare §f items) + 59 Oct — "all-October" REFUTED; flipper = daemon `f12302830` (R091 archive of `2026-09-30_07-42_architecture-catalog-golive-prep-continuation.md`, 11:49, between the prune measure and the 12-04 commit); census + seed persisted `~/.cache/docshealth/t1-warn-census.txt`; Sept folded into the wave seed (pipeline.md [decision] row updated)** |
 | Hand-dropped contradictory w-verdicts (b03/b09) | 2 rows | bare, never re-adjudicated |
 | Standing doc-counts gate | 0 | README asserts 131/228/46 with no eval gate enforcing them |
 | README service-table rows + FEATURES row statuses | 30 + ~120 rows | counts verified 2026-10-24; rows NOT claim-verified |

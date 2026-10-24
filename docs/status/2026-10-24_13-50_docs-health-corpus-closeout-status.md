@@ -12,7 +12,7 @@
 4. **M4 — README + FEATURES counts re-derived** (the 2026-10-06 §f.5 debt): nixosModules 55→**131** (canonical eval), packages 30→**46** (eval), Gatus checks 133→**228** (endpoints eval), SigNoz 31/6→**47 rules/10 dashboards**, service modules 70→**118**, desktop 10→**13**, lib 10→**15**, HM programs 19→**20**; derivation commands embedded in README; stale **Ollama (ROCm)** mention removed (system-removed 2026-10-12); both files stamped. Committed `8823b46b8`.
 5. **M5 — ROADMAP Theme-1 + cross-theme staleness pass**: Samsung-migration row → SHIPPED (doctrine-C `+C` subvols, NOT the debated XFS; trailing docker end-state moot), boot-mirror noted as the shipped shutdown option, `/data`-consolidation + firewall + rocm-module + attic rows de-Dockerized, voice-agents row RESOLVED, ttmPagesLimit framing aligned to the settled GTT-first doctrine. **AGENTS pass**: all 33 referenced paths exist (zero MISSING); 37 dated citations are deliberate incident anchors, not pollution; 57 KB size accepted-by-design (the 2026-10-01 routing-table architecture). Committed `684d4f2f8`.
 6. **M6 — harvest dedupe ledger** (see §Ledger): sampled-open reconciliation vs TODO_LIST/docs/todo found **3 untracked items** — all harvested this session (§f); everything else verified tracked or owner-gated.
-7. **M3 — gates + close**: `nix flake check --no-build` **all checks passed** (Darwin omission = expected signature); `check-doc-links.sh` OK; `check-todo-system.sh` structure OK (81 unharvested-§f WARNs, ALL 2026-10 wave — the M8–M11 surface); CHANGELOG sweep entry landed (count-before-claim below); owning rows closed on BOTH surfaces with successor state.
+7. **M3 — gates + close**: `nix flake check --no-build` **all checks passed** (Darwin omission = expected signature); `check-doc-links.sh` OK; `check-todo-system.sh` structure OK ~~(81 unharvested-§f WARNs, ALL 2026-10 wave — the M8–M11 surface)~~ **(81 unharvested-§f WARNs — composition corrected 2026-10-24 by T1 census: 22 Sept stragglers + 59 Oct, NOT all-October; all folded into the wave seed)**; CHANGELOG sweep entry landed (count-before-claim below); owning rows closed on BOTH surfaces with successor state.
 8. **M7 — qmd**: NO SystemNix collection exists (qmd indexes only `cv`), so the "re-index after mass moves" premise is void — nothing to re-index; recorded here so the next sweep does not re-chase it.
 
 ## b) PARTIALLY DONE
@@ -74,7 +74,7 @@ Method: the 93 PARTIAL-flagged files' bare rows are the corpus's open surface; 1
 | desktop-alerting runbook (09-24_00-07) | NOT tracked | → harvested (§f.2) |
 | "Nothing else" / policy-question / owner-observation rows (misc) | n/a | non-asks — bare is honest |
 
-Sept §f surface: `check-todo-system.sh` reports ZERO unharvested Sept reports (81 WARNs all-October) — the systematic harvest reconciliation holds beyond the sample.
+~~Sept §f surface: `check-todo-system.sh` reports ZERO unharvested Sept reports (81 WARNs all-October) — the systematic harvest reconciliation holds beyond the sample.~~ **Corrected 2026-10-24 (16-43 plan T1): the census holds 22 Sept stragglers (09-26 → 09-30, ~480 bare §f items, mixed tracked/untracked/done-since — spot-check: ~half tracked by grep). The "holds beyond the sample" claim was false; the reconciliation held only inside the sample. Stragglers routed into the wave seed (`~/.cache/docshealth/t1-warn-census.txt` + pipeline.md [decision] row).**
 
 ## Appendix: gates + commits
 
