@@ -314,6 +314,12 @@ check_local "oauth2-proxy" "4180" "/ping" "200" 2>/dev/null || true
 
 check_local "Gatus" "9110" "/" "200" "" 2>/dev/null || true
 
+# T-007 (2026-10-24): the Discord alert gate must be up and answering —
+# a dead relay silently drops every gatus Discord alert (gatus does not
+# retry provider sends). "forwarded" in the body proves the JSON snapshot
+# rendered, not just a bare 200.
+check_local "Gatus Alert Relay" "9111" "/healthz" "200" "forwarded" 2>/dev/null || true
+
 check_local "DNS Blocker" "9090" "/health" "200" "" 2>/dev/null || true
 
 # DNS: verify local resolution via dnsblockd
