@@ -32,16 +32,16 @@
 1. **The retention-reconciliation EPIC: understanding complete, prevention still missing.** The figure is right everywhere TODAY, but it lives in ≥6 prose surfaces with no mechanical gate — the durable fix (the grep-gate, storage.md:136) has been queued since 2026-09-25 12:27 and no dispatch has picked it up. Three sessions + one review were needed to catch 7 stale sites; the next figure change re-runs the circus. Mirrored into the queue this pass.
 2. **2w-sharp evidence is derivation + inventory, not scheduler observation.** The bucket math was hand-derived from perl source and cross-checked against 6/6 live snapshots; a read-only btrbk dryrun/info output showing its own "preserve weekly" labels was never captured (11-51 §b2). Queued this pass.
 3. **Reconciliation scope is root-only.** `/data` (14d 4w) and pool `services/*` (7d 4w) windows in the doctrine table remain the sweep's approximations (≈4-5w / ≈4w) — consistent with the model but unreconciled. Owner question (g1), now with a persistent blocked row.
-4. **Docker figure de-duplication chosen-against.** The reviewer's pointer-only alternative was declined twice (inline-figures variant kept), so the figure still lives in 2 AGENTS.md places; the drift class is mitigated only by dated provenance. Queued as a small conversion item this pass.
+~~4. **Docker figure de-duplication chosen-against.** The reviewer's pointer-only alternative was declined twice (inline-figures variant kept), so the figure still lives in 2 AGENTS.md places; the drift class is mitigated only by dated provenance. Queued as a small conversion item this pass.~~ **Won't implement — moot — Docker removed 2026-10-08 (TODO_LIST:122 disposition decided; CHANGELOG Docker-removal entries).**
 5. **Run 5's own verification coverage** was complete in the finding's named scopes but trusted prior-run evidence for `scripts/migrate-clickhouse-xfs.sh` and the `22a4e88f`→`eb844911` transient timeline. Queued as a fresh re-close sweep this pass.
 
 ## c) NOT STARTED (window skips + inherited backlog untouched)
 
 1. **The stale-figure grep-gate** (storage.md:136) — the single most important open item of this lineage.
-2. **The snapshots.nix calendar-anchor comment** (storage.md:15, TODO_LIST:51) — verified still absent this pass (`snapshot_preserve = "3d 1w"` at snapshots.nix:219 carries only the pool-tier comment).
-3. **The `@home-hermes` 09-16 snapshot investigation** (9 days old vs `snapshot_preserve 3d`) — the one live over-retention candidate; queued, untouched.
-4. **Docker volume hygiene** — 212 volumes / 6 active / 4.09G (94%) reclaimable, no inventory, no owner; deliberately out of auto-prune. Queued this pass.
-5. **On-disk provenance cross-check** of `/data/docker` (sudo `du`/`compsize` vs docker accounting) — the 20G→15.5G drop may be partly measurement-method. Queued.
+~~2. **The snapshots.nix calendar-anchor comment** (storage.md:15, TODO_LIST:51) — verified still absent this pass (`snapshot_preserve = "3d 1w"` at snapshots.nix:219 carries only the pool-tier comment).~~ done — storage.md:20 [x] DONE 2026-09-26 — comment landed (commit 5befa617)
+~~3. **The `@home-hermes` 09-16 snapshot investigation** (9 days old vs `snapshot_preserve 3d`) — the one live over-retention candidate; queued, untouched.~~ done — storage.md:21 [x] DONE 2026-09-26 — IN-SPEC verdict
+~~4. **Docker volume hygiene** — 212 volumes / 6 active / 4.09G (94%) reclaimable, no inventory, no owner; deliberately out of auto-prune. Queued this pass.~~ **Won't implement — moot — Docker removed 2026-10-08; /data/docker disposition decided (volumes-only tar + trash, TODO_LIST:122).**
+~~5. **On-disk provenance cross-check** of `/data/docker` (sudo `du`/`compsize` vs docker accounting) — the 20G→15.5G drop may be partly measurement-method. Queued.~~ **Won't implement — moot — Docker removed 2026-10-08 (residue disposition decided, TODO_LIST:122).**
 6. All owner-gated storage backlog (offsite-borg go-live inputs, /data repair gates, ClickHouse restore drill, restic proof chain, deploy-authority decision) — untouched; queue pacing owns them.
 
 ## d) TOTALLY FUCKED UP (regressions, dead-lettered work, process damage)
@@ -68,14 +68,14 @@ Nothing in the window's own artifacts is broken — every landed claim re-verifi
 
 New `[ready]`/`[watch]` rows appended to TODO_LIST.md (all point at docs/todo/storage.md unless noted):
 
-1. Docker volume inventory (212/6/4.09G-94%) → keep/forgotten classification + prune-candidate list, NO auto-prune.
-2. Sudo-window `du`/`compsize /data/docker` vs docker-reported 15.5G (provenance like-for-like).
-3. Convert the Samsung-section docker prose to pointer-only (single-home the figure).
+~~1. Docker volume inventory (212/6/4.09G-94%) → keep/forgotten classification + prune-candidate list, NO auto-prune.~~ **Won't implement — moot — Docker removed 2026-10-08; disposition decided (TODO_LIST:122).**
+~~2. Sudo-window `du`/`compsize /data/docker` vs docker-reported 15.5G (provenance like-for-like).~~ **Won't implement — moot — Docker removed 2026-10-08 (TODO_LIST:122).**
+~~3. Convert the Samsung-section docker prose to pointer-only (single-home the figure).~~ **Won't implement — moot — Docker removed 2026-10-08; AGENTS.md restructured 2026-10-01.**
 4. The grep-gate for stale root-window restatements (fixtures + context rules + negative tests + pre-commit AND CI).
 5. Store-warmth root-cause + retry-once-with-prefetch leg (→ docs/todo/pipeline.md).
 6. Fresh re-close of the trusted-not-re-derived echo surfaces (clickhouse script, darwin, docs/planning) + gate-scope decision for planning docs.
 7. `/data` composition figure refresh + "(figures as of <date>)" convention.
-8. `[watch]` post-Sunday prune verification (dangling images reclaimed; reclaimed figure + projected pin-free date).
+~~8. `[watch]` post-Sunday prune verification (dangling images reclaimed; reclaimed figure + projected pin-free date).~~ **Won't implement — moot — Docker removed 2026-10-08; no docker prune to verify.**
 9. btrbk dryrun observation proof for the 2w-sharp model.
 
 New `BLOCKED` rows (owner answers, section g): reconciliation scope, final retention config, volume policy.
