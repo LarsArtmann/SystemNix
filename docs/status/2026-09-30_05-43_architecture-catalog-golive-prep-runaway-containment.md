@@ -103,7 +103,7 @@ work, deliberately left alone.
 
 ## 4. (b) PARTIALLY DONE
 
-1. **Deploy of the runner-PATH generation** — built + gated; BLOCKED at the
+~~1. **Deploy of the runner-PATH generation** — built + gated; BLOCKED at the~~ done — 07-42 continuation §2 + pipeline.md:283 — deploy landed 15:48; services.md:217 go-live ran on it
    pressure gate (io PSI some avg10 = 22-60% observed over ~12 min,
    avg60 33-55%, with disk busy <10% and one rotating D-state
    `kworker/*+events_unbound`; driver = the live go build after the
@@ -112,28 +112,28 @@ work, deliberately left alone.
    <20% for a sustained window. Note the gate's own classifier guessed
    "D-state phantom on a dead automount" — the evidence points more at
    live parallel IO churn; either way the wait-decision is identical.
-2. **Verification of the runner PATH post-deploy** — blocked by (1). After
+~~2. **Verification of the runner PATH post-deploy** — blocked by (1). After~~ done — services.md:217 GO-LIVE COMPLETE 2026-10-12 — CI runs 59-70 green (jq/nix/python3 resolvable)
    deploy: confirm `path=` carries nix/jq/python3 in the rendered unit.
 
 ## 5. (c) NOT STARTED (all root/owner-gated — the sandbox bans `sudo` and
 
 `systemctl`, and Forgejo 401s every unauthenticated probe)
 
-1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`
+~~1. `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`~~ done — services.md:217 — script green on 3rd run 2026-10-11/12 (mirrors, Actions, tokens, dispatch)
    (mirror, Actions, CI token, sync-token file, first dispatch).
-2. Watch the first CI run (`forgejo.home.lan/lars/eventcatalog-hub/actions`)
+~~2. Watch the first CI run (`forgejo.home.lan/lars/eventcatalog-hub/actions`)~~ done — services.md:217 — run 38 fully green (173 pages); runs 59-70 all green
    — browser/OIDC-gated; the fixed runner PATH makes `jq`/`python3`/`nix`
    resolvable, the remaining watch items are nix-daemon reachability for
    the DynamicUser runner, `npm` in the job env, job-token git-push
    (PUSH_TOKEN fallback documented in the workflow).
-3. sops-paste the sync token
+~~3. sops-paste the sync token~~ done — services.md:217 close-out — owner sops paste landed same day (2026-10-12)
    (`sudo cat /var/lib/forgejo/.eventcatalog-hub-setup/sync-token` →
    `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age
    -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml`,
    env-file format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`).
-4. Deploy carrying the token (sops `restartUnits` restarts the sync unit),
+~~4. Deploy carrying the token (sops `restartUnits` restarts the sync unit),~~ done — services.md:217 — deploy landed same day; sync restarted with token
    or `sudo systemctl start architecture-catalog-sync`.
-5. Verify: sync journal generation swap → `current/index.html` +
+~~5. Verify: sync journal generation swap → `current/index.html` +~~ done — services.md:217 GO-LIVE COMPLETE — dist published (run 51), serving sync converged (residual token re-paste tracked separately at services.md:218)
    `build-stamp.json` → `architecture_catalog_dist_present 1 / fresh 1` →
    three Gatus checks green → post-deploy §15 stops warning.
 
@@ -182,20 +182,20 @@ work, deliberately left alone.
 
 ## 8. (f) Up to 50 things to do next (priority-ordered, go-live chain first)
 
-1. Retry `nix run .#deploy` once io PSI some avg60 <20% sustained — lands
+~~1. Retry `nix run .#deploy` once io PSI some avg60 <20% sustained — lands~~ done — pipeline.md:283 + 07-42 §2 — deploy landed 15:48 (runner PATH shipped)
    the runner PATH (blocks EVERYTHING else).
-2. Verify the deployed runner unit carries `path=` nix/jq/python3.
-3. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`.
-4. Confirm the script's output: mirror exists/created, Actions enabled,
+~~2. Verify the deployed runner unit carries `path=` nix/jq/python3.~~ done — services.md:217 — CI green proves the PATH; go-live complete
+~~3. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`.~~ done — services.md:217 — executed green 2026-10-11/12
+~~4. Confirm the script's output: mirror exists/created, Actions enabled,~~ done — services.md:217 — Actions PATCHed has_actions:true, CI+sync PATs minted, GIT_CLONE_TOKEN stored, 3 mirrors synced
    both tokens stored, sync-token file 0600, dispatch 204.
-5. Watch first CI run to green; triage failures against the watch-list.
-6. Confirm `dist` branch exists post-run.
-7. If job-token push 403s: wire `PUSH_TOKEN` (write PAT) per the workflow
+~~5. Watch first CI run to green; triage failures against the watch-list.~~ done — services.md:217 — run 38 fully green; runs 59-70 green
+~~6. Confirm `dist` branch exists post-run.~~ done — services.md:217 — run 51 published dist
+~~7. If job-token push 403s: wire `PUSH_TOKEN` (write PAT) per the workflow~~ **Won't implement — conditional fallback; not needed — CI runs went green via job-token (services.md:217).**
    fallback and re-run.
-8. sops-paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` from the root-only file.
-9. Deploy (token rotation restarts the sync unit) — can merge with (1) if
+~~8. sops-paste `ARCHITECTURE_CATALOG_SYNC_TOKEN` from the root-only file.~~ done — services.md:217 close-out — owner paste landed 2026-10-12
+~~9. Deploy (token rotation restarts the sync unit) — can merge with (1) if~~ done — services.md:217 — same-day deploy completed the chain
    the storm clears before go-live.
-10. `sudo systemctl start architecture-catalog-sync` (converge now).
+~~10. `sudo systemctl start architecture-catalog-sync` (converge now).~~ done — services.md:217 — sync converged; dist served (current swapped)
 11. Verify sync journal: "serving generation <stamp>".
 12. Verify `/var/lib/architecture-catalog/current/index.html` +
     `build-stamp.json` exist; generations pruned to 3.
@@ -207,19 +207,19 @@ work, deliberately left alone.
     caddy + LAN bypass + static root).
 18. Re-run `nix run .#post-deploy-check` — §15 stops warning.
 19. Update hub TODO [owner] item → [x] after first green dist.
-20. Sweep SystemNix TODO queue/domain files for architecture-catalog rows
+~~20. Sweep SystemNix TODO queue/domain files for architecture-catalog rows~~ done — 07-42 §1.6 — services.md go-live row rewritten + pipeline rows landed
     and close them per the TODO doctrine.
-21. Update AGENTS.md architecture-catalog section: go-live state + runner
+~~21. Update AGENTS.md architecture-catalog section: go-live state + runner~~ done — 07-42 §1.6 — AGENTS catalog section updated (sync-token chain + PATH contract)
     PATH contract.
-22. Update hub README owner-setup section (sync-token file + rotation).
+~~22. Update hub README owner-setup section (sync-token file + rotation).~~ done — 07-42 §1.2 — README rewritten (sync-token file, rotation, PATH prerequisite)
 23. Commit + push hub repo changes (local edit is enough for the script
     run, but push keeps the GitHub↔Forgejo mirror coherent).
-24. Confirm the SystemNix daemon commit for forgejo.nix (multi-agent rule:
+~~24. Confirm the SystemNix daemon commit for forgejo.nix (multi-agent rule:~~ done — 07-42 §1.1 — landed as daemon commit 0751be6a, verified
     `git show --stat` before/amend discipline).
-25. `nix fmt` the forgejo.nix edit before commit.
-26. dprint-check the hub repo edits.
-27. CHANGELOG entries (SystemNix + hub) for the go-live prep.
-28. Optional module polish: sync-script WARN names the token file path
+~~25. `nix fmt` the forgejo.nix edit before commit.~~ done — 07-42 §1.7 — fmt-cached.sh pass, 0 changed
+~~26. dprint-check the hub repo edits.~~ done — 07-42 §1.7 — dprint check rc=0
+~~27. CHANGELOG entries (SystemNix + hub) for the go-live prep.~~ done — 07-42 §1.6 — CHANGELOG [Unreleased] entry added
+~~28. Optional module polish: sync-script WARN names the token file path~~ done — 07-42 §1.4 — WARN text now names /var/lib/forgejo/.eventcatalog-hub-setup/sync-token
     (needs redeploy; bundle with any future forgejo.nix touch).
 29. Confirm forgejo mirror-sync output for `lars/bank-sync`,
     `lars/cqrs-htmx`, `lars/go-cqrs-lite` (source freshness for the first
@@ -242,14 +242,14 @@ work, deliberately left alone.
     session (amdgpu/buildcache/memory-guard/niri leftovers) — mktemp
     leftovers are normal churn, but `niri.prom.tmp` is the fixed-tmp
     pattern the audit bans; confirm it's stale debris, not a live writer.
-39. Root-cause who owned `/tmp/todofix2.py` (session forensics via
+~~39. Root-cause who owned `/tmp/todofix2.py` (session forensics via~~ done — 07-42 §1.5 — closed: abandoned scratch, zero journal traces, nothing to redo
     journals ~01:07) and whether its TODO_LIST reorganization intent
     still needs doing by hand.
 40. Consider a guard: agent one-shot scripts must not run unbounded from
     /tmp (route to tq runbook + pool agent instructions).
 41. Consider pressure-gate improvement: multi-sample disk-busy window
     before labeling "IDLE disks / corpse-pile" (§7.5).
-42. Document the registry finding: bare `nixpkgs#` resolves, named system
+~~42. Document the registry finding: bare `nixpkgs#` resolves, named system~~ done — 07-42 §1.3 — configuration.nix registry comment block records the quirk
     registry entries are not attrname-addressable — note in
     configuration.nix's registry comment block.
 43. After go-live: set a reminder row to check the second nightly build
@@ -266,7 +266,7 @@ work, deliberately left alone.
     (hub TODO [blocked:upstream]).
 49. Post-go-live docs: move the runbook's pre-go-live section below a
     "LIVE" banner.
-50. Self-harvest closure: this report's §f items 1-22 + 39-42 are the
+~~50. Self-harvest closure: this report's §f items 1-22 + 39-42 are the~~ done — 07-42 §1.6 — "Harvest complete (§f.50 obligation)"
     direct follow-ups — deliberately NOT auto-harvested into TODO_LIST at
     authoring time because the user ordered report-only-then-wait; harvest
     immediately after the user picks the next instruction set.

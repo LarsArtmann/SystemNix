@@ -22,16 +22,16 @@ Session: deploy-triage of the user's `nh os switch` (exit 4) + `nix run .#deploy
 ## b) PARTIALLY DONE
 
 1. **Bank-Sync sync errors — researched, fix is user-gated.** Journal: per-balance `statements paused pending SCA approval — run 'bank-sync sca approve'` with `approval_token_issued=false` on every balance; the ~90-day Wise SCA challenge re-armed. Metrics: `bank_sync_sync_errors_total 3` (what the smoke FAILs on), `bank_sync_sca_challenges_total 618` (cumulative). The 3 errors: 26 ERROR lines at 04:47 during the deploy IO storm (`backfill failed chunks_done=0`, `failed to save balance` — transient DB write failures); later cycles completed degraded-but-green. **Fix = user OTP**: dashboard flow (bank-sync → Sync State card → "Wise approval needed" → Approve now) or `bank-sync sca approve` with the daemon's env (my user-shell `bank-sync sca status` failed with `wise.api_key_missing`; sudo is blocked in my sandbox). Note: `sync_errors_total` is cumulative since process start — the smoke stays red until a restart AFTER clean cycles.
-2. **InboxClean `auth_expired` — diagnosed, fix is user-gated.** Main account token dead (the known testing-mode 7-day expiry class; `work` is connected and PASSING). Fix order matters (2026-09-04 lesson): flip the Google OAuth consent screen to **"In production" FIRST**, then re-auth main via the documented env command on the evo-x2 desktop. Until then `inboxclean-sync` fails exit 75 every 30 min and OnFailure pages.
-3. **geometrikks go-live — built, not deployed.** All store artifacts are ready; the flip is `nix run .#deploy`. Expected on the flip: ONE postgres restart (new plugin bundle) bouncing paperless/immich/miniflux once (documented, self-retried); `geometrikks-db-provision` re-runs idempotently and creates the toolkit extension; then the service should go green.
+~~2. **InboxClean `auth_expired` — diagnosed, fix is user-gated.** Main account token dead (the known testing-mode 7-day expiry class; `work` is connected and PASSING). Fix order matters (2026-09-04 lesson): flip the Google OAuth consent screen to **"In production" FIRST**, then re-auth main via the documented env command on the evo-x2 desktop. Until then `inboxclean-sync` fails exit 75 every 30 min and OnFailure pages.~~ done — services.md:343 + CHANGELOG 2026-10-04 — re-consent landed, grant proven live
+~~3. **geometrikks go-live — built, not deployed.** All store artifacts are ready; the flip is `nix run .#deploy`. Expected on the flip: ONE postgres restart (new plugin bundle) bouncing paperless/immich/miniflux once (documented, self-retried); `geometrikks-db-provision` re-runs idempotently and creates the toolkit extension; then the service should go green.~~ done — §h addendum #3 + 07-00 §a.6 — 05:50 activation carried the fix; GREEN (20× 200s/10min)
 
 ## c) NOT STARTED (deliberately — user-owned or follow-on)
 
-1. **FLM socket restart** — the corpse is gone, so `sudo systemctl start fastflowlm.socket` should bind immediately. I did NOT run it (systemctl/sudo are blocked in my sandbox). If the smoke's FLM check is wanted green today, this is a one-liner for you; otherwise it rides the next deploy/reboot.
-2. **go-nix-helpers final commit + push** — the placement-corrected fix sits as daemon commit `e1c6dc2` ("auto-commit heuristic"), **unpushed**, stacked on the pushed `c2cbc61`. It should be squashed into a proper message (soft-reset the one-file commit, recommit, push) so upstream history isn't a heuristic blob. I stopped short because it is a commit/push decision.
-3. **SystemNix go-nix-helpers re-lock** — lock holds `7c06ddc8`; upstream now carries `b3d9580` (templGenerationPolicy/devShellHook/mkDefault apps — unreviewed by me) + the warning fix. Re-locking kills all 7 warnings on this box (final A/B proved the fix itself is render-neutral), but the move also ships `b3d9580`'s features. Candidate for the Monday flake-update bot + CI, or a reviewed targeted `nix flake update go-nix-helpers --refresh` after diffing `7c06ddc8..b3d9580`.
-4. **AGENTS.md updates** — at least four lessons belong there: (a) geometrikks needs `timescaledb_toolkit` (Docker image bundled it; nixpkgs separates it under `postgresql.pkgs`); (b) flm corpse cleared without reboot (bind test is the empirical check); (c) proxyVendor warning root cause + the mkDefault-at-config-level pattern; (d) bank-sync SCA re-armed 2026-09-30. Not written yet — waiting for your go (you asked report-only).
-5. **Worktree cleanup** — `/tmp/gnh-b3d9580` (`git worktree` from the isolation tests) should be removed.
+~~1. **FLM socket restart** — the corpse is gone, so `sudo systemctl start fastflowlm.socket` should bind immediately. I did NOT run it (systemctl/sudo are blocked in my sandbox). If the smoke's FLM check is wanted green today, this is a one-liner for you; otherwise it rides the next deploy/reboot.~~ **Won't implement — superseded — socket enabled in sockets.target.wants, re-arms on next deploy (§h.5; 07-00 §a.9).**
+~~2. **go-nix-helpers final commit + push** — the placement-corrected fix sits as daemon commit `e1c6dc2` ("auto-commit heuristic"), **unpushed**, stacked on the pushed `c2cbc61`. It should be squashed into a proper message (soft-reset the one-file commit, recommit, push) so upstream history isn't a heuristic blob. I stopped short because it is a commit/push decision.~~ done — 07-00 report §a.1 — recommitted e9eb54e + pushed c2cbc61..a15d726
+~~3. **SystemNix go-nix-helpers re-lock** — lock holds `7c06ddc8`; upstream now carries `b3d9580` (templGenerationPolicy/devShellHook/mkDefault apps — unreviewed by me) + the warning fix. Re-locking kills all 7 warnings on this box (final A/B proved the fix itself is render-neutral), but the move also ships `b3d9580`'s features. Candidate for the Monday flake-update bot + CI, or a reviewed targeted `nix flake update go-nix-helpers --refresh` after diffing `7c06ddc8..b3d9580`.~~ done — 07-00 §a.4 — re-locked 7c06ddc8→a15d726, proxyVendor warnings 7→0, lock committed
+~~4. **AGENTS.md updates** — at least four lessons belong there: (a) geometrikks needs `timescaledb_toolkit` (Docker image bundled it; nixpkgs separates it under `postgresql.pkgs`); (b) flm corpse cleared without reboot (bind test is the empirical check); (c) proxyVendor warning root cause + the mkDefault-at-config-level pattern; (d) bank-sync SCA re-armed 2026-09-30. Not written yet — waiting for your go (you asked report-only).~~ done — 07-00 §a.10 — five lesson edits landed (geometrikks/flm/proxyVendor/SCA/deploy-skew)
+~~5. **Worktree cleanup** — `/tmp/gnh-b3d9580` (`git worktree` from the isolation tests) should be removed.~~ done — 07-00 §a.2 — removed with git worktree remove --force + prune
 
 ## d) TOTALLY FUCKED UP (own mistakes, blunt)
 
@@ -51,19 +51,19 @@ Session: deploy-triage of the user's `nh os switch` (exit 4) + `nix run .#deploy
 
 **Immediate — this session's direct follow-ups**
 
-1. Commit + push go-nix-helpers `e1c6dc2` properly (soft-reset → proper message → push) — silences nothing by itself but completes the upstream fix.
-2. Deploy SystemNix HEAD (`9fb816e2`, carries the geometrikks fix + captures the unpushed `5a9c22cc`) — PG toolkit artifacts are pre-built; expect one postgres restart bouncing paperless/immich/miniflux once.
-3. Post-deploy: verify geometrikks green (unit active, `geo.home.lan` 200, `geometrikks-db-provision` journaled the toolkit CREATE EXTENSION).
-4. Start `fastflowlm.socket` (corpse gone — bind test passed) and re-run the FLM smoke check; then update AGENTS.md's flm section (corpse cleared 2026-09-30 without reboot).
+~~1. Commit + push go-nix-helpers `e1c6dc2` properly (soft-reset → proper message → push) — silences nothing by itself but completes the upstream fix.~~ **NOT-DO — NOT-DO — dup of §c.2 (07-00 §a.1).**
+~~2. Deploy SystemNix HEAD (`9fb816e2`, carries the geometrikks fix + captures the unpushed `5a9c22cc`) — PG toolkit artifacts are pre-built; expect one postgres restart bouncing paperless/immich/miniflux once.~~ done — §h addendum #3 — 05:50 activation (dz3w03nr) carried the fix; geometrikks green
+~~3. Post-deploy: verify geometrikks green (unit active, `geo.home.lan` 200, `geometrikks-db-provision` journaled the toolkit CREATE EXTENSION).~~ done — §h #3 + 07-00 §a.6 — provision Finished 05:50:49, /health/ready 200s continuous
+~~4. Start `fastflowlm.socket` (corpse gone — bind test passed) and re-run the FLM smoke check; then update AGENTS.md's flm section (corpse cleared 2026-09-30 without reboot).~~ done — §h.5 + 07-00 §a.9 — socket enabled/re-arms via deploy; AGENTS flm corpse bullet updated
 5. Wise SCA approval (user, OTP): dashboard Sync State → "Approve now"; then one clean cycle; then a deploy/restart resets `sync_errors_total` so the smoke goes green.
-6. InboxClean: consent screen → "In production" FIRST, then re-auth main account (runbook: inboxclean.nix header + AGENTS.md); `work` needs nothing.
-7. Remove `/tmp/gnh-b3d9580` worktree.
+~~6. InboxClean: consent screen → "In production" FIRST, then re-auth main account (runbook: inboxclean.nix header + AGENTS.md); `work` needs nothing.~~ **NOT-DO — NOT-DO — dup of b2 (re-consent landed 2026-10-04).**
+~~7. Remove `/tmp/gnh-b3d9580` worktree.~~ **NOT-DO — NOT-DO — dup of §c.5 (07-00 §a.2).**
 
 **proxyVendor / go-nix-helpers propagation**
 
-8. Review `7c06ddc8..b3d9580` diff for FOD-relevant changes (templGenerationPolicy especially) before any lock move.
-9. Re-lock SystemNix `go-nix-helpers` (targeted `--update-input … --refresh` or ride Monday's bot) → the 7 eval warnings disappear box-wide.
-10. Verify post-lock: toplevel eval warning-free + `nix flake check --no-build` green + one toplevel build.
+~~8. Review `7c06ddc8..b3d9580` diff for FOD-relevant changes (templGenerationPolicy especially) before any lock move.~~ done — 07-00 §a.3 — per-feature review done before re-lock
+~~9. Re-lock SystemNix `go-nix-helpers` (targeted `--update-input … --refresh` or ride Monday's bot) → the 7 eval warnings disappear box-wide.~~ **NOT-DO — NOT-DO — dup of §c.3 (07-00 §a.4).**
+~~10. Verify post-lock: toplevel eval warning-free + `nix flake check --no-build` green + one toplevel build.~~ done — 07-00 §a.4 — warnings 7→0, nix flake check --no-build rc=0
 11. Sweep other own-pinned consumers (bank-sync/papdashboard class) whenever their next bump happens — the fix rides the root via follows for everyone else.
 12. Consider a go-standard negative test: explicit `proxyVendor = true` + deps still warns (the warning's remaining job), default no longer warns.
 
@@ -71,17 +71,17 @@ Session: deploy-triage of the user's `nh os switch` (exit 4) + `nix run .#deploy
 
 13. Make the CV render smoke IO-pressure-aware (WARN-not-FAIL under PSI like the shell check) — today it false-FAILED twice during the storm.
 14. Add a geometrikks probe to post-deploy-check (there is none today — the service was dark since 09-29 and no smoke line noticed).
-15. Verify a Gatus check exists for geometrikks; if red-since-09-29 was silently tolerated, find why nothing paged (OnFailure DID fire — Discord).
+~~15. Verify a Gatus check exists for geometrikks; if red-since-09-29 was silently tolerated, find why nothing paged (OnFailure DID fire — Discord).~~ done — §h addendum #3 — "Gatus 'GeoMetrikks' check existed all along — §f.15 answered"
 16. Bank-sync smoke: consider windowing `sync_errors_total` (restart-cumulative counters keep the check red long after the fix).
 17. Bank-sync: the 04:47 ERROR burst (backfill/save failures) was IO-storm transient — consider a metric for DB-write failures specifically so SCA-degraded vs storage-degraded are distinguishable.
 
 **Docs / memory (AGENTS.md)**
 
-18. AGENTS.md geometrikks section: toolkit requirement + `postgresql.pkgs.timescaledb_toolkit` + build-time note (pgrx, ~pre-built now).
-19. AGENTS.md flm section: corpse cleared without reboot; bind test as the empirical check; "reboot owed" language retired.
-20. AGENTS.md gotchas: proxyVendor default collision (go-standard) + the mkDefault-at-config-level fix pattern + "let-binding scope ≠ option config" trap.
-21. AGENTS.md bank-sync section: SCA re-armed 2026-09-30 (618 cumulative challenges); renewal took the dashboard path.
-22. TODO_LIST/docs/todo/services.md: harvest this session's §f items per the queue discipline.
+~~18. AGENTS.md geometrikks section: toolkit requirement + `postgresql.pkgs.timescaledb_toolkit` + build-time note (pgrx, ~pre-built now).~~ done — 07-00 §a.10(a) — geometrikks shared-cluster DB wiring rewritten (extensions + trusted nuance)
+~~19. AGENTS.md flm section: corpse cleared without reboot; bind test as the empirical check; "reboot owed" language retired.~~ done — 07-00 §a.10(b) — corpse bullet updated, "reboot OWED" retired
+~~20. AGENTS.md gotchas: proxyVendor default collision (go-standard) + the mkDefault-at-config-level fix pattern + "let-binding scope ≠ option config" trap.~~ done — 07-00 §a.10(c) — proxyVendor collision + let-scope trap + verify-then-push landed
+~~21. AGENTS.md bank-sync section: SCA re-armed 2026-09-30 (618 cumulative challenges); renewal took the dashboard path.~~ done — 07-00 §a.10(d) — Wise SCA bullet landed (re-arm + restart-cumulative counter note)
+~~22. TODO_LIST/docs/todo/services.md: harvest this session's §f items per the queue discipline.~~ done — 07-00 §a.11 — services.md ×4 + pipeline.md ×1 + TODO_LIST ×4 queue rows
 
 **Standing items surfaced by today's log (no new research, just queue placement)**
 

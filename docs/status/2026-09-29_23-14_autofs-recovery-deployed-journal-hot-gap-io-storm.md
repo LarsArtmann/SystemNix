@@ -21,15 +21,15 @@
 
 ## b) PARTIALLY DONE
 
-1. **journal-hot migration**: runbook delivered; `prepare` blocked by the PSI gate (58% at attempt). **The quiet window is NOT arriving** — watcher shows PSI 24→83% RISING over 45 min (avg60 = 74%). May require fleet throttling or an off-peak retry. Degraded mode is safe meanwhile; `var-log-journal.mount` will show failed at each boot until migrated.
-2. **Quiet-window watcher (job 052)**: 30+ minutes, zero quiet streaks; will time out at 45 min without a window. Needs an escalation decision (see g/3).
-3. **Forensics completeness**: core evidence captured; optional extras dropped as moot after D-procs cleared (other D-proc stacks, `/proc/10158/mem`).
+~~1. **journal-hot migration**: runbook delivered; `prepare` blocked by the PSI gate (58% at attempt). **The quiet window is NOT arriving** — watcher shows PSI 24→83% RISING over 45 min (avg60 = 74%). May require fleet throttling or an off-peak retry. Degraded mode is safe meanwhile; `var-log-journal.mount` will show failed at each boot until migrated.~~ done — 2026-09-30_00-38 report — migration COMPLETED (runtime path), mount live on Samsung, zero data loss
+~~2. **Quiet-window watcher (job 052)**: 30+ minutes, zero quiet streaks; will time out at 45 min without a window. Needs an escalation decision (see g/3).~~ **Won't implement — moot — watcher killed as moot (00-38 report §a.1, PSI gate raised instead).**
+~~3. **Forensics completeness**: core evidence captured; optional extras dropped as moot after D-procs cleared (other D-proc stacks, `/proc/10158/mem`).~~ **Won't implement — moot — extras explicitly dropped as moot after D-procs cleared (report's own disposition).**
 4. **Daemon-commit bookkeeping**: flake.lock confirmed committed; the ~6 daemon commits that rode the deploy were not audited before activation (one carried the un-migrated journal-hot module — see d/1).
 
 ## c) NOT STARTED (incident backlog, untouched this session)
 
 1. Real BUILD of the regression VM test (`nix build .#checks.x86_64-linux.hot-user-caches`) — eval-green only so far.
-2. forgejo doctrine decision (disko-declare `hot/forgejo` + delete its runtime bootstrap vs keep runtime creation).
+~~2. forgejo doctrine decision (disko-declare `hot/forgejo` + delete its runtime bootstrap vs keep runtime creation).~~ done — CHANGELOG "Forgejo G1 Samsung-subvol migration EXECUTED (2026-10-11)" — prepare→finalize→deploy system-864, live-verified
 3. **Durable fix for the GC-eviction class** (pipeline.md:155) — cause now proven (nightly nix-gc sweep); fix design not started (gcroot the checks / keep-outputs / rescope nix-gc).
 4. gatus-config.nix:673 rule read/fix; pool metadata balance (`-musage=50`); fleet `before=.*.mount` audit; mount-timeout on all automount entries; stuck-jobs gatus alert; gotchas-archive narrative; 12 nix-checker port fixes; docs-health HARVEST of both 09-29 reports.
 5. Reboot-path verification (journal mounts at boot; wedge-free boot) — blocked on migration finalize + quiet window.
@@ -59,13 +59,13 @@
 ## f) Up to 50 things next (roughly impact-ordered)
 
 1. Decide the IO-storm response (see g/3) — throttle fleet vs off-peak migration window.
-2. Run `migrate-journal-hot.sh prepare → mount start → journald restart → finalize` (user sudo) once PSI < 20.
-3. `inboxclean auth` re-consent (user, interactive OAuth).
+~~2. Run `migrate-journal-hot.sh prepare → mount start → journald restart → finalize` (user sudo) once PSI < 20.~~ done — 00-38 report §a.7-9 — executed end-to-end, MIGRATION COMPLETE, zero data loss
+~~3. `inboxclean auth` re-consent (user, interactive OAuth).~~ done — docs/todo/services.md:343 [x] re-consent DONE 2026-10-04 07:45 + CHANGELOG 2026-10-04 (grant proven live, corpus resumed indexing)
 4. Reboot at a quiet window after `nix run .#pre-reboot-check`; verify journal mounts via the boot-ordering path + no re-wedge.
 5. Real build: `nix build .#checks.x86_64-linux.hot-user-caches`.
 6. Post-reboot sweep: `list-jobs` empty, `findmnt` all hot mounts, gatus green, load sane.
 7. File TODO row + AGENTS.md gotcha: "modules with one-time migrations must block deploy until executed" (journal-hot precedent).
-8. Decide + implement forgejo doctrine (mirror the hot-user-caches deletion if disko-declared).
+~~8. Decide + implement forgejo doctrine (mirror the hot-user-caches deletion if disko-declared).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED
 9. Durable fix for pipeline.md:155 (nightly nix-gc vs eval artifacts — gcroots/keep-outputs/rescope).
 10. Fleet audit: any other runtime service ordered between an automount and its `.mount` (the deadlock recipe).
 11. `x-systemd.mount-timeout` on ALL automount-backed entries.

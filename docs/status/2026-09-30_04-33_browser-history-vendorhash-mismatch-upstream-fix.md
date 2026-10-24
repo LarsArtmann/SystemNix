@@ -39,14 +39,14 @@ browser-history-server-go-modules: specified sha256-y5K2/UItJJy+oC82FUkmBOXDcu8O
 
 ## b) PARTIALLY DONE
 
-1. **The deploy itself.** The tree builds green but evo-x2 still runs the OLD generation; the new toplevel (`770mr3an…`) is built-but-unactivated. `nh os switch` / `nix run .#deploy` is deliberately user-owned — the user must re-run it. Until then the old (potentially crash-loop-era) browser-history binary keeps running.
-2. **Post-deploy verification.** Nothing verified against the RUNNING system (post-deploy smoke, unit liveness, agent ingest, ownership-heal journal evidence) — impossible before the switch.
-3. **Binary-jump risk assessment.** The user's update moved the lock from (per AGENTS.md, the 2026-09-22 rollback rev) `1c8f967` to `e2b6ff0` = **36 upstream commits**, spanning the 2026-09-17 `SQLITE_READONLY` crash-loop era (`f3561fd8`) and the 09-22 uid-drift era. I did NOT verify whether the checkpoint-path regression was actually fixed upstream within those 36 commits — the deploy carries an unassessed binary jump. (Mitigations live SystemNix-side: ownership-heal ExecStartPre + 09-22 "treat READONLY as uid drift FIRST" doctrine, independent of the lock.)
+~~1. **The deploy itself.** The tree builds green but evo-x2 still runs the OLD generation; the new toplevel (`770mr3an…`) is built-but-unactivated. `nh os switch` / `nix run .#deploy` is deliberately user-owned — the user must re-run it. Until then the old (potentially crash-loop-era) browser-history binary keeps running.~~ done — 05-43 report §a.9 — user deployed; new 5f04c79 binary live since 04:43
+~~2. **Post-deploy verification.** Nothing verified against the RUNNING system (post-deploy smoke, unit liveness, agent ingest, ownership-heal journal evidence) — impossible before the switch.~~ done — 05-43 §a.9 — /health 200, ingest 200, agent fresh, smoke PASS
+~~3. **Binary-jump risk assessment.** The user's update moved the lock from (per AGENTS.md, the 2026-09-22 rollback rev) `1c8f967` to `e2b6ff0` = **36 upstream commits**, spanning the 2026-09-17 `SQLITE_READONLY` crash-loop era (`f3561fd8`) and the 09-22 uid-drift era. I did NOT verify whether the checkpoint-path regression was actually fixed upstream within those 36 commits — the deploy carries an unassessed binary jump. (Mitigations live SystemNix-side: ownership-heal ExecStartPre + 09-22 "treat READONLY as uid drift FIRST" doctrine, independent of the lock.)~~ done — 05-43 §a.9 — 36-commit jump verified: SQLITE_READONLY crash-loop NOT reintroduced
 
 ## c) NOT STARTED
 
-1. `nix flake check --no-build` belt run after the re-lock (the toplevel build is the stronger signal — `nix eval`/`check` is NOT required for this fix — but it was skipped, not consciously deferred).
-2. Deployment + all post-deploy checks (see b).
+~~1. `nix flake check --no-build` belt run after the re-lock (the toplevel build is the stronger signal — `nix eval`/`check` is NOT required for this fix — but it was skipped, not consciously deferred).~~ done — 07-00 report §a.4 — nix flake check --no-build rc=0 post-lock
+~~2. Deployment + all post-deploy checks (see b).~~ **NOT-DO — NOT-DO — dup of b1/b2 (05-43 §a.9).**
 3. `nvd` diff of old-vs-new browser-history binaries (jump-size evidence).
 4. Sweep of OTHER LarsArtmann flake inputs for latent vendorHash staleness at their locked revs (this class has now recurred on CV 3×, DiscordSync, PMA, browser-history — a batch lock-free `goModules` probe of every LarsArtmann input would catch the next one BEFORE a deploy night).
 5. Upstream hardening of the class (CI FOD build on push, or a scheduled vendorHash auto-refresh bot in browser-history).
@@ -85,20 +85,20 @@ Nothing destroyed, nothing reverted, no data loss. Honest defect list (all minor
 
 **Deploy & verify (blocks everything else):**
 
-1. `nh os switch` (or `nix run .#deploy`) — user-gated, builds are warm so it should be fast.
-2. After switch: `readlink /run/current-system` vs `/nix/var/nix/profiles/system` — anchor MUST match (rc=14/exit-4 class).
-3. `nix run .#post-deploy-check` (browser-history vHost + smoke blocks).
-4. Verify `browser-history.service` and `browser-history-agent` active, journals clean of `SQLITE_READONLY(8)`.
-5. If READONLY appears: treat as uid drift FIRST (read the ownership-heal ExecStartPre's journaled `ls -lan`), per 2026-09-22 doctrine — do NOT roll the lock back (go-modules FOD rollback trap).
-6. Verify one real agent ingest post-deploy (AGENT_FRESHNESS: server may 503-degrade until first ingest — the gate accepts any status, expect recovery).
+~~1. `nh os switch` (or `nix run .#deploy`) — user-gated, builds are warm so it should be fast.~~ **NOT-DO — NOT-DO — dup of b1 (deployed 04:43, 05-43 §a.9).**
+~~2. After switch: `readlink /run/current-system` vs `/nix/var/nix/profiles/system` — anchor MUST match (rc=14/exit-4 class).~~ done — 05-43 §a.1 — deploy anchor verified (system-804 = current-system)
+~~3. `nix run .#post-deploy-check` (browser-history vHost + smoke blocks).~~ done — 05-43 report — post-deploy smoke triage executed (eight-item work list)
+~~4. Verify `browser-history.service` and `browser-history-agent` active, journals clean of `SQLITE_READONLY(8)`.~~ done — 05-43 §a.9 — new binary clean since 04:43 (all readonly matches were pre-deploy PID)
+~~5. If READONLY appears: treat as uid drift FIRST (read the ownership-heal ExecStartPre's journaled `ls -lan`), per 2026-09-22 doctrine — do NOT roll the lock back (go-modules FOD rollback trap).~~ **Won't implement — conditional; did not fire — new binary clean since 04:43 (05-43 §a.9).**
+~~6. Verify one real agent ingest post-deploy (AGENT_FRESHNESS: server may 503-degrade until first ingest — the gate accepts any status, expect recovery).~~ done — 05-43 §a.9 — ingest 200, agent fresh
 7. Gatus "Browser History" + "Browser History Agent Data" green; agent-metrics textfile fresh.
 8. OIDC login works (client secret bridge unchanged, but the server binary jumped).
 9. `nvd diff` old vs new generation — quantify the browser-history binary jump for the record.
-10. 24h soak watch (system-health, restart churn) before considering the jump settled.
+~~10. 24h soak watch (system-health, restart churn) before considering the jump settled.~~ **Won't implement — one-shot; window passed (no soak record found; same-day health verified 05-43).**
 
 **Verify/assess (quiet-hours work):**
 11. Verify upstream `1c8f967..e2b6ff0` actually contains the 09-17 checkpoint-regression fix (`git log upstream -- server.save_event_checkpoint`-adjacent) — documents whether the era is closed.
-12. `nix flake check --no-build` belt run (also covers pre-commit for the next commit).
+~~12. `nix flake check --no-build` belt run (also covers pre-commit for the next commit).~~ **NOT-DO — NOT-DO — dup of §c.1 (07-00 §a.4 rc=0).**
 13. Batch lock-free `goModules` probe of all LarsArtmann inputs at locked revs; produce a stale-vendorHash list BEFORE the next deploy night.
 14. Check whether browser-history upstream CI is alive (private-repo Actions minutes class); if dead, decide a local guard.
 15. Sweep the deprecation warnings (zsh initExtra, stdenv.isDarwin/isLinux) into the pipeline todo.

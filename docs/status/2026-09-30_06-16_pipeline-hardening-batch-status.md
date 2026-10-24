@@ -29,9 +29,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **crush-config lessons.md mirror — source-landed, not delivered.** Foreign-repo delivery = committed THERE (footer-bearing); the edit sits uncommitted in `~/projects/crush-config`. Harvested as a row at authoring time (pipeline.md Backlog, "Commit the crush-config … lessons.md mirror THERE").
-2. **Batch commit mapping.** The auto-daemon swept this session's files into ≥5 heuristic commits, two of them MIXED with a parallel session's files (`caddy.nix`, `oauth2-proxy.nix`, `tests/test-caddy-mint.nix` in `01fcfd1d` + `7267df22`). I verified commit→file mapping for the tracked files (table in session log) but did NOT run the per-commit exclusivity/completeness `git show --stat` sweep over all five — harvested as a row (correctly NOT amended: an amend would absorb the foreign files).
-3. **Full `nix flake check --no-build` — not run this session.** IO storm (avg10 58→82%) made the full-repo eval a freeze-risk per the pressure-aware policy; verification was done via targeted evals (rpi3 config, per-check builds ×4) + gates (todo-system, shellcheck, bash -n). The full check is owed in a quiet window — NOTE the pre-commit hook runs exactly this leg on every non-docs commit, so the next daemon sweep of a `.nix` file effectively runs it for me.
+~~1. **crush-config lessons.md mirror — source-landed, not delivered.** Foreign-repo delivery = committed THERE (footer-bearing); the edit sits uncommitted in `~/projects/crush-config`. Harvested as a row at authoring time (pipeline.md Backlog, "Commit the crush-config … lessons.md mirror THERE").~~ done — §h addendum §g.2 + pipeline.md:255 — committed THERE as 163b76e (footer-bearing)
+~~2. **Batch commit mapping.** The auto-daemon swept this session's files into ≥5 heuristic commits, two of them MIXED with a parallel session's files (`caddy.nix`, `oauth2-proxy.nix`, `tests/test-caddy-mint.nix` in `01fcfd1d` + `7267df22`). I verified commit→file mapping for the tracked files (table in session log) but did NOT run the per-commit exclusivity/completeness `git show --stat` sweep over all five — harvested as a row (correctly NOT amended: an amend would absorb the foreign files).~~ done — §h addendum — exclusivity/completeness sweep over 13 daemon commits executed (all session files landed)
+~~3. **Full `nix flake check --no-build` — not run this session.** IO storm (avg10 58→82%) made the full-repo eval a freeze-risk per the pressure-aware policy; verification was done via targeted evals (rpi3 config, per-check builds ×4) + gates (todo-system, shellcheck, bash -n). The full check is owed in a quiet window — NOTE the pre-commit hook runs exactly this leg on every non-docs commit, so the next daemon sweep of a `.nix` file effectively runs it for me.~~ done — 07-00 report §a.4 — flake check --no-build rc=0 (routine since)
 
 ## c) NOT STARTED (planned this session, dropped — with reasons)
 
@@ -63,11 +63,11 @@
 
 **Immediate (this session's loose ends):**
 
-1. ✱ Run the exclusivity/completeness `git show --stat` sweep over the batch's five daemon commits (`68b3bdb9`, `fba6d2bd`, `d80b2a2a`, `01fcfd1d`, `7267df22`) — new row, HARVESTED.
-2. ✱ Commit the crush-config `references/lessons.md` mirror THERE (footer-bearing) — new row, HARVESTED.
-3. ✱ E2E-fire the nix-parse leg through a real git commit — new row, HARVESTED.
-4. E2E-fire the docs-only skip through a real git commit (row 171).
-5. Full `nix flake check --no-build` in a quiet window (see §b.3; next non-docs daemon commit runs it implicitly).
+~~1. ✱ Run the exclusivity/completeness `git show --stat` sweep over the batch's five daemon commits (`68b3bdb9`, `fba6d2bd`, `d80b2a2a`, `01fcfd1d`, `7267df22`) — new row, HARVESTED.~~ **NOT-DO — NOT-DO — dup of b2 (§h addendum).**
+~~2. ✱ Commit the crush-config `references/lessons.md` mirror THERE (footer-bearing) — new row, HARVESTED.~~ **NOT-DO — NOT-DO — dup of b1 (committed 163b76e).**
+~~3. ✱ E2E-fire the nix-parse leg through a real git commit — new row, HARVESTED.~~ done — §h addendum §g.3 — fired through real .githooks/pre-commit in throwaway worktree (broken .nix rc=1)
+~~4. E2E-fire the docs-only skip through a real git commit (row 171).~~ done — §h addendum §g.3 + CHANGELOG 2026-09-30 close-out — real commit --allow-empty printed skip line, rc=0
+~~5. Full `nix flake check --no-build` in a quiet window (see §b.3; next non-docs daemon commit runs it implicitly).~~ **NOT-DO — NOT-DO — dup of b3 (07-00 §a.4 rc=0).**
 
 **Guard/test hardening (the library's own prioritized+backlog, closest first):**
 6. Standing fixture coverage survey for `.githooks/pre-commit` legs → leg→tested-by matrix + minimal fixture plan (row 181; the inventory half is DONE via the hooks-table reconcile).

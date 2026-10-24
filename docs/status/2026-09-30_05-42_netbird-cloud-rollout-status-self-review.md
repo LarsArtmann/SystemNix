@@ -33,14 +33,14 @@ _Root docs: `docs/brainstorming/2026-09-30_netbird-larsartmann-cloud-selfhosted-
 
 | # | Item                         | What's missing / why it stopped                                                                                                                                                                                                         |
 | - | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **evo-x2 Phase-1 deploy**    | Committed + built but NEVER ACTIVATED. `sudo` is agent-blocked; deploy is a user handover. The plan promised dry-activate — skipped silently instead of being loudly re-gated. Nothing from Phase 1 is live on the box yet.             |
-| 2 | **Cert-mint unit**           | Eval-verified, never RUN. Latent PATH bug (see d1). No VM test executes it — the one new runtime component of Phase 1 got zero runtime verification.                                                                                    |
-| 3 | **pbx NetBird/Dex config**   | Builds green, but four runtime-unverified guesses (d2-d4, e6): management `Relay` JSON shape, Dex userID validity, redirect-URI glob, relay proxy timeouts.                                                                             |
-| 4 | **Monitoring consistency**   | `onFailure = pbx-alert@` wired ONLY on netbird-management. netbird-signal, netbird-relay, dex, dashboard: nothing. Violates the session's own doctrine.                                                                                 |
-| 5 | **pbx repo gates**           | buildflow `--build-mode fast` SKIPS tests; docs-freshness never ran against the new runbook/CHANGELOG. Repo called "green" on partial gates.                                                                                            |
+| ~~1~~ done — platforms/nixos/system/configuration.nix:338 netbird-client.enable = true + CHANGELOG 2026-10-17 (netbird-evox2-login unit live) — deployed | ~~**evo-x2 Phase-1 deploy**~~ | ~~Committed + built but NEVER ACTIVATED. `sudo` is agent-blocked; deploy is a user handover. The plan promised dry-activate — skipped silently instead of being loudly re-gated. Nothing from Phase 1 is live on the box yet.~~ |
+| ~~2~~ done — §h addendum: checks.caddy-mint VM GREEN (mint→caddy chain, dual-zone SANs, real TLS handshakes); tests/test-caddy-mint.nix in-tree | ~~**Cert-mint unit**~~ | ~~Eval-verified, never RUN. Latent PATH bug (see d1). No VM test executes it — the one new runtime component of Phase 1 got zero runtime verification.~~ |
+| ~~3~~ done — §h addendum #3-6: Relay shape verified vs v0.79.0 source, real UUID, 1d timeouts, glob dropped | ~~**pbx NetBird/Dex config**~~ | ~~Builds green, but four runtime-unverified guesses (d2-d4, e6): management `Relay` JSON shape, Dex userID validity, redirect-URI glob, relay proxy timeouts.~~ |
+| ~~4~~ done — §h addendum #7: onFailure wired on netbird-signal/relay/dex (+dex StateDirectory fix) | ~~**Monitoring consistency**~~ | ~~`onFailure = pbx-alert@` wired ONLY on netbird-management. netbird-signal, netbird-relay, dex, dashboard: nothing. Violates the session's own doctrine.~~ |
+| ~~5~~ done — §h addendum #8: FULL buildflow executed, all gates green, new netbird-contract check | ~~**pbx repo gates**~~ | ~~buildflow `--build-mode fast` SKIPS tests; docs-freshness never ran against the new runbook/CHANGELOG. Repo called "green" on partial gates.~~ |
 | 6 | **NetBird dashboard config** | Route approval / DNS nameserver group / ACLs — runbook steps only (user-gated U4).                                                                                                                                                      |
 | 7 | **Doc backporting**          | `relay.larsartmann.cloud` (DNS + vhost) and `vpn.larsartmann.cloud` (MagicDNS suffix) emerged during implementation but were never backported into the brainstorming doc's D4/D5 decision text. Drift between decision doc and reality. |
-| 8 | **sops onboarding snippet**  | Runbook says "create netbird.yaml per .sops.yaml" — no exact creation-rule/key snippet; user must derive it.                                                                                                                            |
+| ~~8~~ done — §h addendum bonus fixes: exact sops snippet landed in the runbook (§f37) | ~~**sops onboarding snippet**~~ | ~~Runbook says "create netbird.yaml per .sops.yaml" — no exact creation-rule/key snippet; user must derive it.~~ |
 
 ## c) NOT STARTED
 
@@ -113,14 +113,14 @@ result that was telling me the surface was wrong.
 
 **P0 fixes (agent, ~1h):**
 
-1. Mint unit: `path = [ pkgs.openssl ]` (+ explicit coreutils), or absolute `getExe` paths
-2. VM test that RUNS the mint unit: mint → SAN assertions → caddy starts (test-caddy-auth pattern)
-3. Dex userID → real generated UUID
-4. Drop the invalid `/auth/*` glob redirect URI (dex is exact-match)
-5. Relay vhost: 1d read/send timeouts + websocket keepalive (copy signal's lesson)
-6. Verify management.json `Relay` key shape against pinned netbird source; fix if wrong
-7. `onFailure = pbx-alert@…` on netbird-signal, netbird-relay, dex
-8. pbx FULL buildflow (tests incl. docs-freshness) — not fast mode
+~~1. Mint unit: `path = [ pkgs.openssl ]` (+ explicit coreutils), or absolute `getExe` paths~~ **NOT-DO — NOT-DO — dup of b2 (§h addendum: fixed + VM-pinned).**
+~~2. VM test that RUNS the mint unit: mint → SAN assertions → caddy starts (test-caddy-auth pattern)~~ **NOT-DO — NOT-DO — dup of b2 (checks.caddy-mint GREEN).**
+~~3. Dex userID → real generated UUID~~ **NOT-DO — NOT-DO — dup of b3 (§h addendum #3).**
+~~4. Drop the invalid `/auth/*` glob redirect URI (dex is exact-match)~~ **NOT-DO — NOT-DO — dup of b3 (§h addendum #4).**
+~~5. Relay vhost: 1d read/send timeouts + websocket keepalive (copy signal's lesson)~~ **NOT-DO — NOT-DO — dup of b3 (§h addendum #5).**
+~~6. Verify management.json `Relay` key shape against pinned netbird source; fix if wrong~~ **NOT-DO — NOT-DO — dup of b3 (§h addendum #6: verified, non-defect).**
+~~7. `onFailure = pbx-alert@…` on netbird-signal, netbird-relay, dex~~ **NOT-DO — NOT-DO — dup of b4 (§h addendum #7).**
+~~8. pbx FULL buildflow (tests incl. docs-freshness) — not fast mode~~ **NOT-DO — NOT-DO — dup of b5 (§h addendum #8).**
 9. Commit + push fixes; update handover
 
 **Deploy chain (user, ~45 min + burn-in):**
@@ -131,7 +131,7 @@ result that was telling me the surface was wrong.
 14. First dashboard login; password → password manager
 15. Create setup key (reusable, 30d)
 16. Create `platforms/nixos/secrets/netbird.yaml` (exact snippet in P0 fix #9)
-17. Flip `netbird-client.enable = true`; evo-x2 deploy (your terminal)
+~~17. Flip `netbird-client.enable = true`; evo-x2 deploy (your terminal)~~ **NOT-DO — NOT-DO — dup of b1 (configuration.nix:338 enable=true, deployed).**
 18. Post-deploy ladder: `dig @127.0.0.1 dash.larsartmann.cloud`, `openssl s_client` SANs, `curl --resolve`, gatus spot-check
 19. `netbird status` on evo-x2 → Connected
 20. Dashboard: approve `192.168.1.0/24` route

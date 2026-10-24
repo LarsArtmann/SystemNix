@@ -43,7 +43,7 @@ pre-existing, unrelated eval break).
 
 | # | Item                   | Gap                                                                                                                                                                                                                                                                                      |
 | - | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **Service activation** | Config exists and evals; the unit is NOT running — needs a rebuild/switch, currently blocked by the pre-existing assertions eval break (see d4). Nothing on the host changed at runtime.                                                                                                 |
+| ~~1~~ done — docs/todo/services.md:278 — ACTIVATION OBSERVED LIVE 2026-10-07 03:52 (port 8104, /readyz all-pass, v46f02bb) | ~~**Service activation**~~ | ~~Config exists and evals; the unit is NOT running — needs a rebuild/switch, currently blocked by the pre-existing assertions eval break (see d4). Nothing on the host changed at runtime.~~ |
 | 2 | Mesh plan T10–T14      | T10 (module/unit), T11 (registry+DNS), T12 (vHost), T13 (`--pair-token`), T14 (extension gate) are functionally LANDED, but the planning doc's acceptance checkboxes are still unchecked — no annotation yet.                                                                            |
 | 3 | Audit verification     | Scoped verifications are complete (gatus coverage, port registry, unit config, fan-outs), but the full `config.assertions` list cannot be evaluated on evo-x2 at all (pre-existing break), so a whole-config "zero failing assertions" statement is currently **impossible** for anyone. |
 | 4 | Memory protocol        | Gotchas discovered this session are recorded in flake/`INTERIM-INPUT-PINS.md` comments but NOT yet in SystemNix `AGENTS.md` (git+file dirty-FOD trap, sanctioned `?rev=` on git+file only, signoz-coverage Environment-list contract, nsfw service entry).                               |
@@ -55,9 +55,9 @@ pre-existing, unrelated eval break).
 3. Browser E2E against the deployed server (extension pairing on the real host, real helium launch).
 4. Upstreaming a NixOS module into the nsfw-classifier repo itself.
 5. SSE `stream:true` path verification with a token (only the fast path was E2E'd).
-6. Cross-repo drift test: pin `DEFAULT_SERVER_URLS` port (extension JS) against `lib/ports.nix`.
+~~6. Cross-repo drift test: pin `DEFAULT_SERVER_URLS` port (extension JS) against `lib/ports.nix`.~~ done — CHANGELOG 2026-10-07 — `extension-default-url-port-drift` eval case landed (services.md:280 [x])
 7. Feedback-flow consumer work in nsfw-human-review (pre-existing AGENTS.md follow-up, untouched).
-8. Runbook page `docs/services/nsfw-classifier.md` (house style for services).
+~~8. Runbook page `docs/services/nsfw-classifier.md` (house style for services).~~ done — docs/services/nsfw-classifier.md exists (populated by later sessions)
 9. TODO_LIST entries / `docs-health` HARVEST of this report's section (f).
 
 ## d) TOTALLY FUCKED UP
@@ -82,17 +82,17 @@ pre-existing, unrelated eval break).
 
 **Deploy & breakage (highest impact)**
 
-1. Fix the pre-existing oci-containers assertions eval break on evo-x2 (blocks switch/flake check for everything).
-2. Rebuild/switch to actually start `nsfw-classifier.service`; verify `/readyz` on the host.
-3. Push nsfw-classifier `46f02bb` to origin/master; flip the input to `git+ssh…?ref=refs/heads/master`, drop `?rev=`, bump lock, clear the INTERIM rows.
-4. Post-deploy verify: `curl https://nsfw.home.lan/healthz` through the caddy vHost (eval-verified only so far).
+~~1. Fix the pre-existing oci-containers assertions eval break on evo-x2 (blocks switch/flake check for everything).~~ **Won't implement — superseded — root-caused 2026-10-01 (upstream nixpkgs null-podman message bug; toplevel/deploy evals never affected; filed upstream, pipeline.md:252-253).**
+~~2. Rebuild/switch to actually start `nsfw-classifier.service`; verify `/readyz` on the host.~~ done — services.md:278 — activation observed live 2026-10-07, /readyz all-checks pass
+~~3. Push nsfw-classifier `46f02bb` to origin/master; flip the input to `git+ssh…?ref=refs/heads/master`, drop `?rev=`, bump lock, clear the INTERIM rows.~~ done — services.md:282 [x] DONE 2026-10-10 — git+ssh?ref=master, lock c6113cee, INTERIM-INPUT-PINS resolved
+~~4. Post-deploy verify: `curl https://nsfw.home.lan/healthz` through the caddy vHost (eval-verified only so far).~~ done — services.md:278 UPDATE 2026-10-07 — nsfw.home.lan caddy E2E GREEN (https /readyz → 200)
 5. Real-browser E2E: launch helium, confirm the extension auto-pairs with the deployed server and filters.
 6. Decide/discard the unrelated uncommitted edits in the nsfw-classifier checkout (`latencybench.go`, `.golangci.yml`) — they poison dirty-tree builds while the git+file pin exists.
 7. Annotate the mesh plan doc: T10–T13 landed, T14 pre-existing — check the boxes with evidence links.
 
 **Contracts & drift guards**
-8. Cross-repo test: assert extension `DEFAULT_SERVER_URLS[0]` port == `ports.nsfw`.
-9. Sweep all service modules for `Environment` attrset forms (signoz-coverage walker contract).
+~~8. Cross-repo test: assert extension `DEFAULT_SERVER_URLS[0]` port == `ports.nsfw`.~~ **NOT-DO — NOT-DO — dup of §c.6 (CHANGELOG 2026-10-07 drift guard).**
+~~9. Sweep all service modules for `Environment` attrset forms (signoz-coverage walker contract).~~ done — services.md:279 [x] DONE 2026-10-07 — zero attrset forms; 3 string-form units converted to list
 10. Add the module-set smoke-eval harness (see e7).
 11. Record the four new gotchas in SystemNix `AGENTS.md`.
 12. HARVEST this report's section (f) into `TODO_LIST.md` (docs-health).
@@ -127,7 +127,7 @@ pre-existing, unrelated eval break).
 35. Port-8080 candidate: fast-fail probe when a non-nsfw service (signoz) occupies it.
 
 **Docs**
-36. `docs/services/nsfw-classifier.md` runbook (house style).
+~~36. `docs/services/nsfw-classifier.md` runbook (house style).~~ **NOT-DO — NOT-DO — dup of §c.8 (runbook exists).**
 37. README wildcard-DNS claim is stale ("dnsblockd has NO wildcard local resolution" vs `dns-blocker-config.nix:83` wildcard) — fix the doc or the config, pick one truth.
 38. FEATURES/CHANGELOG entries in both repos for the integration.
 39. ARCHITECTURE note: where the extension contract lives (url-utils.js ↔ pairing.go ↔ the unit flags).

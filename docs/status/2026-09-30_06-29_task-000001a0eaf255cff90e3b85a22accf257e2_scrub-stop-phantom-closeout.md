@@ -57,9 +57,9 @@
 ## f) NEXT THINGS (ranked, in-lane first)
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
-1. **[ready] Run `checks.x86_64-linux.memory-emergency-guard` VM test in the first sustained quiet window** (avg60 < 25 for ≥5 min), then commit the close-out with the task footer. Everything else in this report is already in-tree.
-2. **[ready] Deploy** (owner): carries the corrected churn list, the template-mounted scrubGuard, the re-arm exclusion. Watch the first post-deploy Zone-6 trip with an active scrub: `btrfs scrub status` must show CANCELLED (proves the ExecStop cancel end-to-end).
-3. **[ready] The new stray-unit lint** (queued this session) — closes the class for good.
+~~1. **[ready] Run `checks.x86_64-linux.memory-emergency-guard` VM test in the first sustained quiet window** (avg60 < 25 for ≥5 min), then commit the close-out with the task footer. Everything else in this report is already in-tree.~~ done — §b1 of this report — VM test PASSED (~06:40); twin 06-25 report: 33.02s green
+~~2. **[ready] Deploy** (owner): carries the corrected churn list, the template-mounted scrubGuard, the re-arm exclusion. Watch the first post-deploy Zone-6 trip with an active scrub: `btrfs scrub status` must show CANCELLED (proves the ExecStop cancel end-to-end).~~ done — 06-25 report — deployed guard script carries the three template instances; fix LIVE on evo-x2 (trips #1463-1468 under new list)
+~~3. **[ready] The new stray-unit lint** (queued this session) — closes the class for good.~~ done — modules/nixos/services/stray-unit-audit.nix; CHANGELOG 2026-10-01 P2 batch
 4. **[already queued, other lanes]** scrub `Persistent=false` + serialization; root-cause the exit-1-after-"no errors found" FAILED state (a parallel session's lane now carries the `SuccessExitStatus` follow-up); guard silence in the 09:56 boot; trip-rate escalation page; post-freeze storm-drain verification.
 
 ## g) QUESTIONS (cannot resolve myself)

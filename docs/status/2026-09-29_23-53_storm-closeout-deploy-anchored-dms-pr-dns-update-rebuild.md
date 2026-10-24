@@ -29,9 +29,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **Reboot recommendation outstanding** — anchoring no longer needs it, but the flm :52626 EADDRINUSE corpse (NPU LLM dark until then), D-state stragglers, and phantom IO PSI clear only there. Timing is owner-gated (movie/sessions).
-2. **geometrikks.service** — the DB provisioning layer I fixed now succeeds (role+extensions+tuning OK), but the APP itself exits 1 in ~5s (Granian shutdown; last failures 23:00/23:10). App-level cause not diagnosed (parallel-session bring-up work was literally still building today). Rate limiter contains its popups.
-3. **dns-update.sh rewrite** — committed but has NO fixture test (it mangled production once; scripts/test-scripts.nix case pending). StevenBlack prefetch failed (network) in the broken run; new script fails loudly instead.
+~~1. **Reboot recommendation outstanding** — anchoring no longer needs it, but the flm :52626 EADDRINUSE corpse (NPU LLM dark until then), D-state stragglers, and phantom IO PSI clear only there. Timing is owner-gated (movie/sessions).~~ **Won't implement — moot — flm corpse cleared WITHOUT reboot (05-43 report §a.8; stability.md:104 DONE-MOOT; "reboot owed" retired 07-00 §a.9).**
+~~2. **geometrikks.service** — the DB provisioning layer I fixed now succeeds (role+extensions+tuning OK), but the APP itself exits 1 in ~5s (Granian shutdown; last failures 23:00/23:10). App-level cause not diagnosed (parallel-session bring-up work was literally still building today). Rate limiter contains its popups.~~ done — 05-43 report §a.2/§h3 + 07-00 §a.6 — root-caused (timescaledb_toolkit), GREEN since 05:50, 20× 200s
+~~3. **dns-update.sh rewrite** — committed but has NO fixture test (it mangled production once; scripts/test-scripts.nix case pending). StevenBlack prefetch failed (network) in the broken run; new script fails loudly instead.~~ done — scripts/dns-update.sh:132 offline selftest landed; CHANGELOG pruned row "Selftest the dns-update.sh pin extraction"
 4. **PR #3628** — filed, but CI reports no checks yet (fork PR; possibly needs maintainer approval or workflow quirk) and the manual-on-live-shell test-plan checkbox is open (needs the DMS bump after merge/release).
 
 ## c) NOT STARTED
@@ -40,7 +40,7 @@
 2. `scripts/negative-test-lints.sh` case pinning the gatus-config-parse mutation (proven manually this session only).
 3. Scheduled/CI HaGeZi hash-drift detection (this class cost a full deploy cycle; today it was manual).
 4. Upstream DMS issue/doc for the DND-vs-critical semantics gap (default makes DND useless against critical storms).
-5. Anything on the CV browser-render baseline FAILs (parallel CV/chromium workstream).
+~~5. Anything on the CV browser-render baseline FAILs (parallel CV/chromium workstream).~~ done — 05-43 report §a.10 — root-caused pressure-transient, not a regression (live fetch returns full CV HTML)
 
 ## d) TOTALLY FUCKED UP (honest)
 
@@ -63,17 +63,17 @@
 
 ## f) NEXT (ranked)
 
-1. **Reboot the box** (owner timing) — clears flm corpse (NPU LLM serves again), D-states, phantom PSI; then `nix run .#deploy` to confirm clean boot generation; run `nix run .#pre-reboot-check` first.
-2. **geometrikks.service app crash** — diagnose the ~5s exit (journalctl -u geometrikks; app env/alembic); parallel bring-up session's completion.
+~~1. **Reboot the box** (owner timing) — clears flm corpse (NPU LLM serves again), D-states, phantom PSI; then `nix run .#deploy` to confirm clean boot generation; run `nix run .#pre-reboot-check` first.~~ **Won't implement — moot — flm serving again 04:50 without reboot (04-51 report); corpse gone (05-43 §a.8); stability.md:104 DONE-MOOT.**
+~~2. **geometrikks.service app crash** — diagnose the ~5s exit (journalctl -u geometrikks; app env/alembic); parallel bring-up session's completion.~~ **NOT-DO — NOT-DO — dup of b2 (05-43/07-00: green).**
 3. **GCP monitoring go-live** (docs/services/signoz-gcp-monitoring.md): create real SA → paste sops key → re-arm `gcpMonitoring.enable=true` → deploy. ALSO correct the runbook's falsified "placeholder fails 403 at scrape (non-fatal)" claim → "400 invalid_grant at Start() is FATAL".
-4. **journal-hot migration**: `sudo bash scripts/migrate-journal-hot.sh`, uncomment the import, deploy.
+~~4. **journal-hot migration**: `sudo bash scripts/migrate-journal-hot.sh`, uncomment the import, deploy.~~ done — 00-38 report — migration executed + import re-armed + deployed (f52i5gyv)
 5. **Watch PR #3628 review**; respond; jj sync loop (`jj git fetch --all-remotes && jj rebase -o master@upstream && jj git push -b feat/timed-notification-mutes`).
 6. **Investigate PR #3628 CI silence** (no checks reported — fork PR approval? workflow trigger conditions).
 7. Add `gatus-config-parse` mutation to `scripts/negative-test-lints.sh`.
-8. Fixture-test the rewritten `dns-update.sh` (scripts/test-scripts.nix — the mangle regression).
+~~8. Fixture-test the rewritten `dns-update.sh` (scripts/test-scripts.nix — the mangle regression).~~ **NOT-DO — NOT-DO — dup of b3 (dns-update.sh offline selftest).**
 9. Scheduled HaGeZi hash-drift guard (CI job or flake check fetch-leg; drift blocks every deploy).
 10. post-deploy smoke: scope the Pocket-ID SQLITE_BUSY grep to since-activation; add "gatus active + no panic in last N min" assertion.
-11. Triage the 2 baseline smoke FAILs (CV browser-render ×2) into docs/todo — "baseline" must not silently grow.
+~~11. Triage the 2 baseline smoke FAILs (CV browser-render ×2) into docs/todo — "baseline" must not silently grow.~~ done — 05-43 §a.10 + services.md:307-308 "CV render smoke IO-pressure-aware" row harvested (07-00 §a.11)
 12. Verify service-health-check went green after siblings healed; verify gatus "Root FS Early Warning (93%)" state (root-fs usage is the parallel disk-cleanup workstream).
 13. Upstream DMS: doc/issue on DND-vs-critical (or propose `notificationDndAllowCritical=false` as safer default — discussion).
 14. After PR #3628 merges + releases: bump the stable pin (or decide to track master) — then attach the manual-test screenshots to the PR.

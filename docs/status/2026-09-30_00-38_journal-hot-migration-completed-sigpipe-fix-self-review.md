@@ -60,12 +60,12 @@ Nothing irreversible happened. No data lost, no false "OK" claims to the user, n
 
 1. Reboot decision + `nix run .#pre-reboot-check` + boot-path verification of journal-hot (the one unproven half).
 2. Optional: re-run `sudo bash scripts/migrate-journal-hot.sh finalize` (fixed) for the official marker record.
-3. Restore PSI gate to 20 / make it env-overridable.
+~~3. Restore PSI gate to 20 / make it env-overridable.~~ done — scripts/migrate-journal-hot.sh:82 now gated via maintenance-entry-gate --psi-max 30 (landed 2026-10-15; stability.md:188 [x]) — gate parameterized
 4. Trash the stale cache list (~13.5G off the 92% QLC root).
 5. Implement the cache mover (generic `hot-user-caches.dirs` module or one-shot script; symlink pattern, skip-live, `chattr +C` for sqlite-heavy targets).
 6. Investigate `/mnt/hot/nix` root-level dir (Aug 17) — likely cruft from the first cache-migration attempt; trash after a peek.
 7. Verify the `~/.cache/go-build → /nix/store/…` symlink (home-manager artifact) is intended; store targets are read-only.
-8. Forgejo doctrine per Q3 answer (disko-declare + `migrate-forgejo-subvol.sh` + flip `dedicated`, or keep-on-QLC and delete the inert bootstrap design).
+~~8. Forgejo doctrine per Q3 answer (disko-declare + `migrate-forgejo-subvol.sh` + flip `dedicated`, or keep-on-QLC and delete the inert bootstrap design).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED (deploy system-864)
 9. File the TODO_LIST row: one-time-migration modules gate (deferred from tonight).
 10. Durable GC-eviction fix (gcroot the checks / keep-outputs / rescope nightly nix-gc) — recurs daily until done.
 11. Real-build the hot-user-caches VM regression test.
