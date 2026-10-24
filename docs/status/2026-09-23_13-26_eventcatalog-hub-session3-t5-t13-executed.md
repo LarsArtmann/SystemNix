@@ -106,21 +106,21 @@
 
 **Owner-gated (the critical path to LIVE):**
 
-1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (mints token, creates hub mirror, enables Actions, stores GIT_CLONE_TOKEN, mirror-syncs sources, dispatches first run).
-2. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect green + `dist` branch. First-run watch-list: nix-shell availability for the runner user, jq on the runner, GITHUB_TOKEN git-push (PUSH_TOKEN fallback documented in the workflow).
-3. Paste the minted sync token into sops: `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml` → replace PLACEHOLDER (value format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`).
-4. Deploy: `nix run .#deploy` (decide batching with parallel-session changes — §g Q2), then `nix run .#post-deploy-check` (§15 warns until first sync lands).
-5. Verify live: Gatus "Architecture Catalog" green, `systemctl start architecture-catalog-sync` converges the first generation immediately.
+~~1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh` (mints token, creates hub mirror, enables Actions, stores GIT_CLONE_TOKEN, mirror-syncs sources, dispatches first run).~~ done — CHANGELOG.md:369 "Architecture Catalog go-live (2026-10-12)" — runner+CI live
+~~2. Watch `https://forgejo.home.lan/lars/eventcatalog-hub/actions` — expect green + `dist` branch. First-run watch-list: nix-shell availability for the runner user, jq on the runner, GITHUB_TOKEN git-push (PUSH_TOKEN fallback documented in the workflow).~~ done — hub CI green + dist published (CHANGELOG 2026-10-12/2026-10-16 entries)
+~~3. Paste the minted sync token into sops: `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops platforms/nixos/secrets/architecture-catalog.yaml` → replace PLACEHOLDER (value format `ARCHITECTURE_CATALOG_SYNC_TOKEN=<token>`).~~ done — token handoff landed (CHANGELOG 2026-09-30 entry; go-live 2026-10-12)
+~~4. Deploy: `nix run .#deploy` (decide batching with parallel-session changes — §g Q2), then `nix run .#post-deploy-check` (§15 warns until first sync lands).~~ done — go-live deployed, catalog.home.lan serving (CHANGELOG.md:369)
+~~5. Verify live: Gatus "Architecture Catalog" green, `systemctl start architecture-catalog-sync` converges the first generation immediately.~~ done — live checks green at go-live (CHANGELOG.md:369)
 
 **Remaining plan tasks (code-side, not started):**
-6. T14: evaluate `architecture-change-detection` (EventCatalog governance docs) for the hub; write the PR-gate recipe (diff two exports in CI, fail on breaking message changes).
-7. T15: write `docs/services/architecture-catalog.md` runbook (sync flow, token rotation, adding a source, freshness semantics, PLACEHOLDER-inert behavior, rollback = previous generation dir).
-8. T15: SystemNix AGENTS.md section for the catalog (module + registry + hub CI + owner runbook pointer).
-9. T15: annotate plan §9 verification matrix with what actually got verified (link this report).
-10. T15: update `docs/todo/services.md` (harvest the plan's remaining tail into the domain library per the TODO-system rules).
-11. Render-validate the plan's mermaid §6 graph (headless render, `scripts/verify-html-diagrams.sh`).
+~~6. T14: evaluate `architecture-change-detection` (EventCatalog governance docs) for the hub; write the PR-gate recipe (diff two exports in CI, fail on breaking message changes).~~ done — T14 done session 4 (14-35 report §a: NO-GO verdict + recipe)
+~~7. T15: write `docs/services/architecture-catalog.md` runbook (sync flow, token rotation, adding a source, freshness semantics, PLACEHOLDER-inert behavior, rollback = previous generation dir).~~ done — runbook landed (14-35 §a; docs/services/architecture-catalog.md exists)
+~~8. T15: SystemNix AGENTS.md section for the catalog (module + registry + hub CI + owner runbook pointer).~~ done — landed session 4 (14-35 report §a)
+~~9. T15: annotate plan §9 verification matrix with what actually got verified (link this report).~~ done — landed session 4 (14-35 report §a)
+~~10. T15: update `docs/todo/services.md` (harvest the plan's remaining tail into the domain library per the TODO-system rules).~~ done — landed session 4 (14-35 report §a)
+~~11. Render-validate the plan's mermaid §6 graph (headless render, `scripts/verify-html-diagrams.sh`).~~ done — validated PASS headlessly (14-35 report §a)
 12. Scratch cleanup decision: `/mnt/buildcache/scratch/eventcatalog-t0/` (keep until hub live per handoff).
-13. Commit + push the SystemNix tree (module + DNS + caddy/integration extensions + sops + smoke §15 + configuration.nix enable) — currently staged/unstaged for the owner's deploy.
+~~13. Commit + push the SystemNix tree (module + DNS + caddy/integration extensions + sops + smoke §15 + configuration.nix enable) — currently staged/unstaged for the owner's deploy.~~ done — committed+pushed 592559ec (14-35 report §2.8)
 
 **Follow-ups discovered this session:**
 14. go-cqrs-lite: cut catalog/v4.6.0 when appropriate (WithServiceOwners + 28 unreleased files from other sessions — needs their owners' blessing) → then flip the cqrs-htmx demo + hub docs to the simple option.

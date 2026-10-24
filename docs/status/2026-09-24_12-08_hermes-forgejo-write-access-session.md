@@ -104,8 +104,8 @@
 
 **This change (immediate):**
 
-1. Triage the three 09-23 package-build failures against TODAY's tree (mr-sync, discordsync prepared-source, cqrs-lint FOD) — they block any toplevel build/deploy.
-2. Deploy (`nix run .#deploy`) with the pressure gate — carries the write upgrade live.
+~~1. Triage the three 09-23 package-build failures against TODAY's tree (mr-sync, discordsync prepared-source, cqrs-lint FOD) — they block any toplevel build/deploy.~~ done — mr-sync fixed upstream (12-08 mr-sync report); pending deploy landed by 2026-09-25 (toplevel built)
+~~2. Deploy (`nix run .#deploy`) with the pressure gate — carries the write upgrade live.~~ done — landed by 2026-09-25 (2026-09-25_12-56 §f.8: upgrade live per AGENTS.md)
 3. Watch the first `forgejo-hermes-token` run: expect "regenerating (owner decision 2026-09-23)" + `Collaborator sweep: N repo(s) granted, 0 failure(s)`.
 4. Verify `/run/hermes-forgejo-token` replaced + `hermes-agent.token.scope` contains `write:repository`.
 5. End-to-end proof: as hermes (or via the workspace), `git ls-remote https://forgejo.<domain>/lars/<some-private-repo>.git` authenticates as hermes-agent; then one real commit+push in a scratch branch of a low-stakes repo; then delete the branch to prove write-only scope.

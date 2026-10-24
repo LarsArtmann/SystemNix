@@ -87,7 +87,7 @@ Nothing damaged. Honest accounting of the two stumbles:
 10. Sweep for droppable go-tarball overrides (`goTarballVersion`/`goTarballHash`) upstream on touch — AGENTS.md says browser-history, papdashboard, crush-daily, PMA still carry now-droppable overrides; none break, but each is a future FOD trap.
 11. When sops-nix > `13616fff` lands: drop the `go_1_25 = go_1_26` overlay alias (`overlays/shared.nix:9`) — add a tracking line so the drop-day isn't missed.
 12. Confirm `base.nix`'s `go_1_27` package comment (line 204, "pinned ahead of the nixpkgs default") still reflects reality after this session (it does; note it).
-13. Decide the GOTOOLCHAIN question permanently (see question 3 below) and encode the decision either way.
+~~13. Decide the GOTOOLCHAIN question permanently (see question 3 below) and encode the decision either way.~~ done — decided 2026-09-29: GOTOOLCHAIN=local shell pin removed (CHANGELOG.md:597; 2026-09-29_07-05 report)
 
 ## 8. g) Questions I Cannot Answer Myself
 

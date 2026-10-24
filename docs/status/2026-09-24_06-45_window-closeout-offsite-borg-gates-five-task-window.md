@@ -31,7 +31,7 @@ Every claim below was re-verified by THIS run against the tree, not copied from 
 1. **The offsite-borg leg overall** — every guard, gate, fixture, drill, and runbook the window could build is landed and verified; the leg itself stays DORMANT pending owner inputs (storage.md:63 `[decision]`): StorageBox hostname/username, passphrase recovery-copy policy, exclusion exceptions. Nothing agent-side remains before the enable flip except the items in (c)/(d).
 2. **Drill-fixture coverage** — 8 of 9 failure/success shapes asserted; the real-mode `/mnt/hot` mountpoint gate is only covered via its "direct predecessor" (secrets-missing die) because it sits behind unstubbable `[ -e ]` bash builtins (01-39 closeout §b1). Cheap fix identified (overridable mountpoint resolver) — queued.
 3. **Classifier durability** — `ob_classify_eval_error` matches the disabled shape by hand-written fixture strings; no committed artifact proves REAL nix stderr against nix-version reword drift (safe direction: a reword flips SKIP→FAIL-loud, but noisy). Already queued (TODO_LIST:72).
-4. **TODO_LIST:291 ↔ pipeline.md drift** — the 05-36 closeout found the queue-dedup row's library entry MISSING from docs/todo/pipeline.md and its evidence line stale. The library entry is **backfilled by this run** (docs-health maintenance); the stale evidence line on row 291 itself is left untouched (append-only contract — rewording existing rows is not allowed).
+~~4. **TODO_LIST:291 ↔ pipeline.md drift** — the 05-36 closeout found the queue-dedup row's library entry MISSING from docs/todo/pipeline.md and its evidence line stale. The library entry is **backfilled by this run** (docs-health maintenance); the stale evidence line on row 291 itself is left untouched (append-only contract — rewording existing rows is not allowed).~~ done — library entry backfilled by this closeout (report §b.4)
 5. **Runbook accuracy follow-ups from task 2** — items f2/f3/f4 of its closeout (explicit re-pin checklist row, drill `/run/secrets` gating note, DR-claim lint tripwire) are partially absorbed: the block-by-block env sweep landed in `4221f607`, the provenance-checklist idea is queued (TODO_LIST:67), and the host-key-pin derivation question is routed as a blocked item this pass. The drill `/run/secrets` gating note specifically is folded into the new §16/§13 gate-behavior note added to `docs/services/offsite-borg.md` by this run.
 
 ## c) NOT STARTED (backlog the window skipped)
@@ -85,8 +85,8 @@ Nothing repo-damaging landed in this window, and this run's verification sweep f
 13. Extract the positive-render guard into a shared pure lib fn so probes drive the REAL guard (TODO_LIST:71).
 14. VM rehearsal of offsite-borg runtime FAIL shapes with mock sops (TODO_LIST:73).
 15. Fixture-negative for the drill fixture: mutated drill copy must FAIL the fixture (TODO_LIST:42 / storage.md:110).
-16. Fold the env-path-pin negative case into the drill fixture (TODO_LIST:41).
-17. Fix `checks.disko-layout` stale-drv eval failure — the pre-commit flake-check gate is dead for all agents until this lands (TODO_LIST:43).
+~~16. Fold the env-path-pin negative case into the drill fixture (TODO_LIST:41).~~ done — DONE 2026-09-25 (docs/todo/storage.md:74)
+~~17. Fix `checks.disko-layout` stale-drv eval failure — the pre-commit flake-check gate is dead for all agents until this lands (TODO_LIST:43).~~ done — RESOLVED 2026-09-25 (06-03 report §d.1)
 18. StorageBox quota monitoring leg (remote-side usage check) before the repo can silently hit the BX11 1 TB ceiling — post-go-live `[watch]`.
 19. Day-2 freshness verification post-go-live: 06:30 job vs the 25h backup-coordination maxAge; `backup_ever_succeeded` MTIME gate distinguishes never-worked from stale.
 20. OnFailure delivery proof post-go-live (synthetic unit failure → Discord + desktop legs; the Discord leg is wired but delivery is unproven until a real failure).

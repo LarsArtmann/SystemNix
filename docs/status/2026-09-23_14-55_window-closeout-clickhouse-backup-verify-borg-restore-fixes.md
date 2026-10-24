@@ -29,10 +29,10 @@ Post-window, same family: `818d0ca4` (env-path eval pin in `backup.nix` + repair
 
 ## b) PARTIALLY DONE
 
-1. **ClickHouse backup is code-done, not operationally done** — zero backup runs have executed (deploy-gated 03:00 timer). No ClickHouse restore drill exists; a never-restored backup is a claim, not a capability.
+~~1. **ClickHouse backup is code-done, not operationally done** — zero backup runs have executed (deploy-gated 03:00 timer). No ClickHouse restore drill exists; a never-restored backup is a claim, not a capability.~~ done — first fire executed+measured 2026-10-07 (docs/status/2026-10-07_03-36 §a.4)
 2. **Drill verification is stand-in depth** — real-repo (WAN/SSH/decrypt) leg never exercised; `--archive`/`--subset`/`--keep` flags never run; negative tests trusted from a prior session rather than re-derived (07:47 report §b). Real-mode `BORG_REPO` quoting assumption unverified.
 3. **The banned-literal scanner gap is diagnosed, not fixed** — `audit-textfile-tmp.sh` class B scans only `.nix` under modules/platforms/tests/lib; `.sh`/`.md` surfaces (where this finding lived) are invisible. Backlogged (`docs/todo/pipeline.md`), not implemented.
-4. **Reviewer's "ideally interpolate the env path"** — superseded: the eval-time pin (a.6) landed the stronger form; the drill still hand-writes the literal, but drift is now machine-caught.
+~~4. **Reviewer's "ideally interpolate the env path"** — superseded: the eval-time pin (a.6) landed the stronger form; the drill still hand-writes the literal, but drift is now machine-caught.~~ done — eval-time pin landed, stronger form (backup.nix:56,178; 818d0ca4)
 5. **Offsite-Borg itself remains DORMANT by design** (`enable = false`, system-796) — all of this window's work is pre-positioning; go-live waits on owner inputs.
 
 ## c) NOT STARTED (backlog items the window skipped — untracked before, now routed)
@@ -65,16 +65,16 @@ Post-window, same family: `818d0ca4` (env-path eval pin in `backup.nix` + repair
 
 ## f) NEXT THINGS (top items; most small and concrete)
 
-1. **Deploy** (`nix run .#deploy`) so `clickhouse-db-backup` takes its first run; verify `/mnt/pool/backups/clickhouse` + `.last_success` + "All Backups Healthy" green — **before any SigNoz upgrade**.
+~~1. **Deploy** (`nix run .#deploy`) so `clickhouse-db-backup` takes its first run; verify `/mnt/pool/backups/clickhouse` + `.last_success` + "All Backups Healthy" green — **before any SigNoz upgrade**.~~ done — deployed; first fire 2026-10-07 (2026-10-07_03-36 §a.4)
 2. **ClickHouse native-BACKUP restore drill** (dir-mode → scratch cluster) — queued this pass.
 3. Real-repo timed Borg restore drill (go-live checklist step 9) once owner inputs exist; annotate real timings in the runbook.
 4. Offsite-Borg go-live sequence: StorageBox hostname/username sops paste, `ssh-keyscan -p 23` pin (verify against Hetzner's published fingerprints), `enable = true`, first nightly run, tripwire exercised LIVE once.
 5. Implement the scanner extension: `audit-textfile-tmp.sh` class B gains `scripts/*.sh` + `docs/**/*.md` (prose allowlist for incident docs) + negative test via `scripts/negative-test-lints.sh`.
-6. Drill hardening batch (already queued): `/mnt/hot` mountpoint gate, FAIL records from the top, flake-pinned borg, deep-integrity mode.
-7. Flake fixture test for the drill (PATH-stub borg) incl. the env-path-pin negative case AND a help-completeness assertion (folds the `--help` fix permanently).
-8. Repo-wide hardcoded help-slicer sweep — queued this pass.
+~~6. Drill hardening batch (already queued): `/mnt/hot` mountpoint gate, FAIL records from the top, flake-pinned borg, deep-integrity mode.~~ done — 00-30 report §a.1
+~~7. Flake fixture test for the drill (PATH-stub borg) incl. the env-path-pin negative case AND a help-completeness assertion (folds the `--help` fix permanently).~~ done — fixtures-storage.nix:55; env-path-pin negative folded 2026-09-25 (storage.md:74)
+~~8. Repo-wide hardcoded help-slicer sweep — queued this pass.~~ done — DONE 2026-10-01 (docs/todo/storage.md:83)
 9. Decide + execute the third-copy placement for `/mnt/pool/backups/clickhouse` (restic-app-dumps vs offsite Borg vs neither; BX11 budget) — owner question below.
-10. Persist fixture tests for the offsite-borg pre/post-deploy smoke blocks (§13/§16) + the ioTier assertion + the positive-path render probe (all already queued).
+~~10. Persist fixture tests for the offsite-borg pre/post-deploy smoke blocks (§13/§16) + the ioTier assertion + the positive-path render probe (all already queued).~~ done — smoke fixture + IO asserts + positive-render check all landed (84f7ab33/751cbc18/14fc6816)
 11. Confirm the borg passphrase recovery copy exists off-host and DECRYPTS (go-live step 1 — the single blocker between "repo exists" and "restore possible").
 12. VM test for `backup.nix` before go-live (tripwire, job shape, marker write) — already queued.
 13. Cross-machine restore verify semantics: live-`cmp` is meaningless on a dead host; add/document a manifest-based mode before the first real drill — owner question below.

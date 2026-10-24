@@ -39,7 +39,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **The deploy.** Three attempts, three distinct blockers (mr-sync go floor → check-script shellcheck → lock revert), all cleared — but **I did not re-run it** (deliberate: I/O PSI 62% with idle disks, guard tripped 2×/last hour, both pressure gates overridable only by force; freeze #5/#6 doctrine). Someone must fire it in a sane window.
+~~1. **The deploy.** Three attempts, three distinct blockers (mr-sync go floor → check-script shellcheck → lock revert), all cleared — but **I did not re-run it** (deliberate: I/O PSI 62% with idle disks, guard tripped 2×/last hour, both pressure gates overridable only by force; freeze #5/#6 doctrine). Someone must fire it in a sane window.~~ done — pending deploy landed by 2026-09-25 (hermes write upgrade live per AGENTS.md — 2026-09-25_12-56 §f.8)
 2. **Race containment, not race prevention.** The lock is committed now, but the writer of the revert was never identified (candidates: the 22:13 session, the 07:12 "shellcheck proof" session, a formatter re-lock, or the daemon). Nothing structural stops a recurrence.
 3. **mr-sync dashboard cutover** — new binary proven buildable; not deployed, so `mr-sync.home.lan` still runs the `6996d9bb`-era binary.
 
@@ -68,7 +68,7 @@
 
 ## f) NEXT (prioritized, session-derived)
 
-1. Re-run `nix run .#deploy` in a calm window (or forced, owner's call) — four input bumps pending.
+~~1. Re-run `nix run .#deploy` in a calm window (or forced, owner's call) — four input bumps pending.~~ **NOT-DO — NOT-DO — dup of b.1 (deploy landed by 2026-09-25).**
 2. After deploy: verify profile anchoring (`readlink /run/current-system` == `/nix/var/nix/profiles/system`) given the exit-4 history on this box.
 3. Post-deploy smokes: mr-sync-dashboard serves `6c1d3f6d`, tq `0.3.1`, bank-sync `2a286f47`, branching-flow `2fec285c`.
 4. Decide + execute the **owed reboot** (run `nix run .#pre-reboot-check` first); expect it to clear the D-state corpse pile, the flm :52626 corpse, and the phantom I/O PSI.

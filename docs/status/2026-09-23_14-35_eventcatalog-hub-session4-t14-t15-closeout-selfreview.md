@@ -139,11 +139,11 @@ now ALL code-complete; only owner-gated go-live remains.
 
 **Owner-gated (critical path to LIVE):**
 
-1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`.
-2. Watch first hub CI run green + `dist` branch (forgejo actions page).
-3. Sops-paste the minted sync token (runbook step 3).
-4. Decide deploy batching; run `nix run .#deploy` + `nix run .#post-deploy-check`.
-5. `sudo systemctl start architecture-catalog-sync`; verify Gatus green ×3.
+~~1. Run `sudo bash ~/projects/eventcatalog-hub/scripts/setup-forgejo.sh`.~~ done — CHANGELOG.md:369 "Architecture Catalog go-live (2026-10-12)"
+~~2. Watch first hub CI run green + `dist` branch (forgejo actions page).~~ done — hub CI live (CHANGELOG 2026-10-12 + 2026-10-16 resurrection entries)
+~~3. Sops-paste the minted sync token (runbook step 3).~~ done — token handoff landed (CHANGELOG 2026-09-30 entry; go-live 10-12)
+~~4. Decide deploy batching; run `nix run .#deploy` + `nix run .#post-deploy-check`.~~ done — go-live deployed (CHANGELOG.md:369)
+~~5. `sudo systemctl start architecture-catalog-sync`; verify Gatus green ×3.~~ done — serving live (CHANGELOG.md:369)
 6. catalog/v4.6.0 tag timing decision (28 files of other sessions' work).
 7. Trash `/mnt/buildcache/scratch/eventcatalog-t0/` (2.7G) at go-live closeout.
 
@@ -163,7 +163,7 @@ recipe.
 16. Pre-commit `bash -n`-on-raw-`script` audit (the §e.1 gate).
 17. SigNoz tile: `architecture_catalog_stamp_age_seconds` trend (watch).
 18. PapDashboard tile description cross-link once URL live-proven.
-19. Post-go-live: confirm §15 smoke goes from WARN-skip to live checks.
+~~19. Post-go-live: confirm §15 smoke goes from WARN-skip to live checks.~~ done — go-live 2026-10-12, catalog.home.lan serving (CHANGELOG.md:369)
 
 **Upstream (go-cqrs-lite, routed in its TODO_LIST):**
 20. Cut catalog/v4.6.0 (WithServiceOwners + 28 unreleased files — owner

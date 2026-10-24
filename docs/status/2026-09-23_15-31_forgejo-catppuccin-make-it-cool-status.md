@@ -26,7 +26,7 @@
 | Live verification    | CSS brace-balance + `@import`-position checks; cascade logic reasoned from CSS spec | No browser/headless render: the `@import` serving path (custom dir override, MIME, no CSP block) and the auto-theme media-query cascade are reasoned, not _proven_. Post-deploy smoke (curl the theme CSS, look at the UI) not run |
 | The arc-green defect | Symptom fixed (removed from `ui.THEMES`)                                            | **The CLASS is unguarded** — nothing at eval time verifies that every `ui.THEMES` entry exists as a `theme-*.css` in the package output. The house pattern (convert every incident into an eval-time guard) not applied            |
 | Memory maintenance   | Plan doc carries the technical findings                                             | `AGENTS.md` Forgejo section NOT updated (settings 2-level INI-atom trap, restart mechanism, theme pattern, arc-green lesson) — violates the house "update at the moment of discovery" rule                                         |
-| Runbook              | —                                                                                   | `docs/services/forgejo.md` has no theme-maintenance section (how to add/retire a theme, the @import coupling, rollback)                                                                                                            |
+| ~~Runbook~~ done — docs/services/forgejo.md:203 "## Themes / UI (Catppuccin, 2026-09-23)" | ~~—~~ | ~~`docs/services/forgejo.md` has no theme-maintenance section (how to add/retire a theme, the @import coupling, rollback)~~ |
 
 ## c) NOT STARTED
 
@@ -60,9 +60,9 @@ Nothing shipped broken. Honest near-misses and one systemic failure:
 
 | # | Item                                                                                                                                                    |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | `nix run .#deploy` (owner timing)                                                                                                                       |
-| 2 | Post-deploy smoke: `curl -sI https://forgejo.home.lan/assets/css/theme-catppuccin-auto.css` (200, text/css, contains @import)                           |
-| 3 | Visual taste-check in browser: Mocha on dark scheme, Latte on light, picker shows 6 themes, footer has no "powered by", no gravatar request in devtools |
+| ~~1~~ done — deployed; live theme verified by 2026-09-30 (CHANGELOG.md:433) | ~~`nix run .#deploy` (owner timing)~~ |
+| ~~2~~ done — post-deploy-check.sh:1659-1660 theme checks, live post-deploy | ~~Post-deploy smoke: `curl -sI https://forgejo.home.lan/assets/css/theme-catppuccin-auto.css` (200, text/css, contains @import)~~ |
+| ~~3~~ done — live dark-scheme rendering observed+fixed (CHANGELOG 2026-09-30 cascade entry) | ~~Visual taste-check in browser: Mocha on dark scheme, Latte on light, picker shows 6 themes, footer has no "powered by", no gravatar request in devtools~~ |
 | 4 | Verify the owner account actually follows the default (if a stored per-user theme exists, reset to "default" in profile settings)                       |
 | 5 | Watch Gatus "Forgejo" + journal for tmpfiles errors across the first deploy                                                                             |
 
@@ -70,11 +70,11 @@ Nothing shipped broken. Honest near-misses and one systemic failure:
 
 | #  | Item                                                                                                                                |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 6  | Eval-time `forgejo-theme-audit`: every `ui.THEMES` entry must exist as `theme-<name>.css` in `cfg.package` output; negative-test it |
-| 7  | Extend `scripts/post-deploy-check.sh` with the Forgejo theme probe                                                                  |
-| 8  | Update `AGENTS.md` Forgejo section: 2-level INI-atom trap, restart mechanism, @import theme pattern, arc-green lesson               |
-| 9  | Runbook `docs/services/forgejo.md`: theme maintenance section (add/retire/rollback, upstream-coupling check on upgrades)            |
-| 10 | CHANGELOG entry                                                                                                                     |
+| ~~6~~ done — audit implemented + negative-probed (forgejo.nix:63-70; 12-10 report §a.2-3) | ~~Eval-time `forgejo-theme-audit`: every `ui.THEMES` entry must exist as `theme-<name>.css` in `cfg.package` output; negative-test it~~ |
+| ~~7~~ **NOT-DO — NOT-DO — dup of f.2 (probe landed :1659).** | ~~Extend `scripts/post-deploy-check.sh` with the Forgejo theme probe~~ |
+| ~~8~~ **NOT-DO — NOT-DO — dup of b.4.** | ~~Update `AGENTS.md` Forgejo section: 2-level INI-atom trap, restart mechanism, @import theme pattern, arc-green lesson~~ |
+| ~~9~~ **NOT-DO — NOT-DO — dup of b.5.** | ~~Runbook `docs/services/forgejo.md`: theme maintenance section (add/retire/rollback, upstream-coupling check on upgrades)~~ |
+| ~~10~~ done — CHANGELOG.md:467 Forgejo Catppuccin UI/UX entry | ~~CHANGELOG entry~~ |
 | 11 | Fix the em dash in `ui.meta.DESCRIPTION`                                                                                            |
 | 12 | Confirm `_forgejo-themes` stays skipped by module auto-discovery (underscore convention — assert in an existing audit if cheap)     |
 | 13 | Sweep the class: audit other `settings`/config string lists against shipped artifacts (labels? runners?) — one-off                  |
@@ -121,10 +121,10 @@ Nothing shipped broken. Honest near-misses and one systemic failure:
 
 | #  | Item                                                                                      |
 | -- | ----------------------------------------------------------------------------------------- |
-| 37 | No full template overrides (upstream-unsupported; break on upgrades)                      |
-| 38 | No fork of upstream themes vendored into the repo (delta approach is the maintenance win) |
-| 39 | No deploy from an agent session without owner go                                          |
-| 40 | No changes to gitea-* legacy themes (kept serving, just not listed)                       |
+| ~~37~~ **Won't implement — decided-against — explicit do-not list in report §f.** | ~~No full template overrides (upstream-unsupported; break on upgrades)~~ |
+| ~~38~~ **Won't implement — decided-against — explicit do-not list (delta approach kept).** | ~~No fork of upstream themes vendored into the repo (delta approach is the maintenance win)~~ |
+| ~~39~~ **Won't implement — decided-against — explicit do-not list (owner-gated deploys).** | ~~No deploy from an agent session without owner go~~ |
+| ~~40~~ **Won't implement — decided-against — explicit do-not list.** | ~~No changes to gitea-* legacy themes (kept serving, just not listed)~~ |
 
 **Meta / process**
 
