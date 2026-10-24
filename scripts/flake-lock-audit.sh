@@ -37,7 +37,7 @@ nla_json_field() { jq -r --arg f "$1" '.[$f] // ""'; }
 # at a different rev (the 2026-10-23 split brain), so always resolve through
 # root.inputs — the same rule lib/flake-input-pin-audit.nix surface 3 enforces.
 nla_locked_nixpkgs() {
-  jq -r '.nodes[.nodes[.root].inputs.nixpkgs].locked.rev // ""' < "$1/flake.lock"
+  jq -r '.nodes[.nodes[.root].inputs.nixpkgs].locked.rev // ""' <"$1/flake.lock"
 }
 
 # Emit a comparison verdict: `match` | `mismatch` | `unknown`.
@@ -79,16 +79,16 @@ nla_selftest() {
 
 ADVISORY=0
 case "${1:-}" in
-  --selftest)
-    nla_selftest
-    exit $?
-    ;;
-  --advisory) ADVISORY=1 ;;
-  "") ;;
-  *)
-    printf 'usage: %s [--advisory|--selftest]\n' "$0" >&2
-    exit 2
-    ;;
+--selftest)
+  nla_selftest
+  exit $?
+  ;;
+--advisory) ADVISORY=1 ;;
+"") ;;
+*)
+  printf 'usage: %s [--advisory|--selftest]\n' "$0" >&2
+  exit 2
+  ;;
 esac
 
 if [[ ! -e /run/current-system ]]; then
@@ -122,25 +122,25 @@ fi
 
 verdict=$(nla_verdict "$running_nixpkgs" "$locked_nixpkgs")
 case "$verdict" in
-  match)
-    printf "${GREEN}  VERDICT: running nixpkgs == pinned nixpkgs (%s) — hash probes measure the right builder graph.${NC}\n" \
-      "$(nla_short "$running_nixpkgs")"
+match)
+  printf "${GREEN}  VERDICT: running nixpkgs == pinned nixpkgs (%s) — hash probes measure the right builder graph.${NC}\n" \
+    "$(nla_short "$running_nixpkgs")"
+  exit 0
+  ;;
+mismatch)
+  printf "${RED}  VERDICT: MISMATCH — running %s, pinned %s.${NC}\n" \
+    "$(nla_short "$running_nixpkgs")" "$(nla_short "$locked_nixpkgs")"
+  printf "${RED}  Any FOD/vendorHash probe you take in this tree measures the PINNED graph,${NC}\n"
+  printf "${RED}  not the one the live system was built with. Expect hash whack-a-mole until${NC}\n"
+  printf "${RED}  you decide which graph is canonical (roll the pin back, or deploy forward).${NC}\n"
+  if ((ADVISORY == 1)); then
+    echo "  (advisory mode — not blocking)"
     exit 0
-    ;;
-  mismatch)
-    printf "${RED}  VERDICT: MISMATCH — running %s, pinned %s.${NC}\n" \
-      "$(nla_short "$running_nixpkgs")" "$(nla_short "$locked_nixpkgs")"
-    printf "${RED}  Any FOD/vendorHash probe you take in this tree measures the PINNED graph,${NC}\n"
-    printf "${RED}  not the one the live system was built with. Expect hash whack-a-mole until${NC}\n"
-    printf "${RED}  you decide which graph is canonical (roll the pin back, or deploy forward).${NC}\n"
-    if ((ADVISORY == 1)); then
-      echo "  (advisory mode — not blocking)"
-      exit 0
-    fi
-    exit 1
-    ;;
-  *)
-    echo "  VERDICT: unknown — could not read one of the revs; not treating as a failure."
-    exit 0
-    ;;
+  fi
+  exit 1
+  ;;
+*)
+  echo "  VERDICT: unknown — could not read one of the revs; not treating as a failure."
+  exit 0
+  ;;
 esac

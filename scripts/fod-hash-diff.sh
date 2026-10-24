@@ -180,14 +180,14 @@ FIXTURE
 }
 
 case "${1:-}" in
-  --selftest)
-    fhd_selftest
-    exit $?
-    ;;
-  "" | -h | --help)
-    printf 'usage: %s <build-log> [--apply]\n       %s --selftest\n' "$0" "$0" >&2
-    exit 2
-    ;;
+--selftest)
+  fhd_selftest
+  exit $?
+  ;;
+"" | -h | --help)
+  printf 'usage: %s <build-log> [--apply]\n       %s --selftest\n' "$0" "$0" >&2
+  exit 2
+  ;;
 esac
 
 LOG=$1

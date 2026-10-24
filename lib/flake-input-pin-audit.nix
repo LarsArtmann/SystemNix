@@ -212,15 +212,13 @@ let
     } lines).findings;
 
   declaredFindings = concatLists (
-    map
-      (
-        f:
-        map (detail: {
-          inherit (f) name;
-          inherit detail;
-        }) (classifyUrl f.url)
-      )
-      declaredInputs
+    map (
+      f:
+      map (detail: {
+        inherit (f) name;
+        inherit detail;
+      }) (classifyUrl f.url)
+    ) declaredInputs
   );
 
   # ── surface 3: declared rev pin vs the node root ACTUALLY resolves ───
@@ -255,7 +253,9 @@ let
       else if nodeKey == null then
         "${f.name}: declared as a rev-in-URL pin but is not a root input of flake.lock"
       else if lockedRev != rev then
-        "${f.name}: flake.nix pins rev ${rev} but the root-referenced lock node '${nodeKey}' is at ${if lockedRev == null then "no rev" else lockedRev} — the lock is split or stale; run `nix flake lock` and commit the result"
+        "${f.name}: flake.nix pins rev ${rev} but the root-referenced lock node '${nodeKey}' is at ${
+          if lockedRev == null then "no rev" else lockedRev
+        } — the lock is split or stale; run `nix flake lock` and commit the result"
       else
         null
     ) declaredInputs

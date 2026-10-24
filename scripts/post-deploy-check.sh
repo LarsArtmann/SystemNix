@@ -226,7 +226,7 @@ battery_marker="$battery_state_dir/post-deploy-last-run.epoch"
 if [ -f "$battery_marker" ]; then
   _prev_battery_start="$(cat "$battery_marker" 2>/dev/null || echo 0)"
   if [ "${_prev_battery_start:-0}" -gt 0 ] 2>/dev/null; then
-    _battery_age_min=$(( ($(date +%s) - _prev_battery_start) / 60 ))
+    _battery_age_min=$((($(date +%s) - _prev_battery_start) / 60))
     if [ "$_battery_age_min" -lt 60 ]; then
       echo -e "${YELLOW}NOTE${NC} another battery started ${_battery_age_min} min ago - load-sensitive results overlap that window (each run is itself load: flm cold loads, chromium renders); a fresh run adds storm, not signal"
       echo ""
@@ -234,7 +234,7 @@ if [ -f "$battery_marker" ]; then
   fi
 fi
 mkdir -p "$battery_state_dir"
-date +%s > "$battery_marker"
+date +%s >"$battery_marker"
 
 # Storm-replacement verdict for a load-sensitive leg whose FAIL branch is
 # being suppressed: counts and prints ONLY. Never touches FAIL or the fail
@@ -334,7 +334,7 @@ fi
 # 2026-10-23 deploy on a transient restart page-cache spike at 3276MB while
 # the steady state sat at ~1G — memory.current counts FILE cache too).
 _dns_max=$(systemctl show -p MemoryMax --value dnsblockd 2>/dev/null || true)
-case "$_dns_max" in ''|*[^0-9]*) _dns_max=2147483648 ;; esac
+case "$_dns_max" in '' | *[^0-9]*) _dns_max=2147483648 ;; esac
 [ "$_dns_max" -lt 2147483648 ] && _dns_max=2147483648
 _dns_rss=$(systemctl show -p MemoryCurrent --value dnsblockd 2>/dev/null || echo "0")
 if [ "$_dns_rss" -gt 0 ] 2>/dev/null && [ "$_dns_rss" -lt "$_dns_max" ]; then
