@@ -85,6 +85,27 @@ _: {
           description = "Regenerate eventcatalog-hub inventory.json from the SystemNix registry";
           inherit onFailure;
 
+          # The unit runs TWO scripts that both call bare commands: the hub's
+          # generate-inventory.sh (`bash`, `date`, `mktemp`, `grep`, `jq`) and
+          # our scripts/catalog-inventory.sh (`jq`, `nix eval`). The default
+          # system-unit PATH carries only coreutils/findutils/grep/sed/systemd
+          # — no bash, no jq, no nix — so this service died at
+          # generate-inventory.sh:159 with "bash: command not found" (status
+          # 127, failing every hour since it was written; the failure stayed
+          # invisible because the unit is oneshot and OnFailure only notifies).
+          # Declare the toolset explicitly instead of trusting the ambient PATH.
+          #
+          # NOTE: `path` is a NixOS unit option (sibling of serviceConfig). Put
+          # inside serviceConfig it becomes a meaningless systemd `Path=`
+          # directive and changes nothing — caught by eval, 2026-10-23.
+          path = [
+            pkgs.bash
+            pkgs.jq
+            pkgs.nix
+            pkgs.coreutils
+            pkgs.gnugrep
+          ];
+
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "4G";
@@ -101,23 +122,6 @@ _: {
               Group = "users";
               StateDirectory = "catalog-inventory-sync";
               ExecStart = "${pkgs.bash}/bin/bash ${cfg.hubDir}/scripts/generate-inventory.sh";
-              # The unit runs TWO scripts that both call bare commands: the
-              # hub's generate-inventory.sh (`bash`, `date`, `mktemp`, `grep`,
-              # `jq`) and our scripts/catalog-inventory.sh (`jq`, `nix eval`).
-              # The default system-unit PATH carries only coreutils/findutils/
-              # grep/sed/systemd — no bash, no jq, no nix — so this service
-              # died at generate-inventory.sh:159 with "bash: command not
-              # found" (status 127, failing every hour since it was written;
-              # the failure was invisible because the unit is oneshot and its
-              # OnFailure only notifies). Declare the toolset explicitly
-              # instead of trusting the ambient PATH.
-              path = [
-                pkgs.bash
-                pkgs.jq
-                pkgs.nix
-                pkgs.coreutils
-                pkgs.gnugrep
-              ];
               Environment = [
                 "HOME=/home/${primaryUser}"
                 "SYSTEMNIX_DIR=${cfg.systemnixDir}"
