@@ -86,17 +86,17 @@
 22. quickshell SIGABRT every ~2 h (ScriptModel UAF) — raise restart resilience or fix.
 ~~23. Extend/add the guard VM test for all four new behaviors (check `tests/` for the existing Zone-5-era guard test first).~~ done — scenario 9 green (docs/status/2026-09-30_06-25)
 ~~24. Resurrection detector: eval- or runtime-tripwire when a config-disabled service's unit runs.~~ done — llama-rag dark-guard detects port rogues (docs/status/2026-09-19_17-47 a1)
-25. Crush-hot-db migration NEVER ran (276 `.crush` dirs, ~42 GiB on QLC) — run it in a quiet window; it is the structural storm fix for the session-DB class.
-26. hermes subvol finalize after first receive + deploy (`migrate-hermes-subvol.sh status` → root-diff shadowed dirs → finalize).
+~~25. Crush-hot-db migration NEVER ran (276 `.crush` dirs, ~42 GiB on QLC) — run it in a quiet window; it is the structural storm fix for the session-DB class.~~ done — premise false: ran 2026-09-18, 279 symlinks/45GiB (docs/services/crush.md:101)
+~~26. hermes subvol finalize after first receive + deploy (`migrate-hermes-subvol.sh status` → root-diff shadowed dirs → finalize).~~ done — leg proven (docs/status/2026-09-18_22-17)
 27. Delete the dead `@nix` subvol (118 G) — user action, queued since 09-12; root at 77%.
 28. Pool growth check after the first `@home-hermes` receive lands (~92 G full receive; pool at 12%, fine — but btrbk retention math should acknowledge it).
 
 **P2 — background:**
-29. Offsite leg (Hetzner StorageBox + Borg) — decided 09-11, not deployed.
+~~29. Offsite leg (Hetzner StorageBox + Borg) — decided 09-11, not deployed.~~ done — implemented 2026-09-22 (docs/services/offsite-borg.md)
 30. Samsung SMART/health monitoring — none today.
 31. Document guard threshold calibration (leave 40/20 as endorsed by TODO #515 verdict).
 32. llama-rag upstream root-cause (ROCm/kernel/GPU-state bisect upstream of llama.cpp) — parked on the g)1 decision.
-33. Confirm the parallel session's `llama-rag-leak-metrics` Gatus check is actually wired (coverage exists on paper).
+~~33. Confirm the parallel session's `llama-rag-leak-metrics` Gatus check is actually wired (coverage exists on paper).~~ done — wired: Gatus llama.cpp Leaked Instances + live detection (docs/services/llama-rag.md; docs/status/2026-09-20_15-30)
 34. VM-test the catch-up-re-arm/Zone-6 relapse loop (a resumed btrbk re-tripping within 30 s must converge, not oscillate).
 35. TODO_LIST HARVEST of this report's (f) list (docs-health).
 

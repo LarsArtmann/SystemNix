@@ -137,17 +137,17 @@ Nothing destructive. Two honest failures:
 12. Re-check D-state corpse pile (freeze-5 backlog): llama corpses
     clear only on reboot — two reboots happened since; verify :8848/:8849
     are free and `llama_rag_leaked_instances` absent.
-13. Confirm the llama-rag disable deploy state is still anchored
+~~13. Confirm the llama-rag disable deploy state is still anchored~~ done — verified: system-785 anchored clean (docs/status/2026-09-19_00-19 a2)
     (system-785 carried it) before any re-enable experiment.
-14. Sweep `docs/services/memory-emergency-guard.md` runbook for the
+~~14. Sweep `docs/services/memory-emergency-guard.md` runbook for the~~ done — runbook carries churn/starvation semantics (docs/services/memory-emergency-guard.md:80-87)
     recovery-reader class (currently only btrbk-era semantics).
 15. Audit OTHER boot-time full-readers for the same crash-amplifier
     shape (paperless classifier? immich ML warmup? monitor365 watchdog?)
     — enumerate `Type=oneshot` boot units with big reads.
-16. After PSI stabilizes ~24h: compare `node_psi_io_some_avg60`
+~~16. After PSI stabilizes ~24h: compare `node_psi_io_some_avg60`~~ done — 2026-09-29 pre/post comparison recorded (docs/todo/storage.md:110)
     distribution pre/post migration — the headline metric for "did the
     structural fix work".
-17. Consider moving discordsync's 11G DB itself off QLC (pool/hot) —
+~~17. Consider moving discordsync's 11G DB itself off QLC (pool/hot) —~~ done — moved: discordsync hot-db shadow-split (docs/status/2026-10-12_15-55)
     the heal reads are the residual reader after session DBs moved.
 18. Revisit freeze-5's owed follow-up: llama.cpp/ROCm spin
     root-cause (llama-rag still config-disabled).

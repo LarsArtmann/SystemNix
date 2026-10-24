@@ -71,7 +71,7 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 ~~3. Decide: fix-forward (repair all 11) vs targeted rollback (revert ONLY the broken input nodes to last-buildable revs; keep mr-sync `6c1d3f6d` + all script/doc work)~~ **Won't implement — moot — resolved: tree buildable by 2026-09-25, deploy landed (no node rollback shipped).**
 4. Locate vendorHash ownership per package (SystemNix `flake.nix` mkLarsPackages vs upstream `nix/packages.nix`) before touching any
 ~~5. cqrs-lint vendorHash refresh (probe got-hash at locked rev → paste upstream → push → re-lock; the proven protocol)~~ done — wave repaired: toplevel built for the 2026-09-30 deploy (CHANGELOG.md:433) — none of the 11 FODs block any more; later cqrs-lifts re-handled per CHANGELOG.md:392
-6. branching-flow vendorHash refresh
+~~6. branching-flow vendorHash refresh~~ done — wave repaired — toplevel buildable + deployed by 2026-09-30 (CHANGELOG.md:433); branching-flow rebuilt through later waves (CHANGELOG.md:617)
 ~~7. inboxclean vendorHash refresh~~ done — wave repaired — toplevel buildable + deployed by 2026-09-30 (CHANGELOG.md:433); inboxclean rebuilt/consented 2026-10-04
 ~~8. PMA vendorHash refresh~~ done — wave repaired — toplevel buildable + deployed by 2026-09-30 (CHANGELOG.md:433); PMA rebuilt in later waves (CHANGELOG.md:618)
 ~~9. erraudit vendorHash refresh~~ done — wave repaired — toplevel buildable + deployed by 2026-09-30; erraudit re-handled in the 2026-10-09/10 waves (CHANGELOG.md:393)

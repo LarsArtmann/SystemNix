@@ -113,8 +113,8 @@ addendum), pbx `docs/runbooks/netbird-deploy.md`.
 30. pbx IPv6 pinning (blocks relay AAAA)
 
 **P3 — mail phase (separate window):**
-31. Hetzner port-25 request (start the clock) → 32. MX/SPF/DKIM/DMARC terraform (coordinate
-with the in-flight dmarc_rua edits) → 33. Stalwart admin-over-VPN once mesh is up →
+31. Hetzner port-25 request (start the clock) → ~~32. MX/SPF/DKIM/DMARC terraform (coordinate
+with the in-flight dmarc_rua edits)~~ done — 17-domain rollout wired (08-06 report §a.6) and APPLIED — live dig 2026-10-12 confirms MX + SPF + DMARC p=reject rua=dmarc@larsartmann.cloud (10-12_08-30 §a.1) → 33. Stalwart admin-over-VPN once mesh is up →
 ~~34. parsedmarc → 35. mail go-live runbook~~ done — 08-06 report §a.8: pbx-artmann runbook rewritten (§0 installer-first, §4 DMARC, §6 relay decision), commits bef58bd/0d22030
 
 **P4 — strategic (owner):**

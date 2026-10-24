@@ -87,7 +87,7 @@ T5 (NixOS serving: DNS/vHost/registry/Gatus/tile/sync timer/deploy), T6 (freshne
 ~~3. Trigger/wait for forgejo-github-sync to mirror the new repo (a SystemNix deploy also triggers it)~~ done — Forgejo mirror + CI live (CHANGELOG:369: hub CI on forgejo.home.lan/lars/eventcatalog-hub)
 ~~4. Mint read-scoped Forgejo token (house `forgejo-generate-token` pattern) — pending Q1~~ done — CI cloning works — token minted/handed off (CHANGELOG:443 token handoff; go-live 369)
 ~~5. Store `GIT_CLONE_TOKEN` as hub repo Actions secret (Forgejo API `PUT /repos/…/actions/secrets/…`)~~ done — prerequisite of live CI — done (CHANGELOG:369/443)
-6. Enable Actions on the hub repo
+~~6. Enable Actions on the hub repo~~ done — Actions enabled — CI runs nightly + on push (architecture-catalog.nix:407)
 ~~7. First CI run: export job (debug jq install, clone auth, go build in container)~~ done — CI green — export leg runs (CHANGELOG:369 go-live; runner PATH contract CHANGELOG:443)
 ~~8. First CI run: publish job (npm, artifact, dist push)~~ done — publish leg live — dist pushed to lars/eventcatalog-hub-dist (CHANGELOG:369)
 ~~9. Verify `dist` branch exists + contains `build-stamp.json`~~ done — dist repo exists + build-stamp consumed by sync/alerts (architecture-catalog.nix build-stamp wiring; CHANGELOG:369)
