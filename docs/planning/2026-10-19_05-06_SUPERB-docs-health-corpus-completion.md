@@ -1,6 +1,7 @@
 # SUPERB — Docs-Health Batch 6-20 Completion Plan
 
-**Date:** 2026-10-19 05:06 CEST · **Status:** PLANNED (executing)
+**Created:** 2026-10-19 05:06 CEST · **Status:** PLANNED (executing)
+**EXECUTING (instance docs-health redispatch-1024, 2026-10-24 07:29 CEST, HEAD `e9627a7bd`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch — "View ALL `**/2026-0*` files! Execute the docs-health SKILL! SUPERBLY" + this planning directive (Pareto → task tables → ≤12min breakdown → mermaid graph → commit+push)
 **Mission:** finish the tracked docs-health 2026-0* corpus sweep (batches 6-20 of 21) AND make the six living docs (TODO_LIST, CHANGELOG, AGENTS, README, ROADMAP, FEATURES) superb, with every gate green. This plan covers ALL remaining TODOs of THIS dispatch — nothing else (the repo's wider backlog stays in TODO_LIST/docs/todo).
 
