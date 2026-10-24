@@ -140,7 +140,7 @@ forwarders are now a choice — keep them, update the comment).
 ~~17. Verify + fix blocklist count claim (25→23) in the header comment.~~ done — 25→23 + ~4M+ domains (eval-verified) — SESSION3 §a.8
 ~~18. AGENTS.md dnsblockd section: deployed-rev claims (75b4ce9 until M11), allowlist~~ done — rev claim corrected + DEPLOYED-LIVE bullet — SESSION3 §a.8
 persistence note, tracking-dial memo pointer, devices/users options.
-19. `docs/services/dnsblockd.md` runbook: new options, smoke-probe inventory, memo link.
+~~19. `docs/services/dnsblockd.md` runbook: new options, smoke-probe inventory, memo link.~~ done — runbook carries the wave: registry/csrf/rate-limit options + post-deploy smoke-probe inventory + memo + archived-plan pointers (dns/services/dnsblockd.md:11-12)
 
 **M13 — TODO reconciliation:**
 ~~20. Annotate the 5 TODO_LIST.md queue rows + `docs/todo/services.md` library entries~~ done — M13 executed by SESSION4 (2026-10-01_02-30)

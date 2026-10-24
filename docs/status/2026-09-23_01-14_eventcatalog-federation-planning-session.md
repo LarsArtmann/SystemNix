@@ -90,7 +90,7 @@ All 49 micro tasks from the plan (§5, sorted by phase/impact) + 1 new from this
 | 34 | 9.1  | `eventcatalog lint` in hub CI (verify license-free first)        | 12  | P2    |
 | 35 | 9.2  | External-catalog lint refs if supported                          | 10  | P2    |
 | 36 | 10.1 | Teams/users convention                                           | 12  | P2    |
-| 37 | 10.2 | owners frontmatter + rebuild                                     | 10  | P2    |
+| ~~37~~ done — exporter emits owners frontmatter per source + merged union in hub builds (hub README:136-141); built catalog carries it (services/bank-sync index.mdx owners: lars) | ~~10.2~~ | ~~owners frontmatter + rebuild~~ | ~~10~~ | ~~P2~~ |
 | ~~38~~ done — llmsTxt enabled in hub config; dist/llms.txt present in E2E build (05-06 report §a.3) | ~~11.1~~ | ~~Enable `/llms.txt`~~ | ~~8~~ | ~~P2~~ |
 | 39 | 11.2 | EventCatalog MCP in crushrc                                      | 12  | P2    |
 | 40 | 12.1 | Federation triggers GO/NO-GO note                                | 12  | P3    |
