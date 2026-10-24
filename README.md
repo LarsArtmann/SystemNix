@@ -79,7 +79,7 @@ SystemNix/
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (228 health checks) + SigNoz (47 alert rules, 10 dashboards). Counts re-derived 2026-10-24 (`nix eval .#nixosModules` → 131; `nix eval .#nixosConfigurations.evo-x2.config.services.gatus.settings.endpoints --apply 'x: builtins.length x'` → 228; 47 `mkRule` sites + 10 dashboard JSONs in `modules/nixos/services/_signoz-alerts.nix`):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (228 health checks) + SigNoz (47 alert rules, 10 dashboards). Counts re-derived 2026-10-24, row-depth verified 2026-10-24 (7 stale rows corrected: SigNoz dashboards 6→10 + cAdvisor removed, Overview/DNS-Blocker/indexer URLs added, bank-sync + indexer-web deploy-state fixed, Dual-WAN marked disabled) — enforced by `checks.doc-counts` (`nix eval .#nixosModules` → 131; `nix eval .#nixosConfigurations.evo-x2.config.services.gatus.settings.endpoints --apply 'x: builtins.length x'` → 228; 47 `mkRule` sites + 10 dashboard JSONs in `modules/nixos/services/_signoz-alerts.nix`):
 
 | Service             | Port             | URL                  | Description                                                                                                                                               |
 | ------------------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
