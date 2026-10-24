@@ -1,6 +1,7 @@
 # SUPERB — Docs-Truth: Closeout Residuals + October Wave
 
 **Created:** 2026-10-24 16:43 CEST · **Owner:** Lars · **Author:** docs-health closeout session (self-review executor)
+**EXECUTING (instance T1-T5 residuals now; T6+ owner-gated (Q2), 2026-10-24 16:51 CEST, HEAD `57cd0de9b`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch — Pareto decomposition (1%/4%/20%/other-20%) + two-level task tables (30–100 min + ≤12 min) + execution graph + commit + push, plan first.
 **Mission:** convert the docs-health mission's residual unverified surfaces into verified truth (3 tiny follow-ups), finish the living-docs row-depth pass, then carry the 9×-proven pipeline across the 2026-10 wave (442 root + 57 tasks reports) so the ENTIRE status corpus reaches truth — with the tooling upstreamed so the next wave doesn't re-pay the friction. Zero intent-loss, zero false history, zero Verschlimmbesserung.
 
