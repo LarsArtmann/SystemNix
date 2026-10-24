@@ -13,6 +13,10 @@
 
 ## Queue
 
+### catalog / inventory
+
+- [ ] [blocked:push] **Push the curated pbx.artmann.tech inventory descriptor (2026-10-24, shipped locally)** — `scripts/catalog-inventory.pbx.json` (service names + subdomains only, private-repo hygiene documented in the script header) rides the inventory union as a fourth host, killing the false "not deployed" chips on pbx/webphone/pbx-lens in catalog.home.lan; the script now ABORTS when the file is missing (a dropped host silently drops deployments). The hourly `catalog-inventory-sync` timer runs from THIS checkout on evo-x2, so regeneration already produces the new shape — only the git push is pending (Source: eventcatalog-hub docs/planning/2026-10-24_17-00 tier 2b)
+
 ### storage
 
 - [ ] [ready] **Pre-deploy gate for the PG-cluster-shadow-split class** — a hot-tier mount landing over a NON-empty service data dir must fail pre-deploy unless the target subvol demonstrably holds the prepared copy (e.g. `PG_VERSION` mtime pre-dating activation + size parity with the shadow source); the 2026-10-19 wave-6 postgres mount initdb'd a blank cluster and 4 services ran on empty DBs 2.5 days undetected → [docs/todo/storage.md](docs/todo/storage.md) (Source: docs/status/2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md)
