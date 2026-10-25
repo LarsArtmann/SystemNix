@@ -1,6 +1,7 @@
 # SUPERB — Fleet-Stabilization Remainder & Backlog Parity (Wave 3)
 
 **Created:** 2026-10-25 12:26 CET · **Owner:** Lars · **Author:** completed-TODO-prune session (post 10-38 report, 6th re-fire of the Pareto/plan/execute template)
+**EXECUTING (instance wave3, 2026-10-25 12:51 CET, HEAD `2fe9a9807`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch (Pareto/plan/execute/push template, 6th re-fire).
 **Mission:** execute the still-open remainder of the 05-10 fleet-stabilization plan (its exec waves 1-2 landed; deploy+proofs and the structural tail are owed), absorb the 2026-10-25 backlog-parity fallout (99 pairing WARNs, 122 unharvested reports — the queue's own truth debt), and open the per-domain burn-down of the 1,792-item open library universe with a coverage-proof mapping so ALL todos are owned by exactly one plan line.
 
