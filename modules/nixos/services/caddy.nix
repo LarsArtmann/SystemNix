@@ -382,25 +382,22 @@ _: {
       # here needs a justification; REGISTRATION is the preferred fix.
       #   alerts, logs — redirect/alias infrastructure (dash alias, SigNoz
       #     logs-explorer redirect), no service behind them.
-      #   auth — pocket-id: owner-pending (status report §g.3: registry-free
-      #     may be deliberate OIDC-provisioning circularity avoidance).
-      #   seo, tasks — openseo + taskchampion-sync-server: real services,
-      #     registration deferred to the §g.2 web-facing-line answer.
-      #   dnsblock, dnsblockd — dns-blocker's hand-written pair; its entry
-      #     exists but carries subdomain = null (vHost.layer "none").
+      #   dnsblockd — dns-blocker's DoH/DoT endpoint vHost; the DASHBOARD-
+      #     facing "dnsblock" subdomain registered 2026-10-25 (§g.2 owner
+      #     answer: subdomain ⇒ dashboard), leaving only the endpoint
+      #     pair-mate blind.
       #   paperless — deliberately hand-written (native OIDC via Pocket ID,
       #     django-allauth Layer 1; protectedVHost would double-auth — see
       #     the vHost block below). Added 2026-10-25 when the parallel
       #     session's integration rework left it firing the blind-spot
       #     assertion in non-evo-x2 caddy contexts (caddy-mint VM); delete
       #     this row if/when it moves to the registry.
+      #   (auth/seo/tasks/dnsblock un-blinded 2026-10-25: pocket-id,
+      #     openseo, taskchampion-sync-server and dns-blocker entries gained
+      #     subdomains per the §g.2/§g.3 owner answers.)
       registryBlindSubdomains = [
         "alerts"
         "logs"
-        "auth"
-        "seo"
-        "tasks"
-        "dnsblock"
         "dnsblockd"
         "paperless"
       ];

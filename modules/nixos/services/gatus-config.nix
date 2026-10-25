@@ -806,19 +806,8 @@ _: {
                   alerts = discordAlert "External HTTPS connectivity lost — server cannot reach the internet";
                 })
               ]
-              ++ [
-                (mkHttpCheck {
-                  name = "OpenSEO";
-                  group = "Productivity";
-                  url = "http://localhost:${toString config.services.openseo.port}";
-                  interval = "5m";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 2000"
-                  ];
-                  alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
-                })
-              ]
+              # OpenSEO check moved to its owning module
+              # (services.integration.openseo.checks, 2026-10-25 registration).
               ++ [
                 (mkHttpCheck {
                   name = "EMEET PIXY";

@@ -566,12 +566,6 @@
                 name = "Infrastructure";
                 tiles = [
                   {
-                    name = "Pocket ID";
-                    href = svcUrl "auth";
-                    description = "Passkey OIDC Provider";
-                    icon = "pocket-id.png";
-                  }
-                  {
                     name = "Caddy";
                     description = "Reverse Proxy";
                     checkUrl = "http://127.0.0.1:${toString ports.caddy-metrics}/metrics";
@@ -594,18 +588,12 @@
                     description = "Cache (Immich)";
                     icon = "redis.png";
                   }
-                  # Single DNS-blocker tile (merged 2026-10-17): the daemon
-                  # is core network infra, not a media app. href opens the
-                  # stats UI (Caddy proxies dnsblock.home.lan to the stats
-                  # port); checkUrl probes the daemon directly so a dead
-                  # daemon reds the dot even while Caddy still answers.
-                  {
-                    name = "DNS Blocker";
-                    href = svcUrl "dnsblock";
-                    description = "DNS Block Stats";
-                    checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
-                    icon = "blocky.png";
-                  }
+                  # Pocket ID and DNS Blocker tiles REMOVED 2026-10-25: both
+                  # moved to their services.integration registry entries
+                  # (pocket-id.nix / dns-blocker.nix homepage) when the
+                  # entries gained subdomains per the §g.2/§g.3 owner answers.
+                  # The floated PapDashboard binary refuses duplicate names
+                  # per group (Immich/Forgejo precedent, start-limit-hit).
                 ];
               }
               # Kept (even when empty) so registry tiles land in their
@@ -657,28 +645,24 @@
                   }
                   # dnsblockd and EMEET PIXY tiles REMOVED 2026-10-17: both
                   # were probe-only/decorative halves of tiles that exist
-                  # elsewhere. dnsblockd merged into the linked Infrastructure
-                  # "DNS Blocker" tile above; EMEET PIXY arrives via the
+                  # elsewhere. dnsblockd merged into the DNS Blocker tile
+                  # (registry-owned since 2026-10-25, dns-blocker.nix
+                  # homepage); EMEET PIXY arrives via the
                   # services.integration registry fan-out (emeet-pixyd.nix
                   # homepage, Infrastructure, with href).
                 ];
               }
+              # Kept (even when empty) so registry tiles land in their
+              # canonical group position — Taskwarrior and OpenSEO arrive
+              # via the services.integration registry fan-out
+              # (taskchampion.nix / openseo.nix homepage, Productivity,
+              # with href). The manual tiles were removed 2026-10-25: they
+              # duplicated the registry tiles (§g.2 registration) and the
+              # floated PapDashboard binary refuses duplicate names per
+              # group (Immich/Forgejo precedent, start-limit-hit).
               {
                 name = "Productivity";
-                tiles = [
-                  {
-                    name = "Taskwarrior";
-                    href = svcUrl "tasks";
-                    description = "Task Sync Server (TaskChampion)";
-                    icon = "taskcafe.png";
-                  }
-                  {
-                    name = "OpenSEO";
-                    href = svcUrl "seo";
-                    description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
-                    icon = "google-search-console.png";
-                  }
-                ];
+                tiles = [ ];
               }
               {
                 name = "Review Tools";
