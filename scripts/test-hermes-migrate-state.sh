@@ -43,6 +43,13 @@ case "${SQLITE_STUB_MODE:-ok}" in
   *) echo "unknown stub mode" >&2; exit 70 ;;
 esac
 EOF
+# SANDBOX SHEBANG TRAP (forgejo-fixture lesson, test-migrate-hot-db.sh):
+# /usr/bin/env does not exist in the nix build sandbox — an env-shebang
+# stub fails exec with ENOENT and timeout(1) reports the STUB as "No such
+# file or directory" (rc 127); that error text rides the census 2>&1
+# capture into INTEGRITY and fires the malformed branch (the 2026-10-25
+# leg2 sandbox-only mystery).
+sed -i "1c #!$BASH" "$scratch/sqlite3-stub"
 chmod +x "$scratch/sqlite3-stub"
 
 # Render a runnable copy: bake the scratch state dir over the interpolated
@@ -82,7 +89,7 @@ SQLITE_STUB_LOG="$scratch/log2"
 : >"$SQLITE_STUB_LOG"
 SQLITE_STUB_LOG="$SQLITE_STUB_LOG" bash "$RENDERED" >"$scratch/out2" 2>&1
 grep -q "skipping migration" "$scratch/out2" || fail "leg2: expected skip after ok census, got: $(cat "$scratch/out2")"
-grep -q "journal_mode=WAL" "$SQLITE_STUB_LOG" || fail "leg2: pragma re-assert did not run (log: $(cat "$SQLITE_STUB_LOG" 2>&1 | head -c 400), out: $(head -c 400 "$scratch/out2"))"
+grep -q "journal_mode=WAL" "$SQLITE_STUB_LOG" || fail "leg2: pragma re-assert did not run"
 assert_no_marker "leg2"
 
 # --- leg 3: unclean shutdown + census exceeds the start budget ->

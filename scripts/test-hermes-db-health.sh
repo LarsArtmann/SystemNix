@@ -49,6 +49,11 @@ cat >"$scratch/systemctl-stub" <<'EOF'
 echo "$*" >>"${SYSTEMCTL_LOG:?}"
 EOF
 chmod +x "$scratch/systemctl-stub"
+# SANDBOX SHEBANG TRAP (forgejo-fixture lesson, test-migrate-hot-db.sh):
+# /usr/bin/env does not exist in the nix build sandbox — rewrite both
+# stubs' interpreter to $BASH or exec fails ENOENT (rc 127; see the
+# migrate fixture's leg2 post-mortem, 2026-10-25).
+sed -i "1c #!$BASH" "$scratch/sqlite3-stub" "$scratch/systemctl-stub"
 
 # Render a runnable copy: scratch state dir, stubbed sqlite3, stubbed
 # systemctl (both forms: the baked store path of a real extraction AND the
