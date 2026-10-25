@@ -119,3 +119,37 @@ No file in `modules/`, `systems/`, `platforms/`, `flake/`, or `scripts/` was tou
 
 None — the recommendation is unchanged (pilot-adopt OpenCloud on the production line, posix driver, stateDir on the pool). RustFS is neither a blocker nor a dependency; it is a future building block with its adoption path pre-verified.
 
+---
+
+## Addendum 2 2026-10-25 13:27 — "OpenCloud vs OR with paperless-ngx"
+
+**Verdict: not substitutes — keep both, integrate NOTHING by default. Paperless is the document brain (already live with four producers); OpenCloud is the general-files drive (the gap). If a document flow into OpenCloud ever materializes, bridge it with the existing drive-paperless engine pointed at a new source — never with filesystem coupling.**
+
+### Why "vs" is a category error
+
+| Axis | Paperless-ngx (LIVE here) | OpenCloud (candidate) |
+|---|---|---|
+| Job | DMS: OCR → classify → tag → searchable archive | General drive: sync, share, browse, WebDAV |
+| Folder semantics | Deliberately DESTROYED (storage-path templates rename everything into the archive) | Preserved (that's the product) |
+| Search | Full-text + correspondents/tags + AI suggestions (paperless-gpt) | Filename/content-level; no DMS model |
+| Producers today | InboxClean email archiving, bank-sync, drive-paperless (Drive mirror), scanner/mobile flows | none |
+| Sync clients / share links | none (API + consume, by design) | the entire point |
+| Replacement risk | Replacing it with OpenCloud kills OCR/classification/search and orphans four live integrations | Replacing OpenCloud-with-paperless isn't even coherent — paperless can't be a drive |
+
+Zero workload overlap in this fleet: documents already have a brain; general files have nothing. Adopting OpenCloud changes NOTHING about paperless.
+
+### "With" — the integration ladder
+
+1. **Default (recommended): no integration.** Documents keep flowing via existing routes (InboxClean, bank-sync, drive-paperless, scanner). OpenCloud serves the general-files layer only.
+2. **If the owner starts keeping live documents in OpenCloud**: extend `drive-paperless` with an `opencloud` SOURCE — rclone WebDAV listing of a designated OpenCloud folder → same DRF API upload → same journal idempotence/routing. The engine is source-agnostic by construction (it scans rclone-visible trees); this is one `sources` entry + an rclone webdav remote in sops, not a new pipeline.
+3. **NEVER filesystem-level coupling** — do not point `PAPERLESS_CONSUME_DIR` (or any producer) into OpenCloud's state tree. Even though the posix driver is path-preserving AND watch-fs-capable (out-of-band writes get noticed — upstream CI runs an `enableWatchFs` matrix variant on posix), the tree is OpenCloud's implementation detail: out-of-band writes carry no trash/versions/metadata semantics, ownership/backup coupling is created, and the house already ruled this class on 2026-10-19: "API route, not the consume dir."
+
+### Pilot verification item (new, folded into Phase 1)
+
+Confirm trash/versions behave on the `posix` driver in the deployed build (upstream CI covers posix across the acceptance matrix, but the PRO table's trash/versions claim should be live-verified during the pilot rather than assumed).
+
+### Net effect on the main verdict
+
+None. Paperless untouched; the pilot plan is unchanged; one verification item added.
+
+
