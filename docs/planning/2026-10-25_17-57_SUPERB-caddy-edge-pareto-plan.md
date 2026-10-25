@@ -95,7 +95,7 @@ Sorted by importance/impact/effort/customer-value (Pareto tier first, then impac
 
 ---
 
-## Fine Breakdown — 92 tasks ≤12 min each
+## Fine Breakdown — 93 tasks ≤12 min each
 
 Grouped under their medium task (execution coherence); group order = the sort above. Gates are 5–10 min owner answers. Full table; G = gate.
 
@@ -332,7 +332,7 @@ Grouped under their medium task (execution coherence); group order = the sort ab
 | F93 | library-deep-dive feedback note (Context7 MCP absent in this harness) | 8 |
 | F94 | Screenshot durable-home / regenerate-commands note | 8 |
 
-**Totals:** 92 fine tasks (3 gates + 89 work), ~17.5 h focused work. Median fine task 10–12 min.
+**Totals:** 93 fine tasks (3 gates + 90 work), ~16 h focused work. Median fine task 10–12 min.
 
 ---
 
