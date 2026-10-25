@@ -195,7 +195,6 @@
           pkgs.coreutils
           pkgs.findutils
           pkgs.systemd
-          pkgs.util-linux # runuser — CHECKPOINT as the service user
           pkgs.duckdb
         ];
         text = ''
@@ -241,8 +240,18 @@
           # copy instant and IO-free (CoW); plain-copy fallback kept for
           # exotic layouts. Same *.backup_*.db naming the prune below and
           # the heal script's restore path already speak.
-          runuser -u monitor365-server -- duckdb "$STATE_DIR/monitor365.duckdb" \
+          # Run as root, NOT via `runuser -u monitor365-server`: the unit's
+          # harden preset blocks runuser's setuid under the systemd 261
+          # sandbox ("cannot set user id: Operation not permitted", first-fire
+          # evidence 2026-10-25 17:13 — CAP_SETUID present and @setuid is
+          # inside @system-service, yet still EPERM). Root-run duckdb on the
+          # quiesced DB is the pattern the 2026-10-25 out-of-band index
+          # rebuild already proved live-safe; the chown net right after
+          # returns any WAL/tmp residue to the service user so the next
+          # server start stays writable (root-owned files are the hazard).
+          duckdb "$STATE_DIR/monitor365.duckdb" \
             -c "SET memory_limit='6GB'; SET threads=2; CHECKPOINT;"
+          chown -R monitor365-server:monitor365-server "$STATE_DIR"
           STAMP=$(date -u +%Y%m%dT%H%M%SZ)
           DEST="$STATE_DIR/monitor365.duckdb.backup_$STAMP.db"
           if ! cp --reflink=always "$STATE_DIR/monitor365.duckdb" "$DEST"; then
