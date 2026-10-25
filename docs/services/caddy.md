@@ -196,6 +196,38 @@ with zero script edits.
   (dotted histogram suffix in SigNoz).
 - Post-deploy: auth-gateway 500/502 detection (above) + plain-vHost probe.
 
+## Edge tracing (OpenTelemetry spans, 2026-10-25)
+
+Every vHost emits an OTel span per request via the `tracing` directive in
+`commonConfig` (the single block shared by hand-written vHosts, the registry
+fan-out, static roots, catch-alls and the cloud mirrors — 76 rendered site
+blocks at the time of writing). Spans carry the OTel HTTP semantic attributes
+(method, route, status, duration, client); the **span name is the requested
+host** (`span {http.request.host}`), so SigNoz spanmetrics cardinality stays
+bounded by the vHost count. Service name: `caddy` (`OTEL_SERVICE_NAME`).
+
+- **Exporter**: gRPC → the local SigNoz collector,
+  `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` on the caddy unit
+  (scheme REQUIRED — otel-go otlptracegrpc is a URL parser; the 2026-08-14
+  schemeless-endpoint hang class). Audited at eval time:
+  `otel-endpoint-audit` expectation `caddy = "grpc-url"`.
+- **Coverage rail**: `signoz-coverage.expected.caddy` — wiring `env`,
+  26h **request-driven** budget (gatus checks hit the backends directly, NOT
+  through Caddy, so spans flow on human browsing + deploy smokes; an
+  overnight without requests is healthy, not dark — dnsblockd doctrine).
+- **What this is NOT**: Caddy cannot continue trace context INTO the
+  backends (no client-side instrumentation anywhere), and Forgejo itself has
+  no OTel support (upstream #3972 was merged + reverted over licensing;
+  never shipped). These are edge spans only — per-request status/duration
+  per vHost, which is exactly the KFears #7216 "basic insight" need.
+- **Verify spans flowing live** (post-deploy): hit any vHost, wait ~10 s,
+  then
+  `clickhouse-client --query "SELECT count() FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp > now() - 300 AND serviceName = 'caddy'"`
+  (same table the coverage collector sweeps). Or check
+  `signoz_traces_reporting{service="caddy"}` on the next coverage scrape.
+- Directive validated against the deployed caddy 2.11.7 binary; full
+  rendered Caddyfile adapts cleanly (`caddy adapt`, 76 tracing blocks).
+
 ## HSTS
 
 `Strict-Transport-Security max-age=31536000; includeSubDomains` is set on
