@@ -29,7 +29,7 @@
   name = "upholds-convergence";
 
   nodes.machine =
-    { ... }:
+    _:
     {
       boot.supportedFilesystems = [ "ext4" ];
       virtualisation.emptyDiskImages = [ 512 ];
@@ -76,10 +76,14 @@
       };
       # DIRECTION (first draft had it backwards — that failure IS a finding:
       # `A Upholds=B` = "while A is active, keep B started", the inverse of
-      # BindsTo=). The MOUNT upholds the consumer, so the dependency edge
-      # lives on the mount unit (systemd.units merge — virtualisation.
-      # fileSystems owns the rest of mnt-uph.mount).
-      systemd.units."mnt-uph.mount".upholds = [ "uph-consumer.service" ];
+      # BindsTo=). The MOUNT upholds the consumer. Pinned nixpkgs (fe13242)
+      # has no `systemd.units.<name>.upholds` (that landed upstream later);
+      # the available form is the inverse-facing `upheldBy` (systemd-unit-
+      # options.nix: "keep THIS unit running as long as the listed units are
+      # running"). Declaring it on the consumer renders the SAME edge the
+      # mount-side option would: a `mnt-uph.mount.upholds/uph-consumer.service`
+      # symlink in the unit dir (systemd-lib.nix symlink pass).
+      systemd.services.uph-consumer.upheldBy = [ "mnt-uph.mount" ];
       system.stateVersion = "25.11";
     };
 
