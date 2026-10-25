@@ -1289,33 +1289,40 @@
       # Lock-float gate (2026-10-25, fleet-stabilization F07-F10): a blanket
       # lock wave floats many revs at once; the 2026-10-23 wave carried four
       # eval-breaking floats that surfaced only as a DOA deploy. Root-input
-      # rev drift vs the reviewed registry (flake/expected-locks.nix) now
-      # fails eval BEFORE anything builds. The registry update IS the
-      # deliberate-float mechanism. Semantics: lib/lock-float-audit.nix;
-      # behavior pinned by checks.lock-float-selftest.
+      # rev drift vs the reviewed registry (flake/expected-locks.nix) fails
+      # HOST-CONFIG evaluation — never the flake's app output, so the deploy
+      # and float-register tooling stays reachable while drifted and absorbs
+      # the drift mechanically (2026-10-25 17:2x: the former outputs-eval
+      # placement made `nix flake update && nix run .#deploy` dead-end at the
+      # gate BEFORE the automation could even run — the entry-eval hole).
+      # The registry update IS the deliberate-float mechanism. Semantics:
+      # lib/lock-float-audit.nix; behavior pinned by checks.lock-float-selftest.
       lockFloatViolations = import ./lib/lock-float-audit.nix {
         lock = lockFile;
         expected = import ./flake/expected-locks.nix;
       };
-      lockFloatGuard =
-        assert
-          lockFloatViolations == [ ]
-          || throw ''
-            flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
-              ${lib.concatStringsSep "\n  " lockFloatViolations}
-            A blanket `nix flake update` is not landable as-is. Float procedure:
-            1. regenerate flake/expected-locks.nix (rederive command in its header) — the gate throws
-               before ANY evaluation, so this is the only way to reach the build; the regeneration is
-               mechanical (derived from flake.lock), never hand-edited.
-            2. prove: nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
-               (capture the log to a file — piping through tail masks every root failure)
-            3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
-               Proof RED? Fix the roots upstream-first, or revert that input's registry row AND its
-               lock rev together. Never commit an unproven float, never delete rows to go green.
-          '';
-        true;
+      lockFloatGateError =
+        if lockFloatViolations == [ ]
+        then null
+        else ''
+          flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
+            ${lib.concatStringsSep "\n  " lockFloatViolations}
+          A blanket `nix flake update` is not landable as-is. Float procedure
+          (automated by `nix run .#float-register`, wired into nix run .#deploy):
+          1. regenerate flake/expected-locks.nix (rederive command in its header) — the regeneration is
+             mechanical (derived from flake.lock), never hand-edited.
+          2. prove: nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
+             (capture the log to a file — piping through tail masks every root failure)
+          3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
+             Proof RED? Fix the roots upstream-first, or revert that input's registry row AND its
+             lock rev together. Never commit an unproven float, never delete rows to go green.
+        '';
+      # Lazy host-config gate: the wrapped import (and the drift check inside)
+      # is forced only when something actually EVALUATES a host configuration
+      # (build / flake check) — app evals skip it entirely.
+      lockFloatGated = cfg: if lockFloatGateError != null then throw lockFloatGateError else cfg;
       allEvalGuards = builtins.seq nixpkgsTarballGuard (
-        builtins.seq flakeInputPinAuditGuard (builtins.seq lockAuditGuard lockFloatGuard)
+        builtins.seq flakeInputPinAuditGuard lockAuditGuard
       );
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
@@ -1370,7 +1377,7 @@
       flake = {
         lib = import ./lib { inherit (nixpkgs) lib; };
 
-        darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
+        darwinConfigurations."Lars-MacBook-Air" = lockFloatGated (import ./systems/darwin.nix {
           inherit
             inputs
             mkLarsPackages
@@ -1378,9 +1385,9 @@
             sharedHomeManagerConfig
             sharedHomeManagerSpecialArgs
             ;
-        };
+        });
 
-        nixosConfigurations."evo-x2" = import ./systems/evo-x2.nix {
+        nixosConfigurations."evo-x2" = lockFloatGated (import ./systems/evo-x2.nix {
           inherit
             inputs
             mkLarsPackages
@@ -1391,20 +1398,20 @@
             sharedHomeManagerConfig
             sharedHomeManagerSpecialArgs
             ;
-        };
+        });
 
-        nixosConfigurations."zfs-vm" = import ./systems/zfs-vm.nix {
+        nixosConfigurations."zfs-vm" = lockFloatGated (import ./systems/zfs-vm.nix {
           inherit inputs;
-        };
+        });
 
-        nixosConfigurations."rpi3-dns" = import ./systems/rpi3-dns.nix {
+        nixosConfigurations."rpi3-dns" = lockFloatGated (import ./systems/rpi3-dns.nix {
           inherit
             inputs
             linuxOnlyOverlays
             sharedHomeManagerConfig
             sharedHomeManagerSpecialArgs
             ;
-        };
+        });
       };
     };
 }
