@@ -41,9 +41,15 @@ in
               # primary accent. Scoped to Weather.qml only; every other bar widget
               # keeps the muted look. Drop when upstream ships a per-widget accent
               # option (none exists in the stable SettingsSpec as of 2026-09-30).
-              weatherQml="$out/share/quickshell/dms/Modules/DankBar/Widgets/Weather.qml"
-              test -f "$weatherQml"
-              chmod -R u+w "$out/share/quickshell/dms/Modules/DankBar/Widgets"
+              # Path is GLOB-resolved, not hardcoded: DMS 2.0.0 renamed the
+              # bar module DankBar -> DBar (2026-10-24), and the old literal
+              # path died inside installPhase with no output (set -e + a
+              # failing `test -f` is silent) — the 2026-10-23 "installPhase
+              # dies silently" symptom. The glob tolerates module renames and
+              # still fails loudly if the Weather widget disappears.
+              weatherQml=$(ls "$out/share/quickshell/dms"/Modules/*/Widgets/Weather.qml 2>/dev/null | head -1)
+              test -n "$weatherQml"
+              chmod -R u+w "$(dirname "$weatherQml")"
               sed -i \
                 -e 's/color: Theme\.widgetIconColor/color: Theme.primary/g' \
                 -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
