@@ -71,10 +71,16 @@
           # lock float re-staled upstream's baked hash. RE-STALE 2026-10-19:
           # keep-going toplevel run (/tmp/toplevel-build-20261019.log)
           # mismatched this shim's own IRv9RBX… vs got QLlBr6cL….
+          # RE-STALE 2026-10-25 (lock-float proof): upstream at the locked
+          # rev 390bf2d STILL bakes the stale QLlBr6cL… — probed through our
+          # lock, specified QLlBr6cL… got 0Ko7CAVV… (first-hand goModules FOD
+          # probe 2026-10-25). Same treadmill as before; drop when upstream
+          # bakes 0Ko7CAVV… (paste-upstream → push → re-lock queued in
+          # docs/todo/upstream.md). Re-add ONLY via nix-hash-fix evidence.
           default =
             inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-QLlBr6cLNhL64dCc/vzaSWyAsAtaY8r5YH9BUgIX3aw=";
+                vendorHash = "sha256-0Ko7CAVVWuYCMaXm7FGSApnCJ8VHqXUSyyU+PMIpmN4=";
               };
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";

@@ -69,11 +69,13 @@
           # surface shims the same hash — the module needs its own override
           # only because it consumes the flake's own package attr, which never
           # sees the lars-packages one. One value, two consumers.
+          # DROPPED AGAIN 2026-10-25: upstream at the locked rev bdd12a3 bakes
+          # a vendorHash that builds green THROUGH OUR LOCK (first-hand probe
+          # 2026-10-25, goModules FOD exit 0) — the 2026-10-23 NBQcjrwD… shim
+          # was the only stale value. Upstream package used directly; re-add
+          # ONLY via nix-hash-fix evidence, never by hand.
           package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = (import ../../../lib/vendor-shims.nix).projects-management-automation;
-              };
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

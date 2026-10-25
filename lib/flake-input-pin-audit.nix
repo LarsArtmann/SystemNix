@@ -80,6 +80,14 @@
     # its go.mod.
     nixpkgs = "REV-PINNED at fe13242 (2026-10-15), the rev generation 939 runs. ROLLBACK of 02c087f3, which broke aw-core (peewee==3.* vs 4.4.0), the linux-7.3 r8125.ko.cer module path, signoz patch context, templ runtime drift and dms-shell 2.0.0 installPhase. A rev-in-URL pin makes `nix flake update` a silent no-op for nixpkgs, which is the intent; the daily nixpkgs-compat workflow uses `--override-input` so its early-warning signal survives. LIFT: re-float to nixos-unstable only when `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` exits 0 with aw-core AND linux-7.3-modules realized.";
     signoz-src = "REV-PINNED at 375b3f83 (2026-10-16). The ?ref=main float moved the sonic version context so the Go-1.26 patches in modules/nixos/services/patches/ stopped applying and the pnpm deps hash re-staled. LIFT: move to a rev where those patches apply unchanged (or sonic >= 1.15 obsoletes them) and `nix build .#signozPkg --no-link` exits 0.";
+    # ── 2026-10-25 lock-float proof holds ──────────────────────────────
+    # Both inputs' latest revs demand toolchain floors our REV-PINNED
+    # nixpkgs cannot meet (following nixpkgs makes consumer flakes import
+    # it overlay-less, so no local overlay can close the gap). Held at the
+    # last build-proven revs with concrete LIFT observables; every hold is
+    # re-verified by the float procedure on the day it is lifted.
+    hermes-agent = "REV-PINNED at 0329638c (2026-10-23T01:21, the rev before upstream 5a5aa9a): its patchelfFixed patches patchelf 0.19.2 for NixOS/patchelf#672, but this input's nixpkgs FOLLOWS our fe13242 pin (patchelf 0.15.2), so the fetched patch cannot apply and every cold pm-ripgrep/pm-node build dies in patchPhase (first-hand --keep-going 2026-10-25: hermes-agent → ripgrep-15.2.0 → patchelf-0.15.2, hunks 543/576/1167/1215 FAILED). LIFT: pinned nixpkgs ships a patchelf containing #672 (i.e. after the nixpkgs fe13242 rev-pin is lifted) — drop the pin, re-float hermes, and re-run the toplevel proof.";
+    inboxclean = "REV-PINNED at b6f15e71 (the rev generation 939 runs): upstream c63bf289 bumped go.mod to `go 1.27.3` while the pinned nixpkgs ships go 1.27.2 and buildGoModule sets GOTOOLCHAIN=local, so the build dies `go.mod requires go >= 1.27.3 (running go 1.27.2)` (first-hand --keep-going 2026-10-25). LIFT: pinned nixpkgs ships go >= 1.27.3 (or the nixpkgs rev-pin is lifted) — drop the pin, re-float inboxclean, and re-run the toplevel proof.";
     # bank-sync row REMOVED 2026-10-16: the 2026-10-14 ceiling pin was lifted
     # by the owner-ratified fresh-start cutover (prod journal archived once by
     # the bank-sync-fresh-start oneshot; see flake.nix bank-sync comment).

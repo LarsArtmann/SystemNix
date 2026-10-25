@@ -231,7 +231,15 @@
       # Blanket `nix flake update` keeps re-introducing this class; move the
       # input forward ONLY after `nix build
       # .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes.
-      url = "github:NousResearch/hermes-agent";
+      # REV-PINNED 2026-10-25 (0329638c = the rev before upstream 5a5aa9a):
+      # 5a5aa9a's patchelfFixed patches patchelf 0.19.2 for NixOS/patchelf#672,
+      # but this input's nixpkgs FOLLOWS our fe13242 pin (patchelf 0.15.2), so
+      # the fetched patch cannot apply — every cold build of pm-ripgrep/pm-node
+      # dies in patchPhase (first-hand --keep-going: hermes-agent →
+      # ripgrep-15.2.0 → patchelf-0.15.2, hunks 543/576/1167/1215 FAILED).
+      # LIFT (tracked in lib/flake-input-pin-audit.nix): pinned nixpkgs ships
+      # a patchelf containing #672 — then drop the pin and re-float.
+      url = "github:NousResearch/hermes-agent/0329638c2bf0438552145589787e355bf23343fe";
     };
 
     # monitor365 — Device monitoring agent (Rust)
@@ -272,7 +280,14 @@
 
     # InboxClean — Gmail AI assistant: web dashboard + incremental sync (Go)
     inboxclean = {
-      url = "github:LarsArtmann/InboxClean?ref=refs/heads/master";
+      # REV-PINNED 2026-10-25 (b6f15e71 = the rev generation 939 runs):
+      # upstream c63bf289 bumped go.mod to `go 1.27.3` while the pinned
+      # nixpkgs ships go 1.27.2 and buildGoModule sets GOTOOLCHAIN=local —
+      # the build dies `go.mod requires go >= 1.27.3 (running go 1.27.2)`
+      # (first-hand --keep-going 2026-10-25). LIFT (tracked in
+      # lib/flake-input-pin-audit.nix): pinned nixpkgs ships go >= 1.27.3 —
+      # then drop the pin and re-float.
+      url = "github:LarsArtmann/InboxClean/b6f15e71b712116428a5b9fbefa46965c3705da0";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)

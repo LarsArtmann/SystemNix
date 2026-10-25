@@ -306,14 +306,14 @@ lib.filterAttrs (_: v: v != null) {
   # flake.nix:111 at tip 849573de bakes the shim's own 5WOy3BHv… value —
   # bit-neutral override (lock == tip; service surface dropped in the same
   # pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
-  # projects-management-automation shim RE-ADDED (2026-10-23 lock float):
-  # first-hand keep-going probe got sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0
-  # (specified U9F6gATv, got NBQcjrwD). VALUE LIVES IN lib/vendor-shims.nix
-  # (2026-10-23 dedup): the module's service surface carries the same shim, and
-  # two hand-synced literals drift. Drop when upstream bakes this value.
-  projects-management-automation =
-    flakePkgShim inputs.projects-management-automation "default"
-      (import ./vendor-shims.nix).projects-management-automation;
+  # projects-management-automation shim DROPPED (2026-10-25): its own drop
+  # condition is met — the upstream flake at the locked rev bdd12a3 bakes a
+  # vendorHash that builds green THROUGH OUR LOCK (first-hand probe
+  # 2026-10-25: inputs.projects-management-automation.packages.x86_64-linux
+  # .default.goModules exited 0; only the 2026-10-23 NBQcjrwD… shim was
+  # stale, re-breaking the FOD it existed to fix). Re-add ONLY via
+  # nix-hash-fix evidence, never by hand.
+  projects-management-automation = flakePkg inputs.projects-management-automation;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
