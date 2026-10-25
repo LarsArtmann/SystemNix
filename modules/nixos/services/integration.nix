@@ -90,10 +90,22 @@ _: {
 
       # Maps a registry entry's `homepage` field to a dashboard tile. The
       # registry key keeps its historical name; the consumer is the
-      # PapDashboard services tab (papdashboard.nix extraTiles fold).
-      dashboardTile = _name: e: {
-        name = e.homepage.name;
-        inherit (e.homepage) group;
+      # PapDashboard services tab (papdashboard.nix extraTiles fold). Tile
+      # `name`/`group` are optional: a null name derives from the subdomain
+      # (the web identity — falls back to the entry key for headless tiles),
+      # a null group lands in the default "Services" group, and href already
+      # derives from the subdomain — so a minimal tile is one line:
+      #   homepage = { icon = "miniflux.png"; };
+      # (icon stays mandatory — the tile-icon assertion below.)
+      dashboardTile = name: e: {
+        name =
+          if e.homepage.name != null then
+            e.homepage.name
+          else if e.subdomain != null then
+            e.subdomain
+          else
+            name;
+        group = if e.homepage.group != null then e.homepage.group else "Services";
         href =
           if e.homepage.href != null then
             e.homepage.href
@@ -264,12 +276,20 @@ _: {
                   lib.types.submodule {
                     options = {
                       name = lib.mkOption {
-                        type = lib.types.str;
-                        description = "Tile label";
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          Tile label; null derives from the entry's subdomain
+                          (or the entry name for headless tiles).
+                        '';
                       };
                       group = lib.mkOption {
-                        type = lib.types.str;
-                        description = "Dashboard tab (existing name appends, new name opens a tab)";
+                        type = lib.types.nullOr lib.types.str;
+                        default = null;
+                        description = ''
+                          Dashboard tab (existing name appends, new name opens
+                          a tab); null lands in the default "Services" group.
+                        '';
                       };
                       href = lib.mkOption {
                         type = lib.types.nullOr lib.types.str;
@@ -288,9 +308,12 @@ _: {
                           Tile logo: a dashboard-icons pack file name
                           (e.g. "miniflux.png"; served at /icons/ by
                           PapDashboard from the pack the module renders) or
-                          an absolute http(s) image URL. Null renders the
-                          tile monogram; names are verified against the pack
-                          at build time (modules/nixos/services/papdashboard.nix).
+                          an absolute http(s) image URL. REQUIRED on registry
+                          tiles — the tile-icon assertion below rejects null
+                          (monogram tiles would red the pre-deploy §16 gate
+                          and the icons_ok Gatus check anyway); names are
+                          verified against the pack at build time
+                          (modules/nixos/services/papdashboard.nix).
                         '';
                       };
                       checkUrl = lib.mkOption {

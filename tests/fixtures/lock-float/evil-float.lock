@@ -1,0 +1,35 @@
+{
+  "nodes": {
+    "root": {
+      "inputs": {
+        "toolA": "nodeA",
+        "toolB": "nodeB",
+        "followsB": [ "toolB" ],
+        "localPkg": "nodeP"
+      }
+    },
+    "nodeA": {
+      "locked": {
+        "type": "github",
+        "owner": "example",
+        "repo": "a",
+        "rev": "3333333333333333333333333333333333333333"
+      }
+    },
+    "nodeB": {
+      "locked": {
+        "type": "github",
+        "owner": "example",
+        "repo": "b",
+        "rev": "2222222222222222222222222222222222222222"
+      }
+    },
+    "nodeP": {
+      "locked": {
+        "type": "path",
+        "path": "/home/lars/projects/localPkg"
+      }
+    }
+  },
+  "version": 8
+}

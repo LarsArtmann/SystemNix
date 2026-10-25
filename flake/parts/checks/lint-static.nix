@@ -771,6 +771,62 @@
                 touch $out
               '';
 
+          # Lock-float selftest (2026-10-25, fleet-stabilization F07-F10):
+          # proves the eval-time rev-drift gate (lib/lock-float-audit.nix,
+          # forced via allEvalGuards after lockAuditGuard) fires on the float
+          # and unregistered classes, stays green on follows/path inputs, and
+          # flags registry table rot. Same pattern as lock-audit-selftest:
+          # fixture locks + per-leg registries, verdicts precomputed at CHECK
+          # EVAL time (pure Nix), bash only asserts.
+          lock-float-selftest =
+            let
+              fixture = root + "/tests/fixtures/lock-float";
+              auditWith =
+                lockFile: expected:
+                (import (root + "/lib/lock-float-audit.nix") {
+                  lock = builtins.fromJSON (builtins.readFile lockFile);
+                  inherit expected;
+                });
+              registry = {
+                toolA = "1111111111111111111111111111111111111111";
+                toolB = "2222222222222222222222222222222222222222";
+              };
+              legs = {
+                clean = builtins.toJSON (auditWith (fixture + "/clean.lock") registry);
+                float = builtins.toJSON (auditWith (fixture + "/evil-float.lock") registry);
+                unregistered = builtins.toJSON (
+                  auditWith (fixture + "/clean.lock") { toolA = registry.toolA; }
+                );
+                stale = builtins.toJSON (
+                  auditWith (fixture + "/clean.lock") (
+                    registry // { localPkg = "4444444444444444444444444444444444444444"; }
+                  )
+                );
+              };
+            in
+            pkgs.runCommand "lock-float-selftest"
+              {
+                inherit (legs)
+                  clean
+                  float
+                  unregistered
+                  stale
+                  ;
+              }
+              ''
+                set -u
+                fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+                [ "$clean" = "[]" ] || fail "clean fixture produced violations: $clean"
+                echo "$float" | grep -q 'toolA' && echo "$float" | grep -q 'floated rev 3333333333333333333333333333333333333333' \
+                  || fail "floated rev not flagged: $float"
+                echo "$unregistered" | grep -q 'toolB' && echo "$unregistered" | grep -q 'NO registry entry' \
+                  || fail "unregistered input not flagged: $unregistered"
+                echo "$stale" | grep -q 'localPkg' && echo "$stale" | grep -q 'stale' \
+                  || fail "stale registry entry not flagged (table rot): $stale"
+                echo "lock-float: 4 legs green (clean incl. follows+path skip, float, unregistered, stale-registry)"
+                touch $out
+              '';
+
           # flake-input-pin-audit selftest (2026-10-14): proves the eval-time
           # hardcoded-version-pin gate (lib/flake-input-pin-audit.nix, forced
           # via allEvalGuards) fires on every pin class and stays quiet on

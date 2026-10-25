@@ -1261,8 +1261,33 @@
             Fix: add '<input>.inputs.<dep>.follows = "<dep>";' to the infra-follows group at the end of the inputs attrset in flake.nix (eval-only deps are always safe to follow) — or, only if the consumer's FODs were validated against its own pin, a documented entry in lib/lock-audit.nix `deliberate`.
           '';
         true;
+      # Lock-float gate (2026-10-25, fleet-stabilization F07-F10): a blanket
+      # lock wave floats many revs at once; the 2026-10-23 wave carried four
+      # eval-breaking floats that surfaced only as a DOA deploy. Root-input
+      # rev drift vs the reviewed registry (flake/expected-locks.nix) now
+      # fails eval BEFORE anything builds. The registry update IS the
+      # deliberate-float mechanism. Semantics: lib/lock-float-audit.nix;
+      # behavior pinned by checks.lock-float-selftest.
+      lockFloatViolations = import ./lib/lock-float-audit.nix {
+        lock = lockFile;
+        expected = import ./flake/expected-locks.nix;
+      };
+      lockFloatGuard =
+        assert
+          lockFloatViolations == [ ]
+          || throw ''
+            flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
+              ${lib.concatStringsSep "\n  " lockFloatViolations}
+            A blanket `nix flake update` is not landable as-is. Float procedure:
+            1. nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
+            2. regenerate flake/expected-locks.nix (rederive command in its header)
+            3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
+          '';
+        true;
       allEvalGuards = builtins.seq nixpkgsTarballGuard (
-        builtins.seq flakeInputPinAuditGuard lockAuditGuard
+        builtins.seq flakeInputPinAuditGuard (
+          builtins.seq lockAuditGuard lockFloatGuard
+        )
       );
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {
