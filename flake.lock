@@ -973,11 +973,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792912781,
-        "narHash": "sha256-zQUCuLXFTYnmMKDY8UwZ0LAlTWUZEdB0IbVwCU7Ij/8=",
+        "lastModified": 1792916281,
+        "narHash": "sha256-GOualyzWzPpBQeD6wl9G3DOnXeCUOr9E/FZz7b+4qLc=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "696be97018d3d7bfc5eb8c6839f4989484e52e12",
+        "rev": "6d65f304e58377258975bfb22a31faffed3789c3",
         "type": "github"
       },
       "original": {
@@ -1129,11 +1129,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1792914966,
-        "narHash": "sha256-nrW1ln4XHwm5KZCQ/CFXhsWSUNUDnO0VI4eO6S4NlEU=",
+        "lastModified": 1792915291,
+        "narHash": "sha256-Ob1FFshgtqtGNN+c77phJ1YIpfVKr6BJhQEBgK0xD98=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "40355a7191fb0eeb885caeca347cb0da8a425e44",
+        "rev": "23924a7921c09b21cf8a525669709afe0bbfc4d7",
         "type": "github"
       },
       "original": {
@@ -3016,11 +3016,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792898981,
-        "narHash": "sha256-pCRLRWcXvy8kyhfZeo8lx5Jccxz2h8psYYUQd1KsGWc=",
+        "lastModified": 1792915386,
+        "narHash": "sha256-SluSSGUKYiSPrZ/BB2C3F9XR+akKtiVoNOdrTpHfgKg=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "0ed4ec9095ec3ba9bc85f2a8f6b83b64bb484201",
+        "rev": "8732bb6135aebac496e13a65a6ffdb1988ee6a26",
         "type": "github"
       },
       "original": {
@@ -4350,11 +4350,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792907515,
-        "narHash": "sha256-rbkjCPhUus+EjGjrDzMkZRM7MjfbUIL4SigWIndrRFc=",
+        "lastModified": 1792911573,
+        "narHash": "sha256-QQtIN1wpTPs3vq9anhbw+khvS9K2sKhJZIxEI3ck/Oo=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "0b9cb7c21f259552937f819905c150b46ae8e17b",
+        "rev": "390bf2d596e353b1889de3bb0d48632190769076",
         "type": "github"
       },
       "original": {
@@ -5665,11 +5665,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792907902,
-        "narHash": "sha256-nkJ2OUNSdbiyBil743f7/P/86ewp6rEa9yjcIKVlzCg=",
+        "lastModified": 1792915741,
+        "narHash": "sha256-k8tRmP7iywxbpHAGEd2ucbHJrLPgXhrnNfb7kKCtW5c=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "3810c13c80b5718f091940954346341b38fc2111",
+        "rev": "4c88ec84c51d9322fde399e4da8a647adb4e9d56",
         "type": "github"
       },
       "original": {
@@ -6258,11 +6258,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1792913789,
-        "narHash": "sha256-iJ8Z9EZm0DXdDMs5bUVGwAvcdMa2dAS6lOnYqgVbTRE=",
+        "lastModified": 1792917833,
+        "narHash": "sha256-R0LrM8OKabxz7UZ5vIDmosBQE2d2d/K/dwj39d8WiWI=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "5df2c86397cb135c051b14a8daca0f5f5fafd634",
+        "rev": "8965b9900419267f03e34e01d4ec1579b8bfc0fc",
         "type": "github"
       },
       "original": {
@@ -6392,11 +6392,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792915441,
-        "narHash": "sha256-KPsycWetILKh3Xwb2njvUa56rG7F0NB2oKJ7+fPaT5s=",
+        "lastModified": 1792915745,
+        "narHash": "sha256-FvIy0cFFldt25Ni4prMU0ot4M5poSkHIDRIpb61T6kg=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "f76e36fb08db1b0032600b4cce2c6026e7fef6bf",
+        "rev": "c63bf2895a17741541ccaccde9677091904dac17",
         "type": "github"
       },
       "original": {
@@ -7212,11 +7212,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792915575,
-        "narHash": "sha256-Sh01LpRMQwFvd3+uLJmhTmmFFVnQBsrNUwNfzJ5HSWM=",
+        "lastModified": 1792917869,
+        "narHash": "sha256-gneXYhh6z1B4Tl8vfJH7mU5rvqzi3i6loDy4crVDAT4=",
         "owner": "LarsArtmann",
         "repo": "nsfw-classifier",
-        "rev": "1c6a239fdabe241622cb26d6e178a707266b45fe",
+        "rev": "735e24d08c46af133ee4ea42afcb9c2208ebde7d",
         "type": "github"
       },
       "original": {
@@ -7236,11 +7236,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792914092,
-        "narHash": "sha256-3PFHLhaNP8GVjHrOR7s1mnRnPht5AfMBkGNf56PjbMQ=",
+        "lastModified": 1792918458,
+        "narHash": "sha256-SAZH0EtxmkaBbj6jdTxae0oG7Akf8YJ7c1zwtuPdx7M=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "e6c295d9bbd498b19c3f39f10b6ef55d3a087643",
+        "rev": "b8a52d150586f9b7a91d1b54c5a7c159047dd943",
         "type": "github"
       },
       "original": {

@@ -1358,6 +1358,31 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# DiscordSync Immich cross-archive verify: oneshot WITHOUT RemainAfterExit,
+# so is-active is meaningless post-run — probe LAST RESULT + the unit's
+# latest journal line instead. Distinguishes the three go-live outcomes:
+# verified key / still-PLACEHOLDER (inert by design — /lookup shows the
+# misleading "Immich: unavailable" badge) / key rejected (Result≠success).
+# Skips hosts without the unit (immich integration disabled).
+if systemctl cat discordsync-immich-verify.service >/dev/null 2>&1; then
+  _dsv_result=$(systemctl show -p Result --value discordsync-immich-verify.service 2>/dev/null || echo unknown)
+  _dsv_line=$(journalctl -u discordsync-immich-verify.service -n 1 --no-pager -o cat 2>/dev/null || true)
+  if [ "$_dsv_result" != "success" ]; then
+    echo -e "${RED}FAIL${NC} DiscordSync Immich verify - Result=$_dsv_result (Immich rejected the key — check scope asset.read+asset.upload / journal)"
+    FAIL=$((FAIL + 1))
+    record_fail "DiscordSync Immich verify - Result=$_dsv_result"
+  elif echo "$_dsv_line" | grep -q "PLACEHOLDER"; then
+    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - API key still PLACEHOLDER (go-live step 2 pending: docs/services/discordsync.md — /lookup shows 'Immich: unavailable' because of this)"
+    SKIP=$((SKIP + 1))
+  elif echo "$_dsv_line" | grep -q "verified"; then
+    echo -e "${GREEN}PASS${NC} DiscordSync Immich verify - API key verified ($_dsv_line)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - success but unexpected journal line: $_dsv_line"
+    SKIP=$((SKIP + 1))
+  fi
+fi
+
 # ClickHouse XFS data mount: functional gate for the dedicated-partition
 # migration. Gated on the DEPLOYED fstab declaring the mount. Do NOT gate on
 # /etc/systemd/system/var-lib-clickhouse.mount - fileSystems entries render

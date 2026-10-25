@@ -550,6 +550,10 @@
           timerConfig = {
             OnCalendar = "daily";
             Persistent = true;
+            # Off 00:00 sharp: the daily nix-gc window starts there and the
+            # verify's curl probes should not race the GC store walk
+            # (bank-sync daily-timer precedent).
+            RandomizedDelaySec = "1h";
           };
         };
 
