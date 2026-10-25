@@ -51,6 +51,11 @@
             vendorHash = "sha256-1O/b94qjAysB41hXQN2Bujd3NmIgicBqEQ4RYvoVJQo=";
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
+      # Immich lookup key pair (IMMICH_URL/IMMICH_API_KEY), rendered by the
+      # discordsync-immich-key-provision converger — NOT a sops template:
+      # the token is machine-minted (direct api_key table insert via
+      # peer-auth postgres), so there is no secret to encrypt.
+      provisionedEnvPath = "${cfg.dataDir}/immich-api-env";
 
       dbBackupDir = "/mnt/pool/backups/discordsync";
 
@@ -639,6 +644,45 @@
           };
         };
 
+        systemd.services.discordsync-immich-key-provision = lib.mkIf cfg.immich.enable {
+          description = "DiscordSync Immich lookup key provisioner (root; direct api_key table insert via peer-auth postgres)";
+          after = [ "postgresql.service" ];
+          wants = [ "postgresql.service" ];
+          # multi-user-wanted (crowdsec-setup pattern): the deploy.sh
+          # provisioner loop's is-enabled gate admits it, so every deploy
+          # re-converges the key. Boot-time run covers DB-restore healing.
+          wantedBy = [ "multi-user.target" ];
+          inherit onFailure;
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = lib.getExe immichKeyProvision;
+            TimeoutStartSec = "2min";
+            # Root BY DESIGN: peer-auth postgres via runuser (no secret exists
+            # to authenticate with), discordsync-owned env file write, and a
+            # try-restart of the consumer units. NoNewPrivileges stays OFF —
+            # runuser is setuid and the script legitimately needs it.
+            NoNewPrivileges = false;
+            ProtectSystem = "strict";
+            ReadWritePaths = [ cfg.dataDir ];
+            PrivateTmp = true;
+          };
+        };
+
+        systemd.timers.discordsync-immich-key-provision = lib.mkIf cfg.immich.enable {
+          description = "Daily DiscordSync Immich key convergence (DB-restore self-heal)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "daily";
+            Persistent = true;
+            # Anywhere in the 00:00-06:00 window: must precede nothing; the
+            # verify unit (00:00 + 1h jitter) may run before or after it —
+            # a 401 from a DB-restored key self-heals at THIS unit's next
+            # run and pages via the verify's FAIL in between.
+            RandomizedDelaySec = "6h";
+          };
+        };
+
         # Daemon-less verification: no HTTP endpoint, so monitoring is
         # OnFailure (Discord) + the system-health state metrics
         # (github-auto-assign pattern). The options?-guard mirrors the
@@ -658,6 +702,9 @@
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
           # DB-heal oneshot runs independently (not blocking deploy activation).
+          # immich-key-provision: the daemon's second EnvironmentFile is
+          # rendered by that oneshot — a missing file FAILS the unit at
+          # start, so the order is load-bearing (immich shape only).
           after = [
             "sops-nix.service"
             "dnsblockd.service"
@@ -665,6 +712,9 @@
           ]
           ++ lib.optionals (cfg.attachmentsDir != null) [
             "discordsync-attachments-dir.service"
+          ]
+          ++ lib.optionals cfg.immich.enable [
+            "discordsync-immich-key-provision.service"
           ];
           wants = [
             "sops-nix.service"
@@ -673,6 +723,9 @@
           ]
           ++ lib.optionals (cfg.attachmentsDir != null) [
             "discordsync-attachments-dir.service"
+          ]
+          ++ lib.optionals cfg.immich.enable [
+            "discordsync-immich-key-provision.service"
           ];
           inherit onFailure;
           startLimitBurst = lib.mkForce 10; # SystemNix uses 10 (upstream is 5)
@@ -776,6 +829,16 @@
             {
               Environment = [ "GOMEMLIMIT=1536MiB" ];
             }
+            (lib.mkIf cfg.immich.enable {
+              # Second EnvironmentFile: the provisioned Immich key pair
+              # (IMMICH_URL/IMMICH_API_KEY). Merging into the upstream list
+              # CONCATENATES (list option) — systemd applies files in order
+              # and later files override earlier keys; the key sets are
+              # disjoint, so ordering carries no semantics. Ordered after the
+              # provision unit (after/wants above) because a missing
+              # EnvironmentFile fails the unit at start.
+              EnvironmentFile = [ provisionedEnvPath ];
+            })
           ];
 
           # The attachment archive is pool-native when attachmentsDir is set:
