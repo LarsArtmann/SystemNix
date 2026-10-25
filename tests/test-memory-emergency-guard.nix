@@ -552,6 +552,32 @@ in
       assert 'memory_emergency_guard_zone_trips_last_hour{zone="5"} 0' in prom, (
           "the legacy bare-timestamp line must NOT attribute to any zone"
       )
+      # churn_mode: 3 trips/hour is under the default escalation threshold
+      # (6) — the Discord alert-fatigue gate must read 0 here...
+      assert "memory_emergency_guard_churn_mode 0" in prom, (
+          "sub-threshold churn must NOT gate the per-trip Gatus check"
+      )
+      # ...and 7 trips/hour crosses it (the 2026-09-14 Zone 6 storm class:
+      # 14 trips paged ~every 10 min — the storm-level escalation alert
+      # replaces the per-trip pings from here).
+      machine.succeed(
+          "for i in 1 2 3 4; do echo $(( $(date +%s) - 60 )) 6 >> /var/lib/memory-emergency-guard/trip-history; done"
+      )
+      out = run_guard("healthy")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_trips_last_hour 7" in prom
+      assert "memory_emergency_guard_churn_mode 1" in prom, (
+          "7 trips/hour must flip churn_mode 1 — the per-trip Gatus check "
+          "conditions require churn_mode 0, this line IS the suppression gate"
+      )
+      # drain: prune the window back under the threshold — churn_mode 0
+      # again (one guard run, no stale emission)
+      machine.succeed("truncate -s 0 /var/lib/memory-emergency-guard/trip-history")
+      out = run_guard("healthy")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_churn_mode 0" in prom, (
+          "drained window must release the churn gate (fail-closed emission, never stale)"
+      )
 
       # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
       #      this VM): burn the budget with one more trip->restore cycle,

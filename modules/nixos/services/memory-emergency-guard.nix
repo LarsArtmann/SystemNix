@@ -743,6 +743,17 @@ _: {
             last_trip_recent=1
           fi
 
+          # churn_mode: the Discord alert-fatigue gate. >=${toString cfg.churnEscalationThreshold}
+          # trips/hour = a full storm, not an event: the per-trip Gatus check
+          # is suppressed (its condition requires churn_mode 0) and the
+          # single 'Memory Guard Trip Churn' escalation alert speaks for the
+          # storm until it drains (computed AFTER the trips_last_hour prune
+          # above, so it reflects the current window).
+          churn_mode=0
+          if [ "''${trips_last_hour:-0}" -ge ${toString cfg.churnEscalationThreshold} ]; then
+            churn_mode=1
+          fi
+
           # Churn-stop forensics state (written at trip action, see above):
           # emitted on every run while the drain window lasts; once
           # sustained io PSI falls back under the trip threshold the
@@ -900,6 +911,10 @@ _: {
             echo "# TYPE memory_emergency_guard_trips_last_hour gauge"
             echo "memory_emergency_guard_trips_last_hour ''${trips_last_hour}"
 
+            echo "# HELP memory_emergency_guard_churn_mode 1 when trips_last_hour >= ${toString cfg.churnEscalationThreshold} — the Discord alert-fatigue gate: per-trip Gatus pings suppressed, the single 'Memory Guard Trip Churn' escalation alert carries the storm context instead"
+            echo "# TYPE memory_emergency_guard_churn_mode gauge"
+            echo "memory_emergency_guard_churn_mode ''${churn_mode}"
+
             echo "# HELP memory_emergency_guard_zone_trips_last_hour Per-zone emergency stops in the last hour — which trip condition dominates the current storm (forensics without journal digs). Trips recorded before 2026-10-01 carry no zone and count only in the aggregate."
             echo "# TYPE memory_emergency_guard_zone_trips_last_hour gauge"
             echo "memory_emergency_guard_zone_trips_last_hour{zone=\"1\"} ''${zone1_lh}"
@@ -1048,6 +1063,12 @@ _: {
           type = lib.types.int;
           default = 40;
           description = "SUSTAINED PSI io some avg60 stall percentage at or above which the Zone 6 trip fires (requires disk-busy corroboration unless unknown). The crash #3 class: a manual balance at 0% unalloc + zram 85% drove io PSI to ~99% and froze the kernel in 2.5 min while every memory gauge looked healthy";
+        };
+
+        churnEscalationThreshold = lib.mkOption {
+          type = lib.types.int;
+          default = 6;
+          description = "Trips in the last hour at or above which memory_emergency_guard_churn_mode flips to 1: the DISCORD alert-fatigue gate (2026-09-14 Zone 6 storm — 14 trips paged ~every 10 min all day). In churn mode the per-trip 'Memory Emergency Guard' Gatus check goes quiet and a single 'Memory Guard Trip Churn' escalation alert carries the context instead (one Gatus episode = one message until the churn drains — a natural cooldown, not a timer). The sev1 desktop notify keeps its own >=2 threshold and is UNAFFECTED.";
         };
 
         ioDiskBusyThresholdPercent = lib.mkOption {

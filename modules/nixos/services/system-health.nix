@@ -2554,8 +2554,37 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*memory_emergency_guard_avail_percent*)"
                   "[BODY] == pat(*memory_emergency_guard_last_trip_recent 0*)"
+                  # Churn suppression (2026-09-14 Zone 6 storm: 14 trips paged
+                  # Discord ~every 10 min all day — per-trip pings ARE the
+                  # fatigue). During a storm (>=6 trips/hour) this check goes
+                  # quiet and the 'Memory Guard Trip Churn' escalation speaks
+                  # for the whole storm instead — one Gatus episode = one
+                  # message until the churn drains.
+                  "[BODY] != pat(*\nmemory_emergency_guard_churn_mode 1\n*)"
+                  "[BODY] == pat(*\nmemory_emergency_guard_churn_mode *)"
                 ];
-                alert = "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, PSI refault thrash, episodic memory stall, or sustained I/O stall with disk-busy corroboration) and FastFlowLM + its activation socket + the resumable I/O churn units (btrbk/balance/scrub) were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10,io_psi_some_avg60}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+                alert = "Memory emergency guard TRIPPED (or the guard died): the machine entered a pre-freeze zone (low MemAvailable, near-full zram, PSI refault thrash, episodic memory stall, or sustained I/O stall with disk-busy corroboration) and FastFlowLM + its activation socket + the resumable I/O churn units (btrbk/balance/scrub) were force-stopped. The socket auto-restores once memory recovers; until then LLM clients get connection-refused by design. If memory_emergency_guard_churn_mode is 1 this alert is SUPPRESSED (see 'Memory Guard Trip Churn'). Check: journalctl -u memory-emergency-guard -n 30, memory_emergency_guard_{avail,zram_fill,psi_some_avg10,io_psi_some_avg60}_percent in the textfile collector, what is holding RAM (ps aux --sort=-%mem | head)";
+              }
+              {
+                name = "Memory Guard Trip Churn";
+                group = "Monitoring";
+                # The escalation half of the Zone 6 alert-fatigue fix
+                # (2026-09-14_13-54 §f.9/12): the per-trip check above is
+                # suppressed while churn_mode 1, and THIS check is the single
+                # storm-level signal. Gatus episodes give the cooldown for
+                # free: one message when the storm starts, the next only on
+                # resolve + re-enter (no per-trip repeats). This REPLACES the
+                # raw trip pings as the "something keeps tripping" signal —
+                # it carries the escalation context the individual trips
+                # lacked.
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] != pat(*\nmemory_emergency_guard_churn_mode 1\n*)"
+                  "[BODY] == pat(*\nmemory_emergency_guard_churn_mode *)"
+                ];
+                alert = "Memory guard TRIP CHURN (>=6 trips in the last hour — the 2026-09-14 Zone 6 storm class; per-trip Discord pings are suppressed while this is active, this is the ONLY storm alert): a repeating trip→restore→re-trip loop is burning the restore budget and the machine is in a sustained storm. This is one message for the whole storm, NOT one per trip. Check, in order: (1) memory_emergency_guard_zone_trips_last_hour — which zone dominates; (2) the guard's per-trip io.stat attribution lines: journalctl -u memory-emergency-guard --since -2h | grep 'top io'; (3) whether the sev1 desktop notify-tier churn context actually fired: journalctl -u sev1-bridge --since -2h | grep -i churn (it gates at >=2 trips/hour — if absent, the bridge is dead and Discord is the only channel); (4) restore state: memory_emergency_guard_restore_capped / trips_last_hour. Do NOT chase individual trips — shed the driver load the io.stat lines name, or wait for the drain (churn_mode returns to 0 and this alert resolves).";
               }
               {
                 name = "Memory Pressure Warning";
