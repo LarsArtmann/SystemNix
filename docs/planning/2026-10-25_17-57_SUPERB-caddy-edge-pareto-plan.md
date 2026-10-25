@@ -1,6 +1,7 @@
 # SUPERB Plan — Caddy Edge: Pareto Execution Plan (Observability + UX + Hygiene)
 
-**Authored:** 2026-10-25 17:57 CET
+**Created:** 2026-10-25 17:57 CET
+**EXECUTING (instance crush-glm-5.3-flash-caddy-edge, 2026-10-25 18:56 CET, HEAD `1435874f8`):** executing (see AGENTS.md plan-execution tombstone)
 **Inputs:** `docs/research/2026-10-25_caddy-deep-dive.html` (adoption audit 89/100, 3 findings) + `docs/status/2026-10-25_17-44_caddy-deep-dive-session-status.md` §f (50 items) — ALL 50 items are mapped below (traceability table).
 **Scope:** follow-up work surfaced by THIS session's caddy deep dive only. Repo-wide backlog (other domains' TODO rows) is deliberately out of scope.
 **Status:** PLANNED — not executing. When execution starts, write the tombstone first (`scripts/plan-marker.sh <this-file> start`, commit immediately).
