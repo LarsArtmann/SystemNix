@@ -43,22 +43,18 @@
       # Caddy vhost sinks (host paths now — no container mount mapping
       # anymore). The nixpkgs caddy module writes each vhost to
       # access-<host>.log (file output => Caddy's default encoder is JSON
-      # per caddyserver.com/docs/caddyfile/directives/log). The global
-      # access.log is Caddy's DEFAULT logger: it receives access records
-      # for hosts without their own log block PLUS Caddy runtime log lines
-      # (JSON without a `request` object). parse() returns None for those,
-      # so they never reach access_logs — but they ARE captured to
-      # access_log_debug as malformed (2026-10-14 live: Caddy restart
-      # banners were 1,113 of 1,113 debug rows; ~19 lines per Caddy restart,
-      # bounded by 30-day debug retention). Keeping the FULL list (global +
-      # every vhost) is the complete traffic picture.
+      # per caddyserver.com/docs/caddyfile/directives/log). The GLOBAL
+      # access.log was dropped 2026-10-25 (M9 of the caddy edge plan):
+      # caddy runtime logs now flow to the journal (output stdout +
+      # journald encoder) and reach SigNoz through the journald receiver
+      # as service "caddy" — tailing them here only produced
+      # access_log_debug malformed rows (2026-10-14 live: 1,113 of 1,113
+      # debug rows were Caddy restart banners). Per-vHost files carry the
+      # full traffic picture for every host.
       # Filenames replicate vhost-options.nix's own derivation: "/" and
       # " " -> "_". Derived from config.services.caddy.virtualHosts at
       # eval time, so new services are tracked automatically.
-      caddyLogPaths = [
-        "/var/log/caddy/access.log"
-      ]
-      ++ map (
+      caddyLogPaths = map (
         host:
         "/var/log/caddy/access-${
           lib.replaceStrings

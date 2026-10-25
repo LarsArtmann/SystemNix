@@ -159,16 +159,52 @@ duration is also in every access-log line (`duration` field).
 
 ## Logs
 
-- **Global** `/var/log/caddy/access.log` — the DEFAULT logger (runtime JSON +
-  any site without its own log block). Roll 100MB × 3, 168h.
-- **Per-vHost** `/var/log/caddy/access-<host>.log` — the nixpkgs per-host
-  default (`log { output file ... }` in every site block). Caddy file-output
-  defaults: roll 100MiB, keep 10 — bounded per file, aggregate grows with
-  vHost count.
-- **No double-logging** (verified against the rendered Caddyfile + live log
-  dir 2026-09-30): each request lands in exactly ONE per-vHost file.
-- geometrikks tails BOTH surfaces (its per-vhost path derivation matches the
-  nixpkgs default) — see `modules/nixos/services/geometrikks.nix`.
+- **Runtime** — the journal (M9, 2026-10-25): the default logger is
+  `output stdout` + `format journald { wrap json }` (encoder needs 2.11.3+;
+  syntax adapt-validated against 2.11.7), so caddy's own lines (reload/TLS/
+  upstream-dial errors) land in the journal with priority prefixes and reach
+  SigNoz through the journald receiver as service `caddy`. The global
+  `/var/log/caddy/access.log` file is GONE — geometrikks no longer tails it
+  (runtime lines only ever produced access_log_debug malformed rows there).
+- **Per-vHost** `/var/log/caddy/access-<host>.log` — file output in every
+  site block: mode 0640 (caddy rw + group r for crowdsec), roll 100MiB ×
+  keep 3 / 168h, zstd-compressed on roll (M21; ~77 vHosts worst case ≈
+  23 GiB uncompressed, far less compressed). A server RESTART (not reload)
+  applies output-file option changes, and open(2) never re-modes existing
+  files — the crowdsec re-chmod timer covers the transition.
+- **Probe endpoints skip access logging** (M21): `/health /healthz /metrics
+  /ping /up /api/healthz /api/server/ping /actuator/health` are `log_skip`ed
+  in commonConfig — responses untouched, only the log row is dropped
+  (gatus/post-deploy probes were ~80 req/min of noise into crowdsec +
+  geometrikks).
+- **No double-logging**: each request lands in exactly ONE per-vHost file;
+  runtime lines land ONLY in the journal.
+- crowdsec tails `/var/log/caddy/*.log` (glob; group-read re-asserted by its
+  timer) — unaffected by the runtime-log switch.
+- geometrikks tails the per-vHost files only (derivation matches the nixpkgs
+  per-host default) — see `modules/nixos/services/geometrikks.nix`.
+- **Access-log ingestion** (filelog receiver) now targets the per-vHost
+  files — `docs/todo/monitoring.md`.
+
+## Error pages
+
+- **404** — branded page (notFoundRoot) served by both wildcard catch-alls
+  WITH the 404 status (`error 404` + `handle_errors 404`).
+- **502/503/504** — branded sibling pages (serverErrorRoot, one file per
+  status) served by `handle_errors 502 503 504` in every upstream-bearing
+  vHost (proxy helpers + hand-written proxy vHosts). file_server keeps the
+  original error status. Static/redirect-only vHosts carry no such route
+  (no upstream, no 5xx). Sandbox-proven 2026-10-25: dead backend → HTTP 502
+  with the page naming 502.
+- **Upstream 5xx RESPONSES** stay pass-through by decision (deep dive
+  finding 2b): `handle_response` blocks that serve a page lose the upstream
+  status (file_server answers 200), and replacing upstream 5xx bodies would
+  break API clients. If ever needed, the opt-in pattern is a `status 5xx`
+  response matcher + `handle_response` inside `proxyTo` (caddyserver/caddy
+  #7283 context) — deliberately NOT wired.
+- **10GB request bodies** — per-vHost `request_body { max_size 10GB }` in
+  commonConfig is deliberate (Immich-class uploads); `read_body 15m` bounds
+  slow-upload stalls (sized for 10GB at ~10Mbps with headroom).
 
 ## Cloud mirroring (split-horizon)
 
@@ -265,16 +301,15 @@ Full adoption audit vs Caddy 2.11: `docs/research/2026-10-25_caddy-deep-dive.htm
 — verdict **89/100 (very high)**: 24 of 27 applicable capabilities fully
 leveraged, 0 anti-patterns, version-current (2.11.7 = upstream latest). Three
 findings (Pareto-ranked, none urgent): (1) `metrics { per_host }` unused —
-the caddy.json dashboard is aggregate-only, one word in `globalConfig` adds
-per-vHost RED metrics with bounded cardinality (2.11+); (2) dead backends
-serve plain-text 502 — `handle_errors 502` in the vHost helpers would brand it
-(dial failures hit error routes; upstream 5xx responses need
-`handle_response @e status 5xx` — caddyserver/caddy#7283); (3) caddy runtime
-logs land only in `access.log`, invisible to the journald→SigNoz pipeline —
-fix is `output stdout` + `format journald` on the default logger (2.11.3+),
-with the geometrikks access.log tail as the tradeoff ([decision], not a
-drive-by). Refresh triggers: next caddy major bump, adoption of any finding,
-or a change to the helper/vHost architecture.
+ADOPTED 2026-10-25 (globalConfig; per-vHost RED metrics live); (2) dead
+backends serve plain-text 502 — ADOPTED 2026-10-25 (`handle_errors 502 503
+504` + branded serverErrorRoot in every upstream-bearing vHost; upstream 5xx
+responses stay pass-through by decision — see Error pages below); (3) caddy
+runtime logs invisible to the journald→SigNoz pipeline — ADOPTED 2026-10-25
+(`output stdout` + `format journald { wrap json }` on the default logger;
+global access.log dropped, geometrikks tail removed, per-vHost files
+unchanged). Refresh triggers: next caddy major bump, adoption of any remaining
+finding, or a change to the helper/vHost architecture.
 
 ## 2026-09-30 config review — verdict table
 

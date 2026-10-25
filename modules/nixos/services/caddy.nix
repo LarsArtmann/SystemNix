@@ -278,6 +278,11 @@ _: {
         request_body {
           max_size 10GB
         }
+        # Probe endpoints bypass ACCESS LOGGING only (M21): gatus/post-deploy
+        # probes were ~80 req/min of log noise into crowdsec + geometrikks.
+        # Responses are untouched — a dead check still alerts the same way.
+        @probe path /health /healthz /metrics /ping /up /api/healthz /api/server/ping /actuator/health
+        log_skip @probe
         # Edge-level OTel spans for EVERY vHost (hand-written, registry
         # fan-out, static roots, catch-alls and the cloud mirrors — they all
         # render through this block). Spans carry the OTel HTTP semantic
@@ -576,23 +581,27 @@ _: {
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
           # in globalConfig — do NOT add a separate `log {}` block there (collision)
           #
-          # Logging map (verified against the rendered Caddyfile + the live log
-          # dir 2026-09-30): this global block configures the DEFAULT logger —
-          # caddy runtime logs plus any site WITHOUT its own log block. Every
-          # vHost also gets the nixpkgs per-host default `log { output file
-          # access-<host>.log }` in its site block, so each request lands in
-          # exactly ONE file (no double-logging); per-host files use Caddy's
-          # file-output defaults (roll 100MiB, keep 10 — bounded per file,
-          # aggregate grows with vHost count). geometrikks tails BOTH surfaces
-          # by design (its per-vhost path derivation matches the nixpkgs
-          # default).
+          # Logging map (M9 + M21 of the 2026-10-25 caddy edge plan): this
+          # global block configures the DEFAULT logger — caddy RUNTIME logs
+          # only (journal now, see below). Every vHost also gets a per-host
+          # `log { output file access-<host>.log }` block (map below), so
+          # each access record lands in exactly ONE file; runtime lines land
+          # ONLY in the journal. geometrikks tails the per-vHost files;
+          # crowdsec's glob covers them; SigNoz ingests runtime lines from
+          # the journald receiver as service "caddy".
           logFormat = ''
-            output file /var/log/caddy/access.log {
-              roll_size 100MB
-              roll_keep 3
-              roll_keep_for 168h
+            # Runtime logs go to the journal (deep dive finding 3, 2026-10-25):
+            # stdout under systemd + the journald encoder (2.11.3+) emits
+            # priority-tagged lines the SigNoz journald receiver ingests as
+            # service "caddy" — caddy's own errors (reload/TLS/upstream-dial)
+            # were invisible to SigNoz while they only landed in the global
+            # access.log file, which is now GONE. Per-vHost access-*.log files
+            # (map below) are unchanged for crowdsec + geometrikks. Syntax
+            # validated against the built 2.11.7 via caddy adapt.
+            output stdout
+            format journald {
+              wrap json
             }
-            format json
           '';
           globalConfig = ''
             auto_https off
@@ -860,6 +869,12 @@ _: {
                   logFormat = ''
                     output file /var/log/caddy/access-${lib.replaceStrings [ "/" " " ] [ "_" "_" ] host}.log {
                       mode 0640
+                      # Bounded rolls (M21): keep 3 x 100MiB, 168h, zstd on
+                      # roll (syntax validated against 2.11.7 adapt).
+                      roll_size 100MiB
+                      roll_keep 3
+                      roll_keep_for 168h
+                      roll_compression zstd
                     }
                   '';
                 }
