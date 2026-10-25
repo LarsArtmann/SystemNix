@@ -255,6 +255,23 @@ override is redundant once that upstream rev is locked + deployed — removal
 is tracked in `docs/todo/services.md`; the global `?` default remains the
 backstop for any backend that sends no cache headers.
 
+## Feature deep dive (2026-10-25)
+
+Full adoption audit vs Caddy 2.11: `docs/research/2026-10-25_caddy-deep-dive.html`
+— verdict **89/100 (very high)**: 24 of 27 applicable capabilities fully
+leveraged, 0 anti-patterns, version-current (2.11.7 = upstream latest). Three
+findings (Pareto-ranked, none urgent): (1) `metrics { per_host }` unused —
+the caddy.json dashboard is aggregate-only, one word in `globalConfig` adds
+per-vHost RED metrics with bounded cardinality (2.11+); (2) dead backends
+serve plain-text 502 — `handle_errors 502` in the vHost helpers would brand it
+(dial failures hit error routes; upstream 5xx responses need
+`handle_response @e status 5xx` — caddyserver/caddy#7283); (3) caddy runtime
+logs land only in `access.log`, invisible to the journald→SigNoz pipeline —
+fix is `output stdout` + `format journald` on the default logger (2.11.3+),
+with the geometrikks access.log tail as the tradeoff ([decision], not a
+drive-by). Refresh triggers: next caddy major bump, adoption of any finding,
+or a change to the helper/vHost architecture.
+
 ## 2026-09-30 config review — verdict table
 
 | #  | Finding                                         | Disposition                                                                  |
