@@ -87,7 +87,12 @@
           {
             echo "# HELP storage_collector_crash_orphans_total Crash-orphaned .state.json tmp files found at daemon start (emit-then-sweep)"
             echo "# TYPE storage_collector_crash_orphans_total gauge"
-            printf 'storage_collector_crash_orphans_total %d %s\n' "$count" "$(date +%s)"
+            # NO trailing timestamp: node_exporter's textfile collector
+            # rejects client-side timestamps ("contains unsupported
+            # client-side timestamps, skipping entire file") — the whole
+            # file was being dropped, setting node_textfile_scrape_error=1
+            # on every scrape (live 2026-10-25, F18).
+            printf 'storage_collector_crash_orphans_total %d\n' "$count"
           } > "$tmp"
           chmod 0644 "$tmp"
           mv -f "$tmp" "$promFile"
