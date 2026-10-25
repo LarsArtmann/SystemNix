@@ -74,6 +74,40 @@ in
       networking.local.cloudDomain = testDomain;
       services.caddy.enable = true;
 
+      # The 2026-10-25 vhost⇒registry blind-spot assertion reads
+      # services.integration entries; the four hand-written proxy vHosts
+      # (auth/seo/tasks/dnsblock) were un-blinded on evo-x2 the same day, so
+      # the VM carries their entries too — minimal shape (subdomain + layer
+      # "none" + tile opt-out; no gatus checks, no OIDC): the production
+      # entries stay owned by the real service modules, this only models the
+      # subdomain ownership the caddy assertion checks.
+      services.integration = {
+        pocket-id = {
+          subdomain = "auth";
+          vHost.layer = "none";
+          noDashboardTile = true;
+          monitored = false;
+        };
+        openseo = {
+          subdomain = "seo";
+          vHost.layer = "none";
+          noDashboardTile = true;
+          monitored = false;
+        };
+        taskchampion-sync-server = {
+          subdomain = "tasks";
+          vHost.layer = "none";
+          noDashboardTile = true;
+          monitored = false;
+        };
+        dns-blocker = {
+          subdomain = "dnsblock";
+          vHost.layer = "none";
+          noDashboardTile = true;
+          monitored = false;
+        };
+      };
+
       environment.systemPackages = [ pkgs.openssl ];
 
       # Path references the caddy module evaluates (mint CA + static-cert

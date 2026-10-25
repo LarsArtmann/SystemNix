@@ -316,6 +316,7 @@ _: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
+          # proxy-port:-
           root * ${root}
           file_server
         '';
@@ -325,6 +326,7 @@ _: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
+          # proxy-port:${toString port}
           @external not remote_ip 127.0.0.1/8 ${lanSubnet}
           handle @external {
             ${forwardAuth}
@@ -341,6 +343,7 @@ _: {
         extraConfig = ''
           ${tlsConfig}
           ${commonConfig}
+          # proxy-port:${toString port}
           ${proxyTo port { inherit hostOverride; }}
           ${serverErrorRoute}
         '';
@@ -359,6 +362,7 @@ _: {
                 extraConfig = ''
                   ${tlsConfig}
                   ${commonConfig}
+                  # proxy-port:-
                   @external not remote_ip 127.0.0.1/8 ${lanSubnet}
                   handle @external {
                     ${forwardAuth}
@@ -387,8 +391,12 @@ _: {
       # tile-coverage, gatus-coverage and OIDC fan-outs, which all key off
       # the registry (the 2026-10-25 blind-spot audit class). Every name
       # here needs a justification; REGISTRATION is the preferred fix.
-      #   alerts, logs — redirect/alias infrastructure (dash alias, SigNoz
-      #     logs-explorer redirect), no service behind them.
+      #   alerts — redirect/alias infrastructure AND removal candidate: it
+      #     exists only for pre-dash bookmarks; if owner bookmarks are gone
+      #     (check fish_history hit-rate before removing), drop the vHost +
+      #     this blind row together.
+      #   logs — redirect/alias infrastructure (SigNoz logs-explorer
+      #     redirect), no service behind it.
       #   dnsblockd — dns-blocker's DoH/DoT endpoint vHost; the DASHBOARD-
       #     facing "dnsblock" subdomain registered 2026-10-25 (§g.2 owner
       #     answer: subdomain ⇒ dashboard), leaving only the endpoint
@@ -455,14 +463,23 @@ _: {
               let
                 vhost = config.services.caddy.virtualHosts.${k};
                 layer = if lib.hasInfix "forward_auth" vhost.extraConfig then "protected" else "plain";
-                proxyLine = lib.findFirst (l: lib.hasInfix "localhost:" l) null (
+                # M26 (2026-10-25 caddy edge plan): the port comes from the
+                # helper-stamped `# proxy-port:` line, NOT the old "first
+                # localhost: line" regex — that heuristic grabbed the
+                # forward_auth dial (oauth2-proxy :4180) on every protected
+                # vHost, so the smoke's backend-down SKIP never fired for
+                # Layer 2 and dead backends mislabeled as auth-gateway
+                # failures. Static/redirect-only vHosts carry
+                # `# proxy-port:-`. Hand-written proxy vHosts stamp their
+                # primary backend port inline.
+                portLine = lib.findFirst (l: lib.hasInfix "# proxy-port:" l) null (
                   lib.splitString "\n" vhost.extraConfig
                 );
-                portMatch = if proxyLine == null then null else builtins.match ".*localhost:([0-9]+).*" proxyLine;
+                # splitString+last: stamps inside handle blocks keep their
+                # render indentation — split on the marker, not hasPrefix.
+                port = if portLine == null then "-" else lib.last (lib.splitString "# proxy-port:" portLine);
               in
-              "${layer} ${lib.removeSuffix ".${domain}" k} ${
-                if portMatch == null then "-" else builtins.head portMatch
-              }"
+              "${layer} ${lib.removeSuffix ".${domain}" k} ${port}"
             )
             (
               builtins.filter (k: lib.hasSuffix ".${domain}" k && !lib.hasInfix "*" k) (
@@ -719,6 +736,7 @@ _: {
                       ${proxyTo proxyPort { hostOverride = null; }}
                     }
                     handle {
+                      # proxy-port:${toString authPort}
                       ${proxyTo authPort { hostOverride = null; }}
                     }
                     ${serverErrorRoute}
@@ -748,6 +766,7 @@ _: {
                       respond 403
                     }
                     handle {
+                      # proxy-port:${toString config.services.paperless.port}
                       ${proxyTo config.services.paperless.port { hostOverride = null; }}
                     }
                     ${serverErrorRoute}
@@ -769,20 +788,26 @@ _: {
                 # cases and SameSite policy regressions. The callback is browser-initiated
                 # (the browser carries the _oauth2_proxy cookie), so forward-auth would
                 # pass anyway, but exempting it makes the flow deterministic.
+                # Watch-note (2026-10-25 caddy edge plan): keep this vHost
+                # HAND-ROLLED — folding it into registry protectedVHost would
+                # lose the callback exemption shape (deep dive §f.31).
                 "seo.${domain}" = {
                   extraConfig = ''
                     ${tlsConfig}
                     ${commonConfig}
                     @gsc_callback path /api/gsc/oauth/callback
                     handle @gsc_callback {
+                      # proxy-port:${toString config.services.openseo.port}
                       ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                     @external not remote_ip 127.0.0.1/8 ${lanSubnet}
                     handle @external {
                       ${forwardAuth}
+                      # proxy-port:${toString config.services.openseo.port}
                       ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                     handle {
+                      # proxy-port:${toString config.services.openseo.port}
                       ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
                     ${serverErrorRoute}
@@ -799,6 +824,7 @@ _: {
                   extraConfig = ''
                     ${tlsConfig}
                     ${commonConfig}
+                    # proxy-port:${toString config.services.dns-blocker.statsPort}
                     ${proxyTo config.services.dns-blocker.statsPort { hostOverride = null; }}
                     ${serverErrorRoute}
                   '';
@@ -848,6 +874,7 @@ _: {
                             @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
                             header @noCache Cache-Control "no-cache, no-store, must-revalidate"
 
+                            # proxy-port:${toString ports.monitor365-server}
                             ${proxyTo ports.monitor365-server { hostOverride = null; }}
                             ${serverErrorRoute}
                           '';

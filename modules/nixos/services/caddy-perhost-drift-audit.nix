@@ -12,12 +12,19 @@ _: {
       lib,
       ...
     }:
+    let
+      # Exact-line match (trimmed): a bare hasInfix "per_host" is VACUOUS —
+      # the directive's explanatory comment contains the same substring, so
+      # stripping the directive while keeping the comment would pass. The
+      # harness's drift mutation relies on this distinction.
+      perHostDirectivePresent = lib.any (l: lib.strings.trim l == "per_host") (
+        lib.splitString "\n" (config.services.caddy.globalConfig or "")
+      );
+    in
     {
       config.assertions = [
         {
-          assertion =
-            !(config.services.caddy.enable or false)
-            || lib.hasInfix "per_host" (config.services.caddy.globalConfig or "");
+          assertion = !(config.services.caddy.enable or false) || perHostDirectivePresent;
           message = ''
             caddy-perhost-drift-audit: services.caddy.globalConfig lost `per_host`.
             Without it all caddy_* metrics are edge-aggregate: the SigNoz caddy
