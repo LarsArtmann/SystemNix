@@ -548,6 +548,12 @@ in
               restartUnits = [ "monitor365-server.service" ];
               content = lib.generators.toKeyValue { } {
                 MONITOR365_SERVER__JWT_SECRET = config.sops.placeholder.server_jwt_secret;
+                # Behind Caddy every request arrives from 127.0.0.1; without
+                # proxy-header trust the per-IP rate limiters collapse ALL
+                # clients into one 10/60s bucket and a normal SSO login trips
+                # 429s on /v1/auth/* (live 2026-10-25). Caddy sends
+                # X-Forwarded-For; trust it so buckets key per real client IP.
+                MONITOR365_SERVER__TRUST_PROXY_HEADERS = "true";
               };
             };
           }
