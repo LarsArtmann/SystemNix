@@ -111,3 +111,19 @@ nix eval --impure --raw --expr 'import /home/lars/.cache/discordsync-immich/eval
 # → /nix/store/…-discordsync-immich-shape-regression.drv  (9/9 cases pass, isolated harness)
 bash scripts/check-todo-system.sh   # OK: TODO queue/library structure clean
 ```
+
+---
+
+## ADDENDUM 2 (2026-10-25 ~10:5x — the owner's "one shot" challenge obsoletes the paste)
+
+Owner pushed further: "why don't we do the key creation in Nix, like a oneshot?" The 08:07 and 10:38 adjudications ("paste is irreducible") were **WRONG in scope** — they considered only the Immich API surface (OIDC-only, no principal) and missed the **peer-auth Postgres path**: the `api_key` table lives in a local postgres that root reaches without any secret, so a root converger mints the key with **zero user action and zero new privileges**.
+
+Built + verified this hour:
+
+- **`discordsync-immich-key-provision`** (root oneshot, boot + daily timer + deploy.sh loop): mint → insert into `api_key` (scoped `asset.read`+`asset.upload`) → render `/var/lib/discordsync/immich-api-env` 0400 → try-restart daemon + verify. Convergence: file+row consistent = no-op; row gone = re-insert from file; file gone = fresh mint. Schema guard fails loudly on drift.
+- Live-verified against the deployed Immich 3.3.3: table `api_key` (StandardizeNames renamed), `key` bytea = raw sha256(token), permissions `varchar[]`, single admin row; INSERT proven in a ROLLBACK transaction; both scripts build clean through writeShellApplication's shellcheck gates; 14-case eval regression green.
+- **Retired**: `discordsync_immich_api_key` sops secret, `discordsync-immich.yaml`, the placeholder verify branch, the paste go-live steps. Runbook rewritten ("Key lifecycle"), configuration.nix comment updated, immich.md:27 cross-ref updated, drive-paperless adoption queued.
+
+**Incident recorded honestly**: appending the drive-paperless queue row, a `grep|head -1` returned EMPTY (pattern mismatch), `sed -i "$LINE r file"` with an empty address appended the row after EVERY line of docs/todo/services.md (587 copies). Fully repaired (delete-all + verify diff-clean + single append); net tree state verified. Lesson: never interpolate an unvalidated line number into sed — `>>` for appends.
+
+**Go-live is now: `nix run .#deploy` — no user action.** (Full `nix flake check` still gated on the floated-locks repair, per §g Q1 answered "run float procedure".)

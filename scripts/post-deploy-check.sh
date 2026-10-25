@@ -1360,10 +1360,12 @@ fi
 
 # DiscordSync Immich cross-archive verify: oneshot WITHOUT RemainAfterExit,
 # so is-active is meaningless post-run — probe LAST RESULT + the unit's
-# latest journal line instead. Distinguishes the three go-live outcomes:
-# verified key / still-PLACEHOLDER (inert by design — /lookup shows the
-# misleading "Immich: unavailable" badge) / key rejected (Result≠success).
-# Skips hosts without the unit (immich integration disabled).
+# latest journal line instead. Distinguishes the go-live outcomes:
+# verified / env file not yet rendered (provision oneshot has not
+# converged) / key rejected (Result≠success). Skips hosts without the unit
+# (immich integration disabled). The key itself is nix-managed since
+# 2026-10-25 (discordsync-immich-key-provision) — there is no placeholder
+# state anymore.
 if systemctl cat discordsync-immich-verify.service >/dev/null 2>&1; then
   _dsv_result=$(systemctl show -p Result --value discordsync-immich-verify.service 2>/dev/null || echo unknown)
   _dsv_line=$(journalctl -u discordsync-immich-verify.service -n 1 --no-pager -o cat 2>/dev/null || true)
@@ -1371,8 +1373,8 @@ if systemctl cat discordsync-immich-verify.service >/dev/null 2>&1; then
     echo -e "${RED}FAIL${NC} DiscordSync Immich verify - Result=$_dsv_result (Immich rejected the key — check scope asset.read+asset.upload / journal)"
     FAIL=$((FAIL + 1))
     record_fail "DiscordSync Immich verify - Result=$_dsv_result"
-  elif echo "$_dsv_line" | grep -q "PLACEHOLDER"; then
-    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - API key still PLACEHOLDER (go-live step 2 pending: docs/services/discordsync.md — /lookup shows 'Immich: unavailable' because of this)"
+  elif echo "$_dsv_line" | grep -q "has not converged"; then
+    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - env file not rendered yet (check discordsync-immich-key-provision journal)"
     SKIP=$((SKIP + 1))
   elif echo "$_dsv_line" | grep -q "verified"; then
     echo -e "${GREEN}PASS${NC} DiscordSync Immich verify - API key verified ($_dsv_line)"

@@ -706,7 +706,13 @@
         # 2026-10-13, not a module-system merge).
         services.system-health.extraMonitoredServices = lib.mkIf (options ? services.system-health) (
           lib.mkAfter (
-            lib.optionals cfg.immich.enable [ "discordsync-immich-verify" ]
+            lib.optionals cfg.immich.enable [
+              "discordsync-immich-verify"
+              # The key provisioner is ALSO daemon-less (no HTTP endpoint):
+              # state metrics + OnFailure routing for its schema-guard and
+              # insert failures, same github-auto-assign pattern.
+              "discordsync-immich-key-provision"
+            ]
             ++ lib.optionals cfg.dbBackup.enable [ "discordsync-db-restore-drill" ]
           )
         );
