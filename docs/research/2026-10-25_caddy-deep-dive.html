@@ -928,43 +928,180 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            Scope: every Caddy surface in the repo — <code>modules/nixos/services/caddy.nix</code>
+            (941 lines), the <code>services.integration</code> registry fan-out
+            (<code>integration.nix</code>), the adjacent consumers (SigNoz scrape,
+            gatus admin check, crowdsec + geometrikks log tails), the VM tests
+            (<code>tests/test-caddy-*.nix</code>), and the runbook
+            (<code>docs/services/caddy.md</code>). Method: repo-wide directive
+            inventory → full Caddy 2.11 capability map from official docs +
+            changelog → per-capability grading. Inventory: <strong>41
+            capability rows</strong>, of which <strong>27 applicable</strong>
+            (14 graded Not-Applicable with reasons in the appendix),
+            <strong>24 fully leveraged</strong>, <strong>3 missed
+            opportunities</strong>, <strong>0 misused</strong>. Score:
+            round(100 × 24/27) = <span class="highlight">89/100 — very high</span>.
+          </p>
+          <p>
+            The deployed surface is not a default nixpkgs caddy: it is a
+            hand-built edge with a three-helper vHost factory, a fail-closed
+            oauth2-proxy forward-auth gate, boot-minted dual-zone certificates,
+            edge OpenTelemetry spans, per-vHost access logs with a mode contract
+            for two log consumers, and eval-time assertions guarding the vHost
+            set. Most audits in this class read as a list of neglect; this one
+            reads as a list of deliberate, documented decisions —
+            <code>auto_https off</code>, no ACME, restart-not-reload,
+            unauthenticated-but-firewalled admin API — each with its rationale
+            in the runbook.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            Caddy is already used close to its ceiling for this deployment's
+            shape (private CA, no ACME, single-upstream backends). The three
+            things worth taking are cheap: <code>metrics { per_host }</code>
+            (one word → per-vHost RED metrics the current dashboard cannot
+            show), a branded 502 via <code>handle_errors</code> (dead backends
+            currently serve Caddy's plain-text default), and routing Caddy's
+            own runtime logs into journald so SigNoz — which already ingests
+            the journal — can alert on proxy failures.
           </div>
         </section>
 
         <!-- Strengths -->
         <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <h2><span class="num">&#9670;</span>What we already use — the baseline</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Ten usage patterns, each load-bearing. Together they are why this
+            audit scores 89: the hard parts (auth gating, cert lifecycle,
+            observability) are already solved with Caddy-native primitives, not
+            workarounds.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>Three-helper vHost factory (single source of truth)</strong>
+                <span><code>plainVHost</code> / <code>protectedVHost</code> /
+                <code>renderVHost</code> render every vHost — hand-written AND
+                registry fan-out — through one tls+headers+auth composition.
+                No snippet drift is possible.
+                modules/nixos/services/caddy.nix:205-268, 718</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
+                <strong>Fail-closed forward_auth with response matching</strong>
+                <span>The <code>@unauth status 401</code> → login redirect AND
+                the <code>@gatefail status 5xx</code> → honest 503 arm use
+                <code>handle_response</code> response matchers — the gate can
+                never fail open. This is beyond most published forward_auth
+                configs. caddy.nix:137-155</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Split-horizon cloud mirroring + branded 404 catch-alls</strong>
+                <span>Every home.lan vHost mirrors 1:1 under
+                <code>larsartmann.cloud</code> by an attrset transform; unknown
+                hosts get a real 404 status with a branded page via
+                <code>error 404</code> + <code>handle_errors</code> (not a
+                redirect that masks typos). caddy.nix:526-537, 746-776</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Edge OpenTelemetry tracing</strong>
+                <span>The <code>tracing</code> directive emits one span per
+                request with the span name pinned to the requested host —
+                SigNoz spanmetrics cardinality stays bounded by the vHost
+                count. Exporter scheme is pinned after the 2026-08-14
+                startup-hang class. caddy.nix:186-188, 886-894</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Boot-minted dual-zone certificate, fail-closed</strong>
+                <span>A oneshot signs a 365d leaf (4 SANs) from the sops'd CA
+                into tmpfs every boot, self-asserts the SANs before install,
+                and <code>Requires=</code> blocks caddy start on mint failure —
+                a broken cert fails the mint (OnFailure → Discord), never the
+                first TLS handshake. caddy.nix:792-855, 872</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Minimal-capability hardening with proof gate</strong>
+                <span><code>CAP_NET_BIND_SERVICE</code> only (the dead ACME-DNS
+                rationale for NET_ADMIN removed), ambient caps under
+                NoNewPrivileges by design, OOMScoreAdjust −500, StartLimit
+                pinned. <code>checks.caddy-mint</code> boots caddy and does real
+                TLS handshakes without the dropped caps. caddy.nix:899-926</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Compression + cache-header policy done right</strong>
+                <span><code>encode zstd gzip</code> on every vHost plus the
+                set-if-absent <code>?Cache-Control "no-cache"</code> default —
+                apps serving immutable content-addressed media keep their own
+                long-lived headers. The app-vs-edge compression interplay is
+                documented with probe evidence. caddy.nix:157-175;
+                docs/services/caddy.md</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Per-vHost access logs with a two-consumer mode contract</strong>
+                <span>Every vHost logs JSON to its own file; a Nix-level map
+                forces <code>mode 0640</code> because open(2) never re-modes
+                existing files — the crowdsec acquis and geometrikks tailer
+                both consume this surface. caddy.nix:485-492, 720-743;
+                crowdsec.nix:83-95; geometrikks.nix:56-75</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>DNS/registry truth enforced at eval time</strong>
+                <span>Every vHost subdomain must exist in dns-local.nix AND map
+                to a registry entry (or a justified exemption table) — the
+                tile/gatus/OIDC fan-outs can no longer be silently missed.
+                Ghost dns-local entries warn at eval. caddy.nix:432-455,
+                466-469</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Derived smoke coverage, zero hand-maintained lists</strong>
+                <span>The <code>/etc/caddy/vhost-layers</code> map (layer +
+                first proxy port per vHost) is computed from the same rendered
+                attrset as the proxy, so post-deploy auth-gateway smoke covers
+                new vHosts with zero script edits. caddy.nix:341-364</span>
               </div>
             </div>
           </div>
+
+          <p>
+            Architecture of the current usage: NixOS renders the Caddyfile at
+            eval time — the Nix helper layer REPLACES what upstream Caddyfile
+            snippets (<code>(name) {}</code> + <code>import</code>) would do,
+            with type-checked options and assertions instead of string
+            inclusion. <code>globalConfig</code> carries
+            <code>auto_https off</code>, <code>default_bind</code> to the LAN IP
+            only (dnsblockd coexistence + NetBird arrival semantics),
+            <code>strict_sni_host on</code>, and the <code>metrics</code>
+            global option (caddy.nix:493-508). TLS is static/minted — no ACME
+            surface exists at all.
+          </p>
         </section>
 
         <!-- Findings -->

@@ -121,12 +121,18 @@
       # upstream stays llama-chat — only the base URL changes; the minted
       # proxy key arrives via EnvironmentFile on the -web unit below).
       aiMeterEnabled = config.services.ai-meter.enable or false;
-      # TEMPORARY vendorHash shim DROPPED (2026-10-15 fleet wave → 2026-10-17
-      # drop): upstream vendorHash.nix at tip 9796ae91 bakes the shim's own
-      # 6lPAB08x… value (go.sum verified identical tip-vs-measured); the
-      # lock re-locks b601473 → tip in the same pass. Re-add ONLY via
+      # TEMPORARY vendorHash shim RE-ADDED (2026-10-25 17:24, owner's
+      # blanket `nix flake update`): inboxclean@5c52f31's baked dPPV791v…
+      # stopped reproducing — the same update moved the nixpkgs-unstable
+      # follow this input builds against, re-vendoring the module graph
+      # (first-hand: inboxclean-5c52f31-go-modules specified dPPV791v… got
+      # wP/qpf3b…, ~/.cache/lockfloat/float-proof-20261025-172436.log).
+      # Drop when upstream's vendorHash reproduces again under the followed
+      # nixpkgs (their own nixpkgs pin catching up); re-add ONLY via
       # nix-hash-fix evidence, never by hand.
-      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-wP/qpf3bpAMbD6yEBao0F+oTEEYFY8cAqZ7PVZtt71M=";
+      };
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];

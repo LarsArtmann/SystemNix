@@ -77,10 +77,15 @@
           # probe 2026-10-25). Same treadmill as before; drop when upstream
           # bakes 0Ko7CAVV… (paste-upstream → push → re-lock queued in
           # docs/todo/upstream.md). Re-add ONLY via nix-hash-fix evidence.
+          # RE-STALE 2026-10-25 17:24 (owner's blanket update, third re-stale):
+          # health-hub@67b0df3 specified 0Ko7CAVV… (the shim below), got
+          # UOJk45I… (first-hand keep-going,
+          # ~/.cache/lockfloat/float-proof-20261025-172436.log). Drop when
+          # upstream bakes UOJk45I…; re-add ONLY via nix-hash-fix evidence.
           default =
             inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-0Ko7CAVVWuYCMaXm7FGSApnCJ8VHqXUSyyU+PMIpmN4=";
+                vendorHash = "sha256-UOJk45I6s3rKZrEWE/BsaQXpSX9234Ste3/gc2ptUHs=";
               };
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";

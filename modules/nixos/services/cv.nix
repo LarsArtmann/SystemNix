@@ -67,14 +67,15 @@
       # upstream-fixed rev exists to float to). Drop when upstream re-bakes
       # (paste-upstream → push → re-lock, docs/todo/upstream.md); re-add
       # ONLY via first-hand keep-going evidence, never by hand.
-      # SHIM UPDATED (2026-10-25 exec-3, second re-float): cv@29868e05
-      # specified SkTcNXE (this shim, baked for 88e0d12), got 1o2UQtLN
-      # (first-hand keep-going, ~/.cache/lockfloat/build3.log) — the module
-      # graph moved AGAIN. Upstream at 29868e05 bakes a third, equally
-      # stale value (Asj5FdV…, flake.nix:42 → vendorHash.nix, verified in
-      # the fetched source), so dropping the shim cannot work either.
+      # SHIM UPDATED (2026-10-25 exec-3, third re-float — owner's blanket
+      # `nix flake update`): cv@09e0882 specified 1o2UQtLN (this shim, baked
+      # for 29868e05), got IzjuTWg… (first-hand keep-going proof,
+      # ~/.cache/lockfloat/float-proof-20261025-172436.log) — the module
+      # graph moved AGAIN. Upstream keeps baking stale values, so dropping
+      # the shim cannot work; drop only when upstream bakes IzjuTWg…
+      # (paste-upstream → push → re-lock, docs/todo/upstream.md).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-1o2UQtLNE63E1evLxzZpvVP+MeNkSeEE2Ko6MNlQHWU=";
+        vendorHash = "sha256-IzjuTWgnhsRsRhprnBBvlCEkSl4dQtM8gvwu2ELbUAY=";
       };
     in
     {
