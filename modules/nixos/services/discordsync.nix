@@ -286,38 +286,29 @@
       };
 
       # Verify the Immich API key wired for the /lookup page's cross-archive
-      # comparison (ADR-062). Catches a mistyped or wrongly-scoped key at
-      # provisioning time instead of leaving every lookup auth-erroring
-      # silently behind the "Immich unavailable" badge. Exit semantics:
-      #   0 = key verified, PLACEHOLDER-inert, not rendered (integration
-      #       off), or Immich unreachable (availability is the Gatus Immich
-      #       check's job — Immich being down must not page as a DiscordSync
-      #       misconfig)
+      # comparison (ADR-062). The key itself is minted by
+      # discordsync-immich-key-provision (below) straight into Immich's
+      # api_key table — this script is the end-to-end pager: it proves the
+      # rendered env file actually authenticates against the live Immich.
+      # Exit semantics:
+      #   0 = key verified, env file not rendered yet (provision has not
+      #       run — it owns paging for its own failures), or Immich
+      #       unreachable (availability is the Gatus Immich check's job —
+      #       Immich being down must not page as a DiscordSync misconfig)
       #   1 = Immich reachable but REJECTED the key (wrong secret or missing
       #       asset.read/asset.upload scope) — OnFailure alerts
       immichVerify = pkgs.writeShellApplication {
         name = "discordsync-immich-verify";
         runtimeInputs = [ pkgs.curl ];
         text = ''
-          env_file="${sopsEnvPath}"
-          url=""
+          env_file="${provisionedEnvPath}"
+          url="${cfg.immich.url}"
           key=""
-          while IFS= read -r line; do
-            case "$line" in
-              IMMICH_URL=*) url="''${line#IMMICH_URL=}" ;;
-              IMMICH_API_KEY=*) key="''${line#IMMICH_API_KEY=}" ;;
-            esac
-          done < "$env_file"
-          if [ -z "$url" ] || [ -z "$key" ]; then
-            echo "discordsync-immich-verify: IMMICH_URL/IMMICH_API_KEY not rendered — integration disabled, nothing to verify"
+          [ -r "$env_file" ] && key=$(sed -n 's/^IMMICH_API_KEY=//p' "$env_file")
+          if [ -z "$key" ]; then
+            echo "discordsync-immich-verify: env file $env_file missing/empty — provision oneshot has not converged; check discordsync-immich-key-provision"
             exit 0
           fi
-          case "$key" in
-            PLACEHOLDER*)
-              echo "discordsync-immich-verify: API key is still a PLACEHOLDER (inert by design) — create a key in Immich scoped to asset.read + asset.upload ONLY, then sops --set it into discordsync-immich.yaml"
-              exit 0
-              ;;
-          esac
           if ! curl -sf --max-time 10 "$url/api/server/ping" -o /dev/null; then
             echo "discordsync-immich-verify: WARN Immich unreachable at $url — availability is owned by the Gatus Immich check; skipping key verification"
             exit 0
@@ -336,6 +327,97 @@
               exit 1
               ;;
           esac
+        '';
+      };
+
+      # Root converger for the Immich lookup key (2026-10-25 — replaces the
+      # sops PLACEHOLDER paste path entirely). Immich is OIDC-only (no local
+      # password an API-level provisioner could authenticate with), but its
+      # Postgres runs on the same host with peer auth for the postgres OS
+      # user — a privilege root ALREADY holds, so this converger grants no
+      # new trust. It inserts the scoped key (asset.read + asset.upload,
+      # matching the service's bulk-upload-check permission guard) directly
+      # into Immich's api_key table and renders the 0400 env file the daemon
+      # and the verify unit read. Convergence states:
+      #   file exists + hash in DB  -> no-op (idempotent)
+      #   file exists, row gone     -> re-insert from file plaintext (DB
+      #                                restore/migration); file unchanged,
+      #                                no restart needed
+      #   file missing              -> mint token, insert, write file,
+      #                                try-restart daemon + verify
+      # The verify unit is restarted after every fresh mint, closing the
+      # loop end-to-end (a bad mint pages within seconds, not a day).
+      # Rotation: rm the env file + restart THIS unit (a UI-side deletion is
+      # resurrected by the file-reinsert path BY DESIGN — the key is
+      # nix-managed; rotate, don't revoke).
+      immichKeyProvision = pkgs.writeShellApplication {
+        name = "discordsync-immich-key-provision";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.openssl
+          pkgs.util-linux
+          pkgs.systemd
+          config.services.postgresql.package
+        ];
+        text = ''
+          set -euo pipefail
+          keyfile="${provisionedEnvPath}"
+          url="${cfg.immich.url}"
+          keyname="discordsync-lookup (nix-managed)"
+          db="${config.services.immich.database.name or "immich"}"
+          psql() { runuser -u postgres -- ${config.services.postgresql.package}/bin/psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
+
+          # Schema guard (loud, not silent): the INSERT below is coupled to
+          # Immich's api_key shape. Verified live 2026-10-25 against 3.3.3
+          # (table renamed api_keys -> api_key by StandardizeNames; key is
+          # BYTEA holding the raw sha256 digest of the token).
+          key_type=$(psql -At -c "SELECT data_type FROM information_schema.columns WHERE table_name = 'api_key' AND column_name = 'key'")
+          if [ "$key_type" != "bytea" ]; then
+            echo "discordsync-immich-key-provision: FAIL api_key.key is '$key_type', expected bytea — Immich schema drifted past this converger; resurrect the sops paste path (runbook) instead of forcing" >&2
+            exit 1
+          fi
+          uid=$(psql -At -c "SELECT id FROM \"user\" WHERE \"isAdmin\" IS TRUE ORDER BY \"createdAt\" LIMIT 1")
+          if [ -z "$uid" ]; then
+            echo "discordsync-immich-key-provision: FAIL no admin user in Immich DB" >&2
+            exit 1
+          fi
+
+          token=""
+          if [ -r "$keyfile" ]; then
+            token=$(sed -n 's/^IMMICH_API_KEY=//p' "$keyfile")
+          fi
+
+          if [ -n "$token" ]; then
+            hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
+            cnt=$(psql -At -c "SELECT count(*) FROM api_key WHERE key = decode('$hex', 'hex')")
+            if [ "$cnt" -ge 1 ]; then
+              echo "discordsync-immich-key-provision: converged (env file + api_key row consistent)"
+              exit 0
+            fi
+            echo "discordsync-immich-key-provision: env file present but row missing (DB restore?) — re-inserting from file plaintext"
+            psql -c "INSERT INTO api_key (name, key, \"userId\", permissions) VALUES ('$keyname', decode('$hex', 'hex'), '$uid', ARRAY['asset.read','asset.upload']::varchar[])"
+            exit 0
+          fi
+
+          token=$(openssl rand -base64 32 | tr -d '/+=')
+          case "$token" in
+            *[!A-Za-z0-9]*) echo "discordsync-immich-key-provision: FAIL generated token contains unexpected characters" >&2; exit 1 ;;
+          esac
+          hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
+          # Drop stale rows of THIS key name (orphaned hashes from a deleted
+          # env file can never re-validate; other keys are untouched).
+          for rid in $(psql -At -c "SELECT id FROM api_key WHERE name = '$keyname'"); do
+            psql -c "DELETE FROM api_key WHERE id = '$rid'"
+          done
+          psql -c "INSERT INTO api_key (name, key, \"userId\", permissions) VALUES ('$keyname', decode('$hex', 'hex'), '$uid', ARRAY['asset.read','asset.upload']::varchar[])"
+          mkdir -p "$(dirname "$keyfile")"
+          tmp=$(mktemp "$(dirname "$keyfile")/.immich-api-env.XXXXXX")
+          printf 'IMMICH_URL=%s\nIMMICH_API_KEY=%s\n' "$url" "$token" > "$tmp"
+          chown ${cfg.user}:${cfg.group} "$tmp"
+          chmod 0400 "$tmp"
+          mv -f "$tmp" "$keyfile"
+          echo "discordsync-immich-key-provision: minted new Immich API key + rendered $keyfile — restarting consumer units"
+          systemctl try-restart discordsync.service discordsync-immich-verify.service
         '';
       };
     in

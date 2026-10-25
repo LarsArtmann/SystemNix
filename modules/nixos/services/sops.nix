@@ -329,23 +329,12 @@ in
                   };
                 }
             //
-              lib.optionalAttrs (svcEnabled "discordsync" && (config.services.discordsync.immich.enable or false))
-                {
-                  # Own encrypted file (split-file precedent:
-                  # papdashboard-discord.yaml) — agent sessions can encrypt a
-                  # NEW file with the public key but cannot add a key to the
-                  # existing discordsync.yaml without the host age identity.
-                  discordsync_immich_api_key = {
-                    sopsFile = lib.path.append secretsDir "discordsync-immich.yaml";
-                    owner = "discordsync";
-                    group = "discordsync";
-                    restartUnits = [
-                      "discordsync.service"
-                      "discordsync-immich-verify.service"
-                    ];
-                  };
-                }
-            // lib.optionalAttrs (svcEnabled "dns-failover") (
+              # discordsync_immich_api_key REMOVED 2026-10-25: the Immich
+              # lookup key is now minted by the root converger oneshot
+              # discordsync-immich-key-provision (direct api_key table insert
+              # via peer-auth postgres — no secret exists to store; see
+              # docs/services/discordsync.md "Immich cross-archive" section).
+            lib.optionalAttrs (svcEnabled "dns-failover") (
               mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
             )
             // lib.optionalAttrs (svcEnabled "cv-server") (
@@ -449,12 +438,15 @@ in
                 (
                   # Immich API key for the Drive-image route (drive-paperless
                   # ingestImages): x-api-key auth against POST /api/assets, scope
-                  # asset.read + asset.upload. Own encrypted file (split-file
-                  # precedent: discordsync-immich.yaml) so agent sessions can
-                  # scaffold it with the public age key. Root-owned — PID 1 reads
-                  # the EnvironmentFile, the ingest user never opens the file.
-                  # Ships as PLACEHOLDER; the ingest run fails loudly with the
-                  # runbook pointer until the real key is sops-set.
+                  # asset.read + asset.upload. Own encrypted file so agent
+                  # sessions can scaffold it with the public age key. Root-owned
+                  # — PID 1 reads the EnvironmentFile, the ingest user never
+                  # opens the file. Ships as PLACEHOLDER; the ingest run fails
+                  # loudly with the runbook pointer until the real key is
+                  # sops-set. (DiscordSync's sibling key left the sops world
+                  # 2026-10-25 for a direct-DB provisioner — see
+                  # discordsync.nix; this consumer keeps the paste path until
+                  # it adopts the same converger.)
                   mkSecrets "drive-paperless-immich.yaml" {
                     owner = "root";
                     group = "root";
@@ -698,32 +690,20 @@ in
               owner = "discordsync";
               group = "discordsync";
               mode = "0400";
-              # Verify unit is conditional (immich.enable): restartUnits must
-              # never name a unit that does not exist in the generation.
-              restartUnits = [
-                "discordsync.service"
-              ]
-              ++ lib.optionals (config.services.discordsync.immich.enable or false) [
-                "discordsync-immich-verify.service"
-              ];
-              content = lib.generators.toKeyValue { } (
-                {
-                  DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
-                  TURSO_URL = config.sops.placeholder.discordsync_turso_url;
-                  TURSO_AUTH_TOKEN = config.sops.placeholder.discordsync_turso_auth_token;
-                  # Self-alerting: the binary POSTs critical errors to this Discord webhook.
-                  # Sourced from the shared signoz.yaml secret (always decrypted alongside).
-                  DISCORDSYNC_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
-                }
-                # Immich cross-archive comparison (ADR-062). Cold config — the
-                # binary validates both-or-neither at startup; rendering the
-                # pair only when the wrapper option is on keeps disabled hosts
-                # free of it entirely.
-                // lib.optionalAttrs (config.services.discordsync.immich.enable or false) {
-                  IMMICH_URL = config.services.discordsync.immich.url;
-                  IMMICH_API_KEY = config.sops.placeholder.discordsync_immich_api_key;
-                }
-              );
+              # The Immich lookup pair (IMMICH_URL/IMMICH_API_KEY) moved OUT
+              # of this template 2026-10-25 — the provisioner oneshot renders
+              # it into its own 0400 env file (direct api_key table insert;
+              # see discordsync.nix). The verify unit reads that file too, so
+              # no conditional restartUnits here anymore.
+              restartUnits = [ "discordsync.service" ];
+              content = lib.generators.toKeyValue { } {
+                DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
+                TURSO_URL = config.sops.placeholder.discordsync_turso_url;
+                TURSO_AUTH_TOKEN = config.sops.placeholder.discordsync_turso_auth_token;
+                # Self-alerting: the binary POSTs critical errors to this Discord webhook.
+                # Sourced from the shared signoz.yaml secret (always decrypted alongside).
+                DISCORDSYNC_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "dns-failover") {
