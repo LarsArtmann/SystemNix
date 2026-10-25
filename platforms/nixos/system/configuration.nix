@@ -500,6 +500,15 @@ in
         # that do not touch workflow files until the PAT is regenerated
         # with repo+workflow and the sops secret redeployed.
         "webphone-android"
+        # Flipped 2026-10-25 (forgejo-flip@gogenfilter): import fully
+        # verified (11 open PRs, 10 releases, master = GitHub HEAD) but the
+        # flip's then-buggy issue-counter verify false-failed AFTER the
+        # import and skipped the push-mirror attach — this list entry is
+        # what attaches it idempotently via phase 5. HAS .github/workflows
+        # until the migration cutover deletes them: mirror pushes that touch
+        # workflow files need the sync PAT to carry the `workflow` scope
+        # (same regeneration as domains, docs/services/forgejo.md).
+        "gogenfilter"
       ];
       immich.enable = true;
       paperless.enable = true;

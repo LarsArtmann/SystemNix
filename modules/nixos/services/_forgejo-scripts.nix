@@ -1143,9 +1143,16 @@ in
       fj_branch=$(echo "$repo2" | jq -r '.default_branch')
       [[ "$fj_branch" == "$gh_branch" ]] \
         || die "post-flip verify failed: default branch '$fj_branch' != GitHub '$gh_branch'"
+      # GitHub's open_issues_count counts issues AND pull requests; Forgejo
+      # splits the same population into open_issues_count (issues only) and
+      # open_pr_counter. Compare like-for-like — a PR-only repo (0 real
+      # issues) must not false-fail the verify AFTER a successful import
+      # (gogenfilter flip 2026-10-25: 11 open PRs imported, script died here
+      # and skipped the push-mirror attach).
       fj_issues=$(echo "$repo2" | jq -r '.open_issues_count')
-      if [[ "$gh_issues" -gt 0 && "$fj_issues" -eq 0 ]]; then
-        die "post-flip verify failed: GitHub had $gh_issues open issues but forgejo imported 0"
+      fj_prs=$(echo "$repo2" | jq -r '.open_pr_counter')
+      if [[ "$gh_issues" -gt 0 && $((fj_issues + fj_prs)) -eq 0 ]]; then
+        die "post-flip verify failed: GitHub had $gh_issues open issues+PRs but forgejo imported 0 (issues=$fj_issues prs=$fj_prs)"
       fi
 
       attached=$(curl -sf --compressed \
