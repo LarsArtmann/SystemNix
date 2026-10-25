@@ -22,7 +22,7 @@
 | Hand-dropped contradictory w-verdicts (b03/b09) | 2 rows | **T2 EXECUTED 2026-10-24 (`e6f8a58b9`): description was wrong — actual residue = v NOOVERLAP line-targeting error (01-14:93, struck v on owners-frontmatter evidence) + v BADPATH filename-typo (13-34:143, struck v on runbook evidence) + bonus 05-55:23 empty-evidence w strike w/ 0x02 byte (restored); 12-04 §a.6 corrected** |
 | Standing doc-counts gate | 0 | **T3 EXECUTED 2026-10-24 (`9a8ed187a`+`61d35c7ce` daemon-swept): `checks.doc-counts` live — eval truth vs README/FEATURES anchors, throws at eval time, 3 negative legs + control, harness 15/0** |
 | README service-table rows + FEATURES row statuses | 30 + ~120 rows | **T4 EXECUTED 2026-10-24 (`43bca64f4`): all 33 README rows verified vs ports registry + live caddy eval + live gen + pgrep; 7 rows + FEATURES indexer-web fixed; ✅-row residue re-queued (TODO_LIST:1485)** |
-| `docs/status/archived/` manifest | 1,457 files | no dir-level manifest (planning archive got one) |
+| `docs/status/archived/` manifest | 1,457 files | ~~no dir-level manifest (planning archive got one)~~ **CORRECTED 2026-10-24 U1: a maintained README has existed since ≤2026-10-12 (per-wave manifest sections from 2026-10-03, conventions, gate-drift finding) — the plan premise was another inherited-unverified claim. Executed as MERGE: counts refreshed (1,457/55) + historical waves table added (pre-2026-10-03 moves it lacked); existing sections preserved.** |
 | 2026-10 root wave | 442 reports | never swept; the 81-WARN surface lives here |
 | 2026-10 tasks/ wave | 57 tq reports | never swept (queue-footer close-out convention) |
 | Validator + prompt + relay upstream → docs-health skill (crush-config) | 3 artifacts | proven locally, never upstreamed |

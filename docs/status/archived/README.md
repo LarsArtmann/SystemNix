@@ -5,10 +5,38 @@ Flat, append-only archive of resolved point-in-time documents. Nothing here is
 annotations (the `[docs-health <date>] RESOLVED + ARCHIVED` convention) or was
 superseded by a named successor.
 
-**Counts (2026-09-21 docs-health sweep):** 1,352 files here (status reports +
-operations runbooks), 42 in [`docs/planning/archived/`](../../planning/archived/)
-(executed/superseded plans). 236 dated reports/plans remain unarchived by
-design — they still carry open work.
+**Counts (re-derived 2026-10-24, docs-truth T5):** 1,457 files here (status reports +
+operations runbooks), 55 in [`docs/planning/archived/`](../../planning/archived/)
+(excluding its README; executed/superseded plans). Earlier counts on record: 1,352 (2026-09-21), 1,390 (2026-10-06).
+
+## Historical bulk waves (pre-manifest moves, enumerated 2026-10-24)
+
+The per-wave manifest sections below start at 2026-10-03; earlier bulk moves predate this
+README. Full enumeration via `git log --diff-filter=A -- docs/status/archived/` (TSV:
+`~/.cache/docshealth/t5-waves.tsv`); the waves that shaped the bulk of the holding:
+
+| Date | Commit | Files | Wave |
+| --- | --- | --- | --- |
+| 2026-07-30 | `43c266837` | 75 | completed status + planning reports (first bulk closeout) |
+| 2026-08-09 | `499a6d21b` | 152 | stale-report archive + agent-docs bootstrap |
+| 2026-08-09 | `f03d22c31` | 96 | 100+ resolved reports (monitor365 watchdog session) |
+| 2026-08-14 | `de989c763` | 32 | resolution-complete 2026-08-1x reports |
+| 2026-08-17 | `05789a893` | 19 | docs-health pass (pool-backups chain) |
+| 2026-09-06 | `dd4f5c995` | 55 | heuristic batch sweep |
+| 2026-09-14 | `835f61643` | 656 | the giant pre-convention corpus backfill |
+| 2026-09-14 | `a6b4b2ff2` | 133 | same-day backfill continuation |
+| 2026-09-14 | `6ddc763f0` | 38 | same-day backfill continuation |
+| 2026-09-19 | `81ec01340` | 34 | heuristic batch sweep |
+| 2026-10-06 | `79dcbc450` | 21 | heuristic batch sweep |
+| 2026-10-18 | `3202b5da0` | 30 | 61-resolved-reports wave (archive-scoped share) |
+| 2026-10-18 | `309d4057c` | 35 | same-window heuristic sweep |
+| 2026-10-24 | `f12302830` | 1 | 09-30_07-42 architecture-catalog golive-prep (corpus batch archive; the 82→81 WARN-flipper, `docs/status/2026-10-24_19-14_*` §a.2) |
+
+Top waves ≈ 1,376 of 1,527 historical additions; the remaining ~151 files landed across 21
+smaller commits. Historical additions exceed the current holding (1,527 vs 1,457): a handful
+of files were re-organized after their first move. **Convention going forward:** every bulk
+archive appends a manifest section (below) at move time; single-file archives skip this (the
+commit message is the manifest).
 
 ## What gets archived
 
