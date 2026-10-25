@@ -791,15 +791,15 @@
                 toolA = "1111111111111111111111111111111111111111";
                 toolB = "2222222222222222222222222222222222222222";
               };
+              staleRegistry = {
+                inherit (registry) toolA toolB;
+                localPkg = "4444444444444444444444444444444444444444";
+              };
               legs = {
                 clean = builtins.toJSON (auditWith (fixture + "/clean.lock") registry);
                 float = builtins.toJSON (auditWith (fixture + "/evil-float.lock") registry);
-                unregistered = builtins.toJSON (auditWith (fixture + "/clean.lock") { toolA = registry.toolA; });
-                stale = builtins.toJSON (
-                  auditWith (fixture + "/clean.lock") (
-                    registry // { localPkg = "4444444444444444444444444444444444444444"; }
-                  )
-                );
+                unregistered = builtins.toJSON (auditWith (fixture + "/clean.lock") { inherit (registry) toolA; });
+                stale = builtins.toJSON (auditWith (fixture + "/clean.lock") staleRegistry);
               };
             in
             pkgs.runCommand "lock-float-selftest"
@@ -822,6 +822,66 @@
                 echo "$stale" | grep -q 'localPkg' && echo "$stale" | grep -q 'stale' \
                   || fail "stale registry entry not flagged (table rot): $stale"
                 echo "lock-float: 4 legs green (clean incl. follows+path skip, float, unregistered, stale-registry)"
+                touch $out
+              '';
+
+          # FEATURES enable-drift selftest (2026-10-25, F11-F13): proves the
+          # standing gate (lib/features-drift.nix + checks.features-drift)
+          # fires on ✅-over-disabled and 🔧-over-enabled rows and skips
+          # ambiguous-prefix / unmapped files by design. Fixture text mirrors
+          # the FEATURES service-table row shape; maps are synthetic.
+          features-drift-selftest =
+            let
+              text = ''
+                | Good service   | ✅     | `good.nix`            | enabled and truthful |
+                | Sad service    | ✅     | `sad.nix`             | claims enabled, eval says false (forgejo-repos class) |
+                | Lazy service   | 🔧     | `lazy.nix`            | claims disabled, eval says enabled |
+                | Off service    | 🔧     | `off.nix`             | disabled and truthful |
+                | Twin service   | ✅     | `twin.nix`            | ambiguous prefix (twin-a/twin-b) — skipped |
+                | Void service   | ✅     | `void.nix`            | no namespace — skipped |
+              '';
+              baseMap = {
+                good = true;
+                sad = false;
+                lazy = true;
+                off = false;
+                twin-a = true;
+                twin-b = false;
+              };
+              verdict = import (root + "/lib/features-drift.nix") {
+                inherit text;
+                moduleFiles = [
+                  "good.nix"
+                  "sad.nix"
+                  "lazy.nix"
+                  "off.nix"
+                  "twin.nix"
+                  "void.nix"
+                ];
+                enabledMap = baseMap;
+              };
+              verdictJSON = builtins.toJSON verdict.violations;
+            in
+            pkgs.runCommand "features-drift-selftest"
+              {
+                inherit verdictJSON;
+                guarded = toString verdict.guarded;
+                ambiguous = toString verdict.skippedAmbiguous;
+                unmapped = toString verdict.skippedUnmapped;
+              }
+              ''
+                set -u
+                fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+                echo "$verdictJSON" | grep -q 'sad' && echo "$verdictJSON" | grep -q 'enable = false' \
+                  || fail "✅-over-disabled row not flagged: $verdictJSON"
+                echo "$verdictJSON" | grep -q 'lazy' && echo "$verdictJSON" | grep -q 'enable = true' \
+                  || fail "🔧-over-enabled row not flagged: $verdictJSON"
+                echo "$verdictJSON" | grep -qv 'good' && echo "$verdictJSON" | grep -qv 'off' \
+                  || fail "truthful rows flagged: $verdictJSON"
+                [ "$guarded" = "4" ] || fail "expected 4 guarded rows (good/sad/lazy/off incl. flagged), got $guarded"
+                [ "$ambiguous" = "1" ] || fail "expected 1 ambiguous skip (twin), got $ambiguous"
+                [ "$unmapped" = "1" ] || fail "expected 1 unmapped skip (void), got $unmapped"
+                echo "features-drift: 5 legs green (wrong-disabled, wrong-enabled, truthful-clean, ambiguous-skip, unmapped-skip)"
                 touch $out
               '';
 
