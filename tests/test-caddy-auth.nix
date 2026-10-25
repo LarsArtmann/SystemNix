@@ -67,6 +67,25 @@ let
       '';
     };
 
+  # Branded server-error pages (M13, caddy edge plan): replicates the
+  # serverErrorRoot derivation's SHAPE (one html per status) — the test
+  # guards the CADDY MECHANISM ({err.status_code} rewrite + original error
+  # status preserved through file_server), not the page art.
+  errRoot = pkgs.linkFarm "caddy-test-servererror-root" [
+    {
+      name = "502.html";
+      path = pkgs.writeText "test-502.html" "<div class=\"code\">502</div> branded-502-page";
+    }
+    {
+      name = "503.html";
+      path = pkgs.writeText "test-503.html" "<div class=\"code\">503</div> branded-503-page";
+    }
+    {
+      name = "504.html";
+      path = pkgs.writeText "test-504.html" "<div class=\"code\">504</div> branded-504-page";
+    }
+  ];
+
   # Caddyfile replicating SystemNix auth patterns (HTTP, no TLS for testing)
   caddyfile = pkgs.writeText "Caddyfile" ''
     {
@@ -102,6 +121,19 @@ let
       }
       handle {
         reverse_proxy localhost:9002
+      }
+    }
+
+    # Pattern 3: dead backend + branded error route (serverErrorRoute, M13).
+    # The EXACT route shape from caddy.nix: dialing a dead port surfaces as
+    # error 502, the handle_errors route rewrites to /{err.status_code}.html
+    # and file_server must serve the page WITH the original 502 status.
+    :8083 {
+      reverse_proxy localhost:9999
+      handle_errors 502 503 504 {
+        root * ${errRoot}
+        rewrite * /{err.status_code}.html
+        file_server
       }
     }
   '';
@@ -227,5 +259,17 @@ in
         f"DEAD GATE SERVED BACKEND CONTENT (the failblank class): code={dead_code} body={body[:120]}"
     )
     print(f"dead-gate arm: gate down answered {dead_code}, no backend content — fail-closed holds")
+
+    # 8. Dead-backend branded 502 (M13, caddy edge plan): the serverErrorRoute
+    #    mechanism end-to-end — real 502 status preserved, page rewritten by
+    #    {err.status_code}, no plain-text caddy error page.
+    code = machine.succeed(
+        "curl -s -o /tmp/dead.html -w '%{http_code}' --max-time 8 http://127.0.0.1:8083/"
+    ).strip()
+    assert code == "502", f"dead backend must answer 502 with the branded route, got: {code}"
+    page = machine.succeed("cat /tmp/dead.html")
+    assert "branded-502-page" in page, f"502 must serve the branded page, got: {page[:120]}"
+    assert "{err" not in page, f"placeholder must be rewritten, got: {page[:120]}"
+    print("dead-backend arm: HTTP 502 + branded page (err.status_code rewrite + status preserved)")
   '';
 }

@@ -706,6 +706,13 @@ eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an I
 # own marker fires rather than an eval accident.
 eval_case caddy perhost-drift fail 'caddy-perhost-drift-audit' \
   'sed:modules/nixos/services/caddy.nix:s|^              per_host$|              # per_host removed by drift test|'
+# Leg 2 (M25): a vHost under a FOREIGN domain must fail the mint SAN
+# coverage assertion at eval — today it would pass everything and die at
+# its first TLS handshake hours later. The injected key stays out of the
+# ghost-subdomain warning (not under ${domain}), so single-failure
+# attribution lands on the SAN guard.
+eval_case caddy mint-third-zone fail 'mint SAN coverage' \
+  'sed:modules/nixos/services/caddy.nix:s|^                "alerts.${domain}" = {|                "https://foreign.example.test" = { };\n                "alerts.${domain}" = {|'
 
 # ── portguard: the shared release-verified port guard (berth-patterns plan T2) ──
 # The artifact check (tests/test-port-guard.nix) asserts seven decision paths

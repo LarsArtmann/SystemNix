@@ -561,6 +561,41 @@ _: {
                 builtins.filter (s: !lib.elem s (registryBlindSubdomains ++ registrySubdomains)) vhostSubdomains
               );
           }
+          # Mint SAN coverage (2026-10-25 caddy edge plan M25): the boot-minted
+          # leaf carries exactly the two dns-local zones. A vHost keyed under
+          # any OTHER domain passes every existing check, gets cert0 anyway,
+          # and fails its FIRST real TLS handshake hours later — fail eval
+          # instead. Negative-tested: scripts/negative-test-lints.sh group
+          # `caddy` leg mint-third-zone.
+          {
+            assertion =
+              let
+                stripScheme = k: lib.last (lib.splitString "://" k);
+                dottedHosts = builtins.filter (h: lib.hasInfix "." h) (
+                  map stripScheme (builtins.attrNames config.services.caddy.virtualHosts)
+                );
+                foreignHosts = builtins.filter (
+                  h: !(lib.hasSuffix ".${domain}" h || (cloudDomain != null && lib.hasSuffix ".${cloudDomain}" h))
+                ) dottedHosts;
+              in
+              foreignHosts == [ ];
+            message =
+              "caddy mint SAN coverage: vHost(s) outside the two minted zones (${domain}${
+                lib.optionalString (cloudDomain != null) ", ${cloudDomain}"
+              }) — the minted leaf would not cover them and TLS fails at first handshake: "
+              + lib.concatStringsSep ", " (
+                let
+                  stripScheme = k: lib.last (lib.splitString "://" k);
+                  dottedHosts = builtins.filter (h: lib.hasInfix "." h) (
+                    map stripScheme (builtins.attrNames config.services.caddy.virtualHosts)
+                  );
+                in
+                builtins.filter (
+                  h: !(lib.hasSuffix ".${domain}" h || (cloudDomain != null && lib.hasSuffix ".${cloudDomain}" h))
+                ) dottedHosts
+              )
+              + ". Extend the mint SAN list (dnsblockd-cert-mint script) or move the vHost into a minted zone.";
+          }
         ];
 
         # Derived vHost layer map for scripts/post-deploy-check.sh: one
