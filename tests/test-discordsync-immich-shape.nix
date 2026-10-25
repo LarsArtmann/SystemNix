@@ -33,8 +33,22 @@ let
       inherit system;
       modules =
         [
+          # Partial closure by design: integration.nix (which declares
+          # services.integration) is deliberately NOT imported — the wrapper's
+          # registry entry is guard-gated and skipped here. The option
+          # existence check must therefore be off: with the full host closure
+          # absent, unrelated sibling-option definitions trip it (observed
+          # 2026-10-25: "services.integration does not exist" fired in the
+          # isolated harness even with the guard provably false). The shapes
+          # asserted below are structural (hasAttr/hasInfix/elem) and do not
+          # depend on it; genuine merge errors still throw.
+          #{ _module.check intentionally absent — strict option check ON: see comment below }
+          # The SystemNix wrapper (mod "discordsync.nix") imports
+          # inputs.discordsync.nixosModules.default ITSELF — do NOT import it
+          # here too: the double import is not deduped across access paths and
+          # fails eval with "services.discordsync.* is already declared"
+          # (observed 2026-10-25).
           inputs.sops-nix.nixosModules.sops
-          inputs.discordsync.nixosModules.default
           (mod "discordsync.nix" "discordsync")
           (mod "sops.nix" "sops")
           # sops.nix reads users.primaryUser (declared by the host layer's
