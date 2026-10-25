@@ -1,7 +1,7 @@
 # SUPERB — Fleet Stabilization, Monitoring Truth & Deploy Throughput
 
 **Created:** 2026-10-25 05:10 CEST · **Owner:** Lars · **Author:** monitor365 self-connect session (post 04-50 report + 05-05 review)
-**EXECUTING (instance exec-2 resume: unblock upholds test, land 2 green batches, changelog, storm-gated deploy, 2026-10-25 07:29 CET, HEAD `c6f562541`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTING (instance exec-3 resume-2: services restored (gen-945/946), float automation end-to-end green (lazy gate + float-register + 9-input absorb, proof green), backup reflink redesign deployed — F19/F20 re-fire pending deploy8; 16-44 report §g answers pending owner, 2026-10-25 17:4x CET, HEAD `555146d25`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch (Pareto/plan/execute template, 5th re-fire).
 **Mission:** un-break what is actively broken (monitor365 drain-trap, monitoring blindness), then permanently raise the two system-wide multipliers — monitoring truth (nothing watches the watcher) and deploy throughput (PSI gate + lock-float eval breaks) — then burn down the long tail by domain.
 
