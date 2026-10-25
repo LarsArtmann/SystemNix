@@ -76,6 +76,22 @@
 # to the flm sacrifice — btrbk resumes incrementally from its next timer
 # fire, balance/scrub timers re-fire on schedule; nothing is lost.
 #
+# 2026-10-25 restore-gate asymmetry (the budget-burn class): the socket
+# restore gate checked ONLY the memory axis — but the dominant trip zone on
+# this machine is Zone 6 (4188 of 4331 trips), whose storms leave the
+# memory gauges HEALTHY (live: MemAvailable 50.6%, mem PSI 0.07 avg60, io
+# PSI 83% avg60). Every restore firing in a storm's cooldown gaps passed
+# the memory gate, cold-loaded 21.6 GB into the active storm, and
+# re-tripped within ticks: the daily budget (3) burned before noon, the
+# socket stayed DOWN (restore_capped 1) until a manual restart, and every
+# LLM consumer (browser-history chat/summaries, PMA, paperless enricher)
+# 503'd all day. Fix: the restore gate now ALSO requires io PSI some avg60
+# below a strict bar (restoreIoSomeAvg60ThresholdPercent, 20 — half the
+# Zone 6 trip bar), extending to the socket the io-drain doctrine the
+# churn re-arm already had (the re-arm path has waited for io calm since
+# 2026-09-17 — the socket, whose cold load is the heaviest burst of all,
+# was the only unit allowed to re-enter the storm).
+#
 # The guard closes that gap: stop the flm backend BEFORE the cliff. flm is
 # the designated sacrifice (stateless, socket-activated, self-heals on the
 # next connection with a 1-3 min cold load — OOMScoreAdjust=300 already
@@ -671,6 +687,7 @@ _: {
               awk -v p="$avail_pct" 'BEGIN { exit !(p >= ${toString cfg.restoreMemAvailableThresholdPercent}) }' &&
               awk -v p="$psi_some_avg10" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeThresholdPercent}) }' &&
               awk -v p="$psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restorePsiSomeAvg60ThresholdPercent}) }' &&
+              awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}) }' &&
               [ "$psi_episodes" -lt ${toString (cfg.psiEpisodeTripCount / 2)} ]
           then
             # Self-heal: the emergency has drained (pressure margins + episode
@@ -690,9 +707,15 @@ _: {
             # socket stays down and restore_capped hands the restart to a
             # human (a capped state with healthy memory must never look
             # like a silently working self-heal loop).
+            # The io gate (2026-10-25) is the fourth axis for the same
+            # reason the memory avg60 margin exists: a lingering sustained
+            # stall re-trips on first tick. Zone 6 storms leave the memory
+            # gauges healthy, so the memory-only gate restored the socket
+            # INTO the storm; the 21.6 GB cold load re-tripped Zone 6 and
+            # the daily budget burned on doomed restores before noon.
             if [ "$restore_capped" = "1" ]; then
               if should_log_verbose "$CAPPED_LOG_EPOCH_FILE"; then
-                echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory is healthy: systemctl start $SOCKET_UNITS" >&2
+                echo "MEMORY EMERGENCY restore capped (''${restores_today} restores today >= $MAX_RESTORES_PER_DAY) — FastFlowLM socket stays DOWN. Manual restart once memory AND I/O pressure are healthy: systemctl start $SOCKET_UNITS" >&2
               fi
             else
               systemctl reset-failed ${
@@ -702,7 +725,7 @@ _: {
               restored_total=$((restored_total + 1))
               echo "$restored_total" > "$RESTORED_COUNT_FILE"
               echo "$((restores_today + 1))" > "$RESTORE_TODAY_FILE"
-              echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, ''${last_trip_age}s since last trip, restore #''${restored_total} today: ''${restores_today_plus}) — sacrifice sockets restored" >&2
+              echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, io PSI some avg60=''${io_psi_some_avg60}%, ''${last_trip_age}s since last trip, restore #''${restored_total} today: ''${restores_today_plus}) — sacrifice sockets restored" >&2
             fi
           fi
 
@@ -1257,6 +1280,12 @@ _: {
           type = lib.types.int;
           default = 10;
           description = "PSI some avg60 percentage below which the sacrifice sockets may be restored (the sustained-stall axis must have fully drained — restoring into a lingering avg60 stall would immediately re-trip)";
+        };
+
+        restoreIoSomeAvg60ThresholdPercent = lib.mkOption {
+          type = lib.types.int;
+          default = 20;
+          description = "PSI io some avg60 percentage below which the sacrifice sockets may be restored. 2026-10-25 budget-burn class: the restore gate was MEMORY-blind — during a sustained Zone 6 io storm (the dominant trip zone, 4188 of 4331 trips) the memory margins recover within minutes, so the socket restored straight INTO the storm, the 21.6 GB flm cold load re-tripped Zone 6, and the daily budget burned before noon (capped 3/3 by 12:34Z; every LLM consumer 503 until a manual restart). Deliberately HALF the Zone 6 trip bar (ioPsiSomeAvg60ThresholdPercent, 40): the cold load is the heaviest single io burst on the machine, so its re-activation needs real calm, not merely below-trip-bar — the same strict-restore-margin doctrine as the memory axis (restore 10 vs trip 50). The churn re-arm (40) stays deliberately more permissive: btrbk sends carry their own containment (MemoryHigh + OOMScoreAdjust), the flm cold load has none. Fail-closed on unreadable PSI (-1), like every other restore gate";
         };
       };
 

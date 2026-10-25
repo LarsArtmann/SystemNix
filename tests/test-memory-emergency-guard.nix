@@ -43,6 +43,10 @@
 #      unchanged) but the socket stays enforced down.
 #   6. Restore: healthy margins + last trip 700 s ago → socket restarted,
 #      reset-failed issued.
+#   6-io. Restore blocked by a lingering io storm (io avg60 30%: below the
+#      Zone-6 trip bar, above the restore bar) with healthy memory — must
+#      NOT restore, must NOT burn budget; io drains → restore fires (the
+#      2026-10-25 budget-burn class: the gate was memory-blind).
 #   6a. Restore with zram STILL ≥92% (53% avail, 0.26% PSI): MUST restore —
 #      the 2026-09-02 lockout regression: stopping the sacrifice cannot
 #      drain zram (its pages belong to other processes), so a zram-gated
@@ -283,6 +287,28 @@ in
         zramPct = 0.97;
         psiAvg10 = "0.26";
       };
+      # The 2026-10-25 budget-burn state: memory FULLY recovered (the same
+      # shape as restoreZramFull) while a REAL io storm still runs —
+      # ioPsiAvg60=30 sits in the hysteresis band (below the Zone-6 trip
+      # bar 40, above the strict restore bar 20) with corroborated disk
+      # activity (13000 ticks: busy% high regardless of the sub-second
+      # elapsed). The old memory-only gate restored into exactly this
+      # state and burned the daily budget on doomed cold loads.
+      restoreIoMild = {
+        availPct = 0.53;
+        zramPct = 0.97;
+        psiAvg10 = "0.26";
+        ioPsiAvg60 = "30.00";
+        diskTicks = 13000;
+      };
+      # The SAME healthy-memory state with the io axis drained under the
+      # restore bar: the restore must now fire (budget permitting).
+      restoreIoDrained = {
+        availPct = 0.53;
+        zramPct = 0.97;
+        psiAvg10 = "0.26";
+        ioPsiAvg60 = "10.00";
+      };
       # The 2026-08-24 crash #3 signature: SUSTAINED io PSI with healthy
       # memory — and REAL disk activity behind it (io_ticks delta 12000 ms
       # over a seeded 30 s interval = 40% busy, above the 20% corroboration
@@ -491,6 +517,46 @@ in
       )
       out = run_guard("healthy")
       assert "sacrifice sockets restored" in out
+      machine.succeed("systemctl is-active --quiet fastflowlm.socket")
+
+      # --- 6-io. Restore gate requires the IO axis to drain too (the
+      #      2026-10-25 budget-burn class): the gate was memory-blind —
+      #      during a sustained Zone 6 storm the memory margins recover in
+      #      minutes, so the socket restored INTO the storm, the 21.6 GB
+      #      cold load re-tripped, and the daily budget burned before noon
+      #      (live 2026-10-25: capped 3/3 by 12:34Z, every LLM consumer
+      #      503 until a manual restart). Same doctrine as the memory
+      #      avg60 restore margin: a lingering sustained stall re-trips.
+      reset_state()
+      machine.succeed("${writeFakes "zone6real" zone6real}")
+      out = run_guard("zone6real")
+      assert_all_down()
+      # The storm "recovers" on the memory axis only: healthy MemAvailable
+      # + PSI, zram quiet — but io PSI avg60 stuck at 30% (the hysteresis
+      # band: below the trip bar 40, above the restore bar 20).
+      machine.succeed(
+          "echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      machine.succeed("${writeFakes "restoreIoMild" restoreIoMild}")
+      out = run_guard("restoreIoMild")
+      assert "sacrifice sockets restored" not in out, (
+          "restore must HOLD while io PSI avg60 sits in the hysteresis "
+          "band (20-40%): a 21.6 GB cold load here re-trips Zone 6 and "
+          "burns the daily restore budget (2026-10-25 live class)"
+      )
+      machine.fail("systemctl is-active --quiet fastflowlm.socket")
+      restores_today = machine.succeed("cat /var/lib/memory-emergency-guard/restores-*").strip()
+      assert restores_today == "1", (
+          "the io-gated hold must NOT consume restore budget (only the "
+          "scenario-6 restore may be spent)"
+      )
+      # The io axis drains under the restore bar — memory gauges unchanged:
+      machine.succeed("${writeFakes "restoreIoDrained" restoreIoDrained}")
+      out = run_guard("restoreIoDrained")
+      assert "sacrifice sockets restored" in out, (
+          "once io PSI avg60 drains below the restore bar the socket must "
+          "self-heal without a human (budget permitting)"
+      )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
 
       # --- 6a. Restore with zram STILL nearly full — the 2026-09-02
