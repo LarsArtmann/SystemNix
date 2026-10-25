@@ -6446,11 +6446,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1792947871,
-        "narHash": "sha256-tv6/gp1uXn22ToA9pyV+CAcc5FrddqiH0dIgk/UB2C8=",
+        "lastModified": 1792949298,
+        "narHash": "sha256-B2jAA3lC1xYRRuoHRzg4dmwF59Fi/k4XdPBcMjSRxHY=",
         "owner": "LarsArtmann",
         "repo": "journal",
-        "rev": "41fb0583ac05799524eccbd4ebb465a14e114d5e",
+        "rev": "9f638e35c0c6a66864e5fa2358b5d8595ac3816d",
         "type": "github"
       },
       "original": {
