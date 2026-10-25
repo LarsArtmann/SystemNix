@@ -85,7 +85,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum(rate(caddy_http_request_duration_seconds.count{code=~\"4..\"}[5m]))",
+                    "query": "sum(rate({__name__=\"caddy_http_request_duration_seconds.count\",code=~\"4..\"}[5m]))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -127,7 +127,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum(rate(caddy_http_request_duration_seconds.count{code=~\"5..\"}[5m]))",
+                    "query": "sum(rate({__name__=\"caddy_http_request_duration_seconds.count\",code=~\"5..\"}[5m]))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -358,7 +358,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "sum by (host) (rate(caddy_http_request_duration_seconds.count{code=~\"5..\",host!~\"_other\"}[5m]))",
+                    "query": "sum by (host) (rate({__name__=\"caddy_http_request_duration_seconds.count\",code=~\"5..\",host!~\"_other\"}[5m]))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,
@@ -421,7 +421,7 @@
                   "kind": "signoz/PromQLQuery",
                   "spec": {
                     "name": "A",
-                    "query": "topk(10, sum by (host) (rate(caddy_http_request_duration_seconds.count{code=~\"5..\",host!~\"_other\"}[15m])))",
+                    "query": "topk(10, sum by (host) (rate({__name__=\"caddy_http_request_duration_seconds.count\",code=~\"5..\",host!~\"_other\"}[15m])))",
                     "disabled": false,
                     "step": 0,
                     "stats": false,

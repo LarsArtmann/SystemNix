@@ -121,7 +121,10 @@ in
     "signoz/rules/caddy-per-host-5xx.json".source = mkRule {
       name = "Caddy Per-Host 5xx Rate High";
       description = "vHost {{.Labels.host}} is serving 5xx at >=0.1/s (6/min) over 5m — dead or failing backend behind the edge";
-      query = ''sum by (host) (rate(caddy_http_request_duration_seconds.count{code=~"5..",host!~"_other"}[5m]))'';
+      # SigNoz's PromQL parser rejects unquoted dotted metric names — the
+      # {__name__="..."} matcher form is the store-proven convention (same
+      # shape the dashboard's latency panel has used since it shipped).
+      query = ''sum by (host) (rate({__name__="caddy_http_request_duration_seconds.count",code=~"5..",host!~"_other"}[5m]))'';
       target = 0.1;
       severity = "warning";
     };
