@@ -134,6 +134,109 @@ _: {
         }
       ];
 
+      # Branded server-error pages (502/503/504) — sibling of notFoundRoot,
+      # served by the helpers' handle_errors routes (deep dive finding 2,
+      # 2026-10-25: a dead backend used to surface as caddy's plain-text
+      # error page, or the catch-alls' 404 page). One file per status so
+      # the served page always names the real code; {err.status_code} in
+      # the route below picks the file. Same Catppuccin Mocha hexes as
+      # notFoundRoot; store-served, self-contained, LAN-offline safe.
+      serverErrorRoot =
+        let
+          errPage = code: title: explanation: ''
+            <!doctype html>
+            <html lang="en">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>${code} - ${title}</title>
+            <style>
+            :root { color-scheme: dark; }
+            * { margin: 0; box-sizing: border-box; }
+            body {
+              min-height: 100vh;
+              display: grid;
+              place-items: center;
+              background: #1e1e2e;
+              color: #cdd6f4;
+              font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+              padding: 2rem;
+            }
+            main { text-align: center; max-width: 34rem; }
+            .code {
+              font-size: clamp(5rem, 18vw, 9rem);
+              font-weight: 800;
+              letter-spacing: 0.05em;
+              color: #f38ba8;
+              line-height: 1;
+            }
+            h1 { font-size: 1.4rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+            p { color: #a6adc8; line-height: 1.65; }
+            code {
+              background: #313244;
+              border-radius: 0.4rem;
+              padding: 0.15rem 0.5rem;
+              font-family: ui-monospace, "JetBrains Mono", monospace;
+              font-size: 0.95em;
+              word-break: break-all;
+            }
+            a {
+              display: inline-block;
+              margin-top: 2rem;
+              padding: 0.7rem 1.5rem;
+              border-radius: 0.6rem;
+              background: #b4befe;
+              color: #1e1e2e;
+              font-weight: 600;
+              text-decoration: none;
+            }
+            a:hover { background: #cba6f7; }
+            footer { margin-top: 2.5rem; font-size: 0.85rem; color: #6c7086; }
+            </style>
+            </head>
+            <body>
+            <main>
+            <div class="code">${code}</div>
+            <h1>${title}</h1>
+            <p>${explanation} <code id="host">this hostname</code>.</p>
+            <p>The service may be restarting or down. Try again shortly.</p>
+            <a href="https://dash.${domain}">Go to the dashboard</a>
+            <footer>${domain} private network</footer>
+            </main>
+            <script>document.getElementById("host").textContent = window.location.host;</script>
+            </body>
+            </html>
+          '';
+        in
+        pkgs.linkFarm "caddy-servererror-root" [
+          {
+            name = "502.html";
+            path = pkgs.writeText "caddy-502.html" (errPage "502" "Service not responding" "The service behind");
+          }
+          {
+            name = "503.html";
+            path = pkgs.writeText "caddy-503.html" (errPage "503" "Service unavailable" "The service behind");
+          }
+          {
+            name = "504.html";
+            path = pkgs.writeText "caddy-504.html" (errPage "504" "Service timed out" "The service behind");
+          }
+        ];
+
+      # Server-error route shared by every upstream-bearing vHost (proxy
+      # helpers, hand-written proxy vHosts, catch-alls). Static and
+      # redirect-only vHosts cannot 502 (no upstream) and don't carry it.
+      # file_server keeps the ORIGINAL error status after the rewrite —
+      # the same mechanism the catch-all 404 page relies on (sandbox-proven
+      # 2026-10-07 against the then-deployed caddy).
+      serverErrorRoute = ''
+        handle_errors 502 503 504 {
+          root * ${serverErrorRoot}
+          rewrite * /{err.status_code}.html
+          file_server
+        }
+      '';
+
       forwardAuth = ''
         forward_auth localhost:${toString proxyPort} {
           uri /oauth2/auth
@@ -223,6 +326,7 @@ _: {
           handle {
             ${proxyTo port { inherit hostOverride; }}
           }
+          ${serverErrorRoute}
         '';
       };
 
@@ -231,6 +335,7 @@ _: {
           ${tlsConfig}
           ${commonConfig}
           ${proxyTo port { inherit hostOverride; }}
+          ${serverErrorRoute}
         '';
       };
 
@@ -503,8 +608,21 @@ _: {
             ${lib.optionalString (bindAddress != null) "default_bind ${bindAddress}"}
             servers {
               strict_sni_host on
+              timeouts {
+                # Bounds slow-upload (slowloris-class) request-body stalls;
+                # 15m covers a 10GB upload at ~10Mbps with headroom (the
+                # 10GB cap itself is the per-vHost request_body max_size
+                # in commonConfig — deliberate, Immich-class uploads).
+                read_body 15m
+              }
             }
-            metrics
+            # per_host (deep dive finding 1, 2026-10-25): request/error/
+            # duration series carry a host label so dashboards and alerts
+            # can slice per vHost. Cardinality is bounded by the registry
+            # fan-out (~80 vHosts), verified live after enable (F12).
+            metrics {
+              per_host
+            }
           '';
 
           virtualHosts =
@@ -529,7 +647,8 @@ _: {
                     ${commonConfig}
                     root * ${notFoundRoot}
                     error 404
-                    handle_errors {
+                    ${serverErrorRoute}
+                    handle_errors 404 {
                       rewrite * /index.html
                       file_server
                     }
@@ -559,6 +678,7 @@ _: {
                     handle {
                       ${proxyTo authPort { hostOverride = null; }}
                     }
+                    ${serverErrorRoute}
                   '';
                 };
 
@@ -587,6 +707,7 @@ _: {
                     handle {
                       ${proxyTo config.services.paperless.port { hostOverride = null; }}
                     }
+                    ${serverErrorRoute}
                   '';
                 };
                 # Forgejo / crm / tasks / manifest / status vHosts:
@@ -621,6 +742,7 @@ _: {
                     handle {
                       ${proxyTo config.services.openseo.port { hostOverride = null; }}
                     }
+                    ${serverErrorRoute}
                   '';
                 };
                 # daily vHost moved to the registry (services.integration.crush-daily,
@@ -635,6 +757,7 @@ _: {
                     ${tlsConfig}
                     ${commonConfig}
                     ${proxyTo config.services.dns-blocker.statsPort { hostOverride = null; }}
+                    ${serverErrorRoute}
                   '';
                 };
                 "dnsblockd.${domain}" = {
@@ -683,6 +806,7 @@ _: {
                             header @noCache Cache-Control "no-cache, no-store, must-revalidate"
 
                             ${proxyTo ports.monitor365-server { hostOverride = null; }}
+                            ${serverErrorRoute}
                           '';
                         }
                       else
@@ -766,7 +890,8 @@ _: {
                         ${commonConfig}
                         root * ${notFoundRoot}
                         error 404
-                        handle_errors {
+                        ${serverErrorRoute}
+                        handle_errors 404 {
                           rewrite * /index.html
                           file_server
                         }

@@ -1464,6 +1464,20 @@ _: {
         services.integration = lib.optionalAttrs (options ? services.integration) {
           dnsblockd = {
             inherit (cfg) enable;
+            # Subdomain added 2026-10-25 (§g.2 owner answer: subdomain ⇒
+            # dashboard). "dnsblock" (the stats UI) is the dashboard-facing
+            # name; the "dnsblockd" vHost stays blind in caddy.nix — it is
+            # the DoH/DoT endpoint pair-mate, not a dashboard destination.
+            # vHost.layer stays "none": the dnsblock/dnsblockd vHosts stay
+            # hand-written in caddy.nix (redirect pair).
+            subdomain = "dnsblock";
+            homepage = {
+              name = "DNS Blocker";
+              group = "Infrastructure";
+              description = "DNS Block Stats";
+              checkUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/";
+              icon = "blocky.png";
+            };
             vHost.layer = "none";
             monitored = true;
             oidc = {

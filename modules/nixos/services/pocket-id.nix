@@ -999,6 +999,18 @@ _: {
         services.integration = lib.optionalAttrs (options ? services.integration) {
           pocket-id = {
             inherit (cfg) enable;
+            # Registered 2026-10-25 (§g.3 owner answer: the absence was an
+            # oversight, not circularity avoidance — the entry carries no oidc
+            # key, so the OIDC fan-out can never provision a client for
+            # pocket-id itself). vHost.layer "none": the auth vHost stays
+            # hand-written in caddy.nix (oauth2-proxy + pocket-id split).
+            subdomain = "auth";
+            homepage = {
+              name = "Pocket ID";
+              group = "Infrastructure";
+              description = "Passkey OIDC Provider";
+              icon = "pocket-id.png";
+            };
             vHost.layer = "none";
             monitored = true;
             checks = [
