@@ -66,7 +66,7 @@
   hermes-agent = "4ea8d23cc9f527332ccb1d55359b27741b6ea51b";
   home-manager = "c216bf5a1f173b0481bd5c8c489ebe5595ecc68c";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "8965b9900419267f03e34e01d4ec1579b8bfc0fc";
+  homebrew-cask = "00f53e4604de09caa11fa9785d7bc83712b01ba6";
   inboxclean = "c63bf2895a17741541ccaccde9677091904dac17";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "69d9b10d9e38308faf33e90f04283a58fa360aa4";
@@ -84,8 +84,8 @@
   nixos-hardware = "1b418b8f203e49a92f250f8babdd19af1b6f7a7f";
   nixpkgs = "fe13242281a67641c0102cdb1087f0ebe586c7df";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
-  nsfw-classifier = "735e24d08c46af133ee4ea42afcb9c2208ebde7d";
-  nur = "b8a52d150586f9b7a91d1b54c5a7c159047dd943";
+  nsfw-classifier = "33075c64c573b2ea53ab7201172469d86fa553c0";
+  nur = "342ac0d4f6781bbb98e9fe1cabcb53e23c68b537";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "e7b2cbb87eb3d61a962ecbf0a13bfadad7a29381";
