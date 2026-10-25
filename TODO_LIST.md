@@ -909,6 +909,11 @@
 - [ ] [ready] **Negative mutation leg for `checks.monitor365-retention-rendered`** — throwaway extendModules with a broken call site (bare retention var / dropped duckdb runtimeInput) asserting the check FAILS; the positive legs prove green-on-good, nothing yet proves red-on-bad (negative-tests.yml harness pattern) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §e.5)
 - [ ] [ready] **Ship a commit-preflight helper (subject ≤72, pipefail-safe chaining, daemon-race retry) + codify in CONTRIBUTING** — THREE same-day incidents: `;`-chained push after a rejected amend (03:5x), pipe-masked `| tail` gating a 76-char-subject rejection into a push (07:1x), ref-lock race losing another message (07:5x) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §d.1)
 
+- [ ] [ready] **Re-run CASES=tilecoverage + CASES=vhostregistry on the settled tree** — vhostregistry never ran green in-harness (lock-float zeroed it; proven on a HEAD-locked copy) → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.2)
+- [ ] [ready] **Root-cause the `nix eval --apply` scope quirk (filterAttrs "missing", attrNames works)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.4)
+- [ ] [ready] **Pre-flight PSI/k10temp check before eval-heavy batches** — extend the deploy storm doctrine to evals → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.5)
+- [ ] [ready] **make_copy lock-fragility: fail-fast (distinct message) on mid-float trees** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.7)
+
 ### pixel6
 
 - [ ] **Udev rule for Google USB vendor 18d1 (adb access)** → [docs/todo/pixel6.md](docs/todo/pixel6.md)
