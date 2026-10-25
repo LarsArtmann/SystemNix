@@ -16,7 +16,8 @@
 - **GSC redirect URI** — `https://seo.<domain>/api/gsc/oauth/callback` (must match the Google Cloud OAuth client config exactly).
 - **restartTriggers on the package** — prevents a stale vite preview serving GC'd store files from the old path (homepage-dashboard pattern).
 - **Telemetry opted out** — `OPENSEO_TELEMETRY_DISABLED=1` (anonymous heartbeats; unnecessary self-hosted).
-- **Monitoring** — Gatus "OpenSEO" (`http://localhost:3002`, gatus-config.nix — the hand-rolled vHost also means no registry checks); unit carries onFailure.
+- **Monitoring** — Gatus "OpenSEO" via the registry entry (`services.integration.openseo.checks`, 5m HTTP probe of `/`; moved out of gatus-config.nix 2026-10-25). Tile likewise registry-fan-out (`homepage`, Productivity group); the hand-written vHost exemption is why `vHost.layer = "none"` — registration without vHost generation.
+- **Registry entry (2026-10-25 §g.2/§g.3 answers)** — subdomain `seo`, monitored, tile + check all fan out from `services.integration.openseo`; the hand-rolled caddy vHost stays canonical (path-scoped forward-auth exemption unreachable by the registry renderer).
 
 ## Related
 
