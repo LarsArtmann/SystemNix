@@ -359,10 +359,15 @@
         name = "discordsync-immich-key-provision";
         runtimeInputs = [
           pkgs.coreutils
+          pkgs.gawk
           pkgs.openssl
           pkgs.util-linux
           pkgs.systemd
-          config.services.postgresql.package
+          # psql CLIENT from pkgs (not config.services.postgresql.package):
+          # that option has no value when postgres is disabled, which would
+          # break the EVAL of this module on immich-less hosts. Client/server
+          # version skew is immaterial for one INSERT/SELECT.
+          pkgs.postgresql
         ];
         text = ''
           set -euo pipefail
@@ -370,7 +375,7 @@
           url="${cfg.immich.url}"
           keyname="discordsync-lookup (nix-managed)"
           db="${config.services.immich.database.name or "immich"}"
-          psql() { runuser -u postgres -- ${config.services.postgresql.package}/bin/psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
+          psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
 
           # Schema guard (loud, not silent): the INSERT below is coupled to
           # Immich's api_key shape. Verified live 2026-10-25 against 3.3.3
@@ -653,20 +658,27 @@
           # re-converges the key. Boot-time run covers DB-restore healing.
           wantedBy = [ "multi-user.target" ];
           inherit onFailure;
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = lib.getExe immichKeyProvision;
-            TimeoutStartSec = "2min";
-            # Root BY DESIGN: peer-auth postgres via runuser (no secret exists
-            # to authenticate with), discordsync-owned env file write, and a
-            # try-restart of the consumer units. NoNewPrivileges stays OFF —
-            # runuser is setuid and the script legitimately needs it.
-            NoNewPrivileges = false;
-            ProtectSystem = "strict";
-            ReadWritePaths = [ cfg.dataDir ];
-            PrivateTmp = true;
-          };
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = lib.getExe immichKeyProvision;
+              TimeoutStartSec = "2min";
+              # Root BY DESIGN: peer-auth postgres via runuser (no secret exists
+              # to authenticate with), discordsync-owned env file write, and a
+              # try-restart of the consumer units. NoNewPrivileges stays OFF —
+              # runuser is setuid and the script legitimately needs it.
+              NoNewPrivileges = false;
+              ProtectSystem = "strict";
+              ReadWritePaths = [ cfg.dataDir ];
+              PrivateTmp = true;
+            }
+            # ioTier.background (mkMerge, the db-heal idiom): the
+            # io-tier-coverage-audit requires every boot-gated unit to carry
+            # a tier — added 2026-10-25 when this unit's missing tier
+            # blocked the whole tree's eval mid float-landing.
+            ioTier.background
+          ];
         };
 
         systemd.timers.discordsync-immich-key-provision = lib.mkIf cfg.immich.enable {
