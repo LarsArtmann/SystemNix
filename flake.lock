@@ -5665,11 +5665,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792939011,
-        "narHash": "sha256-txQptgAmk+7AyKlQRpb7OZiMIYbF7H5+XnPsGInFfu8=",
+        "lastModified": 1792939513,
+        "narHash": "sha256-YtdrvZd0XYFJ57fJmtUB6GxGQ7FGHDL1uoR2c28AgjQ=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "332f1bc135aaa51a01933b7c37df6c9f7e5d11b2",
+        "rev": "1433a2c919d683929baaf5eef240b127c1503cfe",
         "type": "github"
       },
       "original": {
