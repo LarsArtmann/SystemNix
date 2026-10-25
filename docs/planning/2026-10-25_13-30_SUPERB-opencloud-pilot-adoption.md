@@ -1,5 +1,8 @@
 # SUPERB Plan — OpenCloud Pilot Adoption (LAN/VPN, complement mode)
 
+**Created:** 2026-10-25 13:30 CET
+**EXECUTING (instance opencloud-executor-1, owner GO directive 2026-10-25 afternoon; A1=go, complement + LAN/VPN-only per plan scope, 2026-10-25 21:54 CET, HEAD `01d99b129`):** executing (see AGENTS.md plan-execution tombstone)
+
 _2026-10-25 13:30 CET · status: **PLAN ONLY — not executed, no marker** (plan-execution tombstone discipline applies to the session that runs this) · author: PRO/CONTRA session (docs/status/2026-10-25_12-52_opencloud-adoption-pro-contra.md + Addenda 13:01 RustFS, 13:27 Paperless)_
 
 **Scope:** Phase 1 agent build → Phase 2 owner usage window → Phase 3 canonical-store decision. Everything a pilot needs, nothing it doesn't. **Mode:** complement (Drive stays canonical — google-sync/drive-paperless UNTOUCHED), LAN/VPN-only exposure, production line `opencloud-production` 7.2.4, posix driver, stateDir on the HDD pool.
