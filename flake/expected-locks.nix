@@ -32,8 +32,8 @@
   crm = "1723289e7f625612f714efd6ddb6280c7f9512ce";
   crush-config = "7639e20d1e16ff713bfaf4490b350b0b78dff378";
   crush-daily = "abe5489ef0a21ce3e704a1fc579b8830934925e3";
-  cv = "88e0d1232cb0bc095e9f19ecf76f11565dc669fc";
-  dankMaterialShell = "6d65f304e58377258975bfb22a31faffed3789c3";
+  cv = "29868e05e666589817f94fc07f03eb8453a538fa";
+  dankMaterialShell = "e689cd2ce77dd83d7eb7ca394dc34a3e6f709b6a";
   discordsync = "0b08c42f8e894f0551a113a6adbe7b283e9b9481";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
@@ -49,11 +49,11 @@
   go-auto-upgrade = "125d7aedabd135982e812c17062e2a1071f1ccd9";
   go-branded-id = "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71";
   go-commit = "8cb641c51840be1ae7730bbf73553b1da0e7ad76";
-  go-cqrs-lite = "8732bb6135aebac496e13a65a6ffdb1988ee6a26";
+  go-cqrs-lite = "411ab94ccf41cfbaf32a2db67f3a8200db7081c1";
   go-error-family = "a23dc0e08234909e63ee3dc7a7833319bc195c54";
   go-filewatcher = "112a72f92b34082b899d69d821c56fb46e425123";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
-  go-health-dashboard = "390bf2d596e353b1889de3bb0d48632190769076";
+  go-health-dashboard = "e8eeefa9131ec0c3181436db294680cce8c77a6f";
   go-humanize-linter = "be8793eb18aef0517669dc1ba309899c91c12fae";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
@@ -66,7 +66,7 @@
   hermes-agent = "0329638c2bf0438552145589787e355bf23343fe";
   home-manager = "c216bf5a1f173b0481bd5c8c489ebe5595ecc68c";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "00f53e4604de09caa11fa9785d7bc83712b01ba6";
+  homebrew-cask = "ab8197e497a010733b2e1f42e39df82616237628";
   inboxclean = "c63bf2895a17741541ccaccde9677091904dac17";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "69d9b10d9e38308faf33e90f04283a58fa360aa4";
@@ -85,8 +85,8 @@
   nixpkgs = "fe13242281a67641c0102cdb1087f0ebe586c7df";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504";
-  nsfw-classifier = "33075c64c573b2ea53ab7201172469d86fa553c0";
-  nur = "342ac0d4f6781bbb98e9fe1cabcb53e23c68b537";
+  nsfw-classifier = "8330f7aae4aa315e169fd8c2257a9767a13e291e";
+  nur = "8004b26fecbae0a7c2b630544cb01d6c95dd2e2e";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "e7b2cbb87eb3d61a962ecbf0a13bfadad7a29381";
