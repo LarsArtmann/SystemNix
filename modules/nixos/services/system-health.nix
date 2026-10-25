@@ -33,7 +33,16 @@ _: {
       # Built-in default list plus the registry fan-out seam
       # (services.integration.<name>.monitored) — services registering through
       # the integration registry append here instead of editing the default.
-      allMonitoredServices = cfg.monitoredServices ++ cfg.extraMonitoredServices;
+      # lib.unique is LOAD-BEARING: a service in BOTH lists (monitor365 +
+      # monitor365-server since the 2026-10-18 re-enable — the default keeps
+      # them for the disabled era, the registry re-adds them enabled) made
+      # every emit loop write each system_service_* row TWICE into
+      # system_health.prom, and node_exporter rejected the whole scrape
+      # ("was collected before with the same name and label values",
+      # 26 errors per scrape — host metrics blind 2026-10-18..25).
+      allMonitoredServices = lib.unique (
+        cfg.monitoredServices ++ cfg.extraMonitoredServices
+      );
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
       # Census durability ring (2026-10-12): the 10-03 OOM cascade lost the

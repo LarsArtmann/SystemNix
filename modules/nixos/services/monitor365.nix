@@ -223,7 +223,14 @@
           }
           trap restore EXIT TERM INT
 
-          ${lib.getExe serverCfg.package} \
+          # DuckDB's default 2GB PRAGMA memory_limit OOM-aborted the backup
+          # COPY of the 25 GB DB ("could not allocate block ... 1.8 GiB/1.8
+          # GiB used", 2026-10-25 03:01 — export FAILED, no nightly rollback
+          # copy). 6G explicit keeps the COPY under the unit's MemoryHigh 8G
+          # (process overhead included) instead of DuckDB's decimal-2GB
+          # default; the OOM hint banner itself recommends raising it.
+          MONITOR365_SERVER__MEMORY_LIMIT="6G" \
+            ${lib.getExe serverCfg.package} \
             --database-url "$STATE_DIR/monitor365.duckdb" \
             --jwt-secret "$(cat /run/secrets/server_jwt_secret)" \
             backup --output-dir "$STATE_DIR"
