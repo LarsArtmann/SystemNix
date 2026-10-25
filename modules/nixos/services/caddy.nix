@@ -211,7 +211,9 @@ _: {
         pkgs.linkFarm "caddy-servererror-root" [
           {
             name = "502.html";
-            path = pkgs.writeText "caddy-502.html" (errPage "502" "Service not responding" "The service behind");
+            path = pkgs.writeText "caddy-502.html" (
+              errPage "502" "Service not responding" "The service behind"
+            );
           }
           {
             name = "503.html";
