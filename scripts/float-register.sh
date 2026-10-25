@@ -102,6 +102,20 @@ msg_file=$(mktemp)
   echo "scripts/float-register.sh (keep-going log: $proof_log)."
 } > "$msg_file"
 git add "$LOCK" "$REGISTRY"
-git commit -F "$msg_file" -- "$LOCK" "$REGISTRY"
+if ! git commit -F "$msg_file" -- "$LOCK" "$REGISTRY"; then
+  rm -f "$msg_file"
+  # Daemon-race: the auto-commit daemon batches continuously and may have
+  # swept the pair while the proof was running (live 2026-10-25: heuristic
+  # commit landed mid-proof, our pathspec commit found nothing). Success
+  # condition: the tree is clean AND the registry still matches the lock.
+  now_body=$(regen_body)
+  now_reg=$(grep -E '^  [a-zA-Z0-9_.-]+ = "[0-9a-f]{40}";$' "$REGISTRY" || true)
+  if [ "$now_body" = "$now_reg" ] && git diff --quiet -- "$LOCK" "$REGISTRY"; then
+    echo "✓ float-register: the auto-commit daemon landed the pair during the proof — content verified, nothing to do"
+    exit 0
+  fi
+  echo "✗ float-register: commit failed AND content mismatch — inspect $LOCK/$REGISTRY manually"
+  exit 4
+fi
 rm -f "$msg_file"
 echo "✓ float-register: registered [${drifted:-}] and committed lock+registry together"

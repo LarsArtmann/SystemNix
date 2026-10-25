@@ -298,6 +298,20 @@ if [ $(($(date +%s) - race_head_ts_manifest)) -lt 900 ]; then
   export DEPLOY_UNIT_MANIFEST
 fi
 
+# Lock-float auto-registration (2026-10-25 float marathon): a blanket
+# `nix flake update` leaves the lock ahead of flake/expected-locks.nix and
+# EVERY eval (this deploy's own validation battery included) throws at the
+# gate, demanding a manual regenerate→prove→commit ceremony before anything
+# runs. Run the ceremony automatically: no drift → instant no-op; drift →
+# register + keep-going proof + commit, and ABORT here if the proof is red
+# (the deploy could not build those revs either). Opt out: FLOAT_REGISTER=0.
+if [ "${FLOAT_REGISTER:-1}" = "1" ]; then
+  if ! nix run .#float-register; then
+    echo "❌ float-register failed — deploy aborted (the floated revs do not build; see the roots above)"
+    exit 12
+  fi
+fi
+
 phase "Pre-Deploy Validation ==="
 if nix run .#pre-deploy-check; then
   echo ""
