@@ -387,7 +387,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -696,6 +696,16 @@ eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:platforms/nixos/system/boot-mirror.nix:s|      (ioTier.background)|      # tier stripped for negative test|'
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
+
+# ── caddy-perhost-drift-audit (2026-10-25 caddy edge plan M14) ──
+# Finding 1 of the deep dive: metrics per_host is the enabler for every
+# per-vHost observability surface (dashboard by-host panels, the per-host
+# 5xx alert). A refactor dropping the line must fail eval, not silently
+# regress the edge to aggregate-only. The mutation comments the line out
+# INSIDE the Caddyfile string (valid nix, valid Caddyfile) so the audit's
+# own marker fires rather than an eval accident.
+eval_case caddy perhost-drift fail 'caddy-perhost-drift-audit' \
+  'sed:modules/nixos/services/caddy.nix:s|^              per_host$|              # per_host removed by drift test|'
 
 # ── portguard: the shared release-verified port guard (berth-patterns plan T2) ──
 # The artifact check (tests/test-port-guard.nix) asserts seven decision paths
