@@ -173,6 +173,19 @@ _: {
         request_body {
           max_size 10GB
         }
+        # Edge-level OTel spans for EVERY vHost (hand-written, registry
+        # fan-out, static roots, catch-alls and the cloud mirrors — they all
+        # render through this block). Spans carry the OTel HTTP semantic
+        # attributes (method/route/status/duration/client); the span name is
+        # the requested host, keeping SigNoz spanmetrics cardinality bounded
+        # by the vHost count. Exporter: gRPC → the local SigNoz collector via
+        # the unit env below; audit rails: otel-endpoint-audit "grpc-url" +
+        # signoz-coverage "caddy" (wiring env, 26h request-driven budget).
+        # Caddy cannot continue trace context INTO the backends (they carry
+        # no client-side instrumentation), so these are edge spans only.
+        tracing {
+          span {http.request.host}
+        }
       '';
 
       proxyTo =
@@ -870,6 +883,15 @@ _: {
           ]
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           inherit onFailure;
+          environment = {
+            # Edge tracing exporter (commonConfig `tracing` directive): gRPC
+            # to the local SigNoz collector. Scheme REQUIRED — caddy's
+            # exporter is otel-go otlptracegrpc, a URL parser (the 2026-08-14
+            # schemeless-endpoint startup-hang class; grpc-url expectation in
+            # otel-endpoint-audit enforces this at eval).
+            OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:${toString ports.signoz-otlp-grpc}";
+            OTEL_SERVICE_NAME = "caddy";
+          };
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
             StartLimitIntervalSec = lib.mkForce 300;

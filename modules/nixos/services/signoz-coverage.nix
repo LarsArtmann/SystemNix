@@ -476,6 +476,12 @@
               wiring = "env";
               maxAgeHours = 26;
             };
+            # Caddy edge spans (tracing directive on every vHost, env-wired
+            # gRPC exporter). Request-driven traffic: gatus checks hit the
+            # backends DIRECTLY, so spans flow on human browsing + deploy
+            # smokes — 26h request-driven budget (an overnight without
+            # requests is healthy, not dark; dnsblockd doctrine).
+            caddy = env "caddy" 26;
             # ── Known upstream gaps (binary cannot emit yet) ──
             projects-management-automation = {
               serviceName = "projects-management-automation";

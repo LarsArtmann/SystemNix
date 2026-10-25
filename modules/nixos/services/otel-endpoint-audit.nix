@@ -48,6 +48,7 @@ _: {
         # gRPC (port 4317), scheme REQUIRED
         browser-history = "grpc-url"; # Go otlptracegrpc (upstream v0.5.0+ normalizes)
         monitor365-server = "grpc-url"; # Rust tonic
+        caddy = "grpc-url"; # otel-go otlptracegrpc (tracing directive, edge spans)
         # OTLP HTTP (port 4318) via URL-parsing SDKs, scheme REQUIRED
         hermes = "http-url"; # Python opentelemetry-sdk
         # OTLP HTTP (port 4318), Go otlptracehttp — bare host:port, NO scheme
