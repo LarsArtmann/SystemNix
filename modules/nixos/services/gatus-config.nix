@@ -504,6 +504,26 @@ _: {
                   ];
                   alerts = discordAlert "Processes stuck in uninterruptible D-state for >1h — unkillable even by SIGKILL (driver/firmware wedge, amdxdna class 2026-09-04). Every restart of the owning unit strands another corpse; REBOOT is the only fix. Find them: ps -eo pid,stat,wchan:30,etime,comm, then filter the STAT column for lines starting with D";
                 })
+                # Watch-the-watcher (fleet-stabilization F25/F26): the
+                # 2026-10-18..25 dup-row regression made every /metrics
+                # scrape fail whole (HTTP 500, "was collected before") and
+                # host metrics went blind for 7 days while every OTHER
+                # :9100-based check silently degraded with it. This check
+                # names the exporter itself: 200 + the textfile sentinel at
+                # zero. node_textfile_scrape_error flips 1 on ANY textfile
+                # parse/dup error, and its absence (collector gone dark)
+                # fails the pat() too.
+                (mkHttpCheck {
+                  name = "Node Exporter Textfile Health";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*node_textfile_scrape_error 0*)"
+                  ];
+                  alerts = discordAlert "node_exporter /metrics is failing (scrape 500 or textfile errors) — host metrics are BLIND; every :9100-based check is degraded with it. The 2026-10-18 class: duplicate rows in a textfile .prom (system_health.prom) reject the whole scrape. Check: journalctl -u prometheus-node-exporter --since -30m --grep 'collected metric', then ls -la /var/lib/prometheus-node-exporter/textfile_collectors and validate the newest .prom for duplicate series";
+                })
                 # The old "Homepage" check died with homepage-dashboard
                 # (2026-09 merge). The dashboard is PapDashboard now; its
                 # /api/health check lives in the papdashboard registry entry.

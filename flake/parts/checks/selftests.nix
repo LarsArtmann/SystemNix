@@ -89,7 +89,7 @@
               # tool list must be exported INSIDE the script body — an
               # env.PATH attr is silently clobbered (proven by the check's
               # own first failing run: "duckdb: command not found").
-              duckdb = pkgs.duckdb;
+              inherit (pkgs) duckdb;
             }
             ''
               export PATH="${pkgs.duckdb}/bin:${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
@@ -164,6 +164,44 @@
           ${pkgs.bash}/bin/bash "$scratch/scripts/flake-lock-audit.sh" --selftest
           touch $out
         '';
+
+        # Rendered-uniqueness contract for system-health's per-service emit
+        # loop (fleet-stabilization F28/F29; the 2026-10-18..25 dup-row
+        # blindness class): the REAL rendered collector script (evo-x2 unit
+        # ExecStart) must carry a duplicate-free, complete quoted service
+        # list in its `for svc in …` loop. A registry fan-out regression
+        # re-duplicating rows (whole-scrape rejection, host metrics blind)
+        # then fails HERE at check time, not after 7 blind days.
+        system-health-rendered-unique =
+          let
+            host = inputs.self.nixosConfigurations.evo-x2;
+            execStart = host.config.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+            cfg = host.config.services.system-health;
+            allMonitored = lib.unique (cfg.monitoredServices ++ cfg.extraMonitoredServices);
+          in
+          pkgs.runCommand "system-health-rendered-unique"
+            {
+              expectedCount = toString (builtins.length allMonitored);
+              expectedList = lib.concatStringsSep " " allMonitored;
+            }
+            ''
+              set -u
+              fail() { echo "SELFTEST FAIL: $1"; exit 1; }
+              script="${execStart}"
+              line="$(grep -F "for svc in" "$script" | head -1)"
+              [ -n "$line" ] || fail "rendered collector lost its 'for svc in' loop"
+              list="$(printf '%s' "$line" | sed -e "s/.*for svc in //" -e "s/;.*//")"
+              [ -n "$list" ] || fail "per-service list rendered empty"
+              dups="$(printf '%s' "$list" | grep -oE "'[^']+'" | sort | uniq -d | tr '\n' ' ')"
+              [ -z "$dups" ] || fail "rendered per-service list carries duplicates (the 2026-10-18 dup-row class): $dups"
+              n="$(printf '%s' "$list" | grep -oE "'[^']+'" | wc -l)"
+              [ "$n" = "$expectedCount" ] || fail "rendered list has $n entries, expected $expectedCount — dedupe dropped or added entries"
+              for s in $expectedList; do
+                printf '%s' "$list" | grep -qF "'$s'" || fail "service $s missing from rendered list"
+              done
+              echo "system-health-rendered-unique: $n services, zero duplicates (dup-row class pinned)"
+              touch $out
+            '';
 
         # fod-hash-diff selftest (2026-10-23): pins the batch stale-FOD
         # patcher's parser (specified/got pairs from a keep-going log) and its
