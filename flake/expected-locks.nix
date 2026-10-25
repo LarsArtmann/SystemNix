@@ -66,7 +66,7 @@
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
   go-structure-linter = "15794344c26e909978dd00f9a49923f583c3b97f";
-  go-taskqueue = "4c88ec84c51d9322fde399e4da8a647adb4e9d56";
+  go-taskqueue = "332f1bc135aaa51a01933b7c37df6c9f7e5d11b2";
   gogenfilter = "e8a33dd56d9a848efcedc493931af811dc6ed49e";
   golangci-lint-auto-configure = "f511153d0019bdd0ca328d406ba385a4e71c2451";
   helium = "ebac6e7f4af50aa48200ae77ea6606061e2d3e84";
@@ -86,7 +86,7 @@
   niri-session-manager = "fbc96f843edc2022e3f8fde9bec33d770e96b75a";
   nix-amd-npu = "8848c6f3382852290ac25fbe7634058c4e9c037e";
   nix-darwin = "bb0b90dbd54e207100de72b5dcbe3188c98a4b69";
-  nix-email = "c779a324698a5f2f4ab3d33a28abe15f7cc13319";
+  nix-email = "3f38b7928148dae32bbc93ffa473ac813b5e5530";
   nix-homebrew = "c11cccfdd36dd69b5323d70d354b2853379c2426";
   nix-ssh-config = "8c083ed1e823de2f00447468d077ca411b7673ee";
   nixos-hardware = "1b418b8f203e49a92f250f8babdd19af1b6f7a7f";
@@ -94,7 +94,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504";
   nsfw-classifier = "8330f7aae4aa315e169fd8c2257a9767a13e291e";
-  nur = "e445b582549a41691a5aea8d17ff468d6f94ca68";
+  nur = "e2950b6fbdc7c9e324fdb11d9b985a8f08e16c88";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "e7b2cbb87eb3d61a962ecbf0a13bfadad7a29381";
