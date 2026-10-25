@@ -1,7 +1,7 @@
 # SUPERB — Fleet Stabilization, Monitoring Truth & Deploy Throughput
 
 **Created:** 2026-10-25 05:10 CEST · **Owner:** Lars · **Author:** monitor365 self-connect session (post 04-50 report + 05-05 review)
-**EXECUTED (instance exec-1: Wave0 gates (lock-float F07-F10 committed; features-drift F11-F13 + watch-the-watcher F25-F29 VERIFIED GREEN but commit-blocked by foreign upholds test breakage, landing next); T1/T2 deploy storm-gated (PSI+k10temp 98C); T3 packet delivered in 07-05 report; T5 premise live-falsified (nix-daemon/gradle/nsfw, not ghostty); close-out 07-05 + 07-16 reports, 2026-10-25 07:18 CET, HEAD `a51bc1f6a`):** execution finished
+**EXECUTING (instance exec-2 resume: unblock upholds test, land 2 green batches, changelog, storm-gated deploy, 2026-10-25 07:29 CET, HEAD `c6f562541`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch (Pareto/plan/execute template, 5th re-fire).
 **Mission:** un-break what is actively broken (monitor365 drain-trap, monitoring blindness), then permanently raise the two system-wide multipliers — monitoring truth (nothing watches the watcher) and deploy throughput (PSI gate + lock-float eval breaks) — then burn down the long tail by domain.
 
