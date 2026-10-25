@@ -436,8 +436,17 @@ _: {
           # compute delta / elapsed to get average CPU% since last collection.
           # The two per-service reads (CPUUsageNSec + NRestarts) used to live in
           # TWO separate loops, each with its own systemctl call — merged 2026
-          # -09-19: ONE `systemctl show -p CPUUsageNSec -p NRestarts --value`
-          # per service (properties print one per line in the order given).
+          # -09-19: ONE `systemctl show -p CPUUsageNSec -p NRestarts` per
+          # service. SWAP BUG FIXED 2026-10-25: the merged read assumed
+          # properties print in flag order and read them positionally — but
+          # systemctl show prints them in its OWN order (live-probed: with
+          # `-p CPUUsageNSec -p NRestarts` the output is NRestarts-FIRST), so
+          # for six weeks cpu_nsec held NRestarts and cur_r held CPUUsageNSec:
+          # system_service_nrestarts carried CPU-nanoseconds (nix-daemon
+          # 8.4e13), system_service_cpu_percent read ~0 fleet-wide, and the
+          # crash-loop delta (correct cur_r vs swapped prev_r) could never be
+          # positive — the fast detector was structurally dead. Keyed parse
+          # (no --value, match on the `Key=` prefix) is order-immune.
           declare -A prev_cpu_nsec prev_cpu_ts prev_restarts
           if [ -f "$CPU_STATE" ]; then
             while IFS=' ' read -r s n t; do
@@ -455,11 +464,15 @@ _: {
           CPU_STATE_TMP="$(mktemp "''${CPU_STATE}.XXXXXX")"
           RESTART_STATE_TMP="$(mktemp "''${RESTART_STATE}.XXXXXX")"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") allMonitoredServices}; do
-            {
-              read -r cpu_nsec
-              read -r cur_r
-            } < <(systemctl show "$svc" -p CPUUsageNSec -p NRestarts --value 2>/dev/null)
-            # systemctl --value returns literal "[not set]" for stopped units. An
+            cpu_nsec=0
+            cur_r=0
+            while IFS='=' read -r prop val; do
+              case "$prop" in
+                CPUUsageNSec) cpu_nsec="$val" ;;
+                NRestarts) cur_r="$val" ;;
+              esac
+            done < <(systemctl show "$svc" -p CPUUsageNSec -p NRestarts --no-pager 2>/dev/null)
+            # systemctl prints "[not set]" for stopped units. An
             # unguarded write poisons the state file and node_exporter then rejects
             # the whole system_health.prom (2026-09-20 nrestarts="[not" incident)
             cpu_nsec="''${cpu_nsec:-0}"
@@ -2404,6 +2417,28 @@ _: {
                   "[BODY] == pat(*\nsystem_units_enabled_inactive_scrape_errors 0\n*)"
                 ];
                 alert = "Enabled long-running unit(s) are INACTIVE — the pool-dropout class (an enabled daemon nobody started). Read system_unit_enabled_inactive{manager,unit} labels in :9100/metrics, then systemctl start <unit> (and find why the boot transaction skipped it — cancelled mount job, failed Requires, etc.)";
+              }
+              {
+                name = "Unit Crash-Loop / Restart Churn";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                # The 2026-10-20..25 nsfw-classifier class: 239 restarts over
+                # 5 days while EVERY alert layer stayed quiet — the aggregates
+                # below existed in the textfile but nothing consumed them (and
+                # the 2026-09-19 systemctl property-order swap had structurally
+                # zeroed the fast flag since then). Anchored forms: absence of
+                # either aggregate fails closed; any nonzero flag fires.
+                # crash_loop = >=3 restarts within ONE 5-min collection
+                # interval (fast loop); restart_churn = >=5 NRestarts since
+                # the last explicit (deploy/manual) start — deploy restarts
+                # reset NRestarts, so deploy churn cannot false-fire.
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nsystem_any_service_crash_loop 0\n*)"
+                  "[BODY] == pat(*\nsystem_any_service_restart_churn 0\n*)"
+                ];
+                alert = "A monitored service is crash-looping — the 2026-10-20..25 nsfw class (239 restarts, 5 days, invisible to every layer). Attribution: grep 'system_service_crash_loop{.*} 1' and 'system_service_restart_churn{.*} 1' in :9100/metrics, then journalctl -u <service> -n 50. crash_loop = >=3 restarts in one 5-min interval; restart_churn = >=5 restarts since the last deploy/manual restart.";
               }
               {
                 name = "FastFlowLM NPU LLM";

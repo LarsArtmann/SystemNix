@@ -279,6 +279,23 @@ _: {
               details+=("Filesystem in CRITICAL state (unalloc/meta envelope). btrfs-health metrics; do not add load.")
               severities+=("warn")
             fi
+            # --- Unit crash-loop / restart churn (2026-10-25, monitoring.md
+            #     row: the nsfw 2026-10-20..25 class — 239 restarts over 5
+            #     days invisible to every alert layer). TIER: notify (row's
+            #     ask: severity=notify minimum; a looping daemon degrades a
+            #     feature, it does not page the room). crash_loop = >=3
+            #     restarts in one collection interval (fast loop);
+            #     restart_churn = >=5 NRestarts since the last explicit
+            #     start (deploy resets the counter — no deploy false-fires).
+            #     Attribution: first per-service 1-flag in the same file.
+            v=$(prom_value "$HEALTH_PROM" "system_any_service_crash_loop")
+            churn_v=$(prom_value "$HEALTH_PROM" "system_any_service_restart_churn")
+            if [ "$v" = "1" ] || [ "$churn_v" = "1" ]; then
+              loop_svc=$(grep -E '^system_service_(crash_loop|restart_churn)\{.*\} 1$' "$HEALTH_PROM" 2>/dev/null | head -1 | sed -E 's/.*service="([^"]+)".*/\1/')
+              titles+=("UNIT CRASH LOOP")
+              details+=("A monitored service is restart-looping''${loop_svc:+ (''${loop_svc})} — the 2026-10-20..25 nsfw class (5 days invisible). journalctl -u ''${loop_svc:-<check :9100 system_service_crash_loop labels>} -n 50; if it is a known crash, mask/stop it before it burns the disk cold-loading.")
+              severities+=("notify")
+            fi
             v=$(prom_value "$HEALTH_PROM" "system_zram_fill_over_threshold")
             if [ "$v" = "1" ]; then
               # zram near-full ALONE is steady-state normal on this box

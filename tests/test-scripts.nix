@@ -622,6 +622,146 @@
       '';
     };
 
+  # Restart-tracking swap fix + crash-loop consumption (2026-10-25,
+  # monitoring.md row — the nsfw 239-restart/5-day invisible-loop class):
+  # the 2026-09-19 merged systemctl read assumed flag-order output and read
+  # positionally, but systemctl show prints properties in its OWN order
+  # (live-probed 2026-10-25: NRestarts FIRST) — system_service_nrestarts
+  # carried CPU-nanoseconds, cpu_percent read ~0, and the crash-loop delta
+  # (correct cur_r vs swapped prev_r) could never be positive. This test
+  # slices the REAL keyed-parse loop from the rendered collector and runs it
+  # against a stubbed systemctl pinned to the live order (plus the flag
+  # order, a [not set] value, and a missing-property line), then pins the
+  # consumption wiring (gatus + sev1 + signoz) with static tripwires.
+  system-health-restart-tracking =
+    let
+      evo = self.nixosConfigurations.evo-x2.config;
+      collector = evo.systemd.services.system-health-metrics.serviceConfig.ExecStart;
+      probe = pkgs.writeShellApplication {
+        name = "system-health-restart-tracking-probe";
+        # SC2016: slice anchors are deliberate literals; SC1091: the sliced
+        # collector loop is a runtime artifact by design.
+        excludeShellChecks = [
+          "SC2016"
+          "SC1091"
+        ];
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnused
+          pkgs.gnugrep
+          pkgs.bash
+        ];
+        text = ''
+          set -euo pipefail
+          SCRIPT="''${1:?collector store path required}"
+          HEALTH_MODULE="''${2:?system-health module path required}"
+          SEV1_MODULE="''${3:?sev1 module path required}"
+          SIGNOZ_MODULE="''${4:?signoz rules module path required}"
+          WORK=$(mktemp -d)
+          mkdir -p "$WORK/bin"
+
+          # Stub systemctl: `systemctl show <svc> -p CPUUsageNSec -p NRestarts
+          # --no-pager`. ORDER = the LIVE-VERIFIED output order (2026-10-25,
+          # busctl cross-check on nix-daemon: NRestarts=u 0 printed before
+          # CPUUsageNSec=t 8.4e13 while the .prom nrestarts carried the CPU
+          # value) — the exact order that produced the six-week swap. The
+          # mock svc fixture sets exercise: live order, flag order (proving
+          # order-immunity), a [not set] CPU value, and a missing CPU line.
+          cat > "$WORK/bin/systemctl" <<'STUB'
+          #!/usr/bin/env bash
+          svc="$2"
+          case "$svc" in
+            gatus)
+              printf 'NRestarts=0\nCPUUsageNSec=111222333444\n' ;;
+            nsfw-classifier)
+              printf 'NRestarts=5\nCPUUsageNSec=999888777666\n' ;;
+            flag-order)
+              printf 'CPUUsageNSec=123\nNRestarts=7\n' ;;
+            not-set)
+              printf 'NRestarts=2\nCPUUsageNSec=[not set]\n' ;;
+            missing-cpu)
+              printf 'NRestarts=3\n' ;;
+            *)
+              printf 'NRestarts=0\nCPUUsageNSec=1\n' ;;
+          esac
+          STUB
+          chmod +x "$WORK/bin/systemctl"
+          export PATH="$WORK/bin:$PATH"
+
+          # Slice the REAL keyed-parse loop body (from the `cpu_nsec=0` reset
+          # to the RESTART_STATE_TMP append — the full per-svc body, incl. the
+          # while/read keyed parse and the [not set] guards). Anchor tolerates
+          # writeShellApplication's residual per-level indentation (live: the
+          # module's 10-space nix indent strips to 2 inside the loop).
+          sed -n '/^ *cpu_nsec=0$/,/RESTART_STATE_TMP"$/p' "$SCRIPT" > "$WORK/loopbody.sh"
+          grep -q 'CPUUsageNSec' "$WORK/loopbody.sh" || { echo "slice failed: keyed parse not found in rendered collector"; exit 1; }
+
+          export CPU_STATE_TMP="$WORK/cpu_state"
+          export RESTART_STATE_TMP="$WORK/restart_state"
+          export NOW_EPOCH=100
+          : > "$CPU_STATE_TMP"
+          : > "$RESTART_STATE_TMP"
+
+          # Run the sliced body once per fixture service (svc preset).
+          run_one() {
+            local svc="$1"
+            bash -c 'set -euo pipefail; svc="'"$svc"'"; source '"$WORK/loopbody.sh"
+          }
+          run_one gatus
+          run_one nsfw-classifier
+          run_one flag-order
+          run_one not-set
+          run_one missing-cpu
+
+          # Assertions: RESTART_STATE $2 = NRestarts (small), CPU_STATE $2 =
+          # CPUUsageNSec — for BOTH property orders, the [not set] guard,
+          # and the missing-line default.
+          check_state() {
+            local file="$1" svc="$2" want="$3" label="$4"
+            local got
+            got=$(grep "^$svc " "$file" | awk '{print $2}')
+            [ "$got" = "$want" ] || { echo "FAIL $label: $svc expected $want, got '$got'"; exit 1; }
+          }
+          check_state "$RESTART_STATE_TMP" gatus 0 "restarts gatus"
+          check_state "$RESTART_STATE_TMP" nsfw-classifier 5 "restarts nsfw (the incident shape: cumulative NRestarts)"
+          check_state "$RESTART_STATE_TMP" flag-order 7 "restarts flag-order (order-immunity)"
+          check_state "$RESTART_STATE_TMP" not-set 2 "restarts not-set"
+          check_state "$RESTART_STATE_TMP" missing-cpu 3 "restarts missing-cpu"
+          check_state "$CPU_STATE_TMP" gatus 111222333444 "cpu gatus (live order)"
+          check_state "$CPU_STATE_TMP" nsfw-classifier 999888777666 "cpu nsfw"
+          check_state "$CPU_STATE_TMP" flag-order 123 "cpu flag-order (order-immunity)"
+          check_state "$CPU_STATE_TMP" not-set 0 "cpu not-set ([not set] sanitized to 0)"
+          check_state "$CPU_STATE_TMP" missing-cpu 0 "cpu missing-cpu (absent line defaults 0)"
+
+          # ── Static tripwires: the consumption wiring exists ────────────
+          grep -qF 'case "$prop" in' "$HEALTH_MODULE" || { echo "module lost the keyed parse"; exit 1; }
+          grep -qF 'CPUUsageNSec) cpu_nsec="$val"' "$HEALTH_MODULE" || { echo "module lost the CPU key match"; exit 1; }
+          grep -qF 'NRestarts) cur_r="$val"' "$HEALTH_MODULE" || { echo "module lost the NRestarts key match"; exit 1; }
+          grep -qF '\nsystem_any_service_crash_loop 0\n' "$HEALTH_MODULE" || { echo "module lost the anchored crash_loop gatus condition"; exit 1; }
+          grep -qF '\nsystem_any_service_restart_churn 0\n' "$HEALTH_MODULE" || { echo "module lost the anchored churn gatus condition"; exit 1; }
+          grep -qF 'system_any_service_crash_loop' "$SEV1_MODULE" || { echo "sev1 bridge lost the crash-loop leg"; exit 1; }
+          grep -qF 'UNIT CRASH LOOP' "$SEV1_MODULE" || { echo "sev1 bridge lost the crash-loop title"; exit 1; }
+          grep -qF 'system_any_service_crash_loop' "$SIGNOZ_MODULE" || { echo "signoz lost the crash-loop rule"; exit 1; }
+          grep -qF 'system_any_service_restart_churn' "$SIGNOZ_MODULE" || { echo "signoz lost the churn rule"; exit 1; }
+
+          echo "PASS: system-health restart tracking — keyed parse order-immune, [not set]/missing guarded, consumption wired"
+        '';
+      };
+    in
+    pkgs.testers.runNixOSTest {
+      name = "system-health-restart-tracking";
+
+      nodes.machine = _: {
+        system.stateVersion = "25.11";
+      };
+
+      testScript = ''
+        machine.start()
+        machine.wait_for_unit("multi-user.target")
+        machine.succeed("${probe}/bin/system-health-restart-tracking-probe ${collector} ${../modules/nixos/services/system-health.nix} ${../modules/nixos/services/sev1-escalation.nix} ${../modules/nixos/services/_signoz-alerts.nix}")
+      '';
+    };
+
   # Kernel memcg-OOM collector (2026-10-23, monitoring.md row — freeze-#28
   # class): the per-memcg breakdown pipeline (grep oom_memcg -> sed strip ->
   # sort|uniq -c -> awk label-escape+emit) is sliced from the REAL rendered

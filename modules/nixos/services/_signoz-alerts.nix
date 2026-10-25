@@ -674,6 +674,32 @@ in
       interval = "10m";
       severity = "critical";
     };
+
+    # Unit crash-loop consumption (2026-10-25, monitoring.md row: the nsfw
+    # 2026-10-20..25 class — 239 restarts over 5 days while every alert layer
+    # stayed quiet because NOTHING consumed the restart flags). Two shapes:
+    # fast loop (>=3 restarts in one 5-min collection interval) and slow
+    # churn (>=5 NRestarts since the last explicit start — deploy restarts
+    # reset the counter, so deploys cannot false-fire). Note: the underlying
+    # system_service_nrestarts metric carried CPUUsageNSec from the
+    # 2026-09-19 property-order swap until the 2026-10-25 keyed-parse fix;
+    # these rules consume the derived flags, which are post-fix trustworthy.
+    "signoz/rules/unit-crash-loop.json".source = mkRule {
+      name = "Unit Crash-Loop (fast, >=3/5m)";
+      description = "A monitored service restarted >=3 times within one 5-minute collection interval — fast crash-loop. Attribution: the system_service_crash_loop{service} labels name the unit; journalctl -u <service> -n 50";
+      query = "system_any_service_crash_loop";
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
+    "signoz/rules/unit-restart-churn.json".source = mkRule {
+      name = "Unit Restart Churn (slow loop, >=5 since last deploy)";
+      description = "A monitored service accumulated >=5 automatic restarts since its last explicit (deploy/manual) start — slow crash-loop (the 2026-10-20..25 nsfw class: 239 restarts over 5 days, invisible to every layer). Attribution: the system_service_restart_churn{service} labels name the unit; journalctl -u <service> -n 50. Deploys reset NRestarts, so deploy churn cannot fire this.";
+      query = "system_any_service_restart_churn";
+      target = 1;
+      interval = "5m";
+      severity = "warning";
+    };
   };
 
   dashboards = {
