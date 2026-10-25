@@ -139,7 +139,9 @@ _: {
       # consulted for tile-less entries, so the pair silently renders the
       # tile while a comment claims "no tile, justified" — a contradiction
       # that must fail eval instead of compiling (assertion below).
-      contradictoryOptOuts = lib.filterAttrs (_: e: e.noDashboardTile && e.homepage != null) enabledEntries;
+      contradictoryOptOuts = lib.filterAttrs (
+        _: e: e.noDashboardTile && e.homepage != null
+      ) enabledEntries;
 
       # Registry tiles without an icon — a cosmetic gap (monogram
       # fallback), so it WARNS at eval (owner directive 2026-10-25: warn,
@@ -547,9 +549,7 @@ _: {
               assertion = contradictoryOptOuts == { };
               message = ''
                 integration: entries set noDashboardTile = true AND a homepage tile (the flag is ignored while a tile exists):
-                ${lib.concatStringsSep "\n" (
-                  lib.mapAttrsToList (name: _: "  ${name}") contradictoryOptOuts
-                )}
+                ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: _: "  ${name}") contradictoryOptOuts)}
                 The opt-out only means anything on a tile-less entry. Remove one
                 of the two: keep the tile (delete noDashboardTile) or keep the
                 opt-out (delete the homepage block).

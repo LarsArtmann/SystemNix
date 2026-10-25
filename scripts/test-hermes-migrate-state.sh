@@ -82,7 +82,7 @@ SQLITE_STUB_LOG="$scratch/log2"
 : >"$SQLITE_STUB_LOG"
 SQLITE_STUB_LOG="$SQLITE_STUB_LOG" bash "$RENDERED" >"$scratch/out2" 2>&1
 grep -q "skipping migration" "$scratch/out2" || fail "leg2: expected skip after ok census, got: $(cat "$scratch/out2")"
-grep -q "journal_mode=WAL" "$SQLITE_STUB_LOG" || fail "leg2: pragma re-assert did not run"
+grep -q "journal_mode=WAL" "$SQLITE_STUB_LOG" || fail "leg2: pragma re-assert did not run (log: $(cat "$SQLITE_STUB_LOG" 2>&1 | head -c 400), out: $(head -c 400 "$scratch/out2"))"
 assert_no_marker "leg2"
 
 # --- leg 3: unclean shutdown + census exceeds the start budget ->
