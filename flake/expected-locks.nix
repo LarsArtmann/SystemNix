@@ -57,7 +57,7 @@
   go-auto-upgrade = "125d7aedabd135982e812c17062e2a1071f1ccd9";
   go-branded-id = "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71";
   go-commit = "8cb641c51840be1ae7730bbf73553b1da0e7ad76";
-  go-cqrs-lite = "411ab94ccf41cfbaf32a2db67f3a8200db7081c1";
+  go-cqrs-lite = "8a9799fb8d58232a5d6dc215a67b236a9b96fae7";
   go-error-family = "a23dc0e08234909e63ee3dc7a7833319bc195c54";
   go-filewatcher = "112a72f92b34082b899d69d821c56fb46e425123";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
@@ -74,7 +74,7 @@
   hermes-agent = "0329638c2bf0438552145589787e355bf23343fe";
   home-manager = "c216bf5a1f173b0481bd5c8c489ebe5595ecc68c";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "ab8197e497a010733b2e1f42e39df82616237628";
+  homebrew-cask = "3c7771be17d0acb6ab94d6a8f1b3b73646a18fe3";
   inboxclean = "c63bf2895a17741541ccaccde9677091904dac17";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "69d9b10d9e38308faf33e90f04283a58fa360aa4";
@@ -94,7 +94,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504";
   nsfw-classifier = "8330f7aae4aa315e169fd8c2257a9767a13e291e";
-  nur = "8004b26fecbae0a7c2b630544cb01d6c95dd2e2e";
+  nur = "e445b582549a41691a5aea8d17ff468d6f94ca68";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "e7b2cbb87eb3d61a962ecbf0a13bfadad7a29381";

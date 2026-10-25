@@ -169,7 +169,7 @@ if [ "$ok" != "1" ]; then
   exit 4
 fi
 
-echo "--- post-state"
-sql "SELECT COUNT(*) FROM duckdb_indexes();"
+echo "--- post-state (best-effort: the running server holds the single-writer lock)"
+sql "SELECT COUNT(*) FROM duckdb_indexes();" || echo "  (lock held by running server — expected)"
 journalctl -u "$SERVER" --since '-4 min' --no-pager | grep -Ei 'listening|schema|bootstrap|error' | tail -8 || true
 echo "✓ monitor365-server healthy after out-of-band index rebuild — verify SSE device count in ~2 min (agent reconnect grace window, docs/services/monitor365.md)"
