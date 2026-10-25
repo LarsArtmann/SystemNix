@@ -4,6 +4,7 @@ _: {
   flake.nixosModules.taskchampion =
     {
       config,
+      options,
       lib,
       ...
     }:
@@ -32,6 +33,24 @@ _: {
           snapshot = {
             versions = 100;
             days = 14;
+          };
+        };
+
+        # Integration registry entry (2026-10-25 §g.2 answer: subdomain ⇒
+        # dashboard). vHost.layer "none": the tasks vHost stays hand-written
+        # in caddy.nix; the tcp sync check stays hand-written in gatus-config.nix
+        # (registry checks fan out through mkHttpCheck, HTTP-only).
+        services.integration.taskchampion-sync-server = lib.optionalAttrs (options ? services.integration) {
+          enable = true;
+          subdomain = "tasks";
+          inherit (cfg) port;
+          vHost.layer = "none";
+          monitored = true;
+          homepage = {
+            name = "Taskwarrior";
+            group = "Productivity";
+            description = "Task Sync Server (TaskChampion)";
+            icon = "taskcafe.png";
           };
         };
 

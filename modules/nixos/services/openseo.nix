@@ -25,6 +25,7 @@ _: {
   flake.nixosModules.openseo =
     {
       config,
+      options,
       pkgs,
       lib,
       ...
@@ -176,6 +177,37 @@ _: {
           home = stateDir;
         };
         users.groups.openseo = { };
+
+        # Integration registry entry (2026-10-25 §g.2 answer: subdomain ⇒
+        # dashboard). vHost.layer "none": the seo vHost stays hand-written in
+        # caddy.nix — its /api/gsc/oauth/callback forward-auth exemption is
+        # path-scoped, which the registry vHost renderer cannot express.
+        services.integration.openseo = lib.optionalAttrs (options ? services.integration) {
+          enable = true;
+          subdomain = "seo";
+          inherit (cfg) port;
+          vHost.layer = "none";
+          monitored = true;
+          homepage = {
+            name = "OpenSEO";
+            group = "Productivity";
+            description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
+            icon = "google-search-console.png";
+          };
+          checks = [
+            {
+              name = "OpenSEO";
+              group = "Productivity";
+              path = "/";
+              interval = "5m";
+              conditions = [
+                "[STATUS] == 200"
+                "[RESPONSE_TIME] < 2000"
+              ];
+              alert = "OpenSEO down — SEO rank tracking unavailable";
+            }
+          ];
+        };
 
         systemd.services.openseo = {
           description = "OpenSEO — self-hosted SEO suite";
