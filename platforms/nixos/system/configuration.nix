@@ -490,6 +490,16 @@ in
         # next deploy. No .github/workflows in the repo, so the repo-scoped
         # sync PAT suffices (the `workflow` scope is not needed).
         "company-master-data"
+        # Native-since-inception (2026-10-25): created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and seed-pushed by
+        # hand (the seed carried .github/workflows/ci.yml, which the sync
+        # PAT cannot push). UNLIKE company-master-data this repo HAS
+        # .github/workflows — the sync PAT is missing the `workflow`
+        # scope (the live domains freeze, 114 commits behind as of
+        # 2026-10-25), so the attached mirror will only flow commits
+        # that do not touch workflow files until the PAT is regenerated
+        # with repo+workflow and the sops secret redeployed.
+        "webphone-android"
       ];
       immich.enable = true;
       paperless.enable = true;
