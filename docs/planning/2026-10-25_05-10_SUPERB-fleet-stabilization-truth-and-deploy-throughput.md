@@ -1,6 +1,7 @@
 # SUPERB — Fleet Stabilization, Monitoring Truth & Deploy Throughput
 
 **Created:** 2026-10-25 05:10 CEST · **Owner:** Lars · **Author:** monitor365 self-connect session (post 04-50 report + 05-05 review)
+**EXECUTING (instance instance superb-fleet-exec-1; Wave0 gates first (deploy PSI+thermal-blocked, k10temp 98.75); T5 storm attribution live, 2026-10-25 06:15 CET, HEAD `c94a1b6f4`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch (Pareto/plan/execute template, 5th re-fire).
 **Mission:** un-break what is actively broken (monitor365 drain-trap, monitoring blindness), then permanently raise the two system-wide multipliers — monitoring truth (nothing watches the watcher) and deploy throughput (PSI gate + lock-float eval breaks) — then burn down the long tail by domain.
 
