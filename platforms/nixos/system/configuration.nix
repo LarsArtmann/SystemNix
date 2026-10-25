@@ -511,6 +511,13 @@ in
         "gogenfilter"
       ];
       immich.enable = true;
+      # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
+      # Google Drive stays canonical). Production line 7.2.4, posix driver,
+      # Pocket ID external OIDC with declarative role mapping via the
+      # opencloudAdmin/opencloudUser groups. Plan:
+      # docs/planning/2026-10-25_13-30_SUPERB-opencloud-pilot-adoption.md
+      # Runbook: docs/services/opencloud.md
+      opencloud.enable = true;
       paperless.enable = true;
       # Wave-6 remediation flag DROPPED 2026-10-20: the owner restored the DB
       # manually at 2026-10-19 07:31 (pg_restore from the 02:01 dump); the

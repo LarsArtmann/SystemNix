@@ -170,6 +170,10 @@
             # until manual start — the converge list predated the service).
             # requires= pulls the token back up, so only the daemon is listed.
             "paperless-gpt.service"
+            # OpenCloud state lives on the pool (RequiresMountsFor
+            # /mnt/pool/services/opencloud) — a remount dropout leaves it
+            # failed/inactive and needs the converge like the rest.
+            "opencloud.service"
           ];
           description = ''
             Pool consumers to converge once the pool mount is healthy: FAILED

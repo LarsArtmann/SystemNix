@@ -347,6 +347,10 @@ in
           # go-taskqueue journal (services.tq-agent-pool) — task history +
           # watermarks are worth nightly pool snapshots.
           subvolume."services/tq" = { };
+          # OpenCloud state (services.opencloud, subvol created by the
+          # opencloud-storage-dir oneshot) — posix-driver tree + xattr
+          # metadata, nightly pool snapshots.
+          subvolume."services/opencloud" = { };
         };
       };
     };

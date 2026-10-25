@@ -187,5 +187,10 @@
     # both loopback-only, no vHost by design.
     ai-meter = 8107;
     ai-meter-metrics = 8108;
+
+    # OpenCloud — self-hosted file sync & share platform
+    # (services.opencloud, upstream default port), loopback-only; Caddy
+    # proxies cloud.home.lan to it.
+    opencloud = 9200;
   };
 }
