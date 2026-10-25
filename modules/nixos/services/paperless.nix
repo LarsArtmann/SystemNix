@@ -1364,7 +1364,16 @@ _: {
               # Layer "none" keeps DNS + tile derivation while caddy owns
               # the proxy — a registry "plain" layer here would silently
               # overwrite the /admin block (baseline-diff caught 2026-09-15).
+              # (2026-10-25: the "tile derivation" this comment claimed did
+              # not exist — no homepage field — until the tile-coverage
+              # assertion caught it; the tile below is that fix.)
               vHost.layer = "none";
+              homepage = {
+                name = "Paperless";
+                group = "Productivity";
+                description = "Document Archive (Pocket ID SSO)";
+                icon = "paperless.png";
+              };
               backup = {
                 # Daily documentexporter output (01:30 + randomized delay).
                 directory = "/mnt/pool/services/paperless/export";

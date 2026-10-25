@@ -1285,9 +1285,7 @@
           '';
         true;
       allEvalGuards = builtins.seq nixpkgsTarballGuard (
-        builtins.seq flakeInputPinAuditGuard (
-          builtins.seq lockAuditGuard lockFloatGuard
-        )
+        builtins.seq flakeInputPinAuditGuard (builtins.seq lockAuditGuard lockFloatGuard)
       );
     in
     builtins.seq allEvalGuards flake-parts.lib.mkFlake { inherit inputs; } {

@@ -51,29 +51,30 @@ let
     )
   );
 
-  violations = builtins.foldl'
-    (acc: entry:
-      let
-        node = nodes.${entry.nodeKey} or null;
-        actual = if node == null then null else node.locked.rev or null;
-        registered = expected.${entry.name} or null;
-      in
-      if actual != null && registered == null then
-        acc ++ [
-          "${entry.name}: locks rev ${actual} but has NO registry entry — register it in flake/expected-locks.nix (never delete entries to go green)"
-        ]
-      else if actual != null && registered != actual then
-        acc ++ [
-          "${entry.name}: floated rev ${actual}, registry expects ${registered}"
-        ]
-      else if actual == null && registered != null then
-        acc ++ [
-          "${entry.name}: registry entry ${registered} is stale — the input no longer locks a rev (follows/path flip); remove the entry in the same change"
-        ]
-      else
-        acc
-    )
-    [ ]
-    entries;
+  violations = builtins.foldl' (
+    acc: entry:
+    let
+      node = nodes.${entry.nodeKey} or null;
+      actual = if node == null then null else node.locked.rev or null;
+      registered = expected.${entry.name} or null;
+    in
+    if actual != null && registered == null then
+      acc
+      ++ [
+        "${entry.name}: locks rev ${actual} but has NO registry entry — register it in flake/expected-locks.nix (never delete entries to go green)"
+      ]
+    else if actual != null && registered != actual then
+      acc
+      ++ [
+        "${entry.name}: floated rev ${actual}, registry expects ${registered}"
+      ]
+    else if actual == null && registered != null then
+      acc
+      ++ [
+        "${entry.name}: registry entry ${registered} is stale — the input no longer locks a rev (follows/path flip); remove the entry in the same change"
+      ]
+    else
+      acc
+  ) [ ] entries;
 in
 violations

@@ -531,6 +531,9 @@ _: {
             port = ports.tq;
             vHost.layer = "protected";
             monitored = true;
+            # No homepage tile here on purpose: the tq dashboard's tile is
+            # the tq-agent-pool entry above (same https://tq.<domain> href)
+            # — exempted in integration.nix's tileExemptions.
             checks = [
               # Functional, not just liveness: the constant meta
               # description of the real dashboard shell (live-verified

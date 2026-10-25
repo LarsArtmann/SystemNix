@@ -794,9 +794,7 @@
               legs = {
                 clean = builtins.toJSON (auditWith (fixture + "/clean.lock") registry);
                 float = builtins.toJSON (auditWith (fixture + "/evil-float.lock") registry);
-                unregistered = builtins.toJSON (
-                  auditWith (fixture + "/clean.lock") { toolA = registry.toolA; }
-                );
+                unregistered = builtins.toJSON (auditWith (fixture + "/clean.lock") { toolA = registry.toolA; });
                 stale = builtins.toJSON (
                   auditWith (fixture + "/clean.lock") (
                     registry // { localPkg = "4444444444444444444444444444444444444444"; }

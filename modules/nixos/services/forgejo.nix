@@ -1405,8 +1405,11 @@ _: {
         # Service-integration registry entry: the forgejo vHost (Layer 1 — native
         # OIDC via Pocket ID; forward-auth would double-auth), Gatus
         # health + mirror-sync checks, backup freshness, unit-state
-        # monitoring, and the OIDC client registration. The homepage tile
-        # stays static in homepage.nix (unconditional there).
+        # monitoring, the dashboard tile, and the OIDC client registration.
+        # (2026-10-25: the tile was silently LOST in the 2026-09
+        # homepage.nix → PapDashboard merge — the old comment claimed it
+        # "stays static in homepage.nix", a file that no longer existed.
+        # The tile-coverage assertion in integration.nix now enforces this.)
         services.integration = lib.optionalAttrs (options ? services.integration) {
           forgejo = {
             inherit (cfg) enable;
@@ -1503,6 +1506,12 @@ _: {
               maxAgeHours = 25;
             };
             monitored = true;
+            homepage = {
+              name = "Forgejo";
+              group = "Development";
+              description = "Git Forge (Pocket ID SSO, GitHub Mirror Sync)";
+              icon = "forgejo.png";
+            };
             oidc = {
               name = "Forgejo";
               clientId = "forgejo";
