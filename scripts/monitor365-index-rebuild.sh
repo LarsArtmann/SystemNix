@@ -35,7 +35,7 @@ SERVICE_USER="monitor365-server"
 DB="/var/lib/monitor365-server/monitor365.duckdb"
 HEALTH_URL="http://127.0.0.1:3001/health"
 SCHEMA_SQL="${MONITOR365_SCHEMA_SQL:-/nix/store/1m00cf3k9n7c9f75hf9i1rs44xg0paf0-monitor365-prepared-source/crates/db/src/schema.sql}"
-MEM_LIMIT="${MONITOR365_REBUILD_MEM:-6GB}"
+MEM_LIMIT="${MONITOR365_REBUILD_MEM:-8GB}"
 THREADS="${MONITOR365_REBUILD_THREADS:-2}"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -122,19 +122,34 @@ if [ "$MISSING" = "0" ]; then
   exit 0
 fi
 
-echo "--- building (this can take many minutes on the 25 GB events table; IO-storm box: be patient)"
-# Join multi-line statements (schema.sql:543 idx_domain_events_tenant_seq
-# spans TWO lines — a plain grep truncates it and the batch dies at the
-# following statement with a misleading "syntax error at or near <next>").
-DDL=$(awk '
+echo "--- building (one duckdb invocation per statement: a single connection
+    high-waters ACROSS statements — the 61-statement batch OOM'd at 6GB
+    (5.5 GiB/5.5 GiB, 2026-10-25) while the crash-looping server proved a
+    FRESH process builds single indexes even at the 1.8 GiB default. This
+    can take many minutes on the 25 GB events table; IO-storm box: be patient)"
+built=0
+failed=0
+while IFS= read -r stmt; do
+  [ -n "$stmt" ] || continue
+  name=$(printf '%s' "$stmt" | sed -E 's/^CREATE (UNIQUE )?INDEX IF NOT EXISTS ([a-z_]+).*/\2/')
+  if sql "SET memory_limit='$MEM_LIMIT'; SET threads=$THREADS; SET preserve_insertion_order=false; $stmt CHECKPOINT;" 2>/tmp/idx-rebuild-err.log; then
+    built=$((built + 1))
+    echo "  ✓ $name"
+  else
+    failed=$((failed + 1))
+    echo "  ✗ $name — $(head -1 /tmp/idx-rebuild-err.log)"
+  fi
+done < <(awk '
   /^CREATE (UNIQUE )?INDEX/ {
     buf = $0
     while (buf !~ /;$/) { if ((getline line) <= 0) break; buf = buf " " line }
     print buf
   }' "$SCHEMA_SQL")
-sql "SET memory_limit='$MEM_LIMIT'; SET threads=$THREADS; SET preserve_insertion_order=false;
-$DDL
-CHECKPOINT;"
+echo "--- built=$built failed=$failed"
+if [ "$failed" != "0" ]; then
+  echo "✗ $failed index build(s) failed — raise MONITOR365_REBUILD_MEM (box has headroom) and re-run; script is idempotent"
+  exit 7
+fi
 
 AFTER=$(sql "SELECT COUNT(*) FROM duckdb_indexes();")
 echo "--- indexes present after: $AFTER (was $BEFORE)"
