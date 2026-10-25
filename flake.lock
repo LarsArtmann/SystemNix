@@ -4516,11 +4516,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792749166,
-        "narHash": "sha256-U/jvNyakQ4uLm2aI1dVcG1i3LdFOoWeyUdx7sMgDUz0=",
+        "lastModified": 1792938924,
+        "narHash": "sha256-0UdLI4HdIGb8otz6smCc3OvpVYqZ0SzugJ+58ym0UKw=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "be8793eb18aef0517669dc1ba309899c91c12fae",
+        "rev": "f5bd140eaa53d6ae0a58387c00e0c685072a4748",
         "type": "github"
       },
       "original": {

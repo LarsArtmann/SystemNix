@@ -62,11 +62,11 @@
   go-filewatcher = "112a72f92b34082b899d69d821c56fb46e425123";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
   go-health-dashboard = "e8eeefa9131ec0c3181436db294680cce8c77a6f";
-  go-humanize-linter = "be8793eb18aef0517669dc1ba309899c91c12fae";
+  go-humanize-linter = "f5bd140eaa53d6ae0a58387c00e0c685072a4748";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
   go-structure-linter = "15794344c26e909978dd00f9a49923f583c3b97f";
-  go-taskqueue = "332f1bc135aaa51a01933b7c37df6c9f7e5d11b2";
+  go-taskqueue = "1433a2c919d683929baaf5eef240b127c1503cfe";
   gogenfilter = "e8a33dd56d9a848efcedc493931af811dc6ed49e";
   golangci-lint-auto-configure = "f511153d0019bdd0ca328d406ba385a4e71c2451";
   helium = "ebac6e7f4af50aa48200ae77ea6606061e2d3e84";
