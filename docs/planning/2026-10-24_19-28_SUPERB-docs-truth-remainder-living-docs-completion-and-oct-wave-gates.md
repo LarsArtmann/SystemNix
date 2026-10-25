@@ -1,7 +1,7 @@
 # SUPERB — Docs-Truth Remainder: Living-Docs Completion + Oct-Wave Gates
 
 **Created:** 2026-10-24 19:28 CEST · **Owner:** Lars · **Author:** T1–T5 execution session (post 19-14 report)
-**EXECUTING (instance U1-U3+U11/U12 now; U4+ gated Q2, 2026-10-24 19:30 CEST, HEAD `b4d1213bc`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTING (instance U1-U3+U11/U12 DONE 2026-10-24 ~20:05 CEST — `a9e7383d2`/`e3d61ec36`/`9497cefab`/`552a363c6`; U4–U10 remain OWNER-GATED (Q2 wave sequencing, Q1 archive policy, tooling auth) — do not re-execute U1–U3; row-closes on both queue surfaces):** progress marker (see AGENTS.md plan-execution tombstone)
 **Trigger:** user dispatch (re-fire) — Pareto decomposition (1%/4%/20%/other-20%) + two-level task tables (30–100 min + ≤12 min) + execution graph + commit + push, plan first.
 **Mission:** finish the docs-truth mission's last living-doc surfaces (the unnavigable 1,457-file archive, the unreadable 13-layer FEATURES header, the ~90 unverified ✅ rows), then the ONLY thing left is the owner-gated October wave + tooling/canon. After this plan's non-gated tasks, every claim in every living doc is either verified, eval-enforced, or explicitly owner-gated — nothing else remains. Zero intent-loss, zero false history, zero Verschlimmbesserung.
 
