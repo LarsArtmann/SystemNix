@@ -2622,6 +2622,25 @@ _: {
                 alert = "Memory guard TRIP CHURN (>=6 trips in the last hour — the 2026-09-14 Zone 6 storm class; per-trip Discord pings are suppressed while this is active, this is the ONLY storm alert): a repeating trip→restore→re-trip loop is burning the restore budget and the machine is in a sustained storm. This is one message for the whole storm, NOT one per trip. Check, in order: (1) memory_emergency_guard_zone_trips_last_hour — which zone dominates; (2) the guard's per-trip io.stat attribution lines: journalctl -u memory-emergency-guard --since -2h | grep 'top io'; (3) whether the sev1 desktop notify-tier churn context actually fired: journalctl -u sev1-bridge --since -2h | grep -i churn (it gates at >=2 trips/hour — if absent, the bridge is dead and Discord is the only channel); (4) restore state: memory_emergency_guard_restore_capped / trips_last_hour. Do NOT chase individual trips — shed the driver load the io.stat lines name, or wait for the drain (churn_mode returns to 0 and this alert resolves).";
               }
               {
+                name = "Memory Guard Load-Bearing";
+                group = "Monitoring";
+                # The per-boot escalation half (2026-10-25, task queue
+                # §f.10): churn_mode covers the HOUR-scale re-trip loop;
+                # this covers a whole BOOT of repeated containment
+                # (freeze-#7 ran 432 trips/boot). One notify when the boot
+                # crosses the threshold, one Gatus episode = one message
+                # until the boot's trips fall back under it — the guard is
+                # doing its job, but the DRIVER needs a root-cause.
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nmemory_emergency_guard_load_bearing *)"
+                  "[BODY] != pat(*\nmemory_emergency_guard_load_bearing 1\n*)"
+                ];
+                alert = "Memory guard is LOAD-BEARING this boot: memory_emergency_guard_trips_this_boot crossed the per-boot threshold — the guard has repeatedly rescued the boot instead of one bounded event (the 2026-09-28 storm ran 432 trips/boot). Containment is working; the STORM DRIVER is the defect. Check, in order: (1) memory_emergency_guard_trips_this_boot + zone_trips_last_hour — which zone dominates; (2) the guard's per-trip io.stat attribution: journalctl -u memory-emergency-guard --since -4h | grep 'top io'; (3) current PSI/memory regime vs the trip thresholds. Do not restart the guard — find and shed the driver load it keeps stopping.";
+              }
+              {
                 name = "Memory Pressure Warning";
                 group = "Monitoring";
                 # The WARNING tier (2026-08-22): the CRITICAL check fired

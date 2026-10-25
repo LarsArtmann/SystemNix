@@ -754,6 +754,36 @@ _: {
             churn_mode=1
           fi
 
+          # trips_this_boot: the LOAD-BEARING signal (2026-10-25, task queue
+          # §f.10). tripped_total is lifetime, churn_mode is per-hour —
+          # neither answers "how many times has the guard rescued THIS
+          # boot". A boot that racks up hundreds of trips is a structural
+          # defect (freeze-#7: 432 trips/boot), not normal operation. The
+          # count rides the lifetime counter minus a per-boot baseline:
+          # when the boot epoch (now - uptime) differs from the stored one
+          # we are in a fresh boot and the baseline re-snapshots, so no
+          # write on the trip path is needed.
+          UPTIME_SRC="''${UPTIME_SRC:-/proc/uptime}"
+          BOOT_EPOCH_FILE="${stateDir}/boot-epoch"
+          BOOT_BASELINE_FILE="${stateDir}/boot-baseline.count"
+          uptime_s=$(awk '{print int($1)}' "$UPTIME_SRC" 2>/dev/null || true)
+          uptime_s="''${uptime_s:-0}"
+          boot_epoch=$((now - uptime_s))
+          stored_boot_epoch=$(cat "$BOOT_EPOCH_FILE" 2>/dev/null || echo 0)
+          stored_boot_epoch="''${stored_boot_epoch:-0}"
+          if [ "$stored_boot_epoch" != "$boot_epoch" ]; then
+            echo "$boot_epoch" > "$BOOT_EPOCH_FILE"
+            echo "$tripped_total" > "$BOOT_BASELINE_FILE"
+          fi
+          boot_baseline=$(cat "$BOOT_BASELINE_FILE" 2>/dev/null || echo "$tripped_total")
+          boot_baseline="''${boot_baseline:-$tripped_total}"
+          trips_this_boot=$((tripped_total - boot_baseline))
+          if [ "$trips_this_boot" -lt 0 ]; then trips_this_boot=0; fi
+          load_bearing=0
+          if [ "$trips_this_boot" -ge ${toString cfg.loadBearingTripsPerBoot} ]; then
+            load_bearing=1
+          fi
+
           # Churn-stop forensics state (written at trip action, see above):
           # emitted on every run while the drain window lasts; once
           # sustained io PSI falls back under the trip threshold the
@@ -915,6 +945,14 @@ _: {
             echo "# TYPE memory_emergency_guard_churn_mode gauge"
             echo "memory_emergency_guard_churn_mode ''${churn_mode}"
 
+            echo "# HELP memory_emergency_guard_trips_this_boot Emergency stops since this boot started — the LOAD-BEARING signal (a high count means the guard is repeatedly rescuing the boot instead of one bounded event)"
+            echo "# TYPE memory_emergency_guard_trips_this_boot gauge"
+            echo "memory_emergency_guard_trips_this_boot ''${trips_this_boot}"
+
+            echo "# HELP memory_emergency_guard_load_bearing 1 when trips_this_boot >= ${toString cfg.loadBearingTripsPerBoot} — the boot is in the structural-defect storm class (freeze-#7: 432 trips/boot); root-cause the driver, the guard is only containing it"
+            echo "# TYPE memory_emergency_guard_load_bearing gauge"
+            echo "memory_emergency_guard_load_bearing ''${load_bearing}"
+
             echo "# HELP memory_emergency_guard_zone_trips_last_hour Per-zone emergency stops in the last hour — which trip condition dominates the current storm (forensics without journal digs). Trips recorded before 2026-10-01 carry no zone and count only in the aggregate."
             echo "# TYPE memory_emergency_guard_zone_trips_last_hour gauge"
             echo "memory_emergency_guard_zone_trips_last_hour{zone=\"1\"} ''${zone1_lh}"
@@ -1069,6 +1107,12 @@ _: {
           type = lib.types.int;
           default = 6;
           description = "Trips in the last hour at or above which memory_emergency_guard_churn_mode flips to 1: the DISCORD alert-fatigue gate (2026-09-14 Zone 6 storm — 14 trips paged ~every 10 min all day). In churn mode the per-trip 'Memory Emergency Guard' Gatus check goes quiet and a single 'Memory Guard Trip Churn' escalation alert carries the context instead (one Gatus episode = one message until the churn drains — a natural cooldown, not a timer). The sev1 desktop notify keeps its own >=2 threshold and is UNAFFECTED.";
+        };
+
+        loadBearingTripsPerBoot = lib.mkOption {
+          type = lib.types.int;
+          default = 10;
+          description = "Trips since boot start at or above which memory_emergency_guard_load_bearing flips to 1: the 'guard is load-bearing, root-cause the storm' notify (2026-09-28 storm ran 432 trips/boot — a structural-defect alarm, not normal operation; steady-state boots see 0-3). Deliberately per-BOOT and well above churnEscalationThreshold: churn covers the hour-scale re-trip loop, this covers a whole boot of repeated containment.";
         };
 
         ioDiskBusyThresholdPercent = lib.mkOption {
