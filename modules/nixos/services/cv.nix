@@ -67,8 +67,14 @@
       # upstream-fixed rev exists to float to). Drop when upstream re-bakes
       # (paste-upstream → push → re-lock, docs/todo/upstream.md); re-add
       # ONLY via first-hand keep-going evidence, never by hand.
+      # SHIM UPDATED (2026-10-25 exec-3, second re-float): cv@29868e05
+      # specified SkTcNXE (this shim, baked for 88e0d12), got 1o2UQtLN
+      # (first-hand keep-going, ~/.cache/lockfloat/build3.log) — the module
+      # graph moved AGAIN. Upstream at 29868e05 bakes a third, equally
+      # stale value (Asj5FdV…, flake.nix:42 → vendorHash.nix, verified in
+      # the fetched source), so dropping the shim cannot work either.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-SkTcNXEIkTWok3dAJ5iiwAghXzSCcxywDQ8skoALBTA=";
+        vendorHash = "sha256-1o2UQtLNE63E1evLxzZpvVP+MeNkSeEE2Ko6MNlQHWU=";
       };
     in
     {
