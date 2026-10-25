@@ -40,9 +40,7 @@ _: {
       # system_health.prom, and node_exporter rejected the whole scrape
       # ("was collected before with the same name and label values",
       # 26 errors per scrape — host metrics blind 2026-10-18..25).
-      allMonitoredServices = lib.unique (
-        cfg.monitoredServices ++ cfg.extraMonitoredServices
-      );
+      allMonitoredServices = lib.unique (cfg.monitoredServices ++ cfg.extraMonitoredServices);
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
 
       # Census durability ring (2026-10-12): the 10-03 OOM cascade lost the
