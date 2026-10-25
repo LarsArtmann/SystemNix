@@ -50,6 +50,8 @@ Wiring on evo-x2:
 
 Until step 2 happens, the shipped PLACEHOLDER is inert by design: the verify unit logs and exits 0, the toggle renders, and lookups answer the "Immich unavailable" badge (upstream auth_error degradation).
 
+**Why the key cannot be machine-provisioned (adjudicated 2026-10-25, owner question "can't Nix manage this — same machine?"):** Immich runs OIDC-only (`passwordLogin.enabled = false`, no local password fallback) — no local credential exists for a NixOS converger to authenticate with, and key creation requires an already-authenticated principal. The bootstrap-admin-key alternative (one admin key in sops → converger derives scoped keys per consumer) trades the SAME single interactive paste for a MORE privileged secret plus a new oneshot + deploy.sh convergence registration — worse blast radius, more machinery, identical user effort. The single paste IS the minimal-privilege design; everything after it (deploy → secret restartUnits → verify → E2E) is already automated. Reopen only if Immich ships a service-account/machine-identity feature.
+
 ### `discordsync-immich-verify` exit semantics
 
 | Exit | Meaning                                                                          | Action                                                     |

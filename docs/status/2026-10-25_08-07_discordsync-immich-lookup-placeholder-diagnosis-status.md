@@ -107,3 +107,15 @@ busctl get-property org.freedesktop.systemd1 /org/freedesktop/systemd1/unit/immi
 cat /proc/3788/cgroup   # → system-immich.slice/immich-server.service
 bash scripts/check-todo-system.sh   # → OK: TODO queue/library structure clean
 ```
+
+---
+
+## ADDENDUM (post-report continuation, same session, 2026-10-25 ~10:2x-10:4x)
+
+Owner answered the §g questions: (1) go-live NOW, (2) "think about how we best communicate to the user what real happens", (3) bundle the cheap adds. Landed since the report body:
+
+- **f2–f4 LANDED in-tree** (eval/`bash -n` verified; deploy pending with the go-live): `RandomizedDelaySec=1h` on the verify timer, post-deploy-check verify leg (Result + journal classification), `tests/test-discordsync-immich-shape.nix` pure-eval regression (9 cases, wired in `tests/default.nix`).
+- **Owner challenge "can't Nix manage this — same machine?" → ADJUDICATED, runbook-recorded** (docs/services/discordsync.md): Immich is OIDC-only (`passwordLogin.enabled=false`), so no local credential exists for a converger; the bootstrap-admin-key alternative trades the same single paste for a more-privileged secret + machinery. Single paste = minimal-privilege optimum.
+- **f9/f10 adjudicated under Q2**: the misleading badge disappears the moment the real key lands; the WORDING fix (not-configured ≠ unreachable ≠ rejected) stays queued upstream (services.md:113 Tier-3). Hiding the toggle locally was rejected: upstream owns the HTML; a Nix-side patch would be a shim on a state that is about to cease existing.
+- **New unknown queued**: phantom `services.integration` definition forcing `_module.check=false` in the regression test (TODO_LIST + pipeline.md rows; evidence in the test comment).
+- Verification limits (honest): the regression test passes in an isolated lock-file-direct harness (`~/.cache/discordsync-immich/eval.nix`); full `nix flake check` was NOT runnable this session — the flake-level lock-audit gate throws on the fleet's floated locks (pre-existing, other sessions' float-in-progress). shellcheck did not run standalone (binary absent in agent PATH; `bash -n` clean; pre-commit/CI will own it).
