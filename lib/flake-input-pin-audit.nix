@@ -64,17 +64,22 @@
     nixpkgs-llama-rag = "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
     paperless-gpt-src = "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
     qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
-    # ── 2026-10-23 deploy-rollback set (five pins, one cause) ───────────
+    # ── 2026-10-23 deploy-rollback set (two of the original five remain) ─
     # The 2026-10-20 nixos-unstable tip broke the toplevel build in five
     # independent places at once and re-staled ten FOD hashes downstream.
     # These pins hold the last build-proven rev per input so neither the
     # weekly flake-update PR nor an ad-hoc `nix flake update` re-breaks the
     # tree unattended. Every LIFT condition names a concrete observable.
+    #
+    # templ, overview and dankMaterialShell were LIFTED 2026-10-25 on owner
+    # directive ("always on latest") after the causes were re-attributed:
+    # the overview break came from forcing the root templ CLI into
+    # overview/inboxclean builds (`templ-cli.follows` / `templ.follows`),
+    # not from either input's own rev. Removing those follows lines let all
+    # three float; each consumer now builds with the templ CLI that matches
+    # its go.mod.
     nixpkgs = "REV-PINNED at fe13242 (2026-10-15), the rev generation 939 runs. ROLLBACK of 02c087f3, which broke aw-core (peewee==3.* vs 4.4.0), the linux-7.3 r8125.ko.cer module path, signoz patch context, templ runtime drift and dms-shell 2.0.0 installPhase. A rev-in-URL pin makes `nix flake update` a silent no-op for nixpkgs, which is the intent; the daily nixpkgs-compat workflow uses `--override-input` so its early-warning signal survives. LIFT: re-float to nixos-unstable only when `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` exits 0 with aw-core AND linux-7.3-modules realized.";
     signoz-src = "REV-PINNED at 375b3f83 (2026-10-16). The ?ref=main float moved the sonic version context so the Go-1.26 patches in modules/nixos/services/patches/ stopped applying and the pnpm deps hash re-staled. LIFT: move to a rev where those patches apply unchanged (or sonic >= 1.15 obsoletes them) and `nix build .#signozPkg --no-link` exits 0.";
-    templ = "REV-PINNED at 8bbdcac9 (2026-10-16). The ?ref=main float moved the generated runtime past overview's go.mod expectation, breaking the build on undefined `templruntime.NewAttributeExpression`. LIFT: bump only alongside an overview + inboxclean regen whose `nix build .#overview --no-link` exits 0.";
-    overview = "REV-PINNED at 4b480406 (2026-10-16), built against the templ rev pinned above. LIFT: bump only together with the templ input, and only when `nix build .#overview --no-link` exits 0.";
-    dankMaterialShell = "REV-PINNED at 4a87e822 (2026-10-16). The `stable` float pulled dms-shell 2.0.0, whose installPhase dies silently on this tree (1.6.3 installs clean). LIFT: bump to a 2.x rev whose `nix build .#dms-shell --no-link` exits 0, then re-verify the HM module on a fresh session.";
     # bank-sync row REMOVED 2026-10-16: the 2026-10-14 ceiling pin was lifted
     # by the owner-ratified fresh-start cutover (prod journal archived once by
     # the bank-sync-fresh-start oneshot; see flake.nix bank-sync comment).
