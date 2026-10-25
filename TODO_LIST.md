@@ -543,7 +543,7 @@
 - [ ] [blocked:user] **Register the 4 blind-vHost services (pocket-id / openseo / taskchampion-sync-server / dnsblockd-subdomain)** — gated on the §g.2/§g.3 owner answers (circularity + web-facing line); each registration deletes its caddy.nix `registryBlindSubdomains` row → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-25_07-40_papdashboard-tile-coverage-enforcement.md §g)
 
 - [ ] [ready] **rpi3-dns eval: caddy.nix vHost⇒registry assertion inertness** — one cheap toplevel eval post-storm → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.8)
-- [ ] [ready] **Check services.catalog coverage for seo/tasks (openseo, taskchampion-sync)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.9)
+- [x] [ready] **Check services.catalog coverage for seo/tasks (openseo, taskchampion-sync)** — ANSWERED 2026-10-25: both already catalog'd (`catalog-platform.nix` `seo`→openseo:3002, `tasks`→taskchampion); the gap was integration-registry only. (Source: docs/status/2026-10-25_09-46_papdashboard-followups-optout-contradiction-vhost-registry-blindspot-gate.md §f.9)
 
 ### upstream
 - [ ] [ready] **monitor365 upstream: set meta.mainProgram on monitor365-server** — the getExe deprecation warning fires in every flake-check log (assumes the binary name from pname) → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/status/2026-10-23_08-35_journal-deployment-and-lockfloat-casualties-status.md §f.23)

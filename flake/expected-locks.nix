@@ -67,7 +67,7 @@
   go-error-family = "a23dc0e08234909e63ee3dc7a7833319bc195c54";
   go-filewatcher = "112a72f92b34082b899d69d821c56fb46e425123";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
-  go-health-dashboard = "01a5f325fb3356ec99a4af5fe4c5267d4d76728c";
+  go-health-dashboard = "7ae35919b68d3950961be63b6cbe3782f50d4809";
   go-humanize-linter = "f5bd140eaa53d6ae0a58387c00e0c685072a4748";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
@@ -83,7 +83,7 @@
   homebrew-cask = "04d0e28136c9cfe585f0b4c590687d0930316378";
   inboxclean = "5c52f31506d114f508d3cf5832c552da3b5f2228";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
-  journal = "41fb0583ac05799524eccbd4ebb465a14e114d5e";
+  journal = "9f638e35c0c6a66864e5fa2358b5d8595ac3816d";
   library-policy = "a9fd5e3b821ac3b39d676f15df464a0e0655d4cf";
   md-go-validator = "3f466de78df43628ca4c59803151f4345f67607a";
   monitor365 = "77b4a3aec788956760d28faf97b79ad7f9c55ebe";
