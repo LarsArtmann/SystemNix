@@ -270,6 +270,12 @@ _: {
       #     registration deferred to the §g.2 web-facing-line answer.
       #   dnsblock, dnsblockd — dns-blocker's hand-written pair; its entry
       #     exists but carries subdomain = null (vHost.layer "none").
+      #   paperless — deliberately hand-written (native OIDC via Pocket ID,
+      #     django-allauth Layer 1; protectedVHost would double-auth — see
+      #     the vHost block below). Added 2026-10-25 when the parallel
+      #     session's integration rework left it firing the blind-spot
+      #     assertion in non-evo-x2 caddy contexts (caddy-mint VM); delete
+      #     this row if/when it moves to the registry.
       registryBlindSubdomains = [
         "alerts"
         "logs"
@@ -278,6 +284,7 @@ _: {
         "tasks"
         "dnsblock"
         "dnsblockd"
+        "paperless"
       ];
       # vHost subdomains derived from the rendered set (single source of
       # truth — registry fan-out and hand-written entries alike; catch-alls

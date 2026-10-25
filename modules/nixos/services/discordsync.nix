@@ -873,7 +873,7 @@
               description = "Create DiscordSync attachment directory on the HDD pool";
               directory = cfg.attachmentsDir;
               owner = cfg.user;
-              group = cfg.group;
+              inherit (cfg) group;
               mode = "0770";
             });
 
