@@ -8,7 +8,7 @@
 
 ## What the guard does
 
-A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.service`) evaluates six trip zones. On ANY trip it stops FastFlowLM, its activation socket, and the resumable I/O churn units (btrbk root/data/pool, both balances, all three scrubs). The socket is restored automatically once memory margins recover AND the daily restore budget (default 3) is unspent.
+A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.service`) evaluates six trip zones. On ANY trip it stops FastFlowLM, its activation socket, and the resumable I/O churn units (btrbk root/data/pool, both balances, all three scrubs). The socket is restored automatically once memory margins recover AND sustained io PSI has drained below the strict restore bar (`restoreIoSomeAvg60ThresholdPercent`, default 20 — half the Zone 6 trip bar) AND the daily restore budget (default 3) is unspent. The io gate landed 2026-10-25: the restore gate was memory-only, so during a Zone 6 storm (memory gauges healthy, io saturated) the socket restored straight into the storm, the 21.6 GB cold load re-tripped, and the budget burned before noon — capped by 12:34Z with every LLM consumer (browser-history, PMA, paperless enricher) 503ing until a manual `systemctl start fastflowlm.socket`.
 
 | Zone | Signal                                                  | Class                                                                                     |
 | ---- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |

@@ -520,6 +520,37 @@
               touch $out
             '';
 
+        # Guard restore-gate io-drain tripwire (2026-10-25 budget-burn
+        # class): the socket-restore elif must gate on the io PSI axis —
+        # the memory-only gate restored the flm socket INTO active Zone 6
+        # storms (memory gauges recover in minutes, io storms leave them
+        # untouched), the 21.6 GB cold load re-tripped, and the daily
+        # restore budget burned before noon. Static anchors: the option
+        # must be declared AND consumed by an awk gate keyed on the
+        # $io_psi_some_avg60 variable (the churn re-arm's axis), so a
+        # careless edit of the restore elif cannot silently drop the io
+        # condition again.
+        guard-restore-io-gate-selftest =
+          pkgs.runCommand "guard-restore-io-gate-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              grep -q 'restoreIoSomeAvg60ThresholdPercent = lib.mkOption' "$mod" ||
+                { echo "FAIL: restoreIoSomeAvg60ThresholdPercent option declaration missing"; exit 1; }
+              gate=$(grep -c 'awk -v p="\$io_psi_some_avg60" .* cfg\.restoreIoSomeAvg60ThresholdPercent' "$mod") || true
+              if [ "''${gate:-0}" -lt 1 ]; then
+                echo "FAIL: restore elif no longer gates on io PSI (io_psi_some_avg60 < restoreIoSomeAvg60ThresholdPercent) — the 2026-10-25 budget-burn class would return"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum

@@ -545,11 +545,10 @@ in
           "burns the daily restore budget (2026-10-25 live class)"
       )
       machine.fail("systemctl is-active --quiet fastflowlm.socket")
-      restores_today = machine.succeed("cat /var/lib/memory-emergency-guard/restores-*").strip()
-      assert restores_today == "1", (
-          "the io-gated hold must NOT consume restore budget (only the "
-          "scenario-6 restore may be spent)"
-      )
+      # Budget intact: reset_state cleared restores-<today> and the held
+      # restore must not have re-created it (a doomed-restore burn here is
+      # exactly the 2026-10-25 failure).
+      machine.fail("cat /var/lib/memory-emergency-guard/restores-*")
       # The io axis drains under the restore bar — memory gauges unchanged:
       machine.succeed("${writeFakes "restoreIoDrained" restoreIoDrained}")
       out = run_guard("restoreIoDrained")
