@@ -13,7 +13,7 @@
 ## b. What was considered and rejected
 
 1. **Lift the nixpkgs rev-pin** (the audit row's parenthetical path): its own LIFT gate (green toplevel with aw-core + linux-7.3-modules on the float) plus the five-breakage 02c087f3 rollback history — a fleet-wide operation, out of scope for this directive. Not attempted.
-2. **Un-follow inboxclean's nixpkgs** (the journal.nixpkgs deliberate-table pattern): DEAD ON ARRIVAL — upstream InboxClean's OWN flake.lock resolves nixpkgs to `3ec63636`… and that rev **ships go_1_27 1.27.3** (crossed on ~10-23), so wait — see §c: un-follow would have worked by accident, but at the mercy of upstream's lock-freshness schedule with zero local control. The dedicated follow is strictly better: local control, weekly float, documented drop condition.
+2. **Un-follow inboxclean's nixpkgs** (the journal.nixpkgs deliberate-table pattern): would have worked TODAY by luck — upstream InboxClean's own flake.lock resolves nixpkgs to `3ec63636`, which ships go_1_27 1.27.3 — but at the mercy of upstream's lock-freshness schedule with zero local control and no local float lever. The dedicated follow is strictly better: we own the freshness (`nix flake lock --update-input nixpkgs-unstable`), the weekly flake-update floats it, and the drop condition is documented.
 3. **Upstream goTarball fix** (browser-history/PMA pattern): correct long-term but requires upstream flake surgery (go-nix-helpers input adoption; upstream's flake hand-wires `goPkg = unfreePkgs.go_1_27`), plus a vendorHash re-hash cycle. Deferred as unnecessary once the follow gave a green build today.
 
 ## c. The fix (four surfaces + lock, all in daemon batch `d2759f5cd`)
