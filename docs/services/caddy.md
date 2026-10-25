@@ -50,7 +50,11 @@ a `services.integration` entry (or sit on the justified
 registry entry is invisible to the tile/gatus/OIDC fan-outs (the pocket-id /
 openseo / taskchampion / dnsblockd blind-spot class). New vHost = register the
 service (preferred) or extend the table with a justification. Negative-tested
-(`vhostregistry/blind-vhost`).
+(`vhostregistry/blind-vhost`). All four original blind services registered
+2026-10-25 (§g.2/§g.3 owner answers): entries carry `vHost.layer = "none"` so
+the hand-written vHosts (GSC callback exemption, auth oauth2/pocket-id split,
+dns redirect pair) stay canonical while tile/gatus/monitored fan out from the
+registry; the blind table is down to alerts/logs/dnsblockd/paperless.
 
 ## Unknown-host 404 page
 

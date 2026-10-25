@@ -713,6 +713,23 @@
     "cqrs-htmx_7": {
       "flake": false,
       "locked": {
+        "lastModified": 1791833774,
+        "narHash": "sha256-wKwzVamgln/SScYz56XQDuKf2W2ECnB/1WERuHAMn+A=",
+        "owner": "LarsArtmann",
+        "repo": "cqrs-htmx",
+        "rev": "07f579dda5e32e591e894216dc65db8d0cf8f943",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v4.14.1",
+        "repo": "cqrs-htmx",
+        "type": "github"
+      }
+    },
+    "cqrs-htmx_8": {
+      "flake": false,
+      "locked": {
         "lastModified": 1791339067,
         "narHash": "sha256-JThu1De9wsJIxjHgNdSLB2WH4OwrEixwbQ3Rs1dZWBc=",
         "owner": "LarsArtmann",
@@ -3748,6 +3765,23 @@
     "go-etag_4": {
       "flake": false,
       "locked": {
+        "lastModified": 1790170099,
+        "narHash": "sha256-nfC+EUmFO4UuznLPc4BCl5/n2YiaH7jTllTI6igsaYY=",
+        "owner": "LarsArtmann",
+        "repo": "go-etag",
+        "rev": "45dc45731fbd753182968229e6b28ab19d1b9912",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v0.6.0",
+        "repo": "go-etag",
+        "type": "github"
+      }
+    },
+    "go-etag_5": {
+      "flake": false,
+      "locked": {
         "lastModified": 1792148617,
         "narHash": "sha256-mvDEbMQxI60LuWlCWLi0ccWzFZs486rFzY3Vrn33+1g=",
         "owner": "LarsArtmann",
@@ -3762,7 +3796,7 @@
         "type": "github"
       }
     },
-    "go-etag_5": {
+    "go-etag_6": {
       "flake": false,
       "locked": {
         "lastModified": 1790994035,
@@ -3779,7 +3813,7 @@
         "type": "github"
       }
     },
-    "go-etag_6": {
+    "go-etag_7": {
       "flake": false,
       "locked": {
         "lastModified": 1792148617,
@@ -6326,6 +6360,23 @@
     "httputil_3": {
       "flake": false,
       "locked": {
+        "lastModified": 1791551023,
+        "narHash": "sha256-k5zq7IUM1aUAEfUZSVfF1vlzd2CHdkKca6KfGmWJMeU=",
+        "owner": "LarsArtmann",
+        "repo": "httputil",
+        "rev": "19f6a91ff6266612759fe633d4f40b731c539fdd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v1.5.0",
+        "repo": "httputil",
+        "type": "github"
+      }
+    },
+    "httputil_4": {
+      "flake": false,
+      "locked": {
         "lastModified": 1792151289,
         "narHash": "sha256-E7zBOHdLuTRlG6d5FzkCNzs61D9KttMikzSmgetNKaU=",
         "owner": "LarsArtmann",
@@ -6340,7 +6391,7 @@
         "type": "github"
       }
     },
-    "httputil_4": {
+    "httputil_5": {
       "flake": false,
       "locked": {
         "lastModified": 1791551023,
@@ -6357,7 +6408,7 @@
         "type": "github"
       }
     },
-    "httputil_5": {
+    "httputil_6": {
       "flake": false,
       "locked": {
         "lastModified": 1792151289,
@@ -6434,6 +6485,7 @@
     },
     "journal": {
       "inputs": {
+        "cqrs-htmx": "cqrs-htmx_7",
         "flake-parts": [
           "flake-parts"
         ],
@@ -6442,15 +6494,18 @@
         "go-composable-business-types": "go-composable-business-types_3",
         "go-cqrs-lite": "go-cqrs-lite_8",
         "go-error-family": "go-error-family_13",
+        "go-etag": "go-etag_4",
         "go-nix-helpers": "go-nix-helpers_6",
-        "nixpkgs": "nixpkgs_4"
+        "httputil": "httputil_3",
+        "nixpkgs": "nixpkgs_4",
+        "templ-components": "templ-components_6"
       },
       "locked": {
-        "lastModified": 1792949298,
-        "narHash": "sha256-B2jAA3lC1xYRRuoHRzg4dmwF59Fi/k4XdPBcMjSRxHY=",
+        "lastModified": 1792952782,
+        "narHash": "sha256-RiHZ/lSB856I3sfi5B6mZi89iGVWBVjNmlxeEIVB15M=",
         "owner": "LarsArtmann",
         "repo": "journal",
-        "rev": "9f638e35c0c6a66864e5fa2358b5d8595ac3816d",
+        "rev": "045476b7c2782161cf115c34c4862b401d84a24a",
         "type": "github"
       },
       "original": {
@@ -6473,7 +6528,7 @@
         "go-dag-app": "go-dag-app_2",
         "go-datastar": "go-datastar_5",
         "go-error-family": "go-error-family_14",
-        "go-etag": "go-etag_4",
+        "go-etag": "go-etag_5",
         "go-finding": "go-finding_11",
         "go-health": "go-health_3",
         "go-health-dashboard": "go-health-dashboard_4",
@@ -6485,12 +6540,12 @@
         "go-policy-dsl": "go-policy-dsl",
         "go-sse": "go-sse_6",
         "go-workflow-auditlog": "go-workflow-auditlog_2",
-        "httputil": "httputil_3",
+        "httputil": "httputil_4",
         "nixpkgs": [
           "nixpkgs"
         ],
         "samber-do-auditlog": "samber-do-auditlog_5",
-        "templ-components": "templ-components_6"
+        "templ-components": "templ-components_7"
       },
       "locked": {
         "lastModified": 1792734375,
@@ -6679,14 +6734,14 @@
         "go-atomic-write": "go-atomic-write_5",
         "go-branded-id": "go-branded-id_14",
         "go-error-family": "go-error-family_15",
-        "go-etag": "go-etag_5",
+        "go-etag": "go-etag_6",
         "go-ndjson": "go-ndjson_6",
         "go-nix-helpers": [
           "go-nix-helpers"
         ],
         "go-output": "go-output_9",
         "go-sse": "go-sse_7",
-        "httputil": "httputil_4",
+        "httputil": "httputil_5",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -7315,7 +7370,7 @@
     },
     "overview": {
       "inputs": {
-        "cqrs-htmx": "cqrs-htmx_7",
+        "cqrs-htmx": "cqrs-htmx_8",
         "flake-parts": [
           "flake-parts"
         ],
@@ -7326,21 +7381,21 @@
         "go-composable-business-types": "go-composable-business-types_4",
         "go-daemon": "go-daemon_3",
         "go-error-family": "go-error-family_17",
-        "go-etag": "go-etag_6",
+        "go-etag": "go-etag_7",
         "go-filewatcher": "go-filewatcher_3",
         "go-nix-helpers": [
           "go-nix-helpers"
         ],
         "go-sse": "go-sse_8",
         "gogenfilter": "gogenfilter_15",
-        "httputil": "httputil_5",
+        "httputil": "httputil_6",
         "nixpkgs": [
           "nixpkgs"
         ],
         "project-discovery-daemon": "project-discovery-daemon",
         "project-discovery-sdk": "project-discovery-sdk_5",
         "templ-cli": "templ-cli",
-        "templ-components": "templ-components_7",
+        "templ-components": "templ-components_8",
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -8591,6 +8646,23 @@
     "templ-components_6": {
       "flake": false,
       "locked": {
+        "lastModified": 1791916000,
+        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
+        "owner": "LarsArtmann",
+        "repo": "templ-components",
+        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v1.23.0",
+        "repo": "templ-components",
+        "type": "github"
+      }
+    },
+    "templ-components_7": {
+      "flake": false,
+      "locked": {
         "lastModified": 1792226762,
         "narHash": "sha256-mvuTbdUdoi7TDo9Xb5LlzPT2gH/6lRKScE0z/cH7fZk=",
         "owner": "LarsArtmann",
@@ -8605,7 +8677,7 @@
         "type": "github"
       }
     },
-    "templ-components_7": {
+    "templ-components_8": {
       "flake": false,
       "locked": {
         "lastModified": 1792226762,

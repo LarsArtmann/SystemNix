@@ -83,7 +83,7 @@
   homebrew-cask = "04d0e28136c9cfe585f0b4c590687d0930316378";
   inboxclean = "5c52f31506d114f508d3cf5832c552da3b5f2228";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
-  journal = "9f638e35c0c6a66864e5fa2358b5d8595ac3816d";
+  journal = "045476b7c2782161cf115c34c4862b401d84a24a";
   library-policy = "a9fd5e3b821ac3b39d676f15df464a0e0655d4cf";
   md-go-validator = "3f466de78df43628ca4c59803151f4345f67607a";
   monitor365 = "77b4a3aec788956760d28faf97b79ad7f9c55ebe";
