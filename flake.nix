@@ -305,27 +305,28 @@
       url = "github:LarsArtmann/treefmt-full-flake";
     };
 
-    # templ — shared input for the templ compiler. Root-promoted 2026-10-14
-    # to collapse the inboxclean ("templ") + overview ("templ-cli")
-    # duplicate subtrees: both locked the identical tag with a
-    # byte-identical narHash. Build-tool binary, NOT a vendored Go module
-    # (*_templ.go files are committed), so following it carries no
-    # vendorHash/FOD exposure. nixpkgs deliberately NOT followed (templ's
-    # go-modules FOD is validated against its own pin) — see the
-    # deliberate table in lib/lock-audit.nix.
-    # Floated to ?ref=refs/heads/main 2026-10-14 per owner + pin policy
-    # (was tag v0.3.1070, allowlist-lifted same day; upstream default
-    # branch is main, no master exists). Watch: templ CLI ahead of
-    # inboxclean/overview go.mod runtime v0.3.1070 = regen-skew warning
-    # class (2026-10-06 break) — upstream row pins CLI ≥ runtime.
-    # REV-PINNED at 8bbdcac9 (2026-10-16) since 2026-10-23: the ?ref=main
-    # float moved templ's generated runtime past what overview's go.mod
-    # expects, so the overview build died with
-    # `templruntime.NewAttributeExpression` undefined. CLI-vs-runtime skew,
-    # not a code defect. LIFT: bump templ only together with an overview
-    # (and inboxclean) regen whose `nix build .#overview --no-link` passes.
+    # templ — shared input for the templ compiler. ALWAYS LATEST (owner
+    # directive 2026-10-25, matching the pin policy: float unless upstream
+    # is BROKEN).
+    #
+    # The 2026-10-23 rev pin band-aided a CONSUMER parity rule, not a
+    # broken upstream: templ >= 0.3.1084 (a-h/templ c5e4cc74, #1454
+    # "tighten rules on mixed-case attribute names") makes the GENERATOR
+    # emit `templruntime.NewAttributeExpression`, which the consumer's
+    # go.mod runtime must also provide. overview and InboxClean both still
+    # declare github.com/a-h/templ v0.3.1070, so FORCING this CLI into
+    # their builds (the former `templ-cli.follows` / `templ.follows`
+    # lines) is what produced `undefined: NewAttributeExpression`.
+    # Both consumers now build with their OWN templ input (v0.3.1070 tag,
+    # the same version their go.mod declares), so this input floats with
+    # no effect on them; regenerate by hand only with the consumer's CLI.
+    #
+    # Build-tool binary, NOT a vendored Go module (*_templ.go files are
+    # committed), so following it carries no vendorHash/FOD exposure.
+    # nixpkgs deliberately NOT followed (templ's go-modules FOD is
+    # validated against its own pin) — see lib/lock-audit.nix.
     templ = {
-      url = "github:a-h/templ/8bbdcac97f59cd4fef43a834a9357b68da243d71";
+      url = "github:a-h/templ?ref=main";
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
@@ -678,14 +679,14 @@
     };
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
+    # ALWAYS LATEST (owner directive 2026-10-25). The 2026-10-23 rev pin
+    # was collateral: the `NewAttributeExpression` break came from the
+    # templ GENERATOR being forced in via `templ-cli.follows` above, while
+    # the 5 commits past that rev touched only CI config, docs, indirect
+    # go.mod bumps, module.nix and vendorHash.nix — no .templ source.
+    # overview now consumes its own templ-cli pin (v0.3.1070 tag).
     overview = {
-      # REV-PINNED at 4b480406 (2026-10-16) since 2026-10-23: the ?ref
-      # float pulled a rev built against a newer templ runtime than the one
-      # this flake pins (see the templ input above) — the build failed on
-      # `templruntime.NewAttributeExpression` being undefined. LIFT: bump
-      # only together with the templ input, and only when
-      # `nix build .#overview --no-link` exits 0.
-      url = "github:LarsArtmann/overview/4b480406030c37ef6b21d697fe271aac2d95850e";
+      url = "github:LarsArtmann/overview?ref=master";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -782,13 +783,18 @@
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
     # Brings quickshell transitively — no separate quickshell input needed
-    # REV-PINNED at 4a87e822 (2026-10-16) since 2026-10-23: the `stable`
-    # float pulled dms-shell 2.0.0, whose installPhase dies silently on this
-    # tree (1.6.3 installs clean). LIFT: bump to a 2.x rev whose
-    # `nix build .#dms-shell --no-link` exits 0, then re-verify the HM
-    # module (homeModules + lib.patchDms consumers) on a fresh session.
+    # ALWAYS LATEST (owner directive 2026-10-25). Upstream v2.0.0 is the
+    # "Dux Shell" rebrand: qml-common moves to duxlabs-dev/dux-qml-common,
+    # DankCommon -> DCommon, desktop IDs com.danklinux.dms.* ->
+    # dev.duxlabs.shell.*; the derivation keeps pname=dms-shell, cmd/dms,
+    # and the share/quickshell/dms layout, so lib.patchDms + the
+    # Weather.qml recolor anchors still apply (their grep guards prove it).
+    # 4a87e822 above was the v1.6.3 tag commit; homeModules.niri and
+    # homeModules.dank-material-shell keep their names in 2.x.
+    # Bump-verify: nix build .#dms-shell --no-link, then a fresh-session HM
+    # module check (imports in platforms/nixos/desktop/quickshell.nix).
     dankMaterialShell = {
-      url = "github:AvengeMedia/DankMaterialShell/4a87e8227daf0840b3376fd5e7f891f5900165a6";
+      url = "github:AvengeMedia/DankMaterialShell?ref=master";
     };
 
     # dms-paste — PasteBot-style paste workflow for DMS (snippets launcher
@@ -1031,7 +1037,10 @@
     hermes-agent.inputs.uv2nix.follows = "uv2nix";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     inboxclean.inputs.nixpkgs.follows = "nixpkgs";
-    inboxclean.inputs.templ.follows = "templ";
+    # inboxclean.inputs.templ.follows REMOVED 2026-10-25: forcing the root
+    # templ CLI into inboxclean breaks it whenever the CLI outruns the
+    # go.mod runtime (undefined templruntime.NewAttributeExpression).
+    # InboxClean pins its own templ v0.3.1070 tag, matching its go.mod.
     index.inputs.nixpkgs.follows = "nixpkgs";
     library-policy.inputs.flake-parts.follows = "flake-parts";
     library-policy.inputs.go-nix-helpers.follows = "go-nix-helpers";
@@ -1068,7 +1077,10 @@
     overview.inputs.go-nix-helpers.follows = "go-nix-helpers";
     overview.inputs.nixpkgs.follows = "nixpkgs";
     overview.inputs.treefmt-nix.follows = "treefmt-nix";
-    overview.inputs.templ-cli.follows = "templ";
+    # overview.inputs.templ-cli.follows REMOVED 2026-10-25: overview pins
+    # templ-cli v0.3.1070 to match its go.mod runtime. A newer generator
+    # here emits templruntime.NewAttributeExpression, which that runtime
+    # does not have — this follows line WAS the 2026-10-23 build break.
     project-dependency-graph.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.go-nix-helpers.follows = "go-nix-helpers";
