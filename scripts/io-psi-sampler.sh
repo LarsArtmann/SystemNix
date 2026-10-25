@@ -125,9 +125,11 @@ fi
 
 if [ "$SELFTEST" -eq 1 ]; then
   wait
-  head -2 "$SUMFILE" | tail -1 | grep -q '^/system.slice/storm.service' \
-    && grep -A1 $'^path\tpeak_write_Bps' "$SUMFILE" | tail -1 | grep -q '^/system.slice/storm.service' \
-    && echo "selftest: OK (storm ranked first in both blocks)" \
-    || { echo "selftest: FAIL (ranking wrong)"; cat "$SUMFILE"; exit 1; }
+  if head -2 "$SUMFILE" | tail -1 | grep -q '^/system.slice/storm.service' \
+    && grep -A1 $'^path\tpeak_write_Bps' "$SUMFILE" | tail -1 | grep -q '^/system.slice/storm.service'; then
+    echo "selftest: OK (storm ranked first in both blocks)"
+  else
+    echo "selftest: FAIL (ranking wrong)"; cat "$SUMFILE"; exit 1
+  fi
 fi
 exit 0
