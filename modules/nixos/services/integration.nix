@@ -121,20 +121,10 @@ _: {
       monitoredEntries = lib.filterAttrs (_: e: e.monitored) enabledEntries;
       oidcEntries = lib.filterAttrs (_: e: e.oidc != null) enabledEntries;
 
-      # Dashboard-tile coverage exemptions (the tile-coverage assertion
-      # below): web-facing entries (subdomain set) that deliberately carry
-      # NO homepage tile. Every row MUST justify itself in a comment — an
-      # exemption without a reason is a review reject. Rows naming entries
-      # that do not exist on this host fail the stale-exemption assertion
-      # (delete the row when its entry goes away).
-      tileExemptions = {
-        # The dashboard itself — a self-tile is a navigation no-op (same
-        # reasoning as the comment at papdashboard.nix's registry entry).
-        papdashboard = true;
-        # The tq dashboard's tile is carried by the tq-agent-pool entry —
-        # both point at https://tq.<domain>; a second tile duplicates it.
-        tq-serve = true;
-      };
+      # Dashboard-tile coverage: web-facing entries (subdomain set) are
+      # EXPECTED to carry a tile; `noDashboardTile = true` is the explicit,
+      # comment-justified opt-out (lives on the entry, dies with it — no
+      # central table to go stale). See the assertions below.
 
       # Web-facing = subdomain set: the entry publishes a vHost (or at least
       # DNS + tile semantics per vHost.layer "none"), so a dashboard visitor
@@ -142,19 +132,22 @@ _: {
       webFacingEntries = lib.filterAttrs (_: e: e.subdomain != null) enabledEntries;
 
       # Entries violating the doctrine: web-facing but tile-less, unless
-      # exempted above.
-      missingTiles = lib.filterAttrs (
-        name: e: e.homepage == null && !(tileExemptions ? ${name})
-      ) webFacingEntries;
+      # explicitly opted out with a justified noDashboardTile.
+      missingTiles = lib.filterAttrs (_: e: e.homepage == null && !e.noDashboardTile) webFacingEntries;
 
-      # Registry tiles without an icon — monogram tiles red the pre-deploy
-      # §16 inventory gate and the icons_ok Gatus check at DEPLOY time;
-      # rejecting them here moves the failure to eval where it belongs.
-      iconlessTiles = lib.filterAttrs (_: e: e.homepage != null && e.homepage.icon == null) enabledEntries;
+      # Entries carrying BOTH the opt-out and a tile: the flag is only
+      # consulted for tile-less entries, so the pair silently renders the
+      # tile while a comment claims "no tile, justified" — a contradiction
+      # that must fail eval instead of compiling (assertion below).
+      contradictoryOptOuts = lib.filterAttrs (_: e: e.noDashboardTile && e.homepage != null) enabledEntries;
 
-      # Exemption rows naming entries absent from the registry entirely
-      # (entry exists but disabled is FINE — the row guards re-enablement).
-      staleExemptions = lib.filterAttrs (name: _: !(cfg ? ${name})) tileExemptions;
+      # Registry tiles without an icon — a cosmetic gap (monogram
+      # fallback), so it WARNS at eval (owner directive 2026-10-25: warn,
+      # don't fail) instead of failing the build; the §16 pre-deploy
+      # inventory gate and the icons_ok Gatus check remain the hard blocks.
+      iconlessTiles = lib.filterAttrs (
+        _: e: e.homepage != null && e.homepage.icon == null
+      ) enabledEntries;
     in
     {
       options.services.integration = lib.mkOption {
@@ -343,11 +336,11 @@ _: {
                           Tile logo: a dashboard-icons pack file name
                           (e.g. "miniflux.png"; served at /icons/ by
                           PapDashboard from the pack the module renders) or
-                          an absolute http(s) image URL. REQUIRED on registry
-                          tiles — the tile-icon assertion below rejects null
-                          (monogram tiles would red the pre-deploy §16 gate
-                          and the icons_ok Gatus check anyway); names are
-                          verified against the pack at build time
+                          an absolute http(s) image URL. Null renders the
+                          monogram fallback and WARNS at eval (owner
+                          directive 2026-10-25) — the §16 pre-deploy gate
+                          still blocks monogram tiles at deploy time; names
+                          are verified against the pack at build time
                           (modules/nixos/services/papdashboard.nix).
                         '';
                       };
@@ -395,6 +388,21 @@ _: {
                 type = lib.types.bool;
                 default = false;
                 description = "Register the unit in system-health monitoredServices (state/restart/crash-loop metrics)";
+              };
+
+              noDashboardTile = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = ''
+                  Opt OUT of the dashboard-tile coverage assertion for a
+                  web-facing (subdomain-bearing) entry that deliberately
+                  carries no homepage tile. MUST carry a justification
+                  comment where set — the default is: every web-facing
+                  service is reachable from the Services tab.
+                  Contradictory with a homepage tile: the flag is only
+                  consulted for tile-less entries, so an entry carrying
+                  both fails eval (see the assertions below).
+                '';
               };
 
               otel = lib.mkOption {
@@ -521,34 +529,46 @@ _: {
               assertion = missingTiles == { };
               message = ''
                 integration: web-facing (subdomain-bearing) entries without a dashboard tile:
-                ${lib.concatStringsSep "\n" (lib.mapAttrsToList (name: e: "  ${name} (subdomain ${e.subdomain}) — https://${e.subdomain}.${domain} reachable but not on the Services tab") missingTiles)}
+                ${lib.concatStringsSep "\n" (
+                  lib.mapAttrsToList (
+                    name: e:
+                    "  ${name} (subdomain ${e.subdomain}) — https://${e.subdomain}.${domain} reachable but not on the Services tab"
+                  ) missingTiles
+                )}
                 Every web-facing service MUST be reachable from the dashboard.
                 Fix: give the entry a homepage tile (name/group/href are all
                 optional — a minimal tile is `homepage = { icon = ...; }`), or
-                — for a genuinely tile-less web service — add a justified row
-                to `tileExemptions` in modules/nixos/services/integration.nix.
+                — for a genuinely tile-less web service — set
+                `noDashboardTile = true;` on the entry with a justification
+                comment.
               '';
             }
             {
-              assertion = iconlessTiles == { };
+              assertion = contradictoryOptOuts == { };
               message = ''
-                integration: registry tile(s) without an icon:
-                ${lib.concatStringsSep ", " (lib.attrNames iconlessTiles)}
-                Monogram (icon-less) tiles red the pre-deploy §16 inventory
-                gate and the papdashboard_services_json_icons_ok check at
-                DEPLOY time — pick a dashboard-icons pack name or an
-                http(s) URL now, at eval time, where the fix is one line.
+                integration: entries set noDashboardTile = true AND a homepage tile (the flag is ignored while a tile exists):
+                ${lib.concatStringsSep "\n" (
+                  lib.mapAttrsToList (name: _: "  ${name}") contradictoryOptOuts
+                )}
+                The opt-out only means anything on a tile-less entry. Remove one
+                of the two: keep the tile (delete noDashboardTile) or keep the
+                opt-out (delete the homepage block).
               '';
             }
-            {
-              assertion = staleExemptions == { };
-              message = ''
-                integration: tileExemptions rows naming unknown entries:
-                ${lib.concatStringsSep ", " (lib.attrNames staleExemptions)}
-                Delete the stale row(s) — an exemption for a nonexistent entry
-                is dust that hides real coverage gaps.
-              '';
-            }
+          ];
+
+          # Icon-less registry tiles WARN (owner directive 2026-10-25: a
+          # cosmetic gap must not fail the build) — the tile renders its
+          # monogram fallback; the §16 pre-deploy inventory gate and the
+          # icons_ok Gatus check remain the hard blocks at deploy time.
+          warnings = lib.optionals (iconlessTiles != { }) [
+            ''
+              integration: registry tile(s) without an icon (rendering monogram fallback):
+              ${lib.concatStringsSep ", " (lib.attrNames iconlessTiles)}
+              Pick a dashboard-icons pack file name (e.g. "miniflux.png") or an
+              http(s) image URL — the §16 pre-deploy gate blocks monogram tiles
+              at deploy time.
+            ''
           ];
         })
         (lib.optionalAttrs (options ? services.caddy-config) {

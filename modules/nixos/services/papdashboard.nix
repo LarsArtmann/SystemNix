@@ -898,14 +898,16 @@
         # upstream auth re-pin 2026-10-08; the app-level key gate covers the
         # machine surface only) and the Gatus /api/health
         # check. The dashboard IS this service, so it carries no dashboard
-        # tile of its own (a self-tile is a navigation no-op) — exempted in
-        # integration.nix's tileExemptions (tile-coverage assertion).
+        # tile of its own (noDashboardTile opt-out below).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           papdashboard = {
             inherit (cfg) enable;
             subdomain = "dash";
             inherit (cfg) port;
             vHost.layer = "protected";
+            # The dashboard IS this service — a self-tile is a navigation
+            # no-op (tile-coverage opt-out; see integration.nix assertion).
+            noDashboardTile = true;
             checks = [
               {
                 name = "PapDashboard";

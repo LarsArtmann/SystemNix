@@ -591,6 +591,18 @@
             n=$((n + 1))
             sleep "$POLL_SEC"
           done
+          if [ "$n" -ge "$WAIT_CYCLES" ]; then
+            # Maintenance-entry gate (2026-10-25, stability.md row 38 /
+            # freeze-33 T+5 finding: this census ran INTO a 60%+ recovery
+            # storm when the 6-min cap expired — freeze-6 rule (a) class).
+            # The census is off the critical path (the gateway is already
+            # serving; the marker persists), so a storm that outlasts the
+            # wait budget DEFERS instead of running into it. exit 0:
+            # deferral is a successful no-op, not a unit failure; the next
+            # hermes start re-pulls this unit and retries.
+            echo "hermes-db-health: io storm persisted for the full $WAIT_CYCLES-cycle budget — census deferred (marker kept; maintenance never enters a storm)"
+            exit 0
+          fi
           echo "hermes-db-health: running deferred integrity census on $DB (io calm after $n of $WAIT_CYCLES wait cycles)"
 
           INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1) || true

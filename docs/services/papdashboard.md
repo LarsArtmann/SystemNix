@@ -46,6 +46,15 @@ options services.papdashboard.dashboard.*   (module defaults: groups, tiles, sea
 - `system.disks` — stat-strip disk list (default `/`, `/data`, `/mnt/pool`), temp warn range 30–95 °C.
 - `groups[].tiles[]` — `name`, `description`, `href` (also the default probe target), optional `checkUrl`
   for metrics-only tiles, optional `icon` (tile logo — see below).
+- **Coverage is enforced (2026-10-25):** every `services.integration` entry with a `subdomain`
+  MUST carry a `homepage` tile — an eval-time assertion in `integration.nix` (fails `nix flake
+  check`), so a new web-facing service cannot silently miss the Services tab. Registry tiles with
+  `icon = null` WARN at eval (owner directive: cosmetic gap, warn don't fail — the tile renders
+  its monogram fallback; the §16 pre-deploy gate remains the hard monogram block). Tile
+  authoring defaults: `name` derives from the subdomain, `group` defaults to `"Services"`,
+  `href` derives `https://<subdomain>.<domain>` — a minimal tile is `homepage = { icon = "x.png"; }`.
+  Opt-out for genuinely tile-less web services: `noDashboardTile = true;` + justification comment
+  (papdashboard itself and tq-serve are the two live exemptions).
 - `bookmarks[]` — link groups, no status.
 - The registry key for the module itself is still `homepage` (historical name kept to avoid a
   ~20-module rename; the value's `subdomain` is `dash`). A rename is planned as registry cleanup.
@@ -62,7 +71,8 @@ Every tile renders a logo. `icon` is either a file name from the bundled
 ```
 icon = "<pack file>.png"      →  /icons/<pack file>.png  (served by PapDashboard)
 icon = "https://cdn/…/x.svg"  →  used verbatim
-icon = null                   →  monogram fallback only
+icon = null                   →  monogram fallback (registry tiles: eval WARNING since 2026-10-25;
+                                the §16 pre-deploy gate blocks monograms for hand-written tiles)
 ```
 
 - The pack is a **fixed pin in this module** (`iconPackSrc`: homarr-labs/dashboard-icons

@@ -185,6 +185,14 @@ _: {
             subdomain = "immich";
             port = config.services.immich.port;
             vHost.layer = "protected";
+            # Caught by the tile-coverage assertion 2026-10-25: web-facing
+            # since the registry entry exists but never carried a tile.
+            homepage = {
+              name = "Immich";
+              group = "Media";
+              description = "Photo & Video Library (SSO via vHost)";
+              icon = "immich.png";
+            };
             backup = {
               # mediaLocation moved to the mirrored pool 2026-08-16; the DB
               # backup timer writes next to the media it protects.

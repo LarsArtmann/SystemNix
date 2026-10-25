@@ -125,12 +125,20 @@ let
             subdomain = "timers";
             port = 8098;
             vHost.layer = "plain";
+            # Minimal tile (icon only): exercises the tile-coverage
+            # assertion's contract that name/group/href all derive — a
+            # subdomain'd entry MUST carry a tile, and the minimal form is
+            # one line (integration.nix dashboardTile defaults).
+            homepage = {
+              icon = "miniflux.png";
+            };
           };
         }
       ];
       protectedCfg = c.services.caddy.virtualHosts."graph.home.lan".extraConfig;
       plainCfg = c.services.caddy.virtualHosts."timers.home.lan".extraConfig;
       tile = lib.findFirst (t: t.name == "Demo") null c.services.papdashboard.extraTiles;
+      plainTile = lib.findFirst (t: t.name == "timers") null c.services.papdashboard.extraTiles;
       demoCheck = n: lib.findFirst (e: e.name == n) null c.services.gatus-config.extraEndpoints;
       healthCheck = demoCheck "Demo Health";
       tcpCheck = demoCheck "Demo TCP";
@@ -175,6 +183,12 @@ let
       # against the pack). Kept a REAL pack name so enabling papdashboard in
       # this fixture cannot fail the build-time icon gate.
       dashboard-tile-icon = tile.icon == "miniflux.png";
+      # Minimal-tile defaults: name derives from the subdomain, group falls
+      # back to "Services", href derives https://<subdomain>.<domain>.
+      defaults-tile-present = plainTile != null;
+      defaults-tile-name-derived = plainTile != null && plainTile.name == "timers";
+      defaults-tile-group-default = plainTile != null && plainTile.group == "Services";
+      defaults-tile-href-derived = plainTile != null && plainTile.href == "https://timers.home.lan";
       backup-registered =
         (c.services.backup-coordination.backups ? demo)
         && c.services.backup-coordination.backups.demo.directory == "/mnt/pool/backups/demo"
@@ -222,6 +236,76 @@ let
       a: lib.hasPrefix "integration:" a.message && lib.hasInfix "ghost-zone" a.message
     ) failing;
 
+  # Negative case (tile coverage, 2026-10-25): a web-facing (subdomain'd)
+  # entry without a homepage tile must fail the tile-coverage assertion —
+  # the class that silently ate forgejo/paperless/immich tiles.
+  negativeTileFires =
+    let
+      c = evalConfig [
+        {
+          services.integration.ghost-tile = {
+            subdomain = "timers"; # registered in dns-local, no collisions here
+            port = 8098;
+            vHost.layer = "plain";
+          };
+        }
+      ];
+      failing = builtins.filter (a: !a.assertion) c.assertions;
+    in
+    builtins.any (
+      a: lib.hasPrefix "integration:" a.message && lib.hasInfix "ghost-tile" a.message
+    ) failing;
+
+  # Warning case (tile icons, 2026-10-25 owner directive: WARN, don't
+  # fail): a registry tile with a null icon must emit a config.warnings
+  # entry (monogram fallback renders) — the eval stays green; §16 is the
+  # hard block at deploy time.
+  iconWarnFires =
+    let
+      c = evalConfig [
+        {
+          services.integration.ghost-icon = {
+            subdomain = "timers";
+            port = 8098;
+            vHost.layer = "plain";
+            homepage = {
+              name = "Ghost";
+              group = "Media";
+            };
+          };
+        }
+      ];
+    in
+    builtins.any (a: lib.hasPrefix "integration:" a && lib.hasInfix "ghost-icon" a) c.warnings;
+
+  # Negative case (opt-out contradiction, 2026-10-25): noDashboardTile is
+  # only consulted for tile-less entries, so an entry carrying BOTH the
+  # flag and a homepage tile must fail eval naming the entry — otherwise a
+  # comment-justified "no tile" sits next to a silently rendered tile.
+  optoutContradictionFires =
+    let
+      c = evalConfig [
+        {
+          services.integration.ghost-optout = {
+            subdomain = "timers"; # registered in dns-local, no collisions here
+            port = 8098;
+            vHost.layer = "plain";
+            homepage.icon = "miniflux.png";
+            noDashboardTile = true;
+          };
+        }
+      ];
+      failing = builtins.filter (a: !a.assertion) c.assertions;
+    in
+    builtins.any (
+      a: lib.hasPrefix "integration:" a.message && lib.hasInfix "ghost-optout" a.message
+    ) failing;
+
+  # The stale-exemption negative has no pure-eval shape (the opt-out lives
+  # on each entry as noDashboardTile, so it cannot go stale) — the
+  # negative-test harness (scripts/negative-test-lints.sh, group
+  # tilecoverage) proves the fire paths against the real toplevel eval.
+
   failedChecks = lib.filterAttrs (_: v: !v) (
     builtins.removeAttrs positive [ "failingAssertionMessages" ]
   );
@@ -238,6 +322,21 @@ if failedChecks != { } then
 else if !negativeFires then
   pkgs.runCommand "integration-registry-test" { } ''
     echo "integration registry DNS assertion did NOT fire for ghost-zone"
+    exit 1
+  ''
+else if !negativeTileFires then
+  pkgs.runCommand "integration-registry-test" { } ''
+    echo "integration registry tile-coverage assertion did NOT fire for ghost-tile"
+    exit 1
+  ''
+else if !iconWarnFires then
+  pkgs.runCommand "integration-registry-test" { } ''
+    echo "integration registry icon warning did NOT fire for ghost-icon"
+    exit 1
+  ''
+else if !optoutContradictionFires then
+  pkgs.runCommand "integration-registry-test" { } ''
+    echo "integration registry opt-out contradiction assertion did NOT fire for ghost-optout"
     exit 1
   ''
 else
@@ -259,6 +358,7 @@ else
                 name = "Demo";
                 group = "Media";
                 description = "Demo service";
+                icon = "miniflux.png";
               };
             };
             services.papdashboard.enable = true;
@@ -270,6 +370,7 @@ else
     ''
       grep -q '"name": "Demo"' "$json" || { echo "tile missing from rendered services.json"; exit 1; }
       grep -q '"name": "Media"' "$json" || { echo "Media group missing from rendered services.json"; exit 1; }
+      grep -q '"icon": "miniflux.png"' "$json" || { echo "tile icon missing from rendered services.json"; exit 1; }
       grep -q '"title"' "$json" || { echo "title missing from rendered services.json"; exit 1; }
       touch "$out"
     ''

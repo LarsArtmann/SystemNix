@@ -2,9 +2,11 @@
 # Behavioral fixture for hermes-db-health (the deferred-census converger,
 # store-extracted via the evaluated evo-x2 config by
 # checks.hermes-migrate-fixture). Covers: the no-marker fast path, the
-# PSI calm-wait loop (seamed file + zero poll interval), the ok
-# convergence, the malformed hot-swap (backup + marker clear + hermes
-# restart via a stubbed systemctl), and the cannot-complete retry path.
+# PSI calm-wait loop (seamed file + zero poll interval), the storm-
+# outlasts-budget DEFERRAL (maintenance-entry gate, freeze-6 rule a),
+# the ok convergence, the malformed hot-swap (backup + marker clear +
+# hermes restart via a stubbed systemctl), and the cannot-complete
+# retry path.
 #
 # Usage: test-hermes-db-health.sh <extracted-db-health-script>
 set -euo pipefail
@@ -92,15 +94,19 @@ grep -q "converged ok" "$scratch/out2" || fail "leg2: no convergence, got: $(cat
 [ ! -e "$STATE/state.db.integrity-pending" ] || fail "leg2: marker not cleared"
 [ ! -s "$scratch/systemctl-calls" ] || fail "leg2: restart on a healthy db"
 
-# --- leg 3: marker + storm PSI -> waits out the cycles (zero poll sec),
-# then runs anyway and converges.
+# --- leg 3: marker + storm PSI that outlasts the budget -> DEFERS
+# (maintenance-entry gate, freeze-33 T+5 finding): marker kept, exit 0,
+# census NOT run, no restart. The census may only ever run in a calm
+# window — freeze-6 rule (a): maintenance never enters a storm.
 make_db
 : >"$STATE/state.db.integrity-pending"
 psi 92.00
+: >"$scratch/systemctl-calls"
 WAIT_CYCLES=3 run >"$scratch/out3" 2>&1
-grep -q "io calm after 3 of 3 wait cycles" "$scratch/out3" || fail "leg3: wait loop did not burn the cap, got: $(cat "$scratch/out3")"
-grep -q "converged ok" "$scratch/out3" || fail "leg3: census did not run after the cap"
-[ ! -e "$STATE/state.db.integrity-pending" ] || fail "leg3: marker not cleared"
+grep -q "census deferred" "$scratch/out3" || fail "leg3: expected deferral, got: $(cat "$scratch/out3")"
+[ -e "$STATE/state.db.integrity-pending" ] || fail "leg3: marker must persist through deferral"
+! grep -q "converged ok" "$scratch/out3" || fail "leg3: census must not run in a storm"
+[ ! -s "$scratch/systemctl-calls" ] || fail "leg3: no systemctl calls expected on deferral"
 
 # --- leg 4: marker + PSI recovering below the limit mid-loop -> converges
 # (the loop must break on calm, not exhaust the cap). Deterministic flip:

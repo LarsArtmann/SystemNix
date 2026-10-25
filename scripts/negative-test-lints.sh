@@ -256,6 +256,49 @@ eval_case() {
   esac
 }
 
+# eval_warnings <dir> — the enforcement surface of WARNING-class gates
+# (config.warnings): eval must stay green, so the probe is the warnings
+# LIST itself, rendered as JSON for marker grepping.
+eval_warnings() {
+  local dir="$1"
+  nix eval --impure --json --expr "(builtins.getFlake \"path:$dir\").nixosConfigurations.\"evo-x2\".config.warnings" 2>&1
+}
+
+# warn_case <group> <name> <marker> <mutation...> — same contract as
+# eval_case, but the gate WARNS instead of throwing: the eval must SUCCEED
+# AND the warnings list must contain the marker. A green eval without the
+# marker = phantom-quiet gate; a throw = the gate regressed to an error.
+warn_case() {
+  local group="$1" name="$2" marker="$3"
+  shift 3
+
+  if [ -n "$FILTER" ] && [[ ",$FILTER," != *",$group,"* ]]; then
+    return 0
+  fi
+
+  local dir
+  dir=$(make_copy "$group-$name")
+  apply_mutations "$dir" "$@" || {
+    failed=$((failed + 1))
+    return 0
+  }
+
+  local out status=0
+  out=$(eval_warnings "$dir") || status=$?
+
+  if [ "$status" -ne 0 ]; then
+    say "FAIL [$group/$name]: toplevel eval THREW instead of warning — gate regressed to an error:"
+    grep -m3 'error:' <<<"$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  elif ! grep -qF "$marker" <<<"$out"; then
+    say "FAIL [$group/$name]: eval green but warning marker '$marker' absent — gate phantom-quiet"
+    failed=$((failed + 1))
+  else
+    say "PASS [$group/$name]: toplevel eval green with the expected warning"
+    passed=$((passed + 1))
+  fi
+}
+
 SIGNALERTS="modules/nixos/services/_signoz-alerts.nix"
 
 # build_config_path <dir> <attr-path> — realize a config attribute whose
@@ -344,7 +387,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -555,6 +598,27 @@ eval_case tileicons legacy-mdi-icon fail 'tile icon\(s\) must be a dashboard-ico
 # gate unskippable on a real deploy).
 build_case tileicons pack-missing-icon 'config.systemd.services.papdashboard.environment.PAP_ICONS_DIR' fail "is not in the dashboard-icons pack" \
   'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"pocket-id-not-in-any-pack.png"|'
+
+# ── integration tile-coverage audits: the 2026-10-25 class ──
+# The 2026-09 homepage→PapDashboard merge silently DROPPED tiles (forgejo's
+# comment claimed it "stays static in homepage.nix" — a deleted file;
+# paperless + immich never carried one). integration.nix now enforces:
+# web-facing (subdomain'd) entries MUST tile (hard assertion), and registry
+# tiles without icons WARN (owner directive 2026-10-25: cosmetic gap, warn
+# don't fail — §16 pre-deploy remains the hard monogram block), and the
+# noDashboardTile opt-out must not coexist with a tile (hard assertion).
+# All legs mutate miniflux.nix (a real subdomain'd entry).
+# Leg 1: strip the whole homepage block → coverage assertion names miniflux.
+eval_case tilecoverage tile-stripped fail 'without a dashboard tile' \
+  'sed:modules/nixos/services/miniflux.nix:/^            homepage = {$/,/^            };$/d'
+# Leg 2: strip only the icon line → eval stays GREEN with the warning.
+warn_case tilecoverage icon-stripped 'without an icon (rendering monogram fallback)' \
+  'sed:modules/nixos/services/miniflux.nix:s|^              icon = "miniflux.png";$|              # icon stripped|'
+# Leg 3: opt-out + tile contradiction (2026-10-25 §f.6) — the flag is only
+# consulted when homepage == null, so an entry carrying both must fail eval
+# instead of silently rendering the tile beside a "no tile" justification.
+eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homepage tile' \
+  'sed:modules/nixos/services/miniflux.nix:s|^            monitored = true;$|            monitored = true;\n            noDashboardTile = true;|'
 
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the
