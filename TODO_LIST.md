@@ -291,7 +291,7 @@
 - [ ] **Test-fire "Telemetry Export Failures" → Discord** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **SigNoz migrator-gap guard** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **`file_storage` cursor persistence for the journald receiver** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-- [ ] **Caddy access.log ingestion (filelog receiver)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [ ] **Caddy per-vHost access-*.log ingestion (filelog receiver)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **buildcache-gc observability** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Declarative health-check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **System-health collector hardening** → [docs/todo/monitoring.md](docs/todo/monitoring.md)

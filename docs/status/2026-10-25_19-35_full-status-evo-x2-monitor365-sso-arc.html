@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Full Status — 2026-10-25 19:35</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        --bg: var(--surface);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --rose: var(--problem);
+        --emerald: var(--solution);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+
+        --radius: 0px;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 230px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      h1, h2, h3, h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      .hero {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 80ch;
+        margin: 0;
+      }
+      .hero-meta {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin-top: 0.8rem;
+      }
+
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical { background: var(--problem); }
+      .severity-important { background: var(--warning); }
+      .severity-nice { background: var(--solution); }
+
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .badge-critical { color: var(--problem); border-color: var(--problem); }
+      .badge-high { color: var(--warning); border-color: var(--warning); }
+      .badge-medium { color: var(--accent); border-color: var(--accent); }
+      .badge-low { color: var(--text-muted); }
+      .badge-fixed { color: var(--solution); border-color: var(--solution); }
+      .badge-queued { color: var(--accent); border-color: var(--accent); }
+
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before { background: var(--problem); }
+      .stat-good::before { background: var(--solution); }
+      .stat-warn::before { background: var(--warning); }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value { color: var(--problem); }
+      .stat-good .stat-value { color: var(--solution); }
+      .stat-warn .stat-value { color: var(--warning); }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .table-wrap { overflow-x: auto; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:hover td { background: var(--surface-raised); }
+      td code {
+        font-size: 0.85em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      code { font-family: var(--font-mono); }
+
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 { margin-bottom: 0.5rem; }
+      .toc ul { list-style: none; padding: 0; }
+      .toc li { margin: 0.25rem 0; }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover { color: var(--accent); }
+
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      @media (min-width: 1024px) {
+        .sidebar { display: block; }
+      }
+      @media (max-width: 768px) {
+        .layout { flex-direction: column; padding: 1rem; }
+        .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; }
+        .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>Status Report — SystemNix / evo-x2</span>
+      <span>2026-10-25 19:35 CET</span>
+      <span>gen-948 · uptime 14h59m</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">00 Summary</a>
+          <a href="#done">a) Fully Done</a>
+          <a href="#partial">b) Partially Done</a>
+          <a href="#notstarted">c) Not Started</a>
+          <a href="#fucked">d) Fucked Up</a>
+          <a href="#improve">e) Improve</a>
+          <a href="#next">f) Top 25 Next</a>
+          <a href="#question">g) Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-badge">Full Status Update</div>
+          <h1>SystemNix / evo-x2 — storm-day ledger</h1>
+          <p class="hero-subtitle">
+            Point-in-time snapshot at 19:35 CET, 2026-10-25. Today ran 4+ parallel
+            agent sessions through a sustained io storm (3 freeze-budget burns):
+            the lock-float loop was closed end-to-end, deploy8 landed as gen-948
+            (anchor verified live), Monitor365 got a backup redesign plus an SSO
+            user provision, and edge OTel tracing shipped on all 76 vHosts. The
+            runtime-verification tail (backup fire #3, CRM data audit, first real
+            span) is still open, and InboxClean is dark right now.
+          </p>
+          <div class="hero-meta">
+            Written by the Monitor365-SSO session · Live probes: PSI io
+            some 55.7% / full 41.2% · load 15.6 · :3001 ✓ :8088 ✓ :8098 ✓
+            :8099 ✗ · current-system == system-948-link == profile head (anchor PASS)
+          </div>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#summary">00 Summary stat cards</a></li>
+            <li><a href="#done">a) Fully done (verified)</a></li>
+            <li><a href="#partial">b) Partially done</a></li>
+            <li><a href="#notstarted">c) Not started</a></li>
+            <li><a href="#fucked">d) Totally fucked up</a></li>
+            <li><a href="#improve">e) What we should improve</a></li>
+            <li><a href="#next">f) Top 25 things to get done next</a></li>
+            <li><a href="#question">g) The question I cannot answer</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">10</div>
+            <div class="stat-label">Fully done (verified)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Partially done</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Not started (queued)</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Fucked up</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">822</div>
+            <div class="stat-label">[ready] queue rows</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">55%</div>
+            <div class="stat-label">io PSI some avg10</div>
+          </div>
+        </div>
+
+        <h2 id="done"><span class="num">a</span>Fully done — verified</h2>
+
+        <div class="card card-solution">
+          <h4>a1 · Monitor365 SSO login fixed (this session)</h4>
+          <p>
+            Root cause of "Unauthorized: SSO user not found": Monitor365 has no
+            JIT provisioning and the bootstrap admin (<code>admin@monitor365.local</code>,
+            upstream default) never matched the Pocket ID account. Provisioned
+            <code>lars@larsartmann.cloud</code> as super_admin into tenant
+            <code>LarsArtmann</code> via <code>monitor365-server create-admin</code>
+            under a server quiesce (DuckDB single-writer). Verified live:
+            <code>/health</code> ok,
+            <code>/v1/auth/sso/status?email=…&amp;tenant_id=…</code> →
+            <code>{"enabled":true,"display_name":"Pocket"}</code>.
+            <code>email_verified=0</code> is explicitly tolerated upstream
+            (flow.rs:205 warns, accepts). Runbook updated:
+            <code>docs/services/monitor365.md</code>.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a2 · Lock-float loop closed end-to-end; owner's flow works</h4>
+          <p>
+            The gate was forced at outputs-eval, killing <code>nix run .#deploy</code>
+            before float-register could run. Reworked lazy per host configuration;
+            verified live in both directions, then the owner's 9-input blanket
+            update absorbed mechanically (3 vendorHash shims re-staled and fixed:
+            cv, health-hub, inboxclean). Exec-3 resume-2 report §a.1–a.3.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a3 · deploy8 = gen-948 landed, anchor verified by number (re-verified 19:32)</h4>
+          <p>
+            <code>readlink /run/current-system</code> ==
+            <code>system-948-link</code> == newest profile link. The 2026-10-14
+            UNANCHORED class did not recur despite the storm-day deploy cadence
+            (deploys 7 and 8 today).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a4 · Monitor365 backup redesign deployed (gen-948)</h4>
+          <p>
+            Upstream <code>COPY FROM DATABASE</code> provably cannot stream the
+            30 GB DB under any sane cgroup; replaced with quiesced CHECKPOINT +
+            <code>cp --reflink=always</code> + chown net. First-fire sandbox bug
+            (<code>runuser</code> setuid EPERM under the hardened root unit,
+            systemd 261 preset) root-caused and fixed in the same arc.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a5 · Edge OTel tracing is LIVE (corrects the 18:30 report's "deploy pending")</h4>
+          <p>
+            Verified on the running system at 19:32: <code>tracing</code> blocks
+            present in the rendered <code>/etc/caddy/caddy_config</code> (all 76
+            site blocks) and <code>OTEL_EXPORTER_OTLP_ENDPOINT</code> +
+            <code>OTEL_SERVICE_NAME=caddy</code> on the caddy unit env. gen-948
+            carried it. Still missing: first observed span in ClickHouse (b3).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a6 · Registry wave: the 4 blind vHosts registered</h4>
+          <p>
+            pocket-id, openseo, taskchampion, dns-blocker joined
+            <code>services.integration</code> with <code>vHost.layer = "none"</code>;
+            built-in tiles migrated to registry homepages (PapDashboard
+            duplicate-name crash class); caddy blind table 8→4. Eval green,
+            negative tests 5/5. NOTE: this work is IN THE WORKING TREE RIGHT NOW,
+            uncommitted (see d6).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a7 · InboxClean rev-pin lifted via floating nixpkgs-unstable follow</h4>
+          <p>
+            Owner directive "inboxclean should never be pinned". New FLOATING
+            input feeding <code>inboxclean.inputs.nixpkgs</code> ships go 1.27.3;
+            re-floated to master HEAD; pin-audit allowlist row removed; lift
+            condition for the follow documented in flake.nix.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a8 · memory-emergency-guard restore now io-gated (VM-tested)</h4>
+          <p>
+            The restore gate was memory-blind and re-armed the flm socket straight
+            into the io storm, burning the daily budget (3/3 by 12:34Z today, all
+            LLM consumers 503ing). Restore now additionally requires io PSI
+            some avg60 &lt; 20%. Live consequence visible right now: socket down
+            since 17:44 — that is the new gate holding under a 55% storm, by design.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a9 · Queue-parity wave + prune tooling</h4>
+          <p>
+            Pairing WARNs 101→41 (22 repointed, 34 paired); 520 <code>[x]</code>
+            rows pruned to CHANGELOG across queue + 10 domain libraries;
+            <code>scripts/prune-done-todos.sh</code> scriptified the pass
+            (dry-run-first, rev-pinned WARN A/B). The prune UNMASKED drift as
+            predicted: 221 pairing WARNs, unharvested-§f 122→128 (see d5).
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>a10 · Forgejo-OTel dead-end verified with sources</h4>
+          <p>
+            Upstream merged (2024-08-05) then reverted (2024-08-07, EUPL-1.2 vs
+            GPLv3) — never in any release; the author refuses relicense and calls
+            his own traces flat. Research closed; edge tracing (a5) is the answer.
+          </p>
+        </div>
+
+        <h2 id="partial"><span class="num">b</span>Partially done</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In flight</span>
+          <h3>b1 · F19+F20 backup proof — third fire pending</h3>
+          <div class="where">scripts/monitor365-backup-fire.sh</div>
+          <p>
+            Attempt 1 proved the 6GB OOM; attempt 2 hit the runuser sandbox bug;
+            the FIX is deployed in gen-948 but the fire has not re-run. One
+            command, ~2 min quiesce. Expected: export ≈ 30,207,913,984 bytes,
+            "export landed (reflink)" journal line, retention lines.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Data risk</span>
+          <h3>b2 · CRM data-quality audit after the cv boot-sync storm</h3>
+          <div class="where">cv @09e0882 boot CRM-sync · crm</div>
+          <p>
+            cv@09e0882 storm-stalled its startup CRM sync ~11 min, 409-stormed on
+            closed deals and mass-CREATED opportunities (1221 lines/min cv, 2252/min
+            crm at 114% CPU), including one row with
+            <code>crm_id=StreamMarker:…</code> — a marker leaked into the create
+            path. cv recovered self-propelled at 17:55. Whether the CRM now holds
+            duplicate deals is NOT verified. Effort: M (read-only probes).
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Deployed, unobserved</span>
+          <h3>b3 · Edge tracing: code-complete, zero spans observed</h3>
+          <div class="where">caddy.nix · sig-coverage wiring (26h env budget)</div>
+          <p>
+            Config live on the box (a5), but caddy has not been observed emitting
+            a single span into SigNoz ClickHouse;
+            <code>signoz_traces_reporting{service="caddy"}</code> never seen = 1.
+            Also unverified: whether the collector's tail sampling drops caddy
+            spans (c1), and the 26h budget WILL false-page on a quiet weekend (d-risk
+            flagged by the 18:30 session, decision row queued).
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Open</span>
+          <h3>b4 · InboxClean dark again (:8099 refusing at 19:32)</h3>
+          <div class="where">inboxclean · memory-emergency-guard</div>
+          <p>
+            Revived at 17:19, absent from deploy8's FAIL list — and now
+            <code>:8099</code> is NOT listening. The 13:27/14:54/17:19 stops were
+            all guard trips (6/h under storm); this evening's dark window is the
+            same cycle until the storm drains. §g.3 (guard vs service ownership)
+            still pending the owner.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Open</span>
+          <h3>b5 · Health Hub /readyz 503 — not re-verified after cv recovery</h3>
+          <p>
+            Most likely the cv remote dark during the 17:44–17:55 stall; cv serves
+            200s again (:8098 ✓ live-verified 19:32). One probe, folded into the
+            calm-window re-run row.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Open</span>
+          <h3>b6 · Lock-float proof-marker (unproven-float fast path)</h3>
+          <div class="where">docs/todo/pipeline.md</div>
+          <p>
+            float-register's "no drift" fast path cannot distinguish
+            registered-green from registered-unproven under the daemon's 10-min
+            commit cadence; a lock-fingerprint stamp at green-proof commit is
+            designed, not implemented.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Open</span>
+          <h3>b7 · Storm-suspect smokes re-run at calm window</h3>
+          <p>
+            cv render ×2 storm-suspect-downgraded, nsfw CPU 205%, node-exporter
+            journal 419–426 lines/min (scraper early-close class), SigNoz
+            traces_missing 2, storage-history STALE — all baseline/storm class,
+            owned by the existing calm-window row.
+          </p>
+        </div>
+
+        <h2 id="notstarted"><span class="num">c</span>Not started (queued, why, priority)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Item</th><th>Why not started</th><th>Priority</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SigNoz collector sampling-policy check (caddy span volume)</td>
+                <td>Assumed ingest works; config never opened — could silently invalidate the whole feature</td>
+                <td><span class="badge badge-critical">High</span></td>
+              </tr>
+              <tr>
+                <td><code>checks.caddy-mint</code> VM boot proof for caddy changes</td>
+                <td>Storm-gated build all evening</td>
+                <td><span class="badge badge-critical">High</span></td>
+              </tr>
+              <tr>
+                <td>cv upstream: bind-before-boot-sync + StreamMarker leak + 409-storm</td>
+                <td>Gated on b2 audit results (queue-vs-push, §g.2)</td>
+                <td><span class="badge badge-high">High</span></td>
+              </tr>
+              <tr>
+                <td>monitor365 upstream reports: COPY-FROM-DATABASE OOM, memory_limit shape trap, WAL-delete desync</td>
+                <td>No-push policy; queue-only until owner gates a push</td>
+                <td><span class="badge badge-high">High</span></td>
+              </tr>
+              <tr>
+                <td>post-deploy-check: split "not listening" vs "non-loopback" (paperless-gpt class)</td>
+                <td>Queued (pipeline.md); two false rc=3 exits today</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+              </tr>
+              <tr>
+                <td>cv-server ExecStartPost port-readiness probe ("active but refusing" for 11 min must not read healthy)</td>
+                <td>Queued (services.md)</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+              </tr>
+              <tr>
+                <td>128-unharvested-§f report sweep (batched by month)</td>
+                <td>Standing drift row; grew +6 today from parallel sessions' reports</td>
+                <td><span class="badge badge-medium">Medium</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="fucked"><span class="num">d</span>Totally fucked up</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Live</span>
+          <h3>d1 · Monitor365 backup integrity: last FULL export is Oct 23</h3>
+          <div class="where">/var/lib/monitor365-server</div>
+          <p>
+            The Oct 24/25 ~7–8 GB "backups" are partial corpses (30 GB DB,
+            <code>COPY FROM DATABASE</code> OOM class); 3 root-owned corpses +
+            a 0-byte .tmp sit in the state dir awaiting owner sudo prune
+            ([blocked:user] queued). The redesign (a4) is deployed but UNPROVEN
+            until fire #3 (b1). The owner's NVMe safety copy (2026-10-22) remains
+            the only good off-disk copy.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Data risk</span>
+          <h3>d2 · Possible CRM data corruption from the cv sync storm</h3>
+          <p>
+            Duplicate opportunities and a <code>StreamMarker:</code>-prefixed row
+            may exist in production CRM data right now (b2). Not duplicated by the
+            audits; nobody has looked. Severity: silent data-quality damage with
+            downstream sync effects.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Ongoing</span>
+          <h3>d3 · The io storm never ended</h3>
+          <div class="where">/proc/pressure/io · 19:32 reading</div>
+          <p>
+            io PSI some avg10 55.7 / avg300 56.9, full 41.2; load 15.6 after
+            28.5/37.5 peaks. All evening deploys and verification batteries were
+            gate-blocked or storm-degraded; 3 freeze-budget burns today; fastflowlm
+            socket held down by the (correct) new gate. The ghostty io_uring CQ
+            scope at ~99% remains the attributed driver. The box is running, but
+            everything latency-sensitive is degraded.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Designed-in</span>
+          <h3>d4 · caddy's 26h coverage budget will false-page on the first quiet weekend</h3>
+          <div class="where">signoz-coverage.nix wiring (env, 26h)</div>
+          <p>
+            Nothing but human browsing generates caddy spans; 26h &lt; 48h
+            weekend. The 18:30 session committed it copying the neighbor's budget
+            and flagged it only afterwards. Decision row queued (a: accept pages /
+            b: reclassify event / c: warm-probe). Until decided, expect a
+            "Trace Coverage Missing: caddy" page every unattended weekend.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Drift</span>
+          <h3>d5 · TODO-system drift grew again despite today's parity wave</h3>
+          <p>
+            Prune unmasked: 221 pairing WARNs at prune time; unharvested-§f
+            122→128 and counting (4 reports already landed after 18:30). The
+            harvest discipline is holding per-report but the corpus sweep (c7)
+            keeps losing to new arrivals — net-negative day for the backlog.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Process</span>
+          <h3>d6 · The working tree is dirty with ANOTHER session's work right now</h3>
+          <div class="where">git status at 19:32: CHANGELOG.md · docs/services/caddy.md · flake.lock</div>
+          <p>
+            The registry-wave edits (a6) + a flake.lock input bump are uncommitted
+            and were NOT authored by this session — flagged per the shared-tree
+            rule rather than touched. Expect the daemon to sweep them within
+            minutes; a6's "verified" status is theirs to close, not this report's.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">e</span>What we should improve</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Gate-blocked deploys need escalation, not 80-minute solo polling</strong>
+              <span>After one blocked retry + one re-check, surface force-vs-queue to the owner with gate numbers. Today burned an evening on hold-music (18:30 §e.1).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Prove wrapper steps under the UNIT's sandbox, not an agent shell</strong>
+              <span>The runuser EPERM shipped because a root shell proved nothing about a hardened systemd unit. Pattern: systemd-run with the unit's directives, or a dry-run env var (index-rebuild has one; the backup wrapper should too).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>"wired ≠ instrumented ≠ observed ≠ booted" as a named ladder</strong>
+              <span>Edge tracing passed the first two states and stalled at the third; the caddy-mint VM boot is the cheap fourth. Make it a standing pre-deploy step for any caddy.nix change.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>A float proof is a BUILD proof; service floats need a runtime watch</strong>
+              <span>cv@09e0882 builds clean and stalls its port for 11 minutes. Any float of an input with a systemd unit gets a first-restart watch note in the deploy handoff.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Freshness budgets derived per emitter cadence, never copied from the neighbor</strong>
+              <span>The 26h caddy budget contradiction propagated exactly this way. The registry already holds the emitter data to derive each budget.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Ad-hoc analysis one-liners get deploy-grade scrutiny</strong>
+              <span>Broken awk math produced quoted "findings" in a published report (17:45 §d). Sanity-check one known process before quoting numbers.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Smoke checks that conflate absence with misconfiguration must split</strong>
+              <span>"Not listening" during a deploy's own restart window has exited deploys rc=3 twice today (paperless-gpt straddle class).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">→</div>
+            <div class="text">
+              <strong>Load the skills BEFORE the work, not at report time</strong>
+              <span>The 18:30 session harvested its own follow-ups correctly but only because the report format forced it; FEATURES/agents-doc updates were forgotten mid-session.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="next"><span class="num">f</span>Top 25 things to get done next</h2>
+        <p>
+          Ranked by impact. <strong>Harvest record:</strong> every direct follow-up
+          below is ALREADY queued in <code>TODO_LIST.md</code> + its domain
+          library by the source reports of today's sessions (16:44, 18:01, 18:30,
+          18:11) — this report mints NO new rows and has no unharvested §f of its
+          own (the session's only work, Monitor365 SSO, is complete and its
+          re-provision caveat is written into the runbook row).
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Fire the backup, third attempt → F19+F20 proofs (<code>scripts/monitor365-backup-fire.sh</code>)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>2</td><td>CRM data-quality audit: duplicate opportunities? StreamMarker rows? (read-only)</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>3</td><td>Check SigNoz collector tail-sampling policy BEFORE trusting the caddy coverage budget</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>4</td><td>Live-verify first caddy span in ClickHouse + coverage gauge = 1 (deploy rode gen-948)</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td><span class="badge badge-low">Open</span></td></tr>
+              <tr><td>5</td><td>Boot-proof <code>checks.caddy-mint</code> at a calm window</td><td><span class="badge badge-critical">Critical</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>6</td><td>[decision] caddy budget semantics: 26h env vs wiring <code>event</code> vs warm-probe</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>7</td><td>Diagnose InboxClean's current dark window; decide guard-vs-service ownership (§g.3)</td><td><span class="badge badge-high">High</span></td><td>S</td><td><span class="badge badge-low">Open</span></td></tr>
+              <tr><td>8</td><td>Calm-window post-deploy-check re-run (storm-suspect smokes + Health Hub /readyz)</td><td><span class="badge badge-high">High</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>9</td><td>float-register proof-marker (lock-fingerprint stamp at green commit)</td><td><span class="badge badge-high">High</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>10</td><td>cv readiness probe (ExecStartPost port check) so "active but refusing" can't read healthy</td><td><span class="badge badge-high">High</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>11</td><td>cv upstream trio: bind-before-boot-sync, StreamMarker leak, 409-storm-on-closed-deals</td><td><span class="badge badge-high">High</span></td><td>L</td><td><span class="badge badge-low">Gated on #2</span></td></tr>
+              <tr><td>12</td><td>Owner sudo prune of the 3 monitor365 backup corpses + 0-byte .tmp</td><td><span class="badge badge-high">High</span></td><td>S</td><td><span class="badge badge-low">blocked:user</span></td></tr>
+              <tr><td>13</td><td>post-deploy-check: split not-listening vs non-loopback legs</td><td><span class="badge badge-high">High</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>14</td><td>Backup wrapper fixture/VM-test (reflink line, fallback branch, EXIT-trap restore)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>15</td><td>Re-do storm IO attribution properly (iotop-c/pidstat) or strike the junk sentence from 17:45 §d</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>16</td><td>Spanmetrics cardinality audit + per-vHost span panels in SigNoz</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>17</td><td>monitor365 upstream reports ×3 (COPY OOM, memory_limit shape, WAL desync)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-low">blocked:push</span></td></tr>
+              <tr><td>18</td><td>Log↔trace correlation: verify traceID lands in access logs + survives the pipeline</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>19</td><td>tq-agent-pool gate-refusal backoff [decision]</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td><span class="badge badge-low">decision</span></td></tr>
+              <tr><td>20</td><td>Registry-wave close-out: commit + verify the dirty a6 work (not this session's tree)</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td><span class="badge badge-low">Parallel session</span></td></tr>
+              <tr><td>21</td><td>FEATURES.md rows: edge tracing + registry wave + inboxclean follow</td><td><span class="badge badge-low">Low</span></td><td>S</td><td><span class="badge badge-low">Open</span></td></tr>
+              <tr><td>22</td><td>Flip CHANGELOG "deploy pending" wordings to deployed+verified for gen-948 items</td><td><span class="badge badge-low">Low</span></td><td>S</td><td><span class="badge badge-low">Open</span></td></tr>
+              <tr><td>23</td><td>PG-cluster-shadow-split pre-deploy gate (storage queue top item)</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>24</td><td>Unharvested-§f corpus sweep (128 and rising; batched by month)</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td><span class="badge badge-queued">Queued</span></td></tr>
+              <tr><td>25</td><td>Edge→app trace chaining in LarsArtmann Go services (depends on §g answer)</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td><span class="badge badge-low">Owner-gated</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="question"><span class="num">g</span>The question I cannot answer myself</h2>
+        <div class="card card-problem">
+          <h4>Storm-day deploy policy: escalate or wait?</h4>
+          <p>
+            Everything queued today is verification-shaped and blocked on the same
+            gate: io PSI has held 35–74% since 17:10 (55% at 19:32), the freeze
+            budget burned 3/3, yet deploys 7 AND 8 rode the storm successfully
+            under <code>DEPLOY_FORCE_PRESSURE=1</code>. The memory-guard fix now
+            deliberately keeps the LLM socket down until genuine calm, so "wait
+            for the gate" has real availability cost beyond the queue.
+          </p>
+          <p style="margin-bottom: 0">
+            <strong>Should gate-blocked, config-only verification deploys be
+            escalated to you for a go/no-go after one blocked retry — and is the
+            pending verification batch (caddy span proof is a probe, not a deploy;
+            the fire is a script — neither needs the gate) a GO at io avg10 &lt;
+            30, or does it wait for the full &lt; 20 gate?</strong> What I tried:
+            read the gate code, both deploy outcomes today, the guard doctrine,
+            and the freeze history — the doctrine supports both answers, which is
+            exactly why it is yours to make.
+          </p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-10-25 19:35 CET &middot; SystemNix / evo-x2 &middot;
+          live facts probed at write time (PSI, generation anchor, ports, unit
+          states, SSO endpoints) &middot; sources: docs/status/2026-10-25_{16-44,18-01,18-11,18-30}* + this session's Monitor365 SSO fix
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

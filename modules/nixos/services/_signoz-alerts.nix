@@ -109,6 +109,22 @@ in
       query = ''(1 - (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"})) * 100'';
       target = 90;
     };
+    # Per-host 5xx rate (2026-10-25 caddy edge plan M4; G3 answered by the
+    # execute-everything directive — defaults documented, owner-tunable):
+    # any vHost serving 5xx at >=0.1/s (6/min) over the 5m eval window fires.
+    # The code label lives ONLY on the histogram families (source-verified
+    # against modules/caddyhttp/metrics.go: requests_total carries
+    # server/handler[/host], never code) — the request-duration histogram's
+    # dotted .count is the per-host 5xx source. host!~"_other" excludes
+    # per_host's cardinality-overflow bucket. Warning severity: a single
+    # retrying client can sustain 0.1/s on a small vHost — tune before paging.
+    "signoz/rules/caddy-per-host-5xx.json".source = mkRule {
+      name = "Caddy Per-Host 5xx Rate High";
+      description = "vHost {{.Labels.host}} is serving 5xx at >=0.1/s (6/min) over 5m — dead or failing backend behind the edge";
+      query = ''sum by (host) (rate(caddy_http_request_duration_seconds.count{code=~"5..",host!~"_other"}[5m]))'';
+      target = 0.1;
+      severity = "warning";
+    };
     "signoz/rules/tmp-tmpfs-high.json".source = mkRule {
       name = "/tmp TmpFS Usage High (>80%)";
       description = "/tmp tmpfs usage above 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation risking exhaustion";

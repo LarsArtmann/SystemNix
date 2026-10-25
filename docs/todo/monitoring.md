@@ -28,7 +28,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Test-fire "Telemetry Export Failures" → Discord** — synthetic export failure in a maintenance window. **Source:** 08-16 23-27 §B.3
 - [ ] [ready] **SigNoz migrator-gap guard** — assert applied-migration IDs ⊆ known list per DB (the 1010 squash-gap class). **Source:** 08-16 23-27 §E.2
 - [ ] [ready] **`file_storage` cursor persistence for the journald receiver** — `start_at=end` loses logs during collector downtime. **Source:** 08-16 23-27 §C.2
-- [ ] [ready] **Caddy access.log ingestion (filelog receiver)** + **log-ingestion-volume anomaly alert** (>10min silence = pipeline dead). **Source:** 08-16 23-27 §C.1/§C.5
+- [ ] [ready] **Caddy per-vHost access-*.log ingestion (filelog receiver)** + **log-ingestion-volume anomaly alert** (>10min silence = pipeline dead). Re-pointed 2026-10-25 (caddy edge plan M9): the GLOBAL access.log is gone — runtime logs reach SigNoz via journald as service `caddy`; per-vHost access-<host>.log files remain the unshipped surface. **Source:** 08-16 23-27 §C.1/§C.5
 - [ ] [ready] **buildcache-gc observability** — `buildcache_gc_last_success_timestamp` + `_prune_ok` metrics; Discord alert on watermark nukes; `--no-block` semantics decision. **Source:** 08-16 19-12 §f
 - [ ] [ready] **Declarative health-check** — `criticalSystemServices` is a hand-maintained list of 4
 - [ ] [ready] **System-health collector hardening** — `timeout 5` on docker inspect/ps; NRestarts single-read; MemoryMax headroom after the 08-31 stall (128M→256M if not yet raised)
