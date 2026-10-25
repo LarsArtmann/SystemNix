@@ -58,7 +58,18 @@
       # tip 0ec5eac3 (== lock) bakes the last shim value mnvM9S+l… (the CV
       # session pasted it upstream themselves). Re-add ONLY via
       # nix-hash-fix evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TEMPORARY vendorHash shim RE-ADDED (2026-10-25 exec-3 lock-float
+      # proof, first-hand keep-going evidence — build4 log,
+      # ~/.cache/lockfloat/toplevel-build4.log): cv-88e0d12-go-modules
+      # specified GEC+h65F… got SkTcNXE…, and the 64e41fe probe specified
+      # SkTcNX…/got 1o2UQt… — a re-served upstream dependency moved BOTH
+      # revs' module graph (the pma RE-STALE class, 2026-10-23; no
+      # upstream-fixed rev exists to float to). Drop when upstream re-bakes
+      # (paste-upstream → push → re-lock, docs/todo/upstream.md); re-add
+      # ONLY via first-hand keep-going evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-SkTcNXEIkTWok3dAJ5iiwAghXzSCcxywDQ8skoALBTA=";
+      };
     in
     {
       imports = [
