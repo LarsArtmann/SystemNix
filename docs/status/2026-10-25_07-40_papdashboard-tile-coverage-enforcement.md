@@ -61,10 +61,10 @@
 |---|------|--------|--------|----------|
 | 1 | Deploy the batch (rides PSI-calm window + foreign-red clearance), then readlink-anchor + post-deploy: 3 new tiles render, §16 green, tile dots sane (302/401 on auth-fronted vHosts is fine; only ≥500 shows down) | Critical | S | Feature |
 | 2 | Owner: §16 monogram-block soften decision (queued `[decision]`) — warn-and-continue vs hard logo bar | High | S | Decision |
-| 3 | Registry blind-spot audit: rendered caddy vHosts vs registry subdomains; per-delta register-or-assert (pocket-id is the known delta) — QUEUED | High | M | Quality |
-| 4 | Fix the FOREIGN `upholds` test for pinned nixpkgs (owning session) — currently blocks full-tree `nix flake check` and deploy validation | High | S | Bug |
-| 5 | Fix the FOREIGN dead-guard red on `quickshell.nix:50` (owning session) — same tree-blocking class | High | S | Bug |
-| 6 | `integration.nix`: reject `noDashboardTile = true` set together with a `homepage` tile — QUEUED | Medium | S | Quality |
+| 3 | Registry blind-spot audit: rendered caddy vHosts vs registry subdomains; per-delta register-or-assert (pocket-id is the known delta) — DONE 2026-10-25 follow-up: 7 blind (alerts/logs redirect-infra; auth/seo/tasks/dnsblock-pair = 4 services, registrations queued `[blocked:user]` on §g.2/§g.3); class closed mechanically via caddy.nix `registryBlindSubdomains` + vHost⇒registry assertion + `vhostregistry/blind-vhost` negative leg | High | M | Quality |
+| 4 | Fix the FOREIGN `upholds` test for pinned nixpkgs (owning session) — currently blocks full-tree `nix flake check` and deploy validation — FIXED by owning session (`050567953`, re-expressed as `upheldBy`) | High | S | Bug |
+| 5 | Fix the FOREIGN dead-guard red on `quickshell.nix:50` (owning session) — same tree-blocking class — STILL RED as of 2026-10-25 ~09:3x (`weatherQml=$(ls … | head -1)` capture; an errexit-premise FP for pipe-to-head without pipefail, but scanner-vs-callsite is the owning session's call) | High | S | Bug |
+| 6 | `integration.nix`: reject `noDashboardTile = true` set together with a `homepage` tile — DONE 2026-10-25 follow-up: `contradictoryOptOuts` assertion + `optoutContradictionFires` pure-eval leg + `tilecoverage/optout-with-tile` harness leg (4/4 PASS) | Medium | S | Quality |
 | 7 | Post-deploy: confirm no tile lands in the default "Services" group unintentionally (all current entries carry explicit groups; the default is future-facing) | Low | S | Verification |
 | 8 | Headless tiles audit: fastflowlm / hermes / llama-rag tiles have `href = null` (decorative, no probe) — decide if they want `checkUrl` probes or stay decorative | Low | S | Quality |
 | 9 | http(s)-URL icons are unverified at runtime (§16 checks pack-relative names only) — a dead external URL = silent broken logo; optional gatus probe of `/icons/<name>` | Low | M | Monitoring |
@@ -72,7 +72,7 @@
 | 11 | Eval-derived count one-liner documented next to the CHANGELOG conventions (e.2) | Low | S | Tooling |
 | 12 | `warn_case` harness class: backfill a leg for any OTHER warning-class gate that currently has no negative test (survey `config.warnings` authors) | Medium | M | Testing |
 
-*Harvest status: #3 and #6 are queued (`TODO_LIST.md` + `docs/todo/services.md`); #1 is a library `[watch]` row; #2 is a `[decision]` row. #4/#5 belong to the parallel session and are flagged, not hijacked. #7–#12 deliberately NOT harvested — owner triage first (this report waits for instructions).*
+*Harvest status: #3 and #6 are DONE (2026-10-25 follow-up session; rows flipped `[x]` in `TODO_LIST.md` + `docs/todo/services.md`, registrations for #3's four services queued `[blocked:user]`); #1 is a library `[watch]` row; #2 is a `[decision]` row. #4 fixed by the owning session; #5 still red and left with them. #7–#12 deliberately NOT harvested — owner triage first (this report waits for instructions).*
 
 ## g) Questions I cannot answer myself
 

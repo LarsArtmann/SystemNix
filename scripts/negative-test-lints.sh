@@ -387,7 +387,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -619,6 +619,18 @@ warn_case tilecoverage icon-stripped 'without an icon (rendering monogram fallba
 # instead of silently rendering the tile beside a "no tile" justification.
 eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homepage tile' \
   'sed:modules/nixos/services/miniflux.nix:s|^            monitored = true;$|            monitored = true;\n            noDashboardTile = true;|'
+
+# ── vhost⇒registry blind-spot audit (2026-10-25 §f.3) ──
+# A hand-rolled caddy vHost with no services.integration entry is
+# invisible to every registry fan-out (tile/gatus/OIDC) — the class that
+# kept pocket-id/openseo/taskchampion/dnsblockd off the dashboard. The
+# mutation typos the alerts allowlist row (literal-only sed, no shell
+# escapes): the alerts redirect vHost is suddenly covered by neither the
+# allowlist nor the registry and the audit names it. The dns-local
+# assertion stays quiet (alerts has a DNS entry) — single-failure
+# attribution straight to THIS audit.
+eval_case vhostregistry blind-vhost fail 'no services.integration entry' \
+  'sed:modules/nixos/services/caddy.nix:s|^        "alerts"$|        "alerts-typo"|'
 
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the

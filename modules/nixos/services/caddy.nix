@@ -258,6 +258,27 @@ _: {
       # Deliberate exemptions: (none live — the former voice/whisper
       # hand-written vHost exemptions died with voice-agents, 2026-10-08).
       dnsExemptSubdomains = [ ];
+      # vHosts with NO services.integration entry — invisible to the
+      # tile-coverage, gatus-coverage and OIDC fan-outs, which all key off
+      # the registry (the 2026-10-25 blind-spot audit class). Every name
+      # here needs a justification; REGISTRATION is the preferred fix.
+      #   alerts, logs — redirect/alias infrastructure (dash alias, SigNoz
+      #     logs-explorer redirect), no service behind them.
+      #   auth — pocket-id: owner-pending (status report §g.3: registry-free
+      #     may be deliberate OIDC-provisioning circularity avoidance).
+      #   seo, tasks — openseo + taskchampion-sync-server: real services,
+      #     registration deferred to the §g.2 web-facing-line answer.
+      #   dnsblock, dnsblockd — dns-blocker's hand-written pair; its entry
+      #     exists but carries subdomain = null (vHost.layer "none").
+      registryBlindSubdomains = [
+        "alerts"
+        "logs"
+        "auth"
+        "seo"
+        "tasks"
+        "dnsblock"
+        "dnsblockd"
+      ];
       # vHost subdomains derived from the rendered set (single source of
       # truth — registry fan-out and hand-written entries alike; catch-alls
       # and the :80 listener excluded via the "*"/suffix filters).
@@ -395,6 +416,20 @@ _: {
               "caddy: vHost subdomain(s) missing from platforms/common/dns-local.nix (name would never resolve): "
               + lib.concatStringsSep ", " (
                 builtins.filter (s: !lib.elem s (dnsExemptSubdomains ++ dnsLocalSubdomains)) vhostSubdomains
+              );
+          }
+          # vHost⇒registry (2026-10-25 blind-spot audit): a named vHost with
+          # no registry entry is invisible to every fan-out — unmonitored,
+          # tile-less, OIDC-less — exactly how pocket-id/openseo/
+          # taskchampion/dnsblockd stayed off the dashboard. Register the
+          # service (preferred) or extend registryBlindSubdomains with a
+          # justification.
+          {
+            assertion = lib.all (s: lib.elem s (registryBlindSubdomains ++ registrySubdomains)) vhostSubdomains;
+            message =
+              "caddy: vHost subdomain(s) with no services.integration entry (invisible to tile/gatus/OIDC fan-out): "
+              + lib.concatStringsSep ", " (
+                builtins.filter (s: !lib.elem s (registryBlindSubdomains ++ registrySubdomains)) vhostSubdomains
               );
           }
         ];

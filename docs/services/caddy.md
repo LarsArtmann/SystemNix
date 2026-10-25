@@ -44,6 +44,14 @@ nothing serves (`alerts` is the allowlisted legacy alias — an explicit vHost
 redirects it to `dash`). Registry entries carry the same assertion in
 integration.nix.
 
+**Registry-blind vHost gate (2026-10-25):** every named vHost must ALSO map to
+a `services.integration` entry (or sit on the justified
+`registryBlindSubdomains` table in caddy.nix) — a hand-rolled vHost with no
+registry entry is invisible to the tile/gatus/OIDC fan-outs (the pocket-id /
+openseo / taskchampion / dnsblockd blind-spot class). New vHost = register the
+service (preferred) or extend the table with a justification. Negative-tested
+(`vhostregistry/blind-vhost`).
+
 ## Unknown-host 404 page
 
 Both catch-alls serve a branded 404 page instead of redirecting to `dash` (a
