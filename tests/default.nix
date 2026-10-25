@@ -56,7 +56,9 @@ in
   sops-key-audit = import ./test-sops-key-audit.nix { inherit pkgs inputs system; };
   sops-recipient-audit = import ./test-sops-recipient-audit.nix { inherit pkgs inputs system; };
   integration-registry = import ./test-integration.nix { inherit pkgs inputs system; };
-  discordsync-immich-shape = import ./test-discordsync-immich-shape.nix { inherit pkgs inputs system; };
+  discordsync-immich-shape = import ./test-discordsync-immich-shape.nix {
+    inherit pkgs inputs system;
+  };
   cloud-domain = import ./test-cloud-domain.nix { inherit pkgs inputs system; };
   dns-blocker-render = import ./test-dns-blocker-render.nix { inherit pkgs inputs system; };
   notify-p0-render = import ./test-notify-p0.nix { inherit pkgs inputs; };
