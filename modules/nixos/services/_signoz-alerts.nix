@@ -89,6 +89,26 @@ in
       query = ''(1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100'';
       target = 90;
     };
+    # /data usage tiers (2026-10-25, SUPERB T19/F67): the root-disk rule
+    # above pins mountpoint="/" — the 1.1T QLC /data (ai models, Steam,
+    # gcs-staging; the +76G/17h burst class) had NO alarm at any threshold.
+    # WARN at 85 / CRITICAL at 90 (the storage.md watch row's action
+    # threshold). Live 2026-10-25 at rule-landing: 66.7% used (345 GiB free
+    # — ~190 GiB reclaimed since the 2026-10-11 watch baseline of 85.0%);
+    # the rule arrives GREEN and fires only if the burst class returns.
+    "signoz/rules/data-usage-warn.json".source = mkRule {
+      name = "/data Usage Warning (>85%)";
+      description = "/data usage above 85% — the +76G/17h ai-burst class returning past the 2026-10-11 baseline. Growth attribution: du -sb /data/ai /data/SteamLibrary /data/gcs-staging vs the storage.md watch-row baseline";
+      query = ''(1 - (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"})) * 100'';
+      target = 85;
+      severity = "warning";
+    };
+    "signoz/rules/data-usage-critical.json".source = mkRule {
+      name = "/data Usage Critical (>90%)";
+      description = "/data usage above 90% — the storage.md watch row's ACTION threshold (reclaim now: /data/docker residue ~15.5G owner-gated, ai-burst attribution, Steam compatdata). Disk-full here kills classifier model loads and flm cold loads mid-read";
+      query = ''(1 - (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"})) * 100'';
+      target = 90;
+    };
     "signoz/rules/tmp-tmpfs-high.json".source = mkRule {
       name = "/tmp TmpFS Usage High (>80%)";
       description = "/tmp tmpfs usage above 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation risking exhaustion";
