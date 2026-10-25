@@ -64,18 +64,18 @@
           # override (lock == tip; lars-packages surface dropped in the
           # same pass). Re-add ONLY via nix-hash-fix evidence, never by hand.
           # RE-ADDED 2026-10-23 (lock float): first-hand keep-going probe got
-          # sha256-NBQcjrwD… (specified U9F6gATv). The VALUE lives in
-          # lib/vendor-shims.nix (2026-10-23 dedup) because the lars-packages
-          # surface shims the same hash — the module needs its own override
-          # only because it consumes the flake's own package attr, which never
-          # sees the lars-packages one. One value, two consumers.
+          # sha256-NBQcjrwD… (specified U9F6gATv). The value was held in a
+          # shared lib/vendor-shims.nix because the lars-packages surface
+          # shimmed the same hash — the module needs its own override only
+          # because it consumes the flake's own package attr, which never sees
+          # the lars-packages one. One value, two consumers; that shared file
+          # was DELETED 2026-10-25 when both consumers dropped their shims.
           # DROPPED AGAIN 2026-10-25: upstream at the locked rev bdd12a3 bakes
           # a vendorHash that builds green THROUGH OUR LOCK (first-hand probe
           # 2026-10-25, goModules FOD exit 0) — the 2026-10-23 NBQcjrwD… shim
           # was the only stale value. Upstream package used directly; re-add
           # ONLY via nix-hash-fix evidence, never by hand.
-          package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

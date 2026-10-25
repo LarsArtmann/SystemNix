@@ -12,11 +12,14 @@
 # There is no separate allowlist: updating the registry in the same change IS
 # the deliberate-float mechanism, and the registry's git history is the float
 # audit log. The float procedure (also spelled out in the registry header and
-# the throw message in flake.nix): prove the new revs evaluate
+# the throw message in flake.nix) has a non-obvious ORDER: this gate is forced
+# through builtins.seq, so it throws before anything is evaluated — proving the
+# build first is impossible while the registry is stale. Regenerate the registry
+# mechanically (rederive command in its header), THEN prove
 #   nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel \
-#     --keep-going --no-link
-# then regenerate flake/expected-locks.nix and commit lock + registry
-# TOGETHER.
+#     --keep-going --no-link > …/float-proof.log 2>&1; echo rc=$?
+# (capture to a file — a `| tail` pipeline exits 0 and hides the root failures),
+# and commit lock + registry TOGETHER only when the proof is green.
 #
 # Semantics: for each root input name N (string node-key form — follows
 # arrays carry no own node and are skipped):

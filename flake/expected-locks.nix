@@ -9,15 +9,23 @@
 # conflicts rode one blanket update).
 #
 # Deliberate float procedure (the ONLY way past the gate):
-#   1. nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel \
-#        --keep-going --no-link      # prove the new revs still evaluate
-#   2. regenerate this file:
+#   1. regenerate this file (the gate is forced via builtins.seq, so it throws
+#      before ANY evaluation — a build cannot run while the registry is stale):
 #      { jq -r '.nodes.root.inputs|to_entries[]|select(.value|type=="string")|"\(.key)\t\(.value)"' < flake.lock; } \
 #        | while IFS=$'\t' read -r name nk; do \
 #            rev=$(jq -r --arg nk "$nk" '.nodes[$nk].locked.rev? // empty' < flake.lock); \
 #            [ -n "$rev" ] && printf '  %s = "%s";\n' "$name" "$rev"; done
+#      Diff the regenerated body against the committed one: every changed line
+#      must be a rev the float actually moved. A row you did not expect means the
+#      lock moved again underneath you — re-derive, never hand-patch.
+#   2. prove the new revs still evaluate:
+#      nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel \
+#        --keep-going --no-link > ~/.cache/lockfloat/float-proof.log 2>&1; echo rc=$?
+#      ALWAYS capture to a file. `| tail` exits 0 and hides every root failure.
 #   3. commit lock + registry TOGETHER — the registry's git history is the
-#      float audit log.
+#      float audit log. Proof RED? Fix upstream-first (or revert BOTH that
+#      input's registry row and its lock rev); never commit an unproven float
+#      and never delete rows to go green.
 #
 # Seeded 2026-10-25 from the live flake.lock (94 rev-carrying root inputs; 2026-10-25 regen: inboxclean pin lift + new nixpkgs-unstable input).
 {

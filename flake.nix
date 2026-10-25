@@ -1304,9 +1304,14 @@
             flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
               ${lib.concatStringsSep "\n  " lockFloatViolations}
             A blanket `nix flake update` is not landable as-is. Float procedure:
-            1. nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
-            2. regenerate flake/expected-locks.nix (rederive command in its header)
+            1. regenerate flake/expected-locks.nix (rederive command in its header) — the gate throws
+               before ANY evaluation, so this is the only way to reach the build; the regeneration is
+               mechanical (derived from flake.lock), never hand-edited.
+            2. prove: nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
+               (capture the log to a file — piping through tail masks every root failure)
             3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
+               Proof RED? Fix the roots upstream-first, or revert that input's registry row AND its
+               lock rev together. Never commit an unproven float, never delete rows to go green.
           '';
         true;
       allEvalGuards = builtins.seq nixpkgsTarballGuard (
