@@ -578,6 +578,11 @@ fi
 # SSO) is the same class: pat(*oidc/pocket-id*) asserts the allauth login
 # BUTTON on the paperless HTML login page — a body-content pattern, not a
 # metric; the slash-suffix is dropped by the [a-zA-Z0-9_]* extract.
+# `forwarded` (2026-10-25) is the same class: pat(*forwarded*) asserts the
+# Gatus Alert Relay /healthz BODY ("forwarded: N" counter text) — not a
+# metric in any /metrics scrape. Only surfaced as a §10 hard-fail AFTER the
+# textfile collector was fixed (scrape_error 1→0 removed the infra
+# downgrade; live block on the gen-946 deploy attempt).
 extract_gatus_metrics() {
   # Also catch the anchored form pat(*\n<metric> — the leading real-newline
   # escape precedes the name there (2026-08-31: signoz-coverage checks were
@@ -592,7 +597,7 @@ extract_gatus_metrics() {
     grep -v '=$' |
     sed 's/pat(\*//;s/^\\n//;s/.$//' |
     sort -u |
-    grep -vE '^<|connected|email_states?|oidc$|[A-Z]'
+    grep -vE '^<|connected|email_states?|oidc$|forwarded$|[A-Z]'
 }
 
 # Fetch metrics from each endpoint separately to avoid false-positive phantom
