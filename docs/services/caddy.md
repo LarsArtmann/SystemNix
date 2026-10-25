@@ -311,6 +311,15 @@ global access.log dropped, geometrikks tail removed, per-vHost files
 unchanged). Refresh triggers: next caddy major bump, adoption of any remaining
 finding, or a change to the helper/vHost architecture.
 
+Post-adoption notes (2026-10-25, edge plan M22/M23): all three findings were
+adopted and deployed the SAME day — the version-currency leg re-verified at
+closeout (nixpkgs lock `fe13242` rev-pin, lastModified 2026-10-23, carries
+caddy 2.11.7 = upstream latest; the pin audit trail lives in the flake-input
+pin notice). Inventory granularity: audit rows 8 (request_body 10GB) and 9
+(read_body timeout) were split — next refresh should keep them separate
+(cap = size bound via commonConfig; timeout = servers.timeouts, different
+surfaces, different owners).
+
 ## 2026-09-30 config review — verdict table
 
 | #  | Finding                                         | Disposition                                                                  |

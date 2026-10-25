@@ -9,7 +9,9 @@ edits).
 **How to use:** the root `AGENTS.md` routing table sends you here by topic.
 Service-specific deep context lives in `docs/services/<service>.md` (each
 service has a runbook; sections migrated from AGENTS.md are marked
-"Agent Notes (migrated from AGENTS.md 2026-10-01)").
+"Agent Notes (migrated from AGENTS.md 2026-10-01)"). Library/adoption
+research reports live in `docs/research/` — [its README](../research/README.md)
+is the subject/date/refresh-trigger index (M16, caddy edge plan 2026-10-25).
 
 ## Files
 
