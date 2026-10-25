@@ -1106,113 +1106,463 @@
 
         <!-- Findings -->
         <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <h2><span class="num">01</span>Findings — the 3 gaps, then what's already right</h2>
+          <p>
+            Ordered by impact. Each gap names what Caddy offers (with doc
+            source), what the repo does instead (with file:line), and the fix.
+          </p>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
+          <!-- Finding 1: per_host metrics -->
+          <div class="issue issue-critical" id="per-host-metrics">
             <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
+              >Missed Opportunity &middot; High impact</span
             >
-            <h3>Critical issue title</h3>
+            <h3><code>metrics { per_host }</code> unused — dashboard is aggregate-only</h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              not used anywhere &middot; globalConfig at
+              modules/nixos/services/caddy.nix:507 sets bare
+              <code>metrics</code> &middot; consumer dashboard
+              modules/nixos/services/dashboards/caddy.json: all 7 queries are
+              <code>sum(...)</code> with no host dimension
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              Caddy's global <code>metrics</code> option takes a
+              <code>per_host</code> subdirective that adds a <code>host</code>
+              label to every <code>caddy_http_*</code> series (requests,
+              errors, duration, in-flight). Since 2.11 the cardinality is
+              bounded by design — on HTTPS servers each configured host is
+              observed explicitly and unknown hosts aggregate under
+              <code>_other</code> (caddyserver.com/docs/metrics) — and the
+              2.11.2 per-route instrumentation fix cut metrics CPU ~5×
+              (caddyserver/caddy#7492). Today a per-service error-rate alert
+              requires log parsing or tracing queries; with the label, it is
+              one PromQL clause in the existing SigNoz scrape (signoz.nix:1210
+              already scrapes :2019).
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <pre><code><span class="tok-comment"># modules/nixos/services/caddy.nix — globalConfig, before:</span>
+metrics
+
+<span class="tok-comment"># after:</span>
+metrics {
+  per_host
+}
+
+<span class="tok-comment"># dashboard/alert query that becomes possible:</span>
+sum by (host) (rate(caddy_http_requests_total{code=~"5.."}[<span class="tok-number">5m</span>])) > 0</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix</strong>
+              One word in <code>globalConfig</code>; add <code>host</code>
+              breakdowns to the existing caddy.json dashboard panels and
+              (optionally) a SigNoz alert on per-host 5xx rate. Verified:
+              <code>per_host</code> is a global-option subdirective, not a
+              handler one — it belongs in <code>globalConfig</code>, not in a
+              site block.
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
+          <!-- Finding 2: branded 502 -->
+          <div class="issue issue-important" id="branded-502">
             <span class="severity severity-important"
-              >Important &middot; Medium impact</span
+              >Missed Opportunity &middot; Medium impact</span
             >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+            <h3>Dead backends serve Caddy's plain-text 502 — no branded error route</h3>
+            <div class="where">
+              not used anywhere &middot; every proxy vHost renders through
+              <code>proxyTo</code> (modules/nixos/services/caddy.nix:191-203)
+              with no <code>handle_errors</code> / <code>handle_response</code>
+              for proxy failures; the repo's only <code>handle_errors</code> is
+              the 404 catch-all (caddy.nix:526-537)
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              The repo already brands unknown-host 404s with a real status and
+              a styled page. A dead backend gets the default plain-text
+              "502 Bad Gateway" instead. Caddy's semantics (verified against
+              docs + caddyserver/caddy#7283): dial failures (backend
+              unreachable) raise an error that <code>handle_errors</code>
+              catches — an upstream 5xx <em>response</em> does NOT trigger
+              error routes and needs <code>handle_response @e status 5xx</code>
+              on the proxy block. Maintainer francislavoie in #7283: "a 502
+              isn't a response from upstream, but rather an error triggered
+              inside the reverse proxy logic... you have to use
+              <code>handle_errors</code> for this."
             </p>
+            <pre><code><span class="tok-comment"># in the shared vHost helpers (caddy.nix) — one place, every vHost:</span>
+error_404_root = ...;  <span class="tok-comment"># existing notFoundRoot derivation pattern</span>
+
+handle_errors 502 503 504 {
+  rewrite * /502.html
+  file_server
+}
+<span class="tok-comment"># page lives in the same store-served linkFarm as notFoundRoot:</span>
+<span class="tok-comment"># "backend unavailable — {err.status_code}" + dash link, Catppuccin style</span></code></pre>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Add the error route in <code>plainVHost</code> /
+              <code>protectedVHost</code> / the catch-alls (helpers render it
+              everywhere at once). If forward_auth-vs-proxy 502s ever need
+              distinguishing, the #7283 <code>vars</code> flag pattern is the
+              documented approach. Scope note: oauth2-proxy gate failures are
+              already handled by the <code>@gatefail</code> arm (caddy.nix:150-153),
+              so this gap is specifically backend-down UX.
+            </div>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
+          <!-- Finding 3: runtime logs to journald -->
+          <div class="issue issue-important" id="runtime-logs-journald">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact &middot; tradeoff</span
             >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+            <h3>Caddy's own runtime logs never reach SigNoz — default logger is file-only</h3>
+            <div class="where">
+              modules/nixos/services/caddy.nix:485-492 (global
+              <code>logFormat</code> → <code>output file /var/log/caddy/access.log</code>)
+              &middot; consumer: geometrikks tails the same file
+              (geometrikks.nix:58-63) &middot; SigNoz ingests journald directly
+              (docs/services/caddy.md logs section)
+            </div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              Every vHost carries its own log block (the Nix map at
+              caddy.nix:732-743), so the global DEFAULT logger carries only
+              Caddy's runtime logs — startup, config errors, panics — and they
+              land in <code>access.log</code>, invisible to the journald→SigNoz
+              pipeline that sees every other unit. A caddy crash-loop or
+              config-load failure is currently observable only via unit state,
+              not its own error text. Since 2.11.3 Caddy ships a
+              <code>journald</code> encoder wrapper that prepends journal
+              priority prefixes so per-line severity survives (caddyserver.com/docs/caddyfile/directives/log,
+              PR #7623).
             </p>
-          </div>
-        </section>
+            <pre><code><span class="tok-comment"># caddy.nix logFormat — before:</span>
+output file /var/log/caddy/access.log {
+  roll_size 100MB
+  roll_keep 3
+  roll_keep_for 168h
+}
+format json
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
-          <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+<span class="tok-comment"># after (runtime logs → journald with severity → SigNoz):</span>
+output stdout
+format journald {
+  wrap json
 }</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <div class="callout callout-teal">
+              <strong>Fix — with a decision</strong>
+              Caddy allows ONE default-logger output, so this displaces the
+              file: geometrikks's <code>access.log</code> tail must be dropped
+              (its per-vHost tails are unaffected — those files stay), and the
+              caddy runbook log map updated. Tradeoff is small — the file
+              holds only runtime lines today — but it touches a second
+              consumer, so it is a [decision], not a drive-by.
+            </div>
           </div>
+
+          <!-- Finding 4: explicit timeout pin -->
+          <div class="issue issue-nice" id="timeout-pin">
+            <span class="severity severity-nice"
+              >Optional hardening &middot; Low impact</span
+            >
+            <h3>Slowloris timeouts are inherited defaults — an explicit pin is cheap</h3>
+            <div class="where">
+              <code>globalConfig</code> servers block sets only
+              <code>strict_sni_host on</code> (modules/nixos/services/caddy.nix:504-506)
+            </div>
+            <p>
+              Being on 2.11.7, the 2.11.6 slowloris defaults apply
+              automatically: 1-minute read/write stall limits with optional
+              minimum transfer rates, 5-minute keep-alive idle (caddyserver.com/docs/caddyfile/options).
+              But <code>read_body</code> (the WHOLE-upload hard limit) still
+              defaults to unlimited — the 10GB <code>request_body</code> cap
+              (caddy.nix:173-175) bounds size, not duration; a steady trickle
+              upload can hold a connection indefinitely. Exposure is low
+              (LAN/VPN-only names; unknown cloud names NXDOMAIN before reaching
+              caddy), so this is polish, not a gap.
+            </p>
+            <pre><code>servers {
+  strict_sni_host on
+  timeouts {
+    read_body 15m
+  }
+}</code></pre>
+          </div>
+
+          <!-- Finding 5: rate limiting watch -->
+          <div class="issue issue-nice" id="rate-limit-watch">
+            <span class="severity severity-nice"
+              >Watch / owner decision &middot; Low-now impact</span
+            >
+            <h3>No rate limiting — sanctioned path is crowdsec stage-3, not a Caddy plugin</h3>
+            <div class="where">
+              crowdsec.nix:5-7 declares "stage 3 (firewall-bouncer ENFORCEMENT)
+              is still NOT enabled" &middot; caddy.withPlugins is callable in
+              this nixpkgs (<code>__functor</code> verified:
+              <code>nix-instantiate --eval -E 'let pkgs = import &lt;nixpkgs&gt; {}; in pkgs.caddy.withPlugins ? __functor'</code> → true)
+            </div>
+            <p>
+              Core Caddy has no rate limiter; the community module
+              (mholt/caddy-ratelimit) would require a plugin build
+              (<code>pkgs.caddy.withPlugins { plugins = [ … ]; hash = …; }</code>)
+              plus a vendorHash-style FOD pin. The repo's declared enforcement
+              path is crowdsec's firewall bouncer (log-driven detection is
+              already live on these access logs). Keeping ONE enforcement
+              mechanism is the better trade — record this as the Caddy-side
+              alternative if stage-3 stalls.
+            </p>
+          </div>
+
+          <h3>Already right — the decisions that would be wrong to "fix"</h3>
+          <p>
+            The audit also confirmed several non-usages are correct: XFF/Forwarded
+            spoofing is blocked by Caddy's post-2.8 default (no trusted proxies —
+            a LAN browser cannot forge <code>X-Forwarded-For</code> toward
+            backends); credential redaction in access logs is on by default
+            (<code>log_credentials</code> correctly absent); admin API stays
+            unauthenticated but loopback-bound and firewalled (only 80/443
+            open); SSE/streaming backends need no <code>flush_interval</code>
+            tuning (text/event-stream auto-flushes); health checks and load
+            balancing are pointless with one localhost upstream per vHost;
+            and <code>enableReload</code> is correctly avoided — the harden
+            PrivateTmp namespace breaks the reload path, so deploy.sh restarts
+            (docs/services/caddy.md ops section).
+          </p>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Version currency -->
+        <section id="version">
+          <h2><span class="num">02</span>Version currency — zero gap</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            nixpkgs ships caddy 2.11.7
+            (<code>nix eval nixpkgs#caddy.version</code>) — identical to the
+            newest upstream release (v2.11.7, 2026-10-03). The repo inherits
+            every 2.11 feature and all six-plus CVE fixes from the 2.11 line
+            with no action.
           </p>
+          <div class="callout callout-teal">
+            <strong>Current</strong>
+            Zero version gap. The 2.11.6 security fixes (forward_auth/reverse_proxy
+            connection mixup GHSA-6365-7ppr-5r92, HTTPoxy, header-size cap) and
+            the slowloris defaults are live on this host today.
+          </div>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Version</th>
+                <th>Date</th>
+                <th>Notable change</th>
+                <th>Relevance here</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>2.11.7</td>
+                <td>2026-10-03</td>
+                <td>Installed = latest. Faster TLS handshakes; SSE-after-encode fix</td>
+                <td class="yes">Live</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>2.11.6</td>
+                <td>2026-10-01</td>
+                <td>Slowloris idle-timeout defaults; <code>timeouts</code> handler; underscore-header drop + opt-outs; per-config active health state</td>
+                <td class="yes">Inherited</td>
+              </tr>
+              <tr>
+                <td>2.11.4</td>
+                <td>2026-06-03</td>
+                <td>encode prefers zstd/br over gzip — matches this repo's <code>encode zstd gzip</code> order</td>
+                <td class="yes">Inherited</td>
+              </tr>
+              <tr>
+                <td>2.11.3</td>
+                <td>2026-05-12</td>
+                <td><code>journald</code> log encoder — the missing piece for Finding 3</td>
+                <td class="no">Unused — finding</td>
+              </tr>
+              <tr>
+                <td>2.11.2</td>
+                <td>2026-03-06</td>
+                <td>Metrics once-per-route (~5× cheaper); zstd log roll; <code>forward_auth</code> identity fix</td>
+                <td class="yes">Inherited</td>
+              </tr>
+              <tr>
+                <td>2.11.0</td>
+                <td>2026-02-23</td>
+                <td><code>per_host</code> metrics with bounded cardinality — the missing piece for Finding 1</td>
+                <td class="no">Unused — finding</td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities — Pareto-ranked</h2>
+          <p>
+            Priority = impact × ease, sorted descending. Items 1-2 are
+            deploy-and-done; item 3 is a one-line pin; item 4 needs a small
+            consumer decision; item 5 is recorded as an alternative, not a
+            task.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><code>metrics { per_host }</code> + dashboard host breakdown (Finding 1)</td>
+                <td class="yes">5</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">25</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Branded 502 via <code>handle_errors</code> in the vHost helpers (Finding 2)</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Explicit <code>read_body</code> timeout pin (Finding 4)</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Runtime logs → journald; drop geometrikks's access.log tail (Finding 3)</td>
+                <td class="yes">4</td>
+                <td>2</td>
+                <td><span class="highlight">8</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Rate limiting: stay on crowdsec stage-3; keep caddy-ratelimit as recorded alternative (Finding 5)</td>
+                <td>3</td>
+                <td>1</td>
+                <td><span class="highlight">3</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Highest leverage</strong>
+            Item 1 alone upgrades every Caddy panel and future alert from
+            aggregate to per-service — for one word of config, on a metrics
+            path (SigNoz scrape of :2019) that already exists.
+          </div>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">04</span>Appendix — capability inventory &amp; verification</h2>
+          <p>
+            The full grading inventory: 41 rows, 27 applicable
+            (FL = fully leveraged, MO = missed opportunity), 14
+            Not-Applicable with reasons. This table IS the score's
+            denominator — status cells carry stable classes
+            (<code>st-FL</code>/<code>st-MO</code>/<code>st-NA</code>) so the
+            count is re-derivable (see verification below).
+          </p>
+          <table class="compare" id="inv-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence / reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>reverse_proxy + header_up (X-Real-IP, Host override)</td><td class="st-FL yes">FL</td><td>caddy.nix:191-203; registry hostOverride option</td></tr>
+              <tr><td>2</td><td>Matcher system (host/path/remote_ip/status, <code>not</code>)</td><td class="st-FL yes">FL</td><td>caddy.nix:218, 515, 612, 682</td></tr>
+              <tr><td>3</td><td>handle / handle_errors (404 catch-alls, error 404)</td><td class="st-FL yes">FL</td><td>caddy.nix:219-226, 526-537; test-cloud-domain pins</td></tr>
+              <tr><td>4</td><td>redir / respond / rewrite / root / file_server</td><td class="st-FL yes">FL</td><td>caddy.nix:516, 548, 582-585, 703-712</td></tr>
+              <tr><td>5</td><td>forward_auth + handle_response (401 redirect, 5xx fail-closed)</td><td class="st-FL yes">FL</td><td>caddy.nix:137-155</td></tr>
+              <tr><td>6</td><td>request_body max_size</td><td class="st-FL yes">FL</td><td>caddy.nix:173-175 (10GB)</td></tr>
+              <tr><td>7</td><td>intercept (generalized response interception)</td><td class="st-NA no">N/A</td><td>forward_auth handle_response covers the only interception need (the auth gate)</td></tr>
+              <tr><td>8</td><td>handle_path / uri / method / map / vars / templates / try_files / invoke / route</td><td class="st-NA no">N/A</td><td>No prefix-stripped backends; no dynamic templating; Nix does value mapping at eval time</td></tr>
+              <tr><td>9</td><td>basicauth / acme_server / php_fastcgi / fs / abort</td><td class="st-NA no">N/A</td><td>SSO doctrine (oauth2-proxy + native OIDC); no PHP; auto_https off; 403 preferred over abort</td></tr>
+              <tr><td>10</td><td>handle_errors 502 (dial failures) + handle_response @error 5xx</td><td class="st-MO no">MO</td><td>Not used anywhere; finding "branded-502"</td></tr>
+              <tr><td>11</td><td>Static cert + protocols 1.2/1.3 + strict_sni_host</td><td class="st-FL yes">FL</td><td>caddy.nix:54-58, 504-506</td></tr>
+              <tr><td>12</td><td>auto_https off (no ACME attack surface)</td><td class="st-FL yes">FL</td><td>caddy.nix:494; deliberate doctrine (runbook TLS section)</td></tr>
+              <tr><td>13</td><td>Boot-minted dual-zone leaf, fail-closed Requires, SAN self-assert</td><td class="st-FL yes">FL</td><td>caddy.nix:792-872; checks.caddy-mint</td></tr>
+              <tr><td>14</td><td>ACME / on-demand TLS / internal TLS / ECH / tls_automate_names</td><td class="st-NA no">N/A</td><td>Private CA mint; no public issuance ever (never in scope)</td></tr>
+              <tr><td>15</td><td>mTLS client authentication</td><td class="st-NA no">N/A</td><td>Remote trust covered by NetBird VPN + forward-auth</td></tr>
+              <tr><td>16</td><td>encode zstd gzip (+ app-compression interplay documented)</td><td class="st-FL yes">FL</td><td>caddy.nix:172; runbook encode section (probed 2026-10-06)</td></tr>
+              <tr><td>17</td><td>HTTP/3 (default) + UDP/443 firewall</td><td class="st-FL yes">FL</td><td>Default h3; blackhole fixed 2026-09-30 (runbook)</td></tr>
+              <tr><td>18</td><td>SSE/streaming flush semantics</td><td class="st-FL yes">FL</td><td>text/event-stream auto-flush default; llama-chat streams fine</td></tr>
+              <tr><td>19</td><td>2.11.6 slowloris idle timeouts</td><td class="st-FL yes">FL</td><td>Inherited at 2.11.7 (finding "timeout-pin" notes optional explicit pin)</td></tr>
+              <tr><td>20</td><td>LB policies / multiple upstreams / active+passive health checks</td><td class="st-NA no">N/A</td><td>One localhost upstream per vHost — no failover target exists</td></tr>
+              <tr><td>21</td><td>cache-handler plugin (server-side cache)</td><td class="st-NA no">N/A</td><td>Dynamic backends; browser-cache header policy already correct; RAM cost for marginal gain</td></tr>
+              <tr><td>22</td><td>metrics global + admin :2019 + SigNoz scrape + gatus check</td><td class="st-FL yes">FL</td><td>caddy.nix:507; signoz.nix:1210-1211; gatus metrics check (runbook)</td></tr>
+              <tr><td>23</td><td>metrics per_host</td><td class="st-MO no">MO</td><td>Not used; dashboard aggregate-only; finding "per-host-metrics"</td></tr>
+              <tr><td>24</td><td>tracing edge OTel spans (span=host, scheme-pinned exporter)</td><td class="st-FL yes">FL</td><td>caddy.nix:186-188, 886-894; otel-endpoint-audit rails</td></tr>
+              <tr><td>25</td><td>Per-vHost JSON access logs + roll bounds + mode 0640</td><td class="st-FL yes">FL</td><td>caddy.nix:485-492, 720-743; crowdsec + geometrikks consumers</td></tr>
+              <tr><td>26</td><td>Runtime logs → journald (journald encoder, 2.11.3+)</td><td class="st-MO no">MO</td><td>Default logger file-only (caddy.nix:485-492); finding "runtime-logs-journald"</td></tr>
+              <tr><td>27</td><td>Credential redaction defaults (log_credentials absent)</td><td class="st-FL yes">FL</td><td>Correctly not set — Cookie/Auth REDACTED by default</td></tr>
+              <tr><td>28</td><td>log_append / log filters / sampling</td><td class="st-NA no">N/A</td><td>Tracing already carries duration/upstream; low log volume; privacy fine</td></tr>
+              <tr><td>29</td><td>metrics OTLP push / disable_openmetrics / threshold</td><td class="st-NA no">N/A</td><td>Scrape pipeline exists; histogram buckets not configurable upstream</td></tr>
+              <tr><td>30</td><td>Security headers + -Server + HSTS (preload deliberately off)</td><td class="st-FL yes">FL</td><td>caddy.nix:158-171; runbook HSTS section</td></tr>
+              <tr><td>31</td><td>XFF/Forwarded spoof protection (no-trust default since 2.8)</td><td class="st-FL yes">FL</td><td>Default active; nothing trusts client-supplied forward headers</td></tr>
+              <tr><td>32</td><td>Admin API posture (localhost:2019, firewall, metrics consumer)</td><td class="st-FL yes">FL</td><td>sso-dns.md doctrine; ports.caddy-metrics = 2019</td></tr>
+              <tr><td>33</td><td>Rate limiting (core or plugin)</td><td class="st-NA no">N/A</td><td>crowdsec stage-3 firewall bouncer is the sanctioned path (crowdsec.nix:5-7); plugin alternative recorded</td></tr>
+              <tr><td>34</td><td>Catch-all 404 branding + DNS/registry eval gates</td><td class="st-FL yes">FL</td><td>caddy.nix:432-455, 526-537; negative-tested lints</td></tr>
+              <tr><td>35</td><td>caddy.withPlugins plugin mechanism</td><td class="st-NA no">N/A</td><td>No plugin justified today; mechanism verified callable (<code>__functor</code>) in this nixpkgs</td></tr>
+              <tr><td>36</td><td>caddy-l4 (non-HTTP proxying)</td><td class="st-NA no">N/A</td><td>No TCP/UDP proxying need — all edge services are HTTP(S)</td></tr>
+              <tr><td>37</td><td>WAF module (coraza-caddy)</td><td class="st-NA no">N/A</td><td>crowdsec log-detection stack + private surface; one enforcement path preferred</td></tr>
+              <tr><td>38</td><td>Crowdsec caddy bouncer plugin</td><td class="st-NA no">N/A</td><td>Same enforcement-path argument as #33</td></tr>
+              <tr><td>39</td><td>NixOS virtualHosts/logFormat/globalConfig + per-host mode map</td><td class="st-FL yes">FL</td><td>caddy.nix:471-777</td></tr>
+              <tr><td>40</td><td>enableReload deliberately avoided (restart doctrine)</td><td class="st-FL yes">FL</td><td>PrivateTmp breaks reload; deploy.sh restarts (runbook ops)</td></tr>
+              <tr><td>41</td><td>Unit hardening + OTEL env + StartLimit + fail-closed ordering</td><td class="st-FL yes">FL</td><td>caddy.nix:866-926</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Score derivation</h3>
+          <pre><code>N (rows)        = <span class="tok-number">41</span>
+NA (excluded)   = <span class="tok-number">14</span>   <span class="tok-comment"># reasons above</span>
+A (applicable)  = <span class="tok-number">27</span>   <span class="tok-comment"># N - NA</span>
+FL              = <span class="tok-number">24</span>,  MO = 3,  misused = 0
+score           = round(<span class="tok-number">100</span> × 24 / 27) = <span class="tok-number">89</span>  <span class="tok-comment"># band: very high (≥85)</span></code></pre>
+
+          <h3>How to verify</h3>
+          <pre><code><span class="tok-comment"># 1. Version (installed vs latest):</span>
+nix eval nixpkgs#caddy.version   <span class="tok-comment"># → 2.11.7</span>
+<span class="tok-comment">#    upstream latest: github.com/caddyserver/caddy/releases (v2.11.7, 2026-10-03)</span>
+
+<span class="tok-comment"># 2. Re-derive the score (this file, inventory table):</span>
+grep -o 'st-FL' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 24</span>
+grep -o 'st-MO' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 3</span>
+grep -o 'st-NA' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 14</span>
+
+<span class="tok-comment"># 3. Spot-check the usage claims:</span>
+grep -c 'reverse_proxy\|forward_auth\|handle_errors' modules/nixos/services/caddy.nix
+grep -n 'metrics' modules/nixos/services/caddy.nix          <span class="tok-comment"># bare `metrics` at globalConfig</span>
+grep -o '"query": "[^"]*"' modules/nixos/services/dashboards/caddy.json | grep -c 'sum'   <span class="tok-comment"># → 7, all aggregate</span>
+
+<span class="tok-comment"># 4. Feature claims (upstream docs):</span>
+<span class="tok-comment">#   per_host: caddyserver.com/docs/metrics</span>
+<span class="tok-comment">#   journald encoder: caddyserver.com/docs/caddyfile/directives/log (2.11.3, PR #7623)</span>
+<span class="tok-comment">#   handle_errors vs proxy 502: caddyserver.com/docs/caddyfile/directives/handle_errors</span>
+<span class="tok-comment">#     + caddyserver/caddy#7283 (maintainer confirmation)</span>
+<span class="tok-comment">#   slowloris defaults: caddyserver.com/docs/caddyfile/options (2.11.6+)</span>
+
+<span class="tok-comment"># 5. Adjacent consumers cited:</span>
+grep -n 'caddy' modules/nixos/services/signoz.nix | head    <span class="tok-comment"># scrape job at :2019</span>
+grep -n 'access.log' modules/nixos/services/geometrikks.nix  <span class="tok-comment"># tail surface</span></code></pre>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-25 &middot; Reviewed against Caddy 2.11.7
+            (nixpkgs, = upstream latest) &middot; All claims verified against
+            repo source (file:line) and official Caddy docs/changelog where
+            noted &middot; SystemNix library deep dive series
           </p>
         </footer>
       </main>
