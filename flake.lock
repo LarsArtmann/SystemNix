@@ -850,11 +850,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792863565,
-        "narHash": "sha256-X9amUMEEXDfW8uYO4SzPXRcGbF97wD2oWbwGoU217cY=",
+        "lastModified": 1792901045,
+        "narHash": "sha256-WLj9ucdkQiSckqYG2jJXBw92iEVSeHKvjFgtunFibKM=",
         "owner": "LarsArtmann",
         "repo": "crush-config",
-        "rev": "fbc8fefd8ca0490dac062f558926e581766efa03",
+        "rev": "7639e20d1e16ff713bfaf4490b350b0b78dff378",
         "type": "github"
       },
       "original": {
@@ -932,11 +932,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792895135,
-        "narHash": "sha256-Rf9M4M3dxBSelY/4kF5+SGAnuYv1XOfzkSu/Y7n9tfc=",
+        "lastModified": 1792904966,
+        "narHash": "sha256-Bkb3KghYFOGSOXulxXNBO/FCWqIzT52KfTB+jMpG5mg=",
         "owner": "LarsArtmann",
         "repo": "CV",
-        "rev": "fff4a91b06dd1d9904893f50583a51b98fb0fc22",
+        "rev": "88e0d1232cb0bc095e9f19ecf76f11565dc669fc",
         "type": "github"
       },
       "original": {
@@ -1129,11 +1129,11 @@
         "templ-components": "templ-components_5"
       },
       "locked": {
-        "lastModified": 1792895929,
-        "narHash": "sha256-wNILmE+rn7yHxE74a7QfClL/MjcNLYE6aHYcMcQHHAM=",
+        "lastModified": 1792902643,
+        "narHash": "sha256-h3yCC8Z4bIzi7l4P1lvjabYY0WqlUbaJTtyomGFkQl4=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "308ec12a0628967f8f8ceedf3b835820434e65f6",
+        "rev": "c0670d95d6942936f13f93479b86f67bcbde185e",
         "type": "github"
       },
       "original": {
@@ -5665,11 +5665,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792899496,
-        "narHash": "sha256-EHZw5Y4kxPVgEmIk2LhEFT8pw/394VMnCElWmHf36AU=",
+        "lastModified": 1792905012,
+        "narHash": "sha256-8bK55M6Z0dAfxojDzht7N+czNuhvom5hgAJRKNVfy74=",
         "owner": "LarsArtmann",
         "repo": "go-taskqueue",
-        "rev": "c41c65dcd726ce1b5b7af5c054d8f8a5ad4d2f08",
+        "rev": "4e26f5bcc761cdab89525f7fa73d21c6fa672ccf",
         "type": "github"
       },
       "original": {
@@ -6392,11 +6392,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792861586,
-        "narHash": "sha256-qNr6rv4AiIqw8gatTfGSCPPaxn/x0hp7tLBJU3kfm2o=",
+        "lastModified": 1792904000,
+        "narHash": "sha256-7jDFxQUqlW8czvluNCaO2XNDZdX4Id6Bb5l6PBgpYUw=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "7fca7056b89bad7757f2e9aa4db92c4acac09357",
+        "rev": "f79e928a524d013f8aaf5487af480ff8711d0818",
         "type": "github"
       },
       "original": {
@@ -7236,11 +7236,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792903302,
-        "narHash": "sha256-2B2YfQD94TFWjT7cxw2rz0zOaJJ8vSfS2RpCgo973Yg=",
+        "lastModified": 1792905442,
+        "narHash": "sha256-yXKDvzk6xD1QNqyhbnLaak/j4bJL14lrG6fYFkRAQFI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "155ecc6a4098ac2ae955c52d37ffc1220b598c2d",
+        "rev": "e85f30ae202013cd99fc2f2dccc518a6fe63ac6a",
         "type": "github"
       },
       "original": {
