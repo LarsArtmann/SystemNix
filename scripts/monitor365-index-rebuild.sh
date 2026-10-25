@@ -123,7 +123,15 @@ if [ "$MISSING" = "0" ]; then
 fi
 
 echo "--- building (this can take many minutes on the 25 GB events table; IO-storm box: be patient)"
-DDL=$(grep -E '^CREATE (UNIQUE )?INDEX' "$SCHEMA_SQL" | tr -d '\r')
+# Join multi-line statements (schema.sql:543 idx_domain_events_tenant_seq
+# spans TWO lines — a plain grep truncates it and the batch dies at the
+# following statement with a misleading "syntax error at or near <next>").
+DDL=$(awk '
+  /^CREATE (UNIQUE )?INDEX/ {
+    buf = $0
+    while (buf !~ /;$/) { if ((getline line) <= 0) break; buf = buf " " line }
+    print buf
+  }' "$SCHEMA_SQL")
 sql "SET memory_limit='$MEM_LIMIT'; SET threads=$THREADS; SET preserve_insertion_order=false;
 $DDL
 CHECKPOINT;"

@@ -226,10 +226,13 @@
           # DuckDB's default 2GB PRAGMA memory_limit OOM-aborted the backup
           # COPY of the 25 GB DB ("could not allocate block ... 1.8 GiB/1.8
           # GiB used", 2026-10-25 03:01 — export FAILED, no nightly rollback
-          # copy). 6G explicit keeps the COPY under the unit's MemoryHigh 8G
-          # (process overhead included) instead of DuckDB's decimal-2GB
-          # default; the OOM hint banner itself recommends raising it.
-          MONITOR365_SERVER__MEMORY_LIMIT="6G" \
+          # copy). The first fix set "6G" — which upstream SILENTLY REJECTS:
+          # crates/db memory_limit.rs validates the <digits>(KB|MB|GB|TB)
+          # shape and falls back to the default on mismatch (a WARN log
+          # line only), so a "6G"-shaped value would OOM identically on the
+          # next fire. The B unit suffix is load-bearing. 6GB keeps the COPY
+          # under the unit's MemoryHigh 8G (process overhead included).
+          MONITOR365_SERVER__MEMORY_LIMIT="6GB" \
             ${lib.getExe serverCfg.package} \
             --database-url "$STATE_DIR/monitor365.duckdb" \
             --jwt-secret "$(cat /run/secrets/server_jwt_secret)" \
@@ -613,8 +616,19 @@
             serviceConfig = lib.mkMerge [
               {
                 CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
-                MemoryMax = lib.mkForce "4G";
-                MemoryHigh = lib.mkForce "3G";
+                # 2026-10-25 crash-loop class: schema init (CREATE INDEX
+                # IF NOT EXISTS at boot) must be able to rebuild indexes
+                # over the 25 GB events table, but the upstream default
+                # DuckDB memory_limit is "2GB" (decimal 2e9 = 1.86 GiB —
+                # the "1.8 GiB/1.8 GiB used" OOM). Raise it via env to 4GB
+                # (config.rs reads MONITOR365_SERVER__MEMORY_LIMIT; the
+                # value MUST match <digits>(KB|MB|GB|TB) — memory_limit.rs
+                # silently rejects "4G"-style shapes and falls back to the
+                # default) and keep cgroup headroom above it for process
+                # overhead (was 3G/4G, sized for steady state only).
+                Environment = [ "MONITOR365_SERVER__MEMORY_LIMIT=4GB" ];
+                MemoryMax = lib.mkForce "8G";
+                MemoryHigh = lib.mkForce "6G";
               }
               ioTier.heavyDB
             ];

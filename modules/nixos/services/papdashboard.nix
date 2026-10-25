@@ -127,6 +127,23 @@
 
       invalidIconTiles = builtins.filter (t: !(iconIsValid (t.icon or null))) allTiles;
 
+      # PapDashboard refuses to start when a group carries two tiles with
+      # the same name ("group \"X\" tile \"Y\": duplicate name" → exit 75 →
+      # start-limit-hit, live 2026-10-25 14:30 when the tile-coverage work
+      # added registry homepage tiles that duplicated legacy manual ones).
+      # Computed over allGroups (post-fold) so registry-fanout collisions
+      # with manual tiles fail at EVAL time, not at the next restart.
+      duplicateTileNames = lib.unique (
+        lib.concatLists (
+          map (
+            g:
+            map (t: "${g.name}/${t.name}") (
+              builtins.filter (t: builtins.length (builtins.filter (x: x.name == t.name) g.tiles) > 1) g.tiles
+            )
+          ) allGroups
+        )
+      );
+
       # Pack-relative icon names (absolute URLs are external references and
       # stay unverified). Unique so the derivation is input-order independent.
       packIconNames = lib.unique (
@@ -601,12 +618,11 @@
               {
                 name = "Media";
                 tiles = [
-                  {
-                    name = "Immich";
-                    href = svcUrl "immich";
-                    description = "Photo & Video Management";
-                    icon = "immich.png";
-                  }
+                  # Immich arrives via the services.integration registry
+                  # fan-out (immich.nix homepage, Media, with href) — the
+                  # manual tile was removed 2026-10-25: it duplicated the
+                  # registry tile and the floated PapDashboard binary
+                  # refuses duplicate names per group (start-limit-hit).
                   {
                     name = "Paperless";
                     href = svcUrl "paperless";
@@ -615,16 +631,16 @@
                   }
                 ];
               }
+              # Kept (even when empty) so registry tiles land in their
+              # canonical group position — Forgejo arrives via the
+              # services.integration registry fan-out (forgejo.nix homepage,
+              # Development, with href). The manual tile was removed
+              # 2026-10-25: it duplicated the registry tile and the floated
+              # PapDashboard binary refuses duplicate names per group
+              # (start-limit-hit, journal 2026-10-25 14:30).
               {
                 name = "Development";
-                tiles = [
-                  {
-                    name = "Forgejo";
-                    href = svcUrl "forgejo";
-                    description = "Git Forge (GitHub Sync)";
-                    icon = "forgejo.png";
-                  }
-                ];
+                tiles = [ ];
               }
               {
                 name = "AI";
@@ -808,6 +824,10 @@
             message = "services.papdashboard: tile icon(s) must be a dashboard-icons pack file name (e.g. \"miniflux.png\") or an http(s) URL. Offending tiles: ${
               lib.concatStringsSep "; " (map (t: "${t.name} → ${toString (t.icon or null)}") invalidIconTiles)
             }";
+          }
+          {
+            assertion = duplicateTileNames == [ ];
+            message = "services.papdashboard: tile names must be unique within a group — PapDashboard refuses to start on duplicates (exit 75 → start-limit-hit). Offending tiles: ${lib.concatStringsSep ", " duplicateTileNames}";
           }
         ];
 
