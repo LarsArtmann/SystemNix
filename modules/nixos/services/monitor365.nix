@@ -195,6 +195,7 @@
           pkgs.coreutils
           pkgs.findutils
           pkgs.systemd
+          pkgs.util-linux # runuser — CHECKPOINT as the service user
           pkgs.duckdb
         ];
         text = ''
@@ -223,20 +224,35 @@
           }
           trap restore EXIT TERM INT
 
-          # DuckDB's default 2GB PRAGMA memory_limit OOM-aborted the backup
-          # COPY of the 25 GB DB ("could not allocate block ... 1.8 GiB/1.8
-          # GiB used", 2026-10-25 03:01 — export FAILED, no nightly rollback
-          # copy). The first fix set "6G" — which upstream SILENTLY REJECTS:
-          # crates/db memory_limit.rs validates the <digits>(KB|MB|GB|TB)
-          # shape and falls back to the default on mismatch (a WARN log
-          # line only), so a "6G"-shaped value would OOM identically on the
-          # next fire. The B unit suffix is load-bearing. 6GB keeps the COPY
-          # under the unit's MemoryHigh 8G (process overhead included).
-          MONITOR365_SERVER__MEMORY_LIMIT="6GB" \
-            ${lib.getExe serverCfg.package} \
-            --database-url "$STATE_DIR/monitor365.duckdb" \
-            --jwt-secret "$(cat /run/secrets/server_jwt_secret)" \
-            backup --output-dir "$STATE_DIR"
+          # Backup export (2026-10-25 third redesign): upstream's
+          # `monitor365-server backup` (DuckDB ATTACH + COPY FROM DATABASE)
+          # OOM-aborts on this DB regardless of memory_limit — 1.86 GiB
+          # default on 2026-10-25 03:01, then a VALID 6GB limit (5.5 GiB
+          # applied, shape-verified) still died "backup copy failed: Failed
+          # to commit: failed to pin block" ~3 min in at ~7-8 GB written
+          # (first-hand forced fire 2026-10-25 16:12; the Oct 24/25
+          # 7-8 GB "backups" are partial corpses of the same class — last
+          # FULL export is 2026-10-23). COPY FROM DATABASE pins target
+          # blocks until commit and cannot stream a 30 GB DB under any
+          # sane cgroup. Replace it with the owner-ratified NVMe-safety
+          # pattern: the server is STOPPED (single writer quiesced) and
+          # the on-disk file CHECKPOINTed, so a file copy IS a consistent
+          # backup. --reflink=always on the same BTRFS subvol makes the
+          # copy instant and IO-free (CoW); plain-copy fallback kept for
+          # exotic layouts. Same *.backup_*.db naming the prune below and
+          # the heal script's restore path already speak.
+          runuser -u monitor365-server -- duckdb "$STATE_DIR/monitor365.duckdb" \
+            -c "SET memory_limit='6GB'; SET threads=2; CHECKPOINT;"
+          STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          DEST="$STATE_DIR/monitor365.duckdb.backup_$STAMP.db"
+          if ! cp --reflink=always "$STATE_DIR/monitor365.duckdb" "$DEST"; then
+            echo "monitor365-server-backup: reflink unavailable — falling back to full copy"
+            cp "$STATE_DIR/monitor365.duckdb" "$DEST"
+          fi
+          chown monitor365-server:monitor365-server "$DEST"
+          chmod 0600 "$DEST"
+          SIZE=$(stat -c '%s' "$DEST")
+          echo "monitor365-server-backup: export landed (reflink) $DEST ($SIZE bytes)"
 
           # Retain only the newest KEEP backups (upstream's ls -t prune,
           # re-expressed with find for the nullglob audit).

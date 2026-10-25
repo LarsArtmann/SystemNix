@@ -83,12 +83,16 @@
             pkgs.util-linux # flock — concurrent-deploy guard (T13)
             pkgs.procps # ps/pgrep — wedged switch_to-configuration detection
           ] (root + "/scripts/deploy.sh");
-          float-register = mkApp "float-register" "Register floated flake inputs: regenerate flake/expected-locks.nix from the lock, prove with a keep-going toplevel build, commit lock+registry together on green (revert on red). Auto-run by deploy before validation" [
-            pkgs.git
-            pkgs.gnugrep
-            pkgs.jq
-            pkgs.diffutils
-          ] (root + "/scripts/float-register.sh");
+          float-register =
+            mkApp "float-register"
+              "Register floated flake inputs: regenerate flake/expected-locks.nix from the lock, prove with a keep-going toplevel build, commit lock+registry together on green (revert on red). Auto-run by deploy before validation"
+              [
+                pkgs.git
+                pkgs.gnugrep
+                pkgs.jq
+                pkgs.diffutils
+              ]
+              (root + "/scripts/float-register.sh");
           migrate-rust-cache =
             mkApp "migrate-rust-cache"
               "One-time setup of the dedicated Rust cache SSD (/mnt/rust-cache, second SanDisk SDSSDA240G): format btrfs, mount, and move rust/sccache/cargo off /mnt/buildcache. Run BEFORE the first deploy of services.rust-cache"
