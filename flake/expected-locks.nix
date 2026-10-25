@@ -1,16 +1,22 @@
 # Expected lock revs — the reviewed registry behind the lock-float eval gate
-# (lib/lock-float-audit.nix, forced via allEvalGuards in flake.nix).
+# (lib/lock-float-audit.nix, lazily forced on HOST-CONFIG eval via
+# lockFloatGated in flake.nix — never on app evals, so `nix run .#deploy`
+# and `nix run .#float-register` stay reachable while drifted and absorb
+# the drift mechanically; 2026-10-25 17:2x the old outputs-eval placement
+# dead-ended the owner's `nix flake update && nix run .#deploy` at the gate
+# before the automation could run).
 #
 # Every root input that locks a rev MUST have an entry here, and the entry
 # MUST equal flake.lock's locked rev. A blanket `nix flake update` therefore
-# fails eval until the floated revs are re-registered — making each float a
-# conscious, reviewed act instead of a silent eval-break that surfaces as a
-# DOA deploy (the 2026-10-23 wave: hermes-python IFD + crowdsec module
-# conflicts rode one blanket update).
+# fails any HOST-CONFIG build/eval until the floated revs are re-registered
+# — making each float a conscious, reviewed act instead of a silent
+# eval-break that surfaces as a DOA deploy (the 2026-10-23 wave:
+# hermes-python IFD + crowdsec module conflicts rode one blanket update).
 #
-# Deliberate float procedure (the ONLY way past the gate):
-#   1. regenerate this file (the gate is forced via builtins.seq, so it throws
-#      before ANY evaluation — a build cannot run while the registry is stale):
+# Deliberate float procedure (the ONLY way past the gate — automated by
+# scripts/float-register.sh, wired into scripts/deploy.sh):
+#   1. regenerate this file (mechanical, derived from flake.lock — never
+#      hand-edited):
 #      { jq -r '.nodes.root.inputs|to_entries[]|select(.value|type=="string")|"\(.key)\t\(.value)"' < flake.lock; } \
 #        | while IFS=$'\t' read -r name nk; do \
 #            rev=$(jq -r --arg nk "$nk" '.nodes[$nk].locked.rev? // empty' < flake.lock); \
