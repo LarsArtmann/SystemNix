@@ -1535,9 +1535,8 @@ nix eval nixpkgs#caddy.version   <span class="tok-comment"># → 2.11.7</span>
 <span class="tok-comment">#    upstream latest: github.com/caddyserver/caddy/releases (v2.11.7, 2026-10-03)</span>
 
 <span class="tok-comment"># 2. Re-derive the score (this file, inventory table):</span>
-grep -o 'st-FL' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 24</span>
-grep -o 'st-MO' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 3</span>
-grep -o 'st-NA' docs/research/2026-10-25_caddy-deep-dive.html | wc -l  <span class="tok-comment"># → 14</span>
+grep -oE 'class=.st-(FL|MO|NA)' docs/research/2026-10-25_caddy-deep-dive.html | sort | uniq -c
+<span class="tok-comment">#   expected: 24 FL, 3 MO, 14 NA  →  score = 100 × 24/27 = 89</span>
 
 <span class="tok-comment"># 3. Spot-check the usage claims:</span>
 grep -c 'reverse_proxy\|forward_auth\|handle_errors' modules/nixos/services/caddy.nix
