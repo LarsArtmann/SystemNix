@@ -6384,7 +6384,7 @@
         ],
         "go-aichat": "go-aichat_3",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-unstable"
         ],
         "templ": "templ",
         "treefmt-nix": [
@@ -6392,17 +6392,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792760471,
-        "narHash": "sha256-Cq2X5b6WHU/ibAOQu4b4pfdSzAOuw+SqyjAhUTX1B2o=",
+        "lastModified": 1792915745,
+        "narHash": "sha256-FvIy0cFFldt25Ni4prMU0ot4M5poSkHIDRIpb61T6kg=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "b6f15e71b712116428a5b9fbefa46965c3705da0",
+        "rev": "c63bf2895a17741541ccaccde9677091904dac17",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "refs/heads/master",
         "repo": "InboxClean",
-        "rev": "b6f15e71b712116428a5b9fbefa46965c3705da0",
         "type": "github"
       }
     },
@@ -7019,6 +7019,22 @@
     },
     "nixpkgs-unstable_2": {
       "locked": {
+        "lastModified": 1792773339,
+        "narHash": "sha256-rZLrzrC6i+jnTAlvPZHogKDulY7WWDEv9hJeHieO7Zw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-unstable_3": {
+      "locked": {
         "lastModified": 1791048980,
         "narHash": "sha256-KgItSKML8Xvte0B7/uGnBDsYzSnnKHcOaiUbgWBXLXw=",
         "owner": "NixOS",
@@ -7033,7 +7049,7 @@
         "type": "github"
       }
     },
-    "nixpkgs-unstable_3": {
+    "nixpkgs-unstable_4": {
       "locked": {
         "lastModified": 1791048980,
         "narHash": "sha256-KgItSKML8Xvte0B7/uGnBDsYzSnnKHcOaiUbgWBXLXw=",
@@ -7966,6 +7982,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-llama-rag": "nixpkgs-llama-rag",
+        "nixpkgs-unstable": "nixpkgs-unstable_2",
         "nsfw-classifier": "nsfw-classifier",
         "nur": "nur",
         "offline-banner": "offline-banner",
@@ -8450,7 +8467,7 @@
       "inputs": {
         "gitignore": "gitignore_2",
         "nixpkgs": "nixpkgs_6",
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "nixpkgs-unstable": "nixpkgs-unstable_3",
         "version": "version_2"
       },
       "locked": {
@@ -8608,7 +8625,7 @@
       "inputs": {
         "gitignore": "gitignore_3",
         "nixpkgs": "nixpkgs_9",
-        "nixpkgs-unstable": "nixpkgs-unstable_3",
+        "nixpkgs-unstable": "nixpkgs-unstable_4",
         "version": "version_3"
       },
       "locked": {

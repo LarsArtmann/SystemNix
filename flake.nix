@@ -31,6 +31,17 @@
     # --keep-going --no-link` to exit 0 with aw-core AND linux-7.3-modules
     # realized — all five defects above genuinely fixed upstream.
     nixpkgs.url = "github:NixOS/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
+    # FLOATING nixpkgs (nixos-unstable) for consumers whose FOD-governing go
+    # toolchain floor outruns the REV-PINNED root nixpkgs (root ships go_1_27
+    # 1.27.2; upstream InboxClean c63bf289 raised its go.mod floor to 1.27.3,
+    # and buildGoModule's GOTOOLCHAIN=local forbids the auto-download — the
+    # build died `go.mod requires go >= 1.27.3`, first-hand --keep-going
+    # 2026-10-25). NOT covered by the daily nixpkgs-compat workflow (that
+    # --override-inputs the root pin only): the inboxclean go-modules FOD is
+    # this input's compatibility test. COLLAPSE back to
+    # `inboxclean.inputs.nixpkgs.follows = "nixpkgs"` once the root pin lifts
+    # and ships go >= 1.27.3 — one root nixpkgs instance is the goal.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (the last build
     # proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin
     # regression, live 2026-09-14). Consumed ONLY by services/llama-rag.nix.
@@ -280,14 +291,10 @@
 
     # InboxClean — Gmail AI assistant: web dashboard + incremental sync (Go)
     inboxclean = {
-      # REV-PINNED 2026-10-25 (b6f15e71 = the rev generation 939 runs):
-      # upstream c63bf289 bumped go.mod to `go 1.27.3` while the pinned
-      # nixpkgs ships go 1.27.2 and buildGoModule sets GOTOOLCHAIN=local —
-      # the build dies `go.mod requires go >= 1.27.3 (running go 1.27.2)`
-      # (first-hand --keep-going 2026-10-25). LIFT (tracked in
-      # lib/flake-input-pin-audit.nix): pinned nixpkgs ships go >= 1.27.3 —
-      # then drop the pin and re-float.
-      url = "github:LarsArtmann/InboxClean/b6f15e71b712116428a5b9fbefa46965c3705da0";
+      # Floats on upstream master (owner directive 2026-10-25: "inboxclean
+      # should never be pinned"). The go.mod 1.27.3 toolchain floor is met
+      # via the nixpkgs-unstable follow, not by holding this rev back.
+      url = "github:LarsArtmann/InboxClean?ref=refs/heads/master";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
@@ -1051,7 +1058,10 @@
     # stdenv.hostPlatform.*) instead.
     hermes-agent.inputs.uv2nix.follows = "uv2nix";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    inboxclean.inputs.nixpkgs.follows = "nixpkgs";
+    # nixpkgs-unstable, NOT the root pin: inboxclean's go.mod floor 1.27.3
+    # outruns the pinned root nixpkgs' go_1_27 1.27.2 under GOTOOLCHAIN=local
+    # (2026-10-25). Collapse to "nixpkgs" when the root pin lifts.
+    inboxclean.inputs.nixpkgs.follows = "nixpkgs-unstable";
     # inboxclean.inputs.templ.follows REMOVED 2026-10-25: forcing the root
     # templ CLI into inboxclean breaks it whenever the CLI outruns the
     # go.mod runtime (undefined templruntime.NewAttributeExpression).

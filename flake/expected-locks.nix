@@ -19,7 +19,7 @@
 #   3. commit lock + registry TOGETHER — the registry's git history is the
 #      float audit log.
 #
-# Seeded 2026-10-25 from the live flake.lock (93 rev-carrying root inputs).
+# Seeded 2026-10-25 from the live flake.lock (94 rev-carrying root inputs; 2026-10-25 regen: inboxclean pin lift + new nixpkgs-unstable input).
 {
   art-dupl = "1b165cdb90fbdc554335576dd2caafb501f9d063";
   art-dupl-src = "1b165cdb90fbdc554335576dd2caafb501f9d063";
@@ -67,7 +67,7 @@
   home-manager = "c216bf5a1f173b0481bd5c8c489ebe5595ecc68c";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
   homebrew-cask = "00f53e4604de09caa11fa9785d7bc83712b01ba6";
-  inboxclean = "b6f15e71b712116428a5b9fbefa46965c3705da0";
+  inboxclean = "c63bf2895a17741541ccaccde9677091904dac17";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "69d9b10d9e38308faf33e90f04283a58fa360aa4";
   library-policy = "a9fd5e3b821ac3b39d676f15df464a0e0655d4cf";
@@ -84,6 +84,7 @@
   nixos-hardware = "1b418b8f203e49a92f250f8babdd19af1b6f7a7f";
   nixpkgs = "fe13242281a67641c0102cdb1087f0ebe586c7df";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
+  nixpkgs-unstable = "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504";
   nsfw-classifier = "33075c64c573b2ea53ab7201172469d86fa553c0";
   nur = "342ac0d4f6781bbb98e9fe1cabcb53e23c68b537";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
