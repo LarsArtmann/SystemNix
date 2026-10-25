@@ -895,11 +895,12 @@ in
         dbBackup.enable = true;
         # Immich cross-archive comparison on the /lookup page (ADR-062): the
         # server proxies hex SHA-1 hashes to Immich's bulk-upload-check.
-        # Ships with a PLACEHOLDER key — create the real key in Immich scoped
-        # to asset.read + asset.upload ONLY, then sops --set it into
-        # platforms/nixos/secrets/discordsync-immich.yaml (runbook:
-        # docs/services/discordsync.md). discordsync-immich-verify pages when
-        # a non-placeholder key is rejected.
+        # The key is NIX-MANAGED (2026-10-25): the root converger
+        # discordsync-immich-key-provision mints it directly into Immich's
+        # api_key table (peer-auth postgres; scope asset.read + asset.upload)
+        # and renders the daemon's env file — no paste step exists. Rotate:
+        # rm /var/lib/discordsync/immich-api-env + restart the provisioner
+        # (runbook: docs/services/discordsync.md).
         immich.enable = true;
       };
 

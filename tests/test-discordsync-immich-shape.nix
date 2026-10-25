@@ -73,30 +73,46 @@ let
 
   enabledTemplate = enabled.sops.templates."discordsync-env";
   disabledTemplate = disabled.sops.templates."discordsync-env";
+  provisionUnit = "discordsync-immich-key-provision";
+  verifyUnit = "discordsync-immich-verify";
+  enabledEnvFile = "${enabled.services.discordsync.dataDir}/immich-api-env";
+  disabledEnvFile = "${disabled.services.discordsync.dataDir}/immich-api-env";
+  enabledEnvFiles = enabled.systemd.services.discordsync.serviceConfig.EnvironmentFile or [ ];
+  disabledEnvFiles = disabled.systemd.services.discordsync.serviceConfig.EnvironmentFile or [ ];
 
   cases = [
     # --- immich ENABLED: every conditional surface lit ---
     {
-      name = "enabled-template-carries-immich-keys";
+      # The sops env NEVER carries the Immich pair (moved to the provisioned
+      # env file 2026-10-25) — asserted in BOTH shapes.
+      name = "enabled-template-free-of-immich-keys";
       pass =
-        lib.hasInfix "IMMICH_URL" enabledTemplate.content
-        && lib.hasInfix "IMMICH_API_KEY" enabledTemplate.content;
+        !lib.hasInfix "IMMICH_URL" enabledTemplate.content
+        && !lib.hasInfix "IMMICH_API_KEY" enabledTemplate.content;
     }
     {
-      name = "enabled-restartUnits-names-verify";
-      pass = builtins.elem "discordsync-immich-verify.service" enabledTemplate.restartUnits;
+      name = "enabled-provision-unit-exists";
+      pass = enabled.systemd.services ? ${provisionUnit};
     }
     {
-      name = "enabled-restartUnits-still-names-daemon";
-      pass = builtins.elem "discordsync.service" enabledTemplate.restartUnits;
+      name = "enabled-provision-timer-exists";
+      pass = enabled.systemd.timers ? ${provisionUnit};
+    }
+    {
+      name = "enabled-envfile-lists-provisioned-file";
+      pass = builtins.elem enabledEnvFile enabledEnvFiles;
+    }
+    {
+      name = "enabled-daemon-ordered-after-provision";
+      pass = builtins.elem "${provisionUnit}.service" (enabled.systemd.services.discordsync.after or [ ]);
     }
     {
       name = "enabled-verify-unit-exists";
-      pass = enabled.systemd.services ? "discordsync-immich-verify";
+      pass = enabled.systemd.services ? ${verifyUnit};
     }
     {
       name = "enabled-verify-timer-exists";
-      pass = enabled.systemd.timers ? "discordsync-immich-verify";
+      pass = enabled.systemd.timers ? ${verifyUnit};
     }
     # --- immich DISABLED: every conditional surface dark ---
     {
@@ -106,18 +122,32 @@ let
         && !lib.hasInfix "IMMICH_API_KEY" disabledTemplate.content;
     }
     {
-      name = "disabled-restartUnits-never-names-verify";
-      pass =
-        !builtins.elem "discordsync-immich-verify.service" disabledTemplate.restartUnits
-        && builtins.elem "discordsync.service" disabledTemplate.restartUnits;
+      name = "disabled-provision-unit-absent";
+      pass = !(disabled.systemd.services ? ${provisionUnit});
+    }
+    {
+      name = "disabled-provision-timer-absent";
+      pass = !(disabled.systemd.timers ? ${provisionUnit});
+    }
+    {
+      name = "disabled-envfile-free-of-provisioned-file";
+      pass = !builtins.elem disabledEnvFile disabledEnvFiles;
     }
     {
       name = "disabled-verify-unit-absent";
-      pass = !(disabled.systemd.services ? "discordsync-immich-verify");
+      pass = !(disabled.systemd.services ? ${verifyUnit});
     }
     {
       name = "disabled-verify-timer-absent";
-      pass = !(disabled.systemd.timers ? "discordsync-immich-verify");
+      pass = !(disabled.systemd.timers ? ${verifyUnit});
+    }
+    # The sops secret's restartUnits name the daemon only (the verify unit no
+    # longer reads the sops env; identical in both shapes).
+    {
+      name = "restartUnits-daemon-only";
+      pass =
+        enabledTemplate.restartUnits == [ "discordsync.service" ]
+        && disabledTemplate.restartUnits == [ "discordsync.service" ];
     }
   ];
 
@@ -128,11 +158,12 @@ if broken == [ ] then
 else
   throw ''
     discordsync-immich-shape regression: ${toString broken}
-    The immich.enable gate must move template keys, restartUnits, and the
-    verify unit/timer TOGETHER: keys rendered without the verify unit (or
-    restartUnits naming a unit absent from the generation) are the
-    activation-failure class; keys missing while enabled breaks the /lookup
-    cross-archive comparison. Re-verify against
-    modules/nixos/services/sops.nix (discordsync-env template) +
-    modules/nixos/services/discordsync.nix (verify unit/timer).
+    The immich.enable gate must move the provisioned env file, the provision
+    unit/timer, and the verify unit/timer TOGETHER — while the sops env
+    template stays Immich-free in both shapes (the key is machine-minted by
+    discordsync-immich-key-provision into Immich's api_key table; the paste
+    path no longer exists). Re-verify against
+    modules/nixos/services/discordsync.nix (provision + verify units, daemon
+    EnvironmentFile/after) + modules/nixos/services/sops.nix
+    (discordsync-env template).
   ''

@@ -334,9 +334,9 @@ in
               # discordsync-immich-key-provision (direct api_key table insert
               # via peer-auth postgres — no secret exists to store; see
               # docs/services/discordsync.md "Immich cross-archive" section).
-            lib.optionalAttrs (svcEnabled "dns-failover") (
-              mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
-            )
+              lib.optionalAttrs (svcEnabled "dns-failover") (
+                mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
+              )
             // lib.optionalAttrs (svcEnabled "cv-server") (
               # Root-owned raw secret; the service consumes the "cv-env"
               # template (owner cv) which interpolates the placeholder.
