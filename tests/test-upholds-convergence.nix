@@ -65,9 +65,6 @@
       };
       systemd.services.uph-consumer = {
         description = "Upholds evaluation fixture (mount-dependent daemon)";
-        # The mechanism under test: while mnt-uph.mount is active, systemd
-        # continuously (re)starts this unit if it is inactive/failed.
-        upholds = [ "mnt-uph.mount" ];
         wantedBy = [ "multi-user.target" ];
         serviceConfig = {
           Type = "simple";
@@ -77,6 +74,12 @@
           Restart = "no";
         };
       };
+      # DIRECTION (first draft had it backwards — that failure IS a finding:
+      # `A Upholds=B` = "while A is active, keep B started", the inverse of
+      # BindsTo=). The MOUNT upholds the consumer, so the dependency edge
+      # lives on the mount unit (systemd.units merge — virtualisation.
+      # fileSystems owns the rest of mnt-uph.mount).
+      systemd.units."mnt-uph.mount".upholds = [ "uph-consumer.service" ];
       system.stateVersion = "25.11";
     };
 
