@@ -6185,16 +6185,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792896981,
-        "narHash": "sha256-lIxLZ0xzwTZQN+xAT/p8lTHklHrvwiHwSGVALle9P0Y=",
+        "lastModified": 1792790439,
+        "narHash": "sha256-LB3wok261Dt3T26wvdtz6PcVVyk93CTrMyeLFLqA7o4=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "4ea8d23cc9f527332ccb1d55359b27741b6ea51b",
+        "rev": "0329638c2bf0438552145589787e355bf23343fe",
         "type": "github"
       },
       "original": {
         "owner": "NousResearch",
         "repo": "hermes-agent",
+        "rev": "0329638c2bf0438552145589787e355bf23343fe",
         "type": "github"
       }
     },
@@ -6392,17 +6393,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1792915745,
-        "narHash": "sha256-FvIy0cFFldt25Ni4prMU0ot4M5poSkHIDRIpb61T6kg=",
+        "lastModified": 1792760471,
+        "narHash": "sha256-Cq2X5b6WHU/ibAOQu4b4pfdSzAOuw+SqyjAhUTX1B2o=",
         "owner": "LarsArtmann",
         "repo": "InboxClean",
-        "rev": "c63bf2895a17741541ccaccde9677091904dac17",
+        "rev": "b6f15e71b712116428a5b9fbefa46965c3705da0",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/heads/master",
         "repo": "InboxClean",
+        "rev": "b6f15e71b712116428a5b9fbefa46965c3705da0",
         "type": "github"
       }
     },

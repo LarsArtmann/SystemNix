@@ -19,5 +19,9 @@
 {
   # RE-ADDED 2026-10-23 lock float: specified U9F6gATv…, first-hand got
   # NBQcjrwD… (evo-x2 toplevel --keep-going enumeration).
-  projects-management-automation = "sha256-NBQcjrwDfb5Eqeic7hpAN/1M4FI5XAA4YldmKXXpnt0=";
+  # RE-STALE 2026-10-25 (exec-3 lock-float proof, rev UNCHANGED bdd12a35 —
+  # a floated dep rewired the module graph): specified NBQcjrwD…, first-hand
+  # got xvAVnWu… (evo-x2 toplevel --keep-going enumeration). Drop when
+  # upstream bakes it; re-add ONLY via first-hand evidence, never by hand.
+  projects-management-automation = "sha256-xvAVnWuaszhwwObmdWUQ3+DMHv8Yd0tcWe0le0VjtgE=";
 }
