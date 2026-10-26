@@ -82,11 +82,13 @@ echo ""
 SECTION10_ONLY=false
 SECTION11_ONLY=false
 SECTION16_ONLY=false
+SECTION18_ONLY=false
 for arg in "$@"; do
   case "$arg" in
   --section-10-only) SECTION10_ONLY=true ;;
   --section-11-only) SECTION11_ONLY=true ;;
   --section-16-only) SECTION16_ONLY=true ;;
+  --section-18-only) SECTION18_ONLY=true ;;
   *)
     echo "unknown option: $arg" >&2
     exit 64
@@ -113,7 +115,7 @@ else
   warn "running-vs-pinned audit could not run (non-fatal)"
 fi
 
-if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION16_ONLY" != true ]; then
+if [ "$SECTION10_ONLY" != true ] && [ "$SECTION11_ONLY" != true ] && [ "$SECTION16_ONLY" != true ] && [ "$SECTION18_ONLY" != true ]; then
   # 1. Flake syntax check
   echo "1. Flake syntax validation"
   # Content-addressed skip (2026-10-17): `nix flake check --no-build` is the
@@ -527,6 +529,50 @@ EOF
   fi
   rm -f "$PAP_EVAL_ERR"
 }
+
+# §18 body shared by the --section-18-only cheap loop and the full battery
+# (delegation pattern: same shape as §15's pre-vacuum-evidence-gate.sh).
+shadow_split_section18() {
+  echo ""
+  echo "18. Shadow-split gate (hot-tier mount over a non-empty service data dir)"
+  local ss_out ss_rc
+  if ss_out=$(SS_HOST=evo-x2 bash scripts/shadow-split-gate.sh 2>&1); then
+    ss_rc=0
+  else
+    ss_rc=$?
+  fi
+  if [ "$ss_rc" -eq 0 ]; then
+    local ss_warns
+    ss_warns=$(grep -c '^WARN:' <<<"$ss_out" || true)
+    if [ "${ss_warns:-0}" -gt 0 ]; then
+      warn "shadow-split gate: $ss_warns entry(ies) need eyes — degraded probes / parity bands / half-provisioned subvols (details below)"
+    elif grep -q 'nothing to shadow-split' <<<"$ss_out"; then
+      pass "shadow-split gate: no enabled hot-tier entries in the to-be-deployed config"
+    else
+      pass "shadow-split gate: every populated shadow dir has a demonstrably prepared target subvol"
+    fi
+    grep -E '^(PASS|WARN):' <<<"$ss_out" | sed 's/^/    /' || true
+  elif [ "$ss_rc" -eq 1 ]; then
+    fail "shadow-split gate REFUSED — a hot-tier mount would land over a non-empty service data dir without a prepared target subvol (wave-6 shadow-split class, docs/status/2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md). Run the wave's prepare/cutover step first; never deploy over it:"
+    printf '%s\n' "$ss_out" | sed 's/^/    /'
+  else
+    warn "shadow-split gate could not enumerate entries (nix eval / jq failed) — verify the hot-tier entries by hand before deploying"
+  fi
+}
+
+if [ "$SECTION18_ONLY" = true ]; then
+  shadow_split_section18
+  echo ""
+  echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
+  if [ "$FAIL" -gt 0 ]; then
+    echo ""
+    echo "❌ DEPLOY BLOCKED — fix failures above before deploying"
+    exit 1
+  fi
+  echo ""
+  echo "✅ §18-only run passed — safe (full gate still runs inside nix run .#deploy)"
+  exit 0
+fi
 
 if [ "$SECTION16_ONLY" = true ]; then
   pap_section16
@@ -1201,6 +1247,20 @@ done
 if [ "$ZM_TRIPPED" -eq 0 ]; then
   pass "no zombie mounts — every live /mnt/* mount has an existing device and answers real IO"
 fi
+
+# 18. Shadow-split gate (2026-10-26 wave-6 class; storage.md ready row 1).
+# A hot-tier mount landing over a NON-empty service data dir must be caught
+# BEFORE the switch: wave 6 mounted an EMPTY /hot/postgres over live
+# /var/lib/postgresql and four co-tenant DBs ran empty 2.5 days. The gate
+# checks every hot entry in the to-be-deployed config: empty-subvol-over-
+# nonempty-shadow = wave-6 signature (FAIL), PG_VERSION presence parity
+# (FAIL), prepared-copy parity bands + EACCES degradation (WARN). Body lives
+# in shadow_split_section18() above so --section-18-only can loop it cheaply.
+# Fixture-tested by scripts/test-predeploy-shadow-split.sh (flake-check
+# wiring deferred: selftests.nix carries a parallel session's in-flight edits
+# as of authoring — wire `predeploy-shadow-split-selftest` when the file is
+# quiescent).
+shadow_split_section18
 
 # Summary
 echo ""
