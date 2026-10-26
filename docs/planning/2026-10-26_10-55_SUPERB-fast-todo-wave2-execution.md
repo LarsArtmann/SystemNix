@@ -15,7 +15,7 @@
 
 - Root `/` = 698G/723G = **99%, 14G free** (crisis plan owns the drain; tonight 23:00 balance redo is the 1%).
 - nvme enumeration flipped AGAIN (root now `nvme0n1p6`, Samsung `/nix` = `nvme1n1p2`) — the by-id rule holds.
-- `/mnt/hot/.migrate-state/` **does not exist** → the P3 forensics answer shapes up as "zero state records survive"; waves were claim-only.
+- `/mnt/hot/.migrate-state/` **does not exist** → the P3 forensics answer shapes up as "zero state records survive"; waves were claim-only. **ERRATA (11:0x, ~30 min after authoring): WRONG — the real dir is `/mnt/hot/hot/.migrate-state/` (`HOT_PARENT="$TOPLEVEL/hot"`); waves 1-5 carry full markers, wave 6 (postgres) alone is claim-only. Correction + inventory: docs/status/2026-10-26_11-30_fast-todo-wave2-session-status.md §a3/P3.**
 - Open-row census: queue 1,401 (+4 new from the 10:46 caddy report) · storage 170 · stability 169 · monitoring 147 · ai-stack 26 · services 522 · upstream 181 · security 17 · pipeline 521 · desktop 92 · pixel6 18 → **~3,264 open**.
 - Parallel-dirty files this session MUST NOT edit: `TODO_LIST.md` (surgical full-line edits only), `docs/todo/{pipeline,monitoring}.md`, `flake.nix`, `flake/parts/checks/selftests.nix`, `lib/{lars-packages,ports}.nix`, `modules/nixos/services/{caddy,hot-user-caches,journal-backup,journal-serve}.nix`, `platforms/*`, `docs/agents/storage.md`, `docs/services/*`, `disko/samsung-tlc.nix`, `scripts/migrate-user-tmp-hot.sh`, `README.md`.
 - Deploys are OFF the table this session (99% root + PSI storms + owner sudo windows). Build/eval/scripts/docs only.
