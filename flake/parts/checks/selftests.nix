@@ -36,6 +36,7 @@
               assert main.content.mountpoint == "/mnt/hot";
               assert main.content.subvolumes ? "/nix";
               assert main.content.subvolumes ? "/users/lars/cache/nix";
+              assert main.content.subvolumes ? "/users/lars/tmp";
               assert !(evoConfigOptions ? disko);
               true;
           in

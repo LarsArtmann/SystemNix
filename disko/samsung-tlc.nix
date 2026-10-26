@@ -73,6 +73,17 @@
                   "nodiscard"
                 ];
               };
+              # ~/tmp: agent scratch + Go-cache redirect target (E6 fix,
+              # 2026-10-26) — live wiring is the hot-user-caches automount;
+              # created on the live disk by scripts/migrate-user-tmp-hot.sh.
+              "/users/lars/tmp" = {
+                mountpoint = "/home/lars/tmp";
+                mountOptions = [
+                  "compress=zstd"
+                  "noatime"
+                  "nodiscard"
+                ];
+              };
               # Live subvols created OUT-OF-BAND (migrate scripts, not disko)
               # — declared here so a reinstall/rescue re-provision recreates
               # them; mount wiring + +C (nodatacow, inexpressible in disko)

@@ -102,6 +102,20 @@ _: {
               subvol = "users/${primaryUser}/cache/nix";
               mountPoint = "/home/${primaryUser}/.cache/nix";
             };
+            # ~/tmp (2026-10-26): agent scratch + the cv/go-cqrs Go-cache
+            # redirect target. It sat inside snapshotted @, so every cache
+            # rewrite pinned its OLD extents for the 3d root snapshot window —
+            # churn double-billed the QLC root straight into the 2026-10-26
+            # 98%-full class. Unsnapshotted hot subvol = the E6 structural fix
+            # (docs/status/2026-10-25_20-21_qlc-root-space-root-causes-agent-reclaim.md §E6).
+            # PRE-ACTIVATION: scripts/migrate-user-tmp-hot.sh prepare (the
+            # automount SHADOWS whatever stays in the @-side dir — content must
+            # move first). Work products living in tmp lose ALL backup (no
+            # snapshots, no btrbk leg): precious things must not live in tmp.
+            tmp = {
+              subvol = "users/${primaryUser}/tmp";
+              mountPoint = "/home/${primaryUser}/tmp";
+            };
             # go-build is DELIBERATELY ABSENT (2026-09-20, first live run):
             # ~/.cache/go-build is an HM mkOutOfStoreSymlink →
             # /mnt/buildcache/go-build (home.nix env-less-processes
