@@ -38,6 +38,7 @@
     "emeet-pixyd"
     "llama"
     "cloud"
+    "journal"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is

@@ -259,14 +259,22 @@ bounded by the vHost count. Service name: `caddy` (`OTEL_SERVICE_NAME`).
   at the gRPC port :4317 (the audit expectation wrongly asserted
   otlptracegrpc) — the collector answered caddy's HTTP/1.1 POST with an
   h2c SETTINGS frame and EVERY export failed ("malformed HTTP response"),
-  so spans were dark from gen-949 until the :4318 fix deploys. Lesson: the
-  endpoint-audit checked URL shape, not protocol-port agreement.
+  so spans were dark on gen-949. **FIX LIVE (gen-950, 2026-10-26 09:36):**
+  2,685 caddy spans in the first 30 min, coverage gauge
+  `signoz_traces_reporting{service="caddy"} = 1`, last-span age ~9 s,
+  journal flood dead (zero malformed-export lines since the restart vs
+  ~100/s before). Lesson: the endpoint-audit checked URL shape, not
+  protocol-port agreement.
 - **Coverage rail**: `signoz-coverage.expected.caddy` — wiring `env`,
   26h **request-driven** budget (gatus checks hit the backends directly, NOT
   through Caddy, so spans flow on human browsing + deploy smokes; an
   overnight without requests is healthy, not dark — dnsblockd doctrine).
   Still accurate post-`per_host`: that knob multiplies metric series per
-  vHost, never span volume (F78 re-check 2026-10-26).
+  vHost, never span volume (F78 re-check 2026-10-26). The traces pipeline
+  carries **no tail/probabilistic sampler** (`memory_limiter →
+  signozspanmetrics/delta → batch → clickhousetraces + servicegraph`), so
+  100% of edge spans are stored — the volume lever is the span-name-per-vHost
+  bound, never a sampler (checked + live-proven 2026-10-26).
 - **What this is NOT**: Caddy cannot continue trace context INTO the
   backends (no client-side instrumentation anywhere), and Forgejo itself has
   no OTel support (upstream #3972 was merged + reverted over licensing;
@@ -274,8 +282,10 @@ bounded by the vHost count. Service name: `caddy` (`OTEL_SERVICE_NAME`).
   per vHost, which is exactly the KFears #7216 "basic insight" need.
 - **Verify spans flowing live** (post-deploy): hit any vHost, wait ~10 s,
   then
-  `clickhouse-client --query "SELECT count() FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp > now() - 300 AND serviceName = 'caddy'"`
-  (same table the coverage collector sweeps). Or check
+  `clickhouse-client --query "SELECT count() FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp > now() - INTERVAL 5 MINUTE AND resources_string['service.name'] = 'caddy'"`
+  (same table the coverage collector sweeps; `serviceName` is NOT a column
+  here — it lives in the `resources_string` map, and the legacy
+  `distributed_signoz_spans` view is dead since the v3 schema). Or check
   `signoz_traces_reporting{service="caddy"}` on the next coverage scrape.
 - Directive validated against the deployed caddy 2.11.7 binary; full
   rendered Caddyfile adapts cleanly (`caddy adapt`, 76 tracing blocks).

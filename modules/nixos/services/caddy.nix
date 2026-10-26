@@ -288,8 +288,9 @@ _: {
         # render through this block). Spans carry the OTel HTTP semantic
         # attributes (method/route/status/duration/client); the span name is
         # the requested host, keeping SigNoz spanmetrics cardinality bounded
-        # by the vHost count. Exporter: gRPC → the local SigNoz collector via
-        # the unit env below; audit rails: otel-endpoint-audit "grpc-url" +
+        # by the vHost count. Exporter: OTLP/HTTP → the local SigNoz
+        # collector (:4318) via the unit env below; audit rails:
+        # otel-endpoint-audit "http-url" +
         # signoz-coverage "caddy" (wiring env, 26h request-driven budget).
         # Caddy cannot continue trace context INTO the backends (they carry
         # no client-side instrumentation), so these are edge spans only.

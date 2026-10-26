@@ -424,12 +424,11 @@
     # journal — the accounting kernel: chart of accounts, double-entry
     # journal, bank reconciliation against invoices, period close, VAT
     # (PRIVATE repo: github: URL + CI deploy key, cv/crm pattern). CLI over
-    # a local SQLite journal + an OPTIONAL web dashboard (`journal serve`,
-    # 127.0.0.1:8484): loopback-ONLY by upstream design until passkey auth
-    # (their T16) lands — serve refuses non-loopback binds; still no daemon
-    # unit/port registry/vHost (their T23 module shape is an open owner
-    # question, g-2 — runbook). Consumes bank-sync's transactions.v1
-    # exports.
+    # a local SQLite journal + the Hauptbuch web dashboard (journal-serve
+    # unit: loopback 127.0.0.1:8484, registry vHost journal.home.lan at
+    # layer 2 protected — owner g-2 answer 2026-10-26; upstream keeps the
+    # loopback-only bind until T16 passkey auth). Consumes bank-sync's
+    # transactions.v1 exports.
     # NON-FOLLOWER class (own nixpkgs/go-nix-helpers lock, go.mod floor
     # 1.27.2): upstream's baked vendorHash reproduces under its own
     # validated build env (first-hand probe 2026-10-19 at ba60fe0d), so no

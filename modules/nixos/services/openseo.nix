@@ -246,6 +246,12 @@ _: {
                 "NODE_OPTIONS=--max-old-space-size=1536"
                 "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
                 "HOME=${stateDir}"
+                # AI agents ride synthetic.new (2026-10-25 owner decision):
+                # the packaged patch reads OPENROUTER_BASE_URL from process env;
+                # OPENROUTER_API_KEY (sops) holds the SYNTHETIC key. Unset both
+                # + supply a real OpenRouter key to fall back to openrouter.ai.
+                "OPENROUTER_BASE_URL=https://api.synthetic.new/openai/v1"
+                "OPENROUTER_MODEL=syn:large:text"
                 # Privacy: opt out of OpenSEO's anonymous telemetry (introduced v0.1.0).
                 # Sends heartbeats with aggregate counts every 5 min during first 2h,
                 # then at most once daily. No personal data, but unnecessary for a

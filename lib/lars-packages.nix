@@ -211,11 +211,11 @@ lib.filterAttrs (_: v: v != null) {
     flakePkgShim inputs.golangci-lint-auto-configure "default"
       "sha256-0VvVtsy3kjSoqtplM9p6SwR+OMRwVwKqOa5DI9NeCnE=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
-  # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`,
-  # 127.0.0.1:8484, loopback-ONLY until upstream T16 passkey auth — serve
-  # refuses non-loopback binds; no daemon unit, deliberately — upstream T23
-  # module shape is open owner question g-2, runbook). No port-registry
-  # entry: 8484 is upstream's CLI default, not a deployed unit's port.
+  # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
+  # — deployed as the journal-serve unit since 2026-10-26: loopback
+  # 127.0.0.1:8484 behind the protected registry vHost journal.home.lan,
+  # owner g-2 answer; upstream keeps the loopback-only bind until T16
+  # passkey auth — serve refuses non-loopback binds; runbook).
   # Upstream repo is PRIVATE (github: input + CI deploy key, see flake.nix).
   # Non-follower class: builds under its own lock — probe-verified
   # 2026-10-19 (ba60fe0d, no shim needed). Rides PATH via base.nix

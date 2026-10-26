@@ -1477,6 +1477,13 @@ in
         enable = true;
       };
 
+      # Hauptbuch web dashboard (journal serve) — loopback 8484 behind the
+      # protected registry vHost journal.home.lan (owner g-2 answer
+      # 2026-10-26). Runbook: docs/services/journal.md.
+      journal-serve = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;

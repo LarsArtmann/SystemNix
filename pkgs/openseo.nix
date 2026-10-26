@@ -26,6 +26,26 @@ stdenv.mkDerivation (finalAttrs: {
     autoPatchelfHook
   ];
 
+  # SystemNix patch (2026-10-25, owner decision): route the AI chat agents at
+  # synthetic.new instead of openrouter.ai. The @openrouter/ai-sdk-provider
+  # createOpenRouter accepts baseURL, but upstream never passes one — no env
+  # var exists, and synthetic.new's models are NOT on OpenRouter's catalog
+  # (verified live 2026-10-25: 467 models, zero synthetic/syn matches). The
+  # module env sets OPENROUTER_BASE_URL + OPENROUTER_MODEL; unset = stock
+  # OpenRouter behavior (typeof guard keeps the workerd bundle safe even
+  # without nodejs_compat). Works for BOTH consumers: SamChatAgent and the
+  # onboarding agent both reach createOpenRouter through buildChatAgentModel.
+  # synthetic.new is OpenAI-compatible at /openai/v1 (syn:large:text resolves
+  # to hf:deepseek-ai/DeepSeek-V4.1-Flash-1017); OPENROUTER-specific request
+  # extensions (provider.order/zdr, usage.include) ride along — live-tolerated
+  # per docs, re-verify SAM turns post-deploy and drop the module's BASE_URL/
+  # MODEL env lines to fall back to a real OpenRouter key.
+  postPatch = ''
+    substituteInPlace src/server/lib/openrouter.ts \
+      --replace-fail 'return createOpenRouter({ apiKey })(modelId ?? DEFAULT_CHAT_AGENT_MODEL, {' \
+        'return createOpenRouter({ apiKey, baseURL: (typeof process !== "undefined" && process.env?.OPENROUTER_BASE_URL) || undefined })(modelId ?? DEFAULT_CHAT_AGENT_MODEL, {'
+  '';
+
   # Native libraries needed by node_modules native addons (sharp, libsql, lightningcss, etc.)
   buildInputs = [
     stdenv.cc.cc.lib

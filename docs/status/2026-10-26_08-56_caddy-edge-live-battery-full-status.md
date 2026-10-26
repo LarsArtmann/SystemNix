@@ -132,4 +132,21 @@
 
 ---
 
-*Report scope: this session's run only, per instruction. Point-in-time = 08:56 CET.*
+## Post-deploy verification addendum (10:4x CET — gen-950)
+
+A parallel session deployed **gen-950 at 09:36** (lineage after my `706659d05`), carrying all three riders. The §e recipe ran green, live-verified:
+
+| Rider | Live evidence |
+| --- | --- |
+| `:4318` OTLP/HTTP exporter | **2,685 `caddy` spans in 30 min** (`signoz_traces.distributed_signoz_index_v3`, `resources_string['service.name']`); **journal flood dead** — last `malformed HTTP response` 09:35:53, zero since the 09:37 restart (was ~100 lines/s) |
+| Coverage gauge | `signoz_traces_reporting{service="caddy"} 1`, `signoz_traces_last_span_age_seconds 9` (live textfile scrape) |
+| Branded static 404s | `timers.home.lan` unknown path → **404 + `404 - Nothing here` branded page** (1633 B static), `/` stays 200 |
+| `/dex/healthz` log_skip | `@probe` matcher + `log_skip @probe` confirmed rendered in the live `/etc/caddy/caddy_config`; the check itself targets the pbx host |
+
+Row closures: `docs/todo/monitoring.md` edge-tracing deploy row + sampling-policy row → `[x]` (100% policy — no sampler in the traces pipeline); post-deploy span UX pass unblocked → `[ready]`. Runbook receipts: `docs/services/caddy.md` §Edge tracing (fix-live receipt, no-sampler note, **corrected verify query** — `serviceName` is not a column in v3, it lives in `resources_string`, and the legacy `distributed_signoz_spans` view is dead). Fixed my own stale comment at `caddy.nix:291` (still said gRPC/grpc-url).
+
+**Owner question 2 is moot:** spans went live ~14h before tonight's 23:05 budget expiry — last-span age 9 s means the 26h budget will NOT page. Questions 1 (deploy ownership — answered by events) and 3 (G3 thresholds) remain open.
+
+---
+
+*Report scope: this session's run only, per instruction. Point-in-time = 08:56 CET; addendum 10:4x CET.*
