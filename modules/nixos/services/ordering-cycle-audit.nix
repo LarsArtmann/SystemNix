@@ -129,7 +129,10 @@
             lib.unique (builtins.filter (x: x != name && explicitGraph ? ${x}) (map resolve (strings u.after)))
           ) explicitGraph;
           addReversals =
-            acc: name: u:
+            acc: name:
+            let
+              u = explicitGraph.${name};
+            in
             builtins.foldl' (
               acc2: b:
               let
