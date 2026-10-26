@@ -43,6 +43,7 @@ All three provisioned by `pocket-id-config.provision` (`isPublic = true`, `pkceE
 5. **watch-fs**: not enabled (upstream can watch the posix tree for external changes; adds inotify load — enable deliberately if ever needed).
 6. **The pool subvol is created by `opencloud-storage-dir`** (mount-gated oneshot, deploy.sh provisioner-restarted). Do NOT add tmpfiles rules for the stateDir (shadow-dir class); the nixpkgs module's tmpfiles rules are neutralized in the wrapper for exactly that reason.
 7. **First deploy ordering:** `opencloud-storage-dir` → `opencloud-init-config` (needs `/etc/opencloud` writable + pool up) → `opencloud.service`. All mount-gated; a detached DAS fails them loudly (RequiresMountsFor).
+8. **Internal port family:** ocis binds a band of loopback ports invisible to the port-registry audit (they live in binary defaults, not Exec text). Embedded NATS defaulted to **9234 = signoz-clickhouse-raft** → first deploy died in a bind/strike/start-limit loop; fixed via `NATS_PORT` → **9233** (`lib/ports.nix` `opencloud-nats`). The 9235+ internal gRPC ports are ocis-assigned — on any future internal bind failure, check `ss -ltn` against that band first.
 
 ## Verify recipes
 

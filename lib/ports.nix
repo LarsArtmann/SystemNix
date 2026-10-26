@@ -192,5 +192,10 @@
     # (services.opencloud, upstream default port), loopback-only; Caddy
     # proxies cloud.home.lan to it.
     opencloud = 9200;
+
+    # OpenCloud's embedded NATS JetStream — loopback. The ocis default 9234
+    # collides with signoz-clickhouse-raft above (first-deploy bind failure,
+    # 2026-10-26); 9233 sits below ocis's own 9235+ internal gRPC band.
+    opencloud-nats = 9233;
   };
 }
