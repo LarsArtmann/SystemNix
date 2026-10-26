@@ -281,7 +281,7 @@ _: {
         # Probe endpoints bypass ACCESS LOGGING only (M21): gatus/post-deploy
         # probes were ~80 req/min of log noise into crowdsec + geometrikks.
         # Responses are untouched — a dead check still alerts the same way.
-        @probe path /health /healthz /metrics /ping /up /api/healthz /api/server/ping /actuator/health
+        @probe path /health /healthz /metrics /ping /up /api/healthz /api/server/ping /actuator/health /dex/healthz
         log_skip @probe
         # Edge-level OTel spans for EVERY vHost (hand-written, registry
         # fan-out, static roots, catch-alls and the cloud mirrors — they all
@@ -319,6 +319,14 @@ _: {
           # proxy-port:-
           root * ${root}
           file_server
+          # M10/F46 (2026-10-26): static roots no longer 404 bare — unknown
+          # paths get the same branded not-found page as the catch-alls.
+          # file_server keeps the ORIGINAL 404 status after the rewrite.
+          handle_errors 404 {
+            root * ${notFoundRoot}
+            rewrite * /index.html
+            file_server
+          }
         '';
       };
 
@@ -630,6 +638,14 @@ _: {
             (lib.concatStringsSep "\n" vhostLayerLines + "\n");
 
         services.caddy = {
+          # enableReload stays at the nixpkgs default (false), DELIBERATE
+          # (F68, 2026-10-25 deep dive): `caddy reload` cannot pick up binary
+          # or systemd env changes, and logger/output rewrites (the journald
+          # encoder switch is exactly one) are reload's flakiest surface —
+          # a switch-time full restart costs seconds on the LAN edge and
+          # guarantees the running process matches the generation. If a
+          # future change trips on restart latency, revisit per-vHost, not
+          # globally.
           # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
           # in globalConfig — do NOT add a separate `log {}` block there (collision)
           #
@@ -904,6 +920,12 @@ _: {
                       rewrite * /report.html
                       file_server
                     }
+                    # M10/F46: unknown paths get the branded 404 (was bare).
+                    handle_errors 404 {
+                      root * ${notFoundRoot}
+                      rewrite * /index.html
+                      file_server
+                    }
                   '';
                 };
               }
@@ -1085,12 +1107,18 @@ _: {
           ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           inherit onFailure;
           environment = {
-            # Edge tracing exporter (commonConfig `tracing` directive): gRPC
-            # to the local SigNoz collector. Scheme REQUIRED — caddy's
-            # exporter is otel-go otlptracegrpc, a URL parser (the 2026-08-14
-            # schemeless-endpoint startup-hang class; grpc-url expectation in
-            # otel-endpoint-audit enforces this at eval).
-            OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:${toString ports.signoz-otlp-grpc}";
+            # Edge tracing exporter (commonConfig `tracing` directive): OTLP
+            # over HTTP to the local SigNoz collector. Scheme REQUIRED —
+            # caddy's exporter is otel-go otlptracehttp, a URL parser (the
+            # 2026-08-14 schemeless-endpoint startup-hang class; http-url
+            # expectation in otel-endpoint-audit enforces this at eval).
+            # PORT CORRECTED 2026-10-26 (live battery catch): the endpoint
+            # pointed at the gRPC port :4317 — every export failed with
+            # "malformed HTTP response" (the collector answers an HTTP/1.1
+            # POST with an h2c SETTINGS frame). Caddy's tracing directive
+            # ships the HTTP exporter, so the OTLP/HTTP port :4318 is the
+            # contract; spans were DARK from gen-949 until this fix deploys.
+            OTEL_EXPORTER_OTLP_ENDPOINT = "http://localhost:${toString ports.signoz-otlp-http}";
             OTEL_SERVICE_NAME = "caddy";
           };
           unitConfig = {

@@ -86,6 +86,22 @@ let
     }
   ];
 
+  # Branded not-found page + a static root (M10/F46, caddy edge plan):
+  # replicates notFoundRoot's SHAPE — the test guards the 404 mechanism
+  # (rewrite to the page + original 404 status preserved), not the art.
+  notFoundRoot = pkgs.linkFarm "caddy-test-notfound-root" [
+    {
+      name = "index.html";
+      path = pkgs.writeText "test-404.html" "<h1>404</h1> branded-404-page";
+    }
+  ];
+  staticRoot = pkgs.linkFarm "caddy-test-static-root" [
+    {
+      name = "index.html";
+      path = pkgs.writeText "test-static-index.html" "static-index-page";
+    }
+  ];
+
   # Caddyfile replicating SystemNix auth patterns (HTTP, no TLS for testing)
   caddyfile = pkgs.writeText "Caddyfile" ''
     {
@@ -133,6 +149,20 @@ let
       handle_errors 502 503 504 {
         root * ${errRoot}
         rewrite * /{err.status_code}.html
+        file_server
+      }
+    }
+
+    # Pattern 4: static root + branded not-found (staticVHost, M10/F46).
+    # The EXACT route shape from caddy.nix staticVHost: unknown paths get
+    # the notFoundRoot page WITH the original 404 status (file_server keeps
+    # it through the rewrite), while the real index still serves 200.
+    :8084 {
+      root * ${staticRoot}
+      file_server
+      handle_errors 404 {
+        root * ${notFoundRoot}
+        rewrite * /index.html
         file_server
       }
     }
@@ -271,5 +301,21 @@ in
     assert "branded-502-page" in page, f"502 must serve the branded page, got: {page[:120]}"
     assert "{err" not in page, f"placeholder must be rewritten, got: {page[:120]}"
     print("dead-backend arm: HTTP 502 + branded page (err.status_code rewrite + status preserved)")
+
+    # 9. Static-root branded 404 (M10/F46, caddy edge plan): unknown paths on
+    #    a static root get the branded page with the ORIGINAL 404 status,
+    #    while the real index keeps serving 200.
+    ok = machine.succeed(
+        "curl -s -o /tmp/idx.html -w '%{http_code}' --max-time 8 http://127.0.0.1:8084/"
+    ).strip()
+    assert ok == "200", f"static root index must serve 200, got: {ok}"
+    nf_code = machine.succeed(
+        "curl -s -o /tmp/nf.html -w '%{http_code}' --max-time 8 http://127.0.0.1:8084/definitely-not-real"
+    ).strip()
+    assert nf_code == "404", f"unknown static path must keep the 404 status, got: {nf_code}"
+    nf = machine.succeed("cat /tmp/nf.html")
+    assert "branded-404-page" in nf, f"404 must serve the branded page, got: {nf[:120]}"
+    assert "static-index-page" not in nf, f"404 must NOT leak the static index, got: {nf[:120]}"
+    print("static-404 arm: HTTP 404 + branded page (root override + status preserved)")
   '';
 }

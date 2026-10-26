@@ -234,6 +234,10 @@ with zero script edits.
   would be circular).
 - SigNoz scrapes caddy :2019; `caddy_http_response_duration_seconds.sum`
   (dotted histogram suffix in SigNoz).
+- **Per-host cardinality receipt (F12, live 2026-10-26 post-gen-949): 32
+  distinct `host=` labels on the `caddy_http_*` families (~2.7k labelled
+  series); 0 `_other` (no unmatched-Host traffic observed). Cardinality is
+  bounded by the vHost set, not request paths.**
 - Post-deploy: auth-gateway 500/502 detection (above) + plain-vHost probe.
 
 ## Edge tracing (OpenTelemetry spans, 2026-10-25)
@@ -246,15 +250,23 @@ blocks at the time of writing). Spans carry the OTel HTTP semantic attributes
 host** (`span {http.request.host}`), so SigNoz spanmetrics cardinality stays
 bounded by the vHost count. Service name: `caddy` (`OTEL_SERVICE_NAME`).
 
-- **Exporter**: gRPC → the local SigNoz collector,
-  `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` on the caddy unit
-  (scheme REQUIRED — otel-go otlptracegrpc is a URL parser; the 2026-08-14
+- **Exporter**: OTLP over **HTTP** → the local SigNoz collector,
+  `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` on the caddy unit
+  (scheme REQUIRED — otel-go otlptracehttp is a URL parser; the 2026-08-14
   schemeless-endpoint hang class). Audited at eval time:
-  `otel-endpoint-audit` expectation `caddy = "grpc-url"`.
+  `otel-endpoint-audit` expectation `caddy = "http-url"`.
+  **PORT HISTORY (2026-10-26 battery catch):** the endpoint shipped pointed
+  at the gRPC port :4317 (the audit expectation wrongly asserted
+  otlptracegrpc) — the collector answered caddy's HTTP/1.1 POST with an
+  h2c SETTINGS frame and EVERY export failed ("malformed HTTP response"),
+  so spans were dark from gen-949 until the :4318 fix deploys. Lesson: the
+  endpoint-audit checked URL shape, not protocol-port agreement.
 - **Coverage rail**: `signoz-coverage.expected.caddy` — wiring `env`,
   26h **request-driven** budget (gatus checks hit the backends directly, NOT
   through Caddy, so spans flow on human browsing + deploy smokes; an
   overnight without requests is healthy, not dark — dnsblockd doctrine).
+  Still accurate post-`per_host`: that knob multiplies metric series per
+  vHost, never span volume (F78 re-check 2026-10-26).
 - **What this is NOT**: Caddy cannot continue trace context INTO the
   backends (no client-side instrumentation anywhere), and Forgejo itself has
   no OTel support (upstream #3972 was merged + reverted over licensing;
@@ -277,6 +289,31 @@ from the preload list if it ever breaks) and larsartmann.cloud serves only
 LAN/VPN traffic; preloading would brick non-VPN external access patterns for
 zero benefit.
 
+## Header + privacy defaults (correct by default, M18 2026-10-26)
+
+- **X-Forwarded-For is spoof-resistant**: `trusted_proxies` is unset, so
+  Caddy IGNORES any client-supplied `X-Forwarded-For`/`X-Forwarded-Proto`
+  and sets them from the immediate peer (2.5+ behavior). The LAN edge has
+  no proxy in front — the value backends receive is the real client IP.
+  Do not add `trusted_proxies` unless a real proxy lands in front.
+- **Access-log identity**: per-vHost `access-*.log` lines carry client IPs
+  (no auto-redaction — crowdsec + geometrikks need the real source); the
+  8 probe paths (`log_skip @probe`) are the only suppression. Files are
+  root/group-readable per the log roll defaults; journald runtime lines
+  need systemd-journal membership to read.
+- **Permissions-Policy** is the restrictive baseline
+  `geolocation=(), microphone=(), camera=()` on every vHost (reviewed
+  F70 2026-10-26: no vHost needs any of the three; add per-vHost only if a
+  backend ever asks).
+- **`hostOverride` users (F71 audit 2026-10-26): exactly one — bank-sync**
+  (`Host: localhost`, because the daemon's DNS-rebinding guard 403s any
+  non-localhost Host on its loopback bind). The integration-registry
+  option defaults to `null` (no rewrite) everywhere else — audit again if
+  a second user appears.
+- **`enableReload` stays false** (rationale lives as a comment next to
+  `services.caddy` in `caddy.nix`): restarts are the honest, cheap op on
+  this edge.
+
 ## Caching
 
 Caddy does no server-side caching. Its entire cache influence is header
@@ -294,6 +331,12 @@ no-store, must-revalidate`, trunk-hashed assets `immutable`), so the Caddy
 override is redundant once that upstream rev is locked + deployed — removal
 is tracked in `docs/todo/services.md`; the global `?` default remains the
 backstop for any backend that sends no cache headers.
+
+Re-check note (F67, 2026-10-26): after the row-293 override removal lands,
+re-verify WHICH surface owns the header live (`curl -sI` on
+`/ui/bootstrap.js` → upstream `immutable` on assets, Caddy default only
+where the backend is silent) — the `?` set-if-absent default must stay the
+backstop, never fight a backend that already sets `Cache-Control`.
 
 ## Feature deep dive (2026-10-25)
 

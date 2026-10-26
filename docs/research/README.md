@@ -5,6 +5,10 @@ should refresh it. Sorted newest-first. Maintained by hand — add a row when
 you add a report (the row's refresh-trigger is what keeps these from rotting;
 `checks.doc-counts` does NOT police this file yet).
 
+Doctrine (F08 errata, 2026-10-26): every audit-style deep dive MUST include
+a live-probe phase — curl the library's live API/metrics/journal surface
+before scoring a finding. Config presence proves intent, not behavior.
+
 ## Library deep dives (audit-style, scored)
 
 | Report | Date | Subject | Refresh trigger |

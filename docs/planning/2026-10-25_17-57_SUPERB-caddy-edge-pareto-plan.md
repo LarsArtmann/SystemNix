@@ -17,6 +17,8 @@
 
 Verified still open at authoring (17:57): `per_host` absent, no `handle_errors 502`, no journald encoder in `modules/nixos/services/caddy.nix`. Git tree clean at HEAD `8740dba10`+.
 
+**ERRATA (F08, recorded 2026-10-26 during execution):** the source deep dive audited config surfaces only — its findings were scored without a live-probe leg (live `:2019/metrics` needs a `Host: localhost:2019` header no config read reveals; SigNoz dashboard convergence needed the v2 API). Future library deep dives MUST carry a live-probe phase: curl the live API/metrics/journal surface before scoring a finding — config presence proves intent, not behavior. Doctrine now lives in `docs/research/README.md` (refresh-trigger note) and this errata.
+
 ## Decision gates (owner answers required — g1–g3 from the status report)
 
 - **G1 (gates M15):** harvest approved tasks into `TODO_LIST.md` + domain libs now, or keep plan-file-only?

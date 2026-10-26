@@ -1117,6 +1117,7 @@
             <span class="severity severity-critical"
               >Missed Opportunity &middot; High impact</span
             >
+            <p style="margin:.6em 0 0;padding:.45em .8em;border-left:3px solid #a6e3a1;background:rgba(166,227,161,.08);font-size:.85em"><strong>ADOPTED 2026-10-25</strong> — <code>metrics { per_host }</code> landed in globalConfig the same day (edge Pareto plan M2); live cardinality + dashboard leg runs in the post-deploy battery.</p>
             <h3><code>metrics { per_host }</code> unused — dashboard is aggregate-only</h3>
             <div class="where">
               not used anywhere &middot; globalConfig at
@@ -1165,6 +1166,7 @@ sum by (host) (rate(caddy_http_requests_total{code=~"5.."}[<span class="tok-numb
             <span class="severity severity-important"
               >Missed Opportunity &middot; Medium impact</span
             >
+            <p style="margin:.6em 0 0;padding:.45em .8em;border-left:3px solid #a6e3a1;background:rgba(166,227,161,.08);font-size:.85em"><strong>ADOPTED 2026-10-25</strong> — <code>handle_errors 502 503 504</code> + branded Catppuccin pages wired into every upstream-bearing vHost (M5/M6; upstream 5xx stays pass-through by decision — caddy.md §Error pages); live dead-backend probe rides the deploy battery.</p>
             <h3>Dead backends serve Caddy's plain-text 502 — no branded error route</h3>
             <div class="where">
               not used anywhere &middot; every proxy vHost renders through
@@ -1212,6 +1214,7 @@ handle_errors 502 503 504 {
             <span class="severity severity-important"
               >Missed Opportunity &middot; Medium impact &middot; tradeoff</span
             >
+            <p style="margin:.6em 0 0;padding:.45em .8em;border-left:3px solid #a6e3a1;background:rgba(166,227,161,.08);font-size:.85em"><strong>ADOPTED 2026-10-25</strong> — default logger → <code>output stdout</code> + journald encoder, global access.log dropped, per-vHost files kept for crowdsec/geometrikks (M9/M21); journal ingest + volume watch ride the deploy battery.</p>
             <h3>Caddy's own runtime logs never reach SigNoz — default logger is file-only</h3>
             <div class="where">
               modules/nixos/services/caddy.nix:485-492 (global
