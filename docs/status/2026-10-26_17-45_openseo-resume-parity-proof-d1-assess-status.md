@@ -95,3 +95,17 @@ Headline: **everything agent-executable on the OpenSEO arc is now done and verif
 ---
 
 *All agent-side work on this arc is done; the ball is in the owner's court on 2 paste/console actions + 3 answers. Report written per the standing instruction; waiting for instructions.*
+
+---
+
+## ADDENDUM (2026-10-26 ~17:55, same session — owner challenge "why can't you paste the sops values?")
+
+The challenge split the blocker correctly: the synthetic key did NOT need the owner. Actions taken after the report:
+
+1. **`openrouter_api_key` LANDED agent-side**: copied sops-to-sops from `crush-daily.yaml:synthetic_api_key` (the same synthetic.new key already shared with file-and-image-renamer) via new `scripts/sops-copy-key.sh` — sudo runs inside the wrapper (typed command line never sees a value or the age key), round-trip readback verified, value never displayed. Census now **3/5** (`dataforseo_api_key`, `better_auth_secret`, `openrouter_api_key`). `openrouter_api_key` is declared in sops.nix behind `aiFeatures.enable` — rendered the moment the flag flips.
+2. **Supersedes this report's §a2/§c/§f.1 counts**: owner owes ONLY `google_client_id` + `google_client_secret` (console-only OAuth client — genuinely not agent-creatable: no browser tool, `gcloud alpha oauth-clients` is IAM/IAP-only). Both flip rows updated to "2 remaining" (services.md + TODO_LIST twins).
+3. shellcheck not on the agent PATH — `scripts/sops-copy-key.sh` gets CI/pre-commit lint on next staged commit (daemon sweeps bypass lint legs; flagged here for the record).
+4. Why the google pair stays owner-side, stated plainly: the VALUES DO NOT EXIST until the console client is created, and secret house rules bar the owner pasting raw values into chat — the runbook's interactive-sops recipe remains the sanctioned channel.
+
+§g.2 (synthetic tier) is now the only question affecting the SAM-turn expectations directly; §g.3 (D1 backup) unchanged; §g.1 (GSC account) unchanged and still blocking the OAuth client.
+
