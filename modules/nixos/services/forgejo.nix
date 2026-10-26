@@ -1298,6 +1298,16 @@ _: {
         systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
+          # wantedBy forgejo.service, NOT the nixpkgs default multi-user.target:
+          # a long-running unit in multi-user.wants gets an implicit
+          # Before=multi-user.target, which together with after=forgejo here and
+          # forgejo's dnsGate After=multi-user (lib/default.nix mkDnsGate) formed
+          # an ordering cycle — systemd deleted this unit's start job on EVERY
+          # boot/switch (2026-10-25 boot: dead ~11h; 2026-10-26 deploys: restart
+          # start-leg eaten, runner left dead). The explicit After=forgejo
+          # suppresses the implicit before-edge under forgejo.wants — the same
+          # reason forgejo-oidc-setup (also after+wantedBy forgejo) never cycles.
+          wantedBy = lib.mkForce [ "forgejo.service" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           # Same inert-until-finalized gate as the rest of the stateful family:
