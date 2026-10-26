@@ -8,10 +8,13 @@
 # The graph models systemd's ACTUAL transaction semantics:
 #   1. Explicit edges: after=/before= (attr-level and unitConfig-level —
 #      both render into [Unit] After=/Before=).
-#   2. Implicit edges: a unit in a target's wants/requires gets an implicit
-#      Before=<target> (the target's completion waits for its members) —
-#      this is what puts plain multi-user-wanted services on the boot
-#      critical chain.
+#   2. Implicit edges: a unit in a target's wants/requires/wantedBy gets an
+#      implicit Before=<target> (the target's completion waits for its
+#      members) — this is what puts plain multi-user-wanted services on the
+#      boot critical chain. wantedBy is NOT reflected into
+#      config.systemd.targets.<t>.wants at eval (install symlinks are a
+#      build-time artifact — the first negative-test leg passed vacuously
+#      before memberships were derived from each unit's own wantedBy).
 #   3. Suppression: the implicit edge is NOT added when an explicit ordering
 #      already exists between the pair in either direction (live-verified
 #      2026-10-26: the runner fix — wantedBy=forgejo + After=forgejo —
@@ -19,6 +22,11 @@
 #      cycle). This is the sanctioned "wanted by X but starts after X"
 #      idiom; late-applications.target is the graph's single sanctioned
 #      carrier of After=multi-user.target.
+#
+# NAMES: config.systemd.* keys are suffix-less ("forgejo") while every
+# directive value is a full unit name ("forgejo.service") — all nodes and
+# edges are normalized to FULL unit names, and directive refs without a
+# known suffix are resolved by appending the unit-type suffixes.
 #
 # Edges to units absent from config.systemd.* (foreign/typo names) are
 # dropped: they cannot participate in a cycle systemd would break.
@@ -30,17 +38,37 @@
       ...
     }:
     let
-      # Every unit type that participates in start ordering. NOTE:
-      # config.systemd.mounts is a LIST upstream (units keyed by `where`
-      # elsewhere) — mount units are not modeled; edges to them are dropped.
+      suffixes = [
+        ".service"
+        ".target"
+        ".timer"
+        ".path"
+        ".socket"
+      ];
+      hasKnownSuffix = n: builtins.any (s: lib.hasSuffix s n) suffixes;
+
+      # setName -> unit suffix for config.systemd.<setName> keys.
       unitSets = {
-        inherit (config.systemd)
-          services
-          targets
-          timers
-          paths
-          sockets
-          ;
+        services = {
+          suffix = ".service";
+          units = config.systemd.services;
+        };
+        targets = {
+          suffix = ".target";
+          units = config.systemd.targets;
+        };
+        timers = {
+          suffix = ".timer";
+          units = config.systemd.timers;
+        };
+        paths = {
+          suffix = ".path";
+          units = config.systemd.paths;
+        };
+        sockets = {
+          suffix = ".socket";
+          units = config.systemd.sockets;
+        };
       };
 
       # unitConfig.* directives may be space-separated strings (systemd
@@ -51,11 +79,11 @@
         if builtins.isList x then
           x
         else if builtins.isString x then
-          lib.filter (v: v != "") (lib.split " " x)
+          builtins.filter (v: v != "") (builtins.split " " x)
         else
           [ ];
 
-      # unitName -> { after = [...]; before = [...]; } — explicit directives
+      # fullName -> { after = [...]; before = [...]; } — explicit directives
       # only, ENABLED units only (disabled units keep their attr with
       # enable=false but never exist at runtime — modeling them creates
       # phantom cycles).
@@ -66,32 +94,41 @@
             builtins.foldl' (
               acc2: name:
               let
-                u = set.${name};
+                u = set.units.${name};
+                full = if hasKnownSuffix name then name else name + set.suffix;
                 after = asList (u.after or [ ]) ++ asList (u.unitConfig.After or [ ]);
                 before = asList (u.before or [ ]) ++ asList (u.unitConfig.Before or [ ]);
               in
-              if (u.enable or true) == false then acc2 else acc2 // { ${name} = { inherit after before; }; }
-            ) acc (builtins.attrNames set);
+              if (u.enable or true) == false then acc2 else acc2 // { ${full} = { inherit after before; }; }
+            ) acc (builtins.attrNames set.units);
         in
         builtins.foldl' merge { } (builtins.attrValues unitSets);
 
-      # name -> [unitName it must start AFTER] — explicit edges only,
-      # restricted to known units, deduped.
+      # Resolve a directive ref to a known node, appending unit-type
+      # suffixes when the ref is suffix-less ("forgejo" -> "forgejo.service").
+      resolve =
+        ref:
+        if explicitGraph ? ${ref} then
+          ref
+        else
+          let
+            candidates = builtins.filter (s: explicitGraph ? ${ref + s}) suffixes;
+          in
+          if candidates == [ ] then ref else ref + builtins.head candidates;
+
+      # fullName -> [fullName it must start AFTER] — explicit edges only,
+      # resolved, restricted to known units, deduped.
       explicitAfterGraph = builtins.mapAttrs (
         name: u:
         let
           strings = xs: builtins.filter builtins.isString xs;
+          resolved = map resolve ((strings u.after) ++ (strings u.before));
         in
-        lib.unique (
-          (builtins.filter (x: builtins.hasAttr x explicitGraph && x != name) (strings u.after))
-          ++ (builtins.filter (x: builtins.hasAttr x explicitGraph && x != name) (strings u.before))
-        )
+        lib.unique (builtins.filter (x: x != name && explicitGraph ? ${x}) resolved)
       ) explicitGraph;
 
-      # wantedBy is NOT reflected into config.systemd.targets.<t>.wants at
-      # eval (it only generates install symlinks at build time — proven by
-      # the first negative-test leg passing vacuously). Derive memberships
-      # from every unit's own wantedBy instead: target -> [member units].
+      # target -> [member units] from every unit's own wantedBy (enabled
+      # units only). Full names on both sides by construction.
       wantedMemberships =
         let
           add =
@@ -99,44 +136,54 @@
             builtins.foldl' (
               acc2: name:
               let
-                u = set.${name};
+                u = set.units.${name};
+                full = if hasKnownSuffix name then name else name + set.suffix;
                 wb = asList (u.wantedBy or [ ]);
               in
               if (u.enable or true) == false then
                 acc2
               else
-                builtins.foldl' (acc3: t: acc3 // { ${t} = (acc3.${t} or [ ]) ++ [ name ]; }) acc2 wb
-            ) acc (builtins.attrNames set);
+                builtins.foldl' (acc3: t: acc3 // { ${t} = (acc3.${t} or [ ]) ++ [ full ]; }) acc2 wb
+            ) acc (builtins.attrNames set.units);
         in
         builtins.foldl' add { } (builtins.attrValues unitSets);
 
       # Implicit target-membership edges: member m of target T (via
       # wants/requires/wantedBy) → "T after m", unless an explicit ordering
       # between m and T already exists in either direction (suppression).
-      targetMemberEdges = lib.mapAttrs (
-        tName: t:
+      targetMemberEdges =
         let
-          members = lib.unique (
-            asList (t.wants or [ ]) ++ asList (t.requires or [ ]) ++ (wantedMemberships.${tName} or [ ])
-          );
-          tAfter = asList (t.after or [ ]) ++ asList (t.unitConfig.After or [ ]);
-          tBefore = asList (t.before or [ ]) ++ asList (t.unitConfig.Before or [ ]);
-          explicitPair =
-            m:
-            builtins.any (a: a == tName) (explicitGraph.${m}.after or [ ])
-            || builtins.any (b: b == tName) (explicitGraph.${m}.before or [ ])
-            || builtins.elem m tAfter
-            || builtins.elem m tBefore;
+          targets = config.systemd.targets;
         in
-        builtins.filter (
-          m: builtins.isString m && m != tName && builtins.hasAttr m explicitGraph && !explicitPair m
-        ) members
-      ) config.systemd.targets;
+        lib.mapAttrs (
+          rawName: t:
+          let
+            tName = if hasKnownSuffix rawName then rawName else rawName + ".target";
+            rawMembers =
+              asList (t.wants or [ ]) ++ asList (t.requires or [ ]) ++ (wantedMemberships.${tName} or [ ]);
+            members = map resolve (builtins.filter builtins.isString rawMembers);
+            tAfter = map resolve (asList (t.after or [ ]) ++ asList (t.unitConfig.After or [ ]));
+            tBefore = map resolve (asList (t.before or [ ]) ++ asList (t.unitConfig.Before or [ ]));
+            explicitPair =
+              m:
+              builtins.any (a: a == tName) (explicitGraph.${m}.after or [ ])
+              || builtins.any (b: b == tName) (explicitGraph.${m}.before or [ ])
+              || builtins.elem m tAfter
+              || builtins.elem m tBefore;
+          in
+          builtins.filter (
+            m: m != tName && explicitGraph ? ${m} && !explicitPair m
+          ) members
+        ) targets;
 
       fullAfterGraph =
         explicitAfterGraph
         // builtins.mapAttrs (
-          tName: _explicit: lib.unique (explicitAfterGraph.${tName} ++ (targetMemberEdges.${tName} or [ ]))
+          rawName: _explicit:
+          let
+            tName = if hasKnownSuffix rawName then rawName else rawName + ".target";
+          in
+          lib.unique (explicitAfterGraph.${tName} ++ (targetMemberEdges.${rawName} or [ ]))
         ) config.systemd.targets;
 
       # DFS cycle detection. visit returns { cycle; visited; } — cycle is a
@@ -165,12 +212,12 @@
                     visited = acc.visited // sub.visited;
                   };
             in
-            builtins.foldl' step {
-              cycle = [ ];
-              visited = {
-                ${node} = true;
-              };
-            } nexts;
+            builtins.foldl' step
+              {
+                cycle = [ ];
+                visited = { ${node} = true; };
+              }
+              nexts;
 
           iterate =
             black: rootList:
@@ -200,12 +247,14 @@
       # boot-blocking shape the 2026-10-18 audit existed to prevent
       # (miniflux 91s on the boot-0 critical chain). Such units belong in
       # late-applications themselves.
-      lateSet = builtins.listToAttrs (
-        map (m: {
-          name = m;
-          value = true;
-        }) ((targetMemberEdges."late-applications.target" or [ ]) ++ [ "late-applications.target" ])
-      );
+      lateSet =
+        builtins.listToAttrs
+          (
+            map (m: {
+              name = m;
+              value = true;
+            }) ((targetMemberEdges."late-applications" or [ ]) ++ [ "late-applications.target" ])
+          );
 
       reachSet =
         start:
@@ -219,21 +268,18 @@
                 n = builtins.head frontier;
                 nexts = builtins.filter (x: !acc ? ${x}) (fullAfterGraph.${n} or [ ]);
               in
-              go (builtins.tail frontier ++ nexts) (
-                acc
-                // (builtins.listToAttrs (
-                  map (x: {
-                    name = x;
-                    value = true;
-                  }) nexts
-                ))
-              );
+              go
+                (builtins.tail frontier ++ nexts)
+                (acc // (builtins.listToAttrs (map (x: {
+                  name = x;
+                  value = true;
+                }) nexts)));
         in
         go [ start ] { ${start} = true; };
 
       bootBlockers =
         let
-          members = targetMemberEdges."multi-user.target" or [ ];
+          members = targetMemberEdges."multi-user" or [ ];
           offender =
             m:
             let
@@ -252,7 +298,7 @@
           }
           {
             assertion = bootBlockers == [ ];
-            message = "ordering-cycle-audit: multi-user-wanted units transitively ordered after late-applications members drag their readiness waits back into the boot transaction (the 2026-10-18 miniflux-91s critical-chain class): ${lib.concatStringsSep "; " bootBlockers}. Move them to wantedBy = [ \"late-applications.target\" ] (modules/nixos/services/late-applications.nix).";
+            message = "ordering-cycle-audit: multi-user-wanted units transitively ordered after late-applications members drag their readiness waits back into the boot transaction (the 2026-10-18 miniflux-91s critical-chain class): ${lib.concatStringsSep \"; \" bootBlockers}. Move them to wantedBy = [ \"late-applications.target\" ] (modules/nixos/services/late-applications.nix).";
           }
         ];
       };
