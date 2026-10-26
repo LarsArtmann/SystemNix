@@ -76,7 +76,7 @@ Forced-fire evidence tool: `scripts/monitor365-backup-fire.sh` (self-elevates; p
 
 **Current state: the whole stack is QUIESCED and must stay that way until the fixed server deploys.** Watchdog timer stopped 23:10:48, server killed 23:11:04 (`failed` state), agent inactive. Live-verified: zero system cgroup IO post-quiesce (the ~430 GB evening bursts stopped with it). Do NOT just restart the units — the storm's fuel is still loaded (380M-event agent backlog on the pool, broken code on the deployed server): a restart re-enters the loop within minutes.
 
-**Root cause chain (five interlocking, all verified live + source-read at the deployed rev `77b4a3ae`):**
+**Root cause chain (five interlocking; first-hand this session at the deployed rev `77b4a3ae`: items 2 and 5 plus the gen_app Binder cadence and the quiesce timeline — ADOPTED from the parallel session's live probes without independent re-verification: items 1, 3, and the migration-runner DEBUG-logging limitation):**
 
 1. **Per-upload `MAX(sequence)` full-table scan** — every upload runs an `UNGROUPED_AGGREGATE` over ~all 200M events rows (`idx_events_tenant_sequence` unused); 1.4-2.6 s server time per POST.
 2. **Agent batch_size=100 amplification** — `monitor365 init/pair` writes `batch_size = 100` (upstream default, settings.nix) → 50K-event sync cycle = ~500 POSTs. SystemNix fix landed: `batch_size = mkDefault 5000` in monitor365.nix (inert until the agent starts).
