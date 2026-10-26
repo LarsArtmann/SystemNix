@@ -1306,21 +1306,22 @@
         expected = import ./flake/expected-locks.nix;
       };
       lockFloatGateError =
-        if lockFloatViolations == [ ]
-        then null
-        else ''
-          flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
-            ${lib.concatStringsSep "\n  " lockFloatViolations}
-          A blanket `nix flake update` is not landable as-is. Float procedure
-          (automated by `nix run .#float-register`, wired into nix run .#deploy):
-          1. regenerate flake/expected-locks.nix (rederive command in its header) — the regeneration is
-             mechanical (derived from flake.lock), never hand-edited.
-          2. prove: nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
-             (capture the log to a file — piping through tail masks every root failure)
-          3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
-             Proof RED? Fix the roots upstream-first, or revert that input's registry row AND its
-             lock rev together. Never commit an unproven float, never delete rows to go green.
-        '';
+        if lockFloatViolations == [ ] then
+          null
+        else
+          ''
+            flake.lock lock-float audit failed (revs drifted from flake/expected-locks.nix):
+              ${lib.concatStringsSep "\n  " lockFloatViolations}
+            A blanket `nix flake update` is not landable as-is. Float procedure
+            (automated by `nix run .#float-register`, wired into nix run .#deploy):
+            1. regenerate flake/expected-locks.nix (rederive command in its header) — the regeneration is
+               mechanical (derived from flake.lock), never hand-edited.
+            2. prove: nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link
+               (capture the log to a file — piping through tail masks every root failure)
+            3. commit flake.lock + registry TOGETHER — the registry history is the float audit log.
+               Proof RED? Fix the roots upstream-first, or revert that input's registry row AND its
+               lock rev together. Never commit an unproven float, never delete rows to go green.
+          '';
       # Lazy host-config gate: the wrapped import (and the drift check inside)
       # is forced only when something actually EVALUATES a host configuration
       # (build / flake check) — app evals skip it entirely.
@@ -1381,41 +1382,49 @@
       flake = {
         lib = import ./lib { inherit (nixpkgs) lib; };
 
-        darwinConfigurations."Lars-MacBook-Air" = lockFloatGated (import ./systems/darwin.nix {
-          inherit
-            inputs
-            mkLarsPackages
-            sharedOverlays
-            sharedHomeManagerConfig
-            sharedHomeManagerSpecialArgs
-            ;
-        });
+        darwinConfigurations."Lars-MacBook-Air" = lockFloatGated (
+          import ./systems/darwin.nix {
+            inherit
+              inputs
+              mkLarsPackages
+              sharedOverlays
+              sharedHomeManagerConfig
+              sharedHomeManagerSpecialArgs
+              ;
+          }
+        );
 
-        nixosConfigurations."evo-x2" = lockFloatGated (import ./systems/evo-x2.nix {
-          inherit
-            inputs
-            mkLarsPackages
-            sharedOverlays
-            linuxOnlyOverlays
-            pythonTest
-            discoveredModules
-            sharedHomeManagerConfig
-            sharedHomeManagerSpecialArgs
-            ;
-        });
+        nixosConfigurations."evo-x2" = lockFloatGated (
+          import ./systems/evo-x2.nix {
+            inherit
+              inputs
+              mkLarsPackages
+              sharedOverlays
+              linuxOnlyOverlays
+              pythonTest
+              discoveredModules
+              sharedHomeManagerConfig
+              sharedHomeManagerSpecialArgs
+              ;
+          }
+        );
 
-        nixosConfigurations."zfs-vm" = lockFloatGated (import ./systems/zfs-vm.nix {
-          inherit inputs;
-        });
+        nixosConfigurations."zfs-vm" = lockFloatGated (
+          import ./systems/zfs-vm.nix {
+            inherit inputs;
+          }
+        );
 
-        nixosConfigurations."rpi3-dns" = lockFloatGated (import ./systems/rpi3-dns.nix {
-          inherit
-            inputs
-            linuxOnlyOverlays
-            sharedHomeManagerConfig
-            sharedHomeManagerSpecialArgs
-            ;
-        });
+        nixosConfigurations."rpi3-dns" = lockFloatGated (
+          import ./systems/rpi3-dns.nix {
+            inherit
+              inputs
+              linuxOnlyOverlays
+              sharedHomeManagerConfig
+              sharedHomeManagerSpecialArgs
+              ;
+          }
+        );
       };
     };
 }
