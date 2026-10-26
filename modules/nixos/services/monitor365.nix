@@ -329,6 +329,13 @@
               cloud = lib.mkIf serverCfg.enable {
                 endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
                 sync_interval_seconds = lib.mkDefault 60;
+                # Upstream default is 100 (nix/lib/settings.nix batch_size option
+                # + the init/pair TOML template) = 50× request amplification: a
+                # 50K-event sync cycle fires 500 POSTs, each hitting the server's
+                # per-append event scan. 5000 = 10 POSTs for the same cycle.
+                # Inert until the agent unit starts again (stack quiesced
+                # 2026-10-26). 2026-10-26 IO-storm triage.
+                batch_size = lib.mkDefault 5000;
                 authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
               };
             };
