@@ -538,3 +538,33 @@ Known gaps (queued in `docs/todo/services.md`):
 - The push-mirror credential is the sops `GITHUB_TOKEN` (repo scope). A repo
   that gains `.github/workflows/*` gets its mirror pushes rejected for missing
   `workflow` scope — the class that froze `domains` for 96 commits.
+
+## Runner boot ordering-cycle — start job deleted on every boot/switch (2026-10-25/26)
+
+The runner "dying all the time" was a systemd ordering-cycle deadlock, not a
+crash: three ordering edges formed a loop and the cycle-breaker deleted the
+runner's start job from EVERY boot/switch transaction.
+
+1. runner `After=forgejo.service` (forgejo.nix — deliberate: the
+   `forgejo-gen-runner-token` ExecStartPre needs the forgejo API up).
+2. forgejo `After=multi-user.target` — injected by `mkDnsGate`
+   (lib/default.nix, the 2026-10-18 "application readiness, never a boot
+   gate" audit).
+3. runner `Before=multi-user.target` — implicit: the nixpkgs module defaults
+   `wantedBy = [ "multi-user.target" ]`, and a long-running unit in a
+   target's `.wants` is ordered BEFORE that target (multi-user waits for it;
+   caddy carries the same edge).
+
+Loop: multi-user/start → runner/start → forgejo/start → multi-user/start.
+First boot carrying edge 2 was 2026-10-25 22:23 → runner dead ~11h (journal:
+"Job gitea-runner-evo\x2dx2.service/start deleted to break ordering cycle").
+Deploy switches hit the same transaction: the restart job lost its START leg
+(2026-10-26 20:00:18 gen-953 switch: stop executed, start deleted — runner
+left dead; each restart also force-cancelled in-flight CI tasks because the
+runner's `shutdown_timeout=0s`).
+
+Fix (2026-10-26, forgejo.nix): `wantedBy = lib.mkForce [ "forgejo.service" ]`
+— the family pattern (forgejo-oidc-setup et al.). An explicit `After=` on the
+wanted target suppresses the implicit before-edge, so the chain is acyclic:
+multi-user → forgejo → runner. Verify after next boot: journal must NOT
+contain "deleted to break ordering cycle" for this unit.
