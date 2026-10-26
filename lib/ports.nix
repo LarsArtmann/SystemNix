@@ -42,7 +42,10 @@
     signoz-clickhouse-http = 8123;
     signoz-clickhouse-metrics = 9363;
     signoz-clickhouse-keeper = 9181;
-    signoz-clickhouse-raft = 9234;
+    # Moved 9234 → 9239 (2026-10-26): opencloud's embedded NATS binds the
+    # ocis-default loopback 9234 and opencloud 7.2.4 ignores NATS_PORT, so
+    # keeper raft moved rather than fighting the binary default.
+    signoz-clickhouse-raft = 9239;
 
     taskchampion = 10222;
 
@@ -78,6 +81,12 @@
     papdashboard = 8088;
 
     searxng = 8889;
+
+    # journal (Hauptbuch dashboard) — `journal serve` systemd unit binds
+    # loopback ONLY (upstream refuses non-loopback until T16 auth); the
+    # registry vHost (journal.home.lan, protected layer) fronts it via
+    # oauth2-proxy on the same host. Upstream CLI default, now deploy-owned.
+    journalServe = 8484;
 
     attic = 8200;
 
@@ -193,9 +202,9 @@
     # proxies cloud.home.lan to it.
     opencloud = 9200;
 
-    # OpenCloud's embedded NATS JetStream — loopback. The ocis default 9234
-    # collides with signoz-clickhouse-raft above (first-deploy bind failure,
-    # 2026-10-26); 9233 sits below ocis's own 9235+ internal gRPC band.
-    opencloud-nats = 9233;
+    # OpenCloud's embedded NATS JetStream — the ocis internal default
+    # (loopback). Registered so the 9234 listener has an owner of record;
+    # NATS_PORT is a NO-OP in opencloud 7.2.4 (verified live 2026-10-26).
+    opencloud-nats = 9234;
   };
 }

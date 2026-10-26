@@ -113,14 +113,6 @@ _: {
             # default-role fallback must stay off (upstream recommendation).
             GRAPH_ASSIGN_DEFAULT_USER_ROLE = "false";
 
-            # ── internal service port (collision fix, 2026-10-26) ──
-            # ocis defaults its embedded NATS to 127.0.0.1:9234 which
-            # collides with signoz-clickhouse-raft: first deploy died as
-            # bind-failure → supervisor 5-strike → systemd start-limit-hit.
-            # 9233 stays clear of ocis's own 9235+ internal gRPC band;
-            # server and in-process clients share this one config value.
-            NATS_PORT = toString ports.opencloud-nats;
-
             # ── webfinger client discovery (defaults made explicit) ──
             # `groups` appended on every client: the role mapping reads the
             # groups claim from the user's token — a client that does not
