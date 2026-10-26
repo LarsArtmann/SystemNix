@@ -211,11 +211,15 @@ lib.filterAttrs (_: v: v != null) {
     flakePkgShim inputs.golangci-lint-auto-configure "default"
       "sha256-0VvVtsy3kjSoqtplM9p6SwR+OMRwVwKqOa5DI9NeCnE=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
-  # reconciliation, VAT). Pure interactive tool: no daemon, no port, no
-  # service module. Upstream repo is PRIVATE (github: input + CI deploy
-  # key, see flake.nix). Non-follower class: builds under its own lock —
-  # probe-verified 2026-10-19 (ba60fe0d, no shim needed). Rides PATH via
-  # base.nix attrValues (both hosts) + the quick-go §11 pre-deploy batch.
+  # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`,
+  # 127.0.0.1:8484, loopback-ONLY until upstream T16 passkey auth — serve
+  # refuses non-loopback binds; no daemon unit, deliberately — upstream T23
+  # module shape is open owner question g-2, runbook). No port-registry
+  # entry: 8484 is upstream's CLI default, not a deployed unit's port.
+  # Upstream repo is PRIVATE (github: input + CI deploy key, see flake.nix).
+  # Non-follower class: builds under its own lock — probe-verified
+  # 2026-10-19 (ba60fe0d, no shim needed). Rides PATH via base.nix
+  # attrValues (both hosts) + the quick-go §11 pre-deploy batch.
   journal = flakePkg inputs.journal;
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,

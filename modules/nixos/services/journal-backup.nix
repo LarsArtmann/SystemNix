@@ -1,8 +1,10 @@
 # Runbook: docs/services/journal.md
 # journal-backup — nightly GoBD backup of the accounting kernel's books.
 #
-# journal is an interactive CLI by design (no daemon, no port, no vHost —
-# runbook); the ONLY deployment-owned operational piece is this timer,
+# journal is CLI-first by design (no daemon UNIT, no port-registry entry,
+# no vHost — runbook; its optional web dashboard is `journal serve`, a
+# loopback-only user-run command, upstream T23 decides any future unit);
+# the ONLY deployment-owned operational piece is this timer,
 # assigned to the NixOS side by the journal repo's own month-end runbook:
 # "A systemd timer for the nightly run belongs to the deployment (NixOS
 # module)". The run is `journal backup --out backups/journal-$(date +%F).db
