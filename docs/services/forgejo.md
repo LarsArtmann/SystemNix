@@ -568,3 +568,35 @@ Fix (2026-10-26, forgejo.nix): `wantedBy = lib.mkForce [ "forgejo.service" ]`
 wanted target suppresses the implicit before-edge, so the chain is acyclic:
 multi-user → forgejo → runner. Verify after next boot: journal must NOT
 contain "deleted to break ordering cycle" for this unit.
+
+### Resolution + class fix (2026-10-26 late evening)
+
+The instance fix went LIVE in gen-954 (22:55) and the same class bit three
+more units at that switch (geometrikks, crowdsec-bouncer-register, crowdsec
+— chain `geometrikks ← bouncer-register ← crowdsec ← crowdsec-prereq ←
+gate After=multi-user`). All four downed units were manually started 23:37
+(script-internal sudo; runner poller launched, picked up queued CI tasks
+199-201, geometrikks streaming, bouncer converged).
+
+Class fix (owner: "fix it properly"): the root shape — `after =
+[ "multi-user.target" ]` on gate builders and hand-rolled post-gate units —
+was replaced by `late-applications.target`
+(modules/nixos/services/late-applications.nix): the graph's SINGLE
+After=multi-user carrier. Migrated units (wantedBy → late-applications,
+backward edge dropped): forgejo, gatus, oauth2-proxy, miniflux,
+miniflux-oidc-setup (→ wantedBy miniflux.service, family pattern),
+browser-history, crowdsec, crowdsec-bouncer-register, geometrikks, searx,
+hermes, hermes-github-verify, llama-chat, netbird-evox2-login,
+tq-agent-pool (mkForce over upstream), boot-metrics-emit (after → late,
+timer-driven). Gate builders mkDnsGate/mkOidcGate no longer emit the edge.
+
+Enforcement: `modules/nixos/services/ordering-cycle-audit.nix` (eval-time:
+full-graph cycle detection with implicit target-membership edges +
+suppression modeling, plus a boot-blocker reachability check) with
+negative-test legs (`scripts/negative-test-lints.sh` group
+`orderingcycle`) and a runtime tripwire (post-deploy-check §21: journal
+grep for `deleted to break ordering cycle` + runner-activity canary).
+Full doctrine: docs/agents/systemd.md → "Boot critical-path discipline".
+Boot-time verify still pending at authoring time (no reboot since the fix
+landed; next boot must show zero cycle deletions and a runner pulled via
+forgejo.service.wants).
