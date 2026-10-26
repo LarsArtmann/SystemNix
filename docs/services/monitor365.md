@@ -71,3 +71,21 @@ The wrapper (`monitor365-server-backup.service`, quiesced slot) now does: stop w
 Sandbox lesson (first fire 17:13): `runuser -u monitor365-server` from the hardened root unit fails `cannot set user id: Operation not permitted` — CAP_SETUID present, @setuid inside the @system-service filter, still EPERM. The CHECKPOINT therefore runs as ROOT with a `chown -R monitor365-server:monitor365-server "$STATE_DIR"` net right after (root-owned WAL/tmp residue is the hazard; a clean checkpoint deletes the WAL anyway — root-run duckdb is the pattern the index rebuild already proved live-safe).
 
 Forced-fire evidence tool: `scripts/monitor365-backup-fire.sh` (self-elevates; pre/post state, journal excerpts). Prune warning: partial corpses (`*.backup_2026102[45]*`, ~7-8 GB) sit NEWER than several good rungs — count-based retention (KEEP=7) will NOT select them out; remove deliberately.
+
+## IO storm: root cause, quiesce, ship-path (2026-10-26 evening)
+
+**Current state: the whole stack is QUIESCED and must stay that way until the fixed server deploys.** Watchdog timer stopped 23:10:48, server killed 23:11:04 (`failed` state), agent inactive. Live-verified: zero system cgroup IO post-quiesce (the ~430 GB evening bursts stopped with it). Do NOT just restart the units — the storm's fuel is still loaded (380M-event agent backlog on the pool, broken code on the deployed server): a restart re-enters the loop within minutes.
+
+**Root cause chain (five interlocking, all verified live + source-read at the deployed rev `77b4a3ae`):**
+
+1. **Per-upload `MAX(sequence)` full-table scan** — every upload runs an `UNGROUPED_AGGREGATE` over ~all 200M events rows (`idx_events_tenant_sequence` unused); 1.4-2.6 s server time per POST.
+2. **Agent batch_size=100 amplification** — `monitor365 init/pair` writes `batch_size = 100` (upstream default, settings.nix) → 50K-event sync cycle = ~500 POSTs. SystemNix fix landed: `batch_size = mkDefault 5000` in monitor365.nix (inert until the agent starts).
+3. **380M-event backlog that never acks** — uploads 500 (pool of 5 exhausted by the scans) → circuit breaker → `delete_acked` never runs → the agent re-reads and re-uploads forever (`cloud_sync_events_uploaded_from_store 0`).
+4. **gen_* migrations NEVER applied** — DuckDB cannot ADD generated columns after table creation; migrations 020-024 were no-ops forever and the runner logs failures at DEBUG → `Binder Error: Table "e" does not have a column named "gen_app"` every 5-min fast loop (app_usage_refresh) for weeks.
+5. **Watchdog restart churn** — 33 restarts/24h (health 000 during scans + pool-error grep), each start = WAL replay + `bg.cleanup` first cycle where `cleanup_cycle == 0 % 24` fires the FULL MV refresh (full-table COUNT) → the "daily" scan ran at EVERY start.
+
+**Fixes implemented upstream** (~/projects/monitor365, unpushed at session time — see that repo's `docs/status/2026-10-26_23-24_live-io-storm-root-cause-and-fixes.md`): per-tenant sequence watermark (O(1) append), gen_* removal → inline json_extract_string, dmesg probe-once latch (kills the SIGSYS coredump/min), window_focused display gate (kills the xdotool loop), count-cache TTL 30s→600s.
+
+**Ship path:** their session finishes verification gates → commit + push → SystemNix flake lock bump → deploy → THEN decide un-quiesce (owner call: agent start re-fires the 380M backlog drain; max_events_per_day cap still unverified — restore a sane cap BEFORE any agent restart per the governor section above).
+
+Still open: DuckDB relocation off the QLC root (hot-tier pattern), the `cleanup_cycle` startup full-refresh upstream fix (docs/todo/upstream.md), the `/health` 308 repoint, schema-migrate hack removal (blocked behind the cap decision).
