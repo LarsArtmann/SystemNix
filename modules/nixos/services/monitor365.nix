@@ -106,30 +106,21 @@
         pkgs.wtype
       ];
 
-      schemaMigrateScript = pkgs.writeShellApplication {
-        name = "monitor365-schema-migrate";
-        runtimeInputs = [ pkgs.duckdb ];
-        text = ''
-          DB="${serverCfg.stateDir}/monitor365.duckdb"
-          if [ -f "$DB" ] && [ -s "$DB" ]; then
-            duckdb "$DB" -c \
-              "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
-
-            # Raise the daily event upload limit to 1B so the 597M-event
-            # backlog from the integrity-hash fix can drain in ~1 day
-            # instead of ~163 years (10K/day default from upstream
-            # crates/api-types/src/tenant.rs:39).
-            duckdb "$DB" -c \
-              "UPDATE tenants SET max_events_per_day = 1000000000;" \
-              && echo "monitor365-schema-migrate: max_events_per_day set to 1B" \
-              || echo "monitor365-schema-migrate: WARNING — could not update max_events_per_day"
-
-            echo "monitor365-schema-migrate: migrations complete"
-          else
-            echo "monitor365-schema-migrate: DB not found or empty, skipping"
-          fi
-        '';
-      };
+      # RETIRED 2026-10-27: monitor365-schema-migrate (ALTER tenants.version +
+      # UPDATE max_events_per_day = 1B on every boot).
+      # - tenants.version: current upstream ships migration 062
+      #   (062_add_version_columns.sql, ADD COLUMN IF NOT EXISTS) — the
+      #   out-of-band ALTER is redundant against any DB the pinned+later
+      #   upstream touches.
+      # - max_events_per_day = 1B: upstream NEVER resets limits of existing
+      #   tenants at boot (source-verified 2026-10-27: the existing-tenant
+      #   bootstrap path only re-syncs the API key; no startup code writes
+      #   max_events_per_day). The "server re-syncs upstream default on
+      #   bootstrap" premise was stale. The declarative replacement is the
+      #   MONITOR365_SERVER__BOOTSTRAP__MAX_EVENTS_PER_DAY env below, which
+      #   covers the fresh-DB/restore case; once the monitor365 flake input
+      #   is bumped past 2026-10-27, migrate to the upstream module options
+      #   (services.monitor365-server.bootstrap.maxEventsPerDay/maxDevices).
 
       # Heal DuckDB before the server starts: remove a stale WAL from an
       # unclean shutdown (DuckDB checkpoints + deletes the WAL on graceful
@@ -329,12 +320,16 @@
               cloud = lib.mkIf serverCfg.enable {
                 endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
                 sync_interval_seconds = lib.mkDefault 60;
-                # Upstream default is 100 (nix/lib/settings.nix batch_size option
-                # + the init/pair TOML template) = 50× request amplification: a
-                # 50K-event sync cycle fires 500 POSTs, each hitting the server's
-                # per-append event scan. 5000 = 10 POSTs for the same cycle.
-                # Inert until the agent unit starts again (stack quiesced
-                # 2026-10-26). 2026-10-26 IO-storm triage.
+                # 2026-10-27 CORRECTION (upstream source-verified): the
+                # upstream sync loop NEVER reads cloud.batch_size — uploads
+                # are chunked by the cloud client at 5000 events/POST
+                # (size_aware_chunks, DEFAULT_MAX_BATCH_SIZE) plus an 8 MB
+                # payload cap, 50K events/cycle = ~10 POSTs, regardless of
+                # this key. The earlier "50x amplification" mechanism was
+                # wrong (the storm's driver was the per-append MAX(sequence)
+                # full-table scan, fixed upstream 2026-10-26). Keeping 5000
+                # anyway: harmless, documents intent, and matches the real
+                # chunk size if upstream ever wires the field.
                 batch_size = lib.mkDefault 5000;
                 authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
               };
@@ -446,42 +441,19 @@
           };
         })
 
-        # Schema migration: add 'version' column to tenants table for existing DBs.
-        # Upstream bug at pinned commit 0615301: schema.sql includes
-        # 'version INTEGER NOT NULL DEFAULT 0' in CREATE TABLE IF NOT EXISTS
-        # tenants, but no ALTER TABLE migration exists for DBs created before
-        # the column was added. Every SELECT using COLUMNS (which has
-        # COALESCE(tenants.version, 0)) fails with a Binder Error.
-        #
-        # This runs as a SEPARATE service because the monitor365-server's
-        # hardened SystemCallFilter=@system-service blocks the duckdb CLI's
-        # C++ thread creation (clone3 syscall). ExecStartPre inherits the
-        # service's sandbox, so the migration must run outside it.
-        # NOTE: DuckDB ALTER TABLE does not support NOT NULL or DEFAULT
-        # constraints — use bare INTEGER. The Rust COALESCE handles NULLs.
+        # (Schema-migrate oneshot unit RETIRED 2026-10-27 — see the note at
+        # the former schemaMigrateScript site. Upstream owns migrations now.)
+
+        # Declarative tenant limits (replaces the retired schema-migrate
+        # UPDATE hack): consumed by upstream bootstrap ONLY when it actually
+        # provisions a fresh database (restore-from-backup / re-init). An
+        # existing tenant's limits are never touched at boot. Env-var form
+        # works against any pinned upstream; migrate to the module options
+        # after the next monitor365 input bump.
         (lib.mkIf serverCfg.enable {
-          systemd.services.monitor365-schema-migrate = {
-            description = "Monitor365 DuckDB schema migration";
-            before = [ "monitor365-server.service" ];
-            wantedBy = [ "multi-user.target" ];
-            restartTriggers = [ (lib.getExe schemaMigrateScript) ];
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              # Boot-blocking oneshot: bound it (systemd-shape-audit) — the
-              # migration is a two-statement DuckDB ALTER/UPDATE, 5min is a
-              # generous ceiling for a wedged-DB worst case.
-              TimeoutStartSec = "5min";
-              User = "monitor365-server";
-              Group = "monitor365-server";
-              StateDirectory = "monitor365-server";
-            }
-            // ioTier.maintenance;
-            script = lib.getExe schemaMigrateScript;
-          };
-          systemd.services.monitor365-server = {
-            after = [ "monitor365-schema-migrate.service" ];
-            requires = [ "monitor365-schema-migrate.service" ];
+          systemd.services.monitor365-server.environment = {
+            MONITOR365_SERVER__BOOTSTRAP__MAX_EVENTS_PER_DAY = "1000000000";
+            MONITOR365_SERVER__BOOTSTRAP__MAX_DEVICES = "1000";
           };
         })
 

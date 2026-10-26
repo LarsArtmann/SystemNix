@@ -105,20 +105,21 @@ let
       pass = builtins.elem "tq-storage-dir.service" (pool.after or [ ]);
     }
     {
-      # Boot-transaction bound (2026-10-19): the PSI entry-gate REFUSE loop
-      # (upstream Restart=on-failure, RestartSec=30s) kept boot 0
-      # (2026-10-18) open ~2min while the gate refired ×5 INSIDE
-      # multi-user.target's wait set. The unit must order itself PAST the
-      # target so the churn runs outside the boot transaction.
-      name = "pool-post-gate-multi-user-ordering";
-      pass = builtins.elem "multi-user.target" (pool.after or [ ]);
+      # Boot-transaction bound (2026-10-19; reshaped 2026-10-26): the PSI
+      # entry-gate REFUSE loop (upstream Restart=on-failure, RestartSec=30s)
+      # kept boot 0 (2026-10-18) open ~2min while the gate refired ×5 INSIDE
+      # multi-user.target's wait set. The unit must live PAST the boot
+      # transaction — now via late-applications membership (the direct
+      # after=multi-user edge was the gitea-runner ordering-cycle class,
+      # 2026-10-26; enforced graph-wide by ordering-cycle-audit.nix).
+      name = "pool-post-gate-late-applications";
+      pass = builtins.elem "late-applications.target" (pool.wantedBy or [ ]);
     }
     {
-      # The ordering is only safe while the want-edge stays: wantedBy
-      # (upstream-owned) keeps the unit in stc's deploy-restart set and in
-      # the deploy-restart-audit's name coverage.
-      name = "pool-still-wanted-by-multi-user";
-      pass = pool.wantedBy or [ ] == [ "multi-user.target" ];
+      # The backward edge must stay GONE: after=multi-user on a
+      # multi-user-reachable unit re-arms the deleted-start-job cycle class.
+      name = "pool-no-multi-user-after-edge";
+      pass = !builtins.elem "multi-user.target" (pool.after or [ ]);
     }
     {
       # The bound MOVES the refuse-and-refire churn, it does not remove the
