@@ -45,10 +45,12 @@
       # RE-ADDED 2026-10-19 wave: keep-going toplevel enumeration
       # (/tmp/toplevel-build-20261019.log) mismatched the upstream-baked
       # 3dje+f7T… at the new locked rev e88c0d8; got 1O/b94qj….
+      # RE-STALE 2026-10-26 lock float: spec 1O/b94qj, got gYJcV6Ol
+      # (float-proof-20261026-161006.log).
       discordsyncPkg =
         inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-1O/b94qjAysB41hXQN2Bujd3NmIgicBqEQ4RYvoVJQo=";
+            vendorHash = "sha256-gYJcV6OlONXa1U7NbZMsNYKp3sO3vYmTkjT4S8U3ISQ=";
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
       # Immich lookup key pair (IMMICH_URL/IMMICH_API_KEY), rendered by the

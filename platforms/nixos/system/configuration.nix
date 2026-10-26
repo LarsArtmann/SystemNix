@@ -374,8 +374,10 @@ in
       # or a later rev (verify via nix build .#buildflow).
       # RE-STALE 2026-10-19 wave: both surfaces re-pinned to got
       # 9y4NBzy3… (/tmp/toplevel-build-20261019.log, locked rev cf606f8).
+      # RE-STALE 2026-10-26 lock float: spec 9y4NBzy3, got ffjf0h53
+      # (float-proof-20261026-161006.log).
       (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-9y4NBzy3H8EYw5+TMnNIJYma5hCFrF4TlK3qWNRNXHg=";
+        vendorHash = "sha256-ffjf0h5380aSH57Fp2dEftHz8Jzrk4o1w2zMEpGv5JY=";
       })
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
@@ -511,6 +513,16 @@ in
         "gogenfilter"
       ];
       immich.enable = true;
+      # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
+      # repo ~/projects/media-atlas): read-only media_atlas PG role on the
+      # immich DB (smart_search) + Immich external-library read access to
+      # the DiscordSync archive (ADR-061 runbook). The hub service itself
+      # (unit, port, map.local vHost) lands with the L25 deploy PR.
+      # Runbook: docs/services/media-atlas.md
+      media-atlas = {
+        enable = true;
+        immichExternalLibrary.enable = true;
+      };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,
       # Pocket ID external OIDC with declarative role mapping via the

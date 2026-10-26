@@ -74,8 +74,11 @@
       # graph moved AGAIN. Upstream keeps baking stale values, so dropping
       # the shim cannot work; drop only when upstream bakes IzjuTWg…
       # (paste-upstream → push → re-lock, docs/todo/upstream.md).
+      # FOURTH RE-STALE 2026-10-26 lock float: cv@24fc6623 spec IzjuTWgn,
+      # got 5Xjd8Czb (float-proof-20261026-161006.log) — drop only when
+      # upstream bakes 5Xjd8Czb.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-IzjuTWgnhsRsRhprnBBvlCEkSl4dQtM8gvwu2ELbUAY=";
+        vendorHash = "sha256-5Xjd8CzbtPsyYOR2muEHuBfrjcK8D4NVPKVm6CTngn8=";
       };
     in
     {

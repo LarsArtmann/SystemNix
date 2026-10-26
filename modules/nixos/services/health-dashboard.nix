@@ -82,10 +82,13 @@
           # UOJk45I… (first-hand keep-going,
           # ~/.cache/lockfloat/float-proof-20261025-172436.log). Drop when
           # upstream bakes UOJk45I…; re-add ONLY via nix-hash-fix evidence.
+          # FOURTH RE-STALE 2026-10-26 lock float: health-hub@44d8a24 spec
+          # UOJk45I6, got gytpnPbS (float-proof-20261026-161006.log). Drop
+          # when upstream bakes gytpnPbS.
           default =
             inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-UOJk45I6s3rKZrEWE/BsaQXpSX9234Ste3/gc2ptUHs=";
+                vendorHash = "sha256-gytpnPbSRUk+YWZtAgf7sWY/BGGYBSnvcOB3d1ASA5o=";
               };
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";

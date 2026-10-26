@@ -272,15 +272,18 @@ let
     # crush-daily hash RE-STALE 2026-10-19 (third wave for this tool):
     # first-hand keep-going toplevel run (/tmp/toplevel-build-20261019.log)
     # mismatched the 2026-10-15 shim value AAXq+KGA… vs got s37MeZuL….
+    # RE-STALE AGAIN 2026-10-26 lock float: spec s37MeZuL, got /sLqiHyQ
+    # (float-proof-20261026-161006.log).
     crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-s37MeZuLMcAkxq6N582qlU6zwldlF8BJNIr5ezjWWb8=";
+      vendorHash = "sha256-/sLqiHyQXgesEfTiSSRKxHeUScynb7NmgZ+LMnCt96w=";
     };
     # overview shim RE-ADDED (2026-10-19 wave): the lock float moved past
     # the 2026-10-17 bit-neutral drop (tip 966465e == lock then); keep-going
     # enumeration at the new locked rev got NQ0ICMtk… vs specified
-    # +WMj7c5U….
+    # +WMj7c5U…. RE-STALE 2026-10-26 lock float: spec NQ0ICMtk, got
+    # QweKquKP (float-proof-20261026-161006.log).
     overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-NQ0ICMtk+bY9fQDcLR8AkVEVaOv6/jmXv3kQHjS5dMM=";
+      vendorHash = "sha256-QweKquKPXK0SYqk3zxEI8XHApMEUxyI5RDOwVjjsXss=";
     };
     # file-and-image-renamer history: DROPPED 2026-10-18 as bit-neutral
     # (upstream baked nN2cwwLQ…), RE-ADDED hours later when the 00:39 lock
@@ -289,9 +292,11 @@ let
     # re-added 4fF/8VOw… mismatched at the newest locked rev; got
     # uwurhA+9… (/tmp/toplevel-build-20261019.log). RE-STALE AGAIN
     # 2026-10-20 (the lock floated past another renamer rev): got
-    # 9759Ak4d… (first-hand, deploy build failure log).
+    # 9759Ak4d… (first-hand, deploy build failure log). RE-STALE AGAIN
+    # 2026-10-26 lock float: spec 9759Ak4d, got Uz4gaRoR
+    # (float-proof-20261026-161006.log).
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-9759Ak4dHxgBow0RxaUB6j1PVXon9EKZo2dYYwn3sco=";
+      vendorHash = "sha256-Uz4gaRoRpZYtN5+zxP+HyT+sKPRXKrmr2Q0J/JG0v30=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01

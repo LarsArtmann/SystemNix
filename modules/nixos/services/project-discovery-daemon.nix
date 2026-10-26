@@ -59,10 +59,13 @@ _: {
           # RE-STALE 2026-10-19 wave: keep-going toplevel enumeration
           # (/tmp/toplevel-build-20261019.log) mismatched this shim's own
           # nNKXDH5N… at locked rev d4443ff; got jLpz/NzH….
+          # RE-STALE AGAIN 2026-10-26 lock float: spec jLpz/NzH, got
+          # XbZifGSt (float-proof-20261026-174429.log — module surface;
+          # PATH surface rode the same value).
           default =
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-jLpz/NzHqndZbeHYX/afHaXif/u/70iBuqkGPtPy0oo=";
+                vendorHash = "sha256-XbZifGStHDNLF9lMBnTTHi+wkWqNDc69Oy8UAxfpatw=";
               };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default

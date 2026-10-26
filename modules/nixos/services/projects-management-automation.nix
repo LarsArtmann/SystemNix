@@ -75,7 +75,17 @@
           # 2026-10-25, goModules FOD exit 0) — the 2026-10-23 NBQcjrwD… shim
           # was the only stale value. Upstream package used directly; re-add
           # ONLY via nix-hash-fix evidence, never by hand.
-          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # vendorHash shim RE-ADDED (2026-10-26 lock float, first-hand
+          # keep-going, float-proof-20261026-161006.log): upstream's baked
+          # xvAVnWua… at b13d2e21 staled one day after the 2026-10-25
+          # green-through-our-lock probe; got fWJuASoh… (same value as the
+          # lars-packages surface). Drop when upstream bakes the got hash;
+          # re-add ONLY via nix-hash-fix evidence, never by hand.
+          package =
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-fWJuASohwuftEoUnGIQOqBKUBHq8chSSKYj45ILYN9U=";
+              };
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

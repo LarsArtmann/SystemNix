@@ -62,8 +62,11 @@
           # (/tmp/toplevel-build-20261019.log) mismatched upstream-baked
           # KaDlWefE… at locked rev d409f9f; got yB73mr06… (same value as
           # the re-pinned lars-packages surface).
+          # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ
+          # (float-proof-20261026-174429.log — the 16:10 enumeration's
+          # module surface; the PATH surface rode the same value).
           default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-yB73mr06xZTAzAx5M1qyBmM75umJ7baOuPo+RcokFOg=";
+            vendorHash = "sha256-TENDT6NZlwuX5d2MDuiE3498zU04Bsen698Ih4S5RN4=";
           };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";

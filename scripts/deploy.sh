@@ -732,8 +732,12 @@ if nix run .#pre-deploy-check; then
   # machine-register oneshot (PR #446307) — deploy-time re-run converges
   # hub collection changes (directly multi-user-enabled, so the is-enabled
   # gate admits it; re-runs are idempotent hub no-ops).
+  # media-atlas-pg-ro: idempotent read-only grant converger (media_atlas
+  # role on the immich DB; discordsync-immich-key-provision pattern) —
+  # re-runs converge grants + default privileges + the smart_search
+  # fingerprint echo.
   phase "Provisioner convergence (restart oneshots) ==="
-  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys discordsync-immich-key-provision opencloud-storage-dir; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup browser-history-agent-token-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys forgejo-hermes-token twenty-fix-collation dnsblockd-attach-ip crowdsec-setup monitor365-schema-migrate atticd-storage-dir atticd-bootstrap bank-sync-storage-dir google-sync-dirs cv-backup-dir crm-backup-dir inboxclean-backup-dir miniflux-backup-dir paperless-db-backup-dir browser-history-backup-dir discordsync-db-backup-dir clickhouse-db-backup-dir miniflux-oidc-setup llama-rag-model-fetch hermes-github-verify tq-storage-dir tq-bootstrap boot-mirror-sync hot-user-caches-nix-bootstrap restic-app-dumps-setup discordsync-attachments-dir borg-offsite-dir geometrikks-db-provision geometrikks-backup-dir restic-storage-history-setup ai-meter-keys discordsync-immich-key-provision opencloud-storage-dir media-atlas-pg-ro; do
     # borg-offsite-dir: idempotent /mnt/hot/borg cache-dir bootstrap (offsite
     # Borg leg; gated on services.offsite-borg.enable — re-run converges).
     # restic-app-dumps-setup: idempotent repo-password bootstrap (creates
