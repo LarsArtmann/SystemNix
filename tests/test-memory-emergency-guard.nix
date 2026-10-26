@@ -47,6 +47,11 @@
 #      Zone-6 trip bar, above the restore bar) with healthy memory — must
 #      NOT restore, must NOT burn budget; io drains → restore fires (the
 #      2026-10-25 budget-burn class: the gate was memory-blind).
+#   6a-lb. Per-boot load-bearing escalation (2026-10-25 task queue §f.10):
+#      two real trips since a re-snapshotted boot baseline flip
+#      memory_emergency_guard_load_bearing 1; a changed boot epoch resets
+#      trips_this_boot without touching the lifetime counter (the freeze-#7
+#      432-trips/boot structural-defect alarm).
 #   6a. Restore with zram STILL ≥92% (53% avail, 0.26% PSI): MUST restore —
 #      the 2026-09-02 lockout regression: stopping the sacrifice cannot
 #      drain zram (its pages belong to other processes), so a zram-gated
@@ -149,6 +154,10 @@ in
       # Small restore budget so the anti-churn cap scenario can exhaust it
       # within the test run (production default is 3).
       services.memory-emergency-guard.maxRestoresPerDay = 2;
+
+      # Small per-boot threshold so the load-bearing scenario can cross it
+      # with two real trips (production default is 10).
+      services.memory-emergency-guard.loadBearingTripsPerBoot = 2;
 
       # Dummy stand-ins with the real unit names: backend, per-connection
       # template, and the activation socket. sleep(1) processes so systemctl
@@ -643,6 +652,71 @@ in
       assert "memory_emergency_guard_churn_mode 0" in prom, (
           "drained window must release the churn gate (fail-closed emission, never stale)"
       )
+
+      # --- 6a-lb. Per-boot load-bearing escalation (2026-10-25, task queue
+      #      §f.10): trips_this_boot = lifetime counter minus a boot baseline
+      #      that re-snapshots when the boot epoch (now - uptime) changes;
+      #      at loadBearingTripsPerBoot (= 2 in this VM) the guard flips
+      #      memory_emergency_guard_load_bearing 1 — the "guard is
+      #      load-bearing, root-cause the storm" notify. The freeze-#7 boot
+      #      ran 432 trips: nothing else in the metric set answers "how many
+      #      times has the guard rescued THIS boot". UPTIME_SRC points at a
+      #      fixture so the epoch change is simulated without a reboot.
+      machine.succeed(
+          "rm -f /var/lib/memory-emergency-guard/boot-epoch"
+          " /var/lib/memory-emergency-guard/boot-baseline.count"
+          " /var/lib/memory-emergency-guard/tripped.count"
+          " /var/lib/memory-emergency-guard/last-trip"
+      )
+      machine.succeed("echo '1000 0' > /tmp/gt/uptime")
+      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_trips_this_boot 0" in prom, (
+          "a fresh boot baseline must zero trips_this_boot regardless of "
+          "the lifetime counter"
+      )
+      assert "memory_emergency_guard_load_bearing 0" in prom, (
+          "0 trips this boot must NOT arm the load-bearing notify"
+      )
+      run_guard("zone1")
+      machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip")
+      run_guard("zone1")
+      # last-trip = now blocks the restore gate on the healthy runs below
+      # (700 s freshness bar) — the 6b-cap budget accounting stays at #1.
+      machine.succeed(
+          "echo $(date +%s) > /var/lib/memory-emergency-guard/last-trip"
+      )
+      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_trips_this_boot 2" in prom, (
+          "two real trips since the boot baseline must read 2"
+      )
+      assert "memory_emergency_guard_load_bearing 1" in prom, (
+          "trips_this_boot >= loadBearingTripsPerBoot must flip the "
+          "load-bearing gauge — the per-boot structural-defect notify"
+      )
+      # Fresh boot: the epoch change re-snapshots the baseline, so the
+      # per-boot count resets without touching the lifetime counter — the
+      # 432-trips alarm is per-BOOT, never lifetime drift.
+      machine.succeed("echo '90000 0' > /tmp/gt/uptime")
+      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_trips_this_boot 0" in prom, (
+          "a changed boot epoch must re-snapshot the baseline — the count "
+          "resets on reboot without touching the lifetime counter"
+      )
+      assert "memory_emergency_guard_load_bearing 0" in prom
+      # Leave a deterministic slate for 6b-cap: no fixture uptime file, no
+      # stale baseline pair (the next run re-snapshots), churn window empty.
+      machine.succeed(
+          "rm -f /tmp/gt/uptime"
+          " /var/lib/memory-emergency-guard/boot-epoch"
+          " /var/lib/memory-emergency-guard/boot-baseline.count"
+          " /var/lib/memory-emergency-guard/last-trip"
+          " ; truncate -s 0 /var/lib/memory-emergency-guard/trip-history"
+      )
+      reset_state()
+      run_guard("healthy")
 
       # --- 6b-cap. Daily restore budget exhausted (maxRestoresPerDay = 2 in
       #      this VM): burn the budget with one more trip->restore cycle,
