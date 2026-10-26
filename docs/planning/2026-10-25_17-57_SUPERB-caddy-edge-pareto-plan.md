@@ -1,7 +1,7 @@
 # SUPERB Plan — Caddy Edge: Pareto Execution Plan (Observability + UX + Hygiene)
 
 **Created:** 2026-10-25 17:57 CET
-**EXECUTING (instance crush-glm-5.3-flash-caddy-edge, 2026-10-25 18:56 CET, HEAD `1435874f8`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance executed 2026-10-25/26; config live via gen-949 (deployed 21:05:59 by the deploy-unblock session carrying this executor's commits); live battery 2026-10-26: F12 32 host labels, M4 rule armed, M6 502 branded live, M8 read_timeout 900s, M9 caddy.service ingest verified, M24 immich green, M26 SKIP semantics live, M11 no stalls; caught+fixed the OTLP :4317->:4318 exporter bug (spans dark on gen-949, fixed in 7adaabf04, rides next deploy); M10 static-404 gap fixed + VM-pinned same commit; closeout report docs/status/2026-10-26_08-1x, 2026-10-26 08:15 CET, HEAD `7adaabf04`):** execution finished
 **Inputs:** `docs/research/2026-10-25_caddy-deep-dive.html` (adoption audit 89/100, 3 findings) + `docs/status/2026-10-25_17-44_caddy-deep-dive-session-status.md` §f (50 items) — ALL 50 items are mapped below (traceability table).
 **Scope:** follow-up work surfaced by THIS session's caddy deep dive only. Repo-wide backlog (other domains' TODO rows) is deliberately out of scope.
 **Status:** PLANNED — not executing. When execution starts, write the tombstone first (`scripts/plan-marker.sh <this-file> start`, commit immediately).
