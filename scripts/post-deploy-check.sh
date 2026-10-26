@@ -160,6 +160,32 @@ report_warn() {
   WARN=$((WARN + 1))
 }
 
+# ── §21 ordering-cycle deletion gate (2026-10-26 gitea-runner class) ──
+# Any "deleted to break ordering cycle" journal line since the switch means
+# systemd silently DROPPED a start job from the transaction — that unit is
+# down and the next boot repeats it (runner dead ~11h 2026-10-25;
+# geometrikks + crowdsec-bouncer-register at the gen-954 switch — a 24-PASS
+# smoke shipped with the runner dead). Eval-time prevention:
+# modules/nixos/services/ordering-cycle-audit.nix; this is the runtime tripwire.
+_cycle_count="$(journalctl --since '-30min' --no-pager 2>/dev/null | grep -c 'deleted to break ordering cycle' || true)"
+if [ "${_cycle_count:-0}" -gt 0 ]; then
+  _cycle_first="$(journalctl --since '-30min' --no-pager 2>/dev/null | grep -m2 'Found ordering cycle' | cut -c1-160 | tr '\n' ';')"
+  report_fail "Ordering-cycle deletions - ${_cycle_count} start job(s) deleted in the switch window (-30min): ${_cycle_first} — the named unit(s) are DOWN; fix the ordering (wantedBy late-applications.target, never after=multi-user.target chains)"
+else
+  report_pass "Ordering-cycle deletions - none in the switch window (systemd start graph clean)"
+fi
+
+# The incident canary: the runner's start job was the cycle-breaker's
+# favorite deletion target for ~8 days. Skip on hosts without the unit file.
+if [ -e '/etc/systemd/system/gitea-runner-evo\x2dx2.service' ]; then
+  if systemctl is-active --quiet 'gitea-runner-evo\x2dx2.service'; then
+    report_pass "Gitea runner - active (ordering-cycle incident canary)"
+  else
+    report_fail "Gitea runner - INACTIVE: start job deleted by a cycle breaker or unit stopped (journalctl -u 'gitea-runner-evo\\x2dx2.service' --since -30min; eval gate: modules/nixos/services/ordering-cycle-audit.nix)"
+  fi
+fi
+
+
 # Shared pressure-reporting logic (fixture-tested by
 # scripts/test-post-deploy-pressure.sh + the post-deploy-pressure-selftest
 # flake check - the WARN/PASS semantics must never call a storm healthy).

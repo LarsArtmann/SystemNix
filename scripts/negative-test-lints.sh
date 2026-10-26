@@ -632,6 +632,24 @@ eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homep
 eval_case vhostregistry blind-vhost fail 'no services.integration entry' \
   'sed:modules/nixos/services/caddy.nix:s|^        "alerts"$|        "alerts-typo"|'
 
+# ── ordering-cycle-audit: the deleted-start-job class (2026-10-26) ──
+# Assertion audit (modules/nixos/services/ordering-cycle-audit.nix) over the
+# composed systemd start graph (implicit target-membership edges + systemd's
+# explicit-ordering suppression). Both legs re-introduce EXACT incident
+# shapes from 2026-10-25/26; the eval must throw naming the cycle.
+# Leg 1: the gitea-runner regression — flip the runner's wantedBy back to
+# multi-user.target: multi-user waits runner → runner waits forgejo →
+# forgejo (late-applications member) waits late-applications → waits
+# multi-user. This was the ~11h-dead-runner class.
+eval_case orderingcycle runner-wantedby-regression fail 'ordering-cycle-audit' \
+  'sed:modules/nixos/services/forgejo.nix:s|^          wantedBy = lib.mkForce \[ "forgejo.service" \];$|          wantedBy = lib.mkForce [ "multi-user.target" ];|'
+# Leg 2: the geometrikks/crowdsec regression — geometrikks back to
+# multi-user membership drags the crowdsec chain (crowdsec-prereq DNS gate,
+# now a late member) back into the boot transaction: cycle + boot-blocker.
+eval_case orderingcycle geometrikks-multiuser-regression fail 'ordering-cycle-audit' \
+  'sed:modules/nixos/services/geometrikks.nix:s|^              wantedBy = \[ "late-applications.target" \];$|              wantedBy = [ "multi-user.target" ];|'
+
+
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the
 # enforcement surface is the toplevel eval. Three legs mirroring the real
