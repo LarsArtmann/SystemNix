@@ -137,8 +137,12 @@ _: {
         # TimeoutStartSec turns a wedged login into a loud notify-failure +
         # converger retry instead of an immortal loop.
         systemd.services."netbird-evox2-login" = {
-          wantedBy = [ "multi-user.target" ];
-          after = [ "multi-user.target" ];
+          # late-applications (2026-10-26 ordering-cycle class fix):
+          # membership replaces after=multi-user.target — same canonical
+          # post-boot start WITHOUT the backward edge that armed the
+          # gitea-runner deleted-start-job class. The 2min bound below and
+          # the deploy.sh unconditional converger restart are unchanged.
+          wantedBy = [ "late-applications.target" ];
           # Unit-level (NOT serviceConfig): OnFailure is a [Unit] key —
           # serviceConfig.OnFailure renders under [Service] where systemd
           # silently ignores it (visionreviewd ships that latent no-op).

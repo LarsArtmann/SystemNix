@@ -369,18 +369,23 @@ _: {
         };
 
         systemd.services.tq-agent-pool = {
+          # late-applications (2026-10-26 ordering-cycle class fix):
+          # membership + mkForce over the upstream go-taskqueue module's
+          # multi-user default replaces the old after=multi-user.target
+          # edge — same post-boot placement, no backward edge into the
+          # boot transaction (the gitea-runner deleted-start-job class).
+          wantedBy = lib.mkForce [ "late-applications.target" ];
           after = [
             "tq-storage-dir.service"
-            "multi-user.target"
             # Boot-transaction bound (2026-10-19, stability trio item 1):
             # boot 0 (2026-10-18) held the boot ~2min because the PSI entry
             # gate REFUSED into the upstream Restart=on-failure contract
             # (RestartSec=30s refire ×5 until a refusal passed) and each
-            # auto-restart kept this unit "activating" INSIDE
-            # multi-user.target's wait set. After=multi-user.target moves
-            # the pool PAST the transaction (llama-chat 2026-10-17 /
-            # netbird-evox2-login 2026-10-17 pattern): wantedBy stays
-            # upstream (deploy restart coverage unchanged), the gate still
+            # auto-restart kept this unit "activating" INSIDE the boot
+            # target's wait set. late-applications membership moves the pool
+            # PAST the transaction (llama-chat 2026-10-17 / netbird 2026-10-17
+            # pattern, 2026-10-26 class fix): deploy restart coverage is
+            # unchanged (is-enabled sees the wants symlink), the gate still
             # refuses storm entries at EVERY start attempt (boot, deploy,
             # manual), and the refuse-and-refire churn now runs outside the
             # boot — bounded by the startLimitBurst headroom below with

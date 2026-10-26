@@ -102,6 +102,9 @@ _: {
           in
           {
             inherit onFailure;
+            # late-applications (2026-10-26 ordering-cycle class fix; mkForce
+            # over the nixpkgs oauth2-proxy module's multi-user default).
+            wantedBy = lib.mkForce [ "late-applications.target" ];
             # Restart when provision runs: oauth2-proxy loads the client secret
             # via systemd LoadCredential at start time. If provision regenerates
             # the secret (e.g. after desync recovery), oauth2-proxy must restart

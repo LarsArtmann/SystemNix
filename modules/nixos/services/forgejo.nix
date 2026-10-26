@@ -438,6 +438,12 @@ _: {
 
         systemd = {
           services.forgejo = {
+            # late-applications (2026-10-26 ordering-cycle class fix): the
+            # DNS gate keeps forgejo's start off the boot critical chain;
+            # wantedBy multi-user + that gate's old after=multi-user edge is
+            # what deleted the runner's start job on every boot/switch.
+            # mkForce: nixpkgs's forgejo module defaults to multi-user.
+            wantedBy = lib.mkForce [ "late-applications.target" ];
             after = [
               "caddy.service"
               "pocket-id.service"

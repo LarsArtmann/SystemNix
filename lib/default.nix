@@ -448,13 +448,14 @@ in
       };
     in
     {
-      # after (not wants) multi-user.target: every consumer is application
-      # readiness — its start must not hold the boot transaction open while it
-      # waits out dnsblockd's ~2min blocklist load (the 2026-10-18 multi-user
-      # family audit: miniflux was the boot-0 critical-chain gate at 91s; the
-      # llama-chat 2026-10-17 owner ruling is the precedent). Units stay in
-      # multi-user.wants, so deploy coverage is unchanged.
-      after = deps ++ [ "multi-user.target" ];
+      # Consumers pull in via wantedBy = [ "late-applications.target" ]
+      # (modules/nixos/services/late-applications.nix): readiness waits stay
+      # off the boot critical chain WITHOUT arming an ordering cycle. The
+      # pre-2026-10-26 shape (after = multi-user.target here) armed the
+      # cycle class that deleted gitea-runner/geometrikks/crowdsec start
+      # jobs — after=multi-user must never appear on a gate or gate
+      # consumer again (enforced by ordering-cycle-audit.nix).
+      after = deps;
       wants = deps;
       serviceConfig = {
         ExecStartPre = [ "+${lib.getExe script}" ];
@@ -507,12 +508,12 @@ in
       };
     in
     {
-      # Same post-gate ordering as mkOidcGate above (application readiness,
-      # never a boot gate).
+      # Same consumer contract as mkOidcGate above: wantedBy
+      # late-applications.target, never after=multi-user.target (the
+      # 2026-10-26 ordering-cycle class — see late-applications.nix).
       after = [
         "network-online.target"
         "dnsblockd.service"
-        "multi-user.target"
       ];
       wants = [
         "network-online.target"

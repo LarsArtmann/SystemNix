@@ -38,6 +38,9 @@
       bootBlockingTargets = [
         "multi-user.target"
         "graphical.target"
+        # 2026-10-26 ordering-cycle class fix: gated application units live
+        # here now — still boot-started, so IO-tier coverage still applies.
+        "late-applications.target"
       ];
 
       offenders =

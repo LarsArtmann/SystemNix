@@ -213,8 +213,11 @@ _: {
           # with no network gating). network-online would order the load
           # behind NM-wait-online's FULL-link verdict — minutes-long during
           # wifi-failover windows, for zero benefit.
-          after = [ "multi-user.target" ];
-          wantedBy = [ "multi-user.target" ];
+          # late-applications (2026-10-26 ordering-cycle class fix):
+          # membership replaces the old after=multi-user.target edge —
+          # same post-boot start, no backward edge into the boot
+          # transaction (the gitea-runner cycle class).
+          wantedBy = [ "late-applications.target" ];
           unitConfig.ConditionPathExists = cfg.modelPath;
 
           serviceConfig = lib.mkMerge [

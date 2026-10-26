@@ -1394,6 +1394,9 @@ _: {
             };
           in
           {
+            # late-applications (2026-10-26 ordering-cycle class fix; mkForce
+            # over the nixpkgs gatus module's multi-user default).
+            wantedBy = lib.mkForce [ "late-applications.target" ];
             onFailure = onFailureP0;
             after = [
               "network-online.target"

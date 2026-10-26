@@ -298,6 +298,9 @@ _: {
         systemd.services = {
           miniflux = {
             description = lib.mkForce "Miniflux RSS reader";
+            # late-applications (2026-10-26 ordering-cycle class fix; mkForce
+            # over the nixpkgs miniflux module's multi-user default).
+            wantedBy = lib.mkForce [ "late-applications.target" ];
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -335,12 +338,12 @@ _: {
           # restart per deploy via the scripts/deploy.sh provisioner loop.
           miniflux-oidc-setup = {
             description = "Link miniflux user to Pocket ID (openid_connect_id)";
-            wantedBy = [ "multi-user.target" ];
-            # Post-gate explicit (the 2026-10-18 family audit's final
-            # critical-chain hop was this unit; transitive After=miniflux
-            # already lands post-gate — kept self-evident, mkOidcGate doctrine).
+            # Pulled by miniflux itself (forgejo-oidc-setup family pattern,
+            # 2026-10-26 ordering-cycle class fix): a multi-user membership
+            # here would hold the boot transaction open behind miniflux's
+            # OIDC readiness gate (the 2026-10-18 91s critical-chain shape).
+            wantedBy = [ "miniflux.service" ];
             after = [
-              "multi-user.target"
               "miniflux.service"
               "pocket-id.service"
             ];

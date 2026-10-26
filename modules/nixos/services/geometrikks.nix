@@ -652,7 +652,11 @@
             geometrikks = {
               description = "GeoMetrikks — access-log geo analytics (native)";
               documentation = [ "https://github.com/GilbN/geometrikks" ];
-              wantedBy = [ "multi-user.target" ];
+              # late-applications (2026-10-26 ordering-cycle class fix):
+              # chains after crowdsec-bouncer-register -> crowdsec (late
+              # members); a multi-user membership re-armed the cycle that
+              # deleted this unit's start job at the gen-954 switch.
+              wantedBy = [ "late-applications.target" ];
               after = [
                 "network-online.target"
                 "postgresql.service"

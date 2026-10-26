@@ -744,16 +744,18 @@
 
         systemd.services.hermes = {
           description = "Hermes Agent Gateway - Messaging Platform Integration";
-          wantedBy = [ "multi-user.target" ];
+          # late-applications (2026-10-26 ordering-cycle class fix):
+          # membership replaces the old after=multi-user.target edge (same
+          # off-critical-chain effect, no backward edge into the boot
+          # transaction — the edge that armed the gitea-runner cycle class).
+          wantedBy = [ "late-applications.target" ];
           after = [
-            # Post-gate (application readiness, llama-chat owner-ruling
-            # shape): the 2026-10-18 family audit caught hermes holding
-            # multi-user for its FULL 3min TimeoutStartSec and then failing
+            # The 2026-10-18 family audit caught hermes holding multi-user
+            # for its FULL 3min TimeoutStartSec and then failing
             # (hermes-migrate-state sqlite walk, 1.6G read under post-boot
             # IO, boot -1) — the worst gate in the family. The migrate
             # start-budget problem is its own row; this only stops it
             # gating the boot.
-            "multi-user.target"
             "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
@@ -1026,7 +1028,8 @@
           in
           lib.mkIf (cfg.projectsDir != null) {
             description = "Hermes: verify read-only GitHub token can read private repos";
-            wantedBy = [ "multi-user.target" ];
+            # late-applications (2026-10-26 ordering-cycle class fix).
+            wantedBy = [ "late-applications.target" ];
             inherit (dnsGate) after wants;
             inherit onFailure;
             startLimitIntervalSec = 300;

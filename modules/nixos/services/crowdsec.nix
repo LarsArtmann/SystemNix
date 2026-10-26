@@ -439,7 +439,11 @@ _: {
           wants = [ "crowdsec.service" ];
           # Converge before geo starts pulling (its poll would 401 meanwhile)
           before = [ "geometrikks.service" ];
-          wantedBy = [ "multi-user.target" ];
+          # late-applications (2026-10-26 ordering-cycle class fix): this
+          # oneshot chains after crowdsec (a late member) — a multi-user
+          # membership would drag crowdsec's DNS-gated start back into the
+          # boot transaction and re-arm the deleted-start-job cycle.
+          wantedBy = [ "late-applications.target" ];
           serviceConfig = {
             Type = "oneshot";
             # Same DB access pattern as crowdsec-prereq (sqlite via

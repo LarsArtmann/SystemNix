@@ -104,7 +104,12 @@
           startLimitIntervalSec = 300;
           inherit onFailure;
           wants = [ "network.target" ];
-          after = [ "multi-user.target" ];
+          # late-applications (2026-10-26 ordering-cycle class fix): the
+          # timer-fired re-sample must still run past the boot transaction,
+          # but without arming the After=multi-user backward-edge class —
+          # ordering under the late target instead (this box's single
+          # sanctioned After=multi-user carrier).
+          after = [ "late-applications.target" ];
           path = [
             pkgs.systemd
             pkgs.coreutils

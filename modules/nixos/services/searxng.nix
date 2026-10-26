@@ -586,6 +586,10 @@ _: {
           # DNS-gate: dnsblockd must resolve before engine init (wikidata,
           # radio browser, ClearURLs all need network at init time).
           searx = {
+            # late-applications (2026-10-26 ordering-cycle class fix; mkForce
+            # over the nixpkgs searx module's multi-user default — the DNS
+            # gate's 180s probe budget must stay off the boot critical chain).
+            wantedBy = lib.mkForce [ "late-applications.target" ];
             after = [
               "searxng-secret-key.service"
               "dnsblockd.service"

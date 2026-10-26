@@ -394,6 +394,10 @@
             };
 
             systemd.services.browser-history = {
+              # late-applications (2026-10-26 ordering-cycle class fix;
+              # mkForce over the upstream browser-history module's
+              # multi-user default).
+              wantedBy = lib.mkForce [ "late-applications.target" ];
               # The OIDC gate's curl probe (ExecStartPre) waits up to 2min for
               # auth.${domain}/.well-known/openid-configuration to respond —
               # required since browser-history v4.7.0 does OIDC discovery at
