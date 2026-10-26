@@ -386,9 +386,10 @@
     # base.nix --load-extension): with default settings the extension
     # auto-discovers nsfw.home.lan:<ports.nsfw> and pairs via the /readyz
     # token that services.nsfw-classifier provides (--pair-token auto).
-    # nixpkgs FOLLOWS root since 2026-10-07: root (a7868a72) carries
-    # go_1_27 = 1.27.1 — the same minor the flake pins — and the go-modules
-    # FOD rebuild on the flip verified the vendorHash holds. Deliberate
+    # nixpkgs FOLLOWS root since 2026-10-07: root (fe1324228 as of the
+    # 2026-10-19 go-1.27.2 wave) ships go_1_27 = 1.27.2 (direct-eval
+    # verified 2026-10-19; rev-cite toolchain facts, they rot) and the
+    # go-modules FOD rebuild on the flip verified the vendorHash holds. Deliberate
     # entry dropped from lib/lock-audit.nix in the same change.
     nsfw-classifier = {
       # Remote master since 2026-10-10: the INTERIM git+file pin's flip

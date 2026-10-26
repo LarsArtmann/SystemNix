@@ -160,9 +160,13 @@ _: {
         enable = lib.mkEnableOption "NVMe SSD health monitoring with desktop notifications";
 
         device = lib.mkOption {
-          type = lib.types.str;
-          default = "/dev/nvme0n1";
-          description = "NVMe device to monitor";
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = ''
+            NVMe device to monitor. Set a /dev/disk/by-id path: /dev/nvmeNn1
+            kernel enumeration flips across boots, so a literal default
+            silently monitors the wrong drive.
+          '';
         };
 
         warnTempThreshold = lib.mkOption {
@@ -197,6 +201,12 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = cfg.device != null;
+            message = "services.nvme-health-monitor.device must be set to a /dev/disk/by-id path (the /dev/nvme0n1 literal default was the enumeration-flip trap; see platforms/nixos/system/configuration.nix for the working override)";
+          }
+        ];
         systemd = {
           timers.nvme-health-monitor = notifyService.timer;
           services.nvme-health-monitor = notifyService.service;

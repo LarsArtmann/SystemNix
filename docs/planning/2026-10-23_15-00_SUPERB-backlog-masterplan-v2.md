@@ -2882,7 +2882,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | S-1755 | storage:85 | DR-runbook provenance checklist line in docs/CONTRIBUTING.md | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
 | S-1756 | storage:179 | Inventory docs/services/* runbooks for operational figures that drift... | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
 | S-1757 | storage:229 | Write the owner runbook one-liner for the @cache-home.regular-dir-bak... | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
-| S-1758 | storage:267 | Fix the stale AGENTS.md "currently Samsung = nvme1n1" note | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
+| S-1758 | storage:267 | Fix the stale AGENTS.md "currently Samsung = nvme1n1" note | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 ✅ done 2026-10-23 (9ff25c3b3; flipped 2026-10-26) |
 | S-1759 | upstream:75 | Consider a lightweight queue "claim" step (one-line intent note early... | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
 | S-1760 | upstream:86 | go-taskqueue: visibility surface for the citation check (journal fact... | M | edit target at ref; grep-verify; tick rows + commit | 1 | P3 |
 

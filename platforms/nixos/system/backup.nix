@@ -108,7 +108,6 @@ in
         "/data/SteamLibrary"
         "/data/cache"
         "/data/tmp-bench"
-        "/data/tmp-crush-test"
         # Home tool/rebuildable trees. Code lives on GitHub (pushed repos,
         # incl. private); the 2026-08-22 freeze history also makes a nightly
         # full re-read of the projects tree an IO-storm generator.

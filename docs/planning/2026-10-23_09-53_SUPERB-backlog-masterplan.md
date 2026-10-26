@@ -1822,7 +1822,7 @@ Members reference Level-2 IDs (`S-nnnn`); single-member sprints carry the `domai
 | S-0699 | storage:85 | DR-runbook provenance checklist line in docs/CONTRIBUTING.md | M | edit target + grep-verify + tick rows/commit | 1 | P3 |
 | S-0700 | storage:179 | Inventory docs/services/* runbooks for operational figures that drift... | M | edit target + grep-verify + tick rows/commit | 1 | P3 |
 | S-0701 | storage:229 | Write the owner runbook one-liner for the @cache-home.regular-dir-bak... | M | edit target + grep-verify + tick rows/commit | 1 | P3 |
-| S-0702 | storage:267 | Fix the stale AGENTS.md "currently Samsung = nvme1n1" note | M | edit target + grep-verify + tick rows/commit | 1 | P3 |
+| S-0702 | storage:267 | Fix the stale AGENTS.md "currently Samsung = nvme1n1" note | M | edit target + grep-verify + tick rows/commit | 1 | P3 ✅ done 2026-10-23 (9ff25c3b3; flipped 2026-10-26) |
 | S-0703 | upstream:40 | Satellite GOEXPERIMENT sweep (21 repos) | D | sprint 1/6: scope + first subsystem (then 5 more sprints) | 48 | P3 |
 | S-0704 | upstream:41 | go-nix-helpers: default GOEXPERIMENT=jsonv2 in template/devShell + re... | D | sprint 1/6: scope + first subsystem (then 5 more sprints) | 48 | P3 |
 | S-0705 | upstream:59 | InboxClean repo hygiene + engineering follow-ups (2026-09-30 session) | D | sprint 1/6: scope + first subsystem (then 5 more sprints) | 48 | P3 |

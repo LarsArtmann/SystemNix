@@ -150,7 +150,7 @@ cmd_map_user() {
   inodes=$(awk '{print $2}' "$STATE_DIR/csum-inodes.txt")
 
   echo "== resolving inodes via find (user-readable trees) =="
-  local trees="/data/ai /data/models /data/SteamLibrary /data/cache /data/gcs-staging /data/tmp-crush-test /data/.crush"
+  local trees="/data/ai /data/models /data/SteamLibrary /data/cache /data/gcs-staging /data/.crush"
   local ino resolved=0 unresolved=""
   for ino in $inodes; do
     p=$(find $trees -xdev -inum "$ino" -type f -print -quit 2>/dev/null)
