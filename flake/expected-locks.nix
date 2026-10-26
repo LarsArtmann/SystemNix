@@ -38,7 +38,7 @@
   art-dupl = "1b165cdb90fbdc554335576dd2caafb501f9d063";
   art-dupl-src = "1b165cdb90fbdc554335576dd2caafb501f9d063";
   bank-sync = "310d55faa56ec496cf4d39c4834ef040f4b210ff";
-  branching-flow = "f28419ee2c5b7cf6ad46233bf6cf2d9f2b257546";
+  branching-flow = "becd8a1aec1a86eec34d760a38ccbacbc9cbab88";
   brandid-lint = "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71";
   browser-history = "22832ea18fe7991a76cc6a645815754bf4e7818a";
   buildflow = "24dff8181809c6a830688f22bec702a35847156e";
@@ -72,7 +72,7 @@
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
   go-structure-linter = "0ebb272dc4316e07f045d2b1d704744104c93d4b";
-  go-taskqueue = "e22540bac1281c359270eb69f9d8659816050b56";
+  go-taskqueue = "f4ff9b1fdd4b011a03c4dee64146cea6cc16888e";
   gogenfilter = "ad71a7f11c3a36e5c72c382a3d59a8c118889efe";
   golangci-lint-auto-configure = "9ca0054b23e7e9fe4d6220f0cac8feb4bd09491f";
   helium = "b8621d3ce7fb0468f0a47e74a02cb0cb1b7992fb";
