@@ -328,6 +328,14 @@ _: {
         # `machines add` hit "user already exist" (the pre-fix generation's
         # orphan row survived), the start failed, and the nh switch exited 4
         # BEFORE the system profile was updated. They run as a separate
+        # late-applications (2026-10-26 ordering-cycle class fix; mkForce
+        # over the nixpkgs crowdsec module's multi-user default): crowdsec
+        # chains after crowdsec-prereq's DNS gate — a multi-user membership
+        # would put the 180s DNS wait back on the boot critical chain (the
+        # pre-fix After=multi-user edge on prereq armed the gen-954
+        # deleted-start-job cycle instead).
+        systemd.services.crowdsec.wantedBy = lib.mkForce [ "late-applications.target" ];
+
         # oneshot ordered before crowdsec.service instead: requires+before
         # keeps the gate FATAL (a failed DNS wait must hold crowdsec back or
         # hub update burns the restart budget) and a fresh oneshot re-runs on
@@ -335,8 +343,7 @@ _: {
         systemd.services.crowdsec-prereq = {
           description = "CrowdSec pre-start: DNS gate + orphan-machine repair";
           inherit (dnsGate) after wants;
-          before = [ "crowdsec.service" ];
-          serviceConfig = {
+          before = [ "crowdsec.service" ];          serviceConfig = {
             Type = "oneshot";
             User = config.services.crowdsec.user;
             Group = config.services.crowdsec.group;

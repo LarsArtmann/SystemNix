@@ -117,15 +117,31 @@
           if candidates == [ ] then ref else ref + builtins.head candidates;
 
       # fullName -> [fullName it must start AFTER] — explicit edges only,
-      # resolved, restricted to known units, deduped.
-      explicitAfterGraph = builtins.mapAttrs (
-        name: u:
+      # resolved, restricted to known units, deduped. before= is the REVERSE
+      # direction: "U before X" means X waits for U, so U lands in X's
+      # after-list (folding before= into U's OWN after-list inverts every
+      # such edge — the ai-meter-keys false cycle class).
+      explicitAfterGraph =
         let
           strings = xs: builtins.filter builtins.isString xs;
-          resolved = map resolve ((strings u.after) ++ (strings u.before));
+          direct = builtins.mapAttrs (
+            name: u:
+            lib.unique (builtins.filter (x: x != name && explicitGraph ? ${x}) (map resolve (strings u.after)))
+          ) explicitGraph;
+          addReversals =
+            acc: name: u:
+            builtins.foldl' (
+              acc2: b:
+              let
+                rb = resolve b;
+              in
+              if explicitGraph ? ${rb} && rb != name then
+                acc2 // { ${rb} = lib.unique ((acc2.${rb} or [ ]) ++ [ name ]); }
+              else
+                acc2
+            ) acc (strings u.before);
         in
-        lib.unique (builtins.filter (x: x != name && explicitGraph ? ${x}) resolved)
-      ) explicitGraph;
+        builtins.foldl' addReversals direct (builtins.attrNames explicitGraph);
 
       # target -> [member units] from every unit's own wantedBy (enabled
       # units only). Full names on both sides by construction.
@@ -171,9 +187,7 @@
               || builtins.elem m tAfter
               || builtins.elem m tBefore;
           in
-          builtins.filter (
-            m: m != tName && explicitGraph ? ${m} && !explicitPair m
-          ) members
+          builtins.filter (m: m != tName && explicitGraph ? ${m} && !explicitPair m) members
         ) targets;
 
       fullAfterGraph =
@@ -212,12 +226,12 @@
                     visited = acc.visited // sub.visited;
                   };
             in
-            builtins.foldl' step
-              {
-                cycle = [ ];
-                visited = { ${node} = true; };
-              }
-              nexts;
+            builtins.foldl' step {
+              cycle = [ ];
+              visited = {
+                ${node} = true;
+              };
+            } nexts;
 
           iterate =
             black: rootList:
@@ -247,14 +261,12 @@
       # boot-blocking shape the 2026-10-18 audit existed to prevent
       # (miniflux 91s on the boot-0 critical chain). Such units belong in
       # late-applications themselves.
-      lateSet =
-        builtins.listToAttrs
-          (
-            map (m: {
-              name = m;
-              value = true;
-            }) ((targetMemberEdges."late-applications" or [ ]) ++ [ "late-applications.target" ])
-          );
+      lateSet = builtins.listToAttrs (
+        map (m: {
+          name = m;
+          value = true;
+        }) ((targetMemberEdges."late-applications" or [ ]) ++ [ "late-applications.target" ])
+      );
 
       reachSet =
         start:
@@ -268,12 +280,15 @@
                 n = builtins.head frontier;
                 nexts = builtins.filter (x: !acc ? ${x}) (fullAfterGraph.${n} or [ ]);
               in
-              go
-                (builtins.tail frontier ++ nexts)
-                (acc // (builtins.listToAttrs (map (x: {
-                  name = x;
-                  value = true;
-                }) nexts)));
+              go (builtins.tail frontier ++ nexts) (
+                acc
+                // (builtins.listToAttrs (
+                  map (x: {
+                    name = x;
+                    value = true;
+                  }) nexts
+                ))
+              );
         in
         go [ start ] { ${start} = true; };
 
@@ -298,7 +313,7 @@
           }
           {
             assertion = bootBlockers == [ ];
-            message = "ordering-cycle-audit: multi-user-wanted units transitively ordered after late-applications members drag their readiness waits back into the boot transaction (the 2026-10-18 miniflux-91s critical-chain class): ${lib.concatStringsSep \"; \" bootBlockers}. Move them to wantedBy = [ \"late-applications.target\" ] (modules/nixos/services/late-applications.nix).";
+            message = "ordering-cycle-audit: multi-user-wanted units transitively ordered after late-applications members drag their readiness waits back into the boot transaction (the 2026-10-18 miniflux-91s critical-chain class): ${lib.concatStringsSep "; " bootBlockers}. Move them to wantedBy = [ \"late-applications.target\" ] (modules/nixos/services/late-applications.nix).";
           }
         ];
       };
