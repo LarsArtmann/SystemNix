@@ -47,9 +47,18 @@
       # verbatim syntax — ai-meter-keys ships unitConfig.After as one);
       # after=/before= attrs are lists by option type but normalize anyway.
       asList =
-        x: if builtins.isList x then x else if builtins.isString x then lib.filter (v: v != "") (lib.split " " x) else [ ];
+        x:
+        if builtins.isList x then
+          x
+        else if builtins.isString x then
+          lib.filter (v: v != "") (lib.split " " x)
+        else
+          [ ];
 
-      # unitName -> { after = [...]; before = [...]; } — explicit directives only.
+      # unitName -> { after = [...]; before = [...]; } — explicit directives
+      # only, ENABLED units only (disabled units keep their attr with
+      # enable=false but never exist at runtime — modeling them creates
+      # phantom cycles).
       explicitGraph =
         let
           merge =
@@ -61,7 +70,7 @@
                 after = asList (u.after or [ ]) ++ asList (u.unitConfig.After or [ ]);
                 before = asList (u.before or [ ]) ++ asList (u.unitConfig.Before or [ ]);
               in
-              acc2 // { ${name} = { inherit after before; }; }
+              if (u.enable or true) == false then acc2 else acc2 // { ${name} = { inherit after before; }; }
             ) acc (builtins.attrNames set);
         in
         builtins.foldl' merge { } (builtins.attrValues unitSets);
@@ -79,13 +88,37 @@
         )
       ) explicitGraph;
 
+      # wantedBy is NOT reflected into config.systemd.targets.<t>.wants at
+      # eval (it only generates install symlinks at build time — proven by
+      # the first negative-test leg passing vacuously). Derive memberships
+      # from every unit's own wantedBy instead: target -> [member units].
+      wantedMemberships =
+        let
+          add =
+            acc: set:
+            builtins.foldl' (
+              acc2: name:
+              let
+                u = set.${name};
+                wb = asList (u.wantedBy or [ ]);
+              in
+              if (u.enable or true) == false then
+                acc2
+              else
+                builtins.foldl' (acc3: t: acc3 // { ${t} = (acc3.${t} or [ ]) ++ [ name ]; }) acc2 wb
+            ) acc (builtins.attrNames set);
+        in
+        builtins.foldl' add { } (builtins.attrValues unitSets);
+
       # Implicit target-membership edges: member m of target T (via
-      # wants/requires) → "T after m", unless an explicit ordering between m
-      # and T already exists in either direction (suppression).
+      # wants/requires/wantedBy) → "T after m", unless an explicit ordering
+      # between m and T already exists in either direction (suppression).
       targetMemberEdges = lib.mapAttrs (
         tName: t:
         let
-          members = lib.unique (asList (t.wants or [ ]) ++ asList (t.requires or [ ]));
+          members = lib.unique (
+            asList (t.wants or [ ]) ++ asList (t.requires or [ ]) ++ (wantedMemberships.${tName} or [ ])
+          );
           tAfter = asList (t.after or [ ]) ++ asList (t.unitConfig.After or [ ]);
           tBefore = asList (t.before or [ ]) ++ asList (t.unitConfig.Before or [ ]);
           explicitPair =
@@ -95,7 +128,9 @@
             || builtins.elem m tAfter
             || builtins.elem m tBefore;
         in
-        builtins.filter (m: builtins.isString m && m != tName && builtins.hasAttr m explicitGraph && !explicitPair m) members
+        builtins.filter (
+          m: builtins.isString m && m != tName && builtins.hasAttr m explicitGraph && !explicitPair m
+        ) members
       ) config.systemd.targets;
 
       fullAfterGraph =
