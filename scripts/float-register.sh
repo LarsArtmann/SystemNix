@@ -138,9 +138,12 @@ fi
 
 echo "float-register: drift detected —"
 diff <(printf '%s\n' "$current") <(printf '%s\n' "$before") || true
+# `|| true` is load-bearing under set -o pipefail: diff exits 1 on any
+# difference, and an unguarded pipeline here killed the ceremony right
+# after the drift print (regen + proof never ran; live 2026-10-27).
 drifted=$(
-  diff <(printf '%s\n' "$current") <(printf '%s\n' "$before") \
-    | grep '^>' | sed -E 's/^> +([a-zA-Z0-9_.-]+) =.*/\1/' | tr '\n' ' ' | sed 's/ $//'
+  { diff <(printf '%s\n' "$current") <(printf '%s\n' "$before") || true; } \
+    | { grep '^>' || true; } | sed -E 's/^> +([a-zA-Z0-9_.-]+) =.*/\1/' | tr '\n' ' ' | sed 's/ $//'
 )
 rows_before="$LOGDIR/reg-rows-before-$(stamp)"
 printf '%s\n' "$current" > "$rows_before"

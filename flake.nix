@@ -1007,7 +1007,12 @@
     crush-daily.inputs.nixpkgs.follows = "nixpkgs";
     crush-daily.inputs.systems.follows = "systems";
     crush-daily.inputs.treefmt-nix.follows = "treefmt-nix";
-    dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs";
+    # DMS floats on master (owner: "always on latest", 2026-10-25); tip
+    # 5442f39's go.mod floors go >= 1.27.3, which the root fe13242 pin
+    # (go 1.27.2) cannot meet — same class and same fix as inboxclean
+    # (2026-10-25): build against floating nixpkgs-unstable (go 1.27.3).
+    # Flip back to follows = "nixpkgs" when the root pin lifts past go 1.27.3.
+    dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs-unstable";
     discordsync.inputs.flake-parts.follows = "flake-parts";
     discordsync.inputs.treefmt-nix.follows = "treefmt-nix";
     disko.inputs.nixpkgs.follows = "nixpkgs";

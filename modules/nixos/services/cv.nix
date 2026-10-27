@@ -77,8 +77,11 @@
       # FOURTH RE-STALE 2026-10-26 lock float: cv@24fc6623 spec IzjuTWgn,
       # got 5Xjd8Czb (float-proof-20261026-161006.log) — drop only when
       # upstream bakes 5Xjd8Czb.
+      # FIFTH RE-STALE 2026-10-27 lock float: cv@5165e44 spec 5Xjd8Czb,
+      # got N9Zsy7bb (float-proof-20261027-172949.log) — drop only when
+      # upstream bakes N9Zsy7bb.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-5Xjd8CzbtPsyYOR2muEHuBfrjcK8D4NVPKVm6CTngn8=";
+        vendorHash = "sha256-N9Zsy7bbWBXIIFmsTiJUQ+mTO87w8PkpaoUYxnCr37k=";
       };
     in
     {

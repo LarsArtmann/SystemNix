@@ -66,9 +66,12 @@ lib.filterAttrs (_: v: v != null) {
   # branching-flow shim RE-ADDED (2026-10-19): upstream flake at the locked
   # rev carries a raw fakeHash placeholder (specified sha256-AAAA…), so the
   # probe was mandatory; got r/LYNVd+….
+  # RE-STALE 2026-10-27 lock float: branching-flow@f28419e still ships the
+  # AAAA placeholder upstream; got iS5Z/XOU (first-hand keep-going proof,
+  # ~/.cache/lockfloat/float-proof-20261027-172949.log).
   branching-flow =
     flakePkgShim inputs.branching-flow "default"
-      "sha256-r/LYNVd+eGLWyVEpTQxk53Lkzo06kq8nixpHi0fkndc=";
+      "sha256-iS5Z/XOU2leQ/8WvlITw7/NOtUddR/xFsCJ2z2sQyHM=";
   # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
