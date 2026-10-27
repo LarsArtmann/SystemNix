@@ -27,14 +27,19 @@
     gotenberg = 3199;
 
     monitor365-server = 3001;
-    monitor365-metrics = 9191;
+    # Moved 9191 → 9421 (2026-10-27): ocis binds the whole 9100-9304 loopback
+    # band; the fleet vacates it (see the band-vacation note at gatus).
+    monitor365-metrics = 9421;
 
     openseo = 3002;
 
     signoz = 8080;
     signoz-otlp-grpc = 4317;
     signoz-otlp-http = 4318;
-    signoz-node-exporter = 9100;
+    # Moved 9100 → 9400 (2026-10-27): ocis's web service binds the ocis-default
+    # loopback 9100 (its whole internal band is 9100-9304); the collector
+    # metrics endpoint vacates the band.
+    signoz-node-exporter = 9400;
     signoz-collector-metrics = 8888;
     signoz-clickhouse = 9000;
     # ClickHouse HTTP interface (the /ping gatus check and any HTTP client);
@@ -42,16 +47,24 @@
     signoz-clickhouse-http = 8123;
     signoz-clickhouse-metrics = 9363;
     signoz-clickhouse-keeper = 9181;
-    # Moved 9234 → 9239 (2026-10-26): opencloud's embedded NATS binds the
-    # ocis-default loopback 9234 and opencloud 7.2.4 ignores NATS_PORT, so
-    # keeper raft moved rather than fighting the binary default.
-    signoz-clickhouse-raft = 9239;
+    # Moved 9234 → 9239 → 9430 (2026-10-26/27): opencloud's embedded NATS
+    # binds the ocis-default loopback 9234 and opencloud 7.2.4 ignores
+    # NATS_PORT. 9239 turned out to ALSO be inside ocis's 9100-9304 internal
+    # band, so keeper raft lands at 9430, fully outside it.
+    signoz-clickhouse-raft = 9430;
 
     taskchampion = 10222;
 
-    gatus = 9110;
+    # Band vacation (2026-10-27): opencloud (ocis) binds ~86 loopback ports
+    # across 9100-9304 at startup (binary defaults, not configurable en
+    # masse; NATS_PORT was a verified no-op in 7.2.4). Every fleet listener
+    # that lived in that band moved to 94xx, keeping pairs adjacent:
+    # gatus 9110 → 9410, relay 9111 → 9411, pma 9190 → 9420,
+    # monitor365-metrics 9191 → 9421, collector metrics 9100 → 9400,
+    # keeper raft → 9430. Do NOT register new fleet ports inside 9100-9304.
+    gatus = 9410;
     # Local Discord-webhook gate for gatus alerts (loopback only; T-007).
-    gatusAlertRelay = 9111;
+    gatusAlertRelay = 9411;
 
     emeet-pixyd = 8090;
 
@@ -62,7 +75,9 @@
     bank-sync = 8097;
 
     overview = 8083;
-    pma-health = 9190;
+    # Moved 9190 → 9420 (2026-10-27): inside ocis's 9100-9304 internal band
+    # (thumbnails service binds 9190); see the band-vacation note at gatus.
+    pma-health = 9420;
 
     activitywatch = 5600;
 
