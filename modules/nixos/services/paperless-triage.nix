@@ -125,6 +125,7 @@ _: {
           pkgs.coreutils
           pkgs.gnugrep
           pkgs.gawk
+          pkgs.maintenance-entry-gate
         ];
         text = ''
           set -euo pipefail
