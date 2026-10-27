@@ -949,11 +949,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793106138,
-        "narHash": "sha256-H+RHONCJYa6NAyVwCztjUJBTgaAAooEer0wog0ie/tc=",
+        "lastModified": 1793110076,
+        "narHash": "sha256-BfwnV+nOdxffjI7NAKo+nExCev3fcfChClKTSNHcwfk=",
         "owner": "LarsArtmann",
         "repo": "CV",
-        "rev": "ac6763f59ea21591fd69c095458a670695b7667e",
+        "rev": "5165e44ce09a25592452bc17bcd7d00b6c15869b",
         "type": "github"
       },
       "original": {
@@ -966,11 +966,11 @@
     "dank-qml-common": {
       "flake": false,
       "locked": {
-        "lastModified": 1793073767,
-        "narHash": "sha256-mT0Kp4m/FP2u+I6GAZJtBH7LGHh6tSibDuRv4M4YBbc=",
+        "lastModified": 1793108324,
+        "narHash": "sha256-5EPljTgi7YWoBxmSbsDoSetzGPW28jcyPL5i5Yo1PAw=",
         "owner": "duxlabs-dev",
         "repo": "dux-qml-common",
-        "rev": "08efce90fd4b2aa90c4064b57e48b14720bbe255",
+        "rev": "c6e4a6bce24b804688225b0889410d2ec0ae06d7",
         "type": "github"
       },
       "original": {
@@ -990,11 +990,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793107063,
-        "narHash": "sha256-FL2Lgn/KB+6Wh9f2fUKdXpsqDhs9CxhTN7gwhyOzH30=",
+        "lastModified": 1793109765,
+        "narHash": "sha256-+EPb07vEADzQNDqBcmw/68HH1a3yTYyrkaWu2WVdR5E=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "06e0ac182ca42c85d6bc03a658b8c0ce6c094f2d",
+        "rev": "6a15b4429897f8dd14920ca8afad316ab9401d08",
         "type": "github"
       },
       "original": {
@@ -3103,16 +3103,16 @@
     "go-credentials-store": {
       "flake": false,
       "locked": {
-        "lastModified": 1791947500,
-        "narHash": "sha256-NjwVBXzh7dNiFhqTjSe2HOrsZbjQbEE+I+nmlcnOSIY=",
+        "lastModified": 1793107680,
+        "narHash": "sha256-G6Gn4AD0tXc7J6xg9JgDu4alHmBQE/82Msdh7Q8jRPs=",
         "ref": "refs/heads/master",
-        "rev": "6fef4c99760eca76c3e96675c2e9ec55ddaa0f68",
-        "revCount": 216,
+        "rev": "3e1cdc60fd852e7f1e0af2cfea93d9783418ec0e",
+        "revCount": 358,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       },
       "original": {
-        "rev": "6fef4c99760eca76c3e96675c2e9ec55ddaa0f68",
+        "rev": "3e1cdc60fd852e7f1e0af2cfea93d9783418ec0e",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       }
@@ -6293,11 +6293,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1793106713,
-        "narHash": "sha256-r/B+Bb8DZtp8dM2d/cPvarTICGGskypA5fPPwBx3tNU=",
+        "lastModified": 1793109420,
+        "narHash": "sha256-PwGZOZx0TxQ+YBeAOPbJA2O3XxzV/P77NNRwkeJTSfY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "896f63b6900bcf77a396b171525a221e1e379c9e",
+        "rev": "bdd118ceecd3ab04f7bc6a3e17b9d557256347a9",
         "type": "github"
       },
       "original": {
@@ -6711,11 +6711,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1793107047,
-        "narHash": "sha256-Gi+F2HlgdZyLryZ24KTBrnhr21u6tc826CeKAaEqkvA=",
+        "lastModified": 1793107544,
+        "narHash": "sha256-e36TRRa7Yz8OXF8qTcQiYto63ScVkZXmjUJQ4m907XI=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "237236b9dc4baf7a2c322bcfffffcbedb2e9586a",
+        "rev": "9b98c94036acbfb643296d350457605fae47f667",
         "type": "github"
       },
       "original": {
@@ -7292,11 +7292,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793106368,
-        "narHash": "sha256-vJMNik7HRqR3sw7pajveOifEq89ZCz9RvlIVb8Igu84=",
+        "lastModified": 1793109662,
+        "narHash": "sha256-Y/R+C4Zo8T3giqd08NkS3kKR/mbDregh1UNgU3VtIgE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "81ff60c2776e86302dfd05dd97ae01e4e8cead3a",
+        "rev": "3d588eb5d5bb9371fc57749d9e9ac24ec55a3bb9",
         "type": "github"
       },
       "original": {

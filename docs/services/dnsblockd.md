@@ -136,3 +136,9 @@ read-only NixOS `/etc/resolv.conf`) — the interception itself still works via
 the firewall path; the errors are noise, not breakage (fired all day
 2026-10-23 while the dashboard DNS config was being edited).
 
+
+## Size profile (2026-10-27 storage audit S17)
+
+`/var/lib/dnsblockd` (Samsung `hot/dnsblockd` subvol — CORRECT tier): journal.db 4.2G (operator WAL, 30d retention, enabled 2026-10-07 — expect ~2× growth to steady state), tracking.db 2.4G + WALs, dnsblockd_tracking.db 724M, ocr/other small. Both retention surfaces bounded (30d). Growth does not threaten the QLC root.
+
+**Open anomaly:** TWO tracking DBs coexist — `tracking.db` (2.4G) and `dnsblockd_tracking.db` (724M). Upstream renamed the tracking store across versions; the older name likely lingers. Verify last-write mtime of the old-name DB before any cleanup; if untouched for ≥30d it is dead weight on the hot tier only (not the root). **Source:** docs/status/2026-10-27_10-38_var-storage-tier-audit-status.md §F + live probe 2026-10-27 15:1x.
