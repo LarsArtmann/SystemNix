@@ -222,7 +222,7 @@ in
     };
 
   testScript = ''
-    import re
+    import json
 
     machine.start()
 
@@ -264,7 +264,7 @@ in
     # 5. Consume one Faktura (should PASS -> paperless-gpt-auto) and one
     #    letter (should land below threshold -> needs-review).
     machine.succeed(
-      f"printf 'Faktura VAT Nr FA/2026/10/27 Data wystawienia: 2026-10-27 Brutto: 86,84 PLN VAT 23%%' > /tmp/faktura.txt"
+      "printf 'Faktura VAT Nr FA/2026/10/27 Data wystawienia: 2026-10-27 Brutto: 86,84 PLN VAT 23%%' > /tmp/faktura.txt"
     )
     machine.succeed(
       "printf 'Dear Customer, your subscription will renew automatically next month. Kind regards.' > /tmp/letter.txt"
