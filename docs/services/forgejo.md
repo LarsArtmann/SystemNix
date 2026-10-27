@@ -597,6 +597,11 @@ negative-test legs (`scripts/negative-test-lints.sh` group
 `orderingcycle`) and a runtime tripwire (post-deploy-check §21: journal
 grep for `deleted to break ordering cycle` + runner-activity canary).
 Full doctrine: docs/agents/systemd.md → "Boot critical-path discipline".
+Deploy status: the class fix is verified in-tree (eval + flake check +
+negative tests green) and rides the next calm-window deploy — 00:48-04:22
+windows were refused by the freeze-protection gates (parallel monitor365
+test cycles at 98-99% disk util; deliberate non-override). The instance
+fix is LIVE since gen-954 with the runner draining CI since 23:37.
 Boot-time verify still pending at authoring time (no reboot since the fix
 landed; next boot must show zero cycle deletions and a runner pulled via
 forgejo.service.wants).

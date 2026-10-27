@@ -54,7 +54,7 @@ Belt: systemd-shape-audit (class 7) + io-tier-coverage-audit boot-gated scopes e
 - `nix flake check --no-build` ALL PASSED (README 135→137 + FEATURES count re-stamps included; doc-counts gate satisfied).
 - `CASES=orderingcycle` negative tests 2/2 PASS.
 - Units running (§c) + IO calm (some avg10 ~12%, storm source quiesced by the parallel session).
-- Deploy: fired from the quiescence chain after 4 quiet polls; generation + anchor + §21 gate results appended below when the switch lands.
+- Deploy: **blocked by weather, not by the change** — three deploy attempts (00:48 via the quiescence chain, then a 30-min and a 150-min dual-gate retry loop) were all correctly refused by the freeze-protection entry gates: the parallel monitor365 session's cargo test cycles held sdb/sdc at 98-99% util for hours (guard trips #4419-4427 class, 5-7/hour; the recency gate demands ≥60 trip-free minutes). No force-override used — the storm is real, not phantom. The class fix is fully verified in-tree (everything above) and rides ANY future deploy; a 6h dual-gate retry loop was left running at 04:30 to land it at the first calm window. Instance fix remains LIVE (gen-954) with the runner draining CI since 23:37 — the owner-facing pain is resolved independent of this deploy.
 
 ## f. Follow-ups (self-harvested)
 
