@@ -180,6 +180,22 @@ deploy; abort path included). **Early-deploy safety:** the family condition-gate
 subvol. deploy.sh restarts `forgejo-subvol-bootstrap` (is-active-gated, indirect unit) so
 bootstrap fixes converge.
 
+**Backup legs (S13 enumeration — single source of truth, 2026-10-27):**
+
+1. **Daily pool zip** 03:32 → `/mnt/pool/backups/forgejo/forgejo-*.zip` (~27G; content
+   measured 2026-10-27: repos 96.5%, `forgejo-db.sql` 49M, data 73M — growth driver is
+   plain repo content, not LFS/packages). Retention shape (7d×27G ≈ 189G pool) still an
+   open owner call.
+2. **8h btrbk subvol leg** (Set-B above) → `/mnt/pool/backups/forgejo-subvol`.
+3. ~~Weekly stateDir dump~~ — **REMOVED 2026-10-27 (storage-crisis plan S3)**:
+   `services.forgejo.dump.enable = false`; it was a redundant third leg hoarding 123G on
+   the Samsung (+27G/wk). The 123G `/var/lib/forgejo/dump/*` trash is gated on a green
+   restore drill (drill TimeoutStartSec raised 30→60min the same day after an IO-storm
+   timeout killed a force-run mid-verification).
+4. **Sunday restore drill** (`forgejo-restore-drill.service`, 06:00 Sun; CAP fix
+   deployed 2026-10-27 gen-956 — the two consecutive Sunday false-negatives were the
+   empty CapabilityBoundingSet, not the backups).
+
 **G1 executed 2026-10-11 01:45–02:07 CEST** (umount → du gate 67G → prepare 71.75G →
 finalize: 53,172 entries + 43 sampled checksums verified, rename-only swap → deploy
 system-864). Forgejo 15.0.9 lives on the subvol; evidence trail in

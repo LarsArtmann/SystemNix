@@ -408,6 +408,33 @@
           ];
         };
 
+        # --- Declarative entity ensure (2026-10-27, triage-plan T6) --------
+        # The gpt lifecycle tags + the accounting pilot's custom fields are
+        # runtime state a DB restore silently wipes (live probe 2026-10-27:
+        # paperless-gpt-auto, faktura, Invoice number, Issue date ALL absent
+        # after the 2026-10-19 SUPERB restore — runbook DRIFT box). Declared
+        # here, ensured create-only by the paperless-dashboard provisioner on
+        # every deploy. Select-type pilot fields stay undeclared (manual /
+        # workflow-assigned — runbook accounting section).
+        services.paperless-dashboard = lib.optionalAttrs (options ? services.paperless-dashboard) {
+          ensureTags = [
+            cfg.autoTag
+            cfg.autoTagComplete
+            cfg.failTag
+            "faktura"
+          ];
+          ensureCustomFields = [
+            {
+              name = "Invoice number";
+              data_type = "string";
+            }
+            {
+              name = "Issue date";
+              data_type = "date";
+            }
+          ];
+        };
+
         # --- Registry entry: loopback-only, monitored, NO vHost ------------
         services.integration = lib.optionalAttrs (options ? services.integration) {
           paperless-gpt = {

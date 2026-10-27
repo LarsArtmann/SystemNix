@@ -553,6 +553,13 @@ in
       # (:8106, no auth in the embedded UI), token runtime-minted.
       # AI-max plan A8 (2026-10-02); fields/extraction wiring = A9.
       paperless-gpt.enable = true;
+      # paperless-triage — confidence gate IN FRONT of paperless-gpt
+      # (decision-triage productionization P1, 2026-10-27): local
+      # llama-chat margin verdicts admit documents to the auto tag;
+      # below-threshold docs route to needs-review; verdict-down writes
+      # NOTHING (the 2026-10-19 burn class). Runbook: docs/services/paperless.md
+      # triage section.
+      paperless-triage.enable = true;
       # ai-meter — transparent metering proxy for every OpenAI-compatible
       # AI call (tokens, cost, latency, per-client attribution → SigNoz +
       # /var/lib/ai-meter/usage.jsonl). Clients: crush (crushrc extraRc),
@@ -569,6 +576,14 @@ in
       // lib.optionalAttrs config.services.paperless-gpt.enable {
         paperless-gpt = {
           user = "paperless-gpt";
+          envKey = "OPENAI_API_KEY";
+        };
+      }
+      // lib.optionalAttrs config.services.paperless-triage.enable {
+        # Verdict calls ride the llama-chat upstream through the proxy
+        # (owner single-endpoint direction, 2026-10-27).
+        paperless-triage = {
+          user = "paperless-triage";
           envKey = "OPENAI_API_KEY";
         };
       }

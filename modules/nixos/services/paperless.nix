@@ -146,6 +146,14 @@ _: {
       # DO fire on unit-file diffs; only restartTriggers are inert).
       viewsJson = pkgs.writeText "paperless-dashboard-views.json" (builtins.toJSON dcfg.savedViews);
 
+      # Declarative entity sets (2026-10-27, decision-triage plan T6 — the
+      # SUPERB-restore drift class): tags + custom fields ensured
+      # create-only BEFORE saved views resolve their rules, so a DB restore
+      # that wipes them heals on the next provisioner run and a view never
+      # ships with a dangling tag rule.
+      ensureTagsJson = pkgs.writeText "paperless-dashboard-ensure-tags.json" (builtins.toJSON dcfg.ensureTags);
+      ensureFieldsJson = pkgs.writeText "paperless-dashboard-ensure-fields.json" (builtins.toJSON dcfg.ensureCustomFields);
+
       # Executed via `paperless-manage shell < file`: resolves the single
       # allauth SocialAccount-linked user (the Pocket ID SSO user). Any
       # failure (import error, missing table) prints nothing and the
@@ -368,6 +376,58 @@ _: {
             }
           ];
           description = "Saved views to provision on the owner's dashboard.";
+        };
+
+        # Declarative entities beyond views (2026-10-27, decision-triage
+        # plan T6): the 2026-10-19 SUPERB restore silently wiped the
+        # `faktura` tag, `paperless-gpt-auto`, and the Invoice number /
+        # Issue date custom fields (live probe 2026-10-27; runbook DRIFT
+        # box) — runtime-only entities are restore-fragile. Both lists are
+        # ensured CREATE-ONLY (existing entities are never modified), the
+        # same convergence discipline as savedViews.
+        ensureTags = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Tag names ensured to exist (created when missing) before saved
+            views resolve their tag rules. Create-only: colors/matching of
+            existing tags are never touched.
+          '';
+        };
+
+        ensureCustomFields = lib.mkOption {
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Custom field name; unique (the create-only key).";
+                };
+                data_type = lib.mkOption {
+                  # CustomField.FieldDataType from the paperless 3.x source
+                  # (documents/models.py). `select` is deliberately absent:
+                  # option-ID values cannot match LLM answers and stay
+                  # manual/workflow-assigned (runbook, accounting section).
+                  type = lib.types.enum [
+                    "string"
+                    "url"
+                    "date"
+                    "boolean"
+                    "integer"
+                    "float"
+                    "monetary"
+                    "documentlink"
+                  ];
+                  description = "Field data type.";
+                };
+              };
+            }
+          );
+          default = [ ];
+          description = ''
+            Custom fields ensured to exist (created when missing).
+            Create-only: data_type of an existing field is never migrated.
+          '';
         };
       };
 
@@ -1038,6 +1098,36 @@ _: {
                   fi
                   printf 'Authorization: Token %s\n' "$TOKEN" > "$TOKEN_FILE"
 
+                  # 2b. Declarative entity ensure (create-only): tags first
+                  #     (views resolve tag names AFTER this), then custom
+                  #     fields. The 2026-10-27 drift (SUPERB restore wiped
+                  #     faktura + gpt lifecycle tags + 2 pilot fields) heals
+                  #     here on every provisioner run.
+                  TAGS_CREATED=0
+                  while IFS= read -r TNAME; do
+                    [ -n "$TNAME" ] || continue
+                    if ! printf '%s' "$(api GET "/api/tags/?name=''${TNAME}" 2>/dev/null)" \
+                      | jq -e '.count > 0' >/dev/null 2>&1; then
+                      NEW_TAG=$(api POST /api/tags/ "{\"name\":\"''${TNAME}\"}") \
+                        || { echo "paperless-dashboard-provision: tag create failed for '$TNAME'" >&2; exit 1; }
+                      echo "paperless-dashboard-provision: ensured tag '$TNAME' (id=$(printf '%s' "$NEW_TAG" | jq -r '.id'))"
+                      TAGS_CREATED=$((TAGS_CREATED + 1))
+                    fi
+                  done <<<"$(jq -r '.[]' ${ensureTagsJson} 2>/dev/null || true)"
+
+                  FIELDS_CREATED=0
+                  while IFS= read -r FNAME; do
+                    [ -n "$FNAME" ] || continue
+                    if ! printf '%s' "$(api GET "/api/custom_fields/?name=''${FNAME}" 2>/dev/null)" \
+                      | jq -e '.count > 0' >/dev/null 2>&1; then
+                      FTYPE=$(jq -r --arg n "$FNAME" '.[] | select(.name == $n) | .data_type' ${ensureFieldsJson})
+                      NEW_FIELD=$(api POST /api/custom_fields/ "{\"name\":\"''${FNAME}\",\"data_type\":\"''${FTYPE}\"}") \
+                        || { echo "paperless-dashboard-provision: custom field create failed for '$FNAME'" >&2; exit 1; }
+                      echo "paperless-dashboard-provision: ensured custom field '$FNAME' (''${FTYPE}, id=$(printf '%s' "$NEW_FIELD" | jq -r '.id'))"
+                      FIELDS_CREATED=$((FIELDS_CREATED + 1))
+                    fi
+                  done <<<"$(jq -r '.[].name' ${ensureFieldsJson} 2>/dev/null || true)"
+
                   # 3. Existing view names (owner-scoped: SavedView is an
                   #    owned object) + the tag name->id map. Tag names are NOT
                   #    unique at the DB level (tree tags); exact-match first
@@ -1155,7 +1245,7 @@ _: {
                     fi
                   fi
 
-                  echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
+                  echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES ensured_tags=$TAGS_CREATED ensured_fields=$FIELDS_CREATED dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
                 '';
               };
             }
