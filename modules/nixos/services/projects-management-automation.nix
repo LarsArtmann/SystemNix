@@ -216,6 +216,14 @@
               "GIT_CONFIG_COUNT=1"
               "GIT_CONFIG_KEY_0=core.hooksPath"
               "GIT_CONFIG_VALUE_0=/var/empty"
+              # Health listener OFF the upstream-pinned 9190: that port sits
+              # inside ocis's 9100-9304 internal band (opencloud thumbnails
+              # binds 9190; 2026-10-27 band vacation). Upstream sets this var
+              # in a raw Environment list — same later-wins mechanism as the
+              # git identity entries above (the 2026-08-10 mkForce attempt
+              # lost exactly this way; mkAfter lands physically LAST and
+              # wins). Registry: lib/ports.nix pma-health = 9420.
+              "PMA_HEALTH_LISTEN_ADDR=127.0.0.1:${toString ports.pma-health}"
             ];
           }
           ioTier.build
