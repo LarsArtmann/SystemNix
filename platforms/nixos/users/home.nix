@@ -222,14 +222,12 @@ in
     # metered (attribution key = the runtime-minted client key, read per
     # session start). Later statements WIN over the renderer's provider
     # adds, so these override base URL + key only — models, prices and
-    # everything else stay owned by the crush-config repo. gemini stays
-    # DIRECT for now: its provider type is not confirmed OpenAI-compat
-    # with the proxy path (verify first, then route — the land-the-
-    # replacement-first doctrine).
+    # everything else stay owned by the crush-config repo. gemini rides
+    # the NATIVE genai transport through the proxy (genai.go adapter,
+    # 2026-10-17 — NOT OpenAI-compat; the adapter handles the protocol).
     extraRc = lib.mkIf ((osConfig.services.ai-meter or { }).enable or false) ''
       if [ -f /run/ai-meter-keys/crush ]; then
         provider add zai --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/zai" --api-key "$(cat /run/ai-meter-keys/crush)"
-        provider add kimi-coding --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/kimi" --api-key "$(cat /run/ai-meter-keys/crush)"
         provider add gemini --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/gemini" --api-key "$(cat /run/ai-meter-keys/crush)"
       fi
     '';

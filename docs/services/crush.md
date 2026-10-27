@@ -30,7 +30,7 @@ models, LSPs, and the verification workflow for changing any of it.
 | `zai`         | sops `crush.yaml`       | `glm-5.3-flash` declared via `model add` (not in catalog)                                                                                                         |
 | `gemini`      | sops `crush.yaml`       |                                                                                                                                                                   |
 | `minimax`     | sops `crush.yaml`       | **DISABLED** 2026-08-31: Token Plan exhausted (2056). `providers.minimax.disabled = true` in the crush-config repo; key stays rendered. Re-enable = flip the flag |
-| `kimi-coding` | sops `crush.yaml`       |                                                                                                                                                                   |
+| `kimi-coding` | sops `crush.yaml`       | **REMOVED** 2026-10-27 (owner: do not use anymore): sops key + ai-meter upstream + extraRc repoint dropped; crush-config provider declaration removal pending push + lock bump (renders keyless until then) |                                                                                                                                                                   |
 | `llamacpp`    | none (local)            | `:8899`, ad-hoc llama-server; models auto-discovered                                                                                                              |
 | `hyper`       | auth store (OAuth)      | stays store-owned: tokens self-rotate hourly                                                                                                                      |
 

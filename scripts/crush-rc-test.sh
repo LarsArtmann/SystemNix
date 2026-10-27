@@ -106,7 +106,7 @@ for m in "${EXPECT_MODELS[@]}"; do
     exit 1
   fi
 done
-grep -E "^(zai|gemini|minimax|kimi-coding|synthetic|llamacpp)/" "$T/models.out" | head -8 || true
+grep -E "^(zai|gemini|minimax|synthetic|llamacpp)/" "$T/models.out" | head -8 || true
 
 # 3. optional end-to-end key probe (costs one trivial completion)
 if [[ $PROBE == true && -n ${PROBE_MODEL:-} ]]; then

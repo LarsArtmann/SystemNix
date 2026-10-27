@@ -208,7 +208,6 @@ in
                   "zai_api_key"
                   "gemini_api_key"
                   "minimax_api_key"
-                  "kimi_api_key"
                 ]
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
