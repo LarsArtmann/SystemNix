@@ -280,7 +280,7 @@
 - [ ] **Runbook: live-fire collector-config validation procedure** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **GCP integration hardening batch (VM test, CHANGELOG, smoke §, dnsblockd restart semantics)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **SigNoz GCP integration: re-arm (enable=true) + deploy the executed go-live + verify live metric names** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — receivers are containment-DISABLED (enable=false) since the 2026-09-29 first-deploy falsification; re-arm + deploy + verification checklist
-- [ ] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [x] **Textfile-collector fixed-name `.tmp` audit (the niri EACCES class) + stale `btrfs-compression.prom.tmp` check** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DONE 2026-10-27: class = zero instances (audit script extended with trap leg, negative-tested); crowdsec collector fixed; btrfs-compsize timer healthy
 - [ ] **system-health-metrics worst-case section sum (≈500s) exceeds the 180s unit ceiling AND the 120s timer cadence — the collector structurally cannot finish under an IO storm** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **backup-catchup report script (`scripts/backup-catchup-report.sh`)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — the `backup_ever_succeeded` metric half landed 2026-09-23; remaining: stamps vs OnCalendar + prom diff + btrbk dry-run
 - [ ] **btrbk receive-freshness + pool-snapshot-freshness monitoring** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
