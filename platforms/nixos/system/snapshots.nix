@@ -257,17 +257,20 @@ in
         # 2026-10-08; revisit to 1w once the hot-tier waves land).
         snapshot_preserve_min = "2d";
         snapshot_preserve = "3d";
-        # Catch-up burst cap (2026-10-27 plan S23): btrbk's default
-        # resume_missing=yes re-anchors interrupted receives by taking a
-        # FRESH snapshot pair on every retry — the Oct 23 triple-run and the
-        # 2026-10-26 23:00/23:08/23:29 @home-hermes bursts (stray-target
-        # warnings → resume → extra snapshots on the FULL root exactly when
-        # space matters). no: a broken chain waits for the nightly
-        # garbled-receive GC + the next 23:00 window (worst case a full
-        # re-send ~1h QLC read), never a burst.
-        # (2026-10-27: was `false` — settings are string-typed; the bool
-        # killed every toplevel eval, float-proof-20261027-151207 rc=1.)
-        resume_missing = "no";
+        # (2026-10-27 23:0x — REMOVED `resume_missing = "no"`:) btrbk 0.32.7
+        # DEPRECATED this option and enters FAILSAFE MODE on it — preserving
+        # snapshots but SKIPPING ALL TARGETS (pool sends dead). Live-caught at
+        # the 23:00 fire: "Skipping target /mnt/pool/backups/root: Failsafe
+        # mode active (deprecated configuration)", exit 10; the S23 verify had
+        # checked only that the line RENDERS, not that the binary accepts it
+        # (day-1 lesson: verify semantics, not rendering). Modern behavior
+        # (doc/upgrade_to_v0.23.0.md): btrbk always resumes missing backups;
+        # the doc's imitation (target_preserve_min latest + target_preserve
+        # no) would PRUNE the forever-pool and is wrong for us. The S23
+        # burst-cap goal needs a modern re-fix (calendar hardening or
+        # stray-target GC) — row re-opened in docs/todo/storage.md.
+        # (2026-10-27 earlier: was `false` — settings are string-typed; the
+        # bool killed every toplevel eval, float-proof-20261027-151207 rc=1.)
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
         # disables automatic deletion of received backups entirely. Space cost
         # stays near raw data churn — received subvolumes share extents via CoW

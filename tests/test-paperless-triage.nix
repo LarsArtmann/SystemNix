@@ -247,7 +247,15 @@ in
     machine.succeed(f"{sweep} --selftest")
 
     # 4. Declarative entities: ensureTags ran before views (the needs-review
-    #    tag and its saved view both exist after the provisioner).
+    #    tag and its saved view both exist after the provisioner). The unit
+    #    is boot-triggered with a 60s preStart budget; under a loaded HOST
+    #    the VM's Django first response can exceed it (boot flake class),
+    #    so converge it explicitly once the login page genuinely serves —
+    #    the same action deploy.sh performs.
+    machine.wait_until_succeeds(
+      "curl -sf -o /dev/null http://127.0.0.1:2892/accounts/login/", timeout=300
+    )
+    machine.succeed("systemctl restart paperless-dashboard-provision.service")
     machine.wait_for_unit("paperless-dashboard-provision.service")
     token = machine.succeed(
       "runuser -u paperless -- /run/current-system/sw/bin/paperless-manage drf_create_token admin | grep -oE '[0-9a-f]{40}'"
