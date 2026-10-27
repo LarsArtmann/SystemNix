@@ -159,7 +159,9 @@ _: {
             echo "paperless-triage selftest: margin parser fixtures"
             local t out m
             t=$(mktemp)
-            trap 'rm -f "$t"' EXIT
+            # t is function-local; the trap must not outlive selftest() or
+            # nounset kills the script at exit 0 (bash reports "line 1")
+            trap 'rm -f "''${t:-}"' EXIT
             # 1. Clear YES: p_yes ~ 0.951, p_no ~ 0.050 -> strongly positive
             printf '%s' '{"choices":[{"logprobs":{"content":[{"top_logprobs":[{"token":"YES","logprob":-0.05},{"token":"NO","logprob":-3.0},{"token":"yes","logprob":-5.5},{"token":"The","logprob":-9.1}]}]}}]}' >"$t"
             out=$(margin_from_logprobs "$t")
@@ -195,6 +197,7 @@ _: {
             esac
             awk -v m="$m" 'BEGIN { exit !(m > 0.5) }' || die "fixture 5 (variant folding): got $out"
             rm -f "$t"
+            trap - EXIT
             echo "paperless-triage selftest: PASS (5 fixtures)"
           }
 
