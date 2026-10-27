@@ -200,6 +200,10 @@ in
       sops.secrets.paperless_admin_password = { };
 
       services.llama-chat.enable = true;
+      # The HOST's IO storms bleed into the guest's /proc/pressure/io via
+      # virtiofs; the gate has its own selftest check elsewhere — this test
+      # exercises the sweep logic, not the gate.
+      services.paperless-triage.psiMaxPercent = 100;
       services.paperless = {
         enable = true;
         dataDir = lib.mkForce "/var/lib/paperless";

@@ -112,6 +112,7 @@ _: {
     TAG_ENCRYPTED = "encrypted";
     TAG_COMPLETE = completeTag;
     TAG_FAILED = failTag;
+    PSI_MAX = toString cfg.psiMaxPercent;
     STATE_DIR = stateDir;
     TEXTFILE_DIR = textfileDir;
   };
@@ -278,7 +279,7 @@ _: {
       }
 
       # --- PSI admission gate (soft skip — module header note 3) ----------
-      if ! maintenance-entry-gate --name paperless-triage --psi-max 30 --trip-window-min 0 >/dev/null 2>&1; then
+      if ! maintenance-entry-gate --name paperless-triage --psi-max "''${PSI_MAX:-30}" --trip-window-min 0 >/dev/null 2>&1; then
         warn "IO PSI above band - skipping sweep (last-sweep untouched; freshness alerts after 1h of skips)"
         psi_skip=1
         write_prom
@@ -596,6 +597,18 @@ in
       type = lib.types.str;
       default = "needs-review";
       description = "Tag applied to below-threshold / unreadable documents (provisioned + saved-viewed).";
+    };
+
+    psiMaxPercent = lib.mkOption {
+      type = lib.types.ints.between 1 100;
+      default = 30;
+      description = ''
+        IO-PSI band for the maintenance-entry-gate admission skip (the
+        freeze-25 discipline). 100 disables the skip in practice - for VM
+        tests, where the HOST's IO pressure bleeds into the guest's
+        /proc/pressure/io through virtiofs (the gate has its own selftest
+        check; tests of the sweep logic should not re-prove it).
+      '';
     };
   };
 
