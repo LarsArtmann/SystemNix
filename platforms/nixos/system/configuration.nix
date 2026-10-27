@@ -1224,9 +1224,14 @@ in
         # invalid_grant at receiver Start() (account not found), which is
         # FATAL for the whole collector (start-limit-hit, ALL telemetry
         # ingestion dark). Re-armed 2026-10-27 once the real key was in
-        # sops. Post-deploy verification checklist:
+        # sops — and the re-arm deploy hit a SECOND fatal (receivers shipped
+        # without project_id: InvalidArgument "got: projects/" at Start-time
+        # descriptor prefetch → collector start-limit-hit again). Fix:
+        # signoz.nix mkReceiver now bakes project_id per receiver. Post-
+        # deploy verification checklist:
         # docs/services/signoz-gcp-monitoring.md (journal 400/invalid_grant
-        # must NOT appear; receiver label present in :8888/metrics).
+        # AND "got: projects/" must NOT appear; receiver label present in
+        # :8888/metrics).
         gcpMonitoring = {
           enable = true;
           projects = {

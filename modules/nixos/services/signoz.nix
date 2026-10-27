@@ -1582,11 +1582,13 @@ in
             })
 
             # GCP Cloud Monitoring receivers: ADC credential wiring for the
-            # collector + the sops-rendered service-account key. The secret
-            # carries a structurally-valid placeholder key until go-live
-            # (runbook: docs/services/signoz-gcp-monitoring.md) — receivers
-            # then start, scrape, and fail 403 per interval without touching
-            # the rest of the pipeline.
+            # collector + the sops-rendered service-account key (REAL key
+            # since 2026-09-29 go-live; the placeholder era is over). Every
+            # receiver Start() failure is FATAL for the whole collector —
+            # falsified twice live: 09-29 unparseable key (400 invalid_grant
+            # at token fetch), 10-27 missing project_id (InvalidArgument
+            # "got: projects/" at descriptor prefetch). Runbook:
+            # docs/services/signoz-gcp-monitoring.md.
             (lib.mkIf gcpMonitoringEnabled (
               lib.optionalAttrs (options ? sops) {
                 sops.secrets."signoz-gcp-credentials" = {
