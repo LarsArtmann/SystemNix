@@ -28,10 +28,10 @@ func (s alertState) String() string {
 type suppressReason string
 
 const (
-	reasonBootGrace   suppressReason = "boot-grace"
-	reasonSev1Mute    suppressReason = "sev1-mute"
+	reasonBootGrace    suppressReason = "boot-grace"
+	reasonSev1Mute     suppressReason = "sev1-mute"
 	reasonFlapCollapse suppressReason = "flap-collapse"
-	reasonRearmGuard  suppressReason = "rearm-guard"
+	reasonRearmGuard   suppressReason = "rearm-guard"
 )
 
 type decision struct {

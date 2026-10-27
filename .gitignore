@@ -216,3 +216,5 @@ go.work.sum
 # <<< buildflow-managed (.gitignore) <<<
 
 *.qcow2
+# Sensitive files
+id_ed25519*
