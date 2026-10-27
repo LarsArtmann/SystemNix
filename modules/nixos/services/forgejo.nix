@@ -1185,6 +1185,11 @@ _: {
             (serviceOneshotDefaults { })
             (harden {
               MemoryMax = "2G";
+              # Restore drill must read forgejo-owned 0600 dump/subvol files as
+              # root; the empty default bounding set strips DAC bypass and made
+              # two consecutive Sundays fail as false negatives (2026-10-27
+              # storage audit F4).
+              CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_READ_SEARCH";
             })
             ioTier.background
           ];
