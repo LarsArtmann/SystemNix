@@ -1097,6 +1097,52 @@
                 ];
                 alert = "CV auto-apply gauges missing from /metrics — the autoapply DI provider or metrics registration regressed (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /metrics | grep cv_autoapply.";
               }
+              # CRM mirror dead-letter alarm (2026-10-27 incident bundle):
+              # the Kith-mirror syncer PARKS an application after 3
+              # consecutive not-found updates — nonzero means real funnel
+              # deals are missing from the CRM board until revival. The
+              # counter is cumulative since boot, but parked apps do NOT
+              # self-heal (revival needs a repair + re-discover/restart),
+              # so "any nonzero" is the honest threshold here — the exact
+              # opposite of the value-threshold trap on the metrics checks
+              # above. Admin card: /admin "CRM mirror".
+              {
+                name = "CV CRM Mirror Parked";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/crm-status";
+                interval = "30m";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"deadLettered\":0*)"
+                ];
+                alert = "CV CRM mirror has parked applications — their CRM link is dead and the funnel deals are missing from the Kith board. Revive: repair the mirror views, then re-discover the apps or restart cv-server (admin hub → CRM mirror). Check: curl -s -H 'X-API-Key: …' http://localhost:8091/api/pipeline/crm-status | jq .deadLettered";
+              }
+              # CRM mirror endpoint liveness: the guarded crm-status JSON
+              # must answer with its contract key present. Catches the
+              # mirror surface going dark (DI regression, guard drift,
+              # route rename) independently of the parked alarm above.
+              # DELTA NOTE: a ">50 sync errors/hour" rate alarm is NOT
+              # expressible here (syncErrors is cumulative since boot; a
+              # value pat would page forever after the first transient) —
+              # the growing-count read lives on the admin hub's CRM mirror
+              # card and `journalctl -u cv-server | grep -c 'crm sync'`.
+              {
+                name = "CV CRM Mirror Status";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/crm-status";
+                interval = "30m";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"deadLettered\":*)"
+                ];
+                alert = "CV crm-status endpoint is not answering its JSON contract — the CRM mirror surface is dark (DI, guard, or route regression). Check: journalctl -u cv-server --since -15min; the admin hub's CRM mirror card.";
+              }
               # Auto-apply pass observability (2026-09-15 bundle): the
               # last-pass endpoint carries the APPLY-side sibling
               # data/last-autoapply-pass.json — the wire answer to "the

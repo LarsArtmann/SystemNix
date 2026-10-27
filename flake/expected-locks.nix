@@ -47,7 +47,7 @@
   crush-config = "a278e20a8eefec99aba6b76e693414cf00042693";
   crush-daily = "38ff60b45717ad99c5c99f5e58013d1f788f451a";
   cv = "5165e44ce09a25592452bc17bcd7d00b6c15869b";
-  dankMaterialShell = "5442f3923b6e7ce82342d8b17f65f4d616867f37";
+  dankMaterialShell = "853b3999739f0682709cbba37f7658f6ec39218b";
   discordsync = "e219d156bd38f3d167c2516c7d675d82366165cf";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
@@ -86,7 +86,7 @@
   journal = "b6efb5bbe3a388731e8ceff28ac330124d836c11";
   library-policy = "4020b31d31e8a8cabea7dafab102f49fd4764f44";
   md-go-validator = "3f466de78df43628ca4c59803151f4345f67607a";
-  monitor365 = "f0ad66cf410e4d416ec17e0533cc7b8e76793292";
+  monitor365 = "b2809e024d1f64068d725cd98ff394234bd64135";
   mr-sync = "84b33709e649f73109c9f9a162b84a6d3976a18f";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
   niri-session-manager = "fbc96f843edc2022e3f8fde9bec33d770e96b75a";
