@@ -840,11 +840,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1792912959,
-        "narHash": "sha256-9LSIuGc/G8TLm7pnLpPc0wm6vs1Bgay7IY9uvpCE7m4=",
+        "lastModified": 1793112699,
+        "narHash": "sha256-DgbRGGKVwx4aD5WUUbGqCC3msPCTJ9ca6Fr/yl94Zfk=",
         "owner": "LarsArtmann",
         "repo": "crm",
-        "rev": "1723289e7f625612f714efd6ddb6280c7f9512ce",
+        "rev": "e97535d62ec45d40193bac6831189eb8911ed9a4",
         "type": "github"
       },
       "original": {
