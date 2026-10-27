@@ -99,10 +99,10 @@ for f in "${files[@]}"; do
   # dir (live sweep 2026-10-27: ~28 leftovers across 10 collectors,
   # hard-killed units never run an untrapped EXIT); with a trap, an
   # ordinary timeout/TERM exit cleans up.
-  if grep -qE 'mktemp "[^"]*\.prom' <(code); then
+  if grep -qE 'mktemp' <(code) && grep -qE 'textfile_collectors|textfileDir' "$f"; then
     if ! grep -qE "trap ['\"].*rm -f" <(code); then
       echo "FAIL [$rel] C: mktemp'd .prom tmp without EXIT trap (kill leaves .prom.XXXXXX litter; add trap 'rm -f \"\$TMP\"' EXIT):"
-      grep -nE 'mktemp "[^"]*\.prom' "$f" | head -1 | sed 's/^/  /'
+      grep -nE 'mktemp' "$f" | head -1 | sed 's/^/  /'
       fail=1
     fi
   fi
