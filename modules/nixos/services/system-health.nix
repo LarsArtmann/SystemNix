@@ -826,6 +826,28 @@ _: {
             walk_journal "$WALK_DIR/pocket-id" pocket-id.service "-24h" "database is locked" 30 &
           fi
 
+          # === PapDashboard ingest success-count (2026-08-18 sweep ask) ===
+          # The only end-to-end proof that gatus's custom alerting provider
+          # POSTs LAND: gatus's own access line per ingest
+          # ("path=/api/ingest status=200"). 200s vs total ingest requests
+          # in the trailing hour — auth failures (401, sops/gatus-env key
+          # drift), schema drift (422), route loss (404, stale flake pin)
+          # and method bugs (405) all show up as total > ok with the
+          # non-200 class visible in the papdashboard journal directly.
+          # Same walk doctrine as pocket-id above (window + timeout +
+          # exit<=1 valid + fail-closed scrape_errors). Gated on papdashboard
+          # being enabled — hosts without the dashboard emit nothing.
+          collect_papdashboard_ingest=${lib.boolToString (config.services.papdashboard.enable or false)}
+          PAPDASHBOARD_INGEST_OK_1H=""
+          PAPDASHBOARD_INGEST_TOTAL_1H=""
+          PAPDASHBOARD_INGEST_SCRAPE_ERRORS=1
+          if [ "$collect_papdashboard_ingest" = "true" ]; then
+            PAPDASHBOARD_INGEST_SCRAPE_ERRORS=0
+            PAPDASHBOARD_WALKS_LAUNCHED=1
+            walk_journal "$WALK_DIR/pap-ok" papdashboard.service "-1h" "path=/api/ingest status=200" 30 &
+            walk_journal "$WALK_DIR/pap-total" papdashboard.service "-1h" "path=/api/ingest status=[0-9]" 30 &
+          fi
+
           # === Kernel memcg OOM kills (freeze-#28 class) ===
           # KERNEL hard-limit kills (CONSTRAINT_MEMCG) — the userspace
           # systemd-oomd counter above sees "Marked for killing" only. The
@@ -1300,6 +1322,22 @@ _: {
               fi
             fi
 
+            if [ "''${PAPDASHBOARD_WALKS_LAUNCHED:-0}" = 1 ]; then
+              pap_ok_status=2
+              pap_total_status=2
+              read -r pap_ok_status PAPDASHBOARD_INGEST_OK_1H < "$WALK_DIR/pap-ok" 2>/dev/null || { pap_ok_status=2; PAPDASHBOARD_INGEST_OK_1H=""; }
+              read -r pap_total_status PAPDASHBOARD_INGEST_TOTAL_1H < "$WALK_DIR/pap-total" 2>/dev/null || { pap_total_status=2; PAPDASHBOARD_INGEST_TOTAL_1H=""; }
+              if [ "''${pap_ok_status:-2}" -le 1 ] && [ "''${pap_total_status:-2}" -le 1 ]; then
+                PAPDASHBOARD_INGEST_OK_1H="''${PAPDASHBOARD_INGEST_OK_1H:-0}"
+                PAPDASHBOARD_INGEST_TOTAL_1H="''${PAPDASHBOARD_INGEST_TOTAL_1H:-0}"
+              else
+                echo "system-health: papdashboard ingest journal scan failed (status ok=''${pap_ok_status:-?} total=''${pap_total_status:-?})" >&2
+                PAPDASHBOARD_INGEST_OK_1H=""
+                PAPDASHBOARD_INGEST_TOTAL_1H=""
+                PAPDASHBOARD_INGEST_SCRAPE_ERRORS=1
+              fi
+            fi
+
             # memcg OOM consume (parallel raw capture from the launch block):
             # status <=1 (incl. exit-1-no-match) is a valid scan; >=2/timeout
             # fails visible. The per-memcg breakdown is emitted at emission
@@ -1618,6 +1656,23 @@ _: {
               echo "# HELP system_pocket_id_busy_over_threshold 1 when SQLITE_BUSY events reach the sustained-contention threshold (${toString pocketIdBusyEventThreshold}/24h), 0 otherwise"
               echo "# TYPE system_pocket_id_busy_over_threshold gauge"
               echo "system_pocket_id_busy_over_threshold ''${POCKET_ID_BUSY_OVER}"
+            fi
+
+            if [ "$collect_papdashboard_ingest" = "true" ]; then
+              echo "# HELP system_papdashboard_ingest_scrape_errors Scrape status of the papdashboard ingest journal scan: 0 = OK, 1 = journalctl failed/timeout (fail-closed)"
+              echo "# TYPE system_papdashboard_ingest_scrape_errors gauge"
+              echo "system_papdashboard_ingest_scrape_errors ''${PAPDASHBOARD_INGEST_SCRAPE_ERRORS}"
+            fi
+            # Absent pair + scrape_errors=1 is the documented fail-closed
+            # design (same contract as pocket-id above).
+            if [ -n "$PAPDASHBOARD_INGEST_OK_1H" ]; then
+              echo "# HELP system_papdashboard_ingest_ok_1h Successful gatus->papdashboard alert ingests (journal path=/api/ingest status=200) in the last hour — the end-to-end custom-alerting-provider proof"
+              echo "# TYPE system_papdashboard_ingest_ok_1h gauge"
+              echo "system_papdashboard_ingest_ok_1h ''${PAPDASHBOARD_INGEST_OK_1H}"
+
+              echo "# HELP system_papdashboard_ingest_errors_1h Rejected/failed gatus->papdashboard ingest requests (total ingest lines minus 200s) in the last hour — nonzero = auth-key drift, schema drift, route loss or method bug"
+              echo "# TYPE system_papdashboard_ingest_errors_1h gauge"
+              echo "system_papdashboard_ingest_errors_1h $((PAPDASHBOARD_INGEST_TOTAL_1H - PAPDASHBOARD_INGEST_OK_1H))"
             fi
 
             if [ "$collect_memcg_oom" = "true" ]; then
