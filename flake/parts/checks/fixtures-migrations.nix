@@ -203,6 +203,36 @@
               touch $out
             '';
 
+        # migrate-user-tmp-hot.sh (the E6 tmp relocation, live 2026-10-26)
+        # shipped with only shellcheck coverage — its ship-quality pair
+        # (storage-crisis plan S20): the full stub-fixture battery for all
+        # three legs (prepare / finalize / shadow-cleanup) and every refusal
+        # gate, including the destructive shadow-cleanup's
+        # detached-Samsung + archive-verify guards.
+        migrate-user-tmp-fixture =
+          pkgs.runCommand "migrate-user-tmp-fixture"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils-full
+                rsync
+                gawk
+                findutils
+                gnugrep
+                gnused
+                gnutar
+                zstd
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts"
+              cp ${root}/scripts/migrate-user-tmp-hot.sh "$scratch/scripts/migrate-user-tmp-hot.sh"
+              cp ${root}/scripts/test-migrate-user-tmp-hot.sh "$scratch/scripts/test-migrate-user-tmp-hot.sh"
+              bash "$scratch/scripts/test-migrate-user-tmp-hot.sh"
+              touch $out
+            '';
+
       };
     };
 }
