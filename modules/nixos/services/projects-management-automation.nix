@@ -256,6 +256,14 @@
               };
             };
 
+        # The upstream module's raw PMA_HEALTH_LISTEN_ADDR=…:9190 line stays
+        # in the unit TEXT (the mkAfter override above wins at runtime —
+        # systemd later-Environment-wins; the 2026-10-27 ocis band vacation
+        # moves the daemon to ports.pma-health = 9420). The stale 9190
+        # literal is inert text: exempt, not registered — it names no live
+        # listener (and 9190 is now inside ocis's internal band anyway).
+        services.port-registry-audit.allowPorts = [ 9190 ];
+
         # Service-integration registry entry: the two health-endpoint checks
         # (daemon readiness + commit-backlog age) and system-health
         # monitoring of the daemon unit. Replaces rows in gatus-config.nix.
