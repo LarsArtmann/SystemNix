@@ -749,8 +749,8 @@ in
               group = "cv";
               mode = "0400";
               restartUnits = [ "cv-server.service" ];
-              content =
-                lib.generators.toKeyValue { } {
+              content = lib.generators.toKeyValue { } (
+                {
                   # Guards mutating/admin API routes (X-API-Key header).
                   # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
                   CV_API_KEY = config.sops.placeholder.cv_api_key;
@@ -781,7 +781,8 @@ in
                 }
                 // lib.optionalAttrs cvMailboxStaged {
                   CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
-                };
+                }
+              );
             };
           }
           // lib.optionalAttrs (svcEnabled "attic-config") {
