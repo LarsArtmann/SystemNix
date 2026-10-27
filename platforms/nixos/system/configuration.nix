@@ -1191,19 +1191,23 @@ in
         # documented GCP integration; receiver = googlecloudmonitoring on
         # the existing collector). Project set + presets derive from the
         # Google-Cloud-Inventory 2026-09-20 report (live resources only).
-        # Ships inert on a structurally-valid placeholder key until the
-        # service-account go-live runbook runs:
-        # docs/services/signoz-gcp-monitoring.md
+        # GO-LIVE RUNBOOK (steps 1-4) EXECUTED 2026-09-29: SA
+        # signoz-integration@lars-artmann created, monitoring.viewer granted
+        # on all 16 projects, real key rotated into sops
+        # (platforms/nixos/secrets/signoz-gcp-monitoring.yaml), 16/16
+        # projects verified HTTP 200 with live series AS the SA.
         #
-        # DISABLED 2026-09-29 (containment, first deploy carrying it): the
-        # "placeholder key fails 403 at scrape time, non-fatal" assumption
-        # was FALSIFIED live — the token fetch answers 400 invalid_grant at
-        # receiver Start() (account not found), which is FATAL for the whole
-        # collector (start-limit-hit, ALL telemetry ingestion dark).
-        # Re-arm after the go-live runbook provisions the real service
-        # account (its step 5 already verifies "403s STOP").
+        # HISTORY: disabled 2026-09-29 (containment, first deploy carrying
+        # it): the "placeholder key fails 403 at scrape time, non-fatal"
+        # assumption was FALSIFIED live — the token fetch answers 400
+        # invalid_grant at receiver Start() (account not found), which is
+        # FATAL for the whole collector (start-limit-hit, ALL telemetry
+        # ingestion dark). Re-armed 2026-10-27 once the real key was in
+        # sops. Post-deploy verification checklist:
+        # docs/services/signoz-gcp-monitoring.md (journal 400/invalid_grant
+        # must NOT appear; receiver label present in :8888/metrics).
         gcpMonitoring = {
-          enable = false;
+          enable = true;
           projects = {
             # Cloud Run services (12 projects with running services)
             nobletary.cloudRun = true;

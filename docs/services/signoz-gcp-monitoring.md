@@ -62,9 +62,10 @@ project (`lars-artmann` is the natural home) and reads cross-project.
 created; `roles/monitoring.viewer` granted on all 15 monitored projects +
 monitoring API enabled; real key `64cc3cdf…` rotated into sops; verified
 16/16 projects answer HTTP 200 with live series AS the SA — 6 projects show
-real `request_count` data). **REMAINING: re-arm `gcpMonitoring.enable = true`
-(containment-disabled after the falsification above), deploy, + verification** —
-the agent sandbox cannot `sudo`, and `nix run .#deploy` self-elevates.
+real `request_count` data). **RE-ARMED 2026-10-27: `gcpMonitoring.enable =
+true` is back in the tree** (commit carrying this edit); the deploy + live
+verification (journal free of 400/invalid_grant, receiver label in
+`:8888/metrics`, Metrics Explorer names) is the remaining gate.
 
 **dnsblockd dependency (found live at go-live):** blocklists classify
 `monitoring.googleapis.com` as telemetry — dnsblockd served its block page
