@@ -299,7 +299,7 @@
 - [ ] **Caddy per-vHost access-*.log ingestion (filelog receiver)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **buildcache-gc observability** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Declarative health-check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-- [ ] **System-health collector hardening** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [x] **System-health collector hardening** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DONE 2026-10-28: all three asks verified already-landed in code (docker premise moot post-removal; NRestarts single-read live; MemoryMax 256M)
 - [ ] **Gatus lint residuals + synthetic ingest probe + smoke enable-gate sweep** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Consider gatus `alerting` dedup** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Persisted regression tests for the pool-smart collector script** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
