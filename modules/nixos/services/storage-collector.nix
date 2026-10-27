@@ -108,6 +108,36 @@
         ioTier
         serviceOneshotDefaults
         ;
+      scanInterval = "5m";
+      # Freshness sidecar (S25): staleness detector for the daemon's textfile
+      # gauges. Reads storage_collector_last_write_unix_secs from the
+      # daemon's own .prom and republishes storage_collector_fresh 1|0 —
+      # stale means older than 10 daemon cycles (600 s at intervalSecs=60).
+      freshnessScript = pkgs.writeShellApplication {
+        name = "storage-collector-freshness";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          set -euo pipefail
+          PROM="${textfileDir}/storage-collector.prom"
+          NOW="$(date +%s)"
+          STALE_AFTER=600
+          LAST="$(grep -E '^storage_collector_last_write_unix_secs ' "$PROM" 2>/dev/null | awk '{print $2}' || true)"
+          FRESH=0
+          if [ -n "$LAST" ] && [ "$LAST" -gt 0 ] && [ $((NOW - LAST)) -le "$STALE_AFTER" ]; then
+            FRESH=1
+          fi
+          TMP="$(mktemp "${textfileDir}/storage-collector-fresh.prom.XXXXXX")"
+          trap 'rm -f "$TMP"' EXIT
+          {
+            echo "# HELP storage_collector_fresh 1 when the daemon wrote its textfile gauges within 10 cycles"
+            echo "# TYPE storage_collector_fresh gauge"
+            echo "storage_collector_fresh $FRESH"
+          } > "$TMP"
+          chmod 0644 "$TMP"
+          mv -f "$TMP" "${textfileDir}/storage-collector-fresh.prom"
+          trap - EXIT
+        '';
+      };
     in
     {
       imports = [ inputs.storage-collector.nixosModules.default ];
@@ -274,6 +304,81 @@
               filePattern = ".last_success";
               maxAgeHours = 25;
             };
+          };
+        };
+
+        # ── Storm hardening + freshness alert (2026-10-27 plan S25) ────
+        # During the 2026-10-26 balance the collector sat D-state and its
+        # dmesg helper SIGSYS-crashed 4×/5min exactly when the storage
+        # metrics mattered (monitoring.md row; uid 966 = this unit's
+        # DynamicUser). Three SystemNix-side fixes:
+        #   1. ProtectKernelLogs OFF for THIS unit: the crate reads kernel
+        #      log via dmesg by design (btrfs space metadata); the harden
+        #      preset's kernel-log isolation turned that read into SIGSYS.
+        #   2. Slower restart cadence: RestartSec 30 + a start limit, so an
+        #      IO-storm D-state death does not become a restart storm.
+        #   3. Freshness sidecar below: the textfile gauges going stale was
+        #      INVISIBLE — the health check owns the gauge VALUE, nothing
+        #      owned the gauge AGE.
+        systemd.services.storage-collector = {
+          startLimitBurst = 8;
+          startLimitIntervalSec = 300;
+          serviceConfig = {
+            RestartSec = lib.mkDefault "30s";
+            TimeoutStopSec = "60s";
+            ProtectKernelLogs = lib.mkForce false;
+          };
+        };
+
+        # Freshness sidecar: reads the daemon's own
+        # storage_collector_last_write_unix_secs gauge and publishes
+        # storage_collector_fresh 0|1 (stale = older than 10 cycles =
+        # 600 s at the 60 s cadence). Mirrors the guard-fresh pattern.
+        systemd.services.storage-collector-freshness = {
+          description = "storage-collector: textfile freshness gauge (stale-write detector)";
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = "${lib.getExe freshnessScript}";
+              User = "root";
+              TimeoutStartSec = "1min";
+            }
+            (harden {
+              MemoryMax = "128M";
+              CapabilityBoundingSet = [ "CAP_FOWNER" ];
+              ReadWritePaths = [ textfileDir ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.storage-collector-freshness = {
+          description = "storage-collector freshness gauge (${scanInterval} cadence)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "4m";
+            OnUnitActiveSec = scanInterval;
+          };
+        };
+
+        services.integration = (lib.optionalAttrs (options ? services.integration)) {
+          storage-collector-freshness = {
+            enable = true;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Storage Textfile Freshness";
+                group = "Monitoring";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nstorage_collector_fresh 1\n*)"
+                ];
+                alert = "storage-collector textfile gauges are STALE (no successful daemon write within 10 cycles / 600s) — during IO storms this is exactly when capacity/btrfs metrics matter; check systemctl status storage-collector and /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom mtime";
+              }
+            ];
           };
         };
       };
