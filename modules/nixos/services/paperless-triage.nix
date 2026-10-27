@@ -139,7 +139,7 @@ _: {
       #   "PARSE_FAIL <reason>"       loud, never a silent default.
       margin_from_logprobs() {
         jq -r '
-          .choices[0].logprobs.content[0].top_logprobs // empty
+          .choices[0].logprobs.content[0].top_logprobs // []
           | if (length == 0) then "PARSE_FAIL no_top_logprobs"
             else
               (map(select((.token // "") | ascii_downcase | gsub("^\\s+"; "") | startswith("yes")))
