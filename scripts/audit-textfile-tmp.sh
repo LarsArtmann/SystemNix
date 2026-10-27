@@ -93,6 +93,20 @@ for f in "${files[@]}"; do
     done < <(code | grep -nE '(^|[^-])>>?\s*"[^"]*\$\{?[A-Za-z_][A-Za-z0-9_]*\}?[^"]*\.tmp"' | grep -v mktemp || true)
   fi
 
+  # C. mktemp'd .prom tmp without an EXIT trap — the unique mktemp name
+  # cannot WEDGE the collector (that is class A), but a kill between
+  # mktemp and mv leaves a zero-byte .prom.XXXXXX litter in the sticky
+  # dir (live sweep 2026-10-27: ~28 leftovers across 10 collectors,
+  # hard-killed units never run an untrapped EXIT); with a trap, an
+  # ordinary timeout/TERM exit cleans up.
+  if grep -qE 'mktemp "[^"]*\.prom' <(code); then
+    if ! grep -qE "trap ['\"].*rm -f" <(code); then
+      echo "FAIL [$rel] C: mktemp'd .prom tmp without EXIT trap (kill leaves .prom.XXXXXX litter; add trap 'rm -f \"\$TMP\"' EXIT):"
+      grep -nE 'mktemp "[^"]*\.prom' "$f" | head -1 | sed 's/^/  /'
+      fail=1
+    fi
+  fi
+
   # B. phantom rendered-templates path.
   while IFS= read -r line; do
     echo "FAIL [$rel] B: hardcoded /run/secrets-rendered path (real sops-nix renders under /run/secrets/rendered — interpolate config.sops.templates.\"<name>\".path):"

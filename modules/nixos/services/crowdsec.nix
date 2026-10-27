@@ -165,6 +165,7 @@ _: {
         text = ''
           OUT="/var/lib/prometheus-node-exporter/textfile_collectors/crowdsec-counts.prom"
           TMP="$(mktemp "$OUT.XXXXXX")"
+          trap 'rm -f "$TMP"' EXIT
           errors=0
           decisions=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} decisions list -o json 2>/dev/null | jq 'length') || errors=1
           alerts=$(${lib.getExe' config.services.crowdsec.package "cscli"} -c ${repairConfig} alerts list --since 24h -o json 2>/dev/null | jq 'length') || errors=1
