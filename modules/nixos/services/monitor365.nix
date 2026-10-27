@@ -690,6 +690,15 @@
             script = ''
               AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
               SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"
+              # 0-device restarts are BOUNDED. The "circuit breaker deadlock"
+              # mitigation only helps when the deadlock is transient; when the
+              # server reports 0 devices because device registration itself is
+              # broken, an unbounded loop re-fires the whole event drain every
+              # 5 min and never converges (live 2026-10-27: 7 restarts/hour,
+              # ~1.3 GB re-drained per restart). Three attempts, then stop and
+              # let the alerting surface the real fault.
+              ZERO_DEVICE_STAMP="/run/monitor365-agent-watchdog.zero-device-restarts"
+              ZERO_DEVICE_MAX=3
 
               # 1. Is the agent process alive?
               if ! systemctl is-active --quiet monitor365.service; then
@@ -725,11 +734,22 @@
               REALTIME=$(curl -sf --compressed -m 5 "$SERVER_HEALTH" 2>/dev/null \
                 | jq -r '.realtime // empty' 2>/dev/null || echo "")
               if [ -n "$REALTIME" ] && echo "$REALTIME" | grep -q "connected (0 devices)"; then
-                echo "monitor365-agent-watchdog: server reports 0 devices — circuit breaker deadlock, restarting agent"
+                ZERO_DEVICE_RESTARTS=$(cat "$ZERO_DEVICE_STAMP" 2>/dev/null || echo 0)
+                if ! echo "$ZERO_DEVICE_RESTARTS" | grep -qE '^[0-9]+$'; then ZERO_DEVICE_RESTARTS=0; fi
+                if [ "$ZERO_DEVICE_RESTARTS" -ge "$ZERO_DEVICE_MAX" ]; then
+                  echo "monitor365-agent-watchdog: server still reports 0 devices after $ZERO_DEVICE_RESTARTS restarts — NOT restarting again (restarts do not converge; fix device registration — see the agent's upload/device errors)"
+                  exit 0
+                fi
+                ZERO_DEVICE_RESTARTS=$((ZERO_DEVICE_RESTARTS + 1))
+                echo "$ZERO_DEVICE_RESTARTS" >"$ZERO_DEVICE_STAMP" 2>/dev/null || true
+                echo "monitor365-agent-watchdog: server reports 0 devices — circuit breaker deadlock, restarting agent ($ZERO_DEVICE_RESTARTS/$ZERO_DEVICE_MAX)"
                 systemctl restart monitor365.service || true
                 exit 0
               fi
 
+              # Devices are flowing again — clear the bounded counter so a
+              # future transient deadlock still gets its full restart budget.
+              rm -f "$ZERO_DEVICE_STAMP" 2>/dev/null || true
               echo "monitor365-agent-watchdog: agent healthy (process active, metrics responding, server connected)"
             '';
           };

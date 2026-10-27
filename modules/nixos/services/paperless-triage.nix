@@ -49,7 +49,7 @@
 # paperless.md trap #2); only ADDS tags via bulk_edit modify_tags (PATCH
 # /api/documents/<id>/ REPLACES the whole tag set — trap #3); custom
 # fields are P3 (plan §6 Q4-Q6), NOT written here.
-{
+_: {
   flake.nixosModules.paperless-triage =
     {
       config,

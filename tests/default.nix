@@ -39,6 +39,7 @@ in
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
   paperless = makeTest (import ./test-paperless.nix { inherit pkgs; });
   paperless-gpt = makeTest (import ./test-paperless-gpt.nix { inherit inputs; });
+  paperless-triage = makeTest (import ./test-paperless-triage.nix { inherit pkgs; });
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
   cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
   memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
