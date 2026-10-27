@@ -49,7 +49,7 @@
     }:
     let
       inherit (config.users) primaryUser;
-      inherit (import ../../../lib/default.nix lib) ports ioTier;
+      inherit (import ../../../lib/default.nix lib) ports ioTier harden serviceOneshotDefaults onFailure;
       domain = config.networking.domain;
 
       # Agent event buffer lives on the mirrored HDD pool (subvol reserved at
@@ -64,6 +64,14 @@
       # requires re-chowning this tree if the recreated user gets a different
       # uid.
       agentStoragePath = "/mnt/pool/services/monitor365";
+
+      # Off-NVMe interim DB backup copy (2026-10-27 storage-crisis plan S5):
+      # the ONLY copy of the monitor365 DuckDB outside the QLC NVMe was a
+      # 5d-stale T04 pool archive — until the S8 hot-tier migration lands,
+      # this nightly copy is the disaster leg (NVMe loss = live DB + local
+      # backups gone; this file survives). Same subvol as the agent buffer,
+      # own subdir, service-user-owned.
+      poolBackupDir = "${agentStoragePath}/backups";
 
       # Event retention (2026-10-23): the server ingested ~5.3M events/day
       # (597M backlog era average) with NO upstream retention — the DuckDB
@@ -488,6 +496,100 @@
               }
               ioTier.background
             ];
+          };
+        })
+
+        # ── Pool-interim off-NVMe copy (2026-10-27 plan S5) ─────────
+        # Copies the NEWEST nightly backup to the HDD pool 25 min after the
+        # 03:00 quiesced backup (After= holds the start if the backup window
+        # — export + retention + VACUUM attempt, 30min budget — is still
+        # running). Runs as the service user: the source dir is its own
+        # 0750 stateDir, the dest is its own tmpfiles dir — no capabilities
+        # needed, DAC-clean by construction. Pool-side freshness is wired
+        # into backup-coordination below (stale >25h = alert).
+        (lib.mkIf (serverCfg.enable && serverCfg.backup.enable) {
+          systemd.services.monitor365-pool-copy = {
+            description = "Monitor365 newest DB backup copy to the HDD pool (off-NVMe interim leg)";
+            after = [ "monitor365-server-backup.service" ];
+            wants = [ "monitor365-server-backup.service" ];
+            inherit onFailure;
+            unitConfig.RequiresMountsFor = [
+              serverCfg.stateDir
+              poolBackupDir
+            ];
+            path = [
+              pkgs.coreutils
+              pkgs.findutils
+            ];
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "512M";
+                ReadWritePaths = [ poolBackupDir ];
+              })
+              (serviceOneshotDefaults { })
+              ioTier.background
+              {
+                Type = "oneshot";
+                User = "monitor365-server";
+                Group = "monitor365-server";
+                TimeoutStartSec = "60min";
+              }
+            ];
+            script = ''
+              set -euo pipefail
+              STATE_DIR="${serverCfg.stateDir}"
+              SRC="$(find "$STATE_DIR" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2)"
+              if [ -z "$SRC" ]; then
+                echo "monitor365-pool-copy: no backup file in $STATE_DIR — did the 03:00 backup run?" >&2
+                exit 1
+              fi
+              DEST="${poolBackupDir}/$(basename "$SRC")"
+              if [ ! -e "$DEST" ]; then
+                # Plain cp: cross-filesystem (QLC→HDD pool), no reflink
+                # possible. mtime = copy time, which is exactly what the
+                # freshness collector reads.
+                cp -- "$SRC" "$DEST"
+              fi
+              SRC_SIZE="$(stat -c '%s' "$SRC")"
+              DEST_SIZE="$(stat -c '%s' "$DEST")"
+              if [ "$SRC_SIZE" != "$DEST_SIZE" ]; then
+                echo "monitor365-pool-copy: size mismatch after copy ($SRC_SIZE vs $DEST_SIZE) — removing partial" >&2
+                rm -f "$DEST"
+                exit 1
+              fi
+              # Pool-side retention: newest 3 (the local side keeps 2; the
+              # pool leg buys NVMe-loss rollback depth, not indefinite
+              # history — 3×33G on a 12T-free pool is noise).
+              find "${poolBackupDir}" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null \
+                | sort -rn | tail -n +4 | cut -f2 | xargs -r rm -f
+              echo "monitor365-pool-copy: $DEST ($DEST_SIZE bytes) — off-NVMe leg fresh"
+            '';
+          };
+
+          systemd.timers.monitor365-pool-copy = {
+            description = "Nightly monitor365 backup copy to the HDD pool";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "*-*-* 03:25:00";
+              Persistent = true;
+              RandomizedDelaySec = "10m";
+            };
+          };
+
+          systemd.tmpfiles.rules = [
+            "d ${poolBackupDir} 0750 monitor365-server monitor365-server - -"
+          ];
+
+          # Pool-side freshness entry: the local backup_healthy row only
+          # proves the NVMe copy ran; this one proves the disaster leg is
+          # current (stale >25h = the copy unit failed while the backup
+          # kept succeeding — exactly the silent gap S5 closes).
+          services.backup-coordination = lib.optionalAttrs (options ? services.backup-coordination) {
+            backups.monitor365-pool = {
+              directory = poolBackupDir;
+              filePattern = "*.backup_*.db";
+              maxAgeHours = 25;
+            };
           };
         })
 

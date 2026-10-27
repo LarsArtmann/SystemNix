@@ -355,6 +355,14 @@ in
                 [
                   "cv_api_key"
                   "cv_evaluation_citizenships"
+                  # Funnel reply-loop mailbox (2026-10-27, recut-10 T2):
+                  # the applications@larsartmann.cloud Stalwart account
+                  # password. STAGED — until the owner sets it (sudo sops
+                  # platforms/nixos/secrets/cv.yaml), secrets-preflight
+                  # names exactly this key and the deploy gate holds (the
+                  # mail-relay placeholder precedent; the CV poller stays
+                  # inert without the env var, so the unit itself is safe).
+                  "cv_pipeline_mailbox_password"
                 ]
             )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
@@ -745,6 +753,15 @@ in
                 # sudo to modify; same value, different file). Runbook:
                 # crm repo docs/ops/CV-SYNC.md "Running it under systemd".
                 CV_CRM_API_KEY = config.sops.placeholder.crm_api_token;
+                # Funnel reply-loop mailbox (2026-10-27): the Stalwart JMAP
+                # password for pipeline.mailbox (username
+                # applications@larsartmann.cloud; account provisioned in the
+                # pbx-artmann hosts/pbx/mail.nix plan). Owner runbook:
+                # (1) set the account password once in the Stalwart webadmin
+                # (https://mail.artmann.tech/), (2) sudo sops
+                # platforms/nixos/secrets/cv.yaml → cv_pipeline_mailbox_password,
+                # (3) rebuild — the poller self-enables.
+                CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
               };
             };
           }

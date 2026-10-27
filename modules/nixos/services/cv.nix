@@ -379,19 +379,40 @@
                 # Same inertness as replyloop itself — no creds, no polls.
                 alert_router = true;
               };
-              # AgentMail keys stay empty: the SEND transport is the local
-              # relay (see autosend_driver above — zero CV-side secrets).
-              # These become live ONLY for the reply loop READER, if the
-              # owner later provisions an AgentMail API key:
-              #   1. sops cv-env template +=
-              #      CV_PIPELINE_AGENTMAIL_API_KEY=<am_...>
-              #      CV_PIPELINE_AGENTMAIL_INBOX_ID=<inbox id>
-              #      (identity: lars.artmann@agentmail.to — PERMANENT, gate
-              #      Q3: switching it later orphans SentTo reply matching;
-              #      it is already the reply_to target on every send)
-              #   2. rebuild; the poller self-enables (inert without creds)
-              # Until then replies land in the agentmail inbox and are read
-              # via the agentmail web UI / gun.io flows, not folded by CV.
+              # Self-hosted Stalwart reply inbox (JMAP reader, migration P1
+              # landed 2026-10-26): takes DI priority over the legacy
+              # agentmail reader. INERT until CV_PIPELINE_MAILBOX_PASSWORD
+              # exists in the sops cv-env template AND the account exists
+              # on the mail host (pbx-artmann hosts/pbx/mail.nix provision
+              # plan: applications@larsartmann.cloud, added 2026-10-27).
+              # The PUBLIC identity applications@artmann.tech forwards
+              # here (Google-side alias); the legacy agentmail.to forwards
+              # here too before that account closes (owner Q3 ruling:
+              # audit -> forward -> close).
+              mailbox = {
+                enabled = true;
+                host_url = "https://mail.artmann.tech";
+                username = "applications@larsartmann.cloud";
+                # password: CV_PIPELINE_MAILBOX_PASSWORD via the sops
+                # cv-env template overrides this at load time (set the
+                # account password once in the Stalwart webadmin, then
+                # sops). Empty here = the poller self-disables, inert.
+                password = "";
+                mailbox = "";
+              };
+              # AgentMail (LEGACY — owner Q3 ruling 2026-10-27, fam.22.3:
+              # AUDIT -> FORWARD -> CLOSE, not immediate delete): before
+              # this account closes, (1) audit its inbox for unretrieved
+              # mail, (2) set an agentmail-side forward to
+              # applications@larsartmann.cloud (single source of truth on
+              # the own server), only then (3) close the account + run the
+              # M14 code sweep. reply_to above already moved to
+              # applications@artmann.tech — the forward is what keeps the
+              # historical agentmail identity's replies foldable. Keys stay
+              # empty (the Stalwart reader owns the poll now):
+              #   CV_PIPELINE_AGENTMAIL_API_KEY / _INBOX_ID in the sops
+              #   cv-env template would re-enable the legacy reader as a
+              #   DI fallback (Stalwart > AgentMail > off).
               agentmail = {
                 api_key = "";
                 inbox_id = "";
