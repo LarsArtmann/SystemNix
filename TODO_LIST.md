@@ -300,8 +300,8 @@
 - [ ] **buildcache-gc observability** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Declarative health-check** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [x] **System-health collector hardening** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DONE 2026-10-28: all three asks verified already-landed in code (docker premise moot post-removal; NRestarts single-read live; MemoryMax 256M)
-- [ ] **Gatus lint residuals + synthetic ingest probe + smoke enable-gate sweep** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-- [ ] **Consider gatus `alerting` dedup** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [x] **Gatus lint residuals + synthetic ingest probe + smoke enable-gate sweep** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DONE 2026-10-28: authenticated ingest POST probe + 14-gate enable sweep (unit_enabled wants-probe) + papdashboard ingest ok/errors collector metrics
+- [x] **Consider gatus `alerting` dedup** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DECIDED 2026-10-28: no gatus-layer dedup; storm correlation owned by the PapDashboard insight enricher
 - [ ] **Persisted regression tests for the pool-smart collector script** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Enabled-but-inactive consumer detection net** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Gatus "I/O Stall Rate" permanently-red review** → [docs/todo/monitoring.md](docs/todo/monitoring.md)

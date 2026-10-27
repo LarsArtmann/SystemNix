@@ -42,7 +42,11 @@ record_fail() {
 unit_enabled() {
   local u="$1" alt="" hit=""
   [ "${u%.service}" != "$u" ] && alt="${u%.service}.timer"
-  hit=$(find /etc/systemd/system -maxdepth 2 -path '*.wants/*' \( -name "$u" $([ -n "$alt" ] && echo -o -name "$alt") \) -print -quit 2>/dev/null || true)
+  # shellcheck disable=SC2046  # the optional -o clause is a single word by construction
+  # Trailing slash on the root: /etc/systemd/system is a SYMLINK to
+  # /etc/static/systemd/system, and find does not follow a symlinked root
+  # without it (every probe then silently returns nothing = everything SKIPs).
+  hit=$(find /etc/systemd/system/ -maxdepth 2 -path '*.wants/*' \( -name "$u" $([ -n "$alt" ] && printf '%s' "-o -name $alt") \) -print -quit 2>/dev/null || true)
   [ -n "$hit" ]
 }
 
@@ -766,6 +770,11 @@ fi
 # Gotenberg prove the Office/E-Mail consume sidecars are up. Ports from
 # lib/ports.nix (paperless 2892, tika 9998, gotenberg 3199).
 paperless_enabled=false
+# paperless-web is enabled INDIRECTLY (paperless-scheduler `wants =` it — an
+# in-unit dependency, not a filesystem wants symlink), so the unit-file gate
+# stays OR'd in: the module is fully mkIf'd on services.paperless.enable,
+# presence == enabled-intent here.
+test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
 unit_enabled paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
   # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
