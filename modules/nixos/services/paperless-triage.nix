@@ -131,12 +131,6 @@ _: {
       die() { echo "paperless-triage: ERROR: $*" >&2; exit 1; }
       warn() { echo "paperless-triage: WARN: $*" >&2; }
 
-      STATE_FILE="''${STATE_DIR}/state.json"
-      MARKER="''${STATE_DIR}/last-sweep"
-      PROM="''${TEXTFILE_DIR}/paperless_triage.prom"
-      mkdir -p "''${STATE_DIR}" "''${TEXTFILE_DIR}"
-      umask 077
-
       # margin_from_logprobs <response.json>: prints
       #   "MARGIN <float in [-1,1]>"  renormalized p(YES)-p(NO) over the
       #       FIRST content token's top_logprobs (yes/no token variants
@@ -202,6 +196,12 @@ _: {
       }
 
       if [ "''${1:-}" = "--selftest" ]; then selftest; exit 0; fi
+
+      STATE_FILE="''${STATE_DIR}/state.json"
+      MARKER="''${STATE_DIR}/last-sweep"
+      PROM="''${TEXTFILE_DIR}/paperless_triage.prom"
+      mkdir -p "''${STATE_DIR}" "''${TEXTFILE_DIR}"
+      umask 077
 
       : "''${PAPERLESS_BASE_URL:?}" "''${PAPERLESS_API_TOKEN:?}" "''${VERDICT_BASE_URL:?}" "''${VERDICT_MODEL:?}"
 
