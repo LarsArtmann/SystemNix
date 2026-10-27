@@ -200,26 +200,19 @@ workflow-audit-log.*
 ## Reports and coverage
 reports/
 
+## Go
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.work
+go.work.sum
+
 ## Nix
 .envrc
-
-## Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-*.egg
-.venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.tox/
-.nox/
-.ipynb_checkpoints/
-.hypothesis/
-cython_debug/
-.coverage
-htmlcov/
 # <<< buildflow-managed (.gitignore) <<<
 
 *.qcow2

@@ -22,8 +22,14 @@ for f in "$src" "$dst"; do
     exit 66
   fi
 done
-command -v sops >/dev/null || { echo "sops-copy-key: sops not on PATH" >&2; exit 69; }
-command -v ssh-to-age >/dev/null || { echo "sops-copy-key: ssh-to-age not on PATH" >&2; exit 69; }
+command -v sops >/dev/null || {
+  echo "sops-copy-key: sops not on PATH" >&2
+  exit 69
+}
+command -v ssh-to-age >/dev/null || {
+  echo "sops-copy-key: ssh-to-age not on PATH" >&2
+  exit 69
+}
 
 SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 

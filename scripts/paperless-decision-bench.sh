@@ -36,9 +36,15 @@ JEV_MODEL="jev-latest"
 ENCRYPTED_TAG="encrypted"
 BILL_DTYPE="Bill"
 
-die() { echo "ERROR: $*" >&2; exit 1; }
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
 need() { command -v "$1" >/dev/null 2>&1 || die "missing dependency: $1"; }
-need curl; need jq; need pdftoppm; need od
+need curl
+need jq
+need pdftoppm
+need od
 
 as_root() {
   if [[ "$(id -u)" -eq 0 ]]; then bash -c "$1"; else sudo bash -c "$1"; fi
@@ -61,7 +67,7 @@ print(user.username)
 print(t.key)
 '
   tmp="$(mktemp "${WORK_DIR}/.mint.XXXXXX.py")"
-  printf '%s' "$py" > "$tmp"
+  printf '%s' "$py" >"$tmp"
   token="$(manage_py "$tmp" | grep -oE '\b[a-f0-9]{40}\b' | tail -1)"
   rm -f "$tmp"
   [[ -n "$token" ]] || die "DRF token mint failed"
@@ -81,7 +87,8 @@ for d in DocumentType.objects.all().order_by("id"):
 for c in CustomField.objects.all().order_by("id"):
     print("CFIELD", c.id, c.name, c.data_type)
 '
-  tmp="$(mktemp "${WORK_DIR}/.probe.XXXXXX.py")"; printf '%s' "$py" > "$tmp"
+  tmp="$(mktemp "${WORK_DIR}/.probe.XXXXXX.py")"
+  printf '%s' "$py" >"$tmp"
   manage_py "$tmp" | grep -v __paperless_write_test
   rm -f "$tmp"
 }
@@ -89,7 +96,8 @@ for c in CustomField.objects.all().order_by("id"):
 build_corpus() {
   local n="${1:-10}"
   mkdir -p "${WORK_DIR}/images"
-  local token; token="$(mint_token)"
+  local token
+  token="$(mint_token)"
   echo "staging corpus (${n}/class) into ${WORK_DIR}"
   local py tmp
   py="from django.db.models import Q
@@ -112,28 +120,33 @@ emit(\"general\", list(general.values_list(\"id\", flat=True)[:${n}]))
 emit(\"encrypted\", sorted(encrypted_ids)[:${n}])
 print(\"META counts receipt/invoice/general/encrypted\", len(receipt_ids), len(invoice_ids), general.count(), len(encrypted_ids))
 "
-  tmp="$(mktemp "${WORK_DIR}/.corpus.XXXXXX.py")"; printf '%s' "$py" > "$tmp"
-  manage_py "$tmp" > "${WORK_DIR}/classes.raw"
+  tmp="$(mktemp "${WORK_DIR}/.corpus.XXXXXX.py")"
+  printf '%s' "$py" >"$tmp"
+  manage_py "$tmp" >"${WORK_DIR}/classes.raw"
   rm -f "$tmp"
   cat "${WORK_DIR}/classes.raw"
 
-  printf 'doc_id\tclass\ttitle\tfile\n' > "${WORK_DIR}/corpus.tsv"
+  printf 'doc_id\tclass\ttitle\tfile\n' >"${WORK_DIR}/corpus.tsv"
   local line class ids id docjson title imgpath
   while IFS= read -r line; do
     [[ "$line" == "CLASS "* ]] || continue
-    class="${line#CLASS }"; class="${class%% *}"
+    class="${line#CLASS }"
+    class="${class%% *}"
     ids="$(cut -d' ' -f3- <<<"$line" | tr -d '[],')"
     for id in $ids; do
       [[ "$id" =~ ^[0-9]+$ ]] || continue
-      docjson="$(api "$token" "/api/documents/${id}/")" || { echo "WARN: api fetch failed for ${id}" >&2; continue; }
+      docjson="$(api "$token" "/api/documents/${id}/")" || {
+        echo "WARN: api fetch failed for ${id}" >&2
+        continue
+      }
       title="$(jq -r '.title' <<<"$docjson")"
       if imgpath="$(stage_image "$token" "$id")"; then
-        printf '%s\t%s\t%s\t%s\n' "$id" "$class" "$title" "${imgpath#"${WORK_DIR}"/}" >> "${WORK_DIR}/corpus.tsv"
+        printf '%s\t%s\t%s\t%s\n' "$id" "$class" "$title" "${imgpath#"${WORK_DIR}"/}" >>"${WORK_DIR}/corpus.tsv"
       else
-        printf '%s\t%s\t%s\tMISSING\n' "$id" "$class" "$title" >> "${WORK_DIR}/corpus.tsv"
+        printf '%s\t%s\t%s\tMISSING\n' "$id" "$class" "$title" >>"${WORK_DIR}/corpus.tsv"
       fi
     done
-  done < "${WORK_DIR}/classes.raw"
+  done <"${WORK_DIR}/classes.raw"
 
   echo "--- corpus.tsv ---"
   cat "${WORK_DIR}/corpus.tsv"
@@ -144,10 +157,10 @@ sniff_kind() {
   local magic
   magic="$(od -An -tx1 -N4 "$1" | tr -d ' \n')"
   case "$magic" in
-    25504446*) echo application/pdf ;;
-    ffd8ff*)   echo image/jpeg ;;
-    89504e47*) echo image/png ;;
-    *)          echo application/octet-stream ;;
+  25504446*) echo application/pdf ;;
+  ffd8ff*) echo image/jpeg ;;
+  89504e47*) echo image/png ;;
+  *) echo application/octet-stream ;;
   esac
 }
 
@@ -157,14 +170,22 @@ stage_image() {
     find "$out.jpg" "$out.png" -maxdepth 0 2>/dev/null | head -1
     return 0
   fi
-  local tmp; tmp="$(mktemp "${WORK_DIR}/.orig-${id}.XXXXXX")"
-  api "$token" "/api/documents/${id}/download/" > "$tmp" || { rm -f "$tmp"; return 1; }
-  local kind; kind="$(sniff_kind "$tmp")"
+  local tmp
+  tmp="$(mktemp "${WORK_DIR}/.orig-${id}.XXXXXX")"
+  api "$token" "/api/documents/${id}/download/" >"$tmp" || {
+    rm -f "$tmp"
+    return 1
+  }
+  local kind
+  kind="$(sniff_kind "$tmp")"
   case "$kind" in
-    application/pdf) pdftoppm -jpeg -r 100 -scale-to 1400 -f 1 -l 1 -singlefile "$tmp" "$out" ;;
-    image/jpeg)      cp "$tmp" "${out}.jpg" ;;
-    image/png)       cp "$tmp" "${out}.png" ;;
-    *) rm -f "$tmp"; return 1 ;;
+  application/pdf) pdftoppm -jpeg -r 100 -scale-to 1400 -f 1 -l 1 -singlefile "$tmp" "$out" ;;
+  image/jpeg) cp "$tmp" "${out}.jpg" ;;
+  image/png) cp "$tmp" "${out}.png" ;;
+  *)
+    rm -f "$tmp"
+    return 1
+    ;;
   esac
   rm -f "$tmp"
   if [[ -s "${out}.jpg" ]]; then echo "${out}.jpg"; elif [[ -s "${out}.png" ]]; then echo "${out}.png"; else return 1; fi
@@ -190,12 +211,12 @@ load_secrets() {
   export TYPESAFE_API_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
   unset SOPS_AGE_KEY
   if $need_jev; then
-    [[ "$TYPESAFE_API_KEY" != PLACEHOLDER* && -n "$TYPESAFE_API_KEY" ]] \
-      || die "typesafe_api_key in ${SOPS_FILE} is still PLACEHOLDER"
+    [[ "$TYPESAFE_API_KEY" != PLACEHOLDER* && -n "$TYPESAFE_API_KEY" ]] ||
+      die "typesafe_api_key in ${SOPS_FILE} is still PLACEHOLDER"
   fi
   if $need_clef; then
-    [[ "$CLOUDFLARE_API_TOKEN" != PLACEHOLDER* && "$CLOUDFLARE_ACCOUNT_ID" != PLACEHOLDER* ]] \
-      || die "cloudflare keys in ${SOPS_FILE} are still PLACEHOLDER (owner: dash.cloudflare.com account id + Workers AI Read+Run token)"
+    [[ "$CLOUDFLARE_API_TOKEN" != PLACEHOLDER* && "$CLOUDFLARE_ACCOUNT_ID" != PLACEHOLDER* ]] ||
+      die "cloudflare keys in ${SOPS_FILE} are still PLACEHOLDER (owner: dash.cloudflare.com account id + Workers AI Read+Run token)"
   fi
 }
 
@@ -231,9 +252,10 @@ jev_call() {
   if [[ "$arm" == "image" ]]; then
     local img fmt ref b64f
     img="$(doc_row "$doc_id" | cut -f4)"
-    fmt="jpg"; [[ "$img" == *.png ]] && fmt="png"
+    fmt="jpg"
+    [[ "$img" == *.png ]] && fmt="png"
     b64f="${WORK_DIR}/.b64-${doc_id}.txt"
-    base64 -w0 "${WORK_DIR}/${img}" > "$b64f"
+    base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     ref="img-${doc_id}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
     req="$(jq -n --rawfile b64 "$b64f" --arg ref "$ref" --arg fmt "$fmt" --slurpfile q <(questions_json) '{
       model: "'"${JEV_MODEL}"'",
@@ -265,9 +287,10 @@ clef_call() {
   if [[ "$arm" == "image" ]]; then
     local img mime b64f
     img="$(doc_row "$doc_id" | cut -f4)"
-    mime="image/jpeg"; [[ "$img" == *.png ]] && mime="image/png"
+    mime="image/jpeg"
+    [[ "$img" == *.png ]] && mime="image/png"
     b64f="${WORK_DIR}/.b64-${doc_id}.txt"
-    base64 -w0 "${WORK_DIR}/${img}" > "$b64f"
+    base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     req="$(jq -n --rawfile b64 "$b64f" --arg mime "$mime" --slurpfile q <(questions_json) '{
       model: "clef",
       state: [{type: "image_url", image_url: {url: ("data:" + $mime + ";base64," + $b64)}}],
@@ -280,22 +303,23 @@ clef_call() {
     req="$(jq -n --arg s "$content" --slurpfile q <(questions_json) '{model: "clef", state: $s, questions: $q[0]}')"
   fi
   printf '%s' "$req" | curl --silent --fail-with-body --max-time 120 \
-  "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/${CLEF_MODEL}" \
-  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-  -H "Content-Type: application/json" \
-  --data-binary @-
+    "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/${CLEF_MODEL}" \
+    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+    -H "Content-Type: application/json" \
+    --data-binary @-
 }
 
 run_arm() {
   local model="$1" arm="$2" token="$3"
   local out="${WORK_DIR}/results-${model}-${arm}.jsonl"
-  : > "$out"
+  : >"$out"
   local doc_id class title img t0 t1 resp meta
   while IFS=$'\t' read -r doc_id class title img; do
     [[ "$doc_id" == "doc_id" ]] && continue
     [[ "$class" == "encrypted" && "$arm" == "image" ]] && continue
-    if [[ "$arm" == "image" && ( ! -s "${WORK_DIR}/${img}" || "$img" == "MISSING" ) ]]; then
-      echo "  skip ${doc_id}: no staged image"; continue
+    if [[ "$arm" == "image" && (! -s "${WORK_DIR}/${img}" || "$img" == "MISSING") ]]; then
+      echo "  skip ${doc_id}: no staged image"
+      continue
     fi
     t0=$(date +%s.%N)
     if resp="$(jev_call "$arm" "$doc_id" "$token" 2>&1)"; then :; else resp="$(printf '%s' "$resp" | jq -R -s '{http_error: .}')"; fi
@@ -303,10 +327,10 @@ run_arm() {
     meta="$(jq -cn --argjson doc "$doc_id" --arg truth "$class" --arg model "$model" --arg arm "$arm" \
       --argjson lat "$(awk "BEGIN{print ${t1} - ${t0}}")" \
       '{doc_id:$doc, truth:$truth, model:$model, arm:$arm, latency_s:$lat}')"
-    printf '%s' "$resp" | jq -c "$meta + {raw: .}" >> "$out" 2>/dev/null \
-      || printf '%s\n' "${meta}" | jq -c '. + {parse_error: true}' >> "$out"
+    printf '%s' "$resp" | jq -c "$meta + {raw: .}" >>"$out" 2>/dev/null ||
+      printf '%s\n' "${meta}" | jq -c '. + {parse_error: true}' >>"$out"
     echo "  ${model}/${arm} doc=${doc_id} truth=${class} $(date +%H:%M:%S)"
-  done < "${WORK_DIR}/corpus.tsv"
+  done <"${WORK_DIR}/corpus.tsv"
   echo "wrote ${out}"
 }
 
@@ -314,7 +338,10 @@ score() {
   echo "=== paperless-decision-bench score (${WORK_DIR}) ==="
   local f
   for f in "${WORK_DIR}"/results-*.jsonl; do
-    [[ -e "$f" ]] || { echo "no results yet — run --bench first"; return; }
+    [[ -e "$f" ]] || {
+      echo "no results yet — run --bench first"
+      return
+    }
     echo
     echo "--- $(basename "$f") per-doc (truth, guess, conf, noul, latency, tokens) ---"
     jq -r '
@@ -347,9 +374,9 @@ score() {
   for f in "${WORK_DIR}"/results-*.jsonl; do
     [[ -e "$f" ]] || continue
     paste <(jq -r '(.raw.result // .raw).answers.doc_class.choice // "ERR"' "$f" 2>/dev/null) \
-          <(jq -r '(.raw.result // .raw).answers.doc_class.confidence // 0' "$f" 2>/dev/null) \
-          <(jq -r '.truth | sub("^general$"; "letter_or_other")' "$f" 2>/dev/null) \
-      | awk -F'\t' -v name="$(basename "$f")" '
+      <(jq -r '(.raw.result // .raw).answers.doc_class.confidence // 0' "$f" 2>/dev/null) \
+      <(jq -r '.truth | sub("^general$"; "letter_or_other")' "$f" 2>/dev/null) |
+      awk -F'\t' -v name="$(basename "$f")" '
         {
           n++
           if ($1==$3) correct++
@@ -369,9 +396,10 @@ score() {
 setup_secrets() {
   need sops
   if [[ ! -f "$SOPS_FILE" ]]; then
-    local plain; plain="$(mktemp "${WORK_DIR}/.secrets.XXXXXX.yaml")"
+    local plain
+    plain="$(mktemp "${WORK_DIR}/.secrets.XXXXXX.yaml")"
     chmod 600 "$plain"
-    printf 'cloudflare_account_id: PLACEHOLDER-owner-paste\ncloudflare_api_token: PLACEHOLDER-owner-paste\ntypesafe_api_key: PLACEHOLDER-owner-paste\n' > "$plain"
+    printf 'cloudflare_account_id: PLACEHOLDER-owner-paste\ncloudflare_api_token: PLACEHOLDER-owner-paste\ntypesafe_api_key: PLACEHOLDER-owner-paste\n' >"$plain"
     mv "$plain" "$SOPS_FILE"
     sops --encrypt --in-place "$SOPS_FILE"
     echo "created ${SOPS_FILE} with PLACEHOLDER values (creation rule from .sops.yaml)"
@@ -389,26 +417,37 @@ EOF
 main() {
   local mode="${1:-}"
   case "$mode" in
-    --probe) probe ;;
-    --corpus) shift; local n=10; [[ "${1:-}" == "--n" ]] && n="${2:-10}"; build_corpus "$n" ;;
-    --bench)
-      shift; local models="${1:-clef,jev}"; shift || true
-      local also_text=false
-      [[ "${1:-}" == "--also-text" ]] && also_text=true
-      mkdir -p "$WORK_DIR"
-      load_secrets "$models"
-      local token; token="$(mint_token)"
-      local m
-      IFS=',' read -ra ms <<<"$models"
-      for m in "${ms[@]}"; do
-        run_arm "$m" image "$token"
-        $also_text && run_arm "$m" text "$token"
-      done
-      score
-      ;;
-    --score) score ;;
-    --setup-secrets) setup_secrets ;;
-    *) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+  --probe) probe ;;
+  --corpus)
+    shift
+    local n=10
+    [[ "${1:-}" == "--n" ]] && n="${2:-10}"
+    build_corpus "$n"
+    ;;
+  --bench)
+    shift
+    local models="${1:-clef,jev}"
+    shift || true
+    local also_text=false
+    [[ "${1:-}" == "--also-text" ]] && also_text=true
+    mkdir -p "$WORK_DIR"
+    load_secrets "$models"
+    local token
+    token="$(mint_token)"
+    local m
+    IFS=',' read -ra ms <<<"$models"
+    for m in "${ms[@]}"; do
+      run_arm "$m" image "$token"
+      $also_text && run_arm "$m" text "$token"
+    done
+    score
+    ;;
+  --score) score ;;
+  --setup-secrets) setup_secrets ;;
+  *)
+    sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'
+    exit 1
+    ;;
   esac
 }
 

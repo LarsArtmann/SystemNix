@@ -308,9 +308,9 @@ printf '%s %s\n' / /dev/qlc-part "$SRC_F" /dev/samsung-subvol >"$FINDMNT_MAP"
 if TAR_MODE=truncated bash "$SCRIPT_UNDER_TEST" shadow-cleanup >/dev/null 2>&1; then
   fail "shadow-cleanup: truncated archive must fail"
 else
-  [ -f "$SCRATCH/qlc-at/home/lars/tmp/keep/shadow-file.txt" ] \
-    && ok "shadow-cleanup: verify-fail left the shadow intact" \
-    || fail "shadow-cleanup: verify-fail DELETED the shadow anyway"
+  [ -f "$SCRATCH/qlc-at/home/lars/tmp/keep/shadow-file.txt" ] &&
+    ok "shadow-cleanup: verify-fail left the shadow intact" ||
+    fail "shadow-cleanup: verify-fail DELETED the shadow anyway"
 fi
 
 # happy path: archive verified + shadow emptied + live mount untouched.

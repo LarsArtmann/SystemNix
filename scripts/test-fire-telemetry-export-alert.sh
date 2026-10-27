@@ -40,34 +40,34 @@ FAILED=0
 ALREADY_FIRING=""
 
 http() {
-	# http METHOD PATH [BODY] -> sets HTTP_STATUS + HTTP_BODY
-	local method="$1" path="$2" body="${3:-}"
-	local args=(--silent --max-time 15)
-	if [ -n "$body" ]; then
-		args+=(-H "Content-Type: application/json" -d "$body")
-	fi
-	HTTP_BODY=$(curl "${args[@]}" -w $'\n%{http_code}' -X "$method" "$API$path") || HTTP_STATUS=000
-	HTTP_STATUS=$(printf '%s' "$HTTP_BODY" | tail -1)
-	HTTP_BODY=$(printf '%s' "$HTTP_BODY" | sed '$d')
+  # http METHOD PATH [BODY] -> sets HTTP_STATUS + HTTP_BODY
+  local method="$1" path="$2" body="${3:-}"
+  local args=(--silent --max-time 15)
+  if [ -n "$body" ]; then
+    args+=(-H "Content-Type: application/json" -d "$body")
+  fi
+  HTTP_BODY=$(curl "${args[@]}" -w $'\n%{http_code}' -X "$method" "$API$path") || HTTP_STATUS=000
+  HTTP_STATUS=$(printf '%s' "$HTTP_BODY" | tail -1)
+  HTTP_BODY=$(printf '%s' "$HTTP_BODY" | sed '$d')
 }
 
 ok() {
-	# 2xx = success — SigNoz POSTs return 201 Created, not 200
-	[ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]
+  # 2xx = success — SigNoz POSTs return 201 Created, not 200
+  [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]
 }
 
 die() {
-	echo "FAIL: $*" >&2
-	exit 1
+  echo "FAIL: $*" >&2
+  exit 1
 }
 
 leg() {
-	if [ "$1" = 0 ]; then
-		echo "  OK: $2"
-	else
-		echo "  FAIL: $2" >&2
-		FAILED=1
-	fi
+  if [ "$1" = 0 ]; then
+    echo "  OK: $2"
+  else
+    echo "  FAIL: $2" >&2
+    FAILED=1
+  fi
 }
 
 echo "== Preflight: rule + route policy + channel =="
@@ -79,8 +79,8 @@ RULE_ID=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .i
 RULE_STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
 echo "  rule id: $RULE_ID (state: $RULE_STATE)"
 if [ "$RULE_STATE" = "firing" ]; then
-	ALREADY_FIRING=1
-	echo "  NOTE: rule is ALREADY FIRING (real export failures in window?) — Leg 1 will be inconclusive; Leg 2 still validates delivery"
+  ALREADY_FIRING=1
+  echo "  NOTE: rule is ALREADY FIRING (real export failures in window?) — Leg 1 will be inconclusive; Leg 2 still validates delivery"
 fi
 
 http GET "/api/v1/route_policies"
@@ -96,16 +96,16 @@ jq -r '.data[]?.name' <<<"$HTTP_BODY" | grep -qx "Discord Alerts" || die "channe
 echo "== Leg 1: synthetic export-failure counter -> rule FIRING =="
 
 post_counter() {
-	# post_counter VALUE -> one OTLP/JSON metrics POST (cumulative Sum)
-	local value="$1" ts
-	ts="$(date +%s%3N)000000"
-	local payload
-	payload=$(jq -n \
-		--arg metric "$METRIC" \
-		--arg svc "$TEST_SERVICE" \
-		--arg ts "$ts" \
-		--arg value "$value" \
-		'{
+  # post_counter VALUE -> one OTLP/JSON metrics POST (cumulative Sum)
+  local value="$1" ts
+  ts="$(date +%s%3N)000000"
+  local payload
+  payload=$(jq -n \
+    --arg metric "$METRIC" \
+    --arg svc "$TEST_SERVICE" \
+    --arg ts "$ts" \
+    --arg value "$value" \
+    '{
     resourceMetrics: [{
       resource: {attributes: [{key: "service.name", value: {stringValue: $svc}}]},
       scopeMetrics: [{
@@ -121,9 +121,9 @@ post_counter() {
       }]
     }]
   }')
-	curl --silent --max-time 10 -o /dev/null -w "%{http_code}" \
-		-H "Content-Type: application/json" -X POST \
-		--data "$payload" "$OTLP_URL"
+  curl --silent --max-time 10 -o /dev/null -w "%{http_code}" \
+    -H "Content-Type: application/json" -X POST \
+    --data "$payload" "$OTLP_URL"
 }
 
 STATUS=$(post_counter 0)
@@ -139,19 +139,19 @@ FIRED=""
 # (series metadata materialization) — the first live run stayed inactive
 # through a 4-min poll and fired minutes later. Poll a full 10 minutes.
 for _ in $(seq 1 40); do
-	sleep 15
-	http GET "/api/v1/rules"
-	STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
-	if [ "$STATE" = "firing" ]; then
-		FIRED=1
-		break
-	fi
-	echo "  ... rule state: $STATE"
+  sleep 15
+  http GET "/api/v1/rules"
+  STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
+  if [ "$STATE" = "firing" ]; then
+    FIRED=1
+    break
+  fi
+  echo "  ... rule state: $STATE"
 done
 if [ -n "$ALREADY_FIRING" ]; then
-	echo "  SKIP: rule was already firing before the synthetic samples — Leg 1 inconclusive (delivery proof below still applies)"
+  echo "  SKIP: rule was already firing before the synthetic samples — Leg 1 inconclusive (delivery proof below still applies)"
 else
-	leg "${FIRED:-1}" "rule '$RULE_NAME' reached state=firing on the synthetic series (metric path end-to-end: OTLP ingest -> ClickHouse -> rule eval)"
+  leg "${FIRED:-1}" "rule '$RULE_NAME' reached state=firing on the synthetic series (metric path end-to-end: OTLP ingest -> ClickHouse -> rule eval)"
 fi
 
 echo "== Leg 2: >256-rune throwaway -> 'Truncated title' delivery proof =="
@@ -159,10 +159,10 @@ echo "== Leg 2: >256-rune throwaway -> 'Truncated title' delivery proof =="
 THROWAWAY_NAME="SystemNix test-fire delivery probe (auto-deleted) — this alert name deliberately exceeds the 256-rune Discord title limit so the alertmanager notifier logs a Truncated title WARN carrying receiver and ruleId, which is the only journal-visible positive-delivery evidence on this stack because successful Discord notifies are journal-silent"
 QUERY="sum(increase({__name__=~\"otelcol_exporter_send_failed_(log_records|spans|metric_points)\"}[10m]))"
 THROWAWAY_JSON=$(jq -n \
-	--arg name "$THROWAWAY_NAME" \
-	--arg query "$QUERY" \
-	--arg desc "Synthetic test-fire delivery probe; auto-deleted by scripts/test-fire-telemetry-export-alert.sh" \
-	'{
+  --arg name "$THROWAWAY_NAME" \
+  --arg query "$QUERY" \
+  --arg desc "Synthetic test-fire delivery probe; auto-deleted by scripts/test-fire-telemetry-export-alert.sh" \
+  '{
     alert: $name,
     alertType: "METRIC_BASED_ALERT",
     ruleType: "promql_rule",
@@ -191,16 +191,16 @@ THROWAWAY_JSON=$(jq -n \
 # shellcheck disable=SC2329
 # Invoked via the EXIT trap below.
 cleanup() {
-	local rc=$?
-	if [ -n "${THROWAWAY_ID:-}" ]; then
-		http DELETE "/api/v1/rules/$THROWAWAY_ID"
-		ok || echo "  WARN: throwaway rule delete returned HTTP $HTTP_STATUS (the provisioner's orphan pass will remove it)" >&2
-	fi
-	if [ -n "${THROWAWAY_POLICY_ID:-}" ]; then
-		http DELETE "/api/v1/route_policies/$THROWAWAY_POLICY_ID"
-		ok || echo "  WARN: throwaway policy delete returned HTTP $HTTP_STATUS (systemnix-tagged orphan pass will remove it)" >&2
-	fi
-	exit "$rc"
+  local rc=$?
+  if [ -n "${THROWAWAY_ID:-}" ]; then
+    http DELETE "/api/v1/rules/$THROWAWAY_ID"
+    ok || echo "  WARN: throwaway rule delete returned HTTP $HTTP_STATUS (the provisioner's orphan pass will remove it)" >&2
+  fi
+  if [ -n "${THROWAWAY_POLICY_ID:-}" ]; then
+    http DELETE "/api/v1/route_policies/$THROWAWAY_POLICY_ID"
+    ok || echo "  WARN: throwaway policy delete returned HTTP $HTTP_STATUS (systemnix-tagged orphan pass will remove it)" >&2
+  fi
+  exit "$rc"
 }
 trap cleanup EXIT
 
@@ -211,9 +211,9 @@ THROWAWAY_ID=$(jq -r '.data.id // empty' <<<"$HTTP_BODY")
 echo "  throwaway rule created: $THROWAWAY_ID"
 
 POLICY_JSON=$(jq -n \
-	--arg id "$THROWAWAY_ID" \
-	--arg desc "SystemNix test-fire probe: route throwaway rule to Discord Alerts" \
-	'{expression: ("ruleId == \"" + $id + "\""), kind: "policy", channels: ["Discord Alerts"], name: $id, description: $desc, tags: ["systemnix", "test-fire"]}')
+  --arg id "$THROWAWAY_ID" \
+  --arg desc "SystemNix test-fire probe: route throwaway rule to Discord Alerts" \
+  '{expression: ("ruleId == \"" + $id + "\""), kind: "policy", channels: ["Discord Alerts"], name: $id, description: $desc, tags: ["systemnix", "test-fire"]}')
 http POST "/api/v1/route_policies" "$POLICY_JSON"
 ok || die "throwaway route policy create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
 THROWAWAY_POLICY_ID=$(jq -r '.data.id // empty' <<<"$HTTP_BODY")
@@ -225,27 +225,27 @@ sleep 30
 # journal ~15s after the grep). Poll for it instead.
 DELIVERED=""
 for _ in $(seq 1 12); do
-	sleep 20
-	if journalctl -u "$JOURNAL_UNIT" --since "-6 min" --output cat 2>/dev/null | grep -q "Truncated title"; then
-		DELIVERED=1
-		break
-	fi
+  sleep 20
+  if journalctl -u "$JOURNAL_UNIT" --since "-6 min" --output cat 2>/dev/null | grep -q "Truncated title"; then
+    DELIVERED=1
+    break
+  fi
 done
 if [ -n "$DELIVERED" ]; then
-	leg 0 "notifier logged 'Truncated title' for the >256-rune alert — Discord delivery path PROVEN (receiver reached the webhook stage)"
+  leg 0 "notifier logged 'Truncated title' for the >256-rune alert — Discord delivery path PROVEN (receiver reached the webhook stage)"
 else
-	leg 1 "no 'Truncated title' WARN in $JOURNAL_UNIT journal within ~5 min — the notify may not have reached the Discord receiver (check route policies + channel webhook)"
+  leg 1 "no 'Truncated title' WARN in $JOURNAL_UNIT journal within ~5 min — the notify may not have reached the Discord receiver (check route policies + channel webhook)"
 fi
 
 echo "== Result =="
 if [ "$FAILED" = 0 ]; then
-	echo "PASS: Telemetry Export Failures -> Discord proven end-to-end."
-	echo "  The synthetic series (service.name=$TEST_SERVICE) leaves the [10m] window in ~10 min;"
-	echo "  the rule auto-resolves and Discord receives the resolved post."
-	echo "  Real-fire caveat: stopping clickhouse for 60s in a maintenance window remains the"
-	echo "  full-fidelity fire (real exporter errors); this probe proves the identical rule/query/delivery chain synthetically."
-	exit 0
+  echo "PASS: Telemetry Export Failures -> Discord proven end-to-end."
+  echo "  The synthetic series (service.name=$TEST_SERVICE) leaves the [10m] window in ~10 min;"
+  echo "  the rule auto-resolves and Discord receives the resolved post."
+  echo "  Real-fire caveat: stopping clickhouse for 60s in a maintenance window remains the"
+  echo "  full-fidelity fire (real exporter errors); this probe proves the identical rule/query/delivery chain synthetically."
+  exit 0
 else
-	echo "FAIL: one or more legs above failed — see the FAIL lines." >&2
-	exit 1
+  echo "FAIL: one or more legs above failed — see the FAIL lines." >&2
+  exit 1
 fi

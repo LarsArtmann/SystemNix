@@ -53,7 +53,10 @@ systemctl stop "$SERVER" 2>/dev/null || true
 
 lock_ok=0
 for _ in $(seq 1 15); do
-  if sql "SELECT 1;" >/dev/null 2>&1; then lock_ok=1; break; fi
+  if sql "SELECT 1;" >/dev/null 2>&1; then
+    lock_ok=1
+    break
+  fi
   sleep 2
 done
 if [ "$lock_ok" != "1" ]; then
@@ -104,7 +107,10 @@ systemctl start "$SERVER"
 echo "--- waiting for /health (up to 120s)"
 ok=0
 for _ in $(seq 1 60); do
-  if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then ok=1; break; fi
+  if curl -fsS "$HEALTH_URL" >/dev/null 2>&1; then
+    ok=1
+    break
+  fi
   sleep 2
 done
 

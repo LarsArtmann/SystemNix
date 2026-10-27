@@ -185,7 +185,6 @@ if [ -e '/etc/systemd/system/gitea-runner-evo\x2dx2.service' ]; then
   fi
 fi
 
-
 # Shared pressure-reporting logic (fixture-tested by
 # scripts/test-post-deploy-pressure.sh + the post-deploy-pressure-selftest
 # flake check - the WARN/PASS semantics must never call a storm healthy).

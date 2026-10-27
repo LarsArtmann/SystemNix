@@ -658,7 +658,6 @@ eval_case orderingcycle runner-wantedby-regression fail 'ordering-cycle-audit' \
 eval_case orderingcycle geometrikks-multiuser-regression fail 'ordering-cycle-audit' \
   'sed:modules/nixos/services/geometrikks.nix:s|^              wantedBy = \[ "late-applications.target" \];$|              wantedBy = [ "multi-user.target" ];|'
 
-
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the
 # enforcement surface is the toplevel eval. Three legs mirroring the real

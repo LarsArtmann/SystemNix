@@ -41,17 +41,20 @@ SELFTEST=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dry-run) DO_DRY_RUN=1 ;;
-    --prom)
-      shift
-      [ $# -gt 0 ] || { echo "backup-catchup-report.sh: --prom needs a path" >&2; exit 2; }
-      PROM_FILE="$1"
-      ;;
-    --selftest) SELFTEST=1 ;;
-    *)
-      echo "unknown option: $1 (usage: $0 [--dry-run] [--prom <file>] [--selftest])" >&2
+  --dry-run) DO_DRY_RUN=1 ;;
+  --prom)
+    shift
+    [ $# -gt 0 ] || {
+      echo "backup-catchup-report.sh: --prom needs a path" >&2
       exit 2
-      ;;
+    }
+    PROM_FILE="$1"
+    ;;
+  --selftest) SELFTEST=1 ;;
+  *)
+    echo "unknown option: $1 (usage: $0 [--dry-run] [--prom <file>] [--selftest])" >&2
+    exit 2
+    ;;
   esac
   shift
 done
@@ -67,7 +70,10 @@ crit_finding() {
   FINDINGS=$((FINDINGS + 1))
   echo "  CRIT  $1"
 }
-section() { echo; echo "== $1"; }
+section() {
+  echo
+  echo "== $1"
+}
 
 # ── pure helpers (fixture-tested by --selftest) ──────────────────────────
 
@@ -75,9 +81,9 @@ section() { echo; echo "== $1"; }
 # dir in <dir> (btrbk names snapshots <name>.<timestamp>, lexicographic =
 # chronological), empty when none. | head -1 with `|| true`: SIGPIPE-safe.
 newest_btrbk_snapshot() {
-  find "$1" -maxdepth 1 -mindepth 1 -type d 2>/dev/null \
-    | grep -E '/[^/]+\.[0-9]{8}(T[0-9]{4})?$' \
-    | sort | tail -1 || true
+  find "$1" -maxdepth 1 -mindepth 1 -type d 2>/dev/null |
+    grep -E '/[^/]+\.[0-9]{8}(T[0-9]{4})?$' |
+    sort | tail -1 || true
 }
 
 # prom_gauges <prom-file> — emits "name{labels}=value" triples minus HELP/
@@ -89,8 +95,8 @@ prom_gauges() {
 # prom_value <prom-file> <metric-name> <backup-label> — prints the value of
 # `metric{...backup="<label>"...}` (exact label match) or nothing when absent.
 prom_value() {
-  prom_gauges "$1" \
-    | awk -v m="$2" -v b="$3" '
+  prom_gauges "$1" |
+    awk -v m="$2" -v b="$3" '
         $1 ~ "^" m "\\{" {
           labels = $1
           sub(/^[^{]+\{/, "", labels); sub(/\}.*/, "", labels)
@@ -103,7 +109,7 @@ prom_value() {
         }'
 }
 
-hours_between() { echo "$(( ($1 - $2) / 3600 ))"; }
+hours_between() { echo "$((($1 - $2) / 3600))"; }
 
 SELFTEST_DIR=""
 
@@ -120,7 +126,8 @@ selftest() {
   if [ "${r##*/}" = "@.20260930T2301" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL newest_btrbk_snapshot: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL newest_btrbk_snapshot: got '$r'"
   fi
 
   # empty dir -> empty result (not an error)
@@ -128,7 +135,8 @@ selftest() {
   if [ -z "$r" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL newest_btrbk_snapshot empty: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL newest_btrbk_snapshot empty: got '$r'"
   fi
 
   # missing dir -> empty result (find 2>/dev/null)
@@ -136,11 +144,12 @@ selftest() {
   if [ -z "$r" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL newest_btrbk_snapshot missing: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL newest_btrbk_snapshot missing: got '$r'"
   fi
 
   # prom_value: exact-label match, absent label -> empty
-  cat > "$scratch/backups.prom" <<'EOF'
+  cat >"$scratch/backups.prom" <<'EOF'
 # HELP backup_age_hours x
 # TYPE backup_age_hours gauge
 backup_age_hours{backup="immich"} 3
@@ -152,22 +161,25 @@ EOF
   if [ "$r" = "3" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL prom_value exact: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL prom_value exact: got '$r'"
   fi
   r=$(prom_value "$scratch/backups.prom" backup_age_hours nonexistent)
   if [ -z "$r" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL prom_value absent: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL prom_value absent: got '$r'"
   fi
   r=$(prom_value "$scratch/backups.prom" backup_last_success_timestamp immich)
   if [ "$r" = "1700000000" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL prom_value other metric: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL prom_value other metric: got '$r'"
   fi
   # label is a PREFIX of another label — must not match the longer one
-  cat > "$scratch/prefix.prom" <<'EOF'
+  cat >"$scratch/prefix.prom" <<'EOF'
 backup_age_hours{backup="immich"} 3
 backup_age_hours{backup="immich-db"} 77
 EOF
@@ -175,7 +187,8 @@ EOF
   if [ "$r" = "3" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL prom_value prefix: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL prom_value prefix: got '$r'"
   fi
 
   # hours_between
@@ -183,7 +196,8 @@ EOF
   if [ "$r" = "1" ]; then
     pass=$((pass + 1))
   else
-    failn=$((failn + 1)); echo "FAIL hours_between: got '$r'";
+    failn=$((failn + 1))
+    echo "FAIL hours_between: got '$r'"
   fi
 
   echo "selftest: $pass passed, $failn failed"
@@ -196,9 +210,18 @@ if [ "$SELFTEST" -eq 1 ]; then
 fi
 
 # ── environment ──────────────────────────────────────────────────────────
-[ -d "$BTRBK_CONF_DIR" ] || { echo "no $BTRBK_CONF_DIR — not the backup host?" >&2; exit 2; }
-command -v btrbk >/dev/null 2>&1 || { echo "btrbk not on PATH" >&2; exit 2; }
-command -v systemctl >/dev/null 2>&1 || { echo "systemctl not on PATH" >&2; exit 2; }
+[ -d "$BTRBK_CONF_DIR" ] || {
+  echo "no $BTRBK_CONF_DIR — not the backup host?" >&2
+  exit 2
+}
+command -v btrbk >/dev/null 2>&1 || {
+  echo "btrbk not on PATH" >&2
+  exit 2
+}
+command -v systemctl >/dev/null 2>&1 || {
+  echo "systemctl not on PATH" >&2
+  exit 2
+}
 
 NOW=$(date +%s)
 
@@ -279,7 +302,7 @@ if [ -f "$PROM_FILE" ]; then
       warn_finding "no backup_last_success_timestamp series for '$backup_label' in $PROM_FILE (coordination entry missing?)"
       continue
     fi
-    diff=$(( fs_ts - prom_ts ))
+    diff=$((fs_ts - prom_ts))
     adiff=${diff#-}
     if [ "$adiff" -gt 3600 ]; then
       warn_finding "$backup_label: prom stamp ($prom_ts) vs filesystem ($fs_ts) differ by $((adiff / 3600)) h — metric is stale or lying"

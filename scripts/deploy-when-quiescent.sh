@@ -56,11 +56,26 @@ LOG_FILE="${HOME}/.cache/deploy-when-quiescent.log"
 while [ $# -gt 0 ]; do
   case "$1" in
   --fire) FIRE=true ;;
-  --poll-interval) POLL_INTERVAL="${2:?--poll-interval needs seconds}"; shift ;;
-  --min-stable) MIN_STABLE="${2:?--min-stable needs a count}"; shift ;;
-  --stale-secs) STALE_SECS="${2:?--stale-secs needs seconds}"; shift ;;
-  --host) HOST="${2:?--host needs a name}"; shift ;;
-  --log) LOG_FILE="${2:?--log needs a path}"; shift ;;
+  --poll-interval)
+    POLL_INTERVAL="${2:?--poll-interval needs seconds}"
+    shift
+    ;;
+  --min-stable)
+    MIN_STABLE="${2:?--min-stable needs a count}"
+    shift
+    ;;
+  --stale-secs)
+    STALE_SECS="${2:?--stale-secs needs seconds}"
+    shift
+    ;;
+  --host)
+    HOST="${2:?--host needs a name}"
+    shift
+    ;;
+  --log)
+    LOG_FILE="${2:?--log needs a path}"
+    shift
+    ;;
   *)
     echo "unknown option: $1" >&2
     exit 64
