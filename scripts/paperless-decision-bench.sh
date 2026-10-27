@@ -171,7 +171,13 @@ stage_image() {
 }
 
 load_secrets() {
-  if [[ -n "${TYPESAFE_API_KEY:-}" && -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  local models="$1"
+  local need_jev=false need_clef=false
+  [[ "$models" == *jev* ]] && need_jev=true
+  [[ "$models" == *clef* ]] && need_clef=true
+  local have_env=true
+  [[ -z "${TYPESAFE_API_KEY:-}" ]] && have_env=false
+  if $have_env; then
     return
   fi
   [[ -f "$SOPS_FILE" ]] || die "no env vars and no ${SOPS_FILE}; run: $0 --setup-secrets"
@@ -183,8 +189,14 @@ load_secrets() {
   CLOUDFLARE_ACCOUNT_ID="$(sops -d --extract '["cloudflare_account_id"]' "$SOPS_FILE")"
   export TYPESAFE_API_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
   unset SOPS_AGE_KEY
-  [[ "$CLOUDFLARE_API_TOKEN" != PLACEHOLDER* && "$TYPESAFE_API_KEY" != PLACEHOLDER* ]] \
-    || die "sops keys are PLACEHOLDER — owner paste: SOPS_AGE_KEY=\$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops ${SOPS_FILE}"
+  if $need_jev; then
+    [[ "$TYPESAFE_API_KEY" != PLACEHOLDER* && -n "$TYPESAFE_API_KEY" ]] \
+      || die "typesafe_api_key in ${SOPS_FILE} is still PLACEHOLDER"
+  fi
+  if $need_clef; then
+    [[ "$CLOUDFLARE_API_TOKEN" != PLACEHOLDER* && "$CLOUDFLARE_ACCOUNT_ID" != PLACEHOLDER* ]] \
+      || die "cloudflare keys in ${SOPS_FILE} are still PLACEHOLDER (owner: dash.cloudflare.com account id + Workers AI Read+Run token)"
+  fi
 }
 
 questions_json() {
@@ -378,7 +390,7 @@ main() {
       local also_text=false
       [[ "${1:-}" == "--also-text" ]] && also_text=true
       mkdir -p "$WORK_DIR"
-      load_secrets
+      load_secrets "$models"
       local token; token="$(mint_token)"
       local m
       IFS=',' read -ra ms <<<"$models"

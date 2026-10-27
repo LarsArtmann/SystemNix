@@ -115,7 +115,10 @@
       # stale means older than 10 daemon cycles (600 s at intervalSecs=60).
       freshnessScript = pkgs.writeShellApplication {
         name = "storage-collector-freshness";
-        runtimeInputs = [ pkgs.coreutils ];
+        # gnugrep + gawk are load-bearing: writeShellApplication's PATH is
+        # runtimeInputs-only under systemd (no /usr/bin fallback) — shipping
+        # without them made the gauge permanently 0 (live 2026-10-27 gen-956).
+        runtimeInputs = [ pkgs.coreutils pkgs.gnugrep pkgs.gawk ];
         text = ''
           set -euo pipefail
           PROM="${textfileDir}/storage-collector.prom"
