@@ -87,8 +87,12 @@
       # (registry+lock in sync at 5165e44), spec 0YovMWLa, got N9Zsy7bb
       # (float-proof-20261027-212821.log — same truth as the fifth re-stale
       # above; 5165e44's modules hash is N9Zsy7bb, two proofs agree).
+      # EIGHTH RE-STALE 2026-10-27 strand re-float: cv@f22274e spec
+      # N9Zsy7bb, got 0YovMWLa (float-proof-20261027-220636.log — f22274e's
+      # module set matches 0d50fb7's; the strand flaps between two upstream
+      # states and this hash tracks the LOCKED rev, whatever it is).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-N9Zsy7bbWBXIIFmsTiJUQ+mTO87w8PkpaoUYxnCr37k=";
+        vendorHash = "sha256-0YovMWLaIncHZLXzi6KxO2CzYP1chLsEbYxtjAC9j2U=";
       };
     in
     {

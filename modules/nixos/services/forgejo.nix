@@ -1180,7 +1180,10 @@ _: {
             {
               Type = "oneshot";
               User = "root";
-              TimeoutStartSec = "30min";
+              # 60min: the drill streams a ~27G zip off the HDD pool; under
+              # IO-storm nights 30min only covered ~12G of read (live
+              # 2026-10-27 force-run timed out mid-verification).
+              TimeoutStartSec = "60min";
             }
             (serviceOneshotDefaults { })
             (harden {

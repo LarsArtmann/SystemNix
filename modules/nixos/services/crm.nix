@@ -95,7 +95,14 @@
       # d3f740b (== lock) bakes the shim's own R9ui8Fb7… value — the
       # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
       # never by hand.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # SHIM RE-ADDED (2026-10-27 strand re-float): kith-crm@a58f2f8b bakes
+      # nQu2PxkJ… but its own go.mod fetches +gBi/2cT… — first-hand FOD
+      # evidence (float-proof-20261027-220636.log, kith-crm go-modules
+      # mismatch). Drop when upstream pastes the got hash (or the lock
+      # moves past an upstream-fixed rev).
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-+gBi/2cTIfu19o0QzI0FEk84xORplUKt7ECtwLR+/Pk=";
+      };
       twentyEnabled = config.services.twenty.enable or false;
     in
     {
