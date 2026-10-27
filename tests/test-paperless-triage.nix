@@ -227,15 +227,18 @@ in
     machine.start()
 
     # 1. Paperless first (PG migrations + superuser bootstrap), then the
-    #    token mint, the mock verdict endpoint, the provisioner, the sweep.
+    #    mock verdict endpoint + the provisioner. The token unit has no
+    #    wantedBy (paperless-gpt-token pattern): it is pulled by the SWEEP's
+    #    requires= when the timer fires or the test starts the service.
     machine.wait_for_unit("postgresql.service")
     machine.wait_for_unit("paperless-scheduler.service")
     machine.wait_for_unit("paperless-web.service")
     machine.wait_for_unit("mock-llama-chat.service")
-    machine.wait_for_unit("paperless-triage-token.service")
+    machine.wait_for_unit("paperless-triage.timer")
 
-    # 2. Token mint artifacts: 0400, owned by the triage user.
-    machine.succeed("stat -c '%a %U %G' /run/paperless-triage/env | grep '400 paperless-triage paperless-triage'")
+    # Diagnostic: the shared textfile dir must be 1777 (the sweep mktemps
+    # its .prom there).
+    machine.succeed("stat -c '%a' /var/lib/prometheus-node-exporter/textfile_collectors | grep 1777")
 
     # 3. The sweep script's margin parser passes its fixtures.
     sweep = machine.succeed(
@@ -298,8 +301,10 @@ in
       timeout=300,
     )
 
-    # 6. Run the sweep synchronously (systemctl start blocks a oneshot).
+    # 6. Run the sweep synchronously (systemctl start blocks a oneshot;
+    #    requires= pulls the token mint first — assert its artifacts now).
     machine.succeed("systemctl start paperless-triage.service")
+    machine.succeed("stat -c '%a %U %G' /run/paperless-triage/env | grep '400 paperless-triage paperless-triage'")
 
     def tags_of(doc_id):
       out = machine.succeed(

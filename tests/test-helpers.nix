@@ -81,9 +81,13 @@
     # attempts fail fast instead of hanging on an unroutable name.
     networking.hosts."192.0.2.1" = config."test-helpers".dnsGateHosts;
 
-    # Many services emit Prometheus metrics to this directory.
+    # Many services emit Prometheus metrics to this directory. Mode matches
+    # PRODUCTION (1777 sticky, tq-agent-pool/hot-db/triage rules) — 0755
+    # root made every service-user collector mktemp EACCES in VMs while
+    # passing on the real host (paperless-tasks-collector 2026-10-27;
+    # paperless-triage sweep hit the same in test).
     systemd.tmpfiles.rules = [
-      "d /var/lib/prometheus-node-exporter/textfile_collectors 0755 root root - -"
+      "d /var/lib/prometheus-node-exporter/textfile_collectors 1777 nobody nogroup - -"
     ];
   };
 }
