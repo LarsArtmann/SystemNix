@@ -312,6 +312,13 @@ flm consumer count vs the connection budget in `docs/services/fastflowlm.md`.
 
 ## Accounting field extraction on scanned invoices (2026-10-19 go-live)
 
+> **DRIFT (live probe 2026-10-27):** the live DB NO LONGER matches this section —
+> no `faktura` tag, `Accounting` carries only the 2 pilot receipts, and the
+> `Invoice number` (1000012) / `Issue date` (1000013) custom fields are ABSENT
+> (only the 6 pre-pilot fields remain). paperless-gpt tag counters are all 0.
+> Likely casualty of the 2026-10-19 SUPERB restore; see docs/todo/services.md
+> "accounting-extraction drift" row before trusting anything below.
+
 The owner's accounting pilot (manually tagged `Accounting` + `faktura` docs,
 fields `Brutto in PLN`/`VAT in PLN` monetary, `VAT percentages`/`NIP`/
 `Payment status` select) is now extracted automatically by paperless-gpt:

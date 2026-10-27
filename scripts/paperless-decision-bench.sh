@@ -33,7 +33,6 @@ SOPS_FILE="${REPO_ROOT}/platforms/nixos/secrets/decision-bench.yaml"
 CLEF_MODEL="@cf/cloudflare/clef"
 JEV_MODEL="jev-latest"
 
-INVOICE_TAG="faktura"
 ENCRYPTED_TAG="encrypted"
 BILL_DTYPE="Bill"
 
@@ -47,7 +46,7 @@ as_root() {
 
 manage_py() {
   local pyfile="$1"
-  as_root "runuser -u paperless -- /run/current-system/sw/bin/paperless-manage shell < '${pyfile}'"
+  as_root "runuser -u paperless -- /run/current-system/sw/bin/paperless-manage shell < '${pyfile}'" | grep -vE 'objects imported automatically|^Wrote '
 }
 
 mint_token() {
@@ -93,21 +92,25 @@ build_corpus() {
   local token; token="$(mint_token)"
   echo "staging corpus (${n}/class) into ${WORK_DIR}"
   local py tmp
-  py="from documents.models import Document, Tag, DocumentType
-inv = Tag.objects.filter(name=\"${INVOICE_TAG}\").values_list(\"id\", flat=True).first()
+  py="from django.db.models import Q
+from documents.models import Document, Tag, DocumentType
+new = Tag.objects.filter(name=\"new\").values_list(\"id\", flat=True).first()
 enc = Tag.objects.filter(name=\"${ENCRYPTED_TAG}\").values_list(\"id\", flat=True).first()
 bill = DocumentType.objects.filter(name=\"${BILL_DTYPE}\").values_list(\"id\", flat=True).first()
-invoice_ids = set(Document.objects.filter(tags__id=inv).values_list(\"id\", flat=True)) if inv else set()
-receipt_ids = set(Document.objects.filter(document_type=bill).values_list(\"id\", flat=True)) - invoice_ids if bill else set()
+invoice_like = Q(title__icontains=\"invoice\") | Q(title__icontains=\"faktura\") | Q(title__icontains=\"Faktura\")
+receipt_ids = set(Document.objects.filter(document_type=bill).values_list(\"id\", flat=True)) if bill else set()
+invoice_ids = set(Document.objects.filter(invoice_like).exclude(id__in=receipt_ids).values_list(\"id\", flat=True))
 encrypted_ids = set(Document.objects.filter(tags__id=enc).values_list(\"id\", flat=True)) if enc else set()
-general = Document.objects.exclude(id__in=invoice_ids | receipt_ids | encrypted_ids).filter(document_type__isnull=True).order_by(\"-created\")
+general = (Document.objects.filter(document_type__isnull=True, tags__id=new)
+           .exclude(invoice_like).exclude(content=\"\")
+           .exclude(id__in=receipt_ids | invoice_ids | encrypted_ids).order_by(\"-created\"))
 def emit(cls, ids):
     print(\"CLASS\", cls, list(ids))
-emit(\"invoice\", sorted(invoice_ids)[:${n}])
 emit(\"receipt\", sorted(receipt_ids)[:${n}])
+emit(\"invoice\", sorted(invoice_ids)[:${n}])
 emit(\"general\", list(general.values_list(\"id\", flat=True)[:${n}]))
 emit(\"encrypted\", sorted(encrypted_ids)[:${n}])
-print(\"META counts\", len(invoice_ids), len(receipt_ids), len(general), len(encrypted_ids))
+print(\"META counts receipt/invoice/general/encrypted\", len(receipt_ids), len(invoice_ids), general.count(), len(encrypted_ids))
 "
   tmp="$(mktemp "${WORK_DIR}/.corpus.XXXXXX.py")"; printf '%s' "$py" > "$tmp"
   manage_py "$tmp" > "${WORK_DIR}/classes.raw"
@@ -117,10 +120,11 @@ print(\"META counts\", len(invoice_ids), len(receipt_ids), len(general), len(enc
   printf 'doc_id\tclass\ttitle\tfile\n' > "${WORK_DIR}/corpus.tsv"
   local line class ids id docjson title imgpath
   while IFS= read -r line; do
-    class="$(awk '{print $2}' <<<"$line")"
+    [[ "$line" == "CLASS "* ]] || continue
+    class="${line#CLASS }"; class="${class%% *}"
     ids="$(cut -d' ' -f3- <<<"$line" | tr -d '[],')"
-    [[ "$class" == "META" || "$class" == "CLASS" || -z "${ids// }" ]] && continue
     for id in $ids; do
+      [[ "$id" =~ ^[0-9]+$ ]] || continue
       docjson="$(api "$token" "/api/documents/${id}/")" || { echo "WARN: api fetch failed for ${id}" >&2; continue; }
       title="$(jq -r '.title' <<<"$docjson")"
       if imgpath="$(stage_image "$token" "$id")"; then
@@ -345,15 +349,14 @@ score() {
 }
 
 setup_secrets() {
-  need sops; need ssh-to-age
+  need sops
   if [[ ! -f "$SOPS_FILE" ]]; then
-    local age_key recipient
-    age_key="$(as_root "cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key")"
-    recipient="$(as_root "cat /etc/ssh/ssh_host_ed25519_key.pub | ssh-to-age")"
-    printf 'cloudflare_account_id: PLACEHOLDER-owner-paste\ncloudflare_api_token: PLACEHOLDER-owner-paste\ntypesafe_api_key: PLACEHOLDER-owner-paste\n' \
-      | SOPS_AGE_KEY="$age_key" sops --encrypt --age "$recipient" --input-type yaml --output-type yaml --output "$SOPS_FILE" /dev/stdin
-    chmod 600 "$SOPS_FILE" 2>/dev/null || true
-    echo "created ${SOPS_FILE} with PLACEHOLDER values"
+    local plain; plain="$(mktemp "${WORK_DIR}/.secrets.XXXXXX.yaml")"
+    chmod 600 "$plain"
+    printf 'cloudflare_account_id: PLACEHOLDER-owner-paste\ncloudflare_api_token: PLACEHOLDER-owner-paste\ntypesafe_api_key: PLACEHOLDER-owner-paste\n' > "$plain"
+    mv "$plain" "$SOPS_FILE"
+    sops --encrypt --in-place "$SOPS_FILE"
+    echo "created ${SOPS_FILE} with PLACEHOLDER values (creation rule from .sops.yaml)"
   fi
   cat <<EOF
 Owner: paste real values via
