@@ -128,7 +128,11 @@ _: {
               name = "Crush Daily";
               group = "AI";
               description = "AI-Powered Development Insights";
-              icon = "openai.png";
+              # chart-db: database → chart bars, i.e. SQLite session
+              # databases rendered into daily reports. No crush/charm icon
+              # exists in the dashboard-icons pack (openai.png was a
+              # wrong-brand placeholder).
+              icon = "chart-db.png";
             };
           };
         };
