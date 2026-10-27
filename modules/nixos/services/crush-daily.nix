@@ -128,11 +128,13 @@ _: {
               name = "Crush Daily";
               group = "AI";
               description = "AI-Powered Development Insights";
-              # chart-db: database → chart bars, i.e. SQLite session
-              # databases rendered into daily reports. No crush/charm icon
-              # exists in the dashboard-icons pack (openai.png was a
-              # wrong-brand placeholder).
-              icon = "chart-db.png";
+              # The product's own brand mark (docs/brand/, four ascending
+              # violet bars), served by the app itself at /favicon.svg —
+              # the small-size-optimized variant. Absolute URLs bypass the
+              # pack gate by design (see papdashboard.nix); browser tile
+              # loads carry the SSO session, so the protected vHost
+              # serves it.
+              icon = "https://daily.${config.networking.domain}/favicon.svg";
             };
           };
         };

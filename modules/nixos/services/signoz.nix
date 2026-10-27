@@ -150,13 +150,11 @@ in
       gcpReceivers =
         let
           metricEntry = name: { metric_name = name; };
-          mkReceiver =
-            projectId: interval: metrics:
-            {
-              project_id = projectId;
-              collection_interval = interval;
-              metrics_list = map metricEntry metrics;
-            };
+          mkReceiver = projectId: interval: metrics: {
+            project_id = projectId;
+            collection_interval = interval;
+            metrics_list = map metricEntry metrics;
+          };
         in
         lib.foldl' lib.mergeAttrs { } (
           lib.mapAttrsToList (
@@ -169,11 +167,14 @@ in
                   ++ project.extraMetrics;
               in
               lib.optionalAttrs (fastMetrics != [ ]) {
-                "googlecloudmonitoring/${projectId}" = mkReceiver projectId cfg.gcpMonitoring.collectionInterval fastMetrics;
+                "googlecloudmonitoring/${projectId}" =
+                  mkReceiver projectId cfg.gcpMonitoring.collectionInterval
+                    fastMetrics;
               }
               // lib.optionalAttrs project.storage {
                 "googlecloudmonitoring/${projectId}-storage" =
-                  mkReceiver projectId cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
+                  mkReceiver projectId cfg.gcpMonitoring.storageCollectionInterval
+                    gcpStorageMetrics;
               }
             )
           ) cfg.gcpMonitoring.projects

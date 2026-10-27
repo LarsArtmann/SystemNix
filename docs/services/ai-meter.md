@@ -24,6 +24,7 @@ crush provider gemini      → http://127.0.0.1:8107/v1/gemini/v1beta/models/<m>
                            → https://generativelanguage.googleapis.com (NATIVE genai protocol, X-Goog-Api-Key)
 paperless-gpt             → http://127.0.0.1:8107/v1/fastflowlm/chat/completions  → 127.0.0.1:52625 (FastFlowLM)
 inboxclean chat           → http://127.0.0.1:8107/v1/llama-chat/chat/completions  → 127.0.0.1:8850 (llama.cpp)
+browser-history AI        → http://127.0.0.1:8107/v1/llama-chat/chat/completions  → 127.0.0.1:8850 (llama.cpp)
 (+ llama-embeddings upstream declared; unused ones cost nothing; openrouter dropped 2026-10-17 — `openrouter_api_key` was never set in sops)
 ```
 
@@ -42,6 +43,7 @@ zai routes to the **coding** endpoint (`/api/coding/paas/v4`), NOT the general o
 | `crush` | raw file, `$(cat /run/ai-meter-keys/crush)` in the crushrc `extraRc` (home.nix) — overrides `zai` + `kimi-coding` + `gemini` base URLs; later provider-add statements win | zai, kimi, gemini (native) |
 | `paperless-gpt` | env file `OPENAI_API_KEY=…` on the daemon unit | fastflowlm |
 | `inboxclean` | env file on `inboxclean-web` | llama-chat |
+| `browser-history` | env file `LLM_API_KEY=…` (root-owned mint copy — DynamicUser server has no stable uid; systemd reads the file as root) on the `browser-history` unit | llama-chat |
 
 Adding a consumer = add a `services.ai-meter.clients.<name>` entry (user + optional `envKey`) + point the app's base URL at `/v1/<upstream>`. The deploy.sh provisioner loop re-runs `ai-meter-keys` so the key exists before the restarted daemon references it.
 
