@@ -201,9 +201,10 @@ in
 
       services.llama-chat.enable = true;
       # The HOST's IO storms bleed into the guest's /proc/pressure/io via
-      # virtiofs; the gate has its own selftest check elsewhere — this test
-      # exercises the sweep logic, not the gate.
-      services.paperless-triage.psiMaxPercent = 100;
+      # virtiofs (avg10 can exceed 100% on multicore) and the gate has its
+      # own selftest check elsewhere — this test exercises the sweep logic,
+      # not the gate. Effectively-unbounded band, test-scoped.
+      systemd.services.paperless-triage.environment.PSI_MAX = lib.mkForce "100000";
       services.paperless = {
         enable = true;
         dataDir = lib.mkForce "/var/lib/paperless";

@@ -337,8 +337,13 @@
                 # root-owned by ai-meter-keys; systemd reads EnvironmentFile
                 # as root for the DynamicUser server, so root ownership is
                 # the correct shape here (same delivery as the sops file).
+                # The '-' prefix is load-bearing: WITHOUT it a missing file
+                # (ai-meter-keys start-limit failure) FAILS THE WHOLE UNIT —
+                # visits dashboard dark over an AI-only problem. With it, a
+                # missing file degrades to empty LLM_API_KEY → AI
+                # unconfigured (the api/server.go:557 fail-visible gate).
                 EnvironmentFile = lib.optionals aiMeterEnabled [
-                  "/run/ai-meter-keys/browser-history.env"
+                  "-/run/ai-meter-keys/browser-history.env"
                 ];
                 # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
                 TimeoutStartSec = "6min";
