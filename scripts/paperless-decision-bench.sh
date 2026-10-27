@@ -348,7 +348,7 @@ score() {
     [[ -e "$f" ]] || continue
     paste <(jq -r '(.raw.result // .raw).answers.doc_class.choice // "ERR"' "$f" 2>/dev/null) \
           <(jq -r '(.raw.result // .raw).answers.doc_class.confidence // 0' "$f" 2>/dev/null) \
-          <(jq -r '.truth' "$f" 2>/dev/null) \
+          <(jq -r '.truth | sub("^general$"; "letter_or_other")' "$f" 2>/dev/null) \
       | awk -F'\t' -v name="$(basename "$f")" '
         {
           n++
