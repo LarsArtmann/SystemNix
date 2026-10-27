@@ -755,12 +755,12 @@ if [ ! -e "$PROBE_DIR/node-exporter.ok" ]; then
   NODE_EXPORTER_RUNNING_ADDR=$(sed -nE 's/.*--web\.listen-address[= ]([^ \\]+).*/\1/p' \
     /run/current-system/etc/systemd/system/prometheus-node-exporter.service 2>/dev/null | head -1)
   case "$NODE_EXPORTER_RUNNING_ADDR" in
-    127.0.0.1:* | "[::1]:"*)
-      if [ "${NODE_EXPORTER_RUNNING_ADDR##*:}" != "${NODE_EXPORTER_PORT}" ]; then
-        probe_endpoint node-exporter "${NODE_EXPORTER_RUNNING_ADDR##*:}"
-        [ -e "$PROBE_DIR/node-exporter.ok" ] && NODE_EXPORTER_VALIDATED_VIA=running
-      fi
-      ;;
+  127.0.0.1:* | "[::1]:"*)
+    if [ "${NODE_EXPORTER_RUNNING_ADDR##*:}" != "${NODE_EXPORTER_PORT}" ]; then
+      probe_endpoint node-exporter "${NODE_EXPORTER_RUNNING_ADDR##*:}"
+      [ -e "$PROBE_DIR/node-exporter.ok" ] && NODE_EXPORTER_VALIDATED_VIA=running
+    fi
+    ;;
   esac
 fi
 

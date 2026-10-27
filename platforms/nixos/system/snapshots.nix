@@ -265,7 +265,9 @@ in
         # space matters). no: a broken chain waits for the nightly
         # garbled-receive GC + the next 23:00 window (worst case a full
         # re-send ~1h QLC read), never a burst.
-        resume_missing = false;
+        # (2026-10-27: was `false` — settings are string-typed; the bool
+        # killed every toplevel eval, float-proof-20261027-151207 rc=1.)
+        resume_missing = "no";
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
         # disables automatic deletion of received backups entirely. Space cost
         # stays near raw data churn — received subvolumes share extents via CoW
