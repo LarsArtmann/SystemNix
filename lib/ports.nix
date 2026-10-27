@@ -212,14 +212,17 @@
     ai-meter = 8107;
     ai-meter-metrics = 8108;
 
-    # OpenCloud — self-hosted file sync & share platform
-    # (services.opencloud, upstream default port), loopback-only; Caddy
-    # proxies cloud.home.lan to it.
-    opencloud = 9200;
+    # OpenCloud — self-hosted file sync & share platform. The proxy IGNORES
+    # PROXY_HTTP_ADDR (NATS_PORT class, verified live 2026-10-27: unit env
+    # said 9200, binary binds compiled-in 9100 plain HTTP — while 9200 is a
+    # TLS-speaking internal service); loopback-only, Caddy proxies
+    # cloud.home.lan here.
+    opencloud = 9100;
 
-    # OpenCloud's embedded NATS JetStream — the ocis internal default
-    # (loopback). Registered so the 9234 listener has an owner of record;
-    # NATS_PORT is a NO-OP in opencloud 7.2.4 (verified live 2026-10-26).
-    opencloud-nats = 9234;
+    # OpenCloud's embedded NATS JetStream — binds its compiled-in loopback
+    # default 9233 in opencloud 7.2.4 (live 2026-10-27: NATS INFO answers on
+    # 9233; 9234 is an ocis HTTP service); NATS_PORT is a NO-OP. Registered
+    # so the listener has an owner of record.
+    opencloud-nats = 9233;
   };
 }

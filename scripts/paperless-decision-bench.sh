@@ -229,55 +229,61 @@ doc_row() { grep -P "^${1}\t" "${WORK_DIR}/corpus.tsv"; }
 jev_call() {
   local arm="$1" doc_id="$2" token="$3" req
   if [[ "$arm" == "image" ]]; then
-    local img fmt ref
+    local img fmt ref b64f
     img="$(doc_row "$doc_id" | cut -f4)"
     fmt="jpg"; [[ "$img" == *.png ]] && fmt="png"
+    b64f="${WORK_DIR}/.b64-${doc_id}.txt"
+    base64 -w0 "${WORK_DIR}/${img}" > "$b64f"
     ref="img-${doc_id}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
-    req="$(jq -n --rawfile b64 "${WORK_DIR}/${img}" --arg ref "$ref" --arg fmt "$fmt" --slurpfile q <(questions_json) '{
+    req="$(jq -n --rawfile b64 "$b64f" --arg ref "$ref" --arg fmt "$fmt" --slurpfile q <(questions_json) '{
       model: "'"${JEV_MODEL}"'",
       state: {document_page: $ref},
-      assets: {($ref): {type: "image", format: $fmt, data_base64: ($b64 | @base64)}},
+      assets: {($ref): {type: "image", format: $fmt, data_base64: $b64}},
       questions: $q[0]
     }')"
-    curl --silent --fail-with-body --max-time 120 \
+    rm -f "$b64f"
+    printf '%s' "$req" | curl --silent --fail-with-body --max-time 120 \
       https://api.typesafe.ai/v1/systemone \
       -H "Authorization: Bearer ${TYPESAFE_API_KEY}" \
       -H "TypeSafe-Danger-Zone-Images: true" \
       -H "Content-Type: application/json" \
-      --data-binary "$req"
+      --data-binary @-
   else
     local content
     content="$(api "$token" "/api/documents/${doc_id}/" | jq -r '.content[0:8000]')"
     req="$(jq -n --arg s "$content" --slurpfile q <(questions_json) '{model:"'"${JEV_MODEL}"'", state:$s, questions:$q[0]}')"
-    curl --silent --fail-with-body --max-time 60 \
+    printf '%s' "$req" | curl --silent --fail-with-body --max-time 60 \
       https://api.typesafe.ai/v1/systemone \
       -H "Authorization: Bearer ${TYPESAFE_API_KEY}" \
       -H "Content-Type: application/json" \
-      --data-binary "$req"
+      --data-binary @-
   fi
 }
 
 clef_call() {
   local arm="$1" doc_id="$2" token="$3" req
   if [[ "$arm" == "image" ]]; then
-    local img mime
+    local img mime b64f
     img="$(doc_row "$doc_id" | cut -f4)"
     mime="image/jpeg"; [[ "$img" == *.png ]] && mime="image/png"
-    req="$(jq -n --rawfile b64 "${WORK_DIR}/${img}" --arg mime "$mime" --slurpfile q <(questions_json) '{
+    b64f="${WORK_DIR}/.b64-${doc_id}.txt"
+    base64 -w0 "${WORK_DIR}/${img}" > "$b64f"
+    req="$(jq -n --rawfile b64 "$b64f" --arg mime "$mime" --slurpfile q <(questions_json) '{
       model: "clef",
-      state: [{type: "image_url", image_url: {url: ("data:" + $mime + ";base64," + ($b64 | @base64))}}],
+      state: [{type: "image_url", image_url: {url: ("data:" + $mime + ";base64," + $b64)}}],
       questions: $q[0]
     }')"
+    rm -f "$b64f"
   else
     local content
     content="$(api "$token" "/api/documents/${doc_id}/" | jq -r '.content[0:8000]')"
     req="$(jq -n --arg s "$content" --slurpfile q <(questions_json) '{model: "clef", state: $s, questions: $q[0]}')"
   fi
-  curl --silent --fail-with-body --max-time 120 \
-    "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/${CLEF_MODEL}" \
-    -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
-    -H "Content-Type: application/json" \
-    --data-binary "$req"
+  printf '%s' "$req" | curl --silent --fail-with-body --max-time 120 \
+  "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/ai/run/${CLEF_MODEL}" \
+  -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data-binary @-
 }
 
 run_arm() {
@@ -292,7 +298,7 @@ run_arm() {
       echo "  skip ${doc_id}: no staged image"; continue
     fi
     t0=$(date +%s.%N)
-    if resp="$(jev_call "$arm" "$doc_id" "$token")"; then :; else resp="$(printf '%s' "$resp" | jq -R -s '{http_error: .}')"; fi
+    if resp="$(jev_call "$arm" "$doc_id" "$token" 2>&1)"; then :; else resp="$(printf '%s' "$resp" | jq -R -s '{http_error: .}')"; fi
     t1=$(date +%s.%N)
     meta="$(jq -cn --argjson doc "$doc_id" --arg truth "$class" --arg model "$model" --arg arm "$arm" \
       --argjson lat "$(awk "BEGIN{print ${t1} - ${t0}}")" \
