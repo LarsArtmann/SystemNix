@@ -6711,11 +6711,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1793107544,
-        "narHash": "sha256-e36TRRa7Yz8OXF8qTcQiYto63ScVkZXmjUJQ4m907XI=",
+        "lastModified": 1793118201,
+        "narHash": "sha256-scCpt2zg6mzkJo/Tmx3F0KSjtcO5Wd00Ky1Yfh2qmTk=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "9b98c94036acbfb643296d350457605fae47f667",
+        "rev": "f0ad66cf410e4d416ec17e0533cc7b8e76793292",
         "type": "github"
       },
       "original": {

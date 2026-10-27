@@ -49,7 +49,13 @@
     }:
     let
       inherit (config.users) primaryUser;
-      inherit (import ../../../lib/default.nix lib) ports ioTier harden serviceOneshotDefaults onFailure;
+      inherit (import ../../../lib/default.nix lib)
+        ports
+        ioTier
+        harden
+        serviceOneshotDefaults
+        onFailure
+        ;
       domain = config.networking.domain;
 
       # Agent event buffer lives on the mirrored HDD pool (subvol reserved at
@@ -376,14 +382,6 @@
             # upstream 2026-05-08, commit 1a11bc034). Set corsOrigins here only
             # if the dashboard is served from a different origin than the API.
 
-            # 2026-10-27 BACKLOG DRAIN (owner-approved T05): widen compaction
-            # so Apr–Aug backlog events arriving during the drain are NOT
-            # compacted on arrival (default was 90d/180d). TIGHTEN BACK to
-            # the defaults after the drain completes — delete both lines
-            # (T09), the upstream module defaults restore 90/180.
-            compactionRetentionDays = lib.mkDefault 365;
-            compactionExtendedRetentionDays = lib.mkDefault 365;
-
             jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
             environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;
 
@@ -401,7 +399,27 @@
               }/client-secrets/monitor365";
               redirectUri = lib.mkDefault "https://monitor.${domain}/v1/auth/sso/callback";
             };
-          };
+          }
+          # 2026-10-27 BACKLOG DRAIN (owner-approved T05): widen compaction
+          # so Apr–Aug backlog events arriving during the drain are NOT
+          # compacted on arrival (default was 90d/180d). Existence-guarded
+          # (2026-10-27): upstream master does not define these options yet
+          # (drain support in-flight upstream — the unguarded pair killed
+          # every evo-x2 eval at any lock rev); the values apply automatically
+          # on the first upstream rev that declares them. TIGHTEN BACK to
+          # the defaults after the drain completes — delete this block (T09),
+          # the upstream module defaults restore 90/180.
+          // lib.optionalAttrs (options ? services.monitor365-server) (
+            lib.optionalAttrs
+              (
+                (options.services.monitor365-server.type.getSubOptions [ ]).compactionExtendedRetentionDays or null
+                != null
+              )
+              {
+                compactionRetentionDays = lib.mkDefault 365;
+                compactionExtendedRetentionDays = lib.mkDefault 365;
+              }
+          );
 
           users.users.monitor365-server.extraGroups = lib.optional (
             serverCfg.sso.enable && (config.services.pocket-id.enable or false)
