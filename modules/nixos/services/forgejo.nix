@@ -1386,6 +1386,54 @@ _: {
           ];
         };
 
+        # Keep-alive (2026-10-27, owner directive "the runner should just
+        # run"): three stop classes have left CI dark with the unit enabled
+        # and nothing re-pulling it — the ordering-cycle class (2026-10-25/26
+        # switches ate the start leg; root-fixed via late-applications.target
+        # in gen-955, boot-transaction leg still verify-pending), external
+        # parallel-session stops (2026-10-27 20:29: clean "Stopping" with no
+        # start leg; owner restarted it 17 min later), and start-limit
+        # lockouts (the gen-runner-token ExecStartPre fail-loop while forgejo
+        # is down). The ensure timer converges all three within one cadence:
+        # is-active → exit; else reset-failed + start --no-block (the
+        # pool-usb-recovery serialization rule — never block a timer oneshot
+        # on a 3min TimeoutStartSec start). The unit's own gates stay
+        # authoritative: a start against unmet Conditions/RequiresMountsFor
+        # is an instant condition-skip no-op, not a fight, so the pre-finalize
+        # dedicated generation stays safely down. Deliberate downtime = MASK
+        # the runner unit, not stop it. Shape: the llama-chat-ensure pattern
+        # (timer-driven oneshot, no RemainAfterExit, Restart unset = no —
+        # the timer IS the retry).
+        systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}-ensure" = {
+          description = "Keep-alive for the gitea-actions runner (start it whenever it is not active)";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "${pkgs.writeShellApplication {
+              name = "gitea-runner-ensure";
+              runtimeInputs = [ pkgs.systemd ];
+              text = ''
+                unit='gitea-runner-${utils.escapeSystemdPath hostName}.service'
+                if systemctl is-active --quiet "$unit"; then
+                  exit 0
+                fi
+                echo "gitea-runner-ensure: $unit not active — clearing start-limit, starting (no-block)"
+                systemctl reset-failed "$unit" 2>/dev/null || true
+                systemctl start --no-block "$unit"
+              '';
+            }}/bin/gitea-runner-ensure";
+          };
+        };
+
+        systemd.timers."gitea-runner-${utils.escapeSystemdPath hostName}-ensure" = {
+          description = "Re-attempt gitea-runner convergence every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "5min";
+            OnUnitActiveSec = "5min";
+            AccuracySec = "1min";
+          };
+        };
+
         # Fix ownership after Gitea→Forgejo data migration (recursively)
         systemd.tmpfiles.rules =
           lib.throwIf (themeAuditErrors != [ ])

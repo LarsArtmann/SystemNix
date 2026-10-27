@@ -146,6 +146,13 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # The `crm` CLI rides the same package as the server binary; putting
+        # the package on the system PATH exposes the owner-facing client
+        # (contact-add/note/find) without touching the unit's store-path
+        # execution (2026-10-27, crm repo Pareto M21: the CLI shipped but
+        # was unreachable from the shell).
+        environment.systemPackages = [ crmPkg ];
+
         # The raw secret is declared UNCONDITIONALLY (outside mkIf): the
         # sops cv-env template in sops.nix references
         # config.sops.placeholder.crm_api_token to activate the CV syncer
