@@ -26,17 +26,16 @@ let
       }
     );
 
-  # cv_pipeline_mailbox_password STAGED (2026-10-27, recut-10 T2):
-  # declared-pending — the owner pastes the Stalwart mailbox password
-  # first (runbook at the "cv-env" template below). While the key is
-  # absent from cv.yaml the sops-key-audit eval gate correctly BLOCKS
-  # every deploy (the 2026-09-04 activation-death class; an audit
-  # allowlist would pass eval straight into a failed switch), so the
-  # declaration ships OFF. Flip to true once
-  # `sudo sops platforms/nixos/secrets/cv.yaml` has set the key
-  # (2026-10-27: unblocked the tree this way — the declaring session
-  # left the key unset with every deploy wedged behind the gate).
-  cvMailboxStaged = false;
+  # cv_pipeline_mailbox_password (2026-10-27, recut-10 T2): the key is SET
+  # in cv.yaml (strong random, generated + sops-set by the executor on
+  # owner directive "handle it properly" — the value lives ONLY in the
+  # encrypted file). Remaining owner step: create the
+  # applications@larsartmann.cloud Stalwart account WITH this password
+  # (pbx-artmann hosts/pbx/mail.nix plan; or rotate: sops-set a new value
+  # + rebuild). History: the declaring session left the key unset with
+  # every deploy wedged behind the sops-key-audit gate — briefly shipped
+  # as a stage-guarded OFF declaration until the key landed same day.
+  cvMailboxStaged = true;
 in
 {
   flake.nixosModules.sops =
@@ -772,12 +771,12 @@ in
                   # Funnel reply-loop mailbox (2026-10-27): the Stalwart JMAP
                   # password for pipeline.mailbox (username
                   # applications@larsartmann.cloud; account provisioned in the
-                  # pbx-artmann hosts/pbx/mail.nix plan). Owner runbook:
-                  # (1) set the account password once in the Stalwart webadmin
-                  # (https://mail.artmann.tech/), (2) sudo sops
-                  # platforms/nixos/secrets/cv.yaml → cv_pipeline_mailbox_password,
-                  # (3) flip cvMailboxStaged (top of file) to true + rebuild —
-                  # the poller self-enables.
+                  # pbx-artmann hosts/pbx/mail.nix plan). The password value
+                  # is SET in cv.yaml (2026-10-27). Remaining owner step:
+                  # create the Stalwart account WITH that password (webadmin
+                  # https://mail.artmann.tech/ — or rotate: sops-set a new
+                  # value + rebuild). The poller self-enables once the
+                  # account answers JMAP.
                 }
                 // lib.optionalAttrs cvMailboxStaged {
                   CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
