@@ -32,6 +32,20 @@ record_fail() {
   printf '%s\n' "${1%% - *}" >>"$SMOKE_FAIL_NAMES"
 }
 
+# Enable-gate: is the unit ENABLED in this generation (a .wants symlink
+# exists for it or its same-name timer), not merely present? NixOS writes
+# every unit file defined in the generation to /etc/systemd/system even when
+# the owning service module is disabled, so `test -e /etc/systemd/system/X`
+# gated smoke sections on DEAD services (the 2026-08-18 sweep ask). Covers
+# multi-user/timers/late-applications wants dirs and wants-symlinks owned by
+# other units (paperless-scheduler.service.wants/paperless-web.service).
+unit_enabled() {
+  local u="$1" alt="" hit=""
+  [ "${u%.service}" != "$u" ] && alt="${u%.service}.timer"
+  hit=$(find /etc/systemd/system -maxdepth 2 -path '*.wants/*' \( -name "$u" $([ -n "$alt" ] && echo -o -name "$alt") \) -print -quit 2>/dev/null || true)
+  [ -n "$hit" ]
+}
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -700,7 +714,7 @@ fi
 # Browser History: the agent-token provision oneshot must have converged.
 # The agent's EnvironmentFile IS the provisioned agent.env - a dead
 # provisioner means the agent starts with no DB token (or fails outright).
-if test -e /etc/systemd/system/browser-history-agent.service; then
+if unit_enabled browser-history-agent.service; then
   if systemctl is-active --quiet browser-history-agent-token-provision.service; then
     report_pass "Browser History - agent token provisioned (oneshot active)"
   else
@@ -736,7 +750,7 @@ fi
 # the browser-history-registration-smoke-selftest flake check — the
 # 400-open-gate regression branch is proven there against a stub server;
 # extracted so the fixture exercises the SAME code this gate runs).
-if test -e /etc/systemd/system/browser-history.service; then
+if unit_enabled browser-history.service; then
   BRS_URL="http://localhost:8087" \
     BRS_PASS=report_pass BRS_FAIL=report_fail BRS_WARN=report_warn \
     browser_history_registration_smoke || true
@@ -752,7 +766,7 @@ fi
 # Gotenberg prove the Office/E-Mail consume sidecars are up. Ports from
 # lib/ports.nix (paperless 2892, tika 9998, gotenberg 3199).
 paperless_enabled=false
-test -e /etc/systemd/system/paperless-web.service && paperless_enabled=true
+unit_enabled paperless-web.service && paperless_enabled=true
 if $paperless_enabled; then
   # SSO-only mode (2026-09-02): the login page must carry the Pocket ID
   # provider form + the JS auto-submit (PAPERLESS_REDIRECT_LOGIN_TO_SSO is a
@@ -831,7 +845,7 @@ fi
 # ever syncs). Port from lib/ports.nix (bank-sync 8097). Fresh deploys may
 # see the profiles WARN while the initial 365d backfill sync is running.
 banksync_enabled=false
-test -e /etc/systemd/system/bank-sync.service && banksync_enabled=true
+unit_enabled bank-sync.service && banksync_enabled=true
 if $banksync_enabled; then
   # Restart-race-proof fetch: activation may still be (re)starting
   # bank-sync when this runs - the 10s settle sleep in deploy.sh is not
@@ -888,7 +902,7 @@ fi
 # be mid-drain after a deploy restart (in-flight agents, 45min stop window)
 # - active state is enough, agent completions are async by nature.
 tq_enabled=false
-test -e /etc/systemd/system/tq-agent-pool.service && tq_enabled=true
+unit_enabled tq-agent-pool.service && tq_enabled=true
 if $tq_enabled; then
   tq_body="$(wait_body_pattern "http://127.0.0.1:8100/" "Live, read-only projection of the tq task-queue journal" 6 5)" || true
   if grep -q "Live, read-only projection of the tq task-queue journal" <<<"$tq_body"; then
@@ -921,7 +935,7 @@ fi
 # "oidc" is true (verified in the embedded login template) - a misconfigured
 # OAUTH2_* env block renders the password-only form instead.
 miniflux_enabled=false
-test -e /etc/systemd/system/miniflux.service && miniflux_enabled=true
+unit_enabled miniflux.service && miniflux_enabled=true
 if $miniflux_enabled; then
   miniflux_health="$(wait_body_pattern "http://127.0.0.1:8101/healthcheck" "OK" 6 5)" || true
   if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 http://127.0.0.1:8101/healthcheck 2>/dev/null || true)" = "200" ]; then
@@ -954,7 +968,7 @@ fi
 # accounts (work) warn until their one-time OAuth runbook completes
 # (see modules/nixos/services/inboxclean.nix header) - never fail on those.
 inboxclean_enabled=false
-test -e /etc/systemd/system/inboxclean-web.service && inboxclean_enabled=true
+unit_enabled inboxclean-web.service && inboxclean_enabled=true
 if $inboxclean_enabled; then
   inboxclean_health="$(wait_body_pattern "http://127.0.0.1:8099/health" '"status": *"ok"' 6 5)" || true
   if grep -q '"status": *"ok"' <<<"$inboxclean_health"; then
@@ -1095,7 +1109,7 @@ fi
 # would leave ALL git ops on the bind broken with "dubious ownership" -
 # silent to every liveness probe (the D2 class).
 hermes_enabled=false
-test -e /etc/systemd/system/hermes.service && hermes_enabled=true
+unit_enabled hermes.service && hermes_enabled=true
 if $hermes_enabled; then
   # Derive stateDir from the DEPLOYED unit file (module option) - never
   # hardcode /home/hermes; another host may set services.hermes.stateDir.
@@ -1157,7 +1171,7 @@ fi
 # probes can never catch method/body bugs (WARN on absence - ingests only
 # fire on alert transitions, a quiet 30 min is normal).
 papdashboard_enabled=false
-test -e /etc/systemd/system/papdashboard.service && papdashboard_enabled=true
+unit_enabled papdashboard.service && papdashboard_enabled=true
 if $papdashboard_enabled; then
   if curl -s --compressed --max-time 10 --retry 5 --retry-delay 3 --retry-all-errors -o /dev/null "http://127.0.0.1:8088/api/health" 2>/dev/null; then
     report_pass "PapDashboard - /api/health answers"
@@ -1249,7 +1263,7 @@ fi
 # interval). grep -o (not -q): reads the whole stream, no SIGPIPE class on
 # the large /metrics body.
 signoz_coverage_enabled=false
-test -e /etc/systemd/system/signoz-coverage-metrics.service && signoz_coverage_enabled=true
+unit_enabled signoz-coverage-metrics.service && signoz_coverage_enabled=true
 if $signoz_coverage_enabled; then
   # missing needs a retry window: OTel batching (~5s) + a just-restarted
   # service's first command mean the collector run immediately post-switch
@@ -1723,16 +1737,16 @@ $banksync_enabled && check "Bank-Sync (HTTPS)" "https://banksync.$DOMAIN/" "200"
 # subdomain (vHost goes plain-layer in the same deploy). Probe whichever
 # owns crm.$DOMAIN — with -auth the Kith CRM serves its login page at
 # /login (registered route, 200 HTML; / itself redirects to it).
-if test -e /etc/systemd/system/twenty.service; then
+if unit_enabled twenty.service; then
   check "Twenty CRM (HTTPS)" "https://crm.$DOMAIN/" "200" "<html" 2>/dev/null || true
-elif test -e /etc/systemd/system/crm-server.service; then
+elif unit_enabled crm-server.service; then
   check "Kith CRM (HTTPS)" "https://crm.$DOMAIN/login" "200" "<html" 2>/dev/null || true
 fi
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # Enable-gated review tools (LAN-only, no auth)
-test -e /etc/systemd/system/systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
-test -e /etc/systemd/system/systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
+unit_enabled systemd-graph.service && check "systemd-graph (HTTPS)" "https://graph.$DOMAIN/" "200" "" 2>/dev/null || true
+unit_enabled systemd-timer-monitor-audit.service && check "systemd-timer-monitor (HTTPS)" "https://timers.$DOMAIN/" "200" "<html" 2>/dev/null || true
 # Health Hub is a Layer 2 protectedVHost: LAN bypass serves the hub directly
 # (200). Probe /healthz — the hub binary has no route at / (404 by design).
 # Enable-gate on the .wants symlink (same as the liveness block above).
