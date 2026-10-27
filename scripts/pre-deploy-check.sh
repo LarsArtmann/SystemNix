@@ -739,8 +739,37 @@ for port_name in $GATUS_SERVICE_METRIC_PORTS; do
 done
 wait
 
+NODE_EXPORTER_RUNNING_ADDR=""
+NODE_EXPORTER_VALIDATED_VIA=""
+if [ ! -e "$PROBE_DIR/node-exporter.ok" ]; then
+  # Port-migration shadow (2026-10-27 band vacation): the tree port moves
+  # with the sweep, but the RUNNING generation serves the old address until
+  # the deploy lands — probing only the tree port read every node-exporter
+  # metric as ABSENT and blocked the sweep's own carry-deploy (deploy #6,
+  # 56 phantom fails). Metric VOCABULARY is port-independent: fall back to
+  # the running prometheus-node-exporter's --web.listen-address so the
+  # phantom gate validates against the live collector. One-deploy lag
+  # doctrine (same shape as the monitor365 re-enable gate above);
+  # self-cleaning — once the tree port is live the primary probe answers
+  # and this branch never runs.
+  NODE_EXPORTER_RUNNING_ADDR=$(sed -nE 's/.*--web\.listen-address[= ]([^ \\]+).*/\1/p' \
+    /run/current-system/etc/systemd/system/prometheus-node-exporter.service 2>/dev/null | head -1)
+  case "$NODE_EXPORTER_RUNNING_ADDR" in
+    127.0.0.1:* | "[::1]:"*)
+      if [ "${NODE_EXPORTER_RUNNING_ADDR##*:}" != "${NODE_EXPORTER_PORT}" ]; then
+        probe_endpoint node-exporter "${NODE_EXPORTER_RUNNING_ADDR##*:}"
+        [ -e "$PROBE_DIR/node-exporter.ok" ] && NODE_EXPORTER_VALIDATED_VIA=running
+      fi
+      ;;
+  esac
+fi
+
 if [ -e "$PROBE_DIR/node-exporter.ok" ]; then
-  pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
+  if [ -n "$NODE_EXPORTER_VALIDATED_VIA" ]; then
+    warn "Node exporter: tree port ${NODE_EXPORTER_PORT} dark — vocabulary validated against the RUNNING collector at ${NODE_EXPORTER_RUNNING_ADDR} (port migration in flight, one-deploy lag)"
+  else
+    pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
+  fi
   cat "$PROBE_DIR/node-exporter.body" >>"$METRICS_FILE"
 else
   warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — node-exporter metrics will be skipped"
