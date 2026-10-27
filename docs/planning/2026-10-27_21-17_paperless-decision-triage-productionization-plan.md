@@ -1,6 +1,6 @@
 # Paperless decision-triage productionization — design + owner decision pack
 
-**Written:** 2026-10-27 21:17 CEST (session following the 20:55 bench-status report)
+**Created:** 2026-10-27 21:17 CEST (session following the 20:55 bench-status report)
 **Inputs:** [Jev×paperless exploration](../status/2026-10-27_19-46_jev-decision-models-paperless-exploration-status.md) · [Bench + live Jev run](../status/2026-10-27_20-55_decision-model-bench-built-jev-live-run-status.md) · [Bench results dashboard](../research/2026-10-27_paperless-decision-bench-results.html) · [AI-MAX plan](./2026-10-02_13-32_PAPERLESS-AI-MAX-EXECUTION-PLAN.md) (A7/A8 landed = paperless-gpt live) · bank-sync [ledger kernel design](file:///home/lars/projects/bank-sync/docs/planning/2026-10-02_11-50_ledger-accounting-kernel-design.html) + [target mesh](file:///home/lars/projects/bank-sync/docs/planning/2026-10-04_04-05_target-mesh.d2) · journal README/AGENTS (the kernel)
 **Status:** DESIGN — Stages P1 is dispatchable today; P2+ gated on the decision pack (§6). Nothing here is deployed.
 
