@@ -37,6 +37,7 @@ RULE_NAME="Telemetry Export Failures"
 TEST_SERVICE="test-fire"
 JOURNAL_UNIT="signoz.service"
 FAILED=0
+ALREADY_FIRING=""
 
 http() {
 	# http METHOD PATH [BODY] -> sets HTTP_STATUS + HTTP_BODY
@@ -48,6 +49,11 @@ http() {
 	HTTP_BODY=$(curl "${args[@]}" -w $'\n%{http_code}' -X "$method" "$API$path") || HTTP_STATUS=000
 	HTTP_STATUS=$(printf '%s' "$HTTP_BODY" | tail -1)
 	HTTP_BODY=$(printf '%s' "$HTTP_BODY" | sed '$d')
+}
+
+ok() {
+	# 2xx = success — SigNoz POSTs return 201 Created, not 200
+	[ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]
 }
 
 die() {
@@ -67,20 +73,24 @@ leg() {
 echo "== Preflight: rule + route policy + channel =="
 
 http GET "/api/v1/rules"
-[ "$HTTP_STATUS" = 200 ] || die "SigNoz rules API unreachable (HTTP $HTTP_STATUS) — is signoz.service up?"
+ok || die "SigNoz rules API unreachable (HTTP $HTTP_STATUS) — is signoz.service up?"
 RULE_ID=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .id' <<<"$HTTP_BODY" | head -1)
 [ -n "$RULE_ID" ] || die "rule '$RULE_NAME' not provisioned — run the signoz provisioner first"
 RULE_STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
 echo "  rule id: $RULE_ID (state: $RULE_STATE)"
+if [ "$RULE_STATE" = "firing" ]; then
+	ALREADY_FIRING=1
+	echo "  NOTE: rule is ALREADY FIRING (real export failures in window?) — Leg 1 will be inconclusive; Leg 2 still validates delivery"
+fi
 
 http GET "/api/v1/route_policies"
-[ "$HTTP_STATUS" = 200 ] || die "route policies API failed (HTTP $HTTP_STATUS)"
+ok || die "route policies API failed (HTTP $HTTP_STATUS)"
 POLICY_OK=$(jq -r --arg id "$RULE_ID" '[.data[]? | select(.name == $id and ((.channels // []) | index("Discord Alerts")))] | length' <<<"$HTTP_BODY")
 [ "$POLICY_OK" -ge 1 ] || die "no route policy routes rule $RULE_ID to 'Discord Alerts' — alerts would be silently dropped (the 2026-08-16 class); run the provisioner"
 echo "  route policy: $RULE_ID -> Discord Alerts"
 
 http GET "/api/v1/channels"
-[ "$HTTP_STATUS" = 200 ] || die "channels API failed (HTTP $HTTP_STATUS)"
+ok || die "channels API failed (HTTP $HTTP_STATUS)"
 jq -r '.data[]?.name' <<<"$HTTP_BODY" | grep -qx "Discord Alerts" || die "channel 'Discord Alerts' missing"
 
 echo "== Leg 1: synthetic export-failure counter -> rule FIRING =="
@@ -125,7 +135,10 @@ STATUS=$(post_counter 5)
 echo "  failure sample (+5) accepted — waiting for the 1m rule eval"
 
 FIRED=""
-for _ in $(seq 1 20); do
+# NOTE: SigNoz's query engine can lag ingested samples by several minutes
+# (series metadata materialization) — the first live run stayed inactive
+# through a 4-min poll and fired minutes later. Poll a full 10 minutes.
+for _ in $(seq 1 40); do
 	sleep 15
 	http GET "/api/v1/rules"
 	STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
@@ -135,7 +148,11 @@ for _ in $(seq 1 20); do
 	fi
 	echo "  ... rule state: $STATE"
 done
-leg "${FIRED:-1}" "rule '$RULE_NAME' reached state=firing on the synthetic series (metric path end-to-end: OTLP ingest -> ClickHouse -> rule eval)"
+if [ -n "$ALREADY_FIRING" ]; then
+	echo "  SKIP: rule was already firing before the synthetic samples — Leg 1 inconclusive (delivery proof below still applies)"
+else
+	leg "${FIRED:-1}" "rule '$RULE_NAME' reached state=firing on the synthetic series (metric path end-to-end: OTLP ingest -> ClickHouse -> rule eval)"
+fi
 
 echo "== Leg 2: >256-rune throwaway -> 'Truncated title' delivery proof =="
 
@@ -177,18 +194,18 @@ cleanup() {
 	local rc=$?
 	if [ -n "${THROWAWAY_ID:-}" ]; then
 		http DELETE "/api/v1/rules/$THROWAWAY_ID"
-		[ "$HTTP_STATUS" = 200 ] || echo "  WARN: throwaway rule delete returned HTTP $HTTP_STATUS (the provisioner's orphan pass will remove it)" >&2
+		ok || echo "  WARN: throwaway rule delete returned HTTP $HTTP_STATUS (the provisioner's orphan pass will remove it)" >&2
 	fi
 	if [ -n "${THROWAWAY_POLICY_ID:-}" ]; then
 		http DELETE "/api/v1/route_policies/$THROWAWAY_POLICY_ID"
-		[ "$HTTP_STATUS" = 200 ] || echo "  WARN: throwaway policy delete returned HTTP $HTTP_STATUS (systemnix-tagged orphan pass will remove it)" >&2
+		ok || echo "  WARN: throwaway policy delete returned HTTP $HTTP_STATUS (systemnix-tagged orphan pass will remove it)" >&2
 	fi
 	exit "$rc"
 }
 trap cleanup EXIT
 
 http POST "/api/v1/rules" "$THROWAWAY_JSON"
-[ "$HTTP_STATUS" = 200 ] || die "throwaway rule create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
+ok || die "throwaway rule create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
 THROWAWAY_ID=$(jq -r '.data.id // empty' <<<"$HTTP_BODY")
 [ -n "$THROWAWAY_ID" ] || die "throwaway rule created but no id returned"
 echo "  throwaway rule created: $THROWAWAY_ID"
@@ -198,16 +215,26 @@ POLICY_JSON=$(jq -n \
 	--arg desc "SystemNix test-fire probe: route throwaway rule to Discord Alerts" \
 	'{expression: ("ruleId == \"" + $id + "\""), kind: "policy", channels: ["Discord Alerts"], name: $id, description: $desc, tags: ["systemnix", "test-fire"]}')
 http POST "/api/v1/route_policies" "$POLICY_JSON"
-[ "$HTTP_STATUS" = 200 ] || die "throwaway route policy create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
+ok || die "throwaway route policy create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
 THROWAWAY_POLICY_ID=$(jq -r '.data.id // empty' <<<"$HTTP_BODY")
 echo "  throwaway route policy created — waiting one eval cycle for the notify"
 
-sleep 80
-# The WARN carries the receiver name; grep the unit journal for the window.
-if journalctl -u "$JOURNAL_UNIT" --since "-6 min" --output cat 2>/dev/null | grep -q "Truncated title"; then
+sleep 30
+# The WARN lands one eval cycle (≤60s) plus notify dispatch after creation —
+# the first live run missed it with a single grep 80s in (the line hit the
+# journal ~15s after the grep). Poll for it instead.
+DELIVERED=""
+for _ in $(seq 1 12); do
+	sleep 20
+	if journalctl -u "$JOURNAL_UNIT" --since "-6 min" --output cat 2>/dev/null | grep -q "Truncated title"; then
+		DELIVERED=1
+		break
+	fi
+done
+if [ -n "$DELIVERED" ]; then
 	leg 0 "notifier logged 'Truncated title' for the >256-rune alert — Discord delivery path PROVEN (receiver reached the webhook stage)"
 else
-	leg 1 "no 'Truncated title' WARN in $JOURNAL_UNIT journal within 6 min — the notify may not have reached the Discord receiver (check route policies + channel webhook)"
+	leg 1 "no 'Truncated title' WARN in $JOURNAL_UNIT journal within ~5 min — the notify may not have reached the Discord receiver (check route policies + channel webhook)"
 fi
 
 echo "== Result =="

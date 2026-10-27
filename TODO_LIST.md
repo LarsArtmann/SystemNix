@@ -291,7 +291,7 @@
 - [ ] **Zero-series sweep automation + provisioner-Result assertion generalization + GOTRACEBACK=all sweep** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Extend the user-unit monitoring pattern to remaining blind spots** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Commit the dashboard generator + eval-time dashboard JSON lint** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
-- [ ] **Test-fire "Telemetry Export Failures" → Discord** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [x] **Test-fire "Telemetry Export Failures" → Discord** → [docs/todo/monitoring.md](docs/todo/monitoring.md) **DONE 2026-10-27: scripts/test-fire-telemetry-export-alert.sh (agent-safe, no sudo) — synthetic OTLP counter fires the real rule (state=firing observed live) + a >256-rune throwaway rule proves Discord delivery (Truncated-title WARN, receiver=Discord Alerts). Landed gotchas: query-engine series-visibility lags minutes (10-min poll now), API POSTs return 201. Stop-clickhouse full-fidelity fire stays an owner option.**
 - [ ] **SigNoz migrator-gap guard** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **`file_storage` cursor persistence for the journald receiver** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
 - [ ] **Caddy per-vHost access-*.log ingestion (filelog receiver)** → [docs/todo/monitoring.md](docs/todo/monitoring.md)
