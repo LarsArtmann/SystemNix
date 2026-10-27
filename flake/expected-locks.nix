@@ -45,7 +45,7 @@
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
   crm = "a8b85507183c69f740debc099799fe02e767ea8d";
   crush-config = "028d6402a6aa3257e323a4396880b293730a5e2d";
-  crush-daily = "f8f73683217bf7fd08d636bed301087c04ba1e4e";
+  crush-daily = "93697afb020fba6cd5c34e4ed4330c873408f309";
   cv = "8243b2d42f0cf7da9caa93ddc5d76946d9a2e46d";
   dankMaterialShell = "ee6e941459f0b38e1b075757370a6a6d4cc3daba";
   discordsync = "e219d156bd38f3d167c2516c7d675d82366165cf";
@@ -80,7 +80,7 @@
   hermes-agent = "0329638c2bf0438552145589787e355bf23343fe";
   home-manager = "1e3ebeb683d055d1675d3f64e6d2b186cb2ee504";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "e1ca4009570500af8d9592c41940b66729e08876";
+  homebrew-cask = "b612f2bbeda1e4e9e0dc5cec3106942f9f40f068";
   inboxclean = "5c52f31506d114f508d3cf5832c552da3b5f2228";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "b6efb5bbe3a388731e8ceff28ac330124d836c11";
@@ -100,7 +100,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504";
   nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
-  nur = "b4fa359a656ae39562466fa5aee7c644e6165a88";
+  nur = "751c7206db3b6c53e862839c601bfac332dace94";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "1c467991e698e59a68301ebc38c2be72abc83dcf";
