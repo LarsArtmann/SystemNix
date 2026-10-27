@@ -298,7 +298,12 @@ main() {
     bep_resolve_boot "$spec"
     local id8
     id8=${BEP_ID:0:8}
-    BEP_DUMP=$(mktemp "${TMPDIR:-/var/tmp}/boot-evidence.XXXXXX")
+    # Scratch lives under ~/.cache, NOT /var/tmp (2026-10-27 storage audit F5:
+    # killed sessions leak their /var/tmp scratch — the EXIT trap below only
+    # fires on a clean exit — and /tmp is wiped mid-session by tmpfiles; the
+    # evidence boot dump can be 100s of MB and belongs on durable cache).
+    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence"
+    BEP_DUMP=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/boot-evidence.XXXXXX")
     trap 'rm -f "$BEP_DUMP"' EXIT
     journalctl --quiet --no-pager -b "$BEP_ID" >"$BEP_DUMP"
     if [ -z "$out" ]; then

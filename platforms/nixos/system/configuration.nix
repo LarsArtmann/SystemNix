@@ -260,6 +260,13 @@ in
         "d /nix/var/nix/profiles/per-user/${config.users.primaryUser} 0755 ${config.users.primaryUser} users -"
         # Auto-clean stale nix build sandboxes daily (interrupted builds leak them)
         "d /nix/var/nix/builds 0755 root root 1d -"
+        # Age-clean /var/tmp at 14d (2026-10-27 storage audit F5: ~15G of agent
+        # debris accumulated — rehearsal trees, boot-evidence scratch, io probes —
+        # because NOTHING age-cleans /var/tmp by default and killed sessions leak
+        # their scratch. systemd-private-* dirs are per-boot; stale ones are
+        # exactly this leak class. House convention: agent artifacts live under
+        # ~/.cache/<topic>/, never /var/tmp — this rule is the backstop.)
+        "q /var/tmp 1777 root root 14d"
       ];
     };
 
