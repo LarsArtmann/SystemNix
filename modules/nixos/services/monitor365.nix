@@ -618,6 +618,13 @@
           };
 
           systemd.tmpfiles.rules = [
+            # The PARENT must grant traverse to the server-backup unit user:
+            # tmpfiles only modes the FINAL component (forgejo ci-runner
+            # lesson 2026-10-16), and agentStoragePath is owned by the AGENT
+            # user 0750 — monitor365-server cannot cross it (live cp EPERM
+            # in the 2026-10-27 22:04 force-run). 0711 = owner rwx (agent
+            # unchanged), everyone else traverse-only.
+            "d ${agentStoragePath} 0711 monitor365 monitor365 - -"
             "d ${poolBackupDir} 0750 monitor365-server monitor365-server - -"
           ];
 

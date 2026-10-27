@@ -266,7 +266,12 @@ _: {
           lfs.enable = true;
 
           dump = {
-            enable = true;
+            # Disabled 2026-10-27 (storage-crisis plan S3): the weekly stateDir
+            # dump is a REDUNDANT third backup leg (daily pool zip + 8h btrbk
+            # subvol + Sunday restore drill remain) that hoards 123G on the
+            # Samsung and grows +27G/week. Re-enable only if a leg audit
+            # (docs/services/forgejo.md Storage section, S13) re-justifies it.
+            enable = false;
             interval = "weekly";
           };
 
