@@ -88,9 +88,9 @@ Both terminate with the same discriminators as #36: mid-traffic journal end, no 
 
 ## f. Follow-ups (harvested)
 
-1. **`[blocked:user]` cooling inspection** — baits 15–17 recorded; criterion-level deficit proven; no heavy builds/flake checks until inspected (this session deliberately ran NO `nix build` / `nix flake check`).
-2. **`[ready]` shed-load escalation rung** — evidence extended: cap-to-60 % cycles 452×/boot, so the third rung must *remove load*, not merely lower clocks.
-3. **`[blocked:deploy]` deep-cap release hysteresis** — `DEEP THROTTLE DROP` fires at the **middle** band (below 95 °C), producing a re-heat sawtooth every ~89 s; release should require the low band (80 °C) or a hold window.
-4. **`[ready]` monitor365 `dmesg` SIGSYS loop** — decide: drop the collector, or grant `CAP_SYSLOG` + allow `syslog(2)` and set `kernel.dmesg_restrict=0` for that unit; today it burns a coredump a minute.
-5. **`[decision]` interactive-load admission** — 36 SSH PTYs + 7 `crush` sessions is the documented amplifier class (freeze #1: "~a dozen concurrent crush agent sessions"); a session cap or a "storm mode" is an owner tradeoff.
-6. **`[watch]` USB buildcache SSD** — 100 % busy at 7 MB/s and 68–69 °C SMART: it is the choke point in every storm; consider routing builds to the Samsung `tlc` scratch or rate-limiting `sdb`.
+1. **`[blocked:user]` cooling inspection** — baits 15–17 appended to `docs/todo/stability.md:117`; criterion-level deficit proven; no heavy builds/flake checks until inspected (this session deliberately ran NO `nix build` / `nix flake check`).
+2. **`[ready]` shed-load escalation rung** — evidence extended on `docs/todo/stability.md:238`: cap-to-60 % cycles 452×/boot, so the third rung must *remove load*, not merely lower clocks.
+3. **`[blocked:deploy]` deep-cap release hysteresis** — folded into the restore-hysteresis row (`docs/todo/stability.md:239`): `DEEP THROTTLE DROP` fires at the **middle** band (below 95 °C), producing a re-heat sawtooth every ~89 s; release should require the low band (80 °C) or a hold window. Both rungs need the same fix.
+4. **`[ready]` monitor365 `dmesg` SIGSYS loop** — new row in `docs/todo/services.md` (§ after the monitor365-server wedge row): decide drop-the-collector vs `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0`; today it burns a coredump a minute.
+5. **`[decision]` interactive-load admission** — NOT minted: already carried by the build-battery admission row (`docs/todo/stability.md:135`) and the `[decision]` session-gating row; this cut adds one more datapoint (36 SSH PTYs + 7 `crush` sessions live at death).
+6. **`[watch]` USB buildcache SSD** — new row in `docs/todo/storage.md`: 100 % busy at 7 MB/s and 68–69 °C SMART in the death minute; route builds to the Samsung `tlc` scratch or cap concurrent builders on `sdb`.
