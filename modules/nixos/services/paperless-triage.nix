@@ -142,9 +142,9 @@ _: {
           .choices[0].logprobs.content[0].top_logprobs // empty
           | if (length == 0) then "PARSE_FAIL no_top_logprobs"
             else
-              (map(select((.token // "") | ascii_downcase | gsub("^[\s]+"; "") | startswith("yes")))
+              (map(select((.token // "") | ascii_downcase | gsub("^\\s+"; "") | startswith("yes")))
                 | map(.logprob | exp) | add // 0) as $py
-              | (map(select((.token // "") | ascii_downcase | gsub("^[\s]+"; "") | startswith("no")))
+              | (map(select((.token // "") | ascii_downcase | gsub("^\\s+"; "") | startswith("no")))
                 | map(.logprob | exp) | add // 0) as $pn
               | if ($py == 0 and $pn == 0) then "PARSE_FAIL no_yes_no_tokens"
                 else "MARGIN \((($py - $pn) / ($py + $pn)) * 1000 | round / 1000)"
