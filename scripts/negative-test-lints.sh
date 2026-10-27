@@ -387,7 +387,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]] || [[ ",$FILTER," == *,usertmpguard,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -619,6 +619,15 @@ warn_case tilecoverage icon-stripped 'without an icon (rendering monogram fallba
 # instead of silently rendering the tile beside a "no tile" justification.
 eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homepage tile' \
   'sed:modules/nixos/services/miniflux.nix:s|^            monitored = true;$|            monitored = true;\n            noDashboardTile = true;|'
+
+# ── hot-user-caches ⇄ disko cross-guard (2026-10-27 plan S20) ──
+# A cache entry whose subvol is missing from the disko geometry would mount
+# fine TODAY and strand the automount at the next Samsung re-provision —
+# exactly the doctrine-“missing subvol = boot-time mount failure” class the
+# hot-user-caches header warns about. Removing the /users/lars/tmp
+# declaration must fail eval naming the tmp entry.
+eval_case usertmpguard tmp-subvol-undeclared fail 'is not declared in disko/samsung-tlc.nix' \
+  'sed:disko/samsung-tlc.nix:/^              "\/users\/lars\/tmp" = {$/,/^              };$/d'
 
 # ── vhost⇒registry blind-spot audit (2026-10-25 §f.3) ──
 # A hand-rolled caddy vHost with no services.integration entry is

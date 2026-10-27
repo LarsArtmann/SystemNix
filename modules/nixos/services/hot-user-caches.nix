@@ -72,6 +72,10 @@ _: {
       inherit (config.users) primaryUser;
       cfg = config.services.hot-user-caches;
       inherit (import ../../../lib/default.nix lib) mkFilesystem;
+      # Plain attrset read of the rescue/reinstall geometry spec (NOT a module
+      # import — see the cross-guard assertion below).
+      diskoSpec = import ../../../disko/samsung-tlc.nix;
+      diskoSubvolumes = diskoSpec.disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes;
     in
     {
       options.services.hot-user-caches = {
@@ -135,6 +139,21 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
+        # Eval cross-guard (2026-10-27 plan S20): every cache subvol must be
+        # declared in disko/samsung-tlc.nix, so a re-provisioned disk always
+        # carries it (the module doctrine above: missing subvol = automount
+        # fails at boot). The disko spec is deliberately NOT imported into
+        # nixosConfigurations (destructive-mode trap) — read it as a plain
+        # attrset instead. Negative-tested in scripts/negative-test-lints.sh
+        # (group usertmpguard).
+        assertions = lib.mapAttrsToList (
+          name: cache:
+          {
+            assertion = builtins.hasAttr "/${cache.subvol}" diskoSubvolumes;
+            message = "hot-user-caches entry '${name}' (subvol ${cache.subvol}) is not declared in disko/samsung-tlc.nix — add it there so a re-provisioned Samsung recreates it, else the automount fails at boot";
+          }
+        ) cfg.caches;
+
         fileSystems = lib.mapAttrs' (
           _name: cache:
           lib.nameValuePair cache.mountPoint (mkFilesystem {
