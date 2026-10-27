@@ -1682,7 +1682,14 @@ in
         backup = {
           enable = lib.mkDefault true;
           schedule = lib.mkDefault "*-*-* 03:00:00";
-          keep = lib.mkDefault 7;
+          # 7→2 (2026-10-27 storage audit F2 + plan S4): seven nightly reflink
+          # copies of a 33-36G DuckDB hoard ~190G logical on the FULL QLC
+          # root. btrfs-du (S10): the tree is only 6.4G exclusive — extra
+          # generations beyond 2 buy rollback depth at the cost of the
+          # fullest filesystem on the box. The off-NVMe copy is the pool
+          # interim leg (S5); the post-migration retention design (S8)
+          # replaces file copies with btrfs snapshots.
+          keep = lib.mkDefault 2;
         };
         bootstrap = {
           tenantName = lib.mkDefault "LarsArtmann";

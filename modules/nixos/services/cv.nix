@@ -335,9 +335,18 @@
                 max_approval_age_days = 7;
                 never_reapply_rejected_companies = true;
                 # Recruiter replies must not hit the no-reply From (the
-                # relay's sending domain has no inbound mailbox) — route
-                # them to the live agentmail inbox (gate Q3 identity).
-                reply_to = "lars.artmann@agentmail.to";
+                # relay's sending domain has no inbound mailbox). The
+                # PERMANENT public identity is applications@artmann.tech
+                # (owner ruling 2026-10-27, fam.22.1 — gate-Q3: switching
+                # reply_to later orphans SentTo reply matching, so this is
+                # the ONE-TIME cutover, free while zero real sends carry
+                # it). artmann.tech MX stays Google Workspace: the address
+                # is a Google-side alias/forward (owner action, zero DNS)
+                # funneling into the polled Stalwart mailbox below; until
+                # that forward exists, replies to this address rest at
+                # Google — nothing is lost while no live application
+                # carries it.
+                reply_to = "applications@artmann.tech";
               };
               # Send transport: SMTP through the LOCAL postfix null client
               # (127.0.0.1:25, loopback-trusted, no AUTH) → smtp.resend.com
@@ -346,9 +355,9 @@
               # via the send./rsend. CNAMEs). NO sops secret rides the CV
               # unit — apps never hold the upstream credential (that is
               # the whole point of the shared relay).
-              # AgentMail stays the REPLY surface (reply_to above +
-              # replyloop creds below), not the send transport — its API
-              # key was never provisioned, and the relay path needs zero.
+              # AgentMail stays a LEGACY reply surface, not the send
+              # transport — its API key was never provisioned, and the
+              # relay path needs zero.
               autosend_driver = "smtp";
               smtp = {
                 host = "127.0.0.1";
