@@ -40,7 +40,6 @@ mkdir -p "$BIN"
 
 REAL_RSYNC=$(command -v rsync)
 REAL_TAR=$(command -v tar)
-REAL_SLEEP=$(command -v sleep)
 
 export TMP_MIGRATE_SRC="$SCRATCH/home/lars/tmp"
 export TMP_MIGRATE_SUBVOL="$SCRATCH/hot/users/lars/tmp"
@@ -161,7 +160,7 @@ SRC_F=$TMP_MIGRATE_SRC
 SUBVOL_F=$TMP_MIGRATE_SUBVOL
 
 mkfixture() {
-  rm -rf "$SCRATCH/home" "$SCRATCH/hot" "$SCRATCH/aux" "$SCRATCH/pool-backup" "$SCRATCH/qlc-at"
+  rm -rf "${SCRATCH:?}/home" "${SCRATCH:?}/hot" "${SCRATCH:?}/aux" "${SCRATCH:?}/pool-backup" "${SCRATCH:?}/qlc-at"
   : >"$FAKE_SUBVOLS"
   : >"$MOUNT_LOG"
   echo admit >"$SCRATCH/gate-mode"
@@ -333,7 +332,11 @@ ln -s "$SUBVOL_F" "$SRC_F"
 printf '/mnt/hot\n/mnt/pool\n%s\n' "$SRC_F" >"$MOUNTPOINT_LIST"
 printf '%s %s\n' / /dev/qlc-part "$SRC_F" /dev/samsung-subvol >"$FINDMNT_MAP"
 if bash "$SCRIPT_UNDER_TEST" --dry-run shadow-cleanup >/dev/null 2>&1; then
-  [ -e "$SCRATCH/pool-backup/tmp-shadow-final-"* ] && fail "shadow-cleanup: dry-run wrote an archive" || ok "shadow-cleanup: dry-run no mutation"
+  if compgen -G "$SCRATCH/pool-backup/tmp-shadow-final-*" >/dev/null; then
+    fail "shadow-cleanup: dry-run wrote an archive"
+  else
+    ok "shadow-cleanup: dry-run no mutation"
+  fi
 else
   fail "shadow-cleanup: dry-run exited non-zero"
 fi
