@@ -340,6 +340,22 @@
                 # chunk size if upstream ever wires the field.
                 batch_size = lib.mkDefault 5000;
                 authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
+
+                # 2026-10-27 BACKLOG DRAIN (owner-approved T04/T06): discard
+                # the two worthless backlog families locally instead of
+                # uploading them — analytics.* is the 2026-09 correlation-
+                # flood debris, system.cgroup is per-cycle batch noise. The
+                # cutoff bounds the drain to events older than today, so
+                # live telemetry can never match. DISARM after the drain
+                # (T09 window): delete this drain_filter block, then
+                # `nixos-rebuild switch` — no other change needed.
+                drain_filter = {
+                  discard_event_types = [
+                    "analytics.*"
+                    "system.cgroup"
+                  ];
+                  discard_events_before = "2026-10-27T00:00:00Z";
+                };
               };
             };
           };
@@ -359,6 +375,14 @@
             # with_list_parse_key to correctly parse it into Vec<String> (fixed
             # upstream 2026-05-08, commit 1a11bc034). Set corsOrigins here only
             # if the dashboard is served from a different origin than the API.
+
+            # 2026-10-27 BACKLOG DRAIN (owner-approved T05): widen compaction
+            # so Apr–Aug backlog events arriving during the drain are NOT
+            # compacted on arrival (default was 90d/180d). TIGHTEN BACK to
+            # the defaults after the drain completes — delete both lines
+            # (T09), the upstream module defaults restore 90/180.
+            compactionRetentionDays = lib.mkDefault 365;
+            compactionExtendedRetentionDays = lib.mkDefault 365;
 
             jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
             environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;
