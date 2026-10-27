@@ -6711,11 +6711,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1793118595,
-        "narHash": "sha256-zj8bx69vvDbqOH8Hh3i5oH45nOeO4krHCVkV8mU/zXE=",
+        "lastModified": 1793122047,
+        "narHash": "sha256-s7gxo6tIe9w/7IZjVXjclIJ3t3StayMrK5HN6tv1onU=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "e92eb492763fbccea5c86d74de5e528da95c7af1",
+        "rev": "b2809e024d1f64068d725cd98ff394234bd64135",
         "type": "github"
       },
       "original": {
@@ -8384,16 +8384,16 @@
     "ssh-key-monitor": {
       "flake": false,
       "locked": {
-        "lastModified": 1792929949,
-        "narHash": "sha256-Dm9pfsAUDCsDbWGjKKAUggeG3Ucvzx3j0PML+oFrFag=",
-        "ref": "refs/tags/v0.4.0",
-        "rev": "8e0a1834b90bfefa9580604ce4ead8e11979773f",
-        "revCount": 163,
+        "lastModified": 1793115971,
+        "narHash": "sha256-km7ILGeZU+c60xT9Df/nEsrB5CKZHJ4lsUN3X6Z5Du8=",
+        "ref": "refs/tags/v0.4.1",
+        "rev": "379d7d224e6f62a0eac818f367391a37efc83835",
+        "revCount": 389,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/ssh-key-monitor"
       },
       "original": {
-        "ref": "refs/tags/v0.4.0",
+        "ref": "refs/tags/v0.4.1",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/ssh-key-monitor"
       }

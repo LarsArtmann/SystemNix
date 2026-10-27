@@ -65,8 +65,11 @@
           # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ
           # (float-proof-20261026-174429.log — the 16:10 enumeration's
           # module surface; the PATH surface rode the same value).
+          # RE-STALE 2026-10-27 lock float: spec TENDT6NZ, got p4C0Ob7i
+          # (float-proof-20261027-172949.log — same value as the
+          # lars-packages surface).
           default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-TENDT6NZlwuX5d2MDuiE3498zU04Bsen698Ih4S5RN4=";
+            vendorHash = "sha256-p4C0Ob7iqrB18velwc4t0zzLhoFNbZPGqBwqBggMFSQ=";
           };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";

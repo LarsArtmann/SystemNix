@@ -302,9 +302,11 @@ lib.filterAttrs (_: v: v != null) {
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
   # keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
+  # RE-STALE 2026-10-27 lock float: spec TENDT6NZ, got p4C0Ob7i (first-hand
+  # keep-going, ~/.cache/lockfloat/float-proof-20261027-172949.log).
   mr-sync =
     flakePkgShim inputs.mr-sync "default"
-      "sha256-TENDT6NZlwuX5d2MDuiE3498zU04Bsen698Ih4S5RN4=";
+      "sha256-p4C0Ob7iqrB18velwc4t0zzLhoFNbZPGqBwqBggMFSQ=";
   # mr-sync shim DROPPED (2026-10-17 wave): upstream flake.nix:126 at tip
   # 71d6b0d4 bakes the shim's own KaDlWefE… value — bit-neutral override
   # (lock == tip; module surface dropped in the same pass). Re-add ONLY
@@ -422,7 +424,12 @@ lib.filterAttrs (_: v: v != null) {
     doCheck = false;
     # vendorHash re-pin DROPPED (2026-10-17): upstream tip 4b3d1fc3 bakes
     # the shim's own rYQJIQB… value (flake.nix:49); go.sum verified
-    # identical tip-vs-lock. Re-add only with a fresh first-hand got-hash
-    # that upstream's own flake lacks.
+    # identical tip-vs-lock.
+    # vendorHash re-pin RE-ADDED (2026-10-27 lock float): go-taskqueue@420d171
+    # baked 2zqvcUaJ re-staled (a re-served dep moved the module graph), got
+    # 7YE9PJMW (first-hand keep-going proof,
+    # ~/.cache/lockfloat/float-proof-20261027-172949.log). Drop when
+    # upstream bakes 7YE9PJMW.
+    vendorHash = "sha256-7YE9PJMWk5JFPcm0BToeR2V4DU5bXfG4s8kjJyRGJ2U=";
   });
 }
