@@ -579,6 +579,29 @@
               touch $out
             '';
 
+        # backup-catchup-report selftest: fixture coverage of the pure
+        # helpers (newest-snapshot selection incl. non-timestamp noise and
+        # missing dirs, prom label matching incl. the prefix-collision
+        # class, age math).
+        backup-catchup-report-selftest =
+          pkgs.runCommand "backup-catchup-report-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+                gnused
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/backup-catchup-report.sh "$scratch/backup-catchup-report.sh"
+              # /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/backup-catchup-report.sh"
+              ${pkgs.bash}/bin/bash "$scratch/backup-catchup-report.sh" --selftest
+              touch $out
+            '';
+
         # Pocket ID secret-rotation automation selftest (guard + auto-rotate):
         # runs the REAL scripts against fixtures — the regenerateSecretsFor
         # stale-list guard (missing -> allow, fresh -> trip with actionable
