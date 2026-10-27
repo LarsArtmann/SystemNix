@@ -409,17 +409,16 @@
           # on the first upstream rev that declares them. TIGHTEN BACK to
           # the defaults after the drain completes — delete this block (T09),
           # the upstream module defaults restore 90/180.
-          // lib.optionalAttrs (options ? services.monitor365-server) (
+          //
             lib.optionalAttrs
               (
-                (options.services.monitor365-server.type.getSubOptions [ ]).compactionExtendedRetentionDays or null
-                != null
+                options ? services.monitor365-server
+                && options.services.monitor365-server ? compactionExtendedRetentionDays
               )
               {
                 compactionRetentionDays = lib.mkDefault 365;
                 compactionExtendedRetentionDays = lib.mkDefault 365;
-              }
-          );
+              };
 
           users.users.monitor365-server.extraGroups = lib.optional (
             serverCfg.sso.enable && (config.services.pocket-id.enable or false)
