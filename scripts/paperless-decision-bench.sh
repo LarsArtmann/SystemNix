@@ -254,7 +254,7 @@ jev_call() {
     img="$(doc_row "$doc_id" | cut -f4)"
     fmt="jpg"
     [[ "$img" == *.png ]] && fmt="png"
-    b64f="${WORK_DIR}/.b64-${doc_id}.txt"
+    b64f="$(mktemp "${WORK_DIR}/.b64-${doc_id}.XXXXXX")"
     base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     ref="img-${doc_id}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
     req="$(jq -n --rawfile b64 "$b64f" --arg ref "$ref" --arg fmt "$fmt" --slurpfile q <(questions_json) '{
@@ -289,7 +289,7 @@ clef_call() {
     img="$(doc_row "$doc_id" | cut -f4)"
     mime="image/jpeg"
     [[ "$img" == *.png ]] && mime="image/png"
-    b64f="${WORK_DIR}/.b64-${doc_id}.txt"
+    b64f="$(mktemp "${WORK_DIR}/.b64-${doc_id}.XXXXXX")"
     base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     req="$(jq -n --rawfile b64 "$b64f" --arg mime "$mime" --slurpfile q <(questions_json) '{
       model: "clef",
@@ -343,14 +343,15 @@ score() {
       return
     }
     echo
-    echo "--- $(basename "$f") per-doc (truth, guess, conf, noul, latency, tokens) ---"
+    echo "--- $(basename "$f") per-doc (truth, guess, conf, MARGIN, noul, latency, tokens) ---"
     jq -r '
       (.raw.result // .raw) as $r |
       ($r.answers.doc_class.choice // "ERR") as $c |
       ($r.answers.doc_class.confidence // "-") as $cf |
+      ($r.answers.doc_class.probabilities // null | if . == null then "-" else (to_entries | sort_by(-.value) | (.[0].value - .[1].value) * 1000 | round / 1000 | tostring) end) as $m |
       ($r.answers.is_accounting.noul // "-") as $n |
       ($r.usage.input_tokens // $r.result.usage.input_tokens // "-") as $t |
-      [.truth, $c, ($cf | tostring), ($n | tostring), ((.latency_s * 1000) | round | tostring) + "ms", ($t | tostring)] | @tsv
+      [.truth, $c, ($cf | tostring), ($m | tostring), ($n | tostring), ((.latency_s * 1000) | round | tostring) + "ms", ($t | tostring)] | @tsv
     ' "$f" 2>/dev/null | column -t
     jq -r '
       (.raw.result // .raw) as $r |
@@ -370,24 +371,27 @@ score() {
     ' 2>/dev/null || true
   done
   echo
-  echo "accuracy + gate simulation (auto-apply only at confidence >= 0.9):"
+  echo "accuracy + gate simulation (auto-apply at confidence >= 0.9 OR top-2 probability margin >= 0.6 — the paperless-triage gate signal; confidence saturates near 1.0 on right AND wrong answers, margin does not):"
   for f in "${WORK_DIR}"/results-*.jsonl; do
     [[ -e "$f" ]] || continue
     paste <(jq -r '(.raw.result // .raw).answers.doc_class.choice // "ERR"' "$f" 2>/dev/null) \
       <(jq -r '(.raw.result // .raw).answers.doc_class.confidence // 0' "$f" 2>/dev/null) \
+      <(jq -r '(.raw.result // .raw).answers.doc_class.probabilities // null | if . == null then -1 else (to_entries | sort_by(-.value) | (.[0].value - .[1].value)) end' "$f" 2>/dev/null) \
       <(jq -r '.truth | sub("^general$"; "letter_or_other")' "$f" 2>/dev/null) |
       awk -F'\t' -v name="$(basename "$f")" '
         {
           n++
-          if ($1==$3) correct++
-          if ($2>=0.9) { gated++; if ($1==$3) gated_correct++ }
-          if ($1==$3) cs+=$2; else ws+=$2
+          if ($1==$4) correct++
+          if ($2>=0.9) { cg++; if ($1==$4) cg_correct++ }
+          if ($3>=0.6) { mg++; if ($1==$4) mg_correct++ }
+          if ($1==$4) cs+=$2; else ws+=$2
+          if ($1==$4) csm+=$3; else wsm+=$3
           nc[$1]++
         }
         END {
-          printf "  %s: acc=%d/%d (%.0f%%) | >=0.9: %d docs, %d correct (%.1f%% err inside gate) | mean-conf correct=%.2f wrong=%.2f\n", \
-            name, correct, n, 100*correct/n, gated, gated_correct, (gated ? 100*(gated-gated_correct)/gated : 0), \
-            (correct ? cs/correct : 0), ((n-correct) ? ws/(n-correct) : 0)
+          printf "  %s: acc=%d/%d (%.0f%%) | conf>=0.9: %d docs, %d correct (%.1f%% err inside gate) | margin>=0.6: %d docs, %d correct (%.1f%% err inside gate) | mean-conf correct=%.2f wrong=%.2f | mean-margin correct=%.2f wrong=%.2f\n", \
+            name, correct, n, 100*correct/n, cg, cg_correct, (cg ? 100*(cg-cg_correct)/cg : 0), mg, mg_correct, (mg ? 100*(mg-mg_correct)/mg : 0), \
+            (correct ? cs/correct : 0), ((n-correct) ? ws/(n-correct) : 0), (correct ? csm/correct : 0), ((n-correct) ? wsm/(n-correct) : 0)
           for (g in nc) printf "    guess %-16s %d\n", g, nc[g]
         }'
   done

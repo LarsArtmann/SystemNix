@@ -50,6 +50,26 @@ let
     };
   };
 
+  # Option-only mock (fastflowlmOptionsMock pattern from test-paperless-gpt):
+  # paperless.nix reads config.services.fastflowlm.model for its native-AI
+  # env wiring — no flm units run in this VM.
+  fastflowlmOptionsMock = { lib, ... }: {
+    options.services.fastflowlm = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      model = lib.mkOption {
+        type = lib.types.str;
+        default = "vm-mock-model";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 52625;
+      };
+    };
+  };
+
   # Mock llama-chat: YES with high margin when the request mentions a
   # Faktura/receipt, NO with high margin otherwise — the exact llama.cpp
   # response shape the margin parser consumes.
@@ -166,6 +186,7 @@ in
         # co-import: unconditional services.catalog entry (ADR-008).
         (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
         llamaChatOptionsMock
+        fastflowlmOptionsMock
         pocketIdOptionsMock
         mailRelayOptionsMock
         ./mock-sops.nix
