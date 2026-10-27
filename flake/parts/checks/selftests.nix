@@ -166,6 +166,21 @@
           touch $out
         '';
 
+        # float-register selftest (2026-10-27): pins the unpushed-session
+        # hint contract on the RED path — a sibling checkout AHEAD of the
+        # floated rev yields the "+N commits ahead" hint (the monitor365
+        # class: evo-x2 eval died on options that existed only 16 unpushed
+        # commits ahead of the locked rev), while tip-locked, non-git, and
+        # undrifted inputs stay silent.
+        float-register-selftest = pkgs.runCommand "float-register-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts"
+          cp ${root}/scripts/float-register.sh "$scratch/scripts/float-register.sh"
+          export PATH=${pkgs.jq}/bin:${pkgs.git}/bin:${pkgs.bash}/bin:$PATH
+          ${pkgs.bash}/bin/bash "$scratch/scripts/float-register.sh" --selftest
+          touch $out
+        '';
+
         # Rendered-uniqueness contract for system-health's per-service emit
         # loop (fleet-stabilization F28/F29; the 2026-10-18..25 dup-row
         # blindness class): the REAL rendered collector script (evo-x2 unit
