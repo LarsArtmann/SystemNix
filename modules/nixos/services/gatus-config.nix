@@ -910,10 +910,22 @@ _: {
                   # line reads 93-99 or 100. If the metric LINE VANISHES the
                   # negatives pass vacuously — the Storage Collector Health
                   # check owns collector death, this one owns the threshold.
+                  # 2026-10-27 S7 (storage-crisis plan): this check was a
+                  # PHANTOM-GREEN from birth — the pattern hardcoded label
+                  # order device,mount_point,fstype, but node_exporter exposes
+                  # textfile series with ALPHABETICAL labels (device,fstype,
+                  # mount_point), so the literal label segment never matched
+                  # and both negative conditions passed vacuously at a live 94%
+                  # (gatus sqlite: zero UNHEALTHY events ever). The [3-9] class
+                  # itself is fine — gatus pat() is Go filepath.Match, where
+                  # character classes ARE supported ({a,b} alternation is NOT).
+                  # The fixed pattern pins device + mount_point and wildcards
+                  # the label span between them, immune to label reordering.
+                  # A/B-verified against the live /metrics body before deploy.
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 9[3-9]*)"
-                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",mount_point=\"/\",fstype=\"btrfs\"} 100*)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",*mount_point=\"/\"} 9[3-9]*)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{device=\"/dev/nvme1n1p6\",*mount_point=\"/\"} 100*)"
                   ];
                   # ALERT DESCRIPTIONS must not contain " or \ — gatus
                   # hard-fails the WHOLE config at startup (v5.36.0: "alert
