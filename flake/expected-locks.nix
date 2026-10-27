@@ -43,10 +43,10 @@
   browser-history = "22832ea18fe7991a76cc6a645815754bf4e7818a";
   buildflow = "49ced3e0039a5f6e88028697bd779ec2f7f28826";
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
-  crm = "843b36dddd18040e68c8c7ea9497a410c5cb7f96";
+  crm = "a58f2f8b7960ad21cf34c1fc9d776c6f6c4d9a94";
   crush-config = "a278e20a8eefec99aba6b76e693414cf00042693";
   crush-daily = "38ff60b45717ad99c5c99f5e58013d1f788f451a";
-  cv = "5165e44ce09a25592452bc17bcd7d00b6c15869b";
+  cv = "f22274e10e816dd8da7cdbb6847f0bee61ba7391";
   dankMaterialShell = "853b3999739f0682709cbba37f7658f6ec39218b";
   discordsync = "e219d156bd38f3d167c2516c7d675d82366165cf";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
