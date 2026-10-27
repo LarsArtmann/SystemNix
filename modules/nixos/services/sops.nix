@@ -25,6 +25,18 @@ let
         inherit key;
       }
     );
+
+  # cv_pipeline_mailbox_password STAGED (2026-10-27, recut-10 T2):
+  # declared-pending — the owner pastes the Stalwart mailbox password
+  # first (runbook at the "cv-env" template below). While the key is
+  # absent from cv.yaml the sops-key-audit eval gate correctly BLOCKS
+  # every deploy (the 2026-09-04 activation-death class; an audit
+  # allowlist would pass eval straight into a failed switch), so the
+  # declaration ships OFF. Flip to true once
+  # `sudo sops platforms/nixos/secrets/cv.yaml` has set the key
+  # (2026-10-27: unblocked the tree this way — the declaring session
+  # left the key unset with every deploy wedged behind the gate).
+  cvMailboxStaged = false;
 in
 {
   flake.nixosModules.sops =
@@ -352,18 +364,21 @@ in
                   group = "root";
                   restartUnits = [ "cv-server.service" ];
                 }
-                [
-                  "cv_api_key"
-                  "cv_evaluation_citizenships"
+                (
+                  [
+                    "cv_api_key"
+                    "cv_evaluation_citizenships"
+                  ]
                   # Funnel reply-loop mailbox (2026-10-27, recut-10 T2):
                   # the applications@larsartmann.cloud Stalwart account
-                  # password. STAGED — until the owner sets it (sudo sops
-                  # platforms/nixos/secrets/cv.yaml), secrets-preflight
-                  # names exactly this key and the deploy gate holds (the
-                  # mail-relay placeholder precedent; the CV poller stays
-                  # inert without the env var, so the unit itself is safe).
-                  "cv_pipeline_mailbox_password"
-                ]
+                  # password. OFF until the owner sets it (sudo sops
+                  # platforms/nixos/secrets/cv.yaml) AND cvMailboxStaged
+                  # flips true — a declared-but-missing key hard-blocks
+                  # eval (sops-key-audit, the mail-relay placeholder
+                  # precedent; the CV poller stays inert without the env
+                  # var, so the unit itself is safe).
+                  ++ lib.optionals cvMailboxStaged [ "cv_pipeline_mailbox_password" ]
+                )
             )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
               # Raw Google OAuth client credentials.json; the upstream module's
@@ -734,35 +749,39 @@ in
               group = "cv";
               mode = "0400";
               restartUnits = [ "cv-server.service" ];
-              content = lib.generators.toKeyValue { } {
-                # Guards mutating/admin API routes (X-API-Key header).
-                # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
-                CV_API_KEY = config.sops.placeholder.cv_api_key;
-                # D5.1 citizenship carve-out (defense-market funnel):
-                # comma-joined ISO-3166 alpha-2 ("de") — SÜG/NATO-bearing
-                # rows stop categorical-skipping for obtainable regimes.
-                # Empty value = carve-out off (every clearance demand
-                # keeps skipping); CV parses it leniently either way.
-                CV_EVALUATION_CITIZENSHIPS = config.sops.placeholder.cv_evaluation_citizenships;
-                # CRM sync activation (2026-09-28 prep, live 2026-10-02):
-                # the value is the crm-server -api-token — declared as the
-                # crm_api_token secret in modules/nixos/services/crm.nix
-                # (encrypted in platforms/nixos/secrets/crm.yaml with the
-                # host age PUBLIC key — the bank-sync-encryption pattern —
-                # instead of cv.yaml, which needs the host PRIVATE key /
-                # sudo to modify; same value, different file). Runbook:
-                # crm repo docs/ops/CV-SYNC.md "Running it under systemd".
-                CV_CRM_API_KEY = config.sops.placeholder.crm_api_token;
-                # Funnel reply-loop mailbox (2026-10-27): the Stalwart JMAP
-                # password for pipeline.mailbox (username
-                # applications@larsartmann.cloud; account provisioned in the
-                # pbx-artmann hosts/pbx/mail.nix plan). Owner runbook:
-                # (1) set the account password once in the Stalwart webadmin
-                # (https://mail.artmann.tech/), (2) sudo sops
-                # platforms/nixos/secrets/cv.yaml → cv_pipeline_mailbox_password,
-                # (3) rebuild — the poller self-enables.
-                CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
-              };
+              content =
+                lib.generators.toKeyValue { } {
+                  # Guards mutating/admin API routes (X-API-Key header).
+                  # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
+                  CV_API_KEY = config.sops.placeholder.cv_api_key;
+                  # D5.1 citizenship carve-out (defense-market funnel):
+                  # comma-joined ISO-3166 alpha-2 ("de") — SÜG/NATO-bearing
+                  # rows stop categorical-skipping for obtainable regimes.
+                  # Empty value = carve-out off (every clearance demand
+                  # keeps skipping); CV parses it leniently either way.
+                  CV_EVALUATION_CITIZENSHIPS = config.sops.placeholder.cv_evaluation_citizenships;
+                  # CRM sync activation (2026-09-28 prep, live 2026-10-02):
+                  # the value is the crm-server -api-token — declared as the
+                  # crm_api_token secret in modules/nixos/services/crm.nix
+                  # (encrypted in platforms/nixos/secrets/crm.yaml with the
+                  # host age PUBLIC key — the bank-sync-encryption pattern —
+                  # instead of cv.yaml, which needs the host PRIVATE key /
+                  # sudo to modify; same value, different file). Runbook:
+                  # crm repo docs/ops/CV-SYNC.md "Running it under systemd".
+                  CV_CRM_API_KEY = config.sops.placeholder.crm_api_token;
+                  # Funnel reply-loop mailbox (2026-10-27): the Stalwart JMAP
+                  # password for pipeline.mailbox (username
+                  # applications@larsartmann.cloud; account provisioned in the
+                  # pbx-artmann hosts/pbx/mail.nix plan). Owner runbook:
+                  # (1) set the account password once in the Stalwart webadmin
+                  # (https://mail.artmann.tech/), (2) sudo sops
+                  # platforms/nixos/secrets/cv.yaml → cv_pipeline_mailbox_password,
+                  # (3) flip cvMailboxStaged (top of file) to true + rebuild —
+                  # the poller self-enables.
+                }
+                // lib.optionalAttrs cvMailboxStaged {
+                  CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
+                };
             };
           }
           // lib.optionalAttrs (svcEnabled "attic-config") {

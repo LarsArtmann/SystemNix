@@ -127,7 +127,13 @@ _: {
             }
             (harden {
               MemoryMax = "128M";
-              CapabilityBoundingSet = [ "CAP_FOWNER" ];
+              # No capabilities: journal reads come via the
+              # systemd-journal supplementary group and gauge writes via
+              # ReadWritePaths. The original CAP_FOWNER bounding-set entry
+              # was never granted ambient (non-root User=) and the script
+              # does no chown/chmod — dead weight the capability-grant
+              # audit correctly rejected; removed rather than granted
+              # (2026-10-27).
               ReadWritePaths = [ textfileDir ];
             })
             (serviceOneshotDefaults { })
