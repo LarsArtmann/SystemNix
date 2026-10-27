@@ -1109,6 +1109,11 @@ in
                     SupplementaryGroups = lib.optional cfg.components.nodeExporter "systemd-journal";
                     WorkingDirectory = cfg.settings.queryService.dataDir;
                     ExecStart = "${lib.getExe packages.otelCollector} --config /etc/signoz/collector.yaml";
+                    # Backing store for the collector's file_storage extension
+                    # (journald cursor persistence) — created + owned by
+                    # systemd, writable under harden{} ProtectSystem.
+                    StateDirectory = "signoz-collector";
+                    ReadWritePaths = [ "/var/lib/signoz-collector" ];
                   }
                   (harden {
                     MemoryMax = lib.mkForce "1G";
@@ -1124,6 +1129,22 @@ in
                 ];
               };
               environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {
+                # Persistent storage for receivers that checkpoint state (the
+                # journald receiver's log cursor). On restart the receiver
+                # resumes from the stored cursor instead of "start_at" — logs
+                # written while the collector was down are backfilled instead
+                # of lost.
+                extensions = {
+                  file_storage = {
+                    directory = "/var/lib/signoz-collector/storage";
+                    # The extension refuses a missing directory at startup
+                    # (live-caught by the pinned binary's config validation
+                    # 2026-10-27) — StateDirectory gives the signoz user
+                    # ownership of the parent, so the collector creates the
+                    # leaf itself on first start.
+                    create_directory = true;
+                  };
+                };
                 receivers = {
                   otlp = {
                     protocols = {
@@ -1315,9 +1336,15 @@ in
                     # + export-failure alert watch the pipeline.
                     all = true;
                     priority = "info";
-                    # NEVER "beginning": without persistent cursor state a
-                    # restart would re-ingest the entire journal.
+                    # First-run fallback ONLY: with the file_storage extension
+                    # below, restarts resume from the persisted cursor, so a
+                    # collector outage backfills its window instead of losing
+                    # it (start_at=end alone would skip everything logged
+                    # while the collector was down). NEVER "beginning" — a
+                    # first run with no stored state must not re-ingest the
+                    # entire journal.
                     start_at = "end";
+                    storage = "file_storage";
                   };
                 };
                 processors = {
@@ -1486,6 +1513,9 @@ in
                   };
                 };
                 service = {
+                  # Loaded extensions (the storage backends receivers
+                  # reference by name — unused extensions fail startup).
+                  extensions = [ "file_storage" ];
                   telemetry = {
                     metrics = {
                       level = "basic";

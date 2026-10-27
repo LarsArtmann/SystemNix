@@ -677,6 +677,31 @@ _: {
                   ];
                   alerts = discordAlert "SigNoz journald logs pipeline stale — no log records ingested for >30 min (all service logs dark)";
                 })
+                # Migrator-gap guard (signoz-migrator-guard.nix): the 1010
+                # squash-gap class — a known incremental-sync ClickHouse
+                # migration without a finished row (never healed by the
+                # high-water-mark migrator), an applied row unknown to the
+                # pinned source, or a row stuck in status=failed. All four
+                # metrics are anchored two-leg (presence + not-nonzero) so a
+                # dead collector fails the presence legs.
+                (mkHttpCheck {
+                  name = "SigNoz Migrator Guard";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsignoz_migrator_guard_scrape_errors *)"
+                    "[BODY] != pat(*\nsignoz_migrator_guard_scrape_errors [1-9]*)"
+                    "[BODY] == pat(*\nsignoz_migrator_missing_applied_total *)"
+                    "[BODY] != pat(*\nsignoz_migrator_missing_applied_total [1-9]*)"
+                    "[BODY] == pat(*\nsignoz_migrator_unknown_applied_total *)"
+                    "[BODY] != pat(*\nsignoz_migrator_unknown_applied_total [1-9]*)"
+                    "[BODY] == pat(*\nsignoz_migrator_failed_applied_total *)"
+                    "[BODY] != pat(*\nsignoz_migrator_failed_applied_total [1-9]*)"
+                  ];
+                  alerts = discordAlert "SigNoz migrator gap — a known ClickHouse migration never applied (the 1010 squash-gap class) or migration state drifted from the pinned source. Read signoz_migrator_*_applied{database,migration} rows in :9100/metrics for the offender; runbook docs/services/signoz.md";
+                })
                 # Gap budget ratchet (signoz-coverage.maxUpstreamGaps): fires
                 # when the registry's upstream-gap count GROWS past the budget
                 # — new silent noops may not slip in unnoticed. Lower the

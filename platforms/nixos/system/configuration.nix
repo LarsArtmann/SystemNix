@@ -1248,6 +1248,14 @@ in
         enable = true;
       };
 
+      # 2026-10-27 migrator-gap guard: audit applied ClickHouse migration
+      # state against the list extracted from the PINNED collector source —
+      # a known incremental-sync migration without a finished row is the
+      # 1010 squash-gap class (docs/services/signoz.md).
+      signoz-migrator-guard = {
+        enable = true;
+      };
+
       # 2026-10-20 evaluator deadman: external journal-recency heartbeat for
       # the SigNoz rule evaluator (silent evaluator = every SigNoz rule
       # blind; pages via gatus, which survives evaluator death).

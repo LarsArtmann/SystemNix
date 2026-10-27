@@ -203,14 +203,21 @@ _: {
             # cheap, daily-budget remains the real spend cap)
             concurrency = "3";
             interval = "5m";
-            # 90m, raised from 45m (2026-10-15): the worker applies ONLY this
+            # 180m, raised from 90m (2026-10-27): the worker applies ONLY this
             # pool-level cap (worker.go runCtx WithTimeout) and ignores the
             # harvest's per-batch payload timeout_minutes — every 3-item
-            # batch is sized 90m by the harvest, so 45m dead-lettered
-            # 000001a13d2037332 at the wall on its only real run (3 attempts,
-            # zero landed items; the 45m ceiling also forced the completed
-            # 000001a1385cefde batch to skip its heavy build legs).
-            task-timeout = "90m";
+            # batch is sized 90m by the harvest, so a 90m cap equals the
+            # batch size with ZERO headroom: 000001a17c7ec688 dead-lettered
+            # on its only real run (item 1 alone consumed ~87 min in
+            # live-telemetry waits: query-engine visibility lag, rule-flip
+            # poll, Discord delivery proof — items 2-3 were complete but
+            # uncommitted at the wall). Same death class as the 45m wall on
+            # 000001a13d2037332 (fixed by the 2026-10-15 bump) and the
+            # skipped heavy build legs of 000001a1385cefde. 2× the harvest
+            # sizing absorbs one slow live-verification leg plus
+            # environmental burns (dirty-tree preflight requeues,
+            # lease-expiry reclaims).
+            task-timeout = "180m";
             max-per-tick = "3";
             daily-budget = "30";
             repo-interval = "go-taskqueue=10m";

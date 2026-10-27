@@ -22,7 +22,8 @@
 #        (legitimately absent on hosts migrated through the legacy table, so
 #        gap detection covers ONLY the incremental group).
 #   2. RUNTIME (this collector, 5 min): reads <db>.schema_migrations_v2
-#      FINAL for all six DBs (manager.go `Databases`) and emits
+#      FINAL for all six DBs (manager.go `Databases`) and joins against the
+#      known list (lib/migrator-guard-join.awk), emitting
 #        signoz_migrator_missing_applied{database,migration}  known
 #        incremental-sync migration with no finished row (THE 1010 signal)
 #        signoz_migrator_unknown_applied{database,migration}  applied row
@@ -34,14 +35,14 @@
 #      signoz_migrator_guard_scrape_errors. Fail-closed: any ClickHouse
 #      failure writes scrape_errors 1 and NO totals, so the Gatus anchored
 #      pat() conditions fail visibly instead of phantom-green.
-#   3. Gatus "SigNoz Migrator Guard" pages on any nonzero total (module
-#      gatus-config.nix).
+#   3. Gatus "SigNoz Migrator Guard" pages on any nonzero total.
 #
-# Live validation at landing (2026-10-27, rev b8fed01): the extractor's
-# sync/async classification was diffed clean against a hand-verified
-# classifier over the same source, and the guard evaluates GREEN against the
-# live migration state (the only applied-set holes are async-classified
-# migrations, which only `migrate async up` would apply — by design absent).
+# Live validation at landing (2026-10-27, collector rev b8fed01): the
+# extractor's sync/async classification was diffed clean against a
+# hand-verified classifier over the same source, and the guard evaluates
+# GREEN against the live migration state (the only applied-set holes are
+# async-classified migrations, which only `migrate async up` would apply —
+# by design absent).
 {
   flake.nixosModules.signoz-migrator-guard =
     {
@@ -282,55 +283,16 @@
               echo "# TYPE signoz_migrator_unknown_applied gauge"
               echo "# HELP signoz_migrator_failed_applied 1 for every migration row stuck in status=failed"
               echo "# TYPE signoz_migrator_failed_applied gauge"
-              awk -F '\t' '
-                FNR == NR {
-                  if ($3 == "incremental" && $4 == "sync")
-                    needsync[$1 SUBSEP $2] = 1
-                  known[$1 SUBSEP $2] = 1
-                  next
-                }
-                NF >= 3 {
-                  if (!($1 SUBSEP $2 in known))
-                    printf "signoz_migrator_unknown_applied{database=\"%s\",migration=\"%s\"} 1\n", $1, $2
-                  if ($3 == "failed")
-                    printf "signoz_migrator_failed_applied{database=\"%s\",migration=\"%s\"} 1\n", $1, $2
-                }
-                END {
-                  for (k in needsync)
-                    if (status[k] != "finished")
-                      printf "signoz_migrator_missing_applied{database=\"%s\",migration=\"%s\"} 1\n", substr(k, 1, index(k, SUBSEP) - 1), substr(k, index(k, SUBSEP) + 1)
-                }
-              ' "${knownMigrations}/known.tsv" "$APPLIED_FILE" | sort
+              ${pkgs.gawk}/bin/awk -F '\t' -v mode=rows -f ${../../../lib/migrator-guard-join.awk} "${knownMigrations}/known.tsv" "$APPLIED_FILE" | sort
               echo "# HELP signoz_migrator_missing_applied_total known incremental-sync migrations without a finished row, healthy value is zero"
               echo "# TYPE signoz_migrator_missing_applied_total gauge"
-              echo "signoz_migrator_missing_applied_total $(awk -F '\t' '
-                FNR == NR {
-                  if ($3 == "incremental" && $4 == "sync")
-                    needsync[$1 SUBSEP $2] = 1
-                  next
-                }
-                NF >= 3 { status[$1 SUBSEP $2] = $3 }
-                END {
-                  n = 0
-                  for (k in needsync)
-                    if (status[k] != "finished")
-                      n++
-                  print n
-                }
-              ' "${knownMigrations}/known.tsv" "$APPLIED_FILE")"
+              echo "signoz_migrator_missing_applied_total $(${pkgs.gawk}/bin/awk -F '\t' -v mode=missing_total -f ${../../../lib/migrator-guard-join.awk} "${knownMigrations}/known.tsv" "$APPLIED_FILE")"
               echo "# HELP signoz_migrator_unknown_applied_total applied migration rows unknown to the pinned source, healthy value is zero"
               echo "# TYPE signoz_migrator_unknown_applied_total gauge"
-              echo "signoz_migrator_unknown_applied_total $(awk -F '\t' '
-                FNR == NR { known[$1 SUBSEP $2] = 1; next }
-                NF >= 3 && !($1 SUBSEP $2 in known) { n++ }
-                END { print n + 0 }
-              ' "${knownMigrations}/known.tsv" "$APPLIED_FILE")"
+              echo "signoz_migrator_unknown_applied_total $(${pkgs.gawk}/bin/awk -F '\t' -v mode=unknown_total -f ${../../../lib/migrator-guard-join.awk} "${knownMigrations}/known.tsv" "$APPLIED_FILE")"
               echo "# HELP signoz_migrator_failed_applied_total migration rows stuck in status=failed, healthy value is zero"
               echo "# TYPE signoz_migrator_failed_applied_total gauge"
-              echo "signoz_migrator_failed_applied_total $(awk -F '\t' '
-                NF >= 3 && $3 == "failed" { n++ }
-                END { print n + 0 }
-              ' "$APPLIED_FILE")"
+              echo "signoz_migrator_failed_applied_total $(${pkgs.gawk}/bin/awk -F '\t' -v mode=failed_total -f ${../../../lib/migrator-guard-join.awk} "${knownMigrations}/known.tsv" "$APPLIED_FILE")"
             fi
           } > "$TMP"
 
@@ -379,5 +341,128 @@
           };
         };
       };
+    };
+
+  perSystem =
+    {
+      pkgs,
+      ...
+    }:
+    {
+      checks.signoz-migrator-guard-join-selftest =
+        pkgs.runCommand "signoz-migrator-guard-join-selftest"
+          {
+            nativeBuildInputs = with pkgs; [
+              gawk
+              coreutils
+              gnugrep
+            ];
+          }
+          ''
+            join=${../../../lib/migrator-guard-join.awk}
+            known=$PWD/known.tsv
+            applied=$PWD/applied.tsv
+
+            # Fixture known list: incremental-sync 1000/1001, incremental-async
+            # 1002, squashed 1 — the shapes the live list actually carries.
+            printf 'signoz_traces\t1000\tincremental\tsync\n' > "$known"
+            printf 'signoz_traces\t1001\tincremental\tsync\n' >> "$known"
+            printf 'signoz_traces\t1002\tincremental\tasync\n' >> "$known"
+            printf 'signoz_traces\t1\tsquashed\tsync\n' >> "$known"
+
+            assert_count() {
+              local label="$1" file="$2" pattern="$3" want="$4" got
+              got=$(grep -Fc -- "$pattern" "$file" || true)
+              if [ "$got" != "$want" ]; then
+                echo "FAIL $label: pattern '$pattern' expected $want hits, got $got" >&2
+                cat "$file" >&2
+                exit 1
+              fi
+              echo "  ok: $label ($got)"
+            }
+
+            # ── healthy state: everything finished → all-zero, silent rows ──
+            printf 'signoz_traces\t1000\tfinished\n' > "$applied"
+            printf 'signoz_traces\t1001\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1\tfinished\n' >> "$applied"
+            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied")
+            [ -z "$rows" ] || {
+              echo "FAIL healthy state emitted rows: $rows" >&2
+              exit 1
+            }
+            for m in missing unknown failed; do
+              v=$(gawk -F '\t' -v mode="''${m}_total" -f "$join" "$known" "$applied")
+              [ "$v" = 0 ] || {
+                echo "FAIL healthy state $m total = $v" >&2
+                exit 1
+              }
+            done
+            echo "  ok: healthy state all-zero"
+
+            # ── the 1010 class: incremental-sync 1001 missing while 1002 ran ──
+            printf 'signoz_traces\t1000\tfinished\n' > "$applied"
+            printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1\tfinished\n' >> "$applied"
+            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied")
+            printf '%s\n' "$rows" > rows.out
+            assert_count "1010-class missing row" rows.out 'signoz_migrator_missing_applied{database="signoz_traces",migration="1001"}' 1
+            assert_count "no unknown rows in gap fixture" rows.out 'signoz_migrator_unknown_applied' 0
+            assert_count "squashed absence NOT flagged" rows.out 'migration="1"\}' 0
+            [ "$(gawk -F '\t' -v mode=missing_total -f "$join" "$known" "$applied")" = 1 ] || {
+              echo "FAIL gap fixture missing_total != 1" >&2
+              exit 1
+            }
+            echo "  ok: gap fixture"
+
+            # ── in-progress counts as not-converged (schema not finished) ──
+            printf 'signoz_traces\t1000\tfinished\n' > "$applied"
+            printf 'signoz_traces\t1001\tin-progress\n' >> "$applied"
+            printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1\tfinished\n' >> "$applied"
+            [ "$(gawk -F '\t' -v mode=missing_total -f "$join" "$known" "$applied")" = 1 ] || {
+              echo "FAIL in-progress not counted missing" >&2
+              exit 1
+            }
+            echo "  ok: in-progress counts missing"
+
+            # ── unknown applied row (state drift/downgrade class) ──
+            printf 'signoz_traces\t1000\tfinished\n' > "$applied"
+            printf 'signoz_traces\t1001\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t9999\tfinished\n' >> "$applied"
+            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied")
+            printf '%s\n' "$rows" > rows.out
+            assert_count "unknown row flagged" rows.out 'signoz_migrator_unknown_applied{database="signoz_traces",migration="9999"}' 1
+            [ "$(gawk -F '\t' -v mode=unknown_total -f "$join" "$known" "$applied")" = 1 ] || {
+              echo "FAIL unknown_total != 1" >&2
+              exit 1
+            }
+            echo "  ok: unknown row"
+
+            # ── failed row ──
+            printf 'signoz_traces\t1000\tfinished\n' > "$applied"
+            printf 'signoz_traces\t1001\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
+            printf 'signoz_traces\t1\tfailed\n' >> "$applied"
+            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied")
+            printf '%s\n' "$rows" > rows.out
+            assert_count "failed row flagged" rows.out 'signoz_migrator_failed_applied{database="signoz_traces",migration="1"}' 1
+            [ "$(gawk -F '\t' -v mode=failed_total -f "$join" "$known" "$applied")" = 1 ] || {
+              echo "FAIL failed_total != 1" >&2
+              exit 1
+            }
+            echo "  ok: failed row"
+
+            # ── static tripwire: the Gatus check still wires these metrics ──
+            if ! grep -q 'SigNoz Migrator Guard' ${../../../modules/nixos/services/gatus-config.nix}; then
+              echo "FAIL: gatus-config.nix no longer carries the 'SigNoz Migrator Guard' check" >&2
+              exit 1
+            fi
+            echo "  ok: gatus wiring present"
+
+            touch $out
+          '';
     };
 }
