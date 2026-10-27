@@ -245,21 +245,29 @@
             # parses the env var as a URL (OTel spec) requires the scheme.
             otelEndpoint = lib.mkDefault "http://127.0.0.1:${toString ports.signoz-otlp-grpc}";
 
-            # AI suite (2026-10-15, owner decision: local fastflowlm — no
-            # external key; PMA/papdashboard precedent). The server treats AI
-            # as unconfigured until LLM_API_KEY is non-empty
-            # (api/server.go:557 gate) — the dummy "local" rides the unit
-            # Environment below. Model single-sourced from the fastflowlm
-            # module WHEN that module is in scope; this module also evals
-            # standalone (flake.nixosModules.browser-history / VM tests import
-            # it alone) where it is not, so module absence falls back to the
-            # fastflowlm default literal (same reference class as baseUrl's
-            # ports-only lookup). An option RENAME still fails eval loudly on
-            # hosts (strict binding kept). 10m timeout: flm socket-activates
-            # with a 2-5 min cold load from idle; 90s default would abort.
-            llm.baseUrl = lib.mkDefault "http://127.0.0.1:${toString ports.fastflowlm}/v1";
+            # AI suite — INTERACTIVE AI (summaries + /chat) must ride an
+            # always-on endpoint. The 2026-10-15 wiring pointed here at
+            # FastFlowLM directly and the feature NEVER worked from the UI:
+            # flm is the memory-emergency-guard's designated sacrifice —
+            # trips stop fastflowlm.socket (the re-activation listener) and
+            # the 3/day restore cap leaves :52625 REFUSED for hours (live
+            # 2026-10-27: guard SEV1 "FLM RESTORE CAPPED", browser-history
+            # journal full of "dial tcp 127.0.0.1:52625: connect: connection
+            # refused" since boot). llama-chat is always-on CPU, same
+            # Qwen3.6-35B-A3B family, instant first token — and through
+            # ai-meter it is metered like every other AI call on the host.
+            # Key: runtime-minted ai-meter client key via EnvironmentFile on
+            # the unit below; the server treats AI as unconfigured until
+            # LLM_API_KEY is non-empty (api/server.go:557 gate) — if the
+            # mint ever fails, AI fails VISIBLE-unconfigured, never silent
+            # 401s. The direct-flm values remain ONLY as the standalone-
+            # module fallback (VM tests, no ai-meter in scope). Model is
+            # single-sourced from the serving module WHEN in scope.
+            llm.baseUrl = lib.mkDefault (
+              if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat" else "http://127.0.0.1:${toString ports.fastflowlm}/v1"
+            );
             llm.model = lib.mkDefault (
-              if options.services ? fastflowlm then config.services.fastflowlm.model else "qwen3.6-moe:35b-a3b"
+              if aiMeterEnabled && (options.services ? llama-chat) then config.services.llama-chat.alias else if options.services ? fastflowlm then config.services.fastflowlm.model else "qwen3.6-moe:35b-a3b"
             );
             llm.timeout = lib.mkDefault "10m";
 
@@ -282,21 +290,42 @@
             startLimitBurst = 3;
             startLimitIntervalSec = 600;
 
+            # The minted ai-meter env-file key must exist before the server
+            # reads its environment (ai-meter-keys mints at boot; deploy.sh's
+            # provisioner loop re-runs it before daemon restarts on deploys).
+            after = lib.optionals aiMeterEnabled [ "ai-meter-keys.service" ];
+            wants = lib.optionals aiMeterEnabled [ "ai-meter-keys.service" ];
+
             # Agent token from sops loads via the upstream environmentFile
             # option above (systemd reads EnvironmentFile as root, so the
             # root-owned sops template works for the DynamicUser server).
             # LOG_LEVEL likewise comes from the logLevel option.
             serviceConfig = lib.mkMerge [
               {
-                Environment = [
-                  "GOMEMLIMIT=384MiB"
-                  "MAX_USERS=1"
-                  # AI gate + chat subsystem: LLM_API_KEY non-empty flips the
-                  # provider on ("local" dummy — flm ignores it, PMA
-                  # precedent); CHAT_DB_PATH enables /chat (env-only upstream,
-                  # lives beside data.db in the DynamicUser StateDirectory).
-                  "LLM_API_KEY=local"
-                  "CHAT_DB_PATH=/var/lib/browser-history/chat.db"
+                Environment =
+                  [
+                    "GOMEMLIMIT=384MiB"
+                    "MAX_USERS=1"
+                  ]
+                  ++ lib.optionals (!aiMeterEnabled) [
+                    # Standalone-fallback AI gate: LLM_API_KEY non-empty
+                    # flips the provider on ("local" dummy — flm ignores
+                    # Authorization, PMA precedent). Through ai-meter the
+                    # real minted key rides the EnvironmentFile below
+                    # instead (files override Environment= entries).
+                    "LLM_API_KEY=local"
+                  ]
+                  ++ [
+                    # CHAT_DB_PATH enables /chat (env-only upstream, lives
+                    # beside data.db in the DynamicUser StateDirectory).
+                    "CHAT_DB_PATH=/var/lib/browser-history/chat.db"
+                  ];
+                # Runtime-minted ai-meter client key as LLM_API_KEY — minted
+                # root-owned by ai-meter-keys; systemd reads EnvironmentFile
+                # as root for the DynamicUser server, so root ownership is
+                # the correct shape here (same delivery as the sops file).
+                EnvironmentFile = lib.optionals aiMeterEnabled [
+                  "/run/ai-meter-keys/browser-history.env"
                 ];
                 # Must exceed the 300s OIDC gate budget (slow-boot dnsblockd)
                 TimeoutStartSec = "6min";
