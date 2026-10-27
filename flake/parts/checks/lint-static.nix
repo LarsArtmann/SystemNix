@@ -181,7 +181,7 @@
               configFile = sys.config.services.gatus.configFile;
               gatus = sys.config.services.gatus.package;
               relayEnabled = sys.config.services.gatus-alert-relay.enable or false;
-              relayPort = toString (sys.config.services.gatus-alert-relay.port or 9111);
+              relayPort = toString (sys.config.services.gatus-alert-relay.port or 9411);
             in
             pkgs.runCommand "gatus-config-parse-check" { nativeBuildInputs = [ gatus ]; } ''
               GATUS_OIDC_CLIENT_SECRET=check-dummy GATUS_CONFIG_PATH=${configFile} \

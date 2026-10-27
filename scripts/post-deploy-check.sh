@@ -338,13 +338,13 @@ check_local "oauth2-proxy" "4180" "/ping" "200" 2>/dev/null || true
 # every deploy until removed. PapDashboard has its own loopback checks
 # below and the external vHost check targets dash.$DOMAIN.
 
-check_local "Gatus" "9110" "/" "200" "" 2>/dev/null || true
+check_local "Gatus" "9410" "/" "200" "" 2>/dev/null || true
 
 # T-007 (2026-10-24): the Discord alert gate must be up and answering —
 # a dead relay silently drops every gatus Discord alert (gatus does not
 # retry provider sends). "forwarded" in the body proves the JSON snapshot
 # rendered, not just a bare 200.
-check_local "Gatus Alert Relay" "9111" "/healthz" "200" "forwarded" 2>/dev/null || true
+check_local "Gatus Alert Relay" "9411" "/healthz" "200" "forwarded" 2>/dev/null || true
 
 check_local "DNS Blocker" "9090" "/health" "200" "" 2>/dev/null || true
 
@@ -1245,7 +1245,7 @@ fi
 
 # SigNoz coverage audit (signoz-coverage.nix): deploy.sh restarts the
 # collector post-switch, so the textfile gauges are FRESH here - assert the
-# fail-closed summaries directly from node-exporter :9100. This gates trace-
+# fail-closed summaries directly from node-exporter :9400. This gates trace-
 # coverage regressions at DEPLOY time instead of up to 5 min later (gatus
 # interval). grep -o (not -q): reads the whole stream, no SIGPIPE class on
 # the large /metrics body.
@@ -1262,7 +1262,7 @@ if $signoz_coverage_enabled; then
   cov_errors=absent
   coverage_metrics=""
   for _attempt in 1 2 3; do
-    coverage_metrics=$(curl -s --compressed --max-time 15 http://localhost:9100/metrics 2>/dev/null || true)
+    coverage_metrics=$(curl -s --compressed --max-time 15 http://localhost:9400/metrics 2>/dev/null || true)
     if [ -n "$coverage_metrics" ]; then
       cov_missing=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_traces_missing \K[0-9]+' || echo absent)
       cov_errors=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_coverage_scrape_errors \K[0-9]+' || echo absent)
@@ -1274,16 +1274,16 @@ if $signoz_coverage_enabled; then
   if [ -n "$coverage_metrics" ]; then
     case "$cov_missing" in
     0) report_pass "SigNoz Coverage - traces_missing 0 (every enforced service sent spans in budget)" ;;
-    absent) report_fail "SigNoz Coverage - signoz_traces_missing ABSENT from :9100 (collector never ran: journalctl -u signoz-coverage-metrics -n 20)" ;;
-    *) report_fail "SigNoz Coverage - traces_missing $cov_missing after 90s retry window (service(s) dark; grep signoz_traces_reporting :9100/metrics)" ;;
+    absent) report_fail "SigNoz Coverage - signoz_traces_missing ABSENT from :9400 (collector never ran: journalctl -u signoz-coverage-metrics -n 20)" ;;
+    *) report_fail "SigNoz Coverage - traces_missing $cov_missing after 90s retry window (service(s) dark; grep signoz_traces_reporting :9400/metrics)" ;;
     esac
     case "$cov_errors" in
     0) report_pass "SigNoz Coverage - collector scrape_errors 0" ;;
-    absent) report_fail "SigNoz Coverage - signoz_coverage_scrape_errors ABSENT from :9100 (textfile stale/missing)" ;;
+    absent) report_fail "SigNoz Coverage - signoz_coverage_scrape_errors ABSENT from :9400 (textfile stale/missing)" ;;
     *) report_fail "SigNoz Coverage - scrape_errors $cov_errors (ClickHouse queries failing: journalctl -u signoz-coverage-metrics)" ;;
     esac
   else
-    report_fail "SigNoz Coverage - node-exporter :9100 unreachable"
+    report_fail "SigNoz Coverage - node-exporter :9400 unreachable"
   fi
 else
   report_skip "SigNoz Coverage - module disabled (unit absent)"
@@ -1569,8 +1569,8 @@ echo "--- Monitor365 Agent ↔ Server Connectivity ---"
 m365_agent_ok=false
 m365_server_ok=false
 
-# Check 1: Agent metrics endpoint (port 9191) - verifies agent process is alive
-if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
+# Check 1: Agent metrics endpoint (port 9421) - verifies agent process is alive
+if curl -sf -m 5 -o /dev/null "http://localhost:9421/metrics" 2>/dev/null; then
   : # agent alive
 elif ! $m365_enabled; then
   : # disabled - reported below, no restart attempt on absent units
@@ -1581,18 +1581,18 @@ else
   sleep 10
 fi
 
-# Check 2: Agent metrics endpoint (port 9191)
-if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
-  echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:9191)"
+# Check 2: Agent metrics endpoint (port 9421)
+if curl -sf -m 5 -o /dev/null "http://localhost:9421/metrics" 2>/dev/null; then
+  echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:9421)"
   m365_agent_ok=true
   PASS=$((PASS + 1))
 elif ! $m365_enabled; then
   echo -e "${YELLOW}SKIP${NC} Monitor365 agent - service disabled (units absent from systemd)"
   SKIP=$((SKIP + 1))
 else
-  echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9191) - agent may be crashed or circuit-breaker deadlocked"
+  echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9421) - agent may be crashed or circuit-breaker deadlocked"
   FAIL=$((FAIL + 1))
-  record_fail "Monitor365 agent metrics NOT responding (localhost:9191)"
+  record_fail "Monitor365 agent metrics NOT responding (localhost:9421)"
 fi
 
 # Check 3: Server reports agent as connected device.

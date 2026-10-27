@@ -18,7 +18,7 @@ monitoring.md "Gatus boot/restart alert-storm + flap suppression").
 
 ## What it does
 
-gatus' Discord provider posts to `http://127.0.0.1:9111/hook` (port
+gatus' Discord provider posts to `http://127.0.0.1:9411/hook` (port
 `lib/ports.nix` `gatusAlertRelay`); the relay re-posts pass-through bytes
 to the real webhook (from the same `gatus-env` sops secret). Decision
 rules, in order:
@@ -81,4 +81,4 @@ flap-collapse (muted ones must not poison the counter).
   ai-meter doctrine), wrapper `pkgs/gatus-alert-relay.nix`
 - `modules/nixos/services/gatus-alert-relay.nix` — options + unit
 - `modules/nixos/services/gatus-config.nix` — webhook flip + relay check
-- Port: `lib/ports.nix` `gatusAlertRelay = 9111`
+- Port: `lib/ports.nix` `gatusAlertRelay = 9411`

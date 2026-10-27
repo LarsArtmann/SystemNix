@@ -150,7 +150,7 @@ let
                   self.wfile.write(b"<html><body>OK</body></html>")
           def log_message(self, *_):
               pass
-      http.server.HTTPServer(("127.0.0.1", 9100), H).serve_forever()
+      http.server.HTTPServer(("127.0.0.1", 9400), H).serve_forever()
       '
     '';
   };
@@ -179,7 +179,7 @@ in
         endpoints = [
           {
             name = "[TEST] HTML check";
-            url = "http://127.0.0.1:9100/";
+            url = "http://127.0.0.1:9400/";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -188,7 +188,7 @@ in
           }
           {
             name = "[TEST] Metric presence";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -197,7 +197,7 @@ in
           }
           {
             name = "[TEST] Value assertion zero";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -206,7 +206,7 @@ in
           }
           {
             name = "[TEST] Label metric";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -215,7 +215,7 @@ in
           }
           {
             name = "[TEST] Multiple conditions";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -233,7 +233,7 @@ in
             # via the HELP-less body, so the lint + pre-deploy check cover
             # that half; this endpoint covers the newline-escaping half.
             name = "[TEST] Anchored value assertion";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -250,7 +250,7 @@ in
             # the REAL value lines, proving the real newline reaches gatus
             # and the anchors hold against a HELP-laden textfile.
             name = "[TEST] Niri sibling anchored value-zero";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -268,7 +268,7 @@ in
             # green-vacuously match the comment and this meta-assertion
             # would catch the sibling checks regressing to it.
             name = "[TEST-RED] Niri sibling anchored value-one must not match";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -277,7 +277,7 @@ in
           }
           {
             name = "[TEST] Bank-Sync sync health (errors zero + ever synced)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -290,7 +290,7 @@ in
             # conditions verbatim against the HEALTHY mock (members_present 2
             # must NOT match the " 1\n" line; device_errors must be present).
             name = "[TEST] Pool RAID1 membership (healthy = 2 members)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -306,7 +306,7 @@ in
             # lines NOR the HELP comments ("... healthy value is zero" never
             # contains "<metric> <digit>").
             name = "[TEST] SigNoz coverage (anchored zero-value)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -325,7 +325,7 @@ in
             # If this endpoint ever goes GREEN, the anchored forms have lost
             # their meaning (glob regression / gatus pattern engine change).
             name = "[TEST-RED] SigNoz coverage phantom-value rejection";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -339,7 +339,7 @@ in
             # line-anchored VALUE form and the system-health freshness
             # composite must be present and non-zero.
             name = "[TEST] Niri Compositor (value-anchored + fresh)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -358,7 +358,7 @@ in
             # name — the anchor must reject comment matches ("# HELP ..."
             # never starts with the bare name).
             name = "[TEST-RED] Niri freshness frozen (0 must be matchable)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -371,7 +371,7 @@ in
             # drift guard must be present and non-zero, with the reject-half
             # line-anchored so the HELP trap text cannot satisfy it.
             name = "[TEST] PapDashboard services.json drift (healthy = 1)";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -387,7 +387,7 @@ in
             # proving the production reject-half (!= pat(*...0\n*)) trips on
             # a genuine drift instead of being vacuous.
             name = "[TEST-RED] PapDashboard drift reject-half non-vacuous";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -399,7 +399,7 @@ in
             # must match a REAL "icons_ok 0" emission and must NOT match the
             # healthy body (icons_ok 1) — non-vacuousness of the new pair.
             name = "[TEST-RED] PapDashboard icon-coverage reject-half non-vacuous";
-            url = "http://127.0.0.1:9100/metrics";
+            url = "http://127.0.0.1:9400/metrics";
             interval = "5s";
             conditions = [
               "[STATUS] == 200"
@@ -415,7 +415,7 @@ in
     machine.start()
     machine.wait_for_unit("multi-user.target")
     machine.wait_for_unit("mock-metrics.service")
-    machine.wait_for_open_port(9100)
+    machine.wait_for_open_port(9400)
     machine.wait_for_unit("gatus.service")
     machine.wait_for_open_port(8081)
 

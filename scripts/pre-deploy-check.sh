@@ -591,8 +591,8 @@ fi
 echo ""
 echo "10. Metric presence validation (phantom metric detection)"
 GATUS_CONFIG="modules/nixos/services/gatus-config.nix"
-NODE_EXPORTER_PORT=9100
-MONITOR365_PORT=9191
+NODE_EXPORTER_PORT=9400
+MONITOR365_PORT=9421
 
 # Static config traps (mirrors the flake.nix gatus-pattern-lint — defense in
 # depth at deploy time: the working tree can carry a regression CI hasn't
@@ -717,7 +717,7 @@ probe_endpoint() {
 # monitor365 (agent + server) is deliberately disabled since 2026-08-12
 # (private-git-dep blocker — the wireguard-collector crate can't be fetched
 # in the Nix sandbox; storage-collector covers storage trends meanwhile).
-# Probe :9191 only when the DEPLOYED generation actually ships its units,
+# Probe :9421 only when the DEPLOYED generation actually ships its units,
 # else every deploy pays a permanent "not responding" warn for a service
 # that cannot be up. One-deploy lag on re-enable is fine: the warn is
 # non-fatal, and the re-enabling deploy's NEXT run sees the new units.
@@ -912,7 +912,7 @@ if [ -s "$METRICS_FILE" ]; then
   # the live endpoints — signoz_traces_{missing,reporting},
   # signoz_coverage_scrape_errors, signoz_logs_pipeline_stale,
   # system_user_units_{failed,scrape_errors}, system_dnsblockd_metrics_fresh
-  # (all :9100 textfile) + discordsync_projection_dlq_legacy_unchanged,
+  # (all :9400 textfile) + discordsync_projection_dlq_legacy_unchanged,
   # discordsync_turso_local_only_mode (:8085) + bank_sync_sync_errors_total,
   # bank_sync_last_sync_timestamp_seconds (:8097, DAS back). Every entry in
   # this list must die the moment its metric is confirmed live — the list is
@@ -927,16 +927,16 @@ if [ -s "$METRICS_FILE" ]; then
   # this deploy confirms them in the textfile.
   # 2026-09-02 sweep: RETIRED the three entries above (signoz gap budget +
   # both pool_usb_recovery gauges) — the 2026-09-02 pre-deploy run confirmed
-  # all three present in :9100/metrics.
+  # all three present in :9400/metrics.
   # system_local_dns_resolves (2026-09-02): RETIRED same day — confirmed
   # live in the system_health textfile (value 1) by the follow-up session.
   # system_pma_commit_* trio + niri_aw_* pair (2026-09-02/03): RETIRED
-  # 2026-09-03 12:5x — all five confirmed LIVE in :9100/metrics on the
+  # 2026-09-03 12:5x — all five confirmed LIVE in :9400/metrics on the
   # h4w1yz17 generation (pocket-id pair retired earlier the same day).
   # The list is empty; re-add ONLY when a deploy introduces metrics the
   # running generation's collector cannot yet emit.
   # system_stuck_dstate_processes (2026-09-04): RETIRED 2026-09-09 — this
-  # gate's own run confirmed it live in :9100/metrics (nonzero until the
+  # gate's own run confirmed it live in :9400/metrics (nonzero until the
   # owed reboot clears the amdxdna corpse pile).
   # cv_autoapply_passes / cv_autoapply_pass_errors (2026-09-09): RETIRED same
   # day — all five cv_autoapply_* gauges confirmed LIVE via the authenticated

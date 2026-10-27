@@ -508,7 +508,7 @@ _: {
                 # 2026-10-18..25 dup-row regression made every /metrics
                 # scrape fail whole (HTTP 500, "was collected before") and
                 # host metrics went blind for 7 days while every OTHER
-                # :9100-based check silently degraded with it. This check
+                # :9400-based check silently degraded with it. This check
                 # names the exporter itself: 200 + the textfile sentinel at
                 # zero. node_textfile_scrape_error flips 1 on ANY textfile
                 # parse/dup error, and its absence (collector gone dark)
@@ -522,7 +522,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_textfile_scrape_error 0*)"
                   ];
-                  alerts = discordAlert "node_exporter /metrics is failing (scrape 500 or textfile errors) — host metrics are BLIND; every :9100-based check is degraded with it. The 2026-10-18 class: duplicate rows in a textfile .prom (system_health.prom) reject the whole scrape. Check: journalctl -u prometheus-node-exporter --since -30m --grep 'collected metric', then ls -la /var/lib/prometheus-node-exporter/textfile_collectors and validate the newest .prom for duplicate series";
+                  alerts = discordAlert "node_exporter /metrics is failing (scrape 500 or textfile errors) — host metrics are BLIND; every :9400-based check is degraded with it. The 2026-10-18 class: duplicate rows in a textfile .prom (system_health.prom) reject the whole scrape. Check: journalctl -u prometheus-node-exporter --since -30m --grep 'collected metric', then ls -la /var/lib/prometheus-node-exporter/textfile_collectors and validate the newest .prom for duplicate series";
                 })
                 # The old "Homepage" check died with homepage-dashboard
                 # (2026-09 merge). The dashboard is PapDashboard now; its
@@ -663,7 +663,7 @@ _: {
                     "[BODY] == pat(*\nsignoz_coverage_scrape_errors *)"
                     "[BODY] != pat(*\nsignoz_coverage_scrape_errors [1-9]*)"
                   ];
-                  alerts = discordAlert "SigNoz trace coverage gap — a registered service stopped sending spans (or the coverage collector failed): silent observability hole. Check signoz_traces_reporting in :9100/metrics for which service went dark";
+                  alerts = discordAlert "SigNoz trace coverage gap — a registered service stopped sending spans (or the coverage collector failed): silent observability hole. Check signoz_traces_reporting in :9400/metrics for which service went dark";
                 })
                 (mkHttpCheck {
                   name = "SigNoz Logs Pipeline Fresh";

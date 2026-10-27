@@ -60,7 +60,7 @@ let
           services.gatus.settings.endpoints = [
             {
               name = "Gatus self";
-              url = "http://localhost:9110";
+              url = "http://localhost:9410";
               conditions = [ "[STATUS] == 200" ];
             }
           ];

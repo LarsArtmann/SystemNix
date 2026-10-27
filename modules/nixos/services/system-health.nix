@@ -2147,7 +2147,7 @@ _: {
 
         gatus.port = lib.mkOption {
           type = lib.types.int;
-          default = 9110;
+          default = 9410;
           description = "Gatus web port for the API";
         };
 
@@ -2416,7 +2416,7 @@ _: {
                   "[BODY] != pat(*\nsystem_units_enabled_inactive [1-9]*)"
                   "[BODY] == pat(*\nsystem_units_enabled_inactive_scrape_errors 0\n*)"
                 ];
-                alert = "Enabled long-running unit(s) are INACTIVE — the pool-dropout class (an enabled daemon nobody started). Read system_unit_enabled_inactive{manager,unit} labels in :9100/metrics, then systemctl start <unit> (and find why the boot transaction skipped it — cancelled mount job, failed Requires, etc.)";
+                alert = "Enabled long-running unit(s) are INACTIVE — the pool-dropout class (an enabled daemon nobody started). Read system_unit_enabled_inactive{manager,unit} labels in :9400/metrics, then systemctl start <unit> (and find why the boot transaction skipped it — cancelled mount job, failed Requires, etc.)";
               }
               {
                 name = "Unit Crash-Loop / Restart Churn";
@@ -2438,14 +2438,14 @@ _: {
                   "[BODY] == pat(*\nsystem_any_service_crash_loop 0\n*)"
                   "[BODY] == pat(*\nsystem_any_service_restart_churn 0\n*)"
                 ];
-                alert = "A monitored service is crash-looping — the 2026-10-20..25 nsfw class (239 restarts, 5 days, invisible to every layer). Attribution: grep 'system_service_crash_loop{.*} 1' and 'system_service_restart_churn{.*} 1' in :9100/metrics, then journalctl -u <service> -n 50. crash_loop = >=3 restarts in one 5-min interval; restart_churn = >=5 restarts since the last deploy/manual restart.";
+                alert = "A monitored service is crash-looping — the 2026-10-20..25 nsfw class (239 restarts, 5 days, invisible to every layer). Attribution: grep 'system_service_crash_loop{.*} 1' and 'system_service_restart_churn{.*} 1' in :9400/metrics, then journalctl -u <service> -n 50. crash_loop = >=3 restarts in one 5-min interval; restart_churn = >=5 restarts since the last deploy/manual restart.";
               }
               {
                 name = "FastFlowLM NPU LLM";
                 group = "Monitoring";
                 # MUST NOT probe :52625 — every probe is a TCP connection =
                 # permanent keepalive. Use the system-health metrics at
-                # :9100 instead. Idle is healthy (model unloaded); only
+                # :9400 instead. Idle is healthy (model unloaded); only
                 # failure + crash-loop alert.
                 url = "http://localhost:${toString nodePort}/metrics";
                 interval = "2m";
@@ -2780,7 +2780,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_any_service_cpu_over_threshold 0*)"
                 ];
-                alert = "A monitored service exceeds 150% average CPU — possible busy-loop or runaway. Check: curl localhost:9100/metrics | grep cpu_over_threshold | grep ' 1$'";
+                alert = "A monitored service exceeds 150% average CPU — possible busy-loop or runaway. Check: curl localhost:9400/metrics | grep cpu_over_threshold | grep ' 1$'";
               }
               {
                 name = "/tmp TmpFS Usage";
@@ -2882,7 +2882,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_any_service_crash_loop 0*)"
                 ];
-                alert = "A monitored service is crash-looping (3+ restarts in 2 min). Check: curl localhost:9100/metrics | grep system_service_crash_loop | grep ' 1$'. Run: sudo systemctl reset-failed <svc> && sudo systemctl start <svc>";
+                alert = "A monitored service is crash-looping (3+ restarts in 2 min). Check: curl localhost:9400/metrics | grep system_service_crash_loop | grep ' 1$'. Run: sudo systemctl reset-failed <svc> && sudo systemctl start <svc>";
               }
               {
                 name = "Service Restart Churn";
@@ -2893,7 +2893,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_any_service_restart_churn 0*)"
                 ];
-                alert = "A monitored service accumulated 5+ automatic restarts since its last explicit start — a slow crash-churn that never trips the 3-in-2min loop detector (e.g. hermes exit-75 drain chains). Check: curl localhost:9100/metrics | grep system_service_restart_churn | grep ' 1$', then journalctl -u <svc> -n 50";
+                alert = "A monitored service accumulated 5+ automatic restarts since its last explicit start — a slow crash-churn that never trips the 3-in-2min loop detector (e.g. hermes exit-75 drain chains). Check: curl localhost:9400/metrics | grep system_service_restart_churn | grep ' 1$', then journalctl -u <svc> -n 50";
               }
               {
                 name = "OOMD Kills";

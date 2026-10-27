@@ -8,7 +8,7 @@ import qs.Widgets
 PluginComponent {
     id: root
 
-    property string gatusUrl: pluginData.gatusUrl || "http://127.0.0.1:9110/api/v1/endpoints/statuses"
+    property string gatusUrl: pluginData.gatusUrl || "http://127.0.0.1:9410/api/v1/endpoints/statuses"
     property var services: []
     property int upCount: 0
     property int downCount: 0

@@ -52,7 +52,7 @@ type serverConfig struct {
 func main() {
 	cfg := serverConfig{sev1Mute: map[string]bool{}}
 	var sev1MuteList string
-	flag.StringVar(&cfg.listen, "listen", "127.0.0.1:9111", "listen address (bind loopback only)")
+	flag.StringVar(&cfg.listen, "listen", "127.0.0.1:9411", "listen address (bind loopback only)")
 	flag.StringVar(&cfg.upstream, "upstream", os.Getenv("DISCORD_WEBHOOK_URL"), "upstream Discord webhook URL (or $DISCORD_WEBHOOK_URL)")
 	flag.StringVar(&cfg.alertFile, "alert-file", "/run/systemnix/sev1/alert", "SEV1 bridge alert file (4 lines: title/detail/epoch/severity)")
 	flag.DurationVar(&cfg.bootGrace, "boot-grace", 15*time.Minute, "suppress triggers while the relay process is younger than this (covers boot windows and deploy restarts)")
