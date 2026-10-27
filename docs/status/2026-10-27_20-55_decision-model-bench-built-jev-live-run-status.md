@@ -1,5 +1,7 @@
 # Status: decision-model bench BUILT + first LIVE Jev run (receipts/invoices/scans) — Clef arm still key-blocked
 
+> **Addendum 2026-10-27 21:1x — corrected results view:** the styled HTML dashboard at `docs/research/2026-10-27_paperless-decision-bench-results.html` carries the FINAL verified numbers (text arm 34/38 = 90% with encrypted scored on the Noul only — the 26/38/68% figure below predates the encrypted-scoring correction; receipts+invoices 38/38 across arms; all misses in the label-noisy general class).
+
 **Session:** 2026-10-27 19:5x–20:5x · **HEAD at start:** cac27ad (bench build session continued) · **Scope:** this session = Jev×paperless exploration continuation: bench design + build, corpus staging from live paperless, first live Jev run after owner pasted the TypeSafe key. Nothing deployed; no config/modules touched; one new script + one new sops file + doc/queue rows.
 
 ---

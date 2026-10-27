@@ -1406,21 +1406,34 @@ _: {
         # the timer IS the retry).
         systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}-ensure" = {
           description = "Keep-alive for the gitea-actions runner (start it whenever it is not active)";
+          # Family gate (forgejo-family-condition-audit; eval-broken HEAD
+          # 176bbaf4a→ddc3ababb 2026-10-27, fixed in passing): pre-finalize
+          # the marker is absent → this oneshot condition-skips instead of
+          # firing reset-failed+start churn every 5 min against a runner
+          # that would itself condition-skip; post-finalize it converges as
+          # designed. RequiresMountsFor matches the family pattern so the
+          # marker check never races the subvol mount.
+          unitConfig = {
+            RequiresMountsFor = lib.optionals dedicated [ stateDir ];
+            ConditionPathExists = subvolMigratedCondition;
+          };
           serviceConfig = {
             Type = "oneshot";
-            ExecStart = "${pkgs.writeShellApplication {
-              name = "gitea-runner-ensure";
-              runtimeInputs = [ pkgs.systemd ];
-              text = ''
-                unit='gitea-runner-${utils.escapeSystemdPath hostName}.service'
-                if systemctl is-active --quiet "$unit"; then
-                  exit 0
-                fi
-                echo "gitea-runner-ensure: $unit not active — clearing start-limit, starting (no-block)"
-                systemctl reset-failed "$unit" 2>/dev/null || true
-                systemctl start --no-block "$unit"
-              '';
-            }}/bin/gitea-runner-ensure";
+            ExecStart = "${
+              pkgs.writeShellApplication {
+                name = "gitea-runner-ensure";
+                runtimeInputs = [ pkgs.systemd ];
+                text = ''
+                  unit='gitea-runner-${utils.escapeSystemdPath hostName}.service'
+                  if systemctl is-active --quiet "$unit"; then
+                    exit 0
+                  fi
+                  echo "gitea-runner-ensure: $unit not active — clearing start-limit, starting (no-block)"
+                  systemctl reset-failed "$unit" 2>/dev/null || true
+                  systemctl start --no-block "$unit"
+                '';
+              }
+            }/bin/gitea-runner-ensure";
           };
         };
 

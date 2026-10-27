@@ -163,6 +163,12 @@
       # rename must fail eval loudly instead of silently relabeling every
       # token "evo-x2" while visits keep carrying the agent's own header value.
       machineId = config.services.browser-history-agent.machineId;
+
+      # Interactive AI rides the ai-meter proxy → llama-chat upstream when
+      # both are in scope (evo-x2). Option-guarded, NOT `.enable or false`:
+      # this module evals standalone (flake.nixosModules.browser-history /
+      # VM tests import it alone, no ai-meter module present).
+      aiMeterEnabled = (options.services ? ai-meter) && config.services.ai-meter.enable;
     in
     {
       imports = [
@@ -264,10 +270,18 @@
             # module fallback (VM tests, no ai-meter in scope). Model is
             # single-sourced from the serving module WHEN in scope.
             llm.baseUrl = lib.mkDefault (
-              if aiMeterEnabled then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat" else "http://127.0.0.1:${toString ports.fastflowlm}/v1"
+              if aiMeterEnabled then
+                "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat"
+              else
+                "http://127.0.0.1:${toString ports.fastflowlm}/v1"
             );
             llm.model = lib.mkDefault (
-              if aiMeterEnabled && (options.services ? llama-chat) then config.services.llama-chat.alias else if options.services ? fastflowlm then config.services.fastflowlm.model else "qwen3.6-moe:35b-a3b"
+              if aiMeterEnabled && (options.services ? llama-chat) then
+                config.services.llama-chat.alias
+              else if options.services ? fastflowlm then
+                config.services.fastflowlm.model
+              else
+                "qwen3.6-moe:35b-a3b"
             );
             llm.timeout = lib.mkDefault "10m";
 
@@ -302,24 +316,23 @@
             # LOG_LEVEL likewise comes from the logLevel option.
             serviceConfig = lib.mkMerge [
               {
-                Environment =
-                  [
-                    "GOMEMLIMIT=384MiB"
-                    "MAX_USERS=1"
-                  ]
-                  ++ lib.optionals (!aiMeterEnabled) [
-                    # Standalone-fallback AI gate: LLM_API_KEY non-empty
-                    # flips the provider on ("local" dummy — flm ignores
-                    # Authorization, PMA precedent). Through ai-meter the
-                    # real minted key rides the EnvironmentFile below
-                    # instead (files override Environment= entries).
-                    "LLM_API_KEY=local"
-                  ]
-                  ++ [
-                    # CHAT_DB_PATH enables /chat (env-only upstream, lives
-                    # beside data.db in the DynamicUser StateDirectory).
-                    "CHAT_DB_PATH=/var/lib/browser-history/chat.db"
-                  ];
+                Environment = [
+                  "GOMEMLIMIT=384MiB"
+                  "MAX_USERS=1"
+                ]
+                ++ lib.optionals (!aiMeterEnabled) [
+                  # Standalone-fallback AI gate: LLM_API_KEY non-empty
+                  # flips the provider on ("local" dummy — flm ignores
+                  # Authorization, PMA precedent). Through ai-meter the
+                  # real minted key rides the EnvironmentFile below
+                  # instead (files override Environment= entries).
+                  "LLM_API_KEY=local"
+                ]
+                ++ [
+                  # CHAT_DB_PATH enables /chat (env-only upstream, lives
+                  # beside data.db in the DynamicUser StateDirectory).
+                  "CHAT_DB_PATH=/var/lib/browser-history/chat.db"
+                ];
                 # Runtime-minted ai-meter client key as LLM_API_KEY — minted
                 # root-owned by ai-meter-keys; systemd reads EnvironmentFile
                 # as root for the DynamicUser server, so root ownership is

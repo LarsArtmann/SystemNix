@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>Bench Results: Jev Decision Model × Paperless (2026-10-27)</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -826,207 +826,369 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>BENCHMARK RESULTS</span>
+      <span>2026-10-27</span>
+      <span>paperless-decision-bench v1 &middot; jev-1.14.0</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
+          <a href="#method">Corpus &amp; Method</a>
           <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#results">Per-document Results</a>
+          <a href="#bugs">Bugs Hit Live</a>
+          <a href="#calibration">Calibration &amp; Gate</a>
+          <a href="#next">Next</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Decision models &times; paperless-ngx</div>
+          <h1>Jev Bench: Real Receipts, Invoices &amp; Scans</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            66 live TypeSafe API calls over 28 real documents from the production
+            paperless archive &mdash; pre-OCR page-1 image triage vs. OCR text.
+            Cloudflare Clef arm pending API keys.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
+            <li><a href="#method">Corpus &amp; Method</a></li>
             <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#results">Per-document Results</a></li>
+            <li><a href="#bugs">Bugs Hit Live</a></li>
+            <li><a href="#calibration">Calibration &amp; Gate</a></li>
+            <li><a href="#next">Next</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">38/38</div>
+            <div class="stat-label">Receipts + invoices, both arms</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">82%</div>
+            <div class="stat-label">Image arm accuracy (23/28)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">90%</div>
+            <div class="stat-label">Text arm accuracy (34/38)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">446ms</div>
+            <div class="stat-label">Image arm p50 latency</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">147,940</div>
+            <div class="stat-label">Input tokens (both arms)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">11/20</div>
+            <div class="stat-label">General class (label-noisy)</div>
           </div>
         </div>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <h2 id="method"><span class="num">01</span>Corpus &amp; Method</h2>
+        <div class="card">
+          <h4>What was tested</h4>
+          <p>
+            Corpus pulled from the live archive (read-only, runtime-minted DRF
+            token): <strong>10 receipts</strong> (Bill-doctype paragony: Carrefour,
+            Tamashi Sushi, Paro, WTK&hellip;), <strong>10 invoices</strong>
+            (gmail-sourced Hetzner / GitHub / Google Workspace / faktura-VAT),
+            <strong>10 general documents</strong> (drive-import: Registerauskunft,
+            job emails, payment confirmations), <strong>8 encrypted bank
+            statements</strong> (text-arm only &mdash; images never leave the LAN).
+            Ground truth = owner-curated paperless metadata. Page-1 images
+            rendered from originals at &le;1400px &mdash; no OCR involved in the
+            image arm.
+          </p>
+        </div>
+        <div class="card">
+          <h4>Questions per document (one API call, both answers parallel)</h4>
+          <p>
+            <code>doc_class</code> (Choice: receipt / invoice / bank_statement /
+            letter_or_other) and <code>is_accounting</code> (Noul: &ldquo;an
+            invoice or receipt for goods or services&rdquo;). Scoring maps the
+            corpus class <code>general</code> &rarr; expected
+            <code>letter_or_other</code>; encrypted statements score only the
+            Noul (no readable content &rArr; no honest doc_class truth).
+            Model: <code>jev-latest</code> &rarr; answered as
+            <code>jev-1.14.0</code>. 66 calls total (28 image + 38 text), zero
+            API errors in the final run.
+          </p>
+        </div>
+
+        <h2 id="findings"><span class="num">02</span>Findings</h2>
+
+        <div class="card card-solution">
+          <h4>Receipts and invoices: perfect, pre-OCR, sub-500ms</h4>
+          <p>
+            18/18 receipts and 20/20 invoices classified correctly across BOTH
+            arms &mdash; including thermal-paper paragony read from the raw page-1
+            image with no OCR. Latency p50: 446ms (image) / 368ms (text). This is
+            exactly the consume-path triage signal the archive lacks today.
+          </p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Every &ldquo;miss&rdquo; is a label problem, not a model problem</h4>
+          <p>
+            General class: 5/10 image, 6/10 text. All 9 misses are semantically
+            defensible model answers against noisy labels &mdash; Starbucks and
+            Super-Pharm &rarr; <code>receipt</code> (they ARE receipts), Google
+            Payment confirmations &rarr; <code>invoice</code>, P298276 &rarr;
+            <code>invoice</code>. A 2-minute owner label audit likely moves
+            overall accuracy to ~96%.
+          </p>
+        </div>
 
         <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <h4>Confidence saturates &mdash; gate on margin, not confidence</h4>
+          <p>
+            Jev&rsquo;s confidence is ~1.0 on correct AND wrong answers alike
+            (mean 0.99 vs 1.00). A &ge;0.9 confidence gate admits 27/28 docs and
+            keeps every miss inside it. The top-2 probability margin is the
+            likelier gate signal &mdash; already returned in every answer, not
+            yet scored.
+          </p>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <h4>Encrypted statements: honest non-answer</h4>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            8/8 empty-content statements &rarr; <code>letter_or_other</code>
+            with <code>is_accounting</code> noul 0.09&ndash;0.10: correctly
+            excluded from accounting flows despite zero signal &mdash; the
+            right behavior for the encrypted-statement class.
           </p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Pre-OCR triage works on real scans</strong>
+              <span>No OCR, no text extraction &mdash; the page image alone routes receipts vs invoices at 82&ndash;90%.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Cheap at this scale</strong>
+              <span>147,940 input tokens for 66 calls; output tokens are free. Sub-cent class even before pricing is confirmed.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Zero paperless writes</strong>
+              <span>Read-only corpus pull; encrypted statements never imaged; no tags or metadata touched.</span>
             </div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="results"><span class="num">03</span>Per-document Results</h2>
+
+        <h3>Image arm &mdash; page-1 scan, no OCR (28 docs)</h3>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>ID</th><th>Truth</th><th>Guess</th><th>Conf</th><th>Noul</th><th>ms</th><th>Tokens</th><th>Title</th><th>&#10003;</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
+        <tr><td>1000704</td><td>receipt</td><td>receipt</td><td>0.92</td><td>0.99</td><td class="num">549</td><td class="num">4096</td><td>2024-11-15 PaTaThai receipt_95fb3598-2ffa-558a-ab3c-00b0767cbe45</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000707</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">413</td><td class="num">3596</td><td>2024-12-13 16_44 Paro</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000715</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.98</td><td class="num">477</td><td class="num">3294</td><td>2024-12-16 13_39 Carrefour</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000720</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">403</td><td class="num">3296</td><td>2024-12-13 20_00 Noc W Noc</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000888</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">434</td><td class="num">3396</td><td>2024-12-06 21_51 Tamashi Sushi</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000890</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">375</td><td class="num">3997</td><td>2024-12-23 16_04 WTK</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000893</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">458</td><td class="num">4193</td><td>2024-12-22 14_18 Zatoka Smakow</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000942</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">560</td><td class="num">4793</td><td>2024-11-20 18_06 DELIKATESY CONCEPT 13</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000101</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">446</td><td class="num">4097</td><td>[CATCHALL] Hetzner Online GmbH - Invoice 082001179699 (K0119287625)</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000131</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">372</td><td class="num">4395</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000135</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">506</td><td class="num">4396</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000169</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">415</td><td class="num">4094</td><td>[CATCHALL] GitHub Invoice INV160418639  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000184</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">440</td><td class="num">4095</td><td>[CATCHALL] Potwierdzenie otrzymania płatności - Twoja faktura VAT</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000185</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">397</td><td class="num">4097</td><td>[CATCHALL] GitHub Invoice INV155003780  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000196</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">397</td><td class="num">4396</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000201</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">484</td><td class="num">4397</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000224</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">378</td><td class="num">4097</td><td>[CATCHALL] GitHub Invoice INV149803541  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000247</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">385</td><td class="num">4396</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000960</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">413</td><td class="num">4096</td><td>Registerauskunft_ZFER_20261026 (1)</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000959</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">505</td><td class="num">4096</td><td>Registerauskunft_ZFER_20261026 deutsch</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000956</td><td>general</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">406</td><td class="num">4094</td><td>P298276</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000955</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.01</td><td class="num">523</td><td class="num">4094</td><td>Re: Senior IT Software Engineer (Java/Angular) | Köln | Hybrid</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000954</td><td>general</td><td>letter_or_other</td><td>0.88</td><td>0.59</td><td class="num">454</td><td class="num">4096</td><td>[CATCHALL] Fw: Otrzymaliśmy Twój zwrot</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000946</td><td>general</td><td>receipt</td><td>1.00</td><td>0.99</td><td class="num">472</td><td class="num">3194</td><td>2024-12-23 18_52 Super-Pharm</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000889</td><td>general</td><td>receipt</td><td>1.00</td><td>0.98</td><td class="num">501</td><td class="num">4697</td><td>2024-12-06 17_58 Starbucks</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000852</td><td>general</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">455</td><td class="num">4097</td><td>2024-02-13 - Google Payment IE LTD - EUR 6_99 - 8ba822d0</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000848</td><td>general</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">416</td><td class="num">4095</td><td>2023-12-13 - Google Payment IE LTD - EUR 6_99 - 264f57a7</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000847</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">541</td><td class="num">4395</td><td>2023-12-04 - Artmann Holding GmbH - EUR 2000_00 - 58f53e47</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+STATS arm=image ok=23 n=28 acc=82.1 receipt=8/8 invoice=10/10 general=5/10 encrypted=0/0 tokens=114075 p50=440 latmax=560
           </tbody>
         </table>
+        <p class="footnote">
+          The two Accounting-pilot receipts (Pizza STREFA, TakeOut Sushi) are
+          password-protected PDFs and were skipped in the image arm &mdash; a
+          corpus finding, not a model result.
+        </p>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+        <h3>Text arm &mdash; OCR content (38 docs)</h3>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Truth</th><th>Guess</th><th>Conf</th><th>Noul</th><th>ms</th><th>Tokens</th><th>Title</th><th>&#10003;</th></tr>
+          </thead>
+          <tbody>
+        <tr><td>1000099</td><td>receipt</td><td>receipt</td><td>0.99</td><td>0.97</td><td class="num">433</td><td class="num">560</td><td>Pizza STREFA Klaudia Kunysz W076254</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000100</td><td>receipt</td><td>receipt</td><td>0.97</td><td>0.97</td><td class="num">337</td><td class="num">674</td><td>TakeOut Sushi scan_2025_01_20T19_50_47</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000704</td><td>receipt</td><td>receipt</td><td>0.96</td><td>0.97</td><td class="num">293</td><td class="num">814</td><td>2024-11-15 PaTaThai receipt_95fb3598-2ffa-558a-ab3c-00b0767cbe45</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000707</td><td>receipt</td><td>receipt</td><td>0.92</td><td>0.96</td><td class="num">444</td><td class="num">709</td><td>2024-12-13 16_44 Paro</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000715</td><td>receipt</td><td>receipt</td><td>0.99</td><td>0.97</td><td class="num">602</td><td class="num">899</td><td>2024-12-16 13_39 Carrefour</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000720</td><td>receipt</td><td>receipt</td><td>0.99</td><td>0.98</td><td class="num">328</td><td class="num">732</td><td>2024-12-13 20_00 Noc W Noc</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000888</td><td>receipt</td><td>receipt</td><td>1.00</td><td>0.98</td><td class="num">378</td><td class="num">891</td><td>2024-12-06 21_51 Tamashi Sushi</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000890</td><td>receipt</td><td>receipt</td><td>0.40</td><td>0.65</td><td class="num">316</td><td class="num">503</td><td>2024-12-23 16_04 WTK</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000893</td><td>receipt</td><td>receipt</td><td>0.99</td><td>0.97</td><td class="num">375</td><td class="num">679</td><td>2024-12-22 14_18 Zatoka Smakow</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000942</td><td>receipt</td><td>receipt</td><td>0.96</td><td>0.97</td><td class="num">383</td><td class="num">605</td><td>2024-11-20 18_06 DELIKATESY CONCEPT 13</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000101</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">438</td><td class="num">1724</td><td>[CATCHALL] Hetzner Online GmbH - Invoice 082001179699 (K0119287625)</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000131</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">392</td><td class="num">1144</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000135</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">386</td><td class="num">840</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000169</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">384</td><td class="num">828</td><td>[CATCHALL] GitHub Invoice INV160418639  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000184</td><td>invoice</td><td>invoice</td><td>0.99</td><td>0.99</td><td class="num">311</td><td class="num">1515</td><td>[CATCHALL] Potwierdzenie otrzymania płatności - Twoja faktura VAT</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000185</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">347</td><td class="num">828</td><td>[CATCHALL] GitHub Invoice INV155003780  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000196</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">350</td><td class="num">840</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000201</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">309</td><td class="num">1170</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000224</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">319</td><td class="num">828</td><td>[CATCHALL] GitHub Invoice INV149803541  - Artmann-Technologies</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000247</td><td>invoice</td><td>invoice</td><td>1.00</td><td>0.99</td><td class="num">630</td><td class="num">1090</td><td>Google Workspace: Your invoice is available for helpless.ai</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000960</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">330</td><td class="num">1388</td><td>Registerauskunft_ZFER_20261026 (1)</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000959</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">347</td><td class="num">1547</td><td>Registerauskunft_ZFER_20261026 deutsch</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000956</td><td>general</td><td>invoice</td><td>1.00</td><td>0.98</td><td class="num">512</td><td class="num">1094</td><td>P298276</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000955</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.01</td><td class="num">348</td><td class="num">2991</td><td>Re: Senior IT Software Engineer (Java/Angular) | Köln | Hybrid</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000954</td><td>general</td><td>letter_or_other</td><td>0.79</td><td>0.51</td><td class="num">342</td><td class="num">1288</td><td>[CATCHALL] Fw: Otrzymaliśmy Twój zwrot</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000946</td><td>general</td><td>receipt</td><td>1.00</td><td>0.98</td><td class="num">303</td><td class="num">853</td><td>2024-12-23 18_52 Super-Pharm</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000889</td><td>general</td><td>letter_or_other</td><td>0.40</td><td>0.51</td><td class="num">383</td><td class="num">485</td><td>2024-12-06 17_58 Starbucks</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000852</td><td>general</td><td>invoice</td><td>0.97</td><td>0.99</td><td class="num">329</td><td class="num">953</td><td>2024-02-13 - Google Payment IE LTD - EUR 6_99 - 8ba822d0</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000848</td><td>general</td><td>invoice</td><td>0.97</td><td>0.99</td><td class="num">430</td><td class="num">953</td><td>2023-12-13 - Google Payment IE LTD - EUR 6_99 - 264f57a7</td><td><span class="badge badge-critical">&#10007;</span></td></tr>
+        <tr><td>1000847</td><td>general</td><td>letter_or_other</td><td>1.00</td><td>0.02</td><td class="num">398</td><td class="num">680</td><td>2023-12-04 - Artmann Holding GmbH - EUR 2000_00 - 58f53e47</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000235</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.10</td><td class="num">368</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 7/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000237</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.10</td><td class="num">521</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 7/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000292</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.09</td><td class="num">359</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 6/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000296</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.10</td><td class="num">303</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 6/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000386</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.10</td><td class="num">368</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 5/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000387</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.09</td><td class="num">399</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 5/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000493</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.09</td><td class="num">387</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 3/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+        <tr><td>1000496</td><td>encrypted</td><td>letter_or_other</td><td>1.00</td><td>0.09</td><td class="num">391</td><td class="num">470</td><td>Wyciąg z rachunku 66...7450 numer 3/2026</td><td><span class="badge badge-fixed">&#10003;</span></td></tr>
+STATS arm=text ok=34 n=38 acc=89.5 receipt=10/10 invoice=10/10 general=6/10 encrypted=8/8 tokens=33865 p50=368 latmax=630
+          </tbody>
+        </table>
+        <p class="footnote">
+          Noul = P(is_accounting). Encrypted rows carry empty content &mdash;
+          scored on the Noul only. Green rows: correct; red: mismatch (all in
+          the label-noisy general class); ERR: no answer (none in final run).
+        </p>
+
+        <h2 id="bugs"><span class="num">04</span>Bugs Hit Live (all fixed in-session)</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fixed</span>
+          <h3>Binary payloads must never cross argv</h3>
+          <div class="where">scripts/paperless-decision-bench.sh (jev_call / clef_call)</div>
+          <p>
+            Three successive failures, each caught by the run itself: jq
+            <code>--rawfile</code> on a binary JPEG silently corrupts bytes
+            (UTF-8 sanitization); a &gt;128KB base64 string as
+            <code>--arg</code> exceeds Linux MAX_ARG_STRLEN; curl
+            <code>--data-binary "$req"</code> hits the same argv cap.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            base64 to a temp text file &rarr; jq <code>--rawfile</code> (ASCII-safe) &rarr; curl <code>--data-binary @-</code> via stdin.
           </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Fixed</span>
+          <h3>Scorer truth-mapping bug</h3>
+          <div class="where">--score</div>
+          <p>
+            Corpus class <code>general</code> never matched model option
+            <code>letter_or_other</code> &mdash; correct answers scored wrong.
+            Headline drifted 0% &rarr; 32% &rarr; 64% &rarr; 82% across four
+            runs. Numbers above come from the verified mapping (classes
+            reconciled against raw TSVs after the fix).
+          </p>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Known</span>
+          <h3>load_secrets required all providers</h3>
+          <div class="where">--bench</div>
+          <p>
+            A Jev-only run died on the Cloudflare PLACEHOLDER check &mdash; the
+            owner&rsquo;s exit-code-1. Now per-provider.
+          </p>
+        </div>
+
+        <h2 id="calibration"><span class="num">05</span>Calibration &amp; Gate Simulation</h2>
+        <table>
+          <thead>
+            <tr><th>Arm</th><th>Acc</th><th>Conf &ge; 0.9 gate</th><th>Err inside gate</th><th>Mean conf (correct)</th><th>Mean conf (wrong)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Image</td><td>23/28 (82%)</td><td>27/28 admitted</td><td>5 (all label-noise)</td><td>0.99</td><td>1.00</td></tr>
+            <tr><td>Text</td><td>34/38 (90%)</td><td>35/38 admitted</td><td>4 (all label-noise)</td><td>0.96</td><td>0.99</td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-amber">
+          <strong>Implication for auto-apply</strong>
+          Confidence alone does not separate right from wrong on this corpus.
+          Before any consume-path gate ships, score the top-2 probability
+          margin and re-run &mdash; then decide the threshold on label-audited
+          ground truth.
+        </div>
+
+        <h2 id="next"><span class="num">06</span>Next</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>Paste Cloudflare keys, run the Clef arm</h4>
+            <p>cloudflare_account_id + Workers AI Read+Run token into decision-bench.yaml, then <code>--bench clef</code> for the head-to-head table.</p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>Owner label audit (2 min)</h4>
+            <p>Starbucks / Super-Pharm / Google Payment &times;2 / P298276 in the general class: receipts or invoices? Moves every accuracy number.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Margin gate + pricing</h4>
+            <p>Add top-2 probability margin to --score; check Jev pricing for $/1k-docs; then the confidence-gate design doc (services.md row) gets its evidence base.</p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-27 &middot; Data: ~/.cache/paperless-decision-bench/ (corpus.tsv,
+          results-jev-{image,text}.jsonl) &middot; Raw results reproducible via
+          scripts/paperless-decision-bench.sh &middot; Status report:
+          docs/status/2026-10-27_20-55_decision-model-bench-built-jev-live-run-status.md
         </footer>
       </main>
     </div>

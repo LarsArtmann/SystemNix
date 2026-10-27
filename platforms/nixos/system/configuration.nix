@@ -557,7 +557,9 @@ in
       # AI call (tokens, cost, latency, per-client attribution → SigNoz +
       # /var/lib/ai-meter/usage.jsonl). Clients: crush (crushrc extraRc),
       # paperless-gpt (→ fastflowlm upstream), inboxclean (→ llama-chat
-      # upstream). Runbook: docs/services/ai-meter.md.
+      # upstream), browser-history (→ llama-chat upstream; root-owned key —
+      # DynamicUser server, systemd reads the env file as root).
+      # Runbook: docs/services/ai-meter.md.
       ai-meter.enable = true;
       ai-meter.clients = {
         # crush interactive + daemon sessions read the raw key at
@@ -574,6 +576,18 @@ in
         inboxclean = {
           user = "inboxclean";
           envKey = "OPENAI_API_KEY";
+        };
+      }
+      // lib.optionalAttrs config.services.browser-history.enable {
+        # DynamicUser server: no stable uid can own the key — the mint's
+        # chown-to-root path is the designed shape, and systemd reads the
+        # EnvironmentFile as root at unit start. Interactive AI (summaries
+        # + /chat) → llama-chat upstream: always-on CPU, immune to the flm
+        # memory-guard sacrifice/cap windows that made the old direct-flm
+        # wiring never work from the UI (2026-10-27).
+        browser-history = {
+          user = "root";
+          envKey = "LLM_API_KEY";
         };
       };
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops

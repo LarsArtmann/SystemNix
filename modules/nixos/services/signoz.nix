@@ -138,14 +138,25 @@ in
       # the receiver's collection_interval applies to its whole metric
       # list, and polling daily-measured gauges at 300s only burns
       # Monitoring API read quota ($0.01/1k calls, 1M/month free).
+      #
+      # project_id is REQUIRED per receiver: upstream contrib v0.144 has no
+      # ADC-credentials fallback — every API call is built as
+      # "projects/" + ProjectID, and an empty value passes config validation
+      # only to die FATAL at the Start()-time descriptor prefetch
+      # (InvalidArgument "got: projects/" → whole collector down,
+      # 2026-10-27; masked on 2026-09-29 by the placeholder key dying
+      # earlier, at token fetch).
       gcpMonitoringEnabled = cfg.enable && cfg.gcpMonitoring.enable && cfg.components.otelCollector;
       gcpReceivers =
         let
           metricEntry = name: { metric_name = name; };
-          mkReceiver = interval: metrics: {
-            collection_interval = interval;
-            metrics_list = map metricEntry metrics;
-          };
+          mkReceiver =
+            projectId: interval: metrics:
+            {
+              project_id = projectId;
+              collection_interval = interval;
+              metrics_list = map metricEntry metrics;
+            };
         in
         lib.foldl' lib.mergeAttrs { } (
           lib.mapAttrsToList (
@@ -158,11 +169,11 @@ in
                   ++ project.extraMetrics;
               in
               lib.optionalAttrs (fastMetrics != [ ]) {
-                "googlecloudmonitoring/${projectId}" = mkReceiver cfg.gcpMonitoring.collectionInterval fastMetrics;
+                "googlecloudmonitoring/${projectId}" = mkReceiver projectId cfg.gcpMonitoring.collectionInterval fastMetrics;
               }
               // lib.optionalAttrs project.storage {
                 "googlecloudmonitoring/${projectId}-storage" =
-                  mkReceiver cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
+                  mkReceiver projectId cfg.gcpMonitoring.storageCollectionInterval gcpStorageMetrics;
               }
             )
           ) cfg.gcpMonitoring.projects
