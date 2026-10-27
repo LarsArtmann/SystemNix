@@ -257,6 +257,15 @@ in
         # 2026-10-08; revisit to 1w once the hot-tier waves land).
         snapshot_preserve_min = "2d";
         snapshot_preserve = "3d";
+        # Catch-up burst cap (2026-10-27 plan S23): btrbk's default
+        # resume_missing=yes re-anchors interrupted receives by taking a
+        # FRESH snapshot pair on every retry — the Oct 23 triple-run and the
+        # 2026-10-26 23:00/23:08/23:29 @home-hermes bursts (stray-target
+        # warnings → resume → extra snapshots on the FULL root exactly when
+        # space matters). no: a broken chain waits for the nightly
+        # garbled-receive GC + the next 23:00 window (worst case a full
+        # re-send ~1h QLC read), never a burst.
+        resume_missing = false;
         # Pool = FOREVER (user decision 2026-08-21): target_preserve_min = "all"
         # disables automatic deletion of received backups entirely. Space cost
         # stays near raw data churn — received subvolumes share extents via CoW

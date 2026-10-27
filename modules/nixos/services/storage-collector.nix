@@ -305,6 +305,23 @@
               maxAgeHours = 25;
             };
           };
+          storage-collector-freshness = {
+            enable = true;
+            vHost.layer = "none";
+            checks = [
+              {
+                name = "Storage Textfile Freshness";
+                group = "Monitoring";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nstorage_collector_fresh 1\n*)"
+                ];
+                alert = "storage-collector textfile gauges are STALE (no successful daemon write within 10 cycles / 600s) — during IO storms this is exactly when capacity/btrfs metrics matter; check systemctl status storage-collector and /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom mtime";
+              }
+            ];
+          };
         };
 
         # ── Storm hardening + freshness alert (2026-10-27 plan S25) ────
@@ -359,26 +376,6 @@
           timerConfig = {
             OnBootSec = "4m";
             OnUnitActiveSec = scanInterval;
-          };
-        };
-
-        services.integration = (lib.optionalAttrs (options ? services.integration)) {
-          storage-collector-freshness = {
-            enable = true;
-            vHost.layer = "none";
-            checks = [
-              {
-                name = "Storage Textfile Freshness";
-                group = "Monitoring";
-                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
-                interval = "5m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*\nstorage_collector_fresh 1\n*)"
-                ];
-                alert = "storage-collector textfile gauges are STALE (no successful daemon write within 10 cycles / 600s) — during IO storms this is exactly when capacity/btrfs metrics matter; check systemctl status storage-collector and /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom mtime";
-              }
-            ];
           };
         };
       };
