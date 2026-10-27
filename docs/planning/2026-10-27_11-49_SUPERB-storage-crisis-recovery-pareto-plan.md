@@ -1,7 +1,7 @@
 # SUPERB — Storage Crisis Recovery: Pareto Plan v2 (the /var layer)
 
 **Created:** 2026-10-27 11:49 CET
-**EXECUTING (instance storage-crisis-executor, 2026-10-27 14:22 CET, HEAD `790bffbdc`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTING (instance storage-crisis-executor, 2026-10-27 14:22 CET, HEAD `790bffbdc`; session-3 night 23:xx, HEAD `2bd54efec+`):** executing (see AGENTS.md plan-execution tombstone). Session-3 (23:30 report): the 98% clock broken via the §f.11 stopgap ladder; S1/S2*/S4/S7/S15/S16/S18/S22*/S24 done or verified; train B (S3+3 fixes) sequencer-armed; S6 pin-gate GREEN (calm-window run pending); S8/S9/S19/S21/S27 remain
 **Date:** 2026-10-27 11:49 CET · **Author session:** 2026-10-27 storage-tier audit (`docs/status/2026-10-27_10-38_var-storage-tier-audit-status.md` + `…_11-36_var-storage-audit-self-review-status.md`)
 **Successor to:** `docs/planning/2026-10-26_10-33_SUPERB-qlc-root-space-crisis-pareto-plan.md` (reconciliation in §5 — that plan was perms-blind on `/var`, estimated ~45G where reality is 516G; its T1 balance ran WITHOUT the frees and could not return chunks — this plan fixes the ordering).
 **Goal:** QLC root `@` back to ≥50G usable headroom + device-unallocated ≥20G; storage usage non-stupid (no redundant unpruned backup legs, backups verifiable, residue gone, growth bounded); every change verified, nothing verschlimmbessert.
