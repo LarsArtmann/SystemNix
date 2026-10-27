@@ -288,22 +288,19 @@ _: {
       # --- paperless API helpers ------------------------------------------
       api() {
         # api METHOD PATH [JSON_BODY] -> response JSON on stdout.
-        local out status body
+        # --fail-with-body prints the error body to stderr on HTTP failure.
         if [ $# -ge 3 ]; then
-          out=$(curl --silent --fail-with-body --max-time 60 \
+          curl --silent --fail-with-body --max-time 60 \
             -H "Authorization: Token ''${PAPERLESS_API_TOKEN}" \
             -H 'Accept: application/json' \
             -H 'Content-Type: application/json' \
-            -X "$1" -d "$3" "''${PAPERLESS_BASE_URL}$2") || return 1
+            -X "$1" -d "$3" "''${PAPERLESS_BASE_URL}$2"
         else
-          out=$(curl --silent --fail-with-body --max-time 60 \
+          curl --silent --fail-with-body --max-time 60 \
             -H "Authorization: Token ''${PAPERLESS_API_TOKEN}" \
             -H 'Accept: application/json' \
-            -X "$1" "''${PAPERLESS_BASE_URL}$2") || return 1
+            -X "$1" "''${PAPERLESS_BASE_URL}$2"
         fi
-        status="''${out##*$'\n'}"
-        body="''${out%$'\n'*}"
-        printf '%s' "$body"
       }
 
       tag_id_of() {
@@ -320,12 +317,22 @@ _: {
         printf '%s' "$id"
       }
 
-      PASS_ID=$(ensure_tag "''${TAG_PASS:?}") || die "cannot resolve pass tag"
-      REVIEW_ID=$(ensure_tag "''${TAG_REVIEW:?}") || die "cannot resolve review tag"
+      # Paperless-API-down during setup: refusal, not unit failure — a
+      # 5-min timer whose unit fails on every sweep of a paperless outage
+      # bricks into startLimitBurst (same reasoning as verdict-down).
+      soft_api_refuse() {
+        c_api=$((c_api + 1))
+        warn "paperless API failure during setup ($*) - skipping sweep, no writes"
+        write_prom
+        exit 0
+      }
+
+      PASS_ID=$(ensure_tag "''${TAG_PASS:?}") || soft_api_refuse "pass tag resolve"
+      REVIEW_ID=$(ensure_tag "''${TAG_REVIEW:?}") || soft_api_refuse "review tag resolve"
       # Exclusion tags resolve WITHOUT create (absent = nobody carries it).
-      ENC_ID=$(tag_id_of "''${TAG_ENCRYPTED}")
-      DONE_ID=$(tag_id_of "''${TAG_COMPLETE}")
-      FAIL_ID=$(tag_id_of "''${TAG_FAILED}")
+      ENC_ID=$(tag_id_of "''${TAG_ENCRYPTED}") || soft_api_refuse "encrypted tag lookup"
+      DONE_ID=$(tag_id_of "''${TAG_COMPLETE}") || soft_api_refuse "complete tag lookup"
+      FAIL_ID=$(tag_id_of "''${TAG_FAILED}") || soft_api_refuse "failed tag lookup"
       declare -a exclude_ids=("$PASS_ID" "$REVIEW_ID")
       [ "$ENC_ID" != MISSING ] && exclude_ids+=("$ENC_ID")
       [ "$DONE_ID" != MISSING ] && exclude_ids+=("$DONE_ID")
@@ -356,7 +363,7 @@ _: {
       # --- candidate fetch -------------------------------------------------
       page_size=$((TRIAGE_MAX_DOCS * 4))
       DOCS=$(api GET "/api/documents/?added__gt=''${st_last_added}&ordering=added&page_size=''${page_size}") \
-        || die "candidate fetch failed"
+        || soft_api_refuse "candidate fetch"
       total_fetched=$(printf '%s' "$DOCS" | jq '.results | length')
 
       processed=0

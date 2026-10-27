@@ -35,6 +35,15 @@ Always-on CPU llama-server (llama.cpp) serving Lars's abliterated Qwen3.6
   on 10-10). Thinking disabled server-side so consumers that send no
   template kwargs (InboxClean's OpenAI client) get it too. Same probe with
   thinking off: 80 tokens, `finish_reason=stop`, valid plan JSON.
+- **paperless-triage verdicts (2026-10-27, via ai-meter):** the confidence
+  gate in front of paperless-gpt asks one-word YES/NO verdicts with
+  `logprobs`+`top_logprobs` (margin = renormalized p(YES)−p(NO), the gate
+  signal — llama-server's logprobs are the REASON this endpoint won over
+  flm v1.0.2, which has none; live-proven: Faktura → margin +0.985, letter
+  → −0.985). ≤5 sequential calls per 5-min sweep, 4k-char prompts, 180 s
+  per-call timeout — negligible against interactive turns, and under CPU
+  starvation it times out into a refusal (nothing routes, the verdict-down
+  Gatus check fires) rather than queuing.
 
 ## Model
 

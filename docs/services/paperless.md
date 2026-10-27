@@ -309,15 +309,85 @@ workflow (A4 gate).
 42/100) every quarter — next due 2027-01-02. Check: native AI version delta
 (new suggestion targets?), paperless-gpt release notes (upstream is ACTIVE),
 flm consumer count vs the connection budget in `docs/services/fastflowlm.md`.
+Since 2026-10-27 this cadence ALSO owns the decision-triage eval loop
+(decision-triage plan §5/T8 — ONE cadence, not two): regenerate the bench
+corpus (`scripts/paperless-decision-bench.sh --corpus`), re-run `--score`
+(now with the top-2 margin gate simulation), and fold owner corrections of
+triage-written tags into the corpus as golden labels. P2 shadow data (when
+the pack answers) supersedes the label-noisy corpus as the accuracy number.
+
+## Decision-triage gate: paperless-triage (2026-10-27, plan P1)
+
+`services.paperless-triage` (module `paperless-triage.nix`, NO listener —
+timer oneshot every 5 min) sits IN FRONT of the paperless-gpt pipeline: a
+document only receives the `paperless-gpt-auto` tag after a LOCAL yes/no
+verdict clears a probability-margin threshold. The gate exists to make the
+2026-10-19 burn class impossible (70 receipts terminal-failed because
+gpt's retry cap outruns any LLM outage — trap 1 above).
+
+- **Verdict provider = llama-chat (:8850, via ai-meter `llama-chat`
+  upstream — owner single-endpoint direction 2026-10-27), NOT FastFlowLM**:
+  the deployed flm v1.0.2 has no logprobs support (binary-proven 2026-10-27;
+  upstream added it later), and llama-server 0.6.0 carries `top_logprobs`
+  (live-proven: Faktura sample → margin +0.985, letter → −0.985). Margin =
+  renormalized p(YES)−p(NO) over the first content token's top_logprobs —
+  raw confidence saturates near 1.0 on right AND wrong answers (bench §d;
+  the T2 margin scoring confirmed Jev's top-2 margin saturates on the
+  doc_class task too). Threshold 0.6 initial, calibrated from shadow data.
+- **Routing:** margin ≥ threshold → add `paperless-gpt-auto` (extraction
+  pipeline runs); below → add `needs-review` (saved view "Needs Review
+  (triage)"); `encrypted`-tagged docs skip (nothing extractable); empty
+  OCR content → needs-review without an LLM call. Writes are ALWAYS
+  additive `bulk_edit modify_tags` — never `PATCH` (trap 3) — and never
+  touch `document_type` (trap 2).
+- **Failure posture (trap 1, inverted):** verdict endpoint down → the
+  sweep writes NOTHING, increments
+  `paperless_triage_refusals_total{reason="verdict_down"}`, and exits 0
+  (repeated nonzero exits would walk the 5-min timer into startLimitBurst
+  and silently brick the unit; the metric + Gatus absence-check alert
+  instead). Docs stay untagged and queued — no terminal states, ever.
+- **Watermark semantics:** candidates = `added__gt` since the last sweep
+  (first run looks back 15 min ONLY — the ~800-doc `new` backlog is
+  deliberately not mass-triaged; backfill is owner-gated). The watermark
+  holds at the OLDEST undecided doc so parse-failures retry; terminally
+  decided docs are MRU-skipped. Max 5 verdicts per sweep (blast-radius
+  cap), 4000 content chars, 180 s per-call timeout, 20 min unit timeout.
+- **Monitoring:** textfile `paperless_triage.prom` (decisions/refusals/
+  backlog/margin/latency/tokens/psi_skip), Gatus unit-state check +
+  verdict-down absence-check, backup-coordination freshness on
+  `/var/lib/paperless-triage/last-sweep` (1 h tolerance), system-health
+  monitored unit. IO-PSI admission via `maintenance-entry-gate` (soft
+  skip — storm-skips surface as freshness staleness, not unit failures).
+- **Token:** runtime-minted (`paperless-triage-token` oneshot,
+  paperless-gpt-token pattern — zero sops); ai-meter client key
+  runtime-minted when the proxy is on. P2 (cloud shadow) + P3 (custom
+  fields) stay gated on the plan §6 owner pack.
+
+**VM test:** `tests/test-paperless-triage.nix` (mock llama-chat with the
+logprobs shape; proves Faktura→PASS, letter→review, entity provisioning,
+metrics, and sweep idempotence end-to-end). Bench calibration:
+`scripts/paperless-decision-bench.sh --score` now prints the per-doc
+top-2 MARGIN column + a margin≥0.6 gate simulation alongside the
+confidence≥0.9 one.
 
 ## Accounting field extraction on scanned invoices (2026-10-19 go-live)
 
-> **DRIFT (live probe 2026-10-27):** the live DB NO LONGER matches this section —
-> no `faktura` tag, `Accounting` carries only the 2 pilot receipts, and the
-> `Invoice number` (1000012) / `Issue date` (1000013) custom fields are ABSENT
-> (only the 6 pre-pilot fields remain). paperless-gpt tag counters are all 0.
-> Likely casualty of the 2026-10-19 SUPERB restore; see docs/todo/services.md
-> "accounting-extraction drift" row before trusting anything below.
+> **DRIFT RESOLVED 2026-10-27 (decision-triage plan T6):** the missing
+> entities are now DECLARED and re-provisioned idempotently —
+> `paperless-gpt.nix` declares the gpt lifecycle tags + `faktura` via
+> `services.paperless-dashboard.ensureTags` and `Invoice number`/`Issue
+> date` via `ensureCustomFields` (create-only, converges on every deploy —
+> a restore can no longer keep them missing). Root cause (live-probe
+> reconstruction): every entity CREATED on 2026-10-19 (faktura tag,
+> `Invoice number` 1000012, `Issue date` 1000013, and `paperless-gpt-auto`
+> 1000010 — created manually at pilot go-live) vanished while ALL
+> pre-pilot entities (gpt's startup tags 1000005-7, the six pilot fields,
+> the whole document set incl. post-restore docs) survived — consistent
+> with the SUPERB-restore window clobbering exactly the pilot-evening DB
+> state; the exact restore mechanics are not reconstructible from the live
+> DB alone. The nightly `paperless-db-backup` (since 2026-09-21) is the
+> real DR path for the next one. Verify post-deploy:
+> `journalctl -u paperless-dashboard-provision | grep ensured`.
 
 The owner's accounting pilot (manually tagged `Accounting` + `faktura` docs,
 fields `Brutto in PLN`/`VAT in PLN` monetary, `VAT percentages`/`NIP`/

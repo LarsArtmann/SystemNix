@@ -171,6 +171,27 @@ Q1/Q2 extend the existing `[decision]` cloud-API-policy row (services.md); Q3 fo
 
 ## 9. Harvest record (this doc's own obligations)
 
+> **EXECUTION RECORD (crush-triage-exec-2026-10-27, T1/T2/T6/T8):** P1
+> LANDED with two evidence-driven design corrections, both binary/live
+> verified and documented in `modules/nixos/services/paperless-triage.nix`
+> + `docs/services/paperless.md` Decision-triage-gate section: (1) the
+> verdict provider is **llama-chat via ai-meter, NOT FastFlowLM** —
+> deployed flm v1.0.2 has zero logprobs support (whole-deployment strings
+> scan; the upstream logprobs docs postdate our pin) while llama-server
+> 0.6.0 carries top_logprobs (live-proven: +0.985/-0.985 sample margins);
+> (2) verdict-down exits 0 + refusal metric + Gatus absence-check instead
+> of nonzero — repeated nonzero exits brick a 5-min timer unit via
+> startLimitBurst (worse visibility than the metric pair). T2 landed in
+> `--score` (per-doc MARGIN column + margin>=0.6 gate sim) and its output
+> SHARPENS the saturation trap: Jev's top-2 margin ALSO saturates on wrong
+> doc_class answers (mean-margin wrong = 1.00/0.99) — threshold choice
+> cannot fix label noise; the P2 shadow remains the only honest accuracy
+> number. T6 landed as declarative ensureTags/ensureCustomFields in
+> paperless-dashboard (gpt lifecycle tags + faktura + both pilot fields;
+> DRIFT box resolved with root-cause reconstruction). T8 folded the eval
+> loop into the A24 quarterly re-audit (runbook Quarterly re-audit
+> section).
+
 - T1: services.md gate-design row **updated this session** (design landed → implement), TODO_LIST queue row synced.
 - Q1/Q2: folded into the existing cloud-API-policy `[decision]` row (pointer to §6 added).
 - T4/T5: NOT queued as `[ready]` (pack-gated); recorded here + in the pack table as the waiting state. They become rows when the pack answers.
