@@ -278,9 +278,10 @@ _: {
         mv -f "$tmp" "$PROM"
       }
 
-      # --- PSI admission gate (soft skip — module header note 3) ----------
-      if ! maintenance-entry-gate --name paperless-triage --psi-max "''${PSI_MAX:-30}" --trip-window-min 0 >/dev/null 2>&1; then
-        warn "IO PSI above band - skipping sweep (last-sweep untouched; freshness alerts after 1h of skips)"
+      # --- PSI admission gate (soft skip — module header note 3). The
+      # refusal REASON rides the WARN line — a silent skip is undebuggable.
+      if ! gate_out=$(maintenance-entry-gate --name paperless-triage --psi-max "''${PSI_MAX:-30}" --trip-window-min 0 2>&1); then
+        warn "admission gate refused - skipping sweep, last-sweep untouched (freshness alerts after 1h of skips): $(printf '%s' "$gate_out" | head -n 1)"
         psi_skip=1
         write_prom
         exit 0
