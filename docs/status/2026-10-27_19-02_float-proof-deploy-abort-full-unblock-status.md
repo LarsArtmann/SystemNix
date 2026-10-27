@@ -57,3 +57,17 @@ The proof error was the LAST link of a chain, not the disease:
 1. Fire the deploy now (forced through the drain-driven IO storm, precedent set 3× today), or wait for a PSI quiet window first?
 2. The un-quiesce decision (drain runbook: agent restart re-fires the 380M backlog drain; `max_events_per_day` cap unverified) — yours, unchanged from the runbook.
 3. The staged registry rows lost their ceremony commit to a daemon race — commit them as-is (content green-proven), or re-run `scripts/float-register.sh` for a fresh no-drift instant pass and its audit-log commit?
+
+## h. Addendum — resumption close-out (~19:55): DEPLOYED as system-956
+
+All three open questions resolved or mooted by events:
+
+1. **Registry rows (Q3 → moot):** the daemon committed the staged green-proven rows itself in `9961a58ea` (19:02:12, `flake/expected-locks.nix` 2-row diff riding the heuristic batch). Verified at resumption: HEAD registry monitor365=`b2809e024…`, dankMaterialShell=`853b3999…` — both match flake.lock exactly. Green-eval probe clean (toplevel drvPath `4mphv8g1…`).
+2. **Deploy (Q1 → landed):** **system-956** active, `/run/current-system` = `vv4ckkahmq31aq7a312rx2d13r308nv1-nixos-system-evo-x2-26.11.20261015.fe13242`, **ANCHOR-OK** (profile system-956 == current-system, compared BY NUMBER per the 2026-10-23 procedure). Landed by a parallel session's deploy of the SAME quiescent tree (`6b1aa4c58`) after a three-actor lock race — the `/tmp/.systemnix-deploy.lock` discipline serialized every attempt, no interference:
+   - Actor A (parallel, ~19:2x): died ~6 min into pre-deploy-check with 1 FAIL — a transient storm-flapped runtime probe (two consecutive clean reruns after: `109 passed, 14 warnings, 0 failed`, script AND app forms). Flap root cause not pinned; PSI avg10 39-48% at the time.
+   - Actor B (mine, 19:41): refused politely (lock held).
+   - Actor C (parallel, PID 89791, ~19:45): completed in ~22 min on the identical tree → system-956.
+3. **Post-deploy (159 PASS / 4 FAIL / 10 WARN):** all 4 FAILs match the previous run's baseline (advisory exit): gitea-runner inactive, signoz traces_missing, nsfw-classifier 212% CPU, node-exporter journal rate — all predate this deploy. This arc's surfaces verified LIVE on 956: monitor365 API+UI 200 (localhost:3001), **agent metrics 9421 now RESPONDING** (dark pre-deploy — the floated generation brought it up), agent connected to server, server-watchdog timer active, CV `/health/live` (version 5165e44) + real-PDF compile + pipeline-store + browser render + proxy-path, tq dashboard + agent pool + `/mnt/pool/services/tq/tq.db`, `mr-sync.home.lan` 200, `tq.home.lan` 200, DMS wallpaper IPC.
+4. **Un-quiesce (Q2 → STILL HELD, owner-gated):** the deploy did NOT restart `monitor365-agent.service` (zero unit transitions in the 40-min journal window — timestamp-scoped read, the sound form) — the drain-refire gate is untouched. The docs/todo/monitoring.md watch row owns it.
+5. **Residue flagged:** `oc-e2-deploy7-sequencer.sh` (PID 2530517) is a zombie waiter — its Phase 1 polls `float-proof-20261027-172949.log` for an `rc=` line that will never arrive (that ceremony was killed mid-run by the daemon race); it sleeps harmlessly in 30s loops but would fire a deploy if anyone ever appended an rc line to that log. Owner may kill PID 2530517.
+6. **Observed at close:** IO PSI avg10 spiked to 75% post-deploy (avg60 79%) — attribution not established here (drain on sdb/sdc is the parallel session's domain); memory PSI ~0, no freeze this arc.
