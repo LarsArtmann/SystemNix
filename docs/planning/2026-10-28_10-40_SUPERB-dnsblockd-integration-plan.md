@@ -1,6 +1,7 @@
 # SUPERB dnsblockd Integration Plan — Pareto Execution Brief
 
-**Authored:** 2026-10-28 10:40 CET · **HEAD at authoring:** `7a59d5e42`
+**Created:** 2026-10-28 10:40 CET · **HEAD at authoring:** `7a59d5e42`
+**EXECUTING (instance crush-dnsblockd-exec-1, 2026-10-28 10:56 CET, HEAD `e5cddf26f`):** executing (see AGENTS.md plan-execution tombstone)
 **Scope:** every OPEN row on the **dnsblockd integration surface** across 9 domain libraries (`services`, `monitoring`, `storage`, `upstream`, `pipeline`, `stability`, `security`, `desktop`, plus the queue) and `ROADMAP.md` Theme 8. Collected by script, not by memory: 60 queue rows + 62 service-library rows + 9 monitoring + 13 upstream + 7 storage + 11 pipeline + 2 stability + 1 security + 1 desktop matched the dnsblockd/DNS pattern, then deduped and premise-checked.
 **Explicitly OUT of scope:** the ~1,300 queue rows owned by other services/subsystems (storage crisis, ai-meter, papermill, cv, forgejo, signoz-GCP, desktop). Same method applies; they are not this brief.
 **Source of truth for findings:** `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html` and `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md`.
