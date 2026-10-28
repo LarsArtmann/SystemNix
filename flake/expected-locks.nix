@@ -45,7 +45,7 @@
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
   crm = "a8b85507183c69f740debc099799fe02e767ea8d";
   crush-config = "028d6402a6aa3257e323a4396880b293730a5e2d";
-  crush-daily = "43da0172a78c637e158fd40db3f7c55f77f03aaa";
+  crush-daily = "6f22def90b405e91f1fca12a2cb58682eb11b543";
   cv = "8243b2d42f0cf7da9caa93ddc5d76946d9a2e46d";
   dankMaterialShell = "ee6e941459f0b38e1b075757370a6a6d4cc3daba";
   discordsync = "e219d156bd38f3d167c2516c7d675d82366165cf";
