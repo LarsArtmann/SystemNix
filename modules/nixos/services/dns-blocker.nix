@@ -262,6 +262,14 @@ _: {
             tls_h3_enabled = cfg.tlsH3Enabled;
             stats_addr = "127.0.0.1";
             stats_port = cfg.statsPort;
+          }
+          // lib.optionalAttrs cfg.pprofEnabled {
+            # Profiles on the loopback stats listener, auth-gated upstream.
+            # Optional (not defaulted) so the rendered YAML stays
+            # byte-identical while the switch is off.
+            pprof_enabled = true;
+          }
+          // {
             # OTLP trace export to the local SigNoz collector (Go
             # otlptracehttp: bare host:port, no scheme — dnsblockd strips an
             # optional http:// itself, internal/otel/otel.go:97). Full
@@ -491,6 +499,29 @@ _: {
           type = types.port;
           default = ports.dns-blocker-stats;
           description = "Port for dnsblockd stats API (localhost only)";
+        };
+
+        pprofEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Mount Go pprof profiles (`/debug/pprof/*`: goroutine, heap, CPU)
+            on the stats listener (upstream koanf key `pprof_enabled`, T212).
+            OFF by default, matching upstream. The listener is loopback-bound
+            AND every pprof route is dashboard-auth gated (upstream
+            `registerPprofHandlers` wraps them in `authed(...)`), so arming it
+            exposes nothing to the LAN without the bearer token.
+
+            Why this switch matters here: the only forensic channel for the
+            2026-08-27 / 2026-09-06 stats-API wedge class is
+            `scripts/dnsblockd-goroutine-dump.sh`, which reads stacks by
+            sending SIGQUIT, i.e. by KILLING the process and losing the live
+            state. With pprof armed, `go tool pprof
+            http://127.0.0.1:<statsPort>/debug/pprof/goroutine?debug=2`
+            (bearer token) captures the same stacks from a RUNNING instance.
+            Owner-gated: leaving it off costs one restart per wedge diagnosis
+            and nothing else.
+          '';
         };
 
         trustedProxies = mkOption {
@@ -1048,6 +1079,20 @@ _: {
             # the sole LAN resolver at boot.
             assertion = cfg.proxyFilterDomains == [ ] || cfg.dnsBlockResponse == "zero_ip";
             message = "services.dns-blocker.proxyFilterDomains requires dnsBlockResponse \"zero_ip\" (upstream ErrFilterNeedsAddressResponse: a DNS lie needs an address).";
+          }
+          {
+            # SystemNix-side assert because UPSTREAM HAS NONE (verified
+            # 2026-10-28 at lock rev f9bb6477: SetInjectScript, server/proxy.go:154,
+            # assigns the string and returns — no scheme, host or reachability
+            # check). A typo'd URL therefore does not fail the unit or any
+            # check: the injection simply never becomes valid markup, the page
+            # renders as if the filter were off, and nothing reports it (the
+            # fail-open-with-no-signal class). Require the shape the proxy can
+            # actually emit into a src="" attribute.
+            assertion =
+              cfg.proxyInjectScriptURL == null
+              || builtins.match "https?://[^[:space:]\"]+" cfg.proxyInjectScriptURL != null;
+            message = "services.dns-blocker.proxyInjectScriptURL must be an http(s) URL with a host (upstream validates NOTHING here — a typo fails open at runtime with no signal).";
           }
           {
             assertion = !(cfg.dnsRateLimitPerSec > 0) || cfg.dnsRateLimitBurst > 0;

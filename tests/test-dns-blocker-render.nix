@@ -111,6 +111,15 @@ let
     }).config.systemd.services.dnsblockd;
   filterExec = filterSvc.serviceConfig.ExecStart;
 
+  pprofExec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      modules = [
+        {
+          services.dns-blocker.pprofEnabled = true;
+        }
+      ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
   # gate-timeout-audit pattern: force the variant's assertions and require
   # the one named by the message infix to be among the FAILED ones (message
   # strings are only coerced for failed assertions — short-circuit &&).
@@ -367,6 +376,25 @@ let
       ];
       msg = "filter-domains x nxdomain assertion does not fire (upstream ErrFilterNeedsAddressResponse must be mirrored)";
     }
+    {
+      ok = policyAssertionFires "proxyInjectScriptURL must be an http(s) URL" [
+        {
+          # Upstream SetInjectScript validates NOTHING (verified at lock rev
+          # f9bb6477) — this wrapper assert is the only guard against a URL
+          # the proxy would fail open on.
+          services.dns-blocker.proxyInjectScriptURL = "/inject/filter.js";
+        }
+      ];
+      msg = "scheme-less proxyInjectScriptURL assertion does not fire (a typo must not reach the runtime fail-open path)";
+    }
+    {
+      ok = !(policyAssertionFires "proxyInjectScriptURL must be an http(s) URL" [
+        {
+          services.dns-blocker.proxyInjectScriptURL = "http://127.0.0.1:8104/inject/filter.js";
+        }
+      ]);
+      msg = "well-formed proxyInjectScriptURL must NOT trip the shape assertion (false-positive guard)";
+    }
     # ── rpi3-dns parity (secondary host, same module) ──
     {
       ok = rpi3.services.dns-blocker.enable;
@@ -420,6 +448,7 @@ else
         ecsExec
         h3Exec
         filterExec
+        pprofExec
         ;
     }
     ''
@@ -430,13 +459,15 @@ else
       fail() { echo "dns-blocker render content failure: $1"; exit 1; }
       H3CFG="''${h3Exec#* -c }"
       FCFG="''${filterExec#* -c }"
+      PPCFG="''${pprofExec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
       [ -f "$ECFG" ] || fail "ecs variant config not realized: $ECFG"
       [ -f "$H3CFG" ] || fail "h3 variant config not realized: $H3CFG"
       [ -f "$FCFG" ] || fail "filter variant config not realized: $FCFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$PPCFG" ] || fail "pprof variant config not realized: $PPCFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" "$PPCFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -480,7 +511,11 @@ else
       filt = json.load(open(sys.argv[6]))
       assert filt["proxy_filter_domains"] == ["porn.example.com"], "filter domains not rendered verbatim"
       assert "proxy_inject_script_url" not in filt, "inject URL leaked into the YAML on the filter variant too"
+      assert "pprof_enabled" not in cfg, "host config must omit pprof_enabled while the switch is OFF (optionalAttrs guard)"
+      pprof = json.load(open(sys.argv[7]))
+      assert pprof["pprof_enabled"] is True, "pprof_enabled enable flag not rendered"
+      assert pprof["stats_addr"] == "127.0.0.1", "pprof rides the loopback stats listener \u2014 a widened stats_addr would expose profiles"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, rpi3 parity OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, pprof, rpi3 parity OK" > $out
     ''
