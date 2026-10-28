@@ -2198,11 +2198,12 @@ echo ""
 echo "=== Projects Subvol ==="
 if systemctl cat home-lars-projects.mount >/dev/null 2>&1; then
   if findmnt -n /home/lars/projects >/dev/null 2>&1; then
-    _pj_src=$(findmnt -no SOURCE /home/lars/projects)
-    if printf '%s' "$_pj_src" | grep -q 'tlc'; then
-      report_pass "Projects subvol - mounted from the Samsung ($_pj_src)"
+    _pj_uuid=$(findmnt -no UUID /home/lars/projects)
+    _hot_uuid=$(findmnt -no UUID /mnt/hot 2>/dev/null || true)
+    if [ -n "$_pj_uuid" ] && [ "$_pj_uuid" = "$_hot_uuid" ]; then
+      report_pass "Projects subvol - mounted from the Samsung (fs uuid ${_pj_uuid}, $(findmnt -no SOURCE /home/lars/projects))"
     else
-      report_fail "Projects subvol - mounted from '$_pj_src' (NOT by-label tlc — wrong universe; the QLC shadow would be live data)"
+      report_fail "Projects subvol - mount fs uuid '${_pj_uuid:-none}' != Samsung /mnt/hot '${_hot_uuid:-none}' (wrong universe; the QLC shadow would be live data)"
     fi
     if systemctl is-enabled --quiet btrbk-projects.timer 2>/dev/null; then
       report_pass "Projects subvol - btrbk-projects timer enabled (23:10 ladder)"
