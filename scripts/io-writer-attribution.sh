@@ -70,11 +70,13 @@ snapshot() {
     done
 }
 
-mkdir -p "$TMP_DIR"
 if [ ${#REPLAY[@]} -gt 0 ]; then
   SNAP1="${REPLAY[0]}"
   SNAP2="${REPLAY[1]}"
 else
+  # Live-capture only: replay mode must not need a writable HOME (the nix
+  # sandbox has none — the selftest runs this exact path).
+  mkdir -p "$TMP_DIR"
   SNAP1="$TMP_DIR/cg-snap1"
   SNAP2="$TMP_DIR/cg-snap2"
   [ -r "$CGROUP_ROOT/io.stat" ] || [ -d "$CGROUP_ROOT" ] || {
@@ -87,6 +89,12 @@ else
 fi
 
 echo "# io attribution: window=${WINDOW}s top=$TOP threshold=${MB_THRESHOLD}MB (rbytes/wbytes deltas per cgroup)"
+# Sanity count line — the 2026-10-28 lesson: a silently broken pass printed
+# "no movers" at PSI 61%. Sampled counts make "broken pass" distinguishable
+# from "quiet writers" before any conclusion is drawn.
+s1n=$(wc -l < "$SNAP1")
+s2n=$(wc -l < "$SNAP2")
+echo "# sanity: ${s1n} cgroups sampled at t0, ${s2n} at t1 — 0/0 = broken pass (do NOT read as calm); nonzero with no ranked lines = writers quiet, check the stalled-scopes view"
 awk -v thr="$((MB_THRESHOLD * 1048576))" '
   NR == FNR { r1[$1] = $2; w1[$1] = $3; next }
   ($1 in r1) {

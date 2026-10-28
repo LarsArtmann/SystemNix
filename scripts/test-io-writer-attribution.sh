@@ -55,8 +55,13 @@ printf '%s\n' "$out" | rg -q 'session-12.scope' || fail "session-12 missing"
 printf '%s\n' "$out" | rg -q 'MB-wr system.slice$' || fail "system.slice write-only delta missing"
 
 # 5. Root aggregate excluded: the replay fixtures have no root io.stat
-# line by construction; assert the header documents the window+threshold.
+#    line by construction; assert the header documents the window+threshold.
 printf '%s\n' "$out" | head -1 | rg -q 'window=.*top=5 threshold=10MB' || fail "header contract drifted"
+
+# 5b. Sanity count line: sampled counts must be present and match the
+#     fixture (5 cgroups at t0, 4 at t1 — one vanished) so a broken pass
+#     can never masquerade as "no movers" (the 2026-10-28 trap).
+printf '%s\n' "$out" | rg -q '# sanity: 5 cgroups sampled at t0, 4 at t1' || fail "sanity count line missing/wrong"
 
 # 6. No argv ever: output must not contain '--jwt-secret' style content —
 # by construction (comm/cgroup names only); assert no '/' beyond cgroup
