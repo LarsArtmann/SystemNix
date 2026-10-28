@@ -1503,6 +1503,18 @@ _: {
                     #     start-limit-hit → dead sole resolver.
                     ManagedOOMPreference = "omit";
                     OOMScoreAdjust = -1000;
+                    # Journal spam gate (2026-10-28 queue item): while the
+                    # SigNoz collector is down (docs/todo/monitoring.md
+                    # SEV1), the exporter logs one ERROR per export attempt —
+                    # 1/min for hours (900+ in a single boot) — burying the
+                    # very journal whose phase lines are the startup-hang
+                    # discriminator. The failure itself stays ALARMED
+                    # out-of-band (dnsblockd-otel-observer + Gatus "DNS
+                    # Blocker OTel Export", dnsblockd_otel_export_broken), so
+                    # this journal copy is redundant signal: deny exactly the
+                    # dead-endpoint dial line, keep every other OTel error
+                    # class visible.
+                    LogFilterPatterns = [ "~*4318: connect: connection refused*" ];
                     # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
                     # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
                     # the unbounded dns_domain/http_path/proxy_domain labels were
