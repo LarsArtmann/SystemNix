@@ -108,6 +108,15 @@
             })
             (serviceDefaults { })
             ioTier.background
+            {
+              # M15 (2026-10-28 stability plan): the standing ~19 MB/s
+              # forever-read (computeDirSize walk) drops from BE/6 to the
+              # IDLE class entirely — storm nights proved BE/6 still
+              # competes for the QLC's 620/295 QD1 IOPS; idle starves the
+              # dashboard exactly when the box needs it to.
+              IOSchedulingClass = lib.mkForce "idle";
+              IOSchedulingPriority = lib.mkForce 0;
+            }
           ];
         };
 

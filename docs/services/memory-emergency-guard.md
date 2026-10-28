@@ -10,6 +10,16 @@
 
 A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.service`) evaluates six trip zones. On ANY trip it stops FastFlowLM, its activation socket, and the resumable I/O churn units (btrbk root/data/pool, both balances, all three scrubs). The socket is restored automatically once memory margins recover AND sustained io PSI has drained below the strict restore bar (`restoreIoSomeAvg60ThresholdPercent`, default 20 — half the Zone 6 trip bar) AND the daily restore budget (default 3) is unspent. The io gate landed 2026-10-25: the restore gate was memory-only, so during a Zone 6 storm (memory gauges healthy, io saturated) the socket restored straight into the storm, the 21.6 GB cold load re-tripped, and the budget burned before noon — capped by 12:34Z with every LLM consumer (browser-history, PMA, paperless enricher) 503ing until a manual `systemctl start fastflowlm.socket`.
 
+**Zone-6 action split (2026-10-28 §7.1a, RATIFIED — live with the next deploy):** zone 6 (IO) trips no longer touch sockets/sacrifice AT ALL. Action table:
+
+| Trip class | Cooldown | Action | Restore |
+| --- | --- | --- | --- |
+| Zones 1–5 (memory) | `actionCooldownSeconds` 600 | stop sockets + sacrifice + churn units (unchanged legacy path) | legacy 4-axis restore gate + budget |
+| Zone 6 (IO), `ioPause.enable` | `ioActionCooldownSeconds` 150 | **SIGSTOP headless driver process groups** named by the per-trip io.stat attribution (config-owned `ioPause.cgroupPatterns`, capped `maxPauseGroups`); sockets stay SERVING | auto SIGCONT at io PSI avg60 < 20 sustained `calmSeconds` (600), hard cap `maxPausedSeconds` (3600) |
+| Zone 6 escalation | — | ≥3 zone-6 trips with trees already paused ⇒ the writer is outside the pausable set ⇒ churn-unit stop (STILL never the socket stop) | churn re-arm path |
+
+The **never-PTY invariant is the hard safety layer**: a process group is pausable only when NO member holds a controlling terminal (one /proc pass builds the tty-owning pgid set; any overlap is skipped + logged) — owner interactive work is structurally unpausable, honoring the 2026-10-07 SIGSTOP-license revocation by construction. Pause state: `stateDir/io-paused` (epoch + pgids), metrics `memory_emergency_guard_io_paused_groups` + `io_pause_epoch_seconds`. The sustained-storm latch (§7.1c) adds `memory_emergency_guard_sustained_storm` (≥2 trips/h held ≥2 h, or ≥20/boot) with its own Gatus check.
+
 | Zone | Signal                                                  | Class                                                                                     |
 | ---- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | 1    | MemAvailable < 5%                                       | absolute floor                                                                            |

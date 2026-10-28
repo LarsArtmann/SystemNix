@@ -167,6 +167,7 @@ _: {
           IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
           PAUSE_FILE="${stateDir}/io-paused"
           PAUSE_CALM_EPOCH_FILE="${stateDir}/io-pause-calm.epoch"
+          STORM_LATCH_EPOCH_FILE="${stateDir}/storm-latch.epoch"
 
           # Kernel data sources, env-overridable for the VM regression test
           # (tests/test-memory-emergency-guard.nix fakes them to exercise the
@@ -998,6 +999,36 @@ _: {
             load_bearing=1
           fi
 
+          # Sustained-storm latch (2026-10-28 §7.1c RATIFIED, plan M20/F53):
+          # >= stormSustainedTripsPerHour CONTINUOUSLY for
+          # >= stormSustainedSeconds (latch epoch file: set on first
+          # qualifying run, cleared the first run that drops under —
+          # sustained means unbroken), OR >= stormBootTripFallback trips
+          # this boot. The hour-scale churn alert (>=6/h) catches the acute
+          # spike; load_bearing catches the per-boot total; THIS catches
+          # the in-between: a 1.3-4/h slow-burn storm that outlasts 2 h
+          # (every freeze #33-#37 boot — census table in stability.md).
+          # Single bursts (2-3 trips, restore, calm) never latch: they
+          # never hold the bar for 2 h.
+          storm_latch_epoch=$(cat "$STORM_LATCH_EPOCH_FILE" 2>/dev/null) || storm_latch_epoch=0
+          storm_latch_epoch="''${storm_latch_epoch:-0}"
+          sustained_storm=0
+          if [ "''${trips_last_hour:-0}" -ge ${toString cfg.stormSustainedTripsPerHour} ]; then
+            if [ "$storm_latch_epoch" -eq 0 ] 2>/dev/null; then
+              echo "$now" > "$STORM_LATCH_EPOCH_FILE"
+              storm_latch_epoch="$now"
+            fi
+            if [ $((now - storm_latch_epoch)) -ge ${toString cfg.stormSustainedSeconds} ]; then
+              sustained_storm=1
+            fi
+          else
+            rm -f "$STORM_LATCH_EPOCH_FILE" 2>/dev/null || true
+            storm_latch_epoch=0
+          fi
+          if [ "$trips_this_boot" -ge ${toString cfg.stormBootTripFallback} ]; then
+            sustained_storm=1
+          fi
+
           # Churn-stop forensics state (written at trip action, see above):
           # emitted on every run while the drain window lasts; once
           # sustained io PSI falls back under the trip threshold the
@@ -1179,6 +1210,15 @@ _: {
             echo "# HELP memory_emergency_guard_load_bearing 1 when trips_this_boot >= ${toString cfg.loadBearingTripsPerBoot} — the boot is in the structural-defect storm class (freeze-#7: 432 trips/boot); root-cause the driver, the guard is only containing it"
             echo "# TYPE memory_emergency_guard_load_bearing gauge"
             echo "memory_emergency_guard_load_bearing ''${load_bearing}"
+
+            echo "# HELP memory_emergency_guard_sustained_storm 1 when trips_last_hour >= ${toString cfg.stormSustainedTripsPerHour} CONTINUOUSLY for >= ${toString cfg.stormSustainedSeconds}s, or trips_this_boot >= ${toString cfg.stormBootTripFallback} — the multi-hour slow-burn storm class (freeze #33-#37; distinct from the >=6/h churn spike and the per-boot load-bearing flip)"
+            echo "# TYPE memory_emergency_guard_sustained_storm gauge"
+            echo "memory_emergency_guard_sustained_storm ''${sustained_storm}"
+            if [ "$storm_latch_epoch" -gt 0 ] 2>/dev/null; then
+              echo "# HELP memory_emergency_guard_storm_latch_epoch_seconds When the current unbroken >= ${toString cfg.stormSustainedTripsPerHour}-trips/h stretch began (absent when not in a qualifying stretch)"
+              echo "# TYPE memory_emergency_guard_storm_latch_epoch_seconds gauge"
+              echo "memory_emergency_guard_storm_latch_epoch_seconds ''${storm_latch_epoch}"
+            fi
 
             echo "# HELP memory_emergency_guard_zone_trips_last_hour Per-zone emergency stops in the last hour — which trip condition dominates the current storm (forensics without journal digs). Trips recorded before 2026-10-01 carry no zone and count only in the aggregate."
             echo "# TYPE memory_emergency_guard_zone_trips_last_hour gauge"
@@ -1505,6 +1545,24 @@ _: {
           type = lib.types.int;
           default = 150;
           description = "Zone-6-only cooldown between emergency actions. IO storms re-trip at cooldown pace and the 600 s memory cadence left 450 s of uncontained storm per cycle (2026-10-28: trips at exactly 600 s spacing while system.slice wrote 19-52 GB per window). The IO action is resumable (SIGSTOP), so a tighter re-arm is safe";
+        };
+
+        stormSustainedTripsPerHour = lib.mkOption {
+          type = lib.types.int;
+          default = 2;
+          description = "Sustained-storm latch bar (2026-10-28 §7.1c): trips_last_hour at or above this CONTINUOUSLY for stormSustainedSeconds latches sustained_storm=1. Census floor of the documented storm band (freeze #33-#37 ran 1.3-11.7 trips/h); single bursts never hold 2 h";
+        };
+
+        stormSustainedSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 7200;
+          description = "Hours-scale sustainment required before the storm latch flips (the churn alert covers hour-scale spikes; this covers the multi-hour slow burn)";
+        };
+
+        stormBootTripFallback = lib.mkOption {
+          type = lib.types.int;
+          default = 20;
+          description = "Per-boot total that latches sustained_storm regardless of hourly rhythm — a 20-trip boot is structural even if the hourly buckets oscillate under the sustained bar";
         };
 
         ioPause = {

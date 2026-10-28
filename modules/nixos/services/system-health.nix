@@ -2696,6 +2696,24 @@ _: {
                 alert = "Memory guard is LOAD-BEARING this boot: memory_emergency_guard_trips_this_boot crossed the per-boot threshold — the guard has repeatedly rescued the boot instead of one bounded event (the 2026-09-28 storm ran 432 trips/boot). Containment is working; the STORM DRIVER is the defect. Check, in order: (1) memory_emergency_guard_trips_this_boot + zone_trips_last_hour — which zone dominates; (2) the guard's per-trip io.stat attribution: journalctl -u memory-emergency-guard --since -4h | grep 'top io'; (3) current PSI/memory regime vs the trip thresholds. Do not restart the guard — find and shed the driver load it keeps stopping.";
               }
               {
+                name = "Memory Guard Sustained Storm";
+                group = "Monitoring";
+                # The multi-hour middle tier (2026-10-28 §7.1c, plan M20):
+                # churn covers the >=6/h SPIKE, load-bearing the per-boot
+                # TOTAL — this covers the slow burn: >=2 trips/h held
+                # CONTINUOUSLY for >=2h, or >=20 trips this boot (every
+                # freeze #33-#37 boot sat in this band for 11-25 h).
+                # One episode = one message until the stretch breaks.
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nmemory_emergency_guard_sustained_storm *)"
+                  "[BODY] != pat(*\nmemory_emergency_guard_sustained_storm 1\n*)"
+                ];
+                alert = "Memory guard SUSTAINED STORM: >=2 trips/hour held continuously for >=2h (or >=20 trips this boot) — this is the freeze #33-#37 slow-burn class, not a spike and not yet load-bearing totals. The box has been storming for hours; containment is cycling. Check: (1) scripts/io-writer-attribution.sh — name the CURRENT driver (storm drivers rotate: battery -> rm -> pool-rescan -> classifier all seen 2026-10-28); (2) scripts/crash-triage.sh --boots 3 for the boot census; (3) whether the Zone-6 action split (ioPause) is deployed yet — if not, every one of these trips is still killing the LLM sockets for nothing.";
+              }
+              {
                 name = "Memory Pressure Warning";
                 group = "Monitoring";
                 # The WARNING tier (2026-08-22): the CRITICAL check fired

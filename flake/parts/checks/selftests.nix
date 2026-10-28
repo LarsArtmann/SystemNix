@@ -100,6 +100,28 @@
               touch $out
             '';
 
+        # nix admission gate fixture selftest (2026-10-28, stability plan
+        # M3/F17): trip-recent + PSI-band refusals, calm/force/ungated
+        # passthroughs, the audit-log contract (subcommand only — argv can
+        # carry secrets), and the unresolvable-real-nix fail-closed path.
+        # The real nix is stubbed: the test never builds anything.
+        nix-admission-gate-selftest =
+          pkgs.runCommand "nix-admission-gate-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                ripgrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/nix-admission-gate.sh "$scratch/nix-admission-gate.sh"
+              cp ${root}/scripts/test-nix-admission-gate.sh "$scratch/test-nix-admission-gate.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test-nix-admission-gate.sh"
+              touch $out
+            '';
+
         # crash-triage fixture selftest (2026-10-28, stability plan
         # M10/F39): stub-journalctl world encoding the double-crash night
         # — reset-reason attribution to the NEXT boot, full-count
