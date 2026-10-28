@@ -1768,8 +1768,10 @@ _: {
                     exit 0
                   fi
                   # Atomic replace so a reader (or a torn run) never sees a
-                  # half-written allowlist.
-                  tmp="${allowlistBackupDir}/.allowlist.tmp"
+                  # half-written allowlist. mktemp'd name (sticky-dir
+                  # collision class) + trap so a torn run leaves no litter.
+                  tmp="$(mktemp "${allowlistBackupDir}/.allowlist.tmp.XXXXXX")"
+                  trap 'rm -f "$tmp"' EXIT
                   install -m 600 "$src" "$tmp"
                   mv -f "$tmp" "${allowlistBackupDir}/allowlist"
                   echo "dnsblockd-allowlist-backup: copied allowlist ($(stat -c %s "$src") bytes)"

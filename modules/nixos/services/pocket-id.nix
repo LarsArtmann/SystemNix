@@ -339,64 +339,64 @@ _: {
                 fi
               ''}
               ${lib.optionalString (!client.isPublic) ''
-              OLD_SECRET_IDS=""
-              ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
-                # Force regeneration = REPLACE the client's whole secret set:
-                # delete the file so the skip-if-exists check below falls
-                # through to POST /secrets, then prune every secret that
-                # existed BEFORE the rotation (the new POST /secrets value is
-                # the only survivor). Without the prune an old secret keeps
-                # authenticating forever on the 2.17+ multi-secret model —
-                # and any previously leaked value stays live. Only after the
-                # stale-list guard: a list entry that survives past its one
-                # intended deploy must fail LOUDLY, not re-rotate silently
-                # on every subsequent run (dnsblockd 2026-08-22
-                # LoadCredential-desync class).
-                if [ -f "$SECRET_FILE" ]; then
-                  if ! ${lib.getExe regenerateGuard} "$SECRET_FILE" "${client.clientId}" "${toString cfg.provision.regenerateGuardWindowHours}"; then
+                OLD_SECRET_IDS=""
+                ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
+                  # Force regeneration = REPLACE the client's whole secret set:
+                  # delete the file so the skip-if-exists check below falls
+                  # through to POST /secrets, then prune every secret that
+                  # existed BEFORE the rotation (the new POST /secrets value is
+                  # the only survivor). Without the prune an old secret keeps
+                  # authenticating forever on the 2.17+ multi-secret model —
+                  # and any previously leaked value stays live. Only after the
+                  # stale-list guard: a list entry that survives past its one
+                  # intended deploy must fail LOUDLY, not re-rotate silently
+                  # on every subsequent run (dnsblockd 2026-08-22
+                  # LoadCredential-desync class).
+                  if [ -f "$SECRET_FILE" ]; then
+                    if ! ${lib.getExe regenerateGuard} "$SECRET_FILE" "${client.clientId}" "${toString cfg.provision.regenerateGuardWindowHours}"; then
+                      exit 1
+                    fi
+                    echo "  Force-regenerating secret (listed in regenerateSecretsFor)..."
+                    OLD_SECRET_IDS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100" | jq -r --arg cid "${client.clientId}" '.data[] | select(.id == $cid) | .credentials.secrets[]?.id' 2>/dev/null | tr '\n' ' ' | sed 's/ $//')
+                    rm -f "$SECRET_FILE"
+                  fi
+                ''}
+                if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
+                  echo "  Secret file already exists."
+                else
+                  echo "  Generating client secret..."
+                  SECRET_RESPONSE=$(curl -s --compressed --max-time 30 -X POST \
+                    -H "X-API-Key: $API_KEY" \
+                    "$API_URL/api/oidc/clients/$CLIENT_ID/secrets" 2>&1 || true)
+                  CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
+
+                  if [ -n "$CLIENT_SECRET" ]; then
+                    # Atomic write: a guard kill between truncate and write would
+                    # leave a TRUNCATED secret that crash-loops the consumer
+                    # (near-miss during the 2026-09-29 storm night — the
+                    # memory-emergency-guard kills units under IO pressure).
+                    # mktemp (0600) + mv in the same dir = same-fs rename; readers
+                    # see the old or the new secret, never a partial one.
+                    TMP_SECRET="$(mktemp "$CLIENT_SECRETS_DIR/.secret.${client.clientId}.XXXXXX")"
+                    printf '%s\n' "$CLIENT_SECRET" > "$TMP_SECRET"
+                    chmod 640 "$TMP_SECRET"
+                    chown pocket-id:pocket-id "$TMP_SECRET"
+                    mv -f "$TMP_SECRET" "$SECRET_FILE"
+                    echo "  Secret written to $SECRET_FILE"
+                    if [ -n "$OLD_SECRET_IDS" ]; then
+                      for SID in $OLD_SECRET_IDS; do
+                        PRUNE_CODE=$(api_delete "/api/oidc/clients/$CLIENT_ID/secrets/$SID" | tail -1)
+                        case "$PRUNE_CODE" in
+                          200|204|404) echo "  Pruned pre-rotation secret $SID (HTTP $PRUNE_CODE).";;
+                          *) echo "  WARNING: prune of pre-rotation secret $SID returned HTTP $PRUNE_CODE — it remains ACTIVE" >&2;;
+                        esac
+                      done
+                    fi
+                  else
+                    echo "  ERROR: Failed to generate secret for '${client.name}' — consumer service will crash-loop" >&2
                     exit 1
                   fi
-                  echo "  Force-regenerating secret (listed in regenerateSecretsFor)..."
-                  OLD_SECRET_IDS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100" | jq -r --arg cid "${client.clientId}" '.data[] | select(.id == $cid) | .credentials.secrets[]?.id' 2>/dev/null | tr '\n' ' ' | sed 's/ $//')
-                  rm -f "$SECRET_FILE"
                 fi
-              ''}
-              if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
-                echo "  Secret file already exists."
-              else
-                echo "  Generating client secret..."
-                SECRET_RESPONSE=$(curl -s --compressed --max-time 30 -X POST \
-                  -H "X-API-Key: $API_KEY" \
-                  "$API_URL/api/oidc/clients/$CLIENT_ID/secrets" 2>&1 || true)
-                CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
-
-                if [ -n "$CLIENT_SECRET" ]; then
-                  # Atomic write: a guard kill between truncate and write would
-                  # leave a TRUNCATED secret that crash-loops the consumer
-                  # (near-miss during the 2026-09-29 storm night — the
-                  # memory-emergency-guard kills units under IO pressure).
-                  # mktemp (0600) + mv in the same dir = same-fs rename; readers
-                  # see the old or the new secret, never a partial one.
-                  TMP_SECRET="$(mktemp "$CLIENT_SECRETS_DIR/.secret.${client.clientId}.XXXXXX")"
-                  printf '%s\n' "$CLIENT_SECRET" > "$TMP_SECRET"
-                  chmod 640 "$TMP_SECRET"
-                  chown pocket-id:pocket-id "$TMP_SECRET"
-                  mv -f "$TMP_SECRET" "$SECRET_FILE"
-                  echo "  Secret written to $SECRET_FILE"
-                  if [ -n "$OLD_SECRET_IDS" ]; then
-                    for SID in $OLD_SECRET_IDS; do
-                      PRUNE_CODE=$(api_delete "/api/oidc/clients/$CLIENT_ID/secrets/$SID" | tail -1)
-                      case "$PRUNE_CODE" in
-                        200|204|404) echo "  Pruned pre-rotation secret $SID (HTTP $PRUNE_CODE).";;
-                        *) echo "  WARNING: prune of pre-rotation secret $SID returned HTTP $PRUNE_CODE — it remains ACTIVE" >&2;;
-                      esac
-                    done
-                  fi
-                else
-                  echo "  ERROR: Failed to generate secret for '${client.name}' — consumer service will crash-loop" >&2
-                  exit 1
-                fi
-              fi
               ''}
             ''
           ) (cfg.provision.oidcClients ++ cfg.provision.extraOidcClients)}

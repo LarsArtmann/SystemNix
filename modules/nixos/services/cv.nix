@@ -111,8 +111,13 @@
       # NINTH RE-STALE 2026-10-28 float: cv@1e22121 spec N9Zsy7bb, got
       # MeDzARcT (first-hand,
       # ~/.cache/lockfloat/float-proof-20261028-214409.log).
+      # TENTH RE-STALE 2026-10-28 (deploy-fix session, post-push float): the
+      # fix-bearing tip dd201874b (42 commits past 1e22121, pushed with owner
+      # permission) spec MeDzARcT, got autqYveR (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261028-cvdd201.log) — the strand
+      # keeps flapping; this hash tracks the LOCKED rev.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-MeDzARcTIloBTqPbhgklw1Z+FsKtp5LiHS4GMCVCNFA=";
+        vendorHash = "sha256-autqYveRmHaCno4bfxfpdDgo1OkQi2hxHCd+9HuYon0=";
       };
     in
     {
