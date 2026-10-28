@@ -1248,554 +1248,567 @@ _: {
           }
         ];
 
-        systemd = {
-          services = {
-            # Bridges the Pocket ID client secret into an env file dnsblockd
-            # can consume (LoadCredential pattern — mirrors browser-history).
-            # When the secret is missing the unit exits 0 WITHOUT writing the
-            # env file, so SSO stays off instead of crash-looping the DNS
-            # path.
-            dnsblockd-oidc-secret =
-              lib.mkIf (cfg.oidcIssuerURL != "" && (config.services.pocket-id-config.provision.enable or false))
-                {
-                  description = "dnsblockd — Pocket ID OIDC client secret provisioning";
-                  after = [ "pocket-id-provision.service" ];
-                  wants = [ "pocket-id-provision.service" ];
-                  before = [ "dnsblockd.service" ];
-                  wantedBy = [ "dnsblockd.service" ];
-                  startLimitBurst = 5;
-                  startLimitIntervalSec = 300;
+        # lib.mkMerge, NOT `{ … } // (lib.mkIf …)`: `//` is a SHALLOW merge,
+        # so the conditional allowlist-backup leg's `services.<unit>` keys
+        # REPLACED the whole resolver `services` attrset (and, worse, its
+        # mkIf attrset made the module system treat the ENTIRE `systemd`
+        # value as conditional on cfg.allowlistBackup.enable — so on pool
+        # hosts the only surviving units were the backup pair, and on
+        # pool-less hosts dnsblockd had no unit at all). Live 2026-10-28:
+        # evo-x2 built etc/systemd/system/dnsblockd.service with NO
+        # ExecStart, and flake/parts/checks/dnsblockd-guards.nix went red on
+        # the missing ExecStartPost. mkMerge merges the nested option paths
+        # deeply, which is what both legs need.
+        systemd = lib.mkMerge [
+          {
+            services = {
+              # Bridges the Pocket ID client secret into an env file dnsblockd
+              # can consume (LoadCredential pattern — mirrors browser-history).
+              # When the secret is missing the unit exits 0 WITHOUT writing the
+              # env file, so SSO stays off instead of crash-looping the DNS
+              # path.
+              dnsblockd-oidc-secret =
+                lib.mkIf (cfg.oidcIssuerURL != "" && (config.services.pocket-id-config.provision.enable or false))
+                  {
+                    description = "dnsblockd — Pocket ID OIDC client secret provisioning";
+                    after = [ "pocket-id-provision.service" ];
+                    wants = [ "pocket-id-provision.service" ];
+                    before = [ "dnsblockd.service" ];
+                    wantedBy = [ "dnsblockd.service" ];
+                    startLimitBurst = 5;
+                    startLimitIntervalSec = 300;
 
-                  serviceConfig = {
-                    Type = "oneshot";
-                    RemainAfterExit = true;
-                    StateDirectory = "dnsblockd-oidc";
-                    LoadCredential = [
-                      "pocket-id-secret:${
-                        config.services.pocket-id.dataDir or "/var/lib/pocket-id"
-                      }/client-secrets/${cfg.oidcClientID}"
-                    ];
+                    serviceConfig = {
+                      Type = "oneshot";
+                      RemainAfterExit = true;
+                      StateDirectory = "dnsblockd-oidc";
+                      LoadCredential = [
+                        "pocket-id-secret:${
+                          config.services.pocket-id.dataDir or "/var/lib/pocket-id"
+                        }/client-secrets/${cfg.oidcClientID}"
+                      ];
+                    };
+
+                    path = [ pkgs.coreutils ];
+
+                    script = ''
+                      SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
+
+                      if [ ! -s "$SECRET_FILE" ]; then
+                        echo "dnsblockd-oidc-secret: Pocket ID secret not found — removing env file so SSO stays off"
+                        rm -f "${oidcEnvFile}"
+                        exit 0
+                      fi
+
+                      install -d -m 0755 "$(dirname "${oidcEnvFile}")"
+                      echo "DNSBLOCKD_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
+                      chmod 600 "${oidcEnvFile}"
+                      echo "dnsblockd-oidc-secret: Pocket ID client secret written"
+                    '';
                   };
 
-                  path = [ pkgs.coreutils ];
+              dnsblockd-attach-ip = {
+                description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
+                wantedBy = [ "multi-user.target" ];
+                after = [
+                  "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+                  "network-online.target"
+                ];
+                wants = [
+                  "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+                  "network-online.target"
+                ];
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                restartTriggers = [ (lib.getExe attachIPScript) ];
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    RemainAfterExit = true;
+                    ExecStart = lib.getExe attachIPScript;
+                  }
+                  (harden {
+                    ProtectHome = false;
+                    CapabilityBoundingSet = "CAP_NET_ADMIN";
+                    NoNewPrivileges = false;
+                  })
+                  (serviceOneshotDefaults { })
+                ];
+              };
 
-                  script = ''
-                    SECRET_FILE="$CREDENTIALS_DIRECTORY/pocket-id-secret"
-
-                    if [ ! -s "$SECRET_FILE" ]; then
-                      echo "dnsblockd-oidc-secret: Pocket ID secret not found — removing env file so SSO stays off"
-                      rm -f "${oidcEnvFile}"
-                      exit 0
-                    fi
-
-                    install -d -m 0755 "$(dirname "${oidcEnvFile}")"
-                    echo "DNSBLOCKD_OIDC_CLIENT_SECRET=$(cat "$SECRET_FILE")" > "${oidcEnvFile}"
-                    chmod 600 "${oidcEnvFile}"
-                    echo "dnsblockd-oidc-secret: Pocket ID client secret written"
-                  '';
+              dnsblockd = {
+                description = "DNS Block Page Server + Embedded Resolver";
+                after = [
+                  "dnsblockd-attach-ip.service"
+                  "sops-nix.service"
+                ]
+                ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
+                wants = [
+                  "dnsblockd-attach-ip.service"
+                  "sops-nix.service"
+                ]
+                ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
+                wantedBy = [ "multi-user.target" ];
+                # P0: Discord page alongside the desktop toast — the sole
+                # resolver's death must not depend on the desktop session.
+                onFailure = onFailureP0;
+                restartTriggers = [
+                  dnsblockdConfigFile
+                  pkgs.dnsblockd
+                ];
+                unitConfig = {
+                  StartLimitBurst = 10;
+                  StartLimitIntervalSec = 120;
                 };
 
-            dnsblockd-attach-ip = {
-              description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
-              wantedBy = [ "multi-user.target" ];
+                serviceConfig =
+                  let
+                    initScript = pkgs.writeShellApplication {
+                      name = "dnsblockd-init";
+                      runtimeInputs = [ pkgs.coreutils ];
+                      text = ''
+                        install -d /var/lib/dnsblockd
+                      '';
+                    };
+                    secretCheck = pkgs.writeShellApplication {
+                      name = "dnsblockd-wait-secrets";
+                      runtimeInputs = [ pkgs.coreutils ];
+                      text = ''
+                        for _ in $(seq 1 30); do
+                          if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
+                            exit 0
+                          fi
+                          sleep 1
+                        done
+                        echo "ERROR: sops secrets not available after 30s: ${caCert}, ${caKey}" >&2
+                        exit 1
+                      '';
+                    };
+                    # Readiness smoke for the 2026-10-12 13:06 startup-hang class:
+                    # a wedged init logs phases 1-3 then never reaches
+                    # listeners_start, and with Type=simple the unit reads
+                    # "active" immediately so TimeoutStartSec NEVER fires — the
+                    # resolver died silently for 8+ minutes host-wide. Bounded
+                    # poll (listenerWaitBudgetSec, journal-sized — see the
+                    # module let): no listener = fail the
+                    # start job → Restart=always retries + OnFailure alerts,
+                    # instead of an invisible outage. If the probe tooling
+                    # itself cannot run inside the sandbox, fail OPEN (warn) —
+                    # a monitoring blind spot must never kill the sole DNS
+                    # resolver.
+                    # The observed contract is DNS on `ports.dns-blocker` (53)
+                    # over UDP and TCP — the same value the render writes into
+                    # dns_port, so gate and binary cannot drift apart. A single
+                    # transport is warned, not failed: a degraded resolver is
+                    # not a dead one, and killing it is the outage class this
+                    # gate exists to prevent. checks.dnsblockd-readiness-gate
+                    # proves both verdicts against fixture listener maps.
+                    # Poll budget: 300s, JOURNAL-MEASURED (2026-10-20 task-queue
+                    # verification of the original 60s guess — which sat INSIDE
+                    # the healthy-but-slow distribution and would have killed
+                    # the resolver mid-load: observed healthy tail spans 61.5s
+                    # to 255.5s start→listeners (worst: the 2026-10-18 01:42:40
+                    # boot, server_init 246.4s, the 3.9M-entry blocklist load;
+                    # second-worst 115.5s on 2026-10-19 04:05). A killed healthy
+                    # start restart-churns to
+                    # StartLimitBurst = sole-resolver downtime caused by its own
+                    # guard — the exact heavyDB-gate class this budget had to
+                    # respect. Binding + envelope relationship live at the
+                    # module let (listenerWaitBudgetSec/timeoutStartBudgetSec).
+                    listenerWait = pkgs.writeShellApplication {
+                      name = "dnsblockd-wait-listener";
+                      runtimeInputs = [
+                        pkgs.coreutils
+                        pkgs.iproute2
+                      ];
+                      text = ''
+                        # Port contract: the gate proves the port the binary
+                        # ACTUALLY serves DNS on, never the block page. This
+                        # probed cfg.blockPort until 2026-10-28 — a Caddy-adjacent
+                        # proxy port — leaving the sole-resolver contract
+                        # unwatched by its own gate (review issue #2).
+                        dnsPort="${toString ports.dns-blocker}"
+                        # Test seams, set ONLY by checks.dnsblockd-readiness-gate.
+                        # Production resolves both from these defaults; the unit
+                        # inherits no ambient environment.
+                        budget="''${DNSBLOCKD_LISTENER_WAIT_BUDGET:-${toString listenerWaitBudgetSec}}"
+                        ssCmd="''${DNSBLOCKD_LISTENER_WAIT_SS:-ss}"
+
+                        # ss -ltnu = listening TCP + UDP, numeric. The local-address
+                        # column ends at whitespace, so suffix-matching ":<port>" is
+                        # exact (:5355 ends in 5355, never in ":53").
+                        # A function, not `$( "$var" … )`: the repo's nullglob audit
+                        # rejects command indirection through a variable (an empty
+                        # $var silently runs nothing).
+                        ssProbe() {
+                          "$ssCmd" -ltnuH
+                        }
+                        probe() {
+                          dnsTcp=0
+                          dnsUdp=0
+                          local proto _state _recvq _sendq localAddr _peer
+                          while read -r proto _state _recvq _sendq localAddr _peer; do
+                            case "$localAddr" in
+                              *":$dnsPort") ;;
+                              *) continue ;;
+                            esac
+                            case "$proto" in
+                              tcp) dnsTcp=1 ;;
+                              udp) dnsUdp=1 ;;
+                            esac
+                          done <<< "$listeners"
+                        }
+                        sample() {
+                          if ! listeners="$(ssProbe 2>/dev/null)"; then
+                            return 2
+                          fi
+                          probe
+                        }
+
+                        if ! sample; then
+                          echo "WARNING: ss probe unavailable in sandbox — listener smoke skipped" >&2
+                          exit 0
+                        fi
+                        for _ in $(seq 1 "$budget"); do
+                          if [ "$dnsTcp" = 1 ] && [ "$dnsUdp" = 1 ]; then
+                            exit 0
+                          fi
+                          if [ "$dnsTcp" = 1 ] || [ "$dnsUdp" = 1 ]; then
+                            # A serving resolver that answers on ONE transport is
+                            # degraded (oversized answers SERVFAIL), not dead.
+                            # Failing the start job here would restart-churn to
+                            # StartLimitBurst — the outage this gate exists to
+                            # prevent. Warn loudly, keep serving.
+                            echo "WARNING: dnsblockd answers :$dnsPort on one transport only (tcp=$dnsTcp udp=$dnsUdp) after ${toString listenerWaitBudgetSec}s budget" >&2
+                            exit 0
+                          fi
+                          sleep 1
+                          sample || true
+                        done
+                        echo "ERROR: no :$dnsPort listener (UDP or TCP) after ''${budget}s — init wedged before listeners_start. Discriminator: journalctl -u dnsblockd | grep 'startup phase complete' (3 of 5 phases, or 5/5 with no bound port = bind failure, not a hang)" >&2
+                        exit 1
+                      '';
+                    };
+                  in
+                  lib.mkMerge [
+                    (harden {
+                      MemoryMax = "4G";
+                      ProtectSystem = "strict";
+                      CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
+                      AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+                    })
+                    (serviceDefaults { RestartSec = "3s"; })
+                    # BE/5 heavyDB: the boot-time 3.9M-entry blocklist build is a
+                    # bulk read (the 2026-08-31 gate class: ~2min under IO load)
+                    # and the resolver is latency-sensitive while it serves —
+                    # exactly the heavyDB contract (llama-chat/clickhouse tier).
+                    ioTier.heavyDB
+                    {
+                      Type = "simple";
+                      # OOM-kill immunity for the sole DNS resolver. dnsblockd was
+                      # oomd-killed 730x/day at the old 50%/20s threshold (2026-08-04
+                      # root cause); the 60%/30s threshold + MemoryMax=4G +
+                      # GOMEMLIMIT below tamed it, but under /system.slice PSI
+                      # >60%/30s oomd still ranks it by memory.current. Killing DNS
+                      # cascades: local *.home.lan zones die, deploys block on
+                      # cache.home.lan resolution (2026-09-02 class), and
+                      # sev1/Discord alerting goes blind with the resolver down.
+                      #   ManagedOOMPreference = "omit": oomd NEVER selects this
+                      #     unit as a kill candidate (nix-daemon + PMA precedent;
+                      #     the directive DEFAULT "auto" means oomd WILL kill).
+                      #   OOMScoreAdjust = -1000: the kernel global-OOM killer
+                      #     picks it last (nix-daemon doctrine). A kernel kill
+                      #     costs ~2min of DNS while the 3.9M-entry blocklist
+                      #     reloads, and a kill loop hits StartLimitBurst →
+                      #     start-limit-hit → dead sole resolver.
+                      ManagedOOMPreference = "omit";
+                      OOMScoreAdjust = -1000;
+                      # Journal spam gate (2026-10-28 queue item): while the
+                      # SigNoz collector is down (docs/todo/monitoring.md
+                      # SEV1), the exporter logs one ERROR per export attempt —
+                      # 1/min for hours (900+ in a single boot) — burying the
+                      # very journal whose phase lines are the startup-hang
+                      # discriminator. The failure itself stays ALARMED
+                      # out-of-band (dnsblockd-otel-observer + Gatus "DNS
+                      # Blocker OTel Export", dnsblockd_otel_export_broken), so
+                      # this journal copy is redundant signal: deny exactly the
+                      # dead-endpoint dial line, keep every other OTel error
+                      # class visible.
+                      LogFilterPatterns = [ "~*4318: connect: connection refused*" ];
+                      # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
+                      # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
+                      # the unbounded dns_domain/http_path/proxy_domain labels were
+                      # dropped and domains bucketed into domain_category; a
+                      # regression test (internal/server/cardinality_regression_test.go)
+                      # guards it. Span attributes are exempt (never create metric
+                      # series). The SQLite tracking-write pressure remains: without
+                      # GOMEMLIMIT, Go's default GOGC=100 doesn't trigger GC until
+                      # heap doubles (~1.2G from 600M base), but MemoryMax kills first.
+                      Environment = [
+                        "GOMEMLIMIT=3GiB"
+                        # Full goroutine dump on SIGQUIT (kill -QUIT) — the
+                        # 2026-08-27 stats-API wedge healed before a dump could
+                        # be taken; "all" ensures every goroutine's stack lands
+                        # in the journal when the runbook fires it (default
+                        # GOTRACEBACK=single shows only the signal-handling
+                        # goroutine, which says nothing about a mutex deadlock).
+                        "GOTRACEBACK=all"
+                      ]
+                      ++ lib.optionals (cfg.proxyInjectScriptURL != null) [
+                        # proxy_inject_script_url rides the env, never the YAML:
+                        # the config file is world-readable in the Nix store and
+                        # the URL can carry a sensitive host:port (same rule as
+                        # upstream's auth_token). Koanf's flat env mapping turns
+                        # DNSBLOCKD_PROXY_INJECT_SCRIPT_URL into the
+                        # proxy_inject_script_url config key.
+                        "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=${cfg.proxyInjectScriptURL}"
+                      ];
+                      EnvironmentFile = lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
+                      ExecStartPre = [
+                        "+-${lib.getExe initScript}"
+                        "${lib.getExe secretCheck}"
+                      ];
+                      ExecStartPost = [ "${lib.getExe listenerWait}" ];
+                      # Rendered from timeoutStartBudgetSec (the wait-listener
+                      # poll's envelope ceiling — assertion below keeps the two
+                      # coherent). 330s = above the measured 255.5s healthy tail
+                      # so the POLL, not the envelope, is what expires first.
+                      TimeoutStartSec = "${toString timeoutStartBudgetSec}s";
+                      ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
+                      StateDirectory = "dnsblockd";
+                      WorkingDirectory = "/var/lib/dnsblockd";
+                      RestrictAddressFamilies = [
+                        "AF_INET"
+                        "AF_INET6"
+                        "AF_NETLINK"
+                      ];
+                    }
+                  ];
+              };
+            };
+
+            # ── dnsblockd freshness observer (2026-10-28 plan T05 + T14) ──
+            # WHY: the OTel exporter's failure is currently reported BY the
+            # exporter, so when the collector dies the only metric that knows is
+            # the one that cannot be delivered (`/health` read 46,764
+            # `otelInternalErrors` while 964 refusals piled up in one boot, and
+            # `signoz-coverage` still claimed `wiring = "config"`). The stats API
+            # (:9090) keeps serving during exactly that failure, so sampling the
+            # exporter's own error counter from it — into the node_exporter
+            # textfile dir, which Gatus reads out-of-band — makes the breakage
+            # visible without SigNoz.
+            # Same unit also ages the loaded blocklists: they are SRI-pinned to a
+            # mutable branch, so they only refresh when someone runs
+            # scripts/dns-update.sh. Nothing else in the system knows how old the
+            # blocking data is.
+            # Fail-CLOSED: any sampling failure writes observer_ok 0 rather than
+            # leaving the last good file in place (a frozen gauge is the
+            # phantom-green class this repo keeps re-learning).
+            # Threshold: 30 days. Refresh cadence stays MANUAL (the script edits
+            # hashes in the tree and needs a commit + deploy); the metric is the
+            # alarm, not a timer that would auto-commit on its own.
+            services.dnsblockd-otel-observer = {
+              description = "dnsblockd OTel-export + blocklist-freshness gauges for node_exporter";
+              inherit onFailure;
+              serviceConfig = {
+                Type = "oneshot";
+                StateDirectory = "dnsblockd-otel";
+                # Below the 60s sampling interval: a hung sample must not freeze
+                # the gauges (the stats API wedges under IO starvation — the
+                # 2026-08-27/09-06 class).
+                TimeoutStartSec = "45s";
+                ExecStart =
+                  let
+                    observer = pkgs.writeShellApplication {
+                      name = "dnsblockd-otel-observer";
+                      runtimeInputs = [
+                        pkgs.coreutils
+                        pkgs.curl
+                        pkgs.gnugrep
+                        pkgs.gawk
+                      ];
+                      text = ''
+                        OUT_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                        OUT="$OUT_DIR/dnsblockd-freshness.prom"
+                        STATE="/var/lib/dnsblockd-otel/last-errors"
+                        HASH_FILE="/var/lib/dnsblockd-otel/blocklist-set-hash"
+                        SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
+                        STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
+                        STALE_SECONDS=$((30 * 86400))
+                        blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
+
+                        observer_ok=0
+                        errors_now=""
+                        body="$(curl -fsS --max-time 10 "$STATS" 2>/dev/null)" && observer_ok=1 || observer_ok=0
+                        if [ -n "$body" ]; then
+                          errors_now="$(printf '%s\n' "$body" | grep -m1 '^dnsblockd_otel_errors_total' | awk '{print $NF}' || true)"
+                        fi
+                        # digits only — validated with grep because the shell
+                        # case-glob for an empty alternative needs two single
+                        # quotes, which Nix's indented-string escapes swallow
+                        printf '%s' "$errors_now" | grep -Eq '^[0-9]+$' || observer_ok=0
+
+                        prev=0
+                        if [ -r "$STATE" ]; then
+                          prev="$(cat "$STATE" 2>/dev/null || true)"
+                        fi
+                        printf '%s' "$prev" | grep -Eq '^[0-9]+$' || prev=0
+                        export_broken=0
+                        if [ "$observer_ok" = 1 ]; then
+                          # A counter that MOVED means the exporter failed since
+                          # the previous sample (it only increments on export
+                          # errors) — the dead-collector signature.
+                          if [ "$errors_now" -gt "$prev" ]; then
+                            export_broken=1
+                          fi
+                          printf '%s\n' "$errors_now" > "$STATE"
+                        else
+                          # Blind sample: assume broken so the alarm fires.
+                          export_broken=1
+                        fi
+
+                        # Nix store files carry mtime = 1 (reproducibility), so
+                        # the FILE age says nothing. What is measurable is when
+                        # the LOADED SET last changed: this observer hashes the
+                        # list and remembers the first moment it saw that hash,
+                        # which is exactly "how long since anyone refreshed".
+                        now_epoch="$(date +%s)"
+                        if [ "''${#blocklists[@]}" -eq 0 ]; then
+                          # tempAllowAll: blocking is deliberately off, so
+                          # staleness is not a failure mode here.
+                          blocklist_age=-1
+                          refresh_stale=0
+                        else
+                          set_hash="$(printf '%s\n' "''${blocklists[@]}" | md5sum | cut -d' ' -f1)"
+                          prev_hash=""
+                          since=""
+                          if [ -r "$HASH_FILE" ]; then prev_hash="$(cat "$HASH_FILE" 2>/dev/null || true)"; fi
+                          if [ -r "$SINCE_FILE" ]; then since="$(cat "$SINCE_FILE" 2>/dev/null || true)"; fi
+                          if [ "$set_hash" != "$prev_hash" ] || ! printf '%s' "$since" | grep -Eq '^[0-9]+$'; then
+                            since="$now_epoch"
+                            printf '%s\n' "$set_hash" > "$HASH_FILE"
+                            printf '%s\n' "$since" > "$SINCE_FILE"
+                          fi
+                          blocklist_age=$((now_epoch - since))
+                          refresh_stale=0
+                          if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
+                        fi
+
+                        mkdir -p "$OUT_DIR"
+                        TMP="$(mktemp "$OUT_DIR/dnsblockd-freshness.prom.XXXXXX")"
+                        chmod 644 "$TMP"
+                        trap 'rm -f "$TMP"' EXIT
+                        {
+                          echo "# HELP dnsblockd_otel_errors_total Export errors the dnsblockd exporter itself counted (source: stats API, survives a dead collector)"
+                          echo "# TYPE dnsblockd_otel_errors_total counter"
+                          echo "dnsblockd_otel_errors_total ''${errors_now:-0}"
+                          echo "# HELP dnsblockd_otel_export_broken 1 when the exporter failed since the last sample or the sample was blind"
+                          echo "# TYPE dnsblockd_otel_export_broken gauge"
+                          echo "dnsblockd_otel_export_broken $export_broken"
+                          echo "# HELP dnsblockd_otel_observer_ok 0 when this observer could not read the stats API (gauges are blind)"
+                          echo "# TYPE dnsblockd_otel_observer_ok gauge"
+                          echo "dnsblockd_otel_observer_ok $observer_ok"
+                          echo "# HELP dnsblockd_blocklist_age_seconds Seconds since the loaded blocklist SET last changed (store mtimes are always 1)"
+                          echo "# TYPE dnsblockd_blocklist_age_seconds gauge"
+                          echo "dnsblockd_blocklist_age_seconds $blocklist_age"
+                          echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the loaded set has not changed in 30 days"
+                          echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
+                          echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
+                        } > "$TMP"
+                        mv "$TMP" "$OUT"
+                      '';
+                    };
+                  in
+                  "${lib.getExe observer}";
+              };
+            };
+            timers.dnsblockd-otel-observer = {
+              description = "Sample dnsblockd exporter + blocklist freshness gauges";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnBootSec = "90s";
+                OnUnitActiveSec = "60s";
+                AccuracySec = "10s";
+              };
+            };
+
+            # ── Permanent-allowlist backup (2026-10-28 queue item) ──
+            # The allowlist (dashboard "Always allow" judgement) is the only
+            # irreversible dnsblockd artifact, and it lives on hot/dnsblockd —
+            # an UNSNAPSHOTTED subvol (doctrine C; btrbk covers hot/forgejo
+            # only). A daily copy onto the HDD pool (restic-app-dumps dir,
+            # backup-coordination freshness row) gives it an independent,
+            # pool-side copy; tracking/journal loss stays acceptable analytics
+            # loss and is deliberately NOT copied.
+            # Units are enable-gated: pool-less hosts (rpi3) never get
+            # RequiresMountsFor dependencies on a mount that does not exist
+            # (browser-history dbBackup precedent).
+            tmpfiles.rules = [
+              (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
+              (mkStateDir "/var/lib/dnsblockd-otel" "0755" "root" "root")
+            ];
+          }
+          (lib.mkIf cfg.allowlistBackup.enable {
+            services.dnsblockd-allowlist-backup-dir = mkPoolDirUnit {
+              description = "Create dnsblockd allowlist backup directory on the HDD pool";
+              directory = allowlistBackupDir;
+            };
+
+            services.dnsblockd-allowlist-backup = {
+              description = "Copy the permanent dnsblockd allowlist onto the HDD pool";
               after = [
-                "sys-subsystem-net-devices-${cfg.blockInterface}.device"
-                "network-online.target"
+                "dnsblockd.service"
+                "dnsblockd-allowlist-backup-dir.service"
               ];
-              wants = [
-                "sys-subsystem-net-devices-${cfg.blockInterface}.device"
-                "network-online.target"
-              ];
+              wants = [ "dnsblockd-allowlist-backup-dir.service" ];
+              unitConfig.RequiresMountsFor = [ allowlistBackupDir ];
               inherit onFailure;
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
-              restartTriggers = [ (lib.getExe attachIPScript) ];
               serviceConfig = lib.mkMerge [
                 {
                   Type = "oneshot";
-                  RemainAfterExit = true;
-                  ExecStart = lib.getExe attachIPScript;
+                  ExecStart = pkgs.writeShellScript "dnsblockd-allowlist-backup" ''
+                    set -euo pipefail
+                    src="/var/lib/dnsblockd/allowlist"
+                    if [ ! -s "$src" ]; then
+                      # An empty/missing allowlist is a legitimate state (no
+                      # "Always allow" verdict yet) — never overwrite the last
+                      # good copy with nothing.
+                      echo "dnsblockd-allowlist-backup: no allowlist content yet — keeping last copy"
+                      exit 0
+                    fi
+                    # Atomic replace so a reader (or a torn run) never sees a
+                    # half-written allowlist. mktemp'd name (sticky-dir
+                    # collision class) + trap so a torn run leaves no litter.
+                    tmp="$(mktemp "${allowlistBackupDir}/.allowlist.tmp.XXXXXX")"
+                    trap 'rm -f "$tmp"' EXIT
+                    install -m 600 "$src" "$tmp"
+                    mv -f "$tmp" "${allowlistBackupDir}/allowlist"
+                    echo "dnsblockd-allowlist-backup: copied allowlist ($(stat -c %s "$src") bytes)"
+                  '';
+                  ReadWritePaths = [ allowlistBackupDir ];
                 }
-                (harden {
-                  ProtectHome = false;
-                  CapabilityBoundingSet = "CAP_NET_ADMIN";
-                  NoNewPrivileges = false;
-                })
+                (harden { MemoryMax = "256M"; })
                 (serviceOneshotDefaults { })
+                ioTier.background
               ];
             };
 
-            dnsblockd = {
-              description = "DNS Block Page Server + Embedded Resolver";
-              after = [
-                "dnsblockd-attach-ip.service"
-                "sops-nix.service"
-              ]
-              ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
-              wants = [
-                "dnsblockd-attach-ip.service"
-                "sops-nix.service"
-              ]
-              ++ lib.optionals (cfg.oidcIssuerURL != "") [ "dnsblockd-oidc-secret.service" ];
-              wantedBy = [ "multi-user.target" ];
-              # P0: Discord page alongside the desktop toast — the sole
-              # resolver's death must not depend on the desktop session.
-              onFailure = onFailureP0;
-              restartTriggers = [
-                dnsblockdConfigFile
-                pkgs.dnsblockd
-              ];
-              unitConfig = {
-                StartLimitBurst = 10;
-                StartLimitIntervalSec = 120;
+            timers.dnsblockd-allowlist-backup = {
+              description = "Daily permanent-allowlist copy to the HDD pool";
+              wantedBy = [ "timers.target" ];
+              after = [ "mnt-pool.mount" ];
+              timerConfig = {
+                # 02:55 — staggered off browser-history (02:15) and miniflux
+                # (02:45); clear of the 03:00-04:00 heavy dump cluster.
+                OnCalendar = "*-*-* 02:55:00";
+                Persistent = true;
               };
-
-              serviceConfig =
-                let
-                  initScript = pkgs.writeShellApplication {
-                    name = "dnsblockd-init";
-                    runtimeInputs = [ pkgs.coreutils ];
-                    text = ''
-                      install -d /var/lib/dnsblockd
-                    '';
-                  };
-                  secretCheck = pkgs.writeShellApplication {
-                    name = "dnsblockd-wait-secrets";
-                    runtimeInputs = [ pkgs.coreutils ];
-                    text = ''
-                      for _ in $(seq 1 30); do
-                        if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
-                          exit 0
-                        fi
-                        sleep 1
-                      done
-                      echo "ERROR: sops secrets not available after 30s: ${caCert}, ${caKey}" >&2
-                      exit 1
-                    '';
-                  };
-                  # Readiness smoke for the 2026-10-12 13:06 startup-hang class:
-                  # a wedged init logs phases 1-3 then never reaches
-                  # listeners_start, and with Type=simple the unit reads
-                  # "active" immediately so TimeoutStartSec NEVER fires — the
-                  # resolver died silently for 8+ minutes host-wide. Bounded
-                  # poll (listenerWaitBudgetSec, journal-sized — see the
-                  # module let): no listener = fail the
-                  # start job → Restart=always retries + OnFailure alerts,
-                  # instead of an invisible outage. If the probe tooling
-                  # itself cannot run inside the sandbox, fail OPEN (warn) —
-                  # a monitoring blind spot must never kill the sole DNS
-                  # resolver.
-                  # The observed contract is DNS on `ports.dns-blocker` (53)
-                  # over UDP and TCP — the same value the render writes into
-                  # dns_port, so gate and binary cannot drift apart. A single
-                  # transport is warned, not failed: a degraded resolver is
-                  # not a dead one, and killing it is the outage class this
-                  # gate exists to prevent. checks.dnsblockd-readiness-gate
-                  # proves both verdicts against fixture listener maps.
-                  # Poll budget: 300s, JOURNAL-MEASURED (2026-10-20 task-queue
-                  # verification of the original 60s guess — which sat INSIDE
-                  # the healthy-but-slow distribution and would have killed
-                  # the resolver mid-load: observed healthy tail spans 61.5s
-                  # to 255.5s start→listeners (worst: the 2026-10-18 01:42:40
-                  # boot, server_init 246.4s, the 3.9M-entry blocklist load;
-                  # second-worst 115.5s on 2026-10-19 04:05). A killed healthy
-                  # start restart-churns to
-                  # StartLimitBurst = sole-resolver downtime caused by its own
-                  # guard — the exact heavyDB-gate class this budget had to
-                  # respect. Binding + envelope relationship live at the
-                  # module let (listenerWaitBudgetSec/timeoutStartBudgetSec).
-                  listenerWait = pkgs.writeShellApplication {
-                    name = "dnsblockd-wait-listener";
-                    runtimeInputs = [
-                      pkgs.coreutils
-                      pkgs.iproute2
-                    ];
-                    text = ''
-                      # Port contract: the gate proves the port the binary
-                      # ACTUALLY serves DNS on, never the block page. This
-                      # probed cfg.blockPort until 2026-10-28 — a Caddy-adjacent
-                      # proxy port — leaving the sole-resolver contract
-                      # unwatched by its own gate (review issue #2).
-                      dnsPort="${toString ports.dns-blocker}"
-                      # Test seams, set ONLY by checks.dnsblockd-readiness-gate.
-                      # Production resolves both from these defaults; the unit
-                      # inherits no ambient environment.
-                      budget="''${DNSBLOCKD_LISTENER_WAIT_BUDGET:-${toString listenerWaitBudgetSec}}"
-                      ssCmd="''${DNSBLOCKD_LISTENER_WAIT_SS:-ss}"
-
-                      # ss -ltnu = listening TCP + UDP, numeric. The local-address
-                      # column ends at whitespace, so suffix-matching ":<port>" is
-                      # exact (:5355 ends in 5355, never in ":53").
-                      # A function, not `$( "$var" … )`: the repo's nullglob audit
-                      # rejects command indirection through a variable (an empty
-                      # $var silently runs nothing).
-                      ssProbe() {
-                        "$ssCmd" -ltnuH
-                      }
-                      probe() {
-                        dnsTcp=0
-                        dnsUdp=0
-                        local proto _state _recvq _sendq localAddr _peer
-                        while read -r proto _state _recvq _sendq localAddr _peer; do
-                          case "$localAddr" in
-                            *":$dnsPort") ;;
-                            *) continue ;;
-                          esac
-                          case "$proto" in
-                            tcp) dnsTcp=1 ;;
-                            udp) dnsUdp=1 ;;
-                          esac
-                        done <<< "$listeners"
-                      }
-                      sample() {
-                        if ! listeners="$(ssProbe 2>/dev/null)"; then
-                          return 2
-                        fi
-                        probe
-                      }
-
-                      if ! sample; then
-                        echo "WARNING: ss probe unavailable in sandbox — listener smoke skipped" >&2
-                        exit 0
-                      fi
-                      for _ in $(seq 1 "$budget"); do
-                        if [ "$dnsTcp" = 1 ] && [ "$dnsUdp" = 1 ]; then
-                          exit 0
-                        fi
-                        if [ "$dnsTcp" = 1 ] || [ "$dnsUdp" = 1 ]; then
-                          # A serving resolver that answers on ONE transport is
-                          # degraded (oversized answers SERVFAIL), not dead.
-                          # Failing the start job here would restart-churn to
-                          # StartLimitBurst — the outage this gate exists to
-                          # prevent. Warn loudly, keep serving.
-                          echo "WARNING: dnsblockd answers :$dnsPort on one transport only (tcp=$dnsTcp udp=$dnsUdp) after ${toString listenerWaitBudgetSec}s budget" >&2
-                          exit 0
-                        fi
-                        sleep 1
-                        sample || true
-                      done
-                      echo "ERROR: no :$dnsPort listener (UDP or TCP) after ''${budget}s — init wedged before listeners_start. Discriminator: journalctl -u dnsblockd | grep 'startup phase complete' (3 of 5 phases, or 5/5 with no bound port = bind failure, not a hang)" >&2
-                      exit 1
-                    '';
-                  };
-                in
-                lib.mkMerge [
-                  (harden {
-                    MemoryMax = "4G";
-                    ProtectSystem = "strict";
-                    CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-                    AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-                  })
-                  (serviceDefaults { RestartSec = "3s"; })
-                  # BE/5 heavyDB: the boot-time 3.9M-entry blocklist build is a
-                  # bulk read (the 2026-08-31 gate class: ~2min under IO load)
-                  # and the resolver is latency-sensitive while it serves —
-                  # exactly the heavyDB contract (llama-chat/clickhouse tier).
-                  ioTier.heavyDB
-                  {
-                    Type = "simple";
-                    # OOM-kill immunity for the sole DNS resolver. dnsblockd was
-                    # oomd-killed 730x/day at the old 50%/20s threshold (2026-08-04
-                    # root cause); the 60%/30s threshold + MemoryMax=4G +
-                    # GOMEMLIMIT below tamed it, but under /system.slice PSI
-                    # >60%/30s oomd still ranks it by memory.current. Killing DNS
-                    # cascades: local *.home.lan zones die, deploys block on
-                    # cache.home.lan resolution (2026-09-02 class), and
-                    # sev1/Discord alerting goes blind with the resolver down.
-                    #   ManagedOOMPreference = "omit": oomd NEVER selects this
-                    #     unit as a kill candidate (nix-daemon + PMA precedent;
-                    #     the directive DEFAULT "auto" means oomd WILL kill).
-                    #   OOMScoreAdjust = -1000: the kernel global-OOM killer
-                    #     picks it last (nix-daemon doctrine). A kernel kill
-                    #     costs ~2min of DNS while the 3.9M-entry blocklist
-                    #     reloads, and a kill loop hits StartLimitBurst →
-                    #     start-limit-hit → dead sole resolver.
-                    ManagedOOMPreference = "omit";
-                    OOMScoreAdjust = -1000;
-                    # Journal spam gate (2026-10-28 queue item): while the
-                    # SigNoz collector is down (docs/todo/monitoring.md
-                    # SEV1), the exporter logs one ERROR per export attempt —
-                    # 1/min for hours (900+ in a single boot) — burying the
-                    # very journal whose phase lines are the startup-hang
-                    # discriminator. The failure itself stays ALARMED
-                    # out-of-band (dnsblockd-otel-observer + Gatus "DNS
-                    # Blocker OTel Export", dnsblockd_otel_export_broken), so
-                    # this journal copy is redundant signal: deny exactly the
-                    # dead-endpoint dial line, keep every other OTel error
-                    # class visible.
-                    LogFilterPatterns = [ "~*4318: connect: connection refused*" ];
-                    # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
-                    # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
-                    # the unbounded dns_domain/http_path/proxy_domain labels were
-                    # dropped and domains bucketed into domain_category; a
-                    # regression test (internal/server/cardinality_regression_test.go)
-                    # guards it. Span attributes are exempt (never create metric
-                    # series). The SQLite tracking-write pressure remains: without
-                    # GOMEMLIMIT, Go's default GOGC=100 doesn't trigger GC until
-                    # heap doubles (~1.2G from 600M base), but MemoryMax kills first.
-                    Environment = [
-                      "GOMEMLIMIT=3GiB"
-                      # Full goroutine dump on SIGQUIT (kill -QUIT) — the
-                      # 2026-08-27 stats-API wedge healed before a dump could
-                      # be taken; "all" ensures every goroutine's stack lands
-                      # in the journal when the runbook fires it (default
-                      # GOTRACEBACK=single shows only the signal-handling
-                      # goroutine, which says nothing about a mutex deadlock).
-                      "GOTRACEBACK=all"
-                    ]
-                    ++ lib.optionals (cfg.proxyInjectScriptURL != null) [
-                      # proxy_inject_script_url rides the env, never the YAML:
-                      # the config file is world-readable in the Nix store and
-                      # the URL can carry a sensitive host:port (same rule as
-                      # upstream's auth_token). Koanf's flat env mapping turns
-                      # DNSBLOCKD_PROXY_INJECT_SCRIPT_URL into the
-                      # proxy_inject_script_url config key.
-                      "DNSBLOCKD_PROXY_INJECT_SCRIPT_URL=${cfg.proxyInjectScriptURL}"
-                    ];
-                    EnvironmentFile = lib.optionals (cfg.oidcIssuerURL != "") [ oidcEnvFile ];
-                    ExecStartPre = [
-                      "+-${lib.getExe initScript}"
-                      "${lib.getExe secretCheck}"
-                    ];
-                    ExecStartPost = [ "${lib.getExe listenerWait}" ];
-                    # Rendered from timeoutStartBudgetSec (the wait-listener
-                    # poll's envelope ceiling — assertion below keeps the two
-                    # coherent). 330s = above the measured 255.5s healthy tail
-                    # so the POLL, not the envelope, is what expires first.
-                    TimeoutStartSec = "${toString timeoutStartBudgetSec}s";
-                    ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
-                    StateDirectory = "dnsblockd";
-                    WorkingDirectory = "/var/lib/dnsblockd";
-                    RestrictAddressFamilies = [
-                      "AF_INET"
-                      "AF_INET6"
-                      "AF_NETLINK"
-                    ];
-                  }
-                ];
             };
-          };
-
-          # ── dnsblockd freshness observer (2026-10-28 plan T05 + T14) ──
-          # WHY: the OTel exporter's failure is currently reported BY the
-          # exporter, so when the collector dies the only metric that knows is
-          # the one that cannot be delivered (`/health` read 46,764
-          # `otelInternalErrors` while 964 refusals piled up in one boot, and
-          # `signoz-coverage` still claimed `wiring = "config"`). The stats API
-          # (:9090) keeps serving during exactly that failure, so sampling the
-          # exporter's own error counter from it — into the node_exporter
-          # textfile dir, which Gatus reads out-of-band — makes the breakage
-          # visible without SigNoz.
-          # Same unit also ages the loaded blocklists: they are SRI-pinned to a
-          # mutable branch, so they only refresh when someone runs
-          # scripts/dns-update.sh. Nothing else in the system knows how old the
-          # blocking data is.
-          # Fail-CLOSED: any sampling failure writes observer_ok 0 rather than
-          # leaving the last good file in place (a frozen gauge is the
-          # phantom-green class this repo keeps re-learning).
-          # Threshold: 30 days. Refresh cadence stays MANUAL (the script edits
-          # hashes in the tree and needs a commit + deploy); the metric is the
-          # alarm, not a timer that would auto-commit on its own.
-          services.dnsblockd-otel-observer = {
-            description = "dnsblockd OTel-export + blocklist-freshness gauges for node_exporter";
-            inherit onFailure;
-            serviceConfig = {
-              Type = "oneshot";
-              StateDirectory = "dnsblockd-otel";
-              # Below the 60s sampling interval: a hung sample must not freeze
-              # the gauges (the stats API wedges under IO starvation — the
-              # 2026-08-27/09-06 class).
-              TimeoutStartSec = "45s";
-              ExecStart =
-                let
-                  observer = pkgs.writeShellApplication {
-                    name = "dnsblockd-otel-observer";
-                    runtimeInputs = [
-                      pkgs.coreutils
-                      pkgs.curl
-                      pkgs.gnugrep
-                      pkgs.gawk
-                    ];
-                    text = ''
-                      OUT_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
-                      OUT="$OUT_DIR/dnsblockd-freshness.prom"
-                      STATE="/var/lib/dnsblockd-otel/last-errors"
-                      HASH_FILE="/var/lib/dnsblockd-otel/blocklist-set-hash"
-                      SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
-                      STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
-                      STALE_SECONDS=$((30 * 86400))
-                      blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
-
-                      observer_ok=0
-                      errors_now=""
-                      body="$(curl -fsS --max-time 10 "$STATS" 2>/dev/null)" && observer_ok=1 || observer_ok=0
-                      if [ -n "$body" ]; then
-                        errors_now="$(printf '%s\n' "$body" | grep -m1 '^dnsblockd_otel_errors_total' | awk '{print $NF}' || true)"
-                      fi
-                      # digits only — validated with grep because the shell
-                      # case-glob for an empty alternative needs two single
-                      # quotes, which Nix's indented-string escapes swallow
-                      printf '%s' "$errors_now" | grep -Eq '^[0-9]+$' || observer_ok=0
-
-                      prev=0
-                      if [ -r "$STATE" ]; then
-                        prev="$(cat "$STATE" 2>/dev/null || true)"
-                      fi
-                      printf '%s' "$prev" | grep -Eq '^[0-9]+$' || prev=0
-                      export_broken=0
-                      if [ "$observer_ok" = 1 ]; then
-                        # A counter that MOVED means the exporter failed since
-                        # the previous sample (it only increments on export
-                        # errors) — the dead-collector signature.
-                        if [ "$errors_now" -gt "$prev" ]; then
-                          export_broken=1
-                        fi
-                        printf '%s\n' "$errors_now" > "$STATE"
-                      else
-                        # Blind sample: assume broken so the alarm fires.
-                        export_broken=1
-                      fi
-
-                      # Nix store files carry mtime = 1 (reproducibility), so
-                      # the FILE age says nothing. What is measurable is when
-                      # the LOADED SET last changed: this observer hashes the
-                      # list and remembers the first moment it saw that hash,
-                      # which is exactly "how long since anyone refreshed".
-                      now_epoch="$(date +%s)"
-                      if [ "''${#blocklists[@]}" -eq 0 ]; then
-                        # tempAllowAll: blocking is deliberately off, so
-                        # staleness is not a failure mode here.
-                        blocklist_age=-1
-                        refresh_stale=0
-                      else
-                        set_hash="$(printf '%s\n' "''${blocklists[@]}" | md5sum | cut -d' ' -f1)"
-                        prev_hash=""
-                        since=""
-                        if [ -r "$HASH_FILE" ]; then prev_hash="$(cat "$HASH_FILE" 2>/dev/null || true)"; fi
-                        if [ -r "$SINCE_FILE" ]; then since="$(cat "$SINCE_FILE" 2>/dev/null || true)"; fi
-                        if [ "$set_hash" != "$prev_hash" ] || ! printf '%s' "$since" | grep -Eq '^[0-9]+$'; then
-                          since="$now_epoch"
-                          printf '%s\n' "$set_hash" > "$HASH_FILE"
-                          printf '%s\n' "$since" > "$SINCE_FILE"
-                        fi
-                        blocklist_age=$((now_epoch - since))
-                        refresh_stale=0
-                        if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
-                      fi
-
-                      mkdir -p "$OUT_DIR"
-                      TMP="$(mktemp "$OUT_DIR/dnsblockd-freshness.prom.XXXXXX")"
-                      chmod 644 "$TMP"
-                      trap 'rm -f "$TMP"' EXIT
-                      {
-                        echo "# HELP dnsblockd_otel_errors_total Export errors the dnsblockd exporter itself counted (source: stats API, survives a dead collector)"
-                        echo "# TYPE dnsblockd_otel_errors_total counter"
-                        echo "dnsblockd_otel_errors_total ''${errors_now:-0}"
-                        echo "# HELP dnsblockd_otel_export_broken 1 when the exporter failed since the last sample or the sample was blind"
-                        echo "# TYPE dnsblockd_otel_export_broken gauge"
-                        echo "dnsblockd_otel_export_broken $export_broken"
-                        echo "# HELP dnsblockd_otel_observer_ok 0 when this observer could not read the stats API (gauges are blind)"
-                        echo "# TYPE dnsblockd_otel_observer_ok gauge"
-                        echo "dnsblockd_otel_observer_ok $observer_ok"
-                        echo "# HELP dnsblockd_blocklist_age_seconds Seconds since the loaded blocklist SET last changed (store mtimes are always 1)"
-                        echo "# TYPE dnsblockd_blocklist_age_seconds gauge"
-                        echo "dnsblockd_blocklist_age_seconds $blocklist_age"
-                        echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the loaded set has not changed in 30 days"
-                        echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
-                        echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
-                      } > "$TMP"
-                      mv "$TMP" "$OUT"
-                    '';
-                  };
-                in
-                "${lib.getExe observer}";
-            };
-          };
-          timers.dnsblockd-otel-observer = {
-            description = "Sample dnsblockd exporter + blocklist freshness gauges";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnBootSec = "90s";
-              OnUnitActiveSec = "60s";
-              AccuracySec = "10s";
-            };
-          };
-
-          # ── Permanent-allowlist backup (2026-10-28 queue item) ──
-          # The allowlist (dashboard "Always allow" judgement) is the only
-          # irreversible dnsblockd artifact, and it lives on hot/dnsblockd —
-          # an UNSNAPSHOTTED subvol (doctrine C; btrbk covers hot/forgejo
-          # only). A daily copy onto the HDD pool (restic-app-dumps dir,
-          # backup-coordination freshness row) gives it an independent,
-          # pool-side copy; tracking/journal loss stays acceptable analytics
-          # loss and is deliberately NOT copied.
-          # Units are enable-gated: pool-less hosts (rpi3) never get
-          # RequiresMountsFor dependencies on a mount that does not exist
-          # (browser-history dbBackup precedent).
-          tmpfiles.rules = [
-            (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
-            (mkStateDir "/var/lib/dnsblockd-otel" "0755" "root" "root")
-          ];
-        }
-        // (lib.mkIf cfg.allowlistBackup.enable {
-          services.dnsblockd-allowlist-backup-dir = mkPoolDirUnit {
-            description = "Create dnsblockd allowlist backup directory on the HDD pool";
-            directory = allowlistBackupDir;
-          };
-
-          services.dnsblockd-allowlist-backup = {
-            description = "Copy the permanent dnsblockd allowlist onto the HDD pool";
-            after = [
-              "dnsblockd.service"
-              "dnsblockd-allowlist-backup-dir.service"
-            ];
-            wants = [ "dnsblockd-allowlist-backup-dir.service" ];
-            unitConfig.RequiresMountsFor = [ allowlistBackupDir ];
-            inherit onFailure;
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                ExecStart = pkgs.writeShellScript "dnsblockd-allowlist-backup" ''
-                  set -euo pipefail
-                  src="/var/lib/dnsblockd/allowlist"
-                  if [ ! -s "$src" ]; then
-                    # An empty/missing allowlist is a legitimate state (no
-                    # "Always allow" verdict yet) — never overwrite the last
-                    # good copy with nothing.
-                    echo "dnsblockd-allowlist-backup: no allowlist content yet — keeping last copy"
-                    exit 0
-                  fi
-                  # Atomic replace so a reader (or a torn run) never sees a
-                  # half-written allowlist. mktemp'd name (sticky-dir
-                  # collision class) + trap so a torn run leaves no litter.
-                  tmp="$(mktemp "${allowlistBackupDir}/.allowlist.tmp.XXXXXX")"
-                  trap 'rm -f "$tmp"' EXIT
-                  install -m 600 "$src" "$tmp"
-                  mv -f "$tmp" "${allowlistBackupDir}/allowlist"
-                  echo "dnsblockd-allowlist-backup: copied allowlist ($(stat -c %s "$src") bytes)"
-                '';
-                ReadWritePaths = [ allowlistBackupDir ];
-              }
-              (harden { MemoryMax = "256M"; })
-              (serviceOneshotDefaults { })
-              ioTier.background
-            ];
-          };
-
-          timers.dnsblockd-allowlist-backup = {
-            description = "Daily permanent-allowlist copy to the HDD pool";
-            wantedBy = [ "timers.target" ];
-            after = [ "mnt-pool.mount" ];
-            timerConfig = {
-              # 02:55 — staggered off browser-history (02:15) and miniflux
-              # (02:45); clear of the 03:00-04:00 heavy dump cluster.
-              OnCalendar = "*-*-* 02:55:00";
-              Persistent = true;
-            };
-          };
-        });
+          })
+        ];
 
         # Service-integration registry entry: unit-state monitoring + the Pocket
         # ID OIDC client (native OIDC in dnsblockd itself —
