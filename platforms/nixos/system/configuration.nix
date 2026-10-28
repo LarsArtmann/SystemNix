@@ -1338,6 +1338,11 @@ in
       # for the full incident narrative).
       memory-emergency-guard = {
         enable = true;
+        # Zone-6 action split (2026-10-28 §7.1a RATIFIED, plan §10 design):
+        # IO-class trips SIGSTOP headless driver trees (never-PTY invariant)
+        # instead of stopping the LLM sockets — wrong-tool 4x proven. Live
+        # with the next deploy; VM-test legs in tests/test-memory-emergency-guard.nix.
+        ioPause.enable = true;
       };
 
       # 2026-10-04 freeze #8–#14 prevention: flips amd_pstate

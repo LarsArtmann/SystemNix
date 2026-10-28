@@ -1,5 +1,10 @@
 # perSystem devShells. Split out of flake.nix 2026-10-08.
-{ inputs, mkLarsPackages, ... }:
+{
+  inputs,
+  mkLarsPackages,
+  root,
+  ...
+}:
 {
   perSystem =
     {
@@ -33,6 +38,18 @@
             ++ [
               (mkLarsPackages system).buildflow
             ];
+          # Battery-class admission gate (2026-10-28 §7.1b, stability plan
+          # M3/F16): a `nix` wrapper FIRST on PATH refuses build/shell/
+          # develop/run/flake-check while the guard recently tripped or PSI
+          # is in the storm band (deploy.sh's pressure doctrine at the
+          # typing layer — the freezes #14-#33 battery class). Owner login
+          # shells never include this PATH prefix => owner unaffected by
+          # construction. Escape: ADMISSION_GATE_FORCE=1 (audit-logged).
+          shellHook = ''
+            export PATH="${pkgs.runCommand "nix-admission-gate" { } ''
+              install -Dm555 ${root}/scripts/nix-admission-gate.sh $out/bin/nix
+            ''}/bin:$PATH"
+          '';
         };
       }
       # Quickshell development — hot-reload QML shell development.
