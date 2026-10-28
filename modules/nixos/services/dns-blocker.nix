@@ -1510,8 +1510,140 @@ _: {
             };
           };
 
+          # ── dnsblockd freshness observer (2026-10-28 plan T05 + T14) ──
+          # WHY: the OTel exporter's failure is currently reported BY the
+          # exporter, so when the collector dies the only metric that knows is
+          # the one that cannot be delivered (`/health` read 46,764
+          # `otelInternalErrors` while 964 refusals piled up in one boot, and
+          # `signoz-coverage` still claimed `wiring = "config"`). The stats API
+          # (:9090) keeps serving during exactly that failure, so sampling the
+          # exporter's own error counter from it — into the node_exporter
+          # textfile dir, which Gatus reads out-of-band — makes the breakage
+          # visible without SigNoz.
+          # Same unit also ages the loaded blocklists: they are SRI-pinned to a
+          # mutable branch, so they only refresh when someone runs
+          # scripts/dns-update.sh. Nothing else in the system knows how old the
+          # blocking data is.
+          # Fail-CLOSED: any sampling failure writes observer_ok 0 rather than
+          # leaving the last good file in place (a frozen gauge is the
+          # phantom-green class this repo keeps re-learning).
+          # Threshold: 30 days. Refresh cadence stays MANUAL (the script edits
+          # hashes in the tree and needs a commit + deploy); the metric is the
+          # alarm, not a timer that would auto-commit on its own.
+          services.dnsblockd-otel-observer = {
+            description = "dnsblockd OTel-export + blocklist-freshness gauges for node_exporter";
+            inherit onFailure;
+            serviceConfig = {
+              Type = "oneshot";
+              StateDirectory = "dnsblockd-otel";
+              # Below the 60s sampling interval: a hung sample must not freeze
+              # the gauges (the stats API wedges under IO starvation — the
+              # 2026-08-27/09-06 class).
+              TimeoutStartSec = "45s";
+              ExecStart =
+                let
+                  observer = pkgs.writeShellApplication {
+                    name = "dnsblockd-otel-observer";
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.curl
+                      pkgs.gnugrep
+                      pkgs.gawk
+                    ];
+                    text = ''
+                      OUT_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                      OUT="$OUT_DIR/dnsblockd-freshness.prom"
+                      STATE="/var/lib/dnsblockd-otel/last-errors"
+                      STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
+                      STALE_SECONDS=$((30 * 86400))
+                      blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
+
+                      observer_ok=0
+                      errors_now=""
+                      body="$(curl -fsS --max-time 10 "$STATS" 2>/dev/null)" && observer_ok=1 || observer_ok=0
+                      if [ -n "$body" ]; then
+                        errors_now="$(printf '%s\n' "$body" | grep -m1 '^dnsblockd_otel_errors_total' | awk '{print $NF}' || true)"
+                      fi
+                      # digits only — validated with grep because the shell
+                      # case-glob for an empty alternative needs two single
+                      # quotes, which Nix's indented-string escapes swallow
+                      printf '%s' "$errors_now" | grep -Eq '^[0-9]+$' || observer_ok=0
+
+                      prev=0
+                      if [ -r "$STATE" ]; then
+                        prev="$(cat "$STATE" 2>/dev/null || true)"
+                      fi
+                      printf '%s' "$prev" | grep -Eq '^[0-9]+$' || prev=0
+                      export_broken=0
+                      if [ "$observer_ok" = 1 ]; then
+                        # A counter that MOVED means the exporter failed since
+                        # the previous sample (it only increments on export
+                        # errors) — the dead-collector signature.
+                        if [ "$errors_now" -gt "$prev" ]; then
+                          export_broken=1
+                        fi
+                        printf '%s\n' "$errors_now" > "$STATE"
+                      else
+                        # Blind sample: assume broken so the alarm fires.
+                        export_broken=1
+                      fi
+
+                      newest=0
+                      for f in "''${blocklists[@]}"; do
+                        [ -e "$f" ] || continue
+                        m="$(stat -c %Y "$f" 2>/dev/null || echo 0)"
+                        printf '%s' "$m" | grep -Eq '^[0-9]+$' || continue
+                        if [ "$m" -gt "$newest" ]; then newest="$m"; fi
+                      done
+                      now_epoch="$(date +%s)"
+                      if [ "$newest" -gt 0 ]; then
+                        blocklist_age=$((now_epoch - newest))
+                        refresh_stale=0
+                        if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
+                      else
+                        blocklist_age=-1
+                        refresh_stale=1
+                      fi
+
+                      mkdir -p "$OUT_DIR"
+                      TMP="$(mktemp "$OUT_DIR/.dnsblockd-freshness.XXXXXX")"
+                      {
+                        echo "# HELP dnsblockd_otel_errors_total Export errors the dnsblockd exporter itself counted (source: stats API, survives a dead collector)"
+                        echo "# TYPE dnsblockd_otel_errors_total counter"
+                        echo "dnsblockd_otel_errors_total ''${errors_now:-0}"
+                        echo "# HELP dnsblockd_otel_export_broken 1 when the exporter failed since the last sample or the sample was blind"
+                        echo "# TYPE dnsblockd_otel_export_broken gauge"
+                        echo "dnsblockd_otel_export_broken $export_broken"
+                        echo "# HELP dnsblockd_otel_observer_ok 0 when this observer could not read the stats API (gauges are blind)"
+                        echo "# TYPE dnsblockd_otel_observer_ok gauge"
+                        echo "dnsblockd_otel_observer_ok $observer_ok"
+                        echo "# HELP dnsblockd_blocklist_age_seconds Age of the NEWEST loaded blocklist file"
+                        echo "# TYPE dnsblockd_blocklist_age_seconds gauge"
+                        echo "dnsblockd_blocklist_age_seconds $blocklist_age"
+                        echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the newest blocklist is older than 30 days (or unreadable)"
+                        echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
+                        echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
+                      } > "$TMP"
+                      mv "$TMP" "$OUT"
+                    '';
+                  };
+                in
+                "${lib.getExe observer}";
+            };
+          };
+          timers.dnsblockd-otel-observer = {
+            description = "Sample dnsblockd exporter + blocklist freshness gauges";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "90s";
+              OnUnitActiveSec = "60s";
+              AccuracySec = "10s";
+            };
+          };
+
           tmpfiles.rules = [
             (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
+            (mkStateDir "/var/lib/dnsblockd-otel" "0755" "root" "root")
           ];
         };
 
