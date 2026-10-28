@@ -37,6 +37,7 @@ before scoring a finding. Config presence proves intent, not behavior.
 
 | Report | Date | Subject | Refresh trigger |
 |---|---|---|---|
+| [2026-10-28_nfs-fscache-learnings-assessment.md](2026-10-28_nfs-fscache-learnings-assessment.md) | 2026-10-28 | NFS FS-Cache technique (video) vs this fleet — no NFS today; recipe for a future `/data/models` share | NFS enters the fleet, big-model cold-reload profiling, cachefilesd module move |
 | [2026-10-11_decentralized-offsite-backup-review.md](2026-10-11_decentralized-offsite-backup-review.md) | 2026-10-11 | Offsite backup design review | storage architecture change |
 | [2026-10-11_forgejo-sarif-support-community-sentiment.md](2026-10-11_forgejo-sarif-support-community-sentiment.md) | 2026-10-11 | Forgejo SARIF upstream sentiment | before re-proposing SARIF upstream |
 | [2026-10-02_paperless-ngx-ai-internet-sweep.md](2026-10-02_paperless-ngx-ai-internet-sweep.md) | 2026-10-02 | Paperless AI internet sweep | paperless AI pipeline rework |
