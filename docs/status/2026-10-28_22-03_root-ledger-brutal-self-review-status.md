@@ -62,3 +62,9 @@ NEW:
 ---
 
 **Waiting for instructions.** Next system event regardless: the 23:10 btrbk ladder (root / projects / forgejo — the forgejo leg needs its heal row done first to go green).
+
+---
+
+**Appendix (2026-10-28 22:30, same session — §f.1 resolved by analysis):** monitor365's 110 G decomposes as 3 × 39 G: the live `monitor365.duckdb` + two same-night `backup_20261028T02*.db` copies. `filefrag -v` on a backup shows FIEMAP `shared` extents — they are `cp --reflink=always` copies (the 10-25 CHECKPOINT redesign working as designed), so **real extent cost ≈ the DB once (~39 G); the ledger's du-apparent overstated monitor365 by ~70 G of shared extents**. Not an anomaly; the §b.1 "two interpretations" question is answered (reflink-sharing interpretation correct). Residual watch: retention must keep deleting old timestamped backups or APPARENT size grows ~39 G/night while real stays flat.
+
+**Appendix 2 (2026-10-28 22:45 — §f.2 resolved):** the measurement holes closed: `~/.cache` ≈ **20 G** (not the stale 80 G — purged with the 10-26/27 wave), `~/tmp` ≈ **19 G** of regenerable Go caches (row-184 remainder). Combined with Appendix 1's monitor365 reflink finding, the root ledger's real story: shadow ~137 G + monitor365 39 G real + .local 30 G + .cache 20 G + tmp 19 G + ~100 G system/var/metadata + snapshot deltas ≈ the 454 G data used.
