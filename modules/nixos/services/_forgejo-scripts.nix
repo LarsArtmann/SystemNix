@@ -1078,10 +1078,12 @@ in
       fi
 
       if [ -z "$FORGEJO_TAG" ]; then
+        # curl -f exit 22 on a missing latest release must fall into the
+        # guard below, not kill the script via set -e (hence || true).
         FORGEJO_TAG=$(curl -sf --compressed \
           -H "Authorization: token $FORGEJO_TOKEN" \
           "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$FORGEJO_REPO/releases/latest" \
-          | jq -r '.tag_name // empty')
+          | jq -r '.tag_name // empty' || true)
         if [ -z "$FORGEJO_TAG" ]; then
           echo "Error: no latest release on forgejo for $FORGEJO_OWNER/$FORGEJO_REPO (and FORGEJO_TAG unset)" >&2
           exit 1
@@ -1126,7 +1128,10 @@ in
         echo "Error: github release create failed for $FORGEJO_TAG (does the tag exist on github? push tags first)" >&2
         exit 1
       }
-      upload_url=$(printf '%s' "$created" | jq -r '.upload_url' | sed 's/{.*//}')
+      upload_url=$(printf '%s' "$created" | jq -r '.upload_url')
+      # Strip the "{?name}" template suffix; bash expansion avoids the
+      # sed BRE brace-parsing pitfall on that suffix.
+      upload_url="''${upload_url%%\{*}"
 
       tmp=$(mktemp)
       trap 'rm -f "$tmp"' EXIT

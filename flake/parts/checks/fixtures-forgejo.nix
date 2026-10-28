@@ -192,7 +192,11 @@
               printf 200 > "$STUB_HTTP/$FJ.GET.2.code"
               printf '{"owner":{"login":"lars"},"mirror":true}' > "$STUB_HTTP/$FJ.GET.2.body"
               printf 200 > "$STUB_HTTP/$FJ.GET.3.code"
-              printf '{"owner":{"login":"lars"},"mirror":false,"default_branch":"main","open_issues_count":3}' > "$STUB_HTTP/$FJ.GET.3.body"
+              # open_pr_counter REQUIRED: the flip verify compares
+              # issues+PRs like-for-like (gogenfilter fix 2026-10-25);
+              # jq -r on a missing field yields "null" and the script's
+              # arithmetic dies under set -u ("null: unbound variable").
+              printf '{"owner":{"login":"lars"},"mirror":false,"default_branch":"main","open_issues_count":3,"open_pr_counter":0}' > "$STUB_HTTP/$FJ.GET.3.body"
               printf 204 > "$STUB_HTTP/$FJ.DELETE.1.code"
               MIG=localhost_3000_api_v1_repos_migrate.POST
               printf 201 > "$STUB_HTTP/$MIG.1.code"
@@ -546,7 +550,9 @@
               GH_TAG_KEY="api.github.com_repos_LarsArtmann_dnsblockd_releases_tags_v1.0.0"
               GH_CREATE_KEY="api.github.com_repos_LarsArtmann_dnsblockd_releases"
               ASSET_KEY="localhost_asset1"
-              UPLOAD_KEY="localhost_upload"
+              # Upload URL carries ?name=asset1; the stub sanitizer maps
+              # the whole URL to this key.
+              UPLOAD_KEY="localhost_upload_name_asset1"
               REL_BODY='{"tag_name":"v1.0.0","name":"v1.0.0","body":"notes","assets":[{"browser_download_url":"http://localhost/asset1"}]}'
 
               # Skip-when-disabled: empty GITHUB_TOKEN exits 0 without
