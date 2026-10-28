@@ -101,11 +101,33 @@ for bin in rsync ionice nice timeout btrfs findmnt tar runuser flock df du find 
   }
 done
 
-if [ "$DRY_RUN" != "1" ]; then
-  [ "$(id -u)" -eq "${PROJ_MIGRATE_ROOT_UID:-0}" ] || {
+# Re-exec once through the NixOS sudo wrapper (pre-reboot-check pattern:
+# preserve PATH so the preflight-resolved tools survive sudo's secure_path,
+# and forward the PROJ_MIGRATE_* fixture overrides explicitly — sudo strips
+# the environment). A nix-store sudo can never be setuid; the wrapper is the
+# real one. Dry-run stays unprivileged (read-only by design).
+if [ "$(id -u)" -ne "${PROJ_MIGRATE_ROOT_UID:-0}" ] && [ "$DRY_RUN" != "1" ]; then
+  SUDO=/run/wrappers/bin/sudo
+  [ -x "$SUDO" ] || SUDO="$(command -v sudo || true)"
+  if [ -z "$SUDO" ]; then
     echo "must run as root (sudo)" >&2
     exit 1
-  }
+  fi
+  exec "$SUDO" env \
+    PATH="$PATH" \
+    PROJ_MIGRATE_SRC="$SRC" \
+    PROJ_MIGRATE_SUBVOL="$SUBVOL" \
+    PROJ_MIGRATE_USER="$USER" \
+    PROJ_MIGRATE_GROUP="$GROUP" \
+    PROJ_MIGRATE_HOT_ROOT="$HOT_ROOT" \
+    PROJ_MIGRATE_POOL_FREE_PATH="$POOL_FREE_PATH" \
+    PROJ_MIGRATE_ROOT_FREE_PATH="$ROOT_FREE_PATH" \
+    PROJ_MIGRATE_STATE_DIR="$STATE_DIR" \
+    PROJ_MIGRATE_RECEIVES_DIR="$RECEIVES_DIR" \
+    PROJ_MIGRATE_ARCHIVE_DIR="$ARCHIVE_DIR" \
+    PROJ_MIGRATE_AUX="$AUX" \
+    PROJ_MIGRATE_ROOT_UID="${PROJ_MIGRATE_ROOT_UID:-0}" \
+    bash "$0" "$@"
 fi
 
 # ── Entry gate (freeze #19/#20/#21 class — see pkgs/maintenance-entry-gate.nix)
@@ -315,7 +337,10 @@ shadow-cleanup)
     echo "$POOL_FREE_PATH is not a mountpoint — archive target missing. Refusing." >&2
     exit 1
   }
-  RECEIVES=$(ls -1 "$RECEIVES_DIR" 2>/dev/null | grep -c '^projects\.' || true)
+  RECEIVES=0
+  for entry in "$RECEIVES_DIR"/projects.*; do
+    [ -e "$entry" ] && RECEIVES=$((RECEIVES + 1))
+  done
   if [ "${RECEIVES:-0}" -lt 5 ]; then
     echo "REFUSED: only ${RECEIVES:-0} pool receives (< 5) — the soak gate (≥ 5 green" >&2
     echo "nightly sends) has not been met; the shadow is still the only full pre-migration copy." >&2
