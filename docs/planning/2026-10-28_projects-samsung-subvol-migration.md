@@ -79,7 +79,7 @@ Path-preserved surfaces needing NO change: `~/.config/crush/skills` fan-out syml
 ### Phase A — prerequisites (hard gate, no config work before this)
 
 - [ ] A1. Land `docs/todo/storage.md` row 184 (Go-cache leak source-removal + trash of `projects/{.gocache-disk,.golangci-disk,.gotmp}` ~59 GiB after builds quiesce). Cross-repo consent + owner directive already on the row.
-- [ ] A2. Owner decision on `wevisone-spike` (trash vs keep — 2026-10-26 plan §2.1). If kept: it migrates like any repo; if trashed: gone before prepare.
+- [x] A2. Owner decision on `wevisone-spike` (trash vs keep — 2026-10-26 plan §2.1). If kept: it migrates like any repo; if trashed: gone before prepare. **DONE 2026-10-28 22:58 (late ruling): trash-all — it HAD migrated with the subvol; trashed from `~/projects/wevisone-spike` post-cutover, owner-granted 22:54.**
 - [ ] A3. Space asserts (script-enforced, not eyeballed): Samsung free ≥ payload×1.5; QLC unalloc > 10 GiB (the balance-jobs floor); pool free ≥ payload×1.5 (seed + shadow archive).
 - [ ] A4. No active IO storm: the prepare script self-refuses while IO PSI some avg10 ≥ 20% / a balance or btrbk send is streaming (family entry gate, `migrate-user-tmp-hot.sh`).
 - [ ] A5. Coordinate with the `~/tmp` hot-user-caches migration window (its todo row: E6 execution owner-gated) — two user-tree Samsung migrations share the quiet-window + PSI gates; never run two prepare/cutover passes concurrently.
