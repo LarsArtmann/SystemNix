@@ -16,6 +16,19 @@
 - **`dnsIPv6Enabled = false`** — evo-x2 has no global IPv6. Omits IPv6 root servers, avoids 5-15s timeouts.
 - **Scoped filter proxy (ADR-0018) wired 2026-10-08, OFF on the host** — `dns-blocker.nix` now exposes `proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` / `proxyTLSPassthrough` (upstream contract: ADR-0018 in the dnsblockd repo). Enabling = set `proxyFilterDomains` to registrable-domain suffixes (DNS answers them with the block IP — the "scoped lie"; precedence allowlist > filter > block) + `proxyInjectScriptURL` to the classifier's `/inject/filter.js`. The URL rides the `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env var, NEVER the YAML (store is world-readable — same rule as upstream's auth_token); render test pins both halves (`tests/test-dns-blocker-render.nix` item 7). Constraints: requires `dnsBlockResponse = "zero_ip"` (eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` — a lie needs an address); filter domains NEVER TLS-splice (termination on the dnsblockd CA — devices must trust it, already true on evo-x2 via `security.pki.certificates`); the filter set is read at startup, changes restart the service; classifier down fails OPEN (pages render unfiltered, the lie still lands on the working proxy). Feature stays owner opt-in — picking domains + classifier is an owner decision.
 
+**Failover asymmetry (pinned 2026-10-28, plan T13):** `rpi3-dns` imports the
+same module but is NOT a clone of evo-x2 — the render test now pins both the
+parity and the differences: same `:53` port, same `zero_ip` blocked-answer,
+same 77-entry permanent whitelist; DIFFERENT block IP (`.151` vs `.200`, so a
+client can tell which resolver answered), filter proxy OFF on rpi3, and
+`dnsRateLimitPerSec = 0` (unlimited) so a failover never throttles every
+client during an evo-x2 outage. Consequence to remember before enabling
+`proxyFilterDomains`: filtered names resolve to the block IP, and on the
+failover host there is no proxy behind it — the "scoped lie" becomes a
+connection failure instead of a block page. Enable filtering on both hosts or
+accept that a failover degrades it. Asserted at EVAL level only: rpi3 is
+aarch64, which this x86_64 host cannot build a rendered config for.
+
 **Exporter + freshness observer (2026-10-28, plan T05/T14):**
 `dnsblockd-otel-observer` (oneshot + 60s timer) samples the stats API and
 writes `dnsblockd-freshness.prom` into the node_exporter textfile dir, so two
