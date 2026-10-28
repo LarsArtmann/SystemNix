@@ -14,7 +14,10 @@ script="$here/crash-triage.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-fail() { echo "test-crash-triage: FAIL: $*" >&2; exit 1; }
+fail() {
+  echo "test-crash-triage: FAIL: $*" >&2
+  exit 1
+}
 
 # --- Stub journalctl ------------------------------------------------------
 mkdir -p "$scratch/bin" "$scratch/docs/status/tasks"
@@ -76,7 +79,7 @@ EOF
     echo "stub: unmatched args: $*" >&2; exit 1 ;;
 esac
 STUB
-} > "$scratch/bin/journalctl"
+} >"$scratch/bin/journalctl"
 chmod +x "$scratch/bin/journalctl"
 
 # Evidence file ONLY for boot "aaaaaaaa" (short id 8 chars).
