@@ -2,7 +2,7 @@
 
 **Created:** 2026-10-28 10:40 CET · **HEAD at authoring:** `7a59d5e42`
 **EXECUTING (instance crush-dnsblockd-exec-1, 2026-10-28 10:56 CET, HEAD `e5cddf26f`):** executing (see AGENTS.md plan-execution tombstone)
-**Progress (2026-10-28 12:20, instance crush-dnsblockd-exec-1): 10/27 done** — T01, T02, T05 (observer half), T07, T12, T13, T14, T15, T22, T23 are implemented + verified + committed; T03 is partial; the 16 remaining tasks are gated by deploy/root, an owner decision, or an upstream release (per-task gates in `docs/status/2026-10-28_12-20_dnsblockd-plan-execution-status.md` §c). Nothing below is re-planned — resume at T03.
+**Progress (2026-10-28 13:55, instance crush-dnsblockd-exec-2): 16/27 done** — T01, T02, T03, T05 (observer half), T06, T07, T12, T13, T14, T15, T19, T20, T21, T22, T23, T24 are implemented + verified + committed; T05's exporter half still needs a deploy. The 11 remaining tasks are gated by deploy/root (T04, T08, T09, T10, T11, T26, T27), an owner decision (T16, T17, T18) or a GitHub push (T25). Per-task gates: `docs/status/2026-10-28_12-20_dnsblockd-plan-execution-status.md` §c. Nothing below is re-planned.
 **Scope:** every OPEN row on the **dnsblockd integration surface** across 9 domain libraries (`services`, `monitoring`, `storage`, `upstream`, `pipeline`, `stability`, `security`, `desktop`, plus the queue) and `ROADMAP.md` Theme 8. Collected by script, not by memory: 60 queue rows + 62 service-library rows + 9 monitoring + 13 upstream + 7 storage + 11 pipeline + 2 stability + 1 security + 1 desktop matched the dnsblockd/DNS pattern, then deduped and premise-checked.
 **Explicitly OUT of scope:** the ~1,300 queue rows owned by other services/subsystems (storage crisis, ai-meter, papermill, cv, forgejo, signoz-GCP, desktop). Same method applies; they are not this brief.
 **Source of truth for findings:** `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html` and `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md`.
@@ -371,3 +371,136 @@ flowchart TD
 - **No new abstraction** to fix a one-service problem.
 - **No re-dispatch of the four falsified rows** (epilogue: they are recorded in §0 so the next reader cannot be misled).
 - **No deploy from an agent shell.** Every activation leg carries an explicit `deploy` gate.
+
+
+---
+
+## Appendix A — T06 option audit (the 460-1195 blind spot, closed 2026-10-28)
+
+The review behind this plan read `dns-blocker.nix` 1-460 and 1195-1494 and grepped
+the middle, so its cohesion/coupling scores rested on the RENDER block, not on the
+option declarations. T06 closed that gap with three checks against the **locked**
+upstream rev `f9bb6477` (`~/projects/dnsblockd`, read via `git show`, never the
+working tree).
+
+### A.1 Corrections to the premise
+
+- The row said **53 options**. The file had **52** top-level `mkOption`
+  declarations before this session (plus 15 submodule fields = 67 total). It is 53
+  now only because T06 ADDED `pprofEnabled` (see A.4).
+- The three "deliberate omissions" are real omissions, but only two of them are
+  deliberate for OUR reasons — see A.3.
+
+### A.2 Phantom-key check: ZERO
+
+The single highest-value test for a re-implemented config schema: does every key we
+render exist in upstream's struct?
+
+```
+comm -23 <(jq --raw-output 'keys[]' <our rendered config> | sort -u) \
+         <(git show f9bb6477:internal/config/config.go | rg -o 'koanf:"[a-z0-9_]+"' | sed 's/koanf:"//;s/"//' | sort -u)
+# -> empty
+```
+
+57 rendered keys, 151 accepted upstream keys, **0 phantom**. The wrapper is
+schema-accurate at this rev; the "coupled by re-implementation" finding in the
+review is about MAINTENANCE cost, not present-tense correctness.
+
+### A.3 The three omitted keys, adjudicated
+
+| Upstream key | Upstream default | Verdict | Why |
+| --- | --- | --- | --- |
+| `allow_sibling_domains` | `true` | **omit-on-purpose (default is wanted)** | The block page's Allow button grants the allowed domain's same-site siblings (F155, 2026-10-17 reddit incident). That IS the desired UX; pinning it to `true` in our YAML would add a key that only restates the default. Revisit if a sibling grant ever surprises: then pin it explicitly rather than relying on the default. |
+| `dhcp_lease_file` | `""` (off) | **omit-on-purpose (nothing to read)** | Feeds `GET /api/devices/candidates` from a DHCP server's lease file. This host runs no DHCP server (the LAN router does), and our device registry is declarative (`services.dns-blocker.devices`). Wiring it would invent a data source. |
+| `pprof_enabled` | `false` | **omit WAS a mistake — now wired** | See A.4. |
+
+### A.4 The finding: our wedge forensics KILL the patient
+
+`scripts/dnsblockd-goroutine-dump.sh` reads stacks by sending **SIGQUIT**, which
+prints every goroutine and then EXITS the process — the only way it works today,
+and why the 2026-08-27 wedge's root cause is still unknown (the instance healed
+before anyone destroyed it on purpose).
+
+Upstream `registerPprofHandlers` (handlers.go:2716-2727) mounts `/debug/pprof/*` on
+the **loopback stats listener** and wraps every route in the dashboard's
+`authed(...)`, so `pprof_enabled: true` gives live CPU/heap/goroutine profiles over
+`127.0.0.1:<statsPort>` behind the existing bearer token — diagnosis WITHOUT a
+restart.
+
+Landed in T06: `services.dns-blocker.pprofEnabled` (default `false`, inert — the
+rendered host config store path is byte-identical, `kxgximh…` before and after)
+plus a render-test variant proving the switch both ways and that `stats_addr`
+stays `127.0.0.1`. Enabling it stays an owner call because it is the only
+remaining knob whose on-state changes the security surface, even if the surface is
+loopback + auth.
+
+### A.5 Rejected as NOT worth wiring
+
+`cluster_*` (11 keys), `dashboard_sse_*` (4), `csrf_cookie_*` (2),
+`dns_answer_ttl_max`, `dns_cache_size`, `dns_blocklist_tls_skip_verify`,
+`blocklist_mapping`, `auth_token` (env-only by our own rule), `allow`/`block`
+(policy submodule fields, not top-level) — each is either single-host-irrelevant
+(the cluster is a multi-node feature with no second dnsblockd server) or a
+deliberate-by-default we have no stance for. Not wiring an option is not a defect;
+wiring one without a reason is phantom config.
+
+### A.6 Full option → key map
+
+Regenerate rather than trust this table:
+`rg -o '\b[a-z][a-z0-9_]* = cfg\.[a-zA-Z][a-zA-Z0-9]*' modules/nixos/services/dns-blocker.nix`
+
+| Line | Option (Nix) | Rendered key (upstream koanf) | How it lands |
+| ---: | ------------ | ----------------------------- | ------------ |
+| 468 | `blockInterface` | — | service (ExecStartPre IP-attach) |
+| 474 | `blockIPPrefix` | — | service (ExecStartPre IP-attach) |
+| 480 | `blockIP` | `dns_block_ip`, `listen_addr` | rendered |
+| 486 | `blockPort` | `port` | rendered |
+| 492 | `blockTLSPort` | `tls_port` | rendered |
+| 498 | `statsPort` | `stats_port` | rendered |
+| 504 | `pprofEnabled` | — | gates `pprof_enabled` (optionalAttrs) |
+| 527 | `trustedProxies` | `trusted_proxies` | rendered |
+| 538 | `blocklists` | — | build-time processor |
+| 561 | `whitelist` | — | build-time processor |
+| 567 | `extraDomains` | — | build-time processor |
+| 573 | `blocklistTrialUrls` | `dns_blocklist_trial_urls` | rendered |
+| 590 | `blocklistCacheDir` | `dns_blocklist_cache_dir` | rendered |
+| 604 | `categories` | — | build-time processor |
+| 610 | `tempAllowAll` | — | gates `dns_blocklists` |
+| 618 | `enableDNSSEC` | `dns_dnssec_enabled` | rendered |
+| 624 | `dnsForwarders` | `dns_forwarders` | rendered |
+| 641 | `localRecords` | `dns_local_records` | rendered |
+| 650 | `localZones` | `dns_local_zones` | rendered |
+| 657 | `allowedNetworks` | `dns_allowed_networks` | rendered |
+| 663 | `dnsIPv6Enabled` | `dns_ipv6_enabled` | rendered |
+| 669 | `dnsEcsEnabled` | `dns_ecs_enabled` | rendered |
+| 684 | `dnsEcsIpv4PrefixLen` | `dns_ecs_ipv4_prefix_len` | rendered |
+| 694 | `dnsEcsIpv6PrefixLen` | `dns_ecs_ipv6_prefix_len` | rendered |
+| 704 | `tlsH3Enabled` | `tls_h3_enabled` | rendered |
+| 724 | `dnsReloadInterval` | `dns_reload_interval` | rendered |
+| 730 | `dnsBlockResponse` | `dns_block_response` | rendered |
+| 743 | `dnsBlockTTL` | `dns_block_ttl` | rendered |
+| 749 | `dnsResolveTimeout` | `dns_resolve_timeout` | rendered |
+| 755 | `dnsRestartBackoff` | `dns_restart_backoff` | rendered |
+| 761 | `dnsRateLimitPerSec` | `dns_rate_limit_per_sec` | rendered |
+| 772 | `dnsRateLimitBurst` | `dns_rate_limit_burst` | rendered |
+| 781 | `dnsRateLimitMaxClients` | `dns_rate_limit_max_clients` | rendered |
+| 789 | `dnsTLSEnabled` | — | gates `dns_tls_enabled`/`dns_tls_port` |
+| 795 | `dnsTLSPort` | `dns_tls_port` | rendered |
+| 803 | `dnsDOHEnabled` | — | gates `dns_doh_enabled`/`_port`/`_path` |
+| 809 | `dnsDOHPort` | `dns_doh_port` | rendered |
+| 815 | `dnsDOHPath` | `dns_doh_path` | rendered |
+| 821 | `dnsDOHTrustedProxies` | `dns_doh_trusted_proxies` | rendered |
+| 833 | `proxyEnabled` | `proxy_enabled` | rendered |
+| 845 | `oidcIssuerURL` | `oidc_issuer_url` | rendered |
+| 856 | `oidcClientID` | `oidc_client_id` | rendered |
+| 862 | `oidcRedirectURL` | `oidc_redirect_url` | rendered |
+| 872 | `oidcButtonText` | `oidc_button_text` | rendered |
+| 882 | `proxyConnectTimeout` | `proxy_connect_timeout` | rendered |
+| 888 | `proxyUpstreamDNS` | `proxy_upstream_dns` | rendered |
+| 899 | `proxyTLSPassthrough` | `proxy_tls_passthrough` | rendered |
+| 913 | `proxyFilterDomains` | `proxy_filter_domains` | rendered |
+| 929 | `proxyInjectScriptURL` | — | systemd env (never YAML) |
+| 943 | `proxyInjectStripCSP` | `proxy_inject_strip_csp` | rendered |
+| 951 | `devices` | — | `devices` (inherit) |
+| 989 | `users` | — | `users` (inherit) |
+| 1009 | `policies` | — | `policies` (inherit, optionalAttrs) |

@@ -87,6 +87,20 @@ _: {
       # as a WARNING LIST; it hardens into an assertion in the same change
       # that populates every module, derives localRecords from the catalog,
       # and deletes the hand-list.
+      #
+      # 2026-10-28 CENSUS (the warning is ACCEPTED DEBT, not neglect — do
+      # not "fix" it by adding entries alone): 15 modules declare
+      # services.catalog entries; 22 enabled integration subdomains still
+      # have none. The list is DERIVED, so it changes without anyone editing
+      # this file: four separate TODO rows quoted it as 19 / 21 / 21 / 23
+      # names within three weeks, and `logs` (Dozzle, gone with Docker) plus
+      # `crm` (now declared) were both stale in those rows. Never restate a
+      # count in prose — re-derive it:
+      #   nix eval --json .#nixosConfigurations.evo-x2.config.warnings
+      # and read the `catalog:` warning. Deferring is correct because half a
+      # migration is worse than none: entries without the localRecords
+      # derivation leave two DNS sources alive while the warning goes quiet,
+      # which is the exact drift-silencing this cross-check exists to stop.
       config = lib.optionalAttrs (options ? services.integration) {
         warnings =
           let
