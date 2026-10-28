@@ -73,6 +73,20 @@ Rules:
 - The reset-reason line lives in the NEXT boot's kernel messages, never in the dying boot's journal.
 - Drivers named by io.stat attribution survive the branch classification: IO writers route to the standing-writer/placement fixes, thermal legs route to the cooling floor (BIOS fans/PPT) — the two ladders are complementary, not rival diagnoses.
 
+### Freeze census — trips/boot vs the escalation thresholds (F52, 2026-10-28; regenerate with `scripts/crash-triage.sh --boots 6`)
+
+| Boot / freeze | Window (uptime) | Guard trips | DEEP-THROTTLE ENTERs | OOM | trips/h | Family |
+| --- | --- | --- | --- | --- | --- | --- |
+| #7 (`boot -1` Sep 27–29) | ~37 h | 432 | — | — | 11.7 | B→C (scrub-loop era) |
+| #33 `3e5c8af5` | 4 d 13.5 h | 493 | 41.3 h un-exited guided | late memory leg | 4.5 | C |
+| #34 `27580a79` | 17 h 49 m | 89 | 637 | 5 | 5.0 | C |
+| #35 `ce19a826` | 24 h 30 m | 33 | 343 | 27 | 1.3 | C |
+| #36 `b803d718` | 11 h 07 m | 34 | 452 | 2 | 3.1 | C |
+| #37 `3caf5548` | 14 h 36 m | 60 | 430 | 0 | 4.1 | C |
+| boot 0 `b0d70d73` (live re-fire #9) | ≥2 h at 02:30 | 11+ | 84+ | 0 | ~5 | C (forming) |
+
+Threshold defense: `loadBearingTripsPerBoot = 10` is crossed within 2–5 h on every storm boot — sound. The M20 sustained-escalation latch (§7.1c) should key on **≥2 trips/h sustained ≥2 h** (the floor of the documented storm band 1.3–11.7/h — hourly buckets inside #35 peaked well above its 1.3/h average) with a per-boot total ≥20 fallback; single bursts (2–3 trips, restore, calm) must stay silent. Final values are the owner's §7.1c call after this census.
+
 ## Journal Retention & Pre-Vacuum Evidence Gate (2026-10-13)
 
 - **Vacuum mechanism** — journald auto-vacuums at `SystemMaxUse = 8G` (`platforms/nixos/system/boot.nix`, hot-tier `/var/log/journal` on the Samsung). There is NO cron vacuum and NO human in the loop: when the journal crosses 8G, the OLDEST boots vanish silently. Three autopsies were won-or-lost on the pull-before-vacuum race (10-03 triage lost its journal outright; freeze-27/28 pulled in time by dispatch luck).
