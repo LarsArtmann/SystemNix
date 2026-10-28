@@ -739,6 +739,34 @@ in
       interval = "5m";
       severity = "warning";
     };
+
+    # Serve-path starvation of the local interactive AI tier (2026-10-27:
+    # llama-chat /health answered 200 while a 13-token generation took 6m38s
+    # under loadavg 324 — every health-shaped check was blind to the
+    # slowdown). Mean TTFT over a rolling 5m window, derived from the
+    # ai-meter rate pair; the underscore forms are the store-LIVE names
+    # (standalone Sum/Count counters, lint-static allowlist). TTFT samples
+    # exist for STREAMING calls only, so zero traffic keeps the rule silent
+    # by design (no data, no fire) — this watches the interactive serve
+    # path, not exporter liveness. Warn at 30s (direct local gen is low
+    # single-digit seconds), critical at 120s (the 10-27 probe's own client
+    # timeout — past this, callers fail).
+    "signoz/rules/ai-llama-chat-ttft-warning.json".source = mkRule {
+      name = "Local AI TTFT High (>30s, llama-chat)";
+      description = "Mean time-to-first-token for local interactive inference (upstream=llama-chat via ai-meter) exceeded 30s for 5m — the llama-server serve path is starving (CPU/IO storm class, 2026-10-27: /health stayed 200 while a 13-token gen took 6m38s under loadavg 324). Check system load + fastflowlm/llama-server state.";
+      query = ''sum(rate(ai_meter_ttft_seconds_sum{upstream="llama-chat"}[5m])) / clamp_min(sum(rate(ai_meter_ttft_seconds_count{upstream="llama-chat"}[5m])), 1e-9)'';
+      target = 30;
+      interval = "5m";
+      severity = "warning";
+    };
+    "signoz/rules/ai-llama-chat-ttft-critical.json".source = mkRule {
+      name = "Local AI TTFT Critical (>120s, llama-chat)";
+      description = "Mean time-to-first-token for local interactive inference (upstream=llama-chat via ai-meter) exceeded 120s for 5m — clients time out at 120s, so calls are FAILING while /health stays 200 (2026-10-27 class). Check system load, the memory-emergency guard's sacrificed units, and llama-server core share.";
+      query = ''sum(rate(ai_meter_ttft_seconds_sum{upstream="llama-chat"}[5m])) / clamp_min(sum(rate(ai_meter_ttft_seconds_count{upstream="llama-chat"}[5m])), 1e-9)'';
+      target = 120;
+      interval = "5m";
+      severity = "critical";
+    };
   };
 
   dashboards = {
