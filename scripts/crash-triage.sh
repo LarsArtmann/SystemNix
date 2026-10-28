@@ -53,11 +53,12 @@ census() { # full-id pattern -> count
   echo "${n:-0}"
 }
 
-shutdown_ceremony() { # full-id -> 1 if PID-1 shutdown markers exist
+shutdown_ceremony() { # full-id -> 1 if PID-1 final-target markers exist
   # USER managers also log "Reached target Shutdown" when sessions close
-  # mid-boot (the stability.md trap) — only systemd[1] ceremony counts.
+  # mid-boot (the stability.md trap), and systemd[1] logs "Stopping X"
+  # for ordinary unit stops — only the FINAL targets count as ceremony.
   local n
-  n=$("$JOURNALCTL" -b "$1" --no-pager 2>/dev/null | rg -c 'systemd\[1\]: (Reached target (Shutdown|Power-Off|Reboot)|Stopping.*\.)') || n=0
+  n=$("$JOURNALCTL" -b "$1" --no-pager 2>/dev/null | rg -c 'systemd\[1\]: (Reached target (Shutdown|Power-Off|Reboot|Halt))') || n=0
   [ "${n:-0}" -gt 0 ] && echo 1 || echo 0
 }
 
