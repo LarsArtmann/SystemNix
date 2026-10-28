@@ -16,6 +16,38 @@
 - **`dnsIPv6Enabled = false`** — evo-x2 has no global IPv6. Omits IPv6 root servers, avoids 5-15s timeouts.
 - **Scoped filter proxy (ADR-0018) wired 2026-10-08, OFF on the host** — `dns-blocker.nix` now exposes `proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` / `proxyTLSPassthrough` (upstream contract: ADR-0018 in the dnsblockd repo). Enabling = set `proxyFilterDomains` to registrable-domain suffixes (DNS answers them with the block IP — the "scoped lie"; precedence allowlist > filter > block) + `proxyInjectScriptURL` to the classifier's `/inject/filter.js`. The URL rides the `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env var, NEVER the YAML (store is world-readable — same rule as upstream's auth_token); render test pins both halves (`tests/test-dns-blocker-render.nix` item 7). Constraints: requires `dnsBlockResponse = "zero_ip"` (eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` — a lie needs an address); filter domains NEVER TLS-splice (termination on the dnsblockd CA — devices must trust it, already true on evo-x2 via `security.pki.certificates`); the filter set is read at startup, changes restart the service; classifier down fails OPEN (pages render unfiltered, the lie still lands on the working proxy). Feature stays owner opt-in — picking domains + classifier is an owner decision.
 
+**Exporter + freshness observer (2026-10-28, plan T05/T14):**
+`dnsblockd-otel-observer` (oneshot + 60s timer) samples the stats API and
+writes `dnsblockd-freshness.prom` into the node_exporter textfile dir, so two
+things SigNoz structurally cannot report become visible out-of-band:
+
+- `dnsblockd_otel_export_broken` — set when
+  `dnsblockd_otel_errors_total` (the real metric name; the `/health` JSON
+  field is `otelInternalErrors`, and the queue's earlier
+  `dnsblockd_otel_internal_errors` spelling matches nothing on `/metrics`)
+  moved since the last sample. This is the dead-collector signature: during
+  the 2026-10-27→28 collector outage the counter climbed ~1/min while SigNoz
+  saw nothing, because the exporter reporting it was the thing that was dead.
+- `dnsblockd_otel_observer_ok` — 0 when the stats API could not be sampled.
+  Fail-closed: a blind sample also sets `export_broken 1`, so the Gatus check
+  cannot silently pass on stale gauges.
+- `dnsblockd_blocklist_age_seconds` / `..._refresh_stale` — seconds since the
+  LOADED blocklist SET last changed (the observer hashes the list and keeps
+  the first-seen epoch under `/var/lib/dnsblockd-otel/`; Nix store mtimes are
+  always 1, so file age is meaningless). Stale means "nobody has run
+  `scripts/dns-update.sh` in 30 days", which is the only refresh mechanism —
+  deliberately manual, because it edits SRI hashes that need a commit and a
+  deploy, so the metric is the alarm rather than a timer that auto-commits.
+
+Both ride `services.integration.dnsblockd.checks` (Gatus "DNS Blocker OTel
+Export" 60s, "DNS Blocker Blocklist Freshness" 5m) and read
+`http://127.0.0.1:9400/metrics`. Verified by running the SHIPPED script text
+against the live stats API: healthy → `observer_ok 1` with age tracking from
+0; set backdated 40 days → `refresh_stale 1`; dead stats port →
+`observer_ok 0` + `export_broken 1`. First live sample (pre-deploy, 2026-10-28)
+already reported `export_broken 1` — the collector is down, see
+`docs/todo/monitoring.md` SEV1.
+
 **CA rotation (the two-places-one-CA rule; guard added 2026-10-28):** the
 dnsblockd CA exists twice by necessity — a PEM inlined into
 `security.pki.certificates` (`platforms/nixos/system/dns-blocker-config.nix:244`,

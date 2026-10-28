@@ -1554,6 +1554,8 @@ _: {
                       OUT_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
                       OUT="$OUT_DIR/dnsblockd-freshness.prom"
                       STATE="/var/lib/dnsblockd-otel/last-errors"
+                      HASH_FILE="/var/lib/dnsblockd-otel/blocklist-set-hash"
+                      SINCE_FILE="/var/lib/dnsblockd-otel/blocklist-set-since"
                       STATS="http://127.0.0.1:${toString ports.dns-blocker-stats}/metrics"
                       STALE_SECONDS=$((30 * 86400))
                       blocklists=(${lib.concatStringsSep " " (map (p: "'${p}'") blocklistPaths)})
@@ -1588,21 +1590,31 @@ _: {
                         export_broken=1
                       fi
 
-                      newest=0
-                      for f in "''${blocklists[@]}"; do
-                        [ -e "$f" ] || continue
-                        m="$(stat -c %Y "$f" 2>/dev/null || echo 0)"
-                        printf '%s' "$m" | grep -Eq '^[0-9]+$' || continue
-                        if [ "$m" -gt "$newest" ]; then newest="$m"; fi
-                      done
+                      # Nix store files carry mtime = 1 (reproducibility), so
+                      # the FILE age says nothing. What is measurable is when
+                      # the LOADED SET last changed: this observer hashes the
+                      # list and remembers the first moment it saw that hash,
+                      # which is exactly "how long since anyone refreshed".
                       now_epoch="$(date +%s)"
-                      if [ "$newest" -gt 0 ]; then
-                        blocklist_age=$((now_epoch - newest))
+                      if [ "''${#blocklists[@]}" -eq 0 ]; then
+                        # tempAllowAll: blocking is deliberately off, so
+                        # staleness is not a failure mode here.
+                        blocklist_age=-1
+                        refresh_stale=0
+                      else
+                        set_hash="$(printf '%s\n' "''${blocklists[@]}" | md5sum | cut -d' ' -f1)"
+                        prev_hash=""
+                        since=""
+                        if [ -r "$HASH_FILE" ]; then prev_hash="$(cat "$HASH_FILE" 2>/dev/null || true)"; fi
+                        if [ -r "$SINCE_FILE" ]; then since="$(cat "$SINCE_FILE" 2>/dev/null || true)"; fi
+                        if [ "$set_hash" != "$prev_hash" ] || ! printf '%s' "$since" | grep -Eq '^[0-9]+$'; then
+                          since="$now_epoch"
+                          printf '%s\n' "$set_hash" > "$HASH_FILE"
+                          printf '%s\n' "$since" > "$SINCE_FILE"
+                        fi
+                        blocklist_age=$((now_epoch - since))
                         refresh_stale=0
                         if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
-                      else
-                        blocklist_age=-1
-                        refresh_stale=1
                       fi
 
                       mkdir -p "$OUT_DIR"
@@ -1617,10 +1629,10 @@ _: {
                         echo "# HELP dnsblockd_otel_observer_ok 0 when this observer could not read the stats API (gauges are blind)"
                         echo "# TYPE dnsblockd_otel_observer_ok gauge"
                         echo "dnsblockd_otel_observer_ok $observer_ok"
-                        echo "# HELP dnsblockd_blocklist_age_seconds Age of the NEWEST loaded blocklist file"
+                        echo "# HELP dnsblockd_blocklist_age_seconds Seconds since the loaded blocklist SET last changed (store mtimes are always 1)"
                         echo "# TYPE dnsblockd_blocklist_age_seconds gauge"
                         echo "dnsblockd_blocklist_age_seconds $blocklist_age"
-                        echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the newest blocklist is older than 30 days (or unreadable)"
+                        echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the loaded set has not changed in 30 days"
                         echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
                         echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
                       } > "$TMP"
@@ -1692,6 +1704,36 @@ _: {
                   "[RESPONSE_TIME] < 500"
                 ];
                 alert = "DNS blocker down — no ad/malware blocking";
+              }
+              {
+                # Out-of-band by design: this reads the node_exporter textfile
+                # the observer writes, NOT SigNoz — the exporter's failure is
+                # exactly what SigNoz cannot report while the collector is
+                # down (the 2026-10-27→28 outage: 964 refusals in one boot,
+                # invisible).
+                name = "DNS Blocker OTel Export";
+                group = "Infrastructure";
+                url = "http://127.0.0.1:${toString ports.signoz-node-exporter}/metrics";
+                interval = "60s";
+                conditions = [
+                  # newline-anchored like the neighbouring textfile checks:
+                  # an unanchored pattern would also match "10"/"11".
+                  "[BODY] == pat(*\ndnsblockd_otel_observer_ok 1\n*)"
+                  "[BODY] == pat(*\ndnsblockd_otel_export_broken 0\n*)"
+                ];
+                alert = "dnsblockd's OTel exporter is failing (or the observer went blind) — traces/logs from the resolver are being dropped; check the collector (docs/todo/monitoring.md SEV1) and journalctl -u dnsblockd | grep 4318";
+              }
+              {
+                # The blocking data is the only artifact in this service with
+                # no age signal: the lists are SRI-pinned to a mutable branch
+                # and refresh only when someone runs scripts/dns-update.sh
+                # (manual by design — it edits hashes that need a commit).
+                name = "DNS Blocker Blocklist Freshness";
+                group = "Infrastructure";
+                url = "http://127.0.0.1:${toString ports.signoz-node-exporter}/metrics";
+                interval = "5m";
+                conditions = [ "[BODY] == pat(*\ndnsblockd_blocklist_refresh_stale 0\n*)" ];
+                alert = "dnsblockd blocklists have not changed in 30+ days — run scripts/dns-update.sh, commit the hash bump, deploy (stale lists mean new ad/malware domains resolve)";
               }
             ];
             oidc = {
