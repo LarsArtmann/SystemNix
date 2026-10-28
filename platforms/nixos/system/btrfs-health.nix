@@ -312,8 +312,24 @@ let
         scrub_total_errors=0
         scrub_all_finished=1
         scrub_incomplete=0
-        for scrub_mnt in / /data; do
+        for scrub_mnt in / /data /mnt/hot; do
           scrub_out=$(timeout 30 btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
+          # /mnt/hot adoption (2026-10-28, projects-subvol plan B11): per-mount
+          # metrics from day one, but the composites (error_free /
+          # incomplete_unexplained) only count the mount once its FIRST scrub
+          # has completed — a never-started /mnt/hot would page
+          # incomplete_unexplained on day one while the first weekly window
+          # simply has not arrived yet. After first completion this branch
+          # never fires again. stale=1 is honest (it IS unscrubbed) and inert:
+          # the gatus stale checks are root/data-literal.
+          if [ "$scrub_mnt" = "/mnt/hot" ] && echo "$scrub_out" | grep -q 'no scrub.*started'; then
+            echo "btrfs_scrub_status{mount=\"mnt_hot\"} 0"
+            echo "btrfs_scrub_errors_total{mount=\"mnt_hot\"} 0"
+            echo "btrfs_scrub_duration_seconds{mount=\"mnt_hot\"} 0"
+            echo "btrfs_scrub_last_completed_seconds{mount=\"mnt_hot\"} 0"
+            echo "btrfs_scrub_stale{mount=\"mnt_hot\"} 1"
+            continue
+          fi
           scrub_err=$(echo "$scrub_out" | awk '
             /no errors found/ {e=0}
             /with [0-9]+ error/ {match($0, /with ([0-9]+)/, a); e=a[1]}

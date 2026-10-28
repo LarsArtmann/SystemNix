@@ -2,6 +2,8 @@
 
 > Migrated verbatim from AGENTS.md on 2026-10-01 (restructure).
 > **Read when:** touching Pocket ID, oauth2-proxy, any vHost auth layer (Layer 0/1/2 decisions), Caddy config, or debugging double-auth/redirect-loop/`invalid_client` issues. DNS (dnsblockd) specifics live in [docs/services/dnsblockd.md](../services/dnsblockd.md).
+>
+> **dnsblockd claims verified 2026-10-28 (architecture review):** this file's only dnsblockd content is provisioning HISTORY (the 2026-09-02 multi-secret fix) — no runtime claim about the resolver, its OIDC client or its ports lives here, so nothing was contradicted by that session's live probes (`ss -ltnup`, `/health`, journal). Resolver/block-page/filter-proxy behaviour is owned by [docs/services/dnsblockd.md](../services/dnsblockd.md); the two portals' OIDC clients are owned by `services.integration.dnsblockd`.
 
 ## Index
 
