@@ -137,8 +137,10 @@ the firewall path; the errors are noise, not breakage (fired all day
 2026-10-23 while the dashboard DNS config was being edited).
 
 
-## Size profile (2026-10-27 storage audit S17)
+## Size profile (2026-10-27 storage audit S17; corrected 2026-10-28)
 
-`/var/lib/dnsblockd` (Samsung `hot/dnsblockd` subvol — CORRECT tier): journal.db 4.2G (operator WAL, 30d retention, enabled 2026-10-07 — expect ~2× growth to steady state), tracking.db 2.4G + WALs, dnsblockd_tracking.db 724M, ocr/other small. Both retention surfaces bounded (30d). Growth does not threaten the QLC root.
+`/var/lib/dnsblockd` (Samsung `hot/dnsblockd` subvol, btrfs `compress=zstd:3` — CORRECT tier): journal.db 4.6G (operator WAL, 30d retention, enabled 2026-10-07 — expect ~2× growth to steady state), tracking.db 2.55G + WALs, `trust-anchor.db` + `trust-anchor-tombstones.db` (0600 root, small), temp-allowlist* legacy stubs. Growth does not threaten the QLC root.
 
-**Open anomaly:** TWO tracking DBs coexist — `tracking.db` (2.4G) and `dnsblockd_tracking.db` (724M). Upstream renamed the tracking store across versions; the older name likely lingers. Verify last-write mtime of the old-name DB before any cleanup; if untouched for ≥30d it is dead weight on the hot tier only (not the root). **Source:** docs/status/2026-10-27_10-38_var-storage-tier-audit-status.md §F + live probe 2026-10-27 15:1x.
+**Retention is NOT all 30d** — the wrapper renders no `retention_*` keys, so upstream defaults apply: request tracks **30d**, aggregated metrics **90d**, block-rate trend **365d**, journal **30d**. Same table, with the decision context, in `docs/services/dnsblockd-tracking-dial.md`.
+
+**Resolved anomaly (was open 2026-10-27):** the second tracking DB (`dnsblockd_tracking.db`, 724M) is GONE — a live probe 2026-10-28 10:14 shows exactly one `tracking.db`. The remainder of that reclaim (the `/data/tmp-crush-test` copy) was trashed 2026-10-26 (TODO_LIST close-out). Do not re-open the class without a fresh `ls`: the earlier "two DBs coexist" note outlived its subject by one day. **Source:** docs/status/2026-10-27_10-38_var-storage-tier-audit-status.md §F + live probe 2026-10-27 15:1x, re-probed 2026-10-28 10:14.

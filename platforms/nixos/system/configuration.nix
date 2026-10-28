@@ -526,6 +526,13 @@ in
         # workflow calls forgejo-release-shadow, so the GitHub twin
         # keeps receiving release assets for proxy.golang.org.
         "dnsblockd"
+        # Native-since-inception (2026-10-28): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and seed-pushed by
+        # hand. No workflow files in the repo, so the repo-scoped sync PAT
+        # suffices (company-master-data precedent). Phase 5 attaches the
+        # push mirror on the next deploy.
+        "media-atlas"
       ];
       immich.enable = true;
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,

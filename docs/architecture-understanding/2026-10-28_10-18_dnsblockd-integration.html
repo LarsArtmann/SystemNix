@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dnsblockd Integration Review &mdash; SystemNix</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>ARCHITECTURE REVIEW</span>
+      <span>2026-10-28</span>
+      <span>dnsblockd integration &middot; SystemNix</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#findings">Findings</a>
+          <a href="#issues">Issue Cards</a>
+          <a href="#scores">Scores</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#proposal">Before / After</a>
+          <a href="#plan">Roadmap</a>
+          <a href="#evidence">Evidence</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-badge">Architecture Review</div>
+          <h1>Is the dnsblockd integration superb?</h1>
+          <p class="hero-subtitle">
+            Deepest per-service operational surface in the tree &mdash; runbook, discriminator,
+            measured readiness budget, OOM immunity, five-layer monitoring. Capped at
+            <strong>good</strong>, not superb, by one structural decision: it re-implements the
+            upstream NixOS module instead of consuming it.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">53 / 0</div>
+            <div class="stat-label">Wrapper options / phantom options &mdash; every declared option reaches the render block</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">57 / ~110</div>
+            <div class="stat-label">Upstream config keys the live config carries &mdash; the rest are unreachable from Nix</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3.6</div>
+            <div class="stat-label">Composite score (1&ndash;5) &mdash; &ldquo;Good&rdquo; band, 0.1 above &ldquo;Fair&rdquo;</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">40,667</div>
+            <div class="stat-label">Live OTel internal errors this process &mdash; exporter posts to a dead :4318</div>
+          </div>
+        </div>
+
+        <div class="card card-solution">
+          <h4>The one-sentence verdict</h4>
+          <p>
+            This is <em>operator-grade</em> integration &mdash; the runbook alone records five
+            distinct incident classes with journal-measured budgets &mdash; but it is
+            <em>architecturally capped</em>: <code>modules/nixos/services/dns-blocker.nix</code>
+            (1,494 lines) hand-rolls a config renderer for a service that ships its own 2,224-line
+            NixOS module (options split by theme, renderer, assertions, two VM tests) at the
+            exact rev already locked. Every upstream capability added since 2026-10 is invisible
+            to Nix until someone edits a Nix attrset by hand.
+          </p>
+        </div>
+
+        <h2 id="findings"><span class="num">01</span>Findings</h2>
+
+        <div class="card card-solution">
+          <h4>What is genuinely superb (and rare)</h4>
+          <p>
+            <strong>Failure-class memory.</strong> <code>docs/services/dnsblockd.md</code> carries
+            a 5-phase startup discriminator, the journal-measured readiness budget (300s poll
+            inside a 330s envelope, sized against a <em>measured</em> 255.5s healthy tail &mdash;
+            the two previous guesses, 60s and 150s, both sat inside the healthy distribution),
+            the oomd kill-loop history (730 kills/day), the block-page phantom-200 diagnosis,
+            the NetBird tunnel-IP hijack proof matrix, and the gatus-watches-itself-with-the-watched
+            caveat. That is a runbook written from incidents, not from documentation.
+          </p>
+          <p>
+            <strong>Guard depth.</strong> 22 eval assertions mirror upstream caps (256 devices /
+            16 IPs, 64 policies / 512 domains / 16 windows, dup ids, dangling refs, single
+            ownership, schedule shape, ECS prefix range, h3-requires-tls, filter-needs-address).
+            <code>tests/test-dns-blocker-render.nix</code> (446 lines) both pins the real rendered
+            YAML and <em>negative-tests every assertion</em> by forcing the failing variant and
+            requiring the message.
+          </p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>What keeps it from superb</h4>
+          <p>
+            <strong>Split schema.</strong> The upstream module is the schema of record; the
+            wrapper is a second, smaller schema. Live config proves the gap:
+            <code>gateway_*</code> (ADR-0011 interception gateway, shipped 2026-10-17),
+            <code>cluster_*</code> (HA fabric), <code>dns_doq_enabled</code>,
+            <code>dns_doh3_*</code>, <code>dns_qname_minimization_level</code>,
+            <code>dns_circuit_breaker_*</code>, <code>retention_*</code>,
+            <code>tracking_batch_*</code>, <code>dashboard_sse_*</code>,
+            <code>dhcp_lease_file</code>, <code>pprof_enabled</code>,
+            <code>allow_sibling_domains</code> &mdash; all present at the locked rev, none
+            reachable from <code>services.dns-blocker</code>.
+          </p>
+          <p>
+            <strong>Re-implemented readiness.</strong> The deployed binary already calls
+            <code>sdnotify.Ready()</code> after <code>srv.Startup()</code> &mdash; listeners
+            bound, probe gate passed. The wrapper overrides <code>Type = "simple"</code> and
+            substitutes a 300s <code>ss -ltn</code> poll for the <em>block-page</em> port (80),
+            never the DNS contract (:53 TCP/UDP).
+          </p>
+        </div>
+
+        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Structural</span>
+          <h3>Upstream module not consumed &mdash; documented doctrine, broken in the largest service</h3>
+          <div class="where">modules/nixos/services/dns-blocker.nix:1-1494 &middot; ~/projects/dnsblockd/nix/modules/nixos/{config,options/*,assertions}.nix</div>
+          <p>
+            <code>docs/agents/integration-registry.md</code> states the rule plainly: when an
+            upstream LarsArtmann flake exports <code>nixosModules</code>, <em>always consume the
+            upstream module &mdash; never hand-roll a parallel one</em>, with
+            <code>monitor365.nix</code> named as the gold standard. dnsblockd exports
+            <code>nixosModules.default</code> and <code>.dnsblockd</code>. The wrapper still
+            re-declares the schema in camelCase (<code>blockIP</code> vs upstream
+            <code>block_ip</code>), so a migration is now a 53-option rename plus a user-identity
+            decision &mdash; the longer it waits, the wider the gap.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Migrate to <code>inputs.dnsblockd.nixosModules.dnsblockd</code> and delete the render
+            block; keep only SystemNix-owned layers (sops env, gates, ioTier, onFailureP0,
+            ports, registry entry). Re-tag the queue row: its stated blocker is falsified
+            (see Evidence E7).
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Availability</span>
+          <h3>The readiness gate proves port 80, not DNS</h3>
+          <div class="where">modules/nixos/services/dns-blocker.nix:1346-1367 (listenerWait) &middot; :1383 Type = "simple"</div>
+          <p>
+            <code>ss -ltn | grep ":${cfg.blockPort} "</code> polls the block-page listener.
+            The service contract is resolution on <code>:53</code> (UDP <em>and</em> TCP). Two
+            blind spots follow: (a) <code>ss -ltn</code> is TCP-only, so a UDP-only
+            <code>:53</code> failure is invisible to the gate; (b) nothing in the gate names port
+            53 at all. The 2026-10-12 wedge is caught only incidentally &mdash; that wedge bound
+            no listeners whatsoever.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Adopt upstream <code>Type = "notify"</code> (add <code>AF_UNIX</code> to
+            <code>RestrictAddressFamilies</code>, drop the poll) &mdash; or, as a one-line
+            interim, extend the poll to <code>ss -ltnu</code> and match
+            <code>:53</code>.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Security</span>
+          <h3>The sole resolver and its L7 proxy run as root</h3>
+          <div class="where">live unit: no User= &middot; upstream config.nix:256-259 (cfg.user/group, CAP_NET_BIND_SERVICE)</div>
+          <p>
+            The deployed unit has a strong sandbox (ProtectSystem=strict, syscall arch native,
+            three address families, NoNewPrivileges) but no <code>User=</code>: the process that
+            parses untrusted DNS, TLS SNI, and HTTP is root. Upstream creates an unprivileged
+            <code>dnsblockd</code> user and relies on <code>CAP_NET_BIND_SERVICE</code>, which
+            the wrapper already grants &mdash; so the privilege is not needed.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Owner decision (already recorded in the queue row): adopt upstream's user with a
+            one-time <code>chown -R dnsblockd:dnsblockd /var/lib/dnsblockd</code> heal, or
+            override <code>user = "root"</code> explicitly so the choice is visible.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Observability</span>
+          <h3>The OTel leg is dead and self-blinding</h3>
+          <div class="where">/health: otelInternalErrors=40667 &middot; journal: 903 &times; &ldquo;Post http://localhost:4318/v1/&hellip;: connection refused&rdquo; this boot</div>
+          <p>
+            <code>signoz-collector.service</code> is the known 2026-10-27 outage (fix in tree,
+            undeployed), so :4318 is dark. The integration-level lesson is separate:
+            <code>services.signoz-coverage.expected.dnsblockd.wiring = "config"</code> still
+            asserts the leg works, and the only signal that it does not &mdash;
+            <code>dnsblockd_otel_internal_errors</code> &mdash; travels <em>through the same
+            broken exporter</em>. The watcher dies with the watched, again.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Deploy the collector fix; then add a collector-independent assertion: a textfile
+            metric (or gatus check) on <code>otelInternalErrors</code> sampled from
+            <code>127.0.0.1:9090/metrics</code> &mdash; the stats API survives exporter failure,
+            which is exactly why it is the right vantage point.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Durability</span>
+          <h3>The one owner-curated dataset has no backup</h3>
+          <div class="where">allowlist_path=/var/lib/dnsblockd/allowlist &middot; snapshots.nix:393-413 (only hot/forgejo is btrbk-covered)</div>
+          <p>
+            The permanent allowlist (dashboard &ldquo;Always allow&rdquo;,
+            <code>POST /api/allowlist</code>, Likely-Broken-Sites bulk flow) is the fix for the
+            daily data-loss bug documented as max-adoption finding #1. It now persists &mdash;
+            onto <code>hot/dnsblockd</code>, a Samsung subvolume that is <em>deliberately</em>
+            outside every snapshot set (doctrine C). tracking/journal loss is acceptable
+            analytics loss; the allowlist is a few hundred bytes of human judgement that cannot
+            be regenerated.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Add a tiny oneshot (or a btrbk subvolume entry) that copies
+            <code>allowlist</code> into <code>/var/backup/</code> &mdash; snapshot-covered,
+            pool-shipped.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Correctness of the record</span>
+          <h3>Runbook drift: two claims falsified by live state</h3>
+          <div class="where">docs/services/dnsblockd.md:140-145</div>
+          <p>
+            (1) &ldquo;Open anomaly: TWO tracking DBs coexist&rdquo; &mdash; the live data dir holds
+            one <code>tracking.db</code> (2.55G); the 724M <code>dnsblockd_tracking.db</code> is
+            gone. (2) &ldquo;Both retention surfaces bounded (30d)&rdquo; &mdash; actual upstream
+            defaults (no keys rendered) are tracks 30d / metrics 90d / block-rate 365d, correctly
+            stated in <code>dnsblockd-tracking-dial.md</code> but not here. Also undocumented:
+            <code>trust-anchor.db</code> / <code>trust-anchor-tombstones.db</code> (0600 root) now
+            live in the data dir.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Future-proofing</span>
+          <h3>Split-brain CA trust with no parity guard</h3>
+          <div class="where">platforms/nixos/system/dns-blocker-config.nix:244-278 (inline PEM) vs sops dnsblockd_ca_cert</div>
+          <p>
+            The same CA exists twice: a PEM literal in the repo and a sops secret. Parity holds
+            <em>today</em> (verified this session: identical SHA-256 fingerprint), but nothing
+            enforces it. The first CA rotation silently breaks browser trust and the filter-proxy
+            &ldquo;scoped lie&rdquo;, which needs devices to trust that CA.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            One line in <code>scripts/post-deploy-check.sh</code>: compare
+            <code>openssl x509 -fingerprint -sha256</code> of the PKI cert against
+            <code>/run/secrets/dnsblockd_ca_cert</code>.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Freshness</span>
+          <h3>Blocklists are eval-pinned with no staleness signal</h3>
+          <div class="where">platforms/common/dns-blocklists.nix (SRI over mutable gitlab main) &middot; scripts/dns-update.sh</div>
+          <p>
+            SRI pinning is the right call (content drift fails the build loudly), but it makes
+            freshness a manual act: <code>scripts/dns-update.sh</code> has no timer and no
+            telemetry. Upstream's native runtime fetcher (<code>dns_blocklist_urls</code> +
+            <code>dns_blocklist_cache_dir</code>) is unreachable from the wrapper, which wires
+            the cache dir only for <em>trial</em> URLs. Every other artifact in this integration
+            reports its age; the blocking data itself does not.
+          </p>
+        </div>
+
+        <h2 id="scores"><span class="num">03</span>Scores (1&ndash;5)</h2>
+        <div class="scorecard">
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Coupling &mdash; coupled to upstream's <em>config schema</em> by re-implementation (57 keys as a Nix attrset) instead of to its <em>module interface</em>; SystemNix-lib coupling is clean (harden/ports/registry/gates)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Cohesion &mdash; one module, one service; only the blocklist fetch+whitelist-filter subsystem is arguably a second concern inside it</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Modularity &mdash; file boundaries are sharp, the service&harr;upstream boundary is porous; <code>dnsblockd-cert-trust.nix</code> extraction is the counter-example that proves the seam works</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Composability &mdash; optionalAttrs render blocks, submodule options, mergeable harden/ioTier/serviceDefaults, rpi3 reuses the module with a different config; missing knobs are exactly the upstream families</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Scalability &mdash; each new upstream capability costs a hand-edited render block + render-test; eval-time blocklist fetch and a 300s readiness tail both grow with the list</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Service orientation &mdash; owns its data on a fail-closed hot subvol, explicit contracts (:53, block page, stats API), registry-driven tile/OIDC/monitoring; vHosts and three gatus checks still live outside</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">4</div>
+            <div class="label">Dependency direction &mdash; module &rarr; lib, upstream value &rarr; module via one pinned input; the missing inversion is depending on the upstream <em>options interface</em></div>
+          </div>
+        </div>
+        <p class="hero-subtitle" style="margin-top: 1rem">
+          Composite 25/7 = <strong>3.57</strong> &mdash; &ldquo;Good&rdquo; (3.5&ndash;4.4): no urgent
+          restructuring, address the lowest dimension. Contrast with the tree-wide 2026-10-14
+          review, where coupling/modularity/dependency-direction each scored 4.
+        </p>
+
+        <h2 id="strengths">Strengths</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Zero phantom options</strong>
+              <span>All 53 declared options are referenced through <code>cfg.*</code> and reach the render block &mdash; the phantom-config class (<code>extraDomains</code>) was closed by wiring, not deleting, and is pinned by a render-test assert.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Assertions that are actually tested</strong>
+              <span>22 eval assertions, each negative-proven in <code>tests/test-dns-blocker-render.nix</code> by forcing the failing variant and matching the message text.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Incident-shaped operations</strong>
+              <span>5-phase discriminator, goroutine-dump-before-restart doctrine, oomd omit + OOMScoreAdjust -1000, MemoryMax 4G with GOMEMLIMIT 3GiB, P0 Discord page alongside the desktop toast.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Monitoring lattice with known blind spots written down</strong>
+              <span>5 gatus checks (resolver UDP, resolver TCP, /health, timeout-anchored system-resolver) + 5 SigNoz rules (unit state, stats wedge, crash counter, journal drops, local-resolution dead), and the runbook states where the watcher dies with the watched.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Data placement with a fail-closed stance</strong>
+              <span><code>hot/dnsblockd</code> subvol, <code>cow = true</code>, implicit <code>RequiresMountsFor</code> kept deliberately: a detached Samsung stops the resolver rather than shadow-writing to the QLC root.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Secrets discipline</strong>
+              <span>Auth token via <code>DNSBLOCKD_AUTH_TOKEN</code> EnvironmentFile, never the store YAML; proxy inject URL via env; OIDC secret bridged by a oneshot that fails open to &ldquo;SSO off&rdquo; instead of crash-looping DNS.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2>Issue Table</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Severity</th><th>Issue</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><span class="badge badge-critical">Structural</span></td><td>Upstream module not consumed; 53-key schema re-implemented</td><td><span class="badge badge-low">Open (queue row mislabeled)</span></td></tr>
+            <tr><td>2</td><td><span class="badge badge-critical">Availability</span></td><td>Readiness gate polls block-page :80 (TCP) instead of DNS :53</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>3</td><td><span class="badge badge-high">Security</span></td><td>Sole resolver + L7 proxy run as root</td><td><span class="badge badge-low">Open (owner)</span></td></tr>
+            <tr><td>4</td><td><span class="badge badge-high">Observability</span></td><td>OTel exporter dead, signal travels the dead path</td><td><span class="badge badge-low">Open (collector fix undeployed)</span></td></tr>
+            <tr><td>5</td><td><span class="badge badge-high">Durability</span></td><td>Permanent allowlist has no backup</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>6</td><td><span class="badge badge-low">Docs</span></td><td>Runbook: two tracking DBs + 30d retention claims falsified</td><td><span class="badge badge-fixed">Fixed this session</span></td></tr>
+            <tr><td>7</td><td><span class="badge badge-low">Future-proofing</span></td><td>CA duplicated (inline PEM + sops), no parity guard</td><td><span class="badge badge-fixed">Verified equal; guard open</span></td></tr>
+            <tr><td>8</td><td><span class="badge badge-low">Freshness</span></td><td>Blocklists eval-pinned, no age telemetry</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>9</td><td><span class="badge badge-low">Coverage</span></td><td>No VM test; upstream ships two that boot this unit</td><td><span class="badge badge-low">Open</span></td></tr>
+            <tr><td>10</td><td><span class="badge badge-low">Registry</span></td><td>3 gatus checks + hand-written vHosts outside the registry entry</td><td><span class="badge badge-low">Documented exception</span></td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="proposal">Before / After</h2>
+        <div class="compare-header">
+          <div class="compare-before">Today: wrapper owns the schema</div>
+          <div class="compare-after">Target: upstream owns the schema</div>
+        </div>
+        <div class="compare-row">
+          <div>
+            <pre><code><span class="tok-comment"># modules/nixos/services/dns-blocker.nix (1,494 lines)</span>
+dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
+  lib.generators.toYAML {} (
+    { listen_addr = cfg.blockIP; port = cfg.blockPort; <span class="tok-comment">…57 keys…</span> }
+    // lib.optionalAttrs cfg.dnsDOHEnabled { dns_doh_enabled = true; <span class="tok-comment">…</span> }
+  ));
+<span class="tok-comment"># every upstream feature = one hand-written attr + one render-test assert</span></code></pre>
+          </div>
+          <div>
+            <pre><code><span class="tok-comment"># modules/nixos/services/dns-blocker.nix (thin wrapper)</span>
+<span class="tok-keyword">imports</span> = [ inputs.dnsblockd.nixosModules.dnsblockd ];
+services.dnsblockd = {
+  enable = cfg.enable;
+  block_ip = cfg.blockIP;
+  gateway_enabled = cfg.gateway;   <span class="tok-comment"># free, typed, asserted upstream</span>
+  <span class="tok-comment"># SystemNix-only layers stay here: sops env,</span>
+  <span class="tok-comment"># ioTier, onFailureP0, ports, registry entry</span>
+};
+<span class="tok-comment"># + checks.&lt;system&gt;.dnsblockd-vm = upstream nixos-vm-test</span></code></pre>
+          </div>
+        </div>
+
+        <h2 id="plan"><span class="num">04</span>Roadmap</h2>
+
+        <div class="migration-step">
+          <div class="migration-num">P0</div>
+          <div class="migration-content">
+            <h4>Make the readiness gate test the contract</h4>
+            <p>
+              Interim: <code>ss -ltnu</code> and match <code>:53</code> in
+              <code>dnsblockd-wait-listener</code>. Proper: <code>Type = "notify"</code> +
+              <code>AF_UNIX</code>, delete the poll. One deploy, one render-test line.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P0</div>
+          <div class="migration-content">
+            <h4>Give the OTel failure a collector-independent observer</h4>
+            <p>
+              Deploy the signoz <code>project_id</code> fix (already in tree), then sample
+              <code>dnsblockd_otel_internal_errors</code> from <code>:9090/metrics</code> into a
+              textfile metric + gatus check. Extend the existing &ldquo;4318 refused journal
+              spam&rdquo; queue row to carry this second half.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P1</div>
+          <div class="migration-content">
+            <h4>Migrate to <code>nixosModules.dnsblockd</code></h4>
+            <p>
+              Unblock a queue row that is already unblocked: <code>csrf_enabled</code> and
+              <code>blocklist_files</code> exist at the locked rev. Sequence: owner decides user
+              identity &rarr; map 53 options &rarr; adopt upstream VM test &rarr; FOD probe &rarr;
+              deploy &rarr; verify 110-key parity. Subsumes P0&nbsp;#2 and unlocks
+              gateway/cluster/DoQ/retention for free.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P1</div>
+          <div class="migration-content">
+            <h4>Back up the allowlist</h4>
+            <p>
+              Copy <code>/var/lib/dnsblockd/allowlist</code> into a snapshot-covered path on a
+              timer. Smallest irreversible-data fix in the whole integration.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P2</div>
+          <div class="migration-content">
+            <h4>Add the two cheap parity/freshness guards</h4>
+            <p>
+              CA fingerprint parity in <code>post-deploy-check.sh</code>; a blocklist-age
+              metric (max mtime across <code>dns_blocklists</code>) with a gatus threshold, and
+              a calendar reminder to run <code>scripts/dns-update.sh</code>.
+            </p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">P3</div>
+          <div class="migration-content">
+            <h4>Finish the registry inversion</h4>
+            <p>
+              Move the three DNS gatus checks into <code>services.integration.dnsblockd.checks</code>
+              and document the vHost exception where the registry can see it.
+            </p>
+          </div>
+        </div>
+
+        <h2 id="evidence"><span class="num">05</span>Evidence</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Probe</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>E1</td><td><code>ss -ltnup</code> + <code>pgrep -af dnsblockd</code></td><td>:53 UDP+TCP, stats 127.0.0.1:9090, block page .200:80/:443 (Caddy owns .150); PID 3919, unit <code>active</code></td></tr>
+            <tr><td>E2</td><td>live cmdline + executable path</td><td><code>dnsblockd-f9bb647</code> = <code>flake.lock</code> node <code>dnsblockd</code> rev <code>f9bb6477c5b2&hellip;</code>; matches <code>flake/expected-locks.nix:54</code></td></tr>
+            <tr><td>E3</td><td>parse the live rendered config</td><td>57 keys; absent: <code>gateway_*</code>, <code>cluster_*</code>, <code>dns_doq_*</code>, <code>dns_doh3_*</code>, <code>retention_*</code>, <code>tracking_batch_*</code>, <code>dashboard_sse_*</code>, <code>dhcp_lease_file</code>, <code>pprof_enabled</code>, <code>allow_sibling_domains</code></td></tr>
+            <tr><td>E4</td><td><code>GET /health</code></td><td><code>status: pass</code>, 0 DNS crashes, batch stats 55,171 written / 0 dropped, blocklist per-source health present, <strong><code>otelInternalErrors: 40667</code></strong></td></tr>
+            <tr><td>E5</td><td><code>journalctl -u dnsblockd -b</code> grep 4318/otlp</td><td>903 lines: <code>Post "http://localhost:4318/v1/{logs,traces}": connection refused</code>; <code>ss</code> shows no :4317/:4318 listener</td></tr>
+            <tr><td>E6</td><td>deployed unit file</td><td><code>Type=simple</code>, <code>ExecStartPost=dnsblockd-wait-listener</code>, <code>TimeoutStartSec=330s</code>, <code>Restart=always</code>, no <code>User=</code>, <code>RestrictAddressFamilies</code> = AF_INET/AF_INET6/AF_NETLINK (no AF_UNIX)</td></tr>
+            <tr><td>E7</td><td><code>git show f9bb6477:nix/modules/nixos/options/{core,dns}.nix</code></td><td><code>csrf_enabled</code> (core.nix:171) and <code>blocklist_files</code> (dns.nix:178) PRESENT at the locked rev &rarr; the <code>[blocked:push]</code> premise on both migration rows is falsified</td></tr>
+            <tr><td>E8</td><td><code>git show f9bb6477:cmd/dnsblockd/main.go</code></td><td><code>sdnotify.Ready()</code> after <code>srv.Startup()</code> &mdash; true readiness available in the deployed binary</td></tr>
+            <tr><td>E9</td><td>CA fingerprint compare</td><td>repo inline PEM == <code>/run/secrets/dnsblockd_ca_cert</code> (SHA-256 <code>EE:A9:E1:&hellip;:49:88</code>, valid to 2036-04-12)</td></tr>
+            <tr><td>E10</td><td><code>/var/lib/dnsblockd</code> + <code>findmnt</code></td><td>journal.db 4.6G, tracking.db 2.55G, trust-anchor DBs present; mounted from <code>/hot/dnsblockd</code> (btrfs, compress=zstd:3) &mdash; one tracking DB, not two</td></tr>
+            <tr><td>E11</td><td>option-vs-render cross-check</td><td>53 option declarations, 0 never referenced through <code>cfg.*</code></td></tr>
+          </tbody>
+        </table>
+
+        <footer class="footer">
+          Generated 2026-10-28 &middot; every claim above is backed by a probe in the Evidence
+          table, a file:line, or a command output captured this session
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -616,7 +616,9 @@
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum
-        # gate incl. a negative control, panic truncation, write-refusal)
+        # gate incl. a negative control, panic truncation, write-refusal,
+        # ClickHouse death-window states ok/dark/failed/skipped + section
+        # ordering + epoch-ns TZ math)
         # plus static tripwires: the stability remedy doc must still point
         # at the script (doc-drift guard) and the script must carry the
         # no-overwrite guard (evidence files are append-only).

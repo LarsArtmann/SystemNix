@@ -159,6 +159,14 @@ _: {
           CGROUP_IO_SNAPSHOT="${stateDir}/cgroup-io.last"
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
+          IO_ACTION_COOLDOWN_SECONDS=${toString cfg.ioActionCooldownSeconds}
+          IO_PAUSE_ENABLE=${lib.boolToString cfg.ioPause.enable}
+          IO_PAUSE_PATTERNS="${lib.concatStringsSep " " cfg.ioPause.cgroupPatterns}"
+          IO_PAUSE_MAX_GROUPS=${toString cfg.ioPause.maxPauseGroups}
+          IO_PAUSE_CALM_SECONDS=${toString cfg.ioPause.calmSeconds}
+          IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
+          PAUSE_FILE="${stateDir}/io-paused"
+          PAUSE_CALM_EPOCH_FILE="${stateDir}/io-pause-calm.epoch"
 
           # Kernel data sources, env-overridable for the VM regression test
           # (tests/test-memory-emergency-guard.nix fakes them to exercise the
@@ -539,17 +547,30 @@ _: {
           # cooldown pace. The per-trip forensics + io.stat attribution
           # machinery already fires and feeds tree selection. Full design
           # + VM-test contract: plan file §10, execution log.
+          # Zone class for the action split (2026-10-28 §7.1a): zone 6 is
+          # IO-class — with ioPause enabled it NEVER touches sockets or
+          # sacrifice units (memory is healthy in the crash-#3 class);
+          # zones 1-5 keep the legacy memory action byte-identical.
+          zone_is_io=0
+          [ "$zone" = "6" ] && zone_is_io=1
+          io_split_active=0
+          [ "$zone_is_io" = "1" ] && [ "$IO_PAUSE_ENABLE" = "true" ] && io_split_active=1
+          cooldown_bar=${toString cfg.actionCooldownSeconds}
+          [ "$zone_is_io" = "1" ] && cooldown_bar=$IO_ACTION_COOLDOWN_SECONDS
           if [ "$trip" = "1" ]; then
             # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
             # only the backend left the socket accepting, and every trip's
             # own gatus alerts re-woke flm via the PapDashboard insight
             # enricher — a 21.6 GB cold load into a zram-full machine
             # (2026-08-22 05:49 feedback loop). Socket stop is idempotent.
-            if [ -n "$SOCKET_UNITS" ]; then
+            # IO-class trips (action split) are EXEMPT: their drivers are
+            # headless build trees, not the LLM — the socket stop here was
+            # the 4x-proven wrong tool (freezes #24, #25, 2026-10-27 x2).
+            if [ "$io_split_active" = "0" ] && [ -n "$SOCKET_UNITS" ]; then
               systemctl stop $SOCKET_UNITS 2>/dev/null || true
             fi
 
-            if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt ${toString cfg.actionCooldownSeconds} ]; then
+            if [ "$last_trip" -gt 0 ] && [ "$last_trip_age" -lt "$cooldown_bar" ]; then
               if should_log_verbose "$COOLDOWN_LOG_EPOCH_FILE"; then
                 # Guard-vs-operator attribution (2026-10-01, plan P2 #10):
                 # disclose WHICH zone tripped and how much cooldown remains,
@@ -1308,6 +1329,40 @@ _: {
           type = lib.types.int;
           default = 20;
           description = "PSI io some avg60 percentage below which the sacrifice sockets may be restored. 2026-10-25 budget-burn class: the restore gate was MEMORY-blind — during a sustained Zone 6 io storm (the dominant trip zone, 4188 of 4331 trips) the memory margins recover within minutes, so the socket restored straight INTO the storm, the 21.6 GB flm cold load re-tripped Zone 6, and the daily budget burned before noon (capped 3/3 by 12:34Z; every LLM consumer 503 until a manual restart). Deliberately HALF the Zone 6 trip bar (ioPsiSomeAvg60ThresholdPercent, 40): the cold load is the heaviest single io burst on the machine, so its re-activation needs real calm, not merely below-trip-bar — the same strict-restore-margin doctrine as the memory axis (restore 10 vs trip 50). The churn re-arm (40) stays deliberately more permissive: btrbk sends carry their own containment (MemoryHigh + OOMScoreAdjust), the flm cold load has none. Fail-closed on unreadable PSI (-1), like every other restore gate";
+        };
+
+        ioActionCooldownSeconds = lib.mkOption {
+          type = lib.types.int;
+          default = 150;
+          description = "Zone-6-only cooldown between emergency actions. IO storms re-trip at cooldown pace and the 600 s memory cadence left 450 s of uncontained storm per cycle (2026-10-28: trips at exactly 600 s spacing while system.slice wrote 19-52 GB per window). The IO action is resumable (SIGSTOP), so a tighter re-arm is safe";
+        };
+
+        ioPause = {
+          enable = lib.mkEnableOption "Zone-6 action split (2026-10-28 §7.1a): IO-class trips SIGSTOP headless driver trees instead of stopping the LLM sockets — the socket stop was the wrong tool 4x proven (freezes #24, #25, 2026-10-27 x2: memory healthy, sockets dead, storm untouched). Honors the 2026-10-07 SIGSTOP-license revocation by construction: a process group is only pausable when NO member holds a controlling TTY (tty_nr == 0 for every member), so owner interactive work is structurally unpausable";
+          cgroupPatterns = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [
+              "nix-daemon.service"
+              "tq-agent-pool.service"
+              "session-"
+            ];
+            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top";
+          };
+          maxPauseGroups = lib.mkOption {
+            type = lib.types.int;
+            default = 8;
+            description = "Hard cap on simultaneously paused process groups per storm";
+          };
+          calmSeconds = lib.mkOption {
+            type = lib.types.int;
+            default = 600;
+            description = "Seconds of sustained io PSI some avg60 below restoreIoSomeAvg60ThresholdPercent required before paused trees are SIGCONTinued";
+          };
+          maxPausedSeconds = lib.mkOption {
+            type = lib.types.int;
+            default = 3600;
+            description = "Safety cap: paused trees are ALWAYS resumed (with a WARN) after this many seconds, calm or not — a tree must never stay frozen unattended";
+          };
         };
       };
 
