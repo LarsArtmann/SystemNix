@@ -178,9 +178,13 @@ lib.filterAttrs (_: v: v != null) {
   # follower divergence; got EiJnFbX3… from the keep-going enumeration,
   # ~/.cache/lockfloat/float-proof-20261026-161006.log). Drop when upstream
   # bakes the got hash; re-add ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE (2026-10-28 toplevel keep-going, deploy-fix session):
+  # erraudit@6fe130d spec EiJnFbX3…, got /Va1XfKr… (first-hand,
+  # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log). Drop when
+  # upstream bakes /Va1XfKr…; re-add ONLY via nix-hash-fix evidence.
   erraudit =
     flakePkgShim inputs.erraudit "default"
-      "sha256-EiJnFbX3VuOlU08KLD8Mm1dTnH0maEOpNMnGDb0Nh6c=";
+      "sha256-/Va1XfKrfN3QZjSFBjfXwOtDlgAKt1fLRZo1N5UEmkQ=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,

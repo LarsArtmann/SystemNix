@@ -91,8 +91,12 @@
       # N9Zsy7bb, got 0YovMWLa (float-proof-20261027-220636.log — f22274e's
       # module set matches 0d50fb7's; the strand flaps between two upstream
       # states and this hash tracks the LOCKED rev, whatever it is).
+      # NINTH RE-STALE 2026-10-28 toplevel keep-going (deploy-fix session):
+      # cv@8243b2d spec 0YovMWLa, got bfVHTAsr (first-hand,
+      # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log) — the strand
+      # flapped again; this hash tracks the LOCKED rev.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-0YovMWLaIncHZLXzi6KxO2CzYP1chLsEbYxtjAC9j2U=";
+        vendorHash = "sha256-bfVHTAsrkepQ6+dzqI511RqghB8g/xxCJWEfcfz2SLo=";
       };
     in
     {

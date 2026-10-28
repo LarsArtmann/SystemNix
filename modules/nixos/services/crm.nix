@@ -100,8 +100,12 @@
       # evidence (float-proof-20261027-220636.log, kith-crm go-modules
       # mismatch). Drop when upstream pastes the got hash (or the lock
       # moves past an upstream-fixed rev).
+      # RE-STALE (2026-10-28 toplevel keep-going, deploy-fix session):
+      # kith-crm@a8b855071 spec +gBi/2cT…, got nP5lPlmK… (first-hand,
+      # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log). Drop when
+      # upstream bakes nP5lPlmK…; re-add ONLY via nix-hash-fix evidence.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-+gBi/2cTIfu19o0QzI0FEk84xORplUKt7ECtwLR+/Pk=";
+        vendorHash = "sha256-nP5lPlmKwqnWHyJooT+GRQJoICkYE9fd6JR9asHO7Oc=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
