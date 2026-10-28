@@ -19,7 +19,7 @@ service runbooks and `docs/todo/*`.
 | 3 | Research pass over the AI estate | `docs/services/{llama-rag,fastflowlm,llama-chat,ai-meter,crush}.md`, `lib/ports.nix`, go-aichat SKILL.md |
 | 4 | Live verification of the headline claims (§07 appendix in report) | `GET :8850/v1/models` → 200 + `qwen3.6-35b-a3b-aggressive`; busctl `llama-embeddings` active; `fastflowlm.socket` active + :52625 LISTEN; `GET :8107/health` → 200 OK; ss :8849 LISTEN with `llama-reranker` unit **inactive** (rogue re-confirmed) |
 | 5 | Report written: fleet table, ai-meter routing, consumer fleet, Crush provider table, GTT hardware model, open items, verification appendix | 8 sections, all `id` anchors present (loop-verified), all `href`s resolve |
-| 6 | Self-parse check | Python `html.parser` full-file feed: clean |
+| 6 | ~~Self-parse check~~ **CORRECTED 19:15 — false assurance.** `html.parser` is lenient and does NOT balance tags; see correction block at end of file. | A real tag-balance check found the shipped page broken |
 | 7 | Ollama-removal directive honored | No Ollama surface anywhere in the report |
 | 8 | No secret values in the artifact | Only key *sources* named (sops files, OAuth store); zero raw values |
 | 9 | Ghost temp file cleaned up | `.cache-report-nav.part` added in `97d832842`, deleted in `3e4941afd` — net history clean |
@@ -54,7 +54,7 @@ service runbooks and `docs/todo/*`.
 | - | -------- | ------ | ---------- |
 | 1 | **Empty-body splice**: first python splice read the body from `/dev/stdin` inside a `bash <<'EOF'` heredoc — stdin was already at EOF, so `body=''` and the entire template body (lines 839-1030) was deleted from the file | Whole body gone for ~1 minute; caught immediately, template recopied | Reaching for a clever one-liner instead of writing the body to a real file first |
 | 2 | **Ghost artifact in git history**: created `.cache-report-nav.part` in the REPO ROOT via the write tool, used it for nothing, forgot it existed — the daemon committed it (`97d832842`), I deleted it, daemon committed the deletion (`3e4941afd`) | Two garbage commits; noise in `git log` for a file that never should have existed | Violated the house rule that intermediates live in `/dev/shm`/`~/.cache/`, never the repo; also created a file with no consumer (planning failure) |
-| 3 | **`<main class="main">` opening tag destroyed** by my own splice range (it replaced 839-1030, which included the tag at 849), leaving structurally broken HTML on disk | Broken state existed on disk for ~2 min. **Verified post-hoc:** neither committed version (`97d832842`, `3e4941afd`) contains the broken state — both show exactly one `<main class="main">`. Lucky daemon timing, not process. | No boundary assertion before splicing; the "parse ok" check only ran AFTER the manual fix, so it never tested the broken state |
+| 3 | **`<main class="main">` opening tag destroyed** by my own splice range (it replaced 839-1030, which included the tag at 849), leaving structurally broken HTML on disk | Broken state existed on disk for ~2 min. **Verified post-hoc:** neither committed version (`97d832842`, `3e4941afd`) contains the broken state — both show exactly one `<main class="main">`. Lucky daemon timing, not process. | No boundary assertion before splicing; the "parse ok" check only ran AFTER the manual fix, so it never tested the broken state. **CORRECTED 19:15:** the post-hoc check itself was hollow — it counted `<main>` occurrences, not tag balance. The REAL shipped breakage was a missing `</aside>`: my splice range (839-1030) also consumed the template's `</aside>` at old line 847, so the entire page rendered inside the fixed-width sidebar (`display:none` below 1100px = invisible page). The broken version IS in git history (`3e4941afd`). Fixed 19:12; balance now verified with a stack-based checker (errors: none, unclosed: none). |
 | 4 | **Edit-tool mod-time race, twice**: after sed/python modified the file, I invoked `edit` without re-reading → "file has been modified since last read" twice | Two wasted round trips; fell back to bash `sed -i` | Bash writes invalidate the edit tool's read-tracking; re-read before every post-bash edit |
 | 5 | **Multi-agent content-pin skipped**: never ran `git rev-parse HEAD` + `git status --short` before the first write (Session Discipline rule) | No collision occurred this time — by luck; the daemon committed mid-session twice and I only noticed via a `D` entry for a file I "never committed" | Rule exists precisely for this; skipped it |
 | 6 | **Misread `grep -c 0` exit code as a chain failure** and briefly believed the splice hadn't happened | ~1 wasted verification round | `grep -c` exits 1 on zero matches; command attribution confusion, not a tool failure |
@@ -155,6 +155,31 @@ duplicated. HARVEST can run the moment the owner picks items from §f.
 3. **nsfw-classifier and whisper:** are these living parts of your AI estate that belong in the overview, or retired/Docker-era remnants I should document as historical? You told me not to research outside the session, so I'm asking instead of guessing.
 
 ---
+
+## CORRECTION BLOCK — 2026-10-28 19:15
+
+Owner reported the overview page BROKEN after this report was filed. Root cause found
+and fixed:
+
+- **The shipped page was structurally broken.** My body splice replaced template lines
+  839-1030, which included BOTH the sidebar `<nav>` (intended) AND its enclosing
+  `</aside>` (NOT intended, never noticed). Result: every `<section>`, card, and table
+  after the hero rendered inside `<aside class="sidebar">` — a fixed-width column that
+  is `display:none` below 1100px. On a typical window the page was literally blank.
+- **The report's own verification claims above were wrong in two ways**, both now
+  corrected in place: (1) "parse ok" via `html.parser` is NOT tag-balance validation —
+  it happily parses mismatched tags; (2) the §d3 post-hoc "broken state never committed"
+  check counted `<main>` occurrences and missed the real defect entirely. The broken
+  page was committed as `3e4941afd`; the fixed version supersedes it in the working tree
+  (daemon will sweep).
+- **Fix:** `</aside>` restored after `</nav>`; stack-based tag-balance checker now
+  reports errors: none, unclosed: none; all 24 used CSS classes verified present in the
+  template stylesheet; template placeholder top-bar replaced with real values
+  ("AI SETUPS / 2026-10-28 / SYSTEMNIX · EVO-X2"); zero placeholder strings remain.
+- **New standing lesson (folds into §e):** a stack-based tag-balance check is the
+  minimum structural gate for any hand-assembled HTML artifact; "it parses" means
+  nothing. Visual render verification (§c1) is still owed — no browser binary found on
+  PATH this session.
 
 **WAITING FOR INSTRUCTIONS** (per session order; no harvest, no commit, no follow-up
 actions taken after this file was written).
