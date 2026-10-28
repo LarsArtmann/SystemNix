@@ -1661,3 +1661,8 @@
 - [ ] [ready] **Decompose /var/lib/monitor365-server's 110G** (39G→110G in 2 days; DB vs WAL vs CHECKPOINT/reflink backups vs corpses; du-apparent vs real extents — reflink sharing may mask the truth) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Close the root-ledger holes: measure ~/.cache and ~/tmp for real** (both timed out of the throttled walks; per-child budgets, background window) → [docs/todo/storage.md](docs/todo/storage.md)
 - [ ] [ready] **Delete filesystem residue subvols** (.rescue/zz-test-delete + zz-test-snap test leftovers; empty @home ID 257, a 10-26 deletion candidate still present) → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] [ready] **Fire the prepared generation and run the calm-box post-deploy re-run on it** (cv@dd201874b + templ-components v1.24.0 pin + the dnsblockd tmp audit fix ride it; toplevel proof green; sequence clear of the btrbk ladder window) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **inboxclean-sync: pull app-level logs before the 5-min timeout kill** (decide TimeoutStartSec tightness vs a real wedge) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **ci-watchdog: read the script intent before fixing** (its deterministic ~2s exit may BE the canary signal it exists to emit) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **monitor365-pool-copy + paperless-exporter: last-good timestamps** (both no-journal stale failed states — dead or just stale?) → [docs/todo/services.md](docs/todo/services.md)
+- [ ] [ready] **Battery §6: report last-run result, not the sticky failed flag** (home-manager-lars showed green at 17:49 while the battery read it failed) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
