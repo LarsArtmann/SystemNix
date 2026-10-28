@@ -102,6 +102,29 @@ section exists in code + fixture tests but is dormant until the G1/G2 owner gate
 - The script REFUSES repos still marked pull-mirror (a push mirror on a pull mirror is incoherent
   — the next pull clobbers forgejo-side commits). Flip first.
 - Auth: the PAT from `forgejo-sync.env` is stored by forgejo as the push remote credential.
+- Fleet-migration pilot (2026-10-28, master plan
+  `GoReleaser-Wizard/docs/planning/2026-10-12_15-17_forgejo-primary-migration-master-plan.md`):
+  `dnsblockd` is listed. Its `.forgejo/workflows/{ci,release}.yml` + `.goreleaser.yaml`
+  (gitea_urls → forgejo.home.lan) were pushed to GitHub master FIRST so the full-import flip
+  preserves them; after the flip this entry attaches the push mirror via phase 5.
+
+### Release shadow (`forgejo-release-shadow`, shipped 2026-10-28)
+
+Copies a Forgejo release (notes + assets) to the public GitHub twin, keeping GitHub the download
+surface for proxy.golang.org / Homebrew / public clones while Forgejo is the release origin.
+Called by each canonical repo's Forgejo Actions release workflow (the goreleaser-wizard
+`--ci-provider forgejo` template ships the step):
+
+- `GITHUB_TOKEN` empty → exit 0 (shadow is opt-in per runner; a missing
+  `RELEASE_SHADOW_GITHUB_TOKEN` user-level Forgejo secret never blocks a release).
+- `FORGEJO_TOKEN` is the Forgejo API token (`secrets.GITHUB_TOKEN` inside Forgejo Actions);
+  `FORGEJO_TAG` optional (defaults to the repo's latest Forgejo release).
+- Idempotent: an existing GitHub release with ≥ the Forgejo asset count is a no-op; a deficient
+  one REFUSES (heal manually — silently appending to a half-uploaded release risks duplicates).
+- GitHub tag must exist before shadowing (goreleaser pushes the tag to the Forgejo remote only;
+  the push mirror forwards it within sync_on_commit latency — or push tags explicitly).
+- Fixture-tested in `forgejo-scripts-fixture` (skip/disabled, happy path, already-mirrored,
+  deficient, missing-release).
 
 ### Flipping a repo to native (`forgejo-flip@<name>`)
 
