@@ -20,6 +20,14 @@
 #      proxy_filter_domains key while empty), rendered verbatim when set,
 #      inject URL rides the systemd env (DNSBLOCKD_PROXY_INJECT_SCRIPT_URL)
 #      and NEVER the YAML (store is world-readable)
+#   8. rpi3-dns parity (2026-10-28, plan T13): the secondary host shares this
+#      module, so its DNS contract is pinned too — same port, same zero_ip
+#      response, same 77-entry whitelist — while its DELIBERATE divergences
+#      are pinned just as hard (different block IP, filter proxy OFF, no rate
+#      limit). Asserted at EVAL level: rpi3-dns is aarch64-linux, so this
+#      x86_64 host cannot realize its rendered config file (no aarch64
+#      builder) — the option-level facts are what a cross-host drift breaks
+#      first, and a file-level leg would need a remote builder to exist here.
 # Content checks grep the REAL rendered YAML, realized through the ExecStart
 # string context — not a reconstruction of the generator.
 {
@@ -29,6 +37,7 @@
 }:
 let
   evox2 = inputs.self.nixosConfigurations.evo-x2.config;
+  rpi3 = inputs.self.nixosConfigurations.rpi3-dns.config;
   svc = evox2.systemd.services.dnsblockd;
   exec = svc.serviceConfig.ExecStart;
 
@@ -358,6 +367,37 @@ let
       ];
       msg = "filter-domains x nxdomain assertion does not fire (upstream ErrFilterNeedsAddressResponse must be mirrored)";
     }
+    # ── rpi3-dns parity (secondary host, same module) ──
+    {
+      ok = rpi3.services.dns-blocker.enable;
+      msg = "rpi3-dns must keep the blocker enabled — it is the VRRP failover resolver";
+    }
+    {
+      ok =
+        rpi3.services.dns-blocker.dnsBlockResponse == "zero_ip"
+        && evox2.services.dns-blocker.dnsBlockResponse == rpi3.services.dns-blocker.dnsBlockResponse;
+      msg = "the two hosts must answer blocked names identically (a failover must not change what a block MEANS)";
+    }
+    {
+      ok = builtins.length rpi3.services.dns-blocker.whitelist == 77;
+      msg = "rpi3 whitelist drifted from the shared 77-entry list (the permanent allowlist is judgement data, not per-host state)";
+    }
+    {
+      ok = rpi3.services.dns-blocker.blockIP != evox2.services.dns-blocker.blockIP;
+      msg = "the two hosts must answer blocked names with DIFFERENT addresses (otherwise a client cannot tell which resolver it reached)";
+    }
+    {
+      ok = !rpi3.services.dns-blocker.proxyEnabled && evox2.services.dns-blocker.proxyEnabled;
+      msg = "filter-proxy asymmetry changed: evo-x2 runs it and rpi3 does not — if rpi3 ever serves filtered domains the lie resolves to a host with no proxy (docs/services/dnsblockd.md 'Failover asymmetry')";
+    }
+    {
+      ok = rpi3.services.dns-blocker.dnsRateLimitPerSec == 0;
+      msg = "rpi3 lost its rate-limit exemption (0 = unlimited); a failover with a 50/s cap would throttle every client during an evo-x2 outage";
+    }
+    {
+      ok = rpi3.services.dns-blocker.tempAllowAll == false;
+      msg = "rpi3 must never ship with tempAllowAll — the failover host blocking nothing is worse than being down";
+    }
   ];
 
   failed = builtins.filter (c: !c.ok) checks;
@@ -442,5 +482,5 @@ else
       assert "proxy_inject_script_url" not in filt, "inject URL leaked into the YAML on the filter variant too"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3 OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, rpi3 parity OK" > $out
     ''
