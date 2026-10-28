@@ -91,12 +91,18 @@
       # N9Zsy7bb, got 0YovMWLa (float-proof-20261027-220636.log — f22274e's
       # module set matches 0d50fb7's; the strand flaps between two upstream
       # states and this hash tracks the LOCKED rev, whatever it is).
-      # NINTH RE-STALE 2026-10-28 toplevel keep-going (deploy-fix session):
-      # cv@8243b2d spec 0YovMWLa, got bfVHTAsr (first-hand,
-      # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log) — the strand
-      # flapped again; this hash tracks the LOCKED rev.
+      # INTERIM-ROLLBACK (2026-10-28, deploy-fix session): cv@8243b2d (the
+      # 10-27/28 strand-float rev this shim last tracked) parses its OWN
+      # embedded config defaults badly — the binary dies at boot ("yaml:
+      # line 426: mapping values are not allowed", defaults seam mid-refactor
+      # de9822178). Rolled the input back to 5165e44, the gen-956-proven rev
+      # that ran healthy until the strand float (modules hash N9Zsy7bb…,
+      # two float-proofs agree). The fix (de9822178, config tests green
+      # locally) is NOT pushed — do NOT float cv until origin/master carries
+      # it and the boot parse is re-proven; re-add shims ONLY via
+      # nix-hash-fix evidence, never by hand.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-bfVHTAsrkepQ6+dzqI511RqghB8g/xxCJWEfcfz2SLo=";
+        vendorHash = "sha256-N9Zsy7bbWBXIIFmsTiJUQ+mTO87w8PkpaoUYxnCr37k=";
       };
     in
     {
