@@ -36,7 +36,6 @@ CGROUP_ROOT="${CGROUP_ROOT:-/sys/fs/cgroup}"
 PROC_ROOT="${PROC_ROOT:-/proc}"
 TMP_DIR="${IOATTR_TMP:-${XDG_CACHE_HOME:-$HOME/.cache}/ioattr}"
 REPLAY=()
-REPLAY_ARGS=()
 
 usage() { sed -n '2,30p' "$0" >&2; }
 
