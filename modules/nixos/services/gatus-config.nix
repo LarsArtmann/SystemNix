@@ -778,16 +778,12 @@ _: {
                   interval = "60s";
                   conditions = [ "[CONNECTED] == true" ];
                 }
-                (mkHttpCheck {
-                  name = "DNS Blocker";
-                  group = "Infrastructure";
-                  url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
-                  conditions = [
-                    "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
-                  ];
-                  alerts = discordAlert "DNS blocker down — no ad/malware blocking";
-                })
+                # "DNS Blocker" (the HTTP /health probe) moved into the
+                # service's OWN registry entry (services.integration.dnsblockd
+                # .checks, 2026-10-28): the owner of a service declares its
+                # endpoint check, so a dnsblockd change cannot leave a stale
+                # copy here. The DNS PROTOCOL probes below stay: they assert
+                # the :53 contract and have no endpoint shape.
                 {
                   name = "Upstream DNS (Quad9)";
                   group = "Infrastructure";

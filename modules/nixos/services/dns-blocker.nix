@@ -1539,6 +1539,29 @@ _: {
             };
             vHost.layer = "none";
             monitored = true;
+            # The HTTP liveness check belongs to the OWNER of the service, not
+            # to the core gatus list (2026-10-28 review issue #10: the entry
+            # carried zero checks while three hand-written ones lived in
+            # gatus-config.nix). Only the HTTP /health probe moves: the raw
+            # DNS protocol probes (`DNS Resolver`, `DNS Resolver TCP`,
+            # `DNS Blocking Active`) stay in the core list on purpose — they
+            # assert the :53 contract, which has no endpoint/URL shape this
+            # schema can express, and they must survive a dnsblockd vHost
+            # change. URL/interval/conditions are byte-identical to the check
+            # they replace (verified by diffing the rendered endpoint set).
+            checks = [
+              {
+                name = "DNS Blocker";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.dns-blocker-stats}/health";
+                interval = "30s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alert = "DNS blocker down — no ad/malware blocking";
+              }
+            ];
             oidc = {
               name = "dnsblockd";
               clientId = "dnsblockd";

@@ -2401,6 +2401,43 @@ echo ""
 echo "=== §22 dnsblockd CA parity (trust anchor vs served CA) ==="
 dnsblockd_ca_parity_smoke
 
+# --- §23 dnsblockd scoped filter proxy (ADR-0018) contract ---
+# Four proxy keys changed 2026-10-08 (proxy_tls_passthrough,
+# proxy_inject_strip_csp added; proxy_filter_domains deliberately absent so
+# the "scoped lie" stays OFF) and no deploy check ever looked at them: the
+# feature's whole blast radius is DNS answers for opted-in domains, so a
+# render regression is invisible until a device cannot reach a filtered site.
+# Read-only probe of the RENDERED config the running unit was started with
+# (never the module source — the source can be right while the deploy is old).
+# Env override FILTER_PROXY_CONFIG drives a fixture.
+echo ""
+echo "=== §23 dnsblockd filter-proxy contract (ADR-0018) ==="
+_fp_cfg="${FILTER_PROXY_CONFIG:-}"
+if [ -z "$_fp_cfg" ]; then
+  _fp_exec="$(systemctl show -p ExecStart --value dnsblockd 2>/dev/null || true)"
+  # The value is the structured form
+  # "{ path=… ; argv[]=… serve -c /nix/store/<hash>-dnsblockd-config.yaml ; … }",
+  # so take the token after "-c " and stop at the field separator.
+  _fp_cfg="$(printf '%s\n' "$_fp_exec" | sed -n 's/.* -c \([^ ;]*\).*/\1/p' | head -1)"
+fi
+if [ -z "$_fp_cfg" ] || [ ! -r "$_fp_cfg" ]; then
+  report_skip "dnsblockd filter-proxy - rendered config unreadable (${_fp_cfg:-no ExecStart path})"
+else
+  _fp_missing=""
+  for _k in proxy_enabled proxy_tls_passthrough proxy_inject_strip_csp; do
+    grep -q "\"$_k\"" "$_fp_cfg" || _fp_missing="$_fp_missing $_k"
+  done
+  if [ -n "$_fp_missing" ]; then
+    report_fail "dnsblockd filter-proxy - rendered config lost${_fp_missing} (the 2026-10-08 wiring regressed; a filtered domain would fall back to whatever the old render did)"
+  elif grep -q '"proxy_filter_domains"' "$_fp_cfg"; then
+    report_warn "dnsblockd filter-proxy - proxy_filter_domains is RENDERED: the scoped lie is armed for those domains (owner opt-in feature — expected only when deliberately enabled)"
+  elif ! systemctl is-active --quiet dnsblockd 2>/dev/null; then
+    report_fail "dnsblockd filter-proxy - config carries the proxy keys but the unit is NOT active"
+  else
+    report_pass "dnsblockd filter-proxy - 3 proxy keys rendered, no filter domains armed, unit active"
+  fi
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
