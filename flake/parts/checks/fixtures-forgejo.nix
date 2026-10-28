@@ -139,6 +139,8 @@
               inject ${lib.getExe forgejoScripts.mirrorHealthScript} "$HEALTH"
               inject ${lib.getExe forgejoScripts.censusScript} "$CENSUS"
               inject ${lib.getExe forgejoScripts.avatarSyncScript} "$AVATAR"
+              SHADOW="$FIX/forgejo-release-shadow"
+              inject ${lib.getExe forgejoScripts.releaseShadowScript} "$SHADOW"
 
               export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
               rc=0; capt=""
@@ -536,6 +538,70 @@
               grep -q '^forgejo_avatar_failed 1$' "$TF_A/forgejo_avatar_sync.prom" \
                 || { echo "FAIL avatar: metrics failed"; cat "$TF_A/forgejo_avatar_sync.prom"; exit 1; }
               unset FORGEJO_AVATAR_SYNC_USER
+
+              # ---- forgejo-release-shadow (release shadow M-plan)
+              # FORGEJO_URL pinned to the fixture's localhost:3000.
+              export FORGEJO_URL=http://localhost:3000
+              FJ_TAG_KEY="localhost_3000_api_v1_repos_lars_dnsblockd_releases_tags_v1.0.0"
+              GH_TAG_KEY="api.github.com_repos_LarsArtmann_dnsblockd_releases_tags_v1.0.0"
+              GH_CREATE_KEY="api.github.com_repos_LarsArtmann_dnsblockd_releases"
+              ASSET_KEY="localhost_asset1"
+              UPLOAD_KEY="localhost_upload"
+              REL_BODY='{"tag_name":"v1.0.0","name":"v1.0.0","body":"notes","assets":[{"browser_download_url":"http://localhost/asset1"}]}'
+
+              # Skip-when-disabled: empty GITHUB_TOKEN exits 0 without
+              # touching any API (the stub would 404 everything).
+              GITHUB_TOKEN= FORGEJO_TOKEN=fxtok FORGEJO_REPO=dnsblockd \
+                GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
+                FORGEJO_TAG=v1.0.0 run "$SHADOW"
+              need_rc shadow-skip 0
+              need_has shadow-skip "shadow disabled, skipping"
+
+              # Happy path: forgejo release found (FORGEJO_TAG given),
+              # github tag absent (stub default 404, probe has no -f),
+              # release created (201 + upload_url), asset downloaded
+              # (200) and uploaded (201).
+              printf '200' > "$STUB_HTTP/''${FJ_TAG_KEY}.GET.code"
+              printf '%s' "$REL_BODY" > "$STUB_HTTP/''${FJ_TAG_KEY}.GET.body"
+              printf '200' > "$STUB_HTTP/''${GH_CREATE_KEY}.POST.code"
+              printf '{"upload_url":"http://localhost/upload{?name}"}' > "$STUB_HTTP/''${GH_CREATE_KEY}.POST.body"
+              printf '200' > "$STUB_HTTP/''${ASSET_KEY}.GET.code"
+              printf 'binary-blob' > "$STUB_HTTP/''${ASSET_KEY}.GET.body"
+              printf '201' > "$STUB_HTTP/''${UPLOAD_KEY}.POST.code"
+              FORGEJO_TOKEN=fxtok FORGEJO_REPO=dnsblockd \
+                GITHUB_TOKEN=gxtok GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
+                FORGEJO_TAG=v1.0.0 run "$SHADOW"
+              need_rc shadow-happy 0
+              need_has shadow-happy "1/1 assets mirrored"
+              grep -qF 'tag_name' "$STUB_STATE/req.''${GH_CREATE_KEY}.POST.1.json" \
+                || { echo "FAIL shadow: release POST payload"; exit 1; }
+
+              # Already-mirrored: github tag exists with >= forgejo
+              # assets (2 vs 1) — idempotent no-op.
+              printf '200' > "$STUB_HTTP/''${GH_TAG_KEY}.GET.code"
+              printf '{"assets":[{},{}]}' > "$STUB_HTTP/''${GH_TAG_KEY}.GET.body"
+              FORGEJO_TOKEN=fxtok FORGEJO_REPO=dnsblockd \
+                GITHUB_TOKEN=gxtok GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
+                FORGEJO_TAG=v1.0.0 run "$SHADOW"
+              need_rc shadow-idem 0
+              need_has shadow-idem "already mirrored"
+
+              # Deficient shadow: github has FEWER assets (0) than
+              # forgejo (1) — refuse loudly, never silently append.
+              printf '{"assets":[]}' > "$STUB_HTTP/''${GH_TAG_KEY}.GET.body"
+              FORGEJO_TOKEN=fxtok FORGEJO_REPO=dnsblockd \
+                GITHUB_TOKEN=gxtok GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
+                FORGEJO_TAG=v1.0.0 run "$SHADOW"
+              need_rc shadow-deficient 1
+              need_has shadow-deficient "heal manually"
+
+              # Missing FORGEJO_TAG and no forgejo latest release (the
+              # latest probe 404s by stub default, curl -f aborts) —
+              # loud failure, not a silent skip.
+              FORGEJO_TOKEN=fxtok FORGEJO_REPO=dnsblockd \
+                GITHUB_TOKEN=gxtok GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
+                run "$SHADOW"
+              need_rc shadow-notag 1
 
               echo "PASS: all forgejo staged-primary script fixtures" > "$out"
             '';

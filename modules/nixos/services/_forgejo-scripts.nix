@@ -1035,6 +1035,128 @@ in
   # Operator paths: `sudo systemctl start forgejo-flip@<name>.service`
   # (env + onFailure wired), `forgejo-flip-check@<name>` for the dry-run
   # twin, or the PATH binary with the sync unit's env for fixture tests.
+  releaseShadowScript = pkgs.writeShellApplication {
+    name = "forgejo-release-shadow";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.coreutils
+      pkgs.gnused
+    ];
+    text = ''
+      # Copy a Forgejo release (assets + notes) to the public GitHub mirror
+      # (staged-primary plan: Forgejo releases, GitHub stays the public
+      # download surface for proxy.golang.org / Homebrew / clones).
+      #
+      # Called by each canonical repo's Forgejo Actions release workflow:
+      #   FORGEJO_URL/FORGEJO_OWNER/FORGEJO_REPO identify the primary
+      #   release; GITHUB_OWNER/GITHUB_REPO the shadow target;
+      #   FORGEJO_TOKEN is the Forgejo API token (secrets.GITHUB_TOKEN in
+      #   Forgejo Actions), GITHUB_TOKEN the GitHub PAT
+      #   (RELEASE_SHADOW_GITHUB_TOKEN). An empty GITHUB_TOKEN exits 0 —
+      #   the shadow is opt-in per runner env, never a release blocker.
+      # Idempotent: an existing GitHub release with >= the Forgejo asset
+      # count is treated as already mirrored; a deficient one is refused
+      # loudly (manual heal — silently appending to a half-uploaded
+      # release invites duplicate assets).
+      FORGEJO_URL="''${FORGEJO_URL:-https://forgejo.home.lan}"
+      FORGEJO_OWNER="''${FORGEJO_OWNER:-lars}"
+      FORGEJO_REPO="''${FORGEJO_REPO:-}"
+      FORGEJO_TAG="''${FORGEJO_TAG:-}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
+      GITHUB_OWNER="''${GITHUB_OWNER:-}"
+      GITHUB_REPO="''${GITHUB_REPO:-}"
+
+      if [ -z "$GITHUB_TOKEN" ]; then
+        echo "forgejo-release-shadow: GITHUB_TOKEN empty — shadow disabled, skipping"
+        exit 0
+      fi
+      if [ -z "$FORGEJO_TOKEN" ] || [ -z "$FORGEJO_REPO" ] || [ -z "$GITHUB_OWNER" ] || [ -z "$GITHUB_REPO" ]; then
+        echo "Error: FORGEJO_TOKEN / FORGEJO_REPO / GITHUB_OWNER / GITHUB_REPO must all be set" >&2
+        exit 1
+      fi
+
+      if [ -z "$FORGEJO_TAG" ]; then
+        FORGEJO_TAG=$(curl -sf --compressed \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$FORGEJO_REPO/releases/latest" \
+          | jq -r '.tag_name // empty')
+        if [ -z "$FORGEJO_TAG" ]; then
+          echo "Error: no latest release on forgejo for $FORGEJO_OWNER/$FORGEJO_REPO (and FORGEJO_TAG unset)" >&2
+          exit 1
+        fi
+      fi
+      echo "forgejo-release-shadow: $FORGEJO_OWNER/$FORGEJO_REPO@$FORGEJO_TAG -> $GITHUB_OWNER/$GITHUB_REPO"
+
+      forgejo_release=$(curl -sf --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$FORGEJO_REPO/releases/tags/$FORGEJO_TAG") || {
+        echo "Error: forgejo release $FORGEJO_TAG not found" >&2
+        exit 1
+      }
+      notes=$(printf '%s' "$forgejo_release" | jq -r '.body // ""')
+      title=$(printf '%s' "$forgejo_release" | jq -r '.name // .tag_name')
+      assets=$(printf '%s' "$forgejo_release" | jq -r '.assets[]?.browser_download_url // empty')
+      asset_count=$(printf '%s\n' "$assets" | grep -c . || true)
+
+      github_code=$(curl -s -o /dev/null -w "%{http_code}" \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/tags/$FORGEJO_TAG")
+      if [ "$github_code" = "200" ]; then
+        gh_assets=$(curl -sf \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
+          "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases/tags/$FORGEJO_TAG" \
+          | jq '[.assets[]?] | length')
+        if [ "''${gh_assets:-0}" -ge "$asset_count" ]; then
+          echo "✓ release $FORGEJO_TAG already mirrored ($gh_assets assets)"
+          exit 0
+        fi
+        echo "Error: github release $FORGEJO_TAG exists with $gh_assets assets < forgejo $asset_count — heal manually" >&2
+        exit 1
+      fi
+
+      payload=$(jq -n --arg tag "$FORGEJO_TAG" --arg name "$title" --arg body "$notes" \
+        '{tag_name: $tag, name: $name, body: $body, draft: false}')
+      created=$(curl -sf -X POST \
+        -H "Authorization: Bearer $GITHUB_TOKEN" \
+        -H "Content-Type: application/json" \
+        "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPO/releases" \
+        -d "$payload") || {
+        echo "Error: github release create failed for $FORGEJO_TAG (does the tag exist on github? push tags first)" >&2
+        exit 1
+      }
+      upload_url=$(printf '%s' "$created" | jq -r '.upload_url' | sed 's/{.*//}')
+
+      tmp=$(mktemp)
+      trap 'rm -f "$tmp"' EXIT
+      FAILED=0
+      uploaded=0
+      for url in $assets; do
+        filename=$(printf '%s' "$url" | sed 's|.*/||')
+        curl -sfL -H "Authorization: token $FORGEJO_TOKEN" -o "$tmp" "$url" || {
+          echo "✗ $filename: forgejo download failed" >&2
+          FAILED=1
+          continue
+        }
+        code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
+          -H "Content-Type: application/octet-stream" \
+          --data-binary "@$tmp" \
+          "$upload_url?name=$filename")
+        if [ "$code" = "201" ]; then
+          uploaded=$((uploaded + 1))
+          echo "✓ $filename"
+        else
+          echo "✗ $filename: github upload failed (HTTP $code)" >&2
+          FAILED=1
+        fi
+      done
+      echo "forgejo-release-shadow: $uploaded/$asset_count assets mirrored for $FORGEJO_TAG"
+      exit "$FAILED"
+    '';
+  };
+
   flipRepoScript = pkgs.writeShellApplication {
     name = "forgejo-flip-repo";
     runtimeInputs = [

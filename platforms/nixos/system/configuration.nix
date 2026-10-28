@@ -518,6 +518,14 @@ in
         # workflow files need the sync PAT to carry the `workflow` scope
         # (same regeneration as domains, docs/services/forgejo.md).
         "gogenfilter"
+        # Pilot for the Forgejo-primary fleet migration (master plan
+        # 2026-10-12): .forgejo/workflows CI/release pushed to GitHub
+        # master first (the full-import flip preserves them). Flip with
+        # forgejo-flip@dnsblockd, then this entry attaches the push
+        # mirror (8h + sync_on_commit) via phase 5. The repo's release
+        # workflow calls forgejo-release-shadow, so the GitHub twin
+        # keeps receiving release assets for proxy.golang.org.
+        "dnsblockd"
       ];
       immich.enable = true;
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,

@@ -135,6 +135,7 @@ _: {
         avatarSyncScript
         mirrorStarredScript
         pushMirrorScript
+        releaseShadowScript
         flipRepoScript
         mirrorHealthScript
         censusScript
@@ -1487,6 +1488,7 @@ _: {
           reconcileMirrorsScript
           mirrorStarredScript
           pushMirrorScript
+          releaseShadowScript
           flipRepoScript
           censusScript
           setupScript

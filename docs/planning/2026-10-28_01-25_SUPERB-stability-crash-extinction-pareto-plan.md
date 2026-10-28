@@ -270,3 +270,33 @@ New rows added to `TODO_LIST.md` `### stability` + `docs/todo/stability.md` (lib
 - PSI at stop: avg10=66.87 avg60=65.03 (re-intensifying from 49 — the battery was actively worsening it).
 
 **Legs in scope this instance:** M1 close-out (F3/F4), F5/F6 (guard source + Z6 design note), F14 (admission-gate design), M8 (boot-2 forensics), M12 (discriminator fork), M9/M10/M11 (scripts+selftests), M19 (F51/F52), M15, M22, M24, M25. Deploy legs (M5/M6) and gated legs (M2/M3/M16/M20 implementation) NOT executed — §7 gates stay owner-held.
+
+### F5 source-map (guard, for the eventual §7.1 implementer)
+
+- Zone dispatch (zones 1–6 elif chain): `memory-emergency-guard.nix` lines ~352–393 (pre-design-note numbering). Zone 6 = io PSI avg60 ≥ threshold AND disk-busy corroboration.
+- **Wrong-tool site:** socket stop runs FIRST and OUTSIDE the cooldown for EVERY zone (`if [ "$trip" = "1" ]` → `systemctl stop $SOCKET_UNITS`, the "activation path first" 2026-08-22 loop-fix). This is what the split must make zone-conditional.
+- Full action branch (cooldown-else): sacrifice stop, churn-unit stop w/ catch-up protection + `CHURN_STOPPED_FILE`, forensics transient unit, persist-before-log trip identity (fsync), per-zone counters, io.stat attribution delta vs snapshot.
+- Cooldown: `cfg.actionCooldownSeconds` (600 s) — single knob for all zones today; split needs `ioActionCooldownSeconds` (default 150).
+- Restore path: 4-axis calm gate (mem avg10/avg60, io avg60, episodes) — the Z6 calm-resume (SIGCONT) hangs symmetric here, keyed on `restoreIoSomeAvg60ThresholdPercent`.
+- Already exists and REUSED (no new build needed): `trips_this_boot` + `load_bearing` metrics (2026-10-25), per-trip io.stat attribution, `ioPsiForensics` bundle, churn re-arm machinery.
+
+### F6 design — Zone-6 action split (awaiting §7.1a go)
+
+1. **Dispatch:** at the trip branch, `zone-class = (zone == 6 ? io : memory)`. Memory class (zones 1–5): byte-identical behavior to today. IO class: SKIP socket+sacrifice stop entirely; instead run the pause action.
+2. **Tree selection (attributed, config-owned):** from the existing per-trip io.stat attribution delta, take top-N cgroups (N=3); intersect with `cfg.ioPause.cgroupPatterns` (default: `nix-daemon.service`, `tq-agent-pool.service`, headless `session-*.scope` agent trees); walk each cgroup's `cgroup.procs`, group by PGID.
+3. **Never-PTY invariant (hard):** a PGID is pausable ONLY if NO process in the group has a controlling TTY (`ps -o tty=` ≠ `?` for any member ⇒ skip, log skip). Owner interactive work is unpausable by construction. Additionally skip uid 0 groups that own no build (allow config for nixbld/nix-daemon workers, which ARE pausable — builds resume).
+4. **Pause action:** `kill -STOP -<pgid>` each eligible group (cap: `maxPauseGroups`, default 8), write `PAUSE_FILE` = epoch + pgid list + comm names, journal line `IO-PAUSE: stopped pgids … (drivers: <comms>) — socket left SERVING`.
+5. **Calm-resume:** in the 30 s loop, if `PAUSE_FILE` exists AND io PSI avg60 < `restoreIoSomeAvg60ThresholdPercent` sustained ≥ `ioPause.calmSeconds` (default 600): `kill -CONT` each pgid (dead pgids silently skipped), clear file, journal `IO-RESUME`. Safety cap `maxPausedSeconds` (default 3600): auto-resume + WARN even if never calm — a tree must never stay frozen overnight unattended.
+6. **Escalation (distinct IO ladder):** if zone-6 trips continue while `PAUSE_FILE` non-empty (drivers paused but pressure persists ⇒ the writer is NOT in the pausable set), escalate to the EXISTING churn-stop machinery (unit stops) on trip ≥3 of the pause window — never to the socket stop.
+7. **flm/LLM exemption by construction:** services are not pausable trees; zone-6 no longer touches sockets. The §7.2 flm question dissolves for zone 6.
+8. **VM-test contract (F11/F12):** scenario Z6-pause — fake headless writer (dd loop, tty=?) + fake owner PTY process in the VM; force zone-6 trip via the existing test seam; assert writer T-stopped, PTY untouched, socket ACTIVE; calm injection → writer resumed, PAUSE_FILE cleared. Scenario mem-regression — zone-3 trip still stops sockets, pauses nothing.
+
+### F14 design — battery admission gate (awaiting §7.1b UX answer)
+
+1. **Hook point:** devshell-only PATH wrapper named `nix`, placed FIRST in the devshell's PATH (`flake/parts/devshells.nix`) — real nix at `builtins.storePath` passthrough for all non-battery invocations. Owner login shells never include the devshell PATH prefix ⇒ owner unaffected by construction. Gates subcommands: `build`, `shell`, `develop`, `run`, `flake check` (the battery forms; `nix eval`/`fmt` pass free).
+2. **State inputs (read-only, user-readable):** (a) guard trip-recent: textfile metric `memory_emergency_guard_last_trip_recent=1` or last-trip epoch within 30 min; (b) live PSI band: `/proc/pressure/{io,memory}` some avg10 ≥ 20% (mirrors deploy.sh's pressure gate exactly — one doctrine, two enforcement points).
+3. **Refusal UX — the open §7.1b question, both variants designed:**
+   - **Hard-fail (recommended default):** exit 1, message names the condition (trip-recent vs PSI-band), the calm-window hint ("retry when io PSI avg10 < 20 and no guard trip in 30 min; current: io avg10 X%, mem avg10 Y%, last trip Zs ago"), and the documented escape `ADMISSION_GATE_FORCE=1` (audit-logged to the incident record, never silent).
+   - **Queue-park (variant B):** wrapper spools the argv to `~/.cache/admission-gate/parked/` + a calm-poll timer unit re-executes when the band clears. More moving parts (spool GC, dupe suppression, timer unit) — recommend NOT v1.
+4. **Selftest (F17):** fixture state dir with fake trip-epoch → refusal asserted; calm fixture → passthrough; force-env → passthrough + warn line. Registered in the flake selftests check.
+5. **Deployment surface:** flake/parts/devshells.nix + one script in `scripts/` + CONTRIBUTING note. Zero systemd changes, zero module changes — cannot affect the running box until the next deploy, and then only inside devshells.

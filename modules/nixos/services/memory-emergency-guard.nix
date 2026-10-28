@@ -517,6 +517,28 @@ _: {
             echo "GUARD CHURN-LIST DRIFT: ioChurnUnits entries that do not exist on the running system — their stop is a silent NO-OP:''${churn_drift}. The baked list has drifted from the system (rename, rename-away, or a stray attrname): fix the ioChurnUnits declaration or the unit names. (Distinct prefix on purpose: emergency-action greps must not match a standing drift warning.)" >&2
           fi
 
+          # DESIGN — Zone-6 action split (plan 2026-10-28 SUPERB §M2/F6,
+          # PENDING §7.1 owner ratification — NOT ACTIVE, this is design
+          # prose only): IO-class trips (zone 6) must NOT reach the socket
+          # stop below. Memory gauges are healthy in the crash-#3 class
+          # (tonight: MemAvailable 34-57% across six Z6 trips) and the
+          # socket+sacrifice stop is the wrong tool, 4× proven (#24, #25,
+          # 2026-10-27 ×2 — it killed the LLM stack while headless build
+          # batteries kept writing 19-52 GB per cooldown window).
+          # Ratified shape: zones 1-5 keep this exact path unchanged;
+          # zone 6 instead SIGSTOPs headless driver trees (config-owned
+          # cgroup scope + HARD never-PTY invariant: a process group is
+          # only pausable when NO member holds a controlling TTY — the
+          # 2026-10-07 SIGSTOP-license revocation honored by construction,
+          # not prose), writes a pause-state file (epoch + pgids), and
+          # calm-resumes via SIGCONT in the 30 s loop at io PSI avg60 <
+          # restoreIoSomeAvg60ThresholdPercent sustained ~10 min, with a
+          # maxPausedSeconds safety auto-resume so no tree stays frozen
+          # forever. Own cooldown knob (ioActionCooldownSeconds, default
+          # 150 s vs the memory 600 s) because IO storms re-trip at
+          # cooldown pace. The per-trip forensics + io.stat attribution
+          # machinery already fires and feeds tree selection. Full design
+          # + VM-test contract: plan file §10, execution log.
           if [ "$trip" = "1" ]; then
             # Kill the ACTIVATION PATH FIRST, outside the cooldown: stopping
             # only the backend left the socket accepting, and every trip's
