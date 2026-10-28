@@ -1,6 +1,7 @@
 # SUPERB — Stability Crash-Extinction: Pareto Plan
 
 **Created:** 2026-10-28 01:25 CET · **Author session:** watchdog double-crash diagnosis (`docs/status/2026-10-28_00-58_watchdog-double-crash-diagnosis-live-recovery-storm-status.md`)
+**EXECUTING (instance stability-extinction executor session (crash-diagnosis continuation); executing ungated agent legs only (M1 close-out, F5/F6/F14 designs, M8-M12 forensics/scripts, M15/M19/M22/M24/M25); gates §7 stay owner-held, 2026-10-28 01:51 CET, HEAD `1c1746551`):** executing (see AGENTS.md plan-execution tombstone)
 **Goal:** Make the evo-x2 stop dying: no more watchdog resets, no more recovery-storm crash loops, thermal family contained — by ratifying and landing the four already-designed structural fixes, plus the forensics/observability legs that keep them honest.
 **Scope:** ALL open stability-domain todos (TODO_LIST `### stability` + `docs/todo/stability.md` + tonight's session items + the pending-deploy wave's stability legs + ROADMAP stability ideas). Non-stability backlog stays in `TODO_LIST.md` (§6, listed with counts). The EXECUTING storage plan (`2026-10-27_11-49`) is NOT superseded — its deploy legs are coordinated here, its storage content untouched.
 **Live state at planning time:** io PSI some avg60 **72.6%** (9th post-crash re-fire, boot 0 = `b0d70d73`, guard trips #4508/#4509); two hardware-watchdog deaths in 24h (boot -2 `b803d718` 10:03 Oct 27 undiagnosed, boot -1 `3caf5548` 00:40 Oct 28 root-caused: 4.5h Zone-6 livelock + k10temp 100 °C); journal 7.9G/8G; boot-chain session (00:44–01:15) left 5 eval-green fixes UNDEPLOYED; storage-crisis plan mid-flight (train B armed).
@@ -255,3 +256,17 @@ New rows added to `TODO_LIST.md` `### stability` + `docs/todo/stability.md` (lib
 - SEV1-escalation row's "~15 lines" estimate: self-retracted upstream; plan carries the corrected 30–60-line latch shape.
 - ROADMAP "QLC SLC-cache exhaustion" root-cause prose predates the thermal/instant-cut family split (freeze #8+ archaeology) — discriminator fork (M12) supersedes that framing; ROADMAP edit deferred to M12 to avoid doc churn.
 - TODO_LIST:146 calm-window row assumed ONE window closes five verifications — still true post-M5; M6 consumes it rather than duplicating.
+
+## 10. Execution log
+
+### 2026-10-28 01:51 — executor session start (ungated legs only)
+
+**M1 containment state at takeover (01:46–01:51):**
+- Storm was NOT draining: guard trips **#4510–#4514** fired 01:05–01:45 (cooldown-pace, one per 600 s window), all Zone 6, wrong-tool action (sockets+sacrifice stop) each time. io.stat per trip: system.slice +19…+52 GB / 10 min window.
+- `crush-hot-db-migrate.service` = **failed** (ended itself), `discordsync-db-heal.service` = inactive → F1 owner legs MOOT.
+- Live writer attribution (5 s /proc io pass): headless `bash scripts/tools/bump-dep.sh larsartmann/go-retry v0.9.0 --commit --lint …` (session-12.scope, PGID 1931684, 16 min old, tty=none) + child `golangci-lint`; nix-daemon worker serving it (system.slice = the 52 GB window). A go-ecosystem battery amplifying re-fire #9 — the M3 admission-gate violation class, live.
+- **ACTION TAKEN (agent, no sudo needed — uid-1000 target): SIGSTOP process group `-1931684`** (bash + golangci-lint verified `T`-state). This is M2's designed action applied manually, once. Zero data loss; fully resumable.
+- **RESUME INSTRUCTION (when io PSI avg60 < 20 sustained ~10 min): `/run/current-system/sw/bin/kill -CONT -1931684`** — then check `ps -o stat= -p 1931684` shows `S` again.
+- PSI at stop: avg10=66.87 avg60=65.03 (re-intensifying from 49 — the battery was actively worsening it).
+
+**Legs in scope this instance:** M1 close-out (F3/F4), F5/F6 (guard source + Z6 design note), F14 (admission-gate design), M8 (boot-2 forensics), M12 (discriminator fork), M9/M10/M11 (scripts+selftests), M19 (F51/F52), M15, M22, M24, M25. Deploy legs (M5/M6) and gated legs (M2/M3/M16/M20 implementation) NOT executed — §7 gates stay owner-held.
