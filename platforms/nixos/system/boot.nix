@@ -32,21 +32,22 @@ let
   # down for why.
   bootCompleteAfterOffenders =
     let
-      unitsWithEdges = lib.mapAttrsToList (
-        name: unit: {
-          inherit name;
-          edges = lib.flatten [
-            (unit.after or [ ])
-            (unit.unitConfig.After or [ ])
-          ];
-        }
-      ) (
-        config.systemd.services
-        // config.systemd.timers
-        // config.systemd.sockets
-        // config.systemd.paths
-        // config.systemd.targets
-      );
+      unitsWithEdges =
+        lib.mapAttrsToList
+          (name: unit: {
+            inherit name;
+            edges = lib.flatten [
+              (unit.after or [ ])
+              (unit.unitConfig.After or [ ])
+            ];
+          })
+          (
+            config.systemd.services
+            // config.systemd.timers
+            // config.systemd.sockets
+            // config.systemd.paths
+            // config.systemd.targets
+          );
     in
     lib.concatLists (
       map (e: if builtins.elem "boot-complete.target" e.edges then [ e.name ] else [ ]) unitsWithEdges
