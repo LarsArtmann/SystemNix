@@ -132,13 +132,28 @@
         # restart since at least Oct 7). The `?` guard keeps an old lock
         # (pre-rocm-package) evaluating on the CPU build. Verify after
         # deploy: /metrics "provider":"rocm" and provider_cpu_fallbacks 0.
+        #
+        # TEMPORARY vendorHash shim ADDED (2026-10-28 blanket float,
+        # first-hand keep-going proof: nsfw-classifier-go-rocm@1e95693
+        # specified aP3tjRj8, got tRYzmtvJ —
+        # ~/.cache/lockfloat/float-proof-20261028-214409.log). Upstream's
+        # baked hash at the locked rev does NOT reproduce through our lock
+        # (its own nixpkgs governs the go-modules FOD), so the override is
+        # the only consumer-side fix — the paste-upstream → push → re-lock
+        # cycle is queued in docs/todo/upstream.md. Applied to the ROCm
+        # branch only (the one evo-x2 builds); the CPU branch keeps
+        # upstream's baked value until a host actually selects it.
+        # Drop when upstream bakes tRYzmtvJ…; re-add ONLY via nix-hash-fix
+        # evidence, never by hand.
         package = lib.mkOption {
           type = lib.types.package;
           default =
-            if pkgs.stdenv.hostPlatform.isx86_64 && flakePkgs ? nsfw-classifier-go-rocm then
-              flakePkgs.nsfw-classifier-go-rocm
+            (if pkgs.stdenv.hostPlatform.isx86_64 && flakePkgs ? nsfw-classifier-go-rocm then
+              flakePkgs.nsfw-classifier-go-rocm.overrideAttrs {
+                vendorHash = "sha256-tRYzmtvJfQQwIDkX2JK5tzhnz29mQr2pvWZm/jzTsfM=";
+              }
             else
-              flakePkgs.nsfw-classifier-go;
+              flakePkgs.nsfw-classifier-go);
           defaultText = lib.literalExpression "inputs.nsfw-classifier.packages.\${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go-rocm";
           description = "Package providing the nsfw-server binary (defaults to the flake input's ROCm build on x86_64, CPU build otherwise).";
         };

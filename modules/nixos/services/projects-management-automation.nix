@@ -81,10 +81,13 @@
           # green-through-our-lock probe; got fWJuASoh… (same value as the
           # lars-packages surface). Drop when upstream bakes the got hash;
           # re-add ONLY via nix-hash-fix evidence, never by hand.
+          # RE-STALE 2026-10-28 blanket float: pma@fbd3b1a8 spec fWJuASoh,
+          # got v9mUgqkE (float-proof-20261028-214409.log) — both surfaces
+          # (this module + lib/lars-packages.nix) carry the same value.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-fWJuASohwuftEoUnGIQOqBKUBHq8chSSKYj45ILYN9U=";
+                vendorHash = "sha256-v9mUgqkE41fb1mw+2bAMsutA+8FyebmgcZ/bBbFpeis=";
               };
           user = primaryUser;
           group = "users";

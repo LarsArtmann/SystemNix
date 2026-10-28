@@ -85,11 +85,15 @@
           # FOURTH RE-STALE 2026-10-26 lock float: health-hub@44d8a24 spec
           # UOJk45I6, got gytpnPbS (float-proof-20261026-161006.log). Drop
           # when upstream bakes gytpnPbS.
-          default =
-            inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-gytpnPbSRUk+YWZtAgf7sWY/BGGYBSnvcOB3d1ASA5o=";
-              };
+          # SHIM DROPPED 2026-10-28 (drop-protocol): health-hub@75d6874
+          # ALREADY bakes the got hash — the upstream flake at the locked
+          # rev carries
+          # `vendorHash = "sha256-AkS9Q+CwxaNhZyJ79VPl0yNUP7obca7eauVNVAicMGU=";`
+          # (flake.nix:111) == the value our 2026-10-28 proof mismatched
+          # into (~/.cache/lockfloat/float-proof-20261028-214409.log), so
+          # the override only re-created the drift treadmill.
+          # Re-add ONLY via nix-hash-fix evidence, never by hand.
+          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
         };

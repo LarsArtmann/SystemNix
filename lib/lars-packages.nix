@@ -114,9 +114,15 @@ lib.filterAttrs (_: v: v != null) {
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-10-26 lock float: at 24dff818 spec 9y4NBzy3, got ffjf0h53
   # (first-hand keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
-  buildflow =
-    flakePkgShim inputs.buildflow "default"
-      "sha256-ffjf0h5380aSH57Fp2dEftHz8Jzrk4o1w2zMEpGv5JY=";
+  # buildflow shim DROPPED (2026-10-28 blanket float — drop-protocol): the
+  # locked rev ce10b79's OWN vendorHash.nix carries the got hash
+  # "sha256-9SVsy6pMlBypghZHR0Otf1jtcgpZ9NsK463jRfn9zWA=", the exact value
+  # our 2026-10-28 proof mismatched into
+  # (~/.cache/lockfloat/float-proof-20261028-214409.log), so the override
+  # only re-created the drift treadmill. Both surfaces dropped (this one +
+  # platforms/nixos/system/configuration.nix). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  buildflow = flakePkg inputs.buildflow;
   # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved
@@ -271,9 +277,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-10-26 lock float (second value in one day — the input
   # keeps moving): spec 7EyJHHnw, got OTLxExVE (first-hand keep-going,
   # ~/.cache/lockfloat/float-proof-20261026-161006.log).
+  # RE-STALE 2026-10-28 blanket float: library-policy@f3651092 spec
+  # OTLxExVE, got UtUhdbS9 (float-proof-20261028-214409.log).
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-OTLxExVEu4cdiLVl/MeCFlMSwv5JjsdGLGvavZ/z5ok=";
+      "sha256-UtUhdbS9W9RRBNUHAUKAfG+Rd7p3ACejRhtsn1jNbpg=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -375,9 +383,13 @@ lib.filterAttrs (_: v: v != null) {
   # same value — it consumes the flake's own package attr. Drop when
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence,
   # never by hand.
+  # RE-STALE 2026-10-28 blanket float: pma@fbd3b1a8 spec fWJuASoh, got
+  # v9mUgqkE (float-proof-20261028-214409.log). The service module
+  # (modules/nixos/services/projects-management-automation.nix) carries
+  # the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-fWJuASohwuftEoUnGIQOqBKUBHq8chSSKYj45ILYN9U=";
+      "sha256-v9mUgqkE41fb1mw+2bAMsutA+8FyebmgcZ/bBbFpeis=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -434,6 +446,15 @@ lib.filterAttrs (_: v: v != null) {
     # 7YE9PJMW (first-hand keep-going proof,
     # ~/.cache/lockfloat/float-proof-20261027-172949.log). Drop when
     # upstream bakes 7YE9PJMW.
-    vendorHash = "sha256-7YE9PJMWk5JFPcm0BToeR2V4DU5bXfG4s8kjJyRGJ2U=";
+    # RE-STALE 2026-10-28 blanket float: go-taskqueue@a0ed057 now requires
+    # go-health v0.8.1, which the 7YE9PJMW FOD does NOT contain — and the
+    # stale FOD was silently REUSED because a fixed-output store path is
+    # content-addressed by the SPECIFIED hash, so a leftover build of an
+    # older rev's module set short-circuits the build and the missing module
+    # only surfaces at compile time ("reading …/go-health/@v/v0.8.1.mod: no
+    # such file", float-proof-20261028-214409.log). Fresh fakeHash probe at
+    # the locked rev got 4zISVNEX (tq-probe.log). Drop when upstream bakes
+    # 4zISVNEX; re-add ONLY via nix-hash-fix evidence, never by hand.
+    vendorHash = "sha256-4zISVNEXOjNfK+t9uG84Exn42FNTAZcFpN6yatDcHUE=";
   });
 }

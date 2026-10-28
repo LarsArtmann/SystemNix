@@ -294,9 +294,11 @@ let
     # 2026-10-20 (the lock floated past another renamer rev): got
     # 9759Ak4d… (first-hand, deploy build failure log). RE-STALE AGAIN
     # 2026-10-26 lock float: spec 9759Ak4d, got Uz4gaRoR
-    # (float-proof-20261026-161006.log).
+    # (float-proof-20261026-161006.log). FIFTH RE-STALE 2026-10-28 float:
+    # spec Uz4gaRoR, got XnWfiJWq
+    # (~/.cache/lockfloat/float-proof-20261028-214409.log).
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-Uz4gaRoRpZYtN5+zxP+HyT+sKPRXKrmr2Q0J/JG0v30=";
+      vendorHash = "sha256-XnWfiJWqmBbLVqiRle48MGsvSQm+1d7gVfUyQS4pbTY=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01

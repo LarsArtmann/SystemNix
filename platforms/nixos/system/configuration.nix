@@ -383,9 +383,11 @@ in
       # 9y4NBzy3… (/tmp/toplevel-build-20261019.log, locked rev cf606f8).
       # RE-STALE 2026-10-26 lock float: spec 9y4NBzy3, got ffjf0h53
       # (float-proof-20261026-161006.log).
-      (inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-ffjf0h5380aSH57Fp2dEftHz8Jzrk4o1w2zMEpGv5JY=";
-      })
+      # SHIM DROPPED 2026-10-28 (drop-protocol): the locked rev ce10b79's own
+      # vendorHash.nix bakes 9SVsy6pM — the exact got hash of the 2026-10-28
+      # proof — so the override was drift-treadmill only. Both surfaces
+      # dropped (the other is lib/lars-packages.nix).
+      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.

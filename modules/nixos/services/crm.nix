@@ -104,8 +104,11 @@
       # kith-crm@a8b855071 spec +gBi/2cT…, got nP5lPlmK… (first-hand,
       # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log). Drop when
       # upstream bakes nP5lPlmK…; re-add ONLY via nix-hash-fix evidence.
+      # RE-STALE AGAIN (2026-10-28 blanket float): kith-crm@fcb3bb38 spec
+      # nP5lPlmK, got XDRvpM8 (float-proof-20261028-214409.log). Same
+      # non-follower treadmill; drop when upstream bakes XDRvpM8.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-nP5lPlmKwqnWHyJooT+GRQJoICkYE9fd6JR9asHO7Oc=";
+        vendorHash = "sha256-XDRvpM8/R7g5PDWJ5U4fb/8+w9pk5n2VCiY6W/4tTWU=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

@@ -101,8 +101,18 @@
       # locally) is NOT pushed — do NOT float cv until origin/master carries
       # it and the boot parse is re-proven; re-add shims ONLY via
       # nix-hash-fix evidence, never by hand.
+      # LIFTED 2026-10-28 (owner blanket `nix flake update`): the rollback
+      # condition is met — origin/master tip 1e22121 CONTAINS de9822178
+      # (`git merge-base --is-ancestor`, 64 commits back), so the config
+      # parse fix the interim rollback waited for is published. The boot
+      # parse re-proof rides the deploy (post-deploy cv smoke +
+      # `journalctl -u cv-server`); if it still dies on its embedded
+      # defaults, roll the input back to 5165e44 instead of re-pinning.
+      # NINTH RE-STALE 2026-10-28 float: cv@1e22121 spec N9Zsy7bb, got
+      # MeDzARcT (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261028-214409.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-N9Zsy7bbWBXIIFmsTiJUQ+mTO87w8PkpaoUYxnCr37k=";
+        vendorHash = "sha256-MeDzARcTIloBTqPbhgklw1Z+FsKtp5LiHS4GMCVCNFA=";
       };
     in
     {
