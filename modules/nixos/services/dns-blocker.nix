@@ -324,7 +324,7 @@ _: {
             dns_enabled = true;
             dns_exit_on_failure = true;
             dns_listen_addr = "0.0.0.0";
-            dns_port = 53;
+            dns_port = ports.dns-blocker;
             dns_block_ip = cfg.blockIP;
             dns_block_response = cfg.dnsBlockResponse;
             dns_blocklists = blocklistPaths;
@@ -1331,6 +1331,13 @@ _: {
                   # itself cannot run inside the sandbox, fail OPEN (warn) —
                   # a monitoring blind spot must never kill the sole DNS
                   # resolver.
+                  # The observed contract is DNS on `ports.dns-blocker` (53)
+                  # over UDP and TCP — the same value the render writes into
+                  # dns_port, so gate and binary cannot drift apart. A single
+                  # transport is warned, not failed: a degraded resolver is
+                  # not a dead one, and killing it is the outage class this
+                  # gate exists to prevent. checks.dnsblockd-readiness-gate
+                  # proves both verdicts against fixture listener maps.
                   # Poll budget: 300s, JOURNAL-MEASURED (2026-10-20 task-queue
                   # verification of the original 60s guess — which sat INSIDE
                   # the healthy-but-slow distribution and would have killed
@@ -1350,18 +1357,70 @@ _: {
                       pkgs.iproute2
                     ];
                     text = ''
-                      if ! listeners="$(ss -ltn 2>/dev/null)"; then
+                      # Port contract: the gate proves the port the binary
+                      # ACTUALLY serves DNS on, never the block page. This
+                      # probed cfg.blockPort until 2026-10-28 — a Caddy-adjacent
+                      # proxy port — leaving the sole-resolver contract
+                      # unwatched by its own gate (review issue #2).
+                      dnsPort="${toString ports.dns-blocker}"
+                      # Test seams, set ONLY by checks.dnsblockd-readiness-gate.
+                      # Production resolves both from these defaults; the unit
+                      # inherits no ambient environment.
+                      budget="''${DNSBLOCKD_LISTENER_WAIT_BUDGET:-${toString listenerWaitBudgetSec}}"
+                      ssCmd="''${DNSBLOCKD_LISTENER_WAIT_SS:-ss}"
+
+                      # ss -ltnu = listening TCP + UDP, numeric. The local-address
+                      # column ends at whitespace, so suffix-matching ":<port>" is
+                      # exact (:5355 ends in 5355, never in ":53").
+                      # A function, not `$( "$var" … )`: the repo's nullglob audit
+                      # rejects command indirection through a variable (an empty
+                      # $var silently runs nothing).
+                      ssProbe() {
+                        "$ssCmd" -ltnuH
+                      }
+                      probe() {
+                        dnsTcp=0
+                        dnsUdp=0
+                        local proto _state _recvq _sendq localAddr _peer
+                        while read -r proto _state _recvq _sendq localAddr _peer; do
+                          case "$localAddr" in
+                            *":$dnsPort") ;;
+                            *) continue ;;
+                          esac
+                          case "$proto" in
+                            tcp) dnsTcp=1 ;;
+                            udp) dnsUdp=1 ;;
+                          esac
+                        done <<< "$listeners"
+                      }
+                      sample() {
+                        if ! listeners="$(ssProbe 2>/dev/null)"; then
+                          return 2
+                        fi
+                        probe
+                      }
+
+                      if ! sample; then
                         echo "WARNING: ss probe unavailable in sandbox — listener smoke skipped" >&2
                         exit 0
                       fi
-                      for _ in $(seq 1 ${toString listenerWaitBudgetSec}); do
-                        if printf '%s\n' "$listeners" | grep -q ":${toString cfg.blockPort} "; then
+                      for _ in $(seq 1 "$budget"); do
+                        if [ "$dnsTcp" = 1 ] && [ "$dnsUdp" = 1 ]; then
+                          exit 0
+                        fi
+                        if [ "$dnsTcp" = 1 ] || [ "$dnsUdp" = 1 ]; then
+                          # A serving resolver that answers on ONE transport is
+                          # degraded (oversized answers SERVFAIL), not dead.
+                          # Failing the start job here would restart-churn to
+                          # StartLimitBurst — the outage this gate exists to
+                          # prevent. Warn loudly, keep serving.
+                          echo "WARNING: dnsblockd answers :$dnsPort on one transport only (tcp=$dnsTcp udp=$dnsUdp) after ${toString listenerWaitBudgetSec}s budget" >&2
                           exit 0
                         fi
                         sleep 1
-                        listeners="$(ss -ltn 2>/dev/null)" || true
+                        sample || true
                       done
-                      echo "ERROR: no :${toString cfg.blockPort} listener after ${toString listenerWaitBudgetSec}s — init wedged before listeners_start (discriminator: journalctl -u dnsblockd | grep 'startup phase complete' — 3 of 5 phases = hung)" >&2
+                      echo "ERROR: no :$dnsPort listener (UDP or TCP) after ''${budget}s — init wedged before listeners_start. Discriminator: journalctl -u dnsblockd | grep 'startup phase complete' (3 of 5 phases, or 5/5 with no bound port = bind failure, not a hang)" >&2
                       exit 1
                     '';
                   };

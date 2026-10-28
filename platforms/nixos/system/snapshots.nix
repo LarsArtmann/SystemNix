@@ -91,6 +91,53 @@ let
     p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/rust-cache/rust/${p}"
   ) rustCacheProjects;
 
+  # The same rules, executed by the mount-gated rust-cache-projects-links
+  # unit instead of global tmpfiles (see the unit's comment) — exact L+
+  # semantics preserved by feeding them back through systemd-tmpfiles.
+  rustCacheLinksConf = pkgs.writeText "rust-cache-projects-links.conf" (
+    builtins.concatStringsSep "\n" (rustCacheLinks ++ [ "" ])
+  );
+
+  # ~/projects dedicated subvolume on the Samsung (2026-10-28,
+  # docs/planning/2026-10-28_projects-samsung-subvol-migration.md): armed
+  # only on the host that physically carries the Samsung — a hostname gate
+  # (NOT `config.fileSystems ? "/mnt/hot"`: reading the option this module
+  # contributes to is an infinite recursion; the forgejoDedicated precedent
+  # gates on an orthogonal service option, projects has no single owning
+  # service, so the host is the honest gate). VM-test hosts eval clean.
+  projectsSubvolArmed = config.networking.hostName == "evo-x2";
+
+  # Plain mount at the SAME path (path-invariant — every consumer path,
+  # symlink, unit WorkingDirectory, and flake git+file:// input keeps
+  # resolving unchanged): deliberately NOT the cacheSubvolumes automount
+  # style (activation-time writes under an unmounted mountpoint are the
+  # shadow-dir class, the 2026-09-20..29 bootstrap saga). by-label tlc:
+  # nvme0/nvme1 enumeration flips across boots. Options mirror the tlc
+  # filesystem's own doctrine (hardware-configuration.nix): per-mount
+  # compress=zstd (btrfs compression is per-mount, NOT fs-wide) and
+  # DEFAULT commit (commit=300 is a QLC-preservation measure, not for
+  # TLC) + space_cache=v2. nofail per the non-root-mount boot rule; every
+  # projects writer unit carries RequiresMountsFor (fail-loud, never
+  # shadow-write) and §18 (shadow-split-gate.sh) FAILS any deploy while
+  # the shadow is populated and the subvol is empty — so a
+  # deploy-before-prepare is loud but safe. The subvolume itself is
+  # created by scripts/migrate-projects-subvol.sh (runbook:
+  # docs/services/projects-subvol.md).
+  projectsHomeMount = lib.optionalAttrs projectsSubvolArmed {
+    "/home/${primaryUser}/projects" = {
+      device = "/dev/disk/by-label/tlc";
+      fsType = "btrfs";
+      options = [
+        "subvol=users/lars/projects"
+        "compress=zstd"
+        "noatime"
+        "nodiscard"
+        "space_cache=v2"
+        "nofail"
+      ];
+    };
+  };
+
   # Scrub deferral guard (2026-08-31 freeze lesson). The nixpkgs autoScrub
   # units run `btrfs scrub start -B <mnt>` at IOSchedulingClass=idle, but BFQ
   # priority does not stop the BYTES: a scrub is a full-filesystem read, and
@@ -234,7 +281,8 @@ in
     };
   }
   // cacheFileSystems
-  // hermesHomeMount;
+  // hermesHomeMount
+  // projectsHomeMount;
 
   services = {
     btrbk.instances."root" = {
@@ -412,6 +460,35 @@ in
       };
     };
 
+    # ~/projects dedicated subvolume (Set-B storage, 2026-10-28 plan): local
+    # snapshots on the Samsung + nightly incremental sends to the HDD pool.
+    # Referenced through the /mnt/hot TOPLEVEL mount (forgejo precedent) so
+    # the leg stays independent of the /home/lars/projects mount state —
+    # btrbk resolves users/lars/projects from the toplevel. 23:10 slots
+    # between root (23:00) and data (23:30). Freshness is Gatus-watched via
+    # projects_subvol_backup_fresh (12h threshold, forgejo precedent) plus
+    # the per-prefix pool verify legs.
+    btrbk.instances."projects" = lib.mkIf projectsSubvolArmed {
+      onCalendar = "23:10";
+      snapshotOnly = false;
+      settings = {
+        # Local tier: incremental-send parents + short rollback.
+        snapshot_preserve_min = "2d";
+        snapshot_preserve = "3d";
+        # BOUNDED pool retention (forgejo/hermes precedent): ends the @-leg
+        # FOREVER-hoarding of projects churn (~55 GiB payload × 14d/8w is
+        # the whole pool cost; ~13 TiB free).
+        target_preserve_min = "7d";
+        target_preserve = "14d 8w";
+        volume."/mnt/hot" = {
+          snapshot_dir = "/mnt/hot/.snapshots";
+          subvolume."users/lars/projects" = {
+            target = "/mnt/pool/backups/projects-subvol";
+          };
+        };
+      };
+    };
+
     # Receive/snapshot freshness gauges (the 2026-08-31 §f.17-18 gap): the
     # pool-side RECEIVE trees and the pool snapshot dir had no freshness
     # gauges in backups.prom — only the daily 3d-threshold verify guard
@@ -453,6 +530,13 @@ in
         # Mirrored HDD pool: scrub verifies BOTH raid1 copies match. Weekly is
         # cheap while the pool is near-empty; scrub time grows with usage.
         "/mnt/pool"
+        # Samsung tlc fs via its toplevel mount (2026-10-28): /nix + the hot
+        # tier + users/lars/projects live there and it was NEVER scrubbed —
+        # projects puts checksummed source-of-truth on the only pre-pool-send
+        # copy of an unscrubbed filesystem. One /mnt/hot entry covers the
+        # whole fs (~400 GiB weekly read at idle priority; the scrub deferral
+        # guard wraps the template unit — storms defer, never block).
+        "/mnt/hot"
       ];
     };
 
@@ -463,7 +547,12 @@ in
   };
 
   systemd = {
-    tmpfiles.rules = rustCacheLinks ++ [
+    # rustCacheLinks moved to the mount-gated rust-cache-projects-links unit
+    # below (2026-10-28 projects-subvol plan): global tmpfiles runs even with
+    # the projects mount absent (nofail + detached Samsung), and L+ rules
+    # would then create the links on the unmounted @ shadow — hidden beneath
+    # the mount once it returns, never healed.
+    tmpfiles.rules = [
       # btrbk-data needs /data/.snapshots to exist before it can create
       # snapshot subvolumes. Without this, btrbk-data fails with
       # "Failed to fetch subvolume detail for snapshot_dir".
@@ -480,6 +569,10 @@ in
       # next slot via RequiresMountsFor + onFailure instead.
       "d /mnt/hot/.snapshots 0755 root root -"
       "d /mnt/pool/backups/forgejo-subvol 0755 root root -"
+      # ~/projects btrbk leg (gated with the instance above): pool-side
+      # receive target. Trailing "-" keeps detached-DAS boots clean; btrbk
+      # fails loudly at 23:10 via RequiresMountsFor + onFailure instead.
+      "d /mnt/pool/backups/projects-subvol 0755 root root -"
     ];
 
     services = {
@@ -586,6 +679,50 @@ in
           }
         ];
         inherit onFailure;
+      };
+      btrbk-projects = lib.mkIf projectsSubvolArmed {
+        unitConfig.RequiresMountsFor = [
+          "/mnt/pool"
+          "/mnt/hot"
+        ];
+        serviceConfig = lib.mkMerge [
+          ioTier.background
+          {
+            # First run seeds ~55 GiB over the DAS USB link (the 24h root-send
+            # precedent: DAS-realistic throughput under concurrent load can
+            # be slow); nightly incrementals finish in minutes.
+            TimeoutStartSec = "24h";
+            # btrbk-data oom lesson: send page cache is charged to this
+            # cgroup — throttle early instead of becoming an oomd victim.
+            MemoryHigh = "4G";
+            OOMScoreAdjust = -250;
+          }
+        ];
+        inherit onFailure;
+      };
+
+      # ~/projects/<p>/target → /mnt/rust-cache symlinks, executed from the
+      # rustCacheLinksConf rule file above instead of global tmpfiles (the
+      # 2026-09-20..29 shadow-dir class: L+ under an unmounted mountpoint
+      # writes the @ shadow and the links hide beneath the mount, never
+      # healing). Mount-gated: fail-loud, the same stance as every other
+      # projects writer. Exact L+ semantics preserved by feeding the same
+      # rules through systemd-tmpfiles --create.
+      rust-cache-projects-links = lib.mkIf projectsSubvolArmed {
+        description = "rust-cache target symlinks inside ~/projects (mount-gated)";
+        wantedBy = [ "multi-user.target" ];
+        unitConfig.RequiresMountsFor = [
+          "/home/${primaryUser}/projects"
+          "/mnt/rust-cache"
+        ];
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            TimeoutStartSec = "1min";
+            ExecStart = "${lib.getExe' pkgs.systemd "systemd-tmpfiles"} --create ${rustCacheLinksConf}";
+          }
+          (serviceOneshotDefaults { })
+        ];
       };
 
       # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
@@ -717,8 +854,8 @@ in
           # Aggregate failures: one bad config must never mask the others.
           export PATH=/run/wrappers/bin:$PATH
           failed=0
-          for conf in root data pool ${lib.optionalString forgejoDedicated "forgejo"}; do
-            if [ "$conf" = forgejo ] && ! mountpoint -q /mnt/hot; then
+          for conf in root data pool ${lib.optionalString forgejoDedicated "forgejo"} ${lib.optionalString projectsSubvolArmed "projects"}; do
+            if { [ "$conf" = forgejo ] || [ "$conf" = projects ]; } && ! mountpoint -q /mnt/hot; then
               echo ":: skipping $conf (Samsung /mnt/hot detached — its snapshots live there; next fire retries)"
               continue
             fi
@@ -1153,4 +1290,27 @@ in
       };
     };
   };
+
+  # Eval-time pins for the ~/projects Samsung subvolume (2026-10-28 plan).
+  # The disko-row presence cross-guard (hot-user-caches pattern): the subvol
+  # is created out-of-band by scripts/migrate-projects-subvol.sh, so the
+  # disko declaration is the ONLY re-provision parity — drift here means a
+  # re-provisioned Samsung silently loses the mount target. The
+  # writer-gating pin (RequiresMountsFor sweep) is asserted alongside once
+  # the sweep lands (see projectsWriters below).
+  assertions = lib.optionals projectsSubvolArmed (
+    [
+      {
+        assertion = (import ../../../disko/samsung-tlc.nix).disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes ? "/users/lars/projects";
+        message = "snapshots.nix projectsHomeMount: /users/lars/projects is not declared in disko/samsung-tlc.nix — a re-provisioned Samsung would not recreate the subvol and the mount fails at boot";
+      }
+    ]
+    ++ (map (
+      unit:
+      {
+        assertion = (config.systemd.services ? "${unit}") -> (builtins.any (m: m == "/home/${primaryUser}/projects") (config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]));
+        message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
+      }
+    ) projectsWriters)
+  );
 }

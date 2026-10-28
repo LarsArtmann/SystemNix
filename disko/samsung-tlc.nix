@@ -92,10 +92,17 @@
               #                  + scripts/migrate-journal-hot.sh (2026-09-14)
               #   /caddy-logs  — platforms/nixos/system/caddy-logs-hot.nix
               #                  + scripts/migrate-caddy-logs-hot.sh (2026-10-01)
+              #   /users/lars/projects — platforms/nixos/system/snapshots.nix
+              #                  (projectsHomeMount) + scripts/migrate-projects-subvol.sh
+              #                  (2026-10-28; +C deliberately NOT applied — Set B
+              #                  snapshotted source-of-truth, not a +C cache tree)
               "/journal" = {
                 mountpoint = null;
               };
               "/caddy-logs" = {
+                mountpoint = null;
+              };
+              "/users/lars/projects" = {
                 mountpoint = null;
               };
             };

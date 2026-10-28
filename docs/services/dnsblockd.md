@@ -71,9 +71,24 @@ journalctl -u dnsblockd \
    un-freezes when `auth.home.lan` resolves again.
 
 **Structural gate (2026-10-20, closes the silent-window class; budget re-sized
-same day twice — 60s → 150s → 300s, each re-size journal-forced):**
+same day twice — 60s → 150s → 300s, each re-size journal-forced; PORT
+CORRECTED 2026-10-28):**
 `dnsblockd-wait-listener` ExecStartPost (dns-blocker.nix) polls
-`ss -ltn` for the blockPort listener, 300s bounded (inside
+`ss -ltnu` for **the DNS port (`ports.dns-blocker`, 53) over UDP and TCP** —
+the same value the render writes into `dns_port`, so gate and binary cannot
+drift. Until 2026-10-28 it polled `cfg.blockPort` (:80, TCP only), i.e. the
+block-page/proxy port: the gate proved a *neighbouring* listener and left the
+sole-resolver contract unwatched (2026-10-28 review issue #2). Verdict rules
+now: no `:53` on either transport → FAIL the start job; ONE transport →
+WARNING only (a resolver that answers UDP-only is degraded, not dead, and a
+failed start would restart-churn the sole resolver — the outage class this
+gate exists to prevent). Enumeration is a
+suffix match on `":<port>"`, so `:5355` never satisfies `:53`.
+`checks.dnsblockd-readiness-gate` executes the deployed script against five
+fixture listener maps (a `:80`-only map and a `:5355`-only map must both
+FAIL; `:53` both transports passes silently; UDP-only and a broken probe
+must pass with a warning) — the gate can no longer regress to a proxy port
+without a red check. 300s bounded (inside
 `TimeoutStartSec=330s`; an eval assertion pins budget < envelope), fail-OPEN
 if the probe tooling cannot run in the sandbox — a monitoring blind spot must
 never kill the sole resolver. The budget is JOURNAL-MEASURED, not a guess:
