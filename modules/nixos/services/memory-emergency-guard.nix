@@ -577,15 +577,36 @@ _: {
                 # so a journal reader can tell the guard's persistent-pressure
                 # heartbeat from a fresh operator-visible action.
                 last_zone=$(awk 'END { print (NF >= 2 ? $2 : "unknown") }' "$HISTORY_FILE" 2>/dev/null)
-                echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ${toString cfg.actionCooldownSeconds}s, $(( ${toString cfg.actionCooldownSeconds} - last_trip_age ))s remaining; last trip zone=''${last_zone:-unknown}) — persistent pressure, NOT a new action: the trip already stopped the sockets, this line is the guard's heartbeat"
+                echo "MEMORY EMERGENCY still active (''${reason}) but action cooldown active (''${last_trip_age}s < ''${cooldown_bar}s, $(( cooldown_bar - last_trip_age ))s remaining; last trip zone=''${last_zone:-unknown}) — persistent pressure, NOT a new action: the trip already acted, this line is the guard's heartbeat"
               fi
             else
-              echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
-                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-              } to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
-              systemctl stop ${
-                lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
-              } 2>/dev/null || true
+              run_memory_action=1
+              run_churn_stop=1
+              if [ "$io_split_active" = "1" ]; then
+                run_memory_action=0
+                run_churn_stop=0
+                # IO escalation ladder: driver trees already paused but the
+                # storm persists (>=3 zone-6 history entries since the pause
+                # epoch) => the writer is OUTSIDE the pausable set; escalate
+                # to the churn-unit stop (unit stops — STILL never the socket).
+                pause_epoch_now=0
+                [ -f "$PAUSE_FILE" ] && pause_epoch_now=$(awk 'NR == 1 { print $1 }' "$PAUSE_FILE" 2>/dev/null)
+                if [ "$pause_epoch_now" -gt 0 ] 2>/dev/null; then
+                  io_trips_in_pause=$(awk -v c="$pause_epoch_now" '$1 >= c && $2 == 6' "$HISTORY_FILE" 2>/dev/null | wc -l)
+                  if [ "$io_trips_in_pause" -ge 3 ]; then
+                    run_churn_stop=1
+                    echo "MEMORY EMERGENCY io escalation: ''${io_trips_in_pause} zone-6 trips with driver trees already paused — the writer is outside the pausable set, stopping churn units (sockets stay SERVING)" >&2
+                  fi
+                fi
+              fi
+              if [ "$run_memory_action" = "1" ]; then
+                echo "MEMORY EMERGENCY: ''${reason} — stopping sockets + ${
+                  lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+                } to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore." >&2
+                systemctl stop ${
+                  lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
+                } 2>/dev/null || true
+              fi
               # Zone 6's real mitigation: stop the resumable churn sources
               # (btrbk sends, balance, scrub). The post-storm drain path
               # below RE-ARMS them once sustained io PSI falls back under
@@ -593,8 +614,9 @@ _: {
               # cost the nightly pool send a full +24h (the timers had
               # already fired; the freshness threshold is 3 days, so a
               # second storm in the window would FAIL the backup check).
-              # Stopping an inactive unit is a no-op.
-              if [ -n "$CHURN_UNITS" ]; then
+              # Stopping an inactive unit is a no-op. Memory actions always
+              # run this block; IO-class actions only on escalation.
+              if [ "$run_churn_stop" = "1" ] && [ -n "$CHURN_UNITS" ]; then
                 # Record WHICH units were actually ACTIVE before the stop
                 # (post-trip forensics must be a prom read, not a journal
                 # dig — 2026-09-15) so the churn-stopped state file lists
@@ -717,7 +739,90 @@ _: {
                 printf '%s\n' "$cur_cg" > "''${CGROUP_IO_SNAPSHOT}.tmp" 2>/dev/null &&
                   mv "''${CGROUP_IO_SNAPSHOT}.tmp" "$CGROUP_IO_SNAPSHOT" || true
               fi
-              if [ -n "$attribution" ]; then
+              # Zone-6 pause action (2026-10-28 §7.1a): SIGSTOP the headless
+              # driver trees the attribution just named — NEVER the sockets/
+              # sacrifice. Selection: top attribution cgroups matching a
+              # configured pattern -> cgroup.procs -> process groups.
+              # HARD never-PTY invariant (the 2026-10-07 SIGSTOP-license
+              # revocation, honored by construction): a group is pausable
+              # only when NO member holds a controlling terminal — one
+              # /proc pass builds the tty-owning pgid set, and any overlap
+              # is skipped with a log line.
+              if [ "$io_split_active" = "1" ]; then
+                pgid_has_tty=""
+                for pst in /proc/[0-9]*/stat; do
+                  [ -r "$pst" ] || continue
+                  IFS= read -r stat_line < "$pst" 2>/dev/null || continue
+                  rest="''${stat_line#*) }"
+                  # shellcheck disable=SC2086 # deliberate field split: $1 state, $3 pgrp, $5 tty_nr
+                  set -- $rest
+                  if [ "''${5:-0}" != "0" ] && [ -n "''${3:-}" ]; then
+                    case " $pgid_has_tty " in
+                      *" $3 "*) ;;
+                      *) pgid_has_tty="$pgid_has_tty $3" ;;
+                    esac
+                  fi
+                done
+                cand_pgids=""
+                if [ -n "$cur_cg" ]; then
+                  # deliberate word splitting: cgroup paths carry no spaces
+                  # shellcheck disable=SC2086
+                  for pat in $IO_PAUSE_PATTERNS; do
+                    # shellcheck disable=SC2086
+                    for cg in $(printf '%s\n' "$cur_cg" | awk -v pat="$pat" 'index($2, pat) > 0 {print $2}' | head -3); do
+                      procs_f="$CGROUP_IO_SRC/$cg/cgroup.procs"
+                      [ -r "$procs_f" ] || continue
+                      # shellcheck disable=SC2086
+                      for cpid in $(cat "$procs_f" 2>/dev/null); do
+                        cpgid=$(awk '{ s = index($0, ")"); rest = substr($0, s + 2); split(rest, f, " "); print f[3] }' "/proc/$cpid/stat" 2>/dev/null) || continue
+                        [ -n "$cpgid" ] || continue
+                        case " $cand_pgids " in
+                          *" $cpgid "*) ;;
+                          *) cand_pgids="$cand_pgids $cpgid" ;;
+                        esac
+                      done
+                    done
+                  done
+                fi
+                pause_count=0
+                new_paused=""
+                # shellcheck disable=SC2086
+                for cpgid in $cand_pgids; do
+                  [ "$pause_count" -ge "$IO_PAUSE_MAX_GROUPS" ] && break
+                  case " $pgid_has_tty " in
+                    *" $cpgid "*)
+                      echo "IO-PAUSE skip: pgid ''${cpgid} holds a controlling TTY — owner-interactive work is never pausable" >&2
+                      continue
+                      ;;
+                  esac
+                  if kill -STOP -"$cpgid" 2>/dev/null; then
+                    pause_count=$((pause_count + 1))
+                    new_paused="$new_paused $cpgid"
+                  fi
+                done
+                if [ -n "$new_paused" ]; then
+                  old_epoch=0
+                  old_pgids=""
+                  if [ -f "$PAUSE_FILE" ]; then
+                    old_epoch=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
+                    old_pgids=$(awk 'NR > 1 {print $1}' "$PAUSE_FILE" 2>/dev/null | tr '\n' ' ')
+                  fi
+                  [ "''${old_epoch:-0}" -gt 0 ] 2>/dev/null || old_epoch="$now"
+                  {
+                    echo "$old_epoch"
+                    # shellcheck disable=SC2086
+                    for pg in $old_pgids $new_paused; do echo "$pg"; done
+                  } > "$PAUSE_FILE.tmp"
+                  mv "$PAUSE_FILE.tmp" "$PAUSE_FILE"
+                  sync -f "$PAUSE_FILE" 2>/dev/null || true
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
+                elif [ ! -f "$PAUSE_FILE" ]; then
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO eligible headless tree matched the attribution (patterns: ''${IO_PAUSE_PATTERNS}) — pressure persists but nothing pausable; escalation arms after 3 such trips" >&2
+                fi
+              fi
+              if [ "$io_split_active" = "1" ]; then
+                : # the IO-PAUSE line above IS the zone-6 action line
+              elif [ -n "$attribution" ]; then
                 echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone}) — top io since last trip: ''${attribution}" >&2
               else
                 echo "MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #''${tripped_total}, zone ''${zone})" >&2
@@ -769,6 +874,49 @@ _: {
               echo "$restored_total" > "$RESTORED_COUNT_FILE"
               echo "$((restores_today + 1))" > "$RESTORE_TODAY_FILE"
               echo "MEMORY EMERGENCY cleared (MemAvailable=''${avail_pct}%, zram=''${zram_pct}%, PSI some avg10=''${psi_some_avg10}%, PSI some avg60=''${psi_some_avg60}%, io PSI some avg60=''${io_psi_some_avg60}%, ''${last_trip_age}s since last trip, restore #''${restored_total} today: ''${restores_today_plus}) — sacrifice sockets restored" >&2
+            fi
+          fi
+
+          # Zone-6 calm-resume (2026-10-28 §7.1a): SIGCONT the paused driver
+          # trees once io PSI some avg60 has stayed below the restore bar for
+          # calmSeconds (epoch-file tracked), or at the maxPausedSeconds hard
+          # cap — a tree must never stay frozen unattended. Dead pgids fail
+          # silently (kill -CONT on a vanished group is a no-op error).
+          if [ "$IO_PAUSE_ENABLE" = "true" ] && [ -f "$PAUSE_FILE" ]; then
+            pause_epoch=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
+            pause_epoch="''${pause_epoch:-0}"
+            io_resume_reason=""
+            if [ "$pause_epoch" -gt 0 ] 2>/dev/null; then
+              pause_age=$((now - pause_epoch))
+              if [ "$pause_age" -ge "$IO_PAUSE_MAX_SECONDS" ]; then
+                io_resume_reason="hard cap ''${IO_PAUSE_MAX_SECONDS}s reached (calm or not)"
+              elif
+                awk -v p="$io_psi_some_avg60" 'BEGIN { exit !(p >= 0 && p < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}) }'
+              then
+                if [ ! -f "$PAUSE_CALM_EPOCH_FILE" ]; then
+                  echo "$now" > "$PAUSE_CALM_EPOCH_FILE"
+                fi
+                calm_since=$(cat "$PAUSE_CALM_EPOCH_FILE" 2>/dev/null) || calm_since="$now"
+                calm_since="''${calm_since:-$now}"
+                if [ $((now - calm_since)) -ge "$IO_PAUSE_CALM_SECONDS" ]; then
+                  io_resume_reason="io PSI some avg60=''${io_psi_some_avg60}% < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ''${IO_PAUSE_CALM_SECONDS}s"
+                fi
+              else
+                # not calm: reset the calm clock (sustained = unbroken)
+                rm -f "$PAUSE_CALM_EPOCH_FILE" 2>/dev/null || true
+              fi
+            fi
+            if [ -n "$io_resume_reason" ]; then
+              resumed=0
+              # deliberate word splitting over pgid lines
+              # shellcheck disable=SC2086
+              for pg in $(awk 'NR > 1 {print $1}' "$PAUSE_FILE" 2>/dev/null); do
+                if kill -CONT -"$pg" 2>/dev/null; then
+                  resumed=$((resumed + 1))
+                fi
+              done
+              rm -f "$PAUSE_FILE" "$PAUSE_CALM_EPOCH_FILE" 2>/dev/null || true
+              echo "MEMORY EMERGENCY IO-RESUME: SIGCONTinued ''${resumed} paused driver process group(s) — ''${io_resume_reason}" >&2
             fi
           fi
 
@@ -958,6 +1106,19 @@ _: {
             fi
           fi
 
+          # Zone-6 pause window (2026-10-28): the io-drain state as a prom
+          # read — how many driver trees are SIGSTOPped and since when.
+          io_paused_groups=0
+          io_pause_ts_line=""
+          if [ -f "$PAUSE_FILE" ]; then
+            io_paused_groups=$(awk 'NR>1 && NF { n++ } END { print n + 0 }' "$PAUSE_FILE" 2>/dev/null)
+            io_paused_groups="''${io_paused_groups:-0}"
+            io_pause_epoch=$(awk 'NR==1 {print $1}' "$PAUSE_FILE" 2>/dev/null) || io_pause_epoch=0
+            if [ "''${io_pause_epoch:-0}" -gt 0 ] 2>/dev/null; then
+              io_pause_ts_line="memory_emergency_guard_io_pause_epoch_seconds ''${io_pause_epoch}"
+            fi
+          fi
+
           {
             echo "# HELP memory_emergency_guard_avail_percent MemAvailable as percent of MemTotal"
             echo "# TYPE memory_emergency_guard_avail_percent gauge"
@@ -1086,6 +1247,15 @@ _: {
               # emission on a no-op test
               # shellcheck disable=SC2015
               [ -n "$churn_block" ] && printf '%s\n' "$churn_block" || true
+            fi
+
+            echo "# HELP memory_emergency_guard_io_paused_groups Headless driver process groups currently SIGSTOPped by the Zone-6 action split (0 = no pause window active)"
+            echo "# TYPE memory_emergency_guard_io_paused_groups gauge"
+            echo "memory_emergency_guard_io_paused_groups ''${io_paused_groups}"
+            if [ -n "$io_pause_ts_line" ]; then
+              echo "# HELP memory_emergency_guard_io_pause_epoch_seconds Epoch of the first pause in the active Zone-6 pause window (absent when none)"
+              echo "# TYPE memory_emergency_guard_io_pause_epoch_seconds gauge"
+              echo "$io_pause_ts_line"
             fi
           } > "$TMP"
           mv "$TMP" "$OUT"
