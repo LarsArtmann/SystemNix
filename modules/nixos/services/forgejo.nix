@@ -136,6 +136,7 @@ _: {
         mirrorStarredScript
         pushMirrorScript
         releaseShadowScript
+        branchProtectScript
         flipRepoScript
         mirrorHealthScript
         censusScript
@@ -575,7 +576,12 @@ _: {
                 Environment = [
                   "FORGEJO_CANONICAL_REPOS=${lib.concatStringsSep " " cfg.canonicalRepos}"
                 ];
-                ExecStart = [ (lib.getExe pushMirrorScript) ];
+                ExecStart = [
+                  (lib.getExe pushMirrorScript)
+                  # Phase 6 (T22): default-branch protection on primaries —
+                  # refuses pull mirrors, so it converges as repos flip.
+                  (lib.getExe branchProtectScript)
+                ];
               })
               (serviceOneshotDefaults { })
               (harden {
@@ -1489,6 +1495,7 @@ _: {
           mirrorStarredScript
           pushMirrorScript
           releaseShadowScript
+          branchProtectScript
           flipRepoScript
           censusScript
           setupScript

@@ -141,6 +141,8 @@
               inject ${lib.getExe forgejoScripts.avatarSyncScript} "$AVATAR"
               SHADOW="$FIX/forgejo-release-shadow"
               inject ${lib.getExe forgejoScripts.releaseShadowScript} "$SHADOW"
+              PROTECT="$FIX/forgejo-branch-protect"
+              inject ${lib.getExe forgejoScripts.branchProtectScript} "$PROTECT"
 
               export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
               rc=0; capt=""
@@ -608,6 +610,45 @@
                 GITHUB_TOKEN=gxtok GITHUB_OWNER=LarsArtmann GITHUB_REPO=dnsblockd \
                 run "$SHADOW"
               need_rc shadow-notag 1
+
+              # ---- forgejo-branch-protect (T22)
+              # Happy: repo native, default branch unprotected -> POST.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy.GET.1.code"
+              printf '{"default_branch":"master","mirror":false}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy.GET.1.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.GET.1.code"
+              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.GET.1.body"
+              printf 201 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.POST.1.code"
+              FORGEJO_TOKEN=fxtok FORGEJO_URL=http://localhost:3000 \
+                FORGEJO_CANONICAL_REPOS=prot-happy run "$PROTECT"
+              need_rc prot-happy 0
+              need_has prot-happy "master protected"
+              jq -e '.branch_name == "master" and .enable_push == true' \
+                "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.POST.1.json" > /dev/null \
+                || { echo "FAIL branch-protect: POST payload"; exit 1; }
+
+              # Idempotent: protection already present -> skip, no POST.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem.GET.1.code"
+              printf '{"default_branch":"main","mirror":false}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem.GET.1.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.GET.1.code"
+              printf '[{"branch_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.GET.1.body"
+              FORGEJO_TOKEN=fxtok FORGEJO_URL=http://localhost:3000 \
+                FORGEJO_CANONICAL_REPOS=prot-idem run "$PROTECT"
+              need_rc prot-idem 0
+              need_has prot-idem "already protected"
+              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.POST.1.json" ] \
+                || { echo "FAIL branch-protect: idem must not POST"; exit 1; }
+
+              # Refuse mirrors (protection is for primaries).
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-mirror.GET.1.code"
+              printf '{"default_branch":"master","mirror":true}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-mirror.GET.1.body"
+              FORGEJO_TOKEN=fxtok FORGEJO_URL=http://localhost:3000 \
+                FORGEJO_CANONICAL_REPOS=prot-mirror run "$PROTECT"
+              need_rc prot-mirror 1
+              need_has prot-mirror "flip first"
+
+              # Empty canonicalRepos -> quiet no-op.
+              FORGEJO_TOKEN=fxtok FORGEJO_CANONICAL_REPOS= run "$PROTECT"
+              need_rc prot-empty 0
 
               echo "PASS: all forgejo staged-primary script fixtures" > "$out"
             '';

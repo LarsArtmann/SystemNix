@@ -1162,6 +1162,74 @@ in
     '';
   };
 
+  branchProtectScript = pkgs.writeShellApplication {
+    name = "forgejo-branch-protect";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    text = ''
+      # Protect the default branch of every CANONICAL (primary) repo
+      # (staged-primary plan T22): normal pushes stay open (the owner is
+      # the only writer on this instance), force pushes and branch
+      # deletions are blocked by the API defaults once a protection rule
+      # exists. Sync-unit phase 6, same FORGEJO_CANONICAL_REPOS env as
+      # the push-mirror phase; runs AFTER flip (refuses mirrors loudly).
+      FORGEJO_URL="''${FORGEJO_URL:-https://forgejo.home.lan}"
+      FORGEJO_OWNER="${primaryUser}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+      REPOS="''${FORGEJO_CANONICAL_REPOS:-}"
+
+      if [ -z "$FORGEJO_TOKEN" ]; then
+        echo "Error: FORGEJO_TOKEN must be set" >&2
+        exit 1
+      fi
+      if [ -z "$REPOS" ]; then
+        echo "forgejo-branch-protect: canonicalRepos empty — nothing to do"
+        exit 0
+      fi
+
+      read -r -a repos <<< "$REPOS"
+      FAILED=0
+      for name in "''${repos[@]}"; do
+        repo=$(curl -sf --compressed \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name") || {
+          echo "✗ $name: not found on forgejo (canonicalRepos drift?)" >&2
+          FAILED=1
+          continue
+        }
+        if [[ "$(echo "$repo" | jq -r '.mirror')" == "true" ]]; then
+          echo "✗ $name: still a PULL mirror — branch protection is for primaries (flip first)" >&2
+          FAILED=1
+          continue
+        fi
+        branch=$(echo "$repo" | jq -r '.default_branch')
+        protected=$(curl -sf --compressed \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protection" \
+          | jq --arg branch "$branch" '[.[] | select(.branch_name == $branch)] | length') || protected=0
+        if [ "''${protected:-0}" != "0" ]; then
+          echo "✓ $name: $branch already protected"
+          continue
+        fi
+        code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protection" \
+          -d "$(jq -n --arg branch "$branch" \
+            '{branch_name: $branch, enable_push: true}')")
+        if [[ "$code" == "200" || "$code" == "201" ]]; then
+          echo "✓ $name: $branch protected (push open, force-push/delete blocked)"
+        else
+          echo "✗ $name: branch protection POST failed (HTTP $code)" >&2
+          FAILED=1
+        fi
+      done
+      exit "$FAILED"
+    '';
+  };
+
   flipRepoScript = pkgs.writeShellApplication {
     name = "forgejo-flip-repo";
     runtimeInputs = [

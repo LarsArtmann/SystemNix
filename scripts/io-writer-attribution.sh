@@ -110,7 +110,7 @@ if [ "$SHOW_PRESSURE" = "1" ] && [ ${#REPLAY[@]} -eq 0 ]; then
       val="${line#avg10=}"
       case "$val" in '' | *[!0-9.]*) continue ;; esac
       awk -v v="$val" 'BEGIN { exit !(v >= 10) }' || continue
-      printf '%s %s%%\n' "$val" "$rel"
+      printf '%s %s\n' "$val" "$rel"
     done | sort -nr | head -n 8 | awk '{ printf "%8s%% %s\n", $1, $2 }'
 fi
 

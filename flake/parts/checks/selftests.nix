@@ -77,6 +77,20 @@
           touch $out
         '';
 
+        # io-writer-attribution fixture selftest (2026-10-28, stability
+        # plan M9/F37): replay-mode delta math, ranking, threshold
+        # filter, vanished-cgroup tolerance, and the no-argv output
+        # contract — the tool that must name storm drivers in one pass
+        # (the 2026-10-28 storm: cgroup view caught tq-agent-pool
+        # +162GB/10min that the uid-1000 /proc view was blind to).
+        io-writer-attribution-selftest = pkgs.runCommand "io-writer-attribution-selftest" { } ''
+          scratch=$(mktemp -d)
+          cp ${root}/scripts/io-writer-attribution.sh "$scratch/io-writer-attribution.sh"
+          cp ${root}/scripts/test-io-writer-attribution.sh "$scratch/test-io-writer-attribution.sh"
+          ${pkgs.bash}/bin/bash "$scratch/test-io-writer-attribution.sh"
+          touch $out
+        '';
+
         # monitor365 event retention: the 03:00 unattended window must
         # never be the retention script's first execution — eval is
         # structurally blind to logic/interpolation bugs inside shell
