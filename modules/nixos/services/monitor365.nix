@@ -93,6 +93,12 @@
       systemAgentCfg = config.services.monitor365;
       serverCfg = config.services.monitor365-server;
 
+      # The Pocket ID identity monitor365 matches SSO logins against (email
+      # ONLY — no JIT provisioning, runbook docs/services/monitor365.md).
+      # Must equal the Pocket ID account email; if that ever changes,
+      # update this line.
+      ssoAdminEmail = "lars@larsartmann.cloud";
+
       # Runtime deps — CLI tools for system + desktop collectors.
       # Wired into the systemd service PATH by the upstream module.
       # X11 tools (xdotool, xprintidle, scrot, wmctrl) are kept for upstream
@@ -169,6 +175,45 @@
             else
               echo "monitor365-duckdb-heal: main DB missing/empty, no backup found — server will create fresh DB"
             fi
+          fi
+        '';
+      };
+
+      # Ensure the Pocket ID SSO identity exists in the tenant DB before the
+      # server starts (idempotent boot-time heal). Monitor365 matches SSO
+      # logins on email ONLY and has NO JIT provisioning: a DB restored from
+      # a pre-provisioning backup (or a projection rebuild losing the user
+      # row) breaks EVERY SSO login with "Unauthorized: SSO user not found"
+      # while agents keep working (live 2026-10-25, again 2026-10-28 — the
+      # manual create-admin heal was lost to the Oct-26/27 backup-restore
+      # churn). Upstream bootstrap provisions the admin only on a
+      # tenant-EMPTY DB (the existing-tenant path re-syncs the API key only
+      # — crates/server/src/bootstrap/mod.rs, source-verified 2026-10-28),
+      # so this ExecStartPre is the declarative replacement for the manual
+      # create-admin runbook step. Runs as the service user BEFORE the
+      # server takes the single-writer lock; the upstream CLI's
+      # duplicate-email rejection is the idempotency signal.
+      ssoIdentityScript = pkgs.writeShellApplication {
+        name = "monitor365-ensure-sso-identity";
+        runtimeInputs = [
+          pkgs.coreutils
+        ];
+        text = ''
+          if OUT="$(monitor365-server create-admin --email '${ssoAdminEmail}' 2>&1)"; then
+            echo "monitor365-ensure-sso-identity: created SSO admin ${ssoAdminEmail}"
+          else
+            case "$OUT" in
+              *"already exists"*)
+                echo "monitor365-ensure-sso-identity: SSO admin ${ssoAdminEmail} already exists"
+                ;;
+              *"No tenants found"*)
+                echo "monitor365-ensure-sso-identity: WARNING: no tenants yet — in-server bootstrap provisions tenant+admin when fully configured" >&2
+                ;;
+              *)
+                echo "monitor365-ensure-sso-identity: ERROR: $OUT" >&2
+                exit 1
+                ;;
+            esac
           fi
         '';
       };
@@ -463,9 +508,16 @@
         (lib.mkIf serverCfg.enable {
           systemd.services.monitor365-server = {
             serviceConfig = {
-              ExecStartPre = lib.mkBefore [
-                (lib.getExe duckdbHealScript)
-              ];
+              ExecStartPre = lib.mkBefore (
+                [
+                  (lib.getExe duckdbHealScript)
+                ]
+                # After the heal: the identity check opens the DB only once
+                # the WAL/restore state is resolved. Order matters.
+                ++ lib.optionals (serverCfg.sso.enable or false) [
+                  (lib.getExe ssoIdentityScript)
+                ]
+              );
               TimeoutStartSec = "3min";
             };
           };

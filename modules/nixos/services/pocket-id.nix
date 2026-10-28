@@ -324,7 +324,21 @@ _: {
               # The old singular /secret route 404s — every NEW client created
               # after the pocket-id bump silently got no secret (live 2026-09-02:
               # Paperless provisioned, secret generation failed every run).
-              SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
+              # Public clients (PKCE, no secret — the OpenCloud trio) must
+              # NOT reach the secrets API: Pocket ID rejects secret creation
+              # for public clients with 400 validation_failed (live
+              # 2026-10-28), which exited the whole provisioner before ANY
+              # later client in the loop was processed. A stale secret file
+              # from an earlier confidential era is a dead credential — prune it.
+              ${lib.optionalString client.isPublic ''
+                if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
+                  rm -f "$SECRET_FILE"
+                  echo "  Removed stale secret file for public client (PKCE-only)."
+                else
+                  echo "  Public client — no secret needed (PKCE-only)."
+                fi
+              ''}
+              ${lib.optionalString (!client.isPublic) ''
               OLD_SECRET_IDS=""
               ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
                 # Force regeneration = REPLACE the client's whole secret set:
@@ -383,6 +397,7 @@ _: {
                   exit 1
                 fi
               fi
+              ''}
             ''
           ) (cfg.provision.oidcClients ++ cfg.provision.extraOidcClients)}
 
