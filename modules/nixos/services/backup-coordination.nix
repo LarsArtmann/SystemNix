@@ -46,14 +46,26 @@ _: {
               name: backup:
               let
                 pattern = if backup.filePattern != null then backup.filePattern else "*";
+                scanDirs = if backup.scanSubdirectories then "1" else "0";
               in
               ''
                 # Backup: ${name}
                 BACKUP_DIR="${backup.directory}"
                 PATTERN="${pattern}"
                 MAX_AGE="${toString backup.maxAgeHours}"
+                SCAN_DIRS="${scanDirs}"
                 # || true handles: find exit non-zero (dir missing), head SIGPIPE
-                LATEST="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name "$PATTERN" -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2 || true)"
+                if [ "$SCAN_DIRS" = "1" ]; then
+                  # Snapshot-tree leg (btrbk receives + snapshot dirs): the
+                  # entries are SUBVOLUME DIRECTORIES, not files, and every
+                  # fresh send/receive adds a NEW entry — so the newest-entry
+                  # mtime IS the freshness signal (a received subvol preserves
+                  # its source snapshot timestamps, i.e. the true backup
+                  # point, not the receive wall clock).
+                  LATEST="$(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2 || true)"
+                else
+                  LATEST="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name "$PATTERN" -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2 || true)"
+                fi
                 if [ -n "$LATEST" ] && [ -e "$LATEST" ]; then
                   MTIME="$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)"
                   AGE_HOURS=$(( (NOW - MTIME) / 3600 ))
@@ -101,6 +113,16 @@ _: {
                   type = lib.types.nullOr lib.types.str;
                   default = null;
                   description = "Glob pattern for backup files (default: *)";
+                };
+                scanSubdirectories = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = ''
+                    Scan first-level SUBDIRECTORIES instead of files (btrbk
+                    received-snapshot and snapshot-dir legs: every fresh send
+                    lands a new subvolume directory, so the newest-entry mtime
+                    is the freshness signal).
+                  '';
                 };
                 maxAgeHours = lib.mkOption {
                   type = lib.types.int;

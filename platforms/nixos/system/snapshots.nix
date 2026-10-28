@@ -401,6 +401,32 @@ in
       };
     };
 
+    # Receive/snapshot freshness gauges (the 2026-08-31 §f.17-18 gap): the
+    # pool-side RECEIVE trees and the pool snapshot dir had no freshness
+    # gauges in backups.prom — only the daily 3d-threshold verify guard
+    # covered them, so a silently-dead receive leg aged a full day before
+    # ANY signal. scanSubdirectories: these are snapshot subvolume dirs,
+    # one new entry per fresh send (see the option's note in
+    # backup-coordination.nix). Labels = btrbk instance names (the same
+    # terms the backup-catchup-report.sh prom-diff matches on).
+    backup-coordination.backups = {
+      root = {
+        directory = "/mnt/pool/backups/root";
+        scanSubdirectories = true;
+        maxAgeHours = 25;
+      };
+      data = {
+        directory = "/mnt/pool/backups/data";
+        scanSubdirectories = true;
+        maxAgeHours = 25;
+      };
+      pool = {
+        directory = "/mnt/pool/.snapshots";
+        scanSubdirectories = true;
+        maxAgeHours = 25;
+      };
+    };
+
     # Weekly instead of monthly: the scrub needs ~2h to complete 707 GiB on /data
     # at idle I/O priority. With frequent reboots (58 unsafe shutdowns), a monthly
     # scrub window almost never completes before the next reboot interrupts it.
