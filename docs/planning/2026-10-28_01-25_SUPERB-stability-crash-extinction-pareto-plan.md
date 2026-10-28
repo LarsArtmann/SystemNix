@@ -300,3 +300,19 @@ New rows added to `TODO_LIST.md` `### stability` + `docs/todo/stability.md` (lib
    - **Queue-park (variant B):** wrapper spools the argv to `~/.cache/admission-gate/parked/` + a calm-poll timer unit re-executes when the band clears. More moving parts (spool GC, dupe suppression, timer unit) — recommend NOT v1.
 4. **Selftest (F17):** fixture state dir with fake trip-epoch → refusal asserted; calm fixture → passthrough; force-env → passthrough + warn line. Registered in the flake selftests check.
 5. **Deployment surface:** flake/parts/devshells.nix + one script in `scripts/` + CONTRIBUTING note. Zero systemd changes, zero module changes — cannot affect the running box until the next deploy, and then only inside devshells.
+
+### 2026-10-28 10:55 — executor session progress (post-ratification)
+
+§7 gates ANSWERED by owner (~03:05): **§7.1 all three RATIFIED** (Z6 split + hard-fail gate + census latch), §7.2 SKIPPED (io.max values still unanswered — M16 stays owner-gated), storm drivers "let it run", §7.3 BIOS + M25 brief green-lit.
+
+**Implemented + toplevel-eval-green (ride the M5 deploy wave):**
+- **M2/F7–F10** Zone-6 action split — guard `ioPause` (attribution-matched cgroupPatterns, HARD never-PTY invariant, calm-resume 600 s + 3600 s cap, `ioActionCooldownSeconds` 150, ≥3-trip churn escalation; sockets never touched by zone 6) + `ioPause.enable = true` on evo-x2 + runbook action table (F13). VM legs F11/F12 → M5 battery (storm-banned at write time).
+- **M3/F15–F17** admission gate — `scripts/nix-admission-gate.sh` (hard-fail, trip-recent OR PSI-band ≥20, `ADMISSION_GATE_FORCE=1` audit-logged, owner unaffected by construction) + devshell PATH wiring (F16) + fixture selftest in flake checks.
+- **M20/F53–F54** sustained-storm latch — guard epoch-file latch (≥2/h × 2 h OR ≥20/boot) + `sustained_storm` metrics + dedicated Gatus check. VM-leg extension rides M5.
+- **M15/F46** mr-sync-dashboard → `IOSchedulingClass = idle`.
+- **M25/F61–F62** role-split decision brief → `docs/planning/2026-10-28_10-45_role-split-decision-brief.md` (owner reads; recommendation: option A mini-PC).
+- TODO close-out: 6 rows ticked across both surfaces (Z6 split, admission leg, mr-sync idle, sustained latch, merge-decision ×2) + checker exit 0.
+
+**Remaining for the M5 wave owner window:** deploy (boot-chain 5 + M2–M4 + this batch + storage train-B) behind the quiescence protocol → anchor verify → M6 reboot battery → M7 thermal legs (BIOS fans/PPT per §7.3). Still open beyond: M4 (reader-pause automation), M11 (census/autopsy scripts), M13/M14/M16–M18/M21–M24/M26/M27 per §1 ordering.
+
+**Live handoff note:** boot 0 survived the night (no freeze #38) but the storm never drained (28+ trips by 10:33, all zone 6, old action each time — the split's ratification evidence); the paused battery (PGID 1931684, session-12) stays SIGSTOPped while the storm holds — **SIGCONT when io PSI avg60 < 20 sustained ~10 min**: `/run/current-system/sw/bin/kill -CONT -1931684`.
