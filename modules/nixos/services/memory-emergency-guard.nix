@@ -773,15 +773,14 @@ _: {
                     for cg in $(printf '%s\n' "$cur_cg" | awk -v pat="$pat" 'index($2, pat) > 0 {print $2}' | head -3); do
                       procs_f="$CGROUP_IO_SRC/$cg/cgroup.procs"
                       [ -r "$procs_f" ] || continue
-                      # shellcheck disable=SC2086
-                      for cpid in $(cat "$procs_f" 2>/dev/null); do
+                      while IFS= read -r cpid; do
                         cpgid=$(awk '{ s = index($0, ")"); rest = substr($0, s + 2); split(rest, f, " "); print f[3] }' "/proc/$cpid/stat" 2>/dev/null) || continue
                         [ -n "$cpgid" ] || continue
                         case " $cand_pgids " in
                           *" $cpgid "*) ;;
                           *) cand_pgids="$cand_pgids $cpgid" ;;
                         esac
-                      done
+                      done <"$procs_f"
                     done
                   done
                 fi
@@ -910,12 +909,11 @@ _: {
             if [ -n "$io_resume_reason" ]; then
               resumed=0
               # deliberate word splitting over pgid lines
-              # shellcheck disable=SC2086
-              for pg in $(awk 'NR > 1 {print $1}' "$PAUSE_FILE" 2>/dev/null); do
+              while IFS= read -r pg; do
                 if kill -CONT -"$pg" 2>/dev/null; then
                   resumed=$((resumed + 1))
                 fi
-              done
+              done < <(awk 'NR > 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
               rm -f "$PAUSE_FILE" "$PAUSE_CALM_EPOCH_FILE" 2>/dev/null || true
               echo "MEMORY EMERGENCY IO-RESUME: SIGCONTinued ''${resumed} paused driver process group(s) — ''${io_resume_reason}" >&2
             fi
