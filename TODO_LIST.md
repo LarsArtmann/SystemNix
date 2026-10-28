@@ -1651,3 +1651,6 @@
 - [ ] [ready] **Sweep `ss -ltn`-style listener gates for the wrong-port class** (the readiness gate proved :80 for weeks while its own text said :53) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Sweep for gates/polls that no `checks.*` ever executes** (the silent-fixture class behind the wrong-port gate) → [docs/todo/services.md](docs/todo/services.md)
 - [ ] [ready] **Dashboard the dnsblockd freshness textfile** (out-of-band gauges; SigNoz sees them only post-recovery, which is when trends matter) → [docs/todo/monitoring.md](docs/todo/monitoring.md)
+- [ ] [ready] **Re-run `nix run .#post-deploy-check` on a calm box** (both cutover runs were storm-mode: CV render STORM-SUSPECTs unverified, SigNoz/HealthHub rode cv's restart, §18 sanity flagged normal multi-core pool CPU) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [ ] [ready] **Verify the first btrbk-projects nightly ladder after 23:10** (snapshot + send green, per-prefix verify legs PASS, `projects_subvol_backup_fresh` flips to 1; first seed landed 18:17) → [docs/todo/storage.md](docs/todo/storage.md)
+- [ ] [ready] **Investigate node-exporter journal rate ~437 lines/min** (flagged by §18 sanity on every battery run; what is it logging?) → [docs/todo/monitoring.md](docs/todo/monitoring.md)
