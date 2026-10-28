@@ -7,7 +7,7 @@
 
 ## 0. Goal
 
-Move `/home/lars/projects` — live-verified 2026-10-28: **126 GiB raw, 342 top-level entries**, currently a plain directory inside the QLC root `@` subvolume — onto a **dedicated BTRFS subvolume on the Samsung 970 EVO Plus** (`tlc` filesystem, `/dev/nvme1n1p2`-or-`nvme0n1p2` by-label `tlc`, 493 GiB free), **mounted at the exact same path** `/home/lars/projects`.
+Move `/home/lars/projects` — live-verified 2026-10-28: **126 GiB raw, 342 top-level entries**, currently a plain directory inside the QLC root `@` subvolume — onto a **dedicated BTRFS subvolume on the Samsung 970 EVO Plus** (`tlc` filesystem; currently `/dev/nvme0n1p2`, but nvme0/nvme1 enumeration FLIPS across boots — `by-label tlc` is the only stable handle), 493 GiB free, **mounted at the exact same path** `/home/lars/projects`.
 
 Path-invariant mount: every consumer path, symlink, unit WorkingDirectory, and flake `git+file://` input keeps resolving unchanged. Nothing downstream of the path moves; only the bytes beneath it change device and snapshot regime.
 
