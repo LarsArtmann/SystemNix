@@ -16,6 +16,22 @@
 - **`dnsIPv6Enabled = false`** — evo-x2 has no global IPv6. Omits IPv6 root servers, avoids 5-15s timeouts.
 - **Scoped filter proxy (ADR-0018) wired 2026-10-08, OFF on the host** — `dns-blocker.nix` now exposes `proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` / `proxyTLSPassthrough` (upstream contract: ADR-0018 in the dnsblockd repo). Enabling = set `proxyFilterDomains` to registrable-domain suffixes (DNS answers them with the block IP — the "scoped lie"; precedence allowlist > filter > block) + `proxyInjectScriptURL` to the classifier's `/inject/filter.js`. The URL rides the `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env var, NEVER the YAML (store is world-readable — same rule as upstream's auth_token); render test pins both halves (`tests/test-dns-blocker-render.nix` item 7). Constraints: requires `dnsBlockResponse = "zero_ip"` (eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` — a lie needs an address); filter domains NEVER TLS-splice (termination on the dnsblockd CA — devices must trust it, already true on evo-x2 via `security.pki.certificates`); the filter set is read at startup, changes restart the service; classifier down fails OPEN (pages render unfiltered, the lie still lands on the working proxy). Feature stays owner opt-in — picking domains + classifier is an owner decision.
 
+**`/etc/hosts` deliberately shadows TWO zone names — not drift, not a second
+truth source (pointer added 2026-10-28, plan T19).**
+`platforms/nixos/system/networking.nix:37-40` pins `forgejo.home.lan` +
+`catalog.home.lan` to `networking.local.lanIP` in `/etc/hosts`. `nsswitch`
+resolves `files` BEFORE `dns`, so those two names keep resolving while a
+switch restarts or stalls
+this resolver — the failure it closes is real and dated: on 2026-10-14
+catalog-sync CI runs 84/85 died at 19:07 right after a switch restarted
+dnsblockd, then 94/96 died mid-job at 20:15 during the same switch-time
+stall. The list is intentionally tiny (names consumed by UNATTENDED jobs);
+interactive browsing still resolves through the full dnsblockd zone, so a
+name you just added to `dns_local_records` may resolve in a browser while
+`getent hosts` on the box still answers from `/etc/hosts`. Diagnose
+"resolver says X but the box says Y" by reading `networking.nix` FIRST —
+the two host names are the ONLY legitimate case.
+
 **Failover asymmetry (pinned 2026-10-28, plan T13):** `rpi3-dns` imports the
 same module but is NOT a clone of evo-x2 — the render test now pins both the
 parity and the differences: same `:53` port, same `zero_ip` blocked-answer,
@@ -100,6 +116,69 @@ unidentified, queued in `docs/todo/services.md`).
   - **2026-09-02 incident (the class, proven live):** during a NIC-vanish DNS outage the user `sudo nano`'d resolv.conf to `1.1.1.1` as a workaround; after the NIC self-recovered (03:24, no reboot) the leftover edit killed `*.home.lan` for ~10h while dnsblockd was HEALTHY on :53 — gatus stayed green because its "DNS Resolver" check probes `127.0.0.1` directly, never the system-resolver path (blind spot). Cascade: attic substituter `cache.home.lan` unresolvable → `nix flake check --no-build` prints `error: unable to download ... .narinfo` → pre-deploy gate step 1 greps ANY `error:` → **deploy blocked by the very deploy that would fix DNS (chicken-and-egg)**. Fixes shipped: (1) gate filter excludes narinfo-unreachability errors (infra noise, never syntax); (2) `system_local_dns_resolves` textfile metric (getent `auth.home.lan` through the SYSTEM resolver) + anchored gatus check "Local DNS System Resolver" closes the blind spot. Recovery runbook for the class: verify dnsblockd health first (`dig cache.home.lan @127.0.0.1 +short` must answer), then `nix run .#deploy` (activation rewrites resolv.conf) — never hand-edit it back under pressure without confirming dnsblockd actually resolves
 - **Dashboard auth token via sops env** — `auth_token` is passed via `DNSBLOCKD_AUTH_TOKEN` EnvironmentFile (koanf env override), NOT the nix-store config YAML. The sops secret `dnsblockd_auth_token` is owned by `primaryUser:users` so the DMS DnsStatsWidget can read it for its `Authorization: Bearer` header. The sops template `dnsblockd-auth-env` (root-owned) feeds the systemd EnvironmentFile. Two renderings of the same key, different owners, different consumers. Protected routes: `/stats`, `/api/allow`, `/api/report`, `/api/cache/flush`. Unprotected: `/health`, `/metrics`, `/dashboard`, `/api/dashboard-data` (cookie-gated).
 - **HaGeZi blocklists come from the GitLab mirror** (`gitlab.com/hagezi/mirror`), NOT GitHub — GitHub's automated fraud detection repeatedly locks `hagezi/dns-blocklists` (404s all 22 fetch derivations, blocking every deploy). Lists track the mirror's mutable `main` branch with SRI-hash pinning: content drift fails the build loudly; fresh blocklists require periodic hash refreshes
+
+**Comment-claim sweep (2026-10-28, plan T20).** Config COMMENTS are claims
+with no compiler behind them, so this repo has twice shipped a FALSE premise
+that a later session acted on. The sweep re-read every comment in
+`platforms/nixos/system/dns-blocker-config.nix` and
+`modules/nixos/services/dns-blocker.nix` against adjacent config and live
+state:
+
+- Pre-T299 "recursion is broken without forwarders" claims: **already
+  corrected** (`dns-blocker-config.nix:16` and `:111`) — no stale copy
+  survives anywhere in `modules/`, `platforms/`, or `lib/`.
+- **CORRECTED**: the device-registry header promised "owner-confirm markers
+  to verify at the next deploy window" — both markers were resolved in
+  October, so it now says no unverified entry remains and that a NEW unknown
+  needs its own marker.
+- **CORRECTED**: the wildcard bullet's `search home.lan` consequence was
+  contradicted by `platforms/common/dns-resolver.nix:35-41` (the `search`
+  line was dropped 2026-10-17); it now names that removal and the residual
+  out-of-repo clients the warning still applies to.
+- Verified CLEAN: the `listenerWaitBudgetSec` journal-measured rationale
+  (255.5s observed worst, 300s budget), the `proxy` option descriptions, the
+  `trustedProxies` spoof-safety argument, and the blocklist-mirror rationale.
+
+Rule for future passes: when a comment states a NEGATIVE capability ("X does
+not work", "Y is unsupported"), it is the highest-risk claim class in this
+file set — verify it against the locked upstream rev or delete it.
+
+**Block-page TLS + h2 (probed live 2026-10-28, plan T21).** Three facts that
+together make every block-page smoke test easier to get wrong than right:
+
+1. **The cert is minted per SNI, on demand, from the dnsblockd CA.** A
+   request with `-servername doubleclick.net` is answered with
+   `subject=O=dnsblockd, CN=doubleclick.net` (issuer `O=DNS Blocker,
+   CN=dnsblockd-CA`, SAN `doubleclick.net` + `*.doubleclick.net`, 365 days).
+   Minted certs are cached (same serial across repeated probes), so this is
+   cheap — but it means "the block page's certificate" does not exist as a
+   single object, and a probe MUST pass `-servername` or it gets the
+   wildcard/default leaf instead.
+2. **h2 is negotiated and serves the FULL page** — `ALPN protocol: h2` on
+   `192.168.1.200:443`, status 200, 92,567 bytes, same title/markers/byte
+   count as `http/1.1`. The 2026-08-22 note that "the block page differs on
+   h2 vs h1.1" is **FALSIFIED at the current lock rev (`f9bb6477`)**; the
+   earlier observation predates the 2026-09 rewrite of the page templates.
+   Consequence: no Gatus h2-variant endpoint and no `--http2` smoke leg is
+   worth adding — one h1.1 probe covers the page, and h2 is proven manual
+   only. Re-open if a page-template change lands.
+3. **The mint depends on the host clock.** `notBefore` equals the mint
+   instant, so a host whose clock is behind NTP-correct clients hands out
+   `CERT_NOT_YET_VALID` and every blocked domain becomes a browser error page
+   instead of a block page — indistinguishable from "the blocker is down"
+   because DNS keeps resolving. Check `timedatectl` FIRST when a block page
+   fails to render but `dig` still answers `.200`.
+
+Reproduce all three:
+
+```bash
+dig +short doubleclick.net @127.0.0.1                 # -> 192.168.1.200
+printf '' | openssl s_client -connect 192.168.1.200:443 \
+  -servername doubleclick.net 2>/dev/null | openssl x509 -noout -subject -dates
+printf '' | openssl s_client -alpn h2 -connect 192.168.1.200:443 \
+  -servername doubleclick.net 2>&1 | rg 'ALPN protocol'
+```
+
 
 ## Startup hang — 5-phase discriminator + playbook (2026-10-12 13:06 incident)
 

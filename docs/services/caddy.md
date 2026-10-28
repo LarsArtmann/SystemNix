@@ -103,6 +103,34 @@ May-era `CAP_NET_ADMIN` came from a dead ACME-DNS-challenge rationale in
 under NNP by design, caddy never calls setuid/setgid). Proof gate:
 `checks.caddy-mint` boots caddy and handshakes TLS on both zones.
 
+### Listener IP map — who owns :80 and :443 (verified live 2026-10-28)
+
+Two different processes bind these ports on this host, on DIFFERENT addresses.
+Nothing binds either port on loopback, so a `127.0.0.1:443` probe returns an
+EMPTY response rather than a refusal — it looks like "the vHost is down" when
+the vHost was never the thing you reached (hit live 2026-10-16).
+
+| Address                    | Ports   | Owner       | Serves                                                                            |
+| -------------------------- | ------- | ----------- | --------------------------------------------------------------------------------- |
+| `networking.local.lanIP`   | 80, 443 | `caddy`     | Every real vHost, the unknown-host 404 catch-all, and the `*.home.lan` wildcard    |
+| `networking.local.blockIP` | 80, 443 | `dnsblockd` | Block pages + the scoped filter proxy (ADR-0018) on temp-allowed / filtered names  |
+
+Defaults live in `platforms/nixos/system/local-network.nix` (`.150` / `.200`).
+Live probe: `ss -ltnp | rg ':443'` shows `192.168.1.150:443` and
+`192.168.1.200:443` and no `0.0.0.0` or `127.0.0.1` row. The resolver's own
+`:53` is the exception — it binds `0.0.0.0`, which is why the readiness gate
+probes it there. Consequence for smoke tests: always connect to `lanIP`
+explicitly —
+
+```bash
+printf 'GET / HTTP/1.1\r\nHost: <vhost>\r\nConnection: close\r\n\r\n' \
+  | openssl s_client -quiet -connect <lanIP>:443 -servername <vhost>
+```
+
+`dnsblockd`'s block-page listener comes from `listen_addr` / `port` /
+`tls_port` in the generated YAML; `stats_addr`/`stats_port` stay on
+`127.0.0.1:9090` and are the ONLY loopback listeners on the box.
+
 ## Ops
 
 - **Restart after every deploy** — deploy.sh does this (`Restarting

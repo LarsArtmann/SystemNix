@@ -67,9 +67,12 @@ in
 
       # Household device registry — named attribution in Top Clients,
       # per-device pause, device-scoped temp-allows. Inventory 2026-09-30
-      # (/proc/net/arp + repo knowledge); unknown-identity entries carry
-      # owner-confirm markers to verify at the next deploy window (plan M11).
-      # The VRRP virtualIP (.53) and blockIP (.200) are NOT devices.
+      # (/proc/net/arp + repo knowledge). CORRECTED 2026-10-28: this comment
+      # used to promise owner-confirm markers for unknown identities — both
+      # were resolved since (pixel6 decommissioned 2026-10-01, .62 confirmed
+      # as the MacBook 2026-10-04), so NO unverified entry remains here and a
+      # future unknown must get a fresh marker rather than inheriting this
+      # claim. The VRRP virtualIP (.53) and blockIP (.200) are NOT devices.
       devices = [
         {
           id = "evo-x2";
@@ -132,9 +135,14 @@ in
       # live-verified end-to-end the same day (unknown name → A answer with
       # synthesised owner → Caddy 404 branded page; apex and exact records
       # still win; AAAA on an A-only wildcard still NXDOMAINs at the zone
-      # boundary). NB: LAN clients with `search home.lan` now also resolve
-      # <anything>.<failed-tld>.home.lan through the wildcard — same
-      # behaviour a Unbound local-zone wildcard would produce. The cloud
+      # boundary). NB (CORRECTED 2026-10-28): the original note here said LAN
+      # clients with `search home.lan` also resolve
+      # <anything>.<failed-tld>.home.lan through the wildcard. The managed
+      # resolv.conf DROPPED that `search` line on 2026-10-17
+      # (platforms/common/dns-resolver.nix:35-41, deliberate), so NixOS hosts
+      # no longer complete bare labels; clients outside this repo (the Mac,
+      # DHCP guests) may still carry it and will still reach the wildcard
+      # that way. The cloud
       # zone stays wildcard-free BY DESIGN (explicit records only, one
       # namespace for the VPN alias set — not a tooling limitation; the
       # old "sdns ignores wildcard local records" reasoning was wrong: the
