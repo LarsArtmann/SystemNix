@@ -1826,7 +1826,7 @@ _: {
               # A plain null (not mkIf) keeps the registry row ABSENT on
               # pool-less hosts — a mkIf-false submodule would leave the
               # backup-coordination options unset instead of absent.
-              if config.services.dnsblockd-allowlist-backup.enable then
+              if cfg.allowlistBackup.enable then
                 {
                   directory = allowlistBackupDir;
                   filePattern = "allowlist";
