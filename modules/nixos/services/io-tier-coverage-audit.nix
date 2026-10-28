@@ -114,6 +114,7 @@
             "cv-backup-dir"
             "discordsync-attachments-dir"
             "discordsync-db-backup-dir"
+            "dnsblockd-allowlist-backup-dir"
             "dnsblockd-attach-ip"
             "dnsblockd-cert-mint"
             "geometrikks-backup-dir"
