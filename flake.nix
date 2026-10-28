@@ -397,7 +397,21 @@
       # is on origin/master — so the row was removed from
       # docs/INTERIM-INPUT-PINS.md. Deploy-key fetch, same pattern as
       # file-and-image-renamer.
-      url = "github:LarsArtmann/nsfw-classifier?ref=refs/heads/master";
+      #
+      # REV-PINNED at 58d398dc (2026-10-27) since 2026-10-28: upstream tip
+      # 1e95693 does NOT compile. The F0.3 client-telemetry refactor landed
+      # half-wired — internal/server/telemetry.go (added d93ca46) references
+      # identifiers that never landed (`http`, `writeErr`, Server.telemetryPath),
+      # so `go build ./cmd/nsfw` dies with 12 undefined-symbol errors even
+      # though the go-modules FOD is green (the "FOD green ≠ compile green"
+      # class, docs/agents/nix-flakes.md). Upstream's own status report calls
+      # that work "f03-half-wired". 58d398dc predates telemetry.go entirely
+      # and is the gen-959-deployed, build-proven rev.
+      # LIFT: upstream master compiles again (the F0.3 telemetry handler +
+      # Server.telemetryPath + writeErr all present) — verify with
+      # `nix build github:LarsArtmann/nsfw-classifier/master#nsfw-classifier-go-rocm`
+      # or a probe through our lock, then drop this pin AND its allowlist row.
+      url = "github:LarsArtmann/nsfw-classifier/58d398dc68b94f16df2adefdeb8f2864d950080f";
     };
 
     # templ-components — the SHARED component library source consumed by the
@@ -563,6 +577,23 @@
     # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
     go-health-dashboard = {
       url = "github:LarsArtmann/go-health-dashboard?ref=master";
+    };
+
+    # go-health — the Kubernetes-health-probe SDK (github.com/larsartmann/
+    # go-health). Declared here ONLY as a MODULE-SOURCE pin for consumers that
+    # feed it into mkPreparedSource (DiscordSync's local replace target), the
+    # templ-components pattern above. TAG-PINNED at v0.8.1 because that is
+    # exactly what DiscordSync's go.mod requires and what its code calls
+    # (healthlib.DoServiceName, first shipped in the tag) while its own flake
+    # input still sits on rev 0a8a4d4c — the stale copy made the package die
+    # at compile ("undefined: healthlib.DoServiceName"). NOT master: the
+    # consumer was written against v0.8.1's API.
+    # dnsblockd consumes go-health as a normal flake input of its own and is
+    # NOT wired to this node.
+    # LIFT: DiscordSync bumps its own go-health input to >= v0.8.1 — then
+    # drop the follows line, this input, and the pin-audit allowlist row.
+    go-health = {
+      url = "github:LarsArtmann/go-health/v0.8.1";
     };
 
     # erraudit — Error handling pattern analyzer for Go projects
@@ -1004,6 +1035,12 @@
     templ-components.inputs.flake-parts.follows = "flake-parts";
     templ-components.inputs.nixpkgs.follows = "nixpkgs";
     templ-components.inputs.treefmt-nix.follows = "treefmt-nix";
+    # go-health (module-source pin for DiscordSync — see the input block):
+    # same treatment, plus its `systems` edge so the lock-audit dedup holds.
+    go-health.inputs.flake-parts.follows = "flake-parts";
+    go-health.inputs.nixpkgs.follows = "nixpkgs";
+    go-health.inputs.systems.follows = "systems";
+    go-health.inputs.treefmt-nix.follows = "treefmt-nix";
     art-dupl.inputs.nixpkgs.follows = "nixpkgs";
     # 2026-10-14: art-dupl's own flake-parts copy (same rev as root — pure
     # alias collapse) and treefmt-nix copy (eval-only dep; moves 4cfe8d70
@@ -1047,6 +1084,7 @@
     # Flip back to follows = "nixpkgs" when the root pin lifts past go 1.27.3.
     dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs-unstable";
     discordsync.inputs.flake-parts.follows = "flake-parts";
+    discordsync.inputs.go-health.follows = "go-health";
     discordsync.inputs.templ-components.follows = "templ-components";
     discordsync.inputs.treefmt-nix.follows = "treefmt-nix";
     disko.inputs.nixpkgs.follows = "nixpkgs";

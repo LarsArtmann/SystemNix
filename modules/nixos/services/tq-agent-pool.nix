@@ -54,6 +54,11 @@ _: {
       # 2zqvcUaJ re-staled, got 7YE9PJMW (first-hand keep-going proof,
       # ~/.cache/lockfloat/float-proof-20261027-172949.log). Drop when
       # upstream bakes 7YE9PJMW.
+      # RE-STALE 2026-10-28 blanket float: go-taskqueue@a0ed057 needs
+      # go-health v0.8.1, which the 7YE9PJMW module cache lacks (the stale
+      # FOD was reused because a fixed-output path is keyed by the SPECIFIED
+      # hash); fresh fakeHash probe got 4zISVNEX. Same value as the
+      # lars-packages `tq` surface — update BOTH together.
       # doCheck gated off 2026-10-05: upstream's TestAgentsDocSizeGuard is red at
       # the locked rev (AGENTS.md 17102 B > the repo's own 15400 B budget);
       # drop the gate when upstream prunes/resets and the lock moves past.
@@ -62,7 +67,7 @@ _: {
           (old: {
             nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
             doCheck = false;
-            vendorHash = "sha256-7YE9PJMWk5JFPcm0BToeR2V4DU5bXfG4s8kjJyRGJ2U=";
+            vendorHash = "sha256-4zISVNEXOjNfK+t9uG84Exn42FNTAZcFpN6yatDcHUE=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden
