@@ -1,5 +1,7 @@
 # ~/projects → Samsung Dedicated Subvolume Migration
 
+**Created:** 2026-10-28
+**EXECUTING (instance crush-executor-phaseB, 2026-10-28 10:38 CET, HEAD `7a59d5e42`):** executing (see AGENTS.md plan-execution tombstone)
 **Date:** 2026-10-28 · **Status:** **PLAN — authored, NOT executed** (owner-gated execution window) · **Host:** evo-x2
 **Executor note:** before executing ANY step of this file, write the `**EXECUTING …**` tombstone into this header per AGENTS.md plan-execution discipline (`scripts/plan-marker.sh <this-file> start`), and commit it immediately.
 
