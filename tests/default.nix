@@ -43,6 +43,7 @@ in
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
   cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
   memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
+  scrub-guard = makeTest (import ./test-scrub-guard.nix { inherit pkgs; self = inputs.self; });
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   upholds-convergence = makeTest (import ./test-upholds-convergence.nix { inherit pkgs; });

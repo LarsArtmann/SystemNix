@@ -444,10 +444,10 @@ let
           DEFER_LAST=$(sort -rn "${stateDir}/scrub-deferrals.log" 2>/dev/null | head -1 | cut -d' ' -f1) || DEFER_LAST=0
         fi
         case "''${DEFER_LAST:-0}" in
-          ''|*[!0-9]*) DEFER_LAST=0 ;;
+          '''|*[!0-9]*) DEFER_LAST=0 ;;
         esac
         case "''${DEFER_TOTAL:-0}" in
-          ''|*[!0-9]*) DEFER_TOTAL=0 ;;
+          '''|*[!0-9]*) DEFER_TOTAL=0 ;;
         esac
         echo "# HELP btrfs_scrub_deferred_total Times the scrub guard deferred a window (IO/zram pressure or a streaming btrbk/balance unit) — lifetime counter"
         echo "# TYPE btrfs_scrub_deferred_total counter"
