@@ -2,6 +2,7 @@
 
 **Created:** 2026-10-28 10:40 CET · **HEAD at authoring:** `7a59d5e42`
 **EXECUTING (instance crush-dnsblockd-exec-1, 2026-10-28 10:56 CET, HEAD `e5cddf26f`):** executing (see AGENTS.md plan-execution tombstone)
+**Progress (2026-10-28 12:20, instance crush-dnsblockd-exec-1): 10/27 done** — T01, T02, T05 (observer half), T07, T12, T13, T14, T15, T22, T23 are implemented + verified + committed; T03 is partial; the 16 remaining tasks are gated by deploy/root, an owner decision, or an upstream release (per-task gates in `docs/status/2026-10-28_12-20_dnsblockd-plan-execution-status.md` §c). Nothing below is re-planned — resume at T03.
 **Scope:** every OPEN row on the **dnsblockd integration surface** across 9 domain libraries (`services`, `monitoring`, `storage`, `upstream`, `pipeline`, `stability`, `security`, `desktop`, plus the queue) and `ROADMAP.md` Theme 8. Collected by script, not by memory: 60 queue rows + 62 service-library rows + 9 monitoring + 13 upstream + 7 storage + 11 pipeline + 2 stability + 1 security + 1 desktop matched the dnsblockd/DNS pattern, then deduped and premise-checked.
 **Explicitly OUT of scope:** the ~1,300 queue rows owned by other services/subsystems (storage crisis, ai-meter, papermill, cv, forgejo, signoz-GCP, desktop). Same method applies; they are not this brief.
 **Source of truth for findings:** `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html` and `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md`.

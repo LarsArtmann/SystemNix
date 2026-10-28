@@ -239,7 +239,7 @@ not harvested (reason given).
     `docs/agents/monitoring.md`. `[Q]`
 19. Prove the collector's own Gatus/SigNoz rules are green once it is back. `[Q]`
 20. Cut the `otelErrors` journal spam at its source OR ratelimit it — the spam buries absence-of-phase-line signals. `[Q]`
-21. Migrate the remaining `dnsblockd_otel_internal_errors` spellings anywhere they survive (grep the tree). `[NQ]`
+21. ~~Migrate the remaining `dnsblockd_otel_internal_errors` spellings.~~ `[NH: verified this session — the only surviving occurrences are the two explanatory corrections that name the wrong spelling on purpose; no live instruction uses it]`
 
 **Guards that are still missing**
 
