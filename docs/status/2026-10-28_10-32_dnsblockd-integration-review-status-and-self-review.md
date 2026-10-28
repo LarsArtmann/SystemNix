@@ -35,7 +35,9 @@ Deliverable: `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integra
 16. **Runbook drift fixed on sight** (`docs/services/dnsblockd.md:140-145`): the "TWO tracking DBs coexist" open anomaly (falsified by a 10:14 probe), the "both retention surfaces bounded (30d)" claim (actual: tracks 30d / metrics 90d / block-rate 365d / journal 30d), plus the previously undocumented `trust-anchor*.db` files.
 17. **Queue surgery, both surfaces each time:** 1 row closed, 2 rows re-tagged/superseded, 1 row extended (OTel observer half), 4 new `[ready]` rows — all mirrored into `TODO_LIST.md` + `docs/todo/services.md`.
 18. **Repo's own gate run:** `scripts/check-todo-system.sh` → `OK: TODO queue/library structure clean` (the 144 unharvested-report WARNs are the pre-existing, documented backlog class, unchanged by me).
-19. **Parallel-session collision handled per doctrine:** detected their dirty files before editing, re-read every target file after each external modification, used surgical edits, did not touch or revert their work, and flagged it here and in the chat.
+19. **The report's own roadmap harvested in the same session** (AGENTS.md requires it): 3 new rows into `docs/todo/services.md`, 1 cross-cutting row into `docs/todo/monitoring.md`, 4 mirrored one-liners into `TODO_LIST.md`, plus `ROADMAP.md` gained a new **Theme 8: Service-integration horizons** (one-schema-per-service principle, gateway, cluster, DoQ, retention dial) instead of a queue row.
+20. **The runbook now carries the verdict itself** — a review nobody opens is worthless, so `docs/services/dnsblockd.md` got the 3.57/5 verdict, both concrete defects, and the "why is `sdnotify` unused" answer above the DNS section, plus the "sole resolver" line now cross-references the two-host failover contract.
+21. **Parallel-session collision handled per doctrine:** detected their dirty files before editing, re-read every target file after each external modification, used surgical edits, did not touch or revert their work, and flagged it here and in the chat.
 
 ---
 
@@ -106,7 +108,7 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 3. Add the CA-parity fingerprint compare to `scripts/post-deploy-check.sh` (BLOCK on mismatch). `[Q]`
 4. Deploy the in-tree signoz `project_id` collector fix — unblocks dnsblockd traces. `[Q]` (pre-existing monitoring row)
 5. Add a collector-independent observer: textfile/gatus sampling `dnsblockd_otel_internal_errors` from `127.0.0.1:9090/metrics`. `[Q]` (extended OTel row)
-6. Add a negative test for the readiness gate (a unit test that a `:80`-only listener map FAILS the new check). `[NEW-Q]`
+6. Add a negative test for the readiness gate (a `:80`-only listener map must FAIL). `[Q]` (folded into the readiness-gate row, which now requires it in the same change)
 7. Verify the new gate against the 300s budget: assert poll budget < `TimeoutStartSec` still holds after the rewrite. `[NH: enforced by an existing eval assertion — nothing new to track]`
 
 ### P1 — capability and durability
@@ -124,12 +126,12 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 19. Document `trust-anchor.db` / `trust-anchor-tombstones.db` + their retention in the runbook. `[NH: done inline this session in the size-profile section]`
 
 ### P2 — observation and truth-maintenance
-20. Prove the 5 gatus checks are actually green (needs root sqlite read from a privileged shell). `[NEW-Q]`
+20. Prove the 5 gatus checks are actually green (needs root sqlite read from a privileged shell). `[NH: root-gated — the existing post-deploy battery rows own this class]`
 21. Decide whether `otelInternalErrors` may page or only WARN, and write the threshold down. `[NH: subsumed by #5 — the observer's threshold includes it]`
 22. Check every other `signoz-coverage` service for the same exporter-blindness, and fix the class once. `[NEW-Q]`
 23. Fix `signoz-coverage`'s claim style: `wiring = "config"` should carry a last-verified date that expires. `[NH: design change to a shared registry — needs its own decision, not a queue row]`
 24. Grep `docs/agents/{monitoring,sso-dns}.md` for dnsblockd claims contradicted by this session's probes. `[NEW-Q]`
-25. Add the P3/P4 long-horizon items (gateway, cluster, DoQ) to `ROADMAP.md`. `[NEW-Q]`
+25. ~~Add the P3/P4 long-horizon items (gateway, cluster, DoQ) to `ROADMAP.md`.~~ `[NH: DONE this session — ROADMAP.md "Theme 8: Service-integration horizons"]`
 26. Add a series index for `docs/architecture-understanding/` so scores diff across reviews. `[NH: cross-skill tooling, belongs to the docs-health sweep]`
 27. Sweep runbooks for the "two DBs coexist" class (an anomaly note that outlives its subject). `[NH: covered by the next docs-health VERIFY pass across all runbooks]`
 28. Reconcile "sole resolver" language with the documented two-host failover contract. `[NEW-Q]`
@@ -137,8 +139,8 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 
 ### P3 — cleanup and hygiene
 30. Delete the legacy `temp-allowlist.conf` / `temp-allowlist.json` stubs if nothing reads them. `[NH: needs a source check in the binary's config loader — out of session scope]`
-31. Confirm `allow_sibling_domains`, `dhcp_lease_file`, `pprof_enabled` are intentional omissions (security posture) and write the "why" into the runbook. `[NEW-Q]`
-32. Record the review's verdict + score in `docs/services/dnsblockd.md` so the next reader gets the assessment without opening the HTML. `[NEW-Q]`
+31. Confirm `allow_sibling_domains`, `dhcp_lease_file`, `pprof_enabled` are intentional omissions (security posture) and write the "why" into the runbook. `[Q]` (folded into the option-validation row)
+32. ~~Record the review's verdict + score in `docs/services/dnsblockd.md`.~~ `[NH: DONE this session — verdict + both defects + why `sdnotify` is unused now sit above the DNS section]`
 33. Retire or annotate the 144 unharvested `§f` reports (pre-existing WARN). `[NH: a prune/harvest pass, explicitly its own session]`
 
 ### Process (mine, not the repo's)
@@ -170,6 +172,9 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 | `docs/services/dnsblockd.md` | Size profile corrected (one tracking DB, honest retention table, trust-anchor DBs) | committed in `bbde76901` |
 | `docs/todo/services.md` | CA row closed w/ fingerprint; migration row re-tagged + premise refresh; push row superseded; OTel row extended; **+4 new rows** | committed in `bbde76901` |
 | `TODO_LIST.md` | Same five corrections as one-liners + 4 mirrored rows | committed in `bbde76901` |
+| `ROADMAP.md` | NEW "Theme 8: Service-integration horizons" (5 long-horizon items, harvested from the review) | post-report |
+| `docs/todo/monitoring.md` | +1 row: exporter-blindness audit across every `signoz-coverage` service | post-report |
+| `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md` | THIS report | post-report |
 | *(parallel session)* `CHANGELOG.md`, `docs/agents/stability.md`, `docs/todo/stability.md`, `flake/parts/checks/selftests.nix`, `memory-emergency-guard.nix`, `configuration.nix` | NOT mine — rode the same daemon commit | untouched |
 
 **Commands that produced the evidence:** `pgrep -af dnsblockd`, `ss -ltnup`, `busctl get-property … ActiveState`, `readlink -f /proc/3919/exe`, Python parse of the live `-dnsblockd-config.yaml`, `GET /health` + `/metrics` via urllib, `journalctl -u dnsblockd -b | grep -ci 4318`, `findmnt`, `openssl x509 -fingerprint -sha256` (inline PEM vs `/run/secrets`), `git show f9bb6477:…` for options/`main.go`/`config.nix`, `scripts/check-todo-system.sh`.
