@@ -205,15 +205,23 @@ prepare)
     echo "REFUSED: pool free ${POOL_FREE:-0} B < payload×1.5 (${NEED} B — first seed + shadow archive both land there)." >&2
     exit 1
   fi
+  # btrfs-progs emits the value either inline ("Unallocated: 48.00GiB") or,
+  # per-device on the following line, as "Device unallocated:\t  48.00GiB"
+  # (our pin's format) — parse both (the single-line-only parser read empty
+  # and refused with a phantom 0 B, live 2026-10-28).
   UNALLOC_B=$(btrfs filesystem usage "$ROOT_FREE_PATH" 2>/dev/null | awk '
-    /^Unallocated:/ {
-      v = $2; n = v + 0; u = v; gsub(/^[0-9.]+/, "", u)
-      m = 1
-      if (u == "KiB") m = 1024
-      else if (u == "MiB") m = 1048576
-      else if (u == "GiB") m = 1073741824
-      else if (u == "TiB") m = 1099511627776
-      printf "%.0f", n * m
+    /^[[:space:]]*Device unallocated:/ { v = $3 }
+    /^[[:space:]]*Unallocated:/ && $2 ~ /^[0-9]/ { v = $2 }
+    END {
+      if (v != "") {
+        n = v + 0; u = v; gsub(/^[0-9.]+/, "", u)
+        m = 1
+        if (u == "KiB") m = 1024
+        else if (u == "MiB") m = 1048576
+        else if (u == "GiB") m = 1073741824
+        else if (u == "TiB") m = 1099511627776
+        printf "%.0f", n * m
+      }
     }')
   UNALLOC_B=${UNALLOC_B:-0}
   if [ "$DRY_RUN" != "1" ] && [ "$UNALLOC_B" -lt $((10 * 1024 * 1024 * 1024)) ]; then
