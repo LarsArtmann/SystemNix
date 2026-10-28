@@ -34,6 +34,7 @@ _: {
         onFailure
         onFailureP0
         mkStateDir
+        mkPoolDirUnit
         ports
         ;
 
@@ -460,6 +461,10 @@ _: {
       # the gatus/SigNoz legs (~1-2 min), not this budget.
       listenerWaitBudgetSec = 300;
       timeoutStartBudgetSec = 330;
+
+      # Pool-side copy target for the permanent allowlist (see the
+      # dnsblockd-allowlist-backup unit below).
+      allowlistBackupDir = "/mnt/pool/backups/dnsblockd";
     in
     {
       options.services.dns-blocker = {
@@ -469,6 +474,10 @@ _: {
           type = types.str;
           default = "lo";
           description = "Network interface for block IP address";
+        };
+
+        allowlistBackup = {
+          enable = mkEnableOption "daily pool-side copy of the permanent allowlist (hosts with /mnt/pool only)";
         };
 
         blockIPPrefix = mkOption {
@@ -1712,11 +1721,79 @@ _: {
             };
           };
 
+          # ── Permanent-allowlist backup (2026-10-28 queue item) ──
+          # The allowlist (dashboard "Always allow" judgement) is the only
+          # irreversible dnsblockd artifact, and it lives on hot/dnsblockd —
+          # an UNSNAPSHOTTED subvol (doctrine C; btrbk covers hot/forgejo
+          # only). A daily copy onto the HDD pool (restic-app-dumps dir,
+          # backup-coordination freshness row) gives it an independent,
+          # pool-side copy; tracking/journal loss stays acceptable analytics
+          # loss and is deliberately NOT copied.
+          # Units are enable-gated: pool-less hosts (rpi3) never get
+          # RequiresMountsFor dependencies on a mount that does not exist
+          # (browser-history dbBackup precedent).
           tmpfiles.rules = [
             (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
             (mkStateDir "/var/lib/dnsblockd-otel" "0755" "root" "root")
           ];
-        };
+        }
+        // (lib.mkIf cfg.allowlistBackup.enable {
+          systemd.services.dnsblockd-allowlist-backup-dir = mkPoolDirUnit {
+            description = "Create dnsblockd allowlist backup directory on the HDD pool";
+            directory = allowlistBackupDir;
+          };
+
+          systemd.services.dnsblockd-allowlist-backup = {
+            description = "Copy the permanent dnsblockd allowlist onto the HDD pool";
+            after = [
+              "dnsblockd.service"
+              "dnsblockd-allowlist-backup-dir.service"
+            ];
+            wants = [ "dnsblockd-allowlist-backup-dir.service" ];
+            unitConfig.RequiresMountsFor = [ allowlistBackupDir ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                ExecStart = pkgs.writeShellScript "dnsblockd-allowlist-backup" ''
+                  set -euo pipefail
+                  src="/var/lib/dnsblockd/allowlist"
+                  if [ ! -s "$src" ]; then
+                    # An empty/missing allowlist is a legitimate state (no
+                    # "Always allow" verdict yet) — never overwrite the last
+                    # good copy with nothing.
+                    echo "dnsblockd-allowlist-backup: no allowlist content yet — keeping last copy"
+                    exit 0
+                  fi
+                  # Atomic replace so a reader (or a torn run) never sees a
+                  # half-written allowlist.
+                  tmp="${allowlistBackupDir}/.allowlist.tmp"
+                  install -m 600 "$src" "$tmp"
+                  mv -f "$tmp" "${allowlistBackupDir}/allowlist"
+                  echo "dnsblockd-allowlist-backup: copied allowlist ($(stat -c %s "$src") bytes)"
+                '';
+                ReadWritePaths = [ allowlistBackupDir ];
+              }
+              (harden { MemoryMax = "256M"; })
+              (serviceOneshotDefaults { })
+              ioTier.background
+            ];
+          };
+
+          systemd.timers.dnsblockd-allowlist-backup = {
+            description = "Daily permanent-allowlist copy to the HDD pool";
+            wantedBy = [ "timers.target" ];
+            after = [ "mnt-pool.mount" ];
+            timerConfig = {
+              # 02:55 — staggered off browser-history (02:15) and miniflux
+              # (02:45); clear of the 03:00-04:00 heavy dump cluster.
+              OnCalendar = "*-*-* 02:55:00";
+              Persistent = true;
+            };
+          };
+        });
 
         # Service-integration registry entry: unit-state monitoring + the Pocket
         # ID OIDC client (native OIDC in dnsblockd itself —
@@ -1742,7 +1819,18 @@ _: {
             };
             vHost.layer = "none";
             monitored = true;
-            # The HTTP liveness check belongs to the OWNER of the service, not
+            # Allowlist pool-copy freshness (dnsblockd-allowlist-backup,
+            # 02:55 daily) — gated so pool-less hosts register no phantom
+            # backup row (browser-history precedent).
+            backup =
+              # A plain null (not mkIf) keeps the registry row ABSENT on
+              # pool-less hosts — a mkIf-false submodule would leave the
+              # backup-coordination options unset instead of absent.
+              if config.services.dnsblockd-allowlist-backup.enable then {
+                directory = allowlistBackupDir;
+                filePattern = "allowlist";
+                maxAgeHours = 25;
+              } else null;
             # to the core gatus list (2026-10-28 review issue #10: the entry
             # carried zero checks while three hand-written ones lived in
             # gatus-config.nix). Only the HTTP /health probe moves: the raw

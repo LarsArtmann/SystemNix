@@ -41,6 +41,9 @@ in
       blockInterface = "eno1";
       blockIPPrefix = 24;
       statsPort = ports.dns-blocker-stats;
+      # evo-x2 has the pool (rpi3 does not) — the allowlist pool-copy leg
+      # (dnsblockd-allowlist-backup, 02:55 daily) is host-opt-in.
+      allowlistBackup.enable = true;
 
       # Caddy reverse-proxies dnsblock.${domain} to the loopback stats API;
       # trust its X-Forwarded-For so the audit log records the real LAN
