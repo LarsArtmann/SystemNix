@@ -1,0 +1,9 @@
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#fleet">Inference Fleet</a>
+          <a href="#metering">Metering Layer</a>
+          <a href="#consumers">Consumers</a>
+          <a href="#agent">Agent Setup</a>
+          <a href="#hardware">Hardware Model</a>
+          <a href="#open">Open Items</a>
+          <a href="#verification">Verification</a>
