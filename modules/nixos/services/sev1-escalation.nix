@@ -183,8 +183,19 @@ _: {
             if [ "$g_churn" -ge 2 ] 2>/dev/null; then
               churn_note=" TRIP CHURN: ''${g_churn} trips in the last hour — a consumer is re-waking FastFlowLM after every restore; the daily restore budget will stop this."
             fi
+            # Per-boot count (2026-10-28, stability plan F51): the hour-scale
+            # churn note misses the slow-burn storm (one trip per 10-min
+            # cooldown = churn-invisible, 34-60 trips/boot on the freeze
+            # #34-#37 boots). >=3 this boot = say it; the load-bearing
+            # threshold (10+) already has its own Gatus flip.
+            g_boot=$(prom_value "$GUARD_PROM" "memory_emergency_guard_trips_this_boot")
+            g_boot="''${g_boot:-0}"
+            boot_note=""
+            if [ "$g_boot" -ge 3 ] 2>/dev/null; then
+              boot_note=" THIS BOOT: ''${g_boot} trips since boot — a slow-burn storm, not one event; shed the driver the guard's io.stat lines name."
+            fi
             titles+=("MEMORY EMERGENCY GUARD TRIPPED")
-            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this alert clears automatically when the guard restores the sockets).''${churn_note} journalctl -u memory-emergency-guard -n 30")
+            details+=("The machine entered a pre-freeze zone; FastFlowLM + socket were force-stopped (this alert clears automatically when the guard restores the sockets).''${churn_note}''${boot_note} journalctl -u memory-emergency-guard -n 30")
             severities+=("notify")
           fi
 

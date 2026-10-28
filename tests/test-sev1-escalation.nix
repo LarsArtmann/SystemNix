@@ -109,6 +109,15 @@
         memory_emergency_guard_sacrifice_socket_active 0
         memory_emergency_guard_trips_last_hour 3
       '';
+      # Slow-burn storm (2026-10-28 F51): one trip per cooldown = churn-
+      # invisible, but the per-boot count is high (the freeze #34-#37
+      # shape) - the detail must say THIS BOOT.
+      guardPromBootStorm = ''
+        memory_emergency_guard_last_trip_recent 1
+        memory_emergency_guard_sacrifice_socket_active 0
+        memory_emergency_guard_trips_last_hour 1
+        memory_emergency_guard_trips_this_boot 34
+      '';
       # Anti-churn cap spent + socket still down: notify tier with the
       # manual restart path (the trip alert has long cleared by then).
       guardPromCapped = ''
@@ -448,6 +457,21 @@
       alert = machine.succeed("cat /tmp/sev1/alert")
       assert "TRIP CHURN" in alert, (
           "trip churn (>=2 trips/hour) must be surfaced in the alert detail"
+      )
+      assert alert.strip().split("\n")[3] == "notify"
+
+      # 9d. Per-boot count (2026-10-28 F51): a slow-burn storm (1 trip in
+      #     the last hour = churn-silent, 34 since boot) must surface the
+      #     THIS BOOT note — the freeze #34-#37 boots churn-invisible shape.
+      machine.succeed("${writeProms "bootstorm" guardPromBootStorm healthPromHealthy}")
+      out = run_bridge("bootstorm")
+      assert "MEMORY EMERGENCY GUARD TRIPPED" in out
+      alert = machine.succeed("cat /tmp/sev1/alert")
+      assert "THIS BOOT: 34 trips since boot" in alert, (
+          "a slow-burn per-boot storm must be named in the alert detail"
+      )
+      assert "TRIP CHURN" not in alert, (
+          "1 trip/hour must NOT trigger the churn note (distinct signals)"
       )
       assert alert.strip().split("\n")[3] == "notify"
 

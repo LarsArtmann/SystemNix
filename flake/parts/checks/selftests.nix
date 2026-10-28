@@ -83,13 +83,45 @@
         # contract — the tool that must name storm drivers in one pass
         # (the 2026-10-28 storm: cgroup view caught tq-agent-pool
         # +162GB/10min that the uid-1000 /proc view was blind to).
-        io-writer-attribution-selftest = pkgs.runCommand "io-writer-attribution-selftest" { } ''
-          scratch=$(mktemp -d)
-          cp ${root}/scripts/io-writer-attribution.sh "$scratch/io-writer-attribution.sh"
-          cp ${root}/scripts/test-io-writer-attribution.sh "$scratch/test-io-writer-attribution.sh"
-          ${pkgs.bash}/bin/bash "$scratch/test-io-writer-attribution.sh"
-          touch $out
-        '';
+        io-writer-attribution-selftest =
+          pkgs.runCommand "io-writer-attribution-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                ripgrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/io-writer-attribution.sh "$scratch/io-writer-attribution.sh"
+              cp ${root}/scripts/test-io-writer-attribution.sh "$scratch/test-io-writer-attribution.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test-io-writer-attribution.sh"
+              touch $out
+            '';
+
+        # crash-triage fixture selftest (2026-10-28, stability plan
+        # M10/F39): stub-journalctl world encoding the double-crash night
+        # — reset-reason attribution to the NEXT boot, full-count
+        # censuses (the F35 anti-truncation rule), discriminator branch
+        # proposals, un-evidenced-crashed-boot sweep, vacuum clock.
+        crash-triage-selftest =
+          pkgs.runCommand "crash-triage-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                ripgrep
+                gawk
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/crash-triage.sh "$scratch/crash-triage.sh"
+              cp ${root}/scripts/test-crash-triage.sh "$scratch/test-crash-triage.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test-crash-triage.sh"
+              touch $out
+            '';
 
         # monitor365 event retention: the 03:00 unattended window must
         # never be the retention script's first execution — eval is
