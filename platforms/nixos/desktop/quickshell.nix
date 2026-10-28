@@ -54,8 +54,14 @@ in
               test -f "$clipDir/ClipboardConstants.qml"
               chmod -R u+w "$clipDir"
               entryQml="$clipDir/ClipboardEntry.qml"
+              # Anchor on the caption's UNIQUE font line: the row's type
+              # caption is the only StyledText with fontSizeSmall, whereas
+              # `color: root.colorForRole(Theme.primary)` also styles the
+              # pinned-indicator DIcon — an earlier color-anchored sed hid
+              # the pin marker on text entries too (caught 2026-10-28 by
+              # diffing the patched QML against upstream).
               sed -i \
-                -e 's|^\( *color: root\.colorForRole(Theme\.primary)\)$|\1\n                visible: entryType !== "text"|' \
+                -e 's|^\( *font\.pixelSize: Theme\.fontSizeSmall\)$|\1\n                visible: entryType !== "text"|' \
                 "$entryQml"
               grep -q 'visible: entryType !== "text"' "$entryQml"
               sed -i -e 's|^\( *maximumLineCount: \).*$|\12|' "$entryQml"

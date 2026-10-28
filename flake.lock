@@ -560,11 +560,11 @@
     "cmdguard_8": {
       "flake": false,
       "locked": {
-        "lastModified": 1792938607,
-        "narHash": "sha256-+h49iyldK048IZzYl8IFxcw4bMuvSyVpy5pJjLbX1Vo=",
+        "lastModified": 1792189650,
+        "narHash": "sha256-lRmtSFF8SFDiRhT4BHK33w7a6iqp6eL5zXWADX34Q0s=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "8185582ff2becf5acf0089b716a35698802fe4d9",
+        "rev": "5be908f329cfa37ccdb38af103c7899627e57232",
         "type": "github"
       },
       "original": {
@@ -1060,7 +1060,9 @@
         "go-etag": "go-etag_3",
         "go-finding": "go-finding_4",
         "go-flightrecorder": "go-flightrecorder_4",
-        "go-health": "go-health",
+        "go-health": [
+          "go-health"
+        ],
         "go-health-dashboard": "go-health-dashboard",
         "go-httputil": "go-httputil_2",
         "go-idempotency": "go-idempotency_4",
@@ -1171,7 +1173,7 @@
         "go-datastar": "go-datastar_4",
         "go-error-family": "go-error-family_7",
         "go-flightrecorder": "go-flightrecorder_5",
-        "go-health": "go-health_2",
+        "go-health": "go-health",
         "go-health-dashboard": "go-health-dashboard_2",
         "go-nix-helpers": [
           "go-nix-helpers"
@@ -1854,11 +1856,11 @@
     "go-atomic-write_6": {
       "flake": false,
       "locked": {
-        "lastModified": 1792938191,
-        "narHash": "sha256-byYxmH1EfPXfPrJle6o2AeZ6RMouLd/QWCp5MLu5ows=",
+        "lastModified": 1792322979,
+        "narHash": "sha256-plFlwtvzl68ivZ4Ax+utVSY3508omM8d0aw3EbUJ1P8=",
         "owner": "LarsArtmann",
         "repo": "go-atomic-write",
-        "rev": "fa146beaa857aa4b24040a546f6dc0bd5e7971fa",
+        "rev": "9d96d6eeaa600b71ffbfe600949ad363e7e9c7eb",
         "type": "github"
       },
       "original": {
@@ -3126,11 +3128,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793126472,
-        "narHash": "sha256-9YUpcTRpm7KwV6MugwqmxAKn/XsDu5ZEVO6eOEEg+Ic=",
+        "lastModified": 1792898981,
+        "narHash": "sha256-pCRLRWcXvy8kyhfZeo8lx5Jccxz2h8psYYUQd1KsGWc=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "654d2f530cbdfafbf7a422b6c087e380273acf2c",
+        "rev": "0ed4ec9095ec3ba9bc85f2a8f6b83b64bb484201",
         "type": "github"
       },
       "original": {
@@ -4345,17 +4347,17 @@
     "go-health": {
       "flake": false,
       "locked": {
-        "lastModified": 1791737081,
-        "narHash": "sha256-52Sgcwwh4Lngleh/htZlWB1jyLW9V+yjugzwYLFP43o=",
+        "lastModified": 1793129872,
+        "narHash": "sha256-UdKnecrVmHPHWTn2yuK/Y9E6vMAmsd1sVlLa5ZSWNZU=",
         "owner": "LarsArtmann",
         "repo": "go-health",
-        "rev": "0a8a4d4ca038cfc686db7f16bb90eb0ff4b4c8b2",
+        "rev": "b7258b09a818f3e37ad3e24c6d0d9899b821d1d3",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "v0.8.1",
         "repo": "go-health",
-        "rev": "0a8a4d4ca038cfc686db7f16bb90eb0ff4b4c8b2",
         "type": "github"
       }
     },
@@ -4472,7 +4474,20 @@
       }
     },
     "go-health_2": {
-      "flake": false,
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
       "locked": {
         "lastModified": 1793129872,
         "narHash": "sha256-UdKnecrVmHPHWTn2yuK/Y9E6vMAmsd1sVlLa5ZSWNZU=",
@@ -5908,11 +5923,11 @@
     "gogenfilter_14": {
       "flake": false,
       "locked": {
-        "lastModified": 1792952981,
-        "narHash": "sha256-jYDeGcXCOs3LX91QAtdBhQS0CMpzn07W/9csDxiB2VE=",
+        "lastModified": 1792085290,
+        "narHash": "sha256-r58GjvxpfaGyyV+f3gRm3YsL9typC+lIoMxJZXl6xro=",
         "owner": "LarsArtmann",
         "repo": "gogenfilter",
-        "rev": "ad71a7f11c3a36e5c72c382a3d59a8c118889efe",
+        "rev": "e8a33dd56d9a848efcedc493931af811dc6ed49e",
         "type": "github"
       },
       "original": {
@@ -7341,17 +7356,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1793197864,
-        "narHash": "sha256-mOF96I/NCNwlcwE6gh8tTJ4XF5q5dZKhRDbuL5Y79pg=",
+        "lastModified": 1793135240,
+        "narHash": "sha256-IewH8Xt9SGgvFL+rjucbTVFbvUkQD1MmJ/6/pPx6GGY=",
         "owner": "LarsArtmann",
         "repo": "nsfw-classifier",
-        "rev": "1e956934777fbde9edc507ec553c6ce513dcdb4e",
+        "rev": "58d398dc68b94f16df2adefdeb8f2864d950080f",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/heads/master",
         "repo": "nsfw-classifier",
+        "rev": "58d398dc68b94f16df2adefdeb8f2864d950080f",
         "type": "github"
       }
     },
@@ -8064,6 +8079,7 @@
         "go-error-family": "go-error-family_10",
         "go-filewatcher": "go-filewatcher_2",
         "go-finding": "go-finding_7",
+        "go-health": "go-health_2",
         "go-health-dashboard": "go-health-dashboard_3",
         "go-humanize-linter": "go-humanize-linter_2",
         "go-nix-helpers": "go-nix-helpers_3",
@@ -8274,11 +8290,11 @@
     "samber-do-auditlog_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1793054236,
-        "narHash": "sha256-7lOxhj5w4d6gIdM7hoEFXti2wwd9XpDu3i9wg5hk0to=",
+        "lastModified": 1792078122,
+        "narHash": "sha256-QEdjmwBHG7DxbR9JXe3JI30WulHzJGPhFY/y3PG247g=",
         "owner": "LarsArtmann",
         "repo": "samber-do-auditlog",
-        "rev": "b136b1577b375fc8c6fdcfe5065fd6ed200bcabf",
+        "rev": "5e7a0b2898d34f8ddd527f2fd43868db7515bc27",
         "type": "github"
       },
       "original": {

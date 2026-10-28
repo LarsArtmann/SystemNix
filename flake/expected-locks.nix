@@ -67,6 +67,7 @@
   go-error-family = "a23dc0e08234909e63ee3dc7a7833319bc195c54";
   go-filewatcher = "16ea6599150a70a55acd043d4236be71b439ed60";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
+  go-health = "b7258b09a818f3e37ad3e24c6d0d9899b821d1d3";
   go-health-dashboard = "75d6874eed176cc1d5ace1b5bdda963b06a7fb6d";
   go-humanize-linter = "ec19200cb3f547e5856622a5c57eafeb81131050";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
@@ -99,7 +100,7 @@
   nixpkgs = "fe13242281a67641c0102cdb1087f0ebe586c7df";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "31ecbaca1bdefa45dffc409f0250bd8039ea0010";
-  nsfw-classifier = "1e956934777fbde9edc507ec553c6ce513dcdb4e";
+  nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
   nur = "904e6c5e1a73e5efea989600adda1d4d733fed5d";
   offline-banner = "dc8a239ded65cd06e617594f1918e85ef8b60fd7";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
