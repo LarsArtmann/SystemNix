@@ -701,6 +701,18 @@ in
       RuntimeMaxUse = "2G";
       MaxFileSec = "1week";
       MaxRetentionSec = "1month";
+      # Death-evidence flush window (M22, 2026-10-28): at a watchdog death the
+      # last 30-90s of journal entries are lost to page cache. Two knobs set
+      # that window: kernel writeback only guarantees dirty data older than
+      # dirty_expire_centisecs=30s, and journald's own fsync sweep defaults to
+      # SyncIntervalSec=5min — ordinary (info) entries have NO sync path faster
+      # than either. 15s bounds the unsynced window for every priority to
+      # ≤15s + writeback completion, cutting the worst-case evidence loss from
+      # minutes toward ~30s under the storm class. Cost: 4 tiny fsyncs/min on
+      # the Samsung hot-tier journal (~5 MB/h, 8G cap) — negligible.
+      # Full analysis: docs/agents/stability.md "Watchdog death evidence-loss
+      # window". Verdict on the WDT timeout itself: KEEP 30s (see there).
+      SyncIntervalSec = "15s";
     };
   };
 
