@@ -72,6 +72,8 @@ NEW (harvested with this report):
 2. **DiscordSync push**: same templ-components v1.24.0 lockstep bump needed there (the SystemNix pin's LIFT condition names it) — extend the push grant?
 3. **Deploy window**: fire the prepared generation right after tonight's ladder (~00:15), or hold for a morning window?
 
+**ANSWERS (owner, 2026-10-28 22:56, next session):** (1) trash-all — executed 22:58 (`trash ~/projects/wevisone-spike`, source gone, ~12 G compressed in Trash, storage.md row closed); (2) push granted — DiscordSync `sync-flake-pins.sh` pass bumped templ-components → v1.24.0 tag commit 29f71a51 + go-health → v0.8.1 + 4 more drifted pins, vendorHash re-measured (gYJcV6Ol…), both FODs + pin-checker green, pushed as 79952c46; (3) "postladder" — MOOT: a parallel session had already deployed gen-959 from HEAD 0c97ef04f at 22:55:42 (anchored, config-revision verified, cv serving from store path `cv-dd20187`, health 200s — no 5165e44 rollback needed; the warn predates the deploy). The LIFT ceremony for the root templ-components pin is queued [ready] in upstream.md.
+
 ---
 
 **Waiting for instructions.** The ladder watch fires ~23:10; the report's in-flight facts will be verified then.
