@@ -325,7 +325,9 @@ bep_selftest() (
 
   # epoch-ns conversion: local-time stamps and UTC stamps that name the
   # same instant must agree, and the result must be nanosecond scale.
-  check "epoch-ns honors local tz" test "$(TZ=America/New_York bep_epoch_ns '2026-10-28 03:05:12')" = "$(TZ=UTC bep_epoch_ns '2026-10-28 07:05:12')"
+  # POSIX TZ form (sign INVERTED: UTC-4 = UTC+4) — parses without
+  # tzdata zone files, so it holds in the nix sandbox too.
+  check "epoch-ns honors local tz" test "$(TZ=UTC-4 bep_epoch_ns '2026-10-28 07:05:12')" = "$(TZ=UTC bep_epoch_ns '2026-10-28 03:05:12')"
   check "epoch-ns nanosecond scale" test "$(TZ=UTC bep_epoch_ns '2026-10-28 07:05:12')" = "$(TZ=UTC date -d '2026-10-28 07:05:12' +%s)000000000"
 
   # Full render: the CH section lands AFTER the panic section (canonical
