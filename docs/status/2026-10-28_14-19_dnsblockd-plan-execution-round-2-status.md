@@ -220,10 +220,9 @@ re-committing by theme — work that would have been avoided by committing each 
 ## g) Three questions I cannot answer myself
 
 **Q1 — Does a root path exist today, or should verified-but-inert work keep stacking?**
-Twelve tasks are now in-tree and provably inert: the host's rendered dnsblockd config is byte-identical (`kxgximh…`
-before and after). The telemetry outage is ~18 hours old and needs one deploy plus one `reset-failed`. If a root window is
-open, say so and I will run deploy → post-deploy-check → the four live probes above. If not, the queue keeps growing and
-every one of these fixes stays theoretical.
+**Six** of the sixteen carry code that only a deploy activates (T01's gate fix, T02 §22, T05's observer,
+T14's freshness metric, T23 §23, and T06's pprof switch), and the host's rendered dnsblockd config is byte-identical
+(`kxgximh…`
 
 **Q2 — Should pprof be armed?**
 It is loopback-only and auth-gated, and it is the difference between diagnosing the next stats-API wedge and destroying
@@ -262,3 +261,12 @@ migration should be forced now, in one session, with the DNS derivation in the s
 
 Deliberately NOT harvested: the root-gated items (#1-#7). They are a single deploy, and the plan already carries
 `T26` for the verification half; duplicating them into the queue would create a fifth surface for one action.
+
+---
+
+**Correction (2026-10-28 15:18, same session):** this section originally said "twelve tasks are now
+in-tree and provably inert". That number was wrong and contradicted the report's own headline. Recounted:
+**six** tasks carry code that a deploy activates; T22's eval guard and T06's new assertion are already ACTIVE
+(eval-time gates run on `nix flake check`, not at deploy), and the remaining nine are documentation or tests
+that no activation touches. The error is the exact class this report criticises two sections later — a number
+written into prose instead of derived.
