@@ -1738,12 +1738,12 @@ _: {
           ];
         }
         // (lib.mkIf cfg.allowlistBackup.enable {
-          systemd.services.dnsblockd-allowlist-backup-dir = mkPoolDirUnit {
+          services.dnsblockd-allowlist-backup-dir = mkPoolDirUnit {
             description = "Create dnsblockd allowlist backup directory on the HDD pool";
             directory = allowlistBackupDir;
           };
 
-          systemd.services.dnsblockd-allowlist-backup = {
+          services.dnsblockd-allowlist-backup = {
             description = "Copy the permanent dnsblockd allowlist onto the HDD pool";
             after = [
               "dnsblockd.service"
@@ -1782,7 +1782,7 @@ _: {
             ];
           };
 
-          systemd.timers.dnsblockd-allowlist-backup = {
+          timers.dnsblockd-allowlist-backup = {
             description = "Daily permanent-allowlist copy to the HDD pool";
             wantedBy = [ "timers.target" ];
             after = [ "mnt-pool.mount" ];
@@ -1826,11 +1826,14 @@ _: {
               # A plain null (not mkIf) keeps the registry row ABSENT on
               # pool-less hosts — a mkIf-false submodule would leave the
               # backup-coordination options unset instead of absent.
-              if config.services.dnsblockd-allowlist-backup.enable then {
-                directory = allowlistBackupDir;
-                filePattern = "allowlist";
-                maxAgeHours = 25;
-              } else null;
+              if config.services.dnsblockd-allowlist-backup.enable then
+                {
+                  directory = allowlistBackupDir;
+                  filePattern = "allowlist";
+                  maxAgeHours = 25;
+                }
+              else
+                null;
             # to the core gatus list (2026-10-28 review issue #10: the entry
             # carried zero checks while three hand-written ones lived in
             # gatus-config.nix). Only the HTTP /health probe moves: the raw
