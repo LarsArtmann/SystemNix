@@ -942,7 +942,9 @@
         "systems": [
           "systems"
         ],
-        "templ-components": "templ-components_3",
+        "templ-components": [
+          "templ-components"
+        ],
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -1070,7 +1072,9 @@
         "gogenfilter": "gogenfilter_6",
         "nixpkgs": "nixpkgs_2",
         "samber-do-auditlog": "samber-do-auditlog_2",
-        "templ-components": "templ-components_4",
+        "templ-components": [
+          "templ-components"
+        ],
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -1178,7 +1182,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "templ-components": "templ-components_5"
+        "templ-components": "templ-components_3"
       },
       "locked": {
         "lastModified": 1793211662,
@@ -6551,7 +6555,7 @@
         "go-paperless": "go-paperless",
         "httputil": "httputil_3",
         "nixpkgs": "nixpkgs_4",
-        "templ-components": "templ-components_6"
+        "templ-components": "templ-components_4"
       },
       "locked": {
         "lastModified": 1793180228,
@@ -6598,7 +6602,7 @@
           "nixpkgs"
         ],
         "samber-do-auditlog": "samber-do-auditlog_5",
-        "templ-components": "templ-components_7"
+        "templ-components": "templ-components_5"
       },
       "locked": {
         "lastModified": 1793157258,
@@ -7046,6 +7050,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-chromium": {
+      "locked": {
+        "lastModified": 1785571196,
+        "narHash": "sha256-KoTsyMQqnXQZq8deCEnu4QkyldkwH/bpMMhUcfMdGIw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "148bab9c1c3c53136ecb44a6ea356a0ed5b39b06",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "148bab9c1c3c53136ecb44a6ea356a0ed5b39b06",
+        "type": "github"
+      }
+    },
     "nixpkgs-darwin": {
       "locked": {
         "lastModified": 1792603927,
@@ -7432,7 +7452,7 @@
         "project-discovery-daemon": "project-discovery-daemon",
         "project-discovery-sdk": "project-discovery-sdk_5",
         "templ-cli": "templ-cli",
-        "templ-components": "templ-components_8",
+        "templ-components": "templ-components_6",
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -8100,6 +8120,7 @@
         "superfile": "superfile",
         "systems": "systems_2",
         "templ": "templ_2",
+        "templ-components": "templ-components_7",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix",
@@ -8632,40 +8653,6 @@
     "templ-components_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1791916000,
-        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
-        "owner": "LarsArtmann",
-        "repo": "templ-components",
-        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "ref": "v1.23.0",
-        "repo": "templ-components",
-        "type": "github"
-      }
-    },
-    "templ-components_4": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1791916000,
-        "narHash": "sha256-ffufS+TcUgERsyQpj4M+6pCBPQEQIUU68OR3AevGoLQ=",
-        "owner": "LarsArtmann",
-        "repo": "templ-components",
-        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "repo": "templ-components",
-        "rev": "2126f3c877a4d383ec03f1af370828cdda8c2887",
-        "type": "github"
-      }
-    },
-    "templ-components_5": {
-      "flake": false,
-      "locked": {
         "lastModified": 1791831121,
         "narHash": "sha256-VkmbWQs15GOSOwhBOb0rzaT7fsv/1BgofUG9JibMkus=",
         "owner": "LarsArtmann",
@@ -8680,7 +8667,7 @@
         "type": "github"
       }
     },
-    "templ-components_6": {
+    "templ-components_4": {
       "flake": false,
       "locked": {
         "lastModified": 1792772107,
@@ -8697,7 +8684,7 @@
         "type": "github"
       }
     },
-    "templ-components_7": {
+    "templ-components_5": {
       "flake": false,
       "locked": {
         "lastModified": 1792836723,
@@ -8714,7 +8701,7 @@
         "type": "github"
       }
     },
-    "templ-components_8": {
+    "templ-components_6": {
       "flake": false,
       "locked": {
         "lastModified": 1792226762,
@@ -8727,6 +8714,34 @@
       "original": {
         "owner": "LarsArtmann",
         "ref": "master",
+        "repo": "templ-components",
+        "type": "github"
+      }
+    },
+    "templ-components_7": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-chromium": "nixpkgs-chromium",
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792772107,
+        "narHash": "sha256-f3sqJfHDXToB/+hCoceCIHttfjey3iXRkdTpJ/w4rwg=",
+        "owner": "LarsArtmann",
+        "repo": "templ-components",
+        "rev": "29f71a5110bcb6e9865fefda4340b2f9c2a47ee6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v1.24.0",
         "repo": "templ-components",
         "type": "github"
       }

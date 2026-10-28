@@ -26,35 +26,79 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      # Clipboard-modal density/cleanliness patches come from the dms-paste
-      # input (lib.patchDms — it also adds the perl its perl -0pi leg needs;
-      # the DMS Go build env ships none); the weather recolor below stays
-      # host-side. Compose further legs as chained overrideAttrs.
+      # QML polish legs live HERE (no longer via dms-paste's lib.patchDms)
+      # since 2026-10-28: DMS 2.x moved clipboard geometry onto Theme
+      # density expressions (`maximumLineCount: entryType === "long_text" ?
+      # 3 + Math.min(0, Theme.densityLevel) : 1`, `itemHeight:
+      # Theme.listItemTwoLineHeight + Theme.densityStepM`), so patchDms's
+      # literal-string seds stopped matching and its own grep guards killed
+      # installPhase with NO log line (the 2026-10-23 silent-installPhase
+      # class, re-hit 2026-10-28). Every leg below is a property-name
+      # rewrite followed by its own POSITIVE guard, so upstream drift fails
+      # loudly instead of silently skipping; perl is no longer needed.
+      # LIFT: once github:LarsArtmann/dms-paste tracks DMS 2.x, drop these
+      # bodies and call lib.patchDms again (pastebot-parity-audit.nix keeps
+      # the settings contract either way — it never inspected these files).
       default =
-        (dmsPaste.lib.patchDms pkgs dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default)
-        .overrideAttrs
+        dankMaterialShell.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           (prev: {
-            postInstall = prev.postInstall + ''
-              # Weather "pop": the bar weather widget inherits widgetIconColor/
-              # widgetTextColor, which resolve to the muted surfaceText gray in dark
-              # mode — hard to read. Recolor icon + temperature to the theme's
-              # primary accent. Scoped to Weather.qml only; every other bar widget
-              # keeps the muted look. Drop when upstream ships a per-widget accent
-              # option (none exists in the stable SettingsSpec as of 2026-09-30).
-              # Path is GLOB-resolved, not hardcoded: DMS 2.0.0 renamed the
-              # bar module DankBar -> DBar (2026-10-24), and the old literal
-              # path died inside installPhase with no output (set -e + a
-              # failing `test -f` is silent) — the 2026-10-23 "installPhase
-              # dies silently" symptom. The glob tolerates module renames and
-              # still fails loudly if the Weather widget disappears.
-              weatherQml=$(ls "$out/share/quickshell/dms"/Modules/*/Widgets/Weather.qml 2>/dev/null | head -1)
-              test -n "$weatherQml"
-              chmod -R u+w "$(dirname "$weatherQml")"
+            postInstall = (prev.postInstall or "") + ''
+              # ── Clipboard modal (PasteBot parity) ───────────────────────
+              # 1) no per-row type caption for plain "text" entries (Image /
+              #    Long Text captions stay — they carry information)
+              # 2) two preview lines instead of one (fits row height 68:
+              #    label 18 + 2x21 text + spacing = 64 <= 68)
+              # 3) wider/taller modal 650x550 -> 880x620, denser rows -> 68
+              clipDir="$out/share/quickshell/dms/Modals/Clipboard"
+              test -f "$clipDir/ClipboardEntry.qml"
+              test -f "$clipDir/ClipboardConstants.qml"
+              chmod -R u+w "$clipDir"
+              entryQml="$clipDir/ClipboardEntry.qml"
               sed -i \
-                -e 's/color: Theme\.widgetIconColor/color: Theme.primary/g' \
-                -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
-                "$weatherQml"
-              grep -q 'color: Theme\.primary' "$weatherQml"
+                -e 's|^\( *color: root\.colorForRole(Theme\.primary)\)$|\1\n                visible: entryType !== "text"|' \
+                "$entryQml"
+              grep -q 'visible: entryType !== "text"' "$entryQml"
+              sed -i -e 's|^\( *maximumLineCount: \).*$|\12|' "$entryQml"
+              grep -q '^ *maximumLineCount: 2$' "$entryQml"
+              constQml="$clipDir/ClipboardConstants.qml"
+              sed -i \
+                -e 's|^\( *readonly property int modalWidth: \).*$|\1880|' \
+                -e 's|^\( *readonly property int modalHeight: \).*$|\1620|' \
+                -e 's|^\( *readonly property [a-z]* itemHeight: \).*$|\168|' \
+                "$constQml"
+              grep -q 'modalWidth: 880' "$constQml"
+              grep -q 'modalHeight: 620' "$constQml"
+              grep -q 'itemHeight: 68' "$constQml"
+
+              # ── Weather "pop" ───────────────────────────────────────────
+              # The bar weather widget inherits widgetIconColor/
+              # widgetTextColor, which resolve to the muted surfaceText gray
+              # in dark mode — hard to read. Recolor icon + temperature to
+              # the theme's primary accent, scoped to Weather.qml only. Drop
+              # when upstream ships a per-widget accent option (none exists
+              # in the stable SettingsSpec as of 2026-09-30).
+              #
+              # Glob + LOOP, not `head -1`: DMS 2.x ships BOTH the legacy
+              # Modules/DankBar and the live Modules/DBar trees, and only the
+              # live one still uses the widget*Color tokens — the 2026-10-28
+              # failure was `ls | head -1` picking DankBar, whose Weather.qml
+              # has no such color, so the sed no-opped and the single-file
+              # grep guard aborted installPhase (float-proof-20261028-214409).
+              weatherPatched=0
+              for weatherQml in "$out/share/quickshell/dms"/Modules/*/Widgets/Weather.qml; do
+                [ -f "$weatherQml" ] || continue
+                chmod u+w "$weatherQml"
+                sed -i \
+                  -e 's/color: Theme\.widgetIconColor/color: Theme.primary/g' \
+                  -e 's/color: Theme\.widgetTextColor/color: Theme.primary/g' \
+                  "$weatherQml"
+                if grep -q 'color: Theme\.primary' "$weatherQml"; then
+                  weatherPatched=$((weatherPatched + 1))
+                fi
+              done
+              # At least one Weather widget must end up recolored — a module
+              # rename or a dropped widget still fails loudly here.
+              test "$weatherPatched" -gt 0
             '';
           });
       description = "The DankMaterialShell package";
