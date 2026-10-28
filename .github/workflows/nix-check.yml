@@ -215,6 +215,7 @@ jobs:
           - hermes
           - cv
           - memory-emergency-guard
+          - sev1-escalation
           - pool-recovery
           - btrbk-rescue
           - niri-session

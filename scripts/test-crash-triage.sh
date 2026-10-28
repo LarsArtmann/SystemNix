@@ -14,12 +14,20 @@ script="$here/crash-triage.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-fail() { echo "test-crash-triage: FAIL: $*" >&2; exit 1; }
+fail() {
+  echo "test-crash-triage: FAIL: $*" >&2
+  exit 1
+}
 
 # --- Stub journalctl ------------------------------------------------------
 mkdir -p "$scratch/bin" "$scratch/docs/status/tasks"
-cat > "$scratch/bin/journalctl" <<'STUB'
-#!/usr/bin/env bash
+# Shebang resolved at runtime (usb-flap pattern): /usr/bin/env does not
+# exist inside the Nix sandbox, so a hardcoded env shebang makes the stub
+# unexecutable in the flake check while it works live.
+bash_abs="$(command -v bash)"
+{
+  printf '#!%s\n' "$bash_abs"
+  cat <<'STUB'
 # Canned world (oldest -> newest):
 #  bootC (3 days ago):   clean shutdown, no trips
 #  bootB (Oct 26-27):    452 throttles + 34 trips, NO shutdown ceremony,
@@ -71,6 +79,7 @@ EOF
     echo "stub: unmatched args: $*" >&2; exit 1 ;;
 esac
 STUB
+} >"$scratch/bin/journalctl"
 chmod +x "$scratch/bin/journalctl"
 
 # Evidence file ONLY for boot "aaaaaaaa" (short id 8 chars).

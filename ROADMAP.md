@@ -110,6 +110,18 @@ Detailed tasks live in [docs/todo/upstream.md](./docs/todo/upstream.md); the dis
 
 ---
 
+## Theme 8: Service-integration horizons
+
+Long-horizon capabilities that are deliberately NOT queue work: each needs an owner decision or an upstream landing first. Harvested from the 2026-10-28 dnsblockd architecture review (`docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html`).
+
+- **One schema per service** — the general principle behind the dnsblockd finding: when an upstream LarsArtmann flake ships `nixosModules`, the consumer should own ONLY SystemNix layers (secrets, gates, IO tier, alerting, ports, registry entry) and let upstream own keys, types, defaults, assertions, and VM tests. Every hand-rolled render block is a second schema that drifts silently. Audit the tree for other wrappers with a 50+ key render block
+- **dnsblockd gateway mode (ADR-0011)** — DNS-trust content interception, ability shipped upstream and unreachable from Nix today. Needs: upstream owner answers T366 (may the NixOS module touch the host firewall) + T367 (quiet-window bench) and the LarsArtmann/dnsblockd#24 G3 content-inspection design. Production posture change, not a feature toggle
+- **dnsblockd cluster / HA fabric** — `cluster_*` landed upstream (P2P, digest intervals). Would replace the current keepalived-VIP + two-independent-hosts model with a real consistency contract. Only worth it if the second host ever serves anything but failover
+- **DNS-over-QUIC + DoH3** — `dns_doq_enabled` / `dns_doh3_*` exist upstream, off by default. Blocked behind a client-inventory question (which household devices would even use it) and the note above about the old DoQ overlay being rejected for build cost
+- **Retention policy as an explicit dial** — the wrapper renders no `retention_*` keys, so 30d/90d/365d ride upstream defaults. Making them first-class options is a storage-budget decision (currently journal.db 4.6G + tracking.db 2.55G on the Samsung hot tier)
+
+---
+
 ## Deferred / Rejected Ideas
 
 | Idea                  | Status   | Reason                                                                                                |

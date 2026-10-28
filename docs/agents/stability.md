@@ -73,11 +73,42 @@ Rules:
 - The reset-reason line lives in the NEXT boot's kernel messages, never in the dying boot's journal.
 - Drivers named by io.stat attribution survive the branch classification: IO writers route to the standing-writer/placement fixes, thermal legs route to the cooling floor (BIOS fans/PPT) — the two ladders are complementary, not rival diagnoses.
 
+### Freeze census — trips/boot vs the escalation thresholds (F52, 2026-10-28; regenerate with `scripts/crash-triage.sh --boots 6`)
+
+| Boot / freeze | Window (uptime) | Guard trips | DEEP-THROTTLE ENTERs | OOM | trips/h | Family |
+| --- | --- | --- | --- | --- | --- | --- |
+| #7 (`boot -1` Sep 27–29) | ~37 h | 432 | — | — | 11.7 | B→C (scrub-loop era) |
+| #33 `3e5c8af5` | 4 d 13.5 h | 493 | 41.3 h un-exited guided | late memory leg | 4.5 | C |
+| #34 `27580a79` | 17 h 49 m | 89 | 637 | 5 | 5.0 | C |
+| #35 `ce19a826` | 24 h 30 m | 33 | 343 | 27 | 1.3 | C |
+| #36 `b803d718` | 11 h 07 m | 34 | 452 | 2 | 3.1 | C |
+| #37 `3caf5548` | 14 h 36 m | 60 | 430 | 0 | 4.1 | C |
+| boot 0 `b0d70d73` (live re-fire #9) | ≥2 h at 02:30 | 11+ | 84+ | 0 | ~5 | C (forming) |
+
+Threshold defense: `loadBearingTripsPerBoot = 10` is crossed within 2–5 h on every storm boot — sound. The M20 sustained-escalation latch (§7.1c) should key on **≥2 trips/h sustained ≥2 h** (the floor of the documented storm band 1.3–11.7/h — hourly buckets inside #35 peaked well above its 1.3/h average) with a per-boot total ≥20 fallback; single bursts (2–3 trips, restore, calm) must stay silent. Final values are the owner's §7.1c call after this census.
+
 ## Journal Retention & Pre-Vacuum Evidence Gate (2026-10-13)
 
 - **Vacuum mechanism** — journald auto-vacuums at `SystemMaxUse = 8G` (`platforms/nixos/system/boot.nix`, hot-tier `/var/log/journal` on the Samsung). There is NO cron vacuum and NO human in the loop: when the journal crosses 8G, the OLDEST boots vanish silently. Three autopsies were won-or-lost on the pull-before-vacuum race (10-03 triage lost its journal outright; freeze-27/28 pulled in time by dispatch luck).
 - **Pre-vacuum evidence gate** — `scripts/pre-vacuum-evidence-gate.sh` (live check; wired as pre-deploy-check §15, fixture-tested by `checks.pre-vacuum-gate-selftest`). For every non-current boot still on disk it checks for a committed evidence file under `docs/status/` citing the boot id (hex-boundary match — a bare 8-char id8 grep false-positives inside 40-char git SHAs) and, when absent, whether any UNCHECKED row in `docs/todo/stability.md` cites the boot's date window. Open row + no evidence → REFUSE (exit 1, pre-deploy BLOCKS). Unguarded-but-unreferenced boots degrade to a warning. It also prints the vacuum clock (journal disk usage vs SystemMaxUse).
-- **Remedy when the gate refuses** — pull the listed boot BEFORE anything else: one command, `scripts/boot-evidence-pull.sh -b <boot-id-or-offset>` (canonical sections: boot-boundary lines, OOM/guard/thermal/panic census + full OOM/guard/thermal lines, kernel panic scan; writes `docs/status/tasks/<UTC-date-time>_boot-<id8>-evidence-pull.md` citing the id8 in the hex-boundary form the gate greps; never overwrites; `-o -` streams to stdout; fixture selftest `checks.boot-evidence-pull-selftest`). The 2026-10-13 backfill example: `docs/status/tasks/2026-10-13_02-30_boot-evidence-backfill-oct05-10.md` (11 boots Oct 5–10 pulled at 7.1G/8G pressure). Commit the file, re-run the gate.
+- **Remedy when the gate refuses** — pull the listed boot BEFORE anything else: one command, `scripts/boot-evidence-pull.sh -b <boot-id-or-offset>` (canonical sections: boot-boundary lines, OOM/guard/thermal/panic census + full OOM/guard/thermal lines, kernel panic scan, ClickHouse death-window tail — the M22 remote leg over [journal cut → next boot] in epoch-ns UTC, fail-soft: ok/dark/failed/skipped render as evidence context with the not-evidence-of-absence caveat, `BEP_CH_TAIL` bounds the bodies; writes `docs/status/tasks/<UTC-date-time>_boot-<id8>-evidence-pull.md` citing the id8 in the hex-boundary form the gate greps; never overwrites; `-o -` streams to stdout; fixture selftest `checks.boot-evidence-pull-selftest`). The 2026-10-13 backfill example: `docs/status/tasks/2026-10-13_02-30_boot-evidence-backfill-oct05-10.md` (11 boots Oct 5–10 pulled at 7.1G/8G pressure). Commit the file, re-run the gate.
+
+## Watchdog death evidence-loss window (M22, 2026-10-28)
+
+What is actually lost at a Branch-C watchdog death, measured across the Oct 27 pair (#36 `b803d718`, #37 `3caf5548`):
+
+| Clock | Config (live-verified) | Effect at death |
+| --- | --- | --- |
+| WDT reset | `watchdogd` timeout=30s / pet 10s (boot.nix; safe-exit on clean shutdown) | reset fires 30s after the last completed pet; reset→next-boot measured **92s** (#36: cut 10:03:11 → boot 10:04:43) and **131s** (#37: 00:40:38 → 00:42:49) |
+| Local journal flush | journald write() → page cache; on disk via kernel writeback (`dirty_expire_centisecs=3000` = 30s age floor, flusher wakes 5s, background 1%/dirty 5%) OR journald's fsync sweep — `SyncIntervalSec` was the systemd **5min default** (never overridden; `SyncIntervalSec=15s` landed 2026-10-28, boot.nix journald block) | entries logged in the final **~30–90s** hang window never reach disk (source report §a; both boots cut mid-write). The 30s component is the dirty_expire floor — fresh pages wait for it unless an fsync beats it |
+| Remote tail (SigNoz) | OTel journald receiver (`all=true`) reads the journal via mmap — sees entries ~instantly, batch-exports to ClickHouse in seconds | **#36: newest ClickHouse row 10:03:06 local — 5s FRESHER than the journal's last flushed line.** When alive, the pipeline outlives the flush. **#37: ingestion STOPPED 20:21:43 local, 4h19m pre-death** — not storm load: the deploy-7 GCP re-arm shipped 23 `googlecloudmonitoring/*` receivers without `project_id`, each fatal at receiver Start (`projects/` InvalidArgument), start-limit-hit 20:21:53, dead across the reboot (still failed on boot 0 Oct 28); diagnosed + fixed in tree 2026-10-27, deploy-gated (`docs/todo/monitoring.md`: the SEV1 collector-dead-since row + the "Deploy + verify: signoz GCP receiver `project_id` fix" row) |
+
+Verdicts:
+
+- **WDT timeout: KEEP 30s.** Raising to ≥120s to let `hung_task_panic`+kdump win the race buys nothing for the dominant family: Branch-C livelock tasks are RUNNABLE/spinning with IRQs enabled, never the >120s `TASK_UNINTERRUPTIBLE` state khungtaskd needs (documented blind since the 2026-08-22 analysis) — 7 retained WDT boots, empty pstore and no vmcore at ANY window. Shortening has no demonstrated benefit (every documented WDT death was a genuine multi-minute livelock; resetting 20s earlier changes no outcome) and real false-reset risk for transient starvation bursts (watchdog_thresh was RAISED to 20s for the GPU-compute false-positive class, boot.nix). 30/10 (3-miss tolerance) survived 7 deaths with zero false resets; watchdogd verified healthy in the #36 autopsy.
+- **Flush window: ADJUSTED — `SyncIntervalSec=15s`** (boot.nix journald block): bounds the ordinary-entry unsynced window from the 5-min sync-timer default to ≤15s + writeback completion. Cost: 4 tiny fsyncs/min on the Samsung hot-tier journal (~5 MB/h, 8G cap) — negligible.
+
+Autopsy rules: (a) death-window probe order = local journal cut → ClickHouse logs tail (`clickhouse-client` on `signoz_logs.distributed_logs_v2`, timestamps are epoch-ns UTC; automated as the canonical pull's remote-tail section, `scripts/boot-evidence-pull.sh`) → WDT arithmetic (cut + ≤30s pet remainder → reset → +90–130s boot); (b) **ClickHouse absence is NOT evidence of absence** — the collector has a fatal-at-startup failure mode that silences the whole log pipeline (proven #37); check `signoz-collector` liveness across the boot before trusting a gap; (c) when the pipeline is alive, ClickHouse is FRESHER than the local journal by the flush lag — pull both.
 
 ## Agent-Initiated SIGSTOP — Standing Rule (REVOCATION doctrine, 2026-10-07)
 

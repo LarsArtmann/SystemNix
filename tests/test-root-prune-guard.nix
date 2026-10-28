@@ -31,6 +31,11 @@ let
   # snapshots.nix sets services.rust-cache.rustProjects (target/ symlink
   # tmpfiles), whose option lives in this flake-parts wrapper module.
   rustCache = (import ../modules/nixos/services/rust-cache.nix).flake.nixosModules.rust-cache;
+  # snapshots.nix sets services.backup-coordination.backups (btrbk-instance
+  # labels for the health gauge) — same wrapper-module class: import the
+  # declaring module or the option does not exist (the 2026-10-28 gate break).
+  backupCoordination =
+    (import ../modules/nixos/services/backup-coordination.nix { }).flake.nixosModules.backup-coordination;
   # btrbk stub: logs the invocation, exits /tmp/btrbk-rc (default 0). Written
   # over ${pkgs.btrbk}/bin/btrbk in the VM because the module's
   # writeShellApplication wrapper prepends its runtimeInputs to PATH ahead
@@ -65,6 +70,7 @@ in
       imports = [
         snapshots
         rustCache
+        backupCoordination
         (import ../platforms/nixos/system/primary-user.nix)
       ];
 
