@@ -658,6 +658,22 @@ eval_case orderingcycle runner-wantedby-regression fail 'ordering-cycle-audit' \
 eval_case orderingcycle geometrikks-multiuser-regression fail 'ordering-cycle-audit' \
   'sed:modules/nixos/services/geometrikks.nix:s|^              wantedBy = \[ "late-applications.target" \];$|              wantedBy = [ "multi-user.target" ];|'
 
+# ── boot-contract-audit: the 2026-10-28 bless-timing armor ──
+# Two assertions in platforms/nixos/system/boot.nix guard the auto-rollback
+# contract: (1) NO unit may order After=boot-complete.target (an edge from a
+# boot-transaction member recreates the boot-blocker class the drop-in
+# removed); (2) bootCounting implies the end-of-boot drop-in. Both legs
+# re-introduce the exact regression shapes.
+# Leg 1: poison a unit with an after=boot-complete.target edge — the wait
+# drags whatever reaches that unit out to end-of-boot (or cycles).
+eval_case bootcomplete after-edge-regression fail 'boot-contract-audit' \
+  'sed:modules/nixos/services/geometrikks.nix:s|^              wantedBy = \[ "late-applications.target" \];$|              wantedBy = [ "late-applications.target" ]; after = [ "boot-complete.target" ];|'
+# Leg 2: delete the drop-in's ordering while keeping bootCounting on —
+# silently restores the ~11s bless and the neutered rollback (the exact
+# state the 2026-10-28 review found live).
+eval_case bootcomplete dropin-deleted fail 'boot-contract-audit' \
+  'sed:platforms/nixos/system/boot.nix:s|^      After = \[ "multi-user.target" \];$|      After = [ ];|'
+
 # ── pastebot-parity-audit: the clipboard/snippets picker surface ──
 # Assertion audit (modules/nixos/desktop/pastebot-parity-audit.nix) — the
 # enforcement surface is the toplevel eval. Three legs mirroring the real
