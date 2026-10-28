@@ -212,6 +212,12 @@
             # the full posture an explicit budget (TimeoutStartSec is a
             # [Unit]-section key in modern systemd).
             unitConfig.TimeoutStartSec = "10min";
+            # ~/projects reader-writer (2026-10-28 projects-subvol plan D6):
+            # the models checkout lives under ~/projects — fail loud when the
+            # Samsung subvol mount is absent (never serve from the stale @
+            # shadow). Conditional on the mount being declared.
+            unitConfig.RequiresMountsFor =
+              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
             # Unit failures page via the notify-failure template (Discord) —
             # registry convention: silent failures are unacceptable.
             inherit onFailure;

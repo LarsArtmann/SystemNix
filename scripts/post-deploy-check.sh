@@ -2344,6 +2344,79 @@ echo "=== §20 Kith CRM OIDC readiness (crm-server) ==="
 CRM_UNIT_FILE="${CRM_UNIT_FILE:-/etc/systemd/system/crm-server.service}"
 crm_oidc_smoke "$CRM_UNIT_FILE"
 
+# --- §22 dnsblockd CA parity: the trust anchor vs the CA the proxy serves ---
+# The same CA exists TWICE by necessity: the PEM inlined into
+# security.pki.certificates (platforms/nixos/system/dns-blocker-config.nix)
+# so this host trusts it, and the sops secret the dnsblockd block-page proxy
+# terminates TLS with. Parity was verified byte-identical 2026-10-28 and was
+# enforced by NOTHING — so a CA rotation that touches one side and not the
+# other silently breaks browser trust (and the ADR-0018 scoped-filter-proxy
+# lie, which only works while devices trust that CA). Three verdicts, each a
+# real failure mode:
+#   - the sops CA is absent from the trust bundle -> clients cannot verify
+#     anything the proxy serves (trust side lost the rotation)
+#   - a DIFFERENT dnsblockd-CA is also trusted     -> a retired key keeps
+#     trust, so a leaked old key still MITMs
+#   - the CA is expired/near-expiry                -> silent trust cliff
+# A duplicate identical entry is a WARN (benign for trust, but it means two
+# mechanisms append the same PEM — the split-brain signature this repo
+# audits; live 2026-10-28: the bundle carries it twice, identical
+# fingerprint, cause not yet found -> docs/todo/services.md).
+# Env-overridable so a fixture harness can drive it: CA_PARITY_BUNDLE,
+# CA_PARITY_SOPS.
+echo ""
+echo "=== §22 dnsblockd CA parity (trust anchor vs served CA) ==="
+_ca_bundle="${CA_PARITY_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}"
+_ca_sops="${CA_PARITY_SOPS:-/run/secrets/dnsblockd_ca_cert}"
+if [ ! -r "$_ca_sops" ]; then
+  report_skip "dnsblockd CA parity - ${_ca_sops} not readable (sops not rendered / dnsblockd not provisioned)"
+elif [ ! -r "$_ca_bundle" ]; then
+  report_skip "dnsblockd CA parity - ${_ca_bundle} not readable (no system trust bundle)"
+elif ! _ca_sops_fp="$(openssl x509 -in "$_ca_sops" -noout -fingerprint -sha256 2>/dev/null | cut -d= -f2)"; then
+  report_fail "dnsblockd CA parity - ${_ca_sops} is not a parseable PEM certificate (the proxy has no usable serving CA)"
+elif [ -z "$_ca_sops_fp" ]; then
+  report_fail "dnsblockd CA parity - empty fingerprint from ${_ca_sops}"
+else
+  # Split the bundle into one PEM per file (crl2pkcs7|pkcs7 is the only
+  # portable "list every cert in a bundle" pair; openssl has no split command).
+  # 296 certs cost ~5s of openssl calls — acceptable for a post-deploy smoke.
+  _ca_tmp="$(mktemp -d)"
+  # shellcheck disable=SC2064  # expand _ca_tmp NOW: the trap runs after it may be unset
+  trap "rm -rf '$_ca_tmp'; rm -f '$SMOKE_FAIL_NAMES'" EXIT
+  openssl crl2pkcs7 -nocrl -certfile "$_ca_bundle" 2>/dev/null \
+    | openssl pkcs7 -print_certs 2>/dev/null >"$_ca_tmp/all.pem" || true
+  awk -v dir="$_ca_tmp" 'BEGIN{n=0} /-----BEGIN CERTIFICATE-----/{n++} {print > sprintf("%s/c%04d.pem", dir, n)}' "$_ca_tmp/all.pem"
+  _ca_matches=0
+  _ca_foreign=""
+  for _f in "$_ca_tmp"/c*.pem; do
+    _meta="$(openssl x509 -in "$_f" -noout -subject -fingerprint -sha256 2>/dev/null || true)"
+    case "$_meta" in
+      *dnsblockd-CA*) ;;
+      *) continue ;;
+    esac
+    _ca_matches=$((_ca_matches + 1))
+    _fp="$(printf '%s\n' "$_meta" | sed -n 's/^sha256 Fingerprint=//p')"
+    if [ "$_fp" != "$_ca_sops_fp" ]; then
+      _ca_foreign="${_ca_foreign}${_fp:-unparsed} "
+    fi
+  done
+
+  if [ "$_ca_matches" -eq 0 ]; then
+    report_fail "dnsblockd CA parity - no dnsblockd-CA in ${_ca_bundle}: the proxy serves a CA this host does not trust (rotation touched sops but not security.pki.certificates, or vice versa)"
+  elif [ -n "$_ca_foreign" ]; then
+    report_fail "dnsblockd CA parity - a DIFFERENT dnsblockd-CA is trusted (${_ca_foreign% }) while the proxy serves ${_ca_sops_fp}: a retired key keeps trust, so a leaked old key still MITMs"
+  elif openssl x509 -in "$_ca_sops" -noout -checkend $((90 * 86400)) >/dev/null 2>&1; then
+    if [ "$_ca_matches" -gt 1 ]; then
+      report_warn "dnsblockd CA parity - trusted and identical, but the bundle appends the same CA ${_ca_matches}x (benign for trust; two mechanisms writing one PEM — find the second writer)"
+    else
+      report_pass "dnsblockd CA parity - trust anchor == serving CA (${_ca_sops_fp:0:17}…, valid >90d, single entry)"
+    fi
+  else
+    report_warn "dnsblockd CA parity - trust anchor == serving CA, but it expires within 90 days: rotate sops + security.pki.certificates TOGETHER (docs/services/dnsblockd.md 'CA rotation')"
+  fi
+  rm -rf "$_ca_tmp"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="

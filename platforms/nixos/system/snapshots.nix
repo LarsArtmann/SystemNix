@@ -107,6 +107,26 @@ let
   # service, so the host is the honest gate). VM-test hosts eval clean.
   projectsSubvolArmed = config.networking.hostName == "evo-x2";
 
+  # Units that read/write under ~/projects (2026-10-28 plan §4/D6) — the
+  # assertion below pins that each carries a projects-prefixed
+  # RequiresMountsFor while the subvol is armed (a DEEPER path also counts:
+  # RequiresMountsFor pulls every covering mount). hermes is NOT listed: its
+  # module self-gates on its own projectsDir option (RequiresMountsFor=
+  # projectsDir covers this mount transitively whenever it is set). A unit
+  # renamed out of existence stops being checked (the ? guard) — renames
+  # must update this list.
+  projectsWriters = [
+    "projects-management-automation"
+    "pma-daemon-watchdog"
+    "project-discovery-daemon"
+    "tq-agent-pool"
+    "cv-server"
+    "nsfw-classifier"
+    "git-lag-metrics"
+    "bank-sync-qonto-stage"
+    "rust-cache-projects-links"
+  ];
+
   # Plain mount at the SAME path (path-invariant — every consumer path,
   # symlink, unit WorkingDirectory, and flake git+file:// input keeps
   # resolving unchanged): deliberately NOT the cacheSubvolumes automount
@@ -1308,7 +1328,7 @@ in
     ++ (map (
       unit:
       {
-        assertion = (config.systemd.services ? "${unit}") -> (builtins.any (m: m == "/home/${primaryUser}/projects") (config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]));
+        assertion = (config.systemd.services ? "${unit}") -> (builtins.any (m: lib.hasPrefix "/home/${primaryUser}/projects" m) (config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]));
         message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
       }
     ) projectsWriters)

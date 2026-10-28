@@ -434,6 +434,13 @@ lib.mkIf cfg.components.nodeExporter {
       # repo is user-owned (root git would hit dubious-ownership).
       services.git-lag-metrics = {
         description = "SystemNix git push-lag metrics for node_exporter textfile";
+        # ~/projects READER (2026-10-28 projects-subvol plan D6): reads git
+        # state from /home/lars/projects/SystemNix — fail loud when the
+        # Samsung subvol mount is absent so the metric can never silently
+        # go phantom (ahead_by=-1 on a dead repo read). Conditional on the
+        # mount being declared (VM/test hosts unaffected).
+        unitConfig.RequiresMountsFor =
+          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
         serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";

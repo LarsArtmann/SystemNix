@@ -591,6 +591,14 @@
           # multi-user.target.
           wantedBy = lib.mkForce [ "late-applications.target" ];
 
+          # ~/projects writer (2026-10-28 projects-subvol plan D6): the CV
+          # checkout (workingDirectory/profileDir) lives under ~/projects —
+          # fail loud when the Samsung subvol mount is absent instead of
+          # rendering from the stale @ shadow. Conditional on the mount being
+          # declared (VM/test hosts unaffected).
+          unitConfig.RequiresMountsFor =
+            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+
           serviceConfig = lib.mkMerge [
             (harden {
               # Mostly idle; renders spike only during PDF export bursts.

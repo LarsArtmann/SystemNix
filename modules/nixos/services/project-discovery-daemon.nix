@@ -143,6 +143,13 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
 
+          # ~/projects walker (2026-10-28 projects-subvol plan D6): discovery
+          # roots live under ~/projects — fail loud when the Samsung subvol
+          # mount is absent (never index the stale @ shadow). Conditional on
+          # the mount being declared (VM/test hosts unaffected).
+          unitConfig.RequiresMountsFor =
+            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+
           inherit onFailure;
 
           environment = {

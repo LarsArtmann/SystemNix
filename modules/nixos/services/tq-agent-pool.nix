@@ -422,6 +422,13 @@ _: {
           # keys in [Service] (journal "Unknown key" warnings); [Unit] wins.
           startLimitBurst = 40;
           startLimitIntervalSec = 1800;
+          # ~/projects writer (2026-10-28 projects-subvol plan D6): agents
+          # walk + commit repos under ~/projects — fail loud when the Samsung
+          # subvol mount is absent instead of shadow-writing the stale @ copy.
+          # Conditional on the mount being declared (VM/test hosts unaffected;
+          # the pool DB side stays gated on /mnt/pool via tq-storage-dir).
+          unitConfig.RequiresMountsFor =
+            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
           inherit onFailure;
           # PapDashboard bridge key — systemd reads this as PID 1, so the
           # root-owned 0400 template stays unreadable to the pool process

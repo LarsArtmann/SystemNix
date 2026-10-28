@@ -170,6 +170,13 @@
         #   MemorySwapMax=0: PMA has only ~370 MB anon — swapping is
         #     counterproductive and risks swap-thrashing.
         #   CPUQuota=200%: caps PMA at 2 cores.
+        # ~/projects writer (2026-10-28 projects-subvol plan D6): the daemon
+        # commits every repo under ~/projects — fail loud when the Samsung
+        # subvol mount is absent instead of shadow-writing the stale @ copy
+        # beneath it. Conditional on the mount being declared (VM/test hosts
+        # unaffected; clickhouse hasAttr pattern).
+        systemd.services.projects-management-automation.unitConfig.RequiresMountsFor =
+          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
         systemd.services.projects-management-automation.serviceConfig = lib.mkMerge [
           {
             Type = lib.mkForce "exec";
@@ -238,6 +245,10 @@
           lib.mkIf config.services.projects-management-automation.enableDiscoveryDaemon
             {
               description = "Restart PMA when its discovery daemon hangs (responsive-socket probe)";
+              # Watchdog must not restart PMA into an absent projects mount
+              # (plan D6): refuse while the subvol is down, same as the daemon.
+              unitConfig.RequiresMountsFor =
+                lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
               serviceConfig = {
                 Type = "oneshot";
                 ExecStart = lib.getExe pmaDaemonWatchdog;
