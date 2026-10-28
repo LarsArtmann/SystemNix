@@ -25,6 +25,32 @@ let
   # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
+
+  # Units ordering After=boot-complete.target (attr + unitConfig forms,
+  # across every unit family) — must stay EMPTY; see the boot-contract
+  # assertions further down for why.
+  bootCompleteAfterOffenders =
+    let
+      unitsWithEdges = lib.mapAttrsToList (
+        name: unit: {
+          inherit name;
+          edges = lib.flatten [
+            (unit.after or [ ])
+            (unit.unitConfig.After or [ ])
+          ];
+        }
+      ) (
+        config.systemd.services
+        // config.systemd.timers
+        // config.systemd.sockets
+        // config.systemd.paths
+        // config.systemd.mounts
+        // config.systemd.targets
+      );
+    in
+    lib.concatLists (
+      map (e: if builtins.elem "boot-complete.target" e.edges then [ e.name ] else [ ]) unitsWithEdges
+    );
 in
 {
   # Bootloader and Kernel Configuration
@@ -271,6 +297,29 @@ in
       Wants = [ "multi-user.target" ];
     };
   };
+
+  # Eval-time armor for the two contracts above (2026-10-28, negative-tested
+  # in scripts/negative-test-lints.sh group bootcomplete — the harness proves
+  # the assertions fire on the exact regression shapes):
+  #   (1) NO defined unit may order After=boot-complete.target — such an edge
+  #       from a boot-transaction member recreates the boot-blocker class the
+  #       drop-in removed, and the generator's basic.target.wants pull is
+  #       runtime-only, so this is the only static guard for the class.
+  #   (2) bootCounting implies the end-of-boot drop-in — deleting the block
+  #       above while keeping counting silently restores the ~11s bless and
+  #       the neutered auto-rollback (the exact state found 2026-10-28).
+  assertions = [
+    {
+      assertion = bootCompleteAfterOffenders == [ ];
+      message = "boot-contract-audit: unit(s) ${lib.concatStringsSep ", " bootCompleteAfterOffenders} order After=boot-complete.target — that drags end-of-boot waits into whatever transaction reaches them (the 2026-10-28 drop-in exists so NOTHING waits on boot-complete except bless-boot itself, whose edge is runtime-generated). Remove the edge; post-boot work belongs in wantedBy = [ \"late-applications.target\" ].";
+    }
+    {
+      assertion =
+        !config.boot.loader.systemd-boot.bootCounting.enable
+        || builtins.elem "multi-user.target" (config.systemd.targets.boot-complete.unitConfig.After or [ ]);
+      message = "boot-contract-audit: boot.loader.systemd-boot.bootCounting is enabled but boot-complete.target is not ordered After=multi-user.target — systemd-bless-boot-generator wires bless into basic.target.wants at runtime, so entries get marked GOOD ~11s into userspace and the tries counter can never roll a bad generation back (the exact neutered state found and fixed 2026-10-28). Restore the systemd.targets.boot-complete drop-in in this file.";
+    }
+  ];
 
   # USB HDD enclosure tuning — JMicron JMS567 (152d:0567) BOT bridge
   # Kernel defaults nr_requests=2 for USB mass storage, starving the block layer.
