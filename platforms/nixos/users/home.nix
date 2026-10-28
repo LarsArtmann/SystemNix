@@ -547,14 +547,23 @@ in
         mkdir -p /mnt/rust-cache/cargo/registry
       fi
       if ${pkgs.util-linux}/bin/mountpoint -q /mnt/buildcache || ${pkgs.util-linux}/bin/mountpoint -q /mnt/rust-cache; then
+        # chmod before rm (2026-10-28 boot review): go writes its toolchain
+        # trees under ~/.cache/gomod with read-only dirs (0555) — `go` sets
+        # them itself — and rm -rf as the OWNER cannot unlink inside a 0555
+        # dir. The unguarded rm aborted the whole activation on EPERM every
+        # boot (home-manager-lars 5-restart fail-loop → start-limit-hit,
+        # live 2026-10-28 00:43), leaving the user environment stale.
+        # chmod -R u+w on our OWN cache dirs is always safe pre-reap.
         for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
           if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
+            chmod -R u+w -- "$HOME/.cache/$d" 2>/dev/null || true
             rm -rf -- "$HOME/.cache/$d"
             echo "migrated buildcache fallback: removed real dir $HOME/.cache/$d (HM symlink replaces it)"
           fi
         done
         for d in ${lib.concatStringsSep " " reapNames.homeRelDirs}; do
           if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
+            chmod -R u+w -- "$HOME/$d" 2>/dev/null || true
             rm -rf -- "$HOME/$d"
             echo "migrated buildcache fallback: removed real dir $HOME/$d (HM symlink replaces it)"
           fi

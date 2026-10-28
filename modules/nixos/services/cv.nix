@@ -580,6 +580,17 @@
           ];
           inherit onFailure;
 
+          # late-applications (2026-10-28 boot-critical-chain review): the
+          # 2026-10-28 00:42 boot sat 285s in the boot transaction on this
+          # unit — multi-user.target completed the INSTANT cv-server started
+          # (journal-proven). Its chain drags pocket-id-provision's fail-retry
+          # cycle (the OpenCloud Web secret TODO) plus the 120s crm-server
+          # socket wait, none of which is boot-critical for a desktop+server
+          # hybrid. Same placement as the 2026-10-26 ordering-cycle class fix
+          # (16 units, gen-955). mkForce: the upstream cv module defaults to
+          # multi-user.target.
+          wantedBy = lib.mkForce [ "late-applications.target" ];
+
           serviceConfig = lib.mkMerge [
             (harden {
               # Mostly idle; renders spike only during PDF export bursts.

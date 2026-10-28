@@ -101,6 +101,12 @@ let
   # heavier is already streaming (next week retries). The skip is NOT silent:
   # btrfs-health metrics keep reporting scrub status, so a perpetually
   # skipped scrub shows up as never-finished (Gatus-visible), not phantom-green.
+  # 2026-10-27 deferred-total ledger: every defer appends "<epoch> <mnt>" to
+  # the btrfs-health state dir; the collector reads it into
+  # btrfs_scrub_deferred_total (+ btrfs_scrub_last_deferred_seconds) so a
+  # POLICY deferral (this guard) is separable from a BROKEN scrub pipeline
+  # by the metrics alone, not by journal archaeology.
+  scrubDeferLog = "/var/lib/btrfs-health/scrub-deferrals.log";
   scrubGuard = pkgs.writeShellApplication {
     name = "btrfs-scrub-guard";
     runtimeInputs = [
@@ -112,6 +118,13 @@ let
     text = ''
       set -euo pipefail
       mnt="''${1:?usage: btrfs-scrub-guard <mountpoint>}"
+      defer_log="${scrubDeferLog}"
+      defer() {
+        echo "btrfs-scrub: deferring scrub of $mnt — $1"
+        mkdir -p "$(dirname "$defer_log")"
+        echo "$(date +%s) $mnt" >> "$defer_log"
+        exit 0
+      }
 
       # Guard 0 (same doctrine as btrfs-balance-*): never scrub under IO or
       # zram pressure — a manual balance at 99% IO PSI froze the machine
@@ -124,8 +137,7 @@ let
         ZRAM_PCT=$(( ''${ZRAM_ORIG:-0} * 100 / ZRAM_DISKSIZE ))
       fi
       if [ "''${PSI_IO_SOME:-0}" -ge 20 ] || [ "$ZRAM_PCT" -ge 80 ]; then
-        echo "btrfs-scrub: deferring scrub of $mnt — IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); scrubbing under pressure froze the machine (2026-08-24/31 classes). Next weekly window retries."
-        exit 0
+        defer "IO PSI some avg10=''${PSI_IO_SOME}% (>=20) or zram ''${ZRAM_PCT}% full (>=80); scrubbing under pressure froze the machine (2026-08-24/31 classes). Next weekly window retries."
       fi
 
       # Guard 1: never stack a full-fs read on a live btrbk send or balance —
@@ -139,8 +151,7 @@ let
       for heavy in btrbk-root.service btrbk-data.service btrbk-pool.service btrfs-balance-metadata.service btrfs-balance-data.service; do
         heavy_state=$(systemctl show -p ActiveState --value "$heavy" 2>/dev/null || echo inactive)
         if [ "$heavy_state" = "active" ] || [ "$heavy_state" = "activating" ]; then
-          echo "btrfs-scrub: deferring scrub of $mnt — $heavy is streaming (state=$heavy_state); stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
-          exit 0
+          defer "$heavy is streaming (state=$heavy_state); stacking full-device readers saturated the QLC NVMe and froze the box (2026-08-31 16:34). Next weekly window retries."
         fi
       done
 
@@ -609,6 +620,10 @@ in
       # status=3) and keep failing as the corruption tripwire, and the
       # btrfs-health metrics + Gatus checks own the error signal regardless.
       "btrfs-scrub@".serviceConfig.SuccessExitStatus = [ 1 ];
+      # The guard's defer ledger lives in the btrfs-health state dir; the
+      # template needs write access to it (the collector reads it into
+      # btrfs_scrub_deferred_total).
+      "btrfs-scrub@".serviceConfig.ReadWritePaths = [ "/var/lib/btrfs-health" ];
 
       # ── freeze-7 remaining half: no boot catch-up, no stampede ────────────
       # All three instances share ONE weekly calendar slot; without ordering,

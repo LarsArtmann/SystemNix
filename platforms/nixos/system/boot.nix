@@ -41,6 +41,8 @@ in
       # removed). Pairs with the 30s hardware watchdog below: a hung boot never
       # pets the WDT -> reset -> counter converges -> unattended rollback.
       # boot-mirror-sync reverse-propagates the loader's counter renames.
+      # The boot-complete drop-in further down is load-bearing: without it the
+      # blessing fires ~11s into userspace, not at end of boot.
       systemd-boot.bootCounting = {
         enable = true;
         tries = 3;
@@ -244,11 +246,41 @@ in
         ];
       };
 
+  # ── Boot assessment: bless at END of boot, not at basic.target ────────────
+  # systemd-bless-boot-generator wires systemd-bless-boot.service into
+  # basic.target.wants at RUNTIME (generator.early — verified live 2026-10-28:
+  # /run/systemd/generator.early/basic.target.wants/systemd-bless-boot.service),
+  # and upstream boot-complete.target only Requires/After sysinit.target, so
+  # with bootCounting on, the freshly-booted entry was marked GOOD ~11s into
+  # userspace — before 99% of the boot transaction ran. A generation that
+  # breaks anywhere past basic.target (failed multi-user chain, hung desktop,
+  # the 26min-userspace storm class measured 2026-10-27) still got blessed and
+  # the tries=3 auto-rollback could NEVER fire. Ordering boot-complete after
+  # multi-user.target restores the documented contract the bootCounting block
+  # above describes ("a boot that reaches boot-complete.target gets blessed"):
+  # bless now runs once the boot transaction actually completed.
+  # asDropin MERGES with the packaged unit (keeps its Requires=sysinit.target;
+  # a plain target entry would shadow it — the scheduled-tasks.nix 2026-10-23
+  # class). No ordering cycle: nothing in the multi-user graph orders after
+  # boot-complete.target or bless-boot (the generator's basic.target.wants edge
+  # is pull-in only), and the eval-time ordering-cycle-audit stays green.
+  systemd.targets.boot-complete = {
+    overrideStrategy = "asDropin";
+    unitConfig = {
+      After = [ "multi-user.target" ];
+      Wants = [ "multi-user.target" ];
+    };
+  };
+
   # USB HDD enclosure tuning — JMicron JMS567 (152d:0567) BOT bridge
   # Kernel defaults nr_requests=2 for USB mass storage, starving the block layer.
   # With only 2 pending requests, the USB pipe idles between transfers, throttling
   # sequential throughput. nr_requests=128 keeps the pipe saturated — drives are
   # 2x Toshiba MG08ACA16TE (16TB 7200RPM) that deliver ~276 MB/s when unchoked.
+  # KERNEL=="sd[a-z]" (whole disks only) + TEST== guard: partition events
+  # (sdb1/sdc1) carry the bridge's parent ATTRS but have no queue/ subdir of
+  # their own — the unguarded rule "Could not chase sysfs attribute" errored at
+  # every boot (2026-10-28 boot review, journal err-level spam).
   # (REMOVED 2026-08-27: a companion hdparm -S 120 spindown rule matched
   # KERNEL=="sd[ab]" — written for the RETIRED ZFS pool disks, which are gone.
   # sd[ab] now letter-collides with LIVE DAS disks on replug (confirmed topology:
@@ -259,7 +291,7 @@ in
   # pool-backed services (paperless/immich/atticd) make 10-min standby cycles
   # pure latency + wear.)
   services.udev.extraRules = ''
-    ACTION=="add|change", SUBSYSTEM=="block", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"
+    ACTION=="add|change", KERNEL=="sd[a-z]", SUBSYSTEM=="block", TEST=="queue/nr_requests", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"
   '';
 
   # Static /tmp tmpfs mount with explicit 48 GiB size cap.
@@ -637,6 +669,14 @@ in
   # stale blocks — subsequent daily runs only trim ~24h of churn (~50-100
   # GiB), taking ~10-15 min instead of 1h14m.
   systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";
+  # NOT Persistent: with Persistent=true every reboot-storm night (crisis
+  # sessions power-cycling the box, e.g. 4 boots on 2026-10-27) re-fires the
+  # missed daily trim AT BOOT — a full-pool fstrim competing with the boot
+  # IO storm itself (live 2026-10-28 00:42 boot: fstrim started at 40s and
+  # was still running 11min in, load avg 98). The SLC-cache doctrine needs
+  # the DAILY cadence, not boot-time catch-up: a trim skipped on a reboot
+  # night simply runs at the next daily slot.
+  systemd.timers.fstrim.timerConfig.Persistent = lib.mkForce false;
 
   # kdump vmcore retention — bound /var/crash growth (boot + weekly)
   systemd.timers.kdump-retention = {

@@ -428,6 +428,34 @@ let
         echo "# TYPE btrfs_scrub_deferred_by_guard gauge"
         echo "btrfs_scrub_deferred_by_guard ''${SCRUB_DEFERRED}"
 
+        # ── Guard-defer COUNT ledger (2026-10-27) ─────────────────────────
+        # The scrub guard appends "<epoch> <mount>" on EVERY defer (IO/zram
+        # guard 0 OR streaming btrbk/balance guard 1). A perpetually
+        # deferred scrub previously looked identical to a broken scrub
+        # pipeline (never-finished red with no discriminator); the
+        # deferral COUNT + last-defer age say "the guard is answering,
+        # deliberately" — a static count with rising staleness is the
+        # breakage class (the guard stopped deferring because the units
+        # never even fire).
+        DEFER_TOTAL=0
+        DEFER_LAST=0
+        if [ -f "${stateDir}/scrub-deferrals.log" ]; then
+          DEFER_TOTAL=$(grep -c . "${stateDir}/scrub-deferrals.log" 2>/dev/null) || DEFER_TOTAL=0
+          DEFER_LAST=$(sort -rn "${stateDir}/scrub-deferrals.log" 2>/dev/null | head -1 | cut -d' ' -f1) || DEFER_LAST=0
+        fi
+        case "''${DEFER_LAST:-0}" in
+          ''|*[!0-9]*) DEFER_LAST=0 ;;
+        esac
+        case "''${DEFER_TOTAL:-0}" in
+          ''|*[!0-9]*) DEFER_TOTAL=0 ;;
+        esac
+        echo "# HELP btrfs_scrub_deferred_total Times the scrub guard deferred a window (IO/zram pressure or a streaming btrbk/balance unit) — lifetime counter"
+        echo "# TYPE btrfs_scrub_deferred_total counter"
+        echo "btrfs_scrub_deferred_total ''${DEFER_TOTAL}"
+        echo "# HELP btrfs_scrub_last_deferred_seconds Epoch of the most recent guard deferral (0 = never deferred)"
+        echo "# TYPE btrfs_scrub_last_deferred_seconds gauge"
+        echo "btrfs_scrub_last_deferred_seconds ''${DEFER_LAST}"
+
         echo "# HELP btrfs_scrub_staleness_parse_errors 1 = a FINISHED scrub's started-timestamp failed to parse — the staleness gauges above are unreliable"
         echo "# TYPE btrfs_scrub_staleness_parse_errors gauge"
         echo "btrfs_scrub_staleness_parse_errors ''${scrub_parse_errors:-1}"

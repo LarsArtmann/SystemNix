@@ -38,7 +38,13 @@
     # IO scheduler: bfq prioritizes interactive I/O over bulk writers (ClickHouse, nix-optimise)
     # Falls back to mq-deadline (kernel default) if bfq module unavailable
     ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
-    ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|dm-[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
+    # Whole disks only (sd[a-z] — partitions have no queue/ of their own) and
+    # NOT USB-attached (2026-10-28 boot review): scheduling writes at USB disk
+    # attach fail EBUSY while the device is mid-enumeration ("Failed to write
+    # bfq ... Device or resource busy", err-level journal spam for sda/sdb/sdd
+    # at every boot). USB disks are bulk targets (DAS pool, buildcache) where
+    # the default mq-deadline is equivalent; internal disks keep bfq.
+    ACTION=="add|change", KERNEL=="sd[a-z]|vd[a-z]|dm-[0-9]*", SUBSYSTEMS!="usb", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
   '';
 
   # Add essential system packages for AMD GPU monitoring and control
