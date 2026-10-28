@@ -1618,7 +1618,9 @@ _: {
                       fi
 
                       mkdir -p "$OUT_DIR"
-                      TMP="$(mktemp "$OUT_DIR/.dnsblockd-freshness.XXXXXX")"
+                      TMP="$(mktemp "$OUT_DIR/dnsblockd-freshness.prom.XXXXXX")"
+                      chmod 644 "$TMP"
+                      trap 'rm -f "$TMP"' EXIT
                       {
                         echo "# HELP dnsblockd_otel_errors_total Export errors the dnsblockd exporter itself counted (source: stats API, survives a dead collector)"
                         echo "# TYPE dnsblockd_otel_errors_total counter"
