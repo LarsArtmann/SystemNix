@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  options,
   ...
 }:
 let
@@ -721,6 +722,75 @@ in
         inherit onFailure;
       };
 
+      # Nightly btrbk leg freshness collector (fail-closed, forgejo
+      # forgejo-subvol-backup-metrics precedent): reads the newest RECEIVED
+      # subvol pool-side and emits projects_subvol_backup_* — the Gatus
+      # check on the integration entry below fails on absence of fresh=1
+      # (no phantom greens; scrape failure writes only scrape_errors 1).
+      # Threshold 36h = the nightly 23:10 cadence + one missed slot
+      # tolerated (forgejo's 12h = 8h cadence + half — rescaled for 24h).
+      # Receive/snapshot names are btrbk basename-form `projects.<date>`
+      # (nested-subvol precedent: hot/forgejo → `forgejo.<date>`); verify
+      # against the first live seed (docs/services/projects-subvol.md).
+      projects-subvol-backup-metrics = lib.mkIf projectsSubvolArmed {
+        description = "Projects subvol backup freshness metrics (nightly btrbk leg)";
+        unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "root";
+          }
+          (serviceOneshotDefaults { })
+          (harden {
+            # mktemp+rename over a possible foreign-owned leftover in the
+            # sticky 1777 textfile dir (audit-textfile-tmp pattern).
+            CapabilityBoundingSet = "CAP_FOWNER CAP_DAC_READ_SEARCH";
+            ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+          })
+        ];
+        path = [
+          pkgs.coreutils
+          pkgs.gnugrep
+        ];
+        script = ''
+          set -euo pipefail
+          dir=/mnt/pool/backups/projects-subvol
+          tf=/var/lib/prometheus-node-exporter/textfile_collectors
+          tmp=$(mktemp "$tf/projects-subvol.XXXXXX")
+          chmod 644 "$tmp"
+          trap 'rm -f "$tmp"' EXIT
+
+          if [ ! -d "$dir" ]; then
+            echo "projects-subvol-backup-metrics: $dir missing (btrbk target never created?)" >&2
+            # scrape error — the fresh metric is deliberately ABSENT so the
+            # Gatus check fails (fail-closed absence class).
+            printf '# projects subvol backup metrics\nprojects_subvol_backup_scrape_errors 1\n' > "$tmp"
+            mv "$tmp" "$tf/projects_subvol_backup.prom" 2>/dev/null || echo "warn: publish failed (foreign-owned leftover?)" >&2
+            exit 0
+          fi
+
+          newest=$(ls -1 "$dir" | grep -E '^projects\.' | sort | tail -1 || true)
+          now=$(date +%s)
+          if [ -n "$newest" ] && [ -d "$dir/$newest" ]; then
+            recv=$(stat -c %Y "$dir/$newest")
+            age=$(( now - recv ))
+            # Content floor (forgejo 2026-10-11 phantom classes): an EMPTY
+            # subvol snapshot and a guard-killed partial receive both carry
+            # fresh mtimes. The live tree holds 300+ top-level repos; 0-49
+            # entries = not a usable backup.
+            entries=$( (ls -1 "$dir/$newest" 2>/dev/null || true) | wc -l )
+            entries=$(( entries + 0 ))
+            if [ "$age" -lt 129600 ] && [ "$entries" -ge 50 ]; then fresh=1; else fresh=0; fi
+            printf '# projects subvol backup metrics\nprojects_subvol_backup_scrape_errors 0\nprojects_subvol_backup_last_age_seconds %s\nprojects_subvol_backup_top_level_entries %s\nprojects_subvol_backup_fresh %s\n' "$age" "$entries" "$fresh" >> "$tmp"
+          else
+            # Leg never completed a receive: fresh=0 pages (by design until
+            # the first 23:10 slot after cutover).
+            printf '# projects subvol backup metrics\nprojects_subvol_backup_scrape_errors 0\nprojects_subvol_backup_last_age_seconds -1\nprojects_subvol_backup_fresh 0\n' >> "$tmp"
+          fi
+          mv "$tmp" "$tf/projects_subvol_backup.prom" 2>/dev/null || echo "warn: publish failed (foreign-owned leftover?)" >&2
+        '';
+      };
+
       # ~/projects/<p>/target → /mnt/rust-cache symlinks, executed from the
       # rustCacheLinksConf rule file above instead of global tmpfiles (the
       # 2026-09-20..29 shadow-dir class: L+ under an unmounted mountpoint
@@ -741,6 +811,7 @@ in
             TimeoutStartSec = "1min";
             ExecStart = "${lib.getExe' pkgs.systemd "systemd-tmpfiles"} --create ${rustCacheLinksConf}";
           }
+          ioTier.background
           (serviceOneshotDefaults { })
         ];
       };
@@ -1130,6 +1201,15 @@ in
           if [ "$hermes_expected" = "yes" ]; then
             check_freshness /mnt/pool/backups/root "@home-hermes" yes
           fi
+
+          # ~/projects subvol receives (2026-10-28 plan): only expected once
+          # the host actually mounts the subvolume — pre-migration
+          # generations must stay green (hermes precedent). Mount-UNIT probe,
+          # never findmnt under harden{}'s ProtectHome. Receive prefix is
+          # btrbk basename-form `projects` (hot/forgejo → `forgejo` precedent).
+          if systemctl is-active --quiet home-lars-projects.mount; then
+            check_freshness /mnt/pool/backups/projects-subvol "projects" yes
+          fi
           # /data stays WARN-only while the /data EIO corruption stance holds
           # (docs/todo/storage.md): btrbk-data has not completed a receive since
           # 2026-08-20, so a hard FAIL here exit-4'd EVERY activation that
@@ -1238,6 +1318,34 @@ in
             fi
             echo "OK: @home-hermes snapshot is $H_AGE day(s) old"
           fi
+
+          # ~/projects subvol local snapshots (2026-10-28): live in the
+          # SAMSUNG toplevel snapshot dir (/mnt/hot/.snapshots, NOT
+          # /mnt/btrfs-root/.snapshots), basename-form names
+          # projects.YYYYMMDDTHHMM. Checked only while the mount is active
+          # (hermes pattern; mount-UNIT probe — harden{}'s ProtectHome hides
+          # /home from findmnt).
+          if systemctl is-active --quiet home-lars-projects.mount; then
+            P_LATEST=$(find /mnt/hot/.snapshots -maxdepth 1 -mindepth 1 -type d -name 'projects.*' | sort | tail -1) || true
+            if [ -z "$P_LATEST" ]; then
+              echo "WARNING: No projects-subvol snapshots found while the subvolume is mounted"
+              exit 1
+            fi
+            P_NAME=$(basename "$P_LATEST")
+            P_DATESTR="''${P_NAME#projects.}"
+            P_DATESTR="''${P_DATESTR%%T*}"
+            if [ ''${#P_DATESTR} -ne 8 ]; then
+              echo "WARNING: Could not parse date from projects snapshot name: $P_NAME"
+              exit 1
+            fi
+            P_EPOCH=$(date -d "''${P_DATESTR:0:4}-''${P_DATESTR:4:2}-''${P_DATESTR:6:2}" +%s)
+            P_AGE=$(( ($(date +%s) - P_EPOCH) / 86400 ))
+            if [ "$P_AGE" -gt "$MAX_AGE_DAYS" ]; then
+              echo "WARNING: projects subvol snapshot is $P_AGE days old (threshold: $MAX_AGE_DAYS)"
+              exit 1
+            fi
+            echo "OK: projects subvol snapshot is $P_AGE day(s) old"
+          fi
         '';
       };
     };
@@ -1260,6 +1368,15 @@ in
         RandomizedDelaySec = "1h";
       };
       wantedBy = [ "timers.target" ];
+    };
+
+    timers.projects-subvol-backup-metrics = lib.mkIf projectsSubvolArmed {
+      description = "Periodic projects subvol backup freshness collection";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*-*-* *:00/5:00";
+        Persistent = true;
+      };
     };
 
     timers.pool-metrics = {
@@ -1311,6 +1428,35 @@ in
     };
   };
 
+  # Integration-registry entry (2026-10-28): backup-freshness check for the
+  # projects subvol btrbk leg. Layer none (no vHost — not a web service).
+  # No `backup` row: the btrbk leg's freshness is covered by the metric
+  # check below + the per-prefix verify legs (backup rows are for
+  # file-pattern backup legs like the forgejo dump zips).
+  services.integration = lib.optionalAttrs (options ? services.integration) {
+    projects-subvol = {
+      enable = projectsSubvolArmed;
+      vHost.layer = "none";
+      monitored = true;
+      checks = [
+        {
+          # Nightly subvol backup leg (btrbk-projects): fail-closed — absence
+          # of fresh=1 (never ran / scrape error) is RED by design.
+          name = "Projects Subvol Backup (nightly)";
+          group = "Storage";
+          url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+          interval = "5m";
+          conditions = [
+            "[STATUS] == 200"
+            "[BODY] == pat(*\nprojects_subvol_backup_scrape_errors 0*)"
+            "[BODY] == pat(*\nprojects_subvol_backup_fresh 1*)"
+          ];
+          alert = "Projects subvol backup leg stale: no received subvol pool-side within 36h — journalctl -u btrbk-projects (send failure, pool absent, or first seed still pending post-cutover).";
+        }
+      ];
+    };
+  };
+
   # Eval-time pins for the ~/projects Samsung subvolume (2026-10-28 plan).
   # The disko-row presence cross-guard (hot-user-caches pattern): the subvol
   # is created out-of-band by scripts/migrate-projects-subvol.sh, so the
@@ -1321,16 +1467,20 @@ in
   assertions = lib.optionals projectsSubvolArmed (
     [
       {
-        assertion = (import ../../../disko/samsung-tlc.nix).disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes ? "/users/lars/projects";
+        assertion =
+          (import ../../../disko/samsung-tlc.nix)
+          .disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes
+            ? "/users/lars/projects";
         message = "snapshots.nix projectsHomeMount: /users/lars/projects is not declared in disko/samsung-tlc.nix — a re-provisioned Samsung would not recreate the subvol and the mount fails at boot";
       }
     ]
-    ++ (map (
-      unit:
-      {
-        assertion = (config.systemd.services ? "${unit}") -> (builtins.any (m: lib.hasPrefix "/home/${primaryUser}/projects" m) (config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]));
-        message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
-      }
-    ) projectsWriters)
+    ++ (map (unit: {
+      assertion =
+        (config.systemd.services ? "${unit}")
+        -> (builtins.any (m: lib.hasPrefix "/home/${primaryUser}/projects" m) (
+          config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]
+        ));
+      message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
+    }) projectsWriters)
   );
 }

@@ -217,7 +217,8 @@
             # Samsung subvol mount is absent (never serve from the stale @
             # shadow). Conditional on the mount being declared.
             unitConfig.RequiresMountsFor =
-              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+                [ "/home/lars/projects" ];
             # Unit failures page via the notify-failure template (Discord) —
             # registry convention: silent failures are unacceptable.
             inherit onFailure;

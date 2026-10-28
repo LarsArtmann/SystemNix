@@ -43,7 +43,12 @@ in
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });
   cv = makeTest (import ./test-cv.nix { inherit pkgs inputs; });
   memory-emergency-guard = makeTest (import ./test-memory-emergency-guard.nix { inherit pkgs; });
-  scrub-guard = makeTest (import ./test-scrub-guard.nix { inherit pkgs; self = inputs.self; });
+  # test-scrub-guard.nix already returns a runNixOSTest result (it needs
+  # `self` to sed-stub the REAL evo-x2 guard artifact), so wrapping it in
+  # makeTest applied runNixOSTest to an already-built test → flake check
+  # died with "unsupported attribute `containers`" and NO .nix commit on
+  # this tree could pass the pre-commit gate (fixed 2026-10-28).
+  scrub-guard = import ./test-scrub-guard.nix { inherit pkgs; self = inputs.self; };
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   upholds-convergence = makeTest (import ./test-upholds-convergence.nix { inherit pkgs; });

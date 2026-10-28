@@ -1360,7 +1360,7 @@
         ./flake/parts/checks/selftests.nix
         ./flake/parts/checks/doc-counts.nix
         ./flake/parts/checks/features-drift.nix
-        ./flake/parts/checks/dnsblockd-gate.nix
+        ./flake/parts/checks/dnsblockd-guards.nix
         ./flake/parts/checks/vm-tests.nix
       ]
       ++ discoveredModulePaths;

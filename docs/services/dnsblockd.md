@@ -15,6 +15,38 @@
 - **Operator WAL (journal) enabled in-tree 2026-10-07** — owner decision (the "evo-x2 enablement" open question from dnsblockd's 2026-10-06 WAL landing, its TODO T354/W24 precondition): `journal_enabled: true` + `journal_dsn: /var/lib/dnsblockd/journal.db` in the dns-blocker.nix generated YAML (engine sqlite / durability normal / query-log off / retention 30d ride upstream defaults — the validated sentinels; tracking gate satisfied by METADATA_ONLY > NO_TRACK). The WAL rides BESIDE the tracking tables: `audit_entries` stays the evidence doctrine, NOTHING serves analytics reads from the WAL (the W24 read-model cutover remains owner-gated upstream). Pinned by the render test's python asserts (`tests/test-dns-blocker-render.nix` — journal_enabled/journal_dsn greps on the REAL rendered YAML, the anti-phantom contract) and watched by the SigNoz rule `DNS Blocker Journal Dropping` (`_signoz-alerts.nix`, mirrors upstream `DnsblockdJournalDropping`: `increase(dnsblockd_journal_drops_total[15m]) > 10`; absence-safe — no series until the first drop). Applies to BOTH dns-blocker hosts (evo-x2 + rpi3-dns share the module YAML; rpi3 activates on its next deploy). Inspect: extract the config path from the live unit's ExecStart, then `<dnsblockd> journal status|replay --last N|verify -c <config>` (read-only open, safe on the live DB; `verify` folds WAL↔`audit_entries` parity). `/health` carries a `journal` block; metrics `dnsblockd_journal_appends_total{kind}` / `dnsblockd_journal_drops_total`. Deploy was weather-blocked 2026-10-07 (IO PSI 40-98%, freeze-precursor gate — parallel-session build churn, not this change) — activates on the first successful deploy after the storm; post-deploy live probes (journal.db created, journal status CLI, /health block, appends counter) still pending.
 - **`dnsIPv6Enabled = false`** — evo-x2 has no global IPv6. Omits IPv6 root servers, avoids 5-15s timeouts.
 - **Scoped filter proxy (ADR-0018) wired 2026-10-08, OFF on the host** — `dns-blocker.nix` now exposes `proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` / `proxyTLSPassthrough` (upstream contract: ADR-0018 in the dnsblockd repo). Enabling = set `proxyFilterDomains` to registrable-domain suffixes (DNS answers them with the block IP — the "scoped lie"; precedence allowlist > filter > block) + `proxyInjectScriptURL` to the classifier's `/inject/filter.js`. The URL rides the `DNSBLOCKD_PROXY_INJECT_SCRIPT_URL` systemd env var, NEVER the YAML (store is world-readable — same rule as upstream's auth_token); render test pins both halves (`tests/test-dns-blocker-render.nix` item 7). Constraints: requires `dnsBlockResponse = "zero_ip"` (eval assertion mirrors upstream `ErrFilterNeedsAddressResponse` — a lie needs an address); filter domains NEVER TLS-splice (termination on the dnsblockd CA — devices must trust it, already true on evo-x2 via `security.pki.certificates`); the filter set is read at startup, changes restart the service; classifier down fails OPEN (pages render unfiltered, the lie still lands on the working proxy). Feature stays owner opt-in — picking domains + classifier is an owner decision.
+
+**CA rotation (the two-places-one-CA rule; guard added 2026-10-28):** the
+dnsblockd CA exists twice by necessity — a PEM inlined into
+`security.pki.certificates` (`platforms/nixos/system/dns-blocker-config.nix:244`,
+so this host trusts it) and the sops secret
+`dnsblockd_ca_cert` that the block-page/filter proxy terminates TLS with.
+Parity was verified byte-identical 2026-10-28 (SHA-256
+`EE:A9:E1:…:49:88`, CN `dnsblockd-CA`, valid to 2036-04-12) and until then
+was enforced by NOTHING: a one-sided edit silently breaks browser trust,
+and with it the ADR-0018 scoped lie that only works while devices trust that
+CA. `post-deploy-check.sh §22` now compares them every deploy
+(`scripts/lib/ca-parity-smoke.sh`): missing CA in the bundle → FAIL (the
+trust side lost the rotation), a DIFFERENT `dnsblockd-CA`
+also trusted → FAIL (a retired key keeps trust, so a leaked old key still
+MITMs), identical but appended twice → WARN (two writers, one PEM), inside
+90 days of expiry → WARN.
+
+Rotating therefore means ONE commit touching BOTH sides plus the sops
+re-encrypt, then a deploy, then `nix run .#post-deploy-check` — the §22
+verdict is the proof, not the deploy exit code. Verify by hand with:
+
+```console
+openssl x509 -in /run/secrets/dnsblockd_ca_cert -noout -fingerprint -sha256
+openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt \
+  | openssl pkcs7 -print_certs -noout | grep -A1 'CN=dnsblockd-CA'
+```
+
+Fixture harness: `bash scripts/test-ca-parity-smoke.sh` (8 legs, real
+certs), also a flake check (`checks.dnsblockd-ca-parity-selftest`).
+Live state 2026-10-28: WARN — trusted and identical, but the bundle carries
+the same CA **twice** (benign, identical fingerprint; the second writer is
+unidentified, queued in `docs/todo/services.md`).
 - **Block-page PHANTOM-200: a "blocked" domain answers HTTP 200 with the block-page HTML — API clients fail with JSON-parse errors, never network errors (found live 2026-09-29 on `monitoring.googleapis.com`)** — blocklists classify parts of `googleapis.com` as telemetry; the SigNoz GCP integration's scrapes hit the block page until the domain was whitelisted in `platforms/common/dns-blocklists.nix`. When an HTTPS API integration mysteriously returns HTML: `dig +short <host> @127.0.0.1` — the block IP (192.168.1.200) vs a real answer is the whole diagnosis. **Second instance found live 2026-10-14:** GeoMetrikks's default public-IP echo `api64.ipify.org` (HaGeZi telemetry category) returned the block page, breaking the app's JSON parse → its `map-home-undetected` advisory; `ipify.org` is now whitelisted in `dns-blocklists.nix`.
 - **Wildcard `*.home.lan` RESOLVES since 2026-10-12** (dnsblockd `d5a22a4b` fixed RFC 4592 lookup + owner-name synthesis; configured-but-dead 2026-10-07→10-12 while LocalZoneStore was exact-match only) — unknown zone names answer with the server IP so Caddy's `https://*.home.lan` catch-all serves the branded 404; exact records and the apex still win. Consequence (2026-10-17, live-diagnosed): any client with search-domain completion resolves FAILED public names (offline, or typo'd/NXDOMAIN while online) onto this host through the wildcard — evo-x2 + rpi3-dns therefore dropped the `search` line from their managed resolv.conf (`dns-resolver.nix`, 2026-10-17; bare-label typing like `ping forge` no longer resolves there, measured usage zero; TLS bare-label SNI never worked anyway). Other LAN clients (MacBook) own their resolver config — owner decision tracked in `docs/todo/services.md`. Diagnosis: dnsblockd repo `docs/research/2026-10-17_search-domain-wildcard-offline-resolution-diagnosis.md`
 - **`restartTriggers` on dnsblockd** — Without it, config changes may not restart the process → stale config → DNS outage.

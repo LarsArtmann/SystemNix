@@ -61,6 +61,7 @@ in
           cfg
           pkgs
           lib
+          config
           harden
           onFailure
           ports

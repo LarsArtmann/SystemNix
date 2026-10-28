@@ -25,7 +25,7 @@
 # Budget is injected as 2s (test seam) so a failing leg costs seconds, not the
 # production 300s. The seam is documented at the script; the unit inherits no
 # ambient environment, so production always resolves the defaults.
-{ inputs, ... }:
+{ inputs, root, ... }:
 {
   perSystem =
     {
@@ -100,5 +100,26 @@
           touch "$out"
           echo "dnsblockd readiness gate: 5/5 legs passed (2 negative, 3 positive)"
         '';
+
+      # CA-parity fixture selftest (post-deploy §22, 2026-10-28 plan T02).
+      # Runs the SAME scripts/lib/ca-parity-smoke.sh prod sources — never a
+      # drifted copy — against REAL openssl-generated certificates, so a change
+      # in openssl's subject/fingerprint formatting breaks here instead of
+      # silently weakening the live guard. Live, both CAs agree; the FAIL
+      # branches have no rehearsal path that does not deliberately break real
+      # browser trust, so this is the only exercise they get.
+      checks.dnsblockd-ca-parity-selftest =
+        pkgs.runCommand "dnsblockd-ca-parity-selftest"
+          {
+            nativeBuildInputs = [ pkgs.openssl ];
+          }
+          ''
+            scratch=$(mktemp -d)
+            mkdir -p "$scratch/scripts/lib"
+            cp ${root}/scripts/test-ca-parity-smoke.sh "$scratch/scripts/test-ca-parity-smoke.sh"
+            cp ${root}/scripts/lib/ca-parity-smoke.sh "$scratch/scripts/lib/ca-parity-smoke.sh"
+            ${pkgs.bash}/bin/bash "$scratch/scripts/test-ca-parity-smoke.sh"
+            touch $out
+          '';
     };
 }

@@ -23,9 +23,22 @@
 #                                           also not proof of danger)
 #   subvol dir missing                   -> WARN (mount fails fast+loud at
 #                                           activation by module design —
-#                                           service-down, not data-loss)
+#                                           service-down, not data-loss);
+#                                           STRICT entries (nofail mounts,
+#                                           today: the ~/projects subvol)
+#                                           FAIL instead — their activation
+#                                           does NOT fail, so §18 is the
+#                                           only thing standing between a
+#                                           pre-prepare deploy and a dead
+#                                           mount over the only live copy
 #
-# Enumeration reads the pinned config via nix eval (host override: SS_HOST).
+# Enumeration sources (all via nix eval on the pinned config; host override:
+# SS_HOST):
+#   services.hot-user-caches.caches       (class cache — automounts)
+#   services.hot-db.entries               (class data — required mounts)
+#   fileSystems."/home/lars/projects"     (class data, STRICT — the 2026-10-28
+#                                          projects Samsung subvol; emitted
+#                                          only while the mount is declared)
 # Test hooks (fixtures set ALL of them; production never does):
 #   SS_ENTRIES_JSON  inline entries document instead of nix eval
 #   SS_SHADOW_ROOT   prefix for shadow paths (default "")
@@ -101,7 +114,8 @@ dir_size() {
 
 emit_entry_verdict() {
   # $1 class (data|cache) · $2 name · $3 shadow dir · $4 subvol dir
-  local class="$1" name="$2" shadow="$3" subvol="$4"
+  # $5 strict ("true" for nofail mounts — missing subvol FAILs, see header)
+  local class="$1" name="$2" shadow="$3" subvol="$4" strict="${5:-false}"
   local s_bytes s_count
   read -r s_bytes s_count <<<"$(dir_size "$shadow")"
   if [ "$s_bytes" = "absent" ]; then
@@ -118,6 +132,10 @@ emit_entry_verdict() {
   fi
 
   if [ ! -d "$subvol" ]; then
+    if [ "$strict" = "true" ]; then
+      ss_fail "$class/$name: STRICT entry — shadow $shadow holds $s_count files but the subvol $subvol does not exist yet AND the mount is nofail (activation will NOT fail; the deploy would ship a dead mount + fail-loud writers over the only live copy). Fix: run the migrate prepare phase (scripts/migrate-projects-subvol.sh) so the subvol demonstrably holds the copy, then deploy"
+      return 0
+    fi
     ss_warn "$class/$name: subvol dir $subvol MISSING while shadow $shadow holds $s_count files — the mount will fail fast+loud at activation (module design), but the entry is half-provisioned"
     return 0
   fi
@@ -156,26 +174,34 @@ collect_entries() {
   if [ -n "${SS_ENTRIES_JSON:-}" ]; then
     doc="$SS_ENTRIES_JSON"
   else
-    local uc_enable hdb_enable uc hdb
+    local uc_enable hdb_enable uc hdb proj_mount proj_armed
     uc_enable=$(nix eval --json ".#nixosConfigurations.$SS_HOST.config.services.hot-user-caches.enable" 2>/dev/null || echo "null")
     hdb_enable=$(nix eval --json ".#nixosConfigurations.$SS_HOST.config.services.hot-db.enable" 2>/dev/null || echo "null")
     uc=$(nix eval --json ".#nixosConfigurations.$SS_HOST.config.services.hot-user-caches.caches" 2>/dev/null || echo "{}")
     hdb=$(nix eval --json ".#nixosConfigurations.$SS_HOST.config.services.hot-db.entries" 2>/dev/null || echo "{}")
-    doc=$(printf '{"ucEnable":%s,"hdbEnable":%s,"uc":%s,"hdb":%s}\n' \
-      "${uc_enable:-null}" "${hdb_enable:-null}" "$uc" "$hdb")
+    # Third source (2026-10-28 projects-subvol plan D4): the ~/projects
+    # Samsung subvol — emitted only while the mount is declared, so the
+    # gate is automatically blind again if the mount is ever removed.
+    proj_mount=$(nix eval --json ".#nixosConfigurations.$SS_HOST.config.fileSystems.\"/home/lars/projects\".fsType" 2>/dev/null || echo "null")
+    if [ "${proj_mount:-null}" != "null" ]; then proj_armed=true; else proj_armed=false; fi
+    doc=$(printf '{"ucEnable":%s,"hdbEnable":%s,"uc":%s,"hdb":%s,"projectsMount":%s}\n' \
+      "${uc_enable:-null}" "${hdb_enable:-null}" "$uc" "$hdb" "$proj_armed")
   fi
   # Single stdin-form jq (direnv shells misparse file-argument jq — AGENTS.md
-  # 2026-10-17); emit one TSV row {class,name,shadow,subvol} per enabled entry.
+  # 2026-10-17); emit one TSV row {class,name,shadow,subvol,strict} per
+  # enabled entry.
   printf '%s' "$doc" | jq -r '
     def shadowprefix: if $ENV.SS_SHADOW_ROOT == "" then "" else $ENV.SS_SHADOW_ROOT end;
     (if .ucEnable == true then
-       .uc | to_entries[] | {class: "cache", name: .key, shadow: (shadowprefix + .value.mountPoint), subvol: ($ENV.SS_HOT_ROOT + "/" + .value.subvol)}
+       .uc | to_entries[] | {class: "cache", name: .key, shadow: (shadowprefix + .value.mountPoint), subvol: ($ENV.SS_HOT_ROOT + "/" + .value.subvol), strict: false}
      else empty end),
     (if .hdbEnable == true then
-       .hdb | to_entries[] | {class: "data", name: .key, shadow: (shadowprefix + .value.path), subvol: ($ENV.SS_HOT_ROOT + "/hot/" + .key)}
-     else empty end
-    )
-    | [.class, .name, .shadow, .subvol]
+       .hdb | to_entries[] | {class: "data", name: .key, shadow: (shadowprefix + .value.path), subvol: ($ENV.SS_HOT_ROOT + "/hot/" + .key), strict: false}
+     else empty end),
+    (if .projectsMount == true then
+       {class: "data", name: "projects", shadow: (shadowprefix + "/home/lars/projects"), subvol: ($ENV.SS_HOT_ROOT + "/users/lars/projects"), strict: true}
+     else empty end)
+    | [.class, .name, .shadow, .subvol, .strict]
     | @tsv'
 }
 
@@ -189,9 +215,9 @@ main() {
     echo "PASS: no enabled hot-tier entries in the to-be-deployed config — nothing to shadow-split"
     exit 0
   fi
-  while IFS=$'\t' read -r class name shadow subvol; do
+  while IFS=$'\t' read -r class name shadow subvol strict; do
     [ -n "$class" ] || continue
-    emit_entry_verdict "$class" "$name" "$shadow" "$subvol"
+    emit_entry_verdict "$class" "$name" "$shadow" "$subvol" "${strict:-false}"
   done <<<"$entries"
 
   echo "shadow-split gate: $PASSES passed, $WARNS warned, $FAILS failed"

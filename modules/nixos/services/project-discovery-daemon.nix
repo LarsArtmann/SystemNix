@@ -148,7 +148,8 @@ _: {
           # mount is absent (never index the stale @ shadow). Conditional on
           # the mount being declared (VM/test hosts unaffected).
           unitConfig.RequiresMountsFor =
-            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+              [ "/home/lars/projects" ];
 
           inherit onFailure;
 

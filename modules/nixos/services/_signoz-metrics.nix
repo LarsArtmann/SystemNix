@@ -4,6 +4,7 @@
   cfg,
   pkgs,
   lib,
+  config,
   harden,
   onFailure,
   ports,
@@ -440,7 +441,8 @@ lib.mkIf cfg.components.nodeExporter {
         # go phantom (ahead_by=-1 on a dead repo read). Conditional on the
         # mount being declared (VM/test hosts unaffected).
         unitConfig.RequiresMountsFor =
-          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+            [ "/home/lars/projects" ];
         serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";

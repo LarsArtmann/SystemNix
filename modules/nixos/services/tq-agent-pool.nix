@@ -428,7 +428,8 @@ _: {
           # Conditional on the mount being declared (VM/test hosts unaffected;
           # the pool DB side stays gated on /mnt/pool via tq-storage-dir).
           unitConfig.RequiresMountsFor =
-            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+            lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+              [ "/home/lars/projects" ];
           inherit onFailure;
           # PapDashboard bridge key — systemd reads this as PID 1, so the
           # root-owned 0400 template stays unreadable to the pool process

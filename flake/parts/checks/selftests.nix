@@ -145,6 +145,30 @@
               touch $out
             '';
 
+        # shadow-split deploy gate fixtures (pre-deploy §18): the wave-6
+        # signature + degradation ladders + the 2026-10-28 STRICT projects
+        # legs (empty-subvol FAIL, missing-subvol FAIL for the nofail
+        # mount, prepared PASS, parity WARN). Fixtures drive the gate via
+        # SS_ENTRIES_JSON — no nix eval runs inside the check.
+        shadow-split-gate-selftest =
+          pkgs.runCommand "shadow-split-gate-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                findutils
+                jq
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts"
+              cp ${root}/scripts/shadow-split-gate.sh "$scratch/scripts/shadow-split-gate.sh"
+              cp ${root}/scripts/test-predeploy-shadow-split.sh "$scratch/scripts/test-predeploy-shadow-split.sh"
+              ${pkgs.bash}/bin/bash "$scratch/scripts/test-predeploy-shadow-split.sh"
+              touch $out
+            '';
+
         # monitor365 event retention: the 03:00 unattended window must
         # never be the retention script's first execution — eval is
         # structurally blind to logic/interpolation bugs inside shell

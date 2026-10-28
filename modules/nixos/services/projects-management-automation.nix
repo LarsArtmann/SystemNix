@@ -176,7 +176,8 @@
         # beneath it. Conditional on the mount being declared (VM/test hosts
         # unaffected; clickhouse hasAttr pattern).
         systemd.services.projects-management-automation.unitConfig.RequiresMountsFor =
-          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+          lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+            [ "/home/lars/projects" ];
         systemd.services.projects-management-automation.serviceConfig = lib.mkMerge [
           {
             Type = lib.mkForce "exec";
@@ -248,7 +249,8 @@
               # Watchdog must not restart PMA into an absent projects mount
               # (plan D6): refuse while the subvol is down, same as the daemon.
               unitConfig.RequiresMountsFor =
-                lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+                lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+                  [ "/home/lars/projects" ];
               serviceConfig = {
                 Type = "oneshot";
                 ExecStart = lib.getExe pmaDaemonWatchdog;

@@ -19,6 +19,10 @@
 #   PG_VERSION present both sides       -> PASS, rc 0
 #   subvol < 25% of shadow              -> WARN, rc 0
 #   subvol dir missing                  -> WARN, rc 0
+#   projects (STRICT) missing subvol    -> FAIL, rc 1 (nofail mount: §18 is
+#                                          the only pre-switch protection)
+#   projects empty subvol over shadow   -> FAIL (wave-6 signature), rc 1
+#   projects prepared copy / parity     -> PASS rc 0 / WARN rc 0
 #   shadow unreadable (EACCES)          -> WARN, rc 0
 #   no entries at all                   -> PASS, rc 0
 # Run: bash scripts/test-predeploy-shadow-split.sh
@@ -73,6 +77,7 @@ JSON_DATA_EMPTY='{"ucEnable":true,"uc":[],"hdbEnable":true,"hdb":{"mydb":{"path"
 JSON_CACHE_EMPTY='{"ucEnable":true,"uc":{"x":{"subvol":"users/t/cache/x","mountPoint":"/srv/x"}},"hdbEnable":false,"hdb":{}}'
 JSON_PREPARED='{"ucEnable":false,"uc":[],"hdbEnable":true,"hdb":{"pg":{"path":"/var/lib/postgresql","cow":false,"unit":"postgresql.service"}}}'
 JSON_NODATA='{"ucEnable":false,"uc":[],"hdbEnable":false,"hdb":{}}'
+JSON_PROJECTS='{"ucEnable":false,"uc":[],"hdbEnable":false,"hdb":{},"projectsMount":true}'
 
 echo "shadow-split gate fixtures"
 
@@ -151,6 +156,39 @@ expect "unreadable WARN emitted" "$(printf '%s' "$VerdictOut" | grep -c 'unreada
 run_case "no entries PASS" "true" "true" "$JSON_NODATA"
 expect "rc 0 (pass)" "$VerdictRC" "0"
 expect "no-entry verdict" "$(printf '%s' "$VerdictOut" | grep -c 'nothing to shadow-split' || true)" "1"
+
+# 12. projects (STRICT, nofail mount): empty subvol over populated shadow
+#     -> FAIL — the wave-6 signature for the 2026-10-28 projects subvol.
+run_case "projects empty subvol FAIL" \
+  "mkdir -p shadow/home/lars/projects/SystemNix && printf x > shadow/home/lars/projects/SystemNix/README.md" \
+  "mkdir -p hot/users/lars/projects" \
+  "$JSON_PROJECTS"
+expect "rc 1 (fail)" "$VerdictRC" "1"
+expect "projects wave-6 FAIL" "$(printf '%s' "$VerdictOut" | grep -c 'WAVE-6 SIGNATURE' || true)" "1"
+
+# 13. projects STRICT: subvol dir entirely missing -> FAIL (nofail mount,
+#     activation will not fail — §18 is the only pre-switch protection).
+run_case "projects missing subvol FAIL (strict)" \
+  "mkdir -p shadow/home/lars/projects/SystemNix && printf x > shadow/home/lars/projects/SystemNix/README.md" \
+  "true" \
+  "$JSON_PROJECTS"
+expect "rc 1 (fail)" "$VerdictRC" "1"
+expect "strict missing-subvol FAIL" "$(printf '%s' "$VerdictOut" | grep -c 'STRICT entry' || true)" "1"
+
+# 14. projects prepared copy (>= 25% of shadow) -> PASS.
+run_case "projects prepared PASS" \
+  "mkdir -p shadow/home/lars/projects/r && dd if=/dev/zero of=shadow/home/lars/projects/r/data bs=1k count=100 2>/dev/null" \
+  "mkdir -p hot/users/lars/projects/r && dd if=/dev/zero of=hot/users/lars/projects/r/data bs=1k count=50 2>/dev/null" \
+  "$JSON_PROJECTS"
+expect "rc 0 (pass)" "$VerdictRC" "0"
+
+# 15. projects parity band: subvol far smaller than shadow -> WARN only.
+run_case "projects parity WARN" \
+  "mkdir -p shadow/home/lars/projects/r && dd if=/dev/zero of=shadow/home/lars/projects/r/data bs=1k count=1000 2>/dev/null" \
+  "mkdir -p hot/users/lars/projects/r && dd if=/dev/zero of=hot/users/lars/projects/r/data bs=1k count=10 2>/dev/null" \
+  "$JSON_PROJECTS"
+expect "rc 0 (warn-only)" "$VerdictRC" "0"
+expect "projects parity WARN" "$(printf '%s' "$VerdictOut" | grep -c '<25% of shadow' || true)" "1"
 
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then

@@ -614,14 +614,18 @@
             after = [ "bank-sync-storage-dir.service" ];
             wants = [ "bank-sync-storage-dir.service" ];
             unitConfig = {
-              RequiresMountsFor = [ cfg.dataDir ]
+              RequiresMountsFor = [
+                cfg.dataDir
+              ]
               # ~/projects READER (2026-10-28 projects-subvol plan D6): the
               # historical Qonto sources live under ~/projects — without this
               # gate, a detached Samsung makes the stage unit read the STALE
               # @ shadow copies (ConditionPathExists still passes on the
               # shadow dir) and silently stage old CSVs. Conditional on the
               # mount being declared (VM/test hosts unaffected).
-              ++ lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [ "/home/lars/projects" ];
+              ++ lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [
+                "/home/lars/projects"
+              ];
               ConditionPathExists = [
                 qontoCsvTech
                 qontoCsvHolding
