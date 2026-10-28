@@ -26,9 +26,10 @@ let
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
 
-  # Units ordering After=boot-complete.target (attr + unitConfig forms,
-  # across every unit family) — must stay EMPTY; see the boot-contract
-  # assertions further down for why.
+  # Units ordering After=boot-complete.target (attr + unitConfig forms;
+  # systemd.mounts is a LIST in NixOS and carries no after key, so it is not
+  # scanned) — must stay EMPTY; see the boot-contract assertions further
+  # down for why.
   bootCompleteAfterOffenders =
     let
       unitsWithEdges = lib.mapAttrsToList (
@@ -44,7 +45,6 @@ let
         // config.systemd.timers
         // config.systemd.sockets
         // config.systemd.paths
-        // config.systemd.mounts
         // config.systemd.targets
       );
     in

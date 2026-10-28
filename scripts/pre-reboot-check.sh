@@ -471,6 +471,37 @@ else
   fi
 fi
 
+# 12. Boot assessment (systemd-boot counting + bless timing) — the
+#     auto-rollback contract (tries=3) is only real when BOTH hold:
+#     (a) a fresh entry carries a +tries counter, and (b) bless-boot runs at
+#     END of boot (after multi-user), not ~11s in via the generator's
+#     basic.target wiring (the 2026-10-28 boot-chain review found the
+#     blessing early and the rollback consequently neutered). A suffix-less
+#     newest entry is benign ONLY when the previous boot provably blessed
+#     late; a bless BEFORE multi-user is a live regression and BLOCKS.
+echo ""
+echo "12. Boot assessment (counting + bless timing)"
+prev_boot_monotonic() {
+  # First monotonic timestamp (seconds) of the previous boot's line matching $1.
+  journalctl -b -1 -q --no-pager -o short-monotonic _PID=1 2>/dev/null |
+    grep -m1 -F "$1" |
+    grep -oE '[0-9]+(\.[0-9]+)?' | head -1
+}
+NEWEST_ENTRY="$(ls -t "$BOOT_DIR/loader/entries"/nixos-*.conf 2>/dev/null | head -1 || true)"
+BLESS_TS="$(prev_boot_monotonic 'Starting Mark the Current Boot Loader Entry as Good')"
+MULTI_TS="$(prev_boot_monotonic 'Reached target Multi-User System')"
+if [ -n "$NEWEST_ENTRY" ] && echo "$NEWEST_ENTRY" | grep -qE '\+[0-9]+(-[0-9]+)?\.conf$'; then
+  pass "newest entry carries a boot counter ($(basename "$NEWEST_ENTRY")) — auto-rollback armed"
+elif [ -z "$MULTI_TS" ]; then
+  warn "newest entry has no +tries suffix and no previous-boot multi-user journal evidence — counting state unverified (first boot after install? fixture run?)"
+elif [ -z "$BLESS_TS" ]; then
+  warn "newest entry has no +tries suffix and the previous boot never started bless-boot — verify boot counting installs suffixes on the next deploy"
+elif awk -v b="$BLESS_TS" -v m="$MULTI_TS" 'BEGIN { exit !(b > m) }'; then
+  pass "previous boot blessed AFTER multi-user (end-of-boot contract holds); newest entry already blessed — counter re-arms on the next deploy's fresh entry"
+else
+  fail "previous boot blessed BEFORE multi-user reached (${BLESS_TS}s < ${MULTI_TS}s) — the booted generation predates the 2026-10-28 boot-complete drop-in, so the tries counter is being stripped ~11s in and the auto-rollback is neutered; deploy the current tree before rebooting"
+fi
+
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
 if [ "$FAIL" -gt 0 ]; then
