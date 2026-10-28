@@ -126,6 +126,16 @@ Called by each canonical repo's Forgejo Actions release workflow (the goreleaser
 - Fixture-tested in `forgejo-scripts-fixture` (skip/disabled, happy path, already-mirrored,
   deficient, missing-release).
 
+### Branch protection (`forgejo-branch-protect`, shipped 2026-10-28, sync phase 6)
+
+Protects the default branch of every `canonicalRepos` entry (staged-primary plan T22): normal
+pushes stay open (`enable_push: true` — the owner is the instance's only writer), while the API
+defaults established by the rule block force pushes and branch deletion. Idempotent (skips repos
+already listing the default branch), refuses pull mirrors loudly (protection is for primaries;
+it converges as repos flip). Runs in the sync unit right after the push-mirror phase under the
+same `FORGEJO_CANONICAL_REPOS` env. Fixture-tested in `forgejo-scripts-fixture` (create, already-
+protected no-POST, mirror refuse, empty-list no-op).
+
 ### Flipping a repo to native (`forgejo-flip@<name>`)
 
 ```bash
