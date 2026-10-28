@@ -330,6 +330,7 @@ _: {
               # 2026-10-28), which exited the whole provisioner before ANY
               # later client in the loop was processed. A stale secret file
               # from an earlier confidential era is a dead credential — prune it.
+              SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
               ${lib.optionalString client.isPublic ''
                 if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
                   rm -f "$SECRET_FILE"
