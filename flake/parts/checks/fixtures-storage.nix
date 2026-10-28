@@ -522,6 +522,27 @@
               expect "root last_completed ABSENT" 'btrfs_scrub_last_completed_seconds\{mount="root"\}' invert
               rm -f "$FIX/fixtures/root.fails"
 
+              echo "=== Run E: no deferral ledger -> deferred_total 0, last_deferred 0 ==="
+              write_fixture root.txt finished-fresh
+              write_fixture data.txt finished-fresh
+              run_collector
+              expect "deferred_total=0 (absent ledger)" 'btrfs_scrub_deferred_total 0$'
+              expect "last_deferred=0 (absent ledger)" 'btrfs_scrub_last_deferred_seconds 0$'
+
+              echo "=== Run F: ledger present -> count + last-defer epoch emitted ==="
+              NOW_EPOCH=$(date +%s)
+              printf '%s /\n%s /data\n%s /\n' "$((NOW_EPOCH - 7200))" "$((NOW_EPOCH - 3600))" "$((NOW_EPOCH - 86400))" > "$FIX/state-root/scrub-deferrals.log"
+              run_collector
+              expect "deferred_total=3" 'btrfs_scrub_deferred_total 3$'
+              expect "last_deferred = newest epoch" "btrfs_scrub_last_deferred_seconds $((NOW_EPOCH - 3600))\$"
+
+              echo "=== Run G: garbage ledger values -> 0 (not a poisoned metric) ==="
+              printf 'garbage line\n\n' > "$FIX/state-root/scrub-deferrals.log"
+              run_collector
+              expect "deferred_total still numeric garbage-safe" 'btrfs_scrub_deferred_total [0-9]+\$'
+              expect "last_deferred garbage-safe" 'btrfs_scrub_last_deferred_seconds [0-9]+\$'
+              rm -f "$FIX/state-root/scrub-deferrals.log"
+
               if [ "$FAILS" -gt 0 ]; then
                 echo "FAIL: $FAILS assertion(s) failed; last btrfs.prom:"
                 cat "$FIX/textfile/btrfs.prom" || true
