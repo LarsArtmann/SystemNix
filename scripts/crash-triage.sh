@@ -101,7 +101,9 @@ for line in "${bootlist[@]}"; do
   echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom"
   echo "    reset-reason(in this boot, for previous): $reason"
   [ "$endkind" = "ABRUPT" ] && echo "    discriminator proposal: $branch  $ev"
-  if [ "$endkind" = "ABRUPT" ] && [ -z "$evfile" ]; then
+  # offset 0 is the RUNNING boot — "abrupt" just means it has not shut
+  # down yet; never page on it.
+  if [ "$endkind" = "ABRUPT" ] && [ "$offset" != "0" ] && [ -z "$evfile" ]; then
     echo "    !! UNEVIDENCED CRASHED BOOT — pull evidence NOW: scripts/boot-evidence-pull.sh -b <offset> (journal vacuum eats oldest boots at the cap)"
   fi
 done
