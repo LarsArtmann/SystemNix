@@ -241,6 +241,17 @@ in
     };
   };
 
+  # Caddy serves a catch-all for the split-horizon cloud zone too, but that
+  # zone is explicit-record only BY DESIGN (one namespace for the VPN alias
+  # set; unknown cloud names forward upstream rather than landing on the 404
+  # page). Paired-ness is therefore required for home.lan and explicitly
+  # waived here for the cloud domain — see modules/nixos/services/
+  # dns-caddy-wildcard-audit.nix.
+  services.dns-caddy-wildcard-audit = {
+    extraPairedDomains = [ cloudDomain ];
+    allowCatchAllWithoutWildcard = [ cloudDomain ];
+  };
+
   security.pki.certificates = [
     ''
       -----BEGIN CERTIFICATE-----
