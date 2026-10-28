@@ -37,10 +37,12 @@ mapfile -t bootlist < <("$JOURNALCTL" --list-boots --no-pager 2>/dev/null | tail
 [ ${#bootlist[@]} -ge 2 ] || { echo "crash-triage: need >=2 boots from --list-boots" >&2; exit 1; }
 
 # Reset-reason line of the PREVIOUS boot, read from boot N's kernel log
-# (the reason lives in the NEXT boot, never the dying one).
+# (the reason lives in the NEXT boot, never the dying one).  NOTE: no
+# `| head -1` under pipefail — rg with multiple matches + head = SIGPIPE
+# = silently "none" (live-caught 2026-10-28).
 reset_reason_for() { # full-boot-id -> prints reason or "none"
   local reason
-  reason=$("$JOURNALCTL" -b "$1" -k --no-pager 2>/dev/null | rg -o 'Previous system reset reason \[[^]]*\]: .*' | head -1) || true
+  reason=$("$JOURNALCTL" -b "$1" -k --no-pager 2>/dev/null | rg -m1 -o 'Previous system reset reason \[[^]]*\]: .*') || true
   echo "${reason:-none}"
 }
 
@@ -68,7 +70,7 @@ i=0
 for line in "${bootlist[@]}"; do
   i=$((i + 1))
   [ "$i" -gt "$BOOTS" ] && break
-  read -r offset full <<< "$(printf '%s %s %s\n' "$line" | awk '{print $1, $2, $3}')"
+  read -r offset full <<< "$(printf '%s\n' "$line" | awk '{print $1, $2}')"
   start=$(printf '%s\n' "$line" | awk '{print $4, $5, $6}')
   end=$(printf '%s\n' "$line" | awk '{print $8, $9, $10}')
   short="${full:0:8}"
