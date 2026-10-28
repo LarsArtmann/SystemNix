@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>AI Setups Overview &mdash; SystemNix</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -839,194 +839,414 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#fleet">Inference Fleet</a>
+          <a href="#metering">Metering Layer</a>
+          <a href="#consumers">Consumers</a>
+          <a href="#agent">Agent Setup</a>
+          <a href="#hardware">Hardware Model</a>
+          <a href="#open">Open Items</a>
+          <a href="#verification">Verification</a>
         </nav>
-      </aside>
 
       <main class="main">
+
         <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Architecture Overview</div>
+          <h1>AI Setups &mdash; SystemNix</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            The full AI estate on evo-x2: a three-tier local inference fleet
+            (NPU chat, CPU agent brain, GPU retrieval), one transparent
+            metering proxy in front of everything, the Crush agent
+            configuration, and the product fleet that consumes it all.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
-          <h3>Contents</h3>
-          <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
-          </ul>
-        </nav>
-
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
-          <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Inference Tiers</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">5</div>
+            <div class="stat-label">Live Endpoints (probe)</div>
           </div>
-        </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Foreign Port Holder (:8849)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">3</div>
+            <div class="stat-label">go-aichat SaaS Consumers</div>
+          </div>
         </div>
 
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <h4>The design in one sentence</h4>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            Async bulk work goes to the NPU (FastFlowLM, socket-activated,
+            idle-unloaded), interactive agent turns go to a CPU-resident
+            llama-server (llama-chat, always warm, thinking off), retrieval
+            goes to GPU llama-server instances (llama-rag), vision goes to
+            socket-activated llama-vlm instances &mdash; and every call,
+            local or cloud, crosses one loopback metering proxy
+            (<strong>ai-meter</strong>) that attributes tokens, cost, and
+            latency per client. Ollama was removed by owner directive
+            (2026-10-12) and is never to return.
           </p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="fleet"><span class="num">01</span>Inference Fleet</h2>
         <table>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
+              <th>Tier</th>
+              <th>Engine</th>
+              <th>Endpoint</th>
+              <th>Hardware</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>FastFlowLM</strong></td>
+              <td>flm v1.0.2 (Qwen3.6-35B-A3B MoE, ~3B active)</td>
+              <td><code>127.0.0.1:52625/v1</code> (socket-activated)</td>
+              <td>AMD XDNA NPU</td>
+              <td>Async: paperless tagging, paperless-gpt, PAP_INSIGHT, PMA commit messages</td>
+            </tr>
+            <tr>
+              <td><strong>llama-chat</strong></td>
+              <td>llama.cpp CPU (abliterated Qwen3.6-35B-A3B, Q4_K_P, 23.4 GB, <code>--jinja</code>, thinking off)</td>
+              <td><code>127.0.0.1:8850/v1</code></td>
+              <td>CPU (MoE keeps tokens interactive)</td>
+              <td>Interactive agent brain: InboxClean /chat, paperless-triage verdicts (logprobs)</td>
+            </tr>
+            <tr>
+              <td><strong>llama-rag</strong></td>
+              <td>llama-server ROCm 0.3.0 (rev-pinned <code>nixpkgs-llama-rag</code>)</td>
+              <td><code>:8848/v1</code> embeddings (bge-m3), <code>:8849</code> reranker</td>
+              <td>GPU (GTT via ROCm)</td>
+              <td>RAG retrieval: Paperless AI semantic search; reranker leg deliberately dropped (plan A13)</td>
+            </tr>
+            <tr>
+              <td><strong>llama-vlm</strong></td>
+              <td>llama.cpp vision, socket-activated templates</td>
+              <td><code>:8127</code> (e4b), <code>:8128</code> (captioner)</td>
+              <td>CPU</td>
+              <td>Vision: document captioning, visionreviewd verdicts, media-atlas</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card card-warning">
+          <h4>Why llama-chat is CPU while the GPU exists</h4>
+          <p>
+            The llama.cpp/ROCm path wedges under systemd units on gfx1150
+            (freeze #5, 2026-09-18 &mdash; even the rev-pinned 0.3.0 build:
+            ~94% single-thread CPU spin after the vocab warning, 3/3
+            repros). llama-rag only runs because it was re-pinned to the
+            byte-identical proven 0.3.0 store path and gated by a soak
+            protocol; the interactive brain went CPU instead. A 3B-active
+            MoE keeps first-token latency in milliseconds without the GPU.
+          </p>
+        </div>
+
+        <div class="card">
+          <h4>FastFlowLM operational shape</h4>
+          <p>
+            <code>MaxConnections = 8</code> inetd-style socket (flm's hard
+            limit is 10; the consumer budget peaks at 7). Cold load is 2-5
+            min for the 21.6 GB mmap'd model, so the socket activation +
+            1h idle TTL keeps RAM free when idle. The backend is the
+            memory-guard's designated sacrifice (OOMScoreAdjust=300,
+            exponential restart backoff) and carries a release-verified
+            port guard (<code>lib/port-guard.nix</code>) against the
+            5&times;-recurred zombie/orphan port-holder class. Gatus must
+            never probe :52625 &mdash; every TCP probe is a permanent
+            keepalive that pins the model.
+          </p>
+        </div>
+
+        <h2 id="metering"><span class="num">02</span>Metering Layer &mdash; ai-meter</h2>
+        <p>
+          Every OpenAI-compatible AI call on the host flows through one
+          loopback Go proxy (~700 lines, in-tree at
+          <code>pkgs/ai-meter/</code>): tokens, cost, latency, TTFT, and
+          per-client attribution without changing any request shape. Proxy
+          on <code>:8107</code>, Prometheus metrics on <code>:8108</code>
+          (scraped by SigNoz). Client keys are runtime-minted per boot
+          (<code>/run/ai-meter-keys/</code>) &mdash; never in the repo,
+          never in sops. Upstream provider keys are sops copies owned by
+          the <code>ai-meter</code> user.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Route</th>
+              <th>Upstream</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>crush (agent sessions)</td>
+              <td><code>/v1/zai</code>, <code>/v1/gemini</code></td>
+              <td>z.ai coding endpoint (GLM Coding Plan Max), Google genai (native protocol)</td>
+            </tr>
+            <tr>
+              <td>paperless-gpt</td>
+              <td><code>/v1/fastflowlm</code></td>
+              <td>127.0.0.1:52625 (NPU)</td>
+            </tr>
+            <tr>
+              <td>inboxclean chat, browser-history AI</td>
+              <td><code>/v1/llama-chat</code></td>
+              <td>127.0.0.1:8850 (CPU)</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout callout-warning">
+          <strong>Watch out</strong>
+          zai routes to the <em>coding</em> endpoint only: the GLM Coding
+          Plan (Max Yearly) quota applies there; the general endpoint has
+          zero balance and 429s with code 1113 &mdash; read the upstream
+          error body, not just the status code (2026-10-17 outage).
+        </div>
+
+        <h2 id="consumers"><span class="num">03</span>Consumer Fleet</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Consumer</th>
+              <th>Serves</th>
+              <th>Backend</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Paperless (+ celery &times;2, paperless-gpt)</td>
+              <td>Document tagging, AI suggestions, semantic search</td>
+              <td>flm :52625 + embeddings :8848</td>
+              <td>Re-enabled 2026-10-10 after the 09-18 dark window; triage verdicts gate on llama-chat logprobs margins</td>
+            </tr>
+            <tr>
+              <td>InboxClean (SaaS)</td>
+              <td>/chat Gmail agent</td>
+              <td>llama-chat :8850 via ai-meter</td>
+              <td>go-aichat consumer; 3-min turn budget; thinking disabled server-side</td>
+            </tr>
+            <tr>
+              <td>browser-history (SaaS)</td>
+              <td>AI features over history data</td>
+              <td>llama-chat :8850 via ai-meter</td>
+              <td>go-aichat consumer</td>
+            </tr>
+            <tr>
+              <td>KeyHolderAI (SaaS)</td>
+              <td>go-aichat reference consumer</td>
+              <td>own deployment</td>
+              <td>go-aichat SDK: streaming client, context windows, SSE fan-out, event-sourced chat store</td>
+            </tr>
+            <tr>
+              <td>PMA (projects-management-automation)</td>
+              <td>Commit messages (go-commit)</td>
+              <td>flm :52625</td>
+              <td><code>OPENAI_TIMEOUT=10m</code> wired &mdash; the 30s default fired mid-cold-load and triggered flm's heap SIGABRT crash class</td>
+            </tr>
+            <tr>
+              <td>papdashboard PAP_INSIGHT</td>
+              <td>Dashboard insight enrichment</td>
+              <td>flm :52625</td>
+              <td>Periodic, &le;1 concurrent</td>
+            </tr>
+            <tr>
+              <td>visionreviewd / media-atlas</td>
+              <td>Image captioning + verdicts</td>
+              <td>llama-vlm :8127/:8128</td>
+              <td>Socket-activated; bridges carry <code>SuccessExitStatus = [ 143 ]</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="agent"><span class="num">04</span>Agent Setup &mdash; Crush</h2>
+        <p>
+          Interactive AI sessions run through <code>crush</code> with an
+          HM-managed config sourced from the private
+          <code>crush-config</code> repo; keys live in sops
+          (<code>platforms/nixos/secrets/crush.yaml</code> &rarr;
+          <code>/run/secrets</code>) and are injected at load. Only
+          hyper's self-rotating OAuth state lives in the local auth
+          store. The agent skills/memory layer is fan-out-managed with
+          store-pin guards at three enforcement layers.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Provider</th>
+              <th>Model</th>
+              <th>Key source</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>zai</td>
+              <td>glm-5.3-flash (via ai-meter &rarr; coding endpoint)</td>
+              <td>sops</td>
+              <td><span class="badge badge-fixed">Active</span></td>
             </tr>
             <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>gemini</td>
+              <td>&mdash; (via ai-meter, native genai protocol)</td>
+              <td>sops</td>
+              <td><span class="badge badge-fixed">Active</span></td>
+            </tr>
+            <tr>
+              <td>synthetic</td>
+              <td>&mdash;</td>
+              <td>sops (crush-daily.yaml)</td>
+              <td><span class="badge badge-fixed">Active</span></td>
+            </tr>
+            <tr>
+              <td>hyper</td>
+              <td>&mdash;</td>
+              <td>OAuth store (self-rotating)</td>
+              <td><span class="badge badge-fixed">Active</span></td>
+            </tr>
+            <tr>
+              <td>llamacpp</td>
+              <td>auto-discovered</td>
+              <td>none (local :8899, ad-hoc)</td>
+              <td><span class="badge badge-low">Ad-hoc</span></td>
+            </tr>
+            <tr>
+              <td>kimi-coding</td>
+              <td>&mdash;</td>
+              <td>&mdash;</td>
+              <td><span class="badge badge-critical">Removed</span> 2026-10-27 (owner: do not use anymore; lock bump pending)</td>
+            </tr>
+            <tr>
+              <td>minimax</td>
+              <td>&mdash;</td>
+              <td>sops (key retained)</td>
+              <td><span class="badge badge-medium">Disabled</span> since 2026-08-31 (plan exhausted)</td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+        <h2 id="hardware"><span class="num">05</span>Hardware Model &mdash; GTT-first Strix Halo</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>NPU (XDNA, /dev/accel0) owns async chat</strong>
+              <span>FastFlowLM maps Qwen3.6 MoE onto the NPU; socket activation + idle TTL keep the 21.6 GB model out of RAM when idle.</span>
+            </div>
           </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>GPU is GTT, not VRAM</strong>
+              <span>The BIOS UMA carveout is 1 GiB (the floor). All real GPU memory is GTT = shared system RAM (~124 GiB); <code>ttm.pages_limit=120G</code> is a soft eviction trigger, and monitoring uses the <code>node_amdgpu_mem_info_gtt_*</code> metrics, never VRAM-% (which pins near 100% forever on this carveout).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>ROCm needs two session variables</strong>
+              <span><code>HSA_OVERRIDE_GFX_VERSION=11.5.1</code> (gfx1150 is not officially supported; without it ROCm silently falls back to CPU) and <code>HSA_ENABLE_SDMA=0</code>; <code>llama-server-rocm</code> additionally bakes in the ROCm library path for dlopen'd libs.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Device cgroup isolation is load-bearing</strong>
+              <span><code>rocm.deviceCgroup</code> (DevicePolicy=strict, dri/kfd only) exists because ROCm's libdrm enumeration opens the NPU accel node and wedges every llama-server start in unkillable D-state (2026-09-04 incident, corpses survive SIGKILL until reboot).</span>
+            </div>
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <h2 id="open"><span class="num">06</span>Open Items</h2>
+        <div class="issue issue-important">
+          <span class="severity severity-important">Live-confirmed</span>
+          <h3>Foreign llama-server holds the reranker port :8849</h3>
+          <div class="where">llama-rag.nix &middot; docs/todo/ai-stack.md &middot; re-confirmed live this session</div>
+          <p>
+            A hermes-spawned reranker llama-server (0.3.0 pinned build,
+            <code>--reranking --pooling rank</code>, cgroup
+            <code>hermes.service</code>) sits on :8849 while the
+            <code>llama-reranker</code> unit is inactive. This session's
+            probe agrees: :8849 is LISTENing with no unit-owned PID. The
+            identity-based leak collector journals a FOREIGN line every
+            5 min; <code>nix run .#ai-stack-status</code> flags it
+            <code>HELD-UNVERIFIED</code>. Owner decision (kill vs leave)
+            is queued &mdash; already tracked, not re-queued here.
+          </p>
+        </div>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Known class</span>
+          <h3>flm v1.0.2 cancel-path heap SIGABRT</h3>
+          <div class="where">docs/services/fastflowlm.md</div>
+          <p>
+            A client timeout mid-cold-load triggers a double-free SIGABRT;
+            no upstream release (through v1.0.7) claims a fix. Contained
+            structurally by <code>OPENAI_TIMEOUT=10m</code> on PMA, the
+            OOM/restart backoff, and the memory-guard sacrifice zones.
+            Any bump needs live-serve validation + one-time weight
+            re-pull discipline.
+          </p>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
-        </div>
+        <h2 id="verification"><span class="num">07</span>Verification &mdash; live probes, 2026-10-28</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Claim</th>
+              <th>Probe</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>llama-chat serving the abliterated Qwen3.6 model</td>
+              <td><code>GET :8850/v1/models</code></td>
+              <td><span class="badge badge-fixed">200</span> <code>qwen3.6-35b-a3b-aggressive</code></td>
+            </tr>
+            <tr>
+              <td>llama-embeddings unit active</td>
+              <td>busctl ActiveState</td>
+              <td><span class="badge badge-fixed">active</span></td>
+            </tr>
+            <tr>
+              <td>fastflowlm socket armed</td>
+              <td>busctl + ss</td>
+              <td><span class="badge badge-fixed">active</span>, :52625 listening</td>
+            </tr>
+            <tr>
+              <td>ai-meter proxy healthy</td>
+              <td><code>GET :8107/health</code></td>
+              <td><span class="badge badge-fixed">200 OK</span></td>
+            </tr>
+            <tr>
+              <td>reranker port held by foreign cgroup</td>
+              <td>ss :8849 + busctl unit state</td>
+              <td><span class="badge badge-medium">LISTEN, unit inactive</span> (hermes rogue, tracked)</td>
+            </tr>
+          </tbody>
+        </table>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-28 &middot; Claims verified against docs/services/*
+          runbooks and live probes (see &sect;07) &middot; Snapshot report, do
+          not upsert
         </footer>
       </main>
     </div>
