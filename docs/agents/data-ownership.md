@@ -31,8 +31,8 @@ recover.
 
 | Domain              | Owner (write authority)                                                                  | Class                  | Restore path                                                                                               | Evidence                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Contacts            | Kith CRM — event journal (`~/.local/share/crm/ledger.db`); projections are disposable    | **truth** (in-fleet)   | `crm-backup` nightly 03:40 → `/mnt/pool/backups/crm` (30d, WAL-safe sqlite snapshots)                      | `crm.nix:128,372` · `crm.md:5,20`                          |
-| Calendar            | **nobody** — no DAV server, no DAV client in the fleet                                   | **none**               | none                                                                                                       | `catalog-platform.nix:71` (CardDAV only) · `FEATURES.md:251` |
+| Contacts            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29 (Mesh B)**; the Kith journal demotes to a read-only people projection (held ZERO people at the move) | **truth** (in-fleet; provision + drill pending) | nightly Stalwart store archive on pbx; PII restore drill = Pareto task 7 (pending) | `crm/docs/DATA-MESH.md` amendment · plan below |
+| Calendar            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29**, gated on the CalDAV probe verdict at the deployed pin (fallback Mesh A) | **truth** (probe + provision pending) | nightly Stalwart store archive on pbx; restore drill pending (Pareto task 7) | same amendment · plan below                              |
 | Mail                | Stalwart at `mail.artmann.tech` (Hetzner VPS, off-fleet — the module targets that host)   | not in fleet           | none in-fleet; `mail-relay` here is an outbound null client only                                           | `nix-email.nix:112` ("future VPS target") · `catalog-platform.nix:71` · `configuration.nix:669` |
 | Files (Drive)       | Google Drive — canonical                                                                 | **not yours**          | Google-side; the local mirror is DISABLED (`google-sync.enable = false`)                                   | `opencloud.md:3` · `configuration.nix:711`                 |
 | Files (self-hosted) | OpenCloud — pilot, complement mode, LAN/VPN-only                                         | second write surface   | pool + `restic-app-dumps`                                                                                  | `opencloud.md:3`                                           |
@@ -86,19 +86,21 @@ Fix the second test before adding new surfaces, not after.
 
 ## Known gaps
 
-- **Calendar has no owner at all** (see above). If one is wanted, it belongs on
-  the same DAV boundary as contacts — Stalwart already advertises CardDAV
-  (`catalog-platform.nix:71`) — rather than a second DAV server next to it,
-  which would recreate the second-truth split that contacts just closed. The
-  2026-10-29 bidirectional proposal
-  (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) turns
-  this into a named decision: its D1 asks for the topology (Mesh A vs Mesh B),
-  D2 for the write authority that a Google spoke would need.
-- **Contacts are declared-owned but thin**: the Kith journal holds **zero** people
-  contacts; the 139 real ones sit in a dead Twenty dump awaiting an owner-picked
-  import route (`docs/todo/services.md:363`), and the Google Contacts sync ladder
-  is unconfigured — no client secret, no token, no button, and `ProtectHome`
-  would block the token refresh (`docs/todo/services.md:364`).
+- **Calendar owner: DECIDED 2026-10-29 (D1 = Mesh B)** — Stalwart on the same
+  DAV boundary as contacts, exactly as this doc argued; D2 = field-scoped
+  low-trust writes with deletion quarantine + per-run caps (the Google spoke
+  becomes a bi-directional edge via pim-sync, one writer per leg).
+  Open residue: the CalDAV probe verdict (Pareto tasks 3-5) is the gate — on
+  FAIL the fallback is Mesh A (journal keeps contacts, Stalwart calendar
+  only). Decision record: `crm/docs/DATA-MESH.md` amendment +
+  `docs/planning/2026-10-29_22-11_stalwart-single-truth-pareto-execution-plan.md`.
+- **Contacts owner moved before any bytes landed (the free window)**: the Kith
+  journal held **zero** people contacts at the 2026-10-29 move, so the owner
+  change cost nothing. The 139 staged Twenty people now route CSV→vCard into
+  **Stalwart** via pim-sync (Pareto task 16 — superseding the journal-import
+  routes in `docs/todo/services.md:366`); the Google sync ladder
+  (`docs/todo/services.md:367`) is superseded by pim-sync + its own GCP OAuth
+  client (Pareto task 8). The crm gcontacts/carddav legs retire re-pointed.
 - **`webphone` (pbx.artmann.tech) lists "contacts"** as a feature — an
   unexamined fourth surface with no stated direction relative to Kith
   (`catalog-platform.nix:67`).
@@ -110,7 +112,7 @@ Fix the second test before adding new surfaces, not after.
 - `docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html` — the
   bidirectional contacts+calendar proposal built on this doctrine (6 decisions,
   two end-states, and the doctrine collision with the CRM/pbx reps)
-- `docs/services/crm.md` — contacts truth, backup leg, cutover history
+- `docs/services/crm.md` — relations/deals/tasks truth (contacts demoted to Stalwart 2026-10-29), backup leg, cutover history
 - `docs/services/*.md` — every row's per-service runbook (state, not doctrine)
 - `docs/agents/integration-registry.md` — how a new service gets wired and gated
 - `docs/agents/storage.md` + `docs/services/offsite-borg.md` — backup layers and
