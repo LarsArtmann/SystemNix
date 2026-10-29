@@ -600,6 +600,16 @@ in
       # NOTHING (the 2026-10-19 burn class). Runbook: docs/services/paperless.md
       # triage section.
       paperless-triage.enable = true;
+      # Admission band re-calibrated 2026-10-29 (live audit): the default 30%
+      # band on `IO PSI some avg10` is UNREACHABLE on this host, which idles
+      # at 40-60% and peaks at 90%+ during ordinary engineering activity
+      # (buildflow/gopls/golangci runs). Result was a permanent off-switch:
+      # the unit logged 7 completed sweeps in its lifetime and REFUSED every
+      # other run, so paperless-gpt received nothing. The gate still exists
+      # for heavy disk work (migrate-* scripts, builds); this sweep is a
+      # bounded API+GPU job (max 5 verdicts, 4000 content chars, ~1s wall),
+      # so 75% keeps a real storm out while letting normal days through.
+      paperless-triage.psiMaxPercent = 75;
       # ai-meter — transparent metering proxy for every OpenAI-compatible
       # AI call (tokens, cost, latency, per-client attribution → SigNoz +
       # /var/lib/ai-meter/usage.jsonl). Clients: crush (crushrc extraRc),
