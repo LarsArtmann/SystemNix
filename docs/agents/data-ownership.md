@@ -89,7 +89,11 @@ Fix the second test before adding new surfaces, not after.
 - **Calendar has no owner at all** (see above). If one is wanted, it belongs on
   the same DAV boundary as contacts — Stalwart already advertises CardDAV
   (`catalog-platform.nix:71`) — rather than a second DAV server next to it,
-  which would recreate the second-truth split that contacts just closed.
+  which would recreate the second-truth split that contacts just closed. The
+  2026-10-29 bidirectional proposal
+  (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) turns
+  this into a named decision: its D1 asks for the topology (Mesh A vs Mesh B),
+  D2 for the write authority that a Google spoke would need.
 - **Contacts are declared-owned but thin**: the Kith journal holds **zero** people
   contacts; the 139 real ones sit in a dead Twenty dump awaiting an owner-picked
   import route (`docs/todo/services.md:363`), and the Google Contacts sync ladder
@@ -103,6 +107,9 @@ Fix the second test before adding new surfaces, not after.
 
 ## See also
 
+- `docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html` — the
+  bidirectional contacts+calendar proposal built on this doctrine (6 decisions,
+  two end-states, and the doctrine collision with the CRM/pbx reps)
 - `docs/services/crm.md` — contacts truth, backup leg, cutover history
 - `docs/services/*.md` — every row's per-service runbook (state, not doctrine)
 - `docs/agents/integration-registry.md` — how a new service gets wired and gated
