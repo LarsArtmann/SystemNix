@@ -59,6 +59,7 @@
   go-humanize-linter = "ec19200cb3f547e5856622a5c57eafeb81131050";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
   go-output = "06357826d1a9886e5b10a9aa65c8d27ce6b25e3c";
+  go-paperless = "ba4ea1fecce5f7aab778904f218020b0d16ee418";
   go-structure-linter = "0ebb272dc4316e07f045d2b1d704744104c93d4b";
   go-taskqueue = "07a396cadd5085c0aa38a8907db758cefa375840";
   gogenfilter = "ad71a7f11c3a36e5c72c382a3d59a8c118889efe";
