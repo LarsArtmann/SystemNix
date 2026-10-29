@@ -452,6 +452,15 @@
       url = "git+ssh://git@github.com/LarsArtmann/journal?ref=refs/heads/master";
     };
 
+    # go-paperless — journal's own lock pins this dep to a LOCAL
+    # file:///home/lars/projects/go-paperless path, which only resolves on
+    # this machine and kills CI eval the moment journal's inputs are
+    # walked (2026-10-29 negative-tests controls). Root-follow pins the
+    # same rev via the github remote; narHash verified identical.
+    go-paperless = {
+      url = "github:LarsArtmann/go-paperless";
+    };
+
     # index — project documentation indexer; the docs-archive-stats
     # home-manager timer records the dated-docs history TSV (which lives in
     # the index repo and rides its auto-commit) daily at 06:15.
@@ -976,6 +985,10 @@
     library-policy.inputs.git-hooks.follows = "git-hooks";
     index.inputs.flake-parts.follows = "flake-parts";
     journal.inputs.flake-parts.follows = "flake-parts";
+    # journal's nested go-paperless node is a LOCAL file:// path in
+    # journal's own lock — follow the github remote instead (see the
+    # go-paperless input block above).
+    journal.inputs.go-paperless.follows = "go-paperless";
     # journal nixpkgs deliberately NOT followed (FOD-governing go
     # toolchain — deliberate table entry in lib/lock-audit.nix). Deep
     # treefmt copy via its own go-nix-helpers pin (eval-only dep).
