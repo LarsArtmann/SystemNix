@@ -104,7 +104,18 @@ let
         def do_POST(self):
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length).decode("utf-8", "replace")
-            yes = bool(re.search(r"faktura|receipt|brutto|vat", body, re.I))
+            # Classify on the DOCUMENT EXCERPT only: decode the JSON first
+            # (the wire body has escaped newlines), then take what sits
+            # between the sweep's --- markers — the surrounding prompt
+            # template itself contains "receipt"/"VAT" and would YES every
+            # request if matched against the whole content.
+            try:
+                content = json.loads(body)["messages"][-1]["content"]
+            except Exception:
+                content = ""
+            m = re.search(r"---\n(.*)\n---", content, re.S)
+            excerpt = m.group(1) if m else ""
+            yes = bool(re.search(r"faktura|receipt|brutto|vat", excerpt, re.I))
             payload = json.dumps(completion(yes)).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -271,8 +282,16 @@ in
         f"curl -sf -H 'Authorization: Token {token}' 'http://127.0.0.1:2892{path}'"
       )
 
-    review_tag = json.loads(api("/api/tags/?name=needs-review"))
-    assert review_tag["count"] == 1, f"needs-review tag not provisioned: {review_tag}"
+    def tag_id_by_name(name):
+        # paperless 3.3.1: ?name= is not a server-side filter (declared
+        # lookups are name__iexact etc.), so an unmatched param silently
+        # returns ALL tags — exact-match client-side.
+        out = json.loads(api("/api/tags/?page_size=100000"))
+        ids = [t["id"] for t in out["results"] if t["name"] == name]
+        assert len(ids) == 1, f"tag {name!r} not uniquely present: {out}"
+        return ids[0]
+
+    review_id = tag_id_by_name("needs-review")
     views = json.loads(api("/api/saved_views/?page_size=100"))
     view_names = [v["name"] for v in views["results"]]
     assert "Needs Review (triage)" in view_names, f"saved view missing: {view_names}"
@@ -325,8 +344,7 @@ in
       )
       return json.loads(out)["tags"]
 
-    pass_tag = json.loads(api("/api/tags/?name=paperless-gpt-auto"))["results"][0]["id"]
-    review_id = review_tag["results"][0]["id"]
+    pass_tag = tag_id_by_name("paperless-gpt-auto")
 
     machine.wait_until_succeeds(
       f"test $(curl -sf -H 'Authorization: Token {token}' http://127.0.0.1:2892/api/documents/{faktura['id']}/ | jq '.tags | index({pass_tag}) != null') = true",

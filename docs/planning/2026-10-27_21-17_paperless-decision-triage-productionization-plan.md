@@ -197,3 +197,20 @@ Q1/Q2 extend the existing `[decision]` cloud-API-policy row (services.md); Q3 fo
 - T4/T5: NOT queued as `[ready]` (pack-gated); recorded here + in the pack table as the waiting state. They become rows when the pack answers.
 - T7: cross-repo — cannot ride the SystemNix queue; this section is the record that it is deliberately not harvested (owner hands §2 to the journal session).
 - T2/T3/T6/T8: already tracked (run row continuation / existing rows); no duplicates created.
+
+> **EXECUTION RECORD addendum (2026-10-29, T1d VM iterations 14–18):** the
+> VM test caught two REAL paperless-3.3.1 API contract bugs plus two script
+> bugs that live-API probes had missed (live probes never exercised a
+> bulk_edit write or a name→id lookup against an existing tag population):
+> (a) `bulk_edit modify_tags` requires BOTH `add_tags` AND `remove_tags`
+> keys — every production sweep would have 400'd on every write; (b)
+> `/api/tags/?name=` is not a server-side filter in 3.3.1 (declared lookups
+> are `name__iexact` etc.) — lookups silently return ALL tags, and the T6
+> provisioner's existence check built on it meant the drift-heal would
+> create NOTHING once any tag existed (the exact SUPERB-restore scenario it
+> was built for); both now exact-match client-side. Script bugs: the
+> selftest EXIT trap outlived its function-local temp var (nounset kills
+> the script at exit 0, bash reports "line 1"), and `ensure_tag` logged
+> "created tag" to stdout — polluting the captured tag id into invalid
+> JSON on any fresh/restored instance. Fixed + documented as runbook traps
+> 1–3 in paperless.md §Decision-triage gate.

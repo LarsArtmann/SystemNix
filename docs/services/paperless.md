@@ -370,6 +370,29 @@ metrics, and sweep idempotence end-to-end). Bench calibration:
 top-2 MARGIN column + a margin≥0.6 gate simulation alongside the
 confidence≥0.9 one.
 
+**Paperless 3.3.1 API contract traps (VM-proven 2026-10-29, cost 4 test
+iterations):**
+
+1. `POST /api/documents/bulk_edit/` with `method=modify_tags` requires
+   BOTH `parameters.add_tags` AND `parameters.remove_tags` to be PRESENT
+   (an `[]` is fine); omitting either returns
+   `400 {"non_field_errors":["remove_tags not specified"]}`. The sweep
+   always sends `remove_tags: []` — the call is strictly additive.
+2. `GET /api/tags/?name=<x>` is NOT a server-side filter on 3.3.1: the
+   declared lookups are `name__istartswith/iendswith/icontains/iexact`
+   (filters.py `CHAR_KWARGS`), so an unmatched `name=` param is silently
+   IGNORED and the response contains ALL tags — `results[0].id` is then
+   whatever tag has the lowest pk, not the tag you asked for. All
+   name→id resolution (sweep `tag_id_of`, provisioner existence checks,
+   test lookups) must exact-match client-side over
+   `?page_size=100000` results. The T6 provisioner's original
+   `.count > 0` check had exactly this bug: once ANY tag existed the
+   heal would create NOTHING (drift stays).
+3. Failure reasons from paperless calls must ride the WARN line
+   (`curl --fail-with-body` output captured and appended) — the four
+   iterations the `remove_tags` 400 stayed invisible behind a bare
+   "bulk_edit failed" are the standing proof.
+
 ## Accounting field extraction on scanned invoices (2026-10-19 go-live)
 
 > **DRIFT RESOLVED 2026-10-27 (decision-triage plan T6):** the missing
