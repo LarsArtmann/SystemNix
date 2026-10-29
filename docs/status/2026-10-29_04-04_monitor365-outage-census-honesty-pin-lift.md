@@ -122,7 +122,9 @@ The three FAILs are load/timing artifacts, each verified rather than assumed:
 | `Service Sanity journal — prometheus-node-exporter 464/min` | the documented storm class; not service-initiated |
 | `Gitea runner` | the switch stops the runner and the 5-min keep-alive restarts it — watched it: inactive 03:43:07 → **active 03:44:37** |
 
-New fail-set baseline recorded at `~/.local/state/systemnix/smoke-fail-baseline.txt` (those three names). This also answers the previous report's "re-run smoke on a calm box" ask for the coverage leg specifically: `signoz_traces_missing` is 0 in the deployed generation.
+New fail-set baseline recorded at `~/.local/state/systemnix/smoke-fail-baseline.txt` (those three names).
+
+**Second smoke run (04:30, after the deploy settled):** `PASS 167 / FAIL 4 / SKIP 3 / WARN 12 / STORM-SUSPECT 1`, still storm mode (io PSI 35.7 %). Three of the four FAILs are the same two load artifacts plus a **new, real-but-owned-elsewhere** one: `FastFlowLM - :52625 unreachable`. Investigation: `fastflowlm.socket` is **inactive** because the memory-emergency guard stopped it — the guard is firing every 30 s (`journalctl --since '6 hours ago' | grep -i 'Memory emergency guard'` shows a 30 s cadence through 04:28–04:30) with swap at **62/62 GiB** and 73 GiB used, i.e. the designed safety valve working under the concurrent agent batch, not a regression from this session's changes. It re-arms when pressure drops; the trade-off is that the auto-commit daemon's LLM provider is dark while it holds. Recorded, not fought. This also answers the previous report's "re-run smoke on a calm box" ask for the coverage leg specifically: `signoz_traces_missing` is 0 in the deployed generation.
 
 ## §7 Harness repairs (found by running the suite, which had never run this session)
 
