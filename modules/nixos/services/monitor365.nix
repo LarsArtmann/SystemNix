@@ -207,9 +207,12 @@
         runtimeInputs = [
           pkgs.coreutils
         ];
-        text = ''
-          exec ${pkgs.bash}/bin/bash ${../../../scripts/monitor365-ensure-sso-identity.sh} '${ssoAdminEmail}'
-        '';
+        # Repo-file-backed, like the retention script above: the fixture
+        # (checks.monitor365-sso-identity-selftest) then executes the SAME
+        # text the ExecStartPre runs. The admin email arrives as argv[1]
+        # from the ExecStartPre line below, so this text keeps no
+        # Nix-interpolated state.
+        text = builtins.readFile ../../../scripts/monitor365-ensure-sso-identity.sh;
       };
 
       # Server DB backup, quiesced. Upstream's backup (admin_cmd.rs
@@ -509,7 +512,7 @@
                 # After the heal: the identity check opens the DB only once
                 # the WAL/restore state is resolved. Order matters.
                 ++ lib.optionals (serverCfg.sso.enable or false) [
-                  (lib.getExe ssoIdentityScript)
+                  "${lib.getExe ssoIdentityScript} ${ssoAdminEmail}"
                 ]
               );
               TimeoutStartSec = "3min";
