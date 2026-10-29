@@ -141,7 +141,7 @@
           db="${config.services.immich.database.name or "immich"}"
           psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
 
-          install -d -o ${cfg.user} -g ${cfg.group} -m 0750 "$state"
+          install -d -o ${cfg.user} -g ${cfg.user} -m 0750 "$state"
 
           # Schema guard (loud): the INSERT below couples to Immich's api_key
           # shape — key is BYTEA holding the raw sha256 digest of the token
@@ -166,7 +166,7 @@
             esac
             tmp=$(mktemp "$state/.hub-api-key.XXXXXX")
             printf '%s' "$token" > "$tmp"
-            chown ${cfg.user}:${cfg.group} "$tmp"
+            chown ${cfg.user}:${cfg.user} "$tmp"
             chmod 0400 "$tmp"
             mv -f "$tmp" "$hubkey"
             echo "media-atlas-key-provision: minted hub API key"
@@ -208,7 +208,7 @@
             insert_key "$hex"
             tmp=$(mktemp "$state/.immich-key.XXXXXX")
             printf '%s' "$token" > "$tmp"
-            chown ${cfg.user}:${cfg.group} "$tmp"
+            chown ${cfg.user}:${cfg.user} "$tmp"
             chmod 0400 "$tmp"
             mv -f "$tmp" "$immkey"
             echo "media-atlas-key-provision: minted Immich API key ($keyname)"
@@ -268,7 +268,7 @@
 
         hub.immich.mlUrl = lib.mkOption {
           type = lib.types.str;
-          default = "http://127.0.0.1:3003";
+          default = "http://127.0.0.1:${toString ports.immich-ml}";
           defaultText = "http://127.0.0.1:3003";
           description = "Immich machine-learning service base URL (text-query embeddings, the upstream CLI default).";
         };

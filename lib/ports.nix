@@ -110,6 +110,11 @@
     # squat 8491/8492 by convention; production takes the next free 84xx.
     media-atlas = 8493;
 
+    # Immich machine-learning service (the hub dials it for text-query
+    # embeddings, --immich-ml-url; Immich's own upstream default, dial-only
+    # from the hub — immich.nix owns the bind).
+    immich-ml = 3003;
+
     attic = 8200;
 
     # FastFlowLM NPU LLM server (OpenAI-compatible) — socket-activated frontend
