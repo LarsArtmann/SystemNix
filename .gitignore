@@ -218,3 +218,7 @@ go.work.sum
 *.qcow2
 # Sensitive files
 id_ed25519*
+
+## In-tree Go build outputs (daemon-sweep guard, 2026-10-29)
+pkgs/ai-meter/ai-meter
+pkgs/gatus-alert-relay/gatus-alert-relay
