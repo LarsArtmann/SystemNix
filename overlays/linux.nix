@@ -274,8 +274,10 @@ let
     # mismatched the 2026-10-15 shim value AAXq+KGA… vs got s37MeZuL….
     # RE-STALE AGAIN 2026-10-26 lock float: spec s37MeZuL, got /sLqiHyQ
     # (float-proof-20261026-161006.log).
+    # RE-STALE AGAIN 2026-10-29 23:10 lock float (rev 83c4d8a3): spec
+    # /sLqiHyQ, got iPis8A3A (deploy keep-going, nh build log).
     crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-/sLqiHyQXgesEfTiSSRKxHeUScynb7NmgZ+LMnCt96w=";
+      vendorHash = "sha256-iPis8A3Arpz8xGsniYH/BtjZoCJ6STrtdX8oD1T+KNA=";
     };
     # overview shim RE-ADDED (2026-10-19 wave): the lock float moved past
     # the 2026-10-17 bit-neutral drop (tip 966465e == lock then); keep-going
