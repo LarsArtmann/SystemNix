@@ -8,6 +8,12 @@
     # NetBird mesh VPN client (outbound WireGuard tunnel wt0 — see
     # modules/nixos/services/netbird.nix; control plane on the pbx server)
     netbird = 51820;
+    # NetBird client local Prometheus /metrics endpoint (netbird >=0.67,
+    # `--enable-local-metrics` / config.json LocalMetrics*). 9465, NOT the
+    # netbird default 9191: ocis binds the whole 9100-9304 loopback band at
+    # startup (see the gatus band-vacation note below; monitor365 paid for
+    # exactly this collision 2026-10-27).
+    netbird-metrics = 9465;
 
     dns-blocker = 53;
     dns-blocker-stats = 9090;
