@@ -259,7 +259,14 @@ lib.filterAttrs (_: v: v != null) {
   # Non-follower class: builds under its own lock — probe-verified
   # 2026-10-19 (ba60fe0d, no shim needed). Rides PATH via base.nix
   # attrValues (both hosts) + the quick-go §11 pre-deploy batch.
-  journal = flakePkg inputs.journal;
+  # RE-STALE 2026-10-29 float: journal@50b4941 bakes R6w7rVD9… but its
+  # module graph fetches OzU6YCvB… (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261029-180630.log). Mirrored in
+  # journal-serve.nix's package default — edit BOTH. Drop when upstream
+  # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+  journal =
+    flakePkgShim inputs.journal "default"
+      "sha256-OzU6YCvBTkDl9Jfj5fCOAczSzYMPbv397a7BuDF2rdA=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
