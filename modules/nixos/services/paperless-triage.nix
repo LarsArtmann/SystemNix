@@ -410,8 +410,12 @@ _: {
             # The response body lands in TAG_API_ERR (curl --fail-with-body
             # writes the server's error there) so failure reasons are never
             # swallowed — callers append it to their WARN.
+            # paperless 3.3.1 bulk_edit modify_tags requires BOTH add_tags and
+            # remove_tags present (each optional-key absence is a 400
+            # non_field_errors "… not specified", VM-proven 2026-10-29);
+            # remove_tags stays empty — this call is strictly additive.
             TAG_API_ERR=$(api POST /api/documents/bulk_edit/ \
-              "{\"documents\":[$1],\"method\":\"modify_tags\",\"parameters\":{\"add_tags\":[$2]}}") || return 1
+              "{\"documents\":[$1],\"method\":\"modify_tags\",\"parameters\":{\"add_tags\":[$2],\"remove_tags\":[]}}") || return 1
           }
 
           while IFS= read -r doc; do
