@@ -6726,6 +6726,27 @@
         "type": "github"
       }
     },
+    "media-atlas": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793269586,
+        "narHash": "sha256-rFJAIAIlevSllDOLjJqUSznZH+Z5FmVXEbSshnD4p5g=",
+        "ref": "refs/heads/master",
+        "rev": "435a0ba451c819cab99ce049e078dc7f067a176c",
+        "revCount": 178,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/media-atlas"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/media-atlas"
+      }
+    },
     "mic-monitor": {
       "flake": false,
       "locked": {
@@ -8063,6 +8084,7 @@
         "journal": "journal",
         "library-policy": "library-policy",
         "md-go-validator": "md-go-validator_2",
+        "media-atlas": "media-atlas",
         "monitor365": "monitor365",
         "mr-sync": "mr-sync",
         "niri": "niri",

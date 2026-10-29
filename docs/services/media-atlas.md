@@ -1,16 +1,39 @@
-# media-atlas (federation hub — groundwork)
+# media-atlas (federation hub)
 
-**Service:** `modules/nixos/services/media-atlas.nix` — groundwork only (v0.1 plan L11 + L03 enabler; repo `~/projects/media-atlas`). The hub binary, port, `map.local` vHost, and gatus check land with the L25 deploy PR. Runbook source: media-atlas `docs/planning/2026-10-25_21-56_SUPERB-media-atlas-v0.1-build-plan.md`.
+**Service:** `modules/nixos/services/media-atlas.nix` — groundwork (v0.1 plan L11 + L03 enabler) PLUS the hub service (`services.media-atlas.hub.enable`, the L25 deploy; repo `~/projects/media-atlas`, forgejo-primary). Runbook source: media-atlas `docs/planning/2026-10-25_21-56_SUPERB-media-atlas-v0.1-build-plan.md` + `docs/deploy/flip-card.md`.
 
 ## What this deploys today
 
-| Piece                     | What                                                                                                                      |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `media_atlas` user + role | Peer-auth principal: OS user == PG role, system user, no password (socket peer only; TCP stays password-gated)             |
+| Piece                       | What                                                                                                                                                                                                                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media_atlas` user + role   | Peer-auth principal: OS user == PG role, system user, no password (socket peer only; TCP stays password-gated)                                                                                                                                                                                                 |
 | `media-atlas-pg-ro` oneshot | Root converger (discordsync-immich-key-provision pattern): `GRANT CONNECT/USAGE/SELECT` on the immich DB + `ALTER DEFAULT PRIVILEGES FOR ROLE immich` so future migrations stay readable; echoes the `smart_search` schema fingerprint + row count into the journal (Phase-0 evidence + `atlas doctor` anchor) |
-| Immich archive read       | `immich` user joins the `discordsync` group (DAC read on `attachments/`, `drwxrwx---`) + `BindReadOnlyPaths` on `immich-server` (namespace-level RO) + `RequiresMountsFor` (mount-gated, 226 class) — DiscordSync ADR-061 external-library runbook |
+| Immich archive read         | `immich` user joins the `discordsync` group (DAC read on `attachments/`, `drwxrwx---`) + `BindReadOnlyPaths` on `immich-server` (namespace-level RO) + `RequiresMountsFor` (mount-gated, 226 class) — DiscordSync ADR-061 external-library runbook                                                             |
 
-## Ops
+## The hub service (`hub.enable`)
+
+| Piece                       | What                                                                                                                                                                                                                                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `media-atlas` service       | `atlas serve` as `media_atlas`, loopback `:8493` (`ports.media-atlas`), `StateDirectory=media-atlas` (0750), `harden{}` + `ioTier.background`, journal on the pool QLC root                                                                                                                                                        |
+| `media-atlas-key-provision` | Root converger (discordsync-immich-key-provision pattern): mints the INBOUND hub key (`hub-api-key`) once and the OUTBOUND Immich key (`immich-key`, api_key row `media-atlas-hub (nix-managed)`, scopes `asset.read asset.view asset.statistics tag.read library.read`), file-first reconcile, `try-restart`s the hub on rotation |
+| vHost `map.home.lan`        | Registry entry, **plain layer** — the hub's own single API key gates `/api`, `/events`, `/thumb` (OQ-5); caddy-side auth would double-gate. TLS-only at caddy                                                                                                                                                                      |
+| Gatus                       | `/health/ready` 30s + functional plate check (`Map · MediaAtlas` title) 60s, Discord alert on failure                                                                                                                                                                                                                              |
+| Dashboard tile              | "MediaAtlas", group Media, photoprism icon (no atlas glyph in the pack)                                                                                                                                                                                                                                                            |
+
+### Deploy sequence (owner, IO-quiet window)
+
+1. Seed the production journal FIRST, from the hub repo: `docs/deploy/flip-card.md` (stage + `sudo -u media_atlas` embeddings join + metadata join). The service's `StateDirectory` is the same `/var/lib/media-atlas` the flip card stages, so the seeded journal becomes the live store.
+2. Re-lock the input to the intended rev: `nix flake lock --update-input media-atlas` (branch-tracked; the lock is the pin — the repo's auto-commit daemon lands commits continuously, so never eval a moving tip un-reviewed).
+3. `nix run .#deploy` (the provisioner loop re-converges keys; the hub unit starts after `media-atlas-key-provision` via `requires`).
+4. Verify: gatus tile green + `atlas` plate at `https://map.home.lan` with the hub key.
+
+### Ops
+
+- **Key rotation** — hub key: `rm /var/lib/media-atlas/hub-api-key && systemctl restart media-atlas-key-provision` (mints + restarts the hub). Immich key: same with `immich-key`; the file-first reconcile re-inserts the row from the file plaintext on DB restore.
+- **Legacy key cleanup** — the interactive 2026-10-29 mint (`media-atlas-hub (nix-managed pending L25)`) is superseded by the provisioner's row; delete it in the Immich UI after the first provisioned deploy.
+- **Nightly timers** — the UMAP sidecar + `poll-embeddings` timers are NOT in this module yet (media-atlas `docs/deploy/umap-nightly-timer.nix` is the reference); land them with the v0.1 follow-up.
+
+## Ops (groundwork)
 
 - **Converger contract** — role creation is guarded, all grants idempotent; re-runs (every deploy via the provisioner loop, plus boot) converge. Missing `smart_search` is a WARN (Immich's ML toggle), never a grant failure.
 - **External library** — the Immich library object itself is created via Immich's API (media-atlas plan L03; runbook: DiscordSync `docs/runbook/immich-external-library.md`), with the runbook's exclusion globs (`**/*.gz`, `**/*.zst`, `**/*.thumb.jpg`, `**/*.poster.jpg`). First scan runs in the IO-quiet window.
@@ -18,4 +41,4 @@
 
 ## Backup
 
-None yet (no state). The hub's own SQLite store + its pool backup land with L25.
+The hub's SQLite journal lives in `StateDirectory /var/lib/media-atlas` (pool QLC root). Backup policy rides the pool's existing snapshot cadence; a dedicated freshness check lands with the v0.1 follow-up (journal is rebuildable from Immich — it is a derived store, RPO = re-pull).

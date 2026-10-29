@@ -540,12 +540,21 @@ in
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
       # repo ~/projects/media-atlas): read-only media_atlas PG role on the
       # immich DB (smart_search) + Immich external-library read access to
-      # the DiscordSync archive (ADR-061 runbook). The hub service itself
-      # (unit, port, map.local vHost) lands with the L25 deploy PR.
+      # the DiscordSync archive (ADR-061 runbook). hub.enable adds the L25
+      # serve unit: atlas serve on loopback 8493 behind map.home.lan (plain
+      # layer — the hub's own API key is the one auth gate), key provisioner
+      # mints inbound hub key + outbound Immich key (tag.read + library.read
+      # included). Deploy = owner action in an IO-quiet window; seed the
+      # production journal first via the repo's docs/deploy/flip-card.md.
       # Runbook: docs/services/media-atlas.md
       media-atlas = {
         enable = true;
         immichExternalLibrary.enable = true;
+        hub.enable = true;
+        # The CLIP model Immich actually embeds with (verified via
+        # GET /api/system-config 2026-10-29); text queries must embed in
+        # the same space or search ranks garbage.
+        hub.immich.mlModel = "ViT-B-32__openai";
       };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,
