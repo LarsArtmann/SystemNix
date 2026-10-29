@@ -79,6 +79,16 @@
                 ];
                 alert = "File and Image Renamer health dashboard down - screenshot renaming may be stuck";
               }
+              {
+                name = "File Renamer Watcher";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.file-and-image-renamer-watcher}/healthz";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                ];
+                alert = "File and Image Renamer watcher pipeline down - the watch loop is not serving healthz";
+              }
             ];
             homepage = {
               name = "File Renamer";
