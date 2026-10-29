@@ -1,7 +1,7 @@
 # Paperless decision-triage productionization — design + owner decision pack
 
 **Created:** 2026-10-27 21:17 CEST (session following the 20:55 bench-status report)
-**EXECUTING (instance crush-triage-exec-2026-10-27, 2026-10-27 21:40 CET, HEAD `65a2a3aa1`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTING (instance crush-triage-exec-2026-10-27, 2026-10-27 21:40 CET, HEAD `65a2a3aa1`):** executing (see AGENTS.md plan-execution tombstone). **2026-10-29:** T1–T8 + docs green (VM test exit-0, flake check green, README re-stamped); deploy leg BLOCKED at the entry gate by an IO-PSI corpse-pile (avg10 76%, events_unbound D-state, idle disks — freeze-class precursor; not forced). Re-fire `nix run .#deploy` under quiescence then the paperless.md §Decision-triage-gate smoke list; tombstone flips to EXECUTED only after live verify.
 **Inputs:** [Jev×paperless exploration](../status/2026-10-27_19-46_jev-decision-models-paperless-exploration-status.md) · [Bench + live Jev run](../status/2026-10-27_20-55_decision-model-bench-built-jev-live-run-status.md) · [Bench results dashboard](../research/2026-10-27_paperless-decision-bench-results.html) · [AI-MAX plan](./2026-10-02_13-32_PAPERLESS-AI-MAX-EXECUTION-PLAN.md) (A7/A8 landed = paperless-gpt live) · bank-sync [ledger kernel design](file:///home/lars/projects/bank-sync/docs/planning/2026-10-02_11-50_ledger-accounting-kernel-design.html) + [target mesh](file:///home/lars/projects/bank-sync/docs/planning/2026-10-04_04-05_target-mesh.d2) · journal README/AGENTS (the kernel)
 **Status:** DESIGN — Stages P1 is dispatchable today; P2+ gated on the decision pack (§6). Nothing here is deployed.
 

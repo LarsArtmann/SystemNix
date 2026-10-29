@@ -106,6 +106,35 @@
       # tree, so the sandbox build needs no GOPRIVATE fetch setup.
       atlasPkg = inputs.media-atlas.packages.${pkgs.stdenv.hostPlatform.system}.atlas;
 
+      # Root converger: make the DiscordSync attachment tree group-readable
+      # so the Immich crawler can walk it (ADR-061 external-library grant:
+      # the immich user IS in the discordsync group, and the archive ROOT
+      # is 0770 discordsync:discordsync). The per-channel subdirs the
+      # DiscordSync writer creates carry a restrictive umask though — the
+      # FIRST scan EACCES'd on attachments/00 while the root listed fine
+      # (2026-10-29, immich-server journal). chmod g+rX is idempotent and
+      # cheap on the ~5.5k-file tree; the deploy loop re-runs it so new
+      # subdirs converge. Durable writer-side fix (UMask on the DiscordSync
+      # unit) stays a DiscordSync-lane follow-up — ADR-061 keeps that repo
+      # change-free for MVP.
+      archivePermConverger = pkgs.writeShellApplication {
+        name = "media-atlas-archive-perms";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.findutils
+        ];
+        text = ''
+          set -euo pipefail
+          archive="${archivePath}"
+          if [ ! -d "$archive" ]; then
+            echo "media-atlas-archive-perms: $archive missing (pool unmounted?) — nothing to converge" >&2
+            exit 0
+          fi
+          find "$archive" -depth -exec chmod g+rX -- {} +
+          echo "media-atlas-archive-perms: converged group-read on the archive tree"
+        '';
+      };
+
       # Root converger for BOTH API keys (discordsync-immich-key-provision
       # pattern — DB-level INSERT, idempotent, file-first reconcile):
       #   hub-api-key — the INBOUND key the serve unit requires on /api,
@@ -338,6 +367,30 @@
         };
 
         # --- The hub service (v0.1 deploy, L25) ---
+        systemd.services.media-atlas-archive-perms = lib.mkIf cfg.immichExternalLibrary.enable {
+          description = "MediaAtlas archive permission converger (group-read on the DiscordSync attachment tree for the Immich crawler)";
+          # Mount-gated (226 class): a detached DAS skips cleanly via the
+          # converger's -d guard, never shadow-writes a root-fs path.
+          unitConfig.RequiresMountsFor = [ archivePath ];
+          wantedBy = [ "multi-user.target" ];
+          # Converge BEFORE the crawler can scan.
+          before = [ "immich-server.service" ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = lib.getExe archivePermConverger;
+              TimeoutStartSec = "10min";
+              # chmod on a discordsync-owned tree needs root; no secret, no
+              # runuser — NoNewPrivileges stays ON.
+              ProtectSystem = "strict";
+              PrivateTmp = true;
+              ReadWritePaths = [ archivePath ];
+            }
+            ioTier.background
+          ];
+        };
+
         systemd.services.media-atlas-key-provision = lib.mkIf hubCfg.enable {
           description = "MediaAtlas API key provisioner (inbound hub key + outbound Immich key, idempotent converger)";
           after = [

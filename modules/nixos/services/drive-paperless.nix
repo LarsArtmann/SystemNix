@@ -77,7 +77,8 @@ _: {
           gdrive = "Google Drive (private)";
           gdrive-shared = "Google Drive (shared with me)";
           gwork = "Google Workspace";
-        }.${remote} or "Google Drive (${remote})";
+        }
+        .${remote} or "Google Drive (${remote})";
       defaultSources =
         if googleSyncPresent then
           map (m: {
