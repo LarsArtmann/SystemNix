@@ -116,8 +116,11 @@
       # permission) spec MeDzARcT, got autqYveR (first-hand,
       # ~/.cache/lockfloat/float-proof-20261028-cvdd201.log) — the strand
       # keeps flapping; this hash tracks the LOCKED rev.
+      # ELEVENTH RE-STALE 2026-10-29 float: cv@e168e6d spec autqYveR, got
+      # g1hKglo (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261029-180630.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-autqYveRmHaCno4bfxfpdDgo1OkQi2hxHCd+9HuYon0=";
+        vendorHash = "sha256-g1hKglo1kRrQQ6VE15KSmwJPq407juRlooOS4gnHxgA=";
       };
     in
     {

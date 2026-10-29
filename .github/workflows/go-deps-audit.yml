@@ -48,24 +48,22 @@ jobs:
             access-tokens = github.com=${{ secrets.NIX_GITHUB_RO_TOKEN || secrets.GITHUB_TOKEN }}
 
       # The audit's `nix eval` of input outPaths forces every private input
-      # tree (CV, go-cqrs-lite, branching-flow — all git+ssh). Same auth
-      # block as nix-check.yml; go-nix-helpers rides an HTTPS rewrite.
+      # tree (all LarsArtmann repos are git+ssh). Same auth block as
+      # nix-check.yml; go-nix-helpers rides an HTTPS rewrite.
       - name: Configure private flake-input auth
         env:
-          NIX_DEPLOY_KEY_CV: ${{ secrets.NIX_DEPLOY_KEY_CV }}
-          NIX_DEPLOY_KEY_GO_CQRS_LITE: ${{ secrets.NIX_DEPLOY_KEY_GO_CQRS_LITE }}
-          NIX_DEPLOY_KEY_BRANCHING_FLOW: ${{ secrets.NIX_DEPLOY_KEY_BRANCHING_FLOW }}
-          NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH }}
-          NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK: ${{ secrets.NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK }}
-          NIX_DEPLOY_KEY_JOURNAL: ${{ secrets.NIX_DEPLOY_KEY_JOURNAL }}
+          # One bundle secret serves EVERY private git+ssh flake input (46
+          # LarsArtmann repos as of 2026-10-29): each repo has a read-only
+          # deploy key, all keys concatenated in the secret. csplit splits
+          # on the OPENSSH BEGIN lines, so a newly added private input
+          # needs its key appended to the secret and zero workflow edits.
+          NIX_DEPLOY_KEYS_BUNDLE: ${{ secrets.NIX_DEPLOY_KEYS_BUNDLE }}
         run: |
           eval "$(ssh-agent -s)" >/dev/null
-          printf '%s\n' "$NIX_DEPLOY_KEY_CV" | ssh-add -
-          printf '%s\n' "$NIX_DEPLOY_KEY_GO_CQRS_LITE" | ssh-add -
-          printf '%s\n' "$NIX_DEPLOY_KEY_BRANCHING_FLOW" | ssh-add -
-          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DEPENDENCY_GRAPH" | ssh-add -
-          printf '%s\n' "$NIX_DEPLOY_KEY_PROJECT_DISCOVERY_SDK" | ssh-add -
-          printf '%s\n' "$NIX_DEPLOY_KEY_JOURNAL" | ssh-add -
+          printf '%s\n' "$NIX_DEPLOY_KEYS_BUNDLE" | csplit -z -s -f /tmp/nix-dk- - '/BEGIN OPENSSH PRIVATE KEY/' '{*}'
+          chmod 600 /tmp/nix-dk-*
+          for f in /tmp/nix-dk-*; do ssh-add "$f"; done
+          rm -f /tmp/nix-dk-*
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
           echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
           echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"

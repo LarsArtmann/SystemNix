@@ -107,8 +107,11 @@
       # RE-STALE AGAIN (2026-10-28 blanket float): kith-crm@fcb3bb38 spec
       # nP5lPlmK, got XDRvpM8 (float-proof-20261028-214409.log). Same
       # non-follower treadmill; drop when upstream bakes XDRvpM8.
+      # RE-STALE (2026-10-29 float): kith-crm@f1d40c9 spec XDRvpM8, got
+      # LpMsryrv (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261029-180630.log).
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-XDRvpM8/R7g5PDWJ5U4fb/8+w9pk5n2VCiY6W/4tTWU=";
+        vendorHash = "sha256-LpMsryrviNzDbeJrQBQnvviZxgUaAwFNWb2vTGRC7BU=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
