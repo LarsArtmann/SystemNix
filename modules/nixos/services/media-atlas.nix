@@ -272,6 +272,12 @@
           defaultText = "http://127.0.0.1:3003";
           description = "Immich machine-learning service base URL (text-query embeddings, the upstream CLI default).";
         };
+
+        hub.immich.mlModel = lib.mkOption {
+          type = lib.types.str;
+          default = "";
+          description = "CLIP model for the hub's text queries — MUST equal the Immich smart-search model (Immich admin → machine learning, live: ViT-B-32__openai on this deployment). Empty = /api/search answers 502 with a config hint; embeddings from a different model would not share the stored vectors' space.";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -403,6 +409,7 @@
                 "--api-key-file ${stateDir}/hub-api-key"
                 "--immich-url ${hubCfg.immich.url}"
                 "--immich-ml-url ${hubCfg.immich.mlUrl}"
+                "--immich-ml-model ${hubCfg.immich.mlModel}"
                 "--immich-key-file ${stateDir}/immich-key"
               ];
             }

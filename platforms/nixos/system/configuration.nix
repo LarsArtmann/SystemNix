@@ -551,6 +551,10 @@ in
         enable = true;
         immichExternalLibrary.enable = true;
         hub.enable = true;
+        # The CLIP model Immich actually embeds with (verified via
+        # GET /api/system-config 2026-10-29); text queries must embed in
+        # the same space or search ranks garbage.
+        hub.immich.mlModel = "ViT-B-32__openai";
       };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,
