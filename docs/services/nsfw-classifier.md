@@ -18,14 +18,51 @@ Backend for the Helium NSFW extension (loaded via `--load-extension` from the so
 - **Storage follows value class (ADR-0016, upstream `docs/adr/0016-state-root-storage-placement.md`)** — TWO roots:
   - **State root** `/var/lib/nsfw-classifier/state/` (`StateDirectory=nsfw-classifier/state`, mode 0700): the DURABLE stores — `feedback.db` (irreplaceable golden human labels), `domains.db` (DNS-feed evidence journal), `history.db` + `history/` (unrepeatable captures). Wired via explicit `--feedback-db/--domain-db/--history-db/--history-dir` flags (the `stateRoot` option; `null` = upstream cache-dir defaults = migration rollback).
   - **Cache root** `/var/cache/nsfw-classifier/` (`CacheDirectory=` + `XDG_CACHE_HOME=/var/cache`, lars-owned): what STAYS — `verdicts.db` (recomputable by design), `feedback.jsonl` (derived mirror; rebuilt from the journal when missing), `pair-token` (extensions auto re-pair from `/readyz`).
-- **Port binds BEFORE model load** (fast-fail on port-in-use; `Type=simple` is sufficient) — `/readyz` gates readiness during load + warmup; expect first-check red after a cold start, now with `TimeoutStartSec = 10min` (17 CPU model loads vs the global 3-min default).
+- **Port binds BEFORE model load** (fast-fail on port-in-use; `Type=simple` by default — any `watchdogSec` value flips the unit to `Type=notify`, see the deploy checklist) — `/readyz` gates readiness during load + warmup; expect first-check red after a cold start, now with `TimeoutStartSec = 10min` (17 CPU model loads vs the global 3-min default).
 - **Limits** — MemoryMax 16G (full ensemble; MemoryHigh derived 12.8G), ioTier.background, start-limit 5 starts / 5 min (test-pinned).
-- **Alerting** — unit failures page via the `notify-failure@%n` template (Discord); Gatus probes `http://127.0.0.1:8104/readyz` every 30s with `[STATUS] == 200` + `[RESPONSE_TIME] < 500` (measured 0.3–10 ms live); unit-state metrics via the registry entry (`monitored`).
+- **Alerting** — unit failures page via the `notify-failure@%n` template (Discord); Gatus probes `http://127.0.0.1:8104/readyz` every 30s with `[STATUS] == 200` + `[RESPONSE_TIME] < 500` (measured 0.3–10 ms live), plus an x86_64-only `nsfw-classifier-provider` check on `/api/health` that alarms when the EFFECTIVE provider stops being `rocm` (the silent-CPU incident's tripwire, 2026-10-29); unit-state metrics via the registry entry (`monitored`).
 - **CLI on PATH** — the module installs the unit's package (same ROCm wrapping) into `environment.systemPackages`: `nsfw <subcommand>` works in any shell (`server`, `classify`, `benchmark`, `batch-report`, `evaluate`, `human-review`, `latency-bench`, plus `faces`/`parts`/`immich`/`history`), and `bin/` also carries the `nsfw-server`/`nsfw-classify`/… compat shims. Don't casually run a second `nsfw server` against the live instance (port 8104 + shared cache/state roots; the running unit IS the server).
 - **GPU runtime (ROCm/MIGraphX) — RESOLVED 2026-10-15, was the silent-CPU incident**: the `package` option defaults to the flake's `nsfw-classifier-go-rocm` build on x86_64 (`?`-guarded so a pre-rocm lock keeps evaluating on the CPU build). The CPU-wrapped package's ONNX Runtime (the Microsoft release) cannot enable MIGraphX at all — on this AMD host every model silently fell back to CPU inference on every restart since at least Oct 7 (journal: `auto-detected provider unavailable, falling back to CPU` per model), which held ~300ms fast verdicts only while the box was idle; under 2026-10-15's sibling-session load CPU inference hit 5-15s and the extension's 10s upload timeout failed every classify (fail-open reveals). Verify after every deploy: `/metrics` (Bearer pairing token) shows `"provider": "rocm"` and `provider_cpu_fallbacks: 0` — upstream surfaces the EFFECTIVE provider there since the incident; `"device": "auto"` alone is the request, not the reality. GPU cold start compiles MIGraphX kernels and is SLOW (measured 74m50s calm-cold; the old "~2min, cached under /var/cache" claim never held — see Startup timeline below).
 - **The extension half lives elsewhere** — the Chromium extension (`~/projects/nsfw-classifier/nsfw-extension`) is injected into every Helium instance by the wrapper flag; its ID is path-derived (SHA-256 of the load path), so the source dir path must stay stable or extension settings reset.
 - **Extension port-drift guard boundary** — the `extension-default-url-port-drift` case in `tests/test-nsfw-classifier.nix` pins the FLAKE INPUT's `nsfw-extension/url-utils.js` (`DEFAULT_SERVER_URLS[0]` == resolved port). Helium loads the LIVE checkout, so a live `url-utils.js` port edit bypasses the guard until the input rev is bumped — that boundary is accepted: the guard fires at every input bump (flake check / CI), and live edits are the documented dev workflow (upstream repo owns its own pre-commit). A Nix eval cannot hermetically read a foreign working tree.
 - **Open owner decisions** (queued in `docs/todo/services.md`, deliberately not agent-decided): whether `nsfw.home.lan` should count as "local" for auto-opt-in feedback; the LAN trust model for the unauthenticated `/readyz` pairing token (rate-limit flag exists upstream as mitigation). ~~GPU/ROCm fast mode vs CPU falconsai~~ — RESOLVED 2026-10-15 by the silent-CPU incident: the unit runs the ROCm-wrapped package (see the GPU runtime bullet above). ~~Backup policy for `/var/cache/nsfw-classifier`~~ — RESOLVED 2026-10-12 by ADR-0016: durable stores moved to the state root (see Migration below); what remains in cache is regenerable by design, so no dedicated backup tier is owed to it.
+
+## Deploy / lock-bump checklist (one page)
+
+Every upstream bump re-lands weeks of gated hardening at once — the running
+binary is ALWAYS the oldest code on the box. Live evidence 2026-10-29: the
+unit runs upstream rev `58d398d` (2026-10-27), `provider: rocm` — the
+2026-10-18 boot-hang blockers (concurrent-Run SEGV fix, inference run gate,
+sd_notify binary support, `-rocm` default) ARE in that rev; what is still
+MISSING is the systemd watchdog flip (the binary speaks sd_notify, the unit
+never set `Type=notify`, so nothing pings) and routine lock currency.
+
+Owner steps (agent cannot: root + deploy):
+
+```bash
+cd ~/projects/SystemNix
+# 1. Bump the input (fold this into EVERY deploy — the bump IS the deploy)
+nix flake lock --update-input nsfw-classifier
+# 2. Flip the watchdog on the live host config (one-time, still pending):
+#    services.nsfw-classifier.watchdogSec = 300;   # recommended floor; flips Type=notify
+# 3. Build + switch (a RESTART costs the full boot timeline — see Startup
+#    timeline; prefer the next natural restart window)
+nixos-rebuild test --flake .#evo-x2
+sudo systemctl restart nsfw-classifier
+```
+
+Post-verify (in order; all non-root):
+
+1. **Provider truth** — `curl -s http://127.0.0.1:8104/api/health | jq .provider` must be `rocm` (the new `nsfw-classifier-provider` Gatus check now alarms on this automatically; `"device": "auto"` alone is the REQUEST, not the reality).
+2. **Watchdog armed** — `systemctl show nsfw-classifier -p Type -p WatchdogUSec` → `Type=notify`, `WatchdogUSec=300000000`; the journal shows periodic WATCHDOG pings and upstream `/metrics` carries `nsfw_systemd_*` counters (scraped only under a notify socket).
+3. **Readiness** — `/readyz` 200 after the (SLOW, normal) boot budget; first Gatus red after a cold start is expected.
+4. **Extension classify** — a real image through the browser extension (pairing survives restarts; token lives in the cache root).
+5. **No leaked sessions at shutdown** — the 2026-10-29 upstream lifecycle fix releases the skin/exposed/person ONNX sessions through `injector.Shutdown()`; the next stop/restart's journal must show zero leaked-session warnings (builds before that rev leak all three).
+6. **Provider CPU fallbacks** — `/metrics` `provider_cpu_fallbacks: 0`.
+
+Rollback: `nix flake lock --recreate-lock-file` is NOT the rollback — revert
+`flake.lock` (git), `nixos-rebuild test`, restart. The state root is untouched
+by lock bumps.
 
 ## Storage migration & backup
 

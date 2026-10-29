@@ -247,9 +247,8 @@
             # registry convention: silent failures are unacceptable.
             inherit onFailure;
 
-            # Binds the port BEFORE loading models (fast-fail on port-in-use),
-            # so Type=simple is sufficient; /readyz gates readiness during
-            # model load + warmup.
+            # Binds the port BEFORE loading models (fast-fail on port-in-use);
+            # /readyz gates readiness during model load + warmup.
             serviceConfig = lib.mkMerge [
               {
                 # sd_notify is only delivered to notify units, so the
@@ -330,6 +329,27 @@
                     "[RESPONSE_TIME] < 500"
                   ];
                   alert = "NSFW classifier down — nsfw.home.lan unreachable (unit failed or model load wedged). Check: systemctl status nsfw-classifier, journalctl -u nsfw-classifier — runbook: docs/services/nsfw-classifier.md";
+                }
+              ]
+              # The silent-CPU guard (2026-10-15 incident): /api/health is
+              # the public machine twin (same exemption as /health — no
+              # pairing token needed) and reports the EFFECTIVE inference
+              # provider. On the ROCm default build any "cpu" here means
+              # every model fell back at session build (journal WARN per
+              # model) — verdicts keep flowing but 10-50x slower, which is
+              # exactly how the incident hid for a week. x86_64-only: on
+              # other hosts the CPU build is the correct answer, so the
+              # condition would false-alarm.
+              ++ lib.optionals (pkgs.stdenv.hostPlatform.isx86_64) [
+                {
+                  name = "nsfw-classifier-provider";
+                  group = "AI";
+                  path = "/api/health";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\"provider\":\"rocm\"*)"
+                  ];
+                  alert = "NSFW classifier fell back to CPU inference — verdicts are 10-50x slower and the extension's fast path will time out under load. Check journalctl -u nsfw-classifier for 'falling back to CPU' per model, /metrics provider_cpu_fallbacks, and that the unit runs the -rocm package — runbook: docs/services/nsfw-classifier.md (GPU runtime section)";
                 }
               ];
               homepage = {
