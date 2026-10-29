@@ -48,7 +48,7 @@ by the auto-commit daemon as `694a55996` with a heuristic message.
 | # | Work | What is missing |
 | --- | --- | --- |
 | b1 | "Review **all** settings" of the CPE | ~70 % covered. Missing: **firewall zones and rules** (no page in this fork's UI), **wireless SSID/PSK/mode** (page 500s), **installed packages**, **modem/APN profile** (SIM absent), **runtime DHCP state** (config only). All need a shell, which I never obtained |
-| b2 | The two-DHCP finding | Proved from **stored config** (`ignore=0` + toggle-on), not from runtime evidence. The CPE's own syslog (165 KB, already downloaded) was never grepped for `dnsmasq` leases/ACKs |
+| b2 | The two-DHCP finding | **RESOLVED LATER THE SAME SESSION**: grepping the CPE syslog found `dnsmasq-dhcp[1776]: DHCP, IP range 192.168.1.101 -- 192.168.1.200, lease time 12h`, so the server is runtime-proven live (not just configured). Zero `DHCPACK` lines in 1391 log lines, so it has granted no lease this boot, which makes turning it off safe |
 | b3 | Hardware identity | SoC/RAM/flash/kernel confirmed. **`board_name` / product string still unknown**, which is what decides whether upstream carries an exact device entry or only a generic image |
 | b4 | Root cause of "4G router has no internet" | Explained plausibly (two DHCP servers + unroutable DNS + LAN-mode port), not proven end-to-end from a failing client |
 | b5 | Report location | Landed in `docs/reviews/` (owner hinted `docs/reports/`). Needs a decision on the canonical folder |
@@ -85,7 +85,7 @@ Honest list, worst first.
 | d3 | **Chased the wrong access path for the CPE for ~15 tool calls.** Tried ubus `system.board`/`system.info` (denied by empty ACLs), then SSH with host-key algorithm workarounds (3 attempts, handshake never completed), then telnet logins as `admin` and `root`. The answer was sitting in a **plain LuCI status tab** (`/admin/system/status/syslog`) the whole time | Hardware ID took far longer than it should; and I still have no shell |
 | d4 | **Downloaded a 165 KB syslog and used it exactly once** (boot lines for the SoC). Never grepped it for `dnsmasq`, `firewall`, Wi-Fi, WAN-mode or modem evidence that would have converted several "configured" findings into "runtime-proven" ones | The strongest finding (two DHCP servers) rests on config, not on logs |
 | d5 | **Told the owner the CPE was "not serving DHCP on the 192.168.1.0/24 segment"**, then found `dhcp.lan.ignore=0` and had to contradict myself in the next message | A wrong statement was published mid-session |
-| d6 | **Claimed the CPE had no working clock / no NTP** from an HTTP `Date:` header (2026-03-07), then found a correct Europe/Berlin clock in the timezone page and never resolved the contradiction | Unexplained inconsistency left in the record |
+| d6 | **Claimed the CPE had no working clock / no NTP** from an HTTP `Date:` header (2026-03-07) | Wrong. The syslog settles it: boot logs start at `Sat Mar 7 15:32` and switch to `Thu Oct 29 19:46` once NTP lands, so the box does sync. The stale `Date:` header was a rendering artifact, not a broken clock |
 | d7 | **Flip-flopped the telnet verdict twice** (exposed and usable, then rejected, then "authenticates but the shell dies") | Reader cannot tell what the actual state is from the transcript alone |
 | d8 | **Architecture recommendation churned**: first "bridge mode is the ask", then "DMZ is recommended", then "no DMZ is needed at all" once Tailscale/Netbird made inbound unnecessary | Correct answer at the end, two wrong intermediate recommendations on the record |
 | d9 | **Truncated my own report file at Part 2** to rewrite Parts 2 and 3, discarding the original Part 2 draft (recoverable only from git history `694a55996`) | Sloppy editing pattern, no functional loss |
@@ -236,3 +236,21 @@ Ordered roughly by risk-reduction per minute.
 | `rsh`, `tn.py`, `tn3.py`, `ubus.sh` | failed shell attempts (dropbear host-key mismatch, telnet auth quirks) |
 | `backup.bin` (9,522 B) | vendor-encrypted config archive, not parseable |
 | `ROUTER-REVIEW-2026-10-29.md` | the first draft, superseded by the in-repo report |
+
+---
+
+## Addendum 22:18 CET, the syslog pass that should have happened first
+
+Grepping the already-downloaded 165 KB CPE syslog (1391 lines) closed four open items and corrected two of my claims:
+
+| Finding | Evidence | Effect on the plan |
+| --- | --- | --- |
+| CPE DHCP is **live** on `.101 to .200`, and has granted **zero** leases this boot | `dnsmasq-dhcp[1776]: DHCP, IP range 192.168.1.101 -- 192.168.1.200, lease time 12h`, no `DHCPACK` | Turning it off is now provably safe (it stays first priority) |
+| LTE module is a **Quectel EC200A-EU**, not "EC25-class" | `4gup: start 2c7c:6005`, `AT+CGMR -> EC200AEUV1HAR02A06M16` | Upstream OpenWrt needs the CDC-Ethernet + AT path, not QMI |
+| **No SIM** at AT level, and the module does its own NAT | `AT+CPIN? -> +CME ERROR: 10`, `AT+QCFG="nat" -> 1` | 4G proof is a hard gate before any topology change |
+| Watchcat is **actively counting toward a reboot** | `watchcat: no internet connectivity for 2960 seconds. Reseting when reaching 21600` | Needs a policy decision in Phase 0 |
+| **No WAN interface exists** (LAN mode confirmed at runtime) | `pingcheck: Interface 'wan' not found or error` | Confirms the "no internet" root cause |
+| Clock **does** sync via NTP (corrects d6) | boot `Sat Mar 7 15:32` then `Thu Oct 29 19:46` | none |
+
+The resulting execution plan: `docs/planning/2026-10-29_22-18_SUPERB-4g-failover-then-openwrt-pareto-plan.md`
+(21 coarse tasks of 30 to 100 min, 92 fine tasks of 12 min or less, three hard gates, three independent risk buckets).
