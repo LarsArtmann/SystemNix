@@ -340,7 +340,7 @@ to LAN mode with DHCP off. The server's static config never changes, so no NixOS
 | Partition layout | `u-boot` 0x0–0x30000 · `u-boot-env` 0x30000–0x40000 · **`factory` 0x40000–0x50000** · `kernel` 0x50000–0x1893d0 · `rootfs` 0x1893d0–0x7e0000 · `rootfs_data` 0x6e0000–0x7e0000 (**1 MB overlay**) · `backup` · `bdinfo` |
 | Kernel | **4.4.140**, built 2024-09-28 by `abu@openwrt`, GCC 5.4.0 (LEDE 17.01-era BSP) — EOL since 2018 |
 | Kernel cmdline | `console=ttyS0,115200 rootfstype=squashfs,jffs2` ⇒ serial console exists |
-| 4G module | **Quectel** over USB: `GSM modem (1-port)` → ttyUSB0/1/2 plus `cdc_ether` netdev (EC25-class) |
+| 4G module | **Quectel EC200A-EU** (Cat 4, LTE only): USB `2c7c:6005`, `AT+CGMR -> EC200AEUV1HAR02A06M16`, three ttyUSB AT ports plus a `cdc_ether` netdev, module-side NAT on (`AT+QCFG="nat" -> 1`). **SIM not inserted** (`AT+CPIN? -> +CME ERROR: 10`) |
 | Wi-Fi | vendor proprietary `MT7628 AP Driver 4.1.0.0` (`ra0`); **no PCIe card** — 2.4 GHz is a hardware ceiling |
 
 **Consequences for "run our own software on it":**
