@@ -19,6 +19,12 @@
 #      discordsync-immich-key-provision way: DB-level INSERT, idempotent
 #      by key name, file-first reconcile, secret only ever in a 0400 file
 #      under the state dir.
+#   4. Nightly refresh timers (hub.pollEmbeddings / hub.umapNightly, the
+#      v0.1 follow-up lifting the repo's docs/deploy/umap-nightly-timer.nix
+#      shape onto the real flake outputs): smart_search embeddings diff
+#      poll (02:00) + UMAP refit (03:00, IO/CPU-quiet knobs verbatim from
+#      the reviewed shape). The NSFW lane-join timer stays OUT until the
+#      hub's joinLanes MapSet-strip bug is fixed (media-atlas TODO 10).
 # Deploy: owner-gated (calm window); the flip card in the repo's
 # docs/deploy/flip-card.md seeds the production journal first.
 { inputs, ... }:
@@ -35,6 +41,7 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ports
         ioTier
@@ -105,6 +112,11 @@
       # `atlas` from the repo flake (rev-pinned input): committed vendor/
       # tree, so the sandbox build needs no GOPRIVATE fetch setup.
       atlasPkg = inputs.media-atlas.packages.${pkgs.stdenv.hostPlatform.system}.atlas;
+
+      # The UMAP sidecar wrapper from the SAME rev-pinned input (flake app:
+      # python3 + umap-learn around scripts/umap_fit.py) — single
+      # provenance with atlasPkg, no second lock surface to drift.
+      umapFitProgram = inputs.media-atlas.apps.${pkgs.stdenv.hostPlatform.system}.umap-fit.program;
 
       # Root converger: make the DiscordSync attachment tree group-readable
       # so the Immich crawler can walk it (ADR-061 external-library grant:
@@ -306,6 +318,26 @@
           default = "";
           description = "CLIP model for the hub's text queries — MUST equal the Immich smart-search model (Immich admin → machine learning, live: ViT-B-32__openai on this deployment). Empty = /api/search answers 502 with a config hint; embeddings from a different model would not share the stored vectors' space.";
         };
+
+        hub.pollEmbeddings = {
+          enable = lib.mkEnableOption "the nightly smart_search embeddings diff poll (`atlas poll-embeddings` — idempotent, unchanged embeddings emit nothing; new assets still enter via pull/tail)";
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 02:00";
+            description = "OnCalendar for the embeddings diff poll (ahead of the UMAP refit window).";
+          };
+        };
+
+        hub.umapNightly = {
+          enable = lib.mkEnableOption "the nightly UMAP refit (export → fit/transform → project-coords), lifting the repo's docs/deploy/umap-nightly-timer.nix shape onto the flake outputs";
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 03:00";
+            description = "OnCalendar for the UMAP refit (03:00 + RandomizedDelaySec avoids the other nightly windows on evo-x2).";
+          };
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -468,6 +500,116 @@
           ];
         };
 
+        # --- Nightly refresh timers (v0.1 follow-up, plan L25.1) ---
+        # The repo's reviewed shape (docs/deploy/umap-nightly-timer.nix)
+        # lifted onto the real flake outputs. Both timers are idempotent;
+        # failures toast via onFailure (a silently stale map is the exact
+        # failure mode these exist to prevent). The NSFW lane-join timer
+        # deliberately stays OUT until the hub's joinLanes MapSet-strip
+        # bug is fixed (media-atlas TODO 10, open tail 1).
+
+        # Embeddings diff poll: re-joins smart_search onto the existing
+        # inventory through the peer-auth local socket, so the unit MUST
+        # run as the media_atlas OS user (same principal as the hub).
+        systemd.services.media-atlas-poll-embeddings =
+          lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
+            {
+              description = "MediaAtlas smart_search embeddings diff poll (atlas poll-embeddings, idempotent)";
+              inherit onFailure;
+              after = [ "postgresql.service" ];
+              wants = [ "postgresql.service" ];
+              path = [ pkgs.coreutils ];
+              serviceConfig = lib.mkMerge [
+                {
+                  Type = "oneshot";
+                  User = cfg.user;
+                  Group = cfg.user;
+                  StateDirectory = stateDirName;
+                  TimeoutStartSec = "10min";
+                }
+                (harden { MemoryMax = "512M"; })
+                # BE/6 background, NOT idle: a seconds-long PG join should not
+                # stall behind transcription storms the way an idle-class job may.
+                ioTier.background
+                (serviceOneshotDefaults { })
+              ];
+              script = ''
+                set -eu
+                exec ${lib.getExe hubCfg.package} poll-embeddings --db ${stateDir}/atlas.db
+              '';
+            };
+
+        systemd.timers.media-atlas-poll-embeddings =
+          lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
+            {
+              description = "Nightly MediaAtlas embeddings diff poll";
+              wantedBy = [ "timers.target" ];
+              timerConfig = {
+                OnCalendar = hubCfg.pollEmbeddings.calendar;
+                Persistent = true;
+                RandomizedDelaySec = "30m";
+              };
+            };
+
+        # UMAP refit: export → fit/transform (--mode auto keeps the model
+        # persistent, transforming only stragglers) → project-coords, all
+        # against the live journal (SQLite WAL: coexists with the hub).
+        systemd.services.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
+          description = "MediaAtlas UMAP nightly refit (export -> fit/transform -> project-coords)";
+          inherit onFailure;
+          # Deterministic freshness: when the 02:00 poll was missed (host
+          # down), the wants+after pair re-runs it immediately before the
+          # fit instead of fitting a night-stale embedding matrix.
+          after = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
+          wants = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
+          path = [ pkgs.coreutils ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = cfg.user;
+              Group = cfg.user;
+              StateDirectory = [
+                stateDirName
+                "${stateDirName}/umap"
+              ];
+              TimeoutStartSec = "30min";
+            }
+            # IO/CPU-quiet knobs carried verbatim from the reviewed shape:
+            # the nightly must never be the load that competes with live
+            # services on the QLC root (2026-10-27 lesson: load-300
+            # transcription batches). ProtectSystem=strict is safe because
+            # StateDirectory paths stay writable under it.
+            (harden {
+              MemoryMax = "2G"; # generous headroom, not a tight bound: numba JIT dominates
+              ProtectSystem = "strict";
+              ReadWritePaths = [ "${stateDir}/umap" ];
+            })
+            {
+              Nice = 19;
+              IOSchedulingClass = "idle";
+              CPUWeight = 20;
+              IOWeight = 50;
+            }
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+            ${lib.getExe hubCfg.package} export --db ${stateDir}/atlas.db --out ${stateDir}/umap/export.json
+            ${umapFitProgram} --input ${stateDir}/umap/export.json --output ${stateDir}/umap/coords.json --model-dir ${stateDir}/umap/model --mode auto
+            ${lib.getExe hubCfg.package} project-coords --db ${stateDir}/atlas.db --in ${stateDir}/umap/coords.json --run "$(date +%F)"
+          '';
+        };
+
+        systemd.timers.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
+          description = "Nightly MediaAtlas UMAP refit";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = hubCfg.umapNightly.calendar;
+            Persistent = true;
+            RandomizedDelaySec = "30m";
+          };
+        };
+
         # Service-integration registry entry: fans out to the Caddy vHost
         # (map.home.lan, PLAIN layer — the hub's own API key is the single
         # auth gate (OQ-5); oauth2-proxy forward-auth would double-gate),
@@ -519,5 +661,16 @@
           };
         };
       };
+
+      assertions = [
+        {
+          assertion = !hubCfg.umapNightly.enable || hubCfg.enable;
+          message = "services.media-atlas.hub.umapNightly.enable requires hub.enable (shared state dir, journal path and peer-auth user).";
+        }
+        {
+          assertion = !hubCfg.pollEmbeddings.enable || hubCfg.enable;
+          message = "services.media-atlas.hub.pollEmbeddings.enable requires hub.enable (peer-auth media_atlas user + journal path).";
+        }
+      ];
     };
 }

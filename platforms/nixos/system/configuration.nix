@@ -562,6 +562,13 @@ in
         # GET /api/system-config 2026-10-29); text queries must embed in
         # the same space or search ranks garbage.
         hub.immich.mlModel = "ViT-B-32__openai";
+        # Nightly refresh (v0.1 plan L17.5/L25.1): embeddings diff poll at
+        # 02:00 + UMAP refit at 03:00 (umap wants+after the poll, so a
+        # missed poll re-runs before the fit). Both idempotent; the NSFW
+        # lane-join timer stays out until the hub's joinLanes fold bug is
+        # fixed upstream.
+        hub.pollEmbeddings.enable = true;
+        hub.umapNightly.enable = true;
       };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,

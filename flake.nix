@@ -773,8 +773,9 @@
     # the repo's auto-commit daemon lands commits continuously, so ref-track
     # + deliberate re-lock at deploy time beats a ?rev= pin (which the
     # flake-input-pin-audit would require an allowlist row for). The locked
-    # rev (435a0ba, 2026-10-29) is build-proven; the deploy PR re-locks to
-    # the v0.1 tag. Committed vendor/ tree, so no GOPRIVATE fetch setup is
+    # rev rode the 2026-10-29 toplevel proof green (docs/status/
+    # 2026-10-29_18-56_lock-float-wave-unblock-*); the v0.1 deploy re-locks
+    # (to the tag). Committed vendor/ tree, so no GOPRIVATE fetch setup is
     # needed in the sandbox.
     media-atlas = {
       url = "git+ssh://git@github.com/LarsArtmann/media-atlas?ref=refs/heads/master";
