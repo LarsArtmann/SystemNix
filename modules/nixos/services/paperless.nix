@@ -544,8 +544,14 @@ _: {
             exporter.enable = true;
 
             settings = {
-              # Rebuilds tesseract with equ+osd+eng+deu (upstream package apply).
-              PAPERLESS_OCR_LANGUAGE = "deu+eng";
+              # Rebuilds tesseract with equ+osd plus every language named here
+              # (the nixpkgs module splits this on "+" and feeds it to
+              # tesseract5.override.enableLanguages).
+              # pol added 2026-10-29: this archive is Polish-heavy (Alior/
+              # mBank/Credit Agricole statements, "Faktura VAT" invoices,
+              # Polish correspondence) and deu+eng silently drops every
+              # diacritic, so search and LLM extraction ran on mangled text.
+              PAPERLESS_OCR_LANGUAGE = "deu+eng+pol";
 
               # v3 defaults already sane: OCR_MODE=auto (OCR only when the
               # original has no text layer), ARCHIVE_FILE_GENERATION=auto,
