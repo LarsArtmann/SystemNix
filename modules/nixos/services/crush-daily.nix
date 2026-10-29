@@ -121,7 +121,7 @@ _: {
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                 ];
-                alert = "Crush Daily down — AI development insights unavailable";
+                alert = "Crush Daily unhealthy — /api/health returned non-200. Since 2026-10-29 the endpoint is dependency-aware: a 503 names the failing check (event_store = SQLite event store unreachable/closed) in its JSON body while the process may still be up; check journalctl -u crush-daily and the body's checks[] for attribution";
               }
             ];
             homepage = {

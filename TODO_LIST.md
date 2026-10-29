@@ -369,6 +369,8 @@
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+- [ ] [ready] **Consolidate the journal vendorHash shim (3 sites → 1) + run the shim-necessity probe** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §b/§d)
+- [ ] [ready] **End-to-end review of the hours-old media-atlas module (owning session)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §d)
 - [ ] [ready] **Paperless AI embeddings through ai-meter (`llama-embeddings` upstream declared but unrouted; owner "single endpoint" direction 2026-10-27)** — paperless client + envKey, repoint PAPERLESS_AI_LLM_EMBEDDING_* to `:8107/v1/llama-embeddings`, keep the 1024-dim smoke assertion → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-27_21-40_browser-history-ai-endpoint-rewire-status.md §e.2)
 - [x] Fix the 22:55 gen-954 ordering-cycle victims: geometrikks + the crowdsec-prereq chain — DONE 2026-10-26/27 via the late-applications.target class fix; all units restarted clean, eval audit green → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-27_00-45_gitea-runner-class-fix-late-applications-deployed.md §c)
 - [x] Eval-time ordering-cycle audit + negative-test leg — DONE 2026-10-27: ordering-cycle-audit.nix (cycles + boot-blockers) + group `orderingcycle` negative legs PASS → [docs/todo/services.md](docs/todo/services.md) (Source: same §d)
@@ -669,6 +671,7 @@
 - [ ] [ready] **Verify why dnsblockd check-lockstep did not run before the dep-sweep commit shipped** — the sweep rode heuristic daemon commits which bypass pre-commit legs keyed on staged paths (2026-09-28 daemon-race precedent); confirm preflight-gates.sh would have caught the drift, and whether the dnsblockd repo runs check-lockstep in CI (push leg), else wire it → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f.9)
 
 ### pipeline
+- [ ] [ready] **float-register: 72-char commit subject + verify the pair actually committed (false "daemon landed" success)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §d)
 - [ ] [ready] **Wire `dprint.json` into a gate or delete it** (a full markdown/YAML/JSON formatter config that no hook, formatter or CI step runs) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
 - [ ] [ready] **Sweep liveness checks for the `kill -0` / PID-reuse trap** (rc=2 unconditionally in agent shells; in prod scripts a reused pid fakes a live lock or a running child) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
