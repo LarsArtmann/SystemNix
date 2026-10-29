@@ -1752,6 +1752,13 @@ in
         package = inputs.storage-collector.packages.${pkgs.stdenv.hostPlatform.system}.default;
       };
 
+      # crush-events — StopFailure/PermissionResult telemetry (2026-10-29
+      # crush-0990 plan T16): collects the crush-config observe hooks'
+      # ~/.local/state/crush/*.jsonl into textfile metrics + a gatus
+      # freshness canary; the SigNoz rule lives in _signoz-alerts.nix.
+      # No port/vHost — metrics-only, not web-facing.
+      crush-events.enable = true;
+
       # Monitor365 server (dashboard + API) runs on the same machine.
       # RE-ENABLED 2026-10-18 with the agent — same preparedSrc unblock.
       monitor365-server = {

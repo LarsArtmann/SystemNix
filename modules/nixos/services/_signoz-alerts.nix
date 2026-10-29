@@ -165,6 +165,21 @@ in
       target = 1;
       interval = "1m";
     };
+    # Crush StopFailure recurrence (2026-10-29 crush-0990 plan T16): the
+    # provider-error turn-ends that silently kill tq-agent-pool / crush-debug
+    # runs are logged by the crush-config stop-failure-log hook and counted
+    # by services.crush-events (crush_events_lines_total{file="provider-errors"}).
+    # >=5 in 30m = a provider outage pattern, not a one-off retry. Warning
+    # severity: attribution first (ai-meter metrics, provider status), page
+    # only if it persists past investigation.
+    "signoz/rules/crush-stop-failure.json".source = mkRule {
+      name = "Crush Provider Errors Sustained";
+      description = "{{.Labels.user}}: provider-error turn-ends (StopFailure) recurred in crush sessions — pool/headless runs are dying on provider errors. Attribution: ai-meter request metrics + the provider's status; tail ~/.local/state/crush/provider-errors.jsonl";
+      query = ''sum by (user) (increase(crush_events_lines_total{file="provider-errors"}[30m]))'';
+      step = 300;
+      target = 5;
+      severity = "warning";
+    };
     "signoz/rules/gpu-thermal.json".source = mkRule {
       name = "GPU Thermal Throttling (>90°C)";
       description = "AMD GPU temperature above 90°C";

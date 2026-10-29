@@ -17,6 +17,7 @@
   config,
   pkgs,
   lib,
+  options,
   ...
 }:
 let
