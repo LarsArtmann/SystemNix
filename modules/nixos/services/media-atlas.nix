@@ -165,7 +165,6 @@
           state="${stateDir}"
           hubkey="$state/hub-api-key"
           immkey="$state/immich-key"
-          url="${hubCfg.immich.url}"
           keyname="media-atlas-hub (nix-managed)"
           db="${config.services.immich.database.name or "immich"}"
           psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
