@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>What exists and the step up — contacts + calendar (2026-10-29)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -845,27 +845,58 @@
           display: none;
         }
       }
+
+      /* --- Numbered step list (report-specific) --- */
+      ol.steps {
+        list-style: none;
+        counter-reset: step;
+        margin: 1rem 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+      }
+      ol.steps li {
+        counter-increment: step;
+        position: relative;
+        padding-left: 3rem;
+        line-height: 1.6;
+      }
+      ol.steps li::before {
+        content: counter(step, decimal-leading-zero);
+        position: absolute;
+        left: 0;
+        top: 0.1rem;
+        font-family: var(--font-mono);
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--accent);
+        border-bottom: 2px solid var(--text);
+        padding-bottom: 0.15rem;
+      }
+      ol.steps .badge {
+        margin-right: 0.6rem;
+      }
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>INVENTORY &amp; STEP-UP BRIEF</span>
+      <span>2026-10-29</span>
+      <span>SYSTEMNIX &middot; CRM &middot; NIX-EMAIL &middot; PBX-ARTMANN</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <!-- Sidebar TOC -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
-          <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
+          <a href="#have">01 &middot; What you already have</a>
+          <a href="#question">02 &middot; The one open question</a>
+          <a href="#options">03 &middot; Three step-ups</a>
+          <a href="#recommendation">04 &middot; Recommendation</a>
+          <a href="#week">05 &middot; This week</a>
+          <a href="#appendix">Appendix &middot; evidence</a>
         </nav>
       </aside>
 
@@ -873,198 +904,662 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">
+            INVENTORY &amp; STEP-UP BRIEF &middot; 2026-10-29 &middot; FOR OWNER
+            REVIEW
+          </div>
+          <h1>The machine is built. The decision is unmade.</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            A cross-repo synthesis of the two 2026-10-29 mesh proposals: what
+            verifiably exists today across four repos, where the two proposals
+            disagree, three honest step-ups, and one recommendation. Every
+            claim below was re-checked in the source repos this session.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Scope: contacts + calendar, 2 Google accounts</span>
+            <span class="tag">Sources: 2 proposals, 4 repos, re-verified</span>
+            <span class="tag teal">Output: 3 options, 1 recommendation</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
-          </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">2</div>
+            <div class="label">
+              Built-and-green sync surfaces (gcontacts in, CardDAV out) &mdash;
+              both switched off
+            </div>
           </div>
           <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="score">0</div>
+            <div class="label">Live sync legs in production</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3/2</div>
+            <div class="label">
+              Ownership doctrines / disagreeing answers on who owns contacts
+            </div>
           </div>
           <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">139</div>
+            <div class="label">
+              Real people staged in a dead Twenty dump &mdash; inside no owner
+              at all
+            </div>
           </div>
         </section>
 
-        <!-- Summary -->
-        <section id="summary">
-          <h2><span class="num">00</span>Summary</h2>
+        <!-- 01 What you already have -->
+        <section id="have">
+          <h2><span class="num">01</span>What you already have</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
-          </p>
-          <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
-          </div>
-        </section>
-
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
-          <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            You asked what exists. More than either proposal lets on: the
+            contacts half of the mesh is <em>code-complete and verified</em>
+            &mdash; it is configuration-gated, not engineering-gated. The
+            calendar half is a candidate (Stalwart) with zero measurements.
+            Nothing below is assumed; every row was opened and read today.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>A ratified constitution, not a vibe</strong>
+                <span
+                  >crm/docs/DATA-MESH.md (owner-ratified 2026-10-19) names the
+                  hub, every spoke's direction and machine actor, the join-key
+                  namespaces, and eight principles. It even refuses to guess the
+                  calendar owner: the cell reads TBD, "MUST be named before any
+                  CalDAV spoke is built."</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>Both contacts legs are built the right way round</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >Google in: one-way, multi-account, per-account state and
+                  actors, tombstones, expired-token auto-resync, single-flight
+                  &mdash; read-only OAuth scope by design. Stalwart out: vCard
+                  4.0, ETag re-PUTs, squatter eviction, zero-write reruns,
+                  E2E-green. Both marked FULLY_FUNCTIONAL in crm/FEATURES.md;
+                  neither has ever run against real Google or a live
+                  device.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The server dialect is measured, not assumed</strong>
+                <span
+                  >Stalwart CardDAV at the deployed pin (0.16.26): 17/18 probe
+                  PASS, re-baselined 2026-10-28 &mdash; If-Match semantics,
+                  sync-collection tokens, UID-conflict rejection. JMAP contacts
+                  green. The deployed webmail already <em>reads</em> JMAP
+                  calendars and contacts (agenda sidebar, birthdays
+                  plugin).</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Restore is proven where it exists</strong>
+                <span
+                  >CRM: nightly WAL-safe snapshots with a drilled restore
+                  (crm/docs/ops/RESTORE-DRILL.md). Stalwart: nightly whole-store
+                  archive plus VM-verified native backup/restore paths
+                  (nix-email probes, 2026-10-18). Whichever store wins, a backup
+                  leg already exists &mdash; the drill is the only missing
+                  ritual.</span
                 >
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- Findings -->
-        <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>State today (verified this session)</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Mesh constitution</strong></td>
+                <td>
+                  Ratified 2026-10-19. Contacts owner = CRM journal; calendars
+                  = TBD by design (a rule, not an omission)
+                </td>
+                <td>crm/docs/DATA-MESH.md &sect;1&ndash;&sect;3</td>
+              </tr>
+              <tr>
+                <td><strong>Google inbound reader</strong></td>
+                <td>
+                  FULLY_FUNCTIONAL, never run against real Google. Multi-account
+                  (<code>-google-account</code>), tombstones, sync tokens,
+                  per-account actors <code>bot:google-sync:&lt;acct&gt;</code>
+                </td>
+                <td>crm/FEATURES.md:130&ndash;143 &middot; internal/gcontacts</td>
+              </tr>
+              <tr>
+                <td><strong>CardDAV out-mirror</strong></td>
+                <td>
+                  FULLY_FUNCTIONAL, E2E-green vs Stalwart. vCard 4.0, UID =
+                  contact id, foreign-squatter eviction, deletes propagate
+                </td>
+                <td>crm/FEATURES.md:25 &middot; docs/ops/CARDDAV-SYNC.md</td>
+              </tr>
+              <tr>
+                <td><strong>Stalwart CardDAV</strong></td>
+                <td>
+                  Probe-verified at the deployed pin 0.16.26: 17/18 PASS
+                  (2026-10-28 re-baseline)
+                </td>
+                <td>nix-email/FEATURES.md:62 &middot; docs/probes/2026-10-28-carddav-01626/</td>
+              </tr>
+              <tr>
+                <td><strong>Stalwart CalDAV</strong></td>
+                <td class="no">
+                  Shipped upstream, read by the deployed webmail &mdash; but no
+                  probe transcript exists in the fleet and no FEATURES row
+                </td>
+                <td>nix-email probes dir (absent) &middot; pbx hosts/pbx/bulwark.nix:184</td>
+              </tr>
+              <tr>
+                <td><strong>Transport</strong></td>
+                <td>
+                  NetBird mesh: control plane on the pbx host, evo-x2 + pbx as
+                  peers, backup-coordinated. No new network story needed
+                </td>
+                <td>pbx hosts/pbx/backup.nix:108 &middot; netbird-contract.nix</td>
+              </tr>
+              <tr>
+                <td><strong>Production posture</strong></td>
+                <td class="no">
+                  crm-server is live (OIDC-only sign-in) with zero
+                  <code>-google-*</code> and zero <code>-carddav-*</code> flags.
+                  Every sync leg is OFF. The enablement ladder is documented,
+                  including the flag-before-token ordering trap
+                </td>
+                <td>SystemNix modules/nixos/services/crm.nix &middot; docs/todo/services.md:367</td>
+              </tr>
+              <tr>
+                <td><strong>Real data</strong></td>
+                <td class="no">
+                  139 people + 61 companies staged as importer-shaped CSVs from
+                  the dead Twenty dump; the journal holds ZERO people contacts;
+                  both Google accounts hold the only live bytes
+                </td>
+                <td>SystemNix docs/todo/services.md:366</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
-          <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Read that table again as one sentence</strong>
+            The hard problems &mdash; constitution, adapters, dialect
+            verification, restore, transport &mdash; are done. What remains is
+            one unprobed protocol (CalDAV), one unfilled table cell (calendar
+            owner), one collision (contacts owner), and configuration.
+          </div>
+        </section>
+
+        <!-- 02 The one open question -->
+        <section id="question">
+          <h2><span class="num">02</span>The one open question</h2>
+          <p>
+            Your two proposals agree on far more than they disagree &mdash;
+            and the one real disagreement is not engineering. It is a single
+            question with three written answers: <strong>who owns
+            contacts?</strong>
+          </p>
+
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>CRM constitution (ratified 10-19)</th>
+                <th>pbx-artmann doctrine (10-29)</th>
+                <th>SystemNix inventory (10-29)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Contacts owner</strong></td>
+                <td class="yes">CRM journal</td>
+                <td class="no">Stalwart ("no declared owner" is the gap)</td>
+                <td class="no">Journal on paper, nobody in practice (0 contacts)</td>
+              </tr>
+              <tr>
+                <td><strong>Calendar owner</strong></td>
+                <td>TBD &mdash; must be named first</td>
+                <td class="yes">Stalwart</td>
+                <td class="yes">Stalwart is the candidate (unprobed)</td>
+              </tr>
+              <tr>
+                <td><strong>Google's role</strong></td>
+                <td>Read-only inbound, NEVER receives a write</td>
+                <td>SaaS = never the owner</td>
+                <td>Holds the only real bytes today</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            Calendar is <em>not</em> the contested question: all three
+            documents point at the same answer (Stalwart, on the same DAV
+            boundary as the contacts mirror), and both proposals reject the
+            same alternatives (the CRM growing an event journal; a second DAV
+            server). What calendar lacks is not a decision but a measurement
+            &mdash; no CalDAV probe has ever run against your deployment.
+          </p>
+
+          <div class="callout callout-amber">
+            <strong>Why this blocks everything</strong>
+            The constitution's principle 1 is "one truth owner per entity
+            type, named before any new spoke." With contacts contested and
+            calendar unnamed, every line of sync code is a bet on an
+            unresolved question. Both proposals say this. They just pick
+            different answers &mdash; each citing your own documents.
+          </div>
+        </section>
+
+        <!-- 03 Three step-ups -->
+        <section id="options">
+          <h2><span class="num">03</span>Three step-ups</h2>
+          <p>
+            Every option below is constitution-legal and uses the machine you
+            already own. They differ in how much moves, how fast you get value,
+            and where you can end up.
+          </p>
+
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>1 &middot; Light the machine</th>
+                <th>2 &middot; One hub</th>
+                <th>3 &middot; Exit Google</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Contacts owner</strong></td>
+                <td>Kith journal (constitution stands)</td>
+                <td>Stalwart (constitution amended)</td>
+                <td>Stalwart</td>
+              </tr>
+              <tr>
+                <td><strong>Calendar owner</strong></td>
+                <td>Stalwart</td>
+                <td>Stalwart</td>
+                <td>Stalwart</td>
+              </tr>
+              <tr>
+                <td><strong>Existing code</strong></td>
+                <td class="yes">All of it, as built</td>
+                <td>gcontacts parts re-pointed; out-mirror retires</td>
+                <td>Re-pointed, then frozen</td>
+              </tr>
+              <tr>
+                <td><strong>New code</strong></td>
+                <td>Google People write path + Calendar adapter</td>
+                <td>One Google&harr;Stalwart adapter (cards + events) + merge rules</td>
+                <td>Same as 2, plus device cutover tooling</td>
+              </tr>
+              <tr>
+                <td><strong>Doctrine change</strong></td>
+                <td class="yes">None (fill the TBD cell)</td>
+                <td>Amend: retire "journal is contacts truth"; Kith = relations</td>
+                <td>Amend + a deliberate "freeze the loser" ritual</td>
+              </tr>
+              <tr>
+                <td><strong>Phone story</strong></td>
+                <td>Stays on Google (DAV mirror for self-hosted devices)</td>
+                <td>Google now, DAV later &mdash; the only path off Google</td>
+                <td class="yes">DAV to a store you own, end of story</td>
+              </tr>
+              <tr>
+                <td><strong>Time to first value</strong></td>
+                <td class="yes">Days (config + consent, mostly)</td>
+                <td>Weeks (adapter is real code)</td>
+                <td>Months (habits + every device)</td>
+              </tr>
+              <tr>
+                <td><strong>Backup/restore legs</strong></td>
+                <td class="no">Two to keep honest (CRM dump + mail archive)</td>
+                <td class="yes">One (mail store archive + one drill)</td>
+                <td class="yes">One</td>
+              </tr>
+              <tr>
+                <td><strong>Chief risk</strong></td>
+                <td>Two owners forever; journal lineage for events stays weak</td>
+                <td>Store lineage is weaker than journal provenance</td>
+                <td>Losing Google-native calendar UX (scheduling, assistant)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Option 1 -->
+          <div class="issue issue-important">
+            <span class="severity severity-important">Option 1 &middot; smallest step</span>
+            <h3>Light the machine &mdash; the journal hub</h3>
+            <div class="where">
+              Mesh A &middot; both proposals' phases P0&ndash;P5 &middot; pbx-artmann research doc's recommendation
+            </div>
+            <p>
+              Keep the ratified constitution exactly as written. The Kith
+              journal becomes contacts truth in practice (not just on paper):
+              run the Google OAuth ladder, fill the journal with the 139 staged
+              people plus both accounts' contacts, switch on the CardDAV
+              mirror, enroll a device. Calendar follows after the CalDAV probe:
+              name Stalwart in the TBD cell, build the inbound leg. "Bi-directional"
+              is honored as two one-way legs with exactly one writer each.
+            </p>
+            <p>
+              <strong>Choose it if</strong> you want contacts working on your
+              phone and in the CRM this week, with zero constitutional change
+              and the smallest new-code surface.
+            </p>
+            <div class="callout callout-amber">
+              <strong>The price</strong>
+              Two owners, two restore drills, forever &mdash; and the journal
+              fills with contact truth that option 2 would then have to migrate.
+              A phone can never fully leave Google, because the device write
+              surface stays Google-shaped.
+            </div>
+          </div>
+
+          <!-- Option 2 -->
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">Option 2 &middot; recommended</span>
+            <h3>One hub &mdash; Stalwart owns both, Kith owns relations</h3>
+            <div class="where">
+              Mesh B &middot; SystemNix proposal's recommendation &middot; pbx-artmann doctrine's end-state
+            </div>
+            <p>
+              Amend the constitution once: Stalwart becomes truth for
+              <em>both</em> personal PII types (contacts + calendar), on one
+              DAV boundary, with one backup unit and one restore drill. Kith
+              demotes to what only a CRM can do &mdash; relations, deals,
+              tasks &mdash; holding links to people, not copies of them. The
+              gcontacts investment is not thrown away: its People client, OAuth
+              loopback, multi-account registry, state handling and
+              single-flight runner get re-pointed into one Google&harr;Stalwart
+              adapter covering cards and events. The CardDAV out-mirror retires
+              (the owner <em>is</em> the DAV server now).
+            </p>
+            <p>
+              <strong>Choose it if</strong> you accept one amendment and a few
+              weeks of adapter work in exchange for the structurally simplest
+              end-state &mdash; and the only one where a phone can eventually
+              drop Google entirely.
+            </p>
+            <div class="callout callout-amber">
+              <strong>The price</strong>
+              A ratified decision gets retired (that is what amendments are
+              for), and contact lineage moves from journal provenance (every
+              change carries an actor) to store-level history plus adapter
+              logs. Auditability is real but coarser.
+            </div>
+          </div>
+
+          <!-- Option 3 -->
+          <div class="issue">
+            <span class="severity">Option 3 &middot; the long game</span>
+            <h3>Exit Google &mdash; own the surface, not just the truth</h3>
+            <div class="where">
+              Terminal state &middot; pbx-artmann doc's option C &middot; a lifestyle decision as much as an engineering one
+            </div>
+            <p>
+              Run a bounded import window (Google &rarr; Stalwart for both
+              entity types), then freeze Google as a read-only mirror you stop
+              typing into. Devices speak DAV (CardDAV/CalDAV) or a sync client
+              pointed at your store. The two-writers question doesn't get
+              answered &mdash; it gets deleted: one writer total, read-only
+              OAuth scopes everywhere, best security posture of the three.
+            </p>
+            <p>
+              <strong>Choose it if</strong> leaving Google is the actual goal
+              and you will change device habits to get it.
+            </p>
+            <div class="callout callout-amber">
+              <strong>The price</strong>
+              Every device and every calendar-sharing relationship (family,
+              work, attendees) currently assumes Google. Assistant scheduling,
+              Meet links, and shared calendars don't follow you to DAV. This
+              option is only honest as a <em>destination</em> reached through
+              option 2 &mdash; jumped at directly, it usually breaks on
+              calendar sociology, not on technology.
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 Recommendation -->
+        <section id="recommendation">
+          <h2><span class="num">04</span>Recommendation</h2>
+          <p>
+            <strong>Option 2 &mdash; one hub &mdash; entered through three
+            decision-free moves, with option 1 as the documented fallback.</strong>
+          </p>
+
+          <p>
+            The argument is a timing argument, and it is the one thing neither
+            proposal says out loud: <strong>option 2's migration cost is zero
+            today, and it grows every day option 1 runs.</strong> The journal
+            currently holds zero people contacts. The moment the 139 staged
+            people and both Google accounts land in it (option 1's first
+            phases), contact truth exists in a store that option 2 would then
+            have to migrate. Decide before you fill, and the amendment costs a
+            table cell. Decide after, and it costs a migration. The cheapest
+            this decision will ever be is right now.
+          </p>
+
+          <p>
+            And the decision does not even have to be made blind, because the
+            three moves that unblock <em>every</em> option are identical:
+          </p>
+
+          <ol class="steps">
+            <li>
+              <strong>CalDAV probe suite</strong> against the deployed pin in
+              the demo VM &mdash; the CardDAV suite is the template. Converts
+              "Stalwart can own calendars" from upstream marketing into a
+              measured verdict in docs/probes/. Required by all three options.
+            </li>
+            <li>
+              <strong>Google OAuth plumbing</strong> &mdash; GCP project, OAuth
+              client in production publishing mode, one consent per account.
+              Every option's adapter needs exactly this, read-only first.
+            </li>
+            <li>
+              <strong>Stalwart PII provisioning + restore drill</strong> &mdash;
+              declarative address book and calendar plan objects (the dialect
+              is already proven on the mail side), plus one drilled restore of
+              the store. Whichever option wins, Stalwart holds something
+              personal after this week.
+            </li>
+          </ol>
+
+          <p>What the mesh looks like the day after the amendment lands:</p>
+          <pre><code>  Google acct A ──┐                                       ┌── phones / DAV clients
+                  │         one adapter (cache,         │
+  Google acct B ──┴───────▶  disposable state)  ──────▶  OWNER: Stalwart
+                             People + Calendar APIs       contacts + calendar + mail
+                                                         pbx.artmann.tech
+                                                         one store · one backup · one drill
+                                                         │
+                                          ┌──────────────┴──────────────┐
+                                          ▼                             ▼
+                                   Kith CRM (relations,          nightly archive +
+                                   deals, tasks — links)        drilled restore</code></pre>
+
+          <div class="callout callout-teal">
+            <strong>The gate (kill switch)</strong>
+            If the CalDAV probe disappoints &mdash; scheduling, recurrence or
+            sync-token semantics broken at the pin &mdash; option 2 is off for
+            calendar, and you fall back to option 1 with nothing wasted: the
+            probe, the OAuth plumbing and the Stalwart drills are all load-bearing
+            there too. That symmetry is why this recommendation is safe.
+          </div>
+
+          <div class="callout callout-amber">
+            <strong>What I am asking you to accept</strong>
+            One constitutional amendment (journal &rarr; Stalwart for personal
+            contacts; Kith keeps relations), coarser lineage than journal
+            provenance, and a few weeks of adapter work before the first
+            bidirectional byte. In exchange: one owner, one DAV boundary, one
+            backup unit, one restore drill &mdash; and a door out of Google
+            that option 1 never opens.
+          </div>
+        </section>
+
+        <!-- 05 This week -->
+        <section id="week">
+          <h2><span class="num">05</span>This week</h2>
+          <p>
+            Ordered so that nothing irreversible happens before the D1
+            decision, and every step pays off under every option.
+          </p>
+
+          <ol class="steps">
+            <li>
+              <span class="badge badge-medium">Agent</span>
+              <strong>Run the CalDAV probe suite</strong> (nix-email demo VM,
+              CardDAV suite as template; verdicts recorded under
+              docs/probes/). Exit: a measured yes/no on Stalwart calendars.
+            </li>
+            <li>
+              <span class="badge badge-high">Owner</span>
+              <strong>Create the GCP OAuth client</strong> (People API first;
+              production publishing mode &mdash; the InboxClean 7-day-token
+              lesson) and run one consent per account. Exit: live read tokens,
+              refresh behavior observed.
+            </li>
+            <li>
+              <span class="badge badge-medium">Agent</span>
+              <strong>Provision the Stalwart PII plan</strong> (address book +
+              calendar objects, demo-VM first) and drill one store restore.
+              Exit: the future owner passes the same ownership tests the CRM
+              passed.
+            </li>
+            <li>
+              <span class="badge badge-high">Owner</span>
+              <strong>Decide D1 with the probe on the desk.</strong>
+              Recommended: amend the constitution &mdash; Stalwart owns
+              contacts + calendar; Kith owns relations; the journal's contact
+              legs re-point. Exit: one owner per entity type, in writing, in
+              all three repos' doctrines.
+            </li>
+            <li>
+              <span class="badge badge-medium">Agent</span>
+              <strong>Only then move data</strong>: the 139 staged people land
+              in the winner (Stalwart under option 2; journal under option 1),
+              through one door, with provenance.
+            </li>
+          </ol>
+
+          <div class="callout callout-amber">
+            <strong>The one thing not to do this week</strong>
+            Do not land the 139 into the journal "to get them out of the dump"
+            before D1. It feels like progress; it is actually the single move
+            that converts option 2 from a table-cell amendment into a
+            migration project. The dump is backed up; it can wait four days.
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">06</span>Appendix &middot; evidence</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            This brief adds no new primary research. It synthesizes the two
+            2026-10-29 proposals and re-verified their load-bearing claims
+            directly in the four repos during this session (~21:45). The
+            proposals remain the full evidence base:
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Claim relied on here</th>
+                <th>Re-verified</th>
+                <th>Where</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>Constitution ratified 10-19; calendar owner TBD by rule</td>
+                <td class="yes">Yes</td>
+                <td>crm/docs/DATA-MESH.md</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>gcontacts + CardDAV mirror FULLY_FUNCTIONAL, unused</td>
+                <td class="yes">Yes</td>
+                <td>crm/FEATURES.md:25,130&ndash;143</td>
+              </tr>
+              <tr>
+                <td>CardDAV 17/18 PASS at deployed pin 0.16.26</td>
+                <td class="yes">Yes</td>
+                <td>nix-email/FEATURES.md:62 + probes dir</td>
+              </tr>
+              <tr>
+                <td>No CalDAV probe exists; webmail reads JMAP calendars</td>
+                <td class="yes">Yes</td>
+                <td>nix-email probes dir &middot; pbx bulwark.nix:184</td>
+              </tr>
+              <tr>
+                <td>crm-server runs with zero google/carddav flags</td>
+                <td class="yes">Yes</td>
+                <td>SystemNix modules/nixos/services/crm.nix</td>
+              </tr>
+              <tr>
+                <td>139 staged people; journal holds zero; ladder documented</td>
+                <td class="yes">Yes</td>
+                <td>SystemNix docs/todo/services.md:366&ndash;367</td>
+              </tr>
+              <tr>
+                <td>Three doctrines disagree; D1/D2 logged as decisions</td>
+                <td class="yes">Yes</td>
+                <td>SystemNix docs/todo/services.md:15 + the three doctrine docs</td>
+              </tr>
+              <tr>
+                <td>NetBird mesh joins evo-x2 and pbx</td>
+                <td class="yes">Yes</td>
+                <td>pbx hosts/pbx/backup.nix:108&ndash;117</td>
               </tr>
             </tbody>
           </table>
+
+          <p><strong>Source proposals:</strong></p>
+          <ul>
+            <li>
+              SystemNix docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html
+              &mdash; the doctrine-collision analysis, Mesh A/B, D1&ndash;D6
+              (note: its &lt;title&gt; still reads "Report Title")
+            </li>
+            <li>
+              pbx-artmann docs/research/2026-10-29_contacts-calendar-data-mesh-proposal.html
+              &mdash; the two-one-way-legs reading, the Stalwart-for-calendar
+              case, phases P0&ndash;P5
+            </li>
+          </ul>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-29 &middot; every claim re-verified against the
+            four repos in this session &middot; Bauhaus editorial kit
           </p>
         </footer>
       </main>

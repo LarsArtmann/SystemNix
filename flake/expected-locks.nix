@@ -25,17 +25,17 @@
 {
   art-dupl = "1b165cdb90fbdc554335576dd2caafb501f9d063";
   art-dupl-src = "1b165cdb90fbdc554335576dd2caafb501f9d063";
-  bank-sync = "bc0ca66099f45e122fe14999c9f2652250bd13f9";
+  bank-sync = "a961fee35663082d8390fb629ca28b9b9cdf0bd4";
   branching-flow = "f28419ee2c5b7cf6ad46233bf6cf2d9f2b257546";
   brandid-lint = "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71";
-  browser-history = "22832ea18fe7991a76cc6a645815754bf4e7818a";
+  browser-history = "f9c8916bc5b9ddf0ff2e55ad960be9b72ec09482";
   buildflow = "4acfb12b5797fe4e558e9e1034ae6af3376433b4";
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
-  crm = "f1d40c9eb8b5384ee30e7e5c5b7c39c58d9121d9";
-  crush-config = "4468af58d9ccb215be15b8e78227fba838751d8a";
-  crush-daily = "412bdd1595129e62d07acbffa8ed40fd26de2ce0";
+  crm = "d57e00f46b7f946ad112c0fdffbbb3431d499494";
+  crush-config = "d79602d02729797ca0e28e0d6d42f2d800893d08";
+  crush-daily = "83c4d8a3de5035eb00122d3f85307d0636f91224";
   cv = "e168e6d39913680adbb2611a7e1ed5aaf68d4bf9";
-  dankMaterialShell = "b18fc386930d30834f83a14cd7c944e10853cb97";
+  dankMaterialShell = "8ce37501bd9c4dcbac04d1deb4e57d50f3e2c94f";
   discordsync = "79952c46f0bfcc94763e40570741a1c97785d2d2";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
@@ -43,7 +43,7 @@
   domains = "aba7cb95b31399cdae936ad7a12f5fffff7dc312";
   emeet-pixyd = "9b5f5cd6cfe73792715f97a26f869b29a9b72d02";
   erraudit = "256200c1d59572ad4db6afdb0c37eae28e6c89d1";
-  file-and-image-renamer = "b54a54efe45a0ff6506f46ce6c3406134e4a8757";
+  file-and-image-renamer = "6ce5c2a7220695e3e188d2ec47a53947e31611c3";
   flake-compat = "5edf11c44bc78a0d334f6334cdaf7d60d732daab";
   flake-parts = "024633cd702b10285db5cb19b40ad48d2399ba60";
   flake-utils = "b7a79d3fea1e214f6d668d521cecec0c01e26544";
@@ -69,7 +69,7 @@
   hermes-agent = "0329638c2bf0438552145589787e355bf23343fe";
   home-manager = "095fef2f265c3c0da4fe315efba8f8a04495ab34";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "8fec6978fe9e25bf05f4a01d0960e48880ab6f35";
+  homebrew-cask = "030cfb80bd25f112aafc50c2b5df5fb1d5febc94";
   inboxclean = "5c52f31506d114f508d3cf5832c552da3b5f2228";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
   journal = "50b4941686f9718bf6449962589aab1c83c3ca5f";
@@ -90,7 +90,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "31ecbaca1bdefa45dffc409f0250bd8039ea0010";
   nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
-  nur = "96c8543f992119c744b325713c7871524a2aa666";
+  nur = "3f2dbddf44b3d794961c402bd8bc7ad9e506631b";
   offline-banner = "2ccdf6ec04f32b94aa2b8ddd7d35a38b5daf2903";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "1c467991e698e59a68301ebc38c2be72abc83dcf";
@@ -99,8 +99,8 @@
   project-dependency-graph = "9836197c61ec18537f1bd59ef0ecfad04915f98a";
   project-discovery-daemon = "145cd73db456320adcde0d71b77a535e03bbd7f4";
   project-meta = "9ba321b2a73b937c1b15294b36777b2d47eac84f";
-  projects-management-automation = "fbd3b1a82bb1ad9a2b97188fb096cf3aa2b1ed8b";
-  pyproject-build-systems = "a17819c85163988e063806ffc4f6d2716bc8ead8";
+  projects-management-automation = "afccaf96137509a8d199a49a42b5454869994be9";
+  pyproject-build-systems = "6171a3484937e14cdf2316ed9a60f1c27b6cb71e";
   pyproject-nix = "bf7d4b1d6de61db02fd4e748395634f03006e5de";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";
   rust-overlay = "afcefd09c71e63663a46e4ce5e09968584f2c709";
@@ -112,7 +112,7 @@
   storage-collector = "0569c46c3ca4c2959e711a5cf8f0d3545f912436";
   superfile = "97af177d4790cec601dc3a45a1e7c2983bb0dfc5";
   systems = "d36eeed142f88b5a636f2e3856a53c61654cf29b";
-  templ = "f6492f22bef32521a9d90400ec44de5ed3b7546b";
+  templ = "3e969eda7228806e4917c3e1985a4b9058161aca";
   todo-list-ai = "903e88a93b8fa8fcb04d8f160557a9c9953527ed";
   treefmt-full-flake = "d4817f5494feca3c5e927b58032ddcd718dbfdff";
   treefmt-nix = "0d6d739a833ba9a9c93034862e4a7b061a062a1c";

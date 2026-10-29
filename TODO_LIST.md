@@ -672,6 +672,10 @@
 - [ ] [ready] **Verify why dnsblockd check-lockstep did not run before the dep-sweep commit shipped** — the sweep rode heuristic daemon commits which bypass pre-commit legs keyed on staged paths (2026-09-28 daemon-race precedent); confirm preflight-gates.sh would have caught the drift, and whether the dnsblockd repo runs check-lockstep in CI (push leg), else wire it → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §f.9)
 
 ### pipeline
+- [ ] [ready] **Stray-continuation-line guard for one-physical-line files (TODO_LIST/CHANGELOG/library rows)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-29_21-43_contacts-calendar-ownership-doctrine-and-bidi-mesh-proposal.md §d.1)
+- [ ] [ready] **Index the ownership page + the bidirectional-mesh proposal in `docs/README.md` Key Documents (decide whether planning gets its own index)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §b.2)
+- [ ] [ready] **"Last verified" convention for doctrine pages + stamp `docs/agents/data-ownership.md`** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §e.9)
+- [ ] [ready] **Codify the research-artifact convention in AGENTS.md (docs/research + index row vs `~/.cache/<topic>` scratch, never /tmp)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §d.2)
 - [ ] [ready] **float-register: 72-char commit subject + verify the pair actually committed (false "daemon landed" success)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §d)
 - [ ] [ready] **Wire `dprint.json` into a gate or delete it** (a full markdown/YAML/JSON formatter config that no hook, formatter or CI step runs) → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 
