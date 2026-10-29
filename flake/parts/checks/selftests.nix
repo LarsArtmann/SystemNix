@@ -236,6 +236,46 @@
             touch $out
           '';
 
+        # monitor365 additive schema heal (ExecStartPre): the migration
+        # upstream never wrote. Its fixture builds a LEGACY DuckDB (users
+        # table without the version column), proves the production
+        # projection does not bind, then proves the heal repairs it — plus
+        # idempotency and fail-open. The fixture runs against the repo text
+        # AND the rendered wrapper the unit execs, and asserts the
+        # ExecStartPre passes the database path as argv[1].
+        monitor365-heal-schema-selftest =
+          let
+            preStartEntries =
+              inputs.self.nixosConfigurations.evo-x2.config.systemd.services.monitor365-server.serviceConfig.ExecStartPre;
+            entry = lib.findFirst (e: lib.hasInfix "monitor365-heal-schema" e) null preStartEntries;
+            callSite = lib.splitString " " entry;
+            rendered = builtins.head callSite;
+            callSiteDb = builtins.elemAt callSite 1;
+          in
+          pkgs.runCommand "monitor365-heal-schema-selftest" { } ''
+            export PATH="${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin:${pkgs.duckdb}/bin"
+            scratch=$(mktemp -d)
+            cp ${root}/scripts/monitor365-heal-schema.sh "$scratch/monitor365-heal-schema.sh"
+            cp ${root}/scripts/test-monitor365-heal-schema.sh "$scratch/test-monitor365-heal-schema.sh"
+
+            # Call-site contract: the heal needs the DB file it heals.
+            case '${callSiteDb}' in
+              *.duckdb) : ;;
+              *)
+                echo "FAIL: ExecStartPre passes no DuckDB path (argv[1]='${callSiteDb}')"
+                exit 1
+                ;;
+            esac
+
+            echo "== repo text =="
+            bash "$scratch/test-monitor365-heal-schema.sh"
+
+            echo "== rendered wrapper =="
+            MONITOR365_HEAL_SCHEMA_SCRIPT=${rendered} \
+              bash "$scratch/test-monitor365-heal-schema.sh"
+            touch $out
+          '';
+
         # Rendered-artifact leg of the retention fixture: the repo-file
         # selftest above proves the repo text, but the 03:00 window runs
         # the RENDERED writeShellApplication output, called by the

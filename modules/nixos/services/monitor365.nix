@@ -179,6 +179,32 @@
         '';
       };
 
+      # Additive schema heal — the migration upstream never wrote. Upstream
+      # runs `crates/db/src/schema.sql` with CREATE TABLE IF NOT EXISTS on
+      # every start, which never alters an existing table, and its embedded
+      # DuckDB migration set stops at 028 with no ALTER for the `version`
+      # columns. A DB restored from a backup older than those columns stays
+      # permanently version-less: `get_user_by_email`'s
+      # `COALESCE(users.version, 0)` stops binding and the SSO callback maps
+      # that DB error to "Unauthorized: SSO user not found" (live
+      # 2026-10-29, and the reason the identity heal alone could not fix it —
+      # its own create-admin pre-check reads through the same broken
+      # projection, so every start attempted an INSERT and hit the unique
+      # index). Idempotent ADD COLUMN IF NOT EXISTS plus a post-condition
+      # probe of the exact production projection. Fail-OPEN, like the
+      # identity heal below.
+      schemaHealScript = pkgs.writeShellApplication {
+        name = "monitor365-heal-schema";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.duckdb
+        ];
+        # Repo-file-backed so checks.monitor365-heal-schema-selftest executes
+        # the SAME text the ExecStartPre runs — the NOT NULL-on-ADD-COLUMN
+        # parser error was caught by that fixture, not by review.
+        text = builtins.readFile ../../../scripts/monitor365-heal-schema.sh;
+      };
+
       # Ensure the Pocket ID SSO identity exists in the tenant DB before the
       # server starts (idempotent boot-time heal). Monitor365 matches SSO
       # logins on email ONLY and has NO JIT provisioning: a DB restored from
@@ -508,9 +534,13 @@
               ExecStartPre = lib.mkBefore (
                 [
                   (lib.getExe duckdbHealScript)
+                  "${lib.getExe schemaHealScript} ${serverCfg.stateDir}/monitor365.duckdb"
                 ]
-                # After the heal: the identity check opens the DB only once
-                # the WAL/restore state is resolved. Order matters.
+                # After the heals: the identity check opens the DB only once
+                # the WAL/restore state is resolved AND the users-table
+                # projection binds again — its create-admin pre-check goes
+                # through the same `COALESCE(users.version, 0)` SELECT the
+                # schema heal repairs. Order matters.
                 ++ lib.optionals (serverCfg.sso.enable or false) [
                   "${lib.getExe ssoIdentityScript} ${ssoAdminEmail}"
                 ]
