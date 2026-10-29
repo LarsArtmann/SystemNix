@@ -199,10 +199,12 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   login unit Requires a NOT-FOUND unit and any start (boot enqueue or
   manual) dies on the dependency — which is why even boots AFTER the
   Oct 10 queue fix left zero oneshot journal entries and why the owner had
-  to enroll manually. Fix (in-tree 2026-10-15, deploy owed): drop the
-  override back to default `[]` (the sops key file exists before sysinit;
-  no ordering edge needed). Eval-verified: login unit Requires/After now
-  only the daemon.
+  to enroll manually. Fix (in-tree 2026-10-15; VERIFIED DEPLOYED 2026-10-29,
+  generation system-964: unit renders `Requires=netbird-evox2.service` only
+  + `TimeoutStartSec=2min`, oneshot runs clean NeedsLogin-guarded no-ops):
+  drop the override back to default `[]` (the sops key file exists before
+  sysinit; no ordering edge needed). Eval-verified: login unit Requires/After
+  now only the daemon.
 - **deploy.sh restarts the login oneshot via the unconditional explicit
   block, not the is-enabled gated loop** — `systemctl is-enabled --quiet`
   intermittently returns rc=1 mid-switch for indirectly-pulled units
@@ -221,6 +223,49 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   `rels://relay.larsartmann.cloud` connected with zero errors since 12:00,
   and daemon re-authenticates across reboots (the Oct 15 03:14 boot came
   up logged in — no PermissionDenied).
+
+## Local metrics + mesh observability (2026-10-29 leverage pass)
+
+NetBird ≥0.67 clients can expose a LOCAL Prometheus endpoint (off upstream
+by default). It is enabled declaratively via the `config.d` fragment keys
+`LocalMetricsEnabled` / `LocalMetricsAddress` (PascalCase Go field names of
+`profilemanager.Config` — source-verified against v0.81.0; plain bool/string,
+so the url.URL ManagementUrl crash class cannot apply) and the daemon
+restarts on fragment changes via `restartTriggers` (nixpkgs wires none).
+
+- **Endpoint**: `127.0.0.1:9465/metrics` (`ports.netbird-metrics`; NEVER the
+  netbird default 9191 — ocis binds the whole 9100-9304 loopback band).
+- **Why**: the ONLY signal distinguishing daemon-alive from
+  control-plane-connected — `netbird_management_connected` / `netbird_signal_connected`
+  gauges + `netbird_peers_connected{connection_type}` + per-peer latency.
+  The 2026-10-17 pbx outage left the control plane dead 8h behind a green
+  unit-state; this closes that blind spot.
+- **Gatus** "NetBird Mesh Connection" (registry entry checks in
+  netbird.nix, interval 1m): anchored pair asserting
+  `netbird_management_connected 1` — absence (endpoint down) and value-0
+  (stream lost) both fail it fail-closed.
+- **SigNoz**: scrape job `netbird` → `127.0.0.1:9465` + alert rule
+  "NetBird Management Stream Down"
+  (`min(netbird_management_connected) or vector(0)` < 1, 5m, critical — the
+  `or vector(0)` leg makes scrape absence fireable).
+- **Live probe** (needs root for the daemon socket):
+  `sudo /run/current-system/sw/bin/... netbird status -d`, or plain
+  `cat /var/lib/netbird-evox2/config.json | jq '.LocalMetricsEnabled'
+  after deploy.
+
+### Advanced OSS feature inventory (v0.81 self-hosted, 2026-10-29 research)
+
+| Feature | State here |
+| --- | --- |
+| Setup-key enrollment, routing peer, matched-domain DNS, ACL policy | IN USE (provisioner-managed) |
+| Client local metrics | IN USE (this pass: 9465 + Gatus + SigNoz) |
+| Exit node (0.0.0.0/0 via evo-x2) | QUEUED [blocked:user] — roaming adblock + full encryption (services.md) |
+| Management Prometheus metrics (`metricsPort`, `management_grpc_connected_streams`) | QUEUED [blocked:user] pbx-artmann row (server-side view of the same outage signal) |
+| NetBird SSH (native OpenSSH, identity-aware, v0.60+) | NOT USED — admin fallback stays plain SSH; revisit if bastion friction appears |
+| Networks / zero-trust resources | provisioner already models `lan` + resource; fine as-is |
+| Posture checks (OS/version/cert, self-hosted OK) | NOT USED — single-user mesh, no fleet policy need yet |
+| Search domains / peer-name DNS | NOT USED — matched-domain forwarding covers it |
+| Traffic-event logging / event streaming | PAID (cloud/enterprise) — out of scope per C1 |
 
 ---
 

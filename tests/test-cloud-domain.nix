@@ -221,6 +221,14 @@ let
         # daemon restarts on fragment-only changes (nixpkgs wires no
         # restartTriggers — source-verified pinned rev)
         && enabled.systemd.services."netbird-evox2".restartTriggers != [ ]
+        # login-unit dependency render pin (2026-10-15 dangling-Require
+        # incident): the oneshot must Require ONLY the daemon — the
+        # nixpkgs doc-example systemdDependencies value (sops-install-
+        # secrets.service, not-found in this flake's activation-script
+        # sops mode) must never return; also the 2min start bound
+        && (enabled.systemd.services."netbird-evox2-login".requires or null) == [ "netbird-evox2.service" ]
+        && (enabled.systemd.services."netbird-evox2-login".after or [ ]) == [ "netbird-evox2.service" ]
+        && enabled.systemd.services."netbird-evox2-login".serviceConfig.TimeoutStartSec == "2min"
         # name parameterization: the suffix flows into unit + fragment paths
         && (renamed.services.netbird.clients ? rpi3)
         && (renamed.systemd.services ? "netbird-rpi3-login")

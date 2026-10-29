@@ -279,6 +279,18 @@
             (harden { MemoryMax = "1G"; })
             (serviceOneshotDefaults { })
             ioTier.background
+            {
+              # The post-sync corpus self-heal ("corpus backup incomplete —
+              # self-healing with a full backup pass", upstream corpus_backup.go)
+              # pages the WHOLE mailbox and exceeds the 5min oneshot default
+              # under IO pressure; a mid-pass timeout kill leaves the
+              # completion marker unwritten, so the 1h cooldown re-arms the
+              # same full pass forever — the 2026-10-26→29 livelock (every
+              # other tick "Failed with result 'timeout'"). 25min lets the
+              # pass finish once (marker written → self-heal stops
+              # permanently) while staying inside the 30min timer cadence.
+              TimeoutStartSec = "25min";
+            }
           ];
         };
 

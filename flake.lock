@@ -169,11 +169,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1793307433,
-        "narHash": "sha256-tU82IMiH4eol9yTpUJEWmlOQlRjjFDgOaci4/Hx32pc=",
+        "lastModified": 1793300174,
+        "narHash": "sha256-4KUdeNlue+cIjsgOVRSnFWEyvTa7A6nNmy0s2myudRE=",
         "ref": "refs/heads/master",
-        "rev": "122508d924843a37848de94c64545f883e241f8d",
-        "revCount": 2284,
+        "rev": "a961fee35663082d8390fb629ca28b9b9cdf0bd4",
+        "revCount": 2266,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       },
@@ -874,11 +874,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1793306851,
-        "narHash": "sha256-ofqecWJmYTYLi2hyCXFz8/a01nIETE/ewlTmIeLtiyM=",
+        "lastModified": 1793297411,
+        "narHash": "sha256-kDOa366OumuM+YVzABCws8L8ixPhADNrWs1zOMXmRWo=",
         "ref": "refs/heads/master",
-        "rev": "ef98a573726d3a012e17df1f190c09ea6e004ff3",
-        "revCount": 1110,
+        "rev": "d57e00f46b7f946ad112c0fdffbbb3431d499494",
+        "revCount": 1105,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
@@ -6344,11 +6344,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1793307340,
-        "narHash": "sha256-jaseAny5Ge5WS1x/iI1jPMGi3i7Pu5qkWzWjZJZL4Ak=",
+        "lastModified": 1793304203,
+        "narHash": "sha256-Uk+tw8uWe/S0lJdo4lXOocaMBgAEsCAsu/oP4mwK6BY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "eea6c48738eaba41db013a9b83fd77c6bc75e9d0",
+        "rev": "030cfb80bd25f112aafc50c2b5df5fb1d5febc94",
         "type": "github"
       },
       "original": {
@@ -6555,11 +6555,11 @@
         "templ-components": "templ-components_6"
       },
       "locked": {
-        "lastModified": 1793307469,
-        "narHash": "sha256-+OjvTxI/bLlL/pFRkHUEdVtxOXCPjUv++TQ2pVjA0Z8=",
+        "lastModified": 1793197833,
+        "narHash": "sha256-d+H8cCa91JSDtJnGcXmWE1a0VNvc7PFOf1e1yCg0NvM=",
         "ref": "refs/heads/master",
-        "rev": "1230bf2301ed5f7136b0499e90ea55afaaa9c6fc",
-        "revCount": 594,
+        "rev": "50b4941686f9718bf6449962589aab1c83c3ca5f",
+        "revCount": 555,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/journal"
       },
@@ -6734,11 +6734,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793306620,
-        "narHash": "sha256-PhowV4EUasYi6UZkAIzr7aR0yS+ux5y+7tehyNsuvZ0=",
+        "lastModified": 1793285277,
+        "narHash": "sha256-seNppW292Tx0eRwl4Ni0mGH6IV4Jg7n0PcXO9PGsURk=",
         "ref": "refs/heads/master",
-        "rev": "382d21cb1dfa652b8d7b37e5df1ef28f71b7761d",
-        "revCount": 244,
+        "rev": "e7896ef9c4743f0826604474d358118c6b1a01ce",
+        "revCount": 225,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/media-atlas"
       },
@@ -7367,11 +7367,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793307072,
-        "narHash": "sha256-EefU8QTlZHXqVplw5YVjIziX/R3v4JzEg9mBM5SrVZQ=",
+        "lastModified": 1793305149,
+        "narHash": "sha256-RsfGCdmAHpofwjC/ZTIXGRTjorVmgpz+07nSH8aUfz4=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8cc81fb4a1f27c69833147a761c182926f89aecb",
+        "rev": "3f2dbddf44b3d794961c402bd8bc7ad9e506631b",
         "type": "github"
       },
       "original": {
@@ -7900,11 +7900,11 @@
         "samber-do-auditlog": "samber-do-auditlog_9"
       },
       "locked": {
-        "lastModified": 1793307555,
-        "narHash": "sha256-I651Ub9S+cwEEqupSuV+kktcK1ngUPOUq9g8AO4wfn4=",
+        "lastModified": 1793298878,
+        "narHash": "sha256-Afc55RODoTmhnokWD9iKuv1NweW4OKGJowYZLKw1lvc=",
         "ref": "refs/heads/master",
-        "rev": "7dc552fe07e0f4b58b6e9355800ad91f2e29f1d0",
-        "revCount": 4256,
+        "rev": "afccaf96137509a8d199a49a42b5454869994be9",
+        "revCount": 4252,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },

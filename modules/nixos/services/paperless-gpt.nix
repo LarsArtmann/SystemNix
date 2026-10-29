@@ -92,16 +92,32 @@
         # Suggestion language pinned to the archive's majority language,
         # matching PAPERLESS_AI_LLM_OUTPUT_LANGUAGE in paperless.nix (A11).
         LLM_LANGUAGE = "German";
-        # Tag-gating: documents enter processing ONLY via the auto tag —
-        # nothing happens to untagged documents. AUTO_TAG_COMPLETE marks
+        # Tag-gating: documents enter processing ONLY via the auto tag.
+        # Nothing happens to untagged documents. AUTO_TAG_COMPLETE marks
         # processed docs; FAIL_TAG breaks the retry loop after max retries.
-        inherit (cfg)
-          manualTag
-          autoTag
-          autoTagComplete
-          failTag
-          ;
+        # The names MUST be the upstream SCREAMING_SNAKE_CASE identifiers
+        # (main.go reads os.Getenv("AUTO_TAG") and friends). A plain
+        # `inherit (cfg) autoTag ...` renders `Environment="autoTag=..."`,
+        # which the daemon never reads: every tag name silently fell back to
+        # the upstream default. Those defaults equal our values, which is why
+        # the bug stayed invisible, but any option change was a no-op
+        # (audit 2026-10-29: /api/config reported AUTO_TAG=None while the
+        # unit carried only `autoTag=paperless-gpt-auto`).
+        MANUAL_TAG = cfg.manualTag;
+        AUTO_TAG = cfg.autoTag;
+        AUTO_TAG_COMPLETE = cfg.autoTagComplete;
+        FAIL_TAG = cfg.failTag;
         AUTO_TAG_MAX_RETRIES = toString cfg.autoTagMaxRetries;
+        # Generation switches, pinned explicitly: upstream defaults all of
+        # them to true, so this changes no behaviour and makes the intent
+        # inspectable in /api/config (the audit found them unset, which reads
+        # as "no metadata extraction"). Document types come from the
+        # EXISTING paperless vocabulary only, never invented.
+        AUTO_GENERATE_TITLE = "true";
+        AUTO_GENERATE_TAGS = "true";
+        AUTO_GENERATE_CORRESPONDENTS = "true";
+        AUTO_GENERATE_DOCUMENT_TYPE = "true";
+        AUTO_GENERATE_CREATED_DATE = "true";
         # Bounded-write posture (Stage-A spirit from the AI-max plan):
         # suggest only EXISTING tags (no unbounded tag creation) and never
         # clobber manual metadata.
