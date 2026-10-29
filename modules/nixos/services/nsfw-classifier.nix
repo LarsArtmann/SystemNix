@@ -183,6 +183,24 @@
             cache dir (recomputable/regenerable by design).
           '';
         };
+
+        watchdogSec = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = ''
+            WatchdogSec budget: restart the unit when the binary stops
+            re-arming the watchdog (hung boot, wedged cgo inference — the
+            2026-10-18 postmortem class). The binary speaks sd_notify
+            (READY=1 at serve start, STOPPING=1 at drain, WATCHDOG=1 at
+            WATCHDOG_USEC/2 while serving; upstream
+            internal/server/sdnotify.go, 2026-10-25). null (default) keeps
+            the unit Type=simple with no watchdog; any value flips the unit
+            to Type=notify (systemd only delivers NOTIFY_SOCKET to notify
+            units). Budget generously: cold start loads every model and
+            MIGraphX compiles per session (measured minutes, boot budgets
+            in the runbook) — 300 is the recommended floor.
+          '';
+        };
       };
 
       config = lib.mkMerge [
@@ -234,7 +252,11 @@
             # model load + warmup.
             serviceConfig = lib.mkMerge [
               {
-                Type = "simple";
+                # sd_notify is only delivered to notify units, so the
+                # watchdog option flips the type; without it (default) the
+                # shape is unchanged: simple + /readyz readiness.
+                Type = if cfg.watchdogSec != null then "notify" else "simple";
+                WatchdogSec = lib.mkIf (cfg.watchdogSec != null) cfg.watchdogSec;
                 ExecStart = execStart;
                 # The models checkout lives under a 0700 home — only the
                 # configured user can traverse it (DynamicUser cannot; see
