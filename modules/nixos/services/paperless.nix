@@ -52,9 +52,10 @@ _: {
       # arrives via the runtime-minted env file below. Direct :8848
       # otherwise (llama-server ignores Authorization).
       embeddingEndpoint =
-        if aiMeterEnabled
-        then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-embeddings"
-        else "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
+        if aiMeterEnabled then
+          "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-embeddings"
+        else
+          "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
 
       # ── Layer 1 native OIDC via Pocket ID ────────────────────────────────────
       # Optional-dependency refs (dns-blocker `or false` idiom): hosts

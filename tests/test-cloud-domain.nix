@@ -201,7 +201,7 @@ let
                 }
               ];
             }).config;
-          netbirdPorts = import ../lib/ports.nix;
+          netbirdPorts = (import ../lib/ports.nix).ports;
         in
         # fragment keys present + registered non-ocis-band port
         enabled.services.netbird.clients.evox2.config ? "LocalMetricsEnabled"
