@@ -212,31 +212,29 @@
             rendered = builtins.head callSite;
             callSiteEmail = builtins.elemAt callSite 1;
           in
-          pkgs.runCommand "monitor365-sso-identity-selftest"
-            { }
-            ''
-              export PATH="${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
-              scratch=$(mktemp -d)
-              cp ${root}/scripts/monitor365-ensure-sso-identity.sh "$scratch/monitor365-ensure-sso-identity.sh"
-              cp ${root}/scripts/test-monitor365-ensure-sso-identity.sh "$scratch/test-monitor365-ensure-sso-identity.sh"
+          pkgs.runCommand "monitor365-sso-identity-selftest" { } ''
+            export PATH="${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+            scratch=$(mktemp -d)
+            cp ${root}/scripts/monitor365-ensure-sso-identity.sh "$scratch/monitor365-ensure-sso-identity.sh"
+            cp ${root}/scripts/test-monitor365-ensure-sso-identity.sh "$scratch/test-monitor365-ensure-sso-identity.sh"
 
-              # Call-site contract: the unit must hand the heal an email.
-              case '${callSiteEmail}' in
-                ?*@?*) : ;;
-                *)
-                  echo "FAIL: ExecStartPre passes no admin email (argv[1]='${callSiteEmail}')"
-                  exit 1
-                  ;;
-              esac
+            # Call-site contract: the unit must hand the heal an email.
+            case '${callSiteEmail}' in
+              ?*@?*) : ;;
+              *)
+                echo "FAIL: ExecStartPre passes no admin email (argv[1]='${callSiteEmail}')"
+                exit 1
+                ;;
+            esac
 
-              echo "== repo text =="
+            echo "== repo text =="
+            bash "$scratch/test-monitor365-ensure-sso-identity.sh"
+
+            echo "== rendered wrapper =="
+            MONITOR365_SSO_IDENTITY_SCRIPT=${rendered} \
               bash "$scratch/test-monitor365-ensure-sso-identity.sh"
-
-              echo "== rendered wrapper =="
-              MONITOR365_SSO_IDENTITY_SCRIPT=${rendered} \
-                bash "$scratch/test-monitor365-ensure-sso-identity.sh"
-              touch $out
-            '';
+            touch $out
+          '';
 
         # Rendered-artifact leg of the retention fixture: the repo-file
         # selftest above proves the repo text, but the 03:00 window runs

@@ -19,7 +19,7 @@
 # 10 minutes of the inboxclean-web journal into the node_exporter textfile
 # dir; the SigNoz rule (InboxClean Health Handler Timeout Burst) alerts at
 # >=3 in the window. Runbook: docs/services/inboxclean.md.
-{ inputs, ... }: {
+_: {
   flake.nixosModules.inboxclean-canary =
     {
       config,

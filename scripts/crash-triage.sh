@@ -23,9 +23,18 @@ JOURNAL_CAP_BYTES="${JOURNAL_CAP_BYTES:-8589934592}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --boots) BOOTS="$2"; shift 2 ;;
-    -h | --help) sed -n '2,17p' "$0" >&2; exit 0 ;;
-    *) echo "crash-triage: unknown flag: $1" >&2; exit 2 ;;
+  --boots)
+    BOOTS="$2"
+    shift 2
+    ;;
+  -h | --help)
+    sed -n '2,17p' "$0" >&2
+    exit 0
+    ;;
+  *)
+    echo "crash-triage: unknown flag: $1" >&2
+    exit 2
+    ;;
   esac
 done
 
@@ -34,7 +43,10 @@ done
 # reverse to newest-first, keep N+1 (the boot AFTER a crash carries its
 # reset reason).
 mapfile -t bootlist < <("$JOURNALCTL" --list-boots --no-pager 2>/dev/null | tail -n $((BOOTS + 1)) | tac)
-[ ${#bootlist[@]} -ge 2 ] || { echo "crash-triage: need >=2 boots from --list-boots" >&2; exit 1; }
+[ ${#bootlist[@]} -ge 2 ] || {
+  echo "crash-triage: need >=2 boots from --list-boots" >&2
+  exit 1
+}
 
 # Reset-reason line of the PREVIOUS boot, read from boot N's kernel log
 # (the reason lives in the NEXT boot, never the dying one).  NOTE: no
@@ -71,7 +83,7 @@ i=0
 for line in "${bootlist[@]}"; do
   i=$((i + 1))
   [ "$i" -gt "$BOOTS" ] && break
-  read -r offset full <<< "$(printf '%s\n' "$line" | awk '{print $1, $2}')"
+  read -r offset full <<<"$(printf '%s\n' "$line" | awk '{print $1, $2}')"
   start=$(printf '%s\n' "$line" | awk '{print $4, $5, $6}')
   end=$(printf '%s\n' "$line" | awk '{print $8, $9, $10}')
   short="${full:0:8}"
@@ -88,10 +100,14 @@ for line in "${bootlist[@]}"; do
   # discriminator branch proposal (docs/agents/stability.md fork)
   branch="?"
   if [ "$endkind" = "ABRUPT" ]; then
-    if [ "$throttle" -ge 20 ] && [ "$trips" -ge 5 ]; then branch="C combined (storm+ceiling)"
-    elif [ "$throttle" -ge 20 ]; then branch="A thermal"
-    elif [ "$trips" -ge 5 ]; then branch="B livelock"
-    else branch="A/B (census thin — pull evidence before branching)"
+    if [ "$throttle" -ge 20 ] && [ "$trips" -ge 5 ]; then
+      branch="C combined (storm+ceiling)"
+    elif [ "$throttle" -ge 20 ]; then
+      branch="A thermal"
+    elif [ "$trips" -ge 5 ]; then
+      branch="B livelock"
+    else
+      branch="A/B (census thin — pull evidence before branching)"
     fi
   fi
   ev="(evidence: "

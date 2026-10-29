@@ -48,7 +48,10 @@ in
   # makeTest applied runNixOSTest to an already-built test → flake check
   # died with "unsupported attribute `containers`" and NO .nix commit on
   # this tree could pass the pre-commit gate (fixed 2026-10-28).
-  scrub-guard = import ./test-scrub-guard.nix { inherit pkgs; self = inputs.self; };
+  scrub-guard = import ./test-scrub-guard.nix {
+    inherit pkgs;
+    inherit (inputs) self;
+  };
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
   upholds-convergence = makeTest (import ./test-upholds-convergence.nix { inherit pkgs; });

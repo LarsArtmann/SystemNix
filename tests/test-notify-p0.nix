@@ -72,7 +72,7 @@ let
       msg = "notify-failure-p0@ must be Type=oneshot";
     }
     {
-      ok = pkgs.lib.hasInfix "notify-failure-p0" (svc."notify-failure-p0@".serviceConfig.ExecStart);
+      ok = pkgs.lib.hasInfix "notify-failure-p0" svc."notify-failure-p0@".serviceConfig.ExecStart;
       msg = "notify-failure-p0@ ExecStart does not run the notify-failure-p0 script";
     }
   ]

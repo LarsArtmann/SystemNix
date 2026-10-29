@@ -57,7 +57,8 @@ pkgs.testers.runNixOSTest {
             # failed injection would phantom-green every scenario below.
             grep -q '${stubs}/systemctl' $out/bin/btrfs-scrub-guard
             grep -q '${stubs}/btrfs-probe' $out/bin/btrfs-scrub-guard
-          '')
+          ''
+        )
       ];
     };
 

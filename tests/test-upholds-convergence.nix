@@ -28,64 +28,62 @@
 {
   name = "upholds-convergence";
 
-  nodes.machine =
-    _:
-    {
-      boot.supportedFilesystems = [ "ext4" ];
-      virtualisation.emptyDiskImages = [ 512 ];
-      # qemu-vm.nix replaces `fileSystems` at priority 900 — must use the
-      # virtualisation alias (test-pool-recovery gotcha).
-      virtualisation.fileSystems."/mnt/uph" = {
-        device = "/dev/disk/by-label/uph";
-        fsType = "ext4";
-        options = [ "nofail" ];
-      };
-      systemd.services.uph-fmt = {
-        description = "Format the virtio disk as ext4 label uph (test-only)";
-        wantedBy = [ "local-fs.target" ];
-        before = [
-          "mnt-uph.mount"
-          "local-fs.target"
-        ];
-        serviceConfig = {
-          Type = "oneshot";
-          User = "root";
-        };
-        path = [
-          pkgs.e2fsprogs
-          pkgs.util-linux
-          pkgs.systemd
-        ];
-        script = ''
-          if ! blkid /dev/vdb | grep -q 'LABEL="uph"'; then
-            mkfs.ext4 -L uph /dev/vdb
-          fi
-          udevadm settle
-        '';
-      };
-      systemd.services.uph-consumer = {
-        description = "Upholds evaluation fixture (mount-dependent daemon)";
-        wantedBy = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "simple";
-          ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
-          # Deliberately NO auto-restart: any recovery observed below can
-          # only have come from Upholds.
-          Restart = "no";
-        };
-      };
-      # DIRECTION (first draft had it backwards — that failure IS a finding:
-      # `A Upholds=B` = "while A is active, keep B started", the inverse of
-      # BindsTo=). The MOUNT upholds the consumer. Pinned nixpkgs (fe13242)
-      # has no `systemd.units.<name>.upholds` (that landed upstream later);
-      # the available form is the inverse-facing `upheldBy` (systemd-unit-
-      # options.nix: "keep THIS unit running as long as the listed units are
-      # running"). Declaring it on the consumer renders the SAME edge the
-      # mount-side option would: a `mnt-uph.mount.upholds/uph-consumer.service`
-      # symlink in the unit dir (systemd-lib.nix symlink pass).
-      systemd.services.uph-consumer.upheldBy = [ "mnt-uph.mount" ];
-      system.stateVersion = "25.11";
+  nodes.machine = _: {
+    boot.supportedFilesystems = [ "ext4" ];
+    virtualisation.emptyDiskImages = [ 512 ];
+    # qemu-vm.nix replaces `fileSystems` at priority 900 — must use the
+    # virtualisation alias (test-pool-recovery gotcha).
+    virtualisation.fileSystems."/mnt/uph" = {
+      device = "/dev/disk/by-label/uph";
+      fsType = "ext4";
+      options = [ "nofail" ];
     };
+    systemd.services.uph-fmt = {
+      description = "Format the virtio disk as ext4 label uph (test-only)";
+      wantedBy = [ "local-fs.target" ];
+      before = [
+        "mnt-uph.mount"
+        "local-fs.target"
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+      };
+      path = [
+        pkgs.e2fsprogs
+        pkgs.util-linux
+        pkgs.systemd
+      ];
+      script = ''
+        if ! blkid /dev/vdb | grep -q 'LABEL="uph"'; then
+          mkfs.ext4 -L uph /dev/vdb
+        fi
+        udevadm settle
+      '';
+    };
+    systemd.services.uph-consumer = {
+      description = "Upholds evaluation fixture (mount-dependent daemon)";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = "${pkgs.coreutils}/bin/sleep infinity";
+        # Deliberately NO auto-restart: any recovery observed below can
+        # only have come from Upholds.
+        Restart = "no";
+      };
+    };
+    # DIRECTION (first draft had it backwards — that failure IS a finding:
+    # `A Upholds=B` = "while A is active, keep B started", the inverse of
+    # BindsTo=). The MOUNT upholds the consumer. Pinned nixpkgs (fe13242)
+    # has no `systemd.units.<name>.upholds` (that landed upstream later);
+    # the available form is the inverse-facing `upheldBy` (systemd-unit-
+    # options.nix: "keep THIS unit running as long as the listed units are
+    # running"). Declaring it on the consumer renders the SAME edge the
+    # mount-side option would: a `mnt-uph.mount.upholds/uph-consumer.service`
+    # symlink in the unit dir (systemd-lib.nix symlink pass).
+    systemd.services.uph-consumer.upheldBy = [ "mnt-uph.mount" ];
+    system.stateVersion = "25.11";
+  };
 
   testScript = ''
     machine.start()

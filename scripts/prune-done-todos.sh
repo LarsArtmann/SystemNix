@@ -38,13 +38,19 @@ usage() {
 
 for arg in "$@"; do
   case "$arg" in
-    --apply) APPLY=1 ;;
-    --help|-h) usage ;;
-    *) echo "unknown arg: $arg (see --help)" >&2; exit 2 ;;
+  --apply) APPLY=1 ;;
+  --help | -h) usage ;;
+  *)
+    echo "unknown arg: $arg (see --help)" >&2
+    exit 2
+    ;;
   esac
 done
 
-[ -f "$TODO" ] || { echo "TODO_LIST.md not found at $TODO" >&2; exit 1; }
+[ -f "$TODO" ] || {
+  echo "TODO_LIST.md not found at $TODO" >&2
+  exit 1
+}
 mkdir -p "$SCRATCH"
 
 # --- Rev-pinned baseline -----------------------------------------------------

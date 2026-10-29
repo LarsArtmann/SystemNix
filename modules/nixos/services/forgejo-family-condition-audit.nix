@@ -39,7 +39,7 @@ _: {
       result = audit {
         inherit lib stateDir;
         units = config.systemd.services;
-        exemptUnits = cfg.exemptUnits;
+        inherit (cfg) exemptUnits;
       };
     in
     {

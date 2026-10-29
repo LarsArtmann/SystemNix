@@ -464,7 +464,7 @@ _: {
               # BE/6 background: multi-GB GGUF downloads + writes on the cold
               # first fetch — bulk data movement that must finish but never
               # contends with interactive tiers (btrbk-send precedent).
-              (ioTier.background)
+              ioTier.background
               {
                 Type = "oneshot";
                 User = cfg.user;

@@ -62,7 +62,6 @@ _: {
       cfg = config.services.paperless-triage;
       inherit (import ../../../lib/default.nix lib)
         harden
-        serviceDefaults
         serviceOneshotDefaults
         onFailure
         ioTier

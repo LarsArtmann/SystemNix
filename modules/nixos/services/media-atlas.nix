@@ -12,7 +12,7 @@
 #      "read-only from Immich's perspective" defense in depth).
 # The hub service itself (systemd unit, port, caddy vHost, gatus) lands
 # with the v0.1 deploy PR (plan task L25).
-{ ... }:
+_:
 {
   flake.nixosModules.media-atlas =
     {

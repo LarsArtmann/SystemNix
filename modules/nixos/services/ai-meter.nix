@@ -125,14 +125,14 @@ _: {
         inject_stream_usage = true;
         # Daemon reads the ai-meter-owned mirror copies (see mintScript) —
         # never the consumer-owned 0400 originals.
-        clients = lib.mapAttrsToList (name: client: {
+        clients = lib.mapAttrsToList (name: _client: {
           inherit name;
           key_file = "${keysDir}/config/${name}";
         }) cfg.clients;
         inherit upstreams;
         costs = lib.mapAttrs (_: cost: {
-          input = cost.input;
-          output = cost.output;
+          inherit (cost) input;
+          inherit (cost) output;
           cached_input = cost.cachedInput;
         }) cfg.costs;
       };

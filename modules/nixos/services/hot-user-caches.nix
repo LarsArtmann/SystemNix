@@ -75,7 +75,8 @@ _: {
       # Plain attrset read of the rescue/reinstall geometry spec (NOT a module
       # import — see the cross-guard assertion below).
       diskoSpec = import ../../../disko/samsung-tlc.nix;
-      diskoSubvolumes = diskoSpec.disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes;
+      diskoSubvolumes =
+        diskoSpec.disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes;
     in
     {
       options.services.hot-user-caches = {
@@ -146,13 +147,10 @@ _: {
         # nixosConfigurations (destructive-mode trap) — read it as a plain
         # attrset instead. Negative-tested in scripts/negative-test-lints.sh
         # (group usertmpguard).
-        assertions = lib.mapAttrsToList (
-          name: cache:
-          {
-            assertion = builtins.hasAttr "/${cache.subvol}" diskoSubvolumes;
-            message = "hot-user-caches entry '${name}' (subvol ${cache.subvol}) is not declared in disko/samsung-tlc.nix — add it there so a re-provisioned Samsung recreates it, else the automount fails at boot";
-          }
-        ) cfg.caches;
+        assertions = lib.mapAttrsToList (name: cache: {
+          assertion = builtins.hasAttr "/${cache.subvol}" diskoSubvolumes;
+          message = "hot-user-caches entry '${name}' (subvol ${cache.subvol}) is not declared in disko/samsung-tlc.nix — add it there so a re-provisioned Samsung recreates it, else the automount fails at boot";
+        }) cfg.caches;
 
         fileSystems = lib.mapAttrs' (
           _name: cache:

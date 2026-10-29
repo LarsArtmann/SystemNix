@@ -70,7 +70,7 @@ print(t.key)
   printf '%s' "$py" >"$tmp"
   token="$(manage_py "$tmp" | grep -oE '\b[a-f0-9]{40}\b' | tail -1)"
   rm -f "$tmp"
-  [[ -n "$token" ]] || die "DRF token mint failed"
+  [[ -n $token ]] || die "DRF token mint failed"
   printf '%s' "$token"
 }
 
@@ -129,12 +129,12 @@ print(\"META counts receipt/invoice/general/encrypted\", len(receipt_ids), len(i
   printf 'doc_id\tclass\ttitle\tfile\n' >"${WORK_DIR}/corpus.tsv"
   local line class ids id docjson title imgpath
   while IFS= read -r line; do
-    [[ "$line" == "CLASS "* ]] || continue
+    [[ $line == "CLASS "* ]] || continue
     class="${line#CLASS }"
     class="${class%% *}"
     ids="$(cut -d' ' -f3- <<<"$line" | tr -d '[],')"
     for id in $ids; do
-      [[ "$id" =~ ^[0-9]+$ ]] || continue
+      [[ $id =~ ^[0-9]+$ ]] || continue
       docjson="$(api "$token" "/api/documents/${id}/")" || {
         echo "WARN: api fetch failed for ${id}" >&2
         continue
@@ -194,14 +194,14 @@ stage_image() {
 load_secrets() {
   local models="$1"
   local need_jev=false need_clef=false
-  [[ "$models" == *jev* ]] && need_jev=true
-  [[ "$models" == *clef* ]] && need_clef=true
+  [[ $models == *jev* ]] && need_jev=true
+  [[ $models == *clef* ]] && need_clef=true
   local have_env=true
-  [[ -z "${TYPESAFE_API_KEY:-}" ]] && have_env=false
+  [[ -z ${TYPESAFE_API_KEY:-} ]] && have_env=false
   if $have_env; then
     return
   fi
-  [[ -f "$SOPS_FILE" ]] || die "no env vars and no ${SOPS_FILE}; run: $0 --setup-secrets"
+  [[ -f $SOPS_FILE ]] || die "no env vars and no ${SOPS_FILE}; run: $0 --setup-secrets"
   local age_key
   age_key="$(as_root "cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key")"
   export SOPS_AGE_KEY="${age_key}"
@@ -211,11 +211,11 @@ load_secrets() {
   export TYPESAFE_API_KEY CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID
   unset SOPS_AGE_KEY
   if $need_jev; then
-    [[ "$TYPESAFE_API_KEY" != PLACEHOLDER* && -n "$TYPESAFE_API_KEY" ]] ||
+    [[ $TYPESAFE_API_KEY != PLACEHOLDER* && -n $TYPESAFE_API_KEY ]] ||
       die "typesafe_api_key in ${SOPS_FILE} is still PLACEHOLDER"
   fi
   if $need_clef; then
-    [[ "$CLOUDFLARE_API_TOKEN" != PLACEHOLDER* && "$CLOUDFLARE_ACCOUNT_ID" != PLACEHOLDER* ]] ||
+    [[ $CLOUDFLARE_API_TOKEN != PLACEHOLDER* && $CLOUDFLARE_ACCOUNT_ID != PLACEHOLDER* ]] ||
       die "cloudflare keys in ${SOPS_FILE} are still PLACEHOLDER (owner: dash.cloudflare.com account id + Workers AI Read+Run token)"
   fi
 }
@@ -249,11 +249,11 @@ doc_row() { grep -P "^${1}\t" "${WORK_DIR}/corpus.tsv"; }
 
 jev_call() {
   local arm="$1" doc_id="$2" token="$3" req
-  if [[ "$arm" == "image" ]]; then
+  if [[ $arm == "image" ]]; then
     local img fmt ref b64f
     img="$(doc_row "$doc_id" | cut -f4)"
     fmt="jpg"
-    [[ "$img" == *.png ]] && fmt="png"
+    [[ $img == *.png ]] && fmt="png"
     b64f="$(mktemp "${WORK_DIR}/.b64-${doc_id}.XXXXXX")"
     base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     ref="img-${doc_id}-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \n')"
@@ -284,11 +284,11 @@ jev_call() {
 
 clef_call() {
   local arm="$1" doc_id="$2" token="$3" req
-  if [[ "$arm" == "image" ]]; then
+  if [[ $arm == "image" ]]; then
     local img mime b64f
     img="$(doc_row "$doc_id" | cut -f4)"
     mime="image/jpeg"
-    [[ "$img" == *.png ]] && mime="image/png"
+    [[ $img == *.png ]] && mime="image/png"
     b64f="$(mktemp "${WORK_DIR}/.b64-${doc_id}.XXXXXX")"
     base64 -w0 "${WORK_DIR}/${img}" >"$b64f"
     req="$(jq -n --rawfile b64 "$b64f" --arg mime "$mime" --slurpfile q <(questions_json) '{
@@ -315,9 +315,9 @@ run_arm() {
   : >"$out"
   local doc_id class title img t0 t1 resp meta
   while IFS=$'\t' read -r doc_id class title img; do
-    [[ "$doc_id" == "doc_id" ]] && continue
-    [[ "$class" == "encrypted" && "$arm" == "image" ]] && continue
-    if [[ "$arm" == "image" && (! -s "${WORK_DIR}/${img}" || "$img" == "MISSING") ]]; then
+    [[ $doc_id == "doc_id" ]] && continue
+    [[ $class == "encrypted" && $arm == "image" ]] && continue
+    if [[ $arm == "image" && (! -s "${WORK_DIR}/${img}" || $img == "MISSING") ]]; then
       echo "  skip ${doc_id}: no staged image"
       continue
     fi
@@ -338,7 +338,7 @@ score() {
   echo "=== paperless-decision-bench score (${WORK_DIR}) ==="
   local f
   for f in "${WORK_DIR}"/results-*.jsonl; do
-    [[ -e "$f" ]] || {
+    [[ -e $f ]] || {
       echo "no results yet — run --bench first"
       return
     }
@@ -373,7 +373,7 @@ score() {
   echo
   echo "accuracy + gate simulation (auto-apply at confidence >= 0.9 OR top-2 probability margin >= 0.6 — the paperless-triage gate signal; confidence saturates near 1.0 on right AND wrong answers, margin does not):"
   for f in "${WORK_DIR}"/results-*.jsonl; do
-    [[ -e "$f" ]] || continue
+    [[ -e $f ]] || continue
     paste <(jq -r '(.raw.result // .raw).answers.doc_class.choice // "ERR"' "$f" 2>/dev/null) \
       <(jq -r '(.raw.result // .raw).answers.doc_class.confidence // 0' "$f" 2>/dev/null) \
       <(jq -r '(.raw.result // .raw).answers.doc_class.probabilities // null | if . == null then -1 else (to_entries | sort_by(-.value) | (.[0].value - .[1].value)) end' "$f" 2>/dev/null) \
@@ -399,7 +399,7 @@ score() {
 
 setup_secrets() {
   need sops
-  if [[ ! -f "$SOPS_FILE" ]]; then
+  if [[ ! -f $SOPS_FILE ]]; then
     local plain
     plain="$(mktemp "${WORK_DIR}/.secrets.XXXXXX.yaml")"
     chmod 600 "$plain"
@@ -425,7 +425,7 @@ main() {
   --corpus)
     shift
     local n=10
-    [[ "${1:-}" == "--n" ]] && n="${2:-10}"
+    [[ ${1:-} == "--n" ]] && n="${2:-10}"
     build_corpus "$n"
     ;;
   --bench)
@@ -433,7 +433,7 @@ main() {
     local models="${1:-clef,jev}"
     shift || true
     local also_text=false
-    [[ "${1:-}" == "--also-text" ]] && also_text=true
+    [[ ${1:-} == "--also-text" ]] && also_text=true
     mkdir -p "$WORK_DIR"
     load_secrets "$models"
     local token

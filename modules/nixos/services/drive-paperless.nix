@@ -61,7 +61,6 @@ _: {
       paperlessEnabled = paperlessPresent && config.services.paperless.enable;
 
       stateDir = "/var/lib/drive-paperless";
-      journal = "${stateDir}/journal.tsv";
       runEnv = "/run/drive-paperless/env";
 
       # google-sync is optional at eval scope the same way (VM tests may
@@ -74,11 +73,11 @@ _: {
       immichPresent = options ? services.immich;
       correspondentFor =
         remote:
-        ({
+        {
           gdrive = "Google Drive (private)";
           gdrive-shared = "Google Drive (shared with me)";
           gwork = "Google Workspace";
-        }).${remote} or "Google Drive (${remote})";
+        }.${remote} or "Google Drive (${remote})";
       defaultSources =
         if googleSyncPresent then
           map (m: {
@@ -318,9 +317,9 @@ _: {
               | jq -r '.id'
           }
 
-          ${lib.concatMapStringsSep "\n" (src: ensureBlock src) cfg.sources}
+          ${lib.concatMapStringsSep "\n" ensureBlock cfg.sources}
 
-          ${lib.concatMapStringsSep "\n" (src: scanBlock src) cfg.sources}
+          ${lib.concatMapStringsSep "\n" scanBlock cfg.sources}
 
           echo "drive-paperless: run complete — uploaded=$uploaded (docs=$docs images=$images) failed=$failed cap_hit=$cap_hit missing_source=$missing_source"
           if [ "$failed" -gt 0 ]; then

@@ -56,7 +56,7 @@ in
   name = "ai-meter";
 
   nodes.machine =
-    { lib, ... }:
+    { ... }:
     {
       imports = [
         aiMeterModule

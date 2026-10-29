@@ -106,7 +106,7 @@
         in
         bindAssertions ++ pluginAssertions;
 
-      dmsUsers = lib.filterAttrs (user: uc: (uc.programs.dank-material-shell or { }).enable or false) (
+      dmsUsers = lib.filterAttrs (_user: uc: (uc.programs.dank-material-shell or { }).enable or false) (
         config.home-manager.users or { }
       );
     in

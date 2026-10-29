@@ -130,9 +130,11 @@
       # Drop when upstream's vendorHash reproduces again under the followed
       # nixpkgs (their own nixpkgs pin catching up); re-add ONLY via
       # nix-hash-fix evidence, never by hand.
-      inboxcleanPkg = inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-wP/qpf3bpAMbD6yEBao0F+oTEEYFY8cAqZ7PVZtt71M=";
-      };
+      inboxcleanPkg =
+        inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+          {
+            vendorHash = "sha256-wP/qpf3bpAMbD6yEBao0F+oTEEYFY8cAqZ7PVZtt71M=";
+          };
     in
     {
       imports = [ inputs.inboxclean.nixosModules.default ];

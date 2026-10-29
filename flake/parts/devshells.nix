@@ -46,9 +46,11 @@
           # shells never include this PATH prefix => owner unaffected by
           # construction. Escape: ADMISSION_GATE_FORCE=1 (audit-logged).
           shellHook = ''
-            export PATH="${pkgs.runCommand "nix-admission-gate" { } ''
-              install -Dm555 ${root}/scripts/nix-admission-gate.sh $out/bin/nix
-            ''}/bin:$PATH"
+            export PATH="${
+              pkgs.runCommand "nix-admission-gate" { } ''
+                install -Dm555 ${root}/scripts/nix-admission-gate.sh $out/bin/nix
+              ''
+            }/bin:$PATH"
           '';
         };
       }

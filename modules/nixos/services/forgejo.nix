@@ -78,7 +78,7 @@ _: {
       # Code-search index dir (see the settings.indexer comment): plain dir
       # on the Samsung hot toplevel, deliberately outside the subvol.
       forgejoIndexDir = "/mnt/hot/forgejo-index";
-      repoIndexerEnabled = (cfg.settings.indexer.REPO_INDEXER_ENABLED or false);
+      repoIndexerEnabled = cfg.settings.indexer.REPO_INDEXER_ENABLED or false;
       dataDirMountUnit = "${utils.escapeSystemdPath stateDir}.mount";
       # G1 migration marker: scripts/migrate-forgejo-subvol.sh `finalize`
       # touches this INSIDE the subvol after the delta-verify. Every stateful

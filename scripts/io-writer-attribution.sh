@@ -41,13 +41,35 @@ usage() { sed -n '2,30p' "$0" >&2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --window) WINDOW="$2"; shift 2 ;;
-    --top) TOP="$2"; shift 2 ;;
-    --mb-threshold) MB_THRESHOLD="$2"; shift 2 ;;
-    --no-pressure) SHOW_PRESSURE=0; shift ;;
-    --from-snapshots) REPLAY=("$2" "$3"); shift 3 ;;
-    -h | --help) usage; exit 0 ;;
-    *) echo "io-writer-attribution: unknown flag: $1" >&2; usage; exit 2 ;;
+  --window)
+    WINDOW="$2"
+    shift 2
+    ;;
+  --top)
+    TOP="$2"
+    shift 2
+    ;;
+  --mb-threshold)
+    MB_THRESHOLD="$2"
+    shift 2
+    ;;
+  --no-pressure)
+    SHOW_PRESSURE=0
+    shift
+    ;;
+  --from-snapshots)
+    REPLAY=("$2" "$3")
+    shift 3
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "io-writer-attribution: unknown flag: $1" >&2
+    usage
+    exit 2
+    ;;
   esac
 done
 
@@ -82,17 +104,17 @@ else
     echo "io-writer-attribution: cgroup root unreadable: $CGROUP_ROOT" >&2
     exit 1
   }
-  snapshot > "$SNAP1"
+  snapshot >"$SNAP1"
   sleep "$WINDOW"
-  snapshot > "$SNAP2"
+  snapshot >"$SNAP2"
 fi
 
 echo "# io attribution: window=${WINDOW}s top=$TOP threshold=${MB_THRESHOLD}MB (rbytes/wbytes deltas per cgroup)"
 # Sanity count line — the 2026-10-28 lesson: a silently broken pass printed
 # "no movers" at PSI 61%. Sampled counts make "broken pass" distinguishable
 # from "quiet writers" before any conclusion is drawn.
-s1n=$(wc -l < "$SNAP1")
-s2n=$(wc -l < "$SNAP2")
+s1n=$(wc -l <"$SNAP1")
+s2n=$(wc -l <"$SNAP2")
 echo "# sanity: ${s1n} cgroups sampled at t0, ${s2n} at t1 — 0/0 = broken pass (do NOT read as calm); nonzero with no ranked lines = writers quiet, check the stalled-scopes view"
 awk -v thr="$((MB_THRESHOLD * 1048576))" '
   NR == FNR { r1[$1] = $2; w1[$1] = $3; next }
@@ -125,22 +147,22 @@ fi
 # only — root writers are already covered by the cgroup view above; this
 # adds process-level names for agent sessions/batteries).
 if [ ${#REPLAY[@]} -eq 0 ] && [ -d "$PROC_ROOT" ]; then
-  : > "$TMP_DIR/proc-snap1"
+  : >"$TMP_DIR/proc-snap1"
   for p in "$PROC_ROOT"/[0-9]*; do
     [ -r "$p/io" ] || continue
     pid="${p##*/}"
     wb=$(awk '/^write_bytes:/ { print $2 }' "$p/io" 2>/dev/null) || continue
     rb=$(awk '/^read_bytes:/ { print $2 }' "$p/io" 2>/dev/null) || continue
-    printf '%s %s %s\n' "$pid" "${rb:-0}" "${wb:-0}" >> "$TMP_DIR/proc-snap1"
+    printf '%s %s %s\n' "$pid" "${rb:-0}" "${wb:-0}" >>"$TMP_DIR/proc-snap1"
   done
   sleep 2
-  : > "$TMP_DIR/proc-snap2"
+  : >"$TMP_DIR/proc-snap2"
   for p in "$PROC_ROOT"/[0-9]*; do
     [ -r "$p/io" ] || continue
     pid="${p##*/}"
     wb=$(awk '/^write_bytes:/ { print $2 }' "$p/io" 2>/dev/null) || continue
     rb=$(awk '/^read_bytes:/ { print $2 }' "$p/io" 2>/dev/null) || continue
-    printf '%s %s %s\n' "$pid" "${rb:-0}" "${wb:-0}" >> "$TMP_DIR/proc-snap2"
+    printf '%s %s %s\n' "$pid" "${rb:-0}" "${wb:-0}" >>"$TMP_DIR/proc-snap2"
   done
   echo "# user-visible process detail (>= ${MB_THRESHOLD}MB moved in 2s; comm only, root hidden by /proc perms)"
   awk -v thr="$((MB_THRESHOLD * 1048576))" '

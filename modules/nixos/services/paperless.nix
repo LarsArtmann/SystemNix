@@ -151,8 +151,12 @@ _: {
       # create-only BEFORE saved views resolve their rules, so a DB restore
       # that wipes them heals on the next provisioner run and a view never
       # ships with a dangling tag rule.
-      ensureTagsJson = pkgs.writeText "paperless-dashboard-ensure-tags.json" (builtins.toJSON dcfg.ensureTags);
-      ensureFieldsJson = pkgs.writeText "paperless-dashboard-ensure-fields.json" (builtins.toJSON dcfg.ensureCustomFields);
+      ensureTagsJson = pkgs.writeText "paperless-dashboard-ensure-tags.json" (
+        builtins.toJSON dcfg.ensureTags
+      );
+      ensureFieldsJson = pkgs.writeText "paperless-dashboard-ensure-fields.json" (
+        builtins.toJSON dcfg.ensureCustomFields
+      );
 
       # Executed via `paperless-manage shell < file`: resolves the single
       # allauth SocialAccount-linked user (the Pocket ID SSO user). Any

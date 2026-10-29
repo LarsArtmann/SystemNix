@@ -111,7 +111,7 @@ _: {
               (serviceDefaults { RestartSec = "10s"; })
               # BE/5 heavyDB: bulk ONNX model loads at boot (the llama-chat
               # page-in class) then latency-sensitive inference serving.
-              (ioTier.heavyDB)
+              ioTier.heavyDB
               {
                 Environment = lib.mkForce [ "HOME=/var/lib/immich" ];
               }

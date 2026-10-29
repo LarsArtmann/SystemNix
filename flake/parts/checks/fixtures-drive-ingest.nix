@@ -117,7 +117,7 @@
             gsConfigCheck =
               lib.findFirst (e: lib.hasInfix "google-sync-config-check" e)
                 (throw "google-sync ExecStartPre carries no config-check")
-                (gsEval.config.systemd.services.google-sync.serviceConfig.ExecStartPre);
+                gsEval.config.systemd.services.google-sync.serviceConfig.ExecStartPre;
 
             evalPins =
               let

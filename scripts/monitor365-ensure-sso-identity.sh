@@ -46,18 +46,18 @@ if out="$(monitor365-server create-admin --email "$email" 2>&1)"; then
 fi
 
 case "$out" in
-  *"already exists"*)
-    echo "monitor365-ensure-sso-identity: SSO admin ${email} already exists"
-    ;;
-  *"Duplicate key"* | *"violates unique constraint"*)
-    echo "monitor365-ensure-sso-identity: SSO admin ${email} already exists (unique constraint on tenant_id + email)"
-    ;;
-  *"No tenants found"*)
-    echo "monitor365-ensure-sso-identity: WARNING: no tenants yet — in-server bootstrap provisions tenant+admin when fully configured" >&2
-    ;;
-  *)
-    echo "monitor365-ensure-sso-identity: WARNING: create-admin failed for an unrecognised reason; continuing so the control plane can start. SSO logins may 401 with 'Unauthorized: SSO user not found' until the identity exists. Remediation: monitor365-server create-admin --email ${email}. Output was: ${out}" >&2
-    ;;
+*"already exists"*)
+  echo "monitor365-ensure-sso-identity: SSO admin ${email} already exists"
+  ;;
+*"Duplicate key"* | *"violates unique constraint"*)
+  echo "monitor365-ensure-sso-identity: SSO admin ${email} already exists (unique constraint on tenant_id + email)"
+  ;;
+*"No tenants found"*)
+  echo "monitor365-ensure-sso-identity: WARNING: no tenants yet — in-server bootstrap provisions tenant+admin when fully configured" >&2
+  ;;
+*)
+  echo "monitor365-ensure-sso-identity: WARNING: create-admin failed for an unrecognised reason; continuing so the control plane can start. SSO logins may 401 with 'Unauthorized: SSO user not found' until the identity exists. Remediation: monitor365-server create-admin --email ${email}. Output was: ${out}" >&2
+  ;;
 esac
 
 exit 0

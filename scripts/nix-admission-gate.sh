@@ -32,7 +32,7 @@ AUDIT_LOG="${AUDIT_LOG:-${XDG_CACHE_HOME:-$HOME/.cache}/admission-gate/audit.log
 # --- resolve the REAL nix (first nix on PATH that is not this wrapper) ---
 if [ -z "$REAL_NIX" ]; then
   self_dir=$(cd "$(dirname "$0")" && pwd)
-  IFS=: read -r -a path_parts <<< "$PATH"
+  IFS=: read -r -a path_parts <<<"$PATH"
   for d in "${path_parts[@]}"; do
     [ "$d" = "$self_dir" ] && continue
     if [ -x "$d/nix" ]; then
@@ -51,7 +51,7 @@ fi
 sub="${1:-}"
 gated=0
 case "$GATED_SUBCOMMANDS" in
-  *" $sub "*) gated=1 ;;
+*" $sub "*) gated=1 ;;
 esac
 if [ "$sub" = "flake" ] && [ "${2:-}" = "check" ]; then
   gated=1
@@ -87,7 +87,7 @@ audit() {
   mkdir -p "$(dirname "$AUDIT_LOG")" 2>/dev/null || true
   # subcommand only — full argv can carry secrets
   printf '%s %s sub=%s trip_recent=%s io_avg10=%s mem_avg10=%s\n' \
-    "$(date -Is)" "$1" "$sub" "$trip_recent" "$psi_io" "$psi_mem" >> "$AUDIT_LOG" 2>/dev/null || true
+    "$(date -Is)" "$1" "$sub" "$trip_recent" "$psi_io" "$psi_mem" >>"$AUDIT_LOG" 2>/dev/null || true
 }
 
 refuse() {

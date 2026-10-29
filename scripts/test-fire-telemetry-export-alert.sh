@@ -157,7 +157,7 @@ fi
 echo "== Leg 2: >256-rune throwaway -> 'Truncated title' delivery proof =="
 
 THROWAWAY_NAME="SystemNix test-fire delivery probe (auto-deleted) — this alert name deliberately exceeds the 256-rune Discord title limit so the alertmanager notifier logs a Truncated title WARN carrying receiver and ruleId, which is the only journal-visible positive-delivery evidence on this stack because successful Discord notifies are journal-silent"
-QUERY="sum(increase({__name__=~\"otelcol_exporter_send_failed_(log_records|spans|metric_points)\"}[10m]))"
+QUERY='sum(increase({__name__=~"otelcol_exporter_send_failed_(log_records|spans|metric_points)"}[10m]))'
 THROWAWAY_JSON=$(jq -n \
   --arg name "$THROWAWAY_NAME" \
   --arg query "$QUERY" \

@@ -14,7 +14,6 @@ _: {
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
-        onFailure
         onFailureP0
         serviceTypes
         mkHttpCheck

@@ -344,7 +344,8 @@ _: {
         systemd.services.crowdsec-prereq = {
           description = "CrowdSec pre-start: DNS gate + orphan-machine repair";
           inherit (dnsGate) after wants;
-          before = [ "crowdsec.service" ];          serviceConfig = {
+          before = [ "crowdsec.service" ];
+          serviceConfig = {
             Type = "oneshot";
             User = config.services.crowdsec.user;
             Group = config.services.crowdsec.group;

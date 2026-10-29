@@ -14,21 +14,24 @@ script="$here/io-writer-attribution.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-fail() { echo "test-io-writer-attribution: FAIL: $*" >&2; exit 1; }
+fail() {
+  echo "test-io-writer-attribution: FAIL: $*" >&2
+  exit 1
+}
 
 # --- Fixture: two snapshots one "window" apart -------------------------
 # Known deltas (MB): tq-agent-pool +162000 rd / +300 wr (the 2026-10-28
 # 02:00 trip shape), session-12.scope +40 rd, system.slice +25 wr,
 # quiet.scope unchanged (must NOT appear), plus a cgroup that VANISHED
 # between snapshots (must be skipped, not abort).
-cat > "$scratch/s1" <<'EOF'
+cat >"$scratch/s1" <<'EOF'
 system.slice/tq-agent-pool.service 1000000 0
 user.slice/user-1000.slice/session-12.scope 41943040 2097152
 system.slice 5242880 5242880
 user.slice/user-1000.slice/quiet.scope 1048576 1048576
 system.slice/transient-dying.service 999999 999999
 EOF
-cat > "$scratch/s2" <<'EOF'
+cat >"$scratch/s2" <<'EOF'
 system.slice/tq-agent-pool.service 170776647680 314572800
 user.slice/user-1000.slice/session-12.scope 83886080 3145728
 system.slice 5242880 31457280

@@ -37,7 +37,6 @@ _: {
         harden
         onFailure
         serviceOneshotDefaults
-        ioTier
         ;
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
       stateDir = "/var/lib/btrfs-balance-watch";

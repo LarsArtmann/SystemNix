@@ -146,7 +146,7 @@ _: {
           # Unit-level (NOT serviceConfig): OnFailure is a [Unit] key —
           # serviceConfig.OnFailure renders under [Service] where systemd
           # silently ignores it (visionreviewd ships that latent no-op).
-          onFailure = onFailure;
+          inherit onFailure;
           serviceConfig.TimeoutStartSec = "2min";
         };
 

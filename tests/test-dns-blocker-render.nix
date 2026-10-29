@@ -388,11 +388,12 @@ let
       msg = "scheme-less proxyInjectScriptURL assertion does not fire (a typo must not reach the runtime fail-open path)";
     }
     {
-      ok = !(policyAssertionFires "proxyInjectScriptURL must be an http(s) URL" [
-        {
-          services.dns-blocker.proxyInjectScriptURL = "http://127.0.0.1:8104/inject/filter.js";
-        }
-      ]);
+      ok =
+        !(policyAssertionFires "proxyInjectScriptURL must be an http(s) URL" [
+          {
+            services.dns-blocker.proxyInjectScriptURL = "http://127.0.0.1:8104/inject/filter.js";
+          }
+        ]);
       msg = "well-formed proxyInjectScriptURL must NOT trip the shape assertion (false-positive guard)";
     }
     # ── rpi3-dns parity (secondary host, same module) ──

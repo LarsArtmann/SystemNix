@@ -11,10 +11,13 @@ script="$here/nix-admission-gate.sh"
 scratch=$(mktemp -d)
 trap 'rm -rf "$scratch"' EXIT
 
-fail() { echo "test-nix-admission-gate: FAIL: $*" >&2; exit 1; }
+fail() {
+  echo "test-nix-admission-gate: FAIL: $*" >&2
+  exit 1
+}
 
 mkdir -p "$scratch/bin"
-printf '#!/usr/bin/env bash\necho "REALNIX $*"\n' > "$scratch/bin/nix"
+printf '#!/usr/bin/env bash\necho "REALNIX $*"\n' >"$scratch/bin/nix"
 chmod +x "$scratch/bin/nix"
 
 PROM="$scratch/guard.prom"
@@ -24,9 +27,9 @@ LASTTRIP="$scratch/last-trip"
 
 # state setter: prom-line io_avg10 mem_avg10
 state() {
-  printf '%s\n' "$1" > "$PROM"
-  printf 'some avg10=%s avg60=0.00 total=0\n' "$2" > "$IOF"
-  printf 'some avg10=%s avg60=0.00 total=0\n' "$3" > "$MEMF"
+  printf '%s\n' "$1" >"$PROM"
+  printf 'some avg10=%s avg60=0.00 total=0\n' "$2" >"$IOF"
+  printf 'some avg10=%s avg60=0.00 total=0\n' "$3" >"$MEMF"
 }
 
 # gate <force(0|1)> <args...> — runs the script against the current state
@@ -45,7 +48,7 @@ gate() {
 
 CALM='memory_emergency_guard_last_trip_recent 0'
 TRIPPED='memory_emergency_guard_last_trip_recent 1'
-: > "$scratch/audit.log"
+: >"$scratch/audit.log"
 
 # 1. Calm: gated subcommand passes through to the real nix.
 state "$CALM" 2.5 1.0
@@ -96,7 +99,7 @@ REAL_NIX=/nonexistent/nix GUARD_PROM="$PROM" PSI_IO_SRC="$IOF" PSI_MEM_SRC="$MEM
 # 10. Trip-recent via the LAST-TRIP EPOCH source (metric calm, file 60s old).
 state "$CALM" 2.0 1.0
 now=$(date +%s)
-echo $((now - 60)) > "$LASTTRIP"
+echo $((now - 60)) >"$LASTTRIP"
 gate 0 build >/dev/null 2>&1 && fail "fresh last-trip epoch must refuse even when the metric says calm"
 rm -f "$LASTTRIP"
 
