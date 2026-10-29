@@ -340,7 +340,7 @@
               # exactly how the incident hid for a week. x86_64-only: on
               # other hosts the CPU build is the correct answer, so the
               # condition would false-alarm.
-              ++ lib.optionals (pkgs.stdenv.hostPlatform.isx86_64) [
+              ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
                 {
                   name = "nsfw-classifier-provider";
                   group = "AI";
