@@ -132,7 +132,7 @@ First full run: **66 passed / 10 failed**. All ten traced to two causes, none of
 2. **Five stale sed anchors** — exactly the failure the harness itself warns about, caught by its own NO-OP detector: README counts `131→141` and `228→247`, `boot-mirror.nix` `(ioTier.background)` → `ioTier.background`, and the papdashboard icon anchor `"pocket-id.png"` (the tile moved to the integration registry, silently turning BOTH tile-icon legs into no-ops) → `"caddy.png"` with an anchor note.
 3. One leg failing for the wrong reason: `bootcomplete/after-edge-regression` appended a second `after =` attribute → duplicate-attr eval error instead of the audit marker. Rewritten to inject `"boot-complete.target"` into the existing list.
 
-Groups re-run green individually (`tileicons 3/3`, `iotier 2/2`, `doccounts 3/3`, `bootcomplete 2/2`); full second pass is the verification below.
+Groups re-run green individually (`tileicons 3/3`, `iotier 2/2`, `doccounts 3/3`, `bootcomplete 2/2`), then the full suite: **76 passed, 0 failed** — up from 66/10 at the start of this section, with the two new groups (`ssoclassify`, `shallowmerge`) included.
 
 ---
 
@@ -146,6 +146,7 @@ Groups re-run green individually (`tileicons 3/3`, `iotier 2/2`, `doccounts 3/3`
 | `CASES=ssoclassify` | 2/2 (drift RED, control green) |
 | `CASES=shallowmerge` | 2/2 |
 | `CASES=tileicons / iotier / doccounts / bootcomplete` | 3/3, 2/2, 3/3, 2/2 |
+| **full `scripts/negative-test-lints.sh`** | **76 passed, 0 failed** (first pass same session: 66/10) |
 | `dead-guard-lint` + `with-pkgs-lint` builds | green |
 | §24 live | 186 units, 0 missing ExecStart, 2 masked |
 | coverage metrics (live) | missing 0 / gaps 4 / over_threshold 0 |
