@@ -115,59 +115,124 @@ mode correct, telephony correctly unprovisioned.
 
 ---
 
-## Part 2 — Secondary router `192.168.1.254`
+## Part 2 — Secondary router `192.168.1.254` (4G CPE, vendor LuCI build)
+
+Credential `admin/admin` works over LuCI and over the ubus JSON-RPC endpoint. All settings below were read from the
+device's own CBI endpoints (`/cgi-bin/luci/admin/...`).
+
+### 2.1 Identity
 
 | Item | Value |
 | --- | --- |
-| Address | `192.168.1.254` (outside the gateway's pool), MAC `9C:E5:49:61:91:78` (OUI registered to IEEE RA ⇒ privacy-protected assignment) |
-| UI | **LuCI** (`/cgi-bin/luci` → 403 login page), page title **`4G-LTE`** |
-| LuCI build | `git-24.271.34822-f9d19ca` ⇒ **OpenWrt 24.10** generation, vendor-branded (Bootstrap theme, "setup.css") |
-| Services | 80 (LuCI), **22 dropbear**, **23 telnet**, 443 refused |
-| Clock | `Sat, 07 Mar 2026` while the true date is 2026-10-29 ⇒ **no NTP / no WAN** |
-| HTTP hardening headers | `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `X-XSS-Protection` — present |
-| DHCP | not serving on the 192.168.1.0/24 segment (gateway leases are unaffected) |
+| Address | `192.168.1.254/24`, MAC `9C:E5:49:61:91:78` (IEEE RA "anonymous" MA-L ⇒ no vendor attribution) |
+| UI | LuCI, title `4G-LTE`, copyright 2022, **Firmware 1.0.273-20240928-115300** (built 2024-09-28) |
+| Userland | LuCI build `git-24.271.34822-f9d19ca` (OpenWrt 24.10 generation) — **vendor fork, not upstream OpenWrt** |
+| Radios | **2.4 GHz only**, single radio (menu offers only "Wireless 2.4G") |
+| Services | 80 LuCI, 22 dropbear, **23 telnet**; 443 refused |
+| Clock | Europe/Berlin, correct (`2026-10-29 19:49`) |
+| Firmware update | manual file upload only (`/admin/system/upgrade`) — no upstream OpenWrt image unless the SoC is a supported target |
+| 4G | **"SIM Detached"** — no SIM, so no cellular backup exists today |
 
-Confirmed so far: it is not a "cheap Chinese firmware" in the vulnerable sense — it is a **LuCI build of OpenWrt 24.10**,
-so the OpenWrt plan is already 80 % done. Two findings to act on once credentials exist:
-**telnet is open** (should be off — dropbear already provides SSH) and the box has no working clock.
+### 2.2 Settings inventory
 
-**Pending:** full settings review requires the login credential and the model/SoC (label or LuCI Status → Overview).
+| Area | State |
+| --- | --- |
+| LAN/WAN switch | **LAN mode** — the WAN/LAN port is configured as LAN, so the box is a plain client on the 192.168.1.0/24 segment and routes nothing |
+| LAN | 192.168.1.254/24 |
+| DHCP server | **Enabled** (`dhcp.lan.ignore=0`, toggle on) — pool `.101–.200` (start 101, limit 100), lease 12 h |
+| DHCP DNS | **`10.43.255.55`** (corporate/on-prem resolver, unreachable here) + `9.9.9.9` |
+| Static lease | `192.168.1.100` → `local-nixos0` |
+| **Remote Web** | **ENABLED** (`filter.remoteweb.enabled=1`, toggle-on) with `Listen Port = 1` |
+| **Port forwards** | **7 rules, all to `192.168.1.100`**: TCP 22, TCP 443, TCP 6443, TCP+UDP 41641 (tailscale), TCP+UDP 9500/9501/9502 (Longhorn) — names `ssh-onprem-0`, `onprem-0-k8s`, `onprem-0-tailscale`, `onprem-0-Longhorn[-webhooks]` |
+| DMZ | off |
+| MAC / IP / domain filters | all **Disabled** |
+| PPTP/L2TP client | off, no fields set |
+| QoS / DDNS / WiFi schedule / TTL override | all off; static routes: none |
+| Watchdog (ping check) | **ON** — target `@dns`, ICMP, interval 10 s, period 60 s |
+| Watchcat | **ON** — "reboot on internet connection lost", period **6 h**, ping `8.8.8.8` every 3 s, forced reboot delay 30 s |
+| IPv6 (LAN) | **Dynamic IP (SLAAC/DHCPv6)** — enabled |
+| Admin account | `admin` / `admin` |
+| Wi-Fi | SSID **`Europol \| Law enforcement`** (broadcast), WPA2 confirmed by over-the-air scan; 0 clients; WPS is a one-shot PBC button (no persistent WPS toggle) |
+| Wireless Repeater (WISP) | idle, no upstream configured |
+
+### 2.3 Findings
+
+**Critical — this box is one cable away from being internet-exposed with default credentials**
+
+1. **Remote Web (WAN-side web admin) is enabled**, on a device whose only admin credential is `admin/admin`. Today the
+   WAN port is in LAN mode and no upstream forwards to it, so it is not reachable from the internet — but the moment it is
+   switched to WAN mode with a working 4G SIM (or placed behind a port forward), the LuCI login is published to the
+   internet with a default password. *Fix before any WAN: Remote Web → off, admin password → strong.*
+2. **Seven stale port forwards to `192.168.1.100`** publish SSH, the k8s API (6443), HTTPS, tailscale and Longhorn
+   (9500–9502) the instant a WAN appears. They are leftovers from when this box was the internet-facing router of an
+   on-prem cluster (`local-nixos0` static lease, `10.43.255.55` corporate DNS). *Fix: delete all 7.*
+3. **Two DHCP servers are configured on one L2 segment.** The gateway serves `.10–.253`; this box is configured to serve
+   `.101–.200` (toggle on, `ignore=0`) while its port is in LAN mode. Whichever answers first wins, and a client that
+   leases from this box gets gateway `.254` (no WAN, in LAN mode) and DNS `10.43.255.55` (unroutable) — i.e. exactly the
+   "connected but no internet" symptom. *Fix: DHCP server off until the box is actually the router.*
+4. **Telnet (23) is exposed.** A login prompt answers, but `admin/admin` is rejected and the connection drops, so no shell
+   was obtained — irrelevant, a plaintext daemon that serves nothing is pure attack surface. *Fix: disable telnetd.*
+5. **Watchcat will reboot the box every 6 h while it has no internet.** Fine as a last-resort watchdog once the box is
+   the live router; a self-reboot loop generator while it is being commissioned. Revisit after the SIM is in.
+
+**Medium / low**
+
+6. DHCP DNS `10.43.255.55` + `9.9.9.9` are wrong for this network (must be `192.168.1.150`/`.151`, see Part 1 finding 3).
+7. Static lease for `local-nixos0` at `.100` — the address this repo's gatus checks assume for a different host.
+8. IPv6 is enabled on the LAN; on a 4G uplink that is a second, often more permissive, path to the internet — decide
+   deliberately (disable, or make sure the IPv6 firewall input policy is restrictive).
+9. The **wireless settings page is broken** (`/admin/network/wireless/config` throws a Lua dispatcher error:
+   `bad argument #2 to 'get' (string expected, got nil)`). SSID/PSK changes must go through SSH/uci until the firmware is
+   replaced or updated.
+10. TTL override is off — if the mobile plan does tethering detection, a 4G backup will be shaped/blocked; the page exists
+    for exactly that (IPv4 TTL / IPv6 HL).
+11. Firmware 1.0.273 is from 2024-09-28; no in-place upstream OpenWrt path is confirmed (SoC unknown).
 
 ---
 
-## Part 3 — Architecture proposal: OpenWrt primary + ISP box as modem + 4G failover
+## Part 3 — Architecture: what should actually carry the LAN?
 
-**Verdict: sound, but the "ISP box as pure modem" step is the one that cannot be done from the UI** — the DMC7002KLG has
-no bridge/modem-only page (Part 1.3). Three workable shapes:
+**The decisive fact: the 4G box is 2.4 GHz-only with a single radio and a budget SoC, while the ISP gateway currently
+serves 7 clients on 5 GHz.** Making the 4G box the primary router therefore trades the whole household's Wi-Fi for a
+failover path. Three coherent designs, in order of what they cost:
 
-| Option | Shape | Trade-offs |
+| Option | Shape | Cost / trade-off |
 | --- | --- | --- |
-| **A — DMZ (recommended)** | OpenWrt takes `192.168.1.1`, owns DHCP + DNS; gateway keeps its WAN and DMZ-hosts the OpenWrt WAN IP | No ISP ticket; double NAT (harmless for outbound; inbound lives entirely on the OpenWrt firewall); needs the gateway's own LAN IP moved (`192.168.1.1` → e.g. `.254`) so OpenWrt can hold `.1` |
-| **B — ISP bridge** | Ask Vodafone to enable bridge; OpenWrt gets the public IPv4 | Cleanest routing; DOCSIS box keeps modem duty; depends on the ISP honoring it, and the 4G backup then needs its own default-route policy |
-| **C — swap the gateway** | Own DOCSIS 3.0/3.1 modem (e.g. TC4400-class) + OpenWrt | Full control, no ISP firmware in the path; extra hardware, and the ISP may insist on their modem |
+| **1 — 4G as the router, ISP box keeps only modem + Wi-Fi AP duty** (closest to the original idea) | 4G box takes `192.168.1.1`, owns DHCP + DNS; ISP box LAN moves to a second subnet (e.g. `192.168.0.1`) and stays the Wi-Fi AP | Works and needs no ISP action, **but** the ISP box's Wi-Fi clients then sit in the 4G box's LAN while the ISP box still does NAT for the 4G box's WAN — a triangular path, and 2.4 GHz-only clients on the 4G radio if the ISP radio is ever turned off. All LAN traffic passes a budget SoC. |
+| **2 — Failover at the server, keep the ISP gateway as-is** | Nothing changes for the LAN; evo-x2 already has `wifi-failover-watch` (deletes the pinned `default via 192.168.1.1` on carrier loss and lets the Wi-Fi fallback route take over) | Zero risk to the household, **but** only evo-x2 survives a cable outage; phones, TV and the MacBook do not. This is the cheapest real backup and it already exists. |
+| **3 — A proper OpenWrt router with 5 GHz + the 4G CPE as its second WAN** | Buy/reuse a 5 GHz-capable OpenWrt device as the router; the 4G CPE becomes either a USB/modem or an `mwan3` member | The only shape that gives whole-house failover without degrading Wi-Fi. Requires hardware; the 4G CPE's own 4G modem may not be extractable, in which case it stays the second WAN via its LAN port. |
 
-**Hard constraints from this repo, whichever option wins:**
+**Hard constraints from this repo, whichever shape wins**
 
 - `networking.local.gateway = 192.168.1.1` (`platforms/nixos/system/local-network.nix`) and
-  `scripts/wifi-failover-watch.sh` pins `default via 192.168.1.1 dev eno1` — so the **new primary must hold `192.168.1.1`**,
-  otherwise every deploy-time network assumption and the failover daemon need editing.
-- DHCP must move to the new primary: it should serve `.10–.99` and advertise **DNS 192.168.1.150/.151**, which retires
+  `scripts/wifi-failover-watch.sh` pins `default via 192.168.1.1 dev eno1` → **the new primary must hold `192.168.1.1`**,
+  or both the NixOS config and the failover daemon need editing in the same change.
+- The new primary's DHCP must serve `.10–.99` and advertise **DNS `192.168.1.150` / `.151`** — that retires Part 1
   findings 3 and 4 in one step.
-- The OpenWrt box's NAT throughput is the open question: if the SoC is MT7628-class the wired uplink will cap well below
-  the cable line. Confirm the model before committing.
-- 4G failover = `mwan3` with the LTE interface in a lower-priority member group, plus a health probe against a
-  known-good target; keep the wired member metric 1 / LTE metric 2 so failback is automatic.
-- Do **not** run two DHCP servers on one segment during the cutover — move the gateway's DHCP to off before enabling it on
-  OpenWrt.
+- **Never two DHCP servers on one segment.** During any cutover: disable one, move the box, then enable the other.
+- The ISP box has **no bridge/modem-only page** (Part 1.3, all 24 pages enumerated), so "Vodafone box as pure modem" needs
+  the ISP to flip it; otherwise NAT-behind-NAT is the honest fallback.
+- No inbound exposure is needed (services are reached over Tailscale/Netbird), so **no DMZ is required on either box** —
+  keep both WANs closed.
 
 ---
 
-## Recommended apply order
+## Recommended sequencing
 
-1. WPS off, both bands *(brief Wi-Fi restart)*.
-2. Gateway LAN: pool size 244 → 90; DNS1/DNS2 → `.150`/`.151` *(gateway reboot, ~2 min)*.
-3. 2.4 GHz encryption → AES-only.
-4. Firewall → port scan detection on.
-5. New admin password + new 20+ char PSKs *(owner-supplied values; all clients reconnect)*.
-6. Identify `192.168.1.16`; reconcile the `.29` / Pixel-6 record.
-7. Then the Part 3 cutover (DMZ recommended), plus: telnet off on the OpenWrt box, NTP configured.
+**Stage 0 — stop the bleeding on the 4G box (no topology change, ~5 min)**
+Remote Web off · delete the 7 forwards · DHCP server off · admin password changed · telnet disabled.
+*Verify:* `/admin/network/remoteweb` toggle-off, forwards table empty, DHCP toggle off, telnet refuses.
+
+**Stage 1 — make the ISP gateway correct (Part 1 fixes, ~10 min)**
+WPS off both bands · DHCP pool `.10`/size 90 · DHCP DNS `.150`/`.151` · 2.4 GHz encryption AES-only · port scan detection on.
+*Verify:* `nmcli dev wifi list` still shows the SSIDs as WPA2, a client renew shows the new DNS, leases land in `.10–.99`.
+
+**Stage 2 — decide the topology (owner call, this is the Part 3 table)**
+Option 2 is free and immediate; Option 1 needs the LAN/DHCP re-plan above; Option 3 needs hardware.
+
+**Stage 3 — commission the 4G backup**
+SIM + APN (currently "SIM Detached") · TTL override if the carrier shapes tethering · watchcat period reviewed ·
+failover drill: unplug the coax, confirm uplink switches, plug back in.
+
+**Stage 4 — hygiene**
+Identify `192.168.1.16` · resolve the Pixel-6 `.29` record · add the router to the monitoring/todo docs.
