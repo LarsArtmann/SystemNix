@@ -89,7 +89,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "31ecbaca1bdefa45dffc409f0250bd8039ea0010";
   nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
-  nur = "430408eb22b952d3efbc924a84b21483c4d82dc8";
+  nur = "23e5769af44a79c73d92ea3536af3fa380daf1aa";
   offline-banner = "15751758f04d6e8b8054e1c4324b422c033d11cb";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "1c467991e698e59a68301ebc38c2be72abc83dcf";
