@@ -340,336 +340,339 @@
         };
       };
 
-      config = lib.mkIf cfg.enable {
-        # Peer-auth principal for the hub: OS user == PG role. The hub service
-        # unit (L25) runs as this user and connects over the local socket.
-        users.groups.${cfg.user} = { };
-        users.users.${cfg.user} = {
-          isSystemUser = true;
-          group = cfg.user;
-          description = "MediaAtlas federation hub (read-only peer-auth PG access to immich smart_search)";
-        };
-
-        systemd.services.media-atlas-pg-ro = {
-          description = "MediaAtlas read-only Postgres role converger (grants on the immich DB via peer-auth postgres)";
-          after = [
-            "postgresql.service"
-          ];
-          wants = [
-            "postgresql.service"
-          ];
-          # multi-user-wanted (crowdsec-setup pattern): the deploy.sh
-          # provisioner loop's is-enabled gate admits it, so every deploy
-          # re-converges the grants. Boot-time run covers DB-restore healing.
-          wantedBy = [ "multi-user.target" ];
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = lib.getExe pgRoConverger;
-              TimeoutStartSec = "2min";
-              # Root BY DESIGN (discordsync-immich-key-provision pattern):
-              # peer-auth postgres via runuser and ALTER DEFAULT PRIVILEGES FOR
-              # ROLE immich need superuser; no secret exists to authenticate
-              # with. NoNewPrivileges stays OFF — runuser is setuid and the
-              # script legitimately needs it.
-              NoNewPrivileges = false;
-              ProtectSystem = "strict";
-              PrivateTmp = true;
-            }
-            # io-tier-coverage-audit: every boot-gated unit carries a tier.
-            ioTier.background
-          ];
-        };
-
-        # --- Immich external-library read access (ADR-061 runbook) ---
-        users.users.immich.extraGroups = lib.mkIf cfg.immichExternalLibrary.enable [
-          config.services.discordsync.group
-        ];
-        systemd.services.immich-server = lib.mkIf cfg.immichExternalLibrary.enable {
-          # Mount-gated (226 class): a detached DAS fails the unit loudly
-          # instead of scanning a root-fs shadow path.
-          unitConfig.RequiresMountsFor = [ archivePath ];
-          # Namespace-level RO over the group-rwx archive dir: Immich never
-          # writes external-library files, and the bind makes that a kernel
-          # guarantee instead of an application promise.
-          serviceConfig.BindReadOnlyPaths = [ archivePath ];
-        };
-
-        # --- The hub service (v0.1 deploy, L25) ---
-        systemd.services.media-atlas-archive-perms = lib.mkIf cfg.immichExternalLibrary.enable {
-          description = "MediaAtlas archive permission converger (group-read on the DiscordSync attachment tree for the Immich crawler)";
-          # Mount-gated (226 class): a detached DAS skips cleanly via the
-          # converger's -d guard, never shadow-writes a root-fs path.
-          unitConfig.RequiresMountsFor = [ archivePath ];
-          wantedBy = [ "multi-user.target" ];
-          # Converge BEFORE the crawler can scan.
-          before = [ "immich-server.service" ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = lib.getExe archivePermConverger;
-              TimeoutStartSec = "10min";
-              # chmod on a discordsync-owned tree needs root; no secret, no
-              # runuser — NoNewPrivileges stays ON.
-              ProtectSystem = "strict";
-              PrivateTmp = true;
-              ReadWritePaths = [ archivePath ];
-            }
-            ioTier.background
-          ];
-        };
-
-        systemd.services.media-atlas-key-provision = lib.mkIf hubCfg.enable {
-          description = "MediaAtlas API key provisioner (inbound hub key + outbound Immich key, idempotent converger)";
-          after = [
-            "postgresql.service"
-            "media-atlas-pg-ro.service"
-          ];
-          wants = [ "postgresql.service" ];
-          # multi-user-wanted (pg-ro pattern): every deploy re-converges the
-          # keys; boot-time run covers DB-restore healing.
-          wantedBy = [ "multi-user.target" ];
-          # Keys must exist before the hub reads them at first start.
-          before = [ "media-atlas.service" ];
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = lib.getExe keyProvision;
-              TimeoutStartSec = "2min";
-              # Root BY DESIGN (pg-ro/discordsync-provision pattern): peer
-              # auth psql via runuser; no secret exists to authenticate with.
-              NoNewPrivileges = false;
-              ProtectSystem = "strict";
-              PrivateTmp = true;
-              ReadWritePaths = [ stateDir ];
-            }
-            ioTier.background
-          ];
-        };
-
-        systemd.services.media-atlas = lib.mkIf hubCfg.enable {
-          description = "MediaAtlas federation hub (atlas serve, loopback behind the map vHost)";
-          inherit onFailure;
-          after = [
-            "network.target"
-            "postgresql.service"
-            "media-atlas-key-provision.service"
-          ];
-          wants = [ "postgresql.service" ];
-          wantedBy = [ "multi-user.target" ];
-
-          # The provisioner must have converged (it owns the key files the
-          # flags below point at); if it failed, onFailure pages instead of
-          # the hub flapping on a missing key file.
-          requires = [ "media-atlas-key-provision.service" ];
-
-          # SQLite WAL on the pool — flapping restart-hammers it for no
-          # gain; generous start-limit window (journal-serve pattern).
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-
-          serviceConfig = lib.mkMerge [
-            (harden {
-              MemoryMax = "1G";
-            })
-            (serviceDefaults { })
-            # The journal rides the QLC root — never compete with the
-            # desktop or Immich for I/O.
-            ioTier.background
-            {
-              User = cfg.user;
-              Group = cfg.user;
-              StateDirectory = stateDirName;
-              StateDirectoryMode = "0750";
-              ExecStart = lib.concatStringsSep " " [
-                "${lib.getExe hubCfg.package} serve"
-                "--db ${stateDir}/atlas.db"
-                "--addr 127.0.0.1:${toString hubCfg.port}"
-                "--api-key-file ${stateDir}/hub-api-key"
-                "--immich-url ${hubCfg.immich.url}"
-                "--immich-ml-url ${hubCfg.immich.mlUrl}"
-                "--immich-ml-model ${hubCfg.immich.mlModel}"
-                "--immich-key-file ${stateDir}/immich-key"
-              ];
-            }
-          ];
-        };
-
-        # --- Nightly refresh timers (v0.1 follow-up, plan L25.1) ---
-        # The repo's reviewed shape (docs/deploy/umap-nightly-timer.nix)
-        # lifted onto the real flake outputs. Both timers are idempotent;
-        # failures toast via onFailure (a silently stale map is the exact
-        # failure mode these exist to prevent). The NSFW lane-join timer
-        # deliberately stays OUT until the hub's joinLanes MapSet-strip
-        # bug is fixed (media-atlas TODO 10, open tail 1).
-
-        # Embeddings diff poll: re-joins smart_search onto the existing
-        # inventory through the peer-auth local socket, so the unit MUST
-        # run as the media_atlas OS user (same principal as the hub).
-        systemd.services.media-atlas-poll-embeddings =
-          lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
-            {
-              description = "MediaAtlas smart_search embeddings diff poll (atlas poll-embeddings, idempotent)";
-              inherit onFailure;
-              after = [ "postgresql.service" ];
-              wants = [ "postgresql.service" ];
-              path = [ pkgs.coreutils ];
-              serviceConfig = lib.mkMerge [
-                {
-                  Type = "oneshot";
-                  User = cfg.user;
-                  Group = cfg.user;
-                  StateDirectory = stateDirName;
-                  TimeoutStartSec = "10min";
-                }
-                (harden { MemoryMax = "512M"; })
-                # BE/6 background, NOT idle: a seconds-long PG join should not
-                # stall behind transcription storms the way an idle-class job may.
-                ioTier.background
-                (serviceOneshotDefaults { })
-              ];
-              script = ''
-                set -eu
-                exec ${lib.getExe hubCfg.package} poll-embeddings --db ${stateDir}/atlas.db
-              '';
-            };
-
-        systemd.timers.media-atlas-poll-embeddings =
-          lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
-            {
-              description = "Nightly MediaAtlas embeddings diff poll";
-              wantedBy = [ "timers.target" ];
-              timerConfig = {
-                OnCalendar = hubCfg.pollEmbeddings.calendar;
-                Persistent = true;
-                RandomizedDelaySec = "30m";
-              };
-            };
-
-        # UMAP refit: export → fit/transform (--mode auto keeps the model
-        # persistent, transforming only stragglers) → project-coords, all
-        # against the live journal (SQLite WAL: coexists with the hub).
-        systemd.services.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
-          description = "MediaAtlas UMAP nightly refit (export -> fit/transform -> project-coords)";
-          inherit onFailure;
-          # Deterministic freshness: when the 02:00 poll was missed (host
-          # down), the wants+after pair re-runs it immediately before the
-          # fit instead of fitting a night-stale embedding matrix.
-          after = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
-          wants = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
-          path = [ pkgs.coreutils ];
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              User = cfg.user;
-              Group = cfg.user;
-              StateDirectory = [
-                stateDirName
-                "${stateDirName}/umap"
-              ];
-              TimeoutStartSec = "30min";
-            }
-            # IO/CPU-quiet knobs carried verbatim from the reviewed shape:
-            # the nightly must never be the load that competes with live
-            # services on the QLC root (2026-10-27 lesson: load-300
-            # transcription batches). ProtectSystem=strict is safe because
-            # StateDirectory paths stay writable under it.
-            (harden {
-              MemoryMax = "2G"; # generous headroom, not a tight bound: numba JIT dominates
-              ProtectSystem = "strict";
-              ReadWritePaths = [ "${stateDir}/umap" ];
-            })
-            {
-              Nice = 19;
-              IOSchedulingClass = "idle";
-              CPUWeight = 20;
-              IOWeight = 50;
-            }
-            (serviceOneshotDefaults { })
-          ];
-          script = ''
-            set -eu
-            ${lib.getExe hubCfg.package} export --db ${stateDir}/atlas.db --out ${stateDir}/umap/export.json
-            ${umapFitProgram} --input ${stateDir}/umap/export.json --output ${stateDir}/umap/coords.json --model-dir ${stateDir}/umap/model --mode auto
-            ${lib.getExe hubCfg.package} project-coords --db ${stateDir}/atlas.db --in ${stateDir}/umap/coords.json --run "$(date +%F)"
-          '';
-        };
-
-        systemd.timers.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
-          description = "Nightly MediaAtlas UMAP refit";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = hubCfg.umapNightly.calendar;
-            Persistent = true;
-            RandomizedDelaySec = "30m";
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
+          # Peer-auth principal for the hub: OS user == PG role. The hub service
+          # unit (L25) runs as this user and connects over the local socket.
+          users.groups.${cfg.user} = { };
+          users.users.${cfg.user} = {
+            isSystemUser = true;
+            group = cfg.user;
+            description = "MediaAtlas federation hub (read-only peer-auth PG access to immich smart_search)";
           };
-        };
 
-        # Service-integration registry entry: fans out to the Caddy vHost
-        # (map.home.lan, PLAIN layer — the hub's own API key is the single
-        # auth gate (OQ-5); oauth2-proxy forward-auth would double-gate),
-        # the Gatus checks, and the dashboard tile.
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          "media-atlas" = lib.mkIf hubCfg.enable {
-            enable = true;
-            inherit (hubCfg) port;
-            subdomain = "map";
-            vHost.layer = "plain";
-            checks = [
+          systemd.services.media-atlas-pg-ro = {
+            description = "MediaAtlas read-only Postgres role converger (grants on the immich DB via peer-auth postgres)";
+            after = [
+              "postgresql.service"
+            ];
+            wants = [
+              "postgresql.service"
+            ];
+            # multi-user-wanted (crowdsec-setup pattern): the deploy.sh
+            # provisioner loop's is-enabled gate admits it, so every deploy
+            # re-converges the grants. Boot-time run covers DB-restore healing.
+            wantedBy = [ "multi-user.target" ];
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
               {
-                name = "MediaAtlas hub ready";
-                group = "Media";
-                path = "/health/ready";
+                Type = "oneshot";
+                RemainAfterExit = true;
+                ExecStart = lib.getExe pgRoConverger;
+                TimeoutStartSec = "2min";
+                # Root BY DESIGN (discordsync-immich-key-provision pattern):
+                # peer-auth postgres via runuser and ALTER DEFAULT PRIVILEGES FOR
+                # ROLE immich need superuser; no secret exists to authenticate
+                # with. NoNewPrivileges stays OFF — runuser is setuid and the
+                # script legitimately needs it.
+                NoNewPrivileges = false;
+                ProtectSystem = "strict";
+                PrivateTmp = true;
               }
+              # io-tier-coverage-audit: every boot-gated unit carries a tier.
+              ioTier.background
+            ];
+          };
+
+          # --- Immich external-library read access (ADR-061 runbook) ---
+          users.users.immich.extraGroups = lib.mkIf cfg.immichExternalLibrary.enable [
+            config.services.discordsync.group
+          ];
+          systemd.services.immich-server = lib.mkIf cfg.immichExternalLibrary.enable {
+            # Mount-gated (226 class): a detached DAS fails the unit loudly
+            # instead of scanning a root-fs shadow path.
+            unitConfig.RequiresMountsFor = [ archivePath ];
+            # Namespace-level RO over the group-rwx archive dir: Immich never
+            # writes external-library files, and the bind makes that a kernel
+            # guarantee instead of an application promise.
+            serviceConfig.BindReadOnlyPaths = [ archivePath ];
+          };
+
+          # --- The hub service (v0.1 deploy, L25) ---
+          systemd.services.media-atlas-archive-perms = lib.mkIf cfg.immichExternalLibrary.enable {
+            description = "MediaAtlas archive permission converger (group-read on the DiscordSync attachment tree for the Immich crawler)";
+            # Mount-gated (226 class): a detached DAS skips cleanly via the
+            # converger's -d guard, never shadow-writes a root-fs path.
+            unitConfig.RequiresMountsFor = [ archivePath ];
+            wantedBy = [ "multi-user.target" ];
+            # Converge BEFORE the crawler can scan.
+            before = [ "immich-server.service" ];
+            serviceConfig = lib.mkMerge [
               {
-                # The hub's search lane dials Immich ML (—immich-ml-url);
-                # probe the dependency so an ML outage pages here instead
-                # of surfacing as mystery 502s on the map.
-                name = "Immich ML (media-atlas search dependency)";
-                group = "Media";
-                url = "tcp://127.0.0.1:${toString ports.immich-ml}";
+                Type = "oneshot";
+                RemainAfterExit = true;
+                ExecStart = lib.getExe archivePermConverger;
+                TimeoutStartSec = "10min";
+                # chmod on a discordsync-owned tree needs root; no secret, no
+                # runuser — NoNewPrivileges stays ON.
+                ProtectSystem = "strict";
+                PrivateTmp = true;
+                ReadWritePaths = [ archivePath ];
               }
+              ioTier.background
+            ];
+          };
+
+          systemd.services.media-atlas-key-provision = lib.mkIf hubCfg.enable {
+            description = "MediaAtlas API key provisioner (inbound hub key + outbound Immich key, idempotent converger)";
+            after = [
+              "postgresql.service"
+              "media-atlas-pg-ro.service"
+            ];
+            wants = [ "postgresql.service" ];
+            # multi-user-wanted (pg-ro pattern): every deploy re-converges the
+            # keys; boot-time run covers DB-restore healing.
+            wantedBy = [ "multi-user.target" ];
+            # Keys must exist before the hub reads them at first start.
+            before = [ "media-atlas.service" ];
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
               {
-                name = "MediaAtlas map plate";
-                group = "Media";
-                path = "/";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                  # Functional, not just liveness: every plate carries the
-                  # "Map · MediaAtlas" title (the templ page head) — an
-                  # error shell would not.
-                  "[BODY] == pat(*MediaAtlas*)"
+                Type = "oneshot";
+                RemainAfterExit = true;
+                ExecStart = lib.getExe keyProvision;
+                TimeoutStartSec = "2min";
+                # Root BY DESIGN (pg-ro/discordsync-provision pattern): peer
+                # auth psql via runuser; no secret exists to authenticate with.
+                NoNewPrivileges = false;
+                ProtectSystem = "strict";
+                PrivateTmp = true;
+                ReadWritePaths = [ stateDir ];
+              }
+              ioTier.background
+            ];
+          };
+
+          systemd.services.media-atlas = lib.mkIf hubCfg.enable {
+            description = "MediaAtlas federation hub (atlas serve, loopback behind the map vHost)";
+            inherit onFailure;
+            after = [
+              "network.target"
+              "postgresql.service"
+              "media-atlas-key-provision.service"
+            ];
+            wants = [ "postgresql.service" ];
+            wantedBy = [ "multi-user.target" ];
+
+            # The provisioner must have converged (it owns the key files the
+            # flags below point at); if it failed, onFailure pages instead of
+            # the hub flapping on a missing key file.
+            requires = [ "media-atlas-key-provision.service" ];
+
+            # SQLite WAL on the pool — flapping restart-hammers it for no
+            # gain; generous start-limit window (journal-serve pattern).
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "1G";
+              })
+              (serviceDefaults { })
+              # The journal rides the QLC root — never compete with the
+              # desktop or Immich for I/O.
+              ioTier.background
+              {
+                User = cfg.user;
+                Group = cfg.user;
+                StateDirectory = stateDirName;
+                StateDirectoryMode = "0750";
+                ExecStart = lib.concatStringsSep " " [
+                  "${lib.getExe hubCfg.package} serve"
+                  "--db ${stateDir}/atlas.db"
+                  "--addr 127.0.0.1:${toString hubCfg.port}"
+                  "--api-key-file ${stateDir}/hub-api-key"
+                  "--immich-url ${hubCfg.immich.url}"
+                  "--immich-ml-url ${hubCfg.immich.mlUrl}"
+                  "--immich-ml-model ${hubCfg.immich.mlModel}"
+                  "--immich-key-file ${stateDir}/immich-key"
                 ];
-                alert = "MediaAtlas map down — the federation hub at map.home.lan is unreachable. Check: systemctl status media-atlas, journalctl -u media-atlas -n 50.";
               }
             ];
-            homepage = {
-              name = "MediaAtlas";
-              group = "Media";
-              description = "Federated semantic media map (Immich + DiscordSync)";
-              # No atlas glyph in the homepage icon pack; photoprism is the
-              # photo-map icon (the hub IS the map layer over Immich).
-              icon = "photoprism.png";
+          };
+
+          # --- Nightly refresh timers (v0.1 follow-up, plan L25.1) ---
+          # The repo's reviewed shape (docs/deploy/umap-nightly-timer.nix)
+          # lifted onto the real flake outputs. Both timers are idempotent;
+          # failures toast via onFailure (a silently stale map is the exact
+          # failure mode these exist to prevent). The NSFW lane-join timer
+          # deliberately stays OUT until the hub's joinLanes MapSet-strip
+          # bug is fixed (media-atlas TODO 10, open tail 1).
+
+          # Embeddings diff poll: re-joins smart_search onto the existing
+          # inventory through the peer-auth local socket, so the unit MUST
+          # run as the media_atlas OS user (same principal as the hub).
+          systemd.services.media-atlas-poll-embeddings =
+            lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
+              {
+                description = "MediaAtlas smart_search embeddings diff poll (atlas poll-embeddings, idempotent)";
+                inherit onFailure;
+                after = [ "postgresql.service" ];
+                wants = [ "postgresql.service" ];
+                path = [ pkgs.coreutils ];
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = cfg.user;
+                    Group = cfg.user;
+                    StateDirectory = stateDirName;
+                    TimeoutStartSec = "10min";
+                  }
+                  (harden { MemoryMax = "512M"; })
+                  # BE/6 background, NOT idle: a seconds-long PG join should not
+                  # stall behind transcription storms the way an idle-class job may.
+                  ioTier.background
+                  (serviceOneshotDefaults { })
+                ];
+                script = ''
+                  set -eu
+                  exec ${lib.getExe hubCfg.package} poll-embeddings --db ${stateDir}/atlas.db
+                '';
+              };
+
+          systemd.timers.media-atlas-poll-embeddings =
+            lib.mkIf (hubCfg.enable && hubCfg.pollEmbeddings.enable)
+              {
+                description = "Nightly MediaAtlas embeddings diff poll";
+                wantedBy = [ "timers.target" ];
+                timerConfig = {
+                  OnCalendar = hubCfg.pollEmbeddings.calendar;
+                  Persistent = true;
+                  RandomizedDelaySec = "30m";
+                };
+              };
+
+          # UMAP refit: export → fit/transform (--mode auto keeps the model
+          # persistent, transforming only stragglers) → project-coords, all
+          # against the live journal (SQLite WAL: coexists with the hub).
+          systemd.services.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
+            description = "MediaAtlas UMAP nightly refit (export -> fit/transform -> project-coords)";
+            inherit onFailure;
+            # Deterministic freshness: when the 02:00 poll was missed (host
+            # down), the wants+after pair re-runs it immediately before the
+            # fit instead of fitting a night-stale embedding matrix.
+            after = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
+            wants = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
+            path = [ pkgs.coreutils ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = cfg.user;
+                Group = cfg.user;
+                StateDirectory = [
+                  stateDirName
+                  "${stateDirName}/umap"
+                ];
+                TimeoutStartSec = "30min";
+              }
+              # IO/CPU-quiet knobs carried verbatim from the reviewed shape:
+              # the nightly must never be the load that competes with live
+              # services on the QLC root (2026-10-27 lesson: load-300
+              # transcription batches). ProtectSystem=strict is safe because
+              # StateDirectory paths stay writable under it.
+              (harden {
+                MemoryMax = "2G"; # generous headroom, not a tight bound: numba JIT dominates
+                ProtectSystem = "strict";
+                ReadWritePaths = [ "${stateDir}/umap" ];
+              })
+              {
+                Nice = 19;
+                IOSchedulingClass = "idle";
+                CPUWeight = 20;
+                IOWeight = 50;
+              }
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              set -eu
+              ${lib.getExe hubCfg.package} export --db ${stateDir}/atlas.db --out ${stateDir}/umap/export.json
+              ${umapFitProgram} --input ${stateDir}/umap/export.json --output ${stateDir}/umap/coords.json --model-dir ${stateDir}/umap/model --mode auto
+              ${lib.getExe hubCfg.package} project-coords --db ${stateDir}/atlas.db --in ${stateDir}/umap/coords.json --run "$(date +%F)"
+            '';
+          };
+
+          systemd.timers.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
+            description = "Nightly MediaAtlas UMAP refit";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = hubCfg.umapNightly.calendar;
+              Persistent = true;
+              RandomizedDelaySec = "30m";
             };
           };
-        };
-      };
 
-      assertions = [
+          # Service-integration registry entry: fans out to the Caddy vHost
+          # (map.home.lan, PLAIN layer — the hub's own API key is the single
+          # auth gate (OQ-5); oauth2-proxy forward-auth would double-gate),
+          # the Gatus checks, and the dashboard tile.
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            "media-atlas" = lib.mkIf hubCfg.enable {
+              enable = true;
+              inherit (hubCfg) port;
+              subdomain = "map";
+              vHost.layer = "plain";
+              checks = [
+                {
+                  name = "MediaAtlas hub ready";
+                  group = "Media";
+                  path = "/health/ready";
+                }
+                {
+                  # The hub's search lane dials Immich ML (—immich-ml-url);
+                  # probe the dependency so an ML outage pages here instead
+                  # of surfacing as mystery 502s on the map.
+                  name = "Immich ML (media-atlas search dependency)";
+                  group = "Media";
+                  url = "tcp://127.0.0.1:${toString ports.immich-ml}";
+                }
+                {
+                  name = "MediaAtlas map plate";
+                  group = "Media";
+                  path = "/";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                    # Functional, not just liveness: every plate carries the
+                    # "Map · MediaAtlas" title (the templ page head) — an
+                    # error shell would not.
+                    "[BODY] == pat(*MediaAtlas*)"
+                  ];
+                  alert = "MediaAtlas map down — the federation hub at map.home.lan is unreachable. Check: systemctl status media-atlas, journalctl -u media-atlas -n 50.";
+                }
+              ];
+              homepage = {
+                name = "MediaAtlas";
+                group = "Media";
+                description = "Federated semantic media map (Immich + DiscordSync)";
+                # No atlas glyph in the homepage icon pack; photoprism is the
+                # photo-map icon (the hub IS the map layer over Immich).
+                icon = "photoprism.png";
+              };
+            };
+          };
+        })
         {
-          assertion = !hubCfg.umapNightly.enable || hubCfg.enable;
-          message = "services.media-atlas.hub.umapNightly.enable requires hub.enable (shared state dir, journal path and peer-auth user).";
-        }
-        {
-          assertion = !hubCfg.pollEmbeddings.enable || hubCfg.enable;
-          message = "services.media-atlas.hub.pollEmbeddings.enable requires hub.enable (peer-auth media_atlas user + journal path).";
+          assertions = [
+            {
+              assertion = !hubCfg.umapNightly.enable || hubCfg.enable;
+              message = "services.media-atlas.hub.umapNightly.enable requires hub.enable (shared state dir, journal path and peer-auth user).";
+            }
+            {
+              assertion = !hubCfg.pollEmbeddings.enable || hubCfg.enable;
+              message = "services.media-atlas.hub.pollEmbeddings.enable requires hub.enable (peer-auth media_atlas user + journal path).";
+            }
+          ];
         }
       ];
     };

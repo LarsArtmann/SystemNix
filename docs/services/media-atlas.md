@@ -19,6 +19,8 @@
 | vHost `map.home.lan`        | Registry entry, **plain layer** — the hub's own single API key gates `/api`, `/events`, `/thumb` (OQ-5); caddy-side auth would double-gate. TLS-only at caddy                                                                                                                                                                      |
 | Gatus                       | `/health/ready` 30s + functional plate check (`Map · MediaAtlas` title) 60s, Discord alert on failure                                                                                                                                                                                                                              |
 | Dashboard tile              | "MediaAtlas", group Media, photoprism icon (no atlas glyph in the pack)                                                                                                                                                                                                                                                            |
+| `media-atlas-poll-embeddings` | Nightly 02:00 (+30m random, `hub.pollEmbeddings.*`): idempotent smart_search diff poll as the `media_atlas` peer-auth user; failure toasts                                                                                                                     |
+| `media-atlas-umap`          | Nightly 03:00 (+30m random, `hub.umapNightly.*`): export → `umap-fit --mode auto` (persistent model, straggler transform) → `project-coords --run <date>`; IO/CPU-quiet knobs from the repo's reviewed shape (Nice 19, idle IO, MemoryMax 2G); failure toasts                                                                    |
 
 ### Deploy sequence (owner, IO-quiet window)
 
@@ -31,7 +33,7 @@
 
 - **Key rotation** — hub key: `rm /var/lib/media-atlas/hub-api-key && systemctl restart media-atlas-key-provision` (mints + restarts the hub). Immich key: same with `immich-key`; the file-first reconcile re-inserts the row from the file plaintext on DB restore.
 - **Legacy key cleanup** — the interactive 2026-10-29 mint (`media-atlas-hub (nix-managed pending L25)`) is superseded by the provisioner's row; delete it in the Immich UI after the first provisioned deploy.
-- **Nightly timers** — the UMAP sidecar + `poll-embeddings` timers are NOT in this module yet (media-atlas `docs/deploy/umap-nightly-timer.nix` is the reference); land them with the v0.1 follow-up.
+- **Nightly timers** — LANDED 2026-10-29 (the repo's `docs/deploy/umap-nightly-timer.nix` shape lifted onto the flake outputs): `hub.pollEmbeddings.enable` (02:00 diff poll) + `hub.umapNightly.enable` (03:00 UMAP refit, `wants+after` the poll so a missed poll re-runs before the fit); both `Persistent=true` and enabled on evo-x2. The UMAP unit consumes the `umap-fit` flake app from the same rev-pinned input as the `atlas` package. The NSFW lane-join timer stays OUT until the hub's `joinLanes` MapSet-strip bug is fixed (media-atlas TODO 10).
 
 ## Ops (groundwork)
 
