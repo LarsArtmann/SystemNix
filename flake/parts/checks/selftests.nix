@@ -200,7 +200,18 @@
         # → start-limit-hit), and its failure mode is inverted from the
         # usual one: a miscategorised result kills the service it heals.
         # The fixture stubs `monitor365-server`, so no DuckDB is needed.
+        # Two legs: the repo text, then the RENDERED wrapper the unit
+        # actually execs — the rendered leg is also what proves the
+        # ExecStartPre still passes an admin email as argv[1].
         monitor365-sso-identity-selftest =
+          let
+            preStartEntries =
+              inputs.self.nixosConfigurations.evo-x2.config.systemd.services.monitor365-server.serviceConfig.ExecStartPre;
+            entry = lib.findFirst (e: lib.hasInfix "monitor365-ensure-sso-identity" e) null preStartEntries;
+            callSite = lib.splitString " " entry;
+            rendered = builtins.head callSite;
+            callSiteEmail = builtins.elemAt callSite 1;
+          in
           pkgs.runCommand "monitor365-sso-identity-selftest"
             { }
             ''
@@ -208,7 +219,22 @@
               scratch=$(mktemp -d)
               cp ${root}/scripts/monitor365-ensure-sso-identity.sh "$scratch/monitor365-ensure-sso-identity.sh"
               cp ${root}/scripts/test-monitor365-ensure-sso-identity.sh "$scratch/test-monitor365-ensure-sso-identity.sh"
+
+              # Call-site contract: the unit must hand the heal an email.
+              case '${callSiteEmail}' in
+                ?*@?*) : ;;
+                *)
+                  echo "FAIL: ExecStartPre passes no admin email (argv[1]='${callSiteEmail}')"
+                  exit 1
+                  ;;
+              esac
+
+              echo "== repo text =="
               bash "$scratch/test-monitor365-ensure-sso-identity.sh"
+
+              echo "== rendered wrapper =="
+              MONITOR365_SSO_IDENTITY_SCRIPT=${rendered} \
+                bash "$scratch/test-monitor365-ensure-sso-identity.sh"
               touch $out
             '';
 

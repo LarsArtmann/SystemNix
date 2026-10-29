@@ -816,5 +816,19 @@ if [[ ",${CASES:-}," == *,metricnames,* ]]; then
   fi
   unset status
 fi
+
+# ── monitor365 SSO identity classifier (checks.monitor365-sso-identity-selftest) ──
+# The classifier's failure mode is inverted: a pattern it does NOT recognise
+# exits the ExecStartPre non-zero and kills the unit it heals (2026-10-28
+# 22:54 → restart loop → start-limit-hit, control plane dark). Both upstream
+# duplicate wordings are removed here — the exact drift that caused it — and
+# the fixture must go RED. The comment leg is the immunity control: editing
+# prose next to the patterns must not trip anything.
+run_case ssoclassify wording-drift monitor365-sso-identity-selftest fail 'leg3 wrong message' \
+  'sed:scripts/monitor365-ensure-sso-identity.sh:s|"Duplicate key"|"never-matches-a"|' \
+  'sed:scripts/monitor365-ensure-sso-identity.sh:s|"violates unique constraint"|"never-matches-b"|'
+run_case ssoclassify comment-control monitor365-sso-identity-selftest pass '' \
+  'append:scripts/monitor365-ensure-sso-identity.sh:# negative-test immunity control'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]
