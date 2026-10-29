@@ -1110,8 +1110,8 @@ _: {
                   TAGS_CREATED=0
                   while IFS= read -r TNAME; do
                     [ -n "$TNAME" ] || continue
-                    if ! printf '%s' "$(api GET "/api/tags/?name=''${TNAME}" 2>/dev/null)" \
-                      | jq -e '.count > 0' >/dev/null 2>&1; then
+                    if ! printf '%s' "$(api GET "/api/tags/?page_size=100000" 2>/dev/null)" \
+                      | jq -e --arg n "$TNAME" 'any(.results[]?; .name == $n)' >/dev/null 2>&1; then
                       NEW_TAG=$(api POST /api/tags/ "{\"name\":\"''${TNAME}\"}") \
                         || { echo "paperless-dashboard-provision: tag create failed for '$TNAME'" >&2; exit 1; }
                       echo "paperless-dashboard-provision: ensured tag '$TNAME' (id=$(printf '%s' "$NEW_TAG" | jq -r '.id'))"
@@ -1122,8 +1122,8 @@ _: {
                   FIELDS_CREATED=0
                   while IFS= read -r FNAME; do
                     [ -n "$FNAME" ] || continue
-                    if ! printf '%s' "$(api GET "/api/custom_fields/?name=''${FNAME}" 2>/dev/null)" \
-                      | jq -e '.count > 0' >/dev/null 2>&1; then
+                    if ! printf '%s' "$(api GET "/api/custom_fields/?page_size=100000" 2>/dev/null)" \
+                      | jq -e --arg n "$FNAME" 'any(.results[]?; .name == $n)' >/dev/null 2>&1; then
                       FTYPE=$(jq -r --arg n "$FNAME" '.[] | select(.name == $n) | .data_type' ${ensureFieldsJson})
                       NEW_FIELD=$(api POST /api/custom_fields/ "{\"name\":\"''${FNAME}\",\"data_type\":\"''${FTYPE}\"}") \
                         || { echo "paperless-dashboard-provision: custom field create failed for '$FNAME'" >&2; exit 1; }

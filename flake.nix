@@ -755,6 +755,18 @@
       url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=refs/heads/master";
     };
 
+    # media-atlas — the MediaAtlas federation hub (`atlas` binary, repo
+    # ~/projects/media-atlas): one semantic map over Immich + the DiscordSync
+    # archive (v0.1 plan). Forgejo-primary since 2026-10-28 — the GitHub twin
+    # is the push mirror the fleet fetches over (nsfw-classifier pattern).
+    # REV-PINNED (not ref-tracked) until the v0.1 tag: bump this rev with the
+    # deploy PR, never a floating ref (the repo's auto-commit daemon lands
+    # commits continuously; only a pin is reproducible). Committed vendor/
+    # tree, so no GOPRIVATE fetch setup is needed in the sandbox.
+    media-atlas = {
+      url = "git+ssh://git@github.com/LarsArtmann/media-atlas?rev=435a0ba451c819cab99ce049e078dc7f067a176c";
+    };
+
     # nix-email — Declarative mail stack (Stalwart + DMARC monitoring).
     # Consumed via the upstream-flake pattern (like inboxclean/discordsync):
     # flake.nixosModules.default wraps nixpkgs services.stalwart +

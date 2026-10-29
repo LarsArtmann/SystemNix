@@ -310,7 +310,12 @@ _: {
           }
 
           tag_id_of() {
-            api GET "/api/tags/?name=$1" | jq -r 'if .count > 0 then .results[0].id else "MISSING" end'
+            # paperless 3.3.1: ?name= is NOT a server-side filter (the
+            # declared lookups are name__iexact etc.) — an unmatched param is
+            # silently ignored and returns ALL tags. Exact-match client-side
+            # (same pattern as the provisioner's tag_id()).
+            api GET "/api/tags/?page_size=100000" | jq -r --arg n "$1" \
+              'first(.results[] | select(.name == $n) | .id | tostring) // "MISSING"'
           }
 
           ensure_tag() {
