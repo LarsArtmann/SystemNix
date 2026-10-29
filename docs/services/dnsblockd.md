@@ -316,4 +316,8 @@ the firewall path; the errors are noise, not breakage (fired all day
 
 **Retention is NOT all 30d** — the wrapper renders no `retention_*` keys, so upstream defaults apply: request tracks **30d**, aggregated metrics **90d**, block-rate trend **365d**, journal **30d**. Same table, with the decision context, in `docs/services/dnsblockd-tracking-dial.md`.
 
+## Permanent-allowlist backup (2026-10-28)
+
+The allowlist (`/var/lib/dnsblockd/allowlist` — the only irreversible artifact, on the UNSNAPSHOTTED `hot/dnsblockd` subvol) is copied daily to `/mnt/pool/backups/dnsblockd/allowlist` by `dnsblockd-allowlist-backup.service` (02:55, `Persistent`, empty-source-safe, atomic replace; `dnsblockd-allowlist-backup-dir.service` creates the mount-gated pool dir and is a `deploy.sh` converger). The path is in `services.restic-app-dumps.paths`, so the copy rides the restic dedup repo + offsite chain. Pool-less hosts (rpi3) skip it (`services.dns-blocker.allowlistBackup.enable`, off by default). tracking/journal are deliberately NOT copied (acceptable analytics loss).
+
 **Resolved anomaly (was open 2026-10-27):** the second tracking DB (`dnsblockd_tracking.db`, 724M) is GONE — a live probe 2026-10-28 10:14 shows exactly one `tracking.db`. The remainder of that reclaim (the `/data/tmp-crush-test` copy) was trashed 2026-10-26 (TODO_LIST close-out). Do not re-open the class without a fresh `ls`: the earlier "two DBs coexist" note outlived its subject by one day. **Source:** docs/status/2026-10-27_10-38_var-storage-tier-audit-status.md §F + live probe 2026-10-27 15:1x, re-probed 2026-10-28 10:14.
