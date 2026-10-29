@@ -49,6 +49,10 @@
           user = lib.mkDefault primaryUser;
           dataDir = lib.mkDefault "${userHome}/.file-renamer";
           healthAddr = lib.mkDefault "127.0.0.1:${toString ports.file-and-image-renamer-health}";
+          # Upstream's watcherHealthAddr default (127.0.0.1:8087) collides
+          # with browser-history's registered port — the 2026-10-29 gen-965
+          # restart race EADDRINUSE-killed browser-history. Dedicated port.
+          watcherHealthAddr = lib.mkDefault "127.0.0.1:${toString ports.file-and-image-renamer-watcher}";
           # OTel traces -> local SigNoz OTLP/HTTP collector (host:port, no
           # scheme - the OTel SDK builds the URL; noop tracer when null).
           otelEndpoint = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";

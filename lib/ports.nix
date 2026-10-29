@@ -97,6 +97,12 @@
 
     file-and-image-renamer-health = 8086;
 
+    # Upstream renamer's watcher health endpoint (watcherHealthAddr,
+    # ADR-0005) defaulted to 127.0.0.1:8087 — browser-history's registered
+    # port; the 2026-10-29 gen-965 switch lost the bind race (EADDRINUSE
+    # killed browser-history). Dedicated registry port instead.
+    file-and-image-renamer-watcher = 8089;
+
     browser-history = 8087;
 
     papdashboard = 8088;
