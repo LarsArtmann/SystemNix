@@ -1,0 +1,2294 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>PROPOSAL &middot; FOR OWNER REVIEW</span>
+      <span>2026-10-29</span>
+      <span>SystemNix &middot; crm &middot; nix-email &middot; pbx-artmann</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">01 &middot; Summary &amp; verdict</a>
+          <a href="#today">02 &middot; Today, with evidence</a>
+          <a href="#collision">03 &middot; The doctrine collision</a>
+          <a href="#topology">04 &middot; Two end-states</a>
+          <a href="#architecture">05 &middot; Target architecture</a>
+          <a href="#semantics">06 &middot; Sync semantics</a>
+          <a href="#calendar">07 &middot; Calendar specifics</a>
+          <a href="#phases">08 &middot; Phased execution</a>
+          <a href="#risks">09 &middot; Risks &amp; kill switches</a>
+          <a href="#governance">10 &middot; Verification &amp; governance</a>
+          <a href="#unverified">11 &middot; Verify before code</a>
+          <a href="#decisions">12 &middot; Decisions needed</a>
+          <a href="#alternatives">13 &middot; Alternatives dismissed</a>
+          <a href="#appendix">Appendix &middot; effort &amp; index</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">PROPOSAL &middot; 2026-10-29 &middot; FOR OWNER REVIEW</div>
+          <h1>One truth, two Googles</h1>
+          <p class="subtitle">
+            Bidirectional contacts and calendar across both Google accounts, with
+            a single owner you control, wired the way the CRM repo already
+            describes a data mesh. Most of the machine exists. What does not
+            exist is an answer to question D1 — and two ratified documents
+            currently give opposite ones.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Status: awaiting your review</span>
+            <span class="tag">Scope: contacts + calendar</span>
+            <span class="tag teal">Unblocked by: 6 decisions, 0 lines of code</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-warn">
+            <div class="score">2</div>
+            <div class="label">Google accounts holding both contacts and calendar</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">3</div>
+            <div class="label">Ownership doctrines that disagree today</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">1</div>
+            <div class="label">Truth owner per entity type (the invariant)</div>
+          </div>
+          <div class="score-card">
+            <div class="score">6</div>
+            <div class="label">Decisions this proposal needs from you</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">01</span>Summary &amp; verdict</h2>
+          <p>
+            <strong>What you asked for:</strong> contacts and calendar currently
+            live in two Google accounts; you want bidirectional sync, a real
+            data owner you control, and a data-mesh shape.
+          </p>
+          <p>
+            <strong>What is true today:</strong> the mesh already exists on
+            paper and half-exists in code. The contact half has a ratified
+            constitution, a working Google import adapter (multi-account,
+            per-account state and actors) and a working CardDAV out-mirror
+            verified against the deployed Stalwart. The calendar half has
+            nothing anywhere. Google is, in practice, the only store that holds
+            the real bytes.
+          </p>
+          <p>
+            <strong>The blocker is not engineering, it is doctrine.</strong>
+            Three ownership documents written in three repos disagree about who
+            should own personal contacts and calendar. Two of them are dated
+            today. Until one answer wins, every line of sync code is a bet on
+            an unresolved question.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Bidirectional sync is buildable, but it is <em>constitutional</em>:
+            it amends the CRM mesh's rule that Google never receives a write,
+            and it obliges us to build the conflict machinery the 2026-10-19
+            owner decision explicitly declined to build. Two coherent end-states
+            are on the table (Mesh A / Mesh B, §04). I recommend
+            <strong>Mesh B</strong> — one store owns both entity types
+            (Stalwart), Kith demotes to relations — because it is the shape the
+            document you pointed me at argues for, and the only one where a
+            phone can eventually drop Google entirely. Decide D1, and the rest
+            of this document becomes executable.
+          </div>
+        </section>
+
+        <!-- The ask, formalised -->
+        <section id="today">
+          <h2><span class="num">02</span>Today, with evidence</h2>
+          <p>
+            Every row below is verifiable at the cited path. "Unverified" means
+            exactly that — listed in §11, not assumed.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>State today</th>
+                  <th>Evidence</th>
+                  <th>Gap</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Google — both accounts</strong></td>
+                  <td>
+                    The only place holding the real bytes: contacts and calendar
+                    for two accounts. Counts, overlap and collection set are
+                    unmeasured.
+                  </td>
+                  <td>Your premise (this request); not yet inventoried</td>
+                  <td class="no">No owner, no lineage, no export ritual</td>
+                </tr>
+                <tr>
+                  <td><strong>Kith CRM journal</strong></td>
+                  <td>
+                    Ratified <em>contacts</em> truth: "In-flows land here (Google,
+                    InboxClean); the Stalwart CardDAV mirror is an OUT-flow".
+                    Event-sourced, so every change carries an actor.
+                  </td>
+                  <td>
+                    <code>~/projects/crm/docs/DATA-MESH.md:18</code> &middot;
+                    <code>modules/nixos/services/crm.nix:128,372</code>
+                  </td>
+                  <td class="no">
+                    Holds ZERO people contacts today; 139 sit in a dead Twenty
+                    dump (<code>docs/todo/services.md:363</code>)
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>gcontacts adapter</strong></td>
+                  <td>
+                    Google → CRM, one-way, <em>never</em> writes back. Multi-account
+                    (per-account token/state, per-account actors
+                    <code>bot:google-sync:&lt;acct&gt;</code>), tombstones, sync
+                    tokens, EXPIRED_SYNC_TOKEN auto-resync, capped jittered
+                    backoff, single-flight runner. Scope is
+                    <code>contacts.readonly</code>.
+                  </td>
+                  <td>
+                    <code>~/projects/crm/FEATURES.md:130-143</code> &middot;
+                    <code>~/projects/crm/docs/ops/GOOGLE-SYNC.md:4,11,51</code>
+                  </td>
+                  <td class="no">
+                    Write direction absent by design; read-only scope blocks it
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>CardDAV out-mirror</strong></td>
+                  <td>
+                    CRM → Stalwart, one-way, E2E-green against the deployed pin
+                    (Stalwart 0.16.22 at the time, re-baselined on 0.16.26):
+                    UID = bare contact id, etag re-PUTs, foreign-squatter
+                    eviction, deletes propagate, zero-write reruns, per-account
+                    0600 state <code>uid → etag+hash</code>.
+                  </td>
+                  <td>
+                    <code>~/projects/crm/FEATURES.md:25</code> &middot;
+                    <code>~/projects/crm/docs/ops/CARDDAV-SYNC.md:1-14</code>
+                  </td>
+                  <td class="no">Not deployed (owner-gated live go-live)</td>
+                </tr>
+                <tr>
+                  <td><strong>Stalwart CardDAV</strong></td>
+                  <td>
+                    Probe-verified dialect: discovery chain, MKCOL books,
+                    <code>If-Match</code> REQUIRED on overwrite,
+                    UID-changing PUT → <code>412 no-uid-conflict</code>,
+                    sync-collection needs sync-level 1, maxResults 2000. 17/18
+                    probe PASS reproduced on the 0.16.26 advance.
+                  </td>
+                  <td>
+                    <code>~/projects/nix-email/FEATURES.md:62</code> &middot;
+                    <code>docs/probes/2026-10-28-carddav-01626/</code>
+                  </td>
+                  <td class="yes">Verified — this is the strongest surface we have</td>
+                </tr>
+                <tr>
+                  <td><strong>Stalwart CalDAV</strong></td>
+                  <td>
+                    Upstream reports collaboration features — <em>CalDAV,
+                    CardDAV, WebDAV</em> — since the 0.12.0 rebrand
+                    (2025-05-26). <strong>No probe transcript exists in this
+                    fleet</strong>, and nix-email's feature table carries
+                    CardDAV and JMAP-contacts rows but no CalDAV row.
+                  </td>
+                  <td>
+                    <code>~/projects/nix-email/modules/stalwart-module/default.nix:65</code>
+                  </td>
+                  <td class="no">Unverified — probe required (§11 #1)</td>
+                </tr>
+                <tr>
+                  <td><strong>Stalwart JMAP</strong></td>
+                  <td>
+                    JMAP contacts functional (server-assigned card ids, UID
+                    preserved); the deployed webmail already reads JMAP
+                    calendars and contacts (agenda sidebar, birthdays plugin).
+                  </td>
+                  <td>
+                    <code>~/projects/nix-email/FEATURES.md:63</code> &middot;
+                    <code>~/projects/pbx-artmann/hosts/pbx/bulwark.nix:184,196</code>
+                  </td>
+                  <td class="yes">
+                    A calendar consumer already reads — the writing side is what
+                    is missing
+                  </td>
+                </tr>
+                <tr>
+                  <td><strong>Mail store + archive</strong></td>
+                  <td>
+                    Stalwart holds the mail store on the pbx host with a
+                    whole-store nightly archive.
+                  </td>
+                  <td>
+                    <code>~/projects/pbx-artmann/hosts/pbx/backup.nix</code> &middot;
+                    <code>docs/architecture/data-ownership.md</code> (evidence index)
+                  </td>
+                  <td class="yes">Existing backup leg, if this becomes the owner</td>
+                </tr>
+                <tr>
+                  <td><strong>CRM backup</strong></td>
+                  <td>
+                    Nightly WAL-safe sqlite snapshots 03:40 →
+                    <code>/mnt/pool/backups/crm</code>, 30-day retention.
+                  </td>
+                  <td><code>docs/services/crm.md:20</code></td>
+                  <td class="yes">Existing backup leg, if this stays the owner</td>
+                </tr>
+                <tr>
+                  <td><strong>SystemNix deployment</strong></td>
+                  <td>
+                    <code>crm-server</code> runs with OIDC, api-token and passkeys
+                    off — and with <strong>no</strong> <code>-google-*</code> or
+                    <code>-carddav-*</code> flags at all. The Google ladder is
+                    unconfigured: no client secret, no consent token, no button —
+                    and <code>ProtectHome=read-only</code> would block the token
+                    refresh write.
+                  </td>
+                  <td>
+                    <code>modules/nixos/services/crm.nix:220-233</code> &middot;
+                    <code>docs/todo/services.md:364</code>
+                  </td>
+                  <td class="no">Both directions are currently OFF in production</td>
+                </tr>
+                <tr>
+                  <td><strong>Doctrine</strong></td>
+                  <td>
+                    Three documents, two answers (see §03).
+                  </td>
+                  <td>
+                    <code>docs/agents/data-ownership.md</code> (this repo, today)
+                    &middot; <code>crm/docs/DATA-MESH.md</code> (ratified
+                    2026-10-19) &middot;
+                    <code>pbx-artmann/docs/architecture/data-ownership.md</code>
+                    (today)
+                  </td>
+                  <td class="no">Blocks every line of sync code</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- The doctrine collision -->
+        <section id="collision">
+          <h2><span class="num">03</span>The doctrine collision</h2>
+          <p>
+            This is the finding that matters most in this document: the fleet
+            has three data-ownership doctrines, written in three repos within ten
+            days, and they do not agree. One of them is ratified. One of them
+            you handed me this session.
+          </p>
+
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Question</th>
+                  <th>CRM mesh constitution (ratified 2026-10-19)</th>
+                  <th>nix-email roadmap (mail stack repo)</th>
+                  <th>pbx-artmann doctrine (2026-10-29)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Who owns <strong>contacts</strong>?</td>
+                  <td class="yes">The CRM journal</td>
+                  <td class="yes">Kith CRM ("the CONTACTS SOURCE OF TRUTH")</td>
+                  <td class="no">Stalwart — the CRM must never be the book</td>
+                </tr>
+                <tr>
+                  <td>Who owns <strong>calendar</strong>?</td>
+                  <td class="no">TBD placeholder — "MUST be named before any CalDAV spoke"</td>
+                  <td>unstated</td>
+                  <td class="yes">Stalwart (implicitly, consumed but undeclared)</td>
+                </tr>
+                <tr>
+                  <td>May a spoke <strong>write back</strong>?</td>
+                  <td class="no">No — "NEVER writes back"; two-way explicitly rejected</td>
+                  <td>Nothing writes into Kith from Stalwart</td>
+                  <td>Not addressed for Google; clerks may read and log, not own</td>
+                </tr>
+                <tr>
+                  <td>Is the CRM the phone's address book?</td>
+                  <td class="yes">Yes — devices read the CRM's CardDAV mirror</td>
+                  <td class="yes">Yes — Stalwart mirrors contacts for phones</td>
+                  <td class="no">No — "a CRM that becomes the address book is a split brain with a network dependency"</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="issue issue-critical">
+            <span class="severity severity-critical">Blocking &middot; Doctrine</span>
+            <h3>The same 2026-10-19 owner decision is cited by both sides, for opposite conclusions</h3>
+            <div class="where">
+              ~/projects/crm/docs/planning/2026-10-19_04-09_data-mesh-carddav-pareto.md
+              (Appendix A) &middot; ~/projects/nix-email/ROADMAP.md:142-155 &middot;
+              ~/projects/pbx-artmann/docs/architecture/data-ownership.md:38,66-81
+            </div>
+            <p>
+              The CRM memo records a ratified decision ("Kith IS the contacts
+              source of truth; Stalwart mirrors"). nix-email's roadmap repeats
+              it. The pbx-artmann doctrine, written afterwards, asserts the
+              reverse (<em>Stalwart should own personal PII; the CRM is a
+              relations store that may resolve a name and log a call, never hold
+              the book</em>) — and cites the same constitution's clause 2
+              ("one owner per type") as its reason. Both cannot be built. Until
+              one is retired, any adapter we write encodes a guess.
+            </p>
+          </div>
+
+          <div class="issue issue-critical">
+            <span class="severity severity-critical">Blocking &middot; Order of operations</span>
+            <h3>Your ask is a constitution amendment, not a feature</h3>
+            <div class="where">~/projects/crm/docs/DATA-MESH.md:30 (Google row: "full read; NEVER writes back")</div>
+            <p>
+              Bidirectional means Google becomes an <em>editing surface</em>.
+              That is a change of trust posture (read → owning-write) and it
+              obliges field-level merge machinery, tombstone discipline and loop
+              suppression — the exact machinery the 2026-10-19 memo declined to
+              build when it rejected two-way sync for the device mirror. The
+              reasoning behind that rejection (two editing surfaces for one
+              entity type) applies here too, so the amendment must be explicit
+              and dated, not implied by a new adapter.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: decide before building</strong>
+              D1 (topology) and D2 (write authority) are answered in one
+              sitting. Every other section of this proposal is then mechanical.
+            </div>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">Important &middot; Ownership drift</span>
+            <h3>Calendar has an owner decision parking it — dated after the contacts one</h3>
+            <div class="where">~/projects/crm/ROADMAP.md:51-55 (parked 2026-10-20)</div>
+            <p>
+              The CRM's own roadmap says calendar events "own their truth in
+              whatever calendar system holds them — the CRM journal has no
+              event/calendaring facts and must at most MIRROR task due-dates
+              outward (never import)", parked until a consumer asks. Your
+              request <em>is</em> a consumer asking, so the parked row is now
+              live — and it points away from Kith owning calendar.
+            </p>
+          </div>
+        </section>
+
+        <!-- Two end-states -->
+        <section id="topology">
+          <h2><span class="num">04</span>Two coherent end-states</h2>
+          <p>
+            Both are constitution-legal (ownership is per <em>entity type</em>,
+            not per person). They differ in how much moves, and in whether a
+            phone can ever leave Google.
+          </p>
+
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Mesh A — journal hub</th>
+                  <th>Mesh B — PII hub (recommended)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Contacts owner</td>
+                  <td class="yes">Kith CRM journal (status quo ratified 2026-10-19)</td>
+                  <td>Stalwart addressbook (pbx doctrine)</td>
+                </tr>
+                <tr>
+                  <td>Calendar owner</td>
+                  <td>Stalwart (its CalDAV/JMAP surface)</td>
+                  <td class="yes">Stalwart — one store, one archive, one DAV endpoint</td>
+                </tr>
+                <tr>
+                  <td>Phone / device surface</td>
+                  <td>Google now; the CRM's CardDAV mirror for self-hosted devices</td>
+                  <td class="yes">Google now, and DAV (CardDAV + CalDAV) later — the only path off Google</td>
+                </tr>
+                <tr>
+                  <td>Existing code reused</td>
+                  <td class="yes">
+                    gcontacts inbound + carddav out-mirror stay as-is
+                  </td>
+                  <td>
+                    gcontacts' People client, OAuth loopback, multi-account
+                    registry, syncfile state, single-flight runner — re-pointed
+                  </td>
+                </tr>
+                <tr>
+                  <td>New code needed</td>
+                  <td>
+                    Google People write path (CRM → Google) + a Google Calendar
+                    adapter + a merge engine <em>per entity type</em>
+                  </td>
+                  <td>
+                    One Google↔Stalwart adapter covering cards and events + one
+                    merge engine; Kith's out-mirror retires
+                  </td>
+                </tr>
+                <tr>
+                  <td>Backup legs to keep honest</td>
+                  <td>Two (CRM dump + mail store archive)</td>
+                  <td class="yes">One (mail store archive) + the adapter's disposable state</td>
+                </tr>
+                <tr>
+                  <td>Migration risk</td>
+                  <td class="yes">Low — contact truth does not move</td>
+                  <td>Medium — contact truth moves out of the journal; Kith needs a link, not a copy</td>
+                </tr>
+                <tr>
+                  <td>Doctrine impact</td>
+                  <td>Keeps the ratified CRM decision; adds a calendar owner row</td>
+                  <td>
+                    Retires the CRM's "Kith is the contacts truth" claim and the
+                    pbx "unowned contacts" gap in one move
+                  </td>
+                </tr>
+                <tr>
+                  <td>Rough effort to first bidirectional byte</td>
+                  <td>Lower</td>
+                  <td>Higher</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>My pick: Mesh B — and here is the whole argument</strong>
+            (1) It is what the document you asked me to read argues, and that
+            document's own reasoning (one store, one auth directory, one backup
+            unit for personal PII) is the stronger engineering position.
+            (2) Events are the discriminator: recurrence, overrides, timezones
+            and attendees make a real calendar store the only sane owner of
+            events — a CRM journal modelling RRULE from scratch is a
+            multi-month detour into a solved problem.
+            (3) It is the only topology where the phone can eventually speak
+            DAV to a store you own, because the owner <em>is</em> the DAV server.
+            Choose Mesh A instead if you want the smallest step and are happy for
+            contacts and calendar to have different owners — it is not wrong,
+            just more surface for the same outcome.
+          </div>
+        </section>
+
+        <!-- Target architecture -->
+        <section id="architecture">
+          <h2><span class="num">05</span>Target architecture</h2>
+          <p>
+            The shape is "one owner, edges on both sides". Google is an edge,
+            not a hub: it stays the app surface your devices already use, while
+            the store you control holds the truth, the lineage and the restore
+            point.
+          </p>
+
+          <div class="dep-tree">
+            <span class="root">Stalwart (owner: contacts + calendar)</span><br />
+            ├── <span class="ok">sync adapter &middot; spoke A</span> ─── Google account A
+            <span class="unwanted">(bidirectional, field-scoped)</span><br />
+            ├── <span class="ok">sync adapter &middot; spoke B</span> ─── Google account B
+            <span class="unwanted">(bidirectional, field-scoped)</span><br />
+            ├── <span class="ok">DAV devices</span> ─── phones/tablets (CardDAV + CalDAV, phase P7)<br />
+            ├── <span class="ok">Kith CRM</span> ─── relations only; reads contact facts, never owns them<br />
+            └── <span class="ok">nightly archive</span> ─── whole-store backup + restore drill
+          </div>
+
+          <p>
+            The adapter is a <strong>cache, not an owner</strong>: its state is
+            the same disposable 0600 JSON the mesh already uses (delete it and
+            the next run is a harmless full resync). It owns no entity, holds no
+            truth, and can be redeployed from git — which is precisely the mesh
+            constitution's test for "not the owner".
+          </p>
+
+          <h3>The spoke contract (extends DATA-MESH §2)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Spoke</th>
+                  <th>Direction</th>
+                  <th>Join key</th>
+                  <th>Machine actor</th>
+                  <th>Trust posture</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Google Contacts (account A)</td>
+                  <td class="no"><strong>Bidirectional</strong> — changed from "IN, one-way"</td>
+                  <td><code>google:&lt;acct&gt;</code> (resourceName)</td>
+                  <td><code>bot:google-sync:&lt;acct&gt;</code></td>
+                  <td>Field-scoped owning-write + conflict queue (D2)</td>
+                </tr>
+                <tr>
+                  <td>Google Contacts (account B)</td>
+                  <td class="no"><strong>Bidirectional</strong></td>
+                  <td><code>google:&lt;acct&gt;</code></td>
+                  <td><code>bot:google-sync:&lt;acct&gt;</code></td>
+                  <td>Same as A — separate namespace, disjoint links</td>
+                </tr>
+                <tr>
+                  <td>Google Calendar (A and/or B)</td>
+                  <td class="no"><strong>Bidirectional, new spoke</strong></td>
+                  <td><code>googlecal:&lt;acct&gt;</code> (new namespace)</td>
+                  <td><code>bot:google-cal-sync:&lt;acct&gt;</code></td>
+                  <td>Whitelisted calendars only; attendee policy (D5)</td>
+                </tr>
+                <tr>
+                  <td>Kith CRM</td>
+                  <td>READ (relations; optional mirror of task due-dates OUT)</td>
+                  <td>email / stored external id</td>
+                  <td>none (a reader fabricates no actor)</td>
+                  <td>Read-only — the CRM stops being a contact owner in Mesh B</td>
+                </tr>
+                <tr>
+                  <td>Stalwart CardDAV (devices)</td>
+                  <td>READ/WRITE by the owner itself — the surface, not a spoke</td>
+                  <td>vCard UID</td>
+                  <td>n/a</td>
+                  <td>The owner's native protocol</td>
+                </tr>
+                <tr>
+                  <td>Webmail / webphone</td>
+                  <td>READ</td>
+                  <td>JMAP / <code>phoneMatches</code></td>
+                  <td>none</td>
+                  <td>Unchanged</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout callout-amber">
+            <strong>Transport, and the trust path that is still unchosen</strong>
+            The two hosts already sit on a mesh VPN, and the CRM lane's trust
+            question (private CA vs mesh-bound listener) is an open row in the
+            pbx repo. The adapter needs a decided path before it can talk to
+            Stalwart from evo-x2 — see §11 #6.
+          </div>
+        </section>
+
+        <!-- Semantics -->
+        <section id="semantics">
+          <h2><span class="num">06</span>Bidirectional sync semantics</h2>
+          <p>
+            This is the part that decides whether the mesh leaks. "Bidirectional"
+            is not a flag; it is five rules and a control surface.
+          </p>
+
+          <div class="grid-2">
+            <div class="card card-problem">
+              <h3>1. Merge against a base, not against each other</h3>
+              <p>
+                Keep the last-synced snapshot per item. A change is "theirs"
+                only if it differs from the base; that is what distinguishes a
+                remote edit from our own write. Two-way without a base is
+                last-write-wins, and last-write-wins silently eats edits made on
+                a phone.
+              </p>
+            </div>
+            <div class="card card-problem">
+              <h3>2. Field-level provenance, ambiguous → queue</h3>
+              <p>
+                When both sides changed the same field since the base, do
+                <em>not</em> pick a winner. Materialise a conflict item and show
+                it. The journal's own rule already points this way: machine
+                writes are low-trust, humans own overwrites.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <h3>3. Tombstones, never auto-delete</h3>
+              <p>
+                A remote deletion creates a review item, not a deletion. The
+                existing adapters already behave this way ("deleted in Google …"
+                as a note, exactly once; the CRM contact is never deleted). A
+                sync engine that deletes on a tombstone is how a bad API day
+                becomes data loss.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <h3>4. Loop suppression by recorded writes</h3>
+              <p>
+                Every write we make records its resulting version
+                (etag/hash/updated timestamp) in adapter state, so the next pull
+                recognises it as ours. The CardDAV mirror already proves the
+                pattern: <code>uid → etag+hash</code> state, and a rerun with no
+                changes performs zero writes.
+              </p>
+            </div>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">Important &middot; Silent-loss class</span>
+            <h3>5. Unknown fields must round-trip opaquely</h3>
+            <div class="where">Google <code>X-GOOGLE-*</code> / extended properties &middot; unknown vCard properties &middot; timezone objects</div>
+            <p>
+              A two-way sync that re-writes an object it did not fully
+              understand deletes the parts it did not model. Contacts and events
+              both carry vendor-specific and structural fields (Google extended
+              properties, contact groups, photos as separate resources, iCal
+              <code>X-</code> properties, attachments). Rule: store the
+              unmodelled remainder opaquely and put it back byte-for-byte, and
+              prove it with a fixture that round-trips a deliberately weird
+              object. This single rule is the difference between a sync and a
+              slow-motion data loss.
+            </p>
+          </div>
+
+          <h3>The control surface (all of it is required)</h3>
+          <div class="grid-3">
+            <div class="card">
+              <h3>Per-spoke pause</h3>
+              <p>One switch per account/collection, independent of the others.</p>
+            </div>
+            <div class="card">
+              <h3>Dry-run mode</h3>
+              <p>Report the would-write / would-delete set; touch nothing (already implemented downstream).</p>
+            </div>
+            <div class="card">
+              <h3>Canary subset</h3>
+              <p>Enable writes for N items first, and un-create them if the run goes wrong.</p>
+            </div>
+          </div>
+
+          <div class="callout callout-teal">
+            <strong>Idempotence is the safety net, not the feature</strong>
+            Rerun = zero writes. Delete state = safe full resync. Every rule on
+            this page exists so that a crashed or mis-deployed sync can never
+            corrupt truth — which is exactly what the constitution's principle 5
+            already demands of every spoke.
+          </div>
+        </section>
+
+        <!-- Calendar -->
+        <section id="calendar">
+          <h2><span class="num">07</span>Calendar specifics</h2>
+          <p>
+            Calendar is where naive syncs die. These are the hazards I know of
+            <em>before</em> touching the API; §11 lists what still needs
+            verification.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Hazard</th>
+                  <th>Why it bites</th>
+                  <th>Rule we adopt</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Recurrence + single-instance overrides</td>
+                  <td>
+                    A recurring event plus "this occurrence only" edits are
+                    modelled as a recurrence id / original-start relationship. A
+                    sync that flattens them duplicates or loses occurrences.
+                  </td>
+                  <td>Model recurrence explicitly; never expand-and-store; test an override fixture</td>
+                </tr>
+                <tr>
+                  <td>Attendees and invitations</td>
+                  <td>
+                    Writing an event with attendees can email real guests —
+                    a sync can spam a meeting. Invitation state is also shared:
+                    you are not the only writer.
+                  </td>
+                  <td>
+                    Suppress notifications on every sync-side write; treat
+                    attendee-bearing events as read-mostly and queue conflicts
+                  </td>
+                </tr>
+                <tr>
+                  <td>Read-only collections</td>
+                  <td>
+                    Birthdays, holidays and subscribed calendars exist inside
+                    the account and are not writable; they also duplicate
+                    contact facts.
+                  </td>
+                  <td>Explicit calendar-id whitelist; everything else is skipped and counted</td>
+                </tr>
+                <tr>
+                  <td>Timezones and DST</td>
+                  <td>
+                    Floating vs UTC vs TZID-anchored times change meaning across
+                    a sync boundary.
+                  </td>
+                  <td>Preserve the original representation; never normalise to UTC on write</td>
+                </tr>
+                <tr>
+                  <td>Reminders, sequence, etag</td>
+                  <td>
+                    Reminders are a child collection; <code>sequence</code> and
+                    etag drive optimistic concurrency.
+                  </td>
+                  <td>Conditional writes (If-Match-class); no blind overwrite</td>
+                </tr>
+                <tr>
+                  <td>Incremental sync tokens</td>
+                  <td>
+                    Token expiry forces a full resync; deletions only appear when
+                    asked for explicitly.
+                  </td>
+                  <td>
+                    Handle token-expiry as a first-class path (the contacts
+                    adapter already auto-resyncs on EXPIRED_SYNC_TOKEN)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Devices: DAV vs the Google app</td>
+                  <td>
+                    CalDAV from a phone writes straight into the owner; the Google
+                    app writes into Google.
+                  </td>
+                  <td>
+                    Phase 1 keeps devices on Google. DAV cutover is a separate,
+                    reversible phase (P7) after CalDAV is probe-verified
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="callout callout-amber">
+            <strong>The calendar owner has a verification debt</strong>
+            CardDAV's dialect in this fleet is probe-pinned and reproducible.
+            CalDAV's is not — nothing in nix-email's feature table claims it, and
+            no transcript exists. Verifying it is step one of §11, because the
+            whole calendar half of this proposal rests on that surface behaving.
+          </div>
+        </section>
+
+        <!-- Phases -->
+        <section id="phases">
+          <h2><span class="num">08</span>Phased execution</h2>
+          <p>
+            Same ladder that has worked for every other cutover in this fleet:
+            read-only first, canary second, wide third, and a kill switch at
+            every rung. Nothing in this plan writes to Google before P3.
+          </p>
+
+          <div class="migration-step">
+            <div class="migration-num">0</div>
+            <div class="migration-content">
+              <h4>P0 — Inventory and escape hatch (read-only)</h4>
+              <p>
+                Enumerate both accounts: collections, item counts, overlap,
+                duplicate clusters, group/label vocabulary. Produce full exports
+                (API dump + Takeout) <em>before</em> any write exists.
+                <strong>Gate:</strong> you have seen the numbers and the
+                duplicate list. <strong>Kill switch:</strong> none needed — nothing writes.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>P1 — Ratify D1/D2 and declare the owner's collections</h4>
+              <p>
+                Record the topology decision and the write-authority amendment
+                in the constitutions (this repo's ownership doc, the CRM mesh
+                doc, the pbx doctrine). Then declare the addressbook and calendar
+                objects in the mail plan instead of leaving them as runtime
+                state — after verifying the plan dialect accepts those types.
+                <strong>Gate:</strong> both documents say the same thing; the
+                collections are declarative and redeployable.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>P2 — Import Google → owner (dark, read-only outbound)</h4>
+              <p>
+                Both accounts' contacts and the whitelisted calendars land in the
+                owner. Dedup runs hub-side. Reruns must be no-ops.
+                <strong>Gate:</strong> counts reconcile per collection; a rerun
+                performs zero writes; you have reviewed the merge report.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>P3 — Owner → Google write path, ONE account, canary first</h4>
+              <p>
+                Dry-run, then 10 canary items, then a 7-day soak with the
+                conflict queue empty. Scopes must be widened (write scopes
+                replace today's read-only consent) and the GCP app must leave
+                testing mode for tokens that survive a week.
+                <strong>Gate:</strong> zero unexpected mutations over 7 days.
+                <strong>Kill switch:</strong> pause the spoke; un-create the
+                canary set.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>P4 — Account A goes fully bidirectional</h4>
+              <p>
+                Phone edits, web edits and owner edits now converge on the owner.
+                <strong>Gate:</strong> an edit made in Google appears in the
+                owner and in the other spoke's view within two cycles, with one
+                journal event and the right actor.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>P5 — Account B joins; the two accounts converge through the owner</h4>
+              <p>
+                This is the actual answer to "my contacts are in two Google
+                accounts": the hub is the only place both copies meet, so the
+                accounts stop needing to know about each other.
+                <strong>Gate:</strong> cross-account duplicates are gone by
+                policy, not by accident; per-account links never collide.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">6</div>
+            <div class="migration-content">
+              <h4>P6 — Calendar repeats the ladder</h4>
+              <p>
+                Same P2–P5 sequence for events, after the CalDAV surface is
+                verified and the calendar whitelist + attendee policy are
+                settled. <strong>Gate:</strong> a recurring event with one
+                overridden occurrence survives a full round trip untouched.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">7</div>
+            <div class="migration-content">
+              <h4>P7 — Optional: point devices at the owner (DAV)</h4>
+              <p>
+                Add the owner as a second account on one phone, read-only usage
+                first, then decide whether it becomes primary. Reversible by
+                removing the account.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">8</div>
+            <div class="migration-content">
+              <h4>P8 — Steady state and governance close-out</h4>
+              <p>
+                Decide Google's final posture: keep it bidirectional as a
+                convenience edge, or dial it to one-way out (owner → Google) once
+                the owner is the edit surface. Ship the four artifacts per spoke,
+                wire the metrics and alerts, and run the restore drill.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Risks -->
+        <section id="risks">
+          <h2><span class="num">09</span>Risks &amp; kill switches</h2>
+          <p>
+            Ordered by what it costs when it happens. Every row has a switch
+            that stops it without a rebuild.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Risk</th>
+                  <th>Severity</th>
+                  <th>Mitigation / kill switch</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Mass deletion propagates (a bad token resync or an API oddity reads as "everything deleted")</td>
+                  <td><span class="badge badge-critical">Critical</span></td>
+                  <td>Tombstones never auto-delete; delete ceiling per run (abort above N% deletions); pause spoke</td>
+                </tr>
+                <tr>
+                  <td>Duplicate explosion across the two accounts and the owner</td>
+                  <td><span class="badge badge-critical">Critical</span></td>
+                  <td>Per-account join namespaces (already built), hub-side find-or-create, idempotent reruns, dedup report at P2</td>
+                </tr>
+                <tr>
+                  <td>Write loop / ping-pong between the two accounts</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>Merge base + recorded writes (etag/hash) so our own writes are recognised; per-run write ceiling</td>
+                </tr>
+                <tr>
+                  <td>Silent field loss (unknown/structural fields stripped on rewrite)</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>Opaque round-trip of unmodelled data + a fixture that proves it (§06 rule 5)</td>
+                </tr>
+                <tr>
+                  <td>Invitation spam from attendee-bearing events</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>Notification suppression on every write; attendees read-mostly; queue rather than push</td>
+                </tr>
+                <tr>
+                  <td>Recurrence corruption (overrides flattened or duplicated)</td>
+                  <td><span class="badge badge-high">High</span></td>
+                  <td>Explicit recurrence model; override fixture as a gate; calendar stays in a later phase</td>
+                </tr>
+                <tr>
+                  <td>OAuth token death (testing-mode refresh tokens expire in 7 days — a known trap in this fleet)</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>Publish the GCP app out of testing mode; token-age metric + alert; re-consent runbook</td>
+                </tr>
+                <tr>
+                  <td>API quota / rate limits during a large first sync</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>Reuse the existing capped, jittered backoff; batch endpoints; patient first pass</td>
+                </tr>
+                <tr>
+                  <td>Owner store unreachable (host down, VPN down)</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>Degrade, don't die: devices keep working off Google; sync stalls and reports lag; no partial writes</td>
+                </tr>
+                <tr>
+                  <td>Restore asymmetry (Google export ≠ DAV restore)</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>Restore drill: restore the owner from its nightly archive, then prove both spokes re-converge without duplicates</td>
+                </tr>
+                <tr>
+                  <td>Doctrine re-flip after code exists (the collision in §03 returns)</td>
+                  <td><span class="badge badge-medium">Medium</span></td>
+                  <td>Write both constitutions in the same change as P1; the adapter's direction must be declared in config, not implied by code</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Governance -->
+        <section id="governance">
+          <h2><span class="num">10</span>Verification &amp; governance</h2>
+          <p>
+            The mesh's fourth principle (federated governance) is the part most
+            projects skip. In this fleet it means: metrics exist, alerts fire, the
+            restore drill runs, and every spoke ships its four artifacts.
+          </p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>Metrics to emit</h3>
+              <p>
+                Per spoke × collection: items, writes per direction, conflicts
+                pending, tombstones held, deletions refused, sync lag seconds,
+                last success timestamp. Promote the existing sharded sync
+                counters rather than inventing a parallel scheme.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Alerts and surfaces</h3>
+              <p>
+                A Gatus check per spoke; a SigNoz panel for lag/conflicts; the
+                conflict queue in the UI you actually open. Alert on: lag above
+                two intervals, any pending conflict older than a day, and any run
+                whose deletion count exceeds the ceiling.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Four artifacts per spoke</h3>
+              <p>
+                Contract doc, probe transcripts, ops runbook, decided boot
+                posture. This is the constitution's own rule, and it is how the
+                CardDAV mirror earned trust before it ever ran live.
+              </p>
+            </div>
+            <div class="card">
+              <h3>Restore drill</h3>
+              <p>
+                Restore the owner from its nightly archive into a scratch path,
+                verify counts and a sample of items, then prove the spokes
+                re-converge. An untested restore is not an owner's backup leg.
+              </p>
+            </div>
+          </div>
+
+          <h3>How we will know it worked</h3>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>One edit, three places, one event</strong>
+                <span>
+                  An edit in Google account A appears in the owner and in account
+                  B within two cycles, attributed to
+                  <code>bot:google-sync:a</code> — no phantom second write.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Deletes are reviewable, never silent</strong>
+                <span>
+                  A remote deletion produces a queue item and zero deletions on
+                  the first pass, always.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Reruns are free</strong>
+                <span>
+                  No-change rerun performs zero writes; deleting adapter state
+                  triggers a full resync that creates no duplicates.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Weird objects survive</strong>
+                <span>
+                  The opacity fixture (unknown properties, an override
+                  occurrence, a photo reference) round-trips byte-for-byte.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Unverified -->
+        <section id="unverified">
+          <h2><span class="num">11</span>Verify before code</h2>
+          <p>
+            Six things this proposal assumes but has not proven. Each is a
+            bounded probe, and each can invalidate part of the plan — so they run
+            first.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Claim I am relying on</th>
+                  <th>Status</th>
+                  <th>How to verify</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>Stalwart serves a usable CalDAV surface on our pin (0.16.26)</td>
+                  <td class="no">Unverified — no probe transcript exists</td>
+                  <td>
+                    Extend the existing demo-VM probe (the CardDAV one is 17/18
+                    PASS) to CalDAV: discovery, MKCOL, conditional PUT, sync-collection
+                  </td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>The mail plan dialect accepts addressbook + calendar objects at the pinned rev</td>
+                  <td class="no">Unverified — flagged as a gap in the pbx doctrine</td>
+                  <td>Read the pinned version's provision schema; if it refuses, record the refusal</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>Google People write semantics (update + etag/conflict behaviour, group handling, photo resources)</td>
+                  <td class="no">Unverified — today's code only reads</td>
+                  <td>Against a throwaway test account, with a written transcript per call</td>
+                </tr>
+                <tr>
+                  <td>4</td>
+                  <td>Google Calendar incremental sync + token expiry + notification suppression behave as assumed</td>
+                  <td class="no">Unverified</td>
+                  <td>Same throwaway account: force a token expiry, write with an attendee, observe the email</td>
+                </tr>
+                <tr>
+                  <td>5</td>
+                  <td>The real overlap/content of the two accounts (counts, duplicates, shared people)</td>
+                  <td class="no">Not measured</td>
+                  <td>P0 inventory, read-only</td>
+                </tr>
+                <tr>
+                  <td>6</td>
+                  <td>The adapter's network path and trust story (evo-x2 ↔ mail host over the mesh)</td>
+                  <td class="no">Undecided in the pbx repo</td>
+                  <td>Decide private CA vs mesh-bound listener; then a reachability probe, not a flag</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Decisions -->
+        <section id="decisions">
+          <h2><span class="num">12</span>Decisions needed</h2>
+          <p>
+            Six answers. D1 and D2 are commitments; the rest are scoping. Nothing
+            else in this document should be built before the first two land.
+          </p>
+
+          <div class="issue issue-critical">
+            <span class="severity severity-critical">D1 &middot; Blocks everything</span>
+            <h3>Which end-state: Mesh A (journal hub) or Mesh B (PII hub)?</h3>
+            <p>
+              <strong>A:</strong> Kith keeps contacts, Stalwart owns calendar.
+              <strong>B:</strong> Stalwart owns both, Kith becomes relations-only.
+              <br /><strong>My recommendation: B.</strong> It matches the
+              document you sent me, gives one store and one restore drill for
+              personal PII, and is the only topology that can eventually take a
+              phone off Google. Choose A if you want contact truth to stay where
+              it already is and accept two owners and two restore paths.
+            </p>
+          </div>
+
+          <div class="issue issue-critical">
+            <span class="severity severity-critical">D2 &middot; Constitutional</span>
+            <h3>Do we amend "no write-back" and how wide is the write authority?</h3>
+            <p>
+              (i) Amend to <strong>field-scoped low-trust writes</strong> with a
+              conflict queue — the sync may fill and add, never silently
+              overwrite a human edit <em>(recommended)</em>;
+              (ii) amend to full authority, sync wins;
+              (iii) do not amend — then bidirectional is off the table and the
+              ask in this session cannot be met.
+            </p>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">D3 &middot; Blast radius</span>
+            <h3>Which account is primary, and does the second stay symmetric?</h3>
+            <p>
+              Both bidirectional <em>(recommended — it is the point of the
+              request)</em>; personal bidirectional + work read-only (lower blast
+              radius, less consent surface); or one account only. Also: do
+              devices keep using Google in phase 1? Recommendation: yes, keep
+              them — device cutover is P7 and reversible.
+            </p>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">D4 &middot; Scope</span>
+            <h3>Contacts only, or calendar in the same project?</h3>
+            <p>
+              Calendar roughly doubles the surface (recurrence, attendees,
+              timezones) and depends on verification #1. Options: contacts first
+              and calendar as a second project <em>(recommended)</em>; or both
+              together if you want a single doctrine change and a single soak.
+            </p>
+          </div>
+
+          <div class="issue issue-important">
+            <span class="severity severity-important">D5 &middot; Data policy</span>
+            <h3>Duplicate policy for the overlap, and what counts as "the" calendar set?</h3>
+            <p>
+              The two accounts almost certainly share people. Options: merge on
+              email + name with a review list you approve <em>(recommended)</em>;
+              or keep per-account copies separate on purpose. Separately: name
+              the calendar whitelist and the attendee-bearing-event policy
+              (queue vs push). And note the 139 staged Twenty contacts — import
+              them into the owner once, at P2, so they arrive through the same
+              door as everything else.
+            </p>
+          </div>
+
+          <div class="issue issue-nice">
+            <span class="severity severity-nice">D6 &middot; Plumbing</span>
+            <h3>Where does the adapter live, and how often does it run?</h3>
+            <p>
+              Recommendation: a timer on the fleet host beside the CRM (sops,
+              deployment, monitoring and backups already exist there), polling on
+              the order of minutes; push/webhook channels only if you want
+              near-real-time and accept a public endpoint plus channel renewal.
+            </p>
+          </div>
+        </section>
+
+        <!-- Alternatives -->
+        <section id="alternatives">
+          <h2><span class="num">13</span>Alternatives dismissed</h2>
+
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Alternative</th>
+                  <th>Why not</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Bridge the two Google accounts to each other (no owner)</td>
+                  <td class="no">
+                    Fails your requirement outright: no owner, nowhere to keep
+                    lineage, conflicts and tombstones, and a third-party-shaped
+                    dependency between two accounts that are supposed to stop
+                    needing each other.
+                  </td>
+                </tr>
+                <tr>
+                  <td>A file-level DAV syncer between Google and a DAV store</td>
+                  <td class="no">
+                    A second state store outside the journal, no lineage, and
+                    conflict handling limited to "keep both" — plus its Google
+                    backends are historically the weak spot. Verify before
+                    trusting; the mesh wants journal-attributed writes.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Stand up a fresh DAV server (Radicale/Baikal-class) as the owner</td>
+                  <td class="no">
+                    A third store is a new backup leg, a new auth path and a new
+                    migration — exactly what the pbx doctrine argues against when
+                    an existing store already speaks the protocol.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Keep Google as the de-facto owner and mirror it locally</td>
+                  <td class="no">
+                    That is today's state, and it fails the requirement: the
+                    bytes live on someone else's disks with no restore path you
+                    have run.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Periodic manual export/import (Takeout + CSV)</td>
+                  <td class="no">
+                    Not bidirectional, no tombstones, no provenance, and it turns
+                    every merge into an afternoon of manual diffing.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">&#9670;</span>Appendix</h2>
+
+          <h3>Rough effort shape (no estimates you should hold me to)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Phase</th>
+                  <th>Work</th>
+                  <th>Size</th>
+                  <th>Depends on</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>P0</td>
+                  <td>Read-only inventory + exports of both accounts</td>
+                  <td>Small</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>P1</td>
+                  <td>Ratify D1/D2, sync the three doctrines, declare collections</td>
+                  <td>Small, mostly writing</td>
+                  <td>D1, D2, verification #2</td>
+                </tr>
+                <tr>
+                  <td>P2</td>
+                  <td>Import into the owner + dedup report</td>
+                  <td>Medium</td>
+                  <td>Verification #2, #5</td>
+                </tr>
+                <tr>
+                  <td>P3</td>
+                  <td>Write path + conflict machinery, canary + soak</td>
+                  <td>Large — the real project</td>
+                  <td>Verification #3, D3, D5</td>
+                </tr>
+                <tr>
+                  <td>P4–P5</td>
+                  <td>Both accounts wide</td>
+                  <td>Medium</td>
+                  <td>P3 clean soak</td>
+                </tr>
+                <tr>
+                  <td>P6</td>
+                  <td>Calendar ladder</td>
+                  <td>Large</td>
+                  <td>Verification #1, #4, D4</td>
+                </tr>
+                <tr>
+                  <td>P7–P8</td>
+                  <td>Optional device cutover, governance close-out</td>
+                  <td>Medium</td>
+                  <td>P5/P6 stable</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>Pins and versions this rests on</h3>
+          <ul>
+            <li>
+              Stalwart <strong>0.16.26</strong> (mail stack pin; the CardDAV
+              probe was re-baselined on it 2026-10-28).
+            </li>
+            <li>
+              Contact sync + mirror code lives in <code>~/projects/crm</code>
+              (<code>internal/gcontacts</code>, <code>internal/carddav</code>,
+              <code>internal/syncfile</code>) and is <em>not</em> deployed with
+              either flag on the fleet host today.
+            </li>
+            <li>
+              The fleet host's CRM runs behind OIDC with an api-token; any new
+              adapter credential belongs in sops, never on a command line.
+            </li>
+          </ul>
+
+          <h3>Documents this proposal touches</h3>
+          <ul>
+            <li><code>SystemNix/docs/agents/data-ownership.md</code> — fleet doctrine (calendar currently unowned)</li>
+            <li><code>crm/docs/DATA-MESH.md</code> — ratified mesh constitution + flow table</li>
+            <li><code>pbx-artmann/docs/architecture/data-ownership.md</code> — the doctrine you sent me</li>
+            <li><code>nix-email/ROADMAP.md</code> §5 — the contacts-mirror row</li>
+          </ul>
+
+          <div class="callout callout-amber">
+            <strong>What I did not do</strong>
+            I wrote no code, created no credentials, and touched no Google
+            account. The only side effects of this session are three documents —
+            the fleet ownership page, this proposal, and the queued follow-ups.
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-10-29 &middot; Reviewed against the CRM mesh
+            constitution (ratified 2026-10-19), the pbx-artmann ownership
+            doctrine (2026-10-29), the fleet ownership page (2026-10-29) and the
+            mail stack's 0.16.26 feature/probe baseline &middot; Unverified
+            claims are labelled, not implied
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
