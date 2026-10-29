@@ -782,6 +782,22 @@ in
       interval = "5m";
       severity = "critical";
     };
+    # NetBird mesh health (2026-10-29 leverage pass): the client's local
+    # metrics endpoint (scrape job "netbird", loopback 9465) exposes
+    # netbird_management_connected — the ONLY signal that distinguishes
+    # daemon-alive from control-plane-connected. The 2026-10-17 pbx outage
+    # left the mesh control plane dead for 8h behind a green unit-state.
+    # `or vector(0)` fires on scrape absence too (the count()+vector(0)
+    # doctrine from monitoring.md — absence must never read as healthy).
+    "signoz/rules/netbird-management-disconnected.json".source = mkRule {
+      name = "NetBird Management Stream Down";
+      description = "NetBird client lost its control-plane connection (netbird_management_connected < 1, or the local metrics endpoint stopped answering) — tunnels persist but no re-routes/enrollments/DNS updates flow. This state sat invisible for 8h on 2026-10-17. Check: journalctl -u netbird-evox2, netbird status, and the pbx-side netbird-management unit (pbx.artmann.tech)";
+      query = "min(netbird_management_connected) or vector(0)";
+      target = 1;
+      op = "below";
+      interval = "5m";
+      severity = "critical";
+    };
   };
 
   dashboards = {

@@ -179,6 +179,55 @@ let
       msg = "netbird client module surface mismatch (services.netbird.clients)";
     }
     {
+      # 2026-10-29 leverage pass pins: the local metrics endpoint (netbird
+      # >=0.67 fragment keys, PascalCase Go field names — source-verified
+      # v0.81.0) + the parameterized instance name (evox2 default; the
+      # hostName-derived default was REJECTED — renaming moves
+      # /var/lib/netbird-<name> and orphans the enrolled dashboard peer).
+      # The metrics endpoint is the 2026-10-17 8h-outage blind-spot signal:
+      # regression here goes back to daemon-alive-but-invisible.
+      ok =
+        let
+          enabled =
+            (inputs.self.nixosConfigurations.evo-x2.extendModules {
+              modules = [ { services.netbird-client.enable = true; } ];
+            }).config;
+          renamed =
+            (inputs.self.nixosConfigurations.evo-x2.extendModules {
+              modules = [
+                {
+                  services.netbird-client.enable = true;
+                  services.netbird-client.name = "rpi3";
+                }
+              ];
+            }).config;
+          netbirdPorts = import ../lib/ports.nix;
+        in
+        # fragment keys present + registered non-ocis-band port
+        enabled.services.netbird.clients.evox2.config ? "LocalMetricsEnabled"
+        && enabled.services.netbird.clients.evox2.config.LocalMetricsEnabled == true
+        && enabled.services.netbird.clients.evox2.config ? "LocalMetricsAddress"
+        &&
+          builtins.match "127.0.0.1:9465" enabled.services.netbird.clients.evox2.config.LocalMetricsAddress
+          != null
+        && netbirdPorts ? netbird-metrics
+        && netbirdPorts.netbird-metrics == 9465
+        # gatus mesh-connection check rides the registry entry (anchored
+        # pair: presence-with-1 + explicit-0 negative leg)
+        && enabled.services.integration.netbird.checks != [ ]
+        && builtins.any (
+          c: c.url or null == "http://127.0.0.1:9465/metrics"
+        ) enabled.services.integration.netbird.checks
+        # daemon restarts on fragment-only changes (nixpkgs wires no
+        # restartTriggers — source-verified pinned rev)
+        && enabled.systemd.services."netbird-evox2".restartTriggers != [ ]
+        # name parameterization: the suffix flows into unit + fragment paths
+        && (renamed.services.netbird.clients ? rpi3)
+        && (renamed.systemd.services ? "netbird-rpi3-login")
+        && renamed.services.netbird.clients.rpi3.config.LocalMetricsEnabled == true;
+      msg = "netbird local-metrics/name-parameterization surface mismatch (2026-10-29 leverage pass)";
+    }
+    {
       ok = ports.netbird == 51820;
       msg = "netbird port not registered in lib/ports.nix";
     }

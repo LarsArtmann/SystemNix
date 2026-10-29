@@ -207,17 +207,17 @@ _: {
           ];
 
           preStart = lib.mkAfter ''
-          if [ -f "$NB_CONFIG" ] && jq -e '
-              (.ManagementUrl | type) == "string" or (.ManagementURL | type) == "string"
-            ' "$NB_CONFIG" >/dev/null 2>&1; then
-            jq '
-                if (.ManagementUrl | type) == "string" then del(.ManagementUrl) else . end
-                | if (.ManagementURL | type) == "string" then del(.ManagementURL) else . end
-              ' "$NB_CONFIG" > "$NB_CONFIG.purged"
-            mv "$NB_CONFIG.purged" "$NB_CONFIG"
-            echo "netbird: purged string-form management URL from $NB_CONFIG (netbird >=0.80 requires url.URL object form)"
-          fi
-        '';
+            if [ -f "$NB_CONFIG" ] && jq -e '
+                (.ManagementUrl | type) == "string" or (.ManagementURL | type) == "string"
+              ' "$NB_CONFIG" >/dev/null 2>&1; then
+              jq '
+                  if (.ManagementUrl | type) == "string" then del(.ManagementUrl) else . end
+                  | if (.ManagementURL | type) == "string" then del(.ManagementURL) else . end
+                ' "$NB_CONFIG" > "$NB_CONFIG.purged"
+              mv "$NB_CONFIG.purged" "$NB_CONFIG"
+              echo "netbird: purged string-form management URL from $NB_CONFIG (netbird >=0.80 requires url.URL object form)"
+            fi
+          '';
         };
 
         # Service-integration registry entry: unit-state monitoring + the
