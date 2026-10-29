@@ -45,7 +45,16 @@ _: {
       inherit (cfg) dataDir;
       pgBackupDir = "/mnt/pool/backups/paperless";
       llmEndpoint = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
-      embeddingEndpoint = "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
+      aiMeterEnabled = config.services.ai-meter.enable or false;
+      # Embeddings route through ai-meter when the metering proxy is on
+      # (owner single-endpoint direction, 2026-10-27): the `llama-embeddings`
+      # upstream fans out to the same bge-m3 instance, and the proxy key
+      # arrives via the runtime-minted env file below. Direct :8848
+      # otherwise (llama-server ignores Authorization).
+      embeddingEndpoint =
+        if aiMeterEnabled
+        then "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-embeddings"
+        else "http://127.0.0.1:${toString ports.llama-embeddings}/v1";
 
       # ── Layer 1 native OIDC via Pocket ID ────────────────────────────────────
       # Optional-dependency refs (dns-blocker `or false` idiom): hosts
@@ -131,6 +140,19 @@ _: {
       # degrades to no-SSO instead of failing the unit.
       oidcEnvFragment = lib.optionalAttrs oidcEnabled {
         EnvironmentFile = [ "-${oidcEnvFile}" ];
+      };
+
+      # ai-meter proxy key for embeddings: attached like the OIDC env —
+      # EnvironmentFile beats the dummy PAPERLESS_AI_LLM_EMBEDDING_API_KEY
+      # in `environment`. Bare path (no `-`): a missing mint fails loud
+      # instead of silently 401-ing every embedding call.
+      aiMeterEnvFragment = lib.optionalAttrs aiMeterEnabled {
+        EnvironmentFile = [ "/run/ai-meter-keys/paperless.env" ];
+      };
+      # The mint must have run before any paperless unit reads its env.
+      aiMeterUnitFragment = lib.optionalAttrs aiMeterEnabled {
+        after = [ "ai-meter-keys.service" ];
+        wants = [ "ai-meter-keys.service" ];
       };
 
       # ── Declarative dashboards (saved views) ────────────────────────────────
@@ -671,7 +693,7 @@ _: {
 
           systemd.services =
             let
-              mountGate = {
+              mountGate = aiMeterUnitFragment // {
                 unitConfig.RequiresMountsFor = [ dataDir ];
                 inherit onFailure;
                 startLimitBurst = 5;
@@ -690,6 +712,7 @@ _: {
                     CPUQuota = "200%";
                   }
                   oidcEnvFragment
+                  aiMeterEnvFragment
                 ];
               };
               # Scheduler runs DB migrations + superuser bootstrap in preStart;
@@ -704,6 +727,7 @@ _: {
                     TimeoutStartSec = "5min";
                   }
                   oidcEnvFragment
+                  aiMeterEnvFragment
                 ];
               };
               # Task queue does OCR + classification + AI indexing — the heavyweight.
@@ -715,6 +739,7 @@ _: {
                     CPUQuota = "200%";
                   }
                   oidcEnvFragment
+                  aiMeterEnvFragment
                 ];
               };
               paperless-consumer = mountGate // {
@@ -725,6 +750,7 @@ _: {
                     CPUQuota = "200%";
                   }
                   oidcEnvFragment
+                  aiMeterEnvFragment
                   {
                     # Group-writable consume dir: interactive scan drops (lars
                     # is in the paperless group) land as lars-owned files the

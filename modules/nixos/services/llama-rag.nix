@@ -146,13 +146,20 @@ _: {
           echo "llama-rag: all models ready"
       '';
 
+      # --ubatch-size 2048: llama.cpp's default PHYSICAL batch (512) caps a
+      # single embedding input at 512 tokens — anything larger gets HTTP 500
+      # "input (N tokens) is too large to process" (paperless llm_index
+      # chunks reach ~800; RAG sat dark ~30d on this, 2026-10-29). 2048
+      # covers llama-index's 1024-token chunks with headroom; bge-m3 is
+      # small enough that the larger compute buffer is negligible.
       embeddingsExecStart =
         "${llamaServer} --embedding"
         + " -m ${cfg.modelDir}/${cfg.embeddingsModel}"
         + " --alias ${cfg.embeddingsAlias}"
         + " --host ${cfg.host}"
         + " --port ${toString cfg.embeddingsPort}"
-        + " --ctx-size ${toString cfg.ctxSize}";
+        + " --ctx-size ${toString cfg.ctxSize}"
+        + " --ubatch-size 2048";
 
       rerankerExecStart =
         "${llamaServer} --reranking --pooling rank"

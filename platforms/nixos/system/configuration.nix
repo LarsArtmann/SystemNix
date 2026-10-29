@@ -627,6 +627,15 @@ in
           envKey = "OPENAI_API_KEY";
         };
       }
+      // lib.optionalAttrs config.services.paperless.enable {
+        # LLM-index embedding calls ride the llama-embeddings upstream
+        # through the proxy (same single-endpoint direction; envKey is the
+        # paperless env var the runtime mint must override).
+        paperless = {
+          user = "paperless";
+          envKey = "PAPERLESS_AI_LLM_EMBEDDING_API_KEY";
+        };
+      }
       // lib.optionalAttrs (config.services.inboxclean.enable or false) {
         inboxclean = {
           user = "inboxclean";

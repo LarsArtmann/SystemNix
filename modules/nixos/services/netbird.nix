@@ -8,6 +8,14 @@
 # without that file fails activation by design — fail-closed, no placeholder
 # secrets. The login oneshot handles enrollment automatically; no inbound
 # ports are opened beyond the P2P WireGuard port (51820/udp).
+#
+# Multi-host ready (2026-10-29): every instance-suffix flows through
+# services.netbird-client.name (unit names, state dir, config.d fragment
+# path) so the next client (rpi3) enrolls by setting name + its own sops
+# key — no module fork. The local Prometheus metrics endpoint
+# (netbird >=0.67, loopback) + the NetBird Mesh Connection Gatus check close
+# the 2026-10-17 blind spot: the daemon sat "running" for 8h while its
+# management stream was dead and nothing could see it.
 _: {
   flake.nixosModules.netbird =
     {
@@ -49,6 +57,23 @@ _: {
           default = "https://netbird.larsartmann.cloud";
           description = "NetBird management URL (self-hosted control plane)";
         };
+        name = lib.mkOption {
+          type = lib.types.str;
+          default = "evox2";
+          description = "Client instance name — suffixed into unit names (netbird-<name>), the state dir (/var/lib/netbird-<name>) and the config.d fragment path. A per-host declaration, NOT derived from networking.hostName: renaming an enrolled host would move its state dir and orphan the dashboard peer (fresh WireGuard identity, silent re-enrollment).";
+        };
+        metrics = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Expose the netbird client's local Prometheus /metrics endpoint (netbird >=0.67; off upstream by default, loopback-only). Scraped by SigNoz and asserted by the NetBird Mesh Connection Gatus check — the only visibility into daemon-alive-but-disconnected, the 2026-10-17 8h-outage blind spot.";
+          };
+          address = lib.mkOption {
+            type = lib.types.str;
+            default = "127.0.0.1:${toString ports.netbird-metrics}";
+            description = "Loopback listen address for the local metrics endpoint. Never the netbird default 9191 — ocis binds the whole 9100-9304 loopback band at startup.";
+          };
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -57,7 +82,7 @@ _: {
         # headless server, ever. The login oneshot picks the key up from the
         # sops-rendered file via LoadCredential.
         services.netbird = {
-          clients.evox2 = {
+          clients.${cfg.name} = {
             port = ports.netbird;
             # Management URL goes via ENV, never the `config` JSON fragment:
             # netbird >=0.80 serializes ManagementURL as a nested url.URL
@@ -69,6 +94,21 @@ _: {
             # `netbird up` forwards it in the LoginRequest — the daemon then
             # persists the correctly-shaped object itself.
             environment.NB_MANAGEMENT_URL = cfg.managementURL;
+
+            # Local Prometheus endpoint (netbird >=0.67): config.d fragment
+            # keys are the PascalCase Go field names of
+            # profilemanager.Config — source-verified against v0.81.0
+            # (json.MarshalIndent with no json tags on these fields). Plain
+            # bool/string values only, so the url.URL ManagementUrl
+            # string-fragment crash class cannot apply. The nixpkgs preStart
+            # shallow-merges config.d/*.json into config.json on every
+            # start, so the keys converge even after netbird rewrites the
+            # file (they round-trip: the daemon serializes the whole
+            # struct).
+            config = {
+              LocalMetricsEnabled = cfg.metrics.enable;
+              LocalMetricsAddress = cfg.metrics.address;
+            };
             login = {
               enable = true;
               setupKeyFile = config.sops.secrets.netbird_setup_key.path;
@@ -136,7 +176,7 @@ _: {
         # target's job-completion set (canonical post-boot start), and a 2min
         # TimeoutStartSec turns a wedged login into a loud notify-failure +
         # converger retry instead of an immortal loop.
-        systemd.services."netbird-evox2-login" = {
+        systemd.services."netbird-${cfg.name}-login" = {
           # late-applications (2026-10-26 ordering-cycle class fix):
           # membership replaces after=multi-user.target — same canonical
           # post-boot start WITHOUT the backward edge that armed the
@@ -156,7 +196,17 @@ _: {
         # string-typed management-URL keys ourselves. Object-typed values were
         # written by netbird itself and must survive. mkAfter because the
         # nixpkgs preStart is what exports $NB_CONFIG and the jq PATH.
-        systemd.services.netbird-evox2.preStart = lib.mkAfter ''
+        systemd.services."netbird-${cfg.name}" = {
+          # A fragment-only change (metrics settings) never restarts the
+          # daemon otherwise — nixpkgs wires NO restartTriggers for the
+          # config.d file (source-verified, pinned rev) — so the daemon
+          # would keep running on the OLD merged config until the next
+          # manual restart.
+          restartTriggers = [
+            config.environment.etc."netbird-${cfg.name}/config.d/50-nixos.json".source
+          ];
+
+          preStart = lib.mkAfter ''
           if [ -f "$NB_CONFIG" ] && jq -e '
               (.ManagementUrl | type) == "string" or (.ManagementURL | type) == "string"
             ' "$NB_CONFIG" >/dev/null 2>&1; then
@@ -168,15 +218,37 @@ _: {
             echo "netbird: purged string-form management URL from $NB_CONFIG (netbird >=0.80 requires url.URL object form)"
           fi
         '';
+        };
 
-        # Service-integration registry entry: unit-state monitoring only
-        # (no vHost — the client is not a web service; no port checks —
-        # health = unit liveness).
+        # Service-integration registry entry: unit-state monitoring + the
+        # mesh-connection check (no vHost — the client is not a web service).
         services.integration = lib.optionalAttrs (options ? services.integration) {
           netbird = {
             enable = true;
             vHost.layer = "none";
             monitored = true;
+            checks = [
+              {
+                # Anchored pair per monitoring.md (2026-10-17 PapDashboard
+                # worked example): the negative leg catches an explicit 0 at
+                # a LINE START (\n before the name — no lookalike substring
+                # can satisfy it), the positive leg demands presence with
+                # value 1 — so BOTH absence (endpoint down / collector
+                # stale) and value-0 (management stream lost) fail the
+                # check. This is the 2026-10-17 8h-outage signal: the unit
+                # stayed active/running the whole time.
+                name = "NetBird Mesh Connection";
+                group = "NetBird Control Plane";
+                url = "http://127.0.0.1:${toString ports.netbird-metrics}/metrics";
+                interval = "1m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\nnetbird_management_connected 1*)"
+                  "[BODY] != pat(*\nnetbird_management_connected 0\n*)"
+                ];
+                alert = "NetBird client lost its management-plane connection (local metrics: netbird_management_connected != 1) — tunnels persist but no re-routes/enrollments/DNS updates; this stayed invisible for 8h on 2026-10-17. Check: journalctl -u netbird-${cfg.name}, netbird status";
+              }
+            ];
           };
         };
       };

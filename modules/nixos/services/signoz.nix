@@ -1331,6 +1331,19 @@ in
                           static_configs = [ { targets = [ "127.0.0.1:${toString ports.ai-meter-metrics}" ]; } ];
                           metrics_path = "/metrics";
                         }
+                        {
+                          # NetBird client local Prometheus endpoint (netbird
+                          # >=0.67, enabled by modules/nixos/services/
+                          # netbird.nix): netbird_management_connected /
+                          # netbird_signal_connected / netbird_peers_connected
+                          # {connection_type} — the daemon-alive-but-disconnected
+                          # blind-spot signal (2026-10-17 8h outage class).
+                          # Loopback 9465 (NOT the netbird default 9191 — ocis
+                          # binds the whole 9100-9304 loopback band).
+                          job_name = "netbird";
+                          static_configs = [ { targets = [ "127.0.0.1:${toString ports.netbird-metrics}" ]; } ];
+                          metrics_path = "/metrics";
+                        }
                       ];
                     };
                   };
