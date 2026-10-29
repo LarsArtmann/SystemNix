@@ -53,20 +53,38 @@ jobs:
       - name: Configure private flake-input auth
         env:
           # One bundle secret serves EVERY private git+ssh flake input (46
-          # LarsArtmann repos as of 2026-10-29): each repo has a read-only
-          # deploy key, all keys concatenated in the secret. csplit splits
-          # on the OPENSSH BEGIN lines, so a newly added private input
-          # needs its key appended to the secret and zero workflow edits.
+          # LarsArtmann repos as of 2026-10-29): `@REPO <name>` headers, each
+          # followed by that repo's read-only deploy key. A plain ssh-agent
+          # CANNOT serve multiple deploy keys - GitHub accepts the FIRST key
+          # offered and returns "Repository not found" for every other repo.
+          # So each key gets its own Host alias (IdentitiesOnly) plus a
+          # insteadOf rewrite per repo URL. New private input = append
+          # `@REPO <name>` + key to the secret, zero workflow edits.
           NIX_DEPLOY_KEYS_BUNDLE: ${{ secrets.NIX_DEPLOY_KEYS_BUNDLE }}
         run: |
-          eval "$(ssh-agent -s)" >/dev/null
-          printf '%s\n' "$NIX_DEPLOY_KEYS_BUNDLE" | csplit -z -s -f /tmp/nix-dk- - '/BEGIN OPENSSH PRIVATE KEY/' '{*}'
+          while IFS= read -r line; do
+            case "$line" in
+              "@REPO "*) repo="${line#@REPO }"; kf="/tmp/nix-dk-$repo"; : > "$kf";;
+              *) [ -n "${kf:-}" ] && printf '%s\n' "$line" >> "$kf";;
+            esac
+          done < <(printf '%s\n' "$NIX_DEPLOY_KEYS_BUNDLE")
           chmod 600 /tmp/nix-dk-*
-          for f in /tmp/nix-dk-*; do ssh-add "$f"; done
-          rm -f /tmp/nix-dk-*
+          mkdir -p ~/.ssh
+          : > ~/.ssh/nixci-config
+          for kf in /tmp/nix-dk-*; do
+            repo="${kf#/tmp/nix-dk-}"
+            {
+              echo "Host nixci-$repo"
+              echo "  HostName github.com"
+              echo "  User git"
+              echo "  IdentityFile $kf"
+              echo "  IdentitiesOnly yes"
+              echo "  StrictHostKeyChecking accept-new"
+            } >> ~/.ssh/nixci-config
+            git config --global url."ssh://git@nixci-$repo/LarsArtmann/$repo".insteadOf "ssh://git@github.com/LarsArtmann/$repo"
+          done
           git config --global url."https://github.com/LarsArtmann/go-nix-helpers".insteadOf "git@github.com:LarsArtmann/go-nix-helpers"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
-          echo "GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=accept-new" >> "$GITHUB_ENV"
+          echo "GIT_SSH_COMMAND=ssh -F $HOME/.ssh/nixci-config" >> "$GITHUB_ENV"
 
       # Exit 1 only on ERROR-MISSING (tag genuinely absent upstream) or FATAL
       # (lock parse broken). WARN-DIVERGED / WARN-UNKNOWN are advisory.
