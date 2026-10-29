@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# audit-serviceconfig-merge.sh — reject `serviceConfig = <expr> // <expr>`
-# shallow merges in module source.
+# audit-serviceconfig-merge.sh — reject shallow `//` merges in module source.
 #
-# `//` on serviceConfig DISCARDS priority: mkDefault/mkForce inside either
-# operand is silently clobbered by the plain values of the other. The
-# documented rule (docs/agents/systemd.md): ALWAYS merge fragments via
-# lib.mkMerge [...] so per-key priorities survive:
+# Rule 1 (serviceConfig): `//` on serviceConfig DISCARDS priority:
+# mkDefault/mkForce inside either operand is silently clobbered by the plain
+# values of the other. The documented rule (docs/agents/systemd.md): ALWAYS
+# merge fragments via lib.mkMerge [...] so per-key priorities survive:
 #
 #   BAD:  serviceConfig = harden { MemoryMax = "2G"; } // serviceDefaults {};
 #         (a later plain key, or a mkForce inside harden, is silently lost)
@@ -20,6 +19,19 @@
 # statement buffer: any `//` in the buffer (URLs `://` stripped) without a
 # `mkMerge` anywhere in it fails. Multi-line `//` between two fragments
 # INSIDE a mkMerge list is a different judgment call and stays out of scope.
+#
+# Scope v3 adds rule 2 — mkIf inside a shallow `//` on ANY attribute, not just
+# serviceConfig. `lib.mkIf` returns a CONDITIONAL attrset; composing it with
+# `//` makes the module system treat the whole attribute value as conditional,
+# so the unconditional operand silently vanishes when the condition is false.
+# Eval stays green and the rendered unit loses its ExecStart: the 2026-10-28
+# dns-blocker.nix `systemd = { … } // (lib.mkIf cfg.allowlistBackup.enable
+# { … })` wiped EVERY dnsblockd unit on evo-x2 (no ExecStart) and the unit
+# entirely on rpi3-dns — found only when a parallel session's readiness gate
+# went red, never by an eval error.
+#
+#   BAD:  systemd = { after = [ "a" ]; } // (lib.mkIf cfg.on { … });
+#   GOOD: systemd = lib.mkMerge [ { after = [ "a" ]; } (lib.mkIf cfg.on { … }) ];
 #
 # Usage:
 #   bash scripts/audit-serviceconfig-merge.sh            # scan the tree

@@ -817,6 +817,54 @@ if [[ ",${CASES:-}," == *,metricnames,* ]]; then
   unset status
 fi
 
+# ── shallowmerge: the `//`+mkIf source audit (pre-commit + CI leg) ──
+# Not a flake check, so it runs directly against a disposable tree: the
+# scanner derives REPO_ROOT from its own path, which lets a scratch tree
+# hold exactly the one file under judgment. Positive case = the 2026-10-28
+# dns-blocker.nix shape that removed EVERY dnsblockd unit while eval and
+# every build stayed green.
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *",shallowmerge,"* ]]; then
+  smdir="$WORK/shallowmerge-tree"
+  mkdir -p "$smdir/scripts" "$smdir/modules"
+  cp "$REPO_ROOT/scripts/audit-serviceconfig-merge.sh" "$smdir/scripts/"
+  printf '%s\n' \
+    '{ config, lib, ... }:' \
+    '{' \
+    '  systemd = { after = [ "a.service" ]; } // (lib.mkIf cfg.on { requires = [ "b" ]; });' \
+    '  serviceConfig = harden { } // serviceDefaults { };' \
+    '}' >"$smdir/modules/evil.nix"
+  out=$(bash "$smdir/scripts/audit-serviceconfig-merge.sh" 2>&1) && status=0 || status=$?
+  if [ "$status" -ne 0 ] &&
+    grep -q 'mkIf inside a shallow // merge' <<<"$out" &&
+    grep -q 'serviceConfig assigned with a shallow // merge' <<<"$out"; then
+    say "PASS [shallowmerge]: both banned shapes fail the audit"
+    passed=$((passed + 1))
+  else
+    say "FAIL [shallowmerge]: audit missed a banned shape (exit=$status):"
+    printf '%s\n' "$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  fi
+  # Comment-immunity control: prose naming the shape, plus the sanctioned
+  # mkMerge form, must both stay green.
+  rm -f "$smdir/modules/evil.nix"
+  printf '%s\n' \
+    '{ lib, ... }:' \
+    '{' \
+    '  # never write systemd = { x = 1; } // (lib.mkIf cond { }); — use mkMerge' \
+    '  systemd = lib.mkMerge [ { after = [ "a.service" ]; } (lib.mkIf true { requires = [ "b" ]; }) ];' \
+    '}' >"$smdir/modules/good.nix"
+  out=$(bash "$smdir/scripts/audit-serviceconfig-merge.sh" 2>&1) && status=0 || status=$?
+  if [ "$status" -eq 0 ]; then
+    say "PASS [shallowmerge]: comment + mkMerge control stays green"
+    passed=$((passed + 1))
+  else
+    say "FAIL [shallowmerge]: the control tripped the audit:"
+    printf '%s\n' "$out" | sed 's/^/    /'
+    failed=$((failed + 1))
+  fi
+  unset status
+fi
+
 # ── monitor365 SSO identity classifier (checks.monitor365-sso-identity-selftest) ──
 # The classifier's failure mode is inverted: a pattern it does NOT recognise
 # exits the ExecStartPre non-zero and kills the unit it heals (2026-10-28

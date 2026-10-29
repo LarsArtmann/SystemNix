@@ -88,13 +88,15 @@ if ! textfile_out=$(scripts/audit-textfile-tmp.sh 2>&1); then
     exit 1
 fi
 
-# Fast guard: serviceConfig must never be assigned with a shallow `//`
-# merge — it discards mkDefault/mkForce priority silently (the documented
-# "always use lib.mkMerge" rule, finally enforced). Includes a selftest
-# proving the scanner still detects the banned shape. Milliseconds.
+# Fast guard: no shallow `//` merges. serviceConfig loses mkDefault/mkForce
+# priority silently (the documented "always use lib.mkMerge" rule), and any
+# `X = … // (lib.mkIf …)` makes the WHOLE attribute conditional, dropping the
+# other operand when false (2026-10-28 dns-blocker: every dnsblockd unit lost
+# its ExecStart with eval green). Includes a selftest proving the scanner
+# still detects both banned shapes. Milliseconds.
 if ! merge_out=$(scripts/audit-serviceconfig-merge.sh --selftest 2>&1 && scripts/audit-serviceconfig-merge.sh 2>&1); then
     echo "$merge_out" >&2
-    log_error "serviceconfig-merge audit failed — use lib.mkMerge [...], never serviceConfig = X // Y."
+    log_error "shallow-merge audit failed — use lib.mkMerge [...], never serviceConfig = X // Y, and never X = Y // (lib.mkIf …)."
     exit 1
 fi
 
