@@ -29,6 +29,7 @@ is the subject/date/refresh-trigger index (M16, caddy edge plan 2026-10-25).
 | `monitoring.md`           | Gatus patterns, SigNoz, textfile collectors, ClickHouse traps             |
 | `shell-devtools.md`       | Shell traps, direnv/fish/zellij/btop, qmd wiring                          |
 | `git.md`                  | Git corruption recovery, history-rewrite checklist, push protection       |
+| `data-ownership.md`       | Who owns which data domain, truth vs mirror vs projection, restore paths  |
 
 ## Provenance map (old AGENTS.md section → new home)
 

@@ -21,6 +21,7 @@ Deep domain knowledge lives in referenced files — **read the relevant one BEFO
 | Gatus checks, SigNoz rules/dashboards, textfile collectors, phantom metrics  | [docs/agents/monitoring.md](./docs/agents/monitoring.md)                                                     |
 | Shell scripts, direnv/fish/zellij, GOBIN shadowing, qmd MCP                  | [docs/agents/shell-devtools.md](./docs/agents/shell-devtools.md)                                             |
 | Git recovery, history rewrites, GitHub push protection                       | [docs/agents/git.md](./docs/agents/git.md)                                                                   |
+| "Who owns X?" — data ownership, truth vs mirror vs projection, restore paths | [docs/agents/data-ownership.md](./docs/agents/data-ownership.md)                                             |
 
 - **Service deep context** (ports, secrets, traps, runbooks): `docs/services/<service>.md` — every enabled service has one and they own per-service state (backfill complete 2026-10-01; AI-stack daemons live in `llama-rag.md` + the GPU section below).
 - **Incident narratives** (dates, hashes, root causes): [docs/gotchas-archive.md](./docs/gotchas-archive.md) + `docs/status/`.
