@@ -200,7 +200,7 @@ Same ordering as above, grouped by phase. Fine IDs are `F##`.
 | F21 | Probe u-boot for TFTP/web recovery (interrupt at boot, note the menu and the expected filename) | C05 | 3 | 2 | 5 | 3 |
 | F22 | Capture `board_name` / product string from u-boot env or the console | C05 | 4 | 2 | 3 | 2 |
 | F23 | Find the exact device in upstream OpenWrt's `mt76x8` device list (by model string) | C05 | 4 | 3 | 3 | 2 |
-| F24 | Dump the full 8 MB flash to a file over the console or the read path | C04 | 4 | 3 | 5 | 3 |
+| F24 | Start the full 8 MB flash dump and verify it is progressing (dump runs ~20 min in background; 12 min hands-on) | C04 | 4 | 3 | 5 | 3 |
 | F25 | Extract and store the `factory` partition (0x40000 to 0x50000) separately | C04 | 4 | 3 | 5 | 2 |
 | F26 | Save `u-boot-env` and the partition table output | C04 | 3 | 2 | 5 | 1 |
 | F27 | Checksum both copies of the dump and of `factory`; store one copy off-machine | C04 | 4 | 3 | 5 | 2 |
@@ -237,17 +237,17 @@ Same ordering as above, grouped by phase. Fine IDs are `F##`.
 | ID | ≤12 min task | Parent | I | CV | RR | E |
 | --- | --- | --- | --- | --- | --- | --- |
 | F50 | Write the address plan into the runbook (`192.168.0.0/24` link, `192.168.1.0/24` house) | C11 | 4 | 3 | 3 | 1 |
-| F51 | Fill the two risk gaps only the owner can close (label model, Wi-Fi path A/B/C) | C11 | 4 | 4 | 3 | 1 |
+| F51 | Record the owner-supplied label model, port count and Wi-Fi path choice into the runbook, then propagate the choice into F58/F61 | C11 | 4 | 4 | 3 | 1 |
 | F52 | Pre-configure the Compal's `192.168.0.1/24` + DHCP `.2` limit `1` values but do not apply | C11 | 4 | 3 | 3 | 2 |
 | F53 | Pre-configure the CPE's LAN `.1` + DHCP `.10/90` + DNS `.150/.151` values but do not apply | C11 | 4 | 3 | 3 | 2 |
-| F54 | Add the CPE static route `192.168.0.0/24 via 192.168.0.1` (for modem admin access) | C11 | 3 | 2 | 2 | 1 |
+| F54 | Verify the modem UI is reachable from the LAN by masquerade alone (no static route needed: `192.168.0.0/24` is the WAN connected subnet); record the result | C11 | 3 | 2 | 2 | 1 |
 | F55 | Rehearse the rollback ladder out loud, step by step, against the live devices | C11 | 4 | 3 | 5 | 2 |
 | F56 | Book the window; announce the outage duration | C11 | 2 | 3 | 2 | 1 |
 | F57 | Apply the Compal LAN change to `192.168.0.1`, wait for the reboot | C12 | 5 | 5 | 3 | 2 |
 | F58 | Recable: Compal LAN1 to CPE WAN, CPE LAN to the house switch | C12 | 5 | 5 | 3 | 2 |
 | F59 | Switch the CPE's WAN/LAN port to WAN mode, apply, wait for reboot | C12 | 5 | 5 | 3 | 2 |
 | F60 | Set the CPE LAN to `192.168.1.1`, DHCP `.10/90`, DNS `.150/.151`, apply | C12 | 5 | 5 | 3 | 2 |
-| F61 | Re-enable the Compal DHCP with pool `.2` limit `1`; turn both of its radios off | C12 | 4 | 4 | 3 | 2 |
+| F61 | Re-enable the Compal DHCP with pool `.2` limit `1`; turn its radios off **only under path A or B** (path C keeps 5 GHz, accepting the split-network consequence from report 4.1) | C12 | 4 | 4 | 3 | 2 |
 | F62 | Verify `ping 192.168.1.1`, `getent hosts home.lan`, a fresh DHCP lease, Wi-Fi association | C13 | 5 | 5 | 3 | 2 |
 | F63 | Confirm the gateway's WAN still holds `89.65.239.240` and the CPE's WAN holds `192.168.0.2` | C13 | 5 | 5 | 3 | 1 |
 | F64 | Failover drill: unplug the coax, time the switch to LTE, record it | C13 | 5 | 5 | 3 | 3 |
@@ -261,9 +261,9 @@ Same ordering as above, grouped by phase. Fine IDs are `F##`.
 | F67 | Confirm the device entry (or the closest sibling) in `ramips/mt76x8` | C14 | 4 | 4 | 2 | 2 |
 | F68 | Check EC200A support: `kmod-usb-net-cdc-ether` + `uqmi`/`comgt` path in 24.10 | C14 | 4 | 4 | 2 | 2 |
 | F69 | Assemble a package list that fits 8 MB (mwan3, firewall, dropbear, no Go binaries) | C14 | 4 | 4 | 2 | 3 |
-| F70 | Build the image on evo-x2 and check the squashfs size against the 0x6e0000 rootfs budget | C14 | 4 | 3 | 2 | 3 |
+| F70 | Assemble the image config and start the build on evo-x2 (build runs 20 to 40 min in background; 12 min hands-on), then check the squashfs size against the 0x6e0000 budget | C14 | 4 | 3 | 2 | 3 |
 | F71 | Prepare the TFTP recovery server and image filenames from F28 | C15 | 4 | 3 | 5 | 2 |
-| F72 | Flash over the recovery path with the console attached, watch the boot | C15 | 4 | 4 | 2 | 3 |
+| F72 | Flash over the recovery path with the console attached and watch the boot (10 to 20 min wall time; the task ends when first boot reaches a login prompt) | C15 | 4 | 4 | 2 | 3 |
 | F73 | First boot: set root password, disable telnet, confirm 2.4 GHz radio and calibration intact | C15 | 4 | 4 | 3 | 2 |
 | F74 | Rebuild the 4G path (`uqmi` or AT-script + `mwan3` with wired primary, LTE backup) | C15 | 5 | 5 | 2 | 3 |
 | F75 | Prove 4G data + failover on OpenWrt, on the bench | C15 | 5 | 5 | 2 | 3 |
@@ -292,11 +292,57 @@ Same ordering as above, grouped by phase. Fine IDs are `F##`.
 
 ---
 
+### 4.1 Done-when rules (apply to every row above)
+
+- **Config rows**: the value is read back from the device after save, never inferred from the "Save & Apply" toast.
+- **Network rows**: a client-side command proves it (a lease, a resolve, a route, an association), not the router's own claim.
+- **Destructive rows**: two independent copies or checksums exist before the next row starts.
+- **Nothing is "green"** because a form accepted input. If the read-back disagrees, the row is red.
+
+### 4.2 Owner-only rows (the agent must not do these)
+
+`F14` (insert the SIM), `F20` to `F22` (UART leads, label, console), `F44` to `F46` (secret values: the agent never invents or
+stores them), `F51` (label model + Wi-Fi path), `F56` (book the outage window), `F91` (aesthetic channel choice).
+Everything else is agent-executable end to end.
+
+### 4.3 Stop-the-line rules
+
+1. **Dump checksum mismatch** at `F27`: no flash, ever. `C15` is cancelled permanently for this device.
+2. **A client leases outside `.10 to .99`** after `C07`: stop, do not stack the next change, re-verify the pool first.
+3. **Unexpected loss of route or DNS on evo-x2 during `C12`**: roll back immediately, do not debug forward mid-window.
+4. **Cutover exceeds the booked window** (target 10 min, cap 30): roll back, re-book.
+5. **Any step whose done-when is unmet** blocks the next row. No parallel guessing.
+
+### 4.4 Client-impact notes (so nothing looks like a new bug)
+
+- After `F34`/`F35` the gateway reboots: every client re-associates and renews, which is expected to look like a blip.
+- After `F38`, clients that cached a negative DNS answer for an internal name may need a flush; the `*.home.lan` wildcard
+  means a stale NXDOMAIN is unlikely but a cached dotlan answer is possible.
+- After `F45`/`F46` every Wi-Fi device must be re-keyed by hand, including the TV and any IoT that hides its network UI.
+- After `F61` the Compal's radios stop under path A/B: devices that were on 5 GHz must be re-homed to the CPE's 2.4 GHz.
+
+### 4.5 Known weaknesses of this plan (read before trusting it)
+
+1. **`C03` can fail outright.** No SIM and no data plan means no failover; `G1` then cancels `C11` to `C13` and the session
+   ends with 3 h spent and the architecture unbuilt. That is the correct outcome, not a failure of the plan.
+2. **The EC200A reports `AT+QCFG="nat",1`.** The module does its own NAT, so the CPE's WAN address may already be private.
+   Double NAT is a live unknown for both the throughput gate and any TTL/tethering decision. `F19` records the real WAN IP.
+3. **Path A makes the CPE the only AP**, on a single 2.4 GHz radio with 0 current clients. The household's 5 GHz band
+   disappears. This is the plan's largest user-visible regression and it is unresolved by design (question 2).
+4. **The Compal may reject a pool of 1.** Its UI enforces a minimum pool size on the LAN page (`checkDHCPPoolMinMax`).
+   If 1 is refused, fall back to a pool of `.2 to .5` (4 addresses) and accept that the modem link could hand a stray lease.
+5. **8 MB may simply not fit a usable image.** OpenWrt 24.10 plus mwan3 plus dropbear plus the CDC-Ethernet modem path is
+   plausibly over budget; `C14`/`F70` may legitimately end at "ImmortalWrt", "vendor firmware retained", or a device swap.
+6. **No budget line for path B.** A 5 GHz AP is the only way to keep the household's Wi-Fi and it is unsourced hardware.
+7. **Four rows own long wall-clock waits** (`F24` dump, `F70` build, `F72` flash, `F64` failover timing). The 12 minute
+   rule is hands-on time, not elapsed time; do not stack them in one sitting.
+8. **Nothing here is rehearsed on hardware.** Every step is a paper plan validated against device state read over HTTP.
+
 ## 5. Execution graph
 
 ```mermaid
 flowchart TD
-    subgraph P0["Phase 0, disarm, 45 min, no outage"]
+    subgraph P0["Phase 0, disarm, 60 min, no outage"]
         C01["C01 Disarm CPE<br/>RemoteWeb off - 7 forwards gone<br/>DHCP off - telnet off - new pw"]
         C02["C02 Watchcat policy<br/>6h self-reboot counter live"]
     end
@@ -366,9 +412,9 @@ flowchart TD
     KEEP --> C17
     C16 --> C17
     C17 --> C18
-    C18 --> C19
-    C19 --> C20
-    C20 --> C21
+    C17 --> C19
+    C17 --> C20
+    C17 --> C21
 ```
 
 **Read the graph as three independent contracts:**

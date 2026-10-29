@@ -269,7 +269,7 @@ CPE (2.4 GHz only) or from a new 5 GHz AP plugged into the CPE's LAN.
 | House LAN | CPE DHCP DNS | **`192.168.1.150`, `192.168.1.151`** | Retires Part 1 findings 3 + 4 |
 | House LAN | Compal Wi-Fi | **off** | Consequence 4.1 |
 | House LAN | evo-x2 / rpi3 | static `.150` / `.151` | No repo change needed — gateway stays `.1` |
-| House LAN | CPE static route | `192.168.0.0/24 via 192.168.0.1` | Keeps the modem's admin UI reachable from the LAN |
+| House LAN | CPE static route | **none needed** (`192.168.0.0/24` is the WAN's connected subnet; LAN to modem admin works through the default masquerade) | Corrected 2026-10-29: an earlier draft of this report asked for a route that would be redundant |
 
 No DMZ and no port forwards on either box: inbound is not needed (services ride Tailscale/Netbird).
 
@@ -296,7 +296,8 @@ No DMZ and no port forwards on either box: inbound is not needed (services ride 
 10. Recable: Compal LAN1 → CPE **WAN** port; CPE **LAN** port → the house switch that evo-x2 sits on.
 11. CPE: switch the WAN/LAN port to **WAN mode**; LAN → `192.168.1.1`; enable DHCP `.10–.99` with DNS `.150`/`.151`.
 12. Compal: re-enable DHCP with pool `.2` limit `1`; turn both radios off.
-13. CPE: add the static route from 4.2.
+13. CPE: confirm the modem's admin UI is reachable from the LAN through masquerade alone (no static route: the WAN
+    subnet is directly connected).
 14. *Verify:* `ping 192.168.1.1`; `getent hosts home.lan`; `nix flake check --no-build` (narinfo path proves DNS+TCP);
     a fresh DHCP client gets `.10–.99` with DNS `.150`; `nmcli dev wifi list` shows only the CPE SSID; gatus green.
 15. **Throughput gate:** `iperf3` through the CPE (evo-x2 ↔ another LAN host). If wired NAT is materially below the cable
