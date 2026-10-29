@@ -45,7 +45,7 @@ D1 to D6 are the product. D7 is the license to experiment.
 | **T0** | C01 | **30 min** | The two-DHCP race, the exposed admin toggle and the 7 armed forwards are gone. The reported "no internet" confusion stops being possible |
 | **T1** | T0 + C07, C08, C09, C10 | **3 h** | D1, D2, D3, D4 true. Gateway correct, credentials rotated, the LAN finally uses the home DNS stack |
 | **T2** | T1 + C03, C06, C11, C12, C13 | **8.2 h** | D5, D6 true. Whole-house LTE failover live on the vendor firmware, with a rehearsed rollback |
-| **T3** | all 21 (adds C02, C04, C05, C14 to C21) | **21.8 h** | D7 true: firmware preserved, the OpenWrt path attempted or declined, docs, monitoring, hygiene |
+| **T3** | all 21 (adds C02, C04, C05, C14 to C21) | **20.8 h** | D7 true: firmware preserved, the OpenWrt path attempted or declined, docs, monitoring, hygiene |
 
 **T2 is the product.** T3 is optional upside: if the flash fails, T2's outcome is untouched.
 
@@ -149,7 +149,7 @@ insurance for the optional phase, not a gate on the value. It now sits on the pa
 A household with a working LTE backup on the firmware that already knows how to drive this modem, correct DNS and DHCP, no
 default credentials, and a rehearsed rollback. That is D1 to D6 in §0.1.
 
-### 2.4 The rest, to reach 100 % (~13 h)
+### 2.4 The rest, to reach 100 % (~12.6 h)
 
 `C02`, `C04`, `C05`, `C14` to `C21`: preserve the firmware, attempt OpenWrt, runbooks, monitoring, hygiene, Wi-Fi tuning.
 Valuable, optional, individually abandonable.
@@ -178,7 +178,7 @@ twice without a verification pass between; every step ends with a read-back, nev
 
 ## 4. Coarse plan, 21 tasks, 30 to 100 min
 
-`CP` marks the critical path, `||` marks work that runs beside it, `post` marks the optional tail.
+`CP` marks the critical path, `par` marks work that runs beside it, `post` marks the optional tail.
 
 | ID | Task | Track | Min | I | CV | RR | E |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -192,9 +192,9 @@ twice without a verification pass between; every step ends with a read-back, nev
 | C11 | **Pre-stage the cutover**: address plan, both configs, rollback rehearsal, window | **CP** | 60 | 4 | 4 | 4 | 2 |
 | C12 | **Execute the cutover** (the single outage window) | **CP** | 90 | 5 | 5 | 3 | 3 |
 | C13 | **Post-cutover verify plus failover drill** | **CP** | 60 | 5 | 5 | 3 | 2 |
-| C02 | CPE watchdog policy (Watchcat 6 h counter is live, Watchdog `@dns`) | || | 30 | 3 | 3 | 3 | 1 |
-| C04 | **Preserve the firmware**: full 8 MB dump, `factory`, `u-boot-env`, two verified copies | || | 90 | 4 | 3 | 5 | 3 |
-| C05 | **Recovery prep**: `board_name`, UART pinout, u-boot recovery, one-page runbook | || | 60 | 3 | 2 | 5 | 3 |
+| C02 | CPE watchdog policy (Watchcat 6 h counter is live, Watchdog `@dns`) | par | 30 | 3 | 3 | 3 | 1 |
+| C04 | **Preserve the firmware**: full 8 MB dump, `factory`, `u-boot-env`, two verified copies | par | 90 | 4 | 3 | 5 | 3 |
+| C05 | **Recovery prep**: `board_name`, UART pinout, u-boot recovery, one-page runbook | par | 60 | 3 | 2 | 5 | 3 |
 | C14 | OpenWrt image: `ramips/mt76x8`, EC200A CDC path, mwan3, **trimmed to 6.56 MiB** | post | 100 | 4 | 4 | 2 | 5 |
 | C15 | Bench flash plus 4G re-confirmation (only with C04 verified twice) | post | 100 | 4 | 4 | 2 | 5 |
 | C16 | OpenWrt cutover, or roll back and keep the vendor image | post | 60 | 3 | 3 | 2 | 3 |
@@ -204,8 +204,8 @@ twice without a verification pass between; every step ends with a read-back, nev
 | C20 | Evidence archive plus repeatable CPE audit script | post | 60 | 2 | 1 | 3 | 2 |
 | C21 | Wi-Fi tuning: 5 GHz AP decision, DFS 52, 2.4 GHz 40 to 20 MHz | post | 60 | 3 | 3 | 1 | 2 |
 
-Totals: **critical path 490 min (8.2 h)**, parallel track 150 min (2.5 h), post-value 635 min (10.6 h),
-all-in 1,275 min (21.3 h).
+Totals, recomputed from the table: **critical path 490 min (8.2 h)**, parallel track 180 min (3.0 h), post-value
+575 min (9.6 h), all-in **1,245 min (20.8 h)**.
 
 ---
 
