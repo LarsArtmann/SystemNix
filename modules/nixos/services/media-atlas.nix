@@ -578,12 +578,18 @@
               # IO/CPU-quiet knobs carried verbatim from the reviewed shape:
               # the nightly must never be the load that competes with live
               # services on the QLC root (2026-10-27 lesson: load-300
-              # transcription batches). ProtectSystem=strict is safe because
-              # StateDirectory paths stay writable under it.
+              # transcription batches).
               (harden {
                 MemoryMax = "2G"; # generous headroom, not a tight bound: numba JIT dominates
                 ProtectSystem = "strict";
-                ReadWritePaths = [ "${stateDir}/umap" ];
+                # Root state dir included explicitly (not just the umap
+                # subtree): project-coords writes the journal + WAL next
+                # to atlas.db under strict — do not rely on the
+                # StateDirectory exemption subtlety.
+                ReadWritePaths = [
+                  stateDir
+                  "${stateDir}/umap"
+                ];
               })
               {
                 Nice = 19;
