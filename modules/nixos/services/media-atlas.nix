@@ -433,6 +433,14 @@
                 path = "/health/ready";
               }
               {
+                # The hub's search lane dials Immich ML (—immich-ml-url);
+                # probe the dependency so an ML outage pages here instead
+                # of surfacing as mystery 502s on the map.
+                name = "Immich ML (media-atlas search dependency)";
+                group = "Media";
+                url = "tcp://127.0.0.1:${toString ports.immich-ml}";
+              }
+              {
                 name = "MediaAtlas map plate";
                 group = "Media";
                 path = "/";
