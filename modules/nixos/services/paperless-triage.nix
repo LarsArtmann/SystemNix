@@ -318,7 +318,10 @@ _: {
             id=$(tag_id_of "$1")
             if [ "$id" = "MISSING" ]; then
               id=$(api POST /api/tags/ "{\"name\":\"$1\"}" | jq -r '.id') || return 1
-              echo "paperless-triage: created tag '$1' (id=$id)"
+              # stderr, NOT stdout: callers capture this function's stdout
+              # as the tag id — an echo here corrupts every bulk_edit JSON
+              # (invalid JSON -> ParseError 400, VM-proven 2026-10-27).
+              echo "paperless-triage: created tag '$1' (id=$id)" >&2
             fi
             printf '%s' "$id"
           }
@@ -404,8 +407,11 @@ _: {
           tag_doc() {
             # tag_doc <doc_id> <tag_id> — ADDITIVE bulk_edit only (PATCH on a
             # single document REPLACES the whole tag set — runbook trap #3).
-            api POST /api/documents/bulk_edit/ \
-              "{\"documents\":[$1],\"method\":\"modify_tags\",\"parameters\":{\"add_tags\":[$2]}}" >/dev/null
+            # The response body lands in TAG_API_ERR (curl --fail-with-body
+            # writes the server's error there) so failure reasons are never
+            # swallowed — callers append it to their WARN.
+            TAG_API_ERR=$(api POST /api/documents/bulk_edit/ \
+              "{\"documents\":[$1],\"method\":\"modify_tags\",\"parameters\":{\"add_tags\":[$2]}}") || return 1
           }
 
           while IFS= read -r doc; do
@@ -490,14 +496,14 @@ _: {
                 c_pass=$((c_pass + 1)); mru_add "$doc_id"; max_terminal_added="$doc_added"
                 echo "paperless-triage: id=''${doc_id} margin=''${margin} -> PASS (tagged ''${TAG_PASS})"
               else
-                c_api=$((c_api + 1)); pending_added="''${pending_added:-''${doc_added}}"; warn "bulk_edit failed on id=''${doc_id} (pass)"
+                c_api=$((c_api + 1)); pending_added="''${pending_added:-''${doc_added}}"; warn "bulk_edit failed on id=''${doc_id} (pass): ''${TAG_API_ERR:-<no body>}"
               fi
             else
               if tag_doc "$doc_id" "$REVIEW_ID"; then
                 c_review=$((c_review + 1)); mru_add "$doc_id"; max_terminal_added="$doc_added"
                 echo "paperless-triage: id=''${doc_id} margin=''${margin} -> REVIEW (tagged ''${TAG_REVIEW})"
               else
-                c_api=$((c_api + 1)); pending_added="''${pending_added:-''${doc_added}}"; warn "bulk_edit failed on id=''${doc_id} (review)"
+                c_api=$((c_api + 1)); pending_added="''${pending_added:-''${doc_added}}"; warn "bulk_edit failed on id=''${doc_id} (review): ''${TAG_API_ERR:-<no body>}"
               fi
             fi
             processed=$((processed + 1))

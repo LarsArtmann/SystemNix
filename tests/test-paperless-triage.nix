@@ -104,7 +104,18 @@ let
         def do_POST(self):
             length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(length).decode("utf-8", "replace")
-            yes = bool(re.search(r"faktura|receipt|brutto|vat", body, re.I))
+            # Classify on the DOCUMENT EXCERPT only: decode the JSON first
+            # (the wire body has escaped newlines), then take what sits
+            # between the sweep's --- markers — the surrounding prompt
+            # template itself contains "receipt"/"VAT" and would YES every
+            # request if matched against the whole content.
+            try:
+                content = json.loads(body)["messages"][-1]["content"]
+            except Exception:
+                content = ""
+            m = re.search(r"---\n(.*)\n---", content, re.S)
+            excerpt = m.group(1) if m else ""
+            yes = bool(re.search(r"faktura|receipt|brutto|vat", excerpt, re.I))
             payload = json.dumps(completion(yes)).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
