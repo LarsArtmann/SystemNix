@@ -520,21 +520,39 @@
           };
         })
 
-        # OTel traces → local SigNoz OTLP/gRPC collector (tonic). The otel
-        # cargo feature must be enabled in the build (see upstream flake.nix
-        # commonArgs). Tonic requires http:// scheme in the endpoint.
-        # When unset, noop tracer is used (zero overhead).
+        # OTel traces → local SigNoz OTLP/gRPC collector (tonic). Tonic
+        # requires an http:// scheme in the endpoint; when unset the CLI uses
+        # a noop tracer (zero overhead).
+        #
+        # The env var is deliberately still set — but it is a SILENT NOOP on
+        # the binary we ship, verified first-hand 2026-10-29:
+        #   - `init_tracing` (the only OTel initialiser) is called from
+        #     crates/cli/src/main.rs ALONE; crates/server has no `[features]`
+        #     section, no monitor365-cli dependency and never initialises a
+        #     tracer, so the SERVER process cannot export spans at all;
+        #   - the built artefact proves it: `monitor365` carries 27
+        #     `opentelemetry` strings, `monitor365-server` carries ZERO (probe
+        #     validated against known literals in the same binary, e.g.
+        #     "DuckDB migration not applied");
+        #   - 40 days of ClickHouse traces contain no `monitor365-server`
+        #     serviceName under any spelling.
+        # The `--features otel` in the upstream flake's commonArgs is real but
+        # only the CLI crate has the feature, so it cannot reach the server.
+        #
+        # Consequence for the census: wiring is "upstream" (known gap, counted
+        # in signoz_traces_upstream_gaps, never paged). It was registered as
+        # "env"/enforced until 2026-10-29, which pinned signoz_traces_missing
+        # at 1 FOREVER — an enforced leg no code change could satisfy, i.e. a
+        # permanently red alert that trains people to ignore the check. LIFT:
+        # upstream initialises a tracer in crates/server (or the server gains
+        # the otel feature); then flip back to "env" and lower maxUpstreamGaps.
         (lib.mkIf serverCfg.enable {
           systemd.services.monitor365-server.environment = {
             OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "http://localhost:${toString ports.signoz-otlp-grpc}";
           };
-          # Upstream build enables the otel cargo feature (--features otel,
-          # upstream flake.nix commonArgs), so spans actually flow — register
-          # the unit in the signoz-coverage census (reverse assertion refuses
-          # env-var silent noops). Request-driven budget: 26h.
           services.signoz-coverage.expected.monitor365-server = {
             serviceName = "monitor365-server";
-            wiring = "env";
+            wiring = "upstream";
             maxAgeHours = 26;
           };
         })

@@ -501,10 +501,19 @@
 
         # Ratchet DOWN with the registry: overview flipped to enforced
         # 2026-09-29 and verified reporting live 2026-10-10 (T1 battery:
-        # signoz_traces_reporting{service="overview"} = 1), leaving exactly
-        # these 3 upstream gaps (projects-management-automation, papdashboard,
-        # hermes). Any NEW silent noop must trip the budget check again.
-        services.signoz-coverage.maxUpstreamGaps = 3;
+        # signoz_traces_reporting{service="overview"} = 1).
+        #
+        # 4 as of 2026-10-29: projects-management-automation, papdashboard,
+        # hermes, and monitor365-server — the last one MOVED here from
+        # "env"/enforced, because the server process cannot initialise a
+        # tracer at all (source + artefact + 40 days of empty ClickHouse
+        # evidence in monitor365.nix at the registry entry). It had pinned
+        # signoz_traces_missing at 1 permanently, which is worse than an
+        # honest gap: a red leg nobody can ever clear. Raising the budget is
+        # the conscious half of the deal — any OTHER new silent noop still
+        # trips the check. LIFT: flip monitor365-server back to "env" and drop
+        # this to 3 once crates/server initialises OTel upstream.
+        services.signoz-coverage.maxUpstreamGaps = 4;
 
         assertions = map (msg: {
           assertion = false;
