@@ -1,5 +1,7 @@
 # SUPERB PLAN: 4G failover first, hackable firmware second
 
+**Created:** 2026-10-29 22:18
+**EXECUTING (instance crush-router-t0t1, 2026-10-30 00:37 CET, HEAD `2e2896a08`):** executing (see AGENTS.md plan-execution tombstone)
 **Version:** v2, 2026-10-29 (replaces v1 `22-18` in place)
 **What this is:** the execution plan for turning a currently-useless 4G CPE into the household's primary router with a
 working LTE backup, then (separately, optionally) replacing its 2016 firmware with real OpenWrt so the owner can run their
