@@ -329,3 +329,28 @@ No DMZ and no port forwards on either box: inbound is not needed (services ride 
 
 Every stage is reversible without touching the repo: Compal back to `192.168.1.1` + DHCP `.10/244` + radios on, CPE back
 to LAN mode with DHCP off. The server's static config never changes, so no NixOS rebuild is ever part of a rollback.
+
+### 2.4 Hardware (harvested from `/admin/system/status/syslog`)
+
+| Item | Value |
+| --- | --- |
+| SoC | **MediaTek MT7628AN ver:1 eco:2** (MIPS 24KEc, 580 MHz) |
+| RAM | **60,708 KiB ≈ 64 MB** |
+| Flash | **8 MB** SPI (`spi32766.0`, 6 MTD partitions) |
+| Partition layout | `u-boot` 0x0–0x30000 · `u-boot-env` 0x30000–0x40000 · **`factory` 0x40000–0x50000** · `kernel` 0x50000–0x1893d0 · `rootfs` 0x1893d0–0x7e0000 · `rootfs_data` 0x6e0000–0x7e0000 (**1 MB overlay**) · `backup` · `bdinfo` |
+| Kernel | **4.4.140**, built 2024-09-28 by `abu@openwrt`, GCC 5.4.0 (LEDE 17.01-era BSP) — EOL since 2018 |
+| Kernel cmdline | `console=ttyS0,115200 rootfstype=squashfs,jffs2` ⇒ serial console exists |
+| 4G module | **Quectel** over USB: `GSM modem (1-port)` → ttyUSB0/1/2 plus `cdc_ether` netdev (EC25-class) |
+| Wi-Fi | vendor proprietary `MT7628 AP Driver 4.1.0.0` (`ra0`); **no PCIe card** — 2.4 GHz is a hardware ceiling |
+
+**Consequences for "run our own software on it":**
+
+- Upstream OpenWrt target `ramips/mt76x8` covers MT7628AN broadly, so a real image is very likely flashable — the standard
+  8 MB layout (`factory` at 0x40000, `firmware` at 0x50000) is the same one used by the WE-826/KuWFi/ZBT CPE family.
+- **8 MB flash is the binding constraint**: ~1 MB free overlay today. Fine for routing (mwan3, firewall, WireGuard,
+  node_exporter); **not** for anything Go-sized.
+- **`factory` must be dumped before any flash** (radio calibration), and the whole 8 MB should be imaged first; the UART
+  on ttyS0 @115200 is the recovery path if u-boot's TFTP/web recovery is unreachable.
+- **dnsblockd does not belong on this box** (64 MB RAM, 8 MB flash, 580 MHz vs a Go binary + blocklists + SQLite). It
+  already runs on evo-x2 + rpi3-dns behind the VRRP VIP; the CPE's job is DHCP with DNS `.150`/`.151`, NAT, failover,
+  firewall, exporter.
