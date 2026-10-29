@@ -25,17 +25,17 @@
 {
   art-dupl = "1b165cdb90fbdc554335576dd2caafb501f9d063";
   art-dupl-src = "1b165cdb90fbdc554335576dd2caafb501f9d063";
-  bank-sync = "a961fee35663082d8390fb629ca28b9b9cdf0bd4";
+  bank-sync = "122508d924843a37848de94c64545f883e241f8d";
   branching-flow = "f28419ee2c5b7cf6ad46233bf6cf2d9f2b257546";
   brandid-lint = "dd29f9b328a3ebd4346f310fd1be6e5d42be7a71";
   browser-history = "f9c8916bc5b9ddf0ff2e55ad960be9b72ec09482";
   buildflow = "4acfb12b5797fe4e558e9e1034ae6af3376433b4";
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
-  crm = "d57e00f46b7f946ad112c0fdffbbb3431d499494";
+  crm = "0269ae4eb4f6b2c3c69d8a92e1e2fab8434c0647";
   crush-config = "d79602d02729797ca0e28e0d6d42f2d800893d08";
   crush-daily = "83c4d8a3de5035eb00122d3f85307d0636f91224";
   cv = "e168e6d39913680adbb2611a7e1ed5aaf68d4bf9";
-  dankMaterialShell = "8ce37501bd9c4dcbac04d1deb4e57d50f3e2c94f";
+  dankMaterialShell = "26c4cd11542aaeee87554ad031a01b3525910610";
   discordsync = "79952c46f0bfcc94763e40570741a1c97785d2d2";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
@@ -69,13 +69,13 @@
   hermes-agent = "0329638c2bf0438552145589787e355bf23343fe";
   home-manager = "095fef2f265c3c0da4fe315efba8f8a04495ab34";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
-  homebrew-cask = "030cfb80bd25f112aafc50c2b5df5fb1d5febc94";
+  homebrew-cask = "98bb37db913875c5ea404aaa8c168530fdc8c554";
   inboxclean = "5c52f31506d114f508d3cf5832c552da3b5f2228";
   index = "f583b68abd981df5663c235d3618a189bba51fe7";
-  journal = "50b4941686f9718bf6449962589aab1c83c3ca5f";
+  journal = "f2509d1938aefc15ff4963bba14ea828da5da9fe";
   library-policy = "f36510924184c78b638ae602e848935a627571c5";
   md-go-validator = "3f466de78df43628ca4c59803151f4345f67607a";
-  media-atlas = "e7896ef9c4743f0826604474d358118c6b1a01ce";
+  media-atlas = "60fe66094c3f6aa2a745891d2adb4d0655f61616";
   monitor365 = "10d252918bfcea33f341385a50182f26aaa75182";
   mr-sync = "84b33709e649f73109c9f9a162b84a6d3976a18f";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
@@ -90,7 +90,7 @@
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "31ecbaca1bdefa45dffc409f0250bd8039ea0010";
   nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
-  nur = "3f2dbddf44b3d794961c402bd8bc7ad9e506631b";
+  nur = "1ed2044f581c81f5084bac775091602cb9657981";
   offline-banner = "2ccdf6ec04f32b94aa2b8ddd7d35a38b5daf2903";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
   overview = "1c467991e698e59a68301ebc38c2be72abc83dcf";
@@ -99,7 +99,7 @@
   project-dependency-graph = "9836197c61ec18537f1bd59ef0ecfad04915f98a";
   project-discovery-daemon = "145cd73db456320adcde0d71b77a535e03bbd7f4";
   project-meta = "9ba321b2a73b937c1b15294b36777b2d47eac84f";
-  projects-management-automation = "afccaf96137509a8d199a49a42b5454869994be9";
+  projects-management-automation = "7dc552fe07e0f4b58b6e9355800ad91f2e29f1d0";
   pyproject-build-systems = "6171a3484937e14cdf2316ed9a60f1c27b6cb71e";
   pyproject-nix = "bf7d4b1d6de61db02fd4e748395634f03006e5de";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";
