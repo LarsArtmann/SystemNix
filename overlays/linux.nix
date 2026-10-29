@@ -298,9 +298,13 @@ let
     # 2026-10-26 lock float: spec 9759Ak4d, got Uz4gaRoR
     # (float-proof-20261026-161006.log). FIFTH RE-STALE 2026-10-28 float:
     # spec Uz4gaRoR, got XnWfiJWq
-    # (~/.cache/lockfloat/float-proof-20261028-214409.log).
+    # (~/.cache/lockfloat/float-proof-20261028-214409.log). SIXTH RE-STALE
+    # 2026-10-29 23:15 keep-going (SAME rev 6ce5c2a — mutable-dep drift,
+    # spec XnWfiJWq, got mcCpX4P5;
+    # ~/.cache/fixwave/keepgoing.log): a go.mod dependency was re-served
+    # differently upstream between 10-28 and 10-29.
     file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-XnWfiJWqmBbLVqiRle48MGsvSQm+1d7gVfUyQS4pbTY=";
+      vendorHash = "sha256-mcCpX4P5uhgvEQPm/3dyOD8mrd15cOZOlAEogQihoBI=";
     };
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01

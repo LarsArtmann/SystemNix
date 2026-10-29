@@ -558,9 +558,12 @@
           systemd.services.media-atlas-umap = lib.mkIf (hubCfg.enable && hubCfg.umapNightly.enable) {
             description = "MediaAtlas UMAP nightly refit (export -> fit/transform -> project-coords)";
             inherit onFailure;
-            # Deterministic freshness: when the 02:00 poll was missed (host
-            # down), the wants+after pair re-runs it immediately before the
-            # fit instead of fitting a night-stale embedding matrix.
+            # Freshness semantics, precisely: a MISSED poll (host was down;
+            # the unit never ran tonight) is pulled in and re-run before the
+            # fit by the wants+after pair. A FAILED poll does NOT block the
+            # fit — Wants= (not Requires=) lets the refit proceed on the
+            # last-good matrix while the poll's onFailure toast reports the
+            # gap; Persistent=true still catches the missed-run case on boot.
             after = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
             wants = lib.optional hubCfg.pollEmbeddings.enable "media-atlas-poll-embeddings.service";
             path = [ pkgs.coreutils ];

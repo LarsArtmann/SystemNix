@@ -391,12 +391,14 @@ lib.filterAttrs (_: v: v != null) {
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence,
   # never by hand.
   # RE-STALE 2026-10-28 blanket float: pma@fbd3b1a8 spec fWJuASoh, got
-  # v9mUgqkE (float-proof-20261028-214409.log). The service module
-  # (modules/nixos/services/projects-management-automation.nix) carries
-  # the same value.
+  # v9mUgqkE (float-proof-20261028-214409.log). RE-STALE 2026-10-29 23:15
+  # keep-going after the 7-input lock revert (pma back at afccaf96, spec
+  # v9mUgqkE, got uTanAcTC; ~/.cache/fixwave/keepgoing.log). The service
+  # module (modules/nixos/services/projects-management-automation.nix)
+  # carries the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-v9mUgqkE41fb1mw+2bAMsutA+8FyebmgcZ/bBbFpeis=";
+      "sha256-uTanAcTCg/ayVXiXefLMeF4yZMlbJriOmsW7Qgzwh8I=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

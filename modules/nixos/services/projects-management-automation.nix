@@ -84,10 +84,13 @@
           # RE-STALE 2026-10-28 blanket float: pma@fbd3b1a8 spec fWJuASoh,
           # got v9mUgqkE (float-proof-20261028-214409.log) — both surfaces
           # (this module + lib/lars-packages.nix) carry the same value.
+          # RE-STALE 2026-10-29 23:15 keep-going after the 7-input lock
+          # revert (pma back at afccaf96): spec v9mUgqkE, got uTanAcTC
+          # (~/.cache/fixwave/keepgoing.log) — both surfaces updated.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-v9mUgqkE41fb1mw+2bAMsutA+8FyebmgcZ/bBbFpeis=";
+                vendorHash = "sha256-uTanAcTCg/ayVXiXefLMeF4yZMlbJriOmsW7Qgzwh8I=";
               };
           user = primaryUser;
           group = "users";
