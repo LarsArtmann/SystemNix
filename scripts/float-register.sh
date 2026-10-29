@@ -79,6 +79,51 @@ unpushed_hints() {
     done
 }
 
+# Per-run roots-extraction summary (2026-10-29 per-log attribution rule):
+# root lists are usable ONLY when the extraction names the log it came from
+# AND the lock revs it saw — a root list quoted without its log is
+# unattributed and stale-prone (live: c3ed35c2/fc0506b roots quoted from the
+# 18:00 log while the 18:06 lock had already moved; nix-flakes.md lesson).
+drifted_revs() {
+  local lock="$1" drifted="$2"
+  jq -r '.nodes.root.inputs|to_entries[]|select(.value|type=="string")|"\(.key)\t\(.value)"' <"$lock" |
+    while IFS=$'	' read -r name nk; do
+      case " $drifted " in
+      *" $name "*) ;;
+      *) continue ;;
+      esac
+      rev=$(jq -r --arg nk "$nk" '.nodes[$nk].locked.rev? // empty' <"$lock")
+      [ -n "$rev" ] && printf '  - %s @ %s\n' "$name" "$rev"
+    done
+}
+
+extract_root_lines() {
+  grep -E 'error:|hash mismatch|got:|specified:|builder for .* failed' "$1" 2>/dev/null || true
+}
+
+write_roots_file() {
+  local log="$1" rc="$2" drifted="$3" lock="$4" out="$5"
+  {
+    echo "# float-register roots extraction ($(date -Iseconds))"
+    echo
+    echo "- source proof log: \`$log\` (rc=$rc) — quote roots only with this file"
+    echo "- drifted inputs at proof time (lock $lock @ $(sha256sum "$lock" 2>/dev/null | cut -c1-12)):"
+    if [ -n "$drifted" ]; then
+      drifted_revs "$lock" "$drifted"
+    else
+      echo '  - (none)'
+    fi
+    echo
+    echo '## roots'
+    roots=$(extract_root_lines "$log" | head -20)
+    if [ -n "$roots" ]; then
+      printf '%s\n' "$roots"
+    else
+      echo '(no root signatures — proof green)'
+    fi
+  } >"$out"
+}
+
 fr_selftest() {
   local scratch root base tip lock out failures=0
   scratch=$(mktemp -d)
@@ -118,6 +163,39 @@ fr_selftest() {
   out=$(FLOAT_REGISTER_CHECKOUT_ROOT="$root" unpushed_hints "$lock" "")
   if [ -z "$out" ]; then echo "PASS: undrifted input silent"; else
     echo "FAIL: expected silence, got: $out"
+    failures=$((failures + 1))
+  fi
+
+  # roots-file legs (planted-log fixtures): a RED log must yield a roots
+  # file carrying the log path, the drifted rev, and the root lines; a
+  # green log must say so — the attribution contract, mechanized.
+  redlog="$scratch/proof-red.log"
+  {
+    echo 'error: hash mismatch in input:alpha:'
+    echo '         specified: sha256-AAAAAAAA'
+    echo '            got:    sha256-BBBBBBBB'
+    echo 'rc=1'
+  } >"$redlog"
+  greenlog="$scratch/proof-green.log"
+  echo 'this derivation will be built' >"$greenlog"
+  echo 'rc=0' >>"$greenlog"
+  mklock "$base"
+  rf="$scratch/roots-red.md"
+  write_roots_file "$redlog" 1 "alpha" "$lock" "$rf"
+  for want in "$redlog" "alpha @ $base" 'got:    sha256-BBBBBBBB'; do
+    if grep -qF -- "$want" "$rf" 2>/dev/null; then
+      echo "PASS: roots file carries: $want"
+    else
+      echo "FAIL: roots file missing: $want"
+      failures=$((failures + 1))
+    fi
+  done
+  rf="$scratch/roots-green.md"
+  write_roots_file "$greenlog" 0 "" "$lock" "$rf"
+  if grep -qF 'no root signatures' "$rf" 2>/dev/null; then
+    echo 'PASS: green roots file self-describes'
+  else
+    echo 'FAIL: green roots file missing its no-roots marker'
     failures=$((failures + 1))
   fi
   rm -rf "$scratch"
@@ -180,6 +258,9 @@ echo "float-register: proving ($PROOF_ATTR --keep-going; log: $proof_log)"
 rc=0
 nix build ".#$PROOF_ATTR" --keep-going --no-link >"$proof_log" 2>&1 || rc=$?
 echo "rc=$rc" >>"$proof_log"
+roots_file="$LOGDIR/float-roots-$(stamp).md"
+write_roots_file "$proof_log" "$rc" "${drifted:-}" "$LOCK" "$roots_file"
+echo "float-register: roots extraction written: $roots_file"
 
 # ── 4. commit on green, revert on red ─────────────────────────────────────
 if [ "$rc" != "0" ]; then
