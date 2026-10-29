@@ -1,5 +1,7 @@
 # SUPERB — crush 0.99.0 Rollout Finish + Hardening (Pareto Plan)
 
+**EXECUTING (crush executor session, 2026-10-29 19:37 CET, HEAD 5d94d60c5):** owner directive "GET SHIT DONE — the WHOLE TODO LIST" = full execution mode. Pre-execution state delta vs plan authoring: T1/T2 owner pushes SUPERSEDED by consumer-side vendorHash shims (parallel 18:56 report, commits 4881815bf+); T4 re-proof DONE by the parallel float wave (proof rc=0, eval-green); T5 crush-config float ALREADY in lock (@4468af5, ahead-3-unpushed — CI fetch risk noted); branch merged: media-atlas-hub-service → master, plan+report committed+pushed by daemon (46be5347d). Deploy authority (old Q2) granted by this directive. Remaining: T6 deploy → T7–T10 verify → non-gated hardening tasks.
+
 **Authored:** 2026-10-29 18:42 CET — Crush agent session, branch `media-atlas-hub-service`
 **Scope:** ALL open work from the crush v0.99.0 adoption session (docs/status/2026-10-29_18-33_crush-0990-session-brutal-self-review-and-status.md §f, 32 items) + the pipeline.md finish-line rows. State verified at authoring time: nur float committed + flake check green; crush-config master @ 822f897 (hooks landed, not floated); evo-x2 still on 0.98.2; toplevel build blocked by kith-crm@c3ed35c2 + cv@fc0506b upstream vendorHash.
 
