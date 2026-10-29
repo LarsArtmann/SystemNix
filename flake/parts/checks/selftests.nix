@@ -193,6 +193,25 @@
               touch $out
             '';
 
+        # monitor365 SSO identity heal (ExecStartPre): the classifier that
+        # decides whether create-admin succeeded, found the identity, or
+        # failed. It has taken the control plane down twice by not
+        # recognising an upstream wording (2026-10-28 22:54 → restart loop
+        # → start-limit-hit), and its failure mode is inverted from the
+        # usual one: a miscategorised result kills the service it heals.
+        # The fixture stubs `monitor365-server`, so no DuckDB is needed.
+        monitor365-sso-identity-selftest =
+          pkgs.runCommand "monitor365-sso-identity-selftest"
+            { }
+            ''
+              export PATH="${pkgs.coreutils}/bin:${pkgs.gnugrep}/bin:${pkgs.bash}/bin"
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/monitor365-ensure-sso-identity.sh "$scratch/monitor365-ensure-sso-identity.sh"
+              cp ${root}/scripts/test-monitor365-ensure-sso-identity.sh "$scratch/test-monitor365-ensure-sso-identity.sh"
+              bash "$scratch/test-monitor365-ensure-sso-identity.sh"
+              touch $out
+            '';
+
         # Rendered-artifact leg of the retention fixture: the repo-file
         # selftest above proves the repo text, but the 03:00 window runs
         # the RENDERED writeShellApplication output, called by the

@@ -20,8 +20,12 @@ EMAIL="lars@example.test"
 # Writes a stub that prints $1 and exits $2, then runs the script against it.
 run_with() {
   # $1 = stdout/stderr text, $2 = exit code
+  # Shebang must be the RUNNING bash, not /usr/bin/env: the sandboxed
+  # check builder has no /usr/bin/env, and the stub silently "failed" with
+  # a bad interpreter instead of exercising the classifier (caught by leg1
+  # on the first check run).
   cat >"$STUB_DIR/monitor365-server" <<STUB
-#!/usr/bin/env bash
+#!${BASH}
 cat <<'MSG'
 $1
 MSG

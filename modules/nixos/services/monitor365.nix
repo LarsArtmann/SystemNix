@@ -191,37 +191,24 @@
       # — crates/server/src/bootstrap/mod.rs, source-verified 2026-10-28),
       # so this ExecStartPre is the declarative replacement for the manual
       # create-admin runbook step. Runs as the service user BEFORE the
-      # server takes the single-writer lock; the upstream CLI's
-      # duplicate-email rejection is the idempotency signal.
+      # server takes the single-writer lock.
+      #
+      # The classifier itself is repo-file-backed
+      # (scripts/monitor365-ensure-sso-identity.sh) so
+      # checks.monitor365-sso-identity-selftest executes the SAME text: eval
+      # cannot see shell branching, and this branch list is where a real
+      # outage hid twice. The identity heal is fail-OPEN — a heal that fails
+      # closed takes down collection, realtime and the dashboard to protect
+      # one login path, which is strictly worse than the condition it repairs
+      # (2026-10-28 22:54 → 01:32: unmatched upstream wording exit-1'd the
+      # ExecStartPre, the unit burned its start budget, control plane dark).
       ssoIdentityScript = pkgs.writeShellApplication {
         name = "monitor365-ensure-sso-identity";
         runtimeInputs = [
           pkgs.coreutils
         ];
         text = ''
-          if OUT="$(monitor365-server create-admin --email '${ssoAdminEmail}' 2>&1)"; then
-            echo "monitor365-ensure-sso-identity: created SSO admin ${ssoAdminEmail}"
-          else
-            case "$OUT" in
-              # Duplicate-email rejection comes in TWO upstream wordings —
-              # the CLI's friendly one and the DuckDB unique-constraint
-              # error (the 2026-10-29 01:32 start-limit outage: the
-              # constraint form has NO "already exists" substring, so the
-              # missing pattern exit-1'd the ExecStartPre on every start
-              # after the first heal and the unit burned its start budget).
-              # BOTH mean the identity is present = success.
-              *"already exists"*|*"violates unique constraint"*)
-                echo "monitor365-ensure-sso-identity: SSO admin ${ssoAdminEmail} already exists"
-                ;;
-              *"No tenants found"*)
-                echo "monitor365-ensure-sso-identity: WARNING: no tenants yet — in-server bootstrap provisions tenant+admin when fully configured" >&2
-                ;;
-              *)
-                echo "monitor365-ensure-sso-identity: ERROR: $OUT" >&2
-                exit 1
-                ;;
-            esac
-          fi
+          exec ${pkgs.bash}/bin/bash ${../../../scripts/monitor365-ensure-sso-identity.sh} '${ssoAdminEmail}'
         '';
       };
 
