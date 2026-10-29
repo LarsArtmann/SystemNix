@@ -369,6 +369,7 @@
 - [ ] **Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp) — THE gate for re-enabling llama-rag and unblocking the paperless RAG item** → [docs/todo/ai-stack.md](docs/todo/ai-stack.md)
 
 ### services
+- [ ] [ready] **Verify a restore path for TaskChampion task state (the tasks.home.lan sync hub)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/agents/data-ownership.md 2026-10-29)
 - [ ] [ready] **Consolidate the journal vendorHash shim (3 sites → 1) + run the shim-necessity probe** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §b/§d)
 - [ ] [ready] **End-to-end review of the hours-old media-atlas module (owning session)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md §d)
 - [ ] [ready] **Paperless AI embeddings through ai-meter (`llama-embeddings` upstream declared but unrouted; owner "single endpoint" direction 2026-10-27)** — paperless client + envKey, repoint PAPERLESS_AI_LLM_EMBEDDING_* to `:8107/v1/llama-embeddings`, keep the 1024-dim smoke assertion → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-10-27_21-40_browser-history-ai-endpoint-rewire-status.md §e.2)
