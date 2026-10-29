@@ -45,10 +45,10 @@
   cmdguard = "8185582ff2becf5acf0089b716a35698802fe4d9";
   crm = "fcb3bb3811f34ca2257ef2c267354cbeec37d2c7";
   crush-config = "028d6402a6aa3257e323a4396880b293730a5e2d";
-  crush-daily = "93697afb020fba6cd5c34e4ed4330c873408f309";
+  crush-daily = "955ddb295fc6c0f487b494a839389d89ed6ce0bd";
   cv = "dd201874bee4a96679f362f87df8ca86782d07bf";
   dankMaterialShell = "0b174e070244041b88a253ada9c5fdbb58125d6d";
-  discordsync = "921d5fc444bf3e9aabc35d1e6f1cf2a3633ac1a7";
+  discordsync = "79952c46f0bfcc94763e40570741a1c97785d2d2";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
   dnsblockd = "3dc6e8d54896eba8def251174e1818ce946041f7";
@@ -67,7 +67,6 @@
   go-error-family = "a23dc0e08234909e63ee3dc7a7833319bc195c54";
   go-filewatcher = "16ea6599150a70a55acd043d4236be71b439ed60";
   go-finding = "8578f743638a6330373af34dd7b4a3fb4731632e";
-  go-health = "b7258b09a818f3e37ad3e24c6d0d9899b821d1d3";
   go-health-dashboard = "75d6874eed176cc1d5ace1b5bdda963b06a7fb6d";
   go-humanize-linter = "ec19200cb3f547e5856622a5c57eafeb81131050";
   go-nix-helpers = "07aefa24b85ba40758da508b909cf573fd5acbd8";
@@ -124,7 +123,6 @@
   superfile = "97af177d4790cec601dc3a45a1e7c2983bb0dfc5";
   systems = "d36eeed142f88b5a636f2e3856a53c61654cf29b";
   templ = "f6492f22bef32521a9d90400ec44de5ed3b7546b";
-  templ-components = "29f71a5110bcb6e9865fefda4340b2f9c2a47ee6";
   todo-list-ai = "903e88a93b8fa8fcb04d8f160557a9c9953527ed";
   treefmt-full-flake = "d4817f5494feca3c5e927b58032ddcd718dbfdff";
   treefmt-nix = "0d6d739a833ba9a9c93034862e4a7b061a062a1c";

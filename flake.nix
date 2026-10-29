@@ -414,31 +414,6 @@
       url = "github:LarsArtmann/nsfw-classifier/58d398dc68b94f16df2adefdeb8f2864d950080f";
     };
 
-    # templ-components — the SHARED component library source consumed by the
-    # crush-daily and DiscordSync flakes (both feed it into mkPreparedSource
-    # as the local replace target for github.com/larsartmann/templ-components
-    # and its submodules). TAG-PINNED at v1.24.0 deliberately:
-    #
-    #   - both consumers' go.mod require templ-components v1.24.0 AND import
-    #     `utils/tone`, a package that first shipped in that tag;
-    #   - their OWN flake inputs lag behind their go.mod (crush-daily pins
-    #     the v1.23.0 tag, DiscordSync a 2126f3c8 rev), so their prepared
-    #     sources lack utils/tone and the go-modules FOD dies in `go mod
-    #     tidy` ("module … /utils@latest found (v1.24.0, replaced by
-    #     ./_local_deps/templ-components/utils), but does not contain package
-    #     … /utils/tone", float-proof-20261028-214409.log);
-    #   - a moving ref (master) would instead let upstream API churn break
-    #     their committed *_templ.go against an unpinned module version,
-    #     which is the one thing a prepared-source module pin must prevent.
-    #
-    # Both consumers follow this node (infra-follows group below). LIFT: when
-    # upstream crush-daily + DiscordSync bump their own templ-components
-    # input to >= v1.24.0, drop the follows AND this pin (its allowlist row
-    # in lib/flake-input-pin-audit.nix fails eval if left behind).
-    templ-components = {
-      url = "github:LarsArtmann/templ-components/v1.24.0";
-    };
-
     # crush-daily — Daily AI-powered insights from Crush development databases
     crush-daily = {
       url = "github:LarsArtmann/crush-daily?ref=refs/heads/master";
@@ -577,23 +552,6 @@
     # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
     go-health-dashboard = {
       url = "github:LarsArtmann/go-health-dashboard?ref=master";
-    };
-
-    # go-health — the Kubernetes-health-probe SDK (github.com/larsartmann/
-    # go-health). Declared here ONLY as a MODULE-SOURCE pin for consumers that
-    # feed it into mkPreparedSource (DiscordSync's local replace target), the
-    # templ-components pattern above. TAG-PINNED at v0.8.1 because that is
-    # exactly what DiscordSync's go.mod requires and what its code calls
-    # (healthlib.DoServiceName, first shipped in the tag) while its own flake
-    # input still sits on rev 0a8a4d4c — the stale copy made the package die
-    # at compile ("undefined: healthlib.DoServiceName"). NOT master: the
-    # consumer was written against v0.8.1's API.
-    # dnsblockd consumes go-health as a normal flake input of its own and is
-    # NOT wired to this node.
-    # LIFT: DiscordSync bumps its own go-health input to >= v0.8.1 — then
-    # drop the follows line, this input, and the pin-audit allowlist row.
-    go-health = {
-      url = "github:LarsArtmann/go-health/v0.8.1";
     };
 
     # erraudit — Error handling pattern analyzer for Go projects
@@ -1028,19 +986,6 @@
     superfile.inputs.flake-compat.follows = "flake-compat";
     todo-list-ai.inputs.flake-parts.follows = "flake-parts";
     todo-list-ai.inputs.treefmt-nix.follows = "treefmt-nix";
-    # templ-components (root node shared by crush-daily/DiscordSync — see the
-    # input block): infra deps followed to root so the lock-audit dedup stays
-    # honest. Its flake OUTPUTS are never evaluated (it is consumed purely as
-    # a prepared-source directory), so following nixpkgs is build-neutral.
-    templ-components.inputs.flake-parts.follows = "flake-parts";
-    templ-components.inputs.nixpkgs.follows = "nixpkgs";
-    templ-components.inputs.treefmt-nix.follows = "treefmt-nix";
-    # go-health (module-source pin for DiscordSync — see the input block):
-    # same treatment, plus its `systems` edge so the lock-audit dedup holds.
-    go-health.inputs.flake-parts.follows = "flake-parts";
-    go-health.inputs.nixpkgs.follows = "nixpkgs";
-    go-health.inputs.systems.follows = "systems";
-    go-health.inputs.treefmt-nix.follows = "treefmt-nix";
     art-dupl.inputs.nixpkgs.follows = "nixpkgs";
     # 2026-10-14: art-dupl's own flake-parts copy (same rev as root — pure
     # alias collapse) and treefmt-nix copy (eval-only dep; moves 4cfe8d70
@@ -1075,7 +1020,6 @@
     crush-daily.inputs.go-nix-helpers.follows = "go-nix-helpers";
     crush-daily.inputs.nixpkgs.follows = "nixpkgs";
     crush-daily.inputs.systems.follows = "systems";
-    crush-daily.inputs.templ-components.follows = "templ-components";
     crush-daily.inputs.treefmt-nix.follows = "treefmt-nix";
     # DMS floats on master (owner: "always on latest", 2026-10-25); tip
     # 5442f39's go.mod floors go >= 1.27.3, which the root fe13242 pin
@@ -1084,8 +1028,6 @@
     # Flip back to follows = "nixpkgs" when the root pin lifts past go 1.27.3.
     dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs-unstable";
     discordsync.inputs.flake-parts.follows = "flake-parts";
-    discordsync.inputs.go-health.follows = "go-health";
-    discordsync.inputs.templ-components.follows = "templ-components";
     discordsync.inputs.treefmt-nix.follows = "treefmt-nix";
     disko.inputs.nixpkgs.follows = "nixpkgs";
     dnsblockd.inputs.flake-parts.follows = "flake-parts";
