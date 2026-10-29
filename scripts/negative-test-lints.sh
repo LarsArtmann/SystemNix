@@ -585,19 +585,22 @@ eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
 
 # ── papdashboard tile-icon gates: the 2026-10-17 "logos went dark" class ──
 # The module ships two gates; each leg mutates ONE tile icon in the
-# built-in group defaults (the first group tile, pocket-id.png) and proves
-# the matching gate fires.
+# built-in group defaults and proves the matching gate fires. Anchor note
+# (2026-10-29): the original anchor was `"pocket-id.png"`; the tile moved to
+# the integration registry (pocket-id.nix), which silently turned BOTH legs
+# into no-ops — the harness's own NO-OP detector caught it. The Caddy tile
+# is the current first in-module icon; refresh this anchor if it moves too.
 # Gate 1 (FORM, eval assertion): a legacy homepage-era mdi-* name must
 # throw the assertion that names the tile — the exact shape that survived
 # the 2026-09-18 homepage merge unnoticed.
 eval_case tileicons legacy-mdi-icon fail 'tile icon\(s\) must be a dashboard-icons pack file name' \
-  'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"mdi-sitemap"|'
+  'sed:modules/nixos/services/papdashboard.nix:s|"caddy.png"|"mdi-sitemap"|'
 # Gate 2 (EXISTS, build gate): a FORM-VALID name the pack does not carry
 # must pass the eval and fail the dashboardIcons copy — realized through
 # PAP_ICONS_DIR's string context (the unit-env reference that makes the
 # gate unskippable on a real deploy).
 build_case tileicons pack-missing-icon 'config.systemd.services.papdashboard.environment.PAP_ICONS_DIR' fail "is not in the dashboard-icons pack" \
-  'sed:modules/nixos/services/papdashboard.nix:s|"pocket-id.png"|"pocket-id-not-in-any-pack.png"|'
+  'sed:modules/nixos/services/papdashboard.nix:s|"caddy.png"|"caddy-not-in-any-pack.png"|'
 
 # ── integration tile-coverage audits: the 2026-10-25 class ──
 # The 2026-09 homepage→PapDashboard merge silently DROPPED tiles (forgejo's
@@ -665,9 +668,12 @@ eval_case orderingcycle geometrikks-multiuser-regression fail 'ordering-cycle-au
 # removed); (2) bootCounting implies the end-of-boot drop-in. Both legs
 # re-introduce the exact regression shapes.
 # Leg 1: poison a unit with an after=boot-complete.target edge — the wait
-# drags whatever reaches that unit out to end-of-boot (or cycles).
+# drags whatever reaches that unit out to end-of-boot (or cycles). The edge
+# must be INJECTED INTO the existing after list: appending a second
+# `after =` attribute is a duplicate-attr eval error, which fails the leg
+# for the wrong reason (the audit never runs; live 2026-10-29).
 eval_case bootcomplete after-edge-regression fail 'boot-contract-audit' \
-  'sed:modules/nixos/services/geometrikks.nix:s|^              wantedBy = \[ "late-applications.target" \];$|              wantedBy = [ "late-applications.target" ]; after = [ "boot-complete.target" ];|'
+  'sed:modules/nixos/services/geometrikks.nix:s|^                "geometrikks-oidc-env.service"$|                "geometrikks-oidc-env.service"\n                "boot-complete.target"|'
 # Leg 2: delete the drop-in's ordering while keeping bootCounting on —
 # silently restores the ~11s bless and the neutered rollback (the exact
 # state the 2026-10-28 review found live).
@@ -735,7 +741,7 @@ eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside se
 # Both must throw the audit marker; the legs also prove the audit module is
 # imported by evo-x2 auto-discovery (an absent module would let both PASS).
 eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
-  'sed:platforms/nixos/system/boot-mirror.nix:s|      (ioTier.background)|      # tier stripped for negative test|'
+  'sed:platforms/nixos/system/boot-mirror.nix:s|      ioTier.background|      # tier stripped for negative test|'
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
 
@@ -779,13 +785,13 @@ run_case portguard green-control port-guard-check pass 'never-matches' \
 # eval gate with its own marker (not an eval accident). The gate compares
 # doc-extracted assertions against flake-eval truth — never assert-against-assert.
 run_case doccounts readme-modules doc-counts fail 'doc-counts: README nixosModules asserts' \
-  'sed:README.md:s|`nix eval .#nixosModules` → 131;|`nix eval .#nixosModules` → 130;|'
+  'sed:README.md:s|`nix eval .#nixosModules` → 141;|`nix eval .#nixosModules` → 140;|'
 run_case doccounts features-packages doc-counts fail 'doc-counts: FEATURES packages asserts' \
   'sed:FEATURES.md:s|46 packages in|45 packages in|'
 # Anchor-missing leg: a non-numeric stamp kills the anchor regex entirely —
 # the "anchor missing" branch must fire (never silently pass).
 run_case doccounts anchor-missing doc-counts fail 'doc-counts: README gatus endpoints assertion anchor missing' \
-  'sed:README.md:s|` → 228;|` → two-hundred;|'
+  'sed:README.md:s|` → 247;|` → two-hundred;|'
 
 # ── metricnames: LIVE store-truth sweep (opt-in ONLY — CI has no store access) ──
 # The nightly workflow sets no CASES, so this group never runs in CI: it needs

@@ -388,7 +388,7 @@
             echo "discordsync-immich-key-provision: FAIL api_key.key is '$key_type', expected bytea — Immich schema drifted past this converger; resurrect the sops paste path (runbook) instead of forcing" >&2
             exit 1
           fi
-          uid=$(psql -At -c "SELECT id FROM \"user\" WHERE \"isAdmin\" IS TRUE ORDER BY \"createdAt\" LIMIT 1")
+          uid=$(psql -At -c "SELECT id FROM \"user\" WHERE \"isAdmin\" IS TRUE ORDER BY \"createdAt\" LIMIT 1" || true)
           if [ -z "$uid" ]; then
             echo "discordsync-immich-key-provision: FAIL no admin user in Immich DB" >&2
             exit 1
@@ -396,7 +396,7 @@
 
           token=""
           if [ -r "$keyfile" ]; then
-            token=$(sed -n 's/^IMMICH_API_KEY=//p' "$keyfile")
+            token=$(sed -n 's/^IMMICH_API_KEY=//p' "$keyfile" || true)
           fi
 
           if [ -n "$token" ]; then

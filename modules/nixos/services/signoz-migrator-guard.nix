@@ -352,10 +352,10 @@
       checks.signoz-migrator-guard-join-selftest =
         pkgs.runCommand "signoz-migrator-guard-join-selftest"
           {
-            nativeBuildInputs = with pkgs; [
-              gawk
-              coreutils
-              gnugrep
+            nativeBuildInputs = [
+              pkgs.gawk
+              pkgs.coreutils
+              pkgs.gnugrep
             ];
           }
           ''
@@ -386,7 +386,7 @@
             printf 'signoz_traces\t1001\tfinished\n' >> "$applied"
             printf 'signoz_traces\t1002\tfinished\n' >> "$applied"
             printf 'signoz_traces\t1\tfinished\n' >> "$applied"
-            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied")
+            rows=$(gawk -F '\t' -v mode=rows -f "$join" "$known" "$applied") # dead-guard-ok: fixture — a gawk failure must abort the selftest, not read as an empty (healthy) row set
             [ -z "$rows" ] || {
               echo "FAIL healthy state emitted rows: $rows" >&2
               exit 1
