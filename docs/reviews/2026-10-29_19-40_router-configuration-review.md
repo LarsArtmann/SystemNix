@@ -236,3 +236,96 @@ failover drill: unplug the coax, confirm uplink switches, plug back in.
 
 **Stage 4 — hygiene**
 Identify `192.168.1.16` · resolve the Pixel-6 `.29` record · add the router to the monitoring/todo docs.
+
+---
+
+## Part 4 — Option 1 end-state spec (4G CPE as primary router, ISP box as modem + link)
+
+Chosen 2026-10-29. **Nothing in this part has been applied.**
+
+### 4.1 The consequence that shapes everything
+
+A router cannot have its WAN and its LAN in the same subnet. Today **both** boxes sit in `192.168.1.0/24` and the Compal
+is the household AP. Once the CPE is the router, the Compal's LAN is by definition the CPE's *upstream* segment — so the
+Compal's Wi-Fi would land on the modem side: no LAN services (`*.home.lan`), and no 4G failover when the cable dies.
+That is exactly the goal, so **the Compal's radios must be turned off** and the household Wi-Fi must be served from the
+CPE (2.4 GHz only) or from a new 5 GHz AP plugged into the CPE's LAN.
+
+| Wi-Fi choice | Consequence |
+| --- | --- |
+| **A** — CPE 2.4 GHz only (free) | Whole house fails over, but every client drops to a single 2.4 GHz radio on a budget SoC |
+| **B** — add a 5 GHz OpenWrt AP on the CPE's LAN port (recommended) | Whole house fails over and keeps 5 GHz; ~30–60 € hardware, one extra device to document |
+| **C** — leave the Compal's 5 GHz on | Fast internet for 5 GHz clients, but they lose LAN services and never fail over. Not recommended — it splits the house into two networks |
+
+### 4.2 Address plan
+
+| Segment | Device | Address | Notes |
+| --- | --- | --- | --- |
+| Modem ↔ router link | Compal DMC7002KLG LAN | `192.168.0.1/24`, DHCP **on**, pool `.2` limit `1`, DNS irrelevant | Only the CPE's WAN port lives here |
+| Modem ↔ router link | CPE WAN (wired) | DHCP client → `192.168.0.2` | Primary uplink |
+| Modem ↔ router link | CPE 4G | LTE | Automatic backup, preferred-source = wired |
+| House LAN | CPE LAN / Wi-Fi | **`192.168.1.1/24`** | Unchanged from the repo's `networking.local.gateway` |
+| House LAN | CPE DHCP | **start `.10`, limit `90`** ⇒ `.10–.99` | Keeps `.53/.100/.150/.151/.200` free |
+| House LAN | CPE DHCP DNS | **`192.168.1.150`, `192.168.1.151`** | Retires Part 1 findings 3 + 4 |
+| House LAN | Compal Wi-Fi | **off** | Consequence 4.1 |
+| House LAN | evo-x2 / rpi3 | static `.150` / `.151` | No repo change needed — gateway stays `.1` |
+| House LAN | CPE static route | `192.168.0.0/24 via 192.168.0.1` | Keeps the modem's admin UI reachable from the LAN |
+
+No DMZ and no port forwards on either box: inbound is not needed (services ride Tailscale/Netbird).
+
+### 4.3 Steps
+
+**Stage A — preparation, no outage**
+
+1. Compal: SYSTEM → Backup, download the encrypted config (store off-repo; treat as sensitive).
+2. CPE: photograph the label → SoC, RAM, LAN port count. Needed for the throughput go/no-go and to know whether an
+   upstream OpenWrt image could ever replace this firmware.
+3. CPE Stage-0 hardening: Remote Web off, delete the 7 forwards, telnetd off, admin password changed.
+4. *Verify:* `/admin/network/remoteweb` toggle off; forwards table empty; `bash -c 'exec 3<>/dev/tcp/192.168.1.254/23'` refused.
+
+**Stage B — build the future LAN while the old one still runs, no outage**
+
+5. CPE: DHCP server **off** (`ignore=1`) — this alone stops today's two-DHCP race.
+6. CPE: DHCP DNS → `.150`/`.151`; DHCP range `.10`/`90` (stored for later).
+7. CPE: Wi-Fi per choice A/B/C (SSID/PSK changes need SSH/uci — the LuCI wireless page is broken).
+8. *Verify:* no second DHCP server on the segment; CPE still reachable at `.254`.
+
+**Stage C — cutover (~10 min outage, single sit-down)**
+
+9. Compal: DHCP off for now; LAN IP → `192.168.0.1` (this reboots the gateway, ~2 min).
+10. Recable: Compal LAN1 → CPE **WAN** port; CPE **LAN** port → the house switch that evo-x2 sits on.
+11. CPE: switch the WAN/LAN port to **WAN mode**; LAN → `192.168.1.1`; enable DHCP `.10–.99` with DNS `.150`/`.151`.
+12. Compal: re-enable DHCP with pool `.2` limit `1`; turn both radios off.
+13. CPE: add the static route from 4.2.
+14. *Verify:* `ping 192.168.1.1`; `getent hosts home.lan`; `nix flake check --no-build` (narinfo path proves DNS+TCP);
+    a fresh DHCP client gets `.10–.99` with DNS `.150`; `nmcli dev wifi list` shows only the CPE SSID; gatus green.
+15. **Throughput gate:** `iperf3` through the CPE (evo-x2 ↔ another LAN host). If wired NAT is materially below the cable
+    plan, roll back to the Compal (`192.168.1.1`) — the rollback is steps 9–12 in reverse with the CPE back in LAN mode.
+
+**Stage D — 4G backup (only after C succeeds)**
+
+16. SIM inserted (currently "SIM Detached"), APN set, verify registration and a data path.
+17. TTL override on if the carrier shapes tethering (IPv4 TTL 65 / IPv6 HL 64 is the usual evasion value — check the
+    tariff first; some carriers police it).
+18. Watchcat: period 6 h is a self-reboot generator if both uplinks are down. Decide: keep (last-resort) or raise.
+19. Failover drill: unplug the coax → confirm the LAN moves to 4G and comes back when the coax returns. Record the
+    failover and failback times.
+
+**Stage E — hygiene**
+
+20. Identify `192.168.1.16`; reconcile the `.29` Pixel-6 record (Part 1.5).
+21. Document the new topology in `docs/services/` + the todo domain library; add the CPE to monitoring.
+
+### 4.4 Repo impact
+
+- **No NixOS change required**: `networking.local.gateway = 192.168.1.1` and `scripts/wifi-failover-watch.sh`'s pinned
+  `default via 192.168.1.1 dev eno1` both keep working, because the CPE takes `.1`.
+- `services.dns-blocker.devices` still lists `lan-router` at `192.168.1.1` — that entry now describes the CPE; it should
+  be renamed (and the Compal's `192.168.0.1` added) in the same change that documents the new topology.
+- `docs/todo/services.md`'s `dhcp_lease_file` note ("no DHCP server here") stays true for evo-x2, but the *LAN* now has a
+  DHCP server whose leases live on the CPE — worth a runbook line.
+
+### 4.5 Rollback
+
+Every stage is reversible without touching the repo: Compal back to `192.168.1.1` + DHCP `.10/244` + radios on, CPE back
+to LAN mode with DHCP off. The server's static config never changes, so no NixOS rebuild is ever part of a rollback.
