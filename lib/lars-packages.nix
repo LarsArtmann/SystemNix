@@ -262,7 +262,7 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-10-29 float: journal@50b4941 bakes R6w7rVD9… but its
   # module graph fetches OzU6YCvB… (first-hand,
   # ~/.cache/lockfloat/float-proof-20261029-180630.log). Mirrored in
-  # journal-serve.nix's package default — edit BOTH. Drop when upstream
+  # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE. Drop when upstream
   # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
   journal =
     flakePkgShim inputs.journal "default"
