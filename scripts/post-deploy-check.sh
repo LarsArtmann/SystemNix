@@ -2439,6 +2439,66 @@ else
   fi
 fi
 
+# --- §24 every ENABLED unit renders a start command ---
+# The 2026-10-28 dns-blocker defect (`systemd = { …resolver units… } //
+# (lib.mkIf cfg.allowlistBackup.enable { … })`) left an ENABLED
+# dnsblockd.service with NO ExecStart on evo-x2 and no unit at all on
+# rpi3-dns, while eval and every build stayed green, because `//` is shallow
+# and a mkIf operand makes the whole attribute conditional. Nothing in the
+# smoke battery read the RENDERED unit files, so the only tripwire was a
+# parallel session's readiness gate. This section is that tripwire: it walks
+# the generation's own wants graph (the is-enabled truth, not file presence —
+# NixOS writes unit files for disabled modules too) and requires an
+# ExecStart= in every enabled service unit.
+#
+# Deliberate exceptions: a unit whose file resolves to /dev/null is MASKED
+# (wireplumber / network-local-commands under niri) and is counted, not
+# failed. Description= is deliberately NOT asserted: six enabled units from
+# upstream modules carry none (atticd, mandb, prometheus-node-exporter,
+# taskchampion-sync-server, netbird-evox2-login, linger-users), so asserting
+# it would fire on every deploy for reasons unrelated to this class.
+echo ""
+echo "=== §24 enabled units render a start command ==="
+_un_root="/run/current-system/etc/systemd/system"
+if [ ! -d "$_un_root" ]; then
+  report_skip "unit-shape - no rendered systemd tree at $_un_root"
+else
+  _un_enabled=0
+  _un_masked=0
+  _un_broken=""
+  # Both wants-dir shapes: target-owned (*.wants/x.service) and unit-owned
+  # (x.service.wants/y.service). Env override UNIT_SHAPE_ROOT drives a fixture.
+  while IFS= read -r _un_link; do
+    _un_name="$(basename "$_un_link")"
+    case "$_un_name" in
+    *.service) ;;
+    *) continue ;;
+    esac
+    _un_file="$(readlink -f "$_un_link" 2>/dev/null || true)"
+    if [ -z "$_un_file" ] || [ ! -r "$_un_file" ]; then
+      _un_broken="$_un_broken ${_un_name}(dangling)"
+      continue
+    fi
+    if [ "$_un_file" = "/dev/null" ]; then
+      _un_masked=$((_un_masked + 1))
+      continue
+    fi
+    _un_enabled=$((_un_enabled + 1))
+    grep -q '^ExecStart=' "$_un_file" || _un_broken="$_un_broken ${_un_name}"
+  done <<EOF_UNITS
+$(ls "${UNIT_SHAPE_ROOT:-$_un_root}"/*.wants/*.service "${UNIT_SHAPE_ROOT:-$_un_root}"/*/*.wants/*.service 2>/dev/null || true)
+EOF_UNITS
+
+  if [ -n "$_un_broken" ]; then
+    report_fail "unit-shape - enabled unit(s) with no start command:${_un_broken} (a shallow // merge that swallowed the unconditional half renders like this)"
+  elif [ "$_un_enabled" -eq 0 ]; then
+    report_skip "unit-shape - no enabled service units found under $_un_root (enumeration broken?)"
+  else
+    report_pass "unit-shape - $_un_enabled enabled service unit(s) all render ExecStart ($_un_masked masked)"
+  fi
+  unset _un_root _un_link _un_name _un_file _un_broken _un_enabled _un_masked
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
