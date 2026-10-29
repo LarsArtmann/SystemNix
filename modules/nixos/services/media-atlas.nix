@@ -19,12 +19,15 @@
 #      discordsync-immich-key-provision way: DB-level INSERT, idempotent
 #      by key name, file-first reconcile, secret only ever in a 0400 file
 #      under the state dir.
-#   4. Nightly refresh timers (hub.pollEmbeddings / hub.umapNightly, the
-#      v0.1 follow-up lifting the repo's docs/deploy/umap-nightly-timer.nix
-#      shape onto the real flake outputs): smart_search embeddings diff
-#      poll (02:00) + UMAP refit (03:00, IO/CPU-quiet knobs verbatim from
-#      the reviewed shape). The NSFW lane-join timer stays OUT until the
-#      hub's joinLanes MapSet-strip bug is fixed (media-atlas TODO 10).
+#   4. Nightly refresh timers (hub.pollEmbeddings / hub.umapNightly /
+#      hub.laneJoin, the v0.1 follow-up lifting the repo's
+#      docs/deploy/umap-nightly-timer.nix shape onto the real flake
+#      outputs): smart_search embeddings diff poll (02:00) + UMAP refit
+#      (03:00, IO/CPU-quiet knobs verbatim from the reviewed shape) + NSFW
+#      lane join (04:00, landed 2026-10-30 once the hub's joinLanes
+#      merge-fold contract was pinned by
+#      TestJoinLanes_LaneJoinPreservesEmbeddingAndCoords — the earlier
+#      MapSet-strip concern is closed upstream of this module).
 # Deploy: owner-gated (calm window); the flip card in the repo's
 # docs/deploy/flip-card.md seeds the production journal first.
 { inputs, ... }:
@@ -336,6 +339,16 @@
             type = lib.types.str;
             default = "*-*-* 03:00";
             description = "OnCalendar for the UMAP refit (03:00 + RandomizedDelaySec avoids the other nightly windows on evo-x2).";
+          };
+        };
+
+        hub.laneJoin = {
+          enable = lib.mkEnableOption "the nightly NSFW verdict lane join (atlas pull --with-lanes: metadata walk + Immich tag walk, landed once the hub's lane-join merge-fold contract was pinned)";
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 04:00";
+            description = "OnCalendar for the lane join (after the UMAP window; own failure domain — it never wants the poll or the refit).";
           };
         };
       };
