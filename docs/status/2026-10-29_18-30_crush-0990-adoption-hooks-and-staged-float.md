@@ -55,3 +55,31 @@ Fix belongs upstream-first (vendorHash bumps in those repos, then re-float + flo
 - docs/todo/pipeline.md `[blocked:deploy]`: finish-line row (float crush-config + deploy + §4 checklist) — done at authoring time.
 - Roadmap (not filed): persistent `crush serve` tq-agent-pool architecture (SIGHUP reload + graceful shutdown now make it viable); `CRUSH_PERMISSIONS_PIPED=1` for a crush-debug host UI.
 - Upstream idea worth filing later: PostCompact/SessionStart are observe-only — context injection on compaction events would materially help long sessions (the 3h twin-executor class); blocked by contract, not by us.
+
+## Appendix — 2026-10-29 19:4x annotation (docs-health ANNOTATE mode; body untouched)
+
+1. **§3's root inventory was incomplete, and "transient" was partly wrong.** The
+   18:06 proof had a FOURTH root this report missed: media-atlas key-provision
+   shellcheck SC2034 (dead var), fixed in 4881815bf by the parallel session.
+   And journal@50b4941 was NOT a one-off proxy flake — the parallel session's
+   two deterministic proof runs got the same FOD mismatch and shimmed it
+   (three consumption sites; see their report
+   `docs/status/2026-10-29_18-56_lock-float-wave-unblock-cv-crm-journal-media-atlas.md`
+   §a.4/§b.2). The standalone-green claim here likely rode their on-disk
+   shims (edit window overlap) — treat that claim as superseded.
+2. **§3's "fix belongs upstream-first" was overtaken by events:** consumer-side
+   vendorHash shims (cv/crm/journal) unblocked the deploy without upstream
+   pushes; the upstream paste cycle stays queued `[blocked:push]`
+   (docs/todo/upstream.md) — cv is on its 11th shim generation.
+3. **The nur float moved again** after this report (23e5769 → 96c8543, NUR
+   cadence) — still carrying crush 0.99.0 at deploy time; post-deploy
+   `crush --version` is the authoritative check (§4.1).
+4. **Deploy executed** 2026-10-29 ~19:41 CET by the executor session of the
+   18:42 plan (owner full-execution directive; DEPLOY_FORCE_PRESSURE=1 under
+   the diagnosed phantom-PSI signature). §4 checklist outcomes: executor
+   report (same session).
+5. **The hooks did NOT ride this deploy:** the lock's crush-config rev is
+   4468af5, an ancestor of the hook commits (822f897/fcf4516, unpushed —
+   agents never push). Hooks activate after the owner pushes crush-config and
+   a follow-up float+deploy lands. §4.4 (hook-fire checks) is OWNER-GATED
+   until then, not forgotten.
