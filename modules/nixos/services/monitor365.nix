@@ -203,7 +203,14 @@
             echo "monitor365-ensure-sso-identity: created SSO admin ${ssoAdminEmail}"
           else
             case "$OUT" in
-              *"already exists"*)
+              # Duplicate-email rejection comes in TWO upstream wordings —
+              # the CLI's friendly one and the DuckDB unique-constraint
+              # error (the 2026-10-29 01:32 start-limit outage: the
+              # constraint form has NO "already exists" substring, so the
+              # missing pattern exit-1'd the ExecStartPre on every start
+              # after the first heal and the unit burned its start budget).
+              # BOTH mean the identity is present = success.
+              *"already exists"*|*"violates unique constraint"*)
                 echo "monitor365-ensure-sso-identity: SSO admin ${ssoAdminEmail} already exists"
                 ;;
               *"No tenants found"*)
