@@ -459,6 +459,7 @@
     # same rev via the github remote; narHash verified identical.
     go-paperless = {
       url = "github:LarsArtmann/go-paperless";
+      flake = false;
     };
 
     # index — project documentation indexer; the docs-archive-stats
