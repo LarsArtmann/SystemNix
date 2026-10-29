@@ -28,7 +28,64 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+# scan_mkif_merge <file> <rel> — the BROADER sibling of the serviceConfig
+# rule: any `ATTR = <expr> // <expr>` whose operands mention lib.mkIf.
+#
+# `//` is a SHALLOW attrset merge, and lib.mkIf returns a conditional
+# attrset. Composing them makes the module system treat the ENTIRE
+# attribute value as conditional, so the unconditional half silently
+# disappears whenever the condition is false — and eval stays green while
+# the rendered unit loses its ExecStart (2026-10-28 dns-blocker.nix:
+# `systemd = { … } // (lib.mkIf cfg.allowlistBackup.enable { … })` wiped
+# every dnsblockd unit on evo-x2, and the whole unit on rpi3-dns, with no
+# eval error anywhere). The sanctioned form is
+# `ATTR = lib.mkMerge [ { … } (lib.mkIf cond { … }) ];`.
+#
+# Only `//` + `mkIf` is flagged; a plain `//` (priority-clobbering) is the
+# serviceConfig rule's job, and an mkMerge buffer may legitimately hold an
+# mkIf fragment.
+scan_mkif_merge() {
+  local f="$1" rel="$2"
+  awk -v rel="$rel" '
+    function report(nr, text,   check) {
+      check = text
+      gsub(/:\/\//, ":", check)
+      if (check ~ /\/\// && check ~ /mkIf/ && check !~ /mkMerge/) {
+        printf "FAIL [%s]: mkIf inside a shallow // merge (line %d — the whole attribute becomes conditional and the other operand is silently dropped when false; use lib.mkMerge [ … (lib.mkIf …) ]):\n", rel, nr
+        print "  " text
+      }
+    }
+    /^[[:space:]]*#/ { next }
+    {
+      if (collect) {
+        buf = buf "\n" $0
+        if ($0 ~ /;/) {
+          report(startnr, buf)
+          collect = 0
+        } else if (NR - startnr >= 12) {
+          report(startnr, buf)
+          collect = 0
+        }
+        next
+      }
+      if ($0 ~ /[A-Za-z_][A-Za-z0-9_.-]*[[:space:]]*=/ && $0 !~ /;/) {
+        collect = 1
+        startnr = NR
+        buf = $0
+        next
+      }
+      report(NR, $0)
+    }
+  ' "$f"
+}
+
 scan_file() {
+  local f="$1" rel="$2"
+  scan_serviceconfig_merge "$f" "$rel"
+  scan_mkif_merge "$f" "$rel"
+}
+
+scan_serviceconfig_merge() {
   local f="$1" rel="$2"
   # One awk pass; comment lines skipped FIRST so reported line numbers are
   # true FNR. `://` URL schemes are stripped before the `//` operator check.
@@ -156,9 +213,48 @@ EOF
     echo "$out"
     rc=1
   fi
+
+  # mkIf-inside-`//` legs: the 2026-10-28 dns-blocker shape that wiped every
+  # dnsblockd unit while eval stayed green.
+  cat >"$tmp/evil-mkif.nix" <<'EOF'
+systemd = { after = [ "a.service" ]; } // (lib.mkIf cfg.on { requires = [ "b" ]; });
+EOF
+  cat >"$tmp/evil-mkif-continuation.nix" <<'EOF'
+systemd =
+  { after = [ "a.service" ]; }
+  // (lib.mkIf cfg.on { requires = [ "b" ]; });
+EOF
+  cat >"$tmp/good-mkif.nix" <<'EOF'
+# sanctioned: mkIf as an mkMerge fragment, no // anywhere
+systemd = lib.mkMerge [
+  { after = [ "a.service" ]; }
+  (lib.mkIf cfg.on { requires = [ "b" ]; })
+];
+# a plain shallow merge without mkIf is the other rule's business
+extraConfig = a // b;
+EOF
+
+  out="$(scan_mkif_merge "$tmp/evil-mkif.nix" "evil-mkif.nix")"
+  if [ -z "$out" ] || ! echo "$out" | grep -q 'mkIf inside a shallow // merge'; then
+    echo "SELFTEST FAIL: scanner did not flag mkIf inside a single-line // merge:"
+    echo "$out"
+    rc=1
+  fi
+  out="$(scan_mkif_merge "$tmp/evil-mkif-continuation.nix" "evil-mkif-continuation.nix")"
+  if [ -z "$out" ] || ! echo "$out" | grep -q 'mkIf inside a shallow // merge'; then
+    echo "SELFTEST FAIL: scanner did not flag mkIf inside a continuation-line // merge:"
+    echo "$out"
+    rc=1
+  fi
+  out="$(scan_mkif_merge "$tmp/good-mkif.nix" "good-mkif.nix")"
+  if [ -n "$out" ]; then
+    echo "SELFTEST FAIL: scanner flagged the sanctioned mkMerge/mkIf form or a plain non-mkIf merge:"
+    echo "$out"
+    rc=1
+  fi
   rm -rf "$tmp"
   if [ "$rc" -eq 0 ]; then
-    echo "SELFTEST PASS: detects single-line + continuation shallow merges, ignores mkMerge (both shapes) and URLs"
+    echo "SELFTEST PASS: detects single-line + continuation shallow merges (serviceConfig and mkIf-inside-//), ignores mkMerge (all shapes) and URLs"
   fi
   return "$rc"
 }
