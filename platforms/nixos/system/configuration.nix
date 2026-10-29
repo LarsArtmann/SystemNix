@@ -535,6 +535,13 @@ in
         # suffices (company-master-data precedent). Phase 5 attaches the
         # push mirror on the next deploy.
         "media-atlas"
+        # Native-since-inception (2026-10-29): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # No workflow files in the repo, so the repo-scoped sync PAT
+        # suffices (media-atlas precedent). Phase 5 attaches the push
+        # mirror on the next deploy.
+        "pingen-spike"
       ];
       immich.enable = true;
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
