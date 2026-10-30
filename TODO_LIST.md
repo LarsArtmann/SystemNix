@@ -1040,6 +1040,7 @@
 
 ### desktop
 
+- [ ] [ready] **Package nvtop master (71094a9) locally — nixpkgs 3.3.2 shows vram-only per-process GPU memory on this Strix Halo APU (llama 1.8 MiB vs real 782 MiB, GPU% 0 for all)** — pkgs/ fetchFromGitHub override + platforms/common swap, needs one deploy; drop when nixpkgs ships ≥3.4.0 → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-10-30_03-24_amdgpu-telemetry-upstream-research.md §a.3)
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Stop niri.service Restart=on-failure from resurrecting an oomd-killed niri as a headless zombie during session teardown (var-based condition passes mid-teardown; SDDM-lockout class, live 2026-10-17)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
