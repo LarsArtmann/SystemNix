@@ -101,6 +101,10 @@ verdict is the proof, not the deploy exit code. Verify by hand with:
 openssl x509 -in /run/secrets/dnsblockd_ca_cert -noout -fingerprint -sha256
 openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt \
   | openssl pkcs7 -print_certs -noout | grep -A1 'CN=dnsblockd-CA'
+# duplicate-counter (buildcatrust double-emission, resolved 2026-10-30):
+# count the CA's base64 body in the RAW bundle — 2 = the plain + TRUSTED
+# pair, >2 or a fingerprint mismatch = a real second writer:
+grep -c 'MIIFSzCCAzOgAwIBAgIUDqspDh2XW' /etc/ssl/certs/ca-certificates.crt
 ```
 
 Fixture harness: `bash scripts/test-ca-parity-smoke.sh` (8 legs, real
