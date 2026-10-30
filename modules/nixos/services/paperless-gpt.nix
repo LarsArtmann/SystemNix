@@ -440,14 +440,12 @@
             "paperless-web.service"
             "paperless-gpt-token.service"
           ]
-          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ]
-          ++ lib.optionals (cfg.llmUpstream == "llama-chat") [ "llama-chat.service" ];
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           wants = [
             "network-online.target"
             "paperless-web.service"
           ]
-          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ]
-          ++ lib.optionals (cfg.llmUpstream == "llama-chat") [ "llama-chat.service" ];
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
           requires = [ "paperless-gpt-token.service" ];
           wantedBy = [ "multi-user.target" ];
           inherit onFailure;
