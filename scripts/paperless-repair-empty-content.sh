@@ -41,7 +41,7 @@ BASE="http://127.0.0.1:${PORT}"
 DATA_DIR="${PAPERLESS_DATA_DIR:-/mnt/pool/services/paperless}"
 MANAGE="${PAPERLESS_MANAGE:-/run/current-system/sw/bin/paperless-manage}"
 GS_BIN="${PAPERLESS_GS_BIN:-$(command -v gs || true)}"
-OCR_BIN="${PAPERLESS_OCRMYPDF_BIN:-$(command -v ocrmypdf || true)}"
+OCR_BIN=""
 
 APPLY=0
 LIMIT=0
@@ -88,23 +88,22 @@ WORK_ROOT="${XDG_CACHE_HOME:-/root/.cache}/paperless-repair"
 mkdir -p "$WORK_ROOT"
 WORK="$(mktemp -d "${WORK_ROOT}/run.XXXXXX")"
 TOKEN_FILE="$WORK/token"
-trap 'rm -rf "$WORK"' EXIT
+# Per-document scratch MUST be writable by the paperless user: ocrmypdf
+# raises OutputFileAccessError otherwise (live 2026-10-30). The dataDir is
+# paperless-owned, so scratch lives there and is removed on exit.
+PWORK="${DATA_DIR}/.repair-scratch"
+mkdir -p "$PWORK"
+chown paperless:paperless "$PWORK" 2>/dev/null || true
+chmod 0700 "$PWORK" 2>/dev/null || true
+trap 'rm -rf "$WORK" "$PWORK"' EXIT
 
 # --- locate the tools paperless itself uses -------------------------------
-# The OCR result must come from the same tesseract language set paperless
-# has; the system PATH usually lacks ocrmypdf, so fall back to the python
-# environment the paperless package exposes.
-find_ocrmypdf() {
-  if [ -n "$OCR_BIN" ] && [ -x "$OCR_BIN" ]; then return 0; fi
-  local cand
-  cand="$(find /nix/store -maxdepth 3 -path '*-python*o*ocrmypdf-*/bin/ocrmypdf' -print 2>/dev/null | head -n1)"
-  if [ -n "$cand" ] && [ -x "$cand" ]; then
-    OCR_BIN="$cand"
-    return 0
-  fi
-  echo "could not locate ocrmypdf (set PAPERLESS_OCRMYPDF_BIN)" >&2
-  return 1
-}
+# OCR must run through PAPERLESS's OWN ocrmypdf + tesseract language set.
+# paperless calls ocrmypdf as a library inside its python env, so the CLI in
+# /nix/store is a DIFFERENT build with a different tessdata set (proven
+# 2026-10-29: the standalone CLI rejected `-l pol` while the paperless unit
+# now ships pol). `paperless-manage shell` gives us exactly paperless's
+# interpreter, settings and PATH, so the helper below calls ocrmypdf in it.
 find_gs() {
   if [ -n "$GS_BIN" ] && [ -x "$GS_BIN" ]; then return 0; fi
   local cand
@@ -117,8 +116,37 @@ find_gs() {
   return 1
 }
 find_gs
-find_ocrmypdf
-OCR_LANG="${PAPERLESS_OCR_LANGUAGE:-deu+eng}"
+
+# Runs inside paperless's own interpreter: settings.OCR_LANGUAGE is the
+# LIVE language set, so a future language change needs no edit here.
+OCR_HELPER="$WORK/ocr_helper.py"
+cat >"$OCR_HELPER" <<'PY'
+import os
+
+import ocrmypdf
+from django.conf import settings
+
+ocrmypdf.ocr(
+    os.environ["RP_IN"],
+    os.environ["RP_OUT"],
+    language=settings.OCR_LANGUAGE,
+    output_type="pdf",
+    optimize=0,
+    force_ocr=True,
+    progress_bar=False,
+)
+print("RP_OCR_OK")
+PY
+
+ocr_pdf() { # ocr_pdf <in> <out> -> 0 on success
+  local in="$1" out="$2" d
+  # The paperless user must be able to read the input and write the output.
+  d="$(dirname "$out")"
+  chmod 0755 "$d" 2>/dev/null || true
+  chmod 0644 "$in" 2>/dev/null || true
+  runuser -u paperless -- env RP_IN="$in" RP_OUT="$out" \
+    "$MANAGE" shell <"$OCR_HELPER" 2>&1 | grep -q RP_OCR_OK
+}
 
 # --- token -----------------------------------------------------------------
 # drf_create_token as the paperless OS user (peer-auth PG); the token lives
@@ -168,7 +196,7 @@ for d in qs:
     ]))
 PY
 runuser -u paperless -- "$MANAGE" shell <"$LIST_PY" 2>/dev/null |
-  grep -E '^[0-9]+\t' >"$WORK/candidates.tsv" || true
+  grep -E '^[0-9]+' >"$WORK/candidates.tsv" || true
 
 if [ -n "$DOC_IDS" ]; then
   : >"$WORK/selected.tsv"
@@ -180,11 +208,12 @@ fi
 
 total=$(wc -l <"$WORK/candidates.tsv" | tr -d ' ')
 echo "paperless-repair: ${total} document(s) with empty content"
-echo "paperless-repair: mode=$([ "$APPLY" -eq 1 ] && echo APPLY || echo DRY-RUN) limit=${LIMIT:-none} min_chars=$MIN_CHARS ocr_lang=$OCR_LANG"
+echo "paperless-repair: mode=$([ "$APPLY" -eq 1 ] && echo APPLY || echo DRY-RUN) limit=${LIMIT:-none} min_chars=$MIN_CHARS ocr=paperless-env"
 echo "paperless-repair: gs=$GS_BIN"
-echo "paperless-repair: ocrmypdf=$OCR_BIN"
+echo "paperless-repair: ocr=paperless-manage shell (ocrmypdf library, settings.OCR_LANGUAGE)"
 
 processed=0
+attempted=0
 repaired=0
 failed=0
 skipped_enc=0
@@ -193,7 +222,7 @@ skipped_img=0
 
 while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
   [ -n "$id" ] || continue
-  if [ "$LIMIT" -gt 0 ] && [ "$processed" -ge "$LIMIT" ]; then
+  if [ "$LIMIT" -gt 0 ] && [ "$attempted" -ge "$LIMIT" ]; then
     echo "paperless-repair: limit reached (${LIMIT})"
     break
   fi
@@ -213,8 +242,10 @@ while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
     continue
   fi
 
-  w="$WORK/$id"
+  w="$PWORK/$id"
+  rm -rf "$w"
   mkdir -p "$w"
+  chown paperless:paperless "$w" 2>/dev/null || true
   cp "$src" "$w/orig.pdf"
 
   # Password-protected: no password here, and guessing is not our business.
@@ -224,6 +255,7 @@ while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
     continue
   fi
 
+  attempted=$((attempted + 1))
   sigs=$(pdfsig "$w/orig.pdf" 2>/dev/null | grep -c "Signature #" || true)
   "$GS_BIN" -q -o "$w/clean.pdf" -sDEVICE=pdfwrite "$w/orig.pdf" >/dev/null 2>&1 || {
     echo "FAIL id=$id ghostscript rewrite failed" >&2
@@ -231,9 +263,8 @@ while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
     continue
   }
 
-  if ! "$OCR_BIN" -f -l "$OCR_LANG" --output-type pdf --optimize 0 \
-    "$w/clean.pdf" "$w/ocr.pdf" >"$w/ocr.log" 2>&1; then
-    echo "FAIL id=$id ocrmypdf failed: $(tail -n1 "$w/ocr.log")" >&2
+  if ! ocr_pdf "$w/clean.pdf" "$w/ocr.pdf" >/dev/null 2>&1; then
+    echo "FAIL id=$id ocrmypdf failed" >&2
     failed=$((failed + 1))
     continue
   fi
@@ -318,5 +349,5 @@ while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
   rm -rf "$w"
 done <"$WORK/candidates.tsv"
 
-echo "paperless-repair: done - considered=$processed repaired=$repaired failed=$failed skipped_encrypted=$skipped_enc skipped_no_text=$skipped_notext skipped_images=$skipped_img"
+echo "paperless-repair: done - considered=$processed attempted=$attempted repaired=$repaired failed=$failed skipped_encrypted=$skipped_enc skipped_no_text=$skipped_notext skipped_images=$skipped_img"
 [ "$failed" -eq 0 ]
