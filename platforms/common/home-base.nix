@@ -21,6 +21,7 @@ in
     ./programs/ssh-config.nix
     ./programs/starship.nix
     ./programs/activitywatch.nix
+    ./programs/push-stall-watch.nix
     ./programs/tmux.nix
     ./programs/git.nix
     ./programs/jujutsu.nix
