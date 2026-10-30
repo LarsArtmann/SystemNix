@@ -50,9 +50,10 @@
       paperlessCfg = config.services.paperless;
       paperlessPort = paperlessCfg.port;
       fastflowlmEnabled = config.services.fastflowlm.enable or false;
+      llamaChatEnabled = config.services.llama-chat.enable or false;
       # ai-meter metering proxy (2026-10-16): when enabled, LLM traffic
       # routes through the loopback proxy (attribution + token metering;
-      # the upstream is still FastFlowLM — only the base URL changes). The
+      # only the base URL changes, the upstream follows llmUpstream). The
       # proxy key arrives via the runtime-minted env file; it OVERRIDES
       # the dummy OPENAI_API_KEY below (EnvironmentFile beats Environment).
       aiMeterEnabled = config.services.ai-meter.enable or false;
@@ -79,18 +80,33 @@
         LISTEN_INTERFACE = "127.0.0.1:${toString cfg.port}";
         GIN_MODE = "release";
         LOG_LEVEL = cfg.logLevel;
-        # LLM: FastFlowLM (OpenAI-compatible, ignores Authorization) —
-        # direct, or through ai-meter when the metering proxy is enabled.
+        # LLM: OpenAI-compatible local server, directly or through ai-meter
+        # when the metering proxy is enabled. Upstream default is llama-chat
+        # (see the llmUpstream option for the FastFlowLM evidence).
         LLM_PROVIDER = "openai";
-        LLM_MODEL = config.services.fastflowlm.model;
+        LLM_MODEL =
+          if cfg.llmUpstream == "llama-chat" then
+            (config.services.llama-chat.alias or "qwen3.6-35b-a3b-aggressive")
+          else
+            config.services.fastflowlm.model;
         OPENAI_BASE_URL =
           if aiMeterEnabled then
-            "http://127.0.0.1:${toString ports.ai-meter}/v1/fastflowlm"
+            "http://127.0.0.1:${toString ports.ai-meter}/v1/${cfg.llmUpstream}"
+          else if cfg.llmUpstream == "llama-chat" then
+            "http://127.0.0.1:${toString (config.services.llama-chat.port or ports.llama-chat)}/v1"
           else
             "http://127.0.0.1:${toString config.services.fastflowlm.port}/v1";
-        OPENAI_API_KEY = "fastflowlm-local-no-auth";
+        OPENAI_API_KEY = "local-no-auth";
+        # Prompt budget. Upstream defaults TOKEN_LIMIT=0 (unbounded), which
+        # let a single document plus the 235-name correspondent list produce
+        # prompts far past the model's window. 6000 leaves room for the
+        # templates and the vocabulary lists inside a 32k context, and keeps
+        # per-call cost bounded (six calls per document).
+        TOKEN_LIMIT = toString cfg.tokenLimit;
+        CORRESPONDENT_PROMPT_LIMIT = toString cfg.correspondentPromptLimit;
         # Suggestion language pinned to the archive's majority language,
         # matching PAPERLESS_AI_LLM_OUTPUT_LANGUAGE in paperless.nix (A11).
+        # Covers 4 of 5 *.Language template slots and every tag/type prompt.
         LLM_LANGUAGE = "German";
         # Tag-gating: documents enter processing ONLY via the auto tag.
         # Nothing happens to untagged documents. AUTO_TAG_COMPLETE marks
@@ -219,6 +235,51 @@
           description = "Tag applied when a document exceeds the retry cap.";
         };
 
+        # --- LLM route (2026-10-29 audit) -------------------------------------
+        # llama-chat is the DEFAULT because FastFlowLM is not usable as the
+        # metadata workhorse: it is a socket-activated NPU server whose
+        # context is small enough that a ~1.5k-token prompt does not error
+        # out, it HANGS (600 s timeout) and then dies with the documented
+        # v1.0.2 heap bug (`double free or corruption (!prev)`, SIGABRT,
+        # live-proven 2026-10-29). Extraction sends six prompts per document
+        # including the whole tag/correspondent/type vocabulary, so it needs
+        # a large-context, always-on server. llama-chat carries 32k and is
+        # the same model paperless-triage already verdicts with (owner
+        # single-endpoint direction, 2026-10-27).
+        llmUpstream = lib.mkOption {
+          type = lib.types.enum [
+            "llama-chat"
+            "fastflowlm"
+          ];
+          default = "llama-chat";
+          description = ''
+            Which local OpenAI-compatible upstream serves the extraction
+            prompts. `llama-chat` (default) is always-on with a 32k window;
+            `fastflowlm` is the NPU server, smaller/faster per token but
+            socket-activated and crash-prone above ~1k prompt tokens.
+          '';
+        };
+
+        tokenLimit = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 6000;
+          description = ''
+            Upstream TOKEN_LIMIT: total prompt budget per call (0 upstream
+            means unbounded). Content is truncated to whatever is left after
+            the template and vocabulary lists.
+          '';
+        };
+
+        correspondentPromptLimit = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 80;
+          description = ''
+            Upstream CORRESPONDENT_PROMPT_LIMIT: how many correspondent names
+            are shown to the model (0 = the whole list). The archive has 235
+            correspondents, whose names alone would consume most of a prompt.
+          '';
+        };
+
         autoTagMaxRetries = lib.mkOption {
           type = lib.types.ints.unsigned;
           default = 3;
@@ -285,8 +346,12 @@
             message = "services.paperless-gpt requires services.paperless.enable: the token mint (paperless-gpt-token) runs drf_create_token against the paperless DB";
           }
           {
-            assertion = fastflowlmEnabled;
-            message = "services.paperless-gpt requires services.fastflowlm.enable: suggestions are served by the local FastFlowLM NPU model";
+            assertion = if cfg.llmUpstream == "llama-chat" then llamaChatEnabled else fastflowlmEnabled;
+            message =
+              if cfg.llmUpstream == "llama-chat" then
+                "services.paperless-gpt with llmUpstream = \"llama-chat\" requires services.llama-chat.enable: extraction prompts are served by the always-on 32k-context chat server"
+              else
+                "services.paperless-gpt with llmUpstream = \"fastflowlm\" requires services.fastflowlm.enable: prompts are served by the NPU model (small context, socket-activated)";
           }
         ];
 
@@ -375,12 +440,14 @@
             "paperless-web.service"
             "paperless-gpt-token.service"
           ]
-          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ]
+          ++ lib.optionals (cfg.llmUpstream == "llama-chat") [ "llama-chat.service" ];
           wants = [
             "network-online.target"
             "paperless-web.service"
           ]
-          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ];
+          ++ lib.optionals aiMeterEnabled [ "ai-meter.service" ]
+          ++ lib.optionals (cfg.llmUpstream == "llama-chat") [ "llama-chat.service" ];
           requires = [ "paperless-gpt-token.service" ];
           wantedBy = [ "multi-user.target" ];
           inherit onFailure;

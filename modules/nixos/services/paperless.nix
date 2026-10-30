@@ -180,6 +180,21 @@ _: {
       ensureFieldsJson = pkgs.writeText "paperless-dashboard-ensure-fields.json" (
         builtins.toJSON dcfg.ensureCustomFields
       );
+      # Document types ensured create-only (2026-10-29 audit): the archive had
+      # THREE types total, so paperless-gpt's document-type prompt could only
+      # ever answer Bill / Bank Receipt / Bank Statement for 1,781 untyped
+      # documents. Types are pure vocabulary, so declaring them is safe.
+      ensureDocTypesJson = pkgs.writeText "paperless-dashboard-ensure-doctypes.json" (
+        builtins.toJSON dcfg.ensureDocumentTypes
+      );
+      # Tag matching hygiene: paperless's classifier trains on every tag whose
+      # matching algorithm is AUTO (=6), and machine/lifecycle tags must never
+      # auto-match (the 2026-09-06 empty-vocabulary incident). A restore can
+      # bring legacy AUTO values back, so this is ENFORCED rather than merely
+      # created: NONE (=0) is written whenever the live value differs.
+      matchingNoneJson = pkgs.writeText "paperless-dashboard-matching-none.json" (
+        builtins.toJSON dcfg.enforceTagMatchingNone
+      );
 
       # Executed via `paperless-manage shell < file`: resolves the single
       # allauth SocialAccount-linked user (the Pocket ID SSO user). Any
@@ -454,6 +469,28 @@ _: {
           description = ''
             Custom fields ensured to exist (created when missing).
             Create-only: data_type of an existing field is never migrated.
+          '';
+        };
+
+        ensureDocumentTypes = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Document-type names ensured to exist (created when missing).
+            Create-only. paperless-gpt can only classify into an EXISTING
+            type, so the extraction vocabulary starts here.
+          '';
+        };
+
+        enforceTagMatchingNone = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Tag names forced to matching_algorithm = NONE (0) whenever their
+            live value differs. Machine/lifecycle tags must never feed the
+            classifier's auto-matching (the 2026-09-06 empty-vocabulary
+            incident); enforcement also heals a restore that brings legacy
+            AUTO values back.
           '';
         };
       };

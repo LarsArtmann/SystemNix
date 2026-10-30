@@ -46,6 +46,27 @@ let
     };
   };
 
+  # Option-only mock of the DEFAULT llmUpstream (llama-chat, 2026-10-29):
+  # the module reads .enable/.alias/.port for its assertion and env
+  # rendering. No chat server runs in the VM — the daemon never calls the
+  # LLM there (no auto-tagged documents exist).
+  llamaChatOptionsMock = { lib, ... }: {
+    options.services.llama-chat = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+      };
+      alias = lib.mkOption {
+        type = lib.types.str;
+        default = "vm-mock-chat";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 8850;
+      };
+    };
+  };
+
   # Option-only mocks copied from test-paperless.nix: the paperless module's
   # registry entry fans its OIDC client into pocket-id-config.provision and
   # reads mail-relay.enable — the option PATHS must exist in this minimal VM.
@@ -115,6 +136,7 @@ in
         # services.catalog entry (ADR-008; loud eval failure if missing).
         (import ../modules/nixos/services/catalog.nix { }).flake.nixosModules.catalog
         fastflowlmOptionsMock
+        llamaChatOptionsMock
         pocketIdOptionsMock
         mailRelayOptionsMock
         ./mock-sops.nix
@@ -128,6 +150,7 @@ in
       sops.secrets.paperless_admin_password = { };
 
       services.fastflowlm.enable = true;
+      services.llama-chat.enable = true;
       services.paperless = {
         enable = true;
         dataDir = lib.mkForce "/var/lib/paperless";
