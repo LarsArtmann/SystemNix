@@ -122,6 +122,7 @@
             "hermes-github-verify"
             "inboxclean-backup-dir"
             "indexer-web-secret-key"
+            "media-atlas-backup-dir"
             "miniflux-backup-dir"
             "miniflux-oidc-setup"
             "paperless-db-backup-dir"
