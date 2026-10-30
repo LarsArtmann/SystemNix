@@ -516,11 +516,14 @@
 
           # --- Nightly refresh timers (v0.1 follow-up, plan L25.1) ---
           # The repo's reviewed shape (docs/deploy/umap-nightly-timer.nix)
-          # lifted onto the real flake outputs. Both timers are idempotent;
-          # failures toast via onFailure (a silently stale map is the exact
-          # failure mode these exist to prevent). The NSFW lane-join timer
-          # deliberately stays OUT until the hub's joinLanes MapSet-strip
-          # bug is fixed (media-atlas TODO 10, open tail 1).
+          # lifted onto the real flake outputs. All three timers are
+          # idempotent; failures toast via onFailure (a silently stale map is
+          # the exact failure mode these exist to prevent). The NSFW
+          # lane-join timer landed 2026-10-30: the hub's joinLanes
+          # MapSet-strip concern closed upstream (merge-fold contract pinned
+          # by TestJoinLanes_LaneJoinPreservesEmbeddingAndCoords), so the
+          # join now runs nightly AFTER the refit — coords and embeddings
+          # written tonight survive tomorrow's join.
 
           # Embeddings diff poll: re-joins smart_search onto the existing
           # inventory through the peer-auth local socket, so the unit MUST
@@ -633,6 +636,48 @@
             };
           };
 
+          # NSFW verdict lane join: `atlas pull --with-lanes` (full walk —
+          # --skip-metadata is rejected by design there: the tag walk needs
+          # the API key from the metadata half). Own failure domain BY
+          # ORDER ONLY: after= the refit so a lane-joined asset's coords
+          # are already in the journal, but NO wants= — a failed refit must
+          # not block the join and vice versa (each toasts independently;
+          # the join is ~6s and idempotent, the refit is the expensive one).
+          systemd.services.media-atlas-lane-join = lib.mkIf (hubCfg.enable && hubCfg.laneJoin.enable) {
+            description = "MediaAtlas NSFW verdict lane join (atlas pull --with-lanes, idempotent)";
+            inherit onFailure;
+            after = lib.optional hubCfg.umapNightly.enable "media-atlas-umap.service";
+            path = [ pkgs.coreutils ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = cfg.user;
+                Group = cfg.user;
+                StateDirectory = stateDirName;
+                TimeoutStartSec = "10min";
+              }
+              (harden { MemoryMax = "512M"; })
+              # BE/6 background like the poll (NOT idle): same
+              # seconds-walk-should-not-stall reasoning as the poll unit.
+              ioTier.background
+              (serviceOneshotDefaults { })
+            ];
+            script = ''
+              set -eu
+              exec ${lib.getExe hubCfg.package} pull --db ${stateDir}/atlas.db --immich-url ${hubCfg.immich.url} --immich-key-file ${stateDir}/immich-key --with-lanes
+            '';
+          };
+
+          systemd.timers.media-atlas-lane-join = lib.mkIf (hubCfg.enable && hubCfg.laneJoin.enable) {
+            description = "Nightly MediaAtlas NSFW verdict lane join";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = hubCfg.laneJoin.calendar;
+              Persistent = true;
+              RandomizedDelaySec = "30m";
+            };
+          };
+
           # Service-integration registry entry: fans out to the Caddy vHost
           # (map.home.lan, PLAIN layer — the hub's own API key is the single
           # auth gate (OQ-5); oauth2-proxy forward-auth would double-gate),
@@ -693,6 +738,10 @@
             {
               assertion = !hubCfg.pollEmbeddings.enable || hubCfg.enable;
               message = "services.media-atlas.hub.pollEmbeddings.enable requires hub.enable (peer-auth media_atlas user + journal path).";
+            }
+            {
+              assertion = !hubCfg.laneJoin.enable || hubCfg.enable;
+              message = "services.media-atlas.hub.laneJoin.enable requires hub.enable (state dir + Immich key file).";
             }
           ];
         }

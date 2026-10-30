@@ -564,11 +564,13 @@ in
         hub.immich.mlModel = "ViT-B-32__openai";
         # Nightly refresh (v0.1 plan L17.5/L25.1): embeddings diff poll at
         # 02:00 + UMAP refit at 03:00 (umap wants+after the poll, so a
-        # missed poll re-runs before the fit). Both idempotent; the NSFW
-        # lane-join timer stays out until the hub's joinLanes fold bug is
-        # fixed upstream.
+        # missed poll re-runs before the fit) + NSFW verdict lane join at
+        # 04:00 (order-only after the refit, own failure domain). All
+        # idempotent; the join landed once the hub's merge-fold contract
+        # was pinned upstream (go-codec v0.3.3 + TestJoinLanes pin).
         hub.pollEmbeddings.enable = true;
         hub.umapNightly.enable = true;
+        hub.laneJoin.enable = true;
       };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,
