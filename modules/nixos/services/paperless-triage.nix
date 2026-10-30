@@ -375,8 +375,17 @@ _: {
           }
 
           # --- candidate fetch -------------------------------------------------
+          # The watermark is a stored ISO timestamp taken from the API, which
+          # may carry a "+01:00" offset. Used RAW in a query string the "+"
+          # decodes to a SPACE and paperless answers
+          # 400 {"added__gt":["Enter a valid date/time."]}, so every sweep
+          # after the first refused ("paperless API failure during setup")
+          # and the gate silently routed nothing (live-proven 2026-10-30: the
+          # stored value was 2026-10-28T18:30:44.755977+01:00). Percent-encode
+          # the offset separator before the request.
+          urlenc_ts() { printf '%s' "$1" | sed 's/+/%2B/g'; }
           page_size=$((TRIAGE_MAX_DOCS * 4))
-          DOCS=$(api GET "/api/documents/?added__gt=''${st_last_added}&ordering=added&page_size=''${page_size}") \
+          DOCS=$(api GET "/api/documents/?added__gt=$(urlenc_ts "''${st_last_added}")&ordering=added&page_size=''${page_size}") \
             || soft_api_refuse "candidate fetch"
           total_fetched=$(printf '%s' "$DOCS" | jq '.results | length')
 
