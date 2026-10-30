@@ -13,7 +13,7 @@
 | Wi-Fi | 2.4 GHz only (vendor `MT7628 AP Driver 4.1.0.0`, `ra0`), no PCIe — 5 GHz is a hardware ceiling. SSID `Europol \| Law enforcement` |
 | Address / mode | `192.168.1.254`, wired port in **LAN mode** (no WAN interface exists) |
 | MTD map | `u-boot` 0x0–0x30000 · `u-boot-env` 0x30000–0x40000 · **`factory` 0x40000–0x50000 (65,536 B, radio calibration)** · `kernel` 0x50000–0x1893d0 · `rootfs` 0x1893d0–0x7e0000 · `rootfs_data` 0x6e0000–0x7e0000 (1 MB overlay) · `backup` 0x7e0000–0x7f0000 · `bdinfo` 0x7f0000–0x800000. Kernel+squashfs ceiling **6,881,280 B = 6.56 MiB** |
-| OpenWrt path | `ramips/mt76x8` generic; lean 24.10 ≈ 6.1 MiB fits (+0.46 spare), **+mwan3 ≈ 6.7 MiB does NOT fit** |
+| OpenWrt path | `ramips/mt76x8`, profile `mediatek_mt7628an-eval-board` — **image BUILT + verified 2026-10-30** (25.12.6, 5.50 MiB, spare 1.06 MiB; mwan3 excluded by budget). See "OpenWrt flash session" below |
 
 ## CURRENT STATE (2026-10-30): config-hardened, administratively LOCKED
 
@@ -37,8 +37,9 @@ recovery exists: ubus ACLs are empty, SSH dropbear never completes its handshake
 password, and no valid config backup exists (`backup.tar.gz` download produced an HTML error page;
 `backup.bin` 9,522 B is vendor-encrypted, magic `d23a77c8d8633dc7`).
 
-**Recovery (needs the owner's hands, rides the SIM-insertion visit):** hold the physical
-factory-reset button ~10 s → box returns to `admin/admin` → re-apply T0 with the scripts in
+**Recovery (needs the owner's hands; now step A1 of the OpenWrt flash session below):** hold the
+physical factory-reset button ~10 s → box returns to `admin/admin` → (if the flash is deferred)
+re-apply T0 with the scripts in
 `~/.cache/router-review/exec/` (mirrored in `/data/backups/router-audit-2026-10-29/`):
 `remoteweb-off.sh`, `del-forwards.sh` (cfg ids in the script), `dhcp-off.sh`, then rotate the
 password with the **store-first** pattern (`gw-f44.sh` shows the working method; the failed
@@ -61,3 +62,50 @@ pattern was store-AFTER-verify). All steps take ~10 min.
 ## T2 cutover role (approved Option 1)
 
 End-state: Compal LAN → `192.168.0.0/24` (modem duty, DHCP pool `.2` limit 1), CPE takes `192.168.1.1` with DHCP `.10–.99` advertising DNS `.150/.151` (CPE DHCP DNS fields are writable — unlike the Compal's), LTE as automatic backup. **Blocked on:** SIM (owner), label model + port count (owner), Wi-Fi path A/B/C (owner). See plan §7 for the minute-by-minute runbook.
+
+## OpenWrt flash session (staged 2026-10-30 — image READY, owner-gated)
+
+Owner directive 2026-10-30: OpenWrt on this box. The plan's UART-first tail (F20–F28) is re-scoped:
+brick-insurance dump comes from the vendor **telnet shell** after the reset (pre-rotation
+telnet+`admin/admin` worked, F09), and the target DTS was verified to use ONE combined firmware
+partition — `mt7628an_mediatek_mt7628an-eval-board.dts` (openwrt-25.12): u-boot@`0x0`/0x30000,
+u-boot-env@0x30000, factory@0x40000 (read-only, wmac eeprom), `denx,uimage` firmware@0x50000 size
+0x7b0000 — matching the vendor map exactly. UART = Phase C last resort only.
+
+**Artifacts** (`/data/backups/router-audit-2026-10-29/openwrt-25.12.6/`, SHA256SUMS.txt beside):
+
+- `openwrt-25.12.6-ramips-mt76x8-mediatek_mt7628an-eval-board-squashfs-sysupgrade.bin` —
+  5,767,474 B (5.50 MiB, cap 6.56 MiB), built from the official imagebuilder (tarball
+  sha256-verified) + `PACKAGES="kmod-usb-net-cdc-ether kmod-usb-net-qmi-wwan kmod-usb-serial
+  kmod-usb-serial-option uqmi"` (EC200A modem stack); squashfs @ 0x20677B, core end 0x5C1979
+  (vendor `backup`@0x7e0000 untouched by the write)
+- FILES overlay baked in: LAN static `192.168.1.254`, `dhcp.lan.ignore=1` (cannot race the
+  Compal), hostname `cpe-4g`, dropbear key = evo-x2 `id_ed25519.pub`, root password (store-first:
+  `~/.config/router-credentials/cpe-openwrt.txt`). mwan3 NOT included (budget) — lean failover
+  script instead, later.
+- Working copies: `~/.cache/router-review/openwrt/` (`build-image.sh`, `split-uimage.py`,
+  `dump-receiver.sh`)
+
+**Ladder — owner hands needed ONCE (~15 min):**
+
+- **A (primary) — vendor-shell dump + flash:** ① owner holds reset ~10 s (box running) →
+  `admin/admin` @ `.254` → ② agent: web snapshot + telnet shell probe (`cat /proc/mtd; id; ls
+  /sbin/sysupgrade`) → ③ **GATE: dump EVERY mtd** over `nc` to `dump-receiver.sh` (:34567), sizes
+  verified against the MTD map + sha256 ×2, archived to /data — NO write before this passes →
+  ④ push image via nc (:34568) into `/tmp` (60 MB ramfs), sha256 both sides → ⑤ write per live
+  `/proc/mtd`: combined `firmware` mtd present → `mtd write /tmp/openwrt.bin firmware`;
+  split kernel/rootfs only → seam write (seam = vendor kernel-mtd size; the invariant is
+  contiguous-from-0x50000 — the denx,uimage split is dynamic, internal boundaries irrelevant);
+  `sysupgrade -n -F` only if mtd write is unavailable → ⑥ reboot → verify at
+  `ssh root@192.168.1.254`: `uci show network.lan` (.254) + `dhcp.lan` (ignore=1), hostname,
+  `wifi status` (mt7603 radio), `lsusb` → `2c7c:6005` (EC200A), LuCI `http://192.168.1.254`.
+  NO T2 config yet. Post-flash hygiene is inherent: no telnetd, unique root pw, SSH key first.
+- **B (no shell) — u-boot recovery probe:** owner unplugs, HOLDS reset, plugs in, keeps holding
+  ~10 s; agent watches ARP/HTTP/TFTP for the recovery loader. WARNING: MT7628 u-boot recovery
+  often listens at `192.168.1.1` — collides with the Compal gateway → bench-isolate first
+  (direct cable / isolated switch port), never on the live LAN.
+- **C (last resort) — UART:** 3.3 V adapter + case open; serial console + `sf read` dump if A·B
+  fail (boot-loop / restricted-CLI scenarios).
+- **Rollback:** A's dump + reverse seam write restores vendor firmware byte-for-byte; u-boot and
+  factory partitions are never written in any phase. With u-boot intact, a failed flash is always
+  recoverable via B/C.
