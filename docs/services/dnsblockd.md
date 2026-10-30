@@ -106,8 +106,24 @@ openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt \
 Fixture harness: `bash scripts/test-ca-parity-smoke.sh` (8 legs, real
 certs), also a flake check (`checks.dnsblockd-ca-parity-selftest`).
 Live state 2026-10-28: WARN — trusted and identical, but the bundle carries
-the same CA **twice** (benign, identical fingerprint; the second writer is
-unidentified, queued in `docs/todo/services.md`).
+the same CA **twice**. **Second writer IDENTIFIED 2026-10-30: it is nixpkgs
+itself, not a second repo source.** `nixos/modules/security/ca.nix`
+implements `security.pki.certificates` as
+`pkgs.cacert.override { extraCertificateStrings = <the inline PEM>; }`, and
+the resulting nss-cacert build (buildcatrust) emits each extra input cert
+TWICE into its `ca-bundle.crt`: once as a plain `BEGIN CERTIFICATE` block
+(preceded by the p11-kit name line `cn=dnsblockd-CA:eea9e1be`) and once as a
+`BEGIN TRUSTED CERTIFICATE` block carrying p11-kit trust rules
+(serverAuth/clientAuth/codeSigning). Both copies live in ONE store file
+(`/etc/ssl/certs/ca-certificates.crt` → the
+`mzg0gm78…-nss-cacert-3.126` output; `grep -c` on the CA base64 prefix → 2,
+DER fingerprints identical `EE:A9:E1:…:49:88`); the
+`ca-no-trust-rules-bundle.crt` sibling carries it exactly once, confirming
+the duplication is the trust-rules bundle's emission, not app-side. Repo
+consequence: rotation still touches exactly ONE inline entry — the duplicate
+regenerates identically on every rebuild, needs no action, and the §22
+duplicate-WARN remains the durable tripwire if a future nixpkgs change ever
+makes the copies diverge.
 - **Block-page PHANTOM-200: a "blocked" domain answers HTTP 200 with the block-page HTML — API clients fail with JSON-parse errors, never network errors (found live 2026-09-29 on `monitoring.googleapis.com`)** — blocklists classify parts of `googleapis.com` as telemetry; the SigNoz GCP integration's scrapes hit the block page until the domain was whitelisted in `platforms/common/dns-blocklists.nix`. When an HTTPS API integration mysteriously returns HTML: `dig +short <host> @127.0.0.1` — the block IP (192.168.1.200) vs a real answer is the whole diagnosis. **Second instance found live 2026-10-14:** GeoMetrikks's default public-IP echo `api64.ipify.org` (HaGeZi telemetry category) returned the block page, breaking the app's JSON parse → its `map-home-undetected` advisory; `ipify.org` is now whitelisted in `dns-blocklists.nix`.
 - **Wildcard `*.home.lan` RESOLVES since 2026-10-12** (dnsblockd `d5a22a4b` fixed RFC 4592 lookup + owner-name synthesis; configured-but-dead 2026-10-07→10-12 while LocalZoneStore was exact-match only) — unknown zone names answer with the server IP so Caddy's `https://*.home.lan` catch-all serves the branded 404; exact records and the apex still win. Consequence (2026-10-17, live-diagnosed): any client with search-domain completion resolves FAILED public names (offline, or typo'd/NXDOMAIN while online) onto this host through the wildcard — evo-x2 + rpi3-dns therefore dropped the `search` line from their managed resolv.conf (`dns-resolver.nix`, 2026-10-17; bare-label typing like `ping forge` no longer resolves there, measured usage zero; TLS bare-label SNI never worked anyway). Other LAN clients (MacBook) own their resolver config — owner decision tracked in `docs/todo/services.md`. Diagnosis: dnsblockd repo `docs/research/2026-10-17_search-domain-wildcard-offline-resolution-diagnosis.md`
 - **`restartTriggers` on dnsblockd** — Without it, config changes may not restart the process → stale config → DNS outage.
