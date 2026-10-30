@@ -7464,3 +7464,28 @@ PIPELINE DARK FOR THIS WINDOW — 0 rows in the window.
 Per M22: ClickHouse absence is NOT evidence of absence — the collector has a fatal-at-startup failure mode that silences the whole log pipeline (proven #37). Cross-check signoz-collector liveness across this boot BEFORE trusting the gap.
 ```
 ```
+
+## Death-window actor analysis (2026-10-31 follow-up query, window widened backward)
+
+The canonical section above covers [journal cut → next boot] and reads DARK. Widening backward to the thermal-guard throttle release — epoch-ns 1793327504000000000 → 1793327629000000000 (2026-10-30 02:31:44 → 02:33:49 UTC = 03:31:44 → 03:33:49 CET) — proves the pipeline was ALIVE until the hang: **168 rows across 17 covered seconds, newest row 2026-10-30 03:32:00.871 CET, i.e. 1.1 s BEFORE the journal's last flushed line (03:32:02.459)**. Opposite of the #36 pattern (CH 5 s fresher there): the OTel batch export stopped with the hang, and the journal's final ~1 s existed only in page cache — lost to flush AND export together. The hang is therefore bracketed at ≈03:32:01–03:32:02.
+
+M22 rule-(b) liveness cross-check satisfied from inside the data: rows 1.1 s before the dark stretch → the silence after 03:32:00.87 is the KERNEL hang, not a collector outage (no signoz-collector unit-state doubt needed).
+
+Row counts by unit (whole widened window): crm-server 35, projects-management-automation 23, cv-server 20, user@1000 19, init.scope 15, signoz 15, immich-server 14, prometheus-node-exporter 8, monitor365 6, monitor365-server 5, discordsync 3, nsfw-classifier 2, sev1-bridge 2, thermal-pstate-guard 1. Severity uniformly DEBUG (the OTel journald receiver's default) — zero kernel lines in the remote tail.
+
+Final-second actors (last-seen ordering, all routine traffic):
+
+| last-seen (CET) | unit | what it was doing |
+| --- | --- | --- |
+| 03:32:00.87 | immich-server.service | "Error: could not renew lock for job 16338" — the known symptom (forensics report §f.16); firing AT the death second is expected-under-death |
+| 03:32:00.78 | crm-server.service | routine GET /api/contacts/by-phone → 200 |
+| 03:32:00.56 | projects-management-automation.service | "processing batch … sperrmuell-direct" |
+| 03:32:00.16 | discordsync.service | routine INFO |
+| 03:31:59.7 | cv-server.service | /health 200 + one "career-pipeline … context deadline exceeded" WARN + a 9.4 s SSE-stats request (subsystem strain) |
+| 03:31:59.5 | monitor365 / monitor365-server | routine scan output |
+| 03:31:59.2 | signoz.service | promql rule evaluation — monitoring alive to the end |
+| 03:31:58.9 | user@1000.service | chromium scope CPU accounting |
+
+Guard/thermal choreography in the remote tail: 03:31:44.74 `DEEP THROTTLE DROP: scaling_max_freq restored (cool band reached)`; SEV1 bridge active 03:31:44.78 AND 03:31:54.77 — `SEV1 active (2 condition(s), severity=notify): MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP`. Then 16 s of normal traffic, then dark.
+
+Reading: the machine served normal userspace traffic (200-status HTTP responses) to within ~1 s of the cut — the death was an ABRUPT stop mid-traffic, not a final-seconds progressive crawl. The journal-side "ends mid-HTTP" discriminator and the remote tail agree.
