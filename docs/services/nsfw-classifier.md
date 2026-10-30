@@ -152,3 +152,29 @@ Budgets: calm cold boot **74m50s** (2026-10-17, boot ee085387); warm-page-cache 
 ## Related
 
 - [docs/agents/desktop.md](../agents/desktop.md) — the Helium `--load-extension` wiring and path-stability rule
+
+## Nightly Immich triage (nsfw-immich-scan, C7)
+
+`nsfw immich` classifies NEW Immich assets and writes the verdicts back
+as `nsfw:*` tags — the verdict PRODUCER for the media-atlas lane join
+(nightly 04:00 `atlas pull --with-lanes` reads those tags). Deployment
+only (ADR-061: the classifier repo stays change-free); the CLI is
+upstream verbatim — incremental (--only-new provenance marker),
+resumable (checkpoint under the cache dir), fail-open per asset.
+
+Owner deploy steps (one-time):
+
+1. Mint a DEDICATED Immich key for the scan: asset read (previews) AND
+   tag write (the verdicts) — NOT the media-atlas hub's read-only key.
+   Immich shows the secret only at creation.
+2. Install it root/0400 at the apiKeyFile path you configure (default
+   suggestion: /var/lib/nsfw-classifier/immich-key, owner lars).
+3. Enable in configuration.nix:
+   `services.nsfw-classifier.immichScan = { enable = true; apiKeyFile = "/var/lib/nsfw-classifier/immich-key"; };`
+   (calendar default 01:00 — before the media-atlas 02:00 poll → 04:00
+   lane join, so fresh verdicts land in the same night's lanes).
+4. `nix run .#deploy`; first full pass over a five-figure library runs
+   HOURS (TimeoutStartSec 6h) — subsequent nights are minutes.
+5. Verify: `systemctl list-timers nsfw-immich-scan`, then the JSON run
+   report at /var/lib/nsfw-classifier/state/immich-scan-<date>.json and
+   `journalctl -u nsfw-immich-scan -n 50`.

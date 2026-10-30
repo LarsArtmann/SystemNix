@@ -35,6 +35,7 @@
         harden
         onFailure
         serviceDefaults
+        serviceOneshotDefaults
         ioTier
         ports
         ;
@@ -201,6 +202,43 @@
             in the runbook) — 300 is the recommended floor.
           '';
         };
+
+        immichScan = {
+          enable = lib.mkEnableOption ''
+            the nightly `nsfw immich` triage — classify NEW Immich assets and
+            write the verdicts back as nsfw:* tags (the media-atlas lane
+            join reads those tags nightly at 04:00; ADR-061: the classifier
+            repo stays change-free, this is deployment-only wiring).
+          '';
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 01:00";
+            description = "OnCalendar for the scan (before the media-atlas 02:00 poll → 04:00 lane join, so fresh verdicts land in the same night's lanes).";
+          };
+
+          url = lib.mkOption {
+            type = lib.types.str;
+            default = "http://127.0.0.1:2283";
+            description = "Immich API base URL the scan triages.";
+          };
+
+          apiKeyFile = lib.mkOption {
+            type = lib.types.str;
+            description = ''
+              Immich API key file for the scan — must carry asset read
+              (previews) AND tag write (the verdicts). NOT the hub's
+              read-only key; mint a dedicated key (Immich shows it once at
+              creation) and install it 0400 under the state root.
+            '';
+          };
+
+          extraArgs = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = "Extra flags for `nsfw immich` (e.g. \"--album\" \"NSFW review\" or visibility filters).";
+          };
+        };
       };
 
       config = lib.mkMerge [
@@ -358,6 +396,78 @@
                 description = "Image NSFW classifier — browser-extension backend";
                 icon = "frigate.png";
               };
+            };
+          };
+
+          # ── Nightly `nsfw immich` triage (media-atlas v0.1 plan C7) ────────
+          # Classify NEW Immich assets and write the verdicts back as
+          # nsfw:* tags — the verdict PRODUCER the media-atlas lane join
+          # (04:00 `atlas pull --with-lanes`) reads the same night. The CLI
+          # is upstream `nsfw immich` verbatim (ADR-061: the classifier
+          # repo stays change-free): incremental via the provenance marker
+          # (--only-new), resumable checkpoint under the cache dir,
+          # fail-open per asset. Calendar 01:00 → poll 02:00 → umap 03:00
+          # → lane join 04:00 on evo-x2.
+          systemd.services.nsfw-immich-scan = lib.mkIf (cfg.enable && cfg.immichScan.enable) {
+            description = "nsfw-classifier — nightly Immich triage (classify new assets, write nsfw:* tags)";
+            inherit onFailure;
+            after = [ "network-online.target" ];
+            wants = [ "network-online.target" ];
+            # The models checkout lives under ~/projects — same
+            # mount-gate as the server unit (fail loud on the stale
+            # shadow-subvol class).
+            unitConfig.RequiresMountsFor =
+              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+                [ "/home/lars/projects" ];
+            startLimitBurst = 3;
+            startLimitIntervalSec = 3600;
+            # First full pass over a five-figure library is HOURS of
+            # GPU inference (the nightly re-runs are minutes —
+            # --only-new); Persistent=true catches up a missed night.
+            unitConfig.TimeoutStartSec = "6h";
+            path = [ pkgs.coreutils ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                # Same user as the server: modelsDir traverses a 0700
+                # home, and the checkpoint rides the shared cache dir.
+                User = cfg.user;
+                CacheDirectory = "nsfw-classifier";
+                Environment = [ "XDG_CACHE_HOME=/var/cache" ];
+                StateDirectory = "nsfw-classifier/state";
+                StateDirectoryMode = "0700";
+                ExecStart = lib.concatStringsSep " " (
+                  [
+                    "${cfg.package}/bin/nsfw immich"
+                    "--url ${cfg.immichScan.url}"
+                    "--api-key-file ${cfg.immichScan.apiKeyFile}"
+                    "--models-dir ${cfg.modelsDir}"
+                    "--only-new"
+                    "--report /var/lib/nsfw-classifier/state/immich-scan-$(date +%F).json"
+                  ]
+                  ++ cfg.immichScan.extraArgs
+                );
+              }
+              # Ensemble inference ≈ the server's footprint (the CLI
+              # loads the same 17-model posture); BE/6 for the model
+              # load + preview-download IO, inference itself is GPU.
+              (harden {
+                MemoryMax = "16G";
+                ProtectHome = false;
+                ProtectSystem = "strict";
+              })
+              ioTier.background
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          systemd.timers.nsfw-immich-scan = lib.mkIf (cfg.enable && cfg.immichScan.enable) {
+            description = "Nightly nsfw Immich triage";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.immichScan.calendar;
+              Persistent = true;
+              RandomizedDelaySec = "15m";
             };
           };
         })
