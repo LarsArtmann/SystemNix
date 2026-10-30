@@ -43,6 +43,7 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkPoolDirUnit
         serviceDefaults
         serviceOneshotDefaults
         onFailure
@@ -351,6 +352,16 @@
             description = "OnCalendar for the lane join (after the UMAP window; own failure domain — it never wants the poll or the refit).";
           };
         };
+
+        hub.dbBackup = {
+          enable = lib.mkEnableOption "the nightly journal DB dump onto the HDD pool (online sqlite .backup, 14d retention, browser-history/cv pattern; the dir rides restic-app-dumps via extraPaths)";
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "*-*-* 05:00";
+            description = "OnCalendar for the journal dump (after the nightly refresh windows, before restic-app-dumps' 05:45 pickup).";
+          };
+        };
       };
 
       config = lib.mkMerge [
@@ -552,7 +563,12 @@
                 ];
                 script = ''
                   set -eu
-                  exec ${lib.getExe hubCfg.package} poll-embeddings --db ${stateDir}/atlas.db
+                  # The trailing stamp is the C10 freshness contract: the
+                  # hub's /health/timers reads it and gatus alerts when the
+                  # age blows the 36h budget (set -eu: a failed poll never
+                  # stamps).
+                  ${lib.getExe hubCfg.package} poll-embeddings --db ${stateDir}/atlas.db
+                  date +%s > ${stateDir}/last-success-poll-embeddings
                 '';
               };
 
@@ -623,6 +639,9 @@
               ${lib.getExe hubCfg.package} export --db ${stateDir}/atlas.db --out ${stateDir}/umap/export.json
               ${umapFitProgram} --input ${stateDir}/umap/export.json --output ${stateDir}/umap/coords.json --model-dir ${stateDir}/umap/model --mode auto
               ${lib.getExe hubCfg.package} project-coords --db ${stateDir}/atlas.db --in ${stateDir}/umap/coords.json --run "$(date +%F)"
+              # C10 freshness stamp (see the poll unit) — only a COMPLETE
+              # refit stamps: export/fit/project all had to succeed.
+              date +%s > ${stateDir}/last-success-umap
             '';
           };
 
@@ -664,7 +683,9 @@
             ];
             script = ''
               set -eu
-              exec ${lib.getExe hubCfg.package} pull --db ${stateDir}/atlas.db --immich-url ${hubCfg.immich.url} --immich-key-file ${stateDir}/immich-key --with-lanes
+              # C10 freshness stamp (see the poll unit).
+              ${lib.getExe hubCfg.package} pull --db ${stateDir}/atlas.db --immich-url ${hubCfg.immich.url} --immich-key-file ${stateDir}/immich-key --with-lanes
+              date +%s > ${stateDir}/last-success-lane-join
             '';
           };
 
@@ -677,6 +698,87 @@
               RandomizedDelaySec = "30m";
             };
           };
+
+          # ── Nightly journal DB backup onto the HDD pool (C10.3) ───────────
+          # Online `sqlite3 .backup` (safe against the live WAL writer) of
+          # /var/lib/media-atlas/atlas.db onto /mnt/pool/backups, 14d
+          # retention — the browser-history/cv pattern verbatim. Pool-leaf
+          # creation is mount-gated (mkPoolDirUnit — no tmpfiles rule under
+          # /mnt/pool). Default OFF: the units hard-depend on the pool
+          # (RequiresMountsFor); evo-x2 opts in via configuration.nix.
+          # The dir rides the restic app-dumps repo via that module's
+          # extraPaths, and the freshness entry below (maxAge 26h) alerts
+          # when the nightly dump goes silent.
+          systemd.services.media-atlas-backup-dir =
+            lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable)
+              (mkPoolDirUnit {
+                description = "Create MediaAtlas journal DB backup directory on the HDD pool";
+                directory = "/mnt/pool/backups/media-atlas";
+              });
+
+          systemd.services.media-atlas-backup = lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable) {
+            description = "MediaAtlas journal DB backup (online sqlite .backup)";
+            after = [
+              "media-atlas.service"
+              "media-atlas-backup-dir.service"
+            ];
+            wants = [ "media-atlas-backup-dir.service" ];
+            # Detached DAS fails the run as a clean dependency error, never
+            # 226/NAMESPACE (btrbk doctrine).
+            unitConfig.RequiresMountsFor = [ "/mnt/pool/backups/media-atlas" ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            path = [ pkgs.coreutils ];
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = cfg.user;
+                Group = cfg.user;
+                StateDirectory = stateDirName;
+                TimeoutStartSec = "10min";
+                ExecStart = pkgs.writeShellScript "media-atlas-backup" ''
+                  set -euo pipefail
+                  db="${stateDir}/atlas.db"
+                  if [ ! -f "$db" ]; then
+                    echo "media-atlas-backup: no atlas.db yet — nothing to back up"
+                    exit 0
+                  fi
+                  dst="/mnt/pool/backups/media-atlas/atlas-$(date +%Y-%m-%d).db"
+                  # -readonly: a read-write open of the live WAL database
+                  # can create/replace the -shm/-wal sidecars while the hub
+                  # is down, poisoning the next hub start with
+                  # SQLITE_READONLY (the 2026-09-22 uid-drift class).
+                  ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$dst'"
+                  # 14-day retention (browser-history/cv pattern); the
+                  # online .backup rewrites every page, nothing shared
+                  # between nights.
+                  find /mnt/pool/backups/media-atlas -name "atlas-*.db" -mtime +14 -delete
+                  echo "media-atlas-backup: wrote $dst"
+                '';
+                ReadWritePaths = [ "/mnt/pool/backups/media-atlas" ];
+              }
+              (harden { MemoryMax = "512M"; })
+              ioTier.background
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          systemd.timers.media-atlas-backup = lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable) {
+            description = "Nightly MediaAtlas journal DB backup";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = hubCfg.dbBackup.calendar;
+              Persistent = true;
+              RandomizedDelaySec = "10m";
+            };
+          };
+
+          # The dump dir joins the restic app-dumps repo (extraPaths —
+          # extend, never redefine the fleet default list).
+          services.restic-app-dumps.extraPaths = lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable) [
+            "/mnt/pool/backups/media-atlas"
+          ];
 
           # Service-integration registry entry: fans out to the Caddy vHost
           # (map.home.lan, PLAIN layer — the hub's own API key is the single
@@ -717,6 +819,23 @@
                   ];
                   alert = "MediaAtlas map down — the federation hub at map.home.lan is unreachable. Check: systemctl status media-atlas, journalctl -u media-atlas -n 50.";
                 }
+                {
+                  # C10.2: the nightlies' last-success stamps (poll 02:00,
+                  # umap 03:00, lane-join 04:00) as the hub reports them —
+                  # "fresh" means every stamp exists and is inside the 36h
+                  # budget (one missed night still passes: Persistent=true
+                  # catches up). "unknown" fires pre-first-run on a fresh
+                  # deploy and clears at 02:00.
+                  name = "MediaAtlas nightlies fresh";
+                  group = "Media";
+                  path = "/health/timers";
+                  interval = "15m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\"rollup\":\"fresh\"*)"
+                  ];
+                  alert = "MediaAtlas nightly stale — a last-success stamp is missing or >36h old (per-timer ages on /health/timers). Check: journalctl -u media-atlas-poll-embeddings -u media-atlas-umap -u media-atlas-lane-join -n 50.";
+                }
               ];
               homepage = {
                 name = "MediaAtlas";
@@ -725,6 +844,19 @@
                 # No atlas glyph in the homepage icon pack; photoprism is the
                 # photo-map icon (the hub IS the map layer over Immich).
                 icon = "photoprism.png";
+              };
+
+              # C10.3: backup-coordination freshness over the pool dump dir
+              # (the nightly media-atlas-backup writes atlas-YYYY-MM-DD.db
+              # there; restic-app-dumps mirrors the dir via extraPaths). The
+              # registry's mtime check alerts when the nightly dump goes
+              # silent — the journal is the irreplaceable artifact ( Immich
+              # and DiscordSync can be re-walked; the ingested history and
+              # projections cannot).
+              backup = lib.mkIf hubCfg.dbBackup.enable {
+                directory = "/mnt/pool/backups/media-atlas";
+                filePattern = "atlas-*.db";
+                maxAgeHours = 26;
               };
             };
           };
@@ -742,6 +874,10 @@
             {
               assertion = !hubCfg.laneJoin.enable || hubCfg.enable;
               message = "services.media-atlas.hub.laneJoin.enable requires hub.enable (state dir + Immich key file).";
+            }
+            {
+              assertion = !hubCfg.dbBackup.enable || hubCfg.enable;
+              message = "services.media-atlas.hub.dbBackup.enable requires hub.enable (journal path + peer-auth user).";
             }
           ];
         }

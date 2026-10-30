@@ -571,6 +571,9 @@ in
         hub.pollEmbeddings.enable = true;
         hub.umapNightly.enable = true;
         hub.laneJoin.enable = true;
+        # Nightly journal dump to the pool (05:00, online sqlite .backup,
+        # 14d retention, restic-app-dumps pickup at 05:45) — C10.3.
+        hub.dbBackup.enable = true;
       };
       # OpenCloud pilot (cloud.home.lan, LAN/VPN-only, complement mode —
       # Google Drive stays canonical). Production line 7.2.4, posix driver,

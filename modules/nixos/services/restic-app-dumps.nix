@@ -64,6 +64,17 @@ _: {
             "/mnt/pool/backups/twenty"
           ];
         };
+
+        # extraPaths: how a service module registers its OWN dump dir
+        # (media-atlas pattern) without redefining the fleet default list —
+        # defining `paths` directly would REPLACE the default (NixOS list
+        # semantics: the default applies only when no module defines the
+        # option), silently dropping every other service's dir.
+        extraPaths = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "Service-owned dump dirs appended to paths (modules register their own /mnt/pool/backups leaves here).";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -74,7 +85,7 @@ _: {
           inherit passwordFile;
           repository = repoPath;
           initialize = true;
-          inherit (cfg) paths;
+          paths = cfg.paths ++ cfg.extraPaths;
           extraBackupArgs = [
             "--tag"
             "app-dumps"
