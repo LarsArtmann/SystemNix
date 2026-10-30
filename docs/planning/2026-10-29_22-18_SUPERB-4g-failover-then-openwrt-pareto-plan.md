@@ -2,6 +2,7 @@
 
 **Created:** 2026-10-29 22:18
 **EXECUTING (instance crush-router-t0t1, 2026-10-30 00:37 CET, HEAD `2e2896a08`):** executing (see AGENTS.md plan-execution tombstone)
+**Execution log:** 2026-10-30 ~04:30 — T0 applied+verified (Remote Web off, 7 forwards gone, DHCP off; password rotated then LOCKED OUT — recovery = physical reset, see `docs/services/4g-cpe.md`); T1 applied+verified (pool 244→**43** [.53/hash-allocator erratum vs §7.1], WPS off ×2, port-scan on, gateway pw rotated; **DNS fields firmware-inert** → D4 rides T2 via the CPE). Full state: `docs/status/2026-10-30_04-30_router-t0-t1-execution-status.md`; runbooks `docs/services/router.md` + `4g-cpe.md`. Blocked on owner: SIM, Wi-Fi path, label model, PSK window, physical reset.
 **Version:** v2, 2026-10-29 (replaces v1 `22-18` in place)
 **What this is:** the execution plan for turning a currently-useless 4G CPE into the household's primary router with a
 working LTE backup, then (separately, optionally) replacing its 2016 firmware with real OpenWrt so the owner can run their
