@@ -154,9 +154,9 @@ execution order. (Session-2 already-done items are NOT re-listed.)
 | 1.2 | Boot demo VM (`nix run .#vm` from nix-email); verify banner + stalwart version 0.16.26 in console | 12 | — |
 | 1.3 | Run `python3 caldav_probe.py > caldav-probe.log`; count PASS lines | 10 | — |
 | 1.4 | Capture `vm-console-excerpt.log` (preflight + version evidence); shut VM down | 8 | — |
-| 2.1 | Write verdict README: PASS/FAIL table per C1-C14 + known-deviance list | 12 | — |
-| 2.2 | Add CalDAV row to `nix-email/FEATURES.md` with transcript pointer | 8 | — |
-| 2.3 | 🧑 GO/NO-GO note (expected GO; fallback = Mesh A re-plan, nothing wasted) | 5 | 🧑 |
+| 2.1 | Write verdict README: PASS/FAIL table per C1-C14 + known-deviance list | 12 | — ✅ done 2026-10-30 (19/20 PASS + C8b supplemental PASS; `nix-email/docs/probes/2026-10-29-caldav-01626/README.md`) |
+| 2.2 | Add CalDAV row to `nix-email/FEATURES.md` with transcript pointer | 8 | — ✅ done 2026-10-30 |
+| 2.3 | 🧑 GO/NO-GO note (expected GO; fallback = Mesh A re-plan, nothing wasted) | 5 | 🧑 **READY FOR OWNER: recommendation GO** (19/20 + embedded-override C8b PASS; the one deviance — standalone override refusal — matches pim-sync's one-resource-per-series design) |
 | 3.1 | SystemNix `nix develop -c buildflow -s dprint-format --fix` at calm window; commit | 12 | — |
 | 3.2 | Push SystemNix (plan v2 + status report + doctrine); record push in session notes | 6 | — |
 | 3.3 | crm + pbx push decision: verify peer wave settled, then push or hold for 🧑 | 8 | 🧑 |
