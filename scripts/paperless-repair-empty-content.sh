@@ -284,27 +284,31 @@ while IFS=$'\t' read -r id mime filename title created corr dtype tags asn; do
   fi
 
   # --- upload the repaired file with the ORIGINAL metadata ----------------
-  args=(-sS --fail-with-body --max-time 300 -X POST
+  # Explicit -o/-w instead of --fail-with-body: the server's 400 body is the
+  # only diagnostic (a bare "curl: (22) ... 400" cost an iteration on
+  # 2026-10-30).
+  args=(-sS --max-time 300 -o "$w/up.json" -w '%{http_code}' -X POST
     -H "Authorization: Token $TOKEN" -H 'Accept: application/json'
     -F "document=@$w/ocr.pdf;type=application/pdf"
     -F "title=$title"
     -F "created=$created")
-  [ -n "$corr" ] && args+=(-F "correspondent=$corr")
-  [ -n "$dtype" ] && args+=(-F "document_type=$dtype")
-  [ -n "$asn" ] && args+=(-F "archive_serial_number=$asn")
+  if [ -n "$corr" ]; then args+=(-F "correspondent=$corr"); fi
+  if [ -n "$dtype" ]; then args+=(-F "document_type=$dtype"); fi
+  if [ -n "$asn" ]; then args+=(-F "archive_serial_number=$asn"); fi
   if [ -n "$tags" ]; then
     IFS=',' read -r -a tag_arr <<<"$tags"
     for t in "${tag_arr[@]}"; do
-      [ -n "$t" ] && args+=(-F "tags=$t")
+      if [ -n "$t" ]; then args+=(-F "tags=$t"); fi
     done
   fi
 
-  if ! task="$(curl "${args[@]}" "$BASE/api/documents/post_document/" 2>"$w/up.err")"; then
-    echo "FAIL id=$id upload failed: $(tail -n1 "$w/up.err")" >&2
+  up_code="$(curl "${args[@]}" "$BASE/api/documents/post_document/" || true)"
+  if [ "$up_code" != "200" ]; then
+    echo "FAIL id=$id upload HTTP $up_code: $(head -c 300 "$w/up.json")" >&2
     failed=$((failed + 1))
     continue
   fi
-  task_id="$(printf '%s' "$task" | tr -d '"')"
+  task_id="$(tr -d '"' <"$w/up.json")"
 
   # --- wait for consumption, then verify the replacement has text ---------
   new_id=""
