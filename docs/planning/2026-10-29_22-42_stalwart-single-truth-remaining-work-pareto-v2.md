@@ -8,9 +8,27 @@
 > for the full session report incl. the seven own-goal lessons). Nothing
 > already done is re-dispatched; everything still open is in the tables below.
 
-**Status:** PLAN v2 (execution IN PROGRESS — session 2 started 22:40; owner
-gates marked 🧑). **Method:** pareto-planning skill (1%→4%→20%→rest), user
+**Status:** PLAN v2 (execution IN PROGRESS — sessions 2–5 ran 2026-10-29/30;
+T17–T27.5 delivered, see pim-sync `docs/status/README.md`; owner gates
+marked 🧑). **Method:** pareto-planning skill (1%→4%→20%→rest), user
 overrides: `.md` + mermaid, micro tasks ≤ 12 min.
+
+**Execution errata (2026-10-30, sessions 3–5):**
+
+- **26.1 as written → implemented differently:** the caldav client uses
+  `sync-collection` (deltas+tombstones) + `calendar-multiget` (bodies),
+  NOT `calendar-query` — the migration converges full listings and
+  incremental deltas, never time-window queries; the wire layer mirrors
+  carddav's probe-pinned dialect (timeouts corrected 2026-10-30 to the
+  pinned 60s/5s/6 after a copy drift to 30s/2s).
+- **19.2/19.3 vendorHash + gate:** RESOLVED 2026-10-30 by the parallel
+  quality session (real `vendorHash` in pim-sync flake.nix, `nix build`
+  green, buildflow gate green, 5 parser fuzz-bug fixes — see pim-sync
+  status `2026-10-30_14-28_…agent-collision.md`). 19.4 `nix flake check`
+  still OPEN.
+- **27.4 ROADMAP idea row + 27.5 boots-clean pin:** landed 2026-10-30
+  afternoon session (crm ROADMAP "CardDAV projection serving mode" +
+  `TestCarddavProjectionFlagsDefaultOff` green).
 
 ---
 
