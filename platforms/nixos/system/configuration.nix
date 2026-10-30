@@ -588,8 +588,56 @@ in
       # auto-resolves to the Pocket ID SSO user (fallback admin). Runbook:
       # docs/services/paperless.md (Dashboards section).
       paperless-dashboard.enable = true;
+      # Declarative metadata vocabulary (audit 2026-10-29). paperless-gpt can
+      # only classify into an EXISTING document type, and the archive shipped
+      # with three (Bill / Bank Receipt / Bank Statement) against 1,781
+      # untyped documents, so the extraction prompt had almost nothing to
+      # choose from. Create-only, additive, safe to extend.
+      paperless-dashboard.ensureDocumentTypes = [
+        "Invoice"
+        "Receipt"
+        "Contract"
+        "Letter"
+        "Tax Document"
+        "Insurance"
+        "Payslip"
+        "Identity Document"
+      ];
+      # `empty-content` marks documents whose OCR produced nothing (382 of
+      # 1,793 on 2026-10-29: signed bank PDFs, password-protected statements,
+      # text-free photos). Tagging the gap makes it visible and auditable
+      # instead of silently unsearchable.
+      paperless-dashboard.ensureTags = [ "empty-content" ];
+      # Machine and lifecycle tags must never auto-match: matching_algorithm
+      # AUTO (6) feeds paperless's hourly classifier, and an AUTO INBOX tag
+      # makes it train on every arriving document (the 2026-09-06
+      # empty-vocabulary incident). Enforced on every provisioner run.
+      paperless-dashboard.enforceTagMatchingNone = [
+        "new"
+        "gmail"
+        "sweaty"
+        "ai-generated"
+        "Accounting"
+        "empty-content"
+        "encrypted"
+        "needs-review"
+      ];
+      paperless-dashboard.savedViews = [
+        {
+          name = "No text (needs attention)";
+          icon = "exclamation-triangle";
+          filterRules = [
+            {
+              ruleType = 6;
+              tagName = "empty-content";
+            }
+          ];
+        }
+      ];
       # paperless-gpt — AI enrichment bridge (custom-field extraction +
-      # tag-gated background processing) on FastFlowLM. Loopback-only
+      # tag-gated background processing) on llama-chat by default (the NPU
+      # FastFlowLM route hangs and core-dumps above ~1k prompt tokens, audit
+      # 2026-10-29; see the module's llmUpstream option). Loopback-only
       # (:8106, no auth in the embedded UI), token runtime-minted.
       # AI-max plan A8 (2026-10-02); fields/extraction wiring = A9.
       paperless-gpt.enable = true;

@@ -1202,6 +1202,48 @@ _: {
                     fi
                   done <<<"$(jq -r '.[].name' ${ensureFieldsJson} 2>/dev/null || true)"
 
+                  # 2c. Document types, create-only, same shape as above.
+                  #     The type vocabulary is what paperless-gpt's extraction
+                  #     prompt chooses from; with only 3 types the classifier
+                  #     could not answer for 1,781 untyped documents
+                  #     (2026-10-29 audit).
+                  DOCTYPES_CREATED=0
+                  while IFS= read -r DTNAME; do
+                    [ -n "$DTNAME" ] || continue
+                    if ! printf '%s' "$(api GET "/api/document_types/?page_size=100000" 2>/dev/null)" \
+                      | jq -e --arg n "$DTNAME" 'any(.results[]?; .name == $n)' >/dev/null 2>&1; then
+                      NEW_DT=$(api POST /api/document_types/ "{\"name\":\"''${DTNAME}\"}") \
+                        || { echo "paperless-dashboard-provision: document type create failed for '$DTNAME'" >&2; exit 1; }
+                      echo "paperless-dashboard-provision: ensured document type '$DTNAME' (id=$(printf '%s' "$NEW_DT" | jq -r '.id'))"
+                      DOCTYPES_CREATED=$((DOCTYPES_CREATED + 1))
+                    fi
+                  done <<<"$(jq -r '.[]' ${ensureDocTypesJson} 2>/dev/null || true)"
+
+                  # 2d. Tag matching hygiene (ENFORCED, not create-only):
+                  #     machine/lifecycle tags get matching_algorithm=0. An
+                  #     AUTO tag that is also the inbox tag makes the hourly
+                  #     classifier train on every incoming document, the
+                  #     2026-09-06 empty-vocabulary failure class.
+                  MATCHING_FIXED=0
+                  MATCHING_TAGS_JSON=$(api GET "/api/tags/?page_size=100000")
+                  while IFS= read -r MTNAME; do
+                    [ -n "$MTNAME" ] || continue
+                    MID=$(printf '%s' "$MATCHING_TAGS_JSON" | jq -r --arg n "$MTNAME" \
+                      'first(.results[] | select(.name == $n) | .id | tostring) // "MISSING"')
+                    if [ "$MID" = "MISSING" ]; then
+                      echo "paperless-dashboard-provision: matching-none: tag '$MTNAME' does not exist - skipping" >&2
+                      continue
+                    fi
+                    MALGO=$(printf '%s' "$MATCHING_TAGS_JSON" | jq -r --arg id "$MID" \
+                      'first(.results[] | select((.id|tostring) == $id) | .matching_algorithm)')
+                    if [ "$MALGO" != "0" ]; then
+                      api PATCH "/api/tags/$MID/" '{"matching_algorithm":0,"match":""}' >/dev/null \
+                        || { echo "paperless-dashboard-provision: matching-none PATCH failed for '$MTNAME'" >&2; exit 1; }
+                      echo "paperless-dashboard-provision: tag '$MTNAME' matching_algorithm $MALGO -> 0 (auto-matching off)"
+                      MATCHING_FIXED=$((MATCHING_FIXED + 1))
+                    fi
+                  done <<<"$(jq -r '.[]' ${matchingNoneJson} 2>/dev/null || true)"
+
                   # 3. Existing view names (owner-scoped: SavedView is an
                   #    owned object) + the tag name->id map. Tag names are NOT
                   #    unique at the DB level (tree tags); exact-match first
@@ -1319,7 +1361,7 @@ _: {
                     fi
                   fi
 
-                  echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES ensured_tags=$TAGS_CREATED ensured_fields=$FIELDS_CREATED dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
+                  echo "paperless-dashboard-provision: done - owner=$OWNER created=$CREATED skipped_existing=$SKIPPED_EXISTING skipped_no_rules=$SKIPPED_NO_RULES dropped_rules=$DROPPED_RULES ensured_tags=$TAGS_CREATED ensured_fields=$FIELDS_CREATED ensured_doctypes=$DOCTYPES_CREATED matching_fixed=$MATCHING_FIXED dashboard_assertions=$(printf '%s' "$CREATED_DASH_IDS" | wc -w)"
                 '';
               };
             }
