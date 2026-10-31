@@ -88,7 +88,12 @@ for line in "${bootlist[@]}"; do
   end=$(printf '%s\n' "$line" | awk '{print $8, $9, $10}')
   short="${full:0:8}"
   clean=$(shutdown_ceremony "$full")
-  trips=$(census "$full" 'action taken: sockets')
+  # trips metric counts BOTH eras (2026-10-31 fix): the socket-stop era
+  # ('action taken: sockets') AND the ioPause era (live since the Oct 28
+  # 18:06 mid-boot deploy, 'IO-PAUSE (trip' — both the SIGSTOPped and the
+  # NO-eligible shapes are distinct trips). The sockets-only grep
+  # undercounted freeze #38 by 10x (40 vs 412 real trips, boot 0 0 vs 169).
+  trips=$(census "$full" 'action taken: sockets|IO-PAUSE \(trip')
   throttle=$(census "$full" 'DEEP THROTTLE ENTER')
   oom=$(census "$full" 'invoked oom-killer')
   # reset reason for the PREVIOUS boot, read from THIS boot's kernel log

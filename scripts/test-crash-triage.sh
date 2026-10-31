@@ -51,6 +51,10 @@ EOF
     ;;
   *"-b aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
     echo 'memory-emergency-guard-check: MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #4490, zone 6)'
+    # ioPause-era trips (both shapes) — the 2026-10-31 metric fix must
+    # count them alongside the socket-stop lines above.
+    echo 'memory-emergency-guard-check: MEMORY EMERGENCY IO-PAUSE (trip #4491, zone 6): SIGSTOPped 2 headless driver process group(s)'
+    echo 'memory-emergency-guard-check: MEMORY EMERGENCY IO-PAUSE (trip #4492, zone 6): NO eligible headless tree matched the attribution'
     echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'  # 8x
     echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'
     echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'
@@ -66,6 +70,8 @@ EOF
     ;;
   *"-b bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"*)
     for i in $(seq 34); do echo 'memory-emergency-guard-check: MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #44, zone 6)'; done
+    # ioPause-era no-match trips (pre-fix the metric read 34; real 40).
+    for i in $(seq 6); do echo 'memory-emergency-guard-check: MEMORY EMERGENCY IO-PAUSE (trip #440, zone 6): NO eligible headless tree matched the attribution'; done
     for i in $(seq 452); do echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'; done
     echo 'kernel: something invoked oom-killer'
     ;;
@@ -88,11 +94,13 @@ touch "$scratch/docs/status/tasks/2026-10-27_23-57_boot-aaaaaaaa-evidence-pull.m
 out=$(PATH="$scratch/bin:$PATH" JOURNALCTL="$scratch/bin/journalctl" DOCS_ROOT="$scratch" bash "$script" --boots 3)
 
 # 1. bootB (-2): abrupt, un-evidenced — must flag + propose branch C
-#    (34 trips + 452 throttles). Flag checked two-step in block 4 below.
-printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=34 throttle_ENTER=452' || fail "bootB census line wrong:\n$out"
+#    (40 trips = 34 socket + 6 IO-PAUSE + 452 throttles). Flag checked
+#    two-step in block 4 below.
+printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=40 throttle_ENTER=452' || fail "bootB census line wrong:\n$out"
 
 # 2. bootA (-1): abrupt, HAS evidence, watchdog reason read from boot0.
-printf '%s\n' "$out" | rg -q 'aaaaaaaa.*ABRUPT.*trips=25 throttle_ENTER=8' || fail "bootA census line wrong:\n$out"
+#    trips = 25 socket-stop + 2 IO-PAUSE (the 2026-10-31 both-eras fix).
+printf '%s\n' "$out" | rg -q 'aaaaaaaa.*ABRUPT.*trips=27 throttle_ENTER=8' || fail "bootA census line wrong:\n$out"
 printf '%s\n' "$out" | rg -q 'reset-reason\(in this boot, for previous\).*watchdog timer expired' || fail "reset reason line missing"
 printf '%s\n' "$out" | rg -q 'aaaaaaaa' || true
 printf '%s\n' "$out" | rg 'aaaaaaaa' -A 3 | rg -q 'boot-aaaaaaaa-evidence-pull' || fail "bootA evidence not linked"
