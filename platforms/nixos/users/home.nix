@@ -848,6 +848,86 @@ in
     };
   };
 
+  # Website-fleet timers (canonical since 2026-10-31; before, these were
+  # hand-symlinked into ~/.config/systemd/user/timers.target.wants/ and any
+  # home-manager switch wiped them). Scripts live in the vision-review-agent
+  # checkout; the wrappers give the units their runtime deps.
+  systemd.user.services.site-monitor = {
+    Unit = {
+      Description = "HTTP+TLS monitor for lars.software site fleet";
+    };
+    Service = {
+      Type = "oneshot";
+      ExecStart =
+        let
+          siteMonitor = pkgs.writeShellApplication {
+            name = "site-monitor";
+            runtimeInputs = [
+              pkgs.curl
+              pkgs.openssl
+              pkgs.libnotify
+              pkgs.coreutils
+            ];
+            text = ''
+              exec "$HOME/projects/vision-review-agent/scripts/site-monitor.sh"
+            '';
+          };
+        in
+        "${siteMonitor}/bin/site-monitor";
+      # Set to a healthchecks.io-style URL for the off-machine dead-man's
+      # switch (the script pings it on every clean run).
+      Environment = [ "SITE_MONITOR_PING_URL=" ];
+    };
+  };
+  systemd.user.timers.site-monitor = {
+    Unit = {
+      Description = "Hourly site fleet monitor";
+    };
+    Timer = {
+      OnCalendar = "hourly";
+      Persistent = true;
+    };
+    Install = {
+      WantedBy = [ "timers.target" ];
+    };
+  };
+
+  systemd.user.services.fleet-review = {
+    Unit = {
+      Description = "Monthly capture+review cycle for the 17-site fleet";
+    };
+    Service = {
+      Type = "oneshot";
+      TimeoutStartSec = "2h";
+      ExecStart =
+        let
+          fleetReview = pkgs.writeShellApplication {
+            name = "fleet-review";
+            runtimeInputs = [
+              pkgs.bash
+              pkgs.coreutils
+            ];
+            text = ''
+              exec "$HOME/projects/vision-review-agent/scripts/review-fleet.sh"
+            '';
+          };
+        in
+        "${fleetReview}/bin/fleet-review";
+    };
+  };
+  systemd.user.timers.fleet-review = {
+    Unit = {
+      Description = "Monthly fleet review (capture -> verify -> review)";
+    };
+    Timer = {
+      OnCalendar = "monthly";
+      Persistent = true;
+    };
+    Install = {
+      WantedBy = [ "timers.target" ];
+    };
+  };
+
   xdg.desktopEntries.helium = {
     name = "Helium";
     genericName = "Web Browser";
