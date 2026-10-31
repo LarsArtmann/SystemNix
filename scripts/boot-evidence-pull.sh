@@ -444,7 +444,12 @@ main() {
     # evidence boot dump can be 100s of MB and belongs on durable cache).
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence"
     BEP_DUMP=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/boot-evidence.XXXXXX")
-    trap 'rm -f "$BEP_DUMP"' EXIT
+    # "${var:-}" not "$var": the trap fires at SCRIPT exit, after main()'s
+    # locals are popped (same bash locals/EXIT-trap hazard as the helper
+    # subshell bodies above) — a bare "$var" under set -u kills the trap
+    # AND the cleanup, leaking the scratch dump (re-fired live 2026-10-31,
+    # 27580a79 pull: file written, exit 1, scratch left behind).
+    trap 'rm -f "${BEP_DUMP:-}"' EXIT
     journalctl --quiet --no-pager -b "$BEP_ID" >"$BEP_DUMP"
     if [ -z "$out" ]; then
       out="$TASKS_DIR/$(date -u '+%Y-%m-%d_%H-%M')_boot-${id8}-evidence-pull.md"
@@ -464,7 +469,7 @@ main() {
     ch_out=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/ch.XXXXXX")
     ch_err=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/ch.XXXXXX")
     ch_sect=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/ch.XXXXXX")
-    trap 'rm -f "$BEP_DUMP" "$ch_out" "$ch_err" "$ch_sect"' EXIT
+    trap 'rm -f "${BEP_DUMP:-}" "${ch_out:-}" "${ch_err:-}" "${ch_sect:-}"' EXIT
     ch_status=$(bep_ch_fetch "$lo_ns" "$hi_ns" "$tail_n" "$ch_out" "$ch_err")
     bep_render_ch "$lo_ns" "$hi_ns" "$tail_n" "$ch_status" "$ch_out" >"$ch_sect"
     bep_render "$BEP_DUMP" "$id8" "$BEP_ID" "$BEP_FIRST_TS" "$BEP_LAST_TS" "$ch_sect" | bep_write "$out"
