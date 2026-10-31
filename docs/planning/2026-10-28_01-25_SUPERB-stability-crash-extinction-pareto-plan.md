@@ -244,7 +244,7 @@ Queue: 855 `[ready]` + 52 `[decision]` total. By domain (ready/decision): stabil
 
 1. **§7.1 — the big three:** (a) Zone-6 action split go/no-go (headless-only SIGSTOP scope); (b) admission-gate refusal UX: hard-fail vs queue-park; (c) SEV1 option-B threshold ratification (after F52 census).
 2. **§7.2 — throughput tradeoffs:** io.max cap values for tq-pool/build slices (accept slower builds); flm exemption.
-3. **§7.3 — hardware/strategy:** BIOS fans-100% + PPT-cap willingness; role-split (second box) appetite — M25 brief informs, owner decides.
+3. **§7.3 — hardware/strategy:** BIOS fans-100% + PPT-cap willingness; role-split (second box) appetite — M25 brief informs, owner decides. **#38 mapping verdict (2026-10-31, evidence for the re-prioritize-vs-keep-sequenced question): stability.md #38 ledger bullet — ADD OOM-swap-exhaustion as a NEW extinction hypothesis + PROMOTE M23 (ZRAM/watermark recalibration) to primary leg; owner gate stays open, never self-answered.**
 
 ## 8. Harvest (done at authoring time per TODO-system rules)
 

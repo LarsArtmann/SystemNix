@@ -997,5 +997,75 @@ in
           "the trip action line must name its top I/O movers (2026-09-28: "
           "1300+ trips said 'I/O stalled' without naming a culprit)"
       )
+
+      # --- 9d. ioPause cgroupPatterns: no-match -> match (2026-10-31) ---
+      #      The freeze-#38 census showed 373 whole-boot "NO eligible
+      #      headless tree matched" IO-PAUSE trips while the attribution
+      #      named monitor365-server and agent sessions live under
+      #      app.slice/run-*.scope (the old session- pattern never
+      #      matched them). Exercises the pause-selection loop end to end
+      #      through the CGROUP_IO_SRC fixture: a non-matching cgroup
+      #      must log the NO-eligible line; the extended patterns
+      #      (monitor365-server.service, app.slice/run-) must select a
+      #      real HEADLESS process group and SIGSTOP it. The never-PTY
+      #      invariant is unchanged (fixture asserts tty-less-ness first).
+      #      IO_PAUSE_ENABLE/PATTERNS ride unit-env override seams so the
+      #      earlier zone-6 scenarios keep covering the socket-stop path.
+      machine.succeed("rm -f /var/lib/memory-emergency-guard/io-paused")
+      sleeper = machine.succeed(
+          "setsid sleep 600 >/dev/null 2>&1 & echo $!"
+      ).strip()
+      # Headless sanity: the never-PTY invariant would skip a TTY-holding
+      # group, so the fixture process MUST be tty-less for the match leg
+      # to be meaningful.
+      tty = machine.succeed(f"ps -o tty= -p {sleeper}").strip()
+      assert tty == "?", f"fixture sleeper holds a tty ({tty!r}) - match leg invalid"
+      # No-match leg: a cgroup matching NO pattern -> the NO-eligible line.
+      machine.succeed(
+          "rm -rf /tmp/cgt9d"
+          " && mkdir -p /tmp/cgt9d/system.slice/offender.service"
+          " && printf '8:0 rbytes=9000000 wbytes=0\\n'"
+          " > /tmp/cgt9d/system.slice/offender.service/io.stat"
+      )
+      machine.succeed("echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip")
+      machine.succeed(
+          "${writeFakes "zone6midd" (zone6mid // { diskTicks = 65000; })}"
+      )
+      out = run_guard(
+          "zone6midd",
+          extra_env="CGROUP_IO_SRC=/tmp/cgt9d IO_PAUSE_ENABLE=true IO_PAUSE_PATTERNS='nix-daemon.service tq-agent-pool.service session-'",
+      )
+      assert "NO eligible headless tree matched" in out, (
+          "a zone-6 trip with a pattern-missing cgroup must log the "
+          "NO-eligible line (the freeze-#38 373-trip class)"
+      )
+      # Match leg: monitor365 + app.slice/run-*.scope cgroups now select.
+      machine.succeed(
+          "rm -rf /tmp/cgt9d"
+          " && mkdir -p /tmp/cgt9d/system.slice/monitor365-server.service"
+          " /tmp/cgt9d/app.slice/run-deadbeef.scope"
+          " && printf '8:0 rbytes=9000000 wbytes=0\\n'"
+          " > /tmp/cgt9d/system.slice/monitor365-server.service/io.stat"
+          " && printf '8:0 rbytes=8000000 wbytes=0\\n'"
+          " > /tmp/cgt9d/app.slice/run-deadbeef.scope/io.stat"
+          f" && echo {sleeper} > /tmp/cgt9d/system.slice/monitor365-server.service/cgroup.procs"
+          f" && echo {sleeper} > /tmp/cgt9d/app.slice/run-deadbeef.scope/cgroup.procs"
+      )
+      machine.succeed("echo $(( $(date +%s) - 700 )) > /var/lib/memory-emergency-guard/last-trip")
+      machine.succeed(
+          "${writeFakes "zone6mide" (zone6mid // { diskTicks = 65000; })}"
+      )
+      out = run_guard(
+          "zone6mide",
+          extra_env="CGROUP_IO_SRC=/tmp/cgt9d IO_PAUSE_ENABLE=true IO_PAUSE_PATTERNS='nix-daemon.service tq-agent-pool.service session- monitor365-server.service app.slice/run-'",
+      )
+      assert "SIGSTOPped 1 headless driver process group" in out, (
+          "the extended patterns must select the monitor365/run-*.scope "
+          "cgroups' headless group (freeze-#38 census coverage gap)"
+      )
+      state = machine.succeed(f"ps -o stat= -p {sleeper}").strip()
+      assert "T" in state, f"fixture sleeper must be SIGSTOPped, state={state!r}"
+      machine.succeed(f"kill -CONT {sleeper} 2>/dev/null; kill {sleeper} 2>/dev/null; true")
+      machine.succeed("rm -rf /tmp/cgt9d")
     '';
 }
