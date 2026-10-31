@@ -137,10 +137,47 @@
           };
     in
     {
+      # crm-people-sync timer (2026-10-31, email-roster plan E11): the
+      # people-roster catch-up pushing observed senders into the Kith CRM.
+      # OFF by default — flip on only after upstream PR #9 (run-timeout +
+      # evidence-order + fast-path) is pinned, and pair with
+      # services.crm.enable (the env template references its
+      # crm_api_token sops placeholder).
+      options.services.inboxclean.crmPeopleSync = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Run `inboxclean crm-people-sync` on a timer, feeding the Kith
+            CRM's people roster from the email corpus. Requires
+            services.crm.enable (shares the crm_api_token sops secret).
+          '';
+        };
+        calendar = lib.mkOption {
+          type = lib.types.str;
+          default = "*-*-* 05:40:00";
+          description = ''
+            systemd OnCalendar for the people-sync timer. 05:40 sits after
+            the inboxclean backup (04:30) and the crm backup (~03:42), off
+            the 01:00-03:00 btrbk peak (backup-coordination doctrine).
+          '';
+        };
+      };
+
       imports = [ inputs.inboxclean.nixosModules.default ];
 
       config = lib.mkIf cfg.enable {
         assertions = [
+          {
+            assertion = cfg.crmPeopleSync.enable -> (config.services.crm.enable or false);
+            message = ''
+              services.inboxclean.crmPeopleSync.enable requires services.crm
+              (the Kith CRM): the env template references its
+              crm_api_token sops placeholder, and a placeholder for an
+              undeclared secret fails activation (bank-sync-encryption
+              pattern).
+            '';
+          }
           {
             assertion = cfg.paperless.enable -> (config.services.paperless.enable or false);
             message = ''
@@ -292,6 +329,72 @@
               TimeoutStartSec = "25min";
             }
           ];
+        };
+
+        # People-roster catch-up into the Kith CRM (plan E11, 2026-10-31).
+        # Requires upstream PR #9's run-timeout fix: the first run on a
+        # real corpus drains ~106k rows (~5 min) before any LLM work, and
+        # the pre-#9 5-minute budget killed every such run mid-push — the
+        # 749-gap incident. INBOXCLEAN_RUN_TIMEOUT covers the drain plus
+        # the evidence-ordered extraction slice; TimeoutStartSec stays the
+        # outer systemd ceiling above it.
+        systemd.services.crm-people-sync = lib.mkIf cfg.crmPeopleSync.enable {
+          description = "InboxClean → Kith CRM people-roster catch-up";
+          after = [ "sops-nix.service" "network-online.target" "crm-server.service" ];
+          wants = [ "sops-nix.service" "crm-server.service" ];
+          inherit onFailure;
+
+          serviceConfig = lib.mkMerge [
+            (harden { MemoryMax = "1G"; })
+            (serviceOneshotDefaults { })
+            ioTier.background
+            {
+              Type = "oneshot";
+              User = "inboxclean";
+              Group = "inboxclean";
+              ExecStart = "${lib.getExe inboxcleanPkg} crm-people-sync --format json";
+              EnvironmentFile = [
+                (config.sops.templates."inboxclean-crm-people-env".path)
+              ] ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/inboxclean.env" ];
+              # Outer ceiling above INBOXCLEAN_RUN_TIMEOUT (2h in the env
+              # template): a first-corpus drain plus 150 evidence-ordered
+              # LLM extractions at the observed 8-150 s/call.
+              TimeoutStartSec = "3h";
+            }
+          ];
+        };
+
+        systemd.timers.crm-people-sync = lib.mkIf cfg.crmPeopleSync.enable {
+          description = "Run the InboxClean→CRM people-roster catch-up daily";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.crmPeopleSync.calendar;
+            Persistent = true;
+          };
+        };
+
+        sops.templates."inboxclean-crm-people-env" = lib.mkIf cfg.crmPeopleSync.enable {
+          # PID 1 reads EnvironmentFile as root; root ownership matches the
+          # crm-server-env pattern (modules/nixos/services/crm.nix).
+          owner = "root";
+          group = "root";
+          mode = "0400";
+          restartUnits = [ "crm-people-sync.service" ];
+          content = lib.generators.toKeyValue { } {
+            CRM_URL = "http://127.0.0.1:${toString ports.crm}";
+            CRM_API_TOKEN = config.sops.placeholder.crm_api_token;
+            CRM_MY_EMAILS = "lartyhd@gmail.com,lars@larsartmann.com,lars@artmann.tech";
+            CRM_PEOPLE_AI_MAX_PER_RUN = "150";
+            CRM_PEOPLE_AI_ORDER = "evidence";
+            INBOXCLEAN_RUN_TIMEOUT = "2h";
+            LLM_PROVIDER = "openai";
+            OPENAI_BASE_URL =
+              if aiMeterEnabled then
+                "http://127.0.0.1:${toString ports.ai-meter}/v1/llama-chat"
+              else
+                "http://127.0.0.1:${toString config.services.llama-chat.port}/v1";
+            LLM_MODEL = config.services.llama-chat.alias;
+          };
         };
 
         # Service-integration registry entry: fans out to the Caddy vHost
