@@ -350,6 +350,10 @@ in
       auto = "tracking-only";
       defaultAudio = "nc";
       user = "lars";
+      # Registry-wired (was daemon-default by convention): a re-allocation
+      # in lib/ports.nix now flows into the unit env instead of silently
+      # proxying to a dead port. Upstream option since v0.5.0.
+      port = ports.emeet-pixyd;
     };
 
     # AMD GPU Support - imported from hardware module

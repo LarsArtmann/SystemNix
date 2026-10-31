@@ -340,8 +340,15 @@
         # outer systemd ceiling above it.
         systemd.services.crm-people-sync = lib.mkIf cfg.crmPeopleSync.enable {
           description = "InboxClean → Kith CRM people-roster catch-up";
-          after = [ "sops-nix.service" "network-online.target" "crm-server.service" ];
-          wants = [ "sops-nix.service" "crm-server.service" ];
+          after = [
+            "sops-nix.service"
+            "network-online.target"
+            "crm-server.service"
+          ];
+          wants = [
+            "sops-nix.service"
+            "crm-server.service"
+          ];
           inherit onFailure;
 
           serviceConfig = lib.mkMerge [
@@ -355,7 +362,8 @@
               ExecStart = "${lib.getExe inboxcleanPkg} crm-people-sync --format json";
               EnvironmentFile = [
                 (config.sops.templates."inboxclean-crm-people-env".path)
-              ] ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/inboxclean.env" ];
+              ]
+              ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/inboxclean.env" ];
               # Outer ceiling above INBOXCLEAN_RUN_TIMEOUT (2h in the env
               # template): a first-corpus drain plus 150 evidence-ordered
               # LLM extractions at the observed 8-150 s/call.

@@ -116,7 +116,26 @@
             "OPENAI_MODEL=qwen3.6-moe:35b-a3b"
             "OPENAI_TIMEOUT=10m"
           ];
+          # Pre-commit build gate (upstream TODO J3, hold-not-discard
+          # semantics): a Go tree that does not build/vet is HELD — the
+          # commit lands on the next event after the tree is fixed. Kills
+          # the red-at-HEAD class where a broken intermediate state is
+          # snapshotted into master (emeet-pixyd TODO #176, enabled
+          # 2026-10-31). The gate runs GOWORK=off with a writable GOCACHE
+          # under HOME=/home/lars (unit env).
+          requireCleanBuild = true;
+          requireCleanVet = true;
         };
+
+        # The gate's go binary comes from the module's `pkgs.go` PATH entry
+        # (1.26.x at this lock) — repos whose go.mod requires a newer
+        # toolchain (emeet-pixyd: >= 1.27.1) would fail the gate on the
+        # toolchain, not the tree, freezing their auto-commits as held WARN
+        # loops. mkBefore puts go_1_27 ahead of the module's entry so the
+        # gate always measures the tree, never the toolchain.
+        systemd.services.projects-management-automation.path = lib.mkBefore [
+          pkgs.go_1_27
+        ];
 
         # OTel traces → local SigNoz OTLP/HTTP collector. Uses raw OTel SDK
         # (no go-cqrs-lite). Noop tracer when unset (zero overhead).
