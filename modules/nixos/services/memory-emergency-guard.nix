@@ -160,8 +160,12 @@ _: {
           SOCKET_UNITS="${lib.concatStringsSep " " cfg.socketUnits}"
           MAX_RESTORES_PER_DAY=${toString cfg.maxRestoresPerDay}
           IO_ACTION_COOLDOWN_SECONDS=${toString cfg.ioActionCooldownSeconds}
-          IO_PAUSE_ENABLE=${lib.boolToString cfg.ioPause.enable}
-          IO_PAUSE_PATTERNS="${lib.concatStringsSep " " cfg.ioPause.cgroupPatterns}"
+          # VM-test seams (like the kernel sources below): an env override
+          # wins over the baked config value so scenario 9d can exercise the
+          # ioPause branch without flipping it on for every earlier zone-6
+          # scenario (their assertions cover the socket-stop path).
+          IO_PAUSE_ENABLE="''${IO_PAUSE_ENABLE:-${lib.boolToString cfg.ioPause.enable}}"
+          IO_PAUSE_PATTERNS="''${IO_PAUSE_PATTERNS:-${lib.concatStringsSep " " cfg.ioPause.cgroupPatterns}}"
           IO_PAUSE_MAX_GROUPS=${toString cfg.ioPause.maxPauseGroups}
           IO_PAUSE_CALM_SECONDS=${toString cfg.ioPause.calmSeconds}
           IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
@@ -1571,8 +1575,10 @@ _: {
               "nix-daemon.service"
               "tq-agent-pool.service"
               "session-"
+              "monitor365-server.service"
+              "app.slice/run-"
             ];
-            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top";
+            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top. monitor365-server + app.slice run-*.scope added 2026-10-31 from the freeze-#38 census: 373 whole-boot NO-eligible trips while the attribution named monitor365-server (+13.2 GB windows), and agent sessions live under app.slice/run-*.scope where the session- pattern never matched";
           };
           maxPauseGroups = lib.mkOption {
             type = lib.types.int;
