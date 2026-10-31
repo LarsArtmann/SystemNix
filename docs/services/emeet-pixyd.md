@@ -8,6 +8,11 @@
 
 - **The endpoint checks are DELIBERATELY SILENT (`alert = ""`) and `monitored = false`** — the daemon is a graphical-session user unit: down during reboots and SSH-only periods is EXPECTED state, so a paging HTTP check would false-page Discord on every reboot (niri session-aware doctrine). Paging is owned by the session-aware meta check in `gatus-config.nix` (`system_emeet_pixyd_expected_down`, fires only when niri runs but the daemon doesn't). Do NOT "fix" the silent checks into alerting ones. `/api/health` answers 503 "offline" when the webcam is unplugged but the daemon is alive — hence `[STATUS] < 500`, not `== 200`, on the liveness check.
 
+## Port registry wiring (2026-10-31)
+
+- `hardware.emeet-pixy.port = ports.emeet-pixyd` (`platforms/nixos/system/configuration.nix`) — the loopback bind is now registry-wired instead of relying on the daemon default matching `lib/ports.nix` by convention; a future re-allocation in the registry flows into the unit env instead of silently proxying to a dead port. Upstream option since v0.5.0 (tag exists; proxy + flake verified). **Deploy-pending:** the wiring rides the next NixOS switch, and the flake input is still locked at a pre-tag rev — floating/pinning the input is Lars's open call (float master tip vs pin the `v0.5.0` tag URL via `scripts/float-register.sh`).
+- The `version` field in `/api/status` confirms which build runs; after the input bump, expect `0.5.0` (was `dev`/`1535ddf`-era).
+
 ## `/api/status` endpoint + the grey-"off" widget trap (2026-10-01)
 
 - **Contract:** `GET 127.0.0.1:8090/api/status` answers **always-200 while the daemon runs** with stable field names — `camera` (present/absent state), `online` (webcam reachable), `battery`, `model`, `version` (daemon build version). It exists so UI widgets can distinguish _daemon down_ from _camera offline_ — `/api/health` cannot (503 on both unplugged camera and dead daemon). Shipped with the upstream build pinned at `1535ddf` in flake.lock (deploy-pending as of 2026-10-01 — older daemon builds 404 on this route).
