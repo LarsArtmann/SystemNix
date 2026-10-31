@@ -574,7 +574,13 @@ _: {
               # avatar sync, which refuses any repo still marked mirror==true.
               (lib.mkIf (cfg.canonicalRepos != [ ]) {
                 Environment = [
-                  "FORGEJO_CANONICAL_REPOS=${lib.concatStringsSep " " cfg.canonicalRepos}"
+                  # QUOTED: an unquoted Environment= value is parsed as
+                  # space-separated assignments, so FOO=a b c assigns only
+                  # FOO=a and silently DROPS the rest — every canonicalRepos
+                  # entry after the first never reached the sync phases
+                  # (gogenfilter's push mirror was never attached because of
+                  # this; root-caused 2026-10-31).
+                  "FORGEJO_CANONICAL_REPOS=\"${lib.concatStringsSep " " cfg.canonicalRepos}\""
                 ];
                 ExecStart = [
                   (lib.getExe pushMirrorScript)
