@@ -35,6 +35,7 @@
   crush-config = "d79602d02729797ca0e28e0d6d42f2d800893d08";
   crush-daily = "83c4d8a3de5035eb00122d3f85307d0636f91224";
   cv = "e168e6d39913680adbb2611a7e1ed5aaf68d4bf9";
+  cvagent = "ee317932eac231871273a59ec19760e676b76d61";
   dankMaterialShell = "8ce37501bd9c4dcbac04d1deb4e57d50f3e2c94f";
   discordsync = "79952c46f0bfcc94763e40570741a1c97785d2d2";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";

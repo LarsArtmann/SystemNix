@@ -1114,6 +1114,10 @@ in
         profileProbe.enable = true;
       };
 
+      # cvagent — daily scan + mesh export into the CV checkout
+      # (Code-To-CV-Agent). Runbook: docs/services/cvagent.md.
+      cvagent.enable = true;
+
       # InboxClean — Gmail AI assistant dashboard (inbox.home.lan).
       # Sops: platforms/nixos/secrets/inboxclean.yaml (gmail credentials.json).
       # Runbook: complete the one-time OAuth flow (see modules/nixos/services/

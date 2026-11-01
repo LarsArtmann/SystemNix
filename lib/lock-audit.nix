@@ -50,6 +50,8 @@
       "same rev as root nixpkgs today (7fd4004); follow flip pending the crm follows [decision] (docs/todo/upstream.md wave5 note)";
     "journal.nixpkgs" =
       "vendorHash validated against upstream's own locked nixpkgs (go 1.27.2 toolchain; first-hand probe 2026-10-19 at ba60fe0d); following would re-tool the go-modules FOD on every root-nixpkgs bump — the pdg wave class";
+    "cvagent.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (go_1_27 toolchain; first-hand probe 2026-11-01 at ee31793 built clean through its own pins); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
   },
 }:
 let

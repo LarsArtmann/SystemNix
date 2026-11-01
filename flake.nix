@@ -1083,6 +1083,13 @@
     # Without this, the input locks its own go-nix-helpers via git+ssh:
     # (git insteadOf pollution) — divergent narHash vs the top-level
     # github: fetch, the "NAR hash mismatch" daemon-cache trap (docs/agents/nix-flakes.md).
+    # cvagent: flake-parts + treefmt-nix are eval-only for the consumed
+    # package (packages.default is a buildGoModule — neither is in the
+    # closure), so the infra follows are safe; its nixpkgs stays on
+    # upstream's own pins (FOD validated there, deliberate list in
+    # lib/lock-audit.nix).
+    cvagent.inputs.flake-parts.follows = "flake-parts";
+    cvagent.inputs.treefmt-nix.follows = "treefmt-nix";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
     file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
