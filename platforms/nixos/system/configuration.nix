@@ -793,6 +793,16 @@ in
       # while placeholders remain.
       google-sync.enable = false;
       drive-paperless.enable = config.services.google-sync.enable;
+      # Audible library → HDD pool archive (audible-cli, weekly full-library
+      # download of every book in the Audible account + DRM-free M4B
+      # conversion). DORMANT until the go-live checklist completes
+      # (docs/services/audible-sync.md): ONE interactive Amazon login
+      # (`audible-quickstart`), paste the two device credentials into
+      # platforms/nixos/secrets/audible-sync.yaml via the sops editor, then
+      # flip audible-sync.enable + deploy. The unit's config-check
+      # ExecStartPre fails fast with the checklist pointer while the
+      # placeholder remains.
+      audible-sync.enable = false;
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
       # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
       # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each
