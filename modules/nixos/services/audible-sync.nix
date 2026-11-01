@@ -177,7 +177,7 @@ _: {
           #    The raw AAXC + voucher stay in downloads/ either way.
           echo "audible-sync: decrypting to DRM-free M4B (books/)"
           failures=0
-          while IFS= read -r -d '' f; do
+          while IFS= read -r -d "" f; do
             audible decrypt "$f" -d "$bookDir" -r -t || {
               echo "audible-sync: DECRYPT FAILED: $f (raw AAXC + voucher kept in $dlDir)"
               failures=$((failures + 1))
