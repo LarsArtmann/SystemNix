@@ -287,25 +287,13 @@ let
     overview = prev.overview.overrideAttrs {
       vendorHash = "sha256-QweKquKPXK0SYqk3zxEI8XHApMEUxyI5RDOwVjjsXss=";
     };
-    # file-and-image-renamer history: DROPPED 2026-10-18 as bit-neutral
-    # (upstream baked nN2cwwLQ…), RE-ADDED hours later when the 00:39 lock
-    # float hit 40176d0 (first-hand FOD drv 5pbh840d… mismatched; upstream
-    # needs the vendorHash.nix re-pin ritual). RE-STALE 2026-10-19: the
-    # re-added 4fF/8VOw… mismatched at the newest locked rev; got
-    # uwurhA+9… (/tmp/toplevel-build-20261019.log). RE-STALE AGAIN
-    # 2026-10-20 (the lock floated past another renamer rev): got
-    # 9759Ak4d… (first-hand, deploy build failure log). RE-STALE AGAIN
-    # 2026-10-26 lock float: spec 9759Ak4d, got Uz4gaRoR
-    # (float-proof-20261026-161006.log). FIFTH RE-STALE 2026-10-28 float:
-    # spec Uz4gaRoR, got XnWfiJWq
-    # (~/.cache/lockfloat/float-proof-20261028-214409.log). SIXTH RE-STALE
-    # 2026-10-29 23:15 keep-going (SAME rev 6ce5c2a — mutable-dep drift,
-    # spec XnWfiJWq, got mcCpX4P5;
-    # ~/.cache/fixwave/keepgoing.log): a go.mod dependency was re-served
-    # differently upstream between 10-28 and 10-29.
-    file-and-image-renamer = prev.file-and-image-renamer.overrideAttrs {
-      vendorHash = "sha256-mcCpX4P5uhgvEQPm/3dyOD8mrd15cOZOlAEogQihoBI=";
-    };
+    # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
+    # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes
+    # ritual, proven by last-green-verify + full CI). Six re-stales
+    # (2026-10-19/20/26/28/29×2 — see git log) were the lock float moving
+    # faster than upstream re-pins; upstream now re-pins on every verify, so
+    # the override only ever added a second, staler copy of the same number.
+    # Resurrect ONLY if an upstream rev ships a stale baked hash again.
   };
   # TEMPORARY version pin (2026-10-03): nixpkgs 7a0f122f (the 2026-10-01
   # lock) produced clickhouse 26.8.7.19 with a derivation that is ALREADY
