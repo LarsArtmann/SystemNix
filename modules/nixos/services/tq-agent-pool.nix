@@ -279,6 +279,20 @@ _: {
             enable = lib.mkDefault true;
             addr = lib.mkDefault "127.0.0.1:${toString ports.tq}";
           };
+
+          # CRUSH-SERVER FLIP (staged 2026-11-01, NOT active — the locked
+          # go-taskqueue rev 07a396ca predates the upstream
+          # `crushServerSocket` option, and the 2026-10-07 done-preflight
+          # rule says version-coupled keys land WITH their lock bump, never
+          # earlier: an unknown option here crash-loops BOTH units).
+          # ACTIVATE in the same change as `nix flake lock --update-input
+          # go-taskqueue` past 2026-11-01 (option + keeper shipped in the
+          # SUPERB adoption wave):
+          #   crushServerSocket = "/mnt/pool/services/tq/crush-pool.sock";
+          # Then watch ONE routed wave (tq tasks, DLQ empty, attempts sane,
+          # closeout facts) per docs/services/tq.md; rollback = remove the
+          # line (in-process runs return, zero residue). L4 fleet ruling
+          # sheet: go-taskqueue docs/planning/2026-11-01_19-50_L4-*.md.
         };
 
         # tq CLI on PATH for the operator (tq stats / dlq / tail / rescue)

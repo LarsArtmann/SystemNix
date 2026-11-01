@@ -141,6 +141,19 @@ let
       pass = lib.hasSuffix "/bin/tq serve --addr 127.0.0.1:${toString ports.tq}" serve.serviceConfig.ExecStart;
     }
     {
+      # CRUSH-SERVER FLIP STATE (2026-11-01): routing is NOT active — the
+      # pool ExecStart carries no --crush-server until the staged line in
+      # modules/nixos/services/tq-agent-pool.nix activates WITH the lock
+      # float past the upstream option (2026-10-07 version-coupling rule).
+      # At the flip commit, REPLACE this pin with the socket-suffix pins:
+      #   pool:   hasSuffix "--crush-server /mnt/pool/services/tq/crush-pool.sock"
+      #   serve:  hasSuffix "/bin/tq serve --addr 127.0.0.1:<port> --crush-server /mnt/pool/services/tq/crush-pool.sock"
+      name = "crush-server-flip-not-yet-active";
+      pass = !builtins.any (lib.hasInfix "--crush-server") (
+        [ pool.serviceConfig.ExecStart ] ++ (pool.serviceConfig.ExecStartPre or [ ])
+      );
+    }
+    {
       name = "serve-writable-journal-dir";
       pass = builtins.elem "/mnt/pool/services/tq" (serve.serviceConfig.ReadWritePaths or [ ]);
     }

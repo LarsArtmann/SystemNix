@@ -151,6 +151,20 @@ same journal.
   needs the fakeHash dance THERE, then `nix flake lock --update-input
   go-taskqueue` here. `nix build .#tq` (quick-go batch) surfaces drift
   before a deploy.
+- **Crush-server flip (STAGED 2026-11-01, not active)**: routing every
+  agent turn through a pool-owned `crush server` ships upstream
+  (`crushServerSocket` option + keeper supervisor + `[crush-server]`
+  no-burn death class + prompt-baked verdict/ask rails, all pinned by
+  two zero-spend smokes). The staged line sits commented in
+  `modules/nixos/services/tq-agent-pool.nix` — activate it IN THE SAME
+  change as the `nix flake lock --update-input go-taskqueue` that moves
+  past 2026-11-01 (version-coupling rule above), then watch ONE routed
+  wave: `tq tasks` (attempts sane), `tq dlq` (empty, or rows carrying
+  `[crush-server]` that re-ran cleanly), closeout reports carry verdict
+  facts, dashboard `/agents/live` pane shows live turns. Rollback =
+  remove the line (in-process runs return, zero residue); `tq doctor`
+  WARNs if host crush ≠ the smokes-proven pin. L4 fleet ruling sheet:
+  go-taskqueue `docs/planning/2026-11-01_19-50_L4-FLEET-GO-NO-GO-SHEET.md`.
 
 ---
 
