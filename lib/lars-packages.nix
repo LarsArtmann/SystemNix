@@ -123,6 +123,10 @@ lib.filterAttrs (_: v: v != null) {
   # platforms/nixos/system/configuration.nix). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
   buildflow = flakePkg inputs.buildflow;
+  # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
+  # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
+  # packages.default with its own baked vendorHash (no follows into it).
+  cvagent = flakePkg inputs.cvagent;
   # NOT flakePkg: upstream go-cqrs-lite's `packages.default` is a deliberate
   # no-op derivation (BuildFlow `nix build .` needs it; the real CLI lives at
   # packages.cqrs-lint). The 2026-10-09 shim drop kept flakePkg, which resolved

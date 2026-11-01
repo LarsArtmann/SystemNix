@@ -524,6 +524,15 @@
       url = "github:LarsArtmann/cmdguard?ref=master";
       flake = false;
     };
+    # cvagent — git history → CV facts + CV-repo mesh export (Code-To-CV-Agent).
+    # Public repo; ?ref=master per the pin policy (locked rev held until an
+    # explicit update; probe-build before any lock move). Flakes its own
+    # packages.default (buildGoModule, go_1_27, own vendorHash) — no follows
+    # on purpose, vendorHash stability. Consumed by lars-packages (PATH CLI)
+    # and modules/nixos/services/cvagent.nix (scan+mesh timer).
+    cvagent = {
+      url = "github:LarsArtmann/Code-To-CV-Agent?ref=master";
+    };
     go-nix-helpers = {
       # Was INTERIM `git+file:///home/lars/worktrees/go-nix-helpers-vnfix` -
       # the /vN pseudo-version normalization fix (8c87f26) now lives on the
