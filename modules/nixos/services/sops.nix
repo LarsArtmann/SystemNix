@@ -209,6 +209,17 @@ in
                   "gemini_api_key"
                   "minimax_api_key"
                 ]
+            // lib.optionalAttrs (svcEnabled "audible-sync") (
+              # The CI-proven minimal audible-cli auth shape: adp_token +
+              # device_private_key — stable device credentials with NO
+              # refresh-token rotation, so the rendered file is read-only
+              # forever (audible-cli re-reads it each weekly run). Ships as
+              # PLACEHOLDER; go-live checklist docs/services/audible-sync.md.
+              mkSecrets "audible-sync.yaml" {
+                owner = "audible-sync";
+                group = "audible-sync";
+              } [ "audible_sync_auth_json" ]
+            )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
               # real Wise token and is decryptable only with the host key
