@@ -48,18 +48,21 @@
           # Deliberately NO -e: per-repo scan failures warn, the export continues.
           set -uo pipefail
           cvagent="${lib.getExe cfg.package}"
-          db="''${CVAGENT_DB:?CVAGENT_DB is required}"
-          target="''${CVAGENT_TARGET:?CVAGENT_TARGET is required}"
+          db="${cfg.database}"
+          target="${cfg.targetDir}"
+          concurrency="${toString cfg.concurrency}"
+          min_confidence="${toString cfg.minConfidence}"
 
+          # Environment injection is deliberately NOT used here: cvagent's
+          # koanf layer claims the whole CVAGENT_* env namespace, so any
+          # CVAGENT_<X> this unit exported would be parsed as config and
+          # poison the load (caught live in the 2026-11-01 smoke test).
           mkdir -p "$(dirname "$db")"
-
-          # Word-split the repository list on purpose (paths carry no spaces).
-          read -r -a repos <<< "''${CVAGENT_REPOS:?CVAGENT_REPOS is required}"
 
           scanned=0
           failed=0
-          for repo in "''${repos[@]}"; do
-            if "$cvagent" scan "$repo" --db "$db" --concurrency "''${CVAGENT_CONCURRENCY:-3}"; then
+          for repo in ${lib.concatMapStringsSep " " (r: "'${r}'") cfg.repositories}; do
+            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency"; then
               scanned=$((scanned + 1))
             else
               echo "WARN: cvagent scan failed: $repo" >&2
@@ -73,7 +76,7 @@
           fi
 
           "$cvagent" mesh --target "$target" --db "$db" \
-            --min-confidence "''${CVAGENT_MIN_CONFIDENCE:-0.6}"
+            --min-confidence "$min_confidence"
 
           echo "done: scanned=$scanned failed=$failed target=$target"
         '';
@@ -148,14 +151,7 @@
               # Scan volume scales with repository history (go-cqrs-lite
               # alone walks 9k commits) — keep the budget generous.
               TimeoutStartSec = "10min";
-              Environment = [
-                "HOME=/home/lars"
-                "CVAGENT_DB=${cfg.database}"
-                "CVAGENT_TARGET=${cfg.targetDir}"
-                "CVAGENT_REPOS=${lib.concatStringsSep " " cfg.repositories}"
-                "CVAGENT_MIN_CONFIDENCE=${toString cfg.minConfidence}"
-                "CVAGENT_CONCURRENCY=${toString cfg.concurrency}"
-              ];
+              Environment = [ "HOME=/home/lars" ];
             }
             (harden {
               # The export writes the CV checkout and the fact store under
