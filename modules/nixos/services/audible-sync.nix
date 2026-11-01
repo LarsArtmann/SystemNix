@@ -98,20 +98,13 @@ _: {
           configDir="${stateDir}/config"
 
           if grep -q PLACEHOLDER "$authFile"; then
-            cat >&2 <<'EOT'
-          audible-sync: Audible device credentials are still PLACEHOLDER.
-          Go-live checklist (docs/services/audible-sync.md):
-            1. Run `nix shell nixpkgs#audible-cli -c audible-quickstart`
-               (interactive Amazon login, ONCE — on any machine).
-            2. Extract the two stable device credentials:
-               `jq -r '.adp_token, .device_private_key' < ~/.audible/auth.json`
-            3. Paste them into the auth JSON via the sops EDITOR (never a
-               command line):
-               SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
-                 sops platforms/nixos/secrets/audible-sync.yaml
-               shape: {"adp_token": "...", "device_private_key": "..."}
-            4. Redeploy (`nix run .#deploy`).
-          EOT
+            echo "audible-sync: Audible device credentials are still PLACEHOLDER." >&2
+            echo "audible-sync: Go-live checklist (docs/services/audible-sync.md):" >&2
+            echo "audible-sync:   1. nix shell nixpkgs#audible-cli -c audible-quickstart  (interactive Amazon login, ONCE)" >&2
+            echo "audible-sync:   2. jq -r '.adp_token, .device_private_key' < ~/.audible/auth.json" >&2
+            echo "audible-sync:   3. Paste into platforms/nixos/secrets/audible-sync.yaml via the sops EDITOR" >&2
+            echo "audible-sync:      (never a command line): shape {\"adp_token\": \"...\", \"device_private_key\": \"...\"}" >&2
+            echo "audible-sync:   4. Redeploy (nix run .#deploy)." >&2
             exit 1
           fi
 
@@ -150,7 +143,10 @@ _: {
           echo "audible-sync: exporting full library listing"
           audible library export -f json -o "$libDir/library.json"
           cp "$libDir/library.json" "$libDir/library-$(date +%Y-%m-%d).json"
-          ls -1t "$libDir"/library-*.json | tail -n +${toString (cfg.librarySnapshots + 1)} | xargs -r rm -f
+          # Dated names sort lexicographically = chronologically; -print0/-0
+          # (SC2012/SC2038-clean) + null-safe GNU sort/tail/xargs chain.
+          find "$libDir" -name 'library-*.json' -type f -print0 \
+            | sort -zr | tail -zn +${toString (cfg.librarySnapshots + 1)} | xargs -0 -r -- rm -f
           libItems=$(jq 'length' < "$libDir/library.json")
           echo "audible-sync: library lists $libItems items"
 
