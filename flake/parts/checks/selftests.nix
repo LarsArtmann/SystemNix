@@ -771,6 +771,32 @@
               touch $out
             '';
 
+        # Boot-evidence scratch gc selftest: age+holder gate fixtures
+        # (60h-unheld reclaimed, stale ch scrap reclaimed, fresh kept,
+        # live /proc-fd holder kept until released, quiet-mode silence,
+        # BEP_GC_AGE_H override).
+        boot-evidence-scratch-gc-selftest =
+          pkgs.runCommand "boot-evidence-scratch-gc-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+                gnused
+                findutils
+                procps
+                util-linux
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              cp ${root}/scripts/boot-evidence-scratch-gc.sh "$scratch/boot-evidence-scratch-gc.sh"
+              # /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/boot-evidence-scratch-gc.sh"
+              ${pkgs.bash}/bin/bash "$scratch/boot-evidence-scratch-gc.sh" selftest
+              touch $out
+            '';
+
         # backup-catchup-report selftest: fixture coverage of the pure
         # helpers (newest-snapshot selection incl. non-timestamp noise and
         # missing dirs, prom label matching incl. the prefix-collision
