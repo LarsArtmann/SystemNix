@@ -35,16 +35,57 @@ negotiation).
 4. Pre-flight for manual bind tests: confirm the port is actually free
    first (`ss -tln | grep 8103`) — never assume from memory.
 
-**Why only CV federates today (fleet inventory, live-probed 2026-09-22):**
-the remote URL must serve go-health `Response` JSON — the hub always sends
-`Accept: application/json` and an undecodable body becomes a permanent
-`name/reachable` FAIL row, never a skip. CV (:8098) is the only go-health
-instance in the fleet: inboxclean/overview/browser-history/papdashboard/
-geometrikks serve custom health JSON, file-and-image-renamer/
-discordsync/tq serve HTML dashboards, llama-rag serves llama.cpp's
-`{"status":"ok"}`, and monitor365-server/crush-daily/pma-health answer 404
-or nothing on `/health`. A service joins the hub by adopting go-health (or
-exposing a go-health-shaped probe), not by being added to `remotes`.
+Usually you don't even get here manually: the `health-dashboard-rediscover`
+timer (below) fails loudly with the exact line to add the day after a
+service starts speaking go-health.
+
+## Who federates today (full-registry sweep, 2026-11-02)
+
+EIGHT remotes — every go-health speaker on the host, found by sweeping ALL
+77 `lib/ports.nix` ports on `/health`, `/readyz`, `/healthz` with
+`Accept: application/json` (a go-health document = status
+pass/warn/fail/off AND a `checks` object):
+
+| Remote | Port/Path | Notes |
+| ------ | --------- | ----- |
+| `cv` | 8098 `/health` | first remote (2026-09-19) |
+| `discordsync` | 8085 `/health` | its `/readyz` is a custom OTel document — `/health` is the go-health one |
+| `renamer` | 8086 `/health` | file-and-image-renamer main daemon |
+| `renamer-watcher` | 8089 `/health` | the watcher's own healthd (port split 2026-10-29) |
+| `tq` | 8100 `/health` | go-taskqueue serve dashboard |
+| `pma` | 9420 `/readyz` | no `/health`; `/healthz` is a liveness-only empty-checks stub |
+| `dnsblockd` | 9090 `/readyz` | the STATS port serves the canonical go-health document (blocklist-sources/database/dns checks), not just Prometheus |
+| `nsfw` | 8104 `/health` | nsfw-classifier |
+
+Still custom-JSON (NOT federatable without adopting go-health upstream):
+monitor365 (`{"status":"ok",...}` + rate-limited `/healthz`), overview,
+browser-history (`"ok"` + checks in its own shape), inboxclean, geometrikks
+(HTML), gatus-alert-relay, bank-sync/papdashboard/media-atlas
+(`{"status":"up"}`), miniflux (HTML/plain). Federation refuses any of
+these as a permanent `name/reachable` FAIL row — a service joins by
+adopting go-health, not by being added to `remotes`.
+
+## The rediscover drift sweep (2026-11-02)
+
+The list above was stale for five weeks — the 2026-09-22 inventory said
+"only CV speaks go-health", four-plus services adopted go-health v0.8.x
+silently, and nothing re-probed. `health-dashboard-rediscover.service`
+(daily, 15m after boot, Persistent) re-runs the exact sweep minus the hub
+itself (self-federation would recurse) and FAILS via `onFailure` with the
+exact `remotes` line to add when a registry port serves a go-health
+document that is not federated. Connection-refused, 4xx/5xx and
+undecodable bodies are skipped — the only failure mode is positive
+go-health evidence, so there is no false-positive class by construction
+(validated live against all 77 registry ports: with the 8 federated the
+sweep exits clean).
+
+Why not DNS autodiscovery: `*.home.lan` records DERIVE from the platform
+catalog (ADR-008), but the catalog carries no health-PROTOCOL marker and
+the hub binary consumes a static `HEALTH_HUB_REMOTES` env — blind
+derivation from `healthPath` would federate every custom-JSON service
+into permanent FAIL rows. The runtime sweep is the honest equivalent of
+autodiscovery for this fleet; true DNS/SRV discovery would be an upstream
+health-hub feature.
 
 ## Readiness semantics (why `/readyz` pages)
 
