@@ -830,11 +830,11 @@
     },
     "crane": {
       "locked": {
-        "lastModified": 1793576233,
-        "narHash": "sha256-F53BB9a44pOYWyxQxzBBh7rmZybX29Ah1ETaG5D02JI=",
+        "lastModified": 1792350552,
+        "narHash": "sha256-292lvpvxTGKryKxh3/3tcIVi85CwYGdl4oOi113Sob8=",
         "owner": "ipetkov",
         "repo": "crane",
-        "rev": "4866304b6bd1ad48412ad90bcd3b1a6296f3affd",
+        "rev": "e675a36b7377bebe41d548388a2501cbb16d380d",
         "type": "github"
       },
       "original": {
@@ -6811,16 +6811,17 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1793581663,
-        "narHash": "sha256-cjGccvIExzdKCzI51mxO/6zxnQ40K+MMkmEDgKOBIg8=",
+        "lastModified": 1793126660,
+        "narHash": "sha256-XrcvKNqKzKl7wADeVJoCDtpwFHd7E1YpCHauy+FkSkc=",
         "ref": "refs/heads/master",
-        "rev": "31ea3b7b1cc8729e0daec453911a3031d14579bd",
-        "revCount": 4441,
+        "rev": "10d252918bfcea33f341385a50182f26aaa75182",
+        "revCount": 4422,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "10d252918bfcea33f341385a50182f26aaa75182",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       }
@@ -7640,16 +7641,17 @@
         "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
-        "lastModified": 1793550243,
-        "narHash": "sha256-fmQ8U+MLdp5J0+oQGuZQfPazEBn8exh3tDw2AFcEidY=",
+        "lastModified": 1792951428,
+        "narHash": "sha256-jn/8GKNb4YygD6MZuAu/saH1FwHWwopnFrL5OW8C5FE=",
         "ref": "refs/heads/master",
-        "rev": "983928ff39fd186aa40d2aacb055af52d77d502a",
-        "revCount": 154,
+        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
+        "revCount": 133,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       }
@@ -8182,11 +8184,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793523538,
-        "narHash": "sha256-vHPjEGxtV+StSLW9DJpa3c3gt0UD0s1q4nC98AZ0N0c=",
+        "lastModified": 1793086596,
+        "narHash": "sha256-ObKS44vw4IIVpQ69YJzUGjZ0IwnpWoUlwjJSY7gefdo=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "c85ccd343087c57da6021cafa1647142ad03e32e",
+        "rev": "c7e9d512653a35ef4d5879c3df4d44d7b78d0e6d",
         "type": "github"
       },
       "original": {
@@ -8992,17 +8994,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1793480648,
-        "narHash": "sha256-ePWEdTx0WuKhjawMkYx2HuTtOSqqYQEKdeCjxJMAWsg=",
+        "lastModified": 1792338185,
+        "narHash": "sha256-nYpXsDfpykrF+1Syrs2hTIkuS71xMyBXMPxUUvMaEi4=",
         "owner": "LarsArtmann",
         "repo": "vision-review-agent",
-        "rev": "5f6cbbed501805f5b7c7be26e215615b62ce89b0",
+        "rev": "8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "vision-review-agent",
+        "rev": "8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45",
         "type": "github"
       }
     },

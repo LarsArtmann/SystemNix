@@ -93,6 +93,15 @@
     # go.mod floor without touching the root pin. Same pattern clears
     # hermes-agent if its patch context survives an unstable follow.
     hermes-agent = "REV-PINNED at 0329638c (2026-10-23T01:21, the rev before upstream 5a5aa9a): its patchelfFixed patches patchelf 0.19.2 for NixOS/patchelf#672, but this input's nixpkgs FOLLOWS our fe13242 pin (patchelf 0.15.2), so the fetched patch cannot apply and every cold pm-ripgrep/pm-node build dies in patchPhase (first-hand --keep-going 2026-10-25: hermes-agent → ripgrep-15.2.0 → patchelf-0.15.2, hunks 543/576/1167/1215 FAILED). LIFT: pinned nixpkgs ships a patchelf containing #672 (i.e. after the nixpkgs fe13242 rev-pin is lifted) — drop the pin, re-float hermes, and re-run the toplevel proof.";
+    # ── 2026-11-02 04:12 lock-float proof holds ────────────────────────
+    # The 03:16 + 04:12 blanket float moved ~70 inputs unproven (daemon
+    # sweeps); the 04:32 keep-going enumeration left three roots that hash
+    # shims cannot fix — upstream breakage classes, pinned back to the last
+    # build-proven rev per input (log:
+    # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+    monitor365 = "REV-PINNED at 10d25291 (2026-11-02): upstream 31ea3b7b bumped wasm-bindgen 0.2.129 → 0.2.130 without re-pasting the tarball hash in nix/tools.nix (spec gtEruUDi…, got lofzu1Ubn… — first-hand keep-going, float-proof-20261102-043225-lars.log), breaking monitor365-ui; 10d25291 is the last build-proven 0.2.129 pair. The fix is already pasted in ~/projects/monitor365 (13 commits ahead of origin, in-flight session). LIFT: that stack lands on origin/master with the lofzu1Ubn… paste — drop the pin, re-lock past it, re-run the toplevel proof.";
+    project-discovery-daemon = "REV-PINNED at 145cd73d (2026-11-02): upstream 983928ff does not compile — server.go:1061 references godmn.ReadNotifyCounters, which no longer exists (half-wired upstream refactor; first-hand keep-going, float-proof-20261102-043225-lars.log). 145cd73d is the last build-proven rev. LIFT: upstream master compiles again (ReadNotifyCounters defined or the call removed) and a probe build through our lock exits 0 — then drop this pin and this row.";
+    vision-review-agent = "REV-PINNED at 8cbb0ec9 (2026-11-02): upstream 5f6cbbed raised go.mod's go directive to >= 1.27.3 while our REV-PINNED nixpkgs (fe13242) ships go 1.27.2 under GOTOOLCHAIN=local (first-hand keep-going, float-proof-20261102-043225-lars.log). 8cbb0ec9 is the last build-proven rev. LIFT: upstream go.mod fits the pinned toolchain again, or the fe13242 nixpkgs pin lifts to a rev shipping go >= 1.27.3 (the inboxclean pattern: a floating nixpkgs-unstable follow) — and a probe build exits 0 — then drop this pin and this row.";
     # inboxclean row REMOVED 2026-10-25: the 2026-10-25 go-1.27.3-floor pin
     # was lifted by the nixpkgs-unstable follow (flake.nix) — the input
     # floats on upstream master again, and the FOD proves the toolchain.
