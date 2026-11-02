@@ -390,6 +390,16 @@ in
                     # lesson distill + the STEER loop) and kills the
                     # BrainHealth dark-brain warn row.
                     "cv_agent_api_key"
+                    # openaicompat chat key (2026-11-02, owner order —
+                    # supersedes the same-day disable): the Synthetic API
+                    # key, copied from crush-daily.yaml's synthetic_api_key
+                    # via scripts/sops-copy-key.sh (auth + a syn:large:text
+                    # completion live-verified HTTP 200 pre-copy). Feeds
+                    # OPENAICOMPAT_API_KEY in the cv-env template;
+                    # chat.enabled lands in the SAME commit (FLIP-TIMING:
+                    # never enable without the key — the 2026-11-02 warn
+                    # class was exactly enabled-with-empty-key).
+                    "cv_openaicompat_api_key"
                   ]
                   # Funnel reply-loop mailbox (2026-10-27, recut-10 T2):
                   # the applications@larsartmann.cloud Stalwart account
@@ -791,6 +801,15 @@ in
                   # backpressure live-validated over the 1038-app store —
                   # 120s default is too tight for a full pass.
                   CV_AGENT_TIMEOUT = "300s";
+                  # openaicompat chat (2026-11-02, owner order): the Synthetic
+                  # key (cv_openaicompat_api_key, copied from crush-daily.yaml
+                  # synthetic_api_key). Binds to openaicompat.api_key via
+                  # bindSpecialEnvVars (accepts both OPENAICOMPAT_API_KEY and
+                  # CV_OPENAICOMPAT_API_KEY; canonical = unprefixed, matches
+                  # the llmsetup name). cv.nix carries base_url +
+                  # chat.model=syn:large:text; HealthCheck is wiring-only
+                  # (zero network calls), so enabled+keyed adds no warn row.
+                  OPENAICOMPAT_API_KEY = config.sops.placeholder.cv_openaicompat_api_key;
                   # D5.1 citizenship carve-out (defense-market funnel):
                   # comma-joined ISO-3166 alpha-2 ("de") — SÜG/NATO-bearing
                   # rows stop categorical-skipping for obtainable regimes.

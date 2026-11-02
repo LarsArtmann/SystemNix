@@ -484,17 +484,30 @@
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
             logging.format = "json";
-            # openaicompat disabled 2026-11-02 (the 2026-10-14 DEPLOY-ORDER
-            # flip, finally ridden): chat/voice is unconsumed and the section
-            # has zero keys — with enabled=true the deployed ChatService
-            # health row warned forever ("enabled but api_key is empty").
-            # Disabled is a configured state (openaicompat HealthCheck: nil
-            # when !Enabled), so the row disappears honestly. The FLIP-TIMING
-            # constraint is satisfied: the old-binary-ignores-the-section
-            # hazard is gone — the locked cv rev (e168e6d, deployed) parses
-            # openaicompat (the live warn names it). Re-enable ONLY together
-            # with OPENAICOMPAT_API_KEY in the cv-env sops template.
-            openaicompat.enabled = false;
+            # openaicompat ENABLED 2026-11-02 (owner order, superseding the
+            # same-day disable): chat runs on Synthetic — base_url +
+            # syn:large:text per the openseo precedent, auth + a live
+            # completion verified HTTP 200 pre-copy. The key rides
+            # OPENAICOMPAT_API_KEY (cv-env sops template; cv.yaml
+            # cv_openaicompat_api_key) and landed in the SAME commit — the
+            # FLIP-TIMING rule stands: never enable without the key (the
+            # retired warn class was exactly enabled-with-empty-key).
+            # TTS/STT stay OFF: the Go defaults are Groq-shaped
+            # (canopylabs/orpheus-v1-english, whisper-large-v3) and Synthetic
+            # serves no /audio/* surface — enabled voice = broken calls.
+            # HealthCheck is wiring-only (zero network calls), so
+            # enabled+keyed adds no warn row.
+            openaicompat = {
+              enabled = true;
+              base_url = "https://api.synthetic.new/openai/v1";
+              api_key = ""; # rides OPENAICOMPAT_API_KEY (cv-env template)
+              chat = {
+                enabled = true;
+                model = "syn:large:text"; # required when chat.enabled (no default)
+              };
+              tts.enabled = false; # Groq-shaped default unusable on Synthetic
+              stt.enabled = false; # whisper default unusable on Synthetic
+            };
             # Absolute state-dir path: the default (data/graphrag.sqlite) is
             # CWD-relative, which happens to resolve correctly today but only
             # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can
