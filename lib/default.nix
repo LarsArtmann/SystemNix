@@ -80,7 +80,13 @@ in
         }
         (harden (
           {
-            inherit memoryMax;
+            # MemoryMax, not memoryMax: harden{}'s argument is capitalised and
+            # a lowercase key is passed through to the unit verbatim, where
+            # systemd rejects it as an unknown directive ("Unknown key
+            # 'memoryMax' in section [Service], ignoring") AND the intended
+            # ceiling is silently replaced by harden's 512M default
+            # (2026-11-02, first booted in the crush-daily VM test).
+            MemoryMax = memoryMax;
             ReadWritePaths = [ mountRoot ];
           }
           // lib.optionalAttrs (owner != null) {

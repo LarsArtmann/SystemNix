@@ -32,6 +32,14 @@ _: {
       # dedicated system user. The pool leaf is chowned to whoever writes the
       # backups, so this must not drift from the upstream backup unit's User=.
       serviceUser = if cfg.runAsUser == null then "crush-daily" else cfg.runAsUser;
+      # The leaf's GROUP is the user's primary group, not a group named after
+      # the user. On evo-x2 lars' gid is `users` (100) — there is no `lars`
+      # group at all — so `chown lars:lars` failed the leaf unit on every boot
+      # and the backup service, which runs as that unprivileged user, then had
+      # no writable destination under the root-owned /mnt/pool/backups. Found
+      # by the VM test on its first boot (2026-11-02); the flake check could
+      # not see it because it renders the script without a user database.
+      serviceGroup = config.users.users.${serviceUser}.group;
     in
     {
       config = lib.mkIf cfg.enable {
@@ -59,6 +67,7 @@ _: {
             description = "Create Crush Daily backup directory on the HDD pool";
             directory = cfg.backup.directory;
             owner = serviceUser;
+            group = serviceGroup;
             mode = "0750";
           }
         );

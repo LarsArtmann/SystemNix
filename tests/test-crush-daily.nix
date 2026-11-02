@@ -71,6 +71,11 @@ in
       system.stateVersion = "25.11";
       virtualisation.memorySize = 2048;
 
+      # sqlite3 for the WAL probe and the artifact's quick_check: the module's
+      # units carry sqlite in their own `path`, but the test script runs in the
+      # shell's environment, not in a unit.
+      environment.systemPackages = [ pkgs.sqlite ];
+
       # The module defaults to the dedicated `crush-daily` system user with
       # ProtectHome=true. The host runs as the primary user because the
       # collector reads ~/.local/share/crush/projects.json — exercise THAT
@@ -202,10 +207,13 @@ in
     )
 
     # ---- 5. Retention prunes by age, keeps what is inside the window ----
+    # Both fixtures are dated RELATIVE to the VM clock. Hardcoded epochs are a
+    # trap: a "this year" timestamp is already outside a 7-day window by
+    # November and the test then asserts the opposite of what it means.
     stale = "${backupDir}/crush-daily-20200101_000000.db"
-    fresh = "${backupDir}/crush-daily-20260101_000000.db"
-    machine.succeed(f"cp '{artifact}' {stale} && touch -d '@1577836800' {stale}")
-    machine.succeed(f"cp '{artifact}' {fresh} && touch -d '@1767225600' {fresh}")
+    fresh = "${backupDir}/crush-daily-20200102_000000.db"
+    machine.succeed(f"cp '{artifact}' {stale} && touch -d '30 days ago' {stale}")
+    machine.succeed(f"cp '{artifact}' {fresh} && touch -d '3 days ago' {fresh}")
     machine.sleep(1)  # distinct timestamp for the second artifact
     machine.systemctl("start crush-daily-backup.service")
     machine.fail(f"test -f {stale}")
