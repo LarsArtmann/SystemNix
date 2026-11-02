@@ -44,3 +44,7 @@ The bank-sync `[cqrs.journal_snapshot_divergence]` was NEVER a divergence: the u
 - No bank-sync-repo follow-up rows: the error-mapping fix is complete (code + test + template + CHANGELOG); its daemon commit lands in that repo.
 - The /users/lars/tmp decision stays owner-gated with the recommendation recorded (storage.md:128).
 - pre-reboot-check after the deploy (carried, owned).
+
+## g) Post-report addendum (06:58)
+
+Watch-window 1 (05:27→06:57, 90 min) closed WITHOUT firing: PSI worsened 74→97 (storm night 2 continuing) and the parallel session opened a NEW wave at 06:47-06:52 (flake.nix, quickshell.nix, configuration.nix) — both gates correctly held the deploy. Watcher re-armed as window 2 (`deploy4-window2.log`, pid 808842). Live state 06:58: anchor still `zwjf`=system-968; bank-sync daemon active; qonto-import inactive-GREEN; HM active; opencloud still failed (fix riding the deploy, as designed).
