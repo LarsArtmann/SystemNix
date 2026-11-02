@@ -334,20 +334,21 @@ _: {
               )
             }";
           }
-          {
-            assertion =
-              let
-                pairs = map (ep: "${ep.group or ""}/${ep.name or "?"}") config.services.gatus.settings.endpoints;
-              in
-              builtins.length pairs == builtins.length (lib.lists.unique pairs);
-            message = "gatus-endpoint-uniqueness: duplicate name+group pair — gatus PANICS on config parse ('name and group combination must be unique') and restart-loops with ALL monitoring down (2026-11-02 productivity_browser-history duplicate: 131 restarts before dedup; doc-counts counts endpoints, not collisions). Duplicates: ${
-              lib.concatStringsSep ", " (
-                builtins.filter (p: lib.length (builtins.filter (q: q == p) pairs) > 1) (
-                  lib.lists.unique pairs
+          (
+            let
+              pairs = map (ep: "${ep.group or ""}/${ep.name or "?"}") config.services.gatus.settings.endpoints;
+            in
+            {
+              assertion = builtins.length pairs == builtins.length (lib.lists.unique pairs);
+              message = "gatus-endpoint-uniqueness: duplicate name+group pair — gatus PANICS on config parse ('name and group combination must be unique') and restart-loops with ALL monitoring down (2026-11-02 productivity_browser-history duplicate: 131 restarts before dedup; doc-counts counts endpoints, not collisions). Duplicates: ${
+                lib.concatStringsSep ", " (
+                  builtins.filter (p: lib.length (builtins.filter (q: q == p) pairs) > 1) (
+                    lib.lists.unique pairs
+                  )
                 )
-              )
-            }";
-          }
+              }";
+            }
+          )
         ];
         services.gatus = {
           enable = true;

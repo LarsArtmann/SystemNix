@@ -32,6 +32,7 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkMetricTextfileCollector
         mkOidcGate
         mkPoolDirUnit
         mkSqliteBackupUnit
@@ -712,43 +713,50 @@
         # the pool (RequiresMountsFor), which is host-shaped — evo-x2 opts
         # in via configuration.nix (profileProbe precedent).
         (lib.mkIf (cfg.enable && cfg.dbBackup.enable) {
-          systemd.services.browser-history-backup-dir = mkPoolDirUnit {
-            description = "Create Browser History DB backup directory on the HDD pool";
-            directory = backupDir;
-          };
+          # One systemd key: the pool-dir unit and the backup pair merge
+          # (a dotted systemd.services.* next to a bare systemd = in the
+          # same attrset is a duplicate-attribute error).
+          systemd = lib.mkMerge [
+            {
+              services.browser-history-backup-dir = mkPoolDirUnit {
+                description = "Create Browser History DB backup directory on the HDD pool";
+                directory = backupDir;
+              };
+            }
 
-          # The backup pair lives in lib/mkSqliteBackupUnit (plan E1): the
-          # same WAL-safe contract as crush-daily's backup, one generator.
-          # The rendered script is the old inline one PLUS temp-copy +
-          # quick_check-before-rename (a killed run can no longer leave a
-          # torn .sqlite that looks valid) and .tmp cleanup in retention.
-          systemd = mkSqliteBackupUnit {
-            inherit pkgs;
-            name = "browser-history-backup";
-            description = "Browser History DB backup (online sqlite .backup)";
-            dbPath = "/var/lib/browser-history/data.db";
-            backupDir = backupDir;
-            prefix = "browser-history-db-";
-            retentionDays = 14;
-            # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
-            # miniflux (02:45).
-            startAt = { OnCalendar = "*-*-* 02:15:00"; };
-            serviceDeps = [
-              "browser-history.service"
-              "browser-history-backup-dir.service"
-            ];
-            timerAfter = [ "mnt-pool.mount" ];
-            onFailureDeps = onFailure;
-            extraServiceConfig = [
-              # The server's DynamicUser StateDirectory is 0700 owned by a
-              # random uid — root cannot traverse it without
-              # CAP_DAC_READ_SEARCH (cv-backup silent-no-op precedent:
-              # DAC-obeying root saw no DB and exited 0 "nothing to back up"
-              # forever).
-              (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
-              ioTier.background
-            ];
-          };
+            # The backup pair lives in lib/mkSqliteBackupUnit (plan E1): the
+            # same WAL-safe contract as crush-daily's backup, one generator.
+            # The rendered script is the old inline one PLUS temp-copy +
+            # quick_check-before-rename (a killed run can no longer leave a
+            # torn .sqlite that looks valid) and .tmp cleanup in retention.
+            (mkSqliteBackupUnit {
+              inherit pkgs;
+              name = "browser-history-backup";
+              description = "Browser History DB backup (online sqlite .backup)";
+              dbPath = "/var/lib/browser-history/data.db";
+              backupDir = backupDir;
+              prefix = "browser-history-db-";
+              retentionDays = 14;
+              # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
+              # miniflux (02:45).
+              startAt = { OnCalendar = "*-*-* 02:15:00"; };
+              serviceDeps = [
+                "browser-history.service"
+                "browser-history-backup-dir.service"
+              ];
+              timerAfter = [ "mnt-pool.mount" ];
+              onFailureDeps = onFailure;
+              extraServiceConfig = [
+                # The server's DynamicUser StateDirectory is 0700 owned by a
+                # random uid — root cannot traverse it without
+                # CAP_DAC_READ_SEARCH (cv-backup silent-no-op precedent:
+                # DAC-obeying root saw no DB and exited 0 "nothing to back
+                # up" forever).
+                (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
+                ioTier.background
+              ];
+            })
+          ];
         })
 
         # Service-integration registry entries (modules/nixos/services/
