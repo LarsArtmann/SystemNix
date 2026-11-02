@@ -62,7 +62,14 @@ bep_killpass_join() {
   #                pass cannot disambiguate
   #   UNRESOLVED — no join found; the section names the gap instead of
   #                fabricating a cgroup path
-  local dump="$1" oom="$2" win=30
+  # Window: 60 s. Calibrated 2026-11-02 over the two live OOM boots —
+  # b0d70d73 (systemd lines LEAD kernel kills, up to exactly -30 s:
+  # session-74.scope sat ON the old +-30 edge and a -31 s line would
+  # silently miss) and 7b12c3db (systemd lines LAG 1-8 s). Join output
+  # is byte-identical at 30/45/60 on both boots (counter-uid exclusion +
+  # leaf-over-slice + uid-shape scoring absorb the wider net), so 60 s
+  # is pure margin for the async-cgroup-notification lead class.
+  local dump="$1" oom="$2" win=60
   local kills kline pid task uid ts uts att line unit lts lus udiff score bestscore first cand
   kills=$(grep -E 'Out of memory: Killed process' "$dump" || true)
   if [ -z "$kills" ]; then
@@ -93,13 +100,20 @@ bep_killpass_join() {
       [ "$udiff" -le "$win" ] || continue
       # Counter-uid exclusion: a user@975 line cannot evidence a uid-1000
       # victim (live Oct-28: the hermes scope's line sat closest to the
-      # session-74 kills and would have won on proximity alone).
+      # session-74 kills and would have won on proximity alone), and NO
+      # user-flavored unit can evidence a uid-0 (system) victim — the
+      # win=60 calibration pass would otherwise let a -58 s session line
+      # join an unrelated uid-0 kill.
       case "$unit" in
       user@*.service | user-*.slice)
+        [ "$uid" = 0 ] && continue
         if [ -n "$uid" ]; then
           u2=$(printf '%s' "$unit" | sed -E 's/^user[@-]([0-9]+)\.(service|slice)$/\1/')
           [ "$u2" != "$uid" ] && continue
         fi
+        ;;
+      session-*.scope)
+        [ "$uid" = 0 ] && continue
         ;;
       esac
       # Leaf units (.scope/.service) beat parent aggregates (.slice):
@@ -375,6 +389,15 @@ bep_selftest() (
     echo "Oct 11 23:10:01 evo-x2 kernel: Out of memory: Killed process 3595707 (chrome-headless) total-vm:1518498916kB, UID:1000 oom_score_adj:300"
     echo "Oct 11 23:10:02 evo-x2 systemd[1]: session-74.scope: The kernel OOM killer killed some processes in this unit."
     echo "Oct 11 23:11:00 evo-x2 kernel: Out of memory: Killed process 424242 (ghost) total-vm:800kB, UID:0 oom_score_adj:0"
+    # Join-window calibration legs (2026-11-02: win=60; systemd lines can
+    # LEAD kernel kills — the Oct-28 correct join line sat at exactly -30 s
+    # under the old win=30). One victim whose unit line leads by -45 s
+    # (inside the window -> unit-join) and one at -121 s (outside ->
+    # UNRESOLVED; the wider window must NOT fish it in).
+    echo "Oct 11 23:20:01 evo-x2 kernel: Out of memory: Killed process 5000001 (early-lead) total-vm:100kB, UID:1000 oom_score_adj:0"
+    echo "Oct 11 23:19:16 evo-x2 systemd[1]: session-77.scope: The kernel OOM killer killed some processes in this unit."
+    echo "Oct 11 23:40:01 evo-x2 kernel: Out of memory: Killed process 5000002 (far-past) total-vm:100kB, UID:1000 oom_score_adj:0"
+    echo "Oct 11 23:38:00 evo-x2 systemd[1]: session-78.scope: The kernel OOM killer killed some processes in this unit."
     echo "Oct 11 23:05:00 evo-x2 memory-emergency-guard-check[9]: MEMORY EMERGENCY: zone 6 trip"
     echo "Oct 11 23:15:00 evo-x2 thermal-pstate-guard-check[9]: THERMAL THROTTLE ENTER: amd_pstate -> guided"
     echo "Oct 11 23:20:00 evo-x2 kernel: BUG: unable to handle page fault"
@@ -384,12 +407,14 @@ bep_selftest() (
   out=$(bep_render "$tmp/journal" "bf8a454c" "bf8a454cdeadbeef000000000000000000000000" "2026-10-11 11:09:43" "2026-10-12 13:04:01" "$tmp/ch-sect")
   printf '%s\n' "$out" >"$tmp/evidence.md"
 
-  check "census oom count" grep -q '^- oom-lines: 8$' "$tmp/evidence.md"
-  check "census killpass join line" grep -q -- '- oom kill-pass join: 4 killed process(es) — 2 memcg-attested, 1 unit-joined, 1 unresolved' "$tmp/evidence.md"
+  check "census oom count" grep -q '^- oom-lines: 10$' "$tmp/evidence.md"
+  check "census killpass join line" grep -q -- '- oom kill-pass join: 6 killed process(es) — 2 memcg-attested, 2 unit-joined, 2 unresolved' "$tmp/evidence.md"
   check "join: pid1 attested" grep -q 'pid=1 task=nix uid= memcg=/system.slice/tq-agent-pool.service basis=attested' "$tmp/evidence.md"
   check "join: chromium attested path" grep -q 'pid=3392891 task=chromium uid=1000 memcg=/user.slice/user-1000.slice/session-74.scope basis=attested' "$tmp/evidence.md"
   check "join: headless unit-joined" grep -q 'pid=3595707 task=chrome-headless uid=1000 unit=session-74.scope basis=unit-join' "$tmp/evidence.md"
   check "join: ghost unresolved" grep -q 'pid=424242 task=ghost uid=0 memcg=UNRESOLVED' "$tmp/evidence.md"
+  check "join: -45 s lead joins" grep -q 'pid=5000001 task=early-lead uid=1000 unit=session-77.scope basis=unit-join' "$tmp/evidence.md"
+  check "join: -121 s stays unresolved" grep -q 'pid=5000002 task=far-past uid=1000 memcg=UNRESOLVED' "$tmp/evidence.md"
   check "join: section heading" grep -q '^## OOM kill-pass join' "$tmp/evidence.md"
   check "census guard count" grep -q '^- guard-lines (memory-emergency-guard): 1$' "$tmp/evidence.md"
   check "census thermal count" grep -q '^- thermal-THROTTLE-lines: 1$' "$tmp/evidence.md"
