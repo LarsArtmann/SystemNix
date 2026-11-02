@@ -780,15 +780,26 @@
               monitored = true;
               checks = [
                 {
+                  # F3.5 flip (2026-11-02): /api/doctor, the full deployment
+                  # diagnosis — 503 names the failing check in checks[] (config
+                  # / database / journal / projection / agents / ai / otel /
+                  # auth / panics / backup), where /health could only say THAT
+                  # something degraded. The route exists on every rev since
+                  # e506008 (F2) and this check deploys in the same toplevel
+                  # as the browser-history generation, so there is no window
+                  # where the probe outruns the route.
                   name = "Browser History";
                   group = "Productivity";
-                  url = "http://localhost:${toString ports.browser-history}/health";
-                  interval = "5m";
+                  url = "http://localhost:${toString ports.browser-history}/api/doctor";
+                  interval = "60s";
                   conditions = [
                     "[STATUS] == 200"
-                    "[RESPONSE_TIME] < 500"
+                    # The doctor runs its checks sequentially over the shared
+                    # pool — budget 2s, not the /health-era 500ms.
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*\"status\":\"ok\"*)"
                   ];
-                  alert = "Browser History server down — browsing analytics unavailable. An exactly-10.0s response time is the Gatus client-timeout signature (server never answered within max-time — the 2026-10-12 burst-2 class: precedes/coincides with IO PSI 33%+ nvme write bursts; check the I/O Stall Rate check + /proc/pressure/io before blaming the server)";
+                  alert = "browser-history doctor FAILED — /api/doctor answers 503 when any named check fails. Read checks[] (config / database / journal / projection / agents / ai / otel / auth / panics / backup): GET /api/doctor from the box, or run `browser-history-server doctor --json` as the service user. An exactly-10.0s response time is the Gatus client-timeout signature (server never answered within max-time — the 2026-10-12 burst-2 class: precedes/coincides with IO PSI 33%+ nvme write bursts; check the I/O Stall Rate check + /proc/pressure/io before blaming the server). Check: systemctl status browser-history; journalctl -u browser-history -n 50; systemctl status browser-history-agent.timer";
                 }
                 {
                   # Registration-bypass + deletion/rollback detector (2026-10-15,
