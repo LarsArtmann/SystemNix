@@ -14,7 +14,7 @@
    - Host eval GREEN (icon-form regex + tile-coverage assertions + float audit) — `nix eval` of the toplevel drvPath passes, re-verified at 21:30 HEAD `7b02a933` after the parallel session's crm/cv/forgejo landings.
    - §16 pre-deploy tolerance for URL icons confirmed by code-read: `scripts/pre-deploy-check.sh:499-517` counts `http(s)://` icons into coverage (`pap_url_total`), so the URL tile cannot block the deploy battery.
    - Pack gate mechanics proven earlier in the session (the chart-db interlude): `nix-store --realise` of the icons drv produced the referenced file — see §d.2 for how many wrong verbs that took.
-   - **Live endpoint probe:** `getent hosts daily.home.lan` → 192.168.1.150; raw TLS GET → `HTTP/1.1 200 OK`, `Content-Type: image/svg+xml`, 233 bytes, `Cache-Control: public, max-age=31536000, immutable`, via Caddy. The favicon route predates the DEPLOYED lock rev (route commit 6c2daf0 ≤ locked 38ff60b; only the brand *docs* are newer at f20d0ba) — the URL works against prod TODAY, before any deploy.
+   - **Live endpoint probe:** `getent hosts daily.home.lan` → 192.168.1.150; raw TLS GET → `HTTP/1.1 200 OK`, `Content-Type: image/svg+xml`, 233 bytes, `Cache-Control: public, max-age=31536000, immutable`, via Caddy. The favicon route predates the DEPLOYED lock rev (route commit 6c2daf0 ≤ locked 38ff60b; only the brand _docs_ are newer at f20d0ba) — the URL works against prod TODAY, before any deploy.
 4. **Master un-stranded.** Found master un-evalable since 20:28 (every host eval died on the lock-float audit: flake.lock floated crm 843b36dd→52d5e468 + cv 5165e44→0d50fb76 at 20:18 `4aaf0faa6`, while `e5cdde425` 20:28 reverted ONLY the registry rows back to the pins — a half red-path). Repaired by restoring flake.lock to `4aaf0faa6^` (the pre-float, last-green state the 19:25 green probe + system-956 deploy validated); exact-inverse diff (38+/56−); daemon-committed as `81262f39c` (20:55). Post-repair eval green; `nix fmt` on my edited module: 0 changed.
 5. **Self-harvest at authoring time (repo rule):** 4 doc edits — `[watch]` favicon-cache row in `docs/todo/services.md`; evidence + misattribution-correction UPDATE appended to the Daemon float-split guard row in `docs/todo/pipeline.md`; nix-CLI-gaps bullet in `docs/agents/nix-flakes.md`; icon-source-first sentence in `docs/agents/integration-registry.md` step 6. Ledger: §f.
 
@@ -29,7 +29,7 @@
 
 1. Deploy + post-deploy visual verification (tile renders violet bars, not a monogram) — owner-gated, §f.1/2.
 2. CHANGELOG entry for the 27-minute master strand — report records it; changelog-worthiness is an owner call (§f.7).
-3. crush-config guard-hook fix (` -r ` pattern blocked `nix-store -r` — false positive on a non-rg binary) — cross-project, not SystemNix (§f.8).
+3. crush-config guard-hook fix (`-r` pattern blocked `nix-store -r` — false positive on a non-rg binary) — cross-project, not SystemNix (§f.8).
 4. Upstream nix issue for `nix build <drv-path>` silent no-op — would need the verify-before-filing gate first (§f.9).
 5. float-register hardening implementation (row-582 remedies, green-proof marker row 573, pipefail death row 580) — pre-existing rows, not mine tonight.
 
@@ -48,7 +48,7 @@
 1. **Upstream-checkout-first reflex for first-party branding** — any tile/brand/logo question starts with `rg -il "brand|logo|favicon" <product-checkout>`, generic packs second. Harvested into integration-registry.md step 6 tonight.
 2. **Float-in-progress marker (row 582 remedies) is now proven necessary by three independent incidents in one evening** — my §d.4 clobber-risk is the third. The ceremony-side fixes (fingerprint registry before proof, regenerate against temp registry, green-proof stamp) + daemon-side path-exclusion would have prevented every one.
 3. **Post-commit green-eval probe in the float flow** — the strand was detectable in seconds by a trivial `nix eval` after any lock/registry commit; instead it took an unrelated session's eval to trip. Cheap gate, big payoff.
-4. **Shell guard ` -r ` pattern needs anchoring to rg** — it blocked `nix-store -r` (third strike message fires on any binary). crush-config repo, cross-project.
+4. **Shell guard `-r` pattern needs anchoring to rg** — it blocked `nix-store -r` (third strike message fires on any binary). crush-config repo, cross-project.
 5. **Attribution: heuristic daemon batches + mixed-author content = forensics debt.** My §f.14 attribution question is already unanswerable hours later. The pathspec-commit and amend disciplines exist; the daemon's batches don't follow them. Keep flagging; the deploy7 session's daemon-guard row is the systemic fix.
 6. **Nix CLI cheat-sheet** — harvested (nix-flakes.md): on this box, realize = `nix-store --realise`; `nix build <drv>` lies; `nix store build` doesn't exist; `nix-instantiate` can't see flakes.
 
@@ -61,7 +61,7 @@
 5. **Nix CLI gaps bullet** (realize verb, silent no-op, missing commands). — HARVESTED (docs/agents/nix-flakes.md).
 6. **Icon-source-first sentence for first-party services.** — HARVESTED (docs/agents/integration-registry.md step 6).
 7. **CHANGELOG entry for the master strand** (20:28→20:55 un-evalable master; root cause the half red-path; repair 81262f39c). — NOT harvested: owner call on changelog-worthiness.
-8. **crush-config guard-hook: anchor the ` -r ` block to rg** (false-positives on `nix-store -r` and any other ` -r ` flag). — NOT harvested: lives in the crush-config repo, not SystemNix.
+8. **crush-config guard-hook: anchor the `-r` block to rg** (false-positives on `nix-store -r` and any other `-r` flag). — NOT harvested: lives in the crush-config repo, not SystemNix.
 9. **Upstream nix issue: `nix build <drv-path>` exits rc=0 without building** — needs a minimal repro + upstream research through the verify-before-filing gate first. — NOT harvested: outbound filing, gated.
 10. **float-register/daemon atomicity remedies (row 582)** — fingerprint-registry-before-proof, regenerate-against-temp-registry, daemon path-exclusion. — pre-existing row, now carries my instance.
 11. **Green-proof stamp (row 573)** — "no drift → no-op" cannot distinguish proven-green from never-proven. — pre-existing row.

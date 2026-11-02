@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 ce19a826 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 25 22:23:41 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Oct 25 22:23:41 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/nnzaz7jdk8mvy246dd60prar42hmimjy-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 25 22:23:41 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Oct 26 22:53:54 evo-x2 signoz-wrapper[2852416]: {"timestamp":"2026-10-26T22:53:54.710388244+01:00","level":"INFO","msg":"promql rule task","name":"01a00809-9481-73bc-9136-15fd93b319fb-groupname","eval_started_at":"2026-10-26T21:53:54.709099272Z","code.filepath":"github.com/SigNoz/signoz/pkg/query-service/rules/prom_rule_task.go","code.function":"github.com/SigNoz/signoz/pkg/query-service/rules.(*PromRuleTask).Eval","code.lineno":326}
 Oct 26 22:53:54 evo-x2 signoz-wrapper[2852416]: {"timestamp":"2026-10-26T22:53:54.710456092+01:00","level":"INFO","msg":"evaluating promql query","rule.id":"01a00809-9481-73bc-9136-15fd93b319fb","rule.query":"node_nvme_critical_warning","code.filepath":"github.com/SigNoz/signoz/pkg/query-service/rules/prom_rule.go","code.function":"github.com/SigNoz/signoz/pkg/query-service/rules.(*PromRule).buildAndRunQuery","code.lineno":101}
@@ -30,12 +32,14 @@ Oct 26 22:53:58 evo-x2 smartd[1474]: Device: /dev/disk/by-id/ata-SanDisk_SDSSDA2
 ```
 
 ## Census
+
 - oom-lines: 27
 - guard-lines (memory-emergency-guard): 3173
 - thermal-THROTTLE-lines: 5
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 Oct 26 16:01:35 evo-x2 kernel: kswapd0 invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
 Oct 26 16:01:36 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/llama-chat.service,task=llama-server,pid=15205,uid=1000
@@ -67,6 +71,7 @@ Oct 26 16:22:35 evo-x2 kernel: Out of memory: Killed process 2175963 (llama-serv
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 25 22:27:18 evo-x2 memory-emergency-guard-check[16977]: MEMORY EMERGENCY io drained (io PSI some avg60=31.15% < 40%) — churn units re-armed (re-arm #485)
 Oct 25 22:27:18 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -3244,6 +3249,7 @@ Oct 26 22:53:37 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated s
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 26 05:44:12 evo-x2 thermal-pstate-guard-check[14892]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=95C(hi:95/lo:80)
 Oct 26 10:11:13 evo-x2 thermal-pstate-guard-check[2926986]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=63C(hi:95/lo:80)
@@ -3253,6 +3259,7 @@ Oct 26 17:20:45 evo-x2 thermal-pstate-guard-check[3104809]: thermal-pstate-guard
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 25 22:23:41 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/nnzaz7jdk8mvy246dd60prar42hmimjy-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 25 22:23:41 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/nnzaz7jdk8mvy246dd60prar42hmimjy-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

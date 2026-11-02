@@ -53,6 +53,7 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 ## e) WHAT WE SHOULD IMPROVE
 
 **This session:**
+
 1. mvdan/sh has no `kill` builtin — interventions must call `/run/current-system/sw/bin/kill` explicitly and VERIFY with a same-command `ps` before claiming effect.
 2. Inferred identifiers (freeze numbers, ownership) get checked against their registry file before they reach the user.
 3. Live-storm sessions: read the lineage state first; execute the licensed containment; apologize to siblings later.
@@ -96,12 +97,12 @@ Two more instant-cut freezes tonight — **#29 (02:17:32)** ending a 61h12m boot
 
 ## Self-harvest record (AGENTS.md mandate)
 
-| §f item | Harvested at authoring time |
-| --- | --- |
-| 3/4 (freeze #29/#30 lineage + BAIT counter) | ✅ New queue row in TODO_LIST.md `### stability` + new `## Freeze #29 / #30` section appended to docs/todo/stability.md |
-| 1/2/11 (evidence read-back + gate re-run + balance actor) | ✅ Folded into the same queue row's verification steps (one dispatch scope) |
-| 5–10, 15–18 | Deliberately not queued as new rows: 5/6/7/11/16–18 are session-scoped follow-ups owned by this report's Source citation; 8/9/10 are [decision] items needing your §g.2/§g.3 rulings first — queueing them would front-run the owner decision |
-| 12–14 | Already queued at cited stability.md rows — no drift edits needed |
+| §f item                                                   | Harvested at authoring time                                                                                                                                                                                                                   |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3/4 (freeze #29/#30 lineage + BAIT counter)               | ✅ New queue row in TODO_LIST.md `### stability` + new `## Freeze #29 / #30` section appended to docs/todo/stability.md                                                                                                                       |
+| 1/2/11 (evidence read-back + gate re-run + balance actor) | ✅ Folded into the same queue row's verification steps (one dispatch scope)                                                                                                                                                                   |
+| 5–10, 15–18                                               | Deliberately not queued as new rows: 5/6/7/11/16–18 are session-scoped follow-ups owned by this report's Source citation; 8/9/10 are [decision] items needing your §g.2/§g.3 rulings first — queueing them would front-run the owner decision |
+| 12–14                                                     | Already queued at cited stability.md rows — no drift edits needed                                                                                                                                                                             |
 
 ## Verification appendix (commands run this session)
 

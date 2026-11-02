@@ -40,7 +40,7 @@
 2. `scripts/negative-test-lints.sh` case pinning the gatus-config-parse mutation (proven manually this session only).
 3. Scheduled/CI HaGeZi hash-drift detection (this class cost a full deploy cycle; today it was manual).
 4. Upstream DMS issue/doc for the DND-vs-critical semantics gap (default makes DND useless against critical storms).
-~~5. Anything on the CV browser-render baseline FAILs (parallel CV/chromium workstream).~~ done — 05-43 report §a.10 — root-caused pressure-transient, not a regression (live fetch returns full CV HTML)
+   ~~5. Anything on the CV browser-render baseline FAILs (parallel CV/chromium workstream).~~ done — 05-43 report §a.10 — root-caused pressure-transient, not a regression (live fetch returns full CV HTML)
 
 ## d) TOTALLY FUCKED UP (honest)
 

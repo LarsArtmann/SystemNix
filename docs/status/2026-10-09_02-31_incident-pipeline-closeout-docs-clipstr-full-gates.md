@@ -55,6 +55,7 @@ Four concrete misses, all mine, all recovered:
 7. **Quiescence is a gate input:** when a battery is this long and the tree is shared, run the single-pass proof at a quiescent moment (or accept per-leg evidence and say so) instead of burning 3 re-runs on foreign transients.
 
 ## f) Next things (⚠ = owner-gated; go-taskqueue items belong in ITS TODO_LIST at harvest time)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED into SystemNix queue surfaces — §f items belong to go-taskqueue's own TODO system (domain-routing rule; rationale above).
 
 1. Re-run `ci-local.sh` once on a quiescent tree → the missing single exit-0 pass.

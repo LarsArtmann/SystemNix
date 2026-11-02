@@ -6,14 +6,14 @@
 
 ## a) The measured boot (2026-10-28 00:42:59, the boot under review)
 
-| Phase | Duration | Note |
-| --- | --- | --- |
-| firmware | 1min 2.5s | BIOS POST — see (e)5 |
-| loader | 1.45s | timeout 1 + menu |
-| kernel | 1.9s | |
-| initrd | 5.5s | switch-root at 5.5s |
-| **userspace → multi-user/graphical** | **285.7s** | prior boots: 127.9s; **26min 31.8s** (the 2026-10-27 storm boot) |
-| SDDM (login screen) | **~33s** | `display-manager.service` started at 33.2s — the desktop was READY 250s before the boot transaction completed |
+| Phase                                | Duration   | Note                                                                                                          |
+| ------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------- |
+| firmware                             | 1min 2.5s  | BIOS POST — see (e)5                                                                                          |
+| loader                               | 1.45s      | timeout 1 + menu                                                                                              |
+| kernel                               | 1.9s       |                                                                                                               |
+| initrd                               | 5.5s       | switch-root at 5.5s                                                                                           |
+| **userspace → multi-user/graphical** | **285.7s** | prior boots: 127.9s; **26min 31.8s** (the 2026-10-27 storm boot)                                              |
+| SDDM (login screen)                  | **~33s**   | `display-manager.service` started at 33.2s — the desktop was READY 250s before the boot transaction completed |
 
 Load average at 1min uptime: **98** (thundering herd of ~100 concurrent start jobs; all timer+boot units at once).
 
@@ -27,13 +27,13 @@ Load average at 1min uptime: **98** (thundering herd of ~100 concurrent start jo
 
 ## c) Fixes landed this session (eval-green, deploy pending)
 
-| # | Fix | File |
-| --- | --- | --- |
-| 1 | `systemd.targets.boot-complete` asDropin: `After/Wants = multi-user.target` — bless now runs when the boot transaction actually completed; counting rollback protects the WHOLE boot. Cycle-safe (nothing in the multi-user graph orders after boot-complete/bless-boot; ordering-cycle-audit green) | `platforms/nixos/system/boot.nix` |
-| 2 | `cv-server.wantedBy = mkForce [ "late-applications.target" ]` — the gen-955 class-fix placement; multi-user no longer waits on cv→pocket-id-provision→crm chains | `modules/nixos/services/cv.nix` |
-| 3 | `chmod -R u+w` before both reap `rm -rf` loops — home-manager activation survives read-only go toolchain dirs | `platforms/nixos/users/home.nix` |
-| 4 | `fstrim.timerConfig.Persistent = mkForce false` — daily cadence keeps the SLC doctrine; no boot-time catch-up trims | `platforms/nixos/system/boot.nix` |
-| 5 | udev: bfq rule `SUBSYSTEMS!="usb"` + whole-disk `sd[a-z]`; JMicron rule `KERNEL=="sd[a-z]"` + `TEST=="queue/nr_requests"` | `platforms/nixos/hardware/amd-gpu.nix`, `platforms/nixos/system/boot.nix` |
+| # | Fix                                                                                                                                                                                                                                                                                                  | File                                                                      |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1 | `systemd.targets.boot-complete` asDropin: `After/Wants = multi-user.target` — bless now runs when the boot transaction actually completed; counting rollback protects the WHOLE boot. Cycle-safe (nothing in the multi-user graph orders after boot-complete/bless-boot; ordering-cycle-audit green) | `platforms/nixos/system/boot.nix`                                         |
+| 2 | `cv-server.wantedBy = mkForce [ "late-applications.target" ]` — the gen-955 class-fix placement; multi-user no longer waits on cv→pocket-id-provision→crm chains                                                                                                                                     | `modules/nixos/services/cv.nix`                                           |
+| 3 | `chmod -R u+w` before both reap `rm -rf` loops — home-manager activation survives read-only go toolchain dirs                                                                                                                                                                                        | `platforms/nixos/users/home.nix`                                          |
+| 4 | `fstrim.timerConfig.Persistent = mkForce false` — daily cadence keeps the SLC doctrine; no boot-time catch-up trims                                                                                                                                                                                  | `platforms/nixos/system/boot.nix`                                         |
+| 5 | udev: bfq rule `SUBSYSTEMS!="usb"` + whole-disk `sd[a-z]`; JMicron rule `KERNEL=="sd[a-z]"` + `TEST=="queue/nr_requests"`                                                                                                                                                                            | `platforms/nixos/hardware/amd-gpu.nix`, `platforms/nixos/system/boot.nix` |
 
 Expected next-boot userspace: from 285s toward the calm ~40–60s baseline (SDDM already at 33s; remaining multi-user tail: clickhouse 55s + bank-sync/discordsync oneshots + rescue-snapshot class — watch one boot before further migration).
 
@@ -56,8 +56,8 @@ Expected next-boot userspace: from 285s toward the calm ~40–60s baseline (SDDM
 
 ## f) Self-harvested follow-ups
 
-1. REBOOT-VERIFY the boot-chain batch (bless at end-of-boot, cv-server under late-applications, home-manager-lars clean first-try, no udev bfq/nr_requests err lines, userspace phase ≪ 180s regression line) → [blocked:user] services.md.  ← this row
-2. /home/lars/tmp automount root cause + fix options → [blocked:user] storage.md.  ← this row
+1. REBOOT-VERIFY the boot-chain batch (bless at end-of-boot, cv-server under late-applications, home-manager-lars clean first-try, no udev bfq/nr_requests err lines, userspace phase ≪ 180s regression line) → [blocked:user] services.md. ← this row
+2. /home/lars/tmp automount root cause + fix options → [blocked:user] storage.md. ← this row
 3. FinishTimestamp=0 recurrence watch → [watch] row folded into (e)1 via this report; no separate queue row (boot-metrics transaction_open already alerts the class via Gatus "Boot-duration metrics missing or erroring").
 
 ## g) Questions for the owner

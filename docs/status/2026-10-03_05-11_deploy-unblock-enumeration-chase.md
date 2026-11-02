@@ -50,6 +50,7 @@
 5. **todo-list-ai upstream policy**: its lockfile is generated under a dev bun that drifts from nixpkgs' bun — every nixpkgs bun bump re-breaks it. Durable fix belongs upstream (regen under the SAME bun the flake builds with, e.g. via a devshell bun pinned to nixpkgs).
 
 ## f) NEXT — ordered
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 1. Collect 073 (running): expect exit 0. If mismatches remain → fix with its own got-hash evidence, repeat. (in-flight, mine)

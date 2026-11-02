@@ -36,43 +36,43 @@ stale vendorHash), 2 integration (dirty-tree lock pin, stale rev pin).
 ## b) PARTIALLY DONE
 
 ~~1. **Live deployment (ROUND8 C4/C5)** — everything up to the switch is done;~~ done at `tq pool live: units + dashboard + CLI documented (docs/services/tq.md:143)`
-   `nix run .#deploy` is sudo-gated in this session. Not run.
+`nix run .#deploy` is sudo-gated in this session. Not run.
 ~~2. **Round-9 cutover** — runbook written (`docs/services/tq.md`) but the~~ done — cutover done: tq task queue has driven agent sessions since late Sept (docs/status/tasks/*)
-   manual pool (`/tmp/tq` PIDs 55731 agent-pool + 682008 serve :8090) is
-   STILL RUNNING (belongs to a parallel session; deliberately not killed).
-   Until cutover, a deploy creates a SECOND pool (different DB) — double
-   LLM spend on the go-taskqueue repo.
+manual pool (`/tmp/tq` PIDs 55731 agent-pool + 682008 serve :8090) is
+STILL RUNNING (belongs to a parallel session; deliberately not killed).
+Until cutover, a deploy creates a SECOND pool (different DB) — double
+LLM spend on the go-taskqueue repo.
 ~~3. **DB carry-over decision** — cutover steps support both fresh-journal and~~ done — moot post-cutover; runbook path preserved (docs/services/tq.md Cutover)
-   copy of the dogfood `tasks.db`; not executed, so nothing decided live.
+copy of the dogfood `tasks.db`; not executed, so nothing decided live.
 ~~4. **PapDashboard bridge live-proof** — env + alert-url wired and the ingest~~ **Won't implement — no tq dead-letter has flowed; watch item.**
-   API is proven (gatus uses it), but no tq dead-letter has flowed yet.
+API is proven (gatus uses it), but no tq dead-letter has flowed yet.
 
 ## c) NOT STARTED (deliberate skips + gaps)
 
 ~~1. **VM test (ROUND8 E3)** — skipped (plan tier "rest"); upstream bank-sync~~ **Won't implement — plan-tier skip; house eval test landed instead (tests/default.nix:75).**
-   ships one, go-taskqueue does not. Neither a SystemNix `tests/test-tq*.nix`
-   nor an upstream `nixos-vm-test` exists.
+ships one, go-taskqueue does not. Neither a SystemNix `tests/test-tq*.nix`
+nor an upstream `nixos-vm-test` exists.
 ~~2. **`--discovery-addr` wiring** — the pool does a local scan; the~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
-   project-discovery-daemon (on this box, `/run/project-discovery/daemon.sock`)
-   is not consumed. Skip rationale never documented in the module.
+project-discovery-daemon (on this box, `/run/project-discovery/daemon.sock`)
+is not consumed. Skip rationale never documented in the module.
 ~~3. **`--status-every N`** — upstream-owner-blocked (N not picked).~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
 ~~4. **`tq api` write API** — not exposed/wired anywhere.~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
 ~~5. **CQA bridge (`--cqa-url`)** — not wired (CQA not deployed here AFAIK).~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
 ~~6. **`--budget-cmd`** — not wired.~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
 ~~7. **Local-NPU model option (FastFlowLM)** — never wired or surfaced; the~~ **Won't implement — deliberate skips (discovery-addr/status-every/api/CQA/budget-cmd/flm) never revisited.**
-   pool pins the PAID zai/glm-5.3-flash per the upstream example. A free
-   local option exists and was not evaluated.
+pool pins the PAID zai/glm-5.3-flash per the upstream example. A free
+local option exists and was not evaluated.
 ~~8. **DLQ/sidecar log-dir monitoring** — `~/.local/state/tq/logs` has~~ **Won't implement — DLQ log-dir monitoring never built.**
-   age-based retention (168h) but no size metric/alert.
+age-based retention (168h) but no size metric/alert.
 ~~9. **AGENTS.md gotcha entry for the git+file dirtyRev lock trap** — the~~ done at `dirtyRev git+file gotcha landed (docs/agents/nix-flakes.md:114)`
-   lesson lives only in the flake.nix input comment.
+lesson lives only in the flake.nix input comment.
 ~~10. **docs/services index check** — `docs/services/tq.md` may not be listed~~ **Won't implement — services index never verified; stale.**
-    in any index (unverified).
+in any index (unverified).
 ~~11. **`withPapIngest` coverage of the 2 new Gatus endpoints** — assumed~~ done at `verified eval-rendered: both tq endpoints carry pap ingest alertTypes (01:53 session; docs/services/tq.md:143)`
-    (they sit in the same wrapped endpoints expression) but never verified
-    that they actually receive the pap ingest alert block.
+(they sit in the same wrapped endpoints expression) but never verified
+that they actually receive the pap ingest alert block.
 ~~12. **Pre-deploy check additions** — assumed check #12 (ExecStart existence)~~ done at `verified: pre-deploy ExecStart enumeration lists all tq units (01:53 session)`
-    auto-covers the 3 new units; not verified against the script.
+auto-covers the 3 new units; not verified against the script.
 
 ## d) TOTALLY FUCKED UP (caught in-session; honest list)
 
@@ -104,31 +104,31 @@ stale vendorHash), 2 integration (dirty-tree lock pin, stale rev pin).
 
 ## e) WHAT WE SHOULD IMPROVE (design risks + process)
 
-~~1. **`tq-bootstrap` can block/annoy deploys**: it runs at every deploy as a~~ done at `bootstrap posture decided+implemented`, ` pinned by test (tests/test-tq-agent-pool.nix)`
-   wanted unit and does git commits in 3 repos; a repo in a weird state
-   (rebase, detached, conflicts) makes the oneshot fail → activation
-   friction. Consider: failure tolerance for the oneshot (best-effort +
-   alert, like the deploy.sh `|| true` provisioner pattern) or moving
-   seeding fully into the runbook.
+~~1. **`tq-bootstrap` can block/annoy deploys**: it runs at every deploy as a~~ done at `bootstrap posture decided+implemented`, `pinned by test (tests/test-tq-agent-pool.nix)`
+wanted unit and does git commits in 3 repos; a repo in a weird state
+(rebase, detached, conflicts) makes the oneshot fail → activation
+friction. Consider: failure tolerance for the oneshot (best-effort +
+alert, like the deploy.sh `|| true` provisioner pattern) or moving
+seeding fully into the runbook.
 ~~2. **deploy.sh lacks a pre-check for the manual round-9 pool**: a deploy~~ done at `double-pool guard live (scripts/deploy.sh:478)`
-   without reading the runbook silently DOUBLE-RUNS pools. A WARN on live
-   `/tmp/tq` processes would close it.
+without reading the runbook silently DOUBLE-RUNS pools. A WARN on live
+`/tmp/tq` processes would close it.
 ~~3. **Budget/cost extrapolation**: calibrated knobs (budget 30/day,~~ **Won't implement — live-tuning watches; months of operation since.**
-   max-per-tick 3) were proven for ONE repo (go-taskqueue); I extrapolated
-   to CV+SystemNix without live evidence. First live days need watching.
+max-per-tick 3) were proven for ONE repo (go-taskqueue); I extrapolated
+to CV+SystemNix without live evidence. First live days need watching.
 ~~4. **MemoryMax 8G for 2 crush agents is a guess** — crush (bun) + builds can~~ **Won't implement — live-tuning watches; months of operation since.**
-   exceed it; OOM-killed agents retry and burn budget. Needs live tuning.
+exceed it; OOM-killed agents retry and burn budget. Needs live tuning.
 ~~5. **Journal on the one-USB-link DAS**: every fact append rides the~~ **Won't implement — live-tuning watches; months of operation since.**
-   IO-storm-susceptible link (2026-09-06 class). Low volume, but worth an
-   eye during pool sends/scrubs.
+IO-storm-susceptible link (2026-09-06 class). Low volume, but worth an
+eye during pool sends/scrubs.
 ~~6. **Single-machine source of truth**: the deployed binary's source (13+~~ **Won't implement — push never done; pin still carries CI-dark note.**
-   commits ahead of origin, owner-blocked push) exists ONLY on evo-x2. Disk
-   loss = deployed-binary provenance loss.
+commits ahead of origin, owner-blocked push) exists ONLY on evo-x2. Disk
+loss = deployed-binary provenance loss.
 ~~7. **module-eval check asserts fragments, not full ExecStarts** (see d2) —~~ done at `house test pins exact ExecStart binary (tests/test-tq-agent-pool.nix; tests/default.nix:75)`
-   upstream check should pin the exact binary path.
+upstream check should pin the exact binary path.
 ~~8. **House eval test absent** — upstream covers the module; nothing pins the~~ **Won't implement — operational watches; stale.**
-   SystemNix house layer (a `tests/test-tq-agent-pool.nix` minimal eval
-   would, cheaply).
+SystemNix house layer (a `tests/test-tq-agent-pool.nix` minimal eval
+would, cheaply).
 
 ## f) NEXT — up to 50 things, ordered
 

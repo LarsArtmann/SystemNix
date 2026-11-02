@@ -5,14 +5,14 @@
 
 ## Session timeline (all times CEST)
 
-| Time | Event |
-| --- | --- |
-| ~18:20 | Diagnosed "forever boot" question: current boot loaded **gen 922** while profile default was 924 — Samsung ESP (BootOrder-first) was 2 gens stale because gens 923/924 were installed via raw `switch-to-configuration test/boot` (pts/17, 10:58/11:07) which never restarts `boot-mirror-sync`. Predicted next-boot convergence (sync ran 18:14:07). |
-| ~18:25–18:40 | Deploy-latency analysis of the pasted 18:43 deploy log: Nix build itself = **11s**; wall time ≈ ~7–9 redundant flake evals (measured 24.8s/eval on committed HEAD), 2 gate batteries, sequential 5s-timeout metric probes against dead endpoints, unbounded provisioner restarts, and the failure-multiplier (exit 4 → full re-run tax). |
-| 18:43–19:15 | User deploy hung 27 min at `Restarting provisioner: netbird-evox2-login.service`. Root cause chain established: pbx rebooted 09:07 UTC (uptime 8h11m) → `netbird-management.service` started before DNS ready → 5 instant restarts died on `lookup auth.larsartmann.cloud: no such host` → **start-limit-hit** → management dead 8h behind an nginx **502** while signal/relay recovered → evo-x2 daemon stuck "Connecting" → login oneshot's poll (`grep ': Connected\|NeedsLogin'`) never matches → `systemctl restart` blocks forever. |
-| 19:15–19:19 | Fixes: restarted wedged evo-x2 daemon (did not help — see §d.4), probed management plane (TLS OK, `/api/health` → **502**), SSH'd pbx read-only (root), started `netbird-management` (17:19 UTC, IdP cache warmed). Self-heal verified 19:19:18: management stream connected → login unit Finished → blocked restart returned → **deploy continued on its own** (no Ctrl-C needed). |
-| 19:20–19:33 | Implemented optimizations in `scripts/deploy.sh` + `scripts/pre-deploy-check.sh` (see §a). Parallel session concurrently landed a deeper netbird unit fix (After=multi-user.target + 2min TimeoutStartSec + unit-level onFailure) — coordination worked as designed (one mtime-race rejection, one duplicate avoided). |
-| 19:34–19:38 | Real deploy on the optimized pipeline: **242s total, exit 0, anchored at system-925** (`readlink /run/current-system` == `system-925-link` target `zqlrxlv…`). Live log shows flake-check cache hit, manifest emission, phase timers, provisioner convergence +31s, no timeout warnings. |
+| Time         | Event                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~18:20       | Diagnosed "forever boot" question: current boot loaded **gen 922** while profile default was 924 — Samsung ESP (BootOrder-first) was 2 gens stale because gens 923/924 were installed via raw `switch-to-configuration test/boot` (pts/17, 10:58/11:07) which never restarts `boot-mirror-sync`. Predicted next-boot convergence (sync ran 18:14:07).                                                                                                                                                                                     |
+| ~18:25–18:40 | Deploy-latency analysis of the pasted 18:43 deploy log: Nix build itself = **11s**; wall time ≈ ~7–9 redundant flake evals (measured 24.8s/eval on committed HEAD), 2 gate batteries, sequential 5s-timeout metric probes against dead endpoints, unbounded provisioner restarts, and the failure-multiplier (exit 4 → full re-run tax).                                                                                                                                                                                                  |
+| 18:43–19:15  | User deploy hung 27 min at `Restarting provisioner: netbird-evox2-login.service`. Root cause chain established: pbx rebooted 09:07 UTC (uptime 8h11m) → `netbird-management.service` started before DNS ready → 5 instant restarts died on `lookup auth.larsartmann.cloud: no such host` → **start-limit-hit** → management dead 8h behind an nginx **502** while signal/relay recovered → evo-x2 daemon stuck "Connecting" → login oneshot's poll (`grep ': Connected\|NeedsLogin'`) never matches → `systemctl restart` blocks forever. |
+| 19:15–19:19  | Fixes: restarted wedged evo-x2 daemon (did not help — see §d.4), probed management plane (TLS OK, `/api/health` → **502**), SSH'd pbx read-only (root), started `netbird-management` (17:19 UTC, IdP cache warmed). Self-heal verified 19:19:18: management stream connected → login unit Finished → blocked restart returned → **deploy continued on its own** (no Ctrl-C needed).                                                                                                                                                       |
+| 19:20–19:33  | Implemented optimizations in `scripts/deploy.sh` + `scripts/pre-deploy-check.sh` (see §a). Parallel session concurrently landed a deeper netbird unit fix (After=multi-user.target + 2min TimeoutStartSec + unit-level onFailure) — coordination worked as designed (one mtime-race rejection, one duplicate avoided).                                                                                                                                                                                                                    |
+| 19:34–19:38  | Real deploy on the optimized pipeline: **242s total, exit 0, anchored at system-925** (`readlink /run/current-system` == `system-925-link` target `zqlrxlv…`). Live log shows flake-check cache hit, manifest emission, phase timers, provisioner convergence +31s, no timeout warnings.                                                                                                                                                                                                                                                  |
 
 ---
 
@@ -53,7 +53,7 @@
 2. **Tried to edit a file a parallel session had just fixed.** My `netbird.nix` TimeoutStartSec edit was rejected by the mtime race check — the parallel session had landed a strictly better fix (target-wait-set removal + onFailure) minutes earlier at 19:17:35. I had decided on my fix without re-reading the target within the active-session window. The guard saved me; my discipline didn't. Rule for next time: re-read immediately before edit when sessions are known-active.
 3. **Misattributed an eval failure.** First timed `nix eval` on the committed tree failed (exit 1, 20.9s); I proceeded on the second run's success and called the first "transient" without root cause (most plausible: the daemon committed the then-broken `boot-mirror.nix` between my rev-resolution and eval — unverified). Sloppy; a wrong rev-pinning conclusion was one lazy step away.
 4. **Incident order-of-operations: local restart before external probe.** I restarted the evo-x2 netbird daemon while the real cause was the pbx control plane being down; the fresh daemon predictably stayed stuck (one wasted production daemon restart; harmless only because the tunnel was already down since boot). The `openssl s_client` probe that settled it was available from the start. Doctrine: probe the dependency graph's far end before restarting the near end.
-5. **Two overclaims in my close-out summary.** (i) "The 27-min hang class is structurally impossible now" — wrong: only the restart-*wait* is bounded; the provisioner loop's `systemctl is-enabled` calls are still unbounded (a wedged dbus/systemd could still hang the loop; rare but not impossible). (ii) "46s re-run" — a single warm-cache sample presented as a characterized number. Both corrected here. No other claims in the session were found false on re-review.
+5. **Two overclaims in my close-out summary.** (i) "The 27-min hang class is structurally impossible now" — wrong: only the restart-_wait_ is bounded; the provisioner loop's `systemctl is-enabled` calls are still unbounded (a wedged dbus/systemd could still hang the loop; rare but not impossible). (ii) "46s re-run" — a single warm-cache sample presented as a characterized number. Both corrected here. No other claims in the session were found false on re-review.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -66,30 +66,31 @@
 7. **Ghost systems check**: none created (all new code is wired and deployed). **Split brains found (small)**: (i) dual timeout bounds for netbird-evox2-login (unit 2min vs deploy 180s) with no cross-referencing comment — safe today (min governs) but drift-prone; (ii) the manifest JSON is an implicit two-file contract (producer/consumer) documented only in paired comments — acceptable, worth a pinning test. **Tests**: existing suites still pass; new code has zero persisted tests (§e.1). **Scope creep**: none — the pbx remote action was inside the unstick mandate. **Removed useful things**: nothing.
 
 ## f) Next tasks (ranked; feeds docs-health HARVEST)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
-| # | Task | Impact | Effort | Category |
-| --- | --- | --- | --- | --- |
-| 1 | Persist selftests: manifest parse, stamp logic, `deploy_restart` rc-124, probe-batch vars | High | S | Quality |
-| 2 | boot-mirror-sync path-trigger/restartTriggers on `/boot/loader/entries` (raw-stc stale-boot class — THIS morning's failure) | High | S-M | Bug |
-| 3 | pbx: netbird-management restart backoff + dns-ready ordering + watchdog; explain stalwart-provision + telephony-health failures (pbx-artmann repo, owner-gated) | High | M | Bug |
-| 4 | systemd-shape-audit class 5 (finite TimeoutStartSec for boot-blocking oneshots) — already queued [ready] by parallel session | High | M | Quality |
-| 5 | visionreviewd OnFailure [Unit]-section fix — already queued [ready] | Medium | S | Bug |
-| 6 | Investigate monitor365 :9191 + cv :8098 down all session | Medium | S | Bug |
-| 7 | Investigate the 9 failed units from the deploy log | Medium | M | Bug |
-| 8 | Extend the stamp pattern to check #2's toplevel eval (identical-tree re-runs still pay ~25–30s) | Medium | S | Quality |
-| 9 | App-eval dedup: one eval resolving pre/post program paths + fallback | Medium | M | Quality |
-| 10 | post-deploy-check.sh: read + parallelize probes if same pattern | Medium | M | Quality |
-| 11 | Bound `systemctl is-enabled` calls in the provisioner loop (timeout 10) | Low | S | Bug |
-| 12 | Next-reboot observational checklist: FinishTimestamp non-zero, netbird login notify-failure path, boot-mirror entry = newest gen | Medium | S | Verification |
-| 13 | CHANGELOG entries + prune today's [x] rows | Low | S | Cleanup |
-| 14 | AGENTS.md Build & Deploy: stamp/manifest/phase-timer semantics + eval floor | Low | S | Documentation |
-| 15 | Inspect the aborted 19:33-45 deploy log | Low | S | Verification |
-| 16 | Tune or accept the race-detector 15-min window vs the daemon's ~10-min cadence (fires on ~every deploy) | Low | M | Quality |
-| 17 | Upstream nixpkgs PR: bound the netbird login poll loop | Low | M | Feature (blocked:push) |
-| 18 | docs-health HARVEST pass over the 129 unharvested §f reports | Medium | L | Documentation |
-| 19 | /tmp debris sweep (test manifests/logs/throwaway scripts — tmpfs, optional) | Low | S | Cleanup |
-| 20 | Collect 3–5 phased deploy logs; re-prioritize remaining perf work from data | Medium | S | Quality |
+| #  | Task                                                                                                                                                            | Impact | Effort | Category               |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---------------------- |
+| 1  | Persist selftests: manifest parse, stamp logic, `deploy_restart` rc-124, probe-batch vars                                                                       | High   | S      | Quality                |
+| 2  | boot-mirror-sync path-trigger/restartTriggers on `/boot/loader/entries` (raw-stc stale-boot class — THIS morning's failure)                                     | High   | S-M    | Bug                    |
+| 3  | pbx: netbird-management restart backoff + dns-ready ordering + watchdog; explain stalwart-provision + telephony-health failures (pbx-artmann repo, owner-gated) | High   | M      | Bug                    |
+| 4  | systemd-shape-audit class 5 (finite TimeoutStartSec for boot-blocking oneshots) — already queued [ready] by parallel session                                    | High   | M      | Quality                |
+| 5  | visionreviewd OnFailure [Unit]-section fix — already queued [ready]                                                                                             | Medium | S      | Bug                    |
+| 6  | Investigate monitor365 :9191 + cv :8098 down all session                                                                                                        | Medium | S      | Bug                    |
+| 7  | Investigate the 9 failed units from the deploy log                                                                                                              | Medium | M      | Bug                    |
+| 8  | Extend the stamp pattern to check #2's toplevel eval (identical-tree re-runs still pay ~25–30s)                                                                 | Medium | S      | Quality                |
+| 9  | App-eval dedup: one eval resolving pre/post program paths + fallback                                                                                            | Medium | M      | Quality                |
+| 10 | post-deploy-check.sh: read + parallelize probes if same pattern                                                                                                 | Medium | M      | Quality                |
+| 11 | Bound `systemctl is-enabled` calls in the provisioner loop (timeout 10)                                                                                         | Low    | S      | Bug                    |
+| 12 | Next-reboot observational checklist: FinishTimestamp non-zero, netbird login notify-failure path, boot-mirror entry = newest gen                                | Medium | S      | Verification           |
+| 13 | CHANGELOG entries + prune today's [x] rows                                                                                                                      | Low    | S      | Cleanup                |
+| 14 | AGENTS.md Build & Deploy: stamp/manifest/phase-timer semantics + eval floor                                                                                     | Low    | S      | Documentation          |
+| 15 | Inspect the aborted 19:33-45 deploy log                                                                                                                         | Low    | S      | Verification           |
+| 16 | Tune or accept the race-detector 15-min window vs the daemon's ~10-min cadence (fires on ~every deploy)                                                         | Low    | M      | Quality                |
+| 17 | Upstream nixpkgs PR: bound the netbird login poll loop                                                                                                          | Low    | M      | Feature (blocked:push) |
+| 18 | docs-health HARVEST pass over the 129 unharvested §f reports                                                                                                    | Medium | L      | Documentation          |
+| 19 | /tmp debris sweep (test manifests/logs/throwaway scripts — tmpfs, optional)                                                                                     | Low    | S      | Cleanup                |
+| 20 | Collect 3–5 phased deploy logs; re-prioritize remaining perf work from data                                                                                     | Medium | S      | Quality                |
 
 ## g) Questions I cannot answer myself
 

@@ -4,16 +4,16 @@
 
 **Format note (skill override):** the `status-report` skill mandates a styled HTML dashboard; the request named `docs/status/<YYYY-MM-DD_HH-MM_WELL-NAMED>.md`, so this is Markdown per the explicit instruction. Flagged, not silently propagated.
 
-| Field | Value |
-| --- | --- |
-| Report time | 2026-10-19 23:20 CEST (Monday) |
-| Host / repo | evo-x2, `/home/lars/projects/SystemNix` (master, tree clean) |
-| Watcher | PID **1250077**, started **10:59:35**, still alive at 23:20 — **12.3 h uptime** |
-| Watcher output | **54 captures → 75 documents** delivered since the restart (57 delivery events); last capture **12:10:44** |
-| Guard activations since restart | **0** (no frame drops, no `/Count` rejections, no delivery failures) |
-| Paperless ingest today | **144 documents**, ids **1000436 → 1000579** |
-| Consume dir now | **0 files** (peak 16 files / 264 MB at 12:18) |
-| Last repo commit | `890bae631` (~11:20) — nothing else touched this tree in 12 h |
+| Field                           | Value                                                                                                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Report time                     | 2026-10-19 23:20 CEST (Monday)                                                                             |
+| Host / repo                     | evo-x2, `/home/lars/projects/SystemNix` (master, tree clean)                                               |
+| Watcher                         | PID **1250077**, started **10:59:35**, still alive at 23:20 — **12.3 h uptime**                            |
+| Watcher output                  | **54 captures → 75 documents** delivered since the restart (57 delivery events); last capture **12:10:44** |
+| Guard activations since restart | **0** (no frame drops, no `/Count` rejections, no delivery failures)                                       |
+| Paperless ingest today          | **144 documents**, ids **1000436 → 1000579**                                                               |
+| Consume dir now                 | **0 files** (peak 16 files / 264 MB at 12:18)                                                              |
+| Last repo commit                | `890bae631` (~11:20) — nothing else touched this tree in 12 h                                              |
 
 ---
 
@@ -81,7 +81,7 @@
 3. **A second silent pipeline failure occurred the same day as the first, in a different layer.** The consume directory filled to 264 MB with both workers spinning in an embedding retry loop, and **nothing** reported it for ~15 minutes. Severity: had the input sizes matched the batch, the stall would have been total and equally silent. Root cause: no probe on the directory, and a retry loop treating a deterministic 500 as transient.
 4. **Twelve hours of intake produced zero organization.** 144 documents ingested, `paperless_inbox_count` up 85, no correspondent/type/tag assignment. Severity: the campaign's value is in the sorting, and the corpus of unsorted documents is now large enough that manual triage is a real cost — plus the classifier will train on unlabeled data unless it is cleaned first. Root cause: intake was made excellent and the organizing half was never built (blocked on my three questions, which I should have escalated harder).
 5. **The device stack crashed mid-campaign (SIGSEGV) and the only record is a log line.** Severity: unknown frequency, no counters, no alert, no runbook entry; a crash could equally have produced a partial or corrupt sheet and only the page-count guard would have noticed (it did not fire — no delivery was lost today).
-6. **A 12.3 h run with zero guard activations is evidence about the guards, not coverage of them.** Every failure path I wrote this morning is still untested by machine: the day proved the *happy* path at scale and left the guards exactly as unverified as when I wrote them. Severity: the next incident will again be found by a human.
+6. **A 12.3 h run with zero guard activations is evidence about the guards, not coverage of them.** Every failure path I wrote this morning is still untested by machine: the day proved the _happy_ path at scale and left the guards exactly as unverified as when I wrote them. Severity: the next incident will again be found by a human.
 7. **My harvest pointed at a library entry that did not exist** (the consume-staleness row), and both checkers passed. Severity: low per instance, but it is the drift class the TODO system exists to prevent, and the gate has a hole for it.
 8. **I answered a capability question ("can Paperless fix rotations?") without ever testing the capability.** Severity: the answer is only as good as the source read; if `ocrmypdf`'s `--rotate-pages` were disabled in the pinned build's wrapper, my answer would still have looked authoritative. The pattern — verifying code instead of observing behaviour — is the same one that produced the 09:44 report's page-count embarrassment.
 
@@ -90,8 +90,8 @@
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Branch every machine-emitted cause on the actual code.** One unconditional sentence produced 8 wrong instructions today and a documented near-miss this morning (rc=6 mislabeled as rc=4). Rule: a log line may name a cause only for the code it just measured.
-2. **Treat "the metric updated" as a hypothesis, not evidence.** A gauge can update and still be wrong; the test is whether it *can* move in response to the thing it claims to measure. Add the class gate (§f) and, until then, sanity-check any "last success" gauge against a second source when you read it.
-3. **Probe the directories, not just the services.** Both of today's silent failures (dead loop, starved consumers) would have been caught by a probe on an *artifact* (a stale consume dir, a stalled log) rather than on a unit's `ActiveState`. Prefer artifact probes: they catch wedged-but-active.
+2. **Treat "the metric updated" as a hypothesis, not evidence.** A gauge can update and still be wrong; the test is whether it _can_ move in response to the thing it claims to measure. Add the class gate (§f) and, until then, sanity-check any "last success" gauge against a second source when you read it.
+3. **Probe the directories, not just the services.** Both of today's silent failures (dead loop, starved consumers) would have been caught by a probe on an _artifact_ (a stale consume dir, a stalled log) rather than on a unit's `ActiveState`. Prefer artifact probes: they catch wedged-but-active.
 4. **Make retry-ability a decision, not a default.** A deterministic 500 ("input too large") must not retry with backoff inside a worker that other tasks need. Distinguish transient (connection, 5xx-with-retry-after) from deterministic (validation, size) at the client.
 5. **Do not scale intake past the ability to organize.** `paperless_inbox_count` is the campaign's organization-debt KPI; intake without sorting converts a physical pile into a digital pile. Set the budget: no more bulk feeding until the first N documents are labeled and the classifier trains.
 6. **Count soft failures.** 332 successful retries is not "no problem" — it is a 332-event signal about the feeder/device interaction, and today nobody could see it without grepping. Instrument the rate.
@@ -110,9 +110,9 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category**. Ticked = already
 
 **Top of the list (each under an hour, all previously queued, none built)**
 
-1. ☐ **Apply the rc-conditional WARN fix** (4 = seating, 6 = jam, 1 = device open, 124 = hang, 139 = crash, else raw stderr) — 8 live mislabels today. · C · S · Bug *(queued; highest urgency now)*
-2. ☐ **Operator notification for delivered / failed / device-gone.** · C · S · Feature *(queued)*
-3. ☐ **Systemd unit for the watcher** (`Restart=always`, journal, boot start, rotation). · C · M · Quality *(queued)*
+1. ☐ **Apply the rc-conditional WARN fix** (4 = seating, 6 = jam, 1 = device open, 124 = hang, 139 = crash, else raw stderr) — 8 live mislabels today. · C · S · Bug _(queued; highest urgency now)_
+2. ☐ **Operator notification for delivered / failed / device-gone.** · C · S · Feature _(queued)_
+3. ☐ **Systemd unit for the watcher** (`Restart=always`, journal, boot start, rotation). · C · M · Quality _(queued)_
 4. ☑ **Consume-directory staleness/depth probe** (library entry created today after the pairing hole). · H · S · Feature
 5. ☑ **FLM embedding batch-size fix / caller-side size guard** (ai-stack.md row harvested today). · H · M · Bug
 6. ☑ **Repair the pinned `llm_index` age metric + add the phantom-metric self-check.** · H · S · Bug
@@ -124,8 +124,8 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category**. Ticked = already
 9. ☑ **Training milestone + hourly train-classifier green.** · H · M · Feature
 10. ☑ **Curate day-one's 144 documents** (keep/merge/delete the test scans) before training. · H · M · Cleanup
 11. ☑ **Numbering ledger + ASN + dashboard** — blocked on three answers. · H · L · Feature
-12. ☐ **Set an intake budget tied to `paperless_inbox_count`** (e.g. stop bulk feeding above N unsorted) and surface the count in `status`. · M · S · Quality *(new)*
-13. ☐ **Label the first 50–100 documents by hand now**, while the corpus is still small — the classifier needs examples and the ledger needs entities. · H · M · Feature *(new; the concrete first move for item 9)*
+12. ☐ **Set an intake budget tied to `paperless_inbox_count`** (e.g. stop bulk feeding above N unsorted) and surface the count in `status`. · M · S · Quality _(new)_
+13. ☐ **Label the first 50–100 documents by hand now**, while the corpus is still small — the classifier needs examples and the ledger needs entities. · H · M · Feature _(new; the concrete first move for item 9)_
 
 **Ingest + device robustness**
 
@@ -136,19 +136,19 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category**. Ticked = already
 18. ☑ **PNG structural assert in receipts mode.** · M · S · Quality
 19. ☑ **Wrapper selftest/fixture for the guards.** · H · M · Quality
 20. ☑ **Loop-exit / fatal-cp audit across `scripts/`.** · H · S · Quality
-21. ☐ **Record the day-one throughput baseline properly** (documents/hour by source, scanner vs other paths) so the remaining ~1900 documents can be planned rather than guessed. · M · S · Quality *(new)*
-22. ☐ **Check the overnight cost of a 4 s poll loop** (CPU wake-ups, journal/log growth, power) before leaving it running for days. · L · S · Quality *(new)*
+21. ☐ **Record the day-one throughput baseline properly** (documents/hour by source, scanner vs other paths) so the remaining ~1900 documents can be planned rather than guessed. · M · S · Quality _(new)_
+22. ☐ **Check the overnight cost of a 4 s poll loop** (CPU wake-ups, journal/log growth, power) before leaving it running for days. · L · S · Quality _(new)_
 23. ☑ **USB recovery unit** if the drop-off class recurs. · M · M · Feature
-24. ☐ **Decide whether an idle watcher should back off** (4 s → 30 s after N idle polls) — harmless today, but it is 7756 wake-ups overnight for nothing. · L · S · Quality *(new)*
-25. ☐ **Add a `--once`/`--bounded` mode** so a fixed number of sheets can be scanned without a kill, useful for tests and for the behavioural rotation check. · M · S · Feature *(new)*
+24. ☐ **Decide whether an idle watcher should back off** (4 s → 30 s after N idle polls) — harmless today, but it is 7756 wake-ups overnight for nothing. · L · S · Quality _(new)_
+25. ☐ **Add a `--once`/`--bounded` mode** so a fixed number of sheets can be scanned without a kill, useful for tests and for the behavioural rotation check. · M · S · Feature _(new)_
 
 **Observability**
 
 26. ☑ **Consume readability guard for non-wrapper producers.** · H · S · Bug
 27. ☑ **Alert when the FAILED backlog reaches a human.** · H · S · Feature
-28. ☐ **Probe the other consumed directories** (drive-paperless drop, inboxclean) with the same staleness shape. · M · S · Quality *(new — generalization of the consume probe)*
-29. ☐ **Add a "watcher alive" signal that is not `pgrep`** (a heartbeat textfile metric the whole monitoring stack can see). · H · S · Feature *(new)*
-30. ☐ **Track ingest *lag* (delivery timestamp → doc id) as a metric**, so "the pipeline is slow" is visible before it becomes a 264 MB backlog. · M · M · Feature *(new)*
+28. ☐ **Probe the other consumed directories** (drive-paperless drop, inboxclean) with the same staleness shape. · M · S · Quality _(new — generalization of the consume probe)_
+29. ☐ **Add a "watcher alive" signal that is not `pgrep`** (a heartbeat textfile metric the whole monitoring stack can see). · H · S · Feature _(new)_
+30. ☐ **Track ingest _lag_ (delivery timestamp → doc id) as a metric**, so "the pipeline is slow" is visible before it becomes a 264 MB backlog. · M · M · Feature _(new)_
 31. ☑ **Audit alerting for paperless-family producer death.** · M · S · Quality
 
 **Paperless-side quality**
@@ -171,25 +171,25 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category**. Ticked = already
 35. ☑ **Post-restore SSO login round-trip.** · M · S · Quality
 36. ☑ **Diagnose bank-sync-paperless.** · H · M · Bug
 37. ☑ **Token-mint boot resilience.** · M · M · Quality
-38. ☐ **Confirm the 40 MB sheets are single documents, not accidental stack scans** — a 40 MB / 2-page colour sheet is plausible, but if the ADF multifeed (inactive detection) merged sheets into one job, the pairing is wrong. Check the two largest products' page counts. · M · S · Bug *(new, and worth doing before the bulk run)*
-39. ☐ **Re-check `paperless_inbox_count` semantics** — 421 documents carrying the inbox tag: confirm that is campaign intake and not a stale tag that ingest should clear. · M · S · Quality *(new)*
+38. ☐ **Confirm the 40 MB sheets are single documents, not accidental stack scans** — a 40 MB / 2-page colour sheet is plausible, but if the ADF multifeed (inactive detection) merged sheets into one job, the pairing is wrong. Check the two largest products' page counts. · M · S · Bug _(new, and worth doing before the bulk run)_
+39. ☐ **Re-check `paperless_inbox_count` semantics** — 421 documents carrying the inbox tag: confirm that is campaign intake and not a stale tag that ingest should clear. · M · S · Quality _(new)_
 
 **Docs / process**
 
 40. ☑ **Scanner docs remainder** (blank-face reorder, USB evidence, bad-scan protocol, storage doctrine). · M · S · Docs
-41. ☐ **Runbook: rc→action table including 1/6/139 and the "device may need a replug" ladder.** · H · S · Docs *(new)*
-42. ☐ **Runbook: write the verified rotation semantics** (archive vs original, the three no-op paths) once item 8 confirms them. · M · S · Docs *(new)*
-43. ☐ **Gotchas archive: the four-day's defects as narrative** (die-in-loop, unconditional cause string, unreadable consume file, empty-dir accumulation, pinned metric). · M · S · Docs *(new)*
-44. ☐ **Close the harvest-pairing checker hole** (row → library entry validity, not just report citation). · M · S · Quality *(new)*
-45. ☐ **Contributor rule: "no `exit` inside a long-running loop" + "branch machine causes on measured codes".** · M · S · Docs *(new)*
+41. ☐ **Runbook: rc→action table including 1/6/139 and the "device may need a replug" ladder.** · H · S · Docs _(new)_
+42. ☐ **Runbook: write the verified rotation semantics** (archive vs original, the three no-op paths) once item 8 confirms them. · M · S · Docs _(new)_
+43. ☐ **Gotchas archive: the four-day's defects as narrative** (die-in-loop, unconditional cause string, unreadable consume file, empty-dir accumulation, pinned metric). · M · S · Docs _(new)_
+44. ☐ **Close the harvest-pairing checker hole** (row → library entry validity, not just report citation). · M · S · Quality _(new)_
+45. ☐ **Contributor rule: "no `exit` inside a long-running loop" + "branch machine causes on measured codes".** · M · S · Docs _(new)_
 
 **Housekeeping / low priority**
 
-46. ☐ **Delete or rebind the stale `trash`/`skipped` dirs' policy** (currently empty; confirm nothing ever needs manual retrieval). · L · S · Cleanup *(new)*
-47. ☐ **Write down where the wrappers' logs live and how to rotate them by hand** until the unit exists. · L · S · Docs *(new)*
-48. ☐ **Confirm the two "not from the scanner" ingest paths at 17:xx** (which producer wrote the Invoice/Finaldunning/image files) — attribution matters for the 144-document total. · L · S · Quality *(new)*
-49. ☐ **Re-check `bank-sync` markers after the day's restarts**, since the suite ran uninterrupted for 12 h. · L · S · Quality *(new)*
-50. ☐ **Decide the fate of the 3 earlier test documents** (1000436 checklist/Biedronka, the reordered-before-fix set) — they are training noise. · L · S · Cleanup *(new)*
+46. ☐ **Delete or rebind the stale `trash`/`skipped` dirs' policy** (currently empty; confirm nothing ever needs manual retrieval). · L · S · Cleanup _(new)_
+47. ☐ **Write down where the wrappers' logs live and how to rotate them by hand** until the unit exists. · L · S · Docs _(new)_
+48. ☐ **Confirm the two "not from the scanner" ingest paths at 17:xx** (which producer wrote the Invoice/Finaldunning/image files) — attribution matters for the 144-document total. · L · S · Quality _(new)_
+49. ☐ **Re-check `bank-sync` markers after the day's restarts**, since the suite ran uninterrupted for 12 h. · L · S · Quality _(new)_
+50. ☐ **Decide the fate of the 3 earlier test documents** (1000436 checklist/Biedronka, the reordered-before-fix set) — they are training noise. · L · S · Cleanup _(new)_
 
 ### Harvest status of this section
 

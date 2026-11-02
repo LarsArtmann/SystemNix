@@ -15,14 +15,14 @@ Two opinion turns produced three durable findings: **the Samsung mirror-first bo
 
 ## Evidence base (new since the 00-31 report)
 
-| Probe | Result |
-|---|---|
-| efivarfs decode (Oct 16 00:50, re-read Oct 17 10:44) | BootOrder `000C`-first, `BootCurrent` `000C`, `LoaderDevicePartUUID` = Samsung ESP — mirror-first LIVE, green across 35h one-boot uptime |
-| `journalctl _COMM=sudo` since Oct 12 | **Oct 15 22:23:21 + 22:23:29**: `lars … TTY=pts/1 … MIRROR=/boot-mirror bash ./boot-mirror-activate.sh` — desktop terminal, minutes before the 22:30 clean shutdown |
-| `.crush/crush.db` `boot-mirror-activate` query | Zero agent-session hits (positive-validated against 'compsize', 2485 hits) → owner-manual is the best-supported read; AGENTS.md + storage.md row 38 independently confirm "owner re-activation" post-heatsink |
-| boot-metrics.prom (Oct 17 10:44) | Boot `3efe02cf` final verdict: **userspace 37m33s, total 37m49s**, phase-COMPLETE (the unfinished-boot retry worked); boot_uptime 126,826s and counting |
-| Live stalled-cgroup ranking (Oct 16 ~00:45) | `user@1000.service` **92.8%**, `session-194.scope` 59.9% vs tiered units ≤5% (fstrim idle 4.4% = yielding by design; clickhouse heavyDB 4.8%) |
-| ioTier census | 41 modules / 70 uses (59 background, 5 build, 3 maintenance, 2 heavyDB, 1 service); **llama-chat: NO tier** (verified in its module); tq-agent-pool build ✓; inboxclean tiered ✓; btrbk/compsize: "no tier found" (weak glob — see §d.4) |
+| Probe                                                | Result                                                                                                                                                                                                                                   |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| efivarfs decode (Oct 16 00:50, re-read Oct 17 10:44) | BootOrder `000C`-first, `BootCurrent` `000C`, `LoaderDevicePartUUID` = Samsung ESP — mirror-first LIVE, green across 35h one-boot uptime                                                                                                 |
+| `journalctl _COMM=sudo` since Oct 12                 | **Oct 15 22:23:21 + 22:23:29**: `lars … TTY=pts/1 … MIRROR=/boot-mirror bash ./boot-mirror-activate.sh` — desktop terminal, minutes before the 22:30 clean shutdown                                                                      |
+| `.crush/crush.db` `boot-mirror-activate` query       | Zero agent-session hits (positive-validated against 'compsize', 2485 hits) → owner-manual is the best-supported read; AGENTS.md + storage.md row 38 independently confirm "owner re-activation" post-heatsink                            |
+| boot-metrics.prom (Oct 17 10:44)                     | Boot `3efe02cf` final verdict: **userspace 37m33s, total 37m49s**, phase-COMPLETE (the unfinished-boot retry worked); boot_uptime 126,826s and counting                                                                                  |
+| Live stalled-cgroup ranking (Oct 16 ~00:45)          | `user@1000.service` **92.8%**, `session-194.scope` 59.9% vs tiered units ≤5% (fstrim idle 4.4% = yielding by design; clickhouse heavyDB 4.8%)                                                                                            |
+| ioTier census                                        | 41 modules / 70 uses (59 background, 5 build, 3 maintenance, 2 heavyDB, 1 service); **llama-chat: NO tier** (verified in its module); tq-agent-pool build ✓; inboxclean tiered ✓; btrbk/compsize: "no tier found" (weak glob — see §d.4) |
 
 ---
 
@@ -75,6 +75,7 @@ Two opinion turns produced three durable findings: **the Samsung mirror-first bo
 ## f) 50 things to get done next (carried = prior report §f, updated; CLOSED entries removed)
 
 **A. Boot measurement & verification debt**
+
 1. Calm-boot re-measure of the 2026-10-06/12 batteries (userspace ≤40s) — [blocked:deploy] stability.md
 2. Warm-reboot repro ×2-3 (~6.8s firmware systematic?) — stability.md
 3. Per-boot reset-reason sweep — stability.md
@@ -144,4 +145,4 @@ Two opinion turns produced three durable findings: **the Samsung mirror-first bo
 
 ---
 
-*Probes this window: efivarfs decodes ×3, `journalctl _COMM=sudo`, crush.db (positive-validated), boot-metrics.prom, PSI + cgroup io.pressure ranking, ioTier census greps, `last -x`, module greps. Writes: AGENTS.md (sudo-trace correction), stability.md + TODO_LIST.md (compsize tier fold, both surfaces). Parallel-session writes observed (stalwart report, bench script) — untouched. No commits; daemon sweeps.*
+_Probes this window: efivarfs decodes ×3, `journalctl _COMM=sudo`, crush.db (positive-validated), boot-metrics.prom, PSI + cgroup io.pressure ranking, ioTier census greps, `last -x`, module greps. Writes: AGENTS.md (sudo-trace correction), stability.md + TODO_LIST.md (compsize tier fold, both surfaces). Parallel-session writes observed (stalwart report, bench script) — untouched. No commits; daemon sweeps._

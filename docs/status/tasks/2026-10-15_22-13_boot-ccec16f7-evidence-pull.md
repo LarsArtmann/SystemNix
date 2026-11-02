@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 ccec16f7 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 15 03:14:01 evo-x2 kernel: Linux version 7.2.9 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Sat Oct  3 10:43:16 UTC 2026
 Oct 15 03:14:01 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 15 03:14:01 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Oct 15 22:30:25 evo-x2 systemd[1]: Unmounting /run/wrappers...
 Oct 15 22:30:25 evo-x2 systemd[1]: Unmounting /tmp...
@@ -30,16 +32,19 @@ Oct 15 22:30:25 evo-x2 systemd[1]: run-secrets.d.mount: Deactivated successfully
 ```
 
 ## Census
+
 - oom-lines: 0
 - guard-lines (memory-emergency-guard): 2781
 - thermal-THROTTLE-lines: 8
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 15 03:16:00 evo-x2 memory-emergency-guard-check[25956]: MEMORY EMERGENCY still active (I/O PSI some avg60=62.91% sustained (max disk busy -1%, MemAvailable=72.8% — the crash #3 class: stacked full-disk readers livelocking the scheduler while memory looks healthy)) but action cooldown active (546s < 600s, 54s remaining; last trip zone=6) — persistent pressure, NOT a new action: the trip already stopped the sockets, this line is the guard's heartbeat
 Oct 15 03:16:00 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -2825,6 +2830,7 @@ Oct 15 22:28:36 evo-x2 gatus[1924605]: 2026/10/15 22:28:36 [watchdog.monitorEndp
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 15 03:15:40 evo-x2 thermal-pstate-guard-check[23233]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=95C(hi:95/lo:80)
 Oct 15 08:14:42 evo-x2 thermal-pstate-guard-check[2166615]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=64C(hi:95/lo:80)
@@ -2837,6 +2843,7 @@ Oct 15 22:23:14 evo-x2 thermal-pstate-guard-check[3119530]: thermal-pstate-guard
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 15 03:14:01 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 15 03:14:01 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

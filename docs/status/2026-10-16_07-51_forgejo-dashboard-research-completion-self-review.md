@@ -65,28 +65,28 @@ Nothing destroyed, mutated, deployed, or exposed (read-only session; the only pr
 
 **Direct follow-ups from THIS session:**
 
-| # | Item | Routing |
-| -- | ---- | ------- |
-| 1 | Decide §g1: clickable WEB overview vs SigNoz/Gatus ops view — decides the collector's shape | owner question, blocks #4 |
-| 2 | Decide §g2: build now (2 live repos) vs wait for cohort growth | owner question, blocks #4 |
-| 3 | Decide §g3: v17 appetite (webhook feeds, fix rides) or hard v15 LTS pin | owner question, gates #10 |
-| 4 | Build the actions-failure textfile collector (`actions/tasks?status=failure` per repo → `system_forgejo_actions_failures`-style metric, Gatus presence, SigNoz rule — the `mirror_sync_stale_count` pattern) | gated on #1+#2+#5 |
-| 5 | Ratify the scoped read-only Forgejo token (existing `[decision]` row — LIVE-confirmed prerequisite this session: unauthenticated API reads 404-mask) | existing row |
-| 6 | Watch PR 14856 / ride the next 15.0.x carrying it (#14843 is live-verified present) | existing `[watch]` row |
-| 7 | Live Actions-unit census (all repos incl. `starred`) — pre-existing `[ready]` row, now post-G2 | existing row |
-| 8 | Close the direct Codeberg `code/actions`-label sweep in an agentic_fetch-capable window (post-12:16) — the definitive close of the one bounded search gap | **harvested `[ready]` this session** |
-| 9 | Verify first REAL push-triggered Actions runs on eventcatalog-hub + domains (rehearsal 204 ≠ real-run health; #14843 exposure) | **harvested `[ready]` this session** |
-| 10 | Read 14334/14351/14356 (workflow-job webhook PR relationship) | only if #3 says v17 |
-| 11 | Subscribe to gitea#31692/#33162 (the only upstream vehicles for a native dashboard) | blocked:user |
-| 12 | Absorb this arc's two closed-row entries into CHANGELOG when the foreign stash-conflict resolves | blocked by foreign conflict |
-| 13 | Grafana registry sweep (forgejo/gitea Actions dashboards) via browser or agentic pass — completes the bounded negative | nice-to-have |
-| 14 | Woodpecker/Crow evaluation — only if the owner ever wants to LEAVE Actions | roadmap, deliberately shallow |
-| 15 | Gatus "Actions jobs stuck waiting" check via the org jobs endpoint — early warning for the runner-wedge class (note: `lars` is a user; org-scope needs a real org or the user-scope endpoint of a post-v15 jump) | design candidate, gated #1 |
-| 16 | If the collector lands: decide SigNoz retention/aggregation for the failure-count series | follow-on of #4 |
-| 17 | If the collector lands: wire it into pre/post-deploy checks (metric presence = phantom-metric discipline) | follow-on of #4 |
-| 18 | Swagger JSON 404: locate where the UI actually loads its spec (cosmetic; zero urgency) | backlog-filler, no urgency |
-| 19 | Fold "next 15.0.x release carrying 14856" into the version-watch row when it ships | watch upkeep |
-| 20 | Re-check gitea#31692 for movement on any future research touchpoint (nobody is building it — quiet watch) | watch |
+| #  | Item                                                                                                                                                                                                             | Routing                              |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 1  | Decide §g1: clickable WEB overview vs SigNoz/Gatus ops view — decides the collector's shape                                                                                                                      | owner question, blocks #4            |
+| 2  | Decide §g2: build now (2 live repos) vs wait for cohort growth                                                                                                                                                   | owner question, blocks #4            |
+| 3  | Decide §g3: v17 appetite (webhook feeds, fix rides) or hard v15 LTS pin                                                                                                                                          | owner question, gates #10            |
+| 4  | Build the actions-failure textfile collector (`actions/tasks?status=failure` per repo → `system_forgejo_actions_failures`-style metric, Gatus presence, SigNoz rule — the `mirror_sync_stale_count` pattern)     | gated on #1+#2+#5                    |
+| 5  | Ratify the scoped read-only Forgejo token (existing `[decision]` row — LIVE-confirmed prerequisite this session: unauthenticated API reads 404-mask)                                                             | existing row                         |
+| 6  | Watch PR 14856 / ride the next 15.0.x carrying it (#14843 is live-verified present)                                                                                                                              | existing `[watch]` row               |
+| 7  | Live Actions-unit census (all repos incl. `starred`) — pre-existing `[ready]` row, now post-G2                                                                                                                   | existing row                         |
+| 8  | Close the direct Codeberg `code/actions`-label sweep in an agentic_fetch-capable window (post-12:16) — the definitive close of the one bounded search gap                                                        | **harvested `[ready]` this session** |
+| 9  | Verify first REAL push-triggered Actions runs on eventcatalog-hub + domains (rehearsal 204 ≠ real-run health; #14843 exposure)                                                                                   | **harvested `[ready]` this session** |
+| 10 | Read 14334/14351/14356 (workflow-job webhook PR relationship)                                                                                                                                                    | only if #3 says v17                  |
+| 11 | Subscribe to gitea#31692/#33162 (the only upstream vehicles for a native dashboard)                                                                                                                              | blocked:user                         |
+| 12 | Absorb this arc's two closed-row entries into CHANGELOG when the foreign stash-conflict resolves                                                                                                                 | blocked by foreign conflict          |
+| 13 | Grafana registry sweep (forgejo/gitea Actions dashboards) via browser or agentic pass — completes the bounded negative                                                                                           | nice-to-have                         |
+| 14 | Woodpecker/Crow evaluation — only if the owner ever wants to LEAVE Actions                                                                                                                                       | roadmap, deliberately shallow        |
+| 15 | Gatus "Actions jobs stuck waiting" check via the org jobs endpoint — early warning for the runner-wedge class (note: `lars` is a user; org-scope needs a real org or the user-scope endpoint of a post-v15 jump) | design candidate, gated #1           |
+| 16 | If the collector lands: decide SigNoz retention/aggregation for the failure-count series                                                                                                                         | follow-on of #4                      |
+| 17 | If the collector lands: wire it into pre/post-deploy checks (metric presence = phantom-metric discipline)                                                                                                        | follow-on of #4                      |
+| 18 | Swagger JSON 404: locate where the UI actually loads its spec (cosmetic; zero urgency)                                                                                                                           | backlog-filler, no urgency           |
+| 19 | Fold "next 15.0.x release carrying 14856" into the version-watch row when it ships                                                                                                                               | watch upkeep                         |
+| 20 | Re-check gitea#31692 for movement on any future research touchpoint (nobody is building it — quiet watch)                                                                                                        | watch                                |
 
 **Deliberately NOT harvested (reasons recorded per the self-harvest rule):** #1–#3 (owner questions, not tasks), #5–#7 (pre-existing rows — never re-harvest), #11 (blocked:user), #12 (blocked by foreign conflict), #13–#20 (no queue-worthy action exists yet / roadmap-grade / watch-grade). Items #8 and #9 ARE harvested (TODO_LIST one-liners + `docs/todo/services.md` full rows, in lockstep, at authoring time).
 

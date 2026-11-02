@@ -77,4 +77,4 @@
 
 ---
 
-**Session logs:** `~/.cache/lockfloat/` — backup-fire-20261025-171257.log (runuser EPERM evidence), float-register*.log ×2, float-proof-20261025-172436.log (the three red roots + got-hashes), proof-shims-*.log (GREEN), deploy8-*.log, deploy7.log (paperless-gpt transient), plus the prior session's set. **Report self-harvest:** §f rows 5-10 queued at authoring time (services.md ×2, pipeline.md ×2, stability.md ×1 + TODO_LIST twins); rows 1-4, 11-16 were already queued during the session; 12-14, 19 carry standing rows. **Nothing pushed; no owner-gated action taken.**
+**Session logs:** `~/.cache/lockfloat/` — backup-fire-20261025-171257.log (runuser EPERM evidence), float-register*.log ×2, float-proof-20261025-172436.log (the three red roots + got-hashes), proof-shims-_.log (GREEN), deploy8-_.log, deploy7.log (paperless-gpt transient), plus the prior session's set. **Report self-harvest:** §f rows 5-10 queued at authoring time (services.md ×2, pipeline.md ×2, stability.md ×1 + TODO_LIST twins); rows 1-4, 11-16 were already queued during the session; 12-14, 19 carry standing rows. **Nothing pushed; no owner-gated action taken.**

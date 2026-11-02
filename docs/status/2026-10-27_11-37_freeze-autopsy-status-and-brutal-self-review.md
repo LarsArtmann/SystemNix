@@ -27,9 +27,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **Death-window writer attribution for #36.** I have the *cgroup* (system.slice, 1.3 TB) and the *device* (sdb 100 % busy) but **not the unit or PID** that read 1.3 TB. The journal window (09:36–09:47) is still on disk, so this is recoverable — it just needs one focused pass. Effort **M**.
+1. **Death-window writer attribution for #36.** I have the _cgroup_ (system.slice, 1.3 TB) and the _device_ (sdb 100 % busy) but **not the unit or PID** that read 1.3 TB. The journal window (09:36–09:47) is still on disk, so this is recoverable — it just needs one focused pass. Effort **M**.
 2. **#34's evidence file.** Boot `27580a79` is "guarded" only because an unrelated report (`2026-10-25_14-08_remedy-map-turn-self-review-full-status.md`) mentions the boot id; I never pulled a dedicated evidence file nor read its thermal section. My 637-cycle count is my own measurement, so the finding stands, but the provenance is thin. Effort **S**.
-3. **Alert efficacy.** I verified the alerting *exists* (`system_thermal_alert 1`, plus sev1 `notify`-tier noise every 10 s for the last 15 min), but not whether the **Gatus "CPU Thermal Alert" check** was green/red during #36, nor whether Discord actually carried it. The owner acted on nothing for ~15 min of latched SEV1. Effort **S**.
+3. **Alert efficacy.** I verified the alerting _exists_ (`system_thermal_alert 1`, plus sev1 `notify`-tier noise every 10 s for the last 15 min), but not whether the **Gatus "CPU Thermal Alert" check** was green/red during #36, nor whether Discord actually carried it. The owner acted on nothing for ~15 min of latched SEV1. Effort **S**.
 4. **Session-load measurement.** I recorded `crush -y` 7 → 16 across the session and ≥17 active PTYs in the death window, but I did not measure `system_crush_sessions` over the dying boot, so "how many sessions is too many" is still a guess. Effort **M**.
 
 ---
@@ -39,7 +39,7 @@
 1. **Fix the evidence-pull thermal census** (`bep_grep_thermal` → count rung-1 and rung-2 separately, plus a selftest leg that would have caught the 1-vs-452 discrepancy). **Deferred on purpose:** the user's instruction was "report, then wait", and any script change wants the selftest/flake battery I am deliberately not running at 98 °C.
 2. **Deep-cap release hysteresis in the guard** (release at the low band 80 °C or a dwell, not at the 95 °C middle band). Code + selftest untouched.
 3. **Shed-load escalation rung** (remove load at sustained ≥95 °C) — design only, no code.
-4. **monitor365 `dmesg` SIGSYS loop** — decided *where* it is documented, not *what* to do (drop collector vs `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0`).
+4. **monitor365 `dmesg` SIGSYS loop** — decided _where_ it is documented, not _what_ to do (drop collector vs `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0`).
 5. **Admission gate for thermal state.** `deploy.sh`'s exit-12 pressure gate reads PSI/zram/MemAvailable but **not** Tctl — at 98.8 °C with `system_thermal_alert 1` a deploy would still be allowed if PSI were calm.
 6. **Root filesystem reclaim.** `/` is at **98 % (21 G free)** with a `root-prune-guard` btrbk prune already firing at 09:58. Not investigated.
 7. **Loose unit:** `service-health-check` flagged `btrbk-pool-clean.service (failed)` at **10:01:16**, 107 s before the cut; the unit is `inactive` now. Cause unknown.
@@ -51,10 +51,10 @@
 
 ## d) TOTALLY FUCKED UP (mine, ranked by how close it came to misleading the owner)
 
-1. **I quoted "~36 owner SSH PTYs" — a pts *index*, not a count.** `last -x | head` showed `pts/36`, and I wrote it as a session count in the report **and** in `docs/agents/stability.md`. Real measurement: **17 unique `pts/N` devices in the final 30 min** of the dying boot, **20** live `who` sessions at authoring. This is exactly the repo's documented "quote-scrutiny" trap, and I walked into it. Corrected in both files this turn.
+1. **I quoted "~36 owner SSH PTYs" — a pts _index_, not a count.** `last -x | head` showed `pts/36`, and I wrote it as a session count in the report **and** in `docs/agents/stability.md`. Real measurement: **17 unique `pts/N` devices in the final 30 min** of the dying boot, **20** live `who` sessions at authoring. This is exactly the repo's documented "quote-scrutiny" trap, and I walked into it. Corrected in both files this turn.
 2. **Hypothesis-first autopsy.** I opened with the thermal/EC family and wrote "thermal/EC class" reasoning before reading the reset register — the opposite of the repo's "assert which question your evidence answers" rule. The final answer was right; the path was wrong and would have shipped an "EC power cut" verdict if I had stopped at the family's heredity.
 3. **First draft over-claimed the reset register.** I presented `0x02000800` as proof while knowing the value is identical on every retained boot (uncontrol-tested, possibly sticky) and that EFI-pstore survival is firmware-dependent. The caveat only landed in the follow-up turn.
-4. **Two cheap rival-killers were missing from the first pass:** the `watchdogd` health check (a dead daemon fires the WDT with *no* hang) and the vmcore check. Both took under a minute; both should be step 1 of any future autopsy.
+4. **Two cheap rival-killers were missing from the first pass:** the `watchdogd` health check (a dead daemon fires the WDT with _no_ hang) and the vmcore check. Both took under a minute; both should be step 1 of any future autopsy.
 5. **I let the tool's number stand unchallenged.** The evidence pull said `thermal-THROTTLE-lines: 1`; my own `grep -c` said 452. I noticed the contradiction only by accident, an hour later, and my first report repeated the census framing ("thermal minor"-style counts) without reconciling it.
 6. **No integrity check in the first pass.** After a hard cut with a 188 s hung `sync` and 1.3 TB in flight, I checked the deploy anchor and stopped there. Filesystem/backup/boot-mirror verification only happened when you asked what I forgot.
 7. **I added load to a box at the ceiling.** Multiple full-boot journal greps (7 boots, ~8 G of journal) ran while Tctl sat at 97–99 °C with 16 other agent sessions. Forensics needed them, but I did not pace them, batch them, or acknowledge the self-contribution until now.
@@ -65,8 +65,8 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Autopsy order should be a checklist, not folklore.** The knowledge exists but is scattered across 30 freeze entries. Six lines at the top of `docs/agents/stability.md` §Hardware Instability: (1) reset register of the *next* boot, (2) pstore + `/var/crash`, (3) system-manager shutdown ceremony, (4) `watchdogd` health/restart count, (5) thermal rung-1 **and** rung-2 counts, (6) guard trip attribution + last line. This session spent its first hour re-deriving exactly that list.
-2. **Phantom-count class in the census tool.** A census that reports `1` for a 452-cycle phenomenon is the same shape as the phantom metrics we hunt in dashboards. Any count that names a *class* ("thermal throttle") must enumerate every emitter of that class, and a selftest fixture must include a rung-2-only boot.
+1. **Autopsy order should be a checklist, not folklore.** The knowledge exists but is scattered across 30 freeze entries. Six lines at the top of `docs/agents/stability.md` §Hardware Instability: (1) reset register of the _next_ boot, (2) pstore + `/var/crash`, (3) system-manager shutdown ceremony, (4) `watchdogd` health/restart count, (5) thermal rung-1 **and** rung-2 counts, (6) guard trip attribution + last line. This session spent its first hour re-deriving exactly that list.
+2. **Phantom-count class in the census tool.** A census that reports `1` for a 452-cycle phenomenon is the same shape as the phantom metrics we hunt in dashboards. Any count that names a _class_ ("thermal throttle") must enumerate every emitter of that class, and a selftest fixture must include a rung-2-only boot.
 3. **Freeze-numbering has no enforcement.** #34 and #35 sat undocumented for ~2 days because nothing compares "boots on disk" against "freeze entries". Extend `pre-vacuum-evidence-gate.sh`: an evidence file must carry a `freeze #N` stamp, and a cut boot with no number warns.
 4. **The deploy pressure gate is thermally blind.** It refuses at PSI/zram/memory thresholds but will happily switch a 98.8 °C box. Add k10temp (`system_cpu_temp_celsius` or `/sys/class/hwmon/k10temp/temp1_input`) with the same refusal class and the same `DEPLOY_FORCE_PRESSURE` escape.
 5. **Alerts exist, action doesn't.** `system_thermal_alert 1` and a latched SEV1 (`notify` tier) were both true for minutes before death; the owner never saw a "this will cut power" signal. The gap is tier/route (Discord vs desktop, notify vs page), not coverage. This is a 2026-09-02 owner ruling to revisit, not an agent decision.
@@ -79,50 +79,50 @@
 
 ## f) Up to 50 next things (ranked; impact/effort/category)
 
-| # | Task | Impact | Effort | Category |
-| --- | --- | --- | --- | --- |
-| 1 | Owner: physical cooling inspection (fans/dust/paste/airflow) — every probe says the deficit is standing | Critical | S | Hardware |
-| 2 | Fix `boot-evidence-pull.sh` thermal census: count `THERMAL THROTTLE ENTER/EXIT` **and** `DEEP THROTTLE ENTER/DROP`; add a rung-2-only selftest fixture | Critical | S | Bug |
-| 3 | Write the 6-line autopsy checklist into `docs/agents/stability.md` (reset register → pstore/vmcore → ceremony → watchdogd → rung1+rung2 → trip attribution) | High | S | Documentation |
-| 4 | Add Tctl to `deploy.sh`'s exit-12 pressure gate (`system_thermal_alert`-equivalent, ≥95 °C, same escape hatch) | High | S | Bug |
-| 5 | Post-hard-cut integrity sweep: wire `boot_reset_reason_watchdog=1` to one read-only pass (btrfs stats, boot-mirror, anchor, backup freshness) | High | M | Feature |
-| 6 | Attribute #36's 1.3 TB `system.slice` reader from the still-on-disk 09:36–09:47 window | High | M | Investigation |
-| 7 | Deep-cap release hysteresis: release at the low band (80 °C) or hold window, not the 95 °C middle band; extend the guard selftest | High | M | Bug |
-| 8 | Shed-load escalation rung: at sustained ≥95 °C remove load (stop `ioChurnUnits`, refuse new builds) rather than only cap clocks | High | L | Feature |
-| 9 | Verify the Gatus "CPU Thermal Alert" check's state during #36 and whether Discord received it | High | S | Investigation |
-| 10 | Reclaim root fs to <90 % (694 G/723 G used; a deploy blocker per pre-deploy §8) | High | M | Cleanup |
-| 11 | Diagnose `btrbk-pool-clean.service` (flagged failed 10:01:16, inactive now) | High | S | Bug |
-| 12 | Add a per-boot thermal summary metric (`deep_throttle_cycles_total`, max Tctl) so a 452-cycle boot is visible without journal digs | High | S | Feature |
-| 13 | Gatus check: deep-throttle cycles/hour > 30 ⇒ alert (today a 452-cycle boot pages nothing) | High | M | Feature |
-| 14 | Add kdump/vmcore + reset-reason + watchdogd-health sections to the canonical evidence pull | High | S | Tooling |
-| 15 | Stamp `freeze #N` into every evidence pull and have `pre-vacuum-evidence-gate.sh` require it | Medium | M | Tooling |
-| 16 | Freeze-index table (boot id8 → freeze # → date → mechanism) in `docs/agents/stability.md` to end the #34/#35-style gaps | Medium | S | Documentation |
-| 17 | Map the three reset-reason encodings (kernel `0x02000800`, watchdogd `0x0020 card-reset`, metric) in one place | Medium | S | Documentation |
-| 18 | monitor365 `dmesg`: drop the collector **or** grant `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0` (owner hardening tradeoff) | Medium | S | Bug |
-| 19 | Cap concurrent `crush` sessions (config or doc discipline) and measure `system_crush_sessions` over a storm boot | Medium | M | Feature |
-| 20 | Route build caches off the USB `sdb` (100 % busy at 7 MB/s) to the Samsung `tlc` scratch | Medium | L | Performance |
-| 21 | Add queue-depth/`io_ticks`-based saturation metric for `sdb` (disk-busy % hides 100 % util at 7 MB/s) | Medium | M | Feature |
-| 22 | Fan/EC telemetry investigation (`nct6775`/vendor hwmon) — the box's #1 failure mode is unmonitored | Medium | M | Feature |
-| 23 | Add a `scripts/crash-triage.sh` that prints reset reason, pstore, ceremony, rung1/rung2 counts, watchdogd health, last line | High | M | Tooling |
-| 24 | Publish the live Tctl/PSI in every deploy refusal message (currently only PSI/zram/mem) | Medium | S | UX |
-| 25 | Revisit the 2026-09-02 notification tier: is a latched "guard tripped + thermal ceiling" state really `notify`-only? | Medium | S | Decision |
-| 26 | Add "journal 30 s silence" detection at boot (a near-WDT marker) to boot-metrics | Medium | M | Feature |
-| 27 | Document "watchdog reset ⇒ box hung, not EC cut" in the thermal guard runbook + stability intro | High | S | Documentation |
-| 28 | Extend `thermal-pstate-guard.sh` to log a one-line per-boot summary (cycles, max temp, time in guided) | Low | S | Feature |
-| 29 | Fix the `rg -r` guard false positive on `-o` (scanner fix, not suppression) | Low | S | Bug |
-| 30 | Cap `systemd-coredump` retention for the per-minute `dmesg` dumps (~44 MB/day) | Low | S | Cleanup |
-| 31 | Verify `system_thermal_alert` is actually scraped by SigNoz (value exists locally; ingestion unverified) | Medium | S | Investigation |
-| 32 | Add a "storm mode" runbook (temp + PSI + session count ⇒ what to stop, in what order) | Medium | M | Documentation |
-| 33 | Measure whether `boot-mirror-sync` survives a cut mid-write (it re-synced fine at 10:05 — add an assertion) | Low | S | Quality |
-| 34 | Baseline the pre-existing `corrupt` device counters (nvme1n1p8 = 386,583,705) so future cuts can be diffed | Medium | S | Investigation |
-| 35 | Add root-fs headroom (≥90 %) to the deploy gate's refusal set, not only to `root-prune-guard` | Medium | S | Bug |
-| 36 | Harvest the #34/#35 evidence into a single freeze-family summary table (mechanism + counts per boot) | Low | S | Documentation |
-| 37 | Investigate `watchdogd`'s `meminfo critical 0.98` path — it can reboot *by design* and would mimic a hang | Low | S | Investigation |
-| 38 | Add `tq-agent-pool` memcg OOM count to the storm-mode dashboard (2 OOMs pre-cut on #36) | Low | S | Monitoring |
-| 39 | Check whether #34/#35 had a deploy or `nix build` in flight (my report asserts "no deploy" only for #36) | Medium | S | Investigation |
-| 40 | Add a `--since/--until` bounded mode to `boot-evidence-pull.sh` for storm-window digging (today it always dumps the whole boot) | Medium | M | Tooling |
+| #  | Task                                                                                                                                                        | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Owner: physical cooling inspection (fans/dust/paste/airflow) — every probe says the deficit is standing                                                     | Critical | S      | Hardware      |
+| 2  | Fix `boot-evidence-pull.sh` thermal census: count `THERMAL THROTTLE ENTER/EXIT` **and** `DEEP THROTTLE ENTER/DROP`; add a rung-2-only selftest fixture      | Critical | S      | Bug           |
+| 3  | Write the 6-line autopsy checklist into `docs/agents/stability.md` (reset register → pstore/vmcore → ceremony → watchdogd → rung1+rung2 → trip attribution) | High     | S      | Documentation |
+| 4  | Add Tctl to `deploy.sh`'s exit-12 pressure gate (`system_thermal_alert`-equivalent, ≥95 °C, same escape hatch)                                              | High     | S      | Bug           |
+| 5  | Post-hard-cut integrity sweep: wire `boot_reset_reason_watchdog=1` to one read-only pass (btrfs stats, boot-mirror, anchor, backup freshness)               | High     | M      | Feature       |
+| 6  | Attribute #36's 1.3 TB `system.slice` reader from the still-on-disk 09:36–09:47 window                                                                      | High     | M      | Investigation |
+| 7  | Deep-cap release hysteresis: release at the low band (80 °C) or hold window, not the 95 °C middle band; extend the guard selftest                           | High     | M      | Bug           |
+| 8  | Shed-load escalation rung: at sustained ≥95 °C remove load (stop `ioChurnUnits`, refuse new builds) rather than only cap clocks                             | High     | L      | Feature       |
+| 9  | Verify the Gatus "CPU Thermal Alert" check's state during #36 and whether Discord received it                                                               | High     | S      | Investigation |
+| 10 | Reclaim root fs to <90 % (694 G/723 G used; a deploy blocker per pre-deploy §8)                                                                             | High     | M      | Cleanup       |
+| 11 | Diagnose `btrbk-pool-clean.service` (flagged failed 10:01:16, inactive now)                                                                                 | High     | S      | Bug           |
+| 12 | Add a per-boot thermal summary metric (`deep_throttle_cycles_total`, max Tctl) so a 452-cycle boot is visible without journal digs                          | High     | S      | Feature       |
+| 13 | Gatus check: deep-throttle cycles/hour > 30 ⇒ alert (today a 452-cycle boot pages nothing)                                                                  | High     | M      | Feature       |
+| 14 | Add kdump/vmcore + reset-reason + watchdogd-health sections to the canonical evidence pull                                                                  | High     | S      | Tooling       |
+| 15 | Stamp `freeze #N` into every evidence pull and have `pre-vacuum-evidence-gate.sh` require it                                                                | Medium   | M      | Tooling       |
+| 16 | Freeze-index table (boot id8 → freeze # → date → mechanism) in `docs/agents/stability.md` to end the #34/#35-style gaps                                     | Medium   | S      | Documentation |
+| 17 | Map the three reset-reason encodings (kernel `0x02000800`, watchdogd `0x0020 card-reset`, metric) in one place                                              | Medium   | S      | Documentation |
+| 18 | monitor365 `dmesg`: drop the collector **or** grant `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0` (owner hardening tradeoff)                              | Medium   | S      | Bug           |
+| 19 | Cap concurrent `crush` sessions (config or doc discipline) and measure `system_crush_sessions` over a storm boot                                            | Medium   | M      | Feature       |
+| 20 | Route build caches off the USB `sdb` (100 % busy at 7 MB/s) to the Samsung `tlc` scratch                                                                    | Medium   | L      | Performance   |
+| 21 | Add queue-depth/`io_ticks`-based saturation metric for `sdb` (disk-busy % hides 100 % util at 7 MB/s)                                                       | Medium   | M      | Feature       |
+| 22 | Fan/EC telemetry investigation (`nct6775`/vendor hwmon) — the box's #1 failure mode is unmonitored                                                          | Medium   | M      | Feature       |
+| 23 | Add a `scripts/crash-triage.sh` that prints reset reason, pstore, ceremony, rung1/rung2 counts, watchdogd health, last line                                 | High     | M      | Tooling       |
+| 24 | Publish the live Tctl/PSI in every deploy refusal message (currently only PSI/zram/mem)                                                                     | Medium   | S      | UX            |
+| 25 | Revisit the 2026-09-02 notification tier: is a latched "guard tripped + thermal ceiling" state really `notify`-only?                                        | Medium   | S      | Decision      |
+| 26 | Add "journal 30 s silence" detection at boot (a near-WDT marker) to boot-metrics                                                                            | Medium   | M      | Feature       |
+| 27 | Document "watchdog reset ⇒ box hung, not EC cut" in the thermal guard runbook + stability intro                                                             | High     | S      | Documentation |
+| 28 | Extend `thermal-pstate-guard.sh` to log a one-line per-boot summary (cycles, max temp, time in guided)                                                      | Low      | S      | Feature       |
+| 29 | Fix the `rg -r` guard false positive on `-o` (scanner fix, not suppression)                                                                                 | Low      | S      | Bug           |
+| 30 | Cap `systemd-coredump` retention for the per-minute `dmesg` dumps (~44 MB/day)                                                                              | Low      | S      | Cleanup       |
+| 31 | Verify `system_thermal_alert` is actually scraped by SigNoz (value exists locally; ingestion unverified)                                                    | Medium   | S      | Investigation |
+| 32 | Add a "storm mode" runbook (temp + PSI + session count ⇒ what to stop, in what order)                                                                       | Medium   | M      | Documentation |
+| 33 | Measure whether `boot-mirror-sync` survives a cut mid-write (it re-synced fine at 10:05 — add an assertion)                                                 | Low      | S      | Quality       |
+| 34 | Baseline the pre-existing `corrupt` device counters (nvme1n1p8 = 386,583,705) so future cuts can be diffed                                                  | Medium   | S      | Investigation |
+| 35 | Add root-fs headroom (≥90 %) to the deploy gate's refusal set, not only to `root-prune-guard`                                                               | Medium   | S      | Bug           |
+| 36 | Harvest the #34/#35 evidence into a single freeze-family summary table (mechanism + counts per boot)                                                        | Low      | S      | Documentation |
+| 37 | Investigate `watchdogd`'s `meminfo critical 0.98` path — it can reboot _by design_ and would mimic a hang                                                   | Low      | S      | Investigation |
+| 38 | Add `tq-agent-pool` memcg OOM count to the storm-mode dashboard (2 OOMs pre-cut on #36)                                                                     | Low      | S      | Monitoring    |
+| 39 | Check whether #34/#35 had a deploy or `nix build` in flight (my report asserts "no deploy" only for #36)                                                    | Medium   | S      | Investigation |
+| 40 | Add a `--since/--until` bounded mode to `boot-evidence-pull.sh` for storm-window digging (today it always dumps the whole boot)                             | Medium   | M      | Tooling       |
 
-*(Items 1–2 are the ones I would do first; 3–5 are the ones that stop this class from recurring.)*
+_(Items 1–2 are the ones I would do first; 3–5 are the ones that stop this class from recurring.)_
 
 ---
 

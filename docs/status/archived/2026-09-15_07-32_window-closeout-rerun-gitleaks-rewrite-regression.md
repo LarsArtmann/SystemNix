@@ -36,8 +36,8 @@ All five cited SHAs are UNREACHABLE from HEAD (verified `git merge-base --is-anc
 
 1. **Repo-generic CI do-analyzer** (provide/invoke type-parameter pairing across all Go repos) — named future hardening in the sweep report; TODO_LIST item exists (branching-flow's `doanalyzerv2` is the seed). **→ docs/todo/upstream.md Repo-generic CI do-analyzer ready row**
 2. **Zone 6 threshold recalibration**, `zone6_churn_units_stopped` forensics metric, SigNoz dashboard surfaces, trip-tier routing check, runbook entry, backup-staleness tripwire while btrbk is guard-stopped — all harvested as TODO items, none started. **→ recalibration open - docs/todo/stability.md Zone-6 row; churn metric/runbook/panel/backup-staleness landed (memory-emergency-guard.md)**
-~~3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.~~ done — flm corpse DONE-MOOT 2026-09-30 - docs/todo/stability.md corpse row
-~~4. _In passing (adjacent, not this window's five):_ sibling batch task `000001a09d06cf0bc…` (enqueued 01:07:44) dead-lettered after 3 failed verify runs on go-taskqueue's own suite (`internal/session` package build failure) — flagged for the go-taskqueue owner.~~ **Won't implement — upstream one-shot flag; go-taskqueue verify/sidecar work since superseded it.**
+   ~~3. **The still-owed evo-x2 reboot** (flm :52626 corpse) — untouched, correctly; no queue item owns it.~~ done — flm corpse DONE-MOOT 2026-09-30 - docs/todo/stability.md corpse row
+   ~~4. _In passing (adjacent, not this window's five):_ sibling batch task `000001a09d06cf0bc…` (enqueued 01:07:44) dead-lettered after 3 failed verify runs on go-taskqueue's own suite (`internal/session` package build failure) — flagged for the go-taskqueue owner.~~ **Won't implement — upstream one-shot flag; go-taskqueue verify/sidecar work since superseded it.**
 
 ## d) TOTALLY FUCKED UP
 

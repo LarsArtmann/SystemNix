@@ -20,13 +20,13 @@
 
 Three pieces:
 
-| Piece | Role |
-|---|---|
-| **FS-Cache** | Kernel framework — generic local caching layer for network filesystems |
-| **CacheFiles** | Kernel module that stores cached data on a local block device (SSD) |
-| **cachefilesd** | Userspace daemon: registers the cache, culls entries when it fills |
+| Piece           | Role                                                                   |
+| --------------- | ---------------------------------------------------------------------- |
+| **FS-Cache**    | Kernel framework — generic local caching layer for network filesystems |
+| **CacheFiles**  | Kernel module that stores cached data on a local block device (SSD)    |
+| **cachefilesd** | Userspace daemon: registers the cache, culls entries when it fills     |
 
-- Mount the NFS share with the `fsc` option → each client caches only what *it* reads; originals stay on the server. Per-machine caches, no full copies.
+- Mount the NFS share with the `fsc` option → each client caches only what _it_ reads; originals stay on the server. Per-machine caches, no full copies.
 - Cache backing store: a size-capped loopback file (`fallocate` a fixed-size image, format ext4 inside, mount it) — bounds the cache without repartitioning.
 - Culling thresholds (his values): cull (LRU) when free space drops below **10%**, stop culling back above **25%**, stop admitting new data at **3%**. Same letter pattern for **file-count** thresholds (matters for many-small-files workloads). No TTL — entries live until LRU-culled.
 - His benchmark (155G DeepSeek, 74 shards): cold over NFS **565 s** (~280 MB/s — nowhere near his 10G, single-stream NFS reality) → warm from SSD cache **93 s** (~1.7 GB/s), ~6×. Single 3.3G shard: 4.5 s → 1.7 s (~2.5×).
@@ -34,13 +34,13 @@ Three pieces:
 
 ## 2. Applicability to this fleet (verified 2026-10-28)
 
-| Question | Finding |
-|---|---|
-| Do we mount NFS anywhere? | **No.** Grep across module/system/platform/docs trees returns zero real hits. |
-| Do we have his "reload big models over and over" pain? | Partially. Models are local on QLC `/data` (~589G AI models: ai 291G + models 210G + llamacpp 92G). With 124.3 GiB RAM, most models fit the page cache warm. The ~100–200G class can be evicted under memory pressure → those reloads hit QLC 4K-class latency (620 IOPS QD1), though shard reads are sequential (bandwidth-bound, QLC seq is adequate). |
-| Would a hot-model Samsung `/mnt/hot` subvol (doctrine C) help? | Maybe 1.5–2× on the biggest-model cold load, at the cost of Samsung capacity. Only worth it if profiling shows model reloads are a real bottleneck. NOT the 6× headline. |
-| Is NixOS support real? | **Verified in the pinned nixpkgs input** (store path `2g1ydkkflg5kl8hb1f8js0s0p9v4gl53-source`, 2026-10-28): `services/cachefilesd.nix` in `network-filesystems/` + `tasks/filesystems/nfs.nix`. |
-| MacBook Air as consumer | 256G SSD 90%+ full — cannot hold model copies at all. NFS + fscache is the only way it touches the model library with warm-read behavior, and its cache image must be tiny (single-digit GB) given disk pressure. |
+| Question                                                       | Finding                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Do we mount NFS anywhere?                                      | **No.** Grep across module/system/platform/docs trees returns zero real hits.                                                                                                                                                                                                                                                                            |
+| Do we have his "reload big models over and over" pain?         | Partially. Models are local on QLC `/data` (~589G AI models: ai 291G + models 210G + llamacpp 92G). With 124.3 GiB RAM, most models fit the page cache warm. The ~100–200G class can be evicted under memory pressure → those reloads hit QLC 4K-class latency (620 IOPS QD1), though shard reads are sequential (bandwidth-bound, QLC seq is adequate). |
+| Would a hot-model Samsung `/mnt/hot` subvol (doctrine C) help? | Maybe 1.5–2× on the biggest-model cold load, at the cost of Samsung capacity. Only worth it if profiling shows model reloads are a real bottleneck. NOT the 6× headline.                                                                                                                                                                                 |
+| Is NixOS support real?                                         | **Verified in the pinned nixpkgs input** (store path `2g1ydkkflg5kl8hb1f8js0s0p9v4gl53-source`, 2026-10-28): `services/cachefilesd.nix` in `network-filesystems/` + `tasks/filesystems/nfs.nix`.                                                                                                                                                         |
+| MacBook Air as consumer                                        | 256G SSD 90%+ full — cannot hold model copies at all. NFS + fscache is the only way it touches the model library with warm-read behavior, and its cache image must be tiny (single-digit GB) given disk pressure.                                                                                                                                        |
 
 ## 3. The recipe, if NFS ever enters (NixOS-native sketch)
 

@@ -42,6 +42,7 @@
 ## f) NEXT (up to 50 — only what this session's run surfaced; harvested per item)
 
 **Verification (this mutation):**
+
 1. Owner logs into `history.home.lan` once: Total visits ~4,959, heatmap Jan-Sep filled, era note ~2,276, Top domains now include the Helium+Firefox long tail — the acceptance test only the owner can run (g1).
 2. Oct 15 02:15 backup: first through the hot mount (existing [watch] row) — additionally confirm it carries `owner=4,959+, zero=0` (persistence proof) — [harvested into the existing watch row's scope; noted here].
 3. Gatus window check: did the browser-history check blip/page during 22:03:16-22:03:5x? If benign-blink, note the tolerance in the runbook mutation entry — [harvested, consolidated row below].

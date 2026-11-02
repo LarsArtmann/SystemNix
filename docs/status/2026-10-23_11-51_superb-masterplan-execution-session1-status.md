@@ -69,7 +69,7 @@
 19. **T-006/T-007** pre-crash heat attribution + truncated-journal corroboration (post-green; SigNoz-side).
 20. **T-011..T-014** pipeline P0 rows (post-green; eval-gate adjacent).
 
-*(Remaining 1,000+ sprints live in the plan's §6/§7 — not restated here; this list is only what THIS session surfaced or advanced.)*
+_(Remaining 1,000+ sprints live in the plan's §6/§7 — not restated here; this list is only what THIS session surfaced or advanced.)_
 
 ## g) Questions (cannot determine from inside the session)
 

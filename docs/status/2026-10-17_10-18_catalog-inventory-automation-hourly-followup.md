@@ -156,14 +156,14 @@ no-op guard working as designed.
 17. Hub: npm audit pass + overrides drop decision (queued row).
 18. Hub: ci-log polish + export-step DNS retry hardening (queued rows).
 19. SystemNix: consider a gatus check for the timer's last-success age
-   (complement to the CI staleness WARN — catches a dead-but-green timer
-   pre-push). Only if post-deploy monitoring shows a blind spot.
+    (complement to the CI staleness WARN — catches a dead-but-green timer
+    pre-push). Only if post-deploy monitoring shows a blind spot.
 20. Re-snapshot inventory once the parallel crm.nix work settles (the
-   timer does this hourly after deploy — manual until then).
+    timer does this hourly after deploy — manual until then).
 21. Docs: hub AGENTS "jq trap" cross-ref — the guard's stub uses `jq -n`
-   with `--argjson` from env strings; if someone runs the self-test inside
-   a direnv shell it inherits DIRENV_DIFF (child scripts unaffected —
-   verified 2026-10-17; worth keeping the note where the fixtures live).
+    with `--argjson` from env strings; if someone runs the self-test inside
+    a direnv shell it inherits DIRENV_DIFF (child scripts unaffected —
+    verified 2026-10-17; worth keeping the note where the fixtures live).
 22. Consider `Persistent=false` review: hourly + Persistent means a
     reboot-storm catches up only one missed run — acceptable; revisit only
     if boots eat runs.

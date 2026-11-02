@@ -40,18 +40,18 @@ no unrelated research). Basis: this session's run log, `dep*.log`, evidence dump
 ## b) PARTIALLY DONE
 
 ~~1. **Boot-chain verification is STATIC, not LIVE** — entry/default/profile/init~~ done — reboots routine; Samsung is live boot drive (docs/todo/storage.md boot-mirror DONE 2026-10-15)
-   all consistent on paper, but I never rebooted to prove the new default boots.
-   The 09-05 near-miss taught exactly this lesson ("activation alone proved
-   insufficient"); my static checks are much stronger but the confirming reboot
-   is still outstanding (user's call — machine in use).
+all consistent on paper, but I never rebooted to prove the new default boots.
+The 09-05 near-miss taught exactly this lesson ("activation alone proved
+insufficient"); my static checks are much stronger but the confirming reboot
+is still outstanding (user's call — machine in use).
 ~~2. **deploy.sh exit-4 rescue** — detection + warning exists and worked twice~~ done — exit-4 class eliminated (corpse guards scripts/deploy.sh:511,684; chronic-FAIL WARN-only fix landed 09-09)
-   (09-05 + today), but the FIX (assert profile advanced / auto `stc boot`
-   repair) is still unwritten; I manually re-ran the deploy instead.
+(09-05 + today), but the FIX (assert profile advanced / auto `stc boot`
+repair) is still unwritten; I manually re-ran the deploy instead.
 ~~3. **Samsung monitoring** — smartd already watches it (by-id self-test logged~~ **Won't implement — migration settled into boot-mirror era; storage stack rebuilt since (docs/todo/storage.md Samsung rows).**
-   09-06), but btrfs-health metrics + Gatus mount/space checks are absent.
+09-06), but btrfs-health metrics + Gatus mount/space checks are absent.
 ~~4. **Smoke WARN/SKIP triage** — classified the 2 WARNs as known-benign~~ **Won't implement — SKIP/WARN enumeration absorbed by post-deploy rewrites.**
-   (InboxClean `auth_expired`, quickshell 1 error line) without deep dives; the
-   5 SKIPs were never enumerated.
+(InboxClean `auth_expired`, quickshell 1 error line) without deep dives; the
+5 SKIPs were never enumerated.
 
 ## c) NOT STARTED (carried, per TODO_LIST)
 
@@ -157,7 +157,7 @@ no unrelated research). Basis: this session's run log, `dep*.log`, evidence dump
 38. btrbk-data EIO abort on the known inode — repair decision **→ docs/todo/stability.md btrfs-scrub@data T04-T08 repair (/data csum arc)**
 39. Phantom io PSI root cause (corpse-inflated, survives reboots) **→ docs/todo/stability.md Root-cause IO PSI with idle disks and ZERO D-state**
 ~~40. llama-rag restart-leak (TimeoutStopSec/kill-escalation; may ease post-migration)~~ done — leaked llama-servers gone; llama-rag disabled (docs/todo/stability.md llama-server instances DONE)
-~~41. Phase 2: hot DBs → nodatacow `hot` subvol (pocket-id, postgres, forgejo, docker data-root)~~ done at `hot-DB migration landed`, ` waves live (docs/services/hot-db.md)`
+~~41. Phase 2: hot DBs → nodatacow `hot` subvol (pocket-id, postgres, forgejo, docker data-root)~~ done at `hot-DB migration landed`, `waves live (docs/services/hot-db.md)`
 ~~42. Pre-journald hang observability (netconsole/serial console, or pstore.max_reason bump)~~ **Won't implement — netconsole/serial never built; forensics matured otherwise.**
 ~~43. Post-deploy smoke: enumerate SKIP units by name in the summary~~ **NOT-DO — dup of b4 (SKIP enumeration).**
 ~~44. niri eval-realization gotcha: confirm the fix rode today's deploy (it deployed clean — verify the guard)~~ done at `source-read fix + gotcha (modules/nixos/desktop/niri-config.nix:81; docs/agents/desktop.md:86)`

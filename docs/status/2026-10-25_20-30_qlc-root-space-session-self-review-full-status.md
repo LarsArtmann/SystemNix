@@ -58,50 +58,50 @@
 
 ## f) Up to 50 things we should get done next
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | Owner approves E6 design: Samsung hot-tier `+C` subvol as THE Go/uv/bun cache home (`/mnt/hot`, 380G free, internal NVMe, never flaps) | Critical | M | Decision |
-| 2 | Patch the 4 leak sites (cv ×2, go-cqrs-lite ×2) to mount-alive-conditional redirects onto the new cache home | Critical | S | Feature |
-| 3 | After quiesce + patch: trash the ~96G live QLC trees (`go-cache` 32G, `.gocache-disk` 35G, `.golangci-disk` 15G, `.gotmp` 9.2G, `go-mod` 3.9G, `go-lint` 0.9G) | Critical | S | Cleanup |
-| 4 | Owner-run balance runbook (reserve→quiet→`ionice -c3 balance -dusage=5 -dlimit=2`→re-provision) once drains land (~Oct 28); success = `unallocated_pct` > 0 | Critical | S | Root op |
-| 5 | Verify the Oct-28 pin-window drain (queue row exists: df vs 666G baseline) | High | S | Verification |
-| 6 | Verify the ≥93% / BTRFS-critical alerts actually DELIVERED to Discord during this 94-97% week (gatus history + owner confirmation) | High | S | Verification |
-| 7 | Owner sudo batch: `btrfs scrub start -B /` + `/data` (both stale >10d) | High | S | Root op |
-| 8 | Owner: `sudo du -xh -d1 /home/hermes` — size the ~160G unknown (gates hermes work) | High | S | Root op |
-| 9 | monitor365-server ~39G DuckDB → hot tier (hot-db pattern; safety copy exists since T04) | High | M | Feature |
-| 10 | Land the ionice rule in `docs/agents/storage.md` (10-20 §f16, re-tripped this session) | High | S | Documentation |
-| 11 | Annotate `docs/operations/disk-cleanup-proposal-2026-09-28.md` as superseded by the 20-21 report | Medium | S | Documentation |
-| 12 | Write the decision record: "rebuildable caches never live on QLC root" (10-20 §f43) | Medium | S | Documentation |
-| 13 | Bounded cache-reaper timer for `~/.cache` second tier + `~/tmp` scratch (buildcache-gc pattern: daily + ≥90% nuclear guard) | Medium | M | Feature |
-| 14 | `uv` cache bound (21G and growing; `UV_CACHE_DIR` → new home + gc) | Medium | S | Feature |
-| 15 | Investigate the Oct-23 burst snapshots (5 in one day; journalctl -u btrbk\* is agent-legal) | Medium | S | Investigation |
-| 16 | Verify next deploy passes pre-deploy disk-space legs at ~94% root | Medium | S | Verification |
-| 17 | Classify `~/tmp/{wevisone-spike 14G, cvdev 1.6G, tmpdir 1.1G}` — owner keep/kill (work products) | Medium | S | Decision |
-| 18 | `.cache/overview` 1.7G + `net.imput.helium` 1.6G: what are they, bounded? | Low | S | Investigation |
-| 19 | Fix the lsof deleted-open probe (correct columns; 10-20 measured 16G held by virtiofsd/qemu — still unaddressed) | Medium | S | Investigation |
-| 20 | `~/.local` 15G + `.config` 14G audit (10-20 §f18) | Low | S | Cleanup |
-| 21 | `~/go` 11G (GOPATH residue) — relocate or clean (10-20 §f28) | Low | S | Cleanup |
-| 22 | `~/projects` per-project node_modules/target/vendor audit (10-20 §f17) | Medium | M | Cleanup |
-| 23 | `forks` 5.6G stale-fork audit (10-20 §f29) | Low | S | Cleanup |
-| 24 | `.nuget` 3.1G + `.insightface` 601M dormant check (10-20 §f27) | Low | S | Cleanup |
-| 25 | `.wine` 949M keep/kill (10-20 §f25) | Low | S | Decision |
-| 26 | Cold archives (`specimens` 838M, `paid-engagements` 1.3G) → `/mnt/pool` (10-20 §f26) | Low | S | Cleanup |
-| 27 | `/data/docker` + `/data` trash ~55G owner reclaim ladder (existing row) | Medium | S | Root op |
-| 28 | Hermes-side cleanup policy once #8 lands (chromium-cdp profile rotation, mnemosyne, gateway logs — 10-20 §f39-41) | High | M | Cleanup |
-| 29 | `root-prune-guard`: consider adding a leak-detector metric (cache-dir size on QLC > threshold) so the leak class alerts BEFORE 93% | Medium | M | Feature |
-| 30 | Re-check leak-tree mtimes post-patch to confirm zero new QLC writes (patch verification gate) | High | S | Verification |
-| 31 | Document the trash topdir-routing rule (subvol stdev → `<mount>/.Trash-1000`) in the user-facing docs, not just storage.md | Low | S | Documentation |
-| 32 | Build the `disk-report` app (10-20 §f15: subvol-aware, idle-IO, timeout'd top-N consumer report — today's session WAS that app, hand-run) | Medium | M | Feature |
-| 33 | Clickhouse p9 churn siting decision (10-20 §f13/14; 197G lifetime writes on the same physical disk as root) | Medium | L | Feature |
-| 34 | `aw-server` sqlite siting (10-20 §f20) | Low | S | Investigation |
-| 35 | Deleted-open-file alert when `lsof +L1` sum >5G (10-20 §f37) | Low | S | Feature |
-| 36 | Consider root snapshot retention `1w` restoration once the leak is fixed (dropped to 3d during churn; storage.md says "revisit") | Medium | S | Decision |
-| 37 | Emergency-reserve rewrite cadence re-evaluation after balance restores unalloc (storage.md T14 note) | Low | S | Decision |
-| 38 | Pin-window projection tooling: given trash time + snapshot set, predict free-by date (this session guessed "~Oct 28" by hand) | Low | M | Feature |
-| 39 | Sweep for OTHER projects with the same redirect pattern (rg `/mnt/\*` case-statement redirects across ~/projects — cv and go-cqrs-lite were found by name-trace, not a sweep) | Medium | S | Investigation |
-| 40 | `.cache/go-build-httputil` (2.1G, active) + `go-mod-fresh` regeneration sources — fold into the #13 reaper | Low | S | Cleanup |
+| #  | Task                                                                                                                                                                          | Impact   | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| 1  | Owner approves E6 design: Samsung hot-tier `+C` subvol as THE Go/uv/bun cache home (`/mnt/hot`, 380G free, internal NVMe, never flaps)                                        | Critical | M      | Decision      |
+| 2  | Patch the 4 leak sites (cv ×2, go-cqrs-lite ×2) to mount-alive-conditional redirects onto the new cache home                                                                  | Critical | S      | Feature       |
+| 3  | After quiesce + patch: trash the ~96G live QLC trees (`go-cache` 32G, `.gocache-disk` 35G, `.golangci-disk` 15G, `.gotmp` 9.2G, `go-mod` 3.9G, `go-lint` 0.9G)                | Critical | S      | Cleanup       |
+| 4  | Owner-run balance runbook (reserve→quiet→`ionice -c3 balance -dusage=5 -dlimit=2`→re-provision) once drains land (~Oct 28); success = `unallocated_pct` > 0                   | Critical | S      | Root op       |
+| 5  | Verify the Oct-28 pin-window drain (queue row exists: df vs 666G baseline)                                                                                                    | High     | S      | Verification  |
+| 6  | Verify the ≥93% / BTRFS-critical alerts actually DELIVERED to Discord during this 94-97% week (gatus history + owner confirmation)                                            | High     | S      | Verification  |
+| 7  | Owner sudo batch: `btrfs scrub start -B /` + `/data` (both stale >10d)                                                                                                        | High     | S      | Root op       |
+| 8  | Owner: `sudo du -xh -d1 /home/hermes` — size the ~160G unknown (gates hermes work)                                                                                            | High     | S      | Root op       |
+| 9  | monitor365-server ~39G DuckDB → hot tier (hot-db pattern; safety copy exists since T04)                                                                                       | High     | M      | Feature       |
+| 10 | Land the ionice rule in `docs/agents/storage.md` (10-20 §f16, re-tripped this session)                                                                                        | High     | S      | Documentation |
+| 11 | Annotate `docs/operations/disk-cleanup-proposal-2026-09-28.md` as superseded by the 20-21 report                                                                              | Medium   | S      | Documentation |
+| 12 | Write the decision record: "rebuildable caches never live on QLC root" (10-20 §f43)                                                                                           | Medium   | S      | Documentation |
+| 13 | Bounded cache-reaper timer for `~/.cache` second tier + `~/tmp` scratch (buildcache-gc pattern: daily + ≥90% nuclear guard)                                                   | Medium   | M      | Feature       |
+| 14 | `uv` cache bound (21G and growing; `UV_CACHE_DIR` → new home + gc)                                                                                                            | Medium   | S      | Feature       |
+| 15 | Investigate the Oct-23 burst snapshots (5 in one day; journalctl -u btrbk\* is agent-legal)                                                                                   | Medium   | S      | Investigation |
+| 16 | Verify next deploy passes pre-deploy disk-space legs at ~94% root                                                                                                             | Medium   | S      | Verification  |
+| 17 | Classify `~/tmp/{wevisone-spike 14G, cvdev 1.6G, tmpdir 1.1G}` — owner keep/kill (work products)                                                                              | Medium   | S      | Decision      |
+| 18 | `.cache/overview` 1.7G + `net.imput.helium` 1.6G: what are they, bounded?                                                                                                     | Low      | S      | Investigation |
+| 19 | Fix the lsof deleted-open probe (correct columns; 10-20 measured 16G held by virtiofsd/qemu — still unaddressed)                                                              | Medium   | S      | Investigation |
+| 20 | `~/.local` 15G + `.config` 14G audit (10-20 §f18)                                                                                                                             | Low      | S      | Cleanup       |
+| 21 | `~/go` 11G (GOPATH residue) — relocate or clean (10-20 §f28)                                                                                                                  | Low      | S      | Cleanup       |
+| 22 | `~/projects` per-project node_modules/target/vendor audit (10-20 §f17)                                                                                                        | Medium   | M      | Cleanup       |
+| 23 | `forks` 5.6G stale-fork audit (10-20 §f29)                                                                                                                                    | Low      | S      | Cleanup       |
+| 24 | `.nuget` 3.1G + `.insightface` 601M dormant check (10-20 §f27)                                                                                                                | Low      | S      | Cleanup       |
+| 25 | `.wine` 949M keep/kill (10-20 §f25)                                                                                                                                           | Low      | S      | Decision      |
+| 26 | Cold archives (`specimens` 838M, `paid-engagements` 1.3G) → `/mnt/pool` (10-20 §f26)                                                                                          | Low      | S      | Cleanup       |
+| 27 | `/data/docker` + `/data` trash ~55G owner reclaim ladder (existing row)                                                                                                       | Medium   | S      | Root op       |
+| 28 | Hermes-side cleanup policy once #8 lands (chromium-cdp profile rotation, mnemosyne, gateway logs — 10-20 §f39-41)                                                             | High     | M      | Cleanup       |
+| 29 | `root-prune-guard`: consider adding a leak-detector metric (cache-dir size on QLC > threshold) so the leak class alerts BEFORE 93%                                            | Medium   | M      | Feature       |
+| 30 | Re-check leak-tree mtimes post-patch to confirm zero new QLC writes (patch verification gate)                                                                                 | High     | S      | Verification  |
+| 31 | Document the trash topdir-routing rule (subvol stdev → `<mount>/.Trash-1000`) in the user-facing docs, not just storage.md                                                    | Low      | S      | Documentation |
+| 32 | Build the `disk-report` app (10-20 §f15: subvol-aware, idle-IO, timeout'd top-N consumer report — today's session WAS that app, hand-run)                                     | Medium   | M      | Feature       |
+| 33 | Clickhouse p9 churn siting decision (10-20 §f13/14; 197G lifetime writes on the same physical disk as root)                                                                   | Medium   | L      | Feature       |
+| 34 | `aw-server` sqlite siting (10-20 §f20)                                                                                                                                        | Low      | S      | Investigation |
+| 35 | Deleted-open-file alert when `lsof +L1` sum >5G (10-20 §f37)                                                                                                                  | Low      | S      | Feature       |
+| 36 | Consider root snapshot retention `1w` restoration once the leak is fixed (dropped to 3d during churn; storage.md says "revisit")                                              | Medium   | S      | Decision      |
+| 37 | Emergency-reserve rewrite cadence re-evaluation after balance restores unalloc (storage.md T14 note)                                                                          | Low      | S      | Decision      |
+| 38 | Pin-window projection tooling: given trash time + snapshot set, predict free-by date (this session guessed "~Oct 28" by hand)                                                 | Low      | M      | Feature       |
+| 39 | Sweep for OTHER projects with the same redirect pattern (rg `/mnt/\*` case-statement redirects across ~/projects — cv and go-cqrs-lite were found by name-trace, not a sweep) | Medium   | S      | Investigation |
+| 40 | `.cache/go-build-httputil` (2.1G, active) + `go-mod-fresh` regeneration sources — fold into the #13 reaper                                                                    | Low      | S      | Cleanup       |
 
-*(40 real items; stopping there rather than padding to 50.)*
+_(40 real items; stopping there rather than padding to 50.)_
 
 ## g) Questions only you can answer
 

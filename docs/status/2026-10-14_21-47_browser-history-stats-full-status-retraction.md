@@ -48,6 +48,7 @@
 ## f) NEXT (up to 50, harvested where actionable)
 
 **Corrections/verification (from d/b):**
+
 1. Correlate the 2026-10-10 16:33-17:00 slow-render burst (8 renders, ≤37.7 s) with io-PSI/journal storm evidence — [queued: watch, services.md].
 2. Correlate the 2026-10-12 03:51 49.2 s render with the nightly backup window — [queued: watch, services.md].
 3. If both bursts land in known storm windows, close as explained-context and add a Gatus render-duration threshold (>5 s authed) — folded into the same watch row.

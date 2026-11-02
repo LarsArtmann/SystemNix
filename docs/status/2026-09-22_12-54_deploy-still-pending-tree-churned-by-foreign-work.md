@@ -38,10 +38,10 @@ This session (12:35-12:54):
 
 1. **AGENTS.md memory updates** — the full set from the night report (f13-19): vendorHash-wave playbook, BuildFlow hook auto-repair trap, never-truncate-enumerations, abandoned-work landing protocol, bank-sync/go-auto-upgrade pin notes.
 2. **Fleet vendorHash audit tooling** (`scripts/vendorhash-fleet-audit.sh`) — one-pass probe of all LarsArtmann input FODs; would have made the 7-repo wave a 1-round fix.
-~~3. **Root-cause of the 7-repo wave** — shared actor (PMA dep-sweep / mass agent session) landing lock+go.mod bumps without hash dances. Uninvestigated.~~ done — root-caused: master-tracking inputs float to stale upstream masters, no upstream Nix CI (2026-10-15_03-05 diagnosis)
-4. **Upstream CI repair on the 7 pushed repos** — bank-sync CI pins go 1.26 vs floor 1.27.1 (red on push), etc.
-5. **This session added nothing new to start** — correct behavior for a verification pass; listed for completeness.
-~~6. **Review of the foreign offsite-Borg work** — NOT mine, NOT started, and NOT blocked-by-anyone: it rides my deploy regardless (see g, Q1-new).~~ done — verified end-to-end by the 12-42 re-dispatch + 02-01 closeout §a.3; deployed dormant in system-796
+   ~~3. **Root-cause of the 7-repo wave** — shared actor (PMA dep-sweep / mass agent session) landing lock+go.mod bumps without hash dances. Uninvestigated.~~ done — root-caused: master-tracking inputs float to stale upstream masters, no upstream Nix CI (2026-10-15_03-05 diagnosis)
+3. **Upstream CI repair on the 7 pushed repos** — bank-sync CI pins go 1.26 vs floor 1.27.1 (red on push), etc.
+4. **This session added nothing new to start** — correct behavior for a verification pass; listed for completeness.
+   ~~6. **Review of the foreign offsite-Borg work** — NOT mine, NOT started, and NOT blocked-by-anyone: it rides my deploy regardless (see g, Q1-new).~~ done — verified end-to-end by the 12-42 re-dispatch + 02-01 closeout §a.3; deployed dormant in system-796
 
 ## d) TOTALLY FUCKED UP (own mistakes, honestly)
 
@@ -92,8 +92,8 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 **Prevent the next wave (systemic):**
 
 15. Build `scripts/vendorhash-fleet-audit.sh` (+ flake app): probe all LarsArtmann inputs' `#default.goModules` at lock revs in one pass; wire into pre-deploy §11 or a flake check.
-~~16. Root-cause the wave: diff the 7 repos' recent commits for the shared actor landing bumps without hash dances.~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: 2026-10-15 diagnosis).**
-17. Extend pre-deploy §11 to cover upstream-flake package inputs (currently prints "unable to determine" for 6 flakePkg inputs).
+    ~~16. Root-cause the wave: diff the 7 repos' recent commits for the shared actor landing bumps without hash dances.~~ **NOT-DO — NOT-DO — dup (of c.3, verified closed: 2026-10-15 diagnosis).**
+16. Extend pre-deploy §11 to cover upstream-flake package inputs (currently prints "unable to determine" for 6 flakePkg inputs).
     18-23. AGENTS.md set (from night report f13-19, unchanged): wave playbook; BuildFlow hook trap; abandoned-work protocol; never-truncate rule; bank-sync floor 1.27.1 + hash `q1XZ…` + `a70aaca1` note; go-auto-upgrade master-riding note; 44a9189-wave record. **Plus one new entry: the no-unattended-waits doctrine (d1/e1).**
 
 **Upstream hygiene (the 7 repos, unchanged from night):**
@@ -115,7 +115,7 @@ Carried from the night (unchanged, still standing lessons — full detail in 01-
 35. Deploy-coordination: adopt/announce a convention for multi-session deploy races (rc=13 exists; nobody's using it as a queue). Maybe a `~/.local/state/systemnix/deploy-claim` convention.
 36. Session-resume protocol: first actions = anchor check + IO check + `git log` delta + toplevel re-eval (codify what I did right this session; make it the documented first four calls).
 37. Consider marking the 01-21 report's §b2 "light switch" claim annotated (docs-health ANNOTATE) — its premise expired at ~08:56 with commit `c35e73ff`.
-~~38. The `6398b256` verification-pass report claims "offsite Borg leg already complete" — after MY deploy lands, verify that claim against the deployed generation (units exist, timer enabled, smoke passes). Until then it is a foreign session's claim, not a fact.~~ done — verified: deployed dormant in system-796 + 02-01 closeout §a.3 re-verification
+    ~~38. The `6398b256` verification-pass report claims "offsite Borg leg already complete" — after MY deploy lands, verify that claim against the deployed generation (units exist, timer enabled, smoke passes). Until then it is a foreign session's claim, not a fact.~~ done — verified: deployed dormant in system-796 + 02-01 closeout §a.3 re-verification
 
 **Noticed in passing (pre-existing, small):**
 

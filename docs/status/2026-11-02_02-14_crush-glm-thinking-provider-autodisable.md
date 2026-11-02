@@ -42,6 +42,7 @@
 **Could have done better:** read the repo's flag-verification precedent comment FIRST (it names the method and the file, `shellconfig/model.go`); test rc semantics empirically before explaining them — the throwaway `CRUSH_GLOBAL_CONFIG=<dir>` harness takes ~2 minutes and is reusable (queued for documentation).
 
 **Still improve:**
+
 1. Test depth: render-grep + `bash -n` proves syntax, not behavior. The stubbed-builtin fixture test would have caught a broken branch in my `crush_key` rewrite — I restructured the function (if/case) and shipped it with zero execution coverage.
 2. **Split brain left in place:** `--reasoning-effort xhigh` now lives in TWO homes (global `model add` in crush-config + project `.crushrc` tq-managed `model large` line). Pre-existing, same value today, but my explanation cemented it instead of flagging it. Decision queued.
 3. The `CRUSH_GLOBAL_CONFIG` harness + the reflective-flag-binding dead-end deserve a doc page — the next session would otherwise re-walk my 4-probe detour (queued).

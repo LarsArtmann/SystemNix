@@ -8,13 +8,13 @@
 
 ## 0) The 23-hour drift check (02:14, one probe batch)
 
-| Claim from the session | Now | Verdict |
-| --- | --- | --- |
-| IO storm active (PSI some avg10 74–86%) | **WORSE: avg10 84%, avg300 87%** (stall-time total 6.8 G → 78 G) | storm never ended; intensified into the sustained regime |
-| k10temp 95–98 °C | **55 °C** | thermal calm now — this round is stalled-IO mode, not CPU-build mode (the R3 "invisible IO" class) |
-| monitor365-server down (3001 refused) | **still down, 24 h+** | P1 recommendation never executed |
-| `system_gatus_endpoints_in_error_long` = 25 | **32** | 7 more endpoints failed into sustained error |
-| SEV1 active = 2 | **1** | one condition cleared (FLM restore cap or guard trip) |
+| Claim from the session                      | Now                                                              | Verdict                                                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| IO storm active (PSI some avg10 74–86%)     | **WORSE: avg10 84%, avg300 87%** (stall-time total 6.8 G → 78 G) | storm never ended; intensified into the sustained regime                                           |
+| k10temp 95–98 °C                            | **55 °C**                                                        | thermal calm now — this round is stalled-IO mode, not CPU-build mode (the R3 "invisible IO" class) |
+| monitor365-server down (3001 refused)       | **still down, 24 h+**                                            | P1 recommendation never executed                                                                   |
+| `system_gatus_endpoints_in_error_long` = 25 | **32**                                                           | 7 more endpoints failed into sustained error                                                       |
+| SEV1 active = 2                             | **1**                                                            | one condition cleared (FLM restore cap or guard trip)                                              |
 
 Tree/commits: my report + all 11 queue rows + 4 library appends + README addendum landed (daemon swept; verified in `git log`). Other sessions since shipped: a scoped polkit rule for storm-unit stop/start/restart (agents gained storm-unit rights), a zram-only-swap ADR, a stability-batch close-out.
 
@@ -64,25 +64,26 @@ Tree/commits: my report + all 11 queue rows + 4 library appends + README addendu
 ## f) NEXT — up to 50 things, with harvest state
 
 **Already harvested by this session's report (rows live; 23 h old, none dispatched):**
-1. Per-endpoint gatus failure-name metric (monitoring) — *rowed*
-2. Gatus boot/restart alert-storm + flap suppression (monitoring) — *rowed*
-3. btrfs-compression.prom ownership + cadence verify (monitoring) — *rowed*
-4. catalog-inventory-sync bash-PATH fix (services) — *rowed; still failing every run*
-5. monitor365-server ioTier + restart-surviving policy (services) — *rowed; server still down*
-6. monitor365-backup phantom-red resolution (services) — *rowed*
-7. ci-watchdog GitHub billing (services, blocked:user) — *rowed*
-8. FastFlowLM disable-or-pin decision (ai-stack) — *rowed, awaiting owner*
-9. tmpfiles CANTCREAT verbose diagnosis (stability) — *rowed*
-10. SEV1 escalation-threshold decision (stability) — *rowed, awaiting owner*
-11. llama-rag dark-guard resurrection + leaked-instance reap (stability) — *rowed, extended*
+
+1. Per-endpoint gatus failure-name metric (monitoring) — _rowed_
+2. Gatus boot/restart alert-storm + flap suppression (monitoring) — _rowed_
+3. btrfs-compression.prom ownership + cadence verify (monitoring) — _rowed_
+4. catalog-inventory-sync bash-PATH fix (services) — _rowed; still failing every run_
+5. monitor365-server ioTier + restart-surviving policy (services) — _rowed; server still down_
+6. monitor365-backup phantom-red resolution (services) — _rowed_
+7. ci-watchdog GitHub billing (services, blocked:user) — _rowed_
+8. FastFlowLM disable-or-pin decision (ai-stack) — _rowed, awaiting owner_
+9. tmpfiles CANTCREAT verbose diagnosis (stability) — _rowed_
+10. SEV1 escalation-threshold decision (stability) — _rowed, awaiting owner_
+11. llama-rag dark-guard resurrection + leaked-instance reap (stability) — _rowed, extended_
 
 **Operational, owner-gated, URGENT (from the drift check):**
-12. Restart monitor365-server — 24 h dark, device telemetry fleet-wide blind — *row 5 covers the policy; the restart itself is owner hands*
-13. Intervene on the storm — PSI avg300 87% is the worst sustained reading yet recorded in any report I saw — *owner terminals/reboot*
-14. GitHub billing console action — *row 7*
+12. Restart monitor365-server — 24 h dark, device telemetry fleet-wide blind — _row 5 covers the policy; the restart itself is owner hands_
+13. Intervene on the storm — PSI avg300 87% is the worst sustained reading yet recorded in any report I saw — _owner terminals/reboot_
+14. GitHub billing console action — _row 7_
 
 **New from this self-review (harvesting now):**
-15. **Inspect `scripts/status-report.sh` for an existing gatus failing-endpoint enumeration** — if it already dumps per-endpoint state, the 25/32-name tax is self-inflicted and part of row 1 becomes redundant — *newly rowed, monitoring*
+15. **Inspect `scripts/status-report.sh` for an existing gatus failing-endpoint enumeration** — if it already dumps per-endpoint state, the 25/32-name tax is self-inflicted and part of row 1 becomes redundant — _newly rowed, monitoring_
 
 **Backlog shaping (not re-harvested — already rowed by prior sessions, listed because the drift check re-validated them):**
 16. The storm structural cure (caches/built trees off QLC + IO budgets) — storage/stability rows
@@ -91,9 +92,9 @@ Tree/commits: my report + all 11 queue rows + 4 library appends + README addendu
 19. bless-boot `After=boot-mirror-sync` ordering fix — stability row 213 (re-confirmed failing at the Oct 20 boot)
 20. The immich incident's own §b/c follow-ups (dump re-anchor, paperless salvage, reboot-survival sanity) — harvested by the 03-10 session; the 14-day-old blank-cluster residue questions compound while queued
 21. /data EIO repair (T04–T08) + root-disk reclaim execution — storage rows; root crossed 90% into the auto-prune band
-22. The 32-error endpoint enumeration the moment row 1 or row 15 lands — *watch*
+22. The 32-error endpoint enumeration the moment row 1 or row 15 lands — _watch_
 
-*(22 items — every further "next thing" I could add would duplicate rows other sessions own; stopping at the honest count rather than padding to 50.)*
+_(22 items — every further "next thing" I could add would duplicate rows other sessions own; stopping at the honest count rather than padding to 50.)_
 
 ## g) Questions I cannot answer myself
 

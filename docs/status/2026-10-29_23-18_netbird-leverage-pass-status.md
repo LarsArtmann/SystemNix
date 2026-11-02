@@ -65,6 +65,7 @@ Honestly: nothing destructive — no build breakage reached HEAD, no prod state 
 ## f) WHAT TO GET DONE NEXT (harvested per row)
 
 **Immediate — this pass's completion:**
+
 1. [ready-after-quiescence] Deploy evo-x2 (poll tree clean + no eval-relevant file <5min mtime ×≥4/60s → eval probe → `nix run .#deploy`) — §07 of the plan artifact. → services.md battery row
 2. [ready] Post-deploy battery: 9465 bound / fragment survived / `metric-exists.sh netbird_management_connected` / gatus green / `netbird status` Connected / anchor == newest link. → services.md row
 3. [ready] SigNoz dashboard panel(s) for `netbird_*` (p2p-vs-relay split sizes the phone-over-LTE path). → monitoring.md row
@@ -117,4 +118,5 @@ Honestly: nothing destructive — no build breakage reached HEAD, no prod state 
 3. **Mesh paging severity + exit node:** should a lost management stream page at critical (Discord, as shipped), and is the phone exit node (burn-in done 2026-10-15) green-lit for dashboard config in the next owner window?
 
 ---
-*Verification chains: harness `~/.cache/netbird-verify/` (minimal.nix + plan.d2/svg + built rule.json); live probes: busctl unit states, login oneshot journal 20:20/21:22, deployed unit text, `netbird up --help` flag surface; gates: toplevel eval, cloud-domain/gatus-pattern-lint/signoz-query-lint builds exit 0, doc-counts, full flake check exit 0. Errata: initial "deploy owed" row was stale (fix already deployed in system-964); `name` default deliberately deviates from the original hostName prescription (state-dir identity migration = silent re-enrollment risk), recorded in the closed row.*
+
+_Verification chains: harness `~/.cache/netbird-verify/` (minimal.nix + plan.d2/svg + built rule.json); live probes: busctl unit states, login oneshot journal 20:20/21:22, deployed unit text, `netbird up --help` flag surface; gates: toplevel eval, cloud-domain/gatus-pattern-lint/signoz-query-lint builds exit 0, doc-counts, full flake check exit 0. Errata: initial "deploy owed" row was stale (fix already deployed in system-964); `name` default deliberately deviates from the original hostName prescription (state-dir identity migration = silent re-enrollment risk), recorded in the closed row._

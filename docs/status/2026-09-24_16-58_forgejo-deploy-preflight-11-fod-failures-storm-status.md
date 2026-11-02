@@ -83,7 +83,7 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 ~~15. PDA: go-1.27 wiring — find which of the three wiring points (module-lambda `goPkg` / `goPkgAttr = "go_1_27"` / `mkPreparedSource` goPkg + `buildGoModule.override { go = go_1_27; }`) is missing at rev 73b7d32~~ done — wave repaired — toplevel buildable + deployed 2026-09-30; PDA startLimit/eval later verified in-tree (CHANGELOG.md:626)
 ~~16. Re-run preflight `--keep-going` → expect green or next domino~~ done — `nix flake check --no-build` green from 2026-09-25 05:33 onward (05-33 report "all checks passed"; 5+ greens same day)
 ~~17. If rollback chosen: python round-trip lock edit reverting the 11 broken nodes (keep `original`/`locked` consistent), keep mr-sync node, re-preflight~~ **Won't implement — moot — fix-forward: no rollback shipped; tree buildable + deployed by 2026-09-30.**
-    **P0 — deploy + verify (once build is green):**
+**P0 — deploy + verify (once build is green):**
 18. Confirm calm window (avg10 < 15 sustained + zero trips in trailing 60 min; poller needs the avg60 fix from e.4 first if reused)
 ~~19. `nix run .#deploy` — unpiped, rc captured directly~~ done — deploy landed by 2026-09-30 (CHANGELOG.md:433)
 20. rc=12 → evidence snapshot → re-ask owner; NEVER force into active trips
@@ -99,12 +99,12 @@ Downstream casualties (units that cannot build): signoz.service, signoz-collecto
 30. hermes 0.21.4 healthy (rides this deploy — first toplevel with the bump)
 ~~31. Check lars' browser-stored per-user theme pref (may override DEFAULT_THEME client-side)~~ **Won't implement — one-shot owner-browser check; window passed, no record.**
 ~~32. Watch tonight's btrbk window (23:00/23:30/23:45) for guard-churn starvation after today's trip budget burn~~ **Won't implement — one-shot; window passed (2026-09-24/25 night; no watch record).**
-    **P1 — storm/infra follow-ups:**
+**P1 — storm/infra follow-ups:**
 33. Queue the structural fix candidate: attic storage lives on the pool behind the ONE DAS USB link — every parallel build storm saturates it. Candidate: move attic storage to the Samsung hot tier (size it first)
 34. Owner decision: cap concurrent agent sessions during guard-active windows (`system_crush_sessions` already emitted; alerting exists at >6)
 35. Investigate go-deps-audit coverage gap (see e.3)
 36. Poller v3: positional-field extraction + disk-busy corroboration; keep it as a reusable script under scripts/ instead of inline
-    **P2 — theme polish + leftovers:**
+**P2 — theme polish + leftovers:**
 37. Chroma-exact Catppuccin syntax highlighting (`[ready]` row exists)
 38. Logo/favicon phase 2 (decision row — owner taste)
 39. Automated negative fixture for the theme-audit throw (negative-test-lints pattern)

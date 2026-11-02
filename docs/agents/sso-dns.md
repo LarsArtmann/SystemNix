@@ -67,11 +67,11 @@ The word appears in three layers that share no code and no failure mode. A
 2026-10-28 session answered the wrong one for a full round trip, so read the
 listener before answering any "how does the proxy handle X" question:
 
-| # | Concept                     | Where                                                                 | What it actually does                                                                                                            |
-| - | --------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | **Upstream DoT forwarders** | `dns_forwarders` in the dnsblockd YAML                                | Registry-agnostic forwarding of unresolved names to Cloudflare/Quad9 over TLS. Not HTTP, not auth, invisible to Caddy.            |
-| 2 | **Temp-allow reverse proxy** | `proxy_enabled` / `proxy_upstream_dns` / `proxy_connect_timeout` / `proxy_tls_passthrough` | The block-page path: a temp-allowed name resolves to the block IP, and dnsblockd SPLICES the HTTPS session to the real backend.  |
-| 3 | **Scoped filter proxy** (ADR-0018) | `services.dns-blocker.proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` | The "scoped lie": opted-in domains answer with the block IP and get a filter script injected, instead of being blocked.          |
+| # | Concept                            | Where                                                                                      | What it actually does                                                                                                           |
+| - | ---------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Upstream DoT forwarders**        | `dns_forwarders` in the dnsblockd YAML                                                     | Registry-agnostic forwarding of unresolved names to Cloudflare/Quad9 over TLS. Not HTTP, not auth, invisible to Caddy.          |
+| 2 | **Temp-allow reverse proxy**       | `proxy_enabled` / `proxy_upstream_dns` / `proxy_connect_timeout` / `proxy_tls_passthrough` | The block-page path: a temp-allowed name resolves to the block IP, and dnsblockd SPLICES the HTTPS session to the real backend. |
+| 3 | **Scoped filter proxy** (ADR-0018) | `services.dns-blocker.proxyFilterDomains` / `proxyInjectScriptURL` / `proxyInjectStripCSP` | The "scoped lie": opted-in domains answer with the block IP and get a filter script injected, instead of being blocked.         |
 
 Discriminators: (1) has no listener of its own; (2) and (3) both terminate on
 `networking.local.blockIP` (`:80`/`:443`, see `docs/services/caddy.md`), but

@@ -19,11 +19,11 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | Done | Missing | Why |
-|---|---|---|---|---|
-| 1 | T5 storm root-cause | sampler tool + first live attribution (a.2/a.3) | the ghostty-scope window itself was not live during this session; no ghostty-scoped fix/cap decided | the storm never presented; premise for tonight falsified instead — the tool + persisted captures arm the next window |
-| 2 | T1 deploy batch | everything in-tree and eval-green (repeated full-flake evals via pre-commit runs + targeted check evals, 06:0x–07:0x) | the deploy itself | see c.1 |
-| 3 | Watch-the-watcher gatus leg | check written + stamped | not LIVE (deploys with the batch) | deploy-gated by definition |
+| # | Item                        | Done                                                                                                                  | Missing                                                                                             | Why                                                                                                                  |
+| - | --------------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1 | T5 storm root-cause         | sampler tool + first live attribution (a.2/a.3)                                                                       | the ghostty-scope window itself was not live during this session; no ghostty-scoped fix/cap decided | the storm never presented; premise for tonight falsified instead — the tool + persisted captures arm the next window |
+| 2 | T1 deploy batch             | everything in-tree and eval-green (repeated full-flake evals via pre-commit runs + targeted check evals, 06:0x–07:0x) | the deploy itself                                                                                   | see c.1                                                                                                              |
+| 3 | Watch-the-watcher gatus leg | check written + stamped                                                                                               | not LIVE (deploys with the batch)                                                                   | deploy-gated by definition                                                                                           |
 
 ## c) NOT DONE (deliberate)
 
@@ -35,9 +35,10 @@
 ## d) OWNER LEVERS (F22–F24 packet — exact, verified)
 
 **Lever 1 — tenant event-cap 1B → 250k (the drain throttle).** The live value re-arms on EVERY boot: `monitor365-schema-migrate` runs `UPDATE tenants SET max_events_per_day = 1000000000` (monitor365.nix; runbook line "Daily event limit override"). Two ways to restore 250k:
+
 - In-tree (rides the next deploy): change that UPDATE's literal in `modules/nixos/services/monitor365.nix` to `250000`.
 - Immediate (sudo, no deploy): `sudo duckdb /var/lib/monitor365-server/*.duckdb "UPDATE tenants SET max_events_per_day = 250000;"` (DB filename per runbook; the server re-reads limits per-request — no restart needed for the cap itself).
-Trade-off: at 250k/day the 407.76M backlog drains over ~1,600 days (effectively frozen); unthrottled it drains in days but at the measured 38–40 GB/10-min write class (the freeze-#33 death-hour reader). **Recommendation: 250k BEFORE any pool-capacity improvement (hot-tier move T8 un-leashes the drain otherwise).**
+  Trade-off: at 250k/day the 407.76M backlog drains over ~1,600 days (effectively frozen); unthrottled it drains in days but at the measured 38–40 GB/10-min write class (the freeze-#33 death-hour reader). **Recommendation: 250k BEFORE any pool-capacity improvement (hot-tier move T8 un-leashes the drain otherwise).**
 
 **Lever 2 — agent intent (row 747-adjacent [blocked:user] + the [decision] fork).** The agent IS running (gen-939 restart), SSE connected, watchdog cycling healthy; backlog 407,761,140 held back only by the wedged pool. Options: (a) keep running + Lever 1 = bounded slow drain; (b) stop+mask (`sudo systemctl stop monitor365.service monitor365-agent-watchdog.timer; sudo systemctl mask …`) = backlog frozen on disk, zero risk, monitoring blind spot for desktop telemetry; (c) retire agent + trim buffer after evidence pull (deletes the bomb). If (a): update the stale CHANGELOG owner-gate note ("Inert until the owner restarts the agent").
 

@@ -12,18 +12,18 @@ Tooling state at report time: `HEAD` = the auto-commit that carries this session
 
 All numbers come from `paperless-manage shell` ORM/SQL probes against the live PostgreSQL DB, 2026-10-29 22:35–23:05.
 
-| Dimension | Value | Reading |
-| --- | --- | --- |
-| Documents | **1,793** | 1,655 added 2026-10, 100 in 2025-01, 42 in 2026-09 (the 2026-10 bulk is the MacBook-M2 import + gmail sync) |
-| Documents with **no text** | **382 (21%)** | 284 images + 98 PDFs — see §1 |
-| Correspondents defined / assigned | 235 / 1,493 | 300 documents without correspondent (17%) |
-| **Document types defined / assigned** | **3 / 12** | `Bill` = 12 docs; `Bank Receipt`, `Bank Statement` = 0 docs. **1,781 docs (99.3%) untyped** |
-| Tags defined | 13 | 4 carry `matching_algorithm=AUTO` (`sweaty`, `new`, `ai-generated`, `Accounting`) |
-| Documents with ≥1 non-system tag | **2** | Everything else carries only `new` + `gmail` + (`sweaty` \| `ai-generated` \| `encrypted`) |
-| Custom fields defined / instances | 8 / **8 rows** | Only 2 documents have any value, all on the 4 accounting pilot fields. `Invoice number` + `Issue date` (created today by the provisioner) = 0 |
-| `created` date == `added` date | 350 (20%) | Date was never extracted; import timestamp is the archive's date |
-| Raw-filename titles | 26 | e.g. `2024-11-15 KFC receipt_7176f5f8-…`, `TakeOut Sushi scan_2025_01_20T19_50_47` |
-| Storage paths | **0** | Filename format (`{{created_year}}/{{correspondent}}/{{title}}`) does the layout instead |
+| Dimension                             | Value          | Reading                                                                                                                                       |
+| ------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Documents                             | **1,793**      | 1,655 added 2026-10, 100 in 2025-01, 42 in 2026-09 (the 2026-10 bulk is the MacBook-M2 import + gmail sync)                                   |
+| Documents with **no text**            | **382 (21%)**  | 284 images + 98 PDFs — see §1                                                                                                                 |
+| Correspondents defined / assigned     | 235 / 1,493    | 300 documents without correspondent (17%)                                                                                                     |
+| **Document types defined / assigned** | **3 / 12**     | `Bill` = 12 docs; `Bank Receipt`, `Bank Statement` = 0 docs. **1,781 docs (99.3%) untyped**                                                   |
+| Tags defined                          | 13             | 4 carry `matching_algorithm=AUTO` (`sweaty`, `new`, `ai-generated`, `Accounting`)                                                             |
+| Documents with ≥1 non-system tag      | **2**          | Everything else carries only `new` + `gmail` + (`sweaty` \| `ai-generated` \| `encrypted`)                                                    |
+| Custom fields defined / instances     | 8 / **8 rows** | Only 2 documents have any value, all on the 4 accounting pilot fields. `Invoice number` + `Issue date` (created today by the provisioner) = 0 |
+| `created` date == `added` date        | 350 (20%)      | Date was never extracted; import timestamp is the archive's date                                                                              |
+| Raw-filename titles                   | 26             | e.g. `2024-11-15 KFC receipt_7176f5f8-…`, `TakeOut Sushi scan_2025_01_20T19_50_47`                                                            |
+| Storage paths                         | **0**          | Filename format (`{{created_year}}/{{correspondent}}/{{title}}`) does the layout instead                                                      |
 
 Interpretation: **the only metadata that "gets added back" today is created by the intake path, not by extraction.** 235 correspondents and reasonable titles come from InboxClean's per-mail tagging; nothing else is derived from document content.
 
@@ -31,11 +31,11 @@ Interpretation: **the only metadata that "gets added back" today is created by t
 
 ## §1 Why 382 documents have no text (three distinct classes, all root-caused)
 
-| Class | Count | Mechanism (proven) |
-| --- | --- | --- |
-| **Signed bank PDFs** | **83** | `paperless/parsers/tesseract.py:617` catches `DigitalSignatureError`/`EncryptedPdfError` and logs *"This file is encrypted and/or signed, OCR is impossible"*. `pdfsig` shows e.g. `Signer: CN=OLINDA,O=QONTO` — these are Qonto/Wise e-receipts. No OCR, no archive file, empty content. **Recoverable** (proven, §2) |
-| **Password-protected statements** | **15** | Alior / Credit Agricole "Wyciąg z rachunku" → `pdfinfo: Command Line Error: Incorrect password`. Needs the bank password (sops `paperless_decrypt_password` path) |
-| **Images** | **284** | 180 png, 97 jpeg, 4 gif, 3 webp. Sampled a 1600×1200 `image/jpeg` (`…CABRO C502…_07.jpg`): it is a **photograph of a broken chair part with zero text** — the empty content is *correct* there. Others are gmail inline images. Class needs a per-image audit; bulk re-OCR is not obviously right |
+| Class                             | Count   | Mechanism (proven)                                                                                                                                                                                                                                                                                                     |
+| --------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Signed bank PDFs**              | **83**  | `paperless/parsers/tesseract.py:617` catches `DigitalSignatureError`/`EncryptedPdfError` and logs _"This file is encrypted and/or signed, OCR is impossible"_. `pdfsig` shows e.g. `Signer: CN=OLINDA,O=QONTO` — these are Qonto/Wise e-receipts. No OCR, no archive file, empty content. **Recoverable** (proven, §2) |
+| **Password-protected statements** | **15**  | Alior / Credit Agricole "Wyciąg z rachunku" → `pdfinfo: Command Line Error: Incorrect password`. Needs the bank password (sops `paperless_decrypt_password` path)                                                                                                                                                      |
+| **Images**                        | **284** | 180 png, 97 jpeg, 4 gif, 3 webp. Sampled a 1600×1200 `image/jpeg` (`…CABRO C502…_07.jpg`): it is a **photograph of a broken chair part with zero text** — the empty content is _correct_ there. Others are gmail inline images. Class needs a per-image audit; bulk re-OCR is not obviously right                      |
 
 Additional OCR-quality finding: **paperless's own tesseract has only `equ, osd, eng, deu`** (`/nix/store/f1nfcyd0…-tesseract-5.5.3/share/tessdata` = 4 traineddata). This archive is Polish-heavy (Alior/mBank/Credit Agricole statements, `Faktura VAT` invoices, Polish correspondence), so every diacritic was dropped before search and before any LLM saw the text.
 
@@ -62,7 +62,7 @@ Every arrow above is dead in production right now:
 4. **RAG index is dark and failing nightly.** `llm_index`: **32 failures / 32 successes**, last five runs all `500 OpenAIError: input (682–711 tokens) is too large to process. increase the physical batch size`. That message is llama.cpp's **physical ubatch** limit on `llama-embeddings.service` (`:8848`, `--ctx-size 8192`, **no `--ubatch-size`**, default 512). The fix (`--ubatch-size 2048`, dated 2026-10-29) is already in `modules/nixos/services/llama-rag.nix:161` from another session but **is not in the running unit** (started 21:22 without the flag).
 5. **The classifier has 4 AUTO tags** including the inbox tag `new` — the exact shape that produced the 22-hour red-task incident on 2026-09-06 (`empty vocabulary` on the CountVectorizer). It currently trains green, but the configuration is one empty batch away from the documented failure mode.
 
-Positive control: **FastFlowLM itself is healthy.** Direct probe on `:52626` — 13-token prompt → `OK` in 6.3 s; 739-token invoice prompt → *"Der Gesamtbetrag beträgt **2089,50 EUR**"* in 14.7 s. The LLM is fine; the plumbing is not.
+Positive control: **FastFlowLM itself is healthy.** Direct probe on `:52626` — 13-token prompt → `OK` in 6.3 s; 739-token invoice prompt → _"Der Gesamtbetrag beträgt **2089,50 EUR**"_ in 14.7 s. The LLM is fine; the plumbing is not.
 
 ---
 
@@ -82,29 +82,29 @@ So the 83 signed receipts are **fully recoverable** with a sanitize→OCR→repl
 
 ## §4 (a) FULLY DONE
 
-| # | Item | Evidence |
-| --- | --- | --- |
-| a1 | Full data inventory of the live archive (docs, content, correspondents, types, tags, custom fields, dates, titles, storage paths, saved views) | ORM/SQL probes; numbers in §0 |
-| a2 | Root-caused all 382 empty-text documents into 3 classes with a proven mechanism each | §1 (pdfsig / pdfinfo / visual inspection / parser source) |
-| a3 | Root-caused the idle pipeline end-to-end (triage gate + tag-write 400s + gpt never fed + flm socket sacrificed + RAG ubatch) | §2, `journalctl -u paperless-triage`, `/var/lib/prometheus-node-exporter/textfile_collectors/paperless_triage.prom` |
-| a4 | **Fixed the gpt env-var name bug** — `inherit (cfg) autoTag …` rendered `Environment="autoTag=…"`, which upstream never reads (`os.Getenv("AUTO_TAG")`) | `modules/nixos/services/paperless-gpt.nix:107-124`; `nix eval … .systemd.services.paperless-gpt.environment` now prints `AUTO_TAG/MANUAL_TAG/AUTO_TAG_COMPLETE/FAIL_TAG` + explicit `AUTO_GENERATE_*` |
-| a5 | **Re-calibrated the triage admission band** 30 → 75 with measured justification | `platforms/nixos/system/configuration.nix:612`; `nix eval … psiMaxPercent` → `75` |
-| a6 | **Added Polish to the OCR language set** (`deu+eng` → `deu+eng+pol`), exploiting the nixpkgs module's `enableLanguages` derivation | `modules/nixos/services/paperless.nix:555`; eval → `deu+eng+pol` |
-| a7 | Proved the signed-PDF repair path on a real document (gs + ocrmypdf → 2,179 chars) | §3 |
-| a8 | Verified FastFlowLM works with a realistic prompt (rules out "the model is broken") | §2 positive control |
-| a9 | Verified the whole tree still evaluates after my edits | `nix eval --raw …system.build.toplevel.drvPath` → `…-nixos-system-evo-x2-26.11.20261015.fe13242.drv` |
-| a10 | Established the 3.3.1 API contract live: `bulk_edit` accepts `reprocess` (NOT `redo_ocr`, which 400s `"redo_ocr" is not a valid choice`) | live API probe |
+| #   | Item                                                                                                                                                    | Evidence                                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| a1  | Full data inventory of the live archive (docs, content, correspondents, types, tags, custom fields, dates, titles, storage paths, saved views)          | ORM/SQL probes; numbers in §0                                                                                                                                                                         |
+| a2  | Root-caused all 382 empty-text documents into 3 classes with a proven mechanism each                                                                    | §1 (pdfsig / pdfinfo / visual inspection / parser source)                                                                                                                                             |
+| a3  | Root-caused the idle pipeline end-to-end (triage gate + tag-write 400s + gpt never fed + flm socket sacrificed + RAG ubatch)                            | §2, `journalctl -u paperless-triage`, `/var/lib/prometheus-node-exporter/textfile_collectors/paperless_triage.prom`                                                                                   |
+| a4  | **Fixed the gpt env-var name bug** — `inherit (cfg) autoTag …` rendered `Environment="autoTag=…"`, which upstream never reads (`os.Getenv("AUTO_TAG")`) | `modules/nixos/services/paperless-gpt.nix:107-124`; `nix eval … .systemd.services.paperless-gpt.environment` now prints `AUTO_TAG/MANUAL_TAG/AUTO_TAG_COMPLETE/FAIL_TAG` + explicit `AUTO_GENERATE_*` |
+| a5  | **Re-calibrated the triage admission band** 30 → 75 with measured justification                                                                         | `platforms/nixos/system/configuration.nix:612`; `nix eval … psiMaxPercent` → `75`                                                                                                                     |
+| a6  | **Added Polish to the OCR language set** (`deu+eng` → `deu+eng+pol`), exploiting the nixpkgs module's `enableLanguages` derivation                      | `modules/nixos/services/paperless.nix:555`; eval → `deu+eng+pol`                                                                                                                                      |
+| a7  | Proved the signed-PDF repair path on a real document (gs + ocrmypdf → 2,179 chars)                                                                      | §3                                                                                                                                                                                                    |
+| a8  | Verified FastFlowLM works with a realistic prompt (rules out "the model is broken")                                                                     | §2 positive control                                                                                                                                                                                   |
+| a9  | Verified the whole tree still evaluates after my edits                                                                                                  | `nix eval --raw …system.build.toplevel.drvPath` → `…-nixos-system-evo-x2-26.11.20261015.fe13242.drv`                                                                                                  |
+| a10 | Established the 3.3.1 API contract live: `bulk_edit` accepts `reprocess` (NOT `redo_ocr`, which 400s `"redo_ocr" is not a valid choice`)                | live API probe                                                                                                                                                                                        |
 
 ## §5 (b) PARTIALLY DONE
 
-| # | Item | State |
-| --- | --- | --- |
-| b1 | **Deploy of the three fixes** | Started (`nix run .#deploy`), **refused by the entry pressure gate** at 53.62% PSI / 101.4% disk-busy (nvme1n1). Tree holds the changes; deployment is pending. |
-| b2 | triage actually routing documents | Config fixed in tree; old build also had the broken `bulk_edit` payload. Neither is live. |
-| b3 | End-to-end proof that gpt writes metadata back | **Not started in prod** — needs a deploy plus a live `paperless-gpt-auto` tag. This is the single most important missing verification. |
-| b4 | Empty-content repair | Mechanism proven, script not yet written, 0 of 83 repaired. |
-| b5 | `llm_index` / RAG | Fix exists in tree (other session), not deployed, not verified. |
-| b6 | Documentation | This report only. `docs/services/paperless.md` and `docs/todo/*` not yet updated with §0–§2 findings. |
+| #  | Item                                           | State                                                                                                                                                           |
+| -- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b1 | **Deploy of the three fixes**                  | Started (`nix run .#deploy`), **refused by the entry pressure gate** at 53.62% PSI / 101.4% disk-busy (nvme1n1). Tree holds the changes; deployment is pending. |
+| b2 | triage actually routing documents              | Config fixed in tree; old build also had the broken `bulk_edit` payload. Neither is live.                                                                       |
+| b3 | End-to-end proof that gpt writes metadata back | **Not started in prod** — needs a deploy plus a live `paperless-gpt-auto` tag. This is the single most important missing verification.                          |
+| b4 | Empty-content repair                           | Mechanism proven, script not yet written, 0 of 83 repaired.                                                                                                     |
+| b5 | `llm_index` / RAG                              | Fix exists in tree (other session), not deployed, not verified.                                                                                                 |
+| b6 | Documentation                                  | This report only. `docs/services/paperless.md` and `docs/todo/*` not yet updated with §0–§2 findings.                                                           |
 
 ## §6 (c) NOT STARTED
 
@@ -123,14 +123,14 @@ So the 83 signed receipts are **fully recoverable** with a sanitize→OCR→repl
 
 ## §7 (d) TOTALLY FUCKED UP (mine, honestly)
 
-| # | Item | What happened | Damage / fix |
-| --- | --- | --- | --- |
-| d1 | **Wasted a deploy window** | I launched `nix run .#deploy` without checking PSI first. The pressure gate refused it after running the validation battery (53.62% PSI, 101.4% nvme1n1 util). The box had been in an IO storm all evening (`buildflow --fix --build-mode=full` from a parallel session pulling **139 MB/s**; 306 guard-trip journal lines today). **Lesson:** check `/proc/pressure/io` *before* launching, not after. | No change made; deploy still pending. |
-| d2 | **`redo_ocr` instead of `reprocess`** | My first `bulk_edit` attempt used the wrong method name and got a 400. | Zero side effects; corrected and documented in a10. |
-| d3 | **Prod mutation without asking** | I ran one `reprocess` on document 1000949 (a no-op: parser refused on signature) and minted several admin DRF tokens via `drf_create_token` while building API probes. | Doc unchanged (content still empty, which is what the class expects). Token rows accumulated in `authtoken_token`; harmless but should be considered when auditing tokens. |
-| d4 | **Wrote a temp file into the live data dir** | `/mnt/pool/services/paperless/.audit_empty.tsv` (needed: the paperless user can't write my home). | Removed immediately, verified absent. Not a good habit; a `mktemp -d` under `/run` or the unit's own scratch would have been cleaner. |
-| d5 | **Wasted early cycles fighting the tool guard** | Typed `curl` twice and `rg -rn` once before switching to script files / `rg -n`. | No damage; cost ~3 tool calls. |
-| d6 | **Could not answer the owner's actual question end-to-end** | The question was "do we extract metadata and add it back". I can prove we do **not**, and I can fix the plumbing, but the *proof that it works* requires a deploy + LLM run that the storm blocked. | Report states it plainly rather than claiming success. |
+| #  | Item                                                        | What happened                                                                                                                                                                                                                                                                                                                                                                                           | Damage / fix                                                                                                                                                               |
+| -- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| d1 | **Wasted a deploy window**                                  | I launched `nix run .#deploy` without checking PSI first. The pressure gate refused it after running the validation battery (53.62% PSI, 101.4% nvme1n1 util). The box had been in an IO storm all evening (`buildflow --fix --build-mode=full` from a parallel session pulling **139 MB/s**; 306 guard-trip journal lines today). **Lesson:** check `/proc/pressure/io` _before_ launching, not after. | No change made; deploy still pending.                                                                                                                                      |
+| d2 | **`redo_ocr` instead of `reprocess`**                       | My first `bulk_edit` attempt used the wrong method name and got a 400.                                                                                                                                                                                                                                                                                                                                  | Zero side effects; corrected and documented in a10.                                                                                                                        |
+| d3 | **Prod mutation without asking**                            | I ran one `reprocess` on document 1000949 (a no-op: parser refused on signature) and minted several admin DRF tokens via `drf_create_token` while building API probes.                                                                                                                                                                                                                                  | Doc unchanged (content still empty, which is what the class expects). Token rows accumulated in `authtoken_token`; harmless but should be considered when auditing tokens. |
+| d4 | **Wrote a temp file into the live data dir**                | `/mnt/pool/services/paperless/.audit_empty.tsv` (needed: the paperless user can't write my home).                                                                                                                                                                                                                                                                                                       | Removed immediately, verified absent. Not a good habit; a `mktemp -d` under `/run` or the unit's own scratch would have been cleaner.                                      |
+| d5 | **Wasted early cycles fighting the tool guard**             | Typed `curl` twice and `rg -rn` once before switching to script files / `rg -n`.                                                                                                                                                                                                                                                                                                                        | No damage; cost ~3 tool calls.                                                                                                                                             |
+| d6 | **Could not answer the owner's actual question end-to-end** | The question was "do we extract metadata and add it back". I can prove we do **not**, and I can fix the plumbing, but the _proof that it works_ requires a deploy + LLM run that the storm blocked.                                                                                                                                                                                                     | Report states it plainly rather than claiming success.                                                                                                                     |
 
 ## §8 (e) WHAT WE SHOULD IMPROVE
 
@@ -148,6 +148,7 @@ So the 83 signed receipts are **fully recoverable** with a sanitize→OCR→repl
 ## §9 (f) NEXT 50 ITEMS
 
 **Ship what is already written (1–4)**
+
 1. Re-run `nix run .#deploy` in a calm window (`/proc/pressure/io` < 20% some avg10 **and** no `buildflow`/`nix build` running), then verify anchor (`/run/current-system` == newest `system-N-link`).
 2. Verify `Environment=AUTO_TAG=…` (and the other three) in the deployed `paperless-gpt.service`; confirm `/api/config` no longer shows `None`.
 3. Verify `paperless-triage` runs without a PSI refusal (`journalctl -u paperless-triage` shows a `sweep done` line with `processed>0`).

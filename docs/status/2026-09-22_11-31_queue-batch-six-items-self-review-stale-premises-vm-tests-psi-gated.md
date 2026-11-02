@@ -21,9 +21,9 @@
 
 1. **All three test artifacts are eval-true, not runtime-true** — the restic VM test, both paperless test extensions, and (for the attic derive) test-attic have NEVER EXECUTED. Every row carries a "first green VM run PSI-gated" annotation (gate <20%; measured 99% avg60 then, ~60% now). Until those runs, "the tests pass" is a claim about my reading of systemd/nixpkgs semantics, not about the tests.
 2. **Library/queue lifecycle inconsistency (my own doing):** the two paperless library entries + the restic VM-test library entry are marked `[x] DONE` (with the run caveat inside the text), while their queue rows stay `[ ]` open with annotations. A future harvest could prune the queue rows citing the `[x]` library and the tests would silently never run. The states should have been consistently "in-flight" on BOTH sides.
-~~3. **The restic UMask gap — caught LATER, not by me (see d.1).** The module's password landed 0644 (harden{} sets no UMask; systemd default 0022; `>` redirection creates 0644) until parallel review-fix `6251c198` (07:32) added `UMask = "0077"`. My session shipped the test whose `stat -c %a == 600` assertion WOULD have caught it at VM-run time, and cited the module's comment ("0600 (umask 077)") as if verified — the comment was a lie until 07:32. The test is compatible with the fix (0600 now real).~~ done — fixed by 6251c198 (UMask=0077 on setup unit) + runtime password 0600 verified live (02-01 closeout)
-~~4. **Health Hub smoke** is enable-gated on a module that has never been deployed — the section is dead code until the health-dashboard deploy lands (by design, but "verified" here means shellcheck + bash -n only).~~ done — Health Hub LIVE since 2026-09-22 (wantedBy fix; /healthz 200; 15-06 §a.4)
-5. **The queue itself:** 6 of ~140 open items. Correct scope for one storm-safe session, not "done".
+   ~~3. **The restic UMask gap — caught LATER, not by me (see d.1).** The module's password landed 0644 (harden{} sets no UMask; systemd default 0022; `>` redirection creates 0644) until parallel review-fix `6251c198` (07:32) added `UMask = "0077"`. My session shipped the test whose `stat -c %a == 600` assertion WOULD have caught it at VM-run time, and cited the module's comment ("0600 (umask 077)") as if verified — the comment was a lie until 07:32. The test is compatible with the fix (0600 now real).~~ done — fixed by 6251c198 (UMask=0077 on setup unit) + runtime password 0600 verified live (02-01 closeout)
+   ~~4. **Health Hub smoke** is enable-gated on a module that has never been deployed — the section is dead code until the health-dashboard deploy lands (by design, but "verified" here means shellcheck + bash -n only).~~ done — Health Hub LIVE since 2026-09-22 (wantedBy fix; /healthz 200; 15-06 §a.4)
+3. **The queue itself:** 6 of ~140 open items. Correct scope for one storm-safe session, not "done".
 
 ## c) NOT STARTED (from this session's item set — deliberately or missed)
 
@@ -62,52 +62,52 @@
 7. Extend the restic test with the `-perm /077` sweep assert (c.3)
 8. ~~Verify the `6251c198` UMask fix renders~~ DONE at report time: `nix eval …restic-app-dumps-setup.serviceConfig.UMask` → `0077`
    **Deploy-gated (owner):**
-~~9. THE DEPLOY — the batch is one `nix run .#deploy` from real (restic module, paperless test args are test-only, attic derive, Health Hub module itself)~~ done — deployed 2026-09-22 13:04 → system-796 (CHANGELOG:471)
-10. First restic run + `restic check` smoke + dedup-ratio measurement after ≥3 nightly runs
-~~11. Health Hub full go-live chain items 1–10 (docs/todo/services.md blocked:deploy entry)~~ done — Health Hub live + federation aggregate 200 since 2026-09-22 (15-06 §a.4)
-~~12. Browser-history dbBackup leg + discordsync ~40G attachments migration riding the same deploy batch~~ done — attachments migrated 2026-09-22 (15-06 §a.1); browser-history dbBackup live (hot-db.md:136)
-    **Storage domain (queue):**
-13. Phase 2 hot-DB migration waves (pocket-id/postgres/discordsync) — owner sudo windows
-~~14. Offsite Borg leg to Hetzner (ACTIVE parallel session owns `docs/services/offsite-borg.md` — coordinate, don't duplicate)~~ done — implemented + deployed dormant 2026-09-22 (CHANGELOG:470)
-~~15. Offsite Borg restore path: runbook + first timed restore drill~~ done — docs/services/offsite-borg-restore.md + scripts/borg-restore-drill.sh landed 2026-09-23 (CHANGELOG:468)
-16. Offsite Borg monitoring extras (`backup_ever_succeeded`, ioTier, smoke entries)
-~~17. ClickHouse backup before the next SigNoz upgrade~~ done — clickhouse-db-backup in signoz.nix (03:00 timer, 3-run retention); verified 2026-09-23_04-00 §a
-~~18. Browser-history DB backup~~ done — browser-history-backup live (02:15 pool leg; hot-db.md:136; discordsync.md cross-refs)
-~~19. `migrate-hot-db.sh` stub-fixture test BEFORE its first user migration window~~ done — scripts/test-migrate-hot-db.sh (full PATH-stub fixture suite, "ALL migrate-hot-db fixture tests passed")
-~~20. T14 hot-tier mount-presence metric + Gatus checks for /mnt/hot~~ done — hot-db-metrics collector + tier/entry Gatus checks in hot-db.nix:393-495 (T14, 2026-09-30)
-~~21. Phase-2 plan doc T-task table update (T5/T9-T15 pending)~~ done — T-table Status column landed 2026-09-30 (51431058; 10-01 closeout §a.1)
-22. /data damage-set inventory + single-victim repair recipe codification
-23. disko config for the deferred reinstall
-24. Snapshot-pinning doctrine sweep
+   ~~9. THE DEPLOY — the batch is one `nix run .#deploy` from real (restic module, paperless test args are test-only, attic derive, Health Hub module itself)~~ done — deployed 2026-09-22 13:04 → system-796 (CHANGELOG:471)
+9. First restic run + `restic check` smoke + dedup-ratio measurement after ≥3 nightly runs
+   ~~11. Health Hub full go-live chain items 1–10 (docs/todo/services.md blocked:deploy entry)~~ done — Health Hub live + federation aggregate 200 since 2026-09-22 (15-06 §a.4)
+   ~~12. Browser-history dbBackup leg + discordsync ~40G attachments migration riding the same deploy batch~~ done — attachments migrated 2026-09-22 (15-06 §a.1); browser-history dbBackup live (hot-db.md:136)
+   **Storage domain (queue):**
+10. Phase 2 hot-DB migration waves (pocket-id/postgres/discordsync) — owner sudo windows
+    ~~14. Offsite Borg leg to Hetzner (ACTIVE parallel session owns `docs/services/offsite-borg.md` — coordinate, don't duplicate)~~ done — implemented + deployed dormant 2026-09-22 (CHANGELOG:470)
+    ~~15. Offsite Borg restore path: runbook + first timed restore drill~~ done — docs/services/offsite-borg-restore.md + scripts/borg-restore-drill.sh landed 2026-09-23 (CHANGELOG:468)
+11. Offsite Borg monitoring extras (`backup_ever_succeeded`, ioTier, smoke entries)
+    ~~17. ClickHouse backup before the next SigNoz upgrade~~ done — clickhouse-db-backup in signoz.nix (03:00 timer, 3-run retention); verified 2026-09-23_04-00 §a
+    ~~18. Browser-history DB backup~~ done — browser-history-backup live (02:15 pool leg; hot-db.md:136; discordsync.md cross-refs)
+    ~~19. `migrate-hot-db.sh` stub-fixture test BEFORE its first user migration window~~ done — scripts/test-migrate-hot-db.sh (full PATH-stub fixture suite, "ALL migrate-hot-db fixture tests passed")
+    ~~20. T14 hot-tier mount-presence metric + Gatus checks for /mnt/hot~~ done — hot-db-metrics collector + tier/entry Gatus checks in hot-db.nix:393-495 (T14, 2026-09-30)
+    ~~21. Phase-2 plan doc T-task table update (T5/T9-T15 pending)~~ done — T-table Status column landed 2026-09-30 (51431058; 10-01 closeout §a.1)
+12. /data damage-set inventory + single-victim repair recipe codification
+13. disko config for the deferred reinstall
+14. Snapshot-pinning doctrine sweep
     **Monitoring/stability (queue highlights):**
-25. system-health-metrics section-sum vs unit-ceiling fix (≈500s vs 180s — structural)
-26. journald `SystemMaxUse` cap
-27. btrbk receive-freshness + pool-snapshot-freshness monitoring
-28. Textfile-collector fixed-name `.tmp` audit + stale `btrfs-compression.prom.tmp`
-29. Zone 6 alert-fatigue pass
-30. Boot-time catch-up stampede control
-31. Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM
-32. `Upholds=` evaluation for mount-dependent services
+15. system-health-metrics section-sum vs unit-ceiling fix (≈500s vs 180s — structural)
+16. journald `SystemMaxUse` cap
+17. btrbk receive-freshness + pool-snapshot-freshness monitoring
+18. Textfile-collector fixed-name `.tmp` audit + stale `btrfs-compression.prom.tmp`
+19. Zone 6 alert-fatigue pass
+20. Boot-time catch-up stampede control
+21. Root-cause the 13:36:13 `mnt-pool.mount` same-second SIGTERM
+22. `Upholds=` evaluation for mount-dependent services
     **Services (queue highlights):**
-33. PMA `Environment=` splitting (the "Artmann" bare-token bug — still open per my session read)
-34. project-discovery-daemon IO taming
-35. Hermes deferred-cleanups cluster (some PAST DUE)
-36. Root-cause the InboxClean→Paperless `gmail` tag demote PATCH rejection
-37. DiscordSync Immich deploy + go-live chain
-38. Browser-history quiet-day 503 mitigation (local Gatus-condition + upstream heartbeat)
-39. Postfix `status=bounced` journal-rate metric + Gatus check
-40. dns-blocker → upstream dnsblockd module migration
+23. PMA `Environment=` splitting (the "Artmann" bare-token bug — still open per my session read)
+24. project-discovery-daemon IO taming
+25. Hermes deferred-cleanups cluster (some PAST DUE)
+26. Root-cause the InboxClean→Paperless `gmail` tag demote PATCH rejection
+27. DiscordSync Immich deploy + go-live chain
+28. Browser-history quiet-day 503 mitigation (local Gatus-condition + upstream heartbeat)
+29. Postfix `status=bounced` journal-rate metric + Gatus check
+30. dns-blocker → upstream dnsblockd module migration
     **Pipeline/docs:**
-41. SHA-citation verifier script (e.5 — doubly motivated now)
-42. Correct the AGENTS.md `nix fmt -- --ci` claim (it is NOT check-only — d.4)
-43. Counter-annotate the false CHANGELOG claim from the docs-health round-2 (append-only, can't edit)
-44. Commit-race procedure: pathspec commit + `git log -1` verify, encoded in CONTRIBUTING
-45. pre-deploy batch build of mkLarsPackages + cv + hermes inputs
-46. Eval-time unit-shape audits for the cv-226 class
-47. Service-completeness manifest audit (enabled ⇒ check + tile + backup + docs)
-48. flake-check guard: HTML pat() needles must start with `<`
-49. Sanctioned read-only host-state probe for agent sessions (I hit the systemctl-block myself this session)
-50. The remaining ~100 queue rows I did not enumerate here (TODO_LIST.md is the source of truth)
+31. SHA-citation verifier script (e.5 — doubly motivated now)
+32. Correct the AGENTS.md `nix fmt -- --ci` claim (it is NOT check-only — d.4)
+33. Counter-annotate the false CHANGELOG claim from the docs-health round-2 (append-only, can't edit)
+34. Commit-race procedure: pathspec commit + `git log -1` verify, encoded in CONTRIBUTING
+35. pre-deploy batch build of mkLarsPackages + cv + hermes inputs
+36. Eval-time unit-shape audits for the cv-226 class
+37. Service-completeness manifest audit (enabled ⇒ check + tile + backup + docs)
+38. flake-check guard: HTML pat() needles must start with `<`
+39. Sanctioned read-only host-state probe for agent sessions (I hit the systemctl-block myself this session)
+40. The remaining ~100 queue rows I did not enumerate here (TODO_LIST.md is the source of truth)
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

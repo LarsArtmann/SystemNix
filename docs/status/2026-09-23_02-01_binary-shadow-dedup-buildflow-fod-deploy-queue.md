@@ -33,10 +33,10 @@
 ## c) NOT STARTED
 
 1. **`~/go/bin` non-shadow strays** (11 remain: actionlint, crush-tmux, getting-started, goal-shaped-app, golines, gosec, govulncheck, metaengine-quickstart, readme-quickstart, scheduler-otel-status, taskmanager) — offered to user, not executed; usage evidence not yet gathered.
-~~2. **Fleet-wide FOD enumeration after the nixpkgs move** — the repo HAS a pre-deploy batch build ("ONE command surfaces every stale vendorHash / FOD breakage", flake.nix ~line 941) purpose-built for exactly this; I did not run it. Buildflow + art-dupl are the two KNOWN casualties; more may lurk.~~ done — enumerations ran repeatedly; 2026-10-15 wave diagnosis enumerated 23 FOD failures (2026-10-15_03-05 §a.2)
-~~3. **Upstream BuildFlow repair** — owned by a parallel session (dirty tree + 2 unpushed commits past broken master); deliberately not touched.~~ done — master healed; multiple lock moves + shim-drop records (lars-packages.nix:78,101,106)
-4. **templ codegen-parity verification** — interactive `templ` switched from a Jul-12 go-install to nixpkgs `v0.3.1020`; no check yet that `*_templ.go` output doesn't churn in the go-cqrs-lite fleet.
-5. **PSI accounting anomaly root-cause** — IO PSI 25-50% for hours with ~1-23% disk busy and ZERO D-state processes; the gate's heuristic blames a corpse pile that no longer exists. Something stalls without disk IO or D-state — unexplained.
+   ~~2. **Fleet-wide FOD enumeration after the nixpkgs move** — the repo HAS a pre-deploy batch build ("ONE command surfaces every stale vendorHash / FOD breakage", flake.nix ~line 941) purpose-built for exactly this; I did not run it. Buildflow + art-dupl are the two KNOWN casualties; more may lurk.~~ done — enumerations ran repeatedly; 2026-10-15 wave diagnosis enumerated 23 FOD failures (2026-10-15_03-05 §a.2)
+   ~~3. **Upstream BuildFlow repair** — owned by a parallel session (dirty tree + 2 unpushed commits past broken master); deliberately not touched.~~ done — master healed; multiple lock moves + shim-drop records (lars-packages.nix:78,101,106)
+2. **templ codegen-parity verification** — interactive `templ` switched from a Jul-12 go-install to nixpkgs `v0.3.1020`; no check yet that `*_templ.go` output doesn't churn in the go-cqrs-lite fleet.
+3. **PSI accounting anomaly root-cause** — IO PSI 25-50% for hours with ~1-23% disk busy and ZERO D-state processes; the gate's heuristic blames a corpse pile that no longer exists. Something stalls without disk IO or D-state — unexplained.
 
 ## d) TOTALLY FUCKED UP (nothing destructive — honest near-misses)
 
@@ -63,7 +63,7 @@
 4. Probe BuildFlow upstream with `#default` (package), not just `#default.goModules` — bc999b4's failure was PAST the FOD.
 5. Add flake check / pre-commit: user `nix profile list` must be empty (doctrine enforcement, WARN-grade).
 6. Add check: `~/go/bin` contains no binary whose name exists in system path (shadow detector); allowlist golines.
-~~7. Migrate `golines` into base.nix → `~/go/bin` can then be empty entirely.~~ done — base.nix:240 pkgs.golines "moved from stray ~/go/bin 2026-10-01, fifty-todos #45"
+~~7. Migrate `golines` into base.nix → `~/go/bin` can then be empty entirely.~~ done — base.nix:240 pkgs.golines "moved from stray ~~/go/bin 2026-10-01, fifty-todos #45"
 8. Decide + purge the 11 `~/go/bin` non-shadow strays (usage-evidence pass over fish_history + scripts first).
 9. Root-cause the idle-disk/no-D-state PSI anomaly (autofs? accounting bug? per-cgroup?) — the pressure gate's corpse-pile heuristic is stale and mislabels this class.
 10. Turn the ad-hoc deploy-queue poller into a small systemd user unit/timer so queued deploys survive sessions (2026-09-19 lesson recurred tonight).
@@ -83,7 +83,7 @@
 24. Monitor guard `trips_last_hour` overnight; if sibling load is chronic at night, consider a scheduled deploy window (06:00-ish, post-btrbk, pre-workload).
 25. Check whether any other host (darwin, rpi3-dns) carries a stale user profile or GOBIN shadows (the class is fleet-wide; only evo-x2 was audited).
 26. Consider a `buildflow doctor` run in SystemNix post-deploy (binary-freshness check now that resolution is single-source).
-27. Reconcile `test-home-manager.sh`'s "~/go/bin in PATH" assertion with the new doctrine (PATH inclusion stays; binary allowlist is the new rule).
+27. Reconcile `test-home-manager.sh`'s "~~/go/bin in PATH" assertion with the new doctrine (PATH inclusion stays; binary allowlist is the new rule).
 28. Audit sessions' habit of installing tools into the shared user env: propose per-session shells/profiles for one-off tooling (systemic fix for the 09-17-class installs).
 29. Gave-up breadcrumbs: wire the deploy-queue log's give-up line into a DMS notification (sev1-bridge pattern, notify tier).
 30. HARVEST this report's f-list into TODO_LIST.md / docs/todo domains (partially done — see below).

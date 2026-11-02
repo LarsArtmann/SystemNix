@@ -14,13 +14,13 @@
 
 ## Evidence base (all gathered this session)
 
-| Boot | Start | Total | Userspace | Context |
-|---|---|---|---|---|
-| -4 | Oct 12 13:05 | 14m19s | 12m57s | storm; clickhouse 10m52s |
-| -3 | Oct 15 02:19 | 27m06s | 25m52s | freeze-#30 recovery |
-| -2 | Oct 15 03:14 | 48m59s | 47m48s | watchdog storm boot, 19h uptime |
-| -1 | Oct 15 22:36 | never converged (23m) | — | clean shutdown 22:59 |
-| 0 | Oct 15 23:29 | graphical 13m37s, transaction STILL open 30+ min in | — | storm: io PSI some avg10 ~87% |
+| Boot | Start        | Total                                               | Userspace | Context                         |
+| ---- | ------------ | --------------------------------------------------- | --------- | ------------------------------- |
+| -4   | Oct 12 13:05 | 14m19s                                              | 12m57s    | storm; clickhouse 10m52s        |
+| -3   | Oct 15 02:19 | 27m06s                                              | 25m52s    | freeze-#30 recovery             |
+| -2   | Oct 15 03:14 | 48m59s                                              | 47m48s    | watchdog storm boot, 19h uptime |
+| -1   | Oct 15 22:36 | never converged (23m)                               | —         | clean shutdown 22:59            |
+| 0    | Oct 15 23:29 | graphical 13m37s, transaction STILL open 30+ min in | —         | storm: io PSI some avg10 ~87%   |
 
 Firmware: 62.5s cold (LPDDR5X training) vs 6.8s warm — the largest fixed cost, BIOS-walk blocked.
 Last-boot prom (`boot-metrics.prom`): phase-complete but reflects boot -2; `boot_userspace_regression 1`.
@@ -64,6 +64,7 @@ Last-boot prom (`boot-metrics.prom`): phase-complete but reflects boot -2; `boot
 ## e) WHAT WE SHOULD IMPROVE
 
 **Process (mine):**
+
 1. Harvest at discovery = BOTH surfaces in the SAME edit pass. Tonight proved the failure is natural; make the pairing mechanical.
 2. Content-pin before EVERY shared-file write — including "quick doc edits".
 3. Never assert a superlative ("first", "only", "zero") from a weaker source when the row's own stronger method is written down one line above.
@@ -77,6 +78,7 @@ Last-boot prom (`boot-metrics.prom`): phase-complete but reflects boot -2; `boot
 ## f) 50 things to get done next (grouped; NEW = queued tonight)
 
 **A. Boot measurement & verification debt (this session's core)**
+
 1. Calm-boot re-measure of the 2026-10-06/12 batteries (userspace ≤40s expectation) — [blocked:deploy] stability.md
 2. Warm-reboot repro ×2-3: confirm ~6.8s firmware is systematic — stability.md (row 239 leg 2)
 3. Per-boot reset-reason sweep (6.8 vs 62.6 split, boot-by-boot) — stability.md (row 239 leg 3)
@@ -146,4 +148,4 @@ Last-boot prom (`boot-metrics.prom`): phase-complete but reflects boot -2; `boot
 
 ---
 
-*Session probes: `systemd-analyze time/critical-chain/blame`, `journalctl --list-boots/-b/-k`, `boot-metrics.prom`, `/proc/pressure/*`, `pgrep`, `last -x`, module reads (llama-chat.nix, llama-rag.nix, boot-metrics.nix), `scripts/check-todo-system.sh` (green). Environment notes: parallel session active (forgejo.md dirty; HEAD fd0e2cc3→dbfabb6a mid-session; two mid-edit race refusals absorbed). No commits made — daemon owns sweep (auto-commit heuristic).*
+_Session probes: `systemd-analyze time/critical-chain/blame`, `journalctl --list-boots/-b/-k`, `boot-metrics.prom`, `/proc/pressure/*`, `pgrep`, `last -x`, module reads (llama-chat.nix, llama-rag.nix, boot-metrics.nix), `scripts/check-todo-system.sh` (green). Environment notes: parallel session active (forgejo.md dirty; HEAD fd0e2cc3→dbfabb6a mid-session; two mid-edit race refusals absorbed). No commits made — daemon owns sweep (auto-commit heuristic)._

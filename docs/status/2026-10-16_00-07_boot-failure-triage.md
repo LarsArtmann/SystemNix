@@ -9,19 +9,19 @@
 
 ## Verification basis (everything below was probed live this session)
 
-| Claim | Evidence command | Result |
-|---|---|---|
-| tq-agent-pool gate refusals | `journalctl -b -u tq-agent-pool` | 40× "REFUSING to start: io PSI some avg10=92–96% >= 30%", `start-limit-hit` 23:50:01 |
-| IO storm source = concurrent agent session | `/proc/*/io` delta sampling (6s) | pid 239584 `crush -y` ≈ **407 MB/s**; pids 281176/281803/287846 `go test -race -shuffle=on ./...` + linker ≈ 130 MB/s combined; `/proc/pressure/io` still 85–88% at 00:07 |
-| gitea-runner CREDENTIALS chicken-and-egg | live unit `/etc/systemd/system/gitea-runner-evo\x2dx2.service:25` | `LoadCredential=token:/run/forgejo-runner/token` — `/run` is tmpfs, systemd's CREDENTIALS step runs **before** the ExecStartPre that creates the token |
-| …fails every boot | `journalctl -b -1` | same 5× `Failed at step CREDENTIALS` + `start-limit-hit` at 22:37:18 (prior boot) |
-| …why gen-898 looked healed | docs/todo/services.md:511 + journal | 2026-10-15 20:30 session fixed the STATE_DIRECTORY leg and saw a clean 20:22:01 start — but that was a **switch**, `/run` (and the token) survived; the reboot(s) after wiped it and re-broke the unit via the still-live CREDENTIALS leg |
-| searx fatal boot fetch | `journalctl -b -u searx.service` | 23:29:48–54 ClearURLs rule fetches fail (`curl: (28) Resolving timed out after 3000ms` ×4) → `init()` raises → exit 1 ×5 → `start-limit-hit` 23:33:37 |
-| :8888 listener is NOT searx | `ss -ltnp` + `lib/ports.nix:38` | `signoz-collector-metrics = 8888`; no searx socket unit exists — searx is genuinely down |
-| btrbk-data = expected tripwire | journal + `ls /data/.repair-done` | gate self-describes as the documented P0 tripwire; marker absent live |
-| Gatus coverage | `journalctl -b -u gatus` | SearXNG alerts fired 11×, tq alerted 23:55; runner only covered by the generic `node_systemd_unit_state{state="failed"} == 1` SigNoz rule |
-| fail2ban degraded | journal + pgrep | 1.1.1 on python3.14, `filtersystemd` `AttributeError('NoneType'.wait)` loop, idle after 100 errors |
-| Kernel clean | `journalctl -k -b -p err` | zero entries; no OOM/watchdog/segfault events |
+| Claim                                      | Evidence command                                                  | Result                                                                                                                                                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| tq-agent-pool gate refusals                | `journalctl -b -u tq-agent-pool`                                  | 40× "REFUSING to start: io PSI some avg10=92–96% >= 30%", `start-limit-hit` 23:50:01                                                                                                                                                      |
+| IO storm source = concurrent agent session | `/proc/*/io` delta sampling (6s)                                  | pid 239584 `crush -y` ≈ **407 MB/s**; pids 281176/281803/287846 `go test -race -shuffle=on ./...` + linker ≈ 130 MB/s combined; `/proc/pressure/io` still 85–88% at 00:07                                                                 |
+| gitea-runner CREDENTIALS chicken-and-egg   | live unit `/etc/systemd/system/gitea-runner-evo\x2dx2.service:25` | `LoadCredential=token:/run/forgejo-runner/token` — `/run` is tmpfs, systemd's CREDENTIALS step runs **before** the ExecStartPre that creates the token                                                                                    |
+| …fails every boot                          | `journalctl -b -1`                                                | same 5× `Failed at step CREDENTIALS` + `start-limit-hit` at 22:37:18 (prior boot)                                                                                                                                                         |
+| …why gen-898 looked healed                 | docs/todo/services.md:511 + journal                               | 2026-10-15 20:30 session fixed the STATE_DIRECTORY leg and saw a clean 20:22:01 start — but that was a **switch**, `/run` (and the token) survived; the reboot(s) after wiped it and re-broke the unit via the still-live CREDENTIALS leg |
+| searx fatal boot fetch                     | `journalctl -b -u searx.service`                                  | 23:29:48–54 ClearURLs rule fetches fail (`curl: (28) Resolving timed out after 3000ms` ×4) → `init()` raises → exit 1 ×5 → `start-limit-hit` 23:33:37                                                                                     |
+| :8888 listener is NOT searx                | `ss -ltnp` + `lib/ports.nix:38`                                   | `signoz-collector-metrics = 8888`; no searx socket unit exists — searx is genuinely down                                                                                                                                                  |
+| btrbk-data = expected tripwire             | journal + `ls /data/.repair-done`                                 | gate self-describes as the documented P0 tripwire; marker absent live                                                                                                                                                                     |
+| Gatus coverage                             | `journalctl -b -u gatus`                                          | SearXNG alerts fired 11×, tq alerted 23:55; runner only covered by the generic `node_systemd_unit_state{state="failed"} == 1` SigNoz rule                                                                                                 |
+| fail2ban degraded                          | journal + pgrep                                                   | 1.1.1 on python3.14, `filtersystemd` `AttributeError('NoneType'.wait)` loop, idle after 100 errors                                                                                                                                        |
+| Kernel clean                               | `journalctl -k -b -p err`                                         | zero entries; no OOM/watchdog/segfault events                                                                                                                                                                                             |
 
 ---
 
@@ -100,4 +100,4 @@
 
 ---
 
-*Self-harvest executed at authoring time: TODO_LIST.md (### services ×5, ### stability ×1) + docs/todo/services.md (7 rows incl. 2 [blocked:user], 1 folded [blocked:deploy]) + docs/todo/stability.md (1 row). No tree/code changes were made this session — diagnosis only. Waiting for instructions.*
+_Self-harvest executed at authoring time: TODO_LIST.md (### services ×5, ### stability ×1) + docs/todo/services.md (7 rows incl. 2 [blocked:user], 1 folded [blocked:deploy]) + docs/todo/stability.md (1 row). No tree/code changes were made this session — diagnosis only. Waiting for instructions._

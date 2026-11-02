@@ -68,6 +68,7 @@
 Already queued (see TODO_LIST + storage/pipeline/monitoring libraries): calm-box post-deploy re-run; first-night ladder verify; CV push→float→shim-drop; crush-daily upstream fix→push→float; §18 sanity redesign; node-exporter journal rate; ~/tmp prepare (owner-gated serialization); wevisone ruling; QLC baseline watch.
 
 NEW (harvested now):
+
 1. [ready] D6 boot proof: `nix run .#pre-reboot-check` + one owner-present reboot; verify mount + writers green within 2 min of login (unblocks the F-phase soak's boot-time confidence).
 2. [ready] Widen pre-deploy §11 FOD enumeration to the toplevel closure (or wire the keep-going prebuild in) — the "4 clean of 8" blind spot.
 3. [ready] float-register build-proof leg (reject unbuildable revs at float time).

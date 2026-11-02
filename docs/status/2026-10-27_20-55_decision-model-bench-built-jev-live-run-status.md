@@ -48,20 +48,20 @@
 
 ## f) Next tasks (session-derived; 12 real items — not padded to 50)
 
-| # | Task | Impact | Effort | Cat. |
-|---|------|--------|--------|------|
-| 1 | Owner: paste Cloudflare `account_id` + Workers AI Read+Run token into `decision-bench.yaml`, then `--bench clef` | High | S | Decision |
-| 2 | Owner: label-audit the 9 `general` docs in `corpus.tsv` (which are truly letter/other vs mislabeled receipts/invoices) | High | S | Decision |
-| 3 | Add top-2 probability margin to `--score` + re-run; compare margin vs confidence as the gate signal | High | S | Quality |
-| 4 | Check Jev pricing page; compute $/1k-docs for both arms; record in the results table | Low | S | Research |
-| 5 | After #1: the Clef-vs-Jev table (accuracy, p50, $/doc) → feeds the services.md gate-design row | High | S | Feature |
-| 6 | Encode the 128KB-argv rule (d.1) into AGENTS.md shell-devtools section | Medium | S | Docs |
-| 7 | Reconcile accounting-extraction runbook drift (row already queued — root-cause vs SUPERB restore, re-provision or retire) | Medium | M | Debt |
-| 8 | If owner blesses a direction: write the §f.2 confidence-gate design doc with THESE numbers as the evidence base | High | M | Feature |
-| 9 | Fold a Jev/Clef triage question into the paperless consume path as a dry-run workflow (no writes; log-only) if #5 supports it | Medium | M | Feature |
-| 10 | Re-run bench after the drive-import backlog settles (corpus is 80%-`new`-tagged right now; classes will stabilize) | Low | M | Watch |
-| 11 | Consider `--n 20` + seed for a stabler corpus before quoting numbers anywhere durable | Low | S | Quality |
-| 12 | Prune the `.b64-*` temp files pattern to a mktemp name (cleanup-on-exit trap) — minor hygiene in the script | Low | S | Cleanup |
+| #  | Task                                                                                                                          | Impact | Effort | Cat.     |
+| -- | ----------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | -------- |
+| 1  | Owner: paste Cloudflare `account_id` + Workers AI Read+Run token into `decision-bench.yaml`, then `--bench clef`              | High   | S      | Decision |
+| 2  | Owner: label-audit the 9 `general` docs in `corpus.tsv` (which are truly letter/other vs mislabeled receipts/invoices)        | High   | S      | Decision |
+| 3  | Add top-2 probability margin to `--score` + re-run; compare margin vs confidence as the gate signal                           | High   | S      | Quality  |
+| 4  | Check Jev pricing page; compute $/1k-docs for both arms; record in the results table                                          | Low    | S      | Research |
+| 5  | After #1: the Clef-vs-Jev table (accuracy, p50, $/doc) → feeds the services.md gate-design row                                | High   | S      | Feature  |
+| 6  | Encode the 128KB-argv rule (d.1) into AGENTS.md shell-devtools section                                                        | Medium | S      | Docs     |
+| 7  | Reconcile accounting-extraction runbook drift (row already queued — root-cause vs SUPERB restore, re-provision or retire)     | Medium | M      | Debt     |
+| 8  | If owner blesses a direction: write the §f.2 confidence-gate design doc with THESE numbers as the evidence base               | High   | M      | Feature  |
+| 9  | Fold a Jev/Clef triage question into the paperless consume path as a dry-run workflow (no writes; log-only) if #5 supports it | Medium | M      | Feature  |
+| 10 | Re-run bench after the drive-import backlog settles (corpus is 80%-`new`-tagged right now; classes will stabilize)            | Low    | M      | Watch    |
+| 11 | Consider `--n 20` + seed for a stabler corpus before quoting numbers anywhere durable                                         | Low    | S      | Quality  |
+| 12 | Prune the `.b64-*` temp files pattern to a mktemp name (cleanup-on-exit trap) — minor hygiene in the script                   | Low    | S      | Cleanup  |
 
 **Harvest Record:** f.1 rides the existing `[blocked:user]` run row (updated by this report's existence); f.2 is new owner-decision — NOT harvested into the queue yet (asked below, lands with the answer); f.3/f.4/f.12 → folded into the bench-continuation row (services.md, updated this session); f.6/f.7 already queued (pipeline/docs surfaces); f.8/f.9 gated on #1/#5; f.10/f.11 watch/quality, recorded here deliberately (would duplicate the run row).
 
@@ -73,4 +73,4 @@
 
 ---
 
-*Session artifacts: scripts/paperless-decision-bench.sh (live-verified), platforms/nixos/secrets/decision-bench.yaml (1 of 3 keys real), ~/.cache/paperless-decision-bench/{corpus.tsv, images/ (28), results-jev-{image,text}.jsonl}. Parallel-session note: flake/expected-locks.nix was modified by another session mid-bench-build (flagged at the time, daemon-committed since — not mine). No deploys, no manual commits (daemon owns the tree).*
+_Session artifacts: scripts/paperless-decision-bench.sh (live-verified), platforms/nixos/secrets/decision-bench.yaml (1 of 3 keys real), ~/.cache/paperless-decision-bench/{corpus.tsv, images/ (28), results-jev-{image,text}.jsonl}. Parallel-session note: flake/expected-locks.nix was modified by another session mid-bench-build (flagged at the time, daemon-committed since — not mine). No deploys, no manual commits (daemon owns the tree)._

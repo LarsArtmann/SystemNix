@@ -9,14 +9,15 @@
 
 The evo-x2 does three jobs on one QLC-rooted, cooling-deficient chassis: **24/7 server** (40+ services: Forgejo, Paperless, Immich, SigNoz, DNS, backups…), **daily-driver desktop**, and **build/test farm** (nix builds, VM tests, go batteries, agent fleets). The stability record:
 
-| Period | Documented freezes/resets | Root families |
-| --- | --- | --- |
-| Aug 22 – Oct 1 (#1–#14) | 14 | zram/memory livelock, IO livelock, thermal cuts begin |
-| Oct 1 – Oct 7 (#8–#26) | 19 in 7 days | thermal ceiling era + battery class + migration storms |
-| Oct 10 – Oct 25 (#27–#33) | 7 (multi-day boots) | combined storm+thermal, watchdog |
-| Oct 25 – Oct 28 (#34–#37 + live re-fire) | 5 in 76 h + one 10-h live storm | SP5100 watchdog after combined storms |
+| Period                                   | Documented freezes/resets       | Root families                                          |
+| ---------------------------------------- | ------------------------------- | ------------------------------------------------------ |
+| Aug 22 – Oct 1 (#1–#14)                  | 14                              | zram/memory livelock, IO livelock, thermal cuts begin  |
+| Oct 1 – Oct 7 (#8–#26)                   | 19 in 7 days                    | thermal ceiling era + battery class + migration storms |
+| Oct 10 – Oct 25 (#27–#33)                | 7 (multi-day boots)             | combined storm+thermal, watchdog                       |
+| Oct 25 – Oct 28 (#34–#37 + live re-fire) | 5 in 76 h + one 10-h live storm | SP5100 watchdog after combined storms                  |
 
 **Direct, countable costs of the last 76 h alone:**
+
 - 5 hard resets × (boot + service catch-up + journal-vacuum risk + every parallel session's in-flight work) — tonight alone: 3 agent sessions' batteries died or were paused mid-run, one deploy wave is stuck undeployed across 4 boots.
 - The 2026-10-28 storm: **28+ guard trips on the live boot (10 h)**, LLM sockets killed repeatedly by the wrong-tool action (the ratified M2 split fixes the action, not the storms), tq-agent-pool +162 GB read windows, nsfw-classifier cold-start storms, a sudo rm wedging buildcache — all concurrent on one disk set.
 - Journal at 7.9/8 G: every additional boot risks eating the evidence for the previous ones (evidence-pull discipline exists because of this).
@@ -26,7 +27,7 @@ The evo-x2 does three jobs on one QLC-rooted, cooling-deficient chassis: **24/7 
 
 ## 2. What moves, what stays (the split sketch)
 
-**Stays on evo-x2 (desktop + latency-sensitive):** niri/DMS desktop, audio, browser, crush interactive sessions, Helium, Steam (models stay on /data — bandwidth-bound), the LLM stack (GTT-first wants the 124 GB RAM + GPU), PapDashboard, monitoring SIGNOZ? *(owner call — see options)*.
+**Stays on evo-x2 (desktop + latency-sensitive):** niri/DMS desktop, audio, browser, crush interactive sessions, Helium, Steam (models stay on /data — bandwidth-bound), the LLM stack (GTT-first wants the 124 GB RAM + GPU), PapDashboard, monitoring SIGNOZ? _(owner call — see options)_.
 
 **Moves to box 2 (build/test farm + churning server tier):** nix build/VM-test batteries (the freezes #14–#33 class), tq-agent-pool + headless agent fleets (the +162 GB/window reader), Forgejo + runner (build farm adjacent), Forgejo/Paperless/Immich backups executing FROM box 2's schedule, ClickHouse (the 41 GB VM resident), attic/binary cache, maybe nsfw-classifier's cold-start storm.
 
@@ -34,12 +35,12 @@ The evo-x2 does three jobs on one QLC-rooted, cooling-deficient chassis: **24/7 
 
 ## 3. Options (indicative, 2026-10 price levels — verify before deciding)
 
-| Option | Hardware | Monthly power | What it buys | Honest downsides |
-| --- | --- | --- | --- | --- |
-| A. Mini-PC (used ThinkCentre/Beelink class, 32–64 GB) | ~200–450 € once | ~5–10 W idle | Batteries + agent pools + ClickHouse off the box; biggest freeze-family kill per euro | Single NVMe → same QLC-vs-build tension at smaller scale; no ECC |
-| B. Mini-PC + SATA/NVMe SSD pair | ~350–650 € once | ~8–15 W | A + build cache on its own disk (the buildcache-USB wedge class dies) | Still one PSU fan-less thermal budget; fine for builds, not for GPU |
-| C. Used tower/Rackable (ECC, 2×3.5") | ~400–800 € once | ~15–30 W | Server tier properly (ZFS/btrfs mirror, ECC RAM, backups executing) | Noise/space; overkill if the server tier stays small |
-| D. No second box — accept MANAGED status | 0 € | 0 W | The full M2–M20 stack still lands; storms pause-not-kill; role stays single | Freeze families become contained-not-extinct; every new heavy workload re-negotiates the queues |
+| Option                                                | Hardware        | Monthly power | What it buys                                                                          | Honest downsides                                                                                |
+| ----------------------------------------------------- | --------------- | ------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| A. Mini-PC (used ThinkCentre/Beelink class, 32–64 GB) | ~200–450 € once | ~5–10 W idle  | Batteries + agent pools + ClickHouse off the box; biggest freeze-family kill per euro | Single NVMe → same QLC-vs-build tension at smaller scale; no ECC                                |
+| B. Mini-PC + SATA/NVMe SSD pair                       | ~350–650 € once | ~8–15 W       | A + build cache on its own disk (the buildcache-USB wedge class dies)                 | Still one PSU fan-less thermal budget; fine for builds, not for GPU                             |
+| C. Used tower/Rackable (ECC, 2×3.5")                  | ~400–800 € once | ~15–30 W      | Server tier properly (ZFS/btrfs mirror, ECC RAM, backups executing)                   | Noise/space; overkill if the server tier stays small                                            |
+| D. No second box — accept MANAGED status              | 0 €             | 0 W           | The full M2–M20 stack still lands; storms pause-not-kill; role stays single           | Freeze families become contained-not-extinct; every new heavy workload re-negotiates the queues |
 
 ## 4. The decision framing
 

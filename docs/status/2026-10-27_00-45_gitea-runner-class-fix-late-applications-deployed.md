@@ -17,17 +17,17 @@ Q2 (start the runner now?) — answered by execution: all four downed units star
 
 Gate builders (lib/default.nix): mkOidcGate + mkDnsGate no longer emit `multi-user.target` in `after` — deps only (network-online + dnsblockd/pocket-id). Hand-rolled copies of the edge removed alongside wantedBy migration:
 
-| Unit | Change |
-| --- | --- |
-| forgejo.service | wantedBy mkForce late (nixpkgs default overridden) |
-| gatus / oauth2-proxy / miniflux / searx / browser-history | wantedBy mkForce late (nixpkgs/upstream defaults) |
-| crowdsec.service | wantedBy mkForce late (nixpkgs default; MISSED in the first sweep — its prereq DNS gate would have sat on the boot chain) |
-| crowdsec-bouncer-register | wantedBy late (chains after crowdsec) |
-| geometrikks | wantedBy late (chains after bouncer → crowdsec) |
-| hermes / hermes-github-verify | wantedBy late; hermes' hand-rolled after=multi-user dropped |
-| miniflux-oidc-setup | wantedBy = [ "miniflux.service" ] (forgejo-oidc-setup family pattern) + after=multi-user dropped |
-| llama-chat / netbird-evox2-login / tq-agent-pool | wantedBy late (tq: mkForce over the upstream go-taskqueue module); after=multi-user dropped — same post-boot placement semantics (2026-10-17/19 stability rulings preserved: refire churn + login polls stay outside the boot transaction) |
-| boot-metrics-emit | after= late (timer-driven service; the only remaining ordering leg) |
+| Unit                                                      | Change                                                                                                                                                                                                                                     |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| forgejo.service                                           | wantedBy mkForce late (nixpkgs default overridden)                                                                                                                                                                                         |
+| gatus / oauth2-proxy / miniflux / searx / browser-history | wantedBy mkForce late (nixpkgs/upstream defaults)                                                                                                                                                                                          |
+| crowdsec.service                                          | wantedBy mkForce late (nixpkgs default; MISSED in the first sweep — its prereq DNS gate would have sat on the boot chain)                                                                                                                  |
+| crowdsec-bouncer-register                                 | wantedBy late (chains after crowdsec)                                                                                                                                                                                                      |
+| geometrikks                                               | wantedBy late (chains after bouncer → crowdsec)                                                                                                                                                                                            |
+| hermes / hermes-github-verify                             | wantedBy late; hermes' hand-rolled after=multi-user dropped                                                                                                                                                                                |
+| miniflux-oidc-setup                                       | wantedBy = [ "miniflux.service" ] (forgejo-oidc-setup family pattern) + after=multi-user dropped                                                                                                                                           |
+| llama-chat / netbird-evox2-login / tq-agent-pool          | wantedBy late (tq: mkForce over the upstream go-taskqueue module); after=multi-user dropped — same post-boot placement semantics (2026-10-17/19 stability rulings preserved: refire churn + login polls stay outside the boot transaction) |
+| boot-metrics-emit                                         | after= late (timer-driven service; the only remaining ordering leg)                                                                                                                                                                        |
 
 Unchanged on purpose: plain multi-user-wanted units with no gate involvement; helpers pulled by their consumers (forgejo-oidc-setup wantedBy forgejo; crowdsec-prereq requires-pulled; architecture-catalog-sync/google-sync timer-driven); mkPoolDirUnit dir-oneshots.
 
@@ -57,6 +57,7 @@ Belt: systemd-shape-audit (class 7) + io-tier-coverage-audit boot-gated scopes e
 - Deploy: **LANDED as gen-955, 07:09:47 2026-10-27** (switch test + boot profile 07:14:40, anchor verified `readlink /run/current-system` == system-955-link). Getting there: 4h of weather — the parallel monitor365 session's cargo test cycles held the disks at 98-99% (guard trips #4419-4443; the freeze-protection gates correctly refused every window 00:48-06:49 — no force-override), then pre-deploy §8 blocked on ROOT FS 100% (4.8G free, whole-btrfs fill incl. /data); unblocked by purging 5.5G of pending trash (the sanctioned 2026-10-25 trash-purge pattern, runbook traps honored) → 9.9G free. The 6h dual-gate retry loop fired the moment both gates cleared. **Post-switch verification: ZERO `deleted to break ordering cycle` lines since 07:05 (gen-954's switch deleted 3; gen-955 deletes none), late-applications.target ACTIVE with all 14 member symlinks, and every migrated member (forgejo, geometrikks, crowdsec, gatus, hermes, miniflux, llama-chat, browser-history, oauth2-proxy, netbird-evox2-login) active.** The class is dead in production; only the owner reboot-verify remains.
 
 Two exit-4 ripples at activation (NOT this class, queued separately):
+
 - pocket-id-provision failed minting the OpenCloud Web client secret → opencloud start-limit-hit (pre-existing opencloud-pilot surface; provisioner retry at 07:20 failed the same way).
 - The runner was gracefully STOPPED at 07:18:39 by the deploy's token-regen ripple (forgejo-generate-token re-ran in the provisioner loop; the pending start leg was likely lost in the exit-4 retry transaction) and sat dead until manually restarted 07:33 — active/running since. The §21 runner canary added tonight would have flagged exactly this at the next deploy; attribution of the one-legged stop (ci-watchdog vs deploy token flow) queued.
 

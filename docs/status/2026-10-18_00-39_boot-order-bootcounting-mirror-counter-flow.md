@@ -10,7 +10,7 @@
 ## a) FULLY DONE
 
 1. **Firmware boot-chain audit, twice** (pre/post the mid-conversation ~18:14 reboot): BootOrder decoded entry-by-entry from efivarfs — `000C` Samsung sd-boot (primary), `000B` Samsung BOOTX64 fallback (wrong #2 slot), `0001` QLC sd-boot (designed fallback), `0004/0006` dup QLC BOOTX64, `0000` stale Windows + 9 inactive dupes; `BootCurrent`/`LoaderDevicePartUUID` = Samsung, green.
-2. **"Disable QLC boot?" answered with evidence** — NO: entry costs nothing, covers Samsung-*ESP* corruption; Samsung *death* is not boot-order-recoverable at all (`/nix` lives on the Samsung; kernel-from-QLC + dead-`/nix` = emergency mode). That class belongs to btrbk/offsite, not the bootloader.
+2. **"Disable QLC boot?" answered with evidence** — NO: entry costs nothing, covers Samsung-_ESP_ corruption; Samsung _death_ is not boot-order-recoverable at all (`/nix` lives on the Samsung; kernel-from-QLC + dead-`/nix` = emergency mode). That class belongs to btrbk/offsite, not the bootloader.
 3. **`loader.timeout = 1`** landed in boot.nix (owner decision "1 is fine"); [decision] row closed on BOTH surfaces (TODO_LIST.md + docs/todo/stability.md) with the bootCounting-resolves-the-tradeoff rationale.
 4. **`bootCounting = { enable = true; tries = 3; }`** landed, deployed, and verified live: entries on both ESPs as content-hash names (`nixos-<sha256>+3.conf`, 4 of them in the sync journal). Locked-nixpkgs builder semantics verified from source before trusting memory (content-addressed names, counter-aware GC, bless = suffix strip).
 5. **Samsung→QLC counter reverse-propagation** in `boot-mirror-sync` (the smart bidirectional slice): loader-owned state (counter renames, blessings) flows back from the booted ESP before rsync; NixOS content stays QLC→Samsung; disjoint flows by content-hashed filenames. Protects the partial-hang convergence class (multi-user reached, boot-complete never).
@@ -81,4 +81,4 @@
 
 ---
 
-*Report format: `.md` at explicit user path — overrides the status-report skill's HTML default (flagged per skill contract). Auto-commit daemon will sweep this file; no manual commit (harness contract). §f self-harvest: the one owed row landed pre-report; speculative items flagged in-file.*
+_Report format: `.md` at explicit user path — overrides the status-report skill's HTML default (flagged per skill contract). Auto-commit daemon will sweep this file; no manual commit (harness contract). §f self-harvest: the one owed row landed pre-report; speculative items flagged in-file._

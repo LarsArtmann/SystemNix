@@ -27,7 +27,7 @@
 
 1. **Live post-deploy verification not possible from an agent sandbox:** the cancel path is proven by unit-file reading + VM test, but a real Zone-6 trip cancelling a REAL running scrub on the host needs the deploy (owner-run) + one trip with an active scrub. Escape condition documented in the close-out (§ Deploy notes).
 2. **Session hygiene under the daemon race:** every file edit got absorbed by the auto-commit daemon within ~10 min; only the final footer commit carries my message. History is correct but attribution is diff-archaeology, not `git log` prose. Partially mitigated by embedding the Task-Queue-ID inside the TODO row texts themselves.
-~~3. **The stray-unit lint I queued is only an idea** (backlog row + design caveat); zero code exists.~~ **NOT-DO — NOT-DO — dup of §f.1 (verified closed).**
+   ~~3. **The stray-unit lint I queued is only an idea** (backlog row + design caveat); zero code exists.~~ **NOT-DO — NOT-DO — dup of §f.1 (verified closed).**
 
 ## c) NOT STARTED
 

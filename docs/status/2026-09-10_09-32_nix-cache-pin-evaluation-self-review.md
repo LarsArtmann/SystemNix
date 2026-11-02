@@ -50,9 +50,9 @@
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Source-clone BEFORE verdict** for any "should we adopt X" evaluation — the README-first pass had a 40% claim error rate this session. Clone is cheap; corrections in doctrine files are not.
-~~2. **Apply verify-before-filing's gate to AGENTS.md writes too** — it currently gates outbound issues; writing a false claim into the repo's own doctrine file is arguably worse (it propagates to every future session). Candidate hard rule: no claim enters AGENTS.md without file:line or command evidence captured in the same session.~~ **NOT-DO — dup of e1 source-verify protocol.**
-~~3. **Report tool/skill resolution failures immediately** (the crush:// builtin-not-found), not in the eventual status report.~~ **Won't implement — session discipline ask; no repo artifact.**
-~~4. Chat-table verdicts should carry confidence labels (README-derived vs source-verified) so the user can see which rows are load-bearing guesses.~~ **Won't implement — confidence-label convention never adopted; docs-only ask.**
+   ~~2. **Apply verify-before-filing's gate to AGENTS.md writes too** — it currently gates outbound issues; writing a false claim into the repo's own doctrine file is arguably worse (it propagates to every future session). Candidate hard rule: no claim enters AGENTS.md without file:line or command evidence captured in the same session.~~ **NOT-DO — dup of e1 source-verify protocol.**
+   ~~3. **Report tool/skill resolution failures immediately** (the crush:// builtin-not-found), not in the eventual status report.~~ **Won't implement — session discipline ask; no repo artifact.**
+   ~~4. Chat-table verdicts should carry confidence labels (README-derived vs source-verified) so the user can see which rows are load-bearing guesses.~~ **Won't implement — confidence-label convention never adopted; docs-only ask.**
 
 ## f) Next things to get done (session-scoped; honest count, not padded to 50)
 

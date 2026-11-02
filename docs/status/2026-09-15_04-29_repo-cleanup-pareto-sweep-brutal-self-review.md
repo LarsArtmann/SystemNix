@@ -34,10 +34,10 @@
 ## c) NOT STARTED
 
 1. **D1-D6 owner decisions** (minecraft, visionreviewd, hook-stack consolidation, history-diet paths, `data/` DB relocation, flake-update gate) — queued in TODO_LIST P3, zero execution by design. **→ D-rows residual: flake-update gate docs/todo/pipeline.md; visionreviewd enabled 09-22; hooks landed; minecraft still off**
-~~2. **`docs/status/archived/README.md` update** — I noticed mid-execution it claims "organized by year and month" (files are flat) and describes only Dec-2025 archiving; I rewrote `docs/archive/README.md` but FORGOT this one — arguably the more important README (1,300 files live there now).~~ done at `archived README rewritten flat/append-only (docs/status/archived/README.md)`
-3. **`docs/README.md` + `FEATURES.md` layout-prose review** — link-checker green (no broken targets), but I never read their prose for stale structure claims. **→ docs/README + FEATURES prose review; docs/todo/pipeline.md exact ask**
-~~4. **CI verification of the pushed commits** — origin runs with fresh daemons; I did not check the nix-check run outcome.~~ **Won't implement — one-shot CI glance; CI state tracked in pipeline.md.**
-~~5. **nix-daemon restart** — the documented fix for the current `-source` invalid-path eval red (sudo, user-owned).~~ **Won't implement — sudo op; eval red era passed.**
+   ~~2. **`docs/status/archived/README.md` update** — I noticed mid-execution it claims "organized by year and month" (files are flat) and describes only Dec-2025 archiving; I rewrote `docs/archive/README.md` but FORGOT this one — arguably the more important README (1,300 files live there now).~~ done at `archived README rewritten flat/append-only (docs/status/archived/README.md)`
+2. **`docs/README.md` + `FEATURES.md` layout-prose review** — link-checker green (no broken targets), but I never read their prose for stale structure claims. **→ docs/README + FEATURES prose review; docs/todo/pipeline.md exact ask**
+   ~~4. **CI verification of the pushed commits** — origin runs with fresh daemons; I did not check the nix-check run outcome.~~ **Won't implement — one-shot CI glance; CI state tracked in pipeline.md.**
+   ~~5. **nix-daemon restart** — the documented fix for the current `-source` invalid-path eval red (sudo, user-owned).~~ **Won't implement — sudo op; eval red era passed.**
 
 ## d) TOTALLY FUCKED UP (owning it)
 

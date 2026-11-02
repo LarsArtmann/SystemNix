@@ -17,10 +17,10 @@ TL;DR: three months of APU process-monitoring fixes are sitting on master while 
 
 On APUs, amdgpu reports process memory through `drm-memory-gtt` in fdinfo, while `drm-memory-vram` is only the small carveout. 3.3.2's per-process accounting reads vram only (`src/extract_gpuinfo_amdgpu.c` in 3.3.2 parses `drm-memory-vram` and sets `gpu_memory_usage` from it), so on a Strix Halo laptop the process list is effectively empty even while an 800 MiB embedding model sits in GTT. The bar is fine (16e0f1d8, 2025-12-13, vram+gtt sum for iGPUs — shipped in 3.3.2); the per-process fix postdates it:
 
-| Commit | Date | What |
-| --- | --- | --- |
-| `d3f91f78` | 2026-07-13 | count GTT in per-process memory usage |
-| `fbd4fe52` | 2026-09-19 | only count GTT on integrated GPUs (#492) |
+| Commit     | Date       | What                                           |
+| ---------- | ---------- | ---------------------------------------------- |
+| `d3f91f78` | 2026-07-13 | count GTT in per-process memory usage          |
+| `fbd4fe52` | 2026-09-19 | only count GTT on integrated GPUs (#492)       |
 | `eafc5ec7` | 2026-09-19 | read device architecture from the KFD topology |
 
 Latest release is still 3.3.2 (2026-02-08), so nixpkgs, the Ubuntu PPA and Debian all ship the pre-`d3f91f78` behavior.
@@ -29,8 +29,8 @@ Latest release is still 3.3.2 (2026-02-08), so nixpkgs, the Ubuntu PPA and Debia
 
 llama.cpp ROCm server holding an 808752 KiB bge-m3 model in GTT (per `/proc/<pid>/fdinfo`):
 
-| | nvtop 3.3.2 | nvtop master `71094a9` |
-| --- | --- | --- |
+|                       | nvtop 3.3.2          | nvtop master `71094a9` |
+| --------------------- | -------------------- | ---------------------- |
 | `gpu_mem_bytes_alloc` | 1,925,120 (~1.8 MiB) | 819,884,032 (~782 MiB) |
 
 nsfw-classifier holding 4510756 KiB in GTT: 3.3.2 shows 8,138,752 (~7.8 MiB); master shows 4,627,083,264 (~4.3 GiB). Master's figures match fdinfo within the expected per-fd double-counting of shared buffers. Both builds run with `-DAMDGPU_SUPPORT=ON`; no issues found on this hardware.

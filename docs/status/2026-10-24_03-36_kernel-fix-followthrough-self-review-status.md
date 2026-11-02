@@ -74,15 +74,15 @@
 
 ## Evidence (this pass)
 
-| Fact | Command | Result |
-| --- | --- | --- |
-| flm still down, capped, budget RE-burned post-midnight | `.prom` (03:35:52, fresh) + `restores-20261024` | `sacrifice_socket_active 0`, `restore_capped 1`, file = 3 (2026-10-23 also 3) |
-| Guard running normally | `.prom` mtime vs date | 28 s fresh; `trips_last_hour 1` |
-| Budget is per-calendar-day (reset design) | memory-emergency-guard.nix:417-422 | `RESTORE_TODAY_FILE=restores-$(date +%Y%m%d)` |
-| Storm decayed but not calm | `/proc/pressure/io` 03:34 | some avg10 30.79 / avg60 36.60 / avg300 29.99 |
-| Overnight check-matrix churn | `pgrep -af 'nix …'` 03:34 | `nix flake check --no-build --all-systems` running |
-| Squatter port free | `ss -ltn` 03:34 | no :8201, no :52625 listener |
-| Rows corrected on both surfaces | TODO_LIST:1708 + pipeline.md:619 | midnight-guess superseded with churn evidence |
-| TODO gate after all edits | `scripts/check-todo-system.sh` | rc=0 (18:3x and after 03:3x corrections) |
-| redactor live behavior | `pgrep -af monitor365/crm \| scripts/redact-argv.sh` | secrets REDACTED, keyword-free argv untouched |
-| Daemon batches carried my work intact | `git show --stat` fd756ce5f/b5e803370/a4c53cbaf | scripts +26/+100 lines present; lock churn = foreign session |
+| Fact                                                   | Command                                              | Result                                                                        |
+| ------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------- |
+| flm still down, capped, budget RE-burned post-midnight | `.prom` (03:35:52, fresh) + `restores-20261024`      | `sacrifice_socket_active 0`, `restore_capped 1`, file = 3 (2026-10-23 also 3) |
+| Guard running normally                                 | `.prom` mtime vs date                                | 28 s fresh; `trips_last_hour 1`                                               |
+| Budget is per-calendar-day (reset design)              | memory-emergency-guard.nix:417-422                   | `RESTORE_TODAY_FILE=restores-$(date +%Y%m%d)`                                 |
+| Storm decayed but not calm                             | `/proc/pressure/io` 03:34                            | some avg10 30.79 / avg60 36.60 / avg300 29.99                                 |
+| Overnight check-matrix churn                           | `pgrep -af 'nix …'` 03:34                            | `nix flake check --no-build --all-systems` running                            |
+| Squatter port free                                     | `ss -ltn` 03:34                                      | no :8201, no :52625 listener                                                  |
+| Rows corrected on both surfaces                        | TODO_LIST:1708 + pipeline.md:619                     | midnight-guess superseded with churn evidence                                 |
+| TODO gate after all edits                              | `scripts/check-todo-system.sh`                       | rc=0 (18:3x and after 03:3x corrections)                                      |
+| redactor live behavior                                 | `pgrep -af monitor365/crm \| scripts/redact-argv.sh` | secrets REDACTED, keyword-free argv untouched                                 |
+| Daemon batches carried my work intact                  | `git show --stat` fd756ce5f/b5e803370/a4c53cbaf      | scripts +26/+100 lines present; lock churn = foreign session                  |

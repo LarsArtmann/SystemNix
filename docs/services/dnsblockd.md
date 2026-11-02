@@ -128,6 +128,7 @@ consequence: rotation still touches exactly ONE inline entry — the duplicate
 regenerates identically on every rebuild, needs no action, and the §22
 duplicate-WARN remains the durable tripwire if a future nixpkgs change ever
 makes the copies diverge.
+
 - **Block-page PHANTOM-200: a "blocked" domain answers HTTP 200 with the block-page HTML — API clients fail with JSON-parse errors, never network errors (found live 2026-09-29 on `monitoring.googleapis.com`)** — blocklists classify parts of `googleapis.com` as telemetry; the SigNoz GCP integration's scrapes hit the block page until the domain was whitelisted in `platforms/common/dns-blocklists.nix`. When an HTTPS API integration mysteriously returns HTML: `dig +short <host> @127.0.0.1` — the block IP (192.168.1.200) vs a real answer is the whole diagnosis. **Second instance found live 2026-10-14:** GeoMetrikks's default public-IP echo `api64.ipify.org` (HaGeZi telemetry category) returned the block page, breaking the app's JSON parse → its `map-home-undetected` advisory; `ipify.org` is now whitelisted in `dns-blocklists.nix`.
 - **Wildcard `*.home.lan` RESOLVES since 2026-10-12** (dnsblockd `d5a22a4b` fixed RFC 4592 lookup + owner-name synthesis; configured-but-dead 2026-10-07→10-12 while LocalZoneStore was exact-match only) — unknown zone names answer with the server IP so Caddy's `https://*.home.lan` catch-all serves the branded 404; exact records and the apex still win. Consequence (2026-10-17, live-diagnosed): any client with search-domain completion resolves FAILED public names (offline, or typo'd/NXDOMAIN while online) onto this host through the wildcard — evo-x2 + rpi3-dns therefore dropped the `search` line from their managed resolv.conf (`dns-resolver.nix`, 2026-10-17; bare-label typing like `ping forge` no longer resolves there, measured usage zero; TLS bare-label SNI never worked anyway). Other LAN clients (MacBook) own their resolver config — owner decision tracked in `docs/todo/services.md`. Diagnosis: dnsblockd repo `docs/research/2026-10-17_search-domain-wildcard-offline-resolution-diagnosis.md`
 - **`restartTriggers` on dnsblockd** — Without it, config changes may not restart the process → stale config → DNS outage.
@@ -199,7 +200,6 @@ printf '' | openssl s_client -alpn h2 -connect 192.168.1.200:443 \
   -servername doubleclick.net 2>&1 | rg 'ALPN protocol'
 ```
 
-
 ## Startup hang — 5-phase discriminator + playbook (2026-10-12 13:06 incident)
 
 dnsblockd init logs `startup phase complete` after each of FIVE phases. A
@@ -253,7 +253,7 @@ CORRECTED 2026-10-28):**
 `ss -ltnu` for **the DNS port (`ports.dns-blocker`, 53) over UDP and TCP** —
 the same value the render writes into `dns_port`, so gate and binary cannot
 drift. Until 2026-10-28 it polled `cfg.blockPort` (:80, TCP only), i.e. the
-block-page/proxy port: the gate proved a *neighbouring* listener and left the
+block-page/proxy port: the gate proved a _neighbouring_ listener and left the
 sole-resolver contract unwatched (2026-10-28 review issue #2). Verdict rules
 now: no `:53` on either transport → FAIL the start job; ONE transport →
 WARNING only (a resolver that answers UDP-only is degraded, not dead, and a
@@ -328,7 +328,6 @@ logs a harmless ERRO on every DNS update (`server.go:779`, cannot back up the
 read-only NixOS `/etc/resolv.conf`) — the interception itself still works via
 the firewall path; the errors are noise, not breakage (fired all day
 2026-10-23 while the dashboard DNS config was being edited).
-
 
 ## Size profile (2026-10-27 storage audit S17; corrected 2026-10-28)
 

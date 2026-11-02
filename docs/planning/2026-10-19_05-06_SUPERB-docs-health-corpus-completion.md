@@ -20,27 +20,27 @@
 
 ## Pareto decomposition
 
-| Layer | Share of work | Share of result | What it is |
-| --- | --- | --- | --- |
-| **1% → 51%** | the verdict convention + spec pipeline + 3 durable surfaces (CHANGELOG entry, archive manifest, continuation-row close) | correctness and auditability of EVERYTHING | one rule-set decides whether ~4k verdicts are signal or garbage; the 3 surfaces make the sweep history-readable |
-| **4% → 64%** | the repeatable loop: classify (sequential agent) → normalize → dry-run → apply → check-rows | corpus coverage scales mechanically | batch-00 template already built; batches 01-09 are 9× the same loop |
-| **20% → 80%** | annotate+archive over 294 files + TODO_LIST `[x]` prune (208 rows) | the two corpus-scale fitness wins the user sees | "archive fully-done files" + "TODO_LIST superb" |
-| **other 20% → 100%** | harvest routing, README/FEATURES computed counts, ROADMAP/AGENTS pass, dangling-ref fixes, gates, reports, commit+push | long-tail superbness + durability | without it: 80% done forever, gates amber, drift returns next week |
+| Layer                | Share of work                                                                                                           | Share of result                                 | What it is                                                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **1% → 51%**         | the verdict convention + spec pipeline + 3 durable surfaces (CHANGELOG entry, archive manifest, continuation-row close) | correctness and auditability of EVERYTHING      | one rule-set decides whether ~4k verdicts are signal or garbage; the 3 surfaces make the sweep history-readable |
+| **4% → 64%**         | the repeatable loop: classify (sequential agent) → normalize → dry-run → apply → check-rows                             | corpus coverage scales mechanically             | batch-00 template already built; batches 01-09 are 9× the same loop                                             |
+| **20% → 80%**        | annotate+archive over 294 files + TODO_LIST `[x]` prune (208 rows)                                                      | the two corpus-scale fitness wins the user sees | "archive fully-done files" + "TODO_LIST superb"                                                                 |
+| **other 20% → 100%** | harvest routing, README/FEATURES computed counts, ROADMAP/AGENTS pass, dangling-ref fixes, gates, reports, commit+push  | long-tail superbness + durability               | without it: 80% done forever, gates amber, drift returns next week                                              |
 
 ## Level 1 — task plan (30–100 min each, ALL mission TODOs, sorted by importance/impact/effort/customer-value)
 
-| # | Task | Window | Impact | Effort | Customer value | Depends on |
-| --- | --- | --- | --- | --- | --- | --- |
-| T1 | Batch-00 adjudication → dry-run → apply → check-rows (31 files, 527 specs) | 40m | CRITICAL (first mutation; proves pipeline) | M | corpus truth begins | — |
-| T2 | Batches 01-03 classification + normalize (3 sequential agents, ~79 files) | 45m | HIGH | M | coverage | T1 (template proven) |
-| T3 | Batches 04-06 classification + normalize (~88 files) | 45m | HIGH | M | coverage | T2 |
-| T4 | Batches 07-09 classification + normalize (~76 files) | 45m | HIGH | M | coverage | T3 |
-| T5 | Apply + check-rows batches 01-09 (staged per batch) | 40m | HIGH | M | corpus truth | T2-T4 |
-| T6 | TODO_LIST prune: 208 `[x]` rows → CHANGELOG consolidated bullet (content verbatim; contract default) | 30m | HIGH (queue contract restored) | S | TODO_LIST superb | — (parallel-safe) |
-| T7 | Archive wave: candidates → citation sweep → banner → `git mv` → manifest → dangling-ref fix → check-doc-links | 60m | HIGH (user ask #4) | M | archive fully-done files | T1, T5 |
-| T8 | HARVEST: merge open-ask inventories → dedupe vs queue/libraries → route (queue+library / ROADMAP / decline) → ledger | 60m | MED-HIGH (future sessions eat here) | M | nothing rots in snapshots | T2-T4 |
-| T9 | Living docs verify: README/FEATURES computed counts; ROADMAP Theme-1; AGENTS spot pass; CHANGELOG sweep entry | 45m | MED-HIGH (drift debt from 2026-10-06 §f.5) | M | superb living docs | T7 (final counts) |
-| T10 | Gates + close: flake check --no-build, check-todo-system, check-doc-links, annotate self-test, inline health report, continuation row re-point/close, status report closeout, pathspec commit + push | 40m | CRITICAL (durability leg of the 1%) | S | green + shipped | all |
+| #   | Task                                                                                                                                                                                                 | Window | Impact                                     | Effort | Customer value            | Depends on           |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------ | ------ | ------------------------- | -------------------- |
+| T1  | Batch-00 adjudication → dry-run → apply → check-rows (31 files, 527 specs)                                                                                                                           | 40m    | CRITICAL (first mutation; proves pipeline) | M      | corpus truth begins       | —                    |
+| T2  | Batches 01-03 classification + normalize (3 sequential agents, ~79 files)                                                                                                                            | 45m    | HIGH                                       | M      | coverage                  | T1 (template proven) |
+| T3  | Batches 04-06 classification + normalize (~88 files)                                                                                                                                                 | 45m    | HIGH                                       | M      | coverage                  | T2                   |
+| T4  | Batches 07-09 classification + normalize (~76 files)                                                                                                                                                 | 45m    | HIGH                                       | M      | coverage                  | T3                   |
+| T5  | Apply + check-rows batches 01-09 (staged per batch)                                                                                                                                                  | 40m    | HIGH                                       | M      | corpus truth              | T2-T4                |
+| T6  | TODO_LIST prune: 208 `[x]` rows → CHANGELOG consolidated bullet (content verbatim; contract default)                                                                                                 | 30m    | HIGH (queue contract restored)             | S      | TODO_LIST superb          | — (parallel-safe)    |
+| T7  | Archive wave: candidates → citation sweep → banner → `git mv` → manifest → dangling-ref fix → check-doc-links                                                                                        | 60m    | HIGH (user ask #4)                         | M      | archive fully-done files  | T1, T5               |
+| T8  | HARVEST: merge open-ask inventories → dedupe vs queue/libraries → route (queue+library / ROADMAP / decline) → ledger                                                                                 | 60m    | MED-HIGH (future sessions eat here)        | M      | nothing rots in snapshots | T2-T4                |
+| T9  | Living docs verify: README/FEATURES computed counts; ROADMAP Theme-1; AGENTS spot pass; CHANGELOG sweep entry                                                                                        | 45m    | MED-HIGH (drift debt from 2026-10-06 §f.5) | M      | superb living docs        | T7 (final counts)    |
+| T10 | Gates + close: flake check --no-build, check-todo-system, check-doc-links, annotate self-test, inline health report, continuation row re-point/close, status report closeout, pathspec commit + push | 40m    | CRITICAL (durability leg of the 1%)        | S      | green + shipped           | all                  |
 
 ## Level 2 — micro-tasks (≤12 min each, ALL mission TODOs, same sort)
 

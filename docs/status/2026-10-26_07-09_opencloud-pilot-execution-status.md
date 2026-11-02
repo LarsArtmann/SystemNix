@@ -61,6 +61,7 @@ _2026-10-26 07:09 CET · session: opencloud-executor-1 (plan tombstone `975ac1d7
 ## f) NEXT (ordered; ≤50)
 
 **Gate (must be green before anything else):**
+
 1. Commit the pending README edits (line-18 count + service table row) — pathspec.
 2. Re-run FULL `nix flake check --no-build` to completion; fix anything it finds (most likely candidates: gatus-config-parse on the webfinger query-path form; doc-counts already green).
 3. `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` sanity (realizes the FOD layer cheaply pre-deploy; opencloud comes from cache.nixos.org at pin — verify substitution, no 40-min local Go build expected).

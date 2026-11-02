@@ -12,11 +12,11 @@ A 30-second oneshot (`memory-emergency-guard.timer` → `memory-emergency-guard.
 
 **Zone-6 action split (2026-10-28 §7.1a, RATIFIED — live with the next deploy):** zone 6 (IO) trips no longer touch sockets/sacrifice AT ALL. Action table:
 
-| Trip class | Cooldown | Action | Restore |
-| --- | --- | --- | --- |
-| Zones 1–5 (memory) | `actionCooldownSeconds` 600 | stop sockets + sacrifice + churn units (unchanged legacy path) | legacy 4-axis restore gate + budget |
+| Trip class                    | Cooldown                      | Action                                                                                                                                                                      | Restore                                                                                             |
+| ----------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Zones 1–5 (memory)            | `actionCooldownSeconds` 600   | stop sockets + sacrifice + churn units (unchanged legacy path)                                                                                                              | legacy 4-axis restore gate + budget                                                                 |
 | Zone 6 (IO), `ioPause.enable` | `ioActionCooldownSeconds` 150 | **SIGSTOP headless driver process groups** named by the per-trip io.stat attribution (config-owned `ioPause.cgroupPatterns`, capped `maxPauseGroups`); sockets stay SERVING | auto SIGCONT at io PSI avg60 < 20 sustained `calmSeconds` (600), hard cap `maxPausedSeconds` (3600) |
-| Zone 6 escalation | — | ≥3 zone-6 trips with trees already paused ⇒ the writer is outside the pausable set ⇒ churn-unit stop (STILL never the socket stop) | churn re-arm path |
+| Zone 6 escalation             | —                             | ≥3 zone-6 trips with trees already paused ⇒ the writer is outside the pausable set ⇒ churn-unit stop (STILL never the socket stop)                                          | churn re-arm path                                                                                   |
 
 The **never-PTY invariant is the hard safety layer**: a process group is pausable only when NO member holds a controlling terminal (one /proc pass builds the tty-owning pgid set; any overlap is skipped + logged) — owner interactive work is structurally unpausable, honoring the 2026-10-07 SIGSTOP-license revocation by construction. Pause state: `stateDir/io-paused` (epoch + pgids), metrics `memory_emergency_guard_io_paused_groups` + `io_pause_epoch_seconds`. The sustained-storm latch (§7.1c) adds `memory_emergency_guard_sustained_storm` (≥2 trips/h held ≥2 h, or ≥20/boot) with its own Gatus check.
 

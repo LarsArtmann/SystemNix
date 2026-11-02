@@ -10,18 +10,18 @@
 
 ## a) FULLY DONE — verification (task A)
 
-| # | Claim | Evidence (live, this session) |
-|---|-------|-------------------------------|
-| 1 | Firmware boots the Samsung ESP | `LoaderDevicePartUUID` efivar decode = `023F66C0-3677-4C15-9CE7-F9E1F1457EDB` (Samsung mirror ESP; matches the documented mirror PARTUUID) |
-| 2 | NVRAM flip persisted | Raw efivar decode: `BootOrder` = `000C`-first (payload `0c 00, 0b 00, 01 00, …`), `BootCurrent` = `000C` — green on the 23:29 boot AND the 22:36 boot (mirror-sync journal lines both) → **reversion #2 (2026-10-12) is cured by the reseat** |
-| 3 | Mirror healthy | `boot-mirror-sync: OK — 50 entries, 249M mirrored` at both boots (diff-gate green); `/boot-mirror` 249M/4G matches `/boot` 249M/4G |
-| 4 | Expected-warning signature documented | `bootctl status` "different partition UUID than the detected ESP" = normal mirror-boot state (loader on Samsung, OS mounts QLC at /boot) — written into AGENTS + systemd.md so nobody "fixes" it |
-| 5 | PCIe link healthy post-reseat | `/sys/class/nvme/nvme1/device/current_link_{speed,width}` = **8.0 GT/s ×4** (device max; slot max 16 GT/s) |
-| 6 | Kernel-clean | `journalctl -k`: no NVMe errors/timeouts/resets; 32/0/0 queues; SUBNQN/D3 lines are benign known quirks |
-| 7 | Filesystem-clean | `btrfs device stats` (tlc): **0 write/read/flush IO errors**; `corruption_errs 12` = cumulative-historical (present at this boot's 23:29 mount; static through all ~50 GB of my benchmark IO; /data's 386M counter is its known repair-era artifact) |
-| 8 | Deploy anchor green | `readlink /run/current-system` == `system-901-link` == profile |
-| 9 | Heatsink working | hwmon 2s sampling across 3 bench runs: idle 47.9 °C → **max 55.9 °C** under sustained mixed load + storm ambient (crit 84.9 °C; historical bare-drive composite max 63.8 °C) |
-| 10 | Hot-tier + hot-db mounts intact post-reseat | `findmnt`: `/mnt/hot`, `/var/log/journal`, `/var/log/caddy`, 5 × `/var/lib/private/*` subvols + forgejo all on nvme1n1p2 |
+| #  | Claim                                       | Evidence (live, this session)                                                                                                                                                                                                                        |
+| -- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Firmware boots the Samsung ESP              | `LoaderDevicePartUUID` efivar decode = `023F66C0-3677-4C15-9CE7-F9E1F1457EDB` (Samsung mirror ESP; matches the documented mirror PARTUUID)                                                                                                           |
+| 2  | NVRAM flip persisted                        | Raw efivar decode: `BootOrder` = `000C`-first (payload `0c 00, 0b 00, 01 00, …`), `BootCurrent` = `000C` — green on the 23:29 boot AND the 22:36 boot (mirror-sync journal lines both) → **reversion #2 (2026-10-12) is cured by the reseat**        |
+| 3  | Mirror healthy                              | `boot-mirror-sync: OK — 50 entries, 249M mirrored` at both boots (diff-gate green); `/boot-mirror` 249M/4G matches `/boot` 249M/4G                                                                                                                   |
+| 4  | Expected-warning signature documented       | `bootctl status` "different partition UUID than the detected ESP" = normal mirror-boot state (loader on Samsung, OS mounts QLC at /boot) — written into AGENTS + systemd.md so nobody "fixes" it                                                     |
+| 5  | PCIe link healthy post-reseat               | `/sys/class/nvme/nvme1/device/current_link_{speed,width}` = **8.0 GT/s ×4** (device max; slot max 16 GT/s)                                                                                                                                           |
+| 6  | Kernel-clean                                | `journalctl -k`: no NVMe errors/timeouts/resets; 32/0/0 queues; SUBNQN/D3 lines are benign known quirks                                                                                                                                              |
+| 7  | Filesystem-clean                            | `btrfs device stats` (tlc): **0 write/read/flush IO errors**; `corruption_errs 12` = cumulative-historical (present at this boot's 23:29 mount; static through all ~50 GB of my benchmark IO; /data's 386M counter is its known repair-era artifact) |
+| 8  | Deploy anchor green                         | `readlink /run/current-system` == `system-901-link` == profile                                                                                                                                                                                       |
+| 9  | Heatsink working                            | hwmon 2s sampling across 3 bench runs: idle 47.9 °C → **max 55.9 °C** under sustained mixed load + storm ambient (crit 84.9 °C; historical bare-drive composite max 63.8 °C)                                                                         |
+| 10 | Hot-tier + hot-db mounts intact post-reseat | `findmnt`: `/mnt/hot`, `/var/log/journal`, `/var/log/caddy`, 5 × `/var/lib/private/*` subvols + forgejo all on nvme1n1p2                                                                                                                             |
 
 ## a2) FULLY DONE — docs truth-sync (task B)
 
@@ -68,14 +68,14 @@
 
 ## f) NEXT (session follow-ups — all harvested)
 
-| # | Item | Status |
-|---|------|--------|
-| 1 | Quiet-window Samsung live-FS re-bench (io PSI < ~20%) | **HARVESTED** → TODO_LIST + storage.md |
-| 2 | Harden `nvme0n1` literals (signoz-metrics + gatus) against enumeration flips | **HARVESTED** → TODO_LIST + monitoring.md |
-| 3 | Owner SMART check (percentage_used, media_errors, thermal-throttle counter) | **HARVESTED** → TODO_LIST + storage.md [blocked:user] |
-| 4 | Boot-phase timing QLC- vs Samsung-ESP (dedupe vs 00:31/00:07 reports first) | **HARVESTED** → TODO_LIST + stability.md [watch] |
-| 5 | Commit the bench harness as `scripts/bench-hot-file.sh` (§e.2) | candidate — small, not queued (repo-script policy is owner-visible surface) |
-| 6 | A third NVRAM reversion post-reseat → re-open persistence-guard question | standing [watch] (TODO_LIST row, updated this session) |
+| # | Item                                                                         | Status                                                                      |
+| - | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1 | Quiet-window Samsung live-FS re-bench (io PSI < ~20%)                        | **HARVESTED** → TODO_LIST + storage.md                                      |
+| 2 | Harden `nvme0n1` literals (signoz-metrics + gatus) against enumeration flips | **HARVESTED** → TODO_LIST + monitoring.md                                   |
+| 3 | Owner SMART check (percentage_used, media_errors, thermal-throttle counter)  | **HARVESTED** → TODO_LIST + storage.md [blocked:user]                       |
+| 4 | Boot-phase timing QLC- vs Samsung-ESP (dedupe vs 00:31/00:07 reports first)  | **HARVESTED** → TODO_LIST + stability.md [watch]                            |
+| 5 | Commit the bench harness as `scripts/bench-hot-file.sh` (§e.2)               | candidate — small, not queued (repo-script policy is owner-visible surface) |
+| 6 | A third NVRAM reversion post-reseat → re-open persistence-guard question     | standing [watch] (TODO_LIST row, updated this session)                      |
 
 ## g) QUESTIONS FOR THE OWNER (cannot be determined from the system)
 

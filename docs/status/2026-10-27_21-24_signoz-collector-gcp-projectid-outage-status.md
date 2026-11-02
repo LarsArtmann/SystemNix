@@ -29,7 +29,7 @@
 ## b) PARTIALLY DONE
 
 1. **Telemetry recovery** — the fix is in tree but NOT deployed. Blocked deliberately: the tree is non-quiescent (parallel session's uncommitted ai-meter/browser-history work); deploying now would ship their half-done state (2026-10-25 deploy-race discipline). Collector stays dark until that deploy. **This is the single most consequential open item.**
-2. **Outage alerting audit** — SigNoz-rules side probed (silent, see above); **gatus side NOT probed**: "SigNoz Traces Coverage" / "Logs Pipeline Fresh" checks read a textfile fed by the coverage collector, which itself reads ClickHouse directly — they *should* have gone stale mid-outage, and whether they paged Discord is unverified (gatus sqlite needs root; agent shells blocked). Folded into the follow-up row.
+2. **Outage alerting audit** — SigNoz-rules side probed (silent, see above); **gatus side NOT probed**: "SigNoz Traces Coverage" / "Logs Pipeline Fresh" checks read a textfile fed by the coverage collector, which itself reads ClickHouse directly — they _should_ have gone stale mid-outage, and whether they paged Discord is unverified (gatus sqlite needs root; agent shells blocked). Folded into the follow-up row.
 3. **Fix verification depth** — eval-level only. The documented boot-test (`timeout 25 <collector-bin> --config <rendered>`) requires `GOOGLE_APPLICATION_CREDENTIALS` (sops-rendered, 0400 signoz) and is only safe while prod collector is down (it IS down) — but agent shells cannot read the secret (sudo banned). So the residual runtime risk (does Start() succeed with the real key + project_id against the live API) is unverified until deploy. Mitigations already on record: 16/16 projects verified HTTP 200 AS the SA on 09-29.
 4. **Receiver count precision** — journal/config eyeballing suggested 25 receivers; the eval probe says **23** (12 run-projects + 4 functions-projects with overlaps merged + storage receivers). Corrected everywhere I had written it, but it cost a correction pass — see §e.
 
@@ -63,6 +63,7 @@ Nothing I shipped this session is broken: the fix evals green, formats canonical
 ## f) NEXT — up to 50 things (brainstorm, NOT a commitment list; harvested rows marked)
 
 **Harvested this session (rows live in TODO_LIST.md + docs/todo/monitoring.md):**
+
 1. Deploy the `project_id` fix + full verification battery (quiescent tree only).
 2. Collector-death detection composite (mirror deadman / freshness metric / absence rule — probe before choosing shape).
 3. Gatus red-state audit for the outage window + Discord delivery check (root-gated leg).

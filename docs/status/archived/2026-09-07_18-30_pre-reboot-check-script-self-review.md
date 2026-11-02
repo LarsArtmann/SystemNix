@@ -41,17 +41,17 @@ not researched (per instruction).
 ## b) PARTIALLY DONE
 
 ~~1. **Negative-test coverage is 2 of ~6 paths**: proven = dead-default-init,~~ **Won't implement — remaining fixture paths never fixture-tested; script stable since.**
-   dead-rollback-init, (accidentally) missing-initrd-on-ESP. NOT fixture-tested:
-   profile ≠ current-system WARN, missing loader.conf FAIL, no-default-line WARN,
-   missing initrd-device FAIL. All are simple variants of proven parsing, but
-   unproven is unproven.
+dead-rollback-init, (accidentally) missing-initrd-on-ESP. NOT fixture-tested:
+profile ≠ current-system WARN, missing loader.conf FAIL, no-default-line WARN,
+missing initrd-device FAIL. All are simple variants of proven parsing, but
+unproven is unproven.
 ~~2. **Deploy-time wiring**: the script exists only as a reboot-time, human-~~ **Won't implement — deploy-time wiring policy never taken; reboot safety handled via pre-reboot ritual + boot counting.**
-   initiated tool. Deployments CHANGE the boot chain (yesterday's incident was
-   caused by a deploy), yet deploy.sh does not invoke or hint at the check.
+initiated tool. Deployments CHANGE the boot chain (yesterday's incident was
+caused by a deploy), yet deploy.sh does not invoke or hint at the check.
 ~~3. **Formatting/lint validation of my own edit**: `bash -n` + the app build ran,~~ **Won't implement — one-shot; formatter gates run since.**
-   but I never ran `nix fmt --no-update-lock-file -- --ci` on my flake.nix edit
-   nor a full `nix flake check`. A parallel session's 18:11 commit claims
-   "retry full check green" — encouraging but THEIR claim, unverified by me.
+but I never ran `nix fmt --no-update-lock-file -- --ci` on my flake.nix edit
+nor a full `nix flake check`. A parallel session's 18:11 commit claims
+"retry full check green" — encouraging but THEIR claim, unverified by me.
 
 ## c) NOT STARTED (from this segment's own ideas)
 

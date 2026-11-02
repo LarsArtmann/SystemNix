@@ -6,10 +6,10 @@
 
 Every OpenAI-compatible AI call on the host flows through one loopback proxy that meters **tokens, cost, latency, TTFT and per-client attribution** without changing any model name or request shape. Born from the 2026-10-16 [Agent Router evaluation](../research/2026-10-16_agent-router-deep-dive.html): the owner wants metrics + metering for ALL AI calls; Agent Router's packaging cost buys governance this single-user host doesn't need, so the exact-scope replacement is ~700 lines of owned Go.
 
-| Surface | Port | Purpose |
-| --- | --- | --- |
-| Proxy | `ai-meter` (8107) | `/v1/<upstream>/<path>` — per-client Bearer key required; `/health` unauthenticated |
-| Admin | `ai-meter-metrics` (8108) | Prometheus `/metrics` (scraped by SigNoz), `/health` |
+| Surface | Port                      | Purpose                                                                             |
+| ------- | ------------------------- | ----------------------------------------------------------------------------------- |
+| Proxy   | `ai-meter` (8107)         | `/v1/<upstream>/<path>` — per-client Bearer key required; `/health` unauthenticated |
+| Admin   | `ai-meter-metrics` (8108) | Prometheus `/metrics` (scraped by SigNoz), `/health`                                |
 
 Both loopback-only. No vHost — deliberately: the proxy is infrastructure, not a user surface.
 
@@ -37,12 +37,12 @@ zai routes to the **coding** endpoint (`/api/coding/paas/v4`), NOT the general o
 - **Client keys**: RUNTIME-MINTED by the `ai-meter-keys` oneshot (`openssl rand -hex 24` → `/run/ai-meter-keys/<client>`, 0400, owned by the consumer's user). Never in the repo, never in sops. Keys live for the boot; existing keys are NEVER regenerated (a silent rotation would 401 running consumers).
 - **Two-copy mint (2026-10-17)**: the daemon (`ai-meter` user) cannot read consumer-owned 0400 files — the first VM run start-looped on exactly that. Each key therefore ALSO exists as an `ai-meter`-owned 0400 mirror at `/run/ai-meter-keys/config/<client>` (dir 0700); the proxy config points ONLY at the mirrors, and the mint re-syncs each mirror (`install`) on every run so the pair can never diverge.
 
-| Client | Key consumption | Routed via |
-| --- | --- | --- |
-| `crush` | raw file, `$(cat /run/ai-meter-keys/crush)` in the crushrc `extraRc` (home.nix) — overrides `zai` + `gemini` base URLs; later provider-add statements win | zai, gemini (native) |
-| `paperless-gpt` | env file `OPENAI_API_KEY=…` on the daemon unit | fastflowlm |
-| `inboxclean` | env file on `inboxclean-web` | llama-chat |
-| `browser-history` | env file `LLM_API_KEY=…` (root-owned mint copy — DynamicUser server has no stable uid; systemd reads the file as root) on the `browser-history` unit | llama-chat |
+| Client            | Key consumption                                                                                                                                           | Routed via           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `crush`           | raw file, `$(cat /run/ai-meter-keys/crush)` in the crushrc `extraRc` (home.nix) — overrides `zai` + `gemini` base URLs; later provider-add statements win | zai, gemini (native) |
+| `paperless-gpt`   | env file `OPENAI_API_KEY=…` on the daemon unit                                                                                                            | fastflowlm           |
+| `inboxclean`      | env file on `inboxclean-web`                                                                                                                              | llama-chat           |
+| `browser-history` | env file `LLM_API_KEY=…` (root-owned mint copy — DynamicUser server has no stable uid; systemd reads the file as root) on the `browser-history` unit      | llama-chat           |
 
 Adding a consumer = add a `services.ai-meter.clients.<name>` entry (user + optional `envKey`) + point the app's base URL at `/v1/<upstream>`. The deploy.sh provisioner loop re-runs `ai-meter-keys` so the key exists before the restarted daemon references it.
 

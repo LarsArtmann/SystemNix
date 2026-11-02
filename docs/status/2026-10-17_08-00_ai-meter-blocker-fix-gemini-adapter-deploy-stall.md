@@ -65,6 +65,7 @@ The ai-meter build's single open bug (daemon cannot read runtime-minted client k
 ## f) NEXT (prioritized, ~50)
 
 **Deploy chain (the moment the tree is quiet):**
+
 1. Re-enumerate `nix build toplevel --keep-going` under the CURRENT lock; one final mismatch sweep if the 07:14 move re-staled shims.
 2. `export DEPLOY_FORCE_PRESSURE=1 NIX_HEAVY_GATE_FORCE=1; nix run .#deploy` (both documented bypasses; §13 needs the gate var).
 3. Anchor verify: `readlink /run/current-system` == newest system-N-link; repair per the exit-14 protocol if not.

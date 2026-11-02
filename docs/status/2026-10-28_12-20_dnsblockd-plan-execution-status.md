@@ -8,28 +8,28 @@
 
 **Bottom line:** 10 of 27 plan tasks are implemented, verified, and committed; 1 is partial; 16 remain and every one of them is gated by
 something I cannot do from an agent shell (deploy/root, an owner decision, or an upstream release). The two defects the review called
-*concrete* are both closed **in-tree** — but neither is ACTIVE on the host until a deploy runs, which needs root.
+_concrete_ are both closed **in-tree** — but neither is ACTIVE on the host until a deploy runs, which needs root.
 
 ---
 
 ## Verification actually performed this session
 
-| # | Command / probe | Result |
-| --- | --- | --- |
-| V1 | `nix build .#checks.x86_64-linux.dnsblockd-readiness-gate` | green — `5/5 legs passed (2 negative, 3 positive)` |
-| V2 | `nix build .#checks.x86_64-linux.dnsblockd-ca-parity-selftest` | green — 8 real-certificate fixture legs |
-| V3 | `nix build .#checks.x86_64-linux.dns-blocker-render` | green — incl. the 7 new rpi3 parity assertions |
-| V4 | `bash scripts/test-ca-parity-smoke.sh` | `PASS: all 8 dnsblockd CA-parity fixture legs` |
-| V5 | `nix flake check --no-build` | **exit 0** (only the expected aarch64-darwin omission) |
-| V6 | `bash scripts/check-todo-system.sh` | `OK: TODO queue/library structure clean` (145 unharvested-report WARN = pre-existing class) |
-| V7 | `bash scripts/audit-shell-nullglob.sh` / `audit-textfile-tmp.sh` | `fail=0` both |
-| V8 | Live: new gate script against real `ss` | exit 0 (finds `:53` on UDP **and** TCP) |
-| V9 | Live: §22 CA parity against the real trust bundle | `WARN — trusted and identical, but the bundle appends the same CA 2x` |
-| V10 | Live: §23 filter-proxy probe against the running unit | `PASS — 3 proxy keys rendered, no filter domains armed, unit active` |
-| V11 | Rendered Gatus endpoint diff (T12) | 245 → 245 endpoints, `DNS Blocker` object **byte-identical** |
-| V12 | Shipped observer script, path-redirected, 3 runs | healthy → `observer_ok 1`; set backdated 40d → `refresh_stale 1`; dead stats port → `observer_ok 0` + `export_broken 1` |
-| V13 | T22 negative test (`lib.mkForce { }` over `services.caddy.virtualHosts`) | exactly 1 matching failed assertion, eval otherwise clean |
-| V14 | `nix eval … security.pki.certificates --apply length` | `1` (so the duplicate CA is not a doubled option entry) |
+| #   | Command / probe                                                          | Result                                                                                                                  |
+| --- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| V1  | `nix build .#checks.x86_64-linux.dnsblockd-readiness-gate`               | green — `5/5 legs passed (2 negative, 3 positive)`                                                                      |
+| V2  | `nix build .#checks.x86_64-linux.dnsblockd-ca-parity-selftest`           | green — 8 real-certificate fixture legs                                                                                 |
+| V3  | `nix build .#checks.x86_64-linux.dns-blocker-render`                     | green — incl. the 7 new rpi3 parity assertions                                                                          |
+| V4  | `bash scripts/test-ca-parity-smoke.sh`                                   | `PASS: all 8 dnsblockd CA-parity fixture legs`                                                                          |
+| V5  | `nix flake check --no-build`                                             | **exit 0** (only the expected aarch64-darwin omission)                                                                  |
+| V6  | `bash scripts/check-todo-system.sh`                                      | `OK: TODO queue/library structure clean` (145 unharvested-report WARN = pre-existing class)                             |
+| V7  | `bash scripts/audit-shell-nullglob.sh` / `audit-textfile-tmp.sh`         | `fail=0` both                                                                                                           |
+| V8  | Live: new gate script against real `ss`                                  | exit 0 (finds `:53` on UDP **and** TCP)                                                                                 |
+| V9  | Live: §22 CA parity against the real trust bundle                        | `WARN — trusted and identical, but the bundle appends the same CA 2x`                                                   |
+| V10 | Live: §23 filter-proxy probe against the running unit                    | `PASS — 3 proxy keys rendered, no filter domains armed, unit active`                                                    |
+| V11 | Rendered Gatus endpoint diff (T12)                                       | 245 → 245 endpoints, `DNS Blocker` object **byte-identical**                                                            |
+| V12 | Shipped observer script, path-redirected, 3 runs                         | healthy → `observer_ok 1`; set backdated 40d → `refresh_stale 1`; dead stats port → `observer_ok 0` + `export_broken 1` |
+| V13 | T22 negative test (`lib.mkForce { }` over `services.caddy.virtualHosts`) | exactly 1 matching failed assertion, eval otherwise clean                                                               |
+| V14 | `nix eval … security.pki.certificates --apply length`                    | `1` (so the duplicate CA is not a doubled option entry)                                                                 |
 
 ---
 
@@ -109,22 +109,22 @@ something I cannot do from an agent shell (deploy/root, an owner decision, or an
 
 ## c) NOT STARTED (and why each one is not laziness)
 
-| Task | Gated by |
-| --- | --- |
-| T04 allowlist backup | **owner answer Q3** (target path + whether tracking data may ride along — a privacy boundary) |
-| T06 option validation (read `dns-blocker.nix:460-1195`) | unblocked; ~100 min of careful reading, deliberately last because it changes no behaviour |
-| T08 `Type = "notify"` + `AF_UNIX` | **deploy** (a wrong family makes the unit sit in `activating`; must be one atomic switch) |
+| Task                                                     | Gated by                                                                                                    |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| T04 allowlist backup                                     | **owner answer Q3** (target path + whether tracking data may ride along — a privacy boundary)               |
+| T06 option validation (read `dns-blocker.nix:460-1195`)  | unblocked; ~100 min of careful reading, deliberately last because it changes no behaviour                   |
+| T08 `Type = "notify"` + `AF_UNIX`                        | **deploy** (a wrong family makes the unit sit in `activating`; must be one atomic switch)                   |
 | T09/T10/T11 upstream-module migration + VM test adoption | **owner answer Q1** (unprivileged user + `chown` of 7 GB while the sole resolver is stopped) and **deploy** |
-| T16 `hot/dnsblockd` coverage decision | doctrine decision (snapshot set vs a small copy-only unit) — needs an owner steer |
-| T17 gateway surface | upstream release (issue #24 + T366/T367) |
-| T18 search-domain LAN-client policy | **owner decision** (open since 2026-10-17) |
-| T19 runbook pointers (4 docs) | unblocked, doc-only |
-| T20 comment sweeps (pre-T299 claims + contradictions) | unblocked, doc-only |
-| T21 h2 block-page / ALPN | unblocked probe; needs a decision on whether h2 should be on at all |
-| T24 catalog/eval warning batch | unblocked but low value (3 duplicated rows for one 21-subdomain warning) |
-| T25 upstream issues batch | needs `gh` write access + the verified repros already collected |
-| T26 post-deploy battery | **deploy** (must run on a generation carrying the new revs) |
-| T27 prune pass | script-driven, and it UNMASKS WARNs (163→221 last time) — wants a quiet window and a rev-pinned A/B |
+| T16 `hot/dnsblockd` coverage decision                    | doctrine decision (snapshot set vs a small copy-only unit) — needs an owner steer                           |
+| T17 gateway surface                                      | upstream release (issue #24 + T366/T367)                                                                    |
+| T18 search-domain LAN-client policy                      | **owner decision** (open since 2026-10-17)                                                                  |
+| T19 runbook pointers (4 docs)                            | unblocked, doc-only                                                                                         |
+| T20 comment sweeps (pre-T299 claims + contradictions)    | unblocked, doc-only                                                                                         |
+| T21 h2 block-page / ALPN                                 | unblocked probe; needs a decision on whether h2 should be on at all                                         |
+| T24 catalog/eval warning batch                           | unblocked but low value (3 duplicated rows for one 21-subdomain warning)                                    |
+| T25 upstream issues batch                                | needs `gh` write access + the verified repros already collected                                             |
+| T26 post-deploy battery                                  | **deploy** (must run on a generation carrying the new revs)                                                 |
+| T27 prune pass                                           | script-driven, and it UNMASKS WARNs (163→221 last time) — wants a quiet window and a rev-pinned A/B         |
 
 ---
 
@@ -132,12 +132,12 @@ something I cannot do from an agent shell (deploy/root, an owner decision, or an
 
 1. **All telemetry on this host has been dark for ~16 hours.** `signoz-collector.service` is `failed` with
    `start-limit-hit` (last attempt 00:45:24, "Start request repeated too quickly"); nothing listens on :4317/:4318. Every
-   service's traces and logs are being dropped, the SigNoz UI still renders (query service + ClickHouse are up) so it *looks*
+   service's traces and logs are being dropped, the SigNoz UI still renders (query service + ClickHouse are up) so it _looks_
    healthy, and the in-band detector for it is scraped by the dead collector — a stack-scale phantom-green. The in-tree fix
    exists; the recovery needs root. This is the single biggest outstanding problem on the box and it is not a dnsblockd one.
 2. **The pre-commit gate was red for everyone, for as long as that VM test existed.** A double-wrapped test meant
    `nix flake check` could not evaluate the check set, so every Nix commit aborted. Nothing reported it; I found it because my
-   own commit was refused. Fixed, but the *class* (nobody runs the gate at HEAD on a shared tree) is unfixed.
+   own commit was refused. Fixed, but the _class_ (nobody runs the gate at HEAD on a shared tree) is unfixed.
 3. **The derived Gatus count in README drifted twice inside 20 minutes.** Two sibling sessions added endpoints without
    re-stamping, and the count moved 243 → 244 → 245 → 247 while I was writing. Each is caught only when someone tries to
    commit; the number is owned by nobody.
@@ -166,7 +166,7 @@ something I cannot do from an agent shell (deploy/root, an owner decision, or an
    plan named a non-existent metric; one named a port its code never touched. A grep at queueing time costs seconds.
 2. **A shell gate is not tested until something executes it against a fixture.** Both defects the review found (wrong-port
    gate, unenforced CA parity) had green runtime evidence — a start job that passed, a deploy that succeeded — because the
-   *evidence* could not distinguish right from wrong. Fixtures with real artifacts (listener maps, openssl certs) are the fix,
+   _evidence_ could not distinguish right from wrong. Fixtures with real artifacts (listener maps, openssl certs) are the fix,
    and they are cheap.
 3. **Derived numbers need a single owner.** README's module/endpoint counts are re-stamped by whoever happens to add the
    offending thing, which is to say nobody. Either generate the sentence or have the gate print the exact replacement line.
@@ -182,7 +182,7 @@ something I cannot do from an agent shell (deploy/root, an owner decision, or an
 **Code / config**
 
 8. **Liveness must not share a failure domain with the thing it watches.** gatus-gated-on-OIDC (2026-10-12) and now
-   OTel-errors-reported-via-OTel are the same anti-pattern; the pattern that works is a *third* channel (textfile → node
+   OTel-errors-reported-via-OTel are the same anti-pattern; the pattern that works is a _third_ channel (textfile → node
    exporter → Gatus), which is what §22/§23 and the observer now use.
 9. **Prefer the readiness signal the binary already emits.** `sdnotify.Ready()` has been called by the deployed binary all
    along; the wrapper ignores it and re-implements readiness with a poll. T08 deletes that whole mechanism.
@@ -205,7 +205,7 @@ not harvested (reason given).
 2. Add an OUT-OF-BAND unit-state leg for the collector itself (system-health textfile or a Gatus `:8888` probe): the current
    detector is scraped by the thing it watches. `[Q]`
 3. Verify the dnsblockd exporter resumes the moment the collector returns; then confirm `dnsblockd_otel_export_broken` returns
-   to 0 in the *next* observer sample — that is the end-to-end proof of T05. `[NQ]`
+   to 0 in the _next_ observer sample — that is the end-to-end proof of T05. `[NQ]`
 4. Deploy the observer + gate + §22/§23: they are in-tree only. One deploy activates T01, T02, T05(observer), T14, T12, T23.
    `[NQ]`
 5. After that deploy: pull `journalctl -u dnsblockd-otel-observer` + the textfile and confirm `observer_ok 1`. `[NQ]`
@@ -263,7 +263,7 @@ not harvested (reason given).
 35. Make the CA-duplicate WARN explain how to find the writer (it currently only says "find the second writer"). `[NQ]`
 36. Re-stamp README's Gatus count **after** the next endpoint wave, and decide whether the sentence should be generated. `[NQ]`
 37. Add a tiny script that prints the exact README replacement lines for `doc-counts` (kills the treadmill). `[NQ]`
-38. Add the observer's textfile to a SigNoz dashboard for the *post-recovery* view (it is the out-of-band leg while dead). `[NQ]`
+38. Add the observer's textfile to a SigNoz dashboard for the _post-recovery_ view (it is the out-of-band leg while dead). `[NQ]`
 39. Decide whether `dnsblockd_otel_errors_total` should also page (today it only warns via Gatus). `[Q]` (folded into 20)
 40. Record in the runbook what the observer does NOT cover (it samples one counter and one age; not block-decision latency). `[NQ]`
 41. Give `dnsblockd-otel-observer` the same `harden{}` treatment as its neighbours once it has run a cycle in prod. `[NQ]`
@@ -297,16 +297,16 @@ not harvested (reason given).
 
 ## Appendix — commits this session touched
 
-| Commit | What it carries |
-| --- | --- |
-| `0fdea5e14` | the Pareto plan + four falsified-row corrections (pushed via merge `7f4edadd0`) |
-| `eb6ef83e2` | plan tombstone `EXECUTING` |
-| `89ae69400` *(daemon batch)* | **T01** gate fix + `checks.dnsblockd-readiness-gate` + `flake.nix` import + runbook paragraph — rode a sibling's storage batch |
-| `700d5c236` | **T02** CA-parity §22 + `scripts/lib/ca-parity-smoke.sh` + 8-leg fixture + README count re-stamp + the scrub-guard repair |
-| `24233721d` | **T12** registry inversion + **T23** filter-proxy §23 |
-| `dbb085a00` | **T05 + T14** observer, two Gatus checks, runbook section |
-| `cddbffbc7` *(and `dce5b2135`)* | **T13** rpi3 parity assertions + runbook "Failover asymmetry" |
-| `90f44ac70` | **T22** `dns-caddy-wildcard-audit` + cloud-zone exemption + module-count re-stamp |
+| Commit                          | What it carries                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `0fdea5e14`                     | the Pareto plan + four falsified-row corrections (pushed via merge `7f4edadd0`)                                                |
+| `eb6ef83e2`                     | plan tombstone `EXECUTING`                                                                                                     |
+| `89ae69400` _(daemon batch)_    | **T01** gate fix + `checks.dnsblockd-readiness-gate` + `flake.nix` import + runbook paragraph — rode a sibling's storage batch |
+| `700d5c236`                     | **T02** CA-parity §22 + `scripts/lib/ca-parity-smoke.sh` + 8-leg fixture + README count re-stamp + the scrub-guard repair      |
+| `24233721d`                     | **T12** registry inversion + **T23** filter-proxy §23                                                                          |
+| `dbb085a00`                     | **T05 + T14** observer, two Gatus checks, runbook section                                                                      |
+| `cddbffbc7` _(and `dce5b2135`)_ | **T13** rpi3 parity assertions + runbook "Failover asymmetry"                                                                  |
+| `90f44ac70`                     | **T22** `dns-caddy-wildcard-audit` + cloud-zone exemption + module-count re-stamp                                              |
 
 **Files this session created:** `flake/parts/checks/dnsblockd-guards.nix`, `scripts/lib/ca-parity-smoke.sh`,
 `scripts/test-ca-parity-smoke.sh`, `modules/nixos/services/dns-caddy-wildcard-audit.nix`,

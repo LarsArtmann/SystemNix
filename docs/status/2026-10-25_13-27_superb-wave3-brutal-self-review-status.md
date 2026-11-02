@@ -57,22 +57,22 @@
 
 ## f) Next tasks (session-derived, honest count 12 — not padded)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Pairing recheck pass on pipeline.md + services.md at discordsync-session quiescence (28 no-entry + 13 wrong-link; individually EYES-ON all 13 wrong-links per d.5) | High | M | Queue parity |
-| 2 | First `--apply` exercise of `scripts/prune-done-todos.sh` at the next prune cycle (3 done rows await) | Medium | S | Tooling |
-| 3 | R19 scoping: locate the tq agent-pool harvest implementation (go-taskqueue ecosystem) and map the five hardening rules onto it | High | M | Dispatch integrity |
-| 4 | Gate hardening: pairing WARNs emit row line numbers (`check-todo-system.sh` pairing_check) | Medium | S | Tooling |
-| 5 | Promote analyze3.sh logic into the gate as `--pairing-report` (or delete the scratch) — one home for the classifier | Medium | S | Tooling |
-| 6 | CONTRIBUTING: the wrong-link/no-entry remedy-doctrine paragraph (repoint/append/new-entry/close decision tree) | Medium | S | Docs |
-| 7 | Deploy-session executor-discovery step: `ls -t docs/status/ \| head -3` + read before pinning a deploy rev (extend the 2026-10-23 pre-read rule) | Medium | S | Process |
-| 8 | Verify exec-3's deploy outcome + proofs (T1/T2) once landed; reconcile the 12-26 plan's R1/R2 lines against their close-out so neither plan double-counts the deploy | High | S | Coordination |
-| 9 | Post-deploy verifications that rode MY closed rows: `/data` 85% alarm live-green (L43's "rides next deploy") + L59 watch-row retirement decision | Medium | S | Monitoring |
-| 10 | R16 SigNoz truth batch (time_series_v2 empty, traces-coverage red, zero-series automation — pairs the new monitoring vacuous-rule entry, S34 sibling) | High | M | Observability |
-| 11 | R17 stability alert batch (zone-6 trip-RATE, GPU thermal edge, throttle high-counter, fan telemetry) | High | M | Stability |
-| 12 | R6 unharvested sweep stage 1 (123 WARNs; 03-42 toolchain dependency — coordinate before touching) | Medium | L | Queue truth |
+| #  | Task                                                                                                                                                                 | Impact | Effort | Category           |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------ |
+| 1  | Pairing recheck pass on pipeline.md + services.md at discordsync-session quiescence (28 no-entry + 13 wrong-link; individually EYES-ON all 13 wrong-links per d.5)   | High   | M      | Queue parity       |
+| 2  | First `--apply` exercise of `scripts/prune-done-todos.sh` at the next prune cycle (3 done rows await)                                                                | Medium | S      | Tooling            |
+| 3  | R19 scoping: locate the tq agent-pool harvest implementation (go-taskqueue ecosystem) and map the five hardening rules onto it                                       | High   | M      | Dispatch integrity |
+| 4  | Gate hardening: pairing WARNs emit row line numbers (`check-todo-system.sh` pairing_check)                                                                           | Medium | S      | Tooling            |
+| 5  | Promote analyze3.sh logic into the gate as `--pairing-report` (or delete the scratch) — one home for the classifier                                                  | Medium | S      | Tooling            |
+| 6  | CONTRIBUTING: the wrong-link/no-entry remedy-doctrine paragraph (repoint/append/new-entry/close decision tree)                                                       | Medium | S      | Docs               |
+| 7  | Deploy-session executor-discovery step: `ls -t docs/status/ \| head -3` + read before pinning a deploy rev (extend the 2026-10-23 pre-read rule)                     | Medium | S      | Process            |
+| 8  | Verify exec-3's deploy outcome + proofs (T1/T2) once landed; reconcile the 12-26 plan's R1/R2 lines against their close-out so neither plan double-counts the deploy | High   | S      | Coordination       |
+| 9  | Post-deploy verifications that rode MY closed rows: `/data` 85% alarm live-green (L43's "rides next deploy") + L59 watch-row retirement decision                     | Medium | S      | Monitoring         |
+| 10 | R16 SigNoz truth batch (time_series_v2 empty, traces-coverage red, zero-series automation — pairs the new monitoring vacuous-rule entry, S34 sibling)                | High   | M      | Observability      |
+| 11 | R17 stability alert batch (zone-6 trip-RATE, GPU thermal edge, throttle high-counter, fan telemetry)                                                                 | High   | M      | Stability          |
+| 12 | R6 unharvested sweep stage 1 (123 WARNs; 03-42 toolchain dependency — coordinate before touching)                                                                    | Medium | L      | Queue truth        |
 
-*Harvest: #1/#2/#3/#4 already landed as the 13-19 report's §f rows (TODO_LIST + pipeline.md); #5-#12 are deliberately NOT harvested by this report — they are plan-line references (R6/R16/R17) or small process items the 12-26 plan + this report's §e already carry; double-queueing them would mint exactly the drift this session just cleared.*
+_Harvest: #1/#2/#3/#4 already landed as the 13-19 report's §f rows (TODO_LIST + pipeline.md); #5-#12 are deliberately NOT harvested by this report — they are plan-line references (R6/R16/R17) or small process items the 12-26 plan + this report's §e already carry; double-queueing them would mint exactly the drift this session just cleared._
 
 ## g) Questions I cannot answer myself (max 3 — carried, still unanswered)
 
@@ -81,4 +81,5 @@
 3. **Wave sequencing vs exec-3**: once their T1/T2 lands, should the 12-26 plan's remaining structural wave (R8-R18) be dispatched to a fresh session immediately, or sequenced behind exec-3's §f close-out (their §g.3 coordination answer may decide both — if you answer theirs, this one is settled)?
 
 ---
-*Session evidence: commits `8835d9100`/`65a00059c`/`8782f345e`/`4375db47e`/`f1d913fd5` (all pathspec, hooks green, pushed `1eae47c28..f1d913fd5`); gate at close: DRIFT 41 / unharvested 123 / structure clean / exit 0; dry-run self-test log in-session (3 rows found, zero writes); worktree list verified post-cleanup (mine removed, 3 foreign stale ones remain, listed §e.7); CHANGELOG entry added at 13:27 by this review (rides this report's commit).*
+
+_Session evidence: commits `8835d9100`/`65a00059c`/`8782f345e`/`4375db47e`/`f1d913fd5` (all pathspec, hooks green, pushed `1eae47c28..f1d913fd5`); gate at close: DRIFT 41 / unharvested 123 / structure clean / exit 0; dry-run self-test log in-session (3 rows found, zero writes); worktree list verified post-cleanup (mine removed, 3 foreign stale ones remain, listed §e.7); CHANGELOG entry added at 13:27 by this review (rides this report's commit)._

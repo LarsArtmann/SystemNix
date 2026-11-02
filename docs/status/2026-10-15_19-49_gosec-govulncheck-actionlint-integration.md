@@ -9,29 +9,29 @@
 
 ## 0. Session Timeline
 
-| # | Step | Outcome |
-|---|------|---------|
-| 1 | Grep repo for prior gosec/govulncheck/actionlint context | 69 hits — TODO row for actionlint (TODO_LIST.md:851, docs/todo/pipeline.md:34), ~/go/bin strays list (2026-09-23 report), go-deps-audit nightly already runs govulncheck |
-| 2 | Read `flake/parts/packages.nix` + `platforms/common/packages/base.nix` | Found the right surface: `developmentPackages` in base.nix (shared, ~80% common) |
-| 3 | nixpkgs availability check | gosec **2.29.0** ✓, govulncheck **1.9.0** ✓, actionlint **1.7.12** ✓, benchstat **absent** ✗ |
-| 4 | Edit attempt #1 | **FAILED** — edit tool rejected: file not read in session. Rule violation, recovered in one step |
-| 5 | Read base.nix:238-256, edit #2 | **SUCCESS** — 3 packages added with version comments, base.nix:240-242 |
-| 6 | `nix fmt . <path>` + `nix eval .#nixosConfigurations.evo-x2.config.environment.systemPackages` | **VERIFIED**: gosec-2.29.0, govulncheck-1.9.0, actionlint-1.7.12 all present in evo-x2 systemPackages |
-| 7 | User adds benchstat (pkg.go.dev/golang.org/x/perf/cmd/benchstat) | Availability checked (absent in nixpkgs) — **then dropped on the floor, never implemented** |
-| 8 | `nix fmt` side effect | Processed 3130 files repo-wide (12 changed) — churned 11 files belonging to OTHER sessions' work; flagged, left untouched |
-| 9 | Auto-commit daemon 19:50:22 | Swept my base.nix edit + 12 foreign files into heuristic commit `6193f506`; **not amended** |
+| # | Step                                                                                           | Outcome                                                                                                                                                                  |
+| - | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | Grep repo for prior gosec/govulncheck/actionlint context                                       | 69 hits — TODO row for actionlint (TODO_LIST.md:851, docs/todo/pipeline.md:34), ~/go/bin strays list (2026-09-23 report), go-deps-audit nightly already runs govulncheck |
+| 2 | Read `flake/parts/packages.nix` + `platforms/common/packages/base.nix`                         | Found the right surface: `developmentPackages` in base.nix (shared, ~80% common)                                                                                         |
+| 3 | nixpkgs availability check                                                                     | gosec **2.29.0** ✓, govulncheck **1.9.0** ✓, actionlint **1.7.12** ✓, benchstat **absent** ✗                                                                             |
+| 4 | Edit attempt #1                                                                                | **FAILED** — edit tool rejected: file not read in session. Rule violation, recovered in one step                                                                         |
+| 5 | Read base.nix:238-256, edit #2                                                                 | **SUCCESS** — 3 packages added with version comments, base.nix:240-242                                                                                                   |
+| 6 | `nix fmt . <path>` + `nix eval .#nixosConfigurations.evo-x2.config.environment.systemPackages` | **VERIFIED**: gosec-2.29.0, govulncheck-1.9.0, actionlint-1.7.12 all present in evo-x2 systemPackages                                                                    |
+| 7 | User adds benchstat (pkg.go.dev/golang.org/x/perf/cmd/benchstat)                               | Availability checked (absent in nixpkgs) — **then dropped on the floor, never implemented**                                                                              |
+| 8 | `nix fmt` side effect                                                                          | Processed 3130 files repo-wide (12 changed) — churned 11 files belonging to OTHER sessions' work; flagged, left untouched                                                |
+| 9 | Auto-commit daemon 19:50:22                                                                    | Swept my base.nix edit + 12 foreign files into heuristic commit `6193f506`; **not amended**                                                                              |
 
 ---
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-|------|----------|
-| gosec added to NixOS system packages | `platforms/common/packages/base.nix:240` (nixpkgs 2.29.0), eval-verified in evo-x2 `environment.systemPackages` |
-| govulncheck added to NixOS system packages | `platforms/common/packages/base.nix:241` (nixpkgs 1.9.0), eval-verified |
-| actionlint added to NixOS system packages | `platforms/common/packages/base.nix:242` (nixpkgs 1.7.12), eval-verified |
-| Placement decision (Go dev section of `developmentPackages`, shared platforms/common) | Follows the existing pattern (golangci-lint, gofumpt, gotests cluster at base.nix:242-253) |
-| Version provenance comments inline | Each line carries the nixpkgs version for future drift-spotting |
+| Item                                                                                  | Evidence                                                                                                        |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| gosec added to NixOS system packages                                                  | `platforms/common/packages/base.nix:240` (nixpkgs 2.29.0), eval-verified in evo-x2 `environment.systemPackages` |
+| govulncheck added to NixOS system packages                                            | `platforms/common/packages/base.nix:241` (nixpkgs 1.9.0), eval-verified                                         |
+| actionlint added to NixOS system packages                                             | `platforms/common/packages/base.nix:242` (nixpkgs 1.7.12), eval-verified                                        |
+| Placement decision (Go dev section of `developmentPackages`, shared platforms/common) | Follows the existing pattern (golangci-lint, gofumpt, gotests cluster at base.nix:242-253)                      |
+| Version provenance comments inline                                                    | Each line carries the nixpkgs version for future drift-spotting                                                 |
 
 **Verification evidence:** `nix eval .#nixosConfigurations.evo-x2.config.environment.systemPackages --apply ... --json` returned all three (`gosec-2.29.0`, `govulncheck-1.9.0`, `actionlint-1.7.12`). That is an EVAL check only — no `nix flake check`, no build, no deploy.
 
@@ -39,23 +39,23 @@
 
 ## b) PARTIALLY DONE
 
-| Item | Done | Missing |
-|------|------|---------|
-| The 4-tool request | 3 of 4 landed + eval-verified | benchstat: availability checked (`absent` in nixpkgs — needs `buildGoModule` from `golang.org/x/perf` + vendorHash FOD work), then silently dropped. This is the session's headline failure — the user amended the task mid-flight and the amendment never made it into the edit |
-| Shared-tree hygiene | Noticed the 11-file fmt churn, flagged it to the user in the closing message | Never attributed the churn: `git show` on `6193f506` shows SUBSTANTIVE diffs in foreign files (browser-history.nix +38 lines, deploy.sh 264 lines changed, lars-packages.nix 90 lines) — mix of other sessions' real work and possibly MY `nix fmt` churn, now entangled in one heuristic commit. Per the 2026-08-30 pathspec-commit rule this is exactly the class the daemon does and sessions are supposed to untangle; I did not |
-| Daemon-race follow-up | Verified WHAT the daemon staged (`git show --stat 6193f506`: 13 files, confirmed my base.nix inside) | Amend-vs-land-on-top decision per `docs/CONTRIBUTING.md` "Daemon-race commit policy" not executed — HEAD still carries a meaningless heuristic message covering 13 files of mixed authorship |
+| Item                  | Done                                                                                                 | Missing                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The 4-tool request    | 3 of 4 landed + eval-verified                                                                        | benchstat: availability checked (`absent` in nixpkgs — needs `buildGoModule` from `golang.org/x/perf` + vendorHash FOD work), then silently dropped. This is the session's headline failure — the user amended the task mid-flight and the amendment never made it into the edit                                                                                                                                                     |
+| Shared-tree hygiene   | Noticed the 11-file fmt churn, flagged it to the user in the closing message                         | Never attributed the churn: `git show` on `6193f506` shows SUBSTANTIVE diffs in foreign files (browser-history.nix +38 lines, deploy.sh 264 lines changed, lars-packages.nix 90 lines) — mix of other sessions' real work and possibly MY `nix fmt` churn, now entangled in one heuristic commit. Per the 2026-08-30 pathspec-commit rule this is exactly the class the daemon does and sessions are supposed to untangle; I did not |
+| Daemon-race follow-up | Verified WHAT the daemon staged (`git show --stat 6193f506`: 13 files, confirmed my base.nix inside) | Amend-vs-land-on-top decision per `docs/CONTRIBUTING.md` "Daemon-race commit policy" not executed — HEAD still carries a meaningless heuristic message covering 13 files of mixed authorship                                                                                                                                                                                                                                         |
 
 ## c) NOT STARTED
 
-| Item | Why it matters |
-|------|----------------|
-| benchstat package (vehicle undecided: `pkgs/benchstat.nix` via buildGoModule vs flake input vs upstream nixpkgs PR) | Explicit user request, zero progress beyond the availability probe |
-| `nix flake check --no-build` after the base.nix edit | Cheap syntax gate; never run this session (only `nix eval` of systemPackages) |
-| **Darwin eval verification** | base.nix is `platforms/common` — the three tools now ride the darwin host too. `nix flake check` skips aarch64-darwin by default, so a darwin eval break would surface only at the next `darwin-rebuild`. Go binaries are cross-platform so risk is low, but it is UNVERIFIED |
-| Deploy | Tools land system-wide only after `nix run .#deploy`; still eval-only. Also: OPEN NEW TERMINAL after deploy |
-| CHANGELOG entry | Nothing recorded yet |
-| Harvest of §f into TODO_LIST.md + docs/todo/ | Skill mandate: report §f is primary HARVEST input; pending user go (user said WAIT after the report) |
-| Actionlint actually USED | The existing queue row (run actionlint over nix-check/flake-update/go-deps-audit, TODO_LIST.md:851) predates this session and is still open — the tool now exists locally but was never run |
+| Item                                                                                                                | Why it matters                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| benchstat package (vehicle undecided: `pkgs/benchstat.nix` via buildGoModule vs flake input vs upstream nixpkgs PR) | Explicit user request, zero progress beyond the availability probe                                                                                                                                                                                                            |
+| `nix flake check --no-build` after the base.nix edit                                                                | Cheap syntax gate; never run this session (only `nix eval` of systemPackages)                                                                                                                                                                                                 |
+| **Darwin eval verification**                                                                                        | base.nix is `platforms/common` — the three tools now ride the darwin host too. `nix flake check` skips aarch64-darwin by default, so a darwin eval break would surface only at the next `darwin-rebuild`. Go binaries are cross-platform so risk is low, but it is UNVERIFIED |
+| Deploy                                                                                                              | Tools land system-wide only after `nix run .#deploy`; still eval-only. Also: OPEN NEW TERMINAL after deploy                                                                                                                                                                   |
+| CHANGELOG entry                                                                                                     | Nothing recorded yet                                                                                                                                                                                                                                                          |
+| Harvest of §f into TODO_LIST.md + docs/todo/                                                                        | Skill mandate: report §f is primary HARVEST input; pending user go (user said WAIT after the report)                                                                                                                                                                          |
+| Actionlint actually USED                                                                                            | The existing queue row (run actionlint over nix-check/flake-update/go-deps-audit, TODO_LIST.md:851) predates this session and is still open — the tool now exists locally but was never run                                                                                   |
 
 ## d) TOTALLY FUCKED UP
 
@@ -66,18 +66,19 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-| # | Improvement |
-|---|-------------|
-| 1 | **Mid-flight amendment ledger:** when the user appends scope mid-task ("oh and X"), it goes into the todo list IMMEDIATELY, not into working memory. The benchstat drop is the proof case |
-| 2 | **Shared-tree fmt discipline:** never run a formatter whose blast radius I haven't verified, especially `nix fmt` on a tree with 3 concurrent sessions. Scope-proof first (one scratch file), repo-wide second |
-| 3 | **Close-out evidence labels:** state explicitly what each verification covers (eval ≠ check ≠ build ≠ deploy ≠ shell). "Verified" must cover every fact asserted |
-| 4 | **Daemon-commit follow-up reflex:** verify `git show --stat HEAD` AND resolve message-entanglement in the same breath it's discovered, not "later" |
+| # | Improvement                                                                                                                                                                                                                                                           |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **Mid-flight amendment ledger:** when the user appends scope mid-task ("oh and X"), it goes into the todo list IMMEDIATELY, not into working memory. The benchstat drop is the proof case                                                                             |
+| 2 | **Shared-tree fmt discipline:** never run a formatter whose blast radius I haven't verified, especially `nix fmt` on a tree with 3 concurrent sessions. Scope-proof first (one scratch file), repo-wide second                                                        |
+| 3 | **Close-out evidence labels:** state explicitly what each verification covers (eval ≠ check ≠ build ≠ deploy ≠ shell). "Verified" must cover every fact asserted                                                                                                      |
+| 4 | **Daemon-commit follow-up reflex:** verify `git show --stat HEAD` AND resolve message-entanglement in the same breath it's discovered, not "later"                                                                                                                    |
 | 5 | **Tool-placement rule:** system-wide dev tools vs devShell membership vs flake packages — base.nix developmentPackages is now the third place Go tools live (devShell, lars-packages, systemPackages). One documented routing table would prevent drift (see f-items) |
-| 6 | This session did NOT follow the full status-report skill loop proactively — the user had to demand it. Work sessions should self-harvest follow-ups at authoring time per the TODO-system rule |
+| 6 | This session did NOT follow the full status-report skill loop proactively — the user had to demand it. Work sessions should self-harvest follow-ups at authoring time per the TODO-system rule                                                                        |
 
 ## f) Up to 50 things to get done next (impact-ordered; session-derived, not researched)
 
 **Immediate (this work's own tail):**
+
 1. Implement benchstat — decide vehicle (Q1): `pkgs/benchstat.nix` (buildGoModule, golang.org/x/perf, vendorHash → joins quick-go FOD probing) vs flake input pin vs skip pending nixpkgs
 2. Resolve the `6193f506` entanglement: land-on-top properly-messaged commit for the base.nix change (or amend per daemon-race policy after reading CONTRIBUTING — but 12 foreign files argue for land-on-top)
 3. Run `nix flake check --no-build` (never run post-edit)

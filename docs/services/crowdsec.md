@@ -7,10 +7,10 @@
 
 ## What runs
 
-| Unit | Shape | Notes |
-| --- | --- | --- |
-| `crowdsec.service` | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/state/crowdsec.db`, WAL) |
-| `crowdsec-update-hub.{service,timer}` | daily oneshot | **OFF** (`autoUpdateService` default false) — hub updates happen at every agent start instead |
+| Unit                                  | Shape                                                            | Notes                                                                                         |
+| ------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `crowdsec.service`                    | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/state/crowdsec.db`, WAL)                            |
+| `crowdsec-update-hub.{service,timer}` | daily oneshot                                                    | **OFF** (`autoUpdateService` default false) — hub updates happen at every agent start instead |
 
 Every start runs (in order): `crowdsec-wait-dns` (our gate, 180s budget) → `crowdsec-setup`
 (unconditional `cscli hub update` + hub installs + `machine add --auto` — nixpkgs
@@ -168,7 +168,7 @@ Stage 3 unlocks after **7 consecutive clean-informed days** (window opened
   before trusting the flip: (1) the tmpfiles rootDir rule (upstream may
   have added it — remove ours), (2) the machine-repair orphan delete
   (upstream setup may be idempotent now), (3) the caddy-group acquis fix
-  + the ambient cap drop candidate, and (4) the bouncer-register flags
-  (`bouncers delete --ignore-missing` / `add --key`) against the new
-  cscli. Also re-check PrivateUsers: if upstream drops it, the cap route
-  becomes viable again and the extraGroups comment needs a truth-sync.
+  - the ambient cap drop candidate, and (4) the bouncer-register flags
+    (`bouncers delete --ignore-missing` / `add --key`) against the new
+    cscli. Also re-check PrivateUsers: if upstream drops it, the cap route
+    becomes viable again and the extraGroups comment needs a truth-sync.

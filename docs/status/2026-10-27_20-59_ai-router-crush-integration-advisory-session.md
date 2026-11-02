@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-27 20:59 local (CET, UTC+1 post-DST) · **HEAD:** `176bbaf4a` (master) · **Session type:** read-only advisory + todo harvest · **Instance:** Crush
 
-**Scope note:** This session answered one owner question — *"How can we improve the AI router and integrations with crush?"* — with live-verified evidence. It changed **zero** system or code config itself; its only repo writes are the todo harvest (5 queue rows + 8 library rows) and this report. Everything below is scoped to this session's run and what it noticed; no unrelated research was done.
+**Scope note:** This session answered one owner question — _"How can we improve the AI router and integrations with crush?"_ — with live-verified evidence. It changed **zero** system or code config itself; its only repo writes are the todo harvest (5 queue rows + 8 library rows) and this report. Everything below is scoped to this session's run and what it noticed; no unrelated research was done.
 
 **Concurrent-tree flag (multi-agent discipline):** `git status` at report time shows modified `scripts/*.sh` + `.gitignore` and an untracked 20:47 status report (`system956-deploy-arc-closeout-self-review`) — NOT authored by this session. No ai-meter/crush overlap with that report (checked per status-report pre-read discipline); the script edits belong to other live sessions.
 
@@ -11,14 +11,17 @@
 ## 0. Self-critique (the three questions answered first)
 
 ### What did I forget?
-1. **Self-harvest at discovery time.** I delivered the advisory and ASKED *"want me to file these?"* while AGENTS.md law says §f follow-ups land in `TODO_LIST.md` + the domain library at authoring time. The first reflex violated standing rules. **Healed in this report's authoring pass** — all new items are now queued (§f Harvest note).
+
+1. **Self-harvest at discovery time.** I delivered the advisory and ASKED _"want me to file these?"_ while AGENTS.md law says §f follow-ups land in `TODO_LIST.md` + the domain library at authoring time. The first reflex violated standing rules. **Healed in this report's authoring pass** — all new items are now queued (§f Harvest note).
 2. **The ratified-research pre-read.** `docs/research/2026-10-16_agent-router-deep-dive.html` (the origin document for ai-meter) was never opened before advising — the planning-layer discipline ("a ratified plan outranks a fresh design") applies to research docs too. I leaned on the runbook + todo rows instead. The advice reached the same conclusions, but by luck of good runbooks, not by reading the primary source.
 
 ### What could I have done better?
+
 3. **Symmetric verified-label rigor.** paperless-gpt's proxy wiring was grep-verified in the module (paperless-gpt.nix:88); inboxclean's wiring was cited from the runbook without grepping its module. A "verified" label must cover every fact asserted, not the convenient subset.
 4. **Scope every number, every time.** All traffic figures below are **since the 19:27:55 UTC daemon start** (Prometheus counters reset on restart) — NOT lifetime. The lifetime truth lives in `/var/lib/ai-meter/usage.jsonl`, which is root-gated and unreadable from agent shells. I said "today", which is accurate, but the scope deserves explicit statement each time.
 
 ### What could I still improve?
+
 5. **Banned-pattern internalization.** Two avoidable errors this session, both documented in AGENTS.md before I typed them: `rg -rn` (the replace trap, **third strike on this host** — the hook caught it, zero damage) and a `sudo` attempt inside a compound command (agent-banned binary). Third strike means the rule + hook are not enough: `rg` IS recursive; `-n` adds line numbers; `-r` rewrites displayed text. No more strikes.
 6. **Open verification debt** (known, not done this session): gatus live state for ai-meter, ClickHouse series ingestion, ledger lifetime stats, and the private crush-config repo state (owns gemini model declarations — cross-repo scope unassessed).
 
@@ -26,39 +29,39 @@
 
 ## a) FULLY DONE
 
-| # | Done | Evidence |
-| --- | --- | --- |
-| A1 | **Live-state verification of the AI router** | `ss -ltnp` → :8107 (proxy) + :8108 (metrics) listening loopback; `/run/ai-meter-keys/crush` exists; full `/metrics` exposition parsed (numbers in §Traffic) |
-| A2 | **Crush↔proxy wiring audit** | `platforms/nixos/users/home.nix:229-238` — `extraRc` repoints zai + kimi-coding + gemini at `127.0.0.1:8107/v1/<upstream>` with the runtime-minted key; gates on KEY FILE existence only (the §e.1 gap) |
-| A3 | **Client enablement audit** | `platforms/nixos/system/configuration.nix:558-575` — `ai-meter.enable = true` with clients crush + paperless-gpt + inboxclean |
-| A4 | **paperless-gpt leg verified wired** | `modules/nixos/services/paperless-gpt.nix:86-88` — `OPENAI_BASE_URL = http://127.0.0.1:8107/v1/fastflowlm` when ai-meter enabled |
-| A5 | **crush-daily ruled out as an LLM consumer** | module grep: OTEL endpoint only, no LLM base URL — the integration-ideas doc's "Crush Daily bypasses Manifest" concern is obsolete for LLM traffic |
-| A6 | **Tooling surface audited** | `pkgs/ai-meter/reports/` is **EMPTY** — the durable ledger (`/var/lib/ai-meter/usage.jsonl`) has no offline consumer |
-| A7 | **Improvement advisory delivered** | 4 axes: health-gate resilience → metering payoff (gemini smoke, dashboard/alert, ledger consumer) → coverage (openrouter/openseo newly unblocked, hermes, crush-debug identity) → 429 failover doctrine; order 1→2→3→4 |
-| A8 | **Session-discipline pre-reads** | docs/planning + docs/brainstorming scanned (no AI-router plan exists — nothing outranks the fresh design); today's untracked status report checked for overlap (none); TODO_LIST + docs/todo/ai-stack.md + ai-meter runbook + service-integration-ideas read |
-| A9 | **Self-harvest landed** | 5 `[ready]` one-liners in TODO_LIST.md + 8 rows in docs/todo/ai-stack.md (5 ready, 2 watch, 1 decision), all citing this report |
+| #  | Done                                         | Evidence                                                                                                                                                                                                                                                     |
+| -- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A1 | **Live-state verification of the AI router** | `ss -ltnp` → :8107 (proxy) + :8108 (metrics) listening loopback; `/run/ai-meter-keys/crush` exists; full `/metrics` exposition parsed (numbers in §Traffic)                                                                                                  |
+| A2 | **Crush↔proxy wiring audit**                 | `platforms/nixos/users/home.nix:229-238` — `extraRc` repoints zai + kimi-coding + gemini at `127.0.0.1:8107/v1/<upstream>` with the runtime-minted key; gates on KEY FILE existence only (the §e.1 gap)                                                      |
+| A3 | **Client enablement audit**                  | `platforms/nixos/system/configuration.nix:558-575` — `ai-meter.enable = true` with clients crush + paperless-gpt + inboxclean                                                                                                                                |
+| A4 | **paperless-gpt leg verified wired**         | `modules/nixos/services/paperless-gpt.nix:86-88` — `OPENAI_BASE_URL = http://127.0.0.1:8107/v1/fastflowlm` when ai-meter enabled                                                                                                                             |
+| A5 | **crush-daily ruled out as an LLM consumer** | module grep: OTEL endpoint only, no LLM base URL — the integration-ideas doc's "Crush Daily bypasses Manifest" concern is obsolete for LLM traffic                                                                                                           |
+| A6 | **Tooling surface audited**                  | `pkgs/ai-meter/reports/` is **EMPTY** — the durable ledger (`/var/lib/ai-meter/usage.jsonl`) has no offline consumer                                                                                                                                         |
+| A7 | **Improvement advisory delivered**           | 4 axes: health-gate resilience → metering payoff (gemini smoke, dashboard/alert, ledger consumer) → coverage (openrouter/openseo newly unblocked, hermes, crush-debug identity) → 429 failover doctrine; order 1→2→3→4                                       |
+| A8 | **Session-discipline pre-reads**             | docs/planning + docs/brainstorming scanned (no AI-router plan exists — nothing outranks the fresh design); today's untracked status report checked for overlap (none); TODO_LIST + docs/todo/ai-stack.md + ai-meter runbook + service-integration-ideas read |
+| A9 | **Self-harvest landed**                      | 5 `[ready]` one-liners in TODO_LIST.md + 8 rows in docs/todo/ai-stack.md (5 ready, 2 watch, 1 decision), all citing this report                                                                                                                              |
 
 **Live traffic snapshot** (sampled ~20:4x local; counters since 19:27:55 UTC daemon start):
 
-| Metric | glm-5.3 | glm-5.3-flash | Total |
-| --- | --- | --- | --- |
-| Requests | 511 (483×200, **28×429**) | 282 (279×200, 3×429) | 793 (762×200, 31×429 = **3.9%**) |
-| Prompt tokens | 74.0M (98.6% cached) | 34.6M (98.7% cached) | 108.6M |
-| Completion tokens | 0.30M | 0.105M | 0.40M |
-| Avg wall / TTFT | 11.8 s / 3.1 s | 9.1 s / 2.4 s | — |
+| Metric            | glm-5.3                   | glm-5.3-flash        | Total                            |
+| ----------------- | ------------------------- | -------------------- | -------------------------------- |
+| Requests          | 511 (483×200, **28×429**) | 282 (279×200, 3×429) | 793 (762×200, 31×429 = **3.9%**) |
+| Prompt tokens     | 74.0M (98.6% cached)      | 34.6M (98.7% cached) | 108.6M                           |
+| Completion tokens | 0.30M                     | 0.105M               | 0.40M                            |
+| Avg wall / TTFT   | 11.8 s / 3.1 s            | 9.1 s / 2.4 s        | —                                |
 
 Est. cost $22.88 (PAYG-reference, overstated by design — Max Yearly bills credits). `unauthorized 0`, `metering_errors 0`, 6 in flight at sample. **Only `client=crush` appears**: gemini/kimi upstreams zero (no gemini models declared; kimi unused), paperless-gpt zero (upstream FLM dead), inboxclean zero (no turns since start).
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works now | Missing | Blocker | Effort |
-| --- | --- | --- | --- | --- | --- |
-| B1 | **ai-meter deploy chain** (TODO_LIST BLOCKER row) | DEPLOYED + metering: ports live, keys minted, crush flows through (793 req since start, 0 metering errors) | ClickHouse series verify, gatus green, one inboxclean turn, one paperless-gpt doc | none for verify legs; paperless leg = FLM dead | S |
-| B2 | **gemini leg** | Native genai adapter built + VM-tested (2026-10-17); extraRc override wired | Zero live traffic — no gemini model declared in the (private) crush-config repo; no cost entries | cross-repo model declaration | M |
-| B3 | **paperless-gpt→proxy leg** | Fully wired through :8107 | Zero traffic — upstream FastFlowLM dead (SIGABRT crash class) | FLM disable-or-pin owner decision | S (after FLM) |
-| B4 | **Router coverage** | crush fully metered | hermes (direct GLM/MiniMax), openseo (direct; key landed 2026-10-26), file-renamer — the "5 services bypass the router" list is still mostly true | openseo newly unblocked; hermes needs its own repo | S–M each |
-| B5 | **Crush attribution** | All crush sessions metered under client=crush | Interactive vs headless (crush-debug Mod+Ctrl+D) indistinguishable | none — polish | S |
-| B6 | **Metering visibility** | Counters + sums + ledger expose everything needed | No dashboard, no alert, no histograms (avg-only), empty reports/ dir — the 2026-10-16 owner demand is still not human-visible | none | S–M |
+| #  | Item                                              | Works now                                                                                                  | Missing                                                                                                                                           | Blocker                                            | Effort        |
+| -- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------- |
+| B1 | **ai-meter deploy chain** (TODO_LIST BLOCKER row) | DEPLOYED + metering: ports live, keys minted, crush flows through (793 req since start, 0 metering errors) | ClickHouse series verify, gatus green, one inboxclean turn, one paperless-gpt doc                                                                 | none for verify legs; paperless leg = FLM dead     | S             |
+| B2 | **gemini leg**                                    | Native genai adapter built + VM-tested (2026-10-17); extraRc override wired                                | Zero live traffic — no gemini model declared in the (private) crush-config repo; no cost entries                                                  | cross-repo model declaration                       | M             |
+| B3 | **paperless-gpt→proxy leg**                       | Fully wired through :8107                                                                                  | Zero traffic — upstream FastFlowLM dead (SIGABRT crash class)                                                                                     | FLM disable-or-pin owner decision                  | S (after FLM) |
+| B4 | **Router coverage**                               | crush fully metered                                                                                        | hermes (direct GLM/MiniMax), openseo (direct; key landed 2026-10-26), file-renamer — the "5 services bypass the router" list is still mostly true | openseo newly unblocked; hermes needs its own repo | S–M each      |
+| B5 | **Crush attribution**                             | All crush sessions metered under client=crush                                                              | Interactive vs headless (crush-debug Mod+Ctrl+D) indistinguishable                                                                                | none — polish                                      | S             |
+| B6 | **Metering visibility**                           | Counters + sums + ledger expose everything needed                                                          | No dashboard, no alert, no histograms (avg-only), empty reports/ dir — the 2026-10-16 owner demand is still not human-visible                     | none                                               | S–M           |
 
 ## c) NOT STARTED
 
@@ -74,14 +77,14 @@ All discovered THIS session; none had any code or config written (advisory sessi
 
 ## d) TOTALLY FUCKED UP
 
-| # | What | Severity | Root cause | Mitigation |
-| --- | --- | --- | --- | --- |
-| D1 | **A dead ai-meter takes down ALL crush AI** — the extraRc repoints all three providers unconditionally (key-file gate ≠ proxy-alive gate) | High (latent — proxy is healthy today) | wiring gates on `/run/ai-meter-keys/crush` existence, never probes :8107 | §e.1 health-gate, S diff, queued |
-| D2 | **3.9% of today's calls 429'd** (31/793, 28 on glm-5.3) — zai coding-plan concurrency/credit limits pass straight through, no retry, no fallback, no doctrine for it | Medium (degraded sessions; billing rejections and rate limits are indistinguishable 429s per runbook) | transparent doctrine has no failure policy | §g.2 decision, queued |
-| D3 | **Queue-trust rot: the ai-meter BLOCKER row premise is stale** — row says "deploy-ready" while live state shows DEPLOYED + metering for a while; nobody closed the loop until an unrelated advisory question stumbled into it | Medium (process) — a dispatch against that row would re-verify already-live work | verification chains don't get closed when live state outruns them | premise-refresh row queued (with re-dispatch protocol) |
-| D4 | **`rg -rn` typed again — THIRD strike on this host** | None (hook blocked; zero damage) | pattern not internalized despite the 2026-10-23 AGENTS.md rule | correction: `rg -n`; the hook works, my fingers don't |
-| D5 | **`sudo` attempt in a compound command** | None (banned binary, call failed) | ledger access reflex | ledger stays root-gated; use repo scripts or owner hands |
-| D6 | **Mid-session mangled hand-math**: derived ai-meter start "~08:21 UTC" from the epoch gauge; real value 19:27:55 UTC (via `date -d @…` at report time) | None — the wrong number never entered delivered text (advisory said "today") | exactly the 2026-10-26 quote-scrutiny trap: I nearly trusted an unverified pipeline number | rule re-proven: one known-value check before quoting |
+| #  | What                                                                                                                                                                                                                          | Severity                                                                                              | Root cause                                                                                 | Mitigation                                               |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| D1 | **A dead ai-meter takes down ALL crush AI** — the extraRc repoints all three providers unconditionally (key-file gate ≠ proxy-alive gate)                                                                                     | High (latent — proxy is healthy today)                                                                | wiring gates on `/run/ai-meter-keys/crush` existence, never probes :8107                   | §e.1 health-gate, S diff, queued                         |
+| D2 | **3.9% of today's calls 429'd** (31/793, 28 on glm-5.3) — zai coding-plan concurrency/credit limits pass straight through, no retry, no fallback, no doctrine for it                                                          | Medium (degraded sessions; billing rejections and rate limits are indistinguishable 429s per runbook) | transparent doctrine has no failure policy                                                 | §g.2 decision, queued                                    |
+| D3 | **Queue-trust rot: the ai-meter BLOCKER row premise is stale** — row says "deploy-ready" while live state shows DEPLOYED + metering for a while; nobody closed the loop until an unrelated advisory question stumbled into it | Medium (process) — a dispatch against that row would re-verify already-live work                      | verification chains don't get closed when live state outruns them                          | premise-refresh row queued (with re-dispatch protocol)   |
+| D4 | **`rg -rn` typed again — THIRD strike on this host**                                                                                                                                                                          | None (hook blocked; zero damage)                                                                      | pattern not internalized despite the 2026-10-23 AGENTS.md rule                             | correction: `rg -n`; the hook works, my fingers don't    |
+| D5 | **`sudo` attempt in a compound command**                                                                                                                                                                                      | None (banned binary, call failed)                                                                     | ledger access reflex                                                                       | ledger stays root-gated; use repo scripts or owner hands |
+| D6 | **Mid-session mangled hand-math**: derived ai-meter start "~08:21 UTC" from the epoch gauge; real value 19:27:55 UTC (via `date -d @…` at report time)                                                                        | None — the wrong number never entered delivered text (advisory said "today")                          | exactly the 2026-10-26 quote-scrutiny trap: I nearly trusted an unverified pipeline number | rule re-proven: one known-value check before quoting     |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -97,6 +100,7 @@ All discovered THIS session; none had any code or config written (advisory sessi
 Impact/Effort per the section guide (S <30min, M 30min–2h, L >2h). **T1–T4 NEW items are already harvested** (5 queue rows + 8 library rows landed before this report); T5 items are pre-existing library/queue rows surfaced by this session's reads (no double-harvest).
 
 **T1 — Router resilience & truth (Critical/High)**
+
 1. Gate the crushrc extraRc on ai-meter `/health` (shape per §g.1) — Critical · S · Feature · NEW, queued
 2. Premise-refresh + close the ai-meter BLOCKER row (re-dispatch protocol) — Critical · S · Documentation · NEW, queued
 3. Verify ai-meter series in ClickHouse (scrape job end-to-end) — High · S · Quality · RESIDUE of 2
@@ -140,11 +144,11 @@ Impact/Effort per the section guide (S <30min, M 30min–2h, L >2h). **T1–T4 N
 
 ## g) Three questions I cannot figure out myself
 
-**Q1 — Proxy-down doctrine.** When ai-meter is dead, should crush sessions fall back to **direct** provider calls (availability first, metering gap) or **fail closed** (no AI without metering)? *What I tried:* the extraRc only gates on key-file existence, so today's de facto behavior is accidental — direct if the key file is missing, dead sessions if the proxy is down. It's inconsistent by accident, not doctrine, and the health-gate implementation shape depends on the answer.
+**Q1 — Proxy-down doctrine.** When ai-meter is dead, should crush sessions fall back to **direct** provider calls (availability first, metering gap) or **fail closed** (no AI without metering)? _What I tried:_ the extraRc only gates on key-file existence, so today's de facto behavior is accidental — direct if the key file is missing, dead sessions if the proxy is down. It's inconsistent by accident, not doctrine, and the health-gate implementation shape depends on the answer.
 
-**Q2 — 429 policy.** Keep the proxy fully transparent (you switch models manually when glm-5.3 throttles), add bounded retry-after honoring, or implement 429→kimi failover in ai-meter (which would permanently close the Agent Router failover adoption trigger)? *What I tried:* metrics show 31×429 today; the runbook documents that zai sends billing rejections AND rate limits as 429 (indistinguishable without reading bodies); no failover code exists anywhere in the path.
+**Q2 — 429 policy.** Keep the proxy fully transparent (you switch models manually when glm-5.3 throttles), add bounded retry-after honoring, or implement 429→kimi failover in ai-meter (which would permanently close the Agent Router failover adoption trigger)? _What I tried:_ metrics show 31×429 today; the runbook documents that zai sends billing rejections AND rate limits as 429 (indistinguishable without reading bodies); no failover code exists anywhere in the path.
 
-**Q3 — Is kimi-coding still wanted?** Provider, upstream, and sops key copy are all live — with **zero traffic ever** (no client routes to it). Keep it as the designated failover target for Q2, or drop it from sops/extraRc/upstreams to shrink the config? *What I tried:* metrics (zero requests), runbook (no kimi consumer documented), todo files (no kimi rows) — nothing states the intent.
+**Q3 — Is kimi-coding still wanted?** Provider, upstream, and sops key copy are all live — with **zero traffic ever** (no client routes to it). Keep it as the designated failover target for Q2, or drop it from sops/extraRc/upstreams to shrink the config? _What I tried:_ metrics (zero requests), runbook (no kimi consumer documented), todo files (no kimi rows) — nothing states the intent.
 
 ---
 

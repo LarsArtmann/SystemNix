@@ -23,11 +23,11 @@ Two independent defects on the status page were root-caused, fixed, deployed,
 and verified live. A third observation (DB row counts reading `~0`) was
 investigated and remains **credential-blocked**.
 
-| # | Symptom | Root cause | Fix | Live proof |
-| - | ------- | ---------- | --- | ---------- |
-| 1 | `map-home-undetected` banner; no route origins/home marker | `dnsblockd`/HaGeZi blocks `api64.ipify.org` (default `MAP_PUBLIC_IP_URL`) → block page → JSON parse error | whitelist `ipify.org` | `getent ahostsv4 api64.ipify.org` → `104.237.62.213`; `home_location_resolved source=external_ip`; `/health` advisories `[]` |
-| 2 | every "Tailed access log" shown "missing" | `os.access()` ignores capabilities for non-root (access(2)) → claims Caddy's 0600 logs unreadable though `CAP_DAC_READ_SEARCH` reads them | source patch `_is_readable()` + `patchedSrc` + build self-test | running `geometrikks-server` (PID 3139026) runs patched venv `g5n5sbdiw…` |
-| 3 | `geo_events`/`access_logs ~0 rows` | unknown — likely TimescaleDB `approximate_row_count` estimate; **not verified** | none (blocked) | — |
+| # | Symptom                                                    | Root cause                                                                                                                                | Fix                                                            | Live proof                                                                                                                   |
+| - | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `map-home-undetected` banner; no route origins/home marker | `dnsblockd`/HaGeZi blocks `api64.ipify.org` (default `MAP_PUBLIC_IP_URL`) → block page → JSON parse error                                 | whitelist `ipify.org`                                          | `getent ahostsv4 api64.ipify.org` → `104.237.62.213`; `home_location_resolved source=external_ip`; `/health` advisories `[]` |
+| 2 | every "Tailed access log" shown "missing"                  | `os.access()` ignores capabilities for non-root (access(2)) → claims Caddy's 0600 logs unreadable though `CAP_DAC_READ_SEARCH` reads them | source patch `_is_readable()` + `patchedSrc` + build self-test | running `geometrikks-server` (PID 3139026) runs patched venv `g5n5sbdiw…`                                                    |
+| 3 | `geo_events`/`access_logs ~0 rows`                         | unknown — likely TimescaleDB `approximate_row_count` estimate; **not verified**                                                           | none (blocked)                                                 | —                                                                                                                            |
 
 ---
 
@@ -37,7 +37,7 @@ investigated and remains **credential-blocked**.
 - **Root-caused #1** with direct evidence (journal warning, block-page fetch,
   `getent` block IP).
 - **Root-caused #2** with documentation-grade evidence (`access(2)` man page:
-  non-root uses an *empty* capability set) plus live corroboration (tailer
+  non-root uses an _empty_ capability set) plus live corroboration (tailer
   streams + `log_format_detected` for 42 files, 0 `does not exist` errors, while
   `os.access` in `_entry()` sets `available=False`).
 - **Implemented #1:** `ipify.org` whitelisted in
@@ -99,7 +99,7 @@ investigated and remains **credential-blocked**.
     gate/anchor failure class AGENTS documents; the shipping deploy nonetheless
     anchored correctly (889).
   - The shipping deploy exited **3**: post-deploy §18 "Service Sanity CPU —
-    nix-daemon.service=382%CPU" flagged as a *NEW* failure. This is an artifact
+    nix-daemon.service=382%CPU" flagged as a _NEW_ failure. This is an artifact
     of the concurrent `nix build` churn in the smoke window, **not** a real
     service regression — but it means the deploy was not a clean pass and should
     be re-run when calm.
@@ -114,7 +114,7 @@ investigated and remains **credential-blocked**.
   time, box calm first" convention or an admission wrapper.
 - **Verify the DELIVERING layer, not the command.** I verified via
   `/run/current-system`, the running PID's venv path, `getent`, journal, and
-  `/health` — good — but I should also have confirmed the *map UI* renders
+  `/health` — good — but I should also have confirmed the _map UI_ renders
   origins (needs a session).
 - **Distinguish the two "missing" signals early.** `health.missingFiles` (open-based,
   authoritative) vs the UI list's `available` (`os.access`-based) look identical

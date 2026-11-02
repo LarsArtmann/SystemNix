@@ -52,6 +52,7 @@
 ## f) NEXT — up to 50 things (prioritized, crowdsec session scope first)
 
 **Immediate (this service, blocking):**
+
 1. Name + fix the "1 dependency failed" in the fix-toplevel build (background job killed mid-grep — re-run `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` and read the failing drv; candidates: crowdsec FOD hash/sandbox or a unit-wiring build step).
 2. Deploy the fix toplevel in a genuine lull (bundled with services.md row 492's hot-db CAP_DAC_OVERRIDE fix + no-heavy-gate removal — ONE switch, one storm window).
 3. Verify anchor discipline post-switch: `readlink /run/current-system` == latest `system-N-link`, then `nix run .#pre-reboot-check`.

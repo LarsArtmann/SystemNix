@@ -5,19 +5,19 @@
 
 **Live state at authoring time:**
 
-| Surface | State |
-| --- | --- |
-| Upstream repo `github:LarsArtmann/offline-banner` | HEAD `78aa7fc`, public, master; CI **green ×2 consecutive** Checks runs (23:54Z docs-flip 1m1s, 23:56Z shell-content gate 59s) + a green Dependabot run |
-| SystemNix lock | `offline-banner` input locked at `fff0b61` — now ~30 upstream commits behind (hardening, MIT LICENSE, CI fixes incl. aarch64, demo assets, shell-content QML gate, FEATURES/ROADMAP) |
-| Live evo-x2 system | still **v1, unsandboxed, gen 904** — nothing from the extraction has shipped; deploy deferred (single-switch doctrine) |
-| Parallel sessions | upstream repo received 4+ dedicated sessions since extraction (nix-skills-review, docs-health, pareto plan, demo capture) and commits were landing DURING this conversation (01:54–01:56) — the tree is hot |
+| Surface                                           | State                                                                                                                                                                                                       |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upstream repo `github:LarsArtmann/offline-banner` | HEAD `78aa7fc`, public, master; CI **green ×2 consecutive** Checks runs (23:54Z docs-flip 1m1s, 23:56Z shell-content gate 59s) + a green Dependabot run                                                     |
+| SystemNix lock                                    | `offline-banner` input locked at `fff0b61` — now ~30 upstream commits behind (hardening, MIT LICENSE, CI fixes incl. aarch64, demo assets, shell-content QML gate, FEATURES/ROADMAP)                        |
+| Live evo-x2 system                                | still **v1, unsandboxed, gen 904** — nothing from the extraction has shipped; deploy deferred (single-switch doctrine)                                                                                      |
+| Parallel sessions                                 | upstream repo received 4+ dedicated sessions since extraction (nix-skills-review, docs-health, pareto plan, demo capture) and commits were landing DURING this conversation (01:54–01:56) — the tree is hot |
 
 ---
 
 ## a) FULLY DONE
 
 1. **Reassessment verdict delivered (this conversation's ask).** Honest answer to "you claimed: do not extract": **the owner was right, I was wrong, and the repo's state since is the proof.** Evidence: 19 files, +1048/−88 since the locked rev (at the time of assessment; more landed since), produced by 4+ parallel sessions within ~26 h. The sharpest single fact: the module lived **unsandboxed** in-tree since gen 904; within a day of extraction, a session hardened the unit AND proved the contract check non-vacuous. That attention was never going to find a 200-line module inside a 900-module monorepo.
-2. **Root cause of my wrong call diagnosed, not just conceded.** Rule-of-three measures *reuse demand* (by which the module still fails: one consumer). The owner's actual motivation — "SystemNix is too big" — was a claim about *attention economics*: extraction bought a small, legible surface with seconds-fast checks that sessions start oriented in. I analyzed the module; the owner was diagnosing the monorepo. I also missed the same-day dms-paste precedent pointing the same direction.
+2. **Root cause of my wrong call diagnosed, not just conceded.** Rule-of-three measures _reuse demand_ (by which the module still fails: one consumer). The owner's actual motivation — "SystemNix is too big" — was a claim about _attention economics_: extraction bought a small, legible surface with seconds-fast checks that sessions start oriented in. I analyzed the module; the owner was diagnosing the monorepo. I also missed the same-day dms-paste precedent pointing the same direction.
 3. **The extraction arc itself (carried from the prior legs of this session):** standalone repo built (v3 behavior, `package`/`layerNamespace` options, module-contract check with the negative-proofed probe-overlap assertion), SystemNix cutover complete at eval level (input + both follows, lock-audit clean, thin wrapper with `systemnix:offline-banner` namespace, evo-x2 toplevel eval green, shipped-QML parity forced and proven), all 6 documentation surfaces updated, 01-19 self-review written with its 3 follow-ups harvested into both TODO queues.
 4. **Open risks I flagged in 01-19 — now closed by parallel sessions, verified this conversation:** CI green (was: never observed; the bad action pin was root-caused and fixed upstream), LICENSE decided (MIT, fleet convention), and the **QML-reachability check implemented upstream** ("feat(checks): shell-content gate", green run 38983984145) — my next-step #4, done by someone else within hours of me queueing it. That speed is itself exhibit A for the extraction.
 
@@ -46,7 +46,7 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Extraction criterion doctrine (fleet-level).** Add the attention-economics test alongside rule-of-three: when the motivation is monorepo size, evaluate the monorepo's *tax on the module's maintenance* (review legibility, check latency, session onboarding, blast radius per change) — not just the module's reuse count. Anything needing dedicated verification work (smoke tests, contract checks, demos) benefits disproportionately from a small repo. Candidate for `crush-config` global lessons (§g Q3).
+1. **Extraction criterion doctrine (fleet-level).** Add the attention-economics test alongside rule-of-three: when the motivation is monorepo size, evaluate the monorepo's _tax on the module's maintenance_ (review legibility, check latency, session onboarding, blast radius per change) — not just the module's reuse count. Anything needing dedicated verification work (smoke tests, contract checks, demos) benefits disproportionately from a small repo. Candidate for `crush-config` global lessons (§g Q3).
 2. **Lock-before-diff is a checklist step, not a judgment call.** Pinning a foreign repo rev must begin with `git log`/`git diff` from the last known-good rev — same class as the queue premise-check rule. I will treat "lock without diff" as a hard error, not a style preference.
 3. **Derive first, ask second.** Before any owner question: sweep fleet conventions, precedent modules, and sibling repos. If a defensible default exists, propose it and ask only for a veto.
 4. **Manual proofs should bequeath automated checks in the same session.** The QML hand-forcing cost ~20 min of eval gymnastics; the automated equivalent upstream is a small runCommand. I left it queued; the right move was to write it immediately while the failure mode was fresh.
@@ -66,6 +66,7 @@
 **Deliberately NOT harvested:** a "module-extraction runbook" (distilling dms-paste + offline-banner into a written procedure: build repo → checks → push → input+follows → wrapper → parity proof → docs sweep → single switch). Two data points justify a runbook, but whether to write one is a decision, not a queued task — and if the §g Q3 answer is yes, it belongs in the doctrine, not a SystemNix doc.
 
 **Already queued — no re-harvest (inventory only):**
+
 - Upstream repo TODO_LIST: hardened-unit live smoke test · unit-syntax gate · observability metric · VM/negative test · IPv6 probe leg · demo mode · claim cleanups (DMS-plugins claim, iface-exclude cross-ref, gen-904 provenance, AGENTS pointers) · sandbox-contract granularity · `failuresToShow` bound · `restartTriggers` drift guard · docs drift gate · option-doc rendering · live-verification debts (auto-start, multi-monitor, click-dismiss machine-verify) · v0.1.0 tag + release + repo polish · demo GIF · README CI badge (condition now met — master is green) · branch protection + dependabot drift-proofing (dependabot already fired its first green run).
 - SystemNix queues: consumer-side env-contract pin (TODO_LIST row 1388) · v3 deploy row (1387, amended per item 1 above) · broken-toplevel build signal (1391) · deploy.sh lock-liveness fd-scan PID fix (1392) · the dms-paste `[blocked:deploy]` batch rows in desktop.md · niri-zombie Restart=on-failure fix (desktop.md, another session's row).
 

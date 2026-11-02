@@ -61,41 +61,41 @@ At 09:46 the IO-pressure gate went green for the first time (avg10 13–18 %) an
 ## f) Next — up to 50, scoped to this workstream
 
 1. Wait for parallel deploy (observer `04B` logging to `~/.local/state/boot-mirror-deploy.log`)
-~~2. On completion: check deploy rc + `system-786+` profile exists~~ done — system-786+ exists anchored (docs/status/2026-09-20_15-30 M1)
-~~3. Verify anchoring: `readlink /run/current-system` == `readlink /nix/var/nix/profiles/system` (exit-4 skip-profile class)~~ done — three-way anchor verified (docs/status/2026-09-20_15-30 M1/F05)
-~~4. `findmnt /boot-mirror` — mounted, by-uuid `4F53-C156`, vfat~~ done — verified (docs/status/2026-09-20_15-30 M2)
-~~5. Confirm `boot-mirror-sync.service` ran (deploy.sh provisioner loop restarts it post-switch)~~ done — ran green, diff gate PASS (docs/status/2026-09-20_15-30 M2)
-~~6. Spot-check mirror tree: `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi` present (the stale Sep-9 copy had neither)~~ done — mirror contents verified (docs/status/2026-09-20_15-30 M2)
-~~7. Full drift gate proof: unit's own `diff -r` passed (journal) — no manual diff needed~~ done — diff-gate PASS journaled (docs/status/2026-09-20_15-57 a3)
-~~8. Check `\EFI\BOOT\BOOTX64.EFI` now exists on mirror (bootctl fallback path → the inert `UEFI OS` 0x000B entry becomes a bonus third boot path)~~ done — §11 tree-identity green incl. bootctl install fallback (docs/status/2026-09-30_12-58 a)
-~~9. ESP free space on Samsung p1 (4 G, kernels duplicated from QLC ESP)~~ done — df 312M/4.0G recorded (docs/status/2026-09-20_15-30)
-10. Record current nvme0/nvme1 mapping for the report (they flip; findmnt truth only)
-~~11. Run `nix run .#pre-reboot-check` — §11 WARN-grade green (mirror present, not yet first)~~ done — exit 0 (docs/status/2026-09-20_15-30 M3)
-12. Dump `efibootmgr -v` (read-only) for the pre-activation baseline
-~~13. Run `nix run .#boot-mirror-activate` — must end "✓ firmware now boots the Samsung mirror first"~~ done — succeeded (docs/status/2026-09-20_15-30 M4)
-~~14. Verify BootOrder: Samsung entry first, QLC `Linux Boot Manager` 0x0001 preserved as second~~ done — 000C first, 0001 second (docs/status/2026-09-20_15-30 M4)
-~~15. Re-run `pre-reboot-check` — §11 now FAIL-grade and green~~ done — 23/0 strict (docs/status/2026-09-20_15-30 M5)
-~~16. **USER: reboot decision** (3 unanswered questions below)~~ done — rebooted; Samsung live boot drive 2026-10-15 (docs/todo/storage.md:42)
-~~17. Post-reboot: `bootctl status` — Current Boot Loader = PARTUUID `023f66c0-…`~~ done — verified (docs/todo/storage.md:42; docs/status/2026-10-16_00-56 a1/a2)
-18. Post-reboot: `pre-reboot-check` green end-to-end
-19. Post-reboot: `post-deploy-check` optional full sweep
-20. Post-reboot: one-time firmware boot-menu test that QLC fallback entry still boots (F8/F11/F12)
-21. Watch guard Zone 6 during any switch in residual storm (btrbk churn re-arm semantics)
-~~22. CHANGELOG.md entry~~ done — landed (docs/status/2026-09-20_15-30 M6)
-~~23. Tick plan-doc checklist items 6–9 (`docs/planning/2026-09-18_19-53_…PARETO-PLAN.md`)~~ done — (docs/status/2026-09-20_15-30 M6)
-~~24. AGENTS.md: tmp-cleaner recurrence lesson + queue-v2 pattern (persistent log, retry set, observer)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
-~~25. AGENTS.md: llama-vlm eval-blocker class (types.path vs absolute /data literals)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
-~~26. Add pointer from the 2026-09-18 report to this one (its "In flight" section references the dead /tmp script)~~ done — annotated SUPERSEDED/DEAD with pointers (docs/status/2026-09-19_10-44 a)
-27. Evaluate: mirror freshness Gatus check vs system-health unit monitoring (extraMonitoredServices may suffice — the unit's diff gate fails LOUD via onFailure)
-28. If parallel deploy FAILED: re-queue (queue v2 one-liner, log path known) after diagnosing whose failure
-29. If parallel deploy exit-4'd on boot-mirror-sync start: fix module, re-deploy (known recoverable risk from yesterday's report)
-30. Confirm daemon did not batch unrelated files into any future explicit commit (pathspec discipline — `git show --stat HEAD` before amending anything)
-31. Post-activation: stale-mirror recovery drill documented (systemctl restart boot-mirror-sync) — no action, just runbook awareness
-32. Scope decision (question 3): root `@` migration off QLC = separate task, own plan doc
-33. Someday: pre-reboot-check could assert mirror sync freshness (unit ran within N hours)
-34. Someday: `nix build` of the whole toplevel BEFORE pressure windows (pre-warm cache so switches are short) — the e554fab nixpkgs bump makes this build long
-35. Noted, not mine: `programs.rofi.extraConfig` rename warning (pre-existing debt, rofi.nix)
-36. Noted, not mine: `_forgejo-scripts.nix` dirty file from another session (still uncommitted at yesterday's snapshot)
+   ~~2. On completion: check deploy rc + `system-786+` profile exists~~ done — system-786+ exists anchored (docs/status/2026-09-20_15-30 M1)
+   ~~3. Verify anchoring: `readlink /run/current-system` == `readlink /nix/var/nix/profiles/system` (exit-4 skip-profile class)~~ done — three-way anchor verified (docs/status/2026-09-20_15-30 M1/F05)
+   ~~4. `findmnt /boot-mirror` — mounted, by-uuid `4F53-C156`, vfat~~ done — verified (docs/status/2026-09-20_15-30 M2)
+   ~~5. Confirm `boot-mirror-sync.service` ran (deploy.sh provisioner loop restarts it post-switch)~~ done — ran green, diff gate PASS (docs/status/2026-09-20_15-30 M2)
+   ~~6. Spot-check mirror tree: `loader/loader.conf`, `EFI/systemd/systemd-bootx64.efi` present (the stale Sep-9 copy had neither)~~ done — mirror contents verified (docs/status/2026-09-20_15-30 M2)
+   ~~7. Full drift gate proof: unit's own `diff -r` passed (journal) — no manual diff needed~~ done — diff-gate PASS journaled (docs/status/2026-09-20_15-57 a3)
+   ~~8. Check `\EFI\BOOT\BOOTX64.EFI` now exists on mirror (bootctl fallback path → the inert `UEFI OS` 0x000B entry becomes a bonus third boot path)~~ done — §11 tree-identity green incl. bootctl install fallback (docs/status/2026-09-30_12-58 a)
+   ~~9. ESP free space on Samsung p1 (4 G, kernels duplicated from QLC ESP)~~ done — df 312M/4.0G recorded (docs/status/2026-09-20_15-30)
+2. Record current nvme0/nvme1 mapping for the report (they flip; findmnt truth only)
+   ~~11. Run `nix run .#pre-reboot-check` — §11 WARN-grade green (mirror present, not yet first)~~ done — exit 0 (docs/status/2026-09-20_15-30 M3)
+3. Dump `efibootmgr -v` (read-only) for the pre-activation baseline
+   ~~13. Run `nix run .#boot-mirror-activate` — must end "✓ firmware now boots the Samsung mirror first"~~ done — succeeded (docs/status/2026-09-20_15-30 M4)
+   ~~14. Verify BootOrder: Samsung entry first, QLC `Linux Boot Manager` 0x0001 preserved as second~~ done — 000C first, 0001 second (docs/status/2026-09-20_15-30 M4)
+   ~~15. Re-run `pre-reboot-check` — §11 now FAIL-grade and green~~ done — 23/0 strict (docs/status/2026-09-20_15-30 M5)
+   ~~16. **USER: reboot decision** (3 unanswered questions below)~~ done — rebooted; Samsung live boot drive 2026-10-15 (docs/todo/storage.md:42)
+   ~~17. Post-reboot: `bootctl status` — Current Boot Loader = PARTUUID `023f66c0-…`~~ done — verified (docs/todo/storage.md:42; docs/status/2026-10-16_00-56 a1/a2)
+4. Post-reboot: `pre-reboot-check` green end-to-end
+5. Post-reboot: `post-deploy-check` optional full sweep
+6. Post-reboot: one-time firmware boot-menu test that QLC fallback entry still boots (F8/F11/F12)
+7. Watch guard Zone 6 during any switch in residual storm (btrbk churn re-arm semantics)
+   ~~22. CHANGELOG.md entry~~ done — landed (docs/status/2026-09-20_15-30 M6)
+   ~~23. Tick plan-doc checklist items 6–9 (`docs/planning/2026-09-18_19-53_…PARETO-PLAN.md`)~~ done — (docs/status/2026-09-20_15-30 M6)
+   ~~24. AGENTS.md: tmp-cleaner recurrence lesson + queue-v2 pattern (persistent log, retry set, observer)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
+   ~~25. AGENTS.md: llama-vlm eval-blocker class (types.path vs absolute /data literals)~~ done — written 2026-09-19 10:15 (docs/status/2026-09-19_10-44 a4)
+   ~~26. Add pointer from the 2026-09-18 report to this one (its "In flight" section references the dead /tmp script)~~ done — annotated SUPERSEDED/DEAD with pointers (docs/status/2026-09-19_10-44 a)
+8. Evaluate: mirror freshness Gatus check vs system-health unit monitoring (extraMonitoredServices may suffice — the unit's diff gate fails LOUD via onFailure)
+9. If parallel deploy FAILED: re-queue (queue v2 one-liner, log path known) after diagnosing whose failure
+10. If parallel deploy exit-4'd on boot-mirror-sync start: fix module, re-deploy (known recoverable risk from yesterday's report)
+11. Confirm daemon did not batch unrelated files into any future explicit commit (pathspec discipline — `git show --stat HEAD` before amending anything)
+12. Post-activation: stale-mirror recovery drill documented (systemctl restart boot-mirror-sync) — no action, just runbook awareness
+13. Scope decision (question 3): root `@` migration off QLC = separate task, own plan doc
+14. Someday: pre-reboot-check could assert mirror sync freshness (unit ran within N hours)
+15. Someday: `nix build` of the whole toplevel BEFORE pressure windows (pre-warm cache so switches are short) — the e554fab nixpkgs bump makes this build long
+16. Noted, not mine: `programs.rofi.extraConfig` rename warning (pre-existing debt, rofi.nix)
+17. Noted, not mine: `_forgejo-scripts.nix` dirty file from another session (still uncommitted at yesterday's snapshot)
 
 ## g) Questions I CANNOT answer myself
 

@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 b0d70d73 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 28 00:42:49 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Oct 28 00:42:49 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/vv4ckkahmq31aq7a312rx2d13r308nv1-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 28 00:42:49 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Oct 30 03:32:02 evo-x2 file-renamer[1943247]: 2026-10-30T03:32:02+01:00 INFO  watcher: request method=GET path=/healthz status=200 duration=54.888µs client_ip=127.0.0.1 request_id=6ae401a20000006fac7345c52a1425fc
 Oct 30 03:32:02 evo-x2 pocket-id-start[2636562]: Oct 30 03:32:02 INF HTTP request completed app=pocket-id version=2.18.0 request_id=4106f0e5-7492-40b1-8b16-65686c257e7d status=200 method=GET path=/ query="" route="" ip=192.168.1.150 latency=78.427µs referer="" user_agent=Go-http-client/1.1 body_size=5777
@@ -30,12 +32,14 @@ Oct 30 03:32:02 evo-x2 crm-server[1993915]: time=2026-10-30T03:32:02.459+01:00 l
 ```
 
 ## Census
+
 - oom-lines: 92
 - guard-lines (memory-emergency-guard): 7289
 - thermal-THROTTLE-lines: 21
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 Oct 28 10:14:01 evo-x2 kernel: kswapd0 invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
 Oct 28 10:14:05 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/run-p3639162-i3650853.scope,task=bun,pid=3639162,uid=1000
@@ -132,6 +136,7 @@ Oct 30 03:20:19 evo-x2 kernel: Out of memory: Killed process 3719954 (flm-real) 
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 28 00:44:51 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
 Oct 28 00:45:24 evo-x2 memory-emergency-guard-check[30439]: MEMORY EMERGENCY: I/O PSI some avg60=45.77% sustained (max disk busy 99.0%, MemAvailable=72.5% — the crash #3 class: stacked full-disk readers livelocking the scheduler while memory looks healthy) — stopping sockets + 'fastflowlm@*.service' 'fastflowlm.service' to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore.
@@ -7425,6 +7430,7 @@ Oct 30 03:31:42 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated s
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 28 00:50:10 evo-x2 thermal-pstate-guard-check[97980]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=98C(hi:95/lo:80)
 Oct 28 13:14:47 evo-x2 thermal-pstate-guard-check[2990887]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=75C(hi:95/lo:80)
@@ -7450,18 +7456,21 @@ Oct 29 17:11:21 evo-x2 thermal-pstate-guard-check[1332171]: thermal-pstate-guard
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 28 00:42:49 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/vv4ckkahmq31aq7a312rx2d13r308nv1-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 28 00:42:49 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/vv4ckkahmq31aq7a312rx2d13r308nv1-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 28 00:42:49 evo-x2 kernel: simple-framebuffer simple-framebuffer.0: [drm] Registered 1 planes with drm panic
 Oct 28 00:42:51 evo-x2 kernel: amdgpu 0000:c6:00.0: [drm] Registered 4 planes with drm panic
 ```
+
 ## Remote log tail — ClickHouse death window (signoz_logs.distributed_logs_v2)
 
 Death window per M22: [journal cut -> next boot], epoch-ns UTC. At a watchdog death the local journal loses its final ~30-90s to flush lag; when the OTel->ClickHouse pipeline is alive the remote tail is FRESHER than the journal cut (#36: newest row 5s before the cut), and when the collector died pre-death the pipeline is silently DARK (#37: 4h19m outage).
 Window: 1793327522000000000 -> 1793327629000000000 epoch-ns UTC (2026-10-30 02:32:02 -> 2026-10-30 02:33:49 UTC)
 PIPELINE DARK FOR THIS WINDOW — 0 rows in the window.
 Per M22: ClickHouse absence is NOT evidence of absence — the collector has a fatal-at-startup failure mode that silences the whole log pipeline (proven #37). Cross-check signoz-collector liveness across this boot BEFORE trusting the gap.
+
 ```
 ```
 
@@ -7475,16 +7484,16 @@ Row counts by unit (whole widened window): crm-server 35, projects-management-au
 
 Final-second actors (last-seen ordering, all routine traffic):
 
-| last-seen (CET) | unit | what it was doing |
-| --- | --- | --- |
-| 03:32:00.87 | immich-server.service | "Error: could not renew lock for job 16338" — the known symptom (forensics report §f.16); firing AT the death second is expected-under-death |
-| 03:32:00.78 | crm-server.service | routine GET /api/contacts/by-phone → 200 |
-| 03:32:00.56 | projects-management-automation.service | "processing batch … sperrmuell-direct" |
-| 03:32:00.16 | discordsync.service | routine INFO |
-| 03:31:59.7 | cv-server.service | /health 200 + one "career-pipeline … context deadline exceeded" WARN + a 9.4 s SSE-stats request (subsystem strain) |
-| 03:31:59.5 | monitor365 / monitor365-server | routine scan output |
-| 03:31:59.2 | signoz.service | promql rule evaluation — monitoring alive to the end |
-| 03:31:58.9 | user@1000.service | chromium scope CPU accounting |
+| last-seen (CET) | unit                                   | what it was doing                                                                                                                            |
+| --------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 03:32:00.87     | immich-server.service                  | "Error: could not renew lock for job 16338" — the known symptom (forensics report §f.16); firing AT the death second is expected-under-death |
+| 03:32:00.78     | crm-server.service                     | routine GET /api/contacts/by-phone → 200                                                                                                     |
+| 03:32:00.56     | projects-management-automation.service | "processing batch … sperrmuell-direct"                                                                                                       |
+| 03:32:00.16     | discordsync.service                    | routine INFO                                                                                                                                 |
+| 03:31:59.7      | cv-server.service                      | /health 200 + one "career-pipeline … context deadline exceeded" WARN + a 9.4 s SSE-stats request (subsystem strain)                          |
+| 03:31:59.5      | monitor365 / monitor365-server         | routine scan output                                                                                                                          |
+| 03:31:59.2      | signoz.service                         | promql rule evaluation — monitoring alive to the end                                                                                         |
+| 03:31:58.9      | user@1000.service                      | chromium scope CPU accounting                                                                                                                |
 
 Guard/thermal choreography in the remote tail: 03:31:44.74 `DEEP THROTTLE DROP: scaling_max_freq restored (cool band reached)`; SEV1 bridge active 03:31:44.78 AND 03:31:54.77 — `SEV1 active (2 condition(s), severity=notify): MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP`. Then 16 s of normal traffic, then dark.
 

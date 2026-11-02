@@ -55,16 +55,16 @@
 **Appended to TODO_LIST this closeout (dedup-checked against all 445 open rows):**
 
 1. Bisect the llama.cpp 0.3.0 spin upstream + the ≥10-min REAL-unit soak acceptance gate — THE llama-rag re-enable gate (unblocks paperless RAG; freeze-5's root driver).
-~~2. Post-deploy smoke for the registration gate using the CSRF double-submit dance (403-closed vs csrf-wall distinguishable).~~ done — DONE 2026-10-15 P09: CSRF dance live-proven + wired post-deploy leg (docs/todo/services.md:197)
-~~3. Gatus check: `browser_history_user_count` decrease/exceed-baseline alert (count-gap exploitation detector).~~ done — DONE 2026-10-15 P06 "Browser History User Count" check (docs/todo/services.md:198)
-~~4. Post-deploy hermes `-v` verification bundle: `Connected as` positive proof + one-day journal-volume measurement with revert path + version-dependency note in the smoke's fail message.~~ done — smoke green at 787 (docs/status/2026-09-20_16-31 §1.1)
-~~5. Paperless RAG degradation visibility ("expects embeddings, :8848 dark") metric/Gatus signal.~~ done — landed: paperless_rag_embeddings_dark + Gatus (docs/status/2026-09-19_17-47 a1)
-6. Pre-commit: classify `path ... is not valid` as loud WARN + repair hint (end the orphan-class `--no-verify` habit).
-7. CONTRIBUTING convention: boot-scoped vs window-scoped journal assertions.
-~~8. Rogue-listener defense for :8848/:8849 while llama-rag is disabled (the 2026-09-18 orphan class can phantom-pass smokes).~~ done — landed: llama-rag-dark-guard (docs/status/2026-09-19_17-47 a1)
-~~9. Registration-surface audit: `/auth/import` unauthenticated-unreachable on the deployed path + sibling user-creation-path sweep in cqrs-htmx (close the unknown-third-bypass-class question).~~ done — DONE 2026-10-15 P09 live + code evidence (docs/todo/services.md:200)
-10. Queue intake freshness rule: live-state claims reconcile against the relevant AGENTS.md section before execution.
-    11–13. (Blocked questions, also appended): Caddy fence on `/auth/register` as interim mitigation? Gate acceptance re-run timing (post-fix vs post-cleanup reprobe)? Hermes global `-v` permanent posture vs upstream adapter-scoped/env-var ask?
+   ~~2. Post-deploy smoke for the registration gate using the CSRF double-submit dance (403-closed vs csrf-wall distinguishable).~~ done — DONE 2026-10-15 P09: CSRF dance live-proven + wired post-deploy leg (docs/todo/services.md:197)
+   ~~3. Gatus check: `browser_history_user_count` decrease/exceed-baseline alert (count-gap exploitation detector).~~ done — DONE 2026-10-15 P06 "Browser History User Count" check (docs/todo/services.md:198)
+   ~~4. Post-deploy hermes `-v` verification bundle: `Connected as` positive proof + one-day journal-volume measurement with revert path + version-dependency note in the smoke's fail message.~~ done — smoke green at 787 (docs/status/2026-09-20_16-31 §1.1)
+   ~~5. Paperless RAG degradation visibility ("expects embeddings, :8848 dark") metric/Gatus signal.~~ done — landed: paperless_rag_embeddings_dark + Gatus (docs/status/2026-09-19_17-47 a1)
+2. Pre-commit: classify `path ... is not valid` as loud WARN + repair hint (end the orphan-class `--no-verify` habit).
+3. CONTRIBUTING convention: boot-scoped vs window-scoped journal assertions.
+   ~~8. Rogue-listener defense for :8848/:8849 while llama-rag is disabled (the 2026-09-18 orphan class can phantom-pass smokes).~~ done — landed: llama-rag-dark-guard (docs/status/2026-09-19_17-47 a1)
+   ~~9. Registration-surface audit: `/auth/import` unauthenticated-unreachable on the deployed path + sibling user-creation-path sweep in cqrs-htmx (close the unknown-third-bypass-class question).~~ done — DONE 2026-10-15 P09 live + code evidence (docs/todo/services.md:200)
+4. Queue intake freshness rule: live-state claims reconcile against the relevant AGENTS.md section before execution.
+   11–13. (Blocked questions, also appended): Caddy fence on `/auth/register` as interim mitigation? Gate acceptance re-run timing (post-fix vs post-cleanup reprobe)? Hermes global `-v` permanent posture vs upstream adapter-scoped/env-var ask?
 
 **Queue-ready items from the window's own reports, already tracked (do NOT re-dispatch, pointers only):** push+tag+bump the `68a2cd68` chain (line 44); count-gap fix (43); probe-user deletion (42); OAuth2 live passkey ceremony (73, P2); CSRF-recipe documentation (03-56 §f.7); post-deploy llama-rag verification chain (650); reranker side drop-or-track decision (653); `nixpkgs-llama-rag` pin expiry probe (652).
 

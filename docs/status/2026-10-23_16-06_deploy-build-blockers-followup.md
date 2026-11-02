@@ -14,7 +14,7 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
    - `linux-7.3-modules` (exit 123): `cat: kernel/drivers/net/ethernet/realtek/r8125.ko.cer: No such file or directory` — the r8125 out-of-tree module does not build against kernel 7.3.
    - `dms-shell-2.0.0+date=2026-10-20_9b41329` (exit 1): passes buildPhase and checkPhase, dies in `installPhase` with no error line in the captured log.
    - `python3.14-aw-core-0.5.17`, `signoz-…-patched` (exit 1): patch/source failures, logs truncated.
-3. **A `flake.lock` rollback does not help.** I restored the pre-float lock (08:31 state) and rebuilt: the exact same four defects persisted — proof they are *not* caused by today's 15:17 float, and that the node-26 breakage comes from the pinned nixpkgs rev (`02c087f3`), which never moved. Lock restored to HEAD afterwards.
+3. **A `flake.lock` rollback does not help.** I restored the pre-float lock (08:31 state) and rebuilt: the exact same four defects persisted — proof they are _not_ caused by today's 15:17 float, and that the node-26 breakage comes from the pinned nixpkgs rev (`02c087f3`), which never moved. Lock restored to HEAD afterwards.
 
 **Deploy is still not possible.** Nothing was activated; no generation was switched.
 
@@ -48,9 +48,9 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
 ## d) TOTALLY FUCKED UP!
 
 1. **Two sessions have been floating `flake.lock` all day and nothing gates it.** Lock commits: 03:20, 04:25, 07:09, 08:20, 08:26, 08:31, 15:17 — each one re-stales every pnpm/vendor hash. My first hash fixes were stale within the hour; the auto-commit daemon swept four of my files into a heuristic commit mid-work. This is the same "lock float without a build gate" class the 08:35 report named, now with a second day of evidence.
-2. **I burned three build cycles re-fixing the same class** (blocklists → signoz → pnpm/vendor) because I fixed files one at a time instead of regenerating *every* pinned hash in one sweep. The `--keep-going` enumeration was right; my repair loop was not batched.
+2. **I burned three build cycles re-fixing the same class** (blocklists → signoz → pnpm/vendor) because I fixed files one at a time instead of regenerating _every_ pinned hash in one sweep. The `--keep-going` enumeration was right; my repair loop was not batched.
 3. **I let a line-offset rewrite (`sed` on `url-line + 1`) corrupt the intent** for the two entries with intervening comments. Caught only because the next build complained — value-matched replacement is the correct method for generated edits.
-4. **A lock rollback experiment ran before I had proven the float was the cause.** It was cheap and reverted, but the hypothesis should have been tested by diffing *which* input moved (hermes/overview did, nixpkgs did not) before touching the lock.
+4. **A lock rollback experiment ran before I had proven the float was the cause.** It was cheap and reverted, but the hypothesis should have been tested by diffing _which_ input moved (hermes/overview did, nixpkgs did not) before touching the lock.
 5. **Three hours vanished between the 12:38 report and this one** (long build waits under a 95–100 % busy pool). The first report's "deploy now" framing is now stale — this file supersedes it.
 
 ## e) WHAT WE SHOULD IMPROVE!
@@ -84,19 +84,19 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
 
 ## Evidence (this pass)
 
-| Fact | Command | Result |
-| --- | --- | --- |
-| Full failure enumeration | `nix build …toplevel --keep-going --no-link` | 6 FOD mismatches, 7 leaf drv failures |
-| Blocklist probe | `nix store prefetch-file --json <gitlab raw>` ×22 | 15 hashes changed, all content sanity-checked |
-| signoz pnpm deps | empty hash → build → `got:` | `sha256-6yhnUvjO…`, then `.#signoz-frontend` builds |
-| pnpm drift | first-hand `got:` values | jscpd / systemd-graph-webui / openseo re-pinned |
-| vendorHash drift | first-hand `got:` values | library-policy 7EyJHHnw, PMA NBQcjrwD, papdashboard mi1+rwiO |
-| Lock rollback test | `git show 407920f98:flake.lock > flake.lock` + build | identical 7 leaf failures → float not the cause |
-| Node 26.12.1 | `/nix/store/gzr0…-node-26.12.1/bin/node --version` | exit 139 (also with `setarch -R`) |
-| Node 26.12.0 | `nix run nixpkgs#nodejs_26 -- --version` | `v26.12.0`, exit 0 |
-| Node 24 | store binary | runs |
-| r8125 | build log | `cat: …/r8125.ko.cer: No such file or directory` |
-| Lock churn | `git log -- flake.lock` | 7 floats today, all heuristic commits |
+| Fact                     | Command                                              | Result                                                       |
+| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------ |
+| Full failure enumeration | `nix build …toplevel --keep-going --no-link`         | 6 FOD mismatches, 7 leaf drv failures                        |
+| Blocklist probe          | `nix store prefetch-file --json <gitlab raw>` ×22    | 15 hashes changed, all content sanity-checked                |
+| signoz pnpm deps         | empty hash → build → `got:`                          | `sha256-6yhnUvjO…`, then `.#signoz-frontend` builds          |
+| pnpm drift               | first-hand `got:` values                             | jscpd / systemd-graph-webui / openseo re-pinned              |
+| vendorHash drift         | first-hand `got:` values                             | library-policy 7EyJHHnw, PMA NBQcjrwD, papdashboard mi1+rwiO |
+| Lock rollback test       | `git show 407920f98:flake.lock > flake.lock` + build | identical 7 leaf failures → float not the cause              |
+| Node 26.12.1             | `/nix/store/gzr0…-node-26.12.1/bin/node --version`   | exit 139 (also with `setarch -R`)                            |
+| Node 26.12.0             | `nix run nixpkgs#nodejs_26 -- --version`             | `v26.12.0`, exit 0                                           |
+| Node 24                  | store binary                                         | runs                                                         |
+| r8125                    | build log                                            | `cat: …/r8125.ko.cer: No such file or directory`             |
+| Lock churn               | `git log -- flake.lock`                              | 7 floats today, all heuristic commits                        |
 
 ---
 
@@ -104,7 +104,7 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
 
 **`nix flake lock --update-input nixpkgs` is a no-op**: our input is `nixos-unstable` and it is already at the tip (`02c087f3`; the registry resolves to the same rev). There is no newer nixpkgs to bump to tonight — and a bump would not have fixed the node problem anyway:
 
-1. **`node-26.12.1` is not a nixpkgs build.** It is a *prebuilt npm-distributed tarball* (`node-v26.12.1-linux-x64`) fetched by the hermes-agent flake's binary-fetch machinery (derivation `node-26.12.1.drv`: `dontBuild=1`, install script handles `uv-…`, `node-v26.12.1-linux-x64`, `package/`). The binary segfaults on startup here (exit 139, also with `setarch -R`), while nixpkgs' own `nodejs_26` (26.12.0) runs. No nixpkgs revision can touch it; only the hermes input can.
+1. **`node-26.12.1` is not a nixpkgs build.** It is a _prebuilt npm-distributed tarball_ (`node-v26.12.1-linux-x64`) fetched by the hermes-agent flake's binary-fetch machinery (derivation `node-26.12.1.drv`: `dontBuild=1`, install script handles `uv-…`, `node-v26.12.1-linux-x64`, `package/`). The binary segfaults on startup here (exit 139, also with `setarch -R`), while nixpkgs' own `nodejs_26` (26.12.0) runs. No nixpkgs revision can touch it; only the hermes input can.
 2. **`aw-core` fails on a nixpkgs packaging regression**: `peewee==3.* not satisfied by version 4.4.0` (our pinned nixpkgs ships peewee 4.4.0). The running system was built from `26.11.20261015.fe13242`; the tree is pinned to `26.11.20261020.02c087f3` — the gap between those two dates is where the packaging broke.
 3. **`dms-shell`**: the older `1.6.3+date=2026-10-07_4a87e82` derivation builds clean; `2.0.0+date=2026-10-20_9b41329` dies in `installPhase` with no error line.
 4. **`signoz-…-patched`**: same silent `installPhase` failure after patches apply with large offsets.

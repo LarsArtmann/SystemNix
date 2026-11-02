@@ -24,7 +24,7 @@
 2. **Restic feature is deploy-true but not yet backup-true.** Password 0600 verified live; the first nightly run fires 05:45 on 2026-09-23 (after this report). The dedup premise ("per-service dumps share ~0 extents") remains unproven until ≥3 runs; the VM test (`tests/test-restic-app-dumps.nix`, written + eval-verified) has still never executed — PSI-gated since writing.
 3. **Offsite Borg leg is dormant by design with open pre-go-live gaps:** no VM test for `backup.nix` (every other backup-producing service has one), no post-deploy smoke, recovery-copy policy undecided, restore drill (TODO_LIST §storage) untouched. Go-live is owner-gated on StorageBox hostname/username + `ssh-keyscan -p 23` host-key pin.
 4. **The reap-discipline cluster is fixed but unguarded.** All four reap surfaces now agree (the deploy ran the reap live at 13:04 — the symlinks exist), but the name set still lives in four hand-kept lists with no parity enforcement, no regression test for either reap site, and `buildcache-init` still does not provision the three new targets (post-USB-recovery the symlinks dangle until the next deploy).
-~~5. **Lineage closure (06-21 report §b.3):** storage.md rows 80/82 and the TODO_LIST:21 parent note still do not cite `d60d598c` as the review-fix completion (storage.md is outside this pass's write scope; queued).~~ done — lineage cited on storage.md rows 2026-10-01 (TODO_LIST:81)
+   ~~5. **Lineage closure (06-21 report §b.3):** storage.md rows 80/82 and the TODO_LIST:21 parent note still do not cite `d60d598c` as the review-fix completion (storage.md is outside this pass's write scope; queued).~~ done — lineage cited on storage.md rows 2026-10-01 (TODO_LIST:81)
 
 ## c) NOT STARTED (the window skipped; still open)
 
@@ -34,11 +34,11 @@
    - a THIRD red is now visible on recent pushes: **`secret-history-scan` fails on the scanner's own canaries** — the historical `leak-canary.tmp.md` blob and the `sk-00000…` fixture shapes quoted in `docs/status/2026-09-15_07-32_window-closeout-rerun-gitleaks-rewrite-regression.md` (verified in run `35799069770` logs).
    - Master CI has therefore provided zero signal for ≥2 days while commits kept landing.
 2. **GOTOOLCHAIN predicate single-sourcing:** the CI "Flake input hygiene" step (`nix-check.yml:156`) and the orphan `scripts/check-flake-inputs.sh:37` still carry the OLD bare `GOTOOLCHAIN.*auto` grep that false-positives home.nix's fish session override — the exact class `744f3882` fixed in the hook. Three copies of the predicate, two stale.
-~~3. **Offsite Borg restore drill** (TODO_LIST line 28) — "a backup you have never restored is Schrödinger's backup".~~ done — runbook + timed drill landed 2026-09-23 (CHANGELOG:468)
-4. **Restic post-deploy proof chain** (TODO_LIST line 43) — first run + `restic check` + one-file restore smoke + dedup measurement.
-5. **Queue re-dispatch idempotency** — the window contained THREE re-dispatches of already-closed work (…f06434, …81acf, …faaa9), each costing a full session to conclude "already done". Owner-side queue work (TODO_LIST lines 167/174/260 track it).
-6. **`buildcache-init` provisioning, reap single-sourcing + parity gate, mountPoint-vs-HM-symlink eval guard, buildcache VM-test rebuild** — all still open in TODO_LIST §storage (lines 41/42/34 + the library).
-7. **`$DRY_RUN_CMD` ratification for the HM activation `rm -rf`** — still blocking the audit-script design (08-03 report question 3).
+   ~~3. **Offsite Borg restore drill** (TODO_LIST line 28) — "a backup you have never restored is Schrödinger's backup".~~ done — runbook + timed drill landed 2026-09-23 (CHANGELOG:468)
+3. **Restic post-deploy proof chain** (TODO_LIST line 43) — first run + `restic check` + one-file restore smoke + dedup measurement.
+4. **Queue re-dispatch idempotency** — the window contained THREE re-dispatches of already-closed work (…f06434, …81acf, …faaa9), each costing a full session to conclude "already done". Owner-side queue work (TODO_LIST lines 167/174/260 track it).
+5. **`buildcache-init` provisioning, reap single-sourcing + parity gate, mountPoint-vs-HM-symlink eval guard, buildcache VM-test rebuild** — all still open in TODO_LIST §storage (lines 41/42/34 + the library).
+6. **`$DRY_RUN_CMD` ratification for the HM activation `rm -rf`** — still blocking the audit-script design (08-03 report question 3).
 
 ## d) TOTALLY FUCKED UP
 

@@ -53,15 +53,15 @@ Nothing destructive: no data loss, no reverts, no secrets, no broken builds. But
 
 ## f) Next tasks (harvested to TODO_LIST.md + domain libraries at authoring time — not entombed)
 
-| # | Task | Impact | Effort | State |
-|---|------|--------|--------|-------|
-| 1 | Deploy evo-x2 (`nix run .#deploy`) once the parallel session's tree settles; run the 4 post-deploy probes; flip CHANGELOG deploy-pending; rpi3 verifies on its next deploy | High | S | `[blocked:deploy]` → library |
-| 2 | Add resolv.conf no-search assertion to `scripts/post-deploy-check.sh` (grep live file; both hosts) | Medium | S | `[ready]` → queue + pipeline.md |
-| 3 | dnsblockd runbook: one pointer sentence for the DELIBERATE /etc/hosts zone shadow (networking.nix:37-40, restart-window resilience for unattended jobs) so it stops being re-discovered as a split brain | Low | S | `[ready]` → queue + services.md |
-| 4 | LAN-clients search policy (MacBook/DHCP/resolved routing domains) | Medium | M | `[decision]` already queued |
-| 5 | CONTRIBUTING daemon-race: add the `git log -p` (not `-L`) immediate-attribution-settle clause, citing the bddadc25/ba60821e crossing | Low | S | `[ready]` → queue + pipeline.md |
-| 6 | dnsblockd T356 amendment: hosts-file PTR naming + online-typo expansion clause (cross-repo) | Low | S | landed at harvest |
-| 7 | Optional UX: `~/.ssh/config` Host aliases if bare-label ssh habit surfaces post-deploy | Low | S | observe first |
+| # | Task                                                                                                                                                                                                     | Impact | Effort | State                           |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------------------- |
+| 1 | Deploy evo-x2 (`nix run .#deploy`) once the parallel session's tree settles; run the 4 post-deploy probes; flip CHANGELOG deploy-pending; rpi3 verifies on its next deploy                               | High   | S      | `[blocked:deploy]` → library    |
+| 2 | Add resolv.conf no-search assertion to `scripts/post-deploy-check.sh` (grep live file; both hosts)                                                                                                       | Medium | S      | `[ready]` → queue + pipeline.md |
+| 3 | dnsblockd runbook: one pointer sentence for the DELIBERATE /etc/hosts zone shadow (networking.nix:37-40, restart-window resilience for unattended jobs) so it stops being re-discovered as a split brain | Low    | S      | `[ready]` → queue + services.md |
+| 4 | LAN-clients search policy (MacBook/DHCP/resolved routing domains)                                                                                                                                        | Medium | M      | `[decision]` already queued     |
+| 5 | CONTRIBUTING daemon-race: add the `git log -p` (not `-L`) immediate-attribution-settle clause, citing the bddadc25/ba60821e crossing                                                                     | Low    | S      | `[ready]` → queue + pipeline.md |
+| 6 | dnsblockd T356 amendment: hosts-file PTR naming + online-typo expansion clause (cross-repo)                                                                                                              | Low    | S      | landed at harvest               |
+| 7 | Optional UX: `~/.ssh/config` Host aliases if bare-label ssh habit surfaces post-deploy                                                                                                                   | Low    | S      | observe first                   |
 
 Deliberately not padded to 50: the honest count from this session's scope is 7 (queueing 43 filler rows would violate the TODO system's own anti-padding precedent).
 

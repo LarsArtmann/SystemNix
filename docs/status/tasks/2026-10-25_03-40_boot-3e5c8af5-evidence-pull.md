@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 3e5c8af5 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 20 14:58:11 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Oct 20 14:58:11 evo-x2 kernel: Command line: initrd=\EFI\nixos\zdhcqlzqxmjcs1090psy4rqb9p425n85-initrd-linux-7.2.10-initrd.efi init=/nix/store/k7gahyil7vbz5crvvbh27izf51vv12wn-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 20 14:58:11 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
                                                 #2  0x0000732a25a2b391 __libc_start_call_main (libc.so.6 + 0x2b391)
                                                 #3  0x0000732a25a2b4a8 __libc_start_main@@GLIBC_2.34 (libc.so.6 + 0x2b4a8)
@@ -30,12 +32,14 @@ Oct 25 04:31:30 evo-x2 signoz-wrapper[692992]: {"timestamp":"2026-10-25T04:31:30
 ```
 
 ## Census
+
 - oom-lines: 16
 - guard-lines (memory-emergency-guard): 15600
 - thermal-THROTTLE-lines: 59
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 Oct 23 18:09:30 evo-x2 kernel: link invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
 Oct 23 18:09:30 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=1167152,uid=1000
@@ -56,6 +60,7 @@ Oct 24 03:40:15 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(nu
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 20 15:00:09 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
 Oct 20 15:00:44 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -15660,6 +15665,7 @@ Oct 25 04:31:15 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated s
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 20 15:03:37 evo-x2 thermal-pstate-guard-check[43221]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=97C(hi:95/lo:80)
 Oct 20 15:22:27 evo-x2 thermal-pstate-guard-check[224376]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=63C(hi:95/lo:80)
@@ -15723,6 +15729,7 @@ Oct 23 11:25:08 evo-x2 thermal-pstate-guard-check[3461949]: thermal-pstate-guard
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 20 14:58:11 evo-x2 kernel: Command line: initrd=\EFI\nixos\zdhcqlzqxmjcs1090psy4rqb9p425n85-initrd-linux-7.2.10-initrd.efi init=/nix/store/k7gahyil7vbz5crvvbh27izf51vv12wn-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 20 14:58:11 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\zdhcqlzqxmjcs1090psy4rqb9p425n85-initrd-linux-7.2.10-initrd.efi init=/nix/store/k7gahyil7vbz5crvvbh27izf51vv12wn-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

@@ -1,7 +1,9 @@
 # Freeze #27 autopsy evidence — boot -2 (ebad051b, Oct 10 23:15:25 → hard cut Oct 11 11:07:59)
+
 Pulled 2026-10-13 00:37 BEFORE any journal vacuum (the Oct-3 triage lost its journal this way). Source task: freeze-28 report §c/§f.4.
 
 ## Boot -2 first/last lines
+
 ```
 Oct 10 23:15:25 evo-x2 kernel: Linux version 7.2.9 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Sat Oct  3 10:43:16 UTC 2026
 Oct 10 23:15:25 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/cyanjjkrhvpinsl59zp7zlnknrzdqr3c-nixos-system-evo-x2-26.11.20261008.e7439b6/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -13,6 +15,7 @@ Oct 11 11:07:59 evo-x2 pma[2619]:  processing batch component=service project=/h
 ```
 
 ## Guard trips — all 37, zone 6, with IO attribution
+
 ```
 Oct 10 23:17:25 evo-x2 memory-emergency-guard-check[11492]: MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #2635, zone 6)
 Oct 10 23:27:32 evo-x2 memory-emergency-guard-check[77260]: MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #2636, zone 6) — top io since last trip: system.slice/io.stat +34817MB, system.slice/llama-chat.service/io.stat +3348MB, system.slice/papdashboard.service/io.stat +3207MB
@@ -54,6 +57,7 @@ Oct 11 11:03:42 evo-x2 memory-emergency-guard-check[2072954]: MEMORY EMERGENCY a
 ```
 
 ## Thermal pstate guard events
+
 ```
 Oct 10 23:16:25 evo-x2 thermal-pstate-guard-check[4588]: thermal-pstate-guard: adopted externally-set mode: active (state said guided); streaks reset
 Oct 10 23:37:09 evo-x2 thermal-pstate-guard-check[194325]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=96C(hi:95/lo:80)
@@ -118,7 +122,9 @@ Oct 11 09:41:11 evo-x2 thermal-pstate-guard-check[3823864]: thermal-pstate-guard
 ```
 
 ## OOM / panic / MCE / BTRFS errors
+
 OOM-pattern lines: 1 — inspected: it is a udev sysfs write error, NOT an OOM (zero oom-kill/invoked-oom/Out-of-memory events in the boot)
+
 ```
 Oct 10 23:15:59 evo-x2 (udev-worker)[813]: sdb: /etc/udev/rules.d/99-local.rules:37 ATTR{queue/scheduler}="bfq": Failed to write "bfq" to sysfs attribute "queue/scheduler", ignoring: Device or resource busy
 Oct 10 23:15:59 evo-x2 (udev-worker)[813]: sdb: /etc/udev/rules.d/99-local.rules:39 ATTR{queue/nr_requests}="128": Failed to write "128" to sysfs attribute "queue/nr_requests", ignoring: Device or resource busy
@@ -153,18 +159,22 @@ Oct 10 23:16:18 evo-x2 dbus-broker-launch[3948]: Ignoring duplicate name 'org.bl
 ```
 
 ## SEV1 bridge (syslog identifier `-t sev1-bridge-check`): SEV1 ACTIVE the whole boot at notify tier
+
 4037 "SEV1 active (2 condition(s), severity=notify): MEMORY EMERGENCY GUARD TRIPPED; FLM RESTORE CAPPED" vs 7 "SEV1 cleared"; still ACTIVE at the last pre-cut run (11:07:33, 26 s before the cut). No page-tier condition ever fired. (The earlier `-g 'action taken'`-adjacent grep noise was nix-gc store-path matches.)
+
 ```
-      1     nix-gc-start[981074]: deleting '/nix/store/s0a97z3j9sinipnvmnash614p1aq7rif-sev1-bridge-check.drv'
-      1     nix-gc-start[981074]: deleting '/nix/store/p76ffxrmqz0yvvsip0h73fpnkdv8rjz6-sev1-bridge-check.drv'
-      1     nix-gc-start[981074]: deleting '/nix/store/1zl6v8yn09jrmbd6apasj6df0zfak7h0-sev1-bridge-check'
+1     nix-gc-start[981074]: deleting '/nix/store/s0a97z3j9sinipnvmnash614p1aq7rif-sev1-bridge-check.drv'
+1     nix-gc-start[981074]: deleting '/nix/store/p76ffxrmqz0yvvsip0h73fpnkdv8rjz6-sev1-bridge-check.drv'
+1     nix-gc-start[981074]: deleting '/nix/store/1zl6v8yn09jrmbd6apasj6df0zfak7h0-sev1-bridge-check'
 ```
 
 ## Journal rate at cut (livelock check)
+
 lines 11:00–11:01: 1031
 lines 11:07:00→cut: 1114
 
 ## Counter continuity
+
 boot -2 last trip: trip #2671
 boot -1 first trip: trip #2672
 boot -1 trip count: 132 (the freeze-#28 boot)

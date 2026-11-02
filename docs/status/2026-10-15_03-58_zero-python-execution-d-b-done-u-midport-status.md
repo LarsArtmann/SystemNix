@@ -9,12 +9,14 @@
 ## a) FULLY DONE
 
 ### D-block — dead sweeper deletions (1% tier)
+
 - D1: content-pin + reference sweep at execution time — zero live wiring (flake/hooks/CI/modules); only queue rows + historical docs referenced the 4 scripts.
 - D2: `fix-versions.py`, `commit-tag-push.py`, `migrate-envrc.py`, `prefetch-crates.py` deleted (725 LOC, 29% of repo Python); the 2 ruff.toml E501 ignores dropped.
 - D3: gates green (gitleaks, living-docs link check, `nix flake check --no-build` all passed during commit attempts).
 - D4 content: committed (see §d for the message caveat).
 
 ### B-block — crush-daily Go backfill (4% tier)
+
 - B1 design: ADR 0007 written in crush-daily (`docs/decisions/0007-backfill-subcommand-design.md`): backfill as a `backfill` subcommand, raw-SQL lineage delete (go-cqrs-lite `event.Store` is append-only by contract — verified live via `go doc`; there is NO delete API), VACUUM INTO backup (upgrade over Python's blind `cp`), re-exec pipeline steps with 300s timeout, GOEXPERIMENT=jsonv2 child-env parity.
 - B2 core: `internal/app/backfill_service.go` — zero-data detection (payload `total_stats` + legacy `stats` fallback), lineage read/delete/restore, verify-collected-event, backup, per-date pipeline re-run; wired into `cmd/crush-daily/main.go` (flags `--no-event-dates`, `--db`, dispatch, usage).
 - B3: `--no-event-dates` mode — missing-report discovery + hot-DB session-presence check via go-crush-data (`SessionFilter{Day}`), summary table output; 9 unit tests covering filter edges, payload shapes (modern/legacy/corrupt), lineage round-trip, discovery modes, backup. All green.
@@ -25,7 +27,9 @@
 - B5 polish (found by smoke-testing): `BackfillDBPath` helper — flag > explicit-config > deployed-nix-store-config > dev-default chain; lenient config load for backfill (no LLM key required for dry-run). Caught a REAL bug: flag-less run initially resolved to the repo's dev DB (verdict `2026-06-01`) instead of the deployed store (`2026-08-23`).
 
 ### B-block bonus — completed the parallel session's broken dependency sweep (forced by B5)
+
 The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx v4.14.1, go-cqrs-lite v4.14.0, templ-components v1.23.0 in go.mod) broke crush-daily's nix build. I completed the missing flake-side half, verified build+tests, squashed to one properly-messaged commit `16edaae`, pushed:
+
 - templ-components flake pin v1.19.4 → v1.23.0 (the lockstep pin; v1.19.4 predated `CopyButtonProps.LabelClass` → "unknown field LabelClass" build failure),
 - cqrs-htmx flake input refreshed (aee26c7 → 9997cdf),
 - vendorHash re-verified (xo4ePVg… → AAXq+KG…),
@@ -34,6 +38,7 @@ The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx 
 ## b) PARTIALLY DONE
 
 ### U-block — ucr-archive extraction (20% tier)
+
 - U1 scaffold: `~/projects/ucr-archive` created (git init, README with the full data-root contract, .gitignore, `go.mod github.com/LarsArtmann/ucr-archive`, `internal/ucrroot` shared path resolution). **No flake.nix yet, nothing committed yet.**
 - U2 encode: `internal/encode/encode.go` written — manifest TSV parser (strict header check), BuildPlan (verdict==OK, dedup, per-album track numbering, sanitize), FLAC/opus/verify phases with idle-IO wrappers, parallel semaphore, report JSON. **Not compiled, not tested. Sweep script not yet copied (U2.2).**
 - U3 rag: `internal/rag/{store,parse,query,embed}.go` written — exact schema parity, whisper JSON (openai/whisper.cpp/faster shapes) + SRT/VTT/txt parsers, stem-suffix stripping, FTS5 import with skip/orphan handling, ask (lexical + snippet + semantic layer), stats, bge-m3 embed client. **Not compiled, not tested.**
@@ -44,15 +49,18 @@ The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx 
 - U7 removal + pixel6.md annotation: NOT STARTED.
 
 ### Commit-message hygiene
+
 - crush-daily: ONE successful manual squash (`16edaae`, proper message). SystemNix: D-block + B5 content landed but messages are daemon heuristics (see §d).
 
 ## c) NOT STARTED
+
 - U-block: cmd wiring, tests, flake, sweep-script copy, parity (U6), removal + annotations (U7).
 - G1: pre-commit ruff leg removal (lines ~390–401) + `ruff.toml` deletion + dummy-.py hook self-check.
 - G2: AGENTS.md scripts line ("Shell + Python" → "Shell"), TODO_LIST/services/pixel6 row close-outs (drift rule), CHANGELOG prune, plan annotation.
 - G3: final flake check + zero-.py asserts + guard selftest, SystemNix push, nix-check.yml watch, close-out consistency check, commit-message repair for D-block/B5.
 
 ## d) TOTALLY FUCKED UP (own it)
+
 1. **Lost every commit-message race with the auto-commit daemon** — 3 amend attempts in SystemNix and repeated sweeps in crush-daily; the daemon re-committed faster than my hooks ran. D-block (725-LOC deletion!) and B5 sit under "chore: auto-commit N changed file(s) (heuristic)" messages. Content is correct and gated; the rationale lives in the plan file, but the git history quality suffered exactly the way the multi-agent discipline warns.
 2. **v0.1.0 tag churn on the public remote** — created, re-pointed twice (dep-sweep discovery forced it), each re-point = delete + recreate on the remote. Minor noise, but a force-replaced tag is exactly the kind of history a reader shouldn't have to trust.
 3. **First ucr-archive files written without reading the how-to-golang banned/required lists first** and with invented helper names (`osReadFile`, `json.dumps` muscle memory) — caught and fixed immediately, but the write-then-scrub loop is below the bar.
@@ -60,6 +68,7 @@ The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx 
 5. **Flag-less DB resolution bug** shipped in my first version (resolved to the dev DB, wrong verdict dates) — caught by comparing with-explicit-flag vs flag-less runs; fixed with an explicit precedence chain + doc comment.
 
 ## e) WHAT WE SHOULD IMPROVE
+
 - **Daemon-race protocol needs a "quiesce window" rule**: before any amend/squash, require (a) no other `git commit` process for N seconds AND (b) the tree to be otherwise clean; if either fails, defer to a scheduled repair slot instead of retrying inline. Today's 3 lost races each burned 5–15 minutes.
 - **The daemon should not commit under 30s of tree silence** (or should leave staged-only sweeps to the owning session) — the heuristic-message noise is a recurring tax (this is at least the third incident in the repo's history).
 - **crush-daily needs the vendored-build gate in CI**: `nix build .#packages.x86_64-linux.default` (or at least the go-modules FOD) on every push — the dep sweep broke nix builds while `go test` stayed green; CI only catches this if it builds the flake.
@@ -72,6 +81,7 @@ The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx 
 ## f) Up to 50 things to do next (ordered, P0 first)
 
 **P0 — don't lose work / unblock:**
+
 1. Commit the current ucr-archive tree (even as WIP) — everything is uncommitted.
 2. Write `cmd/ucr/main.go` (subcommand routing: encode/rag/web/contacts, shared `--root` flag via ucrroot.Flag).
 3. Wire contacts `decode-vcf` incoming-dir default (sorted `contacts/incoming/*.vcf` when no files given).

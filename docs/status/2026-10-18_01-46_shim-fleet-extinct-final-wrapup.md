@@ -14,14 +14,14 @@ The consumer-side vendorHash shim fleet is **EXTINCT**: all 21 historical shim s
 
 ## §a FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                                                                          | Evidence                                                   |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | a1 | **The 8 remaining shims dropped** — 6 bit-neutral (upstream locus == shim value, graph verified identical tip-vs-lock: go-structure-linter, project-dependency-graph, project-discovery-daemon, samber-linter, go-auto-upgrade, file-and-image-renamer) + branching-flow (re-locked to tip `f129ca8a`, neither upstream hash matched the shim → evidence-based drop, arbiter validated) + erraudit (root convergence, see a2) | edits across `lib/lars-packages.nix`, `overlays/linux.nix` |
-| a2 | **erraudit resolved without a push** — its channel-tracking nixpkgs lock had already drifted onto `55bfb4d` (== our root), closing the follower divergence: input re-locked `98827233→0cc8ee2c`, upstream's baked `rIf6DO2D…` governs. FRAGILITY DOCUMENTED: when nixos-unstable moves past our root, the class re-fires — erraudit is the canonical follower-case watch | upstream.md row ticked with the standing-watch note |
-| a3 | **file-and-image-renamer mid-pass re-float handled** — tip moved `8b8d84e9→40176d0` between my graph check and the re-lock (graph changed); fresh got `4fF/8VOw…` pasted upstream, pushed `f3f0b82`, re-locked. The pdd two-round lesson materialized live and the flow absorbed it in one round | push output; final build green |
-| a4 | **Full verification** — 14 dropped-shim flake-attr packages build green individually (`/tmp/pkg-builds.log`, exit 0 — the scope-isolator that unblocked verification during the concurrent monitor365 eval-block); final toplevel `--keep-going` **exit 0** with zero errors + `flake check` **all checks passed** (`/tmp/toplevel-final4.log`) | logs; rev-stamped |
-| a5 | **Doctrine landed** — `docs/agents/go-ecosystem.md` root-nixpkgs-drift paragraph now names ALL SIX hash-literal surfaces (lib/, modules/, platforms/, flake.nix, overlays/, systems/, flake/parts/) with the overview incident as the named class; harvested row ticked on both surfaces | doc diff; TODO_LIST + pipeline.md ticks |
-| a6 | **All close-out surfaces clean** — erraudit row ticked (with standing-watch), sweep-surface row ticked, TODO-system validator "structure clean" | validator output |
+| a2 | **erraudit resolved without a push** — its channel-tracking nixpkgs lock had already drifted onto `55bfb4d` (== our root), closing the follower divergence: input re-locked `98827233→0cc8ee2c`, upstream's baked `rIf6DO2D…` governs. FRAGILITY DOCUMENTED: when nixos-unstable moves past our root, the class re-fires — erraudit is the canonical follower-case watch                                                      | upstream.md row ticked with the standing-watch note        |
+| a3 | **file-and-image-renamer mid-pass re-float handled** — tip moved `8b8d84e9→40176d0` between my graph check and the re-lock (graph changed); fresh got `4fF/8VOw…` pasted upstream, pushed `f3f0b82`, re-locked. The pdd two-round lesson materialized live and the flow absorbed it in one round                                                                                                                              | push output; final build green                             |
+| a4 | **Full verification** — 14 dropped-shim flake-attr packages build green individually (`/tmp/pkg-builds.log`, exit 0 — the scope-isolator that unblocked verification during the concurrent monitor365 eval-block); final toplevel `--keep-going` **exit 0** with zero errors + `flake check` **all checks passed** (`/tmp/toplevel-final4.log`)                                                                               | logs; rev-stamped                                          |
+| a5 | **Doctrine landed** — `docs/agents/go-ecosystem.md` root-nixpkgs-drift paragraph now names ALL SIX hash-literal surfaces (lib/, modules/, platforms/, flake.nix, overlays/, systems/, flake/parts/) with the overview incident as the named class; harvested row ticked on both surfaces                                                                                                                                      | doc diff; TODO_LIST + pipeline.md ticks                    |
+| a6 | **All close-out surfaces clean** — erraudit row ticked (with standing-watch), sweep-surface row ticked, TODO-system validator "structure clean"                                                                                                                                                                                                                                                                               | validator output                                           |
 
 ## §b PARTIALLY DONE
 
@@ -53,16 +53,19 @@ Nothing is broken: toplevel exit 0, all checks passed, zero active shims. The ho
 **Direct answers to the three questions:**
 
 **What did I forget?**
+
 1. **The jq hazard rule — three times.** Documented in AGENTS.md (shell-devtools section), applied zero times until the third hit. Documented lessons that aren't mechanical (aliases/wrappers) get forgotten under load — hence §e1.
 2. **Two different JSON shapes.** `nix flake metadata --json` nests under `.locks`; `flake.lock` nests under `.nodes.root`. I conflated them mid-pass. The metadata shape is what the doctrine examples use; the raw lock is what I was reading.
 3. **Ordering as verification.** Verifying a graph at a rev I was ABOUT to move is verifying a moving target — re-lock first, then the graph check is load-bearing.
 
 **What could I have done better?**
+
 1. Re-lock → verify at the locked rev → decide (the fir race disappears by construction).
 2. Fix the environment once, early: the jq wrapper (§e1) would have deleted three debug cycles AND the flake.lock shape confusion (stdin form forces reading the actual file).
 3. The multiedit anchor discipline: never anchor on a partial block when the block has a `name =` line — the three breaks were one mistake pattern replicated.
 
 **What could we still improve? (pattern-level)**
+
 - e1. **Agent-shell jq wrapper**: alias/wrap `jq` to `env -u DIRENV_DIFF jq` in every agent shell (crushrc/nix level) — the documented hazard is environmental, so the fix belongs in the environment, not in agent memory.
 - e2. **Post-push CI verification as a named step**: an upstream commit isn't done at push; it's done at CI-green (where CI exists). Feeds CI-restoration.
 - e3. **Package-level builds as the scope isolator** — when concurrent eval-audit work blocks the toplevel, `nix build .#<pkg>` isolates YOUR scope cleanly. Worth a line in the multi-agent discipline docs.
@@ -71,28 +74,28 @@ Nothing is broken: toplevel exit 0, all checks passed, zero active shims. The ho
 
 ## §f TOP NEXT TASKS (up to 50 allowed; 20 grounded — filler would be noise; existing rows cited, not duplicated)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **Deploy evo-x2** (owner, at a quiescent moment) + anchor check + `pre-reboot-check` + full `post-deploy-check.sh` | Critical | S | Process |
-| 2 | **Post-deploy service sweep for the five re-locked services** (inboxclean, pma, crm, cv, overview — all rebuilt today) + signoz frontend serving | High | S | Process |
-| 3 | **Wire the agent-shell jq wrapper** (e1): `env -u DIRENV_DIFF jq` at the crushrc/nix level; three strikes today justify the environment fix | Medium | S | Quality |
-| 4 | **FOD rev-staleness guard** (existing pipeline row): store-name rev vs lock rev pre-deploy leg — four live instances today | Medium | M | Quality |
-| 5 | **CI-restoration execution** (upstream.md durable row) | High | L | Feature |
-| 6 | **erraudit root-divergence watch**: pre-deploy leg or textfile metric comparing nixos-unstable tip vs our root pin (the re-fire alarm for a2's fragility) | Medium | S | Quality |
-| 7 | **crush-daily shim** (overlays): same evidence-pass treatment (its bun-lockfile FOD class is nastier — see the todo-list-ai row) | Low | M | Bug |
-| 8 | **Shim ledger, final form**: now near-empty — a one-screen "live overrides" surface (crush-daily + tq's git/doCheck legs + class docs) plus the erraudit watch | Low | S | Quality |
-| 9 | **go-cqrs-lite post-push CI check** for `853c9161` | Medium | S | Process |
-| 10 | **Darwin verification** post-day's moves | Medium | M | Bug-risk |
-| 11 | **rpi3-dns build verification** post-drop-cycle | Low | S | Bug-risk |
-| 12 | **CHANGELOG prune** of the day's `[x]` rows | Low | S | Docs |
-| 13 | **art-dupl behavioral check** — owner said "green enough"; revisit only if dedup output looks off (per their answer) | Low | Watch | Watch |
-| 14 | **nix-email contract hardening** (tryEval-guard, carried from 05-39) | Medium | S | Quality |
-| 15 | **Annotate the 23-48 §i d3 table** with the tq re-pin half (one line) | Low | S | Docs |
-| 16 | **`git log -S` empty-result diagnosis** (carried from 00-40 §d2 — never reproduced) | Low | S | Bug |
-| 17 | **Fmt scoping fix** (fourth+ data points recorded; the queued row is ready to execute) | Medium | M | Quality |
-| 18 | **Post-drop-cycle re-verify before ANY deploy**: the tree moved twice during the passes; one §11 FOD preview at deploy time | High | S | Process |
-| 19 | **Multi-agent discipline doc**: add the package-level-builds scope-isolator pattern (e3) + the mr-wrapped-git awareness to the index.lock hygiene note | Low | S | Docs |
-| 20 | **Update go-ecosystem.md fleet-wave section** with the 2026-10-17/18 wave entry (doctrine's evidence chain stays current) | Low | S | Docs |
+| #  | Task                                                                                                                                                           | Impact   | Effort | Category |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------- |
+| 1  | **Deploy evo-x2** (owner, at a quiescent moment) + anchor check + `pre-reboot-check` + full `post-deploy-check.sh`                                             | Critical | S      | Process  |
+| 2  | **Post-deploy service sweep for the five re-locked services** (inboxclean, pma, crm, cv, overview — all rebuilt today) + signoz frontend serving               | High     | S      | Process  |
+| 3  | **Wire the agent-shell jq wrapper** (e1): `env -u DIRENV_DIFF jq` at the crushrc/nix level; three strikes today justify the environment fix                    | Medium   | S      | Quality  |
+| 4  | **FOD rev-staleness guard** (existing pipeline row): store-name rev vs lock rev pre-deploy leg — four live instances today                                     | Medium   | M      | Quality  |
+| 5  | **CI-restoration execution** (upstream.md durable row)                                                                                                         | High     | L      | Feature  |
+| 6  | **erraudit root-divergence watch**: pre-deploy leg or textfile metric comparing nixos-unstable tip vs our root pin (the re-fire alarm for a2's fragility)      | Medium   | S      | Quality  |
+| 7  | **crush-daily shim** (overlays): same evidence-pass treatment (its bun-lockfile FOD class is nastier — see the todo-list-ai row)                               | Low      | M      | Bug      |
+| 8  | **Shim ledger, final form**: now near-empty — a one-screen "live overrides" surface (crush-daily + tq's git/doCheck legs + class docs) plus the erraudit watch | Low      | S      | Quality  |
+| 9  | **go-cqrs-lite post-push CI check** for `853c9161`                                                                                                             | Medium   | S      | Process  |
+| 10 | **Darwin verification** post-day's moves                                                                                                                       | Medium   | M      | Bug-risk |
+| 11 | **rpi3-dns build verification** post-drop-cycle                                                                                                                | Low      | S      | Bug-risk |
+| 12 | **CHANGELOG prune** of the day's `[x]` rows                                                                                                                    | Low      | S      | Docs     |
+| 13 | **art-dupl behavioral check** — owner said "green enough"; revisit only if dedup output looks off (per their answer)                                           | Low      | Watch  | Watch    |
+| 14 | **nix-email contract hardening** (tryEval-guard, carried from 05-39)                                                                                           | Medium   | S      | Quality  |
+| 15 | **Annotate the 23-48 §i d3 table** with the tq re-pin half (one line)                                                                                          | Low      | S      | Docs     |
+| 16 | **`git log -S` empty-result diagnosis** (carried from 00-40 §d2 — never reproduced)                                                                            | Low      | S      | Bug      |
+| 17 | **Fmt scoping fix** (fourth+ data points recorded; the queued row is ready to execute)                                                                         | Medium   | M      | Quality  |
+| 18 | **Post-drop-cycle re-verify before ANY deploy**: the tree moved twice during the passes; one §11 FOD preview at deploy time                                    | High     | S      | Process  |
+| 19 | **Multi-agent discipline doc**: add the package-level-builds scope-isolator pattern (e3) + the mr-wrapped-git awareness to the index.lock hygiene note         | Low      | S      | Docs     |
+| 20 | **Update go-ecosystem.md fleet-wave section** with the 2026-10-17/18 wave entry (doctrine's evidence chain stays current)                                      | Low      | S      | Docs     |
 
 ## §g QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -105,9 +108,11 @@ Nothing is broken: toplevel exit 0, all checks passed, zero active shims. The ho
 ## §h HARVEST RECORD (self-harvest at authoring time)
 
 **Harvested NOW (direct follow-ups of this tail):**
+
 - `docs/todo/pipeline.md` + TODO_LIST queue: **agent-shell jq wrapper** (e1/§d1) — `[ready]`, fix-in-environment doctrine applied to the documented direnv hazard.
 
 **Deliberately NOT harvested, and why:**
+
 - §f items 1/2 (deploy chain): owner-run, gated on §g1.
 - §f item 7 (crush-daily): gated on §g2 (scope + the bun-lockfile nastiness).
 - §f item 6 (erraudit watch): folded INTO the queue only if the owner wants automation beyond the ledger note — the note itself is already in the drop comment + row (done).

@@ -27,9 +27,9 @@ Closeout reports read first, as instructed: `docs/status/archived/2026-09-19_00-
 ## b) PARTIALLY DONE
 
 1. **hot-db Phase 2 is partial BY DESIGN:** mechanism shipped dormant; every actual migration wave (pocket-id → postgres → discordsync; docker data-root) is an owner sudo window. The `crush-hot-db` interim module is NOT yet folded in (documented debt; the 2026-09-21 10:35 session's per-project-guard upgrade is code-complete but deploy-pending behind the IO storm). The two hot-related VM tests are unrealized on the current tree (queued as TODO_LIST storage row "Rebuild `hot-db` + `crush-hot-db` VM tests green").
-~~2. **The probe-purge close-out chain is half-consumed.** The deletion executed (a.3), but the 04:57-handoff's second half — "remove the `probeRegistrationCleanup` block (self-neutralizing debt)" — never ran: the option + script + fixture + configuration.nix wiring are still in-tree (`browser-history.nix:198/368-387`, `configuration.nix:519`), now dead code, and `docs/todo/services.md:21` still carries the item as `[blocked:user]` although nothing is blocked anymore (annotated this pass).~~ done — probeRegistrationCleanup block REMOVED — grep modules/*.nix for it → 0 matches
-3. **The OAuth2 live rejection remains UNVERIFIED** (user passkey ceremony, `docs/todo/services.md:28`) — correctly qualified by the window's review fix, still open by design.
-4. **The review-fix report's own §a.4-style residue:** none — the CORRECTED annotation landed. Nothing partial left in that orbit.
+   ~~2. **The probe-purge close-out chain is half-consumed.** The deletion executed (a.3), but the 04:57-handoff's second half — "remove the `probeRegistrationCleanup` block (self-neutralizing debt)" — never ran: the option + script + fixture + configuration.nix wiring are still in-tree (`browser-history.nix:198/368-387`, `configuration.nix:519`), now dead code, and `docs/todo/services.md:21` still carries the item as `[blocked:user]` although nothing is blocked anymore (annotated this pass).~~ done — probeRegistrationCleanup block REMOVED — grep modules/*.nix for it → 0 matches
+2. **The OAuth2 live rejection remains UNVERIFIED** (user passkey ceremony, `docs/todo/services.md:28`) — correctly qualified by the window's review fix, still open by design.
+3. **The review-fix report's own §a.4-style residue:** none — the CORRECTED annotation landed. Nothing partial left in that orbit.
 
 ## c) NOT STARTED (window skipped, deliberately — canonical lists live in the cited reports)
 

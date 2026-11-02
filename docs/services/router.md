@@ -6,25 +6,25 @@
 
 ## Inventory
 
-| | |
-| --- | --- |
-| Model | Compal **DMC7002KLG** (Vodafone Station v2 class), FW **2.9.13**, DOCSIS 3.0 8x4, BPI+ |
-| Address | `192.168.1.1/24` (static LAN; repo pins this — `local-network.nix`, `wifi-failover-watch.sh`) |
-| Admin | HTTP only (no TLS listener), realm `Horizon`, user `admin`. **Password rotated 2026-10-30** — value in `~/.config/router-credentials/gateway-admin.txt` (0600, off-repo; move to password manager) |
-| WAN | DHCP from ISP, public `89.65.239.240/22`, lease 7d |
-| Radios | 5 GHz SSID `UPC504705697` (7 clients) + 2.4 GHz `UPC244705697`, WPA2, DFS ch 52 on 5 GHz |
+|         |                                                                                                                                                                                                    |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Model   | Compal **DMC7002KLG** (Vodafone Station v2 class), FW **2.9.13**, DOCSIS 3.0 8x4, BPI+                                                                                                             |
+| Address | `192.168.1.1/24` (static LAN; repo pins this — `local-network.nix`, `wifi-failover-watch.sh`)                                                                                                      |
+| Admin   | HTTP only (no TLS listener), realm `Horizon`, user `admin`. **Password rotated 2026-10-30** — value in `~/.config/router-credentials/gateway-admin.txt` (0600, off-repo; move to password manager) |
+| WAN     | DHCP from ISP, public `89.65.239.240/22`, lease 7d                                                                                                                                                 |
+| Radios  | 5 GHz SSID `UPC504705697` (7 clients) + 2.4 GHz `UPC244705697`, WPA2, DFS ch 52 on 5 GHz                                                                                                           |
 
 ## State after the 2026-10-30 hardening session
 
-| Setting | Before | After | Verification |
-| --- | --- | --- | --- |
-| DHCP pool | `.10` size 244 (`.10–.253`) | `.10` size **43** (`.10–.52`) | BasicLAN.asp read-back `value=43` |
-| DHCP DNS1/DNS2 | `193.47.158.254/.255` (Vodafone) | **unchangeable — fields are firmware-inert** (see traps) | 3 value classes tested, all ignored |
-| WPS 2.4 GHz | Enable 1 | **Enable 0** | page JSON blob `"WPS":{...,"Enable":"0"` |
-| WPS 5 GHz | Enable 1 | **Enable 0** | same, on the 5 GHz page |
-| Port scan detection | off | **on** | `cbPortScanDetection checked` |
-| Admin password | `admin/admin` | 24-char random (stored off-repo) | old auth → 401, new → 200 |
-| Firewall | on, WAN Blocking on, no forwards/DMZ, UPnP off | unchanged (kept) | AdvancedFirewall.asp |
+| Setting             | Before                                         | After                                                    | Verification                             |
+| ------------------- | ---------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- |
+| DHCP pool           | `.10` size 244 (`.10–.253`)                    | `.10` size **43** (`.10–.52`)                            | BasicLAN.asp read-back `value=43`        |
+| DHCP DNS1/DNS2      | `193.47.158.254/.255` (Vodafone)               | **unchangeable — fields are firmware-inert** (see traps) | 3 value classes tested, all ignored      |
+| WPS 2.4 GHz         | Enable 1                                       | **Enable 0**                                             | page JSON blob `"WPS":{...,"Enable":"0"` |
+| WPS 5 GHz           | Enable 1                                       | **Enable 0**                                             | same, on the 5 GHz page                  |
+| Port scan detection | off                                            | **on**                                                   | `cbPortScanDetection checked`            |
+| Admin password      | `admin/admin`                                  | 24-char random (stored off-repo)                         | old auth → 401, new → 200                |
+| Firewall            | on, WAN Blocking on, no forwards/DMZ, UPnP off | unchanged (kept)                                         | AdvancedFirewall.asp                     |
 
 - **Why pool 43, not the plan's 90:** the lease table proves **hash-style (scattered) allocation** (`.16 .29 .62 .122 .136 .161 .218 .241` — never sequential), so a `.10–.99` pool can hand `.53` (the dnsblockd VRRP virtual IP) to ANY new client, not just the 44th. `.10–.52` excludes `.53/.100/.150/.151/.200` structurally. The plan §7.1's "keeps .53 free" claim is only true at size ≤43 — plan erratum, recorded here.
 - Existing out-of-pool leases (`.62 .122 .161 .191`…) are honored on renew (standard DHCP REQUEST-ACK) and churn into `.10–.52` as clients re-DISCOVER. New leases already land in-pool (`.34 .45` observed).

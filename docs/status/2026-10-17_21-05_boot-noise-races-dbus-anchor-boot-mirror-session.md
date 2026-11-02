@@ -71,6 +71,7 @@ Total: 5 deploys (3 gate-refused, 2 forced with documented device-truth verifica
 ## f) NEXT — up to 50 things, roughly Pareto-ordered
 
 **Reboot-window block (highest leverage):**
+
 1. REBOOT (window is owner's call; everything green) — then immediately:
 2. Verify user@1000 io.pressure starts at 0 and stays 0 (PSI-phantom root-cause test #1); if it re-inflates with idle disks → kernel bug report with tonight's evidence pack.
 3. Post-boot: count dbus-broker "Ignoring duplicate name" lines (expect 0 or near-0; any remainder names the self-scan theory → allowPorts-style decision).
@@ -126,4 +127,4 @@ Total: 5 deploys (3 gate-refused, 2 forced with documented device-truth verifica
 
 ---
 
-*Sources: live journal (`journalctl -b`, `_COMM=sudo` forensics), /proc/pressure + cgroup io.pressure, five deploy logs (/tmp/deploy-out*.txt + /var/log/systemnix-deploys/), the 18:13 boot triage, and the running system's unit files. Every "verified" claim above was probed live in this session unless explicitly marked otherwise.*
+_Sources: live journal (`journalctl -b`, `_COMM=sudo` forensics), /proc/pressure + cgroup io.pressure, five deploy logs (/tmp/deploy-out_.txt + /var/log/systemnix-deploys/), the 18:13 boot triage, and the running system's unit files. Every "verified" claim above was probed live in this session unless explicitly marked otherwise.*

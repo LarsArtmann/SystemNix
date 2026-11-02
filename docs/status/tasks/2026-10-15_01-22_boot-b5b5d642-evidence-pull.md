@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 b5b5d642 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 15 02:19:14 evo-x2 kernel: Linux version 7.2.9 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Sat Oct  3 10:43:16 UTC 2026
 Oct 15 02:19:14 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 15 02:19:14 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Oct 15 03:12:22 evo-x2 postgres[1825866]: [1825866] HINT:  Rebuild all objects in this database that use the default collation and run ALTER DATABASE paperless REFRESH COLLATION VERSION, or build PostgreSQL with the right library version.
 Oct 15 03:12:22 evo-x2 cv[5426]: INFO  request method=GET path=/health/live status=200 duration=110.598µs client_ip=127.0.0.1 request_id=6ad028760000070a921f79e19877b18c
@@ -30,16 +32,19 @@ Oct 15 03:12:26 evo-x2 indexer[1938]: INFO request method=GET path=/ status=200 
 ```
 
 ## Census
+
 - oom-lines: 0
 - guard-lines (memory-emergency-guard): 123
 - thermal-THROTTLE-lines: 1
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 15 02:21:15 evo-x2 memory-emergency-guard-check[17878]: MEMORY EMERGENCY io drained (io PSI some avg60=23.00% < 40%) — churn units re-armed (re-arm #73)
 Oct 15 02:21:15 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -167,11 +172,13 @@ Oct 15 03:11:56 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated s
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 15 02:21:03 evo-x2 thermal-pstate-guard-check[17536]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=96C(hi:95/lo:80)
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 15 02:19:14 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 15 02:19:14 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/6hd6lr16i9kv5vm8hyb9p3vr2x6ai745-nixos-system-evo-x2-26.11.20261011.7fd4004/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

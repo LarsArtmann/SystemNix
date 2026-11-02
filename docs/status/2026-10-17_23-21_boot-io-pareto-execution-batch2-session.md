@@ -10,6 +10,7 @@
 ## a) FULLY DONE
 
 ### M01 — anchor triple + boot-safety (F01.1 + F01.3; F01.2 handed off by design)
+
 - **Anchor triple recorded:** booted = `zmnzbs3f` (gen 922), live `/run/current-system` = `f703wg59` (**UNANCHORED — no profile generation points at it**), profile head = gen 926 `v4gdk8yj` (boot-linked, never activated).
 - **Full activation trail reconstructed** from `_COMM=sudo` journal: 18:49 `sgjss8fz` (switch), 19:36 `zqlrxlv2`=gen925 (test+boot), 19:57 `v8f8v8rn`, 20:10 `rm56zlza`, 20:20 `p14vpxps`, 20:27+20:30 gen926 (test+boot), **20:38 `f703wg59` (test-only — the live system)**. The last four activates ran with zero new generations.
 - **Incident-fix safety proven:** BOTH the live system and the boot-default gen 926 carry `After=netbird-evox2.service multi-user.target` + `TimeoutStartSec=2min` (unit-file grep in both closures) — a revert-on-reboot cannot lose the netbird/llama-chat fixes.
@@ -17,11 +18,13 @@
 - **Repair not executed (deliberate):** the plan marks the repair leg owner-run (sudo is guard-banned for agent shells), AND the parallel session root-caused the same anomaly independently and shipped a systemic fix — `deploy.sh` now self-repairs the anchor post-switch (profile + boot entries re-armed). M01's anomaly self-heals at the next deploy. The upstream nh/nixos-rebuild-ng profile-leg vanishing stays open on its pipeline.md row.
 
 ### M03 — shape-audit class 7 (the plan's "class 5"): verified + closed
+
 - Landed by a parallel session (heuristic commits) BEFORE my pass: predicate (boot-blocking Type=oneshot ∧ unset/"infinity" TimeoutStartSec → eval throw), `allowUnboundedOneshot` allowlist (shipped EMPTY — zero live users), `serviceOneshotDefaults` 5min mkDefault floor, `modules/nixos/services/boot-oneshot-bounds.nix` bounding the 10 foreign-rendered stragglers (cpufreq, sshd-keygen, logrotate-checkconf, linger-users, post-boot + 5 in-repo factories), negative leg `shapeaudit/oneshot-unbounded`.
 - **My independent re-verification (re-dispatch protocol):** `CASES=shapeaudit bash scripts/negative-test-lints.sh` → **PASS** (mutation on a tree COPY throws the audit marker); `nix flake check --no-build` → all checks passed. Assertion-list eval on a healthy config is impossible (nixpkgs' lazy `fileSystems'.cycle` message breaks `nix eval config.assertions` — flake check is the only sanctioned gate; noted in-session).
 - **Surfaces closed:** library row services.md:590 (`[x]` + DONE annotation) — the queue row TODO_LIST.md:394 had already been closed by the parallel session; the drift was the library side only.
 
 ### M04 — network-online sweep (F04.1–F04.3, F04.5 partially, F04.7)
+
 - **17 files enumerated** (grep across modules/ platforms/ systems/), **all hits classified**:
   - **DROPPED (8 units, 6 modules — loopback-only binders, local assets):** llama-embeddings, llama-reranker (loopback-asserted; gate kept ONLY on `llama-rag-model-fetch` — the row's fetch-leg special case), llama-vlm-* backends (socket-activated, local models), fastflowlm (data.mount local model), nsfw-classifier (17 local ONNX), papdashboard (local icon pack; Discord paging is runtime outbound), systemd-graph (local dbus/journal).
   - **KEPT with per-unit reason:** model-fetch (HF downloads), hermes (outbound messaging login at start), forgejo-github-sync + forgejo-ensure-repos (outbound git), bank-sync ×3 (Wise API), pbx-backup-pull + geometrikks ×2 (outbound pulls), gatus (probes fire at start), dnsblockd-attach-ip (net-device machinery), dual-wan ×4 (defines the gate), crm-server (out of the row's suspect scope; carries its own bounded fail-open getent DNS wait — the cv-server house idiom), ai-meter + paperless-gpt (outbound LLM consumers), tq-agent-pool (comment only).
@@ -29,44 +32,52 @@
 - **F04.4** (llama-rag special case) folded into the embeddings/reranker edits. **F04.5:** evo-x2 covered via evals + flake check; darwin intentionally skipped by the check (expected); rpi3 not separately evaled (see §e).
 
 ### M08 — visionreviewd OnFailure + CHANGELOG (F08.1–F08.3)
+
 - Fix landed by the parallel session at visionreviewd.nix:60 (unit-level `onFailure`). **My eval verification:** `config.systemd.services.visionreviewd.onFailure` renders `[ "notify-failure@%n.service" ]`; `serviceConfig.OnFailure` → attribute does not exist (the inert [Service] copy is gone).
 - **Three queue rows closed** (TODO_LIST 210 — the 2026-10-06 duplicate discovery, 395 — my session's row, and the library row services.md:591) + CHANGELOG entry.
 - Deploy owed (live /etc unit still carries the inert form until the next switch).
 
 ### M14 — btrbk IO tier at the definition site (F14.1–F14.3)
+
 - Definition site located: `platforms/nixos/system/snapshots.nix` (the instances live there; the services/ glob that missed it was the original bug).
 - All **five** units tiered `ioTier.background` (BE/6) via mkMerge: btrbk-root, btrbk-data, btrbk-pool, btrbk-forgejo (previously nixpkgs' bare best-effort class = BE/4-default), btrbk-pool-clean (hand-rolled `IOSchedulingClass = "best-effort"` without a priority → house helper). btrbk-forgejo-clean (forgejo.nix) already carried the helper — untouched.
 - Doctrine honored: never idle (must-finish, borg precedent), always yields to interactive/desktop. **Renders verified:** IOSchedulingPriority = 6 on all five.
 - No standalone TODO row existed for this ask (the plan cited "[ready] services.md" but no such row was found after three grep passes) — CHANGELOG entry written instead; no row fabricated.
 
 ### M06 — hermes-perms-heal audit (F06.1–F06.3): verdict JUSTIFIED-KEEP
+
 - Unit already carries `ioTier.build` (BE/7 + Nice 10) with a definition-site comment deliberately rejecting idle (starvation tail) — from the 2026-10-06 restructure.
 - **Live journal evidence:** CPU time is FLAT across runs (36s / 33s / 26s CPU) while wall varies 1m06s → 4m42s → **7m52s** — the walk's own cost is constant; the variance IS the yielding working. The "heal path" fires on EVERY run (perms drift continuously from agent churn — convergence is load-bearing at boot + every deploy restart), so deferring past boot-settle would extend the unconverged-perms window for zero CPU savings. ~1G metadata read per run.
 - The 7m52s blame bar = the 18:16 recovery-boot storm data point (journal: Started 18:16:59 → converged 18:24:51). Row closed with the verdict + evidence; M02 owns the calm re-measure.
 
 ### M07 — compsize battery (F07.1–F07.4)
+
 - **F07.1 answered from live state:** the deployed timer (read from `/run/current-system/.../btrfs-compsize.timer`) carries `OnBootSec=30min, OnUnitActiveSec=6h, AccuracySec=5m` — the 2026-10-12 fix IS deployed; the 23:57 run on the 23:29 boot was the **OnBootSec boot fire** (23:29 + 30min − 5min accuracy), landing inside the recovery-storm tail. nix-gc-style timer misfire ruled out.
 - **F07.2+F07.3 landed:** `ExecStartPre = maintenance-entry-gate --name btrfs-compsize` (the shared refuse-and-refire contract, same as the balance/gc fleet) + `ioTier.maintenance` (idle + Nice 10, the row's fstrim pattern; the gate refuses storms, so idle only yields to admitted post-boot traffic). Render eval-verified (`IOSchedulingClass = "idle"` + the gate ExecStartPre).
 - Row stability.md:246 closed with the live proof. Deploy owed.
 
 ### M13 — store-GC anomaly forensics (F13.1–F13.4)
+
 - **F13.1: the path is BACK** — `/nix/store/a1awc19d…-netbird-client-0.80.0-wrapper-evox2/bin/netbird-evox2` exists again (the 19:36→20:38 deploy chain re-realized it); the CURRENT system's `netbird-evox2.service` references exactly that path.
 - **F13.3: landmine DEFUSED** — the running daemon was restarted 19:15:55 (PID 1083316) from `k60vch2i…-netbird-client-0.80.0`, a LIVE path; `/proc/<pid>/exe` shows no "(deleted)".
 - **F13.2 verdict:** the nix-gc TIMER never fired 18:00–20:00 (journal: no entries) — the ~19:07 deletion was a build's **min-free auto-GC** under the 182-proc build. **Root cause class: downstream symptom of the unanchored-deploy anomaly** (the 19:57→20:38 raw-stc activations left the running system's paths with NO profile gcroot → auto-GC was free to delete them). NOT an independent GC bug.
 - **F13.4: no new guard row queued** (deliberate): the parallel session's deploy.sh anchor self-repair removes the enabling condition, and pre-reboot-check gate 10 already audits GC anchoring per boot. The upstream nh profile-leg row keeps the remainder.
 
 ### M17 — FinishTimestamp gap attribution (F17.1–F17.3)
+
 - **Closer NAMED with to-the-second reconciliation:** `boot-metrics-emit.service`. netbird-evox2-login Finished 19:19:18 → boot-metrics-emit `Starting` at 19:19:18 (queued directly behind it) → `Finished` 19:43:18 (`Consumed 165ms CPU over 24min 317ms wall`) → PID-1's ONLY `Startup finished` line of the boot at 19:43:18 (`1h 29min 25.454s userspace = 1h 29min 40.387s`). **btime(1792253627) + 5371s = 19:43:18 CEST** — the monotonic reading resolves exactly.
 - **Mechanism (corrected in-session — see §d):** the 24-min body is the emitter's OWN 12×120s unfinished-boot retry budget; every mid-loop `systemd-analyze` call necessarily refuses while the unit itself holds the transaction open — a self-referential wait that can only end by budget exhaustion (= 19:43:18). The 19:49:18 OnUnitActiveSec re-fire then converged the sample in 157ms. NO second login re-ignition.
 - Fold note for M02: this boot's blame will show boot-metrics-emit ≈24min — a known storm artifact.
 
 ### M15 — transaction_open gauge (F15.1–F15.2; F15.3 observe-only by design)
+
 - `boot-metrics.nix` now emits `transaction_open` + `transaction_open_seconds_past_graphical`: **written MID-RETRY** (every 120s refusal cycle atomically rewrites boot-metrics.prom with the open age = uptime − graphical.target ActiveEnterTimestampMonotonic, uptime fallback pre-graphical) so an infinite-boot box surfaces a number within the first cycle — the 2026-10-17 class was invisible to blame + systemd-analyze for 55+ min. Final sample carries 0/0 when closed; the give-up path keeps the last open age + scrape_errors=1 instead of a bare phase-less error.
 - **Closed-path live dry-run verified** (script extracted via eval, redirected to /tmp, executed on the real boot): transaction_open 0, phases parsed, 28-line prom.
-- **BONUS LIVE CATCH — pre-existing parser bug fixed:** `to_seconds`/`emit_phase` dropped a leading `1h ` (leftmost-longest substring match started at "29min") — the 18:13 boot emitted userspace **1765.454 for the true 1h 29min 25.454s**. Hours case + hours-bearing regexes added; **re-verified against ground truth to the decimal: userspace 5365.454 / total 5380.387** (matches the PID-1 Startup-finished line exactly).
+- **BONUS LIVE CATCH — pre-existing parser bug fixed:** `to_seconds`/`emit_phase` dropped a leading `1h` (leftmost-longest substring match started at "29min") — the 18:13 boot emitted userspace **1765.454 for the true 1h 29min 25.454s**. Hours case + hours-bearing regexes added; **re-verified against ground truth to the decimal: userspace 5365.454 / total 5380.387** (matches the PID-1 Startup-finished line exactly).
 - Row stability.md:244 closed (gauge ask + the 18:13 holder); CHANGELOG entry written. See §d for the honest annotation on the 3efe02cf half-ask.
 
 ### Session hygiene
+
 - 4 CHANGELOG entries (aftermath tranche, network-online sweep, maintenance tiering + compsize gate, transaction_open gauge).
 - 9 TODO surfaces closed across TODO_LIST.md / services.md / stability.md (3 of them parallel-session drift: queue 394's library side, queue 210+395 duplicates, deploy row already closed).
 - check-todo-system.sh green at every checkpoint; scoped treefmt only (0 unintended files touched).
@@ -139,4 +150,4 @@
 
 **Self-assessment:** 11 of 20 medium tasks executed (all non-owner-gated, non-M02-dependent except M18-partial and M20 — see §c/§e.6); every change eval- or live-verified; two honesty defects caught and corrected (one only at this self-review); zero destructive actions; TODO/CHANGELOG surfaces consistent at every checkpoint.
 
-*Arte in Aeternum*
+_Arte in Aeternum_

@@ -53,6 +53,7 @@
 ## f) Next tasks (session-derived; the full backlog lives in TODO_LIST.md + docs/todo/)
 
 **From my session's observations (NEW — harvested at authoring time):**
+
 1. Add the session-start state stamp (date/current-system/newest-gen/HEAD) as a hard rule in AGENTS.md Session Discipline — the d.1/d.4 prevention. Impact: High. Effort: S. Quality.
 2. Add the T+2min watcher-arming rule next to the job-110 class in AGENTS.md (or CONTRIBUTING). Impact: Medium. Effort: S. Quality.
 3. Reconcile the 04:00 vs 05:44 smoke runs: name the 04-04 session's "one NEW fail", check it in my 05:44 output, and either close the delta or open a row. Impact: Medium. Effort: S. Bug.

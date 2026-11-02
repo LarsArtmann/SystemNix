@@ -67,7 +67,7 @@
 ~~1. Deploy SystemNix (`nix run .#deploy`) to activate the 8 fixes — MemoryHigh + dozzle digest + port registry take effect only then.~~ done — deploys routine; fixes long live
 ~~2. Re-run FULL `nix flake check` (VM tests) post-edit as the deploy gate — **IMMEDIATELY: pool-recovery is currently red (see b.1); isolate `nix build .#checks.x86_64-linux.pool-recovery` to classify flake vs regression before ANY deploy**.~~ **Won't implement — one-shot.**
 ~~3. SystemNix: harden the ~25 raw oneshots/watchdogs (batch by risk: root+systemctl ones first).~~ **NOT-DO — dup of c1.**
-~~4. SystemNix: add eval-time "presence" audits (startLimit*, harden-or-justify per unit class) — turns d)/e) class into guard.~~ done at `AGENTS.md Eval-time audit table (systemd shapes`, ` lifecycle keys`, ` ports)`
+~~4. SystemNix: add eval-time "presence" audits (startLimit*, harden-or-justify per unit class) — turns d)/e) class into guard.~~ done at `AGENTS.md Eval-time audit table (systemd shapes`, `lifecycle keys`, `ports)`
 5. SystemNix: decide + implement SystemCallFilter policy for `harden()` (document decision either way).
 ~~6. SystemNix: mutation test for MemoryHigh parser (tests/test-harden-memory.nix).~~ **NOT-DO — dup of e2 (MemoryHigh mutation test).**
 ~~7. SystemNix: taskwarrior sync secret → sops (requires server-side rotation — coordinated change).~~ **NOT-DO — dup of c3 (taskwarrior sops; zfs-vm password).**

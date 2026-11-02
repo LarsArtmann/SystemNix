@@ -15,36 +15,36 @@ every item is something this session actually did wrong or failed to check.
 
 ### a.1 The sixteen plan tasks
 
-| Task | Evidence that it works |
-| --- | --- |
-| **T03** falsified/stale rows | Five adoption-wave rows re-verified against the deployed config (`allowlist_path`, `csrf_enabled`, `devices`/`users`, `extraDomains`, lock rev past `f625cfee`) and closed; second-wave retagged `[watch]`→`[decision]`; OTel row `[ready]`→`[blocked:deploy]` |
-| **T19** runbook pointers | `/etc/hosts` shadow paragraph (with the 2026-10-14 catalog-sync deaths); `:80`/`:443` listener map + loopback-returns-empty gotcha; 3-concepts-"proxy" table; plus the docs index fixed (`status/archive/` vs `archived/`, `services/`/`todo/`/`brainstorming/` missing from the table) |
-| **T20** comment sweep | Zero stale pre-T299 claims survived; two contradictions corrected with dates (device-registry owner-confirm promise; the `search home.lan` consequence killed by the 2026-10-17 removal). Sweep record added to the runbook with a rule for the negative-claim class |
-| **T21** h2 block-page | Probed live: `ALPN protocol: h2`, status 200, **92,567 bytes identical to h1.1**, same title/markers. Premise falsified → the planned Gatus h2 variant and `--http2` smoke leg retired. Two undocumented facts recorded: per-SNI on-demand cert minting (`CN=doubleclick.net`, cached, stable serial) and its clock dependency |
-| **T06** option audit | Whole 460-1195 block read against locked upstream `f9bb6477` (via `git show`, never the working tree). Row's "53 options" was wrong: **52** existed. **0 phantom keys** of 57 rendered (57 rendered ⊆ 151 upstream koanf keys). Full 53-row map + per-option verdicts in plan Appendix A |
-| **T06** pprof switch | `pprofEnabled` added, default off, **host config store path byte-identical** (`kxgximh…` before and after) → zero deploy churn. Render-test variant 7 proves both directions and that `stats_addr` stays loopback |
-| **T24** catalog dedupe | Five citations for one warning (19/21/21/23 affected services, all stale; live is 22) collapsed to one row that states the count is derived, gives the re-derive command, maps all 22 services to modules, and records why the warning must stay a warning. Rationale also written into `catalog.nix` |
-| **T25d** inject-URL | Verified at source that upstream `SetInjectScript` validates nothing; eval assertion added with a rejection leg **and** a false-positive guard, both eval-verified directly |
-| **T25a** race root cause | Traced to `semihalev/sdns` (not dnsblockd), verified unfixed in **both** v1.8.3 and v1.9.1, shown production-reachable on every blocklist reload. Ready-to-file body in `docs/drafts/2026-10-28_sdns-cache-metric-hook-race.md` |
-| **T27a/b** prune prep | Dry run: 131 `[x]` rows / 11 files, WARN A DRIFT=49, baseline `b33a73fd`, artifact in `~/.cache/`. Row's "3 done rows" premise replaced with the verified state |
+| Task                         | Evidence that it works                                                                                                                                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **T03** falsified/stale rows | Five adoption-wave rows re-verified against the deployed config (`allowlist_path`, `csrf_enabled`, `devices`/`users`, `extraDomains`, lock rev past `f625cfee`) and closed; second-wave retagged `[watch]`→`[decision]`; OTel row `[ready]`→`[blocked:deploy]`                                                                 |
+| **T19** runbook pointers     | `/etc/hosts` shadow paragraph (with the 2026-10-14 catalog-sync deaths); `:80`/`:443` listener map + loopback-returns-empty gotcha; 3-concepts-"proxy" table; plus the docs index fixed (`status/archive/` vs `archived/`, `services/`/`todo/`/`brainstorming/` missing from the table)                                        |
+| **T20** comment sweep        | Zero stale pre-T299 claims survived; two contradictions corrected with dates (device-registry owner-confirm promise; the `search home.lan` consequence killed by the 2026-10-17 removal). Sweep record added to the runbook with a rule for the negative-claim class                                                           |
+| **T21** h2 block-page        | Probed live: `ALPN protocol: h2`, status 200, **92,567 bytes identical to h1.1**, same title/markers. Premise falsified → the planned Gatus h2 variant and `--http2` smoke leg retired. Two undocumented facts recorded: per-SNI on-demand cert minting (`CN=doubleclick.net`, cached, stable serial) and its clock dependency |
+| **T06** option audit         | Whole 460-1195 block read against locked upstream `f9bb6477` (via `git show`, never the working tree). Row's "53 options" was wrong: **52** existed. **0 phantom keys** of 57 rendered (57 rendered ⊆ 151 upstream koanf keys). Full 53-row map + per-option verdicts in plan Appendix A                                       |
+| **T06** pprof switch         | `pprofEnabled` added, default off, **host config store path byte-identical** (`kxgximh…` before and after) → zero deploy churn. Render-test variant 7 proves both directions and that `stats_addr` stays loopback                                                                                                              |
+| **T24** catalog dedupe       | Five citations for one warning (19/21/21/23 affected services, all stale; live is 22) collapsed to one row that states the count is derived, gives the re-derive command, maps all 22 services to modules, and records why the warning must stay a warning. Rationale also written into `catalog.nix`                          |
+| **T25d** inject-URL          | Verified at source that upstream `SetInjectScript` validates nothing; eval assertion added with a rejection leg **and** a false-positive guard, both eval-verified directly                                                                                                                                                    |
+| **T25a** race root cause     | Traced to `semihalev/sdns` (not dnsblockd), verified unfixed in **both** v1.8.3 and v1.9.1, shown production-reachable on every blocklist reload. Ready-to-file body in `docs/drafts/2026-10-28_sdns-cache-metric-hook-race.md`                                                                                                |
+| **T27a/b** prune prep        | Dry run: 131 `[x]` rows / 11 files, WARN A DRIFT=49, baseline `b33a73fd`, artifact in `~/.cache/`. Row's "3 done rows" premise replaced with the verified state                                                                                                                                                                |
 
 ### a.2 Verification actually run this round
 
-| # | Command | Result |
-| --- | --- | --- |
-| V1 | `nix build .#checks.x86_64-linux.dns-blocker-render` | green — `… ECS, h3, pprof, rpi3 parity OK` (7 variants) |
-| V2 | `nix flake check --no-build` (twice: mid-session, final) | **exit 0**, "all checks passed!" both times |
-| V3 | `nix eval` scheme-less `proxyInjectScriptURL` | assertion FIRES (exactly 1 failed, message matched) |
-| V4 | `nix eval` well-formed `proxyInjectScriptURL` | **zero** failed assertions |
-| V5 | `nix eval .#…config.assertions` (host) | **zero** failed |
-| V6 | `nix eval --raw …serviceConfig.ExecStart` | `kxgximh…` — byte-identical pre/post session |
-| V7 | `comm -23` rendered keys vs upstream koanf tags @ `f9bb6477` | **0 phantom keys** |
-| V8 | `nix eval` gatus endpoints / nixosModules | **247** / **141** — the counts `checks.doc-counts` enforces; unchanged by this round |
-| V9 | `go test -race ./internal/server/` @ upstream HEAD `b3ebfab0` | **PASS 7.4 s** (could not reproduce — see §d.5) |
-| V10 | `check-todo-system.sh` / `audit-shell-nullglob.sh` / `audit-textfile-tmp.sh` | OK / `fail=0` / `fail=0` |
-| V11 | Relative-link check over 6 edited docs | 0 broken |
+| #   | Command                                                                                    | Result                                                                                                                     |
+| --- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| V1  | `nix build .#checks.x86_64-linux.dns-blocker-render`                                       | green — `… ECS, h3, pprof, rpi3 parity OK` (7 variants)                                                                    |
+| V2  | `nix flake check --no-build` (twice: mid-session, final)                                   | **exit 0**, "all checks passed!" both times                                                                                |
+| V3  | `nix eval` scheme-less `proxyInjectScriptURL`                                              | assertion FIRES (exactly 1 failed, message matched)                                                                        |
+| V4  | `nix eval` well-formed `proxyInjectScriptURL`                                              | **zero** failed assertions                                                                                                 |
+| V5  | `nix eval .#…config.assertions` (host)                                                     | **zero** failed                                                                                                            |
+| V6  | `nix eval --raw …serviceConfig.ExecStart`                                                  | `kxgximh…` — byte-identical pre/post session                                                                               |
+| V7  | `comm -23` rendered keys vs upstream koanf tags @ `f9bb6477`                               | **0 phantom keys**                                                                                                         |
+| V8  | `nix eval` gatus endpoints / nixosModules                                                  | **247** / **141** — the counts `checks.doc-counts` enforces; unchanged by this round                                       |
+| V9  | `go test -race ./internal/server/` @ upstream HEAD `b3ebfab0`                              | **PASS 7.4 s** (could not reproduce — see §d.5)                                                                            |
+| V10 | `check-todo-system.sh` / `audit-shell-nullglob.sh` / `audit-textfile-tmp.sh`               | OK / `fail=0` / `fail=0`                                                                                                   |
+| V11 | Relative-link check over 6 edited docs                                                     | 0 broken                                                                                                                   |
 | V12 | Live probes: ALPN, per-SNI cert, `ss -ltnp`, blocked-domain `dig`, collector `ActiveState` | `h2` negotiated; `CN=doubleclick.net`; `.150`/`.200` on 80+443, nothing on loopback; `→ 192.168.1.200`; **still `failed`** |
-| V13 | Observer unit present in eval | `dnsblockd-otel-observer` confirmed |
+| V13 | Observer unit present in eval                                                              | `dnsblockd-otel-observer` confirmed                                                                                        |
 
 ### a.3 Process work
 
@@ -75,18 +75,18 @@ every item is something this session actually did wrong or failed to check.
 
 ## c) NOT STARTED — and what each needs
 
-| Task | Gate | The specific blocker |
-| --- | --- | --- |
-| T04 allowlist backup | owner (Q3) | destination + whether `tracking.db` rides along |
-| T08 `Type=notify` | deploy | AF_UNIX + notify must land together or the resolver sits "activating" |
-| T09/T10 migration | owner (Q1) + root | `chown -R` 4.6 G journal + 2.55 G tracking with the sole resolver stopped |
-| T11 VM test | resources | aarch64-dns config cannot be realised on x86_64 |
-| T16 doctrine | owner | subvolume copy vs full btrbk entry |
-| T17 gateway/firewall | owner | opt-in matrix + DoH/DoT blocking with a drill |
-| T18 wildcard | owner | evidence assembled; the call is theirs |
-| T25b/c/d | push / repro | 3 of 4 issue bodies unwritten |
-| T26 post-deploy battery | deploy | §22/§23/observer legs are the proof set |
-| T27c prune apply | CHANGELOG ownership | 131-row block would collide with a concurrent session |
+| Task                    | Gate                | The specific blocker                                                      |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------- |
+| T04 allowlist backup    | owner (Q3)          | destination + whether `tracking.db` rides along                           |
+| T08 `Type=notify`       | deploy              | AF_UNIX + notify must land together or the resolver sits "activating"     |
+| T09/T10 migration       | owner (Q1) + root   | `chown -R` 4.6 G journal + 2.55 G tracking with the sole resolver stopped |
+| T11 VM test             | resources           | aarch64-dns config cannot be realised on x86_64                           |
+| T16 doctrine            | owner               | subvolume copy vs full btrbk entry                                        |
+| T17 gateway/firewall    | owner               | opt-in matrix + DoH/DoT blocking with a drill                             |
+| T18 wildcard            | owner               | evidence assembled; the call is theirs                                    |
+| T25b/c/d                | push / repro        | 3 of 4 issue bodies unwritten                                             |
+| T26 post-deploy battery | deploy              | §22/§23/observer legs are the proof set                                   |
+| T27c prune apply        | CHANGELOG ownership | 131-row block would collide with a concurrent session                     |
 
 ---
 
@@ -154,7 +154,7 @@ soften-and-recommit cycles. The lesson was written before it was learned.
 
 The catalog row now says "`logs` (Dozzle) and `crm` no longer appear". I verified `crm` declares a catalog entry and that
 Docker/Dozzle is gone by grepping. I did **not** re-derive the 22-name census from a single fresh eval output and diff the
-two lists mechanically — I read the warning text once. The count (22) is right; the *base* for saying the older lists were
+two lists mechanically — I read the warning text once. The count (22) is right; the _base_ for saying the older lists were
 stale is thinner than the row's confident tone.
 
 ---
@@ -165,7 +165,7 @@ Five rules, each earned by a specific failure above.
 
 1. **Derive every number at the moment of writing, or don't write it.**
    d.1 and d.9 are the same mistake. The remediation is mechanical: any count in prose must sit next to the command that
-   produced it *in the same edit*. This report's §a tables attempt that (§a.2 V8 exists because of d.1).
+   produced it _in the same edit_. This report's §a tables attempt that (§a.2 V8 exists because of d.1).
 
 2. **A tag is a router, not a comment.** If the reason does not fit the vocabulary, the reason belongs in the prose and
    the tag should be the closest honest one — or the row needs a new tag class. d.2.
@@ -190,6 +190,7 @@ or it is decoration; today it is decoration that misleads sessions into believin
 Ordered by what unblocks the most downstream work.
 
 **Root path — one action unblocks six (1-7)**
+
 1. `nix run .#deploy` — activates T01, T02 §22, T05 observer, T14 freshness, T23 §23, T06's pprof switch.
 2. `systemctl reset-failed signoz-collector.service` && start — ends the ~19 h telemetry blackout.
 3. `nix run .#post-deploy-check` — §22/§23/observer are the proof set.
@@ -279,13 +280,13 @@ tables stay hand-padded forever. I cannot tell which you would prefer, and doing
 
 ## Appendix — commits from this round
 
-| SHA | Message |
-| --- | --- |
-| `5b346bb8d` | docs: correct dnsblockd claims the live host contradicts |
-| `512614a7d` | feat: diagnose dnsblockd hangs without destroying the evidence |
+| SHA         | Message                                                               |
+| ----------- | --------------------------------------------------------------------- |
+| `5b346bb8d` | docs: correct dnsblockd claims the live host contradicts              |
+| `512614a7d` | feat: diagnose dnsblockd hangs without destroying the evidence        |
 | `56851cf6c` | docs: settle which watch-list rows are real and which were duplicates |
-| `dbe2e02aa` | docs: report what the second execution round actually finished |
-| `54325a48a` | docs: trace the cache-metric race to the library that owns it |
+| `dbe2e02aa` | docs: report what the second execution round actually finished        |
+| `54325a48a` | docs: trace the cache-metric race to the library that owns it         |
 
 Plus, after this report's own self-review (d.1-d.4): the `[blocked:deploy]`→`[blocked:user]` retag, the round-2 report's
 count correction, and the `dprint.json` harvest row.

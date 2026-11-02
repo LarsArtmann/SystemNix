@@ -64,28 +64,28 @@ No code changed this session, so nothing to test. The two queued config changes 
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Routing pre-read + planning pre-read (storage.md, forgejo runbook, 2026-10-25 QLC report, TODO grep) BEFORE queueing | session transcript; no duplicate rows created |
-| Live tier map for every ≥1G /var consumer (findmnt + df + btrfs usage) | 10-38 report tier table |
-| F1 forgejo: dump inventory (7 zips, 3.9G→27G), nixpkgs module semantics source-verified, daily pool leg live-verified healthy (journal 10-27 03:38, 8×27G, 7d retention) | 10-38 report F1 |
-| F2 monitor365-server: state-dir contents + backup unit design read (KEEP retention, reflink, VACUUM-blocked journal line) | 10-38 report F2 |
-| F3 buffer: 2,310,842 segments, newest 2026-07-30 — frozen 3 months | 10-38 report F3 |
-| F4 drill: root-caused to CAP_DAC_READ_SEARCH absence; 2 failing Sundays live-quoted from journal | 10-38 report F4 |
-| F5 residue inventory (discordsync ×4, /var/tmp, containers overlay, gitea.pre, runner .cache) with dates | 10-38 report F5 |
-| Audit status report written + daemon-committed (`5eca127fa`) | docs/status/2026-10-27_10-38_* |
-| Queue updates: 3 new rows + 2 row updates (560/596) + 2 drift fixes (465/540), dual-surface, checker OK, `nix fmt` 0 changes | TODO_LIST.md, docs/todo/{services,storage}.md |
-| Parallel-session attribution (stability.md diff + signoz-migrator-guard.nix left untouched; 09-48 report overlap-checked) | session transcript |
+| Item                                                                                                                                                                     | Evidence                                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| Routing pre-read + planning pre-read (storage.md, forgejo runbook, 2026-10-25 QLC report, TODO grep) BEFORE queueing                                                     | session transcript; no duplicate rows created |
+| Live tier map for every ≥1G /var consumer (findmnt + df + btrfs usage)                                                                                                   | 10-38 report tier table                       |
+| F1 forgejo: dump inventory (7 zips, 3.9G→27G), nixpkgs module semantics source-verified, daily pool leg live-verified healthy (journal 10-27 03:38, 8×27G, 7d retention) | 10-38 report F1                               |
+| F2 monitor365-server: state-dir contents + backup unit design read (KEEP retention, reflink, VACUUM-blocked journal line)                                                | 10-38 report F2                               |
+| F3 buffer: 2,310,842 segments, newest 2026-07-30 — frozen 3 months                                                                                                       | 10-38 report F3                               |
+| F4 drill: root-caused to CAP_DAC_READ_SEARCH absence; 2 failing Sundays live-quoted from journal                                                                         | 10-38 report F4                               |
+| F5 residue inventory (discordsync ×4, /var/tmp, containers overlay, gitea.pre, runner .cache) with dates                                                                 | 10-38 report F5                               |
+| Audit status report written + daemon-committed (`5eca127fa`)                                                                                                             | docs/status/2026-10-27_10-38_*                |
+| Queue updates: 3 new rows + 2 row updates (560/596) + 2 drift fixes (465/540), dual-surface, checker OK, `nix fmt` 0 changes                                             | TODO_LIST.md, docs/todo/{services,storage}.md |
+| Parallel-session attribution (stability.md diff + signoz-migrator-guard.nix left untouched; 09-48 report overlap-checked)                                                | session transcript                            |
 
 ## b) PARTIALLY DONE
 
-| Item | Missing part |
-| --- | --- |
-| Reclaim sizing | LOGICAL du only; physical (reflink-shared vs exclusive) unmeasured → §f.8 |
-| Root-space alerting check | condition reported, detector state unknown → §f.6 |
-| /var classification completeness | immich cache + dnsblockd size + journal retention knob + July SQLite relics unclassified → §f.10/§f.11/§f.19/§f.20 |
-| nixpkgs source verification | verified at master, not at the pinned rev |
-| Session-improvement encoding | probe-harness rules written here (§e) but not yet encoded in docs/agents/* — deliberately not done mid-report; candidate listed §f.22 |
+| Item                             | Missing part                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Reclaim sizing                   | LOGICAL du only; physical (reflink-shared vs exclusive) unmeasured → §f.8                                                             |
+| Root-space alerting check        | condition reported, detector state unknown → §f.6                                                                                     |
+| /var classification completeness | immich cache + dnsblockd size + journal retention knob + July SQLite relics unclassified → §f.10/§f.11/§f.19/§f.20                    |
+| nixpkgs source verification      | verified at master, not at the pinned rev                                                                                             |
+| Session-improvement encoding     | probe-harness rules written here (§e) but not yet encoded in docs/agents/* — deliberately not done mid-report; candidate listed §f.22 |
 
 ## c) NOT STARTED
 
@@ -121,12 +121,12 @@ New, harvested at THIS report's authoring time:
 10. **Classify `/var/cache/immich` 6.5G** (rebuildable CLIP caches on the full root; move-or-accept decision) → services.md.
 11. **dnsblockd 7.2G size rationale check** (query DB growth / retention knobs) → services.md.
 12. **Owner fork on monitor365 (row 558) now also gates the 32G frozen buffer + root-at-1MiB urgency** — decision nudge only → existing row.
-14. **journald SystemMaxUse check for journal-hot (7.8G)** → services.md (journal.md runbook touch).
-19. (folded into 14) —
-20. **Add the July SQLite relics (monitor365.db/.wal/.shm) to the residue sweep row** → storage.md row edit.
-21. **After the dump-leg decision: rewrite forgejo.md Storage section as the single enumeration of all backup legs** (kill the 3-way split) → services.md.
-22. **Encode the probe-harness rules (§e.1) into docs/agents/shell-devtools.md** (or wherever diagnostics discipline lives) → pipeline/agents surface.
-24. **Identify the dump-growth driver (4G→27G in 7w: mirrors vs LFS/packages)** — informs whether the pool zip retention shape (7d × 27G ≈ 189G) is right → services.md.
+13. **journald SystemMaxUse check for journal-hot (7.8G)** → services.md (journal.md runbook touch).
+14. (folded into 14) —
+15. **Add the July SQLite relics (monitor365.db/.wal/.shm) to the residue sweep row** → storage.md row edit.
+16. **After the dump-leg decision: rewrite forgejo.md Storage section as the single enumeration of all backup legs** (kill the 3-way split) → services.md.
+17. **Encode the probe-harness rules (§e.1) into docs/agents/shell-devtools.md** (or wherever diagnostics discipline lives) → pipeline/agents surface.
+18. **Identify the dump-growth driver (4G→27G in 7w: mirrors vs LFS/packages)** — informs whether the pool zip retention shape (7d × 27G ≈ 189G) is right → services.md.
 
 (24 distinct items — the honest count this session's evidence supports; padding to 50 would be backlog import, which the instruction forbids.)
 

@@ -357,7 +357,7 @@ _: {
         services.backup-coordination.backups.audible-sync = {
           directory = stateDir;
           filePattern = "last_success";
-          maxAgeHours = cfg.maxAgeHours;
+          inherit (cfg) maxAgeHours;
         };
 
         # Service-integration registry entry: the homepage tile only (no

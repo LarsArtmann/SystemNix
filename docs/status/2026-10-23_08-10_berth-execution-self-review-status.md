@@ -54,6 +54,7 @@
 ## f) Up to 50 things to do next
 
 **Deploy-window (gated on the foreign eval red clearing):**
+
 1. Run `nix run .#deploy` once the concurrent session's crowdsec/nixpkgs eval red is fixed (pipeline lock-heal [decision] row).
 2. Anchor check: `readlink /run/current-system` == latest `system-N-link`.
 3. `nix run .#post-deploy-check` full pass.
@@ -105,7 +106,7 @@
 39. Weekly flake-lock bot PR (unchanged).
 40. Ollama residue reclaim (~15G, owner decision — unchanged from backlog).
 
-*(Items beyond 40 are deliberately not padded — the list stops where real work stops.)*
+_(Items beyond 40 are deliberately not padded — the list stops where real work stops.)_
 
 ## g) Questions I CANNOT answer myself
 

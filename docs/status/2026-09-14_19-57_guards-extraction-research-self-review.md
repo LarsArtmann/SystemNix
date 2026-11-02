@@ -33,9 +33,9 @@
 ## c) NOT STARTED
 
 1. The actual extraction (repo scaffold, module migration, option-ification, flake-parts unwrap, SystemNix rewiring) — awaiting user decision.
-~~2. TODO_LIST.md cross-check — an extraction proposal touching 14+ modules should have been checked against existing planned work (AGENTS.md references a "TODO_LIST Phase-1 block" with adjacent guard/memory work). Never opened.~~ **Won't implement — one-shot cross-check; superseded by TODO restructure.**
-~~3. CI-auth consequence analysis — a new flake input's visibility (public vs private `github:`-type) determines whether CI goes dark (the `NIX_GITHUB_RO_TOKEN` class). Never surfaced.~~ **Won't implement — superseded: CI auth surface tracked (docs/todo/pipeline.md).**
-~~4. Adoption-cost estimate for wiring guards into even 2-3 upstream repos' checks.~~ **Won't implement — contingent estimate; decision never taken.**
+   ~~2. TODO_LIST.md cross-check — an extraction proposal touching 14+ modules should have been checked against existing planned work (AGENTS.md references a "TODO_LIST Phase-1 block" with adjacent guard/memory work). Never opened.~~ **Won't implement — one-shot cross-check; superseded by TODO restructure.**
+   ~~3. CI-auth consequence analysis — a new flake input's visibility (public vs private `github:`-type) determines whether CI goes dark (the `NIX_GITHUB_RO_TOKEN` class). Never surfaced.~~ **Won't implement — superseded: CI auth surface tracked (docs/todo/pipeline.md).**
+   ~~4. Adoption-cost estimate for wiring guards into even 2-3 upstream repos' checks.~~ **Won't implement — contingent estimate; decision never taken.**
 
 ## d) TOTALLY FUCKED UP! (honest ledger)
 
@@ -63,33 +63,33 @@ No ghost systems, no split brains, no repo damage — read-only session. The fai
 2. Decide extract-now vs stabilize-first (5 guards landed 09-14; suite still compounding).
 3. Decide upstream-adoption intent now vs SystemNix-only consumer.
 4. Name the repo (`nix-audit-guards`, `nixos-guards`, `eval-guards`…).
-~~5. Scaffold repo: flake.nix exposing `nixosModules.<guard>` per module + a `all` bundle.~~ **Won't implement — extraction step; contingent on undecided decision.**
-~~6. Un-wrap 14 modules from flake-parts `flake.nixosModules.X = {…}` to plain NixOS modules (AGENTS.md trap).~~ **Won't implement — extraction step; contingent.**
-~~7. Option-ify port-registry-audit: `registeredPorts` list option replacing `import lib/ports.nix`.~~ **Won't implement — extraction step; contingent.**
-~~8. Option-ify gatus-coverage-audit: same ports option.~~ **Won't implement — extraction step; contingent.**
-~~9. Option-ify otel-endpoint-audit: `grpcPort`/`httpPort` options (defaults 4317/4318).~~ **Won't implement — extraction step; contingent.**
-~~10. Option-ify deploy-restart-audit: `deployScript` path option replacing `readFile ../../../scripts/deploy.sh`.~~ **Won't implement — extraction step; contingent.**
-~~11. Option-ify mount-gating-audit: protected-prefix option (default `/mnt/`).~~ **Won't implement — extraction step; contingent.**
-~~12. Unify the duplicated port-extraction scan (~30 lines ×2) into the new repo's internal lib.~~ **Won't implement — extraction step; contingent.**
-~~13. Port the 9 dedicated audit test files + `negative-test-lints.sh` harness.~~ **Won't implement — extraction step; contingent.**
-~~14. Port core audit scripts (serviceconfig-merge, shell-nullglob, textfile-tmp) as flake checks.~~ **Won't implement — extraction step; contingent.**
-~~15. Explicitly scope OUT `audit-go-deps.sh` (belongs with go-nix-helpers) — document the decision.~~ **Won't implement — extraction step; contingent.**
-~~16. SystemNix rewiring: replace auto-discovered guard files with `inputs.<repo>.nixosModules.*` imports.~~ **Won't implement — extraction step; contingent.**
-~~17. Carry SystemNix-side config: ports registry values, allowPorts exceptions, deploy script path.~~ **Won't implement — extraction step; contingent.**
-~~18. Consume via `github:LarsArtmann/<repo>?ref=master` + deliberate lock bumps.~~ **Won't implement — extraction step; contingent.**
-~~19. Re-run `nix flake check --no-build` after rewiring; negative-test via `extendModules` per the eval-cache trap.~~ **Won't implement — extraction step; contingent.**
-~~20. Verify negative tests prove the SAME store path isn't trusted (eval-cache convention from AGENTS.md).~~ **Won't implement — extraction step; contingent.**
-~~21. Re-do prior-art search properly: GitHub topic/code search, NixOS discourse, ryanocero/nix-starter-template ecosystems, `nix-linter`-adjacent projects.~~ **NOT-DO — dup of line 29 (prior-art redo).**
-~~22. Recursive sibling survey (`rg -l 'config.assertions|builtins.throw' --type nix` per repo) to make the "zero upstream guards" claim real or kill it.~~ **NOT-DO — dup of line 30 (sibling survey).**
-~~23. Pilot-adoption PR: import the guards bundle into ONE upstream repo's checks (CV — gate pattern already proven) and observe what fires.~~ **Won't implement — pilot PR contingent on decision.**
-~~24. Fix the twin `archive/`/`archived/` dirs in docs/status (noticed in passing; one is probably stale).~~ done at `archive dirs fixed: docs/status/archived canonical`
-~~25. Add a README to the new repo with the incident-class table (each guard ↔ the AGENTS.md gotcha that motivated it).~~ **Won't implement — contingent on decision.**
-~~26. Decide tagging policy if any consumer outside LarsArtmann appears (go-release skill territory).~~ **Won't implement — contingent on decision.**
-~~27. Check whether the new repo needs its own AGENTS.md (guard-authoring conventions: option + assertion + negative test + doc-class link).~~ **Won't implement — contingent on decision.**
-~~28. Wire CI for the new repo (public → plain nix-check; private → needs the deploy-key/NIX_GITHUB_RO_TOKEN pattern).~~ **Won't implement — contingent on decision.**
-~~29. After extraction lands: sweep SystemNix AGENTS.md "Prevention Layers" table to point at the new repo.~~ **Won't implement — contingent on decision.**
-~~30. Measure the before/after: SystemNix module count/lines moved; new repo size.~~ **Won't implement — contingent on decision.**
-~~31. HARVEST this report's section (f) into TODO_LIST.md via docs-health once user approves direction (not done now — user said wait).~~ **Won't implement — harvest deferred by user; library system since landed.**
+   ~~5. Scaffold repo: flake.nix exposing `nixosModules.<guard>` per module + a `all` bundle.~~ **Won't implement — extraction step; contingent on undecided decision.**
+   ~~6. Un-wrap 14 modules from flake-parts `flake.nixosModules.X = {…}` to plain NixOS modules (AGENTS.md trap).~~ **Won't implement — extraction step; contingent.**
+   ~~7. Option-ify port-registry-audit: `registeredPorts` list option replacing `import lib/ports.nix`.~~ **Won't implement — extraction step; contingent.**
+   ~~8. Option-ify gatus-coverage-audit: same ports option.~~ **Won't implement — extraction step; contingent.**
+   ~~9. Option-ify otel-endpoint-audit: `grpcPort`/`httpPort` options (defaults 4317/4318).~~ **Won't implement — extraction step; contingent.**
+   ~~10. Option-ify deploy-restart-audit: `deployScript` path option replacing `readFile ../../../scripts/deploy.sh`.~~ **Won't implement — extraction step; contingent.**
+   ~~11. Option-ify mount-gating-audit: protected-prefix option (default `/mnt/`).~~ **Won't implement — extraction step; contingent.**
+   ~~12. Unify the duplicated port-extraction scan (~30 lines ×2) into the new repo's internal lib.~~ **Won't implement — extraction step; contingent.**
+   ~~13. Port the 9 dedicated audit test files + `negative-test-lints.sh` harness.~~ **Won't implement — extraction step; contingent.**
+   ~~14. Port core audit scripts (serviceconfig-merge, shell-nullglob, textfile-tmp) as flake checks.~~ **Won't implement — extraction step; contingent.**
+   ~~15. Explicitly scope OUT `audit-go-deps.sh` (belongs with go-nix-helpers) — document the decision.~~ **Won't implement — extraction step; contingent.**
+   ~~16. SystemNix rewiring: replace auto-discovered guard files with `inputs.<repo>.nixosModules.*` imports.~~ **Won't implement — extraction step; contingent.**
+   ~~17. Carry SystemNix-side config: ports registry values, allowPorts exceptions, deploy script path.~~ **Won't implement — extraction step; contingent.**
+   ~~18. Consume via `github:LarsArtmann/<repo>?ref=master` + deliberate lock bumps.~~ **Won't implement — extraction step; contingent.**
+   ~~19. Re-run `nix flake check --no-build` after rewiring; negative-test via `extendModules` per the eval-cache trap.~~ **Won't implement — extraction step; contingent.**
+   ~~20. Verify negative tests prove the SAME store path isn't trusted (eval-cache convention from AGENTS.md).~~ **Won't implement — extraction step; contingent.**
+   ~~21. Re-do prior-art search properly: GitHub topic/code search, NixOS discourse, ryanocero/nix-starter-template ecosystems, `nix-linter`-adjacent projects.~~ **NOT-DO — dup of line 29 (prior-art redo).**
+   ~~22. Recursive sibling survey (`rg -l 'config.assertions|builtins.throw' --type nix` per repo) to make the "zero upstream guards" claim real or kill it.~~ **NOT-DO — dup of line 30 (sibling survey).**
+   ~~23. Pilot-adoption PR: import the guards bundle into ONE upstream repo's checks (CV — gate pattern already proven) and observe what fires.~~ **Won't implement — pilot PR contingent on decision.**
+   ~~24. Fix the twin `archive/`/`archived/` dirs in docs/status (noticed in passing; one is probably stale).~~ done at `archive dirs fixed: docs/status/archived canonical`
+   ~~25. Add a README to the new repo with the incident-class table (each guard ↔ the AGENTS.md gotcha that motivated it).~~ **Won't implement — contingent on decision.**
+   ~~26. Decide tagging policy if any consumer outside LarsArtmann appears (go-release skill territory).~~ **Won't implement — contingent on decision.**
+   ~~27. Check whether the new repo needs its own AGENTS.md (guard-authoring conventions: option + assertion + negative test + doc-class link).~~ **Won't implement — contingent on decision.**
+   ~~28. Wire CI for the new repo (public → plain nix-check; private → needs the deploy-key/NIX_GITHUB_RO_TOKEN pattern).~~ **Won't implement — contingent on decision.**
+   ~~29. After extraction lands: sweep SystemNix AGENTS.md "Prevention Layers" table to point at the new repo.~~ **Won't implement — contingent on decision.**
+   ~~30. Measure the before/after: SystemNix module count/lines moved; new repo size.~~ **Won't implement — contingent on decision.**
+   ~~31. HARVEST this report's section (f) into TODO_LIST.md via docs-health once user approves direction (not done now — user said wait).~~ **Won't implement — harvest deferred by user; library system since landed.**
 
 ## g) Questions I cannot answer myself
 

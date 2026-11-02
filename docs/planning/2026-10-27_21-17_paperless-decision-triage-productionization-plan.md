@@ -13,15 +13,15 @@ Productionize as a **triage gate in front of the existing paperless-gpt pipeline
 
 ## 1. Evidence base (what the bench actually proved)
 
-| Fact | Number | Source |
-|---|---|---|
-| Receipts+invoices (the accounting classes) | **38/38 across both arms** | results dashboard §per-class |
-| Image arm overall (incl. label-noisy `general`) | 23/28 (82%) | dashboard |
-| Text arm overall | 34/38 (90%) | dashboard |
-| p50 latency | 446 ms image / 368 ms text | dashboard |
-| Token spend | 147,940 input tokens, 66 calls, all answered | dashboard |
-| Encrypted statements → `noul` is_accounting | ≈0.09 (correctly "not accounting") | dashboard |
-| Known weakness | confidence saturates near 1.0 on right AND wrong answers → **top-2 probability margin is the gate signal, not confidence** | bench §d |
+| Fact                                            | Number                                                                                                                     | Source                       |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Receipts+invoices (the accounting classes)      | **38/38 across both arms**                                                                                                 | results dashboard §per-class |
+| Image arm overall (incl. label-noisy `general`) | 23/28 (82%)                                                                                                                | dashboard                    |
+| Text arm overall                                | 34/38 (90%)                                                                                                                | dashboard                    |
+| p50 latency                                     | 446 ms image / 368 ms text                                                                                                 | dashboard                    |
+| Token spend                                     | 147,940 input tokens, 66 calls, all answered                                                                               | dashboard                    |
+| Encrypted statements → `noul` is_accounting     | ≈0.09 (correctly "not accounting")                                                                                         | dashboard                    |
+| Known weakness                                  | confidence saturates near 1.0 on right AND wrong answers → **top-2 probability margin is the gate signal, not confidence** | bench §d                     |
 
 Open holes (from the 20:55 report §f): Clef arm (owner keys), owner label audit of the 9 `general` docs, margin scoring not yet implemented, $/1k-docs not computed.
 
@@ -120,14 +120,14 @@ One call per document, two questions (both bench-validated; keep v1 minimal — 
 
 **Textfile metrics** (Prometheus, per sweep):
 
-| Metric | Labels | Purpose |
-|---|---|---|
-| `paperless_triage_decisions_total` | `class`, `arm` | volume + distribution drift |
-| `paperless_triage_margin_bucket` | `arm` | calibration; threshold tuning |
-| `paperless_triage_refusals_total` | `reason=margin\|api_error\|skip_class` | gate rate = the drift alarm |
-| `paperless_triage_latency_seconds` (buckets) | `arm` | p50/p95 vs the 446 ms bench number |
-| `paperless_triage_input_tokens_total` | `arm` | spend accounting → $/1k-docs |
-| `paperless_triage_backlog` | — | sweep liveness |
+| Metric                                       | Labels                                 | Purpose                            |
+| -------------------------------------------- | -------------------------------------- | ---------------------------------- |
+| `paperless_triage_decisions_total`           | `class`, `arm`                         | volume + distribution drift        |
+| `paperless_triage_margin_bucket`             | `arm`                                  | calibration; threshold tuning      |
+| `paperless_triage_refusals_total`            | `reason=margin\|api_error\|skip_class` | gate rate = the drift alarm        |
+| `paperless_triage_latency_seconds` (buckets) | `arm`                                  | p50/p95 vs the 446 ms bench number |
+| `paperless_triage_input_tokens_total`        | `arm`                                  | spend accounting → $/1k-docs       |
+| `paperless_triage_backlog`                   | —                                      | sweep liveness                     |
 
 **Gatus:** sweep freshness (last-success age). **SigNoz rule:** refusal rate >20% over 24 h → "triage drift" (label noise or model change — the dashboard's core lesson: watch the labels, not just the model).
 
@@ -135,15 +135,15 @@ One call per document, two questions (both bench-validated; keep v1 minimal — 
 
 ## 6. Owner decision pack (silence = default, house convention)
 
-| # | Question | Default if unanswered |
-|---|---|---|
-| Q1 | **Egress classes:** may page-1 IMAGES of receipts/invoices/general leave the LAN to a metered cloud decision API? (Statements + encrypted: never, in code.) | YES for those 3 classes; statements text-arm-only stays local-forever |
-| Q2 | **Spend ceiling:** monthly USD cap for decision calls (bench burn-rate ≈ 66 calls ≈ trivial; production est. tens of docs/week)? | $5/mo hard cap with circuit-breaker → local-verdict-only mode |
-| Q3 | **Backend:** cloud Jev vs Cloudflare Clef vs local (AnyJev-on-llama-server, still unverified) vs none (P1 gate only)? | Decide after the Clef arm + pricing land (the two open bench items) |
-| Q4 | **Autonomy ladder:** P2 shadow (2 wk) → P3 tag+field writes? | Shadow 2 weeks, then tags+fields (never `document_type`) |
-| Q5 | **Write targets:** tags vs custom fields vs document_type | Tags + `doc_class`/`is_accounting` custom fields; `document_type` stays manual (workflow 1000003 anomaly) |
-| Q6 | **Cloud-down policy:** queue-and-retry vs skip-to-review | Skip-to-review tag, zero terminal fails (2026-10-19 lesson) |
-| Q7 | **Label authority:** when triage disagrees with an owner tag | Owner tag wins; disagreement → review view + eval-corpus record (feeds §5 loop) |
+| #  | Question                                                                                                                                                    | Default if unanswered                                                                                     |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Q1 | **Egress classes:** may page-1 IMAGES of receipts/invoices/general leave the LAN to a metered cloud decision API? (Statements + encrypted: never, in code.) | YES for those 3 classes; statements text-arm-only stays local-forever                                     |
+| Q2 | **Spend ceiling:** monthly USD cap for decision calls (bench burn-rate ≈ 66 calls ≈ trivial; production est. tens of docs/week)?                            | $5/mo hard cap with circuit-breaker → local-verdict-only mode                                             |
+| Q3 | **Backend:** cloud Jev vs Cloudflare Clef vs local (AnyJev-on-llama-server, still unverified) vs none (P1 gate only)?                                       | Decide after the Clef arm + pricing land (the two open bench items)                                       |
+| Q4 | **Autonomy ladder:** P2 shadow (2 wk) → P3 tag+field writes?                                                                                                | Shadow 2 weeks, then tags+fields (never `document_type`)                                                  |
+| Q5 | **Write targets:** tags vs custom fields vs document_type                                                                                                   | Tags + `doc_class`/`is_accounting` custom fields; `document_type` stays manual (workflow 1000003 anomaly) |
+| Q6 | **Cloud-down policy:** queue-and-retry vs skip-to-review                                                                                                    | Skip-to-review tag, zero terminal fails (2026-10-19 lesson)                                               |
+| Q7 | **Label authority:** when triage disagrees with an owner tag                                                                                                | Owner tag wins; disagreement → review view + eval-corpus record (feeds §5 loop)                           |
 
 Q1/Q2 extend the existing `[decision]` cloud-API-policy row (services.md); Q3 folds the Clef/pricing bench continuations; Q4–Q7 are new with this pack.
 
@@ -158,39 +158,40 @@ Q1/Q2 extend the existing `[decision]` cloud-API-policy row (services.md); Q3 fo
 
 ## 8. Execution tasks (maps to TODO surfaces)
 
-| # | Task | Stage | Owner | Maps to |
-|---|---|---|---|---|
-| T1 | Implement `paperless-triage` P1 (local verdict gate in front of paperless-gpt, needs-review routing, metrics, VM test) | P1 | agent | services.md gate-design row (updated: design landed here §3) |
-| T2 | Margin scoring in `--score` + re-run bench (calibrates T1's threshold) | P1 | agent | services.md run row continuation (b) |
-| T3 | Clef arm + pricing → $/1k-docs (pack Q3 input) | P2 | **owner keys** → agent | services.md run row continuation (a)/(c) |
-| T4 | P2 shadow mode behind `--shadow` flag (2-week timer, JSONL ledger, metrics) | P2 | agent (after Q1–Q3) | new row, gated on pack |
-| T5 | P3 writes: DRF field provisioning (incl. re-provision oneshot), tag routing, negative-test legs | P3 | agent (after Q4–Q6) | new row, gated on pack |
-| T6 | Accounting-extraction drift reconciliation (field re-provision or retire — prerequisite for P3's field set) | P3 | agent | existing services.md row |
-| T7 | journal documents.v1 contract addendum + bank-sync candidate filter | P4 | **cross-repo sessions** (journal/bank-sync; cite this plan §2/§4) | foreign repos — owner hands them this plan |
-| T8 | Quarterly eval regeneration folded into the AI re-audit cadence | P4 | agent | services.md re-audit row (2027-01-02) |
+| #  | Task                                                                                                                   | Stage | Owner                                                             | Maps to                                                      |
+| -- | ---------------------------------------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------- | ------------------------------------------------------------ |
+| T1 | Implement `paperless-triage` P1 (local verdict gate in front of paperless-gpt, needs-review routing, metrics, VM test) | P1    | agent                                                             | services.md gate-design row (updated: design landed here §3) |
+| T2 | Margin scoring in `--score` + re-run bench (calibrates T1's threshold)                                                 | P1    | agent                                                             | services.md run row continuation (b)                         |
+| T3 | Clef arm + pricing → $/1k-docs (pack Q3 input)                                                                         | P2    | **owner keys** → agent                                            | services.md run row continuation (a)/(c)                     |
+| T4 | P2 shadow mode behind `--shadow` flag (2-week timer, JSONL ledger, metrics)                                            | P2    | agent (after Q1–Q3)                                               | new row, gated on pack                                       |
+| T5 | P3 writes: DRF field provisioning (incl. re-provision oneshot), tag routing, negative-test legs                        | P3    | agent (after Q4–Q6)                                               | new row, gated on pack                                       |
+| T6 | Accounting-extraction drift reconciliation (field re-provision or retire — prerequisite for P3's field set)            | P3    | agent                                                             | existing services.md row                                     |
+| T7 | journal documents.v1 contract addendum + bank-sync candidate filter                                                    | P4    | **cross-repo sessions** (journal/bank-sync; cite this plan §2/§4) | foreign repos — owner hands them this plan                   |
+| T8 | Quarterly eval regeneration folded into the AI re-audit cadence                                                        | P4    | agent                                                             | services.md re-audit row (2027-01-02)                        |
 
 ## 9. Harvest record (this doc's own obligations)
 
 > **EXECUTION RECORD (crush-triage-exec-2026-10-27, T1/T2/T6/T8):** P1
 > LANDED with two evidence-driven design corrections, both binary/live
 > verified and documented in `modules/nixos/services/paperless-triage.nix`
-> + `docs/services/paperless.md` Decision-triage-gate section: (1) the
-> verdict provider is **llama-chat via ai-meter, NOT FastFlowLM** —
-> deployed flm v1.0.2 has zero logprobs support (whole-deployment strings
-> scan; the upstream logprobs docs postdate our pin) while llama-server
-> 0.6.0 carries top_logprobs (live-proven: +0.985/-0.985 sample margins);
-> (2) verdict-down exits 0 + refusal metric + Gatus absence-check instead
-> of nonzero — repeated nonzero exits brick a 5-min timer unit via
-> startLimitBurst (worse visibility than the metric pair). T2 landed in
-> `--score` (per-doc MARGIN column + margin>=0.6 gate sim) and its output
-> SHARPENS the saturation trap: Jev's top-2 margin ALSO saturates on wrong
-> doc_class answers (mean-margin wrong = 1.00/0.99) — threshold choice
-> cannot fix label noise; the P2 shadow remains the only honest accuracy
-> number. T6 landed as declarative ensureTags/ensureCustomFields in
-> paperless-dashboard (gpt lifecycle tags + faktura + both pilot fields;
-> DRIFT box resolved with root-cause reconstruction). T8 folded the eval
-> loop into the A24 quarterly re-audit (runbook Quarterly re-audit
-> section).
+>
+> - `docs/services/paperless.md` Decision-triage-gate section: (1) the
+>   verdict provider is **llama-chat via ai-meter, NOT FastFlowLM** —
+>   deployed flm v1.0.2 has zero logprobs support (whole-deployment strings
+>   scan; the upstream logprobs docs postdate our pin) while llama-server
+>   0.6.0 carries top_logprobs (live-proven: +0.985/-0.985 sample margins);
+>   (2) verdict-down exits 0 + refusal metric + Gatus absence-check instead
+>   of nonzero — repeated nonzero exits brick a 5-min timer unit via
+>   startLimitBurst (worse visibility than the metric pair). T2 landed in
+>   `--score` (per-doc MARGIN column + margin>=0.6 gate sim) and its output
+>   SHARPENS the saturation trap: Jev's top-2 margin ALSO saturates on wrong
+>   doc_class answers (mean-margin wrong = 1.00/0.99) — threshold choice
+>   cannot fix label noise; the P2 shadow remains the only honest accuracy
+>   number. T6 landed as declarative ensureTags/ensureCustomFields in
+>   paperless-dashboard (gpt lifecycle tags + faktura + both pilot fields;
+>   DRIFT box resolved with root-cause reconstruction). T8 folded the eval
+>   loop into the A24 quarterly re-audit (runbook Quarterly re-audit
+>   section).
 
 - T1: services.md gate-design row **updated this session** (design landed → implement), TODO_LIST queue row synced.
 - Q1/Q2: folded into the existing cloud-API-policy `[decision]` row (pointer to §6 added).

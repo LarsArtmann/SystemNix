@@ -67,40 +67,40 @@ Scrubs were suspected and eliminated (no scrub threads, empty scrub slice — an
 
 ## f) Up to 50 things we should get done next
 
-> Round-three list; overlaps with R1/R2 marked to prevent harvest drift. Ranked by impact. *Intentionally 30 items — the two prior lists (50 + 36) remain un-harvested; padding triple-counts.*
+> Round-three list; overlaps with R1/R2 marked to prevent harvest drift. Ranked by impact. _Intentionally 30 items — the two prior lists (50 + 36) remain un-harvested; padding triple-counts._
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | **You:** reboot (instant storm clear, all 16+ agent sessions gone) or close the other agent terminals | Critical | S | Mitigation |
-| 2 | After calm: sustained ≥60s p6 verification to actually CLOSE the storm (R2 #31, un-fakeable this time) | Critical | S | Verification |
-| 3 | tq-agent-pool: MemoryMax 8G→16-32G + io.max 50-100MB/s + MemoryHigh (R2 #2/#3 — repo edit ready to make) | Critical | S | Bug |
-| 4 | GOCACHE/GOMODCACHE/GOTMPDIR → Samsung for all shells + pool sessions (R2 #4; /var/tmp/go-build adds evidence) | Critical | M | Feature |
-| 5 | Kill-builtin footgun → AGENTS.md shell section: use `/run/current-system/sw/bin/kill`, verify with kill -0, report rc | High | S | Documentation |
-| 6 | Signal-delivery verification rule → same section (verify + report, never assume) | High | S | Documentation |
-| 7 | Simultaneous-probe `snap()` recipe → docs/agents/stability.md (the only valid attribution method) | High | S | Documentation |
-| 8 | Find what restarted monitor365 at 14:09:57 (journal + Restart= policy + timers, one pass) | High | S | Investigation |
-| 9 | monitor365 cloud-sync circuit breaker: why 3+ consecutive failures? Endpoint/auth? The backlog drain was its symptom | Medium | S | Investigation |
-| 10 | gatus/SigNoz: oom_kill>0 alert + PSI io full>25% alert (R2 #5/#6 — would have paged six times today) | High | S | Feature |
-| 11 | Trash 12G /var/tmp rehearsal residue (owner intent — g3 below) | Medium | S | Cleanup |
-| 12 | /var/tmp siting: tmpfs or Samsung (PrivateTmp services + rehearsal tooling land on QLC silently today) | Medium | S | Feature |
-| 13 | R2 correction footnote via ANNOTATE: pool kill actually landed 14:11, not 13:57 (d3/b4) | High | S | Documentation |
-| 14 | Compression audit for churned trees: compressed-extent faults amplify IO (decompress on every fault); `chattr +C`/`compress=noop` candidates: go caches, build trees | High | M | Investigation |
-| 15 | Root 92%: R1 reclaim list now critical (70G go-cache + 48G cache pair + rest) | Critical | S | Cleanup (≈R1 #1-6) |
-| 16 | hermes gateway functional check post-demotion (demotion shouldn't break; verify once) | Low | S | Verification |
-| 17 | Stability-batch re-dispatch: 24024's 3 items died mid-flight — re-dispatch per protocol, verify no half-committed state in THIS repo's tree (foreign dirty files!) | High | S | Verification |
-| 18 | Audit what pid 24024 already committed vs left dirty in SystemNix (session-start git status attribution) | High | S | Investigation |
-| 19 | Exec page-in storm: /nix on Samsung took 108MB/s reads invisibly — consider `lazytime`/readahead tuning or accept (Samsung absorbs it; QLC is the victim) | Low | M | Investigation |
-| 20 | Pool quiet-host gate / `tq pool pause` (R2 #7) | High | M | Feature |
-| 21 | Spawn tq agent sessions with ionice -c3 inherited (R2 #16) | Medium | S | Feature |
-| 22 | Working-probe snippet file: PSI/diskstats/io.stat/memory.events + snap() — verified field math, one home (R2 #25 + this round's additions) | Medium | S | Documentation |
-| 23 | monitor365 restart policy review: should a manually-stopped unit self-resurrect? (depends on #8's finding) | Medium | S | Bug |
-| 24 | Post-storm: re-measure hermes home (R1 g1 sudo du still open) + full df reconciliation at the new 92% baseline | Medium | S | Verification |
-| 25 | "Storm day" postmortem → docs/gotchas-archive.md once dust settles (three rounds, three measurement bugs, one mechanism, 2.5 reports) (≈R2 #35, now bigger) | Medium | S | Documentation |
-| 26 | Consider limiting concurrent interactive crush sessions (16 demoted sessions is a lot of fault-pressure by itself) — soft cap or watchdog | Medium | M | Feature |
-| 27 | Repo disk-report app (R1 #15/R2-adjacent) — now also embeds snap() and kill-verification | Medium | M | Feature |
-| 28 | All three §f lists harvest routing decision — the queue debt is now 3 reports deep | High | S | Decision (yours) |
-| 29 | /tmp tmpfs at 31G/48G — audit what fills it (orphaned test servers found earlier live there) | Low | S | Cleanup |
-| 30 | Orphaned /tmp/TestServeBoot* credentials-server cleanup + harness fix (R2 #19 — still running, still leaked) | Low | S | Cleanup |
+| #  | Task                                                                                                                                                                 | Impact   | Effort | Category           |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------------ |
+| 1  | **You:** reboot (instant storm clear, all 16+ agent sessions gone) or close the other agent terminals                                                                | Critical | S      | Mitigation         |
+| 2  | After calm: sustained ≥60s p6 verification to actually CLOSE the storm (R2 #31, un-fakeable this time)                                                               | Critical | S      | Verification       |
+| 3  | tq-agent-pool: MemoryMax 8G→16-32G + io.max 50-100MB/s + MemoryHigh (R2 #2/#3 — repo edit ready to make)                                                             | Critical | S      | Bug                |
+| 4  | GOCACHE/GOMODCACHE/GOTMPDIR → Samsung for all shells + pool sessions (R2 #4; /var/tmp/go-build adds evidence)                                                        | Critical | M      | Feature            |
+| 5  | Kill-builtin footgun → AGENTS.md shell section: use `/run/current-system/sw/bin/kill`, verify with kill -0, report rc                                                | High     | S      | Documentation      |
+| 6  | Signal-delivery verification rule → same section (verify + report, never assume)                                                                                     | High     | S      | Documentation      |
+| 7  | Simultaneous-probe `snap()` recipe → docs/agents/stability.md (the only valid attribution method)                                                                    | High     | S      | Documentation      |
+| 8  | Find what restarted monitor365 at 14:09:57 (journal + Restart= policy + timers, one pass)                                                                            | High     | S      | Investigation      |
+| 9  | monitor365 cloud-sync circuit breaker: why 3+ consecutive failures? Endpoint/auth? The backlog drain was its symptom                                                 | Medium   | S      | Investigation      |
+| 10 | gatus/SigNoz: oom_kill>0 alert + PSI io full>25% alert (R2 #5/#6 — would have paged six times today)                                                                 | High     | S      | Feature            |
+| 11 | Trash 12G /var/tmp rehearsal residue (owner intent — g3 below)                                                                                                       | Medium   | S      | Cleanup            |
+| 12 | /var/tmp siting: tmpfs or Samsung (PrivateTmp services + rehearsal tooling land on QLC silently today)                                                               | Medium   | S      | Feature            |
+| 13 | R2 correction footnote via ANNOTATE: pool kill actually landed 14:11, not 13:57 (d3/b4)                                                                              | High     | S      | Documentation      |
+| 14 | Compression audit for churned trees: compressed-extent faults amplify IO (decompress on every fault); `chattr +C`/`compress=noop` candidates: go caches, build trees | High     | M      | Investigation      |
+| 15 | Root 92%: R1 reclaim list now critical (70G go-cache + 48G cache pair + rest)                                                                                        | Critical | S      | Cleanup (≈R1 #1-6) |
+| 16 | hermes gateway functional check post-demotion (demotion shouldn't break; verify once)                                                                                | Low      | S      | Verification       |
+| 17 | Stability-batch re-dispatch: 24024's 3 items died mid-flight — re-dispatch per protocol, verify no half-committed state in THIS repo's tree (foreign dirty files!)   | High     | S      | Verification       |
+| 18 | Audit what pid 24024 already committed vs left dirty in SystemNix (session-start git status attribution)                                                             | High     | S      | Investigation      |
+| 19 | Exec page-in storm: /nix on Samsung took 108MB/s reads invisibly — consider `lazytime`/readahead tuning or accept (Samsung absorbs it; QLC is the victim)            | Low      | M      | Investigation      |
+| 20 | Pool quiet-host gate / `tq pool pause` (R2 #7)                                                                                                                       | High     | M      | Feature            |
+| 21 | Spawn tq agent sessions with ionice -c3 inherited (R2 #16)                                                                                                           | Medium   | S      | Feature            |
+| 22 | Working-probe snippet file: PSI/diskstats/io.stat/memory.events + snap() — verified field math, one home (R2 #25 + this round's additions)                           | Medium   | S      | Documentation      |
+| 23 | monitor365 restart policy review: should a manually-stopped unit self-resurrect? (depends on #8's finding)                                                           | Medium   | S      | Bug                |
+| 24 | Post-storm: re-measure hermes home (R1 g1 sudo du still open) + full df reconciliation at the new 92% baseline                                                       | Medium   | S      | Verification       |
+| 25 | "Storm day" postmortem → docs/gotchas-archive.md once dust settles (three rounds, three measurement bugs, one mechanism, 2.5 reports) (≈R2 #35, now bigger)          | Medium   | S      | Documentation      |
+| 26 | Consider limiting concurrent interactive crush sessions (16 demoted sessions is a lot of fault-pressure by itself) — soft cap or watchdog                            | Medium   | M      | Feature            |
+| 27 | Repo disk-report app (R1 #15/R2-adjacent) — now also embeds snap() and kill-verification                                                                             | Medium   | M      | Feature            |
+| 28 | All three §f lists harvest routing decision — the queue debt is now 3 reports deep                                                                                   | High     | S      | Decision (yours)   |
+| 29 | /tmp tmpfs at 31G/48G — audit what fills it (orphaned test servers found earlier live there)                                                                         | Low      | S      | Cleanup            |
+| 30 | Orphaned /tmp/TestServeBoot* credentials-server cleanup + harness fix (R2 #19 — still running, still leaked)                                                         | Low      | S      | Cleanup            |
 
 ## g) Questions I cannot answer myself
 
@@ -118,4 +118,4 @@ Scrubs were suspected and eliminated (no scrub threads, empty scrub slice — an
 - **Measurement scratch:** all under `/home/lars/.cache/` (sim1/sim2, u1/u2, s1/s2, g1/g2, h1/h2, r1/r2, m1/m2, n1/n2, f1/f2 + earlier rounds) — trashable.
 - **Verification artifacts that worked this round:** `/run/current-system/sw/bin/kill -KILL` + pgrep confirm; the `snap()` simultaneous sampler; cgroup io.stat deltas for exonerations (monitor365, nix-daemon).
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

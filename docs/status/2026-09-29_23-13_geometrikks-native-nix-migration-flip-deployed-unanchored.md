@@ -71,38 +71,38 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 ## b) PARTIALLY DONE
 
 ~~1. **The flip itself** — activation advanced `/run/current-system` but the numbered profile~~ done — deploy landed + service went native live 2026-09-29/30 (TODO_LIST:440; storm-closeout deploy anchored 23:53; CHANGELOG:450)
-   did NOT bump (**UNANCHORED — a reboot right now would REVERT to system-800**). Some unit(s)
-   failed inside the switch transaction (exit-4). Prime suspects (unverified): the
-   `postgresql.service` restart (preload change) cascading paperless/immich/miniflux start
-   races inside the same transaction, and/or `geometrikks-db-provision`'s bounded wait losing
-   to that restart, and/or `geometrikks.service` first start (alembic-on-fresh-DB within the
-   5min TimeoutStartSec). The deploy's own last line prescribes the fix: **re-run
-   `nix run .#deploy`** after the failing units are understood.
+did NOT bump (**UNANCHORED — a reboot right now would REVERT to system-800**). Some unit(s)
+failed inside the switch transaction (exit-4). Prime suspects (unverified): the
+`postgresql.service` restart (preload change) cascading paperless/immich/miniflux start
+races inside the same transaction, and/or `geometrikks-db-provision`'s bounded wait losing
+to that restart, and/or `geometrikks.service` first start (alembic-on-fresh-DB within the
+5min TimeoutStartSec). The deploy's own last line prescribes the fix: **re-run
+`nix run .#deploy`** after the failing units are understood.
 ~~2. **Live verification** — NONE performed yet: `/health` + `/health/ready` on :8102, docker~~ done — verified live by 2026-10-01: SSO live + ingestion-dead findings (2026-10-01_03-32 report) + allowlist fix (2026-10-01_01-04)
-   containers gone (`docker ps`), gatus cycle green, OIDC redirect 302→auth.home.lan, Pocket
-   ID client created, sibling DBs (paperless/immich/miniflux) recovered post-PG-restart,
-   alembic journal, geo-degraded banner present. The DoD checklist in the plan is untested.
+containers gone (`docker ps`), gatus cycle green, OIDC redirect 302→auth.home.lan, Pocket
+ID client created, sibling DBs (paperless/immich/miniflux) recovered post-PG-restart,
+alembic journal, geo-degraded banner present. The DoD checklist in the plan is untested.
 3. **Commit hygiene** — all work committed ONLY via the auto-commit daemon (heuristic
-   messages `31392dbf`, `3c1b7fc1`, `dae3ee0a`, tree clean). The directive's "VERY DETAILED
-   commit message + push" is owed: amend-forward the unpushed HEAD into a proper message,
-   then push.
+messages `31392dbf`, `3c1b7fc1`, `dae3ee0a`, tree clean). The directive's "VERY DETAILED
+commit message + push" is owed: amend-forward the unpushed HEAD into a proper message,
+then push.
 
 ## c) NOT STARTED
 
 ~~1. Post-deploy live verification battery (above).~~ **NOT-DO — NOT-DO — dup (§b2, verdicted above).**
 2. `scripts/post-deploy-check.sh` geometrikks section — **I never checked whether the docker
-   era had smoke entries that are now stale, nor added native ones** (the "when a service is
-   retired/merged, sweep the smoke probes in the SAME change" rule — possibly violated; the 4
-   baseline FAILs may even be related, unverified).
+era had smoke entries that are now stale, nor added native ones** (the "when a service is
+retired/merged, sweep the smoke probes in the SAME change" rule — possibly violated; the 4
+baseline FAILs may even be related, unverified).
 ~~3. VM/eval test for the module (`tests/test-geometrikks.nix` never existed; the 2026-09-20~~ done — tests/test-geometrikks-caps.nix → checks.geometrikks-caps (tests/default.nix:66; services.md:413 [x] DONE 2026-10-07)
-   self-review already flagged the missing bring-up test for the docker era — my migration
-   re-introduced a never-ran-on-this-runtime first start with no test).
+self-review already flagged the missing bring-up test for the docker era — my migration
+re-introduced a never-ran-on-this-runtime first start with no test).
 4. Gatus OIDC-redirect check (skipped by design — initiation endpoint path unverified; manual
-   go-live verify instead).
+go-live verify instead).
 5. Docker volume removal (`geometrikks_geometrikks_{timescale_data,geoip_data}` — retained
-   ≥48h green by design; todo row exists).
+≥48h green by design; todo row exists).
 6. Fleet-wide Docker→native program (manifest, twenty, dozzle, …) — explicitly out of scope,
-   nothing started.
+nothing started.
 7. Roadmap entry for the fleet program (the plan doc lists it as follow-up only).
 
 ## d) TOTALLY FUCKED UP / mistakes & waste (honest ledger)
@@ -165,22 +165,22 @@ auto-commit daemon, heuristic messages) but **not pushed**.
 3. Fix the failing unit(s) at root cause (likely ordering/wait, not code).
 4. Re-run `nix run .#deploy` (pressure-gate aware; phantom corpse-PSI may persist → force
    only with the same idle-disk corroboration).
-~~5. Verify anchoring: profile bumped, current-system == profile.~~ done — storm-closeout deploy anchored (2026-09-29_23-53) + generations advanced (system-801+ through Oct)
-6. `curl -s http://127.0.0.1:8102/health` + `/health/ready` → 200.
-7. `docker ps -a | grep -i geometrikks` → no containers (compose down ran on swap).
-8. Gatus "GeoMetrikks" first green cycle post-flip.
-9. Verify `geometrikks-db-provision` journal: role pw set, both extensions created.
-10. Verify alembic ran (app journal: migration lines; `alembic_version` table exists).
-11. Verify paperless/immich/miniflux healthy after the shared-PG restart.
-~~12. Verify Pocket ID client `geometrikks` provisioned (PKCE + exact callback URL).~~ done — proven live: token+userinfo succeeded, logins reached the allow list (CHANGELOG:624 journal evidence)
-13. Verify `geometrikks-oidc-env` wrote `/var/lib/geometrikks-oidc/oidc.env` (bridge active).
-14. Verify vHost: `curl -k https://geo.home.lan` serves the SPA over PLAIN proxy (no oauth2 hop).
-15. OIDC initiation probe: find the login-initiation endpoint in the app (source) and curl it
+   ~~5. Verify anchoring: profile bumped, current-system == profile.~~ done — storm-closeout deploy anchored (2026-09-29_23-53) + generations advanced (system-801+ through Oct)
+5. `curl -s http://127.0.0.1:8102/health` + `/health/ready` → 200.
+6. `docker ps -a | grep -i geometrikks` → no containers (compose down ran on swap).
+7. Gatus "GeoMetrikks" first green cycle post-flip.
+8. Verify `geometrikks-db-provision` journal: role pw set, both extensions created.
+9. Verify alembic ran (app journal: migration lines; `alembic_version` table exists).
+10. Verify paperless/immich/miniflux healthy after the shared-PG restart.
+    ~~12. Verify Pocket ID client `geometrikks` provisioned (PKCE + exact callback URL).~~ done — proven live: token+userinfo succeeded, logins reached the allow list (CHANGELOG:624 journal evidence)
+11. Verify `geometrikks-oidc-env` wrote `/var/lib/geometrikks-oidc/oidc.env` (bridge active).
+12. Verify vHost: `curl -k https://geo.home.lan` serves the SPA over PLAIN proxy (no oauth2 hop).
+13. OIDC initiation probe: find the login-initiation endpoint in the app (source) and curl it
     for a 302 to `auth.home.lan/authorize` with `client_id=geometrikks`.
-16. Enumerate the 4 baseline smoke FAILs; confirm none are geometrikks-adjacent.
-17. Sweep `scripts/post-deploy-check.sh` for docker-era geometrikks probes; replace with
+14. Enumerate the 4 baseline smoke FAILs; confirm none are geometrikks-adjacent.
+15. Sweep `scripts/post-deploy-check.sh` for docker-era geometrikks probes; replace with
     native ones (health/ready, vHost plain, OIDC env bridge, ExecStart native).
-18. Amend-forward the daemon commits into ONE detailed commit (per the directive's commit
+16. Amend-forward the daemon commits into ONE detailed commit (per the directive's commit
     contract) + push (P10, still owed).
 
 **P1 — hardening/follow-through:**

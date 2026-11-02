@@ -17,7 +17,7 @@ The browser-history AI suite was wired (2026-10-15) directly at FastFlowLM `:526
 
 ## §c Collateral finding: llama-chat starves under batch storms (new, queued)
 
-Path verification (crush client key → `/v1/llama-chat`) timed out at 120s — NOT a routing bug: llama-chat `/health` 200, slots show the task accepted, journal shows it *completed* — a 13-token/16-max generation took **6m38s** (direct: 1m43s), ~25% of one core, under **loadavg 324** (monitor365 uncapped backlog drain ~500k events/min since 20:33 + 8×8-thread whisper batch + revived CI runner builds). The 502 metered was the probe's own client-timeout echo (proxy has no upstream timeout). Every health-shaped check is blind to serve-path starvation → queued `[ready]` SigNoz TTFT alert row (monitoring.md) + `[decision]` CPU-floor row (ai-stack.md).
+Path verification (crush client key → `/v1/llama-chat`) timed out at 120s — NOT a routing bug: llama-chat `/health` 200, slots show the task accepted, journal shows it _completed_ — a 13-token/16-max generation took **6m38s** (direct: 1m43s), ~25% of one core, under **loadavg 324** (monitor365 uncapped backlog drain ~500k events/min since 20:33 + 8×8-thread whisper batch + revived CI runner builds). The 502 metered was the probe's own client-timeout echo (proxy has no upstream timeout). Every health-shaped check is blind to serve-path starvation → queued `[ready]` SigNoz TTFT alert row (monitoring.md) + `[decision]` CPU-floor row (ai-stack.md).
 
 ## §d Deploy: gate-blocked by the real IO storm — deliberately NOT forced
 

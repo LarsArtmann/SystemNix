@@ -44,15 +44,16 @@ Design decisions worth remembering:
 ## b) PARTIALLY DONE
 
 ~~1. **The real backfill — RUNNING at report time.** Started ~13:16 from this session (script executed manually, real mode). Timeline of true counts (`gh search ... --limit 1000 --jq length`):~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
-   - Before: **≥1000 issues (cap hit, true total unknown-but-larger) + 339 PRs** unassigned.
-   - 13:45: **459 issues remain → ~541+ issues assigned so far; PR loop not started yet (340 — one new PR appeared during the run).**
-   - Running as background shell `00F`; output pipes through `tail -80` so nothing prints until completion (cosmetic — progress verified via the search counts above).
-~~2. **DEPLOYMENT — GATE-BLOCKED, NOT SWITCHED.** `nix run .#deploy` (bg shell `015`) passed all pre-deploy checks, then the memory-pressure gate fired:~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
-   - `io PSI some avg10 = 46.37% (>= 20%)` → exit, suggesting wait/force.
-   - **Root-caused (not the corpse-pile phantom the message suggests):** `ps` showed **0 D-state processes**; the real driver is a PARALLEL session's build storm (`nix` 151%, `ld` 166%, two `link`, two `go` — sustained 45-70% PSI for 25+ min as of 13:44).
-   - **Disk reality check (10s diskstats delta):** QLC root `nvme1n1` = 33 ticks/10s ≈ **3.3% busy** (idle); Samsung `/nix` store `nvme0n1` = 673 ticks/10s ≈ **67% busy**. This is CPU-bound build work on the FAST TLC store, not the freeze-class full-root-reader pattern (freeze incidents #1-#4).
-   - A bounded 5-min wait loop (bg shell `01D`) was armed; plan: if PSI stays ≥20% when it expires, re-run with `DEPLOY_FORCE_PRESSURE=1` and the documented rationale above (checks green, toplevel already built, root disk idle, Zone-6 guard armed as backstop).
-~~3. **Monitoring wiring** — eval-verified only; goes live with the deploy.~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
+
+- Before: **≥1000 issues (cap hit, true total unknown-but-larger) + 339 PRs** unassigned.
+- 13:45: **459 issues remain → ~541+ issues assigned so far; PR loop not started yet (340 — one new PR appeared during the run).**
+- Running as background shell `00F`; output pipes through `tail -80` so nothing prints until completion (cosmetic — progress verified via the search counts above).
+  ~~2. **DEPLOYMENT — GATE-BLOCKED, NOT SWITCHED.** `nix run .#deploy` (bg shell `015`) passed all pre-deploy checks, then the memory-pressure gate fired:~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
+- `io PSI some avg10 = 46.37% (>= 20%)` → exit, suggesting wait/force.
+- **Root-caused (not the corpse-pile phantom the message suggests):** `ps` showed **0 D-state processes**; the real driver is a PARALLEL session's build storm (`nix` 151%, `ld` 166%, two `link`, two `go` — sustained 45-70% PSI for 25+ min as of 13:44).
+- **Disk reality check (10s diskstats delta):** QLC root `nvme1n1` = 33 ticks/10s ≈ **3.3% busy** (idle); Samsung `/nix` store `nvme0n1` = 673 ticks/10s ≈ **67% busy**. This is CPU-bound build work on the FAST TLC store, not the freeze-class full-root-reader pattern (freeze incidents #1-#4).
+- A bounded 5-min wait loop (bg shell `01D`) was armed; plan: if PSI stays ≥20% when it expires, re-run with `DEPLOY_FORCE_PRESSURE=1` and the documented rationale above (checks green, toplevel already built, root disk idle, Zone-6 guard armed as backstop).
+  ~~3. **Monitoring wiring** — eval-verified only; goes live with the deploy.~~ done — backfill+deploy+timer live: docs/status/2026-09-18_05-58
 
 ## c) NOT STARTED
 

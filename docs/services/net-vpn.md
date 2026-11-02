@@ -201,10 +201,10 @@ Rollout plan: `docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.
   Oct 10 queue fix left zero oneshot journal entries and why the owner had
   to enroll manually. Fix (in-tree 2026-10-15; VERIFIED DEPLOYED 2026-10-29,
   generation system-964: unit renders `Requires=netbird-evox2.service` only
-  + `TimeoutStartSec=2min`, oneshot runs clean NeedsLogin-guarded no-ops):
-  drop the override back to default `[]` (the sops key file exists before
-  sysinit; no ordering edge needed). Eval-verified: login unit Requires/After
-  now only the daemon.
+  - `TimeoutStartSec=2min`, oneshot runs clean NeedsLogin-guarded no-ops):
+    drop the override back to default `[]` (the sops key file exists before
+    sysinit; no ordering edge needed). Eval-verified: login unit Requires/After
+    now only the daemon.
 - **deploy.sh restarts the login oneshot via the unconditional explicit
   block, not the is-enabled gated loop** — `systemctl is-enabled --quiet`
   intermittently returns rc=1 mid-switch for indirectly-pulled units
@@ -255,17 +255,17 @@ restarts on fragment changes via `restartTriggers` (nixpkgs wires none).
 
 ### Advanced OSS feature inventory (v0.81 self-hosted, 2026-10-29 research)
 
-| Feature | State here |
-| --- | --- |
-| Setup-key enrollment, routing peer, matched-domain DNS, ACL policy | IN USE (provisioner-managed) |
-| Client local metrics | IN USE (this pass: 9465 + Gatus + SigNoz) |
-| Exit node (0.0.0.0/0 via evo-x2) | QUEUED [blocked:user] — roaming adblock + full encryption (services.md) |
+| Feature                                                                            | State here                                                                         |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Setup-key enrollment, routing peer, matched-domain DNS, ACL policy                 | IN USE (provisioner-managed)                                                       |
+| Client local metrics                                                               | IN USE (this pass: 9465 + Gatus + SigNoz)                                          |
+| Exit node (0.0.0.0/0 via evo-x2)                                                   | QUEUED [blocked:user] — roaming adblock + full encryption (services.md)            |
 | Management Prometheus metrics (`metricsPort`, `management_grpc_connected_streams`) | QUEUED [blocked:user] pbx-artmann row (server-side view of the same outage signal) |
-| NetBird SSH (native OpenSSH, identity-aware, v0.60+) | NOT USED — admin fallback stays plain SSH; revisit if bastion friction appears |
-| Networks / zero-trust resources | provisioner already models `lan` + resource; fine as-is |
-| Posture checks (OS/version/cert, self-hosted OK) | NOT USED — single-user mesh, no fleet policy need yet |
-| Search domains / peer-name DNS | NOT USED — matched-domain forwarding covers it |
-| Traffic-event logging / event streaming | PAID (cloud/enterprise) — out of scope per C1 |
+| NetBird SSH (native OpenSSH, identity-aware, v0.60+)                               | NOT USED — admin fallback stays plain SSH; revisit if bastion friction appears     |
+| Networks / zero-trust resources                                                    | provisioner already models `lan` + resource; fine as-is                            |
+| Posture checks (OS/version/cert, self-hosted OK)                                   | NOT USED — single-user mesh, no fleet policy need yet                              |
+| Search domains / peer-name DNS                                                     | NOT USED — matched-domain forwarding covers it                                     |
+| Traffic-event logging / event streaming                                            | PAID (cloud/enterprise) — out of scope per C1                                      |
 
 ---
 

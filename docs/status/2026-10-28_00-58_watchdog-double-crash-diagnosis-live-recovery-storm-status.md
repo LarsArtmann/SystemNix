@@ -81,7 +81,7 @@
 
 ## g) Questions I cannot answer myself
 
-1. **Zone-6 action split (row 157):** go/no-go — and if go, confirm the scope stays *headless battery/driver trees only*, never owner PTYs (per the 2026-10-07 SIGSTOP-license revocation)?
+1. **Zone-6 action split (row 157):** go/no-go — and if go, confirm the scope stays _headless battery/driver trees only_, never owner PTYs (per the 2026-10-07 SIGSTOP-license revocation)?
 2. **Admission-gate refusal shape:** when a storm is live, should `nix build`/`flake check`/VM tests hard-FAIL with a calm-window hint, or queue-park until PSI drains? (You removed the 2026-10-14 PSI nix-shim for blocking work — what form of "no" is acceptable to you?)
 3. **Boot 0, right now:** the recovery storm is live (avg60 61%, a `go` battery is writing). I cannot sudo or kill your processes — want a paste-ready containment command list (which readers/trees to stop), and is that `go` build still needed or killable? (Fold the role-split/second-box verdict in here if you want — it's the same tradeoff at larger scale.)
 

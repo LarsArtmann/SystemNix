@@ -31,12 +31,12 @@
 
 ## f) NEXT
 
-| # | Task | Impact | Effort | Owner |
-|---|------|--------|--------|-------|
-| 1 | qonto_archive attachments + receipts bulk archival (statement-upload pattern, filename-derived metadata) | 🔴 completes receipts archival without creds | M | me |
-| 2 | Wise XLS converter (extrame/xls reads them) + wise importer pass | 🟠 second bank fully served | M | me |
-| 3 | Root-cause why ONLY paperless emptied in Wave 6 (standing P0 watch row) | 🟠 trust the subvol pattern | M | root/hot-db |
-| 4 | Push SystemNix (this session's commits) | 🟡 | S | me (done at report close) |
+| # | Task                                                                                                     | Impact                                       | Effort | Owner                     |
+| - | -------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------ | ------------------------- |
+| 1 | qonto_archive attachments + receipts bulk archival (statement-upload pattern, filename-derived metadata) | 🔴 completes receipts archival without creds | M      | me                        |
+| 2 | Wise XLS converter (extrame/xls reads them) + wise importer pass                                         | 🟠 second bank fully served                  | M      | me                        |
+| 3 | Root-cause why ONLY paperless emptied in Wave 6 (standing P0 watch row)                                  | 🟠 trust the subvol pattern                  | M      | root/hot-db               |
+| 4 | Push SystemNix (this session's commits)                                                                  | 🟡                                           | S      | me (done at report close) |
 
 ## g) VERIFICATION LEDGER
 

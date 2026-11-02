@@ -7,6 +7,7 @@ Pre-vacuum gate: this file is the docs/status evidence for boot id8 3caf5548 —
 ## Boot boundary (first 3 / last 12 lines — crash-vs-clean-shutdown discriminator)
 
 ### First 3 lines
+
 ```
 Oct 27 10:04:43 evo-x2 kernel: Linux version 7.2.10 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC @1791725270
 Oct 27 10:04:43 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/83klzcdbh1q19dxc87xn45gjrw6z08g4-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
@@ -14,6 +15,7 @@ Oct 27 10:04:43 evo-x2 kernel: x86/split lock detection: #DB: warning on user-sp
 ```
 
 ### Last 12 lines
+
 ```
 Oct 28 00:40:28 evo-x2 geometrikks-server[1635137]: 2026-10-27T23:39:21.234000Z [info     ] Running job "Refresh GeoLocation.last_hit timestamps (trigger: interval[0:10:00], next run at: 2026-10-28 00:49:21 CET)" (scheduled at 2026-10-28 00:39:21.232466+01:00) [apscheduler.executors.default]
 Oct 28 00:40:28 evo-x2 geometrikks-server[1635137]: 2026-10-27T23:39:21.235765Z [info     ] Running job "Poll CrowdSec decision stream (trigger: interval[0:00:15], next run at: 2026-10-28 00:39:36 CET)" (scheduled at 2026-10-28 00:39:21.233127+01:00) [apscheduler.executors.default]
@@ -30,16 +32,19 @@ Oct 28 00:40:38 evo-x2 browser-history-server[1629288]: {"time":"2026-10-28T00:3
 ```
 
 ## Census
+
 - oom-lines: 0
 - guard-lines (memory-emergency-guard): 2157
 - thermal-THROTTLE-lines: 9
 - kernel panic/BUG/oops lines: 4
 
 ## Kernel OOM lines (all)
+
 ```
 ```
 
 ## memory-emergency-guard lines (all)
+
 ```
 Oct 27 10:07:14 evo-x2 memory-emergency-guard-check[21058]: MEMORY EMERGENCY io drained (io PSI some avg60=32.77% < 40%) — churn units re-armed (re-arm #515)
 Oct 27 10:07:14 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
@@ -2201,6 +2206,7 @@ Oct 28 00:35:28 evo-x2 systemd[1]: memory-emergency-guard.service: Consumed 1.58
 ```
 
 ## THERMAL THROTTLE lines
+
 ```
 Oct 27 10:22:52 evo-x2 thermal-pstate-guard-check[267309]: thermal-pstate-guard: THERMAL THROTTLE ENTER: amd_pstate -> guided after 2x hot ticks: k10temp=97C(hi:95/lo:80)
 Oct 27 11:24:46 evo-x2 thermal-pstate-guard-check[1538983]: thermal-pstate-guard: THERMAL THROTTLE EXIT: amd_pstate restored to active + performance after 12x cool ticks: k10temp=50C(hi:95/lo:80)
@@ -2214,6 +2220,7 @@ Oct 27 16:56:06 evo-x2 thermal-pstate-guard-check[829178]: thermal-pstate-guard:
 ```
 
 ## Kernel panic/BUG/oops lines
+
 ```
 Oct 27 10:04:43 evo-x2 kernel: Command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/83klzcdbh1q19dxc87xn45gjrw6z08g4-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1
 Oct 27 10:04:43 evo-x2 kernel: Kernel command line: initrd=\EFI\nixos\xpvzphn667b393ssv59h1rz61b7nsdw0-initrd-linux-7.2.10-initrd.efi init=/nix/store/83klzcdbh1q19dxc87xn45gjrw6z08g4-nixos-system-evo-x2-26.11.20261015.fe13242/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

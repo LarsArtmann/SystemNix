@@ -126,14 +126,14 @@ Sorted by impact; `[S]` = direct session follow-up (self-harvested, queue pointe
 
 ## Self-harvest record (AGENTS.md authoring-time rule)
 
-| §f item | Queue (TODO_LIST.md) | Domain library | Status |
-| --- | --- | --- | --- |
-| #2 paste-upstream cv/crm/journal | — (`[blocked:push]` rows are library-only by routing rules) | docs/todo/upstream.md | landed |
-| #3 journal consolidation + probe | ### services | docs/todo/services.md | landed |
-| #4 float-register fixes | ### pipeline | docs/todo/pipeline.md | landed |
-| #5 media-atlas review | ### services | docs/todo/services.md | landed |
-| §d.4/nix-flakes trap | — (doc, not a task) | docs/agents/nix-flakes.md | landed |
-| #23 AGENTS.md cross-ref | deliberately not queued — one-line cross-ref deferred to next AGENTS.md touch to avoid racing the live parallel session on the same file | — | recorded here |
-| All others | brainstorm/roadmap fuel or duplicates of existing rows (#14/#16-20/#34/#36/#37 already live in their libraries) | — | not harvested |
+| §f item                          | Queue (TODO_LIST.md)                                                                                                                     | Domain library            | Status        |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------- |
+| #2 paste-upstream cv/crm/journal | — (`[blocked:push]` rows are library-only by routing rules)                                                                              | docs/todo/upstream.md     | landed        |
+| #3 journal consolidation + probe | ### services                                                                                                                             | docs/todo/services.md     | landed        |
+| #4 float-register fixes          | ### pipeline                                                                                                                             | docs/todo/pipeline.md     | landed        |
+| #5 media-atlas review            | ### services                                                                                                                             | docs/todo/services.md     | landed        |
+| §d.4/nix-flakes trap             | — (doc, not a task)                                                                                                                      | docs/agents/nix-flakes.md | landed        |
+| #23 AGENTS.md cross-ref          | deliberately not queued — one-line cross-ref deferred to next AGENTS.md touch to avoid racing the live parallel session on the same file | —                         | recorded here |
+| All others                       | brainstorm/roadmap fuel or duplicates of existing rows (#14/#16-20/#34/#36/#37 already live in their libraries)                          | —                         | not harvested |
 
 Note: `docs/todo/pipeline.md` was mid-edit by the parallel session when I appended (their unstaged changes untouched); my two rows are EOF appends — verify they survived their next save at the next docs-health pass.

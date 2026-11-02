@@ -251,7 +251,7 @@ Source filter and per-site home beacons key on them). Plan + traps:
   `os.access(path, os.R_OK)` in `geometrikks/services/logfiles.py`, but per
   `access(2)` a non-root caller's check uses an EMPTY capability set — so it
   reports Caddy's 0600 logs as unreadable even though the tailer reads them
-  through `CAP_DAC_READ_SEARCH` (the *ingestion* `file_missing` flag, surfaced
+  through `CAP_DAC_READ_SEARCH` (the _ingestion_ `file_missing` flag, surfaced
   in `/health.missingFiles`, is the real signal: it stays `[]`). Fixed by
   `pkgs/geometrikks-logfile-readability.patch` (an open()-based probe) wired as
   `patchedSrc` in `pkgs/geometrikks.nix`, guarded by a build-time self-test.

@@ -45,7 +45,7 @@ The deploy blocker in the owner's pasted log is **fixed, committed, and build-ve
 
 1. **No pre-dive status-report grep — nearly twin-executed.** The concurrent-agent discipline + the 2026-10-18 plan-marker lesson say check `docs/status/` FIRST. The other session's 12:38 triage and 16:06 follow-up already framed this exact deploy failure; I only discovered the live session ~40 minutes into my work, via its untracked report file appearing mid-session and then `ps`. Cost: my diagnosis overlapped their enumeration; had they started r8125 an hour earlier we would have collided on boot.nix. Severity: high (near-miss). Mitigation that worked anyway: my fix landed as a commit they will see; their r8125 item is now obsolete-in-tree.
 2. **First r8125 fix attempt was a silent no-op.** I set `installTargets = [ "install" ]` WITHOUT removing the base derivation's custom `installPhase` (which never reads installTargets) — the build "succeeded" while doing exactly what it did before. I caught it only by inspecting the output tree (no `.ko.cer`). Severity: medium (one wasted build cycle; would have been embarrassing as a claimed fix). Root cause: I read the base derivation, then didn't re-check which phase actually runs under my override.
-3. **Iterated the failure layers instead of enumerating up front.** The repo's own `--keep-going FIRST` critical rule exists for exactly this: I fixed v4l2loopback → built the aggregate → hit the r8125 `.ko.cer` layer → fixed that → built again. The second layer was visible in the first build's graph. Cost: one extra full cycle (~minutes under today's pool contention). 
+3. **Iterated the failure layers instead of enumerating up front.** The repo's own `--keep-going FIRST` critical rule exists for exactly this: I fixed v4l2loopback → built the aggregate → hit the r8125 `.ko.cer` layer → fixed that → built again. The second layer was visible in the first build's graph. Cost: one extra full cycle (~minutes under today's pool contention).
 4. **`rg -r` misuse, repeatedly — the EXACT trap AGENTS.md documents (added TODAY, 2026-10-23).** I typed `rg -rln` / `rg -rn` several times and read replace-mangled output (`system.ln` for `system.modulesTree`, `"'system' … replaced by 'n'"`); every time I noticed and re-ran correctly, but the muscle memory is bad and each mangling cost a re-read.
 5. **Amend-window race absorbed a foreign line into my commit.** I checked `git show --stat HEAD` before amending, but the daemon staged its sweep between my check and the amend; the retry split hit `index.lock` (daemon git op) and I chose not to rewrite a third time under live contention. Result: `8a16b14e9` carries 1 foreign docs/planning line, `9a5e59a97` carries their TODO ticks. Severity: low (attribution noise, content preserved) but it is exactly the documented daemon-race class — my check-then-act window was too wide.
 6. **Spent too long hunting the cosmetic `'system'` warning before time-boxing.** The sweep produced value (ruled-out map + queue row), but the first ~30 minutes had no time-box; a warning-only item should have been capped from the start.
@@ -63,7 +63,7 @@ The deploy blocker in the owner's pasted log is **fixed, committed, and build-ve
 
 ## f) Top next tasks (ranked; owner = who should do it; HARVEST disposition noted)
 
-*Items 1–3 are this session's direct follow-ups and are ALREADY HARVESTED (TODO_LIST.md + docs/todo/stability.md, done at authoring time). Items marked [LIVE] belong to the live parallel session — deliberately NOT harvested again to avoid duplicate queue rows (its own report §f + today's queue rows cover them; recorded here as "deliberately not harvested because live session owns it"). Impact / Effort / Category per the harvest schema.*
+_Items 1–3 are this session's direct follow-ups and are ALREADY HARVESTED (TODO_LIST.md + docs/todo/stability.md, done at authoring time). Items marked [LIVE] belong to the live parallel session — deliberately NOT harvested again to avoid duplicate queue rows (its own report §f + today's queue rows cover them; recorded here as "deliberately not harvested because live session owns it"). Impact / Effort / Category per the harvest schema._
 
 1. **Post-deploy: verify r8125 loads + 2.5G NIC link** (module path moved to `kernel/drivers/net/` — modprobe should resolve via regenerated modules.dep; verify live anyway). Impact: Critical · Effort: S · Category: Bug-verification. ✅ harvested (stability.md).
 2. **Post-deploy: verify OBS virtual camera** (v4l2loopback now installs to `updates/`; one /dev/video probe). Impact: High · Effort: S · Category: Bug-verification. ✅ harvested (stability.md).
@@ -91,7 +91,7 @@ The deploy blocker in the owner's pasted log is **fixed, committed, and build-ve
 24. **Extend the negative-test harness idea to aggregateModules** — a flake-check leg that asserts every extraModulePackages entry's output contains `.ko.cer` next to `.ko` would have turned today's second layer into an eval-time signal (the live session's §e4 makes the same point from the r8125 side). Impact: Medium · Effort: M · Category: Quality.
 25. **Record today's two-session deploy convergence in the gotchas archive** (the near-twin-execution + how it was detected: untracked report + `ps`) — one paragraph in `docs/gotchas-archive.md`. Impact: Low · Effort: S · Category: Documentation.
 
-*(List capped at 25 substantive items rather than padding to 50: items beyond these would be the live session's own queue rows restated, or ROADMAP speculation — the harvest schema values specific-and-actionable over count. The user's "up to 50" is treated as a ceiling, not a quota.)*
+_(List capped at 25 substantive items rather than padding to 50: items beyond these would be the live session's own queue rows restated, or ROADMAP speculation — the harvest schema values specific-and-actionable over count. The user's "up to 50" is treated as a ceiling, not a quota.)_
 
 ## g) Three questions I cannot answer myself
 
@@ -103,20 +103,20 @@ The deploy blocker in the owner's pasted log is **fixed, committed, and build-ve
 
 ## Evidence appendix (first-hand, this session)
 
-| Fact | Command / source | Result |
-| --- | --- | --- |
-| Root failure | owner-pasted `nh os switch` log | `linux-7.3-modules` exit 25, buildEnv conflict `v4l2loopback…/modules.alias` vs kernel |
-| Pinned nixpkgs | `flake.lock` → `nodes[root].inputs.nixpkgs` = `nixpkgs_4` | `02c087f3fe673c9e317f206a627cb6b910336dbe` (26.11.20261020) |
-| Aggregator mechanics | `<nixpkgs>/pkgs/os-specific/linux/kmod/aggregator.nix` | buildEnv + depmod regen + `.ko.cer` cert-merge postBuild |
-| Upstream convention | `amneziawg/default.nix`, `vmm_clock`, `virtio_vmmci`, `xone` | `DEPMOD=true/echo`, `installTargets = [ "modules_install" ]` |
-| v4l2loopback fix build | `nix build .#…boot.kernelPackages.v4l2loopback` | `wanhnk8i…`, output = `updates/v4l2loopback.ko.cer` + `.ko.xz` only |
-| r8125 fix build | `nix build .#…boot.kernelPackages.r8125` | `qd63y84fq…`, output = `r8125.ko.cer` + `r8125.ko.xz` |
-| Blocker cleared | `nix build .#…config.system.modulesTree` | builds: `i2k2d67j…-linux-7.3-modules` |
-| Eval green | `nix eval .#…toplevel.drvPath` | `mxjaw5m4…` drv; getExe warning gone; 5 warnings remain (4 known/deliberate + 1 queued) |
-| Remaining failures | `nix build .#…toplevel --keep-going --no-link` | hermes-tui(139), web-0.0.0(139), overview(1), aw-core(1), signoz-patched(1), dms-shell — NO linux-7.3-modules |
-| Live session proof | `ps aux` 16:13 | `nix build . --keep-going` (500809), `nix build .#checks.x86_64-linux.server-build` (513232); its edits landing (crowdsec/forgejo/system-health/monitoring.md) |
-| Commits (mine) | git log | `8a16b14e9` (r8125 fix; +1 foreign line), `9a5e59a97` (docs+queue; +2 foreign TODO ticks); boot.nix v1 inside daemon `625c8c168` |
-| Format override | owner prompt | `.md` at explicit path (status-report skill default is HTML; explicit instruction wins, flagged per skill contract) |
+| Fact                   | Command / source                                             | Result                                                                                                                                                         |
+| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Root failure           | owner-pasted `nh os switch` log                              | `linux-7.3-modules` exit 25, buildEnv conflict `v4l2loopback…/modules.alias` vs kernel                                                                         |
+| Pinned nixpkgs         | `flake.lock` → `nodes[root].inputs.nixpkgs` = `nixpkgs_4`    | `02c087f3fe673c9e317f206a627cb6b910336dbe` (26.11.20261020)                                                                                                    |
+| Aggregator mechanics   | `<nixpkgs>/pkgs/os-specific/linux/kmod/aggregator.nix`       | buildEnv + depmod regen + `.ko.cer` cert-merge postBuild                                                                                                       |
+| Upstream convention    | `amneziawg/default.nix`, `vmm_clock`, `virtio_vmmci`, `xone` | `DEPMOD=true/echo`, `installTargets = [ "modules_install" ]`                                                                                                   |
+| v4l2loopback fix build | `nix build .#…boot.kernelPackages.v4l2loopback`              | `wanhnk8i…`, output = `updates/v4l2loopback.ko.cer` + `.ko.xz` only                                                                                            |
+| r8125 fix build        | `nix build .#…boot.kernelPackages.r8125`                     | `qd63y84fq…`, output = `r8125.ko.cer` + `r8125.ko.xz`                                                                                                          |
+| Blocker cleared        | `nix build .#…config.system.modulesTree`                     | builds: `i2k2d67j…-linux-7.3-modules`                                                                                                                          |
+| Eval green             | `nix eval .#…toplevel.drvPath`                               | `mxjaw5m4…` drv; getExe warning gone; 5 warnings remain (4 known/deliberate + 1 queued)                                                                        |
+| Remaining failures     | `nix build .#…toplevel --keep-going --no-link`               | hermes-tui(139), web-0.0.0(139), overview(1), aw-core(1), signoz-patched(1), dms-shell — NO linux-7.3-modules                                                  |
+| Live session proof     | `ps aux` 16:13                                               | `nix build . --keep-going` (500809), `nix build .#checks.x86_64-linux.server-build` (513232); its edits landing (crowdsec/forgejo/system-health/monitoring.md) |
+| Commits (mine)         | git log                                                      | `8a16b14e9` (r8125 fix; +1 foreign line), `9a5e59a97` (docs+queue; +2 foreign TODO ticks); boot.nix v1 inside daemon `625c8c168`                               |
+| Format override        | owner prompt                                                 | `.md` at explicit path (status-report skill default is HTML; explicit instruction wins, flagged per skill contract)                                            |
 
 **HARVEST note (docs-health contract):** §f items 1–3 self-harvested at authoring time into `TODO_LIST.md` + `docs/todo/stability.md`. §f items 4–10, 22–23 deliberately NOT harvested: the live parallel session owns them and its 16:06 report + existing queue rows already cover them — re-queueing would duplicate. Items 11–21, 24–25 are new; harvest them from this file if this session does not continue.
 
@@ -136,13 +136,13 @@ Owner steer after this report: "keep going until everything works". Continuation
 
 ### Post-deploy triage table (the 5 baseline FAILs)
 
-| Check | Verdict | Evidence |
-| --- | --- | --- |
-| FastFlowLM :52625 | **By design** — memory-emergency guard Zone-6 sacrificed the socket at 17:36:42 (PSI ~50% deploy storm, "stacked full-disk readers" class); module docs: guard RESTORES the socket once memory recovers past margin | `journalctl --since 17:36:35 --until 17:36:50` + fastflowlm.nix:27-36 |
-| Architecture Catalog marker | **Stale check** — the dist rebranded (`<title>LarsArtmann Architecture Catalog`, fresh gen 20261023-170000); check expected old `<title>EventCatalog`. FIXED in post-deploy-check.sh this pass | local grep of `/var/lib/architecture-catalog/current/index.html` + live openssl probe agree |
-| SigNoz Coverage (4 dark: hermes, monitor365-server, papdashboard, PMA) | **Pre-existing** — in the baseline before the deploy; monitor365-server just restarted (may light up), hermes/papdashboard/PMA dark since before today | `:9100/metrics` signoz_traces_reporting + baseline file |
-| Service Sanity CPU (nsfw 206%, tq-pool 289%) | **Storm transients** — tq-agent-pool's storm gate admitted it post-settle (harvest startup scan); nsfw-classifier is lars's Helium browser extension, calm at 0.8% when re-probed | ps before/after |
-| Service Sanity journal (node-exporter/cv/crm) | **Restart backlogs draining** — cv's CRM re-sync (opportunities ×hundreds + 404 WARNs) + crm startup burst | journalctl -u cv-server |
+| Check                                                                  | Verdict                                                                                                                                                                                                             | Evidence                                                                                    |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| FastFlowLM :52625                                                      | **By design** — memory-emergency guard Zone-6 sacrificed the socket at 17:36:42 (PSI ~50% deploy storm, "stacked full-disk readers" class); module docs: guard RESTORES the socket once memory recovers past margin | `journalctl --since 17:36:35 --until 17:36:50` + fastflowlm.nix:27-36                       |
+| Architecture Catalog marker                                            | **Stale check** — the dist rebranded (`<title>LarsArtmann Architecture Catalog`, fresh gen 20261023-170000); check expected old `<title>EventCatalog`. FIXED in post-deploy-check.sh this pass                      | local grep of `/var/lib/architecture-catalog/current/index.html` + live openssl probe agree |
+| SigNoz Coverage (4 dark: hermes, monitor365-server, papdashboard, PMA) | **Pre-existing** — in the baseline before the deploy; monitor365-server just restarted (may light up), hermes/papdashboard/PMA dark since before today                                                              | `:9100/metrics` signoz_traces_reporting + baseline file                                     |
+| Service Sanity CPU (nsfw 206%, tq-pool 289%)                           | **Storm transients** — tq-agent-pool's storm gate admitted it post-settle (harvest startup scan); nsfw-classifier is lars's Helium browser extension, calm at 0.8% when re-probed                                   | ps before/after                                                                             |
+| Service Sanity journal (node-exporter/cv/crm)                          | **Restart backlogs draining** — cv's CRM re-sync (opportunities ×hundreds + 404 WARNs) + crm startup burst                                                                                                          | journalctl -u cv-server                                                                     |
 
 ### Live fixes this pass (beyond docs)
 

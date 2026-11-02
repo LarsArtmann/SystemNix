@@ -86,42 +86,42 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 ## b) PARTIALLY DONE
 
 ~~1. **The re-anchor deploy** — the whole point of the new rc=14 instruction, NOT yet executed:~~ done — landed rc=0 18:43, system-791 three-way anchored (docs/status/2026-09-20_19-47 §a.7)
-   deploy #1 (16:17:57) activated `g118vva3…` but **exit-4'd on a hermes start-timeout**
-   (16:34:02, `hermes-migrate-state` SIGKILLed at the budget under the deploy's own IO churn —
-   io PSI avg10 hit 26.8% during activation/smoke) → profile stayed **system-787 = UNANCHORED**.
-   Hermes self-recovered via auto-restart (gateway fully live 16:42+, cron delivering,
-   mem-trim heartbeats through 16:51). The re-deploy is blocked by trips **#654 16:32 + #655
-   16:46** — my own gate demands a trip-free 60-min window, earliest **~17:46**. The waiter
-   pattern that did the waiting is documented in this report (inline, heartbeat, no /tmp files).
+deploy #1 (16:17:57) activated `g118vva3…` but **exit-4'd on a hermes start-timeout**
+(16:34:02, `hermes-migrate-state` SIGKILLed at the budget under the deploy's own IO churn —
+io PSI avg10 hit 26.8% during activation/smoke) → profile stayed **system-787 = UNANCHORED**.
+Hermes self-recovered via auto-restart (gateway fully live 16:42+, cron delivering,
+mem-trim heartbeats through 16:51). The re-deploy is blocked by trips **#654 16:32 + #655
+16:46** — my own gate demands a trip-free 60-min window, earliest **~17:46**. The waiter
+pattern that did the waiting is documented in this report (inline, heartbeat, no /tmp files).
 2. **New gates live-validated, with caveats**: rc=14 is proven by the printed message only —
-   my waiter's `DEPLOY_RC=$?` measured `tail`'s exit (0), not the deploy's (pipe artifact,
-   see d.1). The trip-recency gate passed legitimately at entry (60-min trip-free) but the
-   build's OWN IO re-stormed the box — entry gates are structurally blind to self-inflicted
-   pressure (see e.2/e.5).
+my waiter's `DEPLOY_RC=$?` measured `tail`'s exit (0), not the deploy's (pipe artifact,
+see d.1). The trip-recency gate passed legitimately at entry (60-min trip-free) but the
+build's OWN IO re-stormed the box — entry gates are structurally blind to self-inflicted
+pressure (see e.2/e.5).
 3. **hermes perms change**: deployed + **live-proven valuable** (the heal fired on real child
-   drift at 16:27:42 — "fixing ownership and permissions in /home/hermes" — drift the old
-   root-only fast path would have fast-path-exited past), but the first restart timed out
-   (10min36s wall vs 6min `TimeoutStartSec`, confirmed by eval) — the cold-cache ownership
-   walk + migrate-state stack against the documented load-bearing budget. Restart 2 succeeded
-   (~8min wall per journal timestamps — I cannot fully reconcile that with the 6min budget
-   from outside; the unit is running, which is the observable that matters).
+drift at 16:27:42 — "fixing ownership and permissions in /home/hermes" — drift the old
+root-only fast path would have fast-path-exited past), but the first restart timed out
+(10min36s wall vs 6min `TimeoutStartSec`, confirmed by eval) — the cold-cache ownership
+walk + migrate-state stack against the documented load-bearing budget. Restart 2 succeeded
+(~8min wall per journal timestamps — I cannot fully reconcile that with the 6min budget
+from outside; the unit is running, which is the observable that matters).
 
 ## c) NOT STARTED
 
 ~~1. The re-anchor `nix run .#deploy` itself (window-gated, ~17:46+; second run should not~~ **NOT-DO — NOT-DO — dup of §b.1.**
-   restart hermes — unit file unchanged vs current-system — so it should anchor cleanly).
+restart hermes — unit file unchanged vs current-system — so it should anchor cleanly).
 2. Root-side post-heal confirmation snapshot (`sudo find /var/lib/cv -xdev \( ! -user cv -o
    ! -group cv -o ! -perm -u+w \) -print | head` — expect empty; needs sudo).
 3. cv-scan green verification at the 18:23 tick; tonight's 03:30 cv-backup pool receive.
 4. The CV flake lock move (owned by the ACTIVE CV-repo session: vendorHash refresh at their
-   final rev → push → my recorded probe protocol → `nix flake lock --update-input cv`).
+final rev → push → my recorded probe protocol → `nix flake lock --update-input cv`).
 ~~5. Idle-window `nix run .#post-deploy-check` to freeze a new baseline (the Hermes NEW-fail~~ done — smoke 106 PASS / 2 known-FAIL (docs/status/2026-09-20_19-47 §b)
-   ages out; expect CV to drop out once the 18:23 scan runs green).
+ages out; expect CV to drop out once the 18:23 scan runs green).
 6. Hermes smoke start-grace (deploy.sh's 10s settle is structurally too short when stc
-   restarts hermes — 5-8min start) — design candidate only, see e.3.
+restarts hermes — 5-8min start) — design candidate only, see e.3.
 7. Hermes `TimeoutStartSec` 6→10min decision (owner call, see g.2).
 8. Checking whether the smoke "Hermes" NEW-fail persists in the baseline file (it was a
-   mid-restart probe artifact; next smoke should pass it).
+mid-restart probe artifact; next smoke should pass it).
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -169,55 +169,55 @@ re-anchor blocked by new Zone-6 trips #654/#655 (16:32/16:46) — earliest clean
 ## f) Up to 50 things to get done next (prioritized, scoped to this session's threads)
 
 ~~1. **Re-run `nix run .#deploy` in a trip-free 60-min window (earliest ~17:46)** — second run~~ **NOT-DO — NOT-DO — dup of §b.1.**
-   carries no hermes unit-file change → no restart → should anchor cleanly; verify profile
-   bumps past system-787 and rc=0 (or rc=3-only).
+carries no hermes unit-file change → no restart → should anchor cleanly; verify profile
+bumps past system-787 and rc=0 (or rc=3-only).
 ~~2. After anchor: confirm three-way anchor (profile == current-system == default boot entry).~~ done — readlink trio = system-791 (docs/status/2026-09-20_19-47 §a.7)
 ~~3. Verify the 18:23 cv-scan runs green (first funnel tick on the healed server).~~ done — green (docs/status/2026-09-20_19-47 §a.15)
 4. Verify tonight's 03:30 cv-backup pool receive (cv-server healthy since 14:08).
 ~~5. Idle-window `nix run .#post-deploy-check` → new baseline (Hermes ages out, CV drops if~~ **NOT-DO — NOT-DO — dup of §c.5.**
-   scan green).
+scan green).
 6. Root-side cv heal confirmation snapshot (c.2) — user or privileged session.
 7. CV session handoff: they refresh vendorHash at their final rev → re-probe →
-   `nix flake lock --update-input cv` → heal keeps as insurance; upstream `chmod -R u+w`
-   then covers future drift at the source.
+`nix flake lock --update-input cv` → heal keeps as insurance; upstream `chmod -R u+w`
+then covers future drift at the source.
 8. Decide hermes `TimeoutStartSec` 6→10min (g.2) and, if bumped, deploy with the re-anchor.
 9. Hermes smoke start-grace design (e.3) — likely a post-deploy-check.sh tweak.
 10. deploy.sh pre-switch PSI re-check (e.2) — small, high-value.
 11. Wrapper rc discipline (e.1) — fix any remaining `| tail; echo $?` in poller patterns
-    (mine was ad-hoc; `~/.local/state/boot-mirror-queue.sh` should be audited for the same).
+(mine was ad-hoc; `~/.local/state/boot-mirror-queue.sh` should be audited for the same).
 12. Kill-or-keep decision on rogue hermes llamas (g.3) — frees 4.2G + 20% CPU + closes the
-    recurring dark-port pressure source.
+recurring dark-port pressure source.
 13. Post-reboot (user): `bootctl status` PARTUUID proof + pre-reboot-check green + flm
-    :52625 corpse cleared + FastFlowLM smoke PASS (baseline shrinks again).
+:52625 corpse cleared + FastFlowLM smoke PASS (baseline shrinks again).
 ~~14. Post-reboot: go-build automount absence re-verified (entry removed — no unit should exist).~~ **Won't implement — moot — entry removed; nothing to verify (15-02 addendum §Q2).**
 15. File the browser-history empty-batch heartbeat upstream (the `[ready]` todo row).
 16. xdg-desktop-portal flap triage (owner look at which dependency fails; watch row exists).
 17. Watch guard Zone-6 behavior overnight: trips #650-655 all today — if the cadence holds
-    after the crush-hot-db migration completes, revisit `ioChurnUnits` coverage (the
-    recovery-reader class from freeze #6).
+after the crush-hot-db migration completes, revisit `ioChurnUnits` coverage (the
+recovery-reader class from freeze #6).
 ~~18. inboxclean main-account re-consent (user-gated, standing since Sep 4 — every 30-min tick~~ done — 2026-10-04 (docs/status/2026-10-04_08-32 §a.1)
-    fails; the only remaining cause of service-health-check reds).
+fails; the only remaining cause of service-health-check reds).
 19. Consider a `system_hermes_start_duration_seconds` textfile metric (start-budget trend was
-    invisible until it bit — the 12:26 warning was a one-off measurement).
+invisible until it bit — the 12:26 warning was a one-off measurement).
 20. Sweep other heal/fast-path pairs for the symmetry rule (forgejo-subvol-bootstrap,
-    clickhouse-xfs-ownership-heal, atticd-storage-dir) — doctrine is in AGENTS.md now; audit
-    is mechanical.
+clickhouse-xfs-ownership-heal, atticd-storage-dir) — doctrine is in AGENTS.md now; audit
+is mechanical.
 ~~21. The parallel session's `storage-collector.nix` UMask fix rode my deploy — verify the~~ done — storage_collector_health present post-deploy (docs/status/2026-09-20_19-47 §a.6)
-    storage textfile lands 0644 and `node_textfile_scrape_error` stays 0 (their thread, one
-    observation from me post-deploy).
+storage textfile lands 0644 and `node_textfile_scrape_error` stays 0 (their thread, one
+observation from me post-deploy).
 22. Bank-Sync SCA approval (user, ~90-day class) — clears the standing baseline fail.
 23. After the CV lock move: retire the "CV Pipeline Store Health" wait — no, verify the
-    go-health rich-format pattern still matches (rev ≥ ed8b92f already held; the move only
-    adds the content-sync fix).
+go-health rich-format pattern still matches (rev ≥ ed8b92f already held; the move only
+adds the content-sync fix).
 24. Confirm the daemon committed the last docs batch (CHANGELOG/AGENTS/desktop.md were dirty
-    pre-deploy; tree showed them committed by 16:5x — hash-range `1e727445..1105ab73`).
+pre-deploy; tree showed them committed by 16:5x — hash-range `1e727445..1105ab73`).
 25. If a future deploy exit-4s again: the new failed-unit dump makes triage one journal read —
-    use it, don't re-derive (the 12:26 session's ask, now shipped).
+use it, don't re-derive (the 12:26 session's ask, now shipped).
 26. Consider gating the deploy on `pgrep` crush-session count (the recurring storm driver)
-    — owner decision, not unilateral.
+— owner decision, not unilateral.
 27. The `2026-09-20_10-21` phantom-deletion incident's remediation (crush-hot-db guard +
-    sops-skill git restore) is STILL pending on user design decisions (their g.1/g.2) —
-    not mine, flagging visibility.
+sops-skill git restore) is STILL pending on user design decisions (their g.1/g.2) —
+not mine, flagging visibility.
 28. Samsung hot-disk `corrupt 12` triage (their g.3, P0 candidate) — user-gated.
 
 ## g) Up to 3 questions I CANNOT figure out myself

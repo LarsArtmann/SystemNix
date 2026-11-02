@@ -46,8 +46,8 @@ Deploy is unblocked; it has NOT been run (owner call).
 6. **bank-sync verification chain green**: `check-dep-alignment.sh` OK,
    `check-cqrs-lite-coherence.sh --strict` OK (single revision class),
    `checks.test` (full go suite against the NEW vendored trees) + `checks.lint`
-   + both vendor-witness checks green, dashboard `nix run .#e2e` **PASSED**
-   (live SSE event stream, zero console errors / CSP violations).
+   - both vendor-witness checks green, dashboard `nix run .#e2e` **PASSED**
+     (live SSE event stream, zero console errors / CSP violations).
 7. **bank-sync bookkeeping closed**: the blocked TODO_LIST row
    ("Re-pin go-cqrs-lite flake input") removed to CHANGELOG with a full entry;
    the "modernization wave HOLD" row updated (HOLD stands for tag-based
@@ -212,6 +212,7 @@ Nothing was deployed, reverted, force-pushed, or lost. No secrets were exposed
 ## f) NEXT THINGS (prioritized, ≤50)
 
 **Deploy chain (blocking value):**
+
 1. Owner: run `nix run .#deploy` (or your own `nh os switch`) — everything is
    verified green up to the toplevel.
 2. Post-deploy: bank-sync daemon/canary/paperless units green;
@@ -239,62 +240,62 @@ Nothing was deployed, reverted, force-pushed, or lost. No secrets were exposed
 **Process/tooling (from §e):**
 11. Build `nix run .#probe-fod -- <input> [attr]` (the probe script).
 12. Extend `pre-deploy-check` §11 with a two-surfaces shim sweep (service
-    modules + lars-packages).
+modules + lars-packages).
 13. Add a hash-transcription guard: a script that pastes got-hashes into a
-    target file itself (no manual printf).
+target file itself (no manual printf).
 14. Update `docs/agents/nix-flakes.md` §11 section to name the probe pattern
-    (the gotcha bullets exist; the §11 procedure doesn't reference it).
+(the gotcha bullets exist; the §11 procedure doesn't reference it).
 15. Queue the two-surfaces trap as a `[ready]` row in the SystemNix TODO
-    dispatch queue if the owner wants it dispatched (it's currently documented,
-    not queued).
+dispatch queue if the owner wants it dispatched (it's currently documented,
+not queued).
 16. Consider tagging the three upstream fix commits (PMA/library-policy/gsl)
-    upstream so their next lock moves are tag-pinned per the pin policy.
+upstream so their next lock moves are tag-pinned per the pin policy.
 
 **bank-sync follow-through:**
 17. Re-run bank-sync `nix flake check` locally post-deploy for the full VM
-    battery.
+battery.
 18. Close the e2e escape-hatch knowledge (the 2026-10-11 02-45 report recipe)
-    as obsolete now that `nix run .#e2e` works — one line in the next bank-sync
-    docs pass.
+as obsolete now that `nix run .#e2e` works — one line in the next bank-sync
+docs pass.
 19. The ambient-poison rows (GOMODCACHE wrong bytes; corrupted toolchain
-    extraction) — owner/environment decision unchanged.
+extraction) — owner/environment decision unchanged.
 20. bank-sync `docs/INTERIM-INPUT-PINS.md`-style note: not needed (no interim
-    pins were added this wave) — verify that file's claim list stays true.
+pins were added this wave) — verify that file's claim list stays true.
 21. Watch schema v4.7.0 (65 commits behind master at probe time): when bank-sync
-    next bumps schema, the pin + witness move together per the input comment.
+next bumps schema, the pin + witness move together per the input comment.
 22. The cqrs-lint "unstable-d15e0a48d095" version string — add to the
-    rot-on-every-bump watchlist next to the templ-components witness note.
+rot-on-every-bump watchlist next to the templ-components witness note.
 
 **SystemNix bookkeeping:**
 23. The 41-commit stack: consider a `git log --stat` review pass before push so
-    the push message/PR (if any) summarizes accurately.
+the push message/PR (if any) summarizes accurately.
 24. `gatus-config.nix` formatting churn (my `nix fmt` caught another session's
-    unformatted file) — already in-tree via daemon sweep; nothing to do unless
-    the owner wants fmt-only commits labeled.
+unformatted file) — already in-tree via daemon sweep; nothing to do unless
+the owner wants fmt-only commits labeled.
 25. My SystemNix heuristic commits (`3798c940`, `ff093aea`, `9e7b43f5`) have
-    poor messages — acceptable per repo convention (dozens exist); do NOT
-    rewrite the mid-stack.
+poor messages — acceptable per repo convention (dozens exist); do NOT
+rewrite the mid-stack.
 26. The wave9 updates in `docs/todo/upstream.md` + the nix-flakes bullets ride
-    the same unpushed stack — confirm they survive the push review.
+the same unpushed stack — confirm they survive the push review.
 27. Next lock wave: run the two-surfaces grep BEFORE the first `nix build`, not
-    after the first mismatch (this session's ordering cost ~3 round-trips).
+after the first mismatch (this session's ordering cost ~3 round-trips).
 28. When go-cqrs-lite master moves next: SystemNix's `go-cqrs-lite` input
-    follows master — expect the cqrs-lint shim question to re-arm; the drop
-    record names the re-evaluation protocol.
+follows master — expect the cqrs-lint shim question to re-arm; the drop
+record names the re-evaluation protocol.
 
 **Leftover/adjacent (observed, untouched — from the tree, not researched):**
 29. DiscordSync: 4 unpushed local commits (another session, active 19:20
-    2026-10-12) — coordinate before any DiscordSync work.
+2026-10-12) — coordinate before any DiscordSync work.
 30. The "docs: deployment outcome" commit (`1375553f`) in the unpushed stack
-    suggests a post-session deploy already happened — verify bank-sync's daemon
-    is on `eb7818c6`-class binary at next contact.
+suggests a post-session deploy already happened — verify bank-sync's daemon
+is on `eb7818c6`-class binary at next contact.
 31. Row 97/115 remaining repos (health-hub, meta, visionreviewd,
-    vision-review-agent, go-health-dashboard, crm, file-and-image-renamer,
-    project-dependency-graph, crush-daily doCheck leg) — re-probe at next wave.
+vision-review-agent, go-health-dashboard, crm, file-and-image-renamer,
+project-dependency-graph, crush-daily doCheck leg) — re-probe at next wave.
 32. The `annotate.go cmdCheckRows` defect (crush-config, foreign repo) —
-    unchanged, still blocked on owner.
+unchanged, still blocked on owner.
 33. CI runs remain disabled (billing) — all CI-parity work stays
-    unverifiable until then.
+unverifiable until then.
 
 (Stopped at 33: the remaining ideas were variants of the above or outside this
 session's observed scope.)

@@ -12,12 +12,12 @@ CrowdSec is a fail2ban successor: an **agent** tails logs (files or journald), p
 
 ## 2. What pinned nixpkgs ships (verified: store tree `7fd4004d`, 2026-10-14)
 
-| Artifact | Version | Notes |
-| --- | --- | --- |
-| `pkgs.crowdsec` | 1.8.1 | agent + LAPI + `cscli` + notification plugins (slack, email, http, splunk, …) in one package |
-| `pkgs.crowdsec-firewall-bouncer` | 0.0.38 | `cs-firewall-bouncer`, nftables/iptables/ipset modes |
-| `services.crowdsec` module | nixos/modules/services/security/crowdsec.nix | 3 maintainers; full option surface (below) |
-| `services.crowdsec-firewall-bouncer` module | …/crowdsec-firewall-bouncer.nix | assertions + registration oneshot + secret plumbing |
+| Artifact                                    | Version                                      | Notes                                                                                        |
+| ------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `pkgs.crowdsec`                             | 1.8.1                                        | agent + LAPI + `cscli` + notification plugins (slack, email, http, splunk, …) in one package |
+| `pkgs.crowdsec-firewall-bouncer`            | 0.0.38                                       | `cs-firewall-bouncer`, nftables/iptables/ipset modes                                         |
+| `services.crowdsec` module                  | nixos/modules/services/security/crowdsec.nix | 3 maintainers; full option surface (below)                                                   |
+| `services.crowdsec-firewall-bouncer` module | …/crowdsec-firewall-bouncer.nix              | assertions + registration oneshot + secret plumbing                                          |
 
 ### `services.crowdsec` module shape (verified from source)
 
@@ -36,13 +36,13 @@ CrowdSec is a fail2ban successor: an **agent** tails logs (files or journald), p
 
 ## 3. Known module pain points (verified via `gh issue view`, 2026-10-14)
 
-| Issue | State | Why it matters here |
-| --- | --- | --- |
-| [#445342](https://github.com/NixOS/nixpkgs/issues/445342) "sensible defaults so the module does not fail when simply enabling it" | OPEN | Confirms the defaults friction (LAPI off, credential paths, hub update at start). We would NOT "simply enable" — a real config avoids most of it. |
-| [#520206](https://github.com/NixOS/nixpkgs/issues/520206) ExecStartPre hub update fails without network; cascades to bouncer-register EACCES | OPEN | The unconditional hub update at every start is verified in our pinned source (scriptArray). On this host: internet is present, but `crowdsec.service` has **no DNS-gate** — during the ~2 min dnsblockd boot window `cscli hub update` may transiently fail. RestartSec=60 + `Restart` (from the upstream packaged unit — unverified here) should recover; if not, the mitigation is a `mkDnsGate`-style ExecStartPre addition or hub.branch pinning. |
-| [#476253](https://github.com/NixOS/nixpkgs/issues/476253) bouncer boot ordering | CLOSED (fixed) | Fix present in pinned source. |
-| [#526506](https://github.com/NixOS/nixpkgs/issues/526506) bouncer auto-register broke after a 25.11→26.05 upgrade | OPEN | Upgrade-fragility class. We pin nixpkgs; the mitigation is running the register oneshot's own verification after bumps (its script already fails loudly). |
-| #473707 / #476728 hub-update timer failures | referenced | Keep `autoUpdateService` off initially; hub updates then happen at service start only. |
+| Issue                                                                                                                                        | State          | Why it matters here                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [#445342](https://github.com/NixOS/nixpkgs/issues/445342) "sensible defaults so the module does not fail when simply enabling it"            | OPEN           | Confirms the defaults friction (LAPI off, credential paths, hub update at start). We would NOT "simply enable" — a real config avoids most of it.                                                                                                                                                                                                                                                                                                     |
+| [#520206](https://github.com/NixOS/nixpkgs/issues/520206) ExecStartPre hub update fails without network; cascades to bouncer-register EACCES | OPEN           | The unconditional hub update at every start is verified in our pinned source (scriptArray). On this host: internet is present, but `crowdsec.service` has **no DNS-gate** — during the ~2 min dnsblockd boot window `cscli hub update` may transiently fail. RestartSec=60 + `Restart` (from the upstream packaged unit — unverified here) should recover; if not, the mitigation is a `mkDnsGate`-style ExecStartPre addition or hub.branch pinning. |
+| [#476253](https://github.com/NixOS/nixpkgs/issues/476253) bouncer boot ordering                                                              | CLOSED (fixed) | Fix present in pinned source.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| [#526506](https://github.com/NixOS/nixpkgs/issues/526506) bouncer auto-register broke after a 25.11→26.05 upgrade                            | OPEN           | Upgrade-fragility class. We pin nixpkgs; the mitigation is running the register oneshot's own verification after bumps (its script already fails loudly).                                                                                                                                                                                                                                                                                             |
+| #473707 / #476728 hub-update timer failures                                                                                                  | referenced     | Keep `autoUpdateService` off initially; hub updates then happen at service start only.                                                                                                                                                                                                                                                                                                                                                                |
 
 **Maturity verdict:** usable-with-care, not set-and-forget. The two live traps for us are (a) the unconditional network-dependent hub update at start, and (b) version-bump fragility of auto-registration.
 
@@ -62,7 +62,7 @@ CrowdSec is a fail2ban successor: an **agent** tails logs (files or journald), p
 
 ## 5. Recommendation + staged go-path
 
-**Recommendation: adopt, staged, read-only first.** The marginal *enforcement* value on a LAN-bound homelab is modest; the real drivers are (1) unlocking GeoMetrikks' differentiating half (banned map, security page, ban/unban UI), (2) SSH brute-force visibility with community intel, (3) it is the prerequisite for any future exposure (net-vpn endgame, public endpoints). If none of those matter, do not adopt — an inert GeoMetrikks Security tab is honest today.
+**Recommendation: adopt, staged, read-only first.** The marginal _enforcement_ value on a LAN-bound homelab is modest; the real drivers are (1) unlocking GeoMetrikks' differentiating half (banned map, security page, ban/unban UI), (2) SSH brute-force visibility with community intel, (3) it is the prerequisite for any future exposure (net-vpn endgame, public endpoints). If none of those matter, do not adopt — an inert GeoMetrikks Security tab is honest today.
 
 - **Stage 0 (decision):** owner picks scope — LAPI+agent only (display) vs + firewall bouncer (enforcement) vs simulation-only trial.
 - **Stage 1:** `crowdsec.nix` module (agent+LAPI on `127.0.0.1:8082`, metrics `6060`, acquis: sshd journalctl + caddy files, collections `linux`+`caddy`, LAN whitelist, `autoUpdateService = false`, MemoryMax), ports, DNS-gate mitigation for the hub-update-on-start trap, gatus checks, runbook. Deploy. Verify LAPI up.
@@ -72,14 +72,14 @@ CrowdSec is a fail2ban successor: an **agent** tails logs (files or journald), p
 
 ## Verification status
 
-| Claim | Status | Source |
-| --- | --- | --- |
-| `crowdsec` 1.8.1 / bouncer 0.0.38 in pinned nixpkgs | ✅ Verified | store `pkgs/by-name/cr/*` (rev `7fd4004d`), 2026-10-14 |
-| Module option surface, defaults (LAPI off/8080, metrics 6060, sqlite+WAL, sudo-dependent cscli wrapper) | ✅ Verified | store `nixos/modules/services/security/crowdsec.nix`, read in full |
-| Bouncer module shape (mode default, register oneshot, LoadCredential plumbing, assertions, nftables ordering) | ✅ Verified | store `nixos/modules/services/security/crowdsec-firewall-bouncer.nix`, read in full |
-| Unconditional ExecStartPre hub update; autoUpdateService gates only the timer | ✅ Verified | same file (scriptArray + timers), corroborated by nixpkgs #520206 |
-| Issue numbers/titles/states #445342 #520206 #476253 #526506 | ✅ Verified | `gh issue view` (2026-10-14) |
-| GeoMetrikks env var names + semantics | ✅ Verified | raw upstream README (2026-10-14) |
-| `crowdsecurity/caddy` + `crowdsecurity/linux` collections; journalctl source needs ≥1.7.4 | ✅ Verified | hub.crowdsec.net collection pages (2026-10-14); pkg.go.dev journalctl module |
-| SigNoz owns 8080; 8081=crush-daily; 8082/6060 free; no nftables config; sudo not disabled; caddy json file logs | ✅ Verified | `lib/ports.nix`, repo grep, `caddy.nix:423` (2026-10-14) |
-| CAPI reachability behind dnsblockd; agent RAM footprint; `Restart` on crowdsec.service | ❌ Unverified leads | live-check / unit-file read at implementation time |
+| Claim                                                                                                           | Status              | Source                                                                              |
+| --------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------- |
+| `crowdsec` 1.8.1 / bouncer 0.0.38 in pinned nixpkgs                                                             | ✅ Verified         | store `pkgs/by-name/cr/*` (rev `7fd4004d`), 2026-10-14                              |
+| Module option surface, defaults (LAPI off/8080, metrics 6060, sqlite+WAL, sudo-dependent cscli wrapper)         | ✅ Verified         | store `nixos/modules/services/security/crowdsec.nix`, read in full                  |
+| Bouncer module shape (mode default, register oneshot, LoadCredential plumbing, assertions, nftables ordering)   | ✅ Verified         | store `nixos/modules/services/security/crowdsec-firewall-bouncer.nix`, read in full |
+| Unconditional ExecStartPre hub update; autoUpdateService gates only the timer                                   | ✅ Verified         | same file (scriptArray + timers), corroborated by nixpkgs #520206                   |
+| Issue numbers/titles/states #445342 #520206 #476253 #526506                                                     | ✅ Verified         | `gh issue view` (2026-10-14)                                                        |
+| GeoMetrikks env var names + semantics                                                                           | ✅ Verified         | raw upstream README (2026-10-14)                                                    |
+| `crowdsecurity/caddy` + `crowdsecurity/linux` collections; journalctl source needs ≥1.7.4                       | ✅ Verified         | hub.crowdsec.net collection pages (2026-10-14); pkg.go.dev journalctl module        |
+| SigNoz owns 8080; 8081=crush-daily; 8082/6060 free; no nftables config; sudo not disabled; caddy json file logs | ✅ Verified         | `lib/ports.nix`, repo grep, `caddy.nix:423` (2026-10-14)                            |
+| CAPI reachability behind dnsblockd; agent RAM footprint; `Restart` on crowdsec.service                          | ❌ Unverified leads | live-check / unit-file read at implementation time                                  |

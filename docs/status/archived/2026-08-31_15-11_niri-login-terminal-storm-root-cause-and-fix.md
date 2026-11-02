@@ -122,14 +122,14 @@ source `src/main.rs` restore loop (lines 646–652: dedup only for listed apps).
 ## 9. What We Should Improve (distilled)
 
 ~~1. **Kill order discipline:** state-changing remediation must be sequenced~~ **Won't implement — kill-order discipline never canonized.**
-   stop-source → mutate-state → verify, never mutate-then-hope.
+stop-source → mutate-state → verify, never mutate-then-hope.
 ~~2. **Config-as-typo-surface:** the dedup list was one missing string away from~~ done at `eval invariant shipped; tests/test-niri-session-config.nix:2`
-   this incident; classes like "terminal_app_ids ⊆ single_instance_apps" belong
-   in an eval-time check, not in human memory.
+this incident; classes like "terminal_app_ids ⊆ single_instance_apps" belong
+in an eval-time check, not in human memory.
 ~~3. **Upstream-first:** the moment the root cause pointed at upstream logic, the~~ **Won't implement — upstream-first habit never canonized.**
-   branch/pad should have been opened there in parallel with the mitigation.
+branch/pad should have been opened there in parallel with the mitigation.
 ~~4. **Transient app-ids** (gcr-prompter & friends) need a skip list; restoring~~ **NOT-DO — dup of 10.11.**
-   dialogs is nonsense by definition.
+dialogs is nonsense by definition.
 
 ## 10. Next Up To ~30 (derived from this session only)
 

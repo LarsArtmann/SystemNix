@@ -112,8 +112,8 @@ the vHost was never the thing you reached (hit live 2026-10-16).
 
 | Address                    | Ports   | Owner       | Serves                                                                            |
 | -------------------------- | ------- | ----------- | --------------------------------------------------------------------------------- |
-| `networking.local.lanIP`   | 80, 443 | `caddy`     | Every real vHost, the unknown-host 404 catch-all, and the `*.home.lan` wildcard    |
-| `networking.local.blockIP` | 80, 443 | `dnsblockd` | Block pages + the scoped filter proxy (ADR-0018) on temp-allowed / filtered names  |
+| `networking.local.lanIP`   | 80, 443 | `caddy`     | Every real vHost, the unknown-host 404 catch-all, and the `*.home.lan` wildcard   |
+| `networking.local.blockIP` | 80, 443 | `dnsblockd` | Block pages + the scoped filter proxy (ADR-0018) on temp-allowed / filtered names |
 
 Defaults live in `platforms/nixos/system/local-network.nix` (`.150` / `.200`).
 Live probe: `ss -ltnp | rg ':443'` shows `192.168.1.150:443` and

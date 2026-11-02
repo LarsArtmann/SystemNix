@@ -40,38 +40,38 @@
 
 ## f) NEXT (session-scoped backlog, impact-ordered)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | qonto_archive attachments bulk archival (statement-upload pattern, filename-derived metadata, ~1000 files) | 🔴 receipts archived w/o creds | M |
-| 2 | receipts/ + reciepts/ folders same pass (60 files, Sparkasse/wise/caya) | 🔴 | S |
-| 3 | Wise XLS converter (extrame/xls reads them) + wise importer: AT 1078 rows | 🟠 second bank fully served | M |
-| 4 | Same for AH 121 rows | 🟠 | S |
-| 5 | Wise 2024 mt940 statements import (EUR/USD/PLN × orgs) | 🟠 | M |
-| 6 | Wise PDF statements archival to Paperless (18 files) | 🟠 | S |
-| 7 | Wave-6 root-cause: why only paperless emptied (racing ensure/initdb?) | 🟠 subvol trust | M |
-| 8 | Post-restore collation-version check (todo row :31 — did the restore clear the warning?) | 🟡 | S |
-| 9 | Independent API spot-check of the 40 archived statements (title/created/correspondent — currently self-attested by the unit's count query) | 🟡 | S |
-| 10 | Dashboard "Total transactions 859/89" default-window counter vs 963/117 — document or fix the cosmetic | 🟡 | S |
-| 11 | Owner decision: keep or delete the 2 span-CSV extract docs in Paperless (superseded by monthly PDFs) | 🟡 | owner |
-| 12 | Triage stray Drive files: `preuve-*.pdf`, mail-agreement PDF, Wolt timesheets/invoices (22) | ⚪ | S |
-| 13 | Document Drive-extract retention: `~/Downloads/drive-extract-20261019/` (269MB) is load-bearing for tasks 1-2 — move somewhere durable or note it | 🟡 | S |
-| 14 | Clean /tmp scratch (rehearsal DB+env, xls2qonto, bank-sync-bin, drive-files.txt) | ⚪ | S |
-| 15 | `ofx_to_qonto_csv.py` regression/golden test in the repo (gates exist; no automated test) | 🟡 | S |
-| 16 | Cross-validate OFX conversion against the QIF/STA exports (row counts + date ranges as a checksum) | 🟡 | S |
-| 17 | Dispose/dedupe the double `.sta` exports per org (same data as OFX) | ⚪ | S |
-| 18 | Native OFX importer in bank-sync (Go) to replace the python converter long-term | ⚪ | M |
-| 19 | Native Wise-XLS importer in bank-sync | ⚪ | M |
-| 20 | Paperless saved view "Qonto Statements" (declarative, paperless-dashboard pattern) | 🟡 | S |
-| 21 | Verify nightly paperless document_exporter picked up the 42 new docs (DR completeness) | 🟡 | S |
-| 22 | Verify btrbk-pool snapshots cover the staged qonto-import statements tree | 🟡 | S |
-| 23 | Post-import gatus Bank-Sync checks + rev-drift tripwire state | 🟡 | S |
-| 24 | Coverage banner ("statement-backed coverage —") semantics for CLI imports — should the coverage model know the import span? | 🟡 | M |
-| 25 | bank-sync repo docs (runbooks/README) still describe the fragment corpus — update for full corpus | 🟡 | S |
-| 26 | AGENTS/07-gotchas-sync.md: OFX-FITID vs CSV-UUID namespace + bridge-key lesson | 🟡 | S |
-| 27 | AGENTS/11-rituals.md: "rehearse the exact generated unit script" tripwire | 🔴 prevents d1 class | S |
-| 28 | Smoke baseline refresh: 7→8 FAIL flip during my deploys (caddy timeout, nsfw-classifier, prometheus journal-rate under storm) — re-baseline when calm | 🟡 | S |
-| 29 | Daemon-race coordination: propose convention (daemon skips freshly-staged pathspecs, or sessions commit within N seconds of staging) | 🟡 | S |
-| 30 | Standing: pma forward relock, 12 vendorHash shim drops, Monitor365 smoke triage (foreign) | ⚪ | watch |
+| #  | Task                                                                                                                                                  | Impact                         | Effort |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------ |
+| 1  | qonto_archive attachments bulk archival (statement-upload pattern, filename-derived metadata, ~1000 files)                                            | 🔴 receipts archived w/o creds | M      |
+| 2  | receipts/ + reciepts/ folders same pass (60 files, Sparkasse/wise/caya)                                                                               | 🔴                             | S      |
+| 3  | Wise XLS converter (extrame/xls reads them) + wise importer: AT 1078 rows                                                                             | 🟠 second bank fully served    | M      |
+| 4  | Same for AH 121 rows                                                                                                                                  | 🟠                             | S      |
+| 5  | Wise 2024 mt940 statements import (EUR/USD/PLN × orgs)                                                                                                | 🟠                             | M      |
+| 6  | Wise PDF statements archival to Paperless (18 files)                                                                                                  | 🟠                             | S      |
+| 7  | Wave-6 root-cause: why only paperless emptied (racing ensure/initdb?)                                                                                 | 🟠 subvol trust                | M      |
+| 8  | Post-restore collation-version check (todo row :31 — did the restore clear the warning?)                                                              | 🟡                             | S      |
+| 9  | Independent API spot-check of the 40 archived statements (title/created/correspondent — currently self-attested by the unit's count query)            | 🟡                             | S      |
+| 10 | Dashboard "Total transactions 859/89" default-window counter vs 963/117 — document or fix the cosmetic                                                | 🟡                             | S      |
+| 11 | Owner decision: keep or delete the 2 span-CSV extract docs in Paperless (superseded by monthly PDFs)                                                  | 🟡                             | owner  |
+| 12 | Triage stray Drive files: `preuve-*.pdf`, mail-agreement PDF, Wolt timesheets/invoices (22)                                                           | ⚪                             | S      |
+| 13 | Document Drive-extract retention: `~/Downloads/drive-extract-20261019/` (269MB) is load-bearing for tasks 1-2 — move somewhere durable or note it     | 🟡                             | S      |
+| 14 | Clean /tmp scratch (rehearsal DB+env, xls2qonto, bank-sync-bin, drive-files.txt)                                                                      | ⚪                             | S      |
+| 15 | `ofx_to_qonto_csv.py` regression/golden test in the repo (gates exist; no automated test)                                                             | 🟡                             | S      |
+| 16 | Cross-validate OFX conversion against the QIF/STA exports (row counts + date ranges as a checksum)                                                    | 🟡                             | S      |
+| 17 | Dispose/dedupe the double `.sta` exports per org (same data as OFX)                                                                                   | ⚪                             | S      |
+| 18 | Native OFX importer in bank-sync (Go) to replace the python converter long-term                                                                       | ⚪                             | M      |
+| 19 | Native Wise-XLS importer in bank-sync                                                                                                                 | ⚪                             | M      |
+| 20 | Paperless saved view "Qonto Statements" (declarative, paperless-dashboard pattern)                                                                    | 🟡                             | S      |
+| 21 | Verify nightly paperless document_exporter picked up the 42 new docs (DR completeness)                                                                | 🟡                             | S      |
+| 22 | Verify btrbk-pool snapshots cover the staged qonto-import statements tree                                                                             | 🟡                             | S      |
+| 23 | Post-import gatus Bank-Sync checks + rev-drift tripwire state                                                                                         | 🟡                             | S      |
+| 24 | Coverage banner ("statement-backed coverage —") semantics for CLI imports — should the coverage model know the import span?                           | 🟡                             | M      |
+| 25 | bank-sync repo docs (runbooks/README) still describe the fragment corpus — update for full corpus                                                     | 🟡                             | S      |
+| 26 | AGENTS/07-gotchas-sync.md: OFX-FITID vs CSV-UUID namespace + bridge-key lesson                                                                        | 🟡                             | S      |
+| 27 | AGENTS/11-rituals.md: "rehearse the exact generated unit script" tripwire                                                                             | 🔴 prevents d1 class           | S      |
+| 28 | Smoke baseline refresh: 7→8 FAIL flip during my deploys (caddy timeout, nsfw-classifier, prometheus journal-rate under storm) — re-baseline when calm | 🟡                             | S      |
+| 29 | Daemon-race coordination: propose convention (daemon skips freshly-staged pathspecs, or sessions commit within N seconds of staging)                  | 🟡                             | S      |
+| 30 | Standing: pma forward relock, 12 vendorHash shim drops, Monitor365 smoke triage (foreign)                                                             | ⚪                             | watch  |
 
 ## g) TOP 3 QUESTIONS (cannot be answered from the box)
 

@@ -132,7 +132,7 @@ All four verified: syntax ok + execution exits 1 with the explanation. This clos
 
 ## f) NEXT (up to 50, priority order)
 
-~~1. Tick TODO_LIST item (3) "trash/mark-RETIRED the p8/p9-era disk scripts" — DONE this session, tick it.~~ done at `TODO item ticked same day (16-36 session`, ` p8/p9 tombstone row)`
+~~1. Tick TODO_LIST item (3) "trash/mark-RETIRED the p8/p9-era disk scripts" — DONE this session, tick it.~~ done at `TODO item ticked same day (16-36 session`, `p8/p9 tombstone row)`
 ~~2. Fix `health-check.sh` grep -c double-output (HIGH, false-fail every clean run).~~ **NOT-DO — dup of c1 (v).**
 ~~3. Fix `internet-diagnostic.sh` GW/GATEWAY var + retired units → wifi-failover/dnsblockd (HIGH ×2).~~ **NOT-DO — dup of c2 (v).**
 ~~4. Fix `nixos-diagnostic.sh` nonexistent `nixos-rebuild check` → dry-build (HIGH).~~ **NOT-DO — dup of c3 (v).**

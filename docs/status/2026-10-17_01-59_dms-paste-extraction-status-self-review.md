@@ -10,7 +10,7 @@
 ### 1. What did you forget?
 
 1. **The `buildflow` skill was never loaded** — SystemNix has `.buildflow.yml` (checked only during this review). I ran `nix fmt` and flake checks without checking BuildFlow coverage. Consequence: probably none (I used the repo-documented flake commands AGENTS.md prescribes, and dms-paste itself has no `.buildflow.yml`), but it is a straight skill-trigger compliance miss.
-2. **No real-build proof of the composed DMS package.** The patch-contract check in dms-paste builds a FIXTURE with upstream-shaped text — good — but the actual composition `patchDms → weather-leg` against real DMS @ 4a87e82 has never been built. `nix flake check --no-build` proves eval only. The leg ORDER changed vs the deployed shape (clipboard legs now run before weather; each block is self-contained so equivalence was *reasoned*, not built). First real build = next deploy. A `nix build` of `home-manager…programs.dank-material-shell.package` (~minutes) would have closed this.
+2. **No real-build proof of the composed DMS package.** The patch-contract check in dms-paste builds a FIXTURE with upstream-shaped text — good — but the actual composition `patchDms → weather-leg` against real DMS @ 4a87e82 has never been built. `nix flake check --no-build` proves eval only. The leg ORDER changed vs the deployed shape (clipboard legs now run before weather; each block is self-contained so equivalence was _reasoned_, not built). First real build = next deploy. A `nix build` of `home-manager…programs.dank-material-shell.package` (~minutes) would have closed this.
 3. **The scoped formatter invocation behaved globally and I didn't chase the discrepancy.** `nix fmt . <4 paths>` reported "emitted 3189 files… formatted 14 (2 changed)" while `git status` showed only 1 modified file — one formatted file rode a daemon commit unreviewed. Never attributed. Bounded (subsequent daemon commits show only other sessions' files), but unverified.
 4. **FEATURES.md gap noticed, not acted on:** the whole clipboard+snippets feature has NO FEATURES.md row (pre-existing), and I didn't add one for the extraction either. One-line docs-health item.
 5. **iNiR row went stale on my watch** — "our 13 SystemNix DMS plugins" became wrong the moment I extracted one. Fixed during this review (now "12 embedded + paste-snippets external"), i.e. ~2.5h late instead of in the same change.
@@ -19,7 +19,7 @@
 
 ### 2. What is something that's stupid that we do anyway?
 
-- **The auto-commit daemon commits broken intermediate states.** This session found a *committed merge conflict* in CHANGELOG.md (geometrikks vs offline-banner entries — two real sessions' work, marker-broken, daemon-swept). I resolved it as a union. The daemon will do this again; nothing currently gates "don't commit conflict markers".
+- **The auto-commit daemon commits broken intermediate states.** This session found a _committed merge conflict_ in CHANGELOG.md (geometrikks vs offline-banner entries — two real sessions' work, marker-broken, daemon-swept). I resolved it as a union. The daemon will do this again; nothing currently gates "don't commit conflict markers".
 - **Heuristic-commit batching makes attribution archaeology mandatory.** My extraction is spread across 4+ daemon commits mixed with a parallel ai-meter session's 1,200-line work. Any future bisect/blame on the extraction will need this report to interpret.
 
 ### 3. What could you have done better?
@@ -63,7 +63,7 @@ Mild, contained: the fixture-based patch-contract check and the module-contract 
 
 ### 11. How are we doing on tests?
 
-- **Good:** the drift guards got *stronger* — they now run as a build-time check (patch-contract) in dms-paste, not only at SystemNix deploy time. The module-contract check proves registration/defaults/override-priority/no-op-when-disabled. The consumer-side negative tests were updated and pass.
+- **Good:** the drift guards got _stronger_ — they now run as a build-time check (patch-contract) in dms-paste, not only at SystemNix deploy time. The module-contract check proves registration/defaults/override-priority/no-op-when-disabled. The consumer-side negative tests were updated and pass.
 - **Gaps:** the patch-contract fixture is hand-crafted — it proves the patcher's mechanics, not that real upstream text still matches (that stays deploy/real-build-proven). No test executes the QML (DMS plugin behavior remains demo-class, same as before extraction — not a regression).
 
 ---
@@ -137,4 +137,4 @@ Mild, contained: the fixture-based patch-contract check and the module-contract 
 
 ---
 
-*Report is a point-in-time snapshot. §f items 1–12 are queued to TODO_LIST.md / docs/todo/desktop.md (harvest at authoring time); the rest is ROADMAP fuel. Committed by the auto-commit daemon (no manual commit without owner instruction).*
+_Report is a point-in-time snapshot. §f items 1–12 are queued to TODO_LIST.md / docs/todo/desktop.md (harvest at authoring time); the rest is ROADMAP fuel. Committed by the auto-commit daemon (no manual commit without owner instruction)._

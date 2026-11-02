@@ -42,13 +42,13 @@
 
 ## f) Next tasks
 
-| # | Task | Impact | Effort | Cat. |
-|---|------|--------|--------|------|
-| 1 | Await attempt 14 (gate on PATH) → expect the verdict-path assertions to finally execute; fix whatever they surface (the mock-logprobs path is locally proven, so remaining risk is API-shape only) | High | S | Execute |
-| 2 | VM green → `nix flake check --no-build` (whole-tree, parallel-session races tolerated with retry) → deploy under quiescence discipline → anchor + post-deploy-check + live sweep smoke (journal, tags, `.prom`, gatus checks green) | High | M | Execute |
-| 3 | Post-deploy: `journalctl -u paperless-dashboard-provision | grep ensured` (tags/fields live again), one real verdict through ai-meter (logprobs passthrough), `Needs Review (triage)` view visible | High | S | Verify |
-| 4 | Close surfaces: services.md row 103 → [x] with evidence, TODO_LIST sync, CHANGELOG entry, plan-marker `done`, final status report | Medium | S | Docs |
-| 5 | If deploy stays blocked by parallel-session tree churn tonight: leave row 103 `[ready]` with an UPDATE noting "implementation+test green, deploy pending" and stop cleanly | Low | S | Contingency |
+| # | Task                                                                                                                                                                                                                                | Impact                                                                                                                               | Effort | Cat.        |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ | ----------- |
+| 1 | Await attempt 14 (gate on PATH) → expect the verdict-path assertions to finally execute; fix whatever they surface (the mock-logprobs path is locally proven, so remaining risk is API-shape only)                                  | High                                                                                                                                 | S      | Execute     |
+| 2 | VM green → `nix flake check --no-build` (whole-tree, parallel-session races tolerated with retry) → deploy under quiescence discipline → anchor + post-deploy-check + live sweep smoke (journal, tags, `.prom`, gatus checks green) | High                                                                                                                                 | M      | Execute     |
+| 3 | Post-deploy: `journalctl -u paperless-dashboard-provision                                                                                                                                                                           | grep ensured`(tags/fields live again), one real verdict through ai-meter (logprobs passthrough),`Needs Review (triage)` view visible | High   | S           |
+| 4 | Close surfaces: services.md row 103 → [x] with evidence, TODO_LIST sync, CHANGELOG entry, plan-marker `done`, final status report                                                                                                   | Medium                                                                                                                               | S      | Docs        |
+| 5 | If deploy stays blocked by parallel-session tree churn tonight: leave row 103 `[ready]` with an UPDATE noting "implementation+test green, deploy pending" and stop cleanly                                                          | Low                                                                                                                                  | S      | Contingency |
 
 **Harvest record:** all five are this session's remaining plan-execution steps under the standing tombstone — no new queue/library rows needed (anti-duplicate: they close or update existing rows).
 

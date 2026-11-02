@@ -41,7 +41,7 @@
 6. Fleet-wide `x-systemd.mount-timeout` on all automount fstab entries (snapshots.nix family lacks it).
 7. Boot-transaction watchdog alerting ("jobs stuck > 10 min" / sustained load > 20 gatus checks) — would have caught this on Sep 24 instead of Sep 29.
 8. Post-deploy verification that the cache relocation actually delivers the IO-audit goal (nvme0n1 QLC write reduction measurement).
-~~9. `docs/gotchas-archive.md` full narrative entry (AGENTS.md gotcha points there; archive not yet updated).~~ done — full narrative lives in docs/agents/systemd.md:83 (doctrine home post-restructure): umount2→autofs_wait chain, incident history, recipe
+   ~~9. `docs/gotchas-archive.md` full narrative entry (AGENTS.md gotcha points there; archive not yet updated).~~ done — full narrative lives in docs/agents/systemd.md:83 (doctrine home post-restructure): umount2→autofs_wait chain, incident history, recipe
 
 ## d) TOTALLY FUCKED UP!
 

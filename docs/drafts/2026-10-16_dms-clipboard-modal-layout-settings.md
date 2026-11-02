@@ -8,7 +8,7 @@
 
 ---
 
-```markdown
+````markdown
 > [!NOTE]
 > This filing was drafted by GLM-5.3 via Crush from an AI-run investigation, not at my request. When the failure traces to an external report, that source is linked in the body.
 >
@@ -25,6 +25,7 @@ Entry height — `quickshell/Modals/Clipboard/ClipboardConstants.qml` (master `b
 ```qml
 readonly property int itemHeight: 72
 ```
+````
 
 Preview truncates plain-text entries to one line — `quickshell/Modals/Clipboard/ClipboardEntry.qml` (master `b08f3f8`):
 
@@ -63,4 +64,6 @@ Modal dimensions are already covered by `clipboardSize`, so this is deliberately
 DMS 1.6.3 (`4a87e822`, NixOS packaging), behavior re-verified against master `b08f3f8` before filing.
 
 💘 Generated with Crush
+
+```
 ```

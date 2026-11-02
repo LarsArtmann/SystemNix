@@ -17,10 +17,10 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works | Missing | Blocker |
-| --- | --- | --- | --- | --- |
-| b1 | October wave (442 root + 57 tasks/) | plan M8–M11 fully decomposed (~25 batches, proven pipeline, batch lists derivable) | execution | owner gate Q2 (sequencing vs masterplan v2 sprints) |
-| b2 | Tooling upstream (validator + relay → docs-health skill) | validator + prompt proven 9×; artifacts under ~/.cache/docshealth | upstreaming to crush-config | owner gate (M12–M13) |
+| #  | Item                                                     | Works                                                                              | Missing                     | Blocker                                             |
+| -- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------- |
+| b1 | October wave (442 root + 57 tasks/)                      | plan M8–M11 fully decomposed (~25 batches, proven pipeline, batch lists derivable) | execution                   | owner gate Q2 (sequencing vs masterplan v2 sprints) |
+| b2 | Tooling upstream (validator + relay → docs-health skill) | validator + prompt proven 9×; artifacts under ~/.cache/docshealth                  | upstreaming to crush-config | owner gate (M12–M13)                                |
 
 ## c) NOT STARTED
 
@@ -62,17 +62,17 @@
 
 Method: the 93 PARTIAL-flagged files' bare rows are the corpus's open surface; 13 files sampled across corpus halves (14% of the flagged set, ~34 distinct rows read; count corrected in the 16-22 followup); representative open-asks grepped against TODO_LIST + docs/todo.
 
-| Sampled open ask | Tracked? | Disposition |
-| --- | --- | --- |
-| Single-source GOTOOLCHAIN purity predicate (09-22_06-48) | TODO_LIST:759 + pipeline.md | already tracked |
-| hot-user-caches ↔ tmpfiles ordering cycle (09-25_02-20) | TODO_LIST:204 + stability.md:76 + pipeline.md:216 | already tracked |
-| Caddy deploy rows [blocked:deploy]/[ready] (09-30_15-39) | queue rows in-situ | already tracked |
-| Hermes restore drill (09-23_04-00 adjacent) | storage.md:28 | already tracked |
-| Offsite borg restore drill | storage.md:68 [x] | done+tracked |
-| Owner decision: 32 frozen archives (09-18_16-45) | NOT tracked | → ROADMAP (§f.3) |
-| ClickHouse native-BACKUP restore drill (09-23_04-00) | NOT tracked | → harvested (§f.1) |
-| desktop-alerting runbook (09-24_00-07) | NOT tracked | → harvested (§f.2) |
-| "Nothing else" / policy-question / owner-observation rows (misc) | n/a | non-asks — bare is honest |
+| Sampled open ask                                                 | Tracked?                                          | Disposition               |
+| ---------------------------------------------------------------- | ------------------------------------------------- | ------------------------- |
+| Single-source GOTOOLCHAIN purity predicate (09-22_06-48)         | TODO_LIST:759 + pipeline.md                       | already tracked           |
+| hot-user-caches ↔ tmpfiles ordering cycle (09-25_02-20)          | TODO_LIST:204 + stability.md:76 + pipeline.md:216 | already tracked           |
+| Caddy deploy rows [blocked:deploy]/[ready] (09-30_15-39)         | queue rows in-situ                                | already tracked           |
+| Hermes restore drill (09-23_04-00 adjacent)                      | storage.md:28                                     | already tracked           |
+| Offsite borg restore drill                                       | storage.md:68 [x]                                 | done+tracked              |
+| Owner decision: 32 frozen archives (09-18_16-45)                 | NOT tracked                                       | → ROADMAP (§f.3)          |
+| ClickHouse native-BACKUP restore drill (09-23_04-00)             | NOT tracked                                       | → harvested (§f.1)        |
+| desktop-alerting runbook (09-24_00-07)                           | NOT tracked                                       | → harvested (§f.2)        |
+| "Nothing else" / policy-question / owner-observation rows (misc) | n/a                                               | non-asks — bare is honest |
 
 ~~Sept §f surface: `check-todo-system.sh` reports ZERO unharvested Sept reports (81 WARNs all-October) — the systematic harvest reconciliation holds beyond the sample.~~ **Corrected 2026-10-24 (16-43 plan T1): the census holds 22 Sept stragglers (09-26 → 09-30, ~480 bare §f items, mixed tracked/untracked/done-since — spot-check: ~half tracked by grep). The "holds beyond the sample" claim was false; the reconciliation held only inside the sample. Stragglers routed into the wave seed (`~/.cache/docshealth/t1-warn-census.txt` + pipeline.md [decision] row).**
 

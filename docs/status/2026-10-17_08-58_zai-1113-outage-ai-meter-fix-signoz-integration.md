@@ -139,6 +139,7 @@ dirty laundry:
 ## f) Up to 50 things to get done next
 
 **P0 — close out this incident (do today)**
+
 1. Deploy: `cd ~/projects/SystemNix && nix run .#deploy` (ships endpoint fix + dashboard + alert).
 2. Post-deploy probe: tiny request via `127.0.0.1:8107/v1/zai` → expect 200 off coding plan.
 3. Eyeball the provisioned "AI Meter" dashboard in SigNoz — verify panels render, units sane.
@@ -152,29 +153,29 @@ dirty laundry:
 **P1 — hardening (this week)**
 8. Extend `telemetry-coverage.json` with the ai-meter job (doctrine compliance).
 9. Update `docs/services/ai-meter.md` runbook: coding vs general endpoint, 1113 semantics,
-   incident timeline, verification commands.
+incident timeline, verification commands.
 10. ~~Add glm-5.3 cost-table entry~~ DONE 2026-10-17: glm-5.3 added at official PAYG
-    reference prices (1.4/4.4/0.26, docs.z.ai/guides/overview/pricing); semantics per g3 —
-    reference visibility, real marginal spend is plan-covered $0.
+reference prices (1.4/4.4/0.26, docs.z.ai/guides/overview/pricing); semantics per g3 —
+reference visibility, real marginal spend is plan-covered $0.
 11. Canary probe per cloud upstream (cron/systemd timer → 1-token request; alert on non-200)
-    so idle hosts still detect dead accounts.
+so idle hosts still detect dead accounts.
 12. ai-meter: per-upstream circuit breaker / error rewriting (fail fast, name the upstream).
 13. Run `nix flake check` (or full module eval) on SystemNix — the session only parse-checked.
 14. ~~Concurrency tier fact-check~~ DONE 2026-10-17: Max Yearly; caps officially
-    unpublished (quota 28k credits/5h + 140k/week; concurrency only "Max > Pro > Lite") —
-    documented in the runbook. Empirical cap measurement remains open via post-deploy 429s.
+unpublished (quota 28k credits/5h + 140k/week; concurrency only "Max > Pro > Lite") —
+documented in the runbook. Empirical cap measurement remains open via post-deploy 429s.
 15. Consider taming concurrency at the source: tq agent-pool size / crush instance count vs
-    plan caps.
+plan caps.
 16. Admin endpoint on :8108 serving recent ledger records (readable by primary user) —
-    incident triage without root.
+incident triage without root.
 17. Add a `docs/status` cross-link in the ai-meter module header pointing at this report.
 
 **P2 — quality of the observability layer**
 18. Dashboard: add an "upstream error message" panel dimension if/when ai-meter exposes
-    upstream error codes as labels (currently only HTTP status — 1113 vs RPM-limit are
-    indistinguishable in metrics).
+upstream error codes as labels (currently only HTTP status — 1113 vs RPM-limit are
+indistinguishable in metrics).
 19. Dashboard: per-client breakdown panels once a second client (paperless-gpt/inboxclean)
-    actually routes through the proxy.
+actually routes through the proxy.
 20. TTFT: add p95 once histogram buckets exist (only sum/count today → mean only).
 21. Alert: second-stage warning rule at 10% failure for early noise.
 22. Alert: `ai_meter_unauthorized_total > 0` rule (key leakage/rotation botch detector).
@@ -194,29 +195,29 @@ dirty laundry:
 
 **P4 — knowledge capture**
 34. SystemNix AGENTS.md: ai-meter debugging cheat-sheet (admin :8108, metrics families,
-    ledger path, crushrc override interplay).
+ledger path, crushrc override interplay).
 35. crush-config repo: note that provider base-url overrides silently change billing
-    semantics (the 2026-10-16 ai-meter rollout did this invisibly).
+semantics (the 2026-10-16 ai-meter rollout did this invisibly).
 36. Add the "verify the delivering layer" lesson: staged-but-undeployed fixes are Schrödinger
-    fixes — treat deploy as part of done.
+fixes — treat deploy as part of done.
 37. Consider a host-level "AI provider matrix" doc: provider × endpoint × plan × key owner.
 
 **P5 — backlog-adjacent (lower confidence, parked)**
 38. Explore whether crush should get a provider-health hint (env or file) from ai-meter to
-    fail over to fallback providers faster.
+fail over to fallback providers faster.
 39. Evaluate exposing ai-meter as a systemd socket-activated service (idle = no exposed
-    surface).
+surface).
 40. Track Z.ai status page/feed for provider-side incidents (dedupe with canary alerts).
 41. Monthly cost report generation from the ledger (reports/ dir exists, is empty).
 42. Dashboards as code linting: assert every dashboard JSON's refs resolve in CI (the check I
-    ran manually).
+ran manually).
 43. golangci-lint pass over pkgs/ai-meter (stdlib-only, likely trivial findings).
 44. Add a VM test asserting the coding-endpoint base_url (the class of bug this session hit).
 45. Document why crush zai override exists at all (metering) IN the crushrc comment —
-    currently the billing-semantics change is implicit.
+currently the billing-semantics change is implicit.
 46. Re-key rotation drill: verify ai-meter client key re-mint procedure works after reboot.
 47. Review whether gemini/kimi upstreams in ai-meter have the same plan-vs-endpoint mismatch
-    risk as zai did (same class, different providers).
+risk as zai did (same class, different providers).
 48. Consider alerting on `ai_meter_cost_usd_total` rate vs a monthly budget.
 49. Check SigNoz provisioning idempotency: re-running deploy must not duplicate dashboards.
 50. Time-box a decision: keep tq agent-pool on zai or move to a dedicated cheaper provider.
@@ -242,7 +243,7 @@ dirty laundry:
 
 ---
 
-*Point-in-time snapshot. Report format: `.md` at explicit user demand (skill default is HTML);
+_Point-in-time snapshot. Report format: `.md` at explicit user demand (skill default is HTML);
 written to SystemNix (where all session work lives), not the session's cwd repo. Committed by
 the auto-commit daemon per harness rules. **ALL THREE QUESTIONS RESOLVED 2026-10-17: g2 =
-Max Yearly, g3 = PAYG reference prices, g1 = deploy approved and executed.***
+Max Yearly, g3 = PAYG reference prices, g1 = deploy approved and executed.**_

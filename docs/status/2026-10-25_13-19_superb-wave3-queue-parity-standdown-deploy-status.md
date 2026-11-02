@@ -41,14 +41,14 @@
 
 ## f) Next tasks (session-derived, honest count 4)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Pairing recheck pass on pipeline.md + services.md once the discordsync-immich session closes (28 no-entry + 13 wrong-link; rerun `scripts/check-todo-system.sh`, apply the P1/P2 remedy split) | High | M | Queue parity |
-| 2 | First `--apply` exercise of `scripts/prune-done-todos.sh` at the next prune cycle (3 done rows currently await; paste block into CHANGELOG, recount drift row) | Medium | S | Tooling |
-| 3 | R19 scoping: locate the tq agent-pool harvest implementation (go-taskqueue ecosystem, not repo scripts) and map the five hardening rules (sudo-skip, stale-snapshot, watch re-fire, log-only, stamp cap) onto it | High | M | Dispatch integrity |
-| 4 | Gate hardening: pairing WARNs emit row line numbers (§e.1 — one-line change in `check-todo-system.sh` pairing_check) | Medium | S | Tooling |
+| # | Task                                                                                                                                                                                                             | Impact | Effort | Category           |
+| - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------ |
+| 1 | Pairing recheck pass on pipeline.md + services.md once the discordsync-immich session closes (28 no-entry + 13 wrong-link; rerun `scripts/check-todo-system.sh`, apply the P1/P2 remedy split)                   | High   | M      | Queue parity       |
+| 2 | First `--apply` exercise of `scripts/prune-done-todos.sh` at the next prune cycle (3 done rows currently await; paste block into CHANGELOG, recount drift row)                                                   | Medium | S      | Tooling            |
+| 3 | R19 scoping: locate the tq agent-pool harvest implementation (go-taskqueue ecosystem, not repo scripts) and map the five hardening rules (sudo-skip, stale-snapshot, watch re-fire, log-only, stamp cap) onto it | High   | M      | Dispatch integrity |
+| 4 | Gate hardening: pairing WARNs emit row line numbers (§e.1 — one-line change in `check-todo-system.sh` pairing_check)                                                                                             | Medium | S      | Tooling            |
 
-*Harvest: all four landed in TODO_LIST.md + docs/todo/{pipeline,services,pipeline,pipeline}.md at authoring time (rows cite this report).*
+_Harvest: all four landed in TODO_LIST.md + docs/todo/{pipeline,services,pipeline,pipeline}.md at authoring time (rows cite this report)._
 
 ## g) Questions for the owner (consolidated packet — deploy-side asks live in exec-3's 12:55 §g)
 
@@ -58,4 +58,5 @@
 4. **Multi-executor coordination** (cross-ref exec-3 §g.3, not duplicated): their three options stand; this session's vote is (a) exec-3 proceeds through T1/T2 — the stand-down pattern worked and cost nothing.
 
 ---
-*Session evidence: gate `bash scripts/check-todo-system.sh` 13:19 = DRIFT 41 (13 wrong-link + 28 no-entry rows, all pipeline/services), structure clean; classifier `~/.cache/wavep/analyze3.sh` (WRONGLINK 13 / NOENTRY 28); dry-run self-test `bash scripts/prune-done-todos.sh` (3 rows found, zero writes); pinned-rev check red at `2fe9a9807` (paperless assertion), exec-3 green at `cb82632dc`; commits `8835d9100` `65a00059c` `8782f345e` `4375db47e` (pathspec, pre-commit all-green incl. shellcheck + eval).*
+
+_Session evidence: gate `bash scripts/check-todo-system.sh` 13:19 = DRIFT 41 (13 wrong-link + 28 no-entry rows, all pipeline/services), structure clean; classifier `~/.cache/wavep/analyze3.sh` (WRONGLINK 13 / NOENTRY 28); dry-run self-test `bash scripts/prune-done-todos.sh` (3 rows found, zero writes); pinned-rev check red at `2fe9a9807` (paperless assertion), exec-3 green at `cb82632dc`; commits `8835d9100` `65a00059c` `8782f345e` `4375db47e` (pathspec, pre-commit all-green incl. shellcheck + eval)._

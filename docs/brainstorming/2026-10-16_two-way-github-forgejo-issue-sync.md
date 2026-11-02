@@ -7,11 +7,11 @@ repos without losing GitHub history or access.
 **Why this is NOT a fresh build:** three existing LarsArtmann projects are the
 building blocks; the design work is the MAPPING, not the transport.
 
-| Project | Role in the design |
-| ------- | ------------------ |
-| `github-local-sync` | Local-first GitHub sync engine — the transport/queue layer candidate; owner: "should kinda be a backup product one day" (see `sales-landing-page`) |
-| `go-github-kit` | GitHub API client kit — the GitHub-side adapter |
-| `standard-bug-tracking-schema` | The normalized issue schema — conflicts/tombstones/field-mapping should be designed AGAINST this schema, not ad-hoc |
+| Project                        | Role in the design                                                                                                                                 |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `github-local-sync`            | Local-first GitHub sync engine — the transport/queue layer candidate; owner: "should kinda be a backup product one day" (see `sales-landing-page`) |
+| `go-github-kit`                | GitHub API client kit — the GitHub-side adapter                                                                                                    |
+| `standard-bug-tracking-schema` | The normalized issue schema — conflicts/tombstones/field-mapping should be designed AGAINST this schema, not ad-hoc                                |
 
 ## Open design questions (answer before writing sync code)
 

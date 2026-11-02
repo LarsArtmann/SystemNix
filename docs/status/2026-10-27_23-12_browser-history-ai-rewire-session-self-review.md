@@ -52,6 +52,7 @@
 ## f) NEXT — up to 50, ordered (session-spawned + noticed in passing)
 
 **Unblock the landing (1–8):**
+
 1. Owner: monitor365 drain run-vs-suspend → gates 2–8 (question 1)
 2. Deploy the consolidated switch when PSI<20 + tree quiet
 3. Verify bh journal `AI client initialized, base_url …8107/v1/llama-chat`, `api_key_set:true`

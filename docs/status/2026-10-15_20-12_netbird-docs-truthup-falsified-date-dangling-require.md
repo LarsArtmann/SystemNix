@@ -134,6 +134,7 @@ across reboots).
 ## f) NEXT (up to 50, ordered: this session's direct outputs first)
 
 **The dep fix and its guards (highest leverage, all agent-actionable):**
+
 1. Deploy `modules/nixos/services/netbird.nix` (dangling-Require fix) in the next calm window — queue row ready.
 2. Post-deploy: `journalctl -u netbird-evox2-login -n 20` — expect the FIRST real oneshot run ever (clean
    NeedsLogin-guarded no-op); strike the queue row with the evidence.
@@ -160,15 +161,15 @@ across reboots).
 15. Row 180 probes: `netbird status` from evo-x2 + tunnel DNS probe (`dig` via 192.168.1.53 through the mesh).
 16. Gatus "NetBird Control Plane" group eyeball with the API token.
 17. Host-side probe that management's `CredentialsTTL = "12h"` fix is in the RUNNING management.json (converts my
-    "appears live" inference into a fact).
+"appears live" inference into a fact).
 18. Decide the staged `ncysgxq8…` pbx train's fate (switch vs supersede) — row 174(a).
 
 **Setup-key clock (now that the mesh is LIVE, expiry is no longer theoretical):**
 19. Owner decision: setup-key horizon 30d vs 365d (expires ~2026-11-05) — the [decision] row's clock is real now.
 20. Whatever the decision: document/queue the re-enrollment drill (provisioner re-mint → sops refresh → oneshot
-    restart on both peers) as a runbook appendix before the expiry date.
+restart on both peers) as a runbook appendix before the expiry date.
 21. Post-deploy of the dep fix: rehearse the re-enrollment path once (safe — idempotent) so the runbook's manual
-    command is proven rather than precedented.
+command is proven rather than precedented.
 
 **Upstream + fleet (existing rows, refreshed scope):**
 22. §f.13: file the nixpkgs netbird-module never-queued-shape issue (verify-before-filing + github-voice, owner files).
@@ -180,29 +181,29 @@ across reboots).
 
 **Shared-tree hygiene from this session's observations:**
 28. Tell the owning session: browser-history files + gosec report rode daemon commits 907ac625/c887b8c9/c2931b93
-    alongside my doc edits (attribution hygiene; no action needed on my side).
+alongside my doc edits (attribution hygiene; no action needed on my side).
 29. The foreign `checks.x86_64-linux.browser-history` eval break (`fastflowlm` attribute) — owning session fixes;
-    then re-run full `nix flake check` whole-flake green.
+then re-run full `nix flake check` whole-flake green.
 30. The gosec/govulncheck status report is UNHARVESTED per check-todo-system — owning session harvests §f.
 31. If an sops→ln migration is actually planned anywhere (the pbx session believed it exists), document it; if
-    not, note the confusion in gotchas-archive so no future session goes hunting for `ln-install-secrets`.
+not, note the confusion in gotchas-archive so no future session goes hunting for `ln-install-secrets`.
 32. Trace where the false "Oct 10/11 enrollment" claim originated (session DB or a doc I didn't sweep) so any
-    remaining copies get the same correction.
+remaining copies get the same correction.
 33. Add the enrollment saga to `docs/gotchas-archive.md` (incident narratives home) — currently only the status
-    report + runbooks carry it.
+report + runbooks carry it.
 
 **Watch items this session surfaced (existing rows, no new work):**
 34. evo-x2 eval warning "integration subdomain(s) without catalog entries" — pre-existing watch row.
 35. Setup-key expiry failure-signal path changes once the dep fix deploys (oneshot becomes the signal it was
-    always meant to be) — re-verify the rotations.md caveat after deploy.
+always meant to be) — re-verify the rotations.md caveat after deploy.
 36. Re-check `multi-user.target.wants/` still holds the login symlink after the dep-fix deploy (it did on the
-    live system this session).
+live system this session).
 37. Confirm no boot-time regression after the oneshot's first real run (journal + boot duration delta).
 
 **Deliberately NOT queued (recorded so they aren't re-invented):**
 38. Not adding a Gatus check for the mesh itself — "NetBird Control Plane" group already covers control-plane
-    reachability; a mesh-data-plane check would need a peer-to-peer prober that doesn't exist yet (owner-scale
-    decision, not a one-liner).
+reachability; a mesh-data-plane check would need a peer-to-peer prober that doesn't exist yet (owner-scale
+decision, not a one-liner).
 39. Not rewriting historical status docs beyond the 13-45 UPDATE — convention.
 40. Not amending the daemon commits that carry foreign riders — land-on-top policy.
 41. Not "fixing" the browser-history eval break — foreign, owned, in-flight.
@@ -213,14 +214,14 @@ across reboots).
 
 **Stretch (only if the owner wants):**
 46. A `checks.netbird-login-shape` fixture check that renders the login unit and asserts BOTH lessons (queue
-    shape + dependency shape) — superseded by items 3+5 if those land instead.
+shape + dependency shape) — superseded by items 3+5 if those land instead.
 47. Extend `scripts/pre-deploy-check.sh` with a §-leg asserting no unit Requires a not-found unit (generalizes
-    item 5 beyond netbird) — needs a systemd-unit-graph source at pre-deploy time; non-trivial.
+item 5 beyond netbird) — needs a systemd-unit-graph source at pre-deploy time; non-trivial.
 48. Consider `services.netbird-client` option rename/restructure while parameterizing (item 24) so the fleet
-    rollout lands extraction-clean.
+rollout lands extraction-clean.
 49. Backport the two lessons into the nixpkgs netbird module PR alongside item 22 (fix upstream, not just warn).
 50. After the pbx battery: write the mesh close-out addendum to the rollout plan
-    (`docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.md`) so the plan document reaches DONE.
+(`docs/planning/2026-09-30_04-51_netbird-larsartmann-cloud-rollout.md`) so the plan document reaches DONE.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

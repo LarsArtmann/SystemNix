@@ -361,7 +361,7 @@
               Group = "inboxclean";
               ExecStart = "${lib.getExe inboxcleanPkg} crm-people-sync --format json";
               EnvironmentFile = [
-                (config.sops.templates."inboxclean-crm-people-env".path)
+                config.sops.templates."inboxclean-crm-people-env".path
               ]
               ++ lib.optionals aiMeterEnabled [ "/run/ai-meter-keys/inboxclean.env" ];
               # Outer ceiling above INBOXCLEAN_RUN_TIMEOUT (2h in the env

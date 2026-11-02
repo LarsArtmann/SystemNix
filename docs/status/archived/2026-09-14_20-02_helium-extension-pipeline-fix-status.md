@@ -39,7 +39,7 @@
 
 1. **KeePassXC ↔ browser pairing** — the extension must be connected to the KeePassXC database once (GUI: extension icon → Connect). Inherent user step, cannot be automated. **→ KeePassXC pairing/live-verify; docs/todo/desktop.md ready row**
 2. **macOS parity check** — `platforms/darwin/programs/chrome.nix` has its own extension list for real Chrome (which works — prod=chrome). If the user wants KeePassXC-Browser in Helium on macOS too, that's a separate add (darwin runs Helium as well per `darwin.nix`). **→ macOS parity decision; docs/todo/desktop.md exact ask citing this Q3**
-~~3. **Correcting stale docs** — CHANGELOG line 414 and the 2026-07-29/2026-08-09 status docs claim extensions work. They didn't. A correction note belongs in AGENTS.md's gotchas (the `prod=chromecrx` → noupdate class).~~ **Won't implement — stale-claims correction never written; current state carried by docs/todo/desktop.md rows.**
+   ~~3. **Correcting stale docs** — CHANGELOG line 414 and the 2026-07-29/2026-08-09 status docs claim extensions work. They didn't. A correction note belongs in AGENTS.md's gotchas (the `prod=chromecrx` → noupdate class).~~ **Won't implement — stale-claims correction never written; current state carried by docs/todo/desktop.md rows.**
 
 ## d) TOTALLY FUCKED UP
 

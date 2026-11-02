@@ -48,16 +48,16 @@
 
 ## f) NEXT
 
-| # | Task | Impact | Effort | Owner |
-|---|------|--------|--------|-------|
-| 1 | Restore paperless DB from the 02:01 dump (stop units, drop/recreate DB, pg_restore, start) | 🔴 P0 incident | 30min | root session |
-| 2 | Root-cause why ONLY paperless's DB emptied in Wave 6 | 🔴 | 45min | hot-db session |
-| 3 | After restore: one activation (or Sunday timer) → verify my upload lands: 2 docs, metadata, marker | 🔴 arc | 15min | me |
-| 4 | Dashboard detail battery + residuals (anchor done; counters cosmetic note) | 🟠 | 20min | me |
-| 5 | Docs closeout final + TODO strikes + push | 🟡 | 30min | me |
-| 6 | Qonto Business API creds → attachment receipts | 🟠 | owner | owner |
-| 7 | pma forward relock when upstream lands | ⚪ | 30min | blocked:push |
-| 8 | hot-db marker assertion + per-tenant cutover probe gate (e-improvements) | 🟠 | 45min | hot-db session |
+| # | Task                                                                                               | Impact         | Effort | Owner          |
+| - | -------------------------------------------------------------------------------------------------- | -------------- | ------ | -------------- |
+| 1 | Restore paperless DB from the 02:01 dump (stop units, drop/recreate DB, pg_restore, start)         | 🔴 P0 incident | 30min  | root session   |
+| 2 | Root-cause why ONLY paperless's DB emptied in Wave 6                                               | 🔴             | 45min  | hot-db session |
+| 3 | After restore: one activation (or Sunday timer) → verify my upload lands: 2 docs, metadata, marker | 🔴 arc         | 15min  | me             |
+| 4 | Dashboard detail battery + residuals (anchor done; counters cosmetic note)                         | 🟠             | 20min  | me             |
+| 5 | Docs closeout final + TODO strikes + push                                                          | 🟡             | 30min  | me             |
+| 6 | Qonto Business API creds → attachment receipts                                                     | 🟠             | owner  | owner          |
+| 7 | pma forward relock when upstream lands                                                             | ⚪             | 30min  | blocked:push   |
+| 8 | hot-db marker assertion + per-tenant cutover probe gate (e-improvements)                           | 🟠             | 45min  | hot-db session |
 
 ## g) TOP 3 QUESTIONS
 

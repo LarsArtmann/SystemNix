@@ -119,15 +119,15 @@ Direct follow-ups of THIS session are **harvested** (they landed in `TODO_LIST.m
 
 ## Harvest Ledger (AGENTS.md TODO-system compliance)
 
-| §f item | Disposition | Where |
-| --- | --- | --- |
-| f.1 buildcache churn | harvested [ready] | `TODO_LIST.md` + `docs/todo/stability.md` |
-| f.2 PSI-gate shape | harvested [decision], lib-only | `docs/todo/stability.md` |
-| f.3 bar visual sanity | harvested [decision→blocked:user], lib-only | `docs/todo/desktop.md` |
-| f.4 DP-2 reconnect verify | harvested [blocked:user], lib-only | `docs/todo/desktop.md` |
-| f.5 CHANGELOG row | harvested [ready] | `TODO_LIST.md` + `docs/todo/desktop.md` |
-| f.6–f.12 | deliberately NOT harvested: pre-existing baseline failures/other-domain, not session follow-ups (§c) | — |
-| f.13–f.50 | deliberately NOT harvested: ideas/ROADMAP fuel per skill routing rigor; strongest candidates (f.11 pre-reboot-check, f.12 deploy message, f.14 DMS probes) recorded here so the next docs-health HARVEST can route them with full context | — |
-| (repair) obsolete 2026-10-06 KEEP row | reconciled in place | `docs/todo/desktop.md:54` |
+| §f item                               | Disposition                                                                                                                                                                                                                               | Where                                     |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| f.1 buildcache churn                  | harvested [ready]                                                                                                                                                                                                                         | `TODO_LIST.md` + `docs/todo/stability.md` |
+| f.2 PSI-gate shape                    | harvested [decision], lib-only                                                                                                                                                                                                            | `docs/todo/stability.md`                  |
+| f.3 bar visual sanity                 | harvested [decision→blocked:user], lib-only                                                                                                                                                                                               | `docs/todo/desktop.md`                    |
+| f.4 DP-2 reconnect verify             | harvested [blocked:user], lib-only                                                                                                                                                                                                        | `docs/todo/desktop.md`                    |
+| f.5 CHANGELOG row                     | harvested [ready]                                                                                                                                                                                                                         | `TODO_LIST.md` + `docs/todo/desktop.md`   |
+| f.6–f.12                              | deliberately NOT harvested: pre-existing baseline failures/other-domain, not session follow-ups (§c)                                                                                                                                      | —                                         |
+| f.13–f.50                             | deliberately NOT harvested: ideas/ROADMAP fuel per skill routing rigor; strongest candidates (f.11 pre-reboot-check, f.12 deploy message, f.14 DMS probes) recorded here so the next docs-health HARVEST can route them with full context | —                                         |
+| (repair) obsolete 2026-10-06 KEEP row | reconciled in place                                                                                                                                                                                                                       | `docs/todo/desktop.md:54`                 |
 
-*Report ends. WAITING FOR INSTRUCTIONS.*
+_Report ends. WAITING FOR INSTRUCTIONS._

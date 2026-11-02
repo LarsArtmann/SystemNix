@@ -91,8 +91,10 @@ Both fixed. The deploy is now **fully built and fully gated, waiting only on the
 
 Sorted by impact. Impact/Effort/Category per the harvest guide. **This section is the primary input for docs-health HARVEST** — items marked [R] are ROADMAP-fuel, not TODO_LIST commitments.
 
-| #  | Task                                                                                                                                                                                | Impact   | Effort | Category      |
+| # | Task | Impact | Effort | Category |
+
 <!-- check-rows:ledger -->
+
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
 | ~~1~~ done — re-lock done same night (02-21 report a2) | ~~Run `nix run .#deploy` (user; sudo-gated)~~ | ~~Critical~~ | ~~S~~ | ~~Feature~~ |
 | ~~2~~ done — redirect risk retired: explicit OAUTH2_REDIRECT_URL (miniflux.nix:275) | ~~Run `nix run .#post-deploy-check` after the switch — Miniflux smoke + regression baseline diff~~ | ~~Critical~~ | ~~S~~ | ~~Quality~~ |
@@ -104,8 +106,8 @@ Sorted by impact. Impact/Effort/Category per the harvest guide. **This section i
 | ~~8~~ **Won't implement — stale owner decrypt one-shot.** | ~~Interactive sops decrypt round-trip on `miniflux.yaml` (user sudo; NEVER verified)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |
 | ~~9~~ done — BuildFlow vendorHash pushed upstream (02-21 report a1) | ~~Fix BuildFlow upstream: paste `got: 0NQweZeM06UiN3AWkd033QpfTGAZp2Gte05+aaw2b+I=` into `vendorHash.nix`, commit, push (pending Q2)~~ | ~~High~~ | ~~S~~ | ~~Bug~~ |
 | ~~10~~ done — re-lock to healthy master done (02-21 report a2) | ~~After #9: `nix flake lock --update-input buildflow`, confirm subtree, drop the interim-pin posture~~ | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
-| 11 | Add upstream CI to BuildFlow (build its own flake on push) — enforcement for the vendorHash-owns-upstream doctrine                                                                  | High     | M      | Quality       |
-| 12 | Write `scripts/relock-input-at-rev.sh` (e#1 recipe) + AGENTS.md gotcha for the node-deletion trap                                                                                   | Medium   | M      | Quality       |
+| 11 | Add upstream CI to BuildFlow (build its own flake on push) — enforcement for the vendorHash-owns-upstream doctrine | High | M | Quality |
+| 12 | Write `scripts/relock-input-at-rev.sh` (e#1 recipe) + AGENTS.md gotcha for the node-deletion trap | Medium | M | Quality |
 | 13 **→ quick-go-after-input-updates tracked (docs/todo/pipeline.md)** | Adopt rule: `nix build .#quick-go` after any flake input update; consider a deploy.sh conditional for lock-diff builds | High | S | Process |
 | ~~14~~ **Won't implement — stale build; class covered by pre-deploy §11 FOD preview (docs/todo/pipeline.md).** | ~~Run `nix build .#quick-go` NOW to prove the rest of the Go set against the new lock subtree (shared `go-finding_3`/`go-checker-helpers` nodes)~~ | ~~High~~ | ~~M~~ | ~~Quality~~ |
 | ~~15~~ **Won't implement — stale CI check.** | ~~Verify CI green on the next SystemNix push (new lock nodes are fetchable with existing tokens — the CI-dark class)~~ | ~~High~~ | ~~S~~ | ~~Quality~~ |

@@ -30,12 +30,12 @@ diffing both store paths' migration ID lists).
 
 ## Blast radius
 
-| Service | State Oct 19 04:37 → Oct 21 01:51 | Loss |
-| --- | --- | --- |
-| immich | blank DB; web blocked at wizard (no users ⇒ no logins ⇒ no uploads) | none |
-| paperless | blank DB, web up, consumer idle (no docs in) | none observed |
-| miniflux | blank DB (entries=0 even in fresh cluster — feeds not refetched) | none observed |
-| geometrikks | blank DB, schema-only | none observed |
+| Service     | State Oct 19 04:37 → Oct 21 01:51                                   | Loss          |
+| ----------- | ------------------------------------------------------------------- | ------------- |
+| immich      | blank DB; web blocked at wizard (no users ⇒ no logins ⇒ no uploads) | none          |
+| paperless   | blank DB, web up, consumer idle (no docs in)                        | none observed |
+| miniflux    | blank DB (entries=0 even in fresh cluster — feeds not refetched)    | none observed |
+| geometrikks | blank DB, schema-only                                               | none observed |
 
 ## Timeline (evidence)
 

@@ -34,29 +34,29 @@ No file in `modules/`, `systems/`, `platforms/`, `flake/`, or `scripts/` was tou
 
 ### PRO
 
-| # | Argument | Evidence |
-|---|---|---|
-| 1 | **Zero packaging debt** — module + server (both release lines) + desktop client already in OUR pinned nixpkgs; no Docker (removed 2026-10-08) needed anywhere | live `nix eval` @ fe1324228; module/test raw-fetched at the same rev |
-| 2 | **Architecture fits this box** — single Go binary, no DB to back up/upgrade, ~100-400 MB RAM; state = one plain tree (+xattrs) under BTRFS → snapshots + Borg story unchanged; no PHP CVE class; delta sync | upstream docs + architecture; contrast Nextcloud 1-2 GB + PHP+MariaDB |
-| 3 | **Real gap filled** — interactive web file browser, share links, native clients (Linux desktop in nixpkgs, Android on F-Droid, iOS), WebDAV for the rclone fleet; nothing in the fleet provides this today | service inventory; google-sync is a mute one-way mirror |
-| 4 | **Layer-1 SSO pattern match** — external-OIDC-native, same shape as Forgejo/Paperless/Gatus/CV/Kith CRM (pocket-id.nix provision + secret bridge); PKCE public clients are Pocket-ID-compatible in principle | sso-dns.md Layer 1 table; external-idp docs |
-| 5 | **Credible stewardship** — original oCIS team + Heinlein (30-yr German ISP pedigree), Apache-2.0 server, all features free in community edition, active cadence, its own Android/iOS apps | press + docs + tracker |
-| 6 | **Specialized tools stay** — Immich/Paperless/Forgejo untouched; OpenCloud is the general-files layer, NOT a suite migration (we never wanted Talk/Deck/Mail) | repo layout |
-| 7 | **Cheap exit** — plain files on disk; abandoning it later loses nothing but the xattr metadata (filenames/bytes remain browsable) | filesystem-storage design |
+| # | Argument                                                                                                                                                                                                     | Evidence                                                              |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 1 | **Zero packaging debt** — module + server (both release lines) + desktop client already in OUR pinned nixpkgs; no Docker (removed 2026-10-08) needed anywhere                                                | live `nix eval` @ fe1324228; module/test raw-fetched at the same rev  |
+| 2 | **Architecture fits this box** — single Go binary, no DB to back up/upgrade, ~100-400 MB RAM; state = one plain tree (+xattrs) under BTRFS → snapshots + Borg story unchanged; no PHP CVE class; delta sync  | upstream docs + architecture; contrast Nextcloud 1-2 GB + PHP+MariaDB |
+| 3 | **Real gap filled** — interactive web file browser, share links, native clients (Linux desktop in nixpkgs, Android on F-Droid, iOS), WebDAV for the rclone fleet; nothing in the fleet provides this today   | service inventory; google-sync is a mute one-way mirror               |
+| 4 | **Layer-1 SSO pattern match** — external-OIDC-native, same shape as Forgejo/Paperless/Gatus/CV/Kith CRM (pocket-id.nix provision + secret bridge); PKCE public clients are Pocket-ID-compatible in principle | sso-dns.md Layer 1 table; external-idp docs                           |
+| 5 | **Credible stewardship** — original oCIS team + Heinlein (30-yr German ISP pedigree), Apache-2.0 server, all features free in community edition, active cadence, its own Android/iOS apps                    | press + docs + tracker                                                |
+| 6 | **Specialized tools stay** — Immich/Paperless/Forgejo untouched; OpenCloud is the general-files layer, NOT a suite migration (we never wanted Talk/Deck/Mail)                                                | repo layout                                                           |
+| 7 | **Cheap exit** — plain files on disk; abandoning it later loses nothing but the xattr metadata (filenames/bytes remain browsable)                                                                            | filesystem-storage design                                             |
 
 ### CONTRA
 
-| # | Argument | Evidence / mitigation |
-|---|---|---|
-| 1 | **The canonical-store question is unanswered** — adopting before answering it risks a THIRD truth source (Drive ↔ mirror ↔ OpenCloud); drive-paperless ingest, backup budgets, and the mirror's direction all depend on it | the actual gate; see [decision] row queued |
-| 2 | **Young project, fast-moving config surface** — ~1.5 y old; rolling 8.x vs production 7.2.x; nixpkgs module description itself says config "currently not well documented, see source code"; module maintained by 2-3 downstream maintainers | mitigate: pin `opencloud-production` 7.2.4 line; runbook cost is real (new `docs/services/opencloud.md` + pipeline wiring) |
-| 3 | **Vendor's happy path is Docker Compose** — native/systemd runs are downstream territory (bare metal "on your own" upstream); if the module lags a breaking env-var change, WE own the gap | acceptable: our whole fleet is native-systemd; the VM test makes silent breakage unlikely |
-| 4 | **OIDC role-claim wiring is fiddly** — `oidc` role driver fails logins for users without a mapped claim; needs provisioned Pocket-ID userGroups + `groups` scope + WEBFINGER client-ID overrides | mitigate: single-admin pilot can use default-role driver; claim mapping is a phase-2 hardening |
-| 5 | **Share links = a new public-exposure class** — the FEATURE is unauthenticated links; community edition lacks the paid tiers' ransomware protection/file firewall/antivirus (ICAP ClamAV wiring is self-service); a young Go file server facing the internet | mitigate: pilot LAN/VPN-only (cloud-zone mirror + NetBird exist); public-link exposure is an explicit owner call |
-| 6 | **xattr metadata fragility** — naive copies (rsync without `-X`) strip metadata; runbook must pin Borg/rsync flags; trash/versions live in-tree (counts against pool space) | documentation discipline |
-| 7 | **Not groupware** — CalDAV/CardDAV only via bundled best-effort Radicale (no UI, unwarranted); if the owner expects a Nextcloud-suite replacement this is the wrong tool | scope note, not a defect |
-| 8 | **No pack icon** (minor) — tile needs URL icon or semantic glyph | verified 404 @ pin + main |
-| 9 | **Fleet costs** — port registry entry (9200 free, verified), gatus coverage check, integration-registry entry + tile, sops secret (admin/JWT), restic/borg row, runbook, VM-test co-import if wanted | the standard adoption tax every service here pays |
+| # | Argument                                                                                                                                                                                                                                                     | Evidence / mitigation                                                                                                      |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| 1 | **The canonical-store question is unanswered** — adopting before answering it risks a THIRD truth source (Drive ↔ mirror ↔ OpenCloud); drive-paperless ingest, backup budgets, and the mirror's direction all depend on it                                   | the actual gate; see [decision] row queued                                                                                 |
+| 2 | **Young project, fast-moving config surface** — ~1.5 y old; rolling 8.x vs production 7.2.x; nixpkgs module description itself says config "currently not well documented, see source code"; module maintained by 2-3 downstream maintainers                 | mitigate: pin `opencloud-production` 7.2.4 line; runbook cost is real (new `docs/services/opencloud.md` + pipeline wiring) |
+| 3 | **Vendor's happy path is Docker Compose** — native/systemd runs are downstream territory (bare metal "on your own" upstream); if the module lags a breaking env-var change, WE own the gap                                                                   | acceptable: our whole fleet is native-systemd; the VM test makes silent breakage unlikely                                  |
+| 4 | **OIDC role-claim wiring is fiddly** — `oidc` role driver fails logins for users without a mapped claim; needs provisioned Pocket-ID userGroups + `groups` scope + WEBFINGER client-ID overrides                                                             | mitigate: single-admin pilot can use default-role driver; claim mapping is a phase-2 hardening                             |
+| 5 | **Share links = a new public-exposure class** — the FEATURE is unauthenticated links; community edition lacks the paid tiers' ransomware protection/file firewall/antivirus (ICAP ClamAV wiring is self-service); a young Go file server facing the internet | mitigate: pilot LAN/VPN-only (cloud-zone mirror + NetBird exist); public-link exposure is an explicit owner call           |
+| 6 | **xattr metadata fragility** — naive copies (rsync without `-X`) strip metadata; runbook must pin Borg/rsync flags; trash/versions live in-tree (counts against pool space)                                                                                  | documentation discipline                                                                                                   |
+| 7 | **Not groupware** — CalDAV/CardDAV only via bundled best-effort Radicale (no UI, unwarranted); if the owner expects a Nextcloud-suite replacement this is the wrong tool                                                                                     | scope note, not a defect                                                                                                   |
+| 8 | **No pack icon** (minor) — tile needs URL icon or semantic glyph                                                                                                                                                                                             | verified 404 @ pin + main                                                                                                  |
+| 9 | **Fleet costs** — port registry entry (9200 free, verified), gatus coverage check, integration-registry entry + tile, sops secret (admin/JWT), restic/borg row, runbook, VM-test co-import if wanted                                                         | the standard adoption tax every service here pays                                                                          |
 
 ### Alternatives, dismissed
 
@@ -127,14 +127,14 @@ None — the recommendation is unchanged (pilot-adopt OpenCloud on the productio
 
 ### Why "vs" is a category error
 
-| Axis | Paperless-ngx (LIVE here) | OpenCloud (candidate) |
-|---|---|---|
-| Job | DMS: OCR → classify → tag → searchable archive | General drive: sync, share, browse, WebDAV |
-| Folder semantics | Deliberately DESTROYED (storage-path templates rename everything into the archive) | Preserved (that's the product) |
-| Search | Full-text + correspondents/tags + AI suggestions (paperless-gpt) | Filename/content-level; no DMS model |
-| Producers today | InboxClean email archiving, bank-sync, drive-paperless (Drive mirror), scanner/mobile flows | none |
-| Sync clients / share links | none (API + consume, by design) | the entire point |
-| Replacement risk | Replacing it with OpenCloud kills OCR/classification/search and orphans four live integrations | Replacing OpenCloud-with-paperless isn't even coherent — paperless can't be a drive |
+| Axis                       | Paperless-ngx (LIVE here)                                                                      | OpenCloud (candidate)                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Job                        | DMS: OCR → classify → tag → searchable archive                                                 | General drive: sync, share, browse, WebDAV                                          |
+| Folder semantics           | Deliberately DESTROYED (storage-path templates rename everything into the archive)             | Preserved (that's the product)                                                      |
+| Search                     | Full-text + correspondents/tags + AI suggestions (paperless-gpt)                               | Filename/content-level; no DMS model                                                |
+| Producers today            | InboxClean email archiving, bank-sync, drive-paperless (Drive mirror), scanner/mobile flows    | none                                                                                |
+| Sync clients / share links | none (API + consume, by design)                                                                | the entire point                                                                    |
+| Replacement risk           | Replacing it with OpenCloud kills OCR/classification/search and orphans four live integrations | Replacing OpenCloud-with-paperless isn't even coherent — paperless can't be a drive |
 
 Zero workload overlap in this fleet: documents already have a brain; general files have nothing. Adopting OpenCloud changes NOTHING about paperless.
 
@@ -151,5 +151,3 @@ Confirm trash/versions behave on the `posix` driver in the deployed build (upstr
 ### Net effect on the main verdict
 
 None. Paperless untouched; the pilot plan is unchanged; one verification item added.
-
-

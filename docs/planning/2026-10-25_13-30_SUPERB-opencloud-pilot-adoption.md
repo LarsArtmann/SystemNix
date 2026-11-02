@@ -8,6 +8,7 @@ _2026-10-25 13:30 CET · status: **PLAN ONLY — not executed, no marker** (plan
 **Scope:** Phase 1 agent build → Phase 2 owner usage window → Phase 3 canonical-store decision. Everything a pilot needs, nothing it doesn't. **Mode:** complement (Drive stays canonical — google-sync/drive-paperless UNTOUCHED), LAN/VPN-only exposure, production line `opencloud-production` 7.2.4, posix driver, stateDir on the HDD pool.
 
 **Ground truth this plan rests on (verified 2026-10-25):**
+
 - nixpkgs pin `fe1324228` ships: `opencloud` 8.1.0, `opencloud-production` 7.2.4, `services.opencloud` module (hardened unit, `environmentFile`, `stateDir` free-form) + upstream Selenium VM test; `opencloud-desktop` 4.0.0. NOT at pin: `openvfs`.
 - Port 9200 free in `lib/ports.nix`. No dashboard-icons pack icon (404 @ pin AND main) → tile needs an http(s) URL icon.
 - Fleet S3 demand = 0 → RustFS OUT (Addendum 1). Paperless untouched; any future doc-flow bridges via a drive-paperless `opencloud` SOURCE at the API layer, NEVER consume-dir coupling (Addendum 2).
@@ -21,15 +22,19 @@ _2026-10-25 13:30 CET · status: **PLAN ONLY — not executed, no marker** (plan
 ## 1. Pareto Breakdown
 
 ### The 1% that deliver 51% — a reachable, authenticated instance
+
 **Gates + core path only:** owner "go" (A1) → Pocket-ID-vs-embedded-IdP spike with a throwaway `extendModules` eval (B, decision DP1) → port + minimal module on the pool (C1–C7) → caddy vHost + sops secret (D1, D4) → deploy + login smoke (E1–E5). Result: `cloud.home.lan` answers, owner logs in with Pocket ID, files land on the pool. Everything else is improvement, not existence.
 
 ### The 4% that deliver 64% — usable from real devices, observably safe
+
 Desktop client into the NixOS config (F1–F3), Android app with camera-upload OFF (F4–F6), gatus probe + live tile (D2–D3, G5), pool-recovery + backup/xattr coverage (C8, G2), eval battery green (D5–D6). Result: the cloud is on every device the owner uses and the fleet notices when it breaks.
 
 ### The 20% that deliver 80% — trustworthy: verified, documented, recoverable
+
 Trash/versions-on-posix live verify (E7), WebDAV/rclone smoke (E8), journal + memory sweep (E9), runbook with the trap catalogue (G1a–c), memory-watermark coherence (C4), deploy anchor discipline (E2–E3), post-deploy battery (E4), VM-test defer/decide (G4). Result: the service behaves like the rest of the fleet — no silent degradation, no runbook-less orphan.
 
 ### The other 20% (to reach 100%) — deliberately later / conditional
+
 Phase-3 decision review + possible successor plan (mirror flip, drive-paperless re-target — SEPARATE plan, H4) · public share-link exposure design (crowdsec + link-policy work, only if Phase 3 keeps it) · openvfs/pin-bump if virtual files wanted · Collabora office integration if editing wanted · `opencloud` SOURCE for drive-paperless only if a real doc-flow emerges · upstream nixpkgs module feedback if gaps found. **Not doing these now is the point** — Verschlimmbessern guard.
 
 ---
@@ -38,26 +43,26 @@ Phase-3 decision review + possible successor plan (mirror flip, drive-paperless 
 
 Customer = the owner. Value = "log into my private cloud from my devices and trust it."
 
-| # | Task | Phase | Est | Impact | Why this order |
-|---|------|-------|-----|--------|----------------|
-| M1 | Owner gate: confirm "go" + complement + LAN/VPN (G1/G2) | A | 5m | BLOCKING | nothing starts without it |
-| M2 | Step-0 IdP spike: Pocket ID external-OIDC feasibility via throwaway `extendModules` eval (never force-enable in tree) → **DP1** Pocket-ID vs embedded fallback | B | 90m | CRITICAL | auth shape determines C/D wiring; cheapest place to fail |
-| M3 | Core module `modules/nixos/services/opencloud.nix`: enable gate, `opencloud-production`, stateDir `/mnt/pool/services/opencloud`, serviceDefaults/harden, MemoryMax/MemoryHigh≥50%, ioTier, TimeoutStartSec | C | 90m | HIGH | the service itself |
-| M4 | Pool + safety wiring: mount-gated dirs oneshot (atticd pattern), pool-recovery restartUnits, backup/xattr coverage | C | 45m | HIGH | mount-gating + pool-recovery are eval-gated; orphan-class prevention |
-| M5 | Auth + secrets per DP1: WEBFINGER client IDs + issuer env + default-role driver, sops `opencloud.yaml` → `environmentFile` (PLACEHOLDER-safe) | B/D | 60m | HIGH | no login, no pilot |
-| M6 | Reach: `services.integration` entry `cloud.home.lan` (plain reverse_proxy), gatus probe, tile with URL icon | D | 45m | HIGH | the front door + observability |
-| M7 | Eval battery: `nix flake check --no-build`, all audits green (port-registry, gatus-coverage, tile-coverage, mount-gating, systemd-shape, memory-watermark), enable=false default inert | D | 30m | HIGH | the 5-layer pipeline is the house QA |
-| M8 | Deploy + anchor discipline: §16 pre-check, `nix run .#deploy`, full-tree wait (`pgrep -f 'nh os|switch-to-configuration'` empty), `readlink /run/current-system` = newest `system-N-link` | E | 45m | HIGH | a deploy that silently reverts is worse than no deploy |
-| M9 | Post-deploy verify: post-deploy-check.sh, Pocket-ID login + admin role, upload/download/share-link smoke, **trash/versions-on-posix verify**, WebDAV rclone smoke, journal + memory.events sweep | E | 75m | HIGH | proves the PRO-table claims live (Addendum-2 item included) |
-| M10 | Desktop client: `opencloud-desktop` into evo-x2 user config, connect, sync + delta smoke | F | 45m | MED-HIGH | first real device; exercises the desktop client-ID leg |
-| M11 | Android (owner): F-Droid app, login, camera-upload OFF (Immich owns photos) | F | 15m | MED | second device; owner hands |
-| M12 | Runbook `docs/services/opencloud.md`: ports/secrets/units, trap catalogue (xattr `rsync -X`, no-downgrade-across-lines, role-claim fail-closed, watch-fs semantics), verify recipes, rollback | G | 90m | MED | a runbook-less service is future-session debt |
-| M13 | Observability close: gatus green, tile live dot, optional SigNoz memory rule decision | G | 30m | MED | fleet-standard visibility |
-| M14 | VM test `tests/test-opencloud.nix` — DECIDE defer-or-do (house norm says one per service; pilot may defer with a TODO row) | G | 15m (decide) | MED | honest scoping, not skipping silently |
-| M15 | Usage window kickoff: 2–4 weeks, weekly journal glance cadence | H | 5m | MED | the pilot's data source |
-| M16 | Mid-window checkpoint: sync health, error scan, usage notes | H | 15m | MED | catches drift early |
-| M17 | Phase-3 decision review: complement/successor/drop → harvest outcome (successor ⇒ SEPARATE plan; drop ⇒ clean-exit checklist) | H | 30m | HIGH (long-term) | the actual question this pilot answers |
-| M18 | Closeout: status report, CHANGELOG row, resolve the `[decision]` row, docs-health VERIFY pass on every doc touched | H | 45m | MED | single source of truth stays true |
+| #   | Task                                                                                                                                                                                                        | Phase                                                                                 | Est          | Impact           | Why this order                                                       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------ | ---------------- | -------------------------------------------------------------------- |
+| M1  | Owner gate: confirm "go" + complement + LAN/VPN (G1/G2)                                                                                                                                                     | A                                                                                     | 5m           | BLOCKING         | nothing starts without it                                            |
+| M2  | Step-0 IdP spike: Pocket ID external-OIDC feasibility via throwaway `extendModules` eval (never force-enable in tree) → **DP1** Pocket-ID vs embedded fallback                                              | B                                                                                     | 90m          | CRITICAL         | auth shape determines C/D wiring; cheapest place to fail             |
+| M3  | Core module `modules/nixos/services/opencloud.nix`: enable gate, `opencloud-production`, stateDir `/mnt/pool/services/opencloud`, serviceDefaults/harden, MemoryMax/MemoryHigh≥50%, ioTier, TimeoutStartSec | C                                                                                     | 90m          | HIGH             | the service itself                                                   |
+| M4  | Pool + safety wiring: mount-gated dirs oneshot (atticd pattern), pool-recovery restartUnits, backup/xattr coverage                                                                                          | C                                                                                     | 45m          | HIGH             | mount-gating + pool-recovery are eval-gated; orphan-class prevention |
+| M5  | Auth + secrets per DP1: WEBFINGER client IDs + issuer env + default-role driver, sops `opencloud.yaml` → `environmentFile` (PLACEHOLDER-safe)                                                               | B/D                                                                                   | 60m          | HIGH             | no login, no pilot                                                   |
+| M6  | Reach: `services.integration` entry `cloud.home.lan` (plain reverse_proxy), gatus probe, tile with URL icon                                                                                                 | D                                                                                     | 45m          | HIGH             | the front door + observability                                       |
+| M7  | Eval battery: `nix flake check --no-build`, all audits green (port-registry, gatus-coverage, tile-coverage, mount-gating, systemd-shape, memory-watermark), enable=false default inert                      | D                                                                                     | 30m          | HIGH             | the 5-layer pipeline is the house QA                                 |
+| M8  | Deploy + anchor discipline: §16 pre-check, `nix run .#deploy`, full-tree wait (`pgrep -f 'nh os                                                                                                             | switch-to-configuration'`empty),`readlink /run/current-system`= newest`system-N-link` | E            | 45m              | HIGH                                                                 |
+| M9  | Post-deploy verify: post-deploy-check.sh, Pocket-ID login + admin role, upload/download/share-link smoke, **trash/versions-on-posix verify**, WebDAV rclone smoke, journal + memory.events sweep            | E                                                                                     | 75m          | HIGH             | proves the PRO-table claims live (Addendum-2 item included)          |
+| M10 | Desktop client: `opencloud-desktop` into evo-x2 user config, connect, sync + delta smoke                                                                                                                    | F                                                                                     | 45m          | MED-HIGH         | first real device; exercises the desktop client-ID leg               |
+| M11 | Android (owner): F-Droid app, login, camera-upload OFF (Immich owns photos)                                                                                                                                 | F                                                                                     | 15m          | MED              | second device; owner hands                                           |
+| M12 | Runbook `docs/services/opencloud.md`: ports/secrets/units, trap catalogue (xattr `rsync -X`, no-downgrade-across-lines, role-claim fail-closed, watch-fs semantics), verify recipes, rollback               | G                                                                                     | 90m          | MED              | a runbook-less service is future-session debt                        |
+| M13 | Observability close: gatus green, tile live dot, optional SigNoz memory rule decision                                                                                                                       | G                                                                                     | 30m          | MED              | fleet-standard visibility                                            |
+| M14 | VM test `tests/test-opencloud.nix` — DECIDE defer-or-do (house norm says one per service; pilot may defer with a TODO row)                                                                                  | G                                                                                     | 15m (decide) | MED              | honest scoping, not skipping silently                                |
+| M15 | Usage window kickoff: 2–4 weeks, weekly journal glance cadence                                                                                                                                              | H                                                                                     | 5m           | MED              | the pilot's data source                                              |
+| M16 | Mid-window checkpoint: sync health, error scan, usage notes                                                                                                                                                 | H                                                                                     | 15m          | MED              | catches drift early                                                  |
+| M17 | Phase-3 decision review: complement/successor/drop → harvest outcome (successor ⇒ SEPARATE plan; drop ⇒ clean-exit checklist)                                                                               | H                                                                                     | 30m          | HIGH (long-term) | the actual question this pilot answers                               |
+| M18 | Closeout: status report, CHANGELOG row, resolve the `[decision]` row, docs-health VERIFY pass on every doc touched                                                                                          | H                                                                                     | 45m          | MED              | single source of truth stays true                                    |
 
 **Total:** ~13h agent + ~30m owner + 2–4w calendar. Critical path: M1 → M2 → M3/M5 → M6 → M7 → M8 → M9 → M10.
 
@@ -67,95 +72,95 @@ Customer = the owner. Value = "log into my private cloud from my devices and tru
 
 ### Phase A — Gates (P0)
 
-| ID | Task | Est |
-|----|------|-----|
-| A1 | Owner confirms "go" + complement + LAN/VPN-only (G1/G2 answers) | 5m (owner) |
-| A2 | Collision sweep: `rg -il opencloud` across TODO_LIST/docs/todo/CHANGELOG — confirm zero parallel work | 5m |
-| A3 | Re-verify `opencloud-production` 7.2.4 + module still at pin (one `nix eval` pair) | 10m |
+| ID | Task                                                                                                  | Est        |
+| -- | ----------------------------------------------------------------------------------------------------- | ---------- |
+| A1 | Owner confirms "go" + complement + LAN/VPN-only (G1/G2 answers)                                       | 5m (owner) |
+| A2 | Collision sweep: `rg -il opencloud` across TODO_LIST/docs/todo/CHANGELOG — confirm zero parallel work | 5m         |
+| A3 | Re-verify `opencloud-production` 7.2.4 + module still at pin (one `nix eval` pair)                    | 10m        |
 
 ### Phase B — Step-0 IdP spike (P0, throwaway evals ONLY)
 
-| ID | Task | Est |
-|----|------|-----|
+| ID | Task                                                                                                                     | Est |
+| -- | ------------------------------------------------------------------------------------------------------------------------ | --- |
 | B1 | Read nixpkgs module env surface (`environment` keys) + `pocket-id-config.provision` options for public/no-secret clients | 10m |
-| B2 | Throwaway `extendModules` eval: opencloud enabled + `OC_EXCLUDE_RUN_SERVICES=idp` + external issuer env | 12m |
-| B3 | Pocket ID provision shape: client `web`, PKCE, callback `https://cloud.home.lan/…` — can provision express it? | 12m |
-| B4 | WEBFINGER env eval: `WEBFINGER_WEB/_DESKTOP/_ANDROID_OIDC_CLIENT_ID` + scopes incl. `groups` | 10m |
-| B5 | **DP1 decision:** Pocket-ID GO vs embedded-IdP fallback (write verdict + evidence into runbook stub) | 12m |
-| B6 | (only if fallback) embedded-IdP settings + `ADMIN_PASSWORD` via sops, default-role note | 10m |
+| B2 | Throwaway `extendModules` eval: opencloud enabled + `OC_EXCLUDE_RUN_SERVICES=idp` + external issuer env                  | 12m |
+| B3 | Pocket ID provision shape: client `web`, PKCE, callback `https://cloud.home.lan/…` — can provision express it?           | 12m |
+| B4 | WEBFINGER env eval: `WEBFINGER_WEB/_DESKTOP/_ANDROID_OIDC_CLIENT_ID` + scopes incl. `groups`                             | 10m |
+| B5 | **DP1 decision:** Pocket-ID GO vs embedded-IdP fallback (write verdict + evidence into runbook stub)                     | 12m |
+| B6 | (only if fallback) embedded-IdP settings + `ADMIN_PASSWORD` via sops, default-role note                                  | 10m |
 
 ### Phase C — Core module (P1)
 
-| ID | Task | Est |
-|----|------|-----|
-| C1 | `lib/ports.nix`: `opencloud = 9200` | 5m |
-| C2 | Module skeleton: options (enable, port from registry, stateDir, settings passthrough) | 12m |
-| C3 | serviceDefaults/harden + `TimeoutStartSec` + ioTier background | 12m |
-| C4 | `MemoryMax = 1G` + `MemoryHigh = 512M` (≥50% watermark-audit rule) | 5m |
+| ID | Task                                                                                                                                   | Est |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| C1 | `lib/ports.nix`: `opencloud = 9200`                                                                                                    | 5m  |
+| C2 | Module skeleton: options (enable, port from registry, stateDir, settings passthrough)                                                  | 12m |
+| C3 | serviceDefaults/harden + `TimeoutStartSec` + ioTier background                                                                         | 12m |
+| C4 | `MemoryMax = 1G` + `MemoryHigh = 512M` (≥50% watermark-audit rule)                                                                     | 5m  |
 | C5 | Minimal `settings` per DP1 (proxy/oidc block; skip `opencloud-init` oneshot only if settings.opencloud provided — decide deliberately) | 12m |
-| C6 | `environmentFile` ← sops template path; PLACEHOLDER-safe fail-loud preStart | 10m |
-| C7 | `stateDir = /mnt/pool/services/opencloud` + mount-gated dirs oneshot (atticd pattern, NO tmpfiles) | 12m |
-| C8 | pool-recovery `restartUnits` entry + converge-coverage eval green | 10m |
-| C9 | Filename-unique check + auto-discovery eval (`flake.nixosModules.opencloud` renders) | 10m |
+| C6 | `environmentFile` ← sops template path; PLACEHOLDER-safe fail-loud preStart                                                            | 10m |
+| C7 | `stateDir = /mnt/pool/services/opencloud` + mount-gated dirs oneshot (atticd pattern, NO tmpfiles)                                     | 12m |
+| C8 | pool-recovery `restartUnits` entry + converge-coverage eval green                                                                      | 10m |
+| C9 | Filename-unique check + auto-discovery eval (`flake.nixosModules.opencloud` renders)                                                   | 10m |
 
 ### Phase D — Reach + secrets (P1)
 
-| ID | Task | Est |
-|----|------|-----|
+| ID | Task                                                                                            | Est |
+| -- | ----------------------------------------------------------------------------------------------- | --- |
 | D1 | `services.integration` entry: `cloud` subdomain, plain `reverse_proxy` (Layer 1), loopback 9200 | 12m |
-| D2 | Gatus probe entry (loopback URL on registry — coverage-audit green) | 10m |
-| D3 | Tile: `dashboard-icons`-pack-absent → http URL icon (opencloud.eu press asset); §16-aware | 10m |
-| D4 | sops scaffold `platforms/nixos/secrets/opencloud.yaml` + template render (values NEVER inline) | 12m |
-| D5 | `nix flake check --no-build` — ALL audits green | 12m |
-| D6 | Negative sanity: `enable = false` default → zero units rendered on evo-x2 eval | 8m |
+| D2 | Gatus probe entry (loopback URL on registry — coverage-audit green)                             | 10m |
+| D3 | Tile: `dashboard-icons`-pack-absent → http URL icon (opencloud.eu press asset); §16-aware       | 10m |
+| D4 | sops scaffold `platforms/nixos/secrets/opencloud.yaml` + template render (values NEVER inline)  | 12m |
+| D5 | `nix flake check --no-build` — ALL audits green                                                 | 12m |
+| D6 | Negative sanity: `enable = false` default → zero units rendered on evo-x2 eval                  | 8m  |
 
 ### Phase E — Deploy + verify (P1)
 
-| ID | Task | Est |
-|----|------|-----|
-| E1 | `pre-deploy-check.sh --section-16-only` dry run | 8m |
-| E2 | `nix run .#deploy`; wait FULL tree (`pgrep -f 'nh os|switch-to-configuration'` EMPTY) | 12m |
-| E3 | Anchor: `readlink /run/current-system` = newest-by-NUMBER `system-N-link` | 8m |
-| E4 | `post-deploy-check.sh` full battery | 12m |
-| E5 | Login smoke: Pocket ID → session; role=admin confirmed (owner assist if polkit-gated) | 12m |
-| E6 | Web smoke: upload / download / share-link create (LAN) / delete→trash | 12m |
-| E7 | **Trash + versions restore verify on posix driver** (Addendum-2 item — don't assume) | 12m |
-| E8 | rclone WebDAV smoke: webdav remote list/put/get against cloud.home.lan | 10m |
-| E9 | Journal error sweep + `memory.events` high-counter sweep (§17 class) | 10m |
+| ID | Task                                                                                  | Est                              |
+| -- | ------------------------------------------------------------------------------------- | -------------------------------- |
+| E1 | `pre-deploy-check.sh --section-16-only` dry run                                       | 8m                               |
+| E2 | `nix run .#deploy`; wait FULL tree (`pgrep -f 'nh os                                  | switch-to-configuration'` EMPTY) |
+| E3 | Anchor: `readlink /run/current-system` = newest-by-NUMBER `system-N-link`             | 8m                               |
+| E4 | `post-deploy-check.sh` full battery                                                   | 12m                              |
+| E5 | Login smoke: Pocket ID → session; role=admin confirmed (owner assist if polkit-gated) | 12m                              |
+| E6 | Web smoke: upload / download / share-link create (LAN) / delete→trash                 | 12m                              |
+| E7 | **Trash + versions restore verify on posix driver** (Addendum-2 item — don't assume)  | 12m                              |
+| E8 | rclone WebDAV smoke: webdav remote list/put/get against cloud.home.lan                | 10m                              |
+| E9 | Journal error sweep + `memory.events` high-counter sweep (§17 class)                  | 10m                              |
 
 ### Phase F — Clients (P2)
 
-| ID | Task | Est |
-|----|------|-----|
-| F1 | `opencloud-desktop` into evo-x2 user config (nixpkgs @ pin) | 12m |
-| F2 | Deploy + client connect to `cloud.home.lan` (desktop client-ID leg exercised) | 12m |
-| F3 | Sync smoke: folder pair, delta re-upload, conflict-free pause/resume | 12m |
+| ID | Task                                                                            | Est         |
+| -- | ------------------------------------------------------------------------------- | ----------- |
+| F1 | `opencloud-desktop` into evo-x2 user config (nixpkgs @ pin)                     | 12m         |
+| F2 | Deploy + client connect to `cloud.home.lan` (desktop client-ID leg exercised)   | 12m         |
+| F3 | Sync smoke: folder pair, delta re-upload, conflict-free pause/resume            | 12m         |
 | F4 | Android (owner): F-Droid app install + login (`OpenCloudAndroid` client-ID leg) | 12m (owner) |
-| F5 | Android camera-upload OFF — Immich owns photos; verify setting | 5m |
-| F6 | Mobile WEBFINGER login verified from both client legs | 10m |
+| F5 | Android camera-upload OFF — Immich owns photos; verify setting                  | 5m          |
+| F6 | Mobile WEBFINGER login verified from both client legs                           | 10m         |
 
 ### Phase G — Trust depth (P2)
 
-| ID | Task | Est |
-|----|------|-----|
-| G1a | Runbook part 1: identity, ports, units, secrets, storage layout | 12m |
+| ID  | Task                                                                                                                                    | Est |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| G1a | Runbook part 1: identity, ports, units, secrets, storage layout                                                                         | 12m |
 | G1b | Runbook part 2: trap catalogue (xattr `rsync -X`, no-downgrade lines, role-claim fail-closed, watch-fs, OC_INSECURE-loopback rationale) | 12m |
-| G1c | Runbook part 3: verify recipes + rollback ladder + pool-detach degradation semantics | 12m |
-| G2 | Backup coverage: pool snapshots include stateDir; Borg/restic xattr-preservation flag verify | 10m |
-| G3 | SigNoz memory-rule decision (defer with TODO row if pilot says so) | 8m |
-| G4 | VM test defer-or-do decision (house norm vs pilot scope — record either way) | 12m |
-| G5 | Gatus check green + tile live dot eyeball on dash | 8m |
+| G1c | Runbook part 3: verify recipes + rollback ladder + pool-detach degradation semantics                                                    | 12m |
+| G2  | Backup coverage: pool snapshots include stateDir; Borg/restic xattr-preservation flag verify                                            | 10m |
+| G3  | SigNoz memory-rule decision (defer with TODO row if pilot says so)                                                                      | 8m  |
+| G4  | VM test defer-or-do decision (house norm vs pilot scope — record either way)                                                            | 12m |
+| G5  | Gatus check green + tile live dot eyeball on dash                                                                                       | 8m  |
 
 ### Phase H — Window + decision + closeout (P3)
 
-| ID | Task | Est |
-|----|------|-----|
-| H1 | Usage window kickoff: 2–4 weeks; weekly journal-glance cadence note | 5m |
-| H2 | Mid-window checkpoint: sync health, error scan, notes | 12m |
-| H3 | Phase-3 review (owner): complement / successor / drop | 12m (owner) |
-| H4 | If successor → SEPARATE plan stub note (mirror flip, drive-paperless re-target) — NOT this plan | 5m |
-| H5a | Closeout status report (self-harvesting §f) | 12m |
-| H5b | CHANGELOG row + resolve `[decision]` row + docs-health VERIFY on touched docs | 12m |
+| ID  | Task                                                                                            | Est         |
+| --- | ----------------------------------------------------------------------------------------------- | ----------- |
+| H1  | Usage window kickoff: 2–4 weeks; weekly journal-glance cadence note                             | 5m          |
+| H2  | Mid-window checkpoint: sync health, error scan, notes                                           | 12m         |
+| H3  | Phase-3 review (owner): complement / successor / drop                                           | 12m (owner) |
+| H4  | If successor → SEPARATE plan stub note (mirror flip, drive-paperless re-target) — NOT this plan | 5m          |
+| H5a | Closeout status report (self-harvesting §f)                                                     | 12m         |
+| H5b | CHANGELOG row + resolve `[decision]` row + docs-health VERIFY on touched docs                   | 12m         |
 
 **Fine totals:** 47 tasks · ~7h30m agent · ~35m owner · calendar-bound only in H.
 

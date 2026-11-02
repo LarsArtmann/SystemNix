@@ -14,11 +14,11 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | Done | Missing | Why |
-|---|---|---|---|---|
-| 1 | Remedy-map persistence | every item exists as a queue/library row | the ORDERED map lives only in chat — no durable artifact owns the stability-domain sequencing (the 05-10 plan explicitly does NOT own cooling/recovery-admission/tq/sdb) | answered, didn't persist — the anti-pattern this repo's docs system exists to prevent |
-| 2 | 5 process lessons (getent / file-surface / adjacent-evidence / grep-retry / ClickHouse-gap) | identified + correction executed for the uid case | NOT encoded as docs one-liners; offered as "say the word" instead of committing a reversible docs change | over-caution (the prior WAIT order covered the report turn, not the question turn) |
-| 3 | Escalation follow-through | urgent pause-builds demand delivered 06:0x with evidence | zero re-checks for 8 h; rediscovered at 14:07 that builds ran all day at 97–99 °C | no dispatch between turns; no standing escalation mechanism on my side |
+| # | Item                                                                                        | Done                                                     | Missing                                                                                                                                                                  | Why                                                                                   |
+| - | ------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| 1 | Remedy-map persistence                                                                      | every item exists as a queue/library row                 | the ORDERED map lives only in chat — no durable artifact owns the stability-domain sequencing (the 05-10 plan explicitly does NOT own cooling/recovery-admission/tq/sdb) | answered, didn't persist — the anti-pattern this repo's docs system exists to prevent |
+| 2 | 5 process lessons (getent / file-surface / adjacent-evidence / grep-retry / ClickHouse-gap) | identified + correction executed for the uid case        | NOT encoded as docs one-liners; offered as "say the word" instead of committing a reversible docs change                                                                 | over-caution (the prior WAIT order covered the report turn, not the question turn)    |
+| 3 | Escalation follow-through                                                                   | urgent pause-builds demand delivered 06:0x with evidence | zero re-checks for 8 h; rediscovered at 14:07 that builds ran all day at 97–99 °C                                                                                        | no dispatch between turns; no standing escalation mechanism on my side                |
 
 ## c) NOT STARTED
 

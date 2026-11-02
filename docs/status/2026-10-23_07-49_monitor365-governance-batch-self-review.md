@@ -9,23 +9,28 @@ Tree at authoring: `master == origin` (daemon-swept pushes), foreign WIP in tree
 ## Brutal self-review
 
 **1. What did you forget?**
+
 - **Registering my status reports in `docs/status/README.md`** — three reports (03:55, 04:20, 07:55) went unindexed while the parallel session registers theirs; the live-pool convention only works if everyone feeds it. Fixed on sight this hour (one addendum block).
 - **Citing a self-corrupted source**: my `rg -rn` REPLACE-flag mangling made `max_events_per_day` display as `n` — I then cited "`pub n: usize`" from memory of that mangled output into the runbook and an upstream row. The FACT (default 10,000/day) was right; the citation was corrupted provenance. Both surfaces corrected this hour; the trap is now an AGENTS.md live-probe bullet.
 - The repo-file retention selftest re-execution is still pending (blocked by the wave-red eval — carried in the lock-heal row, not forgotten, but still not done).
 
 **2. What is something that's stupid that we do anyway?**
+
 - Commit-message attribution is structurally losing to the daemon: FOUR heuristic-message commits absorbed my work tonight (plan, follows fix, docs ×2) against ONE properly-messaged commit (1d2583c39). My own cadence — edit batch, walk away, come back, commit — hands the daemon a 10-minute window every time.
 
 **3. What could you have done better?**
+
 - **Repeated my own documented failure within three hours**: after writing the `&&`-chain row at 04:2x, I pushed through a pipe (`commit … | tail -3 && push`) whose exit code is TAIL's — the hook's 76-char-subject rejection never gated the push. `&&` after a pipe is not `&&`. Third incident (ref-lock race) completed the set; the row is upgraded to a helper-script ask.
 - **The mid-line CHANGELOG edit**: my old_string was a prefix of a single-line entry and orphaned the previous entry's remainder — caught by immediate re-read and repaired. Line-anchor edits on single-line giant entries, always.
 - **The `--raw` eval scare**: `nix eval --raw` on an INT fails; my loop's `|| echo EVAL-FAIL` made it look like config-eval was broken when the verbose call worked instantly. Flag misuse diagnosed as system breakage — should have run one verbose call FIRST.
 
 **4. What could you still improve?**
+
 - Commit preflight as a script, not discipline (row upgraded: subject check + pipefail + race retry).
 - I executed the papdashboard follows fix while my OWN 04:20 report still had "apply it myself or leave it to the owning session?" as an OPEN owner question. The action was safe (gate-prescribed, flake.nix-only, lock byte-identical) and the directive said execute — but the decision framing said owner. Surfaced honestly here; the remaining wave-red remediation (hermes rollback = a flake.lock edit) stays owner-gated, and that line is now explicit in the row.
 
 **5. Did you lie?**
+
 - No outcome claims were false. Two precision defects, both self-caught and corrected in-source: the mangled `n` citation (above), and the 07:55 report's filename claims a time ~7 minutes ahead of the wall clock (I named it from commit-ordering inference without running `date` first — noted in the README addendum).
 
 **6. How can we be less stupid?**
@@ -92,17 +97,17 @@ Preflight scripts over discipline; verbose-first on any surprising failure; regi
 6. Buffer backlog measure before restart (row :451).
 7. Agent restart decision (row :450).
 8. Re-execute repo-file retention selftest (in lock-heal row).
-9–12. Upstream: bounded queue, environ opt-in, rollups, cap observability (new rows).
-13–15. Upstream pre-existing: gen_app Binder, JWT-off-cmdline, Parquet archival.
-16. DuckDB hot-tier move (row :455).
-17. Buffer-pressure gatus check disposition post-deploy (row :358).
-18. Server metrics endpoint → SigNoz (row :359).
-19. Commit-preflight helper (upgraded row).
-20. Runbook full state refresh (row :456).
-21. nsfw-classifier/mr-sync-dashboard state (row :457).
-22. +0.8 GB backup growth explain (row :458).
-23. Stale AGENTS nvme note (row :18).
-24. 2026-10-20 storm-attribution unharvested §f reports (gate WARN, pre-existing).
+   9–12. Upstream: bounded queue, environ opt-in, rollups, cap observability (new rows).
+   13–15. Upstream pre-existing: gen_app Binder, JWT-off-cmdline, Parquet archival.
+9. DuckDB hot-tier move (row :455).
+10. Buffer-pressure gatus check disposition post-deploy (row :358).
+11. Server metrics endpoint → SigNoz (row :359).
+12. Commit-preflight helper (upgraded row).
+13. Runbook full state refresh (row :456).
+14. nsfw-classifier/mr-sync-dashboard state (row :457).
+15. +0.8 GB backup growth explain (row :458).
+16. Stale AGENTS nvme note (row :18).
+17. 2026-10-20 storm-attribution unharvested §f reports (gate WARN, pre-existing).
 
 ## g) Questions I cannot figure out myself
 

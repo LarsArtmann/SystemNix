@@ -36,9 +36,9 @@
 ## c) NOT STARTED
 
 1. Upstream btop issue research/filing (pid-reuse stale stats, repro: heavy pid-churn host + long-running instance + memory-sorted view).
-~~2. btop version bump evaluation (nixpkgs) once/if an upstream fix exists.~~ **Won't implement — gated on nonexistent upstream fix.**
-~~3. SigNoz census-metrics history query (`system_cgroup_mem_bytes` for paperless) — **deliberately dropped**: the journal-based cgroup sweep settled the question with kernel-truth data.~~ done — deliberately dropped in-session - journal cgroup sweep settled with kernel-truth data
-~~4. Any paperless config change — **deliberately none**: nothing is broken.~~ done — caps + OMP_NUM_THREADS + max-tasks-per-child + alerting verified in place
+   ~~2. btop version bump evaluation (nixpkgs) once/if an upstream fix exists.~~ **Won't implement — gated on nonexistent upstream fix.**
+   ~~3. SigNoz census-metrics history query (`system_cgroup_mem_bytes` for paperless) — **deliberately dropped**: the journal-based cgroup sweep settled the question with kernel-truth data.~~ done — deliberately dropped in-session - journal cgroup sweep settled with kernel-truth data
+   ~~4. Any paperless config change — **deliberately none**: nothing is broken.~~ done — caps + OMP_NUM_THREADS + max-tasks-per-child + alerting verified in place
 
 ## d) TOTALLY FUCKED UP (honest accounting)
 

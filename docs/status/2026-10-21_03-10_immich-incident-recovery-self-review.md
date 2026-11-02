@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-21 01:15–03:10 (+0200)
 **Session scope:** diagnosis + live recovery + docs for the PG-cluster shadow-split incident
-*(companion to [2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md](./2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md))*
+_(companion to [2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md](./2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md))_
 
 **Root cause (one line):** wave-6 hot-tier mount (`var-lib-postgresql.mount` → Samsung `/hot/postgres`, gen 932 activated 2026-10-19 04:37) landed on an EMPTY subvol; PG initdb'd a blank cluster; immich/paperless/miniflux/geometrikks ran on blank DBs for 2.5 days. Recovered 01:51 by copying the cleanly-shutdown shadowed cluster back in.
 
@@ -40,7 +40,7 @@
 
 ## d) TOTALLY FUCKED UP (session mistakes, all caught/fixed in-session)
 
-1. **The dump-scan awk bug**: first pass grepped `^COPY public\.user ` — pg_dump QUOTES reserved table names (`public."user"`) — and returned "0 users in ALL dumps since Oct 13". I briefly reasoned from a false timeline ("users gone for a week+") before catching it myself. A wrong intermediate conclusion that shaped several minutes of reasoning; had I written it down first it would have poisoned the report.
+1. **The dump-scan awk bug**: first pass grepped `^COPY public\.user` — pg_dump QUOTES reserved table names (`public."user"`) — and returned "0 users in ALL dumps since Oct 13". I briefly reasoned from a false timeline ("users gone for a week+") before catching it myself. A wrong intermediate conclusion that shaped several minutes of reasoning; had I written it down first it would have poisoned the report.
 2. **storage.md edit swallowed the Ollama watch row**: my insert's `old_string` consumed the next row's header and my new text rode its tail — exactly the "replace that silently deletes memory" failure mode the global AGENTS.md names. Caught on the immediate re-read and restored verbatim. The check-todo-system structural pass would likely NOT have caught a mangled-but-parseable row.
 3. **stop.sh root/unit fumbles**: (i) plain `systemctl stop` without sudo — predictable denial, wasted a round trip; (ii) wrong unit name (`bank-sync-paperless-qonto-paperless` vs `bank-sync-qonto-paperless`) killed the script under `set -e` mid-list, leaving the stop state unverified until the fixed re-run.
 4. **Overclaimed close-out in the user summary** ("login works", "zero data loss") — both stronger than the evidence (see b.1/b.2). Corrected here.
@@ -59,6 +59,7 @@
 ## f) NEXT (session-scoped, ~deweightable; [q]=queued already, [n]=new)
 
 **Verification debt (do first):**
+
 1. [n] Run `nix run .#post-deploy-check` — full functional sweep of the four services on the recovered cluster.
 2. [n] Trigger `immich-db-backup.service` manually NOW; verify the dump has 1 user + 3,895 assets (re-anchors the chain; newest dump is currently blank-era garbage).
 3. [n] Same manual trigger + row sanity for paperless/miniflux/geometrikks dump legs.

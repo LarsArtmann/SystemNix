@@ -11,42 +11,42 @@
 
 ## 1. Comprehensive plan (30–100 min tasks — full wave-1 scope)
 
-| # | Task | Domain | Work | Impact | Status |
-|---|------|--------|------|--------|--------|
-| T1 | Premise-check + fix the 6 "one-line" config rows (catalog PATH, overcommit, hermes dup, flake comment, nvme default, tmp-crush-test) | services/pipeline/storage | 60 min | HIGH (3 of 6 premises were WRONG — fixed/superseded instead of applied) | ✅ done |
-| T2 | Queue hygiene pass: retag tmp-reclaim, tick stale-done rows, dedupe reprioritized, flip SUPERB S-0702/S-1758 | pipeline | 45 min | HIGH (stops paid no-op re-fires) | ✅ done |
-| T3 | Verdict rows: status-report.sh gatus read, btrfs-compression.prom ownership, nix-fmt scoping, niri-wrapped drift | monitoring/pipeline | 40 min | MED (kills repeated investigation cost) | ✅ done |
-| T4 | Docs: CHANGELOG empty-workspace entry, AGENTS full-line-match note, services.md hermes recipe | docs | 25 min | MED | ✅ done |
-| T5 | Formatter + green-eval verification battery | pipeline | 20 min | gate | ✅ done |
-| T6 | Next wave (queued): M-tier fixtures — hermes WAL fixture, freshness composites, per-endpoint gatus collector, §17 user.slice leg | stability/monitoring | 4×90 min | HIGH | pending |
-| T7 | Next wave (queued): PG-shadow-split pre-deploy gate + migrate-state forensics | storage | 2×80 min | CRITICAL (data-loss class) | pending |
-| T8 | Next wave (queued): the four Pareto blockers | stability/monitoring/upstream | 4×60-100 min | CRITICAL | pending |
-| T9 | Then: remaining XS/S tail (~300 rows, batched by domain) | all | ~15 h total | MED | pending |
-| T10 | Then: L-tier builds (sev1 chronic latch, system-health decomposition, config diet, signoz dir split) | stability/services | multi-day | HIGH | pending |
-| T11 | Owner-gated (never agent): XL programs — offsite Borg, /data repair, hot-DB waves, CI restoration pushes | storage/upstream | owner | CRITICAL | blocked:user |
+| #   | Task                                                                                                                                 | Domain                        | Work         | Impact                                                                  | Status       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | ------------ | ----------------------------------------------------------------------- | ------------ |
+| T1  | Premise-check + fix the 6 "one-line" config rows (catalog PATH, overcommit, hermes dup, flake comment, nvme default, tmp-crush-test) | services/pipeline/storage     | 60 min       | HIGH (3 of 6 premises were WRONG — fixed/superseded instead of applied) | ✅ done      |
+| T2  | Queue hygiene pass: retag tmp-reclaim, tick stale-done rows, dedupe reprioritized, flip SUPERB S-0702/S-1758                         | pipeline                      | 45 min       | HIGH (stops paid no-op re-fires)                                        | ✅ done      |
+| T3  | Verdict rows: status-report.sh gatus read, btrfs-compression.prom ownership, nix-fmt scoping, niri-wrapped drift                     | monitoring/pipeline           | 40 min       | MED (kills repeated investigation cost)                                 | ✅ done      |
+| T4  | Docs: CHANGELOG empty-workspace entry, AGENTS full-line-match note, services.md hermes recipe                                        | docs                          | 25 min       | MED                                                                     | ✅ done      |
+| T5  | Formatter + green-eval verification battery                                                                                          | pipeline                      | 20 min       | gate                                                                    | ✅ done      |
+| T6  | Next wave (queued): M-tier fixtures — hermes WAL fixture, freshness composites, per-endpoint gatus collector, §17 user.slice leg     | stability/monitoring          | 4×90 min     | HIGH                                                                    | pending      |
+| T7  | Next wave (queued): PG-shadow-split pre-deploy gate + migrate-state forensics                                                        | storage                       | 2×80 min     | CRITICAL (data-loss class)                                              | pending      |
+| T8  | Next wave (queued): the four Pareto blockers                                                                                         | stability/monitoring/upstream | 4×60-100 min | CRITICAL                                                                | pending      |
+| T9  | Then: remaining XS/S tail (~300 rows, batched by domain)                                                                             | all                           | ~15 h total  | MED                                                                     | pending      |
+| T10 | Then: L-tier builds (sev1 chronic latch, system-health decomposition, config diet, signoz dir split)                                 | stability/services            | multi-day    | HIGH                                                                    | pending      |
+| T11 | Owner-gated (never agent): XL programs — offsite Borg, /data repair, hot-DB waves, CI restoration pushes                             | storage/upstream              | owner        | CRITICAL                                                                | blocked:user |
 
 ## 2. Detailed 12-minute breakdown (wave 1 as executed)
 
-| # | Micro-task | Result |
-|---|-----------|--------|
-| 1 | Preflight: HEAD pin, parallel-session diff review (append-only harvest rows + tmp migration) | ✅ |
-| 2 | Row 354 premise check: catalog-inventory PATH | ALREADY FIXED 2026-10-23 (unit `path` list) → ticked, never-ticked re-fire class |
-| 3 | Row 395 premise check: `vm.overcommit_memory=1` | SUPERSEDED — boot.nix:337 deliberately `mkForce 0`; applying would have reverted a conscious decision |
-| 4 | Row 396 hermes dup-key probe | /home/hermes/config.yaml perm-denied → retag blocked:user + behavior-preserving recipe (delete earlier `provider: edge` line) |
-| 5 | flake.nix:390 toolchain comment | rewritten rev-cited (fe1324228 / go 1.27.2) |
-| 6 | Row 1337 nvme-health-monitor default | fail-loud: `default = null` + eval assertion naming by-id |
-| 7 | Row 60 tmp-crush-test | content verified (`dnsblockd-vacuumed.db`, 380M, Aug-18, zero refs) → trashed; both config refs dropped (backup.nix, data-corruption-repair.sh) |
-| 8 | Row 61 tmp-bench + /data/cache | both empty live → left in place, disposition recorded |
-| 9 | Row 25 tmp-reclaim retag | `[blocked:deploy]`→`[blocked:user]` (sudo-only remainder) |
-| 10 | Row 1310 reprioritized dedupe | verified single lane already (09-29 row pruned) → ticked |
-| 11 | Row 266 status-report.sh read | unit-state only, no per-endpoint verdicts → per-endpoint metric row confirmed necessary |
-| 12 | Row 268 btrfs-compression.prom ownership | owner FOUND: btrfs-compsize.timer (6h) via btrfs-compsize-metrics; staleness = admission-gate storm deferral |
-| 13 | Row 648 niri-wrapped.nix drift | `nix fmt -- <path>`: 0 changed (already healed) |
-| 14 | Row 1386 nix-fmt scoping | already answered in AGENTS.md (2026-10-23) → ticked; re-verified live |
-| 15 | Rows 609 treefmt override warning | zero non-existent-input warnings in the live eval → already resolved |
-| 16 | CHANGELOG empty-workspace entry + AGENTS full-line-match note | ✅ |
-| 17 | SUPERB S-0702 + S-1758 plan rows | annotated done (9ff25c3b3) |
-| 18 | Formatter over all changed .nix (3 files, 0 changed) + green eval probe | ✅ rc=0, only the known catalog-DNS warning |
+| #  | Micro-task                                                                                   | Result                                                                                                                                          |
+| -- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Preflight: HEAD pin, parallel-session diff review (append-only harvest rows + tmp migration) | ✅                                                                                                                                              |
+| 2  | Row 354 premise check: catalog-inventory PATH                                                | ALREADY FIXED 2026-10-23 (unit `path` list) → ticked, never-ticked re-fire class                                                                |
+| 3  | Row 395 premise check: `vm.overcommit_memory=1`                                              | SUPERSEDED — boot.nix:337 deliberately `mkForce 0`; applying would have reverted a conscious decision                                           |
+| 4  | Row 396 hermes dup-key probe                                                                 | /home/hermes/config.yaml perm-denied → retag blocked:user + behavior-preserving recipe (delete earlier `provider: edge` line)                   |
+| 5  | flake.nix:390 toolchain comment                                                              | rewritten rev-cited (fe1324228 / go 1.27.2)                                                                                                     |
+| 6  | Row 1337 nvme-health-monitor default                                                         | fail-loud: `default = null` + eval assertion naming by-id                                                                                       |
+| 7  | Row 60 tmp-crush-test                                                                        | content verified (`dnsblockd-vacuumed.db`, 380M, Aug-18, zero refs) → trashed; both config refs dropped (backup.nix, data-corruption-repair.sh) |
+| 8  | Row 61 tmp-bench + /data/cache                                                               | both empty live → left in place, disposition recorded                                                                                           |
+| 9  | Row 25 tmp-reclaim retag                                                                     | `[blocked:deploy]`→`[blocked:user]` (sudo-only remainder)                                                                                       |
+| 10 | Row 1310 reprioritized dedupe                                                                | verified single lane already (09-29 row pruned) → ticked                                                                                        |
+| 11 | Row 266 status-report.sh read                                                                | unit-state only, no per-endpoint verdicts → per-endpoint metric row confirmed necessary                                                         |
+| 12 | Row 268 btrfs-compression.prom ownership                                                     | owner FOUND: btrfs-compsize.timer (6h) via btrfs-compsize-metrics; staleness = admission-gate storm deferral                                    |
+| 13 | Row 648 niri-wrapped.nix drift                                                               | `nix fmt -- <path>`: 0 changed (already healed)                                                                                                 |
+| 14 | Row 1386 nix-fmt scoping                                                                     | already answered in AGENTS.md (2026-10-23) → ticked; re-verified live                                                                           |
+| 15 | Rows 609 treefmt override warning                                                            | zero non-existent-input warnings in the live eval → already resolved                                                                            |
+| 16 | CHANGELOG empty-workspace entry + AGENTS full-line-match note                                | ✅                                                                                                                                              |
+| 17 | SUPERB S-0702 + S-1758 plan rows                                                             | annotated done (9ff25c3b3)                                                                                                                      |
+| 18 | Formatter over all changed .nix (3 files, 0 changed) + green eval probe                      | ✅ rc=0, only the known catalog-DNS warning                                                                                                     |
 
 ## 3. Verification (this session, actual runs)
 

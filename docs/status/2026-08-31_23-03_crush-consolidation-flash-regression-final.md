@@ -32,10 +32,10 @@
 > **RESOLUTION (23:40):** items 1 and 2 are DONE — the parallel session's `f00a33ec` ("deploy/smoke hardening" among others) resolved the §10 gate and a deploy landed (`/run/current-system` → `74nx21dm…`); the flash + llamacpp crushrc is LIVE (`crush models` lists `zai/glm-5.3-flash`), and the user confirmed their running session is served by glm-5.3-flash — the exact model-identity end-to-end proof the original verification lacked. The daemon swept the flash fix into `f00a33ec`. Items 3-6 below remain as stated.
 
 1. ~~**Deploy 3 (llamacpp + flash) is BLOCKED**~~ — RESOLVED: gate cleared by the pool-recovery session's hardening work; deploy landed. The §10 chicken-and-egg class (task f12) is still worth the regression case.
-~~2. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.~~ **NOT-DO — dup of f6 (probes done in close-out).**
-~~3. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).~~ **Won't implement — reclaim wait resolved by snapshot rotation.**
-~~4. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.~~ **NOT-DO — dup of c.3.**
-~~5. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.~~ done — AGENTS merge settled by 2026-10-01 restructure; CHANGELOG entry
+   ~~2. **Provider-key functional coverage is 1 of 4** — the fallback smoke runs actually prove the **zai** key end-to-end (glm-5.2 requires it). gemini, minimax, kimi render and load but have never served a request.~~ **NOT-DO — dup of f6 (probes done in close-out).**
+   ~~3. **NVMe reclaim is ~7G visible / ~30G pending** — freed extents are pinned by live btrbk snapshots; full space lands as 3d+1w retention rotates (expect early September).~~ **Won't implement — reclaim wait resolved by snapshot rotation.**
+   ~~4. **Session-DB residue contained, not eliminated** — no NEW key material accumulates (crushrc keys proven never snapshotted — synthetic: 0 hits since 2026-08-18), but both `crush.db` files retain store-era bytes of the four LIVE keys until rotation.~~ **NOT-DO — dup of c.3.**
+   ~~5. **AGENTS.md mid-merge** — my doctrine lines are in the working tree while the parallel session reorganizes the same file (MM state); final shape lands with their sweep.~~ done — AGENTS merge settled by 2026-10-01 restructure; CHANGELOG entry
 
 ## c) NOT STARTED
 

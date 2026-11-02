@@ -24,7 +24,7 @@ Deliverable: `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integra
 5. **Deployed rev proven equals the lock.** Executable `dnsblockd-f9bb647` == `flake.lock` node `dnsblockd` rev `f9bb6477c5b2…` == `flake/expected-locks.nix:54`. No drift between intent and reality.
 6. **Rendered config parsed (not eyeballed).** 57 keys. Absent families enumerated precisely, which is what turns "maybe we're missing features" into a list.
 7. **`/health` + `/metrics` read.** `status: pass`, 0 DNS crashes, 55,171 batch writes / 0 dropped, per-source blocklist health present, `otelInternalErrors: 40667`.
-8. **The OTel breakage isolated to a cause.** 903 journal lines this boot, exact error string (`Post "http://localhost:4318/v1/{logs,traces}": connection refused`), and `ss` proving no `:4317`/`:4318` listener — cross-referenced against the known, in-tree, undeployed 2026-10-27 collector `project_id` fix (so the blame lands on the collector, and the *integration* finding is the invisibility, not the outage).
+8. **The OTel breakage isolated to a cause.** 903 journal lines this boot, exact error string (`Post "http://localhost:4318/v1/{logs,traces}": connection refused`), and `ss` proving no `:4317`/`:4318` listener — cross-referenced against the known, in-tree, undeployed 2026-10-27 collector `project_id` fix (so the blame lands on the collector, and the _integration_ finding is the invisibility, not the outage).
 9. **Readiness mechanism proven against the binary, not the docs.** `git show f9bb6477:cmd/dnsblockd/main.go` shows `sdnotify.Ready()` after `srv.Startup()`; the deployed unit says `Type=simple` + a 300s `ss -ltn` poll of the block-page port. That pairing is the report's sharpest finding.
 10. **A TODO premise falsified with source evidence.** `csrf_enabled` (options/core.nix:171) and `blocklist_files` (options/dns.nix:178) both exist at the locked rev → the `[blocked:push]` blocker on two migration rows does not exist any more. Both rows corrected on **both** surfaces.
 11. **An open TODO row closed with a real comparison.** CA parity: inline PEM (`dns-blocker-config.nix:244-278`) vs sops-rendered `/run/secrets/dnsblockd_ca_cert` → identical SHA-256 `EE:A9:E1:…:49:88`, CN `dnsblockd-CA`, valid to 2036-04-12. The row said "do the actual byte compare" — done.
@@ -45,7 +45,7 @@ Deliverable: `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integra
 
 1. **I queued fixes I could have landed.** The interim readiness fix (`ss -ltnu` + match `:53`) is a ~3-line edit in `listenerWait`; the CA-parity guard is ~10 lines in `scripts/post-deploy-check.sh` and I had the exact verified command in hand. Both are now `[ready]` rows instead of landed code. **This is the biggest gap in the session.**
 2. **Module read is ~48%.** I read lines 1-120 (header + fetch pipeline), 160-460 (render block + let-bindings), 1195-1494 (systemd + registry entry). I did **not** read 460-1195 — the 53 option declarations in detail (~735 lines). So "53 options, 22 assertions, 0 phantoms" is grep-verified, but per-option type/default/description quality is unverified. The Cohesion/Modularity scores lean on that gap.
-3. **Monitoring assessed from config, not from live state.** "5 gatus checks + 5 SigNoz rules" is a *declaration* claim; gatus's own status store needs root/sqlite and I could not read it. I never proved a single one of those checks was green.
+3. **Monitoring assessed from config, not from live state.** "5 gatus checks + 5 SigNoz rules" is a _declaration_ claim; gatus's own status store needs root/sqlite and I could not read it. I never proved a single one of those checks was green.
 4. **Second host (rpi3-dns) entirely unverified.** It shares the module; the runbook says the journal WAL "activates on its next deploy" (2026-10-07) — that has been open three weeks and I neither confirmed nor refuted it (remote host, no access path in this session).
 5. **The report's own visual quality.** Validated structurally, never rendered in a browser — no screenshot, no responsive check at narrow width.
 6. **Roadmap harvest is one-sided.** The skill says harvest to `TODO_LIST.md`/`ROADMAP.md`. I harvested the queue/library; the long-horizon items (gateway/cluster/DoQ adoption) never reached `ROADMAP.md`.
@@ -103,6 +103,7 @@ Deliverable: `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integra
 Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (this session or earlier), `[NEW-Q]` = queued by this report, `[NH: reason]` = deliberately not harvested.
 
 ### P0 — land in tree now, no owner needed
+
 1. Change `dnsblockd-wait-listener` to `ss -ltnu` and match `:53` (TCP **and** UDP), not the block-page port. `[Q]`
 2. Replace the poll with `Type = "notify"` + `AF_UNIX` in `RestrictAddressFamilies`, delete `ExecStartPost`. `[Q]` (same row, proper fix)
 3. Add the CA-parity fingerprint compare to `scripts/post-deploy-check.sh` (BLOCK on mismatch). `[Q]`
@@ -112,6 +113,7 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 7. Verify the new gate against the 300s budget: assert poll budget < `TimeoutStartSec` still holds after the rewrite. `[NH: enforced by an existing eval assertion — nothing new to track]`
 
 ### P1 — capability and durability
+
 8. Back up the permanent allowlist into a snapshot-covered path. `[Q]`
 9. Owner decision: unprivileged `dnsblockd` user (+ one-time chown) vs `user = "root"`. `[Q]`
 10. Migrate to `inputs.dnsblockd.nixosModules.dnsblockd` (53-option mapping). `[Q]`
@@ -126,6 +128,7 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 19. Document `trust-anchor.db` / `trust-anchor-tombstones.db` + their retention in the runbook. `[NH: done inline this session in the size-profile section]`
 
 ### P2 — observation and truth-maintenance
+
 20. Prove the 5 gatus checks are actually green (needs root sqlite read from a privileged shell). `[NH: root-gated — the existing post-deploy battery rows own this class]`
 21. Decide whether `otelInternalErrors` may page or only WARN, and write the threshold down. `[NH: subsumed by #5 — the observer's threshold includes it]`
 22. Check every other `signoz-coverage` service for the same exporter-blindness, and fix the class once. `[NEW-Q]`
@@ -138,12 +141,14 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 29. Add a churn alert if OTLP export errors exceed N/boot (so the spam is signal, not noise). `[NH: same observer as #5]`
 
 ### P3 — cleanup and hygiene
+
 30. Delete the legacy `temp-allowlist.conf` / `temp-allowlist.json` stubs if nothing reads them. `[NH: needs a source check in the binary's config loader — out of session scope]`
 31. Confirm `allow_sibling_domains`, `dhcp_lease_file`, `pprof_enabled` are intentional omissions (security posture) and write the "why" into the runbook. `[Q]` (folded into the option-validation row)
-32. ~~Record the review's verdict + score in `docs/services/dnsblockd.md`.~~ `[NH: DONE this session — verdict + both defects + why `sdnotify` is unused now sit above the DNS section]`
+32. ~~Record the review's verdict + score in `docs/services/dnsblockd.md`.~~ `[NH: DONE this session — verdict + both defects + why`sdnotify`is unused now sit above the DNS section]`
 33. Retire or annotate the 144 unharvested `§f` reports (pre-existing WARN). `[NH: a prune/harvest pass, explicitly its own session]`
 
 ### Process (mine, not the repo's)
+
 34. Land small fixes as code (see §e.1).
 35. Use `rg -l`/`-c` on secrets files; never print ciphertext.
 36. Render a report once before shipping it.
@@ -152,7 +157,7 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 39. When a finding generalizes, generalize it in the same session.
 40. Prefer script-driven insertion for queue rows (no accidental replace).
 
-*(40 items; the remaining numbered slots stay empty deliberately — padding the list would violate "no vague work".)*
+_(40 items; the remaining numbered slots stay empty deliberately — padding the list would violate "no vague work".)_
 
 ---
 
@@ -166,16 +171,16 @@ Harvest status in brackets: `[Q]` = already in `TODO_LIST.md` + `docs/todo/*` (t
 
 ## Appendix — files touched this session
 
-| File | Change | State |
-| --- | --- | --- |
-| `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html` | NEW — 1,360-line review (evidence table, 7-dimension scorecard, roadmap) | committed in `bbde76901` |
-| `docs/services/dnsblockd.md` | Size profile corrected (one tracking DB, honest retention table, trust-anchor DBs) | committed in `bbde76901` |
-| `docs/todo/services.md` | CA row closed w/ fingerprint; migration row re-tagged + premise refresh; push row superseded; OTel row extended; **+4 new rows** | committed in `bbde76901` |
-| `TODO_LIST.md` | Same five corrections as one-liners + 4 mirrored rows | committed in `bbde76901` |
-| `ROADMAP.md` | NEW "Theme 8: Service-integration horizons" (5 long-horizon items, harvested from the review) | post-report |
-| `docs/todo/monitoring.md` | +1 row: exporter-blindness audit across every `signoz-coverage` service | post-report |
-| `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md` | THIS report | post-report |
-| *(parallel session)* `CHANGELOG.md`, `docs/agents/stability.md`, `docs/todo/stability.md`, `flake/parts/checks/selftests.nix`, `memory-emergency-guard.nix`, `configuration.nix` | NOT mine — rode the same daemon commit | untouched |
+| File                                                                                                                                                                             | Change                                                                                                                           | State                    |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `docs/architecture-understanding/2026-10-28_10-18_dnsblockd-integration.html`                                                                                                    | NEW — 1,360-line review (evidence table, 7-dimension scorecard, roadmap)                                                         | committed in `bbde76901` |
+| `docs/services/dnsblockd.md`                                                                                                                                                     | Size profile corrected (one tracking DB, honest retention table, trust-anchor DBs)                                               | committed in `bbde76901` |
+| `docs/todo/services.md`                                                                                                                                                          | CA row closed w/ fingerprint; migration row re-tagged + premise refresh; push row superseded; OTel row extended; **+4 new rows** | committed in `bbde76901` |
+| `TODO_LIST.md`                                                                                                                                                                   | Same five corrections as one-liners + 4 mirrored rows                                                                            | committed in `bbde76901` |
+| `ROADMAP.md`                                                                                                                                                                     | NEW "Theme 8: Service-integration horizons" (5 long-horizon items, harvested from the review)                                    | post-report              |
+| `docs/todo/monitoring.md`                                                                                                                                                        | +1 row: exporter-blindness audit across every `signoz-coverage` service                                                          | post-report              |
+| `docs/status/2026-10-28_10-32_dnsblockd-integration-review-status-and-self-review.md`                                                                                            | THIS report                                                                                                                      | post-report              |
+| _(parallel session)_ `CHANGELOG.md`, `docs/agents/stability.md`, `docs/todo/stability.md`, `flake/parts/checks/selftests.nix`, `memory-emergency-guard.nix`, `configuration.nix` | NOT mine — rode the same daemon commit                                                                                           | untouched                |
 
 **Commands that produced the evidence:** `pgrep -af dnsblockd`, `ss -ltnup`, `busctl get-property … ActiveState`, `readlink -f /proc/3919/exe`, Python parse of the live `-dnsblockd-config.yaml`, `GET /health` + `/metrics` via urllib, `journalctl -u dnsblockd -b | grep -ci 4318`, `findmnt`, `openssl x509 -fingerprint -sha256` (inline PEM vs `/run/secrets`), `git show f9bb6477:…` for options/`main.go`/`config.nix`, `scripts/check-todo-system.sh`.
 

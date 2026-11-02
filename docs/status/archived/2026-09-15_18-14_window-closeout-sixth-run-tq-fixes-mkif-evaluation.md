@@ -18,19 +18,19 @@
 
 1. **mkIf redesign IMPLEMENTATION is open** (row 551) — evaluation complete, ~42-module sweep + per-entry field review awaits the owner decision. Correct per scope, but the co-import requirement lives on until then. **→ docs/todo/pipeline.md mkIf-survivable adoption decision row**
 2. **go-taskqueue docs not updated.** The two behavioral changes are code+tests only; go-taskqueue's own CHANGELOG.md / FEATURES.md carry nothing (I chose not to touch shared docs in a multi-agent repo without checking for in-flight edits — but the gap is real: the next release-cut session won't know these changes exist from docs alone). **→ docs/todo/upstream.md go-taskqueue docs rows**
-~~3. **cmd/tq gate NOT run.** I claimed cmd/tq is unaffected (the changed symbols — `runVerify`, `writeVerifyEvidence`, `buildPayload`, `buildBatchPayload` — are unexported; exported API unchanged), but per the session doctrine "verify by running, not reasoning," I never ran `scripts/test-cmd-tq.sh` or `check-facade-parity.sh`. Logically sound, empirically unverified.~~ **Won't implement — stale verify; unexported symbols.**
-4. **The journal is fixed; `tq show` is not.** `SetFailureEvidence(ctx, "verify", err, tail)` still passes a 4096-byte `EvidenceTailBytes` tail into the structured FailureEvidence blob — the DLQ/`tq show` surface still carries the big tail. Deliberately scoped out (bounded, structured, was already the behavior), but it is the same noise one surface over. **→ docs/todo/upstream.md go-taskqueue journal/verify surfaces**
-~~5. **No end-to-end validation with a live task.** The pollution facts (10:39/11:12 `agent verify failed ("nix flake check --no-build"): …4KB tail…`) came from the pool worker; my fix is unit-tested but no real SystemNix task has been claimed + failed + had its journal fact inspected against the new format.~~ **Won't implement — live pool E2E ran 2026-09-16 (gitleaks-gate-repair session).**
-6. **Citation check has no visibility surface.** When the annotation fires there is no journal fact, no counter, no `Skipped`-style record — the only evidence is the prompt text in the payload (`tq show`). If the pool starts citing many SHAs, nobody sees the check working. **→ docs/todo/upstream.md citation-check visibility ready row**
-~~7. **Citation performance unproven at scale.** One `git merge-base` per unique SHA-like token; the SystemNix TODO_LIST cites SHAs heavily. Fine for harvest cadence in theory; never measured.~~ done — docs/todo/upstream.md citation-check row (COST MEASURED 2026-09-16)
-~~8. **Row 545 carries a sloppy `12:xx` placeholder timestamp** I forgot to replace with the real time before finishing (the verification ran ~12:0x; the placeholder text remains in the committed TODO row).~~ **Won't implement — cosmetic; TODO_LIST restructured 2026-09-19.**
+   ~~3. **cmd/tq gate NOT run.** I claimed cmd/tq is unaffected (the changed symbols — `runVerify`, `writeVerifyEvidence`, `buildPayload`, `buildBatchPayload` — are unexported; exported API unchanged), but per the session doctrine "verify by running, not reasoning," I never ran `scripts/test-cmd-tq.sh` or `check-facade-parity.sh`. Logically sound, empirically unverified.~~ **Won't implement — stale verify; unexported symbols.**
+3. **The journal is fixed; `tq show` is not.** `SetFailureEvidence(ctx, "verify", err, tail)` still passes a 4096-byte `EvidenceTailBytes` tail into the structured FailureEvidence blob — the DLQ/`tq show` surface still carries the big tail. Deliberately scoped out (bounded, structured, was already the behavior), but it is the same noise one surface over. **→ docs/todo/upstream.md go-taskqueue journal/verify surfaces**
+   ~~5. **No end-to-end validation with a live task.** The pollution facts (10:39/11:12 `agent verify failed ("nix flake check --no-build"): …4KB tail…`) came from the pool worker; my fix is unit-tested but no real SystemNix task has been claimed + failed + had its journal fact inspected against the new format.~~ **Won't implement — live pool E2E ran 2026-09-16 (gitleaks-gate-repair session).**
+4. **Citation check has no visibility surface.** When the annotation fires there is no journal fact, no counter, no `Skipped`-style record — the only evidence is the prompt text in the payload (`tq show`). If the pool starts citing many SHAs, nobody sees the check working. **→ docs/todo/upstream.md citation-check visibility ready row**
+   ~~7. **Citation performance unproven at scale.** One `git merge-base` per unique SHA-like token; the SystemNix TODO_LIST cites SHAs heavily. Fine for harvest cadence in theory; never measured.~~ done — docs/todo/upstream.md citation-check row (COST MEASURED 2026-09-16)
+   ~~8. **Row 545 carries a sloppy `12:xx` placeholder timestamp** I forgot to replace with the real time before finishing (the verification ran ~12:0x; the placeholder text remains in the committed TODO row).~~ **Won't implement — cosmetic; TODO_LIST restructured 2026-09-19.**
 
 ## c) NOT STARTED
 
 1. The row-551 owner decision itself (BLOCKED by design). **→ docs/todo/pipeline.md mkIf-survivable row**
 2. **A TODO_LIST row for the buildcache capacity problem was never created** — I hit `/mnt/buildcache` at 100% (0 avail) mid-build, cleared the go build cache per the gc-unit policy, noted it in my final chat message, and then failed to persist it as a TODO row. The only durable trace is this report (see d.3 for why this belongs in d). **→ docs/todo/storage.md buildcache capacity decision row**
 3. **`/mnt/buildcache/swapfile-emergency` provenance** — 16 GiB root-owned file (exactly 16 GiB, created 2026-08-20 09:12, NOT active swap per /proc/swaps, referenced by NO nix file). Investigated, correctly left alone, never recorded anywhere durable, never asked the owner. Finding dies with this report unless persisted (it now is, via §f/§g). **→ docs/todo/storage.md swapfile-emergency provenance decision row**
-~~4. Zone 6 verification probes, the owed evo-x2 reboot (flm :52626 corpse), queue-starvation/dirty-tree lane, closeout-dedup owner question — all carried unchanged from runs 1-5; correctly out of this session's scope.~~ **NOT-DO — dups of 06-10 b.1, upstream.md rows, pipeline.md rows.**
+   ~~4. Zone 6 verification probes, the owed evo-x2 reboot (flm :52626 corpse), queue-starvation/dirty-tree lane, closeout-dedup owner question — all carried unchanged from runs 1-5; correctly out of this session's scope.~~ **NOT-DO — dups of 06-10 b.1, upstream.md rows, pipeline.md rows.**
 
 ## d) TOTALLY FUCKED UP
 
@@ -58,18 +58,18 @@
 4. **File the buildcache-capacity TODO row** (this report is the source): 88G monitor365 rust target (active mtime, gc-protected) + 33G sccache (at cap) + 5.2G stale `go/pkg` (Jul 18) on a 220G disk at 97-100%; weekly `buildcache-gc` is structurally losing the race. **→ docs/todo/storage.md buildcache row**
 5. **Decide `swapfile-emergency`** (16G, root, 2026-08-20, inactive): owner question below. **→ docs/todo/storage.md swapfile row**
 6. go-taskqueue CHANGELOG.md entries for the two landed changes (before the next release cut). **→ docs/todo/upstream.md go-taskqueue rows**
-~~7. Run `scripts/test-cmd-tq.sh` + `scripts/check-facade-parity.sh` to close the two reasoning-only verifications.~~ **Won't implement — stale verify.**
-~~8. E2E: one real pool task against SystemNix → verify the verify-gate passes post-wifi-failover-fix; force a failing verify in a scratch repo → confirm the new fact format + evidence file on the LIVE journal.~~ **Won't implement — live pool E2E ran 2026-09-16.**
-9. Decide whether `FailureEvidence.Tail` (tq show/DLQ surface) should shrink to match the journal excerpt + path pointer. **→ docs/todo/upstream.md go-taskqueue verify surfaces**
-10. Add a visibility surface for the citation check (journal fact or harvest-result counter) — silent successes are unverifiable. **→ docs/todo/upstream.md citation-check row**
-~~11. Measure citation-check cost on the real SystemNix TODO_LIST (SHA-dense text, batch mode).~~ done — docs/todo/upstream.md citation-check row (cost measured)
-~~12. Fix the `12:xx` placeholder in TODO row 545 to the real verification time.~~ **Won't implement — cosmetic.**
-~~13. Verify go-taskqueue push state (4 daemon commits local vs origin).~~ **Won't implement — stale verify.**
-~~14. Consider: should the harvester SKIP (not annotate) items whose SHAs are BOTH dangling AND the item text is pure closeout-report residue (no live work)? Deferred as over-clever; revisit only if annotation noise shows up.~~ **Won't implement — deferred by design per item text.**
-~~15. Zone 6 verification probes (carried, §b.1 of run 5) — VM re-execution, live metric probe, generation parity.~~ done at `docs/services/memory-emergency-guard.md`
-~~16. The owed evo-x2 reboot (flm :52626 corpse) — still the structural fix for the flm/llama class.~~ done — docs/todo/stability.md corpse row
-17. Queue starvation / dirty-tree lane owner decision (carried, run-3 blocker). **→ docs/todo/upstream.md dirty-tolerant lane row**
-18. Closeout dedup / rate-limit owner question (carried; this is run SIX). **→ docs/todo/upstream.md closeout dedup row**
+   ~~7. Run `scripts/test-cmd-tq.sh` + `scripts/check-facade-parity.sh` to close the two reasoning-only verifications.~~ **Won't implement — stale verify.**
+   ~~8. E2E: one real pool task against SystemNix → verify the verify-gate passes post-wifi-failover-fix; force a failing verify in a scratch repo → confirm the new fact format + evidence file on the LIVE journal.~~ **Won't implement — live pool E2E ran 2026-09-16.**
+7. Decide whether `FailureEvidence.Tail` (tq show/DLQ surface) should shrink to match the journal excerpt + path pointer. **→ docs/todo/upstream.md go-taskqueue verify surfaces**
+8. Add a visibility surface for the citation check (journal fact or harvest-result counter) — silent successes are unverifiable. **→ docs/todo/upstream.md citation-check row**
+   ~~11. Measure citation-check cost on the real SystemNix TODO_LIST (SHA-dense text, batch mode).~~ done — docs/todo/upstream.md citation-check row (cost measured)
+   ~~12. Fix the `12:xx` placeholder in TODO row 545 to the real verification time.~~ **Won't implement — cosmetic.**
+   ~~13. Verify go-taskqueue push state (4 daemon commits local vs origin).~~ **Won't implement — stale verify.**
+   ~~14. Consider: should the harvester SKIP (not annotate) items whose SHAs are BOTH dangling AND the item text is pure closeout-report residue (no live work)? Deferred as over-clever; revisit only if annotation noise shows up.~~ **Won't implement — deferred by design per item text.**
+   ~~15. Zone 6 verification probes (carried, §b.1 of run 5) — VM re-execution, live metric probe, generation parity.~~ done at `docs/services/memory-emergency-guard.md`
+   ~~16. The owed evo-x2 reboot (flm :52626 corpse) — still the structural fix for the flm/llama class.~~ done — docs/todo/stability.md corpse row
+9. Queue starvation / dirty-tree lane owner decision (carried, run-3 blocker). **→ docs/todo/upstream.md dirty-tolerant lane row**
+10. Closeout dedup / rate-limit owner question (carried; this is run SIX). **→ docs/todo/upstream.md closeout dedup row**
 
 ## g) QUESTIONS FOR THE OWNER
 

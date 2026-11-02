@@ -40,7 +40,7 @@
 
 ## c) NOT STARTED (all user-gated or follow-on)
 
-~~1. Push bank-sync + dnsblockd; relock SystemNix inputs; deploy (awaiting OK — §g Q1).~~ done at `both pushed`, ` relocked`, ` deployed (docs/todo/upstream.md rows 26`, `131)`
+~~1. Push bank-sync + dnsblockd; relock SystemNix inputs; deploy (awaiting OK — §g Q1).~~ done at `both pushed`, `relocked`, `deployed (docs/todo/upstream.md rows 26`, `131)`
 ~~2. Wise SCA approval + OTT runbook (`docs/services/bank-sync-sca.md`) — human step; also unfreezes the phantom-writer natural experiment.~~ **Won't implement — runbook docs/services/bank-sync-sca.md owns recurrence; cycle closed.**
 ~~3. InboxClean main-account OAuth re-auth (consent screen → "In production" FIRST, then re-auth both accounts).~~ **Won't implement — InboxClean window passed.**
 ~~4. Post-deploy verification round (corruption lines gone, `bank_sync_sync_errors_total` reset, smoke re-run expecting only known WARNs).~~ done — post-deploy smoke asserts errors_total 0 (scripts/post-deploy-check.sh:768)
@@ -63,11 +63,12 @@
 ~~2. **Never stash/reset anything in shared trees** — the auto-commit daemon + parallel sessions make any tree mutation risky. Stash is `rm -rf`-class dangerous here. (Adding this to AGENTS.md as a Critical Rule candidate.)~~ **Won't implement — stash rule never landed in docs/agents; process absorbed.**
 ~~3. **Scratch probes live outside repos** — `/tmp` modules only; in-repo probe files WILL be swept by the daemon into history.~~ **Won't implement — process lesson.**
 ~~4. **Add observability to both fixes (small, high-value follow-ups):**~~ **NOT-DO — dup of c7 (fix observability).**
-   - dnsblockd: expose health-cache age / last-eval timestamp as a gauge (`dnsblockd_health_cache_age_seconds`) — makes the new staleness mechanism itself observable.
-   - bank-sync: count `parseStoredTimestamp` fallback hits (non-canonical rows parsed) as a metric — turns the phantom writer from a journal-grep into a dashboard line. If the counter climbs post-SCA, the writer is back AND observable.
-~~5. **Status-report claims should carry their evidence class** — "verified live" vs "concluded from one window" vs "inherited from a prior report". The pocket-id miss today was an evidence-class error, not a diligence error.~~ **Won't implement — process lesson.**
-~~6. **Heavy-job discipline is still documentation-only** — the `heavy-job` wrapper exists (workload-admission.nix) but nothing stops the next agent session from raw `go test`/`cargo nextest` storms that caused today's wedge. A cheap guard (wrapper alias in devShells, or a lint/hook reminder) would convert the lesson into enforcement.~~ **Won't implement — wrapper documented; devShell aliases never added.**
-~~7. **The 15:31 report should be annotated** (one line at top) pointing to this report's corrections — point-in-time doctrine says don't rewrite, but nothing says don't link forward. (Listed in §f.)~~ done — supersession header shipped inside the 17:28 report itself
+
+- dnsblockd: expose health-cache age / last-eval timestamp as a gauge (`dnsblockd_health_cache_age_seconds`) — makes the new staleness mechanism itself observable.
+- bank-sync: count `parseStoredTimestamp` fallback hits (non-canonical rows parsed) as a metric — turns the phantom writer from a journal-grep into a dashboard line. If the counter climbs post-SCA, the writer is back AND observable.
+  ~~5. **Status-report claims should carry their evidence class** — "verified live" vs "concluded from one window" vs "inherited from a prior report". The pocket-id miss today was an evidence-class error, not a diligence error.~~ **Won't implement — process lesson.**
+  ~~6. **Heavy-job discipline is still documentation-only** — the `heavy-job` wrapper exists (workload-admission.nix) but nothing stops the next agent session from raw `go test`/`cargo nextest` storms that caused today's wedge. A cheap guard (wrapper alias in devShells, or a lint/hook reminder) would convert the lesson into enforcement.~~ **Won't implement — wrapper documented; devShell aliases never added.**
+  ~~7. **The 15:31 report should be annotated** (one line at top) pointing to this report's corrections — point-in-time doctrine says don't rewrite, but nothing says don't link forward. (Listed in §f.)~~ done — supersession header shipped inside the 17:28 report itself
 
 ## f) NEXT TASKS (prioritized, ≤50)
 

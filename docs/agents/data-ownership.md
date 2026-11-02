@@ -10,42 +10,42 @@ You own data when you have all three:
 
 1. **Write authority** — exactly one place accepts writes for that domain.
    Two writers is not redundancy, it is two owners about to disagree.
-2. **A restore path you have actually run** — a backup leg *plus* a drill that
+2. **A restore path you have actually run** — a backup leg _plus_ a drill that
    proved it. An untested dump is a hope, not an asset.
 3. **An export path** — you can leave with the data in a usable format.
 
 Two things look like ownership and are not:
 
-- **Mirror** — a one-way copy. Correct by construction *only* if one direction
+- **Mirror** — a one-way copy. Correct by construction _only_ if one direction
   is inert (Forgejo pull mirrors, `google-sync`). A two-way sync creates a
   second writer and therefore a second truth.
 - **Projection** — a derived read model rebuilt from the truth (CRM
   projections, dashboard tiles, metrics, the CV interviews `.ics` feed).
 
-Corollary: owning the *data* is not owning the *box*. Holding the disk is the
+Corollary: owning the _data_ is not owning the _box_. Holding the disk is the
 strongest form (this fleet's in-house services), but a copy on someone else's
 host that you can restore and export still beats a self-hosted copy you cannot
 recover.
 
 ## Inventory
 
-| Domain              | Owner (write authority)                                                                  | Class                  | Restore path                                                                                               | Evidence                                                   |
-| ------------------- | ---------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Contacts            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29 (Mesh B)**; the Kith journal demotes to a read-only people projection (held ZERO people at the move) | **truth** (in-fleet; provision + drill pending) | nightly Stalwart store archive on pbx; PII restore drill = Pareto task 7 (pending) | `crm/docs/DATA-MESH.md` amendment · plan below |
-| Calendar            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29**, gated on the CalDAV probe verdict at the deployed pin (fallback Mesh A) | **truth** (probe + provision pending) | nightly Stalwart store archive on pbx; restore drill pending (Pareto task 7) | same amendment · plan below                              |
-| Mail                | Stalwart at `mail.artmann.tech` (Hetzner VPS, off-fleet — the module targets that host)   | not in fleet           | none in-fleet; `mail-relay` here is an outbound null client only                                           | `nix-email.nix:112` ("future VPS target") · `catalog-platform.nix:71` · `configuration.nix:669` |
-| Files (Drive)       | Google Drive — canonical                                                                 | **not yours**          | Google-side; the local mirror is DISABLED (`google-sync.enable = false`)                                   | `opencloud.md:3` · `configuration.nix:711`                 |
-| Files (self-hosted) | OpenCloud — pilot, complement mode, LAN/VPN-only                                         | second write surface   | pool + `restic-app-dumps`                                                                                  | `opencloud.md:3`                                           |
-| Photos / video      | Immich (`/mnt/pool/services/immich`)                                                     | **truth**              | `immich-db-backup` + `RequiresMountsFor` on the pool (fails loud, never shadow-writes)                     | `immich.md:5`                                              |
-| Documents           | Paperless-ngx (+ `triage`, `gpt`, dashboard)                                             | **truth**              | `restic-app-dumps` repo carries the per-service dumps                                                      | `restic-app-dumps.nix:1-5` · `paperless.md:1-5`            |
-| Tasks               | TaskChampion sync server (`tasks.home.lan`), Taskwarrior as client                       | **truth** (sync hub)   | `?` — no dump leg found in the module or runbook                                                           | `taskchampion.md:1-9`                                      |
-| Source code         | GitHub canonical; Forgejo = read-only pull mirrors (+ push mirrors for `canonicalRepos`) | mirror of an external truth | 4 legs: daily pool zip, 8h btrbk subvol, weekly stateDir, Sunday drill                                | `forgejo.md:1-6,216`                                       |
-| Chat                | Discord                                                                                  | **not yours** (archive) | `discordsync-db-backup` 03:45 → `/mnt/pool/backups/discordsync` (7d) + Sunday restore drill                | `discordsync.md:87`                                        |
-| Money               | Wise / the bank                                                                          | **not yours**          | `bank-sync` archives into Paperless                                                                        | `bank-sync.nix:97`                                         |
-| Reading (RSS)       | Miniflux                                                                                 | **truth** (subs + read state) | `miniflux-backup` 02:45 `pg_dump -Fc` → pool (14d)                                                   | `miniflux.md:18,162`                                       |
-| Browser history     | the local browsers → `browser-history` archive                                            | archive of a local store | `browser-history-backup` 02:15 → pool (14d)                                                              | `browser-history.md:19`                                    |
-| Identity / SSO      | Pocket ID (`auth.home.lan`)                                                              | **truth**              | `pocket-id-backup` reads the sqlite directly + `restic-app-dumps`                                          | `configuration.nix:780` · `restic-app-dumps.nix:4`         |
-| What exists         | integration registry / `services.catalog`                                                | derived                | regenerated, never restored                                                                                | `integration.nix` · `catalog-inventory-sync.nix`            |
+| Domain              | Owner (write authority)                                                                                                                                     | Class                                           | Restore path                                                                                | Evidence                                                                                        |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Contacts            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29 (Mesh B)**; the Kith journal demotes to a read-only people projection (held ZERO people at the move) | **truth** (in-fleet; provision + drill pending) | nightly Stalwart store archive on pbx; PII restore drill = Pareto task 7 (pending)          | `crm/docs/DATA-MESH.md` amendment · plan below                                                  |
+| Calendar            | **Stalwart at `pbx.artmann.tech` — declared 2026-10-29**, gated on the CalDAV probe verdict at the deployed pin (fallback Mesh A)                           | **truth** (probe + provision pending)           | nightly Stalwart store archive on pbx; restore drill pending (Pareto task 7)                | same amendment · plan below                                                                     |
+| Mail                | Stalwart at `mail.artmann.tech` (Hetzner VPS, off-fleet — the module targets that host)                                                                     | not in fleet                                    | none in-fleet; `mail-relay` here is an outbound null client only                            | `nix-email.nix:112` ("future VPS target") · `catalog-platform.nix:71` · `configuration.nix:669` |
+| Files (Drive)       | Google Drive — canonical                                                                                                                                    | **not yours**                                   | Google-side; the local mirror is DISABLED (`google-sync.enable = false`)                    | `opencloud.md:3` · `configuration.nix:711`                                                      |
+| Files (self-hosted) | OpenCloud — pilot, complement mode, LAN/VPN-only                                                                                                            | second write surface                            | pool + `restic-app-dumps`                                                                   | `opencloud.md:3`                                                                                |
+| Photos / video      | Immich (`/mnt/pool/services/immich`)                                                                                                                        | **truth**                                       | `immich-db-backup` + `RequiresMountsFor` on the pool (fails loud, never shadow-writes)      | `immich.md:5`                                                                                   |
+| Documents           | Paperless-ngx (+ `triage`, `gpt`, dashboard)                                                                                                                | **truth**                                       | `restic-app-dumps` repo carries the per-service dumps                                       | `restic-app-dumps.nix:1-5` · `paperless.md:1-5`                                                 |
+| Tasks               | TaskChampion sync server (`tasks.home.lan`), Taskwarrior as client                                                                                          | **truth** (sync hub)                            | `?` — no dump leg found in the module or runbook                                            | `taskchampion.md:1-9`                                                                           |
+| Source code         | GitHub canonical; Forgejo = read-only pull mirrors (+ push mirrors for `canonicalRepos`)                                                                    | mirror of an external truth                     | 4 legs: daily pool zip, 8h btrbk subvol, weekly stateDir, Sunday drill                      | `forgejo.md:1-6,216`                                                                            |
+| Chat                | Discord                                                                                                                                                     | **not yours** (archive)                         | `discordsync-db-backup` 03:45 → `/mnt/pool/backups/discordsync` (7d) + Sunday restore drill | `discordsync.md:87`                                                                             |
+| Money               | Wise / the bank                                                                                                                                             | **not yours**                                   | `bank-sync` archives into Paperless                                                         | `bank-sync.nix:97`                                                                              |
+| Reading (RSS)       | Miniflux                                                                                                                                                    | **truth** (subs + read state)                   | `miniflux-backup` 02:45 `pg_dump -Fc` → pool (14d)                                          | `miniflux.md:18,162`                                                                            |
+| Browser history     | the local browsers → `browser-history` archive                                                                                                              | archive of a local store                        | `browser-history-backup` 02:15 → pool (14d)                                                 | `browser-history.md:19`                                                                         |
+| Identity / SSO      | Pocket ID (`auth.home.lan`)                                                                                                                                 | **truth**                                       | `pocket-id-backup` reads the sqlite directly + `restic-app-dumps`                           | `configuration.nix:780` · `restic-app-dumps.nix:4`                                              |
+| What exists         | integration registry / `services.catalog`                                                                                                                   | derived                                         | regenerated, never restored                                                                 | `integration.nix` · `catalog-inventory-sync.nix`                                                |
 
 Note on identity: there are **two** identity authorities — Pocket ID for SSO,
 and a separate Kith CRM identity DB (`identity-YYYY-MM-DD.db`, mode 0600) that
@@ -62,7 +62,7 @@ chassis for almost everything:
 - The restic repo that dedups the app dumps is **pool-local** — "losing the host
   loses the repo" (`restic-app-dumps.nix:6-10`).
 - So today durable data has btrbk same-disk snapshots + a pool copy: two copies,
-  one chassis. "You own it" here means *you own it until the box is gone*.
+  one chassis. "You own it" here means _you own it until the box is gone_.
 
 Fix the second test before adding new surfaces, not after.
 
@@ -79,7 +79,7 @@ Fix the second test before adding new surfaces, not after.
    tale: a mirror can freeze silently for 12 days).
 5. **Wire the restore leg and the export path in the same change.** A truth with
    no drill is how you discover ownership is theoretical.
-6. **Delete the loser.** Land the replacement, verify parity, *then* remove the
+6. **Delete the loser.** Land the replacement, verify parity, _then_ remove the
    old surface (the 2026-08-31 `glm-5.3-flash` lesson). Two surfaces that both
    claim to be truth is the one state that is never acceptable, not even
    briefly.

@@ -7,6 +7,7 @@
 **RE-ENABLED 2026-10-18** (owner decision; agent + server `enable = true` in configuration.nix). The 2026-08-12 disable reason — the private `wireguard-collector` crate unfetchable inside the Nix sandbox ("could not read Username") — is obsolete: upstream restructured to the preparedSrc pattern (collector-utils family fetched as flake inputs OUTSIDE the sandbox, path deps rewritten in-tree, crane build), locked in SystemNix since 2026-10-16 (d2c77df8c).
 
 Post-re-enable runtime residue (2026-10-18):
+
 - **Stale uid on the pool buffer tree** — `/mnt/pool/services/monitor365` carries uid 966:956 from the pre-disable user; if the recreated user gets a different uid, re-chown before/after first start (wrapper NOTE at monitor365.nix `agentStoragePath`).
 - **Stale textfile collector file** — `monitor365-backup.prom` (Aug 2, `monitor365_backup_age_hours 999`) refreshes once the 03:00 backup first fires; gatus may flag it orange until then.
 - **Server watchdog + agent watchdog** return with the units; post-deploy-check un-SKIPs automatically once units exist.
@@ -82,7 +83,7 @@ Forced-fire evidence tool: `scripts/monitor365-backup-fire.sh` (self-elevates; p
 1. **Per-upload `MAX(sequence)` full-table scan** — every upload runs an `UNGROUPED_AGGREGATE` over ~all 200M events rows (`idx_events_tenant_sequence` unused); 1.4-2.6 s server time per POST.
 2. **Agent batch_size=100 amplification** — `monitor365 init/pair` writes `batch_size = 100` (upstream default, settings.nix) → 50K-event sync cycle = ~500 POSTs. SystemNix fix landed: `batch_size = mkDefault 5000` in monitor365.nix (inert until the agent starts).
 3. **380M-event backlog that never acks** — uploads 500 (pool of 5 exhausted by the scans) → circuit breaker → `delete_acked` never runs → the agent re-reads and re-uploads forever (`cloud_sync_events_uploaded_from_store 0`).
-4. **gen_* migrations NEVER applied** — DuckDB cannot ADD generated columns after table creation; migrations 020-024 were no-ops forever and the runner logs failures at DEBUG → `Binder Error: Table "e" does not have a column named "gen_app"` every 5-min fast loop (app_usage_refresh) for weeks.
+4. **gen** migrations NEVER applied_* — DuckDB cannot ADD generated columns after table creation; migrations 020-024 were no-ops forever and the runner logs failures at DEBUG → `Binder Error: Table "e" does not have a column named "gen_app"` every 5-min fast loop (app_usage_refresh) for weeks.
 5. **Watchdog restart churn** — 33 restarts/24h (health 000 during scans + pool-error grep), each start = WAL replay + `bg.cleanup` first cycle where `cleanup_cycle == 0 % 24` fires the FULL MV refresh (full-table COUNT) → the "daily" scan ran at EVERY start.
 
 **Fixes implemented upstream** (~/projects/monitor365, unpushed at session time — see that repo's `docs/status/2026-10-26_23-24_live-io-storm-root-cause-and-fixes.md`): per-tenant sequence watermark (O(1) append), gen_* removal → inline json_extract_string, dmesg probe-once latch (kills the SIGSYS coredump/min), window_focused display gate (kills the xdotool loop), count-cache TTL 30s→600s.

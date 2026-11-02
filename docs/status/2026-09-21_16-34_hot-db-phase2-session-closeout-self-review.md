@@ -25,12 +25,12 @@
 ## c) NOT STARTED (all owner-gated or later-wave; nothing agent-side left for this item)
 
 1. Wave 1-3 migration windows: pocket-id → postgres → discordsync (runbook ready).
-~~2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.~~ done — implemented 9546e7a1 (paperless.nix paperless-db-backup 02:00 timer); verified 2026-09-22_05-07 closeout §a.3; tests/test-paperless.nix steps 8+13
-~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:84).**
-4. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.
-5. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail.
-~~6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.~~ done — hot-db.nix:393-495 hot-db-metrics collector + per-entry Gatus (T14, 2026-09-30; CHANGELOG:439); VM failure-transition test green
-7. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green.
+   ~~2. Paperless PG-level dump job (or ratified exporter-only RPO) — queued `[ready]`.~~ done — implemented 9546e7a1 (paperless.nix paperless-db-backup 02:00 timer); verified 2026-09-22_05-07 closeout §a.3; tests/test-paperless.nix steps 8+13
+   ~~3. Docker data-root move (~20 G, own window).~~ **Won't implement — decided-against — earmark dropped, data-root stays /data/docker on QLC (docs/agents/storage.md:84).**
+2. RPO review (plan T15): dump-cadence inventory per migrated DB + WAL-archiving decision.
+3. Wave-2 (dnsblockd, papdashboard) and the gatus cow=true entry (plan T13) — deferred with the rest of the plan tail.
+   ~~6. Monitoring wiring (plan T14): `hot_db_mount_present` textfile metric + Gatus per-entry checks.~~ done — hot-db.nix:393-495 hot-db-metrics collector + per-entry Gatus (T14, 2026-09-30; CHANGELOG:439); VM failure-transition test green
+4. Both hot-db VM tests unrealized on the current tree (storm-blocked builds) — flagged by the verification round; the assertions check (eval-level) IS green.
 
 ## d) TOTALLY FUCKED UP (honest list)
 

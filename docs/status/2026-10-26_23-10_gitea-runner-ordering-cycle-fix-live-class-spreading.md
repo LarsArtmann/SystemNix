@@ -23,6 +23,7 @@ forgejo/start            waits for  multi-user/start      ← mkDnsGate injects 
 ```
 
 Evidence chain:
+
 - Journal 2026-10-25 22:23:56 (first boot carrying the gate edge): `Found ordering cycle: gitea-runner-evo\x2dx2.service/start after forgejo.service/start after multi-user.target/start - after gitea-runner-evo\x2dx2.service` → `Job gitea-runner-evo\x2dx2.service/start deleted to break ordering cycle`. Runner dead ~11h (until the 09:36 deploy).
 - busctl Before/After dumps: runner `Before=[multi-user.target, shutdown.target]`, `After=[…, forgejo.service]`; forgejo `After=[…, multi-user.target, …]`; caddy carries the same Before=multi-user edge (it is systemd-normal for wanted long-running units — the runner's edge was NOT anomalous, forgejo's gate edge + our After=forgejo were the two added sides of the triangle).
 - Generated unit file on disk has NO Before= line → the edge is runtime-added by systemd's default-target-dependency logic.
@@ -67,7 +68,7 @@ Verification performed pre-deploy: `wantedBy` eval = `["forgejo.service"]`, full
 
 Nothing destroyed, no data loss, no wrong config deployed — but five real misses:
 
-1. **Fired the deploy without pre-checking IO pressure** — while having JUST read the 20:40 report documenting that same evening's 61-minute gate fight. The deploy battery correctly aborted (exit 12, real storm: sdb 101.3%, sdd 94.6%, nvme0n1 100.9%) — but burning a battery on a storm that was already visible is exactly the waste the entry gate exists to prevent, and *I* could have pre-checked `/proc/pressure/io` in one command.
+1. **Fired the deploy without pre-checking IO pressure** — while having JUST read the 20:40 report documenting that same evening's 61-minute gate fight. The deploy battery correctly aborted (exit 12, real storm: sdb 101.3%, sdd 94.6%, nvme0n1 100.9%) — but burning a battery on a storm that was already visible is exactly the waste the entry gate exists to prevent, and _I_ could have pre-checked `/proc/pressure/io` in one command.
 2. **Assumed mutation rights I didn't have:** `busctl StartUnit` on the runner → polkit "Access denied". The documented agent probe set is READ-ONLY; a write attempt should never have been typed without expecting this.
 3. **Three attempts to eval one attribute** (attr-path escaping fumble → "Did you mean gitea-runner-evo\x2dx2?" → getFlake impurity error → `--impure` finally worked). The error message had already told me the correct form.
 4. **Hook trip:** an `rg -l … /nix/store/*` line got blocked by the rg-replace guard (known documented trap class) — rerouted, but wasted a round trip.

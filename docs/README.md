@@ -4,19 +4,19 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 
 ## Directory Structure
 
-| Directory          | Purpose                                                                |
-| ------------------ | ---------------------------------------------------------------------- |
-| `agents/`          | Agent knowledge library: domain references split from AGENTS.md        |
-| `architecture/`    | System architecture docs, ADRs, dependency graphs                      |
+| Directory          | Purpose                                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `agents/`          | Agent knowledge library: domain references split from AGENTS.md                                                           |
+| `architecture/`    | System architecture docs, ADRs, dependency graphs                                                                         |
 | `brainstorming/`   | Design notes, ratified and half-formed — **read before designing anything**, a ratified plan here outranks a fresh design |
-| `learnings/`       | Lessons learned from debugging and sessions                            |
-| `operations/`      | Operational procedures and post-deployment checklists                  |
-| `planning/`        | Roadmaps, planning documents, unimplemented proposals                  |
-| `prompts/`         | Reusable debugging and analysis prompts                                |
-| `services/`        | **Per-service runbooks** — ports, secrets, traps, verification; one per enabled service |
-| `status/`          | Status reports from work sessions (older reports in `status/archived/`) |
-| `todo/`            | TODO domain libraries (`storage`, `monitoring`, `services`, …) — the detail behind `TODO_LIST.md` |
-| `troubleshooting/` | Known issues and their solutions                                       |
+| `learnings/`       | Lessons learned from debugging and sessions                                                                               |
+| `operations/`      | Operational procedures and post-deployment checklists                                                                     |
+| `planning/`        | Roadmaps, planning documents, unimplemented proposals                                                                     |
+| `prompts/`         | Reusable debugging and analysis prompts                                                                                   |
+| `services/`        | **Per-service runbooks** — ports, secrets, traps, verification; one per enabled service                                   |
+| `status/`          | Status reports from work sessions (older reports in `status/archived/`)                                                   |
+| `todo/`            | TODO domain libraries (`storage`, `monitoring`, `services`, …) — the detail behind `TODO_LIST.md`                         |
+| `troubleshooting/` | Known issues and their solutions                                                                                          |
 
 ## Key Documents
 

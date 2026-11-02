@@ -19,7 +19,7 @@ record: `docs/status/2026-09-23_13-26_eventcatalog-hub-session3-t5-t13-executed.
 | Freshness    | `architecture-catalog-metrics` (5-min textfile collector) → `architecture_catalog_*` gauges                                                                                                                                                                                 |
 | Monitoring   | Gatus "Architecture Catalog" (+ llms.txt, silent) + "Architecture Catalog Freshness"; `architecture-catalog-sync` in system-health                                                                                                                                          |
 | Backup       | none — fully rebuildable from the `dist` branch                                                                                                                                                                                                                             |
-| AI surface   | `/llms.txt` + `/llms-full.txt` (200-verified 2026-10-12); raw schemas live under `/schemas/<kind>/…` (plain files, no dir index — `/schemas.txt` does NOT exist; runbook claimed it until 2026-10-12. MCP server is Scale-license gated — deliberately not wired) |                                                                                                                                                                                   |
+| AI surface   | `/llms.txt` + `/llms-full.txt` (200-verified 2026-10-12); raw schemas live under `/schemas/<kind>/…` (plain files, no dir index — `/schemas.txt` does NOT exist; runbook claimed it until 2026-10-12. MCP server is Scale-license gated — deliberately not wired)           |
 
 Data flow: each source repo's Go binary exports an EventCatalog tree
 (bank-sync: `bank-sync catalog --format eventcatalog`; cqrs-htmx:
@@ -126,7 +126,7 @@ them). The vHost serves 404s meanwhile (no `current` symlink).
 ## Freshness semantics
 
 The CI writes `build-stamp.json` (`builtAt`) into `dist/`. The collector
-  derives `architecture_catalog_stamp_age_seconds` and flips
+derives `architecture_catalog_stamp_age_seconds` and flips
 `architecture_catalog_fresh` at `freshMaxAgeHours` (36h default). Budget
 arithmetic (stamped 2026-10-12 from live config): nightly cron fires 03:23
 UTC; GitHub→Forgejo pull mirrors sync every 2h (`forgejo.nix`

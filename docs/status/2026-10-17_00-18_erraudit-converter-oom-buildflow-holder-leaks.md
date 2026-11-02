@@ -9,17 +9,17 @@
 
 ## Incident timeline (all 2026-10-16 unless noted)
 
-| Time (CEST) | Event |
-| --- | --- |
-| ~10:1x / ~17:4x / ~20:0x | Three `TestRunGoInDir_WaitDelayBoundsGrandchildPipes` runs in `~/projects/BuildFlow/modules/gomod-checker` leak 6 immortal `exe/holder` orphan processes (PPID 1, ~800 KB RSS each, infinite `waitRelease` poll loop) |
-| 23:38:17 | **Global kernel OOM kill #1**: `converter.test` (erraudit) at 17.9 GB anon → kernel OOM-killer fires and — because its oom_score_adj=300 beats everything else — kills **llama-chat.service's llama-server (pid 1782)** as the victim. converter.test dies too. Journal: `oom-kill:constraint=CONSTRAINT_NONE,global_oom,task=llama-server` |
-| 23:44:28 | **OOM #2**: `converter.test` again at 19.1 GB anon, killed again |
-| 23:53:56 | **OOM #3**: `converter.test` at 20.1 GB anon, killed again; hermes logs "system memory pressure is critical; spawning no new workers" (23:54:52, 23:55:54) — kanban dispatch deferred, not dropped |
-| 23:5x | Session starts: user reports a "convert test" using 77 GB RAM (77 GB = peak VSZ across restarts/accumulation; kernel dumps show 17–20 GB anon per single run) |
-| 23:5x | holder origins identified → BuildFlow `go_cmd_test.go` `holderProgram`; 6 holders killed via `pkill -f exe/holder` |
-| 23:5x–00:0x | Root fix applied in BuildFlow: `waitRelease` bounded to 2 min. Tests pass. |
-| 23:57:28 | Live watcher armed: `/tmp/converter-test-watcher.sh` (pid 3681856, background shell 016), polls 1 Hz for `converter.test` / `go test .*internal/converter`, dumps full ancestry (cwd, env, parent chain, fds) to `/tmp/converter-test-watcher.log`, then SIGTERM→SIGKILL the tree |
-| 00:18 | Watcher alive, no re-fire yet; no holders present; converter.test not running |
+| Time (CEST)              | Event                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~10:1x / ~17:4x / ~20:0x | Three `TestRunGoInDir_WaitDelayBoundsGrandchildPipes` runs in `~/projects/BuildFlow/modules/gomod-checker` leak 6 immortal `exe/holder` orphan processes (PPID 1, ~800 KB RSS each, infinite `waitRelease` poll loop)                                                                                                                       |
+| 23:38:17                 | **Global kernel OOM kill #1**: `converter.test` (erraudit) at 17.9 GB anon → kernel OOM-killer fires and — because its oom_score_adj=300 beats everything else — kills **llama-chat.service's llama-server (pid 1782)** as the victim. converter.test dies too. Journal: `oom-kill:constraint=CONSTRAINT_NONE,global_oom,task=llama-server` |
+| 23:44:28                 | **OOM #2**: `converter.test` again at 19.1 GB anon, killed again                                                                                                                                                                                                                                                                            |
+| 23:53:56                 | **OOM #3**: `converter.test` at 20.1 GB anon, killed again; hermes logs "system memory pressure is critical; spawning no new workers" (23:54:52, 23:55:54) — kanban dispatch deferred, not dropped                                                                                                                                          |
+| 23:5x                    | Session starts: user reports a "convert test" using 77 GB RAM (77 GB = peak VSZ across restarts/accumulation; kernel dumps show 17–20 GB anon per single run)                                                                                                                                                                               |
+| 23:5x                    | holder origins identified → BuildFlow `go_cmd_test.go` `holderProgram`; 6 holders killed via `pkill -f exe/holder`                                                                                                                                                                                                                          |
+| 23:5x–00:0x              | Root fix applied in BuildFlow: `waitRelease` bounded to 2 min. Tests pass.                                                                                                                                                                                                                                                                  |
+| 23:57:28                 | Live watcher armed: `/tmp/converter-test-watcher.sh` (pid 3681856, background shell 016), polls 1 Hz for `converter.test` / `go test .*internal/converter`, dumps full ancestry (cwd, env, parent chain, fds) to `/tmp/converter-test-watcher.log`, then SIGTERM→SIGKILL the tree                                                           |
+| 00:18                    | Watcher alive, no re-fire yet; no holders present; converter.test not running                                                                                                                                                                                                                                                               |
 
 **Launcher signature (identified, owner not yet proven):** `timeout 120 env GOEXPERIMENT=jsonv2 GOWORK=off GOFLAGS=-mod=mod go test ./internal/converter/ -run 'TestFocus|TestFilter|TestGoldenTreeDeterminism' -v` — run in `~/projects/erraudit/internal/converter` (`tree_focus_filter_test.go` + `golden_test.go`). The env-prefix style matches BuildFlow tool invocation, but no BuildFlow gate runs those tests; prime suspects are an agent session iterating on erraudit (4 `crush -y` processes + `crush-daily` scheduler + hermes kanban workers were live all evening). The watcher will name the parent conclusively on next fire.
 
@@ -60,7 +60,7 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Agents must not run unbounded-memory test suites on the shared 128 GB box** — erraudit's converter tests were launched by *something* with no memory ceiling; every `go test` an agent launches under `timeout N` should also carry `systemd-run --scope -p MemoryMax=…` (or GOMEMLIMIT) when the suite is unproven. The `timeout 120` wrapper bounded CPU time and nothing else.
+1. **Agents must not run unbounded-memory test suites on the shared 128 GB box** — erraudit's converter tests were launched by _something_ with no memory ceiling; every `go test` an agent launches under `timeout N` should also carry `systemd-run --scope -p MemoryMax=…` (or GOMEMLIMIT) when the suite is unproven. The `timeout 120` wrapper bounded CPU time and nothing else.
 2. **Test cleanup must not live only in `defer`/`t.Cleanup` when the cleanup target is a separate process** — anything a test spawns that outlives the binary needs a self-expiring design (the BuildFlow fix pattern: bounded wait) or a PID-file sweep in the suite's `TestMain`.
 3. **Global OOM victim selection is a config problem, not luck** — llama-chat's oom_score_adj=300 (set by its unit to be killable) is exactly backwards for a service the owner wants resilient; either give it oom_score_adj=0 with a hard MemoryMax, or accept it as the designated sacrifice explicitly.
 4. **oom_score_adj=-1000 on test binaries** (inherited from the launching agent's cgroup environment) makes every agent-spawned process OOM-immune; the launcher side should normalize this before running foreign test suites.
@@ -70,9 +70,10 @@
 8. **Concurrent-session awareness worked but should be recorded**: a parallel session committed `docs/status/2026-10-17_00-17_ai-meter-build-session-status.html` mid-session and owns the working-tree `ai-meter` changes; this report deliberately does not touch or attribute those.
 
 ## f) Up to 50 things to get done next
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED — because the authoring instruction was report-then-wait (owner-gated; note above). Continuation of this work stream is tracked in docs/planning/2026-10-18_02-35_DOCS-CORPUS-PARETO-COMPLETION-PLAN.md.
 
-*Operator cap: 50. This is a brainstorm ranked by impact, not a commitment list — harvest (with routing rigor) is deferred until the owner says go. Suggested routing in brackets, SystemNix domains per TODO system; erraudit/BuildFlow items belong in THOSE repos.*
+_Operator cap: 50. This is a brainstorm ranked by impact, not a commitment list — harvest (with routing rigor) is deferred until the owner says go. Suggested routing in brackets, SystemNix domains per TODO system; erraudit/BuildFlow items belong in THOSE repos._
 
 1. [erraudit] Read `tree_focus_filter_test.go` + `golden_test.go`, find the 17–20 GB fixture, bound it (golden-tree at reduced scale, `t.Cleanup`, drop `t.Parallel` on the memory-heavy three).
 2. [erraudit] Re-run the three tests with `GOMEMLIMIT=4GiB` + `systemd-run --scope -p MemoryMax=8G` to prove the bound holds before any next launch.
@@ -93,7 +94,7 @@
 17. [erraudit] File the leak as a tracked issue in the erraudit repo with the journal evidence table (oom timestamps, RSS, launcher signature).
 18. [SystemNix] Post-deploy/pre-deploy checks: add an OOM-recent check (§N) so deploys during an active OOM storm get flagged.
 19. [SystemNix/ai-stack] Re-check the other llama-servers (bge-m3, bge-reranker, qwen3.6-35b) survived the pressure window; the qwen server restarted at 02:22 elapsed at check time (23:5x) — suspicious, verify its restart cause.
-20. [SystemNix/monitoring] The GPU/GTT and memory-watermark audits caught nothing here — a *global-pressure* audit hook (PSI spike + oom journal) is the missing layer; consider adding to the eval-time audit family.
+20. [SystemNix/monitoring] The GPU/GTT and memory-watermark audits caught nothing here — a _global-pressure_ audit hook (PSI spike + oom journal) is the missing layer; consider adding to the eval-time audit family.
 21. [erraudit] If the golden-tree test NEEDS the full scale: precompute/persist the golden tree to disk instead of RAM (stream or mmap).
 22. [erraudit] Add `-test.count=1` guidance or Make-free flake app for converter tests so stale-cache confusion doesn't trigger re-runs.
 23. [SystemNix] AGENTS.md session discipline: add "pkill/pgrep are the only working process-kill primitives from agent shells" (kill builtin + sudo + /bin/kill all failed this session).
@@ -128,8 +129,8 @@
 ## g) Questions I cannot answer myself
 
 1. **Which session or schedule owns the erraudit `go test` launches?** I know the exact command signature and that it re-fired three times through OOM kills, but not whether it's one of the live `crush -y` sessions, a crush-daily job, or a hermes kanban worker. (The watcher will name it on next fire — but if YOU know which agent is working in erraudit tonight, we can stop the relaunch loop at the source instead of killing symptoms.)
-2. **Is the 17–20 GB footprint a bug or the intended fixture scale?** If the golden-tree test is *supposed* to process a dataset of that size, the fix is disk-backed/streaming; if it's supposed to be small, it's an accumulation bug. What's the intended data volume for `TestGoldenTreeDeterminism`?
-3. **llama-chat OOM posture:** the 23:38 kill chose llama-server *because* its unit sets oom_score_adj=300. Do you want it hardened against global-OOM victim selection (MemoryMin/oom_score_adj tradeoff), or is "AI server is the designated sacrifice, it restarts" the accepted doctrine?
+2. **Is the 17–20 GB footprint a bug or the intended fixture scale?** If the golden-tree test is _supposed_ to process a dataset of that size, the fix is disk-backed/streaming; if it's supposed to be small, it's an accumulation bug. What's the intended data volume for `TestGoldenTreeDeterminism`?
+3. **llama-chat OOM posture:** the 23:38 kill chose llama-server _because_ its unit sets oom_score_adj=300. Do you want it hardened against global-OOM victim selection (MemoryMin/oom_score_adj tradeoff), or is "AI server is the designated sacrifice, it restarts" the accepted doctrine?
 
 ---
 

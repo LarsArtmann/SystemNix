@@ -42,58 +42,58 @@ Nothing landed broken — but two self-caught process failures, reported honestl
 
 ## f) NEXT 50 (prioritized; §f self-harvest note: every item below is ALREADY tracked in TODO_LIST/docs/todo at the cited row — no new rows minted this report, per the "deliberately not re-harvested because already queued" record)
 
-| # | Item | Row |
-|---|------|-----|
-| 1 | Ghostty interactive-scope IO storm root-cause (blocked 3+ deploys) | monitoring.md:167 |
-| 2 | tq-agent-pool harvest full-rescan skip-cursor (sustained a whole freeze) | stability.md:161 |
-| 3 | InboxClean dashboard query cost — upstream cache/LIMIT | upstream.md:15 |
-| 4 | Productize `scripts/deploy-when-quiescent.sh` (3 lost batteries) | queue:1525 |
-| 5 | PG-cluster-shadow-split pre-deploy gate (data-loss class) | storage.md:13 |
-| 6 | `.migrate-state` wave-6 forensics | storage.md:14 |
-| 7 | Tick pipeline.md twins for rows 648/1386/1419/1491 (this report's own follow-up) | this report §b.1 |
-| 8 | ai-meter deploy chain (key-perm fix → VM → deploy → live smoke) | ai-stack.md:39 |
-| 9 | Deploy + live-verify caddy edge-tracing :4318 fix | monitoring.md:174 |
-| 10 | Deploy the 2026-10-20/21 stability batch + verify | queue:174 |
-| 11 | sev1 chronic-storm latch implementation | stability.md:101 |
-| 12 | system-health `extraCollectors` decomposition (byte-stable names) | queue:520 |
-| 13 | configuration.nix diet 1522→≤600 | queue:521 |
-| 14 | signoz family → per-service dirs | queue:522 |
-| 15 | hermes-migrate WAL-branch VM fixture | queue:879 |
-| 16 | system-health freshness-composite fixtures | monitoring.md:131 |
-| 17 | Per-endpoint gatus failure NAMES collector | monitoring.md:163 |
-| 18 | §17 user.slice sweep leg | monitoring.md:95 |
-| 19 | Phantom-metric detector (frozen-gauge class) | monitoring.md:148 |
-| 20 | paperless consume-dir staleness/depth probe | monitoring.md:146 |
-| 21 | Better-model bench (abliterated Qwen3 family) | ai-stack.md:19 |
-| 22 | Vulkan llama.cpp experiment (owner-gated soak) | ai-stack.md:20 |
-| 23 | catalog VM test (`test-architecture-catalog.nix`) | queue:379 |
-| 24 | drive-paperless journal/walk scalability pass | queue:367 |
-| 25 | Offsite-borg VM rehearsal + §13/§16 fixture family | storage.md:97 |
-| 26 | Boot-mirror path-trigger VM-test runtime leg | storage.md:166 |
-| 27 | Gitleaks Slack rule + fixture | security.md:31 |
-| 28 | Pre-deploy §17 negative-path fixture selftest | stability.md:27 |
-| 29 | `check_user_service` dead code (wire or delete) | monitoring.md:13 |
-| 30 | Textfile-collector exit-0/empty-value class audit (~20 collectors) | monitoring.md:15 |
-| 31 | Zero-python allowlist gate | queue:1324 |
-| 32 | First `--apply` of `scripts/prune-done-todos.sh` | queue:680 |
-| 33 | Pairing-WARN recount pass (41 left: 13 wrong-link + 28 no-entry) | queue:678 |
-| 34 | Unharvested §f sweep (131 and rising) | queue:50 |
-| 35 | `gate:sudo` pre-flight + structured gate fields in harvest | queue:956 |
-| 36 | R19: locate tq harvest impl, map 5 hardening rules | queue:681 |
-| 37 | Doc-counts eval gate (README asserts vs nix-eval truth) | queue:1505 |
-| 38 | `docs/status/archived/` manifest README (1,457 files) | queue:1506 |
-| 39 | Catalog-DNS eval warning: 21 subdomains, decide per name | queue:1420 |
-| 40 | Batch `client.timeout` 15s across all /metrics gatus checks | monitoring.md:161 |
-| 41 | Alert-description disambiguation pass (gatus-config.nix) | monitoring.md:162 |
-| 42 | `system_service_cpu_percent` all-zeros phantom fix + canary | monitoring.md:124 |
-| 43 | Paperless llmindex age-gauge query fix (false RAG-dark) | monitoring.md:142 |
-| 44 | Storm-aware ghostty scope IOWeight cap decision | monitoring.md:167 |
-| 45 | monitor365 volume batch deploy at PSI-calm + rendered spot-check | queue:341 |
-| 46 | Hot-user-caches tmp migration follow-ups (parallel session owns) | storage.md:182 |
-| 47 | monitor365 upstream mainProgram + Binder-error fix | upstream.md:200/553 |
-| 48 | `ssh-suspend-guard` inhibitor verify | desktop.md:27 |
-| 49 | KeePassXC managed-storage key names vs primary source | desktop.md:55 |
-| 50 | Drain the XS/S tail (~300 rows, ~15 h batched) | 2026-10-26 inventory |
+| #  | Item                                                                             | Row                  |
+| -- | -------------------------------------------------------------------------------- | -------------------- |
+| 1  | Ghostty interactive-scope IO storm root-cause (blocked 3+ deploys)               | monitoring.md:167    |
+| 2  | tq-agent-pool harvest full-rescan skip-cursor (sustained a whole freeze)         | stability.md:161     |
+| 3  | InboxClean dashboard query cost — upstream cache/LIMIT                           | upstream.md:15       |
+| 4  | Productize `scripts/deploy-when-quiescent.sh` (3 lost batteries)                 | queue:1525           |
+| 5  | PG-cluster-shadow-split pre-deploy gate (data-loss class)                        | storage.md:13        |
+| 6  | `.migrate-state` wave-6 forensics                                                | storage.md:14        |
+| 7  | Tick pipeline.md twins for rows 648/1386/1419/1491 (this report's own follow-up) | this report §b.1     |
+| 8  | ai-meter deploy chain (key-perm fix → VM → deploy → live smoke)                  | ai-stack.md:39       |
+| 9  | Deploy + live-verify caddy edge-tracing :4318 fix                                | monitoring.md:174    |
+| 10 | Deploy the 2026-10-20/21 stability batch + verify                                | queue:174            |
+| 11 | sev1 chronic-storm latch implementation                                          | stability.md:101     |
+| 12 | system-health `extraCollectors` decomposition (byte-stable names)                | queue:520            |
+| 13 | configuration.nix diet 1522→≤600                                                 | queue:521            |
+| 14 | signoz family → per-service dirs                                                 | queue:522            |
+| 15 | hermes-migrate WAL-branch VM fixture                                             | queue:879            |
+| 16 | system-health freshness-composite fixtures                                       | monitoring.md:131    |
+| 17 | Per-endpoint gatus failure NAMES collector                                       | monitoring.md:163    |
+| 18 | §17 user.slice sweep leg                                                         | monitoring.md:95     |
+| 19 | Phantom-metric detector (frozen-gauge class)                                     | monitoring.md:148    |
+| 20 | paperless consume-dir staleness/depth probe                                      | monitoring.md:146    |
+| 21 | Better-model bench (abliterated Qwen3 family)                                    | ai-stack.md:19       |
+| 22 | Vulkan llama.cpp experiment (owner-gated soak)                                   | ai-stack.md:20       |
+| 23 | catalog VM test (`test-architecture-catalog.nix`)                                | queue:379            |
+| 24 | drive-paperless journal/walk scalability pass                                    | queue:367            |
+| 25 | Offsite-borg VM rehearsal + §13/§16 fixture family                               | storage.md:97        |
+| 26 | Boot-mirror path-trigger VM-test runtime leg                                     | storage.md:166       |
+| 27 | Gitleaks Slack rule + fixture                                                    | security.md:31       |
+| 28 | Pre-deploy §17 negative-path fixture selftest                                    | stability.md:27      |
+| 29 | `check_user_service` dead code (wire or delete)                                  | monitoring.md:13     |
+| 30 | Textfile-collector exit-0/empty-value class audit (~20 collectors)               | monitoring.md:15     |
+| 31 | Zero-python allowlist gate                                                       | queue:1324           |
+| 32 | First `--apply` of `scripts/prune-done-todos.sh`                                 | queue:680            |
+| 33 | Pairing-WARN recount pass (41 left: 13 wrong-link + 28 no-entry)                 | queue:678            |
+| 34 | Unharvested §f sweep (131 and rising)                                            | queue:50             |
+| 35 | `gate:sudo` pre-flight + structured gate fields in harvest                       | queue:956            |
+| 36 | R19: locate tq harvest impl, map 5 hardening rules                               | queue:681            |
+| 37 | Doc-counts eval gate (README asserts vs nix-eval truth)                          | queue:1505           |
+| 38 | `docs/status/archived/` manifest README (1,457 files)                            | queue:1506           |
+| 39 | Catalog-DNS eval warning: 21 subdomains, decide per name                         | queue:1420           |
+| 40 | Batch `client.timeout` 15s across all /metrics gatus checks                      | monitoring.md:161    |
+| 41 | Alert-description disambiguation pass (gatus-config.nix)                         | monitoring.md:162    |
+| 42 | `system_service_cpu_percent` all-zeros phantom fix + canary                      | monitoring.md:124    |
+| 43 | Paperless llmindex age-gauge query fix (false RAG-dark)                          | monitoring.md:142    |
+| 44 | Storm-aware ghostty scope IOWeight cap decision                                  | monitoring.md:167    |
+| 45 | monitor365 volume batch deploy at PSI-calm + rendered spot-check                 | queue:341            |
+| 46 | Hot-user-caches tmp migration follow-ups (parallel session owns)                 | storage.md:182       |
+| 47 | monitor365 upstream mainProgram + Binder-error fix                               | upstream.md:200/553  |
+| 48 | `ssh-suspend-guard` inhibitor verify                                             | desktop.md:27        |
+| 49 | KeePassXC managed-storage key names vs primary source                            | desktop.md:55        |
+| 50 | Drain the XS/S tail (~300 rows, ~15 h batched)                                   | 2026-10-26 inventory |
 
 ## g) Questions only the owner can answer
 

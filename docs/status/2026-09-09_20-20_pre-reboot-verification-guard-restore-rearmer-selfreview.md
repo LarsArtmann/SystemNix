@@ -107,14 +107,14 @@ record where the evidence contradicted it. No deploys, no config changes this se
 1. **Positive-control journal filters**: before ruling anything out via journalctl,
    prove the filter matches a KNOWN event of that source (the `-u` vs syslog-id
    artifact has now bitten twice).
-~~2. **Enumerate all actors** when documenting "what starts/re-arms X" — one observed~~ **Won't implement — stale: two-re-armer enumeration completed in-doc; corpse class cleared (docs/todo/stability.md corpse row DONE-MOOT 2026-09-30).**
+   ~~2. **Enumerate all actors** when documenting "what starts/re-arms X" — one observed~~ **Won't implement — stale: two-re-armer enumeration completed in-doc; corpse class cleared (docs/todo/stability.md corpse row DONE-MOOT 2026-09-30).**
    mechanism is a hypothesis, not a complete model.
-3. **llama wedge tripwire**: port-liveness is green during mid-load wedges; add a
+2. **llama wedge tripwire**: port-liveness is green during mid-load wedges; add a
    duration-based check (`/health` 503 for >15 min = wedge) rather than
    point-in-time status checks.
-4. **Corpse-aware guard restore (P1 candidate, documented)**: restore branch should
+3. **Corpse-aware guard restore (P1 candidate, documented)**: restore branch should
    skip when the backend journal shows recent `bind: Address already in use`.
-~~5. **pre-reboot-check §10 candidate**: gcroots/profiles resolution check (from~~ done at `in-doc DONE 2026-09-10 marker; scripts/pre-reboot-check.sh carries the 3-way anchor`, ` exit-4 predictor and GC-anchoring sections`
+   ~~5. **pre-reboot-check §10 candidate**: gcroots/profiles resolution check (from~~ done at `in-doc DONE 2026-09-10 marker; scripts/pre-reboot-check.sh carries the 3-way anchor`, `exit-4 predictor and GC-anchoring sections`
    session-3 forensics); **smoke-baseline age-stamp**; **exit-4 predictor** =
    changed-unit ∩ failed-unit set (the "3 failed units arm the next deploy" advisory
    is only true for units whose FILES change — the 18:35 deploy activated cleanly
@@ -128,7 +128,7 @@ record where the evidence contradicted it. No deploys, no config changes this se
    silently skips §2. Fixture-tested via BOOT_DIR (f1–f5) + live-verified
    (18 PASS / 0 FAIL; predictor correctly names inboxclean-sync +
    service-health-check, correctly absolves fastflowlm).
-~~6. **No silent pipelines**: every verification probe should assert its own output is~~ done — no-silent-pipeline class landed as fail-closed scrape_errors pattern across collectors (modules/nixos/services/system-health.nix:1429)
+   ~~6. **No silent pipelines**: every verification probe should assert its own output is~~ done — no-silent-pipeline class landed as fail-closed scrape_errors pattern across collectors (modules/nixos/services/system-health.nix:1429)
    non-empty.
 
 ## Self-critique — forgot / could-have-done-better / still-improvable
@@ -148,16 +148,16 @@ record where the evidence contradicted it. No deploys, no config changes this se
 
 ~~1. Await user reboot (SAFE verdict at gen 764).~~ **Won't implement — stale one-shot: await reboot - multiple reboots since Sep-09.**
 ~~2. Post-boot: verify `readlink /run/current-system` = `50z91iw1…`, `/nix` source =~~ **Won't implement — stale one-shot post-boot anchor verify; anchoring later machine-enforced (CHANGELOG 2026-10-17 deploy anchor self-repair).**
-   Samsung p2, `uname -r` = 7.2.3, booted gcroot flipped off `p0ccbqj5`.
+Samsung p2, `uname -r` = 7.2.3, booted gcroot flipped off `p0ccbqj5`.
 ~~3. Post-boot: after 2–5 min cold load, flm :52625 `/v1/models` 200 + llama~~ **Won't implement — stale: flm corpse verified GONE 2026-09-30 (docs/todo/stability.md corpse row).**
-   :8848/:8849 `/health` 200 — expect corpse + wedge classes GONE.
+:8848/:8849 `/health` 200 — expect corpse + wedge classes GONE.
 ~~4. Post-boot: failed-unit count ~0; remove `/boot/loader/loader.conf.bak-stuckboot`.~~ **Won't implement — stale one-shot: failed-unit check + loader.conf.bak removal; boot path superseded by Samsung boot-mirror era (CHANGELOG 2026-09-18-20).**
 ~~5. Post-boot: `p0ccbqj5` pin-or-release decision (user).~~ **Won't implement — stale decision on long-GC'd generation p0ccbqj5.**
 ~~6. Post-boot: one `nix run .#deploy` → refresh smoke baseline (expect 7→≤2 FAILs:~~ **Won't implement — stale one-shot baseline refresh; baseline fully triaged 2026-10-08 (docs/todo/services.md baseline-14 row).**
-   bank-sync SCA + signoz upstream).
+bank-sync SCA + signoz upstream).
 ~~7. Start 3-day soak clock (→ ~Sep-12); journal soak observations.~~ **Won't implement — stale: soak clock window (Sep-12) long passed; flip recorded live in docs/todo/storage.md Phase-1 row.**
 ~~8. Watch Sep-10 00:00 nix-gc: `g9ghy625` survives via ladder pin; `p0ccbqj5`~~ **Won't implement — stale GC watch; retention later changed to 7d (docs/agents/nix-flakes.md gcroots entry).**
-   collectability changes only after reboot.
+collectability changes only after reboot.
 
 **Robustness / monitoring (post-soak P1):**
 ~~9. Corpse-aware memory-guard restore (skip on recent EADDRINUSE) — upstream edit in~~ **NOT-DO — dup of e4 corpse-aware guard restore.**

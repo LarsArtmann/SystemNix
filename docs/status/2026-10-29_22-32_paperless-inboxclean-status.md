@@ -4,20 +4,21 @@
 
 **Live unit verdict at probe time (22:3x):**
 
-| Unit | State | Note |
-| --- | --- | --- |
-| paperless-web / -consumer / -task-queue / -gpt / -gpt-token | active | core stack green; gpt pinned 0.28.0 |
-| paperless-db-backup | inactive | timer oneshot, normal |
-| paperless-exporter | inactive | stale failed state, no journal — open triage row |
-| inboxclean-web | active | `/` and `/health` 200 in 20–70 ms live; slow-query WARNs (sync_state 818 ms, corpus read model 4.2 s) under load |
-| inboxclean-sync | **failed** | every 30-min tick: "Failed with result 'timeout'" (21:58, 22:28 today); 2026-10-27 triage attributed `gmail.token_revoked` — app-level pre-kill log pull still owed |
-| inboxclean-indexer-web / -canary-metrics | inactive | canary timer-led; indexer not enabled |
+| Unit                                                        | State      | Note                                                                                                                                                                |
+| ----------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| paperless-web / -consumer / -task-queue / -gpt / -gpt-token | active     | core stack green; gpt pinned 0.28.0                                                                                                                                 |
+| paperless-db-backup                                         | inactive   | timer oneshot, normal                                                                                                                                               |
+| paperless-exporter                                          | inactive   | stale failed state, no journal — open triage row                                                                                                                    |
+| inboxclean-web                                              | active     | `/` and `/health` 200 in 20–70 ms live; slow-query WARNs (sync_state 818 ms, corpus read model 4.2 s) under load                                                    |
+| inboxclean-sync                                             | **failed** | every 30-min tick: "Failed with result 'timeout'" (21:58, 22:28 today); 2026-10-27 triage attributed `gmail.token_revoked` — app-level pre-kill log pull still owed |
+| inboxclean-indexer-web / -canary-metrics                    | inactive   | canary timer-led; indexer not enabled                                                                                                                               |
 
 ---
 
 ## a) FULLY DONE
 
 **Paperless**
+
 - Core stack + SSO-only login (Pocket ID, since 2026-09-02) stable; break-glass semantics proven.
 - Scanner intake (Brother ADS-1800W → consume dir) end-to-end with campaign instrumentation (2026-10-19).
 - bank-sync→paperless archival automated (runtime DRF token mint, placeholder sops file deleted, 2026-10-01).
@@ -28,6 +29,7 @@
 - T6 accounting-entity drift: declarative `ensureTags`/`ensureCustomFields` heal LANDED, VM-proven.
 
 **InboxClean**
+
 - inboxclean-web live and responsive right now (this morning's 502 class resolved; the 2026-10-25 stop-without-start unit is serving).
 - io.max `IOReadBandwidthMax` 20 MB/s by-id cap LANDED in tree (c4c72e6f9/d1ff5fbd5) — the storm-mitigation leg.
 - OAuth honesty chain fixed upstream (auth dead-grant fall-through 1540a56, /health 8s budget + 60s verdict cache c4d62a3, banner d23c48a) — tested, sitting unpushed.
@@ -37,6 +39,7 @@
 ## b) PARTIALLY DONE
 
 **Paperless**
+
 - Decision-triage gate: green in tree, **DEPLOY PENDING** — blocked 2026-10-29 at the deploy entry gate by IO-PSI corpse pile; re-fire under quiescence. Post-deploy smoke list lives in paperless.md §Decision-triage gate.
 - T6 live heal + `journalctl -u paperless-dashboard-provision | grep ensured` verification: rides the same deploy.
 - Accounting-extraction runbook vs live DB reconciliation: heal landed; live probe found faktura tag + Invoice number/Issue date fields + gpt-auto pipeline ABSENT (SUPERB-restore suspicion) — reconcile after deploy.
@@ -46,6 +49,7 @@
 - Pocket ID group mapping deploy+live-verify legs: [blocked:deploy].
 
 **InboxClean**
+
 - Storm-hardening: cap landed; the **reconnect-backoff + bounded-aggregation-queries** legs (the freeze-#27/#28 driver work: 1.5 GB DB rescanned ~38×/h, `/`-poller identification) still [ready]/unlanded.
 - Upstream push train: 3+ tested commits unpushed (auth honesty, /health cache, banner, dead-grant chain) — `[blocked:user]` push permission.
 - 2026-10-20/21 stability batch (inboxclean-web 1G MemoryMax raise etc.): deployed or riding the pending train per the stability rows.
@@ -59,12 +63,14 @@
 ## d) TOTALLY FUCKED UP (broken live, right now)
 
 **Paperless**
+
 1. **RAG dark and rotting**: `paperless_llmindex_last_success_age_seconds` = 2,582,421 s ≈ **29.9 days**; `llm_index` failed 32 unacked (also today 08:03/08:05/14:24: FLM 500 "input (548/794/758 tokens) too large, batch 512" — the known ai-stack starvation row, unfixed); 480 llm_index journal lines today; pending queue 11. The known "metric may be phantom" caveat does NOT apply anymore — journal confirms fresh failures.
 2. **Inbox backlog 1,595 docs** unprocessed (consume pipeline starved behind the llm_index failures + auto workflow disabled after two burn incidents).
 3. **Collation mismatch** (DB created on glibc 2.42, OS now 2.44) still unfixed — silent index-corruption drift window, one ALTER away since 2026-10-06.
 4. paperless-exporter stale failed state, last-good unknown (in the 12-unit failed batch, untriaged).
 
 **InboxClean**
+
 1. **inboxclean-sync red on every tick** (30-min cadence): 2026-10-27 root-cause `gmail.token_revoked` / `invalid_grant` retryable=false on BOTH accounts; today's failures render as 5-min **timeout** kills — the app-level log pull before the kill is the open triage leg. Fix = owner ceremony: flip OAuth consent screen to **"In production"** FIRST, then `inboxclean auth` per account. This is the **third occurrence** of the Testing-mode 7-day bomb class (2026-09-04, 2026-10-14, 2026-10-27) and the structural cause (consent screen status) is still unconfirmed-fixed.
 2. **Gmail sync is dark** until re-consent: statement archiving/decryption and the `gmail` tag self-heal PATCH all ride the sync tick — nothing new lands in Paperless from Gmail meanwhile.
 

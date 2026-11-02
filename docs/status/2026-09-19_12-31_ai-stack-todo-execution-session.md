@@ -33,16 +33,17 @@
 ## b) PARTIALLY DONE
 
 ~~6. **Item "FastFlowLM smoke: assert model NAME in `/v1/models` + idle-check unit test" — half of it is already in the tree.**~~ done — idle-check test landed (docs/status/2026-09-19_17-47 a4)
-   `scripts/post-deploy-check.sh:287-299` ALREADY derives the bound model from the deployed unit's ExecStart (`systemctl cat fastflowlm.service | sed -n 's/.*flm serve \([^ ]*\).*/\1/p'`) and asserts it in the `/v1/models` body, with a distinct FAIL for answered-but-wrong-model. That sub-item is DONE (by a prior/parallel session). The **idle-check unit test does not exist** — full design below (§f.1).
+`scripts/post-deploy-check.sh:287-299` ALREADY derives the bound model from the deployed unit's ExecStart (`systemctl cat fastflowlm.service | sed -n 's/.*flm serve \([^ ]*\).*/\1/p'`) and asserts it in the `/v1/models` body, with a distinct FAIL for answered-but-wrong-model. That sub-item is DONE (by a prior/parallel session). The **idle-check unit test does not exist** — full design below (§f.1).
 
 ~~7. **Item "flm-dark aggregate monitoring check" — PMA recalibration half.**~~ done — ratio metric landed (docs/status/2026-09-19_17-47 a2)
-   Live probe answers the item's literal question: **`fallbacks_over_threshold` IS tripping right now** — `system_pma_commit_fallbacks_24h = 1337`, `system_pma_commit_failures_1h = 19` (threshold 3 → `failures_over_threshold 1`), `scrape_errors 0`. The count threshold works at high volume. The real residual gap: a week of 100% fallbacks at LOW commit volume (e.g. 2 heuristic commits/24h) trips NOTHING (2 < 20). Designed but not implemented: ratio-based signal (§f.2).
+Live probe answers the item's literal question: **`fallbacks_over_threshold` IS tripping right now** — `system_pma_commit_fallbacks_24h = 1337`, `system_pma_commit_failures_1h = 19` (threshold 3 → `failures_over_threshold 1`), `scrape_errors 0`. The count threshold works at high volume. The real residual gap: a week of 100% fallbacks at LOW commit volume (e.g. 2 heuristic commits/24h) trips NOTHING (2 < 20). Designed but not implemented: ratio-based signal (§f.2).
 
 ~~8. **Item "Rogue-listener defense for :8848/:8849 while llama-rag is disabled" — MOTIVATION PROVEN LIVE, design complete, not implemented.**~~ done — dark-guard landed, live-verified 2 rogues (docs/status/2026-09-19_17-47 a1)
-   **TWO rogue orphan llama-servers are live RIGHT NOW** on the wedged `llama-cpp-0.4.0` build (the module's pinned build is 0.3.0 — anything 0.4.0 on these ports is by definition foreign):
-   - PID **995413** — `bge-m3` on **:8848** — uid 975 (hermes), PPid 1, cgroup `user@975.service/app.slice/hermes-worker-cron-ed3fc8b0…scope` — **State S, 37.4% CPU sustained, 1h46m40s CPU over 4h45m elapsed = the mid-load spin class, ACTIVE**.
-   - PID **995415** — `bge-reranker-v2-m3` on **:8849** — same orphan shape, 0.9% CPU.
-     This is the 2026-09-18 orphan class RECURRED (third time: 09-18, the 09-19 report, now). Nothing detects it today. I cannot kill uid-975 processes (no sudo in agent sandbox). Full design at §f.3 — the new collector would flag both rogues immediately on first run.
+**TWO rogue orphan llama-servers are live RIGHT NOW** on the wedged `llama-cpp-0.4.0` build (the module's pinned build is 0.3.0 — anything 0.4.0 on these ports is by definition foreign):
+
+- PID **995413** — `bge-m3` on **:8848** — uid 975 (hermes), PPid 1, cgroup `user@975.service/app.slice/hermes-worker-cron-ed3fc8b0…scope` — **State S, 37.4% CPU sustained, 1h46m40s CPU over 4h45m elapsed = the mid-load spin class, ACTIVE**.
+- PID **995415** — `bge-reranker-v2-m3` on **:8849** — same orphan shape, 0.9% CPU.
+  This is the 2026-09-18 orphan class RECURRED (third time: 09-18, the 09-19 report, now). Nothing detects it today. I cannot kill uid-975 processes (no sudo in agent sandbox). Full design at §f.3 — the new collector would flag both rogues immediately on first run.
 
 ~~9. **Item "Paperless RAG degradation visibility" — design complete, not implemented.** §f.3 covers it (same collector + second Gatus check).~~ done — landed (docs/status/2026-09-19_17-47 a1)
 
@@ -57,14 +58,16 @@
 ## c) NOT STARTED
 
 ~~13. **ALL code edits.** Nothing in the tree changed this session. Specifically not started:~~ done — all six artifacts landed (docs/status/2026-09-19_17-47 a1-a6)
-    - `modules/nixos/services/llama-rag.nix` dark-guard (Items K+L) — §f.3.
-    - `modules/nixos/services/system-health.nix` PMA ratio metric — §f.2.
-    - `scripts/post-deploy-check.sh` corpse gate — §f.4.
-    - `tests/test-fastflowlm-idle.nix` + `tests/default.nix` registration — §f.1.
-    - `scripts/llama-rag-soak.sh` + flake app — §f.5.
-    - `.github/workflows/llama-rag-pin-expiry.yml` — §f.6.
-~~14. **Todo bookkeeping:** `docs/todo/ai-stack.md` updates (close Items B/E/F with outcomes; retag D-history + J-execution as `[blocked:user]`), `TODO_LIST.md` queue sync, CHANGELOG pruning of closed items. None touched.~~ done — 8 items closed + pruned (docs/status/2026-09-19_17-47 a7)
-~~15. **Verification gates:** no `nix fmt`, no `nix flake check --no-build`, no evals run (nothing to verify — no edits).~~ done — full sweep green, flake check REAL_RC=0 (docs/status/2026-09-19_17-47 a8)
+
+- `modules/nixos/services/llama-rag.nix` dark-guard (Items K+L) — §f.3.
+- `modules/nixos/services/system-health.nix` PMA ratio metric — §f.2.
+- `scripts/post-deploy-check.sh` corpse gate — §f.4.
+- `tests/test-fastflowlm-idle.nix` + `tests/default.nix` registration — §f.1.
+- `scripts/llama-rag-soak.sh` + flake app — §f.5.
+- `.github/workflows/llama-rag-pin-expiry.yml` — §f.6.
+  ~~14. **Todo bookkeeping:** `docs/todo/ai-stack.md` updates (close Items B/E/F with outcomes; retag D-history + J-execution as `[blocked:user]`), `TODO_LIST.md` queue sync, CHANGELOG pruning of closed items. None touched.~~ done — 8 items closed + pruned (docs/status/2026-09-19_17-47 a7)
+  ~~15. **Verification gates:** no `nix fmt`, no `nix flake check --no-build`, no evals run (nothing to verify — no edits).~~ done — full sweep green, flake check REAL_RC=0 (docs/status/2026-09-19_17-47 a8)
+
 16. **The `[watch]` / `[decision]` items** (flm v1.0.2 SIGABRT watch, llama-rag monitoring depth, post-deploy llama-rag verification chain, MiniMax quota, paperless reranking direction) — untouched by design (owner/time-gated).
 
 ---
@@ -99,10 +102,11 @@ Nothing destructive happened — but three honest failures:
 ~~2. **PMA fallback-ratio recalibration** in `system-health.nix`: add `PMA_COMMITS_24H` journal count (`--since "-24h" --grep "committed changes"`, same timeout-60/exit≤1 discipline; init `""`, merge its status into the existing fail branch), compute `PMA_COMMIT_RATIO_OVER=1` when `total ≥ 3 && fallback*100/total ≥ 90`, emit `system_pma_commit_fallback_ratio_over_threshold` UNCONDITIONALLY in the success block (0 when below floor — never a value-less line, never absent-on-quiet-week) + optional `system_pma_commit_fallback_ratio_percent` only when computable. Add `[BODY] == pat(*\nsystem_pma_commit_fallback_ratio_over_threshold 0\n*)` to the "PMA Commit Health" conditions (system-health.nix:1754-1759). Verify the exact success journal line first (`journalctl -u projects-management-automation --since -25h --grep "committed"` sample) before trusting the grep.~~ done — landed (docs/status/2026-09-19_17-47 a2)
 
 ~~3. **llama-rag dark-guard (Items K+L)** in `modules/nixos/services/llama-rag.nix`:~~ done — landed + registry checks (docs/status/2026-09-19_17-47 a1)
-   - Restructure `config = lib.mkIf cfg.enable { … }` (line 304) → `config = lib.mkMerge [ (lib.mkIf cfg.enable { … }) (lib.mkIf (!cfg.enable) { …dark guard… }) ]`.
-   - In the `let`: `paperlessWantsRag = ((config.services.paperless or { }).enable or false);` + `darkGuardScript` (writeShellScript, exact leakMetricsScript hygiene: mktemp XXXXXX + chmod 644 + trap EXIT + mv + CAP_FOWNER in unit). Emission: `llama_rag_ports_rogue_listeners` (`grep -cE ":(embPort|rrPort)[^0-9]"` over `timeout 10 ss -tln`, `|| true`, emit only when computed), `llama_rag_dark_scrape_errors`, and — only when `paperlessWantsRag` — `paperless_rag_embeddings_dark 1` (always 1 while the collector exists, BY CONFIG: a rogue listener must never turn this green).
-   - Unit `llama-rag-dark-guard` + 5-min timer, mirroring `llama-rag-leak-metrics` (lines 410-436: harden{} merge, Type oneshot, CAP_FOWNER CAP_DAC_OVERRIDE, TimeoutStartSec 1min, ioTier.background, startLimit 3/300s). No deploy.sh entry needed (timer-driven like the leak collector).
-   - Second registry entry in the disabled branch: `services.integration.llama-rag-dark = { enable = true; vHost.layer = "none"; checks = [ rogue-check ] ++ lib.optionals paperlessWantsRag [ dark-check ]; }`. Rogue check: node-exporter :9100, `[BODY] == pat(*\nllama_rag_ports_rogue_listeners 0\n*)` + `[BODY] != pat(*\nllama_rag_dark_scrape_errors 1*)` — **first run will be RED: both live rogues (§b.8) are the alert working as designed**. Dark check: `[BODY] == pat(*\npaperless_rag_embeddings_dark 0\n*)` — deliberately red while disabled (one alert, standing dashboard red, Turso precedent), disappears on re-enable when the enabled-side entry's /health checks take over. Verified against integration.nix assertions: absolute `url` avoids checkWithoutPort; no subdomain avoids dnsMissing; layer "none" avoids vhost fan-out; homepage/otel/backup/monitored default null/false → no other fan-out.
+
+- Restructure `config = lib.mkIf cfg.enable { … }` (line 304) → `config = lib.mkMerge [ (lib.mkIf cfg.enable { … }) (lib.mkIf (!cfg.enable) { …dark guard… }) ]`.
+- In the `let`: `paperlessWantsRag = ((config.services.paperless or { }).enable or false);` + `darkGuardScript` (writeShellScript, exact leakMetricsScript hygiene: mktemp XXXXXX + chmod 644 + trap EXIT + mv + CAP_FOWNER in unit). Emission: `llama_rag_ports_rogue_listeners` (`grep -cE ":(embPort|rrPort)[^0-9]"` over `timeout 10 ss -tln`, `|| true`, emit only when computed), `llama_rag_dark_scrape_errors`, and — only when `paperlessWantsRag` — `paperless_rag_embeddings_dark 1` (always 1 while the collector exists, BY CONFIG: a rogue listener must never turn this green).
+- Unit `llama-rag-dark-guard` + 5-min timer, mirroring `llama-rag-leak-metrics` (lines 410-436: harden{} merge, Type oneshot, CAP_FOWNER CAP_DAC_OVERRIDE, TimeoutStartSec 1min, ioTier.background, startLimit 3/300s). No deploy.sh entry needed (timer-driven like the leak collector).
+- Second registry entry in the disabled branch: `services.integration.llama-rag-dark = { enable = true; vHost.layer = "none"; checks = [ rogue-check ] ++ lib.optionals paperlessWantsRag [ dark-check ]; }`. Rogue check: node-exporter :9100, `[BODY] == pat(*\nllama_rag_ports_rogue_listeners 0\n*)` + `[BODY] != pat(*\nllama_rag_dark_scrape_errors 1*)` — **first run will be RED: both live rogues (§b.8) are the alert working as designed**. Dark check: `[BODY] == pat(*\npaperless_rag_embeddings_dark 0\n*)` — deliberately red while disabled (one alert, standing dashboard red, Turso precedent), disappears on re-enable when the enabled-side entry's /health checks take over. Verified against integration.nix assertions: absolute `url` avoids checkWithoutPort; no subdomain avoids dnsMissing; layer "none" avoids vhost fan-out; homepage/otel/backup/monitored default null/false → no other fan-out.
 
 ~~4. **Corpse gate** in `scripts/post-deploy-check.sh` (inside `if $flm_enabled; then`, before the curl at line 287): capture `timeout 20 journalctl -u fastflowlm.service --since "-2h" --grep "bind: Address already in use" --output cat --no-pager -n 1` into a var (`|| true`, no pipe), and when non-empty `report_fail` immediately with the reboot-only message — `elif` the existing curl block. Prevents the 480s stall + doomed-start + 21.6 GB cold-load churn per smoke.~~ done — landed (docs/status/2026-09-19_17-47 a3)
 
@@ -116,7 +120,7 @@ Nothing destructive happened — but three honest failures:
 8. **Bisect execution** (root + owner consent): run §f.5 soak against candidate 0.4.x builds (and, if the spin survives across llama.cpp versions — as freeze-5 proved — bisect ROCm runtime/kernel/GPU-state upstream of llama.cpp, per the item).
 9. **/data EIO triage**: `smartctl -A` + scrub delta on the `mmproj.gguf` file's volume (llmfan46 model dir) — storage.md owns; file may be a single-victim repair candidate.
 10. **flm-dark history verification** (root): gatus sqlite (`/var/lib/private/gatus/gatus.db`) — confirm "FastFlowLM NPU LLM" fired during Sep 4-11 (mechanism analysis says it must have been red; this closes the item's first half with evidence instead of inference).
-~~11. **Deploy the batch** once items 1-6 land: pressure-gated `nix run .#deploy` (expect the two new AI checks red — rogue real, dark by-design — plus §10 auto-loan for the new metrics).~~ done — deployed: dark-guard live detecting rogues (docs/status/2026-09-20_15-30)
+    ~~11. **Deploy the batch** once items 1-6 land: pressure-gated `nix run .#deploy` (expect the two new AI checks red — rogue real, dark by-design — plus §10 auto-loan for the new metrics).~~ done — deployed: dark-guard live detecting rogues (docs/status/2026-09-20_15-30)
 
 **Bookkeeping (agent-actionable, quick):**
 

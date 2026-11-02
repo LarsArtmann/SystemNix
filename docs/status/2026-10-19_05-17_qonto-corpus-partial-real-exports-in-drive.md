@@ -35,14 +35,14 @@
 
 ## f) NEXT
 
-| # | Task | Impact | Effort | Owner |
-|---|------|--------|--------|-------|
-| 1 | Get the Drive folder contents onto the box (owner download-drop into the repo dir, OR wire the google-sync remote read-only, OR the drive-paperless ingest once live) | 🔴 completes the corpus | S-M | owner/me |
-| 2 | Validate each new CSV (headers, windows, junk rows) + let the deployed units import; verify row counts + dashboard | 🔴 | S | me |
-| 3 | Paperless DB restore (P0) → then the statement-upload verification (recipe committed) | 🔴 | S | root session |
-| 4 | Extend the paperless statement upload to the FULL export set (titles/created per period) once the corpus is known | 🟠 | S | me |
-| 5 | Qonto attachment creds → receipts archival | 🟠 | owner |
-| 6 | pma forward relock | ⚪ | push |
+| # | Task                                                                                                                                                                  | Impact                  | Effort | Owner        |
+| - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------ | ------------ |
+| 1 | Get the Drive folder contents onto the box (owner download-drop into the repo dir, OR wire the google-sync remote read-only, OR the drive-paperless ingest once live) | 🔴 completes the corpus | S-M    | owner/me     |
+| 2 | Validate each new CSV (headers, windows, junk rows) + let the deployed units import; verify row counts + dashboard                                                    | 🔴                      | S      | me           |
+| 3 | Paperless DB restore (P0) → then the statement-upload verification (recipe committed)                                                                                 | 🔴                      | S      | root session |
+| 4 | Extend the paperless statement upload to the FULL export set (titles/created per period) once the corpus is known                                                     | 🟠                      | S      | me           |
+| 5 | Qonto attachment creds → receipts archival                                                                                                                            | 🟠                      | owner  |              |
+| 6 | pma forward relock                                                                                                                                                    | ⚪                      | push   |              |
 
 ## g) TOP 3 QUESTIONS
 

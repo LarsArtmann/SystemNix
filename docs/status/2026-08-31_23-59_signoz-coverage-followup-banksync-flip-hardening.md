@@ -103,9 +103,9 @@ signoz_logs_pipeline_stale 0
    `~/projects/dnsblockd` (`internal/otel/otel.go`, working tree only).
    Everything else is ready: config key live, flip procedure documented,
    budget will go 5 → 4. Blocked on user commit+push (I never push).
-~~2. **The 3 KNOWN_NEW_METRICS loans need retirement** next deploy (verify~~ done at `loans retired; gate now KNOWN_NEW_METRICS=signoz_logs_pipeline_stale + auto-derivation (scripts/pre-deploy-check.sh:815)`
+   ~~2. **The 3 KNOWN_NEW_METRICS loans need retirement** next deploy (verify~~ done at `loans retired; gate now KNOWN_NEW_METRICS=signoz_logs_pipeline_stale + auto-derivation (scripts/pre-deploy-check.sh:815)`
    live → delete; the list header now says "a one-deploy loan, not a museum").
-~~3. **test-gatus-patterns VM test edited but NOT built+run** — eval passes;~~ done at `registered as checks.gatus-patterns`, ` built+run by nix flake check (tests/default.nix:35)`
+   ~~3. **test-gatus-patterns VM test edited but NOT built+run** — eval passes;~~ done at `registered as checks.gatus-patterns`, `built+run by nix flake check (tests/default.nix:35)`
    the risky part (gatus API field-name assumption, see d6) is unverified
    until the VM runs (heavy-job wrap it).
 
@@ -153,15 +153,15 @@ metrics-freshness layer (P2); everything else in §f.
 1. **Dashboard JSON pre-deploy validation**: overlap check (pure python,
    offline) + ideally a dry-run POST against the SigNoz v2 API in
    pre-deploy-check — the provisioner is the LAST line, not the first.
-~~2. **Concurrent-tree deploy discipline**: re-run `nix flake check --no-build`~~ done — fresh-check discipline enforced adjacent to deploys via pre-commit + CI flake check (.github/workflows/nix-check.yml:27)
+   ~~2. **Concurrent-tree deploy discipline**: re-run `nix flake check --no-build`~~ done — fresh-check discipline enforced adjacent to deploys via pre-commit + CI flake check (.github/workflows/nix-check.yml:27)
    in the same breath as the deploy; the tree can break between an old check
    and a new deploy.
-~~3. **Smoke threshold sanity**: "System — I/O pressure avg10=70.82% (healthy)"~~ done — answered by IO-PSI deploy gate with phantom discrimination (scripts/deploy.sh:200-208)
+   ~~3. **Smoke threshold sanity**: "System — I/O pressure avg10=70.82% (healthy)"~~ done — answered by IO-PSI deploy gate with phantom discrimination (scripts/deploy.sh:200-208)
    PASSING at 70% looks like a broken threshold (deploy-time IO pressure is
    expected, but 70% labeled healthy needs a second look).
-4. Document the **gatus-API-status-is-HTTP-only** lesson in AGENTS.md (it
+2. Document the **gatus-API-status-is-HTTP-only** lesson in AGENTS.md (it
    invalidated a whole test file silently).
-5. Document the **runNixOSTest read-only overlays collision** (test-side
+3. Document the **runNixOSTest read-only overlays collision** (test-side
    `nixpkgs.overlays` + framework-injected pkgs → "defined multiple times";
    stub the UNIT, not the package set).
 
@@ -169,12 +169,12 @@ metrics-freshness layer (P2); everything else in §f.
 
 **P0:**
 
-~~1. User commits+pushes dnsblockd → `nix flake lock --update-input dnsblockd`~~ done at `dnsblockd wiring=config`, ` spans verified 2026-09-13`, ` budget ratcheted to 3 (modules/nixos/services/signoz-coverage.nix:447`, `501)`
-   → flip wiring `upstream` → `config` → **lower maxUpstreamGaps to 4** →
-   deploy → verify first dnsblockd spans (config key already live).
+~~1. User commits+pushes dnsblockd → `nix flake lock --update-input dnsblockd`~~ done at `dnsblockd wiring=config`, `spans verified 2026-09-13`, `budget ratcheted to 3 (modules/nixos/services/signoz-coverage.nix:447`, `501)`
+→ flip wiring `upstream` → `config` → **lower maxUpstreamGaps to 4** →
+deploy → verify first dnsblockd spans (config key already live).
 ~~2. Retire the 3 KNOWN_NEW_METRICS loans after confirming them live.~~ **NOT-DO — dup of b2 (same-file KNOWN_NEW_METRICS retirement).**
 ~~3. Build+run `tests/test-gatus-patterns.nix` (heavy-job wrapped) — verifies~~ **NOT-DO — dup of b3 (same-file test-gatus-patterns run).**
-   the errors/success field assumption + the RED endpoint.
+the errors/success field assumption + the RED endpoint.
 ~~4. Human glance at the "Telemetry Coverage" dashboard in the UI.~~ **Won't implement — one-shot dashboard glance; window long passed.**
 
 **P1 (upstream instrumentation — each is its own session):**
@@ -202,7 +202,7 @@ logs+metrics-only in the registry comments.
 e5 — still open).
 18. otel-endpoint-audit `configExpression` support (dnsblockd YAML key; both
 audits share one truth).
-~~19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let~~ done at `upstream vendorHash baked`, ` consumer shims dropped (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
+~~19. bank-sync upstream CHANGELOG + tag (vendorHash refresh upstream would let~~ done at `upstream vendorHash baked`, `consumer shims dropped (docs/todo/upstream.md bank-sync vendorHash RESOLVED 2026-10-07)`
 SystemNix DROP the override).
 ~~20. dnsblockd upstream CHANGELOG + transport-selection test.~~ done at `upstream v0.9.3 tag carries OTLP + cached-/health fixes (docs/todo/upstream.md dnsblockd housekeeping)`
 21. `tests/test-signoz-coverage.nix` (eval-assertion + generated-registry **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions lists tests/test-signoz-coverage.nix**

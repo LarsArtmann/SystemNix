@@ -69,4 +69,5 @@ Scope: THIS session only (the P07–P14 execution run; session 1 of the arc land
 3. **macOS agent:** go now with `machineId = "lars-macbook-air"` (one-pager wiring + a bh_ token mint from evo-x2), or defer until after the stop-window lands so the dashboard baseline is clean first?
 
 ---
-*Post-report state: report left for the auto-commit daemon (no manual commit without instruction). Parallel-session edits visible in TODO_LIST.md / docs/agents/nix-flakes.md / docs/todo/monitoring.md were NOT touched.*
+
+_Post-report state: report left for the auto-commit daemon (no manual commit without instruction). Parallel-session edits visible in TODO_LIST.md / docs/agents/nix-flakes.md / docs/todo/monitoring.md were NOT touched._

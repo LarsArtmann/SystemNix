@@ -59,6 +59,7 @@
 ## §f NEXT — up to 50 things to get done (grouped, highest impact first)
 
 **This wave's tail (blocked only on the running deploy):**
+
 1. Verify gen ≥911 carries: `mode 0640` in the rendered Caddyfile (75 blocks), crowdsec-caddy-logs-readable unit+timer, collector script with chmod 0644.
 2. Battery: first file-source hits in :6061 metrics (cs_parser_hits_total with caddy source) + one synthetic request parsed.
 3. Battery: counts prom now 0644 and visible in node-exporter /metrics (crowdsec_decisions_active / crowdsec_alerts_24h / crowdsec_bouncer_geometrikks_registered / scrape_errors 0).

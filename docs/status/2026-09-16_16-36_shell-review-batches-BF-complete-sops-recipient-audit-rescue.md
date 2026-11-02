@@ -118,29 +118,29 @@
 ## f) NEXT (priority order)
 
 1. AGENTS.md gotcha entry: Nix 2.34 list-literal application parse quirk (with the minimal repro).
-~~2. AGENTS.md gotcha entry: `X=$(cmd || echo "0")` when cmd already prints its own zero → `"0\n0"` (grep -c, wc -l, curl -w, is-active).~~ done — CI evaluates check attrs by construction (nix flake check)
-~~3. New audit script `audit-shell-double-output.sh` (pre-commit + CI) for the §e.2 class.~~ **NOT-DO — dup of 14-04 f31 (OPEN - audit-go-deps timeouts).**
-~~4. CI: run `nix eval` smoke on every `checks.*` attr name in CI even when `--no-build` is used elsewhere (born-broken-check guard).~~ done — negative-test-lints full pass 2026-10-04 - docs/todo/pipeline.md dead-guard row
-~~5. `audit-go-deps.sh`: timeouts on nix eval + git ls-remote; FAIL when zero inputs audited; WARN on skipped inputs.~~ done — tests/test-wifi-failover.nix exists; not in known-failing VM-test list
-~~6. `negative-test-lints.sh`: per-case timeout + rsync preflight; then RUN the full pass (not yet done).~~ **NOT-DO — dup of 14-04 f41 (OPEN - CI shellcheck severity).**
-~~7. Run `tests/test-wifi-failover.nix` (daemon fix still only stub-tested).~~ **NOT-DO — dup of 14-04 f43 (OPEN - kernel-device audit).**
-~~8. CI shellcheck `-S warning` with a small ignorelist (would have caught several of this session's classes pre-merge); include `scripts/lib/` and `platforms/**/programs/*.sh` in the lint glob.~~ **Won't implement — one-shot classification.**
-~~9. Kernel-device-name audit rule for scripts/ (no sdX/nvmeXnY as defaults) — 5 sites were hand-fixed; guard the class.~~ **Won't implement — LOW refinements window passed.**
-~~10. `report-goexperiment-gaps.sh`: classify test-only importers correctly.~~ **Won't implement — one-shot refinements.**
-~~11. LOW audit refinements: nullglob trailing-space class-A, textfile-tmp exact allowlist, serviceconfig-merge URL-strip-not-drop, doc-freshness scoped `name =` count.~~ **Won't implement — one-shot fixture.**
-~~12. `crush-rc-test.sh`: timeout + `--probe` without model guard; `validate.sh`: absolute flake ref + timeouts.~~ **Won't implement — Docker removed 2026-10-08 - twenty drift moot.**
-~~13. `test-post-deploy-pressure.sh`: add a fail-path fixture.~~ **Won't implement — inert dead file; retirement never decided.**
-~~14. twenty Docker image drift v2.32.0 → 2.40.2: migration review + bump (DB-backed app doctrine; found live by the repaired checker).~~ **Won't implement — policy decision window passed.**
-15. Retire-or-fix `platforms/nixos/scripts/service-health-check` (dead unwired file, stale unit refs). **→ docs/todo/pipeline.md Retire-stale-ZFS-VM-scripts row**
-~~16. `legacy/` directory policy: leave-as-history vs prune.~~ **Won't implement — one-shot design change.**
-~~17. zfs-vm trio decision (attr stays in flake.nix?) — drives whether zfs-vm scripts stay maintained runbooks.~~ **Won't implement — one-shot parser extension.**
-~~18. wifi-failover eviction → state-based reconcile (documented 2026-09-06 follow-up; needs VM-test update).~~ done — runbook updates landed - scripts/dnsblockd-goroutine-dump.sh verification step + exit contract
-~~19. Consider extending the sops-recipient-audit parser to full YAML key_groups semantics (currently line-based with the isRecipientRef filter — adequate, but a future nested-only shape could need it).~~ **Won't implement — one-shot sweep.**
-~~20. Update `docs/services/*` runbooks touched by script behavior changes (internet-diagnostic emergency commands, dnsblockd-goroutine-dump new verification step + exit contract, display/niri watchdog once-only semantics).~~ **Won't implement — one-shot decision.**
-~~21. Sweep remaining `curl` sites in scripts/ for `--max-time` (convention item 45; ~15 sites fixed ad hoc this session, a handful remain in LOW-priority scripts).~~ **Won't implement — one-shot re-verify.**
-~~22. Post-deploy-check §12/§13-style smoke for the sops-recipient-audit guard? (eval-time only today — decide if it needs runtime teeth.)~~ **Won't implement — one-shot record; rescue documented in the 16-36 report itself.**
-23. Re-verify the 3 selftest scripts I modified still hold after any future formatter pass (`nix fmt` reflow could break the mirrored-indent warn transform in test-home-manager.sh — the transform is a one-shot, the RESULT is stable, but re-check after fmt).
-24. Record in TODO_LIST: the sops-recipient-audit rescue (this session) so the owning session's docs cross-reference it.
+   ~~2. AGENTS.md gotcha entry: `X=$(cmd || echo "0")` when cmd already prints its own zero → `"0\n0"` (grep -c, wc -l, curl -w, is-active).~~ done — CI evaluates check attrs by construction (nix flake check)
+   ~~3. New audit script `audit-shell-double-output.sh` (pre-commit + CI) for the §e.2 class.~~ **NOT-DO — dup of 14-04 f31 (OPEN - audit-go-deps timeouts).**
+   ~~4. CI: run `nix eval` smoke on every `checks.*` attr name in CI even when `--no-build` is used elsewhere (born-broken-check guard).~~ done — negative-test-lints full pass 2026-10-04 - docs/todo/pipeline.md dead-guard row
+   ~~5. `audit-go-deps.sh`: timeouts on nix eval + git ls-remote; FAIL when zero inputs audited; WARN on skipped inputs.~~ done — tests/test-wifi-failover.nix exists; not in known-failing VM-test list
+   ~~6. `negative-test-lints.sh`: per-case timeout + rsync preflight; then RUN the full pass (not yet done).~~ **NOT-DO — dup of 14-04 f41 (OPEN - CI shellcheck severity).**
+   ~~7. Run `tests/test-wifi-failover.nix` (daemon fix still only stub-tested).~~ **NOT-DO — dup of 14-04 f43 (OPEN - kernel-device audit).**
+   ~~8. CI shellcheck `-S warning` with a small ignorelist (would have caught several of this session's classes pre-merge); include `scripts/lib/` and `platforms/**/programs/*.sh` in the lint glob.~~ **Won't implement — one-shot classification.**
+   ~~9. Kernel-device-name audit rule for scripts/ (no sdX/nvmeXnY as defaults) — 5 sites were hand-fixed; guard the class.~~ **Won't implement — LOW refinements window passed.**
+   ~~10. `report-goexperiment-gaps.sh`: classify test-only importers correctly.~~ **Won't implement — one-shot refinements.**
+   ~~11. LOW audit refinements: nullglob trailing-space class-A, textfile-tmp exact allowlist, serviceconfig-merge URL-strip-not-drop, doc-freshness scoped `name =` count.~~ **Won't implement — one-shot fixture.**
+   ~~12. `crush-rc-test.sh`: timeout + `--probe` without model guard; `validate.sh`: absolute flake ref + timeouts.~~ **Won't implement — Docker removed 2026-10-08 - twenty drift moot.**
+   ~~13. `test-post-deploy-pressure.sh`: add a fail-path fixture.~~ **Won't implement — inert dead file; retirement never decided.**
+   ~~14. twenty Docker image drift v2.32.0 → 2.40.2: migration review + bump (DB-backed app doctrine; found live by the repaired checker).~~ **Won't implement — policy decision window passed.**
+2. Retire-or-fix `platforms/nixos/scripts/service-health-check` (dead unwired file, stale unit refs). **→ docs/todo/pipeline.md Retire-stale-ZFS-VM-scripts row**
+   ~~16. `legacy/` directory policy: leave-as-history vs prune.~~ **Won't implement — one-shot design change.**
+   ~~17. zfs-vm trio decision (attr stays in flake.nix?) — drives whether zfs-vm scripts stay maintained runbooks.~~ **Won't implement — one-shot parser extension.**
+   ~~18. wifi-failover eviction → state-based reconcile (documented 2026-09-06 follow-up; needs VM-test update).~~ done — runbook updates landed - scripts/dnsblockd-goroutine-dump.sh verification step + exit contract
+   ~~19. Consider extending the sops-recipient-audit parser to full YAML key_groups semantics (currently line-based with the isRecipientRef filter — adequate, but a future nested-only shape could need it).~~ **Won't implement — one-shot sweep.**
+   ~~20. Update `docs/services/*` runbooks touched by script behavior changes (internet-diagnostic emergency commands, dnsblockd-goroutine-dump new verification step + exit contract, display/niri watchdog once-only semantics).~~ **Won't implement — one-shot decision.**
+   ~~21. Sweep remaining `curl` sites in scripts/ for `--max-time` (convention item 45; ~15 sites fixed ad hoc this session, a handful remain in LOW-priority scripts).~~ **Won't implement — one-shot re-verify.**
+   ~~22. Post-deploy-check §12/§13-style smoke for the sops-recipient-audit guard? (eval-time only today — decide if it needs runtime teeth.)~~ **Won't implement — one-shot record; rescue documented in the 16-36 report itself.**
+3. Re-verify the 3 selftest scripts I modified still hold after any future formatter pass (`nix fmt` reflow could break the mirrored-indent warn transform in test-home-manager.sh — the transform is a one-shot, the RESULT is stable, but re-check after fmt).
+4. Record in TODO_LIST: the sops-recipient-audit rescue (this session) so the owning session's docs cross-reference it.
 
 ---
 

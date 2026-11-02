@@ -83,11 +83,11 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 
 1. **Interim pins are technical debt** — 13 pins, each needing: push upstream fix → flip URL → full `nix flake lock` → verify. Documented, not resolved. **→ 13-pin cleanup; docs/todo/pipeline.md INTERIM-INPUT-PINS sweep row**
 2. **Deploy smoke suite** — exit 1 advisory; 7 FAILs remain (baseline), but I did not triage the two NEW-looking signals (`SigNoz Coverage traces_missing 3`, Pocket ID `SQLITE_BUSY`). **→ two smoke signals; traces trio docs/todo/monitoring.md; Pocket ID SQLITE_BUSY docs/todo/services.md**
-~~3. **`signoz-coverage` duplicate metric** — node_exporter logged `signoz_traces_reporting`/`signoz_traces_expected`/`signoz_traces_last_span_age_seconds` for `file-and-image-renamer` as duplicates ("collected before with the same name and label values"). Root cause not identified; likely a registry/labelling duplicate.~~ **Won't implement — renamer duplicate-series diagnostic; coverage registry reworked since; window passed.**
-~~4. **`hermes.service` start-pre fragility** — its SQLite integrity check took ~5–6 min under activation IO load, timed out twice (6 min), and is the direct cause of the deployment's exit-4. It eventually started; not hardened.~~ done — ExecStartPre full-scan class codified with fix shape (docs/agents/systemd.md hermes doctrine)
-~~5. **AGENTS.md not updated** — the niri-restart-on-deploy hazard, the `nh` `test`-then-`switch` exit-4 behavior, and the `go-nix-helpers` `/vN` gotcha are not recorded.~~ done — session-kill/black-screen hazards codified + machine-enforced (docs/agents/desktop.md session-boot-audit)
-~~6. **Prior status report now stale** — `docs/status/2026-09-13_14-40_deploy-failure-triage-…md` still claims 6 failure classes and lists work as unfinished.~~ **Won't implement — superseded report; archived.**
-~~7. **Worktree cleanup** — `/home/lars/worktrees/{go-nix-helpers-vnfix,go-cqrs-lite-hashfix}` remain; deletion is blocked on the upstream push decision.~~ **Won't implement — pin era over (docs/agents/nix-flakes.md pin policy); worktrees stale.**
+   ~~3. **`signoz-coverage` duplicate metric** — node_exporter logged `signoz_traces_reporting`/`signoz_traces_expected`/`signoz_traces_last_span_age_seconds` for `file-and-image-renamer` as duplicates ("collected before with the same name and label values"). Root cause not identified; likely a registry/labelling duplicate.~~ **Won't implement — renamer duplicate-series diagnostic; coverage registry reworked since; window passed.**
+   ~~4. **`hermes.service` start-pre fragility** — its SQLite integrity check took ~5–6 min under activation IO load, timed out twice (6 min), and is the direct cause of the deployment's exit-4. It eventually started; not hardened.~~ done — ExecStartPre full-scan class codified with fix shape (docs/agents/systemd.md hermes doctrine)
+   ~~5. **AGENTS.md not updated** — the niri-restart-on-deploy hazard, the `nh` `test`-then-`switch` exit-4 behavior, and the `go-nix-helpers` `/vN` gotcha are not recorded.~~ done — session-kill/black-screen hazards codified + machine-enforced (docs/agents/desktop.md session-boot-audit)
+   ~~6. **Prior status report now stale** — `docs/status/2026-09-13_14-40_deploy-failure-triage-…md` still claims 6 failure classes and lists work as unfinished.~~ **Won't implement — superseded report; archived.**
+   ~~7. **Worktree cleanup** — `/home/lars/worktrees/{go-nix-helpers-vnfix,go-cqrs-lite-hashfix}` remain; deletion is blocked on the upstream push decision.~~ **Won't implement — pin era over (docs/agents/nix-flakes.md pin policy); worktrees stale.**
 
 ---
 
@@ -117,13 +117,13 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 ## 8. e) WHAT WE SHOULD IMPROVE
 
 1. **Never run a system-activating deploy without first checking which user units it will restart and warning if one is a compositor/session unit.** Add a `deploy.sh` pre-switch probe.
-~~2. **Treat `nix flake update` on this repo as a high-risk event.** It snaps ~dozens of no-CI moving refs. Gate it: update in a branch, run `--keep-going` enumeration, fix, only then deploy.~~ done — flake-update gated via bot + rollback-on-red runbook (.github/workflows/flake-update.yml; docs/todo/pipeline.md)
-~~3. **`--keep-going` enumeration BEFORE any fix work** — a 2h24m deploy burned to discover the first failure in the prior session; this session enumerated all 12 in one fast pass. Make this the documented first step.~~ done — keep-going enumeration became standard practice (CHANGELOG 2026-10-16 browser-history deploy-blocker entry)
-~~4. **Prefer fixing upstream hashes over pinning old revs** where the repo is actively developed (pins rot). Pinning is right for third-party/blocked cases.~~ done — fix-over-pin is codified policy (docs/agents/nix-flakes.md, 2026-09-16 user directive)
-~~5. **A single mechanical helper for "refresh this FOD's hash"** would have saved many round trips across ~12 failures.~~ done at `hash-refresh helper landed: scripts/update-vendor-hash.sh`
-6. **Record deploy hazards in AGENTS.md** so the next session does not repeat the session-kill.
-7. **Do not leave a deploy in "ran but not committed" state** — verify `/run/current-system` == profile as a first-class step (deploy.sh already checks; it should FAIL, not warn).
-8. **The `/tmp/scratch` → docs breadcrumb** pattern worked; keep it, but put the pins table somewhere the next `nix flake update` will collide with it.
+   ~~2. **Treat `nix flake update` on this repo as a high-risk event.** It snaps ~dozens of no-CI moving refs. Gate it: update in a branch, run `--keep-going` enumeration, fix, only then deploy.~~ done — flake-update gated via bot + rollback-on-red runbook (.github/workflows/flake-update.yml; docs/todo/pipeline.md)
+   ~~3. **`--keep-going` enumeration BEFORE any fix work** — a 2h24m deploy burned to discover the first failure in the prior session; this session enumerated all 12 in one fast pass. Make this the documented first step.~~ done — keep-going enumeration became standard practice (CHANGELOG 2026-10-16 browser-history deploy-blocker entry)
+   ~~4. **Prefer fixing upstream hashes over pinning old revs** where the repo is actively developed (pins rot). Pinning is right for third-party/blocked cases.~~ done — fix-over-pin is codified policy (docs/agents/nix-flakes.md, 2026-09-16 user directive)
+   ~~5. **A single mechanical helper for "refresh this FOD's hash"** would have saved many round trips across ~12 failures.~~ done at `hash-refresh helper landed: scripts/update-vendor-hash.sh`
+2. **Record deploy hazards in AGENTS.md** so the next session does not repeat the session-kill.
+3. **Do not leave a deploy in "ran but not committed" state** — verify `/run/current-system` == profile as a first-class step (deploy.sh already checks; it should FAIL, not warn).
+4. **The `/tmp/scratch` → docs breadcrumb** pattern worked; keep it, but put the pins table somewhere the next `nix flake update` will collide with it.
 
 ---
 
@@ -133,11 +133,11 @@ The `go-nix-helpers` `/vN` bug is the highest-value find: it was latent, and the
 
 1. Push the 5 upstream fixes (`go-nix-helpers`, `file-and-image-renamer`, `go-cqrs-lite`, `branching-flow`, `art-dupl`). **→ upstream pushes owner-gated; docs/todo/upstream.md push-wave CI-watch row**
 2. Flip the 5 `git+file` pins → upstream URLs; full `nix flake lock`; verify. **→ pin flips; docs/todo/pipeline.md row**
-~~3. Refresh upstream vendorHashes for `library-policy`, `go-auto-upgrade`, `projects-management-automation`, `overview`, `md-go-validator`; then unpin.~~ done — vendorHash refresh class solved: §11 FOD preview + update-vendor-hash.sh + shim drop-protocol
-4. Refresh SigNoz vendor hash + frontend pnpm deps at current HEAD; then unpin.
-5. Fix `todo-list-ai` bun lockfile/deployHash upstream; then unpin.
-~~6. Reboot evo-x2 (clears `fastflowlm` :52626 corpse + llama D-state wedge).~~ **NOT-DO — dup of 03-28 f.1 (reboot; w).**
-~~7. After reboot: verify booted == `system-774`, flm starts, llama `/v1/embeddings` + `/v1/rerank` green.~~ **NOT-DO — dup of 03-28 f.2 (post-reboot verify; w).**
+   ~~3. Refresh upstream vendorHashes for `library-policy`, `go-auto-upgrade`, `projects-management-automation`, `overview`, `md-go-validator`; then unpin.~~ done — vendorHash refresh class solved: §11 FOD preview + update-vendor-hash.sh + shim drop-protocol
+3. Refresh SigNoz vendor hash + frontend pnpm deps at current HEAD; then unpin.
+4. Fix `todo-list-ai` bun lockfile/deployHash upstream; then unpin.
+   ~~6. Reboot evo-x2 (clears `fastflowlm` :52626 corpse + llama D-state wedge).~~ **NOT-DO — dup of 03-28 f.1 (reboot; w).**
+   ~~7. After reboot: verify booted == `system-774`, flm starts, llama `/v1/embeddings` + `/v1/rerank` green.~~ **NOT-DO — dup of 03-28 f.2 (post-reboot verify; w).**
 
 **Build/infra hardening**
 ~~8. Add `deploy.sh` pre-switch warning when a restart set includes `niri.service`/`display-manager.service`.~~ **NOT-DO — dup of line 97 (pre-switch warning).**

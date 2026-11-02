@@ -15,28 +15,28 @@ The live QLC storm is **`llama-chat.service`** — SIGKILLed at 18:11:17, auto-r
 
 ## Evidence table (all live-probed this session)
 
-| Signal | Value | When (CEST) | Source |
-| --- | --- | --- | --- |
-| IO PSI `some` | avg10 57.6 / avg60 60.2 / avg300 64.4 | ~18:2x | `/proc/pressure/io` |
-| Memory PSI | avg10 1.06 / avg60 1.98 (clean) | ~18:2x | `/proc/pressure/memory` |
-| Device map (this boot) | **QLC Lexar NQ790 = nvme0n1**, Samsung 970 EVO Plus = nvme1n1; `/` = nvme0n1p6, `/data` = nvme0n1p8 | ~18:2x | `findmnt` + `/dev/disk/by-id` |
-| nvme0n1 (QLC) | **101.5% busy**, 49.1 MB/s read, 2.3 MB/s write (25 s window) | ~18:26 | `/proc/diskstats` delta |
-| nvme1n1 (Samsung) | 1.2% busy, 1.7/2.2 MB/s — hot tier absorbing as designed | ~18:26 | same |
-| Top writer cgroup | **`llama-chat.service` 42.9 MB/s of the 49.1 MB/s = 87%** | ~18:26 | cgroup `io.stat` 25 s delta |
-| Victim cgroups | 3 ghostty user scopes at 79–87% `io.pressure`; llama-chat itself only 21% (it's the reader, not the staller) | ~18:26 | per-cgroup `io.pressure` |
-| llama-chat cmdline | `llama-server -m /data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf --port 8850 --ctx-size 32768` | ~18:28 | `/proc/2872163/cmdline` |
-| Kill event | **18:11:17 `Main process exited, code=killed, status=9/KILL` → `Failed with result 'signal'`** | journal | `journalctl -u llama-chat` |
-| Lifetime stats (killed instance, 1 d 14 h) | 304.1 GB read, 273.9 GB written, 32.9 G mem peak, 19.3 G swap peak, 4 d 18 h CPU | 18:11:17 | same |
-| Restart | 18:11:27 `Scheduled restart job, restart counter is at 1` → **18:20:30 `Started`** (exactly ONE cycle tonight — verified full-history pull at 20:33) | journal | same |
-| Guard state | Trip **#5310** (zone 6, IO-PAUSE, 18:16:33): **`NO eligible headless tree matched the attribution (patterns: nix-daemon.service tq-agent-pool.service session-)`** — pressure persists, nothing pausable | journal | `journalctl` |
-| Thermal | k10temp **96 °C**; `DEEP THROTTLE ENTER` 18:16:49 → `DROP` 18:16:59 (cycling) | journal | `journalctl` |
-| Gatus | `Memory Pressure CRITICAL` TRIGGERED 18:11:31 (fired correctly — monitoring win) | journal | `journalctl` |
-| SEV1 | Continuous `MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP` (severity=notify) through the session | journal | `sev1-bridge-check` |
-| Memory ceiling | llama-chat `memory.max` = 51,539,607,552 (48 GiB); `memory.current` **35.4 GB @ ~18:29 → 13.3 GB @ 20:33** (page-cache eviction — post-load refault phase inferred); RSS stable ~11.5 GB; cgroup-local memory pressure 0 | both probes | cgroup fs |
-| zram | SwapFree 4.5 GiB of 62 GiB (**93% full**) @ ~18:29 → 12.6 GiB (**81%**) @ 20:33 | both probes | `/proc/meminfo` |
-| Storm at report time | PSI some avg10 47.8 / avg60 58.1 / avg300 67.0 — **still stalled ~2 h after the restart** | 20:33:53 | `/proc/pressure/io` |
-| Killer exclusion | kernel OOM + systemd-oomd lines ABSENT in 18:09–18:12 window | session | `journalctl` window grep |
-| Tree | HEAD `d0862d7`, clean, no parallel-session edits observed | 20:33 | content-pin |
+| Signal                                     | Value                                                                                                                                                                                                                    | When (CEST) | Source                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------- |
+| IO PSI `some`                              | avg10 57.6 / avg60 60.2 / avg300 64.4                                                                                                                                                                                    | ~18:2x      | `/proc/pressure/io`           |
+| Memory PSI                                 | avg10 1.06 / avg60 1.98 (clean)                                                                                                                                                                                          | ~18:2x      | `/proc/pressure/memory`       |
+| Device map (this boot)                     | **QLC Lexar NQ790 = nvme0n1**, Samsung 970 EVO Plus = nvme1n1; `/` = nvme0n1p6, `/data` = nvme0n1p8                                                                                                                      | ~18:2x      | `findmnt` + `/dev/disk/by-id` |
+| nvme0n1 (QLC)                              | **101.5% busy**, 49.1 MB/s read, 2.3 MB/s write (25 s window)                                                                                                                                                            | ~18:26      | `/proc/diskstats` delta       |
+| nvme1n1 (Samsung)                          | 1.2% busy, 1.7/2.2 MB/s — hot tier absorbing as designed                                                                                                                                                                 | ~18:26      | same                          |
+| Top writer cgroup                          | **`llama-chat.service` 42.9 MB/s of the 49.1 MB/s = 87%**                                                                                                                                                                | ~18:26      | cgroup `io.stat` 25 s delta   |
+| Victim cgroups                             | 3 ghostty user scopes at 79–87% `io.pressure`; llama-chat itself only 21% (it's the reader, not the staller)                                                                                                             | ~18:26      | per-cgroup `io.pressure`      |
+| llama-chat cmdline                         | `llama-server -m /data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf --port 8850 --ctx-size 32768`                                                 | ~18:28      | `/proc/2872163/cmdline`       |
+| Kill event                                 | **18:11:17 `Main process exited, code=killed, status=9/KILL` → `Failed with result 'signal'`**                                                                                                                           | journal     | `journalctl -u llama-chat`    |
+| Lifetime stats (killed instance, 1 d 14 h) | 304.1 GB read, 273.9 GB written, 32.9 G mem peak, 19.3 G swap peak, 4 d 18 h CPU                                                                                                                                         | 18:11:17    | same                          |
+| Restart                                    | 18:11:27 `Scheduled restart job, restart counter is at 1` → **18:20:30 `Started`** (exactly ONE cycle tonight — verified full-history pull at 20:33)                                                                     | journal     | same                          |
+| Guard state                                | Trip **#5310** (zone 6, IO-PAUSE, 18:16:33): **`NO eligible headless tree matched the attribution (patterns: nix-daemon.service tq-agent-pool.service session-)`** — pressure persists, nothing pausable                 | journal     | `journalctl`                  |
+| Thermal                                    | k10temp **96 °C**; `DEEP THROTTLE ENTER` 18:16:49 → `DROP` 18:16:59 (cycling)                                                                                                                                            | journal     | `journalctl`                  |
+| Gatus                                      | `Memory Pressure CRITICAL` TRIGGERED 18:11:31 (fired correctly — monitoring win)                                                                                                                                         | journal     | `journalctl`                  |
+| SEV1                                       | Continuous `MEMORY EMERGENCY GUARD TRIPPED; UNIT CRASH LOOP` (severity=notify) through the session                                                                                                                       | journal     | `sev1-bridge-check`           |
+| Memory ceiling                             | llama-chat `memory.max` = 51,539,607,552 (48 GiB); `memory.current` **35.4 GB @ ~18:29 → 13.3 GB @ 20:33** (page-cache eviction — post-load refault phase inferred); RSS stable ~11.5 GB; cgroup-local memory pressure 0 | both probes | cgroup fs                     |
+| zram                                       | SwapFree 4.5 GiB of 62 GiB (**93% full**) @ ~18:29 → 12.6 GiB (**81%**) @ 20:33                                                                                                                                          | both probes | `/proc/meminfo`               |
+| Storm at report time                       | PSI some avg10 47.8 / avg60 58.1 / avg300 67.0 — **still stalled ~2 h after the restart**                                                                                                                                | 20:33:53    | `/proc/pressure/io`           |
+| Killer exclusion                           | kernel OOM + systemd-oomd lines ABSENT in 18:09–18:12 window                                                                                                                                                             | session     | `journalctl` window grep      |
+| Tree                                       | HEAD `d0862d7`, clean, no parallel-session edits observed                                                                                                                                                                | 20:33       | content-pin                   |
 
 ---
 
@@ -72,15 +72,15 @@ The live QLC storm is **`llama-chat.service`** — SIGKILLed at 18:11:17, auto-r
 
 ## c) NOT STARTED
 
-| Planned | Why not started | Priority |
-| --- | --- | --- |
-| Guard IO-PAUSE pattern-gap fix (cold-load units unpauseable; manual stops disarm the guard) | design work; needs owner-visible proposal first | Critical |
-| "Guard disarmed" distinct SEV1 condition (N no-match trips ⇒ own condition, not a log line) | same | High |
-| llama-chat disable-or-pin dispatch (standing `ai-stack.md` [decision] row) | owner-gated; tonight is a fresh data point for it | High |
-| Hot-model placement (QLC → Samsung hot-tier) analysis + runbook | contradicts the ratified 2026-08-31 role assignment — needs explicit owner reversal (§g Q3) | High |
-| `scripts/io-attribution.sh` (scriptify this session's cgroup-delta loop) | tooling; not required to close tonight | Medium |
-| Runbook update (`llama-rag.md`) with tonight's chain | waits on the containment ruling (Q2) | Medium |
-| Queueing §f items into TODO_LIST/domain libraries | deliberately deferred — see Harvest note | — |
+| Planned                                                                                     | Why not started                                                                             | Priority |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- |
+| Guard IO-PAUSE pattern-gap fix (cold-load units unpauseable; manual stops disarm the guard) | design work; needs owner-visible proposal first                                             | Critical |
+| "Guard disarmed" distinct SEV1 condition (N no-match trips ⇒ own condition, not a log line) | same                                                                                        | High     |
+| llama-chat disable-or-pin dispatch (standing `ai-stack.md` [decision] row)                  | owner-gated; tonight is a fresh data point for it                                           | High     |
+| Hot-model placement (QLC → Samsung hot-tier) analysis + runbook                             | contradicts the ratified 2026-08-31 role assignment — needs explicit owner reversal (§g Q3) | High     |
+| `scripts/io-attribution.sh` (scriptify this session's cgroup-delta loop)                    | tooling; not required to close tonight                                                      | Medium   |
+| Runbook update (`llama-rag.md`) with tonight's chain                                        | waits on the containment ruling (Q2)                                                        | Medium   |
+| Queueing §f items into TODO_LIST/domain libraries                                           | deliberately deferred — see Harvest note                                                    | —        |
 
 ## d) TOTALLY FUCKED UP
 

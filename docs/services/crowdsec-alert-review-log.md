@@ -5,9 +5,9 @@ Weekly review per the runbook §Alert-review cadence
 **7 consecutive clean-informed days**; one LAN false-positive resets the
 window. Never paste secret values here; counts and scenario names are fine.
 
-| Date | Alerts (7d) | Decisions active | Top scenarios | Verdict | Reviewer |
-| ---- | ----------- | ---------------- | ------------- | ------- | -------- |
-| 2026-10-16 | (baseline entry — see below) | — | — | window OPENED | agent (plan T16) |
+| Date       | Alerts (7d)                  | Decisions active | Top scenarios | Verdict       | Reviewer         |
+| ---------- | ---------------------------- | ---------------- | ------------- | ------------- | ---------------- |
+| 2026-10-16 | (baseline entry — see below) | —                | —             | window OPENED | agent (plan T16) |
 
 **2026-10-16 baseline:** stage 1 detection live since 00:54:55 (LAN
 whitelist active, RFC1918/loopback un-bannable by design); caddy acquis

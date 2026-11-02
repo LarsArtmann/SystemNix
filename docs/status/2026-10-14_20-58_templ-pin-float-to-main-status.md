@@ -9,17 +9,20 @@
 ## Straight answers to the three opening questions
 
 **What did I forget?**
+
 1. **The upstream `default_branch` check.** I wrote `?ref=refs/heads/master` out of house-style habit (todo-list-ai, library-policy both use master) without one 5-second API read. a-h/templ's default branch is `main`. `nix flake update templ` failed with GitHub 422 `No commit found for SHA: refs/heads/master`. Harmless — the lock write failed atomically, nothing half-landed — but it is exactly the verify-external-claims class this repo keeps writing lessons about. Fixed in-session: URL corrected to `refs/heads/main`, gotcha bullet added to `docs/agents/nix-flakes.md` (check `default_branch` before ANY `?ref=` declaration).
 2. **statix on the new lib (prior session's miss, caught today).** `lib/flake-input-pin-audit.nix` shipped yesterday with a statix warning (`classifyUrl`: leading `[ ] ++` no-op concat). The prior close-out battery ran fmt + flake check but NOT standalone statix — and because the auto-commit daemon had swept the lib into a heuristic commit, the pre-commit statix leg was bypassed (the exact daemon-race-lint-bypass class from CONTRIBUTING). Today's daemon-sweep re-run rule caught it; fixed (`classifyUrl` now starts with the first filter term), statix clean, selftest + harness re-proven green.
 3. **A pre-lock state snapshot.** I re-locked without first recording a lock hash, so the delta-scope check had to go through `git show` on the daemon's commit instead of a clean pre/post diff of my own. Worked out (delta = templ node only, verified) but by luck of git history, not by method.
 
 **What could I have done better?**
+
 - The `default_branch` read should be STEP ZERO of any pin lift — I've now written it into the repo docs as part of the protocol.
 - The consumer-skew check (templ CLI vs inboxclean/overview go.mod runtime) happened during my REFLECT step — good — but only because I remembered the 2026-10-06 break from grep results. It should be a NAMED, mandatory step in the pin-lift protocol (grep consumer go.mod files for the tool's runtime pin before floating a build tool). Codification queued as §f.7.
 - The templ build probe ran via `github:a-h/templ/8bbdcac#templ` (fresh fetch) — valid, but building from the LOCKED store path would have made the claim airtight ("the exact sources the lock pins build"), not just "the exact rev builds". Same rev, so no practical difference this time.
 - The session was NOT quiescent when the report was demanded: fmt, the harness re-run, and the doc edits were still open. I closed them BEFORE writing this report so the status below is true — but the cleaner discipline is quiesce-then-report.
 
 **What could I still improve (systemic)?**
+
 - The pin-audit guard can validate ref SYNTAX at eval time but never ref EXISTENCE (eval has no network). A CI leg that checks every floated input's declared branch exists upstream would have caught the master-miss at push time. Queued §f.5.
 - Cross-repo skew (SystemNix's templ CLI vs InboxClean's go.mod runtime) is invisible to every repo-side guard — it's an upstream-row + upstream-CI concern. The watch is queued on both queue surfaces (harvest done, see record below).
 - Daemon attribution: my templ work + the parallel session's crowdsec enablement rode ONE heuristic commit (`7d4239c1`). Working as designed, but it means my "lock delta" evidence lives in a mixed commit — attributed precisely in the appendix.
@@ -28,25 +31,25 @@
 
 ## Timeline (this session)
 
-| # | Step | Result |
-|---|------|--------|
-| 1 | Content-pin + stale-todo cleanup | HEAD `c112fce0` (prior session's work swept); 6 stale todos marked completed; templ-lift task opened |
-| 2 | READ: grep all templ surfaces | flake.nix:272 (URL), lib allowlist row :61, CHANGELOG, 2 status reports, todo rows; INTERIM-INPUT-PINS.md has NO templ (it only lists `git+file:` pins); no living doc hardcodes the pin count |
-| 3 | REFLECT: risk check | Found the 2026-10-06 CLI↔runtime skew class (docs/todo/services.md:334) BEFORE editing; decided float is correct per owner + pin policy, skew mitigated by committed `*_templ.go` + existing upstream row |
-| 4 | EXECUTE (atomic): flake.nix float + allowlist row deletion | `v0.3.1070` → `?ref=refs/heads/master` (first attempt) + row removed 5→4 |
-| 5 | Re-lock | **FAILED: GitHub 422 — no `master` on a-h/templ** |
-| 6 | Research + correct | API: `default_branch: main` → URL/comment fixed to `refs/heads/main` |
-| 7 | Re-lock (2nd) | `07dfb6e` (v0.3.1070, 2026-10-04) → `8bbdcac` (main HEAD, 2026-10-08) |
-| 8 | Verify lock post-state | jq: original ref `refs/heads/main`, locked rev `8bbdcac`; follows intact (`inboxclean.inputs.templ`, `overview.inputs["templ-cli"]` → root templ) |
-| 9 | LIFT-condition build probe | `nix build github:a-h/templ/8bbdcac#templ` → **templ-0.3.1081** green (static binary) |
-| 10 | Selftest rebuild | Green — allowlist traces = surviving 4 rows, templ fully silent |
-| 11 | `nix flake check --no-build` | **EXIT 0** — all eval guards pass (pre-existing unrelated warnings noted in §f) |
-| 12 | `nix fmt` | 0 changed |
-| 13 | Daemon-race handling | Daemon swept my work into `7d4239c1` (+ foreign `configuration.nix`); buried under parallel `6917c884` — no amend (shared history); scope verified via `git show` |
-| 14 | Daemon-sweep lint re-run | deadnix clean; **statix found prior-session warning in my lib → fixed → clean** |
-| 15 | Harness re-run | **39/39 PASS** incl. both inputpin legs |
-| 16 | Doc surfaces | CHANGELOG entry, both queue rows updated (no-drift), nix-flakes.md 422 gotcha |
-| 17 | This report | Written at 20:58, then WAIT |
+| #  | Step                                                       | Result                                                                                                                                                                                                    |
+| -- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Content-pin + stale-todo cleanup                           | HEAD `c112fce0` (prior session's work swept); 6 stale todos marked completed; templ-lift task opened                                                                                                      |
+| 2  | READ: grep all templ surfaces                              | flake.nix:272 (URL), lib allowlist row :61, CHANGELOG, 2 status reports, todo rows; INTERIM-INPUT-PINS.md has NO templ (it only lists `git+file:` pins); no living doc hardcodes the pin count            |
+| 3  | REFLECT: risk check                                        | Found the 2026-10-06 CLI↔runtime skew class (docs/todo/services.md:334) BEFORE editing; decided float is correct per owner + pin policy, skew mitigated by committed `*_templ.go` + existing upstream row |
+| 4  | EXECUTE (atomic): flake.nix float + allowlist row deletion | `v0.3.1070` → `?ref=refs/heads/master` (first attempt) + row removed 5→4                                                                                                                                  |
+| 5  | Re-lock                                                    | **FAILED: GitHub 422 — no `master` on a-h/templ**                                                                                                                                                         |
+| 6  | Research + correct                                         | API: `default_branch: main` → URL/comment fixed to `refs/heads/main`                                                                                                                                      |
+| 7  | Re-lock (2nd)                                              | `07dfb6e` (v0.3.1070, 2026-10-04) → `8bbdcac` (main HEAD, 2026-10-08)                                                                                                                                     |
+| 8  | Verify lock post-state                                     | jq: original ref `refs/heads/main`, locked rev `8bbdcac`; follows intact (`inboxclean.inputs.templ`, `overview.inputs["templ-cli"]` → root templ)                                                         |
+| 9  | LIFT-condition build probe                                 | `nix build github:a-h/templ/8bbdcac#templ` → **templ-0.3.1081** green (static binary)                                                                                                                     |
+| 10 | Selftest rebuild                                           | Green — allowlist traces = surviving 4 rows, templ fully silent                                                                                                                                           |
+| 11 | `nix flake check --no-build`                               | **EXIT 0** — all eval guards pass (pre-existing unrelated warnings noted in §f)                                                                                                                           |
+| 12 | `nix fmt`                                                  | 0 changed                                                                                                                                                                                                 |
+| 13 | Daemon-race handling                                       | Daemon swept my work into `7d4239c1` (+ foreign `configuration.nix`); buried under parallel `6917c884` — no amend (shared history); scope verified via `git show`                                         |
+| 14 | Daemon-sweep lint re-run                                   | deadnix clean; **statix found prior-session warning in my lib → fixed → clean**                                                                                                                           |
+| 15 | Harness re-run                                             | **39/39 PASS** incl. both inputpin legs                                                                                                                                                                   |
+| 16 | Doc surfaces                                               | CHANGELOG entry, both queue rows updated (no-drift), nix-flakes.md 422 gotcha                                                                                                                             |
+| 17 | This report                                                | Written at 20:58, then WAIT                                                                                                                                                                               |
 
 ---
 
@@ -97,11 +100,13 @@
 6. **`nix flake update` UX** — raw GitHub 422 JSON for a wrong branch name is a sharp edge; a repo wrapper could translate the common failure classes (422 branch, 404 repo, tarball regression) into fix-it hints (§f.27).
 
 ## f) Things to get done next (27 honest items — under the 50 cap; padding to 50 would mean inventing work)
+
 > **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 Routing: `[ready]` = queue-harvestable · `[watch]` = monitor · `[decision]` = owner call · `[roadmap]` = ROADMAP fuel. Items 1–9 are THIS session's direct aftermath; 10–18 carried open from the prior session; 19–27 noticed pre-existing (NOT acted on by me).
 
 **Templ aftermath (this session):**
+
 1. `[ready]` **InboxClean upstream: bump go.mod templ v0.3.1070 → v0.3.1081** — clears BOTH skews (its own 1020 CLI and the SystemNix-provided 1081 CLI). Harvested onto both existing row surfaces this session.
 2. `[ready]` **Grep overview's go.mod for its templ runtime pin** — never checked; if it pins ≤1070 the same ceiling note applies to it specifically.
 3. `[ready]` **Sandbox regen smoke** — run `templ generate` with the 0.3.1081 CLI against a copy of inboxclean at go.mod v0.3.1070; empirically proves or kills the skew worry (cheap, one command).
@@ -144,19 +149,19 @@ Routing: `[ready]` = queue-harvestable · `[watch]` = monitor · `[decision]` = 
 
 ## Verification appendix (evidence, with commands)
 
-| Claim | Evidence |
-|---|---|
-| Only templ moved in the lock | `git show 7d4239c1 -- flake.lock` → exactly 4 field lines: lastModified `1791126376`→`1791447740`, narHash, rev `07dfb6e…`→`8bbdcac…`, original ref `v0.3.1070`→`refs/heads/main` |
-| templ lock node post-state | `jq '.nodes.templ.original, .nodes.templ.locked' flake.lock` → original `{owner: a-h, ref: "refs/heads/main", repo: templ}`; locked rev `8bbdcac97f59cd4fef43a834a9357b68da243d71` (2026-10-08) |
-| Follows intact | same jq: `inboxclean.inputs.templ → ["templ"]`, `overview.inputs["templ-cli"] → ["templ"]` |
-| LIFT-condition build probe | `nix build --no-link -L github:a-h/templ/8bbdcac…#templ` → `/nix/store/nnhawix…-templ-0.3.1081` (strip/patchelf "statically linked" = normal Go static build) |
-| Upstream branch fact | `api.github.com/repos/a-h/templ` → `default_branch: "main"` (fetched BEFORE re-lock, after the 422) |
-| Eval guards | `nix flake check --no-build` → EXIT 0 (bg shell 049; warnings observed are pre-existing, listed §f.20–25) |
-| Selftest | `nix build .#checks.x86_64-linux.flake-input-pin-audit-selftest` → green ×2; traces show exactly nixpkgs-llama-rag / paperless-gpt-src / qmd (+ bank-sync, erraudit above the tail cut) — templ silent |
-| Negative tests | `bash scripts/negative-test-lints.sh` → **39 passed, 0 failed** incl. `inputpin/sha-path-pin` + `inputpin/lifted-pin-stale-allowlist` |
-| Lint legs (daemon-swept files) | deadnix clean; statix: 1 finding found in my lib → fixed → `STATIX-CLEAN`; `nix fmt` → 0 changed |
-| Mixed-commit attribution | `git log --stat 7d4239c1` → my 3 files (flake.lock, flake.nix, lib/flake-input-pin-audit.nix) + foreign `platforms/nixos/system/configuration.nix` (+5 lines: `crowdsec.enable = true` + comment) |
-| No amend under moved HEAD | HEAD advanced `7d4239c1` → `6917c884` (parallel crowdsec doc) between sweeps → land-on-top, shared-tree rule |
+| Claim                          | Evidence                                                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Only templ moved in the lock   | `git show 7d4239c1 -- flake.lock` → exactly 4 field lines: lastModified `1791126376`→`1791447740`, narHash, rev `07dfb6e…`→`8bbdcac…`, original ref `v0.3.1070`→`refs/heads/main`                      |
+| templ lock node post-state     | `jq '.nodes.templ.original, .nodes.templ.locked' flake.lock` → original `{owner: a-h, ref: "refs/heads/main", repo: templ}`; locked rev `8bbdcac97f59cd4fef43a834a9357b68da243d71` (2026-10-08)        |
+| Follows intact                 | same jq: `inboxclean.inputs.templ → ["templ"]`, `overview.inputs["templ-cli"] → ["templ"]`                                                                                                             |
+| LIFT-condition build probe     | `nix build --no-link -L github:a-h/templ/8bbdcac…#templ` → `/nix/store/nnhawix…-templ-0.3.1081` (strip/patchelf "statically linked" = normal Go static build)                                          |
+| Upstream branch fact           | `api.github.com/repos/a-h/templ` → `default_branch: "main"` (fetched BEFORE re-lock, after the 422)                                                                                                    |
+| Eval guards                    | `nix flake check --no-build` → EXIT 0 (bg shell 049; warnings observed are pre-existing, listed §f.20–25)                                                                                              |
+| Selftest                       | `nix build .#checks.x86_64-linux.flake-input-pin-audit-selftest` → green ×2; traces show exactly nixpkgs-llama-rag / paperless-gpt-src / qmd (+ bank-sync, erraudit above the tail cut) — templ silent |
+| Negative tests                 | `bash scripts/negative-test-lints.sh` → **39 passed, 0 failed** incl. `inputpin/sha-path-pin` + `inputpin/lifted-pin-stale-allowlist`                                                                  |
+| Lint legs (daemon-swept files) | deadnix clean; statix: 1 finding found in my lib → fixed → `STATIX-CLEAN`; `nix fmt` → 0 changed                                                                                                       |
+| Mixed-commit attribution       | `git log --stat 7d4239c1` → my 3 files (flake.lock, flake.nix, lib/flake-input-pin-audit.nix) + foreign `platforms/nixos/system/configuration.nix` (+5 lines: `crowdsec.enable = true` + comment)      |
+| No amend under moved HEAD      | HEAD advanced `7d4239c1` → `6917c884` (parallel crowdsec doc) between sweeps → land-on-top, shared-tree rule                                                                                           |
 
 ## Harvest record
 

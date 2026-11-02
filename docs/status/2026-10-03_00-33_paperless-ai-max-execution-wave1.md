@@ -64,6 +64,7 @@
 6. **QMD/status hygiene**: this report self-harvests §f (rule); the harvest landed as TODO edits in-session for the already-done items, and the NEW follow-ups below go in with this report.
 
 ## §f) Up to 50 things next (session-derived, ranked)
+
 > **Harvest disposition (docs-health 2026-10-18):** HARVESTED at authoring — landed items cite their queue/library surfaces above; the remainder carries explicit deliberate-not-harvested reasons in-file.
 
 1. **DEPLOY** (`nix run .#deploy`) — carries the whole wave + the 3.2.1 ride; then `post-deploy-check.sh` must pass incl. the new paperless-gpt legs (B18/B33/B47-verify analog).

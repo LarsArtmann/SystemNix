@@ -28,10 +28,10 @@
 ## c) NOT STARTED
 
 1. Persisted regression tests for the collector script (fixture harness lived in /tmp — see e)。 **→ persist collector fixture tests; docs/todo/monitoring.md row citing this report c.1**
-~~2. SigNoz-native alert rules (mkRule) for pool drives — Gatus carries alerting; no dual-channel built.~~ **Won't implement — SigNoz mkRule dual-channel never wanted since; Gatus owns pool alerting (report a.5); superseded.**
-~~3. Collector coverage for the NON-pool drives (NVMe system disk, Samsung 970, buildcache SSD beyond its existing `buildcache_smart_healthy`): **still no remote SMART death-alert path for the NVMe system disk** — the gap I flagged but only closed for the pool members.~~ done — NVMe remote death-alert landed: modules/nixos/services/nvme-health-monitor.nix (by-id + gatus endurance pats)
-4. Persisted dashboard generator script (repeated the repo's throwaway `/tmp` pattern). **→ persist dashboard generator; docs/todo/monitoring.md row (same ask)**
-~~5. `refreshInterval` on telemetry-coverage.json (the one dashboard my loop skipped — it has no scalar spec fields at all).~~ **Won't implement — telemetry-coverage.json has no scalar spec fields by design (report's own note); cosmetic; window passed.**
+   ~~2. SigNoz-native alert rules (mkRule) for pool drives — Gatus carries alerting; no dual-channel built.~~ **Won't implement — SigNoz mkRule dual-channel never wanted since; Gatus owns pool alerting (report a.5); superseded.**
+   ~~3. Collector coverage for the NON-pool drives (NVMe system disk, Samsung 970, buildcache SSD beyond its existing `buildcache_smart_healthy`): **still no remote SMART death-alert path for the NVMe system disk** — the gap I flagged but only closed for the pool members.~~ done — NVMe remote death-alert landed: modules/nixos/services/nvme-health-monitor.nix (by-id + gatus endurance pats)
+2. Persisted dashboard generator script (repeated the repo's throwaway `/tmp` pattern). **→ persist dashboard generator; docs/todo/monitoring.md row (same ask)**
+   ~~5. `refreshInterval` on telemetry-coverage.json (the one dashboard my loop skipped — it has no scalar spec fields at all).~~ **Won't implement — telemetry-coverage.json has no scalar spec fields by design (report's own note); cosmetic; window passed.**
 
 ## d) TOTALLY FUCKED UP (caught and fixed, or owned)
 

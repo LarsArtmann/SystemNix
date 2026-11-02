@@ -40,7 +40,7 @@ I owned that leading with `sudo mkdir` was the wrong answer, built the NixOS VM 
 ~~1. Repo-wide sweep for the silent-noop class (hardened root oneshots reading/`-f`-checking paths under foreign-owned dirs — this is the THIRD DAC incident: attic chown EPERM 2026-08-18, backup-health-metrics cap, now cv-backup).~~ **Won't implement — repo-wide silent-noop sweep never run; class fixed per-incident (forgejo cap fix 2026-10-16).**
 ~~2. Eval-time audit: `ReadWritePaths` under `/mnt/pool` ⇒ `RequiresMountsFor` + a declared creator.~~ **NOT-DO — dup of f5.**
 ~~3. Backup-timer `Persistent=true` lint (flake check).~~ **NOT-DO — dup of f6.**
-   ~~4. `TODO_LIST.md` migration of the durable items (still not done across two reports!).~~ done — 2026-08-31 docs-health audit (eval-audit cluster rows)
+~~4. `TODO_LIST.md` migration of the durable items (still not done across two reports!).~~ done — 2026-08-31 docs-health audit (eval-audit cluster rows)
 ~~4. `backup_ever_succeeded` metric (never-worked vs stale distinction — today proved the difference matters: cv rode "all red" outage noise for days while being never-green since birth).~~ done at `backup_ever_succeeded; modules/nixos/services/backup-coordination.nix:77`
 ~~5. paperless `RandomizedDelaySec` (or fix the lying comment in configuration.nix).~~ **NOT-DO — dup of f15.**
 ~~6. Prod shadow-dir cleanup under `/mnt/pool` (cv + root/data tmpfiles shadows).~~ **NOT-DO — dup of f16.**

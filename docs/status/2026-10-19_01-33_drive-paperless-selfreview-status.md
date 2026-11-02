@@ -8,17 +8,17 @@
 
 ## a. FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| a1 | `modules/nixos/services/drive-paperless.nix` — ingest module (options, token mint unit, ingest unit+timer, assertions, user, backup-coordination row) | isolated nixosSystem evals green; fixture green |
-| a2 | `scripts/test-drive-paperless.sh` — 6-leg fixture (happy path/idempotence, batch drain, size cap, failure injection, revision re-upload, google-sync config-check ×3) | built + ran green via standalone replica |
-| a3 | `flake/parts/checks/fixtures-drive-ingest.nix` + flake.nix import line — committed check with eval-side pins | parse-checked; NOT yet built through `.#checks` (see d3) |
-| a4 | `configuration.nix` — dormant one-flip coupling (`drive-paperless.enable = config.services.google-sync.enable`) | edit landed via daemon commit |
-| a5 | Runbooks: google-sync.md ingest section, paperless.md incoming-import section | committed |
-| a6 | TODO harvest (services.md: pre-work row CLOSED, go-live row, VM-test row; TODO_LIST queue: 3 rows), CHANGELOG entry | committed |
-| a7 | Pre-work row closure evidence: pool free space 12 TB live-checked; rclone 1.75.2 flags live-checked; config-check fixture-tested against real rclone | session log |
-| a8 | Session report 01-30 + this report | on disk |
-| a9 | Two live-caught bugs fixed in-flight: `inherit_errexit` metadata hole; rclone `type = drive` listremotes requirement | fixture legs prove both |
+| #  | Item                                                                                                                                                                  | Evidence                                                 |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| a1 | `modules/nixos/services/drive-paperless.nix` — ingest module (options, token mint unit, ingest unit+timer, assertions, user, backup-coordination row)                 | isolated nixosSystem evals green; fixture green          |
+| a2 | `scripts/test-drive-paperless.sh` — 6-leg fixture (happy path/idempotence, batch drain, size cap, failure injection, revision re-upload, google-sync config-check ×3) | built + ran green via standalone replica                 |
+| a3 | `flake/parts/checks/fixtures-drive-ingest.nix` + flake.nix import line — committed check with eval-side pins                                                          | parse-checked; NOT yet built through `.#checks` (see d3) |
+| a4 | `configuration.nix` — dormant one-flip coupling (`drive-paperless.enable = config.services.google-sync.enable`)                                                       | edit landed via daemon commit                            |
+| a5 | Runbooks: google-sync.md ingest section, paperless.md incoming-import section                                                                                         | committed                                                |
+| a6 | TODO harvest (services.md: pre-work row CLOSED, go-live row, VM-test row; TODO_LIST queue: 3 rows), CHANGELOG entry                                                   | committed                                                |
+| a7 | Pre-work row closure evidence: pool free space 12 TB live-checked; rclone 1.75.2 flags live-checked; config-check fixture-tested against real rclone                  | session log                                              |
+| a8 | Session report 01-30 + this report                                                                                                                                    | on disk                                                  |
+| a9 | Two live-caught bugs fixed in-flight: `inherit_errexit` metadata hole; rclone `type = drive` listremotes requirement                                                  | fixture legs prove both                                  |
 
 ## b. PARTIALLY DONE
 
@@ -59,6 +59,7 @@
 ## f. NEXT (prioritized; ~1h items unless marked)
 
 **P0 — before anything else:**
+
 1. Add `StateDirectory = "drive-paperless"` to the ingest unit (d1) + eval pin (d2); rebuild standalone fixture.
 2. `diff` standalone-check.nix vs committed fixtures-drive-ingest.nix pins section; reconcile (d3).
 3. Parse-check configuration.nix + flake.nix edits (d4).

@@ -45,8 +45,8 @@ The hermes dedicated-subvolume migration (2026-09-15) worked operationally (moun
 ## b) PARTIALLY DONE
 
 1. **`@cache-home` → Samsung migration** — planned in detail, zero execution steps. Deliberately gated behind the hermes prerequisite (user's call, correct order: the plan leaned on the house migrate-script pattern whose one open wrinkle was the unproven backup leg).
-~~2. **High io-PSI mystery** — observed 42–56% avg60 across the evening with sparse actual disk IO in my (flawed, see §d) samples; never root-caused. Matters because Zone-6 guard trust (and tonight's autonomous send) ride on PSI semantics.~~ done — root-caused 2026-09-19: zram refault thrash, idle disks (docs/status/2026-09-19_16-16 §2 — moved to docs/status/archived/ 2026-10-24)
-3. **Operational knowledge capture** — the btrbk gotchas landed in AGENTS.md (one line each); no proper runbook exists in `docs/services/` for manual btrbk operations (silent-send progress, clean heal, ionice tradeoff).
+   ~~2. **High io-PSI mystery** — observed 42–56% avg60 across the evening with sparse actual disk IO in my (flawed, see §d) samples; never root-caused. Matters because Zone-6 guard trust (and tonight's autonomous send) ride on PSI semantics.~~ done — root-caused 2026-09-19: zram refault thrash, idle disks (docs/status/2026-09-19_16-16 §2 — moved to docs/status/archived/ 2026-10-24)
+2. **Operational knowledge capture** — the btrbk gotchas landed in AGENTS.md (one line each); no proper runbook exists in `docs/services/` for manual btrbk operations (silent-send progress, clean heal, ionice tradeoff).
 
 ## c) NOT STARTED
 

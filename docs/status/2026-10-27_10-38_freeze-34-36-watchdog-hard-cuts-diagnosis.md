@@ -11,28 +11,28 @@ The box did **not** panic, OOM-freeze or lose power to the EC: it **hung hard en
 
 The hang formed on two stacked, independently-verified legs:
 
-1. **A standing cooling deficit.** Boot `b803d718` entered the deep-throttle rung **452 times in 11 h 07 m — one cycle every ~89 s — every one of them at k10temp 95–98 °C.** That satisfies the thermal guard's own written effectiveness criterion (`docs/services/thermal-pstate-guard.md` §"Post-deploy effectiveness criterion"): ≥95 °C samples persisting across a whole boot *with `deep_throttled == 1`* means the guard is **deficit-masking, not mitigating**, and "the physical cooling inspection is the only remaining fix".
+1. **A standing cooling deficit.** Boot `b803d718` entered the deep-throttle rung **452 times in 11 h 07 m — one cycle every ~89 s — every one of them at k10temp 95–98 °C.** That satisfies the thermal guard's own written effectiveness criterion (`docs/services/thermal-pstate-guard.md` §"Post-deploy effectiveness criterion"): ≥95 °C samples persisting across a whole boot _with `deep_throttled == 1`_ means the guard is **deficit-masking, not mitigating**, and "the physical cooling inspection is the only remaining fix".
 2. **An IO/CPU starvation storm.** Guard zone-6 trip `#4446` (09:46:21) attributed **+1,324,574 MB of `system.slice` reads in one trip window** (1.3 TB), trip `#4447` (09:57:09) another 83 GB; the USB buildcache SSD (`sdb`, 8:16) sat at **100 % io_ticks with ~7 MB/s of writes**; a kernel `sync` was reported **waiting on writeback completion for >188 s** twice in the final minute; zram was 83 % full; **≥17 owner SSH PTYs were active in the final 30 minutes** (17 unique `pts/N` devices in the dying boot's journal) and 7 concurrent `crush -y` processes were measured at autopsy time (16 by 11:40).
 
-Neither leg is new. What is new is the **proof of the reset mechanism** — previous reports called this family "instant EC power cut" (freezes #8–#14). The watchdog register shows the cut is the *designed last-resort WDT*, which means the box was **unschedulable, not merely hot**.
+Neither leg is new. What is new is the **proof of the reset mechanism** — previous reports called this family "instant EC power cut" (freezes #8–#14). The watchdog register shows the cut is the _designed last-resort WDT_, which means the box was **unschedulable, not merely hot**.
 
 ## a. Evidence
 
 ### a.1 Reset mechanism: hardware watchdog, not panic, not EC
 
-| Probe | Result | Source |
-| --- | --- | --- |
-| Kernel reset reason, boot 0 | `Previous system reset reason [0x02000800]: hardware watchdog timer expired` | `journalctl -b 0 -k` |
-| Same line on boots -1, -2, -4 (every retained boot) | identical `0x02000800` | `journalctl -b <n> -k` |
-| pstore panic record | **none** — `systemd-pstore` skipped with `ConditionDirectoryNotEmpty=/sys/fs/pstore` unmet | `journalctl -b 0` |
-| Panic/oops in the dying boot | none (the 4 "panic" hits in the evidence pull are the `nmi_watchdog=panic` / `softlockup_panic=1` **cmdline** tokens) | evidence pull census |
-| Shutdown ceremony (system manager) | **none** — journal ends mid-traffic on a healthy `nsfw /readyz 200` at 10:03:11; the only `Reached target Shutdown` lines belong to *user* managers (`systemd[209501]` 09:51:33, `systemd[359915]` 09:54:45) | `journalctl -b -1` |
-| wtmp | every session ends `- crash`; the only `shutdown` record in wtmp is Oct 17 12:10 | `last -x` |
-| Watchdog config | `watchdogd`: 30 s timeout, 10 s pet; boot.nix documents the deliberate tradeoff vs `hung_task_timeout_secs=120` — "the WDT always wins, so hung_task_panic=1 never fires → no pstore dump" | `platforms/nixos/system/boot.nix:578-600` |
+| Probe                                               | Result                                                                                                                                                                                                       | Source                                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| Kernel reset reason, boot 0                         | `Previous system reset reason [0x02000800]: hardware watchdog timer expired`                                                                                                                                 | `journalctl -b 0 -k`                      |
+| Same line on boots -1, -2, -4 (every retained boot) | identical `0x02000800`                                                                                                                                                                                       | `journalctl -b <n> -k`                    |
+| pstore panic record                                 | **none** — `systemd-pstore` skipped with `ConditionDirectoryNotEmpty=/sys/fs/pstore` unmet                                                                                                                   | `journalctl -b 0`                         |
+| Panic/oops in the dying boot                        | none (the 4 "panic" hits in the evidence pull are the `nmi_watchdog=panic` / `softlockup_panic=1` **cmdline** tokens)                                                                                        | evidence pull census                      |
+| Shutdown ceremony (system manager)                  | **none** — journal ends mid-traffic on a healthy `nsfw /readyz 200` at 10:03:11; the only `Reached target Shutdown` lines belong to _user_ managers (`systemd[209501]` 09:51:33, `systemd[359915]` 09:54:45) | `journalctl -b -1`                        |
+| wtmp                                                | every session ends `- crash`; the only `shutdown` record in wtmp is Oct 17 12:10                                                                                                                             | `last -x`                                 |
+| Watchdog config                                     | `watchdogd`: 30 s timeout, 10 s pet; boot.nix documents the deliberate tradeoff vs `hung_task_timeout_secs=120` — "the WDT always wins, so hung_task_panic=1 never fires → no pstore dump"                   | `platforms/nixos/system/boot.nix:578-600` |
 
-Consequence: a 30 s missed kick = the whole system (including PID 1 and watchdogd) was not scheduled for 30 s. `nmi_watchdog=panic` + `softlockup_panic=1` produce a pstore record for *per-CPU* lockups; there is none, so this was a **system-wide** starvation, not a single-core lockup.
+Consequence: a 30 s missed kick = the whole system (including PID 1 and watchdogd) was not scheduled for 30 s. `nmi_watchdog=panic` + `softlockup_panic=1` produce a pstore record for _per-CPU_ lockups; there is none, so this was a **system-wide** starvation, not a single-core lockup.
 
-**Rival hypothesis eliminated — watchdogd itself was healthy.** In the dying boot `watchdogd` started exactly once (22:55:47, `watchdogd v4.1`, `/dev/watchdog: SP5100 TCO timer, capabilities 0x8180 - set-timeout, safe-exit, kick`) with **zero restarts, zero errors and no stop** through 11 h of uptime (`journalctl -b -1 -u watchdogd`, `grep -c Started` = 1). A dead or wedged *daemon* would produce the same WDT fire without any system hang; that path is closed. The driver also reports the last reset cause as `0x0020 - card-reset`.
+**Rival hypothesis eliminated — watchdogd itself was healthy.** In the dying boot `watchdogd` started exactly once (22:55:47, `watchdogd v4.1`, `/dev/watchdog: SP5100 TCO timer, capabilities 0x8180 - set-timeout, safe-exit, kick`) with **zero restarts, zero errors and no stop** through 11 h of uptime (`journalctl -b -1 -u watchdogd`, `grep -c Started` = 1). A dead or wedged _daemon_ would produce the same WDT fire without any system hang; that path is closed. The driver also reports the last reset cause as `0x0020 - card-reset`.
 
 **No vmcore either:** `crashkernel=128M` + `kexec_crash_loaded=1`, yet `/var/crash` does not exist — kdump never captured anything, consistent with "no panic" (a capture creates the directory).
 
@@ -49,10 +49,10 @@ Consequence: a 30 s missed kick = the whole system (including PID 1 and watchdog
 
 ### a.3 Cuts #34 / #35 — backfilled (first documentation)
 
-| # | Cut | Boot window | Stack | Thermal at/near death |
-| --- | --- | --- | --- | --- |
-| #34 | 2026-10-25 22:22:13 | `27580a79`, Oct 25 04:33:12 → cut, 17 h 49 m | 89 zone-6 guard actions; 5 OOM invocations; last line `emeet-pixyd /metrics` | **637 × `DEEP THROTTLE ENTER`** (one per ~101 s) + 2 rung-1 ENTER; last deep ENTER 22:20:49 (81 s pre-cut) |
-| #35 | 2026-10-26 22:53:58 | `ce19a826`, Oct 25 22:23:41 → cut, 24 h 30 m | 33 guard actions (31 zone-6); 27 OOM lines; 3,173 guard log lines; last line `smartd` SanDisk 194 `69→68 °C` | **343 × `DEEP THROTTLE ENTER`** + 3 rung-1 ENTER; last deep ENTER 22:45:27 (8.5 min pre-cut) |
+| #   | Cut                 | Boot window                                  | Stack                                                                                                        | Thermal at/near death                                                                                      |
+| --- | ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| #34 | 2026-10-25 22:22:13 | `27580a79`, Oct 25 04:33:12 → cut, 17 h 49 m | 89 zone-6 guard actions; 5 OOM invocations; last line `emeet-pixyd /metrics`                                 | **637 × `DEEP THROTTLE ENTER`** (one per ~101 s) + 2 rung-1 ENTER; last deep ENTER 22:20:49 (81 s pre-cut) |
+| #35 | 2026-10-26 22:53:58 | `ce19a826`, Oct 25 22:23:41 → cut, 24 h 30 m | 33 guard actions (31 zone-6); 27 OOM lines; 3,173 guard log lines; last line `smartd` SanDisk 194 `69→68 °C` | **343 × `DEEP THROTTLE ENTER`** + 3 rung-1 ENTER; last deep ENTER 22:45:27 (8.5 min pre-cut)               |
 
 Both terminate with the same discriminators as #36: mid-traffic journal end, no ceremony, no panic, watchdog reset reason on the following boot. Evidence: `docs/status/tasks/2026-10-27_09-24_boot-b803d718-evidence-pull.md`, `docs/status/tasks/2026-10-27_09-37_boot-ce19a826-evidence-pull.md` (boot `27580a79` already guarded by `2026-10-25_14-08_remedy-map-turn-self-review-full-status.md`).
 
@@ -71,7 +71,7 @@ Both terminate with the same discriminators as #36: mid-traffic journal end, no 
 
 - **Not a panic / BUG / oops** — no lines, no pstore record, no vmcore.
 - **Not a global OOM** in the death window — the last OOM is 14 h earlier (08:48), memcg-constrained.
-- **Not an EC thermal power cut** — this family's resetter is the WDT (see a.1); the thermal deficit is the *enabler* (clock starvation at 95–99 °C), not the switch.
+- **Not an EC thermal power cut** — this family's resetter is the WDT (see a.1); the thermal deficit is the _enabler_ (clock starvation at 95–99 °C), not the switch.
 - **Not a deploy accident** — no deploy in flight, gen-955 anchored before and after (verified twice).
 - **Not journal corruption** — journald was healthy to the last line and reported a clean 5.6 ms flush at the previous boot boundary.
 
@@ -93,13 +93,13 @@ Both terminate with the same discriminators as #36: mid-traffic journal end, no 
 ## e. Doctrine deltas
 
 - **"Instant cut, no ceremony" is not the same as "EC power cut".** Read the next boot's `Previous system reset reason` before naming the mechanism: `0x02000800` = hardware watchdog → the box hung; a true EC/PSU cut leaves a different (or no) reason and usually a shorter POST gap. Future autopsies cite the register.
-- **The thermal guard's effectiveness criterion is a boot-level test, not a spot check.** #36 is the first boot that *fails* it cleanly (452 cycles, all ≥95 °C). Treat `thermal_pstate_guard_deep_trips_total` per boot as the deficit metric — a five-digit counter delta in one boot is the physical-fix alarm, not a tuning knob.
-- **A watchdog reset is evidence of starvation *duration* (≥30 s unscheduled), not of a single culprit.** Screen-starvation and IO-starvation both starve PID 1; both were present.
+- **The thermal guard's effectiveness criterion is a boot-level test, not a spot check.** #36 is the first boot that _fails_ it cleanly (452 cycles, all ≥95 °C). Treat `thermal_pstate_guard_deep_trips_total` per boot as the deficit metric — a five-digit counter delta in one boot is the physical-fix alarm, not a tuning knob.
+- **A watchdog reset is evidence of starvation _duration_ (≥30 s unscheduled), not of a single culprit.** Screen-starvation and IO-starvation both starve PID 1; both were present.
 
 ## f. Follow-ups (harvested)
 
 1. **`[blocked:user]` cooling inspection** — baits 15–17 appended to `docs/todo/stability.md:117`; criterion-level deficit proven; no heavy builds/flake checks until inspected (this session deliberately ran NO `nix build` / `nix flake check`).
-2. **`[ready]` shed-load escalation rung** — evidence extended on `docs/todo/stability.md:238`: cap-to-60 % cycles 452×/boot, so the third rung must *remove load*, not merely lower clocks.
+2. **`[ready]` shed-load escalation rung** — evidence extended on `docs/todo/stability.md:238`: cap-to-60 % cycles 452×/boot, so the third rung must _remove load_, not merely lower clocks.
 3. **Deep-cap release hysteresis** — folded into the **`[ready]`** restore-hysteresis row (`docs/todo/stability.md:239`, implementation is agent-actionable; only the deploy stays gated on the cooling window): `DEEP THROTTLE DROP` fires at the **middle** band (below 95 °C), producing a re-heat sawtooth every ~89 s; release should require the low band (80 °C) or a hold window. Both rungs need the same fix.
 4. **`[ready]` monitor365 `dmesg` SIGSYS loop** — new row in `docs/todo/services.md` (§ after the monitor365-server wedge row): decide drop-the-collector vs `CAP_SYSLOG` + `syslog(2)` + `dmesg_restrict=0`; today it burns a coredump a minute.
 5. **`[decision]` interactive-load admission** — NOT minted: already carried by the build-battery admission row (`docs/todo/stability.md:135`) and the `[decision]` session-gating row; this cut adds one more datapoint (≥17 SSH PTYs in the death window, 7→16 concurrent `crush -y` across the session).

@@ -51,7 +51,7 @@ Evidence chain:
 
 ## d) TOTALLY FUCKED UP (session self-critique)
 
-1. **First-turn answer overstated certainty.** I wrote "THERMTRIP ~100°C" and a "no panic" chain built on an unverified pstore backend and unread trip points. Correct form: "thermal power cut is the best-supported hypothesis; trip point and pstore health unverified." Per this repo's own close-out rule — *assert WHICH question your evidence answers* — my evidence answered "not software"; I phrased it as "firmware thermal trip confirmed".
+1. **First-turn answer overstated certainty.** I wrote "THERMTRIP ~100°C" and a "no panic" chain built on an unverified pstore backend and unread trip points. Correct form: "thermal power cut is the best-supported hypothesis; trip point and pstore health unverified." Per this repo's own close-out rule — _assert WHICH question your evidence answers_ — my evidence answered "not software"; I phrased it as "firmware thermal trip confirmed".
 2. **Burner attribution generalized from a snapshot.** A 2-3 min post-boot `ps` sample became "the heat driver" narrative. Directionally supported now (167% at 15 min), but at answer time it was one data point.
 3. **Walked away from the gate-blocking commit** after ~3 min of lock contention with no watcher, no retry loop, no in-file pending note. The §15 blocking state was left silent — exactly the "silently co-verify / silently abandon" pattern the multi-agent discipline warns about.
 4. **Anomalies scrolled past in turn 1:** the `flm-real` GPF in `libqwen2_npu.so` (kernel traps line, 19:06 — a real userspace fault signal), and the **truncated journal file** (`system@00065dd5ffec988d-….journal~ is truncated, ignoring file` — possible crash-boundary evidence loss). Neither flagged in the first answer; the GPF never would have surfaced without the evidence pull.
@@ -60,13 +60,15 @@ Evidence chain:
 ## e) WHAT WE SHOULD IMPROVE
 
 **Session-level (me):**
+
 - Verify the mechanism's constants before naming the mechanism (trip points, pstore health).
 - Attribute load from pre-crash metrics, not post-boot snapshots.
 - Never leave gate-blocking artifacts uncommitted without a durable retry (background watcher or in-file note).
 - Flag every anomaly noticed in passing — GPFs and truncated journals are signals, not noise.
 
 **System-level (the box):**
-1. **The thermal guard is an oscillating band-aid on a dissipation deficit.** 60% freq cap demonstrably cannot hold the ceiling; restore hysteresis re-arms the spiral within 2 min. It needs a *shed-load* escalation (stop sacrifice units, like memory-emergency-guard does) when sustained ≥95°C — throttling alone fights physics with a percentage.
+
+1. **The thermal guard is an oscillating band-aid on a dissipation deficit.** 60% freq cap demonstrably cannot hold the ceiling; restore hysteresis re-arms the spiral within 2 min. It needs a _shed-load_ escalation (stop sacrifice units, like memory-emergency-guard does) when sustained ≥95°C — throttling alone fights physics with a percentage.
 2. **Heavy builds bypass workload admission.** Dev-shell `go build -c=32` / cargo `cc1plus -c=32` are the dominant heat source tonight and are not wrapped by `workload-admission.nix` — admission control has a hole exactly where the heat comes from.
 3. **nsfw-classifier `--all` (15-model ROCm ensemble) is a standing thermal weapon** on a package that shares CPU+GPU thermal budget. Needs caps or a smaller default ensemble (owner decision).
 4. **Alerts that watch but don't act.** If `cpu-thermal-ceiling` fired during 6h at 95-99°C and nothing shed load, the observability layer is a spectator to the death spiral (unverified — see §c.1).

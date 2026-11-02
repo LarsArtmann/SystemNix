@@ -58,17 +58,17 @@ The auto-commit daemon already committed both session files (git clean).
 ## c) NOT STARTED (all from this session's own recommendations)
 
 ~~1. Guard `ioChurnUnits` extension (`crush-hot-db-migrate`,~~ done — live: memory-emergency-guard.nix:1103-1104
-   `discordsync-db-heal`).
+`discordsync-db-heal`).
 ~~2. `discordsync-db-heal` boot-cadence gating / timeout policy.~~ done — resolved by 20min budget (discordsync.nix:509-514)
 ~~3. Post-migration verification per the crush-hot-db module's own~~ done — DONE 2026-09-29: symlink sweep + PSI profile recorded (docs/todo/storage.md:110; docs/status/2026-09-29_01-35)
-   contract: symlink sweep (`find ~/projects -mindepth 1 -maxdepth 3
+contract: symlink sweep (`find ~/projects -mindepth 1 -maxdepth 3
    -name .crush`, no `-type d`) + `node_psi_io_some_avg60` vs the
-   40-60% baseline (should now COLLAPSE — this is the structural fix
-   landing).
+40-60% baseline (should now COLLAPSE — this is the structural fix
+landing).
 4. flm socket restore verification + consumer recovery (PMA go-commit
-   LLM path, papdashboard enricher were dark since the trips).
+LLM path, papdashboard enricher were dark since the trips).
 5. Tonight's btrbk sends (23:00/23:30) — guard churn-killed sends need
-   `btrbk-pool-clean` healing + a freshness check tomorrow.
+`btrbk-pool-clean` healing + a freshness check tomorrow.
 6. heavy-job serialization for any future migration re-run.
 7. Agent-session cap / advisory during guard-active windows.
 
@@ -116,41 +116,41 @@ Nothing destructive. Two honest failures:
 
 1. Add outcome postscript to the freeze-6 report (migration done,
    PSI drained, flm restore pending).
-~~2. Verify ioChurnUnits in `memory-emergency-guard.nix` source.~~ done — verified + extended (memory-emergency-guard.nix:1103-1104)
-~~3. Extend ioChurnUnits with the two recovery readers + negative/VM~~ done — extended (memory-emergency-guard.nix:1103-1104) + VM scenario-9 green (docs/status/2026-09-30_06-25)
+   ~~2. Verify ioChurnUnits in `memory-emergency-guard.nix` source.~~ done — verified + extended (memory-emergency-guard.nix:1103-1104)
+   ~~3. Extend ioChurnUnits with the two recovery readers + negative/VM~~ done — extended (memory-emergency-guard.nix:1103-1104) + VM scenario-9 green (docs/status/2026-09-30_06-25)
    test coverage (`tests/` guard suite).
-~~4. Gate `discordsync-db-heal` (dirty-shutdown marker or longer~~ done — resolved as timeout-stretch (discordsync.nix:514)
+   ~~4. Gate `discordsync-db-heal` (dirty-shutdown marker or longer~~ done — resolved as timeout-stretch (discordsync.nix:514)
    timeout + ionice idle) — owner decision on posture (see g).
-~~5. Run the crush-hot-db post-first-run verification (symlink sweep +~~ done — DONE 2026-09-29 (docs/todo/storage.md:110)
+   ~~5. Run the crush-hot-db post-first-run verification (symlink sweep +~~ done — DONE 2026-09-29 (docs/todo/storage.md:110)
    PSI baseline comparison) and record the delta.
-6. Verify flm socket auto-restore + one consumer round-trip.
-7. Check btrbk 23:00/23:30 sends land; run `btrbk-pool-clean` if
+2. Verify flm socket auto-restore + one consumer round-trip.
+3. Check btrbk 23:00/23:30 sends land; run `btrbk-pool-clean` if
    garbled targets remain from the churn-kills.
-~~8. Add "Zone 6 tripped in last hour → queue deploy" awareness to~~ done — live: deploy.sh carries trip-recency gate (docs/status/2026-10-10_08-02 e1: three gates incl. trip-recency)
+   ~~8. Add "Zone 6 tripped in last hour → queue deploy" awareness to~~ done — live: deploy.sh carries trip-recency gate (docs/status/2026-10-10_08-02 e1: three gates incl. trip-recency)
    deploy.sh beyond the avg10 gate (avg300/last-trip check).
-9. Wire freeze-6 follow-ups into `TODO_LIST.md`.
-10. Consider `ConditionPathExists=!<clean-shutdown-marker>`-style
-    suppression of full-FS scans (compsize/balance) during
-    guard-active windows.
-11. Session-count advisory: sev1-notify when crush sessions > N while
-    Zone 6 is active (metric `system_crush_sessions` exists).
-12. Re-check D-state corpse pile (freeze-5 backlog): llama corpses
-    clear only on reboot — two reboots happened since; verify :8848/:8849
-    are free and `llama_rag_leaked_instances` absent.
-~~13. Confirm the llama-rag disable deploy state is still anchored~~ done — verified: system-785 anchored clean (docs/status/2026-09-19_00-19 a2)
-    (system-785 carried it) before any re-enable experiment.
-~~14. Sweep `docs/services/memory-emergency-guard.md` runbook for the~~ done — runbook carries churn/starvation semantics (docs/services/memory-emergency-guard.md:80-87)
-    recovery-reader class (currently only btrbk-era semantics).
-15. Audit OTHER boot-time full-readers for the same crash-amplifier
-    shape (paperless classifier? immich ML warmup? monitor365 watchdog?)
-    — enumerate `Type=oneshot` boot units with big reads.
-~~16. After PSI stabilizes ~24h: compare `node_psi_io_some_avg60`~~ done — 2026-09-29 pre/post comparison recorded (docs/todo/storage.md:110)
-    distribution pre/post migration — the headline metric for "did the
-    structural fix work".
-~~17. Consider moving discordsync's 11G DB itself off QLC (pool/hot) —~~ done — moved: discordsync hot-db shadow-split (docs/status/2026-10-12_15-55)
-    the heal reads are the residual reader after session DBs moved.
-18. Revisit freeze-5's owed follow-up: llama.cpp/ROCm spin
-    root-cause (llama-rag still config-disabled).
+4. Wire freeze-6 follow-ups into `TODO_LIST.md`.
+5. Consider `ConditionPathExists=!<clean-shutdown-marker>`-style
+   suppression of full-FS scans (compsize/balance) during
+   guard-active windows.
+6. Session-count advisory: sev1-notify when crush sessions > N while
+   Zone 6 is active (metric `system_crush_sessions` exists).
+7. Re-check D-state corpse pile (freeze-5 backlog): llama corpses
+   clear only on reboot — two reboots happened since; verify :8848/:8849
+   are free and `llama_rag_leaked_instances` absent.
+   ~~13. Confirm the llama-rag disable deploy state is still anchored~~ done — verified: system-785 anchored clean (docs/status/2026-09-19_00-19 a2)
+   (system-785 carried it) before any re-enable experiment.
+   ~~14. Sweep `docs/services/memory-emergency-guard.md` runbook for the~~ done — runbook carries churn/starvation semantics (docs/services/memory-emergency-guard.md:80-87)
+   recovery-reader class (currently only btrbk-era semantics).
+8. Audit OTHER boot-time full-readers for the same crash-amplifier
+   shape (paperless classifier? immich ML warmup? monitor365 watchdog?)
+   — enumerate `Type=oneshot` boot units with big reads.
+   ~~16. After PSI stabilizes ~24h: compare `node_psi_io_some_avg60`~~ done — 2026-09-29 pre/post comparison recorded (docs/todo/storage.md:110)
+   distribution pre/post migration — the headline metric for "did the
+   structural fix work".
+   ~~17. Consider moving discordsync's 11G DB itself off QLC (pool/hot) —~~ done — moved: discordsync hot-db shadow-split (docs/status/2026-10-12_15-55)
+   the heal reads are the residual reader after session DBs moved.
+9. Revisit freeze-5's owed follow-up: llama.cpp/ROCm spin
+   root-cause (llama-rag still config-disabled).
 
 ## g) QUESTIONS (cannot figure out myself)
 

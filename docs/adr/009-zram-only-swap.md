@@ -56,12 +56,12 @@ docs/agents/stability.md and the 2026-08-13 IO-pressure analysis):
 
 ## Alternatives considered and rejected
 
-| Alternative | Verdict | Reason |
-| --- | --- | --- |
-| Disk swap fallback (4–8 GiB) | **Rejected** | Disk 90 %+ full (reclaiming 4–8 GiB currently not viable); QLC ~200 ms write latency converts a memory emergency into an I/O emergency — the exact storm class the guard exists to prevent; would mask the zram-fill sizing signal. Re-evaluate ONLY after the disk has headroom AND a chronic zram-full steady state is observed. |
-| zram writeback backing device | **Rejected** | Same backing-disk problem as above; writeback moves the WORST pages (cold, but re-read on demand) onto the slowest medium. |
-| Raise memoryPercent beyond 50 % | **Rejected for now** | Memory is budgeted (GTT-first GPU doctrine, hot DBs, service MemoryMax fractions); oversized zram just delays the oomd/guard trip without adding physical capacity — compressed anon still consumes physical RAM. 50 % already exceeds any observed steady anon demand. |
-| lzo-rle primary (Fedora default) | **Rejected** | zstd(level=1) measured better here: the ratio delta (~3.2× vs ~2.5×) matters more than lzo-rle's compress-speed edge on a 128 GB host whose bottleneck is reclaim latency, not CPU. |
+| Alternative                      | Verdict              | Reason                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Disk swap fallback (4–8 GiB)     | **Rejected**         | Disk 90 %+ full (reclaiming 4–8 GiB currently not viable); QLC ~200 ms write latency converts a memory emergency into an I/O emergency — the exact storm class the guard exists to prevent; would mask the zram-fill sizing signal. Re-evaluate ONLY after the disk has headroom AND a chronic zram-full steady state is observed. |
+| zram writeback backing device    | **Rejected**         | Same backing-disk problem as above; writeback moves the WORST pages (cold, but re-read on demand) onto the slowest medium.                                                                                                                                                                                                         |
+| Raise memoryPercent beyond 50 %  | **Rejected for now** | Memory is budgeted (GTT-first GPU doctrine, hot DBs, service MemoryMax fractions); oversized zram just delays the oomd/guard trip without adding physical capacity — compressed anon still consumes physical RAM. 50 % already exceeds any observed steady anon demand.                                                            |
+| lzo-rle primary (Fedora default) | **Rejected**         | zstd(level=1) measured better here: the ratio delta (~3.2× vs ~2.5×) matters more than lzo-rle's compress-speed edge on a 128 GB host whose bottleneck is reclaim latency, not CPU.                                                                                                                                                |
 
 ## Recompression study (stability plan T3.3) — mechanics verified, adoption gated
 

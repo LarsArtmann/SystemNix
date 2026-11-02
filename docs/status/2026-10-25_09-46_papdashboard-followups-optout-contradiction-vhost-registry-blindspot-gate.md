@@ -45,19 +45,19 @@
 
 ## f) Next tasks (session-derived; honest count 7 — not padded to 50)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Deploy the tile+follow-up batch when the storm clears (PSI<30 AND k10temp<85 AND lock settled AND dead-guard green): `nix run .#deploy`, readlink anchor discipline, then the post-deploy tile eyeball — ALREADY QUEUED as the `[watch]` row, listed here for completeness | Critical | S | Feature |
-| 2 | Re-run `CASES=tilecoverage` + `CASES=vhostregistry` on the settled tree — the vhostregistry leg has never run green through the harness as wired (proven equivalent on a HEAD-locked copy only) | High | S | Testing |
-| 3 | Answer §g → then register the four blind services (each deletes its `registryBlindSubdomains` row; openseo/tasks registration drags gatus port-coverage probes + §16 icon inventory) — ALREADY QUEUED `[blocked:user]` | High | M | Feature |
-| 4 | Root-cause the `nix eval --apply` scope quirk (`builtins.filterAttrs` "missing" while `attrNames` works) and document the working pattern | Low | S | Tooling |
-| 5 | Pre-flight PSI/temp check before eval-heavy batches (harness WARN or session habit) — the deploy doctrine extended to evals | Medium | S | Stability |
-| 6 | Tie-breaker rule: shared-scanner FP on a foreign-owned red file with the owning session absent (fix-scanner vs leave-red) — the quickshell dead-guard case is the live example | Medium | S | Process |
-| 7 | `make_copy` lock-fragility: distinct fail-fast on mid-float trees (or HEAD-pin the copy's flake.lock) so harness cases stop phantom-failing during deliberate floats | Medium | S | Testing |
-| 8 | One cheap rpi3-dns toplevel eval after settle to confirm the caddy.nix assertion is structurally inert there (expected: caddy not enabled → mkIf inert; verified by construction only) | Low | S | Verification |
-| 9 | Check `services.catalog` coverage for seo/tasks (the audit was integration-scoped; catalog is the "what exists" registry — openseo may be catalog'd but integration-blind) | Low | S | Quality |
+| # | Task                                                                                                                                                                                                                                                                       | Impact   | Effort | Category     |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------ |
+| 1 | Deploy the tile+follow-up batch when the storm clears (PSI<30 AND k10temp<85 AND lock settled AND dead-guard green): `nix run .#deploy`, readlink anchor discipline, then the post-deploy tile eyeball — ALREADY QUEUED as the `[watch]` row, listed here for completeness | Critical | S      | Feature      |
+| 2 | Re-run `CASES=tilecoverage` + `CASES=vhostregistry` on the settled tree — the vhostregistry leg has never run green through the harness as wired (proven equivalent on a HEAD-locked copy only)                                                                            | High     | S      | Testing      |
+| 3 | Answer §g → then register the four blind services (each deletes its `registryBlindSubdomains` row; openseo/tasks registration drags gatus port-coverage probes + §16 icon inventory) — ALREADY QUEUED `[blocked:user]`                                                     | High     | M      | Feature      |
+| 4 | Root-cause the `nix eval --apply` scope quirk (`builtins.filterAttrs` "missing" while `attrNames` works) and document the working pattern                                                                                                                                  | Low      | S      | Tooling      |
+| 5 | Pre-flight PSI/temp check before eval-heavy batches (harness WARN or session habit) — the deploy doctrine extended to evals                                                                                                                                                | Medium   | S      | Stability    |
+| 6 | Tie-breaker rule: shared-scanner FP on a foreign-owned red file with the owning session absent (fix-scanner vs leave-red) — the quickshell dead-guard case is the live example                                                                                             | Medium   | S      | Process      |
+| 7 | `make_copy` lock-fragility: distinct fail-fast on mid-float trees (or HEAD-pin the copy's flake.lock) so harness cases stop phantom-failing during deliberate floats                                                                                                       | Medium   | S      | Testing      |
+| 8 | One cheap rpi3-dns toplevel eval after settle to confirm the caddy.nix assertion is structurally inert there (expected: caddy not enabled → mkIf inert; verified by construction only)                                                                                     | Low      | S      | Verification |
+| 9 | Check `services.catalog` coverage for seo/tasks (the audit was integration-scoped; catalog is the "what exists" registry — openseo may be catalog'd but integration-blind)                                                                                                 | Low      | S      | Quality      |
 
-*Harvest status: #2, #4, #5, #7 harvested to TODO_LIST.md + docs/todo/pipeline.md; #8, #9 to TODO_LIST.md + docs/todo/services.md. #1 and #3 already existed as queue rows ([watch] / [blocked:user]) — referenced, not duplicated. #6 is a [decision] row (pipeline.md) — the rule choice is owner-shaped.*
+_Harvest status: #2, #4, #5, #7 harvested to TODO_LIST.md + docs/todo/pipeline.md; #8, #9 to TODO_LIST.md + docs/todo/services.md. #1 and #3 already existed as queue rows ([watch] / [blocked:user]) — referenced, not duplicated. #6 is a [decision] row (pipeline.md) — the rule choice is owner-shaped._
 
 ## g) Questions I cannot answer myself
 
@@ -66,4 +66,5 @@
 3. **Pocket-id's registry absence:** deliberate circularity avoidance (the OIDC provider provisioning OIDC clients for itself?) or an oversight to fix by registering it like any other service? All four registrations in §f.3's spawn row are gated on this + Q2.
 
 ---
-*Session verification evidence: `CASES=tilecoverage` 4/4 PASS (09:0x); `checks.x86_64-linux.integration-registry` green (post-assertion); vhost⇒registry control green + mutation single-attribution fire on HEAD-locked copy (09:3x, `/tmp/vhost-leg2.txt` rc=1, dns-local assertion count 0); shellcheck harness delta 9→10→9 SC2016 (pre-existing only); `check-todo-system.sh` OK. Storm at close (09:46): io PSI avg60 70%, k10temp 87.0°C — window still closed.*
+
+_Session verification evidence: `CASES=tilecoverage` 4/4 PASS (09:0x); `checks.x86_64-linux.integration-registry` green (post-assertion); vhost⇒registry control green + mutation single-attribution fire on HEAD-locked copy (09:3x, `/tmp/vhost-leg2.txt` rc=1, dns-local assertion count 0); shellcheck harness delta 9→10→9 SC2016 (pre-existing only); `check-todo-system.sh` OK. Storm at close (09:46): io PSI avg60 70%, k10temp 87.0°C — window still closed._

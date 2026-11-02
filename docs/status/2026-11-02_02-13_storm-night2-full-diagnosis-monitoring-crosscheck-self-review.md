@@ -36,14 +36,14 @@ Kernel PSI, the textfile collectors, gatus, SEV1, and the thermal guard ALL agre
 
 ## c) NOT STARTED
 
-| Planned | Why not started | Priority |
-| --- | --- | --- |
+| Planned                                                                              | Why not started                                                                                          | Priority               |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------- |
 | Containment execution (fstrim / llama-chat+ensure / flm / nsfw-classifier stop+mask) | Owner-gated; unexecuted as of 02:13 — PSI easing on its own but the llama-chat OOM→reload loop is intact | Critical (owner hands) |
-| Config-disable edits (llama-rag chat enable=false etc.) | Deploy-gated: pressure gate blocks; owner ruling pending (2nd night) | Critical |
-| /proc attribution of the pts/61 deploy session | deprioritized behind live diagnosis | Medium |
-| SEV1 epoch decode + bridge sampling-semantics check | same | Low |
-| opencloud crash-loop cause triage (30 restarts; which OnFailure chain fired) | SEV1 named it; cause untriaged (hermes-patchelf class? paperless class? unknown) | Medium |
-| MediaAtlas/tq/PapDashboard casualty-vs-real-outage triage | must wait for post-storm re-probe (all three may self-resolve) | Medium |
+| Config-disable edits (llama-rag chat enable=false etc.)                              | Deploy-gated: pressure gate blocks; owner ruling pending (2nd night)                                     | Critical               |
+| /proc attribution of the pts/61 deploy session                                       | deprioritized behind live diagnosis                                                                      | Medium                 |
+| SEV1 epoch decode + bridge sampling-semantics check                                  | same                                                                                                     | Low                    |
+| opencloud crash-loop cause triage (30 restarts; which OnFailure chain fired)         | SEV1 named it; cause untriaged (hermes-patchelf class? paperless class? unknown)                         | Medium                 |
+| MediaAtlas/tq/PapDashboard casualty-vs-real-outage triage                            | must wait for post-storm re-probe (all three may self-resolve)                                           | Medium                 |
 
 ## d) TOTALLY FUCKED UP
 
@@ -93,7 +93,7 @@ Kernel PSI, the textfile collectors, gatus, SEV1, and the thermal guard ALL agre
 
 1. **Did you run the containment batch (or decide to ride the storm out)?** As of 02:13 fstrim is STILL running, llama-chat is STILL on cold-load attempt #3, flm active — yet PSI eased to ~85–90% and swap freed 5.6→9.2 GB on its own. If you're deliberately letting it drain, I stop recommending; if not, the four stop+mask commands stand (plus the ensure-TIMER mask per §d4).
 2. **The two standing rulings, now with two nights of evidence:** disable-or-pin for llama-chat and for fastflowlm (and the QLC-vs-Samsung placement question for the hot chat GGUF). Every hour without a ruling is another possible night-3.
-3. **The build battery (httputil + ChastityAPI go builds, golangci, clippy, qemu VM test, ≥5 crush sessions): yours or parallel agent sessions'?** I can attribute the *sessions* via /proc, but not the *intent* — if it's precious in-flight work I'll treat it as an untouchable storm leg; if it's disposable, it's the third-biggest lever after the model loads.
+3. **The build battery (httputil + ChastityAPI go builds, golangci, clippy, qemu VM test, ≥5 crush sessions): yours or parallel agent sessions'?** I can attribute the _sessions_ via /proc, but not the _intent_ — if it's precious in-flight work I'll treat it as an untouchable storm leg; if it's disposable, it's the third-biggest lever after the model loads.
 
 ---
 

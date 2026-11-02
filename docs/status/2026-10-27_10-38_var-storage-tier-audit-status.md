@@ -9,14 +9,14 @@ The QLC root `/` is at **1.00 MiB device-unallocated** (allocated 722.52GiB of 7
 
 ## Tier map (live findmnt)
 
-| Path | Tier | Verdict |
-| --- | --- | --- |
-| `/var/lib/forgejo` | Samsung `hot/forgejo` subvol | Correct tier; CONTENT mis-managed (F1) |
-| `/var/lib/clickhouse` | dedicated XFS 37G/100G | Correct by design |
-| `/var/log/journal` 7.8G, `/var/log/caddy` 1.7G | Samsung hot subvols | Correct |
-| `/var/lib/{discordsync,dnsblockd,pocket-id,postgres,browser-history,gatus}` | Samsung hot subvols | Correct |
-| `/var/lib/monitor365-server` (190G), `/var/lib/monitor365/buffer` (32G), discordsync residue, `/var/tmp` (17G), `/var/lib/containers` (4.9G), `/var/lib/private/gitea-runner` (14G), `/var/lib/inboxclean` (14.5G), `/var/lib/gitea.pre-forgejo-migration` (5G) | QLC root `@` | The problem layer (F2/F3/F5) |
-| `/mnt/pool` | HDD RAID1, 12T free | Underused for exactly the things strangling the root |
+| Path                                                                                                                                                                                                                                                            | Tier                         | Verdict                                              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
+| `/var/lib/forgejo`                                                                                                                                                                                                                                              | Samsung `hot/forgejo` subvol | Correct tier; CONTENT mis-managed (F1)               |
+| `/var/lib/clickhouse`                                                                                                                                                                                                                                           | dedicated XFS 37G/100G       | Correct by design                                    |
+| `/var/log/journal` 7.8G, `/var/log/caddy` 1.7G                                                                                                                                                                                                                  | Samsung hot subvols          | Correct                                              |
+| `/var/lib/{discordsync,dnsblockd,pocket-id,postgres,browser-history,gatus}`                                                                                                                                                                                     | Samsung hot subvols          | Correct                                              |
+| `/var/lib/monitor365-server` (190G), `/var/lib/monitor365/buffer` (32G), discordsync residue, `/var/tmp` (17G), `/var/lib/containers` (4.9G), `/var/lib/private/gitea-runner` (14G), `/var/lib/inboxclean` (14.5G), `/var/lib/gitea.pre-forgejo-migration` (5G) | QLC root `@`                 | The problem layer (F2/F3/F5)                         |
+| `/mnt/pool`                                                                                                                                                                                                                                                     | HDD RAID1, 12T free          | Underused for exactly the things strangling the root |
 
 ## Findings
 

@@ -4,15 +4,15 @@
 
 **Format note (skill override):** the `status-report` skill mandates a styled HTML dashboard; the request named `docs/status/<YYYY-MM-DD_HH-MM_WELL-NAMED>.md`, so this report is Markdown per the explicit instruction. Flagged, not silently propagated.
 
-| Field | Value |
-| --- | --- |
-| Report time | 2026-10-19 11:13 CEST (Monday) |
-| Host / repo | evo-x2, `/home/lars/projects/SystemNix` (flake, master) |
-| Session trigger | user: "The scanner is scanning nothing......." |
-| Prior report | `docs/status/2026-10-19_09-44_scanner-campaign-live-instrumentation-and-integrity-corrections.md` |
-| Watcher PID | 1250077 (`bash ./scripts/scan-to-paperless.sh watch`, started 10:59:35) |
-| Docs ingested today | 59 (ids 1000436 → 1000494; one more in flight from the 11:13 sheet) |
-| Session commits | `147dac81f`, `8b2e88658`, `a2b8d477b`, `7ff334590`, `21f807c4e` (all daemon-swept, heuristic messages) |
+| Field               | Value                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------ |
+| Report time         | 2026-10-19 11:13 CEST (Monday)                                                                         |
+| Host / repo         | evo-x2, `/home/lars/projects/SystemNix` (flake, master)                                                |
+| Session trigger     | user: "The scanner is scanning nothing......."                                                         |
+| Prior report        | `docs/status/2026-10-19_09-44_scanner-campaign-live-instrumentation-and-integrity-corrections.md`      |
+| Watcher PID         | 1250077 (`bash ./scripts/scan-to-paperless.sh watch`, started 10:59:35)                                |
+| Docs ingested today | 59 (ids 1000436 → 1000494; one more in flight from the 11:13 sheet)                                    |
+| Session commits     | `147dac81f`, `8b2e88658`, `a2b8d477b`, `7ff334590`, `21f807c4e` (all daemon-swept, heuristic messages) |
 
 ---
 
@@ -39,14 +39,14 @@
 
 ## b) PARTIALLY DONE
 
-1. **The watcher is still not a systemd unit.** It is a detached `setsid nohup` user process: survives logout, dies on reboot, no journal integration, unbounded log (52 KB and growing), and — the point — **no automatic restart and no alert if it exits**. The in-process guards now make the specific 10:01 death impossible, but any *other* unexpected exit is equally invisible. Remaining: unit + `Restart=always` + rotation + a signal. (M — the script work is done; the unit shape is the rest.)
-2. **Delivery-side permissions are guarded only on the wrapper's own path.** I fixed the instance (chmod on the stuck file) and the wrapper's delivery, but the *producer* that wrote a mode-600 file into consume is untouched — a future manual copy or phone-photo drop can go silently stuck exactly the same way. A consume-dir-level guard (tmpfiles/path unit enforcing 0644, or a root `+` sweep) is still open. (S)
+1. **The watcher is still not a systemd unit.** It is a detached `setsid nohup` user process: survives logout, dies on reboot, no journal integration, unbounded log (52 KB and growing), and — the point — **no automatic restart and no alert if it exits**. The in-process guards now make the specific 10:01 death impossible, but any _other_ unexpected exit is equally invisible. Remaining: unit + `Restart=always` + rotation + a signal. (M — the script work is done; the unit shape is the rest.)
+2. **Delivery-side permissions are guarded only on the wrapper's own path.** I fixed the instance (chmod on the stuck file) and the wrapper's delivery, but the _producer_ that wrote a mode-600 file into consume is untouched — a future manual copy or phone-photo drop can go silently stuck exactly the same way. A consume-dir-level guard (tmpfiles/path unit enforcing 0644, or a root `+` sweep) is still open. (S)
 3. **Nothing alerts on that class or on ingest staleness.** No Gatus check, textfile collector, or rule covers consume depth/age, so the 2 h 21 min stuck file was invisible; likewise the 75 unacknowledged FAILED tasks sat unread. Both need a probe + route to a channel a human reads. (M)
 4. **Page-count verification covers PDFs only.** `verify_product` checks non-PNM/non-empty for PNG products (receipts mode) but there is no equivalent structural check (e.g. dimensions) for them; receipts mode was not exercised at all in this session. (S)
-5. **The rc explanation is unconditional.** My WARN appends "rc=4 = paper at the feeder with the pick rollers not yet engaged" to *every* non-4 code. Live counter-example in the old log: three failures at 09:04:28–09:04:35 with **rc=6** (SANE `JAMMED`) were labelled with the rc=4 explanation. I inherited the flaw and did not fix it. (S)
+5. **The rc explanation is unconditional.** My WARN appends "rc=4 = paper at the feeder with the pick rollers not yet engaged" to _every_ non-4 code. Live counter-example in the old log: three failures at 09:04:28–09:04:35 with **rc=6** (SANE `JAMMED`) were labelled with the rc=4 explanation. I inherited the flaw and did not fix it. (S)
 6. **Docs refresh is a remainder, not complete.** Still missing from `scanner.md`: the blank-face reorder rule, the USB-stability evidence (two enumerations this boot, `power/control=on`), the bad-scan protocol (delete in UI → re-feed; a re-scan is never byte-identical so dedup will NOT catch it), and the physical-storage doctrine. (S)
 7. **The campaign's own corpus curation is untouched.** Today's ~59 test documents (checklists, KBA, Biedronka, Signal photo, the reordered-before-fix ones) are in Paperless as-is — keep/merge/delete and the deletion of the bad scans is still pending, and it is the prerequisite for a clean training run. (M)
-8. **The GC runs only at startup, so a straggler can outlive it.** The sweep is `-mmin +60` at process start, and the loop never restarts on its own: the 10:01 failure's batch dir was **58 min old** at the 10:59:35 sweep, so it survived and had to be removed by hand (`raw/batch-bYCSHI`, trashed 11:1x). Per-batch cleanup now covers every path the fixed wrapper can take, so no *new* stragglers appear — but a periodic in-loop sweep (every N polls) would put a belt on the per-batch braces and is not implemented. (S)
+8. **The GC runs only at startup, so a straggler can outlive it.** The sweep is `-mmin +60` at process start, and the loop never restarts on its own: the 10:01 failure's batch dir was **58 min old** at the 10:59:35 sweep, so it survived and had to be removed by hand (`raw/batch-bYCSHI`, trashed 11:1x). Per-batch cleanup now covers every path the fixed wrapper can take, so no _new_ stragglers appear — but a periodic in-loop sweep (every N polls) would put a belt on the per-batch braces and is not implemented. (S)
 9. **The numbering/ASN layer is designed but unstarted** — and still blocked on three owner answers (see (g)). (L)
 10. **bank-sync-paperless is still undiagnosed** (every upload rejected `rejection:paperless.client_error`; the token mint succeeds on restart, the main unit logs nothing further). Not touched this session. (M)
 11. **`nix flake check` was not run this session.** No `.nix` file changed (script + docs only) and `check-todo-system.sh`/`check-doc-links.sh` were green, but the repo's own eval gate was not exercised after these edits. (S)
@@ -90,7 +90,7 @@
 
 1. **Long-running loops need a supervision contract, not just better error handling.** Concretely: every daemon-shaped script in `scripts/` should be either a systemd unit with `Restart=always` or explicitly documented as interactive-only. The 10:01 death cost ~50 min of operator time that a `Restart=on-failure` would have cost 2 s of. (Impact: high; fix: convert.)
 2. **Never let a loop's "give up" path be `exit`.** Adopt as a review rule for this repo: inside any `while true` loop, `die`/`exit` is forbidden; failure helpers must report and return. My guards now do this; the rule is not written anywhere.
-3. **Verify the artifact, not the pipeline stage you control.** The frame check felt like verification and proved nothing about the output. Adopt: for every producer script, assert one property of the *delivered artifact* (magic bytes, page count, row count) before claiming success.
+3. **Verify the artifact, not the pipeline stage you control.** The frame check felt like verification and proved nothing about the output. Adopt: for every producer script, assert one property of the _delivered artifact_ (magic bytes, page count, row count) before claiming success.
 4. **Machine output states observations; theories go to prose.** This is the second appearance of the same failure (the previous report flagged it for rc=4, and I still shipped an unconditional cause string). Make it a lint-able habit: no causal claim in a log line without a live probe in the same session.
 5. **A file in a watched directory is not ingested until the consumer says so.** "Delivered" and "consumed" are different states; the ledger loop (doc-id confirmation) is the general fix, and the permission chmod is the narrow one.
 6. **Silence is the enemy signal.** Three separate silent failures this session (dead loop, stuck file, unread FAILED backlog). Every one of them was detectable by a probe that does not exist. Prefer adding a probe over adding a feature.
@@ -109,8 +109,8 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category** Bug/Feature/Quali
 
 **Immediate (unblocks the campaign today)**
 
-1. ☐ **Make the rc explanation conditional on the actual code** — `rc=4` gets the pick-roller text, `rc=6` gets "jammed: open the ADF and clear the sheet", everything else gets the raw stderr line only. · C · S · Bug *(new)*
-2. ☐ **Surface watch events to the operator (desktop notification)** — delivered (with doc name), batch failed, device gone/replug needed. The only current signal is a log line, which is precisely how 50 min of paper disappeared. · C · S · Feature *(new)*
+1. ☐ **Make the rc explanation conditional on the actual code** — `rc=4` gets the pick-roller text, `rc=6` gets "jammed: open the ADF and clear the sheet", everything else gets the raw stderr line only. · C · S · Bug _(new)_
+2. ☐ **Surface watch events to the operator (desktop notification)** — delivered (with doc name), batch failed, device gone/replug needed. The only current signal is a log line, which is precisely how 50 min of paper disappeared. · C · S · Feature _(new)_
 3. ☑ **Systemd unit for the watch** (`Restart=always`, journal, boot start, log rotation) — already queued; priority raised this session. · C · M · Quality
 4. ☑ **Consume-dir readability guard for non-wrapper producers** (tmpfiles/path-unit mode enforcement). · H · S · Bug
 5. ☑ **Alert on consume-dir depth/staleness** (>15 min = red). · H · S · Feature
@@ -120,10 +120,10 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category** Bug/Feature/Quali
 
 **This session's guards need tests (structural)**
 
-9. ☐ **Write a fixture/selftest for the wrapper's guards** — stub `scanimage`, feed a truncated PNM, assert the batch is trimmed and delivered; assert a `/Count` mismatch blocks delivery; assert a copy failure does **not** end the loop (run the loop for 3 iterations and exit 0). Modelled on `scripts/negative-test-lints.sh` + the `CASES=` harness convention. · H · M · Quality *(new)*
-10. ☐ **Add the wrapper to `shellcheck`/pre-commit coverage explicitly** rather than relying on the standalone run, given the daemon bypasses staged-path legs. · M · S · Quality *(new — plausibly covered by the existing "standalone lint re-run for daemon-swept files" row; verify before creating a row)*
+9. ☐ **Write a fixture/selftest for the wrapper's guards** — stub `scanimage`, feed a truncated PNM, assert the batch is trimmed and delivered; assert a `/Count` mismatch blocks delivery; assert a copy failure does **not** end the loop (run the loop for 3 iterations and exit 0). Modelled on `scripts/negative-test-lints.sh` + the `CASES=` harness convention. · H · M · Quality _(new)_
+10. ☐ **Add the wrapper to `shellcheck`/pre-commit coverage explicitly** rather than relying on the standalone run, given the daemon bypasses staged-path legs. · M · S · Quality _(new — plausibly covered by the existing "standalone lint re-run for daemon-swept files" row; verify before creating a row)_
 11. ☑ **Ingest-confirmation loop** (delivered → doc id from journal → ledger → then clean staging). · H · M · Feature
-12. ☐ **Assert PNG products structurally in receipts mode** (dimensions > 0 via `magick identify`), matching the PDF `/Count` assert. · M · S · Quality *(new)*
+12. ☐ **Assert PNG products structurally in receipts mode** (dimensions > 0 via `magick identify`), matching the PDF `/Count` assert. · M · S · Quality _(new)_
 
 **Paperless health found while working**
 
@@ -134,52 +134,52 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category** Bug/Feature/Quali
 17. ☑ **Diagnose bank-sync-paperless** (`paperless.client_error` on every upload). · H · M · Bug
 18. ☑ **Token-mint boot resilience** (mints fail against a degraded DB and stay failed for hours). · M · M · Quality
 19. ☑ **`pol` in OCR_LANGUAGE** for the Polish corpus (check tesseract-pol + re-OCR cost first). · M · M · Feature
-20. ☐ **Verify the `consume_file` failures individually** — 15 unacknowledged failures may be Wave-6 window artifacts and are the only ones that could indicate lost documents. · M · S · Cleanup *(new)*
-21. ☐ **Sanity-check `paperless_inbox_count 336`** against the 59 docs ingested today — is the inbox tag being cleared on ingest, or is the campaign accumulating unprocessed backlog? · M · S · Quality *(new)*
+20. ☐ **Verify the `consume_file` failures individually** — 15 unacknowledged failures may be Wave-6 window artifacts and are the only ones that could indicate lost documents. · M · S · Cleanup _(new)_
+21. ☐ **Sanity-check `paperless_inbox_count 336`** against the 59 docs ingested today — is the inbox tag being cleared on ingest, or is the campaign accumulating unprocessed backlog? · M · S · Quality _(new)_
 
 **Evidence + docs**
 
 22. ☑ **Scanner docs remainder** — blank-face reorder, USB-stability evidence, bad-scan protocol, physical-storage doctrine. · M · S · Docs
-23. ☐ **Runbook: add the rc→code mapping table** (0/4/6/7/124 with the operator action for each). · H · S · Docs *(new)*
-24. ☐ **Runbook: add the device-hang recovery procedure** (replug first, then `scanimage -L`; the wrapper's rc=124 branch prints the same decision tree). · M · S · Docs *(new — partially covered by row 22; keep separate because it is a procedure, not prose)*
-25. ☐ **Runbook: record today's measured product size** (9.1 MB / 2-page sheet at 300 dpi colour; 8.6 MB for the 11:13 sheet) next to the throughput figures. · M · S · Docs *(new)*
+23. ☐ **Runbook: add the rc→code mapping table** (0/4/6/7/124 with the operator action for each). · H · S · Docs _(new)_
+24. ☐ **Runbook: add the device-hang recovery procedure** (replug first, then `scanimage -L`; the wrapper's rc=124 branch prints the same decision tree). · M · S · Docs _(new — partially covered by row 22; keep separate because it is a procedure, not prose)_
+25. ☐ **Runbook: record today's measured product size** (9.1 MB / 2-page sheet at 300 dpi colour; 8.6 MB for the 11:13 sheet) next to the throughput figures. · M · S · Docs _(new)_
 26. ☑ **Carrier Sheet decision** for sub-50.8 × 70 mm slips. · L · S · Feature
 27. ☑ **Transport decision record** (USB chosen, WiFi deferred). · L · S · Docs
 28. ☑ **Canon PIXMA provenance check** in the networking.nix comment. · L · S · Docs
-29. ☐ **Correct the "2.5 GB" figure in today's CHANGELOG/runbook if you prefer raw-vs-total framing** — CHANGELOG says "2.0 GB of raw frames + 467 MB of products"; the log says 1014 dirs / 2.0 GB used. · L · S · Docs *(new, nit)*
+29. ☐ **Correct the "2.5 GB" figure in today's CHANGELOG/runbook if you prefer raw-vs-total framing** — CHANGELOG says "2.0 GB of raw frames + 467 MB of products"; the log says 1014 dirs / 2.0 GB used. · L · S · Docs _(new, nit)_
 
 **Campaign operations**
 
-30. ☑ **Curate today's ~59 test documents** (keep/merge/delete; remove the reordered-before-fix and bad scans) before training. · H · M · Cleanup *(this is the queued corpus-curation item; not yet started)*
+30. ☑ **Curate today's ~59 test documents** (keep/merge/delete; remove the reordered-before-fix and bad scans) before training. · H · M · Cleanup _(this is the queued corpus-curation item; not yet started)_
 31. ☑ **Scan-profile decision** (300 dpi colour vs True Gray, with the faint-thermal acceptance test). · H · S · Feature
 32. ☑ **Post-campaign exporter/restic/media-growth watch**. · M · S · Quality
-33. ☐ **Decide the raw-frame retention policy** — GC now deletes PNM frames 60 min after use; if they are evidence (or a re-convert opportunity), they need an archival path instead. · M · S · Quality *(new; also raised in (g))*
-34. ☐ **Add a rescan/re-feed procedure for the campaign** (delete in UI → re-feed → hash dedup will NOT catch it) and put it on the memory-side of the runbook. · M · S · Docs *(new; overlaps row 22 — fold in there if you prefer fewer rows)*
-35. ☐ **Instrument per-batch timing** (frames/sec + convert/deliver split) so throughput claims are measured, not estimated. · L · S · Quality *(new)*
-36. ☐ **Batch-level manifest** (one JSON line per delivered doc: file, doc-id, frame count, blank flags, hash) as the ledger's substrate. · M · M · Feature *(new — the numbering layer will need it)*
+33. ☐ **Decide the raw-frame retention policy** — GC now deletes PNM frames 60 min after use; if they are evidence (or a re-convert opportunity), they need an archival path instead. · M · S · Quality _(new; also raised in (g))_
+34. ☐ **Add a rescan/re-feed procedure for the campaign** (delete in UI → re-feed → hash dedup will NOT catch it) and put it on the memory-side of the runbook. · M · S · Docs _(new; overlaps row 22 — fold in there if you prefer fewer rows)_
+35. ☐ **Instrument per-batch timing** (frames/sec + convert/deliver split) so throughput claims are measured, not estimated. · L · S · Quality _(new)_
+36. ☐ **Batch-level manifest** (one JSON line per delivered doc: file, doc-id, frame count, blank flags, hash) as the ledger's substrate. · M · M · Feature _(new — the numbering layer will need it)_
 
 **Infrastructure / robustness**
 
-37. ☐ **Root-side USB recovery unit** for the drop-off class (rebind or authorized-toggle after the device vanishes), only if it recurs. · M · M · Feature *(new; the existing row is a `[watch]`, this is the candidate fix)*
-38. ☐ **Log rotation** for `watch.log` (grows unbounded; 52 KB in 15 min of idle). Folded into row 3's unit, called out separately because it applies even before the unit exists. · M · S · Cleanup *(new)*
+37. ☐ **Root-side USB recovery unit** for the drop-off class (rebind or authorized-toggle after the device vanishes), only if it recurs. · M · M · Feature _(new; the existing row is a `[watch]`, this is the candidate fix)_
+38. ☐ **Log rotation** for `watch.log` (grows unbounded; 52 KB in 15 min of idle). Folded into row 3's unit, called out separately because it applies even before the unit exists. · M · S · Cleanup _(new)_
 39. ☑ **Eval-time lint for chmod/chown in non-`+` preStarts of hardened units** (pipeline.md row from the 09-44 harvest). · M · M · Quality
-40. ☐ **Generalize the "watched directory" probe**: any directory a consumer drains should have a staleness check — paperless consume is the first, but the same shape exists for the drive-paperless and inboxclean pipelines. · M · M · Quality *(new)*
-41. ☐ **Audit for other loops in `scripts/` with an `exit` inside `while true`** — the 10:01 bug class is not unique to this script; a 5-minute grep-and-read pass would either clear the repo or find the next incident. · H · S · Quality *(new, cheap, high value)*
-42. ☐ **Audit for other scripts that treat a `cp` failure as fatal** in a long-running context. · M · S · Quality *(new — same pass as 41)*
+40. ☐ **Generalize the "watched directory" probe**: any directory a consumer drains should have a staleness check — paperless consume is the first, but the same shape exists for the drive-paperless and inboxclean pipelines. · M · M · Quality _(new)_
+41. ☐ **Audit for other loops in `scripts/` with an `exit` inside `while true`** — the 10:01 bug class is not unique to this script; a 5-minute grep-and-read pass would either clear the repo or find the next incident. · H · S · Quality _(new, cheap, high value)_
+42. ☐ **Audit for other scripts that treat a `cp` failure as fatal** in a long-running context. · M · S · Quality _(new — same pass as 41)_
 
 **Observability of the campaign itself**
 
-43. ☐ **A "campaign dashboard" line** (docs scanned today, failures, staging size, last ingest) printed by `scan-to-paperless.sh status`, so the operator has one command instead of four. · M · S · Feature *(new)*
-44. ☐ **Feed scan counts into the existing monitoring stack** (docs/hour) so a stall is visible on a graph rather than inferred. · L · M · Feature *(new)*
+43. ☐ **A "campaign dashboard" line** (docs scanned today, failures, staging size, last ingest) printed by `scan-to-paperless.sh status`, so the operator has one command instead of four. · M · S · Feature _(new)_
+44. ☐ **Feed scan counts into the existing monitoring stack** (docs/hour) so a stall is visible on a graph rather than inferred. · L · M · Feature _(new)_
 
 **Process**
 
-45. ☐ **Write the "no exit inside a loop" review rule into the repo's contributor docs.** · M · S · Docs *(new)*
-46. ☐ **Annotate the deferral-condition expiry** as a docs-health habit (the two reports' notes sat stale; see e.10). · M · S · Docs *(new)*
-47. ☐ **Add the four this-session defects to the gotchas archive** (die-in-loop, unconditional rc cause string, mode-600 consume file, empty-dir accumulation) so they survive as narrative, not just as rows. · M · S · Docs *(new)*
-48. ☐ **Ask the parallel Wave-6 session to confirm whether its 05:04 root-cause work touched the paperless consumer's duplicate/ingest paths** before the campaign accelerates — my session assumed its ownership and did not improvise around it. · M · S · Quality *(new)*
-49. ☐ **Decide whether `DELETE_DUPLICATES=true` stays through the campaign** — already answered once (keep), but the first genuinely duplicated document will re-open it; make the answer visible at the point of doubt (runbook + `status` output both mention it today). · L · S · Docs *(new, low)*
-50. ☐ **Remove the stale `.cache/scan-to-paperless/{prev-frame-*.jpg,preview.jpg,b.png,r.png,t.pdf}` scratch files** left over from the exploratory session (incidental clutter in a directory that is now lifecycle-managed). · L · S · Cleanup *(new)*
+45. ☐ **Write the "no exit inside a loop" review rule into the repo's contributor docs.** · M · S · Docs _(new)_
+46. ☐ **Annotate the deferral-condition expiry** as a docs-health habit (the two reports' notes sat stale; see e.10). · M · S · Docs _(new)_
+47. ☐ **Add the four this-session defects to the gotchas archive** (die-in-loop, unconditional rc cause string, mode-600 consume file, empty-dir accumulation) so they survive as narrative, not just as rows. · M · S · Docs _(new)_
+48. ☐ **Ask the parallel Wave-6 session to confirm whether its 05:04 root-cause work touched the paperless consumer's duplicate/ingest paths** before the campaign accelerates — my session assumed its ownership and did not improvise around it. · M · S · Quality _(new)_
+49. ☐ **Decide whether `DELETE_DUPLICATES=true` stays through the campaign** — already answered once (keep), but the first genuinely duplicated document will re-open it; make the answer visible at the point of doubt (runbook + `status` output both mention it today). · L · S · Docs _(new, low)_
+50. ☐ **Remove the stale `.cache/scan-to-paperless/{prev-frame-*.jpg,preview.jpg,b.png,r.png,t.pdf}` scratch files** left over from the exploratory session (incidental clutter in a directory that is now lifecycle-managed). · L · S · Cleanup _(new)_
 
 ### Harvest status of this section
 
@@ -199,18 +199,18 @@ Legend: **Impact** C/H/M/L · **Effort** S/M/L · **Category** Bug/Feature/Quali
 
 ## Appendix: the incident chain (evidence, verbatim)
 
-| Time | Evidence | Meaning |
-| --- | --- | --- |
-| 09:32:07 | `ts=$(date …)` printed into the later product name `doc-20261019-093207-01.pdf` | the fatal scan began |
-| 09:37:07 | `scanimage: received signal 15` then `trying to stop scanner` | `timeout` fired 300 s in |
-| 09:32 → 10:01 | no log output at all (29 min) | `scanimage` blocked in the kernel (D-state on the USB URB) |
-| 10:01:36 | `usb 6-1: USB disconnect, device number 11` + `scanimage: sane_start: Invalid argument` + `Batch terminated, 1 page scanned` | device dropped off the bus; the URB was released |
-| 10:01:36 | `frame-0001.pnm` = **31 bytes**, `magick: negative or zero image size` | header-only PNM from the aborted scan |
-| 10:01:36 | `cp: cannot stat '…/doc-20261019-093207-01.pdf'` → `ERROR: failed copying … (ACL/group write?)` → **process exit** | the fatal `die` |
-| 10:01 → 10:50 | zero log lines; watch PID gone | **50 min of paper fed into nothing** |
-| 10:50:42 | `new SuperSpeed USB device number 13 … Product: ADS-1800W SerialNumber E83229M4X114379` | user replug restored the device |
-| 10:59:35 | `gc: reclaimed 1014 stale raw batch dir(s)` / `removed 47 stale staged product(s)` / `WATCH mode start` | fixed wrapper live |
-| 10:59:39–42 | `2 frame(s) captured` → `delivered 1 document(s)` → doc **1000494** | end-to-end proof |
-| 11:13:40–42 | `2 frame(s) captured` → `delivered 1 document(s)` (`doc-20261019-111336-01.pdf`) | second proof, while this report was being written |
+| Time          | Evidence                                                                                                                     | Meaning                                                    |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| 09:32:07      | `ts=$(date …)` printed into the later product name `doc-20261019-093207-01.pdf`                                              | the fatal scan began                                       |
+| 09:37:07      | `scanimage: received signal 15` then `trying to stop scanner`                                                                | `timeout` fired 300 s in                                   |
+| 09:32 → 10:01 | no log output at all (29 min)                                                                                                | `scanimage` blocked in the kernel (D-state on the USB URB) |
+| 10:01:36      | `usb 6-1: USB disconnect, device number 11` + `scanimage: sane_start: Invalid argument` + `Batch terminated, 1 page scanned` | device dropped off the bus; the URB was released           |
+| 10:01:36      | `frame-0001.pnm` = **31 bytes**, `magick: negative or zero image size`                                                       | header-only PNM from the aborted scan                      |
+| 10:01:36      | `cp: cannot stat '…/doc-20261019-093207-01.pdf'` → `ERROR: failed copying … (ACL/group write?)` → **process exit**           | the fatal `die`                                            |
+| 10:01 → 10:50 | zero log lines; watch PID gone                                                                                               | **50 min of paper fed into nothing**                       |
+| 10:50:42      | `new SuperSpeed USB device number 13 … Product: ADS-1800W SerialNumber E83229M4X114379`                                      | user replug restored the device                            |
+| 10:59:35      | `gc: reclaimed 1014 stale raw batch dir(s)` / `removed 47 stale staged product(s)` / `WATCH mode start`                      | fixed wrapper live                                         |
+| 10:59:39–42   | `2 frame(s) captured` → `delivered 1 document(s)` → doc **1000494**                                                          | end-to-end proof                                           |
+| 11:13:40–42   | `2 frame(s) captured` → `delivered 1 document(s)` (`doc-20261019-111336-01.pdf`)                                             | second proof, while this report was being written          |
 
-*Cross-check command:* `sed -n '349,$p' ~/.cache/scan-to-paperless/watch.log` (line 349 is the 10:59:35 restart marker).
+_Cross-check command:_ `sed -n '349,$p' ~/.cache/scan-to-paperless/watch.log` (line 349 is the 10:59:35 restart marker).

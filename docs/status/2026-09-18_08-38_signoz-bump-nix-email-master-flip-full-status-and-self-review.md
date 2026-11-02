@@ -163,20 +163,20 @@ repo lessons (embarrassing because they were KNOWN):
 
 ~~1. Run `nix run .#deploy` in a quiet window (pressure gates will enforce timing).~~ done — deployed with the 2026-09-21/22 wave; live-verified by later sessions
 ~~2. Post-deploy: verify SigNoz login/impersonation (tokenizer jwt→opaque is the one~~ done — deployed + SigNoz live (later sessions re-verified login/impersonation)
-   behavioral change).
+behavioral change).
 ~~3. Post-deploy: journal-confirm migration 126 applied (signoz unit) + `DELETE FROM~~ done — deployed; migration recorded in the 09-21/22 deploy wave
    migration_lock` hygiene held.
 ~~4. Post-deploy: confirm CH schema-migrator ran as no-op (zero new migrations expected —~~ done — schema-migrator no-op confirmed post-deploy (09-22 deploys)
-   this validates the review empirically).
+this validates the review empirically).
 ~~5. Post-deploy: `nix run .#post-deploy-check` full pass (SigNoz impersonation smoke).~~ done — post-deploy battery ran green on the 09-22 deploys
 ~~6. Post-deploy: spot-check dashboards render + one alert rule fires/resolves on the new~~ done — dashboards/alerts live-verified post-deploy (later SigNoz sessions)
-   stack (frontend+backend co-bumped; ruleSource Discord links should still resolve).
+stack (frontend+backend co-bumped; ruleSource Discord links should still resolve).
 ~~7. Pre-deploy (cheap): `signoz-schema-migrator --help` binary smoke.~~ done — migrator binary shipped in the deployed wave
 ~~8. Pre-deploy (cheap): run `scripts/pre-deploy-check.sh` once as gate rehearsal.~~ done — gate rehearsal ran pre-deploy (2026-09-18_05-58 closeout)
 ~~9. Read post-deploy-check's signoz sections; harden the impersonation smoke if the~~ done — impersonation smoke hardened + live in post-deploy-check
-   tokenizer flip can affect it.
+tokenizer flip can affect it.
 ~~10. Machine-validate the rendered signoz.yaml against the new binary (throwaway run /~~ done — rendered config validated at deploy (§10 battery green)
-    future VM test), retiring the source-inferred "config-safe" verdict.
+future VM test), retiring the source-inferred "config-safe" verdict.
 
 **Signoz: standing obligations opened/confirmed by this bump**
 11. Watch upstream sonic ≥ 1.15 → THEN drop both Go-1.26 patches (recorded drop condition
@@ -241,15 +241,15 @@ third-party HEAD drift is caught before a human asks "time for an update?"
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
 ~~1. **Deploy now or wait?** Everything is staged and verified to build; the live migration~~ done — deployed 2026-09-21/22 wave
-   (126) + tokenizer flip only happen at `nix run .#deploy`. Do you want the deploy +
-   live verification NOW (observability stack restart mid-day), or should this wait for a
-   quiet window you pick?
+(126) + tokenizer flip only happen at `nix run .#deploy`. Do you want the deploy +
+live verification NOW (observability stack restart mid-day), or should this wait for a
+quiet window you pick?
 2. **CV coordination**: is the parallel session's pushed `93cf5bc0f` intended as
-   ready-for-consumption, or is more CV work in flight that my SystemNix re-lock to it
-   might race? (I verified build-green from our lock; I cannot know their session plan.)
+ready-for-consumption, or is more CV work in flight that my SystemNix re-lock to it
+might race? (I verified build-green from our lock; I cannot know their session plan.)
 3. **nix-email depth**: stay plumbing-only (bump verified, contract green), or should I
-   review/adopt the v0.3.x option surface into the wrapper now — and is the D1 rua-mailbox
-   gate still the intended trigger for enabling dmarc-monitor on evo-x2?
+review/adopt the v0.3.x option surface into the wrapper now — and is the D1 rua-mailbox
+gate still the intended trigger for enabling dmarc-monitor on evo-x2?
 
 ---
 

@@ -5,6 +5,7 @@
 **Scope:** triggered by the charmbracelet/crush v0.99.0 release + "what can we improve / deep brainstorm", then a catwalk-endpoint decision question, then this self-review. Covers ONLY this session's work.
 
 **Final state at writing:**
+
 - SystemNix: nur float (crush 0.99.0) committed in lock+registry; flake check green; evo-x2 still RUNNING 0.98.2 — deploy blocked on upstream roots.
 - crush-config (private sibling repo) master @ `822f897` + `fcf4516`: three hook-layer improvements + fixture checks, full flake check green — **not yet floated into SystemNix's lock**.
 - evo-x2 toplevel build: blocked by `kith-crm@c3ed35c2` + `cv@fc0506b` upstream vendorHash mismatches (owner in-flight, other machine).
@@ -64,6 +65,7 @@
 ## f) Next things (grouped, ≤50; [r]=[ready] once unblocked, [o]=owner, [R]=roadmap)
 
 Rollout finish line:
+
 1. [o] Fix kith-crm@c3ed35c2 go-modules vendorHash upstream (got-hash evidence in proof log: `sha256-LpMsryrv…`) and push.
 2. [o] Fix cv@fc0506b go-modules vendorHash upstream (got: `sha256-fyOA12V…`) and push.
 3. [r] Re-run `scripts/float-register.sh` after roots clear (watch media-atlas-key-provision + journal FOD for recurrence).

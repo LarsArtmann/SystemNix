@@ -18,10 +18,10 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works | Missing | Why |
-|---|---|---|---|---|
-| 1 | U2 depth | every ✅ row mechanically covered: path existence + enable truth; 7 drifts fixed | prose-depth per row (each row's full claim text vs behavior) remains M4/T4-era verification only | mechanical depth catches the ghost/wrong-done classes (the dangerous ones) at 269-row scale; prose-depth × 269 is corpus-grade work with diminishing returns vs the wave |
-| 2 | 19-28 plan | U1–U3, U11, U12 done; marker accurate | U4–U10 owner-gated (Q2/Q1/tooling-auth) — see c) | the owner gates ARE the plan's design |
+| # | Item       | Works                                                                            | Missing                                                                                          | Why                                                                                                                                                                      |
+| - | ---------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 | U2 depth   | every ✅ row mechanically covered: path existence + enable truth; 7 drifts fixed | prose-depth per row (each row's full claim text vs behavior) remains M4/T4-era verification only | mechanical depth catches the ghost/wrong-done classes (the dangerous ones) at 269-row scale; prose-depth × 269 is corpus-grade work with diminishing returns vs the wave |
+| 2 | 19-28 plan | U1–U3, U11, U12 done; marker accurate                                            | U4–U10 owner-gated (Q2/Q1/tooling-auth) — see c)                                                 | the owner gates ARE the plan's design                                                                                                                                    |
 
 ## c) NOT STARTED (owner-gated — unchanged from the 19-14 report, pressure increased)
 

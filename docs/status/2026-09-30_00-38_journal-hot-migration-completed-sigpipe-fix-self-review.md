@@ -60,34 +60,34 @@ Nothing irreversible happened. No data lost, no false "OK" claims to the user, n
 
 1. Reboot decision + `nix run .#pre-reboot-check` + boot-path verification of journal-hot (the one unproven half).
 2. Optional: re-run `sudo bash scripts/migrate-journal-hot.sh finalize` (fixed) for the official marker record.
-~~3. Restore PSI gate to 20 / make it env-overridable.~~ done — scripts/migrate-journal-hot.sh:82 now gated via maintenance-entry-gate --psi-max 30 (landed 2026-10-15; stability.md:188 [x]) — gate parameterized
-4. Trash the stale cache list (~13.5G off the 92% QLC root).
-5. Implement the cache mover (generic `hot-user-caches.dirs` module or one-shot script; symlink pattern, skip-live, `chattr +C` for sqlite-heavy targets).
-6. Investigate `/mnt/hot/nix` root-level dir (Aug 17) — likely cruft from the first cache-migration attempt; trash after a peek.
-7. Verify the `~/.cache/go-build → /nix/store/…` symlink (home-manager artifact) is intended; store targets are read-only.
-~~8. Forgejo doctrine per Q3 answer (disko-declare + `migrate-forgejo-subvol.sh` + flip `dedicated`, or keep-on-QLC and delete the inert bootstrap design).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED (deploy system-864)
-9. File the TODO_LIST row: one-time-migration modules gate (deferred from tonight).
-10. Durable GC-eviction fix (gcroot the checks / keep-outputs / rescope nightly nix-gc) — recurs daily until done.
-11. Real-build the hot-user-caches VM regression test.
-12. Eval/build `tests/test-journal-hot.nix` (verify it exists and matches the shipped module).
-13. Audit the daemon commits that rode tonight's deploys (777fa972, 31392dbf, 3c1b7fc1, dae3ee0a + the 00:2x-00:3x batch).
-14. Read the parallel session's `2026-09-29_11-34_gatus-panic-notification-storm-incident.md`.
-15. hermes-agent closure-version anomaly (0.21.4 → 0.0.0).
-16. User: `inboxclean auth` (expired OAuth — last red unit).
-17. Gatus alerts: stuck-systemd-jobs + boot-completion.
-18. Fleet audit: `before=*.mount` orderings; mount-timeout on every automount fstab entry.
-19. gatus-config.nix:673 rule fix.
-20. Pool btrfs metadata balance (97.9% full metadata).
-21. Root-disk cleanup plan beyond caches (QLC 92%).
-22. docs-health HARVEST: the three 09-29/09-30 status reports.
-23. Archive `/var/tmp` forensics (78M journal capture, PID 10158 stack) into docs/ before tmp cleanup.
-24. Post-reboot: verify boot-ordering, then schedule the eventual QLC shadow-dir cleanup after a soak period.
-25. Check `/run/log/journal` residual (dir re-created post-flush, 40B — verify empty, benign expected).
-26. SigNoz GCP receiver go-live deploy (single remaining step per AGENTS.md) + dnsblockd post-deploy probe.
-27. Run buildflow + `nix flake check --no-build` once the tree settles (GC-flap heal protocol if it bites).
-28. Consider a "deploy gate" hook: refuse switch if any imported module matches `migrate-*.sh` unreferenced in its header (codify the doctrine).
-29. `/mnt/hot` capacity watch once caches land there (790G free now; set a gatus threshold).
-30. Revisit forgejo's stale `commit-graph.lock` files if the warnings persist across sync cycles.
+   ~~3. Restore PSI gate to 20 / make it env-overridable.~~ done — scripts/migrate-journal-hot.sh:82 now gated via maintenance-entry-gate --psi-max 30 (landed 2026-10-15; stability.md:188 [x]) — gate parameterized
+3. Trash the stale cache list (~13.5G off the 92% QLC root).
+4. Implement the cache mover (generic `hot-user-caches.dirs` module or one-shot script; symlink pattern, skip-live, `chattr +C` for sqlite-heavy targets).
+5. Investigate `/mnt/hot/nix` root-level dir (Aug 17) — likely cruft from the first cache-migration attempt; trash after a peek.
+6. Verify the `~/.cache/go-build → /nix/store/…` symlink (home-manager artifact) is intended; store targets are read-only.
+   ~~8. Forgejo doctrine per Q3 answer (disko-declare + `migrate-forgejo-subvol.sh` + flip `dedicated`, or keep-on-QLC and delete the inert bootstrap design).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED (deploy system-864)
+7. File the TODO_LIST row: one-time-migration modules gate (deferred from tonight).
+8. Durable GC-eviction fix (gcroot the checks / keep-outputs / rescope nightly nix-gc) — recurs daily until done.
+9. Real-build the hot-user-caches VM regression test.
+10. Eval/build `tests/test-journal-hot.nix` (verify it exists and matches the shipped module).
+11. Audit the daemon commits that rode tonight's deploys (777fa972, 31392dbf, 3c1b7fc1, dae3ee0a + the 00:2x-00:3x batch).
+12. Read the parallel session's `2026-09-29_11-34_gatus-panic-notification-storm-incident.md`.
+13. hermes-agent closure-version anomaly (0.21.4 → 0.0.0).
+14. User: `inboxclean auth` (expired OAuth — last red unit).
+15. Gatus alerts: stuck-systemd-jobs + boot-completion.
+16. Fleet audit: `before=*.mount` orderings; mount-timeout on every automount fstab entry.
+17. gatus-config.nix:673 rule fix.
+18. Pool btrfs metadata balance (97.9% full metadata).
+19. Root-disk cleanup plan beyond caches (QLC 92%).
+20. docs-health HARVEST: the three 09-29/09-30 status reports.
+21. Archive `/var/tmp` forensics (78M journal capture, PID 10158 stack) into docs/ before tmp cleanup.
+22. Post-reboot: verify boot-ordering, then schedule the eventual QLC shadow-dir cleanup after a soak period.
+23. Check `/run/log/journal` residual (dir re-created post-flush, 40B — verify empty, benign expected).
+24. SigNoz GCP receiver go-live deploy (single remaining step per AGENTS.md) + dnsblockd post-deploy probe.
+25. Run buildflow + `nix flake check --no-build` once the tree settles (GC-flap heal protocol if it bites).
+26. Consider a "deploy gate" hook: refuse switch if any imported module matches `migrate-*.sh` unreferenced in its header (codify the doctrine).
+27. `/mnt/hot` capacity watch once caches land there (790G free now; set a gatus threshold).
+28. Revisit forgejo's stale `commit-graph.lock` files if the warnings persist across sync cycles.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

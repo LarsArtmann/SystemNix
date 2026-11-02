@@ -40,22 +40,22 @@
 ## b) PARTIALLY DONE
 
 1. **Mail relay end-to-end delivery is still UNPROVEN.** Key is live, but zero real sends have occurred since (queue was already empty — nothing to flush; `postqueue -f` is moot). Blocks on: Resend domain verification + one real test send. **→ Resend domain verify still blocking E2E (docs/services/mail-relay.md Go-live state 550 blocker)**
-~~2. **InboxClean:** sync still red. Main account `auth_expired`; the work account token (issued Aug 29 under Testing) has passed its 7-day bomb too. Re-auth of BOTH required, in the right order (consent screen to "In production" FIRST).~~ **Won't implement — InboxClean tokens long re-expired; re-auth runbook docs/services/inboxclean.md.**
-~~3. **Bank-sync:** syncs work again, but **statements are DEGRADED** on a fresh Wise SCA challenge (balance-only via transfers fallback). Human approval step pending.~~ **Won't implement — that SCA challenge expired; recurrence runbooked (docs/services/bank-sync-sca.md).**
-~~4. **Docs:** all edits applied; the AGENTS.md changes are staged/awaiting the auto-daemon commit (mail-relay.md + post-deploy-check.sh already committed).~~ done — daemon committed; canonical SOPS_AGE_KEY pattern live in runbooks
-~~5. **Gatus textfile freshness** (frozen-file phantom-green class): identified across two sessions, still not implemented anywhere.~~ **NOT-DO — dup of 03-39 report c1/f18 (Gatus freshness).**
-~~6. **Textfile collector class sweep:** converted repo-wide last session, but the two allowlisted safety-critical units (memory-emergency-guard, sev1-escalation) remain on cosmetic-only exemption — revisit-on-touch stance unchanged.~~ **NOT-DO — dup of 03-39 report b4 (guard/sev1 conversion).**
+   ~~2. **InboxClean:** sync still red. Main account `auth_expired`; the work account token (issued Aug 29 under Testing) has passed its 7-day bomb too. Re-auth of BOTH required, in the right order (consent screen to "In production" FIRST).~~ **Won't implement — InboxClean tokens long re-expired; re-auth runbook docs/services/inboxclean.md.**
+   ~~3. **Bank-sync:** syncs work again, but **statements are DEGRADED** on a fresh Wise SCA challenge (balance-only via transfers fallback). Human approval step pending.~~ **Won't implement — that SCA challenge expired; recurrence runbooked (docs/services/bank-sync-sca.md).**
+   ~~4. **Docs:** all edits applied; the AGENTS.md changes are staged/awaiting the auto-daemon commit (mail-relay.md + post-deploy-check.sh already committed).~~ done — daemon committed; canonical SOPS_AGE_KEY pattern live in runbooks
+   ~~5. **Gatus textfile freshness** (frozen-file phantom-green class): identified across two sessions, still not implemented anywhere.~~ **NOT-DO — dup of 03-39 report c1/f18 (Gatus freshness).**
+   ~~6. **Textfile collector class sweep:** converted repo-wide last session, but the two allowlisted safety-critical units (memory-emergency-guard, sev1-escalation) remain on cosmetic-only exemption — revisit-on-touch stance unchanged.~~ **NOT-DO — dup of 03-39 report b4 (guard/sev1 conversion).**
 
 ## c) NOT STARTED
 
 1. **AGENTS.md gotchas from the prior session's VM-test lessons:** `fs.protected_regular=2` blocking even root's O_TRUNC of foreign-owned files in sticky dirs, and `AmbientCapabilities` (not BoundingSet) being what GRANTS caps to non-root `User=` units. Grep confirms 0 mentions — never landed.
-~~2. **Gatus textfile freshness conditions** for all collectors (mtime-based, fail-closed) — the frozen-prom phantom-green class.~~ **NOT-DO — dup of 03-39 report c1.**
-~~3. **§12 staleness assertion** on `mail-relay.prom` mtime (the new credential-verdict source should refuse stale input).~~ **NOT-DO — dup of 03-39 report b3.**
-~~4. **Bank-sync smoke-check semantics:** `bank_sync_sync_errors_total` is cumulative since process start — the check FAILs forever after ANY historical failure until a unit restart (proven tonight: syncs succeed since 05:28, check still FAIL). Needs a windowed delta or last-cycle-success signal.~~ done at `windowed signal in gate: bank_sync_last_sync_timestamp_seconds (scripts/pre-deploy-check.sh:697)`
-~~5. **`tests/test-oauth2-proxy.nix`** is unregistered in `tests/default.nix` (dead file) — register or trash.~~ **NOT-DO — dup of 03-39 report c2 (test-oauth2-proxy).**
-~~6. **The 50-task backlog** from the prior report (`docs/status/2026-09-06_03-39_…`) — untouched, still valid; see (f) for the carried-forward subset.~~ **Won't implement — meta pointer; backlog harvested by docs-health passes since.**
-~~7. **User-action secrets not yet set:** Hermes fine-grained PAT (placeholder), InboxClean decrypt password (placeholder, inert by design).~~ **Won't implement — Hermes PAT + InboxClean decrypt user actions; tokens long stale.**
-~~8. **The owed reboot** (D-state corpse pile, wedged amdxdna/llama state, flm :52626 zombie socket, zram-50% sizing activation) — user decision, unchanged.~~ done — reboot era closed; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
+   ~~2. **Gatus textfile freshness conditions** for all collectors (mtime-based, fail-closed) — the frozen-prom phantom-green class.~~ **NOT-DO — dup of 03-39 report c1.**
+   ~~3. **§12 staleness assertion** on `mail-relay.prom` mtime (the new credential-verdict source should refuse stale input).~~ **NOT-DO — dup of 03-39 report b3.**
+   ~~4. **Bank-sync smoke-check semantics:** `bank_sync_sync_errors_total` is cumulative since process start — the check FAILs forever after ANY historical failure until a unit restart (proven tonight: syncs succeed since 05:28, check still FAIL). Needs a windowed delta or last-cycle-success signal.~~ done at `windowed signal in gate: bank_sync_last_sync_timestamp_seconds (scripts/pre-deploy-check.sh:697)`
+   ~~5. **`tests/test-oauth2-proxy.nix`** is unregistered in `tests/default.nix` (dead file) — register or trash.~~ **NOT-DO — dup of 03-39 report c2 (test-oauth2-proxy).**
+   ~~6. **The 50-task backlog** from the prior report (`docs/status/2026-09-06_03-39_…`) — untouched, still valid; see (f) for the carried-forward subset.~~ **Won't implement — meta pointer; backlog harvested by docs-health passes since.**
+   ~~7. **User-action secrets not yet set:** Hermes fine-grained PAT (placeholder), InboxClean decrypt password (placeholder, inert by design).~~ **Won't implement — Hermes PAT + InboxClean decrypt user actions; tokens long stale.**
+   ~~8. **The owed reboot** (D-state corpse pile, wedged amdxdna/llama state, flm :52626 zombie socket, zram-50% sizing activation) — user decision, unchanged.~~ done — reboot era closed; zram 62.2 GiB verified (docs/todo/stability.md Post-BIOS memory re-baseline)
 
 ## d) TOTALLY FUCKED UP
 

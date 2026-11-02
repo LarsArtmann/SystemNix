@@ -57,7 +57,7 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
    "measurement" that sized it was run as `lars`, uncapped, warm cache. A cold journal + IO pressure could still
    occasionally exceed 60s → transient `scrape_errors 1` → Gatus flap. Fail-closed, not fail-silent — but the
    false-positive rate is unknown.
-~~3. **Global `DefaultTimeoutStartSec` phantom**: documented (evaluates fine on evo-x2, yet deployed~~ done at `TimeoutStartSec eval audit shipped; modules/nixos/services/timeout-audit.nix`
+   ~~3. **Global `DefaultTimeoutStartSec` phantom**: documented (evaluates fine on evo-x2, yet deployed~~ done at `TimeoutStartSec eval audit shipped; modules/nixos/services/timeout-audit.nix`
    `/etc/systemd/system.conf.d/` is EMPTY; a 28-min wedged job was never killed). Root cause NOT found — is it
    nixpkgs option rendering, a stale generation, or the module not being imported into the host? Systemic hole
    affecting EVERY unit on the box; I only patched the two units I touched.
@@ -87,17 +87,17 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
    exit=0 and concluded it worked. This is EXACTLY the repo's documented "validate with the SAME tool/semantics
    the check uses" trap (python-urlopen-vs-curl class). Cost: one extra deploy cycle + a window of
    fail-closed-red Gatus state. Lesson written into AGENTS.md.
-~~2. **Anticipated the Gatus condition but not the deploy gate.** I added the new metric to gatus-config and got~~ done at `deploy IO PSI gate; scripts/deploy.sh:200`
+   ~~2. **Anticipated the Gatus condition but not the deploy gate.** I added the new metric to gatus-config and got~~ done at `deploy IO PSI gate; scripts/deploy.sh:200`
    blocked by pre-deploy §10 (phantom metric absent on the running system). The bootstrap mechanism is documented
    in AGENTS; I should have run `nix run .#pre-deploy-check` BEFORE the first deploy attempt — it costs seconds.
-3. **Deploy churn on a shared box.** 4 deploy attempts in ~1h (1 blocked by §10, 1 killed by my own session
+2. **Deploy churn on a shared box.** 4 deploy attempts in ~1h (1 blocked by §10, 1 killed by my own session
    interruption mid-run, 2 completed). Each restarts services — the discordsync API outage I then waited out was
    very likely caused by MY deploy restarting it (documented 5-11 min startup). I also did not `git status`
    immediately before deploy #3, which raced the parallel session's uncommitted flm holdback (harmless here —
    their edit landed after my build started — but I got lucky, not careful).
-4. **Tool sloppiness**: used `rg -rn` (the `-r` is REPLACE, not regex-recursion) twice — once produced mangled
+3. **Tool sloppiness**: used `rg -rn` (the `-r` is REPLACE, not regex-recursion) twice — once produced mangled
    output I initially misread as a different metric name before catching it. Wasted a diagnostic cycle.
-5. **Background-job handling**: let the deploy move to background, then an interruption killed it silently;
+4. **Background-job handling**: let the deploy move to background, then an interruption killed it silently;
    recovery was clean (verified current-system before re-running) but the pattern (long deploys in background
    shells that die with the session) is fragile.
 
@@ -109,12 +109,12 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
    must itself run under pipefail (`bash -o pipefail -c '…'`). Interactive shells mask exit-code contracts.
 3. **Every journal read in a collector**: `--since` window + `timeout` + fail-closed gauge. No exceptions —
    make it an auditable rule, then audit.
-~~4. **Every kernel-ioctl call in a collector** (btrfs, nvme, smartctl): `timeout`-wrapped, skip-that-cycle on~~ done — ioctl timeout wrapping standard; btrfs-health.nix:206,296
+   ~~4. **Every kernel-ioctl call in a collector** (btrfs, nvme, smartctl): `timeout`-wrapped, skip-that-cycle on~~ done — ioctl timeout wrapping standard; btrfs-health.nix:206,296
    expiry. `btrfs scrub status` hanging 1h was invisible because nothing bounded it.
-5. **Root-cause the phantom `DefaultTimeoutStartSec`** — until then, per-unit explicit timeouts are the only real
+4. **Root-cause the phantom `DefaultTimeoutStartSec`** — until then, per-unit explicit timeouts are the only real
    guard; an eval-time audit ("every timer-driven oneshot collector MUST set TimeoutStartSec") would encode it.
-6. **Cap the journal** (`SystemMaxUse`): 7.2G of journal is an IO trap multiplier for every future collector bug.
-~~7. **Deploy restart cost awareness**: deploys restart discordsync (5-11 min API gap) every time; consider~~ **Won't implement — discordsync deploy gap never addressed.**
+5. **Cap the journal** (`SystemMaxUse`): 7.2G of journal is an IO trap multiplier for every future collector bug.
+   ~~7. **Deploy restart cost awareness**: deploys restart discordsync (5-11 min API gap) every time; consider~~ **Won't implement — discordsync deploy gap never addressed.**
    deploy.sh ordering or a restart-rationing policy when multiple deploys land in one hour.
 
 ## f) NEXT UP TO 50 (from this session's observations only)
@@ -122,12 +122,12 @@ global `DefaultTimeoutStartSec` being phantom on the deployed system.
 **Directly from this incident:**
 
 ~~1. Verify Gatus "OOMD Kills" check green via gatus sqlite (read-only, per repo doctrine).~~ **Won't implement — one-shot sqlite verify; window passed.**
-   ~~2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the
-   pinned rev; check whether the booted generation ever contained it; fix or replace the mechanism.~~ done — gotcha CORRECTED 2026-08-31 (20-30 report §5): nixpkgs renders the whole system.conf; the setting IS live; per-unit ceilings kept as good practice
+~~2. Root-cause phantom `DefaultTimeoutStartSec`: check how nixpkgs renders `systemd.settings.Manager` in the
+pinned rev; check whether the booted generation ever contained it; fix or replace the mechanism.~~ done — gotcha CORRECTED 2026-08-31 (20-30 report §5): nixpkgs renders the whole system.conf; the setting IS live; per-unit ceilings kept as good practice
 2. Eval-time audit module: every `systemd.services.<name>` with a timer AND Type=oneshot MUST carry explicit
-   `TimeoutStartSec` (the phantom-default defense).
+`TimeoutStartSec` (the phantom-default defense).
 3. Audit ALL `journalctl` invocations repo-wide for `--since`/`-n`/`timeout` bounds (monitor365-server-watchdog,
-   niri-health-metrics, watchdogs, deploy/post-deploy scripts).
+niri-health-metrics, watchdogs, deploy/post-deploy scripts).
 4. Audit all `| sort | head` / `| grep -q` pipelines in collector scripts for SIGPIPE-under-pipefail.
 5. Write a unit test for the oomd collector block (fixture journal: no-match/has-match/timeout paths).
 6. Bump `system-health-metrics` MemoryMax 128M → 256M (journal-growth headroom).
@@ -164,7 +164,7 @@ all-history — check SigNoz dashboards for `system_oomd_kills_total` panels.
 2. **flm holdback:** the parallel session left `pkgs/fastflowlm.nix` dirty (v1.0.3 → 1.0.2 holdback,
    "retry after reboot into kernel 7.2.2"). Should I verify + deploy their change, or is that session still
    owning the thread? (flm = down since boot; PMA/papdashboard/paperless-ai consumers degraded.)
-~~3. **oomd window semantics:** `system_oomd_kills_total` now means "kills in trailing 24h" (was: all-history).~~ **Won't implement — pre-deploy-the-pre-deploy habit never canonized.**
+   ~~3. **oomd window semantics:** `system_oomd_kills_total` now means "kills in trailing 24h" (was: all-history).~~ **Won't implement — pre-deploy-the-pre-deploy habit never canonized.**
    Gatus only alerts on the per-collection delta either way — keep 24h, or prefer current-boot-only (`-b 0`)?
 
 ---

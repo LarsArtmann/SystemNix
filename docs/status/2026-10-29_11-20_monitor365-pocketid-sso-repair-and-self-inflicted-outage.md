@@ -159,6 +159,7 @@ below.
 ## f) NEXT (candidate queue — harvested per the discipline below)
 
 Harvested into the TODO system now (see the "harvested" tags):
+
 1. **[ready] Audit the heal's unknown-error branch against the 03:00 backup window**
    — the fail-open classifier recognises duplicate-key + no-tenants; a DuckDB
    lock-conflict (backup wrapper holds the single-writer lock, watchdog auto-start

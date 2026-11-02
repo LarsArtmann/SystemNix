@@ -15,20 +15,20 @@ The "infinite boot" was `netbird-evox2-login.service`: an unbounded nixpkgs poll
 
 ## Evidence base (all probes this session, live)
 
-| Probe | Result |
-|---|---|
-| `busctl … Manager ListJobs` (~19:05) | 4 jobs: netbird-evox2-login **start/running** (job 531, since 18:13:58); boot-metrics-emit, multi-user.target, graphical.target all **waiting** |
-| Journal Starting-without-Started diff | 3 candidates: netbird-evox2-login (true), linger-users + browser-history-agent-token-provision (**false positives** — oneshots log "Finished", both fine) |
-| Login script source (store) | The unguarded `until … sleep 1` + `get_status() { … 2>&1 \|\| :; }` — errors invisible |
-| netbird-evox2 daemon journal | management gRPC setup lines cycling every 20-30s all boot — never Connected (env cause: pbx, per parallel report) |
-| Wrapper store path `a1awc19d…` | Readable 19:05 → **ENOENT 19:12** (mid concurrent build, 182 nix procs) → still ENOENT 20:11 — while `nix path-info -r` lists it in BOTH booted+current closures |
-| Generations | booted `zmnzbs3f` ≠ current `sgjss8fz` (19:07) → `rm56zlza` (20:11); deploys 19:34 (system-925) + ~20:10 |
-| Parked converger | `sudo systemctl restart netbird-evox2-login` PIDs alive since ~18:50 (the 18:43 deploy's converger) |
-| `FinishTimestampMonotonic` (19:52) | 5371299559 µs ≈ 89.5 min ≈ 19:43:20 — transaction eventually closed; **closer attribution uncertain** (§b.2) |
-| llama-chat journal | Starting 18:13:56 → **Started 18:24:45** (10m49s, bounded, completed) |
-| `/run/current-system/etc/systemd/system/netbird-evox2-login.service` (20:12) | `After=netbird-evox2.service multi-user.target`, unit-level `OnFailure=notify-failure@%n.service`, `TimeoutStartSec=2min` — **my fix LIVE** |
-| `/run/current-system/etc/systemd/system/llama-chat.service` (20:12) | `After=multi-user.target`, `IOSchedulingClass=best-effort` + `IOSchedulingPriority=5` — **my fix LIVE** |
-| `scripts/check-todo-system.sh` | "OK: TODO queue/library structure clean" (the 130 UNHARVESTED warnings are pre-existing global debt; this report self-harvests) |
+| Probe                                                                        | Result                                                                                                                                                           |
+| ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `busctl … Manager ListJobs` (~19:05)                                         | 4 jobs: netbird-evox2-login **start/running** (job 531, since 18:13:58); boot-metrics-emit, multi-user.target, graphical.target all **waiting**                  |
+| Journal Starting-without-Started diff                                        | 3 candidates: netbird-evox2-login (true), linger-users + browser-history-agent-token-provision (**false positives** — oneshots log "Finished", both fine)        |
+| Login script source (store)                                                  | The unguarded `until … sleep 1` + `get_status() { … 2>&1 \|\| :; }` — errors invisible                                                                           |
+| netbird-evox2 daemon journal                                                 | management gRPC setup lines cycling every 20-30s all boot — never Connected (env cause: pbx, per parallel report)                                                |
+| Wrapper store path `a1awc19d…`                                               | Readable 19:05 → **ENOENT 19:12** (mid concurrent build, 182 nix procs) → still ENOENT 20:11 — while `nix path-info -r` lists it in BOTH booted+current closures |
+| Generations                                                                  | booted `zmnzbs3f` ≠ current `sgjss8fz` (19:07) → `rm56zlza` (20:11); deploys 19:34 (system-925) + ~20:10                                                         |
+| Parked converger                                                             | `sudo systemctl restart netbird-evox2-login` PIDs alive since ~18:50 (the 18:43 deploy's converger)                                                              |
+| `FinishTimestampMonotonic` (19:52)                                           | 5371299559 µs ≈ 89.5 min ≈ 19:43:20 — transaction eventually closed; **closer attribution uncertain** (§b.2)                                                     |
+| llama-chat journal                                                           | Starting 18:13:56 → **Started 18:24:45** (10m49s, bounded, completed)                                                                                            |
+| `/run/current-system/etc/systemd/system/netbird-evox2-login.service` (20:12) | `After=netbird-evox2.service multi-user.target`, unit-level `OnFailure=notify-failure@%n.service`, `TimeoutStartSec=2min` — **my fix LIVE**                      |
+| `/run/current-system/etc/systemd/system/llama-chat.service` (20:12)          | `After=multi-user.target`, `IOSchedulingClass=best-effort` + `IOSchedulingPriority=5` — **my fix LIVE**                                                          |
+| `scripts/check-todo-system.sh`                                               | "OK: TODO queue/library structure clean" (the 130 UNHARVESTED warnings are pre-existing global debt; this report self-harvests)                                  |
 
 ---
 
@@ -79,6 +79,7 @@ The "infinite boot" was `netbird-evox2-login.service`: an unbounded nixpkgs poll
 ## f) Up to 50 things to get done next
 
 **A. Deploy/verify (this session's fixes)**
+
 1. Next-reboot battery: userspace ≤~40s calm, llama-chat Starting AFTER multi-user active, netbird login post-boot ordering — pairs with the standing calm-boot re-measure (§g.2 of the 10:44 report)
 2. Wedged-login observational leg: a real netbird outage must now fail at 2min + notify-failure (deploy row's open half)
 3. Anchor check for the ~20:10 `rm56zlza` deploy (I verified system-925 via the parallel report only)
@@ -125,4 +126,4 @@ The "infinite boot" was `netbird-evox2-login.service`: an unbounded nixpkgs poll
 
 ---
 
-*Probes this window: busctl ListJobs/get-property, journalctl (unit timelines, Starting/Finished diffs, sudo/parked-converger forensics), nix path-info closure checks, stat/ls on store paths, /proc pressure + uptime + PID starttime, pgrep (nix build census, netbird processes), readlink on booted/current/profile, evals (unit attrs ×5, full toplevel ×3), check-todo-system.sh, unit-file reads from /run/current-system. Writes: netbird.nix, llama-chat.nix, AGENTS.md (busctl probe entry), net-vpn.md, TODO_LIST.md, docs/todo/services.md, docs/todo/stability.md, this report. All landed clean; tree clean at fcc2cc5b.*
+_Probes this window: busctl ListJobs/get-property, journalctl (unit timelines, Starting/Finished diffs, sudo/parked-converger forensics), nix path-info closure checks, stat/ls on store paths, /proc pressure + uptime + PID starttime, pgrep (nix build census, netbird processes), readlink on booted/current/profile, evals (unit attrs ×5, full toplevel ×3), check-todo-system.sh, unit-file reads from /run/current-system. Writes: netbird.nix, llama-chat.nix, AGENTS.md (busctl probe entry), net-vpn.md, TODO_LIST.md, docs/todo/services.md, docs/todo/stability.md, this report. All landed clean; tree clean at fcc2cc5b._

@@ -4,7 +4,7 @@ _2026-10-16 06:25 CEST · session type: research/exploration (read-only: repo re
 
 **Session scope (complete list of what happened):**
 
-1. Owner question: *"Is there a way to get some kind of proper Overview/Dashboard for all my Forgejo Actions? Something native? An unmerged PR? Another open source tool or extension?"* — with an explicit process demand: READ → UNDERSTAND → RESEARCH → REFLECT, break into steps, execute + verify one at a time, keep going until done.
+1. Owner question: _"Is there a way to get some kind of proper Overview/Dashboard for all my Forgejo Actions? Something native? An unmerged PR? Another open source tool or extension?"_ — with an explicit process demand: READ → UNDERSTAND → RESEARCH → REFLECT, break into steps, execute + verify one at a time, keep going until done.
 2. Local-context pass: `docs/services/forgejo.md` (runbook) + `docs/services/forgejo-upstream-issues.md` read in full; `forgejo.nix` / `_forgejo-scripts.nix` grepped for the Actions/runner config; repo-wide greps for prior dashboard research.
 3. Prior-art pass: `docs/status/2026-10-12_15-45_forgejo-actions-everywhere-pro-contra.md` read in full (the Actions cohort decision context) + `docs/status/2026-09-18_07-47_forgejo-research-session-status.md` read in full (the 09-18 deep-research session's known gaps). The 09-18 HTML report itself was only heading-scanned, NOT read in full (§e.5).
 4. Primary-source research (all fetches 2026-10-16): forgejo.org docs ×4 (user/actions reference, user/actions overview, admin/actions, admin/actions/configuration), delightful-forgejo README (full catalog), `routers/web/web.go` from the forgejo branch (downloaded + mechanically grepped), forgejo-runner `go.mod` + `config.example.yaml` (downloaded + grepped), plus 6 `gh` searches (GitHub repos/issues) and 3 Codeberg API fetches (2 misfired, §d.1; 1 batch 429'd, §e.3).
@@ -34,7 +34,7 @@ Via `gh search issues` on go-gitea/gitea (titles + states verified through searc
 - **go-gitea/gitea#31692 — "Actions dashboard for all the actions in the repos you can access"** — OPEN, `type/proposal`, `topic/gitea-actions`. This is the exact ask.
 - **go-gitea/gitea#33162 — "Organization Actions overview"** — OPEN, `type/proposal`, `topic/gitea-actions`.
 - Forgejo-side (Codeberg) equivalents: **unsearched** — the targeted Codeberg fetches 429-rate-limited before the label-filtered search ran (§e.3). Unknown whether Forgejo tracks its own issue for this or only inherits the Gitea upstream ones.
-- Open PRs *implementing* such a dashboard: **unsearched** (the owner's literal "unmerged PR?" question is still unanswered).
+- Open PRs _implementing_ such a dashboard: **unsearched** (the owner's literal "unmerged PR?" question is still unanswered).
 
 ### F3. Third-party: nothing exists (searched, two independent surfaces)
 
@@ -52,7 +52,7 @@ From the v17.0.0 release-notes dump + issue #14843 (both encountered during the 
 
 - **#14843** (reported 2026-10-14, closed 2026-10-15): affects **v15.0.10 exactly** (15.0.9 and 16.0.6 unaffected per the report). A retried final `UpdateLog(NoMore)` 500s with `transfer logs: dbfs open …: file does not exist`, the runner's retry aborts before `UpdateTask`, and `stop_zombie_tasks` reaps the job as a failure 10–15 min later; `needs:`-jobs stay blocked until `cancel_abandoned_jobs` (24h).
 - Fixes: PR 14847 (merged, v18 milestone), 14855 (merged → v17.0.1), **14856 (v15.0 LTS backport — still OPEN at fetch time)**, 14857 (v17 duplicate, closed-unmerged).
-- **Why it matters here**: the runbook's 2026-10-16 avatar-sync row cites the *"deployed swagger v15.0.10"* — a doc-claim, never live-probed. If the instance really is on 15.0.10, it carries this regression. Blast radius today is small (one Actions-enabled repo), but it must be checked before any Actions-heavy push.
+- **Why it matters here**: the runbook's 2026-10-16 avatar-sync row cites the _"deployed swagger v15.0.10"_ — a doc-claim, never live-probed. If the instance really is on 15.0.10, it carries this regression. Blast radius today is small (one Actions-enabled repo), but it must be checked before any Actions-heavy push.
 
 ---
 
@@ -111,63 +111,63 @@ From the v17.0.0 release-notes dump + issue #14843 (both encountered during the 
 
 **This session's research chain (items 1–10 harvested THIS session as two rows):**
 
-| # | Item | Landing |
-| -- | ---- | ------- |
-| 1 | Read go-gitea/gitea#31692 + #33162 (bodies, comments, linked PRs, merge status) — they ARE the owner's ask upstream | `[ready]`, harvested |
-| 2 | Search OPEN PRs implementing a global Actions dashboard (Codeberg forgejo + go-gitea/gitea) | `[ready]`, harvested (part of row 1) |
-| 3 | Re-run the Codeberg-side feature-request search (429'd), throttled, label `code/actions` | `[ready]`, harvested (part of row 1) |
-| 4 | Check Forgejo SERVER `/metrics` (`[metrics]` ENABLED) for actions counters — the zero-new-infra SigNoz/Gatus path | `[ready]`, harvested (part of row 1) |
-| 5 | Grafana.com registry sweep + Codeberg-side tool search (complete F3's bounded negative) | harvested (part of row 1) |
-| 6 | Live-probe `GET /api/v1/version` → resolve the F5 15.0.10 question | `[ready]`, harvested (row 2) |
-| 7 | If on 15.0.10: watch PR 14856 (v15.0 backport, open at fetch) / plan the patch ride | folds into row 2 |
-| 8 | Synthesize the recommendation matrix + Pareto pick (tabs+bookmarks vs API-fed page vs webhook/SigNoz feed vs server-metrics vs Woodpecker/Crow) | follows 1–5 |
-| 9 | Reconcile with the 09-18 deep-research HTML (annotate it or this report — never fork the knowledge) | harvested (part of row 1) |
-| 10 | Read the 14334/14351/14356 webhook-PR relationship before any feed design (v17-pin awareness) | harvested (part of row 1, noted) |
+| #  | Item                                                                                                                                            | Landing                              |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| 1  | Read go-gitea/gitea#31692 + #33162 (bodies, comments, linked PRs, merge status) — they ARE the owner's ask upstream                             | `[ready]`, harvested                 |
+| 2  | Search OPEN PRs implementing a global Actions dashboard (Codeberg forgejo + go-gitea/gitea)                                                     | `[ready]`, harvested (part of row 1) |
+| 3  | Re-run the Codeberg-side feature-request search (429'd), throttled, label `code/actions`                                                        | `[ready]`, harvested (part of row 1) |
+| 4  | Check Forgejo SERVER `/metrics` (`[metrics]` ENABLED) for actions counters — the zero-new-infra SigNoz/Gatus path                               | `[ready]`, harvested (part of row 1) |
+| 5  | Grafana.com registry sweep + Codeberg-side tool search (complete F3's bounded negative)                                                         | harvested (part of row 1)            |
+| 6  | Live-probe `GET /api/v1/version` → resolve the F5 15.0.10 question                                                                              | `[ready]`, harvested (row 2)         |
+| 7  | If on 15.0.10: watch PR 14856 (v15.0 backport, open at fetch) / plan the patch ride                                                             | folds into row 2                     |
+| 8  | Synthesize the recommendation matrix + Pareto pick (tabs+bookmarks vs API-fed page vs webhook/SigNoz feed vs server-metrics vs Woodpecker/Crow) | follows 1–5                          |
+| 9  | Reconcile with the 09-18 deep-research HTML (annotate it or this report — never fork the knowledge)                                             | harvested (part of row 1)            |
+| 10 | Read the 14334/14351/14356 webhook-PR relationship before any feed design (v17-pin awareness)                                                   | harvested (part of row 1, noted)     |
 
 **Adjacent unexplored paths (surfaced this session, not harvested — fold into the chain when dispatched):**
 
-| # | Item | Note |
-| -- | ---- | ---- |
+| #  | Item                                                                                                                                                                        | Note                                |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | 11 | API-fed overview prototype: one collector hitting `GET /repos/{o}/{r}/actions/runs` for the Actions cohort → textfile metric or tiny static page (repo's collector pattern) | the lightest build-it-yourself path |
-| 12 | Scoped read-only Forgejo token (sops) — existing `[decision]` row; ALSO the prerequisite for any API-fed dashboard + agent CI post-mortems | existing row, new consumer |
-| 13 | Runner job-lifecycle observability — existing `[ready]` row; a metrics/feed path would subsume it | existing row |
-| 14 | Woodpecker/Crow eval (only if the owner wants a real cross-repo pipeline UI more than staying on Actions) | heaviest option |
-| 15 | `DEFAULT_ACTIONS_URL=github` supply-chain interplay with any NEW workflows added for dashboard purposes | decision-grade |
-| 16 | Cohort decision dependency: dashboard value scales with Actions-enabled repo count — sequence vs the `[decision]` cohort row | existing row |
+| 12 | Scoped read-only Forgejo token (sops) — existing `[decision]` row; ALSO the prerequisite for any API-fed dashboard + agent CI post-mortems                                  | existing row, new consumer          |
+| 13 | Runner job-lifecycle observability — existing `[ready]` row; a metrics/feed path would subsume it                                                                           | existing row                        |
+| 14 | Woodpecker/Crow eval (only if the owner wants a real cross-repo pipeline UI more than staying on Actions)                                                                   | heaviest option                     |
+| 15 | `DEFAULT_ACTIONS_URL=github` supply-chain interplay with any NEW workflows added for dashboard purposes                                                                     | decision-grade                      |
+| 16 | Cohort decision dependency: dashboard value scales with Actions-enabled repo count — sequence vs the `[decision]` cohort row                                                | existing row                        |
 
 **Pre-existing rows re-confirmed as live during this session's reads (pointers, deliberately NOT re-harvested):**
 
-| # | Item | Surface |
-| -- | ---- | ------- |
-| 17 | Live Actions-unit census (all repos incl. `starred`) | TODO_LIST:1249 + services.md |
-| 18 | Ratify the canonical-repo Actions cohort (`[decision]`) | services.md |
-| 19 | gitea-actions-runner persistent tokenFile (CREDENTIALS boot-failure class) | services.md `[ready]` |
-| 20 | Deploy the tokenFile fix + FIRST-BOOT verification (`[blocked:deploy]`) | services.md |
-| 21 | `$STATE_DIRECTORY` colon-joined-LIST hardening (paperless.nix ×2, pool-smart-metrics.nix) | services.md `[ready]` |
-| 22 | Deploy the discordsync db-heal fix wave + runbook fold | services.md `[blocked:deploy]` |
-| 23 | CHANGELOG row for the 2026-10-15 wave2 | services.md `[ready]` |
-| 24 | VM tests touched by the manifest removal (eval-green, never RUN) | services.md `[ready]` |
-| 25 | Label-semantics eval selftest | services.md `[ready]` |
-| 26 | Eval-time forgejo-family `.subvol-migrated` gate assertion | services.md `[ready]` |
-| 27 | setup-forgejo.sh loud-fail on empty `FJ_SHA` | services.md `[ready]` |
-| 28 | Forgejo + architecture-catalog runbook capture | services.md `[ready]` |
-| 29 | Fixture-from-live discipline for setup-forgejo.sh jq shapes | services.md `[ready]` |
-| 30 | Delete 4 orphaned all-scope setup PATs (owner-committed) | services.md `[blocked:user]` |
-| 31 | Trash the stale `/var/lib/forgejo/data/gitea.db` fossil (owner) | services.md `[blocked:user]` |
-| 32 | SigNoz tile for catalog dist freshness `[watch]` + CRM passkey login + `/data/docker` reclaim `[decision]` | services.md cluster |
+| #  | Item                                                                                                       | Surface                        |
+| -- | ---------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 17 | Live Actions-unit census (all repos incl. `starred`)                                                       | TODO_LIST:1249 + services.md   |
+| 18 | Ratify the canonical-repo Actions cohort (`[decision]`)                                                    | services.md                    |
+| 19 | gitea-actions-runner persistent tokenFile (CREDENTIALS boot-failure class)                                 | services.md `[ready]`          |
+| 20 | Deploy the tokenFile fix + FIRST-BOOT verification (`[blocked:deploy]`)                                    | services.md                    |
+| 21 | `$STATE_DIRECTORY` colon-joined-LIST hardening (paperless.nix ×2, pool-smart-metrics.nix)                  | services.md `[ready]`          |
+| 22 | Deploy the discordsync db-heal fix wave + runbook fold                                                     | services.md `[blocked:deploy]` |
+| 23 | CHANGELOG row for the 2026-10-15 wave2                                                                     | services.md `[ready]`          |
+| 24 | VM tests touched by the manifest removal (eval-green, never RUN)                                           | services.md `[ready]`          |
+| 25 | Label-semantics eval selftest                                                                              | services.md `[ready]`          |
+| 26 | Eval-time forgejo-family `.subvol-migrated` gate assertion                                                 | services.md `[ready]`          |
+| 27 | setup-forgejo.sh loud-fail on empty `FJ_SHA`                                                               | services.md `[ready]`          |
+| 28 | Forgejo + architecture-catalog runbook capture                                                             | services.md `[ready]`          |
+| 29 | Fixture-from-live discipline for setup-forgejo.sh jq shapes                                                | services.md `[ready]`          |
+| 30 | Delete 4 orphaned all-scope setup PATs (owner-committed)                                                   | services.md `[blocked:user]`   |
+| 31 | Trash the stale `/var/lib/forgejo/data/gitea.db` fossil (owner)                                            | services.md `[blocked:user]`   |
+| 32 | SigNoz tile for catalog dist freshness `[watch]` + CRM passkey login + `/data/docker` reclaim `[decision]` | services.md cluster            |
 
 **Knowledge-capture (new, from this session's tooling friction):**
 
-| # | Item | Note |
-| -- | -- | ---- |
-| 33 | Record the Codeberg API gotchas in `docs/agents/shell-devtools.md` (or similar): issues-search `q=` does not keyword-filter; Git trees API caps at 1000 entries regardless of `per_page`/`recursive` | both cost real context today |
-| 34 | Record the research-tool precedence: `gh search` (GitHub) FIRST for gitea/forgejo feature-surface questions — go-gitea/gitea proposals cover the shared surface and `gh` is authed + unthrottled here | 429 + misfire lesson |
-| 35 | Stamp the F1 conclusion durably ("no native instance-wide Actions overview, source-verified 2026-10-16") in the forgejo runbook once the research completes — so no future session re-researches it | pending chain completion |
-| 36 | §f-harvest backlog triage (104+ unharvested reports, cross-session, pre-existing) | pipeline.md |
+| #  | Item                                                                                                                                                                                                  | Note                         |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 33 | Record the Codeberg API gotchas in `docs/agents/shell-devtools.md` (or similar): issues-search `q=` does not keyword-filter; Git trees API caps at 1000 entries regardless of `per_page`/`recursive`  | both cost real context today |
+| 34 | Record the research-tool precedence: `gh search` (GitHub) FIRST for gitea/forgejo feature-surface questions — go-gitea/gitea proposals cover the shared surface and `gh` is authed + unthrottled here | 429 + misfire lesson         |
+| 35 | Stamp the F1 conclusion durably ("no native instance-wide Actions overview, source-verified 2026-10-16") in the forgejo runbook once the research completes — so no future session re-researches it   | pending chain completion     |
+| 36 | §f-harvest backlog triage (104+ unharvested reports, cross-session, pre-existing)                                                                                                                     | pipeline.md                  |
 
 ## g) Questions I Can NOT Figure Out Myself
 
-1. **What KIND of overview do you actually want?** A GitHub-style *web page* listing recent runs across your Actions-enabled repos (click through to logs), or an *ops/health* view (failure rates, durations, runner saturation) living in the existing SigNoz/Gatus stack? Both are legitimately "a dashboard"; the answer decides API-fed-page vs metrics-feed, and I cannot infer it from the repo.
+1. **What KIND of overview do you actually want?** A GitHub-style _web page_ listing recent runs across your Actions-enabled repos (click through to logs), or an _ops/health_ view (failure rates, durations, runner saturation) living in the existing SigNoz/Gatus stack? Both are legitimately "a dashboard"; the answer decides API-fed-page vs metrics-feed, and I cannot infer it from the repo.
 2. **Does the dashboard precede or follow the cohort decision?** Today exactly one repo (`eventcatalog-hub`, doc-claimed) runs Actions — a perfect cross-repo overview would show one row. Is the intent "I'm about to enable Actions on the canonical cohort and want the overview ready", or "make the one repo's CI visible first"? This sequences item 16 against the whole chain.
 3. **Version appetite: is a v15→v17 jump on the table to unlock the feed mechanisms?** The webhook-for-jobs path (the cleanest push-feed into SigNoz/Gatus) is v17-only, while the instance rides the v15 LTS (deliberately, per the 09-18 research). Would you accept planning an LTS-major jump for this, or must any dashboard work stay v15-compatible (polling API / server-metrics only)?
 

@@ -73,15 +73,17 @@ hypothesis is recorded as correct for the recovery-attempt blocker.
 ## b) PARTIALLY DONE
 
 ~~1. **DAS recovery itself** — host armed + exonerated; the two decisive physical steps are defined but not~~ **Won't implement — moot; DAS recovered 2026-08-31 by replug after uas/controller fixes (no AC drain needed).**
-   yet executed/reported by the user:
-   - **Mouse-dongle port test** (10 s): move a working dongle into the exact port the DAS was silent in →
-     port/controller verdict.
-   - **Full AC drain**: shutdown → unplug wall power → hold power button 30 s → 60 s wait → boot **with DAS
-     attached** (uas/sd_mod/sg resident from boot; coldplug path armed).
-~~2. **Kernel watcher (shell 03D)** — running, but its pattern is now known blind to `high-speed` connects;~~ **Won't implement — watcher moot; incident closed 2026-08-31.**
-   must be replaced with an unfiltered/speed-complete pattern before the next plug attempt.
-~~3. **AGENTS.md ROOT CAUSE block outcome record** — placeholder added ("RECORD THE OUTCOME here"); awaits~~ **NOT-DO — dup of f10.**
-   the replug/AC-drain result.
+yet executed/reported by the user:
+
+- **Mouse-dongle port test** (10 s): move a working dongle into the exact port the DAS was silent in →
+  port/controller verdict.
+- **Full AC drain**: shutdown → unplug wall power → hold power button 30 s → 60 s wait → boot **with DAS
+  attached** (uas/sd_mod/sg resident from boot; coldplug path armed).
+  ~~2. **Kernel watcher (shell 03D)** — running, but its pattern is now known blind to `high-speed` connects;~~ **Won't implement — watcher moot; incident closed 2026-08-31.**
+  must be replaced with an unfiltered/speed-complete pattern before the next plug attempt.
+  ~~3. **AGENTS.md ROOT CAUSE block outcome record** — placeholder added ("RECORD THE OUTCOME here"); awaits~~ **NOT-DO — dup of f10.**
+  the replug/AC-drain result.
+
 4. **Working tree** — clean; all session changes committed by the auto-commit daemon (possibly batched with
    concurrent sessions — see "Not mine" note below).
 
@@ -200,12 +202,12 @@ place, prose could be condensed).
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
 ~~1. **Which physical rear ports did the DAS attempts use — the same port each time, or different ones?**~~ **Won't implement — one-shot flake check; window passed.**
-   (Physical port ↔ bus mapping is invisible from software; this decides whether all attempts hit the same
-   possibly-wedged controller group.)
+(Physical port ↔ bus mapping is invisible from software; this decides whether all attempts hit the same
+possibly-wedged controller group.)
 2. **What did the mouse-dongle test and/or the AC drain show** — or haven't you run them yet? (These two
-   observations end the host-vs-enclosure debate with data.)
+observations end the host-vs-enclosure debate with data.)
 3. **Does the enclosure have its own power switch, and was it ON during the cable-out windows — and do you
-   own any SATA-USB adapter/dock** (for the bridge-dead branch, so the pool can be back today either way)?
+own any SATA-USB adapter/dock** (for the bridge-dead branch, so the pool can be back today either way)?
 
 ---
 

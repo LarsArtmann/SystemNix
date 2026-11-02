@@ -17,6 +17,7 @@ The 2026-10-13 03:45 dump FAILED (11th consecutive night) for a NEW reason — t
 ## §c Restore drill (report §8.4, executed)
 
 `discordsync-db-2026-10-01.sql.gz` → tmpfs → sqlite 3.53.3:
+
 - `PRAGMA quick_check` → **ok**
 - counts: **messages 43,617 / events 68,020 / attachments 5,474**
 - freshness: newest message `2026-10-01 02:26` (dump-window consistent)

@@ -12,11 +12,11 @@
 
 All OpenCloud clients are PUBLIC PKCE clients with predefined client IDs, discovered via OpenCloud's webfinger service (`/.well-known/webfinger`):
 
-| Client | Client ID | Redirect URIs | Scopes |
-| --- | --- | --- | --- |
-| Web | `web` | `https://cloud.home.lan/oidc-callback.html`, `https://cloud.home.lan/oidc-silent-redirect.html` | openid profile email **groups** |
-| Desktop (≥4.0) | `OpenCloudDesktop` | `http://127.0.0.1`, `http://localhost` (loopback port exemption) | openid profile email offline_access **groups** |
-| Android | `OpenCloudAndroid` | `oc://android.opencloud.eu` | openid profile email offline_access **groups** |
+| Client         | Client ID          | Redirect URIs                                                                                   | Scopes                                         |
+| -------------- | ------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Web            | `web`              | `https://cloud.home.lan/oidc-callback.html`, `https://cloud.home.lan/oidc-silent-redirect.html` | openid profile email **groups**                |
+| Desktop (≥4.0) | `OpenCloudDesktop` | `http://127.0.0.1`, `http://localhost` (loopback port exemption)                                | openid profile email offline_access **groups** |
+| Android        | `OpenCloudAndroid` | `oc://android.opencloud.eu`                                                                     | openid profile email offline_access **groups** |
 
 All three provisioned by `pocket-id-config.provision` (`isPublic = true`, `pkceEnabled = true` — web via the integration registry entry, desktop/android via `extraOidcClients` in `modules/nixos/services/opencloud.nix`).
 

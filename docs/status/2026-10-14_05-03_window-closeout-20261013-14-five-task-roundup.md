@@ -4,13 +4,13 @@ Written 2026-10-14 05:03 CEST. Scope: the completed window of five queue tasks (
 
 ## The window's tasks
 
-| Task | Ask | Verdict |
-| --- | --- | --- |
-| `000001a132640f21` | [blocked:user] Freeze #27 owner desktop question | CLOSED-correctly-blocked (commit `1d297b0e`, closeout report exists) |
-| `000001a1327f85c6` | [ready] Pre-vacuum evidence gate | LANDED, deploy-blocking (`31e10874` + backfill `03d72f61`; **no closeout report authored** — §d) |
-| `000001a132c43023` | [ready] inboxclean-web Handler-timeout canary | LANDED after one build-broken false start (commits `bbae5884`→fix `dc3ad6e7`, closeout `8be4a563`; live verification `[blocked:deploy]`) |
-| `000001a13771626a` | [ready] Deploy-gate iostat/top-cgroup crosscheck on PSI refusal | LANDED (`2fa02c2c`; **no closeout report authored** — §d) |
-| `000001a137e9fb10` | [ready] SEV1 notify-tier steady-state alert fatigue | DESIGN SHIPPED, implementation queued (`aa7b3a75` + closeout `99d215b6`) |
+| Task               | Ask                                                             | Verdict                                                                                                                                  |
+| ------------------ | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `000001a132640f21` | [blocked:user] Freeze #27 owner desktop question                | CLOSED-correctly-blocked (commit `1d297b0e`, closeout report exists)                                                                     |
+| `000001a1327f85c6` | [ready] Pre-vacuum evidence gate                                | LANDED, deploy-blocking (`31e10874` + backfill `03d72f61`; **no closeout report authored** — §d)                                         |
+| `000001a132c43023` | [ready] inboxclean-web Handler-timeout canary                   | LANDED after one build-broken false start (commits `bbae5884`→fix `dc3ad6e7`, closeout `8be4a563`; live verification `[blocked:deploy]`) |
+| `000001a13771626a` | [ready] Deploy-gate iostat/top-cgroup crosscheck on PSI refusal | LANDED (`2fa02c2c`; **no closeout report authored** — §d)                                                                                |
+| `000001a137e9fb10` | [ready] SEV1 notify-tier steady-state alert fatigue             | DESIGN SHIPPED, implementation queued (`aa7b3a75` + closeout `99d215b6`)                                                                 |
 
 ## a) FULLY DONE (verified)
 

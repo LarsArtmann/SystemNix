@@ -68,6 +68,7 @@
 ## f) Top 50 things to get done next (impact-ranked; harvest status marked)
 
 **Deploy + verify the session's landings (Critical):**
+
 1. Run the lull deploy carrying stage-2 declarative + geo OAuth-only + geo retention; execute the two `[watch]` batteries (bouncers list, converge log line, password_login_disabled, ANALYTICS_* env, TimescaleDB policies) — **harvested ✓** (`docs/todo/services.md` watch rows + `TODO_LIST.md`).
 2. Fix crowdsec caddy acquis: add crowdsec to the caddy group, re-check ambient cap, verify file-source hits > 0 — **harvested ✓** (`[ready]` row exists).
 3. Fix `sshd-success-logs` sshd-session gap (route per §g Q3) — **harvested ✓** (`[ready]` row exists).
@@ -121,7 +122,7 @@
 43. Doc-drift sweep: older crowdsec status reports still say "stage 2 owner-interactive" — point-in-time snapshots, DO NOT rewrite (ANNOTATE-only doctrine) — **not harvested**: by doctrine.
 44. README/FEATURES: crowdsec + geo entries if the user-facing docs track services — **not harvested**: not verified whether FEATURES.md tracks services this session; next docs-health pass.
 
-*(44 concrete items — the ask was "up to 50"; the remaining slots would be padding, and vague items are worse than none.)*
+_(44 concrete items — the ask was "up to 50"; the remaining slots would be padding, and vague items are worse than none.)_
 
 ## g) Three questions I cannot figure out myself
 
@@ -131,4 +132,4 @@
 
 ---
 
-*Prepared per the status-report skill (`.md` per the owner's explicit path demand — HTML-canonical format overridden this once). §f items marked "landing right after this report" land below; everything else references its existing queue surface. THEN WAITING FOR INSTRUCTIONS.*
+_Prepared per the status-report skill (`.md` per the owner's explicit path demand — HTML-canonical format overridden this once). §f items marked "landing right after this report" land below; everything else references its existing queue surface. THEN WAITING FOR INSTRUCTIONS._

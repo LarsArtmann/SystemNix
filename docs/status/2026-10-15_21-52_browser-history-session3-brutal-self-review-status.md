@@ -59,6 +59,7 @@ Scope: THIS session only (the §f-list execution run over the 20-55 report, ~20:
 ## f) NEXT (36 items; existing rows cited by number, NEW rows marked — harvest status at the bottom)
 
 **The deploy window (owner-gated, everything staged):**
+
 1. Execute the deploy bundle — row 364 (+505 hot-db + 300 emeet riders) when PSI avg10 <20 or owner-forced; then anchor verify (`readlink /run/current-system` == latest system link — the exit-14 class).
 2. Post-deploy battery: registration-gate leg live-fires via post-deploy-check (selftest-backed); `http_request_duration_seconds` series EXISTS in the query API; **signoz-provision journal shows the new dashboard converged with NO FAILED lines**; `browser_history_users` stays 9; gatus parses the new alert text.
 3. Post-deploy: AI first summary + `/chat` smoke (row 363's remaining leg).
@@ -115,4 +116,5 @@ Scope: THIS session only (the §f-list execution run over the 20-55 report, ~20:
 3. **macOS agent:** go now with `machineId = "lars-macbook-air"` (one-pager wiring + a bh_ token mint from evo-x2), or hold until the stop-window lands so the dashboard baseline is clean first?
 
 ---
-*Post-report state: new §f rows (items 12-17) added to queue + libraries; report left for the auto-commit daemon. Upstream repos untouched. Foreign files not disturbed. Parallel sessions were live all session (243 nix/gopls processes; daemon batches inspected before acting past them).*
+
+_Post-report state: new §f rows (items 12-17) added to queue + libraries; report left for the auto-commit daemon. Upstream repos untouched. Foreign files not disturbed. Parallel sessions were live all session (243 nix/gopls processes; daemon batches inspected before acting past them)._

@@ -56,6 +56,7 @@
 ## f. NEXT (session-derived, deduped, ~28 real items — no filler)
 
 **Deploy/boot verification**
+
 1. Owner reboot-verify (run `nix run .#pre-reboot-check` first; after boot: zero `deleted to break ordering cycle`, runner pulled via forgejo.service.wants, `systemd-analyze critical-chain` shows -wait-dns/-wait-oidc under late-applications, not multi-user).
 2. Verify boot-mirror-sync ran after the 07:14 boot write (Samsung ESP current) before any reboot.
 3. Read the FULL gen-955 deploy log (`/var/log/systemnix-deploys/` 07:0x entry) end-to-end — my §21/manual checks covered my surface, not the battery's verdict.

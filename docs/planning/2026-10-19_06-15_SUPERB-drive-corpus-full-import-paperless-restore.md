@@ -22,16 +22,16 @@ Paperless DB schema-empty after the foreign hot-db Wave 6 flip (web 500 on `pape
 
 ## Task plan (sorted by impact)
 
-| # | Task | Impact | Effort | Owner |
-|---|------|--------|--------|-------|
-| T1 | Scratch Go tool: read both XLS, emit Qonto-format CSVs; inspect cell formats first | 🔴 prerequisite | M | me |
-| T2 | Validate CSVs (counts, UUID overlap vs fragments, formats) + rehearse import on throwaway DB with locally built binary | 🔴 no bad data in prod | M | me |
-| T3 | Land corpus in bank-sync repo: 2 full CSVs + 40 statement PDFs under `data/historical/qonto/`; commit (+push, authorized) | 🔴 | S | me |
-| T4 | SystemNix bank-sync.nix: stage/import absorb the full CSVs; paperless unit uploads the 40 statement PDFs (per-file title/org/month metadata, count≥40 gate, marker) | 🔴 | M | me |
-| T5 | SystemNix paperless.nix: opt-in `paperless-db-restore` oneshot (guards + marker), flag set at host config; remove-after-verify note | 🔴 unblocks upload | S-M | me |
-| T6 | Gates: `nix flake check --no-build`, toplevel eval `--keep-going` | 🟠 | S | me |
-| T7 | Deploy (DEPLOY_FORCE_PRESSURE=1 escape, on record) → verify restore, import, 40-doc archival, dashboard full-history totals | 🔴 | M | me |
-| T8 | Docs: close P0 row, queue attachments/Wise follow-ups, update bank-sync runbook, status report, commits + push | 🟠 | S-M | me |
+| #  | Task                                                                                                                                                                | Impact                 | Effort | Owner |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------ | ----- |
+| T1 | Scratch Go tool: read both XLS, emit Qonto-format CSVs; inspect cell formats first                                                                                  | 🔴 prerequisite        | M      | me    |
+| T2 | Validate CSVs (counts, UUID overlap vs fragments, formats) + rehearse import on throwaway DB with locally built binary                                              | 🔴 no bad data in prod | M      | me    |
+| T3 | Land corpus in bank-sync repo: 2 full CSVs + 40 statement PDFs under `data/historical/qonto/`; commit (+push, authorized)                                           | 🔴                     | S      | me    |
+| T4 | SystemNix bank-sync.nix: stage/import absorb the full CSVs; paperless unit uploads the 40 statement PDFs (per-file title/org/month metadata, count≥40 gate, marker) | 🔴                     | M      | me    |
+| T5 | SystemNix paperless.nix: opt-in `paperless-db-restore` oneshot (guards + marker), flag set at host config; remove-after-verify note                                 | 🔴 unblocks upload     | S-M    | me    |
+| T6 | Gates: `nix flake check --no-build`, toplevel eval `--keep-going`                                                                                                   | 🟠                     | S      | me    |
+| T7 | Deploy (DEPLOY_FORCE_PRESSURE=1 escape, on record) → verify restore, import, 40-doc archival, dashboard full-history totals                                         | 🔴                     | M      | me    |
+| T8 | Docs: close P0 row, queue attachments/Wise follow-ups, update bank-sync runbook, status report, commits + push                                                      | 🟠                     | S-M    | me    |
 
 ## Execution graph
 

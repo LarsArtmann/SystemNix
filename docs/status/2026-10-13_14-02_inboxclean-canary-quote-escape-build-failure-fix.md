@@ -111,4 +111,4 @@ Honest self-review of THIS session's execution:
 
 ---
 
-*Provenance: fix in `dc3ad6e7`; verification artifacts: drv `5navslyzjrlf8ixdh55wx45hr4vvl6mn` (valid), unit `vsribc760pidgvc0yffqjzkjbkmm413g-system-units` (ExecStart line 12), flake check green 2026-10-13 ~13:55.*
+_Provenance: fix in `dc3ad6e7`; verification artifacts: drv `5navslyzjrlf8ixdh55wx45hr4vvl6mn` (valid), unit `vsribc760pidgvc0yffqjzkjbkmm413g-system-units` (ExecStart line 12), flake check green 2026-10-13 ~13:55._

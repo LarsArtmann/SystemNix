@@ -105,8 +105,8 @@ Pocket ID login for CRM had **never** worked — this was day-zero, not a regres
    The user-facing unblock should have led the message.
 3. **Two avoidable blocked deploy attempts** — §11 tree-mutation abort and the
    deploy-lock refusal. A 2-second probe (`test -e /tmp/.systemnix-deploy.lock`
-   + `git log` delta) before each attempt would have skipped both; I KNEW the
-   co-tenant was active and raced anyway.
+   - `git log` delta) before each attempt would have skipped both; I KNEW the
+     co-tenant was active and raced anyway.
 4. **Broken watcher script** — `pgrep -af "PID-PLACEHOLDER"` always matched
    nothing → `! ...` always true → false "deploy finished" at first iteration.
 5. **Malformed first anchor check** — `ls …/system-N-link` (path doesn't exist;
@@ -136,6 +136,7 @@ Pocket ID login for CRM had **never** worked — this was day-zero, not a regres
    config flip in 74 minutes) — trust the mechanism, report its failures loudly.
 
 ## f) Next things (prioritized)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 1. **OWNER: retry CRM Pocket ID login** (acceptance test; queued [watch]).

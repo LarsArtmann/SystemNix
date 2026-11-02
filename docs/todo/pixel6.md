@@ -30,4 +30,3 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Pool README day-2 update** (signal key, pending XMLs, Navidrome/FLAC plans)
 
 ## Backlog (untriaged harvest)
-

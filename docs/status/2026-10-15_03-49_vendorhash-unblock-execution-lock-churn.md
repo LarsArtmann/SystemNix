@@ -11,7 +11,7 @@
 1. **Complete consumer-surface map for all 23 failing tools** (the two-surface sweep, `docs/agents/go-ecosystem.md:20` protocol): `lib/lars-packages.nix` flakePkg entries; 8 direct `inputs.<tool>.packages` module surfaces (crm, cv, discordsync, papdashboard, inboxclean, health-dashboard, mr-sync, project-discovery-daemon, PMA); and a THIRD surface class discovered and handled — `mkPackageOption pkgs "<tool>"` options resolving through the input overlays composed in `overlays/linux.nix` (crush-daily, overview, file-and-image-renamer). No config-side package overrides exist, so module-option defaults are live and needed their own shims.
 2. **11 fresh got-hashes probed first-hand** (fakeHash `overrideAttrs` probes against the input flakes, zero tree edits): erraudit `sKya91ES`, golangci `YmWGO9br`, go-auto-upgrade `D5DnebMF`, go-humanize-linter `ZenhGNkk`, go-structure-linter `O2hpYHSc`, buildflow `cCl3IWhu`, branching-flow `0IxhvfLi`, discordsync `UnFb4VRS`, crush-daily `AAXq+KGA`, go-health-dashboard `IRv9RBXa`, file-and-image-renamer `nN2cwwLQ`. Cross-checkable against the 11 pairs transcribed from the 02:46 nh enumeration (library-policy, kith-crm, inboxclean, meta, mr-sync, overview, pdd, PMA, samber-linter, pdg, papdashboard).
 3. **23 vendorHash shims WRITTEN across 10 files**, all attrset-form `overrideAttrs` (the `.override` dead-end class), all citing first-hand evidence: `flakePkgShim` helper + 14 shimmed entries in `lib/lars-packages.nix`; re-pins/Adds in crm.nix, discordsync.nix, papdashboard.nix, inboxclean.nix, health-dashboard.nix, mr-sync.nix, project-discovery-daemon.nix, projects-management-automation.nix; new `fleetVendorHashShims` overlay (crush-daily, overview, file-and-image-renamer) appended AFTER `crushDailyDoCheckGate` in `overlays/linux.nix` (ordering rule respected).
-4. **§11 false-green caught and recorded** (3rd instance of the blindness row, `docs/todo/pipeline.md:59` — row updated this session): the 02:46 deploy failed 23 FODs; §11 minutes later reported "23 uncached go-modules FOD(s) built clean" — a *different* 23. Trusting §11 would have green-lit a broken deploy. The real oracle is the toplevel `--keep-going` build.
+4. **§11 false-green caught and recorded** (3rd instance of the blindness row, `docs/todo/pipeline.md:59` — row updated this session): the 02:46 deploy failed 23 FODs; §11 minutes later reported "23 uncached go-modules FOD(s) built clean" — a _different_ 23. Trusting §11 would have green-lit a broken deploy. The real oracle is the toplevel `--keep-going` build.
 5. **cv re-classified twice, ending shim-fixable:** `0750bd6` = go-sum GUARD failure (consumer-unfixable; the local tidy route failed on floor 1.27.1 vs nixpkgs go 1.26.8, then on private-submodule resolution needing git/auth in a bare env) → the third lock float landed `aa637cbf` where the guard is GONE (upstream tidied) and cv is a plain mismatch: shimmed `p7sOpco6…` first-hand. The `--keep-failed`/tidy infrastructure became unnecessary. CV row in `docs/todo/upstream.md` annotated same session.
 
 ## b) PARTIALLY DONE
@@ -43,6 +43,7 @@
 5. The overlay third-surface class (`mkPackageOption pkgs` + input overlays) is undocumented in the two-surface sweep guidance — `docs/agents/go-ecosystem.md:20` should say "THREE surfaces" (harvested to the report record; row update queued below).
 
 ## f) Next things (execution ladder — most are continuations of the 03:05 report's §f; new/changed items flagged)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — §f carries explicit per-item dispositions in-file (deliberate non-harvest reasons recorded above); nothing untracked remains.
 
 1. [CONTINUES #1] Lock-quiescence check: no lock commits + unchanged mtime for ≥10 min (g/Q1 decides whether to wait or chase).
@@ -71,13 +72,13 @@
 
 ## Self-harvest record
 
-| Item | Disposition at authoring time |
-| --- | --- |
-| §11 3rd instance (e5/§f9) | ✅ `docs/todo/pipeline.md:59` row updated this session |
-| cv guard→gone supersession | ✅ `docs/todo/upstream.md` CV row annotated this session |
+| Item                                | Disposition at authoring time                                                                                                                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| §11 3rd instance (e5/§f9)           | ✅ `docs/todo/pipeline.md:59` row updated this session                                                                                                                                    |
+| cv guard→gone supersession          | ✅ `docs/todo/upstream.md` CV row annotated this session                                                                                                                                  |
 | Three-surface sweep doc update (e5) | Deliberately not queued as a new row — one-line doc annotation, to be landed WITH the wave's close-out docs (f7) rather than as a standalone dispatch; recorded here so it cannot be lost |
-| Quiescence gate (e1) | Deliberately not queued — becomes moot if g/Q1's answer is "waves are done"; fold into the wave close-out doc instead |
-| f1-f8, f10, f12-15 | Already queued at cited locations (03:05 report + pipeline/upstream rows) — no drift edits needed |
+| Quiescence gate (e1)                | Deliberately not queued — becomes moot if g/Q1's answer is "waves are done"; fold into the wave close-out doc instead                                                                     |
+| f1-f8, f10, f12-15                  | Already queued at cited locations (03:05 report + pipeline/upstream rows) — no drift edits needed                                                                                         |
 
 ## Verification appendix (commands this session, all first-hand)
 

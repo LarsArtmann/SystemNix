@@ -79,6 +79,7 @@ Nothing delivered is broken — every gate I own is green and the parity evidenc
 Sorted by impact. **[Q]** = already a queued/library row (no new filing needed); **[N]** = new this report (the starred ones are harvested; the rest are brainstorm/ROADMAP fuel per the skill's >25 rule).
 
 **Fleet-blocking (do first):**
+
 1. [N★] Un-red CI: give the workflow auth for `branching-flow` (or push/repin the rev) — queued in pipeline.md + TODO_LIST this session.
 2. [N★] Un-red CI: clear the statix leg findings (geometrikks.nix inherit + paren warnings) or scope the leg — same row.
 3. [Q] Unblock the dispatch verify gate (hermes-agent re-pin + docs-scoped `.tq-verify`) — existing pipeline.md row, still blocking every SystemNix dispatch.
@@ -130,7 +131,7 @@ Sorted by impact. **[Q]** = already a queued/library row (no new filing needed);
 39. [N] Document the Ogg-serial non-determinism gotcha in nix/docs somewhere reusable (bit-identity ≠ byte-identity for lossy containers).
 40. [N] consider `trash`-safety: `ucr` never deletes, but a `--prune` mode for `derived/` would tempt fate — decide NEVER up front and document.
 
-*(Stopping at 40: items 41–50 would be filler; the top 24 carry the real weight.)*
+_(Stopping at 40: items 41–50 would be filler; the top 24 carry the real weight.)_
 
 **Harvest disposition (per the TODO-system rule):** item 1+2 (one row) harvested NOW into `docs/todo/pipeline.md` + `TODO_LIST.md` at report-authoring time. Items 3–5 are pre-existing rows (no action). Item 19's note is folded into item 13's one-liner when done. The rest are deliberately not harvested: they are either foreign-domain brainstorm (needs owner triage), ucr-archive-repo items (that repo owns its own queue once it has one), or pixel6 backlog rows that already exist verbatim in `docs/todo/pixel6.md`.
 

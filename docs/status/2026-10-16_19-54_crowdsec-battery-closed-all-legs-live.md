@@ -11,6 +11,7 @@
 ## §0 Self-review (what did I forget / do worse / could improve)
 
 **What I forgot:**
+
 1. **Process-age-first.** I ran time-windowed journal checks (`--since 16:25`) against an engine that had started at **08:14:28** — the "zero tail errors" I initially measured was an artifact of the window, not progress. The basic "which process am I probing, how old is it" step would have saved ~15 minutes of misdirection. It also produced the session's most useful discovery (failed tail setups drop the source for the process lifetime — a real CrowdSec behavior worth a runbook gotcha), so the error was productive, but it was still an error.
 2. **The deploy log.** The gen-913 deploy (`17-07-55.log`) landed **at 17:14, while I was watching PSI** — I didn't notice until 19:50 and spent 2.5 idle hours "waiting for a lull" to do a deploy that had already happened. I watched PSI but never polled for generation changes. Cheap fix, big cost.
 3. **The render test's blind spot.** My morning render pin asserted the group-read timer's EXISTENCE, not its ExecStart's executable shape — the exact class (derivation-directory-as-ExecStart → 203/EXEC) that then shipped broken for 45+ minutes of 5-minute timer failures. Tests must assert the failure mode you fear, not the presence of the thing.
@@ -73,6 +74,7 @@
 ## §f Up to 50 things to get done next
 
 **CrowdSec (direct follow-ups, harvested at authoring time):**
+
 1. Add an eval-time/pre-commit lint guard: reject `ExecStart = pkgs.writeShellApplication {…}` (derivation-dir interpolation) across modules — assert `/bin/` interpolation (HARVESTED → pipeline.md + TODO_LIST).
 2. Drop the inert `AmbientCapabilities/CapabilityBoundingSet = CAP_DAC_READ_SEARCH` from crowdsec.service + update the module comment + render pin (HARVESTED → services.md + TODO_LIST).
 3. Send one dedicated synthetic HTTPS request through a caddy vhost and watch it parse end-to-end (openssl s_client pattern, LAN IP) — closes §b.1 cosmetically.
@@ -105,12 +107,12 @@
 26. migrate-hot-db: pre-stop WAL checkpoint + outcome-aware abort branch (existing row 524).
 27. Owner-authorized claim-orphaned run for the 217 zero-user behavioural rows (existing row 525).
 28. hot-db bootstrap CAP_DAC_OVERRIDE deploy at a lull (existing row 527).
-29. Tracked-*.py allowlist gate (existing row).
+29. Tracked-_.py allowlist gate (existing row).
 30. CHANGELOG row for the 2026-10-15 wave2 (existing row).
 31. $STATE_DIRECTORY colon-list hardening for paperless.nix ×2 + pool-smart-metrics.nix (existing row).
 32. First nightly btrbk cycle vs hot/dnsblockd watch (existing row).
 33. Weekly CrowdSec drift check: 44 rules + acquis sources + bouncer gauge freshness (fold into a monthly ops pass).
-34. decide whether `crowdsec-counts` should also export LAPI counters (cs_lapi_*) for graphing — nice-to-have.
+34. decide whether `crowdsec-counts` should also export LAPI counters (cs_lapi__) for graphing — nice-to-have.
 35. Gatus check for the caddy-logs-readable timer itself (a timer that silently 203s for 45 min was only caught by hand — a "timer last-run failed" check class).
 
 **Deliberately NOT harvested:** items 3, 5–10, 33–35 are queued/or referenced above only if they map to existing rows; the remainder are owner-gated or cosmetic and live in this report as visibility, not queue rows. (Harvest rule: §f.1 and §f.2 are this work's direct obligations and were queued at authoring time; everything else was already queued or is not agent-actionable.)
@@ -122,4 +124,5 @@
 3. **Deploy ownership during concurrent sessions:** today's 17:14 deploy (which carried my fix) was the parallel session's, taken mid-storm while I was explicitly PSI-waiting. Do you want a single-owner deploy convention per time window (row 1334), and should agent sessions deploy at all while your interactive session is generating io storms like today's 3-hour one?
 
 ---
-*Report: docs/status/2026-10-16_19-54_crowdsec-battery-closed-all-legs-live.md · author: Crush (glm-5.3-flash) session continuation · all probes read-only except none (no state mutated this session beyond docs).*
+
+_Report: docs/status/2026-10-16_19-54_crowdsec-battery-closed-all-legs-live.md · author: Crush (glm-5.3-flash) session continuation · all probes read-only except none (no state mutated this session beyond docs)._

@@ -93,4 +93,4 @@
 
 ---
 
-*Report written from session memory + verified git/store state at 08:50 CEST. No new research performed beyond the deploy-loop status check.*
+_Report written from session memory + verified git/store state at 08:50 CEST. No new research performed beyond the deploy-loop status check._

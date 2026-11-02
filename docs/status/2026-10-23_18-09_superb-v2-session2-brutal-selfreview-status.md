@@ -50,6 +50,7 @@
 ## f) NEXT — up to 50 things (from this session's lane + findings; plan IDs from v2)
 
 **P0 monitoring/ai (the plan's own next):**
+
 1. T-007 Gatus boot/restart alert-storm + flap suppression (monitoring:198)
 2. T-008 Root-cause ghostty interactive-scope IO storm (monitoring:203)
 3. T-004-sibling: FIX the `system_service_cpu_percent` all-zeros phantom (new row, queued this session)
@@ -113,4 +114,4 @@
 
 ---
 
-*Authored 18:09 CEST by `superb-masterplan-v2-exec-1` after close-out; awaiting instructions.*
+_Authored 18:09 CEST by `superb-masterplan-v2-exec-1` after close-out; awaiting instructions._

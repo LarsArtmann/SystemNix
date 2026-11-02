@@ -21,13 +21,13 @@ Five root causes (C1-C5 below). The single biggest actionable one: **two project
 
 ### C1 — Live data inventory (all measured, 2026-10-25)
 
-| Location | Size | Notes |
-|---|---|---|
-| `/home/lars` (in `@`) | 302G | projects 169G + tmp 69G + .local 15G + .config 14G + go 11G |
-| `~/.cache` (`@cache-home` subvol, NOT snapshotted) | 122G → 70G after this session | was 97G on 10-20 — regrew +25G in 5 days |
-| `/var` | ~45G | 3.4G readable + **~39G `/var/lib/monitor365-server` DuckDB** (perms-blind; size per the 2026-10-22 T04 safety-copy row: pool dropped 39.21 GB during its copy) |
-| `/home/hermes` | unknown | perms-gated (`drwx------`), du reads 0; ~160G arithmetic bucket member (with C3) |
-| system + metadata | ~38G | metadata pool 27.9G / 22G used (78%) |
+| Location                                           | Size                          | Notes                                                                                                                                                          |
+| -------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/home/lars` (in `@`)                              | 302G                          | projects 169G + tmp 69G + .local 15G + .config 14G + go 11G                                                                                                    |
+| `~/.cache` (`@cache-home` subvol, NOT snapshotted) | 122G → 70G after this session | was 97G on 10-20 — regrew +25G in 5 days                                                                                                                       |
+| `/var`                                             | ~45G                          | 3.4G readable + **~39G `/var/lib/monitor365-server` DuckDB** (perms-blind; size per the 2026-10-22 T04 safety-copy row: pool dropped 39.21 GB during its copy) |
+| `/home/hermes`                                     | unknown                       | perms-gated (`drwx------`), du reads 0; ~160G arithmetic bucket member (with C3)                                                                               |
+| system + metadata                                  | ~38G                          | metadata pool 27.9G / 22G used (78%)                                                                                                                           |
 
 ### C2 — THE LEAK: project scripts steer Go caches onto the QLC root (~96G, actively regrowing)
 
@@ -52,19 +52,20 @@ Every byte of the 723G partition is carved into chunks. Deleting files frees ext
 
 ## Executed This Session (agent-safe, no sudo, all verified)
 
-| Target | Size | Staleness evidence | State |
-|---|---|---|---|
-| `~/.cache/gomod-r` | 29G | no file newer than 2026-10-17 | trashed → chmod 0555-wall → purged |
-| `~/.cache/gocache-r` | 19G | no file newer than 2026-10-17 | trashed → purged |
-| `~/tmp/[0-9a-f][0-9a-f]` (256 Go-cache buckets) | 12G | no top-dir mtime since 2026-08-18 | trashed → purged |
-| `~/tmp/go-build{2748316702,257340542,1330595748}` | ~0.7G | mtimes 2026-10-20 | trashed → purged |
-| `~/.cache/{go-mod-fresh,nsfw-dev-gocache,nsfw-gate-gocache,puppeteer}` | ~5.9G | no file newer than 2026-10-23 | trashed → purged |
+| Target                                                                 | Size  | Staleness evidence                | State                              |
+| ---------------------------------------------------------------------- | ----- | --------------------------------- | ---------------------------------- |
+| `~/.cache/gomod-r`                                                     | 29G   | no file newer than 2026-10-17     | trashed → chmod 0555-wall → purged |
+| `~/.cache/gocache-r`                                                   | 19G   | no file newer than 2026-10-17     | trashed → purged                   |
+| `~/tmp/[0-9a-f][0-9a-f]` (256 Go-cache buckets)                        | 12G   | no top-dir mtime since 2026-08-18 | trashed → purged                   |
+| `~/tmp/go-build{2748316702,257340542,1330595748}`                      | ~0.7G | mtimes 2026-10-20                 | trashed → purged                   |
+| `~/.cache/{go-mod-fresh,nsfw-dev-gocache,nsfw-gate-gocache,puppeteer}` | ~5.9G | no file newer than 2026-10-23     | trashed → purged                   |
 
 Method: freshness probe first (`find <tree> -newermt <cutoff>` + dir mtimes; anything fresh = skip), then `trash`, then `trash-rm` purge by exact name, then df verify. Walks ran `ionice -c3 nice -n19 timeout` per the 10-20 hard rule.
 
 **df trail:** 689G used / 24G avail → 666G / 45G at write time (async cleaner + pin expiry continue through ~Oct 28).
 
 **Failures caught by verification (recorded as the discipline working):**
+
 1. `trash-rm gomod-r` died mid-purge on Go's 0555 module dirs (`PermissionError: zombiezen.com/sqlite@v1.4.2`) — fixed with `chmod -R u+w` on the trash entry (same wall as the 2026-08-31 report).
 2. The first purge loop matched `trash-list` **column $2 = TIME, not PATH** → zero iterations, counts unchanged. Silent-empty probe; caught only because the entry counts were re-checked. Correct field: `$3`.
 

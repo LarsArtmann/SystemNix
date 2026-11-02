@@ -90,21 +90,21 @@ Zone 6 fired 16× and changed nothing.
    discordsync-db-heal` — both are idempotent/next-run-converges. The
    migration is the fix, but finishing it on a calm box beats crash-
    looping through it.
-~~2. **Guard: extend `ioChurnUnits`** with `crush-hot-db-migrate.service`~~ done — live: memory-emergency-guard.nix:1103-1104 carries both units
+   ~~2. **Guard: extend `ioChurnUnits`** with `crush-hot-db-migrate.service`~~ done — live: memory-emergency-guard.nix:1103-1104 carries both units
    and `discordsync-db-heal.service` (both resumable oneshots — exactly
    the churn contract) so Zone 6 can actually drain this storm class.
-~~3. **discordsync-db-heal cadence:** a full 11G integrity check at EVERY~~ done — posture decided: TimeoutStartSec 20min (discordsync.nix:509-514 with 2026-09-20 rationale)
+   ~~3. **discordsync-db-heal cadence:** a full 11G integrity check at EVERY~~ done — posture decided: TimeoutStartSec 20min (discordsync.nix:509-514 with 2026-09-20 rationale)
    boot is a standing crash-amplifier under load. Gate it (ConditionPath
    exists on a dirty-shutdown marker, or stretch TimeoutStartSec and
    accept the delay) — decide in the discordsync module.
-4. **Serialize the migration** through the `heavy-job` wrapper slot
+2. **Serialize the migration** through the `heavy-job` wrapper slot
    count (or per-project throttle) if it ever needs re-running on a busy
    box — first-run evidence says a bare 60-min 23G+ read storm is
    freeze-adjacent by itself.
-5. Cap concurrent agent sessions during post-crash recovery windows —
+3. Cap concurrent agent sessions during post-crash recovery windows —
    27 sessions eval-ing into a cold cache + streaming readers is the
    exact stack that died. The `system_crush_sessions` metric exists;
    consider a sev1-notify threshold tie-in during guard-active windows.
-6. btrbk: Zone-6 churn-stops killed sends again this boot (heals via
+4. btrbk: Zone-6 churn-stops killed sends again this boot (heals via
    `btrbk-pool-clean`); verify tonight's 23:00 root send lands once the
    storm drains.

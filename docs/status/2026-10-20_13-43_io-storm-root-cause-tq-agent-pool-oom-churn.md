@@ -69,46 +69,46 @@ The user's four-service stop (13:2x) was directionally right and dropped load in
 
 > Continuation-report list. Items overlapping the 09:39 report (R1) are marked to prevent queue drift — both lists await your harvest routing. Ranked roughly by impact.
 
-| # | Task | Impact | Effort | Category |
-|---|---|---|---|---|
-| 1 | **You, now:** `sudo systemctl stop tq-agent-pool.service` — ends the storm engine (movie relief in seconds) | Critical | S | Mitigation |
-| 2 | Raise tq-agent-pool `MemoryMax` 8G → 16-32G (128G box; 6.3M failcnt + 12 oom_kills is the churn engine) — repo edit + deploy | Critical | S | Bug |
-| 3 | Add `io.max` (50-100 MB/s) + `MemoryHigh` to tq-agent-pool — builds can never saturate the QLC again | Critical | S | Feature |
-| 4 | GOCACHE/GOMODCACHE/GOTMPDIR → Samsung for ALL shells/sessions (linker cmdline proved tmp/go-mod + tmp/go-build* are the live caches) | Critical | M | Feature (≈R1 #11/12/44) |
-| 5 | gatus/SigNoz rule: any service cgroup `memory.events oom_kill` > 0 → alert (12 kills today, zero noticed) | High | S | Feature |
-| 6 | gatus/SigNoz rule: PSI io `full` avg10 > 25% for 5 min → alert (would have paged at ~09:00) | High | S | Feature |
-| 7 | tq pool: quiet-host gate (check PSI/load before dispatch) or `tq pool pause` command | High | M | Feature |
-| 8 | Restart monitor365 (+server) or explicitly accept the monitoring gap (collectors DOWN since 13:2x) | High | S | Decision |
-| 9 | Disable-vs-fix decision for the four stopped services — they all return on next deploy/reboot | High | S | Decision |
-| 10 | Fix nsfw-classifier unit stop behavior (`systemctl stop` hung; check KillMode/TimeoutStopSec/MainPID tracking) | High | S | Bug |
-| 11 | Clean re-measurement of nsfw-classifier write pattern (re-attribution after my label mispair; then retention/siting decision) | Medium | S | Investigation (≈R1 #14) |
-| 12 | Find why mr-sync dashboard ran from `/tmp` outside its unit (manual launch? ExecStart mismatch? `journalctl -u mr-sync-dashboard`) | Medium | S | Investigation |
-| 13 | Document probe blind spots + compressed-mmap mechanism in docs/agents/stability.md (mmap invisible to /proc io; OOM→re-fault→compressed-read loop) | High | S | Documentation |
-| 14 | Write the kernel-log-first runbook line (IO busy + no owner → journalctl -k before userspace probing) | Medium | S | Documentation |
-| 15 | Process rule: "recovered" claims need ≥60s sustained window + cause-gone confirmation | Medium | S | Documentation |
-| 16 | Spawn all tq agent sessions with `ionice -c3` inherited (crush children then yield by default) | Medium | S | Feature |
-| 17 | Audit tq-pool.conf parallelism: concurrent crush sessions × nix/go builds vs a desktop box | Medium | M | Feature |
-| 18 | Review swap/zram pressure during build churn (17G swap usage observed; stability.md territory) | Medium | M | Investigation |
-| 19 | Orphaned `/tmp/TestServeBoot*` credentials-server (pid 3452189, re-parented to init) — trash it; add harness cleanup so test servers never leak | Low | S | Cleanup |
-| 20 | Consolidate the five Go caches now that two are proven live (evidence attached to R1 #11) | Medium | M | Cleanup |
-| 21 | Enforce actual quiet-host for "quiet-host" batch items (the ci-local run self-describes quiet; nothing verified it) | Medium | S | Feature |
-| 22 | Consider moving actively-built project worktrees (go-taskqueue et al.) to Samsung — build reads hammer QLC by construction | Medium | L | Feature |
-| 23 | Re-check hermes-home inference after storm settles (R1 g1 sudo du still open) | Medium | S | Verification (≈R1 #2) |
-| 24 | io.stat live-delta + memory.events sweep added to post-deploy-check (next §-number) | Medium | S | Feature |
-| 25 | My working one-liner probes → documented snippet file (PSI/diskstats/io.stat/memory.events; field-math now verified) | Low | S | Documentation |
-| 26 | Verify whether earlier OOM events exist BEFORE 13:12 today (how long has the pool been churning?) — `journalctl -k --since 2026-10-19 \| rg oom` | Medium | S | Investigation |
-| 27 | Pool config: pin `NIX_BUILD_JOBS`/`GOMAXPROCS` inside agent sessions to bound burst size | Medium | S | Feature |
-| 28 | nsfw-classifier + monitor365 + mr-sync: add per-service io.stat baseline to their runbooks so "normal" is known before the next storm | Low | S | Documentation |
-| 29 | Add `/proc/pressure/io` history to the textfile collector (2s cadence exists for hwmon — same pattern) | Low | M | Feature |
-| 30 | QLC root 91%: the R1 reclaim list still stands untouched (70G go-cache etc.) — now ALSO the storm fuel | Critical | S | Cleanup (≈R1 #1-6) |
-| 31 | After pool stop: sustained 60s p6 verification to actually CLOSE the storm (per e1) | High | S | Verification |
-| 32 | Decide whether round-one's "my du caused it" narrative needs a correction footnote in the 09:39 report (it was A cause, not THE cause — ANNOTATE mode, never rewrite) | Medium | S | Documentation |
-| 33 | hermes chromium-cdp/mnemosyne sizing (blocked on g1 of R1) | Medium | S | Cleanup (≈R1 #39-41) |
-| 34 | Check tq agent session log for the go-taskqueue batch: did item 3 (root build gate RED at HEAD) already land commits mid-storm? (footer-tracked; re-dispatch protocol covers it) | Low | S | Verification |
-| 35 | Add "storm day" postmortem section to docs/gotchas-archive.md once dust settles (three bugs, one mechanism, two reports) | Medium | S | Documentation |
-| 36 | If pool stays running today: periodic p6-busy spot-check every ~10 min during your media time (I can background it on your word) | Low | S | Mitigation |
+| #  | Task                                                                                                                                                                             | Impact   | Effort | Category                |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ----------------------- |
+| 1  | **You, now:** `sudo systemctl stop tq-agent-pool.service` — ends the storm engine (movie relief in seconds)                                                                      | Critical | S      | Mitigation              |
+| 2  | Raise tq-agent-pool `MemoryMax` 8G → 16-32G (128G box; 6.3M failcnt + 12 oom_kills is the churn engine) — repo edit + deploy                                                     | Critical | S      | Bug                     |
+| 3  | Add `io.max` (50-100 MB/s) + `MemoryHigh` to tq-agent-pool — builds can never saturate the QLC again                                                                             | Critical | S      | Feature                 |
+| 4  | GOCACHE/GOMODCACHE/GOTMPDIR → Samsung for ALL shells/sessions (linker cmdline proved tmp/go-mod + tmp/go-build* are the live caches)                                             | Critical | M      | Feature (≈R1 #11/12/44) |
+| 5  | gatus/SigNoz rule: any service cgroup `memory.events oom_kill` > 0 → alert (12 kills today, zero noticed)                                                                        | High     | S      | Feature                 |
+| 6  | gatus/SigNoz rule: PSI io `full` avg10 > 25% for 5 min → alert (would have paged at ~09:00)                                                                                      | High     | S      | Feature                 |
+| 7  | tq pool: quiet-host gate (check PSI/load before dispatch) or `tq pool pause` command                                                                                             | High     | M      | Feature                 |
+| 8  | Restart monitor365 (+server) or explicitly accept the monitoring gap (collectors DOWN since 13:2x)                                                                               | High     | S      | Decision                |
+| 9  | Disable-vs-fix decision for the four stopped services — they all return on next deploy/reboot                                                                                    | High     | S      | Decision                |
+| 10 | Fix nsfw-classifier unit stop behavior (`systemctl stop` hung; check KillMode/TimeoutStopSec/MainPID tracking)                                                                   | High     | S      | Bug                     |
+| 11 | Clean re-measurement of nsfw-classifier write pattern (re-attribution after my label mispair; then retention/siting decision)                                                    | Medium   | S      | Investigation (≈R1 #14) |
+| 12 | Find why mr-sync dashboard ran from `/tmp` outside its unit (manual launch? ExecStart mismatch? `journalctl -u mr-sync-dashboard`)                                               | Medium   | S      | Investigation           |
+| 13 | Document probe blind spots + compressed-mmap mechanism in docs/agents/stability.md (mmap invisible to /proc io; OOM→re-fault→compressed-read loop)                               | High     | S      | Documentation           |
+| 14 | Write the kernel-log-first runbook line (IO busy + no owner → journalctl -k before userspace probing)                                                                            | Medium   | S      | Documentation           |
+| 15 | Process rule: "recovered" claims need ≥60s sustained window + cause-gone confirmation                                                                                            | Medium   | S      | Documentation           |
+| 16 | Spawn all tq agent sessions with `ionice -c3` inherited (crush children then yield by default)                                                                                   | Medium   | S      | Feature                 |
+| 17 | Audit tq-pool.conf parallelism: concurrent crush sessions × nix/go builds vs a desktop box                                                                                       | Medium   | M      | Feature                 |
+| 18 | Review swap/zram pressure during build churn (17G swap usage observed; stability.md territory)                                                                                   | Medium   | M      | Investigation           |
+| 19 | Orphaned `/tmp/TestServeBoot*` credentials-server (pid 3452189, re-parented to init) — trash it; add harness cleanup so test servers never leak                                  | Low      | S      | Cleanup                 |
+| 20 | Consolidate the five Go caches now that two are proven live (evidence attached to R1 #11)                                                                                        | Medium   | M      | Cleanup                 |
+| 21 | Enforce actual quiet-host for "quiet-host" batch items (the ci-local run self-describes quiet; nothing verified it)                                                              | Medium   | S      | Feature                 |
+| 22 | Consider moving actively-built project worktrees (go-taskqueue et al.) to Samsung — build reads hammer QLC by construction                                                       | Medium   | L      | Feature                 |
+| 23 | Re-check hermes-home inference after storm settles (R1 g1 sudo du still open)                                                                                                    | Medium   | S      | Verification (≈R1 #2)   |
+| 24 | io.stat live-delta + memory.events sweep added to post-deploy-check (next §-number)                                                                                              | Medium   | S      | Feature                 |
+| 25 | My working one-liner probes → documented snippet file (PSI/diskstats/io.stat/memory.events; field-math now verified)                                                             | Low      | S      | Documentation           |
+| 26 | Verify whether earlier OOM events exist BEFORE 13:12 today (how long has the pool been churning?) — `journalctl -k --since 2026-10-19 \| rg oom`                                 | Medium   | S      | Investigation           |
+| 27 | Pool config: pin `NIX_BUILD_JOBS`/`GOMAXPROCS` inside agent sessions to bound burst size                                                                                         | Medium   | S      | Feature                 |
+| 28 | nsfw-classifier + monitor365 + mr-sync: add per-service io.stat baseline to their runbooks so "normal" is known before the next storm                                            | Low      | S      | Documentation           |
+| 29 | Add `/proc/pressure/io` history to the textfile collector (2s cadence exists for hwmon — same pattern)                                                                           | Low      | M      | Feature                 |
+| 30 | QLC root 91%: the R1 reclaim list still stands untouched (70G go-cache etc.) — now ALSO the storm fuel                                                                           | Critical | S      | Cleanup (≈R1 #1-6)      |
+| 31 | After pool stop: sustained 60s p6 verification to actually CLOSE the storm (per e1)                                                                                              | High     | S      | Verification            |
+| 32 | Decide whether round-one's "my du caused it" narrative needs a correction footnote in the 09:39 report (it was A cause, not THE cause — ANNOTATE mode, never rewrite)            | Medium   | S      | Documentation           |
+| 33 | hermes chromium-cdp/mnemosyne sizing (blocked on g1 of R1)                                                                                                                       | Medium   | S      | Cleanup (≈R1 #39-41)    |
+| 34 | Check tq agent session log for the go-taskqueue batch: did item 3 (root build gate RED at HEAD) already land commits mid-storm? (footer-tracked; re-dispatch protocol covers it) | Low      | S      | Verification            |
+| 35 | Add "storm day" postmortem section to docs/gotchas-archive.md once dust settles (three bugs, one mechanism, two reports)                                                         | Medium   | S      | Documentation           |
+| 36 | If pool stays running today: periodic p6-busy spot-check every ~10 min during your media time (I can background it on your word)                                                 | Low      | S      | Mitigation              |
 
-*Items 37-50: intentionally not padded — the R1 list (50 items) still awaits routing; padding would double-count.*
+_Items 37-50: intentionally not padded — the R1 list (50 items) still awaits routing; padding would double-count._
 
 ## g) Questions I cannot answer myself
 
@@ -122,7 +122,7 @@ The user's four-service stop (13:2x) was directionally right and dropped load in
 
 - **Both §f lists un-harvested** (09:39 + this one) — parked per your standing "wait for instructions"; this report's §f marks R1 overlaps explicitly to prevent drift when you route the harvest.
 - **Foreign tree changes** (session-start git status) still untouched/unverified by me — same as 09:39 handoff.
-- **Verification artifacts:** all snapshots/scratch live under `/home/lars/.cache/` (io-*, cg-*, d1/d2, p1/p2, q1/q2, w1/w2, x1/x2, y1/y2, z1/z2, t1/t2) — safe to trash; nothing in /tmp was written by me (learned that lesson from AGENTS).
+- **Verification artifacts:** all snapshots/scratch live under `/home/lars/.cache/` (io-_, cg-_, d1/d2, p1/p2, q1/q2, w1/w2, x1/x2, y1/y2, z1/z2, t1/t2) — safe to trash; nothing in /tmp was written by me (learned that lesson from AGENTS).
 - **Final measured state at writing:** p6 bursting 62-99% busy between quiet windows; PSI io some avg10 ~40; pool alive and dispatching; your four services down; two agent trees demoted (idle class); drive healthy; zero data lost anywhere.
 
-*Report ends. Waiting for instructions.*
+_Report ends. Waiting for instructions._

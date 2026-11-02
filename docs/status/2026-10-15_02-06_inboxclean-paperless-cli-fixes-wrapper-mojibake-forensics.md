@@ -69,6 +69,7 @@ Nothing at product level: every landed change is test-pinned, lint-green, and (w
 Markers: **[queued]** = row landed in TODO_LIST + domain library this session · **[owner]** = only the owner can do it · **[upstream]** = InboxClean repo (many ride its TODO #275) · unmarked = agent-actionable candidate.
 
 **Execute / verify the paperless pipeline**
+
 1. Re-consent the main Gmail account (ceremony in docs/services/inboxclean.md:12; wrapper env NOT needed for main) — **[owner]**
 2. Flip the Google Cloud OAuth consent screen to "In production" — ends the ~7-day token bomb (rows 62/138/472) — **[owner]**
 3. After re-consent: verify `/health` `services.gmail.main=connected` + next `inboxclean-sync` tick exits 0, then close row 472 with evidence

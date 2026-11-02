@@ -32,8 +32,8 @@
 
 1. **Fish guard automation** — manual /tmp tests only; nothing in `tests/` persists the behavior, so a future fish.nix refactor can silently rot the guard.
 2. **Guard coverage gaps (known, unfixed)** — (i) btrfs GLOBAL flags between `btrfs` and `subvolume` (`sudo btrfs -q sub del …`) break the token-walk detection; (ii) flags AFTER the delete token (e.g. `--verbose`) get listed as "paths" (cosmetic); (iii) `sudo -i` / `sudo -s` drop into an unguarded root bash — inherent, can only be narrowed, never closed; (iv) clearing the flag itself (`sudo chattr -a /mnt/btrfs-root/.rescue`) is unguarded — that's the disarm step of the whole tier.
-~~3. **Deploy-time convergence of the rescue unit** — boot-run proven in the VM; deploy-time start relies on stc starting newly-wanted multi-user units (same pattern as btrfs-emergency-reserve) — reasoned, not yet observed live. First deploy verifies.~~ done — deploy-convergence question settled via OnBootSec timers (CHANGELOG 2026-10-06 boot critical-path; docs/todo/stability.md)
-4. **Alert delivery for the 5-day reserve red** — confirmed the CHECK evaluates red; did NOT confirm Discord delivery or why the user never noticed.
+   ~~3. **Deploy-time convergence of the rescue unit** — boot-run proven in the VM; deploy-time start relies on stc starting newly-wanted multi-user units (same pattern as btrfs-emergency-reserve) — reasoned, not yet observed live. First deploy verifies.~~ done — deploy-convergence question settled via OnBootSec timers (CHANGELOG 2026-10-06 boot critical-path; docs/todo/stability.md)
+3. **Alert delivery for the 5-day reserve red** — confirmed the CHECK evaluates red; did NOT confirm Discord delivery or why the user never noticed.
 
 ## c) NOT STARTED (identified this session, deliberately deferred)
 

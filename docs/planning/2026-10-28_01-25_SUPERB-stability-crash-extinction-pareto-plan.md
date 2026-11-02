@@ -12,17 +12,21 @@
 ## 0. Pareto Breakdown
 
 ### The 1% that delivers 51% — STOP THE DYING (4 acts)
+
 The box died 33+ times because four specific gaps each have a designed, evidenced, unratified fix. Landing these four converts "storm = death" into "storm = pause and survive":
-- **A. Zone-6 action split** — IO-trips SIGSTOP the *driver trees* (headless builds/backups only, never owner PTYs), not the LLM socket. 4 proven wrong-tool incidents (#24, #25, tonight ×2). Z6 cooldown 600s→120–180s. `[blocked:user] row 157`
+
+- **A. Zone-6 action split** — IO-trips SIGSTOP the _driver trees_ (headless builds/backups only, never owner PTYs), not the LLM socket. 4 proven wrong-tool incidents (#24, #25, tonight ×2). Z6 cooldown 600s→120–180s. `[blocked:user] row 157`
 - **B. Battery-class admission gate** — refuse `nix build`/`flake check`/VM-test batteries while the guard recently tripped or PSI is in band (deploy.sh gate shape, refusal UX = owner question §7.1). 8 documented violations, each fatal. `row 135`
 - **C. Post-crash reader-pause automation** — auto-pause resumable readers + catch-up writers on recovery boots while guard-active. 8 documented re-fires; #9 is live RIGHT NOW. `row 156`
 - **D. Contain the live storm** — the 30-min owner sudo window (stop readers, park the `go` battery tree) that drains re-fire #9 before it becomes freeze #34.
 
 ### The 4% that delivers 64% — SHIP THE PENDING WAVE + THERMAL FLOOR
+
 - **E. One deploy wave behind the quiescence protocol** — boot-chain's 5 fixes + stability batch + storage train-B in ONE switch, then the anchor check + ONE deliberate-reboot battery that closes **five** stacked calm-window verifications (TODO_LIST:146).
 - **F. Thermal floor** — owner BIOS: fans 100% + PPT/TDP cap if exposed; agent: k10temp maxima pull + fan-telemetry probe + sensors wiring. Physics no gate fixes; kills the instant-cut family's ceiling-riding.
 
 ### The 20% that delivers 80% — ATTRIBUTION, PLACEMENT, STANDING WRITERS
+
 - **G. Forensics tooling** — `io-writer-attribution.sh` (tonight's broken one-liner proved the need), crash-triage script (reset-reason-N-boots + un-evidenced-boot sweep + vacuum clock), `journal-census.sh`, `crash-autopsy.sh` (all but the first already queued rows).
 - **H. Boot -2 forensics + freeze-family discriminator fork** — classify the second death; make the next autopsy start at the fork.
 - **I. IO placement** — active model set → Samsung hot tier, cold-load serialization, llama pre-warm (removes 50–60G of QLC cold-reads per boot cycle).
@@ -30,6 +34,7 @@ The box died 33+ times because four specific gaps each have a designed, evidence
 - **K. Guard observability** — per-boot trip counter in SEV1 line + Gatus; freeze-census threshold table; SEV1 sustained-escalation leg (option B, owner-ratified threshold after the census).
 
 ### The other 20% to reach 100% — ARMOR, HYGIENE, ENDGAME
+
 - **L.** bless-boot regression armor (eval assertion + pre-reboot leg — the boot-chain session deferred its own armor)
 - **M.** Watchdog window + journal flush-lag review (last 30–90s of evidence systematically lost)
 - **N.** ZRAM/watermark recalibration after the load shape changes
@@ -46,35 +51,35 @@ The box died 33+ times because four specific gaps each have a designed, evidence
 
 Sorted by importance → impact → effort → value. **Gate** = owner ratification needed before agent execution.
 
-| ID | Task | Tier | Impact | Effort | Who | Gate | Depends |
-|----|------|------|--------|--------|-----|------|---------|
-| M1 | Contain live re-fire #9: owner sudo stops recovery readers + parks `go` battery tree; agent verifies PSI drain + trip quiet | 1% | CRITICAL | 30m | owner+agent | sudo | — |
-| M2 | Zone-6 action split: IO-class trips SIGSTOP headless driver trees + forensics bundle; Z6 cooldown 120–180s; distinct IO escalation; memory zones keep socket-stop; VM test (pause/resume, never-PTY invariant) | 1% | CRITICAL | 100m | agent | **§7.1 go** | M1 |
-| M3 | Battery-class admission gate: `nix build`/`flake check`/VM-test wrapper refused on trip-recent/PSI-band (deploy.sh shape); refusal UX per owner answer | 1% | CRITICAL | 100m | agent | **§7.1 UX** | M1 |
-| M4 | Post-crash reader-pause automation: boot-ordered pause unit (readers + catch-up writers) while guard-active/PSI>40, calm-resume; selftest | 1% | CRITICAL | 90m | agent | — | M2 (action shape) |
-| M5 | Deploy wave assembly: boot-chain 5 fixes + M2+M3+M4 + stability batch + storage train-B; quiescence protocol; anchor verify (§5.1) | 4% | HIGH | 100m | agent+owner | calm window | M2,M3,M4 |
-| M6 | Reboot-verify battery: ONE owner window + 2–3 deliberate reboots closing all five stacked calm-window verifications (bless/counter/mirror, userspace re-measure, Samsung warm-reboot repro, guard VM legs, boot-0 prom re-check) | 4% | HIGH | 60m | owner+agent | reboots | M5 |
-| M7 | Thermal floor: owner BIOS fans-100% + PPT cap if exposed; agent k10temp Oct-27 maxima pull, fan-telemetry probe, sensors wiring check; verify delta under load | 4% | HIGH | 30m+30m | owner+agent | — | M1 (calm box) |
-| M8 | Boot -2 (`b803d718`) death-window forensics; classify via discriminator; append to evidence file | 20% | MED | 45m | agent | — | — |
-| M9 | `scripts/io-writer-attribution.sh` + fixture selftest (the 5s /proc io pass, cgroup join, no-argv-leak) | 20% | MED | 45m | agent | — | — |
-| M10 | Crash-triage script: reset-reason last-N boots + un-evidenced-crashed-boot sweep + vacuum clock (pre-vacuum-gate companion) + selftest | 20% | MED | 45m | agent | — | — |
-| M11 | `scripts/journal-census.sh` (SEV1/trip/OOM census, no head-truncation) + `scripts/crash-autopsy.sh` codification (queued rows; sensors leg + freeze-series lookup) | 20% | MED | 90m | agent | — | — |
-| M12 | Freeze-family discriminator fork doc section in stability.md (instant-cut thermal vs progressive livelock; entry-point table) | 20% | MED | 30m | agent | — | M8 |
-| M13 | Active model set → Samsung hot tier: space check, `+C` subvol, migrate, repoint modelPath, verify loads | 20% | MED | 100m | agent | — | M5 (calm) |
-| M14 | Cold-load serialization: one heavy-job slot / After= chain for llama-chat+flm+vlm+rag; llama pre-warm ExecStartPre | 20% | MED | 60m | agent | — | M13 |
-| M15 | mr-sync-dashboard IO class fix: `IOSchedulingClass=idle` or PSI-aware sync window + verify standing-19MB/s gone | 20% | MED | 30m | agent | — | — |
-| M16 | tq-agent-pool: skip-cursor/early-exit rescan fix + `io.max` cgroup cap on pool + build slices (owner throughput answer §7.2) | 20% | MED | 60m | agent | **§7.2** | — |
-| M17 | inboxclean-web hardening: reconnect backoff + bounded aggregations | 20% | MED | 45m | agent | — | — |
-| M18 | nsfw-classifier storm-aware restart gating (PSI-band condition / longer backoff for cold-start-heavy units) | 20% | MED | 30m | agent | — | — |
-| M19 | Guard per-boot trip counter in SEV1 line + Gatus crash-loop check; freeze-census trips/uptime table (threshold defense) | 20% | MED | 45m | agent | — | — |
-| M20 | SEV1 sustained-escalation leg, option B (warn-tier latch, ≥N trips/h × ≥2h state-file latch ~30–60 lines) + Gatus | 20% | MED | 60m | agent | **§7.1 ratify** | M19 census |
-| M21 | bless-boot regression armor: eval assertion (ordering after boot-mirror-sync) + pre-reboot-check leg (boot-chain session's deferred rows) | 80%→100% | MED | 45m | agent | — | M5 |
-| M22 | Watchdog window + flush-lag review: sp5100-tco timeout vs journal flush lag; document evidence-loss window; adjust if warranted | 80%→100% | LOW-MED | 30m | agent | — | M12 |
-| M23 | ZRAM/watermark recalibration check: verify 47G sizing + swappiness against post-fix load shape; adjust only with evidence | 80%→100% | LOW | 30m | agent | — | M5,M13 |
-| M24 | Stability-lib hygiene: prune `[x]` rows via `scripts/prune-done-todos.sh` (dry-run, rev-pinned WARN A/B), recount drift row | 80%→100% | LOW | 60m | agent | — | — |
-| M25 | Role-split decision brief: second-box evidence pack (crash cost accounting, what moves, monthly cost, what stays) — OWNER DECISION DOC, no infra | 80%→100% | STRATEGIC | 45m | agent | — | — |
-| M26 | Desktop-state snapshot collector (dpms/lock/session textfile, short timer) so freeze autopsies stop needing owner memory | 80%→100% | LOW | 45m | agent | — | — |
-| M27 | Reconcile 00:20–00:22 sibling reports + flm-exemption decision row + tq OnFailure-noise decision row close-out into incident record | 80%→100% | LOW | 30m | agent | — | — |
+| ID  | Task                                                                                                                                                                                                                             | Tier     | Impact    | Effort  | Who         | Gate            | Depends           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------- | ------- | ----------- | --------------- | ----------------- |
+| M1  | Contain live re-fire #9: owner sudo stops recovery readers + parks `go` battery tree; agent verifies PSI drain + trip quiet                                                                                                      | 1%       | CRITICAL  | 30m     | owner+agent | sudo            | —                 |
+| M2  | Zone-6 action split: IO-class trips SIGSTOP headless driver trees + forensics bundle; Z6 cooldown 120–180s; distinct IO escalation; memory zones keep socket-stop; VM test (pause/resume, never-PTY invariant)                   | 1%       | CRITICAL  | 100m    | agent       | **§7.1 go**     | M1                |
+| M3  | Battery-class admission gate: `nix build`/`flake check`/VM-test wrapper refused on trip-recent/PSI-band (deploy.sh shape); refusal UX per owner answer                                                                           | 1%       | CRITICAL  | 100m    | agent       | **§7.1 UX**     | M1                |
+| M4  | Post-crash reader-pause automation: boot-ordered pause unit (readers + catch-up writers) while guard-active/PSI>40, calm-resume; selftest                                                                                        | 1%       | CRITICAL  | 90m     | agent       | —               | M2 (action shape) |
+| M5  | Deploy wave assembly: boot-chain 5 fixes + M2+M3+M4 + stability batch + storage train-B; quiescence protocol; anchor verify (§5.1)                                                                                               | 4%       | HIGH      | 100m    | agent+owner | calm window     | M2,M3,M4          |
+| M6  | Reboot-verify battery: ONE owner window + 2–3 deliberate reboots closing all five stacked calm-window verifications (bless/counter/mirror, userspace re-measure, Samsung warm-reboot repro, guard VM legs, boot-0 prom re-check) | 4%       | HIGH      | 60m     | owner+agent | reboots         | M5                |
+| M7  | Thermal floor: owner BIOS fans-100% + PPT cap if exposed; agent k10temp Oct-27 maxima pull, fan-telemetry probe, sensors wiring check; verify delta under load                                                                   | 4%       | HIGH      | 30m+30m | owner+agent | —               | M1 (calm box)     |
+| M8  | Boot -2 (`b803d718`) death-window forensics; classify via discriminator; append to evidence file                                                                                                                                 | 20%      | MED       | 45m     | agent       | —               | —                 |
+| M9  | `scripts/io-writer-attribution.sh` + fixture selftest (the 5s /proc io pass, cgroup join, no-argv-leak)                                                                                                                          | 20%      | MED       | 45m     | agent       | —               | —                 |
+| M10 | Crash-triage script: reset-reason last-N boots + un-evidenced-crashed-boot sweep + vacuum clock (pre-vacuum-gate companion) + selftest                                                                                           | 20%      | MED       | 45m     | agent       | —               | —                 |
+| M11 | `scripts/journal-census.sh` (SEV1/trip/OOM census, no head-truncation) + `scripts/crash-autopsy.sh` codification (queued rows; sensors leg + freeze-series lookup)                                                               | 20%      | MED       | 90m     | agent       | —               | —                 |
+| M12 | Freeze-family discriminator fork doc section in stability.md (instant-cut thermal vs progressive livelock; entry-point table)                                                                                                    | 20%      | MED       | 30m     | agent       | —               | M8                |
+| M13 | Active model set → Samsung hot tier: space check, `+C` subvol, migrate, repoint modelPath, verify loads                                                                                                                          | 20%      | MED       | 100m    | agent       | —               | M5 (calm)         |
+| M14 | Cold-load serialization: one heavy-job slot / After= chain for llama-chat+flm+vlm+rag; llama pre-warm ExecStartPre                                                                                                               | 20%      | MED       | 60m     | agent       | —               | M13               |
+| M15 | mr-sync-dashboard IO class fix: `IOSchedulingClass=idle` or PSI-aware sync window + verify standing-19MB/s gone                                                                                                                  | 20%      | MED       | 30m     | agent       | —               | —                 |
+| M16 | tq-agent-pool: skip-cursor/early-exit rescan fix + `io.max` cgroup cap on pool + build slices (owner throughput answer §7.2)                                                                                                     | 20%      | MED       | 60m     | agent       | **§7.2**        | —                 |
+| M17 | inboxclean-web hardening: reconnect backoff + bounded aggregations                                                                                                                                                               | 20%      | MED       | 45m     | agent       | —               | —                 |
+| M18 | nsfw-classifier storm-aware restart gating (PSI-band condition / longer backoff for cold-start-heavy units)                                                                                                                      | 20%      | MED       | 30m     | agent       | —               | —                 |
+| M19 | Guard per-boot trip counter in SEV1 line + Gatus crash-loop check; freeze-census trips/uptime table (threshold defense)                                                                                                          | 20%      | MED       | 45m     | agent       | —               | —                 |
+| M20 | SEV1 sustained-escalation leg, option B (warn-tier latch, ≥N trips/h × ≥2h state-file latch ~30–60 lines) + Gatus                                                                                                                | 20%      | MED       | 60m     | agent       | **§7.1 ratify** | M19 census        |
+| M21 | bless-boot regression armor: eval assertion (ordering after boot-mirror-sync) + pre-reboot-check leg (boot-chain session's deferred rows)                                                                                        | 80%→100% | MED       | 45m     | agent       | —               | M5                |
+| M22 | Watchdog window + flush-lag review: sp5100-tco timeout vs journal flush lag; document evidence-loss window; adjust if warranted                                                                                                  | 80%→100% | LOW-MED   | 30m     | agent       | —               | M12               |
+| M23 | ZRAM/watermark recalibration check: verify 47G sizing + swappiness against post-fix load shape; adjust only with evidence                                                                                                        | 80%→100% | LOW       | 30m     | agent       | —               | M5,M13            |
+| M24 | Stability-lib hygiene: prune `[x]` rows via `scripts/prune-done-todos.sh` (dry-run, rev-pinned WARN A/B), recount drift row                                                                                                      | 80%→100% | LOW       | 60m     | agent       | —               | —                 |
+| M25 | Role-split decision brief: second-box evidence pack (crash cost accounting, what moves, monthly cost, what stays) — OWNER DECISION DOC, no infra                                                                                 | 80%→100% | STRATEGIC | 45m     | agent       | —               | —                 |
+| M26 | Desktop-state snapshot collector (dpms/lock/session textfile, short timer) so freeze autopsies stop needing owner memory                                                                                                         | 80%→100% | LOW       | 45m     | agent       | —               | —                 |
+| M27 | Reconcile 00:20–00:22 sibling reports + flm-exemption decision row + tq OnFailure-noise decision row close-out into incident record                                                                                              | 80%→100% | LOW       | 30m     | agent       | —               | —                 |
 
 **Total: ~19h agent + ~2h owner.** Gates: M2/M3/M20 (§7.1), M16 (§7.2), M5/M6 (calm window + reboots).
 
@@ -84,74 +89,74 @@ Sorted by importance → impact → effort → value. **Gate** = owner ratificat
 
 P0 = this session/next calm window. P1 = first dispatch cycle. P2 = second cycle. P3 = background.
 
-| ID | Task (≤12 min each) | Parent | Pri |
-|----|---------------------|--------|-----|
-| F1 | Owner: `sudo systemctl stop crush-hot-db-migrate.service discordsync-db-heal.service` (+hermes heal if D-state) | M1 | P0 |
-| F2 | Owner: park the `go` battery tree (SIGSTOP via sudo, resumable) | M1 | P0 |
-| F3 | Agent: watch PSI avg60 to <20 over 10 min; log drain curve to incident record | M1 | P0 |
-| F4 | Agent: re-run pre-vacuum gate + confirm evidence files committed | M1 | P0 |
-| F5 | Read guard source: locate zone dispatch + action functions, cooldown var | M2 | P0 |
-| F6 | Design note in module: IO-action = SIGSTOP headless trees; enumerate tree sources (cgroup io.stat top-N pids, filter uids 0/nixbld + unit-owned) | M2 | P0 |
-| F7 | Implement never-PTY invariant (tty-owned pids excluded, owner uid interactive scopes excluded) | M2 | P0 |
-| F8 | Implement Z6 cooldown config (default 150s) + IO/memory action split dispatch | M2 | P0 |
-| F9 | Implement pause-state file + calm-resume (SIGCONT on PSI<20 sustained 10m) | M2 | P0 |
-| F10 | Forensics bundle emit on IO-action (io.pressure + io.stat snapshot) | M2 | P0 |
-| F11 | VM test: IO-trip pauses fake driver tree; PTY tree untouched; resume works | M2 | P0 |
-| F12 | VM test: memory-zone action unchanged (regression leg) | M2 | P0 |
-| F13 | Runbook update `docs/services/memory-emergency-guard.md` (action table) | M2 | P0 |
-| F14 | Wrapper script `nix`-gate design: hook point (shell drv / PATH wrapper), state input (trips-recent file, /proc/pressure) | M3 | P0 |
-| F15 | Implement gate script (fail message: calm-window hint + `--force` escape documented) | M3 | P0 |
-| F16 | Wire gate into devshell PATH + document in CONTRIBUTING (agent shells only, never owner login) | M3 | P0 |
-| F17 | Selftest: gate refuses under simulated trip-state; passes calm | M3 | P0 |
-| F18 | Reader-pause unit: enumerate units (migrate/heal/rsync class) as config list | M4 | P0 |
-| F19 | Implement pause-on-boot-if-guard-active service (ConditionPathExists on trip state) | M4 | P0 |
-| F20 | Calm-resume timer + crash-safety (pause idempotent, resume once) | M4 | P0 |
-| F21 | Selftest + fixture (paused units list matches config) | M4 | P0 |
-| F22 | Quiescence pre-check: 4×60s clean-tree + eval-relevant mtimes >5min + green drvPath probe | M5 | P1 |
-| F23 | Assemble wave: confirm boot-chain 5 fixes + M2–M4 + stability batch + train-B all eval-green together | M5 | P1 |
-| F24 | Owner: `nix run .#deploy`; agent watches via pgrep-tree completion | M5 | P1 |
-| F25 | Anchor verify: `readlink /run/current-system` == newest `system-N-link` (by NUMBER) | M5 | P1 |
-| F26 | Post-deploy smoke + §11/§16 sections; defer others per storm discipline | M5 | P1 |
-| F27 | Owner reboot #1 → agent: boot-time measure, bless/counter/mirror decode | M6 | P1 |
-| F28 | Reboot #2/#3 → Samsung warm-reboot repro legs + guard VM-test legs | M6 | P1 |
-| F29 | Clickhouse-stack move decision apply (post-gate) or bank decision doc | M6 | P1 |
-| F30 | Owner: BIOS fans 100% + PPT cap note (photograph settings) | M7 | P1 |
-| F31 | Agent: k10temp hourly-max query Oct 26–28 (SigNoz/ClickHouse) → incident record | M7 | P1 |
-| F32 | Agent: fan-telemetry probe (hwmon sweep) + sensors config wiring | M7 | P1 |
-| F33 | Agent: same-load before/after thermal delta (post-BIOS) → verdict: curve was conservative vs already-maxed | M7 | P1 |
-| F34 | Pull boot -2 death window journal tail + census | M8 | P1 |
-| F35 | Classify via discriminator (thermal vs livelock); write verdict + append evidence file | M8 | P1 |
-| F36 | `io-writer-attribution.sh` core (two snapshots, awk join, comm names only) | M9 | P1 |
-| F37 | Redact-argv compliance + no-secrets selftest + fixture | M9 | P1 |
-| F38 | Crash-triage script: reset-reason last-N + boot-evidence gap sweep + vacuum clock | M10 | P1 |
-| F39 | Selftest + wire as first-step note into stability.md autopsy section | M10 | P1 |
-| F40 | `journal-census.sh` (identifier-scoped, uniq -c, no head) | M11 | P2 |
-| F41 | `crash-autopsy.sh` codify (sensors leg, freeze-series lookup, boot-evidence-pull call) | M11 | P2 |
-| F42 | Discriminator-fork section drafted into stability.md | M12 | P2 |
-| F43 | Samsung free-space check + plan `+C` subvol | M13 | P2 |
-| F44 | Migrate active GGUF set + repoint modelPath + one load verify | M13 | P2 |
-| F45 | Heavy-job serialization slot for cold loads + pre-warm ExecStartPre | M14 | P2 |
-| F46 | mr-sync-dashboard ionice idle + verify standing read drops | M15 | P2 |
-| F47 | tq-pool rescan skip-cursor fix (repos=3 items=1605 skipped=1605 → early-exit) | M16 | P2 |
-| F48 | io.max caps on pool + build slices (after owner throughput answer) | M16 | P2 |
-| F49 | inboxclean-web backoff + bounded query PR prep (foreign repo — verify-before-filing) | M17 | P2 |
-| F50 | nsfw-classifier restart-gate unit override + condition | M18 | P2 |
-| F51 | SEV1 line: per-boot trip count; Gatus crash-loop check | M19 | P2 |
-| F52 | Freeze-census table: trips/boot ÷ uptime across family boots | M19 | P2 |
-| F53 | Escalation leg implement (latch state file, warn-tier, once-per-set) | M20 | P2 |
-| F54 | Escalation Gatus check + VM leg 6a extension | M20 | P2 |
-| F55 | bless eval assertion (after= boot-mirror-sync renders) | M21 | P2 |
-| F56 | pre-reboot-check §bless-ordering leg | M21 | P2 |
-| F57 | Watchdog/flush-lag evidence note + verdict (keep vs adjust) | M22 | P3 |
-| F58 | ZRAM mm_stat re-read + fill% vs new load; document | M23 | P3 |
-| F59 | Hygiene: prune-done-todos dry-run + WARN A/B pin | M24 | P3 |
-| F60 | Hygiene: execute prune + recount drift row | M24 | P3 |
-| F61 | Role-split brief: crash-cost table (33+ freezes × downtime) | M25 | P3 |
-| F62 | Role-split brief: what-moves/what-stays + cost options | M25 | P3 |
-| F63 | Desktop-state collector module + textfile + gatus silence rule | M26 | P3 |
-| F64 | Read 00:20–00:22 reports; reconcile evening-session attribution | M27 | P3 |
-| F65 | flm-exemption decision row: evidence pack + owner question finalize | M27 | P3 |
-| F66 | tq OnFailure-noise decision row close (RestartSec backoff vs once-notice) | M27 | P3 |
+| ID  | Task (≤12 min each)                                                                                                                              | Parent | Pri |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | --- |
+| F1  | Owner: `sudo systemctl stop crush-hot-db-migrate.service discordsync-db-heal.service` (+hermes heal if D-state)                                  | M1     | P0  |
+| F2  | Owner: park the `go` battery tree (SIGSTOP via sudo, resumable)                                                                                  | M1     | P0  |
+| F3  | Agent: watch PSI avg60 to <20 over 10 min; log drain curve to incident record                                                                    | M1     | P0  |
+| F4  | Agent: re-run pre-vacuum gate + confirm evidence files committed                                                                                 | M1     | P0  |
+| F5  | Read guard source: locate zone dispatch + action functions, cooldown var                                                                         | M2     | P0  |
+| F6  | Design note in module: IO-action = SIGSTOP headless trees; enumerate tree sources (cgroup io.stat top-N pids, filter uids 0/nixbld + unit-owned) | M2     | P0  |
+| F7  | Implement never-PTY invariant (tty-owned pids excluded, owner uid interactive scopes excluded)                                                   | M2     | P0  |
+| F8  | Implement Z6 cooldown config (default 150s) + IO/memory action split dispatch                                                                    | M2     | P0  |
+| F9  | Implement pause-state file + calm-resume (SIGCONT on PSI<20 sustained 10m)                                                                       | M2     | P0  |
+| F10 | Forensics bundle emit on IO-action (io.pressure + io.stat snapshot)                                                                              | M2     | P0  |
+| F11 | VM test: IO-trip pauses fake driver tree; PTY tree untouched; resume works                                                                       | M2     | P0  |
+| F12 | VM test: memory-zone action unchanged (regression leg)                                                                                           | M2     | P0  |
+| F13 | Runbook update `docs/services/memory-emergency-guard.md` (action table)                                                                          | M2     | P0  |
+| F14 | Wrapper script `nix`-gate design: hook point (shell drv / PATH wrapper), state input (trips-recent file, /proc/pressure)                         | M3     | P0  |
+| F15 | Implement gate script (fail message: calm-window hint + `--force` escape documented)                                                             | M3     | P0  |
+| F16 | Wire gate into devshell PATH + document in CONTRIBUTING (agent shells only, never owner login)                                                   | M3     | P0  |
+| F17 | Selftest: gate refuses under simulated trip-state; passes calm                                                                                   | M3     | P0  |
+| F18 | Reader-pause unit: enumerate units (migrate/heal/rsync class) as config list                                                                     | M4     | P0  |
+| F19 | Implement pause-on-boot-if-guard-active service (ConditionPathExists on trip state)                                                              | M4     | P0  |
+| F20 | Calm-resume timer + crash-safety (pause idempotent, resume once)                                                                                 | M4     | P0  |
+| F21 | Selftest + fixture (paused units list matches config)                                                                                            | M4     | P0  |
+| F22 | Quiescence pre-check: 4×60s clean-tree + eval-relevant mtimes >5min + green drvPath probe                                                        | M5     | P1  |
+| F23 | Assemble wave: confirm boot-chain 5 fixes + M2–M4 + stability batch + train-B all eval-green together                                            | M5     | P1  |
+| F24 | Owner: `nix run .#deploy`; agent watches via pgrep-tree completion                                                                               | M5     | P1  |
+| F25 | Anchor verify: `readlink /run/current-system` == newest `system-N-link` (by NUMBER)                                                              | M5     | P1  |
+| F26 | Post-deploy smoke + §11/§16 sections; defer others per storm discipline                                                                          | M5     | P1  |
+| F27 | Owner reboot #1 → agent: boot-time measure, bless/counter/mirror decode                                                                          | M6     | P1  |
+| F28 | Reboot #2/#3 → Samsung warm-reboot repro legs + guard VM-test legs                                                                               | M6     | P1  |
+| F29 | Clickhouse-stack move decision apply (post-gate) or bank decision doc                                                                            | M6     | P1  |
+| F30 | Owner: BIOS fans 100% + PPT cap note (photograph settings)                                                                                       | M7     | P1  |
+| F31 | Agent: k10temp hourly-max query Oct 26–28 (SigNoz/ClickHouse) → incident record                                                                  | M7     | P1  |
+| F32 | Agent: fan-telemetry probe (hwmon sweep) + sensors config wiring                                                                                 | M7     | P1  |
+| F33 | Agent: same-load before/after thermal delta (post-BIOS) → verdict: curve was conservative vs already-maxed                                       | M7     | P1  |
+| F34 | Pull boot -2 death window journal tail + census                                                                                                  | M8     | P1  |
+| F35 | Classify via discriminator (thermal vs livelock); write verdict + append evidence file                                                           | M8     | P1  |
+| F36 | `io-writer-attribution.sh` core (two snapshots, awk join, comm names only)                                                                       | M9     | P1  |
+| F37 | Redact-argv compliance + no-secrets selftest + fixture                                                                                           | M9     | P1  |
+| F38 | Crash-triage script: reset-reason last-N + boot-evidence gap sweep + vacuum clock                                                                | M10    | P1  |
+| F39 | Selftest + wire as first-step note into stability.md autopsy section                                                                             | M10    | P1  |
+| F40 | `journal-census.sh` (identifier-scoped, uniq -c, no head)                                                                                        | M11    | P2  |
+| F41 | `crash-autopsy.sh` codify (sensors leg, freeze-series lookup, boot-evidence-pull call)                                                           | M11    | P2  |
+| F42 | Discriminator-fork section drafted into stability.md                                                                                             | M12    | P2  |
+| F43 | Samsung free-space check + plan `+C` subvol                                                                                                      | M13    | P2  |
+| F44 | Migrate active GGUF set + repoint modelPath + one load verify                                                                                    | M13    | P2  |
+| F45 | Heavy-job serialization slot for cold loads + pre-warm ExecStartPre                                                                              | M14    | P2  |
+| F46 | mr-sync-dashboard ionice idle + verify standing read drops                                                                                       | M15    | P2  |
+| F47 | tq-pool rescan skip-cursor fix (repos=3 items=1605 skipped=1605 → early-exit)                                                                    | M16    | P2  |
+| F48 | io.max caps on pool + build slices (after owner throughput answer)                                                                               | M16    | P2  |
+| F49 | inboxclean-web backoff + bounded query PR prep (foreign repo — verify-before-filing)                                                             | M17    | P2  |
+| F50 | nsfw-classifier restart-gate unit override + condition                                                                                           | M18    | P2  |
+| F51 | SEV1 line: per-boot trip count; Gatus crash-loop check                                                                                           | M19    | P2  |
+| F52 | Freeze-census table: trips/boot ÷ uptime across family boots                                                                                     | M19    | P2  |
+| F53 | Escalation leg implement (latch state file, warn-tier, once-per-set)                                                                             | M20    | P2  |
+| F54 | Escalation Gatus check + VM leg 6a extension                                                                                                     | M20    | P2  |
+| F55 | bless eval assertion (after= boot-mirror-sync renders)                                                                                           | M21    | P2  |
+| F56 | pre-reboot-check §bless-ordering leg                                                                                                             | M21    | P2  |
+| F57 | Watchdog/flush-lag evidence note + verdict (keep vs adjust)                                                                                      | M22    | P3  |
+| F58 | ZRAM mm_stat re-read + fill% vs new load; document                                                                                               | M23    | P3  |
+| F59 | Hygiene: prune-done-todos dry-run + WARN A/B pin                                                                                                 | M24    | P3  |
+| F60 | Hygiene: execute prune + recount drift row                                                                                                       | M24    | P3  |
+| F61 | Role-split brief: crash-cost table (33+ freezes × downtime)                                                                                      | M25    | P3  |
+| F62 | Role-split brief: what-moves/what-stays + cost options                                                                                           | M25    | P3  |
+| F63 | Desktop-state collector module + textfile + gatus silence rule                                                                                   | M26    | P3  |
+| F64 | Read 00:20–00:22 reports; reconcile evening-session attribution                                                                                  | M27    | P3  |
+| F65 | flm-exemption decision row: evidence pack + owner question finalize                                                                              | M27    | P3  |
+| F66 | tq OnFailure-noise decision row close (RestartSec backoff vs once-notice)                                                                        | M27    | P3  |
 
 **66 fine tasks** (each ≤12 min). Agent-executable without gates: 51. Owner-gated: F1, F2, F24, F27–F28, F30 (+§7 answers).
 
@@ -262,6 +267,7 @@ New rows added to `TODO_LIST.md` `### stability` + `docs/todo/stability.md` (lib
 ### 2026-10-28 01:51 — executor session start (ungated legs only)
 
 **M1 containment state at takeover (01:46–01:51):**
+
 - Storm was NOT draining: guard trips **#4510–#4514** fired 01:05–01:45 (cooldown-pace, one per 600 s window), all Zone 6, wrong-tool action (sockets+sacrifice stop) each time. io.stat per trip: system.slice +19…+52 GB / 10 min window.
 - `crush-hot-db-migrate.service` = **failed** (ended itself), `discordsync-db-heal.service` = inactive → F1 owner legs MOOT.
 - Live writer attribution (5 s /proc io pass): headless `bash scripts/tools/bump-dep.sh larsartmann/go-retry v0.9.0 --commit --lint …` (session-12.scope, PGID 1931684, 16 min old, tty=none) + child `golangci-lint`; nix-daemon worker serving it (system.slice = the 52 GB window). A go-ecosystem battery amplifying re-fire #9 — the M3 admission-gate violation class, live.
@@ -306,6 +312,7 @@ New rows added to `TODO_LIST.md` `### stability` + `docs/todo/stability.md` (lib
 §7 gates ANSWERED by owner (~03:05): **§7.1 all three RATIFIED** (Z6 split + hard-fail gate + census latch), §7.2 SKIPPED (io.max values still unanswered — M16 stays owner-gated), storm drivers "let it run", §7.3 BIOS + M25 brief green-lit.
 
 **Implemented + toplevel-eval-green (ride the M5 deploy wave):**
+
 - **M2/F7–F10** Zone-6 action split — guard `ioPause` (attribution-matched cgroupPatterns, HARD never-PTY invariant, calm-resume 600 s + 3600 s cap, `ioActionCooldownSeconds` 150, ≥3-trip churn escalation; sockets never touched by zone 6) + `ioPause.enable = true` on evo-x2 + runbook action table (F13). VM legs F11/F12 → M5 battery (storm-banned at write time).
 - **M3/F15–F17** admission gate — `scripts/nix-admission-gate.sh` (hard-fail, trip-recent OR PSI-band ≥20, `ADMISSION_GATE_FORCE=1` audit-logged, owner unaffected by construction) + devshell PATH wiring (F16) + fixture selftest in flake checks.
 - **M20/F53–F54** sustained-storm latch — guard epoch-file latch (≥2/h × 2 h OR ≥20/boot) + `sustained_storm` metrics + dedicated Gatus check. VM-leg extension rides M5.

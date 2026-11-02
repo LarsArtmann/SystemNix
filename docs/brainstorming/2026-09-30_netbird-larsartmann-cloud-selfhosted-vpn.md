@@ -148,17 +148,17 @@ needs the VPN → acceptable, since using the services needs the VPN anyway.
 
 ## 6. Decisions (all owner-ratified 2026-09-30)
 
-| ID | Decision                                                                                  |
-| -- | ----------------------------------------------------------------------------------------- |
+| ID | Decision                                                                                                                                                                                                            |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D1 | Option A: Pocket ID stays on evo-x2; Dex-static sidecar on VPS for NetBird dashboard only **(SUPERSEDED 2026-10-12: pbx-side SSO stage 1 replaced Dex with Pocket ID entirely — see pbx netbird-deploy.md UPDATE)** |
-| D2 | pbx-artmann server hosts NetBird control plane + Dex (accepted risks §7)                  |
-| D3 | dnsblockd CA wildcard for `*.larsartmann.cloud` on evo-x2 Caddy; LE HTTP-01 for VPS names |
-| D4 | Trim public `larsartmann.cloud` DNS to apex + `netbird.` + Resend records                 |
-| D5 | No NetBird-hosted DNS records; matched-domain forwarding → dnsblockd (192.168.1.53)       |
-| D6 | Retire MacBook Tailscale after NetBird burn-in                                            |
-| D7 | Motorola phone imports dnsblockd CA (user store)                                          |
-| D8 | Telephony stays public; SIP/RTP never over VPN                                            |
-| D9 | NetBird on pbx box is admin-optional, skip for v1                                         |
+| D2 | pbx-artmann server hosts NetBird control plane + Dex (accepted risks §7)                                                                                                                                            |
+| D3 | dnsblockd CA wildcard for `*.larsartmann.cloud` on evo-x2 Caddy; LE HTTP-01 for VPS names                                                                                                                           |
+| D4 | Trim public `larsartmann.cloud` DNS to apex + `netbird.` + Resend records                                                                                                                                           |
+| D5 | No NetBird-hosted DNS records; matched-domain forwarding → dnsblockd (192.168.1.53)                                                                                                                                 |
+| D6 | Retire MacBook Tailscale after NetBird burn-in                                                                                                                                                                      |
+| D7 | Motorola phone imports dnsblockd CA (user store)                                                                                                                                                                    |
+| D8 | Telephony stays public; SIP/RTP never over VPN                                                                                                                                                                      |
+| D9 | NetBird on pbx box is admin-optional, skip for v1                                                                                                                                                                   |
 
 ## 7. Accepted risks / trade-offs (owner-accepted)
 

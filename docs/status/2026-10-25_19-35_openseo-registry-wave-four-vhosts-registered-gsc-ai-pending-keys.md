@@ -65,38 +65,38 @@
 
 **Direct follow-ups of THIS session (1–9 already harvested to both surfaces where actionable):**
 
-| # | Task | Priority | Size | Type |
-|---|------|----------|------|------|
-| 1 | **Verify OpenSEO GSC redirect_uri construction from app source** (placeholder vs request-host; fix = BETTER_AUTH_URL env if needed) — BEFORE owner's Google setup | High | S | Feature |
-| 2 | **Rendered-output parity proof** (gatus endpoints, tiles, vhost-layers, system-health, integration-registry check derivation) | High | M | Quality |
-| 3 | **Flip GSC+AI flags → deploy → post-deploy verify** (after owner keys; PSI-calm window; anchor discipline; §16 + tile eyeball) | High | M | Feature |
-| 4 | **Assess openseo D1 backup entry** (+ taskchampion sync data) — pocket-id sqlite pattern; adoption gated on §g.3 answer | Medium | S | Quality |
-| 5 | **Full `nix flake check --no-build` at quiescence** — closes the rpi3-dns §f.8 row + exercises non-evo-x2 caddy contexts with my `options`-guarded entries | Medium | S | Quality |
-| 6 | **Post-deploy tile eyeball** — 4 migrated tiles + dots (rides the existing watch row; listed here for completeness) | Medium | S | Verify |
-| 7 | **Post-enable memory watch** — MemoryMax 2G vs actual openseo RSS once GSC sync + SAM run (the llama-chat 410M silent-throttle class; memory-watermark audit only checks MemoryHigh/MemoryMax coherence) | Medium | S | Watch |
-| 8 | **Secrets-runbook key census after key entry** — verify openseo.yaml holds exactly 5 keys (dataforseo + 4), grep plaintext key names only | Low | S | Verify |
-| 9 | **ai-meter openrouter re-add option** — once openrouter_api_key exists, the dropped ai-meter openrouter copy can return (recipe in ai-meter.md; owner decides) | Low | S | Decision |
+| # | Task                                                                                                                                                                                                     | Priority | Size | Type     |
+| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- | -------- |
+| 1 | **Verify OpenSEO GSC redirect_uri construction from app source** (placeholder vs request-host; fix = BETTER_AUTH_URL env if needed) — BEFORE owner's Google setup                                        | High     | S    | Feature  |
+| 2 | **Rendered-output parity proof** (gatus endpoints, tiles, vhost-layers, system-health, integration-registry check derivation)                                                                            | High     | M    | Quality  |
+| 3 | **Flip GSC+AI flags → deploy → post-deploy verify** (after owner keys; PSI-calm window; anchor discipline; §16 + tile eyeball)                                                                           | High     | M    | Feature  |
+| 4 | **Assess openseo D1 backup entry** (+ taskchampion sync data) — pocket-id sqlite pattern; adoption gated on §g.3 answer                                                                                  | Medium   | S    | Quality  |
+| 5 | **Full `nix flake check --no-build` at quiescence** — closes the rpi3-dns §f.8 row + exercises non-evo-x2 caddy contexts with my `options`-guarded entries                                               | Medium   | S    | Quality  |
+| 6 | **Post-deploy tile eyeball** — 4 migrated tiles + dots (rides the existing watch row; listed here for completeness)                                                                                      | Medium   | S    | Verify   |
+| 7 | **Post-enable memory watch** — MemoryMax 2G vs actual openseo RSS once GSC sync + SAM run (the llama-chat 410M silent-throttle class; memory-watermark audit only checks MemoryHigh/MemoryMax coherence) | Medium   | S    | Watch    |
+| 8 | **Secrets-runbook key census after key entry** — verify openseo.yaml holds exactly 5 keys (dataforseo + 4), grep plaintext key names only                                                                | Low      | S    | Verify   |
+| 9 | **ai-meter openrouter re-add option** — once openrouter_api_key exists, the dropped ai-meter openrouter copy can return (recipe in ai-meter.md; owner decides)                                           | Low      | S    | Decision |
 
 **Ideas / improvements (not harvested — vague or owner-gated; would go to ROADMAP/library on request):**
 
-| # | Idea | Note |
-|---|------|------|
-| 10 | Eval-time duplicate-tile-ownership lint (built-in tile vs registry homepage collision → warning) | §e.2; mechanical fix for a memory-only guard |
-| 11 | Rendered-fan-out parity check derivation (mechanize §b.2) | §e.1 |
-| 12 | Registry tile ordering support (explicit group position) | Only if owner cares about order (§g.2 answer) |
-| 13 | DataForSEO quota/usage monitoring (app ships `scripts/dataforseo-account-usage.ts`; textfile-collector or gatus check for balance) | Prevents silent rank-tracking death on exhausted credits |
-| 14 | GSC token-rotation hazard doc — stored GSC tokens are encrypted keyed by better_auth_secret; rotating that secret orphanizes every connected site | belongs in docs/agents/secrets.md + openseo.md |
-| 15 | OpenSEO upstream watch row (v0.1.1 → next; pnpm-hash churn class on every bump) | upstream.md |
-| 16 | SigNoz rule: openseo unit restart loop (gatus covers down; restart-thrash is a different signal) | monitoring.md |
-| 17 | io-tier re-check for openseo after enable (GSC sync adds writes; audit already lists the unit) | storage.md |
-| 18 | §16 monogram-tile severity decision (§g.1 of the 07:40 report — still open, owner-gated) | decision |
-| 19 | Paperless blind-row → registry move (their own gated workstream) | services.md |
-| 20 | Native-OIDC expansion for OpenSEO (2026-06-29 planning doc names it; Layer 1 someday) | ROADMAP material |
-| 21 | Fleet-wide unharvested-reports sweep (128 WARN) | docs-health session |
-| 22 | OpenSEO mainProgram/meta polish (won't-implement precedent exists for niche meta — only if something consumes it) | probably never |
-| 23 | gatus RESP_TIME 2000ms on vite preview cold boot — first-boot false-alert risk; consider startUp grace or looser first-window | micro |
-| 24 | VM-test leg proving the `options ? services.integration` guard on fixture-only hosts | test hygiene |
-| 25 | Better AUTH story audit: enumerate all services with external-only auth (local_noauth class) and their auth-layer docs freshness | audit |
+| #  | Idea                                                                                                                                              | Note                                                     |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 10 | Eval-time duplicate-tile-ownership lint (built-in tile vs registry homepage collision → warning)                                                  | §e.2; mechanical fix for a memory-only guard             |
+| 11 | Rendered-fan-out parity check derivation (mechanize §b.2)                                                                                         | §e.1                                                     |
+| 12 | Registry tile ordering support (explicit group position)                                                                                          | Only if owner cares about order (§g.2 answer)            |
+| 13 | DataForSEO quota/usage monitoring (app ships `scripts/dataforseo-account-usage.ts`; textfile-collector or gatus check for balance)                | Prevents silent rank-tracking death on exhausted credits |
+| 14 | GSC token-rotation hazard doc — stored GSC tokens are encrypted keyed by better_auth_secret; rotating that secret orphanizes every connected site | belongs in docs/agents/secrets.md + openseo.md           |
+| 15 | OpenSEO upstream watch row (v0.1.1 → next; pnpm-hash churn class on every bump)                                                                   | upstream.md                                              |
+| 16 | SigNoz rule: openseo unit restart loop (gatus covers down; restart-thrash is a different signal)                                                  | monitoring.md                                            |
+| 17 | io-tier re-check for openseo after enable (GSC sync adds writes; audit already lists the unit)                                                    | storage.md                                               |
+| 18 | §16 monogram-tile severity decision (§g.1 of the 07:40 report — still open, owner-gated)                                                          | decision                                                 |
+| 19 | Paperless blind-row → registry move (their own gated workstream)                                                                                  | services.md                                              |
+| 20 | Native-OIDC expansion for OpenSEO (2026-06-29 planning doc names it; Layer 1 someday)                                                             | ROADMAP material                                         |
+| 21 | Fleet-wide unharvested-reports sweep (128 WARN)                                                                                                   | docs-health session                                      |
+| 22 | OpenSEO mainProgram/meta polish (won't-implement precedent exists for niche meta — only if something consumes it)                                 | probably never                                           |
+| 23 | gatus RESP_TIME 2000ms on vite preview cold boot — first-boot false-alert risk; consider startUp grace or looser first-window                     | micro                                                    |
+| 24 | VM-test leg proving the `options ? services.integration` guard on fixture-only hosts                                                              | test hygiene                                             |
+| 25 | Better AUTH story audit: enumerate all services with external-only auth (local_noauth class) and their auth-layer docs freshness                  | audit                                                    |
 
 **Explicitly NOT queued (deliberately):** ROADMAP-grade native-OIDC and ordering machinery (vague/long-term per TODO system rules); the meta/polish nits (won't-implement precedent); anything the owner's §g answers below decide.
 
@@ -107,4 +107,5 @@
 3. **If Google refuses the `home.lan` redirect URI even in Testing mode:** fall back to a real subdomain under `artmann.tech` (DNS + Caddy vHost + OAuth client + ALLOWED_HOST change — I can prep all of it), or abandon GSC integration? (DataForSEO keyword data would still work either way; GSC adds Search-Console-native perf data.)
 
 ---
-*Verification evidence: evo-x2 toplevel drv `9jp62fdhr355hvffp3cin2d52f2z0r5w…` green 19:0x; negative-test-lints 5/5 PASS (case log `~/.cache/negative-test-lints/cases.log`); statix per-file errfmt clean ×7; `nix fmt --` 0 changed ×12; check-todo-system OK; check_local smoke of the RUNNING service pre-registered (3002/html 200, post-deploy-check.sh:448 unchanged and still valid).*
+
+_Verification evidence: evo-x2 toplevel drv `9jp62fdhr355hvffp3cin2d52f2z0r5w…` green 19:0x; negative-test-lints 5/5 PASS (case log `~/.cache/negative-test-lints/cases.log`); statix per-file errfmt clean ×7; `nix fmt --` 0 changed ×12; check-todo-system OK; check_local smoke of the RUNNING service pre-registered (3002/html 200, post-deploy-check.sh:448 unchanged and still valid)._

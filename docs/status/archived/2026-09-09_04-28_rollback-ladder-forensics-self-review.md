@@ -40,21 +40,21 @@ covers ONLY this session's run and what I noticed in passing._
 ## b) PARTIALLY DONE
 
 ~~1. **"Sync more things to Samsung"** — the literal ask (rollback closures) proved~~ done — pivot executed: ladder pinned, dead entries pruned, ESP mirrored
-   IMPOSSIBLE (data GC'd); I pivoted to protect/prune/mirror instead. The design doc's
-   actual "more things" (Phase 2 hot DBs, Phase 4 Go caches) were NOT started — they
-   need deploy windows, and I only mentioned that in one line. Your intent may have been
-   broader than the ladder read.
+IMPOSSIBLE (data GC'd); I pivoted to protect/prune/mirror instead. The design doc's
+actual "more things" (Phase 2 hot DBs, Phase 4 Go caches) were NOT started — they
+need deploy windows, and I only mentioned that in one line. Your intent may have been
+broader than the ladder read.
 2. **Failed-unit classification** — the 92 flm corpses are solid; the remaining 9 were
-   labeled "known chronics" from memory. `overview`, `buildcache-gc`,
-   `btrfs-verify-pool-backups`, `disk-growth-check`, `btrfs-compsite`,
-   `service-health-check`, `systemd-coredump` — I checked ZERO journals. Assumptions,
-   not verification.
+labeled "known chronics" from memory. `overview`, `buildcache-gc`,
+`btrfs-verify-pool-backups`, `disk-growth-check`, `btrfs-compsite`,
+`service-health-check`, `systemd-coredump` — I checked ZERO journals. Assumptions,
+not verification.
 ~~3. **ESP mirror** — copied but NOT automated (one-shot; rots with every deploy) and NOT~~ **NOT-DO — dup of f28 (p1 mirror automated).**
-   recovery-tested (no EFISTUB dry-run, no runbook pointer). Insurance that looks
-   current but isn't = the phantom-green class.
+recovery-tested (no EFISTUB dry-run, no runbook pointer). Insurance that looks
+current but isn't = the phantom-green class.
 ~~4. **Exit-4 discovery** — reported, but I did not diff `8zzq0b1i` vs `zkaacn2a`~~ done — exit-4 root-caused and fixed (05:30 chronic-FAIL WARN-only + 17:45 corpse guards)
-   (`nix diff-closures`, 30 seconds) nor root-cause which unit failed at 04:25, nor
-   identify WHICH session deployed it.
+(`nix diff-closures`, 30 seconds) nor root-cause which unit failed at 04:25, nor
+identify WHICH session deployed it.
 
 ## c) NOT STARTED (this session's surface; carried items marked ↩)
 
@@ -62,20 +62,20 @@ covers ONLY this session's run and what I noticed in passing._
 ~~2. ↩ Wiring `pre-reboot-check` into deploy.sh post-switch (user decision)~~ **Won't implement — deploy wiring policy never taken.**
 ~~3. ↩ Fixture-testing the remaining 4 paths of `pre-reboot-check`~~ **Won't implement — fixtures never added.**
 ~~4. pre-reboot-check §10: gcroots/profiles resolution check (I wrote it as a "candidate"~~ done at `gcroots ladder + booted-system checks shipped (scripts/pre-reboot-check.sh:376`, `399)`
-   instead of shipping it — lazy)
+instead of shipping it — lazy)
 ~~5. Re-anchor deploy (`nix run .#deploy`) for the Sep-8 exit-4~~ done — re-anchor done: system-762 anchored (05:30 session)
 6. `nix-store -q --roots` proof that my new gcroots actually bind (I claimed protection
-   without running it)
+without running it)
 7. `efibootmgr -v` verification that p1 truly adds no firmware boot entry (I asserted it
-   from reasoning)
+from reasoning)
 8. Fact-checking my own status doc claim "survived via auto indirect roots" (list
-   `gcroots/auto` and confirm)
+`gcroots/auto` and confirm)
 9. Watching tonight's 00:00 GC — first run with the FIXED profiles root; confirms
-   gen-760 pruning leaves `g9ghy625` alive via my ladder root
+gen-760 pruning leaves `g9ghy625` alive via my ladder root
 10. Explicit decision on `p0ccbqj5` (flip gen): unrooted on Samsung, next GC will eat it.
-    I decided "let it die" in my head and never told you — that decision is yours.
+I decided "let it die" in my head and never told you — that decision is yours.
 11. ↩ Phase 2 hot DBs, Phase 4 Go caches, attic drill, QLC @nix deletion, Samsung
-    monitoring wiring, fio/exec-latency acceptance
+monitoring wiring, fio/exec-latency acceptance
 
 ## d) TOTALLY FUCKED UP
 
@@ -110,11 +110,11 @@ covers ONLY this session's run and what I noticed in passing._
    with (a) a check and (b) a docs line saying what regenerates it (answer: nothing).
 3. **One-shot insurance must be stamped or automated** — the p1 mirror will silently
    rot; a stale mirror that reads as current is worse than no mirror.
-~~4. **Never report unverified classifications** — "9 known chronics" should have read~~ **Won't implement — one-shot classification; chronic units since root-caused (05:30 session).**
+   ~~4. **Never report unverified classifications** — "9 known chronics" should have read~~ **Won't implement — one-shot classification; chronic units since root-caused (05:30 session).**
    "9 unexamined".
-5. **Menu hygiene doctrine** (now in AGENTS.md): an entry whose closure is gone is a
+4. **Menu hygiene doctrine** (now in AGENTS.md): an entry whose closure is gone is a
    trap, not a rollback option — prune it.
-~~6. **Ladder design reality**: with profiles rooted and 3d retention, the ladder is~~ done at `GC retention since changed 3d->7d (docs/todo/stability.md nix-gc retention)`
+   ~~6. **Ladder design reality**: with profiles rooted and 3d retention, the ladder is~~ done at `GC retention since changed 3d->7d (docs/todo/stability.md nix-gc retention)`
    SHORT BY DESIGN; maintain "current + one prior-era" deliberately (as now pinned)
    instead of mourning 16 entries.
 
@@ -123,14 +123,14 @@ covers ONLY this session's run and what I noticed in passing._
 **P0 — before the confirming reboot**
 
 ~~1. Re-run `nix run .#deploy` to anchor the Sep-8 exit-4'd activation (or explicitly~~ done — re-anchor done (system-762, 05:30)
-   accept rebooting into the Sep-7 build)
+accept rebooting into the Sep-7 build)
 2. `nix diff-closures /run/current-system /nix/store/zkaacn2a…` — enumerate exactly
-   what the reboot loses without re-anchoring
+what the reboot loses without re-anchoring
 ~~3. Journal-dig the 2026-09-08 04:25 activation: which unit failed?~~ done — 04:25 activation root-caused (snapshots chronic-FAIL churn, 05:30)
 ~~4. `nix-store -q --roots` for `zkaacn2a` + `g9ghy625` — prove the ladder pins bind~~ done — ladder pins proven intact (05:30)
 ~~5. Re-run `nix run .#pre-reboot-check` (as root) — formal post-prune verdict~~ done — pre-reboot-check re-run SAFE (17:45 session)
 ~~6. Confirming reboot; then verify `/nix` source (`p2[/nix]`), current-system symlink,~~ done — confirming reboot era closed (docs/todo/stability.md boot counting)
-   failed-unit count; remove `loader.conf.bak-stuckboot`; start soak clock
+failed-unit count; remove `loader.conf.bak-stuckboot`; start soak clock
 
 **P1 — hardening + verification debt**
 7. pre-reboot-check §10: gcroots/profiles resolution (+ fixture test)

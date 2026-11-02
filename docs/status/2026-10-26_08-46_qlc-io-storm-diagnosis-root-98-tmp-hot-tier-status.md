@@ -49,6 +49,7 @@
 ## f) NEXT — up to 50, honest count 32 (impact-sorted; [Q]=already queued, [NEW]=harvested this session, [OG]=owner-gated)
 
 **Today:**
+
 1. [Q] Verify tonight's 23:00 btrbk expiry actually frees the pinned 68G (row 185 re-verify)
 2. [OG] E1 re-run per runbook once pins expire: reserve-rm → quiet window → ioniced bounded balance → re-provision reserve (row 183, now with -28 evidence)
 3. [OG] Decide wevisone-spike (14G bare .venv) — trash recommended, regenerable
@@ -58,7 +59,7 @@
 7. [NEW] `io-psi-crosscheck.sh` delta mode (§e.2)
 8. [NEW] Fix the truncated citation in hot-user-caches.nix comment
 9. [OG] tmp migration execution: prepare → deploy → finalize (row 182; deploy will meet the 98% disk-space gate — expect friction, 20-30 #16)
-**This week:**
+   **This week:**
 10. [OG] Source-remove the four Go-cache redirect sites (cv + go-cqrs-lite repos) per owner directive — then trash `projects/{.gocache-disk 35G,.golangci-disk 15G,.gotmp 9.2G}` after quiescence
 11. [Q] E2 scrub both fs (stale >10d)
 12. [OG] E3 `sudo du /home/hermes` — the last unknown in the ledger
@@ -75,7 +76,7 @@
 23. [Q] ClickHouse p9 churn siting decision (197G lifetime writes on the root disk; 20-30 #33)
 24. [NEW] `~/.cache` 80G regrowth watch (+10G/day since cleanup — uv 21G bulk; threshold row when >90G)
 25. [Q] Root pin-window 3d → 2d evaluation after this incident (pin window cost ~68G of delayed frees)
-**Systemic / backlog:**
+    **Systemic / backlog:**
 26. [NEW] Codify "no un-throttled walks during active storms" (this session's §d.3) into storage.md §f16 rule wording
 27. [Q] tmux/ghostty phantom-PSI recheck (2026-10-14 class) next calm window
 28. [Q] Balance jobs Guard-0 PSI skip band vs `-musage=80` manual gap (weekly jobs self-skip; manual runs bypass — maybe a wrapper?)

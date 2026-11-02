@@ -10,25 +10,25 @@
 
 GeoMetrikks v0.19.0 is multi-source by design (README "Multi-source setup"):
 
-1. **Shipped files** — one full instance tails files from other machines; `LOGPARSER_HOST_NAME` is a JSON list positional to `LOGPARSER_LOG_PATHS`, so each file is labeled as its own source ("access-logs hostname filter, the map's Source filter, per-site homes treat those files like traffic from separate agents"). README: *"If the log files already reach one machine (a shared mount, rsyslog, log shipping), a single full instance can tail them all."*
+1. **Shipped files** — one full instance tails files from other machines; `LOGPARSER_HOST_NAME` is a JSON list positional to `LOGPARSER_LOG_PATHS`, so each file is labeled as its own source ("access-logs hostname filter, the map's Source filter, per-site homes treat those files like traffic from separate agents"). README: _"If the log files already reach one machine (a shared mount, rsyslog, log shipping), a single full instance can tail them all."_
 2. **`APP_MODE=agent`** — a headless second instance on the PBX ingesting locally and writing straight into the SHARED TimescaleDB. Upstream's own WARNING: agent = ordinary DB credentials with full read/write, no tenant isolation — "run agent connections over a VPN or tailnet".
 
 **Recommendation: shape 1 (shipped files, PULL-based).** Shape 2 puts a Python app + GeoLite2 state + DB credentials on the 8 GB PBX and demands agent↔head version lockstep across two repos; shape 1 puts ONE file on a timer and reuses the existing instance. The README's trust warning disappears entirely when nothing on the PBX talks to the DB.
 
 ## 2. Verified facts the design rests on
 
-| Fact | Where verified |
-| --- | --- |
-| Formats supported per file: `auto`, `geometrikks-json`, `nginx`, `traefik-json`, `caddy-json`; `LOGPARSER_LOG_FORMATS` single-or-positional list | `config/settings.py` `log_formats` field, pinned package |
-| `LOGPARSER_HOST_NAME` single-or-positional list; default = machine hostname | same, `host_name` field |
+| Fact                                                                                                                                                                                                                                            | Where verified                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Formats supported per file: `auto`, `geometrikks-json`, `nginx`, `traefik-json`, `caddy-json`; `LOGPARSER_LOG_FORMATS` single-or-positional list                                                                                                | `config/settings.py` `log_formats` field, pinned package                    |
+| `LOGPARSER_HOST_NAME` single-or-positional list; default = machine hostname                                                                                                                                                                     | same, `host_name` field                                                     |
 | nginx recommended `log_format` = keyed JSON (`geometrikks_json`, `escape=json`); only `client_ip`+`timestamp` required; `host` feeds the host filter; timings feed latency analytics; stock `combined` lines ALSO parse but lose host + timings | README v0.19.0 "Nginx setup" + "Backfilling logs written in another format" |
-| Tailer rotation detection: inode change OR ≥99% size shrink ⇒ reopen, read new file from start; missing file ⇒ keep polling, reopen on reappear | `services/logparser/logparser.py` `_is_rotated_async` |
-| `MAP_HOME_LOCATIONS={"<host>": [lat, lon]}` pins a source's map home; README explicitly lists "logs shipped from another machine" as the pin case | README "Site homes" |
-| import-logs double-count warning applies to RE-importing tailed content; live rotation re-read is the new file only | README IMPORTANT box + tailer code |
-| PBX nginx: sibling module enables `services.nginx` (web.nix:345) with default `access.log` (combined) untouched; ONE vhost overrides to the scanner log (fail2ban jail) | pinned `telephony` source `31af29ae`, web.nix:388 |
-| Pull transport exists: evo-x2 → `root@pbx.artmann.tech` ssh (PBX's only authorized key = `lars@evo-x2`), rsync pull, PBX holds zero credentials | `pbx-artmann/backups/evo-x2/README.md` |
-| Both hosts are NetBird peers (PBX peer since 2026-10-14) | pbx AGENTS.md + SystemNix docs |
-| Module today sets ONLY `LOGPARSER_LOG_PATHS` (derived from local Caddy vhosts); no FORMATS/HOST_NAME envs, no extraLogFiles option | `modules/nixos/services/geometrikks.nix:485` |
+| Tailer rotation detection: inode change OR ≥99% size shrink ⇒ reopen, read new file from start; missing file ⇒ keep polling, reopen on reappear                                                                                                 | `services/logparser/logparser.py` `_is_rotated_async`                       |
+| `MAP_HOME_LOCATIONS={"<host>": [lat, lon]}` pins a source's map home; README explicitly lists "logs shipped from another machine" as the pin case                                                                                               | README "Site homes"                                                         |
+| import-logs double-count warning applies to RE-importing tailed content; live rotation re-read is the new file only                                                                                                                             | README IMPORTANT box + tailer code                                          |
+| PBX nginx: sibling module enables `services.nginx` (web.nix:345) with default `access.log` (combined) untouched; ONE vhost overrides to the scanner log (fail2ban jail)                                                                         | pinned `telephony` source `31af29ae`, web.nix:388                           |
+| Pull transport exists: evo-x2 → `root@pbx.artmann.tech` ssh (PBX's only authorized key = `lars@evo-x2`), rsync pull, PBX holds zero credentials                                                                                                 | `pbx-artmann/backups/evo-x2/README.md`                                      |
+| Both hosts are NetBird peers (PBX peer since 2026-10-14)                                                                                                                                                                                        | pbx AGENTS.md + SystemNix docs                                              |
+| Module today sets ONLY `LOGPARSER_LOG_PATHS` (derived from local Caddy vhosts); no FORMATS/HOST_NAME envs, no extraLogFiles option                                                                                                              | `modules/nixos/services/geometrikks.nix:485`                                |
 
 ## 3. Design
 
@@ -66,13 +66,13 @@ Effort: ~1–2 h across both repos + one deploy each.
 
 ## Verification status
 
-| Claim | Status | Source |
-| --- | --- | --- |
-| Multi-source shipped-files + HOST_NAME/FORMATS positional lists; agent mode + trust warning | ✅ Verified | README v0.19.0 (fetched raw 2026-10-16) + `config/settings.py` in pinned store package |
-| nginx JSON log_format field list + combined-format parse limits | ✅ Verified | README "Nginx setup"; parser `formats/nginx.py` + `constants.py` (pinned package) |
-| Tailer rotation semantics (inode / ≥99% shrink / missing-file poll) | ✅ Verified | `services/logparser/logparser.py:434-473,689-693` (pinned package) |
-| `MAP_HOME_LOCATIONS` per-source pin incl. shipped-logs case | ✅ Verified | README "Site homes" |
-| PBX nginx default access.log + scanner-log override; vhost extraConfig reachable from host repo | ✅ Verified | pinned telephony source web.nix:345,388; pbx hosts/pbx gates.nix precedent (mkForce/extraConfig overrides in-tree) |
-| ssh pull path + zero-PBX-credentials doctrine | ✅ Verified | pbx backups/evo-x2/README.md |
-| Helsinki coords for hel1 | ⚠️ Approximate | hel1 = Helsinki (well-known); [60.17, 24.94] city-center coords — beacon precision is cosmetic; owner can refine |
-| NetBird peer reachability pbx↔evo-x2 for ssh (vs public IP) | ❌ Unverified lead | both are peers, but the backup pull's actual target (netbird IP vs public DNS) must be read from the installed kit at implementation time |
+| Claim                                                                                           | Status             | Source                                                                                                                                    |
+| ----------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Multi-source shipped-files + HOST_NAME/FORMATS positional lists; agent mode + trust warning     | ✅ Verified        | README v0.19.0 (fetched raw 2026-10-16) + `config/settings.py` in pinned store package                                                    |
+| nginx JSON log_format field list + combined-format parse limits                                 | ✅ Verified        | README "Nginx setup"; parser `formats/nginx.py` + `constants.py` (pinned package)                                                         |
+| Tailer rotation semantics (inode / ≥99% shrink / missing-file poll)                             | ✅ Verified        | `services/logparser/logparser.py:434-473,689-693` (pinned package)                                                                        |
+| `MAP_HOME_LOCATIONS` per-source pin incl. shipped-logs case                                     | ✅ Verified        | README "Site homes"                                                                                                                       |
+| PBX nginx default access.log + scanner-log override; vhost extraConfig reachable from host repo | ✅ Verified        | pinned telephony source web.nix:345,388; pbx hosts/pbx gates.nix precedent (mkForce/extraConfig overrides in-tree)                        |
+| ssh pull path + zero-PBX-credentials doctrine                                                   | ✅ Verified        | pbx backups/evo-x2/README.md                                                                                                              |
+| Helsinki coords for hel1                                                                        | ⚠️ Approximate      | hel1 = Helsinki (well-known); [60.17, 24.94] city-center coords — beacon precision is cosmetic; owner can refine                          |
+| NetBird peer reachability pbx↔evo-x2 for ssh (vs public IP)                                     | ❌ Unverified lead | both are peers, but the backup pull's actual target (netbird IP vs public DNS) must be read from the installed kit at implementation time |

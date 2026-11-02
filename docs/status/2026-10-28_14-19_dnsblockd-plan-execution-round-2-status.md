@@ -14,23 +14,23 @@ Nothing in this session needed root, and nothing was skipped because it was hard
 
 ## Verification actually performed this session
 
-| # | Command / probe | Result |
-| --- | --- | --- |
-| V1 | `nix build .#checks.x86_64-linux.dns-blocker-render` | green — banner: `… ECS, h3, pprof, rpi3 parity OK` (7 variants, was 6) |
-| V2 | `nix flake check --no-build` | **exit 0**, "all checks passed!" (expected aarch64-darwin omission only) |
-| V3 | `nix eval` — scheme-less `proxyInjectScriptURL` variant | the new assertion FIRES (exactly 1 failed assertion, message matched) |
-| V4 | `nix eval` — well-formed `proxyInjectScriptURL` variant | **zero** failed assertions (false-positive guard) |
-| V5 | `nix eval .#…evo-x2.config.assertions` (host) | **zero** failed assertions |
-| V6 | `nix eval --raw …dnsblockd.serviceConfig.ExecStart` | `/nix/store/kxgximh…-dnsblockd-config.yaml` — **byte-identical to pre-session** |
-| V7 | `comm -23` of rendered keys vs upstream koanf tags @ `f9bb6477` | **0 phantom keys** out of 57 rendered |
-| V8 | `bash scripts/check-todo-system.sh` | `OK: TODO queue/library structure clean` (145 unharvested WARN = pre-existing) |
-| V9 | `bash scripts/audit-shell-nullglob.sh` / `audit-textfile-tmp.sh` | `fail=0` both |
-| V10 | Relative-link check across 6 edited docs | **0 broken links** |
-| V11 | Live ALPN probe `openssl s_client -alpn h2` on `192.168.1.200:443` | `ALPN protocol: h2` — negotiates; page identical to h1.1 |
-| V12 | Live Go client, h2 vs h1.1 block page | both `200`, both 92,567 bytes, same title/markers |
-| V13 | Live per-SNI cert inspection | `O=dnsblockd, CN=doubleclick.net`, issuer `dnsblockd-CA`, 365d, cached (stable serial) |
-| V14 | Live listener map (`ss -ltnp`) | `192.168.1.150:80/443` (caddy) + `192.168.1.200:80/443` (dnsblockd), nothing on loopback |
-| V15 | `scripts/prune-done-todos.sh` dry run | 131 `[x]` rows / 11 files, WARN A DRIFT=49, baseline `b33a73fd` — **not applied** |
+| #   | Command / probe                                                    | Result                                                                                   |
+| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| V1  | `nix build .#checks.x86_64-linux.dns-blocker-render`               | green — banner: `… ECS, h3, pprof, rpi3 parity OK` (7 variants, was 6)                   |
+| V2  | `nix flake check --no-build`                                       | **exit 0**, "all checks passed!" (expected aarch64-darwin omission only)                 |
+| V3  | `nix eval` — scheme-less `proxyInjectScriptURL` variant            | the new assertion FIRES (exactly 1 failed assertion, message matched)                    |
+| V4  | `nix eval` — well-formed `proxyInjectScriptURL` variant            | **zero** failed assertions (false-positive guard)                                        |
+| V5  | `nix eval .#…evo-x2.config.assertions` (host)                      | **zero** failed assertions                                                               |
+| V6  | `nix eval --raw …dnsblockd.serviceConfig.ExecStart`                | `/nix/store/kxgximh…-dnsblockd-config.yaml` — **byte-identical to pre-session**          |
+| V7  | `comm -23` of rendered keys vs upstream koanf tags @ `f9bb6477`    | **0 phantom keys** out of 57 rendered                                                    |
+| V8  | `bash scripts/check-todo-system.sh`                                | `OK: TODO queue/library structure clean` (145 unharvested WARN = pre-existing)           |
+| V9  | `bash scripts/audit-shell-nullglob.sh` / `audit-textfile-tmp.sh`   | `fail=0` both                                                                            |
+| V10 | Relative-link check across 6 edited docs                           | **0 broken links**                                                                       |
+| V11 | Live ALPN probe `openssl s_client -alpn h2` on `192.168.1.200:443` | `ALPN protocol: h2` — negotiates; page identical to h1.1                                 |
+| V12 | Live Go client, h2 vs h1.1 block page                              | both `200`, both 92,567 bytes, same title/markers                                        |
+| V13 | Live per-SNI cert inspection                                       | `O=dnsblockd, CN=doubleclick.net`, issuer `dnsblockd-CA`, 365d, cached (stable serial)   |
+| V14 | Live listener map (`ss -ltnp`)                                     | `192.168.1.150:80/443` (caddy) + `192.168.1.200:80/443` (dnsblockd), nothing on loopback |
+| V15 | `scripts/prune-done-todos.sh` dry run                              | 131 `[x]` rows / 11 files, WARN A DRIFT=49, baseline `b33a73fd` — **not applied**        |
 
 ---
 
@@ -38,8 +38,8 @@ Nothing in this session needed root, and nothing was skipped because it was hard
 
 1. **T03 — the falsified and stale rows are settled.** Five adoption-wave rows that had been live since 2026-09-30 were
    re-verified against the deployed config and closed; the "second-wave capabilities" row was retagged from `[watch]` to
-   `[decision]` because policies, trial blocklists, ECS and h3 are all *implemented, rendered, assertion-guarded and
-   deployed* — what remains is three owner calls, not code. The OTel-spam row moved from `[ready]` to `[blocked:deploy]`
+   `[decision]` because policies, trial blocklists, ECS and h3 are all _implemented, rendered, assertion-guarded and
+   deployed_ — what remains is three owner calls, not code. The OTel-spam row moved from `[ready]` to `[blocked:deploy]`
    because its remainder genuinely needs the collector back.
 
 2. **T19 — four runbook pointers.** The `/etc/hosts` shadowing sentence (with the 2026-10-14 catalog-sync deaths that
@@ -107,24 +107,24 @@ Nothing in this session needed root, and nothing was skipped because it was hard
 
 3. **T06 — enabled-option coverage is complete, enabled-value coverage is not.** Every upstream knob we chose to expose is
    mapped and verified, and the ones we deliberately left alone are recorded with reasons. What no eval can prove is that
-   the *values* we ship are right for this household — that is the owner's dashboard walk.
+   the _values_ we ship are right for this household — that is the owner's dashboard walk.
 
 ---
 
 ## c) NOT STARTED — and exactly what unblocks each
 
-| Task | Gate | What it needs |
-| --- | --- | --- |
-| T04 allowlist backup | owner (Q3) | where the copy lands; whether `tracking.db` rides along (it ships per-device domain history offsite) |
-| T08 `Type=notify` | deploy | AF_UNIX + notify in one commit; a wrong split leaves the resolver "activating" forever |
-| T09/T10 migration spike + execution | owner (Q1) + root | adopt the unprivileged user: `chown -R` 4.6 G journal + 2.55 G tracking while the sole resolver is stopped |
-| T11 VM test adoption | deploy/resources | aarch64-dns config cannot be realised here; needs a builder |
-| T16 doctrine | owner | subvolume copy vs full btrbk entry for the allowlist |
-| T17 gateway/firewall | owner | per-domain opt-in + external DoH/DoT blocking with an off switch and a drill |
-| T18 wildcard decision | owner | the live wildcard evidence is assembled; the call is theirs |
-| T25a-c upstream issues | push | verify the race at HEAD, then file three issues (now four) |
-| T26 post-deploy battery | deploy | §22/§23/observer legs are the proof set |
-| T27c prune apply | CHANGELOG ownership | exclusive access to `CHANGELOG.md` + a quiet window |
+| Task                                | Gate                | What it needs                                                                                              |
+| ----------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| T04 allowlist backup                | owner (Q3)          | where the copy lands; whether `tracking.db` rides along (it ships per-device domain history offsite)       |
+| T08 `Type=notify`                   | deploy              | AF_UNIX + notify in one commit; a wrong split leaves the resolver "activating" forever                     |
+| T09/T10 migration spike + execution | owner (Q1) + root   | adopt the unprivileged user: `chown -R` 4.6 G journal + 2.55 G tracking while the sole resolver is stopped |
+| T11 VM test adoption                | deploy/resources    | aarch64-dns config cannot be realised here; needs a builder                                                |
+| T16 doctrine                        | owner               | subvolume copy vs full btrbk entry for the allowlist                                                       |
+| T17 gateway/firewall                | owner               | per-domain opt-in + external DoH/DoT blocking with an off switch and a drill                               |
+| T18 wildcard decision               | owner               | the live wildcard evidence is assembled; the call is theirs                                                |
+| T25a-c upstream issues              | push                | verify the race at HEAD, then file three issues (now four)                                                 |
+| T26 post-deploy battery             | deploy              | §22/§23/observer legs are the proof set                                                                    |
+| T27c prune apply                    | CHANGELOG ownership | exclusive access to `CHANGELOG.md` + a quiet window                                                        |
 
 ---
 
@@ -172,6 +172,7 @@ re-committing by theme — work that would have been avoided by committing each 
 ## f) NEXT — 34 things, ordered by what unblocks the most
 
 **Rank 1 — needs only a root path (7)**
+
 1. `nix run .#deploy` — activates T01's gate fix, §22, §23, the observer, freshness, and the inject-URL assertion.
 2. `systemctl reset-failed signoz-collector.service` then start it — ends a ~18 h telemetry blackout.
 3. `nix run .#post-deploy-check` — the §22/§23/observer legs ARE the proof set for this wave.
@@ -240,24 +241,24 @@ migration should be forced now, in one session, with the DNS derivation in the s
 
 ## Harvest record (§f self-harvest, at authoring time)
 
-| §f item | Where it lives now |
-| --- | --- |
-| #8 pprof decision | `docs/todo/services.md` — new `[decision]` row (**this session**) |
-| #9/#10/#11/#12 owner calls | already rows (`Q1` migration, `Q3` backup, second-wave adoption, tracking dial) |
-| #13 collector-outage narrative | `docs/todo/monitoring.md` — new row (**this session**) |
-| #15/#16 listener + fixture sweeps | already rows in `docs/todo/services.md` |
-| #17 `kill -0` / PID-reuse sweep | `docs/todo/pipeline.md` + queue mirror (**this session**) |
-| #18 apex wildcard guard | already queued (`docs/todo/services.md`) |
-| #19/#20 observer selftest + hardening | already rows in `docs/todo/services.md` |
-| #21 deploy proof checklist | already row in `docs/todo/services.md` |
-| #23 CA duplicate | already row in `docs/todo/services.md` |
-| #25 upstream issues | `docs/todo/upstream.md` — the inject-URL issue added (**this session**), 3 siblings already rows |
-| #26 `-race` re-run | inside the upstream race row's "VERIFY first" clause |
-| #28 catalog half two | the single canonical catalog row (deduped **this session**) |
-| #29 prune apply | the prune row, now carrying the verified dry-run state (**this session**) |
-| #30 unharvested reports | the harvest row, **recounted 88 → 145 this session** |
-| #33 `/tmp` → `~/.cache` sweep | `docs/todo/pipeline.md` + queue mirror (**this session**) |
-| #2/#3/#4/#5/#14/#22/#24/#27/#31/#32/#34 | covered by the rows named above or by the plan's remaining tasks; nothing left unrouted |
+| §f item                                 | Where it lives now                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| #8 pprof decision                       | `docs/todo/services.md` — new `[decision]` row (**this session**)                                |
+| #9/#10/#11/#12 owner calls              | already rows (`Q1` migration, `Q3` backup, second-wave adoption, tracking dial)                  |
+| #13 collector-outage narrative          | `docs/todo/monitoring.md` — new row (**this session**)                                           |
+| #15/#16 listener + fixture sweeps       | already rows in `docs/todo/services.md`                                                          |
+| #17 `kill -0` / PID-reuse sweep         | `docs/todo/pipeline.md` + queue mirror (**this session**)                                        |
+| #18 apex wildcard guard                 | already queued (`docs/todo/services.md`)                                                         |
+| #19/#20 observer selftest + hardening   | already rows in `docs/todo/services.md`                                                          |
+| #21 deploy proof checklist              | already row in `docs/todo/services.md`                                                           |
+| #23 CA duplicate                        | already row in `docs/todo/services.md`                                                           |
+| #25 upstream issues                     | `docs/todo/upstream.md` — the inject-URL issue added (**this session**), 3 siblings already rows |
+| #26 `-race` re-run                      | inside the upstream race row's "VERIFY first" clause                                             |
+| #28 catalog half two                    | the single canonical catalog row (deduped **this session**)                                      |
+| #29 prune apply                         | the prune row, now carrying the verified dry-run state (**this session**)                        |
+| #30 unharvested reports                 | the harvest row, **recounted 88 → 145 this session**                                             |
+| #33 `/tmp` → `~/.cache` sweep           | `docs/todo/pipeline.md` + queue mirror (**this session**)                                        |
+| #2/#3/#4/#5/#14/#22/#24/#27/#31/#32/#34 | covered by the rows named above or by the plan's remaining tasks; nothing left unrouted          |
 
 Deliberately NOT harvested: the root-gated items (#1-#7). They are a single deploy, and the plan already carries
 `T26` for the verification half; duplicating them into the queue would create a fifth surface for one action.

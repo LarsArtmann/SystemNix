@@ -65,19 +65,19 @@ Loaded the docs-health skill + 3 references, inventoried all **154 unarchived `2
 ## f) NEXT — up to 50 (from THIS session's observations only)
 
 1. Fix the 9 partial strikethroughs (extend `~~` over continuation lines; files+items listed in d.1).
-~~2. Fix the empty-marker strike in 28-04-51 (evidence or revert).~~ **Won't implement — empty-marker strike never fixed; corpus archived.**
-~~3. Correct the 03-58 item-5 marker ("in checks; CI executes lints only after the CI-executes-lints row lands").~~ done — 03-58 f5 marker corrected in place (now carries CI-vs-eval nuance)
-~~4. Add EXECUTED banners to the 7 archived planning docs (one line each).~~ **Won't implement — EXECUTED banners never added.**
-~~5. Read + verify FEATURES sections 4-6, 10 (rest), 11; fix the overclaiming TODO row wording ("targeted update" not "updated").~~ **Won't implement — FEATURES sections never fully verified; maintained by later waves.**
-~~6. Decide + record the DOMAIN_LANGUAGE stance.~~ **NOT-DO — dup of 39.**
-~~7. Second-pass annotation of the 08-20→08-24 brainstorm lists (the ~1,300 unmarked items) — evidence exists in the 08-31 verification sweep markers.~~ **Won't implement — second-pass superseded; corpus archived + living-docs-only process.**
-~~8. Annotate the 11 appendix-only archived reports (pre-existing row).~~ **NOT-DO — dup of 40.**
-~~9. AGENTS.md compression session (now ~263KB).~~ **NOT-DO — dup of 42.**
-~~10. `qmd` re-index after the mass markdown changes.~~ **NOT-DO — dup of 44.**
-~~11. Verify the daemon's commits of this session attribute the 69-file annotation sweep sanely (batched with the 21:33 sessions').~~ **Won't implement — one-shot attribution check; window passed.**
-~~12. Check the 21:33/21:35 concurrent reports' follow-ups for TODO overlap when they quiesce (crush sops migration, signoz trace coverage, forgejo ENOENT — the last likely supersedes my TODO's forgejo-filing row).~~ **Won't implement — overlap check done implicitly; forgejo report superseded the TODO row.**
-~~13. Confirm pre-commit passes on the daemon's commit (first real `nix flake check` over the combined tree).~~ **Won't implement — one-shot pre-commit confirm; window passed.**
-~~14. Link-checker rewrite (the d.4 bug) — resolve-path test with correct sed.~~ done at `scripts/check-doc-links.sh shipped`
+   ~~2. Fix the empty-marker strike in 28-04-51 (evidence or revert).~~ **Won't implement — empty-marker strike never fixed; corpus archived.**
+   ~~3. Correct the 03-58 item-5 marker ("in checks; CI executes lints only after the CI-executes-lints row lands").~~ done — 03-58 f5 marker corrected in place (now carries CI-vs-eval nuance)
+   ~~4. Add EXECUTED banners to the 7 archived planning docs (one line each).~~ **Won't implement — EXECUTED banners never added.**
+   ~~5. Read + verify FEATURES sections 4-6, 10 (rest), 11; fix the overclaiming TODO row wording ("targeted update" not "updated").~~ **Won't implement — FEATURES sections never fully verified; maintained by later waves.**
+   ~~6. Decide + record the DOMAIN_LANGUAGE stance.~~ **NOT-DO — dup of 39.**
+   ~~7. Second-pass annotation of the 08-20→08-24 brainstorm lists (the ~1,300 unmarked items) — evidence exists in the 08-31 verification sweep markers.~~ **Won't implement — second-pass superseded; corpus archived + living-docs-only process.**
+   ~~8. Annotate the 11 appendix-only archived reports (pre-existing row).~~ **NOT-DO — dup of 40.**
+   ~~9. AGENTS.md compression session (now ~263KB).~~ **NOT-DO — dup of 42.**
+   ~~10. `qmd` re-index after the mass markdown changes.~~ **NOT-DO — dup of 44.**
+   ~~11. Verify the daemon's commits of this session attribute the 69-file annotation sweep sanely (batched with the 21:33 sessions').~~ **Won't implement — one-shot attribution check; window passed.**
+   ~~12. Check the 21:33/21:35 concurrent reports' follow-ups for TODO overlap when they quiesce (crush sops migration, signoz trace coverage, forgejo ENOENT — the last likely supersedes my TODO's forgejo-filing row).~~ **Won't implement — overlap check done implicitly; forgejo report superseded the TODO row.**
+   ~~13. Confirm pre-commit passes on the daemon's commit (first real `nix flake check` over the combined tree).~~ **Won't implement — one-shot pre-commit confirm; window passed.**
+   ~~14. Link-checker rewrite (the d.4 bug) — resolve-path test with correct sed.~~ done at `scripts/check-doc-links.sh shipped`
 
 (14 real items — padding to 50 would invent work.)
 

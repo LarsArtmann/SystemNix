@@ -11,13 +11,13 @@ The hooks-everywhere release (v0.99.0) added lifecycle events, but as shipped th
 
 At v0.99.0:
 
-| Event | `context` honored? | Where the result goes |
-| --- | --- | --- |
-| `PreToolUse` / `PostToolUse` / `PostToolUseFailure` | yes | `internal/agent/hooked_tool.go` joins `pre.Context`/`post.Context` into the tool response |
-| `TurnStart` / `TurnEnd` / `Interrupt` / `StopFailure` | no | `fireTurnHook` (`internal/agent/turn_hooks.go`) calls `hooks.Run` and ignores the returned `AggregateResult` |
-| `SessionStart` / `SessionEnd` | no | `internal/app/hooks.go` discards the result |
-| `PreCompact` | only the deny decision | `Blocked()` is honored; `context` is ignored |
-| `PostCompact` | no | `internal/agent/agent.go` fires the event and ignores the result |
+| Event                                                 | `context` honored?     | Where the result goes                                                                                        |
+| ----------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `PreToolUse` / `PostToolUse` / `PostToolUseFailure`   | yes                    | `internal/agent/hooked_tool.go` joins `pre.Context`/`post.Context` into the tool response                    |
+| `TurnStart` / `TurnEnd` / `Interrupt` / `StopFailure` | no                     | `fireTurnHook` (`internal/agent/turn_hooks.go`) calls `hooks.Run` and ignores the returned `AggregateResult` |
+| `SessionStart` / `SessionEnd`                         | no                     | `internal/app/hooks.go` discards the result                                                                  |
+| `PreCompact`                                          | only the deny decision | `Blocked()` is honored; `context` is ignored                                                                 |
+| `PostCompact`                                         | no                     | `internal/agent/agent.go` fires the event and ignores the result                                             |
 
 (`updated_output` is correctly gated to `PostToolUse` in `hooked_tool.go` — that one reads intentional.)
 
@@ -36,13 +36,13 @@ hook add PostCompact --command "bash ./reorient.sh" --name reorient
 
 and have the hook's `{"context": "..."}` reach the model the same way a `PreToolUse` hook's context does.
 
-| | today (v0.99.0) | desired |
-| --- | --- | --- |
-| `context` on tool events | works | unchanged |
-| `context` on `SessionStart` | parsed, discarded | injected into the first turn |
-| `context` on `PostCompact` | parsed, discarded | injected after compaction |
-| `updated_output` on non-`PostToolUse` | parsed, dropped | still dropped (fine — document it) |
-| deny/`Blocked()` semantics | `PreCompact` only | unchanged |
+|                                       | today (v0.99.0)   | desired                            |
+| ------------------------------------- | ----------------- | ---------------------------------- |
+| `context` on tool events              | works             | unchanged                          |
+| `context` on `SessionStart`           | parsed, discarded | injected into the first turn       |
+| `context` on `PostCompact`            | parsed, discarded | injected after compaction          |
+| `updated_output` on non-`PostToolUse` | parsed, dropped   | still dropped (fine — document it) |
+| deny/`Blocked()` semantics            | `PreCompact` only | unchanged                          |
 
 If honoring `context` on lifecycle events is a deliberate scope decision, then the ask shrinks to: state the observe-only contract explicitly in `docs/hooks/README.md` per event, so hook authors do not discover it by wiring a hook that can never fire into the conversation.
 
@@ -57,7 +57,7 @@ If honoring `context` on lifecycle events is a deliberate scope decision, then t
 
 ---
 
-*(draft meta — not part of the filing body)*
+_(draft meta — not part of the filing body)_
 
 **Status:** NOT filed — awaiting owner approval (plan T18.3).
 **Proposed title:** `Hooks: honor "context" on lifecycle events (SessionStart, PostCompact) — currently parsed then discarded`

@@ -110,22 +110,22 @@ extendModules bug (fixed with `mkForce`).
 
 1. Read `scripts/post-deploy-check.sh` dnsblockd section in full (the §-numbered block
    containing the memory check).
-~~2. Insert `_dns_*` probes: extract deployed config path via~~ done — shipped in post-deploy-check.sh (commit 4ba06298) — SESSION3 §a.5
+   ~~2. Insert `_dns_*` probes: extract deployed config path via~~ done — shipped in post-deploy-check.sh (commit 4ba06298) — SESSION3 §a.5
    `systemctl show -p ExecStart --value dnsblockd` → `/nix/store/…-dnsblockd-config.yaml`.
-~~3. Assert `"allowlist_path":"/var/lib/dnsblockd/allowlist"` in the deployed YAML.~~ done — one of the 7 config-key greps, harness-verified — SESSION3 §a.5
-~~4. Assert `"csrf_enabled":true` (config-level — the ONLY csrf signal that cannot~~ done — config-level grep shipped (cannot phantom-green) — SESSION3 §a.5
+   ~~3. Assert `"allowlist_path":"/var/lib/dnsblockd/allowlist"` in the deployed YAML.~~ done — one of the 7 config-key greps, harness-verified — SESSION3 §a.5
+   ~~4. Assert `"csrf_enabled":true` (config-level — the ONLY csrf signal that cannot~~ done — config-level grep shipped (cannot phantom-green) — SESSION3 §a.5
    phantom-green).
-~~5. Assert device registry rendered (`"id":"evo-x2"`, `"id":"pixel6"` …) and~~ done — device + user greps shipped — SESSION3 §a.5
+   ~~5. Assert device registry rendered (`"id":"evo-x2"`, `"id":"pixel6"` …) and~~ done — device + user greps shipped — SESSION3 §a.5
    `"name":"Lars"` user.
-~~6. Assert rate-limit 50/100 and log_sampling 500/100 keys present.~~ done — rate/log_sampling greps shipped — SESSION3 §a.5
-~~7. Discriminating csrf probe: POST to the allow endpoint WITHOUT token → expect 403~~ done — behavioral 403/401 probe shipped config-gated — SESSION3 §a.5
+   ~~6. Assert rate-limit 50/100 and log_sampling 500/100 keys present.~~ done — rate/log_sampling greps shipped — SESSION3 §a.5
+   ~~7. Discriminating csrf probe: POST to the allow endpoint WITHOUT token → expect 403~~ done — behavioral 403/401 probe shipped config-gated — SESSION3 §a.5
    (pre-validated only after M11 deploys csrf on; ship as config-gated).
-8. Keep `report_pass/report_fail/report_skip` + skip-cleanly-on-absent-unit semantics.
-~~9. `bash -n` the whole script; pathspec commit; amend fast.~~ done — bash -n OK + commit 4ba06298 — SESSION3 §a.5
-~~10. Negative-proof the new greps against the OLD deployed config~~ done — negative test vs p6s93ln6 FAILs listing all 7 keys — SESSION3 §a.5
-    (`p6s93ln6…`) — they must FAIL there (proving they discriminate).
-11. Decide WARN-vs-FAIL semantics for probes whose keys appear only post-M11 (they
-    should fail only once the deploying generation carries them).
+2. Keep `report_pass/report_fail/report_skip` + skip-cleanly-on-absent-unit semantics.
+   ~~9. `bash -n` the whole script; pathspec commit; amend fast.~~ done — bash -n OK + commit 4ba06298 — SESSION3 §a.5
+   ~~10. Negative-proof the new greps against the OLD deployed config~~ done — negative test vs p6s93ln6 FAILs listing all 7 keys — SESSION3 §a.5
+   (`p6s93ln6…`) — they must FAIL there (proving they discriminate).
+3. Decide WARN-vs-FAIL semantics for probes whose keys appear only post-M11 (they
+   should fail only once the deploying generation carries them).
 
 **Verification hygiene:**
 ~~12. Run `nix fmt --no-update-lock-file -- --ci`; fix drift on touched files only.~~ done — 0 changed — SESSION3 §a.6

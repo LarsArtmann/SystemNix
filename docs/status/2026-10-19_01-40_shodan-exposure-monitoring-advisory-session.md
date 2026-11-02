@@ -55,73 +55,78 @@ Nothing was destroyed — the session wrote nothing until this report, so there 
 Brainstorm list (session-derived only, per instruction) — sorted by impact within groups. Only the **§f direct follow-ups marked ★** were harvested into `TODO_LIST.md` + `docs/todo/monitoring.md` (see §harvest); the rest are ROADMAP-class and deliberately not queued.
 
 ### A. Shodan SaaS layer (owner-gated)
-| # | Task |
-|---|---|
-| 1 | Decide: buy Shodan Membership (~$49 one-time, 16 IPs — summarizer-verified figure) vs skip and lean on Censys-free + periodic external nmap |
-| 2 | Confirm homelab WAN is public IPv4 vs CGNAT (router check, 100.64.0.0/10) BEFORE buying — CGNAT makes the home half of Monitor a no-op |
-| 3 | If buying: signup + 2FA on the Shodan account (the account itself becomes an inventory of your assets) |
-| 4 | Add pbx IP `/32` to Monitor |
-| 5 | Add homelab IP `/32` (only if #2 says public) |
-| 6 | Enable triggers: `new_service`, `open_database`, `ssl_expired`, `vulnerable`, `malware`, `iot`, `internet_scanner` |
-| 7 | Pick notifier (Email/Discord/Telegram) — align with the still-dangling pbx alert-sink row (pbx TODO line 297) |
-| 8 | Baseline the first crawl: export/screenshot the known-good external surface for diffing |
-| 9 | Optionally add domain assets (artmann.tech, larsartmann.cloud) for subdomain watching |
-| 10 | End-to-end test the alert path (force a `new_service` event via `scan submit` on a temporarily opened port, then close it) |
-| 11 | After 1-2 weeks: tune trigger noise, document FP classes in the runbook |
+
+| #  | Task                                                                                                                                        |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Decide: buy Shodan Membership (~$49 one-time, 16 IPs — summarizer-verified figure) vs skip and lean on Censys-free + periodic external nmap |
+| 2  | Confirm homelab WAN is public IPv4 vs CGNAT (router check, 100.64.0.0/10) BEFORE buying — CGNAT makes the home half of Monitor a no-op      |
+| 3  | If buying: signup + 2FA on the Shodan account (the account itself becomes an inventory of your assets)                                      |
+| 4  | Add pbx IP `/32` to Monitor                                                                                                                 |
+| 5  | Add homelab IP `/32` (only if #2 says public)                                                                                               |
+| 6  | Enable triggers: `new_service`, `open_database`, `ssl_expired`, `vulnerable`, `malware`, `iot`, `internet_scanner`                          |
+| 7  | Pick notifier (Email/Discord/Telegram) — align with the still-dangling pbx alert-sink row (pbx TODO line 297)                               |
+| 8  | Baseline the first crawl: export/screenshot the known-good external surface for diffing                                                     |
+| 9  | Optionally add domain assets (artmann.tech, larsartmann.cloud) for subdomain watching                                                       |
+| 10 | End-to-end test the alert path (force a `new_service` event via `scan submit` on a temporarily opened port, then close it)                  |
+| 11 | After 1-2 weeks: tune trigger noise, document FP classes in the runbook                                                                     |
 
 ### B. SystemNix homelab declarative (agent-actionable)
-| # | Task |
-|---|---|
-| ★12 | Deliver the MISSING homelab-side NixOS answer (close turn-2's dropped thread) |
-| ★13 | Draft the `shodan-audit` oneshot+timer module for evo-x2 (read `docs/agents/*` routing first; SystemNix module conventions) |
-| 14 | sops: add `shodan_api_key` (value via sops editor / one-liner pattern; key in yaml AND sops.nix with `optionalAttrs` guard — the 2026-10-17 `sops-key-audit` eval gate catches one-sided adds) |
-| 15 | Verify `python3Packages.shodan` at SystemNix's pinned nixpkgs rev (first resolve which locked rev is the `nixpkgs` input) |
-| 16 | Decide signal path: textfile collector → SigNoz/Gatus vs plain journald + exit-1 relay |
-| 17 | Keep the unit outbound-only; run `port-registry-audit` (no new port literals) |
-| 18 | `nix flake check` → owner deploy → post-deploy verify (fresh marker) |
-| 19 | One-off internal nmap sweep of 192.168.1.0/24 (the LAN half Shodan cannot see) |
-| 20 | Cross-check sweep output vs `lib/ports.nix` + gatus coverage audit |
-| 21 | Decide periodicity/ownership of the internal sweep (timer vs manual) `[decision]` |
-| 22 | Document the homelab exposure posture (monitoring domain doc) |
-| 23 | UPnP/NAT-PMP check on the router (the accidental-forward class) |
-| 24 | Router admin-surface review (the one thing Shodan WILL see on a home IP) |
-| 25 | rpi3-dns: is 53/udp forwarded publicly? If yes, justify in docs or close it `[decision]` |
+
+| #   | Task                                                                                                                                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ★12 | Deliver the MISSING homelab-side NixOS answer (close turn-2's dropped thread)                                                                                                                  |
+| ★13 | Draft the `shodan-audit` oneshot+timer module for evo-x2 (read `docs/agents/*` routing first; SystemNix module conventions)                                                                    |
+| 14  | sops: add `shodan_api_key` (value via sops editor / one-liner pattern; key in yaml AND sops.nix with `optionalAttrs` guard — the 2026-10-17 `sops-key-audit` eval gate catches one-sided adds) |
+| 15  | Verify `python3Packages.shodan` at SystemNix's pinned nixpkgs rev (first resolve which locked rev is the `nixpkgs` input)                                                                      |
+| 16  | Decide signal path: textfile collector → SigNoz/Gatus vs plain journald + exit-1 relay                                                                                                         |
+| 17  | Keep the unit outbound-only; run `port-registry-audit` (no new port literals)                                                                                                                  |
+| 18  | `nix flake check` → owner deploy → post-deploy verify (fresh marker)                                                                                                                           |
+| 19  | One-off internal nmap sweep of 192.168.1.0/24 (the LAN half Shodan cannot see)                                                                                                                 |
+| 20  | Cross-check sweep output vs `lib/ports.nix` + gatus coverage audit                                                                                                                             |
+| 21  | Decide periodicity/ownership of the internal sweep (timer vs manual) `[decision]`                                                                                                              |
+| 22  | Document the homelab exposure posture (monitoring domain doc)                                                                                                                                  |
+| 23  | UPnP/NAT-PMP check on the router (the accidental-forward class)                                                                                                                                |
+| 24  | Router admin-surface review (the one thing Shodan WILL see on a home IP)                                                                                                                       |
+| 25  | rpi3-dns: is 53/udp forwarded publicly? If yes, justify in docs or close it `[decision]`                                                                                                       |
 
 ### C. pbx-artmann (that repo owns its queue — rows recorded here, drafted from this session's context)
-| # | Task |
-|---|---|
+
+| #  | Task                                                                                                                                                      |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 26 | Draft the pbx `shodan-audit` module mirroring `surface-health.nix` (probe → `pbx-alert@`, diff vs `/var/lib/shodan-audit/last.json`, API errors log-only) |
-| 27 | Add `shodan_api_key` to `push-secrets.sh` + keep `generate.sh` list in sync (repo rule) |
-| 28 | Verify `python3Packages.shodan` at pbx pin `55bfb4d` |
-| 29 | External UDP verification of the Telnyx-only SIP/RTP ACL (on-demand `scan submit` or external nmap) — "no 5060 banner from outside" is the proof |
-| 30 | Reconcile Shodan-visible set vs `port-audit`'s declared set after the first crawl |
-| 31 | Resolve the dangling alert-sink decision (line 297); the Shodan notifier should ride the SAME choice |
-| 32 | Document NetBird STUN 3479 / coturn 3478 as expected-visible (known-good baseline, not alert noise) |
-| 33 | One-shot testssl.sh vs public vhosts (gates, mail, auth) + `ssl_expired` trigger cross-check |
-| 34 | External open-relay + SPF/DKIM/DMARC probe of Stalwart (Shodan sees 25/465/993) |
-| 35 | Runbook row for the audit unit (docs/runbooks) |
-| 36 | Wire the module into pbx CI/checks if convention requires |
+| 27 | Add `shodan_api_key` to `push-secrets.sh` + keep `generate.sh` list in sync (repo rule)                                                                   |
+| 28 | Verify `python3Packages.shodan` at pbx pin `55bfb4d`                                                                                                      |
+| 29 | External UDP verification of the Telnyx-only SIP/RTP ACL (on-demand `scan submit` or external nmap) — "no 5060 banner from outside" is the proof          |
+| 30 | Reconcile Shodan-visible set vs `port-audit`'s declared set after the first crawl                                                                         |
+| 31 | Resolve the dangling alert-sink decision (line 297); the Shodan notifier should ride the SAME choice                                                      |
+| 32 | Document NetBird STUN 3479 / coturn 3478 as expected-visible (known-good baseline, not alert noise)                                                       |
+| 33 | One-shot testssl.sh vs public vhosts (gates, mail, auth) + `ssl_expired` trigger cross-check                                                              |
+| 34 | External open-relay + SPF/DKIM/DMARC probe of Stalwart (Shodan sees 25/465/993)                                                                           |
+| 35 | Runbook row for the audit unit (docs/runbooks)                                                                                                            |
+| 36 | Wire the module into pbx CI/checks if convention requires                                                                                                 |
 
 ### D. Cross-cutting exposure work
-| # | Task |
-|---|---|
+
+| #   | Task                                                                                                                                      |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | ★37 | **IPv6 inventory, both sites** (Hetzner /64 + any home v6 prefix; add prefixes to Monitor if present) — MISSING from both session answers |
-| 38 | Censys second-opinion account + both IPs |
-| 39 | CT-log (crt.sh) review of artmann.tech + larsartmann.cloud subdomain sprawl |
-| 40 | Quarterly full-port external nmap (Shodan samples; nmap enumerates) from a VPS |
-| 41 | If Membership declined: GitHub-Actions-scheduled nmap against both IPs as the free external vantage `[decision]` |
-| 42 | Optional lightweight tripwires (Canarytokens on the pbx) — the post-Wazuh-rejection lightweight class `[decision]` |
-| 43 | Gatus freshness check on the audit marker (stale-audit detection; monitor-of-monitor doctrine) |
-| 44 | If this workstream grows: brainstorming/planning doc FIRST (Session Discipline: ratified plan outranks fresh design) |
+| 38  | Censys second-opinion account + both IPs                                                                                                  |
+| 39  | CT-log (crt.sh) review of artmann.tech + larsartmann.cloud subdomain sprawl                                                               |
+| 40  | Quarterly full-port external nmap (Shodan samples; nmap enumerates) from a VPS                                                            |
+| 41  | If Membership declined: GitHub-Actions-scheduled nmap against both IPs as the free external vantage `[decision]`                          |
+| 42  | Optional lightweight tripwires (Canarytokens on the pbx) — the post-Wazuh-rejection lightweight class `[decision]`                        |
+| 43  | Gatus freshness check on the audit marker (stale-audit detection; monitor-of-monitor doctrine)                                            |
+| 44  | If this workstream grows: brainstorming/planning doc FIRST (Session Discipline: ratified plan outranks fresh design)                      |
 
 ### E. Session-process fixes
-| # | Task |
-|---|---|
-| 45 | Close asked threads before pivoting (process rule, §e.1) |
-| 46 | Re-run failed searches with corrected patterns (§e.2) |
-| 47 | Raw-fetch exact-string claims before citing (§e.3) |
-| 48 | Write learned facts to memory at discovery time (§e.5) |
-| 49 | Raw re-verify pricing/limits before any purchase (closes §b.2) |
+
+| #  | Task                                                                                            |
+| -- | ----------------------------------------------------------------------------------------------- |
+| 45 | Close asked threads before pivoting (process rule, §e.1)                                        |
+| 46 | Re-run failed searches with corrected patterns (§e.2)                                           |
+| 47 | Raw-fetch exact-string claims before citing (§e.3)                                              |
+| 48 | Write learned facts to memory at discovery time (§e.5)                                          |
+| 49 | Raw re-verify pricing/limits before any purchase (closes §b.2)                                  |
 | 50 | One review pass over both answers' claims when implementation starts (verification decay check) |
 
 ## §f harvest record (direct follow-ups only)
@@ -142,4 +147,4 @@ Deliberately NOT harvested: §f.B.14-25 (dependent on the owner signup decision)
 
 ---
 
-*Report format: `.md` per the user's explicit path instruction (status-report skill's canonical is styled HTML; override honored and flagged in the closing message). Commits: none by this session (harness forbids without explicit request; auto-commit daemon will pick the files up).*
+_Report format: `.md` per the user's explicit path instruction (status-report skill's canonical is styled HTML; override honored and flagged in the closing message). Commits: none by this session (harness forbids without explicit request; auto-commit daemon will pick the files up)._

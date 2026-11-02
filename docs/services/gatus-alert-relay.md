@@ -23,12 +23,12 @@ gatus' Discord provider posts to `http://127.0.0.1:9411/hook` (port
 to the real webhook (from the same `gatus-env` sops secret). Decision
 rules, in order:
 
-| rule            | condition                                              | effect                                                                  |
-| --------------- | ------------------------------------------------------ | ----------------------------------------------------------------------- |
-| boot-grace      | relay process age < 15 min (default)                   | suppress trigger, queue; replay at grace end if still failing           |
-| sev1-mute       | SEV1 bridge page-tier active + endpoint on mute list    | suppress trigger, queue; replay when SEV1 clears                        |
-| flap-collapse   | > 4 forwarded triggers per endpoint per 6 h sliding     | suppress (LOSSY — the point), until 30 min event-free quiet             |
-| rearm-guard     | trigger within 10 min of a resolve                      | suppress, queue; replay at deadline if still failing                    |
+| rule          | condition                                            | effect                                                        |
+| ------------- | ---------------------------------------------------- | ------------------------------------------------------------- |
+| boot-grace    | relay process age < 15 min (default)                 | suppress trigger, queue; replay at grace end if still failing |
+| sev1-mute     | SEV1 bridge page-tier active + endpoint on mute list | suppress trigger, queue; replay when SEV1 clears              |
+| flap-collapse | > 4 forwarded triggers per endpoint per 6 h sliding  | suppress (LOSSY — the point), until 30 min event-free quiet   |
+| rearm-guard   | trigger within 10 min of a resolve                   | suppress, queue; replay at deadline if still failing          |
 
 **Contract: a mute may DELAY an alert, never lose it** — every rule except
 flap-collapse replays its queued trigger when the condition clears without

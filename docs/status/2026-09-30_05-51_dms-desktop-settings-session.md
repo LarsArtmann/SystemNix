@@ -32,8 +32,8 @@
 
 1. **NOTHING IS DEPLOYED.** All 13 settings + the patch sit in the repo; the live system still runs the old generation. Activation requires `nix run .#deploy` (human-owned, sudo-gated). Every "done" above is done at eval/build level only.
 2. **`fontScale` surface ambiguity.** DMS has THREE scale knobs: global `fontScale` (what I set — scales the whole DMS UI), bar-specific `dankBarFontScale` (SettingsSpec line 725, def 1.0), and per-bar `barConfig.fontScale`. The ask "set font scaling to 150%" was ambiguous; I chose the global one. Risk: at 150% global, bar text may crowd/clip the fixed bar thickness. Needs owner confirmation or post-deploy eyeball.
-~~3. **Gate coverage thinner than repo doctrine.** Only `nix-instantiate --parse` per edit + targeted option evals (HM attr path) + the one package build were run. A full `nix flake check --no-build` (pre-commit/CI gate, eval-time guard army) was NOT run this session.~~ done — 07-00 report §a.4 — nix flake check --no-build rc=0 on the tree carrying these edits
-4. **Patched package verified standalone, not in the toplevel.** The evo-x2 toplevel closure containing the patched dms-shell was never built as a whole.
+   ~~3. **Gate coverage thinner than repo doctrine.** Only `nix-instantiate --parse` per edit + targeted option evals (HM attr path) + the one package build were run. A full `nix flake check --no-build` (pre-commit/CI gate, eval-time guard army) was NOT run this session.~~ done — 07-00 report §a.4 — nix flake check --no-build rc=0 on the tree carrying these edits
+3. **Patched package verified standalone, not in the toplevel.** The evo-x2 toplevel closure containing the patched dms-shell was never built as a whole.
 
 ## c) NOT STARTED
 

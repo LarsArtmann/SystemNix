@@ -13,6 +13,7 @@ Per the batch's own success definition — "Partial completion with a green veri
 ## a) FULLY DONE
 
 ### Item 1 — Entry gate + serialization for migrate-* maintenance scripts
+
 - **Discovery that changed the job:** item 1 was ~70% pre-landed in-tree by an earlier (footerless, undispatchable) session: `pkgs/maintenance-entry-gate.nix` existed and 6 migrate-* scripts called it — but it was DEAD CODE. Three defects: (1) the gate binary was imported by NOBODY (overlay/apps/systemPackages all missing → every gate call resolved to "command not found" → fail-closed but unusable), (2) two Nix indented-string escapes (`| '')` and `'' |`) TERMINATED the string and broke the file's Nix syntax entirely, (3) the embedded selftest never pointed `run_gate` at its fixture files — it read the REAL `/proc/pressure/io` (failed "must admit" while the host sat at PSI ≥ 20 under build load) and its `EXPECT` anchor was miscounted (10 vs 11 assertions).
 - **Fixed + wired:** overlay entry (`overlays/shared.nix`), runtimeInputs on all three flake apps (migrate-hot-db/buildcache/rust-cache), `environment.systemPackages` via workload-admission (so the raw `sudo bash scripts/migrate-*.sh` runbooks resolve the gate from `/run/current-system/sw/bin` — root secure_path).
 - **Serialization completed:** flock (`/run/lock/systemnix-heavy/systemnix-maintenance.lock`, one migrate-* at a time, `MAINT_ENTRY_GATE_LOCK_DIR` fixture override) added to the three remaining one-shots — migrate-journal-hot, migrate-caddy-logs-hot, migrate-nix-subvol — upgrading their 80%-PSI-only inline gates to the canonical gate (30% band + guard-trip-recency via the guard's fsynced `last-trip` state file); the inline band stays as the tighter per-action re-check. All NINE migrate-* scripts now gate + serialize.
@@ -24,12 +25,14 @@ Per the batch's own success definition — "Partial completion with a green veri
 - **Commit:** content `5b94757a` ("Gate and serialize every migrate-* maintenance script" — daemon smart-commit of my staged work) + footer carrier `43b1b6a1`.
 
 ### Item 2 — IO-pressure admission gate for midnight maintenance jobs
+
 - `btrfs-gc-guard` (platforms/nixos/system/btrfs-health.nix) is no longer space-only: its ExecStartPre delegates to `maintenance-entry-gate` (IO PSI some avg10 ≥ 20% standing band OR a memory-emergency-guard trip within the last 60 min) BEFORE the space checks, refusing with "the timer refires".
 - **Balance coverage:** `ExecStartPre = btrfs-gc-guard` wired into BOTH `btrfs-balance-metadata` and `btrfs-balance-data` — the balance timers were previously COMPLETELY ungated (verified: no ExecStartPre before this change), and the space leg also enforces the free-extents-before-balancing runbook ordering unattended (the 2026-08-24 balance crash class is now blocked on the timer path).
 - **Verified:** evo-x2 eval shows the SAME guard drv on all four units (nix-gc, nix-build-cleanup, both balances); rendered guard text static-verified (bash -n + shellcheck clean — the heavy build was refused, see §e); **LIVE refusal proof**: ran the rendered guard on the host mid-session — it refused at io PSI some avg10 69% (the concurrent session's battery storm) where the old space-only guard would have passed and started. That is the freeze-21 scenario, refused, live.
 - **Commit:** content in daemon sweeps `b1507e4d` (module) + `db08407c` (library row) + `be56c7db` (queue close-out) + `f59664e2` (gate-mandated BLOCKED marker on a foreign queue row, see §d/e) + footer carrier `efb3250e`.
 
 ### Item 3 — deploy.sh entry gate before the validation battery + fail-close the 15s journalctl timeout
+
 - Both gates extracted into functions (`deploy_pressure_gate`, `deploy_trip_recency_gate`) and called TWICE: at ENTRY (immediately after the deploy flock, BEFORE the pre-deploy validation battery — the freeze-22 fix: #22 died 2m55s into section-1 evals with both gates still queued behind it) and again at the original pre-switch positions (the activation is the most dangerous phase; storms build under the minutes-long validation). Same exit 12 + `DEPLOY_FORCE_PRESSURE=1` hatch everywhere.
 - **Fail-close:** the old `timeout 15 journalctl … | grep -c … || true` swallowed a mid-storm 124 into a zero-trip count (pipefail + `|| true`); the bounded read now checks its exit status explicitly and a timeout refuses "guard-trip recency UNVERIFIABLE" (exit 12).
 - **Verified:** bash -n + shellcheck clean; `io-psi-crosscheck.sh selftest` (static tripwire that deploy.sh still wires the crosscheck) green; fixture-tested the trip gate's three modes (timeout → refuse 12, journal-trips → refuse 12, quiet → admit 0) and a LIVE refuse on the storming box (5 real guard trips in the window → rc 12).
@@ -66,8 +69,8 @@ Per the batch's own success definition — "Partial completion with a green veri
 
 ## f) NEXT (harvested at authoring — the first two are already in TODO_LIST.md + docs/todo/stability.md)
 
-1. [ready] Fixture selftest for btrfs-gc-guard itself (space legs untested): stub btrfs-chunk-check + maintenance-entry-gate via PATH; assert unalloc-floor abort, metadata-block abort, OK/WARN paths, and gate-runs-first ordering. *(harvested to TODO_LIST + stability.md)*
-2. [ready] Fixture-test deploy.sh's extracted entry gates beyond the trip leg: source deploy_pressure_gate with stubbed /proc + /sys readers; pin the four exit-12 branches + the DEPLOY_FORCE_PRESSURE hatch. *(harvested to TODO_LIST + stability.md)*
+1. [ready] Fixture selftest for btrfs-gc-guard itself (space legs untested): stub btrfs-chunk-check + maintenance-entry-gate via PATH; assert unalloc-floor abort, metadata-block abort, OK/WARN paths, and gate-runs-first ordering. _(harvested to TODO_LIST + stability.md)_
+2. [ready] Fixture-test deploy.sh's extracted entry gates beyond the trip leg: source deploy_pressure_gate with stubbed /proc + /sys readers; pin the four exit-12 branches + the DEPLOY_FORCE_PRESSURE hatch. _(harvested to TODO_LIST + stability.md)_
 3. Deploy the wave at the next calm window (all three gates + the migrate app PATH fix ride one switch); post-deploy: verify `readlink /run/current-system` anchors per the deploy-anchor discipline.
 4. Post-deploy live check: `nix run .#migrate-rust-cache` (or any migrate app) prints the gate's OK line instead of "command not found".
 5. Post-deploy live check: `systemctl cat nix-gc` + both balances show the same btrfs-gc-guard ExecStartPre; optionally dry-trigger `systemctl start btrfs-balance-metadata` during a storm and watch it refuse.
@@ -89,4 +92,4 @@ Per the batch's own success definition — "Partial completion with a green veri
 2. **Footer-carrier vs daemon:** 3/3 items needed empty footer-bearing commits because the daemon swept AND PUSHED the staged work before I could commit. Keep the carrier pattern (queue dedup works, history carries empty bookkeeping commits), or should the tq preflight instead learn to detect work in daemon heuristic commits by content (then carriers stop being needed)?
 3. **The foreign CI-restoration row:** to unblock the shared todo gate I appended `— BLOCKED: landing per-repo is owner-push (agents never push); agent-side portion is audit + draft workflows only` to the concurrent session's `[ready]` CI-restoration row, using only its own stated rationale. Confirm that marker matches that session's intent (or revert it if the row was meant to stay dispatchable).
 
-*Report self-harvest: §f items 1–2 landed in TODO_LIST.md + docs/todo/stability.md at authoring time; §f items 3–14 are next-step candidates, not owed follow-ups of this batch's close-outs.* **HARVESTED at authoring.**
+_Report self-harvest: §f items 1–2 landed in TODO_LIST.md + docs/todo/stability.md at authoring time; §f items 3–14 are next-step candidates, not owed follow-ups of this batch's close-outs._ **HARVESTED at authoring.**

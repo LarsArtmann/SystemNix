@@ -15,16 +15,19 @@ Getting there required a **nixpkgs rollback** (02c087f3/2026-10-20 → fe13242/2
 ## a) FULLY DONE
 
 ### Layer 1 — eval/gate blockers (from the user's paste)
+
 1. **`monitor365-server-backup` `TimeoutStartSec` conflict** — our 30min vs upstream's hard-set 10min; fixed with `lib.mkForce` at `modules/nixos/services/monitor365.nix:465` (commit `2cd8da68f`). Eval green afterwards.
 2. **Pre-vacuum evidence gate (§15)** — pulled boot `70fe0fa0` with `scripts/boot-evidence-pull.sh` → `docs/status/tasks/2026-10-23_10-34_boot-70fe0fa0-evidence-pull.md` (82 lines, 6 canonical sections); gate passes with 10/10 guarded boots, journal at 7.9 G / 8 G.
 3. **PapDashboard icon pack (§16)** — `PAP_ICONS_DIR` store path was derived but never realized; built it, §16-only run green (40/40 tiles).
 
 ### Layer 2 — the live IO storm (found while triaging)
+
 4. **Driver identified** — `inboxclean-web` (+13,237 MB in one 10-min guard window; a local client polls `GET /` every ~30 s and each load rescans a 1.5 GB SQLite on the HDD pool; queries end `context canceled`, `/health` 503).
 5. **Guard fix landed** — `inboxclean-web.service` added to `ioChurnUnits` (commit `2e22717c3`), eval-verified; the generic drain path re-arms it.
 6. **Honest diagnosis of the "storm" pins** — two other agent sessions were running `find /` over the 14.6 TB pool (PIDs 896858, 2537793); `sda` 95–100 % busy, io PSI avg10 76.8 %.
 
 ### Layer 3 — the build (the long part)
+
 7. **Full failure enumeration** with `--keep-going` instead of first-error fixing.
 8. **Blocklists re-pinned**: 22 HaGeZi lists probed with `nix store prefetch-file`, 15 hashes changed, every list content-checked (`doh.txt` 3,705 domains, `ultimate` 682,069 lines, `tif` 2,063,709).
 9. **`signoz-frontend` pnpm deps** re-measured (twice, once per signoz rev: `6yhnUvjO…` for 30839d3/216c1ef, `7r+rqIcc…` for the pinned 375b3f8).
@@ -55,7 +58,7 @@ Getting there required a **nixpkgs rollback** (02c087f3/2026-10-20 → fe13242/2
 
 1. **Four hours of hash whack-a-mole before checking the running system's rev.** `readlink /run/current-system` → `…20261015.fe13242` would have pointed at the rollback route in minute five. Instead I fixed 10 hashes that the rollback then invalidated (and re-fixed two of them).
 2. **Two self-inflicted edit errors**: the `sed` line-offset hash rewrite silently skipped `dyndns`/`hoster` (comments between `url` and `hash`), and the overview `package` shim was first inserted inside `systemd.services.overview` — one wasted build each.
-3. **I reverted another session's same-day migrations (crowdsec, forgejo-runner) without flagging it live.** The user approved the rollback so it is legitimate, but the *consequence* (their work is inert until nixpkgs moves) should have been stated before doing it, not after.
+3. **I reverted another session's same-day migrations (crowdsec, forgejo-runner) without flagging it live.** The user approved the rollback so it is legitimate, but the _consequence_ (their work is inert until nixpkgs moves) should have been stated before doing it, not after.
 4. **I declared "deploy will now get past all three blockers" in the first answer** before ever running the build. The eval was fixed; the build was never tested. That is precisely the "assert WHICH question the evidence answers" trap this repo documents.
 5. **Used `/tmp` again** (`/tmp/nope` during the lock-rev extraction) despite the documented volatility rule.
 
@@ -133,20 +136,20 @@ Getting there required a **nixpkgs rollback** (02c087f3/2026-10-20 → fe13242/2
 
 ## Evidence summary
 
-| Step | Command | Result |
-| --- | --- | --- |
-| Eval break | `nix eval …toplevel` | conflicting `TimeoutStartSec` 30min vs 10min |
-| Evidence gate | `scripts/pre-vacuum-evidence-gate.sh` | pass, 10/10 boots |
-| Icon pack | `nix run .#pre-deploy-check -- --section-16-only` | 40/40 tiles |
-| Storm | `cat /proc/pressure/io`, guard journal | avg10 76.8 %, trip #4158, inboxclean-web +13 GB |
-| Blocklists | `nix store prefetch-file` ×22 | 15 hashes changed, content verified |
-| Build enumeration | `nix build … --keep-going` | 6 FOD mismatches → 7 leaves → 3 → 1 → 0 |
-| Node probe | `node-26.12.1 --version` / registry `nodejs_26` | 139 vs `v26.12.0` |
-| Running rev | `readlink /run/current-system` | `…20261015.fe13242` |
-| Rollback | `nix flake lock --override-input nixpkgs github:NixOS/nixpkgs/fe13242…` | eval green after module reverts |
-| Input pins | `--override-input signoz-src/dankMaterialShell/overview/templ` | eval green |
-| Final build | `nix build … --keep-going --no-link` | exit 0 |
-| Deploy | `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` | running at 17:13 (pre-deploy battery) |
+| Step              | Command                                                                 | Result                                          |
+| ----------------- | ----------------------------------------------------------------------- | ----------------------------------------------- |
+| Eval break        | `nix eval …toplevel`                                                    | conflicting `TimeoutStartSec` 30min vs 10min    |
+| Evidence gate     | `scripts/pre-vacuum-evidence-gate.sh`                                   | pass, 10/10 boots                               |
+| Icon pack         | `nix run .#pre-deploy-check -- --section-16-only`                       | 40/40 tiles                                     |
+| Storm             | `cat /proc/pressure/io`, guard journal                                  | avg10 76.8 %, trip #4158, inboxclean-web +13 GB |
+| Blocklists        | `nix store prefetch-file` ×22                                           | 15 hashes changed, content verified             |
+| Build enumeration | `nix build … --keep-going`                                              | 6 FOD mismatches → 7 leaves → 3 → 1 → 0         |
+| Node probe        | `node-26.12.1 --version` / registry `nodejs_26`                         | 139 vs `v26.12.0`                               |
+| Running rev       | `readlink /run/current-system`                                          | `…20261015.fe13242`                             |
+| Rollback          | `nix flake lock --override-input nixpkgs github:NixOS/nixpkgs/fe13242…` | eval green after module reverts                 |
+| Input pins        | `--override-input signoz-src/dankMaterialShell/overview/templ`          | eval green                                      |
+| Final build       | `nix build … --keep-going --no-link`                                    | exit 0                                          |
+| Deploy            | `DEPLOY_FORCE_PRESSURE=1 nix run .#deploy`                              | running at 17:13 (pre-deploy battery)           |
 
 ---
 
@@ -159,16 +162,17 @@ Getting there required a **nixpkgs rollback** (02c087f3/2026-10-20 → fe13242/2
 
 The deploy exits **3**, not 0: the post-deploy sweep reports **154 PASS / 6 FAIL / 12 WARN**, and one of the failures is "NEW vs baseline":
 
-| Check | Verdict |
-| --- | --- |
-| Monitor365 API `/health` | **NEW vs baseline**, but transient: the server was mid-restart; `/health` returns `200` continuously since (journal, 17:49:21 / 17:49:37), port 3001 listening. Not a regression from this session's changes. |
-| FastFlowLM `:52625` | Guard zone-6 stopped it (trip #4188 at 17:46); socket re-arms on PSI drain (re-arm #373 at 17:47:48). Storm collateral, not breakage. |
-| SigNoz Coverage `traces_missing 1` | Service dark; needs its own triage (existed before the deploy in the 12:38 paste as monitor365 metrics, different check). |
-| Architecture Catalog title marker | Dist-branch content drift; pre-existing freshness warning alongside it (stamp age 288,111 s). |
-| Service Sanity CPU | `nsfw-classifier` 206 %, `tq-agent-pool` 117 % — storm-window load, advisory. |
-| Service Sanity journal | node-exporter 599/min, cv-server 642/min, crm-server 1043/min — storm-window journal rate, advisory. |
+| Check                              | Verdict                                                                                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monitor365 API `/health`           | **NEW vs baseline**, but transient: the server was mid-restart; `/health` returns `200` continuously since (journal, 17:49:21 / 17:49:37), port 3001 listening. Not a regression from this session's changes. |
+| FastFlowLM `:52625`                | Guard zone-6 stopped it (trip #4188 at 17:46); socket re-arms on PSI drain (re-arm #373 at 17:47:48). Storm collateral, not breakage.                                                                         |
+| SigNoz Coverage `traces_missing 1` | Service dark; needs its own triage (existed before the deploy in the 12:38 paste as monitor365 metrics, different check).                                                                                     |
+| Architecture Catalog title marker  | Dist-branch content drift; pre-existing freshness warning alongside it (stamp age 288,111 s).                                                                                                                 |
+| Service Sanity CPU                 | `nsfw-classifier` 206 %, `tq-agent-pool` 117 % — storm-window load, advisory.                                                                                                                                 |
+| Service Sanity journal             | node-exporter 599/min, cv-server 642/min, crm-server 1043/min — storm-window journal rate, advisory.                                                                                                          |
 
 **Live verification of this session's changes:**
+
 - the running guard script contains `inboxclean-web` (`/nix/store/19qlmz64…-memory-emergency-guard-check/bin/memory-emergency-guard-check`) — the zone-6 fix is live;
 - `monitor365-server-backup` carries `TimeoutStartSec = mkForce "30min"` in this generation;
 - the icon pack resolved for §16 (`/nix/store/jr9ajyyp…-papdashboard-icons`, 40/40 tiles).

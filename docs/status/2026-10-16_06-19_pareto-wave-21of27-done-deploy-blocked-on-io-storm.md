@@ -68,6 +68,7 @@
 ## f) Up to 50 things to get done next (impact-ranked; harvest status marked)
 
 **The switch and its batteries (Critical):**
+
 1. Re-run `scripts/pre-deploy-check.sh` at PSI lull on the CURRENT tree (fresh §11 pin — much landed post-snapshot), expect the signoz leg to clear, then **`nix run .#deploy`** — stage-2 declarative + geo OAuth-only/100y + caddy acquis + dnsblockd whitelist in ONE switch — **not harvested**: this IS the wave's own next step (row 1 of the watch batteries).
 2. T6 anchor battery post-switch: `readlink /run/current-system` == latest `system-N-link`, repair ladder if UNANCHORED — **standing rule**, folded into the deploy battery.
 3. T7 stage-2 battery: bouncer-register "converged from sops" journal line (NOT the skip warning), `cscli bouncers list` shows geometrikks, restart no-op — **harvested ✓** (services.md [watch] row).
@@ -116,7 +117,7 @@
 40. journald "truncated journal file" warning in crowdsec acquis — cosmetic — **deliberately not harvested**.
 41. Roadmap fuel unchanged: console enrollment (CAPI privacy), docker reclaim, vendored-python ratify — **deliberately not harvested** (owner-gated rows exist).
 
-*(41 items — the rest would be padding. Items 22–28 are marked "not harvested → WAIT directive" per the owner's instruction to report and wait; they are one row each in `docs/todo/{monitoring,pipeline,security}.md` the moment you say go.)*
+_(41 items — the rest would be padding. Items 22–28 are marked "not harvested → WAIT directive" per the owner's instruction to report and wait; they are one row each in `docs/todo/{monitoring,pipeline,security}.md` the moment you say go.)_
 
 ## g) Three questions I cannot figure out myself
 

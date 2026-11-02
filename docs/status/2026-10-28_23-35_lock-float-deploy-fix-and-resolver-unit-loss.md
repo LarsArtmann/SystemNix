@@ -10,30 +10,30 @@
 
 ## Executive summary
 
-The float proof (`~/.cache/lockfloat/float-proof-20261028-214409.log`) enumerated **12 root build failures**: 8 fixed-output `vendorHash` mismatches and 4 builder failures. All 12 are resolved, `nix flake check --no-build` prints *all checks passed!*, and the toplevel builds green four times in a row.
+The float proof (`~/.cache/lockfloat/float-proof-20261028-214409.log`) enumerated **12 root build failures**: 8 fixed-output `vendorHash` mismatches and 4 builder failures. All 12 are resolved, `nix flake check --no-build` prints _all checks passed!_, and the toplevel builds green four times in a row.
 
 Two of the four builder failures were **upstream module-pin lag** in our own consumer repos (their `go.mod` requires a module version their own flake input does not pin), one was a **broken upstream tip** that does not compile, and one was **QML patch drift** in the desktop shell (two independent anchors moved with DMS 2.x).
 
-While chasing a red `flake check` (a dnsblockd guard added by a parallel session the same day) I found something far worse than the log showed: `modules/nixos/services/dns-blocker.nix` merged its conditional allowlist-backup units with `{ … } // (lib.mkIf … { … })`. `//` is a *shallow* merge, so the conditional leg replaced the whole `services` attrset — and because one operand was a `mkIf` attrset, the module system treated the entire `systemd` value as conditional on `cfg.allowlistBackup.enable`. Net effect: **the built `dnsblockd.service` had no `Description`, no `ExecStart`, no `ExecStartPost`** on evo-x2, and **no `dnsblockd` unit at all** on rpi3-dns. Activating that tree would have removed the LAN's sole DNS resolver. Fixed with `lib.mkMerge`, verified on both hosts, and the previously-red guard now passes.
+While chasing a red `flake check` (a dnsblockd guard added by a parallel session the same day) I found something far worse than the log showed: `modules/nixos/services/dns-blocker.nix` merged its conditional allowlist-backup units with `{ … } // (lib.mkIf … { … })`. `//` is a _shallow_ merge, so the conditional leg replaced the whole `services` attrset — and because one operand was a `mkIf` attrset, the module system treated the entire `systemd` value as conditional on `cfg.allowlistBackup.enable`. Net effect: **the built `dnsblockd.service` had no `Description`, no `ExecStart`, no `ExecStartPost`** on evo-x2, and **no `dnsblockd` unit at all** on rpi3-dns. Activating that tree would have removed the LAN's sole DNS resolver. Fixed with `lib.mkMerge`, verified on both hosts, and the previously-red guard now passes.
 
 ---
 
 ## 1. The failing proof, itemised
 
-| # | Root | Class | Resolution |
-|---|------|-------|------------|
-| 1 | `cv-1e22121-go-modules` | FOD hash mismatch | re-pin `sha256-MeDzARcT…` (+ lift the interim rollback, see §3.1) |
-| 2 | `health-hub-75d6874-go-modules` | FOD mismatch, **upstream bakes the got hash** | shim **DROPPED** in `modules/nixos/services/health-dashboard.nix` |
-| 3 | `file-and-image-renamer-7393c37-go-modules` | FOD mismatch | re-pin `sha256-XnWfiJWq…` (`overlays/linux.nix`) |
-| 4 | `library-policy-f365109-go-modules` | FOD mismatch | re-pin `sha256-UtUhdbS9…` (`lib/lars-packages.nix`) |
-| 5 | `kith-crm-fcb3bb3-go-modules` | FOD mismatch | re-pin `sha256-XDRvpM8/…` (`modules/nixos/services/crm.nix`) |
-| 6 | `projects-management-automation-fbd3b1a-go-modules` | FOD mismatch | re-pin `sha256-v9mUgqkE…` on **both** surfaces (`lib/lars-packages.nix` + service module) |
-| 7 | `nsfw-classifier-go-rocm-1e95693` | FOD mismatch **and** rev does not compile | transient shim added, then **rev-pinned back to `58d398dc`** and shim removed |
-| 8 | `buildflow-ce10b79-go-modules` | FOD mismatch, **upstream bakes the got hash** | shims **DROPPED** on both surfaces (`lib/lars-packages.nix` + `platforms/nixos/system/configuration.nix`) |
-| 9 | `go-taskqueue-0.3.4` | **stale FOD silently reused** → `go-health@v0.8.1` `.mod` missing at compile | fresh `fakeHash` probe → `sha256-4zISVNEX…`; updated **both** shim surfaces |
-| 10 | `crush-daily-93697af-go-modules` | `templ-components/utils/tone` missing in `_local_deps` | root `templ-components` input TAG-PINNED v1.24.0 + `follows` |
-| 11 | `discordsync-921d5fc-go-modules` | same `utils/tone` class | same follow (+ `go-health` v0.8.1 follow, see §3.2) |
-| 12 | `dms-shell-2.0.0+date=2026-10-28_0b174e0` | `installPhase` died with **no log line** | QML patch legs rewritten in-tree (see §1.2) |
+| #  | Root                                                | Class                                                                        | Resolution                                                                                                |
+| -- | --------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1  | `cv-1e22121-go-modules`                             | FOD hash mismatch                                                            | re-pin `sha256-MeDzARcT…` (+ lift the interim rollback, see §3.1)                                         |
+| 2  | `health-hub-75d6874-go-modules`                     | FOD mismatch, **upstream bakes the got hash**                                | shim **DROPPED** in `modules/nixos/services/health-dashboard.nix`                                         |
+| 3  | `file-and-image-renamer-7393c37-go-modules`         | FOD mismatch                                                                 | re-pin `sha256-XnWfiJWq…` (`overlays/linux.nix`)                                                          |
+| 4  | `library-policy-f365109-go-modules`                 | FOD mismatch                                                                 | re-pin `sha256-UtUhdbS9…` (`lib/lars-packages.nix`)                                                       |
+| 5  | `kith-crm-fcb3bb3-go-modules`                       | FOD mismatch                                                                 | re-pin `sha256-XDRvpM8/…` (`modules/nixos/services/crm.nix`)                                              |
+| 6  | `projects-management-automation-fbd3b1a-go-modules` | FOD mismatch                                                                 | re-pin `sha256-v9mUgqkE…` on **both** surfaces (`lib/lars-packages.nix` + service module)                 |
+| 7  | `nsfw-classifier-go-rocm-1e95693`                   | FOD mismatch **and** rev does not compile                                    | transient shim added, then **rev-pinned back to `58d398dc`** and shim removed                             |
+| 8  | `buildflow-ce10b79-go-modules`                      | FOD mismatch, **upstream bakes the got hash**                                | shims **DROPPED** on both surfaces (`lib/lars-packages.nix` + `platforms/nixos/system/configuration.nix`) |
+| 9  | `go-taskqueue-0.3.4`                                | **stale FOD silently reused** → `go-health@v0.8.1` `.mod` missing at compile | fresh `fakeHash` probe → `sha256-4zISVNEX…`; updated **both** shim surfaces                               |
+| 10 | `crush-daily-93697af-go-modules`                    | `templ-components/utils/tone` missing in `_local_deps`                       | root `templ-components` input TAG-PINNED v1.24.0 + `follows`                                              |
+| 11 | `discordsync-921d5fc-go-modules`                    | same `utils/tone` class                                                      | same follow (+ `go-health` v0.8.1 follow, see §3.2)                                                       |
+| 12 | `dms-shell-2.0.0+date=2026-10-28_0b174e0`           | `installPhase` died with **no log line**                                     | QML patch legs rewritten in-tree (see §1.2)                                                               |
 
 ### 1.1 The trap that hid failure 9
 
@@ -41,8 +41,8 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 ### 1.2 The two dms-shell drifts (both silently fatal)
 
-* **Weather leg:** `weatherQml=$(ls …/Modules/*/Widgets/Weather.qml | head -1)` resolved to the **legacy `Modules/DankBar`** copy, which no longer contains `Theme.widgetIconColor`, while the live `Modules/DBar` copy does. The `sed` no-opped and the single-file `grep -q 'color: Theme.primary'` guard aborted `installPhase` with nothing in the journal. Now: loop over **all** `Weather.qml`, and require at least one patched file.
-* **Clipboard legs:** `dms-paste`'s `lib.patchDms` literal seds no longer match DMS 2.x, which moved geometry onto density expressions (`maximumLineCount: entryType === "long_text" ? 3 + Math.min(0, Theme.densityLevel) : 1`, `itemHeight: Theme.listItemTwoLineHeight + Theme.densityStepM`). Its own guards therefore killed `installPhase` **before** our legs ran. Now the four intents (caption hidden for plain text, two preview lines, 880×620 modal, 68 px rows) live in `platforms/nixos/desktop/quickshell.nix` as property-name rewrites with positive guards, and `lib.patchDms` is no longer consumed for patching (the `homeModules.dms-paste` settings surface is unchanged).
+- **Weather leg:** `weatherQml=$(ls …/Modules/*/Widgets/Weather.qml | head -1)` resolved to the **legacy `Modules/DankBar`** copy, which no longer contains `Theme.widgetIconColor`, while the live `Modules/DBar` copy does. The `sed` no-opped and the single-file `grep -q 'color: Theme.primary'` guard aborted `installPhase` with nothing in the journal. Now: loop over **all** `Weather.qml`, and require at least one patched file.
+- **Clipboard legs:** `dms-paste`'s `lib.patchDms` literal seds no longer match DMS 2.x, which moved geometry onto density expressions (`maximumLineCount: entryType === "long_text" ? 3 + Math.min(0, Theme.densityLevel) : 1`, `itemHeight: Theme.listItemTwoLineHeight + Theme.densityStepM`). Its own guards therefore killed `installPhase` **before** our legs ran. Now the four intents (caption hidden for plain text, two preview lines, 880×620 modal, 68 px rows) live in `platforms/nixos/desktop/quickshell.nix` as property-name rewrites with positive guards, and `lib.patchDms` is no longer consumed for patching (the `homeModules.dms-paste` settings surface is unchanged).
 
 ---
 
@@ -50,7 +50,7 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 1. **All 12 root build failures fixed**; `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` → `rc=0` four times (`proof-fix-2..5.log`).
 2. **`nix flake check --no-build` → `all checks passed!`** (`flake-check-2.log`), after the dns-blocker fix (§3.3).
-3. **Registry** (`flake/expected-locks.nix`) regenerated mechanically from `flake.lock` twice; final diff = the 25 floated revs + 2 new inputs; `float-register` reports *no drift*.
+3. **Registry** (`flake/expected-locks.nix`) regenerated mechanically from `flake.lock` twice; final diff = the 25 floated revs + 2 new inputs; `float-register` reports _no drift_.
 4. **Drop-protocol applied** to two shims whose got-hash upstream already bakes (health-hub, buildflow) — the documented "don't re-pin, drop" branch, verified by grepping the upstream source at the locked rev (`go-health-dashboard/flake.nix:111`, `buildflow/vendorHash.nix:1`).
 5. **`go-taskqueue` shim fixed on both surfaces** (`lib/lars-packages.nix`, `modules/nixos/services/tq-agent-pool.nix`) with a fresh probe, not a copied value.
 6. **`templ-components` module-source pin**: new root input at tag **v1.24.0** (rev `29f71a51`) + `follows` for crush-daily and DiscordSync + infra follows (flake-parts/nixpkgs/treefmt-nix); pin-audit allowlist row with an explicit LIFT condition. A parallel session then got an owner push grant and bumped BOTH consumers upstream (crush-daily `955ddb2`, DiscordSync `79952c46`) at ~23:04, so the pin is now LIFT-ready (`docs/todo/upstream.md` carries the ceremony as a `[ready]` row).
@@ -68,12 +68,12 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 ## 3. b) PARTIALLY DONE
 
-1. **cv** — my edit lifted the interim rollback and re-pinned `MeDzARcT` at `1e22121`; a *parallel* deploy-fix session then floated cv again to `dd201874b` (its own shim `autqYveR`, its own proof `float-proof-20261028-cvdd201b.log`). The deployed generation carries **their** cv rev + hash, not mine. Both proofs were green; I did not independently re-verify their log.
+1. **cv** — my edit lifted the interim rollback and re-pinned `MeDzARcT` at `1e22121`; a _parallel_ deploy-fix session then floated cv again to `dd201874b` (its own shim `autqYveR`, its own proof `float-proof-20261028-cvdd201b.log`). The deployed generation carries **their** cv rev + hash, not mine. Both proofs were green; I did not independently re-verify their log.
 2. **dms-shell runtime behaviour** — the patch strings are verified in the store output, but the QML only takes effect in a **new desktop session**; the running `.quickshell` (71% CPU at sample time) still serves the old package. Not verifiable without an owner-side session restart.
 3. **Deploy completion** — activation landed, but the deploy exited **3** on six post-deploy failures (§c.1–§c.3). `PASS 161 / FAIL 6 / SKIP 5 / WARN 11 / STORM-SUSPECT 1`, storm mode active (`io PSI some avg60=39.99%`).
 4. **dns-blocker file hygiene** — the fix is correct but the formatter inflated the diff to 1065 lines (whitespace only) on a file a parallel session had a staged hunk in. Landed, but it is a collision magnet (§d.4).
 5. **Commit provenance** — the daemon swept every edit into `chore: auto-commit N changed file(s) (heuristic)` commits. The rationale lives in in-file comments and this report, not in commit messages; no amend was performed (§d.5).
-6. **Negative-test coverage of my guard changes** — `scripts/negative-test-lints.sh` was **not** re-run. I changed allowlist *data* (`lib/flake-input-pin-audit.nix`) and shim *values*, not audit logic, so the risk is low — but it is unverified.
+6. **Negative-test coverage of my guard changes** — `scripts/negative-test-lints.sh` was **not** re-run. I changed allowlist _data_ (`lib/flake-input-pin-audit.nix`) and shim _values_, not audit logic, so the risk is low — but it is unverified.
 
 ---
 
@@ -106,18 +106,18 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 ## 6. e) WHAT WE SHOULD IMPROVE (systemic)
 
-| # | Improvement | Why it matters here |
-|---|-------------|---------------------|
-| E1 | **Eval-time guard: reject `//` merges whose operand has `_type` (mkIf/mkOverride).** Extend `scripts/audit-serviceconfig-merge.sh` from `serviceConfig` to every module attrset, or add a dedicated audit. | A shallow `//` silently deleted every resolver unit while eval+build stayed green. |
-| E2 | **Generalised unit-shape smoke**: a table of critical units asserting `Description` + `ExecStart` (+ `ExecStartPost` where owned) in the built toplevel. | The dnsblockd guard caught it; without that check the deploy would have taken DNS down silently. |
-| E3 | **`reseed-shims` app**: enumerate every `vendorHash` shim site, probe with `fakeHash`, rewrite with evidence. | 8 shim escapes per float, plus one that was invisible as "no mismatch". |
-| E4 | **Consumer-side module-pin CI** in crush-daily / DiscordSync: fail when a `_local_deps` replace target's rev does not satisfy the `go.mod` require version. | Two of four builder failures were exactly this lag; the third (templ-components) too. |
-| E5 | **FOD reuse detector**: when a `-go-modules` drv is satisfied from cache but the source rev moved past the hash-measurement rev, WARN (the `stale FOD silently reused` class). | tq's error text pointed at a store path, not at the hash. |
-| E6 | **Machine-readable LIFT conditions** in the pin allowlist (a `LIFT_PROBE` command per row), runnable by a scheduled workflow. | Three new pins land here; pins rot silently. |
-| E7 | **Baseline timestamps for post-deploy exit-3**: record when the previous smoke baseline was taken; if it is older than N hours, label "NEW failures" as *unverified* rather than regression. | monitor365 was already dead since 17:49; the deploy still reported it as a NEW failure. |
-| E8 | **Storm-aware smoke classification** already exists (1 STORM-SUSPECT); extend it to the CPU/journal sanity legs, which were pure load artefacts at load 33 / swap full. | 3 of the 6 FAILs were load-driven. |
-| E9 | **Formatter discipline on shared files**: `nix fmt` a file only when no other session has staged changes in it; otherwise format after landing. | 1065-line whitespace diff for 19 semantic lines. |
-| E10 | **Document the two traps** (FOD reuse, `//`-with-mkIf) in `docs/agents/nix-flakes.md` so the next session does not re-derive them. | Currently only in code comments. |
+| #   | Improvement                                                                                                                                                                                                | Why it matters here                                                                              |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| E1  | **Eval-time guard: reject `//` merges whose operand has `_type` (mkIf/mkOverride).** Extend `scripts/audit-serviceconfig-merge.sh` from `serviceConfig` to every module attrset, or add a dedicated audit. | A shallow `//` silently deleted every resolver unit while eval+build stayed green.               |
+| E2  | **Generalised unit-shape smoke**: a table of critical units asserting `Description` + `ExecStart` (+ `ExecStartPost` where owned) in the built toplevel.                                                   | The dnsblockd guard caught it; without that check the deploy would have taken DNS down silently. |
+| E3  | **`reseed-shims` app**: enumerate every `vendorHash` shim site, probe with `fakeHash`, rewrite with evidence.                                                                                              | 8 shim escapes per float, plus one that was invisible as "no mismatch".                          |
+| E4  | **Consumer-side module-pin CI** in crush-daily / DiscordSync: fail when a `_local_deps` replace target's rev does not satisfy the `go.mod` require version.                                                | Two of four builder failures were exactly this lag; the third (templ-components) too.            |
+| E5  | **FOD reuse detector**: when a `-go-modules` drv is satisfied from cache but the source rev moved past the hash-measurement rev, WARN (the `stale FOD silently reused` class).                             | tq's error text pointed at a store path, not at the hash.                                        |
+| E6  | **Machine-readable LIFT conditions** in the pin allowlist (a `LIFT_PROBE` command per row), runnable by a scheduled workflow.                                                                              | Three new pins land here; pins rot silently.                                                     |
+| E7  | **Baseline timestamps for post-deploy exit-3**: record when the previous smoke baseline was taken; if it is older than N hours, label "NEW failures" as _unverified_ rather than regression.               | monitor365 was already dead since 17:49; the deploy still reported it as a NEW failure.          |
+| E8  | **Storm-aware smoke classification** already exists (1 STORM-SUSPECT); extend it to the CPU/journal sanity legs, which were pure load artefacts at load 33 / swap full.                                    | 3 of the 6 FAILs were load-driven.                                                               |
+| E9  | **Formatter discipline on shared files**: `nix fmt` a file only when no other session has staged changes in it; otherwise format after landing.                                                            | 1065-line whitespace diff for 19 semantic lines.                                                 |
+| E10 | **Document the two traps** (FOD reuse, `//`-with-mkIf) in `docs/agents/nix-flakes.md` so the next session does not re-derive them.                                                                         | Currently only in code comments.                                                                 |
 
 ---
 
@@ -162,7 +162,7 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 **P3 — pipeline hardening**
 
-29. Make **`nix flake check` required** for the deploy gate even when a *cached* content-addressed pass exists (today's red check was cached-out for the pre-deploy path but not for me).
+29. Make **`nix flake check` required** for the deploy gate even when a _cached_ content-addressed pass exists (today's red check was cached-out for the pre-deploy path but not for me).
 30. Record **which tree stamp** the cached flake-check pass belongs to (the 12 h cache is only as good as its stamp).
 31. Add a **pre-deploy §24**: assert `dnsblockd.service` has `ExecStart` (cheap, artefact-level, would have caught today's bug in seconds).
 32. Add the same artefact-level assertion for **home-manager's dms package** (assert the patched strings exist in the store output).
@@ -196,7 +196,7 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 ## 8. g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
 1. **monitor365-server**: it has been down since 17:49 today on upstream migration `027_webauthn_rs_migration.sql` (`Dependency Error: Cannot alter entry "passkeys" because there are entries that depend on it`). Do you want DB surgery on the live DuckDB (restore/patch the `passkeys` dependency graph, potentially destructive) or do we hold the service down until upstream fixes 027?
-2. **Ownership of the remaining follow-ups**: a parallel deploy-fix session re-floated cv to `dd201874b` while I worked. Should *this* line of work own the monitor365/traces/storm close-out, or hand everything to that session so we stop touching the same files?
+2. **Ownership of the remaining follow-ups**: a parallel deploy-fix session re-floated cv to `dd201874b` while I worked. Should _this_ line of work own the monitor365/traces/storm close-out, or hand everything to that session so we stop touching the same files?
 3. **Push permission**: the two remaining upstream repairs (nsfw-classifier F0.3 telemetry, dms-paste DMS 2.x QML) both need a push to lift my interim arrangements. You already granted a push for the crush-daily/DiscordSync module bumps at ~23:04 (landed) — do the same two apply, or will you push them?
 
 ---
@@ -204,6 +204,7 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 ## 9. Evidence appendix
 
 **Logs**
+
 - `~/.cache/lockfloat/float-proof-20261028-214409.log` — the owner's failing proof (12 roots).
 - `~/.cache/lockfloat/proof-fix-1.log` — my first re-proof (3 roots left: tq, discordsync, nsfw).
 - `~/.cache/lockfloat/proof-fix-2.log`, `proof-fix-3.log`, `proof-fix-4.log`, `proof-fix-5.log` — green, `rc=0`.
@@ -213,6 +214,7 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 - `~/.cache/lockfloat/float-proof-20261028-cvdd201*.log` — the parallel session's cv float (RED then GREEN).
 
 **Artefacts inspected**
+
 - Old built unit (broken): `/nix/store/qwzk93pp8s5rl7h4k31fliskbn93shxv-unit-dnsblockd.service/dnsblockd.service` — only `ConditionPathIsMountPoint` + `RequiresMountsFor`.
 - New built unit (fixed): `$(nix build …toplevel --print-out-paths)/etc/systemd/system/dnsblockd.service` — `Description` + `ExecStart` + `ExecStartPost`.
 - Patched dms QML: `/nix/store/050wgac72d37dnf9kiw6561bib5rym0w-dms-shell-2.0.0+date=2026-10-28_0b174e0/share/quickshell/dms/…`.
@@ -220,27 +222,28 @@ While chasing a red `flake check` (a dnsblockd guard added by a parallel session
 
 **Files changed (17)**
 
-| File | Change |
-|------|--------|
-| `flake.nix` | new `templ-components` (v1.24.0) + `go-health` (v0.8.1) inputs; nsfw rev-pin `58d398dc`; 6 follows lines |
-| `flake.lock` | lock moves + 2 new input nodes + follows rewires |
-| `flake/expected-locks.nix` | regenerated twice from the lock (25 rev rows + 2 new inputs) |
-| `lib/flake-input-pin-audit.nix` | 3 allowlist rows (templ-components, go-health, nsfw-classifier) |
-| `lib/lars-packages.nix` | library-policy + PMA + tq re-pins, buildflow shim dropped |
-| `overlays/linux.nix` | file-and-image-renamer re-pin |
-| `modules/nixos/services/cv.nix` | re-pin + rollback-lift note (later superseded by the parallel session's re-float) |
-| `modules/nixos/services/crm.nix` | kith-crm re-pin |
-| `modules/nixos/services/health-dashboard.nix` | health-hub shim dropped |
-| `modules/nixos/services/nsfw-classifier.nix` | shim neutralised, rev-pin rationale |
-| `modules/nixos/services/projects-management-automation.nix` | PMA re-pin (second surface) |
-| `modules/nixos/services/tq-agent-pool.nix` | tq re-pin (second surface) |
-| `modules/nixos/services/dns-blocker.nix` | **`//` → `lib.mkMerge`** (resolver unit restoration) |
-| `platforms/nixos/desktop/quickshell.nix` | QML patch legs re-implemented in-tree |
-| `platforms/nixos/system/configuration.nix` | buildflow shim dropped (second surface) |
-| `docs/todo/upstream.md` | 4 `[blocked:push]` harvest rows |
-| `docs/status/<this file>` | this report |
+| File                                                        | Change                                                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `flake.nix`                                                 | new `templ-components` (v1.24.0) + `go-health` (v0.8.1) inputs; nsfw rev-pin `58d398dc`; 6 follows lines |
+| `flake.lock`                                                | lock moves + 2 new input nodes + follows rewires                                                         |
+| `flake/expected-locks.nix`                                  | regenerated twice from the lock (25 rev rows + 2 new inputs)                                             |
+| `lib/flake-input-pin-audit.nix`                             | 3 allowlist rows (templ-components, go-health, nsfw-classifier)                                          |
+| `lib/lars-packages.nix`                                     | library-policy + PMA + tq re-pins, buildflow shim dropped                                                |
+| `overlays/linux.nix`                                        | file-and-image-renamer re-pin                                                                            |
+| `modules/nixos/services/cv.nix`                             | re-pin + rollback-lift note (later superseded by the parallel session's re-float)                        |
+| `modules/nixos/services/crm.nix`                            | kith-crm re-pin                                                                                          |
+| `modules/nixos/services/health-dashboard.nix`               | health-hub shim dropped                                                                                  |
+| `modules/nixos/services/nsfw-classifier.nix`                | shim neutralised, rev-pin rationale                                                                      |
+| `modules/nixos/services/projects-management-automation.nix` | PMA re-pin (second surface)                                                                              |
+| `modules/nixos/services/tq-agent-pool.nix`                  | tq re-pin (second surface)                                                                               |
+| `modules/nixos/services/dns-blocker.nix`                    | **`//` → `lib.mkMerge`** (resolver unit restoration)                                                     |
+| `platforms/nixos/desktop/quickshell.nix`                    | QML patch legs re-implemented in-tree                                                                    |
+| `platforms/nixos/system/configuration.nix`                  | buildflow shim dropped (second surface)                                                                  |
+| `docs/todo/upstream.md`                                     | 4 `[blocked:push]` harvest rows                                                                          |
+| `docs/status/<this file>`                                   | this report                                                                                              |
 
 **Commands that decided the session**
+
 ```bash
 # enum 12 roots, per-root reasons
 grep -n -A2 "^error: Cannot build" ~/.cache/lockfloat/float-proof-20261028-214409.log | grep "Reason:"
@@ -260,19 +263,19 @@ git diff -w modules/nixos/services/dns-blocker.nix
 
 ## 10. Harvest obligations (AGENTS.md → "TODO System")
 
-| Follow-up | Where it landed |
-|-----------|-----------------|
-| crush-daily + DiscordSync `templ-components` bump | **DONE upstream** (parallel session, owner push grant, `955ddb2` / `79952c46`); the SystemNix-side LIFT is `docs/todo/upstream.md` `[ready]` (§7.21) |
-| DiscordSync `go-health` bump | **DONE upstream** (`79952c46`, row `[x]`); LIFT folds into §7.22 |
-| nsfw-classifier F0.3 telemetry compile break | `docs/todo/upstream.md` `[blocked:push]` (landed) |
-| dms-paste DMS 2.x QML tracking | `docs/todo/upstream.md` `[blocked:push]` (landed) |
-| monitor365 migration 027 | `docs/todo/upstream.md` `[blocked:push]` (landed this pass) |
-| `//`-with-`mkIf` eval guard | `docs/todo/pipeline.md` `[ready]` (landed this pass) |
-| FOD store-path reuse + `//` traps → `docs/agents/nix-flakes.md` | `docs/todo/pipeline.md` `[ready]` (landed this pass) |
-| Stale `nix build .#dms-shell` bump-verify comment | `docs/todo/desktop.md` `[ready]` (landed this pass) |
-| `signoz_traces_missing = 1` / QA after storms | `docs/todo/monitoring.md` `[watch]` (landed this pass) |
-| Deploy-smoke exit-3 close-out on a calm box | deliberately NOT harvested — it is a re-verification of *this report*, tracked in §7.6/§7.50; queueing it would duplicate an owner-visible action already pending |
-| Correct commit provenance (amend heuristic commits) | deliberately NOT harvested — the daemon owns the commit stream and a manual amend now would rewrite shared history without owner direction (§8.2) |
+| Follow-up                                                       | Where it landed                                                                                                                                                   |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| crush-daily + DiscordSync `templ-components` bump               | **DONE upstream** (parallel session, owner push grant, `955ddb2` / `79952c46`); the SystemNix-side LIFT is `docs/todo/upstream.md` `[ready]` (§7.21)              |
+| DiscordSync `go-health` bump                                    | **DONE upstream** (`79952c46`, row `[x]`); LIFT folds into §7.22                                                                                                  |
+| nsfw-classifier F0.3 telemetry compile break                    | `docs/todo/upstream.md` `[blocked:push]` (landed)                                                                                                                 |
+| dms-paste DMS 2.x QML tracking                                  | `docs/todo/upstream.md` `[blocked:push]` (landed)                                                                                                                 |
+| monitor365 migration 027                                        | `docs/todo/upstream.md` `[blocked:push]` (landed this pass)                                                                                                       |
+| `//`-with-`mkIf` eval guard                                     | `docs/todo/pipeline.md` `[ready]` (landed this pass)                                                                                                              |
+| FOD store-path reuse + `//` traps → `docs/agents/nix-flakes.md` | `docs/todo/pipeline.md` `[ready]` (landed this pass)                                                                                                              |
+| Stale `nix build .#dms-shell` bump-verify comment               | `docs/todo/desktop.md` `[ready]` (landed this pass)                                                                                                               |
+| `signoz_traces_missing = 1` / QA after storms                   | `docs/todo/monitoring.md` `[watch]` (landed this pass)                                                                                                            |
+| Deploy-smoke exit-3 close-out on a calm box                     | deliberately NOT harvested — it is a re-verification of _this report_, tracked in §7.6/§7.50; queueing it would duplicate an owner-visible action already pending |
+| Correct commit provenance (amend heuristic commits)             | deliberately NOT harvested — the daemon owns the commit stream and a manual amend now would rewrite shared history without owner direction (§8.2)                 |
 
 ---
 

@@ -8,24 +8,24 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-| - | ---- | -------- |
-| a1 | **W1 — avatar-sync phase** (4th ExecStart of `forgejo-github-sync`, org listing with phantom-green guard, stateless byte-compare converge, binary-safe base64 payload, 1 MiB cap, warn+count-then-exit-1-after-full-pass, `forgejo_avatar_*` textfile metrics) | full detail: 01-04 report §a; `forgejo-scripts-fixture` green |
-| a2 | **W1 — API contract verified against the DEPLOYED forgejo** (swagger.v1.json pulled live, v15.0.10: `POST /orgs/{org}/avatar` + `/user/avatar`, `{"image": base64}` → 204; org/user GET carry `avatar_url`) | 01-04 report §a2 |
-| a3 | **W2 — owner decision implemented**: `FORGEJO_AVATAR_SYNC_USER` **defaults to false** — Pocket ID owns the user avatar via the OIDC picture claim (`oauth2_client.UPDATE_AVATAR`); `=true` opts back into GitHub sync. Orgs are the phase's payload. Header carries the decision + date; skip message reworded ("User avatar sync skipped … OIDC (Pocket ID) owns it") | `_forgejo-scripts.nix:645-652,797`; unit phases comment in `forgejo.nix` corrected to org-only default |
-| a4 | **W2 — fixture re-based on the new default**: run 1 = user upload **only with explicit `FORGEJO_AVATAR_SYNC_USER=true`** (opt-in path coverage retained, payload round-trip assert intact); run 2 = **env-unset default** asserts the user is skipped (no POST, count stays 1, `targets=1 updated=0 in-sync=1`) while the org converges; run 3 = POST-500 opt-in failure path unchanged | `nix build .#checks.x86_64-linux.forgejo-scripts-fixture` → exit 0 |
-| a5 | **W2 — verification battery**: fixture green; **definitive** `nix flake check --no-build` → "all checks passed!" (grep-confirmed, not tail-inferred); `nix fmt` scoped → 0 changed | session log |
-| a6 | **W2 — zero drift across 6 surfaces**: runbook sync-model row (orgs-only + decision), CHANGELOG bullet retitled "orgs (user stays OIDC-owned)", `docs/todo/services.md` row + `TODO_LIST.md` one-liner both updated (edit-both rule), 01-04 report annotated with a dated ADDENDUM | grep-verified post-edit |
-| a7 | **Tree-truth check**: flip confirmed IN the committed tree (`_forgejo-scripts.nix:652` `:-false`, commit `2462d648`); W1 report committed (`202def65`); only foreign diff in tree = `modules/nixos/desktop/offline-banner.nix` (parallel session, untouched, flagged) | git at 01:29 |
+| #  | Item                                                                                                                                                                                                                                                                                                                                                                                    | Evidence                                                                                               |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| a1 | **W1 — avatar-sync phase** (4th ExecStart of `forgejo-github-sync`, org listing with phantom-green guard, stateless byte-compare converge, binary-safe base64 payload, 1 MiB cap, warn+count-then-exit-1-after-full-pass, `forgejo_avatar_*` textfile metrics)                                                                                                                          | full detail: 01-04 report §a; `forgejo-scripts-fixture` green                                          |
+| a2 | **W1 — API contract verified against the DEPLOYED forgejo** (swagger.v1.json pulled live, v15.0.10: `POST /orgs/{org}/avatar` + `/user/avatar`, `{"image": base64}` → 204; org/user GET carry `avatar_url`)                                                                                                                                                                             | 01-04 report §a2                                                                                       |
+| a3 | **W2 — owner decision implemented**: `FORGEJO_AVATAR_SYNC_USER` **defaults to false** — Pocket ID owns the user avatar via the OIDC picture claim (`oauth2_client.UPDATE_AVATAR`); `=true` opts back into GitHub sync. Orgs are the phase's payload. Header carries the decision + date; skip message reworded ("User avatar sync skipped … OIDC (Pocket ID) owns it")                  | `_forgejo-scripts.nix:645-652,797`; unit phases comment in `forgejo.nix` corrected to org-only default |
+| a4 | **W2 — fixture re-based on the new default**: run 1 = user upload **only with explicit `FORGEJO_AVATAR_SYNC_USER=true`** (opt-in path coverage retained, payload round-trip assert intact); run 2 = **env-unset default** asserts the user is skipped (no POST, count stays 1, `targets=1 updated=0 in-sync=1`) while the org converges; run 3 = POST-500 opt-in failure path unchanged | `nix build .#checks.x86_64-linux.forgejo-scripts-fixture` → exit 0                                     |
+| a5 | **W2 — verification battery**: fixture green; **definitive** `nix flake check --no-build` → "all checks passed!" (grep-confirmed, not tail-inferred); `nix fmt` scoped → 0 changed                                                                                                                                                                                                      | session log                                                                                            |
+| a6 | **W2 — zero drift across 6 surfaces**: runbook sync-model row (orgs-only + decision), CHANGELOG bullet retitled "orgs (user stays OIDC-owned)", `docs/todo/services.md` row + `TODO_LIST.md` one-liner both updated (edit-both rule), 01-04 report annotated with a dated ADDENDUM                                                                                                      | grep-verified post-edit                                                                                |
+| a7 | **Tree-truth check**: flip confirmed IN the committed tree (`_forgejo-scripts.nix:652` `:-false`, commit `2462d648`); W1 report committed (`202def65`); only foreign diff in tree = `modules/nixos/desktop/offline-banner.nix` (parallel session, untouched, flagged)                                                                                                                   | git at 01:29                                                                                           |
 
 ## b) PARTIALLY DONE
 
-| # | Item | Missing half |
-| - | ---- | ------------ |
-| b1 | **Live verification** — everything agent-verifiable is done; the RUN is deploy-gated (owner deploys). Expectations now **org-only**: first sync run uploads every org avatar, `forgejo_avatar_failed 0`, second run `updated=0` | deploy + 2 hourly runs (queued `services.md:63` + `TODO_LIST:207`) |
-| b2 | **Verbatim-storage assumption** — byte-compare converge rests on forgejo storing uploads verbatim (Gitea-source inference, never live-probed). Discriminator = the second run's `updated=0`; remedy if falsified = state-file hashing. Labelled UNVERIFIED everywhere it's claimed | same deploy |
-| b3 | **Observability** — metrics publish, unit OnFailure → Discord covers phase failure; **no Gatus check** on `forgejo_avatar_failed` (deliberate, decision documented; §g Q3) | optional check |
-| b4 | **Commit attribution** — the flip is buried in heuristic daemon commits (`2462d648`); only `4b63032b` (base64 fix) carries a real message. W1's `d45ced6b` mixed my hunk with a FOREIGN boot-speed report (parallel session) — flagged, untouched | nothing actionable now |
+| #  | Item                                                                                                                                                                                                                                                                               | Missing half                                                       |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| b1 | **Live verification** — everything agent-verifiable is done; the RUN is deploy-gated (owner deploys). Expectations now **org-only**: first sync run uploads every org avatar, `forgejo_avatar_failed 0`, second run `updated=0`                                                    | deploy + 2 hourly runs (queued `services.md:63` + `TODO_LIST:207`) |
+| b2 | **Verbatim-storage assumption** — byte-compare converge rests on forgejo storing uploads verbatim (Gitea-source inference, never live-probed). Discriminator = the second run's `updated=0`; remedy if falsified = state-file hashing. Labelled UNVERIFIED everywhere it's claimed | same deploy                                                        |
+| b3 | **Observability** — metrics publish, unit OnFailure → Discord covers phase failure; **no Gatus check** on `forgejo_avatar_failed` (deliberate, decision documented; §g Q3)                                                                                                         | optional check                                                     |
+| b4 | **Commit attribution** — the flip is buried in heuristic daemon commits (`2462d648`); only `4b63032b` (base64 fix) carries a real message. W1's `d45ced6b` mixed my hunk with a FOREIGN boot-speed report (parallel session) — flagged, untouched                                  | nothing actionable now                                             |
 
 ## c) NOT STARTED (noticed, deliberately out of scope)
 
@@ -60,38 +60,38 @@
 
 **H** = harvested/queued · **C** = CLOSED this session · **R** = roadmap (deliberately not harvested — no owner signal)
 
-| # | Item | Tag |
-| - | ---- | --- |
-| 1 | Deploy; first sync run uploads all ORG avatars | H (services.md:63, TODO_LIST:207) |
-| 2 | Second-run `updated=0` → settles verbatim-storage; if re-encode seen, switch to state-file hashing | H (same row) |
-| 3 | ~~User-avatar source decision~~ **CLOSED: OIDC > GitHub, default false** | C (W2) |
-| 4 | Org metadata parity (description/website/full_name) — sibling session | R (§g Q1) |
-| 5 | Gatus "Forgejo Avatar Sync" check (`forgejo_avatar_failed` / stale `last_run`) | R (§g Q3) |
-| 6 | Module options `services.forgejo.avatarSync.{enable,syncUser}` (kill the env-only toggle) | R |
-| 7 | Create-time avatar in the org-create POST (no default-avatar hour) | R |
-| 8 | Runbook break-glass: force avatar re-sync recipe (`DELETE /orgs/{org}/avatar`) | R |
-| 9 | Unit + timer description truth-sync ("repos" → "repos + org avatars") | R |
-| 10 | Fixture stub: auto-touch body file on code-only responses (kills `cat` stderr noise) | R |
-| 11 | statix/deadnix standalone re-run at next push window (daemon-amend bypassed the hook legs; treefmt covered format only) | R |
-| 12 | `curl --max-filesize` instead of post-download `wc -c` cap | R |
-| 13 | GH_AVATAR_TMP.b64 leak window on SIGKILL (tmpreaper absorbs; note) | R |
-| 14 | Cross-link shared PATH-stub scaffolding row (TODO_LIST:142) with the avatar fixture's counter-reset/slot-ownership pattern | R |
-| 15 | Post-deploy: confirm real org count N + `forgejo_avatar_*` visible in node_exporter scrape | R (folds into #1) |
-| 16 | Runbook sync-model row: per-run cost note (~1 listing + N+2 downloads, seconds) | R |
-| 17 | Watch: GitHub org whose login collides with a local-only forgejo org (`starred`) → 403/404 warn+count (acceptable; document if it fires) | R |
-| 18 | Re-verify Catppuccin theme assets on live v15.0.10 (runbook cites v15.0.9-era verification) | R |
-| 19 | Close the sibling `[decision]`: Pocket ID `avatarFile` 4MB master vs 54KB `avatar-dms.png` (services.md:61) — avatar surfaces are being touched NOW, this is the same face one layer up | R |
-| 20 | `forgejo_avatar_last_success_timestamp_seconds` if #5 lands | R |
-| 21 | Pathspec-commit future avatar follow-ups out of shared daemon sweeps | standing |
-| 22 | post-deploy-check §-leg for avatars? (probably overkill — unit + metrics coverage; decide with #5) | R |
-| 23 | One-week journal noise check (per-run GitHub GET budget across 4 phases; still <20 calls/run) | R |
-| 24 | Revisit only on slowness: avatar phase adds N forgejo GETs per run | R |
-| 25 | Document the 1 MiB cap rationale in the runbook (GitHub avatars ≤460px; cap is abuse-guard) | R |
-| 26 | Sweep `_forgejo-scripts.nix` for other metadata-less create calls (org create is the known one) | R |
-| 27 | Fixture header: note the stub `--data-binary` capture extension | R |
-| 28 | No upstream filing — all endpoints used as documented; no Forgejo bug found | note |
-| 29 | §f items 4–30 stay R until you signal; only 1–2 are harvest commitments | note |
-| 30 | Old W1 report (01-04) + this closeout = the pair to cite; ANNOTATE, never rewrite, if later work touches avatars | standing |
+| #  | Item                                                                                                                                                                                    | Tag                               |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1  | Deploy; first sync run uploads all ORG avatars                                                                                                                                          | H (services.md:63, TODO_LIST:207) |
+| 2  | Second-run `updated=0` → settles verbatim-storage; if re-encode seen, switch to state-file hashing                                                                                      | H (same row)                      |
+| 3  | ~~User-avatar source decision~~ **CLOSED: OIDC > GitHub, default false**                                                                                                                | C (W2)                            |
+| 4  | Org metadata parity (description/website/full_name) — sibling session                                                                                                                   | R (§g Q1)                         |
+| 5  | Gatus "Forgejo Avatar Sync" check (`forgejo_avatar_failed` / stale `last_run`)                                                                                                          | R (§g Q3)                         |
+| 6  | Module options `services.forgejo.avatarSync.{enable,syncUser}` (kill the env-only toggle)                                                                                               | R                                 |
+| 7  | Create-time avatar in the org-create POST (no default-avatar hour)                                                                                                                      | R                                 |
+| 8  | Runbook break-glass: force avatar re-sync recipe (`DELETE /orgs/{org}/avatar`)                                                                                                          | R                                 |
+| 9  | Unit + timer description truth-sync ("repos" → "repos + org avatars")                                                                                                                   | R                                 |
+| 10 | Fixture stub: auto-touch body file on code-only responses (kills `cat` stderr noise)                                                                                                    | R                                 |
+| 11 | statix/deadnix standalone re-run at next push window (daemon-amend bypassed the hook legs; treefmt covered format only)                                                                 | R                                 |
+| 12 | `curl --max-filesize` instead of post-download `wc -c` cap                                                                                                                              | R                                 |
+| 13 | GH_AVATAR_TMP.b64 leak window on SIGKILL (tmpreaper absorbs; note)                                                                                                                      | R                                 |
+| 14 | Cross-link shared PATH-stub scaffolding row (TODO_LIST:142) with the avatar fixture's counter-reset/slot-ownership pattern                                                              | R                                 |
+| 15 | Post-deploy: confirm real org count N + `forgejo_avatar_*` visible in node_exporter scrape                                                                                              | R (folds into #1)                 |
+| 16 | Runbook sync-model row: per-run cost note (~1 listing + N+2 downloads, seconds)                                                                                                         | R                                 |
+| 17 | Watch: GitHub org whose login collides with a local-only forgejo org (`starred`) → 403/404 warn+count (acceptable; document if it fires)                                                | R                                 |
+| 18 | Re-verify Catppuccin theme assets on live v15.0.10 (runbook cites v15.0.9-era verification)                                                                                             | R                                 |
+| 19 | Close the sibling `[decision]`: Pocket ID `avatarFile` 4MB master vs 54KB `avatar-dms.png` (services.md:61) — avatar surfaces are being touched NOW, this is the same face one layer up | R                                 |
+| 20 | `forgejo_avatar_last_success_timestamp_seconds` if #5 lands                                                                                                                             | R                                 |
+| 21 | Pathspec-commit future avatar follow-ups out of shared daemon sweeps                                                                                                                    | standing                          |
+| 22 | post-deploy-check §-leg for avatars? (probably overkill — unit + metrics coverage; decide with #5)                                                                                      | R                                 |
+| 23 | One-week journal noise check (per-run GitHub GET budget across 4 phases; still <20 calls/run)                                                                                           | R                                 |
+| 24 | Revisit only on slowness: avatar phase adds N forgejo GETs per run                                                                                                                      | R                                 |
+| 25 | Document the 1 MiB cap rationale in the runbook (GitHub avatars ≤460px; cap is abuse-guard)                                                                                             | R                                 |
+| 26 | Sweep `_forgejo-scripts.nix` for other metadata-less create calls (org create is the known one)                                                                                         | R                                 |
+| 27 | Fixture header: note the stub `--data-binary` capture extension                                                                                                                         | R                                 |
+| 28 | No upstream filing — all endpoints used as documented; no Forgejo bug found                                                                                                             | note                              |
+| 29 | §f items 4–30 stay R until you signal; only 1–2 are harvest commitments                                                                                                                 | note                              |
+| 30 | Old W1 report (01-04) + this closeout = the pair to cite; ANNOTATE, never rewrite, if later work touches avatars                                                                        | standing                          |
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -101,4 +101,4 @@
 
 ---
 
-*Verification chain at close: fixture (behavior + wire round-trip, default-off user) → `nix flake check --no-build` "all checks passed!" → evo-x2 ExecStart eval → `nix fmt` 0-changed → tree-truth grep (`:-false` committed). Remaining gap to "done": one deploy.*
+_Verification chain at close: fixture (behavior + wire round-trip, default-off user) → `nix flake check --no-build` "all checks passed!" → evo-x2 ExecStart eval → `nix fmt` 0-changed → tree-truth grep (`:-false` committed). Remaining gap to "done": one deploy._

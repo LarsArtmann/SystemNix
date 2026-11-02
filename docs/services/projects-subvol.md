@@ -45,8 +45,9 @@ Receive and snapshot names are btrbk basename-form `projects.<YYYYMMDDTHHMM>`
 (nested-subvol precedent: `hot/forgejo` → `forgejo.<date>`). The collector
 greps `^projects\..` and both verify legs match `projects.*`. **After the
 first live seed, confirm the actual prefix** (`ls /mnt/pool/backups/projects-subvol`
-+ `ls /mnt/hot/.snapshots`) and update the three greps if btrbk chose
-differently — the plan deferred exactly this to first-seed observation.
+
+- `ls /mnt/hot/.snapshots`) and update the three greps if btrbk chose
+  differently — the plan deferred exactly this to first-seed observation.
 
 ## Migration runbook (owner windows)
 

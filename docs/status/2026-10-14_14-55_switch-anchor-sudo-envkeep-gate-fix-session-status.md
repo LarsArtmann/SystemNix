@@ -56,9 +56,10 @@ Nothing destroyed, nothing reverted, no secrets exposed, no foreign work clobber
 
 ## f) Up to 50 things to get done next
 
-*Direct follow-ups of THIS session (harvest ledger in §h) are marked ★; everything else is observed-in-passing or pre-existing queue rows, listed because the owner asked for the full next-work picture.*
+_Direct follow-ups of THIS session (harvest ledger in §h) are marked ★; everything else is observed-in-passing or pre-existing queue rows, listed because the owner asked for the full next-work picture._
 
 **This fix's lifecycle**
+
 1. ★ Deploy the sudo env_keep fix at the next calm window (queued `[ready]`, TODO_LIST + stability.md).
 2. ★ Post-deploy: verify `sudo env … nix eval` inherits NIX_HEAVY_GATE_FORCE (acceptance check in the row).
 3. ★ Probe whether root's secure_path resolves the gate shim or real nix (determines root-leg gate coverage vs bypass-only).
@@ -110,13 +111,13 @@ Nothing destroyed, nothing reverted, no secrets exposed, no foreign work clobber
 
 ## h) §f self-harvest ledger (TODO-system rule)
 
-| Item | Disposition |
-|---|---|
-| Deploy env_keep fix + post-deploy var check | **HARVESTED pre-report** — `TODO_LIST.md` + `docs/todo/stability.md` `[ready]` rows (landed in `bb070afc`) |
-| Bootloader-default direct evidence (leg 3) | **Deliberately not harvested** — folds into item 1's post-deploy verification (same window, same privileged probe batch); keeping the queue to one deploy-scoped row |
-| stability.md gate section | **Deliberately not harvested** — the gate's author session was editing gate-adjacent docs live during this session; queuing a competing doc task invites the drift the rule exists to prevent. Revisit if no gate section appears within their close-out |
-| /tmp harness cleanup | **Deliberately not harvested** — `/tmp` is tmpfs-scoped, self-cleaning at reboot; queuing it is noise |
+| Item                                        | Disposition                                                                                                                                                                                                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Deploy env_keep fix + post-deploy var check | **HARVESTED pre-report** — `TODO_LIST.md` + `docs/todo/stability.md` `[ready]` rows (landed in `bb070afc`)                                                                                                                                               |
+| Bootloader-default direct evidence (leg 3)  | **Deliberately not harvested** — folds into item 1's post-deploy verification (same window, same privileged probe batch); keeping the queue to one deploy-scoped row                                                                                     |
+| stability.md gate section                   | **Deliberately not harvested** — the gate's author session was editing gate-adjacent docs live during this session; queuing a competing doc task invites the drift the rule exists to prevent. Revisit if no gate section appears within their close-out |
+| /tmp harness cleanup                        | **Deliberately not harvested** — `/tmp` is tmpfs-scoped, self-cleaning at reboot; queuing it is noise                                                                                                                                                    |
 
 ---
 
-*Report covers ONLY this session's work and in-passing observations per owner instruction; no external research performed. Waiting for instructions.*
+_Report covers ONLY this session's work and in-passing observations per owner instruction; no external research performed. Waiting for instructions._

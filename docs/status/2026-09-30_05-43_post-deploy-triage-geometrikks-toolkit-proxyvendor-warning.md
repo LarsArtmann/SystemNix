@@ -22,8 +22,8 @@ Session: deploy-triage of the user's `nh os switch` (exit 4) + `nix run .#deploy
 ## b) PARTIALLY DONE
 
 1. **Bank-Sync sync errors — researched, fix is user-gated.** Journal: per-balance `statements paused pending SCA approval — run 'bank-sync sca approve'` with `approval_token_issued=false` on every balance; the ~90-day Wise SCA challenge re-armed. Metrics: `bank_sync_sync_errors_total 3` (what the smoke FAILs on), `bank_sync_sca_challenges_total 618` (cumulative). The 3 errors: 26 ERROR lines at 04:47 during the deploy IO storm (`backfill failed chunks_done=0`, `failed to save balance` — transient DB write failures); later cycles completed degraded-but-green. **Fix = user OTP**: dashboard flow (bank-sync → Sync State card → "Wise approval needed" → Approve now) or `bank-sync sca approve` with the daemon's env (my user-shell `bank-sync sca status` failed with `wise.api_key_missing`; sudo is blocked in my sandbox). Note: `sync_errors_total` is cumulative since process start — the smoke stays red until a restart AFTER clean cycles.
-~~2. **InboxClean `auth_expired` — diagnosed, fix is user-gated.** Main account token dead (the known testing-mode 7-day expiry class; `work` is connected and PASSING). Fix order matters (2026-09-04 lesson): flip the Google OAuth consent screen to **"In production" FIRST**, then re-auth main via the documented env command on the evo-x2 desktop. Until then `inboxclean-sync` fails exit 75 every 30 min and OnFailure pages.~~ done — services.md:343 + CHANGELOG 2026-10-04 — re-consent landed, grant proven live
-~~3. **geometrikks go-live — built, not deployed.** All store artifacts are ready; the flip is `nix run .#deploy`. Expected on the flip: ONE postgres restart (new plugin bundle) bouncing paperless/immich/miniflux once (documented, self-retried); `geometrikks-db-provision` re-runs idempotently and creates the toolkit extension; then the service should go green.~~ done — §h addendum #3 + 07-00 §a.6 — 05:50 activation carried the fix; GREEN (20× 200s/10min)
+   ~~2. **InboxClean `auth_expired` — diagnosed, fix is user-gated.** Main account token dead (the known testing-mode 7-day expiry class; `work` is connected and PASSING). Fix order matters (2026-09-04 lesson): flip the Google OAuth consent screen to **"In production" FIRST**, then re-auth main via the documented env command on the evo-x2 desktop. Until then `inboxclean-sync` fails exit 75 every 30 min and OnFailure pages.~~ done — services.md:343 + CHANGELOG 2026-10-04 — re-consent landed, grant proven live
+   ~~3. **geometrikks go-live — built, not deployed.** All store artifacts are ready; the flip is `nix run .#deploy`. Expected on the flip: ONE postgres restart (new plugin bundle) bouncing paperless/immich/miniflux once (documented, self-retried); `geometrikks-db-provision` re-runs idempotently and creates the toolkit extension; then the service should go green.~~ done — §h addendum #3 + 07-00 §a.6 — 05:50 activation carried the fix; GREEN (20× 200s/10min)
 
 ## c) NOT STARTED (deliberately — user-owned or follow-on)
 
@@ -71,9 +71,9 @@ Session: deploy-triage of the user's `nh os switch` (exit 4) + `nix run .#deploy
 
 13. Make the CV render smoke IO-pressure-aware (WARN-not-FAIL under PSI like the shell check) — today it false-FAILED twice during the storm.
 14. Add a geometrikks probe to post-deploy-check (there is none today — the service was dark since 09-29 and no smoke line noticed).
-~~15. Verify a Gatus check exists for geometrikks; if red-since-09-29 was silently tolerated, find why nothing paged (OnFailure DID fire — Discord).~~ done — §h addendum #3 — "Gatus 'GeoMetrikks' check existed all along — §f.15 answered"
-16. Bank-sync smoke: consider windowing `sync_errors_total` (restart-cumulative counters keep the check red long after the fix).
-17. Bank-sync: the 04:47 ERROR burst (backfill/save failures) was IO-storm transient — consider a metric for DB-write failures specifically so SCA-degraded vs storage-degraded are distinguishable.
+    ~~15. Verify a Gatus check exists for geometrikks; if red-since-09-29 was silently tolerated, find why nothing paged (OnFailure DID fire — Discord).~~ done — §h addendum #3 — "Gatus 'GeoMetrikks' check existed all along — §f.15 answered"
+15. Bank-sync smoke: consider windowing `sync_errors_total` (restart-cumulative counters keep the check red long after the fix).
+16. Bank-sync: the 04:47 ERROR burst (backfill/save failures) was IO-storm transient — consider a metric for DB-write failures specifically so SCA-degraded vs storage-degraded are distinguishable.
 
 **Docs / memory (AGENTS.md)**
 

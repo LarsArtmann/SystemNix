@@ -47,7 +47,7 @@
 
 1. **Unit misread, repeated class.** I formatted `last_visit_time` as microseconds (`/1e6`) → NULL/empty datetimes; the column is **nanoseconds** (`/1e9`). This is the SAME class as tonight's 21-47 report retraction (journal `duration` ms-vs-ns misread). The lesson did not transfer to the new column — I self-caught only because the empty output looked impossible.
 2. **False-negative near-miss.** My first wikipedia LIKE query "returned empty" — it had actually **parse-failed** (`no such column: visit_duration`), with stderr/stdout interleaving making the error look like it belonged to the NEXT command. For a moment the evidence read as "wikipedia absent from places.sqlite" — the exact wrong premise that would have flipped the whole verdict. Caught on the follow-up schema check. (An empty SQL result is only evidence after the error path is checked.)
-3. *(Minor)* Two burned commands on the places.sqlite lock before going to the copy pattern; and one services.md edit raced the auto-commit daemon (`file modified since read`) — re-read and re-applied cleanly, no damage.
+3. _(Minor)_ Two burned commands on the places.sqlite lock before going to the copy pattern; and one services.md edit raced the auto-commit daemon (`file modified since read`) — re-read and re-applied cleanly, no damage.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -63,22 +63,22 @@
 
 **New this report (rows written to `docs/todo/{services,upstream}.md` + `TODO_LIST.md`):**
 
-| # | Item | Tag | Surface |
-|---|------|-----|---------|
+| # | Item                                                                                                                  | Tag              | Surface     |
+| - | --------------------------------------------------------------------------------------------------------------------- | ---------------- | ----------- |
 | 1 | Stop-window re-attribution of the 217 zero-user behavioural rows (6 tables; re-run zero-overlap + backup gates first) | `[blocked:user]` | services.md |
-| 2 | Render-proof the firefox-burial claim via repro harness (+ trace `dashboard.go:346` consumer) | `[ready]` | services.md |
-| 3 | Fix behavioural sync marshal failure (time.Duration fields; acceptance: one tick logs `behavioural sync complete`) | `[ready]` | upstream.md |
-| 4 | Add Firefox search-query extraction (or declare Chrome-only + stop rendering the permanent zero) | `[ready]` | upstream.md |
-| 5 | Determine downloads firefox=0 mechanism (genuine vs gap) | `[ready]` | upstream.md |
-| 6 | `reattribute` command — scope EXPANDED: visits + behavioural tables + events (was visits+events) | `[ready]` | upstream.md |
-| 7 | Redirect-chain landing-page-loss discussion (keep the last chain visit?) | `[decision]` | upstream.md |
+| 2 | Render-proof the firefox-burial claim via repro harness (+ trace `dashboard.go:346` consumer)                         | `[ready]`        | services.md |
+| 3 | Fix behavioural sync marshal failure (time.Duration fields; acceptance: one tick logs `behavioural sync complete`)    | `[ready]`        | upstream.md |
+| 4 | Add Firefox search-query extraction (or declare Chrome-only + stop rendering the permanent zero)                      | `[ready]`        | upstream.md |
+| 5 | Determine downloads firefox=0 mechanism (genuine vs gap)                                                              | `[ready]`        | upstream.md |
+| 6 | `reattribute` command — scope EXPANDED: visits + behavioural tables + events (was visits+events)                      | `[ready]`        | upstream.md |
+| 7 | Redirect-chain landing-page-loss discussion (keep the last chain visit?)                                              | `[decision]`     | upstream.md |
 
 **Advanced/validated by this session (already queued, not duplicated):**
 
-| # | Item | Where |
-|---|------|-------|
-| 8 | Behavioural-fix filing gate (verify-before-filing: re-read behavioural.go/client.go at HEAD + issues) | upstream.md row 3 acceptance |
-| 9 | Owner-visible vs table-wide counts become correct automatically once #1 lands (searches 100→225 for helium) | consequence of row 1 |
+| # | Item                                                                                                        | Where                        |
+| - | ----------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| 8 | Behavioural-fix filing gate (verify-before-filing: re-read behavioural.go/client.go at HEAD + issues)       | upstream.md row 3 acceptance |
+| 9 | Owner-visible vs table-wide counts become correct automatically once #1 lands (searches 100→225 for helium) | consequence of row 1         |
 
 **The queue already owns the prioritized remainder** (hot-db-bootstrap diagnose, crowdsec first-activation failure, /run/current-system anchor, hot-db.md LIVE flip, migrate-hot-db checkpoint step, nightly btrbk watch, dnsblockd QLC reclaim, Python sweeper deletions, dnsblockd race filing, DiscordSync FOD invariance + lockstep port + 2 pre-existing test failures, templ-components v1.23 verification, .gitignore sweep, geometrikks ×2, go-taskqueue ×2, CI-watch wave, slow-render-burst watch, runbook-polish, upstream reattribute + the rows above). Per the TODO-system rules I will NOT restate them as new report items — the queue is the single source of truth. Explicitly NOT harvested: the missing-`visit_duration` Firefox schema observation (agent works without it; no action until something breaks).
 
@@ -90,4 +90,4 @@
 
 ---
 
-*Evidence trail: places.sqlite WAL-copy queries, agent journal 21:55–22:24, live server DB via sudo-wrapped sqlite3, deployed-source reads at `8900354` (local checkout = upstream HEAD, clean). Prod untouched; no commits; auto-commit daemon owns the tree.*
+_Evidence trail: places.sqlite WAL-copy queries, agent journal 21:55–22:24, live server DB via sudo-wrapped sqlite3, deployed-source reads at `8900354` (local checkout = upstream HEAD, clean). Prod untouched; no commits; auto-commit daemon owns the tree._

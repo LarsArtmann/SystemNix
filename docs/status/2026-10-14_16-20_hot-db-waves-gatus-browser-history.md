@@ -171,6 +171,7 @@ owner's standing 2026-09-30 QLC-churn evacuation doctrine and the
 ## f) NEXT (up to 50, ordered by impact; items marked ⭕ are this session's direct follow-ups and are harvested into TODO_LIST/domain libraries per the standing rule)
 
 **This session's direct follow-ups (⭕ harvested now):**
+
 1. ⭕ `[watch]` Verify tonight's 02:15 `browser-history-backup` lands pool-side through the mounted subvol (first real run).
 2. ⭕ `[watch]` Soak gate (≥1 week, incl. one verified gatus check cycle + backup): then reclaim both shadowed QLC stores (contents-only, keep dirs).
 3. ⭕ `[blocked:user]` Root-cause the deploy profile-set/anchor failure (recurred once WITH the env_keep fix deployed); fix the mechanism, not the retry.
@@ -253,6 +254,7 @@ owner's standing 2026-09-30 QLC-churn evacuation doctrine and the
 ---
 
 **Verification receipts (key evidence, this session):**
+
 - Cutover: `files: src=3 dst=3 bytes: src=19940064 dst=19940064` (gatus);
   `src=3 dst=3 bytes: src=204124160 dst=204124160` (browser-history)
 - Finalize: gatus `cutover=3 now=3` exact; browser-history `cutover=3 now=5`
@@ -274,14 +276,14 @@ owner's standing 2026-09-30 QLC-churn evacuation doctrine and the
 
 Fresh receipts at ~16:25, not from memory:
 
-| Check | hot/gatus | hot/browser-history |
-|---|---|---|
-| Kernel mount table | `/dev/nvme1n1p2[/hot/gatus]` at `/var/lib/private/gatus` | `/dev/nvme1n1p2[/hot/browser-history]` at `/var/lib/private/browser-history` |
-| Mounted-metric (fail-closed) | `hot_db_entry_mounted{name="gatus"} 1` | `hot_db_entry_mounted{name="browser-history"} 1` |
-| Functional | `:9110` → 200 OK, watchdog actively alerting | `/health` → 200 OK |
-| Writes flowing | checks landing in mounted DB | agent ingest 75 s old, `agents_active 1` |
-| Journals (30 min) | 0 errors | 0 errors |
-| Boot | ANCHORED: profile == current-system | same |
+| Check                        | hot/gatus                                                | hot/browser-history                                                          |
+| ---------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Kernel mount table           | `/dev/nvme1n1p2[/hot/gatus]` at `/var/lib/private/gatus` | `/dev/nvme1n1p2[/hot/browser-history]` at `/var/lib/private/browser-history` |
+| Mounted-metric (fail-closed) | `hot_db_entry_mounted{name="gatus"} 1`                   | `hot_db_entry_mounted{name="browser-history"} 1`                             |
+| Functional                   | `:9110` → 200 OK, watchdog actively alerting             | `/health` → 200 OK                                                           |
+| Writes flowing               | checks landing in mounted DB                             | agent ingest 75 s old, `agents_active 1`                                     |
+| Journals (30 min)            | 0 errors                                                 | 0 errors                                                                     |
+| Boot                         | ANCHORED: profile == current-system                      | same                                                                         |
 
 Residuals unchanged (time-gated, queued): first 02:15 backup through the
 mount (tonight), one live btrbk cycle for the landmine scan, ≥1 week soak
@@ -296,16 +298,16 @@ pre-build (15:08, RC=0) and deploy (15:13) — the deploy re-evaluated a tree
 that had never been built, and the FOD failure landed with units already
 down. Timeline fix:
 
-| T-minus | Step | Downtime |
-| --- | --- | --- |
-| −30 min | Content-pin + tree-quiescence gate (no daemon commits ≥10 min, flock free, no other active session) | none |
-| −30 min | `prepare` (warm, services running) | none |
-| −25 min | Edit config + `nix flake check --no-build` | none |
-| −20 min | `nix build` toplevel — the ONLY heavy step, services up | none |
-| −1 min | **Fresh-drift gate (the missing step):** `git log -1` equals the built rev + one cached re-eval; any drift → rebuild while UP | none |
-| 0 | `cutover` (stop + seconds-scale delta + verify + marker) | **starts** |
-| +1 min | `deploy` — pure switch of the pre-built closure; anchor assert | |
-| +2 min | `finalize` + probes | **ends** |
+| T-minus | Step                                                                                                                          | Downtime   |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| −30 min | Content-pin + tree-quiescence gate (no daemon commits ≥10 min, flock free, no other active session)                           | none       |
+| −30 min | `prepare` (warm, services running)                                                                                            | none       |
+| −25 min | Edit config + `nix flake check --no-build`                                                                                    | none       |
+| −20 min | `nix build` toplevel — the ONLY heavy step, services up                                                                       | none       |
+| −1 min  | **Fresh-drift gate (the missing step):** `git log -1` equals the built rev + one cached re-eval; any drift → rebuild while UP | none       |
+| 0       | `cutover` (stop + seconds-scale delta + verify + marker)                                                                      | **starts** |
+| +1 min  | `deploy` — pure switch of the pre-built closure; anchor assert                                                                |            |
+| +2 min  | `finalize` + probes                                                                                                           | **ends**   |
 
 Structural candidates (awaiting owner go-ahead, not yet implemented):
 

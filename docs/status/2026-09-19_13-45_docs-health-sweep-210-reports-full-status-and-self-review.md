@@ -41,14 +41,14 @@
 
 ## c) NOT STARTED
 
-| # | Item                                                                                                      | Why it matters                                                                                                                                                             |
-| - | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | qmd re-index                                                                                              | The MCP returned file-not-found for the freshest reports during this session — the sweep corpus is unsearchable until re-indexed (flagged by earlier sweeps too)           |
-| 2 | `docs/status/archived/README.md` rewrite                                                                  | Stale layout claims flagged 2026-09-15, still open; my 34 moves add to the dir it describes                                                                                |
-| 3 | Persisted fixture + flake-check registration for `check-todo-system.sh`                                   | Repo convention is committed negative tests (test-scripts.nix style); my selftest is inline-only                                                                           |
-| ~~4~~ done — planning triage COMPLETED (docs/status/2026-09-21_16-32 a5) | ~~`docs/planning/` triage + the superseded 2026-08-31 forgejo plan annotation (flagged by the 17-28 report)~~ | ~~Existing TODO row; adjacent to this sweep's archive work~~ |
-| 5 | Sweep-manifest persistence                                                                                | The per-file extraction tables exist ONLY in this conversation — a `docs/status/` manifest (or /tmp ledger) would make sweeps auditable and diffs comparable across sweeps |
-| 6 | Stale-count TODO rows refresh                                                                             | "Consolidate archived (571 files…)" → now 1341; "second-pass annotation (~30 files)" premise changed shape after this sweep                                                |
+| #                                                                        | Item                                                                                                          | Why it matters                                                                                                                                                             |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1                                                                        | qmd re-index                                                                                                  | The MCP returned file-not-found for the freshest reports during this session — the sweep corpus is unsearchable until re-indexed (flagged by earlier sweeps too)           |
+| 2                                                                        | `docs/status/archived/README.md` rewrite                                                                      | Stale layout claims flagged 2026-09-15, still open; my 34 moves add to the dir it describes                                                                                |
+| 3                                                                        | Persisted fixture + flake-check registration for `check-todo-system.sh`                                       | Repo convention is committed negative tests (test-scripts.nix style); my selftest is inline-only                                                                           |
+| ~~4~~ done — planning triage COMPLETED (docs/status/2026-09-21_16-32 a5) | ~~`docs/planning/` triage + the superseded 2026-08-31 forgejo plan annotation (flagged by the 17-28 report)~~ | ~~Existing TODO row; adjacent to this sweep's archive work~~                                                                                                               |
+| 5                                                                        | Sweep-manifest persistence                                                                                    | The per-file extraction tables exist ONLY in this conversation — a `docs/status/` manifest (or /tmp ledger) would make sweeps auditable and diffs comparable across sweeps |
+| 6                                                                        | Stale-count TODO rows refresh                                                                                 | "Consolidate archived (571 files…)" → now 1341; "second-pass annotation (~30 files)" premise changed shape after this sweep                                                |
 
 ## d) TOTALLY FUCKED UP (honest fumbles, this session)
 
@@ -77,17 +77,17 @@ Nothing shipped broken in the end state: all gates green, both defects fixed bef
 
 1. Wire `check-todo-system.sh` into CI (`nix-check.yml`) — parity with the other script gates
 2. Register it as a flake check + committed fixture in `tests/` (repo convention: persisted negative tests)
-~~3. Verify the boot-mirror deploy (queue v3, in flight 10:37 during my session) actually LANDED — I never confirmed its outcome~~ done — deploy landed system-786/787 (docs/status/2026-09-20_15-30 M1)
-4. Read back the sed-hunk edits in `AGENTS.md` + `docs/services/forgejo.md` (blanket path replacement inside long prose — verify no narrative distortion)
-5. Reconcile the queue-count arithmetic (279 at the 10:17 split → 212 now: −63 broken +2 harvest = 218 ≠ 212 — parallel sessions pruned rows; confirm nothing was lost)
-6. Persist the sweep manifest (per-file classifications) for auditability + next-sweep diffing
-7. qmd re-index (fresh reports are MCP-unsearchable — hit live this session)
-8. Extend `check-doc-links.sh` to catch backtick-path references (`docs/status/X.md` prose mentions) to moved files in living docs — the class I fixed manually; the gate only sees `[text](target)` links
-9. Extend `check-todo-system.sh`: flag queue rows whose title fuzzy-matches no library entry title (the `COST MEASURED` mangle class)
-10. Update the two stale-count TODO rows (archived=571→1341; "~30 files unstruck" premise)
-11. Run the full pre-commit hook chain once against a real stage to prove my insertion doesn't break hook ordering (bash -n only so far)
-12. Verify the daemon's next batch preserves the hook + AGENTS prevention-row edits intact (daemon-race discipline)
-13. `git fsck --full` once post-session (box crash history; zero-byte-object gotcha — cheap insurance, cited by the 09-30 report too)
+   ~~3. Verify the boot-mirror deploy (queue v3, in flight 10:37 during my session) actually LANDED — I never confirmed its outcome~~ done — deploy landed system-786/787 (docs/status/2026-09-20_15-30 M1)
+3. Read back the sed-hunk edits in `AGENTS.md` + `docs/services/forgejo.md` (blanket path replacement inside long prose — verify no narrative distortion)
+4. Reconcile the queue-count arithmetic (279 at the 10:17 split → 212 now: −63 broken +2 harvest = 218 ≠ 212 — parallel sessions pruned rows; confirm nothing was lost)
+5. Persist the sweep manifest (per-file classifications) for auditability + next-sweep diffing
+6. qmd re-index (fresh reports are MCP-unsearchable — hit live this session)
+7. Extend `check-doc-links.sh` to catch backtick-path references (`docs/status/X.md` prose mentions) to moved files in living docs — the class I fixed manually; the gate only sees `[text](target)` links
+8. Extend `check-todo-system.sh`: flag queue rows whose title fuzzy-matches no library entry title (the `COST MEASURED` mangle class)
+9. Update the two stale-count TODO rows (archived=571→1341; "~30 files unstruck" premise)
+10. Run the full pre-commit hook chain once against a real stage to prove my insertion doesn't break hook ordering (bash -n only so far)
+11. Verify the daemon's next batch preserves the hook + AGENTS prevention-row edits intact (daemon-race discipline)
+12. `git fsck --full` once post-session (box crash history; zero-byte-object gotcha — cheap insurance, cited by the 09-30 report too)
 
 **Tier 2 — annotation/archive doctrine (the deferred depth):**
 14. Per-item annotation upgrade pass over the 34 archived reports (numbered tables → per-row `~~…~~ done at <hash>`) — the skill's letter, explicitly deferred

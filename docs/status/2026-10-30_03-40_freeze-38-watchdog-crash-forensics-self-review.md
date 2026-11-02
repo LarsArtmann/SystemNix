@@ -86,4 +86,4 @@
 
 ---
 
-*Authored 2026-10-30 03:40–03:45 CET, boot `7b12c3db75ba4d95b86901594936b7b5`, HEAD `4d250ba0d`. All numbers in §a/§d re-verified against the journal in this session; §b.1/§c items deliberately deferred to a calm window per storm-aware probing discipline.*
+_Authored 2026-10-30 03:40–03:45 CET, boot `7b12c3db75ba4d95b86901594936b7b5`, HEAD `4d250ba0d`. All numbers in §a/§d re-verified against the journal in this session; §b.1/§c items deliberately deferred to a calm window per storm-aware probing discipline._

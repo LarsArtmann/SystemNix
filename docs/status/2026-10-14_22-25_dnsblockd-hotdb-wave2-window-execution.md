@@ -5,16 +5,16 @@
 
 ## Window timeline (all times CEST)
 
-| T | Event |
-| --- | --- |
-| 21:1x | cv input's go-modules FOD (from the parallel session's 20:48 flake.lock rewrite, rev `0ad2a6b` = upstream master tip) broke the toplevel build; vendorHash shim re-added per the documented bootstrap exception (first-hand got-hash evidence, gh-verified no upstream-fixed rev exists); commit `5eb7f1a4` (daemon-swept, verified 1-file) |
-| 21:35:39 | Window fired. Drift gate PASS (rev 5eb7f1a4, tree unchanged, not mounted, service up) |
-| ~21:35:45 | **HARD-DOWN START** (`systemctl stop dnsblockd`) |
-| 21:52:33 | Cutover verified byte-exact: 9/9 files, 4,823,594,355 B both sides; marker written. Delta rsync took **17 min** (4.06 GB literal — see §d1) |
-| ~22:02:46 | Deploy: pre-checks 99/0/7-warn, nh build 22 drvs green; activation exit 4 (`crowdsec`, `hot-db-bootstrap`, `service-health-check` failed) — but `var-lib-dnsblockd.mount` started and `dnsblockd.service` was started ON the mount |
-| ~22:08–22:12 | deploy.sh post-flow incl. post-deploy-check: 147 PASS / 5 FAIL / 14 WARN; **NEW failure vs baseline: "DNS"** (probe raced the service restart); **UNANCHORED** gate → deploy exit 3 |
-| 22:12ish | My window script saw deploy ≠ 0 → printed R1 card → **exit 43 without running finalize**. R1 was NOT executed (correct — service was up) |
-| 22:16–22:22 | Verification battery + read-only marker cross-check: ALL GREEN (below) |
+| T            | Event                                                                                                                                                                                                                                                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 21:1x        | cv input's go-modules FOD (from the parallel session's 20:48 flake.lock rewrite, rev `0ad2a6b` = upstream master tip) broke the toplevel build; vendorHash shim re-added per the documented bootstrap exception (first-hand got-hash evidence, gh-verified no upstream-fixed rev exists); commit `5eb7f1a4` (daemon-swept, verified 1-file) |
+| 21:35:39     | Window fired. Drift gate PASS (rev 5eb7f1a4, tree unchanged, not mounted, service up)                                                                                                                                                                                                                                                       |
+| ~21:35:45    | **HARD-DOWN START** (`systemctl stop dnsblockd`)                                                                                                                                                                                                                                                                                            |
+| 21:52:33     | Cutover verified byte-exact: 9/9 files, 4,823,594,355 B both sides; marker written. Delta rsync took **17 min** (4.06 GB literal — see §d1)                                                                                                                                                                                                 |
+| ~22:02:46    | Deploy: pre-checks 99/0/7-warn, nh build 22 drvs green; activation exit 4 (`crowdsec`, `hot-db-bootstrap`, `service-health-check` failed) — but `var-lib-dnsblockd.mount` started and `dnsblockd.service` was started ON the mount                                                                                                          |
+| ~22:08–22:12 | deploy.sh post-flow incl. post-deploy-check: 147 PASS / 5 FAIL / 14 WARN; **NEW failure vs baseline: "DNS"** (probe raced the service restart); **UNANCHORED** gate → deploy exit 3                                                                                                                                                         |
+| 22:12ish     | My window script saw deploy ≠ 0 → printed R1 card → **exit 43 without running finalize**. R1 was NOT executed (correct — service was up)                                                                                                                                                                                                    |
+| 22:16–22:22  | Verification battery + read-only marker cross-check: ALL GREEN (below)                                                                                                                                                                                                                                                                      |
 
 ## Verification battery (22:16–22:22, all first-hand)
 
@@ -75,9 +75,10 @@
 
 ## f) Up to 50 things we should get done next
 
-*(brainstorm, impact-ordered within groups; direct follow-ups are harvested — the rest is ROADMAP fuel)*
+_(brainstorm, impact-ordered within groups; direct follow-ups are harvested — the rest is ROADMAP fuel)_
 
 **Wave-2 close-out (direct follow-ups — HARVESTED):**
+
 1. Re-run `nix run .#deploy` to anchor `/run/current-system` → system-890 (after the 3 failed units pass; closes the reboot-revert hazard).
 2. Diagnose `hot-db-bootstrap.service` failure (journal + aVM-safe repro); it must be green before the postgres wave trusts the bootstrap path.
 3. Diagnose/triage `service-health-check.service` failure (expected: raced the restart; confirm and reset).

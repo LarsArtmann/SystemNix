@@ -17,7 +17,7 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 7. **Dozzle `DOZZLE_TAILSIZE` dropped** (`dozzle.nix`): v10.6.6 logs "Unexpected environment variable" every start; the set value (300) is believed to be the default (see "could have done better" #6).
 8. **fastflowlm 1.0.3 held back → 1.0.2** (`pkgs/fastflowlm.nix`): 1.0.3 (undeployed bump from the freeze-incident-3 session, activated by my first deploy) bundles XRT 2.25.00 which NEVER enumerates the NPU on kernel 7.2.0 — strace-proof: opens no `/dev/accel*` path at all, dies "No such device with index '0'" in ~2s; v1.0.2 opens `/sys/bus/pci/.../accel` → `/dev/accel/accel0` and serves fine on the SAME kernel. Pinned back, hold-back documented in the package. Live-verified after redeploy: model loaded 17:51→17:56, `/v1/models` answers, socket listening.
 9. **Docs/memory updated**: AGENTS.md (smart-audio dynamic discovery, flm 1.0.3 hold-back, mkOidcGate 300s budget + consumer ≥6min rule, docker wants-not-requires + restart=always gotcha), `modules/nixos/services/README.md` (docker rules). One AGENTS.md bullet was accidentally dropped during a concurrent-edit race and immediately restored.
-~~10. **Investigated and classified as noise/known (no action)**: dbus-broker duplicate-name spam (NixOS buildEnv duplication), blueman GameControllerWakelock X11-only warning, quickshell SIGABRT core dumps (known upstream UAF, Restart=always recovered both times), docker containerd one-time boot timeout (self-healed in 3s via docker's own restart), XFS/ESP dirty-bit fsck messages (unclean shutdown from freeze #3), psql connection-refused lines (DB startup ordering, transient), "mount over non-empty" warnings (known shadow dirs, tracked).~~ **Won't implement — quickshell UAF never tracked.**
+   ~~10. **Investigated and classified as noise/known (no action)**: dbus-broker duplicate-name spam (NixOS buildEnv duplication), blueman GameControllerWakelock X11-only warning, quickshell SIGABRT core dumps (known upstream UAF, Restart=always recovered both times), docker containerd one-time boot timeout (self-healed in 3s via docker's own restart), XFS/ESP dirty-bit fsck messages (unclean shutdown from freeze #3), psql connection-refused lines (DB startup ordering, transient), "mount over non-empty" warnings (known shadow dirs, tracked).~~ **Won't implement — quickshell UAF never tracked.**
 
 ## b) PARTIALLY DONE
 
@@ -55,20 +55,20 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 ~~3. Retry flm 1.0.3: `flm list`/serve validation on 7.2.2; expect 21.6 GB weight re-pull; revert if it still can't enumerate.~~ done — pkgs/fastflowlm.nix:32-43
 ~~4. Diff 7.2.0→7.2.2 amdxdna driver source before the retry — does the ABI actually change?~~ **NOT-DO — dup of 55.**
 ~~5. File/subscribe to an upstream FastFlowLM issue on XRT 2.25 + kernel 7.2.0 enumeration (verify-before-filing first).~~ **Won't implement — no upstream filing; reverted instead.**
-   ~~6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.~~ done 2026-08-31 — live positive test (20-30 report §3: postgres healthy in ~17s; dozzle design gap found + documented)
+~~6. Positive test of wants-docker semantics: stop/start docker, watch manifest/twenty compose units converge.~~ done 2026-08-31 — live positive test (20-30 report §3: postgres healthy in ~17s; dozzle design gap found + documented)
 ~~6. Add mkDockerService VM test (docker blip at boot simulation).~~ **NOT-DO — dup of f6.**
-   ~~8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).~~ done 2026-08-31 — 180s + eval-enforced floors (`gate-timeout-audit.nix`)
-   ~~9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.~~ done 2026-08-31 — `gate-timeout-audit.nix` (positive + negative verified)
+~~8. mkDnsGate budget 120s → 180s+ (same class as the OIDC gate fix).~~ done 2026-08-31 — 180s + eval-enforced floors (`gate-timeout-audit.nix`)
+~~9. Eval-time assertion: mkOidcGate consumers' TimeoutStartSec ≥ 6min.~~ done 2026-08-31 — `gate-timeout-audit.nix` (positive + negative verified)
 ~~7. Pre-deploy-check addition: diffstat of foreign undeployed changes since last generation.~~ done at `IO PSI gate in deploy pressure gate; scripts/deploy.sh:200`
 ~~8. deploy.sh pressure gate: add IO PSI some avg10 ≥ 20% (escape hatch exists).~~ **Won't implement — superseded: Docker removed 2026-10-08.**
 ~~9. Restart-policy audit script/check for running containers (RestartPolicy != always).~~ done at `smart-audio RestartSec 30s shipped; modules/nixos/desktop/smart-audio.nix:431`
-   ~~13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).~~ done 2026-08-31 — `system_user_units_failed{user}` + "User Unit Failures" Gatus check (20-30 report)
-   ~~14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).~~ done — classified BENIGN (coldplug job replacement; 20-30 report §5)
-   ~~15. Re-run post-deploy-check for a clean on-record summary.~~ done — 83 PASS / 0 FAIL (2026-08-31)
+~~13. User-unit failure monitoring (system_health metric + Gatus check for `systemctl --user --failed` output).~~ done 2026-08-31 — `system_user_units_failed{user}` + "User Unit Failures" Gatus check (20-30 report)
+~~14. Investigate buildcache-init 15/TERM at 16:37:24 (who ordered the stop mid-run).~~ done — classified BENIGN (coldplug job replacement; 20-30 report §5)
+~~15. Re-run post-deploy-check for a clean on-record summary.~~ done — 83 PASS / 0 FAIL (2026-08-31)
 ~~10. Verify Dozzle v10 default tail size in docs (confirm dropping DOZZLE_TAILSIZE is a true no-op).~~ **NOT-DO — dup of f15.**
 11. smart-audio: bump RestartSec 5s → 30s (exhausted-120s-wait failure mode politeness).
 ~~12. smart-audio DP-2 cross-output test when DP-2 is connected (still untested path).~~ **Won't implement — moot: Docker removed 2026-10-08.**
-    ~~19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).~~ done 2026-08-31 — 20-30 report §6 line-review: sound, VM-tested; one factual error corrected
+~~19. Review other session's shipped changes line-by-line (cv.nix, system-health.nix, btrfs-health.nix, guard Zone 4, deploy.sh).~~ done 2026-08-31 — 20-30 report §6 line-review: sound, VM-tested; one factual error corrected
 ~~13. BTRFS chunk health P0: root unalloc ~6.4 GiB CRITICAL — schedule balance when IO settles.~~ **NOT-DO — dup of 64.**
 ~~14. Shadow-dir cleanup under /mnt/pool, /data, /var/lib/clickhouse ("mount over not empty").~~ done at `balance ran; CHANGELOG chunk-unalloc gate CLEARED 2026-09-02`
 ~~15. flm smoke timeout vs Zone-4 stretched cold loads (27–43 min under contention) — smoke will fail under high PSI; add a PSI-skip like the balance Guard 0.~~ **Won't implement — shadow sweep never completed (cv case fixed declaratively 2026-09-02).**
@@ -80,7 +80,7 @@ _Outcome: 7 root causes fixed + deployed; 1 regression (flm 1.0.3) diagnosed and
 ~~21. dbus duplicate-name spam reduction (xdg portal service dedup) — cosmetic.~~ **Won't implement — backup-age watch; window passed.**
 ~~22. blueman: disable GameControllerWakelock plugin (X11-only warning every boot).~~ done at `dbus duplicate-name pruning; CHANGELOG 2026-10-17 boot-noise entry`
 ~~23. quickshell UAF: track upstream fix / plan upgrade.~~ **Won't implement — blueman plugin never disabled.**
-    ~~31. Update TODO_LIST.md with this session's follow-ups.~~ done — 2026-08-31 docs-health audit
+~~31. Update TODO_LIST.md with this session's follow-ups.~~ done — 2026-08-31 docs-health audit
 ~~24. Add "review foreign undeployed tree changes before deploying" to AGENTS.md Critical Rules (if policy approved).~~ **Won't implement — foreign-review policy never ratified; flock guard stands.**
 ~~25. Gatus/dashboard check for "compose unit inactive while its containers run" split-brain state (manifest this boot).~~ **Won't implement — superseded: Docker removed 2026-10-08.**
 ~~26. docker containerd boot timeout: consider ioTier or longer wait for docker.service under boot storms.~~ **Won't implement — superseded: Docker removed 2026-10-08.**

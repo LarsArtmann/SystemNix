@@ -3,19 +3,19 @@
 **Created:** 2026-10-23 07:05 CEST
 **EXECUTED (instance M1(in-scope)+M4+M5+M6+M7 done; M2 forced-defer (PSI + foreign wave eval-red); M3 watch stands until deploy, 2026-10-23 07:34 CEST, HEAD `f4db1ce8b`):** execution finished
 
-**Author session:** 2026-10-23 07:05 CEST. Owner steer (verbatim intent): *"we need to get better with storing the right kind of data in the right intervals in the first place, then come up with stupid retention windows … I care about IO/s not as much total storage."* Ratified direction from the 04:2x design exchange.
+**Author session:** 2026-10-23 07:05 CEST. Owner steer (verbatim intent): _"we need to get better with storing the right kind of data in the right intervals in the first place, then come up with stupid retention windows … I care about IO/s not as much total storage."_ Ratified direction from the 04:2x design exchange.
 
 **Universe:** the monitor365 data-governance arc that is AGENT-ACTIONABLE in THIS tree. Out of batch (recorded below): owner gates, upstream-repo edits (parallel sessions own `~/projects/monitor365`), the DB hot-tier move (one storage generation at a time — never stack a migration into the volume batch's activation deploy).
 
 ## Grounded design (source-verified this session)
 
-| Fact | Source | Consequence |
-|---|---|---|
-| `interval_seconds: null/0` = REALTIME per collector | `crates/config/src/collector/types.rs:175` | Cadence knobs exist; we inherit mostly-realtime module defaults today |
-| Upload already batched: sync 60 s / batch 100 | `nix/lib/settings.nix:603` | Insert IO is chunky — storms come from VOLUME, not granularity |
-| Tenant daily event cap, upstream default 10,000/day | `crates/api-types/src/tenant.rs` | THE IO/s governor. Collection era ran 61 ev/s = ~50,000× design point; drain lifted cap to 1B, live DB value unverified (permission-blind) |
-| Process events carry cmdline + FULL environ per start/exit | `crates/collectors/linux/src/process.rs:20` | Biggest surviving per-row bulk + a secrets-in-DB smell; no upstream knob |
-| Cap without bounded buffer = balloon | 113-day/597M backlog mechanism | The 10k-era cap + realtime collectors CAUSED the backlog; volume-correct collectors are what make the cap safe |
+| Fact                                                       | Source                                      | Consequence                                                                                                                                |
+| ---------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `interval_seconds: null/0` = REALTIME per collector        | `crates/config/src/collector/types.rs:175`  | Cadence knobs exist; we inherit mostly-realtime module defaults today                                                                      |
+| Upload already batched: sync 60 s / batch 100              | `nix/lib/settings.nix:603`                  | Insert IO is chunky — storms come from VOLUME, not granularity                                                                             |
+| Tenant daily event cap, upstream default 10,000/day        | `crates/api-types/src/tenant.rs`            | THE IO/s governor. Collection era ran 61 ev/s = ~50,000× design point; drain lifted cap to 1B, live DB value unverified (permission-blind) |
+| Process events carry cmdline + FULL environ per start/exit | `crates/collectors/linux/src/process.rs:20` | Biggest surviving per-row bulk + a secrets-in-DB smell; no upstream knob                                                                   |
+| Cap without bounded buffer = balloon                       | 113-day/597M backlog mechanism              | The 10k-era cap + realtime collectors CAUSED the backlog; volume-correct collectors are what make the cap safe                             |
 
 **Design in one line:** the tenant cap is the IO/s governor; collector cadence makes volume correct so the cap never binds; rollups (upstream, later) make retention trivial. Retention-as-landed stays as the backstop + one-time 15 GB reclaim (a 25→7 GB file also cuts every nightly export's read ~2.5× — pure IO/s win).
 
@@ -23,50 +23,50 @@
 
 ## Pareto breakdown
 
-| Tier | Lever | Effect |
-|---|---|---|
-| **1% → 51%** | **Heal master eval-red** (gate-prescribed treefmt-nix follows line; blocks CI, checks, AND the deploy) **+ deploy the landed batch at the gate** | Everything inert becomes live: collector cuts, retention, caps, metric re-key; first fire reclaims ~15 GB and shrinks every future nightly export |
-| **4% → 64%** | **Cadence+governor config commit** (explicit intervals per collector, pinned sync/batch, restart-preconditions) **+ tenant-cap verification path** | The agent that eventually restarts is volume-correct BY CONFIG, not by luck; the governor becomes verifiable |
-| **20% → 80%** | **Upstream queue batch** (bounded offline queue, environ opt-in, rollups) **+ runbook governor doctrine + close-out/harvest** | The structural fixes get owned upstream; the repo's docs stop implying retention is the strategy |
-| **other 20% → 100%** | Owner gates (cap SET at 250k rec, agent restart AFTER cap+buffer check, rollup/90d confirm), upstream execution, DB hot-tier move (row :455, next batch), first-fire watch (tonight 03:00) | Already queued or deliberately deferred — nothing silently dropped |
+| Tier                 | Lever                                                                                                                                                                                      | Effect                                                                                                                                            |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1% → 51%**         | **Heal master eval-red** (gate-prescribed treefmt-nix follows line; blocks CI, checks, AND the deploy) **+ deploy the landed batch at the gate**                                           | Everything inert becomes live: collector cuts, retention, caps, metric re-key; first fire reclaims ~15 GB and shrinks every future nightly export |
+| **4% → 64%**         | **Cadence+governor config commit** (explicit intervals per collector, pinned sync/batch, restart-preconditions) **+ tenant-cap verification path**                                         | The agent that eventually restarts is volume-correct BY CONFIG, not by luck; the governor becomes verifiable                                      |
+| **20% → 80%**        | **Upstream queue batch** (bounded offline queue, environ opt-in, rollups) **+ runbook governor doctrine + close-out/harvest**                                                              | The structural fixes get owned upstream; the repo's docs stop implying retention is the strategy                                                  |
+| **other 20% → 100%** | Owner gates (cap SET at 250k rec, agent restart AFTER cap+buffer check, rollup/90d confirm), upstream execution, DB hot-tier move (row :455, next batch), first-fire watch (tonight 03:00) | Already queued or deliberately deferred — nothing silently dropped                                                                                |
 
 ## Medium-granularity plan (30–100 min, sorted by impact/effort)
 
-| # | Task | Impact | Effort | Tier |
-|---|---|---|---|---|
-| M1 | Heal master lock-audit RED: add the prescribed `treefmt-nix` follows override (consumer resolved from the lock graph); NEVER touch flake.lock; flake check green ×2 | Very high (unblocks CI/deploy/all checks) | Low-Med (30-45m) | 1% |
-| M2 | Deploy at the hard gate (PSI some avg10 < 30% sustained ~5 min, outside 03:00±15 min) + readlink anchor + post-deploy-check + rendered-TOML spot-check (expect keystrokes/mouse `false`, fs_event `60`, NEW store path) | Very high (activation) | Med (45-90m) | 1% |
-| M3 | First post-deploy 03:00 fire watch (tonight): `monitor365-retention:` journal lines, DELETE boundary ≈ Apr–Jul, VACUUM 25.1 GB → ~7–10 GB, WARN sweep; tick rows :444/:445 both surfaces | High (bounds the DB; proves the window) | Watch | 1% |
-| M4 | Cadence+governor config: explicit `interval_seconds` for every enabled collector (process 5 s scan; periodic collectors 60–300 s explicit; clipboard/notifications/afk realtime BY DECISION with comment), pin `cloud.sync` 60 s/100, restart-preconditions block (cap 250k rec + buffer measure first) | High (volume-correct by construction; inert until restart) | Med (45-60m) | 4% |
-| M5 | Upstream queue batch: bounded offline queue (drop-oldest + dropped-counter), environ opt-in/once-per-app (+ secrets rationale), rollup tables endgame, tenant-cap admin path — library rows, no upstream-repo edits | Med-high (structural fixes get owned) | Low-Med (30m) | 20% |
-| M6 | Tenant-cap verification path: probe the server API for a limits-readable endpoint (verified openssl/LAN-IP probe set, NO JWT access); verdict row [ready] vs owner-gated | Med (makes the governor verifiable) | Low (30m) | 4% |
-| M7 | Close-out: runbook governor section, CHANGELOG, status report with self-harvested §f, plan-marker done, pathspec commit + push | Med | Low-Med (45m) | 20% |
+| #  | Task                                                                                                                                                                                                                                                                                                    | Impact                                                     | Effort           | Tier |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------- | ---- |
+| M1 | Heal master lock-audit RED: add the prescribed `treefmt-nix` follows override (consumer resolved from the lock graph); NEVER touch flake.lock; flake check green ×2                                                                                                                                     | Very high (unblocks CI/deploy/all checks)                  | Low-Med (30-45m) | 1%   |
+| M2 | Deploy at the hard gate (PSI some avg10 < 30% sustained ~5 min, outside 03:00±15 min) + readlink anchor + post-deploy-check + rendered-TOML spot-check (expect keystrokes/mouse `false`, fs_event `60`, NEW store path)                                                                                 | Very high (activation)                                     | Med (45-90m)     | 1%   |
+| M3 | First post-deploy 03:00 fire watch (tonight): `monitor365-retention:` journal lines, DELETE boundary ≈ Apr–Jul, VACUUM 25.1 GB → ~7–10 GB, WARN sweep; tick rows :444/:445 both surfaces                                                                                                                | High (bounds the DB; proves the window)                    | Watch            | 1%   |
+| M4 | Cadence+governor config: explicit `interval_seconds` for every enabled collector (process 5 s scan; periodic collectors 60–300 s explicit; clipboard/notifications/afk realtime BY DECISION with comment), pin `cloud.sync` 60 s/100, restart-preconditions block (cap 250k rec + buffer measure first) | High (volume-correct by construction; inert until restart) | Med (45-60m)     | 4%   |
+| M5 | Upstream queue batch: bounded offline queue (drop-oldest + dropped-counter), environ opt-in/once-per-app (+ secrets rationale), rollup tables endgame, tenant-cap admin path — library rows, no upstream-repo edits                                                                                     | Med-high (structural fixes get owned)                      | Low-Med (30m)    | 20%  |
+| M6 | Tenant-cap verification path: probe the server API for a limits-readable endpoint (verified openssl/LAN-IP probe set, NO JWT access); verdict row [ready] vs owner-gated                                                                                                                                | Med (makes the governor verifiable)                        | Low (30m)        | 4%   |
+| M7 | Close-out: runbook governor section, CHANGELOG, status report with self-harvested §f, plan-marker done, pathspec commit + push                                                                                                                                                                          | Med                                                        | Low-Med (45m)    | 20%  |
 
 ## Fine-granularity breakdown (≤12 min each)
 
-| # | Task | Est | Depends |
-|---|---|---|---|
-| F1 | Locate the infra-follows group in flake.nix; read 3 existing entries for form | 5m | — |
-| F2 | Resolve the consumer pulling `go-nix-helpers_8` from flake.lock (stdin-jq per the DIRENV trap); identify exact follows path | 12m | F1 |
-| F3 | Add the follows override(s) — flake.nix ONLY; `git diff` asserts flake.lock byte-identical | 8m | F2 |
-| F4 | `nix flake check --no-build` green ×2 (quiescent moment — parallel sessions active) | 10m | F3 |
-| F5 | Pathspec commit `flake.nix` only + push | 5m | F4 |
-| F6 | Cadence map: every enabled collector → interval decision + comment (decision table into configuration.nix) | 20m | — |
-| F7 | Pin `cloud.sync.sync_interval_seconds = 60`, `batch_size = 100` explicitly + restart-preconditions comment block | 10m | F6 |
-| F8 | Eval green + collect-level `nix eval` spot-check of the new settings | 10m | F7 |
-| F9 | Pathspec commit configuration.nix + push | 5m | F8 |
-| F10 | Probe server API for limits-readable endpoint (openssl s_client, LAN IP, no JWT) | 12m | — |
-| F11 | Verdict: [ready] verification row vs owner-gated admin-API row (with the one-liner) | 10m | F10 |
-| F12 | Upstream rows drafted (bounded buffer / environ / rollups / cap path) → docs/todo/upstream.md + queue one-liners | 12m | — |
-| F13 | TODO gate green after all row edits | 5m | F12 |
-| F14 | PSI probe loop; deploy when gate passes (else defer + record readings) | 12m+ | F5, F9 |
-| F15 | `nix run .#deploy`; monitor output; post-deploy checks run by deploy.sh | 30-60m | F14 |
-| F16 | Anchor: `readlink /run/current-system` == latest `system-N-link` | 5m | F15 |
-| F17 | Rendered-TOML spot-check (false/false/60 at a NEW store path) | 10m | F16 |
-| F18 | Runbook governor section + CHANGELOG entry | 15m | F17 or defer |
-| F19 | Status report (self-harvesting §f) + rows ticked both surfaces | 15m | F18 |
-| F20 | plan-marker done + final pathspec commit + push | 10m | F19 |
-| F21 | First-fire watch tonight 03:00 (journal + sizes + WARN sweep) + row ticks | 12m | F15 |
+| #   | Task                                                                                                                        | Est    | Depends      |
+| --- | --------------------------------------------------------------------------------------------------------------------------- | ------ | ------------ |
+| F1  | Locate the infra-follows group in flake.nix; read 3 existing entries for form                                               | 5m     | —            |
+| F2  | Resolve the consumer pulling `go-nix-helpers_8` from flake.lock (stdin-jq per the DIRENV trap); identify exact follows path | 12m    | F1           |
+| F3  | Add the follows override(s) — flake.nix ONLY; `git diff` asserts flake.lock byte-identical                                  | 8m     | F2           |
+| F4  | `nix flake check --no-build` green ×2 (quiescent moment — parallel sessions active)                                         | 10m    | F3           |
+| F5  | Pathspec commit `flake.nix` only + push                                                                                     | 5m     | F4           |
+| F6  | Cadence map: every enabled collector → interval decision + comment (decision table into configuration.nix)                  | 20m    | —            |
+| F7  | Pin `cloud.sync.sync_interval_seconds = 60`, `batch_size = 100` explicitly + restart-preconditions comment block            | 10m    | F6           |
+| F8  | Eval green + collect-level `nix eval` spot-check of the new settings                                                        | 10m    | F7           |
+| F9  | Pathspec commit configuration.nix + push                                                                                    | 5m     | F8           |
+| F10 | Probe server API for limits-readable endpoint (openssl s_client, LAN IP, no JWT)                                            | 12m    | —            |
+| F11 | Verdict: [ready] verification row vs owner-gated admin-API row (with the one-liner)                                         | 10m    | F10          |
+| F12 | Upstream rows drafted (bounded buffer / environ / rollups / cap path) → docs/todo/upstream.md + queue one-liners            | 12m    | —            |
+| F13 | TODO gate green after all row edits                                                                                         | 5m     | F12          |
+| F14 | PSI probe loop; deploy when gate passes (else defer + record readings)                                                      | 12m+   | F5, F9       |
+| F15 | `nix run .#deploy`; monitor output; post-deploy checks run by deploy.sh                                                     | 30-60m | F14          |
+| F16 | Anchor: `readlink /run/current-system` == latest `system-N-link`                                                            | 5m     | F15          |
+| F17 | Rendered-TOML spot-check (false/false/60 at a NEW store path)                                                               | 10m    | F16          |
+| F18 | Runbook governor section + CHANGELOG entry                                                                                  | 15m    | F17 or defer |
+| F19 | Status report (self-harvesting §f) + rows ticked both surfaces                                                              | 15m    | F18          |
+| F20 | plan-marker done + final pathspec commit + push                                                                             | 10m    | F19          |
+| F21 | First-fire watch tonight 03:00 (journal + sizes + WARN sweep) + row ticks                                                   | 12m    | F15          |
 
 ## Execution graph
 
@@ -97,6 +97,7 @@ flowchart TD
 ## Errata / standing assumptions
 
 **Execution record (2026-10-23 07:5x):**
+
 - M1 DONE-IN-SCOPE: papdashboard nested follows landed (4cf457561, flake.lock byte-identical, lock-audit gate passes). The wave's OTHER reds (hermes bf0203a IFD class + crowdsec-via-unfetched-nixpkgs, root nixpkgs unchanged) are foreign fallout — documented in the pipeline lock-heal [decision] row; not fixable without touching the sacred flake.lock.
 - M2 FORCED-DEFER (double-blocked): PSI storm AND toplevel-eval red (deploy.sh validation would fail). Watch rows updated on both surfaces.
 - M4 DONE (1d2583c39): process 5s / network+battery 300s / location 900s, scoped evals verified 5/300/300/900/60 + mouse=false. Cloud sync/batch pin DROPPED after live-TOML verification (defaults already render [cloud] sync 60/batch 100 — pinning would add surface for zero effect).

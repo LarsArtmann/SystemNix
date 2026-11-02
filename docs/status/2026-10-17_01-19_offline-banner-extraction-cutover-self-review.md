@@ -61,6 +61,7 @@ Nothing destroyed, no secrets, no data loss, live system untouched. But:
 ## f) NEXT (deduplicated against existing rows — new items marked NEW)
 
 **Do before the switch (SystemNix):**
+
 1. [NEW] Reference the hardened-unit smoke-test gate ON the SystemNix v3 deploy row (currently the gate lives only in the upstream repo's TODO + AGENTS — a future dispatcher could switch cold). Tiny doc edit.
 2. [NEW] Consumer-side pin: wrapper assertion that the resolved unit text carries `OFFLINE_BANNER_INTERVAL/_PROBE_HOST/_PROBE_TIMEOUT/_FAILURES` — closes the env-contract split brain at relock time.
 3. Hardened-unit live smoke test (upstream row, re-gated by me to pre-switch) — then ONE combined switch carrying v3-via-input + bank-sync + the rest of the deploy-pending batch (single-switch doctrine, pareto §g Q1).

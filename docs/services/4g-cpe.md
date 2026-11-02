@@ -5,26 +5,26 @@
 
 ## Inventory (proven from the device's own syslog)
 
-| | |
-| --- | --- |
-| SoC / RAM / flash | MediaTek **MT7628AN** ver:1 eco:2, 580 MHz, **60,708 KiB RAM**, **8 MB SPI** (`spi32766.0`) |
-| Firmware | vendor LuCI fork `1.0.273-20240928-115300` (title `4G-LTE`, theme build `git-24.271.34822`), kernel **4.4.140** (LEDE 17.01 BSP), built by `abu@openwrt` |
-| LTE module | Quectel **EC200A-EU** (`AT+CGMR → EC200AEUV1HAR02A06M16`), USB `2c7c:6005`, CDC-Ethernet + 3 AT ports, module NAT on (`AT+QCFG="nat" → 1`). **No SIM** (`AT+CPIN? → +CME ERROR: 10`) |
-| Wi-Fi | 2.4 GHz only (vendor `MT7628 AP Driver 4.1.0.0`, `ra0`), no PCIe — 5 GHz is a hardware ceiling. SSID `Europol \| Law enforcement` |
-| Address / mode | `192.168.1.254`, wired port in **LAN mode** (no WAN interface exists) |
-| MTD map | `u-boot` 0x0–0x30000 · `u-boot-env` 0x30000–0x40000 · **`factory` 0x40000–0x50000 (65,536 B, radio calibration)** · `kernel` 0x50000–0x1893d0 · `rootfs` 0x1893d0–0x7e0000 · `rootfs_data` 0x6e0000–0x7e0000 (1 MB overlay) · `backup` 0x7e0000–0x7f0000 · `bdinfo` 0x7f0000–0x800000. Kernel+squashfs ceiling **6,881,280 B = 6.56 MiB** |
-| OpenWrt path | `ramips/mt76x8`, profile `mediatek_mt7628an-eval-board` — **image BUILT + verified 2026-10-30** (25.12.6, 5.50 MiB, spare 1.06 MiB; mwan3 excluded by budget). See "OpenWrt flash session" below |
+|                   |                                                                                                                                                                                                                                                                                                                                           |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SoC / RAM / flash | MediaTek **MT7628AN** ver:1 eco:2, 580 MHz, **60,708 KiB RAM**, **8 MB SPI** (`spi32766.0`)                                                                                                                                                                                                                                               |
+| Firmware          | vendor LuCI fork `1.0.273-20240928-115300` (title `4G-LTE`, theme build `git-24.271.34822`), kernel **4.4.140** (LEDE 17.01 BSP), built by `abu@openwrt`                                                                                                                                                                                  |
+| LTE module        | Quectel **EC200A-EU** (`AT+CGMR → EC200AEUV1HAR02A06M16`), USB `2c7c:6005`, CDC-Ethernet + 3 AT ports, module NAT on (`AT+QCFG="nat" → 1`). **No SIM** (`AT+CPIN? → +CME ERROR: 10`)                                                                                                                                                      |
+| Wi-Fi             | 2.4 GHz only (vendor `MT7628 AP Driver 4.1.0.0`, `ra0`), no PCIe — 5 GHz is a hardware ceiling. SSID `Europol \| Law enforcement`                                                                                                                                                                                                         |
+| Address / mode    | `192.168.1.254`, wired port in **LAN mode** (no WAN interface exists)                                                                                                                                                                                                                                                                     |
+| MTD map           | `u-boot` 0x0–0x30000 · `u-boot-env` 0x30000–0x40000 · **`factory` 0x40000–0x50000 (65,536 B, radio calibration)** · `kernel` 0x50000–0x1893d0 · `rootfs` 0x1893d0–0x7e0000 · `rootfs_data` 0x6e0000–0x7e0000 (1 MB overlay) · `backup` 0x7e0000–0x7f0000 · `bdinfo` 0x7f0000–0x800000. Kernel+squashfs ceiling **6,881,280 B = 6.56 MiB** |
+| OpenWrt path      | `ramips/mt76x8`, profile `mediatek_mt7628an-eval-board` — **image BUILT + verified 2026-10-30** (25.12.6, 5.50 MiB, spare 1.06 MiB; mwan3 excluded by budget). See "OpenWrt flash session" below                                                                                                                                          |
 
 ## CURRENT STATE (2026-10-30): config-hardened, administratively LOCKED
 
-| Setting | State | Note |
-| --- | --- | --- |
-| Remote Web (WAN admin) | **OFF** | read-back `fa-toggle-off`, `enabled=0`; no extra ports open |
-| Port forwards | **0** (was 7 armed to `192.168.1.100`: ssh-onprem-0 22, onprem-0-k8s 443+6443, onprem-0-tailscale 41641, onprem-0-Longhorn 9500/9501/9502) | rules recorded here for recreation if ever wanted |
-| DHCP server | **OFF** (`ignore=1`) | was live `.101–.200` racing the gateway — it NAK'd client `.16` and ACK'd `motorola-edge-60` at `.136` with dead DNS `10.43.255.55` (the phone self-heals at next renew / Wi-Fi toggle) |
-| Admin password | **rotated to an UNKNOWN random value** — see incident below | `admin/admin` rejected on web (403) AND telnet (`Login incorrect`) |
-| telnetd (port 23) | still listening, **default credential dead** | no UI toggle exists in this fork; permanent fix = OpenWrt flash (F73) |
-| Watchcat | enabled, 6 h no-internet self-reboot (baseline 19118 s/21600 s at 00:43) | keeps rebooting while no SIM; harmless |
+| Setting                | State                                                                                                                                      | Note                                                                                                                                                                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Remote Web (WAN admin) | **OFF**                                                                                                                                    | read-back `fa-toggle-off`, `enabled=0`; no extra ports open                                                                                                                             |
+| Port forwards          | **0** (was 7 armed to `192.168.1.100`: ssh-onprem-0 22, onprem-0-k8s 443+6443, onprem-0-tailscale 41641, onprem-0-Longhorn 9500/9501/9502) | rules recorded here for recreation if ever wanted                                                                                                                                       |
+| DHCP server            | **OFF** (`ignore=1`)                                                                                                                       | was live `.101–.200` racing the gateway — it NAK'd client `.16` and ACK'd `motorola-edge-60` at `.136` with dead DNS `10.43.255.55` (the phone self-heals at next renew / Wi-Fi toggle) |
+| Admin password         | **rotated to an UNKNOWN random value** — see incident below                                                                                | `admin/admin` rejected on web (403) AND telnet (`Login incorrect`)                                                                                                                      |
+| telnetd (port 23)      | still listening, **default credential dead**                                                                                               | no UI toggle exists in this fork; permanent fix = OpenWrt flash (F73)                                                                                                                   |
+| Watchcat               | enabled, 6 h no-internet self-reboot (baseline 19118 s/21600 s at 00:43)                                                                   | keeps rebooting while no SIM; harmless                                                                                                                                                  |
 
 ### The lockout incident (honest record)
 

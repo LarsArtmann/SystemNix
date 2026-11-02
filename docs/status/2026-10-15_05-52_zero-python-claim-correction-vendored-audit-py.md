@@ -11,9 +11,9 @@
 
 1. **The scc challenge answered in one tool round.** `glob **/*.py` + `git ls-files '*.py'` → exactly one hit: `pkgs/.systemd-timer-monitor/systemd-audit.py` (490 lines = scc's 1 file / 37 blank / 57 comments / 396 code / 80 complexity). The owner's "????" had a precise referent within minutes.
 2. **Root cause established, every fact verified in-repo.** The file is the **vendored upstream runtime of cappy-dev/systemd-timer-monitor**, copied verbatim from the last successful build output on 2026-08-28 (`7e44ee2a`) because **upstream was deleted from GitHub** (rev `ff68e41`, tarball 404) — the vendor comment in `pkgs/systemd-timer-monitor.nix:10-13` says "replace with a maintained fork if one appears". It is NOT dead code: it powers the **live** `timers.home.lan` service (5-min oneshot, gatus HTML check, deploy.sh post-switch re-audit, referenced by two VM tests, integration-registered, own runbook). Upstream is **unlicensed** (`lib.licenses.unfree`) — material for the disposition (a translation port would be a derivative work of an unlicensed work).
-3. **The claim failure root-caused.** The 05:14 close-out's "Python is gone from SystemNix" was false as stated; the plan's own asserts were `rg '\.py$' scripts/`-scoped (first-party scripts/ + ruff) while the goal line and the prose claimed repo-wide zero. The lint-static python3 guard was never a tracked-file gate — it guards Nix/shell python3 *usage*, and even documents this very file's 2026-08 exit-127 incident.
+3. **The claim failure root-caused.** The 05:14 close-out's "Python is gone from SystemNix" was false as stated; the plan's own asserts were `rg '\.py$' scripts/`-scoped (first-party scripts/ + ruff) while the goal line and the prose claimed repo-wide zero. The lint-static python3 guard was never a tracked-file gate — it guards Nix/shell python3 _usage_, and even documents this very file's 2026-08 exit-127 incident.
 4. **All six claim surfaces corrected** (count-claim rule: name surfaces, show post-state): CHANGELOG `[Unreleased] → Removed` headline → "**First-party** Python is gone…" + precision note; the plan's EXECUTED banner → Residual 2 block; the 05:14 close-out → title fixed + new **§h Correction** section (daemon-swept into `722087f1`); `AGENTS.md` architecture block → 2-line pointer at the vendored dir (so it is never re-discovered); `[decision]` row queued on **both** queue surfaces (`TODO_LIST.md` + `docs/todo/services.md`, no drift).
-5. **The queue decision row is decision-grade.** Option A: ratify the vendored exception (zero *first-party* Python stands; python3 stays in the closure). Option B: **clean-room Go behavioral reimplementation** (report.html + status.json + exit codes 0 ok / 1 args / 2 no-systemctl), vendored file deleted, python3 leaves the closure — service-affecting, needs deploy + `timers.home.lan` 200-with-html + fresh status.json verification. Translation explicitly forbidden (unlicensed upstream).
+5. **The queue decision row is decision-grade.** Option A: ratify the vendored exception (zero _first-party_ Python stands; python3 stays in the closure). Option B: **clean-room Go behavioral reimplementation** (report.html + status.json + exit codes 0 ok / 1 args / 2 no-systemctl), vendored file deleted, python3 leaves the closure — service-affecting, needs deploy + `timers.home.lan` 200-with-html + fresh status.json verification. Translation explicitly forbidden (unlicensed upstream).
 6. **Gates green after the correction wave:** `nix flake check --no-build` all-pass (exit 0); `check-todo-system.sh` → "OK: TODO queue/library structure clean"; scc recount = exactly the 1 documented file.
 7. **Harvest discipline held:** the session's one genuinely-new actionable follow-up (tracked-`*.py` allowlist gate, see §f item 3) was queued into BOTH surfaces (`docs/todo/pipeline.md` + `TODO_LIST.md`) at authoring time; everything else in §f is pre-existing rows or dispositioned brainstorm.
 8. **On-sight doc fix (owner's 2026-09-06 standing permission):** the runbook's dead upstream link (`docs/services/systemd-timer-monitor.md`) now states the deletion + vendoring instead of pointing at a 404 GitHub repo.
@@ -52,10 +52,10 @@
 
 ## f) Up to 50 things we should get done next
 
-*(Prioritized; ★ = queued/harvested this session; the rest are pre-existing rows — sources cited. Items 1–3 are this session's direct lineage; items 4+ carry the prior close-out's §f and the standing queue.)*
+_(Prioritized; ★ = queued/harvested this session; the rest are pre-existing rows — sources cited. Items 1–3 are this session's direct lineage; items 4+ carry the prior close-out's §f and the standing queue.)_
 
 1. ★ **DECIDE: vendored `systemd-audit.py` — ratify exception (A) or clean-room Go port (B)** — the [decision] row in `docs/todo/services.md` + `TODO_LIST.md`; gates items 2–3.
-2. *(if B)* ★ Clean-room Go behavioral reimplementation of the audit (report.html + status.json + exit codes 0/1/2), vendored file deleted, python3 leaves the closure; deploy in an IO lull + `timers.home.lan` verify battery.
+2. _(if B)_ ★ Clean-room Go behavioral reimplementation of the audit (report.html + status.json + exit codes 0/1/2), vendored file deleted, python3 leaves the closure; deploy in an IO lull + `timers.home.lan` verify battery.
 3. ★ **Tracked-`*.py` allowlist gate** (lint-static/pre-commit leg, one-row allowlist shrinking to zero under B) — `docs/todo/pipeline.md`.
 4. **Un-red the CI nix-check workflow** — branching-flow 404 (needs §g Q2) + statix findings — `docs/todo/pipeline.md` + `TODO_LIST.md`.
 5. **ucr-archive: fix the 2 stale AGENTS.md claims + add the missing `nix run .#test`/`.#lint` extraApps** (only when that repo is quiescent — a parallel session was mid-edit there).
@@ -64,7 +64,7 @@
 8. **crush-daily red test** `TestLegacySnapshotRow_DecodesUnderNewStack` — dedicated fix dispatch or document-and-leave (default: document).
 9. **Commit `scripts/parity-check.sh` into ucr-archive** from the README-VERIFICATION.md parity method.
 10. **ucr-archive `ucr root doctor` subcommand** (preflight: manifest/index/WAV presence, verdict census) — prior close-out §f item 38.
-11. *(mooted, close it)* Upstream-reporting of the ucr-rag.py embed INSERT bug — upstream repo is deleted; record as moot (the plan banner already carries the note).
+11. _(mooted, close it)_ Upstream-reporting of the ucr-rag.py embed INSERT bug — upstream repo is deleted; record as moot (the plan banner already carries the note).
 12. **Re-pin the hermes-agent flake input** — `.tq-verify` is tree-wide RED since 2026-10-14 eve; every dispatch's end-of-session verification fails on it — `docs/todo/pipeline.md`.
 13. **Docs-scoped `.tq-verify`** so a red Nix eval cannot void a docs-only closeout — `docs/todo/pipeline.md`.
 14. **Verdict-durability rule** (write `$TQ_RESULT_FILE` right after the report commit) into CONTRIBUTING — `docs/todo/pipeline.md`.
@@ -85,7 +85,7 @@
 29. **Vulkan llama.cpp experiment** (wedge-free iGPU path; `vulkanSupport` override verified on the pinned nixpkgs) — queued follow-up from the Ollama removal.
 30. **Prior close-out §f items 3–40** (standing brainstorm: ucr web service surface, tq verify-gate GOEXPERIMENT, GPU GTT collector follow-ups, desktop-state snapshot collector, etc.) — deliberately NOT re-harvested; they live in docs/status/2026-10-15_05-14_…§f and the domain libraries until triaged.
 
-*(Stopped at 30: items 31–50 would duplicate the prior report's standing brainstorm without new information from THIS session's run.)*
+_(Stopped at 30: items 31–50 would duplicate the prior report's standing brainstorm without new information from THIS session's run.)_
 
 ## g) Questions I can NOT figure out myself
 

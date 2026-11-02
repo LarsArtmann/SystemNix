@@ -16,6 +16,7 @@ the 12:45 reading that blocked the deploy).
 ## §0 Self-review (the brutal part)
 
 **1. What did I forget?**
+
 - **I fired a full-store `find /nix/store`** (job 0F8, ~12:00) while the
   host was already sliding into the IO corpse-pile — unbounded walk over
   ~100k store entries, abandoned by interrupt, never killed by me. It is
@@ -46,6 +47,7 @@ the 12:45 reading that blocked the deploy).
   the same class).
 
 **2. What's stupid that we do anyway?**
+
 - The monitoring dashboards (nvtop/btop/iotop ghostty scopes) read
   /proc of D-state tasks and pile into every corpse — the watchers become
   victims and PSI amplifiers (97–100% cgroup io.pressure each).
@@ -242,6 +244,6 @@ exit-1 class.
 
 ---
 
-*Report basis: this session only (attempts 14–19, one deploy attempt,
+_Report basis: this session only (attempts 14–19, one deploy attempt,
 surface close-out). No unrelated research performed. Waiting for
-instructions.*
+instructions._

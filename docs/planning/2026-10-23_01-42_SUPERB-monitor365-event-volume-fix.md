@@ -13,50 +13,50 @@
 
 ## Pareto breakdown
 
-| Tier | Lever | Effect |
-|---|---|---|
-| **1% → 51%** | Disable mouse + keystrokes, fs_event 1 s → 60 s (config-only, 3 lines) | Kills the two personal-input firehoses + 98.6% of fs_event at the SOURCE; zero deletion risk; effect lands at next agent start (owner-gated — agent is deliberately stopped) |
-| **4% → 64%** | Nightly retention DELETE (90 d) inside the existing quiesced backup window, AFTER the export (backup-first = rollback path) | Bounds the DB forever; first fires delete ~3 months of Apr–Jul events |
-| **20% → 80%** | Weekly VACUUM (stamp-gated, disk-headroom-guarded) + backup-unit hardening (MemoryMax/High, ioTier.background, Timeout 30min) + docs/close-out/commit/push/PSI-gated deploy | Reclaims the ~15 GB file bloat, stops the 8–20 GB 03:00 memory spikes, makes the whole thing durable in docs + queue |
-| **other 20% → 100%** | NOT this batch (recorded): upstream gen_app fix, upstream JWT-arg fix, upstream archive-then-delete (Parquet) as the proper retention successor, hot-tier DB move, owner-gated agent restart + buffer-backlog measurement | Listed so nobody thinks they were forgotten |
+| Tier                 | Lever                                                                                                                                                                                                                     | Effect                                                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1% → 51%**         | Disable mouse + keystrokes, fs_event 1 s → 60 s (config-only, 3 lines)                                                                                                                                                    | Kills the two personal-input firehoses + 98.6% of fs_event at the SOURCE; zero deletion risk; effect lands at next agent start (owner-gated — agent is deliberately stopped) |
+| **4% → 64%**         | Nightly retention DELETE (90 d) inside the existing quiesced backup window, AFTER the export (backup-first = rollback path)                                                                                               | Bounds the DB forever; first fires delete ~3 months of Apr–Jul events                                                                                                        |
+| **20% → 80%**        | Weekly VACUUM (stamp-gated, disk-headroom-guarded) + backup-unit hardening (MemoryMax/High, ioTier.background, Timeout 30min) + docs/close-out/commit/push/PSI-gated deploy                                               | Reclaims the ~15 GB file bloat, stops the 8–20 GB 03:00 memory spikes, makes the whole thing durable in docs + queue                                                         |
+| **other 20% → 100%** | NOT this batch (recorded): upstream gen_app fix, upstream JWT-arg fix, upstream archive-then-delete (Parquet) as the proper retention successor, hot-tier DB move, owner-gated agent restart + buffer-backlog measurement | Listed so nobody thinks they were forgotten                                                                                                                                  |
 
 ## Medium-granularity plan (30–100 min tasks, sorted by impact/effort)
 
-| # | Task | Impact | Effort | Value | Tier |
-|---|---|---|---|---|---|
-| M1 | Disable volume-engine collectors in SystemNix agent settings (mouse, keystrokes; fs_event → 60 s) with rationale comments | Very high (source-level ~70–90% new-event cut) | Low (~30 min) | Stops the firehose | 1% |
-| M2 | Retention script: nightly DELETE (>90 d) + weekly stamp-gated VACUUM with df headroom guard + before/after count logging, wired into quiesced backup AFTER export, BEFORE server restore | Very high (bounds DB permanently) | Med (~60 min) | The actual fix | 4% |
-| M3 | Backup unit hardening: MemoryMax=12G, MemoryHigh=8G (watermark ≥50% ✓), ioTier.background, TimeoutStartSec=30min | Med (protects 03:00 window on a 128 GB box) | Low (~15 min) | Storm resilience | 20% |
-| M4 | Validate the exact SQL + guard logic on a throwaway DuckDB (TIMESTAMP AND VARCHAR column forms, VACUUM, count queries) | High (correctness proof before it touches prod at 03:00 unattended) | Med (~30 min) | No 03:00 surprise | 20% |
-| M5 | Eval verification: `nix flake check --no-build`, evo-x2 toplevel eval, rendered-TOML check (mouse/keystrokes off, fs_event=60, other defaults intact) | High (proof the merge didn't nuke the other 14 collector defaults) | Med (~30 min) | Anti-regression | 20% |
-| M6 | Docs: runbook (volume engines, retention design, first-fire expectations, rollback path), CHANGELOG entry | Med | Med (~30 min) | Durable knowledge | 20% |
-| M7 | TODO close-out: tick f.3/f.4/f.5 rows on BOTH surfaces (queue + library), add done-marker for collector cut, correct stale premises | Med | Low (~20 min) | Queue hygiene (rule: edit both) | 20% |
-| M8 | Commit (pathspec-scoped, detailed message) + PUSH (owner-ordered this session) | Required | Low (~15 min) | Landed work | 20% |
-| M9 | Deploy — PSI-GATED (skip if io PSI some avg10 > 30%): `nix run .#deploy`, anchor check, pre/post-deploy checks. Agent units stay stopped (inactive units are not restarted by stc; restart is owner-gated) | High (activates tonight 03:00) | Med (~45 min) | Go-live | 20% |
-| M10 | [watch, next fire] Verify first retention fire ~03:00 next calm night: journal counts, DB size drop, backup size drop; NOT this session | High | — | Close-out evidence | 20% |
+| #   | Task                                                                                                                                                                                                       | Impact                                                              | Effort        | Value                           | Tier |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------- | ------------------------------- | ---- |
+| M1  | Disable volume-engine collectors in SystemNix agent settings (mouse, keystrokes; fs_event → 60 s) with rationale comments                                                                                  | Very high (source-level ~70–90% new-event cut)                      | Low (~30 min) | Stops the firehose              | 1%   |
+| M2  | Retention script: nightly DELETE (>90 d) + weekly stamp-gated VACUUM with df headroom guard + before/after count logging, wired into quiesced backup AFTER export, BEFORE server restore                   | Very high (bounds DB permanently)                                   | Med (~60 min) | The actual fix                  | 4%   |
+| M3  | Backup unit hardening: MemoryMax=12G, MemoryHigh=8G (watermark ≥50% ✓), ioTier.background, TimeoutStartSec=30min                                                                                           | Med (protects 03:00 window on a 128 GB box)                         | Low (~15 min) | Storm resilience                | 20%  |
+| M4  | Validate the exact SQL + guard logic on a throwaway DuckDB (TIMESTAMP AND VARCHAR column forms, VACUUM, count queries)                                                                                     | High (correctness proof before it touches prod at 03:00 unattended) | Med (~30 min) | No 03:00 surprise               | 20%  |
+| M5  | Eval verification: `nix flake check --no-build`, evo-x2 toplevel eval, rendered-TOML check (mouse/keystrokes off, fs_event=60, other defaults intact)                                                      | High (proof the merge didn't nuke the other 14 collector defaults)  | Med (~30 min) | Anti-regression                 | 20%  |
+| M6  | Docs: runbook (volume engines, retention design, first-fire expectations, rollback path), CHANGELOG entry                                                                                                  | Med                                                                 | Med (~30 min) | Durable knowledge               | 20%  |
+| M7  | TODO close-out: tick f.3/f.4/f.5 rows on BOTH surfaces (queue + library), add done-marker for collector cut, correct stale premises                                                                        | Med                                                                 | Low (~20 min) | Queue hygiene (rule: edit both) | 20%  |
+| M8  | Commit (pathspec-scoped, detailed message) + PUSH (owner-ordered this session)                                                                                                                             | Required                                                            | Low (~15 min) | Landed work                     | 20%  |
+| M9  | Deploy — PSI-GATED (skip if io PSI some avg10 > 30%): `nix run .#deploy`, anchor check, pre/post-deploy checks. Agent units stay stopped (inactive units are not restarted by stc; restart is owner-gated) | High (activates tonight 03:00)                                      | Med (~45 min) | Go-live                         | 20%  |
+| M10 | [watch, next fire] Verify first retention fire ~03:00 next calm night: journal counts, DB size drop, backup size drop; NOT this session                                                                    | High                                                                | —             | Close-out evidence              | 20%  |
 
 ## Fine-granularity breakdown (≤15 min each)
 
-| # | Task | Est | Depends |
-|---|---|---|---|
-| F1 | Read current monitor365.nix settings block; add `settings.collectors.mouse.enabled = false` + comment | 10m | — |
-| F2 | Add `settings.collectors.keystrokes.enabled = false` + comment (volume + capture_content-default-true privacy note) | 8m | F1 |
-| F3 | Add `settings.collectors.fs_event = { enabled = true; interval_seconds = 60; }` + comment | 8m | F1 |
-| F4 | Write retention SQL constants (retentionDays=90) + DELETE statement w/ count-before query | 12m | — |
-| F5 | VACUUM leg: stamp-file (stateDir, 604800s epoch math) + df headroom guard (skip if avail < dbsize+5G, WARN loudly) | 12m | F4 |
-| F6 | Wire into monitor365BackupScript: export FIRST, then retention, before EXIT-trap restore; echo counts | 12m | F4,F5 |
-| F7 | Backup unit serviceConfig: MemoryMax/MemoryHigh/ioTier.background/TimeoutStartSec | 10m | — |
-| F8 | Throwaway duckdb harness: build test DB (both column types), run script's SQL verbatim, assert row counts + shrink | 15m | F4,F5 |
-| F9 | `nix flake check --no-build` | 5m | F1–F7 |
-| F10 | evo-x2 toplevel eval | 5m | F9 |
-| F11 | Rendered-TOML verification (eval the config-file text or store path; diff collectors section vs current store TOML) | 15m | F10 |
-| F12 | Runbook docs/services/monitor365.md: state + design + first-fire + rollback section | 15m | M2 shape final |
-| F13 | CHANGELOG entry | 8m | F12 |
-| F14 | TODO_LIST.md: tick f.3/f.4/f.5 queue rows + new done row for collector cut | 10m | F9 |
-| F15 | docs/todo/services.md: matching library ticks + annotation | 10m | F14 |
-| F16 | git add (pathspec) + commit detailed + push | 15m | F9–F15 |
-| F17 | PSI gate check → deploy (or defer with explicit note) + anchor check + post-deploy | 15m+ | F16 |
-| F18 | Status-report addendum or §f self-harvest check (report protocol) | 10m | F17 |
+| #   | Task                                                                                                                | Est  | Depends        |
+| --- | ------------------------------------------------------------------------------------------------------------------- | ---- | -------------- |
+| F1  | Read current monitor365.nix settings block; add `settings.collectors.mouse.enabled = false` + comment               | 10m  | —              |
+| F2  | Add `settings.collectors.keystrokes.enabled = false` + comment (volume + capture_content-default-true privacy note) | 8m   | F1             |
+| F3  | Add `settings.collectors.fs_event = { enabled = true; interval_seconds = 60; }` + comment                           | 8m   | F1             |
+| F4  | Write retention SQL constants (retentionDays=90) + DELETE statement w/ count-before query                           | 12m  | —              |
+| F5  | VACUUM leg: stamp-file (stateDir, 604800s epoch math) + df headroom guard (skip if avail < dbsize+5G, WARN loudly)  | 12m  | F4             |
+| F6  | Wire into monitor365BackupScript: export FIRST, then retention, before EXIT-trap restore; echo counts               | 12m  | F4,F5          |
+| F7  | Backup unit serviceConfig: MemoryMax/MemoryHigh/ioTier.background/TimeoutStartSec                                   | 10m  | —              |
+| F8  | Throwaway duckdb harness: build test DB (both column types), run script's SQL verbatim, assert row counts + shrink  | 15m  | F4,F5          |
+| F9  | `nix flake check --no-build`                                                                                        | 5m   | F1–F7          |
+| F10 | evo-x2 toplevel eval                                                                                                | 5m   | F9             |
+| F11 | Rendered-TOML verification (eval the config-file text or store path; diff collectors section vs current store TOML) | 15m  | F10            |
+| F12 | Runbook docs/services/monitor365.md: state + design + first-fire + rollback section                                 | 15m  | M2 shape final |
+| F13 | CHANGELOG entry                                                                                                     | 8m   | F12            |
+| F14 | TODO_LIST.md: tick f.3/f.4/f.5 queue rows + new done row for collector cut                                          | 10m  | F9             |
+| F15 | docs/todo/services.md: matching library ticks + annotation                                                          | 10m  | F14            |
+| F16 | git add (pathspec) + commit detailed + push                                                                         | 15m  | F9–F15         |
+| F17 | PSI gate check → deploy (or defer with explicit note) + anchor check + post-deploy                                  | 15m+ | F16            |
+| F18 | Status-report addendum or §f self-harvest check (report protocol)                                                   | 10m  | F17            |
 
 ## Execution graph
 

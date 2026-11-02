@@ -57,13 +57,13 @@ Nothing. Honest blemishes, all self-caught within one step:
 
 1. Retry SSO login at `https://rss.home.lan` — proves the fix end-to-end.
 2. InboxClean: flip Google OAuth consent screen to "In production" FIRST, then re-consent `main` (runbook in AGENTS.md InboxClean section); verify `/health` shows both accounts `connected`.
-~~3. When PSI drains: `nix run .#deploy` → lands the fetch hardening (+ whatever else the daemon batched).~~ done — deploy landed (docs/status/2026-09-20_15-30 M1)
-4. Post-deploy: verify `llama-rag-model-fetch` shows `active (exited)` and a server restart doesn't re-run it (journal).
-~~5. Determine whether the ~19:31 boot was a crash (check `last -x` reboot records properly, guard Zone-6 trip counters around 19:28, wtmp) — if crash, run the freeze-forensics template.~~ done — freeze #6 root-caused (docs/status/2026-09-18_20-06_freeze-6-diagnosis a1)
-6. After ONE proven SSO login: set miniflux `disableLocalAuth` (go-live gate per runbook).
-7. Update `docs/services/miniflux.md` runbook status line: link converged 2026-09-17, SSO live 2026-09-18.
-8. Check `buildcache-usb-recovery` post-deploy (it failed "still failing I/O" at the 19:31 boot but the mount answered real I/O 8 min later; deploy.sh re-runs it — confirm it converges or the enclosure flapped again).
-9. Confirm sev1/Zone-6 guard behaved during today's storm window (trip counters, no false silences) — the 19:28 event is a live calibration sample.
+   ~~3. When PSI drains: `nix run .#deploy` → lands the fetch hardening (+ whatever else the daemon batched).~~ done — deploy landed (docs/status/2026-09-20_15-30 M1)
+3. Post-deploy: verify `llama-rag-model-fetch` shows `active (exited)` and a server restart doesn't re-run it (journal).
+   ~~5. Determine whether the ~19:31 boot was a crash (check `last -x` reboot records properly, guard Zone-6 trip counters around 19:28, wtmp) — if crash, run the freeze-forensics template.~~ done — freeze #6 root-caused (docs/status/2026-09-18_20-06_freeze-6-diagnosis a1)
+4. After ONE proven SSO login: set miniflux `disableLocalAuth` (go-live gate per runbook).
+5. Update `docs/services/miniflux.md` runbook status line: link converged 2026-09-17, SSO live 2026-09-18.
+6. Check `buildcache-usb-recovery` post-deploy (it failed "still failing I/O" at the 19:31 boot but the mount answered real I/O 8 min later; deploy.sh re-runs it — confirm it converges or the enclosure flapped again).
+7. Confirm sev1/Zone-6 guard behaved during today's storm window (trip counters, no false silences) — the 19:28 event is a live calibration sample.
 
 **Hardening / class closure:**
 10. Eval-time shape audit: flag any `Requires=`-targeted `Type=oneshot` unit lacking `RemainAfterExit` (generalizes today's fix).

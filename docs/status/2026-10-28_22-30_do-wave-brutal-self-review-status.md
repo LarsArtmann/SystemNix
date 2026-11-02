@@ -60,6 +60,7 @@ Resolved this wave: monitor365 decomposition (reflink answer), ledger holes (mea
 Carried: calm-box post-deploy re-run; first-night ladder verify (armed, 23:10); CV shim-drop-at-upstream-bake; §18 sanity redesign; btrbk-forgejo 05:40 re-seed proof; QLC baseline watch; D6 boot proof (owner declined for now — row stays); §11 FOD widening; float-register build leg; daemon-git-death watch; ~/tmp prepare (owner-gated); wevisone ruling (now with 19 G facts, §g); ledger-tooling decision (partially obsoleted by the corrected numbers — row can likely close after review).
 
 NEW (harvested with this report):
+
 1. [ready] Fire the prepared generation post-ladder (cv@dd201874b + templ pin + audit fix; proof green) — then the calm-box re-run on it.
 2. [ready] inboxclean-sync: pull the app-level log lines before the 5-min timeout kill and decide config-tightness vs wedge.
 3. [ready] ci-watchdog: read the script intent before "fixing" — its exit may BE the canary signal it exists to emit.

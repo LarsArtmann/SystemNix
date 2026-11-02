@@ -113,25 +113,25 @@ user answered "yes" but the heal has NOT landed (no journal entries, dirs still 
 
 ~~1. User runs the heal command (or grants this session sudo) — everything unblocks.~~ done — heal ran 05:32 2026-09-25 (external actor) — 05-33 report timeline; 09-52 display report
 ~~2. Verify: `/run/binfmt` + `/run/systemnix/sev1` exist; sev1-bridge green within 10s tick; sandbox probe~~ done — 09-52 display report a1: all paths verified materialized at 05:32; builds un-broken (a2)
-   build succeeds.
+build succeeds.
 3. Run `tests/test-hot-user-caches.nix` (green with fix).
 4. Red-run control: flip the module wiring back to the automount, rebuild the test, expect the tmpfiles
-   assertion to fail, restore (proves the tripwire catches the original bug).
+assertion to fail, restore (proves the tripwire catches the original bug).
 ~~5. `nix flake check --no-build` (full eval incl. the new test + parallel session's boot.nix unit).~~ done — green 05:33 2026-09-25 (05-33 report), incl. the new test + boot.nix unit
 6. Review + co-verify the parallel session's `binfmt-sandbox-dir` unit (it will ride the same deploy).
 ~~7. Deploy `nix run .#deploy` (pressure gate aware; rc=12 → retry when calm; rc=14 → re-run after fixing~~ done — deploys landed from 2026-09-26 (theme live 2026-09-30; hot-db waves 2026-09-30 CHANGELOG.md:449)
-   failed units).
+failed units).
 ~~8. Post-deploy: anchor check (`readlink` profile vs current-system), sandbox probe, sev1-bridge green.~~ done — deploy.sh anchor discipline on the landed deploys; 09-52 display verified paths + builds
 9. Cross-reference the parallel session's "boot-regression" doc (commit c3b0aad6) — likely this same
-   22:34 boot; link the reports.
+22:34 boot; link the reports.
 10. Consider `boot.binfmt.preferStaticEmulators = true` as a follow-up (drops /run/binfmt from
-    extra-sandbox-paths entirely; needs reboot to activate the F-flag registration).
+extra-sandbox-paths entirely; needs reboot to activate the F-flag registration).
 11. Check why `notify-failure@sev1-bridge` did(n't) page Discord 2900× (alert fatigue / channel health).
 12. Verify `systemctl is-enabled hot-user-caches-nix-bootstrap` still satisfies deploy.sh's provisioner
-    gate after the wantedBy change (mount-wantedBy vs automount-wantedBy).
+gate after the wantedBy change (mount-wantedBy vs automount-wantedBy).
 13. First post-fix REBOOT: confirm tmpfiles-setup active + all /run dirs present (the real proof).
 14. The io-psi-forensics bundle from 22:37 (`/var/tmp/io-psi-forensics-20260924T203744Z`, guard Zone 6
-    trip during boot IO storm) is unanalyzed — boot was stormy; unrelated to the cycle but worth a look.
+trip during boot IO storm) is unanalyzed — boot was stormy; unrelated to the cycle but worth a look.
 15. `pre-reboot-check` before that reboot (house rule).
 
 ### g) QUESTIONS I CANNOT ANSWER MYSELF

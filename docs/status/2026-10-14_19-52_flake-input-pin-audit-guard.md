@@ -83,7 +83,7 @@ documented it). Nothing landed broken.
    three. **Harvested** as [ready] (queue + pipeline.md).
 2. **The shims the lift depends on** — the lift comments cite vendorHash shims
    (lib/lars-packages.nix erraudit/crm, crm.nix consumer shim). I did not author or verify
-   them; pins now TRACK master, so a missing/stale shim breaks the next lock move. 
+   them; pins now TRACK master, so a missing/stale shim breaks the next lock move.
    **Harvested** as [ready].
 3. **INTERIM-INPUT-PINS.md §A staleness** — my URL probe shows art-dupl is now a remote
    branch pin (`git+https://…?ref=refs/heads/fork`), so §A's worktree table is at least
@@ -183,6 +183,7 @@ Tags: **[harvest]** = queued this session (queue + pipeline.md); **[ready]** /
 (roadmap fuel, not commitments — per the status-report skill's >25 rule).
 
 **Direct follow-ups (harvested — see §b):**
+
 1. [harvest][ready] Verify post-lift lock originals for erraudit/crm/golangci-lint-auto-configure match their `?ref=master` declarations.
 2. [harvest][ready] Verify the vendorHash shims cited by the lift comments exist and are current (lib + per-service surfaces).
 3. [harvest][ready] Sweep INTERIM-INPUT-PINS.md §A for dead git+file rows (art-dupl already moved).
@@ -277,7 +278,7 @@ Tags: **[harvest]** = queued this session (queue + pipeline.md); **[ready]** /
 - Selftest: `nix build --no-link -L .#checks.x86_64-linux.flake-input-pin-audit-selftest`
   → "7 pin classes flagged, 6 floating classes quiet, allowlist + stale + lock-surface
   legs green" (re-verified post-treefmt, outPath printed).
-- Harness: `bash scripts/negative-test-lints.sh` → **39 passed, 0 failed** (incl. 
+- Harness: `bash scripts/negative-test-lints.sh` → **39 passed, 0 failed** (incl.
   `[inputpin/sha-path-pin]` and `[inputpin/lifted-pin-stale-allowlist]` "toplevel eval
   threw the audit marker").
 - Whole flake: `nix flake check --no-build` → "all checks passed!" (~19:45; darwin

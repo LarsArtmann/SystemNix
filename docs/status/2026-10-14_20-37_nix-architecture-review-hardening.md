@@ -6,6 +6,7 @@
 **Method:** nix-review + architecture-review + pareto-planning skills; prior review cross-referenced (`docs/architecture-understanding/2026-09-14_19-56_service-orientation.html`) instead of re-derived; every executed change verified stepwise; final gate `nix flake check --no-build --all-systems` = **ALL CHECKS PASSED**.
 
 **Artifacts:**
+
 - Review report: `docs/architecture-understanding/2026-10-14_17-17_nix-architecture.html`
 - TODO harvest: 4 rows (services.md) + 3 rows (pipeline.md), queue + library mirrored, `check-todo-system.sh` = structure clean
 
@@ -67,7 +68,7 @@
 10. Per-service directories decision (prior review P2 — owner preference question; flat+grep is a legitimate answer).
 11. Eval-latency: the O(repo) guard-tax is accepted-by-design, but a "guards-lite" eval flag for iteration loops could halve agent session latency; needs a guard-vs-speed doctrine decision.
 12. The 109 unharvested §f-reports backlog (existing row; this report adds +1 — see Harvest Ledger).
-13. system-health.nix: even before the collector seam, its 7 `// `-chained `optionalAttrs` config blocks (lines ~1892-1925) violate the documented no-`//`-on-shared-keys rule's SPIRIT (each branch keys `services.system-health`) — audit whether `mkMerge` is owed there during the P0 decomposition.
+13. system-health.nix: even before the collector seam, its 7 `//`-chained `optionalAttrs` config blocks (lines ~1892-1925) violate the documented no-`//`-on-shared-keys rule's SPIRIT (each branch keys `services.system-health`) — audit whether `mkMerge` is owed there during the P0 decomposition.
 14. with-pkgs-lint: consider also banning `with lib;` (same shadow class, currently unlinted; 0 known sites — cheap to prevent).
 15. statix/deadnix on the 22 files I edited were never EXECUTED in-session (they build only in full-check/CI; `--no-build` skips them) — pre-commit/CI will arbitrate; if CI reds, it's mine.
 16. base.nix: the sweep revealed `# NOTE: pkgs.jj is a JSON stream editor, NOT Jujutsu` style traps live in comments — a package-name-comment-lint could prevent re-adding removed packages (low value, note only).

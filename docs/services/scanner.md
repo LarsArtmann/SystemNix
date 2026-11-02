@@ -2,13 +2,13 @@
 
 USB-attached ADF scanner feeding the existing Paperless-ngx consume directory. Proven end-to-end 2026-10-19 (scan → convert → consume → OCR → doc ID in ~16 s/doc).
 
-| Piece       | What / Where                                                                                          |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| Device      | Brother ADS-1800W, USB to evo-x2 (`/sys/bus/usb/devices/6-1`, vendor 04f9), SANE name `brother5:bus6;dev1` |
-| Driver      | `hardware.sane.brscan5.enable = true` (`platforms/nixos/system/networking.nix`) — sane-backends has NO ADS-1800W support; no IPP-USB/eSCL-over-USB either |
-| Wrapper     | `scripts/scan-to-paperless.sh` (repo, shellchecked)                                                    |
+| Piece       | What / Where                                                                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Device      | Brother ADS-1800W, USB to evo-x2 (`/sys/bus/usb/devices/6-1`, vendor 04f9), SANE name `brother5:bus6;dev1`                                                 |
+| Driver      | `hardware.sane.brscan5.enable = true` (`platforms/nixos/system/networking.nix`) — sane-backends has NO ADS-1800W support; no IPP-USB/eSCL-over-USB either  |
+| Wrapper     | `scripts/scan-to-paperless.sh` (repo, shellchecked)                                                                                                        |
 | Consume dir | `/mnt/pool/services/paperless/consume` — `PAPERLESS_CONSUMER_RECURSIVE=true`, PATCH-T split, Code-39 ASN, `OCR_LANGUAGE=deu+eng`, `DELETE_DUPLICATES=true` |
-| Consumers   | 2 celery workers; OCR_DESKEW + OCR_ROTATE_PAGES on (handles 180° inserts automatically)                 |
+| Consumers   | 2 celery workers; OCR_DESKEW + OCR_ROTATE_PAGES on (handles 180° inserts automatically)                                                                    |
 
 ## The PNM trap (2026-10-19, live)
 

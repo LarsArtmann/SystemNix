@@ -28,10 +28,10 @@
 
 1. **papdashboard flaky test** — the first package build exit-1'd (log tail = DI service-shutdown INFO lines mid-teardown); direct rebuild passed clean. I documented "retry once" but did **not** identify WHICH test is flaky — and I `rm`'d the only full log before harvesting the name.
 2. **inboxclean triage** — root cause identified (`invalid_grant`, the documented testing-mode token-expiry class; needs interactive `inboxclean auth`), but I did not determine which account(s) died (`main` vs `work`), when the token actually died, or whether the `work` account (alive-past-7d as of the 2026-09-12 correction) is still healthy.
-~~3. **Pocket ID smoke failure in deploy-1** — failed then, passed in deploys #2/#3. Presumed transient (caught mid-restart at smoke time) but never explicitly confirmed.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
-~~4. **Live-proof bookkeeping** — I marked the todo "completed" at session end while the systemd layer was still unproven (script layer only). Reality self-corrected overnight (item a9), but the bookkeeping was wrong when made.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
-5. **Attribution of my lock fixes** — staged-only (no-commit mandate honored), so my fixes ride heuristic daemon commits (`57f6a7f3` swept the browser-history rollback). History doesn't cleanly attribute this work.
-6. **`collectorVendorHash = ""`** (`_signoz-packages.nix:96`, signoz collector + schema-migrator) — noticed at ~21:00, flagged in the final message, NOT fixed. Unpinned FOD = silent nondeterminism if the store output is ever GC'd. Fix is ~2 minutes (hash the realized `5lj1zrhw…` FOD, paste).
+   ~~3. **Pocket ID smoke failure in deploy-1** — failed then, passed in deploys #2/#3. Presumed transient (caught mid-restart at smoke time) but never explicitly confirmed.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
+   ~~4. **Live-proof bookkeeping** — I marked the todo "completed" at session end while the systemd layer was still unproven (script layer only). Reality self-corrected overnight (item a9), but the bookkeeping was wrong when made.~~ done — transient smoke failures passed on #2/#3 (a.10-11)
+3. **Attribution of my lock fixes** — staged-only (no-commit mandate honored), so my fixes ride heuristic daemon commits (`57f6a7f3` swept the browser-history rollback). History doesn't cleanly attribute this work.
+4. **`collectorVendorHash = ""`** (`_signoz-packages.nix:96`, signoz collector + schema-migrator) — noticed at ~21:00, flagged in the final message, NOT fixed. Unpinned FOD = silent nondeterminism if the store output is ever GC'd. Fix is ~2 minutes (hash the realized `5lj1zrhw…` FOD, paste).
 
 ## c) NOT STARTED
 

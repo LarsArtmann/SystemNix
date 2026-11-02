@@ -54,23 +54,23 @@
 
 ## f) NEXT 50 TASKS (ordered by impact; status: pending unless marked)
 
-| # | Task | Impact | Effort | Status |
-|---|------|--------|--------|--------|
-| 1 | Fix qonto import file access: root `bank-sync-qonto-stage` oneshot copies both CSVs into `<dataDir>/qonto-import/` (0400 bank-sync), import unit reads the staged copies | 🔴 | S | pending (fix designed) |
-| 2 | Re-deploy (gate/force as needed) + verify: journal shows imported=104 (errors=1 junk row) + imported=28 | 🔴 | S | pending (blocked on #1) |
-| 3 | Root-cause `bank-sync-paperless-token` `/run/.../env: Permission denied` (ProtectSystem=strict vs RuntimeDirectory write, or stale dir ownership; check `ls -ld /run/bank-sync-paperless` post-mortem) | 🔴 | S-M | pending |
-| 4 | After #3: let `bank-sync-qonto-paperless` run; verify 2 documents, metadata (Qonto correspondent / Bank Statement / tags / created dates), marker written | 🔴 | S | pending |
-| 5 | Dashboard verification: qonto profiles + balances render, 132 rows served, first-paint selection works | 🔴 | S | pending (blocked on #2) |
-| 6 | Owner: mint Qonto Business API creds → wire `--provider qonto --receipts` into weekly archival (row exists) | 🟠 | S+owner | blocked:user |
-| 7 | pma forward relock once the parallel session's flake fix lands (supersedes 849573de rollback) | 🟠 | S | blocked:push |
-| 8 | Monitor365 smoke NEW-failure triage (separate re-enable arc; not this session's locus) | 🟠 | M | foreign |
-| 9 | Verify the Sunday 03:00 weekly archival coexists with the new units (timer fired during deploy chaos — check its result) | 🟡 | S | pending |
-| 10 | Anchor check: `readlink /nix/var/nix/profiles/system` vs `/run/current-system` after the exit-4 activation (deploy log says self-repaired — verify) | 🟡 | S | pending |
-| 11 | Drop the 12 vendorHash shims per nix-hash-fix protocol as upstreams bake hashes | ⚪ | M | watch |
-| 12 | Stage the jq-shim lesson (absolute paths / python for lock JSON) into docs/agents/shell-devtools.md | ⚪ | S | pending |
-| 13 | Pre-deploy unit-rehearsal ritual → docs/agents/systemd.md (lesson d.1) | 🟡 | S | pending |
-| 14 | drive-ingest-fixture flake-check breakage: gate behind module flag until its session completes | 🟡 | S | foreign-owned |
-| 15 | Full-disk readers behind the guard trips (standing row — the storm is THE deploy-gate blocker) | 🔴 | M | standing |
+| #  | Task                                                                                                                                                                                                   | Impact | Effort  | Status                  |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------- | ----------------------- |
+| 1  | Fix qonto import file access: root `bank-sync-qonto-stage` oneshot copies both CSVs into `<dataDir>/qonto-import/` (0400 bank-sync), import unit reads the staged copies                               | 🔴     | S       | pending (fix designed)  |
+| 2  | Re-deploy (gate/force as needed) + verify: journal shows imported=104 (errors=1 junk row) + imported=28                                                                                                | 🔴     | S       | pending (blocked on #1) |
+| 3  | Root-cause `bank-sync-paperless-token` `/run/.../env: Permission denied` (ProtectSystem=strict vs RuntimeDirectory write, or stale dir ownership; check `ls -ld /run/bank-sync-paperless` post-mortem) | 🔴     | S-M     | pending                 |
+| 4  | After #3: let `bank-sync-qonto-paperless` run; verify 2 documents, metadata (Qonto correspondent / Bank Statement / tags / created dates), marker written                                              | 🔴     | S       | pending                 |
+| 5  | Dashboard verification: qonto profiles + balances render, 132 rows served, first-paint selection works                                                                                                 | 🔴     | S       | pending (blocked on #2) |
+| 6  | Owner: mint Qonto Business API creds → wire `--provider qonto --receipts` into weekly archival (row exists)                                                                                            | 🟠     | S+owner | blocked:user            |
+| 7  | pma forward relock once the parallel session's flake fix lands (supersedes 849573de rollback)                                                                                                          | 🟠     | S       | blocked:push            |
+| 8  | Monitor365 smoke NEW-failure triage (separate re-enable arc; not this session's locus)                                                                                                                 | 🟠     | M       | foreign                 |
+| 9  | Verify the Sunday 03:00 weekly archival coexists with the new units (timer fired during deploy chaos — check its result)                                                                               | 🟡     | S       | pending                 |
+| 10 | Anchor check: `readlink /nix/var/nix/profiles/system` vs `/run/current-system` after the exit-4 activation (deploy log says self-repaired — verify)                                                    | 🟡     | S       | pending                 |
+| 11 | Drop the 12 vendorHash shims per nix-hash-fix protocol as upstreams bake hashes                                                                                                                        | ⚪     | M       | watch                   |
+| 12 | Stage the jq-shim lesson (absolute paths / python for lock JSON) into docs/agents/shell-devtools.md                                                                                                    | ⚪     | S       | pending                 |
+| 13 | Pre-deploy unit-rehearsal ritual → docs/agents/systemd.md (lesson d.1)                                                                                                                                 | 🟡     | S       | pending                 |
+| 14 | drive-ingest-fixture flake-check breakage: gate behind module flag until its session completes                                                                                                         | 🟡     | S       | foreign-owned           |
+| 15 | Full-disk readers behind the guard trips (standing row — the storm is THE deploy-gate blocker)                                                                                                         | 🔴     | M       | standing                |
 
 (16–50: not enumerated — the f-list above is the honest complete set for THIS session's arc; long-tail items live in the standing TODO libraries.)
 

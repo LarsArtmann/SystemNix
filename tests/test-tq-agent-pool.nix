@@ -149,9 +149,10 @@ let
       #   pool:   hasSuffix "--crush-server /mnt/pool/services/tq/crush-pool.sock"
       #   serve:  hasSuffix "/bin/tq serve --addr 127.0.0.1:<port> --crush-server /mnt/pool/services/tq/crush-pool.sock"
       name = "crush-server-flip-not-yet-active";
-      pass = !builtins.any (lib.hasInfix "--crush-server") (
-        [ pool.serviceConfig.ExecStart ] ++ (pool.serviceConfig.ExecStartPre or [ ])
-      );
+      pass =
+        !builtins.any (lib.hasInfix "--crush-server") (
+          [ pool.serviceConfig.ExecStart ] ++ (pool.serviceConfig.ExecStartPre or [ ])
+        );
     }
     {
       name = "serve-writable-journal-dir";

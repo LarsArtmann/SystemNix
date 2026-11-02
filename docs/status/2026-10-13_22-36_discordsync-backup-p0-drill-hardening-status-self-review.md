@@ -64,7 +64,8 @@ Found the P0 (dump gap now 12+ days on the ONLY backup of the unsnapshotted hot-
 
 ## §f UP TO 50 THINGS TO GET DONE NEXT
 
-*Session follow-ups (this work):*
+_Session follow-ups (this work):_
+
 1. Run alejandra + statix standalone on `modules/nixos/services/discordsync.nix` (§d.1) — agent, now.
 2. Trash `/tmp/discordsync-src` — agent, now.
 3. Deploy the hardening at the first PSI-quiet window (PSI some avg60 < ~20%) — agent, storm-gated.

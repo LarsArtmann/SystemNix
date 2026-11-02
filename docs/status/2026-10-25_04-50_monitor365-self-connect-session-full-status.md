@@ -121,9 +121,11 @@ journal noise and two daemon commits.
    report sections should be swept against the journal anomalies list before closing.
 
 ## f) NEXT — 50 items (brainstorm, tag-routed; NOT wholesale-harvested — the [ready]
+
 subset is fair game for a docs-health HARVEST pass; everything else is ROADMAP fuel)
 
 **Deploy-blocking / immediate (this batch):**
+
 1. [watch→do] Deploy the PSI-calm batch (row 734) — now carries: volume cuts,
    retention, backup caps, backup memory fix, retention caps, node_exporter dedupe.
 2. [ready] Post-deploy proof: node_exporter journal zero "error gathering metrics" +
@@ -145,31 +147,33 @@ subset is fair game for a docs-health HARVEST pass; everything else is ROADMAP f
 
 **Monitoring integrity (the blind-monitor class):**
 11. [ready] Gatus/SigNoz surface for node_exporter self-health (journal-pattern or
-    metric-presence check — "who watches the watcher").
+metric-presence check — "who watches the watcher").
 12. [ready] Attribution: who scrapes :9100 at 1–5s cadence (gatus vs otel receiver);
-    align timeout with the failing-scrape behavior.
+align timeout with the failing-scrape behavior.
 13. [blocked:user] sudo `ss -tnp | grep ':9100'` if the pile persists post-deploy.
 14. [ready] SigNoz "Agent Connected" alert state review — was it red 7 days (metrics
-    blind) or green (fed by another path)? Either answer is a finding.
+blind) or green (fed by another path)? Either answer is a finding.
 15. [ready] Inventory: any OTHER collector pair writing duplicate metric families into
-    the textfile dir (the dedupe is per-list, not per-registry).
+the textfile dir (the dedupe is per-list, not per-registry).
 16. [ready] SigNoz coverage dark four (existing row) — monitor365-server OTel spans
-    still unverified 26h+ past budget.
+still unverified 26h+ past budget.
 
 **Monitor365 structural (the wedge triangle):**
 17. [decision] Owner+upstream: bounded agent offline queue (unbounded buffer row) —
-    the 408M backlog exists because the queue is a bottomless pit.
+the 408M backlog exists because the queue is a bottomless pit.
 18. [ready] Upstream push: gen_app migration fix (new-table+INSERT SELECT or
-    compute-at-query-time), then lock bump — until then fast analytics is dead weight.
+compute-at-query-time), then lock bump — until then fast analytics is dead weight.
 19. [decision] window_focused collector: disable vs wait for Wayland upstream
-    (monitoring.md row).
+(monitoring.md row).
 20. [ready] Agent store-channel backpressure: channel-size vs disk-latency split;
-    upstream constant candidate (queued this session).
+upstream constant candidate (queued this session).
 21. [ready] dmesg coredump in the agent cgroup: identify invoking collector vs
-    hardening block (queued this session).
+hardening block (queued this session).
 22. [ready] DuckDB memory tuning review (existing row 733): MemoryMax 4G/MemoryHigh 3G
-    + server memory_limit for the LIVE server (buffer_pressure 1) — tonight's env-var
-    plumbing is reusable.
+
+- server memory_limit for the LIVE server (buffer_pressure 1) — tonight's env-var
+  plumbing is reusable.
+
 23. [ready] Hot-tier move for the server DB (existing row 728) — the whole wedge class
     shrinks the moment fsync stops costing 200 ms.
 24. [watch] First-fire + first-week backup/retention health after deploy.
@@ -186,45 +190,45 @@ subset is fair game for a docs-health HARVEST pass; everything else is ROADMAP f
 
 **Fleet hygiene noticed in passing (pre-existing rows, re-surfaced):**
 30. [ready] Ghostty interactive-scope IO storm root-cause (monitoring.md row) — it
-    blocked THIS batch's deploy windows three times.
+blocked THIS batch's deploy windows three times.
 31. [ready] Master eval-red triage continuation (row 612) — blanket-wave fallout.
 32. [ready] Eval gate on lock floats (row 616) — tonight's monitor365 lock bump
-    (parallel session) rode through unvalidated.
+(parallel session) rode through unvalidated.
 33. [ready] CHANGELOG deploy-pending mass retag (row 623) — grew by 3+ entries tonight.
 34. [ready] Zero-deploy catalog entries near-miss triage (row 599) — monitor365 vs
-    monitor365-server naming pair still open.
+monitor365-server naming pair still open.
 35. [ready] system-health monolithic collector decomposition behind extraCollectors
-    (row 534) — tonight's dup-metric bug is a direct cost of that shape.
+(row 534) — tonight's dup-metric bug is a direct cost of that shape.
 36. [ready] Dead `duckdb` env attr in monitor365-retention-selftest (row 613) — touched
-    file, didn't take the one-line cleanup.
+file, didn't take the one-line cleanup.
 37. [ready] Negative mutation leg for the retention-rendered check (row 614).
 38. [blocked:user] Owner diagnostics-dir cap for sync-failure snapshots (row 739) —
-    tonight's breaker storm wrote MORE of them.
+tonight's breaker storm wrote MORE of them.
 39. [ready] nsfw-classifier + mr-sync-dashboard state check (row 730) — still
-    unexamined since the owner stop.
+unexamined since the owner stop.
 40. [decision] monitor365 owner-fork strategy row 723 — still the umbrella decision.
 
 **Session-process debt:**
 41. [ready] Add the figment `MONITOR365_SERVER__*` env pattern + "textfile dup =
-    whole-scrape rejection" lessons to docs/agents/monitoring.md.
+whole-scrape rejection" lessons to docs/agents/monitoring.md.
 42. [ready] `/proc/net/tcp` UID mapping as the documented sudo-free first probe for
-    socket-attribution rows (shell-devtools doc candidate).
+socket-attribution rows (shell-devtools doc candidate).
 43. [ready] Status-report template: standing "concurrent sessions" section when
-    interleaved commits detected (this report added it ad hoc).
+interleaved commits detected (this report added it ad hoc).
 44. [ROADMAP] Bounded-queue upstream design (drain governor at the agent, not the
-    tenant cap).
+tenant cap).
 45. [ROADMAP] Per-collector health metrics in the agent (which collector dropped what,
-    instead of journal archaeology).
+instead of journal archaeology).
 46. [ROADMAP] node_exporter textfile schema registry (one writer per metric family,
-    enforced).
+enforced).
 47. [ROADMAP] Backup verification ladder: export exists → export opens → export
-    restores (row 749 pattern applied to monitor365).
+restores (row 749 pattern applied to monitor365).
 48. [ROADMAP] Watchdog restart budget: tonight both watchdogs cycled units during PSI
-    storms — consider PSI-aware deferral in the watchdog scripts.
+storms — consider PSI-aware deferral in the watchdog scripts.
 49. [ROADMAP] Commit-message lint for heuristic daemon messages (they cost every
-    post-hoc attribution session real time).
+post-hoc attribution session real time).
 50. [ROADMAP] Fold the two 2026-10-25 monitor365 reports into the runbook refresh
-    (row 729) when it executes — its spec predates tonight's facts.
+(row 729) when it executes — its spec predates tonight's facts.
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF (max 3)
 
@@ -240,11 +244,11 @@ subset is fair game for a docs-health HARVEST pass; everything else is ROADMAP f
    `~/projects/monitor365` — should a session write+test+push it upstream (then bump
    the SystemNix lock), or is upstream work for the owner/another workflow?
 
-*Self-harvest ledger: items 2-4, 9-10, 20-21, 41-43 and the g-questions' actionable
+_Self-harvest ledger: items 2-4, 9-10, 20-21, 41-43 and the g-questions' actionable
 halves are the only DIRECT follow-ups of this session's work; 20-21 were harvested into
 services.md during this review (04:5x). All other items are pre-existing rows re-surfaced
 or ROADMAP brainstorm — deliberately not queued wholesale (docs-health HARVEST rigor
-applies; the skill's "brainstorm, not commitment" rule).*
+applies; the skill's "brainstorm, not commitment" rule)._
 
 ---
 
@@ -275,9 +279,9 @@ Closed in the second pass:
 Deliberately NOT done in the second pass:
 
 - **Eval-assert for the dedupe — REJECTED as tautological**: any assert on the raw input
-   lists fails in the normal enabled state (both lists legitimately overlap); any assert
-   on the deduped output is guaranteed by the `lib.unique` itself. The honest gate is the
-   queued rendered-prom uniqueness selftest (f-10) — dead code now would be the ghost
-   system this review exists to prevent.
+  lists fails in the normal enabled state (both lists legitimately overlap); any assert
+  on the deduped output is guaranteed by the `lib.unique` itself. The honest gate is the
+  queued rendered-prom uniqueness selftest (f-10) — dead code now would be the ghost
+  system this review exists to prevent.
 - The HTML self-review artifact: written after this appendix
-   (`docs/reviews/2026-10-25_05-0x_brutal-self-review.html`).
+  (`docs/reviews/2026-10-25_05-0x_brutal-self-review.html`).

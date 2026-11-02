@@ -124,4 +124,4 @@
 
 ---
 
-*Self-harvest: §f items 8, 9, 13, 17, 18, 19, 25 are session-direct follow-ups — landed in TODO_LIST.md/library rows? NO — deliberately recorded here only, per the user's "report, then WAIT" directive; harvest on the next dispatch pass (the rows above are written so each can be dropped into its domain file verbatim).*
+_Self-harvest: §f items 8, 9, 13, 17, 18, 19, 25 are session-direct follow-ups — landed in TODO_LIST.md/library rows? NO — deliberately recorded here only, per the user's "report, then WAIT" directive; harvest on the next dispatch pass (the rows above are written so each can be dropped into its domain file verbatim)._

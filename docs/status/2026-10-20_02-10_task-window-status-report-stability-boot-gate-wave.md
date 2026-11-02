@@ -4,13 +4,13 @@
 
 **The window's five tasks:**
 
-| # | Task | Verdict |
-| - | ---- | ------- |
-| 1 | gen-914 storm-protection post-deploy verification sweep | DONE (4 legs live-verified, incl. a real storm-window gate refusal) |
-| 2 | Stability trio: boot-transaction-open unit identification + family audit + compsize | DONE (miniflux 91.4s found as the #1 gate; fixed at `mkOidcGate` definition site — in tree, NOT deployed) |
-| 3 | Post-deploy gate re-measure + residual in-transaction gate set | PARTIAL by design (agent-executable adjudications landed; headline blocked on deploy + owner-hand reboot; row TODO_LIST:162 still open) |
-| 4 | Forgejo stateful-family condition gate by construction | DONE (impl pre-landed via twin daemon commit; verified + closed; live-negative-test still owed) |
-| 5 | Docker-removal follow-ups (Gatus Logs button, §3 tripwire, VM-test watch) | DONE (eval-verified, committed; deploy owed for the button) |
+| # | Task                                                                                | Verdict                                                                                                                                 |
+| - | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | gen-914 storm-protection post-deploy verification sweep                             | DONE (4 legs live-verified, incl. a real storm-window gate refusal)                                                                     |
+| 2 | Stability trio: boot-transaction-open unit identification + family audit + compsize | DONE (miniflux 91.4s found as the #1 gate; fixed at `mkOidcGate` definition site — in tree, NOT deployed)                               |
+| 3 | Post-deploy gate re-measure + residual in-transaction gate set                      | PARTIAL by design (agent-executable adjudications landed; headline blocked on deploy + owner-hand reboot; row TODO_LIST:162 still open) |
+| 4 | Forgejo stateful-family condition gate by construction                              | DONE (impl pre-landed via twin daemon commit; verified + closed; live-negative-test still owed)                                         |
+| 5 | Docker-removal follow-ups (Gatus Logs button, §3 tripwire, VM-test watch)           | DONE (eval-verified, committed; deploy owed for the button)                                                                             |
 
 ---
 
@@ -77,7 +77,7 @@ Most follow-ups this window generated are ALREADY queued (dedup-verified against
 
 1. **`--no-verify` policy ratification** — when a pre-commit failure is PROVEN to be a daemon HEAD race and the identical content already passed the full hook, is reset+split+`--no-verify` with the evidence recorded in the commit body acceptable practice (the 2026-10-20 batch did this 3×), or must future sessions re-run the hook at the cost of another ~4-minute race window? Appended as a BLOCKED row.
 2. **The 2026-10-18 ~03:00 watchdog-expiry boot** — did you notice a hang/freeze around 03:00, or was the box unattended? Decides whether boot -1's death mints freeze #31 or is explained as the hermes/IO boot-storm hang (causality unproven either way; the hermes census window is now exonerated as a cause candidate — read-only + bounded). Appended as a BLOCKED row.
-3. *(Standing, already queued: bank-sync + clickhouse move decisions inside row 162; the calm-window battery slot (158); the go-floor pin-vs-float strategy (pipeline.md:14). Not re-asked here.)*
+3. _(Standing, already queued: bank-sync + clickhouse move decisions inside row 162; the calm-window battery slot (158); the go-floor pin-vs-float strategy (pipeline.md:14). Not re-asked here.)_
 
 ## h) BAND DRIFT
 

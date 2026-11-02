@@ -25,16 +25,16 @@ Session: continuation of the 2026-09-21 10:35 follow-up round (crush-hot-db hard
 ## b) PARTIALLY DONE
 
 1. **VM test `crush-hot-db`** — everything except the run: correct attr found, proven unbuilt locally, CI proven signal-less, calm-window automation built and exercised, exact batch command recorded (`heavy-job nix build --no-link .#checks.x86_64-linux.crush-hot-db`). The run itself waits on a calm window that never came (see d.5).
-~~2. **Deploy batch** — tree is ready and verified, but not deployed (owner authority + storm). It carries: crush-hot-db upgrade (per-project guard, failure paging, dry-run, tripwire), boot-mirror chain, MemoryHigh ceilings (row 73), 2-day WARN boundary (row 74), plus other sessions' landed work (treefmt HTML excludes, d2 overlay fix, hot-db Phase-2). First deploy also triggers the first per-project-guard migrate (`legal-cases` → Samsung).~~ done — deployed — crush-hot-db guard live since the 09-22 generation (docs/status/2026-10-01_13-42 §a.2)
-3. **Decision records** — landed, then self-review caught wrong timestamps (11:40 vs actual ~13:55) — corrected in storage.md + the §h report during THIS pass (see d.1).
+   ~~2. **Deploy batch** — tree is ready and verified, but not deployed (owner authority + storm). It carries: crush-hot-db upgrade (per-project guard, failure paging, dry-run, tripwire), boot-mirror chain, MemoryHigh ceilings (row 73), 2-day WARN boundary (row 74), plus other sessions' landed work (treefmt HTML excludes, d2 overlay fix, hot-db Phase-2). First deploy also triggers the first per-project-guard migrate (`legal-cases` → Samsung).~~ done — deployed — crush-hot-db guard live since the 09-22 generation (docs/status/2026-10-01_13-42 §a.2)
+2. **Decision records** — landed, then self-review caught wrong timestamps (11:40 vs actual ~13:55) — corrected in storage.md + the §h report during THIS pass (see d.1).
 
 ## c) NOT STARTED (in-scope, known)
 
 1. The other 3 small rows the previous session dropped: shadow-dir cleanup under `/mnt/pool`, `/data`, `/var/lib/clickhouse` (Pool-quality item 6); `pool-subvols-ensure` declarative oneshot (item 5); device-constants lib consolidation (item 4).
 2. Row 79 (conditional 04:00 btrbk retry window) — deliberately NOT started (owner rejected-for-now; revisit if tonight's window also dies).
 3. TODO pruning pass ([x] rows → CHANGELOG) — inherited debt, not touched.
-~~4. Post-storm `df /` re-measurement (the +25G growth attribution is still reasoned, not measured).~~ done — measured: 570G/81% at 2026-09-21 00:35 (docs/status/2026-09-20_16-26 §h #48)
-5. btrbk-root 23:00 outcome check + Sep 22 00:28 verify result — time-gated to tomorrow.
+   ~~4. Post-storm `df /` re-measurement (the +25G growth attribution is still reasoned, not measured).~~ done — measured: 570G/81% at 2026-09-21 00:35 (docs/status/2026-09-20_16-26 §h #48)
+4. btrbk-root 23:00 outcome check + Sep 22 00:28 verify result — time-gated to tomorrow.
 
 ## d) TOTALLY FUCKED UP (honest list; all bounded)
 

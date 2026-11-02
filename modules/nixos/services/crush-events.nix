@@ -26,7 +26,6 @@
       inherit (import ../../../lib/default.nix lib) harden;
       cfg = config.services.crush-events;
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
-      primaryUser = config.users.primaryUser;
 
       collector = pkgs.writeShellApplication {
         name = "crush-events-collector";

@@ -47,12 +47,12 @@
 ## e) WHAT WE SHOULD IMPROVE 🔧
 
 1. **"Does not exist anywhere" claims require a full-repo search** — `gh search code --repo <r> <term>` is one command; grep-of-a-few-files is not existence proof. Fold into personal application of verify-external-claims.
-~~2. **Durable docs cite anchors, not line numbers.**~~ **Won't implement — discipline note only.**
-~~3. **Read the whole TODO_LIST before adding rows** (or grep it for keywords — `rg -i "manifest|completeness|registry" TODO_LIST.md` would have been the 5-second version).~~ done — TODO-drift now mechanized: scripts/check-todo-system.sh pairing_check
-~~4. **Apply our own journalctl discipline from command #1** — `--grep` + `--since` + `timeout` should be muscle memory in this repo, not a correction after backgrounding.~~ done — journalctl bounded --grep discipline landed repo-wide (CHANGELOG IO-heavy journalctl elimination)
-~~5. **Skill-load timing was right this session** (verify-external-claims before encoding; status-report before this report) — keep the discipline; the failure in §d.2 was APPLICATION, not loading.~~ **Won't implement — skill discipline; no repo artifact.**
-~~6. **Session-env restrictions**: internalize the tool denylist (ssh/systemctl/sudo denied) at session start; plan read-only alternatives (local checks, journalctl) before the first blocked round trip.~~ **Won't implement — session-env note; superseded by harness docs.**
-~~7. **Fast-flap detection nuance noticed**: gatus 60s cadence + `system_service_restart_churn` may MISS a single fast SIGABRT→socket-restart cycle of nix-daemon. If the abort class ever fires, a dedicated churn/failure-counter sensitivity check may be wanted — noted, not actioned (no observed hits).~~ **Won't implement — conditional on an abort event that never occurred.**
+   ~~2. **Durable docs cite anchors, not line numbers.**~~ **Won't implement — discipline note only.**
+   ~~3. **Read the whole TODO_LIST before adding rows** (or grep it for keywords — `rg -i "manifest|completeness|registry" TODO_LIST.md` would have been the 5-second version).~~ done — TODO-drift now mechanized: scripts/check-todo-system.sh pairing_check
+   ~~4. **Apply our own journalctl discipline from command #1** — `--grep` + `--since` + `timeout` should be muscle memory in this repo, not a correction after backgrounding.~~ done — journalctl bounded --grep discipline landed repo-wide (CHANGELOG IO-heavy journalctl elimination)
+   ~~5. **Skill-load timing was right this session** (verify-external-claims before encoding; status-report before this report) — keep the discipline; the failure in §d.2 was APPLICATION, not loading.~~ **Won't implement — skill discipline; no repo artifact.**
+   ~~6. **Session-env restrictions**: internalize the tool denylist (ssh/systemctl/sudo denied) at session start; plan read-only alternatives (local checks, journalctl) before the first blocked round trip.~~ **Won't implement — session-env note; superseded by harness docs.**
+   ~~7. **Fast-flap detection nuance noticed**: gatus 60s cadence + `system_service_restart_churn` may MISS a single fast SIGABRT→socket-restart cycle of nix-daemon. If the abort class ever fires, a dedicated churn/failure-counter sensitivity check may be wanted — noted, not actioned (no observed hits).~~ **Won't implement — conditional on an abort event that never occurred.**
 
 ## f) Things to get done next (session-scoped; ~30 — the rest is deliberately left to the standing TODO_LIST backlog)
 

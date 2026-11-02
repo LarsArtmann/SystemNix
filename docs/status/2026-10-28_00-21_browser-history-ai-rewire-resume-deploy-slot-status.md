@@ -28,7 +28,7 @@
    - `I/O PSI some avg10 = 65.27% (>= 20%) WITH disk busy = 103.2%` — the entry gate RE-MEASURED at fire time; the sequencer's 2-min ≤80 window (0.0% at 23:31!) was a lull, not the end of the storm;
    - `memory-emergency-guard tripped 6× in the last 60 min` — the drain itself now trips the guard ~6×/h (new fact: the guard is no longer only sacrificing flm for llama-chat loads; the drain's IO is pushing it);
    - `nix flake check --no-build` → `doc-counts: README nixosModules asserts 139, eval truth is 140` — a parallel session added a module without re-stamping the README count. **Two-line doc fix, in my lane, not yet applied (owner's report-first order).**
-   Plus one ⚠ auto-derived new-metric loan `paperless_triage_refusals_total` (paperless session's new check, expected on first deploy — benign).
+     Plus one ⚠ auto-derived new-metric loan `paperless_triage_refusals_total` (paperless session's new check, expected on first deploy — benign).
 
 ## b) PARTIALLY DONE
 

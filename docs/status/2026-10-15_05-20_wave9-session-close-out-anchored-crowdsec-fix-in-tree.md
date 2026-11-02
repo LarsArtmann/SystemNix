@@ -12,14 +12,14 @@ run (~05:10–05:20). **Remaining:** one convergence `nh os switch` to activate 
 
 ## State at session end (live-verified 05:20)
 
-| Surface | State |
-| --- | --- |
-| `/run/current-system` | `5a5hk7pgi…` NEW ✓ |
-| `/nix/var/nix/profiles/system` | `5a5hk7pgi…` NEW ✓ (owner's anchor repair, ~05:10–05:20) — **reboot-safe** |
-| Fleet runtime | NEW: papdashboard `5a6794db`, cv `aa637cb`, inboxclean `9d99e5d`, discordsync `9dfdc03`, fir `21a0ef5`, PMA `3149585c`, kith-crm `a0341a0`, signoz `375b3f8`, mr-sync, hermes, tq — STILL STALE: overview `b819e1a`, browser-history `8900354`, pdd `f2f1bac` (their restart jobs were canceled by the 04:46 abort) |
-| crowdsec | Fix IN-TREE (`crowdsec-prereq.service`, commit `86f1b9c6`), NOT yet live (no activation since 04:46); service still failed from that abort |
-| USB DAS (`/mnt/pool`) | STILL HUNG (`[usb-storage]` D-state ~93 min as of 04:48; silent disk, io PSI = D-state waiters, cpu PSI ≈ 0). Owner physical check pending |
-| Tree | HEAD `780241d0`, clean; wave fix + crowdsec fix + all docs committed (daemon commits `acd30a5d`→`13e33a05`) |
+| Surface                        | State                                                                                                                                                                                                                                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/run/current-system`          | `5a5hk7pgi…` NEW ✓                                                                                                                                                                                                                                                                                                  |
+| `/nix/var/nix/profiles/system` | `5a5hk7pgi…` NEW ✓ (owner's anchor repair, ~05:10–05:20) — **reboot-safe**                                                                                                                                                                                                                                          |
+| Fleet runtime                  | NEW: papdashboard `5a6794db`, cv `aa637cb`, inboxclean `9d99e5d`, discordsync `9dfdc03`, fir `21a0ef5`, PMA `3149585c`, kith-crm `a0341a0`, signoz `375b3f8`, mr-sync, hermes, tq — STILL STALE: overview `b819e1a`, browser-history `8900354`, pdd `f2f1bac` (their restart jobs were canceled by the 04:46 abort) |
+| crowdsec                       | Fix IN-TREE (`crowdsec-prereq.service`, commit `86f1b9c6`), NOT yet live (no activation since 04:46); service still failed from that abort                                                                                                                                                                          |
+| USB DAS (`/mnt/pool`)          | STILL HUNG (`[usb-storage]` D-state ~93 min as of 04:48; silent disk, io PSI = D-state waiters, cpu PSI ≈ 0). Owner physical check pending                                                                                                                                                                          |
+| Tree                           | HEAD `780241d0`, clean; wave fix + crowdsec fix + all docs committed (daemon commits `acd30a5d`→`13e33a05`)                                                                                                                                                                                                         |
 
 > **[ANNOTATED 2026-10-15 (adoption-audit session):]** the Fleet-runtime row's "browser-history `8900354` STILL STALE" did not hold — the live unit file carries `browser-history-server-fff6034` (== lock, verified 2026-10-15 via `/etc/systemd/system/browser-history.service`): the convergence switch landed after this report. overview/pdd staleness NOT re-verified by that probe. Evidence: `docs/2026-10-15_browser-history-deep-dive.html` §Version currency.
 
@@ -201,4 +201,4 @@ run (~05:10–05:20). **Remaining:** one convergence `nh os switch` to activate 
    Should I add the anchor + stale-unit checks to the nh path (or a deploy.sh `--nh-compat` mode),
    or is raw nh reserved for your manual runs and the gate gap accepted?
 
-*Awaiting instructions.*
+_Awaiting instructions._

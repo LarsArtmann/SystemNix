@@ -19,20 +19,20 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|---|---|
-| 1 | Post-restore verification of the 4 core units | `busctl` ActiveState=active/running ×4 (consumer, task-queue, scheduler, web); celery processing mail tasks; tantivy index fresh segments at 07:39 |
-| 2 | **PNM-mime trap discovered + root-caused** | `scanimage --batch=*.png` writes P6 PNM regardless of extension; Paperless rejected `image/x-portable-pixmap` (ConsumerError 07:31:30). ImageMagick reads by content — that is why previews never caught it. Magic-byte proof: `P6` head |
-| 3 | Test receipt ingested on restored DB | Real-PNG conversion → doc **1000436** in 28.4 s; consume drained; index updated |
-| 4 | Live scan end-to-end | checklist sheet → doc **1000437** in 16.2 s, pencil legible at 300 dpi, 180° OCR auto-rotate confirmed working |
-| 5 | `scripts/scan-to-paperless.sh` built + shellchecked + committed | daemon commit `f51b04cd1` (with the noted foreign flake.lock sweep); re-shellchecked OK after every edit |
-| 6 | Duplex mechanics proven | 6 frames / 3 sheets; all six faces visually verified (previews); pairing (1+2)(3+4)(5+6) correct; face-down feed → back first + 180° face — OCR self-heals |
-| 7 | **Watch mode: non-stop duplex intake** | polls ADF ~4 s, 2-page PDF per sheet, auto-delivers only its own batch products, `timeout 300` per batch, STOP flag graceful exit, rc=4/7 soft handling |
-| 8 | Deliver-bug caught + fixed in <60 s | v1 swept stale `out/` (re-delivered the 07:45 PNG, mtime proof); fixed to products-only delivery; relaunched clean |
-| 9 | **DELETE_DUPLICATES proven LIVE** | the accidental re-delivery was rejected: `duplicate_of: 1000437` — the exact jam-re-feed insurance the campaign needs, now evidence-backed |
-| 10 | Ingest wave complete | docs **1000438–1000441** (3 KBA + mystery sheet) + autonomous watch catches (1000442+) |
-| 11 | Token-unit failure diagnosis | `paperless-gpt-token` failed 06:19:58 (`relation auth_user does not exist`), `bank-sync-paperless-token` 06:14:50 — both against the schema-empty DB, both just Requires-not-restarted after restore; user restart commands delivered |
-| 12 | Docs landed | `docs/services/scanner.md` (full runbook incl. PNM trap, watch, seating, multifeed), `paperless.md` cross-ref, CHANGELOG entry, FEATURES row; `check-doc-links.sh` green |
+| #  | Item                                                            | Evidence                                                                                                                                                                                                                                 |
+| -- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1  | Post-restore verification of the 4 core units                   | `busctl` ActiveState=active/running ×4 (consumer, task-queue, scheduler, web); celery processing mail tasks; tantivy index fresh segments at 07:39                                                                                       |
+| 2  | **PNM-mime trap discovered + root-caused**                      | `scanimage --batch=*.png` writes P6 PNM regardless of extension; Paperless rejected `image/x-portable-pixmap` (ConsumerError 07:31:30). ImageMagick reads by content — that is why previews never caught it. Magic-byte proof: `P6` head |
+| 3  | Test receipt ingested on restored DB                            | Real-PNG conversion → doc **1000436** in 28.4 s; consume drained; index updated                                                                                                                                                          |
+| 4  | Live scan end-to-end                                            | checklist sheet → doc **1000437** in 16.2 s, pencil legible at 300 dpi, 180° OCR auto-rotate confirmed working                                                                                                                           |
+| 5  | `scripts/scan-to-paperless.sh` built + shellchecked + committed | daemon commit `f51b04cd1` (with the noted foreign flake.lock sweep); re-shellchecked OK after every edit                                                                                                                                 |
+| 6  | Duplex mechanics proven                                         | 6 frames / 3 sheets; all six faces visually verified (previews); pairing (1+2)(3+4)(5+6) correct; face-down feed → back first + 180° face — OCR self-heals                                                                               |
+| 7  | **Watch mode: non-stop duplex intake**                          | polls ADF ~4 s, 2-page PDF per sheet, auto-delivers only its own batch products, `timeout 300` per batch, STOP flag graceful exit, rc=4/7 soft handling                                                                                  |
+| 8  | Deliver-bug caught + fixed in <60 s                             | v1 swept stale `out/` (re-delivered the 07:45 PNG, mtime proof); fixed to products-only delivery; relaunched clean                                                                                                                       |
+| 9  | **DELETE_DUPLICATES proven LIVE**                               | the accidental re-delivery was rejected: `duplicate_of: 1000437` — the exact jam-re-feed insurance the campaign needs, now evidence-backed                                                                                               |
+| 10 | Ingest wave complete                                            | docs **1000438–1000441** (3 KBA + mystery sheet) + autonomous watch catches (1000442+)                                                                                                                                                   |
+| 11 | Token-unit failure diagnosis                                    | `paperless-gpt-token` failed 06:19:58 (`relation auth_user does not exist`), `bank-sync-paperless-token` 06:14:50 — both against the schema-empty DB, both just Requires-not-restarted after restore; user restart commands delivered    |
+| 12 | Docs landed                                                     | `docs/services/scanner.md` (full runbook incl. PNM trap, watch, seating, multifeed), `paperless.md` cross-ref, CHANGELOG entry, FEATURES row; `check-doc-links.sh` green                                                                 |
 
 ## b) PARTIALLY DONE
 
@@ -81,6 +81,7 @@
 ## f) NEXT — up to 50 things to get done
 
 **Immediate (campaign-blocking):**
+
 1. Push/re-seat the half-seeted sheet (watch is soft-retrying on it right now).
 2. `sudo systemctl start paperless-gpt bank-sync-paperless` (user; polkit).
 3. Verify gpt token mint + one live AI classification after restart.

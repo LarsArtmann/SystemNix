@@ -13,36 +13,36 @@
 
 ## Comprehensive plan (30–100 min each — ALL remaining TODOs)
 
-| # | Task | Customer value | Impact | Effort |
-|---|------|----------------|--------|--------|
-| M1 | Fix `ensure_named` (stderr diagnostics + numeric guard) + `--fail-with-body` in `api()`; eval rendered script | Unblocks the archive | 🔴 | 30min |
-| M2 | Redeploy (atomic gate→build→switch) + activation verify | Lands the fix | 🔴 | 45min |
-| M3 | Verify archival: uploads OK, poll count=2, metadata assertions, marker written, re-run no-op | "paperless has all files + correct metadata" | 🔴 | 30min |
-| M4 | Closeout docs: runbook §Qonto executed-state, TODO strikes, status final, commit + push | Knowledge, reviewability | 🟡 | 45min |
-| M5 | Dashboard detail battery + residuals (anchor, failed-unit cleanup, counter cosmetic note) | Confidence in serving | 🟠 | 30min |
-| M6 | Watch/hygiene rows: shim-drop watch, agent-docs lessons | Future-session leverage | ⚪ | 30min |
-| M7 | Owner-gated tails: Qonto creds recipe (ready-state), pma relock (external) | Attachment receipts + input health | 🟠 | owner/push |
+| #  | Task                                                                                                          | Customer value                               | Impact | Effort     |
+| -- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ------ | ---------- |
+| M1 | Fix `ensure_named` (stderr diagnostics + numeric guard) + `--fail-with-body` in `api()`; eval rendered script | Unblocks the archive                         | 🔴     | 30min      |
+| M2 | Redeploy (atomic gate→build→switch) + activation verify                                                       | Lands the fix                                | 🔴     | 45min      |
+| M3 | Verify archival: uploads OK, poll count=2, metadata assertions, marker written, re-run no-op                  | "paperless has all files + correct metadata" | 🔴     | 30min      |
+| M4 | Closeout docs: runbook §Qonto executed-state, TODO strikes, status final, commit + push                       | Knowledge, reviewability                     | 🟡     | 45min      |
+| M5 | Dashboard detail battery + residuals (anchor, failed-unit cleanup, counter cosmetic note)                     | Confidence in serving                        | 🟠     | 30min      |
+| M6 | Watch/hygiene rows: shim-drop watch, agent-docs lessons                                                       | Future-session leverage                      | ⚪     | 30min      |
+| M7 | Owner-gated tails: Qonto creds recipe (ready-state), pma relock (external)                                    | Attachment receipts + input health           | 🟠     | owner/push |
 
 ## Fine breakdown (max 12 min each)
 
-| # | Micro-task | Parent | Est |
-|---|------------|--------|-----|
-| F01 | Edit ensure_named: `>&2` on create-echo + numeric case-guard exiting 1 | M1 | 6min |
-| F02 | api(): add `--fail-with-body` | M1 | 2min |
-| F03 | Eval rendered script + flake check --no-build in same breath | M1 | 8min |
-| F04 | Commit with detailed message | M1 | 4min |
-| F05 | Toplevel build (mostly cached) + deploy force-if-gated | M2 | 12min |
-| F06 | Activation verify: only expected unit restarts; anchor; no new failed units | M2 | 8min |
-| F07 | Journal: uploads OK + poll count=2 + marker line | M3 | 6min |
-| F08 | Metadata assertions from unit log (created ids, title lines) | M3 | 6min |
-| F09 | Re-run no-op check (marker skip line) via unit restart result | M3 | 6min |
-| F10 | Runbook §Qonto: executed-state + numbers + mint postmortem pointer | M4 | 10min |
-| F11 | TODO strikes/updates for the arc rows | M4 | 6min |
-| F12 | Status report final verdict + commit + push (authorized) | M4 | 10min |
-| F13 | Dashboard detail: amounts render, counter cosmetic confirmed, provider filter | M5 | 10min |
-| F14 | Residuals: reset-failed dead units, rev-drift OK, anchor final | M5 | 6min |
-| F15 | Watch row: 12 shim drops | M6 | 6min |
-| F16 | Agent-docs lessons (stderr helpers, fail-with-body, atomic deploy) | M6 | 12min |
+| #   | Micro-task                                                                    | Parent | Est   |
+| --- | ----------------------------------------------------------------------------- | ------ | ----- |
+| F01 | Edit ensure_named: `>&2` on create-echo + numeric case-guard exiting 1        | M1     | 6min  |
+| F02 | api(): add `--fail-with-body`                                                 | M1     | 2min  |
+| F03 | Eval rendered script + flake check --no-build in same breath                  | M1     | 8min  |
+| F04 | Commit with detailed message                                                  | M1     | 4min  |
+| F05 | Toplevel build (mostly cached) + deploy force-if-gated                        | M2     | 12min |
+| F06 | Activation verify: only expected unit restarts; anchor; no new failed units   | M2     | 8min  |
+| F07 | Journal: uploads OK + poll count=2 + marker line                              | M3     | 6min  |
+| F08 | Metadata assertions from unit log (created ids, title lines)                  | M3     | 6min  |
+| F09 | Re-run no-op check (marker skip line) via unit restart result                 | M3     | 6min  |
+| F10 | Runbook §Qonto: executed-state + numbers + mint postmortem pointer            | M4     | 10min |
+| F11 | TODO strikes/updates for the arc rows                                         | M4     | 6min  |
+| F12 | Status report final verdict + commit + push (authorized)                      | M4     | 10min |
+| F13 | Dashboard detail: amounts render, counter cosmetic confirmed, provider filter | M5     | 10min |
+| F14 | Residuals: reset-failed dead units, rev-drift OK, anchor final                | M5     | 6min  |
+| F15 | Watch row: 12 shim drops                                                      | M6     | 6min  |
+| F16 | Agent-docs lessons (stderr helpers, fail-with-body, atomic deploy)            | M6     | 12min |
 
 ## Execution graph (mermaid)
 

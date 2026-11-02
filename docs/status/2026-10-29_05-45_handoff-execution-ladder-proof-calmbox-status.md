@@ -9,11 +9,11 @@
 
 ## a) Owner answers (22:56) and their execution
 
-| Question (22-30 §g) | Answer | Execution |
-|---|---|---|
-| wevisone-spike 19 G | **trash-all** | `trash ~/projects/wevisone-spike` 22:58; source gone; ~12 G (zstd-compressed) in `~/.local/share/Trash` awaiting the owner trash-empty window (root 70%, 211 G free — no pressure). storage.md row + plan A2 struck. |
-| DiscordSync push grant | **yes** | See §b. |
-| Deploy window | "postladder" | MOOT — the parallel session deployed gen-959 at 22:55:42 (before the question was asked); owner-command-driven per the 23-35 report. This session verified instead (§c). |
+| Question (22-30 §g)    | Answer        | Execution                                                                                                                                                                                                            |
+| ---------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| wevisone-spike 19 G    | **trash-all** | `trash ~/projects/wevisone-spike` 22:58; source gone; ~12 G (zstd-compressed) in `~/.local/share/Trash` awaiting the owner trash-empty window (root 70%, 211 G free — no pressure). storage.md row + plan A2 struck. |
+| DiscordSync push grant | **yes**       | See §b.                                                                                                                                                                                                              |
+| Deploy window          | "postladder"  | MOOT — the parallel session deployed gen-959 at 22:55:42 (before the question was asked); owner-command-driven per the 23-35 report. This session verified instead (§c).                                             |
 
 ## b) DiscordSync templ-components v1.24.0 lockstep bump — PUSHED 79952c46
 
@@ -30,13 +30,13 @@
 
 ## d) The btrbk ladder — first full night on the projects subvol: ALL GREEN
 
-| Instance | Verdict | Evidence |
-|---|---|---|
-| root (23:00) | **GREEN via SELF-HEAL** | 10-27's run FAILED at 23:00:11 (crisis night) leaving an unstamped orphan `@.20261027T2300` (no received-uuid → unmatchable). Tonight btrbk deleted it and full re-seeded: Created 23:00:01, Received UUID `d0deba59…` stamped at stream end, **Finished 00:50:31** (1h50m, 322.4 G written). Tonight's `@.20261028T2300` + both `@home-hermes` increments (10-27, 10-28) landed on top. Chain fully healed. |
-| projects (23:10) | **GREEN — first nightly** | Incremental receive `projects.20261028T2310` (vs 18:03 manual seed), 1m18s, Finished 23:11:18; `projects_subvol_backup_fresh 1`, 341 top-level entries. |
-| data (23:30) | **DELIBERATE fast-fail** | The 2026-09-11 EIO repair gate (no `/data/.repair-done`): local snapshot `data.20261028T2330` + retention prune ran, unit fast-fails BY DESIGN as the canary. Owner-gated repair unchanged. |
-| pool (23:45) | **GREEN** | Deactivated successfully 23:45:06. |
-| forgejo (05:40) | **GREEN — heal PROVEN** | The timer itself (not the manual re-seed) re-received the chain incrementally: `forgejo.20261028T1340` + `T2140` + `20261029T0540`, Deactivated successfully 05:41:00. Closes the stray-receive heal (services.md triage row updated). |
+| Instance         | Verdict                   | Evidence                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| root (23:00)     | **GREEN via SELF-HEAL**   | 10-27's run FAILED at 23:00:11 (crisis night) leaving an unstamped orphan `@.20261027T2300` (no received-uuid → unmatchable). Tonight btrbk deleted it and full re-seeded: Created 23:00:01, Received UUID `d0deba59…` stamped at stream end, **Finished 00:50:31** (1h50m, 322.4 G written). Tonight's `@.20261028T2300` + both `@home-hermes` increments (10-27, 10-28) landed on top. Chain fully healed. |
+| projects (23:10) | **GREEN — first nightly** | Incremental receive `projects.20261028T2310` (vs 18:03 manual seed), 1m18s, Finished 23:11:18; `projects_subvol_backup_fresh 1`, 341 top-level entries.                                                                                                                                                                                                                                                      |
+| data (23:30)     | **DELIBERATE fast-fail**  | The 2026-09-11 EIO repair gate (no `/data/.repair-done`): local snapshot `data.20261028T2330` + retention prune ran, unit fast-fails BY DESIGN as the canary. Owner-gated repair unchanged.                                                                                                                                                                                                                  |
+| pool (23:45)     | **GREEN**                 | Deactivated successfully 23:45:06.                                                                                                                                                                                                                                                                                                                                                                           |
+| forgejo (05:40)  | **GREEN — heal PROVEN**   | The timer itself (not the manual re-seed) re-received the chain incrementally: `forgejo.20261028T1340` + `T2140` + `20261029T0540`, Deactivated successfully 05:41:00. Closes the stray-receive heal (services.md triage row updated).                                                                                                                                                                       |
 
 Operational note: the root self-heal streamed 322 G to the HDD pool through the ladder window — expected cost of re-seeding an orphaned chain; the pool has ~13 TiB free.
 

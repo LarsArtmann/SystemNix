@@ -4,13 +4,13 @@ Written 2026-10-15 00:40 CEST. Scope: the completed window of five queue tasks, 
 
 ## The window's tasks (re-verified)
 
-| Task | Ask | Verdict (this pass) |
-| --- | --- | --- |
-| `000001a132640f21` | [blocked:user] Freeze #27 owner desktop question | Correctly-blocked close stands (commit `1d297b0e`, closeout report on disk). Desktop-state snapshot collector + crush.db session-pinning follow-ups still open unchecked rows. |
-| `000001a1327f85c6` | [ready] Pre-vacuum evidence gate | LANDED and verified: `scripts/pre-vacuum-evidence-gate.sh` present, `checks.pre-vacuum-gate-selftest` pinned in `flake/parts/checks/selftests.nix`, queue row ticked (TODO_LIST:154) with the 11-boot backfill narrative. **Never exercised live on evo-x2** — TODO_LIST:289 still open. |
-| `000001a132c43023` | [ready] inboxclean-web Handler-timeout canary | LANDED after the build-broken false start (`bbae5884` → fix `dc3ad6e7`): `modules/nixos/services/inboxclean-canary.nix` present, closeout `8be4a563`. Live verification still `[blocked:deploy]`; batch-ID footer-record row still open (TODO_LIST:595). |
-| `000001a13771626a` | [ready] Deploy-gate iostat/top-cgroup crosscheck on PSI refusal | LANDED and verified: `scripts/io-psi-crosscheck.sh` present, `checks.io-psi-crosscheck-selftest` (+ deploy.sh wiring tripwire) in selftests.nix, queue row ticked (TODO_LIST:144), ghostty io_uring phantom verdict recorded in `docs/agents/stability.md`. |
-| `000001a137e9fb10` | [ready] SEV1 notify-tier steady-state alert fatigue | DESIGN-only close stands (`aa7b3a75`, closeout `99d215b6`); implementation row open (TODO_LIST:1235); owner threshold/breadth decision row open (docs/todo/stability.md:248). |
+| Task               | Ask                                                             | Verdict (this pass)                                                                                                                                                                                                                                                                      |
+| ------------------ | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `000001a132640f21` | [blocked:user] Freeze #27 owner desktop question                | Correctly-blocked close stands (commit `1d297b0e`, closeout report on disk). Desktop-state snapshot collector + crush.db session-pinning follow-ups still open unchecked rows.                                                                                                           |
+| `000001a1327f85c6` | [ready] Pre-vacuum evidence gate                                | LANDED and verified: `scripts/pre-vacuum-evidence-gate.sh` present, `checks.pre-vacuum-gate-selftest` pinned in `flake/parts/checks/selftests.nix`, queue row ticked (TODO_LIST:154) with the 11-boot backfill narrative. **Never exercised live on evo-x2** — TODO_LIST:289 still open. |
+| `000001a132c43023` | [ready] inboxclean-web Handler-timeout canary                   | LANDED after the build-broken false start (`bbae5884` → fix `dc3ad6e7`): `modules/nixos/services/inboxclean-canary.nix` present, closeout `8be4a563`. Live verification still `[blocked:deploy]`; batch-ID footer-record row still open (TODO_LIST:595).                                 |
+| `000001a13771626a` | [ready] Deploy-gate iostat/top-cgroup crosscheck on PSI refusal | LANDED and verified: `scripts/io-psi-crosscheck.sh` present, `checks.io-psi-crosscheck-selftest` (+ deploy.sh wiring tripwire) in selftests.nix, queue row ticked (TODO_LIST:144), ghostty io_uring phantom verdict recorded in `docs/agents/stability.md`.                              |
+| `000001a137e9fb10` | [ready] SEV1 notify-tier steady-state alert fatigue             | DESIGN-only close stands (`aa7b3a75`, closeout `99d215b6`); implementation row open (TODO_LIST:1235); owner threshold/breadth decision row open (docs/todo/stability.md:248).                                                                                                            |
 
 ## a) FULLY DONE (re-verified, not re-claimed)
 
@@ -48,6 +48,7 @@ Nothing new was started on these five tasks between the prior closeout (2026-10-
 ## f) NEXT THINGS (dedup-checked; everything else from the prior report's §f list is already live rows — not re-minted)
 
 Appended to TODO_LIST.md this pass:
+
 1. **Dedupe the two `task.reprioritized` upstream rows** (TODO_LIST:583 + :1219 — same ask, second mint 2026-10-13) — tick the older as duplicate-of-newer per protocol, keeping one dispatch lane.
 2. **Done-prompt re-fire guard**: harvest-gate/doc-side rule that a window with existing closeout report + footer commits closes as a verified no-op.
 3. **Exercise the pre-vacuum gate live** — already queued (TODO_LIST:289), listed here as the highest-value unverifiable-gate item, NOT re-added.

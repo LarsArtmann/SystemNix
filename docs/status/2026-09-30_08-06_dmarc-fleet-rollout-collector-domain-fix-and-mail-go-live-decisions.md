@@ -103,33 +103,33 @@ the rest of the go-live ladder remain owner-run.
 ## b) PARTIALLY DONE
 
 ~~1. **The DMARC fleet rollout is WIRED, not APPLIED** — DNS is unchanged until~~ **NOT-DO — NOT-DO — dup of §f.5 (verified closed).**
-   the owner runs `nix run .#plan` → `.#apply` → `.#dns-audit` in
-   `~/projects/domains`. Until then: no rua anywhere live, no MX on
-   larsartmann.cloud, no verification TXTs.
+the owner runs `nix run .#plan` → `.#apply` → `.#dns-audit` in
+`~/projects/domains`. Until then: no rua anywhere live, no MX on
+larsartmann.cloud, no verification TXTs.
 ~~2. **dmarc-monitor on evo-x2: still `enable = false`** — correct-by-design;~~ **Won't implement — superseded — Stalwart-native DMARC report analysis; flip row closed SUPERSEDED 2026-10-16 (services.md:226).**
-   the flip remains the FINAL go-live step (runbook §7) after the
-   `dmarc@larsartmann.cloud` mailbox exists.
+the flip remains the FINAL go-live step (runbook §7) after the
+`dmarc@larsartmann.cloud` mailbox exists.
 3. **TLS-RPT silently dropped from runbook §4 during my rewrite** — the old
-   text had an "Optional hardening: `_smtp._tls` TLS-RPT + MTA-STS" bullet; my
-   rewrite removed it while fixing the collector domain and I did not re-add it
-   anywhere. parsedmarc can process SMTP-TLS reports too, so this is a real
-   (optional) gap, now tracked as a next step.
+text had an "Optional hardening: `_smtp._tls` TLS-RPT + MTA-STS" bullet; my
+rewrite removed it while fixing the collector domain and I did not re-add it
+anywhere. parsedmarc can process SMTP-TLS reports too, so this is a real
+(optional) gap, now tracked as a next step.
 4. **email-forwarding README "Usage" section not extended at rollout time** —
-   terraform-docs updated the Inputs/Outputs tables, but the hand-written Usage
-   example still showed the old resource shape. FIXED during report authoring
-   (the records dynamic-block wiring example is in place now); recorded here
-   for timeline accuracy.
+terraform-docs updated the Inputs/Outputs tables, but the hand-written Usage
+example still showed the old resource shape. FIXED during report authoring
+(the records dynamic-block wiring example is in place now); recorded here
+for timeline accuracy.
 5. **The 2026-09-29 status report not annotated** — its §b/§e/§g lines still
-   say `dmarc@artmann.tech` (historical snapshot doctrine: living docs updated,
-   dated report left as-is). A docs-health-style supersession annotation is
-   queued as a next step.
+say `dmarc@artmann.tech` (historical snapshot doctrine: living docs updated,
+dated report left as-is). A docs-health-style supersession annotation is
+queued as a next step.
 6. **nobletary.com's `_dmarc` rua** — its zone lives on Google Cloud DNS
-   (out of the repo's reach; the resource there only pins NS). The
-   verification TXT is in place (inert); the rua itself needs a manual
-   Google-Cloud-DNS edit (owner).
+(out of the repo's reach; the resource there only pins NS). The
+verification TXT is in place (inert); the rua itself needs a manual
+Google-Cloud-DNS edit (owner).
 7. **Receiver-alignment data collection** — the Google-served domains
-   (helpless.ai, jetpackx.io, skylines.one) stay `p=none` and the 4 forwarding
-   domains start `p=none` deliberately; tightening is data-driven and later.
+(helpless.ai, jetpackx.io, skylines.one) stay `p=none` and the 4 forwarding
+domains start `p=none` deliberately; tightening is data-driven and later.
 
 ## c) NOT STARTED
 
@@ -224,23 +224,23 @@ assistant-executable, then hardening/polish)
 4. Add `A` `mail.artmann.tech` → VPS IP in the domains repo and apply JUST
    that (see item 33 for the split), then deploy pbx (user-run) and verify
    `acme-mail.artmann.tech.service` + `stalwart.service` active.
-~~5. Apply the DMARC fleet rollout: `nix run .#plan` → review → `.#apply` →~~ done — applied — live dig @1.1.1.1 (2026-10-12_08-30 §a.1) confirms MX 10 mail.artmann.tech + SPF -all + DMARC p=reject + rua=dmarc@larsartmann.cloud
+   ~~5. Apply the DMARC fleet rollout: `nix run .#plan` → review → `.#apply` →~~ done — applied — live dig @1.1.1.1 (2026-10-12_08-30 §a.1) confirms MX 10 mail.artmann.tech + SPF -all + DMARC p=reject + rua=dmarc@larsartmann.cloud
    `nix run .#dns-audit` (ordering vs the Hetzner unblock: item 33/question g1).
-6. Provision Stalwart over the SSH tunnel: domains `artmann.tech` +
+5. Provision Stalwart over the SSH tunnel: domains `artmann.tech` +
    `larsartmann.cloud`; account principal NAME `dmarc@larsartmann.cloud`;
    personal mailbox (question g2).
-7. Outbound smoke `From: lars@larsartmann.cloud` → journal + Resend dashboard.
-8. Resend scoping decision for `@artmann.tech` envelopes (verify artmann.tech
+6. Outbound smoke `From: lars@larsartmann.cloud` → journal + Resend dashboard.
+7. Resend scoping decision for `@artmann.tech` envelopes (verify artmann.tech
    in Resend or commit to larsartmann.cloud as the sole sending identity).
-~~9. Paste `dmarc-imap-password` into SystemNix sops~~ **Won't implement — superseded — parsedmarc flip abandoned; Stalwart renders DMARC reports natively (services.md:226, 2026-10-16).**
+   ~~9. Paste `dmarc-imap-password` into SystemNix sops~~ **Won't implement — superseded — parsedmarc flip abandoned; Stalwart renders DMARC reports natively (services.md:226, 2026-10-16).**
    `platforms/nixos/secrets/nix-email.yaml`, flip
    `services.dmarc-monitor.enable = true`, `nix run .#deploy` (FINAL).
-~~10. Verify end-to-end: parsedmarc active; first report parsed into~~ **Won't implement — superseded — same Stalwart-native supersession (services.md:226).**
-    `/var/lib/parsedmarc/reports`; dmarc-monitor backup-freshness row green.
-11. Watch the Resend daily-send volume against the ~80/day revisit trigger
-    encoded in runbook §6.
-12. nobletary.com: add `rua=mailto:dmarc@larsartmann.cloud` to its `_dmarc` in
-    Google Cloud DNS manually (verification TXT already wired, inert).
+   ~~10. Verify end-to-end: parsedmarc active; first report parsed into~~ **Won't implement — superseded — same Stalwart-native supersession (services.md:226).**
+   `/var/lib/parsedmarc/reports`; dmarc-monitor backup-freshness row green.
+8. Watch the Resend daily-send volume against the ~80/day revisit trigger
+   encoded in runbook §6.
+9. nobletary.com: add `rua=mailto:dmarc@larsartmann.cloud` to its `_dmarc` in
+   Google Cloud DNS manually (verification TXT already wired, inert).
 
 **Assistant-executable (queued/ready):**
 ~~13. Split-or-annotate the domains rollout so the larsartmann.cloud MX carries~~ **Won't implement — moot — owner ruled "Apply everything NOW" (report §Answers 08:15); early apply blessed in runbook §4 + pbx TODO.**

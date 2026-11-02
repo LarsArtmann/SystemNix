@@ -12,20 +12,20 @@ The ~430 GB evening bursts are **`monitor365-server.service` full-scanning its o
 
 ## Timeline (compact)
 
-| Time | Event |
-| --- | --- |
-| 20:41 | Hunt starts. PSI avg10 **85.4%** — burst LIVE. First diskstats awk produced garbage (field misalignment) — discarded unquoted. |
-| 20:43 | journalctl sweep: `pbx-backup-pull` "Started 18:15" → suspect. |
-| 20:44 | pbx-backup-pull EXONERATED (16.4 s, 347.5 MB, "ok" in journal). |
-| 20:46 | First cgroup sampler (shell) botched its own snapshot sequencing → abandoned. |
-| 20:47 | Python 30s delta: **monitor365-server 2,532 MB read, sole mover**. |
-| 20:49 | Journal: pool starvation ×32, API 500s, SSE drops, `bg.stale_sweep` fallbacks. |
-| 20:50 | Companion services all idle; schema-migrate clean (19:58, 15 s). gen_app Binder Error ×18. |
-| 20:52 | Device pinned: `259:3` = nvme0n1 = QLC root (major:minor mapped; /mnt/hot cross-checked on nvme1n1). |
+| Time  | Event                                                                                                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 20:41 | Hunt starts. PSI avg10 **85.4%** — burst LIVE. First diskstats awk produced garbage (field misalignment) — discarded unquoted.                                                             |
+| 20:43 | journalctl sweep: `pbx-backup-pull` "Started 18:15" → suspect.                                                                                                                             |
+| 20:44 | pbx-backup-pull EXONERATED (16.4 s, 347.5 MB, "ok" in journal).                                                                                                                            |
+| 20:46 | First cgroup sampler (shell) botched its own snapshot sequencing → abandoned.                                                                                                              |
+| 20:47 | Python 30s delta: **monitor365-server 2,532 MB read, sole mover**.                                                                                                                         |
+| 20:49 | Journal: pool starvation ×32, API 500s, SSE drops, `bg.stale_sweep` fallbacks.                                                                                                             |
+| 20:50 | Companion services all idle; schema-migrate clean (19:58, 15 s). gen_app Binder Error ×18.                                                                                                 |
+| 20:52 | Device pinned: `259:3` = nvme0n1 = QLC root (major:minor mapped; /mnt/hot cross-checked on nvme1n1).                                                                                       |
 | 20:55 | Root-gated probes (/proc/PID/io, fd) permission-denied — cgroup io.stat remains the working channel. Second clean 30s delta: 1,969 MB read, write ≈ 0 — confirms sustained pure-read scan. |
-| 20:57 | "Total since activation" awk printed **0 GB — my field bug again**, flagged as such, not quoted. PSI wave passed (85% → 14%). |
-| 21:00 | `rg -rn` typed again — hook BLOCKED it (the hook's message: third strike of this exact trap on this host). |
-| 21:04 | Row queued: services.md + TODO_LIST twin → commit `9ce2fb91f`. No restart. |
+| 20:57 | "Total since activation" awk printed **0 GB — my field bug again**, flagged as such, not quoted. PSI wave passed (85% → 14%).                                                              |
+| 21:00 | `rg -rn` typed again — hook BLOCKED it (the hook's message: third strike of this exact trap on this host).                                                                                 |
+| 21:04 | Row queued: services.md + TODO_LIST twin → commit `9ce2fb91f`. No restart.                                                                                                                 |
 
 ---
 
@@ -43,7 +43,7 @@ The ~430 GB evening bursts are **`monitor365-server.service` full-scanning its o
 
 ## b) PARTIALLY DONE
 
-1. **Query-level attribution** — Works: the scanning is inside monitor365-server, read-only (~0 write), in waves, concurrent with gen_app binder errors. Open: WHICH query scans (the *successful* `dashboard_mv_refresh count=1` leg, `bg.stale_sweep`/retention over the `max_events_per_day=1B` events table, or something else) — not identified. Blocker: DuckDB file is root-locked (single-writer + perms; a read-only CLI probe was considered and rejected — the server holds the write lock), process /proc internals root-gated. Fix locus is the monitor365 repo regardless. Effort remaining: M (upstream session with a sudo ticket).
+1. **Query-level attribution** — Works: the scanning is inside monitor365-server, read-only (~0 write), in waves, concurrent with gen_app binder errors. Open: WHICH query scans (the _successful_ `dashboard_mv_refresh count=1` leg, `bg.stale_sweep`/retention over the `max_events_per_day=1B` events table, or something else) — not identified. Blocker: DuckDB file is root-locked (single-writer + perms; a read-only CLI probe was considered and rejected — the server holds the write lock), process /proc internals root-gated. Fix locus is the monitor365 repo regardless. Effort remaining: M (upstream session with a sudo ticket).
 2. **The monitor365 `/health` row from `6491fd32a` needs reframing** — tonight's triage shows the smoke FAIL was NOT a settle transient: `/health` 308 + the pool starvation are the same sick service. The two rows (/health repoint vs scan-storm) are now two views of one incident and should be merged/linked when triaged — currently a TODO-system split-brain risk (see §e.3). Effort: S.
 3. **Mitigation** — restart identified as temporary-only (scan loop re-enters); NOT executed. Effort: S once decided.
 4. **Carried from Part 1, still open:** fastflowlm "started ≠ serving" verification (now survived two report cycles — see §d.5); float-register fixes; the 17:44 stale-eval anomaly.
@@ -83,48 +83,48 @@ The ~430 GB evening bursts are **`monitor365-server.service` full-scanning its o
 
 (Harvest status: this interval's ONE direct follow-up — the monitor365 scan-storm row — was harvested at authoring time, `9ce2fb91f`, per the self-harvest rule. The rest is deliberately a menu: Part 1's 50-item table still stands in `docs/status/2026-10-26_20-40_*`; this table is the re-ranked union with tonight's new findings promoted. Say the word and I harvest any subset.)
 
-| # | Task | Impact | Effort | Category | Provenance |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Identify monitor365's exact scanning query (MV-refresh leg vs stale_sweep/retention over the 1B-events table) in an upstream session with a sudo ticket | High | M | Bug | NEW tonight |
-| 2 | Fix the gen_app schema drift (migration vs dashboard/saved-view definition — §g Q2 decides which) | High | S–M | Bug | NEW tonight |
-| 3 | Decide + execute DuckDB relocation off the QLC root (hot-tier subvol on Samsung or pool; PSI-gated migrate pass) | High | M–L | Feature | NEW tonight |
-| 4 | Restart monitor365-server to clear the wedged pool (temporary — loop re-enters; pair with #1) | Medium | S | Bug | NEW tonight |
-| 5 | Write `scripts/io-attrib.sh` (cgroup-delta sampler + device map + PSI; kill the hand-rolled awk class) | High | S | Quality | NEW tonight |
-| 6 | Add the 4-step IO-hunt playbook to the ops docs | Medium | S | Documentation | NEW tonight |
-| 7 | Merge/link the two monitor365 rows (/health 308 + scan-storm) into one incident view | Medium | S | Documentation | NEW tonight |
-| 8 | Annotate the guard/SigNoz so responders know trips of the #44xx class are likely this scan until #1 lands | Medium | S | Quality | NEW tonight |
-| 9 | Verify fastflowlm actually serves (started ≠ serving; carried twice) | Medium | S | Bug | Carried |
-| 10 | Identify the ~430 GB burst confirmation over a FULL wave (capture one complete 30-min cycle end-to-end: onset → trip → decay) — feeds the upstream bug report | Medium | S | Bug | NEW tonight |
-| 11 | Fix float-register's silent green-proof death (`drifted=` `\|\| true` + selftest) ✅ harvested 847fd0388 | High | S | Bug | Carried |
-| 12 | float-register proof-marker (lock-fingerprint stamp; registry==lock ≠ proven) | High | M | Quality | Carried |
-| 13 | Upstream FOD download-scope fix (go-taskqueue + branching-flow), then lift pin-backs ✅ harvested 6491fd32a | High | M | Bug | Carried |
-| 14 | Repoint monitor365 `/health` consumers off the 308 route (watchdog SERVER_HEALTH + gatus) ✅ harvested 6491fd32a — merge with #7 at triage | Medium | S | Bug | Carried |
-| 15 | `scripts/vendor-sweep-list.sh <proof-log>` (mechanize the awk extraction + six-surface sweep) | High | S | Quality | Carried |
-| 16 | Root-cause the 17:44 stale-eval anomaly (drv paths identical despite edited shims) | High | M | Quality | Carried |
-| 17 | Provision `/mnt/hot/users/lars/tmp` subvol (fixes home-lars-tmp.mount + the D-state phantom class) | Medium | M | Bug | Carried |
-| 18 | Diagnose pocket-id-provision exit-1 (pre-existing, 216 ms, OnFailure fired) | Medium | S | Bug | Carried |
-| 19 | Diagnose buildcache-gc.service failure (pre-existing) | Medium | S | Bug | Carried |
-| 20 | Upstream paste batch: all 15+ shimmed tools' got-hashes (cv, health-hub, crush-daily, renamer, mr-sync, pdd, overview, library-policy, buildflow, discordsync, erraudit, go-auto-upgrade, go-humanize-linter, project-meta, samber-linter, PMA) — one sweep session ends the treadmill | Medium | M | Cleanup | Carried |
-| 21 | erraudit follower-divergence systematic fix (nixpkgs-unstable follow pattern; FRAGILE note fired twice) | Medium | M | Quality | Carried |
-| 22 | Reconcile pre-deploy (7) vs post-activation (3) failed-unit sets — verify github-auto-assign / opencloud / inboxclean-sync actually healed | Low | S | Quality | Carried |
-| 23 | inboxclean-sync + opencloud recovery confirmation (guard-shed class tonight) | Medium | S | Bug | Carried |
-| 24 | service-health-check + ci-watchdog triage (one IS the notifier — its failure masks others) | Medium | S | Bug | Carried |
-| 25 | Confirm home-lars-tmp.automount fails fast-loud without a fresh corpse pile on access | Low | S | Bug | Carried |
-| 26 | Log pressure-override + gate-abort events persistently from deploy.sh | Low | S | Quality | Carried |
-| 27 | CONTRIBUTING cheat sheet for the TODO gate (title-identity, wait-words, date-regex) | Low | S | Documentation | Carried |
-| 28 | Pre-commit leg: vendorHash literal changes require dated evidence comments | Medium | M | Quality | Carried |
-| 29 | AGENTS.md live-probe set: add LoadUnit-first unit probing + /dev/tcp plain-HTTP | Low | S | Documentation | Carried |
-| 30 | Forensics on the 18:04:05 flake.lock mtime touch (content unchanged; toucher unknown) | Low | S | Quality | Carried |
-| 31 | Next real `nix flake update && deploy` must ride float-register end-to-end (acceptance) | Medium | S | Quality | Carried |
-| 32 | Root-fs watch: 50 G free and falling | Medium | S | Cleanup | Carried |
-| 33 | Verify nix-build-cleanup cleared the 4 stale sandboxes | Low | S | Cleanup | Carried |
-| 34 | Pre-commit hook idea: float message required when expected-locks.nix is staged | Low | S | Quality | Carried |
-| 35 | Fold tonight's bursts into the 2026-10-25_17-45 junk-IO row (same instrument class, fresh evidence) | Low | S | Documentation | Carried |
-| 36 | CHANGELOG entry for gen-953 (19-hash repair, 2 pin-backs, float-register bug) | Medium | S | Documentation | Carried |
-| 37 | Batch-analyze shim-ledger drop economics (one upstream sweep vs per-float re-stale tax) | Medium | S | Cleanup | Carried |
-| 38 | Bump the post-deploy-check "split not-listening from non-loopback" row (third stale-FAIL instance tonight) | Medium | S | Quality | Carried |
-| 39 | Add session open-questions ledger convention (§e.5) to the session discipline docs | Low | S | Documentation | NEW tonight |
-| 40 | TODO-system cross-reference convention ("See:" pointers between rows of one incident) — prevents the split-brain class §e.3 found | Low | S | Quality | NEW tonight |
+| #  | Task                                                                                                                                                                                                                                                                                   | Impact | Effort | Category      | Provenance  |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- | ----------- |
+| 1  | Identify monitor365's exact scanning query (MV-refresh leg vs stale_sweep/retention over the 1B-events table) in an upstream session with a sudo ticket                                                                                                                                | High   | M      | Bug           | NEW tonight |
+| 2  | Fix the gen_app schema drift (migration vs dashboard/saved-view definition — §g Q2 decides which)                                                                                                                                                                                      | High   | S–M    | Bug           | NEW tonight |
+| 3  | Decide + execute DuckDB relocation off the QLC root (hot-tier subvol on Samsung or pool; PSI-gated migrate pass)                                                                                                                                                                       | High   | M–L    | Feature       | NEW tonight |
+| 4  | Restart monitor365-server to clear the wedged pool (temporary — loop re-enters; pair with #1)                                                                                                                                                                                          | Medium | S      | Bug           | NEW tonight |
+| 5  | Write `scripts/io-attrib.sh` (cgroup-delta sampler + device map + PSI; kill the hand-rolled awk class)                                                                                                                                                                                 | High   | S      | Quality       | NEW tonight |
+| 6  | Add the 4-step IO-hunt playbook to the ops docs                                                                                                                                                                                                                                        | Medium | S      | Documentation | NEW tonight |
+| 7  | Merge/link the two monitor365 rows (/health 308 + scan-storm) into one incident view                                                                                                                                                                                                   | Medium | S      | Documentation | NEW tonight |
+| 8  | Annotate the guard/SigNoz so responders know trips of the #44xx class are likely this scan until #1 lands                                                                                                                                                                              | Medium | S      | Quality       | NEW tonight |
+| 9  | Verify fastflowlm actually serves (started ≠ serving; carried twice)                                                                                                                                                                                                                   | Medium | S      | Bug           | Carried     |
+| 10 | Identify the ~430 GB burst confirmation over a FULL wave (capture one complete 30-min cycle end-to-end: onset → trip → decay) — feeds the upstream bug report                                                                                                                          | Medium | S      | Bug           | NEW tonight |
+| 11 | Fix float-register's silent green-proof death (`drifted=` `\|\| true` + selftest) ✅ harvested 847fd0388                                                                                                                                                                               | High   | S      | Bug           | Carried     |
+| 12 | float-register proof-marker (lock-fingerprint stamp; registry==lock ≠ proven)                                                                                                                                                                                                          | High   | M      | Quality       | Carried     |
+| 13 | Upstream FOD download-scope fix (go-taskqueue + branching-flow), then lift pin-backs ✅ harvested 6491fd32a                                                                                                                                                                            | High   | M      | Bug           | Carried     |
+| 14 | Repoint monitor365 `/health` consumers off the 308 route (watchdog SERVER_HEALTH + gatus) ✅ harvested 6491fd32a — merge with #7 at triage                                                                                                                                             | Medium | S      | Bug           | Carried     |
+| 15 | `scripts/vendor-sweep-list.sh <proof-log>` (mechanize the awk extraction + six-surface sweep)                                                                                                                                                                                          | High   | S      | Quality       | Carried     |
+| 16 | Root-cause the 17:44 stale-eval anomaly (drv paths identical despite edited shims)                                                                                                                                                                                                     | High   | M      | Quality       | Carried     |
+| 17 | Provision `/mnt/hot/users/lars/tmp` subvol (fixes home-lars-tmp.mount + the D-state phantom class)                                                                                                                                                                                     | Medium | M      | Bug           | Carried     |
+| 18 | Diagnose pocket-id-provision exit-1 (pre-existing, 216 ms, OnFailure fired)                                                                                                                                                                                                            | Medium | S      | Bug           | Carried     |
+| 19 | Diagnose buildcache-gc.service failure (pre-existing)                                                                                                                                                                                                                                  | Medium | S      | Bug           | Carried     |
+| 20 | Upstream paste batch: all 15+ shimmed tools' got-hashes (cv, health-hub, crush-daily, renamer, mr-sync, pdd, overview, library-policy, buildflow, discordsync, erraudit, go-auto-upgrade, go-humanize-linter, project-meta, samber-linter, PMA) — one sweep session ends the treadmill | Medium | M      | Cleanup       | Carried     |
+| 21 | erraudit follower-divergence systematic fix (nixpkgs-unstable follow pattern; FRAGILE note fired twice)                                                                                                                                                                                | Medium | M      | Quality       | Carried     |
+| 22 | Reconcile pre-deploy (7) vs post-activation (3) failed-unit sets — verify github-auto-assign / opencloud / inboxclean-sync actually healed                                                                                                                                             | Low    | S      | Quality       | Carried     |
+| 23 | inboxclean-sync + opencloud recovery confirmation (guard-shed class tonight)                                                                                                                                                                                                           | Medium | S      | Bug           | Carried     |
+| 24 | service-health-check + ci-watchdog triage (one IS the notifier — its failure masks others)                                                                                                                                                                                             | Medium | S      | Bug           | Carried     |
+| 25 | Confirm home-lars-tmp.automount fails fast-loud without a fresh corpse pile on access                                                                                                                                                                                                  | Low    | S      | Bug           | Carried     |
+| 26 | Log pressure-override + gate-abort events persistently from deploy.sh                                                                                                                                                                                                                  | Low    | S      | Quality       | Carried     |
+| 27 | CONTRIBUTING cheat sheet for the TODO gate (title-identity, wait-words, date-regex)                                                                                                                                                                                                    | Low    | S      | Documentation | Carried     |
+| 28 | Pre-commit leg: vendorHash literal changes require dated evidence comments                                                                                                                                                                                                             | Medium | M      | Quality       | Carried     |
+| 29 | AGENTS.md live-probe set: add LoadUnit-first unit probing + /dev/tcp plain-HTTP                                                                                                                                                                                                        | Low    | S      | Documentation | Carried     |
+| 30 | Forensics on the 18:04:05 flake.lock mtime touch (content unchanged; toucher unknown)                                                                                                                                                                                                  | Low    | S      | Quality       | Carried     |
+| 31 | Next real `nix flake update && deploy` must ride float-register end-to-end (acceptance)                                                                                                                                                                                                | Medium | S      | Quality       | Carried     |
+| 32 | Root-fs watch: 50 G free and falling                                                                                                                                                                                                                                                   | Medium | S      | Cleanup       | Carried     |
+| 33 | Verify nix-build-cleanup cleared the 4 stale sandboxes                                                                                                                                                                                                                                 | Low    | S      | Cleanup       | Carried     |
+| 34 | Pre-commit hook idea: float message required when expected-locks.nix is staged                                                                                                                                                                                                         | Low    | S      | Quality       | Carried     |
+| 35 | Fold tonight's bursts into the 2026-10-25_17-45 junk-IO row (same instrument class, fresh evidence)                                                                                                                                                                                    | Low    | S      | Documentation | Carried     |
+| 36 | CHANGELOG entry for gen-953 (19-hash repair, 2 pin-backs, float-register bug)                                                                                                                                                                                                          | Medium | S      | Documentation | Carried     |
+| 37 | Batch-analyze shim-ledger drop economics (one upstream sweep vs per-float re-stale tax)                                                                                                                                                                                                | Medium | S      | Cleanup       | Carried     |
+| 38 | Bump the post-deploy-check "split not-listening from non-loopback" row (third stale-FAIL instance tonight)                                                                                                                                                                             | Medium | S      | Quality       | Carried     |
+| 39 | Add session open-questions ledger convention (§e.5) to the session discipline docs                                                                                                                                                                                                     | Low    | S      | Documentation | NEW tonight |
+| 40 | TODO-system cross-reference convention ("See:" pointers between rows of one incident) — prevents the split-brain class §e.3 found                                                                                                                                                      | Low    | S      | Quality       | NEW tonight |
 
 (40 rows; the Part 1 table's remaining rows — 50-item menu minus the 14 re-listed here — remain standing in the 20-40 report.)
 
@@ -136,6 +136,6 @@ The ~430 GB evening bursts are **`monitor365-server.service` full-scanning its o
 
 ---
 
-*Self-harvest record (AGENTS.md rule): this interval's single direct follow-up — the monitor365 scan-storm triage row — was queued at authoring time, BEFORE this report (`9ce2fb91f`: services.md + TODO_LIST twin). The remaining §f rows are deliberately not harvested: Part 1's harvested set (847fd0388, 6491fd32a) already covers rows 11–14, the rest is a re-ranked menu awaiting owner prioritization (user instruction: report then WAIT); bulk-queueing a 40-row brainstorm violates the docs-health HARVEST routing anti-pattern.*
+_Self-harvest record (AGENTS.md rule): this interval's single direct follow-up — the monitor365 scan-storm triage row — was queued at authoring time, BEFORE this report (`9ce2fb91f`: services.md + TODO_LIST twin). The remaining §f rows are deliberately not harvested: Part 1's harvested set (847fd0388, 6491fd32a) already covers rows 11–14, the rest is a re-ranked menu awaiting owner prioritization (user instruction: report then WAIT); bulk-queueing a 40-row brainstorm violates the docs-health HARVEST routing anti-pattern._
 
-*Format note: `.md` per the user's explicit path demand (status-report skill is HTML-canonical; override honored, not propagated). Cross-reference: Part 1 = `docs/status/2026-10-26_20-40_lock-float-repair-gen953-deploy-status.md`.*
+_Format note: `.md` per the user's explicit path demand (status-report skill is HTML-canonical; override honored, not propagated). Cross-reference: Part 1 = `docs/status/2026-10-26_20-40_lock-float-repair-gen953-deploy-status.md`._

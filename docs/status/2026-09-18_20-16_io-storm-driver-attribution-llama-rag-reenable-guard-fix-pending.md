@@ -25,7 +25,7 @@
 
 1. **Storm-driver attribution** — strong but not airtight: (i) the live 60-second rate measurement was interrupted, so the headline 15.8 MB/s figure carries a caveat (cgroup io.stat RESETS on unit restart — the 11:28 restart means bundle-delta math may mix restart artifacts in); (ii) the storm ALSO raged Sep 16–17 while llama-rag was nominally disabled — the driver of THAT window (trips #299–#337; crush sessions? discordsync?) has NOT been attributed from the older bundles yet.
 2. **Diskstats analysis** — direction correct (QLC root `nvme0n1p6` saturated with reads; Samsung `nvme1n1p2` at 21% busy; DAS disks idle; `/data` model partition ~0 reads — so the spin does NOT re-read model files), but my parse produced **impossible busy percentages (5950%)** — field misalignment vs the bundle format; needs a live re-parse before any number from it is cited.
-~~3. **Prior session's working-tree changes** still present, still undeployed, still carrying the known exit-4 hazard: `snapshots.nix` verify-gate fix (eval-verified, +7/−1), `AGENTS.md` gotcha bullet, the two 09-17 status reports.~~ done — deployed with system-786 chain 2026-09-20 (docs/status/2026-09-20_15-30 M1)
+   ~~3. **Prior session's working-tree changes** still present, still undeployed, still carrying the known exit-4 hazard: `snapshots.nix` verify-gate fix (eval-verified, +7/−1), `AGENTS.md` gotcha bullet, the two 09-17 status reports.~~ done — deployed with system-786 chain 2026-09-20 (docs/status/2026-09-20_15-30 M1)
 
 ## c) NOT STARTED (this session)
 

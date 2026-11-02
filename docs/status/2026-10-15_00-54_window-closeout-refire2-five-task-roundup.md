@@ -12,6 +12,7 @@ Written 2026-10-15 00:54 CEST. Task-Queue-ID `000001a13800dfbb3ebd5b780df4000000
 ## Delta since `402fdfd5` (2026-10-15 00:45)
 
 Two daemon commits, neither in scope:
+
 - `adbf7449` — geometrikks q3 advisory report (separate session/window) + flake.lock churn.
 - `65507c91` — flake.lock churn only.
 
@@ -46,6 +47,7 @@ Nothing new started on these five tasks since 00:45. The window's queue is fully
 ## g) QUESTIONS ONLY THE OWNER CAN ANSWER
 
 All three remain queued as rows, not re-minted here:
+
 1. Pending-deploy train priority (TODO_LIST:1281, BLOCKED).
 2. InboxClean master push permission ([blocked:push] row, docs/todo/stability.md).
 3. Sev1 chronic-latch threshold/breadth ([decision] row, docs/todo/stability.md).

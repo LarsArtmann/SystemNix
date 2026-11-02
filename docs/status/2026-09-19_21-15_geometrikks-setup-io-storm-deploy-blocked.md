@@ -61,19 +61,19 @@ pre-pulled, so the switch will be short once pressure drains.
 ## b) PARTIALLY DONE
 
 ~~1. **DEPLOY — blocked, queued.** First `nix run .#deploy` exited 12~~ done — deployed + rescued 2026-09-20: app Up(healthy), first Gatus green ever (docs/status/2026-09-20_19-47 §a.3)
-   (pressure gate: io avg10 34.55% + disk busy 101%). The storm persisted
-   ~4h (avg10 27–98.97%, avg60 ~47–85%, disk busy 100% peaks, MemAvailable
-   22–28%, zram 0%, memory fine). Zone-6-class guard lines confirmed
-   ("crash #3 class: stacked full-disk readers livelocking the scheduler";
-   flm socket already sacrificed, action-cooldown cycling). Two pollers ran
-   65 + 60 min; a third auto-deploy watcher fires only after 3 CONSECUTIVE
-   green polls (<15 avg10) — still waiting at report time (21:13:
-   58.31/53.10). `nix flake check` + toplevel build are DONE and cached, so
-   the eventual switch is short.
+(pressure gate: io avg10 34.55% + disk busy 101%). The storm persisted
+~4h (avg10 27–98.97%, avg60 ~47–85%, disk busy 100% peaks, MemAvailable
+22–28%, zram 0%, memory fine). Zone-6-class guard lines confirmed
+("crash #3 class: stacked full-disk readers livelocking the scheduler";
+flm socket already sacrificed, action-cooldown cycling). Two pollers ran
+65 + 60 min; a third auto-deploy watcher fires only after 3 CONSECUTIVE
+green polls (<15 avg10) — still waiting at report time (21:13:
+58.31/53.10). `nix flake check` + toplevel build are DONE and cached, so
+the eventual switch is short.
 ~~2. **Post-deploy verification — not yet possible**: `/health/ready` probe,~~ done — docs/status/2026-09-20_19-47 §a.3 (:8102/health/ready 200, Gatus success=true)
-   login render, ingestion proof (gatus traffic ⇒ events within minutes),
-   Gatus check green, tile, backup dir, `docker compose ps` health states.
-   All steps are written down (runbook); zero thinking left for that phase.
+login render, ingestion proof (gatus traffic ⇒ events within minutes),
+Gatus check green, tile, backup dir, `docker compose ps` health states.
+All steps are written down (runbook); zero thinking left for that phase.
 
 ## c) NOT STARTED
 
@@ -141,22 +141,22 @@ pre-pulled, so the switch will be short once pressure drains.
 ## f) NEXT THINGS (prioritized)
 
 ~~1. Verify pressure drained → complete the deploy (`nix run .#deploy`) and~~ **NOT-DO — NOT-DO — dup of §b.1 (deploy, verified closed).**
-   confirm profile anchoring (`readlink /run/current-system` vs numbered
-   profile).
+confirm profile anchoring (`readlink /run/current-system` vs numbered
+profile).
 ~~2. Post-deploy verification battery: `docker compose ps` (both healthy),~~ **NOT-DO — NOT-DO — dup of §b.2 (post-deploy verification, verified closed).**
-   `/health/ready` 200 via loopback, login page renders, DB initialized,
-   events flowing within ~1 min (gatus traffic), Gatus "GeoMetrikks" green,
-   tile renders, `geo.home.lan` resolves + vHost serves (LAN bypass).
+`/health/ready` 200 via loopback, login page renders, DB initialized,
+events flowing within ~1 min (gatus traffic), Gatus "GeoMetrikks" green,
+tile renders, `geo.home.lan` resolves + vHost serves (LAN bypass).
 3. Confirm sops rendered the env (`/var/lib/geometrikks/.env` exists 0600
-   root) and the app started WITHOUT the admin-password refusal.
+root) and the app started WITHOUT the admin-password refusal.
 4. Trigger/start `geometrikks-db-backup` once manually; verify the pg_dump
-   lands in `/mnt/pool/backups/geometrikks/` (first-run proof).
+lands in `/mnt/pool/backups/geometrikks/` (first-run proof).
 5. Verify backup-coordination picked up the freshness entry (dashboard row
-   appears).
+appears).
 6. Check ingestion actually parses caddy-json (UI log rows populated; if
-   auto-detect failed, pin `LOGPARSER_LOG_FORMATS=caddy-json` and redeploy).
+auto-detect failed, pin `LOGPARSER_LOG_FORMATS=caddy-json` and redeploy).
 7. Watch the first rotation cycle (100MiB) for tail-follow survival across
-   Caddy's rename-rotation.
+Caddy's rename-rotation.
 ~~8. User: MaxMind signup + key paste (go-live row in todo/services.md).~~ done — user pasted MaxMind keys 2026-10-06 (docs/status/2026-10-06_22-08 §a.5: keys into geometrikks.yaml, user-confirmed done)
 9. User: optional CARTO key paste.
 10. User: first login + visual map sanity (browser session).
@@ -164,23 +164,23 @@ pre-pulled, so the switch will be short once pressure drains.
 12. Decide Caddy per-vhost `roll_keep_for 168h` override (§e.3).
 13. Decide the deploy-when-green helper (§e.5).
 ~~14. Re-check crush-hot-db first-migration status (§e.1) — structural fix~~ done — established: first migration RAN 2026-09-18, converged — 279 symlinks, 45 GiB, PRAGMA integrity ok (docs/status/2026-09-21_10-35 §a.6)
-    for the whole queue-blocked class.
+for the whole queue-blocked class.
 ~~15. Update AGENTS.md after first live deploy with the deployed-generation~~ done — AGENTS.md geometrikks entries landed 2026-09-20 (docs/status/2026-09-20_19-47 §a.13)
-    note + any runtime surprises (rotation behavior, parse evidence).
+note + any runtime surprises (rotation behavior, parse evidence).
 16. Harvest this report per docs-health (VERIFY items against code next
-    pass; `[ready]` items already filed).
+pass; `[ready]` items already filed).
 17. GeoMetrikks version-bump doctrine note: upstream releases weekly-ish;
-    bump = `docker manifest inspect` new tag + digest refresh in
-    images.nix (check-image-updates.sh will flag digest drift daily).
+bump = `docker manifest inspect` new tag + digest refresh in
+images.nix (check-image-updates.sh will flag digest drift daily).
 18. Consider upstream filing: `.env.example` says PUID "app runs as" but
-    root-running requires PUID=0 support confirmation (worked here per
-    upstream default flow; if the entrypoint ever refuses PUID=0, fallback
-    documented in runbook gotchas).
+root-running requires PUID=0 support confirmation (worked here per
+upstream default flow; if the entrypoint ever refuses PUID=0, fallback
+documented in runbook gotchas).
 19. Optional: `litestar import-logs` backfill of the .gz history (§c.2).
 20. Optional: SigNoz dashboard panel for geometrikks container metrics
-    (cadvisor already scrapes docker; a panel is cheap if wanted).
+(cadvisor already scrapes docker; a panel is cheap if wanted).
 21. Re-arm `fastflowlm.socket` after the storm drains (guard restore is
-    capped — check `restore_capped` after the deploy window).
+capped — check `restore_capped` after the deploy window).
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 

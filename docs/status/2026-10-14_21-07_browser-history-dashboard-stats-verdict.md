@@ -17,14 +17,14 @@ Everything else the product promises lives in the sections BELOW that grid, and 
 
 ## c) Stat values verified against the 02:15 backup (per-user scoped)
 
-| Stat (evening) | Backup (02:15) | Cross-check |
-| --- | --- | --- |
-| Visits 1739 | 1727 | +12 by evening ✓ |
-| Sessions 126 | 123 (user-scoped) | +3 ✓ |
-| Searches 100 | 100 user-scoped (225 total) | exact ✓ |
-| Downloads 56 | 56 user-scoped (114 total) | exact ✓ |
-| Domains 96 | 96 user-scoped (336 total) | exact ✓ |
-| 1031 no-duration / 704 granular | 1023 / 704 | +8 zero-duration among the 12 new ✓ |
+| Stat (evening)                  | Backup (02:15)              | Cross-check                         |
+| ------------------------------- | --------------------------- | ----------------------------------- |
+| Visits 1739                     | 1727                        | +12 by evening ✓                    |
+| Sessions 126                    | 123 (user-scoped)           | +3 ✓                                |
+| Searches 100                    | 100 user-scoped (225 total) | exact ✓                             |
+| Downloads 56                    | 56 user-scoped (114 total)  | exact ✓                             |
+| Domains 96                      | 96 user-scoped (336 total)  | exact ✓                             |
+| 1031 no-duration / 704 granular | 1023 / 704                  | +8 zero-duration among the 12 new ✓ |
 
 The remaining 3179 visits (Jan 1 → Sep 4 22:04) sit under the all-zeros `user_id` — the pre-attribution era, invisible to the owner by design.
 

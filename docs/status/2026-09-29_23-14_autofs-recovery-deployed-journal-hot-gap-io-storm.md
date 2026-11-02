@@ -29,11 +29,11 @@
 ## c) NOT STARTED (incident backlog, untouched this session)
 
 1. Real BUILD of the regression VM test (`nix build .#checks.x86_64-linux.hot-user-caches`) — eval-green only so far.
-~~2. forgejo doctrine decision (disko-declare `hot/forgejo` + delete its runtime bootstrap vs keep runtime creation).~~ done — CHANGELOG "Forgejo G1 Samsung-subvol migration EXECUTED (2026-10-11)" — prepare→finalize→deploy system-864, live-verified
-3. **Durable fix for the GC-eviction class** (pipeline.md:155) — cause now proven (nightly nix-gc sweep); fix design not started (gcroot the checks / keep-outputs / rescope nix-gc).
-4. gatus-config.nix:673 rule read/fix; pool metadata balance (`-musage=50`); fleet `before=.*.mount` audit; mount-timeout on all automount entries; stuck-jobs gatus alert; gotchas-archive narrative; 12 nix-checker port fixes; docs-health HARVEST of both 09-29 reports.
-5. Reboot-path verification (journal mounts at boot; wedge-free boot) — blocked on migration finalize + quiet window.
-6. TODO row / AGENTS.md gotcha for the journal-hot runbook violation (module shipped without executing its one-time migration).
+   ~~2. forgejo doctrine decision (disko-declare `hot/forgejo` + delete its runtime bootstrap vs keep runtime creation).~~ done — CHANGELOG "Forgejo G1 Samsung-subvol migration EXECUTED (2026-10-11)" — prepare→finalize→deploy system-864, live-verified
+2. **Durable fix for the GC-eviction class** (pipeline.md:155) — cause now proven (nightly nix-gc sweep); fix design not started (gcroot the checks / keep-outputs / rescope nix-gc).
+3. gatus-config.nix:673 rule read/fix; pool metadata balance (`-musage=50`); fleet `before=.*.mount` audit; mount-timeout on all automount entries; stuck-jobs gatus alert; gotchas-archive narrative; 12 nix-checker port fixes; docs-health HARVEST of both 09-29 reports.
+4. Reboot-path verification (journal mounts at boot; wedge-free boot) — blocked on migration finalize + quiet window.
+5. TODO row / AGENTS.md gotcha for the journal-hot runbook violation (module shipped without executing its one-time migration).
 
 ## d) TOTALLY FUCKED UP (honest)
 
@@ -59,55 +59,55 @@
 ## f) Up to 50 things next (roughly impact-ordered)
 
 1. Decide the IO-storm response (see g/3) — throttle fleet vs off-peak migration window.
-~~2. Run `migrate-journal-hot.sh prepare → mount start → journald restart → finalize` (user sudo) once PSI < 20.~~ done — 00-38 report §a.7-9 — executed end-to-end, MIGRATION COMPLETE, zero data loss
-~~3. `inboxclean auth` re-consent (user, interactive OAuth).~~ done — docs/todo/services.md:343 [x] re-consent DONE 2026-10-04 07:45 + CHANGELOG 2026-10-04 (grant proven live, corpus resumed indexing)
-4. Reboot at a quiet window after `nix run .#pre-reboot-check`; verify journal mounts via the boot-ordering path + no re-wedge.
-5. Real build: `nix build .#checks.x86_64-linux.hot-user-caches`.
-6. Post-reboot sweep: `list-jobs` empty, `findmnt` all hot mounts, gatus green, load sane.
-7. File TODO row + AGENTS.md gotcha: "modules with one-time migrations must block deploy until executed" (journal-hot precedent).
-~~8. Decide + implement forgejo doctrine (mirror the hot-user-caches deletion if disko-declared).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED
-9. Durable fix for pipeline.md:155 (nightly nix-gc vs eval artifacts — gcroots/keep-outputs/rescope).
-10. Fleet audit: any other runtime service ordered between an automount and its `.mount` (the deadlock recipe).
-11. `x-systemd.mount-timeout` on ALL automount-backed entries.
-12. Stuck-jobs gatus alert (JobsCount > 0 for > N minutes).
-13. Boot-completion alert (boot > X min old and multi-user.target not reached — catches this incident class at boot+minutes).
-14. D-state / PSI alerting for the fleet (the storm is measurable; nothing alerted).
-15. Read + fix gatus-config.nix:673 (BTRFS Chunk Health).
-16. Pool metadata balance (`btrfs balance start -musage=50 /mnt/pool` — metadata 97.9% full, gatus red).
-17. docs-health HARVEST of the two 09-29 reports.
-18. The 12 pre-existing nix-checker port-collision findings.
-19. Verify inboxclean-sync recovers post-re-consent; audit what its `OnFailure=` hooks fired.
-20. Investigate closure diff anomaly: `hermes-agent 0.21.4 ×2 → 0.0.0 ×2` (version regression?).
-21. Post-migration: confirm tmpfiles rule + keep QLC shadow dir as rollback insurance per runbook.
-22. geometryGuards-style eval assertion for all subvol mounts (see e/7).
-23. Extend test-journal-hot.nix with the "migration not run → designed degradation" scenario.
-24. Audit the daemon commits that rode the deploy (777fa972, 31392dbf, 3c1b7fc1, dae3ee0a) — know exactly what shipped.
-25. Read the parallel session's modified `docs/status/2026-09-29_11-34_gatus-panic-notification-storm-incident.md` — likely part of the current churn; cross-link.
-26. Move Go build caches off the buildcache HDD (TLC) or add PSI-aware scheduling.
-27. nix-gc rescope: dry-run report, move off work hours, or exclude eval caches.
-28. gatus metric: nightly nix-gc paths-freed (correlate future flaps instantly).
-29. AGENTS.md: canonicalize the "path … not valid" heal one-liner (isolated eval of the failing attr).
-30. Final proof of the deletion doctrine: post-reboot, disko-provisioned subvol mounts with zero bootstrap.
-31. AGENTS.md technique note: "deploy-cancels-job" (activating a generation that removes a unit cancels its stuck job — unblocked a whole boot transaction without reboot).
-32. Root disk 92% full: journal migration moves 6.5G off; plan the rest.
-33. sdc1 unmounted — decide role or drop from topology docs.
-34. Verify intentional: ideaIU 2026.2.3 added (+4.07 GiB), idea removed (rode the deploy).
-35. Verify expected: storage-collector +134KiB closure change.
-36. `nix flake archive` / profile gcroot for live inputs — stop nightly GC evicting in-use inputs.
-37. btrfs scrub schedule for tlc (now carries caches + journal).
-38. Exercise forgejo-subvol-bootstrap's new JobTimeoutSec armor at a real boot.
-39. pre-reboot-check: add "list-jobs empty + no failed mounts" assertions.
-40. Archive-copy the /var/tmp forensics into docs/ before tmp cleanup eats them.
-41. Post-deploy buildflow run in SystemNix (12 known findings aside — confirm no NEW ones).
-42. Task-queue: expose an "IO PSI pause" knob (scripts gate; agents don't).
-43. Clean /tmp/diag-cache once stale (was the wedge workaround).
-44. gatus: alert on failed-unit count above baseline (would catch the inboxclean class).
-45. Document the "post-deploy PSI storm" as an expected pattern in AGENTS.md.
-46. Fix hermes 0.0.0 if real (see 20) — input pin or upstream tag.
-47. Skim boots −1..−4 for OTHER never-run units that were queued behind the old wedge (var-log-journal was one).
-48. Consider systemd automount idle-timeout hardening for cache mounts.
-49. Session housekeeping: 22+ concurrent crush sessions — stagger on resume.
-50. Schedule the docs-health HARVEST cycle for the two 09-29 reports (same as 17, tracked separately if pacing demands).
+   ~~2. Run `migrate-journal-hot.sh prepare → mount start → journald restart → finalize` (user sudo) once PSI < 20.~~ done — 00-38 report §a.7-9 — executed end-to-end, MIGRATION COMPLETE, zero data loss
+   ~~3. `inboxclean auth` re-consent (user, interactive OAuth).~~ done — docs/todo/services.md:343 [x] re-consent DONE 2026-10-04 07:45 + CHANGELOG 2026-10-04 (grant proven live, corpus resumed indexing)
+2. Reboot at a quiet window after `nix run .#pre-reboot-check`; verify journal mounts via the boot-ordering path + no re-wedge.
+3. Real build: `nix build .#checks.x86_64-linux.hot-user-caches`.
+4. Post-reboot sweep: `list-jobs` empty, `findmnt` all hot mounts, gatus green, load sane.
+5. File TODO row + AGENTS.md gotcha: "modules with one-time migrations must block deploy until executed" (journal-hot precedent).
+   ~~8. Decide + implement forgejo doctrine (mirror the hot-user-caches deletion if disko-declared).~~ done — CHANGELOG 2026-10-11 — Forgejo G1 Samsung-subvol migration EXECUTED
+6. Durable fix for pipeline.md:155 (nightly nix-gc vs eval artifacts — gcroots/keep-outputs/rescope).
+7. Fleet audit: any other runtime service ordered between an automount and its `.mount` (the deadlock recipe).
+8. `x-systemd.mount-timeout` on ALL automount-backed entries.
+9. Stuck-jobs gatus alert (JobsCount > 0 for > N minutes).
+10. Boot-completion alert (boot > X min old and multi-user.target not reached — catches this incident class at boot+minutes).
+11. D-state / PSI alerting for the fleet (the storm is measurable; nothing alerted).
+12. Read + fix gatus-config.nix:673 (BTRFS Chunk Health).
+13. Pool metadata balance (`btrfs balance start -musage=50 /mnt/pool` — metadata 97.9% full, gatus red).
+14. docs-health HARVEST of the two 09-29 reports.
+15. The 12 pre-existing nix-checker port-collision findings.
+16. Verify inboxclean-sync recovers post-re-consent; audit what its `OnFailure=` hooks fired.
+17. Investigate closure diff anomaly: `hermes-agent 0.21.4 ×2 → 0.0.0 ×2` (version regression?).
+18. Post-migration: confirm tmpfiles rule + keep QLC shadow dir as rollback insurance per runbook.
+19. geometryGuards-style eval assertion for all subvol mounts (see e/7).
+20. Extend test-journal-hot.nix with the "migration not run → designed degradation" scenario.
+21. Audit the daemon commits that rode the deploy (777fa972, 31392dbf, 3c1b7fc1, dae3ee0a) — know exactly what shipped.
+22. Read the parallel session's modified `docs/status/2026-09-29_11-34_gatus-panic-notification-storm-incident.md` — likely part of the current churn; cross-link.
+23. Move Go build caches off the buildcache HDD (TLC) or add PSI-aware scheduling.
+24. nix-gc rescope: dry-run report, move off work hours, or exclude eval caches.
+25. gatus metric: nightly nix-gc paths-freed (correlate future flaps instantly).
+26. AGENTS.md: canonicalize the "path … not valid" heal one-liner (isolated eval of the failing attr).
+27. Final proof of the deletion doctrine: post-reboot, disko-provisioned subvol mounts with zero bootstrap.
+28. AGENTS.md technique note: "deploy-cancels-job" (activating a generation that removes a unit cancels its stuck job — unblocked a whole boot transaction without reboot).
+29. Root disk 92% full: journal migration moves 6.5G off; plan the rest.
+30. sdc1 unmounted — decide role or drop from topology docs.
+31. Verify intentional: ideaIU 2026.2.3 added (+4.07 GiB), idea removed (rode the deploy).
+32. Verify expected: storage-collector +134KiB closure change.
+33. `nix flake archive` / profile gcroot for live inputs — stop nightly GC evicting in-use inputs.
+34. btrfs scrub schedule for tlc (now carries caches + journal).
+35. Exercise forgejo-subvol-bootstrap's new JobTimeoutSec armor at a real boot.
+36. pre-reboot-check: add "list-jobs empty + no failed mounts" assertions.
+37. Archive-copy the /var/tmp forensics into docs/ before tmp cleanup eats them.
+38. Post-deploy buildflow run in SystemNix (12 known findings aside — confirm no NEW ones).
+39. Task-queue: expose an "IO PSI pause" knob (scripts gate; agents don't).
+40. Clean /tmp/diag-cache once stale (was the wedge workaround).
+41. gatus: alert on failed-unit count above baseline (would catch the inboxclean class).
+42. Document the "post-deploy PSI storm" as an expected pattern in AGENTS.md.
+43. Fix hermes 0.0.0 if real (see 20) — input pin or upstream tag.
+44. Skim boots −1..−4 for OTHER never-run units that were queued behind the old wedge (var-log-journal was one).
+45. Consider systemd automount idle-timeout hardening for cache mounts.
+46. Session housekeeping: 22+ concurrent crush sessions — stagger on resume.
+47. Schedule the docs-health HARVEST cycle for the two 09-29 reports (same as 17, tracked separately if pacing demands).
 
 ## g) Questions I CANNOT answer myself
 

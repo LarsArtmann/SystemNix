@@ -7,16 +7,16 @@
 
 ## a) FULLY DONE
 
-| # | What | Evidence | Files |
-|---|------|----------|-------|
-| a1 | Upstream Forgejo OTel verdict verified with sources (merged 2024-08-05 `c7385422`, reverted 2024-08-07 #4866 over EUPL-1.2-vs-GPLv3-or-later; never in any release; author refuses relicense + calls his own traces flat/near-useless) | forgejo#3972/#4866/#7216 quotes in-session; archived revert PR | (research only) |
-| a2 | `tracing` directive landed in `commonConfig` — every vHost (76 rendered site blocks: hand-written, registry fan-out, static roots, catch-alls, :80, cloud mirrors) emits per-request OTel spans; span name = requested host | `git show 08c2540b9` (+22 lines caddy.nix); grep -c "tracing {" = 76 on rendered Caddyfile | `modules/nixos/services/caddy.nix` |
-| a3 | Unit env wiring: `OTEL_SERVICE_NAME=caddy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` (gRPC, scheme-required per the 2026-08-14 URL-parser hang class) | eval output shows both vars merged beside upstream PATH | `modules/nixos/services/caddy.nix` |
-| a4 | Both audit rails registered: `otel-endpoint-audit` `caddy = "grpc-url"`; `signoz-coverage.expected.caddy` wiring `env`, 26h | `nix flake check --no-build` green (assertions satisfied); commit `08c2540b9` | `otel-endpoint-audit.nix`, `signoz-coverage.nix` |
-| a5 | Pre-deploy proof battery: directive validated against the DEPLOYED caddy 2.11.7 binary; full evo-x2 Caddyfile `caddy adapt` clean; switch mechanism confirmed `reloadIfChanged=false`/`restartIfChanged=true` (env goes live — a graceful reload would NOT have) | in-session commands; §b of the 17-45 status report | — |
-| a6 | Docs: runbook §Edge tracing (incl. live-verify ClickHouse recipe), CHANGELOG row, two status reports | `docs/services/caddy.md`, `CHANGELOG.md`, `docs/status/2026-10-25_17-45_*.md` | docs |
-| a7 | Queue + library rows (deploy-gated) harvested and paired; `check-todo-system.sh`: "structure clean" | rows in TODO_LIST + monitoring.md citing the 17-45 report | TODO_LIST.md, docs/todo/monitoring.md |
-| a8 | Daemon-race handling: edits swept into mixed commit `08c2540b9` (mine + foreign `stability.md`/`system-health.nix`) — correctly NOT amended (would absorb foreign work) | `git show --stat 08c2540b9` | — |
+| #  | What                                                                                                                                                                                                                                                             | Evidence                                                                                   | Files                                            |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| a1 | Upstream Forgejo OTel verdict verified with sources (merged 2024-08-05 `c7385422`, reverted 2024-08-07 #4866 over EUPL-1.2-vs-GPLv3-or-later; never in any release; author refuses relicense + calls his own traces flat/near-useless)                           | forgejo#3972/#4866/#7216 quotes in-session; archived revert PR                             | (research only)                                  |
+| a2 | `tracing` directive landed in `commonConfig` — every vHost (76 rendered site blocks: hand-written, registry fan-out, static roots, catch-alls, :80, cloud mirrors) emits per-request OTel spans; span name = requested host                                      | `git show 08c2540b9` (+22 lines caddy.nix); grep -c "tracing {" = 76 on rendered Caddyfile | `modules/nixos/services/caddy.nix`               |
+| a3 | Unit env wiring: `OTEL_SERVICE_NAME=caddy`, `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317` (gRPC, scheme-required per the 2026-08-14 URL-parser hang class)                                                                                                 | eval output shows both vars merged beside upstream PATH                                    | `modules/nixos/services/caddy.nix`               |
+| a4 | Both audit rails registered: `otel-endpoint-audit` `caddy = "grpc-url"`; `signoz-coverage.expected.caddy` wiring `env`, 26h                                                                                                                                      | `nix flake check --no-build` green (assertions satisfied); commit `08c2540b9`              | `otel-endpoint-audit.nix`, `signoz-coverage.nix` |
+| a5 | Pre-deploy proof battery: directive validated against the DEPLOYED caddy 2.11.7 binary; full evo-x2 Caddyfile `caddy adapt` clean; switch mechanism confirmed `reloadIfChanged=false`/`restartIfChanged=true` (env goes live — a graceful reload would NOT have) | in-session commands; §b of the 17-45 status report                                         | —                                                |
+| a6 | Docs: runbook §Edge tracing (incl. live-verify ClickHouse recipe), CHANGELOG row, two status reports                                                                                                                                                             | `docs/services/caddy.md`, `CHANGELOG.md`, `docs/status/2026-10-25_17-45_*.md`              | docs                                             |
+| a7 | Queue + library rows (deploy-gated) harvested and paired; `check-todo-system.sh`: "structure clean"                                                                                                                                                              | rows in TODO_LIST + monitoring.md citing the 17-45 report                                  | TODO_LIST.md, docs/todo/monitoring.md            |
+| a8 | Daemon-race handling: edits swept into mixed commit `08c2540b9` (mine + foreign `stability.md`/`system-health.nix`) — correctly NOT amended (would absorb foreign work)                                                                                          | `git show --stat 08c2540b9`                                                                | —                                                |
 
 ## b) PARTIALLY DONE
 
@@ -26,15 +26,15 @@
 
 ## c) NOT STARTED (session-scoped; explicitly out of scope so far)
 
-| Item | Why not started | Priority |
-|------|-----------------|----------|
-| SigNoz collector sampling-policy check (tail sampling could drop caddy spans → false coverage page) | Assumed ingest "just works"; never opened the collector config | HIGH — could invalidate the whole feature silently |
-| `checks.caddy-mint` VM boot proof | Storm-gated build | HIGH (ride the calm window with the deploy) |
-| SigNoz dashboards/panels for caddy spans; spanmetrics cardinality audit (span name = host → bounded, but never observed) | Deploy-gated | MEDIUM |
-| Access-log traceID → log↔trace correlation (caddy injects traceID into access logs; pipeline value depends on the parallel plan's G2 journald decision) | Cross-plan dependency | MEDIUM |
-| FEATURES.md row + docs/agents/monitoring.md note (trace-driven services list now includes `caddy`) | Forgotten in-session (see e2) | LOW |
-| Backend trace depth (OTel SDK in LarsArtmann Go services so caddy→app spans chain via traceparent) | Owner decision on ambition — see g3 | Owner-gated |
-| Warm-probe gatus check so caddy spans stay fresh on unattended days | Owner decision — see g2 | Owner-gated |
+| Item                                                                                                                                                    | Why not started                                                | Priority                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------- |
+| SigNoz collector sampling-policy check (tail sampling could drop caddy spans → false coverage page)                                                     | Assumed ingest "just works"; never opened the collector config | HIGH — could invalidate the whole feature silently |
+| `checks.caddy-mint` VM boot proof                                                                                                                       | Storm-gated build                                              | HIGH (ride the calm window with the deploy)        |
+| SigNoz dashboards/panels for caddy spans; spanmetrics cardinality audit (span name = host → bounded, but never observed)                                | Deploy-gated                                                   | MEDIUM                                             |
+| Access-log traceID → log↔trace correlation (caddy injects traceID into access logs; pipeline value depends on the parallel plan's G2 journald decision) | Cross-plan dependency                                          | MEDIUM                                             |
+| FEATURES.md row + docs/agents/monitoring.md note (trace-driven services list now includes `caddy`)                                                      | Forgotten in-session (see e2)                                  | LOW                                                |
+| Backend trace depth (OTel SDK in LarsArtmann Go services so caddy→app spans chain via traceparent)                                                      | Owner decision on ambition — see g3                            | Owner-gated                                        |
+| Warm-probe gatus check so caddy spans stay fresh on unattended days                                                                                     | Owner decision — see g2                                        | Owner-gated                                        |
 
 ## d) TOTALLY FUCKED UP
 

@@ -115,4 +115,4 @@ Ranked by impact; items 1–8 are this session's direct follow-ups, 9–50 are s
 
 ---
 
-*Self-harvest note: §f items 1–5 landed in TODO_LIST.md + `docs/todo/monitoring.md` at report-authoring time (row 1 was queued during the batch; rows 2–5 added with this report). Items 6–50 are deliberately NOT harvested: 6–13 are brainstorm/ROADMAP fuel or need their own verification first, 14+ are tooling/sibling-owned or owner-gated — per the TODO-System rule that large-§f lists are brainstorm, not commitment.*
+_Self-harvest note: §f items 1–5 landed in TODO_LIST.md + `docs/todo/monitoring.md` at report-authoring time (row 1 was queued during the batch; rows 2–5 added with this report). Items 6–50 are deliberately NOT harvested: 6–13 are brainstorm/ROADMAP fuel or need their own verification first, 14+ are tooling/sibling-owned or owner-gated — per the TODO-System rule that large-§f lists are brainstorm, not commitment._

@@ -123,11 +123,11 @@ Read-only probe of the same primitive the check uses (`git merge-base --is-ances
 
 1. Delete `/mnt/buildcache/swapfile-emergency` (16 GiB, zero refs) — recommended yes. **→ docs/todo/storage.md swapfile-emergency provenance decision row**
 2. `cargo clean` on `/mnt/buildcache/rust/monitor365` in a quiet window (~100G reclaim, sccache-warmed rebuild) — recommended yes; needs a "builds are quiet" call only you can make. **→ docs/todo/storage.md buildcache-capacity decision row (monitor365 target)**
-~~3. Row 566 verdict: shrink `FailureEvidence.Tail` to the 512-byte excerpt + evidence path (recommend yes) — then implement.~~ **NOT-DO — dup of c.2 (r - upstream.md row).**
-~~4. Row 565 verdict: citation-check visibility surface — journal fact, harvest counter, or both (recommend both: counter for dashboards, fact for the journal trail).~~ **NOT-DO — dup of b.2 (r).**
-~~5. Row 551/568: adopt the mkIf-survivable shape? If yes, the 12 test co-imports retire and the probe matrix folds into `tests/test-integration.nix`.~~ **NOT-DO — dup of c.3 (r - pipeline.md mkIf row).**
-~~6. The three dead `tq-e2e` tasks + evidence file: keep as validation evidence or dismiss/clean?~~ **Won't implement — storm-era test pollution; window passed.**
-~~7. Permission to run live-pool agent tasks (crush quota) for future E2E validations without per-run asking.~~ **Won't implement — one-shot permission.**
+   ~~3. Row 566 verdict: shrink `FailureEvidence.Tail` to the 512-byte excerpt + evidence path (recommend yes) — then implement.~~ **NOT-DO — dup of c.2 (r - upstream.md row).**
+   ~~4. Row 565 verdict: citation-check visibility surface — journal fact, harvest counter, or both (recommend both: counter for dashboards, fact for the journal trail).~~ **NOT-DO — dup of b.2 (r).**
+   ~~5. Row 551/568: adopt the mkIf-survivable shape? If yes, the 12 test co-imports retire and the probe matrix folds into `tests/test-integration.nix`.~~ **NOT-DO — dup of c.3 (r - pipeline.md mkIf row).**
+   ~~6. The three dead `tq-e2e` tasks + evidence file: keep as validation evidence or dismiss/clean?~~ **Won't implement — storm-era test pollution; window passed.**
+   ~~7. Permission to run live-pool agent tasks (crush quota) for future E2E validations without per-run asking.~~ **Won't implement — one-shot permission.**
 
 **Immediate follow-ups from this session (high value, low cost):**
 ~~8. Root-cause the task-2 evidence-file anomaly (controlled single-claimant run; env-propagation audit through the `tq worker` stack).~~ **Won't implement — one-shot anomaly chase.**

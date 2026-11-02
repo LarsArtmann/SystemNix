@@ -80,43 +80,43 @@ Radical honesty, most damaging first.
 
 **Harvest status:** items 1–11 are direct session follow-ups — **already harvested at authoring time** into `TODO_LIST.md` + `docs/todo/{upstream,stability,pipeline}.md` per the AGENTS.md contract. Items 12+ are session-grounded brainstorm (ROADMAP fuel) — deliberately not harvested: they are either owner decisions, larger projects, or lower-confidence ideas; dumping them into the dispatch queue would violate the queue's one-ask contract.
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | CI-watch the 8-repo push wave (`gh run list` per repo), triage reds | High | S | Quality |
-| 2 | Complete the evo-x2 deploy when PSI drains (or owner override); hermes-restart warning applies | Critical | S | Bug |
-| 3 | Improve deploy gate: print iostat %util + top stalled cgroups on refusal | High | M | Quality |
-| 4 | Root-cause DiscordSync goModules FOD hash invariance (hash unchanged across 2 content-changing bumps); file vs go-nix-helpers if bug | High | M | Bug |
-| 5 | templ-components v1.23.0 post-push verification (full suite + clean-module tag resolution) | High | S | Quality |
-| 6 | Fix 2 pre-existing DiscordSync test failures (errkit fmt.Errorf; qt mime) | Medium | S | Bug |
-| 7 | Root-cause io-PSI-with-idle-disks signature (probe script + classification) | High | M | Bug |
-| 8 | Same as 3's evidence but systemic: PSI-vs-iostat probe script for stability runbook | High | S | Quality |
-| 9 | Verify why dnsblockd check-lockstep didn't fire pre-push; wire CI leg if missing | High | M | Bug |
-| 10 | Port check-lockstep gate to DiscordSync; audit crm/index/papdashboard pin surfaces | High | M | Feature |
-| 11 | Sweep LarsArtmann repos for .gitignore rules shadowing packages (`parts/` class) | Medium | M | Bug |
-| 12 | Decide + run the go-datastar v0.6.2 bump sweep across consumers (v0.6.2 exists; ecosystem at v0.6.1) | Low | M | Cleanup |
-| 13 | Resolve the templ CLI skew warning in discordsync sandbox (generator v0.3.1020 vs go.mod v0.3.1070; 12977fbc tried to pin this) | Medium | M | Bug |
-| 14 | Confirm cqrs-lint package truly never imports templ-components (FOD hash suggested so; assumption unverified) | Low | S | Quality |
-| 15 | Update `docs/services/dnsblockd.md` runbook: library-classes.txt must be regenerated from flake-resolved trees, not local self-vendor | Medium | S | Documentation |
-| 16 | Consider a `check-vendor-hash --all-repos` sweep mode across all 8 consumer repos to pre-stale FODs before nixpkgs bumps land | Medium | L | Feature |
-| 17 | Retire the stale "Pinned to v1.11.0" comment class: grep all consumers for pin comments whose tag ≠ actual rev | Low | S | Documentation |
-| 18 | Ask the nsfw-classifier sibling session to confirm the rooms/ids.go add-then-remove (c66c7505 ↔ 058a63d9) was intentional | Low | S | Quality |
-| 19 | Verify nsfw-classifier + discordsync services actually run after the deploy lands (post-deploy-check + journal glance) | High | S | Bug |
-| 20 | Push SystemNix master (9+ commits ahead incl. the lock commit) when the deploy lands | High | S | Cleanup |
-| 21 | Post-deploy: re-check the 6 pre-deploy warnings for anything the lock change affects | Low | S | Quality |
-| 22 | Consider templ-components website/docs publish for v1.23.0 (repo has website/ dir) | Low | M | Documentation |
-| 23 | Add "grep full log for every got-hash before starting fixes" to the go-ecosystem doc's enumeration evidence paragraph | Low | S | Documentation |
-| 24 | Codify "worktree not stash" for baselines in CONTRIBUTING daemon-race section | Low | S | Documentation |
-| 25 | Evaluate making go-standard mkGoFlake FAIL EVAL on pin≠require (systemic kill of the drift class; bigger than per-repo gates) | High | L | Feature |
-| 26 | Sweep for other Python-boilerplate .gitignore blocks in LarsArtmann repos (the `parts/` rule came from a template) | Medium | S | Cleanup |
-| 27 | Monitor InboxClean BuildFlow pre-existing findings (cqrs-lint 10, file-size 69) — triage or accept-with-owner | Low | M | Quality |
-| 28 | dnsblockd: regenerate UI artifacts from LIBRARY_ROOTS to prove local/sandbox parity post-fix (belt-and-suspenders re-check) | Low | S | Quality |
-| 29 | Check whether other consumers of templ-components v1.23.0 features (ButtonProps.Children) can retire local workarounds (cqrs-htmx adminui per release notes) | Low | M | Cleanup |
-| 30 | Keep an eye on the pre-vacuum clock (7.1G/8G) — next backfill pulls boots before any deploy trip | Medium | S | Quality |
-| 31 | Post-deploy: verify the discordsync nightly GCS reconcile still coexists with the backup reschedule (existing watch row) after the version bump | Low | S | Quality |
-| 32 | File or close the go-datastar `datastartest`/`broadcast` trains if any consumer needs them (dnsblockd pins only root+static today) | Low | S | Cleanup |
-| 33 | Consider tagging dnsblockd's fix as a release if it cuts tagged releases (currently master-pinned by consumers) | Low | S | Cleanup |
-| 34 | Write the "poisoned Go VCS cache" recovery one-liner into go-ecosystem.md gotchas index (done in lessons; cross-link from git.md if it recurs) | Low | S | Documentation |
-| 35 | After the deploy: open new terminal session for shell changes (standing rule) | Low | S | Process |
+| #  | Task                                                                                                                                                         | Impact   | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | ------------- |
+| 1  | CI-watch the 8-repo push wave (`gh run list` per repo), triage reds                                                                                          | High     | S      | Quality       |
+| 2  | Complete the evo-x2 deploy when PSI drains (or owner override); hermes-restart warning applies                                                               | Critical | S      | Bug           |
+| 3  | Improve deploy gate: print iostat %util + top stalled cgroups on refusal                                                                                     | High     | M      | Quality       |
+| 4  | Root-cause DiscordSync goModules FOD hash invariance (hash unchanged across 2 content-changing bumps); file vs go-nix-helpers if bug                         | High     | M      | Bug           |
+| 5  | templ-components v1.23.0 post-push verification (full suite + clean-module tag resolution)                                                                   | High     | S      | Quality       |
+| 6  | Fix 2 pre-existing DiscordSync test failures (errkit fmt.Errorf; qt mime)                                                                                    | Medium   | S      | Bug           |
+| 7  | Root-cause io-PSI-with-idle-disks signature (probe script + classification)                                                                                  | High     | M      | Bug           |
+| 8  | Same as 3's evidence but systemic: PSI-vs-iostat probe script for stability runbook                                                                          | High     | S      | Quality       |
+| 9  | Verify why dnsblockd check-lockstep didn't fire pre-push; wire CI leg if missing                                                                             | High     | M      | Bug           |
+| 10 | Port check-lockstep gate to DiscordSync; audit crm/index/papdashboard pin surfaces                                                                           | High     | M      | Feature       |
+| 11 | Sweep LarsArtmann repos for .gitignore rules shadowing packages (`parts/` class)                                                                             | Medium   | M      | Bug           |
+| 12 | Decide + run the go-datastar v0.6.2 bump sweep across consumers (v0.6.2 exists; ecosystem at v0.6.1)                                                         | Low      | M      | Cleanup       |
+| 13 | Resolve the templ CLI skew warning in discordsync sandbox (generator v0.3.1020 vs go.mod v0.3.1070; 12977fbc tried to pin this)                              | Medium   | M      | Bug           |
+| 14 | Confirm cqrs-lint package truly never imports templ-components (FOD hash suggested so; assumption unverified)                                                | Low      | S      | Quality       |
+| 15 | Update `docs/services/dnsblockd.md` runbook: library-classes.txt must be regenerated from flake-resolved trees, not local self-vendor                        | Medium   | S      | Documentation |
+| 16 | Consider a `check-vendor-hash --all-repos` sweep mode across all 8 consumer repos to pre-stale FODs before nixpkgs bumps land                                | Medium   | L      | Feature       |
+| 17 | Retire the stale "Pinned to v1.11.0" comment class: grep all consumers for pin comments whose tag ≠ actual rev                                               | Low      | S      | Documentation |
+| 18 | Ask the nsfw-classifier sibling session to confirm the rooms/ids.go add-then-remove (c66c7505 ↔ 058a63d9) was intentional                                    | Low      | S      | Quality       |
+| 19 | Verify nsfw-classifier + discordsync services actually run after the deploy lands (post-deploy-check + journal glance)                                       | High     | S      | Bug           |
+| 20 | Push SystemNix master (9+ commits ahead incl. the lock commit) when the deploy lands                                                                         | High     | S      | Cleanup       |
+| 21 | Post-deploy: re-check the 6 pre-deploy warnings for anything the lock change affects                                                                         | Low      | S      | Quality       |
+| 22 | Consider templ-components website/docs publish for v1.23.0 (repo has website/ dir)                                                                           | Low      | M      | Documentation |
+| 23 | Add "grep full log for every got-hash before starting fixes" to the go-ecosystem doc's enumeration evidence paragraph                                        | Low      | S      | Documentation |
+| 24 | Codify "worktree not stash" for baselines in CONTRIBUTING daemon-race section                                                                                | Low      | S      | Documentation |
+| 25 | Evaluate making go-standard mkGoFlake FAIL EVAL on pin≠require (systemic kill of the drift class; bigger than per-repo gates)                                | High     | L      | Feature       |
+| 26 | Sweep for other Python-boilerplate .gitignore blocks in LarsArtmann repos (the `parts/` rule came from a template)                                           | Medium   | S      | Cleanup       |
+| 27 | Monitor InboxClean BuildFlow pre-existing findings (cqrs-lint 10, file-size 69) — triage or accept-with-owner                                                | Low      | M      | Quality       |
+| 28 | dnsblockd: regenerate UI artifacts from LIBRARY_ROOTS to prove local/sandbox parity post-fix (belt-and-suspenders re-check)                                  | Low      | S      | Quality       |
+| 29 | Check whether other consumers of templ-components v1.23.0 features (ButtonProps.Children) can retire local workarounds (cqrs-htmx adminui per release notes) | Low      | M      | Cleanup       |
+| 30 | Keep an eye on the pre-vacuum clock (7.1G/8G) — next backfill pulls boots before any deploy trip                                                             | Medium   | S      | Quality       |
+| 31 | Post-deploy: verify the discordsync nightly GCS reconcile still coexists with the backup reschedule (existing watch row) after the version bump              | Low      | S      | Quality       |
+| 32 | File or close the go-datastar `datastartest`/`broadcast` trains if any consumer needs them (dnsblockd pins only root+static today)                           | Low      | S      | Cleanup       |
+| 33 | Consider tagging dnsblockd's fix as a release if it cuts tagged releases (currently master-pinned by consumers)                                              | Low      | S      | Cleanup       |
+| 34 | Write the "poisoned Go VCS cache" recovery one-liner into go-ecosystem.md gotchas index (done in lessons; cross-link from git.md if it recurs)               | Low      | S      | Documentation |
+| 35 | After the deploy: open new terminal session for shell changes (standing rule)                                                                                | Low      | S      | Process       |
 
 ## §g) Three questions I cannot figure out myself
 

@@ -44,15 +44,15 @@
 
 ## f) NEXT (ordered)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | Apply the stderr+guard fix to `ensure_named` (+ `--fail-with-body`), eval, commit | 🔴 | 10min |
-| 2 | Redeploy → verify qonto-paperless green: 2 uploads, count=2, metadata (Qonto / Bank Statement / tags / created), marker written | 🔴 | 30min |
-| 3 | Dashboard battery detail: balance amounts, sync-state counters, provider filter UX | 🟠 | 20min |
-| 4 | Docs closeout: runbook §Qonto executed-state + numbers, TODO strikes, this report finalized | 🟡 | 30min |
-| 5 | Commit + push the arc (authorized) | ⚡ | 10min |
-| 6 | Owner: Qonto Business API creds → wire attachment receipts | 🟠 | owner |
-| 7 | pma forward relock when upstream lands | ⚪ | 30min |
+| # | Task                                                                                                                            | Impact | Effort |
+| - | ------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1 | Apply the stderr+guard fix to `ensure_named` (+ `--fail-with-body`), eval, commit                                               | 🔴     | 10min  |
+| 2 | Redeploy → verify qonto-paperless green: 2 uploads, count=2, metadata (Qonto / Bank Statement / tags / created), marker written | 🔴     | 30min  |
+| 3 | Dashboard battery detail: balance amounts, sync-state counters, provider filter UX                                              | 🟠     | 20min  |
+| 4 | Docs closeout: runbook §Qonto executed-state + numbers, TODO strikes, this report finalized                                     | 🟡     | 30min  |
+| 5 | Commit + push the arc (authorized)                                                                                              | ⚡     | 10min  |
+| 6 | Owner: Qonto Business API creds → wire attachment receipts                                                                      | 🟠     | owner  |
+| 7 | pma forward relock when upstream lands                                                                                          | ⚪     | 30min  |
 
 ## g) TOP 3 QUESTIONS
 

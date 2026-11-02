@@ -61,8 +61,8 @@ flow can never work in that dir — only fresh-create + rename.
 
 | Item                                                                                                                                                                                                                                                                                                                           | Evidence                                                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| mail-relay collector: SASL path interpolated from `config.sops.templates."mail-relay-sasl".path` (single source of truth with postfix) | eval `CAP_FOWNER`/ambient confirmed; unit succeeds in VM |
-| Unique `mktemp` + `chmod 644` + `trap rm EXIT` + `AmbientCapabilities` + `CapabilityBoundingSet = "CAP_FOWNER"` | self-heals stale root-owned prom — **no manual rm needed** |
+| mail-relay collector: SASL path interpolated from `config.sops.templates."mail-relay-sasl".path` (single source of truth with postfix)                                                                                                                                                                                         | eval `CAP_FOWNER`/ambient confirmed; unit succeeds in VM                                                     |
+| Unique `mktemp` + `chmod 644` + `trap rm EXIT` + `AmbientCapabilities` + `CapabilityBoundingSet = "CAP_FOWNER"`                                                                                                                                                                                                                | self-heals stale root-owned prom — **no manual rm needed**                                                   |
 | VM regression: seeds root-owned prom + asserts recovery + asserts journal never says "missing or unreadable"                                                                                                                                                                                                                   | `checks.x86_64-linux.mail-relay` GREEN (iteration 4)                                                         |
 | mock-sops default corrected to `/run/secrets/rendered/`                                                                                                                                                                                                                                                                        | hermes + mail-relay fixtures updated; both VM tests green                                                    |
 | **Class sweep: 12 collectors converted** to mktemp+caps: `_signoz-metrics` (amdgpu/nvme/psi), `attic`, `backup-coordination`, `buildcache`, `gpu-active`, `system-health`, `pool-recovery`, `signoz` (clickhouse-xfs), `signoz-coverage`, `pocket-id` (secret-rotation), `platforms/nixos/system/snapshots.nix` (pool-metrics) | toplevel build green (bash -n on every script); pool-recovery VM test green                                  |
@@ -75,21 +75,21 @@ flow can never work in that dir — only fresh-create + rename.
 ## 3. b) PARTIALLY DONE
 
 ~~1. **Remaining 5 mock-sops VM tests**: eval-verified only (driver derivation~~ done at `attic/cv/paperless/browser-history registered checks (tests/default.nix:31`, `39`, `40`, `43)`
-   builds), not fully RUN (test-attic, test-cv, test-paperless,
-   test-browser-history; test-oauth2-proxy is unregistered — see below).
-   Eval catches the missing-attribute class; runtime behavior of the converted
-   collectors in those VMs is unexercised (most don't run the edited units).
+builds), not fully RUN (test-attic, test-cv, test-paperless,
+test-browser-history; test-oauth2-proxy is unregistered — see below).
+Eval catches the missing-attribute class; runtime behavior of the converted
+collectors in those VMs is unexercised (most don't run the edited units).
 ~~2. **signoz-coverage stray-reap replacement**: I removed the old~~ **Won't implement — one-shot sudo live-verify; window passed; mktemp collector live since.**
-   pid-suffix + `rm -f $OUT.tmp.*` scheme in favor of mktemp. Prod was clean
-   of pid-strays (reaper ran since 2026-08-31) but NOT verified on the live
-   box (needs sudo).
+pid-suffix + `rm -f $OUT.tmp.*` scheme in favor of mktemp. Prod was clean
+of pid-strays (reaper ran since 2026-08-31) but NOT verified on the live
+box (needs sudo).
 3. **pre-deploy/post-deploy integration**: `post-deploy-check.sh` §12 asserts **→ textfile-freshness class still rolling per-collector (docs/todo/monitoring.md Gatus textfile-staleness check)**
-   the collector textfile exists but has NO freshness (mtime) check — a frozen
-   file with good last-values would still serve a phantom green. Identified,
-   not yet implemented.
+the collector textfile exists but has NO freshness (mtime) check — a frozen
+file with good last-values would still serve a phantom green. Identified,
+not yet implemented.
 4. **Guard/sev1 exemption**: documented allowlist (both already carry
-   CAP_FOWNER + DAC_OVERRIDE so the caps defeat the sticky rule) — conversion
-   deliberately deferred, not forgotten.
+CAP_FOWNER + DAC_OVERRIDE so the caps defeat the sticky rule) — conversion
+deliberately deferred, not forgotten.
 
 ## 4. c) NOT STARTED (gaps identified this session)
 
@@ -101,13 +101,13 @@ flow can never work in that dir — only fresh-create + rename.
    dead test file: never evaluated, never run in CI. Register or trash.
 3. **`fs.protected_regular=2` as a named AGENTS.md gotcha** — it cost a test
    iteration; it will cost the next session too.
-~~4. **`AmbientCapabilities ≠ CapabilityBoundingSet` for non-root `User=`** as a~~ done at `landed 2026-10-07 with mail-relay provenance (docs/agents/systemd.md:20)`
+   ~~4. **`AmbientCapabilities ≠ CapabilityBoundingSet` for non-root `User=`** as a~~ done at `landed 2026-10-07 with mail-relay provenance (docs/agents/systemd.md:20)`
    named AGENTS.md systemd gotcha.
-5. **Dedicated VM coverage** for atticd-metrics / buildcache-metrics / **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions monitor-layer test batch**
+4. **Dedicated VM coverage** for atticd-metrics / buildcache-metrics / **→ docs/todo/monitoring.md Signoz-coverage/observability test+panel additions monitor-layer test batch**
    gpu-active / system-health collectors (none have tests; the sweep is
    bash -n-verified only).
-~~6. **post-deploy §12** freshness assertion (see b.3).~~ **NOT-DO — dup of b3 (post-deploy freshness assertion).**
-~~7. **mailq cleanup post-go-live**: placeholder-era deferred messages need~~ done — queue already empty at go-live; postqueue moot (docs/services/mail-relay.md Go-live state)
+   ~~6. **post-deploy §12** freshness assertion (see b.3).~~ **NOT-DO — dup of b3 (post-deploy freshness assertion).**
+   ~~7. **mailq cleanup post-go-live**: placeholder-era deferred messages need~~ done — queue already empty at go-live; postqueue moot (docs/services/mail-relay.md Go-live state)
    `postqueue -f` after the real key lands.
 
 ## 5. d) TOTALLY FUCKED UP (honest self-assessment)
@@ -137,21 +137,21 @@ flow can never work in that dir — only fresh-create + rename.
 ## 6. e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Sweep with tooling first, manual enumeration second** — the audit script~~ **Won't implement — tooling-first now standard practice; no artifact owed.**
-   found what three greps missed. Order of operations for any class-eradication:
-   write the detector, run it, THEN fix what it names.
+found what three greps missed. Order of operations for any class-eradication:
+write the detector, run it, THEN fix what it names.
 ~~2. **Fixture-vs-prod divergence checks should be automatic**: the mock-sops~~ **Won't implement — mock-sops default since corrected; automatic mirror-check never built.**
-   default lying was only found because the deployed main.cf disagreed with
-   the test. A "mock must mirror upstream defaults" check (or a comment+
-   audit pair) would catch the next drift.
+default lying was only found because the deployed main.cf disagreed with
+the test. A "mock must mirror upstream defaults" check (or a comment+
+audit pair) would catch the next drift.
 3. **Cap semantics for non-root units** should be a lib helper
-   (`textfileCollector { name; script; user; extraCaps }`) — 12 copies of the
-   mktemp/caps boilerplate is 12 future drift sites.
+(`textfileCollector { name; script; user; extraCaps }`) — 12 copies of the
+mktemp/caps boilerplate is 12 future drift sites.
 ~~4. **Textfile freshness is a missing monitoring primitive** — every Gatus~~ **NOT-DO — dup of c1 (textfile freshness primitive).**
-   textfile check should pair value conditions with an mtime/staleness
-   condition (the `system_gatus_meta_scrape_errors` doctrine generalizes).
+textfile check should pair value conditions with an mtime/staleness
+condition (the `system_gatus_meta_scrape_errors` doctrine generalizes).
 ~~5. **Test-first for incident regressions paid off** — the AmbientCapabilities~~ **Won't implement — process mandate; absorbed into repo test culture.**
-   bug would have shipped and re-detected ON THE DEPLOYED BOX without the VM
-   regression step. Keep mandating "replay the incident inside the test".
+bug would have shipped and re-detected ON THE DEPLOYED BOX without the VM
+regression step. Keep mandating "replay the incident inside the test".
 
 ## 7. f) NEXT — up to 50 tasks
 
@@ -194,7 +194,7 @@ flow can never work in that dir — only fresh-create + rename.
 29. Extend audit to `.sh` files (operational scripts) for `/run/secrets-rendered`
 
 **Docs/memory:**
-~~30. Link this status report from AGENTS.md Mail Relay section~~ **Won't implement — memory surface now docs/agents/* + runbook; link-a-status-report form obsolete.**
+~~30. Link this status report from AGENTS.md Mail Relay section~~ __Won't implement — memory surface now docs/agents/_ + runbook; link-a-status-report form obsolete._*
 ~~31. Runbook: add explicit ordered go-live checklist (key → DNS → deploy → verify)~~ done at `ordered go-live checklist live (docs/services/mail-relay.md:4`, `55`, `110)`
 ~~32. Runbook: document the collector failure class + self-heal expectation post-deploy~~ done at `failure-class entry live (docs/services/mail-relay.md:134)`
 

@@ -36,8 +36,8 @@ The deploy failure had ONE visible root cause (bank-sync) but `--keep-going` enu
 
 1. **AGENTS.md memory updates** (multiple; see e/f) — session ended mid-deploy-wait.
 2. **Fleet vendorHash audit tooling** — after round 2 of "fix 3, discover 3 more", it is obvious we need a script that probes ALL LarsArtmann inputs' goModules FODs at their lock revs and reports stale ones in ONE pass (would have made this a 1-round fix).
-~~3. **Why ONE wave broke 7 repos at once** — not investigated. All 7 carry the nixpkgs-bump-era churn; a shared dep-sweep/agent pattern landing lock+go.mod bumps without hash dances is the suspected systemic cause (the 2026-09-05 PMA dep-sweep precedent). Needs root-cause before the next nixpkgs bump repeats this.~~ done — root-caused 2026-10-15: master-tracking inputs float onto stale upstream masters; no upstream Nix-build CI (2026-10-15_03-05 diagnosis §a)
-4. **Upstream CI health check on the 7 pushed repos** — several have CI floors (bank-sync pins go-version 1.26 vs floor 1.27.1) that will go red on these pushes.
+   ~~3. **Why ONE wave broke 7 repos at once** — not investigated. All 7 carry the nixpkgs-bump-era churn; a shared dep-sweep/agent pattern landing lock+go.mod bumps without hash dances is the suspected systemic cause (the 2026-09-05 PMA dep-sweep precedent). Needs root-cause before the next nixpkgs bump repeats this.~~ done — root-caused 2026-10-15: master-tracking inputs float onto stale upstream masters; no upstream Nix-build CI (2026-10-15_03-05 diagnosis §a)
+3. **Upstream CI health check on the 7 pushed repos** — several have CI floors (bank-sync pins go-version 1.26 vs floor 1.27.1) that will go red on these pushes.
 
 ## d) TOTALLY FUCKED UP (own mistakes, honestly)
 

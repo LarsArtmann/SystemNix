@@ -195,17 +195,17 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 ### Priority 1 — Immediate (close the loop on this fix)
 
 1. ~~**Deploy to evo-x2** — `nix run .#deploy` to apply the session var + wrapper changes~~ done (deployed via the 2026-08-18 evening deploys (gen 690))
-~~2. **Runtime-verify VRAM usage** — Run `llama-server-rocm -m <model>.gguf` and check `rocm-smi` shows GPU compute + `node_amdgpu_mem_info_vram_used_bytes` jumps~~ **Won't implement — superseded: GTT-first unified-memory doctrine; BIOS carveout at 1 GiB floor (AGENTS GPU section).**
-~~3. **Verify GPUActive stays low** — During inference, `grep GPUActive /proc/meminfo` should be LOW (model in VRAM, not GTT)~~ **NOT-DO — dup of f2.**
-4. ~~**Build-verify the wrapper** — `nix build .#nixosConfigurations.evo-x2.config.environment.systemPackages` or build the specific `llama-server-rocm` derivation to confirm `lib.getExe' llama-cpp-rocwmma "llama-server"` resolves~~ done (wrapper built + deployed with the 08-18 evening deploys)
-~~5. **Verify bare `llama-server` claim** — After deploy, test `llama-server` (without `-rocm` suffix) with `HSA_OVERRIDE_GFX_VERSION` in the env. If it works, the AGENTS.md claim is correct. If it falls back to CPU, remove the claim and only recommend the wrapper.~~ **Won't implement — one-shot bare-binary verify; window passed.**
+   ~~2. **Runtime-verify VRAM usage** — Run `llama-server-rocm -m <model>.gguf` and check `rocm-smi` shows GPU compute + `node_amdgpu_mem_info_vram_used_bytes` jumps~~ **Won't implement — superseded: GTT-first unified-memory doctrine; BIOS carveout at 1 GiB floor (AGENTS GPU section).**
+   ~~3. **Verify GPUActive stays low** — During inference, `grep GPUActive /proc/meminfo` should be LOW (model in VRAM, not GTT)~~ **NOT-DO — dup of f2.**
+2. ~~**Build-verify the wrapper** — `nix build .#nixosConfigurations.evo-x2.config.environment.systemPackages` or build the specific `llama-server-rocm` derivation to confirm `lib.getExe' llama-cpp-rocwmma "llama-server"` resolves~~ done (wrapper built + deployed with the 08-18 evening deploys)
+   ~~5. **Verify bare `llama-server` claim** — After deploy, test `llama-server` (without `-rocm` suffix) with `HSA_OVERRIDE_GFX_VERSION` in the env. If it works, the AGENTS.md claim is correct. If it falls back to CPU, remove the claim and only recommend the wrapper.~~ **Won't implement — one-shot bare-binary verify; window passed.**
 
 ### Priority 2 — Related gaps in the same class
 
 6. **Fix `visionreviewd.nix`** — Inject `rocmEnv` + `LD_LIBRARY_PATH` into the upstream llama-server service via `systemd.services.<name>.environment` with `lib.mkMerge`. Even though the service is disabled today, the gap is latent.
-~~7. **Audit all services that touch ROCm** — grep for `rocm`, `HIP`, `HSA`, `amdgpu` across all systemd services and verify each has the env vars. The pattern: if a service links ROCm libs or spawns ROCm binaries, it needs `rocmEnv`.~~ **Won't implement — ROCm audit moot post Ollama removal 2026-10-12; ai-stack wrapper only consumer.**
-~~8. **Check if `unsloth-studio` still exists** — The April report references it. If it does, verify it has `rocmEnv` in its environment.~~ **NOT-DO — dup of c.2 (unsloth gone).**
-~~9. **Check `hermes.nix`** — Hermes uses `MemoryMax = "24G"` for "PyTorch + ROCm + HIP libraries." Does it have `rocmEnv`? If it runs PyTorch with ROCm, it needs `HSA_OVERRIDE_GFX_VERSION`.~~ **Won't implement — hermes ROCm env never injected; service since re-scoped.**
+   ~~7. **Audit all services that touch ROCm** — grep for `rocm`, `HIP`, `HSA`, `amdgpu` across all systemd services and verify each has the env vars. The pattern: if a service links ROCm libs or spawns ROCm binaries, it needs `rocmEnv`.~~ **Won't implement — ROCm audit moot post Ollama removal 2026-10-12; ai-stack wrapper only consumer.**
+   ~~8. **Check if `unsloth-studio` still exists** — The April report references it. If it does, verify it has `rocmEnv` in its environment.~~ **NOT-DO — dup of c.2 (unsloth gone).**
+   ~~9. **Check `hermes.nix`** — Hermes uses `MemoryMax = "24G"` for "PyTorch + ROCm + HIP libraries." Does it have `rocmEnv`? If it runs PyTorch with ROCm, it needs `HSA_OVERRIDE_GFX_VERSION`.~~ **Won't implement — hermes ROCm env never injected; service since re-scoped.**
 
 ### Priority 3 — Structural fixes (prevent recurrence)
 
@@ -216,8 +216,8 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 ### Priority 4 — Verification & monitoring
 
 13. **Add a Gatus check for VRAM usage** — Alert if `node_amdgpu_mem_info_vram_used_bytes` is suspiciously LOW during known AI workloads (would catch silent CPU fallback). This is hard to do without knowing when AI workloads run, but a "VRAM never exceeds 1 GiB in 24h" check would catch a totally-broken GPU path. **→ docs/todo/ai-stack.md llama-rag monitoring depth row (GPU/VRAM metric + alert)**
-~~14. **Add a smoke test** — A NixOS VM test or a deploy-time check that runs `HSA_OVERRIDE_GFX_VERSION=11.5.1 rocm-smi --showuse` and verifies the GPU is detected. Catches ROCm runtime breakage at deploy time.~~ **Won't implement — rocm-smi deploy smoke never built.**
-~~15. **Monitor GPUActive during AI workloads** — The existing `gpu-active.nix` collector already emits `node_gpu_active_bytes`. Cross-reference with Ollama/llama-server process presence. If GPUActive is high but no AI service is running, something is using GTT instead of VRAM.~~ **Won't implement — one-shot GPUActive crosscheck; window passed.**
+    ~~14. **Add a smoke test** — A NixOS VM test or a deploy-time check that runs `HSA_OVERRIDE_GFX_VERSION=11.5.1 rocm-smi --showuse` and verifies the GPU is detected. Catches ROCm runtime breakage at deploy time.~~ **Won't implement — rocm-smi deploy smoke never built.**
+    ~~15. **Monitor GPUActive during AI workloads** — The existing `gpu-active.nix` collector already emits `node_gpu_active_bytes`. Cross-reference with Ollama/llama-server process presence. If GPUActive is high but no AI service is running, something is using GTT instead of VRAM.~~ **Won't implement — one-shot GPUActive crosscheck; window passed.**
 
 ### Priority 5 — Developer experience
 
@@ -238,9 +238,9 @@ The working tree has a change in `configuration.nix` (line 764-767) that I did N
 
 25. **Audit `ai-models.nix` paths** — Verify `LLAMA_MODEL_PATH` and `HF_HOME` are correct and models are actually present on disk. **→ docs/todo/storage.md M12 GGUF models row (model storage placement)**
 26. **Check model storage on `/data`** — Large GGUF models should be on `/data` (BTRFS, 2 TB NVMe) not `@` (root subvolume, limited space). **→ docs/todo/storage.md M12 GGUF models row**
-~~27. **Verify `ollama-rocm` package is current** — Check if nixpkgs has a newer version with gfx1150 support improvements.~~ **Won't implement — superseded: Ollama removed 2026-10-12.**
-~~28. **Check `llama-cpp-rocwmma` WMMA support** — The override `rocmSupport = true` should enable WMMA (always on for gfx1150 per the comment). Verify with `llama-server --help` that HIP backend is listed.~~ **Won't implement — window passed; flm ships its own XRT wrapper now.**
-~~29. **Test multi-GPU-layer offload** — `llama-server-rocm -m model.gguf -ngl 99` should offload all layers to VRAM. With 34 GiB VRAM, models up to ~30 GiB Q4 should fit entirely in VRAM.~~ **Won't implement — multi-GPU offload never tested.**
+    ~~27. **Verify `ollama-rocm` package is current** — Check if nixpkgs has a newer version with gfx1150 support improvements.~~ **Won't implement — superseded: Ollama removed 2026-10-12.**
+    ~~28. **Check `llama-cpp-rocwmma` WMMA support** — The override `rocmSupport = true` should enable WMMA (always on for gfx1150 per the comment). Verify with `llama-server --help` that HIP backend is listed.~~ **Won't implement — window passed; flm ships its own XRT wrapper now.**
+    ~~29. **Test multi-GPU-layer offload** — `llama-server-rocm -m model.gguf -ngl 99` should offload all layers to VRAM. With 34 GiB VRAM, models up to ~30 GiB Q4 should fit entirely in VRAM.~~ **Won't implement — multi-GPU offload never tested.**
 
 ### Priority 8 — Memory & resource management
 

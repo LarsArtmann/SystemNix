@@ -12,14 +12,14 @@ Wazuh is an open-source SIEM/XDR platform: a **wazuh-manager** detection engine 
 
 ## 2. Verified hard facts
 
-| Claim | Status | Source |
-| --- | --- | --- |
-| `wazuh` ABSENT from SystemNix's pinned nixpkgs `7fd4004d` — no package, no NixOS module | ✅ Verified | store tree read (`pkgs/by-name/wa/`, `pkgs/**`, `nixos/modules/**`), 2026-10-16 |
-| `wazuh` ABSENT from pbx-artmann's pinned nixpkgs `55bfb4d` (same method) | ✅ Verified | store tree read, 2026-10-16 |
-| Wazuh never landed in nixpkgs at all: PRs #308041/#309573 (agent init) closed UNMERGED (last closed as stale 2024-10); package requests #259304/#267698/#274913/#350236 closed; tracking issue #230623 closed as not planned 2026-10-09 | ✅ Verified | GitHub issue/PR search (2026-10-16); blockers named in the thread: GCC-breakage, bundled deps, FHS/root assumptions vs the Nix build model, maintainer inactivity |
-| All-in-one quickstart sizing: 1–25 agents = 4 vCPU / **8 GiB RAM** / 50 GB (90 days alerts); manager min 2 GB/rec 4 GB + **20 GB free disk** (`/var/ossec`, vuln-detection DB ≈ 11 GB unpacked); indexer min 4 GB/rec 16 GB; dashboard min 4 GB | ✅ Verified | documentation.wazuh.com quickstart + component install guides (fetched 2026-10-16) |
-| Agent resource floor: NOT published by upstream ("lightweight") | ✅ Verified | same docs — treat any specific agent-RAM number as unverified |
-| Community Nix packaging exists OUTSIDE nixpkgs (wazuh-agent-nixos / wazuh.nix flakes) | ⚠️ Unverified lead | named in nixpkgs #230623; not audited — do not build a verdict on them |
+| Claim                                                                                                                                                                                                                                           | Status            | Source                                                                                                                                                            |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `wazuh` ABSENT from SystemNix's pinned nixpkgs `7fd4004d` — no package, no NixOS module                                                                                                                                                         | ✅ Verified       | store tree read (`pkgs/by-name/wa/`, `pkgs/**`, `nixos/modules/**`), 2026-10-16                                                                                   |
+| `wazuh` ABSENT from pbx-artmann's pinned nixpkgs `55bfb4d` (same method)                                                                                                                                                                        | ✅ Verified       | store tree read, 2026-10-16                                                                                                                                       |
+| Wazuh never landed in nixpkgs at all: PRs #308041/#309573 (agent init) closed UNMERGED (last closed as stale 2024-10); package requests #259304/#267698/#274913/#350236 closed; tracking issue #230623 closed as not planned 2026-10-09         | ✅ Verified       | GitHub issue/PR search (2026-10-16); blockers named in the thread: GCC-breakage, bundled deps, FHS/root assumptions vs the Nix build model, maintainer inactivity |
+| All-in-one quickstart sizing: 1–25 agents = 4 vCPU / **8 GiB RAM** / 50 GB (90 days alerts); manager min 2 GB/rec 4 GB + **20 GB free disk** (`/var/ossec`, vuln-detection DB ≈ 11 GB unpacked); indexer min 4 GB/rec 16 GB; dashboard min 4 GB | ✅ Verified       | documentation.wazuh.com quickstart + component install guides (fetched 2026-10-16)                                                                                |
+| Agent resource floor: NOT published by upstream ("lightweight")                                                                                                                                                                                 | ✅ Verified       | same docs — treat any specific agent-RAM number as unverified                                                                                                     |
+| Community Nix packaging exists OUTSIDE nixpkgs (wazuh-agent-nixos / wazuh.nix flakes)                                                                                                                                                           | ⚠️ Unverified lead | named in nixpkgs #230623; not audited — do not build a verdict on them                                                                                            |
 
 ## 3. The two threat models + existing coverage (repo facts, 2026-10-16)
 
@@ -35,13 +35,13 @@ Wazuh is an open-source SIEM/XDR platform: a **wazuh-manager** detection engine 
 
 **4.3 Capability-by-capability, Wazuh's pillars are already owned or redundant here:**
 
-| Wazuh capability | Already covered / why redundant |
-| --- | --- |
-| Log analysis (the core) | SigNoz three-pillar stack runs on evo-x2; journald persists on the PBX; the PBX doctrine rejects a second analytics stack |
-| Scanner/brute-force detection | The PBX's real internet threat — owned by fail2ban (live) + 403-storm watchdog (live); CrowdSec (decided) is the modernized successor class on evo-x2 |
-| File integrity (syscheck) | Largely redundant on NixOS: immutable `/nix/store` + declarative `/etc` + rebuild-from-git IS the integrity model; runtime-mutable dirs are few and enumerated |
-| Vulnerability detection | Wazuh's CVE matching is distro-package oriented (deb/rpm); NixOS inventory maps poorly to `/nix/store` paths — a wrong-tool fit |
-| Rootkit checks (rootcheck) | Marginal on a disposable box rebuilt from git in ~30 min |
+| Wazuh capability              | Already covered / why redundant                                                                                                                                |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Log analysis (the core)       | SigNoz three-pillar stack runs on evo-x2; journald persists on the PBX; the PBX doctrine rejects a second analytics stack                                      |
+| Scanner/brute-force detection | The PBX's real internet threat — owned by fail2ban (live) + 403-storm watchdog (live); CrowdSec (decided) is the modernized successor class on evo-x2          |
+| File integrity (syscheck)     | Largely redundant on NixOS: immutable `/nix/store` + declarative `/etc` + rebuild-from-git IS the integrity model; runtime-mutable dirs are few and enumerated |
+| Vulnerability detection       | Wazuh's CVE matching is distro-package oriented (deb/rpm); NixOS inventory maps poorly to `/nix/store` paths — a wrong-tool fit                                |
+| Rootkit checks (rootcheck)    | Marginal on a disposable box rebuilt from git in ~30 min                                                                                                       |
 
 **4.4 The "threat model changed" trigger — answered honestly.** The PBX IS the threat-model change the 2026-09-10 verdict anticipated. But the correct response to that change already landed: CrowdSec (decided 2026-10-14) + pbx fail2ban/watchdogs (live) + Telnyx CIDR hardening (queued). Re-affirming the rejection under the NEW model is consistent, not stubborn — none of Wazuh's incremental capabilities address a threat the current stack misses.
 
@@ -54,11 +54,11 @@ Wazuh is an open-source SIEM/XDR platform: a **wazuh-manager** detection engine 
 
 ## Verification status
 
-| Claim | Status | Source |
-| --- | --- | --- |
-| Package/module absence in both pins; CrowdSec positive control | ✅ Verified | local store trees `7fd4004d` / `55bfb4d`, 2026-10-16 |
-| Wazuh 4.14 current; AIO 8 GiB/50 GB (1–25 agents); manager 2/4 GB + 20 GB disk; indexer 4/16 GB; dashboard 4/8 GB; no published agent floor | ✅ Verified | official docs (fetched 2026-10-16); numbers quoted from quickstart + component pages |
-| nixpkgs history (PRs/issues, closures, blocker reasons) | ✅ Verified with caveat | GitHub search via AI fetch (summarizer-mediated 2026-10-16) — corroborated by the primary local absence evidence; exact issue numbers spot-plausible, conclusion load-bearing |
-| Community Nix flakes (wazuh-agent-nixos, wazuh.nix) exist and work | ❌ Unverified lead | named in nixpkgs #230623, not audited |
-| pbx coverage claims (fail2ban live 2026-10-07, watchdogs, doctrine quote, TODO line 305) | ✅ Verified | pbx-artmann README/FEATURES/TODO_LIST/docs read 2026-10-16 |
-| SystemNix coverage claims (CrowdSec decided/stage-1 in-tree, ports, SigNoz) | ✅ Verified | docs/todo/security.md + docs/todo/services.md + lib/ports.nix read 2026-10-16 |
+| Claim                                                                                                                                       | Status                  | Source                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package/module absence in both pins; CrowdSec positive control                                                                              | ✅ Verified             | local store trees `7fd4004d` / `55bfb4d`, 2026-10-16                                                                                                                          |
+| Wazuh 4.14 current; AIO 8 GiB/50 GB (1–25 agents); manager 2/4 GB + 20 GB disk; indexer 4/16 GB; dashboard 4/8 GB; no published agent floor | ✅ Verified             | official docs (fetched 2026-10-16); numbers quoted from quickstart + component pages                                                                                          |
+| nixpkgs history (PRs/issues, closures, blocker reasons)                                                                                     | ✅ Verified with caveat | GitHub search via AI fetch (summarizer-mediated 2026-10-16) — corroborated by the primary local absence evidence; exact issue numbers spot-plausible, conclusion load-bearing |
+| Community Nix flakes (wazuh-agent-nixos, wazuh.nix) exist and work                                                                          | ❌ Unverified lead      | named in nixpkgs #230623, not audited                                                                                                                                         |
+| pbx coverage claims (fail2ban live 2026-10-07, watchdogs, doctrine quote, TODO line 305)                                                    | ✅ Verified             | pbx-artmann README/FEATURES/TODO_LIST/docs read 2026-10-16                                                                                                                    |
+| SystemNix coverage claims (CrowdSec decided/stage-1 in-tree, ports, SigNoz)                                                                 | ✅ Verified             | docs/todo/security.md + docs/todo/services.md + lib/ports.nix read 2026-10-16                                                                                                 |

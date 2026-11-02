@@ -19,13 +19,13 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | Works | Missing | Blocker |
-| --- | --- | --- | --- | --- |
-| b1 | **Living docs verify (plan T9)** | TODO_LIST pruned; CHANGELOG prune bullet landed | README/FEATURES computed counts, ROADMAP Theme-1 staleness, AGENTS endurance pass — none run | session length; queued (f.9) |
-| b2 | **Non-status triage application** | 52-file classification table in hand, evidence-cited | SUPERSEDED banners/stamps not written; EXECUTED planning docs not `git mv`'d to `docs/planning/archived/` | queued (f.10) |
-| b3 | **HARVEST of batch open-inventories** | by design, tracked items stayed bare; `check-todo-system` shows zero unharvested Sept §f reports | explicit dedupe ledger for the agents' OPENS summaries (most map to already-tracked rows) | queued (f.11) |
-| b4 | **Corpus-wide check-rows final sweep** | per-batch gates ran; partials sampled genuine | one final enumeration of ALL partial tables across the 294 files | queued (f.12) |
-| b5 | **Owning-row close-out** | TODO_LIST:783 + pipeline.md:582 still carry "remaining: ~300 reports" stale text | row re-point to the actual state (Sept done, 2026-10 wave next) | waiting for the final legs so the row closes once |
+| #  | Item                                   | Works                                                                                            | Missing                                                                                                   | Blocker                                           |
+| -- | -------------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| b1 | **Living docs verify (plan T9)**       | TODO_LIST pruned; CHANGELOG prune bullet landed                                                  | README/FEATURES computed counts, ROADMAP Theme-1 staleness, AGENTS endurance pass — none run              | session length; queued (f.9)                      |
+| b2 | **Non-status triage application**      | 52-file classification table in hand, evidence-cited                                             | SUPERSEDED banners/stamps not written; EXECUTED planning docs not `git mv`'d to `docs/planning/archived/` | queued (f.10)                                     |
+| b3 | **HARVEST of batch open-inventories**  | by design, tracked items stayed bare; `check-todo-system` shows zero unharvested Sept §f reports | explicit dedupe ledger for the agents' OPENS summaries (most map to already-tracked rows)                 | queued (f.11)                                     |
+| b4 | **Corpus-wide check-rows final sweep** | per-batch gates ran; partials sampled genuine                                                    | one final enumeration of ALL partial tables across the 294 files                                          | queued (f.12)                                     |
+| b5 | **Owning-row close-out**               | TODO_LIST:783 + pipeline.md:582 still carry "remaining: ~300 reports" stale text                 | row re-point to the actual state (Sept done, 2026-10 wave next)                                           | waiting for the final legs so the row closes once |
 
 ## c) NOT STARTED
 

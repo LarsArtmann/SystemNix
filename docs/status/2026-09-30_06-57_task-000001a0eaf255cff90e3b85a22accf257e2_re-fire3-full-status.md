@@ -20,7 +20,7 @@
 1. **Protocol compliance came LATE:** the re-dispatch protocol + the existing-reports check (`ls docs/status/ | grep <task-id>`) ran mid-session, after ~40 minutes of re-deriving an already-landed fix. Executed fully eventually (footers → live spot-checks → item-scoped §f sweep → footer-bearing landing), but the order was wrong.
 2. **Queue-surface closure is terminal-by-removal, not by my hand:** the TODO_LIST one-liner was pruned/removed by the parallel queue passes between 01:13 and 05:06 (never pruned to CHANGELOG as a named row — the curated CHANGELOG format doesn't take per-row entries; the guard's entry was refreshed instead). Library row is `[x]` with full evidence. Consistent with the file's own convention (done rows must not persist); documented, not re-added.
 3. **Live-fire proof of the kernel-cancel path is VM-only:** no scrub was running during the post-deploy trips, so the cancel path has no host-journal evidence yet — next weekly window (~Oct 5) or the next storm-trip-during-scrub provides it.
-~~4. **Host runs the pre-ordering-fix guard script until deploy:** in-tree only; until then a catch-up grant run emits one stale `churn_units_stopped` metric (cosmetic-but-wrong telemetry during exactly the storms the guard serves).~~ done — 2026-09-30 07:00 deploy landed (system-805, docs/status/2026-09-30_07-19 §timeline); ordering fix in-tree since 06:27 (9d9c17ea/bd4d4078) rode that HEAD; fire-1 fix already LIVE 09-29 (06-25 report: deployed guard script, trips #1463-68)
+   ~~4. **Host runs the pre-ordering-fix guard script until deploy:** in-tree only; until then a catch-up grant run emits one stale `churn_units_stopped` metric (cosmetic-but-wrong telemetry during exactly the storms the guard serves).~~ done — 2026-09-30 07:00 deploy landed (system-805, docs/status/2026-09-30_07-19 §timeline); ordering fix in-tree since 06:27 (9d9c17ea/bd4d4078) rode that HEAD; fire-1 fix already LIVE 09-29 (06-25 report: deployed guard script, trips #1463-68)
 
 ## c) NOT STARTED (this session's scope)
 
@@ -46,6 +46,7 @@ Nothing destroyed, no config breakage, both VM runs isolated, every commit hook-
 5. **VM checks need quiet windows but not fear:** the first run's ~34-min wall was closure-building under an IO storm; the test itself is 33 s. Deferral-to-quiet-window (fire-2b's choice) was right for build cost, but "deferred" must not become "skipped" — it took a third fire.
 
 ## f) What to get done next (ranked, session-scoped; ★ = born this session)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 ~~1. ★ **Deploy the guard chain** (scrub instance churn-stop + re-arm exclusion + ordering fix) in the next calm window — until then the host emits a stale churn metric on catch-up grants and the cancel path stays VM-proven only. Rides the existing batch-deploy row; BLOCKED on the deploy-authority decision.~~ done — 2026-09-30 07:00 deploy (system-805) landed hours later per 07-19 report §timeline; guard chain in-tree since 06:27; later deploys (10-01 deploy-813+) all carry it

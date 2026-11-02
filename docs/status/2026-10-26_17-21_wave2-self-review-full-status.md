@@ -9,19 +9,19 @@
 
 ## a) FULLY DONE
 
-| # | What | Evidence | Commit |
-|---|---|---|---|
-| a1 | **Wave-2 plan** with ALL-TODOs coverage map (11 surfaces, ~3,264 open, explicit disposition per surface), ≤12-min µ-task table, EXECUTING tombstone | `docs/planning/2026-10-26_10-55_SUPERB-fast-todo-wave2-execution.md` | `14e14330c` |
-| a2 | **Deploy-gate friction map with a material correction**: §8 disk space is byte-based (FAIL <5G / WARN <15G), NOT the "<10% block" of the 07-09 report's a4 (that is MemAvailable). At 10:44's 14G free, the E6 deploy would only WARN on disk | plan §5 | `14e14330c` |
-| a3 | **`.migrate-state` forensics SOLVED**: real dir `/mnt/hot/hot/.migrate-state/` (`HOT_PARENT="$TOPLEVEL/hot"`, migrate-hot-db.sh:58-62); waves 1-5 carry full markers (discordsync 10-12 15:46 · gatus+browser-history 10-14 15:07 · pocket-id 18:45 · dnsblockd 21:52 — stamps decoded, dir mtime matches the last wave); **wave 6 (postgres): NO marker ⇒ the config comment "Prepared + cut over BEFORE this entry landed" was claim-only** | marker files + `date -d @` decode; wave-by-wave table in the 11-30 report §P3 | `b65bfbe21` |
-| a4 | **§18 shadow-split pre-deploy gate** — the wave's data-loss-class item: enumerates hot-user-caches `.caches` + hot-db `.entries` via nix eval; FAILs the wave-6 signature (data-class empty subvol over non-empty shadow) + PG_VERSION presence parity; WARNs on parity bands (<25%), missing subvol (fast-loud-by-design), EACCES degradation; §15-style delegation, `--section-18-only` flag | `scripts/shadow-split-gate.sh` + `scripts/pre-deploy-check.sh`; shellcheck + flake check green via hooks | `3187b86bd` |
-| a5 | **19/19 gate fixtures green** — every verdict branch incl. the `/hot/` parent prefix | `bash scripts/test-predeploy-shadow-split.sh` | `3187b86bd` |
-| a6 | **§18 live run matches reality**: 5 entries pass (cache/nix prepared-shape; discordsync/dnsblockd/pocket-id/postgres populated at `/mnt/hot/hot/<name>` — postgres = the recovered 780M cluster), 3 WARNs true (cache/tmp half-provisioned mid-E6 — the gate is the migration's independent progress light; 2× `/var/lib/private/*` degraded without sudo ticket) | `--section-18-only` run | `3187b86bd` |
-| a7 | **`deploy-when-quiescent.sh` + shared `eval-relevant-paths.sh`** (queue row 1525): 4×60s clean+cold polls, green-eval pre-gate (`nix eval --raw`, NO `--no-link`), DRY default, `--fire` rc=1 classification (§11-void/eval signature = exit 3 expected-race; else stop for review); per-run-only output grep; stability constant derived from battery duration in the header | shellcheck green; live dry runs 11:49 (refuses dirty tree, reset paths logged) | `9172f8522` |
-| a8 | **Queue/library ticks**: 3 queue rows + 2 storage rows closed with DONE notes (gate, forensics, quiescent productization); close-out-discipline row annotated; 3 harvest rows queued; `check-todo-system.sh` → "OK: TODO queue/library structure clean" | this batch | `b65bfbe21` |
-| a9 | **AGENTS.md quote-scrutiny rule** (07-09 §f.12's do-on-sight) landed in Session Discipline | AGENTS.md | `b65bfbe21` |
-| a10 | **Foreign-index defense**: a parallel session staged deletions of this session's committed files mid-session; defused via pathspec-scoped `git reset HEAD -- <my paths>` (mixed form) after byte-identical verification — zero loss, no foreign work touched | worktree-vs-HEAD diff checks + post-reset status | process |
-| a11 | **Two errata applied (17:2x)**: the plan's §0 stale "zero state records" line (§d2) and the 11-30 report's premature "commit (this batch)" citation (§d3) — both corrected in place with ERRATA markers naming the corrected surfaces | the two ERRATA blocks | this batch |
+| #   | What                                                                                                                                                                                                                                                                                                                                                                                                                                          | Evidence                                                                                                 | Commit      |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------- |
+| a1  | **Wave-2 plan** with ALL-TODOs coverage map (11 surfaces, ~3,264 open, explicit disposition per surface), ≤12-min µ-task table, EXECUTING tombstone                                                                                                                                                                                                                                                                                           | `docs/planning/2026-10-26_10-55_SUPERB-fast-todo-wave2-execution.md`                                     | `14e14330c` |
+| a2  | **Deploy-gate friction map with a material correction**: §8 disk space is byte-based (FAIL <5G / WARN <15G), NOT the "<10% block" of the 07-09 report's a4 (that is MemAvailable). At 10:44's 14G free, the E6 deploy would only WARN on disk                                                                                                                                                                                                 | plan §5                                                                                                  | `14e14330c` |
+| a3  | **`.migrate-state` forensics SOLVED**: real dir `/mnt/hot/hot/.migrate-state/` (`HOT_PARENT="$TOPLEVEL/hot"`, migrate-hot-db.sh:58-62); waves 1-5 carry full markers (discordsync 10-12 15:46 · gatus+browser-history 10-14 15:07 · pocket-id 18:45 · dnsblockd 21:52 — stamps decoded, dir mtime matches the last wave); **wave 6 (postgres): NO marker ⇒ the config comment "Prepared + cut over BEFORE this entry landed" was claim-only** | marker files + `date -d @` decode; wave-by-wave table in the 11-30 report §P3                            | `b65bfbe21` |
+| a4  | **§18 shadow-split pre-deploy gate** — the wave's data-loss-class item: enumerates hot-user-caches `.caches` + hot-db `.entries` via nix eval; FAILs the wave-6 signature (data-class empty subvol over non-empty shadow) + PG_VERSION presence parity; WARNs on parity bands (<25%), missing subvol (fast-loud-by-design), EACCES degradation; §15-style delegation, `--section-18-only` flag                                                | `scripts/shadow-split-gate.sh` + `scripts/pre-deploy-check.sh`; shellcheck + flake check green via hooks | `3187b86bd` |
+| a5  | **19/19 gate fixtures green** — every verdict branch incl. the `/hot/` parent prefix                                                                                                                                                                                                                                                                                                                                                          | `bash scripts/test-predeploy-shadow-split.sh`                                                            | `3187b86bd` |
+| a6  | **§18 live run matches reality**: 5 entries pass (cache/nix prepared-shape; discordsync/dnsblockd/pocket-id/postgres populated at `/mnt/hot/hot/<name>` — postgres = the recovered 780M cluster), 3 WARNs true (cache/tmp half-provisioned mid-E6 — the gate is the migration's independent progress light; 2× `/var/lib/private/*` degraded without sudo ticket)                                                                             | `--section-18-only` run                                                                                  | `3187b86bd` |
+| a7  | **`deploy-when-quiescent.sh` + shared `eval-relevant-paths.sh`** (queue row 1525): 4×60s clean+cold polls, green-eval pre-gate (`nix eval --raw`, NO `--no-link`), DRY default, `--fire` rc=1 classification (§11-void/eval signature = exit 3 expected-race; else stop for review); per-run-only output grep; stability constant derived from battery duration in the header                                                                 | shellcheck green; live dry runs 11:49 (refuses dirty tree, reset paths logged)                           | `9172f8522` |
+| a8  | **Queue/library ticks**: 3 queue rows + 2 storage rows closed with DONE notes (gate, forensics, quiescent productization); close-out-discipline row annotated; 3 harvest rows queued; `check-todo-system.sh` → "OK: TODO queue/library structure clean"                                                                                                                                                                                       | this batch                                                                                               | `b65bfbe21` |
+| a9  | **AGENTS.md quote-scrutiny rule** (07-09 §f.12's do-on-sight) landed in Session Discipline                                                                                                                                                                                                                                                                                                                                                    | AGENTS.md                                                                                                | `b65bfbe21` |
+| a10 | **Foreign-index defense**: a parallel session staged deletions of this session's committed files mid-session; defused via pathspec-scoped `git reset HEAD -- <my paths>` (mixed form) after byte-identical verification — zero loss, no foreign work touched                                                                                                                                                                                  | worktree-vs-HEAD diff checks + post-reset status                                                         | process     |
+| a11 | **Two errata applied (17:2x)**: the plan's §0 stale "zero state records" line (§d2) and the 11-30 report's premature "commit (this batch)" citation (§d3) — both corrected in place with ERRATA markers naming the corrected surfaces                                                                                                                                                                                                         | the two ERRATA blocks                                                                                    | this batch  |
 
 ## b) PARTIALLY DONE / DEFERRED
 
@@ -35,13 +35,13 @@
 
 ## c) NOT STARTED (owner-gated or explicitly out of lane)
 
-| Item | Gate |
-|---|---|
-| Tonight's 23:00 balance redo (crisis plan T1) + wevisone-spike / cross-repo consent / balance-deviation answers | owner |
-| Hermes config dup-key one-liner; overcommit posture confirmation (wave-1 Q1/Q2) | owner |
-| Crisis-plan armor T5/T6/T7 (balance-failure alerting, storage-collect hardening, io-psi-crosscheck delta mode) — agent-executable, but the 10:33 session owned that lane; not coordinated, not started | lane claim |
-| PG shadow-split residue reclaim (413M + blank cluster) | owner sudo, post-green-days |
-| Push of the 4 wave-2 commits | needs explicit owner request |
+| Item                                                                                                                                                                                                   | Gate                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| Tonight's 23:00 balance redo (crisis plan T1) + wevisone-spike / cross-repo consent / balance-deviation answers                                                                                        | owner                        |
+| Hermes config dup-key one-liner; overcommit posture confirmation (wave-1 Q1/Q2)                                                                                                                        | owner                        |
+| Crisis-plan armor T5/T6/T7 (balance-failure alerting, storage-collect hardening, io-psi-crosscheck delta mode) — agent-executable, but the 10:33 session owned that lane; not coordinated, not started | lane claim                   |
+| PG shadow-split residue reclaim (413M + blank cluster)                                                                                                                                                 | owner sudo, post-green-days  |
+| Push of the 4 wave-2 commits                                                                                                                                                                           | needs explicit owner request |
 
 ## d) TOTALLY FUCKED UP (all self-caught; two cost real time)
 
@@ -65,58 +65,58 @@
 
 ## f) TOP 50 NEXT (sorted: Critical → High → Medium → tail; agent/owner/lane tagged)
 
-| # | Item | Tier | Who |
-|---|---|---|---|
-| 1 | Wire `predeploy-shadow-split-selftest` into selftests.nix (runs the 19-case fixture) — UNBLOCKED | Critical | agent |
-| 2 | pipeline.md:579 twin tick (quiescent script shipped, `9172f8522`) — UNBLOCKED | Critical | agent |
-| 3 | pipeline.md twins for wave-1 rows 648/1386/1419/1491 — UNBLOCKED | Critical | agent |
-| 4 | pipeline.md library twins for the 3 harvest rows (selftest wiring, §11 adoption, fixture-coverage check) — UNBLOCKED | Critical | agent |
-| 5 | §11 tree-stamp adopts `eval-relevant-paths.sh` (own commit + `--section-11-only` verify) | Critical | agent |
-| 6 | Full pre-deploy battery incl. §18 at a calm window (full-mode dispatch verification) | Critical | agent |
-| 7 | E6 deploy rides `deploy-when-quiescent.sh --fire` + runbook names it; §18 tmp WARN flips PASS on prepare (crisis T2 coordination) | Critical | owner+agent |
-| 8 | Verify + correct the wave-6 "Prepared + cut over" comment if it still sits in configuration.nix (§b7) | Critical | agent |
-| 9 | Close-out discipline line in docs/agents/storage.md (row 3 of storage.md top — file now clean) | High | agent |
-| 10 | `scripts/commit-solo.sh` (temp-index productization, §e3) | High | agent |
-| 11 | §18 eval caching via the §1 stamp pattern (§e5) | High | agent |
-| 12 | Fixture-coverage check: every scripts/test-*.sh has a selftests.nix leg (§e-gap) | High | agent |
-| 13 | Subject-length pre-check hook/companion (§e4) | High | agent |
-| 14 | §18 cache-vs-data escalation policy ratification (§g1) | High | owner |
-| 15 | T5 balance-failure alerting (`balance: ended with status: -N` → gatus/Discord) | High | agent (crisis lane) |
-| 16 | T6 storage-collect storm hardening (D-state starvation + uid-966 SIGSYS loop) | High | agent (crisis lane) |
-| 17 | T7 io-psi-crosscheck delta mode (top movers + unattributed-bytes signature) | High | agent (crisis lane) |
-| 18 | T8 E6 fixture test + hot-user-caches↔disko eval cross-guard | High | agent (crisis lane) |
-| 19 | T12 drain verification (Oct 27-28: df vs baseline; root now 88% — stamp the recovery) | High | agent |
-| 20 | hermes WAL-branch VM fixture (queue 879) | High | agent |
-| 21 | tq-agent-pool harvest full-rescan skip-cursor (stability.md:161, Pareto blocker) | High | agent |
-| 22 | ghostty interactive-scope IO storm root-cause (monitoring.md:167, Pareto blocker) | High | agent |
-| 23 | InboxClean dashboard query cost upstream (upstream.md:15, consent-gated) | High | owner+agent |
-| 24 | Per-endpoint gatus failure-names collector | Medium | agent |
-| 25 | §17 post-deploy user.slice memory-sweep leg | Medium | agent |
-| 26 | system-health freshness composites | Medium | agent |
-| 27 | cv-server /health three warn sub-checks triage (07-09 §f.2) | Medium | agent |
-| 28 | Caddy tracing live-verify + g2 coverage budget (needs one human browse) | Medium | owner+agent |
-| 29 | Calm-window post-deploy-check re-baseline (storm-suspect smokes; 07-09 §f.7) | Medium | agent |
-| 30 | post-deploy: split "not listening" from "just-restarted-and-settling" (07-09 §f.8) | Medium | agent |
-| 31 | Storm IO attribution redo with iotop-c/pidstat (07-09 §f.9) | Medium | agent |
-| 32 | cv ExecStartPost port-readiness probe (:8098 class) | Medium | agent |
-| 33 | OpenSEO rendered-parity proof (5-step incl. integration-registry check) | Medium | agent |
-| 34 | SigNoz collector sampling-policy check before trusting caddy span volume | Medium | agent |
-| 35 | `checks.caddy-mint` boot-proof at a calm window | Medium | agent |
-| 36 | ClickHouse dead-view query sweep (`distributed_signoz_spans` class) across runbooks | Medium | agent (caddy-gen950 row) |
-| 37 | otel-endpoint-audit exporter-protocol↔port-kind assertion + negative leg | Medium | agent (caddy-gen950 row) |
-| 38 | netbird `/dex/healthz` gatus end-to-end verify | Medium | agent (caddy-gen950 row) |
-| 39 | 443-listener map into docs/services/caddy.md (perishable, mark as such) | Medium | agent (caddy-gen950 row) |
-| 40 | `scripts/prune-done-todos.sh` first `--apply` pass (queue 680; WARN recount expected to RISE) | Medium | agent |
-| 41 | TODO gate queue↔library checkbox-parity leg (queue 907) | Medium | agent |
-| 42 | T13 monitor365 39G DuckDB relocation decision | Medium | owner |
-| 43 | T14 burst-snapshot policy (5-snaps-in-a-day class) | Medium | agent |
-| 44 | T16 ClickHouse p9 siting memo (197G lifetime writes on root disk) | Medium | decision |
-| 45 | T17 `.rescue` double-fire attribution (Oct 25 22:25+22:30) | Medium | agent |
-| 46 | T19 weekly-balance manual-gap wrapper (maintenance-entry-gate "balance running" leg) | Medium | agent |
-| 47 | T20 post-recovery housekeeping (stale disk-cleanup-proposal annotation, CHANGELOG) | Medium | agent |
-| 48 | T18 post-E6 watches (~/.cache regrowth >90G row; tmp automount idle×builds probe) | Low | agent |
-| 49 | Wave-1 hermes config dup-key + overcommit confirmation (standing Q1/Q2) | Low | owner |
-| 50 | ROADMAP: `--wait-quiescent` flag on `nix run .#deploy` itself (after §f-fire proves the pattern) | Low | decision |
+| #  | Item                                                                                                                              | Tier     | Who                      |
+| -- | --------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------ |
+| 1  | Wire `predeploy-shadow-split-selftest` into selftests.nix (runs the 19-case fixture) — UNBLOCKED                                  | Critical | agent                    |
+| 2  | pipeline.md:579 twin tick (quiescent script shipped, `9172f8522`) — UNBLOCKED                                                     | Critical | agent                    |
+| 3  | pipeline.md twins for wave-1 rows 648/1386/1419/1491 — UNBLOCKED                                                                  | Critical | agent                    |
+| 4  | pipeline.md library twins for the 3 harvest rows (selftest wiring, §11 adoption, fixture-coverage check) — UNBLOCKED              | Critical | agent                    |
+| 5  | §11 tree-stamp adopts `eval-relevant-paths.sh` (own commit + `--section-11-only` verify)                                          | Critical | agent                    |
+| 6  | Full pre-deploy battery incl. §18 at a calm window (full-mode dispatch verification)                                              | Critical | agent                    |
+| 7  | E6 deploy rides `deploy-when-quiescent.sh --fire` + runbook names it; §18 tmp WARN flips PASS on prepare (crisis T2 coordination) | Critical | owner+agent              |
+| 8  | Verify + correct the wave-6 "Prepared + cut over" comment if it still sits in configuration.nix (§b7)                             | Critical | agent                    |
+| 9  | Close-out discipline line in docs/agents/storage.md (row 3 of storage.md top — file now clean)                                    | High     | agent                    |
+| 10 | `scripts/commit-solo.sh` (temp-index productization, §e3)                                                                         | High     | agent                    |
+| 11 | §18 eval caching via the §1 stamp pattern (§e5)                                                                                   | High     | agent                    |
+| 12 | Fixture-coverage check: every scripts/test-*.sh has a selftests.nix leg (§e-gap)                                                  | High     | agent                    |
+| 13 | Subject-length pre-check hook/companion (§e4)                                                                                     | High     | agent                    |
+| 14 | §18 cache-vs-data escalation policy ratification (§g1)                                                                            | High     | owner                    |
+| 15 | T5 balance-failure alerting (`balance: ended with status: -N` → gatus/Discord)                                                    | High     | agent (crisis lane)      |
+| 16 | T6 storage-collect storm hardening (D-state starvation + uid-966 SIGSYS loop)                                                     | High     | agent (crisis lane)      |
+| 17 | T7 io-psi-crosscheck delta mode (top movers + unattributed-bytes signature)                                                       | High     | agent (crisis lane)      |
+| 18 | T8 E6 fixture test + hot-user-caches↔disko eval cross-guard                                                                       | High     | agent (crisis lane)      |
+| 19 | T12 drain verification (Oct 27-28: df vs baseline; root now 88% — stamp the recovery)                                             | High     | agent                    |
+| 20 | hermes WAL-branch VM fixture (queue 879)                                                                                          | High     | agent                    |
+| 21 | tq-agent-pool harvest full-rescan skip-cursor (stability.md:161, Pareto blocker)                                                  | High     | agent                    |
+| 22 | ghostty interactive-scope IO storm root-cause (monitoring.md:167, Pareto blocker)                                                 | High     | agent                    |
+| 23 | InboxClean dashboard query cost upstream (upstream.md:15, consent-gated)                                                          | High     | owner+agent              |
+| 24 | Per-endpoint gatus failure-names collector                                                                                        | Medium   | agent                    |
+| 25 | §17 post-deploy user.slice memory-sweep leg                                                                                       | Medium   | agent                    |
+| 26 | system-health freshness composites                                                                                                | Medium   | agent                    |
+| 27 | cv-server /health three warn sub-checks triage (07-09 §f.2)                                                                       | Medium   | agent                    |
+| 28 | Caddy tracing live-verify + g2 coverage budget (needs one human browse)                                                           | Medium   | owner+agent              |
+| 29 | Calm-window post-deploy-check re-baseline (storm-suspect smokes; 07-09 §f.7)                                                      | Medium   | agent                    |
+| 30 | post-deploy: split "not listening" from "just-restarted-and-settling" (07-09 §f.8)                                                | Medium   | agent                    |
+| 31 | Storm IO attribution redo with iotop-c/pidstat (07-09 §f.9)                                                                       | Medium   | agent                    |
+| 32 | cv ExecStartPost port-readiness probe (:8098 class)                                                                               | Medium   | agent                    |
+| 33 | OpenSEO rendered-parity proof (5-step incl. integration-registry check)                                                           | Medium   | agent                    |
+| 34 | SigNoz collector sampling-policy check before trusting caddy span volume                                                          | Medium   | agent                    |
+| 35 | `checks.caddy-mint` boot-proof at a calm window                                                                                   | Medium   | agent                    |
+| 36 | ClickHouse dead-view query sweep (`distributed_signoz_spans` class) across runbooks                                               | Medium   | agent (caddy-gen950 row) |
+| 37 | otel-endpoint-audit exporter-protocol↔port-kind assertion + negative leg                                                          | Medium   | agent (caddy-gen950 row) |
+| 38 | netbird `/dex/healthz` gatus end-to-end verify                                                                                    | Medium   | agent (caddy-gen950 row) |
+| 39 | 443-listener map into docs/services/caddy.md (perishable, mark as such)                                                           | Medium   | agent (caddy-gen950 row) |
+| 40 | `scripts/prune-done-todos.sh` first `--apply` pass (queue 680; WARN recount expected to RISE)                                     | Medium   | agent                    |
+| 41 | TODO gate queue↔library checkbox-parity leg (queue 907)                                                                           | Medium   | agent                    |
+| 42 | T13 monitor365 39G DuckDB relocation decision                                                                                     | Medium   | owner                    |
+| 43 | T14 burst-snapshot policy (5-snaps-in-a-day class)                                                                                | Medium   | agent                    |
+| 44 | T16 ClickHouse p9 siting memo (197G lifetime writes on root disk)                                                                 | Medium   | decision                 |
+| 45 | T17 `.rescue` double-fire attribution (Oct 25 22:25+22:30)                                                                        | Medium   | agent                    |
+| 46 | T19 weekly-balance manual-gap wrapper (maintenance-entry-gate "balance running" leg)                                              | Medium   | agent                    |
+| 47 | T20 post-recovery housekeeping (stale disk-cleanup-proposal annotation, CHANGELOG)                                                | Medium   | agent                    |
+| 48 | T18 post-E6 watches (~/.cache regrowth >90G row; tmp automount idle×builds probe)                                                 | Low      | agent                    |
+| 49 | Wave-1 hermes config dup-key + overcommit confirmation (standing Q1/Q2)                                                           | Low      | owner                    |
+| 50 | ROADMAP: `--wait-quiescent` flag on `nix run .#deploy` itself (after §f-fire proves the pattern)                                  | Low      | decision                 |
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

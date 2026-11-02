@@ -8,14 +8,14 @@
 
 ## §1 The outage: what actually happened
 
-| Time | Event | Evidence |
-|---|---|---|
-| 2026-10-28 17:48:44 | planned stop, restart 17:49:08 | journal |
-| 17:49:14 | **healthy**: `listening on http://0.0.0.0:3001`, health JSON `status: ok`, `Started Monitor365 control plane server` | journal |
-| 22:18:53 | commit `c33b95e88` adds the `monitor365-ensure-sso-identity` ExecStartPre | `git log -S` |
-| **22:54:41** | **first failing start** — the real outage boundary | journal |
-| 22:54 → 03:xx | restart loop: 5 attempts, then `start-limit-hit`; watchdog re-fires every 5 min repeat it | journal |
-| 2026-10-29 02:03:35 | first healthy start after the fix: `SSO admin lars@larsartmann.cloud already exists (unique constraint on tenant_id + email)` | journal |
+| Time                | Event                                                                                                                         | Evidence     |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 2026-10-28 17:48:44 | planned stop, restart 17:49:08                                                                                                | journal      |
+| 17:49:14            | **healthy**: `listening on http://0.0.0.0:3001`, health JSON `status: ok`, `Started Monitor365 control plane server`          | journal      |
+| 22:18:53            | commit `c33b95e88` adds the `monitor365-ensure-sso-identity` ExecStartPre                                                     | `git log -S` |
+| **22:54:41**        | **first failing start** — the real outage boundary                                                                            | journal      |
+| 22:54 → 03:xx       | restart loop: 5 attempts, then `start-limit-hit`; watchdog re-fires every 5 min repeat it                                     | journal      |
+| 2026-10-29 02:03:35 | first healthy start after the fix: `SSO admin lars@larsartmann.cloud already exists (unique constraint on tenant_id + email)` | journal      |
 
 The previous report's "down since 17:49" was **wrong** — that restart came up healthy, and the same `DuckDB migration FAILED 027` warning existed then with the service serving traffic. The premise was inherited rather than re-derived; journal forensics on the transition found the true boundary in one command (`journalctl -u monitor365-server | grep -E "listening on|Started|ensure-sso-identity"`).
 
@@ -38,6 +38,7 @@ Test surface — `checks.monitor365-sso-identity-selftest` runs the fixture **tw
 Negative-tested both ways: neutering the duplicate-key pattern makes the fixture go RED (`CASES=ssoclassify`, leg `wording-drift`), and the comment-immunity leg stays green.
 
 **Live receipt (02:03:35 + health probe):**
+
 ```
 monitor365-ensure-sso-identity: SSO admin lars@larsartmann.cloud already exists (unique constraint on tenant_id + email)
 monitor365_server::server_cmd: Monitor365 server listening on http://0.0.0.0:3001
@@ -50,12 +51,12 @@ monitor365_server::server_cmd: Monitor365 server listening on http://0.0.0.0:300
 
 The previous report asked which of four zero-reporting services sat inside the enforced budget. Answer, from the rendered registry (`signoz-coverage-expected.json`):
 
-| service | wiring | enforced |
-|---|---|---|
-| hermes | upstream | no |
-| papdashboard | upstream | no |
-| projects-management-automation | upstream | no |
-| **monitor365-server** | **env** | **yes** |
+| service                        | wiring   | enforced |
+| ------------------------------ | -------- | -------- |
+| hermes                         | upstream | no       |
+| papdashboard                   | upstream | no       |
+| projects-management-automation | upstream | no       |
+| **monitor365-server**          | **env**  | **yes**  |
 
 So the single enforced leg was monitor365-server — and it had **never** emitted a span. Three independent first-hand checks:
 
@@ -98,16 +99,16 @@ Proven both ways: a fixture tree with one good, one execStart-less, one masked a
 
 Lift condition from the previous report was satisfied (parallel session pushed both consumers). Ceremony executed exactly as the row prescribed:
 
-| Step | Result |
-|---|---|
+| Step                                                        | Result                                                                                                   |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | targeted re-lock `nix flake update crush-daily discordsync` | crush-daily `93697afb` → `955ddb2`, discordsync `921d5fc4` → `79952c46`; lock node count unchanged (463) |
-| removed root inputs + follows | 2 root inputs, 4 infra-follows, 3 consumer-follows = 11 lines |
-| removed pin-audit allowlist rows | 2 (nsfw-classifier's stays) |
-| registry regenerated mechanically | diff = exactly the 2 rev moves + 2 dropped rows, 94 rows retained |
-| consumers' own pins now resolve to | templ-components `29f71a51` (v1.24.0), go-health `b7258b09` (v0.8.1) — both consumers |
-| `nix flake check --no-build` | all checks passed |
-| keep-going toplevel proof | **rc=0, zero hash mismatches** (no re-stale this wave) |
-| shipped revs | crush-daily `…-955ddb2`, discordsync `…-79952c4` |
+| removed root inputs + follows                               | 2 root inputs, 4 infra-follows, 3 consumer-follows = 11 lines                                            |
+| removed pin-audit allowlist rows                            | 2 (nsfw-classifier's stays)                                                                              |
+| registry regenerated mechanically                           | diff = exactly the 2 rev moves + 2 dropped rows, 94 rows retained                                        |
+| consumers' own pins now resolve to                          | templ-components `29f71a51` (v1.24.0), go-health `b7258b09` (v0.8.1) — both consumers                    |
+| `nix flake check --no-build`                                | all checks passed                                                                                        |
+| keep-going toplevel proof                                   | **rc=0, zero hash mismatches** (no re-stale this wave)                                                   |
+| shipped revs                                                | crush-daily `…-955ddb2`, discordsync `…-79952c4`                                                         |
 
 ## §6 Deploys
 
@@ -116,11 +117,11 @@ Lift condition from the previous report was satisfied (parallel session pushed b
 
 The three FAILs are load/timing artifacts, each verified rather than assumed:
 
-| FAIL | Verdict |
-|---|---|
-| `Service Sanity CPU — tq-agent-pool 408 %` | it is running three crush agents; load 31.6 at deploy time |
-| `Service Sanity journal — prometheus-node-exporter 464/min` | the documented storm class; not service-initiated |
-| `Gitea runner` | the switch stops the runner and the 5-min keep-alive restarts it — watched it: inactive 03:43:07 → **active 03:44:37** |
+| FAIL                                                        | Verdict                                                                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `Service Sanity CPU — tq-agent-pool 408 %`                  | it is running three crush agents; load 31.6 at deploy time                                                             |
+| `Service Sanity journal — prometheus-node-exporter 464/min` | the documented storm class; not service-initiated                                                                      |
+| `Gitea runner`                                              | the switch stops the runner and the 5-min keep-alive restarts it — watched it: inactive 03:43:07 → **active 03:44:37** |
 
 New fail-set baseline recorded at `~/.local/state/systemnix/smoke-fail-baseline.txt` (those three names).
 
@@ -140,20 +141,20 @@ Groups re-run green individually (`tileicons 3/3`, `iotier 2/2`, `doccounts 3/3`
 
 ## §8 Verification summary
 
-| Check | Result |
-|---|---|
-| `nix flake check --no-build` (after lift) | all checks passed |
-| keep-going toplevel proof (after lift) | rc=0, 0 FOD mismatches |
-| `checks.monitor365-sso-identity-selftest` | green, both legs (repo + rendered), 7 legs each |
-| `CASES=ssoclassify` | 2/2 (drift RED, control green) |
-| `CASES=shallowmerge` | 2/2 |
-| `CASES=tileicons / iotier / doccounts / bootcomplete` | 3/3, 2/2, 3/3, 2/2 |
-| **full `scripts/negative-test-lints.sh`** | **76 passed, 0 failed** (first pass same session: 66/10) |
-| `dead-guard-lint` + `with-pkgs-lint` builds | green |
-| §24 live | 186 units, 0 missing ExecStart, 2 masked |
-| coverage metrics (live) | missing 0 / gaps 4 / over_threshold 0 |
-| deploy anchor | `current-system == system-961-link` |
-| monitor365 | active, `/health` 200, database connected |
+| Check                                                 | Result                                                   |
+| ----------------------------------------------------- | -------------------------------------------------------- |
+| `nix flake check --no-build` (after lift)             | all checks passed                                        |
+| keep-going toplevel proof (after lift)                | rc=0, 0 FOD mismatches                                   |
+| `checks.monitor365-sso-identity-selftest`             | green, both legs (repo + rendered), 7 legs each          |
+| `CASES=ssoclassify`                                   | 2/2 (drift RED, control green)                           |
+| `CASES=shallowmerge`                                  | 2/2                                                      |
+| `CASES=tileicons / iotier / doccounts / bootcomplete` | 3/3, 2/2, 3/3, 2/2                                       |
+| **full `scripts/negative-test-lints.sh`**             | **76 passed, 0 failed** (first pass same session: 66/10) |
+| `dead-guard-lint` + `with-pkgs-lint` builds           | green                                                    |
+| §24 live                                              | 186 units, 0 missing ExecStart, 2 masked                 |
+| coverage metrics (live)                               | missing 0 / gaps 4 / over_threshold 0                    |
+| deploy anchor                                         | `current-system == system-961-link`                      |
+| monitor365                                            | active, `/health` 200, database connected                |
 
 ## §9 What I got wrong / would do differently
 
@@ -171,11 +172,11 @@ Groups re-run green individually (`tileicons 3/3`, `iotier 2/2`, `doccounts 3/3`
 
 ## §11 Follow-ups (harvested)
 
-| Follow-up | Where |
-|---|---|
-| monitor365 server OTel initialisation (upstream) | `docs/todo/upstream.md` `[blocked:push]` |
-| templ-components + go-health pin LIFT | `docs/todo/upstream.md` `[x]` with evidence |
-| `//`-with-mkIf eval guard | `docs/todo/pipeline.md` `[x]` |
-| nix-flakes trap documentation | `docs/todo/pipeline.md` `[x]` |
-| gen-959 smoke close-out | `docs/todo/monitoring.md` `[watch]` — traces half RESOLVED, calm-box baseline half still open |
-| Calm-box smoke re-run after the tq agent batch | `docs/todo/monitoring.md` (same row) |
+| Follow-up                                        | Where                                                                                         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| monitor365 server OTel initialisation (upstream) | `docs/todo/upstream.md` `[blocked:push]`                                                      |
+| templ-components + go-health pin LIFT            | `docs/todo/upstream.md` `[x]` with evidence                                                   |
+| `//`-with-mkIf eval guard                        | `docs/todo/pipeline.md` `[x]`                                                                 |
+| nix-flakes trap documentation                    | `docs/todo/pipeline.md` `[x]`                                                                 |
+| gen-959 smoke close-out                          | `docs/todo/monitoring.md` `[watch]` — traces half RESOLVED, calm-box baseline half still open |
+| Calm-box smoke re-run after the tq agent batch   | `docs/todo/monitoring.md` (same row)                                                          |

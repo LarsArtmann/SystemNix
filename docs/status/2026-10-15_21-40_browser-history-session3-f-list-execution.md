@@ -54,7 +54,6 @@ Scope: the 20-55 report's §f follow-up list (agent-actionable subset) + the 3 o
 
 ---
 *All session work committed (pathspec `b89448c7` + daemon-batched earlier edits, verified intact at HEAD). Pre-commit todo gate failed ONLY on a live parallel session's rows (proven failing at HEAD in a throwaway worktree); every other hook leg re-run standalone green. Upstream repos untouched. Foreign files not disturbed.*
-
 ---
 
 ## POST-SCRIPT (2026-10-15 21:50 self-review correction — non-destructive annotation)

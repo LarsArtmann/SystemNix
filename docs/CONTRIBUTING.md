@@ -237,12 +237,12 @@ first edit of any `docs/planning/` plan:
    the 05-23 report's own §e.4).** Prose docs are the clobber class: a
    parallel session rewriting a doc from its stale copy silently deletes
    your edits. Before editing a doc: `git log -1 --format='%h %cr' -- <file>`
-   + re-read the live file (never work from a remembered copy). After
-   editing, BEFORE the commit window closes: `grep -c '<inserted marker>'
+   - re-read the live file (never work from a remembered copy). After
+     editing, BEFORE the commit window closes: `grep -c '<inserted marker>'
    <file>` — count 0 means clobbered. Recovery: re-apply ATOMICALLY (one
-   python/sed pass asserting the marker lands exactly once), then commit
-   immediately — never leave an edited doc uncommitted across another
-   session's doc sweep.
+     python/sed pass asserting the marker lands exactly once), then commit
+     immediately — never leave an edited doc uncommitted across another
+     session's doc sweep.
 
 ## Verification
 

@@ -48,10 +48,10 @@ The lookup key is minted by `discordsync-immich-key-provision` (root oneshot, bo
 
 ### `discordsync-immich-verify` exit semantics
 
-| Exit | Meaning                                                                          | Action                                                     |
-| ---- | -------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Exit | Meaning                                                                             | Action                                                                                                                  |
+| ---- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | 0    | key verified / env file not yet rendered / integration off / **Immich unreachable** | none (provision failures page via the provisioner's own OnFailure; Immich availability is the Gatus Immich check's job) |
-| 1    | Immich reachable but **rejected the key** (HTTP 401/403 — wrong secret or scope) | OnFailure Discord alert; fix key/scope, redeploy           |
+| 1    | Immich reachable but **rejected the key** (HTTP 401/403 — wrong secret or scope)    | OnFailure Discord alert; fix key/scope, redeploy                                                                        |
 
 Rotation: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart discordsync-immich-key-provision` (the provisioner's restart covers the verify unit).
 

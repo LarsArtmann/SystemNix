@@ -6,15 +6,15 @@ Written 2026-10-15 03:29 CEST. Dispatch `Task-Queue-ID: 000001a13800dfbb3ebd5b78
 
 From the production journal (`tq facts --db /mnt/pool/services/tq/tq.db`, 12,008 facts):
 
-| When (CEST) | Event | Why it matters |
-| --- | --- | --- |
-| 10-14 05:03 | First closeout report lands (`7333beb3`) | Work complete, but… |
-| 10-14 05:36 | task requeued — **budget gate: 30/30 daily tasks** | Closeout never recorded; chain parked ~18 h on queue config |
-| 10-14 23:59–10-15 00:25 | 3 more claim→requeue cycles (budget gate, provider rate-limit, preflight "uncommitted changes" from concurrent sessions' in-flight files) | Paid attempts burned before any agent work |
-| 10-15 00:40 / 00:54 | Refire reports #2 and #3 land (`402fdfd5`, `a67b266b`) | Both sessions finished their reports… |
-| 10-15 00:48 / 01:03 | task failed — **verify gate dead: `nix flake check --no-build` fails at the pre-attempt rev too** | End-of-session verification eats the completed closeout; no verdict → re-fire |
-| 10-15 02:20–02:29 | 2 more attempts — preflight refusals (staged docs files from parallel sessions) | env-streak burned |
-| 10-15 03:20 | This session claims | Fourth fire |
+| When (CEST)             | Event                                                                                                                                     | Why it matters                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 10-14 05:03             | First closeout report lands (`7333beb3`)                                                                                                  | Work complete, but…                                                           |
+| 10-14 05:36             | task requeued — **budget gate: 30/30 daily tasks**                                                                                        | Closeout never recorded; chain parked ~18 h on queue config                   |
+| 10-14 23:59–10-15 00:25 | 3 more claim→requeue cycles (budget gate, provider rate-limit, preflight "uncommitted changes" from concurrent sessions' in-flight files) | Paid attempts burned before any agent work                                    |
+| 10-15 00:40 / 00:54     | Refire reports #2 and #3 land (`402fdfd5`, `a67b266b`)                                                                                    | Both sessions finished their reports…                                         |
+| 10-15 00:48 / 01:03     | task failed — **verify gate dead: `nix flake check --no-build` fails at the pre-attempt rev too**                                         | End-of-session verification eats the completed closeout; no verdict → re-fire |
+| 10-15 02:20–02:29       | 2 more attempts — preflight refusals (staged docs files from parallel sessions)                                                           | env-streak burned                                                             |
+| 10-15 03:20             | This session claims                                                                                                                       | Fourth fire                                                                   |
 
 Root causes, ranked: (1) the queue's done-prompt trigger does not consult an existing `*_window-closeout_*` report before re-enqueueing (the re-fire guard, TODO_LIST:1280, queued but unimplemented — this chain is its third proof); (2) `.tq-verify` for SystemNix is `nix flake check --no-build`, which is **RED tree-wide at HEAD** (the hermes-agent lock FOD drift, TODO_LIST:23) — every SystemNix dispatch's verification currently fails regardless of the work's quality, and docs-only dispatches have no docs-scoped verify; (3) the daily budget (30) has no carve-out for verdict-recording dispatches.
 

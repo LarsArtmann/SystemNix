@@ -45,15 +45,16 @@ All five window tasks closed; each verified on BOTH queue surfaces (TODO_LIST.md
 ## f) NEXT THINGS (≤10 queued; deduped against existing unchecked rows)
 
 Appended to TODO_LIST.md this session (see the closeout commit diff for exact lines):
-1. Confirm the gatus "Memory Guard Trip Churn" alert auto-RESOLVED after trip #4512 and `churn_mode` returned to 0 (the alert says it self-resolves; nobody confirmed). *Source: 01-38 closeout §f.22.*
-2. Investigate the 2026-10-27 12:00 sev1-bridge repeat-fire dedup gap: 4 firings in 36 s for ONE condition state ("MEMORY EMERGENCY GUARD TRIPPED") — one-shot-per-state or dedup window needed. *§f.18.*
-3. Build a week-over-week io PSI baseline (textfile metric or simple journal-derived table) to answer whether chronic zone-6 (9+ h at some avg10 35–70%) is new or the post-Samsung-roles normal. *§f.35.*
-4. Check GC retention on the `io-psi-forensics` zone6-trip bundles for the 9-h chronic window before anyone reads them (store paths may have been GC'd). *§f.48.*
-5. First real-storm execution of `scripts/io-writer-attribution.sh` (its selftest is green; the live run during the NEXT trip storm is the unproven leg). *Derived from the 047c159 closeout §b.*
-6. Enumerate which sockets/sacrifice units the 9-h trip train stopped and verify ALL came back (restore_capped re-capped every ~10 min — was there a standing 9-h availability tax?). *Already queued in the window's own harvests (row 1673) — NOT re-added; listed for the cap ledger.*
-7. Verify the dnsblockd allowlist backup actually fired live (journal + pool copy + restic snapshot) — *already queued by the 8407382 closer — NOT re-added.*
-8. Fix the tq verdict/$TQ_RESULT_FILE 0-byte defect — *already queued (row 1717) — NOT re-added; promoted to first priority in (e).1.*
-9–10. Reserved by dedup: remaining §f candidates (guard top-5 child-unit deltas, per-trip io.stat persistence, host-probe harness docs, spot-verify mechanism-claims rule) are already on the queue from this window's own closers — re-adding would mint the duplicate-dispatch class the dedup check exists to stop.
+
+1. Confirm the gatus "Memory Guard Trip Churn" alert auto-RESOLVED after trip #4512 and `churn_mode` returned to 0 (the alert says it self-resolves; nobody confirmed). _Source: 01-38 closeout §f.22._
+2. Investigate the 2026-10-27 12:00 sev1-bridge repeat-fire dedup gap: 4 firings in 36 s for ONE condition state ("MEMORY EMERGENCY GUARD TRIPPED") — one-shot-per-state or dedup window needed. _§f.18._
+3. Build a week-over-week io PSI baseline (textfile metric or simple journal-derived table) to answer whether chronic zone-6 (9+ h at some avg10 35–70%) is new or the post-Samsung-roles normal. _§f.35._
+4. Check GC retention on the `io-psi-forensics` zone6-trip bundles for the 9-h chronic window before anyone reads them (store paths may have been GC'd). _§f.48._
+5. First real-storm execution of `scripts/io-writer-attribution.sh` (its selftest is green; the live run during the NEXT trip storm is the unproven leg). _Derived from the 047c159 closeout §b._
+6. Enumerate which sockets/sacrifice units the 9-h trip train stopped and verify ALL came back (restore_capped re-capped every ~10 min — was there a standing 9-h availability tax?). _Already queued in the window's own harvests (row 1673) — NOT re-added; listed for the cap ledger._
+7. Verify the dnsblockd allowlist backup actually fired live (journal + pool copy + restic snapshot) — _already queued by the 8407382 closer — NOT re-added._
+8. Fix the tq verdict/$TQ_RESULT_FILE 0-byte defect — _already queued (row 1717) — NOT re-added; promoted to first priority in (e).1._
+   9–10. Reserved by dedup: remaining §f candidates (guard top-5 child-unit deltas, per-trip io.stat persistence, host-probe harness docs, spot-verify mechanism-claims rule) are already on the queue from this window's own closers — re-adding would mint the duplicate-dispatch class the dedup check exists to stop.
 
 Net NEW appends this session: items 1–5 above (5 rows) + 1 blocked question row (below). The window's own closers had already harvested their §f well — the dedup check found no rewords needed.
 
@@ -61,7 +62,7 @@ Net NEW appends this session: items 1–5 above (5 rows) + 1 blocked question ro
 
 1. **Is the signoz OTel collector redeploy planned for a specific window?** The dnsblockd 4318 `LogFilterPatterns` line must be re-audited in the SAME switch that revives the collector (the filter assumed a dead endpoint; a live one makes the refused-dial line signal-bearing again). — BLOCKED: queued.
 2. **Do you accept a shared-tree history rewrite to renarrate/split the two foreign files inside `7465a7a3a`** (d).2), or should the boot-chain session own the renarration in its next report? (Row 1716 tracks the work as [ready]; the rewrite-risk call is yours.) — covered by the existing row; not duplicated as a BLOCKED item.
-3. *(none further — the window's other open questions — chronic zone-6 policy, mid-band trip alert, 16:00 shift provenance — are already on the queue as [decision]/[watch] rows.)*
+3. _(none further — the window's other open questions — chronic zone-6 policy, mid-band trip alert, 16:00 shift provenance — are already on the queue as [decision]/[watch] rows.)_
 
 ## h) BAND DRIFT
 

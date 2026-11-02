@@ -41,12 +41,12 @@
 
 ## f) Next tasks
 
-| # | Task | Impact | Effort | Cat. |
-|---|------|--------|--------|------|
-| 1 | VM test to green (iteration 4 building) → deploy via `nix run .#deploy` under the quiescence discipline → anchor verify → post-deploy-check → live sweep smoke (journal + tags + `.prom`) | High | M | Execute |
-| 2 | Post-deploy: verify ensured tags/fields in the paperless DB + `Needs Review (triage)` view + ai-meter logprobs passthrough (one manual sweep with a real consumed doc) | High | S | Verify |
-| 3 | Close surfaces: services.md row 103 → [x] (with evidence), TODO_LIST line sync, CHANGELOG entry, plan-marker `done` | Medium | S | Docs |
-| 4 | If the deploy is blocked tonight by the parallel-session tree: re-dispatch under the same tombstone (row 103 stays [ready] with an UPDATE note) | Low | S | Contingency |
+| # | Task                                                                                                                                                                                      | Impact | Effort | Cat.        |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ----------- |
+| 1 | VM test to green (iteration 4 building) → deploy via `nix run .#deploy` under the quiescence discipline → anchor verify → post-deploy-check → live sweep smoke (journal + tags + `.prom`) | High   | M      | Execute     |
+| 2 | Post-deploy: verify ensured tags/fields in the paperless DB + `Needs Review (triage)` view + ai-meter logprobs passthrough (one manual sweep with a real consumed doc)                    | High   | S      | Verify      |
+| 3 | Close surfaces: services.md row 103 → [x] (with evidence), TODO_LIST line sync, CHANGELOG entry, plan-marker `done`                                                                       | Medium | S      | Docs        |
+| 4 | If the deploy is blocked tonight by the parallel-session tree: re-dispatch under the same tombstone (row 103 stays [ready] with an UPDATE note)                                           | Low    | S      | Contingency |
 
 **Harvest record:** f.1–f.3 are THIS session's remaining plan-execution steps (tracked by the plan tombstone + this report, not new queue rows — anti-duplicate discipline); f.4 is the contingency that becomes row 103's UPDATE if hit. No new domain-library rows created: every durable follow-up already rides row 103 (closes on verify), row 105 (Clef/pricing, owner keys), or the plan §6 pack (P2/P3).
 

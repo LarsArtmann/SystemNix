@@ -55,6 +55,7 @@
 4. **The multi-agent daemon-commit reality makes per-file immediate commits the only race-free pattern** — batched edits guarantee absorption into heuristic commits.
 
 ## f) NEXT THINGS (ranked, in-lane first)
+
 > **Harvest disposition (docs-health 2026-10-18):** NOT HARVESTED as new rows — every §f item was already queued/tracked at authoring time (per-item pointers above); re-appending would mint the duplicate-dispatch class the TODO system bans.
 
 ~~1. **[ready] Run `checks.x86_64-linux.memory-emergency-guard` VM test in the first sustained quiet window** (avg60 < 25 for ≥5 min), then commit the close-out with the task footer. Everything else in this report is already in-tree.~~ done — §b1 of this report — VM test PASSED (~06:40); twin 06-25 report: 33.02s green

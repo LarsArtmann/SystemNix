@@ -48,8 +48,8 @@ credentials reachable without `sudo`). Flagged as open.
     PID 1508609 at 15:55:44Z.
   - `getent hosts ipify.org` → `192.168.1.200` (block IP).
 - **Root-caused #2 (missing list)** with documentation-grade evidence:
-  - `access(2)` man page: *"for non-root users, the check uses an empty set of
-    capabilities."*
+  - `access(2)` man page: _"for non-root users, the check uses an empty set of
+    capabilities."_
   - The tailer "Streaming log file events" + `log_format_detected` for 42 files
     and **0** `does not exist` errors on Oct 14 — i.e. ingestion reads them,
     while the UI's `os.access` probe cannot.
@@ -72,7 +72,7 @@ credentials reachable without `sudo`). Flagged as open.
   a full system build, not deployed**. The whitelist only takes effect after a
   deploy re-processes the blocklists + restarts `dnsblockd` **and**
   `geometrikks` re-runs its startup detection.
-- **Fix #2 (patch):** the *package* builds green, but the **system toplevel for
+- **Fix #2 (patch):** the _package_ builds green, but the **system toplevel for
   evo-x2 was not built/deployed**, so the running service is unchanged.
 - **Verification of the fixes against the live page:** not possible until deploy
   (the advisory and the missing list are runtime state).
@@ -116,7 +116,7 @@ credentials reachable without `sudo`). Flagged as open.
 - **Reproduce-then-fix discipline worked**, but I should have built the system
   toplevel in the SAME pass as the package, to catch module-level
   (dns-blocklist) regressions.
-- **Symptom vs cause:** the page's "missing" list *looked* like an ingestion
+- **Symptom vs cause:** the page's "missing" list _looked_ like an ingestion
   outage; the health endpoint said `missingFiles: []` and status "healthy".
   Lesson reinforced: the UI's per-file `available` flag and the ingestion
   `file_missing` flag are **different signals** — read the code, not the label.
@@ -179,7 +179,7 @@ credentials reachable without `sudo`). Flagged as open.
 36. Add a comment in `geometrikks.nix` about the FODs staying on pristine `src`.
 37. Confirm `python313` site-packages path in the self-test stays valid across
     interpreter bumps (currently `grep -R` is path-agnostic — OK).
-38. Consider making the self-test assert the helper is *callable* (import smoke)
+38. Consider making the self-test assert the helper is _callable_ (import smoke)
     instead of a text grep.
 39. Re-verify the `applyPatches` default `-p1` (worked here; note it).
 40. Snapshot the pre-deploy service hash for rollback (`readlink /run/current-system`).
@@ -252,7 +252,7 @@ Outstanding / notes:
 - The deploying session exited **code 3** (post-deploy smoke "NEW failure":
   `Service Sanity CPU — nix-daemon 382%CPU`) — an artifact of the concurrent
   builds in the smoke window, **not** a regression from these changes. Journal-rate
-  + memory-throttle WARNs are pre-existing advisories.
+  - memory-throttle WARNs are pre-existing advisories.
 - **DB row-count verification remains BLOCKED on credentials.** No unprivileged
   path exists: `pg_hba` is `local all all peer` (no `lars` role) and
   `host … 127.0.0.1/32 md5` needs the sops DB password (root-only env /
@@ -267,4 +267,3 @@ Outstanding / notes:
   `MAP_HOME_LATITUDE/LONGITUDE` (keeps auto-detection adaptive); (2) upstream
   patch + self-test over re-permissioning Caddy's 0600 logs (Caddy has no mode
   knob and POSIX ACLs are masked away by a 0600 create mode).
-

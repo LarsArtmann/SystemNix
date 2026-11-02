@@ -3,10 +3,12 @@
 Pulled 2026-10-13 BEFORE any journal vacuum (same Oct-3 vacuum-loss risk class as freeze-27's pull). Complements docs/status/2026-10-12_13-15_freeze-28-crash-diagnosis-session-status.md and the freeze-27 autopsy evidence (docs/status/tasks/2026-10-13_00-37_freeze-27-autopsy-evidence.md — counter continuity #2671→#2672).
 
 ## Summary counts
+
 - kernel OOM-relevant lines (oom-kill/invoked/Out-of-memory greps): 145
 - memory-emergency-guard-check lines: 432
 
 ## Kernel OOM lines (all)
+
 ```
 Oct 12 00:35:23 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
 Oct 12 00:35:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3156072,uid=1000
@@ -156,6 +158,7 @@ Oct 12 12:32:14 evo-x2 kernel: Out of memory: Killed process 2910470 (llama-serv
 ```
 
 ## Guard trips (all memory-emergency-guard-check lines)
+
 ```
 Oct 11 11:13:42 evo-x2 memory-emergency-guard-check[29011]: MEMORY EMERGENCY: I/O PSI some avg60=55.55% sustained (max disk busy 99.2%, MemAvailable=82.6% — the crash #3 class: stacked full-disk readers livelocking the scheduler while memory looks healthy) — stopping sockets + 'fastflowlm@*.service' 'fastflowlm.service' to prevent kernel freeze (2026-08-22 incident class). The socket stays down until memory recovers; flm cold-loads once on restore.
 Oct 11 11:13:42 evo-x2 memory-emergency-guard-check[29011]: MEMORY EMERGENCY action taken: sockets + sacrifice units stopped (trip #2672, zone 6)
@@ -592,6 +595,7 @@ Oct 12 13:00:43 evo-x2 memory-emergency-guard-check[3022253]: MEMORY EMERGENCY s
 ```
 
 ## First/last lines of the boot
+
 ```
 Oct 11 11:09:43 evo-x2 kernel: Linux version 7.2.9 (nixbld@localhost) (gcc (GCC) 16.2.0, GNU ld (GNU Binutils) 2.46) #1-NixOS SMP PREEMPT_DYNAMIC Sat Oct  3 10:43:16 UTC 2026
 Oct 11 11:09:43 evo-x2 kernel: Command line: initrd=\EFI\nixos\axl3v57y89q5di0p990h016fw4kk39wq-initrd-linux-7.2.9-initrd.efi init=/nix/store/l4m75scgx4hbm19jf17h6pjrsnnk8f26-nixos-system-evo-x2-26.11.20261008.e7439b6/init iommu.passthrough=0 tpm.disabled=1 amdgpu.lockup_timeout=30000 amdgpu.gpu_recovery=1 amd_pstate=active amdgpu.ttm.pages_limit=31457280 amd_iommu=on pstore.backend=efi pstore.record_console=true pstore.max_reason=3 module_blacklist=serial8250 nvme_core.default_ps_max_latency_us=0 console=tty2 console=tty1 delayacct root=fstab loglevel=7 lsm=landlock,yama,bpf crashkernel=128M nmi_watchdog=panic softlockup_panic=1

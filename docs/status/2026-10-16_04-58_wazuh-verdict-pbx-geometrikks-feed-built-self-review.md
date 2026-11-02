@@ -37,7 +37,7 @@
 1. **I broke the shared tree for ~4 minutes (CONFIRMED, not hypothetical).** Daemon commit `30e115a4` (04:38:06) captured `geometrikks.nix` mid-repair with a syntax error (`unexpected 'in'` at my `} in {` damage) — an ancestor of HEAD; fixed by `10dfec74` (04:42-ish). Any parallel session evaluating evo-x2 or flake-checking in that window hit MY syntax failure — the exact documented shared-tree race, with me as the breaker. **Root cause:** I made an incremental structural edit (multiedit splicing a `let…in` INSIDE an attrset) instead of restructuring coherently, and only parse-checked at the END. The repair itself took three rounds (services-close brace dropped, then dead hardcoded timer). **Fix going forward:** `nix-instantiate --parse` (instant) after EVERY structural edit to a shared file; structural rewrites drafted as one coherent replacement, not surgical splices.
 2. **Handoff ignored a blocker I had literally read an hour earlier** — the CHANGELOG's own "NO evo-x2 deploy can go green until this lands" (browser-history vendored drift) was in my context when I wrote "your part: one switch on each host". A correct handoff names the blocker and the order.
 3. **First-write sloppiness in the module** — the `interval` option declared then hardcoded dead (caught in-session before commit); the unit/timer defs nested in the wrong scope. All recovered, but the first pass was not the house standard.
-4. *(minor)* Two failed awk extractions before the clean one; a `./cmd` bash blunder. Time waste, no damage.
+4. _(minor)_ Two failed awk extractions before the clean one; a `./cmd` bash blunder. Time waste, no damage.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -50,24 +50,24 @@
 
 ## f) Next up (session-derived; harvested per TODO-system rules at authoring time)
 
-| # | Item | State/Route |
-| --- | --- | --- |
-| 1 | evo-x2 switch carrying the feed wiring — BLOCKED until the browser-history toplevel blocker lands (parallel session) | library [blocked:deploy], rides flipped row |
-| 2 | pbx switch (user-run) activating `geometrikks-feed.nix` | pbx TODO row (added) |
-| 3 | Post-deploy live verification: timer, pull journal, `pbx`-labeled map rows, Helsinki beacon | already in flipped services.md row |
-| 4 | `logPulls`/`extraLogFiles` render selftest (env-list alignment + unit shape) | queue [ready] + services.md |
-| 5 | Feed freshness signal (probe existing collectors first — phantom-metric rule): offset-file mtime textfile metric or `.last-success` + post-deploy leg | queue [ready] + services.md |
-| 6 | Read logparser.py reappear/new-file seek branch; correct the runbook's "within minutes" claim if seek-end applies to first-seen files | queue [ready] + services.md |
-| 7 | Runbook: exact deploy commands + order-independence note (MISSING clean-exit) | folded into item 6 row |
-| 8 | Feed-file growth/rotation policy (rename-style rotation is proven safe; pick cadence, document) | folded into item 6 row |
-| 9 | FEATURES.md rows (SystemNix multi-source; pbx feed PARTIALLY_FUNCTIONAL) | queue [ready] + pbx row |
-| 10 | Verify at deploy: NixOS nginx logrotate actually covers `/var/log/nginx/geometrikks.log` (pull offset-reset depends on shrink detection) | folded into pbx row |
-| 11 | NetBird-vs-public path probe for the pull ssh (plan's unverified lead) | folded into live-verification row |
-| 12 | Stage 3 optional `import-logs` backfill of PBX history | NOT harvested (optional; plan §5 owns it) |
-| 13 | Helsinki coords refinement | NOT harvested (cosmetic) |
-| 14 | pbx CHANGELOG md formatting unverified by tooling (dprint has no md plugin) | NOT harvested (cosmetic) |
-| 15 | pbx alert sink pick (TODO_LIST:305) | pre-existing row, untouched |
-| 16 | Wazuh reopen triggers (nixpkgs lands wazuh / compliance / ≥3 internet-facing services / upstream Nix support) | on record in review doc + security.md row |
+| #  | Item                                                                                                                                                  | State/Route                                 |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 1  | evo-x2 switch carrying the feed wiring — BLOCKED until the browser-history toplevel blocker lands (parallel session)                                  | library [blocked:deploy], rides flipped row |
+| 2  | pbx switch (user-run) activating `geometrikks-feed.nix`                                                                                               | pbx TODO row (added)                        |
+| 3  | Post-deploy live verification: timer, pull journal, `pbx`-labeled map rows, Helsinki beacon                                                           | already in flipped services.md row          |
+| 4  | `logPulls`/`extraLogFiles` render selftest (env-list alignment + unit shape)                                                                          | queue [ready] + services.md                 |
+| 5  | Feed freshness signal (probe existing collectors first — phantom-metric rule): offset-file mtime textfile metric or `.last-success` + post-deploy leg | queue [ready] + services.md                 |
+| 6  | Read logparser.py reappear/new-file seek branch; correct the runbook's "within minutes" claim if seek-end applies to first-seen files                 | queue [ready] + services.md                 |
+| 7  | Runbook: exact deploy commands + order-independence note (MISSING clean-exit)                                                                         | folded into item 6 row                      |
+| 8  | Feed-file growth/rotation policy (rename-style rotation is proven safe; pick cadence, document)                                                       | folded into item 6 row                      |
+| 9  | FEATURES.md rows (SystemNix multi-source; pbx feed PARTIALLY_FUNCTIONAL)                                                                              | queue [ready] + pbx row                     |
+| 10 | Verify at deploy: NixOS nginx logrotate actually covers `/var/log/nginx/geometrikks.log` (pull offset-reset depends on shrink detection)              | folded into pbx row                         |
+| 11 | NetBird-vs-public path probe for the pull ssh (plan's unverified lead)                                                                                | folded into live-verification row           |
+| 12 | Stage 3 optional `import-logs` backfill of PBX history                                                                                                | NOT harvested (optional; plan §5 owns it)   |
+| 13 | Helsinki coords refinement                                                                                                                            | NOT harvested (cosmetic)                    |
+| 14 | pbx CHANGELOG md formatting unverified by tooling (dprint has no md plugin)                                                                           | NOT harvested (cosmetic)                    |
+| 15 | pbx alert sink pick (TODO_LIST:305)                                                                                                                   | pre-existing row, untouched                 |
+| 16 | Wazuh reopen triggers (nixpkgs lands wazuh / compliance / ≥3 internet-facing services / upstream Nix support)                                         | on record in review doc + security.md row   |
 
 ## g) Questions I cannot figure out myself
 
@@ -77,4 +77,4 @@
 
 ---
 
-*§f harvest executed at authoring time: items 4-6(+7,8 folded) → TODO_LIST [ready] + docs/todo/services.md; item 2/9/10 → pbx-artmann TODO_LIST; items 12-14 explicitly NOT harvested (optional/cosmetic — reasons inline); items 1/3/11 covered by the existing flipped row. Point-in-time snapshot — 2026-10-16 04:58 CEST.*
+_§f harvest executed at authoring time: items 4-6(+7,8 folded) → TODO_LIST [ready] + docs/todo/services.md; item 2/9/10 → pbx-artmann TODO_LIST; items 12-14 explicitly NOT harvested (optional/cosmetic — reasons inline); items 1/3/11 covered by the existing flipped row. Point-in-time snapshot — 2026-10-16 04:58 CEST._

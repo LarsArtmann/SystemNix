@@ -58,6 +58,7 @@ _2026-10-23 08:35 CEST · session: user asked "is `~/projects/journal` deployed 
 ## f) NEXT — things to get done (from this session's findings)
 
 **Unblock + ship (this session's mission):**
+
 1. Land the forgejo-runner migration (c.1 shape) in `modules/nixos/services/forgejo.nix`.
 2. Wire crowdsec-setup: TimeoutStartSec + ioTier + deploy.sh provisioner entry (or justified allowUnits) in `crowdsec.nix`.
 3. `nix flake check --no-build --keep-going` → green.

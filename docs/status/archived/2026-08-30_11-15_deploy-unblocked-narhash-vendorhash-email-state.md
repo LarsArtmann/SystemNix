@@ -27,11 +27,11 @@ Four stacked blockers were found and fixed in sequence. Two of my own mistakes w
 ## c) NOT STARTED
 
 1. **Structural §10 fix** — my exclusion is a hardcode; the root defect is that the extractor loses URL context (any `pat()` on a non-`/metrics` URL with a lowercase word will false-positive again). URL-aware extraction not implemented. **→ docs/todo/pipeline.md Structural §10 URL-aware extraction row**
-~~2. **KNOWN_NEW_METRICS retirement** — I SAW `system_dnsblockd_metrics_fresh` pass as ✓ PRESENT in §10 while still sitting in the allowlist (direct evidence it's stale) and did not remove it. `bank_sync_*` entries remain legitimately blocked on the first post-DAS deploy.~~ done at `KNOWN_NEW_METRICS self-cleaning; scripts/pre-deploy-check.sh:712-741`
-3. **Tests for the two script fixes** — no regression test added for the guard prefix comparison, none for the JSON-field pattern class (`tests/test-gatus-patterns.nix` covers escaping traps, not this). **→ docs/todo/pipeline.md §10 row (regression tests half)**
-~~4. **Individual triage of the 5 failed units** — I classified them as a group (see d3).~~ **Won't implement — one-shot triage; window passed.**
-~~5. **InboxClean sync.enable state check** — `/health` shows BOTH gmail accounts `connected`; per AGENTS.md the sync flip may or may not have happened. Not checked.~~ done — InboxClean re-consent landed 2026-10-04; docs/todo/services.md InboxClean row
-~~6. **cv-scan first tick / funnel freshness observation** — this deploy carried 5d88b4ab (6h scan timer, freshness check) live for the first time; nobody has watched the first tick yet.~~ **Won't implement — cv-scan watch; window passed (hardening continued 2026-10-17).**
+   ~~2. **KNOWN_NEW_METRICS retirement** — I SAW `system_dnsblockd_metrics_fresh` pass as ✓ PRESENT in §10 while still sitting in the allowlist (direct evidence it's stale) and did not remove it. `bank_sync_*` entries remain legitimately blocked on the first post-DAS deploy.~~ done at `KNOWN_NEW_METRICS self-cleaning; scripts/pre-deploy-check.sh:712-741`
+2. **Tests for the two script fixes** — no regression test added for the guard prefix comparison, none for the JSON-field pattern class (`tests/test-gatus-patterns.nix` covers escaping traps, not this). **→ docs/todo/pipeline.md §10 row (regression tests half)**
+   ~~4. **Individual triage of the 5 failed units** — I classified them as a group (see d3).~~ **Won't implement — one-shot triage; window passed.**
+   ~~5. **InboxClean sync.enable state check** — `/health` shows BOTH gmail accounts `connected`; per AGENTS.md the sync flip may or may not have happened. Not checked.~~ done — InboxClean re-consent landed 2026-10-04; docs/todo/services.md InboxClean row
+   ~~6. **cv-scan first tick / funnel freshness observation** — this deploy carried 5d88b4ab (6h scan timer, freshness check) live for the first time; nobody has watched the first tick yet.~~ **Won't implement — cv-scan watch; window passed (hardening continued 2026-10-17).**
 
 ## d) TOTALLY FUCKED UP!
 

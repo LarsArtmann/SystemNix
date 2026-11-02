@@ -48,6 +48,7 @@
 Carried (queue + libraries, see 19-01 §f): calm-box post-deploy re-run; first-night ladder verify (fires 23:10); CV push→float→shim-drop; crush-daily fix→push→float; §18 sanity redesign; node-exporter journal rate; ~/tmp prepare (owner-gated); wevisone ruling (owner); QLC baseline watch; D6 boot proof; §11 FOD widening; float-register build leg; btrbk-forgejo stray heal; failed-units batch triage; daemon-git-death watch.
 
 NEW:
+
 1. [ready] Decompose `/var/lib/monitor365-server` 110 G (du 2 days ago was 39 G): DB vs WAL vs CHECKPOINT/reflink backup chain vs corpses; separate apparent (du) from real (extents) — if the reflink backups dominate apparent, that's by design; if corpses, that's the old partial-backup class again.
 2. [ready] Measure `~/.cache` and `~/tmp` for real (background per-child throttled walk) — close the root-ledger holes.
 3. [ready] Delete test-residue subvols `.rescue/zz-test-delete` + `zz-test-snap` (owner-visibility trivial) and the empty `@home` (ID 257; 10-26 already named it).

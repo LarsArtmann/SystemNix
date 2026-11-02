@@ -17,17 +17,17 @@ The session also exposed a **monitoring blind spot**: `bank_sync_sca_approval_pe
 
 ## Timeline (all times CEST unless marked Z)
 
-| When | What |
-| --- | --- |
-| 2026-09-30 | SCA re-armed (90-day class); OTP undeliverable — Wise held a **wrong phone number** (terminal root cause found 2026-10-07 session) |
-| 2026-10-08 18:19Z | Last known statement-backed window boundary (`from:` in today's error context) |
-| 2026-10-09 20:19:21 | Last healthy-degraded sync cycle (transfers fallback OK, `approval_token_issued=false`, PID 501752) |
-| 2026-10-09 20:30:59 | Clean systemd restart of bank-sync (the user's phone-change window) |
-| 2026-10-09 20:31:23 | **First `bank.empty_sca_token`** — first sync after restart, all balances, new PID 1598206 |
-| 2026-10-12/13 | (Adjacent, pre-session) go-cqrs-lite re-pin crash-loop class; rollback deployed 10-13 14:53 |
-| 2026-10-14 02:00 | Durable `?rev=` pin of bank-sync input at `67dd64526` deployed (system-881) — daemon correct since |
-| 2026-10-14 13:29 | User's dashboard attempts: "sca panel probe" + "sca send probe" both ERROR `empty_sca_token` (request_ids `6acf677f…`/`6acf6781…`) |
-| 2026-10-14 13:35–14:45 | This session: full log read, source verification, live /metrics, runbook + queue updates, commit `2900aeda` |
+| When                   | What                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-30             | SCA re-armed (90-day class); OTP undeliverable — Wise held a **wrong phone number** (terminal root cause found 2026-10-07 session) |
+| 2026-10-08 18:19Z      | Last known statement-backed window boundary (`from:` in today's error context)                                                     |
+| 2026-10-09 20:19:21    | Last healthy-degraded sync cycle (transfers fallback OK, `approval_token_issued=false`, PID 501752)                                |
+| 2026-10-09 20:30:59    | Clean systemd restart of bank-sync (the user's phone-change window)                                                                |
+| 2026-10-09 20:31:23    | **First `bank.empty_sca_token`** — first sync after restart, all balances, new PID 1598206                                         |
+| 2026-10-12/13          | (Adjacent, pre-session) go-cqrs-lite re-pin crash-loop class; rollback deployed 10-13 14:53                                        |
+| 2026-10-14 02:00       | Durable `?rev=` pin of bank-sync input at `67dd64526` deployed (system-881) — daemon correct since                                 |
+| 2026-10-14 13:29       | User's dashboard attempts: "sca panel probe" + "sca send probe" both ERROR `empty_sca_token` (request_ids `6acf677f…`/`6acf6781…`) |
+| 2026-10-14 13:35–14:45 | This session: full log read, source verification, live /metrics, runbook + queue updates, commit `2900aeda`                        |
 
 ---
 
@@ -73,7 +73,7 @@ The session also exposed a **monitoring blind spot**: `bank_sync_sca_approval_pe
 
 ## d) TOTALLY FUCKED UP (radical honesty)
 
-1. **My first edit to `docs/services/bank-sync.md` clobbered the timestamps bullet.** I passed the *header portion* of an existing bullet as `old_string` and my new bullet as `new_string` — the replacement destroyed the original bullet's opening (its tail "— Wise demands …" dangled after my text on one line). Caught by a `sed` inspection immediately after (the tool result looked wrong), repaired in the next edit, final state re-verified (both bullets intact, tail line verified via `rev|cut`). **Lesson:** for prose bullets, `old_string` must include the ENTIRE bullet or a fully unique anchor, and `new_string` must re-include everything replaced. A reviewer-free path to this bug is one more unchecked "looks fine" away — the repair was verified, but only because I inspected.
+1. **My first edit to `docs/services/bank-sync.md` clobbered the timestamps bullet.** I passed the _header portion_ of an existing bullet as `old_string` and my new bullet as `new_string` — the replacement destroyed the original bullet's opening (its tail "— Wise demands …" dangled after my text on one line). Caught by a `sed` inspection immediately after (the tool result looked wrong), repaired in the next edit, final state re-verified (both bullets intact, tail line verified via `rev|cut`). **Lesson:** for prose bullets, `old_string` must include the ENTIRE bullet or a fully unique anchor, and `new_string` must re-include everything replaced. A reviewer-free path to this bug is one more unchecked "looks fine" away — the repair was verified, but only because I inspected.
 2. **The pre-commit hook's nixpkgs guard lies when nix is unavailable/gated.** My amend failed with "nixpkgs flake.lock regression … The global Nix registry rewrote nixpkgs to a tarball" — **false**: the tree's lock is fine (`original.type: github`, verified by direct JSON read). Real cause: the nix **heavy gate** (freeze-storm protection, active from a prior session's trip) refused the guard's `nix eval`, the hook swallows stderr (`2>/dev/null`), empty output → `"unknown"` → wrong error message pointing me at "fix flake.lock". I nearly went lock-hunting for a non-existent regression. Resolved correctly (diagnosed the gate via `/proc/pressure/io`, used the documented `NIX_HEAVY_GATE_FORCE=1` escape with written justification — docs-only amend, io avg10 52% < the 80% storm line, no build in the hook path) — but the hook's failure mode is a bug: **a gated/unavailable nix must not be reported as a lock regression.** Self-harvested (c.3).
 3. **The sentinel blind spot (system-level, pre-existing, now diagnosed + queued):** a **total 5-day statement outage** kept `bank_sync_sca_approval_pending` at **0** and the SCA Gatus check **GREEN** the whole time. The gauge's contract ("latest cycle left any balance blocked on a Wise SCA approval") only covers ApprovalBlocked verdicts; the token-less class errors out instead, and the only signal was `sync_sustained_failure` — 33h late and non-specific. This is exactly the phantom-green class the 2026-10-07 sentinel work was built to kill, surviving one layer deeper.
 4. **The causal attribution has a hole I must name:** the phone-change → no-OTT chain is inferred from **timing** (last healthy-degraded sync 20:19:21, restart 20:30:59, first failure 20:31:23, user's own statement that they changed the number) plus the code-path analysis — **not** from the verdict header value, which was never observed (d/b.4). If the number was actually changed at a different time than the restart window, the attribution weakens (though the no-OTT state itself is fact, and the re-arm remedy applies regardless).
@@ -92,38 +92,38 @@ The session also exposed a **monitoring blind spot**: `bank_sync_sca_approval_pe
 
 Legend: **Status** = `already-queued` (row exists — do NOT double-queue), `new→harvested` (queued during this report's authoring), `roadmap-fuel` (deliberately not queued — needs refinement/owner appetite), `user-gated`.
 
-| # | Task | Impact | Effort | Category | Status |
-| --- | --- | --- | --- | --- | --- |
-| 1 | Owner: wise.com re-arm (web statement challenge) → dashboard Approve now → OTP → auto-sync | Critical | S | Ops | user-gated (library row owns the 5 steps) |
-| 2 | Owner: run the degraded-banner backfill after approval (restores 10-09→approval deposits) | Critical | S | Ops | user-gated |
-| 3 | Owner: one bank-sync restart after approval (clears restart-cumulative `bank_sync_sync_errors_total` for the deploy smoke) | High | S | Ops | user-gated |
-| 4 | Agent: post-approval verify battery — sentinel 0, streak reset, both Gatus checks green, backfill rows landed, FX totals render | Critical | S–M | Quality | waits on #1–3 (c.1) |
-| 5 | Implement verdict-only-403 → blocked-unapprovable verdict (sets pending gauge; degraded-not-failing where safe; surface verdict value) on bank-sync master | High | M | Bug | already-queued (today, services.md + queue) |
-| 6 | Deploy chain for #5 — rides the go-cqrs-lite stream-key re-bump unblock (`67dd64526` pin lift) | High | L | Bug | already-queued (upstream.md) |
-| 7 | Pre-commit nixpkgs fast-guard: distinguish nix-failure (gate/unavailable) from lock regression; print stderr tail; SKIP not FAIL on gate refusal | Medium | S | Quality | **new→harvested** (pipeline.md + queue, this report) |
-| 8 | Sweep ALL pre-commit legs for stderr-swallowed infra refusals (the d.2 class, not just the nixpkgs guard) | Medium | M | Quality | **new→harvested** (same row as #7) |
-| 9 | AGENTS.md agent-probe note: service envs are NOT agent-readable; /metrics + journal only; secret-bearing probes are owner-run | Low | S | Documentation | **new→harvested** (pipeline.md + queue, this report) |
-| 10 | Verify live Gatus state for the 4 bank-sync checks (status API OIDC-gated; recorded-verdict pattern) | Medium | S | Quality | already-queued (row 376) |
-| 11 | Surface `x-2fa-approval-result` (non-secret) in SCA rejection contexts so the class is self-diagnosing from journals | Medium | S | Feature | already-queued (folded into #5 shape (c)) |
-| 12 | Decide: separate `bank_sync_sca_blocked_unapprovable` gauge vs widened pending-gauge contract (design call with #5) | Medium | M | Feature | roadmap-fuel (design successor of #5) |
-| 13 | Resolve the 105 unharvested §f status reports (docs-health HARVEST sweep) | Medium | L | Cleanup | noticed this session; pre-existing backlog |
-| 14 | Clean the 5 leaked `bank-sync demo` test instances (random ports, /tmp go-build exes) | Low | S | Cleanup | already-queued (services.md) |
-| 15 | Record the full incident narrative (dates, obfuscated-number evidence, resolution) in bank-sync.md once resolved | Low | S | Documentation | already-queued (waits on #1) |
-| 16 | Upstream bank-sync: pre-send obfuscated phone hint on the approval panel (would have cut the Oct-7 session to one turn) | Medium | M | Feature | already-queued (blocked:push) |
-| 17 | Fold the python-urllib `/metrics` probe recipe into the monitoring runbook durably | Low | S | Documentation | already-queued (monitoring.md row) |
-| 18 | Window `bank_sync_sync_errors_total` by restart epoch or rate (restart-cumulative counter keeps deploy smoke red post-approval) | Medium | M | Quality | already-queued (services.md) |
-| 19 | bank-sync-paperless post-deploy smoke probe (mint + archival oneshots) | Medium | S | Quality | already-queued (services.md) |
-| 20 | bank-sync→Paperless archival post-deploy verify (Persistent catch-up run) | Medium | S | Verification | already-queued (blocked:deploy) |
-| 21 | Backfill-button UX: the degraded banner was mis-clicked as the approval surface (Oct-7) — separate/relabel the two CTAs | Low | S | Feature | roadmap-fuel (upstream UX) |
-| 22 | `sca status`: default-filtered mode (token line behind an opt-in flag) so non-owner surfaces can run it without OTT-leak risk | Medium | S | Feature | not harvested — CLI contract change needs owner call |
-| 23 | Dashboard probe copy: distinguish "no challenge issued" (unapprovable) from "challenge pending" (approvable) | Medium | S | Feature | roadmap-fuel (pairs with #5/#11) |
-| 24 | Runbook: explicit detection signature for the THIRD class (plain 403 with NO 2FA headers = regional restriction) as its own subsection | Low | S | Documentation | roadmap-fuel (runbook polish) |
-| 25 | Alert enrichment: sustained-failure Discord push could attach the SCA runbook link + the failure-class hint | Low | M | Feature | roadmap-fuel |
-| 26 | go-cqrs-lite stream-key compatibility restoration (unblocks #6 and the whole bank-sync bump chain) | High | L | Bug | already-queued (upstream.md) |
-| 27 | Re-bump rehearsal note: expected preflight exit-65 signature + preflight expectations for the eventual pin lift | Medium | S | Documentation | roadmap-fuel (rides #26) |
-| 28 | Challenge-count observability (618 cumulative challenges noted Oct-7) — a Wise-side anomaly signal | Low | M | Feature | roadmap-fuel |
-| 29 | Verify SSE dashboard repaint under a REAL approval (the repaint claim has never been observed live) | Low | S | Quality | roadmap-fuel (natural part of #4) |
-| 30 | Backfill idempotence check post-approval (run twice; second run must land 0 rows) | Low | S | Quality | roadmap-fuel (natural part of #4) |
+| #  | Task                                                                                                                                                       | Impact   | Effort | Category      | Status                                               |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- | ---------------------------------------------------- |
+| 1  | Owner: wise.com re-arm (web statement challenge) → dashboard Approve now → OTP → auto-sync                                                                 | Critical | S      | Ops           | user-gated (library row owns the 5 steps)            |
+| 2  | Owner: run the degraded-banner backfill after approval (restores 10-09→approval deposits)                                                                  | Critical | S      | Ops           | user-gated                                           |
+| 3  | Owner: one bank-sync restart after approval (clears restart-cumulative `bank_sync_sync_errors_total` for the deploy smoke)                                 | High     | S      | Ops           | user-gated                                           |
+| 4  | Agent: post-approval verify battery — sentinel 0, streak reset, both Gatus checks green, backfill rows landed, FX totals render                            | Critical | S–M    | Quality       | waits on #1–3 (c.1)                                  |
+| 5  | Implement verdict-only-403 → blocked-unapprovable verdict (sets pending gauge; degraded-not-failing where safe; surface verdict value) on bank-sync master | High     | M      | Bug           | already-queued (today, services.md + queue)          |
+| 6  | Deploy chain for #5 — rides the go-cqrs-lite stream-key re-bump unblock (`67dd64526` pin lift)                                                             | High     | L      | Bug           | already-queued (upstream.md)                         |
+| 7  | Pre-commit nixpkgs fast-guard: distinguish nix-failure (gate/unavailable) from lock regression; print stderr tail; SKIP not FAIL on gate refusal           | Medium   | S      | Quality       | **new→harvested** (pipeline.md + queue, this report) |
+| 8  | Sweep ALL pre-commit legs for stderr-swallowed infra refusals (the d.2 class, not just the nixpkgs guard)                                                  | Medium   | M      | Quality       | **new→harvested** (same row as #7)                   |
+| 9  | AGENTS.md agent-probe note: service envs are NOT agent-readable; /metrics + journal only; secret-bearing probes are owner-run                              | Low      | S      | Documentation | **new→harvested** (pipeline.md + queue, this report) |
+| 10 | Verify live Gatus state for the 4 bank-sync checks (status API OIDC-gated; recorded-verdict pattern)                                                       | Medium   | S      | Quality       | already-queued (row 376)                             |
+| 11 | Surface `x-2fa-approval-result` (non-secret) in SCA rejection contexts so the class is self-diagnosing from journals                                       | Medium   | S      | Feature       | already-queued (folded into #5 shape (c))            |
+| 12 | Decide: separate `bank_sync_sca_blocked_unapprovable` gauge vs widened pending-gauge contract (design call with #5)                                        | Medium   | M      | Feature       | roadmap-fuel (design successor of #5)                |
+| 13 | Resolve the 105 unharvested §f status reports (docs-health HARVEST sweep)                                                                                  | Medium   | L      | Cleanup       | noticed this session; pre-existing backlog           |
+| 14 | Clean the 5 leaked `bank-sync demo` test instances (random ports, /tmp go-build exes)                                                                      | Low      | S      | Cleanup       | already-queued (services.md)                         |
+| 15 | Record the full incident narrative (dates, obfuscated-number evidence, resolution) in bank-sync.md once resolved                                           | Low      | S      | Documentation | already-queued (waits on #1)                         |
+| 16 | Upstream bank-sync: pre-send obfuscated phone hint on the approval panel (would have cut the Oct-7 session to one turn)                                    | Medium   | M      | Feature       | already-queued (blocked:push)                        |
+| 17 | Fold the python-urllib `/metrics` probe recipe into the monitoring runbook durably                                                                         | Low      | S      | Documentation | already-queued (monitoring.md row)                   |
+| 18 | Window `bank_sync_sync_errors_total` by restart epoch or rate (restart-cumulative counter keeps deploy smoke red post-approval)                            | Medium   | M      | Quality       | already-queued (services.md)                         |
+| 19 | bank-sync-paperless post-deploy smoke probe (mint + archival oneshots)                                                                                     | Medium   | S      | Quality       | already-queued (services.md)                         |
+| 20 | bank-sync→Paperless archival post-deploy verify (Persistent catch-up run)                                                                                  | Medium   | S      | Verification  | already-queued (blocked:deploy)                      |
+| 21 | Backfill-button UX: the degraded banner was mis-clicked as the approval surface (Oct-7) — separate/relabel the two CTAs                                    | Low      | S      | Feature       | roadmap-fuel (upstream UX)                           |
+| 22 | `sca status`: default-filtered mode (token line behind an opt-in flag) so non-owner surfaces can run it without OTT-leak risk                              | Medium   | S      | Feature       | not harvested — CLI contract change needs owner call |
+| 23 | Dashboard probe copy: distinguish "no challenge issued" (unapprovable) from "challenge pending" (approvable)                                               | Medium   | S      | Feature       | roadmap-fuel (pairs with #5/#11)                     |
+| 24 | Runbook: explicit detection signature for the THIRD class (plain 403 with NO 2FA headers = regional restriction) as its own subsection                     | Low      | S      | Documentation | roadmap-fuel (runbook polish)                        |
+| 25 | Alert enrichment: sustained-failure Discord push could attach the SCA runbook link + the failure-class hint                                                | Low      | M      | Feature       | roadmap-fuel                                         |
+| 26 | go-cqrs-lite stream-key compatibility restoration (unblocks #6 and the whole bank-sync bump chain)                                                         | High     | L      | Bug           | already-queued (upstream.md)                         |
+| 27 | Re-bump rehearsal note: expected preflight exit-65 signature + preflight expectations for the eventual pin lift                                            | Medium   | S      | Documentation | roadmap-fuel (rides #26)                             |
+| 28 | Challenge-count observability (618 cumulative challenges noted Oct-7) — a Wise-side anomaly signal                                                         | Low      | M      | Feature       | roadmap-fuel                                         |
+| 29 | Verify SSE dashboard repaint under a REAL approval (the repaint claim has never been observed live)                                                        | Low      | S      | Quality       | roadmap-fuel (natural part of #4)                    |
+| 30 | Backfill idempotence check post-approval (run twice; second run must land 0 rows)                                                                          | Low      | S      | Quality       | roadmap-fuel (natural part of #4)                    |
 
 **Self-harvest disposition (per the AGENTS.md authoring rule):** items #7, #8, #9 landed in `docs/todo/pipeline.md` + `TODO_LIST.md` during authoring. Deliberately NOT harvested: #12, #21–25, #27–30 (roadmap-fuel: unrefined ideas or natural parts of already-queued work — per harvest anti-patterns), #22 (owner call on CLI contract), #1–3 (user-gated; library row 374 owns them — queue items would mis-dispatch agents).
 

@@ -10,6 +10,7 @@
 ## Self-review answers (the owner's three questions, first)
 
 **What did you forget?**
+
 1. **The CHANGELOG entirely** — zero entries for tonight's user-visible changes (sweep gate live, phantom resolution, go-floor rollback, CI retirement, oauth2-proxy outage fix). Every prior wave got one.
 2. **Cross-repo push-state verification** — I wrote "files in both repos (daemon carries the push)" as evidence for the PapDashboard CI retirement. FALSE: the daemon commits but never pushes (journal-proven for pma; PapDashboard is now **15 commits ahead of origin**, including my ci.yml deletion + AGENTS notes). The retirement is local-only; origin still carries the dead ci.yml.
 3. **Annotating the 00-57 report's §g** — its three questions were answered by execution, but I left the file pointing at open questions with no forward pointer.
@@ -19,6 +20,7 @@
 7. **The post-deploy-check BASELINE mechanism** — exit 3 means "NEW failures vs baseline" twice, and I never looked at where that baseline lives or whether it is current.
 
 **What could you have done better?**
+
 - The first b4 neuter-proof injection was **vacuous** (I prefixed the injected line with `#` — comment immunity swallowed it; both copies went green "confirming" nothing). The A/B control's missing marker caught it, but I wrote the fixture carelessly the first time.
 - **pdg false lead**: my follows-check grep used an unquoted hyphenated attr pattern, wrongly clearing pma; one wasted probe cycle on a theory my own tooling error created.
 - **`ls -t` profile misread** (system-840, a 2026-10-07 leftover, looked like the newest profile) — I nearly misdiagnosed an unanchored deploy from a glob artifact.
@@ -32,29 +34,29 @@
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-| --- | --- | --- |
-| a1 | **b4 neuter-proof EXECUTED** (05-23 b4): copy-based A/B — neutered deadMetrics + injected dead name → check built GREEN (phantom-green proven; the `dotted-phantom-dead` harness leg goes red under neuter); control → FAILED with the exact trap-4 marker | terminal runs, both exits observed |
-| a2 | **discordsync phantom RESOLVED LIVE** — cold CounterVec, never misnamed: counter verified in the running ELF (`.discordsync-wrapped`), 7 handler call sites; one safe empty-body `POST /lookup/immich` materialized the series through exporter → OTel → CH | `metric-exists.sh`: Sum/Cumulative, 1 series |
-| a3 | **Allowlist trimmed + gates re-verified**: sweep **111 live / 10 expected-absent / 0 phantoms** (re-confirmed at session end); `CASES=metricnames` **2/2 PASS** | terminal |
-| a4 | **g1 go-floor root-caused + fixed** — pma's stale `goTarballVersion="1.27.1"` (drop-condition FIRED: nixpkgs go_1_27 = 1.27.2 = floor); pin dropped in pma (`3397f957`, eval-green standalone + via SystemNix `--override-input`); SystemNix interim lock rollback `849573de` (commit `1a5813174`), evo-x2 toplevel eval green | tryEval isolation over all 18 inputs; pipeline.md disposition |
-| a5 | **g3 PapDashboard CI retired (LOCAL TREE)** — ci.yml removed, AGENTS CI section rewritten, daemon-etiquette note (E13.2), probe-before-lock codified SystemNix-side (integration-registry.md), upstream.md row 102 annotated | files in both repos — **push pending, see §b1** |
-| a6 | **E13 closed** (13.1 drop-condition verified landed; 13.2 note; 13.3 verified present; 13.4 prior ☑); plan rows updated; EXECUTING tombstone → EXECUTED done | plan §3 E13 table |
-| a7 | **Foreign fixture unblocked** — drive-ingest gsEval integration co-import (the documented mkIf-guard trap), one line, commit `50f0f7fe4`; then **`nix flake check --no-build --all-systems` = ALL CHECKS PASSED** | check log |
-| a8 | **Battery green at IO-calm** — pre-deploy-check.sh **103 passed / 0 failed** (§11 real FOD builds included) | `~/.cache/pre-deploy-battery.log` |
-| a9 | **Deploy landing verified** — parallel session's lock-held deploy delivered my committed tree; anchor discipline checked: **current-system == system-930 == fe13242, ANCHOR OK** | deploy logs + readlinks |
-| a10 | **oauth2-proxy outage FIXED LIVE** — crash-loop ×44 = `astro preview` dev server (pay-me-website) squatting 4180 in the restart window; found via /proc/net/tcp6 socket-inode scan; targeted kill by exact PID → **/ping 200, unit active** | journal 03:22:01 + live probe |
-| a11 | **Harvest + closeout artifacts** — 2 library rows (flm sudo, pma push/bump), closeout report committed (`cdf9a1078`), final verify (tree clean, anchor, sweep) | git log |
-| a12 | **Report commit + pointer repairs** — the `00-5x` dead pointer fix (`444990bd0`) from the resume step | §a of the 03-26 report |
+| #   | Item                                                                                                                                                                                                                                                                                                                           | Evidence                                                      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| a1  | **b4 neuter-proof EXECUTED** (05-23 b4): copy-based A/B — neutered deadMetrics + injected dead name → check built GREEN (phantom-green proven; the `dotted-phantom-dead` harness leg goes red under neuter); control → FAILED with the exact trap-4 marker                                                                     | terminal runs, both exits observed                            |
+| a2  | **discordsync phantom RESOLVED LIVE** — cold CounterVec, never misnamed: counter verified in the running ELF (`.discordsync-wrapped`), 7 handler call sites; one safe empty-body `POST /lookup/immich` materialized the series through exporter → OTel → CH                                                                    | `metric-exists.sh`: Sum/Cumulative, 1 series                  |
+| a3  | **Allowlist trimmed + gates re-verified**: sweep **111 live / 10 expected-absent / 0 phantoms** (re-confirmed at session end); `CASES=metricnames` **2/2 PASS**                                                                                                                                                                | terminal                                                      |
+| a4  | **g1 go-floor root-caused + fixed** — pma's stale `goTarballVersion="1.27.1"` (drop-condition FIRED: nixpkgs go_1_27 = 1.27.2 = floor); pin dropped in pma (`3397f957`, eval-green standalone + via SystemNix `--override-input`); SystemNix interim lock rollback `849573de` (commit `1a5813174`), evo-x2 toplevel eval green | tryEval isolation over all 18 inputs; pipeline.md disposition |
+| a5  | **g3 PapDashboard CI retired (LOCAL TREE)** — ci.yml removed, AGENTS CI section rewritten, daemon-etiquette note (E13.2), probe-before-lock codified SystemNix-side (integration-registry.md), upstream.md row 102 annotated                                                                                                   | files in both repos — **push pending, see §b1**               |
+| a6  | **E13 closed** (13.1 drop-condition verified landed; 13.2 note; 13.3 verified present; 13.4 prior ☑); plan rows updated; EXECUTING tombstone → EXECUTED done                                                                                                                                                                   | plan §3 E13 table                                             |
+| a7  | **Foreign fixture unblocked** — drive-ingest gsEval integration co-import (the documented mkIf-guard trap), one line, commit `50f0f7fe4`; then **`nix flake check --no-build --all-systems` = ALL CHECKS PASSED**                                                                                                              | check log                                                     |
+| a8  | **Battery green at IO-calm** — pre-deploy-check.sh **103 passed / 0 failed** (§11 real FOD builds included)                                                                                                                                                                                                                    | `~/.cache/pre-deploy-battery.log`                             |
+| a9  | **Deploy landing verified** — parallel session's lock-held deploy delivered my committed tree; anchor discipline checked: **current-system == system-930 == fe13242, ANCHOR OK**                                                                                                                                               | deploy logs + readlinks                                       |
+| a10 | **oauth2-proxy outage FIXED LIVE** — crash-loop ×44 = `astro preview` dev server (pay-me-website) squatting 4180 in the restart window; found via /proc/net/tcp6 socket-inode scan; targeted kill by exact PID → **/ping 200, unit active**                                                                                    | journal 03:22:01 + live probe                                 |
+| a11 | **Harvest + closeout artifacts** — 2 library rows (flm sudo, pma push/bump), closeout report committed (`cdf9a1078`), final verify (tree clean, anchor, sweep)                                                                                                                                                                 | git log                                                       |
+| a12 | **Report commit + pointer repairs** — the `00-5x` dead pointer fix (`444990bd0`) from the resume step                                                                                                                                                                                                                          | §a of the 03-26 report                                        |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State | Missing |
-| --- | --- | --- | --- |
-| b1 | **PapDashboard CI retirement** | Complete in the local tree | **UNPUSHED — 15 commits ahead of origin** (daemon never pushes); my closeout's "daemon carries the push" evidence claim was wrong (§d1) |
-| b2 | **Post-deploy steady state** | Last clean reading: 8 fails (all triaged: 1 fixed by me, 2 foreign-domain, 3 self-healing, 2 owner-gated); oauth2-proxy fix live-verified | The aggregate "7 remaining" was inferred, and the box entered ANOTHER parallel deploy at ~03:5x (mid-transition sample: 15 fails, invalid). Steady state after their wave: UNKNOWN |
-| b3 | **E12 papdashboard VM test** | Still queued (05-23 b2); both IO-calm windows were consumed by the battery + deploy critical path | one IO-calm window |
-| b4 | **monitor365 device reconnect** | Server active post-deploy | device count never re-checked after grace period |
+| #  | Item                            | State                                                                                                                                     | Missing                                                                                                                                                                            |
+| -- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| b1 | **PapDashboard CI retirement**  | Complete in the local tree                                                                                                                | **UNPUSHED — 15 commits ahead of origin** (daemon never pushes); my closeout's "daemon carries the push" evidence claim was wrong (§d1)                                            |
+| b2 | **Post-deploy steady state**    | Last clean reading: 8 fails (all triaged: 1 fixed by me, 2 foreign-domain, 3 self-healing, 2 owner-gated); oauth2-proxy fix live-verified | The aggregate "7 remaining" was inferred, and the box entered ANOTHER parallel deploy at ~03:5x (mid-transition sample: 15 fails, invalid). Steady state after their wave: UNKNOWN |
+| b3 | **E12 papdashboard VM test**    | Still queued (05-23 b2); both IO-calm windows were consumed by the battery + deploy critical path                                         | one IO-calm window                                                                                                                                                                 |
+| b4 | **monitor365 device reconnect** | Server active post-deploy                                                                                                                 | device count never re-checked after grace period                                                                                                                                   |
 
 ## c) NOT STARTED (owner-gated or foreign)
 
@@ -62,17 +64,17 @@
 
 ## d) TOTALLY FUCKED UP (all mine, radical honesty)
 
-| # | What | Severity | Consequence |
-| --- | --- | --- | --- |
-| d1 | **False evidence claim in the closeout**: "files in both repos (daemon carries the push)" — the daemon NEVER pushes (journal-proven on pma the same hour; PapDashboard now 15-ahead including the retirement) | HIGH (a report claim a reviewer would have trusted) | The CI retirement is NOT live on origin; correction = this report + §f harvest row |
-| d2 | **BuildFlow skill never loaded despite `.buildflow.yml`** — I ran manual `nix build`/`flake check`/evals all session in a covered repo without checking what BuildFlow owns | MED (process; harm unverified) | The skill's run/fix/verify contract for covered steps simply didn't apply to tonight's runs |
-| d3 | **Vacuous first neuter-proof injection** (`# EVIL_MUTATION` — comment immunity swallowed it; both copies green) | MED | A verification that tested air; caught only by the A/B control's missing marker |
-| d4 | **"8 → 7 after my fix" claimed without re-measurement** — my own probe-before-claim doctrine, violated in the closeout text; the later re-measure sampled mid-deploy (15) and settled nothing | MED | The steady-state number is currently unknown |
-| d5 | **pdg false lead from my own broken grep** (unquoted hyphenated attr → wrong no-follows list; one probe cycle burned) | LOW | Corrected by the green standalone eval |
-| d6 | **`ls -t` profile misread** (system-840 looked newest) + **fuser "LOCK FREE" misread** (root-held flock invisible) | LOW each | Two near-misdiagnoses (unanchored-deploy theory; deploy-finished theory), both corrected before action |
-| d7 | **Wrapper-vs-ELF strings detour** (`bin/discordsync` is a bash wrapper; "counter absent" briefly live in my notes) | LOW | Corrected by the `unknown_service:.discordsync-wrapped` label |
-| d8 | **CHANGELOG: zero entries** for tonight's wave | LOW-MED | Convention break vs. every prior wave |
-| d9 | **Noticed-and-dropped findings**: monitor365/monitor365-server duplicate textfile metrics (node_exporter gatherer errors, the sanity-journal red); flm socket silent-close mechanism unknown | LOW-MED | Both now harvested (§f) |
+| #  | What                                                                                                                                                                                                          | Severity                                            | Consequence                                                                                            |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| d1 | **False evidence claim in the closeout**: "files in both repos (daemon carries the push)" — the daemon NEVER pushes (journal-proven on pma the same hour; PapDashboard now 15-ahead including the retirement) | HIGH (a report claim a reviewer would have trusted) | The CI retirement is NOT live on origin; correction = this report + §f harvest row                     |
+| d2 | **BuildFlow skill never loaded despite `.buildflow.yml`** — I ran manual `nix build`/`flake check`/evals all session in a covered repo without checking what BuildFlow owns                                   | MED (process; harm unverified)                      | The skill's run/fix/verify contract for covered steps simply didn't apply to tonight's runs            |
+| d3 | **Vacuous first neuter-proof injection** (`# EVIL_MUTATION` — comment immunity swallowed it; both copies green)                                                                                               | MED                                                 | A verification that tested air; caught only by the A/B control's missing marker                        |
+| d4 | **"8 → 7 after my fix" claimed without re-measurement** — my own probe-before-claim doctrine, violated in the closeout text; the later re-measure sampled mid-deploy (15) and settled nothing                 | MED                                                 | The steady-state number is currently unknown                                                           |
+| d5 | **pdg false lead from my own broken grep** (unquoted hyphenated attr → wrong no-follows list; one probe cycle burned)                                                                                         | LOW                                                 | Corrected by the green standalone eval                                                                 |
+| d6 | **`ls -t` profile misread** (system-840 looked newest) + **fuser "LOCK FREE" misread** (root-held flock invisible)                                                                                            | LOW each                                            | Two near-misdiagnoses (unanchored-deploy theory; deploy-finished theory), both corrected before action |
+| d7 | **Wrapper-vs-ELF strings detour** (`bin/discordsync` is a bash wrapper; "counter absent" briefly live in my notes)                                                                                            | LOW                                                 | Corrected by the `unknown_service:.discordsync-wrapped` label                                          |
+| d8 | **CHANGELOG: zero entries** for tonight's wave                                                                                                                                                                | LOW-MED                                             | Convention break vs. every prior wave                                                                  |
+| d9 | **Noticed-and-dropped findings**: monitor365/monitor365-server duplicate textfile metrics (node_exporter gatherer errors, the sanity-journal red); flm socket silent-close mechanism unknown                  | LOW-MED                                             | Both now harvested (§f)                                                                                |
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -87,6 +89,7 @@
 ## f) NEXT THINGS (session-derived, deduped against existing rows; ≈30 — not padded to 50)
 
 **Owner-gated (do/decide):**
+
 1. pma push (`3397f957`) → then the queued re-bump chain (pipeline.md row)
 2. `sudo systemctl start fastflowlm.socket` + verify :52625 (services.md row)
 3. PapDashboard push — 15 commits incl. the CI retirement (queued row added)
@@ -127,4 +130,4 @@
 
 ---
 
-*Report basis: this session's runs and observations only (per instruction). The parallel session's ~03:5x deploy is mid-flight at writing — all "current state" claims above carry that caveat.*
+_Report basis: this session's runs and observations only (per instruction). The parallel session's ~03:5x deploy is mid-flight at writing — all "current state" claims above carry that caveat._

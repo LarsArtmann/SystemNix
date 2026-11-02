@@ -40,25 +40,25 @@
 
 ## e) WHAT WE SHOULD IMPROVE (process, not bugs)
 
-1. **Skill-activation reflex for secrets work is the single highest-value fix**: any `sops`/`secret` verb should trigger the repo skill read BEFORE the first attempt, unconditionally. Consider a hook that warns on any typed `sops ` line when the session hasn't read the skill (mirror of the rg-replace guard).
+1. **Skill-activation reflex for secrets work is the single highest-value fix**: any `sops`/`secret` verb should trigger the repo skill read BEFORE the first attempt, unconditionally. Consider a hook that warns on any typed `sops` line when the session hasn't read the skill (mirror of the rg-replace guard).
 2. **"Can't you use CLI X?!" questions deserve a live capability probe, not a doc answer**: probing `gcloud alpha iam oauth-clients create --help` on the box settled the OAuth-client question in one command; assume CLI surface ≠ console surface and verify per-operation.
 3. **Upstream-patch pattern worked well**: verify feasibility from the SDK/dist source FIRST, patch via dated postPatch with an in-file rollback story, build the package BEFORE asking the owner for credentials. Generalize: every "owner provides key for tool X" step should be preceded by "tool X builds and evals green with a placeholder path".
 4. **Cross-midnight sessions**: keep one report per owner-visible work arc (this is #2), cross-reference, and re-verify earlier rows against overnight parallel churn before closing them (the TODO surfaces had moved; the grep-then-view re-read discipline caught it).
 
 ## f) NEXT TASKS (direct follow-ups 1–4 harvested; 5–10 ideas)
 
-| # | Task | Priority | Size | Type |
-|---|------|----------|------|------|
-| 1 | **Owner pastes 3 values into `openseo.yaml`** (google_client_id/secret from the console client in `openseo-evox2`; synthetic API key under the openrouter_api_key name) — THE blocker | High | XS | Owner |
-| 2 | **Owner creates the OAuth client in console** (consent screen Testing + test user + redirect URI `https://seo.home.lan/api/gsc/oauth/callback` verbatim) | High | S | Owner |
-| 3 | **Flip GSC + AI flags → deploy → post-deploy verify** (anchor discipline, OpenSEO smoke, 4-tile eyeball, rendered-parity proof from last report folds in here) | High | M | Feature |
-| 4 | **SAM live-turn test** (synthetic extension-tolerance, metering survival, process.env proof) — queued `[ready]` in both surfaces | High | S | Verify |
-| 5 | If synthetic 400s the extensions: evaluate a second patch line to strip them when BASE_URL is set (vs. fallback to OpenRouter) | Medium | S | Contingency |
-| 6 | Synthetic quota monitoring (`/quotas` endpoint exists; textfile collector or gatus check) — replaces the OpenRouter-cost metering the app loses | Medium | S | Idea |
-| 7 | GSC token-rotation hazard doc (better_auth_secret rotation orphanizes stored GSC tokens) → docs/agents/secrets.md + openseo.md | Medium | S | Docs |
-| 8 | OpenSEO D1 backup assessment (from last report, still open, owner-gated) | Medium | S | Quality |
-| 9 | DataForSEO account-usage wiring (app ships the script) | Low | S | Idea |
-| 10 | OpenSEO upstream watch row (v0.1.1 bumps; the carried postPatch must be re-based + re-verified on every bump — add that to the row's drop conditions) | Low | S | Watch |
+| #  | Task                                                                                                                                                                                  | Priority | Size | Type        |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- | ----------- |
+| 1  | **Owner pastes 3 values into `openseo.yaml`** (google_client_id/secret from the console client in `openseo-evox2`; synthetic API key under the openrouter_api_key name) — THE blocker | High     | XS   | Owner       |
+| 2  | **Owner creates the OAuth client in console** (consent screen Testing + test user + redirect URI `https://seo.home.lan/api/gsc/oauth/callback` verbatim)                              | High     | S    | Owner       |
+| 3  | **Flip GSC + AI flags → deploy → post-deploy verify** (anchor discipline, OpenSEO smoke, 4-tile eyeball, rendered-parity proof from last report folds in here)                        | High     | M    | Feature     |
+| 4  | **SAM live-turn test** (synthetic extension-tolerance, metering survival, process.env proof) — queued `[ready]` in both surfaces                                                      | High     | S    | Verify      |
+| 5  | If synthetic 400s the extensions: evaluate a second patch line to strip them when BASE_URL is set (vs. fallback to OpenRouter)                                                        | Medium   | S    | Contingency |
+| 6  | Synthetic quota monitoring (`/quotas` endpoint exists; textfile collector or gatus check) — replaces the OpenRouter-cost metering the app loses                                       | Medium   | S    | Idea        |
+| 7  | GSC token-rotation hazard doc (better_auth_secret rotation orphanizes stored GSC tokens) → docs/agents/secrets.md + openseo.md                                                        | Medium   | S    | Docs        |
+| 8  | OpenSEO D1 backup assessment (from last report, still open, owner-gated)                                                                                                              | Medium   | S    | Quality     |
+| 9  | DataForSEO account-usage wiring (app ships the script)                                                                                                                                | Low      | S    | Idea        |
+| 10 | OpenSEO upstream watch row (v0.1.1 bumps; the carried postPatch must be re-based + re-verified on every bump — add that to the row's drop conditions)                                 | Low      | S    | Watch       |
 
 **Not queued:** native-OIDC expansion (ROADMAP), tile ordering machinery (owner-gated), fleet harvest debt (separate docs-health arc).
 
@@ -68,4 +68,5 @@
 2. **Synthetic key: subscription or pay-as-you-go tier?** SAM turns are unbounded chat traffic; if you're on a subscription with rate limits per tier, I should add a conservative gatus/SigNoz watch on SAM error rates post-deploy (and the /quotas collector idea gets a priority bump).
 
 ---
-*Verification evidence: openseo package build `/nix/store/zifxvxqhk778msqzdpv0awfvws96vgg0…` green + patch grep=1 in output; evo-x2 toplevel drv `709rz6hg…` green post-env-change; `gcloud services list --enabled --project=openseo-evox2` shows searchconsole.googleapis.com; sops key census (names only): dataforseo_api_key + better_auth_secret; OpenRouter catalog 467 models / zero synthetic matches (live fetch); synthetic docs fetched 2026-10-25 (OpenAI-compat base URL + syn: aliases).*
+
+_Verification evidence: openseo package build `/nix/store/zifxvxqhk778msqzdpv0awfvws96vgg0…` green + patch grep=1 in output; evo-x2 toplevel drv `709rz6hg…` green post-env-change; `gcloud services list --enabled --project=openseo-evox2` shows searchconsole.googleapis.com; sops key census (names only): dataforseo_api_key + better_auth_secret; OpenRouter catalog 467 models / zero synthetic matches (live fetch); synthetic docs fetched 2026-10-25 (OpenAI-compat base URL + syn: aliases)._

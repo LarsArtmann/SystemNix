@@ -23,7 +23,7 @@ This is the **8th+ fleet-wide vendorHash wave since 2026-10-01** (10-03, 10-05, 
 3. **cv failure correctly differentiated and reproduced first-hand.** `nix build --impure --expr '(builtins.getFlake …).inputs.cv.packages.x86_64-linux.default.goModules'` reproduced the guard: `ERROR: go mod tidy inside the vendor FOD changed committed go.sum semantics beyond the prepared (locally replaced) modules — the committed go.mod/go.sum pair is out of sync (the daemon dep-wave class)`. Consumer-side unfixable; the error text itself prescribes the upstream fix.
 4. **Layered fix plan delivered, upstream-most first:** (1) restore upstream Nix-build CI (deploy-key recipe proven 2026-09-16, `docs/agents/go-ecosystem.md:24-30`); (2) per-repo vendorHash convergence — paste upstream → owner push → re-lock → drop shim (waves 3–8 protocol); (3) cv upstream tidy + go.mod AND go.sum committed together; (4) consumer-side `overrideAttrs { vendorHash = …; }` shims at BOTH surfaces as the NECESSARY bootstrap exception to unblock tonight.
 5. **cv consumer wiring located.** `modules/nixos/services/cv.nix:56-58` — shim `XLIgHM1V…` re-added 2026-10-14 @ `0ad2a6b`; now dead at `0750bd6` (and would stay dead even with a fresh value until upstream tidies).
-6. **TODO_LIST.md:866 verification row — 3 of 4 legs closed:** erraudit shim EXISTS (`lib/lars-packages.nix:104-113`, `LzoxcvFT…` @ 492c233 — now stale at `bb57433`); crm shim EXISTS (`crm.nix` consumer-side, `AtAQS+x0Oj…` @ a410024b — tonight's kith-crm mismatch shows exactly that value as *specified*, i.e. stale at `a0341a0`); cv shim EXISTS (`cv.nix:56`, stale + unfixable consumer-side). Remaining leg: golangci-lint-auto-configure shim (not yet located/verified this session).
+6. **TODO_LIST.md:866 verification row — 3 of 4 legs closed:** erraudit shim EXISTS (`lib/lars-packages.nix:104-113`, `LzoxcvFT…` @ 492c233 — now stale at `bb57433`); crm shim EXISTS (`crm.nix` consumer-side, `AtAQS+x0Oj…` @ a410024b — tonight's kith-crm mismatch shows exactly that value as _specified_, i.e. stale at `a0341a0`); cv shim EXISTS (`cv.nix:56`, stale + unfixable consumer-side). Remaining leg: golangci-lint-auto-configure shim (not yet located/verified this session).
 
 ## b) PARTIALLY DONE
 
@@ -49,12 +49,13 @@ This is the **8th+ fleet-wide vendorHash wave since 2026-10-01** (10-03, 10-05, 
 1. **Deploy blocked, fleet-wide.** 22 stale-vendorHash FODs + 1 cv source-desync FOD; evo-x2 toplevel unbuildable since 02:46. No service changes have shipped tonight.
 2. **cv is consumer-unfixable.** The go-sum guard fires regardless of the pinned hash; upstream must run `go mod tidy` and commit go.mod AND go.sum together, and their Go-test CI must go green first (it is red right now).
 3. **The 2026-10-14 master-tracking flip created same-day-lived shims.** erraudit `LzoxcvFT…` lived ~12h before `bb57433` re-staled it; crm `AtAQS+x0Oj…` likewise. Master-tracking inputs + no upstream CI + consumer-side shims = shims that are stale on arrival of the next float. This inverts the flip's own premise ("shims keep the toplevel green") into a per-float maintenance tax.
-4. **Mechanism note in the 2026-10-14 row is too narrow.** It says erraudit's shim "re-stales on every root-nixpkgs re-vendor wave" — tonight re-staled it via a plain **input rev move** with root nixpkgs static. The re-stale trigger is *any* lock movement of a master-tracking input, which is strictly worse.
+4. **Mechanism note in the 2026-10-14 row is too narrow.** It says erraudit's shim "re-stales on every root-nixpkgs re-vendor wave" — tonight re-staled it via a plain **input rev move** with root nixpkgs static. The re-stale trigger is _any_ lock movement of a master-tracking input, which is strictly worse.
 5. **No gate ran between the overnight floats and the deploy attempt.** The §11-after-lock-wave enforcement gap (`docs/todo/pipeline.md:395` [decision]) has a third live instance: the 13:14 10-07 wave, the 2026-10-14 waves, and tonight's floats all landed with no §11 pass; the deploy build itself was the detector (~3 min of nh work to learn what §11 says in seconds).
 
 ## e) WHAT WE SHOULD IMPROVE
 
 **This session:**
+
 1. I answered "how do we fix" and stopped without running the read-only `--section-11-only` probe — it would have produced the complete 22-pair got-hash table as a durable artifact instead of 11 pairs transcribed from a terminal paste.
 2. I did not read the overnight session reports (`2026-10-15_00-39` geometrikks deploy-storm, `01-07` crowdsec, `02-06` inboxclean) — any of them may name the actor and intent behind the lock floats; attribution is unresolved (g/Q1).
 3. I verified CI on only 2 of ~23 repos before basing the headline recommendation on the CI-less claim.
@@ -70,23 +71,24 @@ This is the **8th+ fleet-wide vendorHash wave since 2026-10-01** (10-03, 10-05, 
 
 ## Got-hash pairs transcribed from the 02:46 enumeration (11 of 22)
 
-| Tool @ locked rev | specified (stale) | got (fresh, canonical paste source) |
-| --- | --- | --- |
-| library-policy @ `e8e3667a` | `sha256-c/8gK23GJIg9+FizUuxHTFfq+Dmes64WjdglqCelFC4=` | `sha256-LNKl6MJs31DOTzZ1ThMIfvJ3+XOgFlS2KhXWKL2ncMY=` |
-| kith-crm @ `a0341a0e` | `sha256-AtAQS+x0OjID6udRi88RD+OYPBT582IKTexudscI0/I=` | `sha256-WOZ2IwqwAaI+Y7EBZyWGRfMPZ13p8rGWaHrMTDOxcE0=` |
-| inboxclean @ `7e23ec6` | `sha256-oZk9R6cnbA3pds0LpNlKbrxZxQvwC5b9IsoBQvilHec=` | `sha256-xekigUvjNAYMr/BdJSGcjzkkgP5CbtOaBzisW78+Zuc=` |
-| meta @ `a00c6dae` | `sha256-G/lV5jG4SGJiMJOHIayWe2WOIdgRICbAEkydciBfe3Y=` | `sha256-RxJS6cpJ3x9VTvcroUeA2gMRNdbcD8xuRTzNUDSGYd0=` |
-| mr-sync @ `f1a13263` | `sha256-P94o4NRlC/nmSzvm55oLHb8wRh2iXT2bPaFg4MA3pWQ=` | `sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=` |
-| overview @ `4b48040` | `sha256-I+gcCYgOz4WeBc69KOODZFIeDoJO2LZHdWARbFkX4hg=` | `sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=` |
-| project-discovery-daemon @ `df32945` | `sha256-6ZDAkBBDARH+s31t8BY/eB3r9eymMcvji4O4IhkEnPA=` | `sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=` |
+| Tool @ locked rev                           | specified (stale)                                     | got (fresh, canonical paste source)                   |
+| ------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| library-policy @ `e8e3667a`                 | `sha256-c/8gK23GJIg9+FizUuxHTFfq+Dmes64WjdglqCelFC4=` | `sha256-LNKl6MJs31DOTzZ1ThMIfvJ3+XOgFlS2KhXWKL2ncMY=` |
+| kith-crm @ `a0341a0e`                       | `sha256-AtAQS+x0OjID6udRi88RD+OYPBT582IKTexudscI0/I=` | `sha256-WOZ2IwqwAaI+Y7EBZyWGRfMPZ13p8rGWaHrMTDOxcE0=` |
+| inboxclean @ `7e23ec6`                      | `sha256-oZk9R6cnbA3pds0LpNlKbrxZxQvwC5b9IsoBQvilHec=` | `sha256-xekigUvjNAYMr/BdJSGcjzkkgP5CbtOaBzisW78+Zuc=` |
+| meta @ `a00c6dae`                           | `sha256-G/lV5jG4SGJiMJOHIayWe2WOIdgRICbAEkydciBfe3Y=` | `sha256-RxJS6cpJ3x9VTvcroUeA2gMRNdbcD8xuRTzNUDSGYd0=` |
+| mr-sync @ `f1a13263`                        | `sha256-P94o4NRlC/nmSzvm55oLHb8wRh2iXT2bPaFg4MA3pWQ=` | `sha256-cFy4AGocSu4kSWQZSjkcmGA8ZpNbm+QamGaq8n5zyis=` |
+| overview @ `4b48040`                        | `sha256-I+gcCYgOz4WeBc69KOODZFIeDoJO2LZHdWARbFkX4hg=` | `sha256-NXdLbWt+UbnP2boe/1sE1LR1qIg/EMHXBtPFZgLAoJk=` |
+| project-discovery-daemon @ `df32945`        | `sha256-6ZDAkBBDARH+s31t8BY/eB3r9eymMcvji4O4IhkEnPA=` | `sha256-nNKXDH5NoVlkjJMQbYICImrthGVxMvZybQgf5QcJBkY=` |
 | projects-management-automation @ `3149585c` | `sha256-uS4pKh4PBIkhhud7SwJCOt1j9R9OHa9eLyhy8nRr+sg=` | `sha256-lPN1fqTDp3jxmThsmdXIlbFpiM10h6qK1ksUYE1HvY8=` |
-| samber-linter @ `1ab13330` | `sha256-wH3k7WiK5HPzpY8IQlF/aw9l0nVCkSWSAMwCHudM4PY=` | `sha256-79YZ0u7C+7oFhZS4YTMJzi3qroanbYTYbOkA2oDiKqY=` |
-| project-dependency-graph @ `5315ae0a` | `sha256-ADzN0+X0UmHTPTXMXdQNYXxArU4IR1i0vh5yLpR8CN4=` | `sha256-lSE3snyu9xFnSekT4pBX23qaKeI22GI+R8rQzEFC3Bw=` |
-| papdashboard @ `c8d0cf92` | `sha256-pg/a63hgLN2X6akLO9DLMVGaqSpGuXirBVq0BCaCbdc=` | `sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=` |
+| samber-linter @ `1ab13330`                  | `sha256-wH3k7WiK5HPzpY8IQlF/aw9l0nVCkSWSAMwCHudM4PY=` | `sha256-79YZ0u7C+7oFhZS4YTMJzi3qroanbYTYbOkA2oDiKqY=` |
+| project-dependency-graph @ `5315ae0a`       | `sha256-ADzN0+X0UmHTPTXMXdQNYXxArU4IR1i0vh5yLpR8CN4=` | `sha256-lSE3snyu9xFnSekT4pBX23qaKeI22GI+R8rQzEFC3Bw=` |
+| papdashboard @ `c8d0cf92`                   | `sha256-pg/a63hgLN2X6akLO9DLMVGaqSpGuXirBVq0BCaCbdc=` | `sha256-CzxGeRncao0r7hc6mbzsAvpjs8WlBCXFl82KpsVP0NU=` |
 
 **Also failing, got-hashes NOT yet transcribed (pull from the full nh log or §11):** health-hub `93d13fd`, discordsync `cac57aa`, crush-daily `bc765f85`, go-structure-linter `bfb7518`, golangci-lint-auto-configure `104b54e`, file-and-image-renamer `21a0ef5`, go-humanize-linter `d24bd274`, go-auto-upgrade `93cb7cd`, erraudit `bb57433`, buildflow `d9f63e8`, branching-flow `0.6.7`.
 
 **cv @ `0750bd6` — NOT a hash mismatch.** Guard failure, first-hand reproduced:
+
 ```
 ERROR: go mod tidy inside the vendor FOD changed committed go.sum
 semantics beyond the prepared (locally replaced) modules — the
@@ -102,6 +104,7 @@ together, then re-pin vendorHash (nix run .#refresh-vendor-hash).
 Tags: **[NEW]** born this session · **[QUEUED]** already queued, spotted/updated this session (location cited) · ownership tags per queue convention.
 
 **Deploy-unblock path (do first, in order):**
+
 1. [NEW] [ready] Pull the 11 missing got-hashes (full nh log or `--section-11-only`) into this table.
 2. [NEW] [ready] Two-surface sweep for all 23 tools: `rg "inputs\.<tool>\.packages" modules/ platforms/ systems/` (go-ecosystem.md:20 protocol).
 3. [NEW] [ready] Shim flakePkg surfaces in `lib/lars-packages.nix` — `overrideAttrs { vendorHash = …; }` attrset form ONLY, each comment citing the first-hand enumeration log (pipeline.md:479 makes this mandatory soon).
@@ -171,14 +174,14 @@ Tags: **[NEW]** born this session · **[QUEUED]** already queued, spotted/update
 
 ## Self-harvest record (AGENTS.md mandate)
 
-| §f item | Harvested at authoring time |
-| --- | --- |
-| 17 (CI-restoration sweep) | ✅ NEW row in `docs/todo/upstream.md` + `TODO_LIST.md` one-liner |
-| 13/50 (erraudit re-stale) | ✅ UPDATE appended to `upstream.md:13` row |
-| 12 (cv guard instance) | ✅ UPDATE appended to `upstream.md:140` CV row |
+| §f item                      | Harvested at authoring time                                                                                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 17 (CI-restoration sweep)    | ✅ NEW row in `docs/todo/upstream.md` + `TODO_LIST.md` one-liner                                                                                                        |
+| 13/50 (erraudit re-stale)    | ✅ UPDATE appended to `upstream.md:13` row                                                                                                                              |
+| 12 (cv guard instance)       | ✅ UPDATE appended to `upstream.md:140` CV row                                                                                                                          |
 | 1–8, 10–11 (execution steps) | Deliberately not queued — they ARE the immediate next actions awaiting your g/Q1–Q3 rulings; queueing an offered-not-approved action would front-run the owner decision |
-| 19 (tripwire mechanization) | Deliberately not queued as new — [decision] already live at `pipeline.md:395`; tonight cited there as third instance is enough until you rule |
-| 28–50 | Already queued at cited locations — no drift edits needed |
+| 19 (tripwire mechanization)  | Deliberately not queued as new — [decision] already live at `pipeline.md:395`; tonight cited there as third instance is enough until you rule                           |
+| 28–50                        | Already queued at cited locations — no drift edits needed                                                                                                               |
 
 ## Verification appendix (commands run this session)
 

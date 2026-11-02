@@ -5,13 +5,13 @@
 
 ## a. Shipped
 
-| # | Artifact | Evidence |
-|---|----------|----------|
-| a1 | `modules/nixos/services/drive-paperless.nix` — new module: hourly Persistent oneshot, scans google-sync mirror defaults 1:1, document-extension filter, DRF-API upload with atomic metadata, journal idempotence, batch cap, fail-loud + freshness row | isolated nixosSystem evals green; all fixture legs green |
-| a2 | `scripts/test-drive-paperless.sh` + `checks.x86_64-linux.drive-ingest-fixture` (flake/parts/checks/fixtures-drive-ingest.nix, imported in flake.nix) — 6 legs + eval pins | built + ran green (standalone replica; see §d for why not via `.#checks`) |
-| a3 | `configuration.nix` — dormant coupled block: `google-sync.enable = false; drive-paperless.enable = config.services.google-sync.enable;` | one-flip go-live |
-| a4 | Runbooks: google-sync.md ingest section (semantics, gotchas, monitoring), paperless.md incoming-import section | docs committed |
-| a5 | TODO harvest: services.md pre-work row CLOSED (all 4 items done), go-live row (blocked:user), VM-test row (ready); TODO_LIST queue: 3 rows; CHANGELOG entry | §f self-harvest below |
+| #  | Artifact                                                                                                                                                                                                                                               | Evidence                                                                  |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| a1 | `modules/nixos/services/drive-paperless.nix` — new module: hourly Persistent oneshot, scans google-sync mirror defaults 1:1, document-extension filter, DRF-API upload with atomic metadata, journal idempotence, batch cap, fail-loud + freshness row | isolated nixosSystem evals green; all fixture legs green                  |
+| a2 | `scripts/test-drive-paperless.sh` + `checks.x86_64-linux.drive-ingest-fixture` (flake/parts/checks/fixtures-drive-ingest.nix, imported in flake.nix) — 6 legs + eval pins                                                                              | built + ran green (standalone replica; see §d for why not via `.#checks`) |
+| a3 | `configuration.nix` — dormant coupled block: `google-sync.enable = false; drive-paperless.enable = config.services.google-sync.enable;`                                                                                                                | one-flip go-live                                                          |
+| a4 | Runbooks: google-sync.md ingest section (semantics, gotchas, monitoring), paperless.md incoming-import section                                                                                                                                         | docs committed                                                            |
+| a5 | TODO harvest: services.md pre-work row CLOSED (all 4 items done), go-live row (blocked:user), VM-test row (ready); TODO_LIST queue: 3 rows; CHANGELOG entry                                                                                            | §f self-harvest below                                                     |
 
 ## b. Design decisions (READ → RESEARCH → REFLECT trail)
 
@@ -55,5 +55,5 @@
 ## g. Session-discipline notes
 
 - Daemon heuristic commits `a454aa34e` + `2cbde1b6a` swept this session's in-flight files; **not amended** — 2cbde1b6a also carries a foreign deletion (`scripts/metric-sweep-expected-absent.txt`, metricnames session) and amending would absorb it. Pre-commit filetype legs may have been bypassed for the .sh files → shellcheck re-run manually (clean).
-- The `nix fmt` canonicalization touched 6 foreign scripts (metric-*, negative-test-lints, plan-marker, test-hermes-*) — formatter output left in place per the AGENTS.md churn doctrine.
+- The `nix fmt` canonicalization touched 6 foreign scripts (metric-_, negative-test-lints, plan-marker, test-hermes-_) — formatter output left in place per the AGENTS.md churn doctrine.
 - No secrets, no deploys, no remote pushes. Throwaway eval/fixture artifacts under `~/.cache/drive-paperless-dev/` (not /tmp — volatility rule).
