@@ -34,6 +34,10 @@
 # BEP_CH_TAIL bounds the last-N bodies (default 20). Fail-soft: a dark,
 # failed, or skipped pipeline is evidence CONTEXT (never a pull failure)
 # and always carries the M22 not-evidence-of-absence caveat.
+#
+# Each pull first runs scripts/boot-evidence-scratch-gc.sh (quiet,
+# fail-soft) to reclaim scratch leaked by prior killed sessions —
+# age+holder-gated, so a concurrent pull's fresh scratch is never touched.
 set -euo pipefail
 
 REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
