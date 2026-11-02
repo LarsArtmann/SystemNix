@@ -11,6 +11,8 @@
 
 The wave-fix work is complete and self-harvested; the only live gap remains the pressure-gated deploy; this continuation's NEW own-goals are two quote-scrutiny slips in my closing message (a lines-vs-reports count conflation and a misattributed baseline time) — both caught while re-checking myself for this report.
 
+> **CORRECTION (2026-11-02 05:45): every bank-sync claim in this report (§b2, §c8, §g1) is WRONG.** The "journal/snapshot divergence" was the unit's 5-min TimeoutStartSec killing the startup preflight mid-COUNT under deploy-battery contention — `context canceled` wrapped into the divergence code's STATIC remediation template. NO divergence exists; the daemon never needed stopping; migrate-journal was never needed; doctor is all-green and the import re-ran green in <1s. The owner question in §g1 is MOOT. Full re-triage + fixes: **docs/status/2026-11-02_05-45_bank-sync-divergence-was-a-timeout-mislabel-re-triage.md**.
+
 ## a) FULLY DONE (continuation work since v1)
 
 1. **Status report v1 written** — `docs/status/2026-11-02_03-40_…` (116 lines, a–g complete, self-harvest section executed inline).
