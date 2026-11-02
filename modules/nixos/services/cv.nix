@@ -481,16 +481,17 @@
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
             logging.format = "json";
-            # DEPLOY-ORDER (CV 2026-10-14 provider-neutral wave): the chat/
-            # voice backend renamed groq.* → openaicompat.* (env
-            # GROQ_API_KEY → OPENAICOMPAT_API_KEY). Production Load ignores
-            # unknown sections (strict decode is test-only), so a mistimed
-            # key never breaks boot — it is silently INERT: the flip must
-            # ride the flake.lock `cv` bump in ONE commit — settings
-            # `openaicompat.enabled = false` (chat/voice is unconsumed —
-            # kills the permanent /health ChatService warn with zero keys)
-            # — otherwise the old binary ignores the new key and the warn
-            # survives the deploy. Delete this comment with the flip.
+            # openaicompat disabled 2026-11-02 (the 2026-10-14 DEPLOY-ORDER
+            # flip, finally ridden): chat/voice is unconsumed and the section
+            # has zero keys — with enabled=true the deployed ChatService
+            # health row warned forever ("enabled but api_key is empty").
+            # Disabled is a configured state (openaicompat HealthCheck: nil
+            # when !Enabled), so the row disappears honestly. The FLIP-TIMING
+            # constraint is satisfied: the old-binary-ignores-the-section
+            # hazard is gone — the locked cv rev (e168e6d, deployed) parses
+            # openaicompat (the live warn names it). Re-enable ONLY together
+            # with OPENAICOMPAT_API_KEY in the cv-env sops template.
+            openaicompat.enabled = false;
             # Absolute state-dir path: the default (data/graphrag.sqlite) is
             # CWD-relative, which happens to resolve correctly today but only
             # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can
@@ -959,6 +960,68 @@
             OnCalendar = "*-*-* 00/6:23:00";
             Persistent = true;
             Unit = "cv-scan.service";
+          };
+        };
+
+        # Agent-brain pass (CV prepared diff, docs/operations/cv-agent-timer.md,
+        # deployed 2026-11-02 with CV_AGENT_API_KEY): review findings +
+        # conditional self-learning distill, daily. Advisory-only by
+        # construction (the agent never sends and never writes the funnel
+        # store; the human approval gate is untouched). 503 = the brain is
+        # dark again (CV_AGENT_API_KEY missing/rotated — warn, not fail: the
+        # enable-window shape); 409 = a pass or manual mission is already in
+        # flight (fine); 404 = the deployed server predates the route →
+        # flake-input bump needed (fail).
+        systemd.services.cv-agent = {
+          description = "CV agent brain pass (review + self-learning, HTTP)";
+          after = [ "cv-server.service" ];
+          wants = [ "cv-server.service" ];
+          inherit onFailure;
+          startLimitBurst = 2;
+          startLimitIntervalSec = 600;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              # Same Type=simple boot-race as cv-scan (2026-10-17 lesson:
+              # after/wants alone cannot close the ~15s bind gap; the
+              # 04:41 Persistent catch-up after a 04:40 boot would hit it).
+              # Bounded fail-open wait — if cv-server is genuinely down the
+              # curl below fails loudly, which is the unit's job.
+              ExecStartPre = "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 60)); until (exec 3<>\"/dev/tcp/127.0.0.1/${toString cfg.port}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"cv-agent: cv-server 127.0.0.1:${toString cfg.port} not reachable within 60s - proceeding (curl will fail loudly if it is really down)\" >&2; exit 0; fi; sleep 1; done'";
+              TimeoutStartSec = 180;
+              # Same sops template the server reads — the systemd manager
+              # injects it, so the hardened sandbox never touches the
+              # secret file itself.
+              EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [
+                cfg.environmentFile
+              ];
+              ExecStart = pkgs.writeShellScript "cv-agent-pass" ''
+                set -euo pipefail
+                base="http://127.0.0.1:${toString cfg.port}"
+                key="''${CV_API_KEY:?CV_API_KEY missing — check the cv-env sops template}"
+                code="$(${lib.getExe pkgs.curl} -sS -o /dev/null -w '%{http_code}' -X POST \
+                  -H "X-API-Key: $key" "$base/api/agent/pass")"
+                case "$code" in
+                  200) echo "cv-agent: pass started (findings land in /api/agent/status)" ;;
+                  409) echo "cv-agent: a pass is already in flight (ok)" ;;
+                  503) echo "cv-agent: 503 (agent.api_key not set — CV_AGENT_API_KEY missing from cv-env; warn, not fail)" >&2 ;;
+                  *) echo "cv-agent: $code (unexpected — 404 means the server predates /api/agent/pass: bump the flake input)" >&2; exit 1 ;;
+                esac
+              '';
+            }
+            (harden { })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.cv-agent = {
+          description = "CV agent brain pass (daily, :41 stagger off cv-scan)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 04:41:00";
+            Persistent = true;
+            Unit = "cv-agent.service";
           };
         };
 
