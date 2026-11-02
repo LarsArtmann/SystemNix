@@ -331,6 +331,21 @@
       url = "github:LarsArtmann/offline-banner?ref=refs/heads/master";
     };
 
+    # quotaboard — AI coding-plan quota dashboard (Z.ai GLM + Synthetic):
+    # web UI + JSON API + DankMaterialShell bar widget (dms-plugin/).
+    # Native-since-inception Forgejo-primary repo (2026-11-02, media-atlas
+    # precedent): created PRIVATE via SSH push-to-create on the local
+    # Forgejo (canonical), GitHub twin created PRIVATE for the push mirror.
+    # Consumed as a HOME module ONLY (quotaboard.homeModules.quotaboard):
+    # user systemd service (services.quotaboard) + DMS bar widget via
+    # programs.dank-material-shell — wired in desktop/quickshell.nix.
+    # PRIVATE repo → git+ssh URL (cv/crm pattern). All its Go deps are
+    # PUBLIC (go proxy), so its FODs need no private-repo plumbing; the
+    # nixpkgs follows keep the lock dedup honest.
+    quotaboard = {
+      url = "git+ssh://git@github.com/LarsArtmann/quotaboard?ref=refs/heads/master";
+    };
+
     # Treefmt formatter with auto-discovery for nix fmt
     treefmt-full-flake = {
       url = "github:LarsArtmann/treefmt-full-flake";
@@ -1021,6 +1036,8 @@
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     go-nix-helpers.inputs.nixpkgs.follows = "nixpkgs";
+    quotaboard.inputs.nixpkgs.follows = "nixpkgs";
+    quotaboard.inputs.treefmt-nix.follows = "treefmt-nix";
     go-structure-linter.inputs.flake-parts.follows = "flake-parts";
     go-taskqueue.inputs.flake-parts.follows = "flake-parts";
     golangci-lint-auto-configure.inputs.flake-parts.follows = "flake-parts";

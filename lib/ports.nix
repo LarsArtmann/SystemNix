@@ -236,6 +236,14 @@
     ai-meter = 8107;
     ai-meter-metrics = 8108;
 
+    # quotaboard — AI coding-plan quota dashboard (user service from the
+    # quotaboard flake input, wired in desktop/quickshell.nix). Loopback
+    # ONLY: the web UI has no auth by design (single-user desktop tool);
+    # the DMS bar widget reads the JSON API here. 8791 is the app's own
+    # compiled-in default — registering it makes the eval-enforced port
+    # registry the single owner of record.
+    quotaboard = 8791;
+
     # OpenCloud — self-hosted file sync & share platform. Moved 9100 → 9500
     # (2026-11-02, strace + /proc/net/tcp proven): the standalone `web`
     # service binds the ocis-compiled default loopback 9100 at startup, and
