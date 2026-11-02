@@ -17,7 +17,7 @@ Freeze #39 — **Branch C (combined storm + thermal ceiling), SP5100 hardware-wa
 | Shutdown ceremony | NONE (zero PID-1 shutdown lines; user-manager lines absent too; wtmp crash class) | pull boundary section |
 | Reset reason | `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired` | boot 0 kernel log, 11:35:45 |
 | cut → boot gap | 98 s (inside the 92–131 s WDT signature measured on #36/#37) | `--list-boots` |
-| pstore / vmcore | empty / none (livelock pets the WDT; 8th consecutive confirmation) | stability.md M22 doctrine |
+| pstore / vmcore | /var/crash absent (no vmcore — verified); pstore NOT probed this session (root-only dir on this box) — "empty" rests on the 8-boot doctrine, not a live read | probe + doctrine |
 | Thermal leg | 2477 DEEP THROTTLE ENTERs, first Oct 30 03:37:28 (3.6 min post-boot, 98 °C), last 11:33:35 (32 s pre-cut) | full-count grep |
 | Storm leg | IO PSI some avg60 98.71 %, disk busy 100 % at the 11:27:25 guard heartbeat | journal |
 | Memory leg | 9 OOM invocations / 10 kills whole-boot (global cascade 01:26–03:21); SEV1 "ZRAM SWAP CRITICAL" 11:33:25 (cleared by 11:33:55) | journal + pull |
@@ -33,7 +33,7 @@ Freeze #39 — **Branch C (combined storm + thermal ceiling), SP5100 hardware-wa
 | Guard trips | **#4921 → #6010 = 1090** (~**19.4/h**, above the storm band 1.3–11.7/h — record rate); 26 carried socket/sacrifice actions (final-hour churn: "23 trips in the last hour" per the SEV1 notify text); the ioPause-era majority were no-matches |
 | Guard log lines | 12,527 |
 | OOM | 9 invocations / 10 kills — see §c act 4 for the victim list with memcgs |
-| journald "Under memory pressure, flushing caches" | 36+ events 07:42 → 11:27, cadence accelerating into the death window |
+| journald "Under memory pressure, flushing caches" | **105 whole-boot** (corrected 12:18 from the first draft's "36+", which was eyeballed from tail-truncated probe output; events span the whole boot with the 07:42→11:27 stretch the densest) | full-count grep |
 | tq-agent-pool | crash-looping from ~08:00: 197 restart/fail lifecycle lines to death (the SEV1 "UNIT CRASH LOOP" condition) |
 | Deploys in-boot | gen-967 Oct 31 03:57, **gen-968 Nov 2 01:25:31, gen-969 Nov 2 08:12:06** |
 
