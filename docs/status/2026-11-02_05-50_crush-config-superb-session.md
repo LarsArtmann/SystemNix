@@ -53,3 +53,5 @@ Everything is committed, registered, eval-green, and PRE-DEPLOY PROVEN — the a
 3. (Standing from the prior report, unchanged): deploy timing — the armed watcher vs `DEPLOY_FORCE_PRESSURE=1`.
 
 **Harvest log: rows queued at authoring time (desktop.md "Crush tooling" section, items 8-9).**
+
+**ADDENDUM (written 08:2x, post-landing):** the shared deploy fired 08:13:14 (gen-969, anchor OK, profile==current) and the staged battery ran green **11/11** — rc markers (thinking always, auto-disable, meter --disable false, model small, both 0.99 hooks, minimax), model identities, slot resolution (`small=[zai/glm-4.7-flash]`), ai-meter :8108 answering. Kimi-removal legs verified in the same generation (no sops key, zero rc references, meter 404) with one premise overturned: 89 kimi picker entries remain via crush's DEFAULT catalog — that is the §f.2 decision row, not the declarative layer. Rows 124/131 + ai-stack 52/53/queue 1490/1491 ticked with evidence. Remaining user act: restart live crush sessions (rc is load-time).
