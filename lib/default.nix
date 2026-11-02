@@ -102,6 +102,178 @@ in
       );
     };
 
+  # mkSqliteBackupUnit: the WAL-safe SQLite backup pair (service + timer) as
+  # a unit generator — the contract extracted from browser-history's
+  # dbBackup unit and crush-daily's flake module (2026-11-02, plan E1).
+  # The canonical script is the SUPERSET of both:
+  #   - clean skip when the database does not exist yet
+  #   - crash-remnant healing: a run killed mid-.backup leaves a
+  #     <prefix>*.sqlite-journal remnant whose sqlite "recovery" silently
+  #     ROLLS BACK later copies of the sibling — drop BOTH loudly
+  #   - online `.backup` via -readonly (a read-write root open of the live
+  #     WAL database can create root-owned -shm/-wal sidecars)
+  #   - quick_check on the TEMP copy, atomic rename only after it passes:
+  #     a killed run can never leave a torn file that looks valid
+  #   - age-based retention matching prefix + tmp + journal remnants
+  #
+  # Returns { services.<name>; timers.<name>; } for a caller-side
+  # `systemd = mkSqliteBackupUnit { ... };` (module-system merge handles the
+  # pair alongside sibling keys).
+  #
+  # Invariants baked in (do not relax at call sites):
+  #   - RequiresMountsFor targets the backup directory: a detached DAS fails
+  #     the run as a clean dependency error, never 226/NAMESPACE
+  #   - ReadWritePaths is exactly the backup directory
+  #   - the timer is Persistent (missed runs while powered off catch up)
+  #
+  # mkPoolDirUnit wiring for the directory itself stays at the call site
+  # (pool-leaf creation is host-shaped, cv-backup-dir pattern).
+  mkSqliteBackupUnit =
+    {
+      pkgs,
+      name,
+      description,
+      dbPath,
+      backupDir,
+      prefix,
+      retentionDays,
+      startAt,
+      timestampFormat ? "%Y-%m-%d",
+      serviceDeps ? [ ],
+      timerAfter ? [ ],
+      onFailureDeps ? [ ],
+      startLimitBurst ? 5,
+      startLimitIntervalSec ? 300,
+      memoryMax ? "512M",
+      extraServiceConfig ? [ ],
+    }:
+    {
+      services.${name} = {
+        inherit description;
+        after = serviceDeps;
+        wants = serviceDeps;
+        unitConfig.RequiresMountsFor = [ backupDir ];
+        onFailure = onFailureDeps;
+        startLimitBurst = startLimitBurst;
+        startLimitIntervalSec = startLimitIntervalSec;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            ExecStart = pkgs.writeShellScript name ''
+              set -euo pipefail
+              db="${dbPath}"
+              if [ ! -f "$db" ]; then
+                echo "${name}: database $db does not exist yet — nothing to back up"
+                exit 0
+              fi
+              find ${backupDir} -name "${prefix}*.sqlite-journal" | while read -r j; do
+                echo "${name}: healing crash-interrupted backup remnant: $j (+ sibling)"
+                rm -f "$j" "''${j%-journal}"
+              done
+              timestamp=$(date +${timestampFormat})
+              dst="${backupDir}/${prefix}$timestamp.sqlite"
+              tmp="$dst.tmp"
+              trap 'rm -f "$tmp"' EXIT
+              ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$tmp'"
+              ${lib.getExe pkgs.sqlite} -readonly "$tmp" "PRAGMA quick_check;" | grep -qx ok
+              mv "$tmp" "$dst"
+              echo "${name}: wrote $dst"
+              find ${backupDir} \( -name "${prefix}*.sqlite" -o -name "${prefix}*.sqlite-journal" -o -name "${prefix}*.sqlite.tmp" \) -mtime +${toString retentionDays} -delete
+            '';
+            ReadWritePaths = [ backupDir ];
+          }
+          (harden { MemoryMax = memoryMax; })
+          (serviceOneshotDefaults { })
+        ] ++ extraServiceConfig;
+      };
+      timers.${name} = {
+        description = "${description} (timer)";
+        wantedBy = [ "timers.target" ];
+        after = timerAfter;
+        timerConfig = {
+          Persistent = true;
+        } // startAt;
+      };
+    };
+
+  # mkMetricTextfileCollector: the fail-closed Prometheus textfile collector
+  # pair (service + timer) as a unit generator (plan E2, extracted from
+  # browser-history's agent-metrics unit 2026-11-02). The wrapper owns the
+  # ATOMICITY contract; the caller's script owns the METRICS:
+  #   - caller script emits Prometheus lines on stdout (HELP/TYPE/values)
+  #   - stdout lands in a mktemp sibling, chmod 644, atomic mv — node
+  #     exporter never scrapes a half-written file, and the sticky 1777
+  #     textfile dir's rename-over-foreign-owned rejection is handled by
+  #     running as root with CAP_FOWNER when needed (caller's caps)
+  #   - a non-zero body exit leaves the PREVIOUS file in place (no mv): the
+  #     collector never publishes a torn or empty metric set
+  #   - OMIT-ON-ERROR RULE (caller-side, load-bearing): when a source is
+  #     unreadable, emit ONLY the scrape_errors gauge and still exit 0 —
+  #     an omitted "active/up" metric fails the alert, a frozen green one
+  #     phantom-greens it
+  # Returns { services.<name>; timers.<name>; } for a caller-side
+  # `systemd = mkMetricTextfileCollector { ... };`.
+  mkMetricTextfileCollector =
+    {
+      pkgs,
+      name,
+      description,
+      outFile,
+      script,
+      timerConfig,
+      textfileDir ? dirOf outFile,
+      timeoutStartSec ? "3min",
+      memoryMax ? "128M",
+      caps ? "",
+      extraPath ? [ ],
+      onFailureDeps ? [ ],
+      startLimitBurst ? 5,
+      startLimitIntervalSec ? 300,
+    }:
+    {
+      services.${name} = {
+        inherit description;
+        startLimitBurst = startLimitBurst;
+        startLimitIntervalSec = startLimitIntervalSec;
+        onFailure = onFailureDeps;
+        path = [ pkgs.coreutils ] ++ extraPath;
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "root";
+            TimeoutStartSec = timeoutStartSec;
+          }
+          (harden (
+            {
+              ReadWritePaths = [ textfileDir ];
+              MemoryMax = memoryMax;
+            }
+            // lib.optionalAttrs (caps != "") {
+              CapabilityBoundingSet = caps;
+            }
+          ))
+          (serviceOneshotDefaults { })
+        ];
+        script = ''
+          set -eu
+          OUT="${outFile}"
+          mkdir -p "${textfileDir}"
+          TMP="$(mktemp "$OUT.XXXXXX")"
+          chmod 644 "$TMP"
+          trap 'rm -f "$TMP"' EXIT
+          (
+          ${script}
+          ) > "$TMP"
+          mv "$TMP" "$OUT"
+        '';
+      };
+      timers.${name} = {
+        description = "${description} (timer)";
+        wantedBy = [ "timers.target" ];
+        timerConfig = timerConfig;
+      };
+    };
+
   # unitExecText: a unit's Exec* line texts + Environment entries as one
   # concatenated string — the shared scan surface of the port-registry and
   # gatus-coverage eval audits (identical scanner, zero drift: a new Exec

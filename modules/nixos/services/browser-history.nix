@@ -34,6 +34,7 @@
         harden
         mkOidcGate
         mkPoolDirUnit
+        mkSqliteBackupUnit
         onFailure
         ports
         serviceOneshotDefaults
@@ -630,40 +631,26 @@
         # last_used_at (env resolution short-circuits before the DB lookup) —
         # only bh_ DB tokens (the co-located provisioner's output) are visible.
         (lib.mkIf (cfg.enable && cfg.agentActivity.enable) {
-          systemd.services.browser-history-agent-metrics = {
+          # The pair lives in lib/mkMetricTextfileCollector (plan E2): the
+          # wrapper owns atomicity (mktemp sibling, chmod 644, atomic mv),
+          # the body below owns the metrics and the omit-on-error rule.
+          systemd = mkMetricTextfileCollector {
+            inherit pkgs;
+            name = "browser-history-agent-metrics";
             description = "Browser History agent ingest freshness (textfile collector)";
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-            inherit onFailure;
-            path = [
-              pkgs.sqlite
-              pkgs.coreutils
-            ];
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                User = "root";
-                TimeoutStartSec = "3min";
-              }
-              (harden {
-                ReadWritePaths = [ textfileDir ];
-                # DAC_READ_SEARCH: the server's DynamicUser StateDirectory is
-                # 0700 random-uid (token-provisioner precedent). FOWNER: the
-                # sticky 1777 textfile dir rejects rename-over-foreign-owned
-                # even for root (mail-relay 2026-09-02..06 class).
-                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
-                MemoryMax = "128M";
-              })
-              (serviceOneshotDefaults { })
-            ];
+            outFile = "${textfileDir}/browser-history-agent.prom";
+            onFailureDeps = onFailure;
+            # DAC_READ_SEARCH: the server's DynamicUser StateDirectory is
+            # 0700 random-uid (token-provisioner precedent). FOWNER: the
+            # sticky 1777 textfile dir rejects rename-over-foreign-owned
+            # even for root (mail-relay 2026-09-02..06 class).
+            caps = "CAP_DAC_READ_SEARCH CAP_FOWNER";
+            extraPath = [ pkgs.sqlite ];
+            timerConfig = {
+              OnBootSec = "2min";
+              OnUnitActiveSec = cfg.agentActivity.interval;
+            };
             script = ''
-              set -eu
-              OUT="${textfileDir}/browser-history-agent.prom"
-              mkdir -p "${textfileDir}"
-              TMP="$(mktemp "$OUT.XXXXXX")"
-              chmod 644 "$TMP"
-              trap 'rm -f "$TMP"' EXIT
-
               DB="/var/lib/browser-history/data.db"
               MAX_AGE_S=$(( ${toString cfg.agentActivity.maxAgeMinutes} * 60 ))
               scrape_errors=0
@@ -694,34 +681,25 @@
                 fi
               fi
 
-              {
-                echo "# HELP browser_history_agent_scrape_errors 1 when the server's agent_tokens table could not be read"
-                echo "# TYPE browser_history_agent_scrape_errors gauge"
-                echo "browser_history_agent_scrape_errors $scrape_errors"
-                if [ "$scrape_errors" -eq 0 ]; then
-                  echo "# HELP browser_history_agent_tokens_total Registered DB-backed browser-history agent tokens"
-                  echo "# TYPE browser_history_agent_tokens_total gauge"
-                  echo "browser_history_agent_tokens_total $tokens"
-                  echo "# HELP browser_history_agent_last_ingest_age_seconds Seconds since the newest agent ingest (server clock); -1 = never"
-                  echo "# TYPE browser_history_agent_last_ingest_age_seconds gauge"
-                  echo "browser_history_agent_last_ingest_age_seconds $age"
-                  echo "# HELP browser_history_agents_active 1 when at least one agent ingested within the freshness window"
-                  echo "# TYPE browser_history_agents_active gauge"
-                  echo "browser_history_agents_active $active"
-                fi
-              } >> "$TMP"
+              echo "# HELP browser_history_agent_scrape_errors 1 when the server's agent_tokens table could not be read"
+              echo "# TYPE browser_history_agent_scrape_errors gauge"
+              echo "browser_history_agent_scrape_errors $scrape_errors"
+              if [ "$scrape_errors" -eq 0 ]; then
+                echo "# HELP browser_history_agent_tokens_total Registered DB-backed browser-history agent tokens"
+                echo "# TYPE browser_history_agent_tokens_total gauge"
+                echo "browser_history_agent_tokens_total $tokens"
+                echo "# HELP browser_history_agent_last_ingest_age_seconds Seconds since the newest agent ingest (server clock); -1 = never"
+                echo "# TYPE browser_history_agent_last_ingest_age_seconds gauge"
+                echo "browser_history_agent_last_ingest_age_seconds $age"
+                echo "# HELP browser_history_agents_active 1 when at least one agent ingested within the freshness window"
+                echo "# TYPE browser_history_agents_active gauge"
+                echo "browser_history_agents_active $active"
+              fi
 
-              mv "$TMP" "$OUT"
-              echo "browser-history-agent-metrics: tokens=''${tokens:-?} active=$active age=''${age}s window=''${MAX_AGE_S}s scrape_errors=$scrape_errors"
+              # Journal summary — stderr, because the wrapper sends stdout to
+              # the .prom file (the old unit echoed this after the mv).
+              echo "browser-history-agent-metrics: tokens=''${tokens:-?} active=$active age=''${age}s window=''${MAX_AGE_S}s scrape_errors=$scrape_errors" >&2
             '';
-          };
-
-          systemd.timers.browser-history-agent-metrics = {
-            timerConfig = {
-              OnBootSec = "2min";
-              OnUnitActiveSec = cfg.agentActivity.interval;
-            };
-            wantedBy = [ "timers.target" ];
           };
         })
 
@@ -739,85 +717,37 @@
             directory = backupDir;
           };
 
-          systemd.services.browser-history-backup = {
+          # The backup pair lives in lib/mkSqliteBackupUnit (plan E1): the
+          # same WAL-safe contract as crush-daily's backup, one generator.
+          # The rendered script is the old inline one PLUS temp-copy +
+          # quick_check-before-rename (a killed run can no longer leave a
+          # torn .sqlite that looks valid) and .tmp cleanup in retention.
+          systemd = mkSqliteBackupUnit {
+            inherit pkgs;
+            name = "browser-history-backup";
             description = "Browser History DB backup (online sqlite .backup)";
-            after = [
+            dbPath = "/var/lib/browser-history/data.db";
+            backupDir = backupDir;
+            prefix = "browser-history-db-";
+            retentionDays = 14;
+            # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
+            # miniflux (02:45).
+            startAt = { OnCalendar = "*-*-* 02:15:00"; };
+            serviceDeps = [
               "browser-history.service"
               "browser-history-backup-dir.service"
             ];
-            wants = [
-              "browser-history.service"
-              "browser-history-backup-dir.service"
-            ];
-            # Detached DAS fails the run as a clean dependency error, never
-            # 226/NAMESPACE (btrbk doctrine).
-            unitConfig.RequiresMountsFor = [ backupDir ];
-            inherit onFailure;
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                ExecStart = pkgs.writeShellScript "browser-history-backup" ''
-                  set -euo pipefail
-                  db="/var/lib/browser-history/data.db"
-                  if [ ! -f "$db" ]; then
-                    echo "browser-history-backup: no data.db yet — nothing to back up"
-                    exit 0
-                  fi
-                  dst="${backupDir}/browser-history-db-$(date +%Y-%m-%d).sqlite"
-                  # Crash-interrupted-run healing (the 2026-10-15 freeze-29/30
-                  # class): a run killed mid-.backup leaves a
-                  # <dst>-journal remnant whose sqlite "recovery" silently
-                  # ROLLS BACK any later copy of the sibling .sqlite (the
-                  # repro-harness landmine, 2026-10-15 session-2 §d1). The
-                  # journal present at run start is ALWAYS stale garbage (no
-                  # concurrent writer to this dir) — the journal+sqlite pair
-                  # is untrustworthy as a backup, so drop BOTH loudly; a
-                  # torn sibling must never look like a good backup. Orphan
-                  # journals without a sibling just go.
-                  find ${backupDir} -name "browser-history-db-*.sqlite-journal" | while read -r j; do
-                    echo "browser-history-backup: healing crash-interrupted backup remnant: $j (+ sibling)"
-                    rm -f "$j" "''${j%-journal}"
-                  done
-                  # -readonly: a read-write root open of the live WAL database
-                  # can create/replace the -shm/-wal sidecars ROOT-owned while
-                  # the server is down, poisoning the next server start with
-                  # SQLITE_READONLY (the 2026-09-22 uid-drift class; the
-                  # ownership-heal ExecStartPre covers any residue anyway).
-                  ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$dst'"
-                  # 14-day retention (cv/miniflux pattern): the online .backup
-                  # rewrites every page, so nothing is shared between nights.
-                  # Journals are matched too (belt for orphans that predate
-                  # the healing step or slip in after it).
-                  find ${backupDir} \( -name "browser-history-db-*.sqlite" -o -name "browser-history-db-*.sqlite-journal" \) -mtime +14 -delete
-                  echo "browser-history-backup: wrote $dst"
-                '';
-                ReadWritePaths = [ backupDir ];
-              }
+            timerAfter = [ "mnt-pool.mount" ];
+            onFailureDeps = onFailure;
+            extraServiceConfig = [
               # The server's DynamicUser StateDirectory is 0700 owned by a
-              # random uid — root cannot traverse it without CAP_DAC_READ_SEARCH
-              # (cv-backup silent-no-op precedent: DAC-obeying root saw no DB
-              # and exited 0 "nothing to back up" forever).
-              (harden {
-                MemoryMax = "512M";
-                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
-              })
-              (serviceOneshotDefaults { })
+              # random uid — root cannot traverse it without
+              # CAP_DAC_READ_SEARCH (cv-backup silent-no-op precedent:
+              # DAC-obeying root saw no DB and exited 0 "nothing to back up"
+              # forever).
+              (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
               ioTier.background
             ];
-          };
-
-          systemd.timers.browser-history-backup = {
-            description = "Nightly Browser History DB backup";
-            wantedBy = [ "timers.target" ];
-            after = [ "mnt-pool.mount" ];
-            timerConfig = {
-              # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
-              # miniflux (02:45).
-              OnCalendar = "*-*-* 02:15:00";
-              Persistent = true;
-            };
           };
         })
 
