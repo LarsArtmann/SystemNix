@@ -1596,13 +1596,13 @@ in
       # Federated go-health hub — health.home.lan. health-hub merges every
       # service's existing go-health endpoint into one dashboard (one card
       # per remote, name/check keys, name/reachable FAIL row when a remote
-      # is dark). Remotes = the fleet's go-health speakers, live-re-probed
-      # 2026-11-02 (the 2026-09-22 "only CV" inventory went stale as
-      # services adopted go-health v0.8.x): cv, discordsync, renamer and tq
-      # serve the rich document on /health; pma has no /health and serves it
-      # on /readyz (its /healthz is a liveness-only empty-checks stub).
-      # Everything else still answers custom health JSON — a remote joins by
-      # adopting go-health, not by being listed (runbook:
+      # is dark). Remotes = ALL of the fleet's go-health speakers, swept
+      # live over every registry port 2026-11-02 (the 2026-09-22 "only CV"
+      # inventory went stale as services adopted go-health v0.8.x): most
+      # serve the rich document on /health; pma and dnsblockd on /readyz.
+      # The module's health-dashboard-rediscover timer re-sweeps daily and
+      # fails loudly when a NEW speaker is not in this list — a remote joins
+      # by adopting go-health, and the sweep catches the adoption (runbook:
       # docs/services/health-dashboard.md).
       health-dashboard = {
         enable = true;
@@ -1610,8 +1610,11 @@ in
           "cv=http://127.0.0.1:${toString ports.cv}/health"
           "discordsync=http://127.0.0.1:${toString ports.discordsync-api}/health"
           "renamer=http://127.0.0.1:${toString ports.file-and-image-renamer-health}/health"
+          "renamer-watcher=http://127.0.0.1:${toString ports.file-and-image-renamer-watcher}/health"
           "tq=http://127.0.0.1:${toString ports.tq}/health"
           "pma=http://127.0.0.1:${toString ports.pma-health}/readyz"
+          "dnsblockd=http://127.0.0.1:${toString ports.dns-blocker-stats}/readyz"
+          "nsfw=http://127.0.0.1:${toString ports.nsfw}/health"
         ];
       };
 
