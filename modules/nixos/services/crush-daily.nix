@@ -153,7 +153,7 @@ _: {
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 1000"
                 ];
-                alert = "Crush Daily unhealthy — /api/health returned non-200. Since 2026-10-29 the endpoint is dependency-aware: a 503 names the failing check (event_store = SQLite event store unreachable/closed) in its JSON body while the process may still be up; check journalctl -u crush-daily and the body's checks[] for attribution";
+                alert = "Crush Daily unhealthy — /api/health returned non-200. The endpoint is dependency-aware: a 503 names the failing check in its JSON body while the process may still be up. Two checks exist. (1) event_store = SQLite event store unreachable/closed — the DB or its WAL cannot be read. (2) collect_freshness = the event store has not been written for over 36h, which means the collector stopped producing data (scheduler dead, discovery returning 0 projects, or every project database unreadable) even though the HTTP server is fine. Before 2026-11-02 only check (1) existed, so a healthy-looking service with a dead collector stayed green for days. Check: curl -s localhost:8081/api/doctor for the full diagnosis, then journalctl -u crush-daily for the collect accounting line (discovered/collected/failed + per-reason breakdown)";
               }
             ];
             homepage = {
