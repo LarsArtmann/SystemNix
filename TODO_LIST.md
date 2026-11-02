@@ -1098,6 +1098,10 @@
 - [ ] [watch] **Unhook maintenance watch** (closed-source, updated 2026-03-19; if YT DOM churn breaks sidebar hiding, fall back to the one-line uBO filter) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.3)
 - [ ] [decision] **Darwin YT-extension parity: Unhook (and the YT drawer) on macOS Brave/Helium too?** (platforms/common/programs/chromium.nix carries only ytShortsBlocker there) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §g.3)
 - [ ] [ready] **Enable `programs.nix-index` + `services.plocate` (which-package-provides-X + locate QoL)** — check the index-timer IO weight against the PSI doctrine first → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-10-09_21-13_cool-nixos-options-exploration-self-review.md §f.11)
+- [ ] [ready] **Update crush-config FEATURES.md + CHANGELOG.md for the 2026-11-02 thinking-pin + provider auto-disable change** (cross-repo ~/projects/crush-config, commit c898e16) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-11-02_02-14_crush-glm-thinking-provider-autodisable.md §f.1)
+- [ ] [ready] **Functional fixture test for crush_key() auto-disable branches in crush-config** (stubbed `provider` builtin; current tests are render-greps + bash -n only) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.2)
+- [ ] [ready] **Document the CRUSH_GLOBAL_CONFIG throwaway-harness flag-surface verification pattern in crush-config docs** (env takes a DIRECTORY; incl. the Go-reflective-flag-binding strings-probe unreliability note) → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.3)
+- [ ] [ready] **Audit `model small` slot resolution + cost of always-thinking on summarization calls routed to glm-5.3-flash** → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §f.4)
 
 ### services / pipeline (harvest 2026-09-30 06:5x)
 
