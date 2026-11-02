@@ -47,10 +47,13 @@ it asserts `runAsUser` existence at eval time.
 `runAsUser`. **`services.crush-daily.backup.enable` is never set**, so no timer exists, and
 `/mnt/pool/backups/crush-daily` is not in `restic-app-dumps.nix`'s `paths` default list (which does
 include `/mnt/pool/backups/browser-history`, `…/cv`, `…/paperless`, …), nor in the fleet
-`backup-coordination` rows. The 38 MB event store holding every generated report — the only
-irreplaceable artifact of the service, because the Crush source DBs age out — has **no backup leg at
-all**. Older `.backup_*` files in `/var/lib/crush-daily/` (Jul 28, Sep 12, Oct 15) are ad-hoc, not
-scheduled.
+`backup-coordination` rows. The 38 MB event store is the service's **only durable state**: it holds
+every generated report plus the LLM insight text, and a re-run cannot reproduce it byte-for-byte (every
+report carries a `Generated <TIMESTAMP>` line, and the insight text is model output). Whether that makes it strictly irreplaceable depends on how much of the reporting
+you would accept regenerating — that is the owner's call (open question 1 in
+`crush-daily/docs/status/2026-11-02_01-56_cross-pollination-review.md`), but either way it has **no
+backup leg at all** right now. Older `.backup_*` files in `/var/lib/crush-daily/` (Jul 28, Sep 12,
+Oct 15) are ad-hoc, not scheduled.
 
 ### The implementation was also wrong (fixed upstream today)
 
@@ -89,7 +92,8 @@ rename, and the `nixos-module-eval` flake check asserts that shape
 
 **Actions, in order:**
 
-1. (done) upstream: WAL-safe backup + a check that pins it;
+1. (done, **uncommitted**) upstream: WAL-safe backup + a check that pins it — commit and push it
+   before the `crush-daily` input rev moves, or the sandbox keeps building the old `cp`-based module;
 2. host: `services.crush-daily.backup.enable = true` on evo-x2;
 3. systemnix: add `/mnt/pool/backups/crush-daily` to `restic-app-dumps.paths` (or `extraPaths`), with
    the same mount-gated leaf + coordination row pattern;
@@ -226,8 +230,10 @@ right lives in exactly one place.
 3. **Explicit resource shape.** `MemoryMax = "1G"` + `GOMEMLIMIT=768MiB` +
    `TimeoutStartSec = "3min"` + `startLimitBurst = 3/60s` + journald caps
    (`journalMaxRetention`, `SystemMaxUse = 500M`) are all in the module rather than left to defaults.
-   browser-history does set `GOMEMLIMIT=384MiB` (`browser-history.nix:320`) and `MemoryMax=512M`
-   upstream — the remaining piece is the journald budget and the documented `TimeoutStartSec`.
+   browser-history already sets `GOMEMLIMIT=384MiB` (`browser-history.nix:320`), `MemoryMax=512M`
+   upstream, and per-unit `TimeoutStartSec` (`:349` server, `:576`, `:610`, `:646`) — the remaining
+   piece is the **journald budget** (`journalMaxRetention` / `SystemMaxUse`), which its module does not
+   set at all.
 4. **Ownership migration with a documented privilege requirement.** crush-daily's `+`-prefixed
    `chown -R` ExecStartPre carries the incident history inline ("unprivileged it SIGSYS'd at every
    boot on `fchownat`, then EPERM'd even unfiltered"). browser-history learned the same class the hard
@@ -281,6 +287,23 @@ by a red treefmt check two weeks later.
 10. Write the forward-auth doctrine down once (in `lib/` docs), referencing both services.
 
 ---
+
+## Appendix — reproduce
+
+```sh
+# Backup coverage: nothing enabled, nothing registered.
+grep -n "crush-daily = {" -A 8 platforms/nixos/system/configuration.nix   # no backup.enable
+grep -n "crush-daily" modules/nixos/services/restic-app-dumps.nix          # no hit
+grep -rn "crush-daily" modules/nixos/services/backup-coordination.nix      # no hit
+
+# The only health signal crush-daily registers.
+grep -n "checks = \[" -A 12 modules/nixos/services/crush-daily.nix
+
+# Shim churn vs the actually locked upstream rev.
+grep -n "crush-daily" flake/expected-locks.nix
+git -C ../crush-daily show 83c4d8a3:vendorHash.nix   # TTFOwkoq…
+grep -n "crush-daily = prev.crush-daily" -A 2 overlays/linux.nix   # iPis8A3A… (post-lock re-bake)
+```
 
 _Verified against SystemNix at 2026-11-02; production claims come from `journalctl -u crush-daily`,
 file metadata under `/var/lib/crush-daily`, and a read-only copy of the production database. No live
