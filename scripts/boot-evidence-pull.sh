@@ -416,6 +416,42 @@ bep_selftest() (
   check "join: -45 s lead joins" grep -q 'pid=5000001 task=early-lead uid=1000 unit=session-77.scope basis=unit-join' "$tmp/evidence.md"
   check "join: -121 s stays unresolved" grep -q 'pid=5000002 task=far-past uid=1000 memcg=UNRESOLVED' "$tmp/evidence.md"
   check "join: section heading" grep -q '^## OOM kill-pass join' "$tmp/evidence.md"
+
+  # Real-dump regression leg (2026-11-02 item-3): the committed sanitized
+  # b0d70d73 cascade excerpt (tests/fixtures/boot-evidence-pull/) pins the
+  # LIVE ranking the synthetic fixtures above missed — the first join
+  # implementation ranked system.slice, then the hermes scope, over the
+  # victim's own session units, and both mistakes were caught only by the
+  # live run. The fixture freezes the exact systemd line order that
+  # produced those traps, so a future ordering change re-fires HERE.
+  local fixture_dir="${BEP_FIXTURE_DIR:-$REPO_ROOT/tests/fixtures/boot-evidence-pull}"
+  if [ -f "$fixture_dir/b0d70d73-oom-cascade.dump" ]; then
+    local fj foom
+    fj=$(mktemp "$tmp/cascade.XXXXXX")
+    foom=$(mktemp "$tmp/cascade.oom.XXXXXX")
+    grep -E 'invoked oom-killer|oom-kill:|Out of memory' \
+      "$fixture_dir/b0d70d73-oom-cascade.dump" >"$foom"
+    bep_killpass_join "$fixture_dir/b0d70d73-oom-cascade.dump" "$foom" >"$fj"
+    check "cascade: 9 victims joined" test "$(grep -c 'basis=' "$fj")" = 9
+    check "cascade: 7 attested" test "$(grep -c 'basis=attested' "$fj")" = 7
+    check "cascade: 2 unit-joined" test "$(grep -c 'basis=unit-join' "$fj")" = 2
+    check "cascade: headless tie set exact" \
+      grep -qF 'pid=3595707 task=chrome-headless uid=1000 unit=user@1000.service | unit=session-95.scope | unit=session-74.scope basis=unit-join' "$fj"
+    check "cascade: second headless same tie" \
+      grep -qF 'pid=3592942 task=chrome-headless uid=1000 unit=user@1000.service | unit=session-95.scope | unit=session-74.scope basis=unit-join' "$fj"
+    check "cascade: system.slice NEVER wins a join" bash -c "! grep -qF 'unit=system.slice' '$fj'"
+    check "cascade: hermes scope NEVER wins a uid-1000 join" \
+      bash -c "! grep 'uid=1000' '$fj' | grep -qF 'hermes-worker-cron'"
+    check "cascade: session-74 attested for chromium" \
+      grep -qF 'pid=3392891 task=chromium uid=1000 memcg=/user.slice/user-1000.slice/session-74.scope basis=attested' "$fj"
+    check "cascade: hermes chromium attested to its own scope" \
+      grep -qF 'pid=44547 task=chromium uid=975 memcg=/user.slice/user-975.slice/user@975.service/app.slice/hermes-worker-cron-f59d5d8cfb7b-exec-bc914a5abdee4e77bb5b714e20c0cd2b.scope basis=attested' "$fj"
+    rm -f "$fj" "$foom"
+  else
+    echo "FAIL: real-dump cascade fixture missing at $fixture_dir"
+    failures=$((failures + 1))
+  fi
+
   check "census guard count" grep -q '^- guard-lines (memory-emergency-guard): 1$' "$tmp/evidence.md"
   check "census thermal count" grep -q '^- thermal-THROTTLE-lines: 1$' "$tmp/evidence.md"
   check "census panic count" grep -q '^- kernel panic/BUG/oops lines: 1$' "$tmp/evidence.md"

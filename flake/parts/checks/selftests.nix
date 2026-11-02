@@ -765,7 +765,9 @@
               cp ${root}/scripts/boot-evidence-pull.sh "$scratch/boot-evidence-pull.sh"
               # The selftest re-executes the copy via "$0"; /usr/bin/env does not exist in the sandbox.
               sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/boot-evidence-pull.sh"
-              ${pkgs.bash}/bin/bash "$scratch/boot-evidence-pull.sh" selftest
+              # The real-dump cascade regression leg reads its fixture from the repo tree.
+              BEP_FIXTURE_DIR=${root}/tests/fixtures/boot-evidence-pull ${pkgs.bash}/bin/bash "$scratch/boot-evidence-pull.sh" selftest
+              test -f ${root}/tests/fixtures/boot-evidence-pull/b0d70d73-oom-cascade.dump
               grep -q 'boot-evidence-pull.sh' ${root}/docs/agents/stability.md
               grep -q 'REFUSING to overwrite existing evidence file' "$scratch/boot-evidence-pull.sh"
               touch $out

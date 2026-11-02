@@ -1,0 +1,16 @@
+Oct 28 10:14:05 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/run-p3639162-i3650853.scope,task=bun,pid=3639162,uid=1000
+Oct 28 10:14:05 evo-x2 kernel: Out of memory: Killed process 3639162 (bun) total-vm:6460716kB, anon-rss:6340kB, file-rss:9272kB, shmem-rss:0kB, UID:1000 pgtables:304kB oom_score_adj:1000
+Oct 28 10:14:05 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/run-p3403769-i3304710.scope,task=bun,pid=3403769,uid=1000
+Oct 28 10:14:05 evo-x2 kernel: Out of memory: Killed process 3403769 (bun) total-vm:6460200kB, anon-rss:5204kB, file-rss:9176kB, shmem-rss:0kB, UID:1000 pgtables:284kB oom_score_adj:1000
+Oct 28 10:14:05 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/llama-chat.service,task=llama-server,pid=1453,uid=1000
+Oct 28 10:14:05 evo-x2 kernel: Out of memory: Killed process 1453 (llama-server) total-vm:41726968kB, anon-rss:2236kB, file-rss:12kB, shmem-rss:0kB, UID:1000 pgtables:68008kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-975.slice/user@975.service/app.slice/hermes-worker-cron-f59d5d8cfb7b-exec-bc914a5abdee4e77bb5b714e20c0cd2b.scope,task=chromium,pid=44547,uid=975
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 44547 (chromium) total-vm:1518608588kB, anon-rss:924kB, file-rss:12kB, shmem-rss:16kB, UID:975 pgtables:820kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/session-74.scope,task=chromium,pid=3392891,uid=1000
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 3392891 (chromium) total-vm:1518605956kB, anon-rss:496kB, file-rss:12kB, shmem-rss:4kB, UID:1000 pgtables:812kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 3595707 (chrome-headless) total-vm:1518498916kB, anon-rss:488kB, file-rss:8kB, shmem-rss:0kB, UID:1000 pgtables:552kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 3592942 (chrome-headless) total-vm:1518498916kB, anon-rss:628kB, file-rss:8kB, shmem-rss:0kB, UID:1000 pgtables:540kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/system.slice/llama-embeddings.service,task=llama-server,pid=2627055,uid=1000
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 2627055 (llama-server) total-vm:11328kB, anon-rss:60kB, file-rss:4kB, shmem-rss:0kB, UID:1000 pgtables:52kB oom_score_adj:300
+Oct 28 10:15:23 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,nodemask=(null),cpuset=/,mems_allowed=0,global_oom,task_memcg=/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-7854.scope,task=helium,pid=7854,uid=1000
+Oct 28 10:15:23 evo-x2 kernel: Out of memory: Killed process 7854 (helium) total-vm:56008976kB, anon-rss:84620kB, file-rss:44kB, shmem-rss:104kB, UID:1000 pgtables:3272kB oom_score_adj:200
