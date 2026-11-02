@@ -45,6 +45,59 @@ bep_grep_oom() {
   grep -E 'invoked oom-killer|oom-kill:|Out of memory' "$1" || true
 }
 
+bep_killpass_join() {
+  # <dump> <oom> — per-victim memcg join over the kernel kill pass (the
+  # Oct-28 10:15 cascade class: `Out of memory: Killed process PID ...`
+  # lines whose pid has NO matching `oom-kill:...task_memcg=` line).  A
+  # global-OOM pass can kill several processes while the kernel only
+  # prints the task_memcg line for its SELECTED victim, so per-victim
+  # memcg must be JOINED, never inferred in prose.  Basis levels:
+  #   attested   — kernel `oom-kill:` line names the pid's task_memcg
+  #   unit-join  — a systemd `<unit>: The kernel OOM killer killed some
+  #                processes in this unit.` line within the join window
+  #                (unit-level evidence, NOT a kernel-attested path)
+  #   UNRESOLVED — no join found; the section names the gap instead of
+  #                fabricating a cgroup path
+  local dump="$1" oom="$2" win=30
+  local kills kline pid task uid ts uts att unit_joined udiff best diff
+  kills=$(grep -E 'Out of memory: Killed process' "$dump" || true)
+  if [ -z "$kills" ]; then
+    return 0
+  fi
+  printf '%s\n' "$kills" | while IFS= read -r kline; do
+    pid=$(printf '%s\n' "$kline" | sed -n 's/.*Killed process \([0-9][0-9]*\).*/\1/p')
+    task=$(printf '%s\n' "$kline" | sed -n 's/.*Killed process [0-9][0-9]* (\([^)]*\)).*/\1/p')
+    uid=$(printf '%s\n' "$kline" | sed -n 's/.*UID:\([0-9][0-9]*\).*/\1/p')
+    ts=$(printf '%s\n' "$kline" | awk '{print $1, $2, $3}')
+    uts=$(date -d "$ts" +%s 2>/dev/null || echo 0)
+    att=$(grep -E ",pid=${pid}(,|$)" "$oom" 2>/dev/null | sed -n 's/.*task_memcg=\([^,]*\).*/\1/p' | head -n 1 || true)
+    if [ -n "$att" ]; then
+      printf 'pid=%s task=%s uid=%s memcg=%s basis=attested\n' "$pid" "$task" "$uid" "$att"
+      continue
+    fi
+    unit_joined=""
+    best=""
+    while IFS= read -r line; do
+      unit=$(printf '%s\n' "$line" | sed -n 's/.*systemd\[[0-9]*\]: \([^:]*\): The kernel OOM killer killed.*/\1/p')
+      [ -n "$unit" ] || continue
+      udiff=$((win + 1))
+      if [ "$uts" -gt 0 ]; then
+        lts=$(printf '%s\n' "$line" | awk '{print $1, $2, $3}')
+        lus=$(date -d "$lts" +%s 2>/dev/null || echo 0)
+        [ "$lus" -gt 0 ] && udiff=$((lus - uts)) && [ "$udiff" -lt 0 ] && udiff=$((-udiff))
+      fi
+      if [ "$udiff" -le "$win" ] && { [ -z "$best" ] || [ "$udiff" -lt "${best##*:}" ]; }; then
+        best="$unit:$udiff"
+      fi
+    done < <(grep -F 'The kernel OOM killer killed' "$dump" || true)
+    if [ -n "$best" ]; then
+      printf 'pid=%s task=%s uid=%s unit=%s basis=unit-join (systemd unit-level evidence, NOT a kernel-attested memcg path)\n' "$pid" "$task" "$uid" "${best%%:*}"
+    else
+      printf 'pid=%s task=%s uid=%s memcg=UNRESOLVED basis=none (no task_memcg line and no systemd OOM-unit join in the dump)\n' "$pid" "$task" "$uid"
+    fi
+  done
+}
+
 bep_grep_guard() {
   grep -F 'memory-emergency-guard' "$1" || true
 }
@@ -156,6 +209,7 @@ bep_render() (
   trap 'rm -rf "$tmp"' EXIT
 
   bep_grep_oom "$dump" >"$tmp/oom"
+  bep_killpass_join "$dump" "$tmp/oom" >"$tmp/killjoin"
   bep_grep_guard "$dump" >"$tmp/guard"
   bep_grep_thermal "$dump" >"$tmp/thermal"
   bep_grep_panic "$dump" >"$tmp/panic"
@@ -165,6 +219,10 @@ bep_render() (
   n_guard=$(wc -l <"$tmp/guard")
   n_thermal=$(wc -l <"$tmp/thermal")
   n_panic=$(wc -l <"$tmp/panic")
+  local n_killed n_att n_join
+  n_killed=$(grep -c 'basis=' "$tmp/killjoin" || true)
+  n_att=$(grep -c 'basis=attested' "$tmp/killjoin" || true)
+  n_join=$(grep -c 'basis=unit-join' "$tmp/killjoin" || true)
 
   cat <<EOF
 # Boot evidence pull: id8 $id8 (full: $fullid)
@@ -183,12 +241,16 @@ $(bep_fenced <(tail -n 12 "$dump"))
 
 ## Census
 - oom-lines: $n_oom
+- oom kill-pass join: $n_killed killed process(es) — $n_att memcg-attested, $n_join unit-joined, $((n_killed - n_att - n_join)) unresolved
 - guard-lines (memory-emergency-guard): $n_guard
 - thermal-THROTTLE-lines: $n_thermal
 - kernel panic/BUG/oops lines: $n_panic
 
 ## Kernel OOM lines (all)
 $(bep_fenced "$tmp/oom")
+
+## OOM kill-pass join — memcg per killed process (kernel-attested or systemd unit-join, never inferred)
+$(bep_fenced "$tmp/killjoin")
 
 ## memory-emergency-guard lines (all)
 $(bep_fenced "$tmp/guard")
@@ -253,8 +315,18 @@ bep_selftest() (
   {
     for i in $(seq 1 30); do echo "Oct 11 12:00:0$i evo-x2 filler[$i]: noise $i"; done
     echo "Oct 11 23:00:01 evo-x2 kernel: nix invoked oom-killer: gfp_mask=0xcc0"
-    echo "Oct 11 23:00:01 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,task=nix,pid=1"
+    echo "Oct 11 23:00:01 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=1"
     echo "Oct 11 23:00:02 evo-x2 kernel: Out of memory: Killed process 1 (nix)"
+    # Kill-pass join fixture (Oct-28 10:15 cascade class): a global pass
+    # whose SELECTED victim carries task_memcg while a same-pass
+    # chrome-headless kill gets NO oom-kill: line — plus the systemd
+    # unit line the join keys on, and one fully unresolved victim.
+    echo "Oct 11 23:10:01 evo-x2 kernel: kswapd0 invoked oom-killer: gfp_mask=0xcc0"
+    echo "Oct 11 23:10:01 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_NONE,global_oom,task_memcg=/user.slice/user-1000.slice/session-74.scope,task=chromium,pid=3392891,uid=1000"
+    echo "Oct 11 23:10:01 evo-x2 kernel: Out of memory: Killed process 3392891 (chromium) total-vm:1518605956kB, UID:1000 oom_score_adj:300"
+    echo "Oct 11 23:10:01 evo-x2 kernel: Out of memory: Killed process 3595707 (chrome-headless) total-vm:1518498916kB, UID:1000 oom_score_adj:300"
+    echo "Oct 11 23:10:02 evo-x2 systemd[1]: session-74.scope: The kernel OOM killer killed some processes in this unit."
+    echo "Oct 11 23:11:00 evo-x2 kernel: Out of memory: Killed process 424242 (ghost) total-vm:800kB, UID:0 oom_score_adj:0"
     echo "Oct 11 23:05:00 evo-x2 memory-emergency-guard-check[9]: MEMORY EMERGENCY: zone 6 trip"
     echo "Oct 11 23:15:00 evo-x2 thermal-pstate-guard-check[9]: THERMAL THROTTLE ENTER: amd_pstate -> guided"
     echo "Oct 11 23:20:00 evo-x2 kernel: BUG: unable to handle page fault"
@@ -264,7 +336,13 @@ bep_selftest() (
   out=$(bep_render "$tmp/journal" "bf8a454c" "bf8a454cdeadbeef000000000000000000000000" "2026-10-11 11:09:43" "2026-10-12 13:04:01" "$tmp/ch-sect")
   printf '%s\n' "$out" >"$tmp/evidence.md"
 
-  check "census oom count" grep -q '^- oom-lines: 3$' "$tmp/evidence.md"
+  check "census oom count" grep -q '^- oom-lines: 8$' "$tmp/evidence.md"
+  check "census killpass join line" grep -q -- '- oom kill-pass join: 4 killed process(es) — 2 memcg-attested, 1 unit-joined, 1 unresolved' "$tmp/evidence.md"
+  check "join: pid1 attested" grep -q 'pid=1 task=nix uid= memcg=/system.slice/tq-agent-pool.service basis=attested' "$tmp/evidence.md"
+  check "join: chromium attested path" grep -q 'pid=3392891 task=chromium uid=1000 memcg=/user.slice/user-1000.slice/session-74.scope basis=attested' "$tmp/evidence.md"
+  check "join: headless unit-joined" grep -q 'pid=3595707 task=chrome-headless uid=1000 unit=session-74.scope basis=unit-join' "$tmp/evidence.md"
+  check "join: ghost unresolved" grep -q 'pid=424242 task=ghost uid=0 memcg=UNRESOLVED' "$tmp/evidence.md"
+  check "join: section heading" grep -q '^## OOM kill-pass join' "$tmp/evidence.md"
   check "census guard count" grep -q '^- guard-lines (memory-emergency-guard): 1$' "$tmp/evidence.md"
   check "census thermal count" grep -q '^- thermal-THROTTLE-lines: 1$' "$tmp/evidence.md"
   check "census panic count" grep -q '^- kernel panic/BUG/oops lines: 1$' "$tmp/evidence.md"

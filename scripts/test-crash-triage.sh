@@ -74,6 +74,12 @@ EOF
     for i in $(seq 6); do echo 'memory-emergency-guard-check: MEMORY EMERGENCY IO-PAUSE (trip #440, zone 6): NO eligible headless tree matched the attribution'; done
     for i in $(seq 452); do echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'; done
     echo 'kernel: something invoked oom-killer'
+    # Kill-pass memcg gap fixture (Oct-28 class): one attested victim
+    # (task_memcg line + matching kill) and one gap victim (kill line
+    # only) -> oom-memcg-attested=1/2.
+    echo 'kernel: oom-kill:constraint=CONSTRAINT_NONE,global_oom,task_memcg=/user.slice/user-1000.slice/session-74.scope,task=chromium,pid=3392891,uid=1000'
+    echo 'kernel: Out of memory: Killed process 3392891 (chromium) UID:1000'
+    echo 'kernel: Out of memory: Killed process 3595707 (chrome-headless) UID:1000'
     ;;
   *"-b 33333333333333333333333333333333"*)
     echo 'systemd[1]: Reached target Shutdown'
@@ -96,7 +102,7 @@ out=$(PATH="$scratch/bin:$PATH" JOURNALCTL="$scratch/bin/journalctl" DOCS_ROOT="
 # 1. bootB (-2): abrupt, un-evidenced — must flag + propose branch C
 #    (40 trips = 34 socket + 6 IO-PAUSE + 452 throttles). Flag checked
 #    two-step in block 4 below.
-printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=40 throttle_ENTER=452' || fail "bootB census line wrong:\n$out"
+printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=40 throttle_ENTER=452.*oom-memcg-attested=1/2' || fail "bootB census line wrong:\n$out"
 
 # 2. bootA (-1): abrupt, HAS evidence, watchdog reason read from boot0.
 #    trips = 25 socket-stop + 2 IO-PAUSE (the 2026-10-31 both-eras fix).

@@ -65,6 +65,23 @@ census() { # full-id pattern -> count
   echo "${n:-0}"
 }
 
+# Kill-pass memcg gap (the Oct-28 cascade class): `Out of memory: Killed
+# process` lines whose pid has NO `oom-kill:...task_memcg=` line — the
+# kernel only prints task_memcg for its SELECTED victim per pass, so
+# per-victim memcg gaps must be COUNTED here and JOINED downstream
+# (boot-evidence-pull.sh bep_killpass_join), never inferred.
+oom_memcg_gap() { # full-id -> "attested/killed"
+  "$JOURNALCTL" -b "$1" --no-pager 2>/dev/null | awk '
+    /oom-kill:.*task_memcg=/ && match($0, /pid=[0-9]+/) {
+      seen[substr($0, RSTART + 4, RLENGTH - 4)] = 1
+    }
+    /Out of memory: Killed process/ && match($0, /Killed process [0-9]+/) {
+      n++
+      if (substr($0, RSTART + 15, RLENGTH - 15) in seen) a++
+    }
+    END { printf "%d/%d", a + 0, n + 0 }'
+}
+
 shutdown_ceremony() { # full-id -> 1 if PID-1 final-target markers exist
   # USER managers also log "Reached target Shutdown" when sessions close
   # mid-boot (the stability.md trap), and systemd[1] logs "Stopping X"
@@ -96,6 +113,7 @@ for line in "${bootlist[@]}"; do
   trips=$(census "$full" 'action taken: sockets|IO-PAUSE \(trip')
   throttle=$(census "$full" 'DEEP THROTTLE ENTER')
   oom=$(census "$full" 'invoked oom-killer')
+  memcg_gap=$(oom_memcg_gap "$full")
   # reset reason for the PREVIOUS boot, read from THIS boot's kernel log
   # (valid for every boot incl. the newest — boot 0 carries the last
   # crash's reason; "none" = previous boot ended cleanly or first boot)
@@ -119,7 +137,7 @@ for line in "${bootlist[@]}"; do
   evfile=$(evidence_file_for "$short")
   [ -n "$evfile" ] && ev+="$(basename "$evfile")" || ev+="NONE"
   ev+=")"
-  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom"
+  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap"
   echo "    reset-reason(in this boot, for previous): $reason"
   [ "$endkind" = "ABRUPT" ] && echo "    discriminator proposal: $branch  $ev"
   # offset 0 is the RUNNING boot — "abrupt" just means it has not shut
