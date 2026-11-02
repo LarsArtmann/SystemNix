@@ -121,3 +121,13 @@ That is the entire session. A two-exchange read-only answer session does not pro
 10. **Scope creep trap?** Checked and held: §f stops at 34 items instead of padding to 50, new-item harvesting is recorded-not-executed per the owner's wait instruction, and the report inventories nothing outside this session's footprint.
 
 **NEXT STEP: waiting for instructions.** No commits made (harness rule; auto-commit daemon will pick this file up).
+
+---
+
+## Owner answers to §g (recorded 2026-11-02, ~04:05 CET)
+
+1. **Turso → KEEP PENDING.** The [blocked:user] row (§f.12/13) stays as-is; no TURSO env or Gatus-check changes.
+2. **Monitoring Q&A → LIVE PROBE REQUIRED.** New doctrine: a read-only "how is X monitored" answer may not say "configured" without a live probe (metric-sweep / ClickHouse series check / `signoz-provision` Result). Directly retroactive to this session's §b.1 gap. Belongs in `docs/agents/monitoring.md` doctrine when harvested.
+3. **Upstream alerts.yml → FULL MIRROR + COVERAGE GATE.** Every upstream rule gets a provisioned SigNoz rule, pinned by an eval-time count assertion (house style) so upstream rule #41 can't silently go dark. Supersedes the "curated subset" branch of §f.3; §f.4's two dark "Prometheus-only" classes (DB-growth, sync-failure count) now have a decided home: mirror them with the documented false-fire risk engineered away.
+
+**Harvest disposition update:** §f items 1-5 remain un-harvested into `TODO_LIST.md` / `docs/todo/monitoring.md` — the owner's wait instruction still governs dispatch — but items 3 and 4 now carry owner direction (answer 3), and item 2's probe doctrine (answer 2) is decided. On the next go: land the probe-required doctrine line + the four new rows (monitoring.md owns 1-4, services.md owns 5), then re-run `check-todo-system.sh` pairing.

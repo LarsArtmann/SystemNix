@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793503039,
-        "narHash": "sha256-u3D5NtgPhLqfj/ph/nPr+miOPAimUz4LHWPh92/oQt8=",
+        "lastModified": 1793587388,
+        "narHash": "sha256-pnJhvmbmCM1T25FybMVRqseowh2a6gsihEOqXHyj4qE=",
         "ref": "refs/heads/master",
-        "rev": "229f54a27daeced5f2bcb2fd3803afb0058ecb5f",
-        "revCount": 962,
+        "rev": "85b1d7a11985955da5724472a0c009bbfd78b409",
+        "revCount": 968,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
