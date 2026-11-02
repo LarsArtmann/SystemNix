@@ -209,7 +209,9 @@ in
   # store (~/.local/share/crush/crush.json, machine-owned plaintext state
   # that agents can read; the 2026-08-18 leak class). They stay in sops
   # (secrets/crush.yaml) → /run/secrets → process memory at crushrc load
-  # time (crush_key helper skips absent files and PLACEHOLDER values).
+  # time (crush_key disables the provider when its key file is absent,
+  # empty, or a PLACEHOLDER value — unprovisioned providers never reach the
+  # picker).
   # hyper stays store-owned on purpose (OAuth refresh state,
   # self-rotating). NOTE: do not track a real "crush/crushrc" in the
   # ~/.config/crush dotfiles repo — it collides with this HM symlink.
@@ -233,6 +235,15 @@ in
       if [ -f /run/ai-meter-keys/crush ]; then
         provider add zai --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/zai" --api-key "$(cat /run/ai-meter-keys/crush)" --disable false
         provider add gemini --base-url "http://127.0.0.1:${toString osConfig.services.ai-meter.port}/v1/gemini" --api-key "$(cat /run/ai-meter-keys/crush)" --disable false
+        # Small slot (summarization/compaction), host-scoped and inside the
+        # meter guard: an unset slot resolves from PICKER-PERSISTED store
+        # state (crush load.go resolveSelectedModels — rc slot > store >
+        # catalog default), which had drifted to hyper/deepseek-v4.1-flash
+        # (charm-cloud OAuth, un-metered). Pinning zai's flash tier keeps
+        # summarization cheap, non-thinking (--thinking always rides only
+        # the glm-5.3-flash model declaration), and inside the ai-meter.
+        # Large stays per-project (.crushrc tq lines; picker store elsewhere).
+        model small zai/glm-4.7-flash
       fi
     '';
   };
