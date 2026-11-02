@@ -28,7 +28,7 @@
   bank-sync = "cb7495a8637e9d260a3bbbef93e7893d1df93935";
   branching-flow = "d17cb1aec720939b75dfb132a7c135cffe5b2717";
   brandid-lint = "77198852914db0d3d0db7d8b770e4c3f35c3dc41";
-  browser-history = "60822a99c729c719966515bea0faf9ae3eae7b6d";
+  browser-history = "c6bcfab01be0c2e88aaad0ba1cc000626fadfd67";
   buildflow = "f263829b7e56de89a9645c430ab853047a3e3ea6";
   cmdguard = "9a731a9f2fc78c2c9393db2fc0838480150d2b1a";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
