@@ -322,11 +322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793618268,
-        "narHash": "sha256-zbb7SY8KEXHf+28umCqrOlrn0gH/zQGTXUHqqTrwhcM=",
+        "lastModified": 1793629540,
+        "narHash": "sha256-zxKVZ1MtOgJWejRAs7x5OmMO8K5CfGh+T8/yFKzKXVE=",
         "ref": "refs/heads/master",
-        "rev": "60822a99c729c719966515bea0faf9ae3eae7b6d",
-        "revCount": 1730,
+        "rev": "e50600802f0075961cb6cd6d7fcba081ff3396ff",
+        "revCount": 1735,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -1049,11 +1049,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793627061,
-        "narHash": "sha256-bGLVE5RkCMBdxGSoS0HLYDCGp80ghw+D1cs/sZGK6B0=",
+        "lastModified": 1793629130,
+        "narHash": "sha256-K/58whSG6nbuNcWFSg6ZLsbsvXsDcrHymI7qYGFbfQc=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "cd59487b82a7a026b3473fc3b1fcddcab3285616",
+        "rev": "63d7b8f3deb77ec301985c49afacd29fa85f91e1",
         "type": "github"
       },
       "original": {
@@ -6175,11 +6175,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793625233,
-        "narHash": "sha256-2yOLeN3YXi1CEo1FdElgvpMMpGQ6ycc0Rs+ZSR4aBMU=",
+        "lastModified": 1793628949,
+        "narHash": "sha256-H1fRpcuzUF5DAYn5nCjDsSDMclQInyj1Na+wNwT3EwY=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "2d126eb0f4db3a351d2de963edcd903a2d7fcd2b",
+        "rev": "1d6b445e3327926b85a9efba0efb9b6d7f159743",
         "type": "github"
       },
       "original": {
@@ -6369,11 +6369,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1793627514,
-        "narHash": "sha256-wpqvP+hxdAMNjnGjBuxJILb9wW2QSa5eEZtrumbrq84=",
+        "lastModified": 1793629059,
+        "narHash": "sha256-AWF05eE0LILhbABqdZg8jQ7/yo1Zqp7WdvVK0p8qVt8=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "a1a9a1e5c4651aab41eb5cb02b195b084ebcf2dd",
+        "rev": "14288ba1064b2f35455f27442b1f5756a50a3eaf",
         "type": "github"
       },
       "original": {
@@ -7410,11 +7410,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793627928,
-        "narHash": "sha256-X/wJJR9C/WDPMwAdTXvZKxbVvqqqUKmLLCUqI1VpYeE=",
+        "lastModified": 1793628556,
+        "narHash": "sha256-1Vn0WMYHbcnWOnJe/z6Hu7jO9c2E/iwTPfklf1S4cxI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "5e6d0dd9fbcea67f0493292d9fe5291bf110cade",
+        "rev": "bc938fd9755772f4734d414ef538ca6ae77b6baa",
         "type": "github"
       },
       "original": {
@@ -8457,11 +8457,11 @@
     "signoz-collector-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793625798,
-        "narHash": "sha256-E5VVxpXFz/zeTrjYSz4F+bG6PSR39YKNvN0QQYpkoaE=",
+        "lastModified": 1793628985,
+        "narHash": "sha256-fnuOBte65aYwxcwSHqYk7KJgsKOofW2IoY30xJruIzU=",
         "owner": "SigNoz",
         "repo": "signoz-otel-collector",
-        "rev": "1b004a97b6393132c3ac620ba6a3060b5120dc8f",
+        "rev": "bd2b18fed2538300fa724953d653c9bb69ddc12c",
         "type": "github"
       },
       "original": {
