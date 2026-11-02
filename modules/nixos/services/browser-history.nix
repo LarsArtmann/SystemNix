@@ -746,15 +746,14 @@
               ];
               timerAfter = [ "mnt-pool.mount" ];
               onFailureDeps = onFailure;
-              extraServiceConfig = [
-                # The server's DynamicUser StateDirectory is 0700 owned by a
-                # random uid — root cannot traverse it without
-                # CAP_DAC_READ_SEARCH (cv-backup silent-no-op precedent:
-                # DAC-obeying root saw no DB and exited 0 "nothing to back
-                # up" forever).
-                (harden { CapabilityBoundingSet = "CAP_DAC_READ_SEARCH"; })
-                ioTier.background
-              ];
+              # The server's DynamicUser StateDirectory is 0700 owned by a
+              # random uid — root cannot traverse it without
+              # CAP_DAC_READ_SEARCH (cv-backup silent-no-op precedent:
+              # DAC-obeying root saw no DB and exited 0 "nothing to back
+              # up" forever). Rides the helper's single harden call — a
+              # separate harden{} would conflict on the same key.
+              caps = "CAP_DAC_READ_SEARCH";
+              extraServiceConfig = [ ioTier.background ];
             })
           ];
         })

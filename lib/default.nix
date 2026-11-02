@@ -145,6 +145,11 @@ in
       startLimitBurst ? 5,
       startLimitIntervalSec ? 300,
       memoryMax ? "512M",
+      # CapabilityBoundingSet for the single harden call — pass
+      # "CAP_DAC_READ_SEARCH" when the DB sits behind a 0700 DynamicUser
+      # StateDirectory. A SEPARATE harden{} in extraServiceConfig would
+      # conflict on CapabilityBoundingSet (two plain strings cannot merge).
+      caps ? "",
       extraServiceConfig ? [ ],
     }:
     {
@@ -183,7 +188,14 @@ in
               '';
               ReadWritePaths = [ backupDir ];
             }
-            (harden { MemoryMax = memoryMax; })
+            (harden (
+              {
+                MemoryMax = memoryMax;
+              }
+              // lib.optionalAttrs (caps != "") {
+                CapabilityBoundingSet = caps;
+              }
+            ))
             (serviceOneshotDefaults { })
           ]
           ++ extraServiceConfig
