@@ -90,6 +90,14 @@ _: {
           # persisted IDM secrets (see module header). All overrides ride the
           # environment (env vars override YAML deterministically).
           environment = {
+            # ── behind Caddy: plain HTTP on the loopback listener ──
+            # Upstream default PROXY_TLS=true serves self-signed TLS on the
+            # proxy port; Caddy's plain reverse_proxy then gets Go's
+            # "Client sent an HTTP request to an HTTPS server" 400 and the
+            # browser surfaces ERR_HTTP2_PROTOCOL_ERROR (live 2026-11-02).
+            # TLS terminates at Caddy; the public OC_URL stays https.
+            PROXY_TLS = "false";
+
             # ── external IdP (Pocket ID) ──
             OC_EXCLUDE_RUN_SERVICES = "idp";
             OC_OIDC_ISSUER = issuer;
