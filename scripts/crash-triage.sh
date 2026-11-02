@@ -137,7 +137,7 @@ for line in "${bootlist[@]}"; do
   evfile=$(evidence_file_for "$short")
   [ -n "$evfile" ] && ev+="$(basename "$evfile")" || ev+="NONE"
   ev+=")"
-  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap"
+  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap → boot-evidence-pull kill-pass join"
   echo "    reset-reason(in this boot, for previous): $reason"
   [ "$endkind" = "ABRUPT" ] && echo "    discriminator proposal: $branch  $ev"
   # offset 0 is the RUNNING boot — "abrupt" just means it has not shut
