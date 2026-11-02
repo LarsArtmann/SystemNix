@@ -122,8 +122,11 @@
       # TWELFTH RE-STALE 2026-11-02 04:12 lock float: cv@aa878d2 spec
       # g1hKglo, got bPvMOBEz (first-hand,
       # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+      # THIRTEENTH RE-STALE 2026-11-02 21:03 lock float: cv@80c2c88 spec
+      # bPvMOBEz, got ENX8uAcw (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261102-210359.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-bPvMOBEzNm6GwTnVMhjMcEiv8lDM75ods56ZqpnPLy4=";
+        vendorHash = "sha256-ENX8uAcwe+7kQuSyoKeK1oT+ySciuiS2VoF+i1AmXiY=";
       };
     in
     {
