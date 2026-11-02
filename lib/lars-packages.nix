@@ -223,9 +223,12 @@ lib.filterAttrs (_: v: v != null) {
   # float-proof-20261026-161006.log): upstream's baked jh6zkdx… at ec19200c
   # staled; got k7GyCaMU…. Drop when upstream bakes the got hash; re-add
   # ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE 2026-11-02 04:12 lock float (9ff1d1645+3709f06b0): at
+  # go-humanize-linter@8ac99125 spec k7GyCaMU, got v6zJv2bV (first-hand
+  # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   go-humanize-linter =
     flakePkgShim inputs.go-humanize-linter "default"
-      "sha256-k7GyCaMU5sjve9SOZVW32wyUklnDLP6dp1oLoKimeBs=";
+      "sha256-v6zJv2bVZhHA0roA8Z8ciTNfz0800BsNlrfQF2b4SXE=";
   # go-structure-linter shim DROPPED (2026-10-18): upstream vendorHash.nix
   # at tip 25b9f6a7 bakes the shim's own O2hpYHSc… value — bit-neutral
   # override (graph verified identical tip-vs-lock). Re-add ONLY via
@@ -250,9 +253,12 @@ lib.filterAttrs (_: v: v != null) {
   # hand.
   # RE-STALE 2026-10-26 lock float: spec 0VvVtsy3, got 6rIzqRAD (first-hand
   # keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
+  # RE-STALE 2026-11-02 04:12 lock float: at
+  # golangci-lint-auto-configure@f4df57a6 spec 6rIzqRAD, got Uvi1KtDo
+  # (first-hand, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-6rIzqRADPVaeY1nheyEHGRvPe6ZEerK246n1J0csGE4=";
+      "sha256-Uvi1KtDoAyKEwJ1CH3veGxFJBgQK87QCapHXLA+GVsI=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -268,9 +274,13 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261029-180630.log). Mirrored in
   # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE. Drop when upstream
   # bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+  # RE-STALE 2026-11-02 04:12 lock float: at journal@3542a958 spec
+  # OzU6YCvB, got 1JuET6kA (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Mirrored in
+  # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
   journal =
     flakePkgShim inputs.journal "default"
-      "sha256-OzU6YCvBTkDl9Jfj5fCOAczSzYMPbv397a7BuDF2rdA=";
+      "sha256-1JuET6kAFsXpHGqAYIYtLNwfg/2Jxy0ors0RV9PElKk=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
@@ -290,9 +300,12 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261026-161006.log).
   # RE-STALE 2026-10-28 blanket float: library-policy@f3651092 spec
   # OTLxExVE, got UtUhdbS9 (float-proof-20261028-214409.log).
+  # RE-STALE 2026-11-02 04:12 lock float: at library-policy@beb8d9ed spec
+  # UtUhdbS9, got X4A26/0R (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-UtUhdbS9W9RRBNUHAUKAfG+Rd7p3ACejRhtsn1jNbpg=";
+      "sha256-X4A26/0RE/S4MeQuGB9hPUQWo4C9XCzrkPMCIYaM+c0=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -348,9 +361,12 @@ lib.filterAttrs (_: v: v != null) {
   # float-proof-20261026-161006.log): upstream's baked ZRoq5Vdq… at 9ba321b2
   # staled; got +rbh2A6r…. Drop when upstream bakes the got hash; re-add
   # ONLY via nix-hash-fix evidence, never by hand.
+  # RE-STALE 2026-11-02 04:12 lock float: at project-meta@17dbf3d0 spec
+  # +rbh2A6r, got CejG7L+F (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-+rbh2A6r59iuxHzbl4nHNVFhqdp5qGQB9NPm8VJq+x4=";
+      "sha256-CejG7L+F99gy8tiPnAVNz/r6LukSwoE8a04M3LGCb/4=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
@@ -400,9 +416,14 @@ lib.filterAttrs (_: v: v != null) {
   # v9mUgqkE, got uTanAcTC; ~/.cache/fixwave/keepgoing.log). The service
   # module (modules/nixos/services/projects-management-automation.nix)
   # carries the same value.
+  # RE-STALE 2026-11-02 04:12 lock float: at pma@fde1c413 spec uTanAcTC,
+  # got tR/Y9ul (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). The service
+  # module (modules/nixos/services/projects-management-automation.nix)
+  # carries the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-uTanAcTCg/ayVXiXefLMeF4yZMlbJriOmsW7Qgzwh8I=";
+      "sha256-tR/Y9ulgxJl2OA3UqIm3kVXf7mn7H2tOALHpGn2XNUs=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -468,6 +489,10 @@ lib.filterAttrs (_: v: v != null) {
     # such file", float-proof-20261028-214409.log). Fresh fakeHash probe at
     # the locked rev got 4zISVNEX (tq-probe.log). Drop when upstream bakes
     # 4zISVNEX; re-add ONLY via nix-hash-fix evidence, never by hand.
-    vendorHash = "sha256-4zISVNEXOjNfK+t9uG84Exn42FNTAZcFpN6yatDcHUE=";
+    # RE-STALE 2026-11-02 04:12 lock float: at go-taskqueue@0e1679dd spec
+    # 4zISVNEX, got wtkejgEG (first-hand,
+    # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Drop when
+    # upstream bakes wtkejgEG; re-add ONLY via nix-hash-fix evidence.
+    vendorHash = "sha256-wtkejgEGOcWXL01VDzjbGwTJgAmMT2pnUQHDGYMJWQI=";
   });
 }

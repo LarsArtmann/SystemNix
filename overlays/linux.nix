@@ -269,23 +269,26 @@ let
   # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence, never by
   # hand.
   fleetVendorHashShims = _final: prev: {
-    # crush-daily hash RE-STALE 2026-10-19 (third wave for this tool):
-    # first-hand keep-going toplevel run (/tmp/toplevel-build-20261019.log)
-    # mismatched the 2026-10-15 shim value AAXq+KGA… vs got s37MeZuL….
-    # RE-STALE AGAIN 2026-10-26 lock float: spec s37MeZuL, got /sLqiHyQ
-    # (float-proof-20261026-161006.log).
-    # RE-STALE AGAIN 2026-10-29 23:10 lock float (rev 83c4d8a3): spec
-    # /sLqiHyQ, got iPis8A3A (deploy keep-going, nh build log).
-    crush-daily = prev.crush-daily.overrideAttrs {
-      vendorHash = "sha256-iPis8A3Arpz8xGsniYH/BtjZoCJ6STrtdX8oD1T+KNA=";
-    };
-    # overview shim RE-ADDED (2026-10-19 wave): the lock float moved past
-    # the 2026-10-17 bit-neutral drop (tip 966465e == lock then); keep-going
-    # enumeration at the new locked rev got NQ0ICMtk… vs specified
-    # +WMj7c5U…. RE-STALE 2026-10-26 lock float: spec NQ0ICMtk, got
-    # QweKquKP (float-proof-20261026-161006.log).
-    overview = prev.overview.overrideAttrs {
-      vendorHash = "sha256-QweKquKPXK0SYqk3zxEI8XHApMEUxyI5RDOwVjjsXss=";
+    # crush-daily shim DROPPED (2026-11-02 04:12 lock float, bit-neutral):
+    # upstream 85b1d7a1 bakes iPis8A3A… — the exact value this shim forced
+    # since 2026-10-29 (verified by reading upstream's vendorHash.nix at the
+    # locked rev); the override only ever re-created a second copy of the
+    # same number. Re-add ONLY via nix-hash-fix evidence, never by hand.
+    # overview shim DROPPED (2026-11-02 04:12 lock float — drop condition
+    # met first-hand): at ef901296 the keep-going enumeration got p91o0rkP…
+    # and upstream's vendorHash.nix bakes the SAME p91o0rkP… (its 0.2.130-era
+    # re-pin finally matches our graph), so the override was stale-wrong, not
+    # neutral — dropping restores the upstream value that the proof verified.
+    # (~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Re-add ONLY
+    # via nix-hash-fix evidence, never by hand.
+    # emeet-pixyd shim RE-ADDED (2026-11-02 04:12 lock float — bootstrap
+    # exception): upstream 612e42fa ships a raw sha256-AAAA… placeholder in
+    # its go-modules FOD, so a probe is mandatory; got WONlox/C… (first-hand
+    # keep-going enumeration, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+    # Drop per-tool when upstream bakes the got hash; re-add ONLY via
+    # nix-hash-fix evidence, never by hand.
+    emeet-pixyd = prev.emeet-pixyd.overrideAttrs {
+      vendorHash = "sha256-WONlox/C5e5CE7THuJ5+t2I+mK4SGizkRpfrp3Abkew=";
     };
     # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
     # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes

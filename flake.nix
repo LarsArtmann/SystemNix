@@ -255,7 +255,16 @@
 
     # monitor365 — Device monitoring agent (Rust)
     monitor365 = {
-      url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=refs/heads/master";
+      # REV-PINNED at 10d25291 (2026-11-02 04:12 float): 31ea3b7b bumped
+      # wasm-bindgen 0.2.129 → 0.2.130 without re-pasting the tarball hash
+      # in nix/tools.nix (spec gtEruUDi…, got lofzu1Ubn… — first-hand
+      # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log),
+      # breaking monitor365-ui; 10d25291 is the last build-proven 0.2.129
+      # pair. The fix is already pasted in ~/projects/monitor365 (13 commits
+      # ahead of origin, in-flight session) — LIFT: that stack lands on
+      # origin/master with the lofzu1Ubn… paste, re-lock past it, re-run the
+      # toplevel proof — then drop this pin and this row.
+      url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=refs/heads/master&rev=10d252918bfcea33f341385a50182f26aaa75182";
     };
 
     # domains — Terraform DNS management (Namecheap). Consumed ONLY for
@@ -717,7 +726,14 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
+      # REV-PINNED at 145cd73d (2026-11-02 04:12 float): upstream 983928ff
+      # does not compile — server.go:1061 references godmn.ReadNotifyCounters,
+      # which no longer exists (half-wired upstream refactor; first-hand
+      # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+      # 145cd73d is the last build-proven rev. LIFT: upstream master compiles
+      # again (ReadNotifyCounters defined or the call removed) and a probe
+      # build through our lock exits 0 — then drop this pin and this row.
+      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master&rev=145cd73db456320adcde0d71b77a535e03bbd7f4";
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
@@ -815,7 +831,16 @@
     # (returned 2026-09-22 after the 2026-09-15 dormant-integration removal;
     # this time enabled on evo-x2, pointed at llama-vlm's captioner endpoint)
     vision-review-agent = {
-      url = "github:LarsArtmann/vision-review-agent?ref=master";
+      # REV-PINNED at 8cbb0ec9 (2026-11-02 04:12 float): upstream 5f6cbbed
+      # raised go.mod's go directive past what our pinned nixpkgs (fe13242,
+      # go 1.27.2 under GOTOOLCHAIN=local) ships — "go.mod requires go >=
+      # 1.27.3" (first-hand keep-going,
+      # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+      # 8cbb0ec9 is the last build-proven rev. LIFT: upstream go.mod fits the
+      # pinned toolchain again (or our nixpkgs pin ships go >= 1.27.3 after
+      # the fe13242 rollback lifts) and a probe build exits 0 — then drop
+      # this pin and this row.
+      url = "github:LarsArtmann/vision-review-agent/8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45";
     };
 
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs

@@ -110,8 +110,11 @@
       # RE-STALE (2026-10-29 float): kith-crm@f1d40c9 spec XDRvpM8, got
       # LpMsryrv (first-hand,
       # ~/.cache/lockfloat/float-proof-20261029-180630.log).
+      # RE-STALE (2026-11-02 04:12 lock float): kith-crm@900bf55f spec
+      # LpMsryrv, got J9L/KEVb (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-LpMsryrviNzDbeJrQBQnvviZxgUaAwFNWb2vTGRC7BU=";
+        vendorHash = "sha256-J9L/KEVbTaxMA1uY5Kz6K/zujUnoX0l/jgQghHNOj04=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

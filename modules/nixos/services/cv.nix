@@ -119,8 +119,11 @@
       # ELEVENTH RE-STALE 2026-10-29 float: cv@e168e6d spec autqYveR, got
       # g1hKglo (first-hand,
       # ~/.cache/lockfloat/float-proof-20261029-180630.log).
+      # TWELFTH RE-STALE 2026-11-02 04:12 lock float: cv@aa878d2 spec
+      # g1hKglo, got bPvMOBEz (first-hand,
+      # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-g1hKglo1kRrQQ6VE15KSmwJPq407juRlooOS4gnHxgA=";
+        vendorHash = "sha256-bPvMOBEzNm6GwTnVMhjMcEiv8lDM75ods56ZqpnPLy4=";
       };
     in
     {

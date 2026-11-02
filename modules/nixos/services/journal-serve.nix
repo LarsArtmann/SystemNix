@@ -65,12 +65,12 @@
           type = lib.types.package;
           # Same store path as the PATH binary (lib/lars-packages.nix
           # journal = flakePkg inputs.journal) — single source of truth.
-          # vendorHash shim 2026-10-29 float: journal@50b4941 spec R6w7rVD9…,
-          # got OzU6YCvB… (first-hand,
-          # ~/.cache/lockfloat/float-proof-20261029-180630.log); mirrors the
-          # flakePkgShim in lars-packages.nix — edit ALL THREE.
+          # vendorHash shim 2026-11-02 04:12 lock float: journal@3542a958
+          # spec OzU6YCvB…, got 1JuET6kA… (first-hand,
+          # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log); mirrors
+          # the flakePkgShim in lars-packages.nix — edit ALL THREE.
           default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-OzU6YCvBTkDl9Jfj5fCOAczSzYMPbv397a7BuDF2rdA=";
+            vendorHash = "sha256-1JuET6kAFsXpHGqAYIYtLNwfg/2Jxy0ors0RV9PElKk=";
           };
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to serve the dashboard with.";
