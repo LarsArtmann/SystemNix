@@ -32,7 +32,7 @@ All three provisioned by `pocket-id-config.provision` (`isPublic = true`, `pkceE
 
 `services.opencloud.settings` is DELIBERATELY empty: the nixpkgs module runs `opencloud-init-config` (`opencloud init`) once — it generates and persists the IDM/service secrets into `/etc/opencloud/opencloud.yaml` (root fs; the running service cannot write there — read-only store config). Skipping init (by providing `settings.opencloud`) would re-generate random secrets on every restart and corrupt the embedded IDM. All overrides ride `services.opencloud.environment` — env vars override YAML deterministically.
 
-`OC_INSECURE=true` (module default): loopback service behind Caddy's TLS; outbound verification to `auth.home.lan` is intentionally lax for the pilot.
+`OC_INSECURE` is NOT set (a 2026-10-25 draft claimed "module default true" — wrong, live-verified against the unit env 2026-11-02): outbound verification to `auth.home.lan` uses real TLS against the dnsblockd CA, which the whole system trusts via `security.pki.certificates` in `platforms/nixos/system/dns-blocker-config.nix`. The loopback proxy port itself is plain HTTP (PROXY_TLS=false, trap #11) — TLS terminates at Caddy.
 
 ## Traps
 
