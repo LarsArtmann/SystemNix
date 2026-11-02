@@ -322,16 +322,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1793629540,
-        "narHash": "sha256-zxKVZ1MtOgJWejRAs7x5OmMO8K5CfGh+T8/yFKzKXVE=",
+        "lastModified": 1793618268,
+        "narHash": "sha256-zbb7SY8KEXHf+28umCqrOlrn0gH/zQGTXUHqqTrwhcM=",
         "ref": "refs/heads/master",
-        "rev": "e50600802f0075961cb6cd6d7fcba081ff3396ff",
-        "revCount": 1735,
+        "rev": "60822a99c729c719966515bea0faf9ae3eae7b6d",
+        "revCount": 1730,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "60822a99c729c719966515bea0faf9ae3eae7b6d",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       }

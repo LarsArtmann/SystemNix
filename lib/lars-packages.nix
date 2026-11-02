@@ -256,9 +256,12 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-02 04:12 lock float: at
   # golangci-lint-auto-configure@f4df57a6 spec 6rIzqRAD, got Uvi1KtDo
   # (first-hand, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+  # RE-STALE 2026-11-02 15:28 lock float: at
+  # golangci-lint-auto-configure@1d6b445e spec Uvi1KtDo, got DIO+MXPj
+  # (first-hand keep-going, float-proof-20261102-152823.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-Uvi1KtDoAyKEwJ1CH3veGxFJBgQK87QCapHXLA+GVsI=";
+      "sha256-DIO+MXPjK6uD3tOD97DzneybnCCJlInXM+GY2tx6ZDQ=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback

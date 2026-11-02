@@ -883,7 +883,17 @@
     # stale hashes there via buildflow nix-hash-fix, never hand-paste) —
     # docs/agents/go-ecosystem.md probe protocol.
     browser-history = {
-      url = "git+ssh://git@github.com/LarsArtmann/browser-history?ref=refs/heads/master";
+      # REV-PINNED at 60822a9 (2026-11-02 15:28 float): upstream e506008
+      # does not compile — api/doctor_cli.go:146 references defaultLLMModel,
+      # which is defined only in the LOCAL ai_provider commit (ee0743b) that
+      # has not been pushed yet, i.e. the doctor series was split across the
+      # push (first-hand keep-going, float-proof-20261102-152823.log).
+      # 60822a9 is the last build-proven rev (the running generation
+      # deployed from it). LIFT: the doctor/ai-provider series lands on
+      # origin/master (~/projects/browser-history is ahead of origin) —
+      # drop the pin, re-lock past it, re-run the toplevel proof — then
+      # drop this pin and its pin-audit row.
+      url = "git+ssh://git@github.com/LarsArtmann/browser-history?ref=refs/heads/master&rev=60822a99c729c719966515bea0faf9ae3eae7b6d";
     };
 
     # CV — resume generator + career pipeline server (PRIVATE repo: git+ssh).
