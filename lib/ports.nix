@@ -236,12 +236,18 @@
     ai-meter = 8107;
     ai-meter-metrics = 8108;
 
-    # OpenCloud — self-hosted file sync & share platform. The proxy IGNORES
-    # PROXY_HTTP_ADDR (NATS_PORT class, verified live 2026-10-27: unit env
-    # said 9200, binary binds compiled-in 9100 plain HTTP — while 9200 is a
-    # TLS-speaking internal service); loopback-only, Caddy proxies
-    # cloud.home.lan here.
-    opencloud = 9100;
+    # OpenCloud — self-hosted file sync & share platform. Moved 9100 → 9500
+    # (2026-11-02, strace + /proc/net/tcp proven): the standalone `web`
+    # service binds the ocis-compiled default loopback 9100 at startup, and
+    # under deploy-time load it wins the race against the proxy — whose
+    # PROXY_HTTP_ADDR IS honored (bind attempts follow the configured port
+    # exactly) — so the proxy bind fails EADDRINUSE → CSP-reload panic
+    # cascade → process exit. The 2026-10-27 "proxy ignores env, binds
+    # compiled-in 9100" note misread that web listener as the proxy. 9500
+    # sits outside the ocis 9100-9304 internal band, so proxy (9500) and
+    # web (ocis default 9100) no longer collide; loopback-only, Caddy
+    # proxies cloud.home.lan here.
+    opencloud = 9500;
 
     # OpenCloud's embedded NATS JetStream — binds its compiled-in loopback
     # default 9233 in opencloud 7.2.4 (live 2026-10-27: NATS INFO answers on
