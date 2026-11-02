@@ -77,7 +77,7 @@
   library-policy = "beb8d9eda03fff9ae4a6a0ef5a5dc1bfd96e51f5";
   md-go-validator = "3f466de78df43628ca4c59803151f4345f67607a";
   media-atlas = "e2c4867d4157d59d1df5a571aae61581ccf40fee";
-  monitor365 = "10d252918bfcea33f341385a50182f26aaa75182";
+  monitor365 = "31ea3b7b1cc8729e0daec453911a3031d14579bd";
   mr-sync = "0064e140df16127c2419c1df955450ce0e72d222";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
   niri-session-manager = "fbc96f843edc2022e3f8fde9bec33d770e96b75a";
@@ -98,7 +98,7 @@
   papdashboard = "b370f98dd1a10da252a3a7e5d0c0f9fcee93d25f";
   paperless-gpt-src = "0a59ea4b2c0b70afbf01bafcd0a0858372368009";
   project-dependency-graph = "493013848b7a396cb9603b795cbf79d1ddaaa51d";
-  project-discovery-daemon = "145cd73db456320adcde0d71b77a535e03bbd7f4";
+  project-discovery-daemon = "983928ff39fd186aa40d2aacb055af52d77d502a";
   project-meta = "17dbf3d0d357e98c072f1da636f12c0b43433d63";
   projects-management-automation = "fde1c413fa3094d3122fdfaf51616b9358fe2aa4";
   pyproject-build-systems = "461a6a8540307fb9c05b8f6ad29e9720d2a621db";
@@ -118,6 +118,6 @@
   treefmt-full-flake = "d4817f5494feca3c5e927b58032ddcd718dbfdff";
   treefmt-nix = "0d6d739a833ba9a9c93034862e4a7b061a062a1c";
   uv2nix = "c361746c7d630d98b972378290547c8d35542a7a";
-  vision-review-agent = "8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45";
+  vision-review-agent = "5f6cbbed501805f5b7c7be26e215615b62ce89b0";
   wallpapers-src = "a6c8891c5612688a770c41a6d5fcc531155b8519";
 }
