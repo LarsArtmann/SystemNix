@@ -178,13 +178,17 @@ in
                 done
                 timestamp=$(date +${timestampFormat})
                 dst="${backupDir}/${prefix}$timestamp.sqlite"
-                tmp="$dst.tmp"
+                # mktemp'd sibling (audit class A: a fixed .tmp name collides
+                # with stale leftovers and cannot self-heal) — the trap plus
+                # the ${prefix}*.sqlite* retention match keep any crash
+                # remnant from lingering.
+                tmp="$(mktemp "$dst.XXXXXX")"
                 trap 'rm -f "$tmp"' EXIT
                 ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$tmp'"
                 ${lib.getExe pkgs.sqlite} -readonly "$tmp" "PRAGMA quick_check;" | grep -qx ok
                 mv "$tmp" "$dst"
                 echo "${name}: wrote $dst"
-                find ${backupDir} \( -name "${prefix}*.sqlite" -o -name "${prefix}*.sqlite-journal" -o -name "${prefix}*.sqlite.tmp" \) -mtime +${toString retentionDays} -delete
+                find ${backupDir} -name "${prefix}*.sqlite*" -mtime +${toString retentionDays} -delete
               '';
               ReadWritePaths = [ backupDir ];
             }

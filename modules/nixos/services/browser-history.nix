@@ -108,6 +108,7 @@
           fi
 
           tmp="$(mktemp "${agentTokenDir}/.agent.env.XXXXXX")"
+          trap 'rm -f "$tmp"' EXIT
           printf 'BROWSER_HISTORY_AGENT_TOKEN=%s\n' "$token" > "$tmp"
           chmod 0600 "$tmp"
           mv "$tmp" "$ENV_FILE"
