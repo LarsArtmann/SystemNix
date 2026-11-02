@@ -33,9 +33,64 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ports
         ;
+
+      # Federation drift sweep candidates: every registry port EXCEPT the
+      # hub itself (federating the hub with its own merged document would
+      # recurse). Name=port pairs baked in at eval time — zero port literals
+      # in the unit text (port-registry-audit reads Exec*/Environment only).
+      candidates = lib.mapAttrsToList (name: p: "${name}=${toString p}") (
+        lib.filterAttrs (n: _: n != "health-dashboard") ports
+      );
+
+      # The 2026-11-02 incident: the remotes list said only CV for five weeks
+      # while four services silently adopted go-health v0.8.x — the
+      # 2026-09-22 "nobody else speaks go-health" inventory was never
+      # re-probed. This sweep is the runtime complement to the eval-time
+      # list: every candidate port is probed on the three go-health paths; a
+      # body that decodes as a go-health document (status pass/warn/fail/off
+      # AND a checks object — custom {"status":"ok"}/{"status":"up"}/HTML
+      # health JSON fails exactly this test) on an UNFEDERATED port fails the
+      # unit with the exact remotes line to add. Connection-refused, 4xx/5xx
+      # and undecodable bodies are skipped, so the only failure mode is
+      # positive go-health evidence — no false-positive class exists by
+      # construction.
+      rediscover = pkgs.writeShellApplication {
+        name = "health-dashboard-rediscover";
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.jq
+        ];
+        text = ''
+          set -euo pipefail
+
+          remotes="${lib.concatStringsSep "," cfg.remotes}"
+          federated=$(printf '%s' "$remotes" | grep -oE ':[0-9]+' | tr -d ':' | sort -un)
+          drift=0
+
+          for pair in ${lib.concatStringsSep " " candidates}; do
+            name=''${pair%%=*}
+            port=''${pair##*=}
+            if printf '%s\n' "$federated" | grep -qx "$port"; then
+              continue
+            fi
+            for path in /health /readyz /healthz; do
+              body=$(curl -sf -m 3 -H 'Accept: application/json' "http://127.0.0.1:''${port}''${path}" 2>/dev/null) || continue
+              if printf '%s' "$body" | jq -e '((.status == "pass") or (.status == "warn") or (.status == "fail") or (.status == "off")) and (.checks | type == "object")' >/dev/null 2>&1; then
+                echo "health-dashboard-rediscover: ''${name} (127.0.0.1:''${port}''${path}) serves a go-health document but is NOT federated." >&2
+                echo "health-dashboard-rediscover: add \"''${name}=http://127.0.0.1:''${port}''${path}\" to services.health-dashboard.remotes (platforms/nixos/system/configuration.nix) and redeploy." >&2
+                drift=1
+                break
+              fi
+            done
+          done
+
+          exit ''${drift}
+        '';
+      };
     in
     {
       # Platform-truth catalog entry (ADR-008): unconditional — the health
@@ -152,6 +207,38 @@
             (harden { MemoryMax = "256M"; })
             (serviceDefaults { })
           ];
+        };
+
+        # Daily federation drift sweep — see the rediscover comment above for
+        # the no-false-positive argument. Failing (drift found) pages through
+        # onFailure like any service failure; the message carries the exact
+        # remotes line to add.
+        systemd.services.health-dashboard-rediscover = {
+          description = "Health hub federation drift sweep (unfederated go-health speakers)";
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              ExecStart = lib.getExe rediscover;
+              TimeoutStartSec = "5m";
+              # Probe-only: no state, no secrets.
+              DynamicUser = true;
+            }
+            (harden { MemoryMax = "128M"; })
+            (serviceOneshotDefaults { })
+          ];
+        };
+
+        systemd.timers.health-dashboard-rediscover = {
+          description = "Health hub federation drift sweep cadence";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "15m";
+            OnUnitActiveSec = "24h";
+            Persistent = true;
+          };
         };
 
         # Service-integration registry entry (modules/nixos/services/
