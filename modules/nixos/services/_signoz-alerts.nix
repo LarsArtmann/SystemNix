@@ -628,9 +628,11 @@ in
     # rules that NO engine evaluated: the host has no Prometheus/vmalert, so
     # alerts.yml (40+ rules incl. the whole 2026-10-12 data-flow dead-man
     # group) was documentation-only. Live layers until now: Gatus (process
-    # liveness + pinned zero-states) and the two pre-existing discordsync
-    # SigNoz rules. Series source: the discordsync scrape job added to the
-    # collector's prometheus receiver the same day (before it, every
+    # liveness + pinned zero-states) and the two discordsync SigNoz rules
+    # that predated this block (2026-11-02: the block has since grown to 7
+    # discordsync rules — the 5-rule mirror set plus the turso-CB and
+    # db-growth increments). Series source: the discordsync scrape job added
+    # to the collector's prometheus receiver the same day (before it, every
     # discordsync_* rule here queried a series that never reached
     # ClickHouse).
     #
