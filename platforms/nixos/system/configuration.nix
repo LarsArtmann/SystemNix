@@ -1596,13 +1596,22 @@ in
       # Federated go-health hub — health.home.lan. health-hub merges every
       # service's existing go-health endpoint into one dashboard (one card
       # per remote, name/check keys, name/reachable FAIL row when a remote
-      # is dark). CV is the first remote: its /health is the go-health rich
-      # document (port from lib/ports.nix). Runbook: docs/services/
-      # health-dashboard.md.
+      # is dark). Remotes = the fleet's go-health speakers, live-re-probed
+      # 2026-11-02 (the 2026-09-22 "only CV" inventory went stale as
+      # services adopted go-health v0.8.x): cv, discordsync, renamer and tq
+      # serve the rich document on /health; pma has no /health and serves it
+      # on /readyz (its /healthz is a liveness-only empty-checks stub).
+      # Everything else still answers custom health JSON — a remote joins by
+      # adopting go-health, not by being listed (runbook:
+      # docs/services/health-dashboard.md).
       health-dashboard = {
         enable = true;
         remotes = [
           "cv=http://127.0.0.1:${toString ports.cv}/health"
+          "discordsync=http://127.0.0.1:${toString ports.discordsync-api}/health"
+          "renamer=http://127.0.0.1:${toString ports.file-and-image-renamer-health}/health"
+          "tq=http://127.0.0.1:${toString ports.tq}/health"
+          "pma=http://127.0.0.1:${toString ports.pma-health}/readyz"
         ];
       };
 
