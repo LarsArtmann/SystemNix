@@ -156,35 +156,38 @@ in
         onFailure = onFailureDeps;
         startLimitBurst = startLimitBurst;
         startLimitIntervalSec = startLimitIntervalSec;
-        serviceConfig = lib.mkMerge [
-          {
-            Type = "oneshot";
-            ExecStart = pkgs.writeShellScript name ''
-              set -euo pipefail
-              db="${dbPath}"
-              if [ ! -f "$db" ]; then
-                echo "${name}: database $db does not exist yet — nothing to back up"
-                exit 0
-              fi
-              find ${backupDir} -name "${prefix}*.sqlite-journal" | while read -r j; do
-                echo "${name}: healing crash-interrupted backup remnant: $j (+ sibling)"
-                rm -f "$j" "''${j%-journal}"
-              done
-              timestamp=$(date +${timestampFormat})
-              dst="${backupDir}/${prefix}$timestamp.sqlite"
-              tmp="$dst.tmp"
-              trap 'rm -f "$tmp"' EXIT
-              ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$tmp'"
-              ${lib.getExe pkgs.sqlite} -readonly "$tmp" "PRAGMA quick_check;" | grep -qx ok
-              mv "$tmp" "$dst"
-              echo "${name}: wrote $dst"
-              find ${backupDir} \( -name "${prefix}*.sqlite" -o -name "${prefix}*.sqlite-journal" -o -name "${prefix}*.sqlite.tmp" \) -mtime +${toString retentionDays} -delete
-            '';
-            ReadWritePaths = [ backupDir ];
-          }
-          (harden { MemoryMax = memoryMax; })
-          (serviceOneshotDefaults { })
-        ] ++ extraServiceConfig;
+        serviceConfig = lib.mkMerge (
+          [
+            {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript name ''
+                set -euo pipefail
+                db="${dbPath}"
+                if [ ! -f "$db" ]; then
+                  echo "${name}: database $db does not exist yet — nothing to back up"
+                  exit 0
+                fi
+                find ${backupDir} -name "${prefix}*.sqlite-journal" | while read -r j; do
+                  echo "${name}: healing crash-interrupted backup remnant: $j (+ sibling)"
+                  rm -f "$j" "''${j%-journal}"
+                done
+                timestamp=$(date +${timestampFormat})
+                dst="${backupDir}/${prefix}$timestamp.sqlite"
+                tmp="$dst.tmp"
+                trap 'rm -f "$tmp"' EXIT
+                ${lib.getExe pkgs.sqlite} -readonly "$db" ".backup '$tmp'"
+                ${lib.getExe pkgs.sqlite} -readonly "$tmp" "PRAGMA quick_check;" | grep -qx ok
+                mv "$tmp" "$dst"
+                echo "${name}: wrote $dst"
+                find ${backupDir} \( -name "${prefix}*.sqlite" -o -name "${prefix}*.sqlite-journal" -o -name "${prefix}*.sqlite.tmp" \) -mtime +${toString retentionDays} -delete
+              '';
+              ReadWritePaths = [ backupDir ];
+            }
+            (harden { MemoryMax = memoryMax; })
+            (serviceOneshotDefaults { })
+          ]
+          ++ extraServiceConfig
+        );
       };
       timers.${name} = {
         description = "${description} (timer)";
