@@ -18,12 +18,20 @@ _: {
       inherit (import ../../../lib/default.nix lib)
         harden
         mkStateDir
+        mkPoolDirUnit
         serviceDefaults
         onFailure
         ports
         ;
       primaryUser = config.users.primaryUser;
       crushDbDir = "/home/${primaryUser}/.local/share/crush/.crush";
+      # True when the backup target lives on the removable HDD pool: the leaf
+      # then needs the mount-gated creator unit and the backup a mount dep.
+      poolBackup = lib.hasPrefix "/mnt/pool/" cfg.backup.directory;
+      # Mirrors the upstream module's own resolution: runAsUser wins over the
+      # dedicated system user. The pool leaf is chowned to whoever writes the
+      # backups, so this must not drift from the upstream backup unit's User=.
+      serviceUser = if cfg.runAsUser == null then "crush-daily" else cfg.runAsUser;
     in
     {
       config = lib.mkIf cfg.enable {
@@ -38,6 +46,30 @@ _: {
           (mkStateDir "/home/${primaryUser}/.local/share" "0750" primaryUser "users")
           (mkStateDir "/home/${primaryUser}/.local/share/crush/.crush" "0750" primaryUser "users")
         ];
+
+        # Pool-resident backup leg (2026-11-02): when the operator points
+        # backup.directory at the HDD pool, the leaf must be created by a
+        # mount-gated unit (cv-backup-dir pattern) — a tmpfiles rule under
+        # /mnt/pool would create it BEFORE the mount and shadow the pool copy
+        # on the root fs (the 9-day DAS shadow-dir incident). The unit is also
+        # what gives the backup service a directory it can write: the parent
+        # /mnt/pool/backups is root-owned and the backup runs as serviceUser.
+        systemd.services.crush-daily-backup-dir = lib.mkIf (cfg.backup.enable && poolBackup) (
+          mkPoolDirUnit {
+            description = "Create Crush Daily backup directory on the HDD pool";
+            directory = cfg.backup.directory;
+            owner = serviceUser;
+            mode = "0750";
+          }
+        );
+
+        systemd.services.crush-daily-backup = lib.mkIf (cfg.backup.enable && poolBackup) {
+          after = [ "crush-daily-backup-dir.service" ];
+          wants = [ "crush-daily-backup-dir.service" ];
+          # Detached DAS fails the run as a clean dependency error, never as a
+          # silent write onto the root filesystem.
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
+        };
 
         systemd.services.crush-daily = {
           inherit onFailure;
@@ -135,6 +167,16 @@ _: {
               # loads carry the SSO session, so the protected vHost
               # serves it.
               icon = "https://daily.${config.networking.domain}/favicon.svg";
+            };
+            # DB dump freshness (crush-daily-backup.timer, daily 00:00 +
+            # Persistent) — gated so a host without the backup leg registers
+            # no phantom row. Feeds backup-coordination's
+            # backup_healthy/backup_age_hours metrics and the aggregate
+            # "All Backups Healthy" Gatus check.
+            backup = lib.mkIf cfg.backup.enable {
+              directory = cfg.backup.directory;
+              filePattern = "crush-daily-*.db";
+              maxAgeHours = 25;
             };
           };
         };

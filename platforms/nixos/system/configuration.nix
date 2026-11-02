@@ -1532,6 +1532,19 @@ in
         # (mode 700 + ACL mask ---) so `crush projects --json` returns an empty
         # list and "collect done projects=0" forever.
         runAsUser = config.users.primaryUser;
+        # Nightly online SQLite backup onto the HDD pool (enabled 2026-11-02).
+        # Before this the 38 MB event store — the only durable state, and the
+        # source of every report and all LLM text — had NO scheduled copy at
+        # all. The directory is pool-resident on purpose: a copy under
+        # /var/lib/crush-daily/backups would die with the disk it protects.
+        # The module adds the mount-gated leaf unit (crush-daily-backup-dir)
+        # and the backup-coordination freshness row; restic-app-dumps mirrors
+        # the same directory into the dedup repo.
+        backup = {
+          enable = true;
+          directory = "/mnt/pool/backups/crush-daily";
+          retention = 7;
+        };
       };
 
       # bank-sync — Wise bank transaction sync + read-only dashboard.

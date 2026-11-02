@@ -49,6 +49,12 @@ _: {
           default = [
             "/mnt/pool/backups/browser-history"
             "/mnt/pool/backups/clickhouse"
+            # crush-daily: the event store is the only durable artifact of the
+            # whole service (38 MB; every report + LLM text is derived from
+            # it). Registered here because the daily .backup rewrite shares
+            # ~0 extents between nights — the plain dump alone would multiply
+            # on the pool.
+            "/mnt/pool/backups/crush-daily"
             "/mnt/pool/backups/cv"
             "/mnt/pool/backups/discordsync"
             # dnsblockd permanent allowlist — the only irreversible
