@@ -730,7 +730,13 @@
                 # key rides along harmlessly and keeps the unit honest if
                 # the import ever grows an API leg).
                 EnvironmentFile = [ envTemplate.path ];
-                TimeoutStartSec = "5min";
+                # 15min (was 5min): the startup preflight alone measured 57s
+                # on a calm box (doctor 2026-11-02) and the deploy battery's
+                # daemon-restart contention pushed the whole unit past 300s —
+                # the 2026-11-02 01:09 kill surfaced as a mislabeled
+                # journal_snapshot_divergence (context canceled inside the
+                # preflight), not a real divergence.
+                TimeoutStartSec = "15min";
               }
               (harden {
                 # Staged CSVs live inside the dataDir — no /home access
