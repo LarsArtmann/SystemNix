@@ -67,7 +67,11 @@ _: {
           (old: {
             nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.git ];
             doCheck = false;
-            vendorHash = "sha256-4zISVNEXOjNfK+t9uG84Exn42FNTAZcFpN6yatDcHUE=";
+            # RE-STALE 2026-11-02 04:12 lock float: at go-taskqueue@0e1679dd
+            # spec 4zISVNEX, got wtkejgEG (first-hand,
+            # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Same
+            # value as the lars-packages `tq` surface — update BOTH together.
+            vendorHash = "sha256-wtkejgEGOcWXL01VDzjbGwTJgAmMT2pnUQHDGYMJWQI=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden

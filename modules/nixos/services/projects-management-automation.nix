@@ -87,10 +87,14 @@
           # RE-STALE 2026-10-29 23:15 keep-going after the 7-input lock
           # revert (pma back at afccaf96): spec v9mUgqkE, got uTanAcTC
           # (~/.cache/fixwave/keepgoing.log) — both surfaces updated.
+          # RE-STALE 2026-11-02 04:12 lock float: at pma@fde1c413 spec
+          # uTanAcTC, got tR/Y9ul (first-hand,
+          # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log) — both
+          # surfaces (this module + lib/lars-packages.nix) updated.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-uTanAcTCg/ayVXiXefLMeF4yZMlbJriOmsW7Qgzwh8I=";
+                vendorHash = "sha256-tR/Y9ulgxJl2OA3UqIm3kVXf7mn7H2tOALHpGn2XNUs=";
               };
           user = primaryUser;
           group = "users";
