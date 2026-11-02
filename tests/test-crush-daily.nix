@@ -26,22 +26,26 @@
 #   5. retention prunes by AGE (the option is days, the unit uses `-mtime`),
 #      not by count — a reader who set 30 expecting 30 files would keep a
 #      thirty-day window they never asked for
-{ pkgs }:
+{ pkgs, inputs }:
 let
-  # The SystemNix overlay module reads `services.crush-daily.*` options that
-  # the upstream flake module declares. Import BOTH: the upstream module owns
-  # the service/backup units and the option set, the overlay adds the pool
-  # leaf unit and the integration row.
-  upstreamModule =
-    (pkgs.callPackage ../modules/nixos/services/crush-daily-upstream.nix { }).flake.nixosModules.crush-daily
-    or (throw "upstream crush-daily module is supplied by the flake input, see the node imports");
-
-  systemNixModule =
-    (import ../modules/nixos/services/crush-daily.nix).flake.nixosModules.crush-daily;
+  # Two modules, two owners. The upstream flake module declares the option set
+  # and the service + backup units; SystemNix's overlay adds the mount-gated
+  # pool leaf and the integration row. Importing only the overlay evaluates
+  # against options that do not exist (that is the host's arrangement too —
+  # systems/evo-x2.nix imports both).
+  upstreamModule = inputs.crush-daily.nixosModules.crush-daily;
+  # The overlay file is a flake-parts module: a FUNCTION returning
+  # `{ flake.nixosModules.crush-daily = <nixos module>; }`. Apply it to an
+  # empty argument set, then select the NixOS module out of the wrapper —
+  # binding both steps to names so the precedence trap (`f { }.a` parsing as
+  # `f ({ }.a)`) cannot resurface.
+  systemNixWrapper = (import ../modules/nixos/services/crush-daily.nix) { };
+  systemNixModule = systemNixWrapper.flake.nixosModules.crush-daily;
 
   port = 18081;
   dataDir = "/var/lib/crush-daily";
   backupDir = "/mnt/pool/backups/crush-daily";
+  db = "${dataDir}/crush-daily.db";
   serviceUser = "lars";
 in
 {
@@ -51,7 +55,12 @@ in
     { lib, config, ... }:
     {
       imports = [
+        upstreamModule
         systemNixModule
+        # The integration registry owns services.integration.* — declared by
+        # this module unconditionally (ADR-008 fan-out shape), so the test
+        # must co-import it exactly as a host does.
+        (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration
         ./test-helpers.nix
         # Real mounted btrfs HDD pool (tests/shared.nix poolDiskFixture — the
         # test-cv recipe). A plain `fileSystems` entry vanishes in VM tests;
@@ -73,7 +82,6 @@ in
 
       services.crush-daily = {
         enable = true;
-        inherit (config.users) primaryUser;
         runAsUser = serviceUser;
         inherit port;
         # No LLM key exists in a sandbox, and insights would fail the config
@@ -147,8 +155,7 @@ in
       "systemctl cat crush-daily.service | grep -q 'schedule --config'"
     )
 
-    db = "${dataDir}/crush-daily.db"
-    machine.succeed(f"test -f {db}")
+    machine.succeed("test -f ${db}")
 
     # ---- 4. The WAL property, measured: .backup captures, cp does not ----
     # A row written by a second writer stays in the -wal file until the next
@@ -162,7 +169,7 @@ in
     # already be in the main file and every assertion below would pass while
     # proving nothing.
     main_only = machine.succeed(
-      "sqlite3 -readonly 'file:${dataDir}/crush-daily.db?immutable=1'"
+      "sqlite3 -readonly 'file:${db}?immutable=1'"
       " \"SELECT count(*) FROM events WHERE id='vm-wal-probe'\""
     ).strip()
     assert main_only == "0", (
@@ -171,7 +178,7 @@ in
     )
 
     machine.systemctl("start crush-daily-backup.service")
-    artifact = machine.succeed(f"ls -1 ${backupDir}/crush-daily-*.db | head -1").strip()
+    artifact = machine.succeed("ls -1 ${backupDir}/crush-daily-*.db | head -1").strip()
     assert artifact.endswith(".db"), f"no backup artifact landed: {artifact!r}"
     machine.succeed(f"sqlite3 -readonly '{artifact}' 'PRAGMA quick_check;' | grep -qx ok")
     in_artifact = machine.succeed(
@@ -184,7 +191,7 @@ in
     # And the naive alternative, run for real: a byte copy of the main file
     # must NOT contain it. This is the regression the runbook describes; a
     # future "simplify the unit to cp" would show up here as a lost night.
-    machine.succeed(f"cp {db} /tmp/naive-copy.db")
+    machine.succeed("cp ${db} /tmp/naive-copy.db")
     naive = machine.succeed(
       "sqlite3 -readonly /tmp/naive-copy.db"
       " \"SELECT count(*) FROM events WHERE id='vm-wal-probe'\""
@@ -204,7 +211,7 @@ in
     machine.fail(f"test -f {stale}")
     machine.succeed(f"test -f {fresh}")
     machine.succeed(f"test -f '{artifact}'")
-    count = machine.succeed(f"ls -1 ${backupDir}/crush-daily-*.db | wc -l").strip()
+    count = machine.succeed("ls -1 ${backupDir}/crush-daily-*.db | wc -l").strip()
     assert int(count) == 3, (
       f"expected 3 artifacts (original, today's second run, the in-window "
       f"fresh one), got {count}"
@@ -212,6 +219,6 @@ in
 
     # No half-written file may look like a backup: the unit writes to a
     # `.tmp` name and only renames after quick_check passes.
-    machine.fail(f"ls ${backupDir}/.crush-daily-*.tmp")
+    machine.fail("ls ${backupDir}/.crush-daily-*.tmp")
   '';
 }
