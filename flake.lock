@@ -1010,16 +1010,16 @@
       "locked": {
         "lastModified": 1793494658,
         "narHash": "sha256-FTQhtqpvcOtGol+6qR8+t7lLs0EtoKvGHUDgZygWUt0=",
-        "owner": "LarsArtmann",
-        "repo": "Code-To-CV-Agent",
+        "ref": "refs/heads/master",
         "rev": "eee6d5750256de688d149f1623d355955994d537",
-        "type": "github"
+        "revCount": 208,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       },
       "original": {
-        "owner": "LarsArtmann",
-        "ref": "master",
-        "repo": "Code-To-CV-Agent",
-        "type": "github"
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       }
     },
     "dank-qml-common": {

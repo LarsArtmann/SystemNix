@@ -8,4 +8,24 @@ updates:
     groups:
       actions:
         patterns:
-          - "*"
+          - '*'
+  - package-ecosystem: gomod
+    directory: /pkgs/ai-meter
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: gomod
+    directory: /pkgs/gatus-alert-relay
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch

@@ -531,7 +531,7 @@
     # on purpose, vendorHash stability. Consumed by lars-packages (PATH CLI)
     # and modules/nixos/services/cvagent.nix (scan+mesh timer).
     cvagent = {
-      url = "github:LarsArtmann/Code-To-CV-Agent?ref=master";
+      url = "git+ssh://git@github.com/LarsArtmann/Code-To-CV-Agent?ref=refs/heads/master";
     };
     go-nix-helpers = {
       # Was INTERIM `git+file:///home/lars/worktrees/go-nix-helpers-vnfix` -
