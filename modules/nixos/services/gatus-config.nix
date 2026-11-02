@@ -1405,6 +1405,32 @@ _: {
                   alerts = discordAlert "Gatus Discord alert relay down or wedged — all gatus Discord alerts are being DROPPED while it is dead (gatus does not retry webhook sends; the queue is in-memory and dies with it). Check: systemctl status gatus-alert-relay, journalctl -u gatus-alert-relay -n 30 (relay decision= lines).";
                 })
               ]
+              # browser-history health (F3.5, 2026-11-02): the app had NO gatus
+              # coverage at all — its port was registered and serving with
+              # nothing watching it. The probe hits /health on the loopback
+              # address the module binds, which is 200 while healthy and 503
+              # when degraded (database unreachable, or agents expected but
+              # silent beyond AGENT_FRESHNESS). Deliberately NOT /api/doctor:
+              # that route only exists on the post-F2 browser-history rev, and
+              # this check must pass on the currently pinned rev too. The
+              # alert text names the doctor because the probe can only say
+              # THAT the deployment is degraded; naming WHICH check failed is
+              # the doctor's job (`browser-history-server doctor --json`, or
+              # GET /api/doctor's checks[] once the rev is bumped).
+              ++ lib.optionals (config.services.browser-history.enable or false) [
+                (mkHttpCheck {
+                  name = "Browser History";
+                  group = "Productivity";
+                  url = "http://127.0.0.1:${toString ports.browser-history}/health";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 2000"
+                    "[BODY] == pat(*\"status\":\"ok\"*)"
+                  ];
+                  alerts = discordAlert "browser-history degraded — the server answers 503 on /health when the journal is unreachable or when agents are expected but none has ingested within AGENT_FRESHNESS. Which check failed: run `browser-history-server doctor --json` as the service user (or GET /api/doctor once deployed) and read checks[] — config / database / journal / projection / agents / ai / otel / auth / panics / backup. Check: systemctl status browser-history; journalctl -u browser-history -n 50; systemctl status browser-history-agent.timer";
+                })
+              ]
               ++ map mkWebsiteCheck ossWebsites
               ++ netbirdControlPlaneChecks
               ++ mailChecks
