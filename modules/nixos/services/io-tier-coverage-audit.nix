@@ -111,6 +111,7 @@
             "clickhouse-db-backup-dir"
             "crm-backup-dir"
             "crowdsec-bouncer-register"
+            "crush-daily-backup-dir"
             "cv-backup-dir"
             "discordsync-attachments-dir"
             "discordsync-db-backup-dir"
