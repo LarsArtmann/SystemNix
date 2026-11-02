@@ -131,3 +131,17 @@ That is the entire session. A two-exchange read-only answer session does not pro
 3. **Upstream alerts.yml → FULL MIRROR + COVERAGE GATE.** Every upstream rule gets a provisioned SigNoz rule, pinned by an eval-time count assertion (house style) so upstream rule #41 can't silently go dark. Supersedes the "curated subset" branch of §f.3; §f.4's two dark "Prometheus-only" classes (DB-growth, sync-failure count) now have a decided home: mirror them with the documented false-fire risk engineered away.
 
 **Harvest disposition update:** §f items 1-5 remain un-harvested into `TODO_LIST.md` / `docs/todo/monitoring.md` — the owner's wait instruction still governs dispatch — but items 3 and 4 now carry owner direction (answer 3), and item 2's probe doctrine (answer 2) is decided. On the next go: land the probe-required doctrine line + the four new rows (monitoring.md owns 1-4, services.md owns 5), then re-run `check-todo-system.sh` pairing.
+
+---
+
+## Execution addendum (2026-11-02, ~05:30 CET — DiscordSync session, live probes)
+
+§f items 1-5 are now CLOSED by the follow-up session (all four planes live-verified from this host: metrics 12s-fresh, 3k discordsync spans/h in `signoz_index_v3` — the v2 legacy table is EMPTY, use v3; 275k log records/h at 100% trace_id correlation; all 5 rules provisioned+enabled+inactive via the rules API):
+
+1. metric-sweep → DONE (all rule-referenced series fresh; immich series 7.25d stale = unused feature, not a phantom).
+2. dashboard → still open, queued as [ready] in docs/todo/monitoring.md.
+3. full-mirror audit + coverage gate → owner decision §g.3 recorded; FIRST INCREMENT LANDED (see 4); the remaining ~57 dormant rules + the count assertion are queued [ready].
+4. two dark classes → LANDED: `discordsync-turso-sync-circuit-breaker.json` (≥6) + `discordsync-db-file-growth.json` (24h gauge increase, 30m window) in `_signoz-alerts.nix` (eval-verified, deploy pending) + the DiscordSync contract synced (alerts.yml `evaluator: signoz-mirror` ×6 + `sig-noz-mirror.list`).
+5. signoz-provision convergence → DONE (API: all 5 enabled, inactive; files rendered in /etc/signoz/rules/).
+
+Also landed: the live-probe-required doctrine + probe gotchas in docs/agents/monitoring.md; SEV1 collector row updated (recovery live-verified); the immich drift the Q1 answer's contract surfaces could not see (SystemNix provisioned it while DiscordSync still said dormant) — fixed in the same cross-repo change.

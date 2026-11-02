@@ -14,6 +14,8 @@ Three of the four failing units are root-caused with two fixed live (HM clobber,
 
 ---
 
+> **CORRECTION (2026-11-02 05:45): §a6's bank-sync root-cause is WRONG.** The "journal/snapshot divergence" was the 5-min TimeoutStartSec killing the startup preflight mid-COUNT under deploy-battery contention — `context canceled` wrapped into the divergence code whose STATIC remediation template read as a diagnosis. NO divergence exists (doctor all-green, import re-ran green <1s, migrate-journal never needed). Full re-triage + fixes: **docs/status/2026-11-02_05-45_bank-sync-divergence-was-a-timeout-mislabel-re-triage.md**.
+
 ## a) FULLY DONE
 
 1. **Deploy anchor repaired + verified** — `profiles/system` was still on OLD 887mx (gen 967) while `current-system` pointed at the new zwjf: the owner's `nh os switch` ran `switch-to-configuration test` (nh 4.4.2 logs show it verbatim), which moves `/run/current-system` but never the profile — the exact UNANCHORED class. Repair per AGENTS procedure (`nix build --no-link --profile /nix/var/nix/profiles/system zwjf` → `stc boot` → created gen 968). Live-verified 03:37: `current-system == system-968-link == zwjf` — a reboot keeps this state.
