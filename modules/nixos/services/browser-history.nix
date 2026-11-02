@@ -43,6 +43,19 @@
         ;
 
       cfg = config.services.browser-history;
+      # Summary webhook push (bh F6): the upstream summaryWebhookUrl option
+      # exists from the 2026-11-02 generation on — the `options ?` guard
+      # short-circuits until the flake input floats past it, so this module
+      # stays evaluable against older locks. Left UNSET here on purpose: no
+      # receiver is chosen yet (the host's push channel is Discord-via-signoz,
+      # which expects its own payload shape). When an owner sets a URL, the
+      # retry-exhausted Gatus check below activates with it. A plain
+      # localhost URL needs no sops; if the URL ever embeds a token, deliver
+      # SUMMARY_WEBHOOK_URL via the sops environmentFile instead of the
+      # option (it would otherwise render into the unit's Environment).
+      summaryWebhookConfigured =
+        (options ? services.browser-history.summaryWebhookUrl)
+        && config.services.browser-history.summaryWebhookUrl != "";
       # TEMPORARY vendorHash shims (2026-10-06, re-pinned 2026-10-07) DROPPED
       # 2026-10-07 at the 3ebbfbf lock move: upstream re-pinned the server
       # got-hash (dQN6dTxU…, first-hand --keep-going toplevel evidence) and
@@ -834,6 +847,29 @@
                     "[BODY] == pat(*\nbrowser_history_agents_active 1\n*)"
                   ];
                   alert = "Browser History has NO agent data — zero agent tokens ingested within the last ${toString cfg.agentActivity.maxAgeMinutes}min (agent timer dead, agent crash-looping, or ingest auth rejecting a revoked token). Check: systemctl status browser-history-agent.timer browser-history-agent.service; journalctl -u browser-history-agent -n 50. Note: legacy sops env-token agents never update last_used_at — DB (bh_) tokens only.";
+                }
+              ]
+              ++ lib.optionals summaryWebhookConfigured [
+                {
+                  # Webhook delivery liveness (2026-11-02, bh F6 + §f 7): the
+                  # deliveries are counted but nothing paged on exhaustion —
+                  # a silently-failing webhook was counted, not alerted.
+                  name = "Browser History Summary Webhook";
+                  group = "Productivity";
+                  url = "http://localhost:${toString ports.browser-history}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Absent-or-zero is healthy (hot-db `!= pat` shape): the
+                    # counter vec materialises the retry_exhausted child only
+                    # after an exhaustion actually happened — a vec with no
+                    # children gathers no family, so absence passes. Any
+                    # nonzero value trips: the [1-9] anchors the first digit
+                    # after the space, the trailing * absorbs multi-digit
+                    # values (10, 11, …) — a 0 sample can never match.
+                    "[BODY] != pat(*browser_history_summary_webhook_deliveries_total{result=\"retry_exhausted\"} [1-9]*)"
+                  ];
+                  alert = "Browser History summary webhook EXHAUSTED its retries — the receiver is unreachable or answering 429/5xx (transient failures are retried 3× before this counter moves; a 4xx rejection never retries and lands on result=\"rejected\", which this check deliberately ignores as a receiver-side contract break the owner must fix at the receiver). The triggering summary is NOT lost (it was served and cached) but push delivery is dead until the receiver recovers. Check the receiver configured at services.browser-history.summaryWebhookUrl; then journalctl -u browser-history -n 100 | grep -i webhook.";
                 }
               ];
               homepage = {
