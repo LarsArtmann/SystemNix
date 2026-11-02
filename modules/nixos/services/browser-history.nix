@@ -757,7 +757,8 @@
         # The server entry REPLACES rows in caddy.nix (history vHost, plain:
         # the app handles OIDC natively — protectedVHost would double-auth
         # the OAuth redirect flow; passkeys are disabled server-side since
-        # 2026-10-16, webauthn.enable = false above),
+        # 2026-10-16, webauthn.enable = false above — the doctrine and both
+        # counter-examples: docs/agents/forward-auth.md),
         # gatus-config.nix (Browser History check), homepage.nix (tile), and
         # pocket-id.nix (OIDC client). The agent registers its own unit with
         # system-health (moved out of monitoredServices' default list).

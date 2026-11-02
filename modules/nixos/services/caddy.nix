@@ -412,7 +412,8 @@ _: {
       #     pair-mate blind.
       #   paperless — deliberately hand-written (native OIDC via Pocket ID,
       #     django-allauth Layer 1; protectedVHost would double-auth — see
-      #     the vHost block below). Added 2026-10-25 when the parallel
+      #     the vHost block below, and the doctrine: docs/agents/forward-auth.md).
+      #     Added 2026-10-25 when the parallel
       #     session's integration rework left it firing the blind-spot
       #     assertion in non-evo-x2 caddy contexts (caddy-mint VM); delete
       #     this row if/when it moves to the registry.
