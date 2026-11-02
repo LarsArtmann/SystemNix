@@ -4,6 +4,7 @@
   pkgs,
   dankMaterialShell,
   dmsPaste,
+  quotaboard,
   ...
 }:
 let
@@ -19,6 +20,11 @@ in
     # clipboard-parity settings) — github:LarsArtmann/dms-paste,
     # extracted from this tree 2026-10-16.
     dmsPaste.homeModules.dms-paste
+    # quotaboard — AI coding-plan quota dashboard (github:LarsArtmann/
+    # quotaboard, Forgejo-primary): user service (services.quotaboard) +
+    # DMS bar widget via programs.dank-material-shell. The module only
+    # ASSIGNS into DMS options — this file imports DMS's HM module above.
+    quotaboard.homeModules.quotaboard
   ];
 
   options.programs.systemnix-quickshell = {
@@ -117,6 +123,17 @@ in
     # (enterToPaste/clickToPaste/maxHistory 100000/visibleEntryActions=["pin"])
     # from the dms-paste input. Pinned by pastebot-parity-audit.nix.
     programs.dms-paste.enable = true;
+
+    # quotaboard — AI coding-plan quota dashboard (github:LarsArtmann/
+    # quotaboard): user service on the registry port + DMS bar widget.
+    # No environmentFile yet — without keys the dashboard and the widget
+    # render per-provider "not configured" guidance (honest empty state);
+    # wire sops secrets here when the owner adds ZAI/Synthetic keys.
+    services.quotaboard = {
+      enable = true;
+      port = ports.quotaboard;
+      dmsPlugin.placeInBar = true;
+    };
 
     programs.dank-material-shell = {
       enable = true;

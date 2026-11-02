@@ -8076,6 +8076,30 @@
         "type": "github"
       }
     },
+    "quotaboard": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793598320,
+        "narHash": "sha256-utCEIOPTGJA6EDmejKWRWo1LgKFIz6Cb9VXr3U9FPnc=",
+        "ref": "refs/heads/master",
+        "rev": "c18cba99a65e2f87e58ed5cff05906cc3c7042d0",
+        "revCount": 6,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/quotaboard"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/quotaboard"
+      }
+    },
     "root": {
       "inputs": {
         "art-dupl": "art-dupl",
@@ -8159,6 +8183,7 @@
         "pyproject-build-systems": "pyproject-build-systems_2",
         "pyproject-nix": "pyproject-nix_2",
         "qmd": "qmd",
+        "quotaboard": "quotaboard",
         "rust-overlay": "rust-overlay_2",
         "samber-linter": "samber-linter_2",
         "signoz-collector-src": "signoz-collector-src",

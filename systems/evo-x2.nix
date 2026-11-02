@@ -86,6 +86,7 @@ nixpkgs.lib.nixosSystem {
           wallpapers = inputs.wallpapers-src;
           inherit (inputs) dankMaterialShell;
           dmsPaste = inputs.dms-paste;
+          quotaboard = inputs.quotaboard;
         };
       };
     }
