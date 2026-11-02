@@ -57,3 +57,7 @@ PSI io some avg10 = **92%**, load 112–143, `ld.mold`/`compile`/`golangci-lint`
 2. **Wire provider keys via sops + `services.quotaboard.environmentFile`** → [blocked:user] in desktop.md (owner provides `ZAI_API_KEY`/`SYNTHETIC_API_KEY`).
 3. **Verify the Forgejo push mirror attached** after the deploy (phase 5) → [ready] row in desktop.md.
 4. **quotaboard CI workflow (`nix flake check` + go test)** → lives in the quotaboard repo, noted here for provenance; dms-paste CI sibling.
+
+## g. Storm addendum (08:06) — deploy window did NOT open
+
+The 60-min PSI watcher expired with io some avg10 at 91–98% the whole time (readings 07:01→08:06: 92→94→97%). Load climbed 112 → **288**; by 08:06 DESKTOP processes were blocking on `blk_mq_get_tag` (helium, quickshell-wrapper) alongside fresh `ld.mold`/`go` build batches from parallel sessions, and the 01:04-deploy re-armed **nsfw-classifier is still the known-sick 46%+ CPU eater** (its `[ready]` triage row predates this session). Verdict: freeze-class precursor, owner/stability-runbook territory — this session deliberately did NOT deploy, did NOT kill foreign processes, and left the queue row + staged verification script (`/tmp/qb-post-deploy-verify.sh`, syntax-checked) as the complete handoff. quotaboard master moved to `b2a3490` (docs-only) AFTER the lock pinned `c18cba99a65e` — expected-locks still matches the locked rev, so eval stays green; the next float wave registers the docs rev.
