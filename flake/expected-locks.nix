@@ -103,8 +103,8 @@
   projects-management-automation = "fde1c413fa3094d3122fdfaf51616b9358fe2aa4";
   pyproject-build-systems = "461a6a8540307fb9c05b8f6ad29e9720d2a621db";
   pyproject-nix = "bf7d4b1d6de61db02fd4e748395634f03006e5de";
-  quotaboard = "c18cba99a65e2f87e58ed5cff05906cc3c7042d0";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";
+  quotaboard = "c18cba99a65e2f87e58ed5cff05906cc3c7042d0";
   rust-overlay = "c85ccd343087c57da6021cafa1647142ad03e32e";
   samber-linter = "329c33c6eae0c8842ad9f8161d13773945e51747";
   signoz-collector-src = "637d961cf2c0e6c049a85434bb3a7c4ed26ce768";
