@@ -568,6 +568,15 @@ main() {
     # killed sessions leak their /var/tmp scratch — the EXIT trap below only
     # fires on a clean exit — and /tmp is wiped mid-session by tmpfiles; the
     # evidence boot dump can be 100s of MB and belongs on durable cache).
+    # Startup self-clean: reclaim leaked scratch from prior killed
+    # sessions (age+holder-gated, so a concurrent fresh pull is never
+    # touched). Fail-soft — a broken/missing gc never aborts the pull.
+    # (2026-11-02: 2.1G of leaked dumps reclaimed by hand; this closes
+    # the leak class. Standalone entry: scripts/boot-evidence-scratch-gc.sh)
+    local gc="$REPO_ROOT/scripts/boot-evidence-scratch-gc.sh"
+    if [ -x "$gc" ]; then
+      "$gc" quiet || true
+    fi
     mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence"
     BEP_DUMP=$(mktemp "${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence/boot-evidence.XXXXXX")
     # "${var:-}" not "$var": the trap fires at SCRIPT exit, after main()'s

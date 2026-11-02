@@ -22,7 +22,7 @@
 #                     checks.x86_64-linux.boot-evidence-scratch-gc-selftest)
 set -euo pipefail
 
-BEC_GC_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence"
+BEC_GC_DIR="${BEC_GC_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/boot-evidence}"
 BEC_GC_AGE_H="${BEP_GC_AGE_H:-48}"
 
 # <file> — nonzero when any live process holds <file> open. Walks
@@ -64,7 +64,7 @@ bec_gc() { # <mode>
 bec_selftest() {
   local failures=0 tmp out
   tmp=$(mktemp -d)
-  trap 'rm -rf "$tmp"' EXIT
+  trap 'rm -rf "${tmp:-}"' EXIT
   check() {
     local desc="$1"
     shift
@@ -76,15 +76,18 @@ bec_selftest() {
 
   local dir="$tmp/boot-evidence"
   mkdir -p "$dir"
-  printf '%.0sx' $(seq 1 1000) >"$dir/old-dump"             # 60h old, unheld
+  printf '%.0sx' $(seq 1 1000) >"$dir/old-dump" # 60h old, unheld
   touch -d '60 hours ago' "$dir/old-dump"
-  printf 'x' >"$dir/fresh-dump"                              # 0h old
-  printf '%.0sx' $(seq 1 100) >"$dir/old-but-held"           # 60h old, held
+  printf 'x' >"$dir/fresh-dump"                    # 0h old
+  printf '%.0sx' $(seq 1 100) >"$dir/old-but-held" # 60h old, held
   touch -d '60 hours ago' "$dir/old-but-held"
   # Real holder: a background shell keeps an fd on the file open.
-  ( exec 9<"$dir/old-but-held"; sleep 30 ) &
+  (
+    exec 9<"$dir/old-but-held"
+    sleep 30
+  ) &
   local holder_pid=$!
-  printf 'x' >"$dir/old-scratch.ch.XXXXXX"                   # stale ch scrap
+  printf 'x' >"$dir/old-scratch.ch.XXXXXX" # stale ch scrap
   touch -d '72 hours ago' "$dir/old-scratch.ch.XXXXXX"
 
   out=$(BEC_GC_DIR="$dir" BEP_GC_AGE_H=48 "$0" 2>&1 || true)
