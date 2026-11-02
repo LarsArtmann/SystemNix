@@ -32,7 +32,7 @@
   buildflow = "4ffcdee897196c42e284303db5fc35ed7365531e";
   cmdguard = "272e83e99e11f6f7fc7a87fdab4dce0d791a4aea";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
-  crush-config = "b4c518a1e8917021c38dfc3b353f12f2a2b6bd5c";
+  crush-config = "66bff2d6e99b5664d477e31457c0206ff38f4d33";
   crush-daily = "85b1d7a11985955da5724472a0c009bbfd78b409";
   cv = "aa878d2f0231cb6495f79124da70527b32d85ad1";
   cvagent = "eee6d5750256de688d149f1623d355955994d537";
