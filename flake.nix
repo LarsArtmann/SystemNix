@@ -374,7 +374,16 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
+      # REV-PINNED at f3651092 (2026-11-02 04:12 float): upstream beb8d9ed's
+      # dep sweep vendored a go-health-dashboard whose InstanceID became a
+      # struct without updating the call site — status.go:309 fails to
+      # compile ("cannot use resp.InstanceID … as string value"; first-hand
+      # keep-going, ~/.cache/lockfloat/float-proof-20261102-052231.log).
+      # f3651092 is the last build-proven rev. LIFT: upstream compiles at a
+      # rev where the go-health-dashboard API change is propagated and a
+      # probe build through our lock exits 0 — then drop this pin and the
+      # lib/flake-input-pin-audit.nix row.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master&rev=f36510924184c78b638ae602e848935a627571c5";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
