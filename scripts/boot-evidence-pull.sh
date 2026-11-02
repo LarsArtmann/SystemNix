@@ -53,13 +53,17 @@ bep_killpass_join() {
   # prints the task_memcg line for its SELECTED victim, so per-victim
   # memcg must be JOINED, never inferred in prose.  Basis levels:
   #   attested   — kernel `oom-kill:` line names the pid's task_memcg
-  #   unit-join  — a systemd `<unit>: The kernel OOM killer killed some
-  #                processes in this unit.` line within the join window
-  #                (unit-level evidence, NOT a kernel-attested path)
+  #   unit-join  — systemd `<unit>: The kernel OOM killer killed some
+  #                processes in this unit.` lines within the join window
+  #                (unit-level evidence, NOT a kernel-attested path);
+  #                candidates are ranked leaf-over-slice and
+  #                uid-consistent (counter-uid units excluded), and ALL
+  #                tied top-ranked units are listed with " | " when the
+  #                pass cannot disambiguate
   #   UNRESOLVED — no join found; the section names the gap instead of
   #                fabricating a cgroup path
   local dump="$1" oom="$2" win=30
-  local kills kline pid task uid ts uts att unit_joined udiff best diff
+  local kills kline pid task uid ts uts att line unit lts lus udiff score bestscore first cand
   kills=$(grep -E 'Out of memory: Killed process' "$dump" || true)
   if [ -z "$kills" ]; then
     return 0
@@ -75,8 +79,8 @@ bep_killpass_join() {
       printf 'pid=%s task=%s uid=%s memcg=%s basis=attested\n' "$pid" "$task" "$uid" "$att"
       continue
     fi
-    unit_joined=""
-    best=""
+    bestscore=""
+    cands=""
     while IFS= read -r line; do
       unit=$(printf '%s\n' "$line" | sed -n 's/.*systemd\[[0-9]*\]: \([^:]*\): The kernel OOM killer killed.*/\1/p')
       [ -n "$unit" ] || continue
@@ -86,12 +90,56 @@ bep_killpass_join() {
         lus=$(date -d "$lts" +%s 2>/dev/null || echo 0)
         [ "$lus" -gt 0 ] && udiff=$((lus - uts)) && [ "$udiff" -lt 0 ] && udiff=$((-udiff))
       fi
-      if [ "$udiff" -le "$win" ] && { [ -z "$best" ] || [ "$udiff" -lt "${best##*:}" ]; }; then
-        best="$unit:$udiff"
+      [ "$udiff" -le "$win" ] || continue
+      # Counter-uid exclusion: a user@975 line cannot evidence a uid-1000
+      # victim (live Oct-28: the hermes scope's line sat closest to the
+      # session-74 kills and would have won on proximity alone).
+      case "$unit" in
+      user@*.service | user-*.slice)
+        if [ -n "$uid" ]; then
+          u2=$(printf '%s' "$unit" | sed -E 's/^user[@-]([0-9]+)\.(service|slice)$/\1/')
+          [ "$u2" != "$uid" ] && continue
+        fi
+        ;;
+      esac
+      # Leaf units (.scope/.service) beat parent aggregates (.slice):
+      # systemd emits OOM-unit lines for BOTH and the closest line can be
+      # the slice (live Oct-28: system.slice at +18 s vs session-74.scope
+      # at -30 s).  Units whose name carries the victim's uid discriminator
+      # (session-*.scope, user@<uid>, user-<uid>.) rank above unshaped
+      # scopes, so a foreign scope (the hermes-worker-cron exec scope does
+      # not embed its uid in the name) cannot outrank the victim's own
+      # session units.  Ties keep the full winner set for honest listing.
+      score=$udiff
+      case "$unit" in
+      *.slice) score=$((score + 1000000)) ;;
+      *.scope | *.service) score=$((score - 1000)) ;;
+      esac
+      case "$unit" in
+      session-*.scope) [ -n "$uid" ] && score=$((score - 500)) ;;
+      user@"$uid".service | user-"$uid".*) [ -n "$uid" ] && score=$((score - 500)) ;;
+      esac
+      if [ -z "$bestscore" ] || [ "$score" -lt "$bestscore" ]; then
+        bestscore=$score
+        cands="$unit"
+      elif [ "$score" -eq "$bestscore" ]; then
+        case "
+$cands" in
+        *"$unit"*) : ;;
+        *) cands="$cands
+$unit" ;;
+        esac
       fi
     done < <(grep -F 'The kernel OOM killer killed' "$dump" || true)
-    if [ -n "$best" ]; then
-      printf 'pid=%s task=%s uid=%s unit=%s basis=unit-join (systemd unit-level evidence, NOT a kernel-attested memcg path)\n' "$pid" "$task" "$uid" "${best%%:*}"
+    if [ -n "$cands" ]; then
+      printf 'pid=%s task=%s uid=%s' "$pid" "$task" "$uid"
+      first=1
+      while IFS= read -r cand; do
+        [ -n "$first" ] && printf ' ' || printf ' | '
+        printf 'unit=%s' "$cand"
+        first=""
+      done <<<"$cands"
+      printf ' basis=unit-join (systemd unit-level evidence, NOT a kernel-attested memcg path; tied candidates listed when the pass cannot disambiguate)\n'
     else
       printf 'pid=%s task=%s uid=%s memcg=UNRESOLVED basis=none (no task_memcg line and no systemd OOM-unit join in the dump)\n' "$pid" "$task" "$uid"
     fi
