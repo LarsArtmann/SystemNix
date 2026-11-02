@@ -677,6 +677,42 @@ in
       severity = "critical";
     };
 
+    # DiscordSync Turso sync circuit breaker (2026-11-02, owner decision
+    # "full mirror": the two former "Prometheus-only by design" dark classes
+    # get SigNoz homes). alerts.yml original is strictly >5; mkRule ops are
+    # above_or_equal|below, so this fires at >=6 — the same semantics as the
+    # Go breaker, which enters backoff on the 6th consecutive failure.
+    # 2026-11-02 live probe: metric fresh, value 0 (breaker healthy — the
+    # quota-frozen Turso PLAN is a separate owner-pending watch owned by the
+    # deliberately-red Gatus check, not by this rule).
+    # Series source: the collector's discordsync scrape job (verified live:
+    # discordsync_turso_sync_consecutive_failures, 12s-fresh samples).
+    "signoz/rules/discordsync-turso-sync-circuit-breaker.json".source = mkRule {
+      name = "DiscordSync Turso Sync Circuit Breaker Tripped (>=6 consecutive failures)";
+      description = "Turso cloud sync has failed 6+ consecutive times — the circuit breaker is in backoff and sync is paused. Check the Turso dashboard for quota exhaustion, network connectivity, or a Turso-side outage; with quota exhausted the service falls back to local-only mode (runbook: docs/runbook/stale-remote-rebaseline.md in DiscordSync)";
+      query = "discordsync_turso_sync_consecutive_failures";
+      target = 6;
+      interval = "5m";
+      severity = "warning";
+    };
+
+    # DiscordSync DB growth storm (2026-11-02, owner "full mirror" decision —
+    # second dark class). Gauge increase over the trailing 24h catches the
+    # retry/idempotency-storm signature (the Aug 9-10 class). Restart-safe:
+    # the gauge re-reads the on-disk size per process, so restarts are not
+    # counter resets and cannot manufacture a fake increase; the known
+    # post-crash catch-up writers CAN legitimately breach it, which is the
+    # designed tradeoff (damped by the 30m eval window requiring three
+    # consecutive breaches before the first page).
+    "signoz/rules/discordsync-db-file-growth.json".source = mkRule {
+      name = "DiscordSync DB Growth Storm (>500 MB in 24h)";
+      description = "The SQLite database (plus WAL) grew >500 MB in 24h — the signature of a retry/idempotency storm or a runaway backfill/reconcile loop, far beyond normal ingestion growth. Compare discordsync_events_emitted_total / discordsync_command_dispatched_total rates and the command-audit pruner (discordsync_command_audit_pruned_total); a breach right after a crash is the catch-up writers converging";
+      query = "increase(discordsync_db_file_bytes[24h])";
+      target = 500000000;
+      interval = "30m";
+      severity = "warning";
+    };
+
     # Forgejo mirror sync backlog (2026-10-16): mirrors whose last sync
     # ATTEMPT is older than 4h (2x the 2h pull interval). TouchMirror
     # advances updated_unix on FAILED attempts too, so this climbs only
