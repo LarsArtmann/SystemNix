@@ -483,11 +483,16 @@ echo ""
 echo "12. Boot assessment (counting + bless timing)"
 prev_boot_monotonic() {
   # First monotonic timestamp (seconds) of the previous boot's line matching $1.
-  journalctl -b -1 -q --no-pager -o short-monotonic _PID=1 2>/dev/null |
-    grep -m1 -F "$1" |
-    grep -oE '[0-9]+(\.[0-9]+)?' | head -1
+  # Drain journalctl into a variable first: a grep -m1/head pipeline SIGPIPEs
+  # journalctl mid-write and, under `set -o pipefail`, kills the whole audit
+  # (exit 141) — this leg never ran live because the SC2012 shellcheck leg
+  # blocked the build until 2026-11-02.
+  local pattern="$1"
+  local out
+  out="$(journalctl -b -1 -q --no-pager -o short-monotonic _PID=1 2>/dev/null || true)"
+  awk -v pat="$pattern" 'index($0, pat) { if (match($0, /[0-9]+(\.[0-9]+)?/)) print substr($0, RSTART, RLENGTH); exit }' <<<"$out"
 }
-NEWEST_ENTRY="$(ls -t "$BOOT_DIR/loader/entries"/nixos-*.conf 2>/dev/null | head -1 || true)"
+NEWEST_ENTRY="$(find "$BOOT_DIR/loader/entries" -maxdepth 1 -name 'nixos-*.conf' -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2- || true)"
 BLESS_TS="$(prev_boot_monotonic 'Starting Mark the Current Boot Loader Entry as Good')"
 MULTI_TS="$(prev_boot_monotonic 'Reached target Multi-User System')"
 if [ -n "$NEWEST_ENTRY" ] && echo "$NEWEST_ENTRY" | grep -qE '\+[0-9]+(-[0-9]+)?\.conf$'; then
