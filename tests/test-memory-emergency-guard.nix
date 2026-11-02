@@ -375,9 +375,21 @@ in
           "grep -oP '^ExecStart=\\K.*' /etc/systemd/system/memory-emergency-guard.service"
       ).strip()
 
-      def run_guard(case, extra_env=""):
+      def run_guard(case, extra_env="", fix_epoch=False):
+          # fix_epoch: keep the boot epoch (now - uptime) STABLE across runs
+          # via the /tmp/gt/fixepoch anchor — the guard re-snapshots the
+          # per-boot baseline whenever the epoch moves, so a static uptime
+          # fixture combined with a live clock made every run look like a
+          # fresh boot (the 6a-lb "two real trips" leg could never read 2).
+          refresh = (
+              "echo $(($(date +%s) - $(cat /tmp/gt/fixepoch))) > /tmp/gt/uptime; "
+              "UPTIME_SRC=/tmp/gt/uptime "
+              if fix_epoch
+              else ""
+          )
           return machine.succeed(
-              f"MEMINFO_SRC=/tmp/gt/{case}-meminfo"
+              refresh
+              + f"MEMINFO_SRC=/tmp/gt/{case}-meminfo"
               f" ZRAM_MM_STAT_SRC=/tmp/gt/{case}-mmstat"
               f" ZRAM_DISKSIZE_SRC=/tmp/gt/disksize"
               f" PSI_SRC=/tmp/gt/{case}-psi"
@@ -663,13 +675,13 @@ in
       #      times has the guard rescued THIS boot". UPTIME_SRC points at a
       #      fixture so the epoch change is simulated without a reboot.
       machine.succeed(
-          "rm -f /var/lib/memory-emergency-guard/boot-epoch"
+          "echo $(($(date +%s) - 1000)) > /tmp/gt/fixepoch"
+          " ; rm -f /var/lib/memory-emergency-guard/boot-epoch"
           " /var/lib/memory-emergency-guard/boot-baseline.count"
           " /var/lib/memory-emergency-guard/tripped.count"
           " /var/lib/memory-emergency-guard/last-trip"
       )
-      machine.succeed("echo '1000 0' > /tmp/gt/uptime")
-      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      out = run_guard("healthy", fix_epoch=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 0" in prom, (
           "a fresh boot baseline must zero trips_this_boot regardless of "
@@ -678,15 +690,15 @@ in
       assert "memory_emergency_guard_load_bearing 0" in prom, (
           "0 trips this boot must NOT arm the load-bearing notify"
       )
-      run_guard("zone1")
+      run_guard("zone1", fix_epoch=True)
       machine.succeed("rm -f /var/lib/memory-emergency-guard/last-trip")
-      run_guard("zone1")
+      run_guard("zone1", fix_epoch=True)
       # last-trip = now blocks the restore gate on the healthy runs below
       # (700 s freshness bar) — the 6b-cap budget accounting stays at #1.
       machine.succeed(
           "echo $(date +%s) > /var/lib/memory-emergency-guard/last-trip"
       )
-      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      out = run_guard("healthy", fix_epoch=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 2" in prom, (
           "two real trips since the boot baseline must read 2"
@@ -698,8 +710,8 @@ in
       # Fresh boot: the epoch change re-snapshots the baseline, so the
       # per-boot count resets without touching the lifetime counter — the
       # 432-trips alarm is per-BOOT, never lifetime drift.
-      machine.succeed("echo '90000 0' > /tmp/gt/uptime")
-      out = run_guard("healthy", "UPTIME_SRC=/tmp/gt/uptime")
+      machine.succeed("echo $(($(date +%s) - 90000)) > /tmp/gt/fixepoch")
+      out = run_guard("healthy", fix_epoch=True)
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_trips_this_boot 0" in prom, (
           "a changed boot epoch must re-snapshot the baseline — the count "
@@ -710,6 +722,7 @@ in
       # stale baseline pair (the next run re-snapshots), churn window empty.
       machine.succeed(
           "rm -f /tmp/gt/uptime"
+          " /tmp/gt/fixepoch"
           " /var/lib/memory-emergency-guard/boot-epoch"
           " /var/lib/memory-emergency-guard/boot-baseline.count"
           " /var/lib/memory-emergency-guard/last-trip"
