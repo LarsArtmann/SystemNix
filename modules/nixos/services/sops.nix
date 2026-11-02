@@ -371,12 +371,25 @@ in
                 {
                   owner = "root";
                   group = "root";
-                  restartUnits = [ "cv-server.service" ];
+                  restartUnits = [
+                    "cv-server.service"
+                    "cv-agent.service"
+                  ];
                 }
                 (
                   [
                     "cv_api_key"
                     "cv_evaluation_citizenships"
+                    # Agent brain (2026-11-02, the funnel-needs-AI close-out):
+                    # the z.ai GLM coding-plan key, copied from crush.yaml's
+                    # zai_api_key via scripts/sops-copy-key.sh (same owner,
+                    # same subscription; endpoint auth live-verified HTTP 200
+                    # against https://api.z.ai/api/coding/paas/v4 before the
+                    # copy). Feeds CV_AGENT_API_KEY in the cv-env template;
+                    # a single key enables the brain (assess/pass/chat/
+                    # lesson distill + the STEER loop) and kills the
+                    # BrainHealth dark-brain warn row.
+                    "cv_agent_api_key"
                   ]
                   # Funnel reply-loop mailbox (2026-10-27, recut-10 T2):
                   # the applications@larsartmann.cloud Stalwart account
@@ -757,12 +770,27 @@ in
               owner = "cv";
               group = "cv";
               mode = "0400";
-              restartUnits = [ "cv-server.service" ];
+              restartUnits = [
+                "cv-server.service"
+                "cv-agent.service"
+              ];
               content = lib.generators.toKeyValue { } (
                 {
                   # Guards mutating/admin API routes (X-API-Key header).
                   # Read/rotate: sudo sops platforms/nixos/secrets/cv.yaml
                   CV_API_KEY = config.sops.placeholder.cv_api_key;
+                  # Agent brain (2026-11-02): z.ai GLM coding-plan key
+                  # (cv_agent_api_key, copied from crush.yaml zai_api_key —
+                  # endpoint auth verified pre-copy). Defaults pre-wire
+                  # provider/model/base_url (openaicompat / glm-5.3-flash /
+                  # https://api.z.ai/api/coding/paas/v4) — this ONE var
+                  # enables the brain (CV runbook docs/operations/
+                  # cv-agent-timer.md prerequisite 1).
+                  CV_AGENT_API_KEY = config.sops.placeholder.cv_agent_api_key;
+                  # 2026-09-08 runbook addendum: real z.ai latency + 429
+                  # backpressure live-validated over the 1038-app store —
+                  # 120s default is too tight for a full pass.
+                  CV_AGENT_TIMEOUT = "300s";
                   # D5.1 citizenship carve-out (defense-market funnel):
                   # comma-joined ISO-3166 alpha-2 ("de") — SÜG/NATO-bearing
                   # rows stop categorical-skipping for obtainable regimes.
