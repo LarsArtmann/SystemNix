@@ -101,8 +101,25 @@ _: {
             # ── external IdP (Pocket ID) ──
             OC_EXCLUDE_RUN_SERVICES = "idp";
             OC_OIDC_ISSUER = issuer;
-            # CSP/login-page wiring for the external IdP origin (no scheme).
+            # Upstream consumes this for IdP login-page wiring; it does NOT
+            # touch the CSP — the IdP origin must be added via the CSP file
+            # below (misread corrected live 2026-11-02).
             IDP_DOMAIN = "auth.${domain}";
+            # ── CSP: allow the external IdP origin ──
+            # Deep-merged (maps merged, slices concatenated + deduped) into
+            # the proxy's built-in default CSP (source-verified v7.2.4
+            # services/proxy/pkg/middleware/security.go): the SPA must fetch
+            # the OIDC discovery document (connect-src) and load the
+            # silent-renew iframe (frame-src) from auth.<domain> — without
+            # this the sign-in dies in the browser on a CSP refusal
+            # (live 2026-11-02).
+            PROXY_CSP_CONFIG_FILE_LOCATION = toString (pkgs.writeText "opencloud-csp.yaml" ''
+              directives:
+                connect-src:
+                  - https://auth.${domain}
+                frame-src:
+                  - https://auth.${domain}
+            '');
             PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD = "jwt";
             PROXY_OIDC_REWRITE_WELLKNOWN = "true";
             PROXY_AUTOPROVISION_ACCOUNTS = "true";
