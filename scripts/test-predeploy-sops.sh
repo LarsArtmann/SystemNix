@@ -53,6 +53,9 @@ expect_contains() {
 
 RECIPIENT="age1testrecipientaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 FAKE_HOST_KEY="-----BEGIN OPENSSH PRIVATE KEY-----fixture"
+# Sandbox-safe stub shebangs: the nix build sandbox has no /usr/bin/env, so
+# stubs must carry an absolute bash path (usb-flap selftest pattern).
+bash_abs="$(command -v bash)"
 
 # make_fixtures <sops_yaml_has_recipient:0|1>
 # Sets up scratch dir + stub bin dir. Echoes the scratch dir path.
@@ -71,7 +74,7 @@ make_fixtures() {
   fi
 
   cat >"$scratch/bin/nix" <<EOF
-#!/usr/bin/env bash
+#!$bash_abs
 printf '%s\n' "\$*" >> "\$NIX_ARG_LOG"
 if [ "\${NIX_RC:-0}" = "0" ]; then
   echo "/nix/store/fixture-manifest.json"
@@ -81,7 +84,7 @@ echo "error: fixture manifest build failure (missing key name in encrypted file)
 exit 1
 EOF
   cat >"$scratch/bin/ssh-to-age" <<EOF
-#!/usr/bin/env bash
+#!$bash_abs
 if [ "\$#" = "0" ]; then
   if [ "\${SSH_TO_AGE_RC:-0}" != "0" ]; then exit 1; fi
   echo "$RECIPIENT"
@@ -98,12 +101,12 @@ fi
 exit 1
 EOF
   cat >"$scratch/bin/sops" <<EOF
-#!/usr/bin/env bash
+#!$bash_abs
 printf 'sops %s\n' "\$*" >> "\$SOPS_CALL_LOG"
 exit "\${SOPS_RC:-0}"
 EOF
   cat >"$scratch/bin/sudo" <<EOF
-#!/usr/bin/env bash
+#!$bash_abs
 if [ "\$1" = "-n" ] && [ "\$2" = "true" ]; then
   exit "\${SUDO_RC:-0}"
 fi

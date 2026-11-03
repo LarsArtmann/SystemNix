@@ -55,7 +55,6 @@ manifest_out=""
 if manifest_out=$("$SOPS_GATE_NIX" build --no-link --print-out-paths "$MANIFEST_ATTR" 2>&1); then
   echo "PASS: sops manifest built clean — sops-install-secrets -check-mode=sopsfile green (every declared secret key present in its encrypted file, formats valid): $(printf '%s\n' "$manifest_out" | tail -1)"
 else
-  rc=$?
   echo "FAIL: sops manifest build failed — the sopsfile check (or the eval feeding it) is RED; a deploy would die at build/activation on the same error:"
   printf '%s\n' "$manifest_out" | tail -15 | sed 's/^/    /'
   GATE_FAILED=1

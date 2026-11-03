@@ -65,6 +65,20 @@
           touch $out
         '';
 
+        # sops pre-deploy gate fixture selftest (superb-v3 S-0002): the §19
+        # gate's three legs (manifest sopsfile check via its checkPhase,
+        # live-host-key recipient binding, decrypt smoke) plus the visible
+        # sudo-skip degradation, driven through stub nix/ssh-to-age/sops/sudo
+        # against the SAME repo gate script pre-deploy-check.sh execs.
+        sops-predeploy-selftest = pkgs.runCommand "sops-predeploy-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts"
+          cp ${root}/scripts/sops-predeploy-gate.sh "$scratch/scripts/sops-predeploy-gate.sh"
+          cp ${root}/scripts/test-predeploy-sops.sh "$scratch/scripts/test-predeploy-sops.sh"
+          ${pkgs.bash}/bin/bash "$scratch/scripts/test-predeploy-sops.sh"
+          touch $out
+        '';
+
         # usb-flap-metrics collector fixture selftest (2026-10-24): state
         # resume, delta math, rolling-window pruning, threshold flip, and
         # the fail-closed probe, driven through a stub journalctl against
