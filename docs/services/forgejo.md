@@ -653,3 +653,50 @@ active with all 14 members, runner alive through the switch. The instance
 fix has been live since gen-954 with the runner draining CI since 23:37.
 Boot-time verify still pending (next reboot must show zero cycle deletions
 and a runner pulled via forgejo.service.wants).
+
+## Runner stop classes — the FOURTH one is mount-stop propagation (2026-11-03)
+
+An INACTIVE runner has four distinct causes. Diagnose by journal timestamp
+order, never by the smoke line's prose (that line used to *assert* a cause,
+"deleted by a cycle breaker", and it misrouted the first responder of the
+2026-11-03 incident):
+
+| # | Class | Signature |
+| - | ----- | --------- |
+| 1 | Ordering cycle | `journalctl \| grep 'deleted to break ordering cycle'` > 0 in the window |
+| 2 | Crash loop | `start-limit-hit` on `gitea-runner-*`, non-zero exit codes |
+| 3 | Manual/ensure-driven stop | someone ran `systemctl stop`; journal shows no peer unit |
+| 4 | **Mount-stop propagation** | `mnt-buildcache.mount: Deactivated successfully` immediately followed by `Stopping Gitea Actions Runner` (7 ms on 2026-11-03) |
+
+**Class 4 mechanism (2026-11-03, 21:11:01):** the runner carries
+`RequiresMountsFor=/mnt/buildcache/ci-runner-cache` (see "Runner warm-cache"
+above — that gate is correct and stays), which compiles to
+`Requires=mnt-buildcache.mount` + `After=`. `buildcache-usb-recovery` is fired
+by deploy.sh after EVERY switch and used to stop that mount unconditionally,
+so any deploy TERMed the runner through stop propagation even with a perfectly
+healthy mount. Recovery fell to the 5-minute `gitea-runner-ensure` timer
+(72 s dark CI), and the post-deploy smoke sampled that gap:
+
+```
+21:11:01.895  Starting Recover buildcache mount after USB hotplug   (sudo TTY pts/42 = deploy.sh)
+21:11:01.913  mnt-buildcache.automount: Deactivated successfully
+21:11:01.915  mnt-buildcache.mount: Deactivated successfully
+21:11:01.920  Stopping Gitea Actions Runner...
+21:11:01.944  gitea-runner: Deactivated successfully
+21:11:01.958  automount re-armed, /mnt/buildcache remounted from /dev/sdb1
+21:12:13      gitea-runner-ensure: not active — clearing start-limit, starting (no-block)
+```
+
+**Fix (committed 2026-11-03, deploy pending):** the recovery script gained a
+step-0 healthy fast path (`buildcache healthy (/mnt/buildcache) - no
+teardown`) and `converge_consumers()`, and the runner is registered in
+`services.buildcache.recoveryRestartUnits` from `forgejo.nix` (where the unit
+lives) so a *real* remount brings it straight back instead of leaving the
+ensure timer to cover. An eval gate rejects any future buildcache-bound daemon
+that is not registered. Full doctrine: `docs/agents/storage.md` → "A recovery
+unit fired on EVERY deploy must be a no-op when healthy".
+
+**Verifying a deploy no longer trips it:** the runner must keep the SAME PID
+across the switch (`pgrep -f act_runner` before/after) and
+`journalctl -u buildcache-usb-recovery --since -10min` must show
+`buildcache healthy (/mnt/buildcache) - no teardown` instead of a mount stop.
