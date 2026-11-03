@@ -81,6 +81,11 @@ trap 'rm -rf "$SCRATCH"' EXIT
 git -C "$SCRATCH" init -q
 git -C "$SCRATCH" config user.name fixture
 git -C "$SCRATCH" config user.email fixture@example.com
+# The G2 fixture stages a literal .githooks/pre-commit path; with a global
+# core.hooksPath that makes scratch commits try (and hint-ignore) it. Point
+# the scratch repo at an empty hooks dir so no hook ever runs here.
+mkdir -p "$SCRATCH/.no-hooks"
+git -C "$SCRATCH" config core.hooksPath "$SCRATCH/.no-hooks"
 
 # shellcheck source=scripts/lib/eval-relevant-paths.sh
 source "$EVAL_PATHS_LIB"
@@ -132,9 +137,12 @@ expect eval-irrelevant-skip "G2 .githooks + docs/todo staged (the 2026-11-03 22G
 # G3: non-eval-root content edits skip (drvPath-only, never realized by --no-build).
 fixture scripts/deploy.sh 'exit 0'
 fixture .github/workflows/ci.yml 'on: push'
+git -C "$SCRATCH" add scripts/deploy.sh .github/workflows/ci.yml
+expect eval-irrelevant-skip "G3 scripts/*.sh + .github/*.yml content edits skip" "G3 non-eval-root edits wrongly forced the leg"
+
+# The eval-parsed exception ships with the baseline (its EDIT is the G9 case).
 fixture scripts/lib/buildcache-reap-names.sh 'BUILDCACHE_REAP_CACHE_DIRS="go-build"'
-git -C "$SCRATCH" add scripts/deploy.sh .github/workflows/ci.yml scripts/lib/buildcache-reap-names.sh
-expect eval-irrelevant-skip "G3 scripts/*.sh + .github/*.yml content edits skip" "G3/G4 non-eval-root edits wrongly forced the leg"
+git -C "$SCRATCH" add scripts/lib/buildcache-reap-names.sh
 
 git -C "$SCRATCH" commit -qm baseline
 
