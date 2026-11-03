@@ -657,7 +657,15 @@ in
       # 2026-10-29; see the module's llmUpstream option). Loopback-only
       # (:8106, no auth in the embedded UI), token runtime-minted.
       # AI-max plan A8 (2026-10-02); fields/extraction wiring = A9.
-      paperless-gpt.enable = true;
+      # DISABLED 2026-11-03 with llama-chat (its only viable upstream —
+      # the module assertion is correct): extraction needs the always-on
+      # 32k-context server that the freeze #41-#44 chain just retired
+      # (owner ruling: crashes stop). Documents queue un-enriched;
+      # paperless itself and the triage gate (ai-meter-backed) are
+      # unaffected. Re-enable TOGETHER with llama-chat's on-demand
+      # activation design (freeze-41 report item 30) — never re-enable
+      # against an always-on cold-loading llama-chat.
+      paperless-gpt.enable = false;
       # paperless-triage — confidence gate IN FRONT of paperless-gpt
       # (decision-triage productionization P1, 2026-10-27): local
       # llama-chat margin verdicts admit documents to the auto tag;
