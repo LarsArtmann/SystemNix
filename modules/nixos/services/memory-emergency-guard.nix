@@ -1577,8 +1577,9 @@ _: {
               "session-"
               "monitor365-server.service"
               "app.slice/run-"
+              "llama-chat.service"
             ];
-            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top. monitor365-server + app.slice run-*.scope added 2026-10-31 from the freeze-#38 census: 373 whole-boot NO-eligible trips while the attribution named monitor365-server (+13.2 GB windows), and agent sessions live under app.slice/run-*.scope where the session- pattern never matched";
+            description = "Substring patterns selecting cgroups whose process groups are eligible for the Zone-6 pause. Attribution-informed: only the top io cgroups matching a pattern are considered. headless agent session scopes + build daemons by default; the never-PTY invariant is the hard safety layer on top. monitor365-server + app.slice run-*.scope added 2026-10-31 from the freeze-#38 census: 373 whole-boot NO-eligible trips while the attribution named monitor365-server (+13.2 GB windows), and agent sessions live under app.slice/run-*.scope where the session- pattern never matched. llama-chat.service added 2026-11-03 from the freeze #39/#40/#43 chain: 5 consecutive storm boots printed NO eligible headless tree matched while llama-chat cold-loaded 23.4 GB off the QLC and held ~25 GB resident with a 41.7 GB VM — the exact driver the pause could not reach (llama-chat is config-disabled the same day; this pattern is the re-enable-day guard so a future enablement can never cold-load into a storm uncontested)";
           };
           maxPauseGroups = lib.mkOption {
             type = lib.types.int;

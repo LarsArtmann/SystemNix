@@ -1332,7 +1332,22 @@ in
       # CPU MoE + always-on and not FastFlowLM/Ollama/GPU; runbook:
       # docs/services/llama-chat.md). Serves the qwen3.6-35b-a3b abliterated
       # tune with native tool calls at 127.0.0.1:8850/v1.
-      llama-chat.enable = true;
+      #
+      # DISABLED 2026-11-03 (owner directive: "we shouldn't crash at all" —
+      # 5 consecutive WDT cuts Nov 2-3). Evidence ledger: llama-server
+      # OOM-killed in freezes #34/#38/#43 (41.7 GB VM, adj 300 — the
+      # kernel's preferred victim at every memory cliff); the 23.4 GB GGUF
+      # cold page-in off the QLC is the boot-time storm seed (#40: ~110 GB
+      # of reads in the first 75 min); llama-chat-ensure.timer re-arms it
+      # at boot-second 8 and every deploy re-arms the owner's manual stops
+      # (freeze-4 rule strikes 1-5: Oct 31 owner stop → Nov 2 gen-968
+      # re-arm → cuts #39/#40/#43/#44). ai-meter's llama-chat upstream
+      # 502s while disabled; InboxClean /chat degrades gracefully. To
+      # re-enable: flip to true + deploy — pair it with the guard
+      # ioPause pattern entry (memory-emergency-guard) and an on-demand
+      # activation design (freeze-41 report item 30) so it never
+      # cold-loads into a storm again.
+      llama-chat.enable = false;
 
       file-and-image-renamer = {
         enable = true;
