@@ -29,7 +29,7 @@
   bank-sync = "cb7495a8637e9d260a3bbbef93e7893d1df93935";
   branching-flow = "d17cb1aec720939b75dfb132a7c135cffe5b2717";
   brandid-lint = "77198852914db0d3d0db7d8b770e4c3f35c3dc41";
-  browser-history = "b8b60dfe3185aab52873194f1e1db8e21927fe41";
+  browser-history = "9daaa804d86a00b1546d72bbd531e5ecae4e27ba";
   buildflow = "2d6bbee1775e55826b63d1139bdf427f5f2ddf09";
   cmdguard = "7ab3f21740684fbc53ac07e5d7f3231e67993e42";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
@@ -99,7 +99,7 @@
   papdashboard = "c0b29a360818997041a9844f7d47c30ce20caa21";
   paperless-gpt-src = "0a59ea4b2c0b70afbf01bafcd0a0858372368009";
   project-dependency-graph = "aaac17c167b903ea59c861a9dc04b466466b9893";
-  project-discovery-daemon = "983928ff39fd186aa40d2aacb055af52d77d502a";
+  project-discovery-daemon = "145cd73db456320adcde0d71b77a535e03bbd7f4";
   project-meta = "3ab5e690849d1b20781793e499d54710517d94ee";
   projects-management-automation = "a257580d30b76d9e9eb1c925e3adf47b7f46a2fb";
   pyproject-build-systems = "461a6a8540307fb9c05b8f6ad29e9720d2a621db";

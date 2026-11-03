@@ -303,16 +303,18 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261026-161006.log).
   # RE-STALE 2026-10-28 blanket float: library-policy@f3651092 spec
   # OTLxExVE, got UtUhdbS9 (float-proof-20261028-214409.log).
-  # 2026-11-02 04:12 float: the input is REV-PINNED back to f3651092
+  # 2026-11-02 04:12 float: the input was REV-PINNED back to f3651092
   # (upstream beb8d9ed vendors a go-health-dashboard whose InstanceID
   # struct change breaks the library-policy build — flake.nix pin comment)
-  # and the value below is f3651092's build-proven hash (it was the SPEC
-  # at beb8d9ed, got X4A26/0R — first-hand,
-  # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). This hash
-  # tracks the LOCKED rev (cv.nix precedent) — re-probe on every pin lift.
+  # and the value below was f3651092's build-proven hash.
+  # 2026-11-03 LIFT: the pin lifted (upstream propagated the API change —
+  # origin/master at 0a276fc0 compiles clean) and the shim re-probed to
+  # the fresh got X4A26/0R (first-hand, float-proof-20261103-171041.log;
+  # amusingly the value that was the SPEC at beb8d9ed). Re-probe on every
+  # lift; drop when upstream bakes our-graph values.
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-UtUhdbS9W9RRBNUHAUKAfG+Rd7p3ACejRhtsn1jNbpg=";
+      "sha256-X4A26/0RE/S4MeQuGB9hPUQWo4C9XCzrkPMCIYaM+c0=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going

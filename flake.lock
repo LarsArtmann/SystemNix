@@ -322,11 +322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793722125,
-        "narHash": "sha256-FtziNJ/RS7repCEZ/gDS3k4D8l7G6R/pV/SiWWPTlb8=",
+        "lastModified": 1793722671,
+        "narHash": "sha256-0wJjO6QcxeTNOpUHQby0N6TCIxdTcurKLwpeXNhZfQ0=",
         "ref": "refs/heads/master",
-        "rev": "b8b60dfe3185aab52873194f1e1db8e21927fe41",
-        "revCount": 1773,
+        "rev": "9daaa804d86a00b1546d72bbd531e5ecae4e27ba",
+        "revCount": 1774,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -7642,16 +7642,17 @@
         "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
-        "lastModified": 1793550243,
-        "narHash": "sha256-fmQ8U+MLdp5J0+oQGuZQfPazEBn8exh3tDw2AFcEidY=",
+        "lastModified": 1792951428,
+        "narHash": "sha256-jn/8GKNb4YygD6MZuAu/saH1FwHWwopnFrL5OW8C5FE=",
         "ref": "refs/heads/master",
-        "rev": "983928ff39fd186aa40d2aacb055af52d77d502a",
-        "revCount": 154,
+        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
+        "revCount": 133,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       }

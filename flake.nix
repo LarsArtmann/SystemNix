@@ -732,11 +732,16 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      # LIFTED 2026-11-03: the 2026-11-02 pin (145cd73d) guarded the
-      # half-wired ReadNotifyCounters refactor — upstream completed it
-      # (first-hand go build at 983928f+ clean) and the pin row left
-      # lib/flake-input-pin-audit.nix.
-      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
+      # REV-PINNED at 145cd73d (RESTORED 2026-11-03 — the lift was
+      # premature): upstream 983928ff references godmn.ReadNotifyCounters,
+      # which exists only in godmn's UNPUBLISHED tree — a local go build
+      # passes via the workspace replace while the proxy-served FOD build
+      # fails `undefined: godmn.ReadNotifyCounters` (server.go:1061; the
+      # two-graphs trap — first proof of round 9). 145cd73d is the last
+      # build-proven rev. LIFT: godmn publishes ReadNotifyCounters (or the
+      # call changes) — verify via a PROXY-side build, not a local go
+      # build, then drop this pin and this row.
+      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master&rev=145cd73db456320adcde0d71b77a535e03bbd7f4";
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
