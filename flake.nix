@@ -873,14 +873,25 @@
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
       # REV-PINNED 2026-11-03 at 16a656f4 (rollback of the 21:03 float to
-      # 80c2c88): 80c2c88 panic-loops cv-server at runtime — sqlite
-      # rehydration times out (career-pipeline query-all deadline exceeded)
-      # and the samber/do lazy healthcheck then nil-derefs
-      # ChatstoreSessions.HealthCheck (sessions_chatstore.go:112) 5 s after
-      # bind; 16a656f4 is the gen-973 rev proven green for 18 h on boot
-      # deed9c84 including the full battery. LIFT: upstream rev where
-      # rehydration completes against the existing store and /health/live
-      # answers without the nil-receiver panic — drop pin + this comment,
+      # 80c2c88, which gen-974 had deployed 16:01 that day). ORIGINAL
+      # RATIONALE RETRACTED 2026-11-03 21:4x after journal+source
+      # verification: the cv-server SIGSEGV loop is REV-INDEPENDENT —
+      # identical nil-deref at ChatstoreSessions.HealthCheck
+      # (sessions_chatstore.go:112, samber/do lazy healthcheck on the
+      # never-resolved chatstore) in every rev e168e6d..HEAD; first SIGSEGV
+      # 2026-11-02 14:06 on cv@aa878d2 with restart counter already 17
+      # (hours BEFORE the 80c2c88 float existed at 21:03), 228 SIGSEGVs hit
+      # the pinned rev itself across boot deed9c84 (the "green 18 h" claim
+      # was never true), and 16a656f4 panicked identically post-rollback
+      # (18:52/19:08/19:24). ROOT CAUSE: pipeline_events outgrew the 5 s
+      # sqliteOperationTimeout on full-scan All() — boot rehydration
+      # deterministically fails ("query all events: context deadline
+      # exceeded"), the chatstore lazy service stays nil, the healthcheck
+      # probe kills the process. The pin is kept ONLY for build-hash
+      # stability (bPvMOBEz = the gen-972/973/975-proven deterministic
+      # store path), not as a fix. LIFT: upstream lands the real fix
+      # (nil-guard on HealthCheck + chunked/raised rehydration so boot
+      # completes against the existing store) — drop pin + this comment,
       # re-lock, re-run the toplevel proof.
       url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=16a656f4924069efcee122c3f7f8ccf27d592a21";
     };

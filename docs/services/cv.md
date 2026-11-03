@@ -231,6 +231,20 @@ journalctl -u cv-server --since "-10 min" | grep -E 'scan completed|bulk evaluat
   one, or drive writes through HTTP.
 - **`StoreLeaseHeldError`**: another process holds
   `<dsn>.lease`. Find the pid in the error; stop that process first.
+- **SIGSEGV restart loop (`sessions_chatstore.go:112` nil-deref,
+  `addr=0x8`)**: boot rehydration fails all 3 attempts with
+  `career-pipeline: query all events: context deadline exceeded` → the
+  chatstore lazy service never resolves → the samber/do healthcheck probe
+  derefs the nil receiver and kills the process every few minutes-hours.
+  REV-INDEPENDENT (verified 2026-11-03: identical code e168e6d..HEAD; the
+  2026-11-03 16a656f4 rev-pin does NOT fix it — it panics identically).
+  Root cause: `pipeline_events` outgrew the 5 s `sqliteOperationTimeout`
+  on full-scan `All()` (first SIGSEGV 2026-11-02 14:06, continuous since).
+  The service alternates panicking/degraded but keeps restarting — CRM
+  sync works in the windows between panics. Fix is upstream CV: nil-guard
+  `HealthCheck` + chunked (or bootstrap-timeout-raised) rehydration —
+  see the TODO row in docs/todo/upstream.md. Verify live state:
+  `journalctl -u cv-server --since -1h | grep -cE 'SIGSEGV'`.
 
 ## Pending root-gated proofs (paste into ONE root shell)
 

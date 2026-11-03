@@ -125,12 +125,22 @@
       # THIRTEENTH RE-STALE 2026-11-02 21:03 lock float: cv@80c2c88 spec
       # bPvMOBEz, got ENX8uAcw (first-hand,
       # ~/.cache/lockfloat/float-proof-20261102-210359.log).
-      # ROLLBACK 2026-11-03 (deploy session): rev back to 16a656f4 — 80c2c88
-      # panic-loops at runtime (sqlite rehydration deadline-exceeded, then
-      # samber/do lazy healthcheck nil-derefs ChatstoreSessions.HealthCheck,
-      # sessions_chatstore.go:112); 16a656f4 is gen-973-green (18 h on boot
-      # deed9c84). bPvMOBEz is 16a656f4's proven hash (gen-973 built and ran
-      # it) — restored, superseding the thirteenth entry's ENX8uAcw.
+      # ROLLBACK 2026-11-03 (deploy session): rev back to 16a656f4,
+      # restoring the proven hash. ORIGINAL CAUSAL CLAIM RETRACTED
+      # 2026-11-03 21:4x (journal + source verification): "80c2c88
+      # panic-loops / 16a656f4 gen-973-green" was FALSE — the
+      # rehydration-timeout → samber/do healthcheck nil-deref
+      # (sessions_chatstore.go:112) is rev-independent (identical code at
+      # HEAD), first SIGSEGV was 2026-11-02 14:06 on cv@aa878d2 with the
+      # restart counter already at 17, 228 SIGSEGVs hit the pinned rev
+      # across boot deed9c84, and 16a656f4 panicked identically
+      # post-rollback (18:52/19:08/19:24). Trigger: pipeline_events
+      # outgrew the 5 s sqliteOperationTimeout on full-scan All(). The
+      # rollback's real value: bPvMOBEz is the PROVEN hash (gen-972/973
+      # built and ran it; gen-975 rebuilt it deterministically),
+      # superseding the thirteenth entry's ENX8uAcw. The pin is build-hash
+      # stability ONLY — the real fix is upstream CV (nil-guard + chunked
+      # rehydration; TODO row in docs/todo/upstream.md).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-bPvMOBEzNm6GwTnVMhjMcEiv8lDM75ods56ZqpnPLy4=";
       };
