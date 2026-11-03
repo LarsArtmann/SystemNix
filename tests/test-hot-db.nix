@@ -252,9 +252,14 @@ in
     # naturally, the live shadow is still reachable and intact (never
     # covered by a fresh subvol), its consumer never wrote, and the SHARED
     # bootstrap stayed green (healthy testdb converged throughout).
-    shadowed_mount = machine.succeed("systemd-escape -p --suffix=mount " + "${shadowedPath}").strip()
-    machine.succeed(f"systemctl is-failed {shadowed_mount}")
-    machine.succeed("systemctl is-active hot-db-bootstrap")
+    # Escape trap (live 2026-11-03 first run): the escaped mount unit name
+    # carries a literal \x2d — through Python AND an unquoted bash word the
+    # backslash vanishes and systemctl queries hotdbx2dshadowed → exit 4
+    # (not-found). Resolve the name INSIDE the guest shell instead.
+    machine.succeed("systemctl is-failed \"$(systemd-escape -p --suffix=mount /var/lib/hotdb-shadowed)\"")
+    # A completed oneshot (no RemainAfterExit) reads INACTIVE, not active —
+    # the shared-unit green state is NOT-failed (exit-3 trap live 2026-11-03).
+    machine.fail("systemctl is-failed hot-db-bootstrap")
     machine.fail("btrfs subvolume show /mnt/hot/hot/shadowed")
     guard_count = machine.succeed("btrfs subvolume list /mnt/hot | grep -c 'hot/'").strip()
     assert guard_count == "1", f"expected exactly the testdb subvol, got {guard_count}"
