@@ -379,7 +379,7 @@ build_case() {
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract doc-counts; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract doc-counts btrbk-data-gate-fixture; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -882,6 +882,23 @@ if [ -z "$FILTER" ] || [[ ",$FILTER," == *",shallowmerge,"* ]]; then
   fi
   unset status
 fi
+
+# ── btrbk-data-gate: exclude-rot guard (T-02, 2026-11-03 storage-pareto plan) ──
+# The fixture (fixtures-storage.nix) runs the REAL gate script against
+# stubbed btrfs/btrbk. Leg 1: drift-strip one exclude name from the
+# script's list — the eio+rot case expects the WARNING the mutated script
+# no longer emits (fixture sensitivity to script content). Leg 2: drop
+# the ExecStartPre wiring — the check's eval guard must throw (the
+# stray-attrname class: an unwired gate guards nothing). Comment leg is
+# the immunity control.
+run_case datagate exclude-name-stripped btrbk-data-gate-fixture fail 'eio\+rot: exclude-rot WARNING expected' \
+  'sed:scripts/btrbk-data-gate.sh:s|SteamLibrary|SteamLibraryX|'
+run_case datagate execstartpre-dropped btrbk-data-gate-fixture fail 'must run the btrbk-data-gate script' \
+  'sed:platforms/nixos/system/snapshots.nix:s|ExecStartPre = "${lib.getExe btrbkDataGate}";|# ExecStartPre dropped for negative test|'
+run_case datagate comment-control btrbk-data-gate-fixture pass '' \
+  'append:scripts/btrbk-data-gate.sh:# negative-test immunity control'
+
+say ""
 
 # ── monitor365 SSO identity classifier (checks.monitor365-sso-identity-selftest) ──
 # The classifier's failure mode is inverted: a pattern it does NOT recognise

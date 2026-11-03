@@ -249,40 +249,30 @@ let
     text = builtins.readFile ../../../scripts/root-prune-guard.sh;
   };
 
-  # btrbk-data EIO repair gate (2026-09-11, docs/todo/storage.md /data repair item).
-  # The /data -> pool send has been structurally dead since 2026-07 (EIO csum
-  # errors from the unsafe-partition-shrink corruption), yet every nightly
-  # run still READ the full ~258G tree for ~3h12m before dying (18G
-  # page-cache peak = the oom-kill failure mode, ~329G written) — ~8TB/month
-  # of pointless QLC reads. Owner stance: btrbk-data keeps FAILING (the
-  # failure is the tripwire), so this gate makes the failure CHEAP instead
-  # of removing it: while the marker is absent it takes the cheap local CoW
-  # snapshot + retention prune (the /data rollback tier never missed a
-  # night — only the send died) and then exits 1, so OnFailure still fires
-  # nightly and ExecStart (the expensive `btrbk run` send) never starts.
-  # With the marker present it exits 0 and the normal nightly run proceeds.
-  # Remove this gate (and the btrfs-verify-pool-backups WARN-only /data
-  # branch) when the T04-T08 repair executes.
+  # btrbk-data gate: EIO repair tripwire (2026-09-11) + exclude-rot guard
+  # (2026-11-03 storage-pareto plan T-02). Full contract in the script
+  # header (scripts/btrbk-data-gate.sh): while /data/.repair-done is
+  # absent the gate takes the cheap local snapshot + retention prune and
+  # exits 1 (OnFailure preserved, the ~258G full-tree send read never
+  # starts); it also verifies /data/ai + /data/SteamLibrary +
+  # /data/gcs-staging are NESTED SUBVOLUMES (owner doctrine 2026-11-03:
+  # NEVER pool-backup re-downloadable AI models — btrbk has no
+  # per-directory exclude) — rot is a WARNING while the EIO gate holds and
+  # a HARD send-refusing tripwire after the repair. Behavior-fixture-tested
+  # (checks.btrbk-data-gate-fixture, stubbed btrfs/btrbk); negative legs in
+  # scripts/negative-test-lints.sh (datagate group). Remove the EIO leg
+  # (and the btrfs-verify-pool-backups WARN-only /data branch) when the
+  # T05 repair executes.
   btrbkDataGate = pkgs.writeShellApplication {
-    name = "btrbk-data-repair-gate";
+    name = "btrbk-data-gate";
     runtimeInputs = [
       pkgs.btrbk
+      pkgs.btrfs-progs
       pkgs.coreutils
     ];
-    text = ''
-      if [ -f /data/.repair-done ]; then
-        exit 0
-      fi
-      echo "btrbk-data: /data EIO repair gate ACTIVE (no /data/.repair-done marker) — taking local snapshot + retention prune, then deliberate fast-fail"
-      if ! btrbk -c /etc/btrbk/data.conf snapshot; then
-        echo "btrbk-data: local snapshot ALSO failed — inspect /data health before the repair run" >&2
-      fi
-      if ! btrbk -c /etc/btrbk/data.conf prune; then
-        echo "btrbk-data: retention prune failed — snapshots may accumulate while the gate is active" >&2
-      fi
-      echo "btrbk-data: nightly pool send deliberately SKIPPED (known /data EIO, docs/todo/storage.md P0). This failure is the tripwire and is EXPECTED while the marker is absent; remove the gate after the T04-T08 repair." >&2
-      exit 1
-    '';
+    # In-tree script (root-prune-guard precedent) so the fixture executes
+    # the same bytes the unit runs.
+    text = builtins.readFile ../../../scripts/btrbk-data-gate.sh;
   };
 in
 {
@@ -394,6 +384,12 @@ in
     # The "." subvolume refers to the BTRFS toplevel. Nested subvolumes (like
     # .snapshots itself) are automatically excluded from snapshots by BTRFS.
     # Since 2026-08-16 snapshots are also sent to /mnt/pool/backups/data.
+    # EXCLUDE DOCTRINE (owner decision 2026-11-03, T-02): /data/ai,
+    # /data/SteamLibrary and /data/gcs-staging are nested SUBVOLUMES —
+    # deliberately carved OUT of the "." snapshot and any pool send
+    # (re-downloadable content, ~650G; the btrbkDataGate exclude-rot guard
+    # enforces it, migration runbook
+    # scripts/migrate-data-exclude-subvols.sh).
     btrbk.instances."data" = {
       onCalendar = "23:30";
       snapshotOnly = false;
@@ -640,13 +636,15 @@ in
           ioTier.background
           {
             TimeoutStartSec = "24h";
-            # EIO repair gate (see btrbkDataGate above): fails the unit in
-            # ~seconds while /data/.repair-done is absent — OnFailure semantics
-            # preserved, the ~258G full-tree send read never starts. Any future
-            # unit-file churn that makes stc restart this chronically-failing
-            # unit also now costs seconds, not a 3h re-send (2026-09-09
-            # exit-4 class, bounded but not eliminated — the failure stance is
-            # deliberate).
+            # EIO repair gate + exclude-rot guard (see btrbkDataGate
+            # above): fails the unit in ~seconds while /data/.repair-done
+            # is absent — OnFailure semantics preserved, the ~258G
+            # full-tree send read never starts — and refuses the send
+            # outright (post-repair) if an exclude subvol has rotted back
+            # to a plain dir. Any future unit-file churn that makes stc
+            # restart this chronically-failing unit also now costs
+            # seconds, not a 3h re-send (2026-09-09 exit-4 class, bounded
+            # but not eliminated — the failure stance is deliberate).
             ExecStartPre = "${lib.getExe btrbkDataGate}";
             # oom-kill containment (2026-08-21 incident): the full-tree send
             # charged 20.6G of PAGE CACHE to this unit's cgroup, making btrbk-data

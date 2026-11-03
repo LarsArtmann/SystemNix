@@ -376,6 +376,150 @@
               touch $out
             '';
 
+        # T-02 (2026-11-03 storage-pareto plan): behavioral fixture for
+        # scripts/btrbk-data-gate.sh — the btrbk-data ExecStartPre
+        # contract. Leg 1 (EIO, since 2026-09-11): marker absent → local
+        # snapshot + retention prune STILL run (the /data rollback tier
+        # must never miss a night), then exit 1 (the deliberate
+        # tripwire). Leg 2 (exclude-rot, 2026-11-03): /data/ai +
+        # SteamLibrary + gcs-staging must be SUBVOLUMES before any pool
+        # send (owner doctrine: NEVER pool-backup re-downloadable AI
+        # models) — rot is a WARNING while the EIO gate holds (send dead
+        # anyway) and a HARD tripwire (exit 1, ZERO btrbk invocation)
+        # once /data/.repair-done exists (the T05 repair lifts the EIO
+        # gate; a rotted exclude must never send ~650G of models). A path
+        # ABSENT entirely reads as clean (the T12 purge shape). PATH
+        # stubs for btrfs/btrbk (root-prune-guard-fixture shape,
+        # BTRBK_DATA_GATE_ROOT + SUBVOLS_OK env). MUTATION NEGATIVE
+        # (borg-restore-drill precedent): a copy with one exclude name
+        # drift-stripped must PASS the send-path the real script refuses
+        # — proves the fixture exercises real script content
+        # (anchor-drift-guarded). The let-guard pins the ExecStartPre
+        # WIRING (the stray-attrname class: an unwired gate guards
+        # nothing — negative leg datagate/execstartpre-dropped).
+        btrbk-data-gate-fixture =
+          let
+            cfg = inputs.self.nixosConfigurations.evo-x2.config;
+            execStartPre = cfg.systemd.services.btrbk-data.serviceConfig.ExecStartPre or null;
+            exeList =
+              if execStartPre == null then
+                [ ]
+              else if builtins.isString execStartPre then
+                [ execStartPre ]
+              else
+                execStartPre;
+            contractGuards =
+              lib.throwIfNot (execStartPre != null && lib.any (e: lib.hasInfix "btrbk-data-gate" e) exeList)
+                "btrbk-data-gate-fixture: btrbk-data.service ExecStartPre must run the btrbk-data-gate script — without it neither the EIO tripwire nor the exclude-rot guard can fire"
+                true;
+          in
+          builtins.deepSeq contractGuards (
+            pkgs.runCommand "btrbk-data-gate-fixture"
+              {
+                nativeBuildInputs = with pkgs; [
+                  bash
+                  coreutils-full
+                  gnugrep
+                  gnused
+                ];
+              }
+              ''
+                set -euo pipefail
+                scratch=$(mktemp -d)
+                mkdir -p "$scratch/bin" "$scratch/data"
+                for d in ai SteamLibrary gcs-staging; do
+                  mkdir -p "$scratch/data/$d"
+                done
+
+                cat > "$scratch/bin/btrfs" <<'EOF'
+                #!/usr/bin/env bash
+                # subvolume show <path>: rc 0 iff the basename is in $SUBVOLS_OK
+                name="''${3##*/}"
+                case " $SUBVOLS_OK " in *" $name "*) exit 0 ;; esac
+                exit 1
+                EOF
+                cat > "$scratch/bin/btrbk" <<'EOF'
+                #!/usr/bin/env bash
+                echo "$*" >> "$BTRBK_LOG"
+                exit 0
+                EOF
+                chmod +x "$scratch/bin/btrfs" "$scratch/bin/btrbk"
+                # Sandbox has no /usr/bin/env — rewrite the shebangs to the
+                # store bash (root-prune-guard-fixture shape; without this
+                # every stub exec fails silently and the log never appears).
+                patchShebangs "$scratch/bin/btrfs" "$scratch/bin/btrbk"
+
+                GATE=${root}/scripts/btrbk-data-gate.sh
+
+                # run_gate <script> <subvols_ok> — sets rc + capt; resets btrbk.log.
+                run_gate() {
+                  rm -f "$scratch/btrbk.log"
+                  rc=0
+                  capt=$(BTRBK_DATA_GATE_ROOT="$scratch/data" \
+                    SUBVOLS_OK="$2" BTRBK_LOG="$scratch/btrbk.log" \
+                    PATH="$scratch/bin:$PATH" \
+                    bash "$1" 2>&1) || rc=$?
+                }
+                has() { printf '%s\n' "$capt" | grep -q -- "$1"; }
+
+                ALL="ai SteamLibrary gcs-staging"
+
+                # 1. EIO + clean excludes: rc=1, EIO ACTIVE, snapshot+prune
+                #    ran, NO rot line.
+                rm -f "$scratch/data/.repair-done"
+                run_gate "$GATE" "$ALL"
+                [ "$rc" -eq 1 ] || { echo "FAIL eio+clean: rc=$rc (want 1)"; exit 1; }
+                has "EIO repair gate ACTIVE" || { echo "FAIL eio+clean: ACTIVE line missing"; exit 1; }
+                grep -q -- "-c /etc/btrbk/data.conf snapshot" "$scratch/btrbk.log" || { echo "FAIL eio+clean: local snapshot leg missing"; exit 1; }
+                grep -q -- "-c /etc/btrbk/data.conf prune" "$scratch/btrbk.log" || { echo "FAIL eio+clean: prune leg missing"; exit 1; }
+                ! has "EXCLUDE-ROT" || { echo "FAIL eio+clean: unexpected rot line"; exit 1; }
+
+                # 2. EIO + rotted SteamLibrary: rc=1, WARNING present,
+                #    cheap tier STILL runs (rollback tier unaffected).
+                run_gate "$GATE" "ai gcs-staging"
+                [ "$rc" -eq 1 ] || { echo "FAIL eio+rot: rc=$rc (want 1)"; exit 1; }
+                has "EXCLUDE-ROT WARNING" || { echo "FAIL eio+rot: exclude-rot WARNING expected"; exit 1; }
+                grep -q -- "-c /etc/btrbk/data.conf snapshot" "$scratch/btrbk.log" || { echo "FAIL eio+rot: cheap tier skipped"; exit 1; }
+
+                # 3. EIO + gcs-staging ABSENT (T12 purge shape): clean, no
+                #    WARNING.
+                rmdir "$scratch/data/gcs-staging"
+                run_gate "$GATE" "ai SteamLibrary"
+                [ "$rc" -eq 1 ] || { echo "FAIL eio+absent: rc=$rc (want 1)"; exit 1; }
+                ! has "EXCLUDE-ROT" || { echo "FAIL eio+absent: absent path must read clean"; exit 1; }
+                mkdir -p "$scratch/data/gcs-staging"
+
+                # 4. Send path (repair done) + clean: rc=0; the gate is a
+                #    pure precheck — btrbk NEVER invoked from the gate.
+                touch "$scratch/data/.repair-done"
+                run_gate "$GATE" "$ALL"
+                [ "$rc" -eq 0 ] || { echo "FAIL send+clean: rc=$rc (want 0)"; exit 1; }
+                [ -s "$scratch/btrbk.log" ] && { echo "FAIL send+clean: gate must not invoke btrbk"; exit 1; }
+
+                # 5. Send path + rotted SteamLibrary: rc=1 TRIPWIRE, ZERO
+                #    btrbk invocation (refuse before any byte is read).
+                run_gate "$GATE" "ai gcs-staging"
+                [ "$rc" -eq 1 ] || { echo "FAIL send+rot: gate must refuse (rc=1), got $rc"; exit 1; }
+                has "EXCLUDE-ROT TRIPWIRE" || { echo "FAIL send+rot: tripwire line missing"; exit 1; }
+                [ -s "$scratch/btrbk.log" ] && { echo "FAIL send+rot: refused send must invoke nothing"; exit 1; }
+
+                # 6. Mutation negative: drift-strip one exclude name from a
+                #    COPY (anchor-guarded) — the mutated gate must PASS the
+                #    send+rot env the real script refuses (fixture
+                #    sensitivity to script content). Env rots gcs-staging
+                #    (present dir, absent from SUBVOLS_OK); the mutated
+                #    script no longer looks at it.
+                mutated="$scratch/gate-mutated.sh"
+                sed 's|gcs-staging|gcs-stagingX|g' "$GATE" > "$mutated"
+                grep -q "gcs-stagingX" "$mutated" || { echo "FAIL mutation-negative: sed anchor did not hit"; exit 1; }
+                run_gate "$mutated" "ai SteamLibrary"
+                [ "$rc" -eq 0 ] || { echo "FAIL mutation-negative: mutated gate should pass (fixture insensitive to script content)"; exit 1; }
+                ! has "EXCLUDE-ROT" || { echo "FAIL mutation-negative: mutated gate still warns"; exit 1; }
+
+                echo "PASS: btrbk-data-gate fixture (eio clean/rot/absent, send clean/rot, mutation-negative, ExecStartPre wiring)" > $out
+              ''
+          );
+
         # 2026-10-01 plan P2 #5: the scrub-staleness gauges parse
         # `btrfs scrub status` text — a format that CHANGED across
         # btrfs-progs eras (7.1 prints "Scrub started:    %s" AND

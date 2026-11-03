@@ -1,6 +1,7 @@
 # SUPERB Storage Pareto Plan — QLC capacity, backup integrity, cache discipline
 
 **Created:** 2026-11-03 20:49 CET (authoring finished 21:0x) · **HEAD at start:** `935bd2405` → authored against the post-session tree · **Status:** PLAN — `scripts/plan-marker.sh <this-file> start` marker owed before ANY execution session
+**EXECUTING (instance green-light standing directive; T-02 first (no prereq); deploy leg PSI-gated per guardrail 5, 2026-11-03 22:37 CET, HEAD `89d4046fe`):** executing (see AGENTS.md plan-execution tombstone)
 **Relationship to SUPERB v3** (`docs/planning/2026-11-03_17-10_SUPERB-backlog-masterplan-v3.md`, EXECUTING since 17:33): v3 schedules all 2,092 rows repo-wide with mechanical buckets, authored BEFORE this session. This plan is the **storage-domain deep layer on top**: it re-ranks storage work with the 2026-11-03 evening evidence (owner Q&A decisions, purge wave findings, the `/var/lib` reveal) and **owns the storage execution order**; v3 remains the repo-wide index. Where v3's storage sprints conflict with this plan's sequencing, this plan wins for storage rows; nothing in v3 is edited ( Verschlimmbessern guard — purely additive).
 
 ## 0. Why this plan exists (context, evidence-backed)
