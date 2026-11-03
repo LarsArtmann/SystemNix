@@ -7,6 +7,8 @@
 
 - [Hardware Instability (post-crash, evo-x2) — freezes #1..#7 + #28, guard zones, defense-in-depth](#hardware-instability-post-crash-evo-x2)
 - [Crash Autopsy — Family Discriminator (entry points)](#crash-autopsy--family-discriminator-entry-points-2026-10-28)
+- [IO-PSI Storm Attribution — live probe set](#io-psi-storm-attribution--live-probe-set-2026-11-03)
+- [Journal Retention & Pre-Vacuum Evidence Gate (2026-10-13)](#journal-retention--pre-vacuum-evidence-gate-2026-10-13)
 - [Agent-Initiated SIGSTOP — Standing Rule (REVOCATION doctrine, 2026-10-07)](#agent-initiated-sigstop--standing-rule-revocation-doctrine-2026-10-07)
 - [ZRAM & Memory Reclaim](#zram--memory-reclaim)
 - [Kernel & Network Hardening (adopted + rejected)](#kernel--network-hardening-2026-09-10-borrowed-from-paepckehhnixos)
@@ -91,6 +93,47 @@ Rules:
 | #40 `2a642827` (freeze-#39 recovery; **DIED Nov 2 14:42, WDT**) | 3 h 06 m | 66 (#6011→#6076; ALL no-match) | 134 | 0 | 21.3 | C — storm-led (0 OOM); boot-second-8 timer re-arm + forced gen-971 9 min pre-death; record trips/h |
 
 Threshold defense: `loadBearingTripsPerBoot = 10` is crossed within 2–5 h on every storm boot — sound. The M20 sustained-escalation latch (§7.1c) should key on **≥2 trips/h sustained ≥2 h** (the floor of the documented storm band 1.3–11.7/h — hourly buckets inside #35 peaked well above its 1.3/h average) with a per-boot total ≥20 fallback; single bursts (2–3 trips, restore, calm) must stay silent. (#38 post-correction sits at ~8.2/h — squarely inside the band; the pre-correction 0.8/h artifact briefly motivated a "latch would miss this class" claim.) Final values are the owner's §7.1c call after this census.
+
+## IO-PSI Storm Attribution — live probe set (2026-11-03)
+
+Codified from the 2026-10-15 85–96 % storm attribution (one pass named `crush -y` ≈ 407 MB/s + a `go test -race` trio ≈ 130 MB/s combined; source: `docs/status/2026-10-16_00-07_boot-failure-triage.md` §a.2/§f.9). Run these three probes in this order BEFORE any containment recommendation (the SIGSTOP doctrine above requires attribution first):
+
+1. **Pressure context — `/proc/pressure/io` before/after** (bracket the whole attribution window so the numbers below are storm-anchored):
+
+   ```bash
+   cat /proc/pressure/io   # before
+   # …run probes 2-3…
+   cat /proc/pressure/io   # after
+   ```
+
+2. **Per-pid IO delta — two-snapshot `/proc/*/io` join KEYED ON PID (6 s window).** The join MUST be a fixed-key `join(1)` on the pid field, never `paste` (line-order join): the 2026-10-15 session's wrong-key join printed CUMULATIVE bytes as plausible-looking deltas and cost a round trip. Pids that appear in only one snapshot drop out silently instead of mispairing:
+
+   ```bash
+   snap() { for d in /proc/[0-9]*; do \
+              b=$(awk '/^read_bytes|^write_bytes/{s+=$2} END{print s+0}' "$d/io" 2>/dev/null); \
+              printf '%s %s\n' "${d#/proc/}" "$b"; done | sort -k1,1; }
+   join <(snap) <(sleep 6; snap) -j 1 -o 0,2.2,1.2 \
+     | awk '{d=$2-$3; if (d>1048576) printf "%8.1f MB/s  pid %-8s %s\n", d/6/1048576, $1, comm($1)} \
+              function comm(p) { getline < ("/proc/" p "/comm"); close("/proc/" p "/comm"); return $0 }' \
+     | sort -rn | head -25
+   ```
+
+   Name a suspect pid's full argv via `pgrep -af` PIPED THROUGH `scripts/redact-argv.sh` (secrets ride argv — the monitor365 `--jwt-secret` and crm `-api-token` were both seen live).
+
+3. **Per-cgroup IO ranking — `io.stat` rbytes/wbytes.** Fields are `KEY=VALUE` pairs per device line; parse by key, never by column index (column-parsing produced all-zeros on 2026-10-15):
+
+   ```bash
+   for f in /sys/fs/cgroup/system.slice/*/*.io.stat /sys/fs/cgroup/system.slice/*/io.stat \
+            /sys/fs/cgroup/user.slice/user-*.slice/user-@1000.service/*.scope/io.stat \
+            /sys/fs/cgroup/user.slice/user-*.slice/user-@1000.service/app.slice/*/io.stat; do \
+     [ -r "$f" ] || continue; \
+     awk -v c="${f#/sys/fs/cgroup/}" '{for(i=2;i<=NF;i++){split($i,kv,"="); \
+        if(kv[1]=="rbytes")r+=kv[2]; if(kv[1]=="wbytes")w+=kv[2]}} \
+       END{if(r+w>1048576) printf "%9.1f MiB R %9.1f MiB W  %s\n", r/1048576, w/1048576, c}' "$f"; \
+   done | sort -rn | head -15
+   ```
+
+   (`cancelled_write_bytes` is ignored deliberately: it nets out FS-level reclaim, not demand.) Cross-check per-pid deltas against the diskstats-throughput trap from the SIGSTOP doctrine: a wedged device (~4 MB/s) can hold some-avg10 at 30–45 at NEAR-ZERO throughput — if probe 1 shows high PSI but probe 2/3 show no writer, suspect device-level wedging (BTRFS metadata, fsync storms), not a process.
 
 ## Journal Retention & Pre-Vacuum Evidence Gate (2026-10-13)
 
