@@ -340,12 +340,20 @@
         # daemon-reload does NOT retroactively enforce device-bound on an
         # existing zombie, so this unit reaps it even with no device present.
         #
+        # A HEALTHY mount is never torn down (2026-11-03): deploy.sh starts
+        # this unit after every switch, and the old unconditional teardown
+        # stopped mnt-buildcache.mount, which RequiresMountsFor propagates
+        # into every consumer (the gitea runner died at 21:11:01 and the
+        # post-deploy smoke FAILed). The healthy fast path converges
+        # recoveryRestartUnits and exits; a real recovery does the same after
+        # proving I/O.
+        #
         # NOTE: deliberately NOT using harden {} - its PrivateTmp/
         # ProtectSystem options create a slave mount namespace in which
         # umount(2) cannot affect the HOST mount table; the zombie reaper
         # would silently no-op. Only non-namespace directives below.
         systemd.services.buildcache-usb-recovery = {
-          description = "Recover buildcache mount after USB hotplug (zombie reaper + remount)";
+          description = "Recover buildcache mount after USB hotplug (zombie reaper + remount + consumer convergence)";
           startLimitBurst = 3;
           startLimitIntervalSec = 300;
           inherit onFailure;
@@ -409,10 +417,18 @@
             # real I/O) must be LEFT ALONE. The old unconditional teardown ran
             # on every deploy and stop-propagated into every bound daemon.
             mount_healthy() {
+              [ -b "$dev" ] || return 1
+              if ! findmnt -n -- "$mnt" >/dev/null 2>&1; then
+                # Armed automount, not yet pulled: one access mounts it. A
+                # dead device fails here (device-timeout), and with no
+                # automount armed the access lands on the root-fs shadow dir
+                # - the findmnt re-check below refuses that.
+                timeout 10 ls -A "$mnt" >/dev/null 2>&1 || return 1
+                findmnt -n -- "$mnt" >/dev/null 2>&1 || return 1
+              fi
               hsrc="$(findmnt -n -t ext4 -o SOURCE -- "$mnt" 2>/dev/null || true)"
               [ -n "$hsrc" ] || return 1
               [ -b "$hsrc" ] || return 1
-              [ -b "$dev" ] || return 1
               # devt identity, not path identity: a replug can hand the same
               # by-id path to a different node (sd letter reuse), and a
               # foreign filesystem may sit at the mountpoint.
@@ -513,6 +529,12 @@
               rm -rf /tmp/bc-fallback
               echo "buildcache fallback sweep: /tmp/bc-fallback removed (tmpfs reclaimed)"
             fi
+
+            # 7. Converge consumers: the step-1 mount stop propagated through
+            #    RequiresMountsFor and TERMed every bound daemon. Real I/O is
+            #    proven by step 4, so they can come back now.
+            converge_consumers
+
             echo "buildcache recovered: $(findmnt -n -t ext4 -o SOURCE -- "$mnt")"
           '';
         };

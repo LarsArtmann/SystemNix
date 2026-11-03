@@ -1407,6 +1407,19 @@ _: {
           ];
         };
 
+        # Fourth stop class (2026-11-03): the runner's
+        # RequiresMountsFor=/mnt/buildcache/ci-runner-cache makes
+        # mnt-buildcache.mount a hard Requires=, so the buildcache recovery
+        # remount STOPS the runner with the mount (Requires stop propagation).
+        # deploy.sh starts that recovery after every switch, so the runner was
+        # killed mid-deploy at 21:11:01 and the post-deploy smoke FAILed 72s
+        # before the ensure timer restarted it. Registering it here makes the
+        # recovery converge it inside the same run; the buildcache module's
+        # coverage assertion (config.assertions) keeps this row honest.
+        services.buildcache.recoveryRestartUnits = [
+          "gitea-runner-${utils.escapeSystemdPath hostName}.service"
+        ];
+
         # Keep-alive (2026-10-27, owner directive "the runner should just
         # run"): three stop classes have left CI dark with the unit enabled
         # and nothing re-pulling it — the ordering-cycle class (2026-10-25/26

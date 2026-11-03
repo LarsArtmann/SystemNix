@@ -194,12 +194,15 @@ else
 fi
 
 # The incident canary: the runner's start job was the cycle-breaker's
-# favorite deletion target for ~8 days. Skip on hosts without the unit file.
+# favorite deletion target for ~8 days, and since 2026-11-03 it also has a
+# mount-stop class (RequiresMountsFor=/mnt/buildcache/ci-runner-cache turns a
+# buildcache recovery remount into a runner stop). Either way an inactive
+# runner means CI is dark. Skip on hosts without the unit file.
 if [ -e '/etc/systemd/system/gitea-runner-evo\x2dx2.service' ]; then
   if systemctl is-active --quiet 'gitea-runner-evo\x2dx2.service'; then
-    report_pass "Gitea runner - active (ordering-cycle incident canary)"
+    report_pass "Gitea runner - active (CI incident canary)"
   else
-    report_fail "Gitea runner - INACTIVE: start job deleted by a cycle breaker or unit stopped (journalctl -u 'gitea-runner-evo\\x2dx2.service' --since -30min; eval gate: modules/nixos/services/ordering-cycle-audit.nix)"
+    report_fail "Gitea runner - INACTIVE: start job dropped (ordering cycle) or the unit was stopped by a mount/recovery stop (journalctl -u 'gitea-runner-evo\x2dx2.service' --since -30min; eval gates: modules/nixos/services/ordering-cycle-audit.nix + services.buildcache.recoveryRestartUnits; the 5-min gitea-runner-ensure timer converges it)"
   fi
 fi
 

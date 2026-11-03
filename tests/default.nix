@@ -54,6 +54,7 @@ in
   };
   sev1-escalation = makeTest (import ./test-sev1-escalation.nix { inherit pkgs; });
   pool-recovery = makeTest (import ./test-pool-recovery.nix { inherit pkgs; });
+  buildcache-recovery = makeTest (import ./test-buildcache-recovery.nix { inherit pkgs; });
   upholds-convergence = makeTest (import ./test-upholds-convergence.nix { inherit pkgs; });
   hot-user-caches = makeTest (import ./test-hot-user-caches.nix { inherit pkgs; });
   btrbk-rescue = makeTest (import ./test-btrbk-rescue.nix { inherit pkgs; });
