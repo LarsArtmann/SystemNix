@@ -867,7 +867,7 @@
 - [ ] **Add `--force` flag to deploy.sh for phantom metrics** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Refactor discordsync to use a shared HTTP gate helper** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Retire stale ZFS-VM scripts/workflow remnants** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
-- [ ] **sops manifest check-mode in pre-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
+- [x] **sops manifest check-mode in pre-deploy-check** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — DONE 2026-11-03: pre-deploy §19 + `scripts/sops-predeploy-gate.sh` (manifest sopsfile check pre-build, live-host-key recipient binding, full decrypt smoke); `sops-predeploy-selftest` (18 fixtures) green, live run all-green incl. 39 files decrypting (superb-v3 S-0002)
 - [ ] **deploy-window journal anchoring + retry/backoff on external HTTP checks** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **Annotate appendix-only ARCHIVED reports** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
 - [ ] **AGENTS.md compression session** → [docs/todo/pipeline.md](docs/todo/pipeline.md)
