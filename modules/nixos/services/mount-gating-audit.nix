@@ -53,6 +53,39 @@
 
       isMntPath = p: lib.hasPrefix "/mnt/" (toString p);
 
+      # Second class (2026-11-03): the `-` prefix is NOT an optionality
+      # escape hatch for paths under a MOUNT. It tolerates ENOENT only; a
+      # path under a mount whose unit is FAILED resolves to ENODEV and
+      # aborts namespace setup for the WHOLE unit (226/NAMESPACE). Live:
+      # buildcache-gc carried `-~/tmp/go-lint`, ~/tmp is a
+      # hot-user-caches automount, and every daily gc from 2026-11-02
+      # 17:38 through 2026-11-03 21:11 died before its first command —
+      # silently disabling the guard that keeps the buildcache disk off
+      # 100%. Any declared mount point is a candidate (not just /mnt/), so
+      # this leg is driven by config.fileSystems rather than a prefix.
+      mountPoints = map (fs: toString fs.mountPoint) (builtins.attrValues config.fileSystems);
+
+      underAnyMount = p: builtins.any (m: isAncestorOrEqual m p) mountPoints;
+
+      dashOffenders =
+        let
+          checked = lib.filterAttrs (_n: _v: !builtins.elem _n cfg.allowUnits) config.systemd.services;
+          bad = lib.concatLists (
+            lib.mapAttrsToList (
+              name: svc:
+              let
+                sc = svc.serviceConfig or { };
+                dashPaths = builtins.filter (p: lib.hasPrefix "-" p) (
+                  map toString (asList (sc.ReadWritePaths or null) ++ asList (sc.ReadOnlyPaths or null))
+                );
+              in
+              map (p: "${name}: ${p}") (builtins.filter (p: underAnyMount (lib.removePrefix "-" p)) dashPaths)
+            ) checked
+          );
+        in
+        bad;
+
+
       offenders =
         let
           checked = lib.filterAttrs (_n: _v: !builtins.elem _n cfg.allowUnits) config.systemd.services;
@@ -102,6 +135,25 @@
             (fails loudly on a detached DAS) or
               serviceConfig.ConditionPathIsMountPoint = "<mount root>";
             (skips cleanly). ConditionPathIsDirectory does NOT count.
+            Deliberate exception:
+              services.mount-gating-audit.allowUnits = [ "<unit>" ];
+            with a justification comment.
+          '';
+        }
+        {
+          assertion = dashOffenders == [ ];
+          message = ''
+            mount-gating-audit: dash-prefixed (`-`) path under a declared mount point:
+            ${lib.concatStringsSep "\n  " dashOffenders}
+            The `-` prefix tolerates ENOENT ONLY. A path under a mount whose
+            unit is FAILED resolves to ENODEV and aborts namespace setup for
+            the WHOLE unit (226/NAMESPACE) — buildcache-gc lost its daily run
+            for two days this way via `-~/tmp/go-lint` and an automount
+            (2026-11-03). Drop the dash and gate the MOUNT instead:
+              unitConfig.RequiresMountsFor = [ "<mount root>" ];
+              serviceConfig.ConditionPathIsMountPoint = "<mount root>";
+            If the path genuinely must stay optional, gate the mount and let
+            the script skip absent dirs (find/rm guarded with `|| true`).
             Deliberate exception:
               services.mount-gating-audit.allowUnits = [ "<unit>" ];
             with a justification comment.

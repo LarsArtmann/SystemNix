@@ -548,6 +548,16 @@ in
                 createHome = true;
               };
               users.groups.signoz = { };
+              # mount-gating-audit exception (2026-11-03): clickhouse-server
+              # carries `-${chBackupDir}` because ClickHouse must start on a
+              # pool-less host, and a `-` entry is the ONLY way systemd can
+              # express a conditionally-present write hole. That choice has a
+              # known residual: `-` tolerates ENOENT but NOT ENODEV, so a
+              # FAILED /mnt/pool mount (not merely an absent one) would abort
+              # the server's namespace setup with 226/NAMESPACE. Accepted
+              # deliberately — the alternative (a hard ReadWritePaths entry)
+              # makes a detached DAS block the whole observability stack.
+              services.mount-gating-audit.allowUnits = [ "clickhouse" ];
               systemd.targets.signoz = {
                 description = "SigNoz observability stack";
                 wantedBy = [ "multi-user.target" ];

@@ -558,6 +558,15 @@ run_case deadguard exempt-capture-guard dead-guard-lint pass 'never-match-marker
   'append:modules/nixos/services/_evil-dead-guard.nix:x=$(curl --silent http://x.example) # dead-guard-ok' \
   'append:modules/nixos/services/_evil-dead-guard.nix:if [ -z "$x" ]; then exit 0; fi'
 
+# ── mount-gating-audit leg 2: dash-prefixed path under a declared mount ──
+# The `-` prefix tolerates ENOENT only; under a FAILED mount the path
+# resolves ENODEV and kills the WHOLE unit with 226/NAMESPACE (the
+# 2026-11-03 buildcache-gc class: two days of dead GC via
+# `-~/tmp/go-lint`). The mutation re-adds exactly that shape to the gc
+# unit, anchored on a line that exists in the live ReadWritePaths list.
+eval_case dashmount dash-path-under-mount fail 'dash-prefixed \(`-`\) path under a declared mount point' \
+  'sed:modules/nixos/services/buildcache.nix:s|^\( *"\${homeDir}/\.cache/pnpm"\)$|\1\n                "-/mnt/buildcache/probe-dir"|'
+
 # ── memory-watermark-audit: the llama-chat 410M throttle trap ──
 # Assertion audit, no check derivation — enforced through the toplevel eval.
 # The mutation recreates the 2026-10-08 shape in FINAL-config terms: an
