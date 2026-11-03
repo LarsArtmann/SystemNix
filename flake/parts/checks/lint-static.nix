@@ -725,6 +725,82 @@
             touch $out
           '';
 
+          # Secret-history scanner selftest (2026-11-03, superb-v3 S-0001):
+          # proves scan-history-secrets.sh still (a) catches novel real-shape
+          # keys, (b) skips value-digest + blob allowlisted canaries visibly,
+          # and (c) is immune to the task-<tq-id> filename phantom class that
+          # drowned CI for weeks (~140 phantom "sk-" variants across 1,194
+          # blobs — the \b-anchoring regression pin). Exercises the allowlist
+          # machinery through the SECRET_HISTORY_EXTRA_* env extension points
+          # so the static production lists stay unpolluted.
+          secret-history-scanner-selftest = pkgs.runCommand "secret-history-scanner-selftest"
+            {
+              nativeBuildInputs = [ pkgs.git pkgs.python3 ];
+            }
+            ''
+              set -u
+              scanner=${root}/scripts/scan-history-secrets.sh
+              work=$(mktemp -d)
+              trap 'rm -rf "$work"' EXIT
+
+              mktree() {
+                git init -q "$1"
+                git -C "$1" config user.email selftest@invalid
+                git -C "$1" config user.name selftest
+              }
+              commit() { git -C "$1" add -A && git -C "$1" commit -qm "$2"; }
+
+              # L1 clean repo -> OK
+              mktree "$work/clean"
+              echo "hello" > "$work/clean/readme.md"
+              commit "$work/clean" "clean"
+              bash "$scanner" "$work/clean" | grep -q '^OK: no secrets' \
+                || { echo "SELFTEST FAIL L1: clean repo not OK"; exit 1; }
+
+              # L2 task-filename regression pin -> OK (the \b fix)
+              mktree "$work/taskid"
+              echo "see docs/status/tasks/2026-10-08_00-09_task-000001a11c56d902302f02b8200000000.md" > "$work/taskid/note.md"
+              commit "$work/taskid" "task id"
+              bash "$scanner" "$work/taskid" | grep -q '^OK: no secrets' \
+                || { echo "SELFTEST FAIL L2: task-<tq-id> filename tripped the OpenAI rule (\\b regression)"; exit 1; }
+
+              # L3 novel real-shape synthetic key -> MUST FAIL
+              mktree "$work/real"
+              printf 'key = syn_%s\n' "$(printf 'selftest-novel-key' | sha256sum | cut -c1-32)" > "$work/real/cfg.txt"
+              commit "$work/real" "real"
+              if bash "$scanner" "$work/real" >/dev/null 2>&1; then
+                echo "SELFTEST FAIL L3: novel syn_ key NOT caught"; exit 1
+              fi
+
+              # L4 value-digest allowlisted canary -> OK + visible SKIP line
+              mktree "$work/canary"
+              canary="re_$(printf 'selftest-canary-value' | sha256sum | cut -c1-33)"
+              printf 'canary = %s\n' "$canary" > "$work/canary/c.txt"
+              commit "$work/canary" "canary"
+              dig=$(printf '%s' "$canary" | sha256sum | cut -d' ' -f1)
+              SECRET_HISTORY_EXTRA_VALUE_DIGESTS="$dig" bash "$scanner" "$work/canary" | tee "$work/l4.log" | grep -q '^OK: no secrets' \
+                || { echo "SELFTEST FAIL L4: digest-allowlisted canary still failed"; exit 1; }
+              grep -q '^SKIP  Resend API key' "$work/l4.log" \
+                || { echo "SELFTEST FAIL L4: allowlist skip not VISIBLE in output"; exit 1; }
+
+              # L5 blob-allowlisted PEM (generic-header class) -> OK
+              mktree "$work/pem"
+              printf 'binary\x00junk-----BEGIN OPENSSH PRIVATE KEY-----\x00more\n' > "$work/pem/img.qcow2"
+              commit "$work/pem" "pem"
+              pemblob=$(git -C "$work/pem" rev-parse HEAD:img.qcow2)
+              SECRET_HISTORY_EXTRA_BLOBS="$pemblob" bash "$scanner" "$work/pem" | grep -q '^OK: no secrets' \
+                || { echo "SELFTEST FAIL L5: blob-allowlisted PEM still failed"; exit 1; }
+              # ...and the SAME PEM without the blob allow -> MUST FAIL (the
+              # blob gate is the only thing standing between us and muting
+              # every PEM in history)
+              if bash "$scanner" "$work/pem" >/dev/null 2>&1; then
+                echo "SELFTEST FAIL L5b: un-allowlisted PEM not caught"; exit 1
+              fi
+
+              echo "secret-history scanner: clean/task-id/novel/digest/blob legs green"
+              touch $out
+            '';
+
           # Lock-audit selftest (2026-10-02 dedup): proves the eval-time
           # flake.lock gate (lib/lock-audit.nix, forced via allEvalGuards)
           # actually fires. Mirrors the gitleaks-coverage pattern: a guard

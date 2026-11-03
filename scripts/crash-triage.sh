@@ -96,6 +96,11 @@ evidence_file_for() { # short-id -> path or empty
 }
 
 echo "=== crash-triage: last $BOOTS boots (newest first) ==="
+abrupt_boots=()
+abrupt_branches=()
+abrupt_evidence=()
+clean_total=0
+running_total=0
 i=0
 for line in "${bootlist[@]}"; do
   i=$((i + 1))
@@ -114,6 +119,13 @@ for line in "${bootlist[@]}"; do
   throttle=$(census "$full" 'DEEP THROTTLE ENTER')
   oom=$(census "$full" 'invoked oom-killer')
   memcg_gap=$(oom_memcg_gap "$full")
+  # S-0025 legs (2026-11-03): hung-task (D-state/writeback stall class —
+  # `INFO: task X blocked for more than N seconds`), btrfs error/warning
+  # census, kernel thermal events (zone trips print to kmsg; the guard's
+  # own throttle lines are counted above).
+  hung=$(census "$full" 'blocked for more than [0-9]+ seconds')
+  btrfs_warn=$(census "$full" 'BTRFS (error|warning)')
+  kthermal=$(census "$full" 'thermal.*temperatures?|critical temperature reached')
   # reset reason for the PREVIOUS boot, read from THIS boot's kernel log
   # (valid for every boot incl. the newest — boot 0 carries the last
   # crash's reason; "none" = previous boot ended cleanly or first boot)
@@ -137,7 +149,19 @@ for line in "${bootlist[@]}"; do
   evfile=$(evidence_file_for "$short")
   [ -n "$evfile" ] && ev+="$(basename "$evfile")" || ev+="NONE"
   ev+=")"
-  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap → boot-evidence-pull kill-pass join"
+  echo "- $short  $start -> $end  [$endkind] trips=$trips throttle_ENTER=$throttle oom=$oom oom-memcg-attested=$memcg_gap hung_task=$hung btrfs_warn=$btrfs_warn kthermal=$kthermal → boot-evidence-pull kill-pass join"
+  # Bookkeeping for the verdict block. offset 0 is the RUNNING boot:
+  # "abrupt" there only means it has not shut down yet — counted as
+  # running, NEVER paged on (same rule as the per-boot flag below).
+  if [ "$offset" = "0" ]; then
+    running_total=$((running_total + 1))
+  elif [ "$endkind" = "ABRUPT" ]; then
+    abrupt_boots+=("$short")
+    abrupt_branches+=("$branch")
+    abrupt_evidence+=("${evfile:+set}")
+  else
+    clean_total=$((clean_total + 1))
+  fi
   echo "    reset-reason(in this boot, for previous): $reason"
   [ "$endkind" = "ABRUPT" ] && echo "    discriminator proposal: $branch  $ev"
   # offset 0 is the RUNNING boot — "abrupt" just means it has not shut
@@ -146,6 +170,30 @@ for line in "${bootlist[@]}"; do
     echo "    !! UNEVIDENCED CRASHED BOOT — pull evidence NOW: scripts/boot-evidence-pull.sh -b <offset> (journal vacuum eats oldest boots at the cap)"
   fi
 done
+
+# --- Verdict (S-0025): name the OPEN discriminators, never bury them ----
+# A reviewer reads this line first: which boots died unexplained, which
+# branch proposals are thin, what evidence is missing.
+echo "=== verdict ==="
+open_disc=""
+idx=0
+for s in "${abrupt_boots[@]-}"; do
+  br=${abrupt_branches[$idx]:-?}
+  ev=${abrupt_evidence[$idx]:-}
+  [ -z "$ev" ] && open_disc+="${s}(NO-EVIDENCE) "
+  case "$br" in
+    "?"|"A/B"*) open_disc+="${s}(THIN-CENSUS) " ;;
+  esac
+  idx=$((idx + 1))
+done
+printf 'abrupt=%d clean=%d running=%d' "${#abrupt_boots[@]}" "${clean_total:-0}" "$running_total"
+if [ -n "${open_disc//[[:space:]]/}" ]; then
+  echo " — OPEN DISCRIMINATORS: ${open_disc}(pull evidence + deepen census before attributing drivers)"
+elif [ "${#abrupt_boots[@]}" -gt 0 ]; then
+  echo " — all abrupt boots have branch proposals + evidence; residual risk = branch-internal driver attribution only"
+else
+  echo " — no abrupt boots in window"
+fi
 
 # --- Vacuum clock --------------------------------------------------------
 usage_line=$("$JOURNALCTL" --disk-usage --no-pager 2>/dev/null | head -1)

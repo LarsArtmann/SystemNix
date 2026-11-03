@@ -74,6 +74,11 @@ EOF
     for i in $(seq 6); do echo 'memory-emergency-guard-check: MEMORY EMERGENCY IO-PAUSE (trip #440, zone 6): NO eligible headless tree matched the attribution'; done
     for i in $(seq 452); do echo 'thermal-pstate-guard-check: thermal-pstate-guard: DEEP THROTTLE ENTER: guided'; done
     echo 'kernel: something invoked oom-killer'
+    # S-0025 legs: hung tasks (2), btrfs warnings (1), kernel thermal (1).
+    echo 'kernel: INFO: task kworker/u386:12 blocked for more than 122 seconds.'
+    echo 'kernel: INFO: task btrfs-transacti blocked for more than 122 seconds.'
+    echo 'kernel: BTRFS warning (device nvme0n1p3): csum failed root'
+    echo 'kernel: thermal thermal_zone9: critical temperature reached (105 C), shutting down'
     # Kill-pass memcg gap fixture (Oct-28 class): one attested victim
     # (task_memcg line + matching kill) and one gap victim (kill line
     # only) -> oom-memcg-attested=1/2.
@@ -101,8 +106,8 @@ out=$(PATH="$scratch/bin:$PATH" JOURNALCTL="$scratch/bin/journalctl" DOCS_ROOT="
 
 # 1. bootB (-2): abrupt, un-evidenced — must flag + propose branch C
 #    (40 trips = 34 socket + 6 IO-PAUSE + 452 throttles). Flag checked
-#    two-step in block 4 below.
-printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=40 throttle_ENTER=452.*oom-memcg-attested=1/2' || fail "bootB census line wrong:\n$out"
+#    two-step in block 4 below. S-0025 fields: hung=2 btrfs_warn=1 kthermal=1.
+printf '%s\n' "$out" | rg -q 'bbbbbbbb.*ABRUPT.*trips=40 throttle_ENTER=452.*oom-memcg-attested=1/2 hung_task=2 btrfs_warn=1 kthermal=1' || fail "bootB census line wrong:\n$out"
 
 # 2. bootA (-1): abrupt, HAS evidence, watchdog reason read from boot0.
 #    trips = 25 socket-stop + 2 IO-PAUSE (the 2026-10-31 both-eras fix).
@@ -123,4 +128,13 @@ echo "$seg" | rg -q 'C combined' || fail "bootB branch proposal not C:\n$seg"
 # 5. Vacuum clock parses 7.9G against the 8G cap.
 printf '%s\n' "$out" | rg -q 'headroom: 0.1G' || fail "vacuum clock headroom wrong:\n$(printf '%s\n' "$out" | tail -3)"
 
-echo "test-crash-triage: PASS (censuses, discriminator branches, evidence sweep, vacuum clock)"
+# 6. S-0025 verdict block: bootB is NO-EVIDENCE; bootA has a full "B
+#    livelock" proposal (27 trips ≥ 5) + evidence so is NOT an open
+#    discriminator; boot0 (running) NEVER paged.
+printf '%s\n' "$out" | rg -q '=== verdict ===' || fail "verdict block missing"
+printf '%s\n' "$out" | rg -q 'abrupt=2 clean=0 running=1' || fail "verdict counts wrong:\n$(printf '%s\n' "$out" | rg 'abrupt=')"
+printf '%s\n' "$out" | rg -q 'OPEN DISCRIMINATORS: bbbbbbbb\(NO-EVIDENCE\)' || fail "bootB not the named open discriminator:\n$(printf '%s\n' "$out" | sed -n '/=== verdict ===/,$p')"
+printf '%s\n' "$out" | rg -q '00000000\(' && fail "running boot paged in verdict"
+printf '%s\n' "$out" | rg -q 'aaaaaaaa\(' && fail "bootA (branch B + evidence) falsely named open discriminator"
+
+echo "test-crash-triage: PASS (censuses, discriminator branches, evidence sweep, vacuum clock, S-0025 legs + verdict)"
