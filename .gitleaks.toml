@@ -105,6 +105,14 @@ regexes = [
   # form because allowlist regexes match the captured secret region and any
   # finish_reason assignment is by definition an API echo, never a secret.
   '''finish_reason=(stop|length|tool_calls|content_filter)''',
+  # gitleaks-coverage fixture token TEMPLATE (tests/fixtures/gitleaks/
+  # positive-slack.txt, xoxb-<numeric>-<numeric>-@SLACKBODY@): the
+  # slack-bot-token rule captures the numeric body despite the template
+  # tail; landed via daemon sweep 17f14463b past the hook and wedged every
+  # manual commit's staged-tree scan (including the daemon's own). Region
+  # match on the fixture's FIXED numeric body — a real token carries
+  # different numerics, so this cannot mask one.
+  '''xoxb-5146853142503-5231104720195''',
 ]
 
 # Detector-coverage fixtures (tests/fixtures/gitleaks/, consumed by the
