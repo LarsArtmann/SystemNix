@@ -299,6 +299,12 @@ in
         # Paperless consume-dir scan drops (dir is 2775 paperless:paperless via
         # the paperless-consumer unit's preStart)
         "paperless"
+        # sops-nix symlink farm listing (/run/secrets.d is root:keys 0751 —
+        # group members may list secret NAMES, never read values: every
+        # secret file is 0400 per-owner). The DMS systemnix-sops bar widget
+        # counts rendered secrets; without membership its count leg
+        # permission-denied into a permanent "0 keys" (superb-v3 S-0006)
+        "keys"
       ];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys

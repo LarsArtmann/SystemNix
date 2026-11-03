@@ -8,13 +8,16 @@ PluginSettings {
 
     StringSetting {
         settingKey: "secretsDir"
-        label: "Sops secrets mount directory"
+        label: "Sops secrets symlink directory"
         defaultValue: "/run/secrets"
     }
 
     StringSetting {
-        settingKey: "sopsFile"
-        label: "Sops age key file path"
-        defaultValue: "/run/secrets/sops-nix-age-key"
+        // The render farm mount point (liveness signal). The old "sopsFile"
+        // key pointed at a path that never exists under age.sshKeyPaths
+        // mode — superb-v3 S-0006.
+        settingKey: "farmDir"
+        label: "Sops render farm mount point"
+        defaultValue: "/run/secrets.d"
     }
 }
