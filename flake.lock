@@ -322,11 +322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793637248,
-        "narHash": "sha256-VNTuoa15ynOAaTqazkW7G/KMWomdBHI++fvFG8yq4Kw=",
+        "lastModified": 1793720769,
+        "narHash": "sha256-phsiLkcFsXl3FAGnqS73PHqKuH8E22IkHpxRhWreQrk=",
         "ref": "refs/heads/master",
-        "rev": "f941a1e763a315d5b7c626d27f3d1b3b295a2a04",
-        "revCount": 1762,
+        "rev": "3ee89742be05bdd3f6f92948d642e069ecda1766",
+        "revCount": 1772,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793640589,
-        "narHash": "sha256-mYsc/N9ljg8eSgexacOin3gyffH5yaJyj06RvI6dEHU=",
+        "lastModified": 1793721363,
+        "narHash": "sha256-9Wd5h0/rMmFD0NEynkGsHek7HLSL87W73H+TLTKpU78=",
         "ref": "refs/heads/master",
-        "rev": "b9f7a45529b53f7a645fcc127c8928af923eeb25",
-        "revCount": 977,
+        "rev": "07cf5ca43bed84dcab77878be14855e9495e15a4",
+        "revCount": 982,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -1740,16 +1740,16 @@
     "go-aichat": {
       "flake": false,
       "locked": {
-        "lastModified": 1792043068,
-        "narHash": "sha256-d9ktrlnt2MB++RaaXhPgNTu5QEvx4qtC8NYj6cpDms4=",
+        "lastModified": 1792108025,
+        "narHash": "sha256-E8yAXxOOfRWyQm+V/TUlCZeOUEOCUw0mxF5nlQvKHv4=",
         "ref": "refs/heads/master",
-        "rev": "ea61a43a7c438939de49a2545628c138f216a832",
-        "revCount": 293,
+        "rev": "b4451268ab92d6ec77e45e60733b70f741c989be",
+        "revCount": 331,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-aichat"
       },
       "original": {
-        "rev": "ea61a43a7c438939de49a2545628c138f216a832",
+        "rev": "b4451268ab92d6ec77e45e60733b70f741c989be",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-aichat"
       }
