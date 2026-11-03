@@ -22,18 +22,19 @@
 # dnsblockd, cv, uv2nix, go-taskqueue, helium, homebrew-cask, nur, dankMaterialShell,
 # pyproject-nix, rust-overlay, nixos-hardware) + add the new media-atlas input
 # (435a0ba, forgejo-primary hub, v0.1 deploy PR). Proof: toplevel toplevel-proof log.
+# 2026-11-03 regen (round-9 float: crush-daily + browser-history; diagnostic rebuild, proof pending)
 {
   art-dupl = "308d8d7510c0743980575d1e7ffa6fb903b96d59";
   art-dupl-src = "308d8d7510c0743980575d1e7ffa6fb903b96d59";
   bank-sync = "cb7495a8637e9d260a3bbbef93e7893d1df93935";
   branching-flow = "d17cb1aec720939b75dfb132a7c135cffe5b2717";
   brandid-lint = "77198852914db0d3d0db7d8b770e4c3f35c3dc41";
-  browser-history = "f941a1e763a315d5b7c626d27f3d1b3b295a2a04";
+  browser-history = "3ee89742be05bdd3f6f92948d642e069ecda1766";
   buildflow = "2d6bbee1775e55826b63d1139bdf427f5f2ddf09";
   cmdguard = "7ab3f21740684fbc53ac07e5d7f3231e67993e42";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
   crush-config = "227a1307f79a3abd7c746f98e985d84660720744";
-  crush-daily = "b9f7a45529b53f7a645fcc127c8928af923eeb25";
+  crush-daily = "07cf5ca43bed84dcab77878be14855e9495e15a4";
   cv = "16a656f4924069efcee122c3f7f8ccf27d592a21";
   cvagent = "4f2c4dffb767df027ead65c8c5aebbed66a01ff6";
   dankMaterialShell = "15073346175f34f49a6e80aa17104c2827eb0e05";
