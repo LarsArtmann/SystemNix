@@ -57,7 +57,7 @@
   go-error-family = "d8c8391cfdcefe35cf53fc6a02295f2192bbbeb2";
   go-filewatcher = "a965e6b8be500594e117eb52e4269fefa90cfcfb";
   go-finding = "26863a3b7c9b943526b2885d6acae87d24e0ae6f";
-  go-health-dashboard = "d4a65347ae999d578fc515aa7d7e6c64753dd7bc";
+  go-health-dashboard = "ee143ac0bb7a318c965d10fc1e810bd750248874";
   go-humanize-linter = "8ac99125c10beb0444f7e621545104e6b58be1b8";
   go-nix-helpers = "2c5d1d75aeacaaf6ddf558fd7d7bd5a4f4f7687a";
   go-output = "ba5033465f9b8e39b876397f01e696fed1a81cd7";
@@ -75,10 +75,10 @@
   inboxclean = "e2f68d05b859c0d6be0e0f4b7a9ef0a1c006393f";
   index = "d624a2faa7f086d945da75475a7b3dbde2cae97b";
   journal = "653acc12fe92cff29fbb59336885f7b4a0c6d6a9";
-  library-policy = "c1dc17ae97bc732dd21bd929bbc8a9acb148621e";
+  library-policy = "f36510924184c78b638ae602e848935a627571c5";
   md-go-validator = "c976f3263745f46192cd145ac8351a54aa833937";
   media-atlas = "18f3cae05049430ef86702a2559d5e339a1c5b2d";
-  monitor365 = "ebfa4056f7687f972ff7fd6767a376d755971bd3";
+  monitor365 = "10d252918bfcea33f341385a50182f26aaa75182";
   mr-sync = "3ce3d7296803698c9166598f5f3c5fc5a2118553";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
   niri-session-manager = "fbc96f843edc2022e3f8fde9bec33d770e96b75a";
@@ -120,6 +120,6 @@
   treefmt-full-flake = "d4817f5494feca3c5e927b58032ddcd718dbfdff";
   treefmt-nix = "0d6d739a833ba9a9c93034862e4a7b061a062a1c";
   uv2nix = "c361746c7d630d98b972378290547c8d35542a7a";
-  vision-review-agent = "59cc2721467905c205100fde344f517c57b615fa";
+  vision-review-agent = "8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45";
   wallpapers-src = "a6c8891c5612688a770c41a6d5fcc531155b8519";
 }
