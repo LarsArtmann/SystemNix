@@ -633,17 +633,30 @@
               # pnpm writes state/metadata under HOME: ~/.cache/pnpm (dlx +
               # project registries) and ~/.local/state/pnpm (pnpm-state.json) -
               # without these holes prune fails under read-only home (verified
-              # live 2026-08-15; the state hole added 2026-08-16). The `-`
-              # prefix makes the legacy go-lint trim paths OPTIONAL (step 2.5
-              # below skips absent dirs, and a fully-reclaimed tree must not
-              # fail the mount-namespacing setup).
+              # live 2026-08-15; the state hole added 2026-08-16).
+              #
+              # DELIBERATELY NO `-~/tmp/go-lint*` HOLES (2026-11-03): the `-`
+              # prefix tolerates ENOENT but NOT ENODEV, and ~/tmp is an
+              # fstab/automount mount point. While that mount is FAILED,
+              # systemd aborts namespace setup for the whole unit:
+              # "Failed to set up mount namespacing: /home/lars/tmp/go-lint: No
+              # such device" -> status=226/NAMESPACE. Live evidence: EVERY run
+              # from 2026-11-02 17:38 through 2026-11-03 21:11 died this way,
+              # silently disabling the only guard that keeps the buildcache
+              # disk off 100%. The two paths held the LEGACY golangci cache
+              # (the wrapper writes /mnt/buildcache/golangci-lint, or the
+              # /tmp/bc-fallback tmpfs when the mount is dead, since
+              # 2026-10-10), so no writer needs a hole here; step 2.5's trim is
+              # now a best-effort no-op under ProtectHome=read-only (its find
+              # calls are `|| true`-tolerant) and the ~1.4G residue is an owner
+              # reclaim (docs/todo/storage.md). NEVER put a ReadWritePaths entry
+              # under a mount point with the `-` prefix: gate the MOUNT, not the
+              # path.
               ProtectHome = "read-only";
               ReadWritePaths = [
                 cfg.mountPoint
                 "${homeDir}/.cache/pnpm"
                 "${homeDir}/.local/state/pnpm"
-                "-${homeDir}/tmp/go-lint"
-                "-${homeDir}/tmp/go-lint-analysis"
               ];
               MemoryMax = "512M";
             })
@@ -677,6 +690,12 @@
             #      7d mtime gate drains the legacy tree and bounds any future
             #      regrowth (reverted wrapper, stray writer) without touching
             #      fresh cache. Dirs are optional - skipped when absent.
+            #      BEST EFFORT ONLY since 2026-11-03: this unit no longer holds
+            #      a ReadWritePaths hole for these paths (a `-`-prefixed hole
+            #      under the ~/tmp mount point killed the whole gc with
+            #      226/NAMESPACE while that mount was failed), so under
+            #      ProtectHome=read-only the deletes below fail EACCES and are
+            #      tolerated - the gc's real job (buildcache hygiene) wins.
             for legacy in "${homeDir}/tmp/go-lint" "${homeDir}/tmp/go-lint-analysis"; do
               if [ -d "$legacy" ]; then
                 find "$legacy" -xdev -type f -mtime +7 -delete || true
