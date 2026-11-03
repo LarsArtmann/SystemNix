@@ -227,14 +227,6 @@ in
         startLimitIntervalSec = 600;
       };
 
-      # smartd unit-state liveness (superb-v3 S-0019 split row, 2026-11-03):
-      # the 2026-08 vanish-death was "smartd dead, nothing noticed" — the
-      # retry ladder above revives it, and this puts a dead/crash-looping
-      # smartd into system-health's alerting (state + restart-count +
-      # start-limit classes; the monitor365 precedent for units without an
-      # integration-registry module).
-      services.system-health.extraMonitoredServices = [ "smartd" ];
-
       # Portal services must wait for niri compositor to be ready, otherwise they race
       # during live activation (nh os test/switch) when both are restarted simultaneously
       user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
