@@ -131,6 +131,8 @@
                   pkgs.nix
                   pkgs.jq
                   pkgs.systemd
+                  pkgs.sops
+                  pkgs.ssh-to-age
                 ];
                 text = builtins.readFile (root + "/scripts/pre-deploy-check.sh");
               };

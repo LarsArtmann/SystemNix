@@ -1291,6 +1291,33 @@ fi
 # quiescent).
 shadow_split_section18
 
+# 19. Sops manifest check-mode (pipeline.md superb-v3 S-0002; source:
+# docs/status/archived/2026-08-18_20-38_issue-138-twenty-v2.32-upgrade-self-review.md §e.1).
+# The 20:03 class: a key declared in sops.nix but absent from the encrypted
+# yaml killed a deploy at BUILD time while pre-deploy-check was green. The
+# eval-time sops-key/recipient audits catch the static shape, but the
+# manifest's own sopsfile check (pre-build, via its checkPhase), live-host-key
+# recipient binding, and a full decrypt smoke only run HERE. Delegation
+# pattern: §15/§18 (standalone gate script, fixture-tested by
+# scripts/test-predeploy-sops.sh).
+echo ""
+echo "19. Sops manifest check-mode (secrets drift fails BEFORE switch)"
+sops_gate_out=""
+sops_gate_rc=0
+sops_gate_out=$(bash scripts/sops-predeploy-gate.sh 2>&1) || sops_gate_rc=$?
+if [ "$sops_gate_rc" -eq 0 ]; then
+  sops_gate_warns=$(grep -c '^WARN:' <<<"$sops_gate_out" || true)
+  if [ "${sops_gate_warns:-0}" -gt 0 ]; then
+    warn "sops gate: green with $sops_gate_warns visible skip(s) — decrypt coverage reduced, details below"
+  else
+    pass "sops gate: manifest sopsfile check green + live host key bound + full decrypt smoke green"
+  fi
+  grep -E '^(PASS|WARN):' <<<"$sops_gate_out" | sed 's/^/    /' || true
+else
+  fail "sops gate REFUSED — secret wiring is broken (missing key / host-key recipient drift / decrypt failure); the deploy would die at build or ACTIVATION (after a full build, the worst moment). Fix BEFORE deploying:"
+  printf '%s\n' "$sops_gate_out" | sed 's/^/    /'
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
