@@ -127,7 +127,7 @@
       # ~/.cache/lockfloat/float-proof-20261102-210359.log).
       # ROLLBACK 2026-11-03 (deploy session): rev back to 16a656f4,
       # restoring the proven hash. ORIGINAL CAUSAL CLAIM RETRACTED
-      # 2026-11-03 21:4x (journal + source verification): "80c2c88
+      # 2026-11-03 ~21:15 (journal + source verification): "80c2c88
       # panic-loops / 16a656f4 gen-973-green" was FALSE — the
       # rehydration-timeout → samber/do healthcheck nil-deref
       # (sessions_chatstore.go:112) is rev-independent (identical code at

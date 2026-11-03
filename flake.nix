@@ -874,7 +874,7 @@
     cv = {
       # REV-PINNED 2026-11-03 at 16a656f4 (rollback of the 21:03 float to
       # 80c2c88, which gen-974 had deployed 16:01 that day). ORIGINAL
-      # RATIONALE RETRACTED 2026-11-03 21:4x after journal+source
+      # RATIONALE RETRACTED 2026-11-03 ~21:15 after journal+source
       # verification: the cv-server SIGSEGV loop is REV-INDEPENDENT —
       # identical nil-deref at ChatstoreSessions.HealthCheck
       # (sessions_chatstore.go:112, samber/do lazy healthcheck on the
