@@ -18,7 +18,10 @@
 #     key never set in openseo.yaml; eval gate stayed green, deploy died
 #     at the manifest FOD).
 #   - secrets whose sopsFile is unreadable at eval time are skipped (runtime
-#     paths like /run/secrets/sops-nix-age-key — quickshell.nix)
+#     paths; the historical example was quickshell.nix's DMS plugin settings
+#     string "/run/secrets/sops-nix-age-key" — a GHOST path retired 2026-11-03
+#     (superb-v3 S-0006): it never existed under age.sshKeyPaths mode. The
+#     skip class stays for genuine runtime-path declarations)
 #
 # Enforced wherever assertions are forced: `nix flake check` (pre-commit, CI).
 #

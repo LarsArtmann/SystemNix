@@ -254,7 +254,13 @@ in
           src = ../../../pkgs/dms-plugins/systemnix-sops;
           settings = {
             secretsDir = "/run/secrets";
-            sopsFile = "/run/secrets/sops-nix-age-key";
+            # S-0006: the old sopsFile="/run/secrets/sops-nix-age-key" was a
+            # GHOST — that path never exists under age.sshKeyPaths mode
+            # (sops-nix converts the SSH host key at activation, renders no
+            # key file), so the widget's key check could never pass. The
+            # farm mount point is the real liveness signal; the count rides
+            # the primary user's "keys" group membership (configuration.nix).
+            farmDir = "/run/secrets.d";
           };
         };
         # Snippets launcher (paste-snippets, github:LarsArtmann/dms-paste):
