@@ -51,6 +51,10 @@ in
       # qemu-vm mkVMOverride REPLACES the whole `fileSystems` option with
       # virtualisation.fileSystems (pool-recovery/test-cv precedent), so the
       # module's own entry is restated here with the production option set.
+      # device-timeout is 30s, NOT the production 2s: the guest's udev only
+      # processes virtio disks after switch-root (udev socket up ~11.7s, the
+      # boot transaction queues dev-vdb.device at ~11.5s), so a 2s bound
+      # fails the FIRST mount attempt with "Timed out waiting for device".
       virtualisation.fileSystems."/mnt/buildcache" = {
         device = "/dev/vdb";
         fsType = "ext4";
@@ -58,7 +62,7 @@ in
           "noatime"
           "nofail"
           "x-systemd.automount"
-          "x-systemd.device-timeout=2s"
+          "x-systemd.device-timeout=30s"
           "x-systemd.device-bound"
         ];
       };
