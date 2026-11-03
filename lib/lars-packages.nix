@@ -313,9 +313,12 @@ lib.filterAttrs (_: v: v != null) {
   # Pin RESTORED to f3651092 until the owner pushes library-policy's bump
   # to the fixed go-health-dashboard v0.12.2 (committed locally); re-probe
   # this shim on the next lift.
+  # UNPINNED 2026-11-03 evening: the v0.12.2 fix landed (a7aa44d) — shim
+  # re-probed at the new rev: spec UtUhdbS9 (f3651092's value), got
+  # zpasin+t (first-hand build probe, go-modules FOD at a7aa44dec).
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-UtUhdbS9W9RRBNUHAUKAfG+Rd7p3ACejRhtsn1jNbpg=";
+      "sha256-zpasin+tqvfidhWlisjJX/Au5K24bowqDxdP896Ebyg=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going

@@ -664,9 +664,15 @@
               # the derivation alphabet matters, verified live 2026-11-03).
               # @SLACKBODY@: 30-char uppercase body for the default
               # slack-bot-token rule (extend.useDefault is load-bearing here).
+              # The fixture's FIXED numeric segments are allowlisted in
+              # .gitleaks.toml (the daemon-sweep wedge fix, 17f14463b) so the
+              # TRACKED template cannot trip the hook — the expansion below
+              # ALSO rewrites those numerics so the scanned COPY is not
+              # covered by that allowlist entry (else the detect leg no-ops).
               sed -i \
                 -e "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" \
                 -e "s/@ULID26@/YFF14Q7903ZAKNTQH2CMVVPR6F/" \
+                -e "s/xoxb-5146853142503-5231104720195-/xoxb-$(printf 'systemnix-slack-num1' | sha256sum | cut -c1-13)-$(printf 'systemnix-slack-num2' | sha256sum | cut -c1-13)-/" \
                 -e "s/@SLACKBODY@/$(printf 'systemnix-slack-fixture' | sha256sum | cut -c1-30 | tr 'a-f' 'A-F')/" \
                 "$f"
             }
