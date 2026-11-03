@@ -91,10 +91,14 @@
           # uTanAcTC, got tR/Y9ul (first-hand,
           # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log) — both
           # surfaces (this module + lib/lars-packages.nix) updated.
+          # RE-STALE 2026-11-03 21:48 lock float: at pma@4053b2ed spec
+          # tR/Y9ul, got R0Vv8yx (first-hand,
+          # ~/.cache/lockfloat/float-proof-20261103-214837.log) — both
+          # surfaces updated.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-tR/Y9ulgxJl2OA3UqIm3kVXf7mn7H2tOALHpGn2XNUs=";
+                vendorHash = "sha256-R0Vv8yx5YPQR7fDuBEPmh7v/mqu/DjrGjDueU1S5lDI=";
               };
           user = primaryUser;
           group = "users";

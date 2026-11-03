@@ -101,7 +101,7 @@
   project-dependency-graph = "aaac17c167b903ea59c861a9dc04b466466b9893";
   project-discovery-daemon = "a6dd6a302e386c5025c2fe81f0c888f2a87fd331";
   project-meta = "3ab5e690849d1b20781793e499d54710517d94ee";
-  projects-management-automation = "a257580d30b76d9e9eb1c925e3adf47b7f46a2fb";
+  projects-management-automation = "4053b2ed9a06a740a8045de5cbdea08c5b9ffdbf";
   pyproject-build-systems = "461a6a8540307fb9c05b8f6ad29e9720d2a621db";
   pyproject-nix = "bf7d4b1d6de61db02fd4e748395634f03006e5de";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";

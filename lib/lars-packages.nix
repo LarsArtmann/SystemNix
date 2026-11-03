@@ -447,9 +447,14 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). The service
   # module (modules/nixos/services/projects-management-automation.nix)
   # carries the same value.
+  # RE-STALE 2026-11-03 21:48 lock float: at pma@4053b2ed spec tR/Y9ul,
+  # got R0Vv8yx (first-hand,
+  # ~/.cache/lockfloat/float-proof-20261103-214837.log). The service
+  # module (modules/nixos/services/projects-management-automation.nix)
+  # carries the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-tR/Y9ulgxJl2OA3UqIm3kVXf7mn7H2tOALHpGn2XNUs=";
+      "sha256-R0Vv8yx5YPQR7fDuBEPmh7v/mqu/DjrGjDueU1S5lDI=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
