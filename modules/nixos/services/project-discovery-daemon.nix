@@ -62,11 +62,14 @@ _: {
           # RE-STALE AGAIN 2026-10-26 lock float: spec jLpz/NzH, got
           # XbZifGSt (float-proof-20261026-174429.log — module surface;
           # PATH surface rode the same value).
+          # vendorHash shim DROPPED (2026-11-03 night, BOTH surfaces with
+          # lib/lars-packages.nix): upstream a6dd6a3 bakes the
+          # through-its-own-lock vendorHash OW+eywme… (go-daemon flake pin
+          # synced to v0.4.0 0a5d806f, own FOD green first-hand; pdd does
+          # not follow our pins, so its own lock governs the FOD content).
+          # Re-add ONLY via nix-hash-fix evidence, never by hand.
           default =
-            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-XbZifGStHDNLF9lMBnTTHi+wkWqNDc69Oy8UAxfpatw=";
-              };
+            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';
