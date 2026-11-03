@@ -897,7 +897,17 @@
     # its own go 1.26.6 from the go.dev tarball (nixpkgs has 1.26.5 while the
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master";
+      # REV-PINNED 2026-11-03 at 16a656f4 (rollback of the 21:03 float to
+      # 80c2c88): 80c2c88 panic-loops cv-server at runtime — sqlite
+      # rehydration times out (career-pipeline query-all deadline exceeded)
+      # and the samber/do lazy healthcheck then nil-derefs
+      # ChatstoreSessions.HealthCheck (sessions_chatstore.go:112) 5 s after
+      # bind; 16a656f4 is the gen-973 rev proven green for 18 h on boot
+      # deed9c84 including the full battery. LIFT: upstream rev where
+      # rehydration completes against the existing store and /health/live
+      # answers without the nil-receiver panic — drop pin + this comment,
+      # re-lock, re-run the toplevel proof.
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=16a656f4924069efcee122c3f7f8ccf27d592a21";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:

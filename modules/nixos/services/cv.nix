@@ -125,8 +125,14 @@
       # THIRTEENTH RE-STALE 2026-11-02 21:03 lock float: cv@80c2c88 spec
       # bPvMOBEz, got ENX8uAcw (first-hand,
       # ~/.cache/lockfloat/float-proof-20261102-210359.log).
+      # ROLLBACK 2026-11-03 (deploy session): rev back to 16a656f4 — 80c2c88
+      # panic-loops at runtime (sqlite rehydration deadline-exceeded, then
+      # samber/do lazy healthcheck nil-derefs ChatstoreSessions.HealthCheck,
+      # sessions_chatstore.go:112); 16a656f4 is gen-973-green (18 h on boot
+      # deed9c84). bPvMOBEz is 16a656f4's proven hash (gen-973 built and ran
+      # it) — restored, superseding the thirteenth entry's ENX8uAcw.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-ENX8uAcwe+7kQuSyoKeK1oT+ySciuiS2VoF+i1AmXiY=";
+        vendorHash = "sha256-bPvMOBEzNm6GwTnVMhjMcEiv8lDM75ods56ZqpnPLy4=";
       };
     in
     {
