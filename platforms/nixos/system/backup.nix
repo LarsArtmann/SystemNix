@@ -269,6 +269,9 @@ in
               MemoryMax = "128M";
               ReadWritePaths = [ "/mnt/hot" ];
             })
+            # io-tier-coverage-audit: boot-gated unit → background BE/6,
+            # matching its borg job's tier (mkdir on the Samsung hot tier).
+            ioTier.background
             (serviceOneshotDefaults { })
           ];
           script = ''

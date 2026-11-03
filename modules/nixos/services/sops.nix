@@ -541,6 +541,7 @@ in
                   "borg_password"
                   "borg_ssh_key"
                   "borg_known_hosts"
+                  "borg_repo"
                 ]
             );
 
