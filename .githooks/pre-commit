@@ -449,17 +449,37 @@ fi
 # green. Costs ~1s (pure eval).
 log_info "Running Nix flake check (eval-only, all systems, no builds)..."
 
-# Docs-only fast path (2026-09-28): when EVERY staged path is .md/.html/.txt,
-# the flake eval cannot be affected by the diff (eval reads .nix sources from
-# the tracked tree only; no guard reads docs) — the leg's only possible
-# outcome on docs commits is environmental flap (store-path evictions,
-# /run/binfmt-style host-FS probes). NOTE: if a future eval-time guard ever
-# starts reading docs files, this skip must be revisited.
-# NOTE: no --diff-filter — DELETED .nix paths must be counted too (a deletion
-# affects eval exactly like an edit).
+# Eval-relevance fast path (docs-only 2026-09-28; widened 2026-11-03, S-048 /
+# TODO_LIST "OOM-kill risk + ~4-min daemon-race window" row): the leg costs
+# ~20GB RSS + 4-7min (docs/agents/nix-flakes.md "flake-check memory profile")
+# and fired on EVERY commit whose staged set wasn't pure docs — including
+# .githooks/*, scripts/*.sh and .github/* diffs that cannot change the eval
+# OUTCOME of a --no-build walk (the 2026-10-20 hook OOM-kill and the 2026-11-03
+# 22GB run on a .githooks+pipeline.md commit both rode this). Widened predicate,
+# keyed on the SHARED eval-relevant tree definition — the same array
+# deploy-when-quiescent's heat-check uses, never an inline copy:
+#   skip iff NO staged path sits under the eval-relevant roots/files
+#        AND no staged path is docs-type (.md/.html/.txt skip everywhere;
+#             2026-09-28 caveat: revisit if an eval-time guard ever reads docs
+#             at eval time — doc-counts' README/FEATURES asserts are BUILD-time)
+#        AND no staged path is a deletion/rename (--diff-filter=DR over ALL
+#             paths: eval readFile()s non-parsed sources — scripts/*.sh,
+#             README.md, shaders — whose CONTENT only moves drvPaths, never
+#             realized by --no-build, but whose ABSENCE throws).
+# The one eval-PARSED file outside the directory roots (scripts/lib/
+# buildcache-reap-names.sh — parsed with throws by lib/buildcache-cache-names.nix)
+# rides IN the shared array itself. Selftest + mutation negatives:
+# scripts/test-precommit-eval-skip.sh (flake check precommit-eval-skip-selftest).
+# The precommit-eval-cache lib's safety model holds again: every remaining
+# run IS an eval-relevant diff that should eval.
+# shellcheck source=scripts/lib/eval-relevant-paths.sh
+source scripts/lib/eval-relevant-paths.sh
 STAGED_ALL=$(git diff --cached --name-only)
-if [ -n "$STAGED_ALL" ] && ! git diff --cached --name-only | grep -qvE '\.(md|html|txt)$'; then
-    log_info "Docs-only staged diff (.md/.html/.txt) — skipping Nix flake check (eval invariant to non-nix sources)."
+STAGED_EVAL_RELEVANT=$(git diff --cached --name-only -- "${EVAL_RELEVANT_PATHS[@]}")
+STAGED_EVAL_RELEVANT=$(printf '%s\n' "$STAGED_EVAL_RELEVANT" | grep -vE '\.(md|html|txt)$' || true)
+STAGED_STRUCTURAL=$(git diff --cached --name-only --diff-filter=DR)
+if [ -n "$STAGED_ALL" ] && [ -z "$STAGED_EVAL_RELEVANT" ] && [ -z "$STAGED_STRUCTURAL" ]; then
+    log_info "Eval-irrelevant staged diff (no eval-relevant paths, docs-typefiles only, no deletions/renames) — skipping Nix flake check (eval invariant to the staged diff)."
 elif [ -z "$STAGED_ALL" ]; then
     log_info "No staged files — skipping Nix flake check."
 else

@@ -98,7 +98,7 @@ exists to lint; the lint-static.nix python3-usage guard covers a regression.)
 
 Standing selftests (flake checks, run on every `nix flake check`):
 `scripts/test-gotoolchain-guard.sh`, `scripts/test-precommit-shellcheck.sh`,
-`scripts/test-precommit-nix-parse.sh`, `scripts/test-precommit-docs-skip.sh`,
+`scripts/test-precommit-nix-parse.sh`, `scripts/test-precommit-eval-skip.sh`,
 `scripts/test-commit-msg-hook.sh`.
 
 ### Auto-fix Commands

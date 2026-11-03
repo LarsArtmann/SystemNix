@@ -77,10 +77,17 @@
       # whose vendor output no longer matches its baked hash — first-hand
       # keep-going probe got sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w
       # (specified g6Q8jl4X, got mi1+rwiO). Drop when upstream bakes it.
+      # RE-STALE 2026-11-02 21:25 lock float: papdashboard@c0b29a36 spec
+      # mi1+rwiO, got unmyEeVV (first-hand keep-going ×2,
+      # ~/.cache/lockfloat/proof-rerun-20261102-2140.log + the interrupted
+      # 21:03 run's cascade window). NOTE: a direct `nix build <go-modules
+      # .drv>` probe false-greened rc=0 in the same window — it trusts an
+      # already-registered CA realisation instead of re-verifying; only the
+      # flake-attr toplevel proof is truth.
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-mi1+rwiOkikTm7Xl9bfjDikP0y5/HwpqwZZHwI9ln+w=";
+            vendorHash = "sha256-unmyEeVV9Mb/CqGSDTGgcQrnxI5le4RIU+Ok5G/l0rA=";
           };
 
       checkEnv = mkSecretCheck pkgs {

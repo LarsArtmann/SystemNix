@@ -8,7 +8,7 @@
 - [Flake Updates (local loop + weekly bot)](#flake-updates-local-loop--weekly-bot)
 - [Infra follows & lock hygiene (2026-10-02)](#infra-follows--lock-hygiene-2026-10-02)
 - [Pinned-nixpkgs rollback & the lock build gate (2026-10-23)](#pinned-nixpkgs-rollback--the-lock-build-gate-2026-10-23)
-- [Two silent-failure traps (2026-10-28 float)](#two-silent-failure-traps-2026-10-28-float)
+- [Three silent-failure traps (2026-10-28 float)](#three-silent-failure-traps-2026-10-28-float)
 - [flake/parts structure (2026-10-09)](#flakeparts-structure-2026-10-09)
 - [Cross-platform eval coverage](#cross-platform-eval-coverage-2026-09-28)
 - [flake-check memory profile + targeted-eval alternative](#flake-check-memory-profile--the-targeted-eval-alternative-2026-10-12)
@@ -61,7 +61,7 @@
 - **Ask which graph a hash probe measures.** `scripts/flake-lock-audit.sh` compares the RUNNING system's `nixpkgsRevision`/`configurationRevision` (from `nixos-version --json`) against the lock and HEAD; it runs as pre-deploy §0 (advisory). A mismatch means every FOD probe in the tree measures a builder graph nobody is running, which is where four hours of the 2026-10-23 recovery went.
 - **Batch stale-hash repair is one command, not nine copy-pastes.** `scripts/fod-hash-diff.sh <keep-going-log>` extracts every `specified`/`got` pair from an enumeration log, lists the `*.nix` sites carrying each stale literal, and prints a diff; `--apply` writes them. It classifies sites: code occurrences are rewritten, full-line comments are NOT (shim blocks record "specified X vs got Y" as history, and rewriting that destroys the evidence trail). A stale literal with no live site is an UPSTREAM hash — paste it upstream or add a consumer shim, do not invent a local one. Pinned by `checks.x86_64-linux.fod-hash-diff-selftest` against fixture trees (no coupling to the live shim inventory).
 
-## Two silent-failure traps (2026-10-28 float)
+## Three silent-failure traps (2026-10-28 float)
 
 Both were found by the same `nix flake update && nix run .#deploy` proof, and both share a shape: **the failure never announces itself at the layer you are looking at.**
 
@@ -73,6 +73,8 @@ Both were found by the same `nix flake update && nix run .#deploy` proof, and bo
   ```
   The `got:` in that failure is the hash the _locked rev_ really needs. Never copy a hash from a neighbouring module, a previous report, or the same file's neighbouring shim.
 - **`ATTR = { … } // (lib.mkIf cond { … })` makes the WHOLE attribute conditional.** `//` is shallow, and `lib.mkIf` returns a conditional attrset; the module system sees one conditional definition and drops the UNCONDITIONAL operand whenever `cond` is false. Eval stays green, every build succeeds, and the damage shows up only in the rendered artefact — 2026-10-28 `systemd = { …resolver units… } // (lib.mkIf cfg.allowlistBackup.enable { … })` in `dns-blocker.nix` produced a `dnsblockd.service` with **no ExecStart** on evo-x2 and **no unit at all** on rpi3, i.e. a deploy that would have deleted the LAN's only DNS resolver. Sanctioned form: `ATTR = lib.mkMerge [ { … } (lib.mkIf cond { … }) ];`. Enforced by `scripts/audit-serviceconfig-merge.sh` (rules: `serviceConfig = X // Y` and mkIf-inside-`//` on any attribute) at pre-commit and in CI, with an in-script selftest plus `CASES=shallowmerge` in `scripts/negative-test-lints.sh`. **Corollary for reviewers: a green eval is not evidence that a unit RENDERS — read the built `…/etc/systemd/system/<unit>.service`.**
+
+- **A direct `nix build <drv>.drv` probe can false-green a FOD that the flake-attr toplevel proof rejects.** 2026-11-02 21:38: `nix build <papdashboard go-modules.drv>` returned rc=0 (empty log, "nothing to do") while the toplevel proof had failed the SAME drv twice minutes earlier with the identical `got:` mismatch — the direct-drv form trusts an already-registered content-addressed realisation instead of re-verifying the fetched content. Pasting the probe's success as evidence would have re-broken the build; the mismatch was real and the pasted `got:` from the BATCH proof was correct. Consequence: **a direct-drv rc=0 is not evidence of anything — the flake-attr toplevel proof (`nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going`) is the only truth** for FOD hash questions.
 
 ## flake/parts structure (2026-10-09)
 

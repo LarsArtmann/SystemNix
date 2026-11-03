@@ -18,4 +18,12 @@ EVAL_RELEVANT_PATHS=(
   flake
   lib
   pkgs
+  # scripts/lib/buildcache-reap-names.sh is the one file outside the directory
+  # roots whose CONTENT can fail a --no-build eval: lib/buildcache-cache-names.nix
+  # readFile+regex PARSES it and throws on a missing/malformed assignment
+  # (added 2026-11-03 when the pre-commit eval-relevance skip started keying on
+  # this array). Other scripts/*.sh are only readFile'd raw — content moves
+  # drvPaths (never realized by --no-build); their ABSENCE is what throws, and
+  # deletion/rename consumers catch that with --diff-filter=DR, not this list.
+  scripts/lib/buildcache-reap-names.sh
 )

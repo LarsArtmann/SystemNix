@@ -17,10 +17,12 @@
 # so 'flake/parts/*.nix' also covers the nested checks/ files.
 #
 # SAFETY MODEL (deliberate non-goals):
-#  - The `nix flake check` leg is NOT memoized: its docs-only/no-staged fast
-#    paths already cover the cheap cases, and every remaining run IS an
-#    eval-relevant diff that should eval. A verdict cache would trade
-#    phantom-green risk on the primary gate for a thin win.
+#  - The `nix flake check` leg is NOT memoized: its eval-relevance/no-staged
+#    fast paths (widened 2026-11-03 from docs-only to the shared
+#    scripts/lib/eval-relevant-paths.sh predicate) already cover the non-eval
+#    cases, and every remaining run IS an eval-relevant diff that should
+#    eval. A verdict cache would trade phantom-green risk on the primary
+#    gate for a thin win.
 #  - Stale-formatter drift (key under-coverage) is backstopped by CI's
 #    `nix fmt -- --ci` arbitration — drift fails RED, never silent. The key
 #    is content-based: no TTL can serve an entry computed from other bytes.

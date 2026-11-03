@@ -991,33 +991,48 @@
               touch $out
             '';
 
-        # Standing regression test for the pre-commit docs-only
-        # flake-check skip guard (landed 2026-09-28, verified only with
-        # a throwaway /tmp classification script until this fixture).
-        # Proves the classification (all-docs staged diff skips the
-        # leg; .nix-mixed / deleted-.nix / extension-less diffs run it)
-        # plus a mutation negative: narrowing the pattern to .md-only
-        # must trip the fixture's T1 assert — html/txt-only commits
-        # would silently lose the skip.
-        precommit-docs-skip-selftest =
-          pkgs.runCommand "precommit-docs-skip-selftest"
+        # Standing regression test for the pre-commit eval-relevance
+        # flake-check skip guard (docs-only form 2026-09-28; widened
+        # 2026-11-03 to the shared eval-relevant tree definition after a
+        # 22GB full-check run was forced by a .githooks+pipeline.md commit
+        # that could not change eval outcome). Proves the classification
+        # (non-eval-root + docs-typefile + empty diffs skip; eval-root
+        # paths, the eval-parsed buildcache .sh, deletions and renames
+        # run it) plus two mutation negatives: narrowing the docs
+        # carve-out to .md-only, and dropping the --diff-filter=DR
+        # structural leg, must each trip a T assert.
+        precommit-eval-skip-selftest =
+          pkgs.runCommand "precommit-eval-skip-selftest"
             {
               nativeBuildInputs = [ pkgs.git ];
             }
             ''
               scratch=$(mktemp -d)
-              cp ${root}/scripts/test-precommit-docs-skip.sh "$scratch/test.sh"
+              mkdir -p "$scratch/scripts/lib"
+              cp ${root}/scripts/test-precommit-eval-skip.sh "$scratch/test.sh"
+              cp ${root}/scripts/lib/eval-relevant-paths.sh "$scratch/scripts/lib/eval-relevant-paths.sh"
               cp ${root}/.githooks/pre-commit "$scratch/real-hook"
               PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
               sed "s/(md|html|txt)/(md)/" "$scratch/real-hook" > "$scratch/mutated-hook"
-              if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut.log" 2>&1; then
-                echo "FAIL: mutated hook (docs pattern narrowed to .md-only) passed the fixture"
-                cat "$scratch/mut.log"
+              if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut1.log" 2>&1; then
+                echo "FAIL: mutated hook (docs carve-out narrowed to .md-only) passed the fixture"
+                cat "$scratch/mut1.log"
                 exit 1
               fi
-              grep -q "T1" "$scratch/mut.log" || {
-                echo "FAIL: mutation caught but not by the T1 assert"
-                cat "$scratch/mut.log"
+              grep -q "T4" "$scratch/mut1.log" || {
+                echo "FAIL: carve-out mutation caught but not by the T4 assert"
+                cat "$scratch/mut1.log"
+                exit 1
+              }
+              sed "s/ --diff-filter=DR//" "$scratch/real-hook" > "$scratch/mutated-hook2"
+              if PRECOMMIT_HOOK="$scratch/mutated-hook2" bash "$scratch/test.sh" > "$scratch/mut2.log" 2>&1; then
+                echo "FAIL: mutated hook (structural --diff-filter=DR leg dropped) passed the fixture"
+                cat "$scratch/mut2.log"
+                exit 1
+              fi
+              grep -q "T3" "$scratch/mut2.log" || {
+                echo "FAIL: structural mutation caught but not by the T3 assert"
+                cat "$scratch/mut2.log"
                 exit 1
               }
               touch $out
