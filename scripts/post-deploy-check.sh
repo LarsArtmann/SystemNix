@@ -1453,26 +1453,44 @@ else
 fi
 
 # DiscordSync Immich cross-archive verify: oneshot WITHOUT RemainAfterExit,
-# so is-active is meaningless post-run — probe LAST RESULT + the unit's
-# latest journal line instead. Distinguishes the go-live outcomes:
-# verified / env file not yet rendered (provision oneshot has not
-# converged) / key rejected (Result≠success). Skips hosts without the unit
-# (immich integration disabled). The key itself is nix-managed since
-# 2026-10-25 (discordsync-immich-key-provision) — there is no placeholder
-# state anymore.
+# so is-active is meaningless post-run. Classify on the unit's own SCRIPT
+# lines (self-prefixed "discordsync-immich-verify:") from the journal — NOT
+# the raw last journal line and NOT Result alone: systemd lifecycle noise
+# ("Triggering OnFailure= dependencies", "Consumed ... CPU") interleaves,
+# and deploy.sh's exit-4 global reset-failed resets Result WITHOUT a re-run,
+# leaving Result=success against a stale failure trail (2026-11-03: 4
+# same-day deploys reported "success but unexpected journal line" while the
+# daily tick had actually failed 403). The last script line IS the last
+# verification outcome. Skips hosts without the unit (immich integration
+# disabled). The key itself is nix-managed since 2026-10-25
+# (discordsync-immich-key-provision) — there is no placeholder state anymore.
 if systemctl cat discordsync-immich-verify.service >/dev/null 2>&1; then
   _dsv_result=$(systemctl show -p Result --value discordsync-immich-verify.service 2>/dev/null || echo unknown)
-  _dsv_line=$(journalctl -u discordsync-immich-verify.service -n 1 --no-pager -o cat 2>/dev/null || true)
-  if [ "$_dsv_result" != "success" ]; then
+  _dsv_state=$(systemctl show -p ActiveState --value discordsync-immich-verify.service 2>/dev/null || echo unknown)
+  _dsv_line=$(journalctl -u discordsync-immich-verify.service -n 200 --no-pager -o cat 2>/dev/null | grep '^discordsync-immich-verify:' | tail -1 || true)
+  if [ "$_dsv_state" = "activating" ]; then
+    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - re-run in flight (deploy no-block start); outcome lands in the next battery"
+    SKIP=$((SKIP + 1))
+  elif [ "$_dsv_result" != "success" ]; then
     echo -e "${RED}FAIL${NC} DiscordSync Immich verify - Result=$_dsv_result (Immich rejected the key — check scope asset.read+asset.upload / journal)"
     FAIL=$((FAIL + 1))
     record_fail "DiscordSync Immich verify - Result=$_dsv_result"
+  elif [ -z "$_dsv_line" ]; then
+    echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - no verification outcome journaled since the last reset/boot (daily timer owns the next run)"
+    SKIP=$((SKIP + 1))
   elif echo "$_dsv_line" | grep -q "has not converged"; then
     echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - env file not rendered yet (check discordsync-immich-key-provision journal)"
+    SKIP=$((SKIP + 1))
+  elif echo "$_dsv_line" | grep -q "Immich unreachable"; then
+    echo -e "${YELLOW}SKIP${NC} DiscordSync Immich verify - Immich unreachable (availability owned by the Gatus Immich check)"
     SKIP=$((SKIP + 1))
   elif echo "$_dsv_line" | grep -q "verified"; then
     echo -e "${GREEN}PASS${NC} DiscordSync Immich verify - API key verified ($_dsv_line)"
     PASS=$((PASS + 1))
+  elif echo "$_dsv_line" | grep -q "FAIL"; then
+    echo -e "${RED}FAIL${NC} DiscordSync Immich verify - last verification FAILED ($_dsv_line)"
+    FAIL=$((FAIL + 1))
+    record_fail "DiscordSync Immich verify - last verification failed ($_dsv_line)"
   else
     echo -e "${YELLOW}WARN${NC} DiscordSync Immich verify - success but unexpected journal line: $_dsv_line"
     SKIP=$((SKIP + 1))

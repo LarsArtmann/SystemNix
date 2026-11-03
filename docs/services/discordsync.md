@@ -53,6 +53,8 @@ The lookup key is minted by `discordsync-immich-key-provision` (root oneshot, bo
 | 0    | key verified / env file not yet rendered / integration off / **Immich unreachable** | none (provision failures page via the provisioner's own OnFailure; Immich availability is the Gatus Immich check's job) |
 | 1    | Immich reachable but **rejected the key** (HTTP 401/403 — wrong secret or scope)    | OnFailure Discord alert; fix key/scope, redeploy                                                                        |
 
+The probe hits `POST /api/assets/bulk-upload-check` — the daemon's actual /lookup consumer endpoint — with a sha1-of-empty checksum (Immich 3.3.3 `assets:[{id,checksum}]` contract; live-verified 2026-11-03, a 200 proves key + scope regardless of accept/reject action). It deliberately does NOT hit `/api/users/me`: the key is scoped to `asset.read`+`asset.upload` only, and users/me 403s it with "Missing required permission: user.read" on a perfectly VALID key (the 2026-11-03 00:43 first-daily-tick failure — 4 same-day deploys then masked it as "success but unexpected journal line" because the exit-4 global reset-failed resets Result without a re-run; deploy.sh now captures the pre-reset failed set for its restart legs, and post-deploy-check classifies on the unit's own script lines).
+
 Rotation: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart discordsync-immich-key-provision` (the provisioner's restart covers the verify unit).
 
 ## Monitoring

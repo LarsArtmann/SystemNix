@@ -320,17 +320,29 @@
             echo "discordsync-immich-verify: WARN Immich unreachable at $url — availability is owned by the Gatus Immich check; skipping key verification"
             exit 0
           fi
-          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "X-Api-Key: $key" "$url/api/users/me" || echo 000)
+          # Probe the endpoint the daemon ACTUALLY consumes (bulk-upload-check,
+          # the ADR-062 /lookup path) — NOT /api/users/me: the key is
+          # deliberately scoped to asset.read+asset.upload, and users/me 403s
+          # it with "Missing required permission: user.read" on a perfectly
+          # VALID key (the 2026-11-03 00:43 first-daily-tick failure class).
+          # The sha1-of-empty probe checksum (base64) exercises the same
+          # permission guard; 200 either way (accept/reject action) proves
+          # key + scope. Payload shape is Immich 3.3.3's assets[{id,checksum}]
+          # contract (live-verified 2026-11-03; the old checksums[] form 400s).
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 \
+            -H "X-Api-Key: $key" -H 'Content-Type: application/json' \
+            -d '{"assets":[{"id":"verify-probe","checksum":"2jmj7l5rSw0yVb/vlWAYkK/YBwk="}]}' \
+            "$url/api/assets/bulk-upload-check" || echo 000)
           case "$code" in
             200)
-              echo "discordsync-immich-verify: Immich API key verified against $url"
+              echo "discordsync-immich-verify: Immich API key verified against $url (bulk-upload-check)"
               ;;
             401|403)
               echo "discordsync-immich-verify: FAIL Immich rejected the API key (HTTP $code) — wrong secret or scope; bulk-upload-check needs asset.read + asset.upload" >&2
               exit 1
               ;;
             *)
-              echo "discordsync-immich-verify: FAIL unexpected response from $url/api/users/me (HTTP $code)" >&2
+              echo "discordsync-immich-verify: FAIL unexpected response from $url/api/assets/bulk-upload-check (HTTP $code)" >&2
               exit 1
               ;;
           esac

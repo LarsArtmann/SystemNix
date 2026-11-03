@@ -614,15 +614,25 @@ if nix run .#pre-deploy-check; then
     # grep -q closes early and a >64KB nh output would SIGPIPE echo under
     # pipefail, misdiagnosing an exit-4 activation as a hard abort (the
     # exact trap documented in post-deploy-check.sh).
+    # Captured by the exit-4 branch below; the dedicated failed-gated legs
+    # later in the script gate on this too (an empty default = healthy
+    # switch, nothing was reset).
+    _failed_before_reset=""
     if [ "$switch_exit" -eq 4 ] || grep -q "Exited(4)" <<<"$nh_output"; then
       echo ""
       echo "⚠ nh os switch: activation completed with failed units (exit code 4)"
       echo "  (some services failed during activation, but config IS activated)"
       # Dump the failed set BEFORE reset-failed clears it — the 2026-09-20
       # un-anchoring chain cost an hour because the failing-unit list had to
-      # be re-derived from the journal after the fact.
+      # be re-derived from the journal after the fact. The capture is also
+      # load-bearing below: the global reset erases every is-failed state,
+      # so the dedicated failed-gated legs gate on THIS list too (2026-11-03:
+      # the discordsync-immich-verify daily 403 sat invisible through 4
+      # same-day deploys because its is-failed gate could never fire after
+      # the reset).
+      _failed_before_reset=$(systemctl --failed --no-legend --no-pager 2>/dev/null || true)
       echo "  Failed units (before reset):"
-      systemctl --failed --no-legend --no-pager 2>/dev/null || true
+      echo "$_failed_before_reset"
       echo "  Resetting start-limit-hit and retrying failed units..."
       sudo systemctl reset-failed 2>/dev/null || true
       systemctl --user reset-failed 2>/dev/null || true
@@ -832,7 +842,13 @@ if nix run .#pre-deploy-check; then
   # idempotent integrity check then never runs all boot. Failed-gated +
   # --no-block: a healthy check must not delay the deploy by re-running the
   # minutes-long scan, and a slow re-run must not stall the deploy either.
-  if systemctl is-failed --quiet discordsync-db-heal.service 2>/dev/null; then
+  # is-failed alone is DEAD on failed-unit deploys: the exit-4 branch above
+  # ran the GLOBAL reset-failed, erasing every failed state before these
+  # legs run. Hence the membership gate against the pre-reset capture —
+  # without it the restart could never fire (2026-11-03: the
+  # discordsync-immich-verify daily 403 sat invisible through 4 deploys).
+  if systemctl is-failed --quiet discordsync-db-heal.service 2>/dev/null \
+    || grep -q '^discordsync-db-heal\.service' <<<"${_failed_before_reset:-}"; then
     echo "Restarting failed oneshot: discordsync-db-heal.service (no-block)"
     sudo systemctl reset-failed discordsync-db-heal.service 2>/dev/null || true
     sudo systemctl start --no-block discordsync-db-heal.service 2>/dev/null || true
@@ -841,8 +857,11 @@ if nix run .#pre-deploy-check; then
   # discordsync-immich-verify: timer-driven oneshot with no [Install] (the
   # daily timer owns scheduling; the sops secret's restartUnits own rotation),
   # so the provisioner loop skips it. If a rejected API key failed it, a fix
-  # converges here instead of waiting for the next daily tick.
-  if systemctl is-failed --quiet discordsync-immich-verify.service 2>/dev/null; then
+  # converges here instead of waiting for the next daily tick — gated on the
+  # pre-reset captured set too (see the db-heal leg above for why is-failed
+  # alone is dead on failed-unit deploys, 2026-11-03).
+  if systemctl is-failed --quiet discordsync-immich-verify.service 2>/dev/null \
+    || grep -q '^discordsync-immich-verify\.service' <<<"${_failed_before_reset:-}"; then
     echo "Restarting failed oneshot: discordsync-immich-verify.service (no-block)"
     sudo systemctl reset-failed discordsync-immich-verify.service 2>/dev/null || true
     sudo systemctl start --no-block discordsync-immich-verify.service 2>/dev/null || true

@@ -39,8 +39,12 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    OpenSSH format):
 
    ```
-   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILfwy1LqNIcqy9kpBOuZ2/VrB4qinXkTPUyiJwjZ3OX+ borg-offsite evo-x2 (Hetzner StorageBox port 23)
+   ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOHhHFX9RnkoEZonUcbpD4/UwiMvp5dk8SWGCmDsTKtv borg-offsite evo-x2 (Hetzner StorageBox port 23) rotated 2026-11-03 r2
    ```
+
+   (2026-11-03 rotation: the pre-go-live key material was exposed in an
+   agent transcript, so the pair was rotated twice before first use —
+   nothing ever authenticated with any exposed copy.)
 
 4. **Fill the sops placeholders** (`sops platforms/nixos/secrets/borg.yaml`,
    as your user with the Sops + Age one-liner from docs/agents/secrets.md):

@@ -2072,11 +2072,10 @@ in
       pbx-backup-pull.enable = true;
 
       # Offsite Borg leg to the Hetzner StorageBox (3rd copy for 3-2-1).
-      # Dormant: go-live needs the owner's StorageBox hostname/username + the
-      # borg pubkey pasted into the Hetzner console (checklist:
-      # docs/services/offsite-borg.md; user-input gate tracked as the
-      # "Offsite Borg go-live inputs" row in docs/todo/storage.md).
-      offsite-borg.enable = false;
+      # LIVE as of the 2026-11-03 go-live: u453585@u453585.your-storagebox.de
+      # (BX11 1 TB, HEL1). Checklist + runbook:
+      # docs/services/offsite-borg.md.
+      offsite-borg.enable = true;
 
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {

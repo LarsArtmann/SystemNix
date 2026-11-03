@@ -34,8 +34,10 @@ fail() {
 SCRATCH=$(mktemp -d)
 trap 'rm -rf "$SCRATCH"' EXIT
 
+# `bash $SCRIPT` (not direct exec): the nix sandbox has no /usr/bin/env,
+# so the shebang only works outside it (migrate-hot-db fixture precedent).
 guard() {
-  "$SCRIPT_UNDER_TEST" "$@"
+  bash "$SCRIPT_UNDER_TEST" "$@"
 }
 
 # ── 1. usage contract ───────────────────────────────────────────────────────
@@ -108,7 +110,9 @@ out=$(guard "$SCRATCH/plain-file" "$SCRATCH/file-marker" eta 2>&1) && fail "file
 # shfmt wraps long conditions so the `ok` lands on a continuation line;
 # live 2026-11-03, first fmt pass dropped 3 of 12 sites).
 SELF=${BASH_SOURCE[0]}
-anchored=$(grep -c 'ok "' "$SELF" || true)
+# Comments and this count's own pattern line carry the literal too —
+# excluded; only real call sites (and the self-count site below) count.
+anchored=$(grep 'ok "' "$SELF" | grep -cv -e '^#' -e '^anchored=' || true)
 anchored=${anchored:-0}
 # +1: THIS check's own site is in the anchored count but emits only after
 # the comparison passes — the success invariant is PASS_COUNT+1 == anchored.

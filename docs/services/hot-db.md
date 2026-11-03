@@ -9,8 +9,16 @@ on TLC — cow keeps btrfs checksums for free, the /data silent-corruption
 doctrine), dump-only RPO.
 
 - Module: `modules/nixos/services/hot-db.nix` (mounts + `hot-db-bootstrap`
-  subvol creator + anti-shadow `RequiresMountsFor`/`ConditionPathIsMountPoint`
-  wiring on every consumer unit + eval-time btrbk landmine scan)
+  subvol creator + **shadow-split guard** on every fresh create (2026-11-03:
+  `scripts/hot-db-shadow-guard.sh`, embedded via writeShellScript — a declared
+  entry whose dataDir is populated WITHOUT a migrate marker is REFUSED a
+  subvol; its mount then fails loud + the `hot_db_entry_mounted` Gatus alert
+  fires, instead of a fresh empty subvol silently shadow-splitting the live
+  store, the 2026-10-12 discordsync class; fixture-tested via
+  `nix build .#checks.x86_64-linux.hot-db-shadow-guard-fixture`, VM-tested
+  in `checks.hot-db` leg 6) + anti-shadow `RequiresMountsFor`/
+  `ConditionPathIsMountPoint` wiring on every consumer unit + eval-time btrbk
+  landmine scan)
 - Migration vehicle: `scripts/migrate-hot-db.sh` (fixture-tested:
   `nix build .#checks.x86_64-linux.migrate-hot-db-fixture`)
 - Monitoring: `hot-db-metrics` collector (5 min, fail-closed) →
@@ -144,6 +152,35 @@ the symlink path itself would not work. All six entries are `cow = true`
 `StateDirectory` → implicit `RequiresMountsFor`; a detached Samsung stops
 the collector (clean restart on remount; the pool history tier is
 unaffected) — accepted for a monitoring store, per the Pre-cutover check.
+
+## The shadow-split guard (2026-11-03, superb-v3 S-0038)
+
+The 2026-10-12 incident shape — an entry deployed before its migrate window
+gets an EMPTY subvol created and mounted over its live dataDir, the service
+recreates a fresh store, the real one hides behind the mountpoint (caught
+then only because a human read migrate's refusal) — is now structurally
+refused at the bootstrap:
+
+- `hot-db-bootstrap` consults the guard before EVERY fresh `subvolume
+  create` (only when the subvol does not already exist).
+- REFUSED when: the dataDir is non-empty (`ls -A`, dotfiles included) with
+  NO migrate marker (`/mnt/hot/hot/.migrate-state/<name>`, written by
+  `cutover` after its verified sync); a marker exists but the subvol is
+  missing (partially wiped tier — ambiguous, human decides); the dataDir is
+  unreadable or not a directory (fail-closed).
+- A refused entry gets NO subvol: its mount fails naturally (`nofail` keeps
+  the boot alive), the consumer condition-skips/deps-fails, and the anchored
+  `hot_db_entry_mounted{name}` Gatus check alerts within a minute. Healthy
+  entries keep converging — the refusal has NO shared-unit blast radius.
+- Remediation when it fires deliberately: run the wave
+  (`scripts/migrate-hot-db.sh prepare + cutover <name>`) or remove the
+  entry. NEVER respond by hand-creating the subvol with
+  `btrfs subvolume create` — that re-opens the split the guard refused.
+- The guard does NOT cover the cutover→deploy parallel-deploy hazard (a
+  stopped consumer restarted onto the un-mounted QLC dir mid-window by
+  another session's deploy — the subvol exists, so the guard legitimately
+  passes); that class stays procedural (keep the gap small, don't deploy
+  during waves).
 
 ## The wave procedure (per service)
 
