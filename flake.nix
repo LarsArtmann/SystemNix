@@ -255,16 +255,11 @@
 
     # monitor365 — Device monitoring agent (Rust)
     monitor365 = {
-      # REV-PINNED at 10d25291 (2026-11-02 04:12 float): 31ea3b7b bumped
-      # wasm-bindgen 0.2.129 → 0.2.130 without re-pasting the tarball hash
-      # in nix/tools.nix (spec gtEruUDi…, got lofzu1Ubn… — first-hand
-      # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log),
-      # breaking monitor365-ui; 10d25291 is the last build-proven 0.2.129
-      # pair. The fix is already pasted in ~/projects/monitor365 (13 commits
-      # ahead of origin, in-flight session) — LIFT: that stack lands on
-      # origin/master with the lofzu1Ubn… paste, re-lock past it, re-run the
-      # toplevel proof — then drop this pin and this row.
-      url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=refs/heads/master&rev=10d252918bfcea33f341385a50182f26aaa75182";
+      # UNPINNED 2026-11-03: the wasm-bindgen 0.2.130 tarball-hash paste
+      # (lofzu1Ubn…) landed on origin/master (ebfa4056f, pasted in
+      # nix/tools.nix by the in-flight session); pin 10d25291 dropped and
+      # the input re-floated — toplevel proof green same day.
+      url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=refs/heads/master";
     };
 
     # domains — Terraform DNS management (Namecheap). Consumed ONLY for
@@ -389,16 +384,11 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      # REV-PINNED at f3651092 (RESTORED 2026-11-03 — the day's lift was
-      # premature): origin/master vendors go-health-dashboard v0.12.1, whose
-      # status.go:309 does not compile (InstanceID struct into a string
-      # field) — a local workspace go build passes via replaces while the
-      # proxy-served FOD build dies at buildPhase (float-proof-20261103-171041
-      # lineage). The FIX is committed in ~/projects/library-policy (bump to
-      # the fixed v0.12.2) awaiting owner push. LIFT: that push lands, then
-      # drop this pin + the audit row, re-lock, re-probe the lars-packages
-      # shim, re-run the toplevel proof.
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master&rev=f36510924184c78b638ae602e848935a627571c5";
+      # UNPINNED 2026-11-03: the go-health-dashboard v0.12.2 fix (the
+      # uncompilable status.go:309 InstanceID change) landed on origin/master
+      # (a7aa44d); pin f3651092 dropped, the lars-packages vendorHash shim
+      # re-probed at the new rev, toplevel proof green same day.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -736,15 +726,18 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      # REV-PINNED at 145cd73d (RESTORED 2026-11-03 — the lift was
-      # premature): upstream 983928ff references godmn.ReadNotifyCounters,
-      # which exists only in godmn's UNPUBLISHED tree — a local go build
-      # passes via the workspace replace while the proxy-served FOD build
-      # fails `undefined: godmn.ReadNotifyCounters` (server.go:1061; the
-      # two-graphs trap — first proof of round 9). 145cd73d is the last
-      # build-proven rev. LIFT: godmn publishes ReadNotifyCounters (or the
-      # call changes) — verify via a PROXY-side build, not a local go
-      # build, then drop this pin and this row.
+      # REV-PINNED at 145cd73d (restored 2026-11-03). CORRECTED DIAGNOSIS
+      # (2026-11-03 evening, source-verified): the recorded cause — "symbol
+      # only in godmn's unpublished tree" — was WRONG. ReadNotifyCounters is
+      # published in go-daemon v0.4.0 (tagged 2026-10-03, local == origin,
+      # proxy-served FOD resolves it fine). The real defect: pdd's OWN
+      # flake.nix pinned its go-daemon input at 138ce86e (v0.3.0-era, predates
+      # notify.go) while go.mod required v0.4.0 — mkPreparedSource's replace
+      # vendored the stale tree, so the FOD compiled against code without the
+      # symbol. FIXED in pdd a6dd6a3 (pin synced to the v0.4.0 commit 0a5d806f,
+      # vendorHash re-baked, pdd's own FOD build green first-hand). LIFT: pdd
+      # a6dd6a3 lands on origin/master — drop this pin and this row, re-lock,
+      # re-run the toplevel proof.
       url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master&rev=145cd73db456320adcde0d71b77a535e03bbd7f4";
     };
 
@@ -843,16 +836,11 @@
     # (returned 2026-09-22 after the 2026-09-15 dormant-integration removal;
     # this time enabled on evo-x2, pointed at llama-vlm's captioner endpoint)
     vision-review-agent = {
-      # REV-PINNED at 8cbb0ec9 (2026-11-02 04:12 float): upstream 5f6cbbed
-      # raised go.mod's go directive past what our pinned nixpkgs (fe13242,
-      # go 1.27.2 under GOTOOLCHAIN=local) ships — "go.mod requires go >=
-      # 1.27.3" (first-hand keep-going,
-      # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
-      # 8cbb0ec9 is the last build-proven rev. LIFT: upstream go.mod fits the
-      # pinned toolchain again (or our nixpkgs pin ships go >= 1.27.3 after
-      # the fe13242 rollback lifts) and a probe build exits 0 — then drop
-      # this pin and this row.
-      url = "github:LarsArtmann/vision-review-agent/8cbb0ec900a84426a6e82ce1f9e5e2ff245c9f45";
+      # UNPINNED 2026-11-03: upstream restored the go.mod floor to 1.27.2
+      # (59cc272), fitting our pinned nixpkgs toolchain (fe13242, go 1.27.2
+      # under GOTOOLCHAIN=local); pin 8cbb0ec9 dropped, probe build green,
+      # toplevel proof green same day.
+      url = "github:LarsArtmann/vision-review-agent";
     };
 
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
