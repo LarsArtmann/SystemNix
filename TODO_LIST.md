@@ -741,7 +741,7 @@
 
 ### security
 
-- [ ] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md)
+- [x] **ROOT: settle the `/run/secrets/sops-nix-age-key` ghost** → [docs/todo/security.md](docs/todo/security.md) — DONE 2026-11-03: path can never exist under age.sshKeyPaths mode (no key file rendered); widget rebuilt to farm-liveness + real count, lars added to `keys` group; eval green, deploy pending (superb-v3 S-0006)
 - [ ] **Crush key-hygiene leftovers** → [docs/todo/security.md](docs/todo/security.md)
 
 - [ ] [blocked:user] **Complete the evo-x2 deploy of the 2026-10-13 upstream-repair lock** — toplevel builds green, pre-deploy 97/0, commit 618d4593; blocked by the io-PSI gate (owner decides: wait for drain vs DEPLOY_FORCE_PRESSURE=1); hermes-restart warning applies (2 active session lines at deploy attempt) → [docs/todo/upstream.md]((docs/todo/upstream.md)) (Source: docs/status/2026-10-13_22-51_upstream-repair-wave-20261011-nixpkgs-bump.md §f.2)
