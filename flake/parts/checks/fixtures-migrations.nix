@@ -40,6 +40,32 @@
               touch $out
             '';
 
+        # hot-db-shadow-guard is the fresh-create refusal gate embedded in
+        # hot-db-bootstrap (hot-db.nix, superb-v3 S-0038) — its refusal
+        # branches (populated dataDir, marker-without-subvol, fail-closed
+        # unreadable) guard every production wave but only ever FIRE on a
+        # mistake; this fixture exercises them for real (pure filesystem
+        # fixtures — the guard only uses coreutils). End-to-end mount
+        # behavior is VM-tested in checks.hot-db (tests/test-hot-db.nix
+        # leg 6).
+        hot-db-shadow-guard-fixture =
+          pkgs.runCommand "hot-db-shadow-guard-fixture"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils-full
+                gnugrep
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/scripts"
+              cp ${root}/scripts/hot-db-shadow-guard.sh "$scratch/scripts/hot-db-shadow-guard.sh"
+              cp ${root}/scripts/test-hot-db-guard.sh "$scratch/scripts/test-hot-db-guard.sh"
+              bash "$scratch/scripts/test-hot-db-guard.sh"
+              touch $out
+            '';
+
         # discordsync-attachments-migrate is the DESTRUCTIVE one-shot
         # (stop service → rsync ~40 GB → checksum verify → rm -rf source
         # → restart) that auto-starts no-block at the next deploy. The

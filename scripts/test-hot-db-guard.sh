@@ -42,7 +42,8 @@ guard() {
 out=$(guard 2>&1) && fail "no-args invocation exited 0" || {
   grep -q "usage:" <<<"$out" && ok "wrong arity prints usage" || fail "no-args exit printed no usage: $out"
 }
-rc=0; guard a b c d >/dev/null 2>&1 || rc=$?
+rc=0
+guard a b c d >/dev/null 2>&1 || rc=$?
 [ "$rc" -eq 2 ] && ok "wrong arity exits 2" || fail "wrong arity rc=$rc (want 2)"
 
 # ── 2. fresh-entry CREATE paths ─────────────────────────────────────────────
@@ -62,9 +63,9 @@ out=$(guard "$SCRATCH/live-dir" "$SCRATCH/live-marker" discordsync 2>&1) && fail
   [ "$rc" -eq 1 ] && ok "populated dataDir refuses rc=1" || fail "populated dataDir rc=$rc (want 1)"
 }
 refusal=$(guard "$SCRATCH/live-dir" "$SCRATCH/live-marker" discordsync 2>&1 >/dev/null) || true
-grep -q "REFUSE (discordsync)" <<<"$refusal" && grep -q "shadow-split" <<<"$refusal" && grep -q "migrate-hot-db" <<<"$refusal" \
-  && ok "refusal names entry + shadow-split + remediation" \
-  || fail "refusal message lost the contract fields: $refusal"
+grep -q "REFUSE (discordsync)" <<<"$refusal" && grep -q "shadow-split" <<<"$refusal" && grep -q "migrate-hot-db" <<<"$refusal" &&
+  ok "refusal names entry + shadow-split + remediation" ||
+  fail "refusal message lost the contract fields: $refusal"
 
 # dotfiles are data too (ls -A, not bare ls)
 mkdir -p "$SCRATCH/dot-dir"
@@ -77,9 +78,9 @@ out=$(guard "$SCRATCH/dot-dir" "$SCRATCH/dot-marker" gamma 2>&1) && fail "dotfil
 mkdir -p "$SCRATCH/marker-home"
 printf 'FILES=3\nBYTES=42\n' >"$SCRATCH/marker-home/delta"
 out=$(guard "$SCRATCH/absent-dir2" "$SCRATCH/marker-home/delta" delta 2>&1) && fail "marker+missing subvol got CREATE" || {
-  grep -q "REFUSE (delta)" <<<"$out" && grep -q "marker" <<<"$out" \
-    && ok "marker with missing subvol refuses" \
-    || fail "marker refusal malformed: $out"
+  grep -q "REFUSE (delta)" <<<"$out" && grep -q "marker" <<<"$out" &&
+    ok "marker with missing subvol refuses" ||
+    fail "marker refusal malformed: $out"
 }
 mkdir -p "$SCRATCH/empty-dir2"
 out=$(guard "$SCRATCH/empty-dir2" "$SCRATCH/marker-home/delta" epsilon 2>&1) && fail "marker beats empty dataDir" || {
@@ -96,15 +97,18 @@ out=$(guard "$SCRATCH/locked-dir" "$SCRATCH/locked-marker" zeta 2>&1) && fail "u
 chmod 755 "$SCRATCH/locked-dir"
 echo not-a-dir >"$SCRATCH/plain-file"
 out=$(guard "$SCRATCH/plain-file" "$SCRATCH/file-marker" eta 2>&1) && fail "file dataDir got CREATE" || {
-  grep -q "REFUSE (eta)" <<<"$out" && grep -q "not a directory" <<<"$out" \
-    && ok "non-directory dataDir refuses" \
-    || fail "non-directory refusal malformed: $out"
+  grep -q "REFUSE (eta)" <<<"$out" && grep -q "not a directory" <<<"$out" &&
+    ok "non-directory dataDir refuses" ||
+    fail "non-directory refusal malformed: $out"
 }
 
 # ── self-verifying assertion count ─────────────────────────────────────────
+# Every ok-call site contains the literal `ok "` — counting that literal is
+# formatting-proof where an `&& ok`-line-anchored regex is not (treefmt's
+# shfmt wraps long conditions so the `ok` lands on a continuation line;
+# live 2026-11-03, first fmt pass dropped 3 of 12 sites).
 SELF=${BASH_SOURCE[0]}
-ANCHOR_RE='&& ok "|[|][|] ok "'
-anchored=$(grep -E "$ANCHOR_RE" "$SELF" | grep -cv '^ANCHOR_RE=' || true)
+anchored=$(grep -c 'ok "' "$SELF" || true)
 anchored=${anchored:-0}
 # +1: THIS check's own site is in the anchored count but emits only after
 # the comparison passes — the success invariant is PASS_COUNT+1 == anchored.

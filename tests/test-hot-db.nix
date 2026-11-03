@@ -13,6 +13,11 @@
 #      Samsung), the consumer condition-skips (ConditionResult=no) instead
 #      of writing into a root-fs shadow dir.
 #   5. Bootstrap is idempotent (second run creates nothing new, exits 0).
+#   6. Shadow-split guard (2026-11-03, superb-v3 S-0038): a declared-but-
+#      unprepared entry (populated dataDir, no migrate marker) gets NO
+#      subvol — its mount fails naturally, the live shadow stays REACHABLE
+#      (never covered), the consumer never runs, and the healthy entry
+#      converges unaffected (no shared-unit blast radius).
 #
 # VM-trap notes:
 #   - qemu-vm.nix replaces the WHOLE `fileSystems` option via mkVMOverride
@@ -26,6 +31,7 @@ let
   hotDbModule = (import ../modules/nixos/services/hot-db.nix).flake.nixosModules.hot-db;
 
   entryPath = "/var/lib/hotdb-test";
+  shadowedPath = "/var/lib/hotdb-shadowed";
   entryMount = {
     device = "/dev/disk/by-label/tlc";
     fsType = "btrfs";
@@ -36,6 +42,17 @@ let
       "space_cache=v2"
       "nofail"
       "nodatacow"
+    ];
+  };
+  shadowedMount = {
+    device = "/dev/disk/by-label/tlc";
+    fsType = "btrfs";
+    options = [
+      "subvol=hot/shadowed"
+      "noatime"
+      "nodiscard"
+      "space_cache=v2"
+      "nofail"
     ];
   };
 in
@@ -60,6 +77,7 @@ in
         ];
       };
       "/var/lib/hotdb-test" = entryMount;
+      "${shadowedPath}" = shadowedMount;
     };
 
     services.hot-db = {
@@ -68,6 +86,13 @@ in
         path = entryPath;
         cow = false;
         unit = "hotdb-consumer.service";
+      };
+      # Leg 6 fixture: declared but NEVER migrated (populated dataDir, no
+      # marker) — the exact 2026-10-12 incident shape.
+      entries.shadowed = {
+        path = shadowedPath;
+        cow = true;
+        unit = "hotdb-shadowed-consumer.service";
       };
     };
 
@@ -82,6 +107,38 @@ in
       };
       script = ''
         echo probe > ${entryPath}/probe.txt
+      '';
+    };
+
+    # Leg 6 probe consumer for the unprepared entry — it must NEVER run
+    # (the entry mount stays failed, the consumer condition-skips).
+    systemd.services.hotdb-shadowed-consumer = {
+      description = "Hot-DB shadow-split fixture consumer (must never run)";
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        echo must-never-land > ${shadowedPath}/consumer-write.txt
+      '';
+    };
+
+    # Leg 6: populate the shadowed dataDir BEFORE the bootstrap consults
+    # the guard (tlc-fmt shape: pulled + ordered before the unit that
+    # reads the state). Without a pre-populated dataDir the guard would
+    # CREATE — the fixture must reproduce the incident's live-store shape.
+    systemd.services.hotdb-shadow-populate = {
+      description = "Test-only: populate a live dataDir before hot-db-bootstrap";
+      wantedBy = [ "hot-db-bootstrap.service" ];
+      before = [ "hot-db-bootstrap.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+      };
+      script = ''
+        mkdir -p ${shadowedPath}
+        echo live-store-bytes > ${shadowedPath}/live.db
       '';
     };
 
@@ -189,5 +246,22 @@ in
     assert "hot_tier_mounted 1" in prom2, f"tier gauge unexpectedly changed after entry unmount:\n{prom2}"
     assert 'hot_db_entry_mounted{name="testdb"} 0' in prom2, f"entry gauge did not flip to 0 after unmount:\n{prom2}"
     assert "hot_db_scrape_errors 0" in prom2, f"scrape_errors not 0 after unmount:\n{prom2}"
+
+    # 6: shadow-split guard — the unprepared `shadowed` entry (populated
+    # dataDir, no marker) must have been REFUSED a subvol; its mount fails
+    # naturally, the live shadow is still reachable and intact (never
+    # covered by a fresh subvol), its consumer never wrote, and the SHARED
+    # bootstrap stayed green (healthy testdb converged throughout).
+    shadowed_mount = machine.succeed("systemd-escape -p --suffix=mount " + "${shadowedPath}").strip()
+    machine.succeed(f"systemctl is-failed {shadowed_mount}")
+    machine.succeed("systemctl is-active hot-db-bootstrap")
+    machine.fail("btrfs subvolume show /mnt/hot/hot/shadowed")
+    guard_count = machine.succeed("btrfs subvolume list /mnt/hot | grep -c 'hot/'").strip()
+    assert guard_count == "1", f"expected exactly the testdb subvol, got {guard_count}"
+    machine.succeed("grep -q live-store-bytes " + "${shadowedPath}/live.db")
+    machine.fail("test -e " + "${shadowedPath}/consumer-write.txt")
+    machine.fail("systemctl is-active hotdb-shadowed-consumer.service")
+    refusals = machine.succeed("journalctl -b -u hot-db-bootstrap --no-pager | grep -c 'REFUSED fresh subvolume for entry shadowed'").strip()
+    assert refusals != "0", "no guard refusal in the bootstrap journal"
   '';
 }

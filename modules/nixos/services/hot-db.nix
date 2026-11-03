@@ -32,6 +32,16 @@
 # instead of writing into it). Per-entry mounts stay `nofail`: the boot
 # must survive; the CONSUMER is the loud failure (boot-hazard gotcha).
 #
+# Shadow-split guard (2026-11-03, superb-v3 S-0038): the bootstrap consults
+# scripts/hot-db-shadow-guard.sh (embedded via writeShellScript) before
+# EVERY fresh `subvolume create` — an entry deployed before its migrate
+# window must never receive a fresh subvol that mounts over its live
+# dataDir (the 2026-10-12 discordsync split, caught only by a human reading
+# a refusal). A refused entry gets NO subvol: its mount then fails naturally
+# (unit failed → consumer condition-skips → the anchored
+# `hot_db_entry_mounted{name}` Gatus check alerts) while healthy entries
+# keep converging — no shared-unit blast radius.
+#
 # Deployment gate G0: NO entries are enabled on evo-x2 until the /nix
 # soak completes (~2026-09-17) — this module ships dormant (enable=false,
 # zero entries); migrations are user windows via
@@ -112,6 +122,14 @@
       # unit, silently voiding the bootstrap's WantedBy/Before ordering;
       # leading-slash drop included via escape's own semantics).
       mountUnitName = path: "${utils.escapeSystemdPath path}.mount";
+
+      # Fresh-create refusal gate (shadow-split guard) — same embedding
+      # pattern as bun-memory-watchdog: the repo file is the single source
+      # (fixture-tested by scripts/test-hot-db-guard.sh), the unit runs the
+      # store copy.
+      shadowGuard = pkgs.writeShellScript "hot-db-shadow-guard" (
+        builtins.readFile ../../../scripts/hot-db-shadow-guard.sh
+      );
 
       # Every btrbk settings string, recursively — the landmine scan needs
       # no structure knowledge: if any config text mentions an entry path
@@ -323,11 +341,19 @@
                   e:
                   let
                     sv = "$pool/${subvolPath e.name}";
+                    marker = "$pool/${hotParent}/.migrate-state/${e.name}";
                   in
                   ''
                     if ! btrfs subvolume show ${sv} >/dev/null 2>&1; then
-                      btrfs subvolume create ${sv}
-                      echo "hot-db: created subvolume ${subvolPath e.name}"
+                      # Guard FIRST, create only on its CREATE verdict — a
+                      # refused entry deliberately gets NO subvol (its mount
+                      # fails loud, see module header).
+                      if ${shadowGuard} "${e.path}" "${marker}" "${e.name}"; then
+                        btrfs subvolume create ${sv}
+                        echo "hot-db: created subvolume ${subvolPath e.name}"
+                      else
+                        echo "hot-db: REFUSED fresh subvolume for entry ${e.name} — its mount will fail loud instead of shadow-splitting ${e.path}. Remediate: scripts/migrate-hot-db.sh prepare + cutover, or remove the entry. Runbook: docs/services/hot-db.md" >&2
+                      fi
                     fi
                   ''
                   + lib.optionalString (!e.cow) ''
