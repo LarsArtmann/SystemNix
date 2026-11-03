@@ -141,8 +141,15 @@
         # toolchain, not the tree, freezing their auto-commits as held WARN
         # loops. mkBefore puts go_1_27 ahead of the module's entry so the
         # gate always measures the tree, never the toolchain.
+        # gcc (2026-11-03): the unit PATH carried no C compiler, so the
+        # gate's `go build ./...` failed EVERY CGO-containing tree with
+        # `cgo: C compiler "gcc" not found` — 1148 false holds in 4h across
+        # ~110 repos (first hit 2026-11-02 14:34), starving the commit queue
+        # into fleet-wide backlog. gcc restores dev-shell parity: the gate
+        # measures the tree, not the gate's environment.
         systemd.services.projects-management-automation.path = lib.mkBefore [
           pkgs.go_1_27
+          pkgs.gcc
         ];
 
         # OTel traces → local SigNoz OTLP/HTTP collector. Uses raw OTel SDK

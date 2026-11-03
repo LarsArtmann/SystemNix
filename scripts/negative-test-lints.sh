@@ -24,6 +24,10 @@
 #   bash scripts/negative-test-lints.sh            # all cases
 #   CASES=gatus bash scripts/negative-test-lints.sh   # filter by case group
 #   KEEP=1   bash scripts/negative-test-lints.sh    # keep workdir on exit
+#                                                   # (self-expires: the
+#                                                   # next start sweeps
+#                                                   # workdirs older
+#                                                   # than 48h)
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -33,6 +37,14 @@ SYSTEM="$(uname -m)-linux"
 # durable for triage; normal runs still trap-remove.
 WORK="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/negative-test-lints.XXXXXX")"
 [ "${KEEP:-0}" = "1" ] || trap 'rm -rf "$WORK"' EXIT
+
+# Sweep stale workdirs from runs whose session died before the EXIT trap
+# fired (KEEP=1 leftovers + killed runs — the 2026-11-03 `PR7oGL` 6.4G
+# litter class). Scratch is rebuildable; a workdir older than 48h is past
+# any triage window and no live run can own it (its own mtime is fresh),
+# so the age gate is concurrency-safe for parallel sessions.
+find "${XDG_CACHE_HOME:-$HOME/.cache}" -maxdepth 1 -type d \
+  -name 'negative-test-lints.*' -mmin +2880 -exec rm -rf {} + 2>/dev/null
 
 FILTER="${CASES:-}"
 

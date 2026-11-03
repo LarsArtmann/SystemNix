@@ -143,6 +143,18 @@ pages when EITHER the hub CI stopped building OR the sync stopped pulling
 while the last-good generation keeps serving — the alert text names both
 debug targets.
 
+CI-leg forensics (2026-11-03 outage lesson): the forgejo journal retains
+only ~1 day, so journal-only diagnosis goes blind within a day of onset —
+diagnose the build leg with the hub repo's `scripts/ci-log.sh` (`--list`,
+`--steps <run>`, `<run>`; reads the root forgejo action DB,
+self-elevates). The 2026-10-28→11-03 outage (served stamp frozen at
+6.7 days, sync leg green every hour) was the hub's
+`check-package-lock-sync` gate killing every CI build ~18s in on a
+package.json bump without a lock regen — the 5th landmine recurrence;
+fixed hub-side 2026-11-03 (lock regen to core 5.8.0 + a
+`.githooks/pre-commit` prevention gate, armed via `core.hooksPath`;
+remains owner-push-gated at report time).
+
 ## Operations
 
 - **Manual sync:** `sudo systemctl start architecture-catalog-sync` (idempotent;

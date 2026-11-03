@@ -98,7 +98,7 @@
 23. **Log-flood hardening idea:** caddy's failed-export retry loop hit ~100 lines/s unthrottled — consider unit LogRateLimitIntervalSec or an exporter backoff note in the runbook.
 24. **caddy.md:** add the error-route first-match-wins + attrset-alphabetical-order mechanics note (explains catalog's SPA-on-404 and why the root override matters).
 25. **Mint VM:** add a static-root stub + 404 assertion (complements auth-side Pattern 4; boots the REAL helper path).
-26. **DiscordSync Immich verify:** continue the 08-07 diagnosis thread (key/scope on the Immich side; NOT caddy).
+26. **DiscordSync Immich verify:** continue the 08-07 diagnosis thread (key/scope on the Immich side; NOT caddy). — **RESOLVED 2026-11-03 ~22:15:** key/scope WAS the right layer: the nix-managed key is VALID, but the verify script probed `/api/users/me`, which 403s a correctly-scoped `asset.read`+`asset.upload` key ("Missing required permission: user.read"; first daily tick 2026-11-03 00:43). Fix landed: the verify probes in-scope `POST /api/assets/bulk-upload-check` (200 live-probed, `assets:[{id,checksum}]` contract) — docs/services/discordsync.md exit-semantics note.
 27. **Opencloud coordination:** hand them the riders list so their switch message mentions carrying the caddy fixes.
 28. **Monitoring runbook:** document the `service.name` unit-form label (`caddy.service` not `caddy`) so no future query repeats my false alarm.
 29. **FEATURES.md:** add the edge-capability rows (per_host metrics, branded error pages, journald runtime logs, probe log_skip).

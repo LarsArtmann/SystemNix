@@ -341,6 +341,10 @@
               echo "discordsync-immich-verify: FAIL Immich rejected the API key (HTTP $code) — wrong secret or scope; bulk-upload-check needs asset.read + asset.upload" >&2
               exit 1
               ;;
+            400)
+              echo "discordsync-immich-verify: FAIL Immich answered 400 from $url/api/assets/bulk-upload-check — probe/contract drift (Immich moved the bulk-upload-check schema past the assets[{id,checksum}] shape this probe pins, live-verified 2026-11-03 on 3.3.3); update the probe payload" >&2
+              exit 1
+              ;;
             *)
               echo "discordsync-immich-verify: FAIL unexpected response from $url/api/assets/bulk-upload-check (HTTP $code)" >&2
               exit 1
