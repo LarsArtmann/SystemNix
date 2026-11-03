@@ -1,14 +1,14 @@
 # Storage Batch Closeout Extension — Gate Unblock, Premise-Move Stamp Sync, Final Verdict
 
 **2026-11-03 23:45 CET · session: closeout extension of task 000001a1a3299dad1b9b14d9a57a00000000 (post-report round: commit-landing through gate repair and final sweep)**
-**Tree at authoring:** HEAD `e544ab766` (clean); this round's commits `b0b9787df` (closeout report + 4 follow-up rows + gate-unblock marker), `2a4d5e373` (queue-row stamp sync); prior round's commits `9f5a9f7e5`, `89d4046fe`, `533a4cdc8`, `098c3e38a`.
+**Tree at authoring:** HEAD `e544ab766` (clean); this round's commits `b0b9787df` (closeout report + 4 follow-up rows + gate-unblock marker), `2a4d5e373` (queue-row stamp sync), `d3039cc00` (this report); the 23-05-report addendum was authored here but landed via the daemon sweep `924240978` mid-battery (verified in HEAD — daemon-race attribution per doctrine). Prior round's commits `9f5a9f7e5`, `89d4046fe`, `533a4cdc8`, `098c3e38a`.
 
 **Scope line — VERIFIED here (command → result):**
 
 - Closeout report landed and survived three daemon sweeps: `git show HEAD:docs/status/tasks/2026-11-03_23-05_…md` → intact (first verification grep used `23-05` against `23:05` content → false 0; caught and re-checked with the file path — a self-inflicted scare, §d.4).
 - TODO gate hard-failure diagnosis: read `scripts/check-todo-system.sh` time-gate + pairing logic (lines 212-227, 280-320) → the ONLY hard fail was ONE foreign row (the PMA session's `[ready]` "Verify tonight's alerting legs…" with wait-language, no ` — BLOCKED:` marker, landed in TODO_LIST by their closeout); the DRIFT flood (~40 rows) and the 176 unharvested-report WARN are warn-only backlog.
 - Gate unblock: appended the checker-mandated marker (form fix only, content untouched) → standalone checker OK; every session tree-wide could commit again.
-- Premise-move discovered and stamped: the "abandoned staged commits" set (§c/§g.1 of the 23-05 report) LANDED ~20 min after authoring — excludes = `d315d3a3b` + `fd900d10d`, quotaboard wiring absorbed by daemon sweep `4b0954a9a` (verified: `quotaboard-env` present in HEAD's sops.nix + quickshell.nix, absent at HEAD~2). UPDATE stamps landed on both surfaces (`2a4d5e373`); the 23-05 report got an annotate-don't-rewrite addendum (this commit).
+- Premise-move discovered and stamped: the "abandoned staged commits" set (§c/§g.1 of the 23-05 report) LANDED ~20 min after authoring — excludes = `d315d3a3b` + `fd900d10d`, quotaboard wiring absorbed by daemon sweep `4b0954a9a` (verified: `quotaboard-env` present in HEAD's sops.nix + quickshell.nix, absent at HEAD~2). UPDATE stamps landed on both surfaces (`2a4d5e373`); the 23-05 report got an annotate-don't-rewrite addendum (authored this round, landed via daemon sweep `924240978`).
 - Final sweep: `git status` clean at authoring; nothing of mine uncommitted; six footer-bearing commits for the task ID; verdict re-recorded (753 bytes, now includes the closeout commits).
 
 **Scope line — NOT verified here (and why):**
@@ -26,7 +26,7 @@
 | Closeout report + 4 follow-up rows landed (`b0b9787df`) — cap-compliant (4 ≤ 10), dedup-checked before appending | `git show --stat b0b9787df` (3 files, 164 insertions); checker OK after |
 | TODO gate unblocked tree-wide — root-caused to the checker's time-gate rule (NOT my content), fixed with the mechanical marker on the foreign row, disclosed in the commit body | `b0b9787df` body; checker OK standalone + in-hook |
 | All closeout content verified IN-Tree after three daemon sweeps (report file, 4 TODO rows, 4 pipeline library rows, PMA marker) | `git show HEAD:` greps ×4 → 1/4/4/1 (plus the file-path check after the grep scare) |
-| Abandoned-staged premise-move stamped on BOTH surfaces + annotate-don't-rewrite addendum on the 23-05 report (this commit) | `2a4d5e373` + the addendum block above |
+| Abandoned-staged premise-move stamped on BOTH surfaces + annotate-don't-rewrite addendum on the 23-05 report (addendum authored this round; landed via daemon sweep `924240978` — attribution corrected here same hour) | `2a4d5e373` + the addendum block in the 23-05 report (verified in HEAD) |
 | Final verdict re-recorded including the closeout commits | `tq verdict: recorded 753 bytes` |
 | Final sweep: tree clean, six footer commits accounted (`9f5a9f7e5`, `89d4046fe`, `533a4cdc8`, `098c3e38a`, `b0b9787df`, `2a4d5e373`), nothing of mine uncommitted | `git status` (clean) + `git log --grep` ×6 |
 | The hook's misleading post-rejection hint ("fix with git commit --amend" after a commit-msg rejection, where NOTHING landed and amend would rewrite the previous — daemon — commit) was identified, resisted live twice, and recorded for the CONTRIBUTING session-race row | queued row citing this round (pipeline.md) |
