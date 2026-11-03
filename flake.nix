@@ -389,12 +389,16 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      # LIFTED 2026-11-03: the 2026-11-02 pin (f3651092) guarded a
-      # go-health-dashboard API change that upstream has since propagated —
-      # origin/master builds clean (first-hand go build at beb8d9ed+) and the
-      # pin row left lib/flake-input-pin-audit.nix. Bumps flow via
-      # `nix flake lock --update-input library-policy --refresh`.
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
+      # REV-PINNED at f3651092 (RESTORED 2026-11-03 — the day's lift was
+      # premature): origin/master vendors go-health-dashboard v0.12.1, whose
+      # status.go:309 does not compile (InstanceID struct into a string
+      # field) — a local workspace go build passes via replaces while the
+      # proxy-served FOD build dies at buildPhase (float-proof-20261103-171041
+      # lineage). The FIX is committed in ~/projects/library-policy (bump to
+      # the fixed v0.12.2) awaiting owner push. LIFT: that push lands, then
+      # drop this pin + the audit row, re-lock, re-probe the lars-packages
+      # shim, re-run the toplevel proof.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master&rev=f36510924184c78b638ae602e848935a627571c5";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool

@@ -306,15 +306,16 @@ lib.filterAttrs (_: v: v != null) {
   # 2026-11-02 04:12 float: the input was REV-PINNED back to f3651092
   # (upstream beb8d9ed vendors a go-health-dashboard whose InstanceID
   # struct change breaks the library-policy build — flake.nix pin comment)
-  # and the value below was f3651092's build-proven hash.
-  # 2026-11-03 LIFT: the pin lifted (upstream propagated the API change —
-  # origin/master at 0a276fc0 compiles clean) and the shim re-probed to
-  # the fresh got X4A26/0R (first-hand, float-proof-20261103-171041.log;
-  # amusingly the value that was the SPEC at beb8d9ed). Re-probe on every
-  # lift; drop when upstream bakes our-graph values.
+  # and the value below is f3651092's build-proven hash.
+  # 2026-11-03: the day's lift attempt re-probed to X4A26/0R at 0a276fc0,
+  # but the PACKAGE then died at buildPhase on the vendored v0.12.1
+  # status.go (two-graphs trap — local go build green, FOD build red).
+  # Pin RESTORED to f3651092 until the owner pushes library-policy's bump
+  # to the fixed go-health-dashboard v0.12.2 (committed locally); re-probe
+  # this shim on the next lift.
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-X4A26/0RE/S4MeQuGB9hPUQWo4C9XCzrkPMCIYaM+c0=";
+      "sha256-UtUhdbS9W9RRBNUHAUKAfG+Rd7p3ACejRhtsn1jNbpg=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going

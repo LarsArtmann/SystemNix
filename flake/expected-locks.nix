@@ -29,7 +29,7 @@
   bank-sync = "cb7495a8637e9d260a3bbbef93e7893d1df93935";
   branching-flow = "d17cb1aec720939b75dfb132a7c135cffe5b2717";
   brandid-lint = "77198852914db0d3d0db7d8b770e4c3f35c3dc41";
-  browser-history = "3ee89742be05bdd3f6f92948d642e069ecda1766";
+  browser-history = "9daaa804d86a00b1546d72bbd531e5ecae4e27ba";
   buildflow = "2d6bbee1775e55826b63d1139bdf427f5f2ddf09";
   cmdguard = "7ab3f21740684fbc53ac07e5d7f3231e67993e42";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
@@ -91,7 +91,7 @@
   nixpkgs = "fe13242281a67641c0102cdb1087f0ebe586c7df";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nixpkgs-unstable = "0bb2eedc20e4739f29e8045034f2828ad7054f8f";
-  nsfw-classifier = "58d398dc68b94f16df2adefdeb8f2864d950080f";
+  nsfw-classifier = "b43a6da7234c32a7def7eab7063fb2e0d553a26d";
   nur = "351d481889ec339ff0858584eb606503cb1ac49f";
   offline-banner = "2ccdf6ec04f32b94aa2b8ddd7d35a38b5daf2903";
   otel-tui = "5e7cf2f4dfc6f06a8c71f49f4d2b66672a7b50f6";
