@@ -56,14 +56,18 @@ ok() {
 }
 
 echo "=== Static asserts on $HOOK (the eval-relevance skip guard's load-bearing text) ==="
-grep -qF 'source scripts/lib/eval-relevant-paths.sh' "$HOOK" &&
+grep -qE '^source scripts/lib/eval-relevant-paths\.sh$' "$HOOK" &&
   ok "T1 classification sources the shared eval-relevant path definition" ||
   die "T1 shared-definition source line drifted — guard and test must be re-synced"
 grep -qF -- '-- "${EVAL_RELEVANT_PATHS[@]}"' "$HOOK" &&
   ok "T2 pathspec walks the shared array (no inline path list)" ||
   die "T2 EVAL_RELEVANT_PATHS pathspec drifted"
-grep -qF -- '--diff-filter=DR' "$HOOK" &&
-  ok "T3 deletions/renames of ANY path force the leg (readFile-absence class)" ||
+# Pinned to the full ASSIGNMENT line, not the bare flag: the hook's comment
+# block also mentions --diff-filter=DR, and a mutation dropping only the CODE
+# occurrence sailed through the bare-flag assert (caught 2026-11-03 while
+# wiring the mutation negative).
+grep -qF 'STAGED_STRUCTURAL=$(git diff --cached --name-only --diff-filter=DR)' "$HOOK" &&
+  ok "T3 deletions/renames of ANY path force the leg (--diff-filter=DR)" ||
   die "T3 structural (--diff-filter=DR) leg drifted"
 grep -qF "grep -vE '\\.(md|html|txt)\$'" "$HOOK" &&
   ok "T4 docs carve-out present" ||
@@ -89,6 +93,16 @@ git -C "$SCRATCH" config core.hooksPath "$SCRATCH/.no-hooks"
 
 # shellcheck source=scripts/lib/eval-relevant-paths.sh
 source "$EVAL_PATHS_LIB"
+# Fail LOUD on a lost lib: without -e a failed source leaves the array unset,
+# bash's set -u turns any direct length probe ("${#ARR[@]}") into an
+# unbound-variable error that if-conditions swallow to false, and the guard's
+# "${ARR[@]}" would silently expand empty — git then classifies EVERY staged
+# path as eval-relevant. The ${ARR[*]-missing} default-expansion is the one
+# set-u-safe probe for unsetness.
+if [ "${EVAL_RELEVANT_PATHS[*]-missing}" = missing ] || [ "${#EVAL_RELEVANT_PATHS[@]}" -eq 0 ]; then
+  echo "FAIL: EVAL_RELEVANT_PATHS is unset/empty — sourcing $EVAL_PATHS_LIB failed"
+  exit 1
+fi
 
 guard() {
   # The hook's classification, verbatim.

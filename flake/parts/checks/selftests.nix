@@ -1008,13 +1008,18 @@
             }
             ''
               scratch=$(mktemp -d)
+              # The test resolves scripts/lib/ relative to its own path
+              # (REPO_ROOT = dirname/..), so it must sit at scripts/ depth —
+              # a flat $scratch/test.sh copy would point REPO_ROOT at the
+              # mktemp PARENT and the lib source would fail (the fixture
+              # now fails loud on that, not silently mis-classifying).
               mkdir -p "$scratch/scripts/lib"
-              cp ${root}/scripts/test-precommit-eval-skip.sh "$scratch/test.sh"
+              cp ${root}/scripts/test-precommit-eval-skip.sh "$scratch/scripts/test-precommit-eval-skip.sh"
               cp ${root}/scripts/lib/eval-relevant-paths.sh "$scratch/scripts/lib/eval-relevant-paths.sh"
               cp ${root}/.githooks/pre-commit "$scratch/real-hook"
-              PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/test.sh"
+              PRECOMMIT_HOOK="$scratch/real-hook" bash "$scratch/scripts/test-precommit-eval-skip.sh"
               sed "s/(md|html|txt)/(md)/" "$scratch/real-hook" > "$scratch/mutated-hook"
-              if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/test.sh" > "$scratch/mut1.log" 2>&1; then
+              if PRECOMMIT_HOOK="$scratch/mutated-hook" bash "$scratch/scripts/test-precommit-eval-skip.sh" > "$scratch/mut1.log" 2>&1; then
                 echo "FAIL: mutated hook (docs carve-out narrowed to .md-only) passed the fixture"
                 cat "$scratch/mut1.log"
                 exit 1
@@ -1025,7 +1030,7 @@
                 exit 1
               }
               sed "s/ --diff-filter=DR//" "$scratch/real-hook" > "$scratch/mutated-hook2"
-              if PRECOMMIT_HOOK="$scratch/mutated-hook2" bash "$scratch/test.sh" > "$scratch/mut2.log" 2>&1; then
+              if PRECOMMIT_HOOK="$scratch/mutated-hook2" bash "$scratch/scripts/test-precommit-eval-skip.sh" > "$scratch/mut2.log" 2>&1; then
                 echo "FAIL: mutated hook (structural --diff-filter=DR leg dropped) passed the fixture"
                 cat "$scratch/mut2.log"
                 exit 1
