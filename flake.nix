@@ -389,16 +389,12 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      # REV-PINNED at f3651092 (2026-11-02 04:12 float): upstream beb8d9ed's
-      # dep sweep vendored a go-health-dashboard whose InstanceID became a
-      # struct without updating the call site — status.go:309 fails to
-      # compile ("cannot use resp.InstanceID … as string value"; first-hand
-      # keep-going, ~/.cache/lockfloat/float-proof-20261102-052231.log).
-      # f3651092 is the last build-proven rev. LIFT: upstream compiles at a
-      # rev where the go-health-dashboard API change is propagated and a
-      # probe build through our lock exits 0 — then drop this pin and the
-      # lib/flake-input-pin-audit.nix row.
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master&rev=f36510924184c78b638ae602e848935a627571c5";
+      # LIFTED 2026-11-03: the 2026-11-02 pin (f3651092) guarded a
+      # go-health-dashboard API change that upstream has since propagated —
+      # origin/master builds clean (first-hand go build at beb8d9ed+) and the
+      # pin row left lib/flake-input-pin-audit.nix. Bumps flow via
+      # `nix flake lock --update-input library-policy --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -425,26 +421,12 @@
     # go-modules FOD rebuild on the flip verified the vendorHash holds. Deliberate
     # entry dropped from lib/lock-audit.nix in the same change.
     nsfw-classifier = {
-      # Remote master since 2026-10-10: the INTERIM git+file pin's flip
-      # condition is met — 46f02bb (vendorHash refresh + GOTOOLCHAIN pin)
-      # is on origin/master — so the row was removed from
-      # docs/INTERIM-INPUT-PINS.md. Deploy-key fetch, same pattern as
-      # file-and-image-renamer.
-      #
-      # REV-PINNED at 58d398dc (2026-10-27) since 2026-10-28: upstream tip
-      # 1e95693 does NOT compile. The F0.3 client-telemetry refactor landed
-      # half-wired — internal/server/telemetry.go (added d93ca46) references
-      # identifiers that never landed (`http`, `writeErr`, Server.telemetryPath),
-      # so `go build ./cmd/nsfw` dies with 12 undefined-symbol errors even
-      # though the go-modules FOD is green (the "FOD green ≠ compile green"
-      # class, docs/agents/nix-flakes.md). Upstream's own status report calls
-      # that work "f03-half-wired". 58d398dc predates telemetry.go entirely
-      # and is the gen-959-deployed, build-proven rev.
-      # LIFT: upstream master compiles again (the F0.3 telemetry handler +
-      # Server.telemetryPath + writeErr all present) — verify with
-      # `nix build github:LarsArtmann/nsfw-classifier/master#nsfw-classifier-go-rocm`
-      # or a probe through our lock, then drop this pin AND its allowlist row.
-      url = "git+ssh://git@github.com/LarsArtmann/nsfw-classifier?rev=58d398dc68b94f16df2adefdeb8f2864d950080f";
+      # Remote master since 2026-10-10; deploy-key fetch. LIFTED 2026-11-03:
+      # the 2026-10-28 pin (58d398dc) guarded the F0.3 telemetry refactor that
+      # landed half-wired — upstream finished it (telemetry handler,
+      # Server.telemetryPath, writeErr all present; first-hand go build at
+      # b43a6da7 clean) and the pin row left lib/flake-input-pin-audit.nix.
+      url = "git+ssh://git@github.com/LarsArtmann/nsfw-classifier?ref=refs/heads/master";
     };
 
     # crush-daily — Daily AI-powered insights from Crush development databases
@@ -750,14 +732,11 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      # REV-PINNED at 145cd73d (2026-11-02 04:12 float): upstream 983928ff
-      # does not compile — server.go:1061 references godmn.ReadNotifyCounters,
-      # which no longer exists (half-wired upstream refactor; first-hand
-      # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
-      # 145cd73d is the last build-proven rev. LIFT: upstream master compiles
-      # again (ReadNotifyCounters defined or the call removed) and a probe
-      # build through our lock exits 0 — then drop this pin and this row.
-      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master&rev=145cd73db456320adcde0d71b77a535e03bbd7f4";
+      # LIFTED 2026-11-03: the 2026-11-02 pin (145cd73d) guarded the
+      # half-wired ReadNotifyCounters refactor — upstream completed it
+      # (first-hand go build at 983928f+ clean) and the pin row left
+      # lib/flake-input-pin-audit.nix.
+      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go
