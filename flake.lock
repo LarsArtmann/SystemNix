@@ -4445,11 +4445,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793508599,
-        "narHash": "sha256-95tJZ7cmUbMj1K5KoRykXFv5iZcol3Stvtp123TDb0U=",
+        "lastModified": 1793731650,
+        "narHash": "sha256-5gvQV1zSG/dpbXNQsCTFpxQ07sIpePRVrTl59xPxDIk=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "ee143ac0bb7a318c965d10fc1e810bd750248874",
+        "rev": "d4a65347ae999d578fc515aa7d7e6c64753dd7bc",
         "type": "github"
       },
       "original": {
@@ -4462,11 +4462,11 @@
     "go-health-dashboard_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1793381408,
-        "narHash": "sha256-iSD3Ik7JKmkgrsOmjhEZPPAuLDS3ZtX90ozvw5zR1GQ=",
+        "lastModified": 1793731650,
+        "narHash": "sha256-5gvQV1zSG/dpbXNQsCTFpxQ07sIpePRVrTl59xPxDIk=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "827e5d73267108f267f24c525f19854805d5ae0e",
+        "rev": "d4a65347ae999d578fc515aa7d7e6c64753dd7bc",
         "type": "github"
       },
       "original": {
@@ -4513,11 +4513,11 @@
     "go-health_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1793187327,
-        "narHash": "sha256-h3LCI9ivxqeaCWYTO4/2UMeQlLx9m58g1fDA8SnKhDw=",
+        "lastModified": 1793593948,
+        "narHash": "sha256-PF0AaISfHYBANPVLt/bwYU6quckYHMjMWaEQUSHrjpA=",
         "owner": "LarsArtmann",
         "repo": "go-health",
-        "rev": "cbd7f78dfb72644021f68a5027b1e5560dfc3d5c",
+        "rev": "d783d78e1f2e38bf6d2fbf35f620d7302945659e",
         "type": "github"
       },
       "original": {
@@ -6628,11 +6628,11 @@
         "templ-components": "templ-components_7"
       },
       "locked": {
-        "lastModified": 1793726515,
-        "narHash": "sha256-lgDtc+CkwJrTy6qE8jm4CBnArk8UoCIMilEEK7Kibrw=",
+        "lastModified": 1793732472,
+        "narHash": "sha256-pm28MxpSgsRY3hTtPl5/GCBde/yfNk5XyPdxSETln9Q=",
         "ref": "refs/heads/master",
-        "rev": "a7aa44dec91c011aba7b4abd4fafeffb45ae8a0d",
-        "revCount": 1363,
+        "rev": "c1dc17ae97bc732dd21bd929bbc8a9acb148621e",
+        "revCount": 1364,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },

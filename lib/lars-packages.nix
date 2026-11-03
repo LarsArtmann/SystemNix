@@ -316,9 +316,18 @@ lib.filterAttrs (_: v: v != null) {
   # UNPINNED 2026-11-03 evening: the v0.12.2 fix landed (a7aa44d) — shim
   # re-probed at the new rev: spec UtUhdbS9 (f3651092's value), got
   # zpasin+t (first-hand build probe, go-modules FOD at a7aa44dec).
-  library-policy =
-    flakePkgShim inputs.library-policy "default"
-      "sha256-zpasin+tqvfidhWlisjJX/Au5K24bowqDxdP896Ebyg=";
+  # zpasin+t never served a green build: the package then died at
+  # buildPhase on the vendored dashboard status.go:309 (branded
+  # health.InstanceID vs string — the two-graphs trap one level deeper:
+  # go.mod bumps are cosmetic when the flake deps map replaces both
+  # go-health and go-health-dashboard).
+  # library-policy shim DROPPED (2026-11-03 night): upstream c1dc17a
+  # floats its own inputs past the break (go-health d783d78,
+  # go-health-dashboard d4a6534, which adopted the branded type
+  # end-to-end) and bakes the through-our-lock vendorHash jKv5SH…
+  # (detached-worktree FOD probe at a7aa44d + the floated lock, binary
+  # produced). Re-add ONLY via nix-hash-fix evidence, never by hand.
+  library-policy = flakePkg inputs.library-policy;
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
