@@ -99,6 +99,24 @@ Rules:
 
 Threshold defense: `loadBearingTripsPerBoot = 10` is crossed within 2–5 h on every storm boot — sound. The M20 sustained-escalation latch (§7.1c) should key on **≥2 trips/h sustained ≥2 h** (the floor of the documented storm band 1.3–11.7/h — hourly buckets inside #35 peaked well above its 1.3/h average) with a per-boot total ≥20 fallback; single bursts (2–3 trips, restore, calm) must stay silent. (#38 post-correction sits at ~8.2/h — squarely inside the band; the pre-correction 0.8/h artifact briefly motivated a "latch would miss this class" claim.) Final values are the owner's §7.1c call after this census.
 
+### Boot cadence — crash-class rate & clustering (2026-11-03, superb-v3 S-0034)
+
+Quantified from the freeze ledger above (authoritative across journal vacuums) + live `crash-triage` for the retained window. **36 crash-class cuts in 34 days (Oct 1 → Nov 3) ≈ 1.06/day, vs exactly TWO clean shutdown boundaries in the same span (the planned 2026-10-15 22:30/22:59 deploy pair) — 95 % of every boot boundary since Oct 1 is crash-class.** Live cross-check (journal retained from Oct 29): abrupt=7, clean=0 across 8 boots — the ratio holds to the present.
+
+Cluster structure (cuts ≥2 within 48 h):
+
+| Cluster | Cuts | Rate | Peak | Notes |
+| --- | --- | --- | --- | --- |
+| Oct 1–2 | 3 in 17 h | burst 4.2/day | — | thermal-era onset (#8–#9, #11) |
+| Oct 3–7 | 15 in ~4.9 d | 3.1/day | Oct 7: 6 cuts in 11 h | the pre-cooling-inspection worst era (#12–#26) |
+| Oct 11–15 | 4 in 4 d 16 h | 0.9/day | — | long-boot era (#27–#30) |
+| Oct 25–28 | 5 in ~2.8 d | 1.8/day | — | the WDT-naming era (#33–#37) |
+| Nov 2–3 | 6 in 30 h | **4.8/day** | the ledger's five-consecutive recovery-boot WDT resets (#40–#44) | **worst cluster on record** (#39–#44; every recovery boot re-armed the recipe) |
+
+Calm gaps between clusters: Oct 7→11 (4 d 0 h), Oct 15→18 (~3 d), Oct 20→25 (4 d 14 h), Oct 30→Nov 2 (2 d 8 h) — the box has NOT gone 5 days without a cut since Sep 29. Crash-boot lifetimes: minutes-to-hours inside clusters (#41: 32 m), 1–4.5 d in calm eras (longest survivor #33: 4 d 13.5 h); family composition is 100 % Branch C since #33. Trend: Oct 1–7 3.2/day → Oct 11–30 0.64/day → Nov 2–3 burst 4.8/day — the sustained rate improved mid-Oct but the burst ceiling did not, and the Nov cluster is the first with EVERY consecutive recovery boot dying (no survivor >18 h since Oct 30 except #43's 18 h 07 m).
+
+Method caveats (data provenance): **wtmp rotated 2026-11-01 00:49** — `last -x` now begins Nov 1 and shows zero shutdown records since (both Nov boundaries are crash-class, consistent with the ledger); never rely on wtmp for cadence beyond its current rotation. Journal retention at authoring starts Oct 29 (7.7/8G, vacuum edge) — ledger + evidence-pull docs are the only boundary sources older than that. #10 (2026-10-01 19:08) is EXCLUDED (defused live, never a cut); the Oct 15 planned pair is excluded from crash counts.
+
 ## IO-PSI Storm Attribution — live probe set (2026-11-03)
 
 Codified from the 2026-10-15 85–96 % storm attribution (one pass named `crush -y` ≈ 407 MB/s + a `go test -race` trio ≈ 130 MB/s combined; source: `docs/status/2026-10-16_00-07_boot-failure-triage.md` §a.2/§f.9). Run these three probes in this order BEFORE any containment recommendation (the SIGSTOP doctrine above requires attribution first):
