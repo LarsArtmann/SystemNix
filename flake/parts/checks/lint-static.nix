@@ -653,14 +653,28 @@
             fixtures=${root}/tests/fixtures/gitleaks
             work=$(mktemp -d)
             trap 'rm -rf "$work"' EXIT
+            expand_templates() {
+              local f="$1"
+              # Expand runtime-derived templates (no-op where absent):
+              # entropy must stay realistic or the rules' entropy gates kill
+              # the detection this check exists to prove. @HEX40@: 40-hex.
+              # @ULID26@: Crockford-base32 ULID shape — sha256('systemnix-ulid-fixture-v3'),
+              # sequence entropy 4.36, above generic-api-key's 3.5 gate
+                           # (hex-derived 26-char forms measured 3.14 and pass UNDER it —
+              # the derivation alphabet matters, verified live 2026-11-03).
+              # @SLACKBODY@: 30-char uppercase body for the default
+              # slack-bot-token rule (extend.useDefault is load-bearing here).
+              sed -i \
+                -e "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" \
+                -e "s/@ULID26@/YFF14Q7903ZAKNTQH2CMVVPR6F/" \
+                -e "s/@SLACKBODY@/$(printf 'systemnix-slack-fixture' | sha256sum | cut -c1-30 | tr 'a-f' 'A-F')/" \
+                "$f"
+            }
             expect_detect() {
               local fixture="$1" label="$2" d
               d=$(mktemp -d "$work/d.XXXXXX")
               cp "$fixtures/$fixture" "$d/"
-              # Expand the @HEX40@ template (no-op where absent): entropy
-              # must stay realistic or the rule's entropy gate kills the
-              # detection this check exists to prove.
-              sed -i "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" "$d/$fixture"
+              expand_templates "$d/$fixture"
               if ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" >/dev/null 2>&1; then
                 echo "SELFTEST FAIL: gitleaks did NOT detect $label (fixture: $fixture) — rule dead or fixture drifted (phantom coverage)"
                 exit 1
@@ -669,6 +683,16 @@
             expect_detect "positive-square.txt" "the sq0atp- Square access-token rule"
             expect_detect "positive-sourcegraph.txt" "the sgp_ sourcegraph access-token rule"
             expect_detect "positive-sourcegraph-local.txt" "the sgp_local_ sourcegraph access-token alternative"
+            # Allowlist over-breadth control: a NOVEL ULID in the exact
+            # oauth_login journal shape that produced the real FP MUST trip
+            # generic-api-key — if an allowlist edit broadens the ULID
+            # literals to any-ULID, this leg goes silent and fails loudly.
+            expect_detect "positive-user-id-novel-ulid.txt" "generic-api-key on a NOVEL ULID in the oauth_login shape (allowlist over-breadth control)"
+            # Slack coverage comes from extend.useDefault (slack-bot-token,
+            # live-verified 2026-11-03 incl. bare-context xoxb-) — NOT a repo
+            # rule. If useDefault breaks or upstream drops the rule, this
+            # leg catches the silent coverage loss.
+            expect_detect "positive-slack.txt" "the default slack-bot-token rule (extend.useDefault pinned)"
             expect_clean() {
               local fixture="$1" label="$2" d
               d=$(mktemp -d "$work/d.XXXXXX")
@@ -679,7 +703,7 @@
               # corrupted fixture stays undetectable — caught by
               # scripts/negative-test-lints.sh gitleaks/negative-fixture-corrupt
               # on 2026-09-15).
-              sed -i "s/@HEX40@/$(printf 'systemnix-gitleaks-coverage-fixture' | sha256sum | cut -c1-40)/" "$d/$fixture"
+              expand_templates "$d/$fixture"
               if ! ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" >/dev/null 2>&1; then
                 echo "SELFTEST FAIL: $label tripped gitleaks (fixture: $fixture)"
                 ${pkgs.gitleaks}/bin/gitleaks detect --no-git --no-banner --source "$d" --config "$cfg" || true
@@ -689,7 +713,15 @@
             expect_clean "negative-bare-hex.txt" "bare low-entropy 40-hex git SHA"
             expect_clean "negative-hex-no-keyword.txt" "HIGH-entropy 40-hex without rule keywords"
             expect_clean "negative-hex-with-keyword.txt" "bare 40-hex with rule keywords (sourcegraph rule overridden — the rev-pin false-positive class)"
-            echo "gitleaks coverage: 3 positive classes detected, 3 negative classes clean"
+            # Load-bearing-literal pin: the allowlisted Pocket-ID user-id in
+            # its oauth_login journal shape stays clean BECAUSE of the
+            # literal allowlist entry (allowlist regexes match the CAPTURED
+            # SECRET region, never the full line — the user_id:"…" line-shape
+            # form silently no-oped, live-verified 2026-10-06 and again at
+            # fixture-authoring time 2026-11-03: same line with a novel ULID
+            # trips generic-api-key).
+            expect_clean "negative-user-id-allowed-ulid.txt" "the allowlisted Pocket-ID user-id literal in its oauth_login journal shape"
+            echo "gitleaks coverage: 5 positive classes detected, 4 negative classes clean"
             touch $out
           '';
 
