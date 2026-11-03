@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  osConfig,
   dankMaterialShell,
   dmsPaste,
   quotaboard,
@@ -126,13 +127,17 @@ in
 
     # quotaboard — AI coding-plan quota dashboard (github:LarsArtmann/
     # quotaboard): user service on the registry port + DMS bar widget.
-    # No environmentFile yet — without keys the dashboard and the widget
-    # render per-provider "not configured" guidance (honest empty state);
-    # wire sops secrets here when the owner adds ZAI/Synthetic keys.
+    # environmentFile re-renders the EXISTING subscription keys (crush.yaml
+    # zai_api_key + crush-daily.yaml synthetic_api_key — see the
+    # quotaboard-env template in modules/nixos/services/sops.nix); no
+    # provider-specific secret was ever needed. Interpolated through
+    # osConfig so the rendered path follows the real sops-nix default
+    # instead of a hardcoded literal (textfile-tmp audit).
     services.quotaboard = {
       enable = true;
       port = ports.quotaboard;
       dmsPlugin.placeInBar = true;
+      environmentFile = osConfig.sops.templates."quotaboard-env".path;
     };
 
     programs.dank-material-shell = {

@@ -637,6 +637,28 @@ in
               };
             };
           }
+          // {
+            # quotaboard (2026-11-03): the AI-quota dashboard's provider keys
+            # are the SAME subscription keys the rest of the machine already
+            # holds — crush.yaml zai_api_key (the GLM coding-plan key) and
+            # crush-daily.yaml synthetic_api_key (endpoint-verified pre-copy
+            # for cv_openaicompat_api_key, sops.nix cv block). No new owner
+            # secret needed; this template just re-renders both into one
+            # user-readable EnvironmentFile. Unconditional because quotaboard
+            # is a HOME service (quickshell.nix) — svcEnabled cannot see it —
+            # and the desktop always enables it. No restartUnits: those
+            # target SYSTEM units; the home-level quotaboard.service picks
+            # the env up on HM switch or re-login.
+            "quotaboard-env" = {
+              owner = primaryUser;
+              group = "users";
+              mode = "0400";
+              content = lib.generators.toKeyValue { } {
+                ZAI_API_KEY = config.sops.placeholder.zai_api_key;
+                SYNTHETIC_API_KEY = config.sops.placeholder.synthetic_api_key;
+              };
+            };
+          }
           // lib.optionalAttrs (svcEnabled "bank-sync") {
             "bank-sync-env" = {
               owner = "bank-sync";
