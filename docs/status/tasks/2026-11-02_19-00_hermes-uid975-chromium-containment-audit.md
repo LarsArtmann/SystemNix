@@ -39,9 +39,22 @@ RAM), optional tightening override) — the 4 GiB cap is hermes' own
 - systemd's own accounting AFTER the kill: `Consumed 1min 26s CPU … 1.1G memory
   peak, 248M swap peak` — the 4 GiB-class MemoryMax held for the whole 9.5 h
   lifetime. The scope was NOT uncontained.
-- adj 300 = chromium's own renderer-role adjustment (matches the live tree's
-  gpu/utility=200 / browser=0 ladder); it made the renderers preferential global-OOM
-  victims on top of the 1.4 TiB total-vm weighting.
+- adj 300 = chromium's own renderer-role adjustment, UPGRADED FROM INFERENCE
+  TO CITATION (chromium source, main, fetched raw 2026-11-02):
+  `content/browser/child_process_launcher_helper_linux.cc`
+  (`LaunchProcessOnLauncherThread`) sets `oom_score = content::kLowestRendererOomScore`
+  for every `--type=renderer` and `content::kMiscOomScore` for the other zygote
+  children, applied via `ZygoteHostImpl::AdjustRendererOOMScore`
+  (`content/browser/zygote_host/zygote_host_impl_linux.cc`). The constants live in
+  `content/public/common/content_constants.cc` (IS_LINUX||IS_CHROMEOS block):
+  `kLowestRendererOomScore = 300`, `kHighestRendererOomScore = 1000`,
+  `kOomScoreBump = 100`, `kMiscOomScore = kLowestRendererOomScore - kOomScoreBump`
+  = 200, browser/zygote = 0. The batch hypothesis named `oom_intervention` as the
+  setter — FALSIFIED: the adjustment is unconditional in the browser's child-process
+  launcher at every renderer launch, not a component intervention that fires under
+  memory pressure. The observed live ladder (browser 0, gpu/utility 200,
+  renderer 300) is exactly this compile-time table; it made the renderers
+  preferential global-OOM victims on top of the 1.4 TiB total-vm weighting.
 
 ## The actual gap
 
