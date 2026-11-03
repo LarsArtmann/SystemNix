@@ -726,19 +726,18 @@
     # embedded daemon 2026-09-07). Must be at a rev that supports
     # PROJECT_DISCOVERY_SEARCH_PATHS and PROJECT_DISCOVERY_SOCKET_MODE.
     project-discovery-daemon = {
-      # REV-PINNED at 145cd73d (restored 2026-11-03). CORRECTED DIAGNOSIS
-      # (2026-11-03 evening, source-verified): the recorded cause — "symbol
-      # only in godmn's unpublished tree" — was WRONG. ReadNotifyCounters is
-      # published in go-daemon v0.4.0 (tagged 2026-10-03, local == origin,
-      # proxy-served FOD resolves it fine). The real defect: pdd's OWN
-      # flake.nix pinned its go-daemon input at 138ce86e (v0.3.0-era, predates
-      # notify.go) while go.mod required v0.4.0 — mkPreparedSource's replace
-      # vendored the stale tree, so the FOD compiled against code without the
-      # symbol. FIXED in pdd a6dd6a3 (pin synced to the v0.4.0 commit 0a5d806f,
-      # vendorHash re-baked, pdd's own FOD build green first-hand). LIFT: pdd
-      # a6dd6a3 lands on origin/master — drop this pin and this row, re-lock,
-      # re-run the toplevel proof.
-      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master&rev=145cd73db456320adcde0d71b77a535e03bbd7f4";
+      # UNPINNED 2026-11-03 night: the fix landed on origin/master (a6dd6a3,
+      # pushed) — pin synced to go-daemon v0.4.0 (0a5d806f), vendorHash
+      # re-baked, pdd's own FOD build green first-hand. History: the pin was
+      # restored 2026-11-03 after a corrected, source-verified diagnosis —
+      # the recorded cause ("symbol only in godmn's unpublished tree") was
+      # WRONG; ReadNotifyCounters is published in go-daemon v0.4.0 (tagged
+      # 2026-10-03). The real defect: pdd's OWN flake.nix pinned its
+      # go-daemon input at 138ce86e (v0.3.0-era, predates notify.go) while
+      # go.mod required v0.4.0 — mkPreparedSource's replace vendored the
+      # stale tree, so the FOD compiled against code without the symbol
+      # (the two-graphs trap).
+      url = "git+ssh://git@github.com/LarsArtmann/project-discovery-daemon?ref=refs/heads/master";
     };
 
     # project-dependency-graph — depgraph CLI: renders the LarsArtmann Go

@@ -404,9 +404,13 @@ lib.filterAttrs (_: v: v != null) {
   # via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-10-26 lock float: spec jLpz/NzH, got XbZifGSt (first-hand
   # keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
-  project-discovery-daemon =
-    flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-XbZifGStHDNLF9lMBnTTHi+wkWqNDc69Oy8UAxfpatw=";
+  # project-discovery-daemon shim DROPPED (2026-11-03 night): upstream
+  # a6dd6a3 bakes the through-its-own-lock vendorHash OW+eywme… (go-daemon
+  # flake pin synced to v0.4.0 0a5d806f, own FOD green first-hand); pdd
+  # does not follow our pins, so its own lock governs the FOD content and
+  # the override could only re-stale it. Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  project-discovery-daemon = flakePkg inputs.project-discovery-daemon;
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim

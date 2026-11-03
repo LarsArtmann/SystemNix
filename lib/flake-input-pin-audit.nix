@@ -104,10 +104,19 @@
     # vision-review-agent row REMOVED 2026-11-03: upstream restored the
     # go.mod floor to 1.27.2 (59cc272, pushed) — pin dropped, probe build
     # green, toplevel proof green (lift ritual complete).
-    # library-policy row REMOVED 2026-11-03: the go-health-dashboard v0.12.2
-    # fix landed on origin/master (a7aa44d, pushed) — pin dropped, shim
-    # re-probed at the new rev, toplevel proof green (lift ritual complete).
-    project-discovery-daemon = "REV-PINNED at 145cd73d (restored 2026-11-03). CORRECTED DIAGNOSIS (2026-11-03 evening, source-verified): the recorded cause — 'symbol only in godmn's unpublished tree' — was WRONG. ReadNotifyCounters is published in go-daemon v0.4.0 (tagged 2026-10-03, local == origin). Real defect: pdd's own flake.nix pinned its go-daemon input at 138ce86e (v0.3.0-era, predates notify.go) while go.mod required v0.4.0 — mkPreparedSource's replace vendored the stale tree and the FOD compiled against code without the symbol. FIXED in pdd a6dd6a3 (pin synced to the v0.4.0 commit 0a5d806f, vendorHash re-baked, pdd's own FOD build green first-hand; awaiting push). LIFT: pdd a6dd6a3 lands on origin/master — drop this pin and this row, re-lock, re-run the toplevel proof.";
+    # library-policy row REMOVED 2026-11-03: pin dropped that evening; the
+    # a7aa44d "fix" was ineffective (go.mod bumps are cosmetic under the
+    # flake deps map — the two-graphs trap), the real fix being
+    # go-health-dashboard d4a6534 adopting the branded InstanceID plus
+    # library-policy c1dc17a floating its own go-health inputs past the
+    # break (worktree FOD green; .#library-policy green through this lock,
+    # shim dropped — lift ritual complete).
+    # project-discovery-daemon row REMOVED 2026-11-03 night: the corrected
+    # root cause (pdd's own go-daemon flake pin stale at 138ce86e vs go.mod
+    # v0.4.0 — NOT "symbol only in godmn's unpublished tree", which was
+    # WRONG) was fixed upstream in a6dd6a3, pushed to origin/master — pin
+    # dropped, input re-floated, toplevel proof re-run (lift ritual
+    # complete).
     cv = "REV-PINNED at 16a656f4 (2026-11-03): upstream 80c2c88 panic-loops cv-server at runtime — boot rehydration times out on the pipeline sqlite store (career-pipeline: query all events: context deadline exceeded, 3 attempts) and the samber/do lazy healthcheck then nil-derefs ChatstoreSessions.HealthCheck (internal/agent/sessions_chatstore.go:112, SIGSEGV addr=0x8 = nil receiver) 5 s after the HTTP bind; systemd restart-loops every ~2.5 min (live journal 2026-11-03 16:19–16:44). 16a656f4 is the gen-973 rev proven GREEN for 18 h on boot deed9c84 including the full battery. LIFT: upstream lands a rev where rehydration completes against the existing store and /health/live answers on :8098 without the nil-receiver panic — drop the pin + the vendorHash shim re-measure, re-lock past it, re-run the toplevel proof.";
     # browser-history row REMOVED 2026-11-02 17:0x: the 15:28 doctor-series
     # split push healed — the full F2-F7 series landed on origin/master

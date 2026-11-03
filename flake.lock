@@ -3266,17 +3266,17 @@
     "go-daemon_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1790834378,
-        "narHash": "sha256-xps7u2ScSdmi5KXIZbYzLw4ttEgRa9prkgcOwsAujQc=",
+        "lastModified": 1791006350,
+        "narHash": "sha256-HMpKUHgozDnBkC7fB0k9BX9pazg9xRaMOyxI1+DaZSQ=",
         "ref": "master",
-        "rev": "138ce86eadaf841575b82d77f1dd34349945e4e8",
-        "revCount": 88,
+        "rev": "0a5d806f11b3e2e10f46b23b64cdcf15218147fe",
+        "revCount": 95,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       },
       "original": {
         "ref": "master",
-        "rev": "138ce86eadaf841575b82d77f1dd34349945e4e8",
+        "rev": "0a5d806f11b3e2e10f46b23b64cdcf15218147fe",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-daemon"
       }
@@ -7659,17 +7659,16 @@
         "project-discovery-sdk": "project-discovery-sdk_7"
       },
       "locked": {
-        "lastModified": 1792951428,
-        "narHash": "sha256-jn/8GKNb4YygD6MZuAu/saH1FwHWwopnFrL5OW8C5FE=",
+        "lastModified": 1793729088,
+        "narHash": "sha256-AgFSHxoFKfJQ5yvmPe50aOiPZFYqAkonPEvlXEUZoPo=",
         "ref": "refs/heads/master",
-        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
-        "revCount": 133,
+        "rev": "a6dd6a302e386c5025c2fe81f0c888f2a87fd331",
+        "revCount": 155,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },
       "original": {
         "ref": "refs/heads/master",
-        "rev": "145cd73db456320adcde0d71b77a535e03bbd7f4",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       }
