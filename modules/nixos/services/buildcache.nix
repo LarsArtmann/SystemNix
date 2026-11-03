@@ -80,6 +80,32 @@
       # shared cache-SSD helpers (lib/cache-ssd.nix).
       deviceSerial = cacheSsd.deviceSerialFromDevice cfg.device;
       mountUnitName = cacheSsd.mountUnitNameFor cfg.mountPoint;
+
+      # Eval-time converge-coverage guard (2026-11-03, gitea-runner class).
+      # A recovery remount stops mnt-buildcache.mount, and RequiresMountsFor
+      # implies Requires=, so every daemon gated on this mount is TERMed with
+      # it. Nothing converged them back: the runner stayed dark from the
+      # 21:11:01 deploy recovery until its own 5-min ensure timer fired 72s
+      # later (the post-deploy smoke FAILed in that window). Same shape as
+      # pool-recovery's coverage assertion (2026-10-04).
+      # Bound = any unitConfig.RequiresMountsFor path on or under the mount
+      # point (the exact mount and "/mnt/buildcache/x" both bind the mount).
+      # Daemon = explicit non-"no" Restart; oneshots self-heal on their next
+      # tick and must never be converged.
+      buildcacheBoundDaemons = lib.filterAttrs (
+        _: svc:
+        let
+          rmf = (svc.unitConfig or { }).RequiresMountsFor or null;
+          paths = if lib.isList rmf then map toString rmf else lib.optionals (rmf != null) [ (toString rmf) ];
+          bound = lib.any (p: p == cfg.mountPoint || lib.hasPrefix "${cfg.mountPoint}/" p) paths;
+          restart = (svc.serviceConfig or { }).Restart or null;
+        in
+        bound && restart != null && restart != "no"
+      ) config.systemd.services;
+
+      unconvergedDaemons = lib.filter (
+        unit: !lib.elem "${unit}.service" (cfg.recoveryRestartUnits ++ cfg.recoveryRestartUnitsExempt)
+      ) (lib.attrNames buildcacheBoundDaemons);
     in
     {
       options.services.buildcache = {
@@ -143,9 +169,52 @@
             description = "OnCalendar for the GC timer (default: daily 05:00 - after btrbk 23:00/23:30, idle I/O tier).";
           };
         };
+
+        recoveryRestartUnits = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Build-cache consumers to converge once the mount is proven healthy:
+            FAILED units are restarted (died against the EIO mount) and units
+            that are enabled but merely INACTIVE are started (the mount-stop
+            dropout class: RequiresMountsFor turns a recovery remount into a
+            stop of every bound daemon). Disabled/masked units are never
+            touched; deliberately hand-stopped listed units come back on the
+            next recovery run, which is intended because every entry here is an
+            always-on daemon whose stop Gatus alerts on anyway.
+
+            The healthy fast path also converges this list, so a deploy-time
+            recovery run heals an externally stopped consumer instead of
+            waiting for its own timer (2026-11-03: the gitea runner stayed dark
+            for 72s after a deploy and the post-deploy smoke FAILed).
+
+            NOTE: this list is NOT concat-merged, a second definition REPLACES
+            it wholesale.
+          '';
+        };
+
+        recoveryRestartUnitsExempt = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Build-cache-bound daemons deliberately NOT converged after a
+            remount. The only escape hatch from the eval-time coverage
+            assertion (config.assertions), so every entry needs a comment
+            justifying why the unit self-heals (own timer, watchdog, etc.).
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
+        assertions = [
+          {
+            assertion = unconvergedDaemons == [ ];
+            message = ''
+              buildcache: build-cache-bound daemon(s) missing from services.buildcache.recoveryRestartUnits — a recovery remount stops mnt-buildcache.mount, RequiresMountsFor propagates that stop to every bound daemon, and nothing brings them back (2026-11-03: the gitea runner died at a 21:11 deploy recovery and the post-deploy smoke FAILed). Add to recoveryRestartUnits, or recoveryRestartUnitsExempt with a reason: ${lib.concatStringsSep ", " unconvergedDaemons}
+            '';
+          }
+        ];
+
         # nofail: a dead/absent USB drive must never block boot. automount: mount
         # on first access rather than at boot, tolerating late DAS power-up.
         # device-timeout bounds the wait if the enclosure is unplugged.
@@ -307,6 +376,67 @@
             set -eu
             mnt="${cfg.mountPoint}"
             dev="${cfg.device}"
+
+            # Converge build-cache consumers against a healthy mount: restart
+            # FAILED units AND start enabled-but-inactive units. The step-1
+            # teardown stops mnt-buildcache.mount, RequiresMountsFor implies
+            # Requires=, so the mount stop TERMs every bound daemon; without
+            # this they stay dark until their own timers/retries (2026-11-03:
+            # the gitea runner was stopped by a deploy-time recovery at
+            # 21:11:01 and the post-deploy smoke FAILed 72s before its ensure
+            # timer brought it back). --no-block: never serialize this unit
+            # behind the slowest consumer (the pool-recovery 2026-10-12 lesson).
+            converge_consumers() {
+              for unit in ${lib.concatStringsSep " " cfg.recoveryRestartUnits}; do
+                if systemctl is-failed --quiet "$unit" 2>/dev/null; then
+                  echo "buildcache-usb-recovery: restarting failed buildcache consumer: $unit"
+                  systemctl reset-failed "$unit" 2>/dev/null || true
+                  systemctl start --no-block "$unit" 2>/dev/null || echo "buildcache-usb-recovery: start $unit failed (non-fatal)" >&2
+                else
+                  en="$(systemctl is-enabled "$unit" 2>/dev/null || true)"
+                  case "$en" in
+                    disabled | masked) continue ;;
+                  esac
+                  if ! systemctl is-active --quiet "$unit" 2>/dev/null; then
+                    echo "buildcache-usb-recovery: starting enabled-but-inactive buildcache consumer: $unit"
+                    systemctl start --no-block "$unit" 2>/dev/null || echo "buildcache-usb-recovery: start $unit failed (non-fatal)" >&2
+                  fi
+                fi
+              done
+            }
+
+            # A mount that is demonstrably healthy (right device number, ext4,
+            # real I/O) must be LEFT ALONE. The old unconditional teardown ran
+            # on every deploy and stop-propagated into every bound daemon.
+            mount_healthy() {
+              hsrc="$(findmnt -n -t ext4 -o SOURCE -- "$mnt" 2>/dev/null || true)"
+              [ -n "$hsrc" ] || return 1
+              [ -b "$hsrc" ] || return 1
+              [ -b "$dev" ] || return 1
+              # devt identity, not path identity: a replug can hand the same
+              # by-id path to a different node (sd letter reuse), and a
+              # foreign filesystem may sit at the mountpoint.
+              [ "$(stat -c %t:%T -- "$hsrc" 2>/dev/null || true)" = "$(stat -c %t:%T -- "$dev" 2>/dev/null || true)" ] || return 1
+              timeout 10 ls -A "$mnt" >/dev/null 2>&1
+            }
+
+            # udev and deploy.sh can fire this unit concurrently; a second run
+            # must not race the first's teardown/remount.
+            exec 9>/run/buildcache-usb-recovery.lock
+            flock -n 9 || {
+              echo "buildcache-usb-recovery: another run in flight - exiting"
+              exit 0
+            }
+
+            # 0. Healthy fast path (2026-11-03): never tear down a working
+            #    mount. Still converge consumers (a no-op for healthy ones) so
+            #    an externally stopped or boot-dropped consumer heals here.
+            if mount_healthy; then
+              echo "buildcache healthy ($mnt) - no teardown"
+              systemctl start buildcache-init.service buildcache-metrics.service 2>/dev/null || true
+              converge_consumers
+              exit 0
+            fi
 
             # 1. Ask PID 1 to tear down automount + mount (real umount in the
             #    HOST namespace), then lazily detach any zombie that survives
