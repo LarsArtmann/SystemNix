@@ -1789,6 +1789,14 @@ _: {
                     echo "dnsblockd-allowlist-backup: copied allowlist ($(stat -c %s "$src") bytes)"
                   '';
                   ReadWritePaths = [ allowlistBackupDir ];
+                  # Freshness marker (offsite-borg .last_success precedent):
+                  # touched only after a SUCCESSFUL run, including the
+                  # legitimate empty-allowlist path, so the freshness row
+                  # means "the leg ran recently", not "a file exists".
+                  # Without it, an allowlist that never had content left the
+                  # row red forever — a chronic false red feeding the
+                  # aggregate check (2026-11-04 diagnosis).
+                  ExecStartPost = "${pkgs.coreutils}/bin/touch ${allowlistBackupDir}/.last_success";
                 }
                 (harden { MemoryMax = "256M"; })
                 (serviceOneshotDefaults { })
@@ -1844,7 +1852,7 @@ _: {
               if cfg.allowlistBackup.enable then
                 {
                   directory = allowlistBackupDir;
-                  filePattern = "allowlist";
+                  filePattern = ".last_success";
                   maxAgeHours = 25;
                 }
               else

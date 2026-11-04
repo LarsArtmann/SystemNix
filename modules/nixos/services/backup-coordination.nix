@@ -17,7 +17,13 @@ _: {
       ...
     }:
     let
-      inherit (import ../../../lib/default.nix lib) harden serviceOneshotDefaults onFailure;
+      inherit (import ../../../lib/default.nix lib)
+        mkHttpCheck
+        discordAlert
+        harden
+        serviceOneshotDefaults
+        onFailure
+        ;
       cfg = config.services.backup-coordination;
 
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
@@ -137,68 +143,102 @@ _: {
         };
       };
 
-      config = lib.mkIf cfg.enable {
-        systemd.services.backup-health-metrics = {
-          description = "Cross-service backup health metrics for Prometheus textfile";
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            (harden {
-              MemoryMax = "128M";
-              # Runs as root, but harden {} strips ALL capabilities from the
-              # bounding set — including CAP_DAC_OVERRIDE — so "root" obeys
-              # file permission bits. Backup dirs owned by service users with
-              # 0700/0750 modes (immich, monitor365-server) were therefore
-              # INVISIBLE to find: backup_healthy stayed 0 forever while
-              # backups actually landed fine. CAP_DAC_READ_SEARCH grants
-              # read-only traversal of those dirs without a write bypass.
-              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
-              ReadWritePaths = [ textfileDir ];
-            })
-            (serviceOneshotDefaults { })
-            {
-              Type = "oneshot";
-            }
-          ];
-          path = [ metricsScript ];
-          script = ''
-            backup-health-metrics
-          '';
-        };
-
-        systemd.timers.backup-health-metrics = {
-          description = "Collect backup health metrics";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "5m";
-            OnUnitActiveSec = "5m";
-          };
-        };
-
-        # Service-integration registry entry: the aggregate backup-health
-        # check (backup_all_healthy metric; per-service freshness rows live
-        # in the OWNING modules' services.integration.<name>.backup).
-        # Replaces the row in gatus-config.nix.
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          backup-coordination = {
-            inherit (cfg) enable;
-            vHost.layer = "none";
-            checks = [
+      config = lib.mkMerge [
+        (lib.mkIf cfg.enable {
+          systemd.services.backup-health-metrics = {
+            description = "Cross-service backup health metrics for Prometheus textfile";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "128M";
+                # Runs as root, but harden {} strips ALL capabilities from the
+                # bounding set — including CAP_DAC_OVERRIDE — so "root" obeys
+                # file permission bits. Backup dirs owned by service users with
+                # 0700/0750 modes (immich, monitor365-server) were therefore
+                # INVISIBLE to find: backup_healthy stayed 0 forever while
+                # backups actually landed fine. CAP_DAC_READ_SEARCH grants
+                # read-only traversal of those dirs without a write bypass.
+                CapabilityBoundingSet = "CAP_DAC_READ_SEARCH CAP_FOWNER";
+                ReadWritePaths = [ textfileDir ];
+              })
+              (serviceOneshotDefaults { })
               {
-                name = "All Backups Healthy";
+                Type = "oneshot";
+              }
+            ];
+            path = [ metricsScript ];
+            script = ''
+              backup-health-metrics
+            '';
+          };
+
+          systemd.timers.backup-health-metrics = {
+            description = "Collect backup health metrics";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "5m";
+              OnUnitActiveSec = "5m";
+            };
+          };
+
+          # Service-integration registry entry: the aggregate backup-health
+          # check (backup_all_healthy metric; per-service freshness rows live
+          # in the OWNING modules' services.integration.<name>.backup).
+          # Replaces the row in gatus-config.nix.
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            backup-coordination = {
+              inherit (cfg) enable;
+              vHost.layer = "none";
+              checks = [
+                {
+                  name = "All Backups Healthy";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                  interval = "5m";
+                  client.timeout = "10s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*backup_all_healthy 0\n*)"
+                    "[BODY] == pat(*\nbackup_all_healthy *)"
+                  ];
+                  alert = "One or more service backups are stale (>25h)";
+                }
+              ];
+            };
+          };
+        })
+
+        # Per-backup freshness checks. The aggregate "All Backups Healthy"
+        # endpoint alerts on state TRANSITIONS, so a chronically-red
+        # aggregate (a deliberate btrbk tripwire, a pending go-live, a
+        # no-content row) ends its alert episode once and then MASKS every
+        # new stale backup — the 2026-11-04 media-atlas gap: its nightly
+        # joined the red aggregate and never paged. One endpoint per
+        # registered backup, each on its own alert episode, reading the
+        # same node-exporter row the aggregate reads. Anchored pat() with
+        # a REAL newline (lint-static gatus-pattern-lint) so the condition
+        # can only match the value line, never a HELP/prefix escape; a
+        # vanished row (collector dead) fails the pat and stays red —
+        # fail-closed like the metric itself.
+        (lib.optionalAttrs (options ? services.gatus-config) {
+          services.gatus-config.extraEndpoints = lib.mkIf cfg.enable (
+            lib.mapAttrsToList (
+              name: _:
+              mkHttpCheck {
+                name = "Backup Freshness: ${name}";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
                 interval = "5m";
                 client.timeout = "10s";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] != pat(*backup_all_healthy 0\n*)"
-                  "[BODY] == pat(*\nbackup_all_healthy *)"
+                  "[BODY] == pat(*\nbackup_healthy{backup=\"${name}\"} 1*)"
                 ];
-                alert = "One or more service backups are stale (>25h)";
+                alerts = discordAlert "Backup ${name} is stale or never produced a dump (>maxAge or no matching file). Check: journalctl for its backup unit this morning, then the owning runbook (docs/services/).";
               }
-            ];
-          };
-        };
-      };
+            ) cfg.backups
+          );
+        })
+      ];
     };
 }

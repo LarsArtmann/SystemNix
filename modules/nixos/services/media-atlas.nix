@@ -707,8 +707,11 @@
           # /mnt/pool). Default OFF: the units hard-depend on the pool
           # (RequiresMountsFor); evo-x2 opts in via configuration.nix.
           # The dir rides the restic app-dumps repo via that module's
-          # extraPaths, and the freshness entry below (maxAge 26h) alerts
-          # when the nightly dump goes silent.
+          # extraPaths, and the freshness entry below (maxAge 26h) feeds
+          # backup_healthy{backup="media-atlas"} — its per-backup freshness
+          # gatus check pages when the nightly dump goes silent (the
+          # aggregate check alone sat chronically red and masked this
+          # outage; per-service checks landed 2026-11-04).
           systemd.services.media-atlas-backup-dir =
             lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable)
               (mkPoolDirUnit {

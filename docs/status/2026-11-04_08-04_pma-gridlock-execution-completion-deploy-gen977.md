@@ -172,3 +172,15 @@ Asked via the structured prompt immediately after this report; recorded here as 
 ## §11 Attribution
 
 The offsite-borg session owned `backup.nix`/`docs/services/offsite-borg.md`/`docs/todo/storage.md` overnight; their 07:00 commit (`d34e239d7`) carried my FEATURES.md re-stamp (uncommitted at the time — their commit, my content: attribution recorded here). Their doc-gates extraction caused the doc-counts gate block; their tq brake explains that smoke FAIL. The deploy shipped their committed backup.nix change (owner-set per its inline comment) in the same gen-977 switch as my fixes — one activation, two sessions' owner-directed work.
+
+## §13 EXECUTION ADDENDUM (2026-11-04 08:3x — the three owner rulings resolved)
+
+Second owner round (~08:1x): keep flm up · rotate the Immich key "use fucking nix" · restart tq pool.
+
+1. **flm: KEPT UP** — it is the re-armed 07:41:31 instance; stable, port 52625 LISTEN; LLM-commit resumption watch stays on the queued services.md row (still heuristic fast-fails at last look; cooldown caps + model queue draining).
+2. **Immich 403: FIXED via the module's own nix-native rotation contract** — `discordsync.nix` documents it ("Rotation: rm the env file + restart THIS unit … the key is nix-managed; rotate, don't revoke"): removed `/var/lib/discordsync/immich-api-env` (old mtime 2026-10-25), restarted `discordsync-immich-key-provision` → **minted 08:20:00** (direct `api_key` table insert via peer-auth postgres, asset.read+asset.upload scope), verify unit re-run → **`Immich API key verified … (bulk-upload-check)` 08:23:41, Deactivated successfully**. The last pre-rotation 403 was 00:49. Residual cosmetics: the provision unit shows `failed` from a SECOND pass that timed out at 08:22 (2min TimeoutStartSec vs storm-slowed psql, io PSI 80%+); the next converger pass in a calm window finds file+row consistent and goes green instantly — self-healing, no action owed. Its OnFailure may have paged; this is the explanation.
+3. **tq-agent-pool: NOT restartable by design right now** — the "brake" turned out to be the `maintenance-entry-gate` REFUSING entry: `REFUSE: tq-agent-pool — IO PSI some avg10=70.96% (>= 30% band)` at 08:18 (the gate that killed freezers #19/#20/#21). My `busctl StartUnit` was polkit-denied anyway (interactive auth). The unit's Restart=on-failure refire loop (30s ×5 per the module contract) will admit it in the first <30%-PSI window — possibly needing one manual start after the refire budget exhausts; check unit state in the next calm window rather than fighting the gate now.
+4. Storm persists (PSI 70-83% at 08:2x, morning builds) — the same reason attempt-1 aborted and the gate refuses tq.
+
+Self-harvest: the stale-binary + LLM-resumption row landed in services.md + TODO_LIST; the midnight `--since` trap landed in AGENTS.md's journalctl doctrine. Nothing else minted — Immich fix done inline (this section), flm watch covered by the existing row.
+

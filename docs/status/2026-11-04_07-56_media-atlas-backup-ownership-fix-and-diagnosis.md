@@ -162,3 +162,27 @@ The hub service itself is **healthy right now** (`/health/ready` up, `/health/ti
 ---
 
 *Harvest note: §f items 1-10 are harvested as the `[ready]` deploy row + corrected surfaces already in TODO_LIST.md/docs/todo/services.md; 11-14 harvested as the alerting-gap + audit rows; 15 harvested as the `[watch]` plate row; 16-24 deliberately NOT harvested (observations without enough definition to dispatch, or explicitly owner-gated per the questions above; 25-28 are pre-existing rows).*
+
+---
+
+## ADDENDUM (2026-11-04 ~08:20, execution session)
+
+The owner's follow-up instruction was READ→UNDERSTAND→RESEARCH→REFLECT→execute-until-done, which resolves §g by directive. What the deeper research found and what shipped:
+
+**§g.2 — the chronic-red rows were NOT two, they were FIVE, and only one was benign-by-design:**
+
+| Row | Verdict | Evidence | Disposition |
+| --- | --- | --- | --- |
+| `dnsblockd` | FALSE red (design mismatch) | `/var/lib/dnsblockd/allowlist` does not exist (user never used "Always allow"); the unit exits 0 with "no allowlist content yet — keeping last copy" and correctly refuses to write a file — but the freshness pattern `allowlist` can then never match. Unit itself healthy (journal: finished clean 02:55 daily). | FIXED in-tree: `ExecStartPost` touches `.last_success` (offsite-borg precedent) on every successful run incl. the empty path; registry `filePattern = ".last_success"`. Health contract becomes "leg ran recently", not "a file exists". |
+| `monitor365-pool` | GENUINE broken, fix already in-tree but UNDEPLOYED | `cp: cannot stat /mnt/pool/services/monitor365/backups/…: Permission denied` (2026-11-03 + 11-04 03:25/03:44 fires). The S5 tmpfiles rules (0711 traverse on `agentStoragePath`, 0750 server-owned leaf) are in the module since the 2026-10-27 lesson but `/etc/tmpfiles.d` has NO monitor365 entries — the rule never went live. | Rides the deploy: `systemd-tmpfiles-setup` re-runs on activation, chown/chmod the chain, pool-copy can then write. Verify leg added to the battery. |
+| `data` | GENUINE, deliberately loud, owner-gated | `btrbk-data-repair-gate`: "nightly pool send deliberately SKIPPED (known /data EIO, docs/todo/storage.md P0). This failure is the tripwire and is EXPECTED while the marker is absent." | No agent action — the SUPERB storage plan (docs/planning/2026-11-03) owns the repair. Stays red until then, by design. |
+| `offsite-borg` | GENUINE pending, NOT mine | `offsite-borg.enable = true` LIVE (configuration.nix:2078) but `borgbackup-job-hetzner` + `borg-offsite-dir` are `inactive/dead`, `.last_success` absent — the go-live flip/seed has not been executed by the parallel session that owns it (their 06:25/07:05 reports were pre-deploy verification). | Flagged; the row self-heals on their first successful seed (ExecStartPost touch). |
+| `media-atlas` | the original finding | unchanged | deploy pending (below). |
+
+**§g.3 — alerting-gap design DECIDED and implemented: per-service freshness endpoints, generated centrally.** The integration-registry fan-out emits collector rows only — no per-backup checks existed anywhere; the aggregate was the only alert surface. New shape in `backup-coordination.nix`: one `Backup Freshness: <name>` endpoint per `cfg.backups` entry (26 on evo-x2, ALL registration paths covered — integration entries, snapshots.nix, monitor365.nix, dns-blocker.nix alike), each reading its own anchored `pat(*\nbackup_healthy{backup="<name>"} 1*)` row (real newline, gatus-pattern-lint clean): a new stale backup creates a NEW alert episode and pages; a vanished row (dead collector) fails the pat fail-closed; chronic reds (data tripwire, offsite-borg go-live) fire their own single initial alerts and stop masking. The aggregate check is kept as the overview tile. Rationale vs the rejected alternatives: a `backup_newly_stale` delta metric needs cross-run state in the collector and a new alert channel; relay fire-on-change adds a moving part outside gatus — per-service endpoints are pure composition of two existing mechanisms (the collector rows + the mkHttpCheck/discordAlert path every other check already rides).
+
+**Also shipped:** the stale module comment (media-atlas.nix ~L709) now describes the per-service check instead of the aggregate claim that never held.
+
+**Verified so far:** all three modules parse + treefmt-canonical, evo-x2 eval green (189 gatus endpoints, 26 freshness checks — names verified), `gatus-pattern-lint` PASS, dnsblockd ExecStartPost + filePattern render spot-checked. `nix flake check --no-build --all-systems` running. Deploy deliberately held for the quiescence gate (§f battery); monitor365-pool + dnsblockd legs added to it.
+
+**Concurrency note:** while working, a parallel session staged a `flake/expected-locks.nix` input-rev bump (`file-and-image-renamer`) and appended a TODO_LIST row — left untouched; the full-host eval above validates their staged change too (lock-audit gate included).
