@@ -85,6 +85,33 @@ _bf_dead_mount_probe() {
   stat -c %i "$BF_DEAD_MOUNT_PATH" >/dev/null 2>&1
 }
 
+# True when the path is itself a mountpoint (stat %m reports the path's own
+# mount; a plain dir inside another fs reports the PARENT's mount point).
+_bf_target_is_mount() {
+  [[ $(stat -c %m "$1" 2>/dev/null) == "$1" ]]
+}
+
+# Probe + poll the mount once, answering "alive" only when the probe exited
+# inside the poll bound. Extracted 2026-11-04 so the agent-cache guard below
+# reuses the exact same D-state-safe liveness semantics (never `wait` on a
+# dead automount: the 25s stat is uninterruptible except by outliving it).
+_bf_mount_alive() {
+  local probe alive=0 _
+  _bf_dead_mount_probe &
+  probe=$!
+  for _ in $(seq 1 "$BF_DEAD_MOUNT_POLLS"); do
+    if ! kill -0 "$probe" 2>/dev/null; then
+      alive=1
+      break
+    fi
+    sleep 0.1
+  done
+  # Never wait: on a dead mount the probe lingers ~25s in D-state. It is
+  # orphaned here and exits on its own; leaving it costs nothing.
+  kill "$probe" 2>/dev/null || true
+  [[ $alive == 1 ]]
+}
+
 _bf_dead_mount_guard() {
   local var needs_probe=0
   for var in GOCACHE GOMODCACHE GOLANGCI_LINT_CACHE npm_config_cache; do
@@ -96,37 +123,85 @@ _bf_dead_mount_guard() {
     return 0
   fi
 
-  _bf_dead_mount_probe &
-  local probe=$!
-  local alive=0
-  local _
-  for _ in $(seq 1 "$BF_DEAD_MOUNT_POLLS"); do
-    if ! kill -0 "$probe" 2>/dev/null; then
-      alive=1
-      break
+  if ! _bf_mount_alive; then
+    log_status "zz-smart-nix.sh: $BF_DEAD_MOUNT_PATH automount is dead — rewriting cache env vars to local fallbacks (spawns would otherwise stall ~25s each)"
+    if [[ ${GOCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+      export GOCACHE="/tmp/bc-fallback/go-cache"
     fi
-    sleep 0.1
-  done
-  # Never wait: on a dead mount the probe lingers ~25s in D-state. It is
-  # orphaned here and exits on its own; leaving it costs nothing.
-  kill "$probe" 2>/dev/null || true
-  if [[ $alive == 1 ]]; then
-    return 0
-  fi
-
-  log_status "zz-smart-nix.sh: $BF_DEAD_MOUNT_PATH automount is dead — rewriting cache env vars to local fallbacks (spawns would otherwise stall ~25s each)"
-  if [[ ${GOCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
-    export GOCACHE="$HOME/.cache/gocache"
-  fi
-  if [[ ${GOMODCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
-    export GOMODCACHE="$HOME/go/pkg/mod"
-  fi
-  if [[ ${GOLANGCI_LINT_CACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
-    export GOLANGCI_LINT_CACHE="$HOME/.cache/golangci-lint"
-  fi
-  if [[ ${npm_config_cache:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
-    export npm_config_cache="/tmp/npm-cache-home"
+    if [[ ${GOMODCACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+      export GOMODCACHE="$HOME/go/pkg/mod"
+    fi
+    if [[ ${GOLANGCI_LINT_CACHE:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+      export GOLANGCI_LINT_CACHE="/tmp/bc-fallback/go-lint"
+    fi
+    if [[ ${npm_config_cache:-} == "$BF_DEAD_MOUNT_PATH"/* ]]; then
+      export npm_config_cache="/tmp/npm-cache-home"
+    fi
   fi
 }
 
 _bf_dead_mount_guard
+
+# ─── Agent Per-Task Cache Redirect (convention enforcement, 2026-11-04) ──────
+# Agent sessions export per-task Go caches like GOCACHE=$HOME/.cache/<task>.
+# Anything real under ~/.cache is the @cache-home subvol on the QLC NVMe —
+# exactly the churn the buildcache SSD exists to keep off it (the 2026-11-03
+# purge wave removed ~16G of this litter by hand). Convention: per-task
+# caches live under /mnt/buildcache/agent-caches/<task>. This guard rewrites
+# stray real-dir targets at direnv-eval time; the standing GC leg
+# (buildcache-agent-cache-gc) ages out whatever it misses. On a dead mount
+# the local dir is left alone (same fallback doctrine as the fish
+# 00-go-cache-guard) and bounded by the GC leg instead.
+_bf_agent_cache_guard() {
+  local var val base target
+  local candidates=()
+  for var in GOCACHE GOLANGCI_LINT_CACHE; do
+    val=${!var:-}
+    case $val in
+      "$HOME/.cache"/*) ;;
+      *) continue ;;
+    esac
+    base=${val#"$HOME/.cache/"}
+    case $base in
+      # Blessed names: HM out-of-store symlinks already land on the mount
+      # (go-build/go/goimports/pnpm), gopls+nix stay NVMe by design
+      # (home.nix comment: LSP/nix-eval latency sensitivity).
+      go-build | go | goimports | gopls | nix | pnpm) continue ;;
+      *) ;;
+    esac
+    # A symlink target is mechanism-independent redirection — leave it.
+    if [[ -L $val ]]; then
+      continue
+    fi
+    candidates+=("$var")
+  done
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  if ! _bf_mount_alive; then
+    return 0
+  fi
+  # Contamination guard: the timing probe treats an instantly-answered ENOENT
+  # path as "alive", and a blind mkdir would then create the tree on the ROOT
+  # fs (the buildcache-init ConditionPathIsMountPoint class). Only redirect
+  # when the path really IS the mount. (Own function: tests stub it — a
+  # fixture tmpdir is not a mountpoint.)
+  if ! _bf_target_is_mount "$BF_DEAD_MOUNT_PATH"; then
+    return 0
+  fi
+
+  for var in "${candidates[@]}"; do
+    val=${!var}
+    base=${val#"$HOME/.cache/"}
+    target="$BF_DEAD_MOUNT_PATH/agent-caches/$base"
+    # The mount answered the probe, so plain mkdir cannot stall; a failure
+    # (perms, ENOSPC) leaves the var untouched rather than breaking builds.
+    if ! mkdir -p "$target" 2>/dev/null; then
+      continue
+    fi
+    log_status "zz-smart-nix.sh: $var=$val is a real dir under ~/.cache — redirecting to $target (per-task agent caches live on the buildcache SSD)"
+    export "$var=$target"
+  done
+}
+_bf_agent_cache_guard

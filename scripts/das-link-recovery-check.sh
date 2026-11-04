@@ -50,10 +50,13 @@ RUSTCACHE_PART="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713-part1"
 #   go-bin-salvage — ~/go/bin binaries salvaged at the @cargo retirement
 #                    (docs/agents/storage.md, 2026-08-17)
 #   .Trash-1000  — the user's trash dir on this volume; never auto-cleaned
+#   agent-caches — per-task agent caches (per-task GOCACHE dirs; convention
+#                  2026-11-04, docs/agents/storage.md; aged out by
+#                  buildcache-agent-cache-gc)
 KNOWN_CACHE_ENTRIES=(
-  cargo go go-bin-salvage go-build go-mod goimports golangci-lint npm pip
-  pnpm-cache pnpm-state pnpm-store playwright rust sccache tmp lost+found
-  .Trash-1000
+  agent-caches cargo go go-bin-salvage go-build go-mod goimports golangci-lint
+  npm pip pnpm-cache pnpm-state pnpm-store playwright rust sccache tmp
+  lost+found .Trash-1000
 )
 
 # Expected top-level entries on the Rust cache SSD (btrfs, services.rust-cache).

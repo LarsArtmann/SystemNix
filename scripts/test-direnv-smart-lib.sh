@@ -19,13 +19,22 @@ fi
 PASS=0
 FAIL=0
 
+# pass/fail counters live in files, not shell vars: the guard tests run in
+# SUBSHELLS (env isolation), and a subshell's variable increment never
+# reaches this parent — the 2026-11-04 session watched a FAIL line print
+# while the summary said "All tests passed" (lying-green harness).
+RESULTS_DIR=$(mktemp -d)
+trap 'rm -rf "$RESULTS_DIR"' EXIT
+: >"$RESULTS_DIR/passed"
+: >"$RESULTS_DIR/failed"
+
 pass() {
   echo "  PASS: $1"
-  PASS=$((PASS + 1))
+  echo "$1" >>"$RESULTS_DIR/passed"
 }
 fail() {
   echo "  FAIL: $1" >&2
-  FAIL=$((FAIL + 1))
+  echo "$1" >>"$RESULTS_DIR/failed"
 }
 
 # Stub direnv-specific functions so the library sources cleanly outside direnv
@@ -277,9 +286,9 @@ echo "=== Dead Mount Guard ==="
   _bf_dead_mount_probe() { sleep 3; } # simulate a D-state stall
   _bf_dead_mount_guard
   local_ok=1
-  [[ $GOCACHE == "$HOME/.cache/gocache" ]] || local_ok=0
+  [[ $GOCACHE == "/tmp/bc-fallback/go-cache" ]] || local_ok=0
   [[ $GOMODCACHE == "$HOME/go/pkg/mod" ]] || local_ok=0
-  [[ $GOLANGCI_LINT_CACHE == "$HOME/.cache/golangci-lint" ]] || local_ok=0
+  [[ $GOLANGCI_LINT_CACHE == "/tmp/bc-fallback/go-lint" ]] || local_ok=0
   [[ $npm_config_cache == "/tmp/npm-cache-home" ]] || local_ok=0
   if [[ $local_ok == 1 ]]; then
     pass "guard: stalled probe -> all four vars rewritten to fallbacks"
@@ -290,7 +299,7 @@ echo "=== Dead Mount Guard ==="
   # Test: the rewrite disarms the guard (second run is a no-op fast path).
   _bf_dead_mount_probe() { sleep 3; }
   _bf_dead_mount_guard
-  if [[ $GOCACHE == "$HOME/.cache/gocache" ]]; then
+  if [[ $GOCACHE == "/tmp/bc-fallback/go-cache" ]]; then
     pass "guard: rewrite disarms the guard on re-run"
   else
     fail "guard: re-run touched the already-rewritten value ($GOCACHE)"
@@ -313,7 +322,109 @@ echo "=== Dead Mount Guard ==="
 )
 
 echo ""
+echo "=== Agent Per-Task Cache Guard ==="
+
+# Fixture HOME + mount so $HOME/.cache paths stay inside the temp tree and the
+# mount-identity check has a real mountpoint to confirm.
+af_home=$(mktemp -d)
+af_mount=$(mktemp -d)
+mkdir -p "$af_home/.cache/vra-gocache" "$af_home/.cache/gopls"
+ln -s "$af_mount/go-build" "$af_home/.cache/go-build"
+
+# Test: real dir under ~/.cache + healthy mount -> rewritten to agent-caches/.
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="$af_home/.cache/vra-gocache"
+  # Fixture tmpdirs are not mountpoints — stub the identity check (the
+  # non-stubbed identity behavior is asserted by the ENOENT test below).
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  expected="$af_mount/agent-caches/vra-gocache"
+  if [[ $GOCACHE == "$expected" && -d $expected ]]; then
+    pass "agent guard: real ~/.cache dir redirected to mount agent-caches/"
+  else
+    fail "agent guard: GOCACHE=$GOCACHE (expected $expected + dir created)"
+  fi
+)
+
+# Test: symlink target under ~/.cache -> untouched (mechanism-independent).
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="$af_home/.cache/go-build"
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  if [[ $GOCACHE == "$af_home/.cache/go-build" ]]; then
+    pass "agent guard: symlink target untouched"
+  else
+    fail "agent guard: rewrote a symlink target ($GOCACHE)"
+  fi
+)
+
+# Test: blessed real dir (gopls) -> untouched (NVMe by design).
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="$af_home/.cache/gopls"
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  if [[ $GOCACHE == "$af_home/.cache/gopls" ]]; then
+    pass "agent guard: blessed name (gopls) untouched"
+  else
+    fail "agent guard: rewrote blessed gopls ($GOCACHE)"
+  fi
+)
+
+# Test: path outside ~/.cache -> untouched.
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="/custom/gocache"
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  if [[ $GOCACHE == "/custom/gocache" ]]; then
+    pass "agent guard: non-.cache target untouched"
+  else
+    fail "agent guard: rewrote unrelated GOCACHE ($GOCACHE)"
+  fi
+)
+
+# Test: mount path NOT a real mountpoint (ENOENT answers the probe) ->
+# untouched AND nothing created at the fake path (root-fs contamination class).
+(
+  export HOME="$af_home"
+  export BF_DEAD_MOUNT_PATH="$af_home/no-such-mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="$af_home/.cache/vra-gocache"
+  _bf_agent_cache_guard
+  if [[ $GOCACHE == "$af_home/.cache/vra-gocache" && ! -e $af_home/no-such-mount ]]; then
+    pass "agent guard: nonexistent mount path -> untouched, nothing created"
+  else
+    fail "agent guard: contaminated non-mount path: GOCACHE=$GOCACHE exists=$(test -e "$af_home/no-such-mount" && echo yes || echo no)"
+  fi
+)
+
+# Test: idempotent — second run leaves the already-redirected value alone.
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOLANGCI_LINT_CACHE
+  export GOCACHE="$af_mount/agent-caches/vra-gocache"
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  if [[ $GOCACHE == "$af_mount/agent-caches/vra-gocache" ]]; then
+    pass "agent guard: idempotent on already-redirected value"
+  else
+    fail "agent guard: re-run mutated the redirected value ($GOCACHE)"
+  fi
+)
+
+rm -rf "$af_home" "$af_mount"
+
+echo ""
 echo "=== Summary ==="
+PASS=$(wc -l <"$RESULTS_DIR/passed")
+FAIL=$(wc -l <"$RESULTS_DIR/failed")
 echo "Passed: $PASS"
 echo "Failed: $FAIL"
 

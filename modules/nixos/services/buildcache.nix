@@ -74,6 +74,11 @@
         "pnpm-cache"
         "pnpm-state"
         "playwright"
+        # 2026-11-04: per-task agent caches (convention: per-task
+        # GOCACHE/GOLANGCI_LINT_CACHE live under agent-caches/<task> — see
+        # docs/agents/storage.md). Provisioned by init so the direnv guard's
+        # redirects and the agent-cache-gc sweep always find the parent.
+        "agent-caches"
       ];
 
       # ID_SERIAL of the cache SSD and the mountpoint's systemd unit name —
@@ -728,6 +733,101 @@
             OnCalendar = cfg.gc.calendar;
             Persistent = true;
             Unit = "buildcache-gc.service";
+          };
+        };
+
+        # Stale per-task agent caches (2026-11-04): Crush sessions historically
+        # exported per-task GOCACHE/GOLANGCI_LINT_CACHE dirs that landed in
+        # ~/.cache (the @cache-home subvol on the QLC NVMe) and were never
+        # reaped — the 2026-11-03 purge wave removed ~16G of this litter by
+        # hand. The convention moves per-task caches to
+        # /mnt/buildcache/agent-caches/<task>; the direnv guard
+        # (zz-smart-nix.sh) rewrites strays at shell start; this unit is the
+        # backstop that ages out BOTH namespaces. Sweep patterns are
+        # deliberately narrow: only agent-litter-shaped names, never the HM
+        # out-of-store symlinks (find -type d does not match a symlink), never
+        # live caches (mtime-gated — go touches entries on every build write).
+        systemd.services.buildcache-agent-cache-gc = lib.mkIf cfg.gc.enable {
+          description = "Age out stale per-task agent caches (~/.cache litter + mount agent-caches)";
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+          unitConfig = {
+            RequiresMountsFor = cfg.mountPoint;
+            # Gate BOTH mounts, never a path: the @cache-home automount must be
+            # up before the namespace holes below are created, and the
+            # conditions skip cleanly (result=skip) when either mount is dead
+            # — sweeping a shadow dir on the root fs would be exactly the
+            # contamination ConditionPathIsMountPoint exists to prevent (the
+            # ~/tmp/go-lint 226/NAMESPACE lesson: gate the MOUNT, not a path).
+            ConditionPathIsMountPoint = [
+              cfg.mountPoint
+              "${homeDir}/.cache"
+            ];
+          };
+          path = [
+            pkgs.coreutils
+            pkgs.findutils
+          ];
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = primaryUser;
+              TimeoutStartSec = "10min";
+            }
+            (harden {
+              ProtectHome = "read-only";
+              ReadWritePaths = [
+                cfg.mountPoint
+                "${homeDir}/.cache"
+              ];
+              MemoryMax = "256M";
+            })
+            ioTier.maintenance
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+            mnt="${cfg.mountPoint}"
+            home_cache="${homeDir}/.cache"
+            echo "buildcache-agent-cache-gc: start"
+
+            # Home litter: real dirs shaped like agent per-task caches,
+            # unmodified >=48h (the negative-test-lints 2026-11-03 precedent).
+            # go-build-*/ *-gocache are the per-task GOCACHE shapes (exact
+            # go-build is the HM symlink — excluded by the pattern); go-tmp and
+            # negative-test-lints.* are litter names observed in the
+            # 2026-11-03 purge wave. Anything else under ~/.cache (gopls,
+            # nix, browser caches, owner-triage dirs like cv-go/glac-fleet)
+            # is NEVER matched.
+            find "$home_cache" -mindepth 1 -maxdepth 1 -type d \
+              \( -name 'go-build-*' -o -name '*-gocache' -o -name 'gocache-*' \
+                 -o -name 'go-tmp' -o -name 'negative-test-lints.*' \) \
+              -mtime +2 -print -exec rm -rf {} + \
+              || echo "buildcache-agent-cache-gc: home sweep failed (non-fatal)" >&2
+
+            # Mount side: per-task caches LIVE here by convention; age out
+            # dirs untouched >=7d (an active task touches its dir on every
+            # build write, so 7d staleness is safely quiescent).
+            if [ -d "$mnt/agent-caches" ]; then
+              find "$mnt/agent-caches" -mindepth 1 -maxdepth 1 -type d \
+                -mtime +7 -print -exec rm -rf {} + \
+                || echo "buildcache-agent-cache-gc: mount sweep failed (non-fatal)" >&2
+            fi
+
+            echo "buildcache-agent-cache-gc: done"
+          '';
+        };
+
+        # Staggered +20min from buildcache-gc (05:00) so the two IO-tier
+        # sweeps never overlap on the USB link.
+        systemd.timers.buildcache-agent-cache-gc = lib.mkIf cfg.gc.enable {
+          description = "Daily stale agent-cache sweep";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "daily 05:20";
+            Persistent = true;
+            Unit = "buildcache-agent-cache-gc.service";
           };
         };
 
