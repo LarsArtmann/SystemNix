@@ -511,6 +511,16 @@
                 Group = cfg.user;
                 StateDirectory = stateDirName;
                 StateDirectoryMode = "0750";
+                # sd_notify pair (2026-11-04 handoff): the atlas binary
+                # sends READY=1 after serve() binds and registers (go-daemon
+                # NotifyReady) and pings WATCHDOG=1 at WatchdogSec/2
+                # (daemon.Watchdog, armed when WATCHDOG_USEC is present).
+                # Type=notify makes the READY gate real (a hub that cannot
+                # bind fails the start instead of flapping "active"); the
+                # watchdog restarts a hung hub. 30s gives a 15s keepalive
+                # budget against SQLite blips.
+                Type = "notify";
+                WatchdogSec = "30s";
                 ExecStart = lib.concatStringsSep " " [
                   "${lib.getExe hubCfg.package} serve"
                   "--db ${stateDir}/atlas.db"

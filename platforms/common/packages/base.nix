@@ -253,7 +253,7 @@ let
     pkgs.buf
     pkgs.delve
     pkgs.gup
-    pkgs.templ
+    larsPackages.templ # flake input (floats on main); pkgs.templ still ships the stale 1020-era generator (see lib/lars-packages.nix)
 
     # Document rendering
     pkgs.typst # Document typesetting compiler (CV PDF rendering; moved from imperative nix profile 2026-09-22)

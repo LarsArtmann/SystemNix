@@ -481,6 +481,14 @@ lib.filterAttrs (_: v: v != null) {
   samber-linter =
     flakePkgShim inputs.samber-linter "default"
       "sha256-zrjjUEyKDe6+jBkZEhVyLa9jAO8yx/gmACcEPXDag1w=";
+  # templ: the flake input (github:a-h/templ, floats on main per the owner
+  # ALWAYS-LATEST directive) replaces nixpkgs' pkgs.templ, which still ships
+  # 0.3.1020 at the rev-pinned nixpkgs — a generator whose output no longer
+  # compiles against trees regenerated for templ >= v0.3.1100 (upstream
+  # ADR-0004 removed templ.ResolveAttributeValue). Application consumers
+  # keep their OWN templ inputs pinned to their go.mod runtimes, so this
+  # binary never leaks into their builds.
+  templ = flakePkg inputs.templ;
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
   # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned
