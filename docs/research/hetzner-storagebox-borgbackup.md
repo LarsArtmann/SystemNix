@@ -181,11 +181,24 @@ sops.secrets.borg-password = {
 ### SSH Key Setup
 
 ```bash
-# Port 23 uses OpenSSH format (already have this)
-ssh-copy-id -i ~/.ssh/id_ed25519.pub -p 23 uXXXXX@uXXXXX.your-storagebox.de
-
-# Or manually — port 23 reads standard OpenSSH format from ~/.ssh/authorized_keys
+# Documented + live-proven path (2026-11-04): install-ssh-key provisions
+# BOTH key stores (RFC4716 for port 22, one-line OpenSSH for port 23) and
+# preserves existing keys. One password-auth run; consume the password
+# from a 0600 file (sshpass -f), never a command line.
+nix run nixpkgs#sshpass -- -f <pwfile> ssh -p 23 \
+  uXXXXX@uXXXXX.your-storagebox.de install-ssh-key < <pubkey-file>
 ```
+
+**Two-store trap (live-proven 2026-11-04):** console "SSH Keys" pastes and
+manual `authorized_keys` edits only reach the port-22 (SCP/SFTP) store —
+port 23 (Borg) reads a separate one-line OpenSSH store that ONLY
+`install-ssh-key` feeds. `ssh-copy-id` targets `authorized_keys` and does
+not work on the restricted StorageBox shell. Failure signature:
+`Permission denied (publickey,password)` while the client offers the
+correct key (fingerprint-matched). docs.hetzner.com is a JS SPA — plain
+fetch returns empty; read via `https://r.jina.ai/<url>`. Probe the
+restricted shell with `ls` as the remote command (no `true`); quota via
+sftp `df -h`.
 
 ### Restore Procedure
 
@@ -235,7 +248,7 @@ borg extract uXXXXX@uXXXXX.your-storagebox.de:backups/borg-root::snapshot-name
 ## Checklist Before Implementation
 
 - [ ] Enable SSH Support (port 23) in Hetzner Console
-- [ ] Add SSH public key (OpenSSH format) to Storage Box
+- [ ] Add SSH public key via `install-ssh-key` (console pastes and manual authorized_keys never reach the port-23 store — two-store trap, live-proven 2026-11-04)
 - [ ] Generate Borg passphrase and store in sops
 - [ ] Create `platforms/nixos/system/backup.nix` module
 - [ ] Add import in `configuration.nix`

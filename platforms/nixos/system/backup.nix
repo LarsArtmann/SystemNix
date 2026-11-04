@@ -14,7 +14,9 @@
 #
 # Sizing doctrine (BX11 is 1 TB): the job MUST exclude rebuildable trees
 # (/data ai/models/Steam/llamacpp ~700 G, code trees backed by GitHub,
-# btrfs receive mirrors + restic repo on the pool) so the irreplaceable set
+# btrfs receive mirrors + restic repo on the pool) and btrbk snapshot trees
+# (/data/.snapshots — the 2026-11-04 pre-seed audit's 13 T dotdir trap,
+# invisible to plain `ls`) so the irreplaceable set
 # (home, /etc, service data, app dumps) fits with dedup + prune headroom.
 # Upgrade BX11 → BX21 if the irreplaceable set passes ~800 G — first-run
 # `borg create --stats` output is the measurement (docs/todo/storage.md
@@ -97,6 +99,13 @@ in
         makes the 1 TB BX11 budget work.
       '';
       default = [
+        # /data dotdir traps (2026-11-04 pre-seed audit): .snapshots is the
+        # btrbk point-in-time tree, ~13 T nominal — archiving it would
+        # duplicate every live /data path N times over. .Trash-1000 is the
+        # same freedesktop-trash class as the home Trash exclude below
+        # (deleted content does not ride the offsite seed).
+        "/data/.snapshots"
+        "/data/.Trash-1000"
         # /data rebuildables (blueprint sizing list: ai 291 G + models 210 G
         # + Steam 106 G + llamacpp 92 G — model weights re-pull, Steam
         # re-downloads; save-game/compatdata exceptions are the owner's

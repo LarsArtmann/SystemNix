@@ -68,7 +68,7 @@ _: {
         };
         mail-server = {
           subdomain = null;
-          description = "Stalwart mail stack (SMTP/IMAP/JMAP/CardDAV) at mail.artmann.tech (nix-email) — CardDAV contacts are a mirror planned to be fed from Kith CRM (the contacts source of truth)";
+          description = "Stalwart mail stack (SMTP/IMAP/JMAP/CardDAV) at mail.artmann.tech (nix-email) — owner-ratified 2026-10-29 (D1=Mesh B): Stalwart owns contacts + calendar as the DAV truth (CalDAV gated on the probe verdict); Google = bi-directional edges; Kith demoted to relations + read-only people projection";
         };
       };
     };

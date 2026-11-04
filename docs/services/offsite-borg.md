@@ -19,7 +19,7 @@ secret yet (tracked as "Offsite Borg go-live inputs" in `docs/todo/storage.md`).
 | Job        | `services.borgbackup.jobs.hetzner` → `borgbackup-job-hetzner.service` + timer (06:30 daily, `Persistent`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Cache      | `/mnt/hot/borg/{cache,config}` (Samsung hot tier — multi-GB caches on `@` would be pinned pool-side by btrbk snapshots forever)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Monitoring | `backup_healthy{backup="offsite-borg"}` marker in `/var/lib/borg-offsite/.last_success` → backup-coordination + the aggregate "All Backups Healthy" Gatus check; the shared loop also emits `backup_ever_succeeded{backup="offsite-borg"}` (MTIME≠0 gate — never-worked vs stale); job unit rides `ioTier.background` (BE/6 — nixpkgs' `idle` IO class starves on this box); enable-gated smoke: pre-deploy §13 + post-deploy §16; OnFailure → `notify-failure@` (DESKTOP leg) + registry `monitored` entry → `system_service_state_failed` metric → Gatus "Offsite Borg Job Service" → Discord (the Discord leg — corrected 2026-09-24: notify-failure@ alone never pages Discord) |
-| Excludes   | Rebuildable trees per the blueprint sizing list — `/data/{ai/models,ai/cache,ai/venv-anime-comic,models,SteamLibrary,cache,docker,tmp-*}`, `~/{projects,forks,worktrees,go,.cache,immich-temp}`, pool btrfs receive mirrors (`backups/{root,data}`), the restic repo, forgejo-subvol, paperless `export/index/llm_index/trash/consume`, immich `thumbs/encoded-video`                                                                                                                                                                                                                                                                                                               |
+| Excludes   | Module exclude list is the single truth (27 entries, 2026-11-04) — `/data/{.snapshots,.Trash-1000,ai/models,ai/cache,ai/venv-anime-comic,models,SteamLibrary,cache,tmp-bench}`, `~/{projects,forks,worktrees,go,.cache,immich-temp,.local/share/Trash}`, pool btrfs receive mirrors (`backups/{root,data}`), `backups/restic-app-dumps`, forgejo-subvol, paperless `export/index/llm_index/trash/consume`, immich `thumbs/encoded-video` |
 
 The passphrase in `borg.yaml` is a real random value. Copy a recovery copy of
 it to whatever medium the owner picks (password manager / printed / split) —
@@ -34,12 +34,35 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    sops-on-that-disk).
 2. **StorageBox**: enable SSH support (port 23) in the Hetzner console (Rex
    Robotics → Storage Box → "SSH-Support aktivieren" is usually already on).
-3. **SSH key**: paste this public key into the Hetzner console
-   (`storagebox.your-storagebox.de` → SSH Keys — port 23 reads standard
-   OpenSSH format):
+3. **SSH key**: install this public key with the documented
+   `install-ssh-key` command (one password-auth run; installs the key in
+   BOTH formats and preserves existing keys):
 
    ```
    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOHhHFX9RnkoEZonUcbpD4/UwiMvp5dk8SWGCmDsTKtv borg-offsite evo-x2 (Hetzner StorageBox port 23) rotated 2026-11-03 r2
+   ```
+
+   ```bash
+   # <pubkey-file> = the line above; <pwfile> = 0600 file holding the box
+   # password, shredded after — NEVER a password on a command line
+   nix run nixpkgs#sshpass -- -f <pwfile> ssh -p 23 \
+     uXXXXX@uXXXXX.your-storagebox.de install-ssh-key < <pubkey-file>
+   ```
+
+   **Never paste keys into the Hetzner console "SSH Keys" field**
+   (live-proven 2026-11-04): StorageBoxes keep TWO key stores — port 22
+   (SCP/SFTP) reads RFC4716 format, port 23 (Borg) reads one-line OpenSSH,
+   and console pastes never reach the port-23 store. Failure signature:
+   `Permission denied (publickey,password)` while `ssh -v` shows the right
+   key offered and fingerprint-matched. Hetzner docs are a JS SPA — plain
+   fetch returns empty; read via `https://r.jina.ai/<url>`. Verify with a
+   key-only probe — remote command `ls` (the restricted shell has no
+   `true`); quota via sftp `df -h`:
+
+   ```bash
+   ssh -p 23 -i <dedicated key> -o IdentitiesOnly=yes \
+     -o StrictHostKeyChecking=yes -o UserKnownHostsFile=<pinned> \
+     uXXXXX@uXXXXX.your-storagebox.de ls
    ```
 
    (2026-11-03 rotation: the pre-go-live key material was exposed in an
@@ -52,9 +75,14 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    - `borg_known_hosts`: output of `ssh-keyscan -p 23 uXXXXX.your-storagebox.de`
      (pinning the host key = MITM fails loudly, github knownHosts doctrine).
 5. **Enable + deploy**: flip `services.offsite-borg.enable = true`
-   (`platforms/nixos/system/configuration.nix`) and `nix run .#deploy`. The
-   go-live tripwire (`borg-offsite-golive-check` ExecStartPre) fails the run
-   with instructions if any placeholder survived.
+   (`platforms/nixos/system/configuration.nix`) and `nix run .#deploy`.
+   HARD GATE before arming any deploy automation: the seed-budget audit
+   must be COMPLETE and green — `ls -A` (not `ls`) on every path root for
+   dotdir traps + sudo legs for root-owned trees, summed against the
+   ~800 G BX21 trigger (2026-11-04: automation armed before the audit
+   finished missed `/data/.snapshots` = 13 T nominal). The go-live
+   tripwire (`borg-offsite-golive-check` ExecStartPre) fails the run with
+   instructions if any placeholder survived.
 6. **First run**: `systemctl start borgbackup-job-hetzner` (or wait for the
    06:30 timer). `doInit` creates the repo on first connect; the first
    archive seeds the whole irreplaceable set over WAN — hours, `TimeoutStartSec`
@@ -126,9 +154,11 @@ root; run ad-hoc borg under `sudo -E` with the env above.)
   pool-side forever (emergency-reserve pinning doctrine).
 - **Retention** (`daily=7, weekly=4, monthly=6`) is the blueprint default;
   the final policy is still an owner decision (`docs/todo/storage.md`).
-- **Immich path is included but currently empty** (`/mnt/pool/services/immich`
-  exists with no library yet); when photos land, they ride this job with zero
-  config churn — but re-check the sizing trigger at that point.
+- **Immich path is live** (`/mnt/pool/services/immich`: library 11 G +
+  upload 1.2 G + database-backup 1.7 G + backups 0.9 G per the 2026-11-04
+  sudo sizing pass; `thumbs`/`encoded-video` excluded as regenerable) —
+  photo growth rides this job with zero config churn; re-check the ~800 G
+  BX21 sizing trigger as the library grows.
 - **Deploy-gate §13/§16 behavior (what SKIP/FAIL means)**: both gates run the
   shared lib `scripts/lib/offsite-borg-smoke.sh` (fixture:
   `scripts/test-offsite-borg-smoke.sh`, 21 branches; flake check
