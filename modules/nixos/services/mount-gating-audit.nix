@@ -85,7 +85,6 @@
         in
         bad;
 
-
       offenders =
         let
           checked = lib.filterAttrs (_n: _v: !builtins.elem _n cfg.allowUnits) config.systemd.services;
