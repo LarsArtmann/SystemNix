@@ -661,21 +661,28 @@ in
   # SP5100 TCO timer (AMD chipset) will fire if watchdogd stops petting it within the timeout.
   # Catches GPU driver hangs, kernel deadlocks, and other scenarios where even SysRq fails.
   #
-  # TRADEOFF (see docs/crash-analysis-2026-06-26.md Appendix D):
-  #   timeout=30s races against kernel.hung_task_timeout_secs=120s. The WDT
-  #   always wins, so hung_task_panic=1 never fires for runtime freezes → no
-  #   pstore dump. 30s prioritizes fast recovery over forensics. Raising to
-  #   120s would let hung_task capture a dump first, but means 120s of
-  #   unresponsiveness on genuine hangs. Kept at 30s because:
-  #     - The BTRFS metadata ENOSPC crash (the repeat failure) is now prevented
-  #       by the GC guard in btrfs-health.nix
-  #     - GPU driver hangs (the other scenario) benefit from fast recovery
-  #     - nowayout=0 means the WDT does NOT protect boot/activation hangs anyway
+  # TRADEOFF (history + 2026-11-04 revision):
+  #   timeout=30s raced kernel.hung_task_timeout_secs=120s — the WDT always won,
+  #   so hung_task_panic=1 never fired for runtime freezes (no pstore dump).
+  #   The 2026-10-27 verdict "KEEP 30s" prioritized fast recovery over forensics.
+  #   RAISED TO 90s by owner directive 2026-11-04 (freeze #46, Nov 2-4 cluster:
+  #   8 WDT cuts where every recovery boot re-armed the crash-recovery
+  #   amplifiers — dnsblockd's ~5 GB cold-boot blocklist re-read, llama
+  #   re-embed backlog, service rehydration — and died again; #40-#45 were six
+  #   CONSECUTIVE recovery-boot deaths). 90s gives transient wedges (btrfs
+  #   delayed-refs reclaim storms, short IO livelocks) a window to clear
+  #   WITHOUT a reset, breaking the reset->amplifier->reset cycle. Still <
+  #   hung_task 120s, so the WDT remains the dominant reset path. Cost: genuine
+  #   full hangs now mean up to ~90s unresponsive before reset (was 30s).
+  #   Counter-evidence recorded honestly in docs/agents/stability.md: every
+  #   documented WDT death was a multi-minute livelock that 90s would NOT have
+  #   saved — this is a bet on the amplifier-cycle break + transient-wedge
+  #   class, not on rescuing the documented deep freezes.
   services = {
     watchdogd = {
       enable = true;
       settings = {
-        timeout = 30; # Hard reset after 30s without a kick
+        timeout = 90; # Hard reset after 90s without a kick (owner 2026-11-04; was 30s — see TRADEOFF above)
         interval = 10; # Pet the watchdog every 10s
         safe-exit = true; # Disable WDT on clean shutdown
         meminfo = {
@@ -712,7 +719,8 @@ in
       # minutes toward ~30s under the storm class. Cost: 4 tiny fsyncs/min on
       # the Samsung hot-tier journal (~5 MB/h, 8G cap) — negligible.
       # Full analysis: docs/agents/stability.md "Watchdog death evidence-loss
-      # window". Verdict on the WDT timeout itself: KEEP 30s (see there).
+      #      window". Verdict on the WDT timeout itself: raised to 90s by owner
+      #      directive 2026-11-04 (supersedes the 2026-10-27 KEEP-30s verdict).
       SyncIntervalSec = "15s";
     };
   };
