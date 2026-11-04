@@ -103,7 +103,7 @@ Self-review answers up front: **What did I forget?** (1) re-running `nix flake c
 20. Add the freshness-check wave to `docs/agents/monitoring.md` (Gatus checks inventory).
 
 **Adjacent monitor365:**
-21. Consolidate the duplicate same-path tmpfiles rules (line 4 `0750` vs line 29 `0711` in 00-nixos.conf — last-wins is fragile; upstream rule vs S5 rule in one module should be one rule).
+21. Consolidate the duplicate same-path tmpfiles rules (line 4 `0750` vs line 29 `0711` in 00-nixos.conf — last-wins is fragile; upstream rule vs S5 rule in one module should be one rule). **CORRECTED + UPGRADED 2026-11-04 evening: tmpfiles is FIRST-wins (the "Duplicate line, ignoring" warning names the discarded later line) — the 0750 upstream rule SHADOWED the 0711 fix since 10-27 (this was the live blocker, not cleanup); fixed in-tree via `lib.mkBefore` in monitor365.nix, residue harvested as services.md ready rows (upstream fix, eval audit, deploy tmpfiles-apply leg).**
 22. Verify monitor365-pool-copy's OnFailure path actually pages (unit-state monitored wiring) — the leg failed 3 nights without an apparent page.
 23. Confirm restic-app-dumps / other legs don't ALSO depend on the monitor365 pool chain.
 
