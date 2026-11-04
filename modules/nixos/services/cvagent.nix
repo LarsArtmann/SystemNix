@@ -43,7 +43,15 @@
 
       script = pkgs.writeShellApplication {
         name = "cvagent-scan-mesh";
-        runtimeInputs = [ cfg.package ];
+        # cvagent exec's `git` for history collection and the script needs
+        # mkdir for the fact-store dir — a unit's default PATH carries
+        # neither (2026-11-04 05:56 run: every scan died on
+        # "git": executable file not found in $PATH, systemic).
+        runtimeInputs = [
+          cfg.package
+          pkgs.git
+          pkgs.coreutils
+        ];
         text = ''
           # Deliberately NO -e: per-repo scan failures warn, the export continues.
           set -uo pipefail
