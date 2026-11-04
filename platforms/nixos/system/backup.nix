@@ -75,15 +75,17 @@ in
     paths = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       description = ''
-        Source trees for the offsite archive: home (user data), /etc
-        (mutable config + host keys), /data (with rebuildable trees
-        excluded below), and the pool's app-dump + irreplaceable service
-        dirs.
+        Source trees for the offsite archive (owner-set 2026-11-04):
+        /home/lars (user data), /etc (mutable config + host keys — the
+        sops-age DR bootstrap, ~1.2 M), and the pool's app-dump +
+        irreplaceable service dirs. /data was REMOVED by owner decision
+        (rebuildable-dominated: gcs-staging/docker/ai-remainder cut; seed
+        ~646 G) — the /data excludes below stay as guard rails if it ever
+        returns to paths.
       '';
       default = [
         "/etc"
         "/home/lars"
-        "/data"
         "/mnt/pool/backups"
         "/mnt/pool/services/immich"
         "/mnt/pool/services/paperless"
