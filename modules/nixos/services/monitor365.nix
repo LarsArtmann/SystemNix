@@ -714,7 +714,15 @@
             };
           };
 
-          systemd.tmpfiles.rules = [
+          # mkBefore: systemd-tmpfiles applies the FIRST rule per path and
+          # IGNORES later duplicates ("Duplicate line for path … ignoring")
+          # — the upstream agent module's 0750 rule for agentStoragePath
+          # shadowed the 0711 traverse rule below on every boot (live
+          # 2026-11-04: dir stayed 0750 monitor365:monitor365 while
+          # monitor365-pool-copy EACCES'd since 2026-10-27, because
+          # systemd-tmpfiles-setup never re-ran to even warn). With ours
+          # first, upstream's rule becomes the ignored duplicate.
+          systemd.tmpfiles.rules = lib.mkBefore [
             # The PARENT must grant traverse to the server-backup unit user:
             # tmpfiles only modes the FINAL component (forgejo ci-runner
             # lesson 2026-10-16), and agentStoragePath is owned by the AGENT
