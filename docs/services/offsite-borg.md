@@ -32,9 +32,11 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
 
 ## Go-live checklist (owner)
 
-1. **Recovery copy**: read `borg_password` from sops and store it outside the
-   host (the first dead disk is the wrong moment to learn it was only in
-   sops-on-that-disk).
+1. **Recovery copy**: ✅ DONE 2026-11-04 — `/root/borg-recovery/borg-offsite-password.txt`
+   (root-only 0400, byte-verified vs sops, 64 chars) + paper sheet printed via
+   the Canon MG2500 (job -59 completed; owner stores the paper off-machine).
+   The first dead disk is the wrong moment to learn it was only in
+   sops-on-that-disk.
 2. **StorageBox**: enable SSH support (port 23) in the Hetzner console (Rex
    Robotics → Storage Box → "SSH-Support aktivieren" is usually already on).
 3. **SSH key**: install this public key with the documented
