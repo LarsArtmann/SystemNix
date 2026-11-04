@@ -177,3 +177,26 @@ See the three questions surfaced to the owner at report time: (1) extraction bac
 ---
 
 *Then wait for instructions.*
+
+---
+
+## ADDENDUM — AI-enablement wave (owner answers applied, 2026-11-05 00:0x–00:2x)
+
+The owner answered §g: (1) AI extraction via zai/GLM-5.3; (2) repo list from `meta list --sort-by importance`; (3) autonomous poll-and-deploy. Everything below is IN TREE and evals green; deploy remains quiescence-gated (§f row 1, updated on both surfaces).
+
+**Verified this addendum (fresh commands):**
+
+| Claim | Evidence |
+| --- | --- |
+| Upstream `ai.baseurl` support exists | Code-To-CV-Agent `2b735e5` pushed (config field + defaultsMap + example + `option.WithBaseURL` + `CVAGENT_AI_BASEURL` env mapping test; `go build`/`vet`/tests green, gofmt clean) |
+| `sk-` key-prefix rejection dropped | same rev; test flipped to "accepts non-sk- keys (OpenAI-compatible providers)"; length check retained |
+| Per-call timeout raised 90s→300s | `1484234` pushed, after probe-1 PROVED 90s dies against z.ai (200-commit prompt, `context deadline exceeded`, rule-based fallback caught it: 18 facts, extractor "rule-based") |
+| Concurrent-session overlap handled | another session's tree carried the SAME two lines this feature needed (cli.go plumb + ai.Config.BaseURL field) PLUS unrelated go-atomic-write adoption (T01); attributed, complemented, not duplicated; their work pushed alongside mine in `2b735e5` (daemon commit) |
+| SystemNix lock on `1484234`, FOD green | `nix flake update cvagent` ×2; probe builds `cvagent-2b735e5` AND `cvagent-1484234` (prepared-source + go-modules + package, vendorHash unchanged) |
+| Follow-audit hit fixed | `cvagent.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix"` added (nested deep-copy hit on the lock move); follow-up eval clean |
+| sops key wired without owner action | `cvagent_ai_api_key` = hermes.yaml `glm_api_key` (second consumer, renamer precedent), guarded `svcEnabled "cvagent"`, owner primaryUser; `cvagent-env` template renders `OPENAI_API_KEY` (not CVAGENT_-prefixed → env trap does not apply) |
+| Module wave evals green | aiEnable/aiModel/aiBaseUrl options (glm-5.3-flash @ z.ai coding endpoint — fleet-verified triple, sops.nix cv-agent 2026-11-02); `--config` + `--ai` in the scan loop; 24 repos (meta importance ≥80, owner directive; templates/forks/CV-target excluded); `TimeoutStartSec` 20min; EVAL-OK ×3 |
+| Probe-1 fallback path PROVEN live | /home/lars/.cache/cvagent/probe-ai.sh (throwaway db): AI timeout → automatic rule-based fallback — the unit can never hard-fail on AI errors alone |
+| Probe-2 (300s) | PENDING at addendum time — result decides: AI facts land (extractor "ai") or the endpoint rejects (escalate to owner with evidence; aiEnable flip is one line) |
+
+**Still open (unchanged)**: deploy + battery (§f row 1 ladder, now including the facts extractor-mix check and `sudo -n busctl … ss` trigger per the polkit note another session added to the runbook); the technologys-typo export propagation (§f 27, upstream); post-deploy §-leg + eval audit + health preflight (§f 2–4, harvested at 20:49).
