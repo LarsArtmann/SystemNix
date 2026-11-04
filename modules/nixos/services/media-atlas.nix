@@ -714,6 +714,11 @@
               (mkPoolDirUnit {
                 description = "Create MediaAtlas journal DB backup directory on the HDD pool";
                 directory = "/mnt/pool/backups/media-atlas";
+                # The backup unit runs as the peer-auth user (cfg.user), not
+                # root — an unowned root:root 0755 leaf makes the nightly
+                # `sqlite3 .backup` die on open (2026-11-03/04 failures).
+                owner = cfg.user;
+                mode = "0750";
               });
 
           systemd.services.media-atlas-backup = lib.mkIf (hubCfg.enable && hubCfg.dbBackup.enable) {

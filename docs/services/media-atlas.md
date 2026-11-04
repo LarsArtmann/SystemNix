@@ -23,7 +23,7 @@
 | `media-atlas-umap`            | Nightly 03:00 (+30m random, `hub.umapNightly.*`): export → `umap-fit --mode auto` (persistent model, straggler transform) → `project-coords --run <date>`; IO/CPU-quiet knobs from the repo's reviewed shape (Nice 19, idle IO, MemoryMax 2G); failure toasts                                                                      |
 | `media-atlas-lane-join`       | Nightly 04:00 (+30m random, `hub.laneJoin.*`): `atlas pull --with-lanes` (full walk — the tag walk needs the API key), order-only `after` the refit, own failure domain; BE/6 background, MemoryMax 512M; failure toasts                                                                                                           |
 
-| `media-atlas-backup` | Nightly 05:00 (+10m random, `hub.dbBackup.*`): online `sqlite3 .backup` of atlas.db onto /mnt/pool/backups/media-atlas (14d retention, -readonly + crash-healing per the browser-history pattern), restic-app-dumps pickup at 05:45; backup-coordination freshness entry (26h max age) alerts when the dump goes silent |
+| `media-atlas-backup` | Nightly 05:00 (+10m random, `hub.dbBackup.*`): online `sqlite3 .backup` of atlas.db onto /mnt/pool/backups/media-atlas (14d retention, -readonly + crash-healing per the browser-history pattern), restic-app-dumps pickup at 05:45; backup-coordination freshness entry (26h max age) flags a silent dump — the aggregate gatus check fires once per red episode (2026-11-04: chronic dnsblockd/data red masked media-atlas's fresh staleness; see the masking-gap queue row). Pool leaf is `media_atlas`-owned 0750 (`mkPoolDirUnit owner = cfg.user` — the backup unit runs as the peer-auth user, not root; the 2026-11-03/04 EACCES class). |
 
 ### Deploy sequence (owner, IO-quiet window)
 
