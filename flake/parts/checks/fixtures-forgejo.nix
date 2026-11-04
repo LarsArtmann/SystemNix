@@ -682,6 +682,7 @@
               printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protection.GET.body"
               run "$VERIFY" pv-actions; need_rc pv-actions 1
               need_has pv-actions "re-run with"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions.PATCH.code"
               run "$VERIFY" pv-actions --patch-actions; need_rc pv-actions-patch 0
               # Parse the PATCH payload, don't grep it (M-lesson).
               jq -e '.has_actions == true' \
