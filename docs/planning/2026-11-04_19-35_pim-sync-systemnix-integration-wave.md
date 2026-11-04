@@ -1,5 +1,8 @@
 # pim-sync → SystemNix integration wave (designed 2026-11-04 ~19:35, NOT executed)
 
+**Created:** 2026-11-04 ~19:35
+**EXECUTING (instance crush instance 2026-11-04 ~20:19, quiescent at 20:18 (float wave settled 20:01, lock==registry), 2026-11-04 20:20 CET, HEAD `024794b75`):** executing (see AGENTS.md plan-execution tombstone)
+
 **Status:** AUTHORED — execution queued `[ready]` (TODO_LIST.md + docs/todo/services.md), gated on
 shared-tree quiescence. At authoring time a parallel float wave (`e9b353742` 19:01 refresh +
 float-register with the toplevel proof still running at 19:35) owned `flake.lock` / `flake.nix` /

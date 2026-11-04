@@ -301,6 +301,20 @@
       url = "git+ssh://git@github.com/LarsArtmann/InboxClean?ref=refs/heads/master";
     };
 
+    # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (Go):
+    # oneshot sync-contacts + jittered 5min timer; Stalwart is the single
+    # truth, Google a sync edge. Consumed as a NixOS module ONLY
+    # (inputs.pim-sync.nixosModules.default → services.pim-sync); the
+    # wrapper (modules/nixos/services/pim-sync.nix) layers the package
+    # pin, onFailure routing + registry/catalog entries. PRIVATE repo →
+    # git+ssh URL (cv/crm/monitor365 pattern); all its Go deps are PUBLIC
+    # (go proxy), so no GOPRIVATE plumbing. Flip-ready DISABLED (enable =
+    # false in configuration.nix) until the owner gates land — plan:
+    # docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md
+    pim-sync = {
+      url = "git+ssh://git@github.com/LarsArtmann/pim-sync?ref=refs/heads/master";
+    };
+
     # NixOS hardware profiles (Raspberry Pi, etc.)
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
@@ -1252,6 +1266,9 @@
     # templ-cli v0.3.1070 to match its go.mod runtime. A newer generator
     # here emits templruntime.NewAttributeExpression, which that runtime
     # does not have — this follows line WAS the 2026-10-23 build break.
+    pim-sync.inputs.flake-parts.follows = "flake-parts";
+    pim-sync.inputs.go-nix-helpers.follows = "go-nix-helpers";
+    pim-sync.inputs.nixpkgs.follows = "nixpkgs";
     project-dependency-graph.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.flake-parts.follows = "flake-parts";
     project-discovery-daemon.inputs.go-nix-helpers.follows = "go-nix-helpers";
@@ -1299,6 +1316,7 @@
     project-dependency-graph.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     projects-management-automation.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     cv.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    pim-sync.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
   };
 
   outputs =

@@ -7598,6 +7598,33 @@
         "type": "github"
       }
     },
+    "pim-sync": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "go-nix-helpers": [
+          "go-nix-helpers"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793819562,
+        "narHash": "sha256-M4sCACqlDy7UC8DmsIjIZAMLmmxH7ZfVqmY+Y+qhIn4=",
+        "ref": "refs/heads/master",
+        "rev": "115328707de47f2554eab5060197e1b3763b7065",
+        "revCount": 67,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/pim-sync"
+      },
+      "original": {
+        "ref": "refs/heads/master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/pim-sync"
+      }
+    },
     "printer-monitor": {
       "flake": false,
       "locked": {
@@ -8214,6 +8241,7 @@
         "overview": "overview",
         "papdashboard": "papdashboard",
         "paperless-gpt-src": "paperless-gpt-src",
+        "pim-sync": "pim-sync",
         "project-dependency-graph": "project-dependency-graph",
         "project-discovery-daemon": "project-discovery-daemon_2",
         "project-meta": "project-meta_2",
