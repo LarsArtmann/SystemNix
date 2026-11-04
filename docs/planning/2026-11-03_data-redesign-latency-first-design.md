@@ -2,6 +2,7 @@
 
 **2026-11-03 · directive: owner (storage Q&A + 19-02 audit §g-directives) · authored by: storage task-queue session (Task-Queue-ID 000001a1a3299dad1b9b14d9a57a00000000)**
 **Status: SCOPING — nothing here is executed. The owner ratifies candidate(s) before ANY change.**
+**EXECUTING (instance tq-000001a1a7 batch, §5 probes only — compsize + cold-load harness; NO layout change, 2026-11-04, HEAD `e9b353742`):** executing (see AGENTS.md plan-execution tombstone)
 **Constraint ranking (owner, 2026-11-03): model-load LATENCY first. AI models stay on QLC (confirmed).**
 
 ---

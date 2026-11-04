@@ -560,6 +560,20 @@ in
         # mirror on the next deploy. Consumed by the desktop as a HOME
         # module (flake input `quotaboard`, desktop/quickshell.nix).
         "quotaboard"
+        # Native-since-inception (2026-11-04): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # No workflow files in the repo, so the repo-scoped sync PAT
+        # suffices (pingen-spike precedent). Phase 5 attaches the push
+        # mirror on the next deploy.
+        "fine-tune"
+        # Native-since-inception (2026-11-04): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # Only .github/dependabot.yml (no workflow files), so the
+        # repo-scoped sync PAT suffices (media-atlas precedent). Phase 5
+        # attaches the push mirror on the next deploy.
+        "pim-sync"
       ];
       immich.enable = true;
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
