@@ -99,6 +99,7 @@
   overview = "b4b36c73f15f069f4334012fddc5943155206b0c";
   papdashboard = "c0b29a360818997041a9844f7d47c30ce20caa21";
   paperless-gpt-src = "0a59ea4b2c0b70afbf01bafcd0a0858372368009";
+  pim-sync = "115328707de47f2554eab5060197e1b3763b7065";
   project-dependency-graph = "aaac17c167b903ea59c861a9dc04b466466b9893";
   project-discovery-daemon = "a6dd6a302e386c5025c2fe81f0c888f2a87fd331";
   project-meta = "3ab5e690849d1b20781793e499d54710517d94ee";

@@ -839,6 +839,22 @@ in
       # ExecStartPre fails fast with the checklist pointer while the
       # placeholder remains.
       audible-sync.enable = false;
+      # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (oneshot
+      # + 5min jittered timer; Stalwart single truth, Google a sync edge).
+      # DORMANT until the owner gates complete (docs/services/pim-sync.md):
+      # (1) GCP OAuth client, publishing status "In production" (testing
+      # tokens die after 7 days — InboxClean lesson), (2) Stalwart DAV
+      # creds + OAuth client JSON into sops, (3) per-account browser
+      # consent tokens, (4) flip pim-sync.enable + deploy (dry-run timer
+      # first, journal review, then live=true + maxChanges cap).
+      # enable = false DELIBERATE: upstream has NO idle no-op — an enabled
+      # unit without token files fails every 5min (discoverAccounts errors
+      # on an empty tokensDir, cmd/pim-sync/sync.go:359) → OnFailure alert
+      # storm + failed-unit exit-4 deploy trap (dmarc-monitor class).
+      # Wrapper: modules/nixos/services/pim-sync.nix pre-wires the package
+      # pin, onFailure, registry + catalog entries. Plan:
+      # docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md
+      pim-sync.enable = false;
       # Per-project crush session DBs → Samsung TLC (/mnt/hot). Structural
       # fix for the 2026-09-14 QLC-root IO storm (guard Zone 6 cycling flm,
       # DEPLOY_FORCE_PRESSURE escapes): crush-hot-db-migrate moves each
