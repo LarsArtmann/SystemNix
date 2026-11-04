@@ -68,8 +68,7 @@ _: {
           # synced to v0.4.0 0a5d806f, own FOD green first-hand; pdd does
           # not follow our pins, so its own lock governs the FOD content).
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
-          default =
-            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';

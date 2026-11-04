@@ -522,8 +522,19 @@ in
 
         CACHE_ROOT="$(pick_cache)"
         export GOLANGCI_LINT_CACHE="$CACHE_ROOT"
-        export GOLANGCI_LINT_ANALYSIS_CACHE="''${CACHE_ROOT}-analysis"
-        mkdir -p "$GOLANGCI_LINT_ANALYSIS_CACHE"
+        # The ANALYSIS cache is per-PROCESS (2026-11-04 docs-gates root
+        # cause: the shared persistent analysis dir kept stale diagnostics
+        # for moved/deleted files across lsp_restart — clearing the dirs
+        # was the only cure — and concurrent langservers cross-
+        # contaminated each other's repos). A fresh dir per launch keeps
+        # within-session speed and makes every restart cold, so the ghost
+        # class cannot survive it. Crashed sessions leave their dir; the
+        # launch sweep reclaims session dirs older than 48h (a long-lived
+        # server is never swept out from under itself).
+        ANALYSIS_PARENT="''${CACHE_ROOT}-analysis"
+        mkdir -p "$ANALYSIS_PARENT"
+        find "$ANALYSIS_PARENT" -maxdepth 1 -name 'session-*' -mmin +2880 -exec rm -rf {} + 2>/dev/null || true
+        export GOLANGCI_LINT_ANALYSIS_CACHE="$(mktemp -d "$ANALYSIS_PARENT/session-XXXXXX")"
 
         exec golangci-lint-langserver "$@"
       '';

@@ -62,15 +62,15 @@ _: {
         # on the root fs (the 9-day DAS shadow-dir incident). The unit is also
         # what gives the backup service a directory it can write: the parent
         # /mnt/pool/backups is root-owned and the backup runs as serviceUser.
-        systemd.services.crush-daily-backup-dir = lib.mkIf (cfg.backup.enable && poolBackup) (
-          mkPoolDirUnit {
-            description = "Create Crush Daily backup directory on the HDD pool";
-            directory = cfg.backup.directory;
-            owner = serviceUser;
-            group = serviceGroup;
-            mode = "0750";
-          }
-        );
+        systemd.services.crush-daily-backup-dir =
+          lib.mkIf (cfg.backup.enable && poolBackup)
+            (mkPoolDirUnit {
+              description = "Create Crush Daily backup directory on the HDD pool";
+              directory = cfg.backup.directory;
+              owner = serviceUser;
+              group = serviceGroup;
+              mode = "0750";
+            });
 
         systemd.services.crush-daily-backup = lib.mkIf (cfg.backup.enable && poolBackup) {
           after = [ "crush-daily-backup-dir.service" ];

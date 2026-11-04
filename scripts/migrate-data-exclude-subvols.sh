@@ -51,8 +51,14 @@ psi() {
 
 io_psi=$(psi io)
 cpu_psi=$(psi cpu)
-[ "$io_psi" -lt 20 ] || { echo "refusing: IO PSI $io_psi >= 20 (storm doctrine — rerun in a calm window)" >&2; exit 1; }
-[ "$cpu_psi" -lt 20 ] || { echo "refusing: CPU PSI $cpu_psi >= 20 (rerun in a calm window)" >&2; exit 1; }
+[ "$io_psi" -lt 20 ] || {
+  echo "refusing: IO PSI $io_psi >= 20 (storm doctrine — rerun in a calm window)" >&2
+  exit 1
+}
+[ "$cpu_psi" -lt 20 ] || {
+  echo "refusing: CPU PSI $cpu_psi >= 20 (rerun in a calm window)" >&2
+  exit 1
+}
 if pgrep -x steam >/dev/null 2>&1; then
   echo "refusing: steam is running — close it first (library must be quiescent for parity verify)" >&2
   exit 1

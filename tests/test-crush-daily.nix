@@ -106,14 +106,11 @@ in
       # not the one being written.
       assertions = [
         {
-          assertion =
-            config.services.integration.crush-daily.backup.directory == backupDir;
+          assertion = config.services.integration.crush-daily.backup.directory == backupDir;
           message = "integration backup row must name the configured backup directory";
         }
         {
-          assertion =
-            config.services.integration.crush-daily.backup.filePattern
-            == "crush-daily-*.db";
+          assertion = config.services.integration.crush-daily.backup.filePattern == "crush-daily-*.db";
           message = "integration backup row must match the artifact name the unit writes";
         }
         {

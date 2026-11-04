@@ -182,7 +182,7 @@ for s in "${abrupt_boots[@]-}"; do
   ev=${abrupt_evidence[$idx]:-}
   [ -z "$ev" ] && open_disc+="${s}(NO-EVIDENCE) "
   case "$br" in
-    "?"|"A/B"*) open_disc+="${s}(THIN-CENSUS) " ;;
+  "?" | "A/B"*) open_disc+="${s}(THIN-CENSUS) " ;;
   esac
   idx=$((idx + 1))
 done

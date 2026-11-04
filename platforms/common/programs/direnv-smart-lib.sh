@@ -158,16 +158,16 @@ _bf_agent_cache_guard() {
   for var in GOCACHE GOLANGCI_LINT_CACHE; do
     val=${!var:-}
     case $val in
-      "$HOME/.cache"/*) ;;
-      *) continue ;;
+    "$HOME/.cache"/*) ;;
+    *) continue ;;
     esac
     base=${val#"$HOME/.cache/"}
     case $base in
-      # Blessed names: HM out-of-store symlinks already land on the mount
-      # (go-build/go/goimports/pnpm), gopls+nix stay NVMe by design
-      # (home.nix comment: LSP/nix-eval latency sensitivity).
-      go-build | go | goimports | gopls | nix | pnpm) continue ;;
-      *) ;;
+    # Blessed names: HM out-of-store symlinks already land on the mount
+    # (go-build/go/goimports/pnpm), gopls+nix stay NVMe by design
+    # (home.nix comment: LSP/nix-eval latency sensitivity).
+    go-build | go | goimports | gopls | nix | pnpm) continue ;;
+    *) ;;
     esac
     # A symlink target is mechanism-independent redirection — leave it.
     if [[ -L $val ]]; then

@@ -1177,6 +1177,10 @@
     # lib/lock-audit.nix).
     cvagent.inputs.flake-parts.follows = "flake-parts";
     cvagent.inputs.treefmt-nix.follows = "treefmt-nix";
+    # Nested: cvagent's go-nix-helpers dep locks its own treefmt-nix deep
+    # copy (follow-audit hit, 2026-11-04 lock move to 2b735e5) — eval-only,
+    # safe to follow the root pin like the parent lines above.
+    cvagent.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
     file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";

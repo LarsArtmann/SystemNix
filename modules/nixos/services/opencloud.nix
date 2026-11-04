@@ -113,13 +113,15 @@ _: {
             # silent-renew iframe (frame-src) from auth.<domain> — without
             # this the sign-in dies in the browser on a CSP refusal
             # (live 2026-11-02).
-            PROXY_CSP_CONFIG_FILE_LOCATION = toString (pkgs.writeText "opencloud-csp.yaml" ''
-              directives:
-                connect-src:
-                  - https://auth.${domain}
-                frame-src:
-                  - https://auth.${domain}
-            '');
+            PROXY_CSP_CONFIG_FILE_LOCATION = toString (
+              pkgs.writeText "opencloud-csp.yaml" ''
+                directives:
+                  connect-src:
+                    - https://auth.${domain}
+                  frame-src:
+                    - https://auth.${domain}
+              ''
+            );
             PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD = "jwt";
             PROXY_OIDC_REWRITE_WELLKNOWN = "true";
             PROXY_AUTOPROVISION_ACCOUNTS = "true";

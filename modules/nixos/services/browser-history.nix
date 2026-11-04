@@ -753,7 +753,9 @@
               retentionDays = 14;
               # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and
               # miniflux (02:45).
-              startAt = { OnCalendar = "*-*-* 02:15:00"; };
+              startAt = {
+                OnCalendar = "*-*-* 02:15:00";
+              };
               serviceDeps = [
                 "browser-history.service"
                 "browser-history-backup-dir.service"

@@ -211,7 +211,8 @@ in
         after = timerAfter;
         timerConfig = {
           Persistent = true;
-        } // startAt;
+        }
+        // startAt;
       };
     };
 

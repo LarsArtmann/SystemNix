@@ -21,6 +21,15 @@
 #     overwritten (the exporter preserves pages without its marker).
 #   - No HTTP endpoint: daemon-less-unit doctrine — failure alerting rides
 #     OnFailure (Discord) + the system-health state metrics.
+#   - AI extraction (owner decision 2026-11-04): one SAMPLED AI call per repo
+#     per run (MaxCommitSample caps the prompt; 24 repos ≈ 24 calls/day on
+#     the GLM coding plan). Endpoint/model: glm-5.3-flash @
+#     https://api.z.ai/api/coding/paas/v4 — the fleet-verified triple
+#     (cv-agent runs it live since 2026-11-02, sops.nix). Key: hermes.yaml
+#     glm_api_key exposed as cvagent_ai_api_key + the cvagent-env template.
+#     Upstream baseurl support: Code-To-CV-Agent 2b735e5 (ai.baseurl +
+#     sk- prefix check dropped). AI failures fall back to rule-based
+#     extraction automatically (extractor name recorded per fact).
 { inputs, ... }: {
   flake.nixosModules.cvagent =
     {
@@ -40,6 +49,19 @@
         ;
 
       cvagentPkg = inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+
+      # Non-secret AI config for the scan invocation. The API key does NOT
+      # live here — it rides the sops-rendered cvagent-env file via
+      # EnvironmentFile (OPENAI_API_KEY is read directly by cvagent, outside
+      # the koanf CVAGENT_* namespace, so the env trap does not apply to it).
+      # `enabled` stays false so the file alone never arms AI; the --ai flag
+      # below is the single switch.
+      aiConfigFile = pkgs.writeText "cvagent-config.yaml" ''
+        ai:
+          enabled: false
+          model: ${cfg.aiModel}
+          baseurl: ${cfg.aiBaseUrl}
+      '';
 
       script = pkgs.writeShellApplication {
         name = "cvagent-scan-mesh";
@@ -70,7 +92,7 @@
           scanned=0
           failed=0
           for repo in ${lib.concatMapStringsSep " " (r: "'${r}'") cfg.repositories}; do
-            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency"; then
+            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency" --config "${aiConfigFile}" ${lib.optionalString cfg.aiEnable "--ai"}; then
               scanned=$((scanned + 1))
             else
               echo "WARN: cvagent scan failed: $repo" >&2
@@ -94,6 +116,24 @@
       options.services.cvagent = {
         enable = lib.mkEnableOption "daily cvagent scan + CV-repo mesh export";
 
+        aiEnable = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Extract facts with the AI extractor per repository (one sampled call per repo); AI failures fall back to rule-based extraction automatically.";
+        };
+
+        aiModel = lib.mkOption {
+          type = lib.types.str;
+          default = "glm-5.3-flash";
+          description = "Model id for the AI extractor (z.ai GLM coding plan).";
+        };
+
+        aiBaseUrl = lib.mkOption {
+          type = lib.types.str;
+          default = "https://api.z.ai/api/coding/paas/v4";
+          description = "OpenAI-compatible endpoint for the AI extractor (z.ai coding endpoint; fleet-verified with cv-agent, sops.nix 2026-11-02).";
+        };
+
         package = lib.mkOption {
           type = lib.types.package;
           default = cvagentPkg;
@@ -108,12 +148,34 @@
 
         repositories = lib.mkOption {
           type = lib.types.listOf lib.types.str;
+          # meta list --sort-by importance, owner directive 2026-11-04
+          # ("all that changed, by importance"): importance >= 80, real code
+          # checkouts; templates/forks and the CV export target itself
+          # excluded. Order follows the meta ranking.
           default = [
-            "/home/lars/projects/SystemNix"
+            "/home/lars/projects/go-composable-business-types" # 96
+            "/home/lars/projects/buildflow" # 95
+            "/home/lars/projects/go-commit" # 95
+            "/home/lars/projects/ai-router-implementation" # 92
+            "/home/lars/projects/cmdguard" # 92
+            "/home/lars/projects/universal-workflow" # 92
+            "/home/lars/projects/timesheets" # 91
+            "/home/lars/projects/gogenfilter" # 90
+            "/home/lars/projects/SystemNix" # 90
+            "/home/lars/projects/erraudit" # 90
+            "/home/lars/projects/invoices" # 90
+            "/home/lars/projects/go-filewatcher" # 90
+            "/home/lars/projects/go-output" # 90
+            "/home/lars/projects/go-auto-upgrade" # 90
+            "/home/lars/projects/project-discovery-sdk" # 87
+            "/home/lars/projects/terraform-to-d2" # 85
+            "/home/lars/projects/terraform-diagrams-aggregator" # 85
+            "/home/lars/projects/md-go-validator" # 82
+            "/home/lars/projects/project-meta" # 80
+            "/home/lars/projects/go-business-rules" # 80
+            "/home/lars/projects/go-cqrs-lite" # 70
             "/home/lars/projects/Code-To-CV-Agent"
-            "/home/lars/projects/go-cqrs-lite"
             "/home/lars/projects/go-aichat"
-            "/home/lars/projects/cmdguard"
             "/home/lars/projects/monitor365"
           ];
           description = "Repository checkouts scanned for CV facts (absolute paths).";
@@ -156,10 +218,15 @@
               User = primaryUser;
               Group = "users";
               ExecStart = lib.getExe script;
-              # Scan volume scales with repository history (go-cqrs-lite
-              # alone walks 9k commits) — keep the budget generous.
-              TimeoutStartSec = "10min";
+              # Scan volume scales with repository count AND history (24
+              # repos, ~40k commits incl. go-cqrs-lite's 9k) — the 2026-11-04
+              # meta-importance expansion doubled the repo count, so the
+              # 2026-11-01 budget doubled with it.
+              TimeoutStartSec = "20min";
               Environment = [ "HOME=/home/lars" ];
+              # AI key via sops-rendered env file; OPENAI_API_KEY is read
+              # directly by cvagent outside the CVAGENT_* koanf namespace.
+              EnvironmentFile = config.sops.templates."cvagent-env".path;
             }
             (harden {
               # The export writes the CV checkout and the fact store under

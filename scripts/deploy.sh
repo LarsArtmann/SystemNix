@@ -847,8 +847,8 @@ if nix run .#pre-deploy-check; then
   # legs run. Hence the membership gate against the pre-reset capture —
   # without it the restart could never fire (2026-11-03: the
   # discordsync-immich-verify daily 403 sat invisible through 4 deploys).
-  if systemctl is-failed --quiet discordsync-db-heal.service 2>/dev/null \
-    || grep -q '^discordsync-db-heal\.service' <<<"${_failed_before_reset:-}"; then
+  if systemctl is-failed --quiet discordsync-db-heal.service 2>/dev/null ||
+    grep -q '^discordsync-db-heal\.service' <<<"${_failed_before_reset:-}"; then
     echo "Restarting failed oneshot: discordsync-db-heal.service (no-block)"
     sudo systemctl reset-failed discordsync-db-heal.service 2>/dev/null || true
     sudo systemctl start --no-block discordsync-db-heal.service 2>/dev/null || true
@@ -860,8 +860,8 @@ if nix run .#pre-deploy-check; then
   # converges here instead of waiting for the next daily tick — gated on the
   # pre-reset captured set too (see the db-heal leg above for why is-failed
   # alone is dead on failed-unit deploys, 2026-11-03).
-  if systemctl is-failed --quiet discordsync-immich-verify.service 2>/dev/null \
-    || grep -q '^discordsync-immich-verify\.service' <<<"${_failed_before_reset:-}"; then
+  if systemctl is-failed --quiet discordsync-immich-verify.service 2>/dev/null ||
+    grep -q '^discordsync-immich-verify\.service' <<<"${_failed_before_reset:-}"; then
     echo "Restarting failed oneshot: discordsync-immich-verify.service (no-block)"
     sudo systemctl reset-failed discordsync-immich-verify.service 2>/dev/null || true
     sudo systemctl start --no-block discordsync-immich-verify.service 2>/dev/null || true

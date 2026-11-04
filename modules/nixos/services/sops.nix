@@ -160,6 +160,22 @@ in
                   hermes_firecrawl_api_key = "firecrawl_api_key";
                 }
             )
+            // lib.optionalAttrs (svcEnabled "cvagent") (
+              # cvagent's AI-extraction key (2026-11-04): the SAME z.ai GLM
+              # coding-plan key as hermes (hermes.yaml glm_api_key) — second
+              # consumer of one yaml key, the file-renamer/crush-daily
+              # precedent. Runs as the primary user (unit User = lars), so
+              # owner = primaryUser needs no guard beyond the service flag.
+              mkKeyedSecrets "hermes.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  restartUnits = [ "cvagent.service" ];
+                }
+                {
+                  cvagent_ai_api_key = "glm_api_key";
+                }
+            )
             // lib.optionalAttrs (svcEnabled "hermes") (
               # Read-only GitHub PAT for private-repo clones (T14, user
               # decision 2026-08-20: read-only, permanently no-push). Own
@@ -569,6 +585,20 @@ in
                 FAL_KEY = config.sops.placeholder.hermes_fal_key;
                 FIRECRAWL_API_KEY = config.sops.placeholder.hermes_firecrawl_api_key;
                 HERMES_GITHUB_READ_TOKEN = config.sops.placeholder.hermes_github_read_token;
+              };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "cvagent") {
+            # AI key for the cvagent timer's --ai extraction. OPENAI_API_KEY
+            # (not CVAGENT_-prefixed) is read directly by cvagent, outside
+            # the koanf namespace — the CVAGENT_* env trap does not apply.
+            "cvagent-env" = {
+              owner = primaryUser;
+              group = "users";
+              mode = "0400";
+              restartUnits = [ "cvagent.service" ];
+              content = lib.generators.toKeyValue { } {
+                OPENAI_API_KEY = config.sops.placeholder.cvagent_ai_api_key;
               };
             };
           }
