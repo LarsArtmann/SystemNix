@@ -4,13 +4,12 @@
 # Decision + rationale: docs/research/hetzner-storagebox-borgbackup.md.
 # Client-side repokey-blake2 means Hetzner sees only opaque ciphertext.
 #
-# DORMANT UNTIL GO-LIVE (enable = false default): the StorageBox hostname and
-# username are user-held inputs that do not exist in any secret yet
-# (docs/todo/storage.md "Offsite Borg go-live inputs"). With the placeholder
-# still in sops, the first run would fail loudly at the go-live tripwire —
-# so the whole module (units, sops secrets, backup-coordination row) only
-# materializes when services.offsite-borg.enable flips true. Go-live
-# checklist: docs/services/offsite-borg.md.
+# GO-LIVE IN PROGRESS (enable = true since 2026-11-03): sops placeholders
+# filled, host key pinned, key-only auth proven rc=0 2026-11-04
+# (docs/todo/storage.md "Offsite Borg go-live inputs"). The whole module
+# (units, sops secrets, backup-coordination row) only materializes when
+# services.offsite-borg.enable is true. Go-live checklist:
+# docs/services/offsite-borg.md.
 #
 # Sizing doctrine (BX11 is 1 TB): the job MUST exclude rebuildable trees
 # (/data ai/models/Steam/llamacpp ~700 G, code trees backed by GitHub,
