@@ -1230,6 +1230,127 @@ in
     '';
   };
 
+  # Post-flip verification (fleet-cutover plan M3): one read-only pass that
+  # proves a flip actually landed on a repo — native (mirror=false), Actions
+  # armed, .forgejo/workflows present, GitHub push mirror attached, default
+  # branch protected. Reuses the exact API shapes of the shipped machinery
+  # (flip/branch-protect/attach-org-push-mirrors) so there is one set of
+  # verified endpoints, not two. --patch-actions is the only mutation
+  # (PATCH has_actions:true), keeping the default run safe to re-run blind.
+  postFlipVerifyScript = pkgs.writeShellApplication {
+    name = "forgejo-post-flip-verify";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+    ];
+    text = ''
+      FORGEJO_URL="''${FORGEJO_URL:-https://forgejo.home.lan}"
+      FORGEJO_OWNER="${primaryUser}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
+
+      usage() {
+        echo "Usage: forgejo-post-flip-verify <repo> [--patch-actions]" >&2
+        echo "  --patch-actions: PATCH has_actions=true when Actions is off" >&2
+        exit 1
+      }
+      [[ $# -ge 1 && $# -le 2 ]] || usage
+      repo="$1"
+      patch_actions=false
+      [[ "''${2:-}" == "--patch-actions" ]] && patch_actions=true
+      if [ -z "$FORGEJO_TOKEN" ]; then
+        echo "Error: FORGEJO_TOKEN not set (root: /var/lib/forgejo/.admin-token.env; agent handoff: privileged batch doc Phase E)" >&2
+        exit 1
+      fi
+
+      api="$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$repo"
+      fails=0
+      report() { # report <label> <ok 0|1> <detail>
+        if [ "$2" -eq 0 ]; then
+          echo "✓ $1''${3:-}"
+        else
+          echo "✗ $1''${3:-}"
+          fails=$((fails + 1))
+        fi
+      }
+
+      # 1. repo exists and is native (mirror=false), like the flip verifier.
+      repo_json=$(curl -s --compressed \
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$api") || { echo "✗ $repo: forgejo unreachable" >&2; exit 1; }
+      if ! echo "$repo_json" | jq -e '.mirror != null' >/dev/null; then
+        echo "✗ $repo: not found on forgejo ($FORGEJO_OWNER/$repo)" >&2
+        exit 1
+      fi
+      branch=$(echo "$repo_json" | jq -r '.default_branch')
+      if [ "$(echo "$repo_json" | jq -r '.mirror')" = "false" ]; then
+        report "native repo (mirror=false)" 0 ""
+      else
+        report "native repo" 1 " (still a PULL mirror — flip first)"
+      fi
+
+      # 2. Actions armed (the flip arms it; PATCH back if it drifted).
+      if [ "$(echo "$repo_json" | jq -r '.has_actions // false')" = "true" ]; then
+        report "Actions armed" 0 ""
+      elif [ "$patch_actions" = true ]; then
+        code=$(curl -s -o /dev/null -w '%{http_code}' -X PATCH \
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d '{"has_actions":true}' \
+          "$api")
+        if [ "$code" = "200" ]; then
+          report "Actions armed (PATCHed has_actions=true)" 0 ""
+        else
+          report "Actions armed" 1 " (PATCH failed HTTP $code)"
+        fi
+      else
+        report "Actions armed" 1 " (off — re-run with --patch-actions)"
+      fi
+
+      # 3. .forgejo/workflows carries both generated files (contents API;
+      #     non-array response = missing dir — the phantom-green guard).
+      wf=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+        "$api/contents/.forgejo/workflows")
+      if echo "$wf" | jq -e 'type == "array"' >/dev/null \
+        && [ "$(echo "$wf" | jq '[.[] | select(.name == "ci.yml")] | length')" -ge 1 ] \
+        && [ "$(echo "$wf" | jq '[.[] | select(.name == "release.yml")] | length')" -ge 1 ]; then
+        report "workflows (ci.yml + release.yml)" 0 ""
+      else
+        report "workflows" 1 " (.forgejo/workflows missing or incomplete — regenerate with the wizard)"
+      fi
+
+      # 4. GitHub push mirror attached (same endpoint as phase-5 attach).
+      pm=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+        "$api/push_mirrors")
+      if echo "$pm" | jq -e 'type == "array"' >/dev/null; then
+        pm_n=$(echo "$pm" | jq 'length')
+        if [ "$pm_n" -ge 1 ]; then
+          report "push mirror attached" 0 " ($pm_n mirror(s))"
+        else
+          report "push mirror attached" 1 " (sync unit phase 5 / forgejo-attach-org-push-mirrors.sh)"
+        fi
+      else
+        report "push mirror attached" 1 " (listing not an array)"
+      fi
+
+      # 5. Default branch protected (same endpoint as forgejo-branch-protect).
+      prot=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+        "$api/branch_protection")
+      if echo "$prot" | jq -e 'type == "array"' >/dev/null; then
+        prot_hit=$(echo "$prot" | jq --arg b "$branch" '[.[] | select(.branch_name == $b)] | length')
+        if [ "$prot_hit" -ge 1 ]; then
+          report "branch protection ($branch)" 0 ""
+        else
+          report "branch protection ($branch)" 1 " (run forgejo-branch-protect)"
+        fi
+      else
+        report "branch protection" 1 " (listing not an array)"
+      fi
+
+      echo "=== post-flip verify $FORGEJO_OWNER/$repo: failures=$fails"
+      [ "$fails" -eq 0 ]
+    '';
+  };
+
   flipRepoScript = pkgs.writeShellApplication {
     name = "forgejo-flip-repo";
     runtimeInputs = [

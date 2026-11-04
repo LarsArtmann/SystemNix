@@ -137,6 +137,7 @@ _: {
         pushMirrorScript
         releaseShadowScript
         branchProtectScript
+        postFlipVerifyScript
         flipRepoScript
         mirrorHealthScript
         censusScript
@@ -1515,6 +1516,7 @@ _: {
           pushMirrorScript
           releaseShadowScript
           branchProtectScript
+          postFlipVerifyScript
           flipRepoScript
           censusScript
           setupScript

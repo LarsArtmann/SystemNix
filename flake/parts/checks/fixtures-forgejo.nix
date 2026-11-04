@@ -143,6 +143,8 @@
               inject ${lib.getExe forgejoScripts.releaseShadowScript} "$SHADOW"
               PROTECT="$FIX/forgejo-branch-protect"
               inject ${lib.getExe forgejoScripts.branchProtectScript} "$PROTECT"
+              VERIFY="$FIX/forgejo-post-flip-verify"
+              inject ${lib.getExe forgejoScripts.postFlipVerifyScript} "$VERIFY"
 
               export FORGEJO_TOKEN=fxtok GITHUB_TOKEN=gxtok GITHUB_USER=LarsArtmann
               rc=0; capt=""
@@ -649,6 +651,78 @@
               # Empty canonicalRepos -> quiet no-op.
               FORGEJO_TOKEN=fxtok FORGEJO_CANONICAL_REPOS= run "$PROTECT"
               need_rc prot-empty 0
+
+              # ============ post-flip verify (fleet-cutover M3) ============
+              # Happy path: all five checks green, exit 0.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy.GET.code"
+              printf '{"mirror":false,"has_actions":true,"default_branch":"master"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_contents_.forgejo_workflows.GET.code"
+              printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_contents_.forgejo_workflows.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_push_mirrors.GET.code"
+              printf '[{"id":1}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_push_mirrors.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protection.GET.code"
+              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protection.GET.body"
+              run "$VERIFY" pv-happy; need_rc pv-happy 0
+              need_has pv-happy "failures=0"
+
+              # Still a pull mirror -> native check fails loudly.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-mirror.GET.code"
+              printf '{"mirror":true,"has_actions":true,"default_branch":"master"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-mirror.GET.body"
+              run "$VERIFY" pv-mirror; need_rc pv-mirror 1
+              need_has pv-mirror "still a PULL mirror"
+
+              # Actions off: refuse without the flag, PATCH with it.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions.GET.code"
+              printf '{"mirror":false,"has_actions":false,"default_branch":"master"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_contents_.forgejo_workflows.GET.code"
+              printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_contents_.forgejo_workflows.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_push_mirrors.GET.code"
+              printf '[{"id":2}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_push_mirrors.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protection.GET.code"
+              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protection.GET.body"
+              run "$VERIFY" pv-actions; need_rc pv-actions 1
+              need_has pv-actions "re-run with"
+              run "$VERIFY" pv-actions --patch-actions; need_rc pv-actions-patch 0
+              # Parse the PATCH payload, don't grep it (M-lesson).
+              jq -e '.has_actions == true' \
+                "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_pv-actions.PATCH.1.json" > /dev/null \
+                || { echo "FAIL pv-actions: PATCH payload"; exit 1; }
+
+              # Workflows missing (non-array listing) -> workflows check fails.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf.GET.code"
+              printf '{"mirror":false,"has_actions":true,"default_branch":"master"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf.GET.body"
+              printf 404 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_contents_.forgejo_workflows.GET.code"
+              printf '{"message":"Not Found"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_contents_.forgejo_workflows.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_push_mirrors.GET.code"
+              printf '[{"id":3}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_push_mirrors.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protection.GET.code"
+              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protection.GET.body"
+              run "$VERIFY" pv-wf; need_rc pv-wf 1
+              need_has pv-wf "workflows"
+
+              # No push mirror attached -> mirror check fails with a fix hint.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror.GET.code"
+              printf '{"mirror":false,"has_actions":true,"default_branch":"main"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_contents_.forgejo_workflows.GET.code"
+              printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_contents_.forgejo_workflows.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_push_mirrors.GET.code"
+              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_push_mirrors.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protection.GET.code"
+              printf '[{"branch_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protection.GET.body"
+              run "$VERIFY" pv-nomirror; need_rc pv-nomirror 1
+              need_has pv-nomirror "push mirror attached"
+
+              # Unprotected default branch -> protection check fails.
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot.GET.code"
+              printf '{"mirror":false,"has_actions":true,"default_branch":"main"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_contents_.forgejo_workflows.GET.code"
+              printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_contents_.forgejo_workflows.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_push_mirrors.GET.code"
+              printf '[{"id":4}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_push_mirrors.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protection.GET.code"
+              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protection.GET.body"
+              run "$VERIFY" pv-noprot; need_rc pv-noprot 1
+              need_has pv-noprot "branch protection (main)"
 
               echo "PASS: all forgejo staged-primary script fixtures" > "$out"
             '';
