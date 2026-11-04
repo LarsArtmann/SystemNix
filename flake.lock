@@ -1401,11 +1401,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1793640679,
-        "narHash": "sha256-9ym79NmBCHrvCyqlfMBGo5NugFCyqiexTDZukHOkkkI=",
+        "lastModified": 1793747356,
+        "narHash": "sha256-wnPGXASEntDDSgic5WRuRvpL2L3wCeJViWd3hMWsbPA=",
         "ref": "refs/heads/master",
-        "rev": "d89040d7c423df8e8af9f040aabc32e738bdd378",
-        "revCount": 1927,
+        "rev": "857e2f175fbcf5b18f300c3bf4a86aae2a237739",
+        "revCount": 1937,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },

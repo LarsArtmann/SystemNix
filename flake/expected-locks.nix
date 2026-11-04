@@ -46,7 +46,7 @@
   domains = "aba7cb95b31399cdae936ad7a12f5fffff7dc312";
   emeet-pixyd = "cc5f133d892eaf102809d9997eaab2e14d38b376";
   erraudit = "fa5575f931b607c056dc1a36719f63073e560358";
-  file-and-image-renamer = "d89040d7c423df8e8af9f040aabc32e738bdd378";
+  file-and-image-renamer = "857e2f175fbcf5b18f300c3bf4a86aae2a237739";
   flake-compat = "5edf11c44bc78a0d334f6334cdaf7d60d732daab";
   flake-parts = "ea2630b7470978622c7689a1ff75d2b389175399";
   flake-utils = "b7a79d3fea1e214f6d668d521cecec0c01e26544";
