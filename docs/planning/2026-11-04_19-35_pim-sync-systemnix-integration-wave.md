@@ -1,7 +1,7 @@
 # pim-sync → SystemNix integration wave (designed 2026-11-04 ~19:35, NOT executed)
 
 **Created:** 2026-11-04 ~19:35
-**EXECUTING (instance crush instance 2026-11-04 ~20:19, quiescent at 20:18 (float wave settled 20:01, lock==registry), 2026-11-04 20:20 CET, HEAD `024794b75`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance wave executed 2026-11-04 20:19-20:38: input+follows locked 115328707, FOD probe green, wrapper+runbook+configuration landed, toplevel proof rc=0 (float-register ceremony completed by parallel session per their 20:29 report), 2026-11-04 20:32 CET, HEAD `3b28493b5`):** execution finished
 
 **Status:** AUTHORED — execution queued `[ready]` (TODO_LIST.md + docs/todo/services.md), gated on
 shared-tree quiescence. At authoring time a parallel float wave (`e9b353742` 19:01 refresh +
