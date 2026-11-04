@@ -34,7 +34,7 @@
   cmdguard = "7ab3f21740684fbc53ac07e5d7f3231e67993e42";
   crm = "900bf55f18d0da734b4a431ffd531269371c3eb0";
   crush-config = "227a1307f79a3abd7c746f98e985d84660720744";
-  crush-daily = "07cf5ca43bed84dcab77878be14855e9495e15a4";
+  crush-daily = "95bf8a08411f8c940c3fe45a1fdfa33bbed3f015";
   cv = "16a656f4924069efcee122c3f7f8ccf27d592a21";
   cvagent = "4f2c4dffb767df027ead65c8c5aebbed66a01ff6";
   dankMaterialShell = "15073346175f34f49a6e80aa17104c2827eb0e05";
