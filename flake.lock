@@ -8252,16 +8252,17 @@
         "nixpkgs": [
           "nixpkgs"
         ],
+        "templ-components": "templ-components_9",
         "treefmt-nix": [
           "treefmt-nix"
         ]
       },
       "locked": {
-        "lastModified": 1793741180,
-        "narHash": "sha256-q6Ni9Avk0s6Bh7ofqaKj/2gfP7SX6NWE2ekgirI4TEI=",
+        "lastModified": 1793835913,
+        "narHash": "sha256-xD/8u8zKUVWVPvRBGbwvokIo+7v6poXxZl3SU5yvaRY=",
         "ref": "refs/heads/master",
-        "rev": "c98d13ad4b4bdb84b02074c6db29a06fc156b282",
-        "revCount": 8,
+        "rev": "0a4c7ab743bab51a1488cd49ecdc0a45650b7a43",
+        "revCount": 59,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/quotaboard"
       },
@@ -8994,6 +8995,23 @@
       "original": {
         "owner": "LarsArtmann",
         "ref": "master",
+        "repo": "templ-components",
+        "type": "github"
+      }
+    },
+    "templ-components_9": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793813772,
+        "narHash": "sha256-JdudBTFPX446nSkt/whb8QomENDNg2JOLI5nf318lJs=",
+        "owner": "LarsArtmann",
+        "repo": "templ-components",
+        "rev": "97c4940741042db4e8f9c79b3c5636325e364399",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "v1.27.0",
         "repo": "templ-components",
         "type": "github"
       }
