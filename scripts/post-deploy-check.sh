@@ -376,6 +376,12 @@ check_local "Gatus Alert Relay" "9411" "/healthz" "200" "forwarded" 2>/dev/null 
 
 check_local "DNS Blocker" "9090" "/health" "200" "" 2>/dev/null || true
 
+# quotaboard (user unit, loopback quota dashboard + DMS bar widget).
+# The API body check is functional, not just alive: "generatedAt" proves
+# the JSON envelope rendered (2026-11-04).
+check_local "Quotaboard API" "8791" "/api/quotas" "200" '"generatedAt"' 2>/dev/null || true
+check_local "Quotaboard health" "8791" "/health" "200" "" 2>/dev/null || true
+
 # DNS: verify local resolution via dnsblockd
 if getent hosts "dash.$DOMAIN" >/dev/null 2>&1; then
   report_pass "DNS - dash.$DOMAIN resolves"
