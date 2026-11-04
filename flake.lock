@@ -948,11 +948,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793721363,
-        "narHash": "sha256-9Wd5h0/rMmFD0NEynkGsHek7HLSL87W73H+TLTKpU78=",
+        "lastModified": 1793810505,
+        "narHash": "sha256-gCPlFi7RHlalxc82CIF+UD7R//iMo13uN3B2XVyMS7Y=",
         "ref": "refs/heads/master",
-        "rev": "07cf5ca43bed84dcab77878be14855e9495e15a4",
-        "revCount": 982,
+        "rev": "95bf8a08411f8c940c3fe45a1fdfa33bbed3f015",
+        "revCount": 1000,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -8764,16 +8764,16 @@
     "templ-components_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1793288139,
-        "narHash": "sha256-yt/v+YfXdofCwabcAUI1ZOtiMiXTVUlCzFVS6x7ElDA=",
+        "lastModified": 1793412368,
+        "narHash": "sha256-4Q28JPnOuoGJVl61kJNZCcTF8zweALIoj3nfwJ1zCL8=",
         "owner": "LarsArtmann",
         "repo": "templ-components",
-        "rev": "97ec6062cca55324ba5cbf1c32c202f4d08d1db6",
+        "rev": "0bffe331aa40991b42be862f50b9672fe0b797b6",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "v1.25.0",
+        "ref": "v1.26.0",
         "repo": "templ-components",
         "type": "github"
       }
