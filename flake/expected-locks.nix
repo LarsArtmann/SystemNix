@@ -42,6 +42,7 @@
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
   dnsblockd = "8b5352f3270bacf9777f8427c642a8d05ae5bb7c";
+  docs-gates = "6ed909f3309102120e9fefee7b67a9ad9317e3e7";
   domains = "aba7cb95b31399cdae936ad7a12f5fffff7dc312";
   emeet-pixyd = "cc5f133d892eaf102809d9997eaab2e14d38b376";
   erraudit = "fa5575f931b607c056dc1a36719f63073e560358";

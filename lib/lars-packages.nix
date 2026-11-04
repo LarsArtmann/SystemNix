@@ -166,6 +166,16 @@ lib.filterAttrs (_: v: v != null) {
   cqrs-lint =
     flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
       "sha256-EQe80wmzlsTM1PjjLKcsOPW/oEXJG4mV3dsJhR9+ZOE=";
+  # docs-gates — the docs-health battery gates (freshness / annotate /
+  # routing / cadence / strike) as one stdlib-only multi-call binary;
+  # packages.default = the binary + the five legacy-name wrappers
+  # (docs-freshness … docs-strike) that exec it, so PATH install covers
+  # both the new verb surface and the pre-extraction fleet scripts.
+  # Extracted from the pbx-artmann fleet 2026-11-03. NO shim ever:
+  # upstream vendorHash = null by the stdlib-only contract — no FOD, no
+  # toolchain-skew re-hash waves (the flake.nix nixpkgs follow is thereby
+  # unconditionally safe).
+  docs-gates = flakePkg inputs.docs-gates;
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed erraudit on 492c233, whose
   # specified hash /D4X81jj… no longer reproduces under the followed

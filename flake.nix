@@ -676,6 +676,20 @@
       url = "github:LarsArtmann/go-branded-id?ref=master";
     };
 
+    # docs-gates — the docs-health battery gates (freshness / annotate /
+    # routing / cadence / strike) as one stdlib-only multi-call binary,
+    # extracted from the pbx-artmann fleet 2026-11-03. PUBLIC repo
+    # (Artmann-Technologies org) — anonymous github: tarball fetch, no CI
+    # auth needed. packages.default = the binary + the five legacy-name
+    # wrappers (docs-freshness … docs-strike) that exec it. No FOD ever:
+    # upstream vendorHash = null by the stdlib-only contract, so the
+    # nixpkgs follow below is unconditionally safe (no toolchain-skew
+    # re-hash exposure). Branch-ref governed (pin policy 2026-09-16:
+    # ?ref=main; the lock holds the exact rev until an explicit update).
+    docs-gates = {
+      url = "github:Artmann-Technologies/docs-gates?ref=main";
+    };
+
     # art-dupl — Code duplication detector
     art-dupl = {
       # Pinned to the fork-branch rev that carries the vendorHash refresh.
@@ -1128,6 +1142,7 @@
     dnsblockd.inputs.flake-parts.follows = "flake-parts";
     dnsblockd.inputs.go-nix-helpers.follows = "go-nix-helpers";
     dnsblockd.inputs.nixpkgs.follows = "nixpkgs";
+    docs-gates.inputs.nixpkgs.follows = "nixpkgs";
     emeet-pixyd.inputs.nixpkgs.follows = "nixpkgs";
     erraudit.inputs.go-nix-helpers.follows = "go-nix-helpers";
     erraudit.inputs.nixpkgs.follows = "nixpkgs";

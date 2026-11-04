@@ -1221,6 +1221,27 @@
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       }
     },
+    "docs-gates": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793755780,
+        "narHash": "sha256-vIZhKqOcGNdN+8WI2/9Ss8fS2dgdI7JLU8Fg4b+aPmw=",
+        "owner": "Artmann-Technologies",
+        "repo": "docs-gates",
+        "rev": "6ed909f3309102120e9fefee7b67a9ad9317e3e7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Artmann-Technologies",
+        "ref": "main",
+        "repo": "docs-gates",
+        "type": "github"
+      }
+    },
     "domains": {
       "inputs": {
         "flake-parts": [
@@ -8136,6 +8157,7 @@
         "disko": "disko",
         "dms-paste": "dms-paste",
         "dnsblockd": "dnsblockd",
+        "docs-gates": "docs-gates",
         "domains": "domains",
         "emeet-pixyd": "emeet-pixyd",
         "erraudit": "erraudit_3",
