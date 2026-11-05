@@ -109,8 +109,12 @@
 
           scanned=0
           failed=0
+          scan_args=(--config "${aiConfigFile}")
+          if [ -n "$ai_flag" ]; then
+            scan_args+=(--ai)
+          fi
           for repo in ${lib.concatMapStringsSep " " (r: "'${r}'") cfg.repositories}; do
-            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency" --config "${aiConfigFile}" $ai_flag; then
+            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency" "''${scan_args[@]}"; then
               scanned=$((scanned + 1))
             else
               echo "WARN: cvagent scan failed: $repo" >&2
