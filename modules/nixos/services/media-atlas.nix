@@ -511,16 +511,20 @@
                 Group = cfg.user;
                 StateDirectory = stateDirName;
                 StateDirectoryMode = "0750";
-                # sd_notify pair (2026-11-04 handoff): the atlas binary
-                # sends READY=1 after serve() binds and registers (go-daemon
-                # NotifyReady) and pings WATCHDOG=1 at WatchdogSec/2
-                # (daemon.Watchdog, armed when WATCHDOG_USEC is present).
-                # Type=notify makes the READY gate real (a hub that cannot
-                # bind fails the start instead of flapping "active"); the
-                # watchdog restarts a hung hub. 30s gives a 15s keepalive
-                # budget against SQLite blips.
+                # Type=notify only — NO WatchdogSec (reverted 2026-11-04 ~23:30).
+                # The 2026-11-04 18:40 handoff added Type=notify + WatchdogSec=30s
+                # on the premise that the atlas binary pings WATCHDOG=1 — TRUE at
+                # upstream f7f4a8a (serve.go daemon.Watchdog), FALSE for the
+                # deployed 18f3cae binary: with the watchdog armed, every start
+                # died at exactly +30s (6 kills then start-limit-hit; the hub was
+                # down 20:56-23:05 while answering health 200s — goroutine 1 sat
+                # idle in the serve select at each SIGABRT). Type=notify stays:
+                # READY=1 is real (starts reach active). RE-ARM WatchdogSec=30s
+                # ONLY after upstream greens TestServeBehavioralSpecs (f7f4a8a
+                # fails it — the failed proof build that blocked the 2026-11-04
+                # float), then re-float + registry together, deploy, and prove
+                # the hub survives >30s with the watchdog armed (live petting).
                 Type = "notify";
-                WatchdogSec = "30s";
                 ExecStart = lib.concatStringsSep " " [
                   "${lib.getExe hubCfg.package} serve"
                   "--db ${stateDir}/atlas.db"
