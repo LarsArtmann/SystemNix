@@ -426,7 +426,17 @@ _: {
                 + (lib.optionalString cfg.loadAsr " --asr 1");
 
               # Release-verified :52626 handoff — see portGuard binding above.
-              ExecStartPre = "+${portGuard} ${toString cfg.backendPort}";
+              # Port reserved FIRST (EADDRINUSE crash-loop guard), then the
+              # psi-wait-gate holds the multi-GB model cold-load back until
+              # io-PSI calms (freeze-#48 class, wired 2026-11-05: flm SIGABRT
+              # ×2 + 12 GB reload per retry pile-drove the recovery boot;
+              # every restart re-arms the wait, spacing crash-loops out).
+              # Wait budget 15 min, then proceed — slow answer beats dead
+              # service (psi-wait-gate contract, PARETO M10.3).
+              ExecStartPre = [
+                "+${portGuard} ${toString cfg.backendPort}"
+                "${lib.getExe pkgs.psi-wait-gate} --name fastflowlm --psi-max 30 --max-wait-sec 900"
+              ];
 
               Environment = [
                 "HOME=/var/lib/fastflowlm"
@@ -466,7 +476,8 @@ _: {
               MemoryMax = "40G";
               MemoryHigh = "32G";
               MemorySwapMax = "20G";
-              TimeoutStartSec = "3min";
+              # 15-min psi-wait-gate budget + cold-load time (was 3min).
+              TimeoutStartSec = "25min";
             }
             (harden { })
             ioTier.background

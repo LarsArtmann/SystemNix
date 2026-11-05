@@ -65,6 +65,17 @@ _: {
       llamaServer = lib.getExe' llama-cpp-rocwmma "llama-server";
       ldLibPath = rocm.makeLdLibraryPath lib;
 
+      # Post-crash calm gate deps (options-guarded: single-module VM tests
+      # importing only llama-rag stay self-contained; evo-x2 carries the
+      # gate enabled — freezes #40–#48 recovery-boot storm wiring,
+      # 2026-11-05). llama-embeddings is a measured top boot reader
+      # (6.2 GB in the first 120 s of the freeze-#48 recovery boot; the
+      # 163 GB re-embed backlog class since #45).
+      calmGateDeps =
+        lib.optionals (
+          (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
+        ) [ "post-crash-calm-gate.service" ];
+
       commonServiceConfig = {
         Type = "exec";
         User = cfg.user;
@@ -495,9 +506,9 @@ _: {
             # NO network-online.target: loopback-only binder, models already
             # local via the required model-fetch oneshot (the fetch unit
             # alone keeps the gate — network-online sweep 2026-10-17).
-            after = [ "llama-rag-model-fetch.service" ];
+            after = [ "llama-rag-model-fetch.service" ] ++ calmGateDeps;
             wantedBy = [ "multi-user.target" ];
-            requires = [ "llama-rag-model-fetch.service" ];
+            requires = [ "llama-rag-model-fetch.service" ] ++ calmGateDeps;
 
             environment = rocm.env // {
               LD_LIBRARY_PATH = ldLibPath;
@@ -526,9 +537,9 @@ _: {
             description = "llama.cpp reranking server (bge-reranker-v2-m3, ROCm GPU)";
             # NO network-online.target: same loopback-only/local-models
             # shape as llama-embeddings (network-online sweep 2026-10-17).
-            after = [ "llama-rag-model-fetch.service" ];
+            after = [ "llama-rag-model-fetch.service" ] ++ calmGateDeps;
             wantedBy = [ "multi-user.target" ];
-            requires = [ "llama-rag-model-fetch.service" ];
+            requires = [ "llama-rag-model-fetch.service" ] ++ calmGateDeps;
 
             environment = rocm.env // {
               LD_LIBRARY_PATH = ldLibPath;

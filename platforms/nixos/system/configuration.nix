@@ -1371,6 +1371,16 @@ in
       # while /health stays 503 past the vocab-warning line.
       llama-rag.enable = true;
 
+      # Boot-time IO-PSI admission barrier for the cold-reader fleet —
+      # wired 2026-11-05 after freezes #47/#48 (the package + its psi-wait
+      # twin had sat unwired since 2026-10-17 while every recovery boot
+      # re-armed the storm). Gates llama-embeddings, llama-reranker and
+      # nsfw-classifier behind a calm-window wait; fastflowlm + llama-vlm
+      # backends carry their own psi-wait-gate ExecStartPre (wait, never
+      # refuse — socket clients see slow answers). Kill-switch for the
+      # whole gated fleet: systemctl stop post-crash-calm-gate.
+      post-crash-calm-gate.enable = true;
+
       # llama.cpp chat server — the interactive brain for InboxClean's
       # dashboard /chat (see modules/nixos/services/llama-chat.nix for why
       # CPU MoE + always-on and not FastFlowLM/Ollama/GPU; runbook:

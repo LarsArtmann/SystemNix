@@ -466,6 +466,16 @@
           touch $out
         '';
 
+        # post-crash-calm-gate selftest: the boot barrier's 5-scenario
+        # fixture run (calm-first-probe admit, refuse-at-zero-cap,
+        # poll-then-admit, refuse-at-wait-cap, default entry gate present)
+        # — wired 2026-11-05 together with the module that finally consumes
+        # it (the package had been a store-only ghost since 2026-10-17).
+        post-crash-calm-gate-selftest = pkgs.runCommand "post-crash-calm-gate-selftest" { } ''
+          ${pkgs.post-crash-calm-gate}/bin/post-crash-calm-gate selftest
+          touch $out
+        '';
+
         # thermal-pstate-guard.sh flips the amd_pstate driver mode
         # (active<->guided) on hysteresis over hwmon sensors — the
         # freeze #8-#14 thermal-ceiling family's enforcement leg (a

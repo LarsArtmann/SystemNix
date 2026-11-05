@@ -276,7 +276,14 @@ _: {
                   OOMScoreAdjust = 300;
                   MemoryMax = s.memoryMax;
                   MemoryHigh = s.memoryMax;
-                  TimeoutStartSec = "3min";
+                  # psi-wait-gate holds the multi-GB GGUF cold-load until
+                  # io-PSI calms (M10.3 wiring, 2026-11-05: freeze #48's
+                  # eight-minute recovery-boot death re-armed the whole
+                  # cold-load fleet at once). The @ bridges queue client
+                  # connections in the socket backlog meanwhile — slow
+                  # answer, never a refused one. 15-min wait + 10-min load.
+                  ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-vlm-${name} --psi-max 30 --max-wait-sec 900";
+                  TimeoutStartSec = "25min";
                 }
                 (harden { })
                 ioTier.background

@@ -50,6 +50,17 @@
 
       pkg = cfg.package;
 
+      # Post-crash calm gate deps (options-guarded: single-module VM tests
+      # importing only nsfw-classifier stay self-contained; evo-x2 carries
+      # the gate enabled — freezes #40–#48 recovery-boot storm wiring,
+      # 2026-11-05. The 17-ONNX cold start read 3.9 GB in the first 120 s
+      # of the freeze-#48 recovery boot, stacked with five other GB-scale
+      # cold readers on the QLC root).
+      calmGateDeps =
+        lib.optionals (
+          (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
+        ) [ "post-crash-calm-gate.service" ];
+
       # FULL posture: --all loads EVERY NSFW-detection model exported in
       # modelsDir (17 of 18 registry entries — jiechau is product-moderation
       # and excluded upstream). Registry ORDER is preserved
@@ -265,6 +276,12 @@
           systemd.services.nsfw-classifier = {
             description = "nsfw-classifier — NSFW image server (browser-extension backend, full ensemble)";
             wantedBy = [ "multi-user.target" ];
+            # Behind the post-crash calm gate (2026-11-05): the ONNX ensemble
+            # cold load is a measured boot-storm reader; on a refused boot the
+            # extension degrades to no-verdict (graceful), and the next calm
+            # window admits it.
+            after = calmGateDeps;
+            requires = calmGateDeps;
             # NO network-online.target: loopback-only binder behind Caddy, all
             # 17 ONNX models local on disk (network-online sweep 2026-10-17).
             startLimitBurst = 5;
