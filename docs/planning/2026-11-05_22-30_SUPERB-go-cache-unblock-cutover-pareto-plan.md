@@ -1,5 +1,7 @@
 # Go-Cache Unblock → Cutover → Harden: Pareto Execution Plan
 
+**Created:** 2026-11-05 22:30 CET
+**EXECUTING (instance crush-glm53-resume-2244, 2026-11-05 22:45 CET, HEAD `173e49338`):** executing (see AGENTS.md plan-execution tombstone)
 **Authored:** 2026-11-05 22:30 CET · **Input:** the session's four status reports (19-50 storm diagnosis, 21-43 cache advisory + boot reset, 22-21 relocation execution, 22-27 close-out) + the freshly-maintained TODO surfaces · **Live verification at authoring time:** lock-float audit STILL RED (toplevel eval throws), io PSI some avg10 70% (new storm wave), no deploy poller alive, tree clean.
 
 **Pareto ladder:** 1% → 51% = *unblock the box + cut the cache over*; 4% → 64% = *protect the win* (containment, forks, guards); 20% → 80% = *prove + harden* (tests, numbers, single-sourcing); other 20% → 100% = *hygiene tail*. Owner-decision gates (unresolved §g questions) are explicit diamonds in the graph — nothing below them is agent-actionable until answered.
