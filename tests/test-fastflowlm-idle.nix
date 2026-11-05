@@ -15,6 +15,11 @@
 { pkgs, self }:
 
 let
+  # fastflowlm is DISABLED on evo-x2 (2026-11-05): the idle unit (and
+  # thus idleExec) only exists under mkIf enable — idleExec is evaluated
+  # LAZILY (only interpolated in the enabled branch below), so this file
+  # evals green in both states; the check SKIPs (not fails) while disabled.
+  flmEnabled = self.nixosConfigurations.evo-x2.config.services.fastflowlm.enable;
   idleExec =
     self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm-idle.serviceConfig.ExecStart;
 in
@@ -28,7 +33,12 @@ pkgs.runCommand "test-fastflowlm-idle-check"
     ];
     meta.description = "FastFlowLM idle-check decision-path unit test (stubbed systemctl/journalctl)";
   }
-  ''
+  (
+    if !flmEnabled then ''
+      mkdir -p "$out"
+      echo "SKIP: fastflowlm idle-check decision-path test (service disabled on evo-x2 2026-11-05; returns with any re-enable)" > "$out/summary"
+    ''
+    else ''
     set -euo pipefail
     work="$PWD/idle-test"
     mkdir -p "$work/stubs"
@@ -151,4 +161,5 @@ pkgs.runCommand "test-fastflowlm-idle-check"
     mkdir -p "$out"
     cp "$work"/stop-*.log "$work"/out-*.log "$out/" 2>/dev/null || true
     echo "ALL PASS: 5 decision paths + stub coverage + socket-safety" > "$out/summary"
-  ''
+    ''
+  )

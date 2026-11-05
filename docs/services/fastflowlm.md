@@ -1,5 +1,7 @@
 # FastFlowLM (NPU LLM) — Agent Notes
 
+> **DISABLED 2026-11-05** (owner directive, resolves the docs/todo/services.md [decision] row). Live diagnosis: the unit's MemoryHigh=32G/MemoryMax=40G pinned the ~34 GB working set (24.9 GB shmem + model cache) permanently above `memory.high`, so the 22.6 GB model was re-read off nvme0n1 continuously (20-30 MB/s, ~750 random-read IOPS, 100% disk util, PSI io some ~47%, 11.6 GB in 6.5 min). `fastflowlm.enable = false` in `platforms/nixos/system/configuration.nix` (full evidence ledger there); module ceilings raised 40/32 → 56/48G for any re-enable (a smaller high recreates the thrash loop); memory-emergency-guard sacrifice/socket lists emptied (observe-only mode). PMA falls back to heuristic commit messages; post-deploy-check's flm E2E leg self-skips on absent units; test-port-guard/test-fastflowlm-idle SKIP while disabled. This runbook is retained for the re-enable path: flip to true + deploy, then verify PSI io <20 once warm.
+
 > Module: `modules/nixos/services/fastflowlm.nix`. Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
 
 ## FastFlowLM (AMD XDNA NPU LLM)
