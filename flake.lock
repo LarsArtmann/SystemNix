@@ -7196,20 +7196,18 @@
         "printer-monitor": "printer-monitor",
         "rust-overlay": "rust-overlay",
         "ssh-key-monitor": "ssh-key-monitor",
-        "storage-collector": "storage-collector",
         "treefmt-nix": [
           "treefmt-nix"
         ],
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1793901324,
-        "narHash": "sha256-VgPu37iVgkNN+3lHju5twZiWRf3jVIzNA6ListEmPV4=",
-        "ref": "refs/heads/master",
-        "rev": "215cd798677038f777d131bdfb2423d6b55ee9be",
-        "revCount": 4514,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/monitor365"
+        "lastModified": 1793726580,
+        "narHash": "sha256-v3XcymZY8Ffps3cfALOUwKbXSkde2L/wXiRjuVeixbc=",
+        "owner": "LarsArtmann",
+        "repo": "monitor365",
+        "rev": "ebfa4056f7687f972ff7fd6767a376d755971bd3",
+        "type": "github"
       },
       "original": {
         "ref": "refs/heads/master",
@@ -8679,7 +8677,7 @@
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
-        "storage-collector": "storage-collector_2",
+        "storage-collector": "storage-collector",
         "superfile": "superfile",
         "systems": "systems_2",
         "templ": "templ_2",
@@ -9052,23 +9050,6 @@
       }
     },
     "storage-collector": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1792452608,
-        "narHash": "sha256-9b4S2aFYjAl+/ezxRUuoxj+/Ul3pJfT8ggbmx9TJHrY=",
-        "ref": "refs/heads/master",
-        "rev": "0569c46c3ca4c2959e711a5cf8f0d3545f912436",
-        "revCount": 243,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/storage-collector"
-      },
-      "original": {
-        "rev": "0569c46c3ca4c2959e711a5cf8f0d3545f912436",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/storage-collector"
-      }
-    },
-    "storage-collector_2": {
       "inputs": {
         "collector-utils": "collector-utils_2",
         "crane": "crane_2",
