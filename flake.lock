@@ -14,11 +14,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793772568,
-        "narHash": "sha256-Xktz4g4OeLVfDlLmYHGR0jpKKVZbQvyeC7K3pjaTTzU=",
+        "lastModified": 1793332221,
+        "narHash": "sha256-XUcWjkt7t4mCrBIFn/YfUTlcnnTB01igyb3rSHCDWP8=",
         "ref": "refs/heads/fork",
-        "rev": "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5",
-        "revCount": 2661,
+        "rev": "308d8d7510c0743980575d1e7ffa6fb903b96d59",
+        "revCount": 2659,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -31,11 +31,11 @@
     "art-dupl-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793772568,
-        "narHash": "sha256-Xktz4g4OeLVfDlLmYHGR0jpKKVZbQvyeC7K3pjaTTzU=",
+        "lastModified": 1793332221,
+        "narHash": "sha256-XUcWjkt7t4mCrBIFn/YfUTlcnnTB01igyb3rSHCDWP8=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5",
+        "rev": "308d8d7510c0743980575d1e7ffa6fb903b96d59",
         "type": "github"
       },
       "original": {
@@ -204,11 +204,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793731122,
-        "narHash": "sha256-F5P+lsE97K5O5GMbhTMAQgb/aJamznPmsHYyxR5Bcoo=",
+        "lastModified": 1793610046,
+        "narHash": "sha256-sWvLTVK0rN57v060fIwNulJb+6LyCHVWAlKhAZ+iCg4=",
         "ref": "refs/heads/master",
-        "rev": "d529225745111c9158cb27b48ad0d02e6edbbc66",
-        "revCount": 2877,
+        "rev": "d17cb1aec720939b75dfb132a7c135cffe5b2717",
+        "revCount": 2876,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -1327,11 +1327,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793766196,
-        "narHash": "sha256-5g8fkJm5Rt0qqkcsZ4zKzBq27R6IcCBES1DIXhk9Whw=",
+        "lastModified": 1793920800,
+        "narHash": "sha256-KuL/BAlFhNBhBpcT9HuLJHmMnpnEp8ybF19Ga+8VdkQ=",
         "owner": "LarsArtmann",
         "repo": "emeet-pixyd",
-        "rev": "9ddfb8bb82c99a983bbe98940c450f4f20d79e85",
+        "rev": "ac1acac2d937c3ca83c06d73751d3990b06ee555",
         "type": "github"
       },
       "original": {
@@ -7891,11 +7891,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793772779,
-        "narHash": "sha256-gPLGT9MhZV64ksehsHVhJ1SyvBpVHPhWpFYchb6Zdg4=",
+        "lastModified": 1793922333,
+        "narHash": "sha256-jNTj7u9A33bWcdFz1GV3lRtF8wY9YMjrl5TrQ7cslb8=",
         "ref": "refs/heads/master",
-        "rev": "3fb6f3fcdc7070008c71e00517e35f8e79b9befe",
-        "revCount": 1741,
+        "rev": "67b2fac96799f269348f51eca78903df6c14dcc8",
+        "revCount": 1742,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },
