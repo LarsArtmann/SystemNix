@@ -259,7 +259,7 @@ printf '%-24s %s%% (max during run %s%%, avg %s%%)\n' "PSI io some avg10" "$PSI_
 printf '%-24s %s (gate<%s%%, accepted=%s)\n' "psi gate" "$PSI_PRE" "$PSI_MAX" "$psi_accepted"
 printf '%-24s %s @ port %s ctx %s ngl %s\n' "server" "$SERVER" "$PORT" "$CTX" "$NGL"
 
-JSON="$(jq -n \
+JSON="$(jq -c -n \
   --arg ts "$(date -Is)" \
   --arg model "$MODEL" \
   --arg server "$SERVER" \
