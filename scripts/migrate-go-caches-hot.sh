@@ -105,6 +105,26 @@ if ! mountpoint -q "$BC"; then
   exit 1
 fi
 
+# The 2026-09-20 blocker, closed at the ONLY point where ordering is
+# guaranteed: systemd canonicalizes mount units through symlinks, so the
+# old HM out-of-store symlink at ~/.cache/go-build must be GONE before the
+# deploy loads the automount (HM would remove it at activation, but the
+# automount start is not ordered after home-manager-lars.service — the
+# parked note's boot-order requirement, satisfied by operator sequencing).
+# Until the deploy, env'd shells keep using $BC/go-build (old env); env-less
+# go processes may recreate a real ~/.cache/go-build dir on the QLC — the
+# existing reap surfaces (buildcache-reap-names, deploy.sh sweep) handle it.
+HM_LINK="/home/$USER/.cache/go-build"
+if [ -L "$HM_LINK" ]; then
+  case "$(readlink "$HM_LINK")" in
+  "$BC"/go-build*) run rm -f "$HM_LINK" ;;
+  *)
+    echo "REFUSED: $HM_LINK is a symlink to $(readlink "$HM_LINK"), not $BC/go-build — inspect by hand" >&2
+    exit 1
+    ;;
+  esac
+fi
+
 case "$ACTION" in
 prepare)
   for c in $CACHES; do

@@ -163,10 +163,13 @@ _bf_agent_cache_guard() {
     esac
     base=${val#"$HOME/.cache/"}
     case $base in
-    # Blessed names: HM out-of-store symlinks already land on the mount
-    # (go-build/go/goimports/pnpm), gopls+nix stay NVMe by design
-    # (home.nix comment: LSP/nix-eval latency sensitivity).
-    go-build | go | goimports | gopls | nix | pnpm) continue ;;
+    # Blessed names: go-build/go-mod/golangci-lint are hot-user-caches
+    # Samsung automounts (2026-11-05 — NOT symlinks, so the -L exemption
+    # below cannot save them; the name list is their only shield),
+    # go/goimports/pnpm are HM out-of-store symlinks onto the mount,
+    # gopls+nix stay NVMe by design (home.nix comment: LSP/nix-eval
+    # latency sensitivity).
+    go-build | go-mod | golangci-lint | go | goimports | gopls | nix | pnpm) continue ;;
     *) ;;
     esac
     # A symlink target is mechanism-independent redirection — leave it.

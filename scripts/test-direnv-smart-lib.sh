@@ -376,6 +376,22 @@ ln -s "$af_mount/go-build" "$af_home/.cache/go-build"
   fi
 )
 
+# Test: blessed name WITHOUT a symlink (golangci-lint Samsung automount,
+# 2026-11-05) -> untouched — regression test for the guard eating the
+# hot-user-caches mount paths (name list is their only shield).
+(
+  export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
+  unset GOCACHE
+  export GOLANGCI_LINT_CACHE="$af_home/.cache/golangci-lint"
+  _bf_target_is_mount() { return 0; }
+  _bf_agent_cache_guard
+  if [[ $GOLANGCI_LINT_CACHE == "$af_home/.cache/golangci-lint" ]]; then
+    pass "agent guard: blessed automount name (golangci-lint) untouched"
+  else
+    fail "agent guard: rewrote blessed golangci-lint automount ($GOLANGCI_LINT_CACHE)"
+  fi
+)
+
 # Test: path outside ~/.cache -> untouched.
 (
   export HOME="$af_home" BF_DEAD_MOUNT_PATH="$af_mount"
