@@ -19,10 +19,18 @@
 { pkgs, self }:
 
 let
-  flmExec =
-    self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm.serviceConfig.ExecStartPre;
-  ragExec =
-    self.nixosConfigurations.evo-x2.config.systemd.services.llama-embeddings.serviceConfig.ExecStartPre;
+  # ExecStartPre grew from a single string to a LIST when the psi-wait-gate
+  # wave wired a second pre-start command (2026-11-05); the port-guard entry
+  # is the "+"-privileged one. Select it whether the unit wires one command
+  # or several, so the next list flip cannot break this check again.
+  pickGuardExec =
+    exec:
+    if builtins.isList exec then
+      pkgs.lib.findFirst (s: pkgs.lib.hasPrefix "+" s) (builtins.head exec) exec
+    else
+      exec;
+  flmExec = pickGuardExec self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm.serviceConfig.ExecStartPre;
+  ragExec = pickGuardExec self.nixosConfigurations.evo-x2.config.systemd.services.llama-embeddings.serviceConfig.ExecStartPre;
 in
 pkgs.runCommand "test-port-guard"
   {
