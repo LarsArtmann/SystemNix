@@ -55,10 +55,17 @@
 #               bge pair, which GGML_ASSERT-crash without it; default 0 for
 #               chat models = the llama-chat default model)
 #   LM          llama-server --load-mode (default none = plain buffered
-#               reads; dio was observed SIGABRT-ing mid-load under memory
-#               pressure on the 0.6.0 build, 2026-11-05, so it stays opt-in
-#               for calm-window experiments; with LM=none the COLD
-#               eviction is what makes the probe cold)
+#               reads. dio's old "SIGABRTs under memory pressure" note was
+#               a misattribution: the two 2026-11-05 aborts fired on bge-m3
+#               WITHOUT --embedding in BOTH load-modes (dio 02:02:08, none
+#               02:05:15 per coredumpctl), and the KEEP_RAW rerun
+#               reproduced it deterministically at zero memory pressure
+#               with the reason captured: llama-context.cpp:2275
+#               GGML_ASSERT(n_outputs_max <= cparams.n_outputs_max) — the
+#               missing-embedding assert, not a dio defect. dio stays
+#               opt-in only for fixed-flag comparability with the none
+#               baseline. With LM=none the COLD eviction is what makes the
+#               probe cold)
 #   COLD        cache-eviction mode: fadvise (default: vmtouch -e, evicts
 #               ONLY the model's pages; unprivileged; auto-resolves vmtouch
 #               via nix) | drop (sync + pagecache drop; needs root, NOT

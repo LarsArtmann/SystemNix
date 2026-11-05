@@ -17,6 +17,10 @@
 #      deploy.sh, so the REAL function text is what runs)
 #   D  probe_endpoint fixture — body + ok-marker per probe id, and the
 #      compute-before-launch ordering pinned as a source tripwire
+#   E  force-override ladder (freeze #49) — force_level() 0/1/2/garbage
+#      mapping on the REAL function text; the tier-2 extreme-band awk
+#      condition accepts/rejects the right (psi,disk) corners; no legacy
+#      literal "!= 1" override site may remain (=2 must clear gate 1)
 # Run: bash scripts/test-deploy-pipeline.sh  (also a flake check)
 set -uo pipefail
 
@@ -204,6 +208,42 @@ fi
 
 # Per-probe files (not shared >>): tripwire on the marker write form.
 assert_contains "per-probe ok-marker write form preserved" "$(grep -c ': >"\$PROBE_DIR/\$1.ok"' "$PDC_SH")" "1"
+
+# ---------------------------------------------------------------------------
+echo "E. force-override ladder (freeze #49 tier-2 extreme-band veto)"
+
+# force_level() extracted live from deploy.sh — the REAL function text runs
+# (same pattern as group C: a copy would test yesterday's function).
+force_level_fn=$(sed -n '/^force_level() {/,/^}/p' "$DEPLOY_SH")
+if [ -n "$force_level_fn" ]; then ok "force_level() present in deploy.sh"; else bad "force_level() missing from deploy.sh"; fi
+
+level_unset=$(env -u DEPLOY_FORCE_PRESSURE bash -c "$force_level_fn"'; force_level')
+assert_eq "unset DEPLOY_FORCE_PRESSURE maps to 0" "$level_unset" "0"
+assert_eq "garbage value maps to 0" "$(DEPLOY_FORCE_PRESSURE=yes bash -c "$force_level_fn"'; force_level')" "0"
+assert_eq "=1 maps to 1" "$(DEPLOY_FORCE_PRESSURE=1 bash -c "$force_level_fn"'; force_level')" "1"
+assert_eq "=2 maps to 2" "$(DEPLOY_FORCE_PRESSURE=2 bash -c "$force_level_fn"'; force_level')" "2"
+
+# Tier-2 tripwires: the extreme-band condition, the =2 escape hint, and the
+# freeze citations must all stay in deploy.sh.
+assert_contains "tier-2 extreme-band condition present" "$(grep -c 'io_psi_avg10:-0} >= 80' "$DEPLOY_SH")" "1"
+assert_contains "tier-2 =2 escape hint present" "$(grep -c 'DEPLOY_FORCE_PRESSURE=2 nix run' "$DEPLOY_SH")" "1"
+assert_contains "tier-2 veto text cites both fatal freezes" "$(grep -c 'twice ended in a WDT freeze' "$DEPLOY_SH")" "1"
+
+# The exact band condition extracted and exercised at the four corners:
+# the fatal corner (92.9/101.8 = freeze #49's entry sample) is IN band; the
+# moderate-PSI, phantom (high PSI, idle disk), and 50/50 corners are OUT —
+# =1 keeps working everywhere outside the fatal corner.
+band_cond=$(grep -m1 -o 'awk "BEGIN{exit !(${io_psi_avg10:-0} >= 80)}" && awk "BEGIN{exit !(${disk_busy:-0} >= 80)}"' "$DEPLOY_SH")
+if [ -n "$band_cond" ]; then ok "band condition extractable verbatim"; else bad "band condition not found verbatim"; fi
+io_psi_avg10=92.9 disk_busy=101.8 eval "$band_cond" && ok "freeze-#49 corner (92.9/101.8) trips tier 2" || bad "freeze-#49 corner must trip tier 2"
+io_psi_avg10=75 disk_busy=100 eval "$band_cond" && bad "moderate PSI (75) must NOT trip tier 2" || ok "moderate PSI stays =1 territory"
+io_psi_avg10=95 disk_busy=10 eval "$band_cond" && bad "phantom PSI (idle disk) must NOT trip tier 2" || ok "phantom corner stays =1 territory"
+io_psi_avg10=50 disk_busy=50 eval "$band_cond" && bad "50/50 must NOT trip tier 2" || ok "50/50 stays =1 territory"
+
+# =2 must clear the first (=1) gate too: no legacy literal "!= 1" override
+# site may remain anywhere in deploy.sh.
+legacy_sites=$(grep -c 'DEPLOY_FORCE_PRESSURE:-0}" != "1"' "$DEPLOY_SH" || true)
+assert_eq "no legacy != 1 override sites remain" "$legacy_sites" "0"
 
 # ---------------------------------------------------------------------------
 echo

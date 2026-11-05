@@ -138,6 +138,21 @@ echo ""
 # (the activation itself is the most dangerous phase; the validation takes
 # minutes and storms build under it). Same exit code + escape hatch as the
 # pre-switch positions (exit 12, DEPLOY_FORCE_PRESSURE=1).
+#
+# DEPLOY_FORCE_PRESSURE ladder (freeze #49, 2026-11-05): 0/empty = the gates
+# rule; 1 = override moderate pressure + trip recency (the historical escape
+# hatch, unchanged); 2 = ALSO override the tier-2 extreme real-storm band
+# inside deploy_pressure_gate. Both WDT deaths of the forced-deploy class
+# (#40 2026-11-02, #49 2026-11-05) were =1 fires into PSI >= 90 with disk
+# >= 100; =2 exists so that act stays deliberate, not a stale env var.
+force_level() {
+  case "${DEPLOY_FORCE_PRESSURE:-0}" in
+    2) echo 2 ;;
+    1) echo 1 ;;
+    *) echo 0 ;;
+  esac
+}
+
 deploy_pressure_gate() {
   echo "=== Memory pressure gate (2026-08-22 stability plan) ==="
   # A deploy is itself a multi-GB build + an activation storm; both freezes
@@ -229,10 +244,29 @@ deploy_pressure_gate() {
     echo "  (both 2026-08-22 freezes had builds as contributing load)."
     echo "  Options: wait for pressure to drain, shed heavy jobs — or override:"
     echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    if [ "$(force_level)" = "0" ]; then
       exit 12
     fi
-    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+    echo "  DEPLOY_FORCE_PRESSURE=$(force_level) set — proceeding anyway"
+    # Tier-2 extreme-band veto (freeze #40 + freeze #49, 2026-11-05): both
+    # WDT deaths of the forced-deploy class were =1 fires into a REAL
+    # device-saturating storm. #40: 2026-11-02 14:19 forced switch into io
+    # PSI avg60 ~99, WDT 23 min later. #49: 2026-11-05 20:02 forced at io
+    # PSI avg10 92.9 / disk 101.8, activation hung from 20:12, WDT 20:36:40,
+    # switch never anchored. =1 stays sufficient for every other refusal
+    # class (phantom PSI, moderate pressure, trip recency); only the measured
+    # extreme band demands the explicit =2.
+    if awk "BEGIN{exit !(${io_psi_avg10:-0} >= 80)}" && awk "BEGIN{exit !(${disk_busy:-0} >= 80)}"; then
+      echo "  ✗ EXTREME real-storm band: io PSI some avg10 = ${io_psi_avg10}% WITH disk busy = ${disk_busy}%"
+      echo "    A forced build+switch here has twice ended in a WDT freeze (#40 2026-11-02,"
+      echo "    #49 2026-11-05: forced at PSI 92.9 / disk 101.8, activation hung, WDT 24 min later)."
+      echo "    If you accept that risk explicitly:"
+      echo "      DEPLOY_FORCE_PRESSURE=2 nix run .#deploy"
+      if [ "$(force_level)" != "2" ]; then
+        exit 12
+      fi
+      echo "  DEPLOY_FORCE_PRESSURE=2 set — proceeding into the extreme band against the twice-fatal evidence"
+    fi
   else
     echo "  OK (PSI mem some avg10 = ${psi_avg10}%, PSI io some avg10 = ${io_psi_avg10:-0}%, disk busy = ${disk_busy:-n/a}%, zram = ${zram_fill:-n/a}%, MemAvailable = ${avail_pct}%)"
   fi
@@ -261,10 +295,10 @@ deploy_trip_recency_gate() {
     echo "  Current PSI may be a dip between trips; deploying now races the storm."
     echo "  Wait for the box to quiet down, or override:"
     echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    if [ "$(force_level)" = "0" ]; then
       exit 12
     fi
-    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+    echo "  DEPLOY_FORCE_PRESSURE=$(force_level) set — proceeding anyway"
     return 0
   fi
   zone6_recent=$(grep -c 'MEMORY EMERGENCY action taken' <<<"$journal_out" || true)
@@ -273,10 +307,10 @@ deploy_trip_recency_gate() {
     echo "  Current PSI may be a dip between trips; deploying now races the storm."
     echo "  Wait for ≥60 min without a trip, or override:"
     echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "${DEPLOY_FORCE_PRESSURE:-0}" != "1" ]; then
+    if [ "$(force_level)" = "0" ]; then
       exit 12
     fi
-    echo "  DEPLOY_FORCE_PRESSURE=1 set — proceeding anyway"
+    echo "  DEPLOY_FORCE_PRESSURE=$(force_level) set — proceeding anyway"
   else
     echo "  OK (no guard trips in the last 60 min)"
   fi

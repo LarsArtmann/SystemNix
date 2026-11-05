@@ -48,3 +48,12 @@ vmtouch evicted 282,635 pages (1G) before launch; the 7 MiB/s figure is the hone
 ## Follow-up harvest
 
 - kill_pid cleanup-trap bug discovered in scripts/bench-hot-file.sh:81 + scripts/bench-samsung-livefs.sh:146 (function defined nowhere; both EXIT traps dead) → TODO_LIST new [ready] row. No other direct follow-ups; deliberately not harvested: baseline number itself (the script owns it, self-gated on PSI, no agent row needed).
+
+## Correction (2026-11-05 21:0x, dio-repro dispatch)
+
+The "LM=dio observed SIGABRT mid-load under memory pressure (one core-dump observed; not reproducible cleanly)" verdict above is **FALSIFIED** on both clauses:
+
+- **Two cores, not one** — coredumpctl holds SIGABRTs at 02:02:08 (PID 2304916) and 02:05:15 (PID 2367016), both bge-m3 on port 18849 WITHOUT `--embedding`, and the second ran `--load-mode none`. Identical crash across load-modes kills the dio attribution; the crash also DID reproduce that night (the "not reproducible cleanly" reading was wrong).
+- **Abort reason captured** — the calm-window KEEP_RAW=1 rerun (2026-11-05 21:0x, storm-tolerant PSI_ACCEPT, mem PSI 0.04% = zero memory pressure) reproduced the SIGABRT deterministically with the reason in server.log: `llama-context.cpp:2275: GGML_ASSERT(n_outputs_max <= cparams.n_outputs_max) failed` during the init warmup encode (`common_init_from_params` → `llama_context::encode`), right after the "embeddings required but some input tokens were not marked as outputs -> overriding" warning. That is the missing-`--embedding` GGML_ASSERT on an embedding GGUF — the EMBED-knob discovery above — not a dio defect and not memory-pressure-dependent.
+
+dio + EMBED=1 exoneration datapoint: green under the strict gate (JSONL `~/.cache/data-ai-compsize/dio-bge-m3.jsonl`). Upstream ggml-org/llama.cpp filing: **NOT filed** — verify-before-filing gate fails (the premise was wrong; nothing to file against dio). dio stays opt-in in the harness for fixed-flag comparability only. Evidence: `~/.cache/data-ai-compsize/dio-sigabrt-repro-2026-11-05/` (server log + PSI samples); live-surface corrections: bench-cold-load.sh LM knob comment, docs/agents/storage.md harness paragraph, design doc §5 LANDED bullet, docs/todo/storage.md row 222.
