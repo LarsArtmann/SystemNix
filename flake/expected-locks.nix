@@ -36,7 +36,7 @@
   crush-config = "227a1307f79a3abd7c746f98e985d84660720744";
   crush-daily = "95bf8a08411f8c940c3fe45a1fdfa33bbed3f015";
   cv = "16a656f4924069efcee122c3f7f8ccf27d592a21";
-  cvagent = "4f2c4dffb767df027ead65c8c5aebbed66a01ff6";
+  cvagent = "148423437b003f993589863611b46a6bb38806ac";
   dankMaterialShell = "15073346175f34f49a6e80aa17104c2827eb0e05";
   discordsync = "c624aca2dcef347d58d28d71bf4832f3beb46e0c";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
@@ -107,7 +107,7 @@
   pyproject-build-systems = "461a6a8540307fb9c05b8f6ad29e9720d2a621db";
   pyproject-nix = "bf7d4b1d6de61db02fd4e748395634f03006e5de";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";
-  quotaboard = "c98d13ad4b4bdb84b02074c6db29a06fc156b282";
+  quotaboard = "0a4c7ab743bab51a1488cd49ecdc0a45650b7a43";
   rust-overlay = "6b29b8e8d3cc8ebda9342fbbcc7ac06eff58e2fb";
   samber-linter = "329c33c6eae0c8842ad9f8161d13773945e51747";
   signoz-collector-src = "bd2b18fed2538300fa724953d653c9bb69ddc12c";
