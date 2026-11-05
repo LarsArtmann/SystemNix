@@ -218,11 +218,13 @@
               User = primaryUser;
               Group = "users";
               ExecStart = lib.getExe script;
-              # Scan volume scales with repository count AND history (24
-              # repos, ~40k commits incl. go-cqrs-lite's 9k) — the 2026-11-04
-              # meta-importance expansion doubled the repo count, so the
-              # 2026-11-01 budget doubled with it.
-              TimeoutStartSec = "20min";
+              # Scan budget: 24 repos at ~2.5 min per repo WITH AI (live
+              # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
+              # facts in 2.6 min; the 20min budget killed the run at repo
+              # ~13/24, OnFailure paged). Sequential AI calls ≈ 60 min for
+              # the full list — 90 min is the generous bound. Bulk work in
+              # the 05:53 slot is off-peak by design (ioTier.background).
+              TimeoutStartSec = "90min";
               Environment = [ "HOME=/home/lars" ];
               # AI key via sops-rendered env file; OPENAI_API_KEY is read
               # directly by cvagent outside the CVAGENT_* koanf namespace.
