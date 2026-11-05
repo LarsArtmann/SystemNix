@@ -71,7 +71,12 @@ nixpkgs.lib.nixosSystem {
             # modules/nixos/services/bank-sync.nix). If a shim is ever
             # re-added, mirror it on BOTH surfaces or HM and the daemon build
             # DIFFERENT package drvs.
-            package = inputs.bank-sync.packages.x86_64-linux.default;
+            # RE-ADDED 2026-11-06 lock float: bank-sync@fab9306 upstream
+            # iJg1bJqr… stale through our lock (got Cgy7/6Oa…,
+            # float-proof-20261106-000533.log); mirrored on both surfaces.
+            package = inputs.bank-sync.packages.x86_64-linux.default.overrideAttrs {
+              vendorHash = "sha256-Cgy7/6Oa6fr8QmFguL5czRBfGhl4t9Fo0C9DTvbw1yA=";
+            };
           };
           services.docs-archive-stats = {
             enable = true;

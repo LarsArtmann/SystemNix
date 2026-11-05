@@ -150,7 +150,15 @@
             # only with a fresh first-hand got-hash (never invented) and
             # mirror it at the HM surface (systems/evo-x2.nix
             # programs.bank-sync) or the two surfaces build different drvs.
-            package = lib.mkDefault inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+            # RE-ADDED 2026-11-06 lock float: bank-sync@fab9306's upstream
+            # iJg1bJqr… went stale through our lock (got Cgy7/6Oa…,
+            # float-proof-20261106-000533.log) — fresh first-hand got-hash,
+            # mirrored at the HM surface.
+            package = lib.mkDefault (
+              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+                vendorHash = "sha256-Cgy7/6Oa6fr8QmFguL5czRBfGhl4t9Fo0C9DTvbw1yA=";
+              }
+            );
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the

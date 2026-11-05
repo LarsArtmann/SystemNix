@@ -47,10 +47,12 @@
       # 3dje+f7T… at the new locked rev e88c0d8; got 1O/b94qj….
       # RE-STALE 2026-10-26 lock float: spec 1O/b94qj, got gYJcV6Ol
       # (float-proof-20261026-161006.log).
+      # RE-STALE 2026-11-06 lock float: discordsync@ea6c444 spec gYJcV6Ol,
+      # got DnpWB49k (float-proof-20261106-000533.log).
       discordsyncPkg =
         inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-gYJcV6OlONXa1U7NbZMsNYKp3sO3vYmTkjT4S8U3ISQ=";
+            vendorHash = "sha256-DnpWB49kIT9YNN2nm0NRewsxgCieGPhiXIIVoUqeplg=";
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
       # Immich lookup key pair (IMMICH_URL/IMMICH_API_KEY), rendered by the

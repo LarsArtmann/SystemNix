@@ -43,8 +43,13 @@
           # other way — it overrode the now-correct upstream hash and was
           # the sole float-register RED of the 2026-11-03 lift wave).
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
+          # RE-ADDED 2026-11-06 lock float: vision-review-agent@4520467
+          # upstream-baked oPfsexE… stale through our lock (got NAkDPYu…,
+          # float-proof-20261106-000533.log).
           package = lib.mkDefault (
-            inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd
+            inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
+              vendorHash = "sha256-NAkDPYu+H8KoJiE2qEqqxvH9v/79if18ZMs7W4KDkTY=";
+            }
           );
           llamaServer.port = lib.mkDefault ports.visionreviewd-llama;
         };

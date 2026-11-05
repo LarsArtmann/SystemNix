@@ -84,10 +84,12 @@
       # .drv>` probe false-greened rc=0 in the same window — it trusts an
       # already-registered CA realisation instead of re-verifying; only the
       # flake-attr toplevel proof is truth.
+      # RE-STALE 2026-11-06 lock float: papdashboard@63425ee spec unmyEeVV,
+      # got vEnbNwKK (float-proof-20261106-000533.log).
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-unmyEeVV9Mb/CqGSDTGgcQrnxI5le4RIU+Ok5G/l0rA=";
+            vendorHash = "sha256-vEnbNwKKfJrPYuqYShKw5pYkAwcSOpbqTOicXQwyZZU=";
           };
 
       checkEnv = mkSecretCheck pkgs {

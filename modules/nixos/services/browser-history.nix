@@ -344,6 +344,20 @@
                   # instead (files override Environment= entries).
                   "LLM_API_KEY=local"
                 ]
+                ++ lib.optionals (config.services.browser-history-agent.tokenUserEmail != null) [
+                  # /admin/ super-admin bootstrap (env-only upstream —
+                  # SUPER_ADMIN_EMAILS in api/config.go; the upstream server
+                  # module has no option yet, so the env rides the unit
+                  # directly, CHAT_DB_PATH precedent). The adminui panel 403s
+                  # EVERY user until reconcileSuperAdmins (api/admin_panel.go)
+                  # resolves one of these emails post-projection-drain and
+                  # grants super_admin in the global "*" domain; the casbin
+                  # grant is in-memory and re-applied every start, so
+                  # removing the email revokes at the next restart. Owner
+                  # identity single-sourced from the tokenUserEmail binding
+                  # (machineId doctrine — one source, no drift).
+                  "SUPER_ADMIN_EMAILS=${config.services.browser-history-agent.tokenUserEmail}"
+                ]
                 ++ [
                   # CHAT_DB_PATH enables /chat (env-only upstream, lives
                   # beside data.db in the DynamicUser StateDirectory).

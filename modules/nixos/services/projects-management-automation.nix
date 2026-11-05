@@ -95,10 +95,13 @@
           # tR/Y9ul, got R0Vv8yx (first-hand,
           # ~/.cache/lockfloat/float-proof-20261103-214837.log) — both
           # surfaces updated.
+          # RE-STALE 2026-11-06 lock float: PMA@f598fc9 spec R0Vv8yx, got
+          # ErtiXt04 (float-proof-20261106-000533.log); both surfaces
+          # updated in the same pass.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-R0Vv8yx5YPQR7fDuBEPmh7v/mqu/DjrGjDueU1S5lDI=";
+                vendorHash = "sha256-ErtiXt04mrrlz9wdwcptkGi2J9oKVvIG2wrfnAzNWq0=";
               };
           user = primaryUser;
           group = "users";

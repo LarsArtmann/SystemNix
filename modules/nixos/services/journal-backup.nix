@@ -75,8 +75,11 @@
           # spec OzU6YCvB…, got 1JuET6kA… (first-hand,
           # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log); mirrors
           # the flakePkgShim in lars-packages.nix — edit ALL THREE sites.
+          # RE-STALE 2026-11-06 lock float: journal@4a63e7f spec 1JuET6kA,
+          # got 65uOOb5j (float-proof-20261106-000533.log); all three
+          # surfaces updated in the same pass.
           default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-1JuET6kAFsXpHGqAYIYtLNwfg/2Jxy0ors0RV9PElKk=";
+            vendorHash = "sha256-65uOOb5jDtTXWTlbsE9jibkFyMhejAiQxQIlGdAALd4=";
           };
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to run the backup with.";

@@ -130,10 +130,12 @@
       # Drop when upstream's vendorHash reproduces again under the followed
       # nixpkgs (their own nixpkgs pin catching up); re-add ONLY via
       # nix-hash-fix evidence, never by hand.
+      # RE-STALE 2026-11-06 lock float: inboxclean@c79cbab spec wP/qpf3b,
+      # got pexiMrou (float-proof-20261106-000533.log).
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-wP/qpf3bpAMbD6yEBao0F+oTEEYFY8cAqZ7PVZtt71M=";
+            vendorHash = "sha256-pexiMroulQauVvYOL0rXqU/9HydtswRouYvMz+Vmm9Y=";
           };
     in
     {

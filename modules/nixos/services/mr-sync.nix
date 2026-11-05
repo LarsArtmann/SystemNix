@@ -68,8 +68,11 @@
           # RE-STALE 2026-10-27 lock float: spec TENDT6NZ, got p4C0Ob7i
           # (float-proof-20261027-172949.log — same value as the
           # lars-packages surface).
+          # RE-STALE 2026-11-06 lock float: mr-sync@ffae30f spec p4C0Ob7i,
+          # got z7ABeNjz (float-proof-20261106-000533.log); both surfaces
+          # updated in the same pass.
           default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-p4C0Ob7iqrB18velwc4t0zzLhoFNbZPGqBwqBggMFSQ=";
+            vendorHash = "sha256-z7ABeNjzvWxzYU+S984Ead91HHNqUjh7XzhCVA6vces=";
           };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";
