@@ -1,5 +1,7 @@
 # Freeze #49 fix session — brutal self-review + status
 
+> **[2026-11-06 merge note]** canonical incident narrative: [2026-11-05_go-build-storm-freeze-49-incident-note.md](./2026-11-05_go-build-storm-freeze-49-incident-note.md) — this report remains the self-review + freeze-confirmation detail record.
+
 **Scope.** THIS session only (2026-11-05, ~20:39–21:05 CET): the "why did we crash AGAIN" autopsy, the deploy.sh tier-2 fix, registration/harvest, and this self-review. Prior-session work (19:42, 19:50 reports) is context, not mine. All session claims below were re-probed at report time (21:00–21:03) — including two of my own that failed re-verification and were corrected (§d.3/§d.4). **NOT harvested this time** (owner instruction: report, then WAIT): every NEW §f item; the three rows landed earlier during the fix phase (deploy re-run, lint-fleet cap, dispatch-gate decision) were harvested under the session's fix mandate and already live in both TODO surfaces.
 
 ---
