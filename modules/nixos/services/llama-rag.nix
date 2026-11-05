@@ -71,10 +71,9 @@ _: {
       # 2026-11-05). llama-embeddings is a measured top boot reader
       # (6.2 GB in the first 120 s of the freeze-#48 recovery boot; the
       # 163 GB re-embed backlog class since #45).
-      calmGateDeps =
-        lib.optionals (
-          (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
-        ) [ "post-crash-calm-gate.service" ];
+      calmGateDeps = lib.optionals (
+        (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
+      ) [ "post-crash-calm-gate.service" ];
 
       commonServiceConfig = {
         Type = "exec";

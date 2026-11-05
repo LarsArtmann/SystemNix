@@ -56,10 +56,9 @@
       # 2026-11-05. The 17-ONNX cold start read 3.9 GB in the first 120 s
       # of the freeze-#48 recovery boot, stacked with five other GB-scale
       # cold readers on the QLC root).
-      calmGateDeps =
-        lib.optionals (
-          (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
-        ) [ "post-crash-calm-gate.service" ];
+      calmGateDeps = lib.optionals (
+        (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
+      ) [ "post-crash-calm-gate.service" ];
 
       # FULL posture: --all loads EVERY NSFW-detection model exported in
       # modelsDir (17 of 18 registry entries — jiechau is product-moderation
