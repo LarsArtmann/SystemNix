@@ -40,9 +40,13 @@
 #               the house deploy-gate number)
 #   PSI_WAIT_S  max seconds to wait for the window before ABORT (default 1800)
 #   PSI_ACCEPT  1 = run anyway in a noisy window (default 0)
-#   MODEL       GGUF path (default: llama-chat's configured modelPath default,
-#               modules/nixos/services/llama-chat.nix modelPath, the 23.4G
-#               Qwen3.6-35B-A3B Q4_K_P, the actual M12 pain case)
+#   MODEL       GGUF path (default: DERIVED at runtime from llama-chat.nix's
+#               modelPath option default — the swap-brain runbook
+#               (docs/services/llama-chat.md "Swap the brain") edits exactly
+#               that line, so the bench default cannot silently stale; a
+#               hardcoded 2026-11-05 fallback + WARN covers runs outside a
+#               checkout. A swap via an override elsewhere (not the module
+#               default) is invisible to the derive — pass MODEL= explicitly)
 #   PORT        scratch port (default 18848; REFUSES if any listener holds it ,
 #               the 09-18 rogue-port-holder class)
 #   CTX         llama-server context size (default 4096; fixed = comparable)
@@ -70,7 +74,20 @@ set -euo pipefail
 
 MODEL_ARG="${1:-}"
 MODEL="${MODEL_ARG:-${MODEL-}}"
-MODEL="${MODEL:-/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf}"
+if [ -z "$MODEL" ]; then
+  LLAMA_CHAT_NIX="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/modules/nixos/services/llama-chat.nix"
+  DERIVED_MODEL=""
+  if [ -r "$LLAMA_CHAT_NIX" ]; then
+    DERIVED_MODEL="$(sed -n '/modelPath = lib.mkOption/,/};/p' "$LLAMA_CHAT_NIX" | grep -o 'default = "[^"]*"' | head -1 | cut -d'"' -f2)"
+  fi
+  if [ -n "$DERIVED_MODEL" ]; then
+    MODEL="$DERIVED_MODEL"
+    echo "### default model derived from llama-chat.nix: $MODEL"
+  else
+    MODEL="/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Aggressive-Q4_K_P.gguf"
+    echo "WARN: could not derive llama-chat modelPath default ($LLAMA_CHAT_NIX unreadable or option block moved), using hardcoded 2026-11-05 fallback"
+  fi
+fi
 PORT="${PORT:-18848}"
 CTX="${CTX:-4096}"
 NGL="${NGL:-99}"

@@ -99,6 +99,13 @@ Source: <https://huggingface.co/HauhauCS/Qwen3.6-35B-A3B-Uncensored-HauhauCS-Agg
 - Swap the brain: change `services.llama-chat.modelPath` + `alias` (the
   inboxclean `LLM_MODEL` follows automatically) — e.g. the dense 27B
   sibling, or a future GPU re-enable once the ROCm wedge is fixed upstream.
+  - Bench sync-check (modelPath split-brain guard, 2026-11-05):
+    `scripts/bench-cold-load.sh` derives its default model from THIS
+    module's `modelPath` option default at runtime — a swap via the module
+    default updates the bench automatically. A swap via an override
+    elsewhere (configuration.nix etc., leaving this module's default stale)
+    is INVISIBLE to that derive — pass `MODEL=<gguf>` to the bench
+    explicitly in that case.
 - Verify: `curl :8850/v1/models` must list the alias;
   `journalctl -u llama-chat -n 50` for load/wedge signatures (the freeze-#5
   class: 94% single-thread CPU spin after a vocab warning).
