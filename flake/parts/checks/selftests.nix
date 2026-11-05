@@ -1337,7 +1337,13 @@
                 map (name: "llama-vlm-${name}@") (builtins.attrNames cfg.services.llama-vlm.servers)
               else
                 [ ];
-            bridgeTemplates = [ "fastflowlm@" ] ++ vlmTemplates;
+            # fastflowlm@ only exists under mkIf enable (service DISABLED on
+            # evo-x2 2026-11-05) — derive it like vlmTemplates so the
+            # contract tracks module state instead of eval-failing on
+            # absence.
+            flmTemplates =
+              if cfg.services.fastflowlm.enable then [ "fastflowlm@" ] else [ ];
+            bridgeTemplates = flmTemplates ++ vlmTemplates;
             contractGuards = builtins.all (
               tmpl:
               lib.throwIfNot (cfg.systemd.services."${tmpl}".serviceConfig.SuccessExitStatus == [ 143 ])

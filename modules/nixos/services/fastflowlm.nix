@@ -473,8 +473,18 @@ _: {
               # peaked at 26G (model + KV + runtime), so 32G/26G would have
               # cgroup-OOM-killed the 21.6 G load on arrival. 40G hard / 32G
               # reclaim — costs nothing while idle (socket-activated).
-              MemoryMax = "40G";
-              MemoryHigh = "32G";
+              # RE-SIZED 2026-11-05 (live diagnosis while nvme0n1 sat at 100%
+              # util): the real working set is ~34 GB (24.9 GB shmem staging
+              # + model file cache + runtime), so a 32G high pinned the unit
+              # permanently ABOVE memory.high and the kernel reclaimed its
+              # pages faster than the 21.6 GB mmap could stay cached: flm
+              # re-read the model off disk continuously (20-30 MB/s, ~750
+              # random-read IOPS, 11.6 GB in 6.5 min, PSI io ~47%). 48G high
+              # / 56G max leaves ~25 GB of cache headroom inside the cgroup
+              # on the 124 GB host; a smaller high recreates the thrash
+              # loop. Service DISABLED in configuration.nix the same day.
+              MemoryMax = "56G";
+              MemoryHigh = "48G";
               MemorySwapMax = "20G";
               # 15-min psi-wait-gate budget + cold-load time (was 3min).
               TimeoutStartSec = "25min";

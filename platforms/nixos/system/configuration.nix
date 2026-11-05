@@ -1263,14 +1263,29 @@ in
       ai-stack.enable = true;
 
       # FastFlowLM NPU LLM server — socket-activated, OpenAI-compatible.
-      # Model is 13.6 GB mmap'd from /data/ai/models/fastflowlm; cold loads
-      # on first request, idle-unloads after 1h. OpenAI-compatible at
-      # http://127.0.0.1:52625/v1. Wired into projects-management-automation
-      # via extraEnvironment (OPENAI_BASE_URL + OPENAI_MODEL) so the auto-
-      # commit daemon uses the local NPU LLM instead of an external API.
-      # Embeddings are served by llama-rag (below), not FastFlowLM —
-      # co-loading embed-gemma via --embed 1 was broken (xrt ENOMEM).
-      fastflowlm.enable = true;
+      # DISABLED 2026-11-05 (owner directive: "I am sick of it"; resolves the
+      # docs/todo/services.md [decision] "intended state on evo-x2" row).
+      # Evidence (live 07:22 diagnosis): flm-real streamed the 22.6 GB
+      # Qwen3.6-35B model off nvme0n1 at 20-30 MB/s (~750 random-read IOPS,
+      # 11.6 GB re-read in 6.5 min, disk at 100% util, PSI io some ~47%)
+      # because the unit's 32G/40G cgroup ceilings pinned the ~34 GB working
+      # set (24.9 GB shmem + model cache) permanently above memory.high:
+      # the kernel reclaimed the model's pages faster than they could stay
+      # cached, so every token batch re-faulted weights from disk. Module
+      # ceilings raised 32/40 -> 48/56G for any future re-enable; re-enable
+      # = flip to true + deploy, then verify PSI io drains <20 once warm.
+      # Consumer impact: PMA auto-commit falls back to heuristic messages
+      # (OPENAI_BASE_URL now points at the dead :52625; graceful fallback
+      # proven through every guard-sacrifice dark window), post-deploy-check
+      # skips the flm E2E leg when the units are absent, and the memory
+      # guard's flm sacrifice/restore legs are cleared at its block below
+      # (empty lists = the designed observe-only mode).
+      # Historical: model was 21.6 GB mmap'd from /data/ai/models/fastflowlm;
+      # cold loads on first request, idle-unloads after 1h, OpenAI-compatible
+      # at http://127.0.0.1:52625/v1. Embeddings were served by llama-rag
+      # (below), not FastFlowLM; co-loading embed-gemma via --embed 1 was
+      # broken (xrt ENOMEM).
+      fastflowlm.enable = false;
 
       # llama.cpp VLM servers (CPU, socket-activated) — NSFW-audit captioning
       # stack. Replaces the ad-hoc nohup llama-server processes from the
@@ -1530,6 +1545,13 @@ in
       # for the full incident narrative).
       memory-emergency-guard = {
         enable = true;
+        # fastflowlm DISABLED 2026-11-05: the DEFAULT sacrifice/socket lists
+        # below name its (now absent) units (stop would no-op, restore would
+        # fail against the missing socket). Empty = the designed
+        # observe-only mode ("nothing is managed, hence nothing is
+        # sacrificed") — the guard keeps detecting/emitting, stops nothing.
+        sacrificeUnits = [ ];
+        socketUnits = [ ];
         # Zone-6 action split (2026-10-28 §7.1a RATIFIED, plan §10 design):
         # IO-class trips SIGSTOP headless driver trees (never-PTY invariant)
         # instead of stopping the LLM sockets — wrong-tool 4x proven. Live
@@ -2169,9 +2191,13 @@ in
       # (CHANGELOG.md:2026-08-12 — registry override + tarball guard +
       # nix flake lock hygiene + scoped `nix flake update`); the
       # discovery daemon still runs (Overview, Gatus, etc. depend on it).
-      # The fastflowlm.enable block above provides a local NPU LLM for
-      # commit-message generation via the OpenAI provider chain (go-commit
-      # 22f0e4c+ reads OPENAI_BASE_URL + OPENAI_MODEL from env).
+      # fastflowlm (the local NPU LLM for commit-message generation via the
+      # OpenAI provider chain; go-commit 22f0e4c+ reads OPENAI_BASE_URL +
+      # OPENAI_MODEL from env) was DISABLED 2026-11-05. The env in the PMA
+      # module still points at 127.0.0.1:52625/v1 (now dead): go-commit
+      # falls back to heuristic commit messages (proven through every
+      # guard-sacrifice dark window). Re-point at a live LLM before
+      # re-enabling AI-generated commit messages.
       projects-management-automation = {
         enable = true;
         mode = "active"; # git auto-commit ENABLED — discovery daemon co-located

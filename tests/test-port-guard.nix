@@ -29,6 +29,11 @@ let
       pkgs.lib.findFirst (s: pkgs.lib.hasPrefix "+" s) (builtins.head exec) exec
     else
       exec;
+  # fastflowlm is DISABLED on evo-x2 (2026-11-05) and its units only exist
+  # under mkIf cfg.enable: flmExec is evaluated LAZILY (only inside the
+  # optionalString below), so the eval survives the disabled state and the
+  # flm legs return automatically with any re-enable.
+  flmEnabled = self.nixosConfigurations.evo-x2.config.services.fastflowlm.enable;
   flmExec = pickGuardExec self.nixosConfigurations.evo-x2.config.systemd.services.fastflowlm.serviceConfig.ExecStartPre;
   ragExec = pickGuardExec self.nixosConfigurations.evo-x2.config.systemd.services.llama-embeddings.serviceConfig.ExecStartPre;
 in
@@ -68,7 +73,7 @@ pkgs.runCommand "test-port-guard"
       fi
     }
 
-    inject "${flmExec}" "$work/flm-guard"
+    ${pkgs.lib.optionalString flmEnabled ''inject "${flmExec}" "$work/flm-guard"''}
     inject "${ragExec}" "$work/rag-guard"
 
     # --- stubs ---
@@ -134,6 +139,11 @@ pkgs.runCommand "test-port-guard"
         exit 1
       fi
     }
+
+    # fastflowlm legs run only when the guard was injected (service
+    # DISABLED 2026-11-05); the rag leg below keeps the shared mkPortGuard
+    # decision paths covered in the meantime.
+    if [ -x "$work/flm-guard" ]; then
 
     # 1. foreign-killed -----------------------------------------------------
     rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
@@ -202,6 +212,10 @@ pkgs.runCommand "test-port-guard"
     grep -q "KILL 555" "$KILLLOG" || { echo "FAIL: owner-lingering: foreign not killed"; exit 1; }
     grep -q "owner-unit pid 222" <<<"$res" || { echo "FAIL: owner-lingering: no draining log"; exit 1; }
     echo "PASS: owner draining at verify is not a blocker"
+
+    else
+      echo "SKIP: fastflowlm guard legs (service disabled 2026-11-05; rag leg covers the shared helper)"
+    fi
 
     # 7. llama-rag guard: same helper, different owners (spare list) ---------
     rm -rf "$FIX"; mkdir -p "$FIX"; rm -f "$STUBS/ss.calls"
