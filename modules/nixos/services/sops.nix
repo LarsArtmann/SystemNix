@@ -667,18 +667,22 @@ in
               };
             };
           }
-          // {
+          // lib.optionalAttrs (svcEnabled "crush-daily") {
             # quotaboard (2026-11-03): the AI-quota dashboard's provider keys
             # are the SAME subscription keys the rest of the machine already
             # holds — crush.yaml zai_api_key (the GLM coding-plan key) and
             # crush-daily.yaml synthetic_api_key (endpoint-verified pre-copy
             # for cv_openaicompat_api_key, sops.nix cv block). No new owner
             # secret needed; this template just re-renders both into one
-            # user-readable EnvironmentFile. Unconditional because quotaboard
-            # is a HOME service (quickshell.nix) — svcEnabled cannot see it —
-            # and the desktop always enables it. No restartUnits: those
-            # target SYSTEM units; the home-level quotaboard.service picks
-            # the env up on HM switch or re-login.
+            # user-readable EnvironmentFile. Guarded by the synthetic_api_key
+            # provisioning condition itself (svcEnabled "crush-daily"):
+            # quotaboard is a HOME service (quickshell.nix) svcEnabled cannot
+            # see, and the desktop always enables it — but rpi3-dns runs
+            # neither, and its toplevel eval died on the missing placeholder
+            # (found 2026-11-05 by the standalone rpi3-dns eval). The
+            # template renders exactly where its key material exists. No
+            # restartUnits: those target SYSTEM units; the home-level
+            # quotaboard.service picks the env up on HM switch or re-login.
             "quotaboard-env" = {
               owner = primaryUser;
               group = "users";
