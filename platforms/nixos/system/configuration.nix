@@ -1287,6 +1287,12 @@ in
       # broken (xrt ENOMEM).
       fastflowlm.enable = false;
 
+      # gatus-coverage exemption (carried by the fastflowlm module while it
+      # was enabled): the PMA env still names :52625 (OPENAI_BASE_URL at the
+      # deliberately-dead flm endpoint). NEVER probe it: the port is dead by
+      # design until flm returns or the env is re-pointed.
+      gatus-coverage-audit.allowPorts = [ ports.fastflowlm ];
+
       # llama.cpp VLM servers (CPU, socket-activated) — NSFW-audit captioning
       # stack. Replaces the ad-hoc nohup llama-server processes from the
       # 2026-09-18/19 Immich audit sessions. Public ports 8127 (verdict model)
