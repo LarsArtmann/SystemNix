@@ -47,6 +47,9 @@
 #               the 09-18 rogue-port-holder class)
 #   CTX         llama-server context size (default 4096; fixed = comparable)
 #   NGL         GPU layers offload (default 99)
+#   EMBED       1 = pass --embedding (REQUIRED for embedding GGUFs like the
+#               bge pair, which GGML_ASSERT-crash without it; default 0 for
+#               chat models = the llama-chat default model)
 #   LM          llama-server --load-mode (default none = plain buffered
 #               reads; dio was observed SIGABRT-ing mid-load under memory
 #               pressure on the 0.6.0 build, 2026-11-05, so it stays opt-in
@@ -71,6 +74,7 @@ MODEL="${MODEL:-/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Q
 PORT="${PORT:-18848}"
 CTX="${CTX:-4096}"
 NGL="${NGL:-99}"
+EMBED="${EMBED:-0}"
 LM="${LM:-none}"
 COLD="${COLD:-fadvise}"
 PSI_MAX="${PSI_MAX:-20}"
@@ -196,7 +200,12 @@ esac
 echo "### cache cold: $COLD_NOTE, launching llama-server (--load-mode $LM: /health 200 = bytes truly read)"
 
 T0="$(date +%s.%N)"
-"$SERVER" -m "$MODEL" \
+EMBED_FLAGS=""
+if [ "$EMBED" = "1" ]; then
+  EMBED_FLAGS="--embedding"
+fi
+# shellcheck disable=SC2086
+"$SERVER" -m "$MODEL" $EMBED_FLAGS \
   --host 127.0.0.1 --port "$PORT" \
   --ctx-size "$CTX" --n-gpu-layers "$NGL" \
   --load-mode "$LM" --parallel 1 \

@@ -62,9 +62,9 @@
 
 ## 5. Open probes (agent-executable follow-ups, queued separately)
 
-- `comsize`-style pass on `/data/ai`: are model extents compressed at rest? (decides the compression-off leg's value)
+- **ANSWERED 2026-11-05 (compsize-equivalent pass, §4 benchmark protocol input):** model extents are NOT compressed at rest in any meaningful way — `btrfs filesystem du -s` disk vs logical on every slice of /data/ai: models/jan 113.37/113.38 GiB, models/image 264.03/264.05 GiB, models/fastflowlm 22.62/22.62 GiB, models/gguf 2.16/2.16 GiB, cache 108.51/108.53 GiB, all ratio ≈ 1.000 (515G total, ~0 saved). filefrag -v corroborates: big weight files carry mixed plain + `encoded` extents whose physical spans equal logical spans (encoded-path 1:1 = stored uncompressed), while small JSON/tokenizer files show real gains at negligible size. Controls: 20M repeated text written to /data/ai under calm memory compressed 270:1 (zstd:3 works), the same text under memory PSI ~45 stored encoded-1:1 (pressure-fallback signature), 50M urandom stored plain (heuristic skip). VERDICT for A1: turning compression off on content dirs costs ~zero space (measured on the bytes that matter) and saves the per-write zstd attempts, i.e. the compression-off leg is justified. Method note: `compsize` itself is root-gated here (agent sandbox NoNewPrivileges; unprivileged compsize dies rc=1 silently), but `btrfs filesystem du -s` + `filefrag -v` are both unprivileged and produced these numbers — see docs/agents/storage.md "Compression" for the re-runnable one-liners.
 - Cold-load benchmark harness for one representative GGUF (repeatable, PSI-gated)
-- What writes churn /data today besides Steam (telemetry lands on the ROOT; verify nothing writes models dirs)
+- What writes churn /data today besides Steam (telemetry lands on the ROOT; verify nothing writes models dirs) — fragmenting-writer evidence added 2026-11-05: the image safetensors sit at ~131KB/extents (195,584 extents for a 25.6G file = max-extent shredding, vs jan GGUFs at 19-84MB/extents), so SOME writer chunks/rewrites the image dir in small pieces (download/merge flow suspected)
 - gcs-staging + docker reclaims (owner-gated rows, prerequisites for a clean re-provision if A2 ever fires)
 
 ## 6. Decision asks (owner)
