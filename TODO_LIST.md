@@ -1152,6 +1152,8 @@
 - [ ] [ready] **Trace the 10:48 session-restore helium non-spawn + journal-pin when the wedged launch guard actually started swallowing main launches** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Stop niri.service Restart=on-failure from resurrecting an oomd-killed niri as a headless zombie during session teardown (var-based condition passes mid-teardown; SDDM-lockout class, live 2026-10-17)** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [ready] **Live-verify KeePassXC passkeys in Helium (user-assisted ceremony: chrome://policy + one real passkey create/re-auth — policy went live with the 10-06 deploy)** → [docs/todo/desktop.md](docs/todo/desktop.md)
+- [ ] [ready] **Standing eval-drift probe for the lock-float audit (flake.lock vs flake/expected-locks.nix sat ~60 inputs drifted, invisible until a host-config eval hit the gate mid-session)** → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: docs/status/2026-11-05_23-51_crush-v100-yolo-unblock-deploy-blocked-by-io-storm.md §e.4)
+- [ ] [ready] **Crush release-watch check (gh api latest tag vs deployed `crush --version` — v0.100.0 shipped unnoticed until the owner asked)** → [docs/todo/desktop.md](docs/todo/desktop.md) (Source: same report §e.5)
 
 - [ ] **Deploy evo-x2 carrying Spotify (`38e146ab`) once the tree is quiescent — eval green 20:13 post-recursion-fix; switch also carries the parallel session's renamer/fastflowlm/cv work** → [docs/todo/desktop.md](docs/todo/desktop.md)
 - [ ] [blocked:deploy] **Post-deploy Spotify window-rule + session-manager verification (dead-until-now rule `^spotify$` vs the real app-id)** → [docs/todo/desktop.md](docs/todo/desktop.md)
