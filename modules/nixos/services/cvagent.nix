@@ -89,10 +89,28 @@
           # poison the load (caught live in the 2026-11-01 smoke test).
           mkdir -p "$(dirname "$db")"
 
+          # Owner credit ceiling (2026-11-05): one run-level gate. If today
+          # already holds >= aiDailyFactCap AI facts, the ENTIRE run goes
+          # rule-based — spend is bounded even on manual triggers/double
+          # runs. Calls ≈ facts/20 and linear in credits, so a fact cap is a
+          # spend cap. The fleet-visible meter (ai-meter proxy routing) is a
+          # queued follow-up; today cvagent hits z.ai directly.
+          today=$(date +%F)
+          ai_facts=$("$cvagent" facts --db "$db" --json 2>/dev/null | awk -v today="$today" '
+            /"extractedAt": "/ {ts=$0; sub(/.*"extractedAt": "/,"",ts); sub(/T.*/,"",ts); cur=ts}
+            /"extractor": "ai"/ && cur == today {n++}
+            END {print n+0}
+          ')
+          ai_flag="${lib.optionalString cfg.aiEnable "--ai"}"
+          if [ "$ai_facts" -ge ${toString cfg.aiDailyFactCap} ]; then
+            ai_flag=""
+            echo "WARN: AI daily cap reached ($ai_facts ai facts today >= ${toString cfg.aiDailyFactCap}) — running rule-based" >&2
+          fi
+
           scanned=0
           failed=0
           for repo in ${lib.concatMapStringsSep " " (r: "'${r}'") cfg.repositories}; do
-            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency" --config "${aiConfigFile}" ${lib.optionalString cfg.aiEnable "--ai"}; then
+            if "$cvagent" scan "$repo" --db "$db" --concurrency "$concurrency" --config "${aiConfigFile}" $ai_flag; then
               scanned=$((scanned + 1))
             else
               echo "WARN: cvagent scan failed: $repo" >&2
@@ -134,6 +152,12 @@
           description = "OpenAI-compatible endpoint for the AI extractor (z.ai coding endpoint; fleet-verified with cv-agent, sops.nix 2026-11-02).";
         };
 
+        aiDailyFactCap = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 600;
+          description = "Owner credit ceiling (2026-11-05): if the fact store already holds this many AI facts dated TODAY, the whole run goes rule-based. Normal day ≈ 500 AI facts (24 repos × ~20); the cap trips only on anomalies (double runs, loops). Calls ≈ facts × 1/20 and are linear in credits, so this is the spend cap.";
+        };
+
         package = lib.mkOption {
           type = lib.types.package;
           default = cvagentPkg;
@@ -151,10 +175,12 @@
           # meta list --sort-by importance, owner directive 2026-11-04
           # ("all that changed, by importance"): importance >= 80, real code
           # checkouts; templates/forks and the CV export target itself
-          # excluded. Order follows the meta ranking.
+          # excluded. Order follows the meta ranking. buildflow (95) is NOT
+          # here: meta lists it but no local checkout exists
+          # (~/projects/buildflow missing, first cycle failed on stat —
+          # 2026-11-05 08:40).
           default = [
             "/home/lars/projects/go-composable-business-types" # 96
-            "/home/lars/projects/buildflow" # 95
             "/home/lars/projects/go-commit" # 95
             "/home/lars/projects/ai-router-implementation" # 92
             "/home/lars/projects/cmdguard" # 92

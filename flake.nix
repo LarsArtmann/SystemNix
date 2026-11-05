@@ -1157,6 +1157,7 @@
     dnsblockd.inputs.go-nix-helpers.follows = "go-nix-helpers";
     dnsblockd.inputs.nixpkgs.follows = "nixpkgs";
     docs-gates.inputs.nixpkgs.follows = "nixpkgs";
+    docs-gates.inputs.git-hooks.follows = "git-hooks";
     # treefmt-nix arrives DEEP under docs-gates' own erraudit copy: upstream
     # gained the erraudit input in the 2026-11-04 lock refresh (erraudit_3 =
     # same rev as our root pin 3d1f7ed3), and erraudit's go-nix-helpers pin
