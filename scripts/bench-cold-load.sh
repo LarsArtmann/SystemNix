@@ -47,8 +47,10 @@
 #               the 09-18 rogue-port-holder class)
 #   CTX         llama-server context size (default 4096; fixed = comparable)
 #   NGL         GPU layers offload (default 99)
-#   LM          llama-server --load-mode (default dio = DirectIO, storage-
-#               bypasses page cache; LM=none reads buffered, then COLD
+#   LM          llama-server --load-mode (default none = plain buffered
+#               reads; dio was observed SIGABRT-ing mid-load under memory
+#               pressure on the 0.6.0 build, 2026-11-05, so it stays opt-in
+#               for calm-window experiments; with LM=none the COLD
 #               eviction is what makes the probe cold)
 #   COLD        cache-eviction mode: fadvise (default: vmtouch -e, evicts
 #               ONLY the model's pages; unprivileged; auto-resolves vmtouch
@@ -69,7 +71,7 @@ MODEL="${MODEL:-/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Q
 PORT="${PORT:-18848}"
 CTX="${CTX:-4096}"
 NGL="${NGL:-99}"
-LM="${LM:-dio}"
+LM="${LM:-none}"
 COLD="${COLD:-fadvise}"
 PSI_MAX="${PSI_MAX:-20}"
 PSI_WAIT_S="${PSI_WAIT_S:-1800}"
@@ -208,7 +210,13 @@ while [ "$SECONDS" -lt "$end" ]; do
     health_ok=true
     break
   fi
-  kill -0 "$SRV" 2>/dev/null || break
+  srv_state="$(awk '{print $3}' "/proc/${SRV}/stat" 2>/dev/null || echo dead)"
+  case "$srv_state" in
+  dead | Z)
+    echo "### server process died (state=$srv_state) before /health went 200"
+    break
+    ;;
+  esac
   sleep 0.2
 done
 T1="$(date +%s.%N)"
@@ -221,10 +229,12 @@ BYTES=$(stat -c %s "$MODEL")
 LOAD_S=$(awk -v t0="$T0" -v t1="$T1" 'BEGIN{printf "%.2f", t1 - t0}')
 
 if [ "$health_ok" != "true" ]; then
-  echo "### RESULT: TIMEOUT after ${TIMEOUT_S}s, /health never returned 200 (last PSI avg10=${PSI_POST}%, max during run ${PSI_MAX_RUN}%)"
+  echo "### RESULT: FAILED, /health never returned 200 within ${TIMEOUT_S}s (last PSI avg10=${PSI_POST}%, max during run ${PSI_MAX_RUN}%)"
+  echo "  server log head (crash reason lives here):"
+  head -8 "$D/server.log" | sed 's/^/    /' || true
   echo "  server log tail:"
-  tail -5 "$D/server.log" | sed 's/^/    /' || true
-  echo "  fix: rerun with TIMEOUT_S=<larger> in a calmer window; KEEP_RAW=1 preserves $D/server.log"
+  tail -3 "$D/server.log" | sed 's/^/    /' || true
+  echo "  fix: KEEP_RAW=1 preserves $D/server.log; a dead-server line above means the load-mode or GPU env aborted (try LM=none), a timeout line means rerun with TIMEOUT_S=<larger> in a calmer window"
   exit 1
 fi
 
