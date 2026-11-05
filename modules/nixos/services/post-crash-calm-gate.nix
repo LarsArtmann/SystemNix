@@ -55,6 +55,7 @@
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
+        ioTier
         onFailure
         serviceOneshotDefaults
         ;
@@ -106,6 +107,7 @@
             }
             (harden { MemoryMax = "128M"; })
             (serviceOneshotDefaults { })
+            ioTier.background
           ];
         };
       };
