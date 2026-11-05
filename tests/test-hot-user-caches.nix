@@ -103,6 +103,13 @@ in
           mount /dev/disk/by-label/tlc /mnt
           mkdir -p /mnt/users/lars/cache
           btrfs subvolume create /mnt/users/lars/cache/nix
+          # The 2026-11-05 go-cache relocation trio (go-build existed on the
+          # live disk since 2026-09-20 undeclared; go-mod + golangci-lint
+          # are new) — the disko cross-assertions require every module
+          # entry to exist in the provisioning pass.
+          btrfs subvolume create /mnt/users/lars/cache/go-build
+          btrfs subvolume create /mnt/users/lars/cache/go-mod
+          btrfs subvolume create /mnt/users/lars/cache/golangci-lint
           umount /mnt
         '';
       };
@@ -155,5 +162,22 @@ in
     # shadow of the underlying @ dir).
     machine.succeed("touch /home/lars/.cache/nix/alive && test -f /home/lars/.cache/nix/alive")
     machine.succeed("test -f /mnt/hot/users/lars/cache/nix/alive")
+
+    # 7. The 2026-11-05 go-cache trio (relocation regression guard): same
+    # automount shape as nix, write-through lands on the hot subvols, and
+    # the mount-timeout posture carries. Unit names use systemd escaping
+    # (go\x2dbuild); the Python driver needs the doubled backslash. The
+    # 2026-09-20 HM-symlink blocker class is guarded at eval time by the
+    # module's disko cross-assertions.
+    machine.succeed("timeout 30 ls /home/lars/.cache/go-build/ >/dev/null")
+    machine.wait_for_unit("home-lars-.cache-go\\x2dbuild.mount", timeout=60)
+    machine.succeed("findmnt -n -o FS_TYPE /home/lars/.cache/go-build | grep -q btrfs")
+    machine.succeed("timeout 30 ls /home/lars/.cache/go-mod/ >/dev/null")
+    machine.succeed("timeout 30 ls /home/lars/.cache/golangci-lint/ >/dev/null")
+    machine.succeed("findmnt -n -o FS_TYPE /home/lars/.cache/go-mod | grep -q btrfs")
+    machine.succeed("findmnt -n -o FS_TYPE /home/lars/.cache/golangci-lint | grep -q btrfs")
+    machine.succeed("touch /home/lars/.cache/go-mod/alive && test -f /mnt/hot/users/lars/cache/go-mod/alive")
+    machine.succeed("touch /home/lars/.cache/golangci-lint/alive && test -f /mnt/hot/users/lars/cache/golangci-lint/alive")
+    machine.succeed("systemctl show home-lars-.cache-go\\x2dbuild.mount -p TimeoutStartUSec | grep -q 90000000")
   '';
 }
