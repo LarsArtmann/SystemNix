@@ -143,3 +143,23 @@ Three surfaced at report time (same set as 02:45 — the interrupted ask): GLM c
 ---
 
 *Then wait for instructions.*
+
+---
+
+## ADDENDUM 2 — first full cycle DONE + owner answers applied (2026-11-05 21:3x)
+
+**Owner answers (Q1/Q2/Q3):** set a credit ceiling; week-one review stands; keep the 60–90min window. All three applied.
+
+| Item | State | Evidence |
+| --- | --- | --- |
+| FIRST FULL PRODUCTION CYCLE | DONE 09:43 | journal: `done: scanned=23 failed=1` (gen 983's 90min budget, ~60 min run; carried by the parallel quotaboard-session deploy) |
+| Production AI facts | 506 ai / 50 rule-based | `cvagent facts --json` extractor counts; 2 z.ai timeouts fell back cleanly (09:06, 09:37) |
+| Mesh artifacts | LANDED | `data/cv/lars_artmann-en-cvagent.patch.json` (23 KB) + 26 files in `data/projects-v2/` (22 generated pages); PMA committed |
+| The 1 failed repo | buildflow — NO checkout exists (`stat: no such file or directory`; meta lists it at 95) | journal 08:40:40; REMOVED from the list (23 repos now); clone decision queued |
+| Credit ceiling (Q1) | WIRED in tree | `aiDailyFactCap = 600` run-level gate (rule-based day when today's ai facts ≥ 600); awk counter VERIFIED against production (506/600 = under); constructs proven via standalone writeShellApplication build (shellcheck+bash -n green) + execution rc=0. Ceiling is fact-count-based until ai-meter proxy routing lands (queued row — cvagent AND cv-agent bypass the meter today) |
+| Week-one review (Q2) | MATERIAL READY | `~/.cache/cvagent/delta-week1.html` (110 KB, `cv render --variant cvagent`); patch = 50 add-ops (keywords like Bash / Go concurrency / Go modules) |
+| Scan window (Q3) | STANDS | 90min live on gen 983; measured 60 min sequential |
+| Ceiling eval verification | BLOCKED externally | the freeze-49 session's still-running float wave holds the lock-float audit red fleet-wide (art-dupl/bank-sync/branching-flow + more drifted vs expected-locks.nix; their Go-cache move commit landed 21:1x mid-wave). NOT fixed by this session per the registry-proof doctrine (never green the registry without proven FODs). The ceiling rides the next green eval/deploy — before tomorrow's 05:53 timer either way |
+| Fleet breakage flag (not mine) | OPEN | the red lock-float audit blocks ALL deploys/evals until the freeze-49 wave lands its expected-locks rows — flagged per the attribution rule |
+
+**Not harvested:** the delta-review pass itself is the queued week-one row (material path recorded here); the Go-cache hot-tier move and freeze-49 residuals belong to their sessions.
