@@ -8,10 +8,12 @@
 # trigger. It measures the M12 pain class directly, the boot-storm
 # "23.4G model page-in >8min" (docs/services/llama-rag.md).
 #
-# What it measures: wall time from exec to /health 200 with --no-mmap,
-# i.e. the model's bytes ACTUALLY READ from storage into GPU/GTT (default
-# mmap would pass /health before the page-in completes and hide the disk
-# cost). Fixed flags = before/after runs are apples-to-apples.
+# What it measures: wall time from exec to /health 200 with
+# --load-mode dio (DirectIO: weights are read straight off storage,
+# bypassing page cache entirely, so the number is the pure storage+init
+# cost and repeatable with no cache games; LM=none falls back to buffered
+# reads, where the COLD=fadvise eviction is what makes it cold). Fixed
+# flags = before/after runs are apples-to-apples.
 #
 # Lessons baked in (bench-hot-file.sh storm-contaminated-run class):
 #   1. numbers under a concurrent IO storm are 2.5-9x depressed, so the run
@@ -45,6 +47,9 @@
 #               the 09-18 rogue-port-holder class)
 #   CTX         llama-server context size (default 4096; fixed = comparable)
 #   NGL         GPU layers offload (default 99)
+#   LM          llama-server --load-mode (default dio = DirectIO, storage-
+#               bypasses page cache; LM=none reads buffered, then COLD
+#               eviction is what makes the probe cold)
 #   COLD        cache-eviction mode: fadvise (default: vmtouch -e, evicts
 #               ONLY the model's pages; unprivileged; auto-resolves vmtouch
 #               via nix) | drop (sync + pagecache drop; needs root, NOT
@@ -64,6 +69,7 @@ MODEL="${MODEL:-/data/ai/models/jan/llamacpp/models/qwen3.6-35b-a3b-aggressive/Q
 PORT="${PORT:-18848}"
 CTX="${CTX:-4096}"
 NGL="${NGL:-99}"
+LM="${LM:-dio}"
 COLD="${COLD:-fadvise}"
 PSI_MAX="${PSI_MAX:-20}"
 PSI_WAIT_S="${PSI_WAIT_S:-1800}"
@@ -185,13 +191,13 @@ fadvise)
   exit 1
   ;;
 esac
-echo "### cache cold: $COLD_NOTE, launching llama-server (--no-mmap: /health 200 = bytes truly read)"
+echo "### cache cold: $COLD_NOTE, launching llama-server (--load-mode $LM: /health 200 = bytes truly read)"
 
 T0="$(date +%s.%N)"
 "$SERVER" -m "$MODEL" \
   --host 127.0.0.1 --port "$PORT" \
   --ctx-size "$CTX" --n-gpu-layers "$NGL" \
-  --no-mmap --parallel 1 \
+  --load-mode "$LM" --parallel 1 \
   >"$D/server.log" 2>&1 &
 SRV=$!
 
@@ -234,44 +240,29 @@ printf '%-24s %s%% (max during run %s%%, avg %s%%)\n' "PSI io some avg10" "$PSI_
 printf '%-24s %s (gate<%s%%, accepted=%s)\n' "psi gate" "$PSI_PRE" "$PSI_MAX" "$psi_accepted"
 printf '%-24s %s @ port %s ctx %s ngl %s\n' "server" "$SERVER" "$PORT" "$CTX" "$NGL"
 
+JSON="$(jq -n \
+  --arg ts "$(date -Is)" \
+  --arg model "$MODEL" \
+  --arg server "$SERVER" \
+  --arg cold "$COLD_NOTE" \
+  --arg lm "$LM" \
+  --arg port "$PORT" \
+  --arg ctx "$CTX" \
+  --arg ngl "$NGL" \
+  --arg psi_max "$PSI_MAX" \
+  --arg psi_pre "$PSI_PRE" \
+  --arg psi_post "$PSI_POST" \
+  --arg psi_max_run "$PSI_MAX_RUN" \
+  --arg psi_avg_run "$PSI_AVG_RUN" \
+  --arg bytes "$BYTES" \
+  --arg load_s "$LOAD_S" \
+  --arg mb_s "$MB_S" \
+  --argjson psi_accepted "$psi_accepted" \
+  '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted}')"
 if [ -n "$OUT" ]; then
   mkdir -p "$(dirname "$OUT")"
-  jq -n \
-    --arg ts "$(date -Is)" \
-    --arg model "$MODEL" \
-    --arg server "$SERVER" \
-    --arg cold "$COLD_NOTE" \
-    --arg port "$PORT" \
-    --arg ctx "$CTX" \
-    --arg ngl "$NGL" \
-    --arg psi_max "$PSI_MAX" \
-    --arg psi_pre "$PSI_PRE" \
-    --arg psi_post "$PSI_POST" \
-    --arg psi_max_run "$PSI_MAX_RUN" \
-    --arg psi_avg_run "$PSI_AVG_RUN" \
-    --arg bytes "$BYTES" \
-    --arg load_s "$LOAD_S" \
-    --arg mb_s "$MB_S" \
-    --argjson psi_accepted "$psi_accepted" \
-    '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted}' >>"$OUT"
+  printf '%s\n' "$JSON" >>"$OUT"
   echo "### JSON line appended to $OUT"
 else
-  jq -n \
-    --arg ts "$(date -Is)" \
-    --arg model "$MODEL" \
-    --arg server "$SERVER" \
-    --arg cold "$COLD_NOTE" \
-    --arg port "$PORT" \
-    --arg ctx "$CTX" \
-    --arg ngl "$NGL" \
-    --arg psi_max "$PSI_MAX" \
-    --arg psi_pre "$PSI_PRE" \
-    --arg psi_post "$PSI_POST" \
-    --arg psi_max_run "$PSI_MAX_RUN" \
-    --arg psi_avg_run "$PSI_AVG_RUN" \
-    --arg bytes "$BYTES" \
-    --arg load_s "$LOAD_S" \
-    --arg mb_s "$MB_S" \
-    --argjson psi_accepted "$psi_accepted" \
-    '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted}'
+  printf '%s\n' "$JSON"
 fi
