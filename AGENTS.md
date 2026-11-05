@@ -14,7 +14,7 @@ Deep domain knowledge lives in referenced files — **read the relevant one BEFO
 | LarsArtmann Go inputs, private-repo CI auth, Go toolchain floors             | [docs/agents/go-ecosystem.md](./docs/agents/go-ecosystem.md)                                                 |
 | systemd units, hardening, activation, deploy exit codes, boot transactions   | [docs/agents/systemd.md](./docs/agents/systemd.md)                                                           |
 | Mounts, snapshots, BTRFS, pool/DAS, buildcache, offsite Borg, space reclaim  | [docs/agents/storage.md](./docs/agents/storage.md)                                                           |
-| Freezes, OOM, IO storms, zram, memory guard, kernel/network hardening        | [docs/agents/stability.md](./docs/agents/stability.md)                                                       |
+| Freezes, OOM, IO storms (→ Build-Storm Runbook), zram, memory guard, kernel/network hardening | [docs/agents/stability.md](./docs/agents/stability.md)                                                     |
 | SSO/OIDC layers, Pocket ID, oauth2-proxy, Caddy vHosts                       | [docs/agents/sso-dns.md](./docs/agents/sso-dns.md)                                                           |
 | Secrets: sops/age workflow, rotations, the 2026-08-18 leak history           | [docs/agents/secrets.md](./docs/agents/secrets.md)                                                           |
 | Desktop: DMS/Quickshell, niri, session manager, audio routing, Helium        | [docs/agents/desktop.md](./docs/agents/desktop.md)                                                           |
