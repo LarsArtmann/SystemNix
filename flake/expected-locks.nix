@@ -78,7 +78,7 @@
   journal = "653acc12fe92cff29fbb59336885f7b4a0c6d6a9";
   library-policy = "c1dc17ae97bc732dd21bd929bbc8a9acb148621e";
   md-go-validator = "c976f3263745f46192cd145ac8351a54aa833937";
-  media-atlas = "18f3cae05049430ef86702a2559d5e339a1c5b2d";
+  media-atlas = "f7f4a8a1f366ac8d21c83f4745a378dbc00f9da0";
   monitor365 = "ebfa4056f7687f972ff7fd6767a376d755971bd3";
   mr-sync = "3ce3d7296803698c9166598f5f3c5fc5a2118553";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
