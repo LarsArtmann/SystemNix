@@ -1,0 +1,45 @@
+# Freeze #49 WDT autopsy — forced deploy into the all-day lint-fleet storm
+
+**Scope.** This report covers the 20:39–21:0x CET session answering the owner's "why did we crash AGAIN": full autopsy of freeze #49, live containment assessment of the recovery boot, the deploy.sh tier-2 fix, and this report. VERIFIED live in this session: boot census (`journalctl --list-boots`: boot -1 `5819f35d` cut 2026-11-05 20:36:40 mid-traffic, zero shutdown ceremony), reset reason (`x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired`, boot 0 kernel log), anchor state (`readlink /run/current-system` == system-983 == `pcfbrxjab3…`; newest-by-NUMBER profile link agrees), BOTH deploy logs (`/var/log/systemnix-deploys/2026-11-05_19-48-20.log`: `DEPLOY_FORCE_PRESSURE=1` at PSI 98.99/disk 102.1 → nh build exit 1 after 621 s; `…_20-02-19.log`: `=1` at PSI 92.9/disk 101.8 → gate override verbatim → build 2 s cached → log ENDS at "> Activating configuration", timer frozen at 579 s), guard liveness in boot -1 (6,996 unit journal lines; final heartbeat 20:36:19: io PSI avg60 93.14%, disk 100%, MemAvail 58%, Zone-6 cooldown 120 s remaining), census counts (362 unique trip numbers #6865→#7226; 31 DEEP THROTTLE ENTERs, first 11:38:20, last 19:08:02; 0 OOM), recovery-boot storm trajectory (io PSI some avg10: 77.33 @ 20:41 → 50.66 @ 20:44 → 42.44 @ 20:48 → 30.50 @ 20:55 gate smoke → 26.68 @ 20:58; load 39→16), and the driver rotation at 20:55 (nvme0n1 101% via llama-vlm-e4b 23.8 PSI + projects-management-automation 17.0, sdb buildcache cooled to 19.4%). NOT VERIFIED: which human/session fired the two forced deploys (the 20:02 log carries the override banner but not the caller; the 19:42 session's claim that its poller did NOT inherit the flag is contradicted by the banners unless both fires were manual — attribution left open), whether the hung 20:12 activation left partial unit state beyond the clean old-gen boot (boot 0 came up on system-983 cleanly, so no).
+
+---
+
+## §a THE ANSWER (chain, in order)
+
+1. **All-day IO storm on the single-USB-disk buildcache** — 8 concurrent golangci-lint runs + 5 go linkers across 5 repos, all funneling `/mnt/buildcache` (sdb): io PSI some avg10 ~99%, load ~1292, from at least 19:42 (both prior reports measured it live). The 19:50 report predicted "one heavy build away from freeze #49".
+2. **19:48:20 — deploy fired WITH `DEPLOY_FORCE_PRESSURE=1`** into PSI 98.99/disk 102.1 (banner verbatim in the log). The pressure gate did its job, named the storm, and was overridden. nh build FAILED exit 1 after 621 s.
+3. **20:02:19 — second deploy, same override**, at PSI 92.9/disk 101.8. Build hit cache (2 s, the diff `pcfbrxjab3` → `aa9zgl8ii5`: fastflowlm removal + 8 units). Activation started ~20:12 and **HUNG** — the log never gets another line; timer frozen at 579 s. A switch restarts dozens of units INTO a device-saturated box (the freeze #4/#5 activation class).
+4. **20:36:40 — WDT reset** (`0x02000800`, 90 s-era, cut→boot gap 160 s). Journal cut mid-crm-request. The guard was ALIVE and heartbeating to the end (20:36:19, the crash-#3 class signature: io PSI avg60 93.14% with MemAvail 58%), in Zone-6 action cooldown; final trips #7225/#7226 both "NO eligible headless tree matched" — the storm drivers are TTY-holding agent sessions (the lint fleet), structurally unpausable by the guard per the 2026-10-07 SIGSTOP-license revocation. The guard could see the cliff and could not reach the drivers.
+5. **Anchor INTACT**: boot 0 (20:39:20) came up on system-983 (`pcfbrxjab3`) — the last GOOD generation. The 20:02 target `aa9zgl8ii5` was built but never activated; **everything that deploy carried is STILL PENDING** (fastflowlm removal, crush_events chmod 644, §16 self-heal, monitor365 tmpfiles mkBefore, quotaboard wiring, the zed rename).
+6. **Recovery boot `7c876ae0` settled** — io PSI avg10 77→27 over 20:41–20:58; unlike the never-cooled deaths (#41: 32 min, #48: 8 min), the box drained its cold-load wave. The tq pool PSI entry gate held it out of the storm window.
+
+Family verdict: **Branch C, storm-led finish** — 362 trips (20.9/h, record band), 31 ENTERs but ZERO in the final ~90 min (pure-IO death window), 0 OOM. This is freeze #40's death recipe repeated verbatim: `=1` forced deploy into the ≥90/≥100 band → activation wedges → WDT.
+
+## §b THE FIX (landed this session, in tree)
+
+**deploy.sh tier-2 veto**: `DEPLOY_FORCE_PRESSURE=1` no longer clears the EXTREME band — io PSI some avg10 ≥80% WITH disk busy ≥80% (measured REAL storm, not the ghostty phantom, which reads idle-disk) now requires `DEPLOY_FORCE_PRESSURE=2`. Rationale: both forced-deploy WDT deaths (#40 2026-11-02, #49 2026-11-05) were `=1` fires into exactly that band; `=1` remains sufficient for every legitimate escape case (moderate pressure, phantoms, trip recency — the "deploying the FIX under pressure" case). Implemented as a `force_level()` ladder + tier-2 block in `deploy_pressure_gate` (runs at ENTRY and pre-switch — the pre-switch re-check now also carries the veto, closing the "entered at a dip, storm built under validation" race for the extreme band). Pinned by `scripts/test-deploy-pipeline.sh` group E (REAL extracted function text: 0/1/2/garbage mapping, the four band corners incl. the exact #49 entry sample 92.9/101.8, no legacy `!= 1` sites) — suite 37/37 green; live smoke: extracted gate refuses rc 12 at current PSI, `=1` proceeds at moderate pressure.
+
+## §c WHAT I DID NOT DO (doctrine)
+
+No kills, no SIGSTOPs, no systemctl mutations (2026-10-07 standing rule: measure, attribute, report, recommend; sudo dead in agent shells since 2026-11-05). The tq-agent-pool and the respawned crush session (go-taskqueue repo, gopls/langserver re-arming) were left running — the pool's entry gate + the settling PSI made intervention unnecessary, and killing them was prohibited anyway. No deploy was fired (the tree's pending deploy stays deferred until calm per the calm-gate doctrine; the tier-2 change takes effect on the NEXT deploy invocation without needing one).
+
+## §d HONEST GAPS
+
+1. **The tier-2 veto is guard rail, not cure** — the storm itself (TTY-holding agent lint fleets on one USB disk) is untouched; only the deploy's ability to join it is now throttled. The structural legs stay open: PSI-aware dispatch gating (19:50 §g.1 owner question, STILL unanswered), lint-fleet concurrency cap, buildcache single-disk funnel.
+2. **Forced-fire attribution open**: who/what set `=1` twice is not in the logs I read. If a poller script inherits owner env vars, the tier-2 veto also fixes THAT class (a stale `=1` can no longer kill).
+3. My first census pass shipped two wrong zero-counts internally (kernel-scoped `-k` for ENTERs; stale 'action taken' phrase for trips) — caught by cross-checking the guard's live tail; corrected numbers above are from the fixed greps. The quote-scrutiny rule applies to censuses too.
+4. The writer-attribution /proc pass had wrong awk field offsets on first attempt (printed nothing — no bad number shipped); the corrected pass found no lars-owned >10 MB/s reader at 20:4x, consistent with the driver being system-slice cold loads by then.
+
+## §e RECOMMEND (owner-gated, in priority order)
+
+1. **Let the box reach io PSI some avg10 <20 sustained, then re-run the pending deploy** (it now also carries the tier-2 veto + this session's registration edits). Post-switch: anchor discipline (newest system-N-link by NUMBER vs current-system), `node_textfile_scrape_error 0`, fastflowlm socket+units gone, ss :52625 closed.
+2. **Answer the 19:50 §g questions** (PSI-dispatch-gate location; GOTOOLCHAIN local-vs-auto) — freeze #49 is the second freeze those unanswered questions have cost.
+3. Consider a lint-fleet concurrency cap (flock wrapper in the direnv guard, max 2 fleet-wide) — 48-minute single lint runs and 8-way concurrency on one USB disk is the recurring storm seed.
+
+## §f Follow-ups (harvested to TODO_LIST + docs/todo/stability.md)
+
+1. Re-run the pending deploy when calm (row queued; carries another session's validated tree — verify anchor after).
+2. Lint-fleet concurrency cap via direnv/flock (row queued [ready]).
+3. PSI-aware dispatch gate decision (row queued [decision], pointing at 19:50 §g.1).
+
+**Sources:** live probes as cited inline; `docs/agents/stability.md` (crash-autopsy entry points, census table #45–#48 rows, SIGSTOP revocation, deploy-gate bullet); `docs/status/2026-11-05_19-50_go-build-slowness-storm-diagnosis-status.md`; `docs/status/2026-11-05_19-42_deploy-blocker-fixes-storm-gated-deploy-status.md`; deploy logs as cited.
