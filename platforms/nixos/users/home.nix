@@ -1035,11 +1035,11 @@ in
         "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
 
         # Text / code files
-        "text/plain" = [ "zed.desktop" ];
-        "text/markdown" = [ "zed.desktop" ];
-        "text/x-yaml" = [ "zed.desktop" ];
-        "application/json" = [ "zed.desktop" ];
-        "application/x-yaml" = [ "zed.desktop" ];
+        "text/plain" = [ "dev.zed.Zed.desktop" ];
+        "text/markdown" = [ "dev.zed.Zed.desktop" ];
+        "text/x-yaml" = [ "dev.zed.Zed.desktop" ];
+        "application/json" = [ "dev.zed.Zed.desktop" ];
+        "application/x-yaml" = [ "dev.zed.Zed.desktop" ];
 
         # Images
         "image/avif" = [ "helium.desktop" ];

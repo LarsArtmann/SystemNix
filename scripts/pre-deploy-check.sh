@@ -479,7 +479,17 @@ pap_section16() {
     if [ -z "$PAP_ICONS_DIR_VAL" ]; then
       fail "papdashboard unit has NO PAP_ICONS_DIR — the icon pack is not wired into the to-be-deployed config (stale module? partial revert?)"
     elif [ ! -d "$PAP_ICONS_DIR_VAL" ]; then
-      fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory"
+      # Derived-but-never-realized class, THIRD occurrence (2026-10-23,
+      # 2026-10-27, 2026-11-05): eval derives the subset path but no build has
+      # realized it (new tiles => new subset drv; the running generation only
+      # anchors the OLD path). Realize it here instead of blocking — it is a
+      # cheap runCommand (~40 file copies, seconds) — and fail loudly only if
+      # the realize itself breaks (hash mismatch, broken iconPackSrc).
+      if nix build --no-link --print-out-paths .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment.PAP_ICONS_DIR >/dev/null 2>&1 && [ -d "$PAP_ICONS_DIR_VAL" ]; then
+        warn "PAP_ICONS_DIR was derived but never realized — built the subset on the fly ($PAP_ICONS_DIR_VAL); recurring class, see 2026-11-05 status"
+      else
+        fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory (and the realize attempt failed — run the nix build by hand for the real error)"
+      fi
     else
       PAP_ICON_NAMES=$(
         {

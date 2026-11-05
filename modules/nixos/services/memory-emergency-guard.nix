@@ -572,6 +572,7 @@ _: {
             # headless build trees, not the LLM — the socket stop here was
             # the 4x-proven wrong tool (freezes #24, #25, 2026-10-27 x2).
             if [ "$io_split_active" = "0" ] && [ -n "$SOCKET_UNITS" ]; then
+              # shellcheck disable=SC2086 # deliberate field split: unit list
               systemctl stop $SOCKET_UNITS 2>/dev/null || true
             fi
 
@@ -873,6 +874,7 @@ _: {
               systemctl reset-failed ${
                 lib.concatMapStringsSep " " (u: "'${u}'") cfg.sacrificeUnits
               } 2>/dev/null || true
+              # shellcheck disable=SC2086 # deliberate field split: unit list
               systemctl start $SOCKET_UNITS 2>/dev/null || true
               restored_total=$((restored_total + 1))
               echo "$restored_total" > "$RESTORED_COUNT_FILE"

@@ -37,6 +37,12 @@
           set -euo pipefail
           out="${textfileDir}/crush_events.prom"
           tmp="$(mktemp "${textfileDir}/crush_events.prom.XXXXXX")"
+          # mktemp creates 0600 and mv preserves it — without this the
+          # collector ships an unreadable .prom and node_exporter rejects
+          # the whole file (node_textfile_scrape_error=1, live 2026-11-05).
+          # Same line as every sibling textfile writer (architecture-catalog
+          # et al).
+          chmod 644 "$tmp"
           trap 'rm -f "$tmp"' EXIT
 
           emit() { printf '%s\n' "$1" >>"$tmp"; }
