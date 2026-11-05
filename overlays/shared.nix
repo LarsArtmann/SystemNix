@@ -59,6 +59,10 @@
     # Waiting twin for must-come-up services (socket-activated cold model
     # loads): waits out IO storms, never refuses (PARETO M10.3).
     psi-wait-gate = prev.callPackage ../pkgs/psi-wait-gate.nix { };
+    # Boot-time WAIT-then-REFUSE barrier for post-crash resumable readers
+    # (freeze-6 rule (a) automation; wired live 2026-11-05 after freezes
+    # #47/#48 — the package sat unwired since 2026-10-17).
+    post-crash-calm-gate = prev.callPackage ../pkgs/post-crash-calm-gate.nix { };
   })
 
   (
