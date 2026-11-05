@@ -254,3 +254,17 @@ flowchart TD
 - Freeze-#49 triage is the 21-03 session's arc — T25 only adds a merge pointer; no duplication.
 - The 22-27 §g questions map to D1–D4 above; answering them in this plan's thread unblocks the spine.
 - This plan is a snapshot; the living queue stays `TODO_LIST.md` + domain libraries (rows already landed tonight).
+
+---
+
+## Execution annotations (resume session, 2026-11-06 00:0x–, tombstone crush-glm53-resume-2244)
+
+- **T1 (in flight, NOT the mechanical path):** the 23:15 deploy's float proof was RED — root cause found + empirically reproduced: `monitor365@215cd79` preparedSrc `cp -r <store-src> $out/<dir>` propagates 0555/0444 store modes → later `rm` dies EACCES. Upstream fix COMMITTED (`monitor365 164e159a4`) but **PUSH-PENDING — new owner gate**. Agent path taken: lock pinned back to proven `ebfa4056` (`nix flake lock --override-input`), float-register re-proof launched 00:05; proof enumerating a vendorHash fleet-wave (art-dupl, branching-flow, …) — µ1.4 hash-paste cycle follows. Drop condition for the pin: after monitor365 push, `nix flake lock --update-input monitor365` + re-proof.
+- **µ1.1 (D1):** no other session mid-procedure at 22:44 (parallel sessions active but none on the float); HOWEVER a 23:15 deploy attempt (owner/parallel) hit the same RED — coordination now via this annotation.
+- **T6 re-scope (µ6.1/6.3/6.4/6.5 DONE, µ6.2 deferred):** fleet floors span 1.26→1.27.3; fork evidence = 4 toolchains in GOMODCACHE; root driver was the deployed profile go 1.26.8 < floors. Post-deploy (go_1_27=1.27.3 ≥ every floor) auto stops downloading → single cache key fleet-wide → floor-alignment drops to hygiene. Toolchain-directive drop-list EMPTY (only 2, both go1.27.3). GOEXPERIMENT clean (global jsonv2 = deliberate key-unifier). Audit entry: docs/agents/go-ecosystem.md "Fleet toolchain-fork audit (2026-11-05/06)".
+- **T8 DONE:** canonical incident note docs/status/2026-11-05_go-build-storm-freeze-49-incident-note.md + merge pointers in-place on 19-50/21-00/21-03/21-43/22-21; AGENTS.md Session Discipline gained the consumer-grep-before-env-change + env↔guard coupling bullet.
+- **T14 µ14.1/µ14.2 DONE:** GOTOOLCHAIN follow-ups + fork-watch ticked BOTH surfaces (pipeline.md:217/218 + TODO_LIST queue row) with live-probe evidence (GOTOOLCHAIN=auto ✓, profile go 1.26.8 — `go version` verify folded into µ4.1); ef6bf1b51 message-debt annotated permanent in 22-27 §b.4. µ14.3 prune-done pending.
+- **T23 DONE (duplicate-confirmed):** the 03:05/03:13 8-minute pair = freezes #47/#48 (already ledgered, 04-46 report); both boot tails verified raw-traffic/no-shutdown-marker — recorded in the incident note.
+- **T25 DONE:** merge pointer on stability.md:340.
+- **T24 partial:** langserver count 8 at 22:44 (pgrep -af golangci-lint-langserver); billing reminder still open.
+- **New evidence for T15:** live /tmp/bc-fallback CARGO_HOME/SCCACHE_DIR redirect observed on first fish -lc after boot (automount first-trigger race, mounts fine on direct probe).

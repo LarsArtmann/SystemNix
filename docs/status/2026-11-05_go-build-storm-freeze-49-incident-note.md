@@ -7,6 +7,7 @@
 
 | Time | Event |
 |------|-------|
+| 03:03–03:16 | Overnight hard-reset PAIR (post-hoc classification 2026-11-06, T23): boot `91b4a3a2` cut mid-traffic at 03:03:12 → 8-minute boot `30b6b4cb` (03:05:44–03:13:47) cut the same way → boot `5819f35d` at 03:16:27. Both tails show raw service traffic, ZERO shutdown markers — the freezes #47/#48 already ledgered (04-46 calm-gate report); duplicate-confirmed, no new ledger row |
 | ≤19:44 | Storm at peak: load 1248–1292, io PSI ~99% — 8 concurrent golangci-lint runs across 5 repos (ChastityAPI 48m, index 44m, go-auto-upgrade 41m, go-bilanz 7m, Zlota44 2m) + 5 go linkers, under TWO toolchains (go1.27.2 + go1.27.3) |
 | 19:50 | Diagnosis report: structural multipliers named — all Go caches on one DRAM-less USB SSD (ext4, 85% full), GOTOOLCHAIN=auto floor-fork (4 toolchains downloaded into GOMODCACHE: go1.27.0–1.27.3), GOEXPERIMENT/-race key splits, gopls defeating Go's LRU trim; live profile `go` = 1.26.8 below every 1.27 floor |
 | 20:02 | Deploy attempt blocked by storm gate (real-IO-storm refusal) |
