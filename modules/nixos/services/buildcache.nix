@@ -608,7 +608,11 @@
             ConditionPathIsMountPoint = cfg.mountPoint;
           };
           environment = {
-            GOCACHE = "${cfg.mountPoint}/go-build";
+            # 2026-11-05: the LIVE go cache is the Samsung hot-user-caches
+            # automount (/home/lars/.cache/go-build); the /mnt/buildcache
+            # tree is the abandoned pre-migration copy (reclaimed by
+            # migrate-go-caches-hot.sh reclaim-usb after the soak).
+            GOCACHE = "/home/lars/.cache/go-build";
             npm_config_cache = "${cfg.mountPoint}/npm";
           };
           path = [
@@ -854,7 +858,7 @@
                   "[BODY] != pat(*buildcache_smart_healthy 0\n*)"
                   "[BODY] == pat(*\nbuildcache_smart_healthy *)"
                 ];
-                alert = "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing - go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
+                alert = "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing - pnpm/playwright/npm builds will fail with missing-directory errors (Go caches live on the Samsung hot tier since 2026-11-05). Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
               }
               {
                 name = "Build Cache Usage";
@@ -873,7 +877,7 @@
                   "[BODY] == pat(*\nbuildcache_mounted *)"
                   "[BODY] == pat(*\nbuildcache_usage_over_threshold 0*)"
                 ];
-                alert = "Build cache SSD exceeds 85% - the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
+                alert = "Build cache SSD exceeds 85% - the 240 GB drive is filling. Prune: cargo clean in monitor365; pnpm store prune; rm old Playwright browsers (the abandoned pre-migration Go trees are reclaimed by scripts/migrate-go-caches-hot.sh reclaim-usb after the soak).";
               }
               {
                 name = "Pool Mounted";

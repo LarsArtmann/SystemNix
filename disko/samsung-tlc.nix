@@ -84,6 +84,41 @@
                   "nodiscard"
                 ];
               };
+              # Go caches (2026-11-05): the hot-user-caches go-build entry
+              # UN-PARKED — the 2026-09-20 blocker (HM symlink canonicalizing
+              # the mount unit into the buildcache autofs) is resolved by
+              # removing the symlink in the same change that adds these
+              # mounts. go-build exists on the live disk since 2026-09-20
+              # (was out-of-band and undeclared — declared here so a
+              # re-provision recreates it); go-mod + golangci-lint are created
+              # by scripts/migrate-go-caches-hot.sh prepare. Live wiring is
+              # the hot-user-caches automount; compress=zstd stays (write-once
+              # content-addressed cache = the /nix workload shape, measured
+              # 1.89x there — NOT the +C log family).
+              "/users/lars/cache/go-build" = {
+                mountpoint = "/home/lars/.cache/go-build";
+                mountOptions = [
+                  "compress=zstd"
+                  "noatime"
+                  "nodiscard"
+                ];
+              };
+              "/users/lars/cache/go-mod" = {
+                mountpoint = "/home/lars/.cache/go-mod";
+                mountOptions = [
+                  "compress=zstd"
+                  "noatime"
+                  "nodiscard"
+                ];
+              };
+              "/users/lars/cache/golangci-lint" = {
+                mountpoint = "/home/lars/.cache/golangci-lint";
+                mountOptions = [
+                  "compress=zstd"
+                  "noatime"
+                  "nodiscard"
+                ];
+              };
               # Live subvols created OUT-OF-BAND (migrate scripts, not disko)
               # — declared here so a reinstall/rescue re-provision recreates
               # them; mount wiring + +C (nodatacow, inexpressible in disko)

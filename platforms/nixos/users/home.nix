@@ -458,14 +458,19 @@ in
     file = {
       ".cache/goimports".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/goimports";
       ".cache/go".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go";
-      # Belt-and-braces for GOCACHE: processes WITHOUT the session env
-      # (systemd user services, dbus-activated apps, emergency shells) fall
-      # back to Go's default ~/.cache/go-build — a real dir there silently
-      # moves build churn back onto the NVMe (2026-08-16: 5.4 GB accumulated
-      # in the USB-outage window). Name list single-sourced in
-      # scripts/lib/buildcache-reap-names.sh (all reap surfaces parse it —
-      # see the activation block below).
-      ".cache/go-build".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go-build";
+      # .cache/go-build is NO LONGER an HM symlink (2026-11-05): the three
+      # Go caches moved to Samsung subvols mounted AT their paths by
+      # hot-user-caches (go-build/go-mod/golangci-lint). The symlink had to
+      # go IN THE SAME CHANGE: systemd canonicalizes mount units through
+      # symlinks, so the new automount materialized inside the buildcache
+      # autofs while it existed (mnt-buildcache-go\x2dbuild.automount, the
+      # 2026-09-20 exit-4 class — full history in hot-user-caches.nix). Go's
+      # DEFAULT cache location now sits on the Samsung directly, so
+      # env-less processes are covered by the mount itself instead of a
+      # symlink. scripts/lib/buildcache-reap-names.sh keeps go-build listed
+      # for the displaced-cache reaps (see the activation block below); the
+      # session env keeps explicit GOCACHE/GOMODCACHE/GOLANGCI_LINT_CACHE
+      # values (repointed) for the direnv/fish guards to probe.
       # pnpm 11 ignores npm_config_* env vars AND .npmrc for store-dir, so the
       # store is redirected via symlink at its default location instead —
       # mechanism-independent, survives pnpm config-scheme changes.
@@ -508,7 +513,7 @@ in
         set -euo pipefail
 
         pick_cache() {
-          local candidate="''${GOLANGCI_LINT_CACHE:-/mnt/buildcache/golangci-lint}"
+          local candidate="''${GOLANGCI_LINT_CACHE:-/home/lars/.cache/golangci-lint}"
           if timeout --signal=KILL 1 mkdir -p "$candidate" 2>/dev/null \
             && timeout --signal=KILL 1 touch "$candidate/.cache-write-probe" 2>/dev/null; then
             rm -f "$candidate/.cache-write-probe"
@@ -664,9 +669,13 @@ in
       # Build caches on the USB SSD — run nix run .#migrate-buildcache BEFORE
       # the first deploy so the target dirs exist and the symlinked sources
       # (~/.cache/goimports, ~/.cache/go) have been moved aside.
-      GOCACHE = "/mnt/buildcache/go-build";
-      GOMODCACHE = "/mnt/buildcache/go-mod";
-      GOLANGCI_LINT_CACHE = "/mnt/buildcache/golangci-lint";
+      # Go caches on the Samsung hot tier (2026-11-05, hot-user-caches
+      # automounts at Go's default/adjacent paths) — the USB buildcache keeps
+      # pnpm/playwright/npm/pip only. Explicit values so the direnv/fish
+      # dead-mount guards keep probing the SAME vars.
+      GOCACHE = "/home/lars/.cache/go-build";
+      GOMODCACHE = "/home/lars/.cache/go-mod";
+      GOLANGCI_LINT_CACHE = "/home/lars/.cache/golangci-lint";
       PIP_CACHE_DIR = "/mnt/buildcache/pip";
       PLAYWRIGHT_BROWSERS_PATH = "/mnt/buildcache/playwright";
       # npm reads npm_config_* env vars as .npmrc settings. pnpm 11 does NOT

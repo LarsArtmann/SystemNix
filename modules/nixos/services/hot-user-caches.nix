@@ -121,20 +121,36 @@ _: {
               subvol = "users/${primaryUser}/tmp";
               mountPoint = "/home/${primaryUser}/tmp";
             };
-            # go-build is DELIBERATELY ABSENT (2026-09-20, first live run):
-            # ~/.cache/go-build is an HM mkOutOfStoreSymlink →
-            # /mnt/buildcache/go-build (home.nix env-less-processes
-            # doctrine), and systemd CANONICALIZES mount units through
-            # symlinks — the go-build entry materialized as
-            # mnt-buildcache-go\x2dbuild.automount, an autofs NESTED INSIDE
-            # the /mnt/buildcache autofs, failing at unit load (exit-4 on
-            # every activation, live 2026-09-20 11:41). A proper integration
-            # needs the HM symlink gated off AND a boot ordering that never
-            # loads the automount while the symlink exists (HM activates
-            # AFTER early-boot automounts). The BuildFlow env_guard
-            # fallback-cache relocation stays PARKED until that design
-            # exists; the Samsung subvol created 2026-09-20
-            # (users/<user>/cache/go-build) is inert and harmless.
+            # go-build/go-mod/golangci-lint (2026-11-05): the 2026-09-20
+            # go-build PARKING is lifted. The old blocker — ~/.cache/go-build
+            # was an HM mkOutOfStoreSymlink → /mnt/buildcache/go-build, and
+            # systemd canonicalizes mount units through symlinks, so the
+            # entry materialized as mnt-buildcache-go\x2dbuild.automount
+            # nested INSIDE the buildcache autofs (exit-4 on every
+            # activation) — is resolved by removing the symlink in the same
+            # change that adds these mounts (home.nix): the unit now
+            # materializes at its real path, and HM activates before the
+            # switch reloads units. go-build's subvol exists on the live disk
+            # since 2026-09-20 (lars-owned, was empty); go-mod + golangci-lint
+            # are created by scripts/migrate-go-caches-hot.sh prepare (root,
+            # one time). CoW + compress=zstd on purpose: cache entries are
+            # write-once content-addressed — the /nix workload shape (1.89x
+            # compression measured there) — NOT the +C in-place-churn family.
+            # USB buildcache stays the home of pnpm/playwright/npm/pip; the
+            # abandoned Go trees on it are reclaimed by
+            # migrate-go-caches-hot.sh reclaim-usb after the soak.
+            go-build = {
+              subvol = "users/${primaryUser}/cache/go-build";
+              mountPoint = "/home/${primaryUser}/.cache/go-build";
+            };
+            go-mod = {
+              subvol = "users/${primaryUser}/cache/go-mod";
+              mountPoint = "/home/${primaryUser}/.cache/go-mod";
+            };
+            golangci-lint = {
+              subvol = "users/${primaryUser}/cache/golangci-lint";
+              mountPoint = "/home/${primaryUser}/.cache/golangci-lint";
+            };
           };
         };
       };

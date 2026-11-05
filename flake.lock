@@ -919,11 +919,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793847311,
-        "narHash": "sha256-e4UJcwIL9M4yxw9kbL9jFKQMdX4g8Nzik4nGsfi9UAs=",
+        "lastModified": 1793913013,
+        "narHash": "sha256-x36BG4aMFAcrZGCXmSkrK6InfMECUU0d3cw/2/arIJU=",
         "ref": "refs/heads/master",
-        "rev": "63f5a81b230b4230c61e196aea817bbc2aaa2d08",
-        "revCount": 372,
+        "rev": "459d24517ea91db03d9c3b86460ec8834a99a87b",
+        "revCount": 375,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       },
@@ -7800,11 +7800,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793906700,
-        "narHash": "sha256-80QfbPihMuhEtSTTe0jinkr3QaRv+YmUHMicSWJvZ6M=",
+        "lastModified": 1793909706,
+        "narHash": "sha256-Samykm6se0psar6ILShpDHmWWMKqpeiXWNs7W10t5EE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "7fe77da1440d97fe4756a2463cf094e4deeca0a3",
+        "rev": "7a6e673446f5edd0d0921b2b0823d6d1646007bd",
         "type": "github"
       },
       "original": {
