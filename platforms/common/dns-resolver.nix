@@ -13,6 +13,7 @@
 # correctly — but WHICH instance depends on gateway mode (below).
 {
   lib,
+  config,
   ...
 }:
 {
