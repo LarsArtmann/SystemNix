@@ -194,9 +194,12 @@ lib.filterAttrs (_: v: v != null) {
   # 6mUToa7K (float-proof-20261106-010252 + -012906 + -014324 logs,
   # three independent FOD measurements). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
+  # RE-STALE 2026-11-06 evening (lock now at 254e4839): spec 6mUToa7K, got
+  # jxGg7Xa (first-hand, float-proof-20261106-225127.log — the crm
+  # pin-wave proof enumerated it).
   cqrs-lint =
     flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
-      "sha256-6mUToa7K9eRWNyk56q/UkpauRisxci7rFgw5Ssvg26E=";
+      "sha256-jxGg7XaLM0TYgmqzB/5XC84PDdkkpOeWHWogbVL5zJY=";
   # docs-gates — the docs-health battery gates (freshness / annotate /
   # routing / cadence / strike) as one stdlib-only multi-call binary;
   # packages.default = the binary + the five legacy-name wrappers
@@ -455,9 +458,13 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   # RE-STALE 2026-11-05 float wave: at project-meta@332065f spec CejG7L+F,
   # got IpBieRbI (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-06 evening: spec IpBieRbI… lineage, got HfNEpdS
+  # (first-hand, float-proof-20261106-225127.log — the crm pin-wave proof
+  # enumerated it; the project-meta input floated again via the peer
+  # daemon commits).
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-3ROlPED3sg66tTJkHkVvraOc7tJoyLYDHk/r6ynNnus=";
+      "sha256-HfNEpdSDAQfbjae/rp9arxLqvVx4586QNHmtrdl/3/s=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at

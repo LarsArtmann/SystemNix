@@ -444,7 +444,9 @@ let
       ok = policyAssertionFires "capped at 64" [
         {
           services.dns-blocker.gatewayLanRanges = map (
-            n: "10.0.${toString (n / 256)}.${toString (n % 256)}/32"
+            # NB: this box's Nix (2.34.9) rejects BOTH the `mod` keyword and
+            # the `%` token — remainder is spelled arithmetically here.
+            n: "10.0.${toString (n / 256)}.${toString (n - (n / 256) * 256)}/32"
           ) (pkgs.lib.range 1 65);
         }
       ];
