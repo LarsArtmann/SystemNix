@@ -436,7 +436,7 @@ let
     }
     {
       ok = policyAssertionFires "pins gatewayIpv4 == blockIP" [
-        { services.dns-blocker.gatewayIpv4 = "192.168.1.250"; }
+        { services.dns-blocker.gatewayIpv4 = pkgs.lib.mkForce "192.168.1.250"; }
       ];
       msg = "lie-address==blockIP assertion does not fire";
     }
