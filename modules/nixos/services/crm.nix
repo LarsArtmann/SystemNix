@@ -125,13 +125,15 @@
       # templ-v0.3.1100 compatibility wave that ends this treadmill (the
       # vendored cqrs-htmx adminui and go-cqrs-lite docserver are both
       # regenerated into the 1100-compatible form upstream now). Value is
-      # the vendorHash crm itself declares and proved green at that source
-      # (see crm AGENTS "NIX PIN WAVE"); re-proven consumer-side in the
-      # evo-x2 toplevel float-proof before the deploy. Drop the shim when
-      # upstream bakes the hash and the lock moves past an upstream-fixed
-      # rev.
+      # the CLEAN-state go-modules hash measured first-hand by the
+      # float-proof against the git+ssh-fetched source (the crm flake's
+      # first-chase value AN6/xU4… was the DIRTY-tree variant — vendorHash
+      # duality, crm AGENTS; the clean value is canonical). First-hand:
+      # float-proof-20261106-223732.log, kith-crm@b57a94c spec AN6/xU4…,
+      # got V2sLHGk. Drop the shim when upstream bakes the hash and the
+      # lock moves past an upstream-fixed rev.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-AN6/xU4iUXZsfp77Ar7FHidG5kxpGjHLbj5BOUcL9kI=";
+        vendorHash = "sha256-V2sLHGkTpsKGtxAN6Si65T7UNnkCr8/sYAT70aO9bks=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
