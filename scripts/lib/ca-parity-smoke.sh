@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # dnsblockd CA parity smoke — post-deploy §22 (fixture-tested by
-# scripts/test-ca-parity-smoke.sh and the dnsblockd-guards-selftest flake
-# check).
+# scripts/test-ca-parity-smoke.sh, which the checks.dnsblockd-ca-parity-selftest
+# flake check runs against REAL openssl certs).
 #
 # The same CA exists twice by necessity: a PEM inlined into
 # security.pki.certificates (platforms/nixos/system/dns-blocker-config.nix)

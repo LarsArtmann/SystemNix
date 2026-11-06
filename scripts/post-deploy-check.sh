@@ -250,7 +250,7 @@ STH_PASS=report_pass STH_FAIL=report_fail STH_WARN=report_warn
 # shellcheck disable=SC2034
 CRM_PASS=report_pass CRM_FAIL=report_fail CRM_WARN=report_warn CRM_SKIP=report_skip
 # Shared dnsblockd CA-parity §22 smoke logic (fixture-tested by
-# scripts/test-ca-parity-smoke.sh + the dnsblockd-guards-selftest flake check
+# scripts/test-ca-parity-smoke.sh + the dnsblockd-ca-parity-selftest flake check
 # — the FAIL branches need a mismatched CA pair, which a live rehearsal
 # cannot produce without breaking real browser trust).
 # shellcheck source=scripts/lib/ca-parity-smoke.sh disable=SC1091
@@ -2428,7 +2428,7 @@ crm_oidc_smoke "$CRM_UNIT_FILE"
 # terminates with. A one-sided rotation silently breaks browser trust and the
 # ADR-0018 scoped filter-proxy that depends on it. Logic lives in the sourced
 # lib so the fixture harness drives the REAL verdicts (see
-# scripts/test-ca-parity-smoke.sh + the dnsblockd-guards-selftest check).
+# scripts/test-ca-parity-smoke.sh + the dnsblockd-ca-parity-selftest check).
 echo ""
 echo "=== §22 dnsblockd CA parity (trust anchor vs served CA) ==="
 dnsblockd_ca_parity_smoke
