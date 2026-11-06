@@ -811,7 +811,18 @@
       # the gen-797-proven rev currently deployed (upstream nixpkgs NOT
       # followed, so the FOD is a cache hit). Do NOT update-input until
       # upstream wires go-sqlitestore and the FOD + package probe green.
-      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=refs/heads/master";
+      # HARD PIN 2026-11-06 (templ API removal): upstream 2f3b275 "chore(deps):
+      # update Go dependencies" bumped a-h/templ 0.3.1070 -> 0.3.1100 and
+      # discordgo in one commit. templ 0.3.1100 REMOVED
+      # templ.ResolveAttributeValue / templ.JoinURLErrs, which every *_templ.go
+      # generated before the v0.3.1100 generator wave still calls, and the
+      # newer discordgo no longer accepts CacheGuild where the handler code
+      # passes event.Guild. 2f3b275 IS current master with no fix behind it:
+      # the parent ea6c444c is the last internally consistent rev (the rev
+      # every deploy before today shipped). LIFT: upstream regenerates its
+      # templates with the v0.3.1100 generator (or pins templ back) AND the
+      # discordgo handlers compile; then drop this pin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?rev=ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
     };
 
     # media-atlas — the MediaAtlas federation hub (`atlas` binary, repo
