@@ -22,6 +22,7 @@ in
     ./programs/starship.nix
     ./programs/activitywatch.nix
     ./programs/push-stall-watch.nix
+    ./programs/trash-prune.nix
     ./programs/tmux.nix
     ./programs/git.nix
     ./programs/jujutsu.nix
