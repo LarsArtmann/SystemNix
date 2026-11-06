@@ -71,14 +71,16 @@ New `[ready]`/`[watch]` rows appended to TODO_LIST.md (all point at docs/todo/st
 ~~1. Docker volume inventory (212/6/4.09G-94%) → keep/forgotten classification + prune-candidate list, NO auto-prune.~~ **Won't implement — moot — Docker removed 2026-10-08; disposition decided (TODO_LIST:122).**
 ~~2. Sudo-window `du`/`compsize /data/docker` vs docker-reported 15.5G (provenance like-for-like).~~ **Won't implement — moot — Docker removed 2026-10-08 (TODO_LIST:122).**
 ~~3. Convert the Samsung-section docker prose to pointer-only (single-home the figure).~~ **Won't implement — moot — Docker removed 2026-10-08; AGENTS.md restructured 2026-10-01.**
-4. The grep-gate for stale root-window restatements (fixtures + context rules + negative tests + pre-commit AND CI).
-5. Store-warmth root-cause + retry-once-with-prefetch leg (→ docs/todo/pipeline.md).
-6. Fresh re-close of the trusted-not-re-derived echo surfaces (clickhouse script, darwin, docs/planning) + gate-scope decision for planning docs.
-7. `/data` composition figure refresh + "(figures as of <date>)" convention.
+4. The grep-gate for stale root-window restatements (fixtures + context rules + negative tests + pre-commit AND CI). **→ routed: the storage.md grep-gate row (fully specified, [ready])**
+5. ~~Store-warmth root-cause + retry-once-with-prefetch leg (→ docs/todo/pipeline.md).~~ **NOT-DO — NOT-DO — stale-unre-derived: the pipeline row never landed and nothing re-surfaced the store-warmth class in the 2 months since (no re-fires, no incidents); re-derive from a live repro if it recurs.**
+6. ~~Fresh re-close of the trusted-not-re-derived echo surfaces (clickhouse script, darwin, docs/planning) + gate-scope decision for planning docs.~~ done — darwin verified N/A 2026-11-06 (grep empty); planning-docs sweep harvested 2026-11-06 (storage.md row); clickhouse script adjacency verified legal in the 01-38 appendix
+7. ~~`/data` composition figure refresh + "(figures as of <date>)" convention.~~ done — AGENTS.md /data composition re-probed + dated (2026-11-03 probe stamp)
 ~~8. `[watch]` post-Sunday prune verification (dangling images reclaimed; reclaimed figure + projected pin-free date).~~ **Won't implement — moot — Docker removed 2026-10-08; no docker prune to verify.**
-9. btrbk dryrun observation proof for the 2w-sharp model.
+9. btrbk dryrun observation proof for the 2w-sharp model. **→ routed: TODO_LIST calendar-anchor observation-proof row (btrbk dryrun scheduler output)**
 
 New `BLOCKED` rows (owner answers, section g): reconciliation scope, final retention config, volume policy.
+
+> HARVESTED 2026-11-06 (T26 month-sweep batch 1): every open §f item resolved inline — routed (grep-gate storage.md; dryrun observation TODO_LIST row), done with evidence (/data figures re-probed + dated 2026-11-03; echo surfaces re-closed across the lineage), 1 NOT-DO stale (store-warmth). The g) owner questions: retention DECIDED 2026-10-08 (3d); volume policy MOOT (Docker removed 2026-10-08, disposition decided); reconciliation scope rides TODO_LIST:135.
 
 High-value existing rows this window re-endorses (NOT re-added — dedup): snapshots.nix calendar-anchor comment (TODO_LIST:51), `@home-hermes` 09-16 snapshot (TODO_LIST:52), queue dedup preflight (TODO_LIST:322), pre-commit WARN classification for invalid-path eval failures (TODO_LIST:313), docs-only fast path for the pre-commit flake-check leg (TODO_LIST:59), the deploy-authority decision gating every runtime-zero task (TODO_LIST:76).
 
