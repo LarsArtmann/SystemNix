@@ -381,23 +381,15 @@ in
       pkgs.uv
       pkgs.shfmt
       pkgs.nodejs
-      # buildflow vendorHash shim RE-ADDED 2026-10-15 fleet wave: upstream at
-      # locked rev d114f28 declares a stale vendorHash while the real dep
-      # content hashes to cCl3IWhu (first-hand evidence: toplevel keep-going
-      # enumeration /tmp/toplevel-20261015b.log, FOD 866x106r failed with
-      # exactly this got hash; the shimmed mkLarsPackages twin instance
-      # realized with the same value). Second surface — the first lives in
-      # lib/lars-packages.nix. Drop when upstream declares cCl3IWhu at this
-      # or a later rev (verify via nix build .#buildflow).
-      # RE-STALE 2026-10-19 wave: both surfaces re-pinned to got
-      # 9y4NBzy3… (/tmp/toplevel-build-20261019.log, locked rev cf606f8).
-      # RE-STALE 2026-10-26 lock float: spec 9y4NBzy3, got ffjf0h53
-      # (float-proof-20261026-161006.log).
-      # SHIM DROPPED 2026-10-28 (drop-protocol): the locked rev ce10b79's own
-      # vendorHash.nix bakes 9SVsy6pM — the exact got hash of the 2026-10-28
-      # proof — so the override was drift-treadmill only. Both surfaces
-      # dropped (the other is lib/lars-packages.nix).
-      inputs.buildflow.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # buildflow: NO entry here. It reaches PATH through
+      # platforms/common/packages/base.nix (`builtins.attrValues larsPackages`),
+      # whose lib/lars-packages.nix declaration is the single source of truth.
+      # The raw `inputs.buildflow.packages.<system>.default` used to be listed
+      # here as a second surface while the two carried DIFFERENT vendorHash
+      # shims; the 2026-11-06 audit showed upstream now bakes the correct
+      # 7F+fM3 at ba3cd98, so both resolved to one derivation and the duplicate
+      # was pure noise — and while they disagreed it built buildflow TWICE,
+      # doubling a go-modules FOD download on every deploy.
       # flm CLI (NPU LLM; service consumes the same package). Replaces the
       # deleted ~/.local/bin/flm wrapper — the nix package sets its own
       # XILINX_XRT/LD_LIBRARY_PATH, no hand-maintained script needed.

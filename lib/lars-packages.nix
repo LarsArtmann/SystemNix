@@ -130,16 +130,20 @@ lib.filterAttrs (_: v: v != null) {
   # only re-created the drift treadmill. Both surfaces dropped (this one +
   # platforms/nixos/system/configuration.nix). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  # RE-STALE 2026-11-06 nixpkgs float (root 1d060086, go 1.27.3): at a1d0c14
-  # spec jbsLverx, got SRdpoBO+ (first-hand fakeHash FOD probe this session,
-  # drv 96c9wjgjp4qkzy1pyii42izy9hl5y40m-buildflow-a1d0c14-go-modules).
-  # This shim reverses the 2026-10-28 drop ABOVE: that drop was evidence-based
-  # for ce10b79 under the then-root toolchain; the toolchain moved again, so
-  # the override is no longer bit-neutral. Drop again when upstream's
-  # vendorHash.nix bakes SRdpoBO+ (re-lock past that rev).
-  buildflow =
-    flakePkgShim inputs.buildflow "default"
-      "sha256-SRdpoBO+z0p2Boea0CZbu0zGx9OFzNO9TmoV2hKz23U=";
+  # SHIM DROPPED AGAIN 2026-11-06 (drop-protocol): the SRdpoBO+ value added
+  # earlier this session was MISATTRIBUTED — it was probed at a1d0c14 (drv
+  # 96c9wjgjp4qkzy1pyii42izy9hl5y40m-buildflow-a1d0c14-go-modules) but pasted
+  # onto the lock after it had already moved to ba3cd98. First-hand re-probe at
+  # ba3cd98 (nix-store --realise of 23qjyl87…-buildflow-ba3cd98-go-modules.drv)
+  # reported specified SRdpoBO+, got
+  # sha256-7F+fM3mxTCysNBZJtoBILx48X1uFLovD762UAISwtJU= — which is EXACTLY what
+  # upstream's own vendorHash.nix bakes at this rev (the raw
+  # inputs.buildflow.packages.default derivation f1rndifs… declares the same
+  # 7F+fM3). The override was therefore drift-treadmill only AND it created a
+  # SECOND buildflow derivation in the closure (raw 7F+fM3 vs shim SRdpoBO+),
+  # doubling the go-modules FOD build on every deploy.
+  # Re-add ONLY via nix-hash-fix evidence taken at the SAME rev you apply it to.
+  buildflow = flakePkg inputs.buildflow;
   # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
   # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
   # packages.default with its own baked vendorHash (no follows into it).
