@@ -26,6 +26,7 @@ before scoring a finding. Config presence proves intent, not behavior.
 
 | Report                                                                                   | Date       | Subject                           | Refresh trigger                                        |
 | ---------------------------------------------------------------------------------------- | ---------- | --------------------------------- | ------------------------------------------------------ |
+| [2026-11-06_kensaku-vs-local-search-stack.md](2026-11-06_kensaku-vs-local-search-stack.md) | 2026-11-06 | kensaku vs OpenCloud × Paperless × renamer × qmd × launchers — WATCH verdict (whole-disk OCR+semantic launcher; no nix packaging, probe path = kensaku-cli binary) | kensaku flake/nixpkgs package, stable 1.x+ line, or owner CLI probe |
 | [2026-09-29_signoz-grafana-gap-analysis.md](2026-09-29_signoz-grafana-gap-analysis.md)   | 2026-09-29 | SigNoz vs Grafana gaps            | SigNoz major bump / dashboard pain that Grafana solves |
 | [coroot-evaluation.md](coroot-evaluation.md)                                             | —          | Coroot observability evaluation   | only if SigNoz is ever questioned                      |
 | [deepflow-evaluation.md](deepflow-evaluation.md)                                         | —          | DeepFlow observability evaluation | only if SigNoz is ever questioned                      |

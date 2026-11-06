@@ -482,9 +482,11 @@
             # way"). Cache data only, exact paths, symlink occupants kept.
             # Names come from the single source scripts/lib/buildcache-reap-
             # names.sh (shared with deploy.sh and the home.nix activation reap
-            # — never a private copy). 2026-09-17: added BuildFlow's
-            # cross-repo fallback names (gobuild gocache gomod - set by
-            # BuildFlow sessions as dead-mount fallbacks) - the original
+            # — never a private copy). 2026-09-17: added the dead-mount
+            # fallback names (gobuild gocache gomod; attribution corrected
+            # 2026-11-06 in reap-names.sh — only `gocache` is BuildFlow's
+            # scripts, `gobuild`/`gomod` match the agent-session export
+            # class, no tracked source) - the original
             # 3-name list evaded them forever, leaving unowned NVMe churn
             # after every dead-mount episode. 2026-09-22 sweep: pnpm
             # (dlx/metadata cache, ~/.cache/pnpm — the store symlink covers
