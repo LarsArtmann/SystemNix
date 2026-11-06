@@ -442,6 +442,33 @@ _: {
             # which upstream treats as "no entries".
             inherit (cfg) policies;
           }
+          // lib.optionalAttrs cfg.gatewayEnabled {
+            # Gateway mode (ADR-0011): DNS-lie capture. Keys render ONLY
+            # while enabled — an inert host must produce a config without
+            # any gateway key at all (the render test pins the absence).
+            # gateway_mode is always the literal "flow": it is the only
+            # posture upstream implements, and the validation layer rejects
+            # anything else ("TLS decryption is the gateway_decrypt_* overlay,
+            # ADR-0021 — not a capture mode").
+            gateway_enabled = true;
+            gateway_mode = "flow";
+            gateway_ipv4 = cfg.gatewayIpv4;
+            gateway_ttl = cfg.gatewayTtl;
+            gateway_max_connections = cfg.gatewayMaxConnections;
+            gateway_block_external_doh = cfg.gatewayBlockExternalDoh;
+          }
+          # IPv6 renders separately: null (the default) means AAAA answers
+          # empty NOERROR while lying — an explicit null key would only
+          # obscure the "no AAAA lie configured" state.
+          // lib.optionalAttrs (cfg.gatewayEnabled && cfg.gatewayIpv6 != null) {
+            gateway_ipv6 = cfg.gatewayIpv6;
+          }
+          // lib.optionalAttrs (cfg.gatewayEnabled && cfg.gatewayLanRanges != [ ]) {
+            # SSRF-floor widening: private destinations the splice may dial
+            # INTO (split-horizon/hairpin answers). Without a range the floor
+            # refuses every private destination; entries stay SPLICE-ONLY.
+            gateway_lan_ranges = cfg.gatewayLanRanges;
+          }
         )
       );
 
@@ -955,6 +982,99 @@ _: {
           description = "Strip upstream Content-Security-Policy headers on injected filter-proxy responses only (inert while proxyInjectScriptURL is null).";
         };
 
+        # ── Gateway mode (ADR-0011, default OFF) ──
+
+        gatewayEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Gateway mode (ADR-0011): DNS-lie capture. While enabled, every
+            non-blocked, non-allowlisted A/AAAA answer points at gatewayIpv4
+            and the widened SNI splice / L7 proxy carry the resulting traffic
+            content-blind, one flow row per connection. Capture authority is
+            DNS trust, not network position: hardcoded-IP apps, device-level
+            DoH/DoT, and UDP flows bypass by construction (residual-bypass
+            matrix, ADR-0011). Requires proxyEnabled and gatewayIpv4
+            (asserted). By-name non-TLS protocols (SSH to public hosts)
+            refuse loudly at the gateway — the local-zone record is the
+            escape hatch; the gateway host itself should resolve through the
+            gateway-free failover peer (dns-resolver.nix) to keep operator
+            SSH working.
+          '';
+        };
+
+        gatewayIpv4 = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            IPv4 address the DNS lie hands out (required when gatewayEnabled,
+            asserted): must be the address the block-page/splice TLS
+            listener answers on — in this wrapper that is always blockIP,
+            and the assertion pins the equality (a lie pointing anywhere
+            else lands where nothing listens).
+          '';
+        };
+
+        gatewayIpv6 = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          description = ''
+            IPv6 address handed out for AAAA while lying. Null answers AAAA
+            empty NOERROR (clients fall back to the A lie at the cost of
+            happy-eyeballs latency on dual-stack clients). Leave null on
+            hosts without global IPv6.
+          '';
+        };
+
+        gatewayTtl = mkOption {
+          type = types.int;
+          default = 60;
+          description = ''
+            TTL (seconds) stamped on lie answers (upstream bounds 5-3600).
+            Bounds off-switch recovery — clients re-resolve within this TTL
+            after POST /api/gateway/off — and lie staleness while enabled.
+          '';
+        };
+
+        gatewayMaxConnections = mkOption {
+          type = types.int;
+          default = 2048;
+          description = ''
+            Cap on concurrent gateway connections (splice + L7; upstream
+            bounds 1-65535). Overflow is rejected with a counter, never
+            silently evicted. The unit's LimitNOFILE scales from this (two
+            sockets per flow) when the gateway is enabled.
+          '';
+        };
+
+        gatewayLanRanges = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            CIDRs the gateway may splice-dial INTO (NAS, printers,
+            self-hosted services; upstream caps 64 entries and rejects
+            0.0.0.0/0 and ::/0 — LAN trust is an explicit allow-set). Without
+            a range the SSRF floor refuses every private destination.
+            Splice-only trust: traffic to these ranges is relayed
+            content-blind, never terminated.
+          '';
+        };
+
+        gatewayBlockExternalDoh = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Block the well-known external DoT/DoH provider endpoints
+            (dns.google, cloudflare-dns.com, dns.quad9.net, ...) while the
+            gateway lies, so configured devices cannot route encrypted DNS
+            around the capture. Endpoints answer as BLOCKED; a policy allow
+            never reopens them (only the operator allowlist outranks the
+            preset). IP-hardened endpoints bypass by construction regardless
+            — the README residual-bypass matrix documents that half. Upstream
+            warns while the lie is armed without this preset.
+          '';
+        };
+
         # ── Device + user registry (household attribution) ──
 
         devices = mkOption {
@@ -1104,6 +1224,37 @@ _: {
             message = "services.dns-blocker.proxyInjectScriptURL must be an http(s) URL with a host (upstream validates NOTHING here — a typo fails open at runtime with no signal).";
           }
           {
+            # Gateway mode hard rules (mirrored from upstream validation.go +
+            # nix/modules/nixos/assertions.nix — the sole resolver must fail
+            # at eval, never crash-loop at boot). The capture authority IS
+            # the DNS lie, so every rule is about WHERE the lie points and
+            # what must exist behind it.
+            assertion =
+              !cfg.gatewayEnabled
+              || (
+                cfg.proxyEnabled
+                && cfg.gatewayIpv4 != null
+                && cfg.gatewayIpv4 == cfg.blockIP
+                && cfg.gatewayTtl >= 5
+                && cfg.gatewayTtl <= 3600
+                && cfg.gatewayMaxConnections >= 1
+                && cfg.gatewayMaxConnections <= 65535
+                && builtins.length cfg.gatewayLanRanges <= 64
+              );
+            message = ''
+              services.dns-blocker gateway violations: gatewayEnabled requires proxyEnabled (upstream: the splice/L7 proxy carries the captured traffic),
+              requires gatewayIpv4, pins gatewayIpv4 == blockIP (this wrapper's block-page/splice TLS listener answers ONLY on blockIP — a lie pointing
+              anywhere else lands where nothing listens), gatewayTtl within 5-3600 and gatewayMaxConnections within 1-65535 (upstream hard bounds),
+              gatewayLanRanges capped at 64 (upstream cap).
+            '';
+          }
+          {
+            # Upstream rejects 0.0.0.0/0 and ::/0 in gateway_lan_ranges
+            # (LAN trust is an explicit allow-set, never the internet).
+            assertion = builtins.all (r: r != "0.0.0.0/0" && r != "::/0") cfg.gatewayLanRanges;
+            message = "services.dns-blocker.gatewayLanRanges must never contain 0.0.0.0/0 or ::/0 (LAN trust is an explicit allow-set — upstream rejects the any-range).";
+          }
+          {
             assertion = !(cfg.dnsRateLimitPerSec > 0) || cfg.dnsRateLimitBurst > 0;
             message = "services.dns-blocker.dnsRateLimitBurst must be > 0 when dnsRateLimitPerSec is enabled.";
           }
@@ -1247,6 +1398,23 @@ _: {
             message = "services.dns-blocker.tlsH3Enabled requires blockTLSPort > 0 (upstream: HTTP/3 terminates QUIC on the same port number as the HTTPS block page listener).";
           }
         ];
+
+        # Gateway advisory warnings (upstream nix assertions.nix carries the
+        # same two as lib.optional warnings — advisory because the failure
+        # mode is degradation, not crash: encrypted-DNS bypass traffic simply
+        # escapes the capture, and CA-terminated gateway HTTPS simply breaks
+        # untrusting clients loudly).
+        warnings = lib.optionals cfg.gatewayEnabled (
+          (lib.optional (!cfg.gatewayBlockExternalDoh) ''
+            services.dns-blocker: gateway_enabled with gateway_block_external_doh=false — configured devices can route encrypted DNS around the lie and bypass the capture entirely; the DNS-tier preset costs nothing, enable it.
+          '')
+          ++ (lib.optional (!cfg.proxyTLSPassthrough) ''
+            services.dns-blocker: gateway_enabled with proxy_tls_passthrough=false — gateway HTTPS is L7-terminated on your CA, so every client must trust the dnsblockd CA or the site breaks loudly (the splice default avoids this).
+          '')
+          ++ (lib.optional (cfg.dnsIPv6Enabled && cfg.gatewayIpv6 == null) ''
+            services.dns-blocker: gateway_enabled with dns_ipv6_enabled but no gateway_ipv6 — AAAA answers empty NOERROR while lying and dual-stack clients pay happy-eyeballs latency per connection; set gateway_ipv6 to lie v6 too.
+          '')
+        );
 
         # lib.mkMerge, NOT `{ … } // (lib.mkIf …)`: `//` is a SHALLOW merge,
         # so the conditional allowlist-backup leg's `services.<unit>` keys
@@ -1497,6 +1665,17 @@ _: {
                       ProtectSystem = "strict";
                       CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
                       AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+                    })
+                    (lib.mkIf cfg.gatewayEnabled {
+                      # Gateway flows hold TWO sockets each (client + spliced/
+                      # proxied backend), so the fd ceiling must cover 2x
+                      # gateway_max_connections on top of listeners, the SQLite
+                      # pool, and epoll fds — upstream's exact formula
+                      # (nix/modules/nixos/config.nix). At the 2048 default the
+                      # 65536 floor wins with ample headroom; the max() only
+                      # raises the ceiling when the connection cap grows past
+                      # what a fixed 65536 can carry (2x65535 would exhaust it).
+                      LimitNOFILE = lib.max 65536 (2 * cfg.gatewayMaxConnections + 4096);
                     })
                     (serviceDefaults { RestartSec = "3s"; })
                     # BE/5 heavyDB: the boot-time 3.9M-entry blocklist build is a

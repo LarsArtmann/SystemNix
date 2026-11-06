@@ -23,7 +23,7 @@
 }:
 let
   inherit (config.networking) domain;
-  inherit (config.networking.local) blockIP virtualIP cloudDomain;
+  inherit (config.networking.local) blockIP subnet virtualIP cloudDomain;
   blocklists = import ../../common/dns-blocklists.nix;
   inherit (import ../../../lib/default.nix lib) ports;
   dnsLocal = import ../../common/dns-local.nix;
@@ -234,6 +234,28 @@ in
         "1.1.1.1:53"
         "9.9.9.9:53"
       ];
+
+      # ── Gateway mode (ADR-0011 DNS-lie capture) — owner enablement 2026-11-06 ──
+      # The lie points at blockIP (.200): the block-page/splice TLS listener
+      # already answers there (caddy holds .150), so the widened splice rides
+      # the EXISTING listener — no new port, no new bind. The lan range
+      # widens the SSRF floor so spliced flows can dial split-horizon/
+      # hairpin LAN destinations. The DoH preset keeps configured devices
+      # from routing encrypted DNS around the capture (DNS-tier guard; the
+      # firewall leg from the upstream bypass matrix does not apply here —
+      # evo-x2 is NOT the LAN router, it only sees traffic the lie steers
+      # onto it).
+      # Consequences accepted + documented in docs/services/dnsblockd.md:
+      # by-name non-TLS protocols (SSH to public hosts) refuse loudly; the
+      # HOST therefore resolves through the rpi3 failover peer first
+      # (dns-resolver.nix) so operator git-over-SSH keeps working — capture
+      # is for the household, not the box that deploys this config; and
+      # rpi3-dns keeps the gateway OFF (failover = truth = capture gap, the
+      # same asymmetry as the scoped filter proxy).
+      gatewayEnabled = true;
+      gatewayIpv4 = blockIP;
+      gatewayLanRanges = [ subnet ];
+      gatewayBlockExternalDoh = true;
     };
 
     dnsblockd-cert-trust = {

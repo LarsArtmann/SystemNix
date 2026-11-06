@@ -120,20 +120,20 @@
       # undefined, float-proof-20261106-012906.log), so crm pinned back to
       # last-green 900bf55f where THIS J9L/KEVb value is the proven pair
       # (registry backup reg-rows-before-20261106-000533).
-      # PIN-WAVE RE-SHIM (2026-11-06): crm input rolled to b57a94c, whose
-      # own flake pins cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf — the
-      # templ-v0.3.1100 compatibility wave that ends this treadmill (the
-      # vendored cqrs-htmx adminui and go-cqrs-lite docserver are both
-      # regenerated into the 1100-compatible form upstream now). Value is
-      # the CLEAN-state go-modules hash measured first-hand by the
-      # float-proof against the git+ssh-fetched source (the crm flake's
-      # first-chase value AN6/xU4… was the DIRTY-tree variant — vendorHash
-      # duality, crm AGENTS; the clean value is canonical). First-hand:
-      # float-proof-20261106-223732.log, kith-crm@b57a94c spec AN6/xU4…,
-      # got V2sLHGk. Drop the shim when upstream bakes the hash and the
-      # lock moves past an upstream-fixed rev.
+      # PIN-WAVE RE-SHIM (2026-11-06): crm input rolled to 166451e, whose
+      # own flake pins cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf AND
+      # carries both in its COMMITTED flake.lock (the b57a94c attempt
+      # shipped only the cqrs-htmx half — the committed lock still pinned
+      # go-cqrs-lite da7663243, so its fetched source vendored the OLD
+      # library and its interim hash V2sLHGk described a state that could
+      # not compile). Value = the go-modules hash crm measured first-hand
+      # on the fully-committed pin wave (rev-pinned clean build exit 0,
+      # crm 166451e); the float-proof re-proves it consumer-side. Lesson
+      # recorded in crm AGENTS: the go-modules hash follows the LOCK
+      # inputs, not worktree dirt. Drop the shim when upstream bakes the
+      # hash and the lock moves past an upstream-fixed rev.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-V2sLHGkTpsKGtxAN6Si65T7UNnkCr8/sYAT70aO9bks=";
+        vendorHash = "sha256-AN6/xU4iUXZsfp77Ar7FHidG5kxpGjHLbj5BOUcL9kI=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

@@ -984,17 +984,16 @@
     crm = {
       # TEMPORARY HARD PIN rolled forward 2026-11-06 (same templ-API-removal
       # class; allowlist block in lib/flake-input-pin-audit.nix). LIFTED by
-      # the upstream pin wave: b57a94c "docs: archive the 10-04 review
-      # report and record the pin wave" carries crm's own double pin —
+      # the upstream pin wave: 166451e carries crm's own double pin —
       # cqrs-htmx b55d95b3 (templ v0.3.1100 regeneration) + go-cqrs-lite
       # f79e37fcf (docserver in the templ-1100 form + the MaxOpenConns
-      # field the read-pool wave consumes) — and `nix build` compiles green
-      # at that source (crm flake.nix vendorHash AN6/xU4…, proven upstream;
-      # float-proof log documents the consumer-side re-shim). Keep pinned
-      # (not ?ref=master): the 10-14 master-tracking window showed the
-      # vendorHash treadmill returns on every upstream float; re-roll this
-      # rev per crm pin wave instead.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=b57a94cb9475e03bc449724959515a8e8a480e95";
+      # field the read-pool wave consumes) — BOTH in the committed
+      # flake.lock (the b57a94c attempt missed the lock hunk), and the
+      # source builds green rev-pinned (crm 166451e, exit 0; consumer-side
+      # float-proof re-proves). Keep pinned (not ?ref=master): the 10-14
+      # master-tracking window showed the vendorHash treadmill returns on
+      # every upstream float; re-roll this rev per crm pin wave instead.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=166451e57841b04db8282d1045d495cb4c4e6c4c";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

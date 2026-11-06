@@ -32,7 +32,7 @@
   browser-history = "6ebaf8afe410a815fb3d38565453d839ea868cb7";
   buildflow = "8dd59d211eda9c82b2282d67b5073abaa3ed9adf";
   cmdguard = "f2240dd724a1ae9281b69e31bc0ac4f3a34e126b";
-  crm = "b57a94cb9475e03bc449724959515a8e8a480e95";
+  crm = "166451e57841b04db8282d1045d495cb4c4e6c4c";
   crush-config = "20587f0e66aacbe4d6a701036e442f19bf657a16";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
   cv = "a821e250ee528e5571f118128d8c3b06678f002d";

@@ -911,16 +911,16 @@
         "nixpkgs-dprint": "nixpkgs-dprint"
       },
       "locked": {
-        "lastModified": 1794000824,
-        "narHash": "sha256-Whum2g/4SZpAhIgIOvIazTo32vSOOxAkVkGn96o0sec=",
+        "lastModified": 1794001760,
+        "narHash": "sha256-pX78jCHHz2BpWX+KDs2aux8gMj6E5SpXBQQI19Krhi4=",
         "ref": "refs/heads/master",
-        "rev": "b57a94cb9475e03bc449724959515a8e8a480e95",
-        "revCount": 1221,
+        "rev": "166451e57841b04db8282d1045d495cb4c4e6c4c",
+        "revCount": 1224,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
       "original": {
-        "rev": "b57a94cb9475e03bc449724959515a8e8a480e95",
+        "rev": "166451e57841b04db8282d1045d495cb4c4e6c4c",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       }
@@ -3499,17 +3499,17 @@
     "go-cqrs-lite_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1792762990,
-        "narHash": "sha256-RghrIlpG7ojJIvEPpdmzo3+VsN49CufFQaf/Jf+Cgok=",
+        "lastModified": 1793999321,
+        "narHash": "sha256-LOJQ3jdxjoMaW6tNBvqhPvC6zaZgj6ia3CF3m27cfD8=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "da76632431da20d4b7979377a86574466b42ba1c",
+        "rev": "f79e37fcfceb23203ab31610d2a2c06bd3ccaaf2",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "da76632431da20d4b7979377a86574466b42ba1c",
+        "rev": "f79e37fcfceb23203ab31610d2a2c06bd3ccaaf2",
         "type": "github"
       }
     },
