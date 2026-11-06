@@ -295,6 +295,16 @@ let
     # emeet-pixyd = prev.emeet-pixyd.overrideAttrs {
     #   vendorHash = "sha256-WONlox/C5e5CE7THuJ5+t2I+mK4SGizkRpfrp3Abkew=";
     # };
+    # dnsblockd shim RE-ADDED (2026-11-06 lock float — nix-hash-fix
+    # evidence): at dnsblockd@cb116e5 upstream's own overlay bakes nw+KyEnF…
+    # which no longer reproduces through our graph (spec nw+KyEnF, got
+    # ZjETTvO+, float-proof-20261106-010252.log). Last-green 8b5352f3 is
+    # UNREACHABLE (rev gone from origin/master — upstream history rewrite),
+    # so shim at the locked rev. Drop when upstream bakes the got hash;
+    # re-add ONLY via nix-hash-fix evidence, never by hand.
+    dnsblockd = prev.dnsblockd.overrideAttrs {
+      vendorHash = "sha256-ZjETTvO+joPO7i6ZtQ640GZSfDCDeo6W+OJuCIiwEiA=";
+    };
     # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
     # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes
     # ritual, proven by last-green-verify + full CI). Six re-stales

@@ -24,10 +24,10 @@
 # (435a0ba, forgejo-primary hub, v0.1 deploy PR). Proof: toplevel toplevel-proof log.
 # 2026-11-03 regen (round-9 float: crush-daily + browser-history; diagnostic rebuild, proof pending)
 {
-  art-dupl = "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5";
-  art-dupl-src = "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5";
+  art-dupl = "308d8d7510c0743980575d1e7ffa6fb903b96d59";
+  art-dupl-src = "308d8d7510c0743980575d1e7ffa6fb903b96d59";
   bank-sync = "fab930686bd945301b2e0fccd2aaeeadf5d7300c";
-  branching-flow = "d529225745111c9158cb27b48ad0d02e6edbbc66";
+  branching-flow = "d17cb1aec720939b75dfb132a7c135cffe5b2717";
   brandid-lint = "8a4230f6c633231fc1afa4d37b2b14966a0f08c1";
   browser-history = "7110bcb36eb16037f5b20fb9142cd4e32dfbc49c";
   buildflow = "2d6bbee1775e55826b63d1139bdf427f5f2ddf09";

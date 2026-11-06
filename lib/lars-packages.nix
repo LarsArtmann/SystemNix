@@ -165,9 +165,14 @@ lib.filterAttrs (_: v: v != null) {
   # ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-11-05 float wave: at go-cqrs-lite@5dc057a spec EQe80wmz,
   # got xA/2yJ6o (float-proof-20261106-000533.log).
-  cqrs-lint =
-    flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
-      "sha256-xA/2yJ6oRiqSBxgWwjl9qooDqS8wlWG+xJN/8amrrbw=";
+  # RE-STALE 2026-11-06 (same night, sibling re-float to 0b7aee4): spec
+  # xA/2yJ6o, got 6mUToa7K (float-proof-20261106-010252.log).
+  # shim DROPPED (2026-11-06, lock moved to d15e0a48): the SAME rev where
+  # the 2026-10-12 drop landed — upstream bakes a green-through-our-lock
+  # hash there; the 6mUToa7K value above was measured at 0b7aee4 and would
+  # be stale-wrong at this rev. Direct package ref (no override) tests the
+  # baked value; re-add ONLY via nix-hash-fix evidence, never by hand.
+  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
   # docs-gates — the docs-health battery gates (freshness / annotate /
   # routing / cadence / strike) as one stdlib-only multi-call binary;
   # packages.default = the binary + the five legacy-name wrappers

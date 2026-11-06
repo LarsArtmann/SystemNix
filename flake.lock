@@ -14,11 +14,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793772568,
-        "narHash": "sha256-Xktz4g4OeLVfDlLmYHGR0jpKKVZbQvyeC7K3pjaTTzU=",
+        "lastModified": 1793332221,
+        "narHash": "sha256-XUcWjkt7t4mCrBIFn/YfUTlcnnTB01igyb3rSHCDWP8=",
         "ref": "refs/heads/fork",
-        "rev": "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5",
-        "revCount": 2661,
+        "rev": "308d8d7510c0743980575d1e7ffa6fb903b96d59",
+        "revCount": 2659,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -31,11 +31,11 @@
     "art-dupl-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1793772568,
-        "narHash": "sha256-Xktz4g4OeLVfDlLmYHGR0jpKKVZbQvyeC7K3pjaTTzU=",
+        "lastModified": 1793332221,
+        "narHash": "sha256-XUcWjkt7t4mCrBIFn/YfUTlcnnTB01igyb3rSHCDWP8=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5",
+        "rev": "308d8d7510c0743980575d1e7ffa6fb903b96d59",
         "type": "github"
       },
       "original": {
@@ -204,11 +204,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793731122,
-        "narHash": "sha256-F5P+lsE97K5O5GMbhTMAQgb/aJamznPmsHYyxR5Bcoo=",
+        "lastModified": 1793610046,
+        "narHash": "sha256-sWvLTVK0rN57v060fIwNulJb+6LyCHVWAlKhAZ+iCg4=",
         "ref": "refs/heads/master",
-        "rev": "d529225745111c9158cb27b48ad0d02e6edbbc66",
-        "revCount": 2877,
+        "rev": "d17cb1aec720939b75dfb132a7c135cffe5b2717",
+        "revCount": 2876,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },

@@ -132,10 +132,12 @@
       # nix-hash-fix evidence, never by hand.
       # RE-STALE 2026-11-06 lock float: inboxclean@c79cbab spec wP/qpf3b,
       # got pexiMrou (float-proof-20261106-000533.log).
+      # RE-STALE 2026-11-06 (same night, sibling re-float): inboxclean@d1b06e6
+      # spec pexiMrou, got AqruWfi8 (float-proof-20261106-010252.log).
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-pexiMroulQauVvYOL0rXqU/9HydtswRouYvMz+Vmm9Y=";
+            vendorHash = "sha256-AqruWfi8mAoxmNBn62E+Fmc0QNdVP/r5Yp1OkIL3at8=";
           };
     in
     {
