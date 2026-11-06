@@ -1,7 +1,7 @@
 # Go-Cache Unblock → Cutover → Harden: Pareto Execution Plan
 
 **Created:** 2026-11-05 22:30 CET
-**EXECUTING (instance instance 3: tail execution T17-T21+T26 (T11 PSI-gated; T15/16/27 blocked on T3/D2), 2026-11-06 02:45 CET, HEAD `f035a3218`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance instance 3 (02:44-03:5x): T17/T18/T19/T21 DONE, 20.1 CLOSED (no upstream fix), T26.1+recount DONE (191 reports/12,628 items, reframe recorded); open: T11 (PSI), T15/16/27 (T3/D2), 20.2 (owner), 20.3 (probe-gated), T26 batches — see docs/status/2026-11-06_03-50_tail-execution-instance3-status.md, 2026-11-06 03:46 CET, HEAD `f6a942ef1`):** execution finished
 **Authored:** 2026-11-05 22:30 CET · **Input:** the session's four status reports (19-50 storm diagnosis, 21-43 cache advisory + boot reset, 22-21 relocation execution, 22-27 close-out) + the freshly-maintained TODO surfaces · **Live verification at authoring time:** lock-float audit STILL RED (toplevel eval throws), io PSI some avg10 70% (new storm wave), no deploy poller alive, tree clean.
 
 **Pareto ladder:** 1% → 51% = *unblock the box + cut the cache over*; 4% → 64% = *protect the win* (containment, forks, guards); 20% → 80% = *prove + harden* (tests, numbers, single-sourcing); other 20% → 100% = *hygiene tail*. Owner-decision gates (unresolved §g questions) are explicit diamonds in the graph — nothing below them is agent-actionable until answered.
