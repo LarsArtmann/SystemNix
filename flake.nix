@@ -352,6 +352,14 @@
     # PUBLIC (go proxy), so its FODs need no private-repo plumbing; the
     # nixpkgs follows keep the lock dedup honest.
     quotaboard = {
+      # LOCK REVERTED 2026-11-06 (0161f384 → 61801b11, unproven-float
+      # rollback per the float doctrine): the peer-daemon float to
+      # 0161f384 ships a vendored tree inconsistent with its own go.mod
+      # (dozens of "explicitly required in go.mod, but not marked as
+      # explicit in vendor/modules.txt" — builder exit 1, first-hand
+      # float-proof-20261106-225127.log). 61801b11 is the last state the
+      # toplevel built through. Re-float ONLY when upstream lands a
+      # consistent `go mod vendor` and the toplevel proof goes green.
       url = "git+ssh://git@github.com/LarsArtmann/quotaboard?ref=refs/heads/master";
     };
 
