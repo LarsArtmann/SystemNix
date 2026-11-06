@@ -287,9 +287,14 @@ let
     # keep-going enumeration, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
     # Drop per-tool when upstream bakes the got hash; re-add ONLY via
     # nix-hash-fix evidence, never by hand.
-    emeet-pixyd = prev.emeet-pixyd.overrideAttrs {
-      vendorHash = "sha256-WONlox/C5e5CE7THuJ5+t2I+mK4SGizkRpfrp3Abkew=";
-    };
+    # emeet-pixyd shim DROPPED (2026-11-06 lock float — drop condition met
+    # first-hand): upstream ac1acac2 bakes vrxbBXRo…, the exact got-hash of
+    # the 2026-11-06 proof (float-proof-20261106-004759.log, specified
+    # WONlox = this shim, got vrxbBXRo = upstream's value) — the override
+    # was stale-wrong, not neutral. Dropping restores the upstream value.
+    # emeet-pixyd = prev.emeet-pixyd.overrideAttrs {
+    #   vendorHash = "sha256-WONlox/C5e5CE7THuJ5+t2I+mK4SGizkRpfrp3Abkew=";
+    # };
     # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
     # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes
     # ritual, proven by last-green-verify + full CI). Six re-stales

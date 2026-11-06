@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>
+      cqrs-htmx usermgmt/oauth2 — Adoption & Utilization Audit
+    </title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -864,6 +866,7 @@
           <a href="#scorecard">Scorecard</a>
           <a href="#strengths">Strengths</a>
           <a href="#findings">Findings</a>
+          <a href="#versions">Versions</a>
           <a href="#proposal">Proposal</a>
           <a href="#appendix">Appendix</a>
         </nav>
@@ -899,21 +902,25 @@
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+          <div class="score-card score-warn">
+            <div class="score">57</div>
+            <div class="label">Adoption score (moderate)</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">11/21</div>
+            <div class="label">Fully-leveraged of applicable</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">7</div>
+            <div class="label">Missed opportunities</div>
           </div>
           <div class="score-card score-bad">
             <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="label">Anti-patterns</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-warn">
+            <div class="score">2</div>
+            <div class="label">Auth releases behind (deployed)</div>
           </div>
         </section>
 
@@ -921,14 +928,29 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            browser-history integrates the module correctly at every seam it
+            touches: PKCE S256 always sent, one-time state consumption,
+            JWKS-verified ID tokens, event-sourced sessions, lockout, and an
+            OAuth-only posture (passkeys disabled 2026-10-16) that fails the
+            boot closed when the provider is missing. The login core is not
+            the problem.
+          </p>
+          <p>
+            The problem is that the integration stops at <em>login</em>: the
+            IdP's identity data is truncated at the email claim, so RBAC is a
+            server-side env var (SUPER_ADMIN_EMAILS), logout is local-only,
+            server-side PKCE enforcement is missing, and an auth-critical
+            upstream security pair sits unreleased-unconsumed. Meanwhile a
+            shipped CLI that heals the 8 duplicate accounts has never run
+            against production.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            Solid login plumbing, identity features idle. The highest-leverage
+            step is one line — <code>pkceEnabled = true</code> on the
+            browser-history Pocket ID client (the only fleet consumer missing
+            it) — followed by an oauth2 tag bump and the never-run
+            <code>merge-duplicate-users</code> stop-window.
           </div>
         </section>
 
@@ -936,24 +958,63 @@
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            The baseline is genuinely good — these are verified, not assumed:
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>PKCE S256 on every login, OIDC discovery for endpoints</strong>
+                <span
+                  >provider.go:225-238 — <code>BeginLogin</code> always adds
+                  <code>oauth2.S256ChallengeOption</code>; Pocket ID endpoints
+                  come from issuer discovery, nothing hardcoded.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>One-time state + rate-limited OAuth surface</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >oauth2.go:106 — <code>ConsumeWithNonce</code> deletes the
+                  state token on use; <code>OAuthRateLimit</code> covers
+                  /auth/oauth/* (usermgmt http.go:88).</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Hardened claims seam</strong>
+                <span
+                  >provider.go:383-421 — ID tokens verified against the
+                  discovered JWKS; live-token material deliberately suppressed
+                  from every error path (LIVE-SECRET class).</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Event-sourced sessions, lockout, audit</strong>
+                <span
+                  >api/server.go:469-477 — SessionStore (24h TTL, survives
+                  restarts), Lockout, and AuditLog wired into the ServiceConfig
+                  alongside OAuth2.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Registration gate covers OAuth auto-provisioning</strong>
+                <span
+                  >MAX_USERS=1 gates both Register and
+                  matchOrCreateUser; the OAuth-only posture fails the boot
+                  closed when the provider is unusable (runbook-verified
+                  2026-10-16).</span
                 >
               </div>
             </div>
@@ -963,112 +1024,493 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <p>Ordered by impact. Misused first, then missed opportunities.</p>
 
           <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
+          <div class="issue issue-critical" id="issue-pkce">
             <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
+              >Misused &middot; Anti-pattern &middot; High impact</span
             >
-            <h3>Critical issue title</h3>
+            <h3>
+              IdP-side PKCE is not enforced — the ONLY fleet OIDC client
+              without <code>pkceEnabled</code>
+            </h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              modules/nixos/services/browser-history.nix:904-910 &middot;
+              fleet norm: crm.nix:509, immich.nix:212, paperless.nix:1595,
+              cv.nix:1381, monitor365.nix:1230, dns-blocker.nix:1917,
+              geometrikks.nix:875, opencloud.nix:294 — all set
+              <code>pkceEnabled = true</code>
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              The Go module always <em>sends</em> an S256 challenge
+              (client-side), but Pocket ID only <em>enforces</em> the verifier
+              exchange for clients flagged PKCE — otherwise the code-for-token
+              swap runs without the binding and the challenge is decorative.
+              Paperless even carries an eval-time assertion demanding
+              <code>pkceEnabled = true</code> (pocket-id.nix:460-461);
+              browser-history's registration omits the flag entirely.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <pre><code><span class="tok-comment"># modules/nixos/services/browser-history.nix (integration registry)</span>
+oidc = {
+  name = "Browser History";
+  clientId = "browser-history";
+  launchURL = "https://history.${domain}";
+  callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
+  <span class="tok-comment"># MISSING: pkceEnabled = true;  — every sibling sets it</span>
+};</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix</strong>
+              Add <code>pkceEnabled = true</code> to the registration. One
+              line, declaratively provisioned by the Pocket ID provisioner,
+              rides the next deploy.
             </div>
           </div>
 
           <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
+          <div class="issue issue-critical" id="issue-groups">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; High impact</span
             >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+            <h3>
+              IdP groups → RBAC unused — super-admin is still a server-side
+              env var
+            </h3>
+            <div class="where">
+              provider.go:159-160 (default scopes openid+email+profile — no
+              <code>groups</code>) &middot; provider.go:110-118 (userInfo has
+              no groups field) &middot; api/oauth2.go:64-71 (no Scopes passed)
+              &middot; fleet fact: docs/agents/sso-dns.md:48
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              Pocket ID emits the <code>groups</code> claim only when the
+              client requests the <code>groups</code> scope, and the module
+              neither requests it nor carries it through — the extracted claim
+              set stops at email/name/preferred_username. The consequence is
+              visible in today's 403 incident: admin membership is granted by
+              a <code>SUPER_ADMIN_EMAILS</code> env bootstrap
+              (api/admin_panel.go:99), re-coupled to every deploy, instead of
+              being an IdP-declared group that revokes everywhere at once.
+              Paperless already proves the fleet pattern (fail-closed
+              superuser-group mapping, sso-dns.md:48). The module also ships
+              the escape hatch — <code>FinishLoginWithToken</code> returns the
+              verified raw ID token, so groups are readable today without a
+              library round-trip; browser-history simply doesn't call it.
             </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Short term: switch the Service to
+              <code>FinishLoginWithToken</code>, read the
+              <code>groups</code> claim, map it to identitymodel roles
+              (fail-closed, paperless style) — plus request the scope and
+              provision the group via
+              <code>pocket-id-config.provision.userGroups</code>. Long term:
+              upstream — extend <code>userInfo</code> with groups + a
+              role-mapping config; needs a provisioner scope field too
+              (oidcClientType has none, lib/types.nix:10-53).
+            </div>
           </div>
 
           <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
+          <div class="issue issue-critical" id="issue-merge">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; High impact &middot; shipped but
+              never run</span
             >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+            <h3>
+              <code>merge-duplicate-users</code> ships in the DEPLOYED binary —
+              the 8 zombie accounts it heals are still in production
+            </h3>
+            <div class="where">
+              api/merge_duplicate_users_cli.go (present at deployed 9daaa80
+              AND lock 98cfec0) &middot;
+              docs/runbooks/merge-duplicate-users.md &middot; gatus baseline
+              still asserts <code>browser_history_users 9</code>
+              (browser-history.nix:855-880)
+            </div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              The pre-2026-10 OAuth flow created a duplicate user per email
+              instead of linking (fixed upstream cqrs-htmx 796ed4f5); the
+              migration CLI re-points all event payloads AND read-model rows
+              to one survivor per email. The SystemNix runbook's
+              "count stays 9 until upstream ships delete" claim is stale —
+              the heal ships in the running binary; the 2026-10-11 session
+              even flagged "did the live run ever happen?" as an open
+              question. It never did.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Owner stop-window per the runbook (claim → merge → compact
+              order), then re-baseline the gatus literal 9 → 1 and close the
+              blocked:user revoke row.
+            </div>
+          </div>
+        </section>
+
+          <!-- Issue 4 -->
+          <div class="issue issue-important" id="issue-logout">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact</span
+            >
+            <h3>Logout is local-only — no RP-initiated logout</h3>
+            <div class="where">
+              usermgmt http.go:217 (<code>POST /auth/logout</code> clears only
+              the app session) &middot; zero
+              <code>end_session</code>/post_logout references in the module
+              &middot; fleet fact: docs/agents/sso-dns.md:50 &middot;
+              provision schema already has
+              <code>logoutCallbackURLs</code> (lib/types.nix:25-29, unused)
+            </div>
+            <p>
+              After a Pocket ID logout, browser-history's 24h session cookie
+              survives on shared machines — the IdP session ends, the app
+              session does not, and nothing redirects through the IdP's
+              end-session endpoint. The fleet doc explicitly records this as
+              per-app work that is "not currently done".
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Logout handler 302s to the discovered
+              <code>end_session_endpoint</code> with id_token_hint +
+              post_logout_redirect_uri; provision
+              <code>logoutCallbackURLs</code> for the client.
+            </div>
+          </div>
+
+          <!-- Issue 5 -->
+          <div class="issue issue-important" id="issue-stepup">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact</span
+            >
+            <h3>
+              Step-up re-auth available at the IdP, unused — most valuable
+              exactly on /admin/
+            </h3>
+            <div class="where">
+              lib/types.nix:38-42 (<code>requiresReauthentication</code> —
+              per-client passkey re-auth each login, unused by ALL fleet
+              consumers) &middot; /admin/ identity operations sit behind a
+              24h session
+            </div>
+            <p>
+              Role changes, tenant administration, and the audit log are
+              reachable for 24h after one passkey ceremony. Pocket ID can
+              force re-authentication per client; a dedicated
+              browser-history-admin client (or upstream prompt=login /
+              max_age=0 on admin routes) would give the privileged surface a
+              fresh ceremony instead of a stale session.
+            </p>
+          </div>
+
+          <!-- Issue 6 -->
+          <div class="issue issue-important" id="issue-versions">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact &middot; security
+              pair unreleased-unconsumed</span
+            >
+            <h3>
+              Two auth releases of drift: deployed v4.12.0, locked v4.13.0,
+              security pair upstream-unreleased
+            </h3>
+            <div class="where">
+              9daaa80 api/go.mod → oauth2 v4.12.0 &middot; 98cfec0 + HEAD →
+              v4.13.0 &middot; cqrs-htmx oauth2 CHANGELOG Unreleased
+              (2026-10-25, S39)
+            </div>
+            <p>
+              v4.13.0 adds <code>FinishLoginWithToken</code> (the escape
+              hatch finding 2 needs) and <code>preferred_username</code>;
+              the unreleased head adds the OIDC nonce round-trip (replayed or
+              injected id_tokens now rejected) and
+              <code>empty_subject</code> rejection (an absent subject used to
+              degrade identity matching to email-only). Production runs
+              v4.12.0: none of these. See the Version currency table below.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Tag the oauth2 release upstream, bump browser-history's go.mod,
+              ride the normal deploy ladder.
+            </div>
+          </div>
+
+          <!-- Issue 7 -->
+          <div class="issue issue-nice" id="issue-scopes">
+            <span class="severity severity-important"
+              >Partially Used &middot; deliberate posture</span
+            >
+            <h3>
+              Three provider slots wired in code, one used in prod
+            </h3>
+            <div class="where">api/oauth2.go:44-71 (google/github/pocket-id builders)</div>
+            <p>
+              The google and github slots are dead code in production (unset
+              env). This is the documented OAuth-only-Pocket-ID posture, not
+              negligence — but the <code>Scopes</code> field stays silently at
+              the module default everywhere; making the request explicit would
+              have surfaced the missing groups scope long ago.
+            </p>
+          </div>
+
+          <!-- Issue 8 -->
+          <div class="issue issue-nice" id="issue-audit">
+            <span class="severity severity-nice"
+              >Partially Used &middot; verification gap</span
+            >
+            <h3>Audit trail wired, depth unverified</h3>
+            <div class="where">api/server.go:472 (AuditLog in ServiceConfig) &middot; adminui Audit page</div>
+            <p>
+              Auth events land in the event-sourced audit log and the admin
+              panel can read them, but no export/bridge beyond the panel was
+              verified in this session — marked honestly as unverified rather
+              than assumed complete.
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+        <!-- Version Currency -->
+        <section id="versions">
+          <h2><span class="num">02a</span>Version currency</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
-          </div>
-        </section>
-
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
-          <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            The deployed binary pins <code>usermgmt/oauth2 v4.12.0</code>; the
+            SystemNix lock (98cfec0) and browser-history HEAD pin
+            <code>v4.13.0</code>. The upstream module's unreleased head carries
+            the next security pair — neither rev consumes it.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Notable change</th>
+                <th>Relevance</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>Unreleased (2026-10-25, S39)</td>
+                <td>Security</td>
+                <td>
+                  <code>BeginLoginWithNonce</code>/<code>FinishLoginWithNonce</code>
+                  — OIDC Core §3.1.2.1 nonce round-trip (replayed/injected
+                  tokens rejected) + <code>empty_subject</code> rejection
+                  (an absent subject used to degrade identity matching to
+                  email-only, linking every email-sharing account)
+                </td>
+                <td class="no">High — tag and bump</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>v4.13.0 (2026-10-11)</td>
+                <td>Feature</td>
+                <td>
+                  Public (secret-less) PKCE clients,
+                  <code>preferred_username</code> claim,
+                  <code>FinishLoginWithToken</code> raw-ID-token escape hatch
+                </td>
+                <td class="yes">Locked, NOT deployed (deployed = v4.12.0)</td>
+              </tr>
+              <tr>
+                <td>v4.12.0 (deployed)</td>
+                <td>—</td>
+                <td>The binary currently serving history.home.lan</td>
+                <td class="no">PKCE-only, no nonce binding</td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Proposal -->
+        <section id="proposal">
+          <h2><span class="num">02b</span>What the solution could look like</h2>
+          <p>
+            Target state: Pocket ID is the single declarative source for who
+            may sign in, who admins, and how strong each door is — the server
+            consumes identity instead of assembling it.
+          </p>
+          <pre><code><span class="tok-comment"># browser-history.nix — integration registration (target)</span>
+oidc = {
+  name = "Browser History";
+  clientId = "browser-history";
+  callbackURLs   = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
+  pkceEnabled    = <span class="tok-keyword">true</span>;          <span class="tok-comment"># server-enforced verifier exchange</span>
+  logoutCallbackURLs = [ "https://history.${domain}/" ];  <span class="tok-comment"># RP-initiated logout lands</span>
+  <span class="tok-comment"># scopes = [ "openid" "email" "profile" "groups" ];  — needs schema field upstream</span>
+};
+
+<span class="tok-comment">// browser-history api — groups → roles at the verified-token seam (target)</span>
+tok, info, err := provider.<span class="tok-function">FinishLoginWithToken</span>(ctx, "pocket-id", code, verifier)
+roles := <span class="tok-function">mapGroupsFailClosed</span>(<span class="tok-function">groupsFromIDToken</span>(tok))  <span class="tok-comment">// paperless precedent</span></code></pre>
+          <div class="callout callout-teal">
+            <strong>This is the target</strong>
+            Admin membership becomes an IdP group (revoke in Pocket ID =
+            revoked everywhere, no redeploy), the code-for-token swap is
+            server-enforced PKCE, and logout actually logs out. The env-var
+            bootstrap and its drift risk disappear.
+          </div>
+        </section>
+
+        <!-- Version Currency -->
+        <section id="versions">
+          <h2><span class="num">02b</span>Version currency</h2>
+          <p>
+            Deployed binary pins <code>usermgmt/oauth2 v4.12.0</code>; the
+            SystemNix lock (98cfec0) and browser-history HEAD pin
+            <code>v4.13.0</code>. The upstream module's unreleased head carries
+            the next security pair — neither rev consumes it.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Notable change</th>
+                <th>Relevance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Unreleased (2026-10-25, S39)</td>
+                <td>Security</td>
+                <td>
+                  <code>BeginLoginWithNonce</code>/<code>FinishLoginWithNonce</code>
+                  — OIDC Core §3.1.2.1 nonce round-trip (replayed/injected
+                  tokens rejected) + <code>empty_subject</code> rejection
+                  (an absent subject used to degrade identity matching to
+                  email-only, linking every email-sharing account)
+                </td>
+                <td class="no">High — tag and bump</td>
+              </tr>
+              <tr>
+                <td>v4.13.0 (2026-10-11)</td>
+                <td>Feature</td>
+                <td>
+                  Public (secret-less) PKCE clients,
+                  <code>preferred_username</code> claim,
+                  <code>FinishLoginWithToken</code> raw-ID-token escape hatch
+                </td>
+                <td class="yes">Locked, NOT deployed (deployed = v4.12.0)</td>
+              </tr>
+              <tr>
+                <td>v4.12.0 (deployed)</td>
+                <td>—</td>
+                <td>The binary currently serving history.home.lan</td>
+                <td class="no">PKCE-only, no nonce binding</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">03</span>Appendix — capability inventory</h2>
+          <p>
+            25 capabilities inventoried, 4 not applicable (with reasons), 21
+            scored: 11 fully leveraged, 2 partially used, 7 missed, 1
+            misused → <span class="highlight">100 × 12 / 21 ≈ 57/100</span>
+            (moderate band).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><code>pkceEnabled = true</code> on the client (finding 1)</td>
+                <td class="yes">4</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">20</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Tag oauth2 release + bump: nonce + empty-subject (finding 4)</td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Run <code>merge-duplicate-users</code> stop-window (finding 3)</td>
+                <td class="yes">4</td>
+                <td>3</td>
+                <td><span class="highlight">12</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>groups → RBAC, short via WithToken, long upstream (finding 2)</td>
+                <td class="yes">5</td>
+                <td>2</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>RP-initiated logout (finding 5)</td>
+                <td>3</td>
+                <td>3</td>
+                <td><span class="highlight">9</span></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Request scopes explicitly, drop the silent default</td>
+                <td>2</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">8</span></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Step-up re-auth for /admin/ via a second client (finding 6)</td>
+                <td>3</td>
+                <td>2</td>
+                <td><span class="highlight">6</span></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Audit-bridge depth verification (finding 8)</td>
+                <td>2</td>
+                <td>3</td>
+                <td><span class="highlight">6</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Not applicable (with reasons):</strong> pure OAuth2
+            non-OIDC providers (no GitHub client configured — posture is
+            Pocket ID exclusive); OIDC back-channel logout (the module does
+            not implement it — upstream capability gap, not consumer
+            neglect); token refresh / offline_access (OAuth is an
+            identity-exchange only — no API call carries a provider token);
+            email_verified gating (no verified-email allow-list exists —
+            matching keys on subject/email).
+          </p>
+          <p><strong>How to verify</strong> (re-derive every claim):</p>
+          <pre><code>rg -n "S256ChallengeOption" ~/projects/cqrs-htmx/usermgmt/oauth2/provider.go
+rg -n "pkceEnabled" modules/nixos/services/*.nix          <span class="tok-comment"># browser-history absent</span>
+rg -n "groups" ~/projects/cqrs-htmx/usermgmt/oauth2/provider.go   <span class="tok-comment"># 0 hits in userInfo</span>
+git -C ~/projects/browser-history show 9daaa80:api/go.mod | grep oauth2/v4
+git -C ~/projects/browser-history cat-file -e 9daaa80:api/merge_duplicate_users_cli.go
+rg -n "end_session|post_logout" ~/projects/cqrs-htmx/usermgmt/     <span class="tok-comment"># 0 hits</span></code></pre>
+          <div class="callout callout-amber">
+            <strong>Done-bar honesty</strong>
+            SystemNix's quality gate (flake check / toplevel eval) is RED at
+            this report's HEAD: a blanket flake.lock float from a concurrent
+            session fails the lock-float audit (27 failed unit-dep roots).
+            The audit's claims are source-level and unaffected, but the gate
+            leg of the done-bar is honestly unmet until the float lands or
+            reverts.
+          </div>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-06 &middot; Reviewed against pinned
+            usermgmt/oauth2 v4.13.0 (deployed v4.12.0) &middot; All claims
+            cite repo source; re-derive via the appendix verify block
           </p>
         </footer>
       </main>

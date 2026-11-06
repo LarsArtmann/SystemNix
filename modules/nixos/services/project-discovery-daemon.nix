@@ -68,7 +68,15 @@ _: {
           # synced to v0.4.0 0a5d806f, own FOD green first-hand; pdd does
           # not follow our pins, so its own lock governs the FOD content).
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
-          default = inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # RE-ADDED (2026-11-06 lock float, module surface): at pdd@cfaaecd
+          # upstream's own-lock hash OW+eywme… went stale through our graph
+          # (spec OW+eyw, got hxcotRZ, float-proof-20261106-004759.log);
+          # lars-packages surface re-shimmed in the same wave — edit BOTH.
+          default =
+            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
+              {
+                vendorHash = "sha256-hxcotRZ7IDXOnXhnD24h7/PPluuXtYl27p0+Bw/oEm0=";
+              };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
           '';
