@@ -293,7 +293,6 @@
             # journal 2026-11-05 07:36:48 "Unknown key 'TimeoutStartSec'
             # in section [Unit], ignoring") and the cold start rode the
             # 3-min default instead.
-            serviceConfig.TimeoutStartSec = "10min";
             # ~/projects reader-writer (2026-10-28 projects-subvol plan D6):
             # the models checkout lives under ~/projects — fail loud when the
             # Samsung subvol mount is absent (never serve from the stale @
@@ -309,6 +308,7 @@
             # /readyz gates readiness during model load + warmup.
             serviceConfig = lib.mkMerge [
               {
+                TimeoutStartSec = "10min";
                 # sd_notify is only delivered to notify units, so the
                 # watchdog option flips the type; without it (default) the
                 # shape is unchanged: simple + /readyz readiness.
@@ -447,10 +447,10 @@
             # [Service]-section key (unitConfig placement is silently
             # ignored — same class as the server unit's 2026-11-05
             # switch-journal warning).
-            serviceConfig.TimeoutStartSec = "6h";
             path = [ pkgs.coreutils ];
             serviceConfig = lib.mkMerge [
               {
+                TimeoutStartSec = "6h";
                 Type = "oneshot";
                 # Same user as the server: modelsDir traverses a 0700
                 # home, and the checkpoint rides the shared cache dir.
