@@ -144,6 +144,11 @@
       # FOURTEENTH RE-STALE 2026-11-06 lock float: cv@64e0e10 spec
       # bPvMOBEz, got aCVmXAeF (first-hand keep-going,
       # ~/.cache/buildwave/proof-090209.log).
+      # FIFTEENTH FLOAT 2026-11-06 (A.Team stored-login deploy): cv@bb27417
+      # (pushed tip carrying the chatstore nil-guard fix 8f999a2de + the
+      # credentials-store waves) — FOD probe GREEN under the SystemNix graph
+      # with the UNCHANGED aCVmXAeF shim (the go.mod module set is stable
+      # across 64e0e10 → bb27417; graphs converged, no re-stale).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-aCVmXAeFJEfIKYDSuRfDDqi07mT/pOM3ocjowNE508I=";
       };
