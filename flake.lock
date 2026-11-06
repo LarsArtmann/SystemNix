@@ -1482,15 +1482,16 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1793939135,
-        "narHash": "sha256-DMtjXzhk3otndPHwFCA0NHhNzIb+DPkf96PtPJq84zI=",
+        "lastModified": 1793813815,
+        "narHash": "sha256-u69FobrPZO12Ssiq0c9SVjzh6RRjGnHr/ycpEjUMd40=",
         "ref": "refs/heads/master",
-        "rev": "0fc16c68a20f5091ecc44439239472509ccb9a10",
-        "revCount": 1954,
+        "rev": "973dd383ba98ae8b6e3b4b3a95f690c627bb49ab",
+        "revCount": 1953,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
       "original": {
+        "rev": "973dd383ba98ae8b6e3b4b3a95f690c627bb49ab",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       }
@@ -8077,16 +8078,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1793939213,
-        "narHash": "sha256-OZvD4ocVnkCYQXWJjSgO32ZFLN+5YrWcY6i05N/T5dE=",
+        "lastModified": 1793922333,
+        "narHash": "sha256-jNTj7u9A33bWcdFz1GV3lRtF8wY9YMjrl5TrQ7cslb8=",
         "ref": "refs/heads/master",
-        "rev": "84d8979b37cb04865b5cf16f1961c73d994d1ccd",
-        "revCount": 1743,
+        "rev": "67b2fac96799f269348f51eca78903df6c14dcc8",
+        "revCount": 1742,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },
       "original": {
-        "ref": "refs/heads/master",
+        "rev": "67b2fac96799f269348f51eca78903df6c14dcc8",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       }

@@ -189,6 +189,8 @@
     crm = "REV-PINNED at 197bdf1 (parent of 13ae851 'chore(deps): update dependencies to latest', same templ 0.3.1100 bump against vendored pre-regen cqrs-htmx adminui). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
     golangci-lint-auto-configure = "REV-PINNED at 28340f6 (parent of f20cd92 'chore(deps): update Go dependencies', same templ 0.3.1100 bump; pkg/report/report_templ.go calls templ.ResolveAttributeValue). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
     inboxclean = "REV-PINNED at e553c510 (parent of 5f4722cd 'align templ stack at v0.3.1100': go.mod moved to 0.3.1100 while workspace deps still ship pre-regen generated code, e.g. go-cqrs-lite/catalog v4.12.0 docserver using templ.JoinURLErrs). LIFT: catalog is regenerated at 0.3.1100 and the package compiles at tip.";
+    file-and-image-renamer = "REV-PINNED at 973dd383 (parent of 0fc16c68 'chore(deps): update Go dependencies', which bumped a-h/parse to a pseudo-version that does not implement parse.Parser[T].Match, so templ v0.3.1100's jstokenizer no longer compiles). LIFT: upstream lands a compiling parse/templ pair and the package builds at tip.";
+    overview = "REV-PINNED at 67b2fac9 (parent of 84d8979b, which added go-cqrs-lite/dedup/v4 to go.mod without wiring it in the flake mkPreparedSource deps map, so the prepared source refuses 'modules without local replace'). LIFT: upstream wires dedup (or drops the requirement) and the prepared source builds at tip.";
   },
 }:
 let

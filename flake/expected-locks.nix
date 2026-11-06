@@ -46,7 +46,7 @@
   domains = "aba7cb95b31399cdae936ad7a12f5fffff7dc312";
   emeet-pixyd = "ac1acac2d937c3ca83c06d73751d3990b06ee555";
   erraudit = "5c841cf21140bbba3bff6613126720dad8298cbd";
-  file-and-image-renamer = "0fc16c68a20f5091ecc44439239472509ccb9a10";
+  file-and-image-renamer = "973dd383ba98ae8b6e3b4b3a95f690c627bb49ab";
   flake-compat = "5edf11c44bc78a0d334f6334cdaf7d60d732daab";
   flake-parts = "ea2630b7470978622c7689a1ff75d2b389175399";
   flake-utils = "b7a79d3fea1e214f6d668d521cecec0c01e26544";
@@ -95,7 +95,7 @@
   nur = "99dbc3053ba5d17ba2f86f63463a662e73c43e84";
   offline-banner = "d9f6d6f239b60907561088cf71e92570c447d962";
   otel-tui = "d43d3f9edbe2c4c61380a10030df4ad02ffc3206";
-  overview = "84d8979b37cb04865b5cf16f1961c73d994d1ccd";
+  overview = "67b2fac96799f269348f51eca78903df6c14dcc8";
   papdashboard = "f751104fd0d4900bf8930ed93dc08d73966a64ec";
   paperless-gpt-src = "49c425596b846ae98d630f4087e8223c188032db";
   pim-sync = "1b70ed4bc523d60fc7e72f6284311e42b3c950c1";

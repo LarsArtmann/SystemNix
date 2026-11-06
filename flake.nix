@@ -425,7 +425,15 @@
       # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key.
       # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
       # possible; the lock holds the exact rev until an explicit update).
-      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer";
+      # TEMPORARY HARD PIN 2026-11-06 (templ/parse skew class; allowlist
+      # block in lib/flake-input-pin-audit.nix): 0fc16c68 "chore(deps):
+      # update Go dependencies" bumped a-h/parse to the 2026-10-27
+      # pseudo-version, whose Parser API does not implement
+      # parse.Parser[T].Match, so compiling templ v0.3.1100's jstokenizer
+      # dies. 973dd383 is the pre-bump rev. LIFT: upstream pins a
+      # parse/templ pair that compiles and the package builds at tip;
+      # then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?rev=973dd383ba98ae8b6e3b4b3a95f690c627bb49ab";
     };
 
     # nsfw-classifier — Go/ONNX NSFW image classifier. Backend for the
@@ -825,7 +833,15 @@
     # go.mod bumps, module.nix and vendorHash.nix — no .templ source.
     # overview now consumes its own templ-cli pin (v0.3.1070 tag).
     overview = {
-      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (private-dep wiring gap; allowlist
+      # block in lib/flake-input-pin-audit.nix): 84d8979b "chore(deps):
+      # update Go dependencies" added the indirect requirement
+      # github.com/larsartmann/go-cqrs-lite/dedup/v4 v4.3.0 without adding
+      # it to the flake's mkPreparedSource deps map, so the prepared source
+      # dies "modules without local replace: .../dedup/v4". 67b2fac9 is the
+      # pre-bump rev. LIFT: upstream wires dedup (or drops the requirement)
+      # and the prepared source builds at tip; then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/overview?rev=67b2fac96799f269348f51eca78903df6c14dcc8";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
