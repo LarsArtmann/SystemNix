@@ -70,7 +70,7 @@ let
     extra:
     (inputs.nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = baseModules ++ extra;
+      modules = baseModules ++ [ { system.stateVersion = "26.11"; } ] ++ extra;
     }).config;
 
   # Positive case: one entry exercising every seam, with a unit override and

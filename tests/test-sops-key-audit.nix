@@ -41,6 +41,7 @@ let
       modules = [
         inputs.sops-nix.nixosModules.sops
         audit
+        { system.stateVersion = "26.11"; }
       ]
       ++ extraModules;
     }).config.assertions;

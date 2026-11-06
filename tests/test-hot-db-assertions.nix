@@ -50,7 +50,7 @@ let
     extraModules:
     (lib.nixosSystem {
       inherit system;
-      modules = base extraModules;
+      modules = (base extraModules) ++ [ { system.stateVersion = "26.11"; } ];
     }).config;
 
   # Forces only the assertions list (mirrors nix flake check semantics).

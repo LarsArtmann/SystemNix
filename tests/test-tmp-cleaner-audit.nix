@@ -50,7 +50,7 @@ let
     extraModules:
     (inputs.nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = base ++ extraModules;
+      modules = base ++ [ { system.stateVersion = "26.11"; } ] ++ extraModules;
     }).config.assertions;
 
   # Only the two tmp-cleaner guards' OWN assertions — a bare nixosSystem

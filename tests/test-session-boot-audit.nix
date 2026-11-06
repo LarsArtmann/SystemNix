@@ -15,7 +15,11 @@ let
     extraModules:
     (inputs.nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ audit ] ++ extraModules;
+      modules = [
+        audit
+        { system.stateVersion = "26.11"; }
+      ]
+      ++ extraModules;
     }).config.assertions;
 
   # Only the guard's OWN assertions — a bare nixosSystem carries unrelated

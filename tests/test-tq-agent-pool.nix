@@ -62,6 +62,7 @@ let
           ];
         }
         { services.tq-agent-pool.enable = enableFlag; }
+        { system.stateVersion = "26.11"; }
       ];
     }).config;
 

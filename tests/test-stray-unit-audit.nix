@@ -36,7 +36,11 @@ let
     extraModules:
     (inputs.nixpkgs.lib.nixosSystem {
       inherit system;
-      modules = [ audit ] ++ extraModules;
+      modules = [
+        audit
+        { system.stateVersion = "26.11"; }
+      ]
+      ++ extraModules;
     }).config.warnings;
 
   flagged =

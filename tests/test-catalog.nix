@@ -30,6 +30,7 @@ let
         }
         catalogModule
         integrationModule
+        { system.stateVersion = "26.11"; }
       ]
       ++ extra;
     }).config;

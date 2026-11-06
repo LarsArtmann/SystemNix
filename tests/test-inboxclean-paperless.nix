@@ -92,7 +92,7 @@ let
     extra:
     (lib.nixosSystem {
       inherit system;
-      modules = base ++ extra;
+      modules = base ++ [ { system.stateVersion = "26.11"; } ] ++ extra;
     }).config;
 
   archivingOn = eval [

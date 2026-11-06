@@ -70,7 +70,7 @@
               modules:
               (inputs.nixpkgs.lib.nixosSystem {
                 system = "x86_64-linux";
-                inherit modules;
+                modules = modules ++ [ { system.stateVersion = "26.11"; } ];
               }).config.assertions;
 
             # The drifted module injects the drift through the
