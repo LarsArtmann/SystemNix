@@ -428,6 +428,32 @@ in
                   ++ lib.optionals cvMailboxStaged [ "cv_pipeline_mailbox_password" ]
                 )
             )
+            // lib.optionalAttrs (svcEnabled "cv-server") (
+              # go-credentials-store master key (2026-11-06, A.Team
+              # stored-login): base64 32B, generated at file-creation time and
+              # encrypted ONLY with the host age PUBLIC key (the
+              # bank-sync-encryption.yaml pattern — cv.yaml itself needs the
+              # host PRIVATE key / sudo to modify, so a NEW key rides its own
+              # public-key-only file). Root-owned raw secret; the service
+              # consumes CREDENTIALS_MASTER_KEY_V1 via the "cv-env" template.
+              # CV's env-wins precedence (internal/credentials/store.go
+              # resolveMasterKeys) reads this BEFORE the
+              # master-key-v1.b64 state-file fallback, so rotation = sops-set
+              # a new value + rebuild. Losing it = every sealed credential in
+              # /var/lib/cv/data/credentials-store becomes undecryptable
+              # (they re-seed via the admin UI; the funnel itself never
+              # depends on the store).
+              mkSecrets "cv-credentials-store.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [
+                    "cv-server.service"
+                    "cv-agent.service"
+                  ];
+                }
+                [ "cv_credentials_master_key" ]
+            )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
               # Raw Google OAuth client credentials.json; the upstream module's
               # ExecStartPre seed script runs as User=inboxclean and copies it
@@ -894,6 +920,15 @@ in
                 }
                 // lib.optionalAttrs cvMailboxStaged {
                   CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
+                }
+                // {
+                  # go-credentials-store master key (2026-11-06): env-wins
+                  # over the master-key-v1.b64 state-file fallback. CV boots
+                  # the store fail-closed when CV_CREDENTIALS_STORE_ENABLED=1
+                  # and NO usable key resolves, so this placeholder and the
+                  # flag in cv.nix MUST land in the same deploy (the
+                  # openaicompat FLIP-TIMING rule).
+                  CREDENTIALS_MASTER_KEY_V1 = config.sops.placeholder.cv_credentials_master_key;
                 }
               );
             };

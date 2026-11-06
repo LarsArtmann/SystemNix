@@ -209,6 +209,27 @@
           port = lib.mkDefault ports.cv;
           environmentFile = lib.mkDefault config.sops.templates."cv-env".path;
 
+          # go-credentials-store (2026-11-06, A.Team stored-login + relogin):
+          # sealed platform credentials (A.Team password first) resolve
+          # server-side via credentials.Active(); the admin UI at
+          # /admin/credentials/ (same Pocket-ID/API-key guard as /admin) is
+          # the ONLY write path (store SDK has no public write API). The
+          # master key rides CREDENTIALS_MASTER_KEY_V1 in the sops cv-env
+          # template (env wins over the state-file fallback). Fail-closed
+          # boot: flag on + key unusable = service refuses to start (the
+          # sops-key-audit gate catches declared-but-missing at eval).
+          environment = {
+            CV_CREDENTIALS_STORE_ENABLED = "1";
+            # Absolute pin (the graphrag.store_dsn precedent): the default
+            # data/credentials-store is CWD-relative and only resolves right
+            # because WorkingDirectory = /var/lib/cv. data/ ROOT files are
+            # never touched by the upstream content sync, so the sealed
+            # credentials.db persists across restarts — but NOT covered by
+            # cv-backup (pipeline.sqlite only); re-seed via the admin UI if
+            # the state dir is ever lost.
+            CV_CREDENTIALS_STORE_DIR = "/var/lib/cv/data/credentials-store";
+          };
+
           settings = {
             # Forms (chat, A.Team, contact) POST same-origin through the
             # Caddy vHost — OriginCheck/CORS/nosurf require the vHost origin
