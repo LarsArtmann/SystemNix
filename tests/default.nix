@@ -9,18 +9,21 @@ let
   # Same { nodes, testScript, name } shape, cleaner API.
   # stateVersion pin for synthetic VM nodes: unset nodes make nixpkgs warn
   # "defaulting to <release>" per node on every eval (the 01-52 warning
-  # wall). mkDefault silences the warnIf (it fires only at option-default
-  # priority 1500) while every explicit per-test set (e.g. boot's 25.11)
-  # still wins; the value equals the pin's own default (cfg.release), so
-  # eval behavior is unchanged.
+  # wall). The tester's own `defaults` key is merged into every node
+  # (testing/nodes.nix) — cleaner than wrapping each node module (nodes
+  # values are typed single-module; a list is rejected). mkDefault
+  # silences the warnIf (it fires only at option-default priority 1500)
+  # while every explicit per-test set (e.g. boot's 25.11) still wins; the
+  # value equals the pin's own default (cfg.release), so eval behavior is
+  # unchanged.
   makeTest =
     testSpec:
     pkgs.testers.runNixOSTest (
       testSpec
       // {
-        nodes = pkgs.lib.mapAttrs (_: node: pkgs.lib.toList node ++ [ stateVersionBase ]) (
-          testSpec.nodes or { }
-        );
+        defaults = {
+          imports = pkgs.lib.toList (testSpec.defaults or [ ]) ++ [ stateVersionBase ];
+        };
       }
     );
   stateVersionBase = {
