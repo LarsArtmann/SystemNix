@@ -303,7 +303,7 @@ let
     # so shim at the locked rev. Drop when upstream bakes the got hash;
     # re-add ONLY via nix-hash-fix evidence, never by hand.
     dnsblockd = prev.dnsblockd.overrideAttrs {
-      vendorHash = "sha256-ZjETTvO+joPO7i6ZtQ640GZSfDCDeo6W+OJuCIiwEiA=";
+      vendorHash = "sha256-QJ1brGWR51XPWAauQ8AXVk04HOXstCezK2NDfZKGCvw=";
     };
     # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
     # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes

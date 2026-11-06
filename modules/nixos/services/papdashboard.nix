@@ -89,7 +89,7 @@
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-vEnbNwKKfJrPYuqYShKw5pYkAwcSOpbqTOicXQwyZZU=";
+            vendorHash = "sha256-WFAW8c/AY1zD4Z2CedkTp0wLIhpHDGGz29IzUs9GgCM=";
           };
 
       checkEnv = mkSecretCheck pkgs {

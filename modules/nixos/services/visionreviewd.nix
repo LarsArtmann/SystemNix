@@ -53,7 +53,7 @@
           # (docs/todo/upstream.md).
           package = lib.mkDefault (
             inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
-              vendorHash = "sha256-NAkDPYu+H8KoJiE2qEqqxvH9v/79if18ZMs7W4KDkTY=";
+              vendorHash = "sha256-aZvJkjsYaB+S3i/FDGskbwqTm/5gkzK1H/ZCYHRncFU=";
               doCheck = false;
             }
           );

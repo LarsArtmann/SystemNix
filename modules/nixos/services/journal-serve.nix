@@ -73,7 +73,7 @@
           # got 65uOOb5j (float-proof-20261106-000533.log); all three
           # surfaces updated in the same pass.
           default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-65uOOb5jDtTXWTlbsE9jibkFyMhejAiQxQIlGdAALd4=";
+            vendorHash = "sha256-c1BLACA1i8yvxaOIbmzMaqQjRRKssP0RrEFgxNxNyOo=";
           };
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to serve the dashboard with.";

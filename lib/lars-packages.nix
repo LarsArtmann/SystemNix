@@ -216,7 +216,7 @@ lib.filterAttrs (_: v: v != null) {
   # got skC3yysE (float-proof-20261106-000533.log).
   erraudit =
     flakePkgShim inputs.erraudit "default"
-      "sha256-skC3yysERTl8W2GHZZVLfN8T/jXiq4Q2AbMhiaKki70=";
+      "sha256-xoynVQs/ZHme0tB7RZXtiFIpZv/lM85PxqMoCqyuY2A=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -234,7 +234,7 @@ lib.filterAttrs (_: v: v != null) {
   # pUk8kT+7, got qfknf/Oa (float-proof-20261106-000533.log).
   go-auto-upgrade =
     flakePkgShim inputs.go-auto-upgrade "default"
-      "sha256-qfknf/OayGOSVeP2GR4AUrQj+3v0RImQgL894WuE1xw=";
+      "sha256-z0Na65DPX2BMxOTSxqwRbA0moL/YiZ6w6oNhvWOq16E=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11): the lock moved
   # 4cee06df → 7f9b7b19, whose flake bakes the shim's OWN JrBhDyCx… value
   # (git show 7f9b7b19:flake.nix) — the override was bit-neutral at the
@@ -252,7 +252,7 @@ lib.filterAttrs (_: v: v != null) {
   # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
   go-humanize-linter =
     flakePkgShim inputs.go-humanize-linter "default"
-      "sha256-v6zJv2bVZhHA0roA8Z8ciTNfz0800BsNlrfQF2b4SXE=";
+      "sha256-uIKgy0BrF/lRYqpIz8L08NOaJbgQ7iTWRMrt/8h2N7I=";
   # go-structure-linter shim DROPPED (2026-10-18): upstream vendorHash.nix
   # at tip 25b9f6a7 bakes the shim's own O2hpYHSc… value — bit-neutral
   # override (graph verified identical tip-vs-lock). Re-add ONLY via
@@ -263,7 +263,7 @@ lib.filterAttrs (_: v: v != null) {
   # eGuBIRDB, got BH1gH3zn (float-proof-20261106-000533.log).
   go-structure-linter =
     flakePkgShim inputs.go-structure-linter "default"
-      "sha256-BH1gH3zn1RI4AyGbqLSU7jf0Z94PSUP8XqgQ+WCDjFU=";
+      "sha256-d9FFjVKgemLqu2l1yW30fDAhX+NlDbTC5Thz6GphsHY=";
   # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
   # flip (flake.nix, owner directive) landed golangci-lint-auto-configure
   # on 81446302, whose vendorHash.nix still pins zg+6ICkRu2… — 69 commits
@@ -290,7 +290,7 @@ lib.filterAttrs (_: v: v != null) {
   # (float-proof-20261106-000533.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-u/j9KmmOir/3eOCwDy9fjm+2njmdTtVpAaHS2QW6e3w=";
+      "sha256-J29XiG3TH8Pg2ZXbA8pIyA6+cBVg8gm9vAdXdSlzBvc=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -364,7 +364,7 @@ lib.filterAttrs (_: v: v != null) {
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-mHS57Ha68nHslctC9qB/sE1OCKaZDTXt3lBeT6t5S8E=";
+      "sha256-oE40ar3lTjs1sy07Td2uKPnmIeCHbcPeNnpLRa4f/rg=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -399,7 +399,7 @@ lib.filterAttrs (_: v: v != null) {
   # spec oS6SRESQ, got S6Brmn7w (float-proof-20261106-000533.log).
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-S6Brmn7wvBqU29AmZ3e6nc+z9CJ7bdUdYIOmZD7YaL4=";
+      "sha256-3npQivwF6WV0pZsF9p6nrwqcl4RwORNzLf76ZeD9rQc=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
@@ -436,7 +436,7 @@ lib.filterAttrs (_: v: v != null) {
   # got IpBieRbI (float-proof-20261106-000533.log).
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-IpBieRbIDPjJf6VpFoMqmNTPyoZbT0x1HFmFe2tc8qQ=";
+      "sha256-3ROlPED3sg66tTJkHkVvraOc7tJoyLYDHk/r6ynNnus=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
@@ -464,7 +464,7 @@ lib.filterAttrs (_: v: v != null) {
   # re-add ONLY via nix-hash-fix evidence, never by hand.
   project-discovery-daemon =
     flakePkgShim inputs.project-discovery-daemon "default"
-      "sha256-hxcotRZ7IDXOnXhnD24h7/PPluuXtYl27p0+Bw/oEm0=";
+      "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
   # vendorHash shim DROPPED (2026-10-09): its drop condition ("lock moves
   # past an upstream-fixed rev") is met — the lock holds 96fd9304, whose
   # flake bakes vendorHash Bvuf0KUY… (the same "got" hash the stale shim
@@ -530,7 +530,7 @@ lib.filterAttrs (_: v: v != null) {
   # zrjjUEyK, got w2Ejmery (float-proof-20261106-000533.log).
   samber-linter =
     flakePkgShim inputs.samber-linter "default"
-      "sha256-w2EjmerySrKLwN5TNIc+ukEO66RT9mPQPSXxl2dH6Ws=";
+      "sha256-ddUyLNLvRXiX0M0MqMTDJi4M5atciWfhj4ndtwtcZnY=";
   # templ: the flake input (github:a-h/templ, floats on main per the owner
   # ALWAYS-LATEST directive) replaces nixpkgs' pkgs.templ, which still ships
   # 0.3.1020 at the rev-pinned nixpkgs — a generator whose output no longer

@@ -72,7 +72,7 @@
           # got z7ABeNjz (float-proof-20261106-000533.log); both surfaces
           # updated in the same pass.
           default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-z7ABeNjzvWxzYU+S984Ead91HHNqUjh7XzhCVA6vces=";
+            vendorHash = "sha256-1M7bvzM3uazJKDxk2LguOBGDLRCrdAufayP8QzglhHE=";
           };
           defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
           description = "The mr-sync package (github:LarsArtmann/mr-sync).";

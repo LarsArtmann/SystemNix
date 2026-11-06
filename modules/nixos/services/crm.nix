@@ -121,7 +121,7 @@
       # last-green 900bf55f where THIS J9L/KEVb value is the proven pair
       # (registry backup reg-rows-before-20261106-000533).
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-J9L/KEVbTaxMA1uY5Kz6K/zujUnoX0l/jgQghHNOj04=";
+        vendorHash = "sha256-wLlrNvcSfevSU2MeYecN1htUbm4Qec4o6nHvUvKVZWY=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
