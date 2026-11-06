@@ -1164,6 +1164,11 @@
     # locks its own treefmt copy (27b3b12a vs root 0d6d739a) — eval-only
     # dep, journal/papdashboard deep-override precedent.
     docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    # crm carries its OWN docs-gates copy (aa6681aa -> erraudit 3d1f7ed3 ->
+    # go-nix-helpers): input overrides are per-graph-path, so the root
+    # docs-gates override above never reaches crm's subtree and the same
+    # deep treefmt copy regrew there (audit failure 2026-11-06).
+    crm.inputs.docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     emeet-pixyd.inputs.nixpkgs.follows = "nixpkgs";
     erraudit.inputs.go-nix-helpers.follows = "go-nix-helpers";
     erraudit.inputs.nixpkgs.follows = "nixpkgs";
