@@ -99,10 +99,12 @@ _: {
       lapiCredentialsFile = "/var/lib/crowdsec/lapi.yaml";
 
       yaml = pkgs.formats.yaml { };
-      # Same content as the upstream module's own configFile (generated from
-      # the MERGED settings.general, defaults included) — cscli must see the
-      # identical db_config/paths or the repair could touch the wrong DB.
-      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.general;
+      # Same content as the upstream module's own config.yaml (generated from
+      # the MERGED settings.config, defaults included — the nixpkgs 446307
+      # module refactor renamed settings.general to settings.config) — cscli
+      # must see the identical db_config/paths or the repair could touch the
+      # wrong DB.
+      repairConfig = yaml.generate "crowdsec-repair-cscli.yaml" config.services.crowdsec.settings.config;
 
       # Upstream gap (live 2026-10-14): `machine add --auto` writes the DB row
       # FIRST and the credentials file SECOND — when the file write fails, the
@@ -268,24 +270,31 @@ _: {
 
         services.crowdsec = {
           # LAPI on loopback (upstream default 8080 collides with SigNoz).
-          settings.general = {
-            api.server = {
-              enable = true;
-              listen_uri = "127.0.0.1:${toString ports.crowdsec-lapi}";
+          # nixpkgs 446307 (landed via the 2026-11-06 nixpkgs float)
+          # restructured the module: the main config moved settings.general
+          # → settings.config, and localConfig was REMOVED (acquisitions /
+          # parsers moved under settings).
+          settings.config = {
+            api = {
+              server = {
+                enable = true;
+                listen_uri = "127.0.0.1:${toString ports.crowdsec-lapi}";
+              };
+              # REQUIRED once the LAPI server is enabled: the upstream setup
+              # script interpolates this path (machine add --auto writes it).
+              # Lives under ReadWritePaths. (Was settings.lapi.credentialsFile
+              # — auto-migrated upstream into api.client.credentials_path.)
+              client.credentials_path = lapiCredentialsFile;
             };
             prometheus.listen_port = ports.crowdsec-metrics;
           };
-          # REQUIRED once the LAPI server is enabled: the upstream setup
-          # script interpolates this path (machine add --auto writes it) —
-          # null is an eval-time failure. Lives under ReadWritePaths.
-          settings.lapi.credentialsFile = lapiCredentialsFile;
 
           hub.collections = [
             "crowdsecurity/linux" # syslog + geoip + sshd scenarios
             "crowdsecurity/caddy" # caddy-logs parser + base-http-scenarios
           ];
 
-          localConfig = {
+          settings = {
             acquisitions = [
               {
                 source = "journalctl";
