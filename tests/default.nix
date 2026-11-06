@@ -18,10 +18,14 @@ let
     pkgs.testers.runNixOSTest (
       testSpec
       // {
-        nodes = pkgs.lib.mapAttrs (_: node: pkgs.lib.toList node ++ [ stateVersionBase ]) (testSpec.nodes or { });
+        nodes = pkgs.lib.mapAttrs (_: node: pkgs.lib.toList node ++ [ stateVersionBase ]) (
+          testSpec.nodes or { }
+        );
       }
     );
-  stateVersionBase = { system.stateVersion = pkgs.lib.mkDefault "26.11"; };
+  stateVersionBase = {
+    system.stateVersion = pkgs.lib.mkDefault "26.11";
+  };
   # evo-x2's config supplies the REAL store scripts for the guard-artifact
   # test (artifact-level verification: test the shipped writeShellApplication
   # outputs, not reconstructions).
