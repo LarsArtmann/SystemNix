@@ -13,7 +13,7 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 | Port              | `8098` (`lib/ports.nix`), loopback only; Caddy `protectedVHost` front                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | State dir         | `/var/lib/cv` (owned `cv:cv`, 0700)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Config            | generated `config.yaml` symlinked into the state dir from `services.cv-server.settings`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| Secrets           | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Secrets           | sops `platforms/nixos/secrets/cv.yaml` → template `cv-env` (`CV_API_KEY`), owned `cv:cv` 0400; sops `cv-credentials-store.yaml` → `CREDENTIALS_MASTER_KEY_V1` (same template) |
 | Persistence       | `/var/lib/cv/data/pipeline.sqlite` (event store; `pipeline.event_store_driver=sqlite`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Backups           | `/mnt/pool/backups/cv/pipeline-<ts>.sqlite`, nightly 03:17 (`cv-backup.timer`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Scan automation   | `cv-scan.timer` every 6h (:23): POST `/api/pipeline/scan` + `/evaluate-tracked` + `/auto-apply` (X-API-Key)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -67,6 +67,32 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
   Never store anything mutable there.
 - `data/` ROOT files (`pipeline.sqlite`, `dead-portals.json`,
   `graphrag.sqlite`) are runtime-mutable and never touched by the sync.
+
+## Credentials store (A.Team stored-login, 2026-11-06)
+
+`CV_CREDENTIALS_STORE_ENABLED=1` + `CV_CREDENTIALS_STORE_DIR=/var/lib/cv/data/credentials-store`
+(cv.nix `services.cv-server.environment`) + `CREDENTIALS_MASTER_KEY_V1` (sops
+`cv-credentials-store.yaml` → `cv-env` template; env WINS over the
+`master-key-v1.b64` state-file fallback). Boots fail-closed: flag on + no
+usable key = service refuses to start.
+
+- **Sealing credentials** (A.Team email+password first): `/admin/credentials/`
+  on https://cv.home.lan (Pocket-ID passkey or API-key guard) → New credential
+  → platform `ateam`, kind `password`, username = login email, secret =
+  password. The admin UI is the ONLY write path (the store SDK has no public
+  write API). Secrets NEVER ride chat/CLI flags/plaintext files.
+- **State**: `credentials.db` lives under `data/` ROOT (sync-untouched,
+  survives restarts) but is NOT covered by `cv-backup` (pipeline.sqlite only)
+  — a lost state dir means re-seeding via the admin UI.
+- **Key rotation** = `sudo sops --set` a new value in cv.yaml-class files …
+  note: `cv-credentials-store.yaml` was created public-key-only
+  (bank-sync-encryption pattern) but the host key still decrypts it at
+  activation; rotating via `sops --set` needs the host PRIVATE key (sudo).
+  Losing the key = sealed credentials undecryptable (re-seed).
+- **Consumers**: server-side `credentials.Active()` resolution (the
+  `cv profile relogin --platform ateam` operator flow reads the password
+  credential; relogin itself runs operator-side with the same env vars, not
+  as this service).
 
 ## Continuous funnel automation
 
