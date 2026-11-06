@@ -19,7 +19,9 @@
 #   CA trusted but a DIFFERENT CA served       -> FAIL (retired key keeps trust)
 #   CA served but NOT in the bundle            -> FAIL (trust side lost rotation)
 #   identical, single entry, healthy           -> PASS
-#   identical but appended twice               -> WARN (two writers, one PEM)
+#   identical, appended exactly 2x             -> WARN (documented buildcatrust
+#                                               steady state — tripwire)
+#   identical, appended >2x                    -> WARN (real second writer)
 #   identical but expiring within 90 days      -> WARN (trust cliff)
 # Run: bash scripts/test-ca-parity-smoke.sh   (also a flake check)
 set -uo pipefail
@@ -122,14 +124,16 @@ CA_PARITY_BUNDLE="$SCRATCH/bundle-ok.pem" \
   dnsblockd_ca_parity_smoke
 expect PASS "single identical entry -> PASS"
 
-# 7. identical but appended twice (the live 2026-10-28 state: two writers)
+# 7. identical but appended exactly twice (the DOCUMENTED live steady state:
+#    nixpkgs buildcatrust emits the pki entry as a plain + p11-kit TRUSTED
+#    pair; the WARN stays as the tripwire against copy drift)
 cat "$SCRATCH/other.pem" "$SCRATCH/current.pem" "$SCRATCH/current.pem" \
   >"$SCRATCH/bundle-dup.pem"
 reset
 CA_PARITY_BUNDLE="$SCRATCH/bundle-dup.pem" \
   CA_PARITY_SOPS="$SCRATCH/current.pem" \
   dnsblockd_ca_parity_smoke
-expect WARN "identical CA appended twice -> WARN (split-brain signature)"
+expect WARN "identical CA appended 2x -> WARN (documented buildcatrust steady state)"
 
 # 8. identical but inside the 90-day expiry window
 cat "$SCRATCH/other.pem" "$SCRATCH/expired_soon.pem" >"$SCRATCH/bundle-expiring.pem"
@@ -139,9 +143,19 @@ CA_PARITY_BUNDLE="$SCRATCH/bundle-expiring.pem" \
   dnsblockd_ca_parity_smoke
 expect WARN "identical CA expiring <90d -> WARN"
 
+# 9. identical but appended THREE times — above the documented 2-copy
+#    buildcatrust steady state, so a REAL second writer exists
+cat "$SCRATCH/other.pem" "$SCRATCH/current.pem" "$SCRATCH/current.pem" \
+  "$SCRATCH/current.pem" >"$SCRATCH/bundle-trip.pem"
+reset
+CA_PARITY_BUNDLE="$SCRATCH/bundle-trip.pem" \
+  CA_PARITY_SOPS="$SCRATCH/current.pem" \
+  dnsblockd_ca_parity_smoke
+expect WARN "identical CA appended 3x -> WARN (above steady state: real second writer)"
+
 echo ""
 if [ "$TEST_FAILURES" -eq 0 ]; then
-  echo "PASS: all 8 dnsblockd CA-parity fixture legs"
+  echo "PASS: all 9 dnsblockd CA-parity fixture legs"
   exit 0
 fi
 echo "FAIL: $TEST_FAILURES dnsblockd CA-parity fixture leg(s)"

@@ -90,8 +90,10 @@ CA. `post-deploy-check.sh §22` now compares them every deploy
 (`scripts/lib/ca-parity-smoke.sh`): missing CA in the bundle → FAIL (the
 trust side lost the rotation), a DIFFERENT `dnsblockd-CA`
 also trusted → FAIL (a retired key keeps trust, so a leaked old key still
-MITMs), identical but appended twice → WARN (two writers, one PEM), inside
-90 days of expiry → WARN.
+MITMs), identical but appended exactly 2x → WARN (the documented
+buildcatrust steady state below — kept as the tripwire against copy drift)
+and >2x → WARN (a REAL second writer — hunt it), inside 90 days of expiry →
+WARN.
 
 Rotating therefore means ONE commit touching BOTH sides plus the sops
 re-encrypt, then a deploy, then `nix run .#post-deploy-check` — the §22
@@ -107,7 +109,7 @@ openssl crl2pkcs7 -nocrl -certfile /etc/ssl/certs/ca-certificates.crt \
 grep -c 'MIIFSzCCAzOgAwIBAgIUDqspDh2XW' /etc/ssl/certs/ca-certificates.crt
 ```
 
-Fixture harness: `bash scripts/test-ca-parity-smoke.sh` (8 legs, real
+Fixture harness: `bash scripts/test-ca-parity-smoke.sh` (9 legs, real
 certs), also a flake check (`checks.dnsblockd-ca-parity-selftest`).
 Live state 2026-10-28: WARN — trusted and identical, but the bundle carries
 the same CA **twice**. **Second writer IDENTIFIED 2026-10-30: it is nixpkgs

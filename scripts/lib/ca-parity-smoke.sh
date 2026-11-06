@@ -18,8 +18,12 @@
 #   no dnsblockd-CA in bundle     -> FAIL (clients cannot verify what is served)
 #   a DIFFERENT dnsblockd-CA      -> FAIL (a retired key keeps trust, so a
 #                                   leaked old key still MITMs)
-#   identical + >1 copy           -> WARN (benign for trust, but two writers
-#                                   append one PEM — the split-brain signature)
+#   identical + exactly 2 copies  -> WARN (the DOCUMENTED nixpkgs steady state:
+#                                   buildcatrust emits each pki entry as a
+#                                   plain + p11-kit TRUSTED pair — tripwire)
+#   identical + >2 copies         -> WARN (above steady state — a REAL second
+#                                   writer exists; hunt it, docs/services/
+#                                   dnsblockd.md 'duplicate-counter')
 #   identical + <90d to expiry    -> WARN (silent trust cliff)
 #   identical, single, healthy    -> PASS
 #
@@ -81,8 +85,10 @@ dnsblockd_ca_parity_smoke() {
     "$CA_FAIL" "dnsblockd CA parity - a DIFFERENT dnsblockd-CA is trusted (${foreign% }) while the proxy serves ${sops_fp}: a retired key keeps trust, so a leaked old key still MITMs"
   elif ! openssl x509 -in "$sops_ca" -noout -checkend $((90 * 86400)) >/dev/null 2>&1; then
     "$CA_WARN" "dnsblockd CA parity - trust anchor == serving CA, but it expires within 90 days: rotate sops + security.pki.certificates TOGETHER (docs/services/dnsblockd.md 'CA rotation')"
-  elif [ "$matches" -gt 1 ]; then
-    "$CA_WARN" "dnsblockd CA parity - trusted and identical, but the bundle appends the same CA ${matches}x (benign for trust; two mechanisms write one PEM — find the second writer)"
+  elif [ "$matches" -gt 2 ]; then
+    "$CA_WARN" "dnsblockd CA parity - trusted and identical, but the bundle appends the same CA ${matches}x — ABOVE the documented 2-copy steady state, so a REAL second writer exists; hunt it (docs/services/dnsblockd.md 'duplicate-counter')"
+  elif [ "$matches" -eq 2 ]; then
+    "$CA_WARN" "dnsblockd CA parity - trusted and identical, appended exactly 2x: the DOCUMENTED nixpkgs steady state (buildcatrust emits each security.pki.certificates entry as a plain + p11-kit TRUSTED pair; docs/services/dnsblockd.md) — benign; drift is >2 copies or a fingerprint mismatch"
   else
     "$CA_PASS" "dnsblockd CA parity - trust anchor == serving CA (${sops_fp:0:17}…, valid >90d, single entry)"
   fi
