@@ -1,0 +1,16 @@
+# /data watch du -sb baseline (apparent-size bytes) — machine-readable companion to the
+# /data watch row (docs/todo/storage.md + TODO_LIST queue row). Re-baseline at a calm
+# window by overwriting the three data lines (git keeps the history); stamps go to the row.
+#
+# Verdict one-liner (exit 0 = no drift, any diff output = drift):
+#   diff <(du -sb /data/ai /data/SteamLibrary /data/gcs-staging | tr '\t' ' ') \
+#        <(grep -v '^#' docs/todo/data-watch-baseline.txt)
+#
+# Current baseline: 15th dispatch, 2026-10-11 01:25 (last byte-precise reading;
+# ~190 GiB owner-side reclaim since — df now ~67%, du re-baseline owed at the next calm window)
+573375206161 /data/ai
+115730680179 /data/SteamLibrary
+24888170891 /data/gcs-staging
+# df -B1 /data at baseline: used 931649626112 / avail 163827507200 (85.0% byte-precise)
+# Provenance: figures carried verbatim from the 15th-dispatch stamp (task 000001a124179efaa09e51d7b3a200000000)
+# into this file 2026-11-06 (quick-wins session) — kills the two-prose-surface hand-copy drift class.
