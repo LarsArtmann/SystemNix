@@ -115,3 +115,26 @@
 | templ A/B proof | `~/projects/library-policy` worktree at `fca47ff` (removed after the test) |
 | hagezi prefetch checks | `nix-prefetch-url … /raw/f8c1f9f8…` → base32 → base64 = `BBE5rsFW…`, `QpCn56gx…` |
 | current proof | `~/.cache/buildwave/proof-102811.log` |
+
+---
+
+## §h. POST-REPORT ADDENDUM (2026-11-06 11:2x) — the deploy ran, failed on buildflow, and the fix inverted one of my earlier claims
+
+The owner ran `nix run .#deploy` at 10:33 (`/var/log/systemnix-deploys/2026-11-06_10-32-32.log`). It exited 1 at 11:06:50 after 25m33s with ONE build failure, never switching generations.
+
+**Two independent defects, both on `buildflow-ba3cd98`, and both were mine:**
+
+1. **The shim hash I "proved this session" was misattributed.** `lib/lars-packages.nix` carried `sha256-SRdpoBO+…`, but the evidence drv was `…-buildflow-a1d0c14-go-modules` — probed at `a1d0c14` and pasted onto a lock that had already moved to `ba3cd98`. Re-probed at `ba3cd98` with `nix-store --realise 23qjyl87…-buildflow-ba3cd98-go-modules.drv`: `specified SRdpoBO+, got sha256-7F+fM3mxTCysNBZJtoBILx48X1uFLovD762UAISwtJU=` — **exactly what upstream's own `vendorHash.nix` bakes at that rev**. Drop-protocol applied: the shim is gone, `buildflow = flakePkg inputs.buildflow`.
+2. **The same package reached `system-path` on two surfaces, so nix built it TWICE.** `platforms/nixos/system/configuration.nix:400` installed the raw `inputs.buildflow.packages.<system>.default` (`7F+fM3`) while `base.nix`'s `builtins.attrValues larsPackages` installed the shimmed twin (`SRdpoBO+`) — two derivations, two independent `go-modules` FOD downloads per deploy, only one of them correct. The `nh` graph showed it plainly (the same pname twice, each with its own `…-go-modules` child). The duplicate entry is removed; buildflow now arrives solely via `larsPackages`.
+
+The deploy log's own error (`read "…/art-dupl/@v/…zip": stream error: stream ID 365; INTERNAL_ERROR`) was a **transient proxy flake on top of** defect 1, not the cause: the version resolves (`proxy.golang.org/…1b165cdb90fb.info` → 200) and the FOD now realises clean.
+
+**Correction to my own §f evidence table:** the row `buildflow probe | drv 96c9wjgjp4qkzy1pyii42izy9hl5y40m` is the receipt for the misattribution — that drv is `a1d0c14`, not the locked `ba3cd98`. A probe's rev receipt is the drv NAME; check it against the lock before pasting.
+
+**Post-fix state (all first-hand):**
+- `nix-store -qR <toplevel.drv> | grep -i buildflow` → **one** `buildflow-ba3cd98` (was two).
+- `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going` → **EXIT=0**, 0 builder failures (`~/.cache/buildwave/proof-final2-114500.log`, drv `lqfgrh2da6j1wlv2bih8p2gs1s3jdphh`).
+- `nix flake check --no-build --all-systems` → `all checks passed!` (`~/.cache/buildwave/fc-113500.log`).
+- Lesson recorded durably in `docs/agents/nix-flakes.md` → "Misattributed FOD hashes and duplicate surfaces (2026-11-06)" + Index row; systemic fix rowed in `docs/todo/pipeline.md` (twin-surface `pname`/`vendorHash` divergence audit) and the pin-wave LIFT in `docs/todo/upstream.md`.
+
+**Nothing else remains before a switch:** every FOD and every derivation the toplevel needs is realised. A `nix run .#deploy` now pays only the rev-metadata rebuild of the top layers (seconds), because `system.configurationRevision = inputs.self.rev` re-keys the toplevel drv on every commit.

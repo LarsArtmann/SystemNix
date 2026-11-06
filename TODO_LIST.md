@@ -780,6 +780,7 @@
 
 ### pipeline
 
+- [ ] [ready] **Eval-time audit: same `pname` reaching the toplevel with DIFFERENT vendorHash (twin-surface divergence)** — buildflow existed TWICE in the evo-x2 closure (lars-packages shim `SRdpoBO+` vs raw flake input `7F+fM3`), doubling a go-modules FOD download every deploy with only one correct; make the human-enforced "twin surfaces move in lockstep" rule an assertion → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/agents/nix-flakes.md → "Misattributed FOD hashes and duplicate surfaces (2026-11-06)")
 - [ ] [ready] **Unconsumed-artifact eval check (ghost-package detector)** — gate that every pkgs/*.nix exposed in overlays/shared.nix is referenced by some module/app/check (the calm-gate sat built-but-unwired 19 days through freezes #40-#48); allowlist with justification → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/planning/2026-11-05_ai-deployment-research.md §7)
 - [ ] [ready] **Stray-continuation-line guard for one-physical-line files (TODO_LIST/CHANGELOG/library rows)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-10-29_21-43_contacts-calendar-ownership-doctrine-and-bidi-mesh-proposal.md §d.1)
 - [ ] [ready] **Index the ownership page + the bidirectional-mesh proposal in `docs/README.md` Key Documents (decide whether planning gets its own index)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §b.2)
