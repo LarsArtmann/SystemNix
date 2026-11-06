@@ -1314,11 +1314,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793932901,
-        "narHash": "sha256-HCTmlistpyHxG5bWJL3USow8OqONMPuJp2gLjQ8jKMw=",
+        "lastModified": 1793938155,
+        "narHash": "sha256-pPlZZLN4kVOvb7vMWH0CZq+S0QBojBDH4hOQHjwsTAo=",
         "owner": "Artmann-Technologies",
         "repo": "docs-gates",
-        "rev": "840cc427b25ea6e410c1458c357401196c40ae7f",
+        "rev": "1715886439923c7dd834a2a7d8bfe45eb1efb98e",
         "type": "github"
       },
       "original": {
@@ -8364,11 +8364,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793937251,
-        "narHash": "sha256-Wb6kgHkh2jix1wavnR45Rf1wBmiVTDy8PCwYDFdgauU=",
+        "lastModified": 1793937956,
+        "narHash": "sha256-7QjwQBhzz58Cw5zpOBov2Bmibko08pZksfVA5BB2wBs=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "9a62765a50657d0227440009244209773458000a",
+        "rev": "3a14a647426e4fdc02bd607ba8a7708c09d2467f",
         "type": "github"
       },
       "original": {
