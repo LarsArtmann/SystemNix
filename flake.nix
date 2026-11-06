@@ -992,7 +992,7 @@
     crm = {
       # TEMPORARY HARD PIN rolled forward 2026-11-06 (same templ-API-removal
       # class; allowlist block in lib/flake-input-pin-audit.nix). LIFTED by
-      # the upstream pin wave: 5302527 carries crm's own double pin —
+      # the upstream pin wave: 0ce5ecc carries crm's own double pin —
       # cqrs-htmx b55d95b3 (templ v0.3.1100 regeneration) + go-cqrs-lite
       # f79e37fcf (docserver in the templ-1100 form + the MaxOpenConns
       # field the read-pool wave consumes) — BOTH in the committed
@@ -1002,7 +1002,7 @@
       # per roll. Keep pinned (not ?ref=master): the 10-14 master-tracking
       # window showed the vendorHash treadmill returns on every upstream
       # float; re-roll this rev per crm pin wave instead.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=5302527b3ff92838ad5e62b39db84a32c4663c46";
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=0ce5ecca8f88d4a71c845bf324346b6bc9875ded";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
