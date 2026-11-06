@@ -93,8 +93,8 @@
 31. Byte-verify-anchor discipline reinforcement (already documented; tonight's recurrence may warrant a hook, not a doc).
 32. Merge the storm/freeze narrative set (see 5).
 33. CHANGELOG row for the daemon-commit debt: guard fix rides a heuristic message (ef6bf1b51) — contents verified, message not amended (two-commits-back = rebase, declined).
-34. Skill-creator note: how-to-golang trigger description over-matches box-infra questions (21-43 §e.5, carried).
-35. buildflow builtin skill load failure retry (carried).
+34. ~~Skill-creator note: how-to-golang trigger description over-matches box-infra questions (21-43 §e.5, carried).~~ done at `SKILLS 2cb16fc — description now scopes Go-performance to app/library choices and excludes box-level build/cache infra (GOCACHE placement`, ` cache disks`, ` build-storm IO)`
+35. ~~buildflow builtin skill load failure retry (carried).~~ **NOT-DO — buildflow is a USER skill at ~/.agents/skills/buildflow (loads fine); crush:// is the BUILTIN namespace and correctly 404s a non-builtin; no config carries the wrong path (rg-verified 2026-11-06) — wrong-namespace assumption from the 19-50 report, not a Crush defect.**
 
 **Pointers to tracked rows noticed this session (36–43)**
 

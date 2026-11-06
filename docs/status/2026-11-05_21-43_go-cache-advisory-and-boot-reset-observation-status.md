@@ -70,7 +70,7 @@
 14. PSI-gated timed-build probe (warm + cold) — quantify "slow" on the NEW boot.
 15. Exact golangci-lint-langserver count via `pgrep -f`.
 16. GOMODCACHE toolchain-download probe (fork evidence).
-17. Retry the buildflow builtin skill load (crush:// "Builtin file not found"); file the defect.
+17. ~~Retry the buildflow builtin skill load (crush:// "Builtin file not found"); file the defect.~~ **NOT-DO — buildflow is a USER skill at ~/.agents/skills/buildflow (loads fine); crush:// is the BUILTIN namespace and correctly 404s a non-builtin; no config carries the wrong path (rg-verified 2026-11-06) — wrong-namespace assumption from the 19-50 report, not a Crush defect.**
 18. Self-harvest BOTH reports' §f into TODO_LIST + domain libraries once the owner lifts the report-only instruction.
 19. Verify the 19:42 session's deploy poller survived the reboot — the deferred deploy it gated (crush-events chmod, §16 self-heal, flm disable) is presumably STILL pending on the new boot.
 20. Re-check whether the §16 icons realize + other in-tree fixes rode ANY deploy before the reset (tree was never deployed as of 19:42; the reboot changed nothing about that).

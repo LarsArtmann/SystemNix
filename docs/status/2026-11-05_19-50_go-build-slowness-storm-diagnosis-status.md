@@ -59,7 +59,7 @@ Grouped; items 1–8 are this session's direct follow-ups, 9–16 storm containm
 4. Build the PSI-gated timed-build probe (warm + cold) and baseline one small repo when calm — quantify "slow".
 5. Establish the exact langserver instance count with `pgrep -f` (close the unverified number).
 6. Probe GOMODCACHE for a downloaded toolchain (`golang.org/toolchain…` dirs) — confirm or kill the fork hypothesis with evidence.
-7. Retry the buildflow builtin skill load (`crush://skills/buildflow/SKILL.md` failed: "Builtin file not found"); file the defect if it persists.
+7. ~~Retry the buildflow builtin skill load (`crush://skills/buildflow/SKILL.md` failed: "Builtin file not found"); file the defect if it persists.~~ **NOT-DO — buildflow is a USER skill at ~/.agents/skills/buildflow (loads fine); crush:// is the BUILTIN namespace and correctly 404s a non-builtin; no config carries the wrong path (rg-verified 2026-11-06) — wrong-namespace assumption from the 19-50 report, not a Crush defect.**
 8. Self-harvest this report's actionable §f rows into `TODO_LIST.md` + `docs/todo/{stability,pipeline,storage}.md` once the owner answers §g (report-only instruction deferred it).
 
 **Storm containment**
