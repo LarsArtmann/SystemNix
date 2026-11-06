@@ -53,9 +53,18 @@ let
       if find "$entry" -xdev -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
         continue
       fi
-      # rm errors (permission denied on other users' files) are
-      # non-fatal — suppress stderr and continue to next entry.
-      rm -rf --one-file-system -- "$entry" 2>/dev/null && removed=$((removed + 1)) || true
+      # rm errors are non-fatal, but NEVER silent (2026-10-01 class: root
+      # without CAP_DAC_OVERRIDE cannot unlink inside foreign-owned
+      # non-writable dirs, and the old `2>/dev/null || true` suppressed
+      # every EACCES — stale root/nixbld residue stood while /tmp hit
+      # 100%). A failed removal now logs a WARN naming the entry, so the
+      # residue class is journal-visible (StandardError=journal) instead of
+      # discoverable only at ENOSPC.
+      if rm -rf --one-file-system -- "$entry" 2>/dev/null; then
+        removed=$((removed + 1))
+      else
+        echo "tmp-cleanup WARN: could not remove $entry (permission/IO — foreign-owned residue class; unit needs CAP_DAC_OVERRIDE+CAP_FOWNER, see docs/todo/services.md tmp-cleanup row)" >&2
+      fi
     done
 
     after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
@@ -872,6 +881,13 @@ in
             ProtectHome = true;
             PrivateTmp = false; # MUST see the real /tmp, not a private tmpfs
             ReadWritePaths = [ "/tmp" ];
+            # Root WITHOUT capabilities cannot unlink inside foreign-owned
+            # non-writable dirs (DAC checks apply to uid 0 too once
+            # CAP_DAC_OVERRIDE is dropped) — the unit's whole job is deleting
+            # stale nixbld/root build residue, so it carries the two unlink
+            # capabilities (bun-memory-watchdog precedent). harden{}'s
+            # mkDefault' empty bounding set loses to this direct key.
+            CapabilityBoundingSet = "CAP_DAC_OVERRIDE CAP_FOWNER";
           })
           {
             Type = "oneshot";
