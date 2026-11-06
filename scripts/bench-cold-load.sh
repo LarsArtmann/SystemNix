@@ -81,7 +81,11 @@
 #               warm during the run, slightly flattering the number
 #   TIMEOUT_S   hard cap on the server load itself (default 1200, the QLC
 #               can take ~8-12min for 23G; M12 measured >8min under storm)
-#   OUT         append the final JSON line to this file (default: stdout only)
+#   OUT         append a JSON line per run to this file (default: stdout
+#               only); FAILED runs append event=dead-server / event=timeout
+#               lines carrying the crash-reason excerpt + PSI context, so
+#               crash forensics join the measurement stream instead of
+#               living only in the KEEP_RAW /tmp dir
 set -euo pipefail
 
 MODEL_ARG="${1:-}"
@@ -331,12 +335,48 @@ BYTES=$(stat -c %s "$MODEL")
 LOAD_S=$(awk -v t0="$T0" -v t1="$T1" 'BEGIN{printf "%.2f", t1 - t0}')
 
 if [ "$health_ok" != "true" ]; then
-  echo "### RESULT: FAILED, /health never returned 200 within ${TIMEOUT_S}s (last PSI avg10=${PSI_POST}%, max during run ${PSI_MAX_RUN}%)"
+  srv_state="$(awk '{print $3}' "/proc/${SRV}/stat" 2>/dev/null || echo dead)"
+  case "$srv_state" in
+  dead | Z) bench_event="dead-server" ;;
+  *) bench_event="timeout" ;;
+  esac
+  reason="$(grep -aiE 'ggml_assert|fatal|abort|terminate|exception|error|failed' "$D/server.log" 2>/dev/null | tail -2 | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-400)"
+  [ -n "$reason" ] || reason="$(tail -c 400 "$D/server.log" 2>/dev/null | tr '\n' ' ' | sed 's/  */ /g')"
+  [ -n "$reason" ] || reason="(server log empty)"
+  echo "### RESULT: FAILED ($bench_event), /health never returned 200 within ${TIMEOUT_S}s (last PSI avg10=${PSI_POST}%, max during run ${PSI_MAX_RUN}%)"
+  echo "  reason excerpt: $reason"
   echo "  server log head (crash reason lives here):"
   head -8 "$D/server.log" | sed 's/^/    /' || true
   echo "  server log tail:"
   tail -3 "$D/server.log" | sed 's/^/    /' || true
   echo "  fix: KEEP_RAW=1 preserves $D/server.log; a dead-server line above means the load-mode or GPU env aborted (try LM=none), a timeout line means rerun with TIMEOUT_S=<larger> in a calmer window"
+  FAIL_JSON="$(jq -c -n \
+    --arg ts "$(date -Is)" \
+    --arg model "$MODEL" \
+    --arg lm "$LM" \
+    --arg port "$PORT" \
+    --arg ctx "$CTX" \
+    --arg ngl "$NGL" \
+    --arg bytes "$BYTES" \
+    --arg timeout_s "$TIMEOUT_S" \
+    --arg psi_max "$PSI_MAX" \
+    --arg psi_pre "$PSI_PRE" \
+    --arg psi_post "$PSI_POST" \
+    --arg psi_max_run "$PSI_MAX_RUN" \
+    --arg psi_avg_run "$PSI_AVG_RUN" \
+    --arg embed_arch "$EMBED_ARCH" \
+    --argjson embed_auto "$EMBED_AUTO" \
+    --argjson psi_accepted "$psi_accepted" \
+    --arg event "$bench_event" \
+    --arg reason "$reason" \
+    '{schema: 1, ts: $ts, probe: "cold-load", event: $event, model: $model, bytes: ($bytes | tonumber), load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), timeout_s: ($timeout_s | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto, reason: $reason}')"
+  if [ -n "$OUT" ]; then
+    mkdir -p "$(dirname "$OUT")"
+    printf '%s\n' "$FAIL_JSON" >>"$OUT"
+    echo "### failure JSON line appended to $OUT"
+  else
+    printf '%s\n' "$FAIL_JSON"
+  fi
   exit 1
 fi
 
