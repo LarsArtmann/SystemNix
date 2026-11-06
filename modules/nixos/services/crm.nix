@@ -120,8 +120,18 @@
       # undefined, float-proof-20261106-012906.log), so crm pinned back to
       # last-green 900bf55f where THIS J9L/KEVb value is the proven pair
       # (registry backup reg-rows-before-20261106-000533).
+      # PIN-WAVE RE-SHIM (2026-11-06): crm input rolled to b57a94c, whose
+      # own flake pins cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf — the
+      # templ-v0.3.1100 compatibility wave that ends this treadmill (the
+      # vendored cqrs-htmx adminui and go-cqrs-lite docserver are both
+      # regenerated into the 1100-compatible form upstream now). Value is
+      # the vendorHash crm itself declares and proved green at that source
+      # (see crm AGENTS "NIX PIN WAVE"); re-proven consumer-side in the
+      # evo-x2 toplevel float-proof before the deploy. Drop the shim when
+      # upstream bakes the hash and the lock moves past an upstream-fixed
+      # rev.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-U9HymCCZRfg3YgcbIk4BRTkefT/fLwZ29nM1xt/YBRg=";
+        vendorHash = "sha256-AN6/xU4iUXZsfp77Ar7FHidG5kxpGjHLbj5BOUcL9kI=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

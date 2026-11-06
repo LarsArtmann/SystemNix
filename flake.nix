@@ -982,15 +982,19 @@
     # vendorHash is shimmed consumer-side in crm.nix (nix-hash-fix evidence
     # only, re-measured on upstream source moves).
     crm = {
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
-      # block in lib/flake-input-pin-audit.nix): 13ae851 "chore(deps):
-      # update dependencies to latest" bumped templ to v0.3.1100 while the
-      # vendored cqrs-htmx adminui generated files still call
-      # templ.JoinURLErrs / templ.ResolveAttributeValue (deleted in
-      # 0.3.1100). 197bdf1 is the pre-bump rev. LIFT: upstream regenerates
-      # at 0.3.1100 (or pins templ back) and the package compiles at tip;
-      # then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=197bdf18c5f9656766d0444b4f3409e70315ab01";
+      # TEMPORARY HARD PIN rolled forward 2026-11-06 (same templ-API-removal
+      # class; allowlist block in lib/flake-input-pin-audit.nix). LIFTED by
+      # the upstream pin wave: b57a94c "docs: archive the 10-04 review
+      # report and record the pin wave" carries crm's own double pin —
+      # cqrs-htmx b55d95b3 (templ v0.3.1100 regeneration) + go-cqrs-lite
+      # f79e37fcf (docserver in the templ-1100 form + the MaxOpenConns
+      # field the read-pool wave consumes) — and `nix build` compiles green
+      # at that source (crm flake.nix vendorHash AN6/xU4…, proven upstream;
+      # float-proof log documents the consumer-side re-shim). Keep pinned
+      # (not ?ref=master): the 10-14 master-tracking window showed the
+      # vendorHash treadmill returns on every upstream float; re-roll this
+      # rev per crm pin wave instead.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=b57a94cb9475e03bc449724959515a8e8a480e95";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
