@@ -332,7 +332,7 @@ lib.filterAttrs (_: v: v != null) {
   # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
   journal =
     flakePkgShim inputs.journal "default"
-      "sha256-65uOOb5jDtTXWTlbsE9jibkFyMhejAiQxQIlGdAALd4=";
+      "sha256-c1BLACA1i8yvxaOIbmzMaqQjRRKssP0RrEFgxNxNyOo=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
@@ -427,7 +427,7 @@ lib.filterAttrs (_: v: v != null) {
   # got z7ABeNjz (float-proof-20261106-000533.log).
   mr-sync =
     flakePkgShim inputs.mr-sync "default"
-      "sha256-z7ABeNjzvWxzYU+S984Ead91HHNqUjh7XzhCVA6vces=";
+      "sha256-1M7bvzM3uazJKDxk2LguOBGDLRCrdAufayP8QzglhHE=";
   # mr-sync shim DROPPED (2026-10-17 wave): upstream flake.nix:126 at tip
   # 71d6b0d4 bakes the shim's own KaDlWefE… value — bit-neutral override
   # (lock == tip; module surface dropped in the same pass). Re-add ONLY
@@ -529,7 +529,7 @@ lib.filterAttrs (_: v: v != null) {
   # carries the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-ErtiXt04mrrlz9wdwcptkGi2J9oKVvIG2wrfnAzNWq0=";
+      "sha256-Sie0CMRWBgeFH5wfLpVQ3XKRe+zxU7OYslpcmthS9gA=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

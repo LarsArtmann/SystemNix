@@ -75,7 +75,7 @@ _: {
           default =
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-hxcotRZ7IDXOnXhnD24h7/PPluuXtYl27p0+Bw/oEm0=";
+                vendorHash = "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
               };
           defaultText = lib.literalExpression ''
             inputs.project-discovery-daemon.packages.''${system}.default
