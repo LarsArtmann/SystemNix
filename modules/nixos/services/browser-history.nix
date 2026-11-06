@@ -906,6 +906,10 @@
                 clientId = "browser-history";
                 launchURL = "https://history.${domain}";
                 callbackURLs = [ "https://history.${domain}/auth/oauth/pocket-id/callback" ];
+                # PKCE S256 on every fleet OIDC client (8 siblings set it;
+                # paperless eval-asserts it) — the always-sent challenge is
+                # advisory until the IdP enforces the verifier.
+                pkceEnabled = true;
               };
             };
             browser-history-agent = {

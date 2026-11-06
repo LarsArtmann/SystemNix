@@ -287,9 +287,13 @@
             startLimitIntervalSec = 300;
             # Cold start loads 17 ONNX models on CPU — the global 3-min
             # DefaultTimeoutStartSec is the queued watch-class trap; give
-            # the full posture an explicit budget (TimeoutStartSec is a
-            # [Unit]-section key in modern systemd).
-            unitConfig.TimeoutStartSec = "10min";
+            # the full posture an explicit budget. TimeoutStartSec is a
+            # [Service]-section key: unitConfig placement lands it in
+            # [Unit] where this systemd silently ignores it (switch
+            # journal 2026-11-05 07:36:48 "Unknown key 'TimeoutStartSec'
+            # in section [Unit], ignoring") and the cold start rode the
+            # 3-min default instead.
+            serviceConfig.TimeoutStartSec = "10min";
             # ~/projects reader-writer (2026-10-28 projects-subvol plan D6):
             # the models checkout lives under ~/projects — fail loud when the
             # Samsung subvol mount is absent (never serve from the stale @
@@ -440,7 +444,10 @@
             # First full pass over a five-figure library is HOURS of
             # GPU inference (the nightly re-runs are minutes —
             # --only-new); Persistent=true catches up a missed night.
-            unitConfig.TimeoutStartSec = "6h";
+            # [Service]-section key (unitConfig placement is silently
+            # ignored — same class as the server unit's 2026-11-05
+            # switch-journal warning).
+            serviceConfig.TimeoutStartSec = "6h";
             path = [ pkgs.coreutils ];
             serviceConfig = lib.mkMerge [
               {
