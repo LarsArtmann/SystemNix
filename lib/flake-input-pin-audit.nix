@@ -181,6 +181,14 @@
     # library-policy@fca47ff + templ v0.3.1070 builds green, @v0.3.1100
     # dies "undefined: templ.ResolveAttributeValue".
     discordsync = "REV-PINNED at ea6c444c (the rev before upstream 2f3b275 bumped templ 0.3.1070 -> 0.3.1100 and discordgo in one daemon commit, breaking both the generated-template API and the CacheGuild handler signature). LIFT: upstream regenerates its templates with the v0.3.1100 generator (or pins templ back to 0.3.1070) and the discordgo handlers compile; then drop the pin and re-lock.";
+    # Same class, one pin per app: each daemon "chore(deps)" commit bumped
+    # the templ require line without regenerating that repo's templates.
+    library-policy = "REV-PINNED at 7fc0983 (parent of daemon commit fca47ff, which flipped the indirect templ require to 0.3.1100 while the flake.lock-pinned templ-components stays pre-regen). Probe-proven: fca47ff + templ 0.3.1070 builds green, + 0.3.1100 dies 'undefined: templ.ResolveAttributeValue'. LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    journal = "REV-PINNED at 4a63e7f (parent of daemon commit 5604c6f, same templ 0.3.1100 bump). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    project-dependency-graph = "REV-PINNED at 8335670e (parent of 21259fa6 'chore(deps): update Go dependencies', same templ 0.3.1100 bump; its committed renderer/graph_templ.go calls templ.ResolveAttributeValue). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    crm = "REV-PINNED at 197bdf1 (parent of 13ae851 'chore(deps): update dependencies to latest', same templ 0.3.1100 bump against vendored pre-regen cqrs-htmx adminui). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    golangci-lint-auto-configure = "REV-PINNED at 28340f6 (parent of f20cd92 'chore(deps): update Go dependencies', same templ 0.3.1100 bump; pkg/report/report_templ.go calls templ.ResolveAttributeValue). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    inboxclean = "REV-PINNED at e553c510 (parent of 5f4722cd 'align templ stack at v0.3.1100': go.mod moved to 0.3.1100 while workspace deps still ship pre-regen generated code, e.g. go-cqrs-lite/catalog v4.12.0 docserver using templ.JoinURLErrs). LIFT: catalog is regenerated at 0.3.1100 and the package compiles at tip.";
   },
 }:
 let

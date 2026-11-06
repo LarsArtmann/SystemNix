@@ -290,7 +290,15 @@
       # Floats on upstream master (owner directive 2026-10-25: "inboxclean
       # should never be pinned"). The go.mod 1.27.3 toolchain floor is met
       # via the nixpkgs-unstable follow, not by holding this rev back.
-      url = "git+ssh://git@github.com/LarsArtmann/InboxClean?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; see the
+      # allowlist block in lib/flake-input-pin-audit.nix): upstream
+      # e553c510 is the last internally consistent shape — 5f4722cd
+      # "align templ stack at v0.3.1100" flipped go.mod to templ 0.3.1100
+      # while the workspace still consumed go-cqrs-lite/catalog v4.12.0,
+      # whose generated docserver uses templ.JoinURLErrs (removed in
+      # 0.3.1100). LIFT: catalog is regenerated at 0.3.1100 (or the app
+      # bumps catalog) and `.#inboxclean` compiles; then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/InboxClean?rev=e553c510cafe335f659030331d8b4d120d6c1826";
     };
 
     # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (Go):
@@ -394,7 +402,17 @@
       # uncompilable status.go:309 InstanceID change) landed on origin/master
       # (a7aa44d); pin f3651092 dropped, the lars-packages vendorHash shim
       # re-probed at the new rev, toplevel proof green same day.
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
+      # block in lib/flake-input-pin-audit.nix): fca47ff is a daemon
+      # "chore: auto-commit" that flipped the indirect templ require to
+      # v0.3.1100 while this repo's flake.lock still pins the pre-regen
+      # templ-components (938dbd97), whose generated svg_templ.go calls
+      # templ.ResolveAttributeValue (deleted in 0.3.1100). Proven both ways
+      # by worktree probe: fca47ff + templ 0.3.1070 builds, + 0.3.1100 dies
+      # "undefined: templ.ResolveAttributeValue". LIFT: upstream regenerates
+      # its templates at 0.3.1100 (or pins templ back) and the package
+      # compiles at tip; then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?rev=7fc09832355ee5f43dc7784b4a5510d57ccb0abd";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -464,7 +482,14 @@
     # follows overrides and no consumer-side shim. Its lock's only private
     # dep node is go-cqrs-lite (CI key already exists).
     journal = {
-      url = "git+ssh://git@github.com/LarsArtmann/journal?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
+      # block in lib/flake-input-pin-audit.nix): 5604c6f is a daemon
+      # "chore: commit 6 pending file(s)" that bumped the templ require to
+      # v0.3.1100 while the flake.lock-pinned templ-components stays
+      # pre-regen (generated code calls templ.ResolveAttributeValue, gone
+      # in 0.3.1100). LIFT: upstream regenerates at 0.3.1100 (or pins
+      # templ back) and `.#journal` compiles at tip; then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/journal?rev=4a63e7fd3ddd3aefcc92bfbcc959ce5918a63303";
     };
 
     # go-paperless — journal's own lock pins this dep to a LOCAL
@@ -570,7 +595,14 @@
     # the goModules vendorHash is probed per lock move and shimmed in
     # lib/lars-packages.nix when stale under the followed nixpkgs graph.
     golangci-lint-auto-configure = {
-      url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
+      # block in lib/flake-input-pin-audit.nix): f20cd92 "chore(deps):
+      # update Go dependencies" bumped templ to v0.3.1100 while its
+      # pkg/report/report_templ.go still calls templ.ResolveAttributeValue
+      # (deleted in 0.3.1100). 28340f6 is the pre-bump rev. LIFT: upstream
+      # regenerates its templates at 0.3.1100 (or pins templ back) and the
+      # package compiles at tip; then unpin and re-lock.
+      url = "github:LarsArtmann/golangci-lint-auto-configure?rev=28340f6352b629bdf2225c88f1c7f64308279f67";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -769,7 +801,15 @@
     # following re-tools the FOD under SystemNix's nixpkgs and re-hashes it
     # on every root-nixpkgs bump (the 2026-10-05 a7868a7 wave class).
     project-dependency-graph = {
-      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
+      # block in lib/flake-input-pin-audit.nix): 21259fa6 "chore(deps):
+      # update Go dependencies" bumped templ to v0.3.1100 while its
+      # renderer's committed graph_templ.go still calls
+      # templ.ResolveAttributeValue (deleted in 0.3.1100). 8335670e is the
+      # pre-bump rev (the rev the deployed generation shipped). LIFT:
+      # upstream regenerates its templates at 0.3.1100 (or pins templ
+      # back) and the package compiles at tip; then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?rev=8335670e8e46e103cefce3e94f57fcc878720a3f";
     };
 
     # project-meta — Per-project metadata management CLI
@@ -926,7 +966,15 @@
     # vendorHash is shimmed consumer-side in crm.nix (nix-hash-fix evidence
     # only, re-measured on upstream source moves).
     crm = {
-      url = "git+ssh://git@github.com/LarsArtmann/crm?ref=refs/heads/master";
+      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
+      # block in lib/flake-input-pin-audit.nix): 13ae851 "chore(deps):
+      # update dependencies to latest" bumped templ to v0.3.1100 while the
+      # vendored cqrs-htmx adminui generated files still call
+      # templ.JoinURLErrs / templ.ResolveAttributeValue (deleted in
+      # 0.3.1100). 197bdf1 is the pre-bump rev. LIFT: upstream regenerates
+      # at 0.3.1100 (or pins templ back) and the package compiles at tip;
+      # then unpin and re-lock.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=197bdf18c5f9656766d0444b4f3409e70315ab01";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
