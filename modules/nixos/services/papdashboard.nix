@@ -86,10 +86,13 @@
       # flake-attr toplevel proof is truth.
       # RE-STALE 2026-11-06 lock float: papdashboard@63425ee spec unmyEeVV,
       # got vEnbNwKK (float-proof-20261106-000533.log).
+      # RE-STALE 2026-11-06 evening: papdashboard@ea0f5c4 spec WFAW8c, got
+      # ktjyNhwo (first-hand, float-proof-20261106-230052.log — surfaced as
+      # the sole root once the crm pin wave cleared the earlier layers).
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-WFAW8c/AY1zD4Z2CedkTp0wLIhpHDGGz29IzUs9GgCM=";
+            vendorHash = "sha256-ktjyNhwoBAyjZHrxAm+jCs4IHnX4L7lWJkbJuQExDHI=";
           };
 
       checkEnv = mkSecretCheck pkgs {

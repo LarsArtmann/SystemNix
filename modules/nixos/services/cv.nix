@@ -220,9 +220,11 @@
           # /admin/credentials/ (same Pocket-ID/API-key guard as /admin) is
           # the ONLY write path (store SDK has no public write API). The
           # master key rides CREDENTIALS_MASTER_KEY_V1 in the sops cv-env
-          # template (env wins over the state-file fallback). Fail-closed
-          # boot: flag on + key unusable = service refuses to start (the
-          # sops-key-audit gate catches declared-but-missing at eval).
+          # template (env wins over the state-file fallback). The flag is
+          # kept as the EXPLICIT contract even though CV is store-on-by-
+          # default since 2026-11-06 (auto-boots on a provisioned key):
+          # =1 makes a broken key FATAL here instead of degrading to the
+          # env seam — production wants the fail-closed posture.
           environment = {
             CV_CREDENTIALS_STORE_ENABLED = "1";
             # Absolute pin (the graphrag.store_dsn precedent): the default
