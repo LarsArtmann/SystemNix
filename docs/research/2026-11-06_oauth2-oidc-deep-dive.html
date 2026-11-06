@@ -1145,7 +1145,6 @@ oidc = {
               blocked:user revoke row.
             </div>
           </div>
-        </section>
 
           <!-- Issue 4 -->
           <div class="issue issue-important" id="issue-logout">
@@ -1346,57 +1345,6 @@ roles := <span class="tok-function">mapGroupsFailClosed</span>(<span class="tok-
             server-enforced PKCE, and logout actually logs out. The env-var
             bootstrap and its drift risk disappear.
           </div>
-        </section>
-
-        <!-- Version Currency -->
-        <section id="versions">
-          <h2><span class="num">02b</span>Version currency</h2>
-          <p>
-            Deployed binary pins <code>usermgmt/oauth2 v4.12.0</code>; the
-            SystemNix lock (98cfec0) and browser-history HEAD pin
-            <code>v4.13.0</code>. The upstream module's unreleased head carries
-            the next security pair — neither rev consumes it.
-          </p>
-          <table class="compare">
-            <thead>
-              <tr>
-                <th>Version</th>
-                <th>Type</th>
-                <th>Notable change</th>
-                <th>Relevance</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Unreleased (2026-10-25, S39)</td>
-                <td>Security</td>
-                <td>
-                  <code>BeginLoginWithNonce</code>/<code>FinishLoginWithNonce</code>
-                  — OIDC Core §3.1.2.1 nonce round-trip (replayed/injected
-                  tokens rejected) + <code>empty_subject</code> rejection
-                  (an absent subject used to degrade identity matching to
-                  email-only, linking every email-sharing account)
-                </td>
-                <td class="no">High — tag and bump</td>
-              </tr>
-              <tr>
-                <td>v4.13.0 (2026-10-11)</td>
-                <td>Feature</td>
-                <td>
-                  Public (secret-less) PKCE clients,
-                  <code>preferred_username</code> claim,
-                  <code>FinishLoginWithToken</code> raw-ID-token escape hatch
-                </td>
-                <td class="yes">Locked, NOT deployed (deployed = v4.12.0)</td>
-              </tr>
-              <tr>
-                <td>v4.12.0 (deployed)</td>
-                <td>—</td>
-                <td>The binary currently serving history.home.lan</td>
-                <td class="no">PKCE-only, no nonce binding</td>
-              </tr>
-            </tbody>
-          </table>
         </section>
 
         <!-- Appendix -->

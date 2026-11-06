@@ -1182,6 +1182,10 @@
     # copy (follow-audit hit, 2026-11-04 lock move to 2b735e5) — eval-only,
     # safe to follow the root pin like the parent lines above.
     cvagent.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    # Deeper hop of the same class (follow-audit hit, 2026-11-06 lock move to
+    # b9f0acf): cvagent's go-humanize-linter dep locks go-nix-helpers, whose
+    # treefmt-nix deep copy regrows — eval-only, follow the root pin.
+    cvagent.inputs.go-humanize-linter.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
     file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
