@@ -122,7 +122,16 @@ lib.filterAttrs (_: v: v != null) {
   # only re-created the drift treadmill. Both surfaces dropped (this one +
   # platforms/nixos/system/configuration.nix). Re-add ONLY via nix-hash-fix
   # evidence, never by hand.
-  buildflow = flakePkg inputs.buildflow;
+  # RE-STALE 2026-11-06 nixpkgs float (root 1d060086, go 1.27.3): at a1d0c14
+  # spec jbsLverx, got SRdpoBO+ (first-hand fakeHash FOD probe this session,
+  # drv 96c9wjgjp4qkzy1pyii42izy9hl5y40m-buildflow-a1d0c14-go-modules).
+  # This shim reverses the 2026-10-28 drop ABOVE: that drop was evidence-based
+  # for ce10b79 under the then-root toolchain; the toolchain moved again, so
+  # the override is no longer bit-neutral. Drop again when upstream's
+  # vendorHash.nix bakes SRdpoBO+ (re-lock past that rev).
+  buildflow =
+    flakePkgShim inputs.buildflow "default"
+      "sha256-SRdpoBO+z0p2Boea0CZbu0zGx9OFzNO9TmoV2hKz23U=";
   # cvagent — git-history→CV-facts CLI (Code-To-CV-Agent): scan/mesh commands,
   # PATH consumer + the cvagent.nix scan+mesh timer. Upstream flakes
   # packages.default with its own baked vendorHash (no follows into it).
