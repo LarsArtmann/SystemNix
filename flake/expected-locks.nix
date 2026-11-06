@@ -24,7 +24,7 @@
 # (435a0ba, forgejo-primary hub, v0.1 deploy PR). Proof: toplevel toplevel-proof log.
 # 2026-11-03 regen (round-9 float: crush-daily + browser-history; diagnostic rebuild, proof pending)
 {
-  art-dupl = "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5";
+  art-dupl = "e36712aa2ea9f833de3925fd970ab85928594e4b";
   art-dupl-src = "0cfc9966b768aeb3894c0ba1af1019c5a19c81a5";
   bank-sync = "fab930686bd945301b2e0fccd2aaeeadf5d7300c";
   branching-flow = "8fd75a742970ad258a288abf24a6c349c820d202";
@@ -38,7 +38,7 @@
   cv = "64e0e10241c215c6b06f71756a97a04ecb0b14a9";
   cvagent = "30b379b3e03eaa574e30c65e029463c7a100c70d";
   dankMaterialShell = "c1c789a1584fb09446293c923b434dcb6325b354";
-  discordsync = "2f3b275ee2e6b7277c4bc357e4a4b513b2d575e8";
+  discordsync = "ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
   dnsblockd = "c69d2bfd47ee642fd2685ecd0ab1b052d410150c";

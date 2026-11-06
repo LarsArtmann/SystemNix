@@ -51,7 +51,7 @@ lib.filterAttrs (_: v: v != null) {
   # drv g4i7z32v1rqr60qwsk13ii54c6zk6vjz-art-dupl-0.9.0-go-modules).
   art-dupl =
     flakePkgShim inputs.art-dupl "default"
-      "sha256-iCINPEzo4sAOxUnjHHZyQCp7Y73p3gXABMQ6uscyDSQ=";
+      "sha256-AFkwR+czRL1litT7pMz0L1ZeUYfq/H23tACxWzgFn8I=";
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
   # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2

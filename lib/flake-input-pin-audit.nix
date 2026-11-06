@@ -168,6 +168,19 @@
     # bank-sync row REMOVED 2026-10-16: the 2026-10-14 ceiling pin was lifted
     # by the owner-ratified fresh-start cutover (prod journal archived once by
     # the bank-sync-fresh-start oneshot; see flake.nix bank-sync comment).
+    # ── 2026-11-06 templ-API-removal pins ──────────────────────────────
+    # a-h/templ v0.3.1100 DELETED templ.ResolveAttributeValue and
+    # templ.JoinURLErrs (present in v0.3.1070, absent from the v0.3.1100
+    # tag). Every generated *_templ.go produced by an older generator calls
+    # them, so a daemon "chore(deps)" bump of the templ require line
+    # silently breaks the compile of any repo that has not ALSO regenerated
+    # its templates with the v0.3.1100 generator. The fleet is mid-wave:
+    # some repos regenerated (buildflow ba3cd98), some only bumped go.mod
+    # (DiscordSync 2f3b275). Evidence: templ v0.3.1100 runtime.go has no
+    # ResolveAttributeValue (v0.3.1070 runtime.go:697 does); local probes:
+    # library-policy@fca47ff + templ v0.3.1070 builds green, @v0.3.1100
+    # dies "undefined: templ.ResolveAttributeValue".
+    discordsync = "REV-PINNED at ea6c444c (the rev before upstream 2f3b275 bumped templ 0.3.1070 -> 0.3.1100 and discordgo in one daemon commit, breaking both the generated-template API and the CacheGuild handler signature). LIFT: upstream regenerates its templates with the v0.3.1100 generator (or pins templ back to 0.3.1070) and the discordgo handlers compile; then drop the pin and re-lock.";
   },
 }:
 let
