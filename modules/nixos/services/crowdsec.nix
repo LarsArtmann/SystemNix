@@ -48,6 +48,7 @@ _: {
         mkDnsGate
         harden
         serviceOneshotDefaults
+        ioTier
         ;
 
       # The gate hostname is the hub index host `cscli hub update` fetches
@@ -345,6 +346,28 @@ _: {
         # pre-fix After=multi-user edge on prereq armed the gen-954
         # deleted-start-job cycle instead).
         systemd.services.crowdsec.wantedBy = lib.mkForce [ "late-applications.target" ];
+
+        # nixpkgs 446307 split setup out of crowdsec.service's ExecStartPre
+        # into a directly-enabled crowdsec-setup.service oneshot (hub update
+        # + installs + machine register; wantedBy multi-user upstream).
+        # House wiring: (1) late-applications, not multi-user — the family's
+        # ordering-cycle fix (2026-10-26 class) AND its DNS-dependent hub
+        # update must stay off the boot critical chain. (2) after
+        # crowdsec-prereq — the prereq runs the DNS gate AND the
+        # orphan-machine repair; without this edge setup's `machines add`
+        # would run BEFORE the repair (the old in-unit ordering died with
+        # the split) and its hub update would predate the gate.
+        # (3) bounded timeout + background tier: a wedged oneshot holds
+        # whatever waits on it open forever (2026-10-17 netbird class).
+        systemd.services.crowdsec-setup = {
+          after = [ "crowdsec-prereq.service" ];
+          wants = [ "crowdsec-prereq.service" ];
+          wantedBy = lib.mkForce [ "late-applications.target" ];
+          serviceConfig = lib.mkMerge [
+            { TimeoutStartSec = "10min"; }
+            ioTier.background
+          ];
+        };
 
         # oneshot ordered before crowdsec.service instead: requires+before
         # keeps the gate FATAL (a failed DNS wait must hold crowdsec back or

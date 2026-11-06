@@ -197,14 +197,18 @@ fi
 # favorite deletion target for ~8 days, and since 2026-11-03 it also has a
 # mount-stop class (RequiresMountsFor=/mnt/buildcache/ci-runner-cache turns a
 # buildcache recovery remount into a runner stop). Either way an inactive
-# runner means CI is dark. Skip on hosts without the unit file.
-if [ -e '/etc/systemd/system/gitea-runner-evo\x2dx2.service' ]; then
-  if systemctl is-active --quiet 'gitea-runner-evo\x2dx2.service'; then
-    report_pass "Gitea runner - active (CI incident canary)"
-  else
-    report_fail "Gitea runner - INACTIVE: start job dropped (ordering cycle) or the unit was stopped by a mount/recovery stop (journalctl -u 'gitea-runner-evo\x2dx2.service' --since -30min; eval gates: modules/nixos/services/ordering-cycle-audit.nix + services.buildcache.recoveryRestartUnits; the 5-min gitea-runner-ensure timer converges it)"
+# runner means CI is dark. Both unit names: the 2026-11-06 forgejo-runner
+# module migration renamed the family — the old gitea-runner unit file only
+# lingers on pre-migration boots (absent → skipped).
+for _runner_unit in 'forgejo-runner-evo\x2dx2.service' 'gitea-runner-evo\x2dx2.service'; do
+  if [ -e "/etc/systemd/system/$_runner_unit" ]; then
+    if systemctl is-active --quiet "$_runner_unit"; then
+      report_pass "Actions runner ($_runner_unit) - active (CI incident canary)"
+    else
+      report_fail "Actions runner ($_runner_unit) - INACTIVE: start job dropped (ordering cycle) or the unit was stopped by a mount/recovery stop (journalctl -u \"$_runner_unit\" --since -30min; eval gates: modules/nixos/services/ordering-cycle-audit.nix + services.buildcache.recoveryRestartUnits; the 5-min runner-ensure timer converges it)"
+    fi
   fi
-fi
+done
 
 # Shared pressure-reporting logic (fixture-tested by
 # scripts/test-post-deploy-pressure.sh + the post-deploy-pressure-selftest

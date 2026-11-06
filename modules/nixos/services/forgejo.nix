@@ -112,6 +112,9 @@ _: {
         runner.labels = runnerLabels;
       };
       runnerConfigFile = (pkgs.formats.yaml { }).generate "runner-config.yaml" runnerSettings;
+      # The v13 forgejo-runner module's state layout (single instance dir;
+      # the gitea-runner nested StateDirectory list is gone with the module).
+      runnerStateDir = "/var/lib/forgejo-runner/${hostName}";
 
       inherit
         (import ./_forgejo-scripts.nix {
@@ -149,7 +152,7 @@ _: {
         hermesForgejoTokenDeliver
         hermesCfg
         genRunnerToken
-        registerRunner
+        provisionRunner
         oidcSetupScript
         addKeysScript
         ;
@@ -1304,15 +1307,29 @@ _: {
           };
         };
 
-        services.gitea-actions-runner = {
+        services.forgejo-runner = {
           package = pkgs.forgejo-runner;
           instances.${hostName} = {
             enable = true;
-            name = hostName;
-            url = "${forgejoUrl}";
-            tokenFile = "/run/forgejo-runner/token";
-            labels = runnerLabels;
-            settings = runnerSettings;
+            # v13 module contract (2026-11-06 float, gitea-actions-runner
+            # removal): at least one server connection with a uuid+token
+            # pair, asserted at eval. The REAL pair is runtime-provisioned
+            # (forgejo-provision-runner carries the legacy .runner identity
+            # so the uuid the Forgejo server knows is preserved); preStart
+            # renders the real values over these placeholders via
+            # replace-secret — the upstream nixos-test pattern, extended to
+            # the token because ours is written INSIDE the unit start (a
+            # LoadCredential/secrets-shape token would demand the file
+            # BEFORE ExecStartPre runs — the 2026-10-16 tmpfs boot-failure
+            # class). Placeholders never reach the daemon: ExecStart points
+            # at the rendered copy.
+            settings = runnerSettings // {
+              server.connections.default = {
+                url = forgejoUrl;
+                uuid = "@UUID@";
+                token = "@TOKEN@";
+              };
+            };
           };
         };
 
@@ -1326,9 +1343,9 @@ _: {
         # joins via SupplementaryGroups; RequiresMountsFor keeps the runner
         # from starting against a shadow dir on the QLC root (loud Gatus,
         # never silent churn).
-        users.groups.gitea-runner-cache = { };
+        users.groups.gitea-runner-cache = { }; # legacy family name kept (docs/todo/services.md decision row)
 
-        systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
+        systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
           # wantedBy forgejo.service, NOT the nixpkgs default multi-user.target:
@@ -1372,6 +1389,21 @@ _: {
             pkgs.gcc
             pkgs.curl
           ];
+          # Render the real connection config the daemon runs with: copy the
+          # module-generated yaml (uuid/token as @PLACEHOLDER@s — valueless
+          # to anyone reading the store copy) and substitute the provisioned
+          # pair. Runs AFTER the ExecStartPre legs (list merge orders
+          # mkForce entries first, preStart's plain-priority entry last) —
+          # the files it reads are written by forgejo-provision-runner one
+          # leg earlier. replace-secret, not sed: the token never appears on
+          # an argv (fish_history/ps class).
+          preStart = ''
+            cp -v ${config.services.forgejo-runner.instances."${hostName}".configFile} ./connection-config.yaml
+            chmod u+w ./connection-config.yaml
+            ${lib.getExe pkgs.replace-secret} '@UUID@' "${runnerStateDir}/.uuid" ./connection-config.yaml
+            ${lib.getExe pkgs.replace-secret} '@TOKEN@' "${runnerStateDir}/.token" ./connection-config.yaml
+            chmod u-w ./connection-config.yaml
+          '';
           serviceConfig = lib.mkMerge [
             {
               Environment = [
@@ -1379,29 +1411,27 @@ _: {
                 "GOCACHE=/mnt/buildcache/ci-runner-cache/gocache"
                 "npm_config_cache=/mnt/buildcache/ci-runner-cache/npm"
               ];
-              # the nixpkgs runner module defaults to ProtectSystem=strict —
-              # the whole hierarchy mounts ro+nosuid in the unit's namespace,
-              # so the cache env above needs this explicit exemption (run 99:
-              # Go cache init EROFS despite 2770 group perms; mount gating via
-              # unitConfig.RequiresMountsFor is already in place)
+              # The v13 module no longer sets ProtectSystem=strict (the
+              # gitea-actions-runner module did); kept as inert armor for a
+              # future sandbox re-add — the cache env needs the exemption
+              # either way (run 99 EROFS precedent).
               ReadWritePaths = [ "/mnt/buildcache/ci-runner-cache" ];
-              EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
-                (lib.getExe registerRunner)
+                ("+" + lib.getExe provisionRunner)
               ];
+              # The rendered copy, not the module's placeholder configFile.
+              ExecStart = lib.mkForce "${lib.getExe config.services.forgejo-runner.package} daemon --config ${runnerStateDir}/connection-config.yaml";
               TimeoutStartSec = "3min";
               MemoryMax = "16G";
               SupplementaryGroups = [ "gitea-runner-cache" ];
-              # Kill the nixpkgs module's LoadCredential=token:<tokenFile>
-              # (nixpkgs lock 55bfb4d added it): systemd sets up credentials
-              # BEFORE ExecStartPre, but /run is tmpfs and gen-runner-token
-              # writes the file INSIDE the start — every boot failed the
-              # CREDENTIALS step ("No such file or directory") into
-              # start-limit-hit; the runner was DOWN from the 2026-10-16
-              # 00:07 boot until this line (hub Actions runs sat "waiting";
-              # the 00:07 triage queued the class, this closes it). TOKEN
-              # reaches the daemon via EnvironmentFile instead.
+              # Kill any LoadCredential the module would generate from a
+              # secrets attr (currently none): systemd sets up credentials
+              # BEFORE ExecStartPre, but the identity files are written
+              # INSIDE the start on a fresh host (/run is tmpfs) — every
+              # boot would fail the CREDENTIALS step into start-limit-hit
+              # (2026-10-16 class). Identity flows via the state-dir files
+              # + replace-secret render instead.
               LoadCredential = lib.mkForce [ ];
             }
             ioTier.build
@@ -1418,7 +1448,7 @@ _: {
         # recovery converge it inside the same run; the buildcache module's
         # coverage assertion (config.assertions) keeps this row honest.
         services.buildcache.recoveryRestartUnits = [
-          "gitea-runner-${utils.escapeSystemdPath hostName}.service"
+          "forgejo-runner-${utils.escapeSystemdPath hostName}.service"
         ];
 
         # Keep-alive (2026-10-27, owner directive "the runner should just
@@ -1439,8 +1469,8 @@ _: {
         # the runner unit, not stop it. Shape: the llama-chat-ensure pattern
         # (timer-driven oneshot, no RemainAfterExit, Restart unset = no —
         # the timer IS the retry).
-        systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}-ensure" = {
-          description = "Keep-alive for the gitea-actions runner (start it whenever it is not active)";
+        systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}-ensure" = {
+          description = "Keep-alive for the forgejo runner (start it whenever it is not active)";
           # Family gate (forgejo-family-condition-audit; eval-broken HEAD
           # 176bbaf4a→ddc3ababb 2026-10-27, fixed in passing): pre-finalize
           # the marker is absent → this oneshot condition-skips instead of
@@ -1456,24 +1486,24 @@ _: {
             Type = "oneshot";
             ExecStart = "${
               pkgs.writeShellApplication {
-                name = "gitea-runner-ensure";
+                name = "forgejo-runner-ensure";
                 runtimeInputs = [ pkgs.systemd ];
                 text = ''
-                  unit='gitea-runner-${utils.escapeSystemdPath hostName}.service'
+                  unit='forgejo-runner-${utils.escapeSystemdPath hostName}.service'
                   if systemctl is-active --quiet "$unit"; then
                     exit 0
                   fi
-                  echo "gitea-runner-ensure: $unit not active — clearing start-limit, starting (no-block)"
+                  echo "forgejo-runner-ensure: $unit not active — clearing start-limit, starting (no-block)"
                   systemctl reset-failed "$unit" 2>/dev/null || true
                   systemctl start --no-block "$unit"
                 '';
               }
-            }/bin/gitea-runner-ensure";
+            }/bin/forgejo-runner-ensure";
           };
         };
 
-        systemd.timers."gitea-runner-${utils.escapeSystemdPath hostName}-ensure" = {
-          description = "Re-attempt gitea-runner convergence every 5 minutes";
+        systemd.timers."forgejo-runner-${utils.escapeSystemdPath hostName}-ensure" = {
+          description = "Re-attempt forgejo-runner convergence every 5 minutes";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = "5min";
