@@ -62,7 +62,7 @@
   lock,
   allowlist ? {
     nixpkgs-llama-rag = "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
-    paperless-gpt-src = "TAG-PINNED at v0.28.0 so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
+    paperless-gpt-src = "TAG-PINNED at v0.31.0 (bumped from v0.28.0 2026-11-06) so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
     qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
     # ── 2026-10-23 deploy-rollback set (two of the original five remain) ─
     # The 2026-10-20 nixos-unstable tip broke the toplevel build in five
@@ -78,20 +78,25 @@
     # not from either input's own rev. Removing those follows lines let all
     # three float; each consumer now builds with the templ CLI that matches
     # its go.mod.
-    nixpkgs = "REV-PINNED at fe13242 (2026-10-15), the rev generation 939 runs. ROLLBACK of 02c087f3, which broke aw-core (peewee==3.* vs 4.4.0), the linux-7.3 r8125.ko.cer module path, signoz patch context, templ runtime drift and dms-shell 2.0.0 installPhase. A rev-in-URL pin makes `nix flake update` a silent no-op for nixpkgs, which is the intent; the daily nixpkgs-compat workflow uses `--override-input` so its early-warning signal survives. LIFT: re-float to nixos-unstable only when `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel --keep-going --no-link` exits 0 with aw-core AND linux-7.3-modules realized.";
-    signoz-src = "REV-PINNED at 375b3f83 (2026-10-16). The ?ref=main float moved the sonic version context so the Go-1.26 patches in modules/nixos/services/patches/ stopped applying and the pnpm deps hash re-staled. LIFT: move to a rev where those patches apply unchanged (or sonic >= 1.15 obsoletes them) and `nix build .#signozPkg --no-link` exits 0.";
-    # ── 2026-10-25 lock-float proof holds ──────────────────────────────
-    # hermes-agent's latest rev demands a toolchain floor our REV-PINNED
-    # nixpkgs cannot meet (following nixpkgs makes consumer flakes import
-    # it overlay-less, so no local overlay can close the gap). Held at the
-    # last build-proven rev with a concrete LIFT observable; the hold is
-    # re-verified by the float procedure on the day it is lifted.
-    # The inboxclean pin from the same float was LIFTED 2026-10-25 (owner:
-    # "inboxclean should never be pinned") via the floating
-    # nixpkgs-unstable follow input — unstable's go_1_27 1.27.3 meets the
-    # go.mod floor without touching the root pin. Same pattern clears
-    # hermes-agent if its patch context survives an unstable follow.
-    hermes-agent = "REV-PINNED at 0329638c (2026-10-23T01:21, the rev before upstream 5a5aa9a): its patchelfFixed patches patchelf 0.19.2 for NixOS/patchelf#672, but this input's nixpkgs FOLLOWS our fe13242 pin (patchelf 0.15.2), so the fetched patch cannot apply and every cold pm-ripgrep/pm-node build dies in patchPhase (first-hand --keep-going 2026-10-25: hermes-agent → ripgrep-15.2.0 → patchelf-0.15.2, hunks 543/576/1167/1215 FAILED). LIFT: pinned nixpkgs ships a patchelf containing #672 (i.e. after the nixpkgs fe13242 rev-pin is lifted) — drop the pin, re-float hermes, and re-run the toplevel proof.";
+    # ── 2026-10-23 deploy-rollback set — FULLY LIFTED 2026-11-06 ────────
+    # The 2026-10-20 nixos-unstable tip broke the toplevel build in five
+    # independent places at once and re-staled ten FOD hashes downstream,
+    # so nixpkgs + signoz-src were pinned back per-input. Owner directive
+    # 2026-11-06 ("EVERYTHING on the latest version") lifted both pins:
+    # nixpkgs row REMOVED 2026-11-06 — re-floated to nixos-unstable,
+    # proof-gated per the pin's own LIFT observable (keep-going toplevel
+    # with aw-core AND linux-7.3-modules realized); anything still broken
+    # upstream gets a fresh per-input pin, not a blanket rollback.
+    # signoz-src row REMOVED 2026-11-06 — back on ?ref=main; the Go-1.26
+    # sonic patches in modules/nixos/services/patches/ must come back
+    # green (or be dropped where sonic >= 1.15 landed) in the re-proof.
+    # templ, overview and dankMaterialShell were LIFTED 2026-10-25 on owner
+    # directive ("always on latest") after the causes were re-attributed:
+    # the overview break came from forcing the root templ CLI into
+    # overview/inboxclean builds (`templ-cli.follows` / `templ.follows`),
+    # not from either input's own rev. Removing those follows lines let all
+    # three float; each consumer now builds with the templ CLI that matches
+    # its go.mod.
     # ── 2026-11-02 04:12 lock-float proof holds ────────────────────────
     # The 03:16 + 04:12 blanket float moved ~70 inputs unproven (daemon
     # sweeps); the 04:32 keep-going enumeration left three roots that hash
@@ -117,7 +122,42 @@
     # WRONG) was fixed upstream in a6dd6a3, pushed to origin/master — pin
     # dropped, input re-floated, toplevel proof re-run (lift ritual
     # complete).
-    cv = "REV-PINNED at 16a656f4 (2026-11-03). ORIGINAL CAUSAL CLAIM RETRACTED same day ~21:15 after journal+source verification: '80c2c88 panic-loops / 16a656f4 gen-973-green-18h' was FALSE — the cv-server SIGSEGV loop is REV-INDEPENDENT (identical nil-deref at ChatstoreSessions.HealthCheck, internal/agent/sessions_chatstore.go:112, in every rev e168e6d..HEAD; the stack names that file:line on cv@aa878d2 2026-11-02 14:06 with restart counter already 17, hours before the 80c2c88 float even existed at 21:03), 228 SIGSEGVs hit the pinned rev itself across boot deed9c84, and 16a656f4 panicked identically post-rollback (2026-11-03 18:52/19:08/19:24). Root cause: pipeline_events outgrew the 5 s sqliteOperationTimeout on full-scan All() — boot rehydration deterministically fails (query all events: context deadline exceeded), the chatstore lazy service stays nil, the samber/do healthcheck probe SIGSEGVs addr=0x8. The pin is kept ONLY for build-hash stability (bPvMOBEz = the gen-972/973/975-proven deterministic store path), not as a fix. LIFT: upstream lands the real fix (nil-guard on HealthCheck + chunked/raised rehydration so boot completes against the existing store) — drop the pin + the vendorHash shim re-measure, re-lock past it, re-run the toplevel proof.";
+    # ── 2026-11-02 04:12 lock-float proof holds ────────────────────────
+    # The 03:16 + 04:12 blanket float moved ~70 inputs unproven (daemon
+    # sweeps); the 04:32 keep-going enumeration left three roots that hash
+    # shims cannot fix — upstream breakage classes, pinned back to the last
+    # build-proven rev per input (log:
+    # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
+    # monitor365 row REMOVED 2026-11-03: the wasm-bindgen 0.2.130 hash
+    # paste (lofzu1Ubn…) landed on origin/master (ebfa4056f) — pin dropped,
+    # input re-floated, toplevel proof green (lift ritual complete).
+    # vision-review-agent row REMOVED 2026-11-03: upstream restored the
+    # go.mod floor to 1.27.2 (59cc272, pushed) — pin dropped, probe build
+    # green, toplevel proof green (lift ritual complete).
+    # library-policy row REMOVED 2026-11-03: pin dropped that evening; the
+    # a7aa44d "fix" was ineffective (go.mod bumps are cosmetic under the
+    # flake deps map — the two-graphs trap), the real fix being
+    # go-health-dashboard d4a6534 adopting the branded InstanceID plus
+    # library-policy c1dc17a floating its own go-health inputs past the
+    # break (worktree FOD green; .#library-policy green through this lock,
+    # shim dropped — lift ritual complete).
+    # project-discovery-daemon row REMOVED 2026-11-03 night: the corrected
+    # root cause (pdd's own go-daemon flake pin stale at 138ce86e vs go.mod
+    # v0.4.0 — NOT "symbol only in godmn's unpublished tree", which was
+    # WRONG) was fixed upstream in a6dd6a3, pushed to origin/master — pin
+    # dropped, input re-floated, toplevel proof re-run (lift ritual
+    # complete).
+    # cv row REMOVED 2026-11-06: the pin held build-hash stability only —
+    # the cv-server SIGSEGV loop is REV-INDEPENDENT (nil-deref at
+    # ChatstoreSessions.HealthCheck, sessions_chatstore.go:112), so the
+    # pin guarded nothing runtime-side; lifted on the owner's
+    # "everything latest" directive, vendorHash re-measure rides the
+    # toplevel proof. Upstream fix (nil-guard + chunked rehydration)
+    # remains the real LIFT for the crash-loop itself.
+    # hermes-agent row REMOVED 2026-11-06: the 2026-10-25 pin (patchelf#672
+    # patch context vs the root pin's patchelf 0.15.2) lifted itself when
+    # the root nixpkgs floated to nixos-unstable — its patchelf contains
+    # #672, so pm-ripgrep/pm-node patchPhase is the re-proof gate.
     # browser-history row REMOVED 2026-11-02 17:0x: the 15:28 doctor-series
     # split push healed — the full F2-F7 series landed on origin/master
     # (e506008..c6bcfab) and the pin + row were dropped together per the

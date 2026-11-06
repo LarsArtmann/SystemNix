@@ -11,40 +11,28 @@
   };
 
   inputs = {
-    # REV-PINNED at fe13242 (2026-10-15) — the rev generation 939 was built
-    # from. ROLLBACK (2026-10-23): the 2026-10-20 tip 02c087f3 broke the
-    # toplevel build in five independent places at once — aw-core
-    # (peewee==3.* unsatisfied by 4.4.0), the linux-7.3 r8125.ko.cer module
-    # path convention, signoz-src patch context, templ runtime/source drift
-    # (templruntime.NewAttributeExpression undefined), and dms-shell 2.0.0
-    # installPhase. Ten stale FOD hashes and four vendorHash mismatches were
-    # downstream of the same float. Path-form rev pin is deliberate (a
-    # `?rev=` query is eval-guard-blocked and re-pins backward on lock
-    # churn): `nix flake update` is now a SILENT NO-OP for nixpkgs, which is
-    # the point — neither the weekly flake-update PR nor an ad-hoc agent
-    # `nix flake update` can re-break the tree unattended. The daily
-    # nixpkgs-compat workflow keeps working because it overrides this URL
-    # with `--override-input` (a bare `nix flake update nixpkgs` here would
-    # be a silent no-op and the early-warning check would pass forever).
-    # LIFT: forward-re-float to nixos-unstable and require
-    # `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel
-    # --keep-going --no-link` to exit 0 with aw-core AND linux-7.3-modules
-    # realized — all five defects above genuinely fixed upstream.
-    nixpkgs.url = "github:NixOS/nixpkgs/fe13242281a67641c0102cdb1087f0ebe586c7df";
-    # FLOATING nixpkgs (nixos-unstable) for consumers whose FOD-governing go
-    # toolchain floor outruns the REV-PINNED root nixpkgs (root ships go_1_27
-    # 1.27.2; upstream InboxClean c63bf289 raised its go.mod floor to 1.27.3,
-    # and buildGoModule's GOTOOLCHAIN=local forbids the auto-download — the
-    # build died `go.mod requires go >= 1.27.3`, first-hand --keep-going
-    # 2026-10-25). Consumers since the 2026-11-06 1.27.3 floor wave:
-    # inboxclean, file-and-image-renamer, go-taskqueue, vision-review-agent
-    # (each upstream's own lock verified at a go-1.27.3 nixpkgs rev,
-    # 1d060086 or 0bb2eedc). NOT covered by the daily nixpkgs-compat workflow
-    # (that --override-inputs the root pin only): the consumers' go-modules
-    # FODs are this input's compatibility test. COLLAPSE each follow back to
-    # `<consumer>.inputs.nixpkgs.follows = "nixpkgs"` once the root pin lifts
-    # and ships go >= 1.27.3 — one root nixpkgs instance is the goal.
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # FLOATING nixos-unstable (2026-11-06): the fe13242 rev-pin (2026-10-15,
+    # gen 939) was LIFTED by owner directive ("EVERYTHING on the latest
+    # version"). History: the pin rolled back the 2026-10-20 tip 02c087f3,
+    # which broke the toplevel in five places at once (aw-core peewee==3.*,
+    # the linux-7.3 r8125.ko.cer module path, signoz patch context, templ
+    # runtime drift, dms-shell 2.0.0 installPhase; ten stale FOD hashes
+    # downstream). The lift is proof-gated: every defect above must come
+    # back green under `nix build .#nixosConfigurations.evo-x2.config.system
+    # .build.toplevel --keep-going` (aw-core AND linux-7.3-modules
+    # realized) before the float commits; anything upstream still broken
+    # gets re-pinned per-input with a fresh LIFT observable, not a blanket
+    # rollback. The float also retires the nixpkgs-unstable follow input
+    # (five go-1.27.3-floor consumers collapsed back onto this root) and
+    # lifts the hermes-agent patchelf#672 blocker (unstable patchelf
+    # contains the fix its patchelfFixed patch targets).
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # nixpkgs-unstable follow input REMOVED 2026-11-06: created 2026-10-25
+    # (inboxclean go-1.27.3 floor vs the pinned root's go_1_27 1.27.2),
+    # extended 2026-11-06 to file-and-image-renamer, go-taskqueue,
+    # vision-review-agent and dankMaterialShell; the root nixpkgs float to
+    # nixos-unstable made it redundant — all five follows collapsed back
+    # to "nixpkgs".
     # REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (the last build
     # proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin
     # regression, live 2026-09-14). Consumed ONLY by services/llama-rag.nix.
@@ -167,15 +155,17 @@
     # (metadata DB) runs at signoz start, the collector's ClickHouse
     # schema-migrator runs pre-start — review new migrations before
     # deploying a moved rev.
-    # REV-PINNED at 375b3f83 (2026-10-16) since 2026-10-23. The ?ref=main
-    # float pulled revs whose go.mod moved the sonic version context, so the
-    # Go-1.26 patches in modules/nixos/services/patches/ stopped applying
-    # (`signoz-…-patched` failed its hunks) and the pnpm deps hash re-staled.
-    # LIFT: bump to a rev where those patches apply unchanged (or where
-    # sonic >= 1.15 makes them obsolete), then rebuild
-    # `nix build .#signozPkg --no-link`.
+    # Pin LIFTED 2026-11-06 (owner directive "everything latest"; back on
+    # ?ref=main). The 2026-10-23 pin existed because main's go.mod moved the
+    # sonic version context so the Go-1.26 patches in
+    # modules/nixos/services/patches/ stopped applying (`signoz-…-patched`
+    # failed its hunks) and the pnpm deps hash re-staled. Re-proof duties on
+    # this float: `nix build .#signozPkg --no-link` (refresh the patches or
+    # drop them where sonic >= 1.15 landed) + the migration-review class for
+    # new pkg/sqlmigration / ClickHouse schema-migrator entries at the
+    # deployed rev.
     signoz-src = {
-      url = "github:SigNoz/signoz/375b3f8305720b236a83b50955269c60d96e1f9e";
+      url = "github:SigNoz/signoz?ref=main";
       flake = false;
     };
     signoz-collector-src = {
@@ -185,12 +175,13 @@
 
     # paperless-gpt — AI metadata enrichment + custom-field extraction for
     # Paperless-ngx (github:icereed/paperless-gpt, MIT). TAG-PINNED at the
-    # v0.28.0 release so the vendorHash + npmDepsHash in
-    # pkgs/paperless-gpt.nix stay reproducible; bump tag + both hashes
-    # together (a moving ref would re-break the FODs on every lock update —
-    # the vendorHash-shim churn class documented in lib/lars-packages.nix).
+    # latest release (v0.31.0 as of the 2026-11-06 bump from v0.28.0) so the
+    # vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible;
+    # bump tag + both hashes together (a moving ref would re-break the FODs
+    # on every lock update — the vendorHash-shim churn class documented in
+    # lib/lars-packages.nix).
     paperless-gpt-src = {
-      url = "github:icereed/paperless-gpt/v0.28.0";
+      url = "github:icereed/paperless-gpt/v0.31.0";
       flake = false;
     };
 
@@ -245,15 +236,13 @@
       # Blanket `nix flake update` keeps re-introducing this class; move the
       # input forward ONLY after `nix build
       # .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes.
-      # REV-PINNED 2026-10-25 (0329638c = the rev before upstream 5a5aa9a):
-      # 5a5aa9a's patchelfFixed patches patchelf 0.19.2 for NixOS/patchelf#672,
-      # but this input's nixpkgs FOLLOWS our fe13242 pin (patchelf 0.15.2), so
-      # the fetched patch cannot apply — every cold build of pm-ripgrep/pm-node
-      # dies in patchPhase (first-hand --keep-going: hermes-agent →
-      # ripgrep-15.2.0 → patchelf-0.15.2, hunks 543/576/1167/1215 FAILED).
-      # LIFT (tracked in lib/flake-input-pin-audit.nix): pinned nixpkgs ships
-      # a patchelf containing #672 — then drop the pin and re-float.
-      url = "github:NousResearch/hermes-agent/0329638c2bf0438552145589787e355bf23343fe";
+      # REV-PINNED 2026-10-25 at 0329638c (patchelf#672 patch context vs the
+      # root pin's patchelf 0.15.2); PIN LIFTED 2026-11-06 when the root
+      # nixpkgs floated to nixos-unstable (its patchelf contains #672, so
+      # upstream 5a5aa9a+'s patchelfFixed patch applies and pm-ripgrep/
+      # pm-node patchPhase must come back green in the toplevel proof — the
+      # proof is the gate for this re-float).
+      url = "github:NousResearch/hermes-agent";
     };
 
     # monitor365 — Device monitoring agent (Rust)
@@ -903,28 +892,16 @@
     # its own go 1.26.6 from the go.dev tarball (nixpkgs has 1.26.5 while the
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
-      # REV-PINNED 2026-11-03 at 16a656f4 (rollback of the 21:03 float to
-      # 80c2c88, which gen-974 had deployed 16:01 that day). ORIGINAL
-      # RATIONALE RETRACTED 2026-11-03 ~21:15 after journal+source
-      # verification: the cv-server SIGSEGV loop is REV-INDEPENDENT —
-      # identical nil-deref at ChatstoreSessions.HealthCheck
-      # (sessions_chatstore.go:112, samber/do lazy healthcheck on the
-      # never-resolved chatstore) in every rev e168e6d..HEAD; first SIGSEGV
-      # 2026-11-02 14:06 on cv@aa878d2 with restart counter already 17
-      # (hours BEFORE the 80c2c88 float existed at 21:03), 228 SIGSEGVs hit
-      # the pinned rev itself across boot deed9c84 (the "green 18 h" claim
-      # was never true), and 16a656f4 panicked identically post-rollback
-      # (18:52/19:08/19:24). ROOT CAUSE: pipeline_events outgrew the 5 s
-      # sqliteOperationTimeout on full-scan All() — boot rehydration
-      # deterministically fails ("query all events: context deadline
-      # exceeded"), the chatstore lazy service stays nil, the healthcheck
-      # probe kills the process. The pin is kept ONLY for build-hash
-      # stability (bPvMOBEz = the gen-972/973/975-proven deterministic
-      # store path), not as a fix. LIFT: upstream lands the real fix
-      # (nil-guard on HealthCheck + chunked/raised rehydration so boot
-      # completes against the existing store) — drop pin + this comment,
-      # re-lock, re-run the toplevel proof.
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=16a656f4924069efcee122c3f7f8ccf27d592a21";
+      # REV-PINNED 2026-11-03 at 16a656f4 for build-hash stability only
+      # (bPvMOBEz); PIN LIFTED 2026-11-06 (owner directive "everything
+      # latest") — the pin guarded NOTHING runtime-side: the cv-server
+      # SIGSEGV loop is REV-INDEPENDENT (nil-deref at
+      # ChatstoreSessions.HealthCheck, sessions_chatstore.go:112; pipeline
+      # _events outgrew the 5 s sqliteOperationTimeout on full-scan boot
+      # rehydration). cv-server crash-loops at EVERY rev until upstream
+      # lands the nil-guard + chunked rehydration fix; this float does not
+      # change that. vendorHash re-measure rides the proof.
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
@@ -1147,12 +1124,12 @@
     crush-daily.inputs.nixpkgs.follows = "nixpkgs";
     crush-daily.inputs.systems.follows = "systems";
     crush-daily.inputs.treefmt-nix.follows = "treefmt-nix";
-    # DMS floats on master (owner: "always on latest", 2026-10-25); tip
-    # 5442f39's go.mod floors go >= 1.27.3, which the root fe13242 pin
-    # (go 1.27.2) cannot meet — same class and same fix as inboxclean
-    # (2026-10-25): build against floating nixpkgs-unstable (go 1.27.3).
-    # Flip back to follows = "nixpkgs" when the root pin lifts past go 1.27.3.
-    dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    # DMS floats on master (owner: "always on latest", 2026-10-25). It rode
+    # the (now-removed) nixpkgs-unstable follow from 2026-10-25 to
+    # 2026-11-06 (tip go.mod floor go >= 1.27.3 vs the root pin's 1.27.2);
+    # collapsed back to the root follow when the root itself floated to
+    # nixos-unstable (2026-11-06).
+    dankMaterialShell.inputs.nixpkgs.follows = "nixpkgs";
     discordsync.inputs.flake-parts.follows = "flake-parts";
     discordsync.inputs.treefmt-nix.follows = "treefmt-nix";
     disko.inputs.nixpkgs.follows = "nixpkgs";
@@ -1195,12 +1172,7 @@
     # treefmt-nix deep copy regrows — eval-only, follow the root pin.
     cvagent.inputs.go-humanize-linter.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
-    # nixpkgs-unstable, NOT the root pin: upstream 0fc16c68 bumped its go.mod
-    # floor to 1.27.3 (2026-11-06 wave), outrunning the pinned root's
-    # go_1_27 1.27.2 under GOTOOLCHAIN=local; upstream's own lock held
-    # 0bb2eedc (go 1.27.3, direct-eval verified). Collapse to "nixpkgs"
-    # when the root pin lifts.
-    file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
     flake-utils.inputs.systems.follows = "systems";
     go-auto-upgrade.inputs.go-nix-helpers.follows = "go-nix-helpers";
@@ -1220,11 +1192,7 @@
     go-humanize-linter.inputs.nixpkgs.follows = "nixpkgs";
     go-structure-linter.inputs.go-nix-helpers.follows = "go-nix-helpers";
     go-structure-linter.inputs.nixpkgs.follows = "nixpkgs";
-    # nixpkgs-unstable, NOT the root pin: upstream a8d9a235 bumped its go.mod
-    # floor to 1.27.3 (2026-11-06 wave); upstream's own lock held the SAME
-    # 1d060086 our unstable resolves to, so its baked vendorHash reproduces.
-    # Collapse to "nixpkgs" when the root pin lifts.
-    go-taskqueue.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    go-taskqueue.inputs.nixpkgs.follows = "nixpkgs";
     golangci-lint-auto-configure.inputs.go-nix-helpers.follows = "go-nix-helpers";
     golangci-lint-auto-configure.inputs.nixpkgs.follows = "nixpkgs";
     helium.inputs.nixpkgs.follows = "nixpkgs";
@@ -1244,10 +1212,7 @@
     # stdenv.hostPlatform.*) instead.
     hermes-agent.inputs.uv2nix.follows = "uv2nix";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    # nixpkgs-unstable, NOT the root pin: inboxclean's go.mod floor 1.27.3
-    # outruns the pinned root nixpkgs' go_1_27 1.27.2 under GOTOOLCHAIN=local
-    # (2026-10-25). Collapse to "nixpkgs" when the root pin lifts.
-    inboxclean.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    inboxclean.inputs.nixpkgs.follows = "nixpkgs";
     # inboxclean.inputs.templ.follows REMOVED 2026-10-25: forcing the root
     # templ CLI into inboxclean breaks it whenever the CLI outruns the
     # go.mod runtime (undefined templruntime.NewAttributeExpression).
@@ -1323,11 +1288,7 @@
     uv2nix.inputs.nixpkgs.follows = "nixpkgs";
     uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
     vision-review-agent.inputs.flake-parts.follows = "flake-parts";
-    # nixpkgs-unstable, NOT the root pin: upstream 22c7e5ee bumped its go.mod
-    # floor to 1.27.3 (2026-11-06 wave); upstream's own lock held 0bb2eedc
-    # (go 1.27.3, direct-eval verified). Collapse to "nixpkgs" when the
-    # root pin lifts.
-    vision-review-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    vision-review-agent.inputs.nixpkgs.follows = "nixpkgs";
     vision-review-agent.inputs.treefmt-nix.follows = "treefmt-nix";
     # 2026-10-14 deep treefmt-nix collapse (9 lock copies → 1): these deep
     # edges — a tool's copy of ANOTHER tool locking treefmt-nix — had been
