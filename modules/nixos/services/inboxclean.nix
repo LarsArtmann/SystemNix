@@ -143,7 +143,7 @@
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-AqruWfi8mAoxmNBn62E+Fmc0QNdVP/r5Yp1OkIL3at8=";
+            vendorHash = "sha256-pexiMroulQauVvYOL0rXqU/9HydtswRouYvMz+Vmm9Y=";
           };
     in
     {

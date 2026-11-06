@@ -307,7 +307,7 @@ lib.filterAttrs (_: v: v != null) {
   # (float-proof-20261106-000533.log).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-J29XiG3TH8Pg2ZXbA8pIyA6+cBVg8gm9vAdXdSlzBvc=";
+      "sha256-u/j9KmmOir/3eOCwDy9fjm+2njmdTtVpAaHS2QW6e3w=";
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -332,7 +332,7 @@ lib.filterAttrs (_: v: v != null) {
   # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
   journal =
     flakePkgShim inputs.journal "default"
-      "sha256-c1BLACA1i8yvxaOIbmzMaqQjRRKssP0RrEFgxNxNyOo=";
+      "sha256-KW+poESPwKFh7GQDG6s+BYW5VrBwHUnIH5eA7ANOBgs=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
@@ -381,7 +381,7 @@ lib.filterAttrs (_: v: v != null) {
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-oE40ar3lTjs1sy07Td2uKPnmIeCHbcPeNnpLRa4f/rg=";
+      "sha256-mHS57Ha68nHslctC9qB/sE1OCKaZDTXt3lBeT6t5S8E=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -416,7 +416,7 @@ lib.filterAttrs (_: v: v != null) {
   # spec oS6SRESQ, got S6Brmn7w (float-proof-20261106-000533.log).
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-3npQivwF6WV0pZsF9p6nrwqcl4RwORNzLf76ZeD9rQc=";
+      "sha256-S6Brmn7wvBqU29AmZ3e6nc+z9CJ7bdUdYIOmZD7YaL4=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
