@@ -141,8 +141,11 @@
       # superseding the thirteenth entry's ENX8uAcw. The pin is build-hash
       # stability ONLY — the real fix is upstream CV (nil-guard + chunked
       # rehydration; TODO row in docs/todo/upstream.md).
+      # FOURTEENTH RE-STALE 2026-11-06 lock float: cv@64e0e10 spec
+      # bPvMOBEz, got aCVmXAeF (first-hand keep-going,
+      # ~/.cache/buildwave/proof-090209.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-bPvMOBEzNm6GwTnVMhjMcEiv8lDM75ods56ZqpnPLy4=";
+        vendorHash = "sha256-aCVmXAeFJEfIKYDSuRfDDqi07mT/pOM3ocjowNE508I=";
       };
     in
     {

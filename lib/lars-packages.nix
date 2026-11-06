@@ -43,7 +43,15 @@ lib.filterAttrs (_: v: v != null) {
   # hand-written actionability_templ.go → actionability_templ_idioms.go
   # (out of bare `templ generate`'s output namespace; pushed this session).
   # Re-add ONLY via nix-hash-fix evidence, never by hand.
-  art-dupl = flakePkg inputs.art-dupl;
+  # RE-STALE 2026-11-06 lock float (no shim until now): the locked art-dupl
+  # rev's baked hash no longer reproduces under the refreshed graph — the
+  # build died "reading …/xo/terminfo/@v/v1.3.0.zip: no such file" because
+  # the stale fixed-output path is keyed by the SPECIFIED hash (class
+  # comment at flakePkgShim). Fresh fakeHash probe got iCINPEzo (first-hand,
+  # drv g4i7z32v1rqr60qwsk13ii54c6zk6vjz-art-dupl-0.9.0-go-modules).
+  art-dupl =
+    flakePkgShim inputs.art-dupl "default"
+      "sha256-iCINPEzo4sAOxUnjHHZyQCp7Y73p3gXABMQ6uscyDSQ=";
   # vendorHash shim DROPPED (2026-10-07 wave — the 13:14/14:59 lock commits
   # moved the input; drop-protocol, docs/agents/nix-flakes.md): upstream
   # 60a91081 ALREADY bakes the got hash A8ZHASMR… (first-hand: evo-x2
@@ -71,7 +79,7 @@ lib.filterAttrs (_: v: v != null) {
   # ~/.cache/lockfloat/float-proof-20261027-172949.log).
   branching-flow =
     flakePkgShim inputs.branching-flow "default"
-      "sha256-iS5Z/XOU2leQ/8WvlITw7/NOtUddR/xFsCJ2z2sQyHM=";
+      "sha256-bCLzzRm6UMyitLSIWfIXmKd68gub+H3NR7lRbqyj43A=";
   # brandid-lint CLI from the go-branded-id repo's flake (packages.default);
   # master-tracked per the 2026-10-11 owner decision. CV's change-gate
   # brandid leg consumes this via PATH instead of a hand-built binary.
@@ -601,6 +609,6 @@ lib.filterAttrs (_: v: v != null) {
     # 4zISVNEX, got wtkejgEG (first-hand,
     # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Drop when
     # upstream bakes wtkejgEG; re-add ONLY via nix-hash-fix evidence.
-    vendorHash = "sha256-wtkejgEGOcWXL01VDzjbGwTJgAmMT2pnUQHDGYMJWQI=";
+    vendorHash = "sha256-WI3MDA8XlAVR9gCb2LND6GJoFDx3g+FFE2WRMwSxUA8=";
   });
 }

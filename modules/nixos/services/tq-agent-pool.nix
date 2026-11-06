@@ -71,7 +71,7 @@ _: {
             # spec 4zISVNEX, got wtkejgEG (first-hand,
             # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Same
             # value as the lars-packages `tq` surface — update BOTH together.
-            vendorHash = "sha256-wtkejgEGOcWXL01VDzjbGwTJgAmMT2pnUQHDGYMJWQI=";
+            vendorHash = "sha256-WI3MDA8XlAVR9gCb2LND6GJoFDx3g+FFE2WRMwSxUA8=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden
