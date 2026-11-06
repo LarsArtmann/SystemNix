@@ -44,7 +44,9 @@ let
 
   restartTriggers = map toString (cs.crowdsec.restartTriggers or [ ]);
 
-  acquisJson = builtins.toJSON crowdsec.localConfig.acquisitions;
+  # nixpkgs PR #446307 (live via the 2026-11-06 nixos-unstable float) removed
+  # localConfig: acquisitions moved under settings.
+  acquisJson = builtins.toJSON crowdsec.settings.acquisitions;
 
   # Caddy vhost logFormat override (caddy.nix mapAttrs): every vhost's log
   # block must carry mode 0640 — the group-read leg of the caddy acquis fix.
