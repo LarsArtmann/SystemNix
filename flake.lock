@@ -322,11 +322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793934063,
-        "narHash": "sha256-kNMNl/oKXiGxWPJzmfxdO8UkIUwdw5Fbdetk5eh1v0Q=",
+        "lastModified": 1793937131,
+        "narHash": "sha256-DnyxdL5NgxYAbw28NlaYTQPfXis+Ha8UK0+Oiw6O+ww=",
         "ref": "refs/heads/master",
-        "rev": "490e0fe436a6516d86fa64c4124fb4218052cdc6",
-        "revCount": 1860,
+        "rev": "c4859aec4e87470f0d9c8e59db2416c1e8d95502",
+        "revCount": 1862,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -376,11 +376,11 @@
         "securitymd": "securitymd"
       },
       "locked": {
-        "lastModified": 1793901127,
-        "narHash": "sha256-P2Uy03Y6jWwGjugy8F2zsSCUsm0H/DYswx1pJG08oEw=",
+        "lastModified": 1793937376,
+        "narHash": "sha256-bGuJarOijA9VDsrBGwdZLmC/eVHbrouGjVabZOcBlJc=",
         "ref": "refs/heads/master",
-        "rev": "42d5ebdc22bf0fc7964b50e51be344a9f79ea727",
-        "revCount": 8128,
+        "rev": "a1d0c149276576094610a581e62833327a9cb2c8",
+        "revCount": 8129,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -493,11 +493,11 @@
     "cmdguard_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1793934424,
-        "narHash": "sha256-2TIXMSPXpUmn5ddIUd0xUJwCtgew5NwONq0kjYH6uJs=",
+        "lastModified": 1793937441,
+        "narHash": "sha256-8JP4XaDRnBZIOyGiTpsUBPCrz/FydxG74m1M3178+Mc=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "f8f327ea9aa3f981ec60d306be7ca096861e05ac",
+        "rev": "f2240dd724a1ae9281b69e31bc0ac4f3a34e126b",
         "type": "github"
       },
       "original": {
@@ -2380,11 +2380,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793933701,
-        "narHash": "sha256-yth4y7V9A0opSrzr3zle+st4RGPzg/W3zNSpCRWDVQM=",
+        "lastModified": 1793936975,
+        "narHash": "sha256-JA5UONEu/OWwWC1HP/mtfDY6oBdV13ylXgIZwVAjO4s=",
         "ref": "refs/heads/master",
-        "rev": "c46c85e4b067728b969581405f8428e90e3abb83",
-        "revCount": 1343,
+        "rev": "babe9c554338f7d89fbbaefca867fd278cb9972a",
+        "revCount": 1344,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
@@ -8364,11 +8364,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793933602,
-        "narHash": "sha256-gVUoC1pIRS8xYf2IVcJcwBHJrvXrqn+gDxpOSpsFnHk=",
+        "lastModified": 1793937251,
+        "narHash": "sha256-Wb6kgHkh2jix1wavnR45Rf1wBmiVTDy8PCwYDFdgauU=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "fdba1daf46f13f0a76ee44df21edbe46a1acac5d",
+        "rev": "9a62765a50657d0227440009244209773458000a",
         "type": "github"
       },
       "original": {
