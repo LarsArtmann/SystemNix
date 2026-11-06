@@ -1553,7 +1553,7 @@
         "go-sse-src": "go-sse-src",
         "httputil-src": "httputil-src",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-unstable"
         ],
         "templ-components-src": "templ-components-src",
         "vision-review-agent-src": "vision-review-agent-src"
@@ -6677,7 +6677,7 @@
         ],
         "go-nix-helpers": "go-nix-helpers_8",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-unstable"
         ]
       },
       "locked": {
@@ -10204,7 +10204,7 @@
           "flake-parts"
         ],
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-unstable"
         ],
         "treefmt-nix": [
           "treefmt-nix"

@@ -36,10 +36,13 @@
     # 1.27.2; upstream InboxClean c63bf289 raised its go.mod floor to 1.27.3,
     # and buildGoModule's GOTOOLCHAIN=local forbids the auto-download — the
     # build died `go.mod requires go >= 1.27.3`, first-hand --keep-going
-    # 2026-10-25). NOT covered by the daily nixpkgs-compat workflow (that
-    # --override-inputs the root pin only): the inboxclean go-modules FOD is
-    # this input's compatibility test. COLLAPSE back to
-    # `inboxclean.inputs.nixpkgs.follows = "nixpkgs"` once the root pin lifts
+    # 2026-10-25). Consumers since the 2026-11-06 1.27.3 floor wave:
+    # inboxclean, file-and-image-renamer, go-taskqueue, vision-review-agent
+    # (each upstream's own lock verified at a go-1.27.3 nixpkgs rev,
+    # 1d060086 or 0bb2eedc). NOT covered by the daily nixpkgs-compat workflow
+    # (that --override-inputs the root pin only): the consumers' go-modules
+    # FODs are this input's compatibility test. COLLAPSE each follow back to
+    # `<consumer>.inputs.nixpkgs.follows = "nixpkgs"` once the root pin lifts
     # and ships go >= 1.27.3 — one root nixpkgs instance is the goal.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (the last build
@@ -1192,7 +1195,12 @@
     # treefmt-nix deep copy regrows — eval-only, follow the root pin.
     cvagent.inputs.go-humanize-linter.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
-    file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
+    # nixpkgs-unstable, NOT the root pin: upstream 0fc16c68 bumped its go.mod
+    # floor to 1.27.3 (2026-11-06 wave), outrunning the pinned root's
+    # go_1_27 1.27.2 under GOTOOLCHAIN=local; upstream's own lock held
+    # 0bb2eedc (go 1.27.3, direct-eval verified). Collapse to "nixpkgs"
+    # when the root pin lifts.
+    file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs-unstable";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
     flake-utils.inputs.systems.follows = "systems";
     go-auto-upgrade.inputs.go-nix-helpers.follows = "go-nix-helpers";
@@ -1212,7 +1220,11 @@
     go-humanize-linter.inputs.nixpkgs.follows = "nixpkgs";
     go-structure-linter.inputs.go-nix-helpers.follows = "go-nix-helpers";
     go-structure-linter.inputs.nixpkgs.follows = "nixpkgs";
-    go-taskqueue.inputs.nixpkgs.follows = "nixpkgs";
+    # nixpkgs-unstable, NOT the root pin: upstream a8d9a235 bumped its go.mod
+    # floor to 1.27.3 (2026-11-06 wave); upstream's own lock held the SAME
+    # 1d060086 our unstable resolves to, so its baked vendorHash reproduces.
+    # Collapse to "nixpkgs" when the root pin lifts.
+    go-taskqueue.inputs.nixpkgs.follows = "nixpkgs-unstable";
     golangci-lint-auto-configure.inputs.go-nix-helpers.follows = "go-nix-helpers";
     golangci-lint-auto-configure.inputs.nixpkgs.follows = "nixpkgs";
     helium.inputs.nixpkgs.follows = "nixpkgs";
@@ -1311,7 +1323,11 @@
     uv2nix.inputs.nixpkgs.follows = "nixpkgs";
     uv2nix.inputs.pyproject-nix.follows = "pyproject-nix";
     vision-review-agent.inputs.flake-parts.follows = "flake-parts";
-    vision-review-agent.inputs.nixpkgs.follows = "nixpkgs";
+    # nixpkgs-unstable, NOT the root pin: upstream 22c7e5ee bumped its go.mod
+    # floor to 1.27.3 (2026-11-06 wave); upstream's own lock held 0bb2eedc
+    # (go 1.27.3, direct-eval verified). Collapse to "nixpkgs" when the
+    # root pin lifts.
+    vision-review-agent.inputs.nixpkgs.follows = "nixpkgs-unstable";
     vision-review-agent.inputs.treefmt-nix.follows = "treefmt-nix";
     # 2026-10-14 deep treefmt-nix collapse (9 lock copies → 1): these deep
     # edges — a tool's copy of ANOTHER tool locking treefmt-nix — had been

@@ -51,9 +51,14 @@
 #               the 09-18 rogue-port-holder class)
 #   CTX         llama-server context size (default 4096; fixed = comparable)
 #   NGL         GPU layers offload (default 99)
-#   EMBED       1 = pass --embedding (REQUIRED for embedding GGUFs like the
-#               bge pair, which GGML_ASSERT-crash without it; default 0 for
-#               chat models = the llama-chat default model)
+#   EMBED       0 = auto (default): the GGUF header's general.architecture
+#               is parsed (first 16 KB, unprivileged, no gguf-py) and
+#               embedding-family arches (bert/nomic-bert/jina-bert class)
+#               get --embedding automatically (embed_auto=true recorded in
+#               the JSON) — they GGML_ASSERT-crash in init without the
+#               flag, the missing-flag abort misattributed to dio on
+#               2026-11-05; 1 = force the flag (WARNs on a non-embedding
+#               arch)
 #   LM          llama-server --load-mode (default none = plain buffered
 #               reads. dio's old "SIGABRTs under memory pressure" note was
 #               a misattribution: the two 2026-11-05 aborts fired on bge-m3
@@ -109,6 +114,49 @@ OUT="${OUT:-}"
 
 psi10() { grep -o 'avg10=[0-9.]*' /proc/pressure/io | head -1 | cut -d= -f2; }
 
+gguf_arch() {
+  # Parse general.architecture out of the GGUF header: v2/v3 layout is
+  # magic(4) ver(4) tensors(8) kvs(8), then KVs of
+  # [u64 keylen][key][u32 vtype][value]. The arch string is KV[0] in
+  # llama.cpp-produced files, but the walk skips scalar/string KVs ahead
+  # of it and bails (exit 1, no output) on the first array/unknown/v1
+  # layout instead of guessing.
+  head -c 16384 "$1" 2>/dev/null | od -An -tu1 -v | tr -s ' \n' ' ' | awk '
+    { n = split($0, b, " "); p = 1
+      if (b[1] != 71 || b[2] != 71 || b[3] != 85 || b[4] != 70) exit 1
+      p = 5
+      ver = b[p] + 256 * b[p+1] + 65536 * b[p+2] + 16777216 * b[p+3]
+      if (ver < 2) exit 1
+      p += 12
+      k = b[p] + b[p+1] * 256 + b[p+2] * 65536 + b[p+3] * 16777216 + b[p+4] * 256^4 + b[p+5] * 256^5 + b[p+6] * 256^6 + b[p+7] * 256^7
+      p += 8
+      split("1 1 2 2 4 4 4 1 0 0 8 8 8", sz, " ")
+      for (i = 0; i < k && p + 8 <= n; i++) {
+        kl = b[p] + b[p+1] * 256 + b[p+2] * 65536 + b[p+3] * 16777216 + b[p+4] * 256^4 + b[p+5] * 256^5 + b[p+6] * 256^6 + b[p+7] * 256^7
+        p += 8
+        key = ""
+        for (j = 0; j < kl && p + j <= n; j++) key = key sprintf("%c", b[p+j])
+        p += kl
+        vt = b[p] + 256 * b[p+1] + 65536 * b[p+2] + 16777216 * b[p+3]
+        p += 4
+        if (vt == 8) {
+          vl = b[p] + b[p+1] * 256 + b[p+2] * 65536 + b[p+3] * 16777216 + b[p+4] * 256^4 + b[p+5] * 256^5 + b[p+6] * 256^6 + b[p+7] * 256^7
+          p += 8
+          if (key == "general.architecture") {
+            val = ""
+            for (j = 0; j < vl && p + j <= n; j++) val = val sprintf("%c", b[p+j])
+            print val
+            exit 0
+          }
+          p += vl
+        } else if (vt == 13) exit 1
+        else if (vt >= 0 && vt <= 12 && sz[vt+1] > 0) p += sz[vt+1]
+        else exit 1
+      }
+      exit 1
+    }'
+}
+
 SERVER="$(command -v llama-server-rocm || command -v llama-server || true)"
 [ -n "$SERVER" ] || {
   echo "FAIL: llama-server not found on PATH (expected llama-server-rocm from ai-stack, or llama-server)"
@@ -120,6 +168,27 @@ SERVER="$(command -v llama-server-rocm || command -v llama-server || true)"
   echo "  fix: pass a readable GGUF, e.g. scripts/bench-cold-load.sh /data/ai/models/gguf/bge-m3.gguf"
   exit 1
 }
+
+EMBED_ARCH="$(gguf_arch "$MODEL" || true)"
+EMBED_AUTO=false
+case "$EMBED_ARCH" in
+bert | nomic-bert | jina-bert | jina-bert-v2)
+  if [ "$EMBED" != "1" ]; then
+    EMBED=1
+    EMBED_AUTO=true
+    echo "### auto-embedding: GGUF arch '$EMBED_ARCH' is embedding-family, enabling --embedding (embed_auto=true in the JSON)"
+    echo "  why: embedding GGUFs GGML_ASSERT-crash in init without the flag (the 2026-11-05 dio misattribution class); EMBED=0 now means auto, not force-off"
+  fi
+  ;;
+"")
+  echo "WARN: could not parse general.architecture from the GGUF header (v1 or exotic layout); EMBED=$EMBED is used as-is"
+  ;;
+*)
+  if [ "$EMBED" = "1" ]; then
+    echo "WARN: EMBED=1 but GGUF arch '$EMBED_ARCH' is not embedding-family; --embedding passed as requested"
+  fi
+  ;;
+esac
 
 if ss -ltn 2>/dev/null | grep -q ":${PORT} "; then
   echo "FAIL: port $PORT already has a listener, refusing to share/bind-collide"
@@ -300,8 +369,10 @@ JSON="$(jq -c -n \
   --arg bytes "$BYTES" \
   --arg load_s "$LOAD_S" \
   --arg mb_s "$MB_S" \
+  --arg embed_arch "$EMBED_ARCH" \
+  --argjson embed_auto "$EMBED_AUTO" \
   --argjson psi_accepted "$psi_accepted" \
-  '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted}')"
+  '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto}')"
 if [ -n "$OUT" ]; then
   mkdir -p "$(dirname "$OUT")"
   printf '%s\n' "$JSON" >>"$OUT"

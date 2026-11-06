@@ -831,7 +831,7 @@
           description = "Daily stale agent-cache sweep";
           wantedBy = [ "timers.target" ];
           timerConfig = {
-            OnCalendar = "daily 05:20";
+            OnCalendar = "*-*-* 05:20:00";
             Persistent = true;
             Unit = "buildcache-agent-cache-gc.service";
           };
