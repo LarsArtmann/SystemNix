@@ -1328,6 +1328,31 @@ else
   printf '%s\n' "$sops_gate_out" | sed 's/^/    /'
 fi
 
+# 20. Parked-trash size warning (storage.md "make parked-trash size
+# observable" row; 2026-11-06). 55G sat invisible in ~/.local/share/Trash
+# for a month (2026-10-08 →) — trash burns down via the trash-prune user
+# timer (30d age expiry), but a deploy window is the right moment to surface
+# a large parked Trash: it inflates the snapshot pin window on the home
+# subvol until emptied. WARN-only by design — trash never blocks a deploy.
+# The trash_size_bytes textfile metric (trash-metrics service) is the
+# continuous leg; this is the deploy-time backstop.
+echo ""
+echo "20. Parked-trash size (home Trash threshold warning)"
+TRASH_WARN_BYTES=$((10 * 1024 * 1024 * 1024)) # 10 GiB
+trash_dir="/home/lars/.local/share/Trash"
+if [ -d "$trash_dir" ]; then
+  trash_bytes=$(du -sb "$trash_dir" 2>/dev/null | cut -f1)
+  trash_bytes=${trash_bytes:-0}
+  if [ "$trash_bytes" -ge "$TRASH_WARN_BYTES" ]; then
+    trash_h=$(numfmt --to=iec "$trash_bytes" 2>/dev/null || echo "${trash_bytes}B")
+    warn "home Trash holds $trash_h (≥10 GiB) — extents pin through every snapshot until emptied; run trash-empty or wait for the trash-prune timer (30d expiry); continuous metric: trash_size_bytes{path=\"$trash_dir\"}"
+  else
+    pass "home Trash under threshold ($(numfmt --to=iec "$trash_bytes" 2>/dev/null || echo "${trash_bytes}B"))"
+  fi
+else
+  pass "no home Trash dir"
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

@@ -1582,6 +1582,13 @@ in
         enable = true;
       };
 
+      # 2026-11-06 observability leg for parked trash (storage.md row):
+      # 55G sat invisible in ~/.local/share/Trash for a month. Companion to
+      # the trash-prune user timer (30d age expiry) and pre-deploy §20.
+      trash-metrics = {
+        enable = true;
+      };
+
       # GitHub Actions canary watchdog for the domains repo (2026-10-17):
       # treats runner-health.yml's every-30-min scheduled run as the
       # Actions-liveness canary from OUTSIDE Actions — the 2026-06→08
