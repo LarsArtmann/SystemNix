@@ -2032,50 +2032,69 @@ in
     '';
   };
 
-  registerRunner = pkgs.writeShellApplication {
-    name = "forgejo-register-runner";
+  # v13 forgejo-runner migration (2026-11-06): the daemon takes its identity
+  # from settings.server.connections (uuid+token pair), not the legacy
+  # .runner file. Identity provisioning stays boot-time — this ROOT leg
+  # (+-prefixed ExecStartPre) carries the live pair out of the legacy
+  # /var/lib/gitea-runner/<name>/.runner (the identity the Forgejo server
+  # already knows — no re-registration, no duplicate entity) or, on a fresh
+  # host, registers via the proven generate-runner-token + act_runner
+  # register flow (registration deprecated but functional in v13.2,
+  # source-verified), then writes the pair as raw-value files for the
+  # unit's preStart replace-secret render. Idempotent: exits clean when
+  # both files exist.
+  provisionRunner = pkgs.writeShellApplication {
+    name = "forgejo-provision-runner";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.jq
       pkgs.forgejo-runner
     ];
     text = ''
-      # STATE_DIRECTORY is a colon-joined LIST since nixpkgs 55bfb4d (the
-      # gitea-actions-runner module now declares StateDirectory =
-      # [ "gitea-runner" "gitea-runner/<name>" ]); the naive
-      # "$STATE_DIRECTORY/${hostName}" interpolation produced the bogus path
-      # /var/lib/gitea-runner:/… (mkdir EROFS in the sandboxed ExecStartPre,
-      # 5 rapid failures → start-limit-hit, 2026-10-15 20:10 switch). Take
-      # the FIRST list entry — the instance dir lives under it, matching the
-      # module's own WorkingDirectory = /var/lib/gitea-runner/<name>.
-      export INSTANCE_DIR="''${STATE_DIRECTORY%%:*}/${hostName}"
-      mkdir -vp "$INSTANCE_DIR"
-      cd "$INSTANCE_DIR"
+      STATE_DIR="/var/lib/forgejo-runner/${hostName}"
+      OLD_STATE_DIR="/var/lib/gitea-runner/${hostName}"
+      UUID_FILE="$STATE_DIR/.uuid"
+      TOKEN_FILE="$STATE_DIR/.token"
+      mkdir -vp "$STATE_DIR"
 
-      # shellcheck source=/dev/null
-      source /run/forgejo-runner/token
-
-      if [ ! -f "$INSTANCE_DIR/.forgejo-migrated" ]; then
-        echo "Forcing runner re-registration (Gitea→Forgejo migration)"
-        rm -f "$INSTANCE_DIR/.runner"
-        touch "$INSTANCE_DIR/.forgejo-migrated"
+      if [ -s "$UUID_FILE" ] && [ -s "$TOKEN_FILE" ]; then
+        echo "provision: connection identity present — nothing to do"
+        exit 0
       fi
 
-      export LABELS_FILE="$INSTANCE_DIR/.labels"
-      LABELS_WANTED="$(echo ${lib.escapeShellArg (lib.concatStringsSep "\n" runnerLabels)} | sort)"
-      LABELS_CURRENT="$(cat "$LABELS_FILE" 2>/dev/null || echo "")"
-
-      if [ ! -e "$INSTANCE_DIR/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ]; then
-        rm -f "$INSTANCE_DIR/.runner"
-
+      runner_file=""
+      if [ -s "$OLD_STATE_DIR/.runner" ]; then
+        echo "provision: carrying identity from legacy $OLD_STATE_DIR/.runner"
+        runner_file="$OLD_STATE_DIR/.runner"
+      else
+        echo "provision: no legacy identity — registering fresh"
+        # shellcheck source=/dev/null
+        source /run/forgejo-runner/token
+        cd "$STATE_DIR"
         act_runner register --no-interactive \
           --instance ${lib.escapeShellArg forgejoUrl} \
           --token "$TOKEN" \
           --name ${lib.escapeShellArg hostName} \
           --labels ${lib.escapeShellArg (lib.concatStringsSep "," runnerLabels)} \
           --config ${runnerConfigFile}
-
-        echo "$LABELS_WANTED" > "$LABELS_FILE"
+        runner_file="$STATE_DIR/.runner"
       fi
+
+      uuid="$(jq -r '.uuid // empty' "$runner_file")"
+      token="$(jq -r '.token // empty' "$runner_file")"
+      if [ -z "$uuid" ] || [ -z "$token" ]; then
+        echo "provision: no uuid/token pair in $runner_file — cannot render connection config" >&2
+        exit 1
+      fi
+
+      owner="$(stat -c '%u:%g' "$STATE_DIR")"
+      printf '%s' "$uuid" > "$UUID_FILE"
+      printf '%s' "$token" > "$TOKEN_FILE"
+      # preStart (replace-secret render) runs as the unit's DynamicUser —
+      # it can only read files the state-dir owner owns.
+      chown "$owner" "$UUID_FILE" "$TOKEN_FILE"
+      chmod 0400 "$UUID_FILE" "$TOKEN_FILE"
+      echo "provision: connection identity written (uuid ${uuid:0:8}…)"
     '';
   };
 

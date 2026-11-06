@@ -113,8 +113,9 @@ in
       }
     );
 
-    # Verbose boot — surface activation/initrd errors on console instead of silent hang
-    initrd.verbose = true;
+    # Verbose boot — surface activation errors on console instead of silent
+    # hang. (boot.initrd.verbose removed 2026-11-06: nixpkgs dropped Scripted
+    # stage 1, the option is a loadErrorAssertion now.)
     consoleLogLevel = 7;
 
     # ── kdump crash capture (2026-08-22 freeze forensics) ────────────────
