@@ -145,9 +145,13 @@ in
       # and died "inconsistent vendoring"; a fakeHash probe names the real
       # value (first-hand: quotaboard-0.1.1-go-modules specified AAAA…,
       # got ajV4Osr8…). Drop when upstream bakes it (re-lock past that rev).
-      package = quotaboard.packages.${pkgs.system}.quotaboard.overrideAttrs {
-        vendorHash = "sha256-ajV4Osr8icios365c6MdIxCwiXR0/BcR7OehU0EnyOM=";
-      };
+      # mkForce: the upstream module defines this option plainly (a bare
+      # assignment), so a second plain definition is a conflict at eval.
+      package = lib.mkForce (
+        quotaboard.packages.${pkgs.system}.quotaboard.overrideAttrs {
+          vendorHash = "sha256-ajV4Osr8icios365c6MdIxCwiXR0/BcR7OehU0EnyOM=";
+        }
+      );
     };
 
     programs.dank-material-shell = {
