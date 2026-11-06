@@ -2068,8 +2068,18 @@ in
         runner_file="$OLD_STATE_DIR/.runner"
       else
         echo "provision: no legacy identity — registering fresh"
+        # TOKEN is defined BY the sourced file; the explicit empty assignment
+        # keeps shellcheck honest (SC2153 fired once writeShellApplication
+        # started linting at info severity under the 2026-11-06 nixpkgs
+        # float, breaking the build) and lets the guard below name the real
+        # failure instead of dying on `set -u`.
+        TOKEN=""
         # shellcheck source=/dev/null
         source /run/forgejo-runner/token
+        if [ -z "$TOKEN" ]; then
+          echo "provision: /run/forgejo-runner/token did not define TOKEN" >&2
+          exit 1
+        fi
         cd "$STATE_DIR"
         act_runner register --no-interactive \
           --instance ${lib.escapeShellArg forgejoUrl} \

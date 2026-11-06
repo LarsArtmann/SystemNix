@@ -138,6 +138,16 @@ in
       port = ports.quotaboard;
       dmsPlugin.placeInBar = true;
       environmentFile = osConfig.sops.templates."quotaboard-env".path;
+      # vendorHash shim (2026-11-06): upstream 61801b1 "chore(deps): update Go
+      # dependencies" bumped go.mod WITHOUT refreshing nix/vendorHash.nix, so
+      # the go-modules FOD still expects the PRE-bump vendor tree. Local
+      # builds silently reused the stale store path (same FOD output name)
+      # and died "inconsistent vendoring"; a fakeHash probe names the real
+      # value (first-hand: quotaboard-0.1.1-go-modules specified AAAA…,
+      # got ajV4Osr8…). Drop when upstream bakes it (re-lock past that rev).
+      package = quotaboard.packages.${pkgs.system}.quotaboard.overrideAttrs {
+        vendorHash = "sha256-ajV4Osr8icios365c6MdIxCwiXR0/BcR7OehU0EnyOM=";
+      };
     };
 
     programs.dank-material-shell = {

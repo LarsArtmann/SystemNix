@@ -1,7 +1,14 @@
 let
   # GitHub repo hagezi/dns-blocklists is repeatedly locked by GitHub's fraud
   # detection. GitLab mirror is the primary reliable source.
-  hagezi = subpath: "https://gitlab.com/hagezi/mirror/-/raw/main/dns-blocklists/${subpath}";
+  #
+  # COMMIT-PINNED, not branch-tracking (2026-11-06): `main` moves daily and
+  # every hagezi list is a fetchurl FOD, so a branch URL re-breaks ~20 hashes
+  # the moment upstream re-publishes — live: the owner's 07:4x deploy died on
+  # HaGeZi-hoster-raw (specified mME4che8, got BBE5rsFW). A moving ref with a
+  # pinned hash is a self-arming deploy bomb; bump this commit + every hash
+  # together (same doctrine as the paperless-gpt tag pin).
+  hagezi = subpath: "https://gitlab.com/hagezi/mirror/-/raw/f8c1f9f8121b91e264ef15e5aed011f226200799/dns-blocklists/${subpath}";
 in
 {
   blocklists = [
