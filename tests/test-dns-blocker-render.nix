@@ -28,6 +28,11 @@
 #      x86_64 host cannot realize its rendered config file (no aarch64
 #      builder) — the option-level facts are what a cross-host drift breaks
 #      first, and a file-level leg would need a remote builder to exist here.
+#   9. gateway mode (ADR-0011, owner enablement 2026-11-06): the lie rides
+#      blockIP (the block-page/splice listener answers there), the DoH
+#      bypass preset stays armed, the OFF variant renders NO gateway key at
+#      all (anti-phantom), and every wrapper gateway assertion fires on its
+#      matching violation at eval time.
 # Content checks grep the REAL rendered YAML, realized through the ExecStart
 # string context — not a reconstruction of the generator.
 {
@@ -118,6 +123,13 @@ let
           services.dns-blocker.pprofEnabled = true;
         }
       ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
+  gatewayOffExec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      # mkForce: the host ARMS the gateway (owner enablement 2026-11-06);
+      # the OFF variant pins the inert render — no gateway key at all.
+      modules = [ { services.dns-blocker.gatewayEnabled = pkgs.lib.mkForce false; } ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
   # gate-timeout-audit pattern: force the variant's assertions and require
@@ -396,6 +408,54 @@ let
         ]);
       msg = "well-formed proxyInjectScriptURL must NOT trip the shape assertion (false-positive guard)";
     }
+    # ── Gateway mode (ADR-0011, owner enablement 2026-11-06) ──
+    {
+      ok = evox2.services.dns-blocker.gatewayEnabled;
+      msg = "evo-x2 must keep the gateway ARMED (owner enablement 2026-11-06) — a silent flip-off would silently end household capture";
+    }
+    {
+      ok = evox2.services.dns-blocker.gatewayIpv4 == evox2.services.dns-blocker.blockIP;
+      msg = "the gateway lie must ride the block-page/splice listener address (blockIP) — anything else lands where nothing listens";
+    }
+    {
+      ok = evox2.services.dns-blocker.gatewayBlockExternalDoh;
+      msg = "gateway must keep the external-DoH bypass preset armed (without it devices can route encrypted DNS around the capture)";
+    }
+    {
+      ok = gatewayOffExec != exec;
+      msg = "gatewayEnabled no longer feeds the rendered config (phantom-option regression)";
+    }
+    {
+      ok = policyAssertionFires "requires proxyEnabled" [
+        {
+          services.dns-blocker.gatewayEnabled = pkgs.lib.mkForce true;
+          services.dns-blocker.proxyEnabled = pkgs.lib.mkForce false;
+        }
+      ];
+      msg = "gateway-requires-proxy assertion does not fire";
+    }
+    {
+      ok = policyAssertionFires "pins gatewayIpv4 == blockIP" [
+        { services.dns-blocker.gatewayIpv4 = "192.168.1.250"; }
+      ];
+      msg = "lie-address==blockIP assertion does not fire";
+    }
+    {
+      ok = policyAssertionFires "capped at 64" [
+        {
+          services.dns-blocker.gatewayLanRanges = map (
+            n: "10.0.${toString (n / 256)}.${toString (n mod 256)}/32"
+          ) (pkgs.lib.range 1 65);
+        }
+      ];
+      msg = "64-lan-range cap assertion does not fire";
+    }
+    {
+      ok = policyAssertionFires "0.0.0.0/0 or ::/0" [
+        { services.dns-blocker.gatewayLanRanges = [ "0.0.0.0/0" ]; }
+      ];
+      msg = "any-range rejection assertion does not fire";
+    }
     # ── rpi3-dns parity (secondary host, same module) ──
     {
       ok = rpi3.services.dns-blocker.enable;
@@ -427,6 +487,10 @@ let
       ok = rpi3.services.dns-blocker.tempAllowAll == false;
       msg = "rpi3 must never ship with tempAllowAll — the failover host blocking nothing is worse than being down";
     }
+    {
+      ok = !rpi3.services.dns-blocker.gatewayEnabled && evox2.services.dns-blocker.gatewayEnabled;
+      msg = "gateway asymmetry changed: the lie is evo-x2-only — a lying failover peer would flip-flop the household between capture and truth with VRRP (docs/services/dnsblockd.md gateway section)";
+    }
   ];
 
   failed = builtins.filter (c: !c.ok) checks;
@@ -450,6 +514,7 @@ else
         h3Exec
         filterExec
         pprofExec
+        gatewayOffExec
         ;
     }
     ''
@@ -461,6 +526,7 @@ else
       H3CFG="''${h3Exec#* -c }"
       FCFG="''${filterExec#* -c }"
       PPCFG="''${pprofExec#* -c }"
+      GOCFG="''${gatewayOffExec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
@@ -468,7 +534,8 @@ else
       [ -f "$H3CFG" ] || fail "h3 variant config not realized: $H3CFG"
       [ -f "$FCFG" ] || fail "filter variant config not realized: $FCFG"
       [ -f "$PPCFG" ] || fail "pprof variant config not realized: $PPCFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" "$PPCFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$GOCFG" ] || fail "gateway-off variant config not realized: $GOCFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" "$PPCFG" "$GOCFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -516,7 +583,16 @@ else
       pprof = json.load(open(sys.argv[7]))
       assert pprof["pprof_enabled"] is True, "pprof_enabled enable flag not rendered"
       assert pprof["stats_addr"] == "127.0.0.1", "pprof rides the loopback stats listener \u2014 a widened stats_addr would expose profiles"
+      assert cfg["gateway_enabled"] is True, "gateway_enabled missing from the host render (ADR-0011 capture would silently be OFF)"
+      assert cfg["gateway_mode"] == "flow", "gateway_mode drifted from the only implemented capture posture"
+      assert cfg["gateway_ipv4"] == cfg["dns_block_ip"], "gateway lie address must equal the block page address (the splice listener answers there)"
+      assert cfg["gateway_ttl"] == 60 and cfg["gateway_max_connections"] == 2048, "gateway ttl/max_connections drifted from upstream defaults"
+      assert cfg["gateway_block_external_doh"] is True, "external-DoH bypass preset lost from the gateway render"
+      assert cfg["gateway_lan_ranges"] == ["192.168.1.0/24"], "gateway lan range must be the LAN subnet (SSRF-floor widening for hairpin dials)"
+      assert "gateway_ipv6" not in cfg, "gateway_ipv6 must stay unrendered while null (AAAA answers empty NOERROR while lying)"
+      goff = json.load(open(sys.argv[8]))
+      assert "gateway_enabled" not in goff, "gateway OFF variant still renders gateway keys (phantom-option regression)"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, pprof, rpi3 parity OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, pprof, gateway mode, rpi3 parity OK" > $out
     ''

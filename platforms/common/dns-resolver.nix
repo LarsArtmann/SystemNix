@@ -34,7 +34,9 @@
   # instance; its gateway is OFF).
   networking.nameservers =
     let
-      gatewayArmed = (config.services.dns-blocker.enable or false) && (config.services.dns-blocker.gatewayEnabled or false);
+      gatewayArmed =
+        (config.services.dns-blocker.enable or false)
+        && (config.services.dns-blocker.gatewayEnabled or false);
     in
     if gatewayArmed then
       [
@@ -69,7 +71,9 @@
     text = lib.concatStringsSep "\n" (
       (map (ns: "nameserver ${ns}") (
         let
-          gatewayArmed = (config.services.dns-blocker.enable or false) && (config.services.dns-blocker.gatewayEnabled or false);
+          gatewayArmed =
+            (config.services.dns-blocker.enable or false)
+            && (config.services.dns-blocker.gatewayEnabled or false);
         in
         if gatewayArmed then
           [

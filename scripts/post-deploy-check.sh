@@ -2470,6 +2470,27 @@ else
   fi
 fi
 
+# Gateway-mode (ADR-0011) legs on the same rendered config: the lie must
+# point at the address the block-page/splice listener answers on, and the
+# DoH bypass preset must ride every armed render (a render without it
+# silently lets configured devices route encrypted DNS around the capture).
+# The PASS line deliberately surfaces that household capture is LIVE — the
+# runtime off-switch (POST /api/gateway/off, drains; hard-off kills) is the
+# documented disarm drill (docs/services/dnsblockd.md gateway section).
+if [ -n "$_fp_cfg" ] && [ -r "$_fp_cfg" ] && grep -q '"gateway_enabled"' "$_fp_cfg"; then
+  _gw_ipv4="$(sed -n 's/^ *"gateway_ipv4": *"\([^"]*\)".*/\1/p' "$_fp_cfg" | head -1)"
+  _gw_block="$(sed -n 's/^ *"dns_block_ip": *"\([^"]*\)".*/\1/p' "$_fp_cfg" | head -1)"
+  if [ -n "$_gw_ipv4" ] && [ "$_gw_ipv4" != "$_gw_block" ]; then
+    report_fail "dnsblockd gateway - lie address $_gw_ipv4 != block page $_gw_block (the splice listener answers only on the block IP; the lie would land where nothing listens)"
+  elif ! grep -q '"gateway_block_external_doh"' "$_fp_cfg"; then
+    report_warn "dnsblockd gateway - armed WITHOUT the external-DoH bypass preset (devices can route encrypted DNS around the capture)"
+  elif ! systemctl is-active --quiet dnsblockd 2>/dev/null; then
+    report_fail "dnsblockd gateway - config arms the lie but the unit is NOT active"
+  else
+    report_pass "dnsblockd gateway - armed on ${_gw_ipv4:-?}, DoH preset on, unit active (household capture LIVE — off-switch: POST /api/gateway/off)"
+  fi
+fi
+
 # --- §24 every ENABLED unit renders a start command ---
 # The 2026-10-28 dns-blocker defect (`systemd = { …resolver units… } //
 # (lib.mkIf cfg.allowlistBackup.enable { … })`) left an ENABLED

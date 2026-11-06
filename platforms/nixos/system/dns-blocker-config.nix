@@ -23,7 +23,12 @@
 }:
 let
   inherit (config.networking) domain;
-  inherit (config.networking.local) blockIP subnet virtualIP cloudDomain;
+  inherit (config.networking.local)
+    blockIP
+    subnet
+    virtualIP
+    cloudDomain
+    ;
   blocklists = import ../../common/dns-blocklists.nix;
   inherit (import ../../../lib/default.nix lib) ports;
   dnsLocal = import ../../common/dns-local.nix;
