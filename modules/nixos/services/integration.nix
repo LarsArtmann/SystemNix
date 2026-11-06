@@ -202,6 +202,15 @@ _: {
                   header_up Host <value>). For loopback-bound apps whose own
                   guards reject non-localhost Hosts (bank-sync's DNS-rebinding
                   guard class) while the vHost name stays banksync.<domain>.
+
+                  Blast radius for future override-adders: the backend's
+                  Host-based origin contracts see the OVERRIDDEN value, not
+                  the public vHost name — same-origin/CSRF layers (CV's
+                  OriginCheck allowlist class, nosurf) and rebinding guards
+                  all key on this header. Audit existing consumers before
+                  adding one (F71 2026-10-26: bank-sync was the only one;
+                  re-grep `hostOverride` across modules/nixos/services when
+                  extending) and update docs/services/caddy.md's F71 row.
                 '';
               };
 
