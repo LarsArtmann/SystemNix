@@ -132,12 +132,18 @@
       # nix-hash-fix evidence, never by hand.
       # RE-STALE 2026-11-06 lock float: inboxclean@c79cbab spec wP/qpf3b,
       # got pexiMrou (float-proof-20261106-000533.log).
-      # RE-STALE 2026-11-06 (same night, sibling re-float): inboxclean@d1b06e6
-      # spec pexiMrou, got AqruWfi8 (float-proof-20261106-010252.log).
+      # RE-STALE then REVERTED (2026-11-06, same night): re-shimmed to
+      # AqruWfi8 for d1b06e6, but that rev COMPILE-fails on go-cqrs-lite
+      # catalog/v4@v4.12.0's templ-runtime mismatch (JoinURLErrs undefined,
+      # float-proof-20261106-012906.log) — inboxclean pinned back to
+      # 5c52f31 (the rev where THIS wP/qpf3b value was first measured,
+      # 2026-10-25; last-green e2f68e0 is GONE from origin after an
+      # upstream history rewrite). LIFT when the templ stack aligns
+      # upstream (5f4722cd attempted it; insufficient as of d1b06e6).
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-AqruWfi8mAoxmNBn62E+Fmc0QNdVP/r5Yp1OkIL3at8=";
+            vendorHash = "sha256-wP/qpf3bpAMbD6yEBao0F+oTEEYFY8cAqZ7PVZtt71M=";
           };
     in
     {

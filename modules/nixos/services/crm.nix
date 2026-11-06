@@ -114,9 +114,14 @@
       # LpMsryrv, got J9L/KEVb (first-hand,
       # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
       # RE-STALE 2026-11-06 lock float: kith-crm@259132b spec J9L/KEVb, got
-      # stHdUXz+ (float-proof-20261106-000533.log).
+      # stHdUXz+ (float-proof-20261106-000533.log) — re-shimmed same night,
+      # then REVERTED: the lock moved on to 2e083af whose vendored cqrs-htmx
+      # templ output is compile-broken (ResolveAttributeValue/JoinURLErrs
+      # undefined, float-proof-20261106-012906.log), so crm pinned back to
+      # last-green 900bf55f where THIS J9L/KEVb value is the proven pair
+      # (registry backup reg-rows-before-20261106-000533).
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-stHdUXz+FU5r+2VJufb2d48adVTA5jCdbYrEFglzRqU=";
+        vendorHash = "sha256-J9L/KEVbTaxMA1uY5Kz6K/zujUnoX0l/jgQghHNOj04=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
