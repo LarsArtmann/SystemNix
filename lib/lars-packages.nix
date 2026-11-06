@@ -167,12 +167,15 @@ lib.filterAttrs (_: v: v != null) {
   # got xA/2yJ6o (float-proof-20261106-000533.log).
   # RE-STALE 2026-11-06 (same night, sibling re-float to 0b7aee4): spec
   # xA/2yJ6o, got 6mUToa7K (float-proof-20261106-010252.log).
-  # shim DROPPED (2026-11-06, lock at d15e0a48 — the sibling session's
-  # settled state, also the 2026-10-12 drop rev): the 6mUToa7K value was
-  # measured at 0b7aee4 (proof #4/#5) and would be stale-wrong here. Direct
-  # package ref (no override) tests d15e0a48's baked value; re-add ONLY via
-  # nix-hash-fix evidence, never by hand.
-  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
+  # shim RE-ADDED (2026-11-06, lock at 0b7aee4 — the state every proof
+  # 2026-11-06 01:29+ actually evaluated through an external oscillation
+  # d15e0a48↔0b7aee4): upstream bakes 5RcdyWcX there vs measured truth
+  # 6mUToa7K (float-proof-20261106-010252 + -012906 + -014324 logs,
+  # three independent FOD measurements). Re-add ONLY via nix-hash-fix
+  # evidence, never by hand.
+  cqrs-lint =
+    flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
+      "sha256-6mUToa7K9eRWNyk56q/UkpauRisxci7rFgw5Ssvg26E=";
   # docs-gates — the docs-health battery gates (freshness / annotate /
   # routing / cadence / strike) as one stdlib-only multi-call binary;
   # packages.default = the binary + the five legacy-name wrappers

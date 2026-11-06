@@ -45,10 +45,16 @@
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
           # RE-ADDED 2026-11-06 lock float: vision-review-agent@4520467
           # upstream-baked oPfsexE… stale through our lock (got NAkDPYu…,
-          # float-proof-20261106-000533.log).
+          # float-proof-20261106-000533.log). doCheck = false (same wave):
+          # TestRunReplayRebuildsReviewsDir is sandbox-FLAKY — the identical
+          # drv passed checkPhase in float-proof-20261106-012906.log and
+          # failed in float-proof-20261106-014324.log (replayed review file
+          # absent under /build); upstream test fix queued
+          # (docs/todo/upstream.md).
           package = lib.mkDefault (
             inputs.vision-review-agent.packages.${pkgs.stdenv.hostPlatform.system}.visionreviewd.overrideAttrs {
               vendorHash = "sha256-NAkDPYu+H8KoJiE2qEqqxvH9v/79if18ZMs7W4KDkTY=";
+              doCheck = false;
             }
           );
           llamaServer.port = lib.mkDefault ports.visionreviewd-llama;
