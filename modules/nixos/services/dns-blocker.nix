@@ -1534,8 +1534,13 @@ _: {
                       # Blocker OTel Export", dnsblockd_otel_export_broken), so
                       # this journal copy is redundant signal: deny exactly the
                       # dead-endpoint dial line, keep every other OTel error
-                      # class visible.
-                      LogFilterPatterns = [ "~*4318: connect: connection refused*" ];
+                      # class visible. LogFilterPatterns is POSIX ERE since the
+                      # systemd float landed 2026-11-04 19:06 (boot -4; glob
+                      # forms now fail "quantifier does not follow a repeatable
+                      # item" and the filter silently stops applying) — the
+                      # .*-wrapped form matches under search AND full-match
+                      # semantics.
+                      LogFilterPatterns = [ "~.*4318: connect: connection refused.*" ];
                       # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
                       # dnsblockd's METRICS cardinality was fixed upstream (2026-08):
                       # the unbounded dns_domain/http_path/proxy_domain labels were
