@@ -149,8 +149,11 @@
       # credentials-store waves) — FOD probe GREEN under the SystemNix graph
       # with the UNCHANGED aCVmXAeF shim (the go.mod module set is stable
       # across 64e0e10 → bb27417; graphs converged, no re-stale).
+      # SIXTEENTH RE-STALE 2026-11-07 20:04 lock float: cv@da7f3cbc spec
+      # aCVmXAeF, got EKiWDhsV (first-hand keep-going,
+      # ~/.cache/lockfloat/float-proof-20261107-200453.log).
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-aCVmXAeFJEfIKYDSuRfDDqi07mT/pOM3ocjowNE508I=";
+        vendorHash = "sha256-EKiWDhsVySFVWRkUOaQRYHIAHDn9JQIujb3LjrMN/rw=";
       };
     in
     {
