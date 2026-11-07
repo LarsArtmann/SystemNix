@@ -6,7 +6,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ---
 
-- **Completed-TODO prune, queue + libraries — the first `--apply` exercise (2026-11-07 quick-wins continuation)** — removed 357 `[x]` rows (159 from `TODO_LIST.md`, 198 across the ten `docs/todo/*` domain libraries) per the TODO contract ("`[x]` rows are pruned to CHANGELOG every pass"). Over-prune inspection before apply: zero truly-bare ticks (every pruned row carries a title; DONE notes spot-verified across the queue sample), and the block below preserves verbatim-truncated titles with pre-prune line numbers so the prune stays auditable. Gate side effect (WARN A/B, rev-pinned baseline `225085b`): pairing DRIFT 60→74 and unharvested §f 192→202 — the expected unmasking class (done rows' Source citations mask open-row drift; counts re-derived live and recounted into the standing sweep rows). This pass also retires the blocked "first `--apply` exercise" row: its "3 done rows" premise was already stale at 131 on 2026-10-28; today's apply found 357. Pruned row titles below:
+- **Completed-TODO prune, queue + libraries — the first `--apply` exercise (2026-11-07 quick-wins continuation)** — removed 357 `[x]` rows (159 from `TODO_LIST.md`, 198 across the ten `docs/todo/*` domain libraries) per the TODO contract ("`[x]` rows are pruned to CHANGELOG every pass"). Over-prune inspection before apply: zero truly-bare ticks (every pruned row carries a title; DONE notes spot-verified across the queue sample), and the block below preserves verbatim-truncated titles with pre-prune line numbers so the prune stays auditable. Gate side effect (WARN A/B, rev-pinned baseline `225085b`, pre-count re-measured live at a HEAD worktree after the fact): pairing DRIFT 60→74 (+14, the expected unmasking — done rows' Source citations mask open-row drift) while unharvested §f went 203→202, DOWN by one — the pruned rows' citations were not load-bearing for harvest coverage. Counts recounted into the standing sweep rows. Process miss recorded: the F27b over-prune inspection (never prune a row whose Source citation carries an open drift) ran POST-apply as a worktree A/B instead of before; no over-prune materialized, but the ordering was wrong. This pass also retires the blocked "first `--apply` exercise" row: its "3 done rows" premise was already stale at 131 on 2026-10-28; today's apply found 357. Pruned row titles below:
 
   - **TODO_LIST.md** (159)
     - [ready] **Pre-deploy gate for the PG-cluster-shadow-split class** — a hot-tier mount landing over a NON-empty  … (line 22)
@@ -80,7 +80,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
     - [ready] **Move dnsblockd's HTTP `/health` gatus check into `services.integration.dnsblockd.checks`** — **DONE  … (line 272)
     - **Root-cause idle-disk/no-D-state IO PSI accounting (pressure gate's corpse heuristic is stale)** → [docs/todo … (line 316)
     - **Scrub completion metric (`btrfs_scrub_last_completed` per fs) + Gatus staleness** → [docs/todo/stability.md] … (line 328)
-    - **Guard trip-rate page: guard load-bearing >N trips/boot escalates to notify** → [docs/todo/stability.md](docs … (line 329)
+    - **Guard trip-rate page: guard load-bearing >N trips/boot escalates to notify** → docs/todo/stability.md … (line 329)
     - **Investigate Sep 27 afternoon instability** (boot -3 ended 17:54, boot -2 lasted 2.5 h — crashes?) → [docs/to … (line 330)
     - **Split the bundled stability.md "Guard/crash-forensics follow-ups" row into atomic queue rows** (it bundles t … (line 340)
     - [blocked:user] **InboxClean master push permission** — STALE-PREMISE 2026-10-29 23:1x: upstream is FULLY PUSHE … (line 357)
@@ -96,10 +96,10 @@ Given the project's history (2,927 commits), this changelog focuses on significa
     - **Test-fire "Telemetry Export Failures" → Discord** → [docs/todo/monitoring.md](docs/todo/monitoring.md) **DON … (line 410)
     - **SigNoz migrator-gap guard** → [docs/todo/monitoring.md](docs/todo/monitoring.md) **DONE 2026-10-27: collecto … (line 411)
     - **System-health collector hardening** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DONE 2026-10-28:  … (line 416)
-    - **Gatus lint residuals + synthetic ingest probe + smoke enable-gate sweep** → [docs/todo/monitoring.md](docs/t … (line 417)
+    - **Gatus lint residuals + synthetic ingest probe + smoke enable-gate sweep** → docs/todo/monitoring.md … (line 417)
     - **Consider gatus `alerting` dedup** → [docs/todo/monitoring.md](docs/todo/monitoring.md) — DECIDED 2026-10-28: … (line 418)
     - [ready] **`ci-watchdog.service` failed at 03:31:43 pre-crash — root-cause + post-boot state** — service-health … (line 477)
-    - [ready] **End-to-end review of the hours-old media-atlas module (owning session)** → [docs/todo/services.md](d … (line 481)
+    - [ready] **End-to-end review of the hours-old media-atlas module (owning session)** → docs/todo/services.md … (line 481)
     - [ready] **Paperless AI embeddings through ai-meter (`llama-embeddings` upstream declared but unrouted; owner " … (line 482)
     - Fix the 22:55 gen-954 ordering-cycle victims: geometrikks + the crowdsec-prereq chain — DONE 2026-10-26/27 via … (line 483)
     - Eval-time ordering-cycle audit + negative-test leg — DONE 2026-10-27: ordering-cycle-audit.nix (cycles + boot- … (line 484)
