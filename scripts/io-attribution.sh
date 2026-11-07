@@ -154,7 +154,8 @@ selftest() {
   printf '259 3 nvme0n1 1 0 100 0 0 0 0 0 0 0 0 0\n8 0 sdb 1 0 100 0 1 1 2 10 0 10 0 12\n' >"$tmp/diskstats0"
   printf '259 3 nvme0n1 1 0 40960 0 0 0 0 0 0 500 0 500\n8 0 sdb 1 0 100 0 1 1 2 10 0 10 0 112\n' >"$tmp/diskstats1"
   mkdir -p "$tmp/by-id"
-  ln -s ../../nvme0n1 "$tmp/by-id/ata-fake-qlc-disk"
+  ln -s ../nvme0n1 "$tmp/by-id/ata-fake-qlc-disk"
+  : >"$tmp/nvme0n1"   # link target must EXIST or load_by_id skips the dangling link
 
   # The DELTA-MATH legs below pin the numbers, the field map, and
   # the measured-window annotation against these fixtures.
@@ -227,9 +228,11 @@ EOF
   local joined
   joined=$(grep -cF 'llama-chat.service 259:3 1.0 0.0 1.0' <<<"$pipeout" || true)
   check "pipeline: cgroup join emits 20MiB/20s = 1.0 MB/s" "$joined" "1"
-  local tags
-  tags=$(grep -c 'window=20.0s' <<<"$pipeout" || true)
-  check "pipeline: measured-window tag on both sections" "$tags" "2"
+  local tags_a tags_b
+  tags_a=$(grep -c '=== per-cgroup IO .* window=20.0s' <<<"$pipeout" || true)
+  check "pipeline: measured-window tag on cgroup section header" "$tags_a" "1"
+  tags_b=$(grep -c '=== per-device .* window=20.0s' <<<"$pipeout" || true)
+  check "pipeline: measured-window tag on device section header" "$tags_b" "1"
   local dev
   dev=$(grep -cF 'ata-fake-qlc-disk (259:3) busy=2.5% read=1.0 write=0.0' <<<"$pipeout" || true)
   check "pipeline: diskstats busy%+rates with by-id name" "$dev" "1"
