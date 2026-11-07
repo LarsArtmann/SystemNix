@@ -152,3 +152,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [decision] **DMS branch policy master vs stable** — master is mid-rebrand (Dux Shell) **Source:** docs/status/2026-10-25_05-07_pin-lift-templ-overview-dms-always-latest-status.md §f.36
 - [ ] [blocked:user] **homebrew-cask float check at next Mac deploy** — unverifiable from Linux; note in Darwin runbook **Source:** docs/status/2026-10-25_14-49_lock-float-proof-five-root-causes-and-parallel-session-collision-status.md §f.31
 - [ ] [ready] **opencloud-desktop into evo-x2 home-manager** — no package wired **Source:** docs/status/2026-10-26_07-09_opencloud-pilot-execution-status.md §f.16
+- [ ] [decision] **iotop/btop/nvtop monitoring dashboards: harden or keep** — readers pile into D-state during storms **Source:** docs/status/2026-10-29_14-08_paperless-triage-p1-session-self-review-status.md §f.25

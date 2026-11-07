@@ -84,3 +84,5 @@
 ---
 
 **Machinery state at handoff:** deploy slot FREE (sequencer dead 23:36, orchestrator halted, no nh in flight); fix eval-green (`f9qpgmglilpcirv8…drv`) but NOT live (system-956); PSI 46 and trending down; README doc-counts 2-line fix is the only static blocker I own. **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.5 f.14 · already-tracked f.6-9 f.12 · OBSOLETE f.2 f.4 f.10 f.11 (FLM world + windows)

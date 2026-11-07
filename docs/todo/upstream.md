@@ -356,3 +356,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [watch] **latency collector 12s median investigation** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.33
 - [ ] [decision] **fs_event watch_paths = [] semantics** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.34
 - [ ] [decision] **Batch-analyze shim-ledger drop economics** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.37
+- [ ] [blocked:push] **git-town: continue aborts a manually-staged resolution, reports sync success without the merge** — verify-before-filing **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.14
+- [ ] [blocked:push] **git-filter-repo docs patch: --refs scopes ref UPDATES, not commit PROCESSING** — verify-before-filing **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.40

@@ -55,3 +55,5 @@
 ## g) Questions I cannot answer myself
 
 1. **None.** (Owner-gated surfaces remain the plan §6 pack Q1–Q7 + the Cloudflare keys for the Clef arm + the 9-`general`-docs label audit — unchanged from the prior reports; nothing NEW is owner-blocked by tonight's work.)
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 · already-tracked f.2-5 (ride services.md:97)

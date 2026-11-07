@@ -137,3 +137,5 @@
 **Format note:** `.md` per your explicit instruction (skill-canonical is styled HTML; flagged as one-off override, not propagated). **Commit:** skipped per harness rule (daemon picks it up). **Harvest status:** complete — A7/A8 rows + SEV1 row landed BEFORE this report; T4 items pre-existed and were not duplicated.
 
 **NEXT: WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.15 f.23 · already-tracked f.1-3 f.5-14 f.22 f.25-28 f.30 · OBSOLETE f.24 f.29 (FLM disabled 2026-11-05) · NEW rowed: f.4(+17) → monitoring [decision], f.16(+20-22 item 40) → ai-stack [blocked:push], f.18 → pipeline, f.19 f.20 → monitoring, f.21(+23-12 §f.18) → ai-stack

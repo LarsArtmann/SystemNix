@@ -119,3 +119,5 @@
 3. **Deploy timing for the consolidated switch:** the moment PSI + tree are quiet it carries MY rewire plus three parallel sessions' pending legs (signoz project_id fix, opencloud port fix, kimi removal, lock-strand repair) — fire it immediately, or hold until those sessions have verified their own legs first?
 
 **Status: waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 · already-tracked f.3-5 f.8-10 f.13 f.16 f.19 f.22 f.26-30 f.40 f.41 · OBSOLETE f.6 f.7 f.25 f.31 f.34 f.39 (FLM world) · NEW rowed: 17 rows (merged f.1+20+21+45, f.23+44, f.32-33+00-21 §f.13, f.36-38+20-22 item 43, f.42-43)

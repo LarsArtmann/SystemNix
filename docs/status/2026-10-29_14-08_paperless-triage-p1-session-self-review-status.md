@@ -247,3 +247,5 @@ exit-1 class.
 _Report basis: this session only (attempts 14–19, one deploy attempt,
 surface close-out). No unrelated research performed. Waiting for
 instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.15 f.16 · already-tracked f.1-9 f.17-20 f.22 f.24 · NEW rowed: f.10(+11-14) f.21 f.23 → services, f.25 → desktop [decision]

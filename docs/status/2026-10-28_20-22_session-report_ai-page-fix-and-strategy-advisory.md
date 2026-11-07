@@ -106,3 +106,5 @@ upstream runtime evidence to reopen).
 
 **WAITING FOR INSTRUCTIONS** (no harvest, no commit, no persistence of the advisory
 beyond this report).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.14 f.15 f.18 f.20 f.32 f.42 · OBSOLETE f.13 f.19 f.30 f.45 (FLM world + supersession) · NEW rowed: 13 rows (merged f.1+22, f.2+37, f.5+6, f.7+8, f.9+10, f.11 watch, f.12+26, f.17+21/24/25/27/29/31/33-36/44, f.38-39) → ai-stack 12, pipeline 1

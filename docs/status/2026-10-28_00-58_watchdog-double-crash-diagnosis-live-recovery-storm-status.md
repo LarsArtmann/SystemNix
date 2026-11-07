@@ -88,3 +88,5 @@
 ## Verdict
 
 Diagnosis: solid and evidence-locked (both boots). Response: prose-heavy, action-light — the known fixes sat in the queue while the recovery storm re-formed live for the 8th time. The box will keep dying until row 157 + row 135/156 are ratified and landed, or the roles are split.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.3 f.4 f.9 f.10 f.15 f.20 f.22 · already-tracked f.5-8 f.12-14 f.16 f.19 f.21 · OBSOLETE f.1 f.17 (FLM world) · NEW rowed: f.11 → services, f.18(+11-09 §f.9) → stability [decision]

@@ -63,3 +63,5 @@ Operational note: the root self-heal streamed 322 G to the HDD pool through the 
 - DiscordSync golden-snapshot tz fix (921d5fc4) rides upstream; nothing SystemNix-side pending from it.
 
 **No open questions for the owner.** The arc's original mission (deploy fix + projects-subvol cutover + first-night proof) is closed end-to-end.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE g.1 · already-tracked g.2 · OBSOLETE g.4 · NEW rowed: g.3 → pipeline (§18 sanity redesign)

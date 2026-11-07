@@ -101,3 +101,5 @@
 **Machinery state at handoff:** trainb-sequencer (pid 2103180, alive, polling) → deploy → posttrainb orchestrator (pid 3810769, setsid, watching for B's exit). Logs: `~/.cache/storage-crisis/{trainb-sequencer,posttrainb}.log`. Report of record for the execution arc: `2026-10-27_23-30_storage-crisis-execution-session3-crisis-broken-status.md`. **The box sleeps safe: 89%, 82G free, 03:00 fits, backup history intact on the pool.**
 
 **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.12 f.18 f.19 · already-tracked f.4 f.8 f.10 f.15 f.20 f.21 · NEW rowed: 10 rows (merged f.6-7) → storage 8, pipeline 1, stability 1

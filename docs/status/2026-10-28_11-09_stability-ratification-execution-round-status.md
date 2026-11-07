@@ -79,3 +79,5 @@ M11 (journal-census + crash-autopsy scripts), M13/M14 (model placement + cold-lo
 ---
 
 **Harvest routing:** items 1–5 are this round's completions-in-flight (tracked here + the plan log; item 3 born this round and NOT yet a row — it is hereby the report's self-harvest, routed to docs/todo/stability.md on next dispatch); 6–10 owner-gated; 11–12 [watch] foreign; 13 plan-ordered. Report written at interruption per instruction; **waiting for instructions**.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.3 f.4 f.6 f.12 · already-tracked f.7 f.8 f.10 f.11 f.13 · OBSOLETE f.1 · NEW rowed: f.5 → stability; f.9 merged into 00-58 §f.18

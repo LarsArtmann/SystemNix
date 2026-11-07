@@ -254,3 +254,5 @@ Grepping the already-downloaded 165 KB CPE syslog (1391 lines) closed four open 
 
 The resulting execution plan: `docs/planning/2026-10-29_22-18_SUPERB-4g-failover-then-openwrt-pareto-plan.md`
 (21 coarse tasks of 30 to 100 min, 92 fine tasks of 12 min or less, three hard gates, three independent risk buckets).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.6 f.16 f.18 f.19 f.22 f.23 f.41 f.44 f.45 f.48 f.49 · already-tracked f.5 f.7-15 f.17 f.20 f.21 f.24-29 f.37 f.38-40 f.42 f.43 f.46 f.47 · NEW rowed: f.50 → services

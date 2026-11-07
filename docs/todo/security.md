@@ -44,3 +44,8 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Record install -m 600 /dev/null secret-creation pattern in the sops skill** **Source:** docs/status/2026-10-26_07-09_opencloud-pilot-execution-status.md §f.31
 - [ ] [watch] **crowdsec acquis parse check post-restart** — mode-0640 caveat **Source:** docs/status/2026-10-26_08-56_caddy-edge-live-battery-full-status.md §f.14
 - [ ] [ready] **Gitleaks Slack rule + fixture** **Source:** docs/status/2026-10-26_10-38_fast-todo-wave1-session-status.md §f.27
+- [ ] [blocked:user] **Relocate scripts/hermes-setup/id_ed25519 to ~/.ssh** — live private key inside the working tree **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.20
+- [ ] [decision] **Confirm the two gitleaks-flagged-but-gitignored paths are intentionally outside the CI ignore story** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.33
+- [ ] [ready] **Re-run the redact-argv.sh self-test** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.34
+- [ ] [decision] **Signed-history policy: must daemon commits stay SSH-signed; pre-receive enforcement?** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.36
+- [ ] [decision] **GitHub branch protection on master (deny force-push)** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.37

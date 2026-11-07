@@ -53,3 +53,5 @@
 ## g) Questions I cannot answer myself
 
 1. **None new.** The plan §6 owner pack (Q1–Q7, silence-defaults documented) remains the only owner-gated surface; P2/P3 stay parked behind it. The verdict-provider swap (llama-chat, not flm) is an implementation correction inside P1's already-dispatched scope — flagged here and in the module header for visibility, not re-asked.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-4 (all ride the open services.md:97 triage row)

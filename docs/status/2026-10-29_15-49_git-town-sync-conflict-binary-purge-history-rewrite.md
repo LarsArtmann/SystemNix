@@ -154,3 +154,5 @@ Grouped; impact-ordered within groups. Most are this session's direct follow-ups
 ## WAITING FOR INSTRUCTIONS
 
 Per the user's instruction, the session stops here. First actions on resume, in order: answer-path for §g (they unblock #6/#7/#1), then §f #5 (harvest), then #1/#4.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.10 f.12 f.15 f.30 · already-tracked f.32 f.41 · OBSOLETE f.4 f.46 f.48 · NEW rowed: 29 rows (merged f.1+2+47, f.3+21, f.9+11+12, f.17+25, f.18+27, f.29+31+42+45, f.35+50) → pipeline 21, security 5, upstream 2, services 1

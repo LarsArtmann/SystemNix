@@ -90,3 +90,5 @@
 ---
 
 **Harvest routing:** items 1–7 are this batch's completion (in-flight, not re-queued — the existing rows already track them); 8 = existing blocked:user row; 9–12 marked not-harvested with reasons (watch / design-first / owner-gated / annotate-later). Report written at interruption per instruction; **waiting for instructions**.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-6 f.9 f.10 · already-tracked f.8 · NEW rowed: f.7 f.11 → stability, f.12(+15-49 item 44) → pipeline
