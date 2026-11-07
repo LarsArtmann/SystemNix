@@ -30,3 +30,6 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Pool README day-2 update** (signal key, pending XMLs, Navidrome/FLAC plans)
 
 ## Backlog (untriaged harvest)
+- [ ] [blocked:user] **Motorola: import dnsblockd CA + enroll** **Source:** docs/status/2026-09-30_05-42 §f.24
+- [ ] [blocked:user] **Phone mobile-data E2E test (dash + full SSO)** **Source:** docs/status/2026-09-30_05-42 §f.25
+- [ ] [blocked:user] **signal-backups pipeline dead since 09-05 (root cause phone-side writer)** **Source:** docs/status/2026-09-29_22-43 §f.16

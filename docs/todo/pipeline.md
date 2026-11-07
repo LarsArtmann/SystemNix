@@ -650,3 +650,95 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Eval-time audit: same `pname` reaching the toplevel with DIFFERENT vendorHash (twin-surface divergence)** — 2026-11-06: `buildflow-ba3cd98` existed TWICE in the evo-x2 closure because `lib/lars-packages.nix` carried a consumer-side shim (`sha256-SRdpoBO+…`) while `platforms/nixos/system/configuration.nix` installed the raw `inputs.buildflow.packages.<system>.default` (upstream's own `7F+fM3…`) — two derivations, two independent `go-modules` FOD builds per deploy, only one correct, and the `nh` graph showed the same pname twice. The documented "twin surfaces must move in lockstep" rule (journal, mr-sync, project-discovery-daemon, projects-management-automation, discordsync, tq) is human-enforced only, so this class recurs. Ask: a NixOS module assertion (or pre-deploy leg) that fails when two entries in `systemPackages`/closure share a `pname` but disagree on `vendorHash`, naming both store paths and both hashes; service-module twins stay legal when the hashes MATCH (dup store path collapses). Pair with `nix flake check` so it runs pre-commit. **Source:** docs/agents/nix-flakes.md → "Misattributed FOD hashes and duplicate surfaces (2026-11-06)"
 - [ ] [ready] **Owed eval leg for daemon-swept .nix bytes: full `nix flake check --no-build` at the next PSI-calm window** + era-annotate the 2026-11-07 00-15 report §f.2 line (the "hook owns it" enforcement claim was false — daemon commits skip hook lint legs; md-only remainders never trigger the eval predicate) + derive the pairing-drift WARN baseline vs the session-start rev (confirm/refute "58 unchanged"). **Source:** docs/status/2026-11-07_01-15_quick-wins-self-review-status.md §d.1/§d.2/§f.1/§f.15
 - [ ] [ready] **Prune-script WARN-A should capture BOTH gate counts (DRIFT + unharvested) + F27b as a documented pre-apply leg** — the 2026-11-07 first --apply lacked a pre-prune unharvested count (203 had to be re-derived at a HEAD worktree post-apply) and F27b ran post-apply; both are the same blind spot. **Source:** docs/status/2026-11-07_02-33_quick-wins-continuation-whole-queue-grind.md §a.23/§c.1
+- [ ] [ready] **Periodic `nix build` of all behavioral fixtures** — close the eval-only gap (fixtures that eval but never build) **Source:** docs/status/2026-09-27_09-47 §f.15
+- [ ] [ready] **ANNOTATE pass over the review-fix ticket's 5 reports** — supersede pointers, one canonical closeout **Source:** docs/status/2026-09-27_09-47 §f.16
+- [ ] [ready] **Review-finding schema `reviewed-at: <sha>`** — one CONTRIBUTING paragraph so findings carry their review commit **Source:** docs/status/2026-09-29_01-40 §f.14
+- [ ] [ready] **AGENTS "deploy-pending" pattern audit** — collapse per-module sentences to library pointers **Source:** docs/status/2026-09-29_03-22 §f.45
+- [ ] [ready] **Post-deploy fresh-shell GOTOOLCHAIN probes** — `go env` clean, go_1_27 on PATH after the pin removal **Source:** docs/status/2026-09-29_07-05 §f.2
+- [ ] [ready] **Re-test plain-shell BuildFlow/bank-sync pre-commit** — post-pin-removal heal verification **Source:** docs/status/2026-09-29_07-05 §f.4
+- [ ] [ready] **Annotate 2026-09-23_15-22 go-toolchain report** — reversal + trigger registered **Source:** docs/status/2026-09-29_07-05 §f.5
+- [ ] [ready] **GOTOOLCHAIN guard-selftest green on a real CI runner** — step exists (nix-check.yml:178), never proven green **Source:** docs/status/2026-09-29_07-05 §f.8
+- [ ] [ready] **Input-hygiene ghost probe: monitor365** — input removed from flake yet still probed somewhere **Source:** docs/status/2026-09-29_07-05 §f.16
+- [ ] [ready] **CI shellcheck scope: scripts/lib/*.sh + .githooks/** — currently unscanned **Source:** docs/status/2026-09-29_07-05 §f.18
+- [ ] [ready] **Weekly jsonv2-graduation probe** — TODO/alert when GOEXPERIMENT defaults flip **Source:** docs/status/2026-09-29_07-05 §f.22
+- [ ] [decision] **GOTOOLCHAIN="local" in templates: drop or document** — templates/go-flake-parts/flake.nix:169 **Source:** docs/status/2026-09-29_07-05 §f.23
+- [ ] [ready] **Live direnv probe: no GOTOOLCHAIN pin leaks** — from direnv libs **Source:** docs/status/2026-09-29_07-05 §f.24
+- [ ] [ready] **docs-freshness GENERIC_DF fragility fix** — rides the gates-family extraction row **Source:** docs/status/2026-09-29_07-33 §f.20
+- [ ] [ready] **gotchas-archive: autofs-deadlock narrative entry** — absent from docs/gotchas-archive.md **Source:** docs/status/2026-09-29_20-21 §f.25
+- [ ] [ready] **Fix the 12 nix-checker port-collision errors in tests/** **Source:** docs/status/2026-09-29_20-21 §f.27 + 2026-09-29_23-14 §f.15
+- [ ] [ready] **CHANGELOG/commit note on timeout-patch history** — patch-then-delete clarification **Source:** docs/status/2026-09-29_20-21 §f.29
+- [ ] [ready] **AGENTS gotcha row: one-time migrations block deploy** — journal-hot precedent **Source:** docs/status/2026-09-29_23-14 §f.7
+- [ ] [ready] **Durable fix: nightly nix-gc vs eval artifacts + rescope** — gcroots/keep-outputs, dry-run first **Source:** docs/status/2026-09-29_23-14 §f.9/§f.24
+- [ ] [ready] **Audit daemon commits that rode the 09-29 deploy** — 777fa972/31392dbf/3c1b7fc1/dae3ee0a **Source:** docs/status/2026-09-29_23-14 §f.21
+- [ ] [ready] **AGENTS: canonicalize "path … not valid" heal one-liner** **Source:** docs/status/2026-09-29_23-14 §f.26
+- [ ] [ready] **AGENTS: "deploy-cancels-job" technique note** **Source:** docs/status/2026-09-29_23-14 §f.28
+- [ ] [ready] **flake archive / profile gcroot for live inputs** — stop nightly GC evictions mid-eval **Source:** docs/status/2026-09-29_23-14 §f.33
+- [ ] [ready] **pre-reboot-check: list-jobs-empty + no-failed-mounts assertions** **Source:** docs/status/2026-09-29_23-14 §f.36
+- [ ] [ready] **Document post-deploy PSI storm as expected pattern** (AGENTS) **Source:** docs/status/2026-09-29_23-14 §f.42
+- [ ] [ready] **tq "IO PSI pause" knob** — scripts-level gate for harvest agents **Source:** docs/status/2026-09-29_23-14 §f.39
+- [ ] [ready] **Codify jump-size + known-bad-era check in flake-update runbook** **Source:** docs/status/2026-09-30_04-33 §f.21
+- [ ] [ready] **Pre-deploy probe: input lock newer than last verified-good build** **Source:** docs/status/2026-09-30_04-33 §f.23
+- [ ] [ready] **AGENTS gotcha: eval-green ≠ runtime (mint case)** **Source:** docs/status/2026-09-30_05-42 §f.38
+- [ ] [ready] **Backport relay/vpn D4/D5 decisions into netbird brainstorm doc** **Source:** docs/status/2026-09-30_05-42 §f.36 + 2026-09-30_07-47 §f.27
+- [ ] [ready] **go-nix-helpers consumer lockedge audit: name+rev pairs** — 4 own-pinned consumers **Source:** docs/status/2026-09-30_07-00 §f.2/§f.19
+- [ ] [blocked:user] **Owner-transmit class guard** — catch "you may need to transmit" misses **Source:** docs/status/2026-09-30_07-00 §f.3
+- [ ] [decision] **Daemon git auto-stage mode** — intent-to-add semantics + secret risk **Source:** docs/status/2026-10-01_02-30 §f.4
+- [ ] [decision] **Cheapest-checks rule change** (04-32 f.1) **Source:** docs/status/2026-10-01_02-54 §f.1
+- [ ] [ready] **tq queue-row preverify plugin** — premise-check at harvest time **Source:** docs/status/2026-10-01_02-54 §f.2
+- [ ] [ready] **README stats refresh** (row counts) **Source:** docs/status/2026-10-01_02-54 §f.4
+- [ ] [decision] **status reports vs tasks/ split** **Source:** docs/status/2026-10-01_02-54 §f.6
+- [ ] [ready] **Archive fully-harvested 09-29/09-30 reports** — after harvest logs land **Source:** docs/status/2026-10-01_02-54 §f.8
+- [ ] [ready] **Probably-fixes sweep convention** — single-command closed-check before queueing **Source:** docs/status/2026-10-01_10-13 §f.1
+- [ ] [ready] **Plan-marker auto-insertion post-table** — scripts/plan-marker.sh hook **Source:** docs/status/2026-10-01_04-32 §f.1
+- [ ] [ready] **Deploy-block class detector in newer-report scan** **Source:** docs/status/2026-10-01_04-32 §f.2
+- [ ] [ready] **Agent-learning: mechanism-first diagnosis convention** **Source:** docs/status/2026-10-01_04-32 §f.3
+- [ ] [ready] **R2 provenance README row** **Source:** docs/status/2026-10-01_04-32 §f.4
+- [ ] [ready] **Phase-1 audit fail-open violation fix** **Source:** docs/status/2026-10-01_04-32 §f.5
+- [ ] [ready] **linkValidator slowness + dependency injection** **Source:** docs/status/2026-10-01_04-32 §f.6
+- [ ] [ready] **todo-modules audit table** **Source:** docs/status/2026-10-01_04-32 §f.7
+- [ ] [ready] **README path integration** **Source:** docs/status/2026-10-01_04-32 §f.8
+- [ ] [ready] **verify-fleet spans plain subagents** **Source:** docs/status/2026-10-01_04-32 §f.9
+- [ ] [ready] **purge_nix cleanup** **Source:** docs/status/2026-10-01_04-32 §f.10
+- [ ] [ready] **Dead-SHA / dead-link guard hook for status reports** — fail docs citing non-ancestor SHAs **Source:** docs/status/2026-10-01_19-17 §f.1 + 2026-09-30_13-34 §f.41
+- [ ] [ready] **Cache pin: evalError non-fatal flag** **Source:** docs/status/2026-10-01_19-17 §f.2
+- [ ] [ready] **Automation process-violation probe** **Source:** docs/status/2026-10-01_19-17 §f.3
+- [ ] [ready] **Retention: priority by tier, not volume** **Source:** docs/status/2026-10-01_19-17 §f.4
+- [ ] [ready] **Fail-loud eval guard for implicit attrset eval errors** **Source:** docs/status/2026-10-01_19-17 §f.5
+- [ ] [ready] **Group/split tests/default.nix (80+ entries)** **Source:** docs/status/2026-10-01_13-43 §f.25
+- [ ] [watch] **Confirm caddy-logs test in flake-update bot coverage** **Source:** docs/status/2026-10-01_13-43 §f.26
+- [ ] [ready] **Fix audit-serviceconfig-merge SELFTEST on clean tree** **Source:** docs/status/2026-10-01_13-43 §f.28
+- [ ] [ready] **Codify build-window announcement convention** **Source:** docs/status/2026-10-01_13-43 §f.29
+- [ ] [ready] **python-atomic-replace as default for shared queue files** **Source:** docs/status/2026-10-01_13-43 §f.30
+- [ ] [ready] **Archive 2026-10-01_01-03 staged report** **Source:** docs/status/2026-10-01_13-43 §f.31
+- [ ] [ready] **Drop the ltrace casualty from systemPackages/overlay/upstream** **Source:** docs/status/2026-10-03_00-35 §f.8
+- [ ] [ready] **litestar wheel 404s: nixpkgs bump or overlay** **Source:** docs/status/2026-10-03_00-35 §f.9
+- [ ] [ready] **Attribute + fix the JS frozen-lockfile build** **Source:** docs/status/2026-10-03_00-35 §f.10
+- [ ] [ready] **E2E the serviceconfig-merge v2 audit through the REAL pre-commit hook** **Source:** docs/status/2026-10-03_06-15 §f.16
+- [ ] [ready] **Policy (+optional wrapper) for raw `nh os switch` bypassing deploy.sh gates** **Source:** docs/status/2026-10-04_10-50 §f.16
+- [ ] [ready] **cv.nix ExecStartPre inline script → writeShellApplication** **Source:** docs/status/2026-10-03_15-05 §f.19
+- [ ] [ready] **Eval-audit: workflow-global packages inside conditional service modules** **Source:** docs/status/2026-10-03_15-05 §f.20
+- [ ] [ready] **Pre-deploy lint legs: stale stamp-gated asset copies; oneshot+wantedBy without RemainAfterExit** **Source:** docs/status/2026-10-03_15-05 §f.21
+- [ ] [ready] **Split post-deploy-check NEW-failure persistence from rolling baseline** **Source:** docs/status/2026-10-03_15-05 §f.22
+- [ ] [ready] **Check daemon `git add -N` semantics** — intent-to-add empty-blob secret risk **Source:** docs/status/2026-10-03_00-34 §f.25
+- [ ] [ready] **docs/agents/nix-flakes.md: pointer to the hermes pip-extras-diff protocol** **Source:** docs/status/2026-10-03_00-34 §f.22
+- [ ] [ready] **Pre-deploy 1b: untracked-referenced files under pkgs/ + secrets force-add guard** **Source:** docs/status/2026-10-03_00-34 §f.16
+- [ ] [ready] **projects.json observability: parse-count metric + atomic-write producer** — zero-byte file sat silent 22 days **Source:** docs/status/2026-10-04_04-29 §f.9/§f.19
+- [ ] [ready] **CV smoke: silence benign /admin 401 console WARN** **Source:** docs/status/2026-10-04_04-29 §f.37
+- [ ] [ready] **caddy.nix eval assertion: hostOverride honored only on proxy vHosts + seam doc** **Source:** docs/status/2026-10-04_04-29 §f.26/§f.27
+- [ ] [ready] **post-deploy-check lines 133/633: null-byte-in-command-substitution warnings** **Source:** docs/status/2026-10-04_04-29 §f.31
+- [ ] [ready] **Pre-deploy 12: whitelist benign network-local-commands "not built yet" noise** **Source:** docs/status/2026-10-04_04-29 §f.30
+- [ ] [ready] **`scripts/wait-io-calm.sh` repo PSI gate (fixture-tested)** — stop hand-rolled pollers **Source:** docs/status/2026-09-30_07-18 §f.26
+- [ ] [ready] **Poller lessons into CONTRIBUTING verification conventions** — string-vs-number, empty-value FPs **Source:** docs/status/2026-09-30_07-18 §f.27
+- [ ] [ready] **Handoff reading-order rule: verify AGENTS/CHANGELOG first** **Source:** docs/status/2026-09-30_07-18 §f.50
+- [ ] [ready] **mktemp(+trap rm) pre-commit per-leg logs** **Source:** docs/status/2026-09-29_07-05 §f.17 + 2026-10-01_10-13 §f.34
+- [ ] [ready] **Restore ~19 pipeline.md rows deleted by d22ccd48** **Source:** docs/status/2026-10-01_10-13 §f.30
+- [ ] [ready] **Move commit-msg subject-length check to top of hook** **Source:** docs/status/2026-10-01_03-33 §f.38
+- [ ] [ready] **AGENTS lesson: deferred-submodule-type-error witness pattern** **Source:** docs/status/2026-10-01_03-47 §f.35
+- [ ] [ready] **Candidate lint: empty-attrset definition + optionalAttrs misassignment sweep** **Source:** docs/status/2026-10-01_03-47 §f.37/§f.38
+- [ ] [ready] **Pin the post-amend gitleaks invocation in CONTRIBUTING daemon-race clause** **Source:** docs/status/2026-10-02_07-54 §f.6
+- [ ] [ready] **Adversarial §f cross-check clause in check-todo-system** **Source:** docs/status/2026-10-02_07-54 §f.7
+- [ ] [ready] **deploy-status one-shot (lock holder + PSI + journal tail)** **Source:** docs/status/2026-10-01_20-58 §f.11
+- [ ] [ready] **Resolve the 08-32 soak-unblock report staged/deleted AD-state** **Source:** docs/status/2026-10-04_10-50 §f.26
+- [ ] [ready] **dns-update.sh pin-extraction selftest** — the 10-01 corruption class **Source:** docs/status/2026-10-03_06-15 §f.20
+- [ ] [ready] **Spot-verify harvested queue rows' premises (T03-wave rows)** — one row's premise already falsified once **Source:** docs/status/2026-10-03_06-15 §f.15
+- [ ] [ready] **darwin+rpi darwin-rebuild eval CI matrix** **Source:** docs/status/2026-09-30_07-47 §f.13

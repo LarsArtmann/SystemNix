@@ -213,3 +213,45 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **SSH-by-name radar: SigNoz rule on the dnsblockd gateway no_handler counter** — by-name non-TLS protocols (SSH/git-over-SSH/games) refuse loudly at the gateway BY DESIGN (ADR-0011); the refusal counter rising means some household workflow just broke the confusing way (the exact "why is git push refusing" trap this feature creates). Wire a SigNoz alert on the counter's increase rate (bounded-label, per ADR-0011 D4) + name the local-zone escape hatch in the alert text. Metric name + label shape to confirm upstream at lock 847d81e3 before wiring. **Source:** this session 2026-11-06_23-28 report §f
 - [ ] [ready] **SigNoz panel/rule for `node_vm_top_vmsize_bytes`** — collector enabled in-tree (vm-top-metrics.nix, rides next deploy); add the top-set panel + optional VmSize threshold watch so reservation-pressure cascades trend visibly before the kill pass. **Source:** docs/status/2026-11-07_02-33_quick-wins-continuation-whole-queue-grind.md §a.12/§f
 - [ ] [ready] **vm-top-metrics pre-deploy-check leg** — collector shipped tree-side without deploy-battery coverage (the §20-for-trash-metrics-but-nothing-for-vm-top asymmetry); assert unit + timer + .prom presence + start-contract post-deploy. **Source:** docs/status/2026-11-07_04-06_quick-wins-continuation-self-review-status.md §b.3/§e/§f.3
+- [ ] [ready] **TV-presence check (SSDP or TCP 3001 on 192.168.1.10)** — gatus check + dashboard tile; the LG TV sat untracked on this LAN until 2026-11-07. **Source:** docs/status/2026-11-07_07-07_tv-overscan-session-self-review-status.md §f.9
+- [ ] [ready] **Stuck-jobs gatus alert (JobsCount > 0 sustained)** **Source:** docs/status/2026-09-29_20-21 §f.21 + 2026-09-29_23-14 §f.12
+- [ ] [ready] **Sustained load-average gatus check (>20 for 15min)** **Source:** docs/status/2026-09-29_20-21 §f.22
+- [ ] [ready] **Cache-mount active tripwire** — assert every cacheSubvolume mount active **Source:** docs/status/2026-09-29_20-21 §f.23
+- [ ] [ready] **Boot-completion alert (multi-user.target not reached in X min)** **Source:** docs/status/2026-09-29_23-14 §f.13
+- [ ] [ready] **D-state/PSI fleet alerting** — storms measurable, nothing alerts **Source:** docs/status/2026-09-29_23-14 §f.14
+- [ ] [ready] **Gatus metric: nightly nix-gc paths-freed** **Source:** docs/status/2026-09-29_23-14 §f.25
+- [ ] [ready] **Gatus failed-unit-count-above-baseline alert** **Source:** docs/status/2026-09-29_23-14 §f.41
+- [ ] [ready] **Verify storage-collector +134KiB closure change is expected** **Source:** docs/status/2026-09-29_23-14 §f.32
+- [ ] [ready] **Measure QLC write-pressure relief (nvme0n1 with caches on tlc)** **Source:** docs/status/2026-09-29_20-21 §f.9
+- [ ] [ready] **iostat re-baseline vs the 2026-09-19 audit** **Source:** docs/status/2026-09-29_20-21 §f.10
+- [ ] [ready] **Recalibrate gatus BTRFS Chunk Health rule** (gatus-config.nix:673) **Source:** docs/status/2026-09-29_20-21 §f.14
+- [ ] [ready] **Confirm notify-failure@gatus not start-limit-blocked after storms** **Source:** docs/status/2026-09-29_11-34 §f.3
+- [ ] [ready] **GCP integration verify chain: post-deploy checklist, live metric names/gcp.json queries, request_latencies quantiles, data-freshness rule, VM test, post-deploy leg, quota panel, memory delta, cross-link, extraMetrics docs** — consolidated (extends monitoring.md:63-65) **Source:** docs/status/2026-09-29_22-43 §f.2-8/§f.17-24
+- [ ] [blocked:user] **GCP metrics extensions: App Engine, Firestore, BigQuery, Pub/Sub backlog, Cloud Build** **Source:** docs/status/2026-09-29_22-43 §f.10-14
+- [ ] [ready] **GCI→SystemNix drift guard (inventory.json vs gcpMonitoring.projects)** **Source:** docs/status/2026-09-29_22-43 §f.17
+- [ ] [ready] **Verify Gatus Browser-History + Agent-Data green, textfile fresh** **Source:** docs/status/2026-09-30_04-33 §f.7
+- [ ] [ready] **Health-dashboard remote #2+ onboarding** — one `remotes` line per service **Source:** docs/status/2026-09-29_03-22 §f.16
+- [ ] [blocked:user] **Post-cutover Gatus smtp-mx/imaps checks (CERTIFICATE_EXPIRATION > 720h)** **Source:** docs/status/2026-09-29_07-33 §f.8
+- [ ] [watch] **Mail-server Gatus registry entry once a SystemNix host consumes** **Source:** docs/status/2026-09-29_07-33 §f.16
+- [ ] [ready] **Buildcache toolchain-fork tripwire automation (buildcache.prom growth + go.mod scan)** **Source:** docs/status/2026-09-29_07-05 §f.21
+- [ ] [watch] **buildcache toolchain-fork watch** **Source:** docs/status/2026-09-29_07-05 §f.6
+- [ ] [ready] **dnsblockd journal-volume before/after log-sampling effect** **Source:** docs/status/2026-09-30_13-07 §f.15
+- [ ] [ready] **dnsblockd RSS baseline post-v0.9.3 telemetry** **Source:** docs/status/2026-09-30_13-07 §f.16
+- [ ] [ready] **Spot-check gatus for stale dnsblockd path/rev literals** **Source:** docs/status/2026-10-01_02-11 §f.29
+- [ ] [watch] **gatus devices-attribution check once upstream exposes attributionRate** **Source:** docs/status/2026-09-30_13-07 §f.44
+- [ ] [ready] **SigNoz panel for churn_units_stopped (per-unit)** **Source:** docs/status/2026-09-30_07-18 §f.32
+- [ ] [ready] **Gatus "Memory Guard Backup Starved" check** — emitter exists, check missing **Source:** docs/status/2026-09-30_07-18 §f.33
+- [ ] [ready] **Resurrection detector (port-holder probe metric)** **Source:** docs/status/2026-09-30_07-18 §f.39
+- [ ] [ready] **Gatus relay STUN 3479/udp check** **Source:** docs/status/2026-09-30_05-42 §f.30
+- [ ] [ready] **Verify integration.monitored fans out for the netbird client** **Source:** docs/status/2026-09-30_05-42 §f.32
+- [ ] [ready] **Gatus check asserting geometrikks OIDC redirect** **Source:** docs/status/2026-09-29_23-13 §f.21
+- [ ] [ready] **Verify geometrikks journald→SigNoz flow; reverse assertion silent** **Source:** docs/status/2026-09-29_23-13 §f.24
+- [ ] [ready] **Ingestion-lag/degraded textfile metric (geometrikks /health flags)** **Source:** docs/status/2026-09-29_23-13 §f.40
+- [ ] [watch] **Caddy-logs mount storm regression watch** — re-queued post-cutover **Source:** docs/status/2026-10-01_13-43 §f.5
+- [ ] [ready] **Gatus check for caddy-logs mount (wants-not-requires degradation)** **Source:** docs/status/2026-10-01_01-03 §f.11
+- [ ] [ready] **NVMe temperature Gatus checks keyed by serial/by-path (not nvme0/1 names)** **Source:** docs/status/2026-10-01_19-21 §f.5
+- [ ] [ready] **acpitz + all trip points in monitoring visibility** **Source:** docs/status/2026-10-01_19-21 §f.14
+- [ ] [ready] **Gatus freshness on thermal_pstate_guard_last_run + sustained-Tctl rule** **Source:** docs/status/2026-10-04_06-39 §f.7
+- [ ] [ready] **storage-collector statvfs EPERM noise: silence or fix** **Source:** docs/status/2026-10-04_06-39 §f.22
+- [ ] [ready] **monitor365_backup healthy=0 while disabled → expected_down pattern or label-skip** **Source:** docs/status/2026-10-04_04-29 §f.38
+- [ ] [blocked:user] **Cross-link integration-registry step 9 ↔ monitoring Gatus patterns; mr-sync projection unhandled-events triage rides services** **Source:** docs/status/2026-10-01_02-54 §f.10

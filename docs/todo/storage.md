@@ -220,3 +220,43 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **bench-cold-load: add mem PSI columns to psi.csv + JSONL** — io-only sampling left "reproduced at zero memory pressure" resting on a pre-run read, not an at-crash sample. **Source:** dio falsification session §b evidence gap
 - [ ] [ready] **bench-cold-load: PSI gate hysteresis (2 consecutive calm polls or avg60 check)** — single-poll dips launch loads into resuming storms (strict-gate dio run: entry 17.2, psi_max_during 45.7 on an accepted=false line). **Source:** dio falsification session strict datapoint
 - [ ] [ready] **Smoke-test the /data baseline compare one-liner against a live du** (tr-normalization + path forms, one small dir, ~30 s) — docs/todo/data-watch-baseline.txt shipped DONE with unexecuted command mechanics; first real exercise otherwise happens at the next watch fire. **Source:** docs/status/2026-11-07_01-15_quick-wins-self-review-status.md §b.3/§e.3/§f.4
+- [ ] [blocked:user] **Pool metadata balance (`btrfs balance -musage=50 /mnt/pool`)** **Source:** docs/status/2026-09-29_20-21 §f.12
+- [ ] [ready] **Root-cause 74 GiB metadata for 2 TiB data (subvol/snapshot audit)** **Source:** docs/status/2026-09-29_20-21 §f.13
+- [ ] [decision] **sdc1 documented + sdd (14.6T ex-pool) role or drop from topology** **Source:** docs/status/2026-09-29_20-21 §f.16 + 2026-09-29_23-14 §f.30
+- [ ] [ready] **x-systemd.mount-timeout on ALL automount-backed entries** (only hot-user-caches has it) **Source:** docs/status/2026-09-29_20-21 §f.18 + 2026-09-29_23-14 §f.11
+- [ ] [ready] **geometryGuards-style eval assertion for ALL subvol mounts** **Source:** docs/status/2026-09-29_23-14 §f.19
+- [ ] [ready] **test-journal-hot "migration not run" scenario** **Source:** docs/status/2026-09-29_23-14 §f.20
+- [ ] [ready] **Post-migration tmpfiles + QLC shadow-dir rollback insurance** **Source:** docs/status/2026-09-29_23-14 §f.18
+- [ ] [ready] **Final deletion-doctrine proof: disko mounts, zero bootstrap** **Source:** docs/status/2026-09-29_23-14 §f.27
+- [ ] [ready] **btrfs scrub schedule for tlc (now carries caches+journal)** **Source:** docs/status/2026-09-29_23-14 §f.34
+- [ ] [ready] **Exercise forgejo-subvol-bootstrap JobTimeoutSec at real boot** **Source:** docs/status/2026-09-29_23-14 §f.35
+- [ ] [ready] **Archive-copy /var/tmp wedge forensics into docs/** **Source:** docs/status/2026-09-29_23-14 §f.37
+- [ ] [ready] **Automount idle-timeout hardening for cache mounts** **Source:** docs/status/2026-09-29_23-14 §f.45
+- [ ] [ready] **Correct in-module "instant 10 GiB" comment (btrfs-health.nix:180)** **Source:** docs/status/2026-09-30_05-40 §f.11
+- [ ] [ready] **Does btrfs-rescue .rescue also pin the reserve file?** **Source:** docs/status/2026-09-30_05-40 §f.16
+- [ ] [blocked:user] **Live-verify reserve file inside pinned snapshot + count pinning snapshots (expect 4-6) + Sep 13 re-provision forensics** **Source:** docs/status/2026-09-30_05-40 §f.12-14
+- [ ] [decision] **BuildCache 2-device SanDisk merge (~447G) vs SSD-split** **Source:** docs/status/2026-09-29_03-22 §f.31
+- [ ] [ready] **buildcache-init: provision pnpm/cargo fallback targets post-recovery** **Source:** docs/status/2026-09-29_03-22 §f.30
+- [ ] [ready] **CRUSH_HOT_DB_DRY_RUN live rehearsal on a deployed gen** **Source:** docs/status/2026-09-29_03-22 §f.47
+- [ ] [ready] **VM-test OnFailure end-to-end (forced per-dir failure → notify-failure@)** **Source:** docs/status/2026-09-29_03-22 §f.48
+- [ ] [ready] **Postgres hot-db wave (ratified cow=false) into migrate-hot-db.sh** **Source:** docs/status/2026-10-01_13-43 §f.19
+- [ ] [ready] **Fold interim crush-hot-db into services.hot-db + delete deploy.sh entry** **Source:** docs/status/2026-10-01_13-43 §f.20 + 2026-09-29_03-22 §f.7
+- [ ] [ready] **test-hot-db `*Directory=` regression case + wave-target-without-stance eval tripwire** **Source:** docs/status/2026-10-01_13-43 §f.21/§f.22
+- [ ] [ready] **Production-sandbox VM node variant + extendModules mount-fail probe** **Source:** docs/status/2026-10-01_13-43 §f.23/§f.24
+- [ ] [ready] **Migrate script "one-time, executed <date>" banner** **Source:** docs/status/2026-10-01_13-43 §f.11
+- [ ] [blocked:user] **Ratify caddy-logs retention stance (no-new-rotation)** — §g2 unanswered ×3 reports **Source:** docs/status/2026-10-01_13-43 §f.12 + 2026-10-01_19-17 §f.9 + 2026-10-01_01-03 §f.9
+- [ ] [watch] **QLC prune backlog / pool catch-up watch** **Source:** docs/status/2026-10-01_13-43 §f.35
+- [ ] [ready] **.Trash-1000 on buildcache: document never-trash or add age-bounded empty** **Source:** docs/status/2026-10-02_06-11 §f.11
+- [ ] [ready] **Record btrfs multi-SOURCE findmnt trap in docs/agents/storage.md gotchas** **Source:** docs/status/2026-10-02_06-11 §f.13
+- [ ] [ready] **Mutation-probe selftest for the das-link debris check** **Source:** docs/status/2026-10-02_06-11 §f.3
+- [ ] [ready] **Growth-delta reporting for the debris check** **Source:** docs/status/2026-10-02_06-11 §f.5
+- [ ] [blocked:user] **Auto-bless recurring-transient das-link class vs keep as audit signal** **Source:** docs/status/2026-10-02_07-54 §f.15
+- [ ] [ready] **Confirm-and-delete `00-go-cache-guard.fish.backup`** **Source:** docs/status/2026-10-02_07-54 §f.17
+- [ ] [ready] **das-link check [6]: distinguish recurring-transient empty dirs (hint text)** **Source:** docs/status/2026-10-02_07-54 §f.5
+- [ ] [ready] **Archive deployed-generation nvd diff into close-out (house habit)** **Source:** docs/status/2026-09-30_07-18 §f.48
+- [ ] [ready] **Write "scrub lifecycle" doc section (template→deferral→stop→cancel→re-arm→resume)** **Source:** docs/status/2026-09-30_07-18 §f.25
+- [ ] [ready] **Sweep docs for old stray-unit/DEPLOY-REQUIRED scrub phrasing** **Source:** docs/status/2026-09-30_07-18 §f.24
+- [ ] [ready] **Timescaledb+postgis backup restore DRILL** **Source:** docs/status/2026-09-29_23-13 §f.45
+- [ ] [ready] **Cross-link single-victim /data repair recipe from storage doc** **Source:** docs/status/2026-10-01_03-33 §f.2 + 2026-10-01_10-13 §f.1
+- [ ] [ready] **Fix stale "deploy-pending" clause + cache-sweep lineage annotations + "11d mid-week weeklies" comment in btrfs-verify-snapshots** **Source:** docs/status/2026-10-01_10-13 §f.3/§f.6/§f.7
+- [ ] [ready] **AGENTS→runbooks snapshot-pinning pointer sweep** **Source:** docs/status/2026-10-01_03-33 §f.45 + 2026-10-01_10-13 §f.35
