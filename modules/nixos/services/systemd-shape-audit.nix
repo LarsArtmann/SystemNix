@@ -460,36 +460,25 @@
       serviceKeysInUnitConfig =
         svc:
         let
-          present =
-            builtins.filter
-              (
-                k:
-                svc.unitConfig.${k} != null
-                && (builtins.elem k serviceSectionKeys || lib.hasPrefix "Limit" k)
-              )
-              (builtins.attrNames svc.unitConfig);
+          present = builtins.filter (
+            k: svc.unitConfig.${k} != null && (builtins.elem k serviceSectionKeys || lib.hasPrefix "Limit" k)
+          ) (builtins.attrNames svc.unitConfig);
         in
         if present == [ ] then null else present;
       serviceKeyInUnitConfigOffenders =
         let
-          bad =
-            lib.filterAttrs
-              (
-                name: svc:
-                let
-                  keys = serviceKeysInUnitConfig svc;
-                in
-                keys != null
-                && builtins.any (k: !builtins.elem "${name}:${k}" cfg.allowUnitConfigServiceKeys) keys
-              )
-              config.systemd.services;
+          bad = lib.filterAttrs (
+            name: svc:
+            let
+              keys = serviceKeysInUnitConfig svc;
+            in
+            keys != null && builtins.any (k: !builtins.elem "${name}:${k}" cfg.allowUnitConfigServiceKeys) keys
+          ) config.systemd.services;
         in
-        lib.mapAttrsToList (
-          name: svc: {
-            inherit name;
-            keys = serviceKeysInUnitConfig svc;
-          }
-        ) bad;
+        lib.mapAttrsToList (name: svc: {
+          inherit name;
+          keys = serviceKeysInUnitConfig svc;
+        }) bad;
     in
     {
       options.services.systemd-shape-audit = {
