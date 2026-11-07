@@ -41,6 +41,14 @@ RAM), optional tightening override) — the 4 GiB cap is hermes' own
   lifetime. The scope was NOT uncontained.
 - adj 300 = chromium's own renderer-role adjustment, UPGRADED FROM INFERENCE
   TO CITATION (chromium source, main, fetched raw 2026-11-02):
+  *(2026-11-07 pin: the fetched rev is `9a988a2a086fabe2a948cdbeb557bccbcf395ff6`
+  (chromium/chromium main@{#1733436}, committed 2026-11-02T23:59:47Z — resolved
+  via the GitHub mirror commit API for that date, per the verify-before-filing
+  rule); re-verified at that SHA, `content/public/common/content_constants.cc`
+  carries exactly `kLowestRendererOomScore = 300`, `kHighestRendererOomScore =
+  1000`, `kOomScoreBump = 100`, `kMiscOomScore = kLowestRendererOomScore -
+  kOomScoreBump`, zygote 0, in the IS_LINUX||IS_CHROMEOS block — the citation
+  holds verbatim at the pin.)*
   `content/browser/child_process_launcher_helper_linux.cc`
   (`LaunchProcessOnLauncherThread`) sets `oom_score = content::kLowestRendererOomScore`
   for every `--type=renderer` and `content::kMiscOomScore` for the other zygote
