@@ -1006,3 +1006,29 @@ Owner answered the extraction-assessment question §g Q2: the mesh grows to **rp
 - [ ] [watch] **Recheck pre-deploy advisory failures** — browser-history-agent, catalog-inventory-sync, ci-watchdog **Source:** docs/status/2026-11-04_21-13_lock-wave-rollback-eval-gates-and-deploy.md §f.16
 - [ ] [ready] **Identify the warn row in cv /health** — which of 43 checks reports warn in the dying process **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.9
 - [ ] [ready] **CV live-checks catalog doc** — docs/agents/health.md absent; ChatstoreSessions.HealthCheck **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.12
+- [ ] [ready] **Verify OpenCloud 7.2.4 search depth without Tika** — correct runbook + research-doc cell **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.5
+- [ ] [ready] **Renamer DLQ/dashboard probe** — check for stuck dead letters **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.16
+- [ ] [ready] **Verify Paperless RAG embeddings serve decrypted statement content** **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.23
+- [ ] [decision] **OpenCloud quarantined derived-state cleanup** — search/bleve.corrupt + idm.boltdb.broken disposition **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.26
+- [ ] [decision] **OpenCloud watch-fs enable decision** — only if external-change workflows appear **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.27
+- [ ] [blocked:user] **Run nix-build-cleanup stale-sandbox sweep** — 8 stale sandboxes flagged; needs sudo **Source:** docs/status/2026-11-06_03-47_deploy-unblock-fixes-landed-deploy-orphaned-session-status.md §f.10 + docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.30
+- [ ] [decision] **tq-agent-pool stop-timeout under deploy windows** — shorter stop timeout + internal drain **Source:** docs/status/2026-11-06_03-47_deploy-unblock-fixes-landed-deploy-orphaned-session-status.md §f.24
+- [ ] [ready] **dnsblockd OTel boot ordering fix** — ordering or bounded retry kills the exporter spam class **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.15
+- [ ] [ready] **docs/services phrasing sweep for hidden cacert-override mechanisms** **Source:** docs/status/2026-11-06_22-39_ca-parity-session-brutal-self-review-status.md §f.5
+- [ ] [ready] **Eval-time comment or assertion for the dnsblockd CA duplication** **Source:** docs/status/2026-11-06_22-39_ca-parity-session-brutal-self-review-status.md §f.6
+- [ ] [ready] **scripts/lib/bundle-cert-enum.sh probe helper** **Source:** docs/status/2026-11-06_22-39_ca-parity-session-brutal-self-review-status.md §f.17
+- [ ] [decision] **Gateway host-protection design gap** — gateway captures the HOST when rpi3 is down **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.3
+- [ ] [ready] **Verify gateway capture is actually recording** — journal.db growth; armed proven, recording not **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.4
+- [ ] [ready] **LAN impact audit while capture is live** — which household by-name flows break **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.6
+- [ ] [decision] **git-by-name stopgap until rpi3 returns** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.8
+- [ ] [ready] **keepalived/.53 failover semantics section for dnsblockd.md** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.9
+- [ ] [ready] **QUIC bypass verification** — confirm LAN QUIC leaks past capture per ADR-0011 **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.10
+- [ ] [decision] **dnsblockd journal.db retention/rotation** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.11
+- [ ] [ready] **Annotate the dnsblockd runbook with the live learnings** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.12 + §f.13 + §f.37
+- [ ] [ready] **rpi3-dns full-toplevel eval** — do it before rpi3 next deploy **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.14
+- [ ] [ready] **rpi3 return checklist** — asymmetry pin, .53 handback, the lie disappears **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.15
+- [ ] [ready] **SearXNG smoke leg must diagnose the lie condition** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.27
+- [ ] [ready] **CRM by-phone T03 battery + restart checks** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.34 + §f.36 + §f.38
+- [ ] [ready] **Verify the cv-credentials-store.yaml provisioned live** **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.35
+- [ ] [ready] **Verify LAN clients DHCP still targets .53 and capture engages** — inferred, not observed **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.47
+- [ ] [decision] **Full self-capture: flip evo-x2 resolver to dnsblockd-first** — trades SSH-by-name and SearXNG engines **Source:** docs/status/2026-11-07_08-47_decrypt-overlay-mitm-wiring-self-review.md §h.2

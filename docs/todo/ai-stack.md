@@ -139,3 +139,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [decision] **On-demand llama-chat re-enable path** — socket/io-triggered; gates paperless-gpt + InboxClean return **Source:** docs/status/2026-11-03_18-40_freeze-41-44-containment-brutal-self-review.md §f.31
 - [ ] [watch] **Drop the nixpkgs-llama-rag input** — when the 0.4.0 spin regression fixes upstream **Source:** docs/status/2026-11-03_18-52_task-000001a18fe8842b3901ba37230100000000_stability-batch-reddispatch-status.md §f.32
 - [ ] [ready] **Doc note that VL GGUFs cannot hit the embedding assert** **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.13
+- [ ] [ready] **Queue the 2027-01-02 Paperless quarterly AI re-audit** **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.21
+- [ ] [decision] **Renamer local llama.cpp vision-provider trial on the 8060S** **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.24

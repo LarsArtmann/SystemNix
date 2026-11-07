@@ -62,3 +62,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [decision] **Forgejo HTTP API LAN exposure** — unauthenticated forgejo.home.lan from LAN intended? **Source:** docs/status/2026-11-04_19-14_forgejo-canonical-repos-provisioned-fine-tune-pim-sync.md §f.25
 - [ ] [ready] **Pre-twin-exposure secret scans** — fine-tune config + pim-sync full tree **Source:** docs/status/2026-11-04_19-14_forgejo-canonical-repos-provisioned-fine-tune-pim-sync.md §f.31 + §f.32
 - [ ] [watch] **rpi3 sops SYNTHETIC_API_KEY eval warning** — placeholder fragment disposition **Source:** docs/status/2026-11-04_20-41_systemnix-flake-session-status-and-self-review.md §f.10
+- [ ] [decision] **Kensaku pre-adoption security probes** — sensitive-path default-denials + screenshot-token leakage quantification **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.2 + §f.3

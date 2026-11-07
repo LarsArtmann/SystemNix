@@ -376,3 +376,6 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **CV typed-nil lifecycle audit** — across all do.Provide sites **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.11
 - [ ] [ready] **Soften the inherited 30-min notify claim in CV CHANGELOG** **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.14
 - [ ] [ready] **CV sibling-dir stray-branch sweep** — cv-stage-crmfix, Code-To-CV-Agent, cv **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.27
+- [ ] [ready] **Two upstream candidates: BuildFlow daemon deps-bump + art-dupl vs templ release-matrix** — source-verify at tip before filing **Source:** docs/status/2026-11-06_08-40_eval-migrations-landed-fod-wave-parallel-collision-upstream-rescues.md §f.22
+- [ ] [ready] **crush release-watch check** — v0.100.0 shipped unnoticed **Source:** docs/status/2026-11-07_01-44_crush-v100-yolo-verify-closeout-brutal-self-review.md §f.7
+- [ ] [ready] **Close-the-loop on the two upstream candidates** — quotaboard vendor sync + dnsblockd host-capture semantics **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.50

@@ -43,3 +43,5 @@
 ## f) Harvest obligations
 
 Self-harvested at authoring time: both [ready] rows (vanish investigation + bundle survival) → `docs/todo/stability.md`; the deploy payload sync → both surfaces (TODO_LIST.md:1956 + stability.md:340); ledger row #50 → `docs/agents/stability.md`. Deliberately NOT harvested: §e.2/§e.3 check ideas (lint/check-surface additions are T-surface work — they belong to pipeline.md's owner sweep, and adding rows for them now would duplicate the §e ledger); the freeze-#51 watch lives in the ledger row (§b.2), not as a queue row (it is a state, not an ask).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE §f-d · already-tracked §f-a §f-b §f-c · §f-e merged into the OnCalendar-lint + LogFilterPatterns rows (freeze-50 selfreview)

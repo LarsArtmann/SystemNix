@@ -87,3 +87,5 @@
 - Storm watchers: 40-poll log (00:00–00:33, min avg10 26.56) + 4h quiet watcher (00:33–04:32, TIMEOUT, one disk ~101% throughout; nix-optimise started 01:44:59 = the sustained-98% step)
 - Landing attribution (secondary): parallel session report `docs/status/2026-11-07_01-20_deploy-unblock-buildflow-split-brain-and-live-post-deploy-failures.md` a.13
 - Edits landed via daemon commits `ed7027c0d`, `bc37a817a`, `225085b95` (+ the evidence-path fix riding the next batch)
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 · already-tracked f.5 f.8 f.9 f.10 · OBSOLETE f.11 f.12 · NEW rowed: f.2 f.4 f.6 → desktop, f.7 → upstream

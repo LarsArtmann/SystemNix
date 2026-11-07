@@ -374,3 +374,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Failed-declared-mount visibility metrics** — storage-collector textfile + system_failed_mount_units metric **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.44 + §f.45
 - [ ] [ready] **Loud notification for force-level-2 deploys** — Discord toast **Source:** docs/status/2026-11-05_21-03_freeze-49-fix-session-brutal-self-review.md §f.23
 - [ ] [ready] **Verify the sev1-bridge notify channel** — the 30-min cadence claim is inherited-unverified **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.22
+- [ ] [watch] **Re-verify system-health worst-case budget rows under the current storm regime** **Source:** docs/status/2026-11-06_03-47_deploy-unblock-fixes-landed-deploy-orphaned-session-status.md §f.20
+- [ ] [decision] **§22 duplicate-copy-count textfile metric** — restore the lost post-prune row **Source:** docs/status/2026-11-06_22-39_ca-parity-session-brutal-self-review-status.md §f.7
+- [ ] [ready] **rpi3-dns external emergency-mode alarm** — 1-min probe + 3-strike; the 11-min blind window must never repeat **Source:** docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.2
+- [ ] [ready] **Gateway-degraded posture signal** — gateway_armed AND rpi3-resolver-dead must page **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.5

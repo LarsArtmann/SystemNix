@@ -459,3 +459,15 @@ Boot -1 (Oct 06 21:09:52 → 21:50:42, 40m50s): the post-#19 recovery boot. Zone
 - [ ] [decision] **Coredump retention policy on evo-x2** — both 0.6.0 cores went Storage-missing within ~19h **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.12
 - [ ] [ready] **SIGABRT families table** — flm/gomp vs bge/embedding-assert; stop cross-family misattribution **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.25
 - [ ] [watch] **boot-mirror-sync trigger state check** — no gen installed means no path trigger fired **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.31
+- [ ] [decision] **Scoped .crush attribution recipe** — bounded-query protocol; never parts-LIKE under PSI>40 **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.7 + docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.14
+- [ ] [ready] **Guard attribution leg for IO-PAUSE trips** **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.10
+- [ ] [ready] **Single-source /var/tmp forensic-bundle tmpfiles retention** — 14d vs 30d split-brain **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.11 + §f.12
+- [ ] [ready] **Capture-cadence adaptivity** — per-boot capture budget in io-psi-forensics.sh **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.16
+- [ ] [ready] **Freeze-ledger precision syncs** **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.17 + §f.18
+- [ ] [ready] **dnsblockd cold-boot blocklist burst profiling** **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.20
+- [ ] [ready] **scripts/storm-state.sh owner-visible one-liner** — PSI + zram + guard-trip counter + top-3 stalled **Source:** docs/status/2026-11-06_06-44_brutal-self-review-freeze50-triage-session.md §f.28 + docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.12
+- [ ] [ready] **VM-reproduce the automount-local-fs-emergency chain** **Source:** docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.3 + §f.6 + §f.10
+- [ ] [ready] **Freeze-51 evidence close-out reads** — ClickHouse death-window tail + boot-0 completeness probes **Source:** docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.4 + §f.5
+- [ ] [blocked:user] **Attribute the 00:43 forced deploy** — owner answer decides the no-EQUALS-1-for-agents rule **Source:** docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.7
+- [ ] [ready] **Delete ~/.cache/incident-20261107** — ~20k duplicated lines of cache hygiene **Source:** docs/status/2026-11-07_01-36_freeze-51-triage-session-brutal-self-review.md §f.11
+- [ ] [ready] **Attribute the 00:51 exit-129** — deploy process-tree kill; mitigation shipped, cause unknown **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.18

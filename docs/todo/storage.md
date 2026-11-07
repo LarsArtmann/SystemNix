@@ -338,3 +338,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [watch] **dio-vs-none read-rate comparison line** — add when dio datapoints accumulate **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.18
 - [ ] [ready] **bench-cold-load verification affordances** — derived-model echo + dry-run flag **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.19 + §f.20
 - [ ] [ready] **bench-cold-load /tmp residue cleanup** — trash stale dirs + tmpfiles age-out rule **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.22 + §f.23
+- [ ] [decision] **Root pool 100-percent chunk-allocated filtered balance** — 722.5/722.5 GiB, 90 percent df; the churn engine (owner timing) **Source:** docs/status/2026-11-07_06-35_gateway-deploy-completion-self-review-status.md §f.31

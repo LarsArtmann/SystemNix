@@ -57,3 +57,5 @@ Harvested at authoring time: verify battery + MacBook-Chrome rows (services.md),
 1. Ratify the decrypt scope (23 TLDs, both devices, empty excludes) or narrow — it is owner-tunable data, not doctrine.
 2. Full self-capture ("MITM myself" including evo-x2's own browser while rpi3 lives) requires flipping the host resolver to dnsblockd-first — trading SSH-by-name (needs a github.com local-zone escape) and SearXNG engines (needs the DNS-allowlist decision). Currently NOT done; host decrypts only in rpi3-down windows.
 3. Float wave: investigate the `Cannot build` unit drvs or confirm the sibling session is alive to finish it.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE h.1 · already-tracked §g-1 §g-2 §g-3(leg) · OBSOLETE h.3 · NEW rowed: h.2 → services [decision] full self-capture

@@ -129,3 +129,5 @@ That is 28 substantive items. Items 29-50 are withheld deliberately: without new
 **HARVEST status:** deliberately NOT harvested this session — owner instruction "THEN WAIT FOR INSTRUCTIONS" makes §f routing an owner-gated step (recorded here per the self-harvest rule). On go: route per file ownership — 1-11, 13-20 → `docs/todo/desktop.md` or a new research follow-up row; 21-27 → `docs/todo/services.md`; 12 → this report's chat thread; 28 → this pass.
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.28 (this pass) · already-tracked f.22 f.25 · OBSOLETE f.12 · NEW rowed: 17 rows (merged f.2+3, f.6+11, f.7+8+9+10+15, f.19+20) → desktop 8, services 6, pipeline 1, ai-stack 2, security 1

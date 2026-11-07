@@ -69,3 +69,5 @@
 1. **§22 steady-state verdict level** — the 2-copy buildcatrust duplication is now documented and the WARN self-explains. Do you want it to stay a **WARN on every deploy** (tripwire doctrine, but a permanent yellow line), or demote to **PASS-with-note** while keeping WARN only for >2 copies / fingerprint mismatch?
 2. **Row 1867 (existing owner-gated)** — is the plain+TRUSTED bundle duplication acceptable **permanent** hygiene, or should I dispatch an evaluation (and possible upstream filing) of `security.pki.useCompatibleBundle` (which carries the CA once but strips p11-kit trust rules — a trust-semantics change across all consumers)?
 3. **Row 1836 (upstream)** — spend a dispatch source-verifying and filing the buildcatrust double-emission upstream (verify-before-filing + github-voice), or close it as documented-known and keep only the local tripwire?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.8 f.10 f.12 · already-tracked f.1 f.2 f.4 f.15 f.18 · OBSOLETE f.13 · NEW rowed: 9 rows → pipeline 6, services 3, monitoring 1 (f.7 restores the lost post-prune row)

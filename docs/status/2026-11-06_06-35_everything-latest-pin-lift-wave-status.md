@@ -81,3 +81,5 @@
 **Self-harvest note (deliberately deferred, rationale recorded per the authoring-time rule):** §f items 1–8 are the in-flight wave (owned by the owner's standing directive + this report's next-action chain — harvesting them into TODO surfaces mid-red-float would split ownership with the next proof iteration); items 9–15 (watch-row ticks, memory updates, CHANGELOG, extraction script, compat-workflow repricing) are deliberately queued HERE for the next HARVEST pass rather than edited now — the tree is one proof iteration from green and every TODO-surface edit adds daemon-sweep surface (three glued commits tonight are the evidence). The wave completion report will carry the full self-harvest.
 
 **Next action on resume:** §f.1 (the four assertion fixes), then the proof loop.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-3 f.6 f.7 f.8 · already-tracked f.5 f.15 · OBSOLETE f.11 · NEW rowed: 6 rows (merged f.4+08-40 §f.4, f.9+08-40 §f.20, f.10+08-40 §f.8, f.12+06-35-gateway §f.24) → pipeline 6

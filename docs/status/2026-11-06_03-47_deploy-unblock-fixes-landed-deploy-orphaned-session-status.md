@@ -80,3 +80,5 @@ Companion earlier report this session: `docs/status/2026-11-05_19-42_deploy-bloc
 ---
 
 **Wait-state:** session parked per instruction; no further actions until directed.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.14 · already-tracked f.4-9 f.11 f.13 f.15-17 f.19 · OBSOLETE f.12 f.22 · NEW rowed: 7 rows (merged f.2+3) → pipeline 4, services 2, monitoring 1; f.10 merged with 06-35 §f.30

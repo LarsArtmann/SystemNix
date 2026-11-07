@@ -34,3 +34,5 @@
 ## f) Follow-ups at authoring time
 
 - None new. Deliberate non-harvests: the §22 telemetry decision row (TODO_LIST:1866, `[decision]`, owner-gated) is unchanged and the 2-copy steady state it describes is now what the WARN itself names; the upstream buildcatrust filing row (TODO_LIST:1836) is a separate dispatch requiring verify-before-filing + github-voice and was not started here.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked §f-1 · §f-2 carried as the 22-39 §f.7 proposal (old row not found post-prune); section states None new — WARN steady-state work landed (CHANGELOG.md:388)
