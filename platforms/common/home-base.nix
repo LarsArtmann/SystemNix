@@ -23,6 +23,7 @@ in
     ./programs/activitywatch.nix
     ./programs/push-stall-watch.nix
     ./programs/trash-prune.nix
+    ./programs/boot-evidence-gc.nix
     ./programs/tmux.nix
     ./programs/git.nix
     ./programs/jujutsu.nix
