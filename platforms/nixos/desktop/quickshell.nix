@@ -138,20 +138,13 @@ in
       port = ports.quotaboard;
       dmsPlugin.placeInBar = true;
       environmentFile = osConfig.sops.templates."quotaboard-env".path;
-      # vendorHash shim (2026-11-06): upstream 61801b1 "chore(deps): update Go
-      # dependencies" bumped go.mod WITHOUT refreshing nix/vendorHash.nix, so
-      # the go-modules FOD still expects the PRE-bump vendor tree. Local
-      # builds silently reused the stale store path (same FOD output name)
-      # and died "inconsistent vendoring"; a fakeHash probe names the real
-      # value (first-hand: quotaboard-0.1.1-go-modules specified AAAA…,
-      # got ajV4Osr8…). Drop when upstream bakes it (re-lock past that rev).
-      # mkForce: the upstream module defines this option plainly (a bare
-      # assignment), so a second plain definition is a conflict at eval.
-      package = lib.mkForce (
-        quotaboard.packages.${pkgs.system}.quotaboard.overrideAttrs {
-          vendorHash = "sha256-ajV4Osr8icios365c6MdIxCwiXR0/BcR7OehU0EnyOM=";
-        }
-      );
+      # The 2026-11-06 vendorHash mkForce shim is DROPPED per its own
+      # "drop when upstream bakes it" clause: upstream re-pinned
+      # nix/vendorHash.nix (av8Nq83C, green toplevel proof at 579af78 on
+      # 2026-11-07). The shim's stale ajV4Osr8 pin was the real cause of the
+      # 2026-11-06 float rollback (misattributed to upstream vendoring).
+      # services.quotaboard.package comes from the home module itself, which
+      # closes over the flake input and ships the ldflags-stamped package.
     };
 
     programs.dank-material-shell = {
