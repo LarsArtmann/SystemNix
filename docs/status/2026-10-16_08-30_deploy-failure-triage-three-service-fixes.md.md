@@ -1,0 +1,2 @@
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 · OBSOLETE f.3 f.7 f.13 f.31 f.33 f.44 (flm class) · already-tracked f.1 f.2 f.17 f.18 f.19 f.20 f.25 f.26 f.28 f.30 f.39 f.40 f.42 f.43 · NEW rowed: f.4 f.14 → stability, f.6 f.10 f.23 f.29 → services, f.9 f.11(+f.45) f.15 f.16 f.21 f.27 f.32 f.36 f.37 f.38 f.46 f.47 → pipeline, f.12(+f.35) f.34 → security, f.22 → monitoring, f.41 → storage
