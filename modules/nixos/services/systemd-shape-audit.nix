@@ -72,6 +72,16 @@
 #    fired despite the config claiming it). Unit-level keys go at the unit
 #    top level (sibling of after/wants), not inside serviceConfig.
 #
+# 9. The MIRROR IMAGE of class 8: [Service]-section keys nested inside
+#    unitConfig. unitConfig serializes into [Unit], where every key below
+#    in the serviceSectionKeys list is invalid — systemd logs "Unknown key
+#    'TimeoutStartSec' in section [Unit], ignoring" and the budget/limit/
+#    sandbox intent silently never applies (live incident: nsfw-classifier
+#    TimeoutStartSec=10min in unitConfig, switch-journal-proven
+#    2026-11-05 07:36:48 — the cold start rode the global default while
+#    the config claimed 10min; same authoring bug in nsfw-immich-scan's
+#    6h sweep budget, fixed on sight the same session).
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -238,6 +248,248 @@
       onFailureInServiceConfigOffenders = lib.attrNames (
         lib.filterAttrs (_n: svc: svc.serviceConfig ? OnFailure) config.systemd.services
       );
+
+      # --- class 9: [Service]-section keys nested inside unitConfig ---
+      # Every key below is documented in systemd.service(5)/systemd.exec(5)/
+      # systemd.resource-control(5)/systemd.kill(5) and is INVALID in the
+      # [Unit] section systemd.unit(5) defines. unitConfig serializes into
+      # [Unit], so any of these here is an authoring error systemd silently
+      # ignores ("Unknown key '…' in section [Unit], ignoring"). Keys VALID
+      # in [Unit] (StartLimit*, JobTimeout*, Condition*/Assert*, OnFailure/
+      # OnSuccess, LogRateLimit*, RequiresMountsFor, DefaultDependencies, …)
+      # are deliberately NOT listed — flagging them would invert the audit
+      # into the class-8 trap. The "Limit*" rlimit family is matched whole
+      # by prefix (no [Unit] key starts with "Limit").
+      serviceSectionKeys = [
+        # process & lifecycle (systemd.service)
+        "Type"
+        "ExitType"
+        "RemainAfterExit"
+        "GuessMainPID"
+        "PIDFile"
+        "BusName"
+        "NotifyAccess"
+        "Sockets"
+        "USBFunctionDescriptors"
+        "USBFunctionStrings"
+        "OOMPolicy"
+        "Restart"
+        "RestartSec"
+        "RestartSteps"
+        "RestartMaxDelaySec"
+        "RestartMaxDurationSec"
+        "RestartPreventExitStatus"
+        "RestartForceExitStatus"
+        "SuccessExitStatus"
+        "RootDirectoryStartOnly"
+        "NonBlocking"
+        "FileDescriptorStoreMax"
+        "ExecStart"
+        "ExecStartPre"
+        "ExecStartPost"
+        "ExecCondition"
+        "ExecReload"
+        "ExecStop"
+        "ExecStopPost"
+        "ExecSearchPath"
+        "TimeoutSec"
+        "TimeoutStartSec"
+        "TimeoutStopSec"
+        "TimeoutAbortSec"
+        "TimeoutStartFailureMode"
+        "TimeoutStopFailureMode"
+        "RuntimeMaxSec"
+        "RuntimeRandomExtraSec"
+        "WatchdogSec"
+        "MountFlags"
+        # process kill (systemd.kill)
+        "KillMode"
+        "KillSignal"
+        "SendSIGKILL"
+        "SendSIGHUP"
+        "WatchdogSignal"
+        # identity & environment (systemd.exec)
+        "User"
+        "Group"
+        "SupplementaryGroups"
+        "DynamicUser"
+        "SetLoginEnvironment"
+        "PAMName"
+        "WorkingDirectory"
+        "RootDirectory"
+        "RootImage"
+        "Environment"
+        "EnvironmentFile"
+        "PassEnvironment"
+        "UnsetEnvironment"
+        "KeyringMode"
+        "OOMScoreAdjust"
+        "TimerSlackNSec"
+        "CoredumpFilter"
+        # sandbox & capabilities (systemd.exec)
+        "NoNewPrivileges"
+        "CapabilityBoundingSet"
+        "AmbientCapabilities"
+        "SecureBits"
+        "UMask"
+        "SELinuxContext"
+        "AppArmorProfile"
+        "SmackProcessLabel"
+        "ProtectSystem"
+        "ProtectHome"
+        "ProtectProc"
+        "ProcSubset"
+        "ProtectKernelTunables"
+        "ProtectKernelModules"
+        "ProtectKernelLogs"
+        "ProtectControlGroups"
+        "ProtectClock"
+        "ProtectHostname"
+        "PrivateTmp"
+        "PrivateDevices"
+        "PrivateNetwork"
+        "PrivateUsers"
+        "PrivateIPC"
+        "PrivateMounts"
+        "NetworkNamespacePath"
+        "IPCNamespacePath"
+        "RestrictAddressFamilies"
+        "RestrictNamespaces"
+        "RestrictRealtime"
+        "RestrictSUIDSGID"
+        "RestrictFileSystems"
+        "RemoveIPC"
+        "MemoryDenyWriteExecute"
+        "MemoryKSM"
+        "LockPersonality"
+        "Personality"
+        "IgnoreSIGPIPE"
+        "SystemCallFilter"
+        "SystemCallErrorNumber"
+        "SystemCallArchitectures"
+        "SystemCallLog"
+        "ReadWritePaths"
+        "ReadOnlyPaths"
+        "InaccessiblePaths"
+        "ExecPaths"
+        "NoExecPaths"
+        "TemporaryFileSystem"
+        "BindPaths"
+        "BindReadOnlyPaths"
+        "MountAPIVFS"
+        "ExtensionDirectories"
+        "ExtensionImages"
+        "LoadCredential"
+        "LoadCredentialEncrypted"
+        "SetCredential"
+        "SetCredentialEncrypted"
+        "ImportCredential"
+        # directories (systemd.exec)
+        "RuntimeDirectory"
+        "StateDirectory"
+        "CacheDirectory"
+        "LogsDirectory"
+        "ConfigurationDirectory"
+        "RuntimeDirectoryMode"
+        "RuntimeDirectoryPreserve"
+        "StateDirectoryMode"
+        "CacheDirectoryMode"
+        "LogsDirectoryMode"
+        "ConfigurationDirectoryMode"
+        # stdio & logging (systemd.exec; LogRateLimit*/LogExtraFields/
+        # LogFilterPatterns/LogNamespace are [Unit] and stay OUT)
+        "StandardInput"
+        "StandardOutput"
+        "StandardError"
+        "StandardInputText"
+        "StandardInputData"
+        "LogLevelMax"
+        "SyslogIdentifier"
+        "SyslogFacility"
+        "SyslogLevel"
+        "SyslogLevelPrefix"
+        "TTYPath"
+        "TTYReset"
+        "TTYVHangup"
+        "TTYVTDisallocate"
+        "TTYColumns"
+        "TTYRows"
+        # scheduling (systemd.exec)
+        "Nice"
+        "CPUSchedulingPolicy"
+        "CPUSchedulingPriority"
+        "CPUSchedulingResetOnFork"
+        "CPUAffinity"
+        "CPUAffinityMode"
+        "NUMAPolicy"
+        "NUMAMask"
+        "IOSchedulingClass"
+        "IOSchedulingPriority"
+        # resource control (systemd.resource-control)
+        "CPUAccounting"
+        "CPUWeight"
+        "StartupCPUWeight"
+        "CPUQuota"
+        "CPUQuotaPeriodSec"
+        "AllowedCPUs"
+        "AllowedMemoryNodes"
+        "MemoryAccounting"
+        "MemoryMin"
+        "MemoryLow"
+        "MemoryHigh"
+        "MemoryMax"
+        "MemorySwapMax"
+        "MemoryLimit"
+        "TasksAccounting"
+        "TasksMax"
+        "IOAccounting"
+        "IOWeight"
+        "StartupIOWeight"
+        "IOReadBandwidthMax"
+        "IOWriteBandwidthMax"
+        "IOReadIOPSMax"
+        "IOWriteIOPSMax"
+        "DeviceAllow"
+        "DevicePolicy"
+        "IPAccounting"
+        "IPAddressAllow"
+        "IPAddressDeny"
+        "IPIngressFilterPath"
+        "IPEgressFilterPath"
+      ];
+      serviceKeysInUnitConfig =
+        svc:
+        let
+          present =
+            builtins.filter
+              (
+                k:
+                svc.unitConfig.${k} != null
+                && (builtins.elem k serviceSectionKeys || lib.hasPrefix "Limit" k)
+              )
+              (builtins.attrNames svc.unitConfig);
+        in
+        if present == [ ] then null else present;
+      serviceKeyInUnitConfigOffenders =
+        let
+          bad =
+            lib.filterAttrs
+              (
+                name: svc:
+                let
+                  keys = serviceKeysInUnitConfig svc;
+                in
+                keys != null
+                && builtins.any (k: !builtins.elem "${name}:${k}" cfg.allowUnitConfigServiceKeys) keys
+              )
+              config.systemd.services;
+        in
+        lib.mapAttrsToList (
+          name: svc: {
+            inherit name;
+            keys = serviceKeysInUnitConfig svc;
+          }
+        ) bad;
     in
     {
       options.services.systemd-shape-audit = {
@@ -259,6 +511,16 @@
             whose unbounded TimeoutStartSec is deliberate. Every entry MUST
             carry a justification comment where it is set, plus the condition
             under which it should gain a bound.
+          '';
+        };
+        allowUnitConfigServiceKeys = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            "<unit>:<Key>" pairs where a [Service]-section key nested inside
+            unitConfig is deliberate. Every entry MUST carry a justification
+            comment where it is set. There should be no such entries: every
+            key in serviceSectionKeys is invalid in [Unit].
           '';
         };
       };
@@ -375,6 +637,25 @@
             journal-proven 2026-10-17).
             Fix: hoist it to the unit TOP LEVEL:
               systemd.services.<name>.onFailure = [ "notify-failure@%n.service" ];
+          '';
+        }
+        {
+          assertion = serviceKeyInUnitConfigOffenders == [ ];
+          message = ''
+            systemd-shape-audit: [Service]-section key(s) nested inside unitConfig for:
+            ${lib.concatStringsSep ", " (
+              map (o: "${o.name} (${lib.concatStringsSep ", " o.keys})") serviceKeyInUnitConfigOffenders
+            )}
+            unitConfig serializes into the [Unit] section, where these keys are
+            invalid — systemd ignores them with "Unknown key '…' in section
+            [Unit]" and the intent silently never applies (nsfw-classifier
+            TimeoutStartSec, journal-proven 2026-11-05: the unit rode the
+            global default while the config claimed 10min).
+            Fix: move the key into serviceConfig, its real section:
+              systemd.services.<name>.serviceConfig.TimeoutStartSec = "10min";
+            Deliberate exception:
+              services.systemd-shape-audit.allowUnitConfigServiceKeys = [ "<unit>:<Key>" ];
+            with a justification comment.
           '';
         }
       ];
