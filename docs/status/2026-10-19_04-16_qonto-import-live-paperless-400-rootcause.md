@@ -59,3 +59,5 @@
 1. Apply fix + redeploy now (items 1–2), or hold?
 2. Same force-deploy policy as the last two activations (case-by-case, on-record) — still your preference while the storm rows stay open?
 3. The two foreign fixes I landed to unblock the box (forgejo gates + selftest env) — keep as-is, or do you want their owning sessions to re-own/refactor them?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.5 · already-tracked f.7 · NEW rowed: f.3 f.4 → upstream, f.6 (+05-17 §f.5) → services

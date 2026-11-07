@@ -105,3 +105,5 @@ _(companion to [2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md](./202
 ---
 
 **Bottom line:** diagnosis and recovery were solid and evidence-backed; the honest debts are (1) an unverified "zero data loss" claim that hinges on an unchecked blank-era paperless DB, (2) no functional post-recovery sweep or backup re-anchor yet, and (3) two in-session edit/measurement mistakes that were caught only by my own re-reads — the checklist/discipline items in (e) exist to make those catches structural instead of lucky.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.12 f.13 f.16 f.24 · already-tracked f.26 · OBSOLETE f.1 f.9 f.10 f.21 f.31 · NEW rowed: 15 rows (merged f.2+3+5, f.4+8, f.6+7, f.11+18, f.14+15) → services 7, monitoring 2, storage 3, pipeline 1, +2 watches

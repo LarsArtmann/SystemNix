@@ -147,3 +147,5 @@ The deploy was blocked by **three independent failures**, only one of which was 
 | Storm driver            | `journalctl -u memory-emergency-guard`                               | trip #4158, `inboxclean-web.service/io.stat +13237MB`                                        |
 | Storm mechanism         | `journalctl -u inboxclean-web`                                       | `GET / … duration=4.99s`, 12× `context canceled` in 3 min, `/health` 503                     |
 | Commit state            | `git log --oneline -1`                                               | `866baaccd chore: auto-commit 1 changed file(s) (heuristic)`                                 |
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.12 f.19 · already-tracked f.5 f.11 f.13 f.16 f.22 f.27 f.32-34 · OBSOLETE f.6 f.17 f.20 f.21 f.26 f.31 f.35 · NEW rowed: 8 rows (merged f.9+10, f.14+15, f.28+29)

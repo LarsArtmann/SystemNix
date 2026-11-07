@@ -117,3 +117,5 @@ _(Items beyond 40 are deliberately not padded — the list stops where real work
 ---
 
 **Report basis:** this session's run only (tombstone 37f1e866e → push d60cc6ab0). Live evidence and full task table: [2026-10-23_08-05_berth-patterns-execution.md](./2026-10-23_08-05_berth-patterns-execution.md).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.3 f.31 · already-tracked f.4 f.5 f.9 f.11-13 f.26 f.27 f.36 f.37 f.39 · OBSOLETE f.6 f.15 f.28 f.38 · NEW rowed: 15 rows (merged f.7+8, f.20+21, f.30+12-38 §f.30, f.32-35) → ai-stack 7, pipeline 3, services 1, monitoring 2, storage 1

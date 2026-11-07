@@ -119,3 +119,5 @@ Scrubs were suspected and eliminated (no scrub threads, empty scrub slice — an
 - **Verification artifacts that worked this round:** `/run/current-system/sw/bin/kill -KILL` + pgrep confirm; the `snap()` simultaneous sampler; cgroup io.stat deltas for exonerations (monitor365, nix-daemon).
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.6 f.7 f.10 f.22 · already-tracked f.4 f.15 f.26 · OBSOLETE f.1 f.2 f.16-18 f.28 · NEW rowed: 6 rows (f.8+23, f.9, f.11, f.12, f.14, f.19) — remaining OPEN items merged into 09-39/13-43 rows

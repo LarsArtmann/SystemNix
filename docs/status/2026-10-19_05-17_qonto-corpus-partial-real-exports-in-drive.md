@@ -49,3 +49,5 @@
 1. **Drive access:** how do you want the folder's exports to reach the box — (a) you download and drop them into `~/projects/bank-sync/data/historical/qonto/transactions/`, (b) I wire read-only access via the google-sync/rclone remote (which remote name is the right one?), or (c) wait for the drive-paperless ingest pipeline to go live?
 2. Are the Drive exports **CSV transaction exports** (what the importer reads), or do they include other artifacts (attachments/PDF statements) that should also flow into Paperless-ngx?
 3. Should the full-history import also extend the archive set (more statement documents per period), or keep the current two period-span CSVs as the archival representation?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.3 · already-tracked f.6 · NEW rowed: f.4 (+13-42 §f.1-2) → services

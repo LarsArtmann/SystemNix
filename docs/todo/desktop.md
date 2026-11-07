@@ -147,3 +147,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Verify DMS DnsStatsWidget unaffected by csrf (Bearer flow)** **Source:** docs/status/2026-09-30_13-07 §f.13
 - [ ] [ready] **Drop dead docker_context.disabled setting from platforms/common/programs/starship.nix:80** — remove the obsolete Docker prompt config left after the 2026-10-08 Docker removal **Source:** docs/status/2026-10-08_14-23_docker-removal-logs-redirect-self-review.md §f.12
 - [ ] [ready] **Reword stale docker CLI comments in platforms/darwin/programs/shells.nix:55,75** — update macOS PATH comments still referencing a Nix-shipped docker CLI **Source:** docs/status/2026-10-08_14-23_docker-removal-logs-redirect-self-review.md §f.13
+- [ ] [ready] **dms-shell 2.0.0 installPhase deep-dive** — rerun drv, capture full log (1.6.3 builds clean; only the stale-comment row exists) **Source:** docs/status/2026-10-23_16-06_deploy-build-blockers-followup.md §f.3

@@ -78,3 +78,5 @@
 1. **Paperless representation:** keep or delete the two span-CSV extract documents now that the 40 monthly PDFs supersede them? (Deletion is a data decision I won't make unilaterally.)
 2. **Attachment corpus:** archive ALL ~1000 qonto_archive files (PDFs AND PNG receipts) plus the receipts/ folders into Paperless, or a subset (e.g. PDFs only)? Related: the 230MB corpus lives only in `~/Downloads` — should the non-git portion (attachments, Wolt, strays) move to a durable pool location, and where?
 3. **Wise corpus:** import the Wise XLS/mt940 history into bank-sync now (same mission shape as Qonto), and should Wise statements also flow to Paperless via the same unit pattern — or is Wise exclusively API-synced going forward, making file imports redundant overlap?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.7 f.27 · already-tracked f.8 f.30 · OBSOLETE f.14 f.28 · NEW rowed: 16 rows (merged f.3-6+19 Wise, f.11+17, f.15+16) → services 5, upstream 7, storage 2, monitoring 1, pipeline 1

@@ -143,3 +143,5 @@ The session's most important deliverable was also its worst moment: **the IO sto
 - **Reproduction snippets that work** (verified this session): idle-IO scan `ionice -c3 nice -n19 timeout 570 du -xh --max-depth=1 <dir>`; live per-cgroup IO = two `io.stat` snapshots 5s apart, join on sorted cgroup paths; per-partition busy% = two `/proc/diskstats` snapshots, busy = Δms_doing_io/window_ms.
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.16 f.46 f.50 · already-tracked f.1 f.4 f.11 f.12 f.19 f.44 · NEW rowed: 19 rows (merged f.2+8+39-41, f.3+5-7, f.13+14+23, f.17+18+22+49, f.24-29, f.36+48, f.43+45) → storage 11, monitoring 4, pipeline 1, services 1, stability 1, +worktree/du watches

@@ -66,3 +66,5 @@ The 02-32 closeout §a "On-sight fix" row, the 02-08 report §g2/§h, the monito
 1. **Deploy window?** The wave is verified and now includes the correction; IO is storming (avg10 75, load 305, third freeze tonight per the 04-02 report). Recommend waiting for a sustained calm window; the battery re-run takes ~5 min right before.
 2. **E9 style call** — accept semantic pack glyphs, or commission the neutral cyan set (~100 min)? Unchanged since queueing.
 3. **PapDashboard CI: repair or retire?** The memo (upstream TODO row 104) recommends retiring; the consumer-side gate has caught everything the dead CI would have.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.5 · already-tracked f.2 f.6 · OBSOLETE f.4 · NEW rowed: f.3 → services [blocked:user]

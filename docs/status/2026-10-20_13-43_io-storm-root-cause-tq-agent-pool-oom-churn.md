@@ -126,3 +126,5 @@ _Items 37-50: intentionally not padded — the R1 list (50 items) still awaits r
 - **Final measured state at writing:** p6 bursting 62-99% busy between quiet windows; PSI io some avg10 ~40; pool alive and dispatching; your four services down; two agent trees demoted (idle class); drive healthy; zero data lost anywhere.
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.6 f.25 · already-tracked f.3 f.4 f.17 f.18 f.20 f.24 f.26 f.27 f.30 · OBSOLETE f.1 f.9 f.26 f.31 f.34 f.36 · NEW rowed: 12 rows (merged f.2+14-16 §f.3, f.7+21+14-16 §f.20, f.10+11, f.14+15, f.16+14-16 §f.21, f.19+14-16 §f.29+30, f.32+14-16 §f.13, f.35+14-16 §f.25)

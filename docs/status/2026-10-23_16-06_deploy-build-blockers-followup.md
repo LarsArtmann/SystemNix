@@ -111,3 +111,5 @@ The three **eval/gate** blockers from the first pass are gone (eval green, pre-v
 5. **`linux-7.3-modules` / r8125**: another Crush session committed `9a5e59a97` at 16:11 documenting the **kmodigest/modules_install convention change** that broke it and queued the remaining work. Do not duplicate that fix from here.
 
 **Consequence:** a clean build needs either (a) nixpkgs rolled back to the running rev `fe13242` (which would re-open the crowdsec module rewrite that today's work was built for), (b) local patches for five upstream/nixpkgs defects, or (c) disabling the affected services (`activitywatch`, `signoz`, `dms-shell`, `hermes`, `overview`) in this generation.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.6 f.7 · already-tracked f.2 f.5 f.9 · OBSOLETE f.8 f.10 · NEW rowed: f.3 → desktop, f.4 → upstream

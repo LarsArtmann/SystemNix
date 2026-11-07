@@ -53,3 +53,5 @@ Executed v2 sprints **T-001 through T-006** (all P0, top-down): two already-sati
 4. The lock-wave session owns: crowdsec render tests (their `5e3c05033`), the forgejo-runner row tick (their migration, verified green by this session).
 
 _Report authored by instance `superb-masterplan-v2-exec-1`; marker flips to EXECUTED in the same commit as this report._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.b2 · already-tracked f.b1 f.b3 · OBSOLETE f.b4 (bookkeeping statement)

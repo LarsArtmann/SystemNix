@@ -118,3 +118,5 @@ Preflight scripts over discipline; verbose-first on any surprising failure; regi
 ## Harvest record
 
 §e.1/§f.19 = upgraded existing row (both surfaces). §e.5/AGENTS rg-note + §e.3/README registration = applied fix-on-sight this hour, no rows needed. §f.1–18 all pre-existing rows (pointers). Nothing deliberately unharvested.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-4 f.6-8 f.10-17 (16 of 19 items; the 07-49 report had pre-existing rows) · OBSOLETE f.19 · NEW rowed: f.5 → services [blocked:user], f.9-12 → upstream

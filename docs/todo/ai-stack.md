@@ -97,3 +97,11 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Re-key rotation drill** — verify ai-meter client-key re-mint works after reboot **Source:** docs/status/2026-10-17_08-58_zai-1113-outage-ai-meter-fix-signoz-integration.md §f.46
 - [ ] [watch] **gemini/kimi plan-vs-endpoint mismatch review** — same class as zai, different providers **Source:** docs/status/2026-10-17_08-58_zai-1113-outage-ai-meter-fix-signoz-integration.md §f.47
 - [ ] [decision] **tq agent-pool provider: keep zai or move to a cheaper dedicated provider** **Source:** docs/status/2026-10-17_08-58_zai-1113-outage-ai-meter-fix-signoz-integration.md §f.50
+- [ ] [watch] **tq pool health probe** — owner said do-not-care-right-now; revisit when they care **Source:** docs/status/2026-10-18_00-40_dropcycle-closeout-13-shims-dropped-full-green.md §f.17
+- [ ] [watch] **Unit-context verification of leak-collector forensic lines** — can the FOREIGN journal line and dark-guard lines fire under the unit sandbox **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.7 + §f.8
+- [ ] [ready] **Re-run CASES=portguard against the deployed tree** — idempotence sanity **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.10
+- [ ] [ready] **Why hermes spawned the :8849 reranker** — cron worker? agent session? recurrence prevention at the source **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.14
+- [ ] [ready] **Rogue-while-enabled gauge** — dark-guard parity, own negative test **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.17
+- [ ] [ready] **llama-chat-side leak/health collector** — parity with the module-scoped llama-rag leak metric **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.18
+- [ ] [watch] **bind-blocked refusal reason + consumer-story review** — implement the T5 reason surface when a consumer story exists **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.20 + §f.21
+- [ ] [ready] **test-ai-stack-status fixture** — scripts/ai-stack-status.sh has zero test coverage **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.23
