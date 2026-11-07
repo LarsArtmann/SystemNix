@@ -100,3 +100,5 @@ All remaining ranked items: **#4–40** (37 items: AGENTS.md edits #4/#6/#30/#49
 1. **Resume or re-plan?** Should I continue executing the remaining ~45 ranked items now (batch-per-domain, commit-per-batch, edits+marks in one commit each), or do you want the order changed (e.g., bookkeeping + code/config items before the conventions batch)?
 2. **Attribution for non-queue sessions:** this session's work is unattributable inside sweep commits (`873ffb2e`). Do you want non-queue sessions to use a footer-bearing commit convention (like tq tasks), or is daemon-sweep attribution acceptable?
 3. **Deploy-gated config items** (#44 rpi3 mkForce drop, #45 golines→base.nix, #47 `boot.binfmt.preferStaticEmulators`): land edit-only this pass with deploys queued owner-side, or hold these three until you confirm a deploy window?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1 (already-complete finding sweep) folds into the 10-01_10-13 f.1 row · f.2 probably-fixes query folds into pipeline lint rows · both OPEN via shared rows.

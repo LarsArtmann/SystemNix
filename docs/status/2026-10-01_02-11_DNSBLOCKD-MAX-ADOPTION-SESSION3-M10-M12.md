@@ -99,3 +99,5 @@
 ---
 
 **Awaiting instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1 (owner broadcast) folds into the 13-07 f.1 row · f.2 (gemini key) folds into the 07-47 f.7 row · f.3 (README surface) rides the M19-M22 family · all OPEN via those shared rows.

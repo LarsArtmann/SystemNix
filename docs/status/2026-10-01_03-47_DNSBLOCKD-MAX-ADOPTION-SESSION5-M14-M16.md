@@ -122,3 +122,5 @@ Resumed at the M14 resume point and executed M14, M15, M16 to completion — eac
 ---
 
 **State at WAIT:** tree carries only foreign modifications (paperless.nix, test-paperless.nix, check-todo-system.sh — parallel session's); my M14–M16 all landed (daemon/parallel-swept, content-verified); `3e85cf1a` is my attributed fix. WAITING FOR INSTRUCTIONS.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1 f.2 f.3 (agent canary spot-checks) ride the M16-M18/services.md:86 standing rows; DNSBLOCKD R5a/b parts DONE via 13-34 verification.

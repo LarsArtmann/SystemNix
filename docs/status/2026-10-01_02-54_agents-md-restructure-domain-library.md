@@ -175,3 +175,5 @@ pathspec-scoped). Pre-commit gates passed on `8e6409dd` (gitleaks, whitespace,
 the parallel session's in-flight files (`modules/nixos/services/mr-sync.nix`,
 `mr-sync.md` bullet, `tests/test-dns-blocker-render.nix` — theirs, untouched).
 All checks green at last run. No deploy needed (docs-only session).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 (ADR-0078 landed) f.5 f.7 (gate warns on unharvested + prune pass) · OPEN rowed 2026-11-07: f.1 (cheapest checks rule change) → pipeline[decision], f.2 (tq queue-row preverify plugin) → pipeline, f.4 (README stats refresh) → pipeline, f.6 (status reports vs tasks/ split) → pipeline[decision], f.8 (archive fully-harvested 09-29/09-30 reports) → pipeline.

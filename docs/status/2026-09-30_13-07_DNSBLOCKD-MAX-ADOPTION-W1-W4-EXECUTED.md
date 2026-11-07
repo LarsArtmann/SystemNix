@@ -124,3 +124,5 @@
 3. **rpi3 parity:** should the failover DNS instance get the same rate-limit (50/100) + device registry when it next deploys, or stay minimal? (Its eval is green on the new lock; the question is stance, not feasibility.)
 
 **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** M16-M18 + M23.2 ride the standing services.md:86 migration row (already queued) · OPEN rowed 2026-11-07: M19 M20 M21 M22 (dnsblockd /api/devices devices=nokey, Query Log device filter, dashboard coverage enrichment, chart metric per-device — recurring in 6 later reports, ONE row family) → upstream + f.1 (owner broadcast of new frontend) → services[blocked:user]; f.2 (Gemini key) folds into the 07-47 f.7 row (same ask); f.3 f.4 (split-by-popularity M23.1) → upstream.

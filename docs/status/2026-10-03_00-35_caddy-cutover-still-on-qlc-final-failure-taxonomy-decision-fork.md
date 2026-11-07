@@ -98,4 +98,4 @@
 
 _Point-in-time snapshot. Auto-commit daemon will sweep this file; verify by content. Next session: read §g answers first, then execute the chosen branch top-to-bottom._
 
-**Harvest log (2026-11-07, T03 wave):** DONE f.1-f.7 (fix-forward branch, shims, green toplevel 10-04/05) f.13-f.18 (deploy + cutover finalize + doctrine rows, CHANGELOG:1445) · SUPERSEDED f.11 f.12 (rollback branch not taken) f.19 f.20 f.21 (replaced by expected-locks registry + float ritual) · OPEN rowed 2026-11-07: f.8 f.9 f.10 → pipeline (ltrace casualty, litestar wheel, JS frozen-lockfile); f.3 already queued (TODO_LIST:50).
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-f.7 (fix-forward branch, shims, green toplevel 10-04/05) f.13-f.18 (deploy + cutover finalize + doctrine rows, CHANGELOG:1445) · SUPERSEDED f.11 f.12 (rollback branch not taken) f.19 f.20 f.21 (replaced by expected-locks registry + float ritual) · OPEN rowed 2026-11-07: f.8 f.9 f.10 → pipeline (ltrace casualty, litestar wheel, JS frozen-lockfile); f.3 already queued (TODO_LIST:50).

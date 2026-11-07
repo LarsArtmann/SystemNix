@@ -60,3 +60,5 @@ Nothing in Phase 0 — all three tasks whole. (Phase 1+ not started, so no parti
 ---
 
 **Bottom line:** Phase 0 (the enforcement band — the plan's 4%→64% slice) is DONE and verified: link AND anchor integrity is now machine-enforced on every markdown commit, with a selftest pinning the checker's own semantics, and the restructure is recorded in CHANGELOG. 16 of 19 tracked todos remain for Phases 1–3.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** OPEN rowed 2026-11-07: f.1 (plan-marker auto-insertion post-table) → pipeline, f.2 (deploy-block class detector in newer-report scan) → pipeline, f.3 (agent learning: mechanism-first diagnosis) → pipeline, f.4 (R2 provenance README row) → pipeline, f.5 (phase-1 audit fail-open violation) → pipeline, f.6 (linkValidator slowness + dependency injection) → pipeline, f.7 (todo-modules audit table) → pipeline, f.8 (README path integration) → pipeline, f.9 (verify-fleet backfill spans plain subagents) → pipeline, f.10 (purge_nix cleanup) → pipeline.

@@ -81,4 +81,4 @@ Count: 3 new + 4 routed + 12 carried — every item noticed this session has an 
 
 **Format note:** `.md` at the explicitly demanded `docs/status/` path (user instruction overrides the skill's HTML default; flagged per skill). No commit — auto-commit daemon owns report commits (harness contract). §f NEW items are docs-health HARVEST candidates for the next maintenance pass.
 
-**Harvest log (2026-11-07, T03 wave):** 4 routed rows already live in services.md:205/206/207/211 (OPEN, awaiting window); NEW rowed 2026-11-07: N4 N5 N6 → services (read debt, KanyuNix recency, extraction-clean checklist).
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** 4 routed rows already live in services.md:205/206/207/211 (OPEN, awaiting window); NEW rowed 2026-11-07: N4 N5 N6 → services (read debt, KanyuNix recency, extraction-clean checklist).

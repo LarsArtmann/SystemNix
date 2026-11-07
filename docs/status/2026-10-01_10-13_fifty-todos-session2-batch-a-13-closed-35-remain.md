@@ -114,3 +114,5 @@ Ranked, batch-grouped, targets verified this session:
 1. **Session-1's three questions remain unanswered and I've been running on defaults** (resume in ranked order; non-queue sessions use footer-bearing pathspec commits; deploy-gated items #45/#47 land edit-only with deploys queued owner-side). Confirm these or correct before batch F/G.
 2. **Library-row backfill policy for already-landed items whose library rows were pruned mid-flight** (#41 statix, likely #42): backfill a closed row in the library (restores the no-drift pairing), or is the queue-row DONE note an accepted closure when the library row is simply gone?
 3. **Batch F adds ~10 convention paragraphs to CONTRIBUTING.md's Verification section** (already the file's densest area, lines 187–236). Keep the house style (one dated bold-lead paragraph per convention, chronological) or consolidate the new ones into a single "Task-queue & report conventions" subsection to cap section growth?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1 (probably-fixes-sweep — actually-CLOSED single-command check before queueing) OPEN rowed 2026-11-07 → pipeline; folds the 03-33 f.1 duplicate.

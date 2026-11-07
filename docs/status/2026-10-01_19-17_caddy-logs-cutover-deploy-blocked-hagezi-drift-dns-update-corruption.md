@@ -213,3 +213,5 @@ final list may grow. Fix runs through the go-ecosystem upgrade procedure (re-pin
 FOD probe at the new rev → lock/package verify → flake check), NOT blind hash adoption.
 
 §f impact: item 1 (deploy retry) is gated on fixing THIS list first; the rest of §f stands.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** OPEN rowed 2026-11-07: f.1 (dead-SHA dead-link hook guard for status reports) → pipeline, f.2 (cache pin: evalError non-fatal flag) → pipeline, f.3 (automation process violation probe) → pipeline, f.4 (retention vs debug need: priority by tier, not volume) → pipeline, f.5 (fail-loud eval guard: explicit implicit-attrset eval errors) → pipeline.

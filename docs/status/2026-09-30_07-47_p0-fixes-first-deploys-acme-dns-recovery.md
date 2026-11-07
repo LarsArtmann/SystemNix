@@ -132,3 +132,5 @@ reason lives only in the box's journal.)
 ---
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** status CLOSED via live verification (2026-10-01_13-43 hot-tier-verified) · DONE f.5 (close-out stamped) · OPEN rowed 2026-11-07: f.6 (CHANGELOG bookkeeping: rules-vs-facts) → pipeline, f.7 (Gemini API key or local-fallback for M19 html-extraction) → services[blocked:user], f.8 (SECURITY page standard) → security, f.9 f.10 f.11 (jz/ethercalc/gollum review+disable-or-keep) → services, f.12 (M19-M22 upstream PR hints) → upstream, f.13 (darwin+rpi darwin-rebuild eval CI matrix) → pipeline.

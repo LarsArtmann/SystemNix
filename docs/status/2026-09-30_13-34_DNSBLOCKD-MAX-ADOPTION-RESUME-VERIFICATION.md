@@ -203,3 +203,5 @@ new options documented in its runbook section.
 
 **Resume point:** §f item 1 (read the smoke script, then M10 edits). Awaiting
 instructions.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** OPEN rowed 2026-11-07: f.1 f.2 (M19.3 redirects + M20 devices=nokey — both fold into the dnsblockd M19-M22 row family from the 13-07 harvest), f.3 (prometheus/firewall sweep: what depends on what) → services; f.4 (J) rides services.md:86; f.5 (AGENTS RM fix) DONE — wrong-node RM warning shipped; f.6 watches ride services.md:86.

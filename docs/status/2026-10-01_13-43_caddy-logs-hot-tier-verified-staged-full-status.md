@@ -135,3 +135,5 @@ _(Stopped at 40 well-founded items rather than padding to 50 — items 41-50 wou
 ---
 
 _Harvest self-check: §f6/f7/f8 landed in `docs/todo/storage.md` before this report was written (3 rows, citing this file). Everything else in §f either blocks on user action (1-5, 12-17), is already tracked by a standing row (33-40), or is hygiene small enough to ride the next dispatch._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1-f.4 verified by 13-43 (cutover deployed + verified) · OPEN rowed 2026-11-07: f.5 (watch next IO storm for caddy-logs regressions) → monitoring[watch].

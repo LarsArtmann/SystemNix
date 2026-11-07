@@ -89,4 +89,4 @@ The GitHub auth failure is **fully diagnosed and the fixed secret is committed (
 
 **Lesson (one line):** the auth "issue" was never a bug — it was an unexecuted go-live step; the actual hard parts were concurrency (GC + parallel deploys) and an eval-time store dependency reddening every gate on the box.
 
-**Harvest log (2026-11-07, T03 wave):** DONE f.1 f.2 (CHANGELOG 10-04/05) f.14 (deploy.sh fd-scan holder id) f.15 (root-100 losed) · SUPERSEDED f.3-f.6 f.18 (PAT placeholder revert; rides services.md:256 [blocked:user] row) f.16 f.17 · OPEN rowed 2026-11-07: f.8→pipeline (watch: pipeline.md:345) f.9 f.12→upstream f.10→security[blocked:user] f.11→pipeline f.13→upstream[blocked:user]; f.7 already queued (services.md:256).
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 (CHANGELOG 10-04/05) f.14 (deploy.sh fd-scan holder id) f.15 (root-100 losed) · SUPERSEDED f.3-f.6 f.18 (PAT placeholder revert; rides services.md:256 [blocked:user] row) f.16 f.17 · OPEN rowed 2026-11-07: f.8→pipeline (watch: pipeline.md:345) f.9 f.12→upstream f.10→security[blocked:user] f.11→pipeline f.13→upstream[blocked:user]; f.7 already queued (services.md:256).

@@ -185,3 +185,5 @@ close-out report.
    `[ ]` → `[x]`, and the session-3 report's open question.
 
 — Session paused per user order. All guards intact; nothing deployed; nothing pushed.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** f.1 (owner broadcast) folds into the 13-07 f.1 row · f.2 same fold · f.3 rides M19-M22 family · OPEN rowed 2026-11-07: f.4 (git auto-stage daemon mode) → pipeline[decision].

@@ -115,3 +115,5 @@ Continuation of `docs/status/2026-09-30_05-43_post-deploy-triage-geometrikks-too
 1. **Who ran the 05:50 activation — and is that session going to deploy again?** The cert-mint fix is theirs; if their session is mid-loop, my "deploy HEAD" recommendation could race their own deploy. Do you want ONE deploy (whose?) or should I treat the tree as mine to hand you?
 2. **Deploy timing**: the caddy outage is aging (SSO + all vhosts dark, un-anchored revert risk) but the pressure doctrine says don't deploy into a storm. Run `nix run .#deploy` NOW, or after I pre-run `pre-deploy-check` + a background toplevel build (10-20 min delay, de-risked deploy)?
 3. **SystemNix master is multiple commits ahead of origin** (the re-lock plus a parallel session's memory-guard scrub fix): push now so CI sees the re-lock, or leave pushing to the owning sessions / Monday bot as usual?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** OPEN already-queued: f.1 (TODO_LIST:1149 float drift) f.4 (existing row) · OPEN rowed 2026-11-07: f.2 → upstream (lockedge name+rev audit), f.3 → pipeline[blocked:user] (owner-transmit class); f.5 duplicate of f.2 — folded.

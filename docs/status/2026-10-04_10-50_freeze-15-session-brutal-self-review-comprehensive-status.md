@@ -101,4 +101,4 @@
 
 _Arte in Aeternum_
 
-**Harvest log (2026-11-07, T03 wave):** DONE f.3 f.4 f.7 f.8 (guard deployed, freeze #16 ledger, crash-triage.sh, k10temp alerting) f.21 (gitea-runner loop fixed freeze-18) f.25 f.30 · SUPERSEDED f.1 f.10-f.12 f.17 f.29 (journal windows gone, IO-admission row owns) · OPEN already-queued: f.2 f.5 f.6 f.9 f.13 f.14 f.18-f.20 f.22-f.24 f.27 f.28 (stability/pipeline rows) · OPEN rowed 2026-11-07: f.16 f.26 → pipeline.
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.4 f.7 f.8 (guard deployed, freeze #16 ledger, crash-triage.sh, k10temp alerting) f.21 (gitea-runner loop fixed freeze-18) f.25 f.30 · SUPERSEDED f.1 f.10-f.12 f.17 f.29 (journal windows gone, IO-admission row owns) · OPEN already-queued: f.2 f.5 f.6 f.9 f.13 f.14 f.18-f.20 f.22-f.24 f.27 f.28 (stability/pipeline rows) · OPEN rowed 2026-11-07: f.16 f.26 → pipeline.

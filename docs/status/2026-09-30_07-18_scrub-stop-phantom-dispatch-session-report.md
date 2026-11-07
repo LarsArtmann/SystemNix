@@ -113,3 +113,5 @@
 ---
 
 **Self-check:** no secrets written (gitleaks green on the footer commit); no pushes; no `.crushrc`/`crush.json`/`.tq-verify` touched; tree left green (`nix flake check --no-build` + VM test green at last run; three unrelated dirty files from a parallel session left untouched).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** OPEN rowed 2026-11-07: M1 (dead-vs-alive btrfs-clean timers) → stability, M4 (site-level mention in closes) → pipeline, M7 (dedupe stale M2c/M2d duplicates) → pipeline; f.2b M2c-set-hygiene folded into M7 row; f.2c+M2e (2026-10-24 fix verified) and f.2a (collapsed judge count) recorded as done-since; M2b/M2d remain live under their existing rows.
