@@ -41,7 +41,7 @@
   discordsync = "ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
-  dnsblockd = "123c6813cbdf015d93a908fd9423a590d7b01eb3";
+  dnsblockd = "f57faf8db6287e92e122128be9a36b63d897f53c";
   docs-gates = "2278406afdfd1b8df7674e2e594b6ea880694c90";
   domains = "aba7cb95b31399cdae936ad7a12f5fffff7dc312";
   emeet-pixyd = "4bd8bf66136f9dcc90c8e27b7bd12c8490d60031";
