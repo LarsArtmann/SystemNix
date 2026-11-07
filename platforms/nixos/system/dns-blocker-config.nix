@@ -257,7 +257,7 @@ in
       # is for the household, not the box that deploys this config; and
       # rpi3-dns keeps the gateway OFF (failover = truth = capture gap, the
       # same asymmetry as the scoped filter proxy).
-      gatewayEnabled = true;
+     # atewayEnabled = ;
       gatewayIpv4 = blockIP;
       gatewayLanRanges = [ subnet ];
       gatewayBlockExternalDoh = true;
