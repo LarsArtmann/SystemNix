@@ -134,3 +134,5 @@
 ---
 
 **Bottom line:** the integration is complete and every verifiable leg is verified green; the only thing between this state and "working bar widget" is one calm-IO deploy window plus ~6 small quality items (d1–d5, e6) that are honest-to-fix in under an hour.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.19 f.23 f.26 f.27 f.29 f.44 · already-tracked f.1-4 f.14 f.16 · NEW rowed: 13 rows (merged f.5, f.6+41, f.7+48, f.8 [decision], f.9+47, f.10+15+40+42+45+46+49, f.11+13+34, f.12, f.17+18, f.20+21+24+25+37 [decision], f.22+39+43+50 [watch], f.28+35, f.31+32 + f.33 merged into 05-05 row) → desktop 12, pipeline 1

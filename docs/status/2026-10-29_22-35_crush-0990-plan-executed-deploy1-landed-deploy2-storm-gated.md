@@ -69,3 +69,5 @@ Three parallel sessions were live (float-wave, router-audit, contacts-calendar e
 5. T17 sign-off: ratify the per-task-processes park (or pick B with the doc's prerequisites).
 
 **Self-harvest:** all session follow-ups landed at authoring time — storm rows (ai-stack.md flm recurrence + hermes SIGSYS, monitoring.md node-exporter evidence), the [decision] row (T17), the plan's queue pointer rows were verified non-drifted, and this report is the source for the EXECUTED marker flip.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE 4.1 4.2 · already-tracked 4.3 4.5 · NEW rowed: 4.4 (+23-15 §f.11+31) → upstream [blocked:user]

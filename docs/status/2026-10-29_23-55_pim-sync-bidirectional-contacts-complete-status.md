@@ -105,3 +105,5 @@ storm-immune code work except 21.x deploy and 26.3.
    crm ahead 8 / pbx ahead 5 from the peer wave — push or keep holding?
 3. **pim-sync GitHub remote:** create now (private `pim-sync`) or after
    flake/CI (task 19) so the first push is buildable-from-clone?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 (+ closing report) · already-tracked f.2 f.8 · OBSOLETE href-refactor+errata (subsumed) · NEW rowed: f.4 → services [blocked:user] real-import approval

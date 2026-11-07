@@ -50,3 +50,5 @@ cv-server's own sweep held `warn` 45/45 straight through BOTH instants (journalc
 - Nothing else: no §f follow-ups left unqueued.
 
 *Watched state as I write: PSI ~75 avg10, expected-locks.nix dirty (parallel wave mid-iteration), watcher idle-by-design.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 · already-tracked f.3 (cv close-out row owns the runbook flip)

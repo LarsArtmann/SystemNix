@@ -133,3 +133,5 @@ _(Stopped at 25 — the tail would be padding; the list is honest at this length
 ---
 
 _Report authored 2026-10-29 23:18 CET. §c6 deferral recorded; a12 harvest already landed. WAITING FOR INSTRUCTIONS._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.4 f.7 f.15 f.20 f.25 · already-tracked f.3 f.6 · OBSOLETE f.24 · NEW rowed: 10 rows (merged f.8+9+10+19, f.12+13) → pipeline 5, security 4, stability 1

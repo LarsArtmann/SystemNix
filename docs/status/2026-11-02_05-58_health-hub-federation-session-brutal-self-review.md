@@ -108,3 +108,5 @@
 - Throwaway toplevel build: green (script shellcheck passed inside checkPhase); harness stubs needed: catalog co-import, integration stub with per-entry `enable`, boot/fileSystems stubs.
 - Federation 200-requirement: go-health `federation/federation.go:415-422`.
 - Parallel-session context: `docs/status/2026-11-02_04-20_health-hub-cv-warns-fix-session.md` (watcher, wave, deploy gates).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 · already-tracked f.1-4 f.7 f.8 f.21 f.22 f.23 f.28 f.29 f.31 · NEW rowed: 10 rows (merged f.9+10, f.12+13, f.14-19+30) → monitoring 3, services 2, upstream 2, pipeline 3

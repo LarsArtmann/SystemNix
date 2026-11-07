@@ -125,3 +125,5 @@
 ---
 
 _Self-harvest: §f items 8, 9, 13, 17, 18, 19, 25 are session-direct follow-ups — landed in TODO_LIST.md/library rows? NO — deliberately recorded here only, per the user's "report, then WAIT" directive; harvest on the next dispatch pass (the rows above are written so each can be dropped into its domain file verbatim)._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 · already-tracked f.2-5 f.6 f.7 f.12 f.15 f.16 f.21 f.39 f.13 · OBSOLETE f.25 f.41 f.45 (flm world) · NEW rowed: 24 rows (merged f.10+19+44, f.11+31+22-35 §4.4, f.14+43, f.23+24, f.34+50, f.40+11-02 13-17 §f.49) → pipeline 13, ai-stack 7, monitoring 3, services 2, security 1, stability 1, upstream 1

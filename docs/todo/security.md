@@ -49,3 +49,9 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Re-run the redact-argv.sh self-test** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.34
 - [ ] [decision] **Signed-history policy: must daemon commits stay SSH-signed; pre-receive enforcement?** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.36
 - [ ] [decision] **GitHub branch protection on master (deny force-push)** **Source:** docs/status/2026-10-29_15-49_git-town-sync-conflict-binary-purge-history-rewrite.md §f.37
+- [ ] [decision] **permission-audit retention policy** — set a real retention after one week of data **Source:** docs/status/2026-10-29_23-15_crush-0990-executor-full-run-and-brutal-self-review.md §f.29
+- [ ] [blocked:user] **Delete legacy CI secrets + old deploy keys** — retire the 8 per-key secrets and read-only keys the bundle replaced **Source:** docs/status/2026-10-29_23-18_ci-unblock-bundle-deploy-keys-and-branch-consolidation.md §f.5
+- [ ] [watch] **Verify secret-history-scan failure set unchanged** **Source:** docs/status/2026-10-29_23-18_ci-unblock-bundle-deploy-keys-and-branch-consolidation.md §f.17
+- [ ] [watch] **Confirm alias-auth blocks inherit the pinned-SHA actions policy** **Source:** docs/status/2026-10-29_23-18_ci-unblock-bundle-deploy-keys-and-branch-consolidation.md §f.21
+- [ ] [ready] **Bundle key rotation procedure doc** — rotate ONE repo key inside the bundle without downtime **Source:** docs/status/2026-10-29_23-18_ci-unblock-bundle-deploy-keys-and-branch-consolidation.md §f.22
+- [ ] [ready] **redact-argv passthrough mode** — preserve column structure for harness joins **Source:** docs/status/2026-11-02_13-17_opencloud-proxy-tls-session-full-status-and-self-review.md §f.41

@@ -105,3 +105,5 @@
 **Commits this session (local, unpushed):** `cb39c78e5` (marker), runbooks via daemon `3a0b5b2c7`, harvest+report amended to `e05778853`, plan log `3e72e8242`. No Nix file touched; `nix flake check --no-build` green at close. **State as-of ~04:45; nothing device-side has run since.** Credentials: `~/.config/router-credentials/` (gateway live; CPE honest locked-state note).
 
 **NOW WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-11 f.17 f.18 f.20 f.21-40 (router rows) · DONE f.42 · NEW rowed: 5 rows → services (f.12 f.13 f.14 [watch] f.15+16+19 f.41)

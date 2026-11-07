@@ -73,3 +73,5 @@ Net NEW appends this session: items 1–5 above (5 rows) + 1 blocked question ro
 - CHANGELOG already carries entries for every user-visible change in this window (system-health close, papdashboard ingest batch, gatus dedup decision, dnsblockd rows) — verified by head-read; no additions needed. FEATURES/README/ROADMAP: no feature-status change in this docs-only window; untouched.
 - The three task closeout reports under docs/status/tasks/ remain OPEN as Source rows (their §f residue is actively cited by queue rows) — not archived; a routed-verdict annotate sweep is queued in (e).6 as process improvement, not executed here (scope: docs maintenance only, and full inline resolution of 3 × ~100 items exceeds this pass).
 - No files moved to docs/status/archived/ this pass: every candidate still carries open, referenced items.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-8 (own queue rows 1693-1697 + cited rows) · OBSOLETE f.9 f.10 (dedup no-ops by design)

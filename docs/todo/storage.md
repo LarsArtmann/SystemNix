@@ -318,3 +318,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **S23 burst-cap real fix: modern btrbk calendar hardening or stray-target GC** **Source:** docs/status/2026-10-27_23-15_storage-crisis-session3-self-review-status.md §f.13
 - [ ] [ready] **Record the unpinned emergency-reserve state in the runbook** — snaps gone → instant 10G relief valve; undocumented **Source:** docs/status/2026-10-27_23-15_storage-crisis-session3-self-review-status.md §f.17
 - [ ] [ready] **journal.db 4.3G growth: dnsblockd.md retention question** **Source:** docs/status/2026-10-27_23-15_storage-crisis-session3-self-review-status.md §f.22
+- [ ] [blocked:user] **/data/docker ~15.5G residue reclaim** — confirm and land the owner row **Source:** docs/status/2026-11-02_13-17_opencloud-proxy-tls-session-full-status-and-self-review.md §f.31

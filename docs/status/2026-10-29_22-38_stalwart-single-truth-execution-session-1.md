@@ -139,3 +139,5 @@ SystemNix commit needed a 5-attempt retry loop against index.lock contention.
 3. **Probe timing**: boot the demo VM tonight as soon as PSI calms (background-poll + autonomous run), or hold VM work for the next working session? (Both are safe; the storm has been easing 95→44 avg10 over the session.)
 
 — Session paused here per owner instruction; todos updated to execution-phase state; awaiting GO on the above.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3-7 f.9-41 f.43-47 (pim-sync artifacts verified in ~/projects/pim-sync) · already-tracked f.8 · OBSOLETE f.2 · NEW rowed: f.42 [blocked:deploy] f.48 f.49 [blocked:user] f.50 [watch] → services

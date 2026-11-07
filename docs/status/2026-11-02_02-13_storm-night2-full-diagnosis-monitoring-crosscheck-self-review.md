@@ -98,3 +98,5 @@ Kernel PSI, the textfile collectors, gatus, SEV1, and the thermal guard ALL agre
 ---
 
 **Cross-references:** night-1 report (`2026-10-31_20-32_…`) and this session's report 1 (`2026-11-02_01-58_…`); `docs/agents/stability.md` (storm action menu, freeze-4 stc re-arm, family-C); `docs/agents/monitoring.md` (textfile/gatus doctrine — the layer I skipped first); harvested rows in TODO_LIST.md + docs/todo/{stability,services,ai-stack}.md.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.7 f.15 · already-tracked f.1-6 f.8 f.9 f.17 f.22 · OBSOLETE f.10 f.20 (flm world + supersession) · NEW rowed: f.11(+12+13+14) → stability, f.16(+13-17 §f.5) f.18(+19) f.21 → monitoring

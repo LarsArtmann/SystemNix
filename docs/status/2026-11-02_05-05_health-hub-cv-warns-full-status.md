@@ -136,3 +136,5 @@
 **False-marker correction (§d3's immediate action, done):** CV repo `docs/operations/cv-agent-timer.md` header flipped from the false "DEPLOYED 2026-11-02" to "COMMITTED 2026-11-02, DEPLOY PENDING" with the correction narrative. `docs/todo/services.md` row 638 fix-(1) verdict rewritten: FIXED then SUPERSEDED (re-enable with key, this commit).
 
 **Still open:** g2, g3 (owner); watcher/verifier PIDs stand; §g manual pass probe + anchor + hub badge count happen post-switch; then the runbook marker flips back to true DEPLOYED with the generation number.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3-8 f.6 f.7 f.10 f.36 · already-tracked f.2 f.9 f.11-18 f.20 f.23 f.25 f.30 f.31 f.38 f.47 · OBSOLETE f.19 f.22 f.35 f.37 f.39 f.42-45 f.49 f.50 (moment-passed) · NEW rowed: f.24 f.27 → services, f.26(+28+29) → upstream [watch], f.32(+08-35 §f.33) → pipeline, f.33(+34) → monitoring [watch]

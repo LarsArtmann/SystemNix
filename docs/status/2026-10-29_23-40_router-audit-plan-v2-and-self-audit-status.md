@@ -234,3 +234,5 @@ existing convention unless told otherwise, and note it in the runbook.
 | Flash budget      | 6,881,280 B = 6.56 MiB           | `rootfs_data` start minus `firmware` start    |
 | Lean 24.10 margin | +0.46 MiB spare                  | derived; +mwan3 is 0.14 MiB over              |
 | UART dump floor   | 728 s = 12.1 min, ~16 min base64 | 8,388,608 B × 10 bits ÷ 115200                |
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.7-9 f.17 f.18 f.21-23 f.25-27 f.49 · already-tracked f.5 f.6 f.10 f.14-16 f.19 f.20 f.22 f.28-48 · NEW rowed: f.11(+12+13) f.24 → services, f.50 → pipeline
