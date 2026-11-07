@@ -265,13 +265,19 @@
           };
         })
 
-        (lib.mkIf cfg.enable {
-          # gatus-coverage exemption (2026-11-08): the registry readiness
-          # check probes the nsfw vHost, not the raw backend port — and the
-          # health-dashboard remotes/sweep reference 8104 by name without
-          # probing it. Sanctioned "vHost-monitored backend" class.
-          services.gatus-coverage-audit.allowPorts = [ cfg.port ];
+        # gatus-coverage exemption (2026-11-08): the health-dashboard
+        # federation remote + rediscover sweep reference 8104 by name — the
+        # sweep itself probes it (/health /readyz /healthz) so the audit's
+        # "never probed" premise is false there. UNCONDITIONAL (not inside
+        # mkIf enable): the sweep bakes the port literal on hosts where the
+        # classifier is disabled too, which is exactly the reference the
+        # audit flags. Scoped to this one port; every other port stays
+        # audited.
+        {
+          services.gatus-coverage-audit.allowPorts = [ ports.nsfw ];
+        }
 
+        (lib.mkIf cfg.enable {
           # The unified CLI on PATH: `nsfw` (classify/benchmark/evaluate/...)
           # resolves to the SAME package the unit runs, so interactive
           # subcommands share its ROCm/CPU ONNX Runtime wrapping. bin also
