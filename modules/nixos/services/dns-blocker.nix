@@ -476,14 +476,21 @@ _: {
           # Keys render together: upstream builds ONE policy from all three.
           # gateway_mode stays "flow" — decryption is an overlay on the flow
           # posture, never a capture mode (upstream validation rejects else).
-          // lib.optionalAttrs
-            (cfg.gatewayEnabled
-              && (cfg.gatewayDecryptDomains != [ ] || cfg.gatewayDecryptDevices != [ ] || cfg.gatewayDecryptExcludeDomains != [ ]))
-            {
-              gateway_decrypt_domains = cfg.gatewayDecryptDomains;
-              gateway_decrypt_devices = cfg.gatewayDecryptDevices;
-              gateway_decrypt_exclude_domains = cfg.gatewayDecryptExcludeDomains;
-            }
+          //
+            lib.optionalAttrs
+              (
+                cfg.gatewayEnabled
+                && (
+                  cfg.gatewayDecryptDomains != [ ]
+                  || cfg.gatewayDecryptDevices != [ ]
+                  || cfg.gatewayDecryptExcludeDomains != [ ]
+                )
+              )
+              {
+                gateway_decrypt_domains = cfg.gatewayDecryptDomains;
+                gateway_decrypt_devices = cfg.gatewayDecryptDevices;
+                gateway_decrypt_exclude_domains = cfg.gatewayDecryptExcludeDomains;
+              }
         )
       );
 
@@ -1327,7 +1334,11 @@ _: {
             # this wrapper pins tracking_mode = METADATA_ONLY (render item
             # 4), which already satisfies upstream's warning threshold.
             assertion =
-              (cfg.gatewayDecryptDomains == [ ] && cfg.gatewayDecryptDevices == [ ] && cfg.gatewayDecryptExcludeDomains == [ ])
+              (
+                cfg.gatewayDecryptDomains == [ ]
+                && cfg.gatewayDecryptDevices == [ ]
+                && cfg.gatewayDecryptExcludeDomains == [ ]
+              )
               || (
                 cfg.gatewayEnabled
                 && cfg.blockTLSPort > 0

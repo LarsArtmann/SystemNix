@@ -482,7 +482,11 @@ let
     }
     # ── Decrypt overlay (ADR-0021, owner enablement 2026-11-07) ──
     {
-      ok = evox2.services.dns-blocker.gatewayDecryptDevices == [ "evo-x2" "macbook" ];
+      ok =
+        evox2.services.dns-blocker.gatewayDecryptDevices == [
+          "evo-x2"
+          "macbook"
+        ];
       msg = "decrypt device scope drifted: only the two CA-enrolled devices (evo-x2 + macbook) may terminate — the Pixel6 (Android Chrome ignores user CA certs) must stay spliced";
     }
     {
@@ -513,7 +517,11 @@ let
     }
     {
       ok = policyAssertionFires "gatewayDecryptDomains/excludes capped at 256" [
-        { services.dns-blocker.gatewayDecryptDomains = map (n: "d${toString n}.example") (pkgs.lib.range 1 257); }
+        {
+          services.dns-blocker.gatewayDecryptDomains = map (n: "d${toString n}.example") (
+            pkgs.lib.range 1 257
+          );
+        }
       ];
       msg = "decrypt 256-entry cap assertion does not fire";
     }
@@ -528,10 +536,18 @@ let
       # every lied subresource (the 2026-11-07 github-assets PNA class) in
       # splice AND decrypt postures — cert trust alone does not fix it.
       ok =
-        (evox2.environment.etc ? "chromium/policies/managed/dnsblockd-lna.json"
-          && pkgs.lib.hasInfix "=public" evox2.environment.etc."chromium/policies/managed/dnsblockd-lna.json".text)
-        && (evox2.environment.etc ? "helium/policies/managed/dnsblockd-lna.json"
-          && pkgs.lib.hasInfix "=public" evox2.environment.etc."helium/policies/managed/dnsblockd-lna.json".text);
+        (
+          evox2.environment.etc ? "chromium/policies/managed/dnsblockd-lna.json"
+          &&
+            pkgs.lib.hasInfix "=public"
+              evox2.environment.etc."chromium/policies/managed/dnsblockd-lna.json".text
+        )
+        && (
+          evox2.environment.etc ? "helium/policies/managed/dnsblockd-lna.json"
+          &&
+            pkgs.lib.hasInfix "=public"
+              evox2.environment.etc."helium/policies/managed/dnsblockd-lna.json".text
+        );
       msg = "LNA address-space override policy missing — Chromium (Helium) browsing breaks under the lie for splice AND decrypt postures";
     }
     # ── rpi3-dns parity (secondary host, same module) ──
