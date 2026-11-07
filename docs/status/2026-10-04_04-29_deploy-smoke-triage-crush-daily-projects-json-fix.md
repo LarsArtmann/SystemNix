@@ -146,3 +146,5 @@
 ---
 
 **Next:** WAIT FOR INSTRUCTIONS (per session contract). Nothing in this report was pushed anywhere; all changes are local commits by the auto-commit daemon (`f40cb38e`, `79f17cad`, `9faf55c0`, `bad945ef`).
+
+**Harvest log (2026-11-07, T03 wave):** DONE f.1-f.8 f.10 f.13 f.28 f.29 (subagent greps: forgejo LIVE, deploys converged, polkit fix, projects.json root cause, §11 rewrite) · SUPERSEDED f.12 f.16 f.32 f.36 f.39 f.40 f.43 (retention floors, parity guards, re-consent row, Go rewrite) · OPEN already-queued: f.5 f.7 f.11 f.14 f.15 f.18 f.20 f.21 f.22 f.42 f.44 · OPEN rowed 2026-11-07: f.9(+f.19) f.17 f.33 f.34 f.35 → services/monitoring, f.23 f.24 f.25 → upstream, f.26 f.27 f.30 f.31 f.37 → pipeline.

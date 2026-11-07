@@ -251,3 +251,5 @@ config `/nix/store/iisvnnxv…-gatus.yaml`, `nix why-depends` on
 `/nix/var/nix/profiles/system-812-link`, post-deploy logs
 `/tmp/pdc-full.log`, `/tmp/flakecheck-postfix.log` (in flight), deploy paste
 (owner terminal, 14:36)._
+
+**Harvest log (2026-11-07, T03 wave):** DONE f.1 f.2 (10-04/05 deploys) f.5 (CHANGELOG:1884 paperless PG migration) f.7 f.13 (bank-sync hostOverride green) f.16 (CHANGELOG:1889 Qt6 gtk2) f.26 (forgejo subvol LIVE) f.30 (crm pushed 10-13) f.32 · SUPERSEDED f.3 (standing batteries) f.4 (Docker removed 10-08) f.8 (crm Pocket-ID-only) f.9 f.11 (Twenty decommissioned) f.12 (oauth2-proxy live) f.17 (flm saga closed) f.24 f.25 f.28 f.31 · OPEN already-queued: f.6 f.10 (services.md:597) f.15 f.18 f.29-part · OPEN rowed 2026-11-07: f.14 → services, f.19 f.20 f.21 f.22 → pipeline, f.23 → upstream, f.27 → services[blocked:user].

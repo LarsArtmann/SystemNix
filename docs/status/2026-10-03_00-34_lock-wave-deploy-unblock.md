@@ -87,3 +87,5 @@
 ---
 
 _Report written from session memory + tree verification only (`date`, git status/log, flake metadata, targeted greps). No new research beyond re-confirming my own threads were still open at 00:34._
+
+**Harvest log (2026-11-07, T03 wave):** DONE f.1-f.6 (CHANGELOG 10-05 keep-going wave, deploy exit 0) f.8 (scrape_error 0 fix 11-05) f.10 (15-05 report verification) f.18 f.19 f.20 f.24 · SUPERSEDED f.9 (monitor365 saga superseded) f.23 (lock-float registry landed 10-25) · OPEN already-queued: f.12 f.13 f.17 f.21 · OPEN rowed 2026-11-07: f.7 f.11 → services, f.14 f.15 → upstream, f.16 f.22 f.25 → pipeline.

@@ -86,3 +86,5 @@
 **Bottom line:** the guard is built, tested, and verified to the eval boundary — and protects nothing yet, while the box live-rehearses freeze #15 at load 47. The critical path is still physical, but the deploy decision (Q1/Q2) is now the blocking software action.
 
 **Harvest ledger (at authoring time):** §f.4 (shadow mode) → folded into the stability.md deploy row as a pending-owner decision; §f.7 (gatus wiring) → already owned by monitoring :17 (updated this session to target the guard's metrics — deliberately not duplicated); §f.1–3 owner legs → stability :117/:103 rows already carry them; §f.5–6 → the deploy row's drill clause; everything else was already queued in earlier sessions' rows, verified cited above.
+
+**Harvest log (2026-11-07, T03 wave):** DONE f.5 (guard live 10-04) f.8 f.9 f.10 (guided series + crash-triage.sh + taxonomy) f.20 (ledger entries) · SUPERSEDED f.2 f.3 f.4 (guard LIVE 10:47 moots runtime/shadow asks) · OPEN already-queued: f.1 f.11-f.16 f.19 f.21 f.25 (stability.md rows incl. [blocked:user] kdump/pstore) · OPEN rowed 2026-11-07: f.6 f.7 f.17 f.18 → stability/monitoring, f.22 → monitoring, f.23 f.24 → services.
