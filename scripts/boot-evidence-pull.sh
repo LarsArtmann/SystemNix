@@ -49,6 +49,27 @@ bep_grep_oom() {
   grep -E 'invoked oom-killer|oom-kill:|Out of memory' "$1" || true
 }
 
+bep_ts_delta() {
+  # <kill_epoch> <line_epoch> — absolute seconds between two syslog-derived
+  # timestamps, YEAR-BOUNDARY safe.  Syslog timestamps carry no year, so GNU
+  # date assumes the CURRENT year for both lines: a Dec 31 kill and its
+  # Jan 1 systemd line parse ~365 days apart instead of seconds (live-proven:
+  # Dec 31 23:59:30 -> Jan 01 00:00:05 parses to -31,535,965 s).  The true
+  # delta is recovered by also trying +-365 d and +-366 d (leap years) and
+  # keeping the candidate with the smallest absolute value — for any normal
+  # intra-boot gap the raw delta itself wins, so the adjustment can never
+  # pull a legitimately distant line into the window.
+  local d best cand
+  d=$(($2 - $1))
+  best=$((d < 0 ? -d : d))
+  for off in 31536000 -31536000 31622400 -31622400; do
+    cand=$((d + off))
+    [ "$cand" -lt 0 ] && cand=$((-cand))
+    [ "$cand" -lt "$best" ] && best=$cand
+  done
+  echo "$best"
+}
+
 bep_killpass_join() {
   # <dump> <oom> — per-victim memcg join over the kernel kill pass (the
   # Oct-28 10:15 cascade class: `Out of memory: Killed process PID ...`
@@ -72,7 +93,9 @@ bep_killpass_join() {
   # silently miss) and 7b12c3db (systemd lines LAG 1-8 s). Join output
   # is byte-identical at 30/45/60 on both boots (counter-uid exclusion +
   # leaf-over-slice + uid-shape scoring absorb the wider net), so 60 s
-  # is pure margin for the async-cgroup-notification lead class.
+  # is pure margin for the async-cgroup-notification lead class.  Deltas
+  # are year-boundary safe (bep_ts_delta; Dec->Jan kill windows recover
+  # their true seconds from the year-blind syslog timestamps).
   local dump="$1" oom="$2" win=60
   local kills kline pid task uid ts uts att line unit lts lus udiff score bestscore first cand
   kills=$(grep -E 'Out of memory: Killed process' "$dump" || true)
@@ -99,7 +122,7 @@ bep_killpass_join() {
       if [ "$uts" -gt 0 ]; then
         lts=$(printf '%s\n' "$line" | awk '{print $1, $2, $3}')
         lus=$(date -d "$lts" +%s 2>/dev/null || echo 0)
-        [ "$lus" -gt 0 ] && udiff=$((lus - uts)) && [ "$udiff" -lt 0 ] && udiff=$((-udiff))
+        [ "$lus" -gt 0 ] && udiff=$(bep_ts_delta "$uts" "$lus")
       fi
       [ "$udiff" -le "$win" ] || continue
       # Counter-uid exclusion: a user@975 line cannot evidence a uid-1000
@@ -483,6 +506,50 @@ bep_selftest() (
     echo "FAIL: later-windows fixture missing at $flw"
     failures=$((failures + 1))
   fi
+
+  # Year-boundary legs (2026-11-07 item): syslog timestamps carry no year,
+  # so a Dec 31 kill and its Jan 1 systemd line parse ~365 days apart under
+  # GNU date (live-proven: -31,535,965 s for a true +35 s gap).  Each leg is
+  # an isolated mini-dump so the year-recovered line is the ONLY candidate:
+  #   lag   — systemd line Jan 1 (+35 s true) must join the Dec 31 kill
+  #   lead  — systemd line Dec 31 (-55 s true) must join the Jan 1 kill
+  #   far   — a Dec 31 line 310 s from the Jan 1 kill must stay out (the
+  #           +-365/366 d rollover recovery must not fish it into the window)
+  local fyr foomyr fjoinyr yr_case yr_dump
+  for yr_case in lag lead far; do
+    fyr=$(mktemp "$tmp/year.$yr_case.XXXXXX")
+    foomyr=$(mktemp "$tmp/year.$yr_case.oom.XXXXXX")
+    fjoinyr=$(mktemp "$tmp/year.$yr_case.join.XXXXXX")
+    case "$yr_case" in
+    lag)
+      yr_dump="Dec 31 23:59:30|Jan 01 00:00:05|session-91.scope|6000011"
+      ;;
+    lead)
+      yr_dump="Jan 01 00:00:40|Dec 31 23:59:45|session-92.scope|6000012"
+      ;;
+    far)
+      yr_dump="Jan 01 00:05:00|Dec 31 23:59:50|session-93.scope|6000013"
+      ;;
+    esac
+    {
+      echo "${yr_dump%%|*} evo-x2 kernel: Out of memory: Killed process ${yr_dump##*|} (yearleg) total-vm:100kB, UID:1000 oom_score_adj:0"
+      echo "$(printf '%s' "$yr_dump" | cut -d'|' -f2) evo-x2 systemd[1]: $(printf '%s' "$yr_dump" | cut -d'|' -f3): The kernel OOM killer killed some processes in this unit."
+    } >"$fyr"
+    grep -E 'invoked oom-killer|oom-kill:|Out of memory' "$fyr" >"$foomyr"
+    bep_killpass_join "$fyr" "$foomyr" >"$fjoinyr"
+    case "$yr_case" in
+    lag)
+      check "year: Dec->Jan lag +35 s joins" grep -qF 'pid=6000011 task=yearleg uid=1000 unit=session-91.scope basis=unit-join' "$fjoinyr"
+      ;;
+    lead)
+      check "year: Dec->Jan lead -55 s joins" grep -qF 'pid=6000012 task=yearleg uid=1000 unit=session-92.scope basis=unit-join' "$fjoinyr"
+      ;;
+    far)
+      check "year: 310 s across year stays unresolved" grep -qF 'pid=6000013 task=yearleg uid=1000 memcg=UNRESOLVED' "$fjoinyr"
+      ;;
+    esac
+    rm -f "$fyr" "$foomyr" "$fjoinyr"
+  done
 
   check "census guard count" grep -q '^- guard-lines (memory-emergency-guard): 1$' "$tmp/evidence.md"
   check "census thermal count" grep -q '^- thermal-THROTTLE-lines: 1$' "$tmp/evidence.md"
