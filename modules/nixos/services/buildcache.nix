@@ -494,8 +494,16 @@
             # dir on the NVMe during dead-mount windows).
             for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
               if [ -e "${homeDir}/.cache/$d" ] && [ ! -L "${homeDir}/.cache/$d" ]; then
-                rm -rf -- "${homeDir}/.cache/$d"
-                echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
+                # 2026-11-07: skip systemd mounts (hot-user-caches go-build
+                # class) — rm -rf on a mountpoint wipes the mounted cache
+                # contents then EBUSY-aborts (same class as the home.nix
+                # activation + deploy.sh reaps, fixed same day).
+                if /run/current-system/sw/bin/mountpoint -q -- "${homeDir}/.cache/$d"; then
+                  echo "skip ${homeDir}/.cache/$d (systemd mount owns it — not a fallback dir)"
+                else
+                  rm -rf -- "${homeDir}/.cache/$d"
+                  echo "reaped real dir at ${homeDir}/.cache/$d (HM symlink will replace it)"
+                fi
               fi
             done
             # The non-.cache fallback paths from home.nix — env-less
@@ -503,8 +511,12 @@
             # same checkLinkTargets abort class (2026-09-22 review fix).
             for d in ${lib.concatStringsSep " " reapNames.homeRelDirs}; do
               if [ -e "${homeDir}/$d" ] && [ ! -L "${homeDir}/$d" ]; then
-                rm -rf -- "${homeDir}/$d"
-                echo "reaped real dir at ${homeDir}/$d (HM symlink will replace it)"
+                if /run/current-system/sw/bin/mountpoint -q -- "${homeDir}/$d"; then
+                  echo "skip ${homeDir}/$d (systemd mount owns it — not a fallback dir)"
+                else
+                  rm -rf -- "${homeDir}/$d"
+                  echo "reaped real dir at ${homeDir}/$d (HM symlink will replace it)"
+                fi
               fi
             done
 

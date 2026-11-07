@@ -480,7 +480,13 @@ if nix run .#pre-deploy-check; then
   read -r -a reap_home_dirs <<<"$BUILDCACHE_REAP_HOME_DIRS"
   for d in "${reap_cache_dirs[@]}"; do
     if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
-      if sudo rm -rf -- "$HOME/.cache/$d"; then
+      # 2026-11-07: a systemd mount (hot-user-caches go-build class) is NOT a
+      # real-dir fallback — rm -rf would wipe the mounted cache contents and
+      # then EBUSY-abort on the mountpoint root (the "reap incomplete" WARN
+      # masked a full cache wipe at the 04:06 deploy). Skip mounts entirely.
+      if /run/current-system/sw/bin/mountpoint -q -- "$HOME/.cache/$d"; then
+        echo "  Skip ~/.cache/$d (systemd mount owns it — not a fallback dir)"
+      elif sudo rm -rf -- "$HOME/.cache/$d"; then
         echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
       else
         echo "  ⚠ WARN: ~/.cache/$d reap incomplete (concurrent writer race) — HM symlink takeover may abort loudly later; next deploy retries" >&2
@@ -494,7 +500,9 @@ if nix run .#pre-deploy-check; then
   # checkLinkTargets would then abort on "Existing file ... in the way").
   for d in "${reap_home_dirs[@]}"; do
     if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
-      if sudo rm -rf -- "$HOME/$d"; then
+      if /run/current-system/sw/bin/mountpoint -q -- "$HOME/$d"; then
+        echo "  Skip ~/$d (systemd mount owns it — not a fallback dir)"
+      elif sudo rm -rf -- "$HOME/$d"; then
         echo "  Reaped ~/$d (real dir had displaced the HM symlink)"
       else
         echo "  ⚠ WARN: ~/$d reap incomplete (concurrent writer race) — next deploy retries" >&2
@@ -507,7 +515,9 @@ if nix run .#pre-deploy-check; then
   # only; safe to remove with sudo since the owner session is long gone.
   for d in go-build-fallback go-build-override go-mod-fallback golangci-lint-override; do
     if [ -e "$HOME/.cache/$d" ]; then
-      if sudo rm -rf -- "$HOME/.cache/$d"; then
+      if /run/current-system/sw/bin/mountpoint -q -- "$HOME/.cache/$d"; then
+        echo "  Skip ~/.cache/$d (systemd mount owns it — not debris)"
+      elif sudo rm -rf -- "$HOME/.cache/$d"; then
         echo "  Reaped incident debris ~/.cache/$d"
       else
         echo "  ⚠ WARN: incident debris ~/.cache/$d reap incomplete (concurrent writer race) — next deploy retries" >&2

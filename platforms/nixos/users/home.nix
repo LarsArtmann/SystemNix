@@ -587,16 +587,28 @@ in
         # chmod -R u+w on our OWN cache dirs is always safe pre-reap.
         for d in ${lib.concatStringsSep " " reapNames.cacheDirs}; do
           if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
-            chmod -R u+w -- "$HOME/.cache/$d" 2>/dev/null || true
-            rm -rf -- "$HOME/.cache/$d"
-            echo "migrated buildcache fallback: removed real dir $HOME/.cache/$d (HM symlink replaces it)"
+            # 2026-11-07: a systemd mount (hot-user-caches go-build class) is
+            # NOT a removable fallback — rm -rf would wipe the mounted cache
+            # contents then EBUSY-abort, which start-limit-killed this unit
+            # at every boot since the 11-05 cutover (live 01:09 2026-11-07).
+            if ${pkgs.util-linux}/bin/mountpoint -q -- "$HOME/.cache/$d"; then
+              echo "migrated buildcache fallback: $HOME/.cache/$d is a mountpoint — leaving it"
+            else
+              chmod -R u+w -- "$HOME/.cache/$d" 2>/dev/null || true
+              rm -rf -- "$HOME/.cache/$d"
+              echo "migrated buildcache fallback: removed real dir $HOME/.cache/$d (HM symlink replaces it)"
+            fi
           fi
         done
         for d in ${lib.concatStringsSep " " reapNames.homeRelDirs}; do
           if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
-            chmod -R u+w -- "$HOME/$d" 2>/dev/null || true
-            rm -rf -- "$HOME/$d"
-            echo "migrated buildcache fallback: removed real dir $HOME/$d (HM symlink replaces it)"
+            if ${pkgs.util-linux}/bin/mountpoint -q -- "$HOME/$d"; then
+              echo "migrated buildcache fallback: $HOME/$d is a mountpoint — leaving it"
+            else
+              chmod -R u+w -- "$HOME/$d" 2>/dev/null || true
+              rm -rf -- "$HOME/$d"
+              echo "migrated buildcache fallback: removed real dir $HOME/$d (HM symlink replaces it)"
+            fi
           fi
         done
       fi
