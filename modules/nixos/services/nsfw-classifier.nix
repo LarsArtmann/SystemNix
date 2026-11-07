@@ -266,6 +266,12 @@
         })
 
         (lib.mkIf cfg.enable {
+          # gatus-coverage exemption (2026-11-08): the registry readiness
+          # check probes the nsfw vHost, not the raw backend port — and the
+          # health-dashboard remotes/sweep reference 8104 by name without
+          # probing it. Sanctioned "vHost-monitored backend" class.
+          services.gatus-coverage-audit.allowPorts = [ cfg.port ];
+
           # The unified CLI on PATH: `nsfw` (classify/benchmark/evaluate/...)
           # resolves to the SAME package the unit runs, so interactive
           # subcommands share its ROCm/CPU ONNX Runtime wrapping. bin also
