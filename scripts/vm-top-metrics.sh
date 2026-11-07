@@ -37,8 +37,8 @@ vm_top_scan() {
     comm="$(awk '/^Name:/ { sub(/^Name:[[:space:]]*/, ""); print; exit }' "$status" 2>/dev/null || true)"
     [ -n "$comm" ] || comm="unknown"
     # comm may contain characters Prometheus labels dislike; strip quotes
-    # and backslashes, cap length.
-    comm="$(printf '%s' "$comm" | tr -d '"\\' | cut -c1-64)"
+    # and backslashes (octal escapes: "/\), cap length.
+    comm="$(printf '%s' "$comm" | tr -d '\042\134' | cut -c1-64)"
     printf '%s %s %s\n' "$((vmsize_kb * 1024))" "$pid" "$comm"
   done
 }
@@ -90,7 +90,12 @@ selftest() {
   printf 'Name:\tweird"comm\nVmSize:\t 1000 kB\n' >"$tmp/proc/4/status"
 
   out="$tmp/out.prom"
-  VM_TOP_PROC_DIR="$tmp/proc" VM_TOP_N=2 vm_top_collect "$out"
+  # NOTE: PROC_DIR/TOP_N are bound at script start from the environment, so
+  # a call-site env prefix would NOT rebind them — assign the fixture values
+  # directly (function env-prefix ≠ variable rebinding).
+  PROC_DIR="$tmp/proc"
+  TOP_N=2
+  vm_top_collect "$out"
 
   local want_top1='node_vm_top_vmsize_bytes{pid="300",comm="chromium"} 9216000000'
   grep -qxF "$want_top1" "$out" || {
@@ -114,8 +119,15 @@ selftest() {
     echo "FAIL hwm line"
     failures=$((failures + 1))
   }
-  # Quote-stripping in comm labels.
-  grep -q 'comm="weirdcomm"' "$out" || grep -q 'pid="4"' /dev/null || true
+
+  # Quote-stripping in comm labels: rerun with TOP_N=3 so the weird-comm
+  # pid enters the set, then assert its label has no embedded quote.
+  TOP_N=3
+  vm_top_collect "$out"
+  grep -q 'comm="weirdcomm"}' "$out" || {
+    echo "FAIL comm quote-stripping (label not sanitized)"
+    failures=$((failures + 1))
+  }
 
   if [ "$failures" -gt 0 ]; then
     echo "vm-top-metrics selftest: $failures failure(s)"
