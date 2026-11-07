@@ -754,6 +754,14 @@ eval_case shapeaudit oneshot-unbounded fail 'boot-blocking Type=oneshot unit\(s\
 # landed unit-level onFailure back into serviceConfig — the audit must throw.
 eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside serviceConfig' \
   'sed:modules/nixos/services/visionreviewd.nix:s|systemd.services.visionreviewd.onFailure = onFailure;|systemd.services.visionreviewd.serviceConfig.OnFailure = onFailure;|'
+# ── systemd-shape-audit class 9: [Service]-section keys inside unitConfig ──
+# The nsfw-classifier class (switch-journal-proven "Unknown key
+# 'TimeoutStartSec' in section [Unit], ignoring", 2026-11-05). Mutation:
+# null the landed serviceConfig value and re-nest it into unitConfig —
+# the audit must throw. The null leg also proves the audit skips
+# null-cleared values (only the unitConfig copy fires).
+eval_case shapeaudit service-key-in-unitconfig fail '\[Service\]-section key\(s\) nested inside unitConfig' \
+  'sed:modules/nixos/services/nsfw-classifier.nix:s|                TimeoutStartSec = "10min";|                TimeoutStartSec = null; unitConfig.TimeoutStartSec = "10min";|'
 
 # ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
 # The llama-chat/compsize class (untiered bulk boot I/O on the QLC). Leg 1
