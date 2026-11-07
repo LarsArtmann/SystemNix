@@ -480,8 +480,11 @@ if nix run .#pre-deploy-check; then
   read -r -a reap_home_dirs <<<"$BUILDCACHE_REAP_HOME_DIRS"
   for d in "${reap_cache_dirs[@]}"; do
     if [ -e "$HOME/.cache/$d" ] && [ ! -L "$HOME/.cache/$d" ]; then
-      sudo rm -rf -- "$HOME/.cache/$d"
-      echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
+      if sudo rm -rf -- "$HOME/.cache/$d"; then
+        echo "  Reaped ~/.cache/$d (real dir had displaced the HM symlink)"
+      else
+        echo "  ⚠ WARN: ~/.cache/$d reap incomplete (concurrent writer race) — HM symlink takeover may abort loudly later; next deploy retries" >&2
+      fi
     fi
   done
   # 2026-09-22: pnpm state + cargo registry — the other HM-managed buildcache
@@ -491,8 +494,11 @@ if nix run .#pre-deploy-check; then
   # checkLinkTargets would then abort on "Existing file ... in the way").
   for d in "${reap_home_dirs[@]}"; do
     if [ -e "$HOME/$d" ] && [ ! -L "$HOME/$d" ]; then
-      sudo rm -rf -- "$HOME/$d"
-      echo "  Reaped ~/$d (real dir had displaced the HM symlink)"
+      if sudo rm -rf -- "$HOME/$d"; then
+        echo "  Reaped ~/$d (real dir had displaced the HM symlink)"
+      else
+        echo "  ⚠ WARN: ~/$d reap incomplete (concurrent writer race) — next deploy retries" >&2
+      fi
     fi
   done
   # 2026-08-16 incident debris: root-owned cache trees created by an env-less
@@ -501,8 +507,11 @@ if nix run .#pre-deploy-check; then
   # only; safe to remove with sudo since the owner session is long gone.
   for d in go-build-fallback go-build-override go-mod-fallback golangci-lint-override; do
     if [ -e "$HOME/.cache/$d" ]; then
-      sudo rm -rf -- "$HOME/.cache/$d"
-      echo "  Reaped incident debris ~/.cache/$d"
+      if sudo rm -rf -- "$HOME/.cache/$d"; then
+        echo "  Reaped incident debris ~/.cache/$d"
+      else
+        echo "  ⚠ WARN: incident debris ~/.cache/$d reap incomplete (concurrent writer race) — next deploy retries" >&2
+      fi
     fi
   done
 
