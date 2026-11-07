@@ -226,3 +226,19 @@ on the next instruction, not backlog) and §f.12 (user act, stated here).
   (exit 12 after 3s, PSI avg10 55.69% + disk busy 95.1%)
 - Parallel session: commits c98d95d51/574626a03; plan tombstones
   `173e49338`/`71555841a` (go-cache pareto arc, EXECUTING)
+
+## h) Post-deploy correction (2026-11-07, appended)
+
+§a.1's semantics claim "yolo … KEEPS the exec-time block list armed — dangerous
+commands are blocked at exec time in yolo" is **half-wrong**; probe-proven on
+the live v0.100.0 binary: yolo auto-approves every request INCLUDING
+statically-matched dangerous commands, so DIRECTLY-TYPED blocked verbs RUN
+(`wget --version` executed under `-y`); the exec-time list arms yolo only for
+statically-invisible (expansion-resolved) invocations
+(`bash.go:328` — `if !check.Matched …` installs the runtime blockers). The
+unblock line's real effect: normal-mode promptlessness + backstop exemption
+for the three names. Full truth table and probes:
+`docs/status/2026-11-07_01-24_crush-v100-yolo-live-verification.md` §a.5/§b.
+Everything else in this report stands; the deploy landed 2026-11-06 12:03 via
+generation 984 (rode the parallel wave) and the §f battery executed 2026-11-07
+with all legs green.
