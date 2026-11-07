@@ -95,12 +95,12 @@ run() {
   win_tag="[$(date -d "@$((t0 / 1000))" '+%F %T') $(date -d "@$((t1 / 1000))" '+%F %T') window=${win_s}s]"
 
   echo "=== per-cgroup IO (bytes/s, top $TOP_N by total) $win_tag ==="
-  # Join two cumulative snapshots on "cgroup dev"; print rate over the MEASURED window.
-  {
-    echo "$cg_a" | sort -k1,1 -k2,2
-    echo "$cg_b" | sort -k1,1 -k2,2
-  } |
-    awk -v w="$win_s" -v tag="$win_tag" -v top="$TOP_N" '
+  # Join two cumulative snapshots on "cgroup dev"; print rate over the
+  # MEASURED window. The snapshots are passed as TWO awk file arguments —
+  # NR==FNR only resets FNR across file arguments, so the earlier piped
+  # concat form put EVERY record in the first-file bucket and the section
+  # was silently always empty (caught by the 2026-11-07 fixture run() pass).
+  awk -v w="$win_s" -v tag="$win_tag" -v top="$TOP_N" '
       NR == FNR { a[$1 " " $2] = $3 " " $4; next }
       {
         k = $1 " " $2
@@ -112,7 +112,8 @@ run() {
             printf "%s %s %.1f %.1f %.1f\n", $1, $2, rb / w / 1048576, wb / w / 1048576, tot / w / 1048576
           }
         }
-      }' |
+      }' \
+    <(echo "$cg_a" | sort -k1,1 -k2,2) <(echo "$cg_b" | sort -k1,1 -k2,2) |
     sort -k5,5 -gr | head -n "$TOP_N" |
     awk -v tag="$win_tag" '
       BEGIN { print "cgroup device-maj:min read_MB/s write_MB/s total_MB/s" }
@@ -120,11 +121,7 @@ run() {
       { print }'
 
   echo "=== per-device (name + by-id, %busy + throughput) $win_tag ==="
-  {
-    echo "$d_a" | sort -k1,1
-    echo "$d_b" | sort -k1,1
-  } |
-    awk -v w="$win_s" '
+  awk -v w="$win_s" '
       NR == FNR { sr[$1] = $3; sw[$1] = $4; ms[$1] = $5; name[$1] = $2; next }
       {
         if ($1 in ms) {
@@ -134,9 +131,10 @@ run() {
           if (d_ms > 0 || r > 0.05 || wr > 0.05)
             printf "%s %s %.1f %.1f %.1f\n", $1, name[$1], d_ms / (w * 1000) * 100, r, wr
         }
-      }' |
+      }' \
+    <(echo "$d_a" | sort -k1,1) <(echo "$d_b" | sort -k1,1) |
     sort -k3,3 -gr |
-    while IFS= read -r mm name busy r wr; do
+    while read -r mm name busy r wr; do
       printf "%s %s (%s) busy=%s%% read=%.1f write=%.1f\n" "$win_tag" "$(by_id_of "$name")" "$mm" "$busy" "$r" "$wr"
     done
 }
