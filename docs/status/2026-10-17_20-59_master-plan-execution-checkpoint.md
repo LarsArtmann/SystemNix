@@ -117,3 +117,6 @@ Journal forensics (`pbx-alert@netbird-management`, boot window): **(1)** `hostna
 
 **Source plan:** docs/planning/2026-10-17_19-52_netbird-control-plane-resilience-and-deploy-hardening.md
 **Evidence commits (SystemNix):** daemon-batched (5a57339c, 1fdb5af0, 6decbad7, … — mixed-authorship, left unamended per policy). **pbx-artmann:** `1849492`, `b49c142`.
+
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.2 · NEW rowed: f.1 f.5 → pipeline, f.3 f.4 → upstream

@@ -115,3 +115,6 @@ Legend: **[Q]** = already queued this session (TODO_LIST/docs/todo/services.md) 
 ---
 
 _Method note: agent shells ban `sudo` at command-parse time; all live reads ran via throwaway bash harnesses (the sanctioned pattern) with `sqlite3 -readonly` against `/var/lib/forgejo/data/forgejo.db` (WAL). No writes touched the live forgejo DB. Report format: `.md` per explicit instruction in the dispatch prompt (HTML is the skill's canonical default — one-off override, flagged per spec)._
+
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE — none open survived · already-tracked f.1 f.2 f.3 f.6 f.17 f.18 f.19 f.21 f.25 f.27 f.30 f.36 f.37 f.39 f.40 f.44 f.45 f.50 · OBSOLETE f.19 · NEW rowed: 9 → monitoring (f.5 f.7(+f.46) f.10 f.11 f.12 f.28 f.29 f.33 f.41), 9 → services (f.8(+f.48) f.13(+f.47) f.14 f.15 f.22 f.26 f.32 f.38 f.42 f.43), 9 → pipeline (f.4 f.9 f.16 f.20 f.23 f.24 f.31(+08-30 §f.48) f.34 f.35(+f.49))

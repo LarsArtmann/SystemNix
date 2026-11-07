@@ -159,3 +159,6 @@ Correction to §c/§d framing, non-destructive:
 - `/home/lars/go/bin/benchstat` EXISTS: imperative `go install` build, `golang.org/x/perf` @ `be2c69f` (2026-10-09), go1.26.8-X:jsonv2, built Oct 11 18:43, 3.5 MB, functional. It **postdates the 2026-09-23 stray-list report** → a **12th stray** that report never enumerated.
 - The session's "benchstat NOT STARTED" claim was about NIX integration (still true — no nix-declared package, nixpkgs absent) and must not be read as "no benchstat on the machine". The tool was already available imperatively; §d item 1 (silent scope drop) stands for the nix path, with this mitigating fact.
 - §f item 16 (~/go/bin strays decision) now covers 12 tools, and §f item 1's vehicle question (Q1) gains a cheaper option (d): leave the imperative binary in place and only shadow/purge it once a nix package lands.
+
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.6 f.30 f.33 · OBSOLETE f.2-5 f.7 f.8 f.25 f.28 f.31 f.34 f.36-40 f.43-48 f.50 (window-passed/YAGNI) · already-tracked f.10 f.11 f.26 f.32 f.35 f.41 f.49 · NEW rowed: 15 rows → pipeline (f.1 f.9 f.12-16 f.20-24 f.29), 3 → upstream (f.18 f.19 f.27), 1 → stability (f.42)
