@@ -33,6 +33,14 @@
 #      bypass preset stays armed, the OFF variant renders NO gateway key at
 #      all (anti-phantom), and every wrapper gateway assertion fires on its
 #      matching violation at eval time.
+#  10. decrypt overlay (ADR-0021, owner enablement 2026-11-07 "MITM myself"):
+#      URL-level capture scoped to the two CA-enrolled devices (evo-x2 +
+#      macbook; the Pixel6 stays spliced — Android Chrome ignores user CA
+#      certs), broad TLD-suffix domains, empty excludes (documented hatch);
+#      the flow-only variant renders NO gateway_decrypt_* key (anti-phantom),
+#      every decrypt assertion fires on its matching violation, and the LNA
+#      browser policy (the lie IP reclassified public — fixes the PNA block
+#      class for splice AND decrypt) stays pinned in both policy dirs.
 # Content checks grep the REAL rendered YAML, realized through the ExecStart
 # string context — not a reconstruction of the generator.
 {
@@ -130,6 +138,20 @@ let
       # mkForce: the host ARMS the gateway (owner enablement 2026-11-06);
       # the OFF variant pins the inert render — no gateway key at all.
       modules = [ { services.dns-blocker.gatewayEnabled = pkgs.lib.mkForce false; } ];
+    }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
+
+  decryptOffExec =
+    (inputs.self.nixosConfigurations.evo-x2.extendModules {
+      # mkForce: the host ARMS the decrypt overlay (owner enablement
+      # 2026-11-07); the OFF variant pins the flow-only render — no
+      # gateway_decrypt_* key at all while the gateway itself stays armed.
+      modules = [
+        {
+          services.dns-blocker.gatewayDecryptDomains = pkgs.lib.mkForce [ ];
+          services.dns-blocker.gatewayDecryptDevices = pkgs.lib.mkForce [ ];
+          services.dns-blocker.gatewayDecryptExcludeDomains = pkgs.lib.mkForce [ ];
+        }
+      ];
     }).config.systemd.services.dnsblockd.serviceConfig.ExecStart;
 
   # gate-timeout-audit pattern: force the variant's assertions and require
@@ -458,6 +480,60 @@ let
       ];
       msg = "any-range rejection assertion does not fire";
     }
+    # ── Decrypt overlay (ADR-0021, owner enablement 2026-11-07) ──
+    {
+      ok = evox2.services.dns-blocker.gatewayDecryptDevices == [ "evo-x2" "macbook" ];
+      msg = "decrypt device scope drifted: only the two CA-enrolled devices (evo-x2 + macbook) may terminate — the Pixel6 (Android Chrome ignores user CA certs) must stay spliced";
+    }
+    {
+      ok = builtins.elem "com" evox2.services.dns-blocker.gatewayDecryptDomains;
+      msg = "decrypt domain list lost the broad TLD suffixes (owner posture 2026-11-07: decrypt all general browsing for enrolled devices)";
+    }
+    {
+      ok = decryptOffExec != exec;
+      msg = "gatewayDecrypt* no longer feeds the rendered config (phantom-option regression)";
+    }
+    {
+      ok = policyAssertionFires "requires gatewayEnabled" [
+        { services.dns-blocker.gatewayEnabled = pkgs.lib.mkForce false; }
+      ];
+      msg = "decrypt-requires-gateway assertion does not fire (upstream gateway_decrypt_requires_gateway)";
+    }
+    {
+      ok = policyAssertionFires "gateway_decrypt_requires_tls" [
+        { services.dns-blocker.blockTLSPort = pkgs.lib.mkForce 0; }
+      ];
+      msg = "decrypt-requires-TLS-listener assertion does not fire (upstream gateway_decrypt_requires_tls)";
+    }
+    {
+      ok = policyAssertionFires "declared services.dns-blocker.devices" [
+        { services.dns-blocker.gatewayDecryptDevices = [ "ghost" ]; }
+      ];
+      msg = "decrypt unknown-device assertion does not fire (upstream gateway_decrypt_devices_known)";
+    }
+    {
+      ok = policyAssertionFires "gatewayDecryptDomains/excludes capped at 256" [
+        { services.dns-blocker.gatewayDecryptDomains = map (n: "d${toString n}.example") (pkgs.lib.range 1 257); }
+      ];
+      msg = "decrypt 256-entry cap assertion does not fire";
+    }
+    {
+      ok = policyAssertionFires "devices at 64" [
+        { services.dns-blocker.gatewayDecryptDevices = map (n: "dev${toString n}") (pkgs.lib.range 1 65); }
+      ];
+      msg = "decrypt 64-device cap assertion does not fire";
+    }
+    {
+      # LNA browser policy pin: without the override, Chromium browsers lose
+      # every lied subresource (the 2026-11-07 github-assets PNA class) in
+      # splice AND decrypt postures — cert trust alone does not fix it.
+      ok =
+        (evox2.environment.etc ? "chromium/policies/managed/dnsblockd-lna.json"
+          && pkgs.lib.hasInfix "=public" evox2.environment.etc."chromium/policies/managed/dnsblockd-lna.json".text)
+        && (evox2.environment.etc ? "helium/policies/managed/dnsblockd-lna.json"
+          && pkgs.lib.hasInfix "=public" evox2.environment.etc."helium/policies/managed/dnsblockd-lna.json".text);
+      msg = "LNA address-space override policy missing — Chromium (Helium) browsing breaks under the lie for splice AND decrypt postures";
+    }
     # ── rpi3-dns parity (secondary host, same module) ──
     {
       ok = rpi3.services.dns-blocker.enable;
@@ -517,6 +593,7 @@ else
         filterExec
         pprofExec
         gatewayOffExec
+        decryptOffExec
         ;
     }
     ''
@@ -529,6 +606,7 @@ else
       FCFG="''${filterExec#* -c }"
       PPCFG="''${pprofExec#* -c }"
       GOCFG="''${gatewayOffExec#* -c }"
+      DOCFG="''${decryptOffExec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
@@ -537,7 +615,8 @@ else
       [ -f "$FCFG" ] || fail "filter variant config not realized: $FCFG"
       [ -f "$PPCFG" ] || fail "pprof variant config not realized: $PPCFG"
       [ -f "$GOCFG" ] || fail "gateway-off variant config not realized: $GOCFG"
-      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" "$PPCFG" "$GOCFG" <<'PYEOF' || fail "see python assert above"
+      [ -f "$DOCFG" ] || fail "decrypt-off variant config not realized: $DOCFG"
+      ${pkgs.python3}/bin/python3 - "$CFG" "$PCFG" "$TCFG" "$ECFG" "$H3CFG" "$FCFG" "$PPCFG" "$GOCFG" "$DOCFG" <<'PYEOF' || fail "see python assert above"
       import json, sys
       cfg = json.load(open(sys.argv[1]))
       assert cfg["allowlist_path"] == "/var/lib/dnsblockd/allowlist", "allowlist_path must point at the persistent state file"
@@ -594,7 +673,13 @@ else
       assert "gateway_ipv6" not in cfg, "gateway_ipv6 must stay unrendered while null (AAAA answers empty NOERROR while lying)"
       goff = json.load(open(sys.argv[8]))
       assert "gateway_enabled" not in goff, "gateway OFF variant still renders gateway keys (phantom-option regression)"
+      assert "com" in cfg["gateway_decrypt_domains"], "decrypt domain list must carry the broad TLD suffixes (owner posture 2026-11-07)"
+      assert cfg["gateway_decrypt_devices"] == ["evo-x2", "macbook"], "decrypt device scope drifted from the two CA-enrolled devices"
+      assert cfg["gateway_decrypt_exclude_domains"] == [], "decrypt excludes must render [] (escape hatch documented, not pre-seeded)"
+      doff = json.load(open(sys.argv[9]))
+      assert doff["gateway_enabled"] is True, "decrypt-OFF variant must keep the gateway itself armed (flow-only posture)"
+      assert "gateway_decrypt_domains" not in doff and "gateway_decrypt_devices" not in doff and "gateway_decrypt_exclude_domains" not in doff, "decrypt-OFF variant still renders gateway_decrypt_* keys (phantom-option regression)"
       print("content OK")
       PYEOF
-      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, pprof, gateway mode, rpi3 parity OK" > $out
+      echo "dns-blocker render: allowlist persistence, rate limit, log sampling, extraDomains belt, tracking gate, journal WAL, policies, trial blocklists, ECS, h3, pprof, gateway mode, decrypt overlay, LNA policy, rpi3 parity OK" > $out
     ''

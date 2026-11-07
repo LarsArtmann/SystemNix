@@ -31,6 +31,27 @@ _: {
           default = true;
           description = "Disable Firefox DNS-over-HTTPS so the local DNS blocker is authoritative";
         };
+
+        localNetworkAccessOverrides = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            Chromium Local Network Access address-space overrides, entries
+            shaped "<ip-or-cidr>=public" (e.g. "192.168.1.200=public").
+            While the dnsblockd gateway lies, public origins resolve to the
+            LAN block IP and Chromium's LNA permission blocks every
+            subresource ("Permission was denied for this request to access
+            the `local` address space" — the 2026-11-07 github-assets
+            class). The override reclassifies the lie IP as public so lied
+            flows render instead of ERR_FAILED, for splice AND decrypt
+            postures. Policy verified: LocalNetworkAccessIpAddressSpaceOverrides
+            (Chrome 130+; CGNAT 100.64.0.0/10 is classified LOCAL by
+            Chromium — moving the block IP there does NOT dodge LNA).
+            Emitted into both /etc/chromium and /etc/helium policy dirs
+            (Helium keeps the Chromium policy path; an unused dir is inert).
+            Firefox needs nothing: it does not enforce LNA.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {

@@ -313,6 +313,10 @@ in
     dnsblockd-cert-trust = {
       enable = true;
       caCertPath = config.sops.secrets.dnsblockd_ca_cert.path;
+      # LNA fix for the lie (2026-11-07 github-assets class): reclassify the
+      # block IP as public so Chromium (Helium) renders lied subresources —
+      # without this, splice AND decrypt postures both ERR_FAILED.
+      localNetworkAccessOverrides = [ "${blockIP}=public" ];
     };
 
     dns-failover = {
