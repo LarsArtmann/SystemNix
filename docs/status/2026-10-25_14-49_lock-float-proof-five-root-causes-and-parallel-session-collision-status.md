@@ -166,3 +166,5 @@ The 10:01 deploy died at the lock-float eval gate on **3 floated root inputs**. 
 | Live anchor            | `/run/current-system`                                             | `dp7arfq3…` == `system-944-link`; 943 also present; anchor verified by generation number                                                                                             |
 
 **Logs retained:** `~/.cache/lockfloat/build2.log` (full 313-line enumeration), `~/.cache/lockfloat/body.nix` (regenerated registry body), `current-body*.nix` (diff inputs).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.9 f.10 f.19 f.20 f.23 f.25-30 f.34 f.35 f.36 f.39 f.44 f.47 f.48 f.49 · already-tracked f.4-6 f.8 f.16 f.40 f.41 · OBSOLETE f.1 f.7 f.11-15 f.17 f.21 f.22 f.24 f.38 f.42 f.43 f.50 · NEW rowed: f.31 → desktop [blocked:user], f.32(+33) → pipeline; merges → 18-11 rows

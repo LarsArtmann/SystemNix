@@ -41,3 +41,6 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **SSH identity drift doc** — which root keys exist on evo-x2, authorized where (feeds pbx fix + borg go-live) **Source:** docs/status/2026-10-16_08-30_deploy-failure-triage-three-service-fixes.md §f.34
 - [ ] [ready] **sops manifest check-mode leg in pre-deploy** — catch secret-manifest drift before the switch, not at deploy **Source:** docs/status/2026-10-24_05-28_superb-v2-exec3-t007-brutal-selfreview-status.md §f.15
 - [ ] [decision] **Archived-journal redaction policy for known leaked values** — accept, or vacuum/sed archived journals post-rotation **Source:** docs/status/2026-10-25_05-08_monitor365-sso-429-trust-proxy-fix-and-inboxclean-502.md §f.28
+- [ ] [ready] **Record install -m 600 /dev/null secret-creation pattern in the sops skill** **Source:** docs/status/2026-10-26_07-09_opencloud-pilot-execution-status.md §f.31
+- [ ] [watch] **crowdsec acquis parse check post-restart** — mode-0640 caveat **Source:** docs/status/2026-10-26_08-56_caddy-edge-live-battery-full-status.md §f.14
+- [ ] [ready] **Gitleaks Slack rule + fixture** **Source:** docs/status/2026-10-26_10-38_fast-todo-wave1-session-status.md §f.27

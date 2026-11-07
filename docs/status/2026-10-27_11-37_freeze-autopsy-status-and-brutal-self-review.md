@@ -141,3 +141,5 @@ _(Items 1–2 are the ones I would do first; 3–5 are the ones that stop this c
 - Commits from this session: `a5f281ac4` (both evidence pulls), `5eca127fa` (diagnosis report + `stability.md` + unrelated daemon batch), `813e8147a` (todo-row batch, also carries another session's `signoz-migrator-guard.nix`), `63c6f9086` (§f mapping), plus this turn's corrections.
 
 **WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.23 f.27 · already-tracked f.1 f.5 f.7 f.8 f.10 f.12 f.13 f.14 f.15 f.17-21 f.24 f.33 · NEW rowed: 19 rows → stability 9, monitoring 5, services 2, storage 1, pipeline 2

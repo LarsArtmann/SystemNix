@@ -342,3 +342,17 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [blocked:push] **PMA relock after the in-flight pma push** — no existing row for this specific relock **Source:** docs/status/2026-10-25_05-08_monitor365-sso-429-trust-proxy-fix-and-inboxclean-502.md §f.31
 - [ ] [decision] **Typed-nil Go policy/lint rule** — ban (T, *ConcreteError) returns in error positions fleet-wide **Source:** docs/status/2026-10-25_06-21_nsfw-crash-loop-fix-session-status.md §f.6
 - [ ] [ready] **LarsArtmann fleet typed-nil/any(err) grep sweep** — 15-min insurance grep across Go repos **Source:** docs/status/2026-10-25_06-21_nsfw-crash-loop-fix-session-status.md §f.25
+- [ ] [decision] **F08 doctrine: teach the library-deep-dive skill the live-probe phase** **Source:** docs/status/2026-10-26_08-56_caddy-edge-live-battery-full-status.md §f.39
+- [ ] [blocked:push] **InboxClean dashboard query cost — upstream cache/LIMIT** **Source:** docs/status/2026-10-26_10-38_fast-todo-wave1-session-status.md §f.3 + docs/status/2026-10-26_17-21_wave2-self-review-full-status.md §f.23
+- [ ] [ready] **monitor365 upstream: mainProgram + Binder-error fix** **Source:** docs/status/2026-10-26_10-38_fast-todo-wave1-session-status.md §f.47
+- [ ] [ready] **monitor365 migration-runner DEBUG→WARN on failed migrations + startup schema canary** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.11
+- [ ] [watch] **MV-refresh cost profiling post-storm** — incremental window queries vs scrambled zone maps **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.12
+- [ ] [ready] **Upstream FOD download-scope fix → lift go-taskqueue/branching-flow pin-backs** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.21
+- [ ] [decision] **Vendor-hash paste batch (15+ tools) to end the shim treadmill** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.22
+- [ ] [ready] **Agent config validation: warn/clamp batch_size < 1000** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.29
+- [ ] [watch] **process-collector event volume sanity** — 212 events/min, top backlog contributor **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.30
+- [ ] [decision] **afk_status on a headless server — should it run?** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.31
+- [ ] [watch] **GET /api/v1/devices/evo-x2/config 404 noise per cycle** — re-confirm the queued row **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.32
+- [ ] [watch] **latency collector 12s median investigation** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.33
+- [ ] [decision] **fs_event watch_paths = [] semantics** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.34
+- [ ] [decision] **Batch-analyze shim-ledger drop economics** **Source:** docs/status/2026-10-27_00-10_monitor365-io-storm-review-and-quiesce-status.md §f.37

@@ -224,3 +224,5 @@ readlink /run/current-system          # f485prqh… == system-948-link target
 nix eval --raw .#…toplevel.drvPath    # a7rpxd5q… (gate GREEN)
 grep -n 'vendorHash = ' modules/nixos/services/cv.nix   # IzjuTWg… (third literal)
 ```
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.6 f.7 f.23 f.42 f.43 f.44 f.45 · already-tracked f.5 f.16-20 f.48 · OBSOLETE f.2 f.8-14 f.24 f.33 f.35-41 f.49 f.50 · NEW rowed: 8 pipeline rows (f.4, f.15+14-49 §f.3, f.21+22 [decision], f.25-27+14-49 §f.46, f.28+14-49 §f.18, f.29+14-49 §f.45, f.30-32, f.46+47)

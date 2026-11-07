@@ -77,3 +77,5 @@
 ## Appendix: session artifacts (continuation turn produced none — that is the finding)
 
 Prior artifacts stand: `04-57` autopsy (+ uid-966 correction), `05-48` self-review, evidence pulls ×3, doc-row updates — all committed (`ed0428a27`, `8594af71f`, daemon batches). The 06:0x remedy-map turn committed NOTHING and persisted NOTHING outside chat.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.6 f.14 f.18 · already-tracked f.4 f.7 f.8 f.13 f.17 f.20 · OBSOLETE f.3 f.10 f.12 f.15 · NEW rowed: f.1 f.19 → stability, f.2 → pipeline, f.9 → storage [blocked:user]; f.5/f.11/f.16 merged into 11-37/18-01 rows

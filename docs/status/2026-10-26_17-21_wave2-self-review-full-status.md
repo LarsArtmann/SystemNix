@@ -127,3 +127,5 @@
 ---
 
 **Handoff:** everything this session promised is either landed+verified (§a) or deferred with its exact unblock named (§b) — the two claims this session got WRONG are corrected in place with ERRATA markers (§d1/d2, §a11). The 50-row §f is dispatch-ready; items 1-9 are unblocked RIGHT NOW (dirty files cleared at ~17:2x).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.5 f.6 f.8 f.11 f.13 f.20 f.28 f.34 f.35 f.40 · already-tracked f.17 f.21 f.22 f.27 f.29 f.30 f.33 f.36 f.37 f.38 f.41 f.42 f.44 f.45 f.47 f.48 · NEW rowed: 14 rows → pipeline 4, storage 5, monitoring 1, services 2, stability 2; merges → 10-38/18-01 rows

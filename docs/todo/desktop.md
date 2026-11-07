@@ -150,3 +150,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **dms-shell 2.0.0 installPhase deep-dive** — rerun drv, capture full log (1.6.3 builds clean; only the stale-comment row exists) **Source:** docs/status/2026-10-23_16-06_deploy-build-blockers-followup.md §f.3
 - [ ] [watch] **Dux rename watch** — confirm homeModules.{niri,dank-material-shell} exist at ?ref=master post-rename + watch unpinned dux-qml-common dep **Source:** docs/status/2026-10-25_05-07_pin-lift-templ-overview-dms-always-latest-status.md §f.34 + §f.35
 - [ ] [decision] **DMS branch policy master vs stable** — master is mid-rebrand (Dux Shell) **Source:** docs/status/2026-10-25_05-07_pin-lift-templ-overview-dms-always-latest-status.md §f.36
+- [ ] [blocked:user] **homebrew-cask float check at next Mac deploy** — unverifiable from Linux; note in Darwin runbook **Source:** docs/status/2026-10-25_14-49_lock-float-proof-five-root-causes-and-parallel-session-collision-status.md §f.31
+- [ ] [ready] **opencloud-desktop into evo-x2 home-manager** — no package wired **Source:** docs/status/2026-10-26_07-09_opencloud-pilot-execution-status.md §f.16

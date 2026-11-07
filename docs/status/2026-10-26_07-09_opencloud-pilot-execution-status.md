@@ -122,3 +122,5 @@ _2026-10-26 07:09 CET · session: opencloud-executor-1 (plan tombstone `975ac1d7
 - Green evals: evo-x2 toplevel drvPath `5kh8bh65…-nixos-system-evo-x2-26.11.20261015.fe13242.drv`; D6 inert probe `[]`; doc-counts standalone build.
 - Failing-then-fixed: full flake check #1 (doc-counts 132→133 — fixed); targeted eval #1 (io-tier + oneshot-timeout audit throws — fixed in-module).
 - Live tree at report time: `43360d2e6` HEAD, `README.md` modified (2 pending hunks), everything else clean; tombstone still EXECUTING.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.4-9 f.14 f.27 · already-tracked f.10 f.15 f.21 f.26 · OBSOLETE f.2 f.3 f.23 f.29 f.32 f.33 · NEW rowed: f.11(+12/13/17/18) → services [blocked:user], f.24(+25) f.28 → services, f.16 → desktop, f.19 → storage [watch], f.20 f.22 f.30 → pipeline, f.31 → security

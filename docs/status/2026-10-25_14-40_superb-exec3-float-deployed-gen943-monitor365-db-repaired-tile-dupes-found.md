@@ -73,3 +73,5 @@
 3. **Deploy pacing**: monitor365-server is likely mid-index-rebuild on the 25 GB DB (heavy IO on the QLC root at PSI ~60-70%). Hold the papdashboard-fix redeploy until the rebuild completes and PSI drains, or force through immediately as with T1?
 
 **WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.5 f.6 f.8 f.10 f.15 f.16 · already-tracked f.4 f.13 f.18 · OBSOLETE f.1 f.3 f.7 f.11 · NEW rowed: f.9 f.17 → monitoring, f.14 → stability; f.12 merged into 18-01 §f.14 row

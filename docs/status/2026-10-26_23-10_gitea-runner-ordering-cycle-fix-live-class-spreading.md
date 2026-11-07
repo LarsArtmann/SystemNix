@@ -114,3 +114,5 @@ Judgment call to flag (not a fuckup, but contested): the daemon-swept commit `a1
 3. **Class-fix direction (f.5):** drop `After=multi-user.target` from the gate builders, or stop gating consumers out of multi-user.wants? The 2026-10-18 audit note ("application readiness, never a boot gate") argues for the former, but you ratified the current pattern — your call before I sweep ~dozens of consumers.
 
 **Source of record for this incident:** docs/services/forgejo.md → "Runner boot ordering-cycle (2026-10-25/26)".
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-9 f.13 f.16 f.17 f.20 · already-tracked f.19 · OBSOLETE f.11 f.18 · NEW rowed: f.10 → monitoring, f.12 → stability [watch], f.14 → services, f.15 → pipeline [decision]

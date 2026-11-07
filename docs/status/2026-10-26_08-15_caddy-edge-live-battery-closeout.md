@@ -56,3 +56,5 @@ Caddy's `tracing` ships the **OTLP/HTTP** exporter, but the unit env pointed at 
 - Root-gated: per-vHost access-file inventory + the log_skip file-line absence check (fold into the filelog row's next window).
 - Owner 30-seconders: :80 plaintext redirect probe; optional inboxclean SSE chat smoke.
 - F25 FP window review at 24–48h (watch row), journald volume watch (flood should DIE when :4318 deploys — the watch row now has the 381k/h baseline to compare against).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE b1 · already-tracked b2 b4 · NEW rowed: b3(+08-56 §f.10-11) → services [blocked:user]

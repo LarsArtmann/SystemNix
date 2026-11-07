@@ -150,3 +150,5 @@ Row closures: `docs/todo/monitoring.md` edge-tracing deploy row + sampling-polic
 ---
 
 _Report scope: this session's run only, per instruction. Point-in-time = 08:56 CET; addendum 10:4x CET._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-3 f.7 f.25 f.26 f.28 f.32 f.46 f.48 f.50 · already-tracked f.5 f.6 f.8 f.16 f.18 f.19 f.22 f.27 f.29 f.30 f.36 f.40 f.42 f.44 f.45 · OBSOLETE f.4 f.13 f.35 f.41 · NEW rowed: 18 rows → pipeline 7, monitoring 4, services 3, storage 2, security 1, upstream 1

@@ -78,3 +78,5 @@
 ---
 
 **Session logs:** `~/.cache/lockfloat/` — backup-fire-20261025-171257.log (runuser EPERM evidence), float-register*.log ×2, float-proof-20261025-172436.log (the three red roots + got-hashes), proof-shims-_.log (GREEN), deploy8-_.log, deploy7.log (paperless-gpt transient), plus the prior session's set. **Report self-harvest:** §f rows 5-10 queued at authoring time (services.md ×2, pipeline.md ×2, stability.md ×1 + TODO_LIST twins); rows 1-4, 11-16 were already queued during the session; 12-14, 19 carry standing rows. **Nothing pushed; no owner-gated action taken.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.16 f.19 · already-tracked f.5 f.6 f.8 f.9 f.11 f.15 f.17 · OBSOLETE f.1 f.4 f.13 f.18 · NEW rowed: f.2 f.7(+17-21 §f.32) f.20 → services, f.10(+14-08 §f.16) → stability [decision], f.12 → stability [blocked:user], f.14(+14-40 §f.12) → storage [watch]

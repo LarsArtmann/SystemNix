@@ -261,3 +261,5 @@ storage-collector: WARN statvfs failed; skipping mount this cycle
 ```
 
 **No commit made** (harness rule: never commit without explicit request); the auto-commit daemon will pick this file up.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.14 f.37 · already-tracked f.9 f.17-21 f.23 f.25 f.26 f.42 f.48 · OBSOLETE f.24 f.39 f.40 · NEW rowed: 21 rows (f.47 harvest-self-application excluded as circular) → pipeline 5, monitoring 6, storage 6, stability 3, services 1
