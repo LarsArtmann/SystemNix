@@ -126,3 +126,5 @@
 1. **May the next calm-window session fire `nix run .#deploy` autonomously**, knowing the batch carries OTHER sessions' undeployed-prod work (forgejo-runner migration with identity carry-over, integration tiles, trust-proxy)? Or do you want to pull that deploy yourself after reviewing the carry list (services.md deploy-watch row)?
 2. **Levers 1+2 now?** Cap 1B→250k + agent keep/stop/retire — the drain-bomb decision is yours per standing rows; every pool-capacity improvement (hot-tier T8) un-leashes the 407.76M backlog until the cap is restored.
 3. **Upstream push authorization** for monitor365 (and the LarsArtmann fleet): may sessions write+push the queued upstream fixes, or is upstream yours? (Also gates T10–T12 and the [blocked:push] rows across ~15 repos.)
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-9 f.12-15 f.21-23 f.26 f.38 · already-tracked f.16-20 f.22 f.25 f.27-30 f.32-33 f.36-37 f.39-49 · OBSOLETE f.10 (backup redesigned) · NEW rowed: f.31 → storage, f.50 → pipeline; f.11/f.24/f.35 merged into 04-50 rows

@@ -85,3 +85,5 @@ _Harvest: #1/#2/#6 ride the existing plan rows; #3/#14 immediate; others queued 
 ---
 
 _Session verification evidence: `nix flake check` fully green at cb82632dc (hook output, 12:53); `checks.hermes-migrate-fixture` green ALL legs (log: `~/.cache/lockfloat/hermes-fixture2.log`); sandbox probe `~/.cache/lockfloat/debug-leg2.log` (rc-127 ENOENT reproduction); registry diffs = exactly {hermes-agent→0329638c, inboxclean→b6f15e71, cv→88e0d12} vs HEAD; shellcheck rc=0 (`~/.cache/lockfloat/shellcheck.log`); treefmt scoped 0-changed; float-proof build #4 `~/.cache/lockfloat/toplevel-build4.log`: rc=1, cv-only root (all other inputs green in-log); storm at close: io PSI avg10 77.2%, k10temp 98.5°C._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.6-9 f.12 · already-tracked f.10 f.15 · OBSOLETE f.13 f.14 · NEW rowed: f.11 → pipeline; f.5 merged into the 09-25 §e.3 row

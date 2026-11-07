@@ -92,3 +92,5 @@
 ---
 
 **Verdict:** one large sprint shipped and honestly verified EXCEPT the two legs named in b.1; one deploy-breaking bug shipped green and caught only by this review (fixed, `ce79d1cc1`); process debt concentrated in rendered-artifact verification discipline and hook-vs-daemon commit asymmetry. Waiting for instructions.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.8-10 f.12 f.21 f.27 f.30 · already-tracked f.5 f.6 f.13 f.14 f.16 f.19 f.20 f.23 f.31 · f.7 already-tracked (monitoring.md:128 node_load1 row) · OBSOLETE f.18 f.28 f.29 (flm disabled / windows passed) · NEW rowed: f.11 f.22 f.24 f.25 f.26 → monitoring, f.15 → security, f.32 → pipeline

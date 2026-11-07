@@ -198,3 +198,5 @@ freeze #33 at 04:31:30 (docs/status/2026-10-25_04-57_freeze-31-33-crash-diagnosi
 
 **Files touched this session:** `flake.nix`, `flake.lock`, `lib/flake-input-pin-audit.nix`, `modules/nixos/services/overview.nix`, `platforms/nixos/desktop/quickshell.nix`, `docs/todo/upstream.md`, `CHANGELOG.md`.
 **Secrets:** none read, written, echoed, or logged.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.4 f.11 f.16 f.21 f.25 f.29-33 f.39-41 f.46 f.50 · already-tracked f.2 f.10 f.14 f.19 f.20 f.23 f.37 f.42 f.47 · OBSOLETE f.15 f.27 f.43 f.45 f.49 · NEW rowed: 18 rows (merged f.34+35) → pipeline 11, stability 3, desktop 2, upstream 2

@@ -66,3 +66,5 @@
 
 1. The plan's three standing questions (backup gap now vs 03:00-fire; drain intent + agent fate; upstream push authorization) — unchanged, packet in §d.
 2. Endorse pause-builds + cooling inspection before any deploy attempt (the autopsy's ask, re-measured live at 98.75°C this session)?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.4 f.5 · already-tracked f.2 f.3 (du-vs-df leg merged into the 09-25 §e.3 row)

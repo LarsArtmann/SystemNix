@@ -78,3 +78,5 @@
 ## Appendix: session artifacts
 
 Autopsy report + correction: `docs/status/2026-10-25_04-57_freeze-31-33-crash-diagnosis.md` · Evidence pulls: `docs/status/tasks/2026-10-25_03-40_boot-3e5c8af5-…`, `…_03-49_boot-daecca67-…`, `…_03-49_boot-002c519e-…` (committed in daemon batches `15f3c61f9`/`a34d98ddb`) · Doc rows: `ed0428a27` (queue + library) + `a34d98ddb` (freeze index + report) · Gate: pre-vacuum PASS, todo-system structure OK.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.6 f.10 · already-tracked f.1-3 f.8 f.9 f.11-14 · OBSOLETE f.7 (standing thermal row owns it) · NEW rowed: f.4 (+07-16 §f.24) → stability

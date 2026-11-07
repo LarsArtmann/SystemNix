@@ -69,3 +69,5 @@
 ## Appendix: gates at report time
 
 check-doc-links OK · check-todo-system structure OK (WARN 81, composition verified 22 Sept + 59 Oct) · doc-counts eval gate green post-collapse · pre-commit all-green on every commit · `git status` clean · `origin/master..HEAD` = 0.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.6 · already-tracked f.2-5

@@ -285,3 +285,5 @@ Deliberately NOT done in the second pass:
   system this review exists to prevent.
 - The HTML self-review artifact: written after this appendix
   (`docs/reviews/2026-10-25_05-0x_brutal-self-review.html`).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.9-15 f.25 f.29 f.32 f.41 f.42 · already-tracked f.5 f.6 f.7 f.16-23 f.27 f.28 f.30 f.31 f.33 f.35 f.39 f.44 f.48 f.50 · OBSOLETE f.3 f.8 (backup redesigned) · NEW rowed: 12 rows (merged f.4+24+07-16 §f.11) → services 3, pipeline 5, upstream 2, storage 1, monitoring 1

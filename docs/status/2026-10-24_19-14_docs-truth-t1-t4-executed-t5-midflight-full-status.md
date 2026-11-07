@@ -74,3 +74,5 @@ _(Q3 — zero-strike banner canon for fully-resolved reports with zero numbered 
 ## Appendix: gates at report time
 
 `nix flake check --no-build` all-checks-passed (post-T3 fixes; doc-counts evaluating green) · negative-test harness 15/0 (doccounts ×3 + 10 pristine controls + toplevel + icons) · `check-todo-system.sh` structure OK, WARN 81 (verified composition: 22 Sept + 59 Oct) · `check-doc-links.sh` OK · shellcheck (repo form) PASS on the touched scripts · annotate check-rows green on all 3 T2 files.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.6 f.8 · already-tracked f.3 f.4 f.5 · OBSOLETE f.7 (/tmp residue)

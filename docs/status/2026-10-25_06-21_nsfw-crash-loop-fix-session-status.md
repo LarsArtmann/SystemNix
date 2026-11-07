@@ -98,3 +98,5 @@
 1. **Was forcing the deploy at Tctl 90°C the right call — and do you want a thermal condition (not just PSI) in the deploy gate?** Tonight it worked; the counterfactual (freeze mid-switch at 05:40, third boot of the night) was one unlucky nix-build away. Your risk tolerance decides whether the gate gets a Tctl ceiling or stays PSI-only.
 2. **Do you want the 04:31:30 boot-evidence pull dispatched NOW (evidence in the journal is freshest and the box is calm-ish), or left to the tq pool?** It is the only item from tonight whose evidence quality decays with time (journal rotation, next boots).
 3. **Should the monitor365 agent come back up?** Tonight's post-deploy check keeps flagging "0 connected devices" — that's the agent you deliberately stopped Oct 21. The open decision (return now / after DB trim / retire) forks several downstream rows; only you hold the intent.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.5 · already-tracked f.3 f.4 f.7 f.9-14 f.16 f.18 f.20-24 · OBSOLETE f.16 (repo-external) · NEW rowed: f.6 f.25 → upstream, f.8 f.15 → ai-stack, f.17 → pipeline, f.19 → monitoring

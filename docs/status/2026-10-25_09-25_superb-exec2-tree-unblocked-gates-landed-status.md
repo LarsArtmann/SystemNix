@@ -41,3 +41,5 @@ Sustained io PSI never held <30% (observed 25–88%, mostly >35%) AND k10temp cy
 5. Owner questions (07-16 §g) still standing: deploy autonomy, cap 250k + agent fate, upstream push.
 
 **Source:** docs/planning/2026-10-25_05-10_SUPERB-*.md (exec-2 marker) + exec-1 close-outs 07-05/07-16.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE e.1 e.2 e.5 · already-tracked e.4 · NEW rowed: e.3 (+07-05 §f.4 +07-16 §f.26 +12-55 §f.5) → storage

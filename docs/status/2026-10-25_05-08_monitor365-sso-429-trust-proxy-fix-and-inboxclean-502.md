@@ -132,3 +132,5 @@
 ---
 
 _Report ends. Waiting for instructions. Per the standing rule, §f is HARVEST-ready but was deliberately not auto-harvested: you asked me to report and wait._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.5 f.13 f.21 f.23 f.24 f.27 f.44 f.47 f.48 · already-tracked f.1 f.4 f.6 f.9 f.10 f.18 f.20 f.22 f.29 f.30 f.32-42 f.45 f.46 · OBSOLETE f.19 f.43 f.49 f.50 · NEW rowed: 13 rows → services 4, upstream 5, pipeline 2, monitoring 1, security 1

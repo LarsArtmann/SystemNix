@@ -105,3 +105,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **llama-chat-side leak/health collector** — parity with the module-scoped llama-rag leak metric **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.18
 - [ ] [watch] **bind-blocked refusal reason + consumer-story review** — implement the T5 reason surface when a consumer story exists **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.20 + §f.21
 - [ ] [ready] **test-ai-stack-status fixture** — scripts/ai-stack-status.sh has zero test coverage **Source:** docs/status/2026-10-23_08-10_berth-execution-self-review-status.md §f.23
+- [ ] [blocked:user] **nsfw extension pairing E2E in Helium** — one classify through the browser; owner-gated **Source:** docs/status/2026-10-25_06-21_nsfw-crash-loop-fix-session-status.md §f.8
+- [ ] [decision] **/readyz pairing-token LAN trust model** — token served unauthenticated during verification **Source:** docs/status/2026-10-25_06-21_nsfw-crash-loop-fix-session-status.md §f.15
