@@ -81,6 +81,15 @@ expect_fail() {
   echo "selftest: guard correctly rejected drift shape '$label'"
 }
 
+expect_pass() {
+  local label="$1"
+  shift
+  if ! (run_check "$@") >/dev/null 2>&1; then
+    fail "selftest: guard rejected a LEGAL shape '$label' — the positive asymmetry (extra KNOWN names allowed) got inverted"
+  fi
+  echo "selftest: guard correctly stayed green on legal shape '$label'"
+}
+
 buildcache_nix="${positional[0]:-$default_buildcache_nix}"
 das_check="${positional[1]:-$default_das_check}"
 
@@ -110,3 +119,13 @@ expect_fail "new buildcacheDirs literal" "$work/buildcache.nix" "$work/das-check
 echo "selftest: fail-closed on empty extraction"
 printf 'buildcacheDirs = [ ];\n' >"$work/empty.nix"
 expect_fail "empty extraction" "$work/empty.nix" "$work/das-check.sh"
+
+echo "selftest: drift shape 4 — KNOWN name ADDED (must stay green)"
+# Coverage is one-directional by design: KNOWN names are the das-check's own
+# universe; extra names (non-buildcache mount entries it also tracks) are
+# legal. A future inversion (requiring exact set equality) would silently
+# break legitimate additions — this leg pins the asymmetry.
+cat "$buildcache_nix" >"$work/buildcache.nix"
+sed -i 's/^KNOWN_CACHE_ENTRIES=(/KNOWN_CACHE_ENTRIES=(\n  extra-selftest-known-name/' "$work/das-check.sh"
+grep -q 'extra-selftest-known-name' "$work/das-check.sh" || fail "selftest: KNOWN-name injection did not land — KNOWN_CACHE_ENTRIES block shape drifted past the injector"
+expect_pass "KNOWN name added" "$work/buildcache.nix" "$work/das-check.sh"

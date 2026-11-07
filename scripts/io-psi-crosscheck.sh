@@ -18,6 +18,9 @@
 #   io-psi-crosscheck.sh full       # divergence probe: adds PSI readings,
 #                                   #   zram ops delta, io.cost state, D-state
 #                                   #   scan, per-pid io deltas (§f.8 probe)
+#   io-psi-crosscheck.sh verdict    # one-line PHANTOM / REAL STORM /
+#                                   #   INCONCLUSIVE classification of a
+#                                   #   refusal (ghostty io_cqring_wait class)
 #   io-psi-crosscheck.sh selftest [path/to/deploy.sh]
 #
 # Read-only over /proc + /sys. Every section is timeout-bounded and
@@ -79,6 +82,44 @@ crosscheck_rank_cgroups_stream() {
       fi
     done
   return 0
+}
+
+# Pure: the phantom classifier (2026-10-14 verdict, docs/agents/stability.md
+# "Deploy pressure gate"). Thresholds from the live signature: all devices
+# ≤5% util + S-state io_cqring_wait sleepers + zero D-state = PSI booking
+# TSK_IOWAIT against idle io_uring CQ-waiters (ghostty class) — the deploy is
+# safe to force; ≥20% max util = genuine device work — wait; D-state present
+# is the automount/corpse class, never the phantom — human eyes.
+verdict_classify() {
+  local max_util="$1" cq="$2" dstate="$3"
+  if [ "$dstate" -gt 0 ]; then
+    echo "INCONCLUSIVE: D-state tasks present with high PSI — the automount/corpse class, NOT the phantom; run 'full' and read the wchans before forcing"
+  elif awk -v m="$max_util" 'BEGIN { exit !(m >= 20) }'; then
+    echo "REAL STORM: max device util ${max_util}% ≥ 20% — genuine device work; wait for the calm window"
+  elif awk -v m="$max_util" 'BEGIN { exit !(m <= 5) }' && [ "$cq" -gt 0 ]; then
+    echo "PHANTOM — SAFE TO FORCE: all devices ≤5% util (max ${max_util}%) with ${cq} S-state io_cqring_wait sleeper(s) and zero D-state — PSI books TSK_IOWAIT against idle io_uring CQ-waiters (ghostty class)"
+  else
+    echo "INCONCLUSIVE: max util ${max_util}%, cq-waiters ${cq}, D-state ${dstate} — between thresholds; run 'full' for the evidence set"
+  fi
+}
+
+verdict_mode() {
+  local w="$CROSSCHECK_WINDOW_S"
+  local snap_a snap_b util_lines max_util cq dstate
+  snap_a="$(crosscheck_snapshot_io_ticks)"
+  sleep "$w"
+  snap_b="$(crosscheck_snapshot_io_ticks)"
+  util_lines="$(crosscheck_util_lines "$snap_a" "$snap_b" "$w")"
+  max_util="$(crosscheck_max_util <<<"$util_lines")"
+  # S-state CQ-waiters: the phantom signature — ghostty scopes sleep in
+  # io_cqring_wait TASK_INTERRUPTIBLE with in_iowait=1, so PSI charges them
+  # while io.stat stays empty. /proc wchan read, no privileges needed.
+  cq="$(ps -eo stat,wchan:32 --no-headers 2>/dev/null | awk '$1 ~ /^S/ && $2 == "io_cqring_wait"' | wc -l)"
+  dstate="$(ps -eo stat --no-headers 2>/dev/null | awk '$1 ~ /^D/' | wc -l)"
+  echo "per-device %util (${w}s io_ticks window, max ${max_util}%):"
+  [ -n "$util_lines" ] && printf '%s\n' "$util_lines" | sed 's/^/  /'
+  echo "verdict inputs: max_util=${max_util}% cq_waiters=${cq} d_state=${dstate}"
+  echo "VERDICT: $(verdict_classify "$max_util" "$cq" "$dstate")"
 }
 
 gate_mode() {
@@ -283,6 +324,21 @@ selftest() {
   fi
   wait
 
+  # 5b. verdict classifier unit cases (pure function, fixed inputs; the
+  # thresholds and precedence live in stability.md's phantom shortcuts).
+  out="$(verdict_classify 0.4 3 0)"
+  case "$out" in "PHANTOM"*) ;; *) echo "FAIL verdict phantom shape: '$out'"; fails=$((fails + 1)) ;; esac
+  out="$(verdict_classify 45.2 0 0)"
+  case "$out" in "REAL STORM"*) ;; *) echo "FAIL verdict real-storm shape: '$out'"; fails=$((fails + 1)) ;; esac
+  out="$(verdict_classify 0.4 2 1)"
+  case "$out" in "INCONCLUSIVE: D-state"*) ;; *) echo "FAIL verdict d-state precedence: '$out'"; fails=$((fails + 1)) ;; esac
+  out="$(verdict_classify 45 1 2)"
+  case "$out" in "INCONCLUSIVE: D-state"*) ;; *) echo "FAIL verdict d-state outranks real: '$out'"; fails=$((fails + 1)) ;; esac
+  out="$(verdict_classify 12 0 0)"
+  case "$out" in "INCONCLUSIVE: max util"*) ;; *) echo "FAIL verdict between-thresholds shape: '$out'"; fails=$((fails + 1)) ;; esac
+  out="$(verdict_classify 3 0 0)"
+  case "$out" in "INCONCLUSIVE: max util"*) ;; *) echo "FAIL verdict low-util-no-waiters inconclusive: '$out'"; fails=$((fails + 1)) ;; esac
+
   # 6. static tripwire: deploy.sh must still wire the crosscheck beside the
   # PSI refusal line (a deleted call would go phantom-green otherwise).
   if [ -n "$deploy_sh" ]; then
@@ -305,12 +361,13 @@ selftest() {
 case "$MODE" in
 gate) gate_mode ;;
 full) full_mode ;;
+verdict) verdict_mode ;;
 selftest)
   shift || true
   selftest "${1:-}"
   ;;
 *)
-  echo "usage: io-psi-crosscheck.sh [gate|full|selftest [deploy.sh]]" >&2
+  echo "usage: io-psi-crosscheck.sh [gate|full|verdict|selftest [deploy.sh]]" >&2
   exit 1
   ;;
 esac

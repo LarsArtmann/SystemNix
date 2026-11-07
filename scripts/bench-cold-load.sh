@@ -85,7 +85,16 @@
 #               only); FAILED runs append event=dead-server / event=timeout
 #               lines carrying the crash-reason excerpt + PSI context, so
 #               crash forensics join the measurement stream instead of
-#               living only in the KEEP_RAW /tmp dir
+#               living only in the KEEP_RAW scratch dir
+#
+# 2026-11-07 hardening (queue rows):
+#   - scratch dir lives under ~/.cache (durable), never /tmp — tmpfiles
+#     wiped KEEP_RAW evidence mid-session twice (the /tmp-volatility trap)
+#   - psi.csv + JSON carry mem PSI beside io (psi_mem_*), so "reproduced at
+#     zero memory pressure" rests on at-crash samples, not a pre-run read
+#   - the gate needs hysteresis: 2 consecutive calm polls ≥10s apart (a
+#     single avg10 dip can sit inside a resuming storm cell — the 2026-11-05
+#     strict-gate dio run launched on one dip and a cell resumed mid-run)
 set -euo pipefail
 
 MODEL_ARG="${1:-}"
@@ -117,6 +126,7 @@ TIMEOUT_S="${TIMEOUT_S:-1200}"
 OUT="${OUT:-}"
 
 psi10() { grep -o 'avg10=[0-9.]*' /proc/pressure/io | head -1 | cut -d= -f2; }
+mem10() { grep -o 'avg10=[0-9.]*' /proc/pressure/memory | head -1 | cut -d= -f2; }
 
 gguf_arch() {
   # Parse general.architecture out of the GGUF header: v2/v3 layout is
@@ -201,27 +211,39 @@ if ss -ltn 2>/dev/null | grep -q ":${PORT} "; then
   exit 1
 fi
 
-echo "### PSI gate: waiting for io some avg10 < ${PSI_MAX}% (abort after $((PSI_WAIT_S / 60))min; PSI_ACCEPT=1 overrides)"
+echo "### PSI gate: waiting for io some avg10 < ${PSI_MAX}% held on 2 consecutive polls ≥10s apart (hysteresis; abort after $((PSI_WAIT_S / 60))min; PSI_ACCEPT=1 overrides)"
 waited=0
 psi_accepted=false
-while [ "$(psi10 | cut -d. -f1)" -ge "$PSI_MAX" ]; do
-  if [ "$PSI_ACCEPT" = "1" ]; then
-    psi_accepted=true
-    echo "WARN: PSI_ACCEPT=1, running in a NOISY window (io some avg10=$(psi10)%): the load_s number is storm-depressed (2.5-9x class) and marked psi_accepted in the JSON"
-    break
+calm_streak=0
+PSI_POLL_S=10
+while :; do
+  now10="$(psi10 | cut -d. -f1)"
+  if [ "$now10" -lt "$PSI_MAX" ]; then
+    calm_streak=$((calm_streak + 1))
+    if [ "$calm_streak" -ge 2 ]; then
+      break
+    fi
+  else
+    calm_streak=0
+    if [ "$PSI_ACCEPT" = "1" ]; then
+      psi_accepted=true
+      echo "WARN: PSI_ACCEPT=1, running in a NOISY window (io some avg10=${now10}%): the load_s number is storm-depressed (2.5-9x class) and marked psi_accepted in the JSON"
+      break
+    fi
+    if [ "$waited" -ge "$PSI_WAIT_S" ]; then
+      echo "ABORT: no quiet window (io some avg10 stayed >= ${PSI_MAX}% for $((PSI_WAIT_S / 60))min), a storm-depressed number is worse than no number"
+      echo "  fix: retry in a calm window, or PSI_ACCEPT=1 to record a known-noisy probe, or PSI_MAX=<n> to relax the gate"
+      exit 1
+    fi
   fi
-  if [ "$waited" -ge "$PSI_WAIT_S" ]; then
-    echo "ABORT: no quiet window (io some avg10 stayed >= ${PSI_MAX}% for $((PSI_WAIT_S / 60))min), a storm-depressed number is worse than no number"
-    echo "  fix: retry in a calm window, or PSI_ACCEPT=1 to record a known-noisy probe, or PSI_MAX=<n> to relax the gate"
-    exit 1
-  fi
-  sleep 30
-  waited=$((waited + 30))
+  sleep "$PSI_POLL_S"
+  waited=$((waited + PSI_POLL_S))
 done
 PSI_PRE="$(psi10)"
-echo "### gate done after ${waited}s, pre-load PSI io some avg10=${PSI_PRE}% | model $(du -h "$MODEL" | cut -f1) | port $PORT | ctx $CTX | ngl $NGL"
+MEM_PRE="$(mem10)"
+echo "### gate done after ${waited}s (${calm_streak} consecutive calm polls), pre-load PSI io some avg10=${PSI_PRE}% mem avg10=${MEM_PRE}% | model $(du -h "$MODEL" | cut -f1) | port $PORT | ctx $CTX | ngl $NGL"
 
-D="$(mktemp -d /tmp/bench-cold-load.XXXXXX)"
+D="$(mktemp -d "${XDG_CACHE_HOME:-$HOME/.cache}/bench-cold-load.XXXXXX")"
 SAMPLER=0
 SRV=0
 cleanup() {
@@ -253,7 +275,7 @@ export HSA_ENABLE_SDMA="${HSA_ENABLE_SDMA:-0}"
 
 (
   while :; do
-    printf '%s,%s\n' "$(date +%s)" "$(psi10)" >>"$D/psi.csv"
+    printf '%s,%s,%s\n' "$(date +%s)" "$(psi10)" "$(mem10)" >>"$D/psi.csv"
     sleep 2
   done
 ) &
@@ -328,8 +350,11 @@ done
 T1="$(date +%s.%N)"
 
 PSI_POST="$(psi10)"
+MEM_POST="$(mem10)"
 PSI_MAX_RUN="$(awk -F, '{if($2+0>m)m=$2+0} END{printf "%.1f", m}' "$D/psi.csv" 2>/dev/null || echo "$PSI_POST")"
 PSI_AVG_RUN="$(awk -F, '{s+=$2; n++} END{if(n)printf "%.1f", s/n; else print "0"}' "$D/psi.csv" 2>/dev/null || echo "0")"
+MEM_MAX_RUN="$(awk -F, '{if($3+0>m)m=$3+0} END{printf "%.1f", m}' "$D/psi.csv" 2>/dev/null || echo "$MEM_POST")"
+MEM_AVG_RUN="$(awk -F, '{s+=$3; n++} END{if(n)printf "%.1f", s/n; else print "0"}' "$D/psi.csv" 2>/dev/null || echo "0")"
 
 BYTES=$(stat -c %s "$MODEL")
 LOAD_S=$(awk -v t0="$T0" -v t1="$T1" 'BEGIN{printf "%.2f", t1 - t0}')
@@ -364,12 +389,16 @@ if [ "$health_ok" != "true" ]; then
     --arg psi_post "$PSI_POST" \
     --arg psi_max_run "$PSI_MAX_RUN" \
     --arg psi_avg_run "$PSI_AVG_RUN" \
+    --arg mem_pre "$MEM_PRE" \
+    --arg mem_post "$MEM_POST" \
+    --arg mem_max_run "$MEM_MAX_RUN" \
+    --arg mem_avg_run "$MEM_AVG_RUN" \
     --arg embed_arch "$EMBED_ARCH" \
     --argjson embed_auto "$EMBED_AUTO" \
     --argjson psi_accepted "$psi_accepted" \
     --arg event "$bench_event" \
     --arg reason "$reason" \
-    '{schema: 1, ts: $ts, probe: "cold-load", event: $event, model: $model, bytes: ($bytes | tonumber), load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), timeout_s: ($timeout_s | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto, reason: $reason}')"
+    '{schema: 1, ts: $ts, probe: "cold-load", event: $event, model: $model, bytes: ($bytes | tonumber), load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), timeout_s: ($timeout_s | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), psi_mem_pre: ($mem_pre | tonumber), psi_mem_post: ($mem_post | tonumber), psi_mem_max_during: ($mem_max_run | tonumber), psi_mem_avg_during: ($mem_avg_run | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto, reason: $reason}')"
   if [ -n "$OUT" ]; then
     mkdir -p "$(dirname "$OUT")"
     printf '%s\n' "$FAIL_JSON" >>"$OUT"
@@ -389,6 +418,7 @@ printf '%-24s %.2f GiB\n' "size" "$(awk -v b="$BYTES" 'BEGIN{printf "%.2f", b / 
 printf '%-24s %s s\n' "load (exec→/health 200)" "$LOAD_S"
 printf '%-24s %s MiB/s\n' "effective read rate" "$MB_S"
 printf '%-24s %s%% (max during run %s%%, avg %s%%)\n' "PSI io some avg10" "$PSI_POST" "$PSI_MAX_RUN" "$PSI_AVG_RUN"
+printf '%-24s %s%% (max during run %s%%, avg %s%%)\n' "PSI mem some avg10" "$MEM_POST" "$MEM_MAX_RUN" "$MEM_AVG_RUN"
 printf '%-24s %s (gate<%s%%, accepted=%s)\n' "psi gate" "$PSI_PRE" "$PSI_MAX" "$psi_accepted"
 printf '%-24s %s @ port %s ctx %s ngl %s\n' "server" "$SERVER" "$PORT" "$CTX" "$NGL"
 
@@ -406,13 +436,17 @@ JSON="$(jq -c -n \
   --arg psi_post "$PSI_POST" \
   --arg psi_max_run "$PSI_MAX_RUN" \
   --arg psi_avg_run "$PSI_AVG_RUN" \
+  --arg mem_pre "$MEM_PRE" \
+  --arg mem_post "$MEM_POST" \
+  --arg mem_max_run "$MEM_MAX_RUN" \
+  --arg mem_avg_run "$MEM_AVG_RUN" \
   --arg bytes "$BYTES" \
   --arg load_s "$LOAD_S" \
   --arg mb_s "$MB_S" \
   --arg embed_arch "$EMBED_ARCH" \
   --argjson embed_auto "$EMBED_AUTO" \
   --argjson psi_accepted "$psi_accepted" \
-  '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto}')"
+  '{schema: 1, ts: $ts, probe: "cold-load", model: $model, bytes: ($bytes | tonumber), server: $server, cold: $cold, load_mode: $lm, port: ($port | tonumber), ctx: ($ctx | tonumber), ngl: ($ngl | tonumber), psi_gate_max: ($psi_max | tonumber), psi_pre: ($psi_pre | tonumber), psi_post: ($psi_post | tonumber), psi_max_during: ($psi_max_run | tonumber), psi_avg_during: ($psi_avg_run | tonumber), psi_mem_pre: ($mem_pre | tonumber), psi_mem_post: ($mem_post | tonumber), psi_mem_max_during: ($mem_max_run | tonumber), psi_mem_avg_during: ($mem_avg_run | tonumber), load_s: ($load_s | tonumber), mb_s: ($mb_s | tonumber), psi_accepted: $psi_accepted, embed_arch: $embed_arch, embed_auto: $embed_auto}')"
 if [ -n "$OUT" ]; then
   mkdir -p "$(dirname "$OUT")"
   printf '%s\n' "$JSON" >>"$OUT"
