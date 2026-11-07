@@ -21,10 +21,18 @@
 set -euo pipefail
 
 MODE="${1:-run}"
-case "$MODE" in selftest) : ;; *) case "$MODE" in ''|*[!0-9]*) echo "usage: io-attribution.sh [window_seconds|selftest]" >&2; exit 2;; esac ;; esac
+case "$MODE" in selftest) : ;; *) case "$MODE" in '' | *[!0-9]*)
+  echo "usage: io-attribution.sh [window_seconds|selftest]" >&2
+  exit 2
+  ;;
+esac ;; esac
 WINDOW="${MODE:-20}"
 if [ "$MODE" != "selftest" ]; then
-  case "$WINDOW" in ''|*[!0-9]*) echo "usage: io-attribution.sh [window_seconds|selftest]" >&2; exit 2;; esac
+  case "$WINDOW" in '' | *[!0-9]*)
+    echo "usage: io-attribution.sh [window_seconds|selftest]" >&2
+    exit 2
+    ;;
+  esac
 fi
 
 CGROUP_ROOT="${IOATTR_CGROUP_ROOT:-/sys/fs/cgroup}"
@@ -51,7 +59,9 @@ load_by_id() {
 sample_cgroups() {
   local f cg line
   while IFS= read -r f; do
-    cg=${f#"$CGROUP_ROOT"}; cg=${cg%/io.stat}; [ -n "$cg" ] || cg=/
+    cg=${f#"$CGROUP_ROOT"}
+    cg=${cg%/io.stat}
+    [ -n "$cg" ] || cg=/
     while IFS= read -r line; do
       # line: "maj:min rbytes=N wbytes=N rios=N wios=N ..."
       echo "$cg $(awk '{print $1, $2, $3}' <<<"$line" |
@@ -81,11 +91,15 @@ run() {
   d_b=$(sample_diskstats)
   local win_ms=$((t1 - t0)) win_s
   win_s=$(awk -v ms="$win_ms" 'BEGIN { printf "%.1f", ms / 1000.0 }')
-  local win_tag="[$(date -d "@$((t0 / 1000))" '+%F %T') $(date -d "@$((t1 / 1000))" '+%F %T') window=${win_s}s]"
+  local win_tag
+  win_tag="[$(date -d "@$((t0 / 1000))" '+%F %T') $(date -d "@$((t1 / 1000))" '+%F %T') window=${win_s}s]"
 
   echo "=== per-cgroup IO (bytes/s, top $TOP_N by total) $win_tag ==="
   # Join two cumulative snapshots on "cgroup dev"; print rate over the MEASURED window.
-  { echo "$cg_a" | sort -k1,1 -k2,2; echo "$cg_b" | sort -k1,1 -k2,2; } |
+  {
+    echo "$cg_a" | sort -k1,1 -k2,2
+    echo "$cg_b" | sort -k1,1 -k2,2
+  } |
     awk -v w="$win_s" -v tag="$win_tag" -v top="$TOP_N" '
       NR == FNR { a[$1 " " $2] = $3 " " $4; next }
       {
@@ -106,7 +120,10 @@ run() {
       { print }'
 
   echo "=== per-device (name + by-id, %busy + throughput) $win_tag ==="
-  { echo "$d_a" | sort -k1,1; echo "$d_b" | sort -k1,1; } |
+  {
+    echo "$d_a" | sort -k1,1
+    echo "$d_b" | sort -k1,1
+  } |
     awk -v w="$win_s" '
       NR == FNR { sr[$1] = $3; sw[$1] = $4; ms[$1] = $5; name[$1] = $2; next }
       {
@@ -146,7 +163,13 @@ selftest() {
   local win=20
   local rate
   rate=$(awk -v a=1000 -v b=20972520 -v w=$win 'BEGIN { printf "%.1f", (b - a) / w / 1048576 }')
-  check() { if [ "$2" = "$3" ]; then pass=$((pass + 1)); echo "ok: $1"; else fail=$((fail + 1)); echo "FAIL: $1 (got=$2 want=$3)"; fi; }
+  check() { if [ "$2" = "$3" ]; then
+    pass=$((pass + 1))
+    echo "ok: $1"
+  else
+    fail=$((fail + 1))
+    echo "FAIL: $1 (got=$2 want=$3)"
+  fi; }
   check "20 MiB over 20s = 1.0 MB/s (delta math + field map)" "$rate" "1.0"
 
   # diskstats busy%: ms_io delta 0 -> 500 over 20s = 2.5%
