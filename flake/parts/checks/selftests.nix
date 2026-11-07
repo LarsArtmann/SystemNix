@@ -476,6 +476,20 @@
           touch $out
         '';
 
+        # io-attribution.sh — the measured-window IO attribution loop the
+        # 2026-10-31 + 2026-11-02 storm sessions scriptified after two
+        # consecutive ad-hoc pipeline manglings. The selftest pins the delta
+        # math (20 MiB / 20 s), the /proc/diskstats field map (sectors f6/f10,
+        # ms_io f13 — the §d1 ms-as-sector trap), the major:minor io.stat key
+        # form (the §d3 name-grep trap), by-id device resolution, and the
+        # measured-window annotation — against fixture trees.
+        io-attribution-selftest = pkgs.runCommand "io-attribution-selftest" { } ''
+          scratch=$(mktemp -d)
+          cp ${root}/scripts/io-attribution.sh "$scratch/io-attribution.sh"
+          ${pkgs.bash}/bin/bash "$scratch/io-attribution.sh" selftest
+          touch $out
+        '';
+
         # thermal-pstate-guard.sh flips the amd_pstate driver mode
         # (active<->guided) on hysteresis over hwmon sensors — the
         # freeze #8-#14 thermal-ceiling family's enforcement leg (a
