@@ -138,3 +138,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [watch] **CRUSH_PERMISSIONS_PIPED + pool permission UI** — upstream roadmap item **Source:** docs/status/2026-10-29_23-15_crush-0990-executor-full-run-and-brutal-self-review.md §f.47
 - [ ] [decision] **On-demand llama-chat re-enable path** — socket/io-triggered; gates paperless-gpt + InboxClean return **Source:** docs/status/2026-11-03_18-40_freeze-41-44-containment-brutal-self-review.md §f.31
 - [ ] [watch] **Drop the nixpkgs-llama-rag input** — when the 0.4.0 spin regression fixes upstream **Source:** docs/status/2026-11-03_18-52_task-000001a18fe8842b3901ba37230100000000_stability-batch-reddispatch-status.md §f.32
+- [ ] [ready] **Doc note that VL GGUFs cannot hit the embedding assert** **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.13

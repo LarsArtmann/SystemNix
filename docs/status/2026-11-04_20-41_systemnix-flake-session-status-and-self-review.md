@@ -104,3 +104,5 @@
 ---
 
 *Report per `status-report` + `brutal-self-review` skills (self-review folded into d/e per session request). Scope restricted to this session's run per instruction. No commit performed — the auto-commit daemon sweeps this file. THEN WAIT FOR INSTRUCTIONS.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.6 · already-tracked f.8 f.12-15 f.25 · OBSOLETE f.19 f.21 · NEW rowed: 12 rows (merged f.5+16+21-13 §f.11+22, f.7+22) → pipeline 9, upstream 1, storage 1, security 1

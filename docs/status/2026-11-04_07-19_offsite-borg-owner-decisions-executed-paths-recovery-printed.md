@@ -29,3 +29,5 @@ Deploy + anchor, §13/§16 gates, unit/timer/secret-render verification, seed ru
 - Deliberately NOT harvested: watcher liveness watch (session orchestration); paper-sheet physical storage confirmation (owner act, conversational).
 
 *Every owner-gated input is now closed. The only thing between here and the first offsite archive is PSI drain.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** no f)/NEXT heading — Not-started paragraph used: DONE N1 · already-tracked N2-N7 N9 N10 · N8/N11 merged into 06-25 rows

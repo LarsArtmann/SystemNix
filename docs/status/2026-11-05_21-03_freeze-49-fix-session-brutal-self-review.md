@@ -90,3 +90,5 @@ NOT harvested this pass (owner: report-then-wait). Items 1–3 overlap rows alre
 3. **Keep the tier-2 band at 80/80, or tighten to the observed ≥90/≥95?** 80/80 catches both deaths with margin (fewer false "moderate" reads); 90/95 minimizes veto friction. And: should a `=2` attempt toast Discord (see §f.23)?
 
 **Sources:** all live probes as cited inline; session artifacts: `docs/status/2026-11-05_21-00_freeze-49-wdt-autopsy-forced-deploy-into-storm.md`, `scripts/deploy.sh` (force_level + tier-2), `scripts/test-deploy-pipeline.sh` (group E), stability.md census row #49 + gate bullet, CHANGELOG 2026-11-05 entry, TODO_LIST + docs/todo/stability.md rows.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.4 f.9 · already-tracked f.3 f.5 f.7 f.12-18 · NEW rowed: 8 rows (merged f.19+20) → stability 4, pipeline 3, monitoring 1; f.11 merged into maintenance-window row

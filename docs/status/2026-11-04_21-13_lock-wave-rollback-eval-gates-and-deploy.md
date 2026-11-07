@@ -97,3 +97,5 @@
 1. **Re-float now or wait?** The ~28 healthy floats were discarded tonight. Re-floating is one automated ceremony but re-touches the exact surface that burned the evening; waiting costs freshness. Which do you want: re-float immediately (I run float-register on a fresh `nix flake update` subset), or hold until the upstream got-hash wave lands?
 2. **Is media-atlas supposed to be live?** It crash-loops (start-limit-hit) and hit OnFailure; its 2026-10-28 rollout notes suggest owner-side state (pool paths, PG role, archive perms) I cannot judge. Fix now, disable until understood, or leave it failing?
 3. **Priority order for the remaining work:** (a) upstream got-hash wave in 23 repos (needs push permission), (b) re-float + proof, (c) failed-unit triage (media-atlas, forgejo-github-sync, tmp.mount), (d) docs/prevention guard. What do you want first?
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 · already-tracked f.3 f.5-8 f.15 f.17-20 f.23-28 · OBSOLETE f.4 f.12 · NEW rowed: 7 rows (merged f.9+10) → pipeline 5, services 2

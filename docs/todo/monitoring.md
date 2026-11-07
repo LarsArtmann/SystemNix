@@ -372,3 +372,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Wire the cache-home usage metric + Trash alert** — owner-approved, still unwired **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.23
 - [ ] [decision] **Runner liveness signal + PapDashboard tile** — loopback health endpoint or heartbeat-age metric **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.20 + §f.21
 - [ ] [ready] **Failed-declared-mount visibility metrics** — storage-collector textfile + system_failed_mount_units metric **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.44 + §f.45
+- [ ] [ready] **Loud notification for force-level-2 deploys** — Discord toast **Source:** docs/status/2026-11-05_21-03_freeze-49-fix-session-brutal-self-review.md §f.23
+- [ ] [ready] **Verify the sev1-bridge notify channel** — the 30-min cadence claim is inherited-unverified **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.22

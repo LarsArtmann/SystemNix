@@ -370,3 +370,9 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [watch] **ROADMAP: CV events-store scaling design** — chunked queries everywhere **Source:** docs/status/2026-11-03_21-24_cv-pin-bs-verdict-full-status-and-self-critique.md §f.48
 - [ ] [watch] **ROADMAP: CV store retention as product feature** — prune/compact command **Source:** docs/status/2026-11-03_21-24_cv-pin-bs-verdict-full-status-and-self-critique.md §f.49
 - [ ] [ready] **Per-task GOCACHE signature lint as BuildFlow provider** **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.24
+- [ ] [ready] **doc-counts collect-then-throw** — report ALL stale anchors in one failure **Source:** docs/status/2026-11-04_20-41_systemnix-flake-session-status-and-self-review.md §f.4
+- [ ] [blocked:push] **Drop go-1.27.2 consumers when the root pin lifts** — dual-toolchain tax **Source:** docs/status/2026-11-05_21-43_go-cache-advisory-and-boot-reset-observation-status.md §f.27 + docs/status/2026-11-05_22-27_session-closeout-go-cache-relocation-full-arc-status.md §f.17
+- [ ] [ready] **go.mod floor audit across storm repos** **Source:** docs/status/2026-11-05_21-43_go-cache-advisory-and-boot-reset-observation-status.md §f.28 + docs/status/2026-11-05_22-27_session-closeout-go-cache-relocation-full-arc-status.md §f.15
+- [ ] [ready] **CV typed-nil lifecycle audit** — across all do.Provide sites **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.11
+- [ ] [ready] **Soften the inherited 30-min notify claim in CV CHANGELOG** **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.14
+- [ ] [ready] **CV sibling-dir stray-branch sweep** — cv-stage-crmfix, Code-To-CV-Agent, cv **Source:** docs/status/2026-11-06_01-08_sev1-cvsession-full-status-and-self-review.md §f.27

@@ -135,3 +135,5 @@
 | 22:26 | git | tree clean; HEAD 75658d3f7 (rows), ef6bf1b51 (guard fix + report), 99af6e0d4 (relocation, amended) — all verified by `git show --stat`; unpushed |
 
 **Sources:** live probes as tabled; the three predecessor reports (19-50, 21-43, 22-21); `docs/status/2026-11-05_21-03_freeze-49-fix-session-brutal-self-review.md` (parallel session — freeze #49 confirmation); git history as cited.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.5 f.6 f.23 f.27 f.28 f.31 f.32 f.34 · already-tracked f.3 f.4 f.8-13 f.25 f.26 f.36 f.37-43 f.49 · OBSOLETE f.35 f.50 · NEW rowed: 5 rows (f.2+7+01-08 §f.16, f.24, f.29 [decision], f.30+01-08 §f.19, f.33) → storage 2, pipeline 3

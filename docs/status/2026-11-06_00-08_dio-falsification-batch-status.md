@@ -127,3 +127,5 @@ Items 26-50 deliberately not fabricated: this session's honest discovery set is 
 | soft-reset split zero-loss proof | `git diff <pre-split-batch> HEAD` EMPTY |
 | leaked-process sweep | none (pgrep clean; 8138 = the live vlm service, untouched) |
 | tq verdict | recorded (996 bytes) |
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3-5 f.7 f.10 f.11 f.24 · already-tracked f.6 f.8 f.9 f.17 · OBSOLETE f.14 f.15 · NEW rowed: 7 rows (merged f.1+2+16+21, f.19+20, f.22+23) → storage 4, stability 2, ai-stack 1

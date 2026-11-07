@@ -113,3 +113,5 @@
 - **Deliberately NOT harvested:** watcher re-arm (session-scoped orchestration, not durable work), §f.1 prose answer (conversational debt, no repo artifact), harness tidy-up (§e.5, one-off).
 
 *Auth leg complete and verified; seed budget audit RED and blocking the deploy by design — the trap it caught is the reason the audit gate exists. Waiting for instructions.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2-5 f.7-11 f.14 f.15 f.17 f.32-34 · already-tracked f.16 f.18-20 f.22-26 f.28-30 f.35-37 · OBSOLETE f.1 f.6 f.12 f.13 f.21 · NEW rowed: f.27(+07-05 §f.18+07-19) → storage [watch], f.31(+07-05 §f.6+07-19) → security [blocked:user]

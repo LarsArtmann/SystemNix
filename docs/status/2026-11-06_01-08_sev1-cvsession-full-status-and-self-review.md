@@ -99,3 +99,5 @@ Stop at 34 — items beyond this would pad the list with unrelated-fleet work th
 3. **The 20:02 activation death:** did you (or a session you know of) intentionally abort the 20:02 deploy mid-activation, or did it die on its own? The log ends at "Activating configuration" with no error, no exit line, and no generation movement — I cannot distinguish an owner abort from a machine-level kill, and the answer changes whether tonight's deploy arc hides a fourth, unknown failure mode.
 
 **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.6 f.8 f.10 f.17 f.29 · already-tracked f.1-5 f.7 f.13 f.15 f.21 f.23-26 f.33 f.34 · OBSOLETE f.30 f.32 · NEW rowed: 9 rows → services 3, upstream 3, pipeline 2, monitoring 1, stability 1; f.16/18/19 merged into 21-43/22-27 rows

@@ -44,3 +44,5 @@ All follow-ups are gate-blocked, so per the queue header ("blocked … → libra
 4. Post-deploy probes (next session after deploy): `node_textfile_scrape_error 0` + `crush_events_lines_total` on :9400; cv-server uptime > 1 h with counter frozen; SEV1 bridge reports no UNIT CRASH LOOP condition. These ride the deploy row, no separate queue entry (verification is part of the deploy arc itself).
 
 Residue observed, not owned here: CV's pre-commit reports `/mnt/buildcache/*` dead-mount warnings (healed to `~/.cache/cv-go` per its 2026-11-02 go-env canon — the go-cache relocation session's env still exports the old paths somewhere upstream of CV's hook); CV tree carries additional parallel-session edits (templ handlers) unrelated to this fix.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-4 (upstream.md:143 cv fix row + stability.md:298)

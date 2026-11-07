@@ -104,3 +104,5 @@
 ---
 
 *Report per `status-report` skill (`.md` default per 2026-10-27 decision; self-review questions folded into d/e per session request). Section (f) is HARVEST input — routes to `TODO_LIST.md` (#1-#12, #16, #25, #31, #32) and `ROADMAP.md` (the rest) when you say go. No commit performed (harness: no commits without explicit request); the auto-commit daemon will pick this file up.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.12 f.22 f.24 · OBSOLETE f.9 f.27 · NEW rowed: 15 rows (merged f.3+23+33+34+20-41 §f.2, f.5-7, f.8+35, f.13+14, f.15+26, f.17+18, f.20+21, f.29+30, f.31+32) → services 13, security 2

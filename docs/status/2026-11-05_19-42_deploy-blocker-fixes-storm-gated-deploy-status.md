@@ -46,3 +46,5 @@ Decision: a poller waits for io PSI some avg10 < 20 across 3 consecutive minutes
 3. Deliberately NOT harvested as rows: §a/§b fixes are DONE in-tree (rows closed above); the storm itself is another session's active work; the deferred-deploy decision is recorded here, and if the storm outlives this session the deploy remains the standing pending-deploy state the CHANGELOG entries already carry.
 
 **Sources:** deploy output (user-pasted, 19:0x); live probes as cited inline; docs/agents/nix-flakes.md nix-CLI-verbs lesson (2026-10-27); docs/status/2026-11-05_09-58_fastflowlm-disable-self-review-status.md.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1 f.2 (stability.md:298 pending-deploy row) · OBSOLETE f.3 (meta-note)

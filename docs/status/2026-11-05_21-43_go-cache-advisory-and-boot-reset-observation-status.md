@@ -131,3 +131,5 @@
 | 21:43 | `du -sh /mnt/buildcache/go-build` | **96G** (corrects the 151G mount-total figure used in the tmpfs dismissal) |
 
 **Sources:** live probes as tabled; `docs/status/2026-11-05_19-50_go-build-slowness-storm-diagnosis-status.md` (predecessor report, §f tier-2 carrier); `docs/status/2026-11-05_19-42_deploy-blocker-fixes-storm-gated-deploy-status.md` §e (inherited forensics); `platforms/nixos/users/home.nix:400-485`; `modules/nixos/services/buildcache.nix:595-650`; `docs/agents/storage.md:66,92-93,111-125`; `docs/todo/pipeline.md:217`; `docs/agents/stability.md` (freeze ledger, S-0035, boot-evidence discipline incl. the full-id `-b` trap).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-4 f.7 f.26 f.37 f.39 f.40 · already-tracked f.6 f.8 f.12 f.13 f.19 f.20 f.23 f.29-32 f.43-50 · OBSOLETE f.17 f.18 f.42 · NEW rowed: 16 rows (merged f.5+22-27 §f.12+01-08 §f.18, f.9+47, f.10+48, f.11+21, f.14+46, f.15+44, f.16+45, f.24+19, f.25+16+18, f.27+17, f.28+15, f.33+34+14, f.36+22, f.38+41) → pipeline 8, stability 4, storage 1, upstream 2, desktop 1

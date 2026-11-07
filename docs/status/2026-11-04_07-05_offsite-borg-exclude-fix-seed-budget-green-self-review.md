@@ -103,3 +103,5 @@
 - **Deliberately NOT harvested:** watcher re-arm/expiry watch (session orchestration); stale-header fixes (completed in-session, post-review); §g questions (conversational, gated on owner); sizing log (harness artifact under `~/.cache/borg-golive/`, path recorded in :58).
 
 *Config excluded the trap, the audit that caught it is now green, automation is armed behind the PSI gate — and the self-review found the rot the body fixes left in the headers.*
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2-4 f.5 f.7 f.8 f.10 · already-tracked f.9 f.11-17 f.19-24 · OBSOLETE f.1 · merges into 06-25 rows (f.6 f.18)
