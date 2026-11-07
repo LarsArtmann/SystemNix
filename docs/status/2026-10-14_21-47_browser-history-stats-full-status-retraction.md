@@ -97,3 +97,5 @@
 3. **Is a full browsing history from Jan 1 onward even correct?** Your Firefox/Helium profiles only reach back so far — if the pre-attribution rows came from a stale/other profile (e.g., the Trash `helium-dp1/dp2` copies the Oct-7 session found), "re-attribute" would import history you may not consider yours. Do you know what was browsing Jan-Sep on this machine before the agent era?
 
 **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.6 f.9–f.15 f.17 f.27 f.31 · already-tracked f.7 f.8 f.16 f.19–f.26 f.28–f.30 f.32 · NEW rowed: f.18 (f.18–30 family, owner product call) → upstream

@@ -67,3 +67,5 @@
 3. **The events side still says zeros** (documented caveat): want me to build the upstream `reattribute` command NOW to make it durable, or is the documented caveat + queued row enough for a homelab that may never grow a rebuild feature?
 
 **Waiting for instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.5–f.9 · already-tracked f.1 f.2 f.4 f.10

@@ -111,3 +111,5 @@
 ---
 
 **Verification artifacts:** `/tmp/toplevel-fix-20261012.log` (restart #1, 2 failures), `/tmp/toplevel-fix-20261012b.log` (restart #2, clobbered gate — the overlay-order proof), `/tmp/toplevel-fix-20261012c.log` (restart #3, EXIT 0), `/tmp/flakecheck-final.log` (all-systems green), `/tmp/gitleaks.log` (the FP finding).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.4 f.5 f.6 f.23 f.33 · already-tracked f.2 f.7–f.22 f.24–f.32 f.35 · NEW rowed: f.34 → pipeline

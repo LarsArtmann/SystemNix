@@ -80,3 +80,5 @@
 ---
 
 **Verification index:** sync journal (`journalctl -u forgejo-github-sync.service --since 2026-10-11 01:50`), metrics (`:9100/metrics` forgejo_mirror_*), mount (`findmnt -T /var/lib/forgejo` → nvme1n1p2[/hot/forgejo] subvolid 260), snapshots (`/mnt/hot/.snapshots`, `/mnt/pool/backups/forgejo-subvol` listings), dump skips (`journalctl -u forgejo-backup.service`), runner (`journalctl -u 'gitea-runner-evo\x2dx2.service'` + store config.yaml + v15.0.9 source task.go/run_job.go/runner.go), swagger (`/tmp/v15-swagger.tmpl` from codeberg tag v15.0.9), deploy gate refusal (systemnix-deploy-tail 03:38:38).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.5 f.9 · OBSOLETE f.12 (FastFlowLM disabled 2026-11-05) · already-tracked f.2 f.4 f.6 f.7 f.10 f.11 f.13 · NEW rowed: f.8 → services

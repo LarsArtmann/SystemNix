@@ -34,3 +34,4 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [blocked:user] **macOS clone resync** — only if held history purge flips to push **Source:** docs/status/2026-09-29_03-22 §f.26
 - [ ] [blocked:user] **Add lars personal age key to .sops.yaml key_groups** — agent-rotatable secrets **Source:** docs/status/2026-10-01_20-58 §f.10
 - [ ] [ready] **SECURITY page standard (what every service page must carry)** **Source:** docs/status/2026-09-30_07-47 §f.8
+- [ ] [watch] **Complete 7-day CrowdSec alert review (docs/services/crowdsec-alert-review-log.md) and decide Stage-3 crowdsec-firewall-bouncer enablement** — review cscli alerts list for LAN false positives, decide ban durations, enable the iptables bouncer if approved **Source:** docs/status/2026-10-15_01-07_crowdsec-session-full-status.md §f.21

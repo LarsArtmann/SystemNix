@@ -55,3 +55,5 @@ All three remain queued as rows, not re-minted here:
 ## h) BAND DRIFT (ADR-0015)
 
 **None recorded.** `tq facts --type task.reprioritized` returned `(0 facts)` again this pass — the type is not emitted by the current go-taskqueue build; the upstream row(s) are TODO_LIST:583/:1219 (dedupe ask at :1279). Unfilled by construction, same as every prior closeout.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1

@@ -154,3 +154,5 @@ The other session's wave (go 1.27.2, fantasy 0.45.3, chromedp 0.21.0, cqrs-htmx 
 ---
 
 _Arte in Aeternum_
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.34 f.36–f.40 f.42 f.43 f.49 f.50 · already-tracked f.35 f.41 f.44 f.47 f.48 · NEW rowed: f.45 → services, f.46 → upstream

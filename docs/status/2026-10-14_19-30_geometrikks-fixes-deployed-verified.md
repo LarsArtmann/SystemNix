@@ -287,3 +287,5 @@ mechanism; the row's calm-window recurrence test remains the decider.
 Also verified in passing: `nix flake check --no-build` passes bare (the
 gate removal is live on 890+) — the "hermes FOD re-pin" queue row's RED
 premise no longer held at ~20:25 (flagged for its owning session).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.6 f.10–f.13 f.15–f.18 f.25 f.27–f.32 f.37 f.38 f.40 f.42–f.50 · already-tracked f.7 f.8 f.9 f.14 f.19–f.24 f.26 f.34 f.35 f.36 f.39 f.41 · NEW rowed: f.33 → services

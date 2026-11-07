@@ -193,3 +193,5 @@ Unchanged-rev tools (library-policy `e8e3667a`, crm `a0341a0`, mr-sync `f1a13263
 _(§f follow-ups: anchor repair = owner step 1 above (deliberately not queued as agent work — needs
 sudo); crowdsec idempotency → `docs/todo/services.md`; phantom metric → `docs/todo/monitoring.md`;
 DAS → owner physical check, storage runbook owns recovery.)_
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.5

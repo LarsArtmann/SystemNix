@@ -344,3 +344,5 @@ was executed this session (toplevel eval 0 failed assertions at
 postgres wiring, restic units; journal/stat/pgrep/findmnt live probes).
 Commits: `a4ab0f82` (code, daemon message), `c854c670` (docs), plus the
 report-time harvest edits._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.4 f.5 f.7 f.8 f.10 f.23 f.28 f.29 f.32 f.38 f.40 · already-tracked f.1 f.2 f.6 f.9 f.11–f.22 f.24–f.27 f.30 f.31 f.35–f.37 f.39 · NEW rowed: f.33 → storage, f.34 → monitoring

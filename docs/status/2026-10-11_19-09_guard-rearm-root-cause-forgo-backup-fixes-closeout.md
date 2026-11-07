@@ -90,3 +90,5 @@ Date: 2026-10-11 05:10–19:05 CEST (one session, three user pivots). Chain: "do
 3. **VM-test authorization:** if a sub-25-PSI window opens in the next hours, may I run the ~2-5 min qemu guard test autonomously, or do you want heavy builds to stay human-triggered regardless of window?
 
 _Session closed in WAITING FOR INSTRUCTIONS state._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.5 f.8 f.9 f.16 f.26 · OBSOLETE f.18 (FastFlowLM) · already-tracked f.1 f.3 f.4 f.6 f.7 f.14 f.15 f.17 f.19–f.25 f.27 f.28 f.30 · NEW rowed: f.10 → stability, f.11 f.29 → services, f.12 → stability, f.13 → pipeline

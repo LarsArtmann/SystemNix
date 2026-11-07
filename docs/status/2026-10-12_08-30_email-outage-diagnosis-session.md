@@ -94,3 +94,5 @@ HARVEST note: items 3, 5, 10-16, 18-21, 27, 28 are ALREADY queued in TODO_LIST.m
 ---
 
 _Self-critique summary (asked directly): forgot to live-verify the Pocket ID claim before asserting it (§d.6), under-explored the sanctioned runtime-secret path to the Gatus API (§b.1), and held the deployed-rev observation instead of surfacing it immediately (§e.2). Diagnosis work itself: all headline claims carry fresh live evidence (§a)._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.7 f.20 · OBSOLETE f.6 (parsedmarc flip abandoned 2026-10-16; Stalwart renders DMARC natively) · already-tracked f.1–f.5 f.8–f.13 f.15–f.19 f.21–f.28 · NEW rowed: f.14 → upstream

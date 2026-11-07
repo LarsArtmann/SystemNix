@@ -77,3 +77,5 @@
 3. **Push now?** The 5 local commits include the other session's llama-chat feature and ollama-directive work alongside my wave/docs changes — push the bundle as-is, or do you want the parallel session to review its own commits first?
 
 _Arte in Aeternum_
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.3 f.4 f.5 f.7 f.11 f.16 f.17 · already-tracked f.1 f.6 f.8 f.9 f.10 f.12 f.13 f.14 f.18 · NEW rowed: f.15 → storage

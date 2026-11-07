@@ -267,3 +267,5 @@ Outstanding / notes:
   `MAP_HOME_LATITUDE/LONGITUDE` (keeps auto-detection adaptive); (2) upstream
   patch + self-test over re-permissioning Caddy's 0600 logs (Caddy has no mode
   knob and POSIX ACLs are masked away by a 0600 create mode).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.8 f.14 f.18–f.25 f.27–f.29 f.32 f.33 f.35–f.37 f.39–f.45 f.47–f.50 · already-tracked f.11 f.12 f.13 f.15 f.34 · NEW rowed: f.9 → monitoring, f.10 → services, f.16 f.31 f.46 → pipeline, f.17 f.38 → services

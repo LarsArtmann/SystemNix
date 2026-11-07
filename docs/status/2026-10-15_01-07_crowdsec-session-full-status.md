@@ -121,3 +121,5 @@
 3. **Deploy ownership tonight**: should MY session keep driving the lull deploy for the crowdsec fix (bundled with the hot-db fix in row 492), or do you want the other session's loop to own the switch while I only verify? (Both deploying the same tree is safe but doubles the storm windows we burn.)
 
 — Waiting for instructions.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1–f.7 f.9–f.20 f.31 f.32 f.35–f.40 f.41 f.42 f.44–f.50 · already-tracked f.22–f.27 f.34 f.43 · NEW rowed: f.21 → security, f.28 f.29 → upstream, f.30 → pipeline, f.33 → services
