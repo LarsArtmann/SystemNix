@@ -322,11 +322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794011749,
-        "narHash": "sha256-o15i4DETll8jn5kMgYvYtzSXpgAtQoMUk1Iduz+P8i0=",
+        "lastModified": 1794032312,
+        "narHash": "sha256-ReKC0JCVCHQeA7sRI18q+Y+3K+xkYxVWaeESgmi0v/I=",
         "ref": "refs/heads/master",
-        "rev": "630484b172a611c54d5e6f95ad52bcd376654ece",
-        "revCount": 1884,
+        "rev": "7549934b56b1e9a1b05e9bf65af2066a9649ea6d",
+        "revCount": 1885,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/browser-history"
       },
@@ -1020,11 +1020,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794028346,
-        "narHash": "sha256-b5j+Fhkj003zO5qtWYroYEf2CNQVKm38JJgnHkW//nE=",
+        "lastModified": 1794031477,
+        "narHash": "sha256-lqaZmzji8tPmQ5VIyJJAXHASozP35YJM7Ie42EsrnZA=",
         "ref": "refs/heads/master",
-        "rev": "974aa208d5eb2aba87b793b40ffacc8949c80017",
-        "revCount": 10002,
+        "rev": "4ca63c5b9448ed344ddcdd8a4382c321ce3e6f42",
+        "revCount": 10011,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
