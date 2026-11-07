@@ -761,7 +761,7 @@ eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside se
 # the audit must throw. The null leg also proves the audit skips
 # null-cleared values (only the unitConfig copy fires).
 eval_case shapeaudit service-key-in-unitconfig fail '\[Service\]-section key\(s\) nested inside unitConfig' \
-  'sed:modules/nixos/services/nsfw-classifier.nix:s|                TimeoutStartSec = "10min";|                TimeoutStartSec = null; unitConfig.TimeoutStartSec = "10min";|'
+  'sed:modules/nixos/services/nsfw-classifier.nix:s|unitConfig.RequiresMountsFor =$|unitConfig.TimeoutStartSec = "10min"; unitConfig.RequiresMountsFor =|'
 
 # ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
 # The llama-chat/compsize class (untiered bulk boot I/O on the QLC). Leg 1
