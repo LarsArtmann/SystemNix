@@ -332,6 +332,22 @@ _: {
             fi
           fi
 
+          # IO-PAUSE DISARMED (freeze #40 close-out, 2026-11-07): the guard's
+          # zone-6 pause matched NO tree for >= disarmedEscalationThreshold
+          # consecutive trips — the storm writer sits outside every pattern
+          # and the action is structurally disarmed (587 silent no-match
+          # trips #5328→#5791 at PSI ~97% was the proof). warn tier: visible
+          # banner + Gatus carry, not a fullscreen page (the guard's own trip
+          # alert already speaks for the storm itself; this speaks for the
+          # guard's INABILITY to act on it).
+          v=$(prom_value "$GUARD_PROM" "memory_emergency_guard_io_pause_disarmed")
+          if [ "$v" = "1" ]; then
+            streak=$(prom_value "$GUARD_PROM" "memory_emergency_guard_io_pause_nomatch_streak")
+            titles+=("IO-PAUSE DISARMED")
+            details+=("memory-emergency-guard zone-6 IO-PAUSE matched NO pausable tree ''${streak:-?} trips in a row — the storm writer is outside every ioPause.cgroupPattern and the guard CANNOT shed IO. Extend the patterns to the attributed writer (journalctl -u memory-emergency-guard | grep 'IO-PAUSE').")
+            severities+=("warn")
+          fi
+
           alerts_active=''${#titles[@]}
 
           # Overall severity (highest tier wins): "page" > "warn" >
