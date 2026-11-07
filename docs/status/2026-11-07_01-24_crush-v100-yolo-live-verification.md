@@ -32,8 +32,10 @@ runtime backstop for statically-invisible (expansion-resolved) invocations.
    | `wget --version` (still on the built-in list, direct) | **EXECUTED** — yolo auto-approves statically-matched dangerous requests (see §c correction) |
    | `X=$(printf wget); $X --version` (still listed, expansion-resolved) | **BLOCKED at exec time** — `blocked: wget is a dangerous command`, exit 1 — the runtime backstop IS armed in yolo |
 
-   Raw outputs: `~/.cache/crush-yolo-probe*.out` at probe time (quoted above;
-   scratch scripts trashed after close-out).
+   Raw outputs were captured at `~/.cache/crush-yolo-probe{,2,3}.out` and
+   trashed after this report was written (quoted verbatim in §a.5 — the
+   durable record is this report + the crush session DB; do not re-cite the
+   cache paths).
 6. **Scratch cleanup**: `~/.cache/crush-yolo-test/` trashed 2026-11-05 23:5x
    (pre-deploy session); probe scripts + outputs trashed after this report.
 
@@ -104,10 +106,11 @@ widens normal-mode silence for exactly sudo/ssh/curl.
   `hwjmwvinng65h9pcdn1nwv7wckpg71m0-…1d06008` (2026-11-07 01:19)
 - Version: `crush --version` → `v0.100.0`; rc line 67 `permissions unblock sudo ssh curl`
 - rc harness: `scripts/crush-rc-test.sh` PASS, 1747 models (2026-11-07 01:2x)
-- Probes: `~/.cache/crush-yolo-probe{,2,3}.out` (2026-11-07 01:1x–01:2x; probe 3
-  was REFUSED by the nested model citing this repo's own AGENTS.md
+- Probes: three nested `crush run -y` runs 2026-11-07 01:1x–01:2x; outputs
+  quoted in §a.5 (cache copies trashed post-report — quote this file, not the
+  paths); probe 3 was REFUSED by the nested model citing this repo's own AGENTS.md
   guard-evasion policy — a model-behavior artifact, not a permission result;
   indirect-sudo exemption is code-derived from the same `resolveBlockedCommands`
-  removal that probes 1–2 exercised)
+  removal that probes 1–2 exercised
 - Source: `internal/agent/tools/bash.go:328-335` + `internal/permission/permission.go:43-50` at tag v0.100.0 (re-fetched to `~/.cache/crush-v100src/` after the reboot wiped /tmp)
 - Lock revs intact in HEAD: crush-config `459d24517ea…`, nur `7a6e6734…` (verified 2026-11-05 23:59 and unchanged through the Nov-6 wave)
