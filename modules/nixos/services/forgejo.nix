@@ -1392,18 +1392,15 @@ _: {
           # Render the real connection config the daemon runs with: copy the
           # module-generated yaml (uuid/token as @PLACEHOLDER@s — valueless
           # to anyone reading the store copy) and substitute the provisioned
-          # pair. Runs AFTER the ExecStartPre legs (list merge orders
-          # mkForce entries first, preStart's plain-priority entry last) —
-          # the files it reads are written by forgejo-provision-runner one
-          # leg earlier. replace-secret, not sed: the token never appears on
+          # pair. This rides INSIDE the mkForce'd ExecStartPre list below —
+          # a plain preStart sugar entry is DISPLACED by ExecStartPre mkForce
+          # (live 2026-11-07: the rendered unit carried only the two + legs,
+          # no cp; the v13 daemon demands connection-config.yaml at start and
+          # crash-looped under the ensure timer after the 11-06 state-dir
+          # recreation, 6164fc7b1 migration gap). Runs after forgejo-
+          # provision-runner one leg earlier — the files it read are written
+          # by that leg. replace-secret, not sed: the token never appears on
           # an argv (fish_history/ps class).
-          preStart = ''
-            cp -v ${config.services.forgejo-runner.instances."${hostName}".configFile} ./connection-config.yaml
-            chmod u+w ./connection-config.yaml
-            ${lib.getExe pkgs.replace-secret} '@UUID@' "${runnerStateDir}/.uuid" ./connection-config.yaml
-            ${lib.getExe pkgs.replace-secret} '@TOKEN@' "${runnerStateDir}/.token" ./connection-config.yaml
-            chmod u-w ./connection-config.yaml
-          '';
           serviceConfig = lib.mkMerge [
             {
               Environment = [
@@ -1419,6 +1416,16 @@ _: {
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
                 ("+" + lib.getExe provisionRunner)
+                # Root leg: render connection-config.yaml from the store
+                # placeholder yaml + the provisioned identity pair (see the
+                # render comment above serviceConfig).
+                ("+" + pkgs.writeShellScript "forgejo-render-runner-config" ''
+                  cp -v ${config.services.forgejo-runner.instances."${hostName}".configFile} ./connection-config.yaml
+                  chmod u+w ./connection-config.yaml
+                  ${lib.getExe pkgs.replace-secret} '@UUID@' "${runnerStateDir}/.uuid" ./connection-config.yaml
+                  ${lib.getExe pkgs.replace-secret} '@TOKEN@' "${runnerStateDir}/.token" ./connection-config.yaml
+                  chmod u-w ./connection-config.yaml
+                '')
               ];
               # The rendered copy, not the module's placeholder configFile.
               ExecStart = lib.mkForce "${lib.getExe config.services.forgejo-runner.package} daemon --config ${runnerStateDir}/connection-config.yaml";
