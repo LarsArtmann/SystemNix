@@ -823,6 +823,9 @@ _: {
                   echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
                 elif [ ! -f "$PAUSE_FILE" ]; then
                   echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO eligible headless tree matched the attribution (patterns: ''${IO_PAUSE_PATTERNS}) — pressure persists but nothing pausable; escalation arms after 3 such trips" >&2
+                elif [ -f "$PAUSE_FILE" ]; then
+                  pause_epoch_note=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
+                  echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO new tree matched (patterns: ''${IO_PAUSE_PATTERNS}) — existing pause kept (epoch ''${pause_epoch_note:-0}), no action this cycle — pressure persists under an already-paused tree" >&2
                 fi
               fi
               if [ "$io_split_active" = "1" ]; then

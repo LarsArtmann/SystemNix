@@ -766,6 +766,36 @@
               touch $out
             '';
 
+        # Guard PAUSE_FILE silent-cycle observability (2026-10-31 guard
+        # census code read): the ioPause branch previously printed NOTHING
+        # when a stale PAUSE_FILE existed and no new tree matched — whole
+        # classes of no-action cycles were journal-invisible, so a
+        # masked-pause bug would have been silent. Static anchors: the
+        # stale-pause skip path must emit a "NO new tree matched … existing
+        # pause kept" journal line, and the branch must follow the
+        # no-file elif (both legs of the elif chain present).
+        guard-pause-skip-observability-selftest =
+          pkgs.runCommand "guard-pause-skip-observability-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              grep -q 'existing pause kept' "$mod" ||
+                { echo "FAIL: stale-PAUSE_FILE skip path no longer emits a journal line — no-action ioPause cycles are journal-invisible again"; exit 1; }
+              nofile_l=$(grep -n 'elif \[ ! -f "\$PAUSE_FILE" \]' "$mod" | head -1 | cut -d: -f1)
+              kept_l=$(grep -n 'existing pause kept' "$mod" | head -1 | cut -d: -f1)
+              if [ -z "$nofile_l" ] || [ -z "$kept_l" ] || [ "$nofile_l" -ge "$kept_l" ]; then
+                echo "FAIL: skip-path journal line misordered vs the no-file elif (nofile@$nofile_l kept@$kept_l)"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum
