@@ -261,6 +261,53 @@ in
       gatewayIpv4 = blockIP;
       gatewayLanRanges = [ subnet ];
       gatewayBlockExternalDoh = true;
+
+      # ── Decrypt overlay (ADR-0021) — owner enablement 2026-11-07 ("MITM
+      # myself"): URL-level capture for the two CA-ENROLLED devices only.
+      # evo-x2 + macbook trust the dnsblockd CA (cert-trust module: Firefox
+      # policy + NSS import on the host; macOS keychain import 2026-08-22 on
+      # the Mac). The Pixel6 is deliberately ABSENT: Android Chrome ignores
+      # user-installed CA certs for browsing — decrypt would break the
+      # phone's TLS outright, it stays flow-spliced. Devices list non-empty
+      # = single-operator posture (unlisted clients splice, never terminate).
+      # Domains: single-label TLD suffixes (filterdomain walks parent labels,
+      # so "com" matches every *.com host) = decrypt ALL general browsing for
+      # the two enrolled devices; excludes stay empty — the escape hatch for
+      # pinned apps / bot-walled origins (SearXNG engine fix is the queued
+      # DNS-allowlist row, NOT this list). While rpi3-first resolver order
+      # stands (dns-resolver.nix), evo-x2 itself only falls into capture
+      # during rpi3-down windows — the overlay then decrypts cleanly instead
+      # of PNA-breaking (with the LNA policy from cert-trust armed).
+      gatewayDecryptDomains = [
+        "com"
+        "net"
+        "org"
+        "io"
+        "dev"
+        "de"
+        "app"
+        "co"
+        "uk"
+        "eu"
+        "se"
+        "nl"
+        "fr"
+        "it"
+        "es"
+        "gg"
+        "tv"
+        "me"
+        "sh"
+        "to"
+        "xyz"
+        "info"
+        "biz"
+      ];
+      gatewayDecryptDevices = [
+        "evo-x2"
+        "macbook"
+      ];
+      gatewayDecryptExcludeDomains = [ ];
     };
 
     dnsblockd-cert-trust = {

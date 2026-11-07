@@ -469,6 +469,21 @@ _: {
             # refuses every private destination; entries stay SPLICE-ONLY.
             gateway_lan_ranges = cfg.gatewayLanRanges;
           }
+          # Decrypt overlay (ADR-0021) renders only while armed AND any list
+          # is set — an inert host (or a flow-only gateway) must produce NO
+          # gateway_decrypt_* key at all (the render test pins the absence;
+          # upstream newDecryptPolicy returns nil for all-empty lists).
+          # Keys render together: upstream builds ONE policy from all three.
+          # gateway_mode stays "flow" — decryption is an overlay on the flow
+          # posture, never a capture mode (upstream validation rejects else).
+          // lib.optionalAttrs
+            (cfg.gatewayEnabled
+              && (cfg.gatewayDecryptDomains != [ ] || cfg.gatewayDecryptDevices != [ ] || cfg.gatewayDecryptExcludeDomains != [ ]))
+            {
+              gateway_decrypt_domains = cfg.gatewayDecryptDomains;
+              gateway_decrypt_devices = cfg.gatewayDecryptDevices;
+              gateway_decrypt_exclude_domains = cfg.gatewayDecryptExcludeDomains;
+            }
         )
       );
 
@@ -1075,6 +1090,55 @@ _: {
           '';
         };
 
+        gatewayDecryptDomains = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            TLS decryption overlay (ADR-0021), operator opt-in, default off:
+            suffix list of domains whose captured flows TERMINATE on the
+            operator CA (ca_cert_file/ca_key_file) instead of splicing. The
+            request rides the L7 proxy and tracking records it at the
+            tracking_mode rung (URLs/headers/bodies per mode). Clients must
+            trust the CA or TLS fails loudly (same class as block certs);
+            enrolled devices come from dnsblockd-cert-trust (Firefox policy
+            + NSS import) — list ONLY devices whose browsers trust the CA
+            (Android Chrome ignores user certs for browsing: never list a
+            phone). Single-label entries ("com") are valid suffixes — they
+            match every host under the TLD (filterdomain walks parent
+            labels). The control tier always wins: paused devices and
+            policy-blocked domains never decrypt. Requires gatewayEnabled
+            and blockTLSPort > 0 (asserted); caps at 256 entries (upstream
+            maxGatewayDecryptDomains).
+          '';
+        };
+
+        gatewayDecryptDevices = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            Device IDs (services.dns-blocker.devices) that decrypt. Empty
+            (default) = the domain grant applies to EVERY lied client —
+            including unenrolled ones, whose TLS then fails loudly; non-empty
+            = only the listed devices decrypt, everyone else splices
+            (single-operator posture: list the CA-enrolled devices). Entries
+            must reference declared device ids (asserted); cap 64 (upstream
+            maxGatewayDecryptDevices).
+          '';
+        };
+
+        gatewayDecryptExcludeDomains = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            Pinning/bot-wall escape hatch (ADR-0021): suffix list that WINS
+            over gatewayDecryptDomains — excluded domains always splice with
+            real certificates so certificate-pinned apps and fingerprint-
+            sensitive origins (Cloudflare-class bot walls rejecting the
+            re-originated Go TLS client) keep working. Cap 256 (upstream
+            maxGatewayDecryptDomains, the same bound as the decrypt list).
+          '';
+        };
+
         # ── Device + user registry (household attribution) ──
 
         devices = mkOption {
@@ -1253,6 +1317,32 @@ _: {
             # (LAN trust is an explicit allow-set, never the internet).
             assertion = builtins.all (r: r != "0.0.0.0/0" && r != "::/0") cfg.gatewayLanRanges;
             message = "services.dns-blocker.gatewayLanRanges must never contain 0.0.0.0/0 or ::/0 (LAN trust is an explicit allow-set — upstream rejects the any-range).";
+          }
+          {
+            # Decrypt overlay hard rules (mirrored from upstream
+            # validation.go validateGatewayDecryptRules — the overlay is
+            # meaningless outside an armed gateway with a TLS listener, and
+            # device scoping must name declared devices; caps keep the
+            # bounded-memory posture). Tracking-rung rule NOT mirrored:
+            # this wrapper pins tracking_mode = METADATA_ONLY (render item
+            # 4), which already satisfies upstream's warning threshold.
+            assertion =
+              (cfg.gatewayDecryptDomains == [ ] && cfg.gatewayDecryptDevices == [ ] && cfg.gatewayDecryptExcludeDomains == [ ])
+              || (
+                cfg.gatewayEnabled
+                && cfg.blockTLSPort > 0
+                && builtins.length cfg.gatewayDecryptDomains <= 256
+                && builtins.length cfg.gatewayDecryptDevices <= 64
+                && builtins.length cfg.gatewayDecryptExcludeDomains <= 256
+                && builtins.all (id: builtins.elem id (map (d: d.id) cfg.devices)) cfg.gatewayDecryptDevices
+              );
+            message = ''
+              services.dns-blocker decrypt-overlay violations: any gatewayDecrypt* list requires gatewayEnabled (the overlay is
+              meaningless without the DNS lie — upstream gateway_decrypt_requires_gateway) and blockTLSPort > 0 (termination
+              rides the TLS listener — upstream gateway_decrypt_requires_tls); gatewayDecryptDomains/excludes capped at 256 and
+              devices at 64 (upstream maxGatewayDecrypt*); gatewayDecryptDevices must reference declared services.dns-blocker.devices
+              ids (upstream gateway_decrypt_devices_known).
+            '';
           }
           {
             assertion = !(cfg.dnsRateLimitPerSec > 0) || cfg.dnsRateLimitBurst > 0;

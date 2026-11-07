@@ -78,6 +78,20 @@ _: {
             certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n dnsblockd-ca -i "$CA_CERT"
           '';
         };
+
+        # Chromium-side LNA fix for the DNS lie (see the option): public
+        # origins resolving to the LAN block IP would otherwise lose every
+        # subresource to the LNA permission block. Managed-policy JSONs are
+        # read at browser start; both fork dirs ship because Helium keeps
+        # the Chromium path but an alternate fork dir is inert if unused.
+        environment.etc = lib.mkIf (cfg.localNetworkAccessOverrides != [ ]) {
+          "chromium/policies/managed/dnsblockd-lna.json".text = builtins.toJSON {
+            LocalNetworkAccessIpAddressSpaceOverrides = cfg.localNetworkAccessOverrides;
+          };
+          "helium/policies/managed/dnsblockd-lna.json".text = builtins.toJSON {
+            LocalNetworkAccessIpAddressSpaceOverrides = cfg.localNetworkAccessOverrides;
+          };
+        };
       };
     };
 }
