@@ -1500,6 +1500,13 @@ in
             deepbackup.storage = true;
           };
         };
+
+        # The PBX's stalwart OTLP exporter reaches this collector through
+        # the netbird tunnel only, so the receiver must answer on a
+        # non-loopback address; the exposure guard is the INTERNAL
+        # FIREWALL (netbird's openInternalFirewall trusts the tunnel
+        # interface; the external zone stays blocked), not the bind.
+        settings.collector.host = "0.0.0.0";
       };
 
       # 2026-08-31 coverage audit: registry asserting every service is FULLY

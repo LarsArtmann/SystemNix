@@ -459,6 +459,11 @@ in
               collector = {
                 port = serviceTypes.servicePort ports.signoz-otlp-grpc "OTLP gRPC receiver port";
                 httpPort = serviceTypes.servicePort ports.signoz-otlp-http "OTLP HTTP receiver port";
+                host = lib.mkOption {
+                  type = lib.types.str;
+                  default = "127.0.0.1";
+                  description = "Bind address for the OTLP receivers";
+                };
               };
             };
           };
@@ -1172,10 +1177,10 @@ in
                   otlp = {
                     protocols = {
                       grpc = {
-                        endpoint = "127.0.0.1:${toString cfg.settings.collector.port}";
+                        endpoint = "${cfg.settings.collector.host}:${toString cfg.settings.collector.port}";
                       };
                       http = {
-                        endpoint = "127.0.0.1:${toString cfg.settings.collector.httpPort}";
+                        endpoint = "${cfg.settings.collector.host}:${toString cfg.settings.collector.httpPort}";
                       };
                     };
                   };
