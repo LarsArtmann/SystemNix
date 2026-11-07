@@ -116,3 +116,5 @@ Legend: Impact / Effort (S<30min, M 30min-2h, L>2h) / Category. Owner-gated item
 **Commit note:** per the status-report skill the report would normally be committed by its own step — the harness forbids commits without explicit owner request, so the auto-commit daemon picks this file up (same handling as the dnsblockd.md section, swept as part of this session's daemon commits).
 
 **Format note:** skill default is a styled HTML dashboard; owner's explicit `.md` path instruction honored per the skill's override rule.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.9 f.15 · already-tracked f.1 f.2 f.7 f.25 · OBSOLETE f.13 f.14 f.28 · NEW rowed: 19 rows (merged f.4+27, f.17+29) → services 9, pixel6 2, monitoring 3, pipeline 3, upstream 2

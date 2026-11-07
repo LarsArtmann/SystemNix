@@ -33,3 +33,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [blocked:user] **Motorola: import dnsblockd CA + enroll** **Source:** docs/status/2026-09-30_05-42 §f.24
 - [ ] [blocked:user] **Phone mobile-data E2E test (dash + full SSO)** **Source:** docs/status/2026-09-30_05-42 §f.25
 - [ ] [blocked:user] **signal-backups pipeline dead since 09-05 (root cause phone-side writer)** **Source:** docs/status/2026-09-29_22-43 §f.16
+- [ ] [blocked:user] **Phone-side NetBird DNS integrity (Private DNS bypass + always-on)** — check/disable Android Private DNS (DoT) and always-on adblock VPN that defeat the DNS push; set NetBird always-on **Source:** docs/status/2026-10-23_18-09_dnsblockd-via-netbird-phone-dns-session.md §f.4 + §f.27
+- [ ] [blocked:user] **Phone VPN-DNS roaming E2E test** — cellular: gc.home.lan, dnsblock.larsartmann.cloud, blocked ad domain, example.com via dnsblockd (needs the dashboard group first) **Source:** docs/status/2026-10-23_18-09_dnsblockd-via-netbird-phone-dns-session.md §f.5

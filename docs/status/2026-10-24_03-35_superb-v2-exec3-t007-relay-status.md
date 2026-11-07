@@ -57,3 +57,5 @@ The relay is eval-green and INERT until deploy. At deploy: relay unit starts, ga
 ## Census at close
 
 TODO_LIST open rows: 1,605+3 queued −1 ticked = 1,607 (tree in constant parallel churn; re-baseline at next session start).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 (relay + flm decoupling rode resumed deploys; healthz at post-deploy-check.sh:379) · already-tracked f.1-4

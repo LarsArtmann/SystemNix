@@ -115,3 +115,5 @@
 ---
 
 _Authored 18:09 CEST by `superb-masterplan-v2-exec-1` after close-out; awaiting instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.8 f.10 f.12 f.13 f.14 f.19 f.24 f.27 f.31 f.32 f.33 f.39 f.40 f.42 f.45 f.46 f.47 f.48 f.49 f.50 · already-tracked f.2-7 f.9 f.11 f.15-18 f.20-23 f.25 f.26 f.28-30 f.34-36 f.38 f.41 f.43 · NEW rowed: f.37 → monitoring, f.44 → pipeline
