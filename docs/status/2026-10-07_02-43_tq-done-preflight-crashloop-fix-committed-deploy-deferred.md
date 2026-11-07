@@ -142,3 +142,5 @@ Tagged: `[NEW]` = born this session · `[ROW]` = pre-existing queue row, cited �
 **Harvest note (per status-report skill):** items 1–2 are the session's direct follow-ups and are recorded HERE + in the final message rather than queued to `TODO_LIST.md`, because the user ordered WAIT-for-instructions before any further action; items 5–9, 25–31, 35–36, 39, 41–45, 48 are `[NEW]` proposals awaiting routing on instruction; `[ROW]` items already live on their cited surfaces; `[OWNER]` items are the user's.
 
 **WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.6 f.7 f.8 f.16 f.17 f.26 f.32 f.42 f.46 f.47 f.48 f.49 · already-tracked f.4 f.10 f.11 f.12 f.13 f.14 f.15 f.18 f.19 f.20 f.21 f.22 f.23 f.24 f.27 f.28 f.31 f.33 f.34 f.36 f.38 f.39 f.40 f.50 · NEW rowed: f.3 f.25 f.29 f.30 f.35 f.41 → services, f.5 f.44 f.45 → pipeline, f.9 → monitoring, f.43 → upstream

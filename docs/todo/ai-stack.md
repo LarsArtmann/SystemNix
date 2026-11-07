@@ -65,3 +65,7 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [blocked:user] **Push SKILLS + go-cqrs-lite repos if daemon didn't** **Source:** docs/status/2026-09-29_20-21 §f.31
 - [ ] [ready] **Skill-fix survives symlink redeployment (~/.config/crush/skills → repos)** **Source:** docs/status/2026-09-29_20-21 §f.32
 - [ ] [ready] **Stagger 22+ concurrent crush sessions on resume** **Source:** docs/status/2026-09-29_23-14 §f.46
+- [ ] [ready] **Verify qmd MCP tools load in a Crush session inside ~/projects/CV** — confirm CV project-local .crushrc exposes qmd query/get/multi_get/status tools at session start **Source:** docs/status/2026-10-09_17-47_qmd-mcp-global-to-cv-rescope-status.md §f.6
+- [ ] [ready] **Pre-warm qmd reranker GGUF model via CLI qmd query** — one CLI query so the ~640 MB reranker downloads outside an MCP tool-call timeout **Source:** docs/status/2026-10-09_17-47_qmd-mcp-global-to-cv-rescope-status.md §f.7
+- [ ] [ready] **Verify qmd status shows cv collection intact with no orphan collections** — confirm the cv index is healthy post-rescope **Source:** docs/status/2026-10-09_17-47_qmd-mcp-global-to-cv-rescope-status.md §f.11
+- [ ] [ready] **Audit CV Crush session logs for qmd stdio MCP spawn errors** — skim CV Crush logs after project-local MCP use for clean stdio startup **Source:** docs/status/2026-10-09_17-47_qmd-mcp-global-to-cv-rescope-status.md §f.22

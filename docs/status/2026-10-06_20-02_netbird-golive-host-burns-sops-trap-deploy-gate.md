@@ -104,3 +104,5 @@ Nothing irreversible. The ranked self-inflicted costs:
 - pbx trains: `f85g340p` → `bd1qy86s` → `5cwskknj`, each deploy-freshness FRESH; ledger blocks appended (two empty-story entries, supersession noted)
 - SystemNix: `services.netbird-client.enable = true` eval; `cloud-domain` check green ("netbird client enabled OK"); `git add -f platforms/nixos/secrets/netbird.yaml` (gitignore `secrets*`); evo-x2 drvPath resolves post-add
 - Deploy gate: run 1 blocked (2 failures — untracked sops file), run 2 blocked (IO PSI 83%/disk 101%); NOT forced; storm attributed to discordsync/clickhouse/3× crush/Rust build train; memory PSI 0 throughout
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.10 f.12 · already-tracked f.2 f.3 f.4 f.5 f.6 f.7 f.8 f.9 f.11

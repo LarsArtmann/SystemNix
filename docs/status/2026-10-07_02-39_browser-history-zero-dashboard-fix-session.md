@@ -144,3 +144,5 @@ The dashboard renders zeros because the OAuth login resolves to a duplicate user
 - Data ownership (Oct 6 backup): visits by user — `000…0`×3179 (orphan), `01M000JA6…`×1018 (owner); agent token `01M1QPZT…` → `01M000JA6…`.
 - Readonly journal signatures: Oct 7 01:25:41 (pid 862342, heartbeat + reaper), Oct 7 01:56:21 (pid 512961, reaper).
 - Lock chain: SystemNix `flake.lock` → browser-history `3ebbfbf` → cqrs-htmx `11f75a73`; generations: 827/828 = `68d0b6d` era; user's 02:36 switch → `vi223xl9` (no browser-history unit diff vs `s31cl42n`).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.5 f.6 f.7 f.8 f.9 f.11 f.12 f.13 f.14 f.18 f.19 f.20 f.23 f.24 f.25 f.26 f.27 f.28 f.30 · already-tracked f.3 f.4 f.10 f.15 f.16 f.22 f.29 · NEW rowed: f.17 → upstream, f.21 → monitoring

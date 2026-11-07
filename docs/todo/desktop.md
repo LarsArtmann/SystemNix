@@ -145,3 +145,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **DMS settings `.bak` pruning + fish startup re-check** **Source:** docs/status/2026-09-30_07-00 §f.28
 - [ ] [blocked:user] **Retire MacBook Tailscale** **Source:** docs/status/2026-09-30_05-42 §f.28
 - [ ] [ready] **Verify DMS DnsStatsWidget unaffected by csrf (Bearer flow)** **Source:** docs/status/2026-09-30_13-07 §f.13
+- [ ] [ready] **Drop dead docker_context.disabled setting from platforms/common/programs/starship.nix:80** — remove the obsolete Docker prompt config left after the 2026-10-08 Docker removal **Source:** docs/status/2026-10-08_14-23_docker-removal-logs-redirect-self-review.md §f.12
+- [ ] [ready] **Reword stale docker CLI comments in platforms/darwin/programs/shells.nix:55,75** — update macOS PATH comments still referencing a Nix-shipped docker CLI **Source:** docs/status/2026-10-08_14-23_docker-removal-logs-redirect-self-review.md §f.13

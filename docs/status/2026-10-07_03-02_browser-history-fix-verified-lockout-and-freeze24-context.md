@@ -103,3 +103,5 @@
 - Readonly window: pid 512961 only — 4 errors 02:41–02:46, ZERO in pid 9360 since 02:51:56; ingest `accepted=1` 02:57:10.
 - Crash #24: death 02:49:28, recovery boot 02:51:56; class + guard analysis in the freeze-24 autopsy (concurrent session, 02:59).
 - Prior chain (root cause, deploy ladder, store-path forensics): [02:39 report](./2026-10-07_02-39_browser-history-zero-dashboard-fix-session.md).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.4 f.5 f.6 f.11 f.12 f.14 f.15 f.16 f.17 f.18 · already-tracked f.1 f.2 f.7 f.8 f.10 f.13 · NEW rowed: f.9 → services, f.19 → pipeline

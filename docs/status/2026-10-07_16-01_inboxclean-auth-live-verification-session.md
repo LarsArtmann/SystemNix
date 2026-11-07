@@ -221,3 +221,5 @@ item's disposition is recorded HERE instead; on your word I land them in `TODO_L
 
 _Awaiting instructions. Nothing was committed by this session (harness rule); the auto-commit
 daemon will pick this report up._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.4 f.8 f.11 f.13 f.16 f.25 f.26 f.27 f.30 · already-tracked f.1 f.2 f.5 f.7 f.9 f.10 f.12 f.14 f.15 f.18 f.19 f.21 f.22 f.23 f.24 f.31 · OBSOLETE f.28 · PREMISE-FALSIFIED f.20 (flake.nix:301 already uses canonical LarsArtmann/InboxClean casing — row NOT queued) · NEW rowed: f.6 → monitoring, f.17 → services, f.29 f.32 → upstream

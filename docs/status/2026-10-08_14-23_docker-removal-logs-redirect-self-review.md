@@ -84,3 +84,5 @@
 ---
 
 _Self-review honesty note: the session's headline quality gap is d)6 — every automated gate stayed green while a real residue class sat in `tests/`. The user's forced self-review, not the pipeline, found it. That's the improvement that matters (e)2/e)4)._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.3 f.6 f.7 f.14 f.15 f.16 f.18 f.20 · already-tracked f.2 f.4 f.5 f.9 f.17 f.19 · NEW rowed: f.8 f.11 → monitoring, f.10 → pipeline, f.12 f.13 → desktop

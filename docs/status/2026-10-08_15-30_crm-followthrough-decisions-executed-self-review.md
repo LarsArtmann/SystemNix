@@ -93,3 +93,5 @@ _(19 items — every real follow-up this session produced; not padded to 50.)_
 - `check-todo-system.sh` re-run after the harvest edits
 
 _Evidence index: gen-845 profile link; PID 3889183 lstart 14:20:02 + journal stop/start 14:19:47/14:20:02; flake.lock crm rev `2bb5d8fd730c`; login page + `/healthz`=`ok` fetches 15:2x/15:30; identity WAL 0 B + main mtime 10-03 16:12; `/data/docker` stat EACCENs; test-server PPIDs 2494325/4041470 (crush sessions 13:21/14:24); voice-check 0 FAIL; todo gate OK._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.5 f.12 f.19 · already-tracked f.1 f.2 f.4 f.6 f.7 f.9 f.10 f.11 f.13 f.14 f.17 f.18 · OBSOLETE f.8 (WebAuthn RPIDs retired 2026-10-17) · NEW rowed: f.15 f.16 → services

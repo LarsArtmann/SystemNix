@@ -159,3 +159,5 @@ The qmd CLI itself stays a global package on PATH (task scoped the MCP, not the 
 qmd row, CHANGELOG v1) · `b5e8ce08` (secrets.md) · `f1d7903f` (CHANGELOG amend) ·
 working-tree FEATURES Crush-row fix (daemon will commit) · CV `3e8da4717` (.crushrc) ·
 crush-config: untouched.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.3 f.4 f.5 f.9 f.10 f.17 f.20 f.21 · OBSOLETE f.12 · already-tracked f.16 f.19 · NEW rowed: f.6 f.7 f.11 f.22 → ai-stack, f.8 (citation corrected to CHANGELOG.md:1418) f.18 → pipeline, f.13 f.14 f.15 → upstream

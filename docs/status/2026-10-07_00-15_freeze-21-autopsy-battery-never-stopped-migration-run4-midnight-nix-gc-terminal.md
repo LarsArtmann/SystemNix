@@ -94,3 +94,5 @@ Death discriminators: hard cut, no ceremony (last lines are `nix-gc-start: delet
 **Standing state at report close:** freeze #21 autopsied (IO-livelock class; chronic = whole-boot build battery at 13 consecutive zone-6 trips; proximate = migration run #4 with sdb read-side collision; terminal = scheduled midnight nix-gc, 59 s from onset to cut, 9,463-path deletion burst on a 96 %-full QLC root; thermal minor, 1 ENTER); guard counter continuity intact (#2124→#2125); crash-loop amplifier observed live (interrupted GC re-fired into recovery boot, trip #2125 inside its window); boot 0 spiked (loadavg 61.66, IO PSI full avg10 61.9) on a second build battery + re-fired GC and was decaying at 00:14; migration NOT re-fired (sdc unmounted); entry-gate and no-heavy-builds rows remain UNIMPLEMENTED as code — the seventh consecutive predecessor-predicted cut.
 
 _Arte in Aeternum_
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 · OBSOLETE f.3 (no-heavy-builds gate removed by owner 2026-10-14)
