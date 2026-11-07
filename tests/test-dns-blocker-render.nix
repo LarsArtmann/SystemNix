@@ -54,6 +54,12 @@ let
   svc = evox2.systemd.services.dnsblockd;
   exec = svc.serviceConfig.ExecStart;
 
+  # Allowlist-backup leg (2026-11-08 queue item): pin the inline backup
+  # script's safety shape — empty-source guard, atomic mktemp+mv replace,
+  # and the pool mount gate — so a regression fails at EVAL, not runtime.
+  backupSvc = evox2.systemd.services.dnsblockd-allowlist-backup or null;
+  backupExec = if backupSvc == null then "" else backupSvc.serviceConfig.ExecStart;
+
   noExtraExec =
     (inputs.self.nixosConfigurations.evo-x2.extendModules {
       # mkForce: a plain definition would CONCATENATE with the host's list
@@ -184,6 +190,19 @@ let
     !(builtins.tryEval names).success;
 
   checks = [
+    # ── Allowlist-backup script shape (2026-11-08 queue item) ──
+    {
+      ok = backupSvc != null;
+      msg = "dnsblockd-allowlist-backup unit missing on evo-x2 — the only irreversible dnsblockd artifact has no pool-side copy path";
+    }
+    {
+      ok = backupSvc.unitConfig.RequiresMountsFor == [ "/mnt/pool/backups/dnsblockd" ];
+      msg = "allowlist backup lost its RequiresMountsFor pool gate — it would write to a fallback dir instead of failing (pool-gating regression)";
+    }
+    {
+      ok = !(rpi3.systemd.services ? dnsblockd-allowlist-backup);
+      msg = "pool-less rpi3-dns must not register the allowlist-backup units (pool-less-host gate regressed)";
+    }
     {
       ok = builtins.match ".*/bin/dnsblockd serve -c /nix/store/.+-dnsblockd-config.yaml" exec != null;
       msg = "dnsblockd ExecStart shape unexpected: ${toString exec}";
@@ -602,6 +621,7 @@ else
       # dependencies) into this build — the greps run on the REAL file.
       inherit
         exec
+        backupExec
         policiesExec
         trialExec
         ecsExec
@@ -624,6 +644,17 @@ else
       GOCFG="''${gatewayOffExec#* -c }"
       DOCFG="''${decryptOffExec#* -c }"
       [ -f "$CFG" ] || fail "rendered config not realized: $CFG"
+      [ -n "$backupExec" ] || fail "allowlist-backup ExecStart missing"
+      grep -q 'no allowlist content yet' "$backupExec" \
+        || fail "allowlist backup lost its empty-source guard (a wiped allowlist would overwrite the last good pool copy)"
+      grep -q 'mktemp "/mnt/pool/backups/dnsblockd/.allowlist.tmp.XXXXXX"' "$backupExec" \
+        || fail "allowlist backup lost the mktemp'd atomic-replace preamble"
+      grep -q 'install -m 600 "$src" "$tmp"' "$backupExec" \
+        || fail "allowlist backup no longer stages the copy with 600 perms before the rename"
+      grep -q 'mv -f "$tmp" "/mnt/pool/backups/dnsblockd/allowlist"' "$backupExec" \
+        || fail "allowlist backup lost the atomic mv replace (readers can see a half-written allowlist)"
+      grep -q 'trap .*rm -f "$tmp".* EXIT' "$backupExec" \
+        || fail "allowlist backup lost the torn-run litter trap"
       [ -f "$PCFG" ] || fail "variant config not realized: $PCFG"
       [ -f "$TCFG" ] || fail "trial variant config not realized: $TCFG"
       [ -f "$ECFG" ] || fail "ecs variant config not realized: $ECFG"

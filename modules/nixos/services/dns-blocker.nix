@@ -291,7 +291,7 @@ _: {
             # must be re-allowed over and over (deep-dive 2026-09-30, finding
             # #1: the only gap in the config that actively loses data, daily).
             allowlist_path = "/var/lib/dnsblockd/allowlist";
-            tracking_mode = "METADATA_ONLY"; ## TODO why not log all!???????
+            tracking_mode = "METADATA_ONLY"; # # TODO why not log all!???????
             tracking_db_path = "/var/lib/dnsblockd/tracking.db";
             # Operator WAL (CQRS journal) — owner-enabled 2026-10-07 (the
             # evo-x2 enablement decision from the 2026-10-06 WAL landing's
@@ -1980,6 +1980,23 @@ _: {
                           if [ "$blocklist_age" -gt "$STALE_SECONDS" ]; then refresh_stale=1; fi
                         fi
 
+                        # Pool-copy freshness (2026-11-08 queue item): the
+                        # backup-coordination row fires at deploy time
+                        # only, so a dead daily copy between deploys was
+                        # invisible. Same mtime logic as the blocklist
+                        # block above, but on the POOL copy (the backup
+                        # unit's mv target).
+                        ${lib.optionalString cfg.allowlistBackup.enable ''
+                          backup_file="${allowlistBackupDir}/allowlist"
+                          if [ -r "$backup_file" ]; then
+                            backup_age=$((now_epoch - $(stat -c %Y "$backup_file")))
+                          else
+                            backup_age=-1
+                          fi
+                          backup_stale=0
+                          if [ "$backup_age" -ge $((25 * 3600)) ] || [ "$backup_age" -eq -1 ]; then backup_stale=1; fi
+                        ''}
+
                         mkdir -p "$OUT_DIR"
                         TMP="$(mktemp "$OUT_DIR/dnsblockd-freshness.prom.XXXXXX")"
                         chmod 644 "$TMP"
@@ -2000,6 +2017,14 @@ _: {
                           echo "# HELP dnsblockd_blocklist_refresh_stale 1 when the loaded set has not changed in 30 days"
                           echo "# TYPE dnsblockd_blocklist_refresh_stale gauge"
                           echo "dnsblockd_blocklist_refresh_stale $refresh_stale"
+                          ${lib.optionalString cfg.allowlistBackup.enable ''
+                            echo "# HELP dnsblockd_allowlist_backup_age_seconds Seconds since the pool-side allowlist copy was last replaced (-1 = copy absent)"
+                            echo "# TYPE dnsblockd_allowlist_backup_age_seconds gauge"
+                            echo "dnsblockd_allowlist_backup_age_seconds $backup_age"
+                            echo "# HELP dnsblockd_allowlist_backup_stale 1 when the pool-side allowlist copy is older than 25h or absent"
+                            echo "# TYPE dnsblockd_allowlist_backup_stale gauge"
+                            echo "dnsblockd_allowlist_backup_stale $backup_stale"
+                          ''}
                         } > "$TMP"
                         mv "$TMP" "$OUT"
                       '';
@@ -2192,6 +2217,27 @@ _: {
                 interval = "5m";
                 conditions = [ "[BODY] == pat(*\ndnsblockd_blocklist_refresh_stale 0\n*)" ];
                 alert = "dnsblockd blocklists have not changed in 30+ days — run scripts/dns-update.sh, commit the hash bump, deploy (stale lists mean new ad/malware domains resolve)";
+              }
+            ]
+            # Pool-copy freshness threshold (2026-11-08 queue item): the
+            # backup-coordination row (§19) fires at deploy time only, so a
+            # dead daily copy between deploys was invisible. The observer
+            # publishes dnsblockd_allowlist_backup_stale (1 = pool copy
+            # older than 25h or absent); this check turns it red. Gated so
+            # pool-less hosts register no phantom row. Fail-closed: the
+            # presence pattern makes an absent metric line RED (the
+            # phantom-green class — forgejo_subvol_backup precedent).
+            ++ lib.optionals cfg.allowlistBackup.enable [
+              {
+                name = "DNS Blocker Allowlist Backup Freshness";
+                group = "Infrastructure";
+                url = "http://127.0.0.1:${toString ports.signoz-node-exporter}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[BODY] == pat(*\ndnsblockd_allowlist_backup_stale *)"
+                  "[BODY] != pat(*\ndnsblockd_allowlist_backup_stale 1\n*)"
+                ];
+                alert = "dnsblockd allowlist pool-copy stale (>25h or absent) — the daily dnsblockd-allowlist-backup leg is dead between deploys. Check: journalctl -u dnsblockd-allowlist-backup --since -26h, ls -la /mnt/pool/backups/dnsblockd, mount | grep /mnt/pool (pool down = the ONLY irreversible dnsblockd artifact has no fresh copy)";
               }
             ];
             oidc = {
