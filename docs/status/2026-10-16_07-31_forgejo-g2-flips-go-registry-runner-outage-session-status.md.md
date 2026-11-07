@@ -1,2 +1,0 @@
-
-**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.4 f.7 f.16 f.46 · OBSOLETE f.1 f.2 f.5 f.8 f.10 f.12 f.20 · already-tracked f.3 f.6 f.19 f.22 f.24 f.26 f.28 f.43 f.44 f.49 · NEW rowed: f.9(+08-30 §f.8) f.11(+08-30 §f.24) watches → services/stability, f.13 f.14 → pipeline, f.15 f.17 f.23 f.33 f.37 f.38 f.39 f.40 f.41 f.45 f.50 → services, f.18(+f.47) f.30(+f.31) f.32 f.34 f.42 f.48 → upstream, f.21 f.25 → security, f.27 → ai-stack, f.35 f.36 → monitoring
