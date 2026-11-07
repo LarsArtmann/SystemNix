@@ -58,3 +58,5 @@
 - **FEATURES/README/ROADMAP/AGENTS**: no stale claims found against this window's changes (re-checked; the ioPause pattern addition is module-internal with the old 3-pattern list asserted nowhere in living docs).
 - **Archives**: no report fully-resolved by this window qualifies for `docs/status/archived/` moves; the two task close-outs are cited by live rows 1791/1795 and stay. The 17:10 close-out stays unarchived (it is this window's canonical close-out, referenced here).
 - **Annotation**: no 2026-* report required inline annotation; the one stale claim found (17:10 §a.2) is corrected inline above rather than by rewriting the historical file.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** §f explicitly appends NONE (17:10 session already harvested; verified zero items)

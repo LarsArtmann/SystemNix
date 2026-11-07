@@ -319,3 +319,13 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Record the unpinned emergency-reserve state in the runbook** — snaps gone → instant 10G relief valve; undocumented **Source:** docs/status/2026-10-27_23-15_storage-crisis-session3-self-review-status.md §f.17
 - [ ] [ready] **journal.db 4.3G growth: dnsblockd.md retention question** **Source:** docs/status/2026-10-27_23-15_storage-crisis-session3-self-review-status.md §f.22
 - [ ] [blocked:user] **/data/docker ~15.5G residue reclaim** — confirm and land the owner row **Source:** docs/status/2026-11-02_13-17_opencloud-proxy-tls-session-full-status-and-self-review.md §f.31
+- [ ] [ready] **Live-exercise the pre-vacuum gate on evo-x2** **Source:** docs/status/2026-11-03_18-52_task-000001a18fe8842b3901ba37230100000000_stability-batch-reddispatch-status.md §f.16
+- [ ] [ready] **Verify btrbk snapshots services/opencloud** — confirm one real snapshot post-Oct-26 **Source:** docs/status/2026-11-03_20-39_opencloud-auth-fix-session-full-status-retrospective-and-roadmap.md §f.10
+- [ ] [decision] **Retain policy for quarantine evidence files** — broken-* siblings on snapshot-rostered subvols **Source:** docs/status/2026-11-03_20-39_opencloud-auth-fix-session-full-status-retrospective-and-roadmap.md §f.28
+- [ ] [blocked:user] **Wave-2 cache triage** — 4 mixed dirs plus go-build-crush/demo/heal additions + purge automation **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.9 + §f.29
+- [ ] [ready] **Automount-aware du walk guard** **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.27
+- [ ] [watch] **Fleet-wide compsize pass beyond /data/ai** **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.28
+- [ ] [ready] **Post-excludes pool-send delta measurement** **Source:** docs/status/2026-11-03_23-45_storage-batch-closeout-extension-and-gate-unblock.md §f.30
+- [ ] [ready] **Document mount-gating-audit second leg** **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.8
+- [ ] [decision] **Reclaim the 1.4G go-lint cache residue** — rebuildable, no writer since 2026-11-02 **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.26
+- [ ] [decision] **Trash doctrine gap for the 55G parked** — gc rm-not-trash for rebuildable cache is the precedent **Source:** docs/status/2026-11-04_04-12_buildcache-recovery-stop-fix-undeployed-and-gc-226-namespace.md §f.46

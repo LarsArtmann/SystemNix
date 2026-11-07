@@ -35,3 +35,5 @@ Harvested into `docs/todo/stability.md` (freeze #41-#44 cluster row): tq-agent-p
 ## f) Verdict
 
 The crash chain's service leg (llama-chat: boot re-arm → 23 GB cold-load → 41.7 GB resident victim → OOM kill → restart into pressure → five WDT cuts) is config-dead as of the next switch. What remains: the session/build leg (owner policy, rows exist), the cooling deficit (owner hands), and the storm attribution gaps (harvested). No forced deploys, no unverified gates, every claim above carries a command or a file path.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** §f is a verdict paragraph; the nine §e subjects all live on the freeze #41-44 cluster row (stability.md:60 a-i) — no new rows

@@ -188,3 +188,5 @@ tail -n 25 ~/.cache/deploy-when-quiescent.log                                   
 ```
 
 **Attribution note:** the auto-commit daemon swept this session's `.nix` work into `bc2869e40`, `798a921ef`, `e544ab766` and `924240978` (heuristic messages), and a parallel session's commit `b0b9787df` swept my three TODO queue rows before I could commit them myself. The one commit I authored directly is `b5b5933cb` (docs + 23:16 report).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.7 · already-tracked f.6 f.9 f.27 · OBSOLETE f.6 f.35 f.38 f.50 · NEW rowed: 25 rows → pipeline 13, services 8, storage 3, monitoring 2 (merged f.2+5, f.3+4, f.11-15, f.16-19, f.20+21, f.22+23, f.24+25, f.28+29, f.30+31, f.39-41, f.44+45, f.46-49)

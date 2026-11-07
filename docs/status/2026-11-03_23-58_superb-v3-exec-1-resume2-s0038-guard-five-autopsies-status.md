@@ -68,3 +68,5 @@
 ---
 
 **Environment notes for the next session:** tree at session end = my configuration.nix revert (uncommitted, correct) + parallel sessions' usual churn; evo-x2 eval GREEN verified 23:57; daemon will sweep. The tombstone stays EXECUTING (exec-1). Census: `grep -ch '^- \[ \]' docs/todo/*.md | awk '{s+=$1} END{print s}'` for re-baseline. Parallel sessions active all evening (cv-pin retraction, OpenCloud IDM, health-hub, quotaboard, storage-decisions — see docs/status/ 21:15–23:05); mixed daemon commits are expected, pathspec-commit or leave-to-daemon per the standing policy.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-11 · OBSOLETE f.12 (standing-order continuation)

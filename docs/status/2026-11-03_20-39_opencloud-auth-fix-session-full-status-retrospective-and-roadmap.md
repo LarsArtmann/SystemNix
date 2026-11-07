@@ -117,3 +117,5 @@ Longer-arc (25–30):
 ---
 
 **Stopping point:** per instruction — reporting and WAITING. No further actions taken after this file.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1 f.2 f.5 f.11-14 f.17 f.18 f.19 f.21 f.22 f.23 f.24 · NEW rowed: 14 rows → services 9, storage 2, pipeline 2, upstream 1, monitoring 1; f.18/f.20 merged into 14-48 rows

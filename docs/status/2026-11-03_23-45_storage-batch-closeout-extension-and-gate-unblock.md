@@ -123,3 +123,5 @@
 Three daemon sweeps (`77a43a6b4`, `7c5b6ebc3`, `e544ab766`) landed between my commits and this report; all verified non-destructive to my content via `git show HEAD:` greps. The freeze-45/PMA sessions' in-flight work cleared from the tree via their own commits before 23:45. The PMA gate-marker fix (`b0b9787df`) touched a foreign-authored row in FORM only (marker append), disclosed in the commit body.
 
 _Arte in Aeternum_
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.7 · already-tracked f.1-4 f.6 f.8 f.10-13 f.19-22 f.26 · NEW rowed: 9 rows → storage 5, pipeline 3, monitoring 1, upstream 1; f.25 merged into 18-52 §f.42

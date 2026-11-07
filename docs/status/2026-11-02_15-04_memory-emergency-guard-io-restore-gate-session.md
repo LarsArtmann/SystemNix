@@ -141,3 +141,5 @@ No damage shipped; all self-caught or corrected, but four real stumbles:
 5. **"READ/UNDERSTAND…" (2)** — gate v2 (freshness + io-only + ionice + persistent log), corrections landed verification, pipeline.md row widened, storm-gate armed and correctly holding.
 
 **Live at write time:** io 98.92, trips 19/h, socket DOWN (trip), capped 0, budget unspent — the fix's semantics visible in production in real time.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.30 · OBSOLETE f.1 f.2 f.4 f.7-9 f.19 f.23 f.29 f.32 · already-tracked f.5 f.10 f.11 f.13 f.14 f.18 f.25 f.33 · NEW rowed: 13 rows → stability 7, services 2, pipeline 3, monitoring 1

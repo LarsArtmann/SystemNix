@@ -136,3 +136,5 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **crush-daily insights leg observed run** — collect proved; the LLM insights/report leg needs one observed scheduled run **Source:** docs/status/2026-10-29_23-15_crush-0990-executor-full-run-and-brutal-self-review.md §f.38
 - [ ] [watch] **Catwalk trigger-watch + Q3 verdict formalization** — charm-catalog drift arms T19; one-line owner ack **Source:** docs/status/2026-10-29_23-15_crush-0990-executor-full-run-and-brutal-self-review.md §f.34 + §f.50
 - [ ] [watch] **CRUSH_PERMISSIONS_PIPED + pool permission UI** — upstream roadmap item **Source:** docs/status/2026-10-29_23-15_crush-0990-executor-full-run-and-brutal-self-review.md §f.47
+- [ ] [decision] **On-demand llama-chat re-enable path** — socket/io-triggered; gates paperless-gpt + InboxClean return **Source:** docs/status/2026-11-03_18-40_freeze-41-44-containment-brutal-self-review.md §f.31
+- [ ] [watch] **Drop the nixpkgs-llama-rag input** — when the 0.4.0 spin regression fixes upstream **Source:** docs/status/2026-11-03_18-52_task-000001a18fe8842b3901ba37230100000000_stability-batch-reddispatch-status.md §f.32

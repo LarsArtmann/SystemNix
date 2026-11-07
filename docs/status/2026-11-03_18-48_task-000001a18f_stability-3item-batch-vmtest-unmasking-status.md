@@ -125,3 +125,5 @@ git log -1 --format='%(trailers:key=Task-Queue-ID)' d255cf6b7                   
 ```
 
 Key files: `modules/nixos/services/memory-emergency-guard.nix:1572-1581` (patterns + seam), `tests/test-memory-emergency-guard.nix:378-399` (fix_epoch seam), `:676-725` (converted 6a-lb), `scripts/crash-triage.sh:92-96` (trips grep), `scripts/test-crash-triage.sh:53-74` (both-eras fixtures), plan §7.3 pointer at `docs/planning/2026-10-28_01-25_SUPERB-stability-crash-extinction-pareto-plan.md:252`.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.5 f.7 f.11 f.15 · already-tracked f.12 f.16 · OBSOLETE f.1 f.3 f.4 f.6 f.14 f.35-37 f.38-50 · NEW rowed: 13 rows → stability 4, pipeline 9

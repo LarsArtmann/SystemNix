@@ -53,3 +53,5 @@
 3. **Deploy timing for the pending wave**: S-0006 (keys group + widget) and S-0002 (§19 gate) are deploy-pending; deploys need a quiescence window (deploy-vs-executor race doctrine) and the journal sits at 0.3G of 8G — deploy soon in a calm window, or batch with the next work wave? If a deploy runs, the pre-vacuum gate will enforce the evidence state; no known un-pulled exposed boots beyond what §e.1 names.
 
 **State: AWAITING INSTRUCTIONS.** The tombstone remains EXECUTING; nothing further will be executed until the owner answers or re-issues the standing order.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.1-3 (cluster + freshness + S-0006 rows)

@@ -214,3 +214,5 @@ gen-974 deploy-time discrepancy (TODO row "15:46" vs link mtime 16:01:35) — no
    an immediate one-off store shrink attempted (needs Q2's ruling first)?
 
 — Report ends. Waiting for instructions.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.37 f.38 · already-tracked f.1-13 f.22-24 · OBSOLETE f.20 f.21 f.31 f.32 f.42 f.43 f.50 · NEW rowed: 15 rows → services 5, pipeline 5, monitoring 1, upstream 3, stability 2; f.40 merged into 15-06 §f.11 row

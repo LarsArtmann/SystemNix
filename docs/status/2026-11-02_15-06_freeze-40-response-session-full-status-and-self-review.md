@@ -86,3 +86,5 @@
 ---
 
 **Honesty check (skill question 5): no lies told; one unverified specific and one hand-waved gap, both disclosed and both correctable in minutes (f.7/f.8). Ghost systems: none created (no code written this session). Split brains: one found, one named (e.7). Scope: held to the crash + this review; the pareto table was asked for.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** already-tracked f.3 f.6 · OBSOLETE f.1 f.2 f.4 f.5 f.8 f.13-15 (llama-chat retired + supersession) · NEW rowed: f.7(+18-52 §f.4+46) f.9 f.10 f.12 → stability, f.11(+21-24 §f.40) → pipeline

@@ -205,3 +205,5 @@ listed for the owner to triage):**
 ---
 
 Waiting for instructions.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.3 f.12 · already-tracked f.1 f.2 f.7 f.14 · OBSOLETE f.11 f.20 f.24 f.25 · NEW rowed: 15 rows → stability 11, upstream 1, monitoring 1, pipeline 2

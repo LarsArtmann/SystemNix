@@ -100,3 +100,5 @@
 Per the harvest rule, §f items 1-21 above duplicate or extend rows that already live in `docs/todo/stability.md` (the cluster row + existing decision rows); genuinely-new ones (3, 4, 5, 6, 33) are deliberately NOT auto-queued here — this session's instruction is "report, then wait", and the owner asked for the list in the report itself. The watcher (shell 03F) still polls; it only prints, it deploys nothing.
 
 **WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 · already-tracked f.4 f.5 f.7 f.9-21 f.23 f.25 · OBSOLETE f.2 · NEW rowed: 13 rows → stability 7, monitoring 3, services 1, ai-stack 1, security 1
