@@ -1581,6 +1581,13 @@ in
         enable = true;
       };
 
+      # 2026-11-07 reservation-pressure observability (monitoring row, from
+      # the b0d70d73 cascade postmortem): top-5 VmSize gauges so ballooning
+      # announces itself BEFORE the swap-exhausted kill pass.
+      vm-top-metrics = {
+        enable = true;
+      };
+
       # GitHub Actions canary watchdog for the domains repo (2026-10-17):
       # treats runner-health.yml's every-30-min scheduled run as the
       # Actions-liveness canary from OUTSIDE Actions — the 2026-06→08
