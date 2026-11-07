@@ -198,6 +198,44 @@ selftest() {
   tag=$(awk -v ms=20000 'BEGIN { printf "%.1f", ms / 1000.0 }')
   check "window annotation computes from measured ms (20.0)" "$tag" "20.0"
 
+  # FULL PIPELINE PASS (2026-11-07 batch): two synthetic sample pairs through
+  # the REAL run() — cgroup join + diskstats busy% + window tag — with a stub
+  # sleep that swaps in the second snapshot and a stub date that advances the
+  # clock a fixed 20 s.
+  mkdir -p "$tmp/fakebin" "$tmp/live"
+  cp -r "$tmp/cg0/system.slice" "$tmp/live/system.slice"
+  cp "$tmp/diskstats0" "$tmp/live/diskstats"
+  cat >"$tmp/fakebin/date" <<EOF
+#!/bin/sh
+if [ "\$1" = "-d" ]; then
+  awk -v s="\${2#@}" 'BEGIN { print strftime("%F %T", s) }'
+else
+  if [ -f "$tmp/now2" ]; then echo 1700000020000; else echo 1700000000000; fi
+fi
+EOF
+  cat >"$tmp/fakebin/sleep" <<EOF
+#!/bin/sh
+cat "$tmp/cg1/system.slice/llama-chat.service/io.stat" > "$tmp/live/system.slice/llama-chat.service/io.stat"
+cp "$tmp/diskstats1" "$tmp/live/diskstats"
+echo 1700000020000 > "$tmp/now2"
+EOF
+  chmod +x "$tmp/fakebin/date" "$tmp/fakebin/sleep"
+  local pipeout
+  pipeout=$(PATH="$tmp/fakebin:$PATH" CGROUP_ROOT="$tmp/live" \
+    DISKSTATS="$tmp/live/diskstats" BY_ID_DIR="$tmp/by-id" TOP_N=10 run)
+  local noop
+  noop=$(grep -cF 'other.service' <<<"$pipeout" || true)
+  check "pipeline: zero-delta cgroup filtered out" "$noop" "0"
+  local joined
+  joined=$(grep -cF 'llama-chat.service 259:3 1.0 0.0 1.0' <<<"$pipeout" || true)
+  check "pipeline: cgroup join emits 20MiB/20s = 1.0 MB/s" "$joined" "1"
+  local tags
+  tags=$(grep -c 'window=20.0s' <<<"$pipeout" || true)
+  check "pipeline: measured-window tag on both sections" "$tags" "2"
+  local dev
+  dev=$(grep -cF 'ata-fake-qlc-disk (259:3) busy=2.5% read=1.0 write=0.0' <<<"$pipeout" || true)
+  check "pipeline: diskstats busy%+rates with by-id name" "$dev" "1"
+
   echo "io-attribution selftest: $pass pass, $fail fail"
   [ "$fail" -eq 0 ]
 }
