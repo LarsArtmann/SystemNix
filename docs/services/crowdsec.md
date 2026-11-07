@@ -9,7 +9,7 @@
 
 | Unit                                  | Shape                                                            | Notes                                                                                         |
 | ------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `crowdsec.service`                    | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/state/crowdsec.db`, WAL)                            |
+| `crowdsec.service`                    | Type=notify, Restart=always (upstream), MemoryMax 1G / High 768M | agent + LAPI + SQLite (`/var/lib/crowdsec/data/crowdsec.db`, WAL — see the 2026-11-07 incident below)                            |
 | `crowdsec-update-hub.{service,timer}` | daily oneshot                                                    | **OFF** (`autoUpdateService` default false) — hub updates happen at every agent start instead |
 
 Every start runs (in order): `crowdsec-wait-dns` (our gate, 180s budget) → `crowdsec-setup`
@@ -17,6 +17,35 @@ Every start runs (in order): `crowdsec-wait-dns` (our gate, 180s budget) → `cr
 #520206: network+DNS are REQUIRED at every start) → `crowdsec -t` config test.
 A failed start is expected during a cold boot until dnsblockd is answering;
 `Restart=always` + 60s delay self-heals. The gate makes the wait deterministic.
+
+## 2026-11-07 — post-float DB-path incident + live heal (RECOVERED)
+
+**Root cause:** the 2026-11-06 nixpkgs float (crowdsec module restructure, live
+since gen 984 at 12:03) silently moved `db_config.db_path` +
+`config_paths.data_dir` from `/var/lib/crowdsec/state/` to `data/`. The engine
+booted on a FRESH EMPTY DB while `lapi.yaml` (Oct-15) still held machine
+credentials → fatal loop `authenticate watcher (evo-x2): ent: machine not
+found` (401 ×2 → fatal → restart) from Nov 6 12:04 until the heal; the moved
+`data_dir` also stranded parser data files (`bad_user_agents.regex.txt`,
+`trendy_cves_uris.json`, GeoLite2 mmdb) → "unable to init data" errors.
+
+**Live heal (2026-11-07 04:2x, sudo):** migrated the 64MB `state/crowdsec.db`
+(machine `evo-x2` + bouncer `geometrikks` rows intact, 0 alerts/0 decisions)
++ all parser data files + GeoLite2 into `data/`; quarantined the fresh junk
+DB as `/var/lib/crowdsec/data/.quarantine-fresh-{db,shm,wal}`; restarted.
+**Evidence:** login `200` ×N, `Loaded 59 scenarios`, 0 tail errors, counts
+`.prom` 0644 with all 4 metrics + `bouncer_geometrikks_registered 1`,
+metrics `:6061` HTTP 200, caddy access logs mode `640`.
+
+**Layout truth (pinned in-tree since 2026-11-07):** `db_path`/`data_dir`/
+`hub_dir`/`index_path` are pinned explicitly in `crowdsec.nix` — no future
+float can move them under a live DB again. **`/var/lib/crowdsec/state` is
+LOAD-BEARING**: the `/etc/crowdsec/{parsers,scenarios,postoverflows}`
+install symlinks (Oct-14 layout) resolve into `state/hub` — deleting it
+re-drops the engine to "Loaded 0 scenarios" (live-proven 04:27); the next
+hub item reinstall converges them onto `data/hub`, after which `state/`
+becomes trashable residue.
+
 
 ## Data sources (acquisitions)
 
