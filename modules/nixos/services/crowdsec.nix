@@ -287,6 +287,31 @@ _: {
               # — auto-migrated upstream into api.client.credentials_path.)
               client.credentials_path = lapiCredentialsFile;
             };
+
+            # State-path pins (2026-11-07 incident): the 2026-11-06 nixpkgs
+            # float (module restructure, live since gen 984) silently moved
+            # db_config.db_path + config_paths.data_dir from
+            # /var/lib/crowdsec/state/ to data/ — the engine booted on a
+            # FRESH EMPTY DB and death-looped on "authenticate watcher:
+            # ent: machine not found" (stale lapi.yaml creds vs a wiped
+            # machine table; live-fix 2026-11-07 04:2x: the 64MB
+            # state/crowdsec.db + parser data files + GeoLite2 mmdb were
+            # migrated into data/, see the runbook). Pin every
+            # state-affecting path explicitly so no future float can move
+            # them under a live DB again. CAVEAT: the /etc/crowdsec/
+            # {parsers,scenarios,postoverflows} install symlinks still
+            # resolve into state/hub (Oct-14 layout, pre-float installs) —
+            # /var/lib/crowdsec/state is LOAD-BEARING until the next hub
+            # item reinstall rewrites them; do NOT delete it.
+            db_config = {
+              type = "sqlite";
+              db_path = "/var/lib/crowdsec/data/crowdsec.db";
+            };
+            config_paths = {
+              data_dir = "/var/lib/crowdsec/data";
+              hub_dir = "/var/lib/crowdsec/data/hub";
+              index_path = "/var/lib/crowdsec/data/hub/.index.json";
+            };
             prometheus.listen_port = ports.crowdsec-metrics;
           };
 
