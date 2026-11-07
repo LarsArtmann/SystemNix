@@ -402,6 +402,8 @@ bep_selftest() (
     echo "Oct 11 23:19:16 evo-x2 systemd[1]: session-77.scope: The kernel OOM killer killed some processes in this unit."
     echo "Oct 11 23:40:01 evo-x2 kernel: Out of memory: Killed process 5000002 (far-past) total-vm:100kB, UID:1000 oom_score_adj:0"
     echo "Oct 11 23:38:00 evo-x2 systemd[1]: session-78.scope: The kernel OOM killer killed some processes in this unit."
+    echo "Oct 11 23:59:40 evo-x2 kernel: Out of memory: Killed process 6000001 (midnight) total-vm:100kB, UID:1000 oom_score_adj:0"
+    echo "Oct 12 00:00:10 evo-x2 systemd[1]: session-79.scope: The kernel OOM killer killed some processes in this unit."
     echo "Oct 11 23:05:00 evo-x2 memory-emergency-guard-check[9]: MEMORY EMERGENCY: zone 6 trip"
     echo "Oct 11 23:15:00 evo-x2 thermal-pstate-guard-check[9]: THERMAL THROTTLE ENTER: amd_pstate -> guided"
     echo "Oct 11 23:20:00 evo-x2 kernel: BUG: unable to handle page fault"
@@ -411,14 +413,15 @@ bep_selftest() (
   out=$(bep_render "$tmp/journal" "bf8a454c" "bf8a454cdeadbeef000000000000000000000000" "2026-10-11 11:09:43" "2026-10-12 13:04:01" "$tmp/ch-sect")
   printf '%s\n' "$out" >"$tmp/evidence.md"
 
-  check "census oom count" grep -q '^- oom-lines: 10$' "$tmp/evidence.md"
-  check "census killpass join line" grep -q -- '- oom kill-pass join: 6 killed process(es) — 2 memcg-attested, 2 unit-joined, 2 unresolved' "$tmp/evidence.md"
+  check "census oom count" grep -q '^- oom-lines: 11$' "$tmp/evidence.md"
+  check "census killpass join line" grep -q -- '- oom kill-pass join: 7 killed process(es) — 2 memcg-attested, 3 unit-joined, 2 unresolved' "$tmp/evidence.md"
   check "join: pid1 attested" grep -q 'pid=1 task=nix uid= memcg=/system.slice/tq-agent-pool.service basis=attested' "$tmp/evidence.md"
   check "join: chromium attested path" grep -q 'pid=3392891 task=chromium uid=1000 memcg=/user.slice/user-1000.slice/session-74.scope basis=attested' "$tmp/evidence.md"
   check "join: headless unit-joined" grep -q 'pid=3595707 task=chrome-headless uid=1000 unit=session-74.scope basis=unit-join' "$tmp/evidence.md"
   check "join: ghost unresolved" grep -q 'pid=424242 task=ghost uid=0 memcg=UNRESOLVED' "$tmp/evidence.md"
   check "join: -45 s lead joins" grep -q 'pid=5000001 task=early-lead uid=1000 unit=session-77.scope basis=unit-join' "$tmp/evidence.md"
   check "join: -121 s stays unresolved" grep -q 'pid=5000002 task=far-past uid=1000 memcg=UNRESOLVED' "$tmp/evidence.md"
+  check "join: midnight +30 s joins" grep -q 'pid=6000001 task=midnight uid=1000 unit=session-79.scope basis=unit-join' "$tmp/evidence.md"
   check "join: section heading" grep -q '^## OOM kill-pass join' "$tmp/evidence.md"
 
   # Real-dump regression leg (2026-11-02 item-3): the committed sanitized
@@ -453,6 +456,31 @@ bep_selftest() (
     rm -f "$fj" "$foom"
   else
     echo "FAIL: real-dump cascade fixture missing at $fixture_dir"
+    failures=$((failures + 1))
+  fi
+
+  # Later-window record leg (2026-11-07 item): the committed sanitized
+  # b0d70d73 LATER-window excerpt (17:49, 19:15/19:34, 20:43, 23:59→00:03)
+  # pins the memcg-constraint class: every OOM outside the 10:14–10:15
+  # global pass was CONSTRAINT_MEMCG with ONLY `oom-kill:` summary lines —
+  # no `Out of memory: Killed process` line, no systemd OOM-unit line — so
+  # the kill-pass join must emit NOTHING for those windows (the census
+  # counts them; the join never fabricates a unit from a window that has
+  # no per-victim kill line to anchor on).
+  local flw foomlw fjoinlw
+  flw="$fixture_dir/b0d70d73-later-windows.dump"
+  if [ -f "$flw" ]; then
+    foomlw=$(mktemp "$tmp/lw.oom.XXXXXX")
+    fjoinlw=$(mktemp "$tmp/lw.join.XXXXXX")
+    grep -E 'invoked oom-killer|oom-kill:|Out of memory' "$flw" >"$foomlw"
+    check "later-windows: 4 memcg invocations" test "$(grep -c 'invoked oom-killer' "$foomlw")" = 4
+    check "later-windows: 4 memcg oom-kill lines" test "$(grep -c 'oom-kill:' "$foomlw")" = 4
+    check "later-windows: 0 Killed-process lines" test "$(grep -c 'Out of memory' "$foomlw")" = 0
+    bep_killpass_join "$flw" "$foomlw" >"$fjoinlw"
+    check "later-windows: join emits NOTHING" test ! -s "$fjoinlw"
+    rm -f "$foomlw" "$fjoinlw"
+  else
+    echo "FAIL: later-windows fixture missing at $flw"
     failures=$((failures + 1))
   fi
 

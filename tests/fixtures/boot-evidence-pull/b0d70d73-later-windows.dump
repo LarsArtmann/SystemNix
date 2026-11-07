@@ -1,0 +1,18 @@
+Oct 28 17:48:27 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 17:49:27 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 17:49:57 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 19:15:14 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 19:15:57 evo-x2 kernel: go invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+Oct 28 19:15:57 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3859022,uid=1000
+Oct 28 19:34:18 evo-x2 kernel: whisper-cli invoked oom-killer: gfp_mask=0x100cca(GFP_HIGHUSER_MOVABLE), order=0, oom_score_adj=0
+Oct 28 19:34:18 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=536157,uid=1000
+Oct 28 20:43:04 evo-x2 kernel: find invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+Oct 28 20:43:04 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/tq-agent-pool.service,task_memcg=/system.slice/tq-agent-pool.service,task=nix,pid=3041302,uid=1000
+Oct 28 20:43:20 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 20:43:50 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 23:59:07 evo-x2 kernel: unpaper invoked oom-killer: gfp_mask=0xcc0(GFP_KERNEL), order=0, oom_score_adj=0
+Oct 28 23:59:07 evo-x2 kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=/,mems_allowed=0,oom_memcg=/system.slice/system-paperless.slice/paperless-task-queue.service,task_memcg=/system.slice/system-paperless.slice/paperless-task-queue.service,task=[celeryd: celer,pid=2370461,uid=315
+Oct 28 23:59:17 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 28 23:59:47 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 29 00:00:17 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
+Oct 29 00:03:10 evo-x2 systemd[1]: memory-emergency-guard.service: Deactivated successfully.
