@@ -810,6 +810,42 @@
               touch $out
             '';
 
+        # DISARMED SEV1 line fires ONCE per no-match streak: the .fired
+        # epoch-file gate must sit before the journal echo, the echo must
+        # write the gate, and the matching-pause reset must clear it
+        # (negative-tested: any leg removed fails the check).
+        guard-disarmed-fire-once-selftest =
+          pkgs.runCommand "guard-disarmed-fire-once-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gnugrep
+              ];
+            }
+            ''
+              mod=${root}/modules/nixos/services/memory-emergency-guard.nix
+              grep -q 'IO_PAUSE_DISARMED_FILE="''${stateDir}/io-pause-nomatch.fired"' "$mod" ||
+                { echo "FAIL: DISARMED fired-gate state file missing"; exit 1; }
+              fire_l=$(grep -n 'SEV1 IO-PAUSE DISARMED' "$mod" | head -1 | cut -d: -f1)
+              gate_l=$(grep -n '\[ ! -f "\$IO_PAUSE_DISARMED_FILE" \]' "$mod" | head -1 | cut -d: -f1)
+              set_l=$(grep -n 'echo "\$now" > "\$IO_PAUSE_DISARMED_FILE"' "$mod" | head -1 | cut -d: -f1)
+              rm_l=$(grep -n 'rm -f "\$IO_PAUSE_DISARMED_FILE"' "$mod" | head -1 | cut -d: -f1)
+              if [ -z "$gate_l" ] || [ "$gate_l" -ge "$fire_l" ]; then
+                echo "FAIL: fired-gate does not precede the SEV1 line (gate@$gate_l fire@$fire_l) — the line would re-emit every no-match trip"
+                exit 1
+              fi
+              if [ -z "$set_l" ] || [ "$set_l" -le "$fire_l" ]; then
+                echo "FAIL: SEV1 line does not arm the fired-gate after emitting (set@$set_l fire@$fire_l) — gate would never latch"
+                exit 1
+              fi
+              if [ -z "$rm_l" ]; then
+                echo "FAIL: matching-pause reset does not clear the fired-gate — a second streak could never fire again"
+                exit 1
+              fi
+              touch $out
+            '';
+
         # Boot-evidence-pull selftest: runs the pull script's `selftest`
         # mode (fixture journal through the canonical-section renderer:
         # census counts, hex-boundary id8 citation for the pre-vacuum

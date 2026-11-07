@@ -171,6 +171,7 @@ _: {
           IO_PAUSE_MAX_SECONDS=${toString cfg.ioPause.maxPausedSeconds}
           PAUSE_FILE="${stateDir}/io-paused"
           IO_PAUSE_NOMATCH_FILE="${stateDir}/io-pause-nomatch.count"
+          IO_PAUSE_DISARMED_FILE="${stateDir}/io-pause-nomatch.fired"
           PAUSE_CALM_EPOCH_FILE="${stateDir}/io-pause-calm.epoch"
           STORM_LATCH_EPOCH_FILE="${stateDir}/storm-latch.epoch"
 
@@ -823,20 +824,24 @@ _: {
                   sync -f "$PAUSE_FILE" 2>/dev/null || true
                   echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): SIGSTOPped ''${pause_count} headless driver process group(s)''${new_paused} — sockets stay SERVING; attribution: ''${attribution:-none}; auto-resume at io PSI avg60 < ${toString cfg.restoreIoSomeAvg60ThresholdPercent}% sustained ${toString cfg.ioPause.calmSeconds}s, hard cap ${toString cfg.ioPause.maxPausedSeconds}s" >&2
                   echo 0 > "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || true
+                  rm -f "$IO_PAUSE_DISARMED_FILE" 2>/dev/null || true
                 elif [ ! -f "$PAUSE_FILE" ]; then
                   nomatch_streak=0
                   [ -r "$IO_PAUSE_NOMATCH_FILE" ] && nomatch_streak=$(cat "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || echo 0)
                   nomatch_streak=$((nomatch_streak + 1))
                   echo "$nomatch_streak" > "$IO_PAUSE_NOMATCH_FILE" 2>/dev/null || true
                   echo "MEMORY EMERGENCY IO-PAUSE (trip #''${tripped_total}, zone 6): NO eligible headless tree matched the attribution (patterns: ''${IO_PAUSE_PATTERNS}) — pressure persists but nothing pausable" >&2
-                  if [ "$nomatch_streak" -ge ${toString cfg.ioPause.disarmedEscalationThreshold} ]; then
+                  if [ "$nomatch_streak" -ge ${toString cfg.ioPause.disarmedEscalationThreshold} ] && [ ! -f "$IO_PAUSE_DISARMED_FILE" ]; then
                     # The distinct DISARMED condition (freeze #40 close-out):
                     # no-match trips are not silence, they are a structural
                     # verdict — the writer sits outside every pattern and the
-                    # zone-6 action is disarmed. Fires at the threshold and
-                    # stays flagged (metric below) until a matching pause
-                    # resets the streak.
+                    # zone-6 action is disarmed. Fires ONCE per streak (the
+                    # .fired epoch file gates re-emission; a matching pause
+                    # resets the streak AND clears the gate) — a 587-trip
+                    # storm must not re-spam the SEV1 line every trip. The
+                    # metric below carries the persistent condition.
                     echo "MEMORY EMERGENCY SEV1 IO-PAUSE DISARMED (trip #''${tripped_total}, zone 6): ''${nomatch_streak} consecutive zone-6 trips matched NO pausable tree (patterns: ''${IO_PAUSE_PATTERNS}) — the IO-PAUSE action is structurally disarmed; extend ioPause.cgroupPatterns to the attributed writer" >&2
+                    echo "$now" > "$IO_PAUSE_DISARMED_FILE" 2>/dev/null || true
                   fi
                 elif [ -f "$PAUSE_FILE" ]; then
                   pause_epoch_note=$(awk 'NR == 1 {print $1}' "$PAUSE_FILE" 2>/dev/null)
