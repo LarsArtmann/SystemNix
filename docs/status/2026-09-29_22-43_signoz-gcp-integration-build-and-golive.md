@@ -97,3 +97,5 @@ Nothing destroyed. **Process misses, honestly:**
 ---
 
 **Evidence:** GCP API probe transcript (16/16 HTTP 200 as SA) in session; `git log` — feature commits `61ef14f4`/`5be64526`/`b243defe`/`dfeb838d`/`34396139` + `95d8641d` (real-key rotation); flake check green runs in session.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.6 · SUPERSEDED f.15 f.25 · OPEN rowed 2026-11-07: f.2 f.3 f.4 f.5 (dedupe: monitoring.md:63-65 rows already carry the GCP verify chain — ride those) f.7 f.8 f.17 f.19 f.20 f.21 f.23 → monitoring, f.9 f.22 → services, f.10-f.14 [blocked:user] → monitoring, f.16 [blocked:user] → pixel6, f.18 → security, f.24 [watch] → monitoring.

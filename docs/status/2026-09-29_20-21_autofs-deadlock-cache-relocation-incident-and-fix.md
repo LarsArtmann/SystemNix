@@ -126,3 +126,5 @@
 ---
 
 _Point-in-time snapshot. Machine still wedged at time of writing; recovery commands in d).4 / f).1. Written by Crush (glm-5.3) during the 2026-09-29 autofs-deadlock session._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-f.8 f.11 f.15 f.17 f.19 f.20 f.28 f.35 f.36 f.38 · SUPERSEDED f.33 f.34 · OPEN rowed 2026-11-07: f.9 f.10 f.14 f.21 f.22 f.23 → monitoring, f.12 f.13 f.16 [decision] → storage, f.18 f.45 → storage, f.24 → stability, f.25 f.27 f.29 → pipeline, f.26 f.30 f.31 f.32 [blocked:user where marked] → ai-stack; f.37 satisfied BY this harvest log.

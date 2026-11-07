@@ -277,3 +277,5 @@ mailbox creation) — user-held values and portals, per repo doctrine.
    vs the tree; a recreate before republish boots pre-mail code. If a
    recreate is plausible before go-live completes, republish first (user-run
    `./installer/publish-release.sh`).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** SUPERSEDED f.6 f.7 f.17 f.21 f.22 f.23 (dmarc native, collector flipped, doctrine rows) · OPEN rowed 2026-11-07: the mail go-ladder f.1-f.5 f.13 f.24 [blocked:user] → services (single owner-ladder row family, deduped with netbird 05-42 §f.42/§f.46), f.8 [blocked:user] → monitoring, f.9 f.11 f.12 f.15 f.20 → services/pipeline, f.10 → upstream, f.16 [watch] → monitoring, f.19 [blocked:user] → ai-stack.

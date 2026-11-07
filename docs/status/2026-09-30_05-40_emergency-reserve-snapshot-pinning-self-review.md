@@ -73,3 +73,5 @@
 ---
 
 **Bottom line:** The question is fully answered; the design wart is real, known (T14), and cheaply fixable. Nothing was changed this session. The worst self-inflicted gap: the first answer omitted the pool-side pinning and the Sep-13 re-provision observation, both of which were knowable from data I already had.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.15 · OPEN rowed 2026-11-07: the @reserve option-1 decision family f.1-f.10 [blocked:user] → ONE decision row in stability (contingent legs ride it), f.11 f.16 → storage, f.12-f.14 [blocked:user] → storage, f.17 [blocked:user] → stability.

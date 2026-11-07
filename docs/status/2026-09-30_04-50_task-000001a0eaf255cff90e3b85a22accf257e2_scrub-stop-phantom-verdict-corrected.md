@@ -28,3 +28,5 @@ The churn-stop WAS a phantom, but the claimed mechanism is wrong for this config
 
 - The changed template unit file will make switch-to-configuration restart the currently-FAILED `btrfs-scrub@-`/`@data` instances — ExecStart (scrubGuard) then re-checks PSI/zram/heavy-readers at start, so a pressured box defers. Expect the chronic-FAIL exit-4 hazard (01-45 §f.12) once at most; the SuccessExitStatus=[1] follow-up (already in another lane) further defuses it.
 - After deploy: next trip's churn-stops actually cancel scrubs; post-storm re-arms restore btrbk/balance but NOT scrubs (weekly timers own their resume; gap is Gatus-visible via the never-finished btrfs-health metrics).
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** NOT HARVESTED section-level: this report carries NO §f items of its own (its §f.12 citation references another report; verdict/landed/verification headings only).

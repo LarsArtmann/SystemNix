@@ -264,3 +264,5 @@ containers state unverified; no live probes run post-deploy.
 
 _Written 2026-09-29 23:13, immediately after the forced deploy returned unanchored. No
 unrelated research performed per instruction._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-f.5 f.6-f.15 f.18 f.20 f.37 f.38 f.39 f.49 · SUPERSEDED f.17 f.28 f.30 f.31 f.32 f.47 f.48 · OPEN rowed 2026-11-07: f.16 rides services.md:237; f.19 [blocked:user] deduped with 03-22 §f.14 row; f.21 f.24 f.40 → monitoring; f.22 f.23 [watch] → services (docker GC row services.md:157 covers f.23); f.25 [blocked:user] → services; f.26 f.27 f.29 f.33 f.34 f.41 f.43 → services; f.35 f.46 → pipeline; f.36 → upstream; f.42 [watch] → services; f.45 → storage.

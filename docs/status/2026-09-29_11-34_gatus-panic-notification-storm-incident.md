@@ -108,3 +108,5 @@ Verified state at 12:00: gatus active, 0 Notify calls in dbus samples, DMS DND o
 6. **Known baseline FAILs (pre-existing, not this incident):** CV browser-render smoke x2 (parallel CV/chromium work), service-health-check (heals when siblings heal). RC on smoke = exit 1 advisory (all baseline-matched).
 
 **Residual owner steps:** (1) reboot when convenient (clears the flm corpse, the D-state stragglers, and the phantom IO PSI), then `nix run .#deploy` to anchor — everything else is already running; (2) GCP monitoring go-live runbook + re-arm; (3) journal-hot migration + re-arm; (4) DND expiry was 12:46 CEST — normal notifications resumed automatically.
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1 f.2 f.5 f.6 f.7 f.8 f.10 f.12 · SUPERSEDED f.4 f.11 · OPEN rowed 2026-11-07: f.3 → monitoring, f.9 → services.

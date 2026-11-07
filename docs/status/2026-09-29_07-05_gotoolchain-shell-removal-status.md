@@ -118,3 +118,5 @@ Session-direct first, then the adjacent queue rows I directly read this session.
 ---
 
 **WAITING FOR INSTRUCTIONS.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.7 f.14 f.25 · OPEN already-queued: f.1 f.5 f.6 f.10 f.11 f.12 f.13 f.17 f.19 f.20 f.26 f.27 f.28 f.29 (TODO_LIST rows 846-855 family + TODO_LIST:844/845/848-852) · OPEN rowed 2026-11-07: f.2 f.4 f.5 f.8 f.16 f.18 f.22 f.23 f.24 → pipeline, f.15 [decision] → security, f.21 → monitoring.

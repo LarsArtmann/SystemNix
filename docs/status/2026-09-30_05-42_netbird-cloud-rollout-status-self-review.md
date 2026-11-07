@@ -232,3 +232,5 @@ _Go/no-go: pbx redeploy ready (dex fix + hardening in-tree, closure green);
 evo-x2 Phase-1 deploy ready (mint unit now runtime-proven)._
 
 _Report ends. Waiting for instructions._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-f.13 f.15-f.20 f.27 f.29 f.37 f.41 f.43 · OPEN rowed 2026-11-07: f.14 [blocked:user] f.21 f.22 f.26 f.31 (dedupe with 07-47 §f.23/24 netbird-state backup row) f.33 [decision] f.35 f.39 f.40 f.44 f.45 → services, f.23 [blocked:user] rides services.md:205, f.24 f.25 [blocked:user] → pixel6, f.28 [blocked:user] → desktop, f.30 f.32 → monitoring, f.36 f.38 → pipeline, f.42 deduped into the mail-ladder row (07-33 §f.1), f.46-f.48 deduped into mail-ladder/split-decision/apex rows, f.49 f.50 [watch/decision] → services.

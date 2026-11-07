@@ -118,3 +118,5 @@
 ---
 
 _Recovery metrics at 23:14: load 15.4 (from 86), 0 D-procs (from 84), hot-cache mount live, nix prefix-free, job queue empty. Remaining red: var-log-journal.mount (migration pending), inboxclean-sync (user OAuth), IO PSI 60-80% (fleet)._
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.2 f.3 f.5 f.6 f.8 f.10 f.16 f.23 f.38 · SUPERSEDED f.1 f.4 f.29 f.40 f.44 · OPEN rowed 2026-11-07: f.7 f.9 f.15 f.21 f.22 f.24 f.26 f.28 f.33 f.36 f.39 f.42 → pipeline, f.11 f.45 → storage, f.12 f.13 f.14 f.25 f.32 f.41 → monitoring, f.17 f.43 → services, f.18 f.19 f.20 f.27 f.30 f.34 f.35 f.37 → storage, f.31 → desktop, f.46 → ai-stack; f.47 satisfied BY this harvest log.

@@ -130,3 +130,5 @@ _(25 items — the honest queue; padding to 50 would be noise.)_
 ---
 
 **Awaiting instructions.**
+
+**Harvest log (2026-11-07, T03 wave — items HARVESTED):** DONE f.1-f.4 f.6 f.13 f.15 · SUPERSEDED f.5 f.9 f.10 f.12 f.25 · OPEN rowed 2026-11-07: f.7 → monitoring, f.8 → services, f.11 f.14 f.16 f.17 f.18 f.19 f.20 → upstream, f.21 f.23 → pipeline, f.22 rides pipeline.md:216, f.24 rides TODO_LIST:1488.
