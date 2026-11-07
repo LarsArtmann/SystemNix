@@ -309,7 +309,11 @@ in
               # First run seeds the whole irreplaceable set over WAN.
               TimeoutStartSec = "2d";
               MemoryMax = "4G";
-              ExecStartPre = lib.getExe' goliveCheck "borg-offsite-golive-check";
+              # writeShellScript yields a SINGLE-FILE derivation — getExe'
+              # would append /bin/<name> onto a file and 203/EXEC at first
+              # start (caught live by the offsite-borg smoke 2026-11-07,
+              # unit carried <file>/bin/borg-offsite-golive-check).
+              ExecStartPre = lib.getExe goliveCheck;
               # Freshness marker for backup-coordination — only after create +
               # prune + compact all succeeded.
               ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";
