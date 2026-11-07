@@ -139,17 +139,20 @@ echo ""
 # minutes and storms build under it). Same exit code + escape hatch as the
 # pre-switch positions (exit 12, DEPLOY_FORCE_PRESSURE=1).
 #
-# DEPLOY_FORCE_PRESSURE ladder (freeze #49, 2026-11-05): 0/empty = the gates
-# rule; 1 = override moderate pressure + trip recency (the historical escape
-# hatch, unchanged); 2 = ALSO override the tier-2 extreme real-storm band
-# inside deploy_pressure_gate. Both WDT deaths of the forced-deploy class
-# (#40 2026-11-02, #49 2026-11-05) were =1 fires into PSI >= 90 with disk
+# DEPLOY_FORCE_PRESSURE ladder (freeze #49, 2026-11-05; trip-recency =2
+# escalation 2026-11-07): 0/empty = the gates rule; 1 = override moderate
+# pressure (the historical escape hatch); 2 = ALSO override the tier-2
+# extreme real-storm band AND the zone-6 trip-recency gate (freeze #40:
+# =1 forced a switch into io PSI avg60 98.9% minutes after the trip gate
+# refused the same deploy — trip-recent windows now demand the second
+# explicit token). Both WDT deaths of the forced-deploy class (#40
+# 2026-11-02, #49 2026-11-05) were =1 fires into PSI >= 90 with disk
 # >= 100; =2 exists so that act stays deliberate, not a stale env var.
 force_level() {
   case "${DEPLOY_FORCE_PRESSURE:-0}" in
-    2) echo 2 ;;
-    1) echo 1 ;;
-    *) echo 0 ;;
+  2) echo 2 ;;
+  1) echo 1 ;;
+  *) echo 0 ;;
   esac
 }
 
@@ -306,11 +309,14 @@ deploy_trip_recency_gate() {
     echo "✗ memory-emergency-guard tripped ${zone6_recent}× in the last 60 min — episodic IO-storm window (freeze #5 class)"
     echo "  Current PSI may be a dip between trips; deploying now races the storm."
     echo "  Wait for ≥60 min without a trip, or override:"
-    echo "    DEPLOY_FORCE_PRESSURE=1 nix run .#deploy"
-    if [ "$(force_level)" = "0" ]; then
+    echo "  A trip-recent window demands the SECOND explicit token (freeze #40:"
+    echo "  =1 forced a switch into io PSI avg60 98.9%, WDT death 9 min later —"
+    echo "  the same deploy this gate had refused 4 min prior):"
+    echo "    DEPLOY_FORCE_PRESSURE=2 nix run .#deploy"
+    if [ "$(force_level)" != "2" ]; then
       exit 12
     fi
-    echo "  DEPLOY_FORCE_PRESSURE=$(force_level) set — proceeding anyway"
+    echo "  DEPLOY_FORCE_PRESSURE=2 set — proceeding into a trip-recent window against the freeze-#40 evidence"
   else
     echo "  OK (no guard trips in the last 60 min)"
   fi

@@ -226,7 +226,7 @@ assert_eq "=2 maps to 2" "$(DEPLOY_FORCE_PRESSURE=2 bash -c "$force_level_fn"'; 
 # Tier-2 tripwires: the extreme-band condition, the =2 escape hint, and the
 # freeze citations must all stay in deploy.sh.
 assert_contains "tier-2 extreme-band condition present" "$(grep -c 'io_psi_avg10:-0} >= 80' "$DEPLOY_SH")" "1"
-assert_contains "tier-2 =2 escape hint present" "$(grep -c 'DEPLOY_FORCE_PRESSURE=2 nix run' "$DEPLOY_SH")" "1"
+assert_contains "=2 escape hints present (tier-2 + trip-recency)" "$(grep -c 'DEPLOY_FORCE_PRESSURE=2 nix run' "$DEPLOY_SH")" "2"
 assert_contains "tier-2 veto text cites both fatal freezes" "$(grep -c 'twice ended in a WDT freeze' "$DEPLOY_SH")" "1"
 
 # The exact band condition extracted and exercised at the four corners:
@@ -244,6 +244,28 @@ io_psi_avg10=50 disk_busy=50 eval "$band_cond" && bad "50/50 must NOT trip tier 
 # site may remain anywhere in deploy.sh.
 legacy_sites=$(grep -c 'DEPLOY_FORCE_PRESSURE:-0}" != "1"' "$DEPLOY_SH" || true)
 assert_eq "no legacy != 1 override sites remain" "$legacy_sites" "0"
+
+# Trip-recency =2 escalation (freeze #40, 2026-11-07): the zone-6 branch of
+# deploy_trip_recency_gate must demand the SECOND explicit token (=2) and
+# never accept =1; the journal-timeout branch stays =1 territory.
+assert_contains "zone-6 branch names freeze #40 in its =2 close-out" "$(grep -c 'trip-recent window against the freeze-#40 evidence' "$DEPLOY_SH")" "1"
+trip_block=$(awk '/^  zone6_recent=/,/^  else$/' "$DEPLOY_SH")
+if grep -q 'DEPLOY_FORCE_PRESSURE=1 nix run' <<<"$trip_block"; then
+  bad "zone-6 branch must not offer the =1 escape"
+else
+  ok "zone-6 branch offers no =1 escape"
+fi
+if grep -q 'force_level)" = "0"' <<<"$trip_block"; then
+  bad "zone-6 branch must veto at levels 0 AND 1, not only 0"
+else
+  ok "zone-6 branch vetoes both 0 and 1 (the =2 token)"
+fi
+if grep -q 'force_level)" != "2"' <<<"$trip_block"; then
+  ok "zone-6 branch carries the =2 veto condition"
+else
+  bad "zone-6 branch lost the =2 veto condition"
+fi
+assert_contains "journal-timeout branch stays =1 territory" "$(grep -c 'DEPLOY_FORCE_PRESSURE=1 nix run' "$DEPLOY_SH")" "2"
 
 # ---------------------------------------------------------------------------
 echo
