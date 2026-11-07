@@ -76,6 +76,8 @@ LEX_T="$(find -L "$LEX" -maxdepth 2 -name temp1_input 2>/dev/null | head -1 || t
 D="$(mktemp -d "$BASE/samsung-bench.XXXXXX")"
 F="$D/fio.bin"
 SAMPLER=0
+# shellcheck source=scripts/lib/process.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/process.sh"
 cleanup() {
   if [ "$SAMPLER" -ne 0 ]; then
     kill_pid "$SAMPLER"

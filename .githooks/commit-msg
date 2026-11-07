@@ -27,3 +27,14 @@ if [ "$length" -gt 72 ]; then
     echo "Shorten the first line and move detail into the body; fix with: git commit --amend"
     exit 1
 fi
+
+# WARN-only footer reminder (2026-11-07, dispatch-contract row): a commit
+# that stages queue/library surfaces is USUALLY a task dispatch, whose
+# protocol step 4 requires a Task-Queue-ID footer. Never blocks — heuristic
+# daemon commits, prune records, and session close-outs legitimately touch
+# these files footer-less; the warning exists so a dispatch author notices
+# BEFORE post-commit grep + amend (the fire-#4 class).
+if git diff --cached --name-only -- 'TODO_LIST.md' 'docs/todo/*.md' 2>/dev/null | grep -q . \
+    && ! grep -q '^Task-Queue-ID:' "$msg_file"; then
+    echo "WARN: staged queue/library rows with no 'Task-Queue-ID:' footer — if this is a task dispatch, protocol step 4 requires one (bake it into the message heredoc; amend now if forgotten)."
+fi
