@@ -279,34 +279,10 @@ in
       # during rpi3-down windows — the overlay then decrypts cleanly instead
       # of PNA-breaking (with the LNA policy from cert-trust armed).
       gatewayDecryptDomains = [
-        "com"
-        "net"
-        "org"
-        "io"
-        "dev"
-        "de"
-        "app"
-        "co"
-        "uk"
-        "eu"
-        "se"
-        "nl"
-        "fr"
-        "it"
-        "es"
-        "gg"
-        "tv"
-        "me"
-        "sh"
-        "to"
-        "xyz"
-        "info"
-        "biz"
+
       ];
       gatewayDecryptDevices = [
-        "evo-x2"
-        "macbook"
-      ];
+];
       gatewayDecryptExcludeDomains = [ ];
     };
 
