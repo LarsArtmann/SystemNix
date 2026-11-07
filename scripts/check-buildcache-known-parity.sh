@@ -129,3 +129,15 @@ cat "$buildcache_nix" >"$work/buildcache.nix"
 sed -i 's/^KNOWN_CACHE_ENTRIES=(/KNOWN_CACHE_ENTRIES=(\n  extra-selftest-known-name/' "$work/das-check.sh"
 grep -q 'extra-selftest-known-name' "$work/das-check.sh" || fail "selftest: KNOWN-name injection did not land — KNOWN_CACHE_ENTRIES block shape drifted past the injector"
 expect_pass "KNOWN name added" "$work/buildcache.nix" "$work/das-check.sh"
+
+echo "selftest: rename-proof — pre-commit leg's literal paths must match real files"
+# The pre-commit parity leg keys on literal filenames; a `git mv` of either
+# source silently orphans it (no staged-path match → leg never runs). This
+# leg rides nix flake check (checks.buildcache-known-parity), so a move
+# without updating the hook grep turns the check RED in the same push.
+hook_sh="$repo_root/.githooks/pre-commit"
+if [ -f "$hook_sh" ] && grep -q 'check-buildcache-known-parity' "$hook_sh"; then
+  [ -f "$default_buildcache_nix" ] || fail "selftest: buildcache.nix is not at the hook's literal path ($default_buildcache_nix) — the move must update .githooks/pre-commit's grep in the SAME change"
+  [ -f "$default_das_check" ] || fail "selftest: das-link-recovery-check.sh is not at the hook's literal path ($default_das_check) — the move must update .githooks/pre-commit's grep in the SAME change"
+  echo "selftest: hook path literals still match the real files"
+fi
