@@ -117,6 +117,18 @@ selftest() {
     echo "SELFTEST FAIL: marked report must not be flagged"
     exit 1
   fi
+  # and a report whose ONLY marker is a capital-H "Harvest log" heading (no
+  # uppercase HARVESTED anywhere) must NOT be flagged — the 2026-11-07 live
+  # burn: 31 "Harvest log" markers silently unregistered (count drifted
+  # 203→204) until the pattern became case-forgiving
+  sdir=$(mktemp -d)
+  printf -- '# Report\n\n## f) follow-ups\n\n1. do the thing\n\n## h) Harvest log (§f, at authoring time)\n\nQueued to TODO_LIST.\n' >"$sdir/2026-10-01_00-00_selftest-harvest-ci.md"
+  out=$(TODO_FILE="$TODO" CHECK_TODO_STATUS_DIR="$sdir" "$0" --scan-file "$TODO" 2>&1) && rc=0 || rc=$?
+  rm -rf "$sdir"
+  if printf '%s\n' "$out" | grep -q 'selftest-harvest-ci'; then
+    echo "SELFTEST FAIL: capital-H Harvest log marker must not be flagged"
+    exit 1
+  fi
   # timegate leg: a [ready] row with wait-language and no BLOCKED marker must FAIL
   tmp=$(mktemp)
   cp "$TODO" "$tmp"
@@ -159,7 +171,7 @@ selftest() {
     echo "SELFTEST FAIL: single-instance row must not be flagged as duplicate"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, marker-exempt) + time-gated [ready] rows (marker-exempt) + duplicate open rows"
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt) + duplicate open rows"
   exit 0
 }
 
@@ -267,7 +279,7 @@ harvest_check() {
   local unmarked=()
   while IFS= read -r report; do
     unmarked+=("$report")
-  done < <(grep -LE 'HARVESTED|NOT HARVESTED|not harvested|harvest log' "${candidates[@]}" 2>/dev/null)
+  done < <(grep -LE 'HARVESTED|NOT HARVESTED|not harvested|[Hh]arvest log' "${candidates[@]}" 2>/dev/null)
   for report in "${unmarked[@]}"; do
     base="${report##*/}"
     if ! grep -qF "$base" "$blobfile"; then
