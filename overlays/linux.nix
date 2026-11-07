@@ -295,16 +295,12 @@ let
     # emeet-pixyd = prev.emeet-pixyd.overrideAttrs {
     #   vendorHash = "sha256-WONlox/C5e5CE7THuJ5+t2I+mK4SGizkRpfrp3Abkew=";
     # };
-    # dnsblockd shim RE-ADDED (2026-11-06 lock float — nix-hash-fix
-    # evidence): at dnsblockd@cb116e5 upstream's own overlay bakes nw+KyEnF…
-    # which no longer reproduces through our graph (spec nw+KyEnF, got
-    # ZjETTvO+, float-proof-20261106-010252.log). Last-green 8b5352f3 is
-    # UNREACHABLE (rev gone from origin/master — upstream history rewrite),
-    # so shim at the locked rev. Drop when upstream bakes the got hash;
-    # re-add ONLY via nix-hash-fix evidence, never by hand.
-    dnsblockd = prev.dnsblockd.overrideAttrs {
-      vendorHash = "sha256-QJ1brGWR51XPWAauQ8AXVk04HOXstCezK2NDfZKGCvw=";
-    };
+    # dnsblockd shim DROPPED (2026-11-07 lock float — drop condition met
+    # first-hand): dnsblockd@5c84b3a3 upstream bakes my8B+MyY…, the exact
+    # got-hash of this float's proof (float-proof-20261107-192958.log,
+    # specified QJ1brG = this shim, got my8B+MyY = upstream's own refreshed
+    # nix/vendor-hash.nix). Upstream re-pins on every verify now; re-add
+    # ONLY via nix-hash-fix evidence, never by hand.
     # file-and-image-renamer shim DROPPED 2026-11-02 as bit-neutral: upstream
     # 43ca9929 bakes vendorHash tvOGnEOv… (pinned by its pin-vendorhashes
     # ritual, proven by last-green-verify + full CI). Six re-stales

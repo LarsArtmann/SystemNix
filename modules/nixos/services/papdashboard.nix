@@ -89,10 +89,12 @@
       # RE-STALE 2026-11-06 evening: papdashboard@ea0f5c4 spec WFAW8c, got
       # ktjyNhwo (first-hand, float-proof-20261106-230052.log — surfaced as
       # the sole root once the crm pin wave cleared the earlier layers).
+      # RE-STALE 2026-11-07 float wave: papdashboard@382ba7c spec ktjyNhwo,
+      # got L4OLuG1F (first-hand, float-proof-20261107-192958.log).
       papdashboardPkg =
         inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
           {
-            vendorHash = "sha256-ktjyNhwoBAyjZHrxAm+jCs4IHnX4L7lWJkbJuQExDHI=";
+            vendorHash = "sha256-L4OLuG1FB2OCBtcoemKWeUeCWfmJYSiU3OsWpZHbKzQ=";
           };
 
       checkEnv = mkSecretCheck pkgs {
