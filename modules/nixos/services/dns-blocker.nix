@@ -291,7 +291,7 @@ _: {
             # must be re-allowed over and over (deep-dive 2026-09-30, finding
             # #1: the only gap in the config that actively loses data, daily).
             allowlist_path = "/var/lib/dnsblockd/allowlist";
-            tracking_mode = "METADATA_ONLY";
+            tracking_mode = "METADATA_ONLY"; ## TODO why not log all!???????
             tracking_db_path = "/var/lib/dnsblockd/tracking.db";
             # Operator WAL (CQRS journal) — owner-enabled 2026-10-07 (the
             # evo-x2 enablement decision from the 2026-10-06 WAL landing's
