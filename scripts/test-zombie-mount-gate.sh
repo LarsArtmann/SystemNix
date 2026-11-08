@@ -57,21 +57,33 @@ EOF
 
 # Stub timeout: drop the budget and exec the command (the real-IO leg then
 # exercises the REAL ls against fixture dirs — a missing dir = dead fs).
-cat >"$FIX/bin/timeout" <<EOF
-#!$BASH_BIN
+# Quoted delimiter: "$@" must reach the stub file verbatim, not expand at
+# write time (an unquoted heredoc turned the stub into a no-op rc-0 and the
+# IO probe never tripped — caught by leg 3).
+cat >"$FIX/bin/timeout" <<'EOF'
+#!BASH_PLACEHOLDER
 shift
-exec "\$@"
+exec "$@"
 EOF
+sed -i "1s|.*|#!$BASH_BIN|" "$FIX/bin/timeout"
 chmod +x "$FIX/bin/findmnt" "$FIX/bin/timeout"
 
 PATH="$FIX/bin:$PATH"
 export PATH
+# Fixture sysfs: the lib's device-existence checks resolve under $FIX/dev
+# (device nodes live at $FIX/dev/dev/sdX1, mirroring the ZM_DEV_ROOT prefix).
+ZM_DEV_ROOT="$FIX/dev"
+# Fixture VFS: the real-IO probe's ls targets $FIX/root/mnt/… instead of the
+# live mounts (the listed paths exist on the real box — without the remap the
+# probe would answer from the LIVE filesystem, green-washing leg 3/leg 6).
+ZM_ROOT="$FIX/root"
 
 # Fixture-mount helpers: mnt creates the target dir + optional device file;
 # src writes the findmnt SOURCE row(s).
 mnt() { # mnt <path> [device]
-  mkdir -p "$FIX/root$path"
+  mkdir -p "$FIX/root$1"
   if [ -n "${2:-}" ]; then
+    mkdir -p "$(dirname "$FIX/dev$2")"
     : >"$FIX/dev$2"
   fi
 }
@@ -156,7 +168,10 @@ src /mnt/pool "/dev/sda1[/@pool]"
 mnt /mnt/buildcache /dev/sdb1
 src /mnt/buildcache "/dev/sdb1"
 printf '/mnt/pool\n/mnt/buildcache\n' >"$FIX/targets"
-# NO "$FIX/root/mnt/buildcache" dir: ls -A fails = the EIO shape
+# NO "$FIX/root/mnt/buildcache" dir: ls -A fails = the EIO shape (mnt()
+# created it above; the dead fs is simulated by removing it post-listing,
+# exactly the zombie shape: findmnt lists it, nothing answers behind it).
+rm -rf "$FIX/root/mnt/buildcache"
 run_leg
 expect_fail "ZOMBIE/DEAD MOUNT /mnt/buildcache"
 if grep -q '^PASS ' "$FIX/out"; then

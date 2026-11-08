@@ -70,6 +70,13 @@ ob_pre_skip() { echo "   $1"; }
 # shellcheck source=scripts/lib/vendor-freshness.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/vendor-freshness.sh"
 
+# Shared §17 zombie-mount gate (fixture-tested by
+# scripts/test-zombie-mount-gate.sh and the zombie-mount-gate-selftest
+# flake check — the FAIL-path parity the 2026-10-21 batch owed: the gate
+# shipped green-path-tested only, no zombie mount existed to trip it).
+# shellcheck source=scripts/lib/zombie-mount-gate.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/zombie-mount-gate.sh"
+
 echo "=== Pre-Deploy Validation ==="
 echo ""
 
@@ -1258,34 +1265,14 @@ pap_section16
 # Gatus green through a 9-flap storm. This gate crosschecks every live
 # /mnt/* mount's device against sysfs and runs a real-IO probe; either
 # trip blocks the deploy (buildcache-init's EIO chown would block
-# activation anyway) with the documented recovery hint.
+# activation anyway) with the documented recovery hint. Verdict logic
+# lives in scripts/lib/zombie-mount-gate.sh (the §10/§11/§13/§14/§15/§16
+# extraction pattern); the negative-path fixture selftest is
+# scripts/test-zombie-mount-gate.sh → checks.zombie-mount-gate-selftest.
 echo ""
 echo "17. Zombie-mount detector"
-ZM_TRIPPED=0
-for zm_mnt in $(findmnt -rn -o TARGET 2>/dev/null | grep -E '^/mnt/' | sort -u || true); do
-  # Real filesystems only — automounted targets also list an autofs row
-  # whose SOURCE is "systemd-1"; btrfs renders SOURCE as /dev/sda1[/subvol].
-  zm_src="$(findmnt -nro SOURCE -t btrfs,ext4,ext3,ext2,xfs,vfat,ntfs3,fuseblk "$zm_mnt" 2>/dev/null | tail -1 || true)"
-  zm_dev="${zm_src%%\[*}"
-  case "$zm_dev" in
-  /dev/*)
-    if [ ! -e "$zm_dev" ]; then
-      fail "ZOMBIE MOUNT $zm_mnt: source $zm_dev no longer exists (device-letter reassignment after USB flap) — recovery: sudo umount -l $zm_mnt && sudo systemctl restart the target's .automount unit, then reboot if it persists (see docs/agents/storage.md 'Stale mountinfo after USB hot-plug')"
-      ZM_TRIPPED=1
-    fi
-    ;;
-  esac
-  # Real-IO probe: the phantom-green killer. A zombie or shutdown-superblock
-  # fs answers findmnt but fails every read (EIO). Own shell cd'd into the
-  # mount is the main EIO spammer — cd out before recovering.
-  if ! timeout 10 ls -A "$zm_mnt" >/dev/null 2>&1; then
-    fail "ZOMBIE/DEAD MOUNT $zm_mnt: real-IO probe failed (EIO / shutdown superblock) while findmnt still lists it — the 2026-08-16 phantom-green signature. Recovery: sudo umount -l $zm_mnt, restart the automount, then run scripts/das-link-recovery-check.sh"
-    ZM_TRIPPED=1
-  fi
-done
-if [ "$ZM_TRIPPED" -eq 0 ]; then
-  pass "no zombie mounts — every live /mnt/* mount has an existing device and answers real IO"
-fi
+ZM_PASS=pass ZM_FAIL=fail
+zm_scan
 
 # 18. Shadow-split gate (2026-10-26 wave-6 class; storage.md ready row 1).
 # A hot-tier mount landing over a NON-empty service data dir must be caught

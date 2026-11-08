@@ -18,10 +18,13 @@
 #   ZM_FINDMNT      findmnt command          (findmnt)
 #   ZM_TIMEOUT_BIN  timeout command          (timeout)
 #   ZM_DEV_ROOT     prefix for -e existence checks ("" — real sysfs)
+#   ZM_ROOT         prefix for the real-IO probe target ("" — the mount as
+#                   listed; fixtures remap listed paths under a fixture root)
 
 ZM_FINDMNT="${ZM_FINDMNT:-findmnt}"
 ZM_TIMEOUT_BIN="${ZM_TIMEOUT_BIN:-timeout}"
 ZM_DEV_ROOT="${ZM_DEV_ROOT:-}"
+ZM_ROOT="${ZM_ROOT:-}"
 
 zm_scan() {
   local zm_mnt zm_src zm_dev zm_tripped=0 zm_targets
@@ -43,7 +46,7 @@ zm_scan() {
     # Real-IO probe: the phantom-green killer. A zombie or shutdown-superblock
     # fs answers findmnt but fails every read (EIO). Own shell cd'd into the
     # mount is the main EIO spammer — cd out before recovering.
-    if ! "$ZM_TIMEOUT_BIN" 10 ls -A "$zm_mnt" >/dev/null 2>&1; then
+    if ! "$ZM_TIMEOUT_BIN" 10 ls -A "$ZM_ROOT$zm_mnt" >/dev/null 2>&1; then
       "$ZM_FAIL" "ZOMBIE/DEAD MOUNT $zm_mnt: real-IO probe failed (EIO / shutdown superblock) while findmnt still lists it — the 2026-08-16 phantom-green signature. Recovery: sudo umount -l $zm_mnt, restart the automount, then run scripts/das-link-recovery-check.sh"
       zm_tripped=1
     fi
