@@ -556,8 +556,16 @@ _: {
                   interval = "5m";
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] != pat(*system_units_enabled_inactive_scrape_errors 1*)"
-                    "[BODY] == pat(*system_units_enabled_inactive 0*)"
+                    # Anchored fail-closed pairs (pat() rules,
+                    # docs/agents/monitoring.md): the == arm proves the line
+                    # exists (dead sweep fails closed); the != arm is
+                    # newline-anchored so the metric's own HELP comment can
+                    # never phantom-green it (the unanchored form matched
+                    # "…errors 1 if the…" verbatim — §10 lint catch).
+                    "[BODY] == pat(*\nsystem_units_enabled_inactive_scrape_errors *)"
+                    "[BODY] != pat(*system_units_enabled_inactive_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_units_enabled_inactive *)"
+                    "[BODY] != pat(*system_units_enabled_inactive 0\n*)"
                   ];
                   alerts = discordAlert "Enabled-but-inactive units stranded (the pool-dropout class: an enabled daemon nobody started). Enumerate: grep system_unit_enabled_inactive on localhost:${toString nodePort}/metrics — each series names manager+unit. Usual shapes: a failed dependency left it down (systemctl status <unit>, journalctl -u <unit>), or a stop-path consumed it without restart. First live catch 2026-11-08: llama-embeddings stranded by a failed post-crash-calm-gate dependency";
                 })
