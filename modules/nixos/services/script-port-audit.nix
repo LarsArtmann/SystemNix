@@ -52,9 +52,7 @@
           );
           portCandidates = builtins.filter (g: builtins.match "0[0-9]+" g == null) digitGroups;
         in
-        lib.unique (
-          builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt portCandidates)
-        );
+        lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt portCandidates));
 
       scanDir =
         dir:
@@ -64,22 +62,20 @@
           # purpose is containing trap literals (the 9110 regression shape,
           # 59999 fixture probes) — it would need a per-leg allowlist entry
           # forever. It IS the fixture file.
-          shFiles = builtins.filter (
-            f: lib.hasSuffix ".sh" f && f != "negative-test-lints.sh"
-          ) files;
+          shFiles = builtins.filter (f: lib.hasSuffix ".sh" f && f != "negative-test-lints.sh") files;
         in
         map (f: rec {
           name = f;
           text = builtins.readFile (dir + "/${f}");
-          unregistered = builtins.filter (p: !builtins.elem p allowedPorts) (
-            extractHostPortLiterals text
-          );
+          unregistered = builtins.filter (p: !builtins.elem p allowedPorts) (extractHostPortLiterals text);
         }) shFiles;
 
-      scans = builtins.concatLists (map scanDir [
-        ../../../scripts
-        ../../../scripts/lib
-      ]);
+      scans = builtins.concatLists (
+        map scanDir [
+          ../../../scripts
+          ../../../scripts/lib
+        ]
+      );
 
       offenders = builtins.filter (s: s.unregistered != [ ]) scans;
 
