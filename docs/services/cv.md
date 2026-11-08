@@ -252,9 +252,13 @@ journalctl -u cv-server --since "-10 min" | grep -E 'scan completed|bulk evaluat
   process (happened 2026-08-27). `systemctl restart cv-server` — the
   content sync re-copies assets. The `CV PDF Export` Gatus check catches
   this class; the HTML check cannot.
-- **`concurrency conflict: app <id> version N` on pipeline writes**: a
-  CLI process opened the same sqlite store. One writer per file — stop
-  one, or drive writes through HTTP.
+- **CRM-mirror parked apps / sync errors growing (tile class)**: parked
+  (dead-lettered) apps + a growing "Sync errors" counter mean the CV→Kith
+  links are poisoned — historically the CRM-side view-key split (repaired
+  2026-11-08, see `docs/services/crm.md` traps + the 11-08 status report;
+  revival = fix the CRM side, then restart cv-server). `GET
+  /api/pipeline/crm-status` (X-API-Key) carries `deadLettered`/`syncErrors`;
+  the dead-letter WARN line in the cv-server journal names the fix.
 - **`StoreLeaseHeldError`**: another process holds
   `<dsn>.lease`. Find the pid in the error; stop that process first.
 - **SIGSEGV restart loop (`sessions_chatstore.go:112` nil-deref,

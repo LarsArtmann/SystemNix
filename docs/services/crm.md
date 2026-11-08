@@ -98,3 +98,13 @@ Pocket ID, then restart crm-server.
 - **The package builds from the PUSHED tip** of `github:LarsArtmann/crm`
   (flake input). Unpushed local commits are NOT deployed — push, then
   `nix flake lock --update-input crm`, then deploy.
+- **CV-mirror view-key split (2026-10-27 → REPAIRED 2026-11-08)**: the branded-id era
+  left 1,993 deal + 178 company view rows keyed `StreamMarker:<ulid>` while /rest echoed
+  and looked up bare ids — every CV-stored link 404'd, re-links re-found the same ghost,
+  3 CV apps parked. Repaired by a server-stopped transactional view rekey (5 dual-generation
+  company forks adjudicated to their bare twins); full record + audit: `docs/status/2026-11-08_06-55_cv-crm-view-key-repair-parked-revival-status.md`, crm repo
+  `docs/ops/CV-SYNC.md` "View-key repair". Residual: 1,234 one-shot notes-fold 409s per CV
+  restart (notes onto storm-closed deals — CV-side classification row queued). **A full
+  projection replay re-forks prefixed views for every marker-form journal stream until the
+  crm fold normalizes stream keys — use the surgical-rekey pattern (or fix the fold) before
+  any `crm-reset-projections` replay.**
