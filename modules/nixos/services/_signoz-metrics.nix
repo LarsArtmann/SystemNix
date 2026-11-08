@@ -327,19 +327,33 @@ lib.mkIf cfg.components.nodeExporter {
                     # ── I/O pressure ────────────────────────────────────────────
                     # avg300 = percent of last 300s (5 min) where tasks stalled
                     # on I/O. Equivalent to rate(node_pressure_io_stalled_seconds_total[5m]).
-                    # Alert at >10% of wall-clock time stalled — indicates
-                    # SLC cache exhaustion or sustained I/O starvation. Percent
-                    # semantics (see the memory thresholds note above).
+                    # Two tiers (2026-11-08 permanently-red retune: the old
+                    # single >10% page tier sat red for WEEKS on this box's
+                    # chronic 10-50% band, burying real storms under a
+                    # permanently-failing check — the mr-sync-15-days-red
+                    # blindness class):
+                    #   warning (>10%)  storm forming — observability only,
+                    #                   nothing pages; the raw avg300 series
+                    #                   carries the trend.
+                    #   alert   (>40% AND disk %util corroborates) — the
+                    #                   page tier, bar matched to the
+                    #                   calm-gate's storm definition (it
+                    #                   refuses heavy maintenance at avg10
+                    #                   >= 40%) and the measured deploy-block
+                    #                   storms (40-80%); calm runs <20%.
+                    # Percent semantics (see the memory thresholds note above).
                     io_some_avg300=0
                     io_full_avg300=0
-                    io_alert=0
+                    io_warning=0
+                    io_storm=0
                     IO_PSI="/proc/pressure/io"
                     if [ -f "$IO_PSI" ]; then
                       io_some_avg300=$(awk '/^some/ {split($4, a, "="); print a[2]}' "$IO_PSI")
                       io_full_avg300=$(awk '/^full/ {split($4, a, "="); print a[2]}' "$IO_PSI")
                       io_some_avg300="''${io_some_avg300:-0}"
                       io_full_avg300="''${io_full_avg300:-0}"
-                      awk "BEGIN{exit !($io_some_avg300 > 10)}" && io_alert=1
+                      awk "BEGIN{exit !($io_some_avg300 > 10)}" && io_warning=1
+                      awk "BEGIN{exit !($io_some_avg300 > 40)}" && io_storm=1
 
                     # ── Disk %util corroboration (crash3 phantom-saturation) ───
                     # D-state tasks parked on dead automounts saturate I/O PSI
@@ -348,6 +362,7 @@ lib.mkIf cfg.components.nodeExporter {
                     # corroborates the stall, phantom waits stay observable.
                     disk_busy_max=0
                     io_corroborated=0
+                    io_disk_corroborated=0
                     io_phantom=0
                     sample_io_ticks() {
                       local d
@@ -361,11 +376,19 @@ lib.mkIf cfg.components.nodeExporter {
                     io_ticks_b="$(sample_io_ticks)"
                     disk_busy_max="$(paste <(tr ' ' '\n' <<<"''${io_ticks_a}") <(tr ' ' '\n' <<<"''${io_ticks_b}") \
                       | awk 'NF == 2 {d = $2 - $1; if (d > m) m = d} END {printf "%.1f", m / 10.0}')"
-                    if [ "$io_alert" = "1" ]; then
+                    if [ "$io_warning" = "1" ]; then
+                      # ONE corroboration sample for both tiers (the old
+                      # phantom semantics, preserved: >10% PSI with idle
+                      # disks = corpse pile, owned by the Stuck D-State
+                      # check); the PAGE tier additionally requires the
+                      # >40% band.
                       if awk "BEGIN{exit !($disk_busy_max >= 10.0)}"; then
-                        io_corroborated=1
+                        io_disk_corroborated=1
                       else
                         io_phantom=1
+                      fi
+                      if [ "$io_storm" = "1" ] && [ "$io_disk_corroborated" = "1" ]; then
+                        io_corroborated=1
                       fi
                     fi
                     fi
@@ -392,7 +415,10 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_psi_io_full_avg300 Proportion of last 5min where all tasks stalled on I/O"
                       echo "# TYPE node_psi_io_full_avg300 gauge"
                       echo "node_psi_io_full_avg300 ''${io_full_avg300}"
-                      echo "# HELP node_psi_io_alert Derived boolean: 1 when I/O stall exceeds threshold AND disk %util corroborates (phantom-filtered, crash3)"
+                      echo "# HELP node_psi_io_warning Storm-forming tier: 1 when some avg300 >10 percent (raw PSI, no corroboration) — observability only, nothing pages; the page tier is node_psi_io_alert"
+                      echo "# TYPE node_psi_io_warning gauge"
+                      echo "node_psi_io_warning ''${io_warning}"
+                      echo "# HELP node_psi_io_alert PAGE tier (2026-11-08 two-tier retune): 1 when some avg300 >40 percent (the calm-gate storm bar; measured deploy-block storms sat 40-80 percent, calm <20) AND disk %util corroborates (phantom-filtered, crash3). The old single >10% tier sat permanently red on this box's chronic 10-50% band"
                       echo "# TYPE node_psi_io_alert gauge"
                       echo "node_psi_io_alert ''${io_corroborated}"
                       echo "# HELP node_psi_io_phantom Derived boolean: 1 when I/O PSI exceeds threshold but disks are idle — D-state tasks on a dead automount (corpse-pile signature; the Stuck D-State check owns paging this)"

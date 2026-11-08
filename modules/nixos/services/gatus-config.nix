@@ -536,6 +536,31 @@ _: {
                   ];
                   alerts = discordAlert "node_exporter /metrics is failing (scrape 500 or textfile errors) — host metrics are BLIND; every :9400-based check is degraded with it. The 2026-10-18 class: duplicate rows in a textfile .prom (system_health.prom) reject the whole scrape. Check: journalctl -u prometheus-node-exporter --since -30m --grep 'collected metric', then ls -la /var/lib/prometheus-node-exporter/textfile_collectors and validate the newest .prom for duplicate series";
                 })
+                # Enabled-but-inactive detection net (the 2026-09-14
+                # pool-dropout class: an enabled daemon nobody started ran
+                # 3 h dark with every event-driven layer green). The
+                # system-health sweep (collectEnabledInactive: system +
+                # monitored user managers) emits the aggregate below; the
+                # per-unit series (system_unit_enabled_inactive{manager,
+                # unit}) name the stranded units for triage. Benign
+                # permanently-inactive shapes (hardware-absent dbus
+                # daemons, event-driven dispatchers, timer-triggered
+                # helpers) belong in services.system-health.
+                # enabledInactiveAllowlist — anything left over is a REAL
+                # stranding and pages. scrape_errors leg keeps the sweep
+                # itself honest (fail-closed).
+                (mkHttpCheck {
+                  name = "Enabled But Inactive Units";
+                  group = "Infrastructure";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] != pat(*system_units_enabled_inactive_scrape_errors 1*)"
+                    "[BODY] == pat(*system_units_enabled_inactive 0*)"
+                  ];
+                  alerts = discordAlert "Enabled-but-inactive units stranded (the pool-dropout class: an enabled daemon nobody started). Enumerate: grep system_unit_enabled_inactive on localhost:${toString nodePort}/metrics — each series names manager+unit. Usual shapes: a failed dependency left it down (systemctl status <unit>, journalctl -u <unit>), or a stop-path consumed it without restart. First live catch 2026-11-08: llama-embeddings stranded by a failed post-crash-calm-gate dependency";
+                })
                 # The old "Homepage" check died with homepage-dashboard
                 # (2026-09 merge). The dashboard is PapDashboard now; its
                 # /api/health check lives in the papdashboard registry entry.
@@ -1354,7 +1379,7 @@ _: {
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_io_alert 0*)"
                   ];
-                  alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall high AND disk %util corroborates (crash3 phantom-filtered: idle-disk PSI = D-state corpse pile, covered by the Stuck D-State check, not this one). Check: nvme smart-log, fstrim status, btrfs filesystem usage. REVIEWED 2026-09-19 (permanently-red TODO): the signal is CORRECT by design — sustained some avg300 >10% with real disk corroboration IS an ongoing storm (the freeze-5/6 era red was real pressure, now structurally fixed via the crush-DB migration); a continuously red check means the box is genuinely IO-starved, do not mute it — fix the readers";
+                  alerts = discordAlert "I/O pressure STORM — some avg300 >40% with disk corroboration (the 2026-11-08 two-tier bar: the old >10% page tier sat permanently red on this box's chronic 10-50% band; 40% matches the calm-gate's storm refusal and the measured deploy-block storms, calm runs <20%). Raw trend + the storm-forming tier: node_psi_io_some_avg300 / node_psi_io_warning in SigNoz. Idle-disk stalls are phantom (node_psi_io_phantom) and belong to the Stuck D-State check. Check: nvme smart-log, fstrim status, btrfs filesystem usage, scripts/io-attrib.sh for the per-unit driver. REVIEWED 2026-09-19 + 2026-11-08 (permanently-red TODO): the signal is CORRECT by design — a red check means the box is genuinely IO-starved at storm level, do not mute it — fix the readers";
                 })
                 (mkHttpCheck {
                   name = "System-Health Metrics";

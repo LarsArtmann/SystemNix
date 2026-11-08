@@ -270,7 +270,14 @@ in
         serviceConfig = lib.mkMerge [
           (harden { })
           (serviceOneshotDefaults { })
-          { ExecStart = "${pkgs.coreutils}/bin/mkdir -p /run/binfmt"; }
+          # Type=oneshot is load-bearing for the enabled-but-inactive
+          # detector: without it the unit is Type=simple, exits after the
+          # mkdir, and reads as an ENABLED-but-inactive daemon (false
+          # page, 2026-11-08 net go-live).
+          {
+            Type = "oneshot";
+            ExecStart = "${pkgs.coreutils}/bin/mkdir -p /run/binfmt";
+          }
         ];
       };
 

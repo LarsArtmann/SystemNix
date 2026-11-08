@@ -1541,8 +1541,16 @@ in
         # the default Type=simple (not oneshot), so the enabled-but-inactive
         # detector cannot exclude it structurally — it is legitimately
         # inactive after seeding the secret. Fixing the Type belongs to the
-        # searxng module (services todo).
-        enabledInactiveAllowlist = [ "searxng-secret-key.service" ];
+        # searxng module (services todo). The other three are benign
+        # permanently-idle shapes: ModemManager (no WWAN modem on this
+        # host), NetworkManager-dispatcher + mandb (event/timer-triggered,
+        # inactive between runs).
+        enabledInactiveAllowlist = [
+          "searxng-secret-key.service"
+          "ModemManager.service"
+          "NetworkManager-dispatcher.service"
+          "mandb.service"
+        ];
       };
 
       # 2026-08-22 kernel-freeze prevention: stops the FastFlowLM backend
