@@ -757,11 +757,14 @@ eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside se
 # ── systemd-shape-audit class 9: [Service]-section keys inside unitConfig ──
 # The nsfw-classifier class (switch-journal-proven "Unknown key
 # 'TimeoutStartSec' in section [Unit], ignoring", 2026-11-05). Mutation:
-# null the landed serviceConfig value and re-nest it into unitConfig —
-# the audit must throw. The null leg also proves the audit skips
-# null-cleared values (only the unitConfig copy fires).
+# re-nest a [Service]-section key into unitConfig on a live mount-gate
+# line — the audit must throw. (The original 2026-11-05 fixture line —
+# a bare `unitConfig.RequiresMountsFor =$` — was repaired by the
+# 2026-11-08 nsfw-classifier serviceConfig fix, so the anchor rides the
+# current gate line; both template legs carry it and either firing
+# suffices.)
 eval_case shapeaudit service-key-in-unitconfig fail '\[Service\]-section key\(s\) nested inside unitConfig' \
-  'sed:modules/nixos/services/nsfw-classifier.nix:s|unitConfig.RequiresMountsFor =$|unitConfig.TimeoutStartSec = "10min"; unitConfig.RequiresMountsFor =|'
+  'sed:modules/nixos/services/nsfw-classifier.nix:s|^            unitConfig.RequiresMountsFor = projectsMountGate;$|            unitConfig.TimeoutStartSec = "10min"; unitConfig.RequiresMountsFor = projectsMountGate;|'
 # ── systemd-shape-audit class 10: is-active probes vs oneshot units ──
 # The scrub-guard false-red lesson (2026-08-31) + the guard churn-rearm
 # dead-on-arrival lesson (2026-10-11): is-active reads "inactive" for a
