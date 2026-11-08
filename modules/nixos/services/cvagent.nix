@@ -54,8 +54,7 @@
 
       config = lib.mkIf cfg.enable {
         services.cvagent = {
-          package = lib.mkDefault
-            inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = lib.mkDefault inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
           # Operator identity (cv-profile-probe precedent): the scan reads
           # the whole projects tree and the mesh writes the CV checkout and
@@ -160,7 +159,7 @@
 
         # Daemon-less unit: no HTTP endpoint to probe, so monitoring is
         # OnFailure (Discord) + the system-health state metrics. The unit
-# name changed cvagent → cvagent-scan with the 2026-11-08 delegation.
+        # name changed cvagent → cvagent-scan with the 2026-11-08 delegation.
         services.system-health.extraMonitoredServices = lib.mkAfter [
           "cvagent-scan"
         ];

@@ -274,6 +274,46 @@ let
     # the same bytes the unit runs.
     text = builtins.readFile ../../../scripts/btrbk-data-gate.sh;
   };
+
+  # PSI/memory admission for the btrbk SEND units (the TODO stability row:
+  # nix-gc has been gated since 2026-10-17 via btrfs-health.nix's
+  # btrfsGcAdmission; the nightly sends were the remaining ungated churn
+  # writers — a full-tree send read is exactly the churn that fed the
+  # freeze class, and the guard's storm-side churn-stop kills sends
+  # MID-STREAM, wasting hours of QLC re-reads). ExecCondition semantics are
+  # the same contract as btrfsGcAdmission: refuse (1) skips the run cleanly
+  # (SUCCESS, OnFailure silent, the timer's next nightly fire retries) and
+  # usage/parser errors (64) escalate to 255 so they can never masquerade as
+  # a skip. A skipped send night is free — the Gatus backup-freshness checks
+  # own starvation paging if storms skip several nights in a row.
+  # Deliberately NOT gated: btrbk-pool-clean (the fail-safe retention prune
+  # — it deletes snapshots, so skipping it during multi-day storms feeds
+  # the QLC-full class instead of the freeze class).
+  btrbkAdmission = pkgs.writeShellApplication {
+    name = "btrbk-admission";
+    runtimeInputs = [ pkgs.maintenance-entry-gate ];
+    text = ''
+      set -uo pipefail
+      rc=0
+      maintenance-entry-gate "$@" || rc=$?
+      case "$rc" in
+        0) exit 0 ;;
+        1) exit 1 ;;
+        *) exit 255 ;;
+      esac
+    '';
+  };
+
+  # The send units the admission gate must cover — pinned by the assertion
+  # below (a unit churn that drops the ExecCondition silently re-opens the
+  # storm-churn class; the drift guard makes that an eval error).
+  btrbkSendUnits = [
+    "btrbk-root"
+    "btrbk-data"
+    "btrbk-pool"
+    "btrbk-forgejo"
+    "btrbk-projects"
+  ];
 in
 {
   fileSystems = {
@@ -614,6 +654,9 @@ in
           ioTier.background
           {
             TimeoutStartSec = "24h";
+            # PSI/memory admission (see btrbkAdmission): refuse during a storm
+            # or inside the guard-trip recency window — skip, don't fail.
+            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-root";
             # btrbk-data oom lesson (2026-08-21): a full-tree send charges its
             # page cache to this unit's cgroup — root re-sends are live since
             # the 2026-09-12 snapshot-loss scenario, so the same 20.6G class
@@ -636,6 +679,9 @@ in
           ioTier.background
           {
             TimeoutStartSec = "24h";
+            # PSI/memory admission (see btrbkAdmission): refuse during a storm
+            # or inside the guard-trip recency window — skip, don't fail.
+            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-data";
             # EIO repair gate + exclude-rot guard (see btrbkDataGate
             # above): fails the unit in ~seconds while /data/.repair-done
             # is absent — OnFailure semantics preserved, the ~258G
@@ -668,6 +714,9 @@ in
           ioTier.background
           {
             TimeoutStartSec = "1h";
+            # PSI/memory admission (see btrbkAdmission): refuse during a storm
+            # or inside the guard-trip recency window — skip, don't fail.
+            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-pool";
             # Same treatment as btrbk-data (the nightly walk over services/*
             # charges page cache to this cgroup): throttle early, never become
             # the oomd victim. A snapshot-only run never approaches 4G — the
@@ -691,6 +740,9 @@ in
             # multi-GiB seed at DAS-realistic throughput). 8h incrementals
             # finish in seconds-to-minutes and never approach the ceiling.
             TimeoutStartSec = "6h";
+            # PSI/memory admission (see btrbkAdmission): refuse during a storm
+            # or inside the guard-trip recency window — skip, don't fail.
+            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-forgejo";
             # btrbk-data oom lesson: page cache of the send is charged to this
             # cgroup — throttle early instead of becoming an oomd victim.
             MemoryHigh = "4G";
@@ -711,6 +763,9 @@ in
             # precedent: DAS-realistic throughput under concurrent load can
             # be slow); nightly incrementals finish in minutes.
             TimeoutStartSec = "24h";
+            # PSI/memory admission (see btrbkAdmission): refuse during a storm
+            # or inside the guard-trip recency window — skip, don't fail.
+            ExecCondition = "${lib.getExe btrbkAdmission} --name btrbk-projects";
             # btrbk-data oom lesson: send page cache is charged to this
             # cgroup — throttle early instead of becoming an oomd victim.
             MemoryHigh = "4G";
@@ -1462,23 +1517,40 @@ in
   # re-provisioned Samsung silently loses the mount target. The
   # writer-gating pin (RequiresMountsFor sweep) is asserted alongside once
   # the sweep lands (see projectsWriters below).
-  assertions = lib.optionals projectsSubvolArmed (
-    [
-      {
+  assertions =
+    lib.optionals projectsSubvolArmed (
+      [
+        {
+          assertion =
+            (import ../../../disko/samsung-tlc.nix)
+            .disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes
+              ? "/users/lars/projects";
+          message = "snapshots.nix projectsHomeMount: /users/lars/projects is not declared in disko/samsung-tlc.nix — a re-provisioned Samsung would not recreate the subvol and the mount fails at boot";
+        }
+      ]
+      ++ (map (unit: {
         assertion =
-          (import ../../../disko/samsung-tlc.nix)
-          .disko.devices.disk.samsung-tlc.content.partitions.main.content.subvolumes
-            ? "/users/lars/projects";
-        message = "snapshots.nix projectsHomeMount: /users/lars/projects is not declared in disko/samsung-tlc.nix — a re-provisioned Samsung would not recreate the subvol and the mount fails at boot";
+          (config.systemd.services ? "${unit}")
+          -> (builtins.any (m: lib.hasPrefix "/home/${primaryUser}/projects" m) (
+            config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]
+          ));
+        message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
+      }) projectsWriters)
+    )
+    ++ [
+      {
+        assertion = builtins.all (
+          u:
+          !(config.systemd.services ? ${u})
+          || lib.hasInfix "btrbk-admission" (config.systemd.services.${u}.serviceConfig.ExecCondition or "")
+        ) btrbkSendUnits;
+        message = ''
+          snapshots.nix: a btrbk send unit lost its PSI/memory admission gate
+          (ExecCondition via btrbkAdmission). A storm-timed nightly send is the
+          ungated-churn freeze class this wiring exists for; re-add
+            ExecCondition = "${btrbkAdmission}/bin/btrbk-admission --name <unit>";
+          or extend the exception list here WITH the reason.
+        '';
       }
-    ]
-    ++ (map (unit: {
-      assertion =
-        (config.systemd.services ? "${unit}")
-        -> (builtins.any (m: lib.hasPrefix "/home/${primaryUser}/projects" m) (
-          config.systemd.services."${unit}".unitConfig.RequiresMountsFor or [ ]
-        ));
-      message = "unit ${unit} writes under ~/projects but lacks RequiresMountsFor=/home/${primaryUser}/projects — a detached Samsung would shadow-write the stale @ copy (split-brain, the 2026-10-28 plan D6)";
-    }) projectsWriters)
-  );
+    ];
 }
