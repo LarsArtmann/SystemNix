@@ -1238,6 +1238,48 @@ _: {
                   alerts = discordAlert "Nightly btrbk pool receives have been guard-stopped for >6h — backups are starving behind a sustained IO storm (2026-09-26..28: three missed nights). Check: journalctl -u memory-emergency-guard --since -1h | grep -E 'catch-up|re-arm'; ls /mnt/pool/backups/root/. If no catch-up slot is granting, io PSI never drained under the resume bar — a manual quiet-window 'sudo systemctl start btrbk-root.service' closes the gap.";
                 })
                 (mkHttpCheck {
+                  name = "Smartd Disk Monitoring";
+                  group = "Monitoring";
+                  # Unit-state liveness (postfix/borgbackup shape): smartd has
+                  # no HTTP surface, and its failure mode is a SILENT
+                  # monitoring hole — the 2026-08-18 exit-16 incident (DAS
+                  # re-enumerated with the removable flag, smartd died for
+                  # the whole boot, every pool-disk SMART alert vanished
+                  # without a page). state_failed covers a dead daemon;
+                  # start_limit_hit covers the retry-based DAS-enumeration
+                  # tolerance exhausting its 10 restarts in 600s and giving
+                  # up (the configuration.nix resilience ladder).
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "2m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_service_state_failed{service=\"smartd\"} 0*)"
+                    "[BODY] == pat(*system_service_start_limit_hit{service=\"smartd\"} 0*)"
+                  ];
+                  alerts = discordAlert "smartd is dead or start-limit-crash-looping — NO disk SMART monitoring is running (the 2026-08-18 silent-death class: a vanished DAS member killed smartd and every health alert with it). Check: journalctl -u smartd -n 50 (exit 16 = device missing '-d removable' tolerance), systemctl status smartd, ls -l /dev/disk/by-id/ (device identity, never nvmeN enumeration).";
+                })
+                (mkHttpCheck {
+                  name = "Memory Guard PSI Episodes";
+                  group = "Monitoring";
+                  # Zone-5 storm-forming early warning (line-anchored VALUE-0
+                  # form, backup-starved sibling): the guard's leaky-bucket
+                  # episode count is a gauge, so the derived
+                  # _psi_episodes_warn flag (>= half the trip bucket — the
+                  # same half-band the guard's own self-heal uses) is the
+                  # Gatus-comparable form. A sustained 1 pages BEFORE the
+                  # Zone-5 trip at psiEpisodeTripCount: the calibrated
+                  # 2026-08-31 pre-freeze signature was recurring avg10
+                  # episodes for ~2 h while avg60 stayed low — the averages
+                  # alone never carried the signal.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nmemory_emergency_guard_psi_episodes_warn 0\n*)"
+                  ];
+                  alerts = discordAlert "Memory guard PSI episode bucket is at/above HALF its Zone-5 trip count — episodic avg10 stall episodes are accumulating toward an emergency trip (the 2026-08-31 pre-freeze signature: recurring spikes while avg60 stayed low). Identify the driver BEFORE the trip: journalctl -u memory-emergency-guard --since -2h | grep -iE 'episode|psi', then scripts/io-attribution.sh for the top cgroups; trip fires at 8 episodes.";
+                })
+                (mkHttpCheck {
                   name = "AW Watcher Attached";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";

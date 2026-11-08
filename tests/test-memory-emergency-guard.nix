@@ -468,6 +468,11 @@ in
       assert "memory_emergency_guard_avail_percent 30.0" in prom
       assert "memory_emergency_guard_psi_some_avg10_percent 0.10" in prom
       assert "memory_emergency_guard_sacrifice_socket_active 1" in prom
+      assert "memory_emergency_guard_psi_episodes_warn 0" in prom, (
+        "the derived warn flag must always be emitted (0 on a healthy run) "
+        "— the Gatus PSI-Episodes check line-anchors on it; a missing line "
+        "would page"
+      )
 
       # --- 2. Zone 1 (absolute floor) -----------------------------------
       reset_state()
@@ -787,6 +792,7 @@ in
       assert_all_down()
       prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
       assert "memory_emergency_guard_psi_episodes 8" in prom
+      assert "memory_emergency_guard_psi_episodes_warn 1" in prom
 
       # --- 6c. Episode decay: bursts then clean runs drain the bucket ------
       reset_state()
@@ -797,6 +803,11 @@ in
       assert "MEMORY EMERGENCY" not in out, (
           "4 episodes + clean runs must decay below the trip count — a burst "
           "pattern must not latch the trip"
+      )
+      prom = machine.succeed("cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom")
+      assert "memory_emergency_guard_psi_episodes_warn 0" in prom, (
+        "decayed bucket must clear the warn flag — the Gatus check returns "
+        "green only on the 0 form"
       )
       machine.succeed("systemctl is-active --quiet fastflowlm.socket")
 

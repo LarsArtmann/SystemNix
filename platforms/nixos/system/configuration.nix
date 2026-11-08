@@ -2106,6 +2106,14 @@ in
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
 
+      # smartd liveness monitoring (system-health collector): smartd has no
+      # HTTP surface, so its daemon-death class (the 2026-08-18 exit-16
+      # silent-death: DAS re-enumeration killed smartd for the WHOLE boot
+      # while every pool-disk SMART alert silently vanished) is only
+      # observable as unit state. The Gatus "Smartd Disk Monitoring" check
+      # (gatus-config.nix) consumes the emitted state metrics.
+      services.system-health.extraMonitoredServices = [ "smartd" ];
+
       # DAS pool replug self-heal: zombie reaper + remount + failed-service
       # restart + real-IO metrics (the /mnt/pool analogue of
       # buildcache-usb-recovery; udev-keyed to the two Toshiba serials).

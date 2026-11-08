@@ -1198,6 +1198,20 @@ _: {
             echo "# TYPE memory_emergency_guard_psi_episodes gauge"
             echo "memory_emergency_guard_psi_episodes ''${psi_episodes}"
 
+            # Gatus cannot numeric-compare (pat() is presence-only, the
+            # system-health collector doctrine), so the raw bucket gets a
+            # derived boolean: 1 at/above HALF the trip bucket — the same
+            # half-band the self-heal drain gate uses. This is the
+            # storm-forming early-warning flag the "Memory Guard PSI
+            # Episodes" Gatus check pages on.
+            psi_episodes_warn=0
+            if [ "$psi_episodes" -ge ${toString (cfg.psiEpisodeTripCount / 2)} ]; then
+              psi_episodes_warn=1
+            fi
+            echo "# HELP memory_emergency_guard_psi_episodes_warn 1 when the leaky-bucket episode count >= ${toString (cfg.psiEpisodeTripCount / 2)} (half the Zone-5 trip bucket) — storm-forming early warning; the trip fires at ${toString cfg.psiEpisodeTripCount}"
+            echo "# TYPE memory_emergency_guard_psi_episodes_warn gauge"
+            echo "memory_emergency_guard_psi_episodes_warn ''${psi_episodes_warn}"
+
             echo "# HELP memory_emergency_guard_io_psi_some_avg60_percent PSI io some avg60 stall percent — the sustained-I/O-stall (Zone 6) signal (-1 when io PSI is unreadable)"
             echo "# TYPE memory_emergency_guard_io_psi_some_avg60_percent gauge"
             echo "memory_emergency_guard_io_psi_some_avg60_percent ''${io_psi_some_avg60}"
