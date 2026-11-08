@@ -1,23 +1,30 @@
 # Runbook: docs/services/mr-sync.md
 # mr-sync — read-only repo-portfolio web dashboard.
 #
-# The mr-sync CLI ships on PATH via mkLarsPackages (pure CLI, source-only
-# flake input). This module deploys its OTHER surface: `mr-sync dashboard`,
-# a read-only HTTP server (templ + SSE) that shows the repo portfolio,
-# disk status of local clones, and recommended sync actions.
+# DELEGATED to the upstream module (inputs.mr-sync.nixosModules.dashboard,
+# repo module-dashboard.nix — VM-tested via the repo's checks.dashboard-vm):
+# options, unit definition, hardening, the cache-dir prep oneshot, and the
+# git/gh PATH wiring all live upstream. This file layers ONLY the
+# SystemNix-specific concerns, per the DiscordSync/Monitor365 pattern
+# (docs/agents/integration-registry.md):
+#   - package wiring incl. the vendorHash float-shim (SystemNix lock graph)
+#   - port from the central registry + primaryUser
+#   - sops GITHUB_TOKEN env file
+#   - onFailure alert routing, Restart defaults, ioTier (idle class, M15)
+#   - TimeoutStartSec on the upstream prep oneshot (house floor, audit class 7)
+#   - integration-registry entry (vHost, Gatus check, tile, monitoring)
 #
-#   - Binds 127.0.0.1:${ports.mr-sync} (the tool's default port 7331).
-#     No --token: the bearer token is only REQUIRED for non-localhost binds
-#     (upstream errTokenRequired), and the vHost is Layer 2 protectedVHost —
-#     oauth2-proxy gates external access via Pocket ID; LAN bypass mirrors
-#     the tq-serve / Homepage posture.
+#   - Binds 127.0.0.1:${ports.mr-sync}. No --token: the bearer token is only
+#     REQUIRED for non-localhost binds (upstream errTokenRequired), and the
+#     vHost is Layer 2 protectedVHost — oauth2-proxy gates external access
+#     via Pocket ID; LAN bypass mirrors the tq-serve / Homepage posture.
 #   - Runs as the primary user: the dashboard reads ~/.mrconfig,
 #     ~/.config/mr-sync/config.json (the user's LIVE config — mrconfig_path,
 #     scan_dirs, exclude_repos, path_overrides), and fully walks
 #     ~/projects + ~/forks for per-repo disk sizes. /home/lars is 0700, so
 #     any other user could not traverse (browser-history-agent / tq-serve
-#     precedent: run as primaryUser). ProtectHome=read-only keeps that
-#     access one-way; the dashboard is documented read-only upstream.
+#     precedent: run as primaryUser). Upstream ProtectHome=read-only keeps
+#     that access one-way; the dashboard is documented read-only upstream.
 #   - GITHUB_TOKEN comes from sops (env-file format). Upstream hard-requires
 #     it for the GitHub fetch; until a real PAT is pasted the dashboard
 #     degrades gracefully (FetchError banner, data filled from .mrconfig +
@@ -38,7 +45,6 @@
       cfg = config.services.mr-sync-dashboard;
       primaryUser = config.users.primaryUser or "lars";
       inherit (import ../../../lib/default.nix lib)
-        harden
         serviceDefaults
         onFailure
         ioTier
@@ -46,11 +52,10 @@
         ;
     in
     {
-      options.services.mr-sync-dashboard = {
-        enable = lib.mkEnableOption "mr-sync repo-portfolio web dashboard";
+      imports = [ inputs.mr-sync.nixosModules.dashboard ];
 
-        package = lib.mkOption {
-          type = lib.types.package;
+      config = lib.mkIf cfg.enable {
+        services.mr-sync-dashboard = {
           # Same source the PATH CLI rides (lib/lars-packages.nix flakePkg) —
           # lars packages are flake outputs, NOT pkgs attributes.
           # TEMPORARY vendorHash shim DROPPED (2026-10-15 fleet wave →
@@ -71,15 +76,14 @@
           # RE-STALE 2026-11-06 lock float: mr-sync@ffae30f spec p4C0Ob7i,
           # got z7ABeNjz (float-proof-20261106-000533.log); both surfaces
           # updated in the same pass.
-          default = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+          package = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
             vendorHash = "sha256-1M7bvzM3uazJKDxk2LguOBGDLRCrdAufayP8QzglhHE=";
           };
-          defaultText = lib.literalExpression "inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default";
-          description = "The mr-sync package (github:LarsArtmann/mr-sync).";
+          user = primaryUser;
+          port = ports.mr-sync;
+          githubTokenFile = config.sops.secrets.mr_sync_github_token.path;
         };
-      };
 
-      config = lib.mkIf cfg.enable {
         sops.secrets.mr_sync_github_token = {
           sopsFile = ../../../platforms/nixos/secrets/mr-sync.yaml;
           # Root-owned 0400: systemd (PID 1) reads EnvironmentFile as root and
@@ -89,26 +93,8 @@
         };
 
         systemd.services.mr-sync-dashboard = {
-          description = "mr-sync repo-portfolio web dashboard";
           inherit onFailure;
-          wantedBy = [ "multi-user.target" ];
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [
-            {
-              Type = "simple";
-              User = primaryUser;
-              Group = "users";
-              ExecStart = "${lib.getExe cfg.package} dashboard --host 127.0.0.1 --port ${toString ports.mr-sync} --no-open";
-              # Env-file format (GITHUB_TOKEN=...); sops rotation restarts us.
-              EnvironmentFile = config.sops.secrets.mr_sync_github_token.path;
-            }
-            (harden {
-              MemoryMax = "512M";
-              # Read ~/.mrconfig + ~/.config/mr-sync/config.json + walk
-              # ~/projects, ~/forks. One-way: the dashboard never writes.
-              ProtectHome = "read-only";
-            })
             (serviceDefaults { })
             ioTier.background
             {
@@ -122,6 +108,11 @@
             }
           ];
         };
+
+        # Upstream's cache-dir prep oneshot is boot-started (multi-user) —
+        # give it the house TimeoutStartSec floor (audit class 7).
+        systemd.services.mr-sync-dashboard-prep.serviceConfig.TimeoutStartSec =
+          lib.mkDefault "5min";
 
         # Service-integration registry entry (modules/nixos/services/
         # integration.nix): ONE declaration fans out to the Caddy vHost
