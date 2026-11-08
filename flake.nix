@@ -1002,7 +1002,7 @@
       # per roll. Keep pinned (not ?ref=master): the 10-14 master-tracking
       # window showed the vendorHash treadmill returns on every upstream
       # float; re-roll this rev per crm pin wave instead.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=0ce5ecca8f88d4a71c845bf324346b6bc9875ded";
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=f32f4c0beab95011e5f3b71f1e07826cb336da99";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

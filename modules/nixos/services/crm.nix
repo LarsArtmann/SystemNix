@@ -1,40 +1,32 @@
 # Runbook: docs/services/crm.md
 # Kith CRM — LarsArtmann's own event-sourced personal CRM (Go +
-# go-cqrs-lite), replacing the Twenty docker-compose stack. Self-contained
-# module: the upstream flake (github:LarsArtmann/crm) exposes packages
-# only, so this file owns the whole service shape, ported from the crm
-# repo's deploy/crm-server.service (the 2026-09-18 pre-module unit):
+# go-cqrs-lite), replacing the Twenty docker-compose stack.
 #
+# DELEGATED 2026-11-08 (own-project upstreaming wave): the product
+# deployment contract (options, the crm-server unit — loopback bind, the
+# ledger/identity sqlite pair, auth flags, native OIDC + the bounded DNS
+# gate, portable hardening) lives upstream —
+# inputs.crm.nixosModules.default. SystemNix layers ONLY site specifics:
+# the vendorHash shim, the primary-user identity, the sops API_TOKEN
+# template, the Pocket ID client-secret bridge, pool backups, alarms, and
+# the catalog/integration fan-out.
+#
+# Standing decisions carried by the layer:
 #   - the LIVE journal stays at ~/.local/share/crm/ledger.db — NO data
 #     migration on adoption (standing decision, crm repo deploy header;
 #     a home-server move changes User=/paths only)
-#   - WebAuthn passkey auth (-auth) rides the cqrs-htmx identity stack.
-#     /healthz stays unauthenticated for Gatus (crm main.go: "always 200
-#     while the process can serve at all ... deliberately OUTSIDE the
-#     auth gate")
 #   - NATIVE OIDC (2026-10-10), PASSKEYS OFF (2026-10-17): Pocket ID is
-#     the ONLY sign-in method (Layer 1 in docs/agents/sso-dns.md — the
-#     oauth2-proxy Layer 2 gate bypasses LAN clients, and crm.<domain> IS
-#     a LAN hostname, so only in-app OIDC covers them). -passkeys=false
-#     leaves the WebAuthn provider unconfigured upstream: the login page
-#     serves the Pocket ID button alone, ceremonies 401, and the passkey
-#     settings page turns off. NO DEGRADE PATH: an unreachable IdP or a
-#     missing client secret fails the boot (no second sign-in method
-#     exists to fall back to) — Gatus catches the 502; fix Pocket ID and
-#     restart. Escape hatches: the -api-token bearer surface stays
-#     outside the session gate (CV sync keeps working), and
+#     the ONLY sign-in method (Layer 1 in docs/agents/sso-dns.md). NO
+#     DEGRADE PATH: an unreachable IdP or a missing client secret fails
+#     the boot — Gatus catches the 502; fix Pocket ID and restart.
+#     Escape hatches: the -api-token bearer surface stays outside the
+#     session gate (CV sync keeps working), and
 #     services.crm-server.auth.enable = false + redeploy lifts the gate.
-#   - the -api-token bearer gate (the Twenty-compatible /rest surface the
-#     CV pipeline sync mirrors into) is INDEPENDENT of the passkey session
-#     gate (api.go: "called OUTSIDE the CRM's session gate") — the CV
-#     syncer keeps working headless with -auth on
 #   - CUTOVER SEMANTICS: while services.twenty.enable is true, Twenty
 #     keeps the crm.<domain> vHost and the dashboard tile; the Kith
 #     serves loopback only (still monitored + backed up). Flipping
-#     twenty.enable = false (the freeze, 2026-10-02 cutover micro-plan
-#     T42) hands the subdomain over ATOMICALLY in the same deploy — the
-#     integration registry keys vHosts by subdomain and two claims would
-#     collide loudly by design (integration.nix).
+#     twenty.enable = false hands the subdomain over ATOMICALLY in the
+#     same deploy (integration.nix keys vHosts by subdomain).
 { inputs, ... }:
 {
   flake.nixosModules.crm =
@@ -48,10 +40,9 @@
     let
       inherit (import ../../../lib/default.nix lib)
         ports
-        serviceTypes
+        serviceOneshotDefaults
         harden
         serviceDefaults
-        serviceOneshotDefaults
         onFailure
         ioTier
         ;
@@ -75,63 +66,13 @@
       # pattern): without it no client secret exists and the flags would
       # point at a client Pocket ID has never heard of.
       pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
-      # TEMPORARY vendorHash shim RE-PINNED (2026-10-14): the master-tracking
-      # flip (flake.nix, owner directive) landed crm on a410024b, whose
-      # kith-crm specified hash gFpBC++z49… no longer reproduces. Got
-      # AtAQS+x0Oj… from a first-hand FOD probe of
-      # services.crm-server.package at the locked rev. Non-follower class,
-      # so upstream pasting the got hash genuinely fixes it; drop then, or
-      # when the lock moves past an upstream-fixed rev. Re-add ONLY via
-      # nix-hash-fix evidence, never by hand.
-      # TEMPORARY vendorHash shim RE-PINNED (2026-10-15 fleet wave): the
-      # overnight lock float landed crm on a0341a0; the shim's AtAQS…
-      # (measured at a410024b) was the SPECIFIED hash in the 02:46 nh
-      # mismatch. Got WOZ2Iwqw… first-hand. Drop per the standing conditions.
-      # VERIFIED UNCHANGED at d3f740b (2026-10-17, passkeys-off flip): the
-      # commit touches no go.mod/go.sum, and a first-hand FOD build of the
-      # full chain (prepared-source → go-modules → kith-crm) went green
-      # with this exact hash — no re-pin needed.
-      # SHIM DROPPED (2026-10-17 wave): upstream crm flake.nix:82 at tip
-      # d3f740b (== lock) bakes the shim's own R9ui8Fb7… value — the
-      # override was bit-neutral. Re-add ONLY via nix-hash-fix evidence,
-      # never by hand.
-      # SHIM RE-ADDED (2026-10-27 strand re-float): kith-crm@a58f2f8b bakes
-      # nQu2PxkJ… but its own go.mod fetches +gBi/2cT… — first-hand FOD
-      # evidence (float-proof-20261027-220636.log, kith-crm go-modules
-      # mismatch). Drop when upstream pastes the got hash (or the lock
-      # moves past an upstream-fixed rev).
-      # RE-STALE (2026-10-28 toplevel keep-going, deploy-fix session):
-      # kith-crm@a8b855071 spec +gBi/2cT…, got nP5lPlmK… (first-hand,
-      # ~/.cache/lockfloat/toplevel-keepgoing-20261028-1655.log). Drop when
-      # upstream bakes nP5lPlmK…; re-add ONLY via nix-hash-fix evidence.
-      # RE-STALE AGAIN (2026-10-28 blanket float): kith-crm@fcb3bb38 spec
-      # nP5lPlmK, got XDRvpM8 (float-proof-20261028-214409.log). Same
-      # non-follower treadmill; drop when upstream bakes XDRvpM8.
-      # RE-STALE (2026-10-29 float): kith-crm@f1d40c9 spec XDRvpM8, got
-      # LpMsryrv (first-hand,
-      # ~/.cache/lockfloat/float-proof-20261029-180630.log).
-      # RE-STALE (2026-11-02 04:12 lock float): kith-crm@900bf55f spec
-      # LpMsryrv, got J9L/KEVb (first-hand,
-      # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
-      # RE-STALE 2026-11-06 lock float: kith-crm@259132b spec J9L/KEVb, got
-      # stHdUXz+ (float-proof-20261106-000533.log) — re-shimmed same night,
-      # then REVERTED: the lock moved on to 2e083af whose vendored cqrs-htmx
-      # templ output is compile-broken (ResolveAttributeValue/JoinURLErrs
-      # undefined, float-proof-20261106-012906.log), so crm pinned back to
-      # last-green 900bf55f where THIS J9L/KEVb value is the proven pair
-      # (registry backup reg-rows-before-20261106-000533).
-      # PIN-WAVE RE-SHIM (2026-11-06): crm input rolled to 5302527 (the
-      # full wave: cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf both in the
-      # committed lock, plus the /search truth wave, group caps, and the
-      # catalog v4.13.0 alignment). History of the interim values: V2sLHGk
-      # was the HALF-committed lock (old go-cqrs-lite — could not compile),
-      # AN6/xU4 the full-pins set BEFORE the catalog bump, k0Inp4g the
-      # CURRENT truth (first-hand float-proof-20261106-233658.log, spec
-      # AN6/xU4 got k0Inp4g — the catalog require bump shifts the vendored
-      # set even though catalog is a replaced local dep, via the module
-      # graph). crm's own flake.nix carries the same value. Drop the shim
-      # when upstream bakes the hash and the lock moves past an
-      # upstream-fixed rev.
+      # vendorHash shim lineage (full history in the git log of this file;
+      # every re-pin was first-hand FOD evidence, never by hand):
+      # k0Inp4g measured at the 2026-11-06 pin wave (5302527, catalog
+      # v4.13.0 alignment — float-proof-20261106-233658.log, spec AN6/xU4
+      # got k0Inp4g). Drop when upstream bakes the hash and the lock
+      # moves past an upstream-fixed rev; re-add ONLY via nix-hash-fix
+      # evidence.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
         vendorHash = "sha256-k0Inp4g7z53orGBBRbf/dDMUdxSJ8X6vRNncMNAMeZk=";
       };
@@ -139,6 +80,7 @@
     in
     {
       imports = [
+        inputs.crm.nixosModules.default
         # Platform-truth catalog entry (ADR-008): unconditional — the
         # Kith CRM platform service exists wherever the module set is
         # imported, even where this host has it disabled. Requires
@@ -153,38 +95,26 @@
         }
       ];
 
-      options.services.crm-server = {
-        enable = lib.mkEnableOption "Kith CRM (crm-server)";
-
-        package = lib.mkOption {
-          type = lib.types.package;
-          default = crmPkg;
-          defaultText = "inputs.crm.packages.<system>.default";
-          description = "crm-server package from the github:LarsArtmann/crm flake";
-        };
-
-        port = serviceTypes.servicePort ports.crm "Host port for the Kith CRM server (loopback)";
-
-        auth = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = ''
-              Session gate (-auth): every CRM route rides the cqrs-htmx
-              identity session gate; /healthz and the bearer -api-token
-              surface stay independent. Sign-in is Pocket ID OIDC only
-              (-passkeys=false, 2026-10-17): passkey ceremonies 401, the
-              passkey settings page is off, registered credentials stay
-              dormant in the identity db. Escape hatch if Pocket ID is
-              unreachable long-term: set to false and redeploy (the
-              bearer API keeps working; the crm repo's
-              docs/ops/PASSKEY-RECOVERY.md documents re-enabling).
-            '';
+      config = lib.mkIf cfg.enable {
+        services.crm-server = {
+          package = crmPkg;
+          # Operator identity: the LIVE journal lives in the owner's home
+          # (adopted in place, 2026-09-18) — a system user cannot reach a
+          # 0700 home.
+          inherit user group;
+          port = ports.crm;
+          inherit stateDir;
+          environmentFiles =
+            [ config.sops.templates."crm-server-env".path ]
+            ++ lib.optionals pocketIdProvisioned [ oidcEnvFile ];
+          auth.enable = true;
+          oidc = lib.optionalAttrs pocketIdProvisioned {
+            issuer = "https://auth.${domain}";
+            clientId = crmOidcClientId;
+            redirectUrl = "https://crm.${domain}/auth/oauth/pocket-id/callback";
           };
         };
-      };
 
-      config = lib.mkIf cfg.enable {
         # The `crm` CLI rides the same package as the server binary; putting
         # the package on the system PATH exposes the owner-facing client
         # (contact-add/note/find) without touching the unit's store-path
@@ -222,95 +152,14 @@
         };
 
         systemd.services = {
+          # Fleet layer over the upstream unit: onFailure alerting and
+          # the SystemNix-owned harden bound (the upstream mkDefaults
+          # hold the same values; this keeps the fleet bound explicit and
+          # registry-auditable).
           crm-server = {
-            description = "Kith CRM (event-sourced personal CRM)";
             inherit onFailure;
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-            wantedBy = [ "multi-user.target" ];
-            after = [ "network-online.target" ];
-            wants = [ "network-online.target" ];
-            environment = {
-              # Go GC ceiling under the unit MemoryMax (cv-server pattern).
-              GOMEMLIMIT = "768MiB";
-            };
             serviceConfig = lib.mkMerge [
-              {
-                User = user;
-                Group = group;
-                EnvironmentFile = [ config.sops.templates."crm-server-env".path ];
-                ExecStart = lib.concatStringsSep " " (
-                  [
-                    "${cfg.package}/bin/crm-server"
-                    "-addr 127.0.0.1:${toString cfg.port}"
-                    "-db ${stateDir}/ledger.db"
-                    "-identity-db ${stateDir}/identity.db"
-                    "-api-token \${API_TOKEN}"
-                  ]
-                  ++ lib.optionals cfg.auth.enable [
-                    "-auth"
-                    # Pocket ID OIDC is the ONLY sign-in method
-                    # (2026-10-17): -passkeys=false leaves the WebAuthn
-                    # provider unconfigured upstream — no -rpid/-origin
-                    # (they only shaped the passkey ceremony).
-                    "-passkeys=false"
-                    # HTTPS posture: Secure on session+CSRF cookies (the
-                    # vHost serves TLS; loopback HTTP is not used).
-                    "-secure true"
-                  ]
-                  ++ lib.optionals pocketIdProvisioned [
-                    # Native OIDC — the only sign-in method since
-                    # -passkeys=false. The client secret rides
-                    # CRM_OIDC_CLIENT_SECRET from the crm-oidc-env bridge
-                    # (environment, never argv).
-                    "-oidc-issuer https://auth.${domain}"
-                    "-oidc-client-id ${crmOidcClientId}"
-                    "-oidc-redirect-url https://crm.${domain}/auth/oauth/pocket-id/callback"
-                  ]
-                );
-                # Strict + exactly one writable carve-out: the journal dir.
-                # Everything else on the filesystem is read-only to the
-                # process (ported from deploy/crm-server.service).
-              }
-              (lib.mkIf pocketIdProvisioned {
-                # EXTENDS the sops env file with the OIDC bridge's secret
-                # file (cv-server mkForce pattern). A MISSING file (the
-                # bridge removed it: no secret provisioned) is only a
-                # systemd warning HERE — but with -passkeys=false the
-                # empty CRM_OIDC_CLIENT_SECRET leaves crm-server's -oidc-*
-                # family partial and the server REFUSES to boot (no
-                # fallback sign-in method). Loud by design; fix the
-                # provisioner.
-                EnvironmentFile = lib.mkForce [
-                  config.sops.templates."crm-server-env".path
-                  oidcEnvFile
-                ];
-                # Boot/deploy-race gate (2026-10-12): OIDC discovery runs once
-                # at startup; a start before auth.<domain> is RESOLVABLE
-                # failed discovery — pre-2026-10-17 that silently degraded
-                # crm.<domain> to passkey-only for days; since -passkeys=false
-                # it fails the BOOT, so the gate matters more. Both observed
-                # failure modes were `lookup … no such host` (boot ordering
-                # AND the deploy's own dnsblockd restart window), so the gate
-                # waits on local DNS — NOT a TCP probe: :1411 (Pocket ID
-                # loopback) is not the served surface (Caddy :443 is) and a
-                # :1411 probe burned its full 120s while discovery succeeded
-                # (first attempt, fixed same day). Bounded, fail-open
-                # (cv-server's wait idiom).
-                ExecStartPre = [
-                  "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until ${pkgs.getent}/bin/getent hosts auth.${domain} >/dev/null 2>&1; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"crm-server: auth.${domain} not resolvable within 120s — starting anyway (sign-in needs Pocket ID; restart once DNS is up)\" >&2; exit 0; fi; sleep 1; done'"
-                ];
-                # The wait window lives under the default 90s start budget
-                # (systemd.md: ExecStartPre-heavy units need an explicit
-                # TimeoutStartSec or switches report false start failures).
-                TimeoutStartSec = "3min";
-              })
-              (harden {
-                ProtectSystem = "strict";
-                ProtectHome = "read-only";
-                ReadWritePaths = [ stateDir ];
-                MemoryMax = "1G";
-              })
+              (harden { MemoryMax = lib.mkForce "1G"; })
               (serviceDefaults { })
             ];
           };
