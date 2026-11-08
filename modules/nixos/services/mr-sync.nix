@@ -110,9 +110,13 @@
         };
 
         # Upstream's cache-dir prep oneshot is boot-started (multi-user) —
-        # give it the house TimeoutStartSec floor (audit class 7).
-        systemd.services.mr-sync-dashboard-prep.serviceConfig.TimeoutStartSec =
-          lib.mkDefault "5min";
+        # give it the house TimeoutStartSec floor (audit class 7) and an io
+        # tier (io-tier-coverage-audit: mkdir/chown only, BE/6 background).
+        systemd.services.mr-sync-dashboard-prep.serviceConfig =
+          lib.mkMerge [
+            { TimeoutStartSec = lib.mkDefault "5min"; }
+            ioTier.background
+          ];
 
         # Service-integration registry entry (modules/nixos/services/
         # integration.nix): ONE declaration fans out to the Caddy vHost

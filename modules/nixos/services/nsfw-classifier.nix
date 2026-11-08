@@ -2,6 +2,24 @@
 # nsfw-classifier — native Nix service for the Go/ONNX NSFW image
 # classifier (flake input nsfw-classifier).
 #
+# DELEGATED to the upstream module (inputs.nsfw-classifier.nixosModules.default,
+# repo nix/nixos-module.nix — extracted 2026-10-18 FROM this module for
+# exactly this delegation): options, unit definition, hardening, package
+# selection (ROCm/CPU), state/cache directories all live upstream. This
+# file layers ONLY the SystemNix-specific concerns, per the
+# DiscordSync/Monitor365 pattern (docs/agents/integration-registry.md):
+#   - port from the central registry, lars/user + live-checkout pinning
+#     (protectHome = false, modelsDir under ~/projects)
+#   - post-crash calm-gate ordering (freeze #40-#48 recovery-boot storm)
+#   - ~/projects mount gating (Samsung subvol shadow-mount class)
+#   - onFailure alert routing + ioTier (BFQ)
+#   - TimeoutStartSec moved to serviceConfig with the upstream unitConfig
+#     placement neutralized (class-9 audit + the 2026-11-05 switch-journal
+#     "Unknown key 'TimeoutStartSec' in section [Unit]" warning)
+#   - catalog + integration registry entries, gatus-coverage exemption
+#   - the nightly `nsfw immich` triage units (ADR-061: deployment-only
+#     wiring — deliberately NOT upstreamed)
+#
 # Purpose: the browser extension (auto-loaded into helium via
 # --load-extension in platforms/common/packages/base.nix) pairs with its
 # backend with ZERO user engagement: with default settings it probes
@@ -33,11 +51,11 @@
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
-        onFailure
         serviceDefaults
         serviceOneshotDefaults
         ioTier
         ports
+        onFailure
         ;
 
       cfg = config.services.nsfw-classifier;
@@ -47,8 +65,6 @@
       # the nsfw-classifier-go-rocm package (added 2026-10-15): an old lock
       # silently keeps the CPU build, a bumped lock picks up GPU inference.
       flakePkgs = inputs.nsfw-classifier.packages.${pkgs.stdenv.hostPlatform.system};
-
-      pkg = cfg.package;
 
       # Post-crash calm gate deps (options-guarded: single-module VM tests
       # importing only nsfw-classifier stay self-contained; evo-x2 carries
@@ -60,196 +76,17 @@
         (options ? services.post-crash-calm-gate) && config.services.post-crash-calm-gate.enable
       ) [ "post-crash-calm-gate.service" ];
 
-      # FULL posture: --all loads EVERY NSFW-detection model exported in
-      # modelsDir (17 of 18 registry entries — jiechau is product-moderation
-      # and excluded upstream). Registry ORDER is preserved
-      # (cli.AvailableModelsOnDisk iterates registry.NSFWDetectionModels()),
-      # so keys[0] stays falconsai: the extension's fast=true quick-scan
-      # still gets a single-model verdict from it; non-fast/stream requests
-      # run the whole ensemble vote. Explicit model lists remain available
-      # by setting models to a non-null list (a lean deterministic posture).
-      # The aux evidence stack (nudenet/skinseg/face) is disk-gated and
-      # independent of this flag.
-      execStart = lib.concatStringsSep " " (
-        [
-          "${pkg}/bin/nsfw-server"
-          "--host 0.0.0.0"
-          "--port ${toString cfg.port}"
-        ]
-        ++ lib.optionals (cfg.models != null) [
-          "--models ${lib.concatStringsSep "," cfg.models}"
-        ]
-        ++ lib.optionals (cfg.models == null) [ "--all" ]
-        ++ [
-          "--models-dir ${cfg.modelsDir}"
-          "--pair-token auto"
-        ]
-        ++
-          lib.optionals (cfg.stateRoot != null)
-            # ADR-0016 (upstream docs/adr/0016): durable stores belong in the
-            # STATE root — /var/cache's contract is "deletable to reclaim
-            # space", which is the wrong home for irreplaceable feedback
-            # (golden human labels), the DNS-feed evidence journal, and
-            # unrepeatable capture history. verdicts.db stays in cache
-            # (recomputable by design), as do feedback.jsonl (rebuilt from the
-            # journal when missing) and the pair token (auto re-pair). null =
-            # upstream cache-dir defaults (pre-migration rollback = set null).
-            [
-              "--feedback-db ${cfg.stateRoot}/feedback.db"
-              "--domain-db ${cfg.stateRoot}/domains.db"
-              "--history-db ${cfg.stateRoot}/history.db"
-              "--history-dir ${cfg.stateRoot}/history"
-            ]
-      );
+      # ~/projects mount gate, shared by the server unit and the immich
+      # scan (2026-10-28 projects-subvol plan D6): the models checkout
+      # lives under ~/projects — fail loud when the Samsung subvol mount is
+      # absent (never serve from the stale @ shadow). Conditional on the
+      # mount being declared.
+      projectsMountGate =
+        lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
+          [ "/home/lars/projects" ];
     in
     {
-      options.services.nsfw-classifier = {
-        enable = lib.mkEnableOption ''
-          nsfw-classifier — Go/ONNX NSFW image server on nsfw.home.lan
-          (browser-extension backend, ensemble mode, pairing-token gated)
-        '';
-
-        port = lib.mkOption {
-          type = lib.types.port;
-          default = ports.nsfw;
-          description = "HTTP port; the extension's discovery candidate list hardcodes nsfw.home.lan:<port>.";
-        };
-
-        models = lib.mkOption {
-          type = lib.types.nullOr (lib.types.listOf lib.types.str);
-          default = null;
-          description = ''
-            Model keys to load. null (default) passes --all: EVERY
-            NSFW-detection model exported under models/<key>/model.onnx
-            loads, in registry order (first entry serves fast=true
-            quick-scan requests — falconsai today). A non-null list pins a
-            lean deterministic posture instead. jiechau (product
-            moderation) is never auto-loaded.
-          '';
-        };
-
-        # NOT lib.mkPackageOption: that helper resolves its default as an
-        # attrpath inside `pkgs`, but this package comes from the
-        # nsfw-classifier flake input, not nixpkgs.
-        #
-        # x86_64 prefers the ROCm-wrapped build: this host class is AMD
-        # (Strix Halo), and the CPU-wrapped package's ONNX Runtime (the
-        # Microsoft release) cannot enable MIGraphX — every model silently
-        # falls back to CPU inference. That ran unnoticed while the box was
-        # idle until 2026-10-15, when sibling-session load pushed CPU
-        # fast-mode inference to 5-15s and the browser extension's 10s
-        # upload timeout failed every classify (journal: "auto-detected
-        # provider unavailable, falling back to CPU" per model, every
-        # restart since at least Oct 7). The `?` guard keeps an old lock
-        # (pre-rocm-package) evaluating on the CPU build. Verify after
-        # deploy: /metrics "provider":"rocm" and provider_cpu_fallbacks 0.
-        # vendorHash: NO consumer shim. The 2026-10-28 float briefly needed
-        # one for the floated rev 1e95693 (spec aP3tjRj8, got tRYzmtvJ), but
-        # that rev does not COMPILE upstream (half-wired F0.3 telemetry —
-        # see the rev pin comment in flake.nix), so the input is pinned back
-        # to 58d398dc whose baked hash is green. Re-add ONLY via nix-hash-fix
-        # evidence if a future float re-stales this FOD.
-        package = lib.mkOption {
-          type = lib.types.package;
-          default =
-            if pkgs.stdenv.hostPlatform.isx86_64 && flakePkgs ? nsfw-classifier-go-rocm then
-              flakePkgs.nsfw-classifier-go-rocm
-            else
-              flakePkgs.nsfw-classifier-go;
-          defaultText = lib.literalExpression "inputs.nsfw-classifier.packages.\${pkgs.stdenv.hostPlatform.system}.nsfw-classifier-go-rocm";
-          description = "Package providing the nsfw-server binary (defaults to the flake input's ROCm build on x86_64, CPU build otherwise).";
-        };
-
-        user = lib.mkOption {
-          type = lib.types.str;
-          default = "lars";
-          description = ''
-            User the unit runs as. Must be able to traverse modelsDir (the
-            default checkout lives under a 0700 home, which rules out
-            DynamicUser).
-          '';
-        };
-
-        modelsDir = lib.mkOption {
-          type = lib.types.str;
-          default = "/home/lars/projects/nsfw-classifier/models";
-          description = ''
-            Directory holding the exported ONNX models. Multi-GB and
-            gitignored, so it is deliberately kept OUT of the Nix store and
-            read from the live checkout instead.
-          '';
-        };
-
-        stateRoot = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = "/var/lib/nsfw-classifier/state";
-          description = ''
-            State root for the DURABLE domain stores (feedback, domains,
-            history) per upstream ADR-0016: placement follows value class,
-            and these are the artifacts whose loss is NOT cheap recovery.
-            Rendered as StateDirectory + explicit --feedback-db/--domain-db/
-            --history-db/--history-dir flags. null restores the upstream
-            cache-dir defaults (migration rollback). verdicts.db, the
-            feedback.jsonl mirror, and the pair token ALWAYS stay in the
-            cache dir (recomputable/regenerable by design).
-          '';
-        };
-
-        watchdogSec = lib.mkOption {
-          type = lib.types.nullOr lib.types.int;
-          default = null;
-          description = ''
-            WatchdogSec budget: restart the unit when the binary stops
-            re-arming the watchdog (hung boot, wedged cgo inference — the
-            2026-10-18 postmortem class). The binary speaks sd_notify
-            (READY=1 at serve start, STOPPING=1 at drain, WATCHDOG=1 at
-            WATCHDOG_USEC/2 while serving; upstream
-            internal/server/sdnotify.go, 2026-10-25). null (default) keeps
-            the unit Type=simple with no watchdog; any value flips the unit
-            to Type=notify (systemd only delivers NOTIFY_SOCKET to notify
-            units). Budget generously: cold start loads every model and
-            MIGraphX compiles per session (measured minutes, boot budgets
-            in the runbook) — 300 is the recommended floor.
-          '';
-        };
-
-        immichScan = {
-          enable = lib.mkEnableOption ''
-            the nightly `nsfw immich` triage — classify NEW Immich assets and
-            write the verdicts back as nsfw:* tags (the media-atlas lane
-            join reads those tags nightly at 04:00; ADR-061: the classifier
-            repo stays change-free, this is deployment-only wiring).
-          '';
-
-          calendar = lib.mkOption {
-            type = lib.types.str;
-            default = "*-*-* 01:00";
-            description = "OnCalendar for the scan (before the media-atlas 02:00 poll → 04:00 lane join, so fresh verdicts land in the same night's lanes).";
-          };
-
-          url = lib.mkOption {
-            type = lib.types.str;
-            default = "http://127.0.0.1:2283";
-            description = "Immich API base URL the scan triages.";
-          };
-
-          apiKeyFile = lib.mkOption {
-            type = lib.types.str;
-            description = ''
-              Immich API key file for the scan — must carry asset read
-              (previews) AND tag write (the verdicts). NOT the hub's
-              read-only key; mint a dedicated key (Immich shows it once at
-              creation) and install it 0400 under the state root.
-            '';
-          };
-
-          extraArgs = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-            description = "Extra flags for `nsfw immich` (e.g. \"--album\" \"NSFW review\" or visibility filters).";
-          };
-        };
-      };
+      imports = [ inputs.nsfw-classifier.nixosModules.default ];
 
       config = lib.mkMerge [
         # Platform-truth catalog entry (ADR-008): unconditional — nsfw exists
@@ -278,100 +115,70 @@
         }
 
         (lib.mkIf cfg.enable {
-          # The unified CLI on PATH: `nsfw` (classify/benchmark/evaluate/...)
-          # resolves to the SAME package the unit runs, so interactive
-          # subcommands share its ROCm/CPU ONNX Runtime wrapping. bin also
-          # carries the nsfw-server/nsfw-classify/... compat shims.
-          environment.systemPackages = [ cfg.package ];
+          services.nsfw-classifier = {
+            # SystemNix port catalog default (extension discovery contract:
+            # nsfw.home.lan:<port>; upstream default 8080 is the fallback
+            # candidate, not the primary).
+            port = lib.mkDefault ports.nsfw;
+            # Live-checkout deployment shape (upstream defaults target a
+            # dedicated user + /var/lib models — NOT this deployment):
+            # models sit under a 0700 home, so the unit runs as the
+            # checkout-owning user with home protection off, and the
+            # dashboard's group is the home group, not the (uncreated
+            # upstream-default) nsfw-classifier group.
+            user = lib.mkDefault "lars";
+            group = lib.mkDefault "users";
+            modelsDir = lib.mkDefault "/home/lars/projects/nsfw-classifier/models";
+            protectHome = false;
+            # Old-lock tolerance the upstream default lacks: `?` on the
+            # ROCm package keeps a pre-2026-10-15 lock evaluating on the
+            # CPU build. vendorHash: NO consumer shim. The 2026-10-28 float
+            # briefly needed one for the floated rev 1e95693 (spec aP3tjRj8,
+            # got tRYzmtvJ), but that rev does not COMPILE upstream
+            # (half-wired F0.3 telemetry — see the rev pin comment in
+            # flake.nix), so the input is pinned back to 58d398dc whose
+            # baked hash is green. Re-add ONLY via nix-hash-fix evidence if
+            # a future float re-stales this FOD.
+            package = lib.mkDefault (
+              if pkgs.stdenv.hostPlatform.isx86_64 && flakePkgs ? nsfw-classifier-go-rocm then
+                flakePkgs.nsfw-classifier-go-rocm
+              else
+                flakePkgs.nsfw-classifier-go
+            );
+          };
 
           systemd.services.nsfw-classifier = {
-            description = "nsfw-classifier — NSFW image server (browser-extension backend, full ensemble)";
-            wantedBy = [ "multi-user.target" ];
             # Behind the post-crash calm gate (2026-11-05): the ONNX ensemble
             # cold load is a measured boot-storm reader; on a refused boot the
             # extension degrades to no-verdict (graceful), and the next calm
             # window admits it.
             after = calmGateDeps;
             requires = calmGateDeps;
-            # NO network-online.target: loopback-only binder behind Caddy, all
-            # 17 ONNX models local on disk (network-online sweep 2026-10-17).
-            startLimitBurst = 5;
-            startLimitIntervalSec = 300;
-            # Cold start loads 17 ONNX models on CPU — the global 3-min
-            # DefaultTimeoutStartSec is the queued watch-class trap; give
-            # the full posture an explicit budget. TimeoutStartSec is a
-            # [Service]-section key: unitConfig placement lands it in
-            # [Unit] where this systemd silently ignores it (switch
-            # journal 2026-11-05 07:36:48 "Unknown key 'TimeoutStartSec'
-            # in section [Unit], ignoring") and the cold start rode the
-            # 3-min default instead.
-            # ~/projects reader-writer (2026-10-28 projects-subvol plan D6):
-            # the models checkout lives under ~/projects — fail loud when the
-            # Samsung subvol mount is absent (never serve from the stale @
-            # shadow). Conditional on the mount being declared.
-            unitConfig.RequiresMountsFor =
-              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
-                [ "/home/lars/projects" ];
+            # ~/projects reader (mount-gate, see projectsMountGate).
+            unitConfig.RequiresMountsFor = projectsMountGate;
             # Unit failures page via the notify-failure template (Discord) —
             # registry convention: silent failures are unacceptable.
             inherit onFailure;
-
-            # Binds the port BEFORE loading models (fast-fail on port-in-use);
-            # /readyz gates readiness during model load + warmup.
             serviceConfig = lib.mkMerge [
-              {
-                TimeoutStartSec = "10min";
-                # sd_notify is only delivered to notify units, so the
-                # watchdog option flips the type; without it (default) the
-                # shape is unchanged: simple + /readyz readiness.
-                Type = if cfg.watchdogSec != null then "notify" else "simple";
-                WatchdogSec = lib.mkIf (cfg.watchdogSec != null) cfg.watchdogSec;
-                ExecStart = execStart;
-                # The models checkout lives under a 0700 home — only the
-                # configured user can traverse it (DynamicUser cannot; see
-                # header comment). Defaults to lars.
-                User = cfg.user;
-                # Pairing token, verdict cache, and feedback JSONL persist via
-                # os.UserCacheDir → XDG_CACHE_HOME → /var/cache/nsfw-classifier
-                # (systemd creates it; owner lars). Stable across restarts so
-                # the extension stays paired. LIST form — signoz-coverage
-                # walks serviceConfig.Environment as a list.
-                CacheDirectory = "nsfw-classifier";
-                Environment = [ "XDG_CACHE_HOME=/var/cache" ];
-                # Durable stores live in the STATE root (ADR-0016): feedback
-                # is irreplaceable golden data, domains/history are
-                # unrepeatable observations — the cache dir's deletability
-                # contract must never apply to them. 0700: history blobs are
-                # sensitive browsing-derived images.
-                StateDirectory = lib.mkIf (cfg.stateRoot != null) "nsfw-classifier/state";
-                StateDirectoryMode = lib.mkIf (cfg.stateRoot != null) "0700";
-              }
               (serviceDefaults { })
-              (harden {
-                # Full ensemble: 17 NSFW models (~6.3G fp32 weights) + ONNX
-                # arenas under parallel inference, plus the aux evidence
-                # stack. Was 2G (single model), then 4G (trio).
-                MemoryMax = "16G";
-                # ProtectHome must stay OFF: the multi-GB gitignored models
-                # checkout is the unit's only non-store input and sits under
-                # /home/lars. Everything else stays locked down (ProtectSystem
-                # "strict" + private tmp + no new privs from harden defaults).
-                ProtectHome = false;
-                ProtectSystem = "strict";
-                # LAN network service: it needs IPv4/IPv6 listeners, the
-                # kernel netlink family Go's net package uses for interface
-                # enumeration, and AF_UNIX for nss/systemd-resolved. Same
-                # baseline as dnsblockd, plus AF_UNIX. service-defaults omits
-                # this on purpose (family needs are service-specific).
-                RestrictAddressFamilies = [
-                  "AF_INET"
-                  "AF_INET6"
-                  "AF_NETLINK"
-                  "AF_UNIX"
-                ];
-              })
               ioTier.background
+              {
+                # Cold start loads 17 ONNX models on CPU — the global 3-min
+                # DefaultTimeoutStartSec is the queued watch-class trap; give
+                # the full posture an explicit budget. [Service]-section key:
+                # the upstream module still declares it in unitConfig ([Unit])
+                # where systemd silently ignores it (switch journal
+                # 2026-11-05 07:36:48 "Unknown key 'TimeoutStartSec' in
+                # section [Unit], ignoring") — neutralized below so the audit
+                # (class 9) stays green and the warning never ships.
+                TimeoutStartSec = "10min";
+              }
             ];
+            # Neutralize the upstream unitConfig placement (wrong section,
+            # systemd ignores it with a journal warning; shape-audit class 9
+            # flags TimeoutStartSec inside unitConfig). null renders as
+            # absent. Drop when upstream moves it to serviceConfig.
+            unitConfig.TimeoutStartSec = lib.mkForce null;
           };
 
           # Service-integration registry entry: the nsfw vHost (Layer 1
@@ -439,7 +246,8 @@
           # repo stays change-free): incremental via the provenance marker
           # (--only-new), resumable checkpoint under the cache dir,
           # fail-open per asset. Calendar 01:00 → poll 02:00 → umap 03:00
-          # → lane join 04:00 on evo-x2.
+          # → lane join 04:00 on evo-x2. Deployment-only wiring — NOT part
+          # of the upstream module.
           systemd.services.nsfw-immich-scan = lib.mkIf (cfg.enable && cfg.immichScan.enable) {
             description = "nsfw-classifier — nightly Immich triage (classify new assets, write nsfw:* tags)";
             inherit onFailure;
@@ -448,9 +256,7 @@
             # The models checkout lives under ~/projects — same
             # mount-gate as the server unit (fail loud on the stale
             # shadow-subvol class).
-            unitConfig.RequiresMountsFor =
-              lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
-                [ "/home/lars/projects" ];
+            unitConfig.RequiresMountsFor = projectsMountGate;
             startLimitBurst = 3;
             startLimitIntervalSec = 3600;
             # First full pass over a five-figure library is HOURS of
@@ -507,5 +313,46 @@
           };
         })
       ];
+
+      options.services.nsfw-classifier.immichScan = {
+        # ADR-061: the nightly Immich triage is DEPLOYMENT wiring (media-atlas
+        # lane pipeline), deliberately not part of the upstream module — the
+        # classifier repo stays change-free. Options live here because the
+        # scan units below are SystemNix-owned.
+        enable = lib.mkEnableOption ''
+          the nightly `nsfw immich` triage — classify NEW Immich assets and
+          write the verdicts back as nsfw:* tags (the media-atlas lane
+          join reads those tags nightly at 04:00; ADR-061: the classifier
+          repo stays change-free, this is deployment-only wiring)
+        '';
+
+        calendar = lib.mkOption {
+          type = lib.types.str;
+          default = "*-*-* 01:00";
+          description = "OnCalendar for the scan (before the media-atlas 02:00 poll → 04:00 lane join, so fresh verdicts land in the same night's lanes).";
+        };
+
+        url = lib.mkOption {
+          type = lib.types.str;
+          default = "http://127.0.0.1:2283";
+          description = "Immich API base URL the scan triages.";
+        };
+
+        apiKeyFile = lib.mkOption {
+          type = lib.types.str;
+          description = ''
+            Immich API key file for the scan — must carry asset read
+            (previews) AND tag write (the verdicts). NOT the hub's
+            read-only key; mint a dedicated key (Immich shows it once at
+            creation) and install it 0400 under the state root.
+          '';
+        };
+
+        extraArgs = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = "Extra flags for `nsfw immich` (e.g. \"--album\" \"NSFW review\" or visibility filters).";
+        };
+      };
     };
 }
