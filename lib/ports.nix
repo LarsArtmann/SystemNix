@@ -161,6 +161,11 @@
         llama-embeddings = 8848;
         llama-reranker = 8849;
 
+        # llama-rag soak-test server instance (scripts/llama-rag-soak.sh
+        # default; registered by the script-port-audit sweep 2026-11-08 —
+        # a real listener target needs an owner of record).
+        llama-soak = 18848;
+
         # llama.cpp chat server (ROCm GPU, always-on) — the interactive agent
         # brain for InboxClean's dashboard chat (services.llama-chat). OpenAI-
         # compatible /v1 with native tool calls; distinct from FastFlowLM's

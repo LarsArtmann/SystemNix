@@ -157,14 +157,14 @@ fi
 echo ""
 echo "--- Gatus Verification ---"
 
-if curl -sf --max-time 10 --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
-  log_pass "Gatus API reachable on localhost:9110"
+if curl -sf --max-time 10 --compressed http://localhost:9410/api/v1/endpoints/status 2>/dev/null | grep -q "status"; then
+  log_pass "Gatus API reachable on localhost:9410"
 else
-  log_fail "Gatus not reachable on localhost:9110"
+  log_fail "Gatus not reachable on localhost:9410"
 fi
 
 # Check TLS cert expiry monitoring
-if curl -sf --max-time 10 --compressed http://localhost:9110/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
+if curl -sf --max-time 10 --compressed http://localhost:9410/api/v1/endpoints/status 2>/dev/null | grep -qi "tls\|cert\|expiry"; then
   log_pass "TLS certificate checks present in Gatus"
 else
   log_warn "TLS certificate expiry check not found in Gatus"

@@ -341,6 +341,11 @@ in
   # indistinguishable from host:port ("resend.com:587" — letters before the
   # colon are legitimate hostnames) and DO extract when NNN is in the 2-65535
   # range; per-audit allowPorts is the sanctioned escape.
+  # Zero-padded groups ("10:00" timestamps → "00") are DROPPED before
+  # toInt: a leading zero is never a port literal in this repo's style,
+  # and lib.toInt("00") dies on the octal/decimal ambiguity (2026-11-08,
+  # first hit when the scanner met scripts/ prose — same fix for both
+  # consuming audits).
   extractPortLiterals =
     text:
     let
@@ -349,8 +354,9 @@ in
       digitGroups = builtins.filter (g: builtins.isString g && builtins.match "[0-9]+" g != null) (
         lib.flatten (map (x: if builtins.isList x then x else [ ]) parts)
       );
+      portCandidates = builtins.filter (g: builtins.match "0[0-9]+" g == null) digitGroups;
     in
-    lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt digitGroups));
+    lib.unique (builtins.filter (p: p >= 2 && p <= 65535) (map lib.toInt portCandidates));
 
   mkSecretCheck =
     pkgs:
