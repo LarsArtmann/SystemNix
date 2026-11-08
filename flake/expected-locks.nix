@@ -69,7 +69,7 @@
   golangci-lint-auto-configure = "28340f6352b629bdf2225c88f1c7f64308279f67";
   helium = "ef91010a4fcc551b5cb24f52608dc8d45c527d9d";
   herdr = "ee5bfb5041bb3e4a49d591c72308aae3c81ecdde";
-  hermes-agent = "0ea6ea941aee31b20fffeb6dfa0d0f29f4370e2e";
+  hermes-agent = "21ae0e1238fdf466fa52a85a6ebf75d6899e49da";
   home-manager = "2c0c1f01521469cf0271180c453c79782d53c2f6";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
   homebrew-cask = "1bdfa28034e0320cce8aebb61c366c3a7f789c1b";
