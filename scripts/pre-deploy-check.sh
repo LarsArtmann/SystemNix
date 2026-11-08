@@ -480,7 +480,21 @@ pap_section16() {
   echo "16. PapDashboard tile icons resolve in the pinned pack (coverage + existence)"
   PAP_EVAL_ERR=$(mktemp)
   PAP_ENV=""
-  PAP_ENV=$(nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment 2>"$PAP_EVAL_ERR") || true
+  # BOTH env surfaces: the environment OPTION attrset (the pre-delegation
+  # home of PAP_ICONS_DIR) AND serviceConfig.Environment (the K=V list where
+  # the upstream module's port/dbPath/iconsDir options land since the
+  # 2026-11-08 F3 delegation — unit render proven identical, only the
+  # option surface moved; scanner follows the contract, not the detail).
+  PAP_ENV=$(
+    {
+      nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment 2>"$PAP_EVAL_ERR" || true
+      nix eval --json .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.serviceConfig.Environment 2>/dev/null || echo '[]'
+    } | jq -s '
+        (.[0] // {}) as $env
+        | (.[1] // []) as $listenv
+        | $env * ($listenv | map(if test("=") then capture("^(?<k>[^=]+)=(?<v>.*)") | {(.k): .v} else empty end) | add // {})
+      '
+  )
   if [ -n "$PAP_ENV" ]; then
     PAP_ICONS_DIR_VAL=$(printf '%s' "$PAP_ENV" | jq -r '."PAP_ICONS_DIR" // empty')
     if [ -z "$PAP_ICONS_DIR_VAL" ]; then
@@ -492,7 +506,7 @@ pap_section16() {
       # anchors the OLD path). Realize it here instead of blocking — it is a
       # cheap runCommand (~40 file copies, seconds) — and fail loudly only if
       # the realize itself breaks (hash mismatch, broken iconPackSrc).
-      if nix build --no-link --print-out-paths .#nixosConfigurations.evo-x2.config.systemd.services.papdashboard.environment.PAP_ICONS_DIR >/dev/null 2>&1 && [ -d "$PAP_ICONS_DIR_VAL" ]; then
+      if nix build --no-link "$PAP_ICONS_DIR_VAL" >/dev/null 2>&1 && [ -d "$PAP_ICONS_DIR_VAL" ]; then
         warn "PAP_ICONS_DIR was derived but never realized — built the subset on the fly ($PAP_ICONS_DIR_VAL); recurring class, see 2026-11-05 status"
       else
         fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory (and the realize attempt failed — run the nix build by hand for the real error)"
