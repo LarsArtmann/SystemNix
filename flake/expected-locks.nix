@@ -106,7 +106,7 @@
   pyproject-build-systems = "bdbc5f8dd2ad6136bb2ccecb14f6ec343965b194";
   pyproject-nix = "d43f0e74444c1f266c640fc49ce6ce6fb69d33c3";
   qmd = "facd35e01359e59d938bc9418e93fb9318addee3";
-  quotaboard = "b1601a9aa39ff6aa54959a78fd6c694ba576720c";
+  quotaboard = "6d0de273ae9d65f7ed4134ae9d2ab76731c8db3e";
   rust-overlay = "d3fe74269f2a6652437e21e78eb7e83be81f6982";
   samber-linter = "6978204b1a910896054c824e5886178d427def8d";
   signoz-collector-src = "6355ea5bea0759f73cc027e03a8362aee2341a20";

@@ -10,10 +10,12 @@
 set -euo pipefail
 
 DOMAIN="${SYSTEMNIX_DOMAIN:-home.lan}"
-# vHost TLS probe budget: 20s matches the Gatus client timeout of the slowest
-# protected backend (mr-sync cold-start du-walks ~/projects + ~/forks,
-# docs/services/mr-sync.md) so a slow-but-alive backend is not misread as
-# unreachable.
+# vHost TLS probe budget: 20s is the FLOOR — it matches the Gatus client
+# timeout of the slowest protected backend (mr-sync cold-start du-walks
+# ~/projects + ~/forks, docs/services/mr-sync.md) so a slow-but-alive
+# backend is not misread as unreachable. The integration manifest RAISES
+# it to max(client.timeout) across all checks when wider (plan T6
+# 2026-11-08: single-sourced from eval truth, not a hand-synced global).
 VHOST_PROBE_TIMEOUT=20
 PASS=0
 FAIL=0
@@ -379,6 +381,18 @@ if [ "$MANIFEST_OK" = true ]; then
   PORT_LLM_EMBED="$(m_port llama-embeddings)" || true
   PORT_LLM_RERANK="$(m_port llama-reranker)" || true
   PORT_DNSBLOCK_STATS="$(m_port dns-blocker-stats)" || true
+
+  # vHost probe budget from the same truth Gatus uses (plan T6): the max
+  # client.timeout across all checks, never BELOW the 20s floor above.
+  _manifest_timeout_budget="$(jq -r '[.. | objects | select(has("timeout")) | .timeout | sub("s$";"") | tonumber] | if length == 0 then empty else max end' <"$MANIFEST_PATH" 2>/dev/null || true)"
+  case "$_manifest_timeout_budget" in
+  '' | *[!0-9]*) ;;
+  *)
+    if [ "$_manifest_timeout_budget" -gt "$VHOST_PROBE_TIMEOUT" ]; then
+      VHOST_PROBE_TIMEOUT="$_manifest_timeout_budget"
+    fi
+    ;;
+  esac
 fi
 
 # --- Infrastructure ---
