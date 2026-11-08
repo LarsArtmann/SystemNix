@@ -39,6 +39,13 @@ let
   # (an empty mkIf definition when the option is absent) errors.
   integrationModule =
     (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration;
+  # The nsfw module's gatus-coverage exemption (allowPorts = [ cfg.port ])
+  # is UNCONDITIONAL since 8b5f6a423 (the health-dashboard sweep bakes the
+  # port literal on disabled hosts too), so this minimal eval must declare
+  # the option or every definition errors — same reasoning as
+  # integrationModule above.
+  gatusCoverageAuditModule =
+    (import ../modules/nixos/services/gatus-coverage-audit.nix).flake.nixosModules.gatus-coverage-audit;
 
   evalConfig =
     extra:
@@ -47,6 +54,7 @@ let
       modules = [
         { networking.domain = "home.lan"; }
         integrationModule
+        gatusCoverageAuditModule
         module
       ]
       ++ extra;
@@ -83,10 +91,12 @@ let
     }
     {
       # Cold-start budget: 17 model loads on CPU can exceed the global
-      # 3-min DefaultTimeoutStartSec (TimeoutStartSec is a [Unit]-section
-      # key — rendered via unitConfig).
+      # 3-min DefaultTimeoutStartSec (TimeoutStartSec is a [Service]-section
+      # key — unitConfig placement lands it in [Unit] where systemd ignores
+      # it; moved to serviceConfig 2026-11-05 after the switch journal's
+      # "Unknown key 'TimeoutStartSec' in section [Unit]" notice).
       name = "cold-start-timeout-budget";
-      pass = (enabledConfig.systemd.services.nsfw-classifier.unitConfig.TimeoutStartSec or "") == "10min";
+      pass = (enabledConfig.systemd.services.nsfw-classifier.serviceConfig.TimeoutStartSec or "") == "10min";
     }
     {
       name = "pairing-token-auto";
