@@ -78,7 +78,7 @@
   journal = "4a63e7fd3ddd3aefcc92bfbcc959ce5918a63303";
   library-policy = "7fc09832355ee5f43dc7784b4a5510d57ccb0abd";
   md-go-validator = "13a0e7898d982a5f27a77ea4712ec8c2339e1c96";
-  media-atlas = "5c6b3d4627154f399626fc17efc4d390529e6b9f";
+  media-atlas = "3b8c7f9eb7693e597319213781b93bdd9321984f";
   monitor365 = "164e159a4b6c02a933ca911094e6c5e58dfdd86a";
   mr-sync = "5abebe93e6ca5abb0d878e3d5f2357f2f60e6fde";
   niri = "9ee3e13b60643448228353097880521658b2fe0e";
@@ -96,7 +96,7 @@
   offline-banner = "d9f6d6f239b60907561088cf71e92570c447d962";
   otel-tui = "d43d3f9edbe2c4c61380a10030df4ad02ffc3206";
   overview = "67b2fac96799f269348f51eca78903df6c14dcc8";
-  papdashboard = "e00e8758ddc07761d56f61954123971cbdb41e74";
+  papdashboard = "287f6951cf7c3995ca9cf92b12d4919fe095fbbb";
   paperless-gpt-src = "49c425596b846ae98d630f4087e8223c188032db";
   pim-sync = "1b70ed4bc523d60fc7e72f6284311e42b3c950c1";
   project-dependency-graph = "8335670e8e46e103cefce3e94f57fcc878720a3f";

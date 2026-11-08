@@ -24,6 +24,14 @@
 # papdashboard_insights_webhook_url), so raw alerts and LLM insights land
 # in two separate Discord channels.
 #
+# DELEGATED 2026-11-08 (SUPERB phase-2 F3): the PAP_* environment contract
+# and the unit skeleton (DynamicUser, state dir, journal-read supplementary
+# group, start-limit window) live upstream —
+# inputs.papdashboard.nixosModules.default. SystemNix layers ONLY site
+# specifics: the vendorHash shim, the services.json tiles renderer +
+# dashboard-icons pack gate, the sops env template + its secret check, the
+# drift collector, the integration fan-out, and the fleet harden layer.
+#
 # Auth model (upstream re-pinned 2026-10-08, flake bump f12d5604 -> rev
 # 81201c88; replaces the 2026-09-18 login-overlay model): the BROWSER surface
 # (UI pages, /api/services, /api/system, fragments, SSE stream) is public AT
@@ -59,7 +67,6 @@
         harden
         serviceDefaults
         onFailure
-        serviceTypes
         mkSecretCheck
         ioTier
         ports
@@ -336,62 +343,14 @@
       nodeExporterPort = config.services.prometheus.exporters.node.port or ports.signoz-node-exporter;
     in
     {
+      # The PAP_* environment contract + unit skeleton live upstream —
+      # importing it here makes inputs.papdashboard the single source of
+      # that truth (enable, package, port, environment, dbPath, llm.*,
+      # insight.*, notifySourceApps, servicesConfig, iconsDir,
+      # environmentFiles, otelEndpoint, extraEnvironment).
+      imports = [ inputs.papdashboard.nixosModules.default ];
+
       options.services.papdashboard = {
-        enable = lib.mkEnableOption "PapDashboard alert hub with NPU insight enricher";
-
-        package = lib.mkOption {
-          type = lib.types.package;
-          default = papdashboardPkg;
-          description = "PapDashboard server package.";
-        };
-
-        port = serviceTypes.servicePort ports.papdashboard "HTTP port for PapDashboard";
-
-        environment = lib.mkOption {
-          type = lib.types.enum [
-            "production"
-            "development"
-          ];
-          default = "production";
-          description = "PAP_ENV for the server (development enables extra debug routes).";
-        };
-
-        llmBaseUrl = lib.mkOption {
-          type = lib.types.str;
-          default = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
-          description = "OpenAI-compatible LLM API root for insight generation (FastFlowLM NPU).";
-        };
-
-        llmModel = lib.mkOption {
-          type = lib.types.str;
-          default = "qwen3.6-moe:35b-a3b";
-          description = "Model name for insight generation.";
-        };
-
-        journalUnits = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [
-            "gatus.service"
-            "caddy.service"
-            "dnsblockd.service"
-          ];
-          description = "systemd units whose recent journal entries are collected as LLM evidence.";
-        };
-
-        evidenceURLs = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [
-            "node-metrics=http://localhost:${toString ports.signoz-node-exporter}/metrics"
-          ];
-          description = ''Extra evidence endpoints as "label=url" entries (comma-joined into PAP_INSIGHT_EVIDENCE_URLS).'';
-        };
-
-        notifySourceApps = lib.mkOption {
-          type = lib.types.str;
-          default = "insight";
-          description = "Comma-separated sourceApp allowlist for OUTBOUND notifications (insights only by default).";
-        };
-
         # Services dashboard surface (the former homepage-dashboard, merged
         # 2026-09): rendered to /etc/papdashboard/services.json and consumed
         # via PAP_SERVICES_CONFIG. Tile status is probed SERVER-SIDE by
@@ -811,6 +770,36 @@
       };
 
       config = lib.mkIf cfg.enable {
+        # Site values for the upstream-owned options (the environment
+        # contract this deployment runs with; llm.* point at the FastFlowLM
+        # NPU sidecar, insight evidence walks the three alert-path units +
+        # node_exporter, secrets ride the sops-rendered env template).
+        services.papdashboard = {
+          package = papdashboardPkg;
+          port = ports.papdashboard;
+          llm = {
+            baseUrl = "http://127.0.0.1:${toString ports.fastflowlm}/v1";
+            model = "qwen3.6-moe:35b-a3b";
+          };
+          insight = {
+            journalUnits = [
+              "gatus.service"
+              "caddy.service"
+              "dnsblockd.service"
+            ];
+            evidenceURLs = [
+              "node-metrics=http://localhost:${toString ports.signoz-node-exporter}/metrics"
+            ];
+          };
+          servicesConfig = "/etc/papdashboard/services.json";
+          iconsDir = dashboardIcons;
+          environmentFiles = [ config.sops.templates."papdashboard-env".path ];
+          # OTel traces → local SigNoz OTLP/HTTP collector (Go otlptracehttp,
+          # bare host:port). Noop until the binary links the otel package.
+          otelEndpoint = "localhost:${toString ports.signoz-otlp-http}";
+          extraEnvironment.GOMEMLIMIT = "384MiB";
+        };
+
         # Eval-time gate on the tile-icon FORM (existence is checked by
         # building dashboardIcons): PapDashboard validates icons at startup
         # and refuses to start on anything that is neither an http(s) URL nor
@@ -829,58 +818,23 @@
           }
         ];
 
+        # Fleet layer on the UPSTREAM-owned unit: the secret-presence gate,
+        # the services.json restart trigger, and the fleet harden/io tier.
+        # (DynamicUser, StateDirectory, the systemd-journal supplementary
+        # group, and the start-limit window come from upstream.)
         systemd.services.papdashboard = {
-          description = "PapDashboard — alert hub with NPU insight enricher";
-          wantedBy = [ "multi-user.target" ];
-          # NO network-online.target: loopback binder + local icon pack;
-          # Discord paging is runtime outbound, never a start-path dep
-          # (network-online sweep 2026-10-17).
           inherit onFailure;
-
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
           restartTriggers = [ servicesConfig ];
-          environment = {
-            PAP_ENV = cfg.environment;
-            # OTel traces → local SigNoz OTLP/HTTP collector (Go otlptracehttp,
-            # bare host:port). Noop until the binary links the otel package.
-            OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
-            PAP_NOTIFY_SOURCE_APPS = cfg.notifySourceApps;
-            PAP_INSIGHT_ENABLED = "true";
-            PAP_INSIGHT_LLM_BASE_URL = cfg.llmBaseUrl;
-            PAP_INSIGHT_LLM_MODEL = cfg.llmModel;
-            # Evidence collection (insight enricher)
-            PAP_INSIGHT_JOURNALCTL_PATH = "/run/current-system/sw/bin/journalctl";
-            PAP_INSIGHT_JOURNAL_UNITS = lib.concatStringsSep "," cfg.journalUnits;
-            PAP_INSIGHT_EVIDENCE_URLS = lib.concatStringsSep "," cfg.evidenceURLs;
-            # Services dashboard (tiles/status/bookmarks/vitals). The file is
-            # read at startup; restartTriggers below restarts the unit when
-            # the rendered config changes.
-            PAP_SERVICES_CONFIG = "/etc/papdashboard/services.json";
-            # Service tile logos: the pack subset the rendered config asks
-            # for, served by the app at /icons/<file>. Referencing the path
-            # here is what forces the missing-icon gate to build on deploy.
-            PAP_ICONS_DIR = "${dashboardIcons}";
-          };
-
           serviceConfig = lib.mkMerge [
-            {
-              ExecStart = lib.getExe' cfg.package "server";
-              ExecStartPre = [ "${checkEnv}/bin/check-papdashboard-env" ];
-              EnvironmentFile = [ config.sops.templates."papdashboard-env".path ];
-              # DynamicUser: no persistent uid; StateDirectory owns /var/lib/papdashboard.
-              # systemd-journal supplementary group grants read access to the
-              # journal files the insight enricher collects as evidence.
-              DynamicUser = true;
-              StateDirectory = "papdashboard";
-              SupplementaryGroups = [ "systemd-journal" ];
-              Environment = [
-                "PAP_PORT=${toString cfg.port}"
-                "PAP_DB_PATH=/var/lib/papdashboard/papdashboard.db"
-                "GOMEMLIMIT=384MiB"
-              ];
-            }
-            (harden { MemoryMax = "512M"; })
+            { ExecStartPre = [ "${checkEnv}/bin/check-papdashboard-env" ]; }
+            # ProtectSystem/ProtectHome passed INTO harden so they match the
+            # upstream unit's own mkDefault strict/read-only — equal values
+            # merge clean (strict vs the old full is the upstream contract).
+            (harden {
+              MemoryMax = "512M";
+              ProtectSystem = "strict";
+              ProtectHome = "read-only";
+            })
             (serviceDefaults { })
             ioTier.background
           ];

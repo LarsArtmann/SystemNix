@@ -7758,11 +7758,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793816484,
-        "narHash": "sha256-l4pEmqzJa3hwzIN/l5U1Gz9TbW0uAoPzeyTOTMv6IUY=",
+        "lastModified": 1794175240,
+        "narHash": "sha256-+lmv6Iu6w+SpQjdmw7yV6hhmWb9GEqaFRc6g4iS3Gnk=",
         "ref": "refs/heads/master",
-        "rev": "5c6b3d4627154f399626fc17efc4d390529e6b9f",
-        "revCount": 364,
+        "rev": "3b8c7f9eb7693e597319213781b93bdd9321984f",
+        "revCount": 370,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/media-atlas"
       },
@@ -8540,11 +8540,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794078054,
-        "narHash": "sha256-d8+86XHRBobfm0HOBnGJYi1ZFVm8Z3DeHNU34v0g5K8=",
+        "lastModified": 1794154178,
+        "narHash": "sha256-YKpapaTihyZ6WKZCOOyyhn0lDppJ3eaqtbbcX202TDY=",
         "ref": "refs/heads/master",
-        "rev": "e00e8758ddc07761d56f61954123971cbdb41e74",
-        "revCount": 1526,
+        "rev": "287f6951cf7c3995ca9cf92b12d4919fe095fbbb",
+        "revCount": 1527,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/PapDashboard"
       },
