@@ -31,7 +31,7 @@ let
     inherit version src;
     sourceRoot = "source/web-app";
 
-    npmDepsHash = "sha256-bnGMNxAEzYxMLzmO61Krs+gIVszEAOeIGHg4EJAomac=";
+    npmDepsHash = "sha256-6ZkO5pVQfJKYGpgUEKS/AXy/bfuot8cOJ2o+Z087HWM=";
 
     # cpu-features (transitive dev-dep: testcontainers -> ssh2) is a Nan
     # addon that no longer compiles on Node 24 and is never imported at
