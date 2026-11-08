@@ -396,6 +396,14 @@ in
           Type = "oneshot";
           ExecStart =
             let
+              # Intentional TREE access (nix-native plan T8.7, 2026-11-08):
+              # the unit's WorkingDirectory below points into the LIVE
+              # SystemNix checkout — the script commits blocklist-hash
+              # updates back to the repo it reads config from. Do NOT
+              # "hermeticize" by copying the tree into the closure; this
+              # is the documented counter-example to the writeShellApplication
+              # migration wave (the script BYTES are store-pinned via
+              # readFile, the WORKING DIRECTORY is deliberately live).
               dnsUpdate = pkgs.writeShellApplication {
                 name = "dns-update";
                 runtimeInputs = [

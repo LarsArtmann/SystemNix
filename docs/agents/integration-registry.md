@@ -158,3 +158,104 @@ Distilled from nsfw-classifier 2026-10-18 + mr-sync/nsfw-classifier 2026-11-08. 
 - **DynamicUser eval-time assert** — `dynamic-user-audit.nix` cross-references DynamicUser services with sops secrets at eval time. Catches ANY DynamicUser service, not just hardcoded names.
 - **NixOS VM tests** — `tests/default.nix` uses `pkgs.testers.runNixOSTest`. `mock-sops.nix` + `test-helpers.nix` provide common mocks.
 - **In VM tests, extra mounts MUST be declared as `virtualisation.fileSystems`, not `fileSystems`** — qemu-vm.nix replaces the WHOLE `fileSystems` option via `mkVMOverride` (priority 900, applied whenever `virtualisation.fileSystems != {}`, which is always) so a plain `fileSystems."/mnt/x"` entry silently VANISHES from the guest fstab (no eval error — the mount unit just 'could not be found'). Guest-side bootstrap units that must run before a mount: `wantedBy/before = local-fs.target` + explicit `before = [ "mnt-x.mount" ]` (a mount waiting on a by-label device whose label only exists post-mkfs is a chicken-and-egg — format BEFORE local-fs, `udevadm settle` after). **test-cv FIXED 2026-09-02**: converted to `virtualisation.fileSystems` + a REAL btrfs pool disk (pool-fmt unit, `findmnt -o FSTYPE` assertion) — before that, its `fileSystems."/mnt/pool"` never mounted and every cv-backup assertion ran against a root-fs shadow directory (green but weaker than believed).
+
+## Service Matrix (generated — do not hand-edit)
+
+The table below is GENERATED from eval truth on every `nix flake check`
+(`checks.registry-matrix-drift`, the features-drift doctrine); hand edits
+drift red. Regenerate after any registry change:
+`nix build .#registry-matrix --print-out-paths && cat <path>`.
+
+<!-- BEGIN GENERATED SERVICE MATRIX — byte-exact contract owned by
+     checks.registry-matrix-drift; regenerate: nix build .#registry-matrix --print-out-paths -->
+| Service | Subdomain | Port | Layer | Unit | Checks | Backup |
+| ------- | --------- | ---- | ------ | ---- | ------ | ------ |
+| ai-meter | — | 8107 | none | ai-meter | 2 | — |
+| alerts | alerts | — | — | — | — | — |
+| architecture-catalog | catalog | — | protected | architecture-catalog-sync | 3 | — |
+| attic | cache | 8200 | plain | attic | 2 | — |
+| auth | auth | 1411 | — | — | — | — |
+| backup-coordination | — | — | none | backup-coordination | 1 | — |
+| bank-sync | banksync | 8097 | protected | bank-sync | 4 | — |
+| browser-history | history | 8087 | plain | browser-history | 3 | /mnt/pool/backups/browser-history |
+| browser-history-agent | — | — | none | browser-history-agent | — | — |
+| btrfs-balance-watch | — | — | none | btrfs-balance-watch | 1 | — |
+| buildcache | — | — | none | buildcache | 4 | — |
+| caddy | — | — | none | caddy | — | — |
+| crm | crm | 8091 | — | — | — | — |
+| crm-server | crm | 8091 | plain | crm-server | 1 | /mnt/pool/backups/crm |
+| crowdsec | — | 8082 | none | crowdsec | 1 | — |
+| crush-daily | daily | 8081 | protected | crush-daily | 1 | /mnt/pool/backups/crush-daily |
+| crush-events | — | — | none | crush-events-collector | 1 | — |
+| cv | cv | 8098 | plain | cv | 10 | /mnt/pool/backups/cv |
+| discordsync | discordsync | 8085 | protected | discordsync | 4 | /mnt/pool/backups/discordsync |
+| dmarc-monitor | — | — | — | — | — | — |
+| dnsblock | dnsblock | — | — | — | — | — |
+| dnsblockd | dnsblockd | — | none | dnsblockd | 4 | /mnt/pool/backups/dnsblockd |
+| emeet-pixyd | emeet-pixyd | 8090 | protected | emeet-pixyd | 2 | — |
+| file-and-image-renamer | renamer | 8086 | protected | file-and-image-renamer | 2 | — |
+| forgejo | forgejo | 3000 | plain | forgejo | 5 | /mnt/pool/backups/forgejo |
+| gatus | status | 9410 | plain | gatus | — | — |
+| geometrikks | geo | 8102 | plain | geometrikks | 1 | /mnt/pool/backups/geometrikks |
+| gotenberg | — | — | none | gotenberg | — | — |
+| health-dashboard | health | 8103 | protected | health-dashboard | 2 | — |
+| hermes | — | — | none | hermes | — | — |
+| immich | immich | 2283 | protected | immich | — | /mnt/pool/services/immich/database-backup |
+| inboxclean | inbox | 8099 | protected | inboxclean | 6 | /mnt/pool/backups/inboxclean |
+| indexer-web | index | 8105 | protected | indexer-web | 2 | — |
+| journal-serve | journal | 8484 | protected | journal-serve | 1 | — |
+| lan-nic-watchdog | — | — | none | lan-nic-watchdog | — | — |
+| llama-embeddings | — | — | none | llama-embeddings | — | — |
+| llama-rag | — | — | none | llama-rag | 2 | — |
+| mail-relay | — | — | none | postfix | 3 | — |
+| mail-server | — | — | — | — | — | — |
+| media-atlas | map | 8493 | plain | media-atlas | 4 | /mnt/pool/backups/media-atlas |
+| miniflux | rss | 8101 | plain | miniflux | 2 | /mnt/pool/backups/miniflux |
+| monitor365 | — | — | none | monitor365 | 2 | — |
+| monitor365-server | monitor | 3001 | none | monitor365-server | 5 | /var/lib/monitor365-server |
+| mr-sync-dashboard | mr-sync | 7331 | protected | mr-sync-dashboard | 1 | — |
+| netbird | — | 51820 | none | netbird | 1 | — |
+| nix-daemon | — | — | none | nix-daemon | — | — |
+| nsfw | nsfw | 8104 | — | — | — | — |
+| offsite-borg | — | — | none | borgbackup-job-hetzner | 1 | /var/lib/borg-offsite |
+| opencloud | cloud | 9500 | plain | opencloud | 2 | — |
+| openseo | seo | 3002 | none | openseo | 1 | — |
+| overview | overview | 8083 | protected | overview | 1 | — |
+| papdashboard | dash | 8088 | protected | papdashboard | 2 | — |
+| paperless | paperless | 2892 | none | paperless | 1 | /mnt/pool/services/paperless/export |
+| paperless-consumer | — | — | none | paperless-consumer | — | — |
+| paperless-db | — | — | none | paperless-db | — | /mnt/pool/backups/paperless |
+| paperless-gpt | — | 8106 | — | — | — | — |
+| paperless-scheduler | — | — | none | paperless-scheduler | — | — |
+| paperless-task-queue | — | — | none | paperless-task-queue | — | — |
+| paperless-triage | — | — | none | paperless-triage | 2 | /var/lib/paperless-triage |
+| paperless-web | — | — | none | paperless-web | — | — |
+| pbx | — | — | — | — | — | — |
+| pbx-backup-pull | — | — | none | pbx-backup-pull | — | /mnt/pool/backups/pbx |
+| pbx-lens | — | — | — | — | — | — |
+| pim-sync | — | — | — | — | — | — |
+| pocket-id | auth | — | none | pocket-id | 2 | /mnt/pool/backups/pocket-id |
+| pool-recovery | — | — | none | pool-recovery | 1 | — |
+| pool-smart-metrics | — | — | none | pool-smart-metrics | 3 | — |
+| projects-management-automation | — | — | none | projects-management-automation | 2 | — |
+| projects-subvol | — | — | none | projects-subvol | 1 | — |
+| restic-app-dumps | — | — | none | restic-app-dumps | — | /mnt/pool/backups/restic-app-dumps |
+| rust-cache | — | — | none | rust-cache | 2 | — |
+| searxng | search | 8889 | protected | searxng | 1 | — |
+| seo | seo | 3002 | — | — | — | — |
+| signoz | signoz | 8080 | protected | signoz | 3 | /mnt/pool/backups/clickhouse |
+| storage-collector-freshness | — | — | none | storage-collector-freshness | 1 | — |
+| storage-history | — | — | none | storage-history | — | /mnt/pool/backups/restic-storage-history |
+| system-health | — | — | none | system-health | 42 | — |
+| systemd-graph | graph | 8847 | plain | systemd-graph | 1 | — |
+| systemd-timer-monitor | timers | — | none | systemd-timer-monitor | 1 | — |
+| taskchampion-sync-server | tasks | 10222 | none | taskchampion-sync-server | — | — |
+| tasks | tasks | 10222 | — | — | — | — |
+| tika | — | — | none | tika | — | — |
+| tq-agent-pool | — | — | none | tq-agent-pool | 1 | — |
+| tq-bootstrap | — | — | none | tq-bootstrap | — | — |
+| tq-serve | tq | 8100 | protected | tq-serve | 1 | — |
+| visionreviewd | — | — | none | visionreviewd | — | — |
+| webphone | — | — | — | — | — | — |
+| wifi-failover | — | — | none | wifi-failover | — | — |
+<!-- END GENERATED SERVICE MATRIX -->

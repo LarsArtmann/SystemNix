@@ -1588,6 +1588,7 @@
         ./flake/parts/apps.nix
         ./flake/parts/checks/lint-static.nix
         ./flake/parts/checks/integration-manifest.nix
+        ./flake/parts/checks/registry-matrix.nix
         ./flake/parts/checks/fixtures-forgejo.nix
         ./flake/parts/checks/fixtures-storage.nix
         ./flake/parts/checks/fixtures-migrations.nix
