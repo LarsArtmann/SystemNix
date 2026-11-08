@@ -8,16 +8,18 @@
 # (GroupBySource); a dark remote renders a "name/reachable" FAIL row instead
 # of silently freezing at its last state.
 #
-#   - Binds 127.0.0.1:${ports.health-dashboard} (HEALTH_HUB_ADDR). The vHost
-#     is Layer 2 protected — oauth2-proxy gates external access via Pocket
-#     ID; go-health documents expose internal check names and error strings,
+#   - Binds 127.0.0.1:${ports.health-dashboard}. The vHost is Layer 2
+#     protected — oauth2-proxy gates external access via Pocket ID;
+#     go-health documents expose internal check names and error strings,
 #     so the raw port must not reach the LAN (mr-sync posture).
-#   - Stateless: no StateDirectory, no sops, no backup entry. The hub is
-#     merge-on-read — every dashboard tick and probe fetches the remotes
-#     fresh; its only memory is the in-process trend ring (opt-in).
-#   - Remotes are deployment configuration (services.health-dashboard.
-#     remotes): validated name=url pairs passed through HEALTH_HUB_REMOTES;
-#     the binary fails fast at startup when an entry is malformed.
+#   - Stateless: no StateDirectory, no sops, no backup entry.
+#
+# DELEGATED 2026-11-08 (own-project upstreaming wave): the hub unit +
+# options (enable, package, remotes, addr, trend) live upstream —
+# inputs.go-health-dashboard.nixosModules.default. SystemNix layers ONLY
+# site specifics: the port-registry addr, the federation drift sweep (its
+# candidate list is derived from THIS host's port registry), onFailure,
+# the fleet harden bound, and the integration/catalog entries.
 { inputs, ... }:
 {
   flake.nixosModules.health-dashboard =
@@ -93,11 +95,12 @@
       };
     in
     {
-      # Platform-truth catalog entry (ADR-008): unconditional — the health
-      # hub exists platform-wide even where this host has it disabled.
-      # Requires nixosModules.catalog (auto-discovered on evo-x2, imported
-      # on rpi3); a missing import fails loudly at eval, which is the point.
       imports = [
+        inputs.go-health-dashboard.nixosModules.default
+        # Platform-truth catalog entry (ADR-008): unconditional — the health
+        # hub exists platform-wide even where this host has it disabled.
+        # Requires nixosModules.catalog (auto-discovered on evo-x2, imported
+        # on rpi3); a missing import fails loudly at eval, which is the point.
         {
           services.catalog.health-dashboard = {
             subdomain = "health";
@@ -108,103 +111,18 @@
         }
       ];
 
-      options.services.health-dashboard = {
-        enable = lib.mkEnableOption "federated go-health hub dashboard";
-
-        package = lib.mkOption {
-          type = lib.types.package;
-          # vendorHash shim DROPPED (2026-10-10 wave — drop-protocol,
-          # docs/agents/nix-flakes.md): upstream 60ecc25 (pushed this wave)
-          # ALREADY bakes the got hash 6CaEDN7… (first-hand keep-going
-          # enumeration, /tmp/toplevel-keepgoing.log; the w28MXo+Z… shim
-          # pinned for the superseded rev 17af7f1 only re-created the drift
-          # treadmill). Re-add ONLY via nix-hash-fix evidence, never by
-          # hand.
-          # TEMPORARY vendorHash shim RE-ADDED (2026-10-15 fleet wave,
-          # first-hand fakeHash FOD probe at locked rev 93d13fd; class
-          # comment: lib/lars-packages.nix flakePkgShim): the overnight
-          # lock float re-staled upstream's baked hash. RE-STALE 2026-10-19:
-          # keep-going toplevel run (/tmp/toplevel-build-20261019.log)
-          # mismatched this shim's own IRv9RBX… vs got QLlBr6cL….
-          # RE-STALE 2026-10-25 (lock-float proof): upstream at the locked
-          # rev 390bf2d STILL bakes the stale QLlBr6cL… — probed through our
-          # lock, specified QLlBr6cL… got 0Ko7CAVV… (first-hand goModules FOD
-          # probe 2026-10-25). Same treadmill as before; drop when upstream
-          # bakes 0Ko7CAVV… (paste-upstream → push → re-lock queued in
-          # docs/todo/upstream.md). Re-add ONLY via nix-hash-fix evidence.
-          # RE-STALE 2026-10-25 17:24 (owner's blanket update, third re-stale):
-          # health-hub@67b0df3 specified 0Ko7CAVV… (the shim below), got
-          # UOJk45I… (first-hand keep-going,
-          # ~/.cache/lockfloat/float-proof-20261025-172436.log). Drop when
-          # upstream bakes UOJk45I…; re-add ONLY via nix-hash-fix evidence.
-          # FOURTH RE-STALE 2026-10-26 lock float: health-hub@44d8a24 spec
-          # UOJk45I6, got gytpnPbS (float-proof-20261026-161006.log). Drop
-          # when upstream bakes gytpnPbS.
-          # SHIM DROPPED 2026-10-28 (drop-protocol): health-hub@75d6874
-          # ALREADY bakes the got hash — the upstream flake at the locked
-          # rev carries
-          # `vendorHash = "sha256-AkS9Q+CwxaNhZyJ79VPl0yNUP7obca7eauVNVAicMGU=";`
-          # (flake.nix:111) == the value our 2026-10-28 proof mismatched
-          # into (~/.cache/lockfloat/float-proof-20261028-214409.log), so
-          # the override only re-created the drift treadmill.
-          # Re-add ONLY via nix-hash-fix evidence, never by hand.
-          default = inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default;
-          defaultText = lib.literalExpression "inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.default";
-          description = "The health-hub package (github:LarsArtmann/go-health-dashboard).";
-        };
-
-        remotes = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [ ];
-          description = ''
-            Federated upstreams as name=url pairs, fetched fresh on every
-            read. Names namespace checks (name/check) and must be unique,
-            non-empty, and free of "/". URLs are absolute http(s) endpoints
-            answering GET with a go-health JSON document (a bare probe's
-            readiness handler, or any go-health-dashboard route — the hub
-            always sends Accept: application/json).
-          '';
-          example = [ "cv=http://127.0.0.1:8098/health" ];
-        };
-
-        trend = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = ''
-            Enable the trend sparkline + timeline card (in-memory ring,
-            ~1h of samples at the 2s push cadence). Purely additive — no
-            persistence, no wire-contract change.
-          '';
-        };
-      };
-
       config = lib.mkIf cfg.enable {
-        assertions = [
-          {
-            assertion = cfg.remotes != [ ];
-            message = "services.health-dashboard.remotes must list at least one name=url pair — a federation of nothing has no surface to serve (upstream ErrNoRemotes fails the unit at startup anyway; this fails the eval instead).";
-          }
-        ];
+        services.health-dashboard = {
+          package = lib.mkDefault inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.health-hub;
+          # Loopback from the port registry — never a literal (the raw
+          # port must not reach the LAN; the protected vHost fronts it).
+          addr = "127.0.0.1:${toString ports.health-dashboard}";
+        };
 
         systemd.services.health-dashboard = {
-          description = "Federated go-health hub (health.home.lan)";
-          wantedBy = [ "multi-user.target" ];
           inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [
-            {
-              Type = "simple";
-              # Stateless network daemon: no home, no state dir, no secrets.
-              DynamicUser = true;
-              ExecStart = "${lib.getExe cfg.package}";
-              Environment = [
-                "HEALTH_HUB_ADDR=127.0.0.1:${toString ports.health-dashboard}"
-                "HEALTH_HUB_REMOTES=${lib.concatStringsSep "," cfg.remotes}"
-              ]
-              ++ lib.optional cfg.trend "HEALTH_HUB_TREND=1";
-            }
-            (harden { MemoryMax = "256M"; })
+            (harden { MemoryMax = lib.mkForce "256M"; })
             (serviceDefaults { })
           ];
         };

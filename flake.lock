@@ -1050,11 +1050,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794005278,
-        "narHash": "sha256-FtM6CipKfE3kidAX2G2lUsDnADD9K9wipZPoUWfkE1Y=",
+        "lastModified": 1794138613,
+        "narHash": "sha256-zdN2nTFPVF5BaFlSCsFaKWCtSTzg5QZDr9i1paG82S8=",
         "ref": "refs/heads/master",
-        "rev": "f070ffa8dac79b878f347f095f0b0e922c6c905d",
-        "revCount": 391,
+        "rev": "09ff6c1fd9268c662e1069a7cb4ac05668fe60d8",
+        "revCount": 396,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       },
@@ -5153,11 +5153,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793952425,
-        "narHash": "sha256-HgdFH3IT2XikcqjLiUiTfaypPZaoKss3auG/wKDKKbQ=",
+        "lastModified": 1794118934,
+        "narHash": "sha256-a884UerfqGmVw3XZfQTcsauA/7hmHqUnrJqTice+6vA=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "83be4b1b46f209a8e313a47e3a0c0e44b3a26eb2",
+        "rev": "d15fcb62b57fff15a75a997ea382be5a937eebfb",
         "type": "github"
       },
       "original": {
@@ -8711,11 +8711,11 @@
         "project-discovery-sdk": "project-discovery-sdk_10"
       },
       "locked": {
-        "lastModified": 1793932866,
-        "narHash": "sha256-HfYs3sI3U08lUdHRxfplD7fm9LozAorz8j43GCqvLWM=",
+        "lastModified": 1794118735,
+        "narHash": "sha256-KWioudf7UFQy3eTEzAm1igDROAUWh37RFHh91/QU1Os=",
         "ref": "refs/heads/master",
-        "rev": "ab80974e1e8d722e8516e1ab1c6f5c8d01d0ce5d",
-        "revCount": 158,
+        "rev": "c8dd7508c4daaf56f9f31de1a537871210bba0c1",
+        "revCount": 160,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },

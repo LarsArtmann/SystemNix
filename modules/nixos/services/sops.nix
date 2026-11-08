@@ -170,7 +170,7 @@ in
                 {
                   owner = primaryUser;
                   group = "users";
-                  restartUnits = [ "cvagent.service" ];
+                  restartUnits = [ "cvagent-scan.service" ];  # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
                 }
                 {
                   cvagent_ai_api_key = "glm_api_key";
@@ -622,7 +622,7 @@ in
               owner = primaryUser;
               group = "users";
               mode = "0400";
-              restartUnits = [ "cvagent.service" ];
+              restartUnits = [ "cvagent-scan.service" ];  # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
               content = lib.generators.toKeyValue { } {
                 OPENAI_API_KEY = config.sops.placeholder.cvagent_ai_api_key;
               };

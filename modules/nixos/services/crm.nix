@@ -456,6 +456,45 @@
               ioTier.background
             ];
           };
+
+          # Alarm pair (docs/ops/ALARMS.md is the unit-shaped source of
+          # truth — keep both sides in sync): by-phone storm watch every
+          # 10 minutes, journal-growth watch nightly. The checks are
+          # read-only, exit 0 clean / 2 ALARM / 1 operational failure;
+          # onFailure relays BOTH alarm and failure (any non-zero rc) to
+          # the host's failure unit, and the journal line distinguishes
+          # them. Scripts run from the working checkout (the blessed path
+          # in ALARMS.md); growth keeps its state file under
+          # ~/.local/state/crm/ (XDG state convention, lars-owned).
+          crm-alarm-byphone = {
+            description = "Kith CRM by-phone storm alarm (>=5 5xx or >=20 >2.5s per 10 min)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = user;
+                Group = group;
+                ExecStart =
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/byphone-health-check.py";
+              }
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+          crm-alarm-journal-growth = {
+            description = "Kith CRM journal-growth alarm (>100k events/day or >250 MB/day)";
+            inherit onFailure;
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = user;
+                Group = group;
+                ExecStart =
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/journal-growth-check.py";
+              }
+              (serviceOneshotDefaults { })
+            ];
+          };
         };
 
         systemd.timers.crm-backup = {
@@ -466,6 +505,28 @@
             # 03:40 — staggered after miniflux (02:45) and cv (03:17),
             # before work hours (the pre-module crm-backup.timer slot).
             OnCalendar = "*-*-* 03:40:00";
+            RandomizedDelaySec = "10min";
+            Persistent = true;
+          };
+        };
+
+        systemd.timers.crm-alarm-byphone = {
+          description = "Kith CRM by-phone storm alarm schedule (every 10 min)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "10min";
+            OnUnitActiveSec = "10min";
+            AccuracySec = "1min";
+            Persistent = true;
+          };
+        };
+
+        systemd.timers.crm-alarm-journal-growth = {
+          description = "Kith CRM journal-growth alarm schedule (nightly)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            # 04:10 — after the backup window, before work hours.
+            OnCalendar = "*-*-* 04:10:00";
             RandomizedDelaySec = "10min";
             Persistent = true;
           };

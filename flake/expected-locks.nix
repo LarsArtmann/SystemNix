@@ -36,7 +36,7 @@
   crush-config = "0631f8e993b4e435da84f84e0f07b8ea7c2d4f25";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
   cv = "da7f3cbcb767885bb14d7b3b4cfe60340ac607b3";
-  cvagent = "f070ffa8dac79b878f347f095f0b0e922c6c905d";
+  cvagent = "09ff6c1fd9268c662e1069a7cb4ac05668fe60d8";
   dankMaterialShell = "b95f61439e7e97d667f610781aca57c849ec2f20";
   discordsync = "ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
@@ -58,7 +58,7 @@
   go-error-family = "7ccca5c62037bab213d548f21a8be333781c0e9c";
   go-filewatcher = "9f44deee398bb9815b56948dcedd286a130e9832";
   go-finding = "57b8e19d5430d1bff65e5caf53fb3bfda9b246ad";
-  go-health-dashboard = "83be4b1b46f209a8e313a47e3a0c0e44b3a26eb2";
+  go-health-dashboard = "d15fcb62b57fff15a75a997ea382be5a937eebfb";
   go-humanize-linter = "9c91385bdabc94d30b0fe974f6f4ebd371c77dcb";
   go-nix-helpers = "2c5d1d75aeacaaf6ddf558fd7d7bd5a4f4f7687a";
   go-output = "ba5033465f9b8e39b876397f01e696fed1a81cd7";
@@ -100,7 +100,7 @@
   paperless-gpt-src = "49c425596b846ae98d630f4087e8223c188032db";
   pim-sync = "1b70ed4bc523d60fc7e72f6284311e42b3c950c1";
   project-dependency-graph = "8335670e8e46e103cefce3e94f57fcc878720a3f";
-  project-discovery-daemon = "ab80974e1e8d722e8516e1ab1c6f5c8d01d0ce5d";
+  project-discovery-daemon = "c8dd7508c4daaf56f9f31de1a537871210bba0c1";
   project-meta = "8b40bd7d250253cddb1d1cf694377dd6ee47f4a2";
   projects-management-automation = "5f9f4661baa5e0368cc748bf432c3059686a7278";
   pyproject-build-systems = "bdbc5f8dd2ad6136bb2ccecb14f6ec343965b194";

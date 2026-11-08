@@ -14,23 +14,23 @@
 # assumption). Overview's boot gate + its discovery watchdog cover the
 # functional path. No direct Gatus check: gatus cannot dial unix sockets,
 # and proxying discovery data through Caddy would expose it.
-_: {
+#
+# DELEGATED 2026-11-08 (own-project upstreaming wave): the deployment
+# contract (options, unit, socket-start contract, portable hardening) lives
+# upstream — inputs.project-discovery-daemon.nixosModules.default. SystemNix
+# layers ONLY site specifics: the vendorHash shim (lock-graph staleness
+# class, see package below), the primary-user default, the projects-subvol
+# mount gate, onFailure alerting, ioTier, and the fleet harden bounds.
+{ inputs, ... }: {
   flake.nixosModules.project-discovery-daemon =
     {
       config,
       lib,
       pkgs,
-      inputs,
       ...
     }:
     let
       cfg = config.services.project-discovery-daemon;
-      inherit (lib)
-        mkEnableOption
-        mkIf
-        mkOption
-        types
-        ;
       inherit (import ../../../lib/default.nix lib)
         harden
         ioTier
@@ -39,11 +39,10 @@ _: {
         ;
     in
     {
-      options.services.project-discovery-daemon = {
-        enable = mkEnableOption "standalone project-discovery daemon (unix socket)";
+      imports = [ inputs.project-discovery-daemon.nixosModules.default ];
 
-        package = mkOption {
-          type = types.package;
+      config = lib.mkIf cfg.enable {
+        services.project-discovery-daemon = {
           # vendorHash shim DROPPED (2026-10-12): the SERVICE surface was
           # the missed second surface of the 2026-10-11 wave8 pdd drop —
           # it kept specifying the 1f9b57c-era Mrn25ftf… while the lock
@@ -72,87 +71,19 @@ _: {
           # upstream's own-lock hash OW+eywme… went stale through our graph
           # (spec OW+eyw, got hxcotRZ, float-proof-20261106-004759.log);
           # lars-packages surface re-shimmed in the same wave — edit BOTH.
-          default =
+          package = lib.mkDefault (
             inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
                 vendorHash = "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
-              };
-          defaultText = lib.literalExpression ''
-            inputs.project-discovery-daemon.packages.''${system}.default
-          '';
-          description = "project-discovery-daemon package.";
+              }
+          );
+          # Discovery runs git inside the search-path repos and reads
+          # ~/.mrconfig: it must be the primary user (dedicated service
+          # users cannot see a 0700 home).
+          user = lib.mkDefault config.users.primaryUser;
         };
 
-        user = mkOption {
-          type = types.str;
-          default = config.users.primaryUser;
-          defaultText = "config.users.primaryUser";
-          description = ''
-            User the daemon runs as. Discovery runs git INSIDE the search-path
-            repos and reads ~/.mrconfig, so it must be a user that can read the
-            primary home — a dedicated service user cannot see a 0700 /home.
-          '';
-        };
-
-        socketPath = mkOption {
-          type = types.str;
-          default = "/run/project-discovery/daemon.sock";
-          description = "Unix socket path the daemon listens on.";
-        };
-
-        socketMode = mkOption {
-          type = types.str;
-          default = "0660";
-          example = "0666";
-          description = ''
-            Socket permission bits, octal string. Widen only as far as the
-            consumer set requires: 0660 plus a shared service group, or 0666
-            for any local user (the parity value used until consumer users are
-            group-managed).
-          '';
-        };
-
-        searchPaths = mkOption {
-          type = types.listOf types.str;
-          default = [ ];
-          example = [ "/home/lars/projects" ];
-          description = ''
-            Directories the daemon discovers projects in. Unset falls back to
-            the SDK default (the user's whole home directory) — always set
-            this explicitly.
-          '';
-        };
-
-        cacheTTL = mkOption {
-          type = types.str;
-          default = "5m";
-          example = "24h";
-          description = ''
-            Server hot-cache TTL (Go duration string). The file watcher and
-            background refresh invalidate entries per-change; the TTL is only
-            the upper bound.
-          '';
-        };
-
-        extraEnvironment = mkOption {
-          type = types.attrsOf types.str;
-          default = { };
-          description = ''
-            Extra environment variables for the daemon (e.g.
-            PROJECT_DISCOVERY_REFRESH_INTERVAL, PROJECT_DISCOVERY_WORKERS,
-            PROJECT_DISCOVERY_FLIGHT_RECORDER).
-          '';
-        };
-      };
-
-      config = mkIf cfg.enable {
         systemd.services.project-discovery-daemon = {
-          description = "Project discovery daemon (unix-socket discovery service)";
-          wantedBy = [ "multi-user.target" ];
-
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-
           # ~/projects walker (2026-10-28 projects-subvol plan D6): discovery
           # roots live under ~/projects — fail loud when the Samsung subvol
           # mount is absent (never index the stale @ shadow). Conditional on
@@ -163,53 +94,29 @@ _: {
 
           inherit onFailure;
 
-          environment = {
-            PROJECT_DISCOVERY_DAEMON_ADDR = cfg.socketPath;
-            PROJECT_DISCOVERY_SEARCH_PATHS = lib.concatStringsSep ":" cfg.searchPaths;
-            PROJECT_DISCOVERY_SOCKET_MODE = cfg.socketMode;
-            PROJECT_DISCOVERY_CACHE_TTL = cfg.cacheTTL;
-          }
-          // cfg.extraEnvironment;
-
-          serviceConfig = {
-            Type = "notify";
-            User = cfg.user;
-            Group = "users";
-            ExecStart = lib.getExe cfg.package;
-            # The daemon pings WATCHDOG=1 at half-interval (sd_notify sender).
-            WatchdogSec = "30s";
-            # Owned by cfg.user; the socket inside carries cfg.socketMode.
-            RuntimeDirectory = "project-discovery";
-            RuntimeDirectoryMode = "0755";
-            # Start contract: "started" means the SOCKET exists, not just the
-            # process. During the 2026-10-07 ghost-socket incident the daemon
-            # ran 26h "active" while unreachable (socket unlinked by another
-            # unit's RuntimeDirectory stop) — overview crash-looped on its
-            # daemon-gate the whole time. Bounded wait covers a notify-before-
-            # bind race; if the socket never appears the unit FAILS and
-            # Restart=always (serviceDefaults) heals it, instead of silently
-            # leaving every consumer gated forever.
-            ExecStartPost = "${pkgs.coreutils}/bin/timeout 30 ${pkgs.bash}/bin/bash -c 'until test -S ${cfg.socketPath}; do sleep 1; done'";
-          }
-          // (harden {
+          serviceConfig = lib.mkMerge [
             # Full discovery of ~260 repos spikes ~7GB (measured while PMA
-            # hosted the daemon; 8G covered peak with headroom).
-            MemoryMax = "8G";
-            # Discovery is CPU-bursty: git, go.mod parsing, file walks.
-            CPUQuota = "400%";
-            # Discovery READS the repos and mrconfig under /home — never writes.
-            ProtectHome = "read-only";
-          })
-          # BE/6 background tier (2026-09-19 IO audit): this daemon is the
-          # top sustained root-NVMe reader (40 GB reads + 17 GB zram writes
-          # attributed via cgroup io.stat over one boot, 10.2 GiB/30 min
-          # spike in the audit window) — discovery latency is invisible to
-          # consumers (5m TTL cache), but its bursts starve the desktop and
-          # stack with builds on the saturated QLC root. BFQ is active on
-          # all disks, so the tier is effective; scheduler-level, immune to
-          # the nvme0/nvme1 name swaps.
-          // ioTier.background
-          // serviceDefaults { };
+            # hosted the daemon; 8G covered peak with headroom). CPU-bursty:
+            # git, go.mod parsing, file walks. Same values the upstream
+            # module mkDefaults — restated at mkForce so the fleet bounds
+            # stay SystemNix-owned (the registry's upstream-plain-beats-
+            # mkDefault trap; proven via rendered-unit parity).
+            (harden {
+              MemoryMax = lib.mkForce "8G";
+              CPUQuota = lib.mkForce "400%";
+              ProtectHome = lib.mkForce "read-only";
+            })
+            # BE/6 background tier (2026-09-19 IO audit): this daemon is the
+            # top sustained root-NVMe reader (40 GB reads + 17 GB zram writes
+            # attributed via cgroup io.stat over one boot, 10.2 GiB/30 min
+            # spike in the audit window) — discovery latency is invisible to
+            # consumers (5m TTL cache), but its bursts starve the desktop and
+            # stack with builds on the saturated QLC root. BFQ is active on
+            # all disks, so the tier is effective; scheduler-level, immune to
+            # the nvme0/nvme1 name swaps.
+            ioTier.background
+            (serviceDefaults { })
+          ];
         };
       };
     };
