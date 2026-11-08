@@ -1271,6 +1271,9 @@ pap_section16
 # scripts/test-zombie-mount-gate.sh → checks.zombie-mount-gate-selftest.
 echo ""
 echo "17. Zombie-mount detector"
+# Verdict producers read inside the sourced zombie-mount-gate.sh (same
+# SC2034 reasoning as the metrics-gate/OB producers above).
+# shellcheck disable=SC2034
 ZM_PASS=pass ZM_FAIL=fail
 zm_scan
 

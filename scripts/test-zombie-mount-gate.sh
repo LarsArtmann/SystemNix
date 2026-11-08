@@ -72,10 +72,12 @@ PATH="$FIX/bin:$PATH"
 export PATH
 # Fixture sysfs: the lib's device-existence checks resolve under $FIX/dev
 # (device nodes live at $FIX/dev/dev/sdX1, mirroring the ZM_DEV_ROOT prefix).
+# shellcheck disable=SC2034
 ZM_DEV_ROOT="$FIX/dev"
 # Fixture VFS: the real-IO probe's ls targets $FIX/root/mnt/… instead of the
 # live mounts (the listed paths exist on the real box — without the remap the
 # probe would answer from the LIVE filesystem, green-washing leg 3/leg 6).
+# shellcheck disable=SC2034
 ZM_ROOT="$FIX/root"
 
 # Fixture-mount helpers: mnt creates the target dir + optional device file;
@@ -96,6 +98,7 @@ src() { # src <path> <row...>
 
 run_leg() { # run_leg — capture the scan's verdicts into FIX/out
   : >"$FIX/out"
+  # shellcheck disable=SC2034
   ZM_PASS="$FIX/bin/vpass" ZM_FAIL="$FIX/bin/vfail"
   cat >"$FIX/bin/vpass" <<EOF
 #!$BASH_BIN
