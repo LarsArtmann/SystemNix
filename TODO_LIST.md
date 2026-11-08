@@ -3359,3 +3359,5 @@
 - [ ] [ready] **indexer-web hot-tier state-dir candidate (each start attempt writes ~150M on QLC root under storm)** → [docs/todo/services.md](docs/todo/services.md) (Source: journal 2026-11-08 + docs/services/indexer-web.md)
 - [ ] [blocked:push] **index upstream: push flake RestartSec=30 fix + SystemNix re-lock** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/services/indexer-web.md 2026-11-08 resilience note)
 - [ ] [blocked:user] **index upstream Go: env-configurable projectionReadyTimeout (hardcoded 10s const)** → [docs/todo/upstream.md](docs/todo/upstream.md) (Source: docs/services/indexer-web.md 2026-11-08 resilience note)
+- [ ] [ready] **Investigate indexer-web event-store snapshot persistence (150M written every start = full replay smell)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-11-08_03-33_indexer-web-readiness-fix-three-layer.md §f.6)
+- [ ] [ready] **Check SigNoz churn rule + Gatus Indexer Web checks after the flap wave** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-11-08_03-33_indexer-web-readiness-fix-three-layer.md §f.7)
