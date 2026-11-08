@@ -52,6 +52,11 @@ nixpkgs.lib.nixosSystem {
     # derivation (plan T05).
     inputs.self.nixosModules.catalog
     inputs.self.nixosModules.catalog-platform
+    # Integration manifest bridge (plan T2, 2026-11-08 nix-native plan):
+    # /etc/systemnix/integration-manifest.json rides this host's generation
+    # too — the module guards both source options, so the catalog-only
+    # subset here renders a valid manifest (integration entries absent).
+    inputs.self.nixosModules.integration-manifest
     inputs.self.nixosModules.dns-failover
     inputs.sops-nix.nixosModules.sops
     inputs.self.nixosModules.sops
