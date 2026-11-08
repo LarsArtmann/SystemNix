@@ -142,6 +142,17 @@ _: {
             {
               MemoryMax = "4G";
               TimeoutStartSec = "12h";
+              # Pre-start stale-lock sweep: upstream's restic module only
+              # runs `restic unlock` AFTER a successful backup (pruneCmd),
+              # so a lock left by a killed run deadlocks every later window
+              # before the unlock line is ever reached — the 2026-11-06..08
+              # three-night blackout (holder killed mid-run by a memory-guard
+              # Zone-6 storm stop; Nov 7 + Nov 8 windows insta-failed on it).
+              # Plain unlock removes dead-holder locks only, is a no-op when
+              # the repo is clean, and still lets a LIVE concurrent holder
+              # correctly fail this run. Env (repo + password) is inherited
+              # from the unit's upstream environment block.
+              ExecStartPre = "${lib.getExe pkgs.restic} unlock";
               # Freshness marker for backup-coordination — runs only when
               # backup + forget + prune all succeeded.
               ExecStartPost = "${pkgs.coreutils}/bin/touch ${markerFile}";

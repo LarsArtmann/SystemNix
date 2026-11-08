@@ -293,6 +293,12 @@
             {
               MemoryMax = "1G";
               TimeoutStartSec = "1h";
+              # Pre-start stale-lock sweep (no prune step by design below,
+              # so upstream emits NO unlock anywhere for this unit — a
+              # single killed run would block every later window until
+              # manual `restic unlock`; same 2026-11-06..08 blackout class
+              # as restic-app-dumps). Dead-holder locks only; no-op clean.
+              ExecStartPre = "${lib.getExe pkgs.restic} unlock";
               # Freshness marker for backup-coordination — runs only when
               # the backup itself succeeded (no prune step by design).
               ExecStartPost = "${pkgs.coreutils}/bin/touch ${historyMarker}";
