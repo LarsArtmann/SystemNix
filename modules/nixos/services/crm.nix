@@ -68,13 +68,14 @@
       pocketIdProvisioned = config.services.pocket-id-config.provision.enable or false;
       # vendorHash shim lineage (full history in the git log of this file;
       # every re-pin was first-hand FOD evidence, never by hand):
-      # k0Inp4g measured at the 2026-11-06 pin wave (5302527, catalog
-      # v4.13.0 alignment — float-proof-20261106-233658.log, spec AN6/xU4
-      # got k0Inp4g). Drop when upstream bakes the hash and the lock
-      # moves past an upstream-fixed rev; re-add ONLY via nix-hash-fix
-      # evidence.
+      # k0Inp4g measured at the 2026-11-06 pin wave (5302527); RE-STALE at
+      # the 2026-11-08 pin roll f32f4c0 (float-proof-20261108-172105.log,
+      # spec k0Inp4g got EzVPIaj — the doc+module commits shifted the
+      # vendored set through the module graph, the catalog-bump class).
+      # Drop when upstream bakes the hash and the lock moves past an
+      # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-k0Inp4g7z53orGBBRbf/dDMUdxSJ8X6vRNncMNAMeZk=";
+        vendorHash = "sha256-EzVPIajPg1tS3PW4eEzPUEv+4H8c1o+eHQKg13xKji0=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in
