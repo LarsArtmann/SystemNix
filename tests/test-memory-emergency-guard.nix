@@ -784,6 +784,18 @@ in
           assert "MEMORY EMERGENCY" not in out, (
               f"episode run {i}/8 must not trip yet (leaky bucket not full)"
           )
+          if i == 4:
+              # The storm-forming Gatus band: at exactly HALF the trip
+              # bucket the derived warn flag flips to 1 (pages BEFORE the
+              # trip) while the guard itself stays quiet.
+              prom = machine.succeed(
+                  "cat /var/lib/prometheus-node-exporter/textfile_collectors/memory-emergency-guard.prom"
+              )
+              assert "memory_emergency_guard_psi_episodes_warn 1" in prom, (
+                  "at 4/8 episodes the warn flag must flip — the Gatus "
+                  "storm-forming page fires half a bucket BEFORE the trip"
+              )
+              assert "memory_emergency_guard_psi_episodes 4" in prom
       out = run_guard("episodic")
       assert "episodic stall" in out, (
           "Zone 5 must trip at the 8th accumulated avg10 episode with avg60 "

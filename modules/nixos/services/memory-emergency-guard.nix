@@ -1208,7 +1208,9 @@ _: {
             if [ "$psi_episodes" -ge ${toString (cfg.psiEpisodeTripCount / 2)} ]; then
               psi_episodes_warn=1
             fi
-            echo "# HELP memory_emergency_guard_psi_episodes_warn 1 when the leaky-bucket episode count >= ${toString (cfg.psiEpisodeTripCount / 2)} (half the Zone-5 trip bucket) — storm-forming early warning; the trip fires at ${toString cfg.psiEpisodeTripCount}"
+            echo "# HELP memory_emergency_guard_psi_episodes_warn 1 when the leaky-bucket episode count >= ${
+              toString (cfg.psiEpisodeTripCount / 2)
+            } (half the Zone-5 trip bucket) — storm-forming early warning; the trip fires at ${toString cfg.psiEpisodeTripCount}"
             echo "# TYPE memory_emergency_guard_psi_episodes_warn gauge"
             echo "memory_emergency_guard_psi_episodes_warn ''${psi_episodes_warn}"
 

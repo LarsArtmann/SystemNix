@@ -770,7 +770,7 @@ in
       # via its /readyz token — zero user engagement. Fast mode (single
       # falconsai model); models read from the live checkout. Details:
       # modules/nixos/services/nsfw-classifier.nix header.
- #     nsfw-classifier.enable = true;
+      #     nsfw-classifier.enable = true;
       # Central outbound mail relay (Postfix null client on 127.0.0.1:25 →
       # authenticated Resend submission). Ships with a PLACEHOLDER sops
       # credential: every send defers in the postfix queue until the real
@@ -2112,7 +2112,7 @@ in
       # while every pool-disk SMART alert silently vanished) is only
       # observable as unit state. The Gatus "Smartd Disk Monitoring" check
       # (gatus-config.nix) consumes the emitted state metrics.
-      services.system-health.extraMonitoredServices = [ "smartd" ];
+      system-health.extraMonitoredServices = [ "smartd" ];
 
       # DAS pool replug self-heal: zombie reaper + remount + failed-service
       # restart + real-IO metrics (the /mnt/pool analogue of

@@ -82,6 +82,25 @@
 #    the config claimed 10min; same authoring bug in nsfw-immich-scan's
 #    6h sweep budget, fixed on sight the same session).
 #
+# 10. `systemctl is-active <unit>` probing a Type=oneshot unit WITHOUT
+#     RemainAfterExit. is-active reports "inactive" for such a unit the
+#     moment its start job finishes, so a liveness probe keyed on it reads
+#     the SAME verdict for "ran fine", "failed", and "never ran" — the
+#     scrub-guard false-red lesson (snapshots.nix scrub guard: is-active
+#     btrfs-scrub@data could never see the mid-send "activating" state and
+#     missed exactly the streaming case it existed for, 2026-08-31) and
+#     the guard churn-rearm dead-subsystem lesson (is-active --quiet
+#     recorded NOTHING for oneshot kills — the whole starvation/catch-up
+#     path was dead on arrival, 2026-10-11). The sanctioned probes are
+#     `systemctl show -p ActiveState --value <unit>` (distinguishes
+#     activating/active/failed) or RemainAfterExit when the unit genuinely
+#     holds state. Scope: literal unit names in the Exec*/script text of
+#     system units — variable targets ($unit, "$1") are statically
+#     unresolvable and stay unflagged; template instances match via their
+#     template base. Deliberate probes go in
+#     services.systemd-shape-audit.allowOneshotIsactiveProbe WITH a
+#     justification comment at the definition site.
+#
 # Assertions are forced by `nix flake check` (pre-commit + CI); a bare
 # `nix eval ...toplevel.drvPath` does NOT check them.
 {
@@ -479,6 +498,83 @@
           inherit name;
           keys = serviceKeysInUnitConfig svc;
         }) bad;
+
+      # --- class 10: is-active probes against oneshot-without-RemainAfterExit
+      # See the header comment for the two live lessons. Static analysis of
+      # the final (post-interpolation) Exec*/script text of system units.
+      execScanKeys = [
+        "ExecStart"
+        "ExecStartPre"
+        "ExecStartPost"
+        "ExecStop"
+        "ExecStopPost"
+        "ExecReload"
+        "ExecCondition"
+      ];
+      scriptScanKeys = [
+        "script"
+        "preStart"
+        "postStart"
+        "preStop"
+        "postStop"
+        "stopScript"
+        "reloadScript"
+      ];
+      unitProbeText =
+        svc:
+        lib.concatStringsSep "\n" (
+          map toString (
+            (lib.flatten (map (k: lib.toList (svc.serviceConfig.${k} or [ ])) execScanKeys))
+            ++ (map (k: svc.${k} or "") scriptScanKeys)
+          )
+        );
+      # Regex-safe unit-name fragment (names carry . - @ _ alnum in practice).
+      escUnitName = builtins.replaceStrings [ "." ] [ "\\." ];
+      # Lines whose is-active call names `target` (bare, .service-suffixed,
+      # or — for a template target — any instance of it).
+      isactiveProbeLine =
+        target: line:
+        let
+          base = lib.removeSuffix "@" target;
+          isTemplate = lib.hasSuffix "@" target;
+          token =
+            if isTemplate then
+              "${escUnitName base}(@[^[:space:];\"')&|]*(\\.service)?)"
+            else
+              "${escUnitName target}((\\.service)?)([[:space:];\"')&|]|$)";
+          pattern = ".*systemctl([[:space:]]+--[[:alnum:]-]+)*[[:space:]]+is-active([[:space:]]+--[[:alnum:]-]+)*[[:space:]]+${token}.*";
+        in
+        builtins.match pattern line != null;
+      # Oneshot units whose is-active verdict lies post-run (no
+      # RemainAfterExit). RemainAfterExit flips the unit to "active
+      # (exited)" after the run, making is-active a truthful probe.
+      lyingOneshotTargets = lib.filterAttrs (
+        _name: svc:
+        svc.enable or true
+        && (svc.serviceConfig.Type or null) == "oneshot"
+        && !(svc.serviceConfig.RemainAfterExit or false)
+      ) config.systemd.services;
+      isactiveProbeOffenders = lib.concatMap (
+        prober:
+        let
+          text = unitProbeText prober.value;
+        in
+        if !(prober.value.enable or true) then
+          [ ]
+        else if !lib.hasInfix "is-active" text then
+          [ ]
+        else
+          lib.concatMap (
+            targetName:
+            if builtins.elem "${prober.name}:${targetName}" cfg.allowOneshotIsactiveProbe then
+              [ ]
+            else
+              lib.optional (builtins.any (isactiveProbeLine targetName) (lib.splitString "\n" text)) {
+                prober = prober.name;
+                inherit targetName;
+              }
+          ) (lib.attrNames lyingOneshotTargets)
+      ) (lib.mapAttrsToList (name: value: { inherit name value; }) config.systemd.services);
     in
     {
       options.services.systemd-shape-audit = {
@@ -510,6 +606,17 @@
             unitConfig is deliberate. Every entry MUST carry a justification
             comment where it is set. There should be no such entries: every
             key in serviceSectionKeys is invalid in [Unit].
+          '';
+        };
+        allowOneshotIsactiveProbe = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            "<prober>:<target>" pairs where a `systemctl is-active <target>`
+            call against a Type=oneshot unit without RemainAfterExit is
+            deliberate (e.g. the probe WANTS the post-run inactive verdict —
+            an is-enabled-class check, not a liveness probe). Every entry
+            MUST carry a justification comment where it is set.
           '';
         };
       };
@@ -644,6 +751,26 @@
               systemd.services.<name>.serviceConfig.TimeoutStartSec = "10min";
             Deliberate exception:
               services.systemd-shape-audit.allowUnitConfigServiceKeys = [ "<unit>:<Key>" ];
+            with a justification comment.
+          '';
+        }
+        {
+          assertion = isactiveProbeOffenders == [ ];
+          message = ''
+            systemd-shape-audit: `systemctl is-active` probe(s) against Type=oneshot
+            units without RemainAfterExit:
+            ${lib.concatStringsSep ", " (map (o: "${o.prober} → ${o.targetName}") isactiveProbeOffenders)}
+            is-active reports "inactive" for such a unit the moment its start job
+            finishes, so the probe reads the same verdict for ran-fine, failed,
+            and never-ran (scrub-guard false-red 2026-08-31; guard churn-rearm
+            dead-on-arrival 2026-10-11).
+            Fix: probe ActiveState explicitly:
+              systemctl show -p ActiveState --value <unit>
+            (distinguishes activating/active/failed — the snapshots.nix
+            scrub-guard pattern), or add RemainAfterExit=true if the unit
+            genuinely holds state after its run.
+            Deliberate exception:
+              services.systemd-shape-audit.allowOneshotIsactiveProbe = [ "<prober>:<target>" ];
             with a justification comment.
           '';
         }
