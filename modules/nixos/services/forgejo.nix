@@ -1419,13 +1419,22 @@ _: {
                 # Root leg: render connection-config.yaml from the store
                 # placeholder yaml + the provisioned identity pair (see the
                 # render comment above serviceConfig).
-                ("+" + pkgs.writeShellScript "forgejo-render-runner-config" ''
-                  cp -v ${config.services.forgejo-runner.instances."${hostName}".configFile} ./connection-config.yaml
-                  chmod u+w ./connection-config.yaml
-                  ${lib.getExe pkgs.replace-secret} '@UUID@' "${runnerStateDir}/.uuid" ./connection-config.yaml
-                  ${lib.getExe pkgs.replace-secret} '@TOKEN@' "${runnerStateDir}/.token" ./connection-config.yaml
-                  chmod u-w ./connection-config.yaml
-                '')
+                (
+                  "+"
+                  + pkgs.writeShellScript "forgejo-render-runner-config" ''
+                    cp -v ${config.services.forgejo-runner.instances."${hostName}".configFile} ./connection-config.yaml
+                    chmod u+w ./connection-config.yaml
+                    ${lib.getExe pkgs.replace-secret} '@UUID@' "${runnerStateDir}/.uuid" ./connection-config.yaml
+                    ${lib.getExe pkgs.replace-secret} '@TOKEN@' "${runnerStateDir}/.token" ./connection-config.yaml
+                    chmod u-w ./connection-config.yaml
+                    # v13 rejects dual connection sources ("server connection
+                    # conflict between .runner and config") — the legacy
+                    # act_runner-register file must go once its uuid/token
+                    # pair is carried into .uuid/.token by provision. Retired
+                    # live 2026-11-08 02:35 (moved out of the state dir).
+                    rm -f ./.runner
+                  ''
+                )
               ];
               # The rendered copy, not the module's placeholder configFile.
               ExecStart = lib.mkForce "${lib.getExe config.services.forgejo-runner.package} daemon --config ${runnerStateDir}/connection-config.yaml";
