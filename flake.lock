@@ -1050,11 +1050,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794138613,
-        "narHash": "sha256-zdN2nTFPVF5BaFlSCsFaKWCtSTzg5QZDr9i1paG82S8=",
+        "lastModified": 1794151572,
+        "narHash": "sha256-jnIxEfkYY8AnZ0f8SxvARmaC+u+ybQdj+15vBjgSbzs=",
         "ref": "refs/heads/master",
-        "rev": "09ff6c1fd9268c662e1069a7cb4ac05668fe60d8",
-        "revCount": 396,
+        "rev": "6ff68d32fd73b54512d4d55567d6b426c7be6f55",
+        "revCount": 399,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       },
@@ -8711,11 +8711,11 @@
         "project-discovery-sdk": "project-discovery-sdk_10"
       },
       "locked": {
-        "lastModified": 1794118735,
-        "narHash": "sha256-KWioudf7UFQy3eTEzAm1igDROAUWh37RFHh91/QU1Os=",
+        "lastModified": 1794150340,
+        "narHash": "sha256-MMW4Uw6Qjg5YlDnhVodv5HFswDnyXxrX1eutPGQL4KA=",
         "ref": "refs/heads/master",
-        "rev": "c8dd7508c4daaf56f9f31de1a537871210bba0c1",
-        "revCount": 160,
+        "rev": "adb9821783092cd8c037421f26aa48c7409a9d47",
+        "revCount": 161,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-daemon"
       },

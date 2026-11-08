@@ -36,7 +36,7 @@
   crush-config = "0631f8e993b4e435da84f84e0f07b8ea7c2d4f25";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
   cv = "da7f3cbcb767885bb14d7b3b4cfe60340ac607b3";
-  cvagent = "09ff6c1fd9268c662e1069a7cb4ac05668fe60d8";
+  cvagent = "6ff68d32fd73b54512d4d55567d6b426c7be6f55";
   dankMaterialShell = "b95f61439e7e97d667f610781aca57c849ec2f20";
   discordsync = "ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
@@ -100,7 +100,7 @@
   paperless-gpt-src = "49c425596b846ae98d630f4087e8223c188032db";
   pim-sync = "1b70ed4bc523d60fc7e72f6284311e42b3c950c1";
   project-dependency-graph = "8335670e8e46e103cefce3e94f57fcc878720a3f";
-  project-discovery-daemon = "c8dd7508c4daaf56f9f31de1a537871210bba0c1";
+  project-discovery-daemon = "adb9821783092cd8c037421f26aa48c7409a9d47";
   project-meta = "8b40bd7d250253cddb1d1cf694377dd6ee47f4a2";
   projects-management-automation = "5f9f4661baa5e0368cc748bf432c3059686a7278";
   pyproject-build-systems = "bdbc5f8dd2ad6136bb2ccecb14f6ec343965b194";
