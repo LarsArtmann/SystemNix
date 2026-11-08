@@ -930,5 +930,18 @@ run_case ssoclassify wording-drift monitor365-sso-identity-selftest fail 'leg3 w
 run_case ssoclassify comment-control monitor365-sso-identity-selftest pass '' \
   'append:scripts/monitor365-ensure-sso-identity.sh:# negative-test immunity control'
 
+# ── script-port-audit (nix-native plan T5, 2026-11-08): host-form port
+# literals in scripts/ must be lib/ports.nix values. The motivating bug is
+# IN this group's DNA: verify-deployment.sh probed gatus at the retired
+# 9110 for 12 days (band vacation drift). Leg 1 re-creates that exact bug
+# shape and must fire; leg 2 is a fresh unregistered hardcode; leg 3 is
+# the comment immunity control.
+eval_case scriptport stale-port-regression fail 'script-port-audit: host-form port literal' \
+  'sed:scripts/verify-deployment.sh:s|localhost:9410|localhost:9110|'
+eval_case scriptport fresh-unregistered-hardcode fail 'script-port-audit: host-form port literal' \
+  'append:scripts/io-psi-forensics.sh:curl -sf --max-time 5 http://localhost:59999/probe 2>/dev/null || true # negative-test fixture literal'
+eval_case scriptport comment-control pass '' \
+  'append:scripts/io-psi-forensics.sh:# negative-test immunity control'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]

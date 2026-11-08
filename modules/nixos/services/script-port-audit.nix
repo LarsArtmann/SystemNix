@@ -60,7 +60,13 @@
         dir:
         let
           files = builtins.attrNames (builtins.readDir dir);
-          shFiles = builtins.filter (f: lib.hasSuffix ".sh" f) files;
+          # negative-test-lints.sh is excluded by NAME: the harness's whole
+          # purpose is containing trap literals (the 9110 regression shape,
+          # 59999 fixture probes) — it would need a per-leg allowlist entry
+          # forever. It IS the fixture file.
+          shFiles = builtins.filter (
+            f: lib.hasSuffix ".sh" f && f != "negative-test-lints.sh"
+          ) files;
         in
         map (f: rec {
           name = f;
