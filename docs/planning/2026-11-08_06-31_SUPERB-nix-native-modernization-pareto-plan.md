@@ -1,6 +1,7 @@
 # SUPERB: Nix-Native Modernization — Pareto Plan
 
 **Created:** 2026-11-08 06:31 · **HEAD:** `74e96d9f` · **Status:** PLANNED (awaiting owner go / dispatch)
+**EXECUTING (instance full-wave execution session, owner GO directive, 2026-11-08 07:18 CET, HEAD `9a37d2ee2`):** executing (see AGENTS.md plan-execution tombstone)
 **Trigger:** owner question "How can we do things in a more nix native/smarter way? Don't forget nix is a PROGRAMMING LANGUAGE!" (2026-11-08 session) → this plan.
 **Premise:** SystemNix is already native where it counts (integration-registry fan-out, eval-guard army, features-drift re-derivation). The remaining frontier is **surfaces that duplicate data Nix already owns** — operational scripts, embedded unit scripts, and prose docs. Nix becomes the single owner of that data; everything else becomes a pure consumer.
 
