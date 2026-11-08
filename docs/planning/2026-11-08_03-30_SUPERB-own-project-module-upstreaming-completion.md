@@ -1,5 +1,7 @@
 # SUPERB — Own-Project Module Upstreaming Completion (the last 30%)
 
+**Created:** 2026-11-08 03:30
+**EXECUTING (instance SUPERB-executor-2026-11-08, 2026-11-08 03:54 CET, HEAD `8b84d6de6`):** executing (see AGENTS.md plan-execution tombstone)
 **Date:** 2026-11-08 03:30 · **Author:** upstreaming-audit session (docs/status/2026-11-08_03-15_own-project-module-upstreaming-audit-two-delegations.md)
 **Status:** PLANNED (not executing — marker protocol per docs/CONTRIBUTING + AGENTS.md plan-execution tombstone applies before ANY execution of this file)
 
