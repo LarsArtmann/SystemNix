@@ -106,6 +106,7 @@ jobs:
           nix build .#checks.x86_64-linux.binary-coverage-lint --no-link --print-out-paths
           nix build .#checks.x86_64-linux.binary-coverage-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.pre-deploy-metrics-selftest --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.zombie-mount-gate-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.post-deploy-pressure-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.gitleaks-coverage-selftest --no-link --print-out-paths
           nix build .#checks.x86_64-linux.dead-guard-lint --no-link --print-out-paths

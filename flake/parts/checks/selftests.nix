@@ -65,6 +65,25 @@
           touch $out
         '';
 
+        # Pre-deploy §17 zombie-mount gate negative-path selftest
+        # (2026-10-21 task §e.3): the gate BLOCKS deploys, so its FAIL
+        # verdicts must be proven against fixtures, not trusted from a
+        # green-path-only live probe. scripts/test-zombie-mount-gate.sh
+        # carries the legs (zombie device → FAIL, dead real-IO → FAIL,
+        # green controls, autofs filtering, wiring tripwire) — this check
+        # wires it through nix so CI runs it (same staging doctrine as
+        # pre-deploy-metrics-selftest: the lib resolves relative to the
+        # test script's own path).
+        zombie-mount-gate-selftest = pkgs.runCommand "zombie-mount-gate-selftest" { } ''
+          scratch=$(mktemp -d)
+          mkdir -p "$scratch/scripts/lib"
+          cp ${root}/scripts/test-zombie-mount-gate.sh "$scratch/scripts/test-zombie-mount-gate.sh"
+          cp ${root}/scripts/lib/zombie-mount-gate.sh "$scratch/scripts/lib/zombie-mount-gate.sh"
+          cp ${root}/scripts/pre-deploy-check.sh "$scratch/scripts/pre-deploy-check.sh"
+          ${pkgs.bash}/bin/bash "$scratch/scripts/test-zombie-mount-gate.sh"
+          touch $out
+        '';
+
         # sops pre-deploy gate fixture selftest (superb-v3 S-0002): the §19
         # gate's three legs (manifest sopsfile check via its checkPhase,
         # live-host-key recipient binding, decrypt smoke) plus the visible

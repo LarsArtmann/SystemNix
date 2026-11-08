@@ -1603,8 +1603,18 @@ in
       # ci-watchdog app (single source of truth); runs as the primary user
       # so gh reads its token from ~/.config/gh (module header + runbook
       # docs/services/ci-watchdog.md).
+      #
+      # RETIRED 2026-11-08 (health-alert sweep): the canary premise is
+      # GONE — every domains GitHub workflow is state=disabled_manually
+      # (runner-health.yml last ran 2026-10-17, failure, carrying the
+      # stale billing annotation from the retired block era) while
+      # Actions itself is HEALTHY (deploy/terraform legs ran green
+      # 2026-11-05; only Dependabot still "active"). The watchdog paged
+      # every 30 min on that frozen run. Re-enable ONLY repointed at a
+      # forge-side scheduled canary (none exists yet — .forgejo ci.yml is
+      # push-triggered only; queued docs/todo/monitoring.md).
       ci-watchdog = {
-        enable = true;
+        enable = false;
         checkProgram = inputs.domains.apps.${pkgs.stdenv.hostPlatform.system}.ci-watchdog.program;
       };
 

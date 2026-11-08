@@ -87,7 +87,7 @@ When a service has an upstream LarsArtmann flake that exports `nixosModules`, **
 
 **Probe-before-lock (codified 2026-10-19, PapDashboard CI retirement):** before ANY `nix flake lock --update-input <larsartmann-input>`, BUILD the target rev outside the lock first — `nix build github:LarsArtmann/<repo>/<rev>#<pkg>` (or the local checkout's `path:` flake) — and only re-lock on green. Upstream repos auto-commit AND auto-push through an UNVALIDATED channel (the daemon pushed both a break and its fix inside one hour, 2026-09-30), and upstream CI cannot be assumed alive (PapDashboard's was billing-dead 2026-07-15 → 2026-10-19, then retired). The SystemNix lock is the ONLY verified gate in the chain: a blind `--update-input` imports whatever the daemon last pushed. A FOD mismatch at the probe = shim protocol (`lib/lars-packages.nix` flakePkgShim), never a blind lock.
 
-Reference implementations: `modules/nixos/services/monitor365.nix` (gold standard), `modules/nixos/services/discordsync.nix` (converged to the pattern).
+Reference implementations: `modules/nixos/services/monitor365.nix` (gold standard), `modules/nixos/services/discordsync.nix` (converged to the pattern), `modules/nixos/services/mr-sync.nix` + `modules/nixos/services/nsfw-classifier.nix` (delegated 2026-11-08 — nsfw is the reference for delegating while keeping deployment-only sub-units (immichScan) and neutralizing upstream unit-config bugs). Full own-project upstreaming audit + classification matrix: `docs/status/2026-11-08_03-15_own-project-module-upstreaming-audit-two-delegations.md`.
 
 ## Module naming & shared lib helpers
 

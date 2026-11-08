@@ -100,6 +100,93 @@ let
     '';
   };
 
+  # Single-writer browser client (2026-11-08 four-instance incident).
+  # The ONLY path allowed to start a main-profile helium is helium.service
+  # — systemd serializes unit starts, so the boot-time spawn race that
+  # birthed two same-second instances is structurally impossible through
+  # this chokepoint. Everything user-facing (desktop entry, xdg-open, dock,
+  # `open`) execs THIS, never the browser. It delegates via Chromium's
+  # singleton when healthy, and when the singleton is wedged or stale it
+  # converges (kill-and-replace via systemd) — a duplicate instance on the
+  # shared profile can never result, because the old one is dead before
+  # the new one starts.
+  helium-open = pkgs.writeShellApplication {
+    name = "helium-open";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gnugrep
+      pkgs.systemd
+    ];
+    text = ''
+      profile_dir="''${HELIUM_PROFILE_DIR:-$HOME/.config/net.imput.helium}"
+
+      # Live main-profile owner pid from Chromium's own singleton lock —
+      # the same primitive the browser trusts (NOT an argv pgrep). Empty
+      # output = no healthy owner.
+      singleton_owner() {
+        local target host pid
+        if ! target=$(readlink "$profile_dir/SingletonLock" 2>/dev/null); then
+          return 1
+        fi
+        host="''${target%-*}"
+        pid="''${target##*-}"
+        if [ "$host" != "$(uname -n)" ]; then
+          return 1
+        fi
+        case "$pid" in
+          "" | *[!0-9]*) return 1 ;;
+        esac
+        if ! grep -aq "ozone-platform-hint" "/proc/$pid/cmdline" 2>/dev/null; then
+          return 1
+        fi
+        if grep -aq "user-data-dir" "/proc/$pid/cmdline" 2>/dev/null; then
+          return 1
+        fi
+        printf '%s\n' "$pid"
+      }
+
+      wait_owner() {
+        local waited=0 limit="''${1:-30}"
+        while [ "$waited" -lt "$limit" ]; do
+          if [ -n "$(singleton_owner)" ]; then
+            return 0
+          fi
+          sleep 1
+          waited=$((waited+1))
+        done
+        return 1
+      }
+
+      # Delegate to the live instance via the singleton. A healthy
+      # singleton acks in well under a second; 5s ceiling means a wedged
+      # owner gets replaced instead of spawning a takeover instance
+      # (exactly the 2026-11-08 06:51/21:29 takeover mechanism).
+      delegate() {
+        timeout 5 env -u QT_STYLE_OVERRIDE helium "$@"
+      }
+
+      if [ -z "$(singleton_owner)" ]; then
+        # No live owner: the SERVICE is the only thing that may start one.
+        systemctl --user start helium.service || true
+        wait_owner 30
+      fi
+
+      if delegate "$@"; then
+        exit 0
+      fi
+
+      # Singleton wedged or stale: converge = kill-and-replace through
+      # systemd, then delegate once more into the fresh instance.
+      systemctl --user restart helium.service || true
+      if wait_owner 45 && delegate "$@"; then
+        exit 0
+      fi
+
+      echo "helium-open: singleton unreachable even after helium.service restart — check: journalctl --user -u helium.service -n 30" >&2
+      exit 1
+    '';
+  };
+
   dms-wallpaper-init = pkgs.writeShellApplication {
     name = "dms-wallpaper-init";
     runtimeInputs = [
@@ -809,6 +896,8 @@ in
       };
     };
 
+    home.packages = [ helium-open ];
+
     systemd.user.services = {
       dms-wallpaper-init = {
         Unit = {
@@ -902,6 +991,12 @@ in
           ExecStart = lib.getExe helium-launch;
           Restart = "always";
           RestartSec = 5;
+          # Watermark doctrine (memory-watermark-audit class): High >= 50%
+          # of Max. The browser ran uncapped through every OOM/wedge
+          # incident — the wedge class is what makes Chromium's singleton
+          # delegation time out and take over (2026-11-08).
+          MemoryHigh = "16G";
+          MemoryMax = "24G";
         };
         Install.WantedBy = [ "graphical-session.target" ];
       };

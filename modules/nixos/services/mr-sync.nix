@@ -45,6 +45,7 @@
       cfg = config.services.mr-sync-dashboard;
       primaryUser = config.users.primaryUser or "lars";
       inherit (import ../../../lib/default.nix lib)
+        harden
         serviceDefaults
         onFailure
         ioTier
@@ -95,6 +96,16 @@
         systemd.services.mr-sync-dashboard = {
           inherit onFailure;
           serviceConfig = lib.mkMerge [
+            (harden {
+              # Same bound the hand-roll carried (upstream sets 512M plain
+              # too; this restores SystemNix's MemoryHigh watermark + CPU
+              # cap + ProtectHostname that the upstream table omits).
+              MemoryMax = "512M";
+              # Read ~/.mrconfig + ~/.config/mr-sync/config.json + walk
+              # ~/projects, ~/forks. One-way: the dashboard never writes.
+              # (Upstream declares plain read-only — same value, no drift.)
+              ProtectHome = "read-only";
+            })
             (serviceDefaults { })
             ioTier.background
             {

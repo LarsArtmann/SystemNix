@@ -336,7 +336,7 @@ in
     };
     "signoz/rules/crowdsec-parse-pipeline-errors.json".source = mkRule {
       name = "CrowdSec Parse Pipeline Errors (s00-raw)";
-      description = "Lines failing the s00-raw syslog stage — the parse pipeline itself is broken (hub update or parser corruption)";
+      description = "s00-raw syslog-stage ko flood — parse pipeline broken (hub update/parser corruption). Format-drift noise (new sshd verbose shapes since the 2026-11-05 openssh float) sits ~25/10m and stays under this threshold; a real break ko's ~100% of ~600 lines/h ≈ 100/10m.";
       # Calibrated live 2026-10-16: s00-raw parses 100% of delivered lines
       # OK (714/714) BY DESIGN — syslog-logs accepts every line, so ANY ko
       # there is a real pipeline break. The s01+ ko counters are ~97%
@@ -344,10 +344,20 @@ in
       # false-alarm class, runbook §verification) and MUST NOT gate an
       # alert. Engine-down (stale series, no increases) is covered by
       # CrowdSec Agent Down.
+      #
+      # RECALIBRATED 2026-11-08: the 2026-11-05 nixpkgs float (openssh
+      # bump) introduced steady s00-raw ko drift-noise (~150/h measured,
+      # 441/3h, started exactly at the deploy; cscli-explain verified
+      # security lines — Failed password/Invalid user — still parse; the
+      # ko shapes are the new auth-success verbose lines). target=1 paged
+      # on that benign stream for 3 days. Threshold 100/10m splits the
+      # classes 4x in both directions: drift ≈ 25/10m, real break =
+      # ~every delivered line ≈ 100+/10m under any ssh activity. Line
+      # attribution + parser pin: docs/todo/monitoring.md crowdsec row.
       query = ''sum(increase(cs_node_hits_ko_total{stage="s00-raw"}[10m]))'';
       step = 300;
       op = "above_or_equal";
-      target = 1;
+      target = 100;
       interval = "5m";
     };
     "signoz/rules/crowdsec-bouncer-not-registered.json".source = mkRule {
@@ -708,8 +718,17 @@ in
     # consecutive breaches before the first page).
     "signoz/rules/discordsync-db-file-growth.json".source = mkRule {
       name = "DiscordSync DB Growth Storm (>500 MB in 24h)";
-      description = "The SQLite database (plus WAL) grew >500 MB in 24h — the signature of a retry/idempotency storm or a runaway backfill/reconcile loop, far beyond normal ingestion growth. Compare discordsync_events_emitted_total / discordsync_command_dispatched_total rates and the command-audit pruner (discordsync_command_audit_pruned_total); a breach right after a crash is the catch-up writers converging";
-      query = "increase(discordsync_db_file_bytes[24h])";
+      description = "The SQLite database (plus WAL) NET-grew >500 MB in 24h — the signature of a retry/idempotency storm or a runaway backfill/reconcile loop, far beyond normal ingestion growth. Compare discordsync_events_emitted_total / discordsync_command_dispatched_total rates and the command-audit pruner (discordsync_command_audit_pruned_total); a breach right after a crash is the catch-up writers converging";
+      # 2026-11-08 phantom-fix: the gauge is db+WAL COMBINED (upstream
+      # RegisterDBFileBytes) and the WAL checkpointer cycles it (grow ->
+      # checkpoint-truncate -> regrow ~15 MB/h) — increase() accumulates
+      # every regrowth: 19.2 GB "growth"/24h measured on a FLAT db
+      # (751->781 MB over 2 days, true +40 MB/24h) while the alert fired
+      # for 3 days. max-min range captures only NET growth: a real storm
+      # (monotone +500 MB) still trips it, WAL cycling cannot. Upstream
+      # split (db-only monotone gauge + separate wal gauge) queued in
+      # docs/todo/monitoring.md.
+      query = "max_over_time(discordsync_db_file_bytes[24h]) - min_over_time(discordsync_db_file_bytes[24h])";
       target = 500000000;
       interval = "30m";
       severity = "warning";

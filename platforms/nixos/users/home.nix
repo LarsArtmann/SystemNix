@@ -978,7 +978,12 @@ in
   xdg.desktopEntries.helium = {
     name = "Helium";
     genericName = "Web Browser";
-    exec = "env -u QT_STYLE_OVERRIDE helium %U";
+    # Single-writer chokepoint (2026-11-08 four-instance incident): NEVER
+    # bare `helium` — a wedged singleton turns a direct launch into a
+    # takeover instance on the shared profile. helium-open delegates via
+    # the singleton and kill-and-replaces through helium.service when
+    # wedged.
+    exec = "helium-open %U";
     icon = "helium";
     terminal = false;
     categories = [

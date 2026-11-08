@@ -13,7 +13,12 @@
 # an empty restored shell carries no state worth N copies.
 {
   singleInstanceApps = [
-    "helium"
+    # helium REMOVED from restore (2026-11-08 four-instance incident): the
+    # session-manager restore spawn raced helium.service inside Chromium's
+    # pre-SingletonLock startup window at boot and birthed a second
+    # main-profile instance. Browser startup is helium.service's EXCLUSIVE
+    # job now (single-writer); Chromium's own --restore-last-session is the
+    # authoritative session restore. Listed in skipApps below.
     "firefox"
     "Firefox"
     "signal"
@@ -42,6 +47,10 @@
   # dialog is nonsense by definition (2026-08-31 report: gcr-prompter was
   # being "restored" every login).
   skipApps = [
+    # Also the single-writer carve-out for the browser (see
+    # singleInstanceApps above): never saved, never restored by the
+    # session manager — helium.service owns its lifecycle end to end.
+    "helium"
     "Jan"
     "gcr-prompter" # GCR/polkit auth prompt dialog
     "xdg-desktop-portal-gtk" # portal file chooser + dialog windows

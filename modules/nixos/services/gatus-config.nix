@@ -1177,6 +1177,25 @@ _: {
                   alerts = discordAlert "Niri compositor crashed while a graphical session is active — desktop is unresponsive. Check: systemctl --user status niri.service";
                 })
                 (mkHttpCheck {
+                  name = "Helium Duplicate Instance";
+                  group = "Monitoring";
+                  # 2026-11-08: four concurrent main-profile instances on ONE
+                  # profile ran 25h unnoticed — LevelDB LOCK contention broke
+                  # extension storage (DeepL) and split history. Verdict is
+                  # pre-computed in system-health (pat() can't numeric-compare);
+                  # both legs line-anchored per the phantom-green doctrine.
+                  # Freshness rides the system-health collector's existing
+                  # staleness alerting — no own freshness condition.
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nsystem_helium_duplicate_instance 0\n*)"
+                    "[BODY] == pat(*\nsystem_helium_instance_count *)"
+                  ];
+                  alerts = discordAlert "More than ONE main-profile Helium instance is running — LevelDB contention + split history (2026-11-08 class). Recovery: pgrep -f 'helium --ozone-platform-hint', kill strays by EXPLICIT PID (keep the SingletonLock owner: readlink ~/.config/net.imput.helium/SingletonLock), then journalctl --user -u helium.service -n 30";
+                })
+                (mkHttpCheck {
                   name = "Niri Crash Loop";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";

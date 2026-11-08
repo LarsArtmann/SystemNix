@@ -101,8 +101,16 @@
 
         systemd.services.indexer-web = {
           inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
+          # The binary's webapp hardcodes a 10s event-store readiness wait
+          # (2026-11-08: 45 "event store not ready within 10s" failures in
+          # 7d — every activation under load trips it; the initial scan of
+          # ~/projects exceeds the wait). The failure is environmental, not
+          # a crash: burst 0 + spaced retries let the unit catch a calm
+          # window instead of dying to start-limit and paging (it sat
+          # start-limit-hit through the whole 2026-11-08 build storm until
+          # a manual reset-failed). Upstream timeout configurability:
+          # docs/todo/upstream.md indexer-web row.
+          startLimitBurst = 0;
           requires = [ "indexer-web-secret-key.service" ];
           after = [ "indexer-web-secret-key.service" ];
           serviceConfig = lib.mkMerge [
@@ -118,6 +126,12 @@
               # The binary's OTel wiring (see header). Registry-set
               # OTEL_EXPORTER_OTLP_ENDPOINT merges beside it.
               Environment = [ "INDEXERWEB_OTEL_ENDPOINT=http://localhost:4318" ];
+              # Space the readiness-fail retries out. mkForce pins our
+              # spacing across lock bumps (upstream ships RestartSec plain —
+              # 5 today, 30 upstream-side after the 2026-11-08 fix lands):
+              # 5s-spaced retries under a loaded box burn the whole start
+              # budget on one storm.
+              RestartSec = lib.mkForce 30;
             }
             (harden { MemoryMax = "1G"; })
           ];

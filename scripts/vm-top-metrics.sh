@@ -65,7 +65,12 @@ vm_top_render() {
 vm_top_collect() { # <out.prom>
   local out="$1" tmp
   tmp="$(mktemp "${out}.tmp.XXXXXX")"
-  vm_top_scan | sort -rn | head -"$TOP_N" | vm_top_render >"$tmp"
+  # NB: the top-N cut must DRAIN sort's whole output (awk keeps reading after
+  # NR>n; it never exits early). `head -n` closes the pipe after N lines —
+  # under process churn the scan output exceeds the pipe buffer, sort hits
+  # SIGPIPE, and pipefail fails the whole unit (live 2026-11-08, load-53
+  # build storm: `sort: write failed: broken pipe` → unit failed → alert).
+  vm_top_scan | sort -rn | awk -v n="$TOP_N" 'NR <= n' | vm_top_render >"$tmp"
   # Atomic rename: node_exporter never reads a half-written file (the
   # sticky-textfile-dir doctrine every collector here follows).
   chmod 0644 "$tmp"
@@ -128,6 +133,33 @@ selftest() {
     echo "FAIL comm quote-stripping (label not sanitized)"
     failures=$((failures + 1))
   }
+
+  # SIGPIPE stress leg (2026-11-08 live failure): with scan output larger
+  # than the 64K pipe buffer, an early-exiting top-N consumer (head) kills
+  # sort with SIGPIPE under pipefail. The producer is stubbed (the race
+  # lives in the sort|cut|render pipeline, not in /proc reading — fixture
+  # trees of this size would cost 40k awk spawns). The collect runs in a
+  # CHILD bash: an `if !` wrapper here would suppress errexit INSIDE the
+  # function (bash if-context rule) and the abort the unit dies of could
+  # never reproduce in-process.
+  vm_top_scan() {
+    local i
+    for i in $(seq 1 20000); do
+      printf '%s %s %s\n' "$((i * 1024))" "$i" "stresspid$i"
+    done
+  }
+  TOP_N=5
+  export -f vm_top_scan vm_top_render vm_top_collect
+  if ! TOP_N="$TOP_N" bash -c 'set -euo pipefail; vm_top_collect "$1"' _ "$out"; then
+    echo "FAIL stress leg: vm_top_collect died under SIGPIPE-sized scan (early-exiting top-N consumer class)"
+    failures=$((failures + 1))
+  fi
+  local metric_lines
+  metric_lines="$(grep -c '^node_vm_top_vmsize_bytes{pid=' "$out" || true)"
+  if [ "$metric_lines" != "5" ]; then
+    echo "FAIL stress leg: wanted 5 metric lines under SIGPIPE-sized scan, got $metric_lines"
+    failures=$((failures + 1))
+  fi
 
   if [ "$failures" -gt 0 ]; then
     echo "vm-top-metrics selftest: $failures failure(s)"

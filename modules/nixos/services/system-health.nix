@@ -1784,6 +1784,31 @@ _: {
               echo "system_thermal_alert ''${THERMAL_ALERT}"
             fi
 
+            # === Helium single-instance tripwire (2026-11-08) ===
+            # Four concurrent main-profile instances ran 25h unnoticed
+            # (LevelDB LOCK spam, broken extension storage, split history).
+            # Counts MAIN-profile mains exactly like the helium-launch
+            # guard: cmdline carries ozone-platform-hint and NOT
+            # user-data-dir. Pre-computed duplicate verdict for Gatus
+            # (pat() cannot numeric-compare).
+            HELIUM_MAINS=0
+            for pid in $(pgrep -f "helium --ozone-platform-hint" 2>/dev/null || true); do
+              if grep -aq "user-data-dir" "/proc/$pid/cmdline" 2>/dev/null; then
+                continue
+              fi
+              HELIUM_MAINS=$((HELIUM_MAINS+1))
+            done
+            HELIUM_DUP=0
+            if [ "$HELIUM_MAINS" -gt 1 ]; then
+              HELIUM_DUP=1
+            fi
+            echo "# HELP system_helium_instance_count Main-profile Helium browser instances alive (must be 1; >1 = LevelDB lock contention + split history)"
+            echo "# TYPE system_helium_instance_count gauge"
+            echo "system_helium_instance_count ''${HELIUM_MAINS}"
+            echo "# HELP system_helium_duplicate_instance 1 if more than one main-profile Helium instance is alive (kill strays by explicit PID, keep the SingletonLock owner)"
+            echo "# TYPE system_helium_duplicate_instance gauge"
+            echo "system_helium_duplicate_instance ''${HELIUM_DUP}"
+
             echo "# HELP system_current_system_profiled 1 if /run/current-system matches a numbered nix profile generation (deployed via nix run .#deploy), 0 if manually activated (reboot would revert to the last real generation)"
             echo "# TYPE system_current_system_profiled gauge"
             echo "system_current_system_profiled ''${SYSTEM_PROFILED}"
