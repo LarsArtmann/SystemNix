@@ -72,8 +72,8 @@ sed -f "$WORK/unescape.sed" "$WORK/body.raw" >"$WORK/body.bash"
 
 render_case() { # render_case <out.sh> <devroot> <textfile-dir>
   sed -e "s|\${textfileDir}|$3|g" \
-    -e "s|\${toString cfg.tempThresholdCelsius}|50|g" \
-    -e "s|\${lib.escapeShellArgs cfg.drives}|\"$1/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_Z61BAAKS\" \"$1/dev/disk/by-id/ata-TOSHIBA_MG08ACA16TE_Z61BAB2M\"|g" \
+    -e 's|${toString cfg.tempThresholdCelsius}|50|g' \
+    -e "s|\${lib.escapeShellArgs cfg.drives}|\"$2/disk/by-id/ata-TOSHIBA_MG08ACA16TE_Z61BAAKS\" \"$2/disk/by-id/ata-TOSHIBA_MG08ACA16TE_Z61BAB2M\"|g" \
     "$WORK/body.bash" >"$1"
   bash -n "$1" || bad "rendered collector fails bash -n"
 }
@@ -90,7 +90,7 @@ Serial Number: SERIALPLACE
   9 Power_On_Hours          0x0012  100  100  000    Old_age Always   -       42114
   5 Reallocated_Sector_Ct   0x0033  100  100  010    Pre-fail Always   -       $1
 191 G-Sense_Error_Rate      0x0022  100  100  000    Old_age Always   -       $2
-194 Temperature_Celsius     0x0022  067  050  000    Old_age Always   -       $3 (0 6100 0)
+194 Temperature_Celsius     0x0022  067  050  000    Old_age Always   -       $3/61
 196 Reallocated_Event_Count 0x0032  100  100  016    Old_age Always   -       0
 197 Current_Pending_Sector  0x0022  100  100  000    Old_age Always   -       0
 198 Offline_Uncorrectable   0x0008  100  100  000    Old_age Offline  -       0
@@ -133,7 +133,6 @@ reset_fixtures() { # healthy two-drive world
 }
 
 run_collector() { # run_collector <rendered-script> <state-dir> <textfile-dir>
-  rm -rf "$WORK/textfile-run"
   mkdir -p "$2" "$3"
   PATH="$WORK/bin:$PATH" STATE_DIRECTORY="$2" bash "$1" >/dev/null 2>"$WORK/stderr"
 }
@@ -190,12 +189,8 @@ assert_metric "unprivileged: healthy sibling untouched" "$PROM" '^pool_smart_hea
 # ── Case 4: absent drive / whole-DAS outage ─────────────────────────────
 render_case "$WORK/case-absent.sh" "$DEVS" "$WORK/textfile-absent"
 # One absent: counted out, sibling still scored.
-rm -f "$D1" "$D2"
-: >"$D2"
-reset_fixtures >/dev/null 2>&1 || true
-: >"$D2"
+reset_fixtures
 rm -f "$D1"
-attr_table 0 0 30 >"$D2.attr"
 run_collector "$WORK/case-absent.sh" "$WORK/state-absent" "$WORK/textfile-absent"
 PROM="$WORK/textfile-absent/pool-smart.prom"
 assert_metric "absent: one drive counts" "$PROM" '^pool_smart_drives_present 1$'

@@ -1575,6 +1575,37 @@
               touch $out
             '';
 
+        # Pool-smart collector regression fixtures (2026-11-08): the
+        # 2026-09-12 fixture harness lived in /tmp and died with the tmpfs.
+        # The collector body is EXTRACTED from the staged module copy (the
+        # same file the system builds from) — Nix indented-string escapes
+        # unescaped, the three interpolations (textfileDir, threshold,
+        # drive list) substituted with fixture seams — then driven with a
+        # stub smartctl: healthy world, counter-mutation + FAILED-health
+        # flips, bridge-swallowed attribute table (fail-closed), and the
+        # absent-drive / whole-DAS contracts.
+        pool-smart-collector-selftest =
+          pkgs.runCommand "pool-smart-collector-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                gawk
+                gnugrep
+                gnused
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/modules/nixos/services"
+              cp ${root}/modules/nixos/services/pool-smart-metrics.nix "$scratch/modules/nixos/services/pool-smart-metrics.nix"
+              cp ${root}/scripts/test-pool-smart-collector.sh "$scratch/test-pool-smart-collector.sh"
+              # /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/test-pool-smart-collector.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test-pool-smart-collector.sh" "$scratch/modules/nixos/services/pool-smart-metrics.nix"
+              touch $out
+            '';
+
       };
     };
 }
