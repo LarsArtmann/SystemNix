@@ -30,18 +30,19 @@ in
       bind '"' split-window -v -c "#{pane_current_path}"
       bind b last-window
 
-      # SystemNix development session template
-      bind D new-session -d -s SystemNix -n just "cd ~/projects/SystemNix && just" \; \
+      # SystemNix development session template (flake-native: the justfile
+      # was removed 2026-10 — commands map to flake apps, never `just`)
+      bind D new-session -d -s SystemNix -n check "cd ~/projects/SystemNix && nix flake check --no-build" \; \
                        new-window -d -n nvim "cd ~/projects/SystemNix && nvim" \; \
                        new-window -d -n shell "cd ~/projects/SystemNix" \; \
                        select-window -t 0
 
-      # Integration with Just commands
-      bind J new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && just"
-      bind T new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && just test"
-      bind S new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && just switch"
-      bind B new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && just benchmark"
-      bind H new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && just health"
+      # Flake-native shortcuts (were `just` bindings before the justfile removal)
+      bind J new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && nix flake check --no-build"
+      bind T new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && nix run .#pre-deploy-check"
+      bind S new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && nix run .#deploy"
+      bind B new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && nix run .#post-deploy-check"
+      bind H new-window -c "#{pane_current_path}" "cd ~/projects/SystemNix && nix run .#pre-reboot-check"
 
       # Session persistence for SystemNix
       set -g @resurrect-strategy-nvim 'session'

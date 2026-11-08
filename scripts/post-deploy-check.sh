@@ -318,6 +318,69 @@ echo ""
 PROBE_DIR="$(mktemp -d /tmp/systemnix-postdeploy-probes.XXXXXX)"
 trap 'rm -f "$SMOKE_FAIL_NAMES"; rm -rf "$PROBE_DIR"' EXIT
 
+# --- Integration manifest loader (2026-11-08 nix-native plan T3.1) ----------
+# Eval truth (services.catalog + services.integration + lib/ports.nix) baked
+# into THIS generation as /etc/systemnix/integration-manifest.json (the
+# manifest bridge, modules/nixos/services/integration-manifest.nix). Probes
+# below reference port NAMES, never literals — a port move (monitor365
+# 9191→9421 class) needs zero script edits. Degrade contract (T4.1):
+# absent/unparseable manifest → one WARN here, then every port-driven
+# section below SKIPs (never FAILs — an old generation must not turn into
+# a blocked deploy).
+MANIFEST_PATH="${SYSTEMNIX_MANIFEST:-/etc/systemnix/integration-manifest.json}"
+MANIFEST_OK=false
+if [ -r "$MANIFEST_PATH" ] && jq -e '(.ports | type == "object") and (.services | type == "object")' <"$MANIFEST_PATH" >/dev/null 2>&1; then
+  MANIFEST_OK=true
+else
+  report_warn "integration manifest $MANIFEST_PATH absent or unparseable — port-driven sections below SKIP (generation without the manifest module, or a tree-run; deployed generations carry it)"
+fi
+
+# m_port <registry-name> → port number on stdout; rc 1 + a loud WARN when
+# the name is missing from the manifest's ports registry (T4.2 drift leg:
+# a probe targeting a port Nix does not own is drift, not a silent skip).
+m_port() {
+  local name="$1" p=""
+  [ "$MANIFEST_OK" = true ] || return 1
+  p="$(jq -r --arg n "$name" '.ports[$n] // empty' <"$MANIFEST_PATH" 2>/dev/null)" || p=""
+  if [ -z "$p" ]; then
+    report_warn "manifest drift: port '$name' not in the registry this generation exposes (script probes a name lib/ports.nix does not own)"
+    return 1
+  fi
+  printf '%s' "$p"
+}
+
+# Resolve the port names this battery probes. Empty = the section SKIPs (the
+# loader/m_port WARN above already named the cause). Registry names are
+# host-independent, so they resolve even where the service is disabled.
+PORT_POCKET_ID=""
+PORT_DISCORDSYNC=""
+PORT_M365_SERVER=""
+PORT_M365_METRICS=""
+PORT_SEARXNG=""
+PORT_BROWSERHISTORY=""
+PORT_RENAMER=""
+PORT_CRUSH_DAILY=""
+PORT_SIGNOZ=""
+PORT_NODEEXPORTER=""
+PORT_LLM_EMBED=""
+PORT_LLM_RERANK=""
+PORT_DNSBLOCK_STATS=""
+if [ "$MANIFEST_OK" = true ]; then
+  PORT_POCKET_ID="$(m_port pocket-id)" || true
+  PORT_DISCORDSYNC="$(m_port discordsync-api)" || true
+  PORT_M365_SERVER="$(m_port monitor365-server)" || true
+  PORT_M365_METRICS="$(m_port monitor365-metrics)" || true
+  PORT_SEARXNG="$(m_port searxng)" || true
+  PORT_BROWSERHISTORY="$(m_port browser-history)" || true
+  PORT_RENAMER="$(m_port file-and-image-renamer-health)" || true
+  PORT_CRUSH_DAILY="$(m_port crush-daily)" || true
+  PORT_SIGNOZ="$(m_port signoz)" || true
+  PORT_NODEEXPORTER="$(m_port signoz-node-exporter)" || true
+  PORT_LLM_EMBED="$(m_port llama-embeddings)" || true
+  PORT_LLM_RERANK="$(m_port llama-reranker)" || true
+  PORT_DNSBLOCK_STATS="$(m_port dns-blocker-stats)" || true
+fi
+
 # --- Infrastructure ---
 check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
@@ -332,8 +395,10 @@ check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
 # a FAIL under storm mode - lock contention text in the journal is evidence,
 # not a timeout artifact.
 curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://catchall-probe.$DOMAIN/" >"$PROBE_DIR/catchall.code" 2>/dev/null &
-curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/healthz" >"$PROBE_DIR/pocketid-healthz.code" 2>/dev/null &
-curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:1411/" >"$PROBE_DIR/pocketid-page.code" 2>/dev/null &
+if [ -n "$PORT_POCKET_ID" ]; then
+  curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:${PORT_POCKET_ID}/healthz" >"$PROBE_DIR/pocketid-healthz.code" 2>/dev/null &
+  curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://localhost:${PORT_POCKET_ID}/" >"$PROBE_DIR/pocketid-page.code" 2>/dev/null &
+fi
 wait
 _catchall_status="$(cat "$PROBE_DIR/catchall.code" 2>/dev/null || true)"
 _pocketid_status="$(cat "$PROBE_DIR/pocketid-healthz.code" 2>/dev/null || true)"
@@ -346,12 +411,14 @@ else
   report_fail "Caddy catch-all 404 - probe answered '${_catchall_status:-nothing}' (expected 404; unreachable = Caddy/TLS chain down)"
 fi
 
-if [ "$_pocketid_status" = "204" ] || [ "$_pocketid_page" = "200" ]; then
-  report_pass "Pocket ID (localhost:1411, status ${_pocketid_status:-${_pocketid_page}})"
+if [ -z "$PORT_POCKET_ID" ]; then
+  report_skip "Pocket ID - manifest port unavailable (see manifest WARN above)"
+elif [ "$_pocketid_status" = "204" ] || [ "$_pocketid_page" = "200" ]; then
+  report_pass "Pocket ID (localhost:${PORT_POCKET_ID}, status ${_pocketid_status:-${_pocketid_page}})"
 elif $systemnix_storm_mode; then
   report_storm_suspect "Pocket ID - health probes failed under I/O storm (io some avg60=${STORM_IO_AVG60}%; healthz '${_pocketid_status:-none}' / page '${_pocketid_page:-skipped}') - re-verify when calm"
 else
-  report_fail "Pocket ID (localhost:1411) - health probes failed (healthz: '${_pocketid_status:-none}', page: '${_pocketid_page:-skipped}')"
+  report_fail "Pocket ID (localhost:${PORT_POCKET_ID}) - health probes failed (healthz: '${_pocketid_status:-none}', page: '${_pocketid_page:-skipped}')"
 fi
 
 # Pocket ID: scan recent journal for SQLITE_BUSY or francis panics.
@@ -445,9 +512,13 @@ if [ -n "$_dns_config" ] && [ -r "$_dns_config" ]; then
   # is off (config key ignored / wrong binary), 403 proves it is armed.
   # Do NOT probe the block page for csrf form fields instead: the page
   # template emits csrf_token fields even with csrf disabled.
-  _dns_csrf_status=$(curl -s -o /tmp/.smoke-dns-csrf -w '%{http_code}' --max-time 10 \
-    -X POST -H 'Content-Type: application/json' -d '{}' \
-    http://127.0.0.1:9090/api/allow 2>/dev/null || true)
+  if [ -n "$PORT_DNSBLOCK_STATS" ]; then
+    _dns_csrf_status=$(curl -s -o /tmp/.smoke-dns-csrf -w '%{http_code}' --max-time 10 \
+      -X POST -H 'Content-Type: application/json' -d '{}' \
+      "http://127.0.0.1:${PORT_DNSBLOCK_STATS}/api/allow" 2>/dev/null || true)
+  else
+    _dns_csrf_status=""
+  fi
   if [ "$_dns_csrf_status" = "403" ]; then
     report_pass "DNS - csrf middleware armed (bare POST /api/allow -> 403)"
   elif [ "$_dns_csrf_status" = "401" ]; then
@@ -468,16 +539,20 @@ check_local "Immich" "2283" "/api/server/ping" "200" "" 2>/dev/null || true
 # (~5-11 min after restart, depending on attachment count). Retry to distinguish
 # "in startup backfill" (SKIP) from "crashed" (FAIL). Uses /healthz (fast) not
 # /api/stats (can take 10+ seconds on a fully loaded instance).
-if wait_for_200 "http://localhost:8085/healthz" 3 5; then
-  echo -e "${GREEN}PASS${NC} DiscordSync (localhost:8085) (200)"
-  PASS=$((PASS + 1))
-elif pgrep -f discordsync >/dev/null 2>&1; then
-  echo -e "${YELLOW}SKIP${NC} DiscordSync (localhost:8085) - process alive but API not ready (startup backfill in progress)"
-  SKIP=$((SKIP + 1))
+if [ -n "$PORT_DISCORDSYNC" ]; then
+  if wait_for_200 "http://localhost:${PORT_DISCORDSYNC}/healthz" 3 5; then
+    echo -e "${GREEN}PASS${NC} DiscordSync (localhost:${PORT_DISCORDSYNC}) (200)"
+    PASS=$((PASS + 1))
+  elif pgrep -f discordsync >/dev/null 2>&1; then
+    echo -e "${YELLOW}SKIP${NC} DiscordSync (localhost:${PORT_DISCORDSYNC}) - process alive but API not ready (startup backfill in progress)"
+    SKIP=$((SKIP + 1))
+  else
+    echo -e "${RED}FAIL${NC} DiscordSync (localhost:${PORT_DISCORDSYNC}) - process not running and API unreachable"
+    FAIL=$((FAIL + 1))
+    record_fail "DiscordSync (localhost:${PORT_DISCORDSYNC})"
+  fi
 else
-  echo -e "${RED}FAIL${NC} DiscordSync (localhost:8085) - process not running and API unreachable"
-  FAIL=$((FAIL + 1))
-  record_fail "DiscordSync (localhost:8085)"
+  report_skip "DiscordSync - manifest port unavailable (see manifest WARN above)"
 fi
 
 check_local "Crush Daily" "8081" "/api/health" "200" 2>/dev/null || true
@@ -490,6 +565,13 @@ check_local "Overview" "8083" "/" "200" "<html" 2>/dev/null || true
 # FAILing a deliberately-off service (red FAILs on known-off services breed alert fatigue).
 m365_enabled=false
 systemctl list-unit-files 'monitor365*' --no-legend 2>/dev/null | grep -q monitor365 && m365_enabled=true
+# Manifest port gate (plan T3.4): the m365 probes are port-driven; missing
+# port(s) degrade to the SAME skip-class as a disabled service — one WARN
+# names the cause, and every m365_enabled branch below keeps its semantics.
+if $m365_enabled && { [ -z "$PORT_M365_SERVER" ] || [ -z "$PORT_M365_METRICS" ]; }; then
+  m365_enabled=false
+  report_warn "Monitor365 - units enabled but manifest port(s) unavailable; probes degraded to SKIP (see manifest WARN above)"
+fi
 
 if $m365_enabled; then
   # Deploy-time warmup (2026-10-23): the deploy's switch restarts monitor365,
@@ -499,9 +581,9 @@ if $m365_enabled; then
   # endpoint returned 200 continuously afterwards. Poll to readiness first,
   # then keep the one-shot functional verdict unchanged — same discipline as
   # the Pocket ID and bank-sync probes above.
-  wait_for_200 "http://localhost:3001/health" 3 2 || true
-  check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
-  check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
+  wait_for_200 "http://localhost:${PORT_M365_SERVER}/health" 3 2 || true
+  check_local "Monitor365 API" "$PORT_M365_SERVER" "/health" "200" 2>/dev/null || true
+  check_local "Monitor365 UI" "$PORT_M365_SERVER" "/ui/" "200" "<html" 2>/dev/null || true
 else
   echo -e "${YELLOW}SKIP${NC} Monitor365 API/UI - service disabled (units absent from systemd)"
   SKIP=$((SKIP + 1))
@@ -515,7 +597,7 @@ check_local "SearXNG" "8889" "/healthz" "200" 2>/dev/null || true
 
 # SearXNG: functional search test (HTML mode - JSON API is disabled by design).
 # Write to file then grep - avoids pipefail SIGPIPE trap on large HTML bodies.
-if curl -s --compressed --max-time 10 -o /tmp/.smoke-searx "http://localhost:8889/search?q=test" 2>/dev/null; then
+if [ -n "$PORT_SEARXNG" ] && curl -s --compressed --max-time 10 -o /tmp/.smoke-searx "http://localhost:${PORT_SEARXNG}/search?q=test" 2>/dev/null; then
   if grep -qi 'article\|<h4\|result-default' /tmp/.smoke-searx 2>/dev/null; then
     report_pass "SearXNG - functional search returns results"
   else
@@ -720,8 +802,13 @@ fi
 # this leg FAILed the deploy (exit 3) while the app served fine. That
 # degradation is a WARN here (the agent timer + agent-activity collector
 # legs below own agent silence); only refused/DB-degraded is a FAIL.
-_bh_code=$(curl -s --compressed -o /tmp/.smoke-bh-health -w "%{http_code}" --max-time 10 "http://localhost:8087/health" 2>/dev/null || true)
-if [ "$_bh_code" = "200" ]; then
+_bh_code=""
+if [ -n "$PORT_BROWSERHISTORY" ]; then
+  _bh_code=$(curl -s --compressed -o /tmp/.smoke-bh-health -w "%{http_code}" --max-time 10 "http://localhost:${PORT_BROWSERHISTORY}/health" 2>/dev/null || true)
+fi
+if [ -z "$PORT_BROWSERHISTORY" ]; then
+  report_skip "Browser History - manifest port unavailable (see manifest WARN above)"
+elif [ "$_bh_code" = "200" ]; then
   report_pass "Browser History - /health 200 (server up, agents fresh)"
 elif [ "$_bh_code" = "503" ] && grep -q '"db":"ok"' /tmp/.smoke-bh-health 2>/dev/null; then
   report_warn "Browser History - /health 503 = agent-freshness decay (by design; DB ok, app serving). Agent silence is covered by the agent legs below"
@@ -775,12 +862,12 @@ fi
 # the browser-history-registration-smoke-selftest flake check — the
 # 400-open-gate regression branch is proven there against a stub server;
 # extracted so the fixture exercises the SAME code this gate runs).
-if unit_enabled browser-history.service; then
-  BRS_URL="http://localhost:8087" \
+if unit_enabled browser-history.service && [ -n "$PORT_BROWSERHISTORY" ]; then
+  BRS_URL="http://localhost:${PORT_BROWSERHISTORY}" \
     BRS_PASS=report_pass BRS_FAIL=report_fail BRS_WARN=report_warn \
     browser_history_registration_smoke || true
 else
-  report_skip "Browser History - registration-gate smoke skipped (service not deployed)"
+  report_skip "Browser History - registration-gate smoke skipped (service not deployed or manifest port unavailable)"
 fi
 
 # Paperless: the login page BODY proves the full Django + PostgreSQL + redis
@@ -1329,7 +1416,7 @@ fi
 # the large /metrics body.
 signoz_coverage_enabled=false
 unit_enabled signoz-coverage-metrics.service && signoz_coverage_enabled=true
-if $signoz_coverage_enabled; then
+if $signoz_coverage_enabled && [ -n "$PORT_NODEEXPORTER" ]; then
   # missing needs a retry window: OTel batching (~5s) + a just-restarted
   # service's first command mean the collector run immediately post-switch
   # can legitimately see missing=1 (e.g. a freshly-enforced registry entry's
@@ -1340,7 +1427,7 @@ if $signoz_coverage_enabled; then
   cov_errors=absent
   coverage_metrics=""
   for _attempt in 1 2 3; do
-    coverage_metrics=$(curl -s --compressed --max-time 15 http://localhost:9400/metrics 2>/dev/null || true)
+    coverage_metrics=$(curl -s --compressed --max-time 15 "http://localhost:${PORT_NODEEXPORTER}/metrics" 2>/dev/null || true)
     if [ -n "$coverage_metrics" ]; then
       cov_missing=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_traces_missing \K[0-9]+' || echo absent)
       cov_errors=$(printf '%s\n' "$coverage_metrics" | grep -oP '^signoz_coverage_scrape_errors \K[0-9]+' || echo absent)
@@ -1361,7 +1448,7 @@ if $signoz_coverage_enabled; then
     *) report_fail "SigNoz Coverage - scrape_errors $cov_errors (ClickHouse queries failing: journalctl -u signoz-coverage-metrics)" ;;
     esac
   else
-    report_fail "SigNoz Coverage - node-exporter :9400 unreachable"
+    report_fail "SigNoz Coverage - node-exporter :${PORT_NODEEXPORTER} unreachable"
   fi
 else
   report_skip "SigNoz Coverage - module disabled (unit absent)"
@@ -1411,7 +1498,7 @@ echo "=== Functional Checks ==="
 
 # Crush Daily: reports should exist after first collection.
 # The API returns a JSON array of date strings: ["2026-07-19", "2026-07-18", ...]
-if crush_reports=$(curl -s --compressed --max-time 5 "http://localhost:8081/api/reports" 2>/dev/null); then
+if [ -n "$PORT_CRUSH_DAILY" ] && crush_reports=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_CRUSH_DAILY}/api/reports" 2>/dev/null); then
   if echo "$crush_reports" | grep -qE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"'; then
     echo -e "${GREEN}PASS${NC} Crush Daily has reports"
     PASS=$((PASS + 1))
@@ -1423,7 +1510,7 @@ if crush_reports=$(curl -s --compressed --max-time 5 "http://localhost:8081/api/
     # zero-data reports can sit silently for weeks.
     latest_date=$(echo "$crush_reports" | grep -oE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"' | head -1 | tr -d '"')
     if [ -n "$latest_date" ] &&
-      curl -s --compressed --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null &&
+      curl -s --compressed --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:${PORT_CRUSH_DAILY}/api/reports/$latest_date" 2>/dev/null &&
       grep -qE '"session_count":[ ]*[1-9][0-9]*' /tmp/.smoke-crush-report; then
       echo -e "${GREEN}PASS${NC} Crush Daily latest report ($latest_date) has session_count >0"
       PASS=$((PASS + 1))
@@ -1449,7 +1536,7 @@ fi
 # bytes (embedded data) which bash command-substitution silently strips,
 # corrupting the JSON and making grep miss the pattern. Use grep -a (treat
 # binary as text) for the same reason.
-if curl -s --compressed --max-time 15 -o /tmp/.smoke-discordsync "http://localhost:8085/api/stats" 2>/dev/null; then
+if [ -n "$PORT_DISCORDSYNC" ] && curl -s --compressed --max-time 15 -o /tmp/.smoke-discordsync "http://localhost:${PORT_DISCORDSYNC}/api/stats" 2>/dev/null; then
   if grep -qa '"guilds"' /tmp/.smoke-discordsync 2>/dev/null; then
     echo -e "${GREEN}PASS${NC} DiscordSync API functional (stats endpoint returns data)"
     PASS=$((PASS + 1))
@@ -1537,7 +1624,7 @@ if awk '$1 !~ /^#/ && $2 == "/var/lib/clickhouse" { found = 1 } END { exit !foun
 fi
 
 # SigNoz: impersonation mode must be active (auth delegated to Caddy + Pocket ID)
-if signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/global/config" 2>/dev/null); then
+if [ -n "$PORT_SIGNOZ" ] && signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_SIGNOZ}/api/v1/global/config" 2>/dev/null); then
   if echo "$signoz_config" | grep -q '"impersonation"'; then
     if echo "$signoz_config" | grep -q '"enabled": *true'; then
       echo -e "${GREEN}PASS${NC} SigNoz impersonation mode active (Pocket ID is sole auth boundary)"
@@ -1552,12 +1639,12 @@ if signoz_config=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/
     SKIP=$((SKIP + 1))
   fi
 else
-  echo -e "${YELLOW}SKIP${NC} SigNoz not reachable on localhost:8080"
+  echo -e "${YELLOW}SKIP${NC} SigNoz not reachable on localhost:${PORT_SIGNOZ:-?} (or manifest port unavailable)"
   SKIP=$((SKIP + 1))
 fi
 
 # SigNoz: alert rules must be provisioned (>15 rules expected)
-if signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/rules" 2>/dev/null); then
+if [ -n "$PORT_SIGNOZ" ] && signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_SIGNOZ}/api/v1/rules" 2>/dev/null); then
   RULE_COUNT=$(echo "$signoz_rules" | jq -r '.data.rules | length' 2>/dev/null || echo "0")
   RULE_COUNT="${RULE_COUNT:-0}"
   if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
@@ -1605,7 +1692,7 @@ fi
 # incident (e.g. DAS-dependent units through the pool outage) is a legitimate
 # long-firing state; the point is VISIBILITY at every deploy: a rule that can
 # never resolve is usually a broken query or an unacknowledged outage.
-if signoz_alerts_json=$(curl -s --compressed --max-time 5 "http://localhost:8080/api/v1/alerts" 2>/dev/null) &&
+if [ -n "$PORT_SIGNOZ" ] && signoz_alerts_json=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_SIGNOZ}/api/v1/alerts" 2>/dev/null) &&
   [ -n "$signoz_alerts_json" ]; then
   LONG_FIRING=$(echo "$signoz_alerts_json" | jq -r '
     .data[]?
@@ -1625,11 +1712,11 @@ fi
 # above). POST /v1/embeddings returns a 1024-dim vector; POST /v1/rerank must
 # rank the correct document first. These catch a "healthy but wrong model"
 # regression (model swapped without the alias changing).
-if $llama_rag_enabled; then
+if $llama_rag_enabled && [ -n "$PORT_LLM_EMBED" ]; then
   if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmemb -w "%{http_code}" \
     -H "Content-Type: application/json" \
     -d '{"input":"test document"}' \
-    "http://localhost:8848/v1/embeddings" 2>/dev/null | grep -q "200"; then
+    "http://localhost:${PORT_LLM_EMBED}/v1/embeddings" 2>/dev/null | grep -q "200"; then
     if jq -e '.data[0].embedding | length == 1024' /tmp/.smoke-lmemb >/dev/null 2>&1; then
       report_pass "llama.cpp Embeddings - /v1/embeddings returns a 1024-dim vector"
     else
@@ -1639,11 +1726,11 @@ if $llama_rag_enabled; then
     report_fail "llama.cpp Embeddings - /v1/embeddings unreachable (journalctl -u llama-embeddings -n 30)"
   fi
 
-  if $llama_rag_reranker; then
+  if $llama_rag_reranker && [ -n "$PORT_LLM_RERANK" ]; then
     if curl -s --compressed --max-time 30 -o /tmp/.smoke-lmrr -w "%{http_code}" \
       -H "Content-Type: application/json" \
       -d '{"model":"bge-reranker-v2-m3","query":"what is the capital of france","documents":["paris is the capital of france","london is the capital of england"]}' \
-      "http://localhost:8849/v1/rerank" 2>/dev/null | grep -q "200"; then
+      "http://localhost:${PORT_LLM_RERANK}/v1/rerank" 2>/dev/null | grep -q "200"; then
       if jq -e '.results[0].index == 0' /tmp/.smoke-lmrr >/dev/null 2>&1; then
         report_pass "llama.cpp Reranker - /v1/rerank ranks the correct document first"
       else
@@ -1665,8 +1752,8 @@ echo "--- Monitor365 Agent ↔ Server Connectivity ---"
 m365_agent_ok=false
 m365_server_ok=false
 
-# Check 1: Agent metrics endpoint (port 9421) - verifies agent process is alive
-if curl -sf -m 5 -o /dev/null "http://localhost:9421/metrics" 2>/dev/null; then
+# Check 1: Agent metrics endpoint - verifies agent process is alive
+if curl -sf -m 5 -o /dev/null "http://localhost:${PORT_M365_METRICS}/metrics" 2>/dev/null; then
   : # agent alive
 elif ! $m365_enabled; then
   : # disabled - reported below, no restart attempt on absent units
@@ -1677,18 +1764,18 @@ else
   sleep 10
 fi
 
-# Check 2: Agent metrics endpoint (port 9421)
-if curl -sf -m 5 -o /dev/null "http://localhost:9421/metrics" 2>/dev/null; then
-  echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:9421)"
+# Check 2: Agent metrics endpoint
+if curl -sf -m 5 -o /dev/null "http://localhost:${PORT_M365_METRICS}/metrics" 2>/dev/null; then
+  echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:${PORT_M365_METRICS})"
   m365_agent_ok=true
   PASS=$((PASS + 1))
 elif ! $m365_enabled; then
   echo -e "${YELLOW}SKIP${NC} Monitor365 agent - service disabled (units absent from systemd)"
   SKIP=$((SKIP + 1))
 else
-  echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9421) - agent may be crashed or circuit-breaker deadlocked"
+  echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:${PORT_M365_METRICS}) - agent may be crashed or circuit-breaker deadlocked"
   FAIL=$((FAIL + 1))
-  record_fail "Monitor365 agent metrics NOT responding (localhost:9421)"
+  record_fail "Monitor365 agent metrics NOT responding (localhost:${PORT_M365_METRICS})"
 fi
 
 # Check 3: Server reports agent as connected device.
@@ -1697,13 +1784,13 @@ fi
 # This avoids false FAILs right after deploy (agent was just started).
 m365_check_server() {
   local health
-  health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health" 2>/dev/null) || return 3
+  health=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_M365_SERVER}/health" 2>/dev/null) || return 3
   echo "$health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"' && return 0
   echo "$health" | grep -q '"realtime":"connected (0 devices)"' && return 1
   return 2
 }
 
-if m365_health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
+if m365_health=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_M365_SERVER}/health" 2>/dev/null); then
   if echo "$m365_health" | grep -q '"realtime"'; then
     if echo "$m365_health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
       echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server"
@@ -1731,7 +1818,7 @@ if m365_health=$(curl -s --compressed --max-time 5 "http://localhost:3001/health
     SKIP=$((SKIP + 1))
   fi
 else
-  echo -e "${YELLOW}SKIP${NC} Monitor365 server not reachable on localhost:3001"
+  echo -e "${YELLOW}SKIP${NC} Monitor365 server not reachable on localhost:${PORT_M365_SERVER:-?}"
   SKIP=$((SKIP + 1))
 fi
 
@@ -1781,7 +1868,7 @@ fi
 # The watcher and health service MUST share the same state files. A 200 with
 # total_operations: 0 on a system that's been renaming for weeks means split-brain
 # (watcher writing to ~/.renamer-history.json, dashboard reading dataDir/history.json).
-if renamer_status=$(curl -s --compressed --max-time 5 "http://localhost:8086/status" 2>/dev/null); then
+if [ -n "$PORT_RENAMER" ] && renamer_status=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_RENAMER}/status" 2>/dev/null); then
   total_ops=$(echo "$renamer_status" | grep -oE '"total_operations":[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   if [ "$total_ops" -gt 0 ] 2>/dev/null; then
     echo -e "${GREEN}PASS${NC} File Renamer dashboard has real history ($total_ops operations)"
@@ -1791,7 +1878,7 @@ if renamer_status=$(curl -s --compressed --max-time 5 "http://localhost:8086/sta
     SKIP=$((SKIP + 1))
   fi
 else
-  echo -e "${YELLOW}SKIP${NC} File Renamer dashboard not reachable on localhost:8086"
+  echo -e "${YELLOW}SKIP${NC} File Renamer dashboard not reachable on localhost:${PORT_RENAMER:-?} (or manifest port unavailable)"
   SKIP=$((SKIP + 1))
 fi
 

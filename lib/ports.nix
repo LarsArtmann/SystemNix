@@ -1,266 +1,286 @@
+# Port registry — the single allocator for every TCP port this fleet
+# binds or dials (Critical Rule: never hardcode localhost:PORT).
+#
+# INVARIANTS (enforced at import — lib/ports.nix is a bare attrset import,
+# so validation runs on EVERY consumer, zero call-site changes):
+#   - every value is an INT in 1..65535 (mkPort-class range guarantee,
+#     plan T11 2026-11-08: validation-on-import instead of an mkPort
+#     wrapper over 78 call sites — same invariant, no churn)
+#   - value-uniqueness stays in lib/default.nix (needs lib)
 {
-  ports = {
-    pocket-id = 1411;
-    pocket-id-metrics = 9464;
-    oauth2-proxy = 4180;
-    caddy-metrics = 2019;
+  ports =
+    let
+      raw = {
+        pocket-id = 1411;
+        pocket-id-metrics = 9464;
+        oauth2-proxy = 4180;
+        caddy-metrics = 2019;
 
-    # NetBird mesh VPN client (outbound WireGuard tunnel wt0 — see
-    # modules/nixos/services/netbird.nix; control plane on the pbx server)
-    netbird = 51820;
-    # NetBird client local Prometheus /metrics endpoint (netbird >=0.67,
-    # `--enable-local-metrics` / config.json LocalMetrics*). 9465, NOT the
-    # netbird default 9191: ocis binds the whole 9100-9304 loopback band at
-    # startup (see the gatus band-vacation note below; monitor365 paid for
-    # exactly this collision 2026-10-27).
-    netbird-metrics = 9465;
+        # NetBird mesh VPN client (outbound WireGuard tunnel wt0 — see
+        # modules/nixos/services/netbird.nix; control plane on the pbx server)
+        netbird = 51820;
+        # NetBird client local Prometheus /metrics endpoint (netbird >=0.67,
+        # `--enable-local-metrics` / config.json LocalMetrics*). 9465, NOT the
+        # netbird default 9191: ocis binds the whole 9100-9304 loopback band at
+        # startup (see the gatus band-vacation note below; monitor365 paid for
+        # exactly this collision 2026-10-27).
+        netbird-metrics = 9465;
 
-    dns-blocker = 53;
-    dns-blocker-stats = 9090;
-    dns-blocker-block = 8050;
+        dns-blocker = 53;
+        dns-blocker-stats = 9090;
+        dns-blocker-block = 8050;
 
-    forgejo = 3000;
+        forgejo = 3000;
 
-    # SMTP submission from local services to the Postfix null-client relay
-    # (modules/nixos/services/mail-relay.nix) — loopback only, never exposed.
-    mail-relay = 25;
+        # SMTP submission from local services to the Postfix null-client relay
+        # (modules/nixos/services/mail-relay.nix) — loopback only, never exposed.
+        mail-relay = 25;
 
-    immich = 2283;
-    redis = 6379;
+        immich = 2283;
+        redis = 6379;
 
-    paperless = 2892;
-    tika = 9998;
-    gotenberg = 3199;
+        paperless = 2892;
+        tika = 9998;
+        gotenberg = 3199;
 
-    monitor365-server = 3001;
-    # Moved 9191 → 9421 (2026-10-27): ocis binds the whole 9100-9304 loopback
-    # band; the fleet vacates it (see the band-vacation note at gatus).
-    monitor365-metrics = 9421;
+        monitor365-server = 3001;
+        # Moved 9191 → 9421 (2026-10-27): ocis binds the whole 9100-9304 loopback
+        # band; the fleet vacates it (see the band-vacation note at gatus).
+        monitor365-metrics = 9421;
 
-    openseo = 3002;
+        openseo = 3002;
 
-    signoz = 8080;
-    signoz-otlp-grpc = 4317;
-    signoz-otlp-http = 4318;
-    # Moved 9100 → 9400 (2026-10-27): ocis's web service binds the ocis-default
-    # loopback 9100 (its whole internal band is 9100-9304); the collector
-    # metrics endpoint vacates the band.
-    signoz-node-exporter = 9400;
-    signoz-collector-metrics = 8888;
-    signoz-clickhouse = 9000;
-    # ClickHouse HTTP interface (the /ping gatus check and any HTTP client);
-    # the native TCP protocol keeps 9000 above.
-    signoz-clickhouse-http = 8123;
-    signoz-clickhouse-metrics = 9363;
-    signoz-clickhouse-keeper = 9181;
-    # Moved 9234 → 9239 → 9430 (2026-10-26/27): opencloud's embedded NATS
-    # binds the ocis-default loopback 9234 and opencloud 7.2.4 ignores
-    # NATS_PORT. 9239 turned out to ALSO be inside ocis's 9100-9304 internal
-    # band, so keeper raft lands at 9430, fully outside it.
-    signoz-clickhouse-raft = 9430;
+        signoz = 8080;
+        signoz-otlp-grpc = 4317;
+        signoz-otlp-http = 4318;
+        # Moved 9100 → 9400 (2026-10-27): ocis's web service binds the ocis-default
+        # loopback 9100 (its whole internal band is 9100-9304); the collector
+        # metrics endpoint vacates the band.
+        signoz-node-exporter = 9400;
+        signoz-collector-metrics = 8888;
+        signoz-clickhouse = 9000;
+        # ClickHouse HTTP interface (the /ping gatus check and any HTTP client);
+        # the native TCP protocol keeps 9000 above.
+        signoz-clickhouse-http = 8123;
+        signoz-clickhouse-metrics = 9363;
+        signoz-clickhouse-keeper = 9181;
+        # Moved 9234 → 9239 → 9430 (2026-10-26/27): opencloud's embedded NATS
+        # binds the ocis-default loopback 9234 and opencloud 7.2.4 ignores
+        # NATS_PORT. 9239 turned out to ALSO be inside ocis's 9100-9304 internal
+        # band, so keeper raft lands at 9430, fully outside it.
+        signoz-clickhouse-raft = 9430;
 
-    taskchampion = 10222;
+        taskchampion = 10222;
 
-    # Band vacation (2026-10-27): opencloud (ocis) binds ~86 loopback ports
-    # across 9100-9304 at startup (binary defaults, not configurable en
-    # masse; NATS_PORT was a verified no-op in 7.2.4). Every fleet listener
-    # that lived in that band moved to 94xx, keeping pairs adjacent:
-    # gatus 9110 → 9410, relay 9111 → 9411, pma 9190 → 9420,
-    # monitor365-metrics 9191 → 9421, collector metrics 9100 → 9400,
-    # keeper raft → 9430. Do NOT register new fleet ports inside 9100-9304.
-    gatus = 9410;
-    # Local Discord-webhook gate for gatus alerts (loopback only; T-007).
-    gatusAlertRelay = 9411;
+        # Band vacation (2026-10-27): opencloud (ocis) binds ~86 loopback ports
+        # across 9100-9304 at startup (binary defaults, not configurable en
+        # masse; NATS_PORT was a verified no-op in 7.2.4). Every fleet listener
+        # that lived in that band moved to 94xx, keeping pairs adjacent:
+        # gatus 9110 → 9410, relay 9111 → 9411, pma 9190 → 9420,
+        # monitor365-metrics 9191 → 9421, collector metrics 9100 → 9400,
+        # keeper raft → 9430. Do NOT register new fleet ports inside 9100-9304.
+        gatus = 9410;
+        # Local Discord-webhook gate for gatus alerts (loopback only; T-007).
+        gatusAlertRelay = 9411;
 
-    emeet-pixyd = 8090;
+        emeet-pixyd = 8090;
 
-    minecraft = 25565;
+        minecraft = 25565;
 
-    crush-daily = 8081;
+        crush-daily = 8081;
 
-    bank-sync = 8097;
+        bank-sync = 8097;
 
-    overview = 8083;
-    # Moved 9190 → 9420 (2026-10-27): inside ocis's 9100-9304 internal band
-    # (thumbnails service binds 9190); see the band-vacation note at gatus.
-    pma-health = 9420;
+        overview = 8083;
+        # Moved 9190 → 9420 (2026-10-27): inside ocis's 9100-9304 internal band
+        # (thumbnails service binds 9190); see the band-vacation note at gatus.
+        pma-health = 9420;
 
-    activitywatch = 5600;
+        activitywatch = 5600;
 
-    discordsync-api = 8085;
+        discordsync-api = 8085;
 
-    # Reserved for the upstream llamaServer unit (services.vision-review-agent).
-    # evo-x2 does NOT enable it — the daemon reviews via llama-vlm's captioner
-    # endpoint — but the wrapper module still defaults the option to the
-    # registered port so a future llamaServer.enable stays registry-correct.
-    visionreviewd-llama = 8390;
+        # Reserved for the upstream llamaServer unit (services.vision-review-agent).
+        # evo-x2 does NOT enable it — the daemon reviews via llama-vlm's captioner
+        # endpoint — but the wrapper module still defaults the option to the
+        # registered port so a future llamaServer.enable stays registry-correct.
+        visionreviewd-llama = 8390;
 
-    file-and-image-renamer-health = 8086;
+        file-and-image-renamer-health = 8086;
 
-    # Upstream renamer's watcher health endpoint (watcherHealthAddr,
-    # ADR-0005) defaulted to 127.0.0.1:8087 — browser-history's registered
-    # port; the 2026-10-29 gen-965 switch lost the bind race (EADDRINUSE
-    # killed browser-history). Dedicated registry port instead.
-    file-and-image-renamer-watcher = 8089;
+        # Upstream renamer's watcher health endpoint (watcherHealthAddr,
+        # ADR-0005) defaulted to 127.0.0.1:8087 — browser-history's registered
+        # port; the 2026-10-29 gen-965 switch lost the bind race (EADDRINUSE
+        # killed browser-history). Dedicated registry port instead.
+        file-and-image-renamer-watcher = 8089;
 
-    browser-history = 8087;
+        browser-history = 8087;
 
-    papdashboard = 8088;
+        papdashboard = 8088;
 
-    searxng = 8889;
+        searxng = 8889;
 
-    # journal (Hauptbuch dashboard) — `journal serve` systemd unit binds
-    # loopback ONLY (upstream refuses non-loopback until T16 auth); the
-    # registry vHost (journal.home.lan, protected layer) fronts it via
-    # oauth2-proxy on the same host. Upstream CLI default, now deploy-owned.
-    journalServe = 8484;
+        # journal (Hauptbuch dashboard) — `journal serve` systemd unit binds
+        # loopback ONLY (upstream refuses non-loopback until T16 auth); the
+        # registry vHost (journal.home.lan, protected layer) fronts it via
+        # oauth2-proxy on the same host. Upstream CLI default, now deploy-owned.
+        journalServe = 8484;
 
-    # media-atlas (MediaAtlas federation hub) — `atlas serve` systemd unit
-    # binds loopback ONLY; the hub's own single API key (OQ-5) gates /api,
-    # /events and /thumb, so the registry vHost (map.home.lan, plain layer —
-    # caddy-side auth would double-gate) fronts it TLS-only. Dev instances
-    # squat 8491/8492 by convention; production takes the next free 84xx.
-    media-atlas = 8493;
+        # media-atlas (MediaAtlas federation hub) — `atlas serve` systemd unit
+        # binds loopback ONLY; the hub's own single API key (OQ-5) gates /api,
+        # /events and /thumb, so the registry vHost (map.home.lan, plain layer —
+        # caddy-side auth would double-gate) fronts it TLS-only. Dev instances
+        # squat 8491/8492 by convention; production takes the next free 84xx.
+        media-atlas = 8493;
 
-    # Immich machine-learning service (the hub dials it for text-query
-    # embeddings, --immich-ml-url; Immich's own upstream default, dial-only
-    # from the hub — immich.nix owns the bind).
-    immich-ml = 3003;
+        # Immich machine-learning service (the hub dials it for text-query
+        # embeddings, --immich-ml-url; Immich's own upstream default, dial-only
+        # from the hub — immich.nix owns the bind).
+        immich-ml = 3003;
 
-    attic = 8200;
+        attic = 8200;
 
-    # FastFlowLM NPU LLM server (OpenAI-compatible) — socket-activated frontend
-    # on 52625, backend on 52626. The proxy unit forwards only when the
-    # backend binds, so 52626 is internal.
-    fastflowlm = 52625;
-    fastflowlm-backend = 52626;
+        # FastFlowLM NPU LLM server (OpenAI-compatible) — socket-activated frontend
+        # on 52625, backend on 52626. The proxy unit forwards only when the
+        # backend binds, so 52626 is internal.
+        fastflowlm = 52625;
+        fastflowlm-backend = 52626;
 
-    # Review-only systemd tooling — exposed on LAN for ops review, no auth.
-    # systemd-graph serves the live D-Bus-driven dependency graph UI.
-    # systemd-timer-monitor is a static HTML report refreshed by a timer
-    # (no port needed; served as a static dir by Caddy via the file_server).
-    systemd-graph = 8847;
+        # Review-only systemd tooling — exposed on LAN for ops review, no auth.
+        # systemd-graph serves the live D-Bus-driven dependency graph UI.
+        # systemd-timer-monitor is a static HTML report refreshed by a timer
+        # (no port needed; served as a static dir by Caddy via the file_server).
+        systemd-graph = 8847;
 
-    # llama.cpp RAG servers (ROCm GPU) — embeddings for Paperless AI and
-    # broader RAG pipelines. Two separate instances because llama.cpp's
-    # --embedding and --reranking modes are mutually exclusive per server
-    # instance. RERANKER LEG DROPPED 2026-10-02 (plan A13, consumerless —
-    # zero /v1/rerank callers exist); the port stays RESERVED so the
-    # dark-guard keeps catching rogues on it and no other service claims it.
-    llama-embeddings = 8848;
-    llama-reranker = 8849;
+        # llama.cpp RAG servers (ROCm GPU) — embeddings for Paperless AI and
+        # broader RAG pipelines. Two separate instances because llama.cpp's
+        # --embedding and --reranking modes are mutually exclusive per server
+        # instance. RERANKER LEG DROPPED 2026-10-02 (plan A13, consumerless —
+        # zero /v1/rerank callers exist); the port stays RESERVED so the
+        # dark-guard keeps catching rogues on it and no other service claims it.
+        llama-embeddings = 8848;
+        llama-reranker = 8849;
 
-    # llama.cpp chat server (ROCm GPU, always-on) — the interactive agent
-    # brain for InboxClean's dashboard chat (services.llama-chat). OpenAI-
-    # compatible /v1 with native tool calls; distinct from FastFlowLM's
-    # socket-activated NPU endpoint (:52625, async workloads only).
-    llama-chat = 8850;
+        # llama.cpp chat server (ROCm GPU, always-on) — the interactive agent
+        # brain for InboxClean's dashboard chat (services.llama-chat). OpenAI-
+        # compatible /v1 with native tool calls; distinct from FastFlowLM's
+        # socket-activated NPU endpoint (:52625, async workloads only).
+        llama-chat = 8850;
 
-    # llama.cpp vision-language servers (CPU, socket-activated) — NSFW-audit
-    # captioning/verdict stack (services.llama-vlm). Public socket on 812x,
-    # internal backend on 813x (the socat bridge forwards only when the
-    # backend binds). NOTE: 8123 is signoz-clickhouse-http — never use 812x
-    # for anything ClickHouse-adjacent.
-    llama-vlm-e4b = 8127;
-    llama-vlm-e4b-backend = 8137;
-    llama-vlm-cap = 8128;
-    llama-vlm-cap-backend = 8138;
+        # llama.cpp vision-language servers (CPU, socket-activated) — NSFW-audit
+        # captioning/verdict stack (services.llama-vlm). Public socket on 812x,
+        # internal backend on 813x (the socat bridge forwards only when the
+        # backend binds). NOTE: 8123 is signoz-clickhouse-http — never use 812x
+        # for anything ClickHouse-adjacent.
+        llama-vlm-e4b = 8127;
+        llama-vlm-e4b-backend = 8137;
+        llama-vlm-cap = 8128;
+        llama-vlm-cap-backend = 8138;
 
-    # Kith CRM — LarsArtmann's own event-sourced CRM (services.crm-server,
-    # modules/nixos/services/crm.nix), loopback-only behind the crm vHost.
-    # Same port the pre-module deploy unit and the CV syncer's base_url
-    # always used (2026-09-18 standing decision) — the registry entry makes
-    # it eval-enforced instead of hardcoded.
-    crm = 8091;
+        # Kith CRM — LarsArtmann's own event-sourced CRM (services.crm-server,
+        # modules/nixos/services/crm.nix), loopback-only behind the crm vHost.
+        # Same port the pre-module deploy unit and the CV syncer's base_url
+        # always used (2026-09-18 standing decision) — the registry entry makes
+        # it eval-enforced instead of hardcoded.
+        crm = 8091;
 
-    # CV — resume generator + career pipeline server (services.cv-server)
-    cv = 8098;
+        # CV — resume generator + career pipeline server (services.cv-server)
+        cv = 8098;
 
-    # InboxClean — Gmail AI assistant web dashboard (services.inboxclean)
-    inboxclean = 8099;
+        # InboxClean — Gmail AI assistant web dashboard (services.inboxclean)
+        inboxclean = 8099;
 
-    # go-taskqueue — read-only tq serve dashboard (services.tq-agent-pool)
-    tq = 8100;
+        # go-taskqueue — read-only tq serve dashboard (services.tq-agent-pool)
+        tq = 8100;
 
-    # Miniflux — self-hosted RSS reader (services.miniflux), loopback-only;
-    # Caddy proxies rss.home.lan to it.
-    miniflux = 8101;
+        # Miniflux — self-hosted RSS reader (services.miniflux), loopback-only;
+        # Caddy proxies rss.home.lan to it.
+        miniflux = 8101;
 
-    # mr-sync — read-only repo-portfolio web dashboard
-    # (services.mr-sync-dashboard), loopback-only; Caddy proxies
-    # mr-sync.home.lan to it. 7331 is the tool's own default port
-    # (mr-sync dashboard).
-    mr-sync = 7331;
+        # mr-sync — read-only repo-portfolio web dashboard
+        # (services.mr-sync-dashboard), loopback-only; Caddy proxies
+        # mr-sync.home.lan to it. 7331 is the tool's own default port
+        # (mr-sync dashboard).
+        mr-sync = 7331;
 
-    # GeoMetrikks — reverse-proxy access-log geo analytics (services.geometrikks),
-    # loopback-only; Caddy proxies geo.home.lan to it.
-    geometrikks = 8102;
+        # GeoMetrikks — reverse-proxy access-log geo analytics (services.geometrikks),
+        # loopback-only; Caddy proxies geo.home.lan to it.
+        geometrikks = 8102;
 
-    # health-dashboard — federated go-health hub (services.health-dashboard),
-    # loopback-only; Caddy proxies health.home.lan to it. Serves the merged
-    # dashboard + kubelet probes; its readiness merges every federated remote.
-    health-dashboard = 8103;
+        # health-dashboard — federated go-health hub (services.health-dashboard),
+        # loopback-only; Caddy proxies health.home.lan to it. Serves the merged
+        # dashboard + kubelet probes; its readiness merges every federated remote.
+        health-dashboard = 8103;
 
-    # nsfw-classifier — NSFW image-filter server (services.nsfw-classifier),
-    # bound to all interfaces so the browser extension's auto-discovery can
-    # reach it at nsfw.home.lan:<port> (nsfw-extension/url-utils.js
-    # DEFAULT_SERVER_URLS); the /classify endpoints gate on the pairing
-    # token from --pair-token auto.
-    nsfw = 8104;
+        # nsfw-classifier — NSFW image-filter server (services.nsfw-classifier),
+        # bound to all interfaces so the browser extension's auto-discovery can
+        # reach it at nsfw.home.lan:<port> (nsfw-extension/url-utils.js
+        # DEFAULT_SERVER_URLS); the /classify endpoints gate on the pairing
+        # token from --pair-token auto.
+        nsfw = 8104;
 
-    # indexer-web — event-sourced docs index WebUI (services.indexer-web),
-    # loopback-only; Caddy proxies index.home.lan to it. Binary from the
-    # index flake (github:LarsArtmann/index).
-    indexer-web = 8105;
+        # indexer-web — event-sourced docs index WebUI (services.indexer-web),
+        # loopback-only; Caddy proxies index.home.lan to it. Binary from the
+        # index flake (github:LarsArtmann/index).
+        indexer-web = 8105;
 
-    # paperless-gpt — AI metadata enrichment + custom-field extraction
-    # bridge (services.paperless-gpt). Loopback ONLY: the embedded web UI
-    # has NO built-in auth, so it must never gain a vHost.
-    paperless-gpt = 8106;
+        # paperless-gpt — AI metadata enrichment + custom-field extraction
+        # bridge (services.paperless-gpt). Loopback ONLY: the embedded web UI
+        # has NO built-in auth, so it must never gain a vHost.
+        paperless-gpt = 8106;
 
-    # CrowdSec security engine (services.crowdsec) — agent + LAPI (SQLite
-    # decisions DB). Loopback ONLY: GeoMetrikks and the future firewall
-    # bouncer are same-host consumers. 8080 is the upstream default but is
-    # SigNoz's here; 8082 is the first live-free loopback port.
-    crowdsec-lapi = 8082;
+        # CrowdSec security engine (services.crowdsec) — agent + LAPI (SQLite
+        # decisions DB). Loopback ONLY: GeoMetrikks and the future firewall
+        # bouncer are same-host consumers. 8080 is the upstream default but is
+        # SigNoz's here; 8082 is the first live-free loopback port.
+        crowdsec-lapi = 8082;
 
-    # CrowdSec Prometheus endpoint (level=full, loopback-only). Upstream
-    # default 6060 is TAKEN by an unidentified Go pprof listener on *:6060
-    # (live-probed 2026-10-14, /debug/pprof/ answers 200) — do NOT reuse it.
-    crowdsec-metrics = 6061;
+        # CrowdSec Prometheus endpoint (level=full, loopback-only). Upstream
+        # default 6060 is TAKEN by an unidentified Go pprof listener on *:6060
+        # (live-probed 2026-10-14, /debug/pprof/ answers 200) — do NOT reuse it.
+        crowdsec-metrics = 6061;
 
-    # ai-meter — transparent metering proxy for every OpenAI-compatible AI
-    # call on the host (services.ai-meter). Proxy on 8107 (per-client
-    # Bearer keys), admin plane (Prometheus /metrics + /health) on 8108 —
-    # both loopback-only, no vHost by design.
-    ai-meter = 8107;
-    ai-meter-metrics = 8108;
+        # ai-meter — transparent metering proxy for every OpenAI-compatible AI
+        # call on the host (services.ai-meter). Proxy on 8107 (per-client
+        # Bearer keys), admin plane (Prometheus /metrics + /health) on 8108 —
+        # both loopback-only, no vHost by design.
+        ai-meter = 8107;
+        ai-meter-metrics = 8108;
 
-    # quotaboard — AI coding-plan quota dashboard (user service from the
-    # quotaboard flake input, wired in desktop/quickshell.nix). Loopback
-    # ONLY: the web UI has no auth by design (single-user desktop tool);
-    # the DMS bar widget reads the JSON API here. 8791 is the app's own
-    # compiled-in default — registering it makes the eval-enforced port
-    # registry the single owner of record.
-    quotaboard = 8791;
+        # quotaboard — AI coding-plan quota dashboard (user service from the
+        # quotaboard flake input, wired in desktop/quickshell.nix). Loopback
+        # ONLY: the web UI has no auth by design (single-user desktop tool);
+        # the DMS bar widget reads the JSON API here. 8791 is the app's own
+        # compiled-in default — registering it makes the eval-enforced port
+        # registry the single owner of record.
+        quotaboard = 8791;
 
-    # OpenCloud — self-hosted file sync & share platform. Moved 9100 → 9500
-    # (2026-11-02, strace + /proc/net/tcp proven): the standalone `web`
-    # service binds the ocis-compiled default loopback 9100 at startup, and
-    # under deploy-time load it wins the race against the proxy — whose
-    # PROXY_HTTP_ADDR IS honored (bind attempts follow the configured port
-    # exactly) — so the proxy bind fails EADDRINUSE → CSP-reload panic
-    # cascade → process exit. The 2026-10-27 "proxy ignores env, binds
-    # compiled-in 9100" note misread that web listener as the proxy. 9500
-    # sits outside the ocis 9100-9304 internal band, so proxy (9500) and
-    # web (ocis default 9100) no longer collide; loopback-only, Caddy
-    # proxies cloud.home.lan here.
-    opencloud = 9500;
+        # OpenCloud — self-hosted file sync & share platform. Moved 9100 → 9500
+        # (2026-11-02, strace + /proc/net/tcp proven): the standalone `web`
+        # service binds the ocis-compiled default loopback 9100 at startup, and
+        # under deploy-time load it wins the race against the proxy — whose
+        # PROXY_HTTP_ADDR IS honored (bind attempts follow the configured port
+        # exactly) — so the proxy bind fails EADDRINUSE → CSP-reload panic
+        # cascade → process exit. The 2026-10-27 "proxy ignores env, binds
+        # compiled-in 9100" note misread that web listener as the proxy. 9500
+        # sits outside the ocis 9100-9304 internal band, so proxy (9500) and
+        # web (ocis default 9100) no longer collide; loopback-only, Caddy
+        # proxies cloud.home.lan here.
+        opencloud = 9500;
 
-    # OpenCloud's embedded NATS JetStream — binds its compiled-in loopback
-    # default 9233 in opencloud 7.2.4 (live 2026-10-27: NATS INFO answers on
-    # 9233; 9234 is an ocis HTTP service); NATS_PORT is a NO-OP. Registered
-    # so the listener has an owner of record.
-    opencloud-nats = 9233;
-  };
+        # OpenCloud's embedded NATS JetStream — binds its compiled-in loopback
+        # default 9233 in opencloud 7.2.4 (live 2026-10-27: NATS INFO answers on
+        # 9233; 9234 is an ocis HTTP service); NATS_PORT is a NO-OP. Registered
+        # so the listener has an owner of record.
+        opencloud-nats = 9233;
+      };
+      inRange = p: builtins.isInt p && p >= 1 && p <= 65535;
+      invalid = builtins.concatLists (
+        builtins.attrValues (builtins.mapAttrs (n: v: if inRange v then [ ] else [ n ]) raw)
+      );
+    in
+    if invalid != [ ] then
+      builtins.throw "lib/ports.nix: port value(s) not an int in 1..65535: ${builtins.concatStringsSep ", " invalid}"
+    else
+      raw;
 }
