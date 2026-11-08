@@ -1540,6 +1540,41 @@
             | tee $out
         '';
 
+        # Post-deploy probe fixture selftest (2026-11-08): the 2026-10-28
+        # ingest probe + unit_enabled gate sweep shipped verification-checked-
+        # only (docs/status/2026-10-28_01-20_… §b.1/b.2) — the probe's status
+        # matrix (2xx pass; 401/403/405/400/422 each → their NAMED fail
+        # diagnosis + transport-reset catch-all) runs against a fixture HTTP
+        # server, the wants-symlink harness against a fixture /etc/systemd/
+        # system reached THROUGH a symlink (the trailing-slash trap), plus
+        # wiring pins so a re-inline of either function in
+        # post-deploy-check.sh orphans the legs loudly.
+        post-deploy-probe-selftest =
+          pkgs.runCommand "post-deploy-probe-selftest"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                curl
+                findutils
+                gnugrep
+                gnused
+                python3
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              mkdir -p "$scratch/lib"
+              cp ${root}/scripts/post-deploy-check.sh "$scratch/post-deploy-check.sh"
+              cp ${root}/scripts/lib/pap-ingest-probe.sh "$scratch/lib/pap-ingest-probe.sh"
+              cp ${root}/scripts/lib/unit-enabled-probe.sh "$scratch/lib/unit-enabled-probe.sh"
+              cp ${root}/scripts/test-post-deploy-probe-fixtures.sh "$scratch/test-post-deploy-probe-fixtures.sh"
+              # /usr/bin/env does not exist in the sandbox.
+              sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/test-post-deploy-probe-fixtures.sh"
+              ${pkgs.bash}/bin/bash "$scratch/test-post-deploy-probe-fixtures.sh"
+              touch $out
+            '';
+
       };
     };
 }

@@ -35,22 +35,11 @@ record_fail() {
 }
 
 # Enable-gate: is the unit ENABLED in this generation (a .wants symlink
-# exists for it or its same-name timer), not merely present? NixOS writes
-# every unit file defined in the generation to /etc/systemd/system even when
-# the owning service module is disabled, so `test -e /etc/systemd/system/X`
-# gated smoke sections on DEAD services (the 2026-08-18 sweep ask). Covers
-# multi-user/timers/late-applications wants dirs and wants-symlinks owned by
-# other units (paperless-scheduler.service.wants/paperless-web.service).
-unit_enabled() {
-  local u="$1" alt="" hit=""
-  [ "${u%.service}" != "$u" ] && alt="${u%.service}.timer"
-  # shellcheck disable=SC2046  # the optional -o clause is a single word by construction
-  # Trailing slash on the root: /etc/systemd/system is a SYMLINK to
-  # /etc/static/systemd/system, and find does not follow a symlinked root
-  # without it (every probe then silently returns nothing = everything SKIPs).
-  hit=$(find /etc/systemd/system/ -maxdepth 2 -path '*.wants/*' \( -name "$u" $([ -n "$alt" ] && printf '%s' "-o -name $alt") \) -print -quit 2>/dev/null || true)
-  [ -n "$hit" ]
-}
+# exists for it or its same-name timer), not merely present? Extracted to
+# scripts/lib/unit-enabled-probe.sh 2026-11-08 (fixture harness leg; the
+# function contract lives there).
+# shellcheck source=scripts/lib/unit-enabled-probe.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/unit-enabled-probe.sh"
 
 # Colors
 RED='\033[0;31m'
@@ -230,6 +219,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib/offsite-borg-smoke.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/lib/memory-throttle-sweep.sh"
 # shellcheck source=scripts/lib/service-sanity-sweep.sh disable=SC1091
 source "$(dirname "${BASH_SOURCE[0]}")/lib/service-sanity-sweep.sh"
+# Shared PapDashboard authenticated ingest probe (fixture-tested by
+# scripts/test-post-deploy-probe-fixtures.sh + the post-deploy-probe-selftest
+# flake check — the status matrix must map each non-2xx to its named
+# diagnosis, not a bare "probe failed").
+# shellcheck source=scripts/lib/pap-ingest-probe.sh disable=SC1091
+source "$(dirname "${BASH_SOURCE[0]}")/lib/pap-ingest-probe.sh"
 # Shared storage-history §19 smoke logic (fixture-tested by
 # scripts/test-storage-history-smoke.sh and the
 # storage-history-smoke-selftest flake check — the freshness verdicts feed
@@ -1257,33 +1252,13 @@ if $papdashboard_enabled; then
   # expects 2xx. A triggered+resolved pair for the synthetic aggregate
   # "postdeploy-smoke" leaves one benign RESOLVED alert in the dashboard.
   # The key is never echoed - only status codes are printed.
-  pap_ingest_key=""
-  for pap_env in /run/secrets-rendered/papdashboard-env /run/secrets-rendered/gatus-env; do
-    if [ -r "$pap_env" ]; then
-      pap_ingest_key=$(grep -E '^(PAP_API_KEY|PAPDASHBOARD_INGEST_KEY)=' "$pap_env" 2>/dev/null | head -1 | cut -d= -f2-)
-      [ -n "$pap_ingest_key" ] && break
-    fi
-  done
-  pap_ingest_post() {
-    # pap_ingest_post <event-type> -> HTTP status code (000 on transport fail)
-    curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST \
-      -H 'Content-Type: application/json' \
-      -H "Authorization: Bearer $pap_ingest_key" \
-      -d "{\"type\":\"alert.$1\",\"aggregateId\":\"postdeploy-smoke\",\"payload\":{\"severity\":\"info\",\"title\":\"post-deploy smoke\",\"body\":\"synthetic authenticated ingest probe (post-deploy-check)\",\"sourceApp\":\"gatus\"},\"metadata\":{\"correlationId\":\"postdeploy\",\"causationId\":\"postdeploy\",\"userId\":\"\",\"sourceApp\":\"gatus\"}}" \
-      "http://127.0.0.1:8088/api/ingest" 2>/dev/null || echo 000
-  }
+  pap_ingest_resolve_key
   if [ -z "$pap_ingest_key" ]; then
     report_skip "PapDashboard - authenticated ingest probe skipped (no readable rendered env with an ingest key)"
   else
-    pap_auth_code=$(pap_ingest_post triggered)
-    case "$pap_auth_code" in
-    200 | 201 | 204) report_pass "PapDashboard - authenticated ingest POST accepted (auth+method+body end-to-end)" ;;
-    401 | 403) report_fail "PapDashboard - authenticated ingest POST rejected ($pap_auth_code): rendered key does not match PAP_API_KEY (rotation drift between sops and gatus-env?)" ;;
-    405) report_fail "PapDashboard - authenticated ingest POST 405: method-token mismatch" ;;
-    400 | 422) report_fail "PapDashboard - authenticated ingest POST $pap_auth_code: body schema drift (gatus-config.nix body vs the live /api/ingest huma schema)" ;;
-    *) report_fail "PapDashboard - authenticated ingest POST returned $pap_auth_code (expected 2xx)" ;;
-    esac
-    pap_ingest_post resolved >/dev/null || true
+    pap_auth_code=$(pap_ingest_post "http://127.0.0.1:8088/api/ingest" "$pap_ingest_key" triggered)
+    pap_ingest_verdict "$pap_auth_code" report_pass report_fail
+    pap_ingest_post "http://127.0.0.1:8088/api/ingest" "$pap_ingest_key" resolved >/dev/null || true
   fi
   # journalctl's own --grep (PCRE): a `journalctl | grep -q` pipe here would
   # SIGPIPE (141) under pipefail once the journal exceeds the pipe buffer.
