@@ -762,6 +762,16 @@ eval_case shapeaudit onfailure-in-serviceconfig fail 'OnFailure nested inside se
 # null-cleared values (only the unitConfig copy fires).
 eval_case shapeaudit service-key-in-unitconfig fail '\[Service\]-section key\(s\) nested inside unitConfig' \
   'sed:modules/nixos/services/nsfw-classifier.nix:s|unitConfig.RequiresMountsFor =$|unitConfig.TimeoutStartSec = "10min"; unitConfig.RequiresMountsFor =|'
+# ── systemd-shape-audit class 10: is-active probes vs oneshot units ──
+# The scrub-guard false-red lesson (2026-08-31) + the guard churn-rearm
+# dead-on-arrival lesson (2026-10-11): is-active reads "inactive" for a
+# Type=oneshot unit without RemainAfterExit the moment its start job
+# finishes — ran-fine, failed, and never-ran are indistinguishable.
+# Mutation: repoint the monitor365 agent-watchdog + graphical-restart
+# probes (legitimately aimed at the long-running agent) at the pool-copy
+# ONESHOT — the audit must throw naming prober → target for both.
+eval_case shapeaudit isactive-oneshot-probe fail 'is-active` probe\(s\) against Type=oneshot' \
+  'sed:modules/nixos/services/monitor365.nix:s|is-active --quiet monitor365.service|is-active --quiet monitor365-pool-copy.service|'
 
 # ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
 # The llama-chat/compsize class (untiered bulk boot I/O on the QLC). Leg 1

@@ -528,8 +528,19 @@
             ++ (map (k: svc.${k} or "") scriptScanKeys)
           )
         );
-      # Regex-safe unit-name fragment (names carry . - @ _ alnum in practice).
-      escUnitName = builtins.replaceStrings [ "." ] [ "\\." ];
+      # Regex-safe unit-name fragment (names carry . - @ _ alnum in
+      # practice; some attr keys carry systemd's own \x2d escapes — the
+      # backslash must be escaped FIRST or it re-escapes the dot escape).
+      escUnitName =
+        builtins.replaceStrings
+          [
+            "\\"
+            "."
+          ]
+          [
+            "\\\\"
+            "\\."
+          ];
       # Lines whose is-active call names `target` (bare, .service-suffixed,
       # or — for a template target — any instance of it).
       isactiveProbeLine =
