@@ -54,7 +54,8 @@
 
       config = lib.mkIf cfg.enable {
         services.cvagent = {
-          package = lib.mkDefault (inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default);
+          package = lib.mkDefault
+            inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
           # Operator identity (cv-profile-probe precedent): the scan reads
           # the whole projects tree and the mesh writes the CV checkout and
