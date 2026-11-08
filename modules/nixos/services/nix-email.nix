@@ -15,13 +15,14 @@
 # registry entry (monitored unit + backup-coordination freshness for the
 # parsedmarc reports directory).
 #
-# DEPLOYMENT STATE (2026-09-29): dmarc-monitor fully wired on evo-x2 but
-# enable = false until the mail stack is live on pbx-artmann (the rua
-# mailbox must exist first — a failing parsedmarc unit exit-4s deploys).
-# Flip services.dmarc-monitor.enable in configuration.nix as the FINAL
-# step of pbx-artmann docs/runbooks/mail-go-live.md, then paste the real
-# dmarc-imap-password secret (platforms/nixos/secrets/nix-email.yaml,
-# placeholder value shipped).
+# DEPLOYMENT STATE (superseded 2026-10-16; corrected 2026-11-09):
+# dmarc-monitor stays enable = false PERMANENTLY — pbx-artmann
+# docs/runbooks/mail-go-live.md §7 replaces the evo-x2 parsedmarc flip
+# with Stalwart-native ingestion (0.16 ReportSettings singleton, webadmin
+# /manage/reports/dmarc); a flipped parsedmarc would poll an inbox whose
+# reports are consumed at RCPT time, with the placeholder IMAP password
+# still in sops (failed-unit exit-4 class). The wrapper stays for the
+# catalog entry and any future non-Stalwart host.
 #   - services.mail-server is now ENABLED on the pbx-artmann VPS — but it
 #     consumes the upstream module DIRECTLY (that repo has no sops; its
 #     runtime-file secrets doctrine differs), not through this wrapper.

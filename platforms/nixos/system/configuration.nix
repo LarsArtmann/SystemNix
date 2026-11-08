@@ -789,11 +789,12 @@ in
       # rollout). Wrapper module: modules/nixos/services/nix-email.nix
       # pre-wires sops (nix-email.yaml), onFailure, the monitored unit +
       # reports-freshness backup row.
-      # enable = false DELIBERATE: flipping it before the mailbox exists on
-      # the VPS guarantees a permanently-failing parsedmarc unit — a failed
-      # unit inside an activation exit-4s the deploy and skips the profile
-      # bump (reboot-revert trap). Flip to true as the FINAL mail go-live
-      # step (pbx-artmann docs/runbooks/mail-go-live.md).
+      # enable = false PERMANENT (superseded 2026-10-16, runbook §7):
+      # Stalwart 0.16 intercepts/parses/stores DMARC aggregates natively
+      # (ReportSettings singleton; webadmin /manage/reports/dmarc is the
+      # UI) — a flipped parsedmarc would poll an inbox whose reports are
+      # consumed at RCPT time, with the placeholder IMAP password still in
+      # sops (failed-unit exit-4 class). Never flip on evo-x2.
       dmarc-monitor = {
         enable = false;
         settings.imap = {
