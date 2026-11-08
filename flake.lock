@@ -8393,11 +8393,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793815183,
-        "narHash": "sha256-Lkipd3al4IUPK2C3LHQ2prays2WOgyU0n3THDP7923Y=",
+        "lastModified": 1794115747,
+        "narHash": "sha256-XrOQRLvHZCRXJCWUe0OKCyis4vN1VA34op+VZPr4qmg=",
         "ref": "refs/heads/master",
-        "rev": "a8ba14601a9d6397b16e78210ad7a388bcc7d0fa",
-        "revCount": 3100,
+        "rev": "64a29d8d307168bfb8dbe5e30c7882120b239ebe",
+        "revCount": 3110,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/nsfw-classifier"
       },

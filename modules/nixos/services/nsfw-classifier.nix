@@ -162,23 +162,11 @@
             serviceConfig = lib.mkMerge [
               (serviceDefaults { })
               ioTier.background
-              {
-                # Cold start loads 17 ONNX models on CPU — the global 3-min
-                # DefaultTimeoutStartSec is the queued watch-class trap; give
-                # the full posture an explicit budget. [Service]-section key:
-                # the upstream module still declares it in unitConfig ([Unit])
-                # where systemd silently ignores it (switch journal
-                # 2026-11-05 07:36:48 "Unknown key 'TimeoutStartSec' in
-                # section [Unit], ignoring") — neutralized below so the audit
-                # (class 9) stays green and the warning never ships.
-                TimeoutStartSec = "10min";
-              }
             ];
-            # Neutralize the upstream unitConfig placement (wrong section,
-            # systemd ignores it with a journal warning; shape-audit class 9
-            # flags TimeoutStartSec inside unitConfig). null renders as
-            # absent. Drop when upstream moves it to serviceConfig.
-            unitConfig.TimeoutStartSec = lib.mkForce null;
+            # TimeoutStartSec: upstream-owned since the 2026-11-08 fix
+            # (serviceConfig section, 10min — the old unitConfig copy was
+            # neutralized here via mkForce null; both sides dropped at the
+            # re-lock past nsfw-classifier@<fix>).
           };
 
           # Service-integration registry entry: the nsfw vHost (Layer 1

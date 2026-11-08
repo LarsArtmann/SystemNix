@@ -91,7 +91,7 @@
   nixos-hardware = "1a8ff4f57ffe1f732beaa1db842247a381ea471d";
   nixpkgs = "f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
-  nsfw-classifier = "a8ba14601a9d6397b16e78210ad7a388bcc7d0fa";
+  nsfw-classifier = "64a29d8d307168bfb8dbe5e30c7882120b239ebe";
   nur = "2c77f9a098441ea18a25c0dd54294be6cefee44d";
   offline-banner = "d9f6d6f239b60907561088cf71e92570c447d962";
   otel-tui = "d43d3f9edbe2c4c61380a10030df4ad02ffc3206";
