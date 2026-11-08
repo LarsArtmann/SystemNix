@@ -1,5 +1,16 @@
 # media-atlas (federation hub)
 
+**Delegated (2026-11-08, SUPERB phase-2 F2):** the generic hub contract
+(the `atlas serve` unit — Type=notify WITHOUT WatchdogSec, start-limit
+window — plus the nightly timer family: poll-embeddings, UMAP refit with
+its wants-not-requires ordering, lane join) lives upstream at
+`media-atlas/nix/nixos-module.nix`, imported via
+`inputs.media-atlas.nixosModules.default` (`3b8c7f9`, floated with the
+upstream vendor sync + templ 0.3.1100 regen). `modules/nixos/services/
+media-atlas.nix` layers site specifics: the PG role converger, the
+archive-perms + API-key provisioners, fleet harden bounds, the pool
+journal backups, and the integration fan-out.
+
 **Service:** `modules/nixos/services/media-atlas.nix` — groundwork (v0.1 plan L11 + L03 enabler) PLUS the hub service (`services.media-atlas.hub.enable`, the L25 deploy; repo `~/projects/media-atlas`, forgejo-primary). Runbook source: media-atlas `docs/planning/2026-10-25_21-56_SUPERB-media-atlas-v0.1-build-plan.md` + `docs/deploy/flip-card.md`.
 
 ## What this deploys today

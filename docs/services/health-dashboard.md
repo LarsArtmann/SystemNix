@@ -3,7 +3,11 @@
 `health.home.lan` — one dashboard federating every service's existing
 go-health endpoint (github:LarsArtmann/go-health-dashboard, `health-hub`
 binary). Module: `modules/nixos/services/health-dashboard.nix`
-(`services.health-dashboard`). The hub renders one card per remote with
+(`services.health-dashboard`). **Delegated (2026-11-08, SUPERB phase-2
+P2):** the hub unit shape lives upstream via
+`inputs.go-health-dashboard.nixosModules.default` (`d15fcb6`); the
+SystemNix module sets addr from `lib/ports.nix` and keeps the
+rediscover unit + integration fan-out. The hub renders one card per remote with
 `name/check` keys (worst-of status); a dark remote shows a
 `name/reachable` FAIL row instead of silently freezing at its last state.
 

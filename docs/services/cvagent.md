@@ -1,5 +1,13 @@
 # cvagent (CV repo code-derived evidence)
 
+**Delegated (2026-11-08, SUPERB phase-2 P1):** the wrapper/scan contract
+(options + the cvagent-scan unit + timer shape, wrapper runtime deps,
+config render) lives upstream at `Code-To-CV-Agent/nix/nixos-module.nix`,
+imported via `inputs.cvagent.nixosModules.default` (`6ff68d3`, VM-test
+proven round 9). `modules/nixos/services/cvagent.nix` layers site
+specifics: repo checkout paths, mesh run wiring, ioTier/onFailure,
+harden bounds, system-health + tmpfiles wiring.
+
 **Service:** `services.cvagent` — `modules/nixos/services/cvagent.nix`. A daily timer (05:53 + jitter, `Persistent`) running the [cvagent](https://github.com/LarsArtmann/Code-To-CV-Agent) CLI (flake input, also on PATH via `lib/lars-packages.nix`): scans the configured repository checkouts into an event-sourced sqlite fact store, then exports the mesh artifacts into the CV checkout (`/home/lars/projects/CV`):
 
 - `data/cv/lars_artmann-en-cvagent.patch.json` — RFC 6902 variant patch adding keywords/projects the curated base does not list yet; render it with `cv render --variant cvagent` (verified end-to-end 2026-11-01: the CV repo's own loader applies the patch and the delta appears in the output).

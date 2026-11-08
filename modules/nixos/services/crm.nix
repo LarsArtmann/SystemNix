@@ -324,8 +324,9 @@
                 Type = "oneshot";
                 User = user;
                 Group = group;
-                ExecStart =
-                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/byphone-health-check.py";
+                ExecStart = [
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/byphone-health-check.py"
+                ];
               }
               (serviceOneshotDefaults { })
             ];
@@ -339,8 +340,9 @@
                 Type = "oneshot";
                 User = user;
                 Group = group;
-                ExecStart =
-                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/journal-growth-check.py";
+                ExecStart = [
+                  "/run/current-system/sw/bin/python3 /home/lars/projects/crm/scripts/journal-growth-check.py"
+                ];
               }
               (serviceOneshotDefaults { })
             ];

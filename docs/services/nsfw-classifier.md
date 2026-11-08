@@ -4,6 +4,11 @@
 
 Backend for the Helium NSFW extension (loaded via `--load-extension` from the source dir — see desktop.md): classifies images, pairs with the browser, serves verdicts.
 
+**Delegated (2026-11-08, SUPERB phase-1 Wave N):** the service unit shape
+lives upstream via `inputs.nsfw-classifier.nixosModules.default`
+(`64a29d8d`); the SystemNix module layers the GPU fallback wiring, vHost
+registry, and fleet harden.
+
 ## What it serves
 
 | Route     | Auth                   | What                                          |

@@ -7,6 +7,16 @@ strip, bookmarks, and search. It replaced the retired homepage-dashboard (Node/N
 This runbook covers the services surface: config anatomy, dot semantics, deploy probes,
 and the rollback path. Product docs: the PapDashboard repo `README.md` (§Services surface).
 
+**Delegated (2026-11-08, SUPERB phase-2 F3):** the PAP_* environment
+contract and the unit skeleton (DynamicUser, state dir, the
+systemd-journal supplementary group, start-limit window) live upstream at
+`PapDashboard/nix/nixos-module.nix`, imported via
+`inputs.papdashboard.nixosModules.default` (`287f695`).
+`modules/nixos/services/papdashboard.nix` layers site specifics: the
+vendorHash shim, the services.json tiles renderer + dashboard-icons pack
+gate, the sops env template + its secret check, the drift collector, and
+the integration fan-out.
+
 ## Surface map
 
 | Surface                                          | Where                                               | Auth                                                                         |

@@ -6,6 +6,15 @@ LarsArtmann's own event-sourced personal CRM (Go + go-cqrs-lite) at
 disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 `docs/ops/` there: CV-SYNC.md, PASSKEY-RECOVERY.md, RESTORE-DRILL.md).
 
+**Delegated (2026-11-08, SUPERB phase-2 F1):** the product deployment
+contract (options + the crm-server unit — loopback bind, the sqlite pair,
+auth/OIDC flags, the DNS gate, portable hardening) lives upstream at
+`crm/nix/nixos-module.nix`, imported via `inputs.crm.nixosModules.default`
+(rev-pinned `f32f4c0`). `modules/nixos/services/crm.nix` layers only site
+specifics: the vendorHash shim, primary-user identity, the sops API-token
+template, the Pocket ID client-secret bridge, pool backups, alarms, and
+the catalog + integration fan-out.
+
 ## Surfaces
 
 | Surface     | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
