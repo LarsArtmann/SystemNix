@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # unit_enabled — post-deploy battery enable-gate probe.
 #
 # Extracted 2026-11-08 from post-deploy-check.sh (batch §f.37 asked for the

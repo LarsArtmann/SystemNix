@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # PapDashboard authenticated /api/ingest probe — post-deploy battery leg.
 #
 # Extracted 2026-11-08 from post-deploy-check.sh so the status matrix has a

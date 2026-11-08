@@ -145,8 +145,7 @@ PY
   }
 
   wait_portfile() { # wait_portfile <portfile>
-    local i
-    for i in 1 2 3 4 5 6 7 8 9 10; do
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
       [ -s "$1" ] && return 0
       sleep 0.2
     done
