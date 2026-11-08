@@ -548,11 +548,14 @@
       # Oneshot units whose is-active verdict lies post-run (no
       # RemainAfterExit). RemainAfterExit flips the unit to "active
       # (exited)" after the run, making is-active a truthful probe.
+      # Accepted value shapes: bool true or the string "yes" (systemd
+      # accepts both; nixpkgs modules emit either).
+      remainAfterExitSet = v: v == true || v == "yes";
       lyingOneshotTargets = lib.filterAttrs (
         _name: svc:
         svc.enable or true
         && (svc.serviceConfig.Type or null) == "oneshot"
-        && !(svc.serviceConfig.RemainAfterExit or false)
+        && !(remainAfterExitSet (svc.serviceConfig.RemainAfterExit or false))
       ) config.systemd.services;
       isactiveProbeOffenders = lib.concatMap (
         prober:
