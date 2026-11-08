@@ -533,6 +533,17 @@
               base_url = "http://127.0.0.1:${toString ports.crm}";
               api_key = "";
               timeout = "30s";
+              # Durable replay checkpoint (cv c3d3bfc76, repo config.yaml
+              # checkpoint_path): persists the appID → CRM link map across
+              # restarts so a full-journal replay cannot re-create
+              # opportunities. WITHOUT it every pipeline event re-drives the
+              # syncer from scratch — measured 175k CRM events/day churn
+              # (journal-growth alarm 2026-11-08, 100% bot:cv-pipeline).
+              # Absolute state-dir pin (the graphrag.store_dsn precedent):
+              # data/ root survives the upstream content sync and exists
+              # today; a relative default would only resolve via
+              # WorkingDirectory luck.
+              checkpoint_path = "/var/lib/cv/data/crm-checkpoint.json";
             };
             # journald/SigNoz ingestion friendliness: structured JSON lines
             # instead of the text default (internal/config LogFormatJSON).
