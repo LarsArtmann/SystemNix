@@ -22,6 +22,8 @@ set -euo pipefail
 #   - New TCP connections: instant (route table updated immediately)
 #   - Existing non-MPTCP connections: timeout + reconnect (tuned via tcp_retries)
 
+# Deployed unit injects ENO1_GW from config.networking.local.gateway (dual-wan.nix);
+# this default is a manual-tree-run fallback only.
 ENO1_GW="${ENO1_GW:-192.168.1.1}"
 ENO1_IF="${ENO1_IF:-eno1}"
 WIFI_IF="${WIFI_IF:-wlan0}"

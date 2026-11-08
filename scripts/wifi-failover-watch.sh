@@ -23,6 +23,8 @@ set -euo pipefail
 
 ENO1_IF="${ENO1_IF:-eno1}"
 FALLBACK_IF="${FALLBACK_IF:-wlan0}"
+# Deployed unit injects GW from config.networking.local.gateway (wifi-failover.nix);
+# this default is a manual-tree-run fallback only.
 GW="${GW:-192.168.1.1}"
 POLL="${POLL_INTERVAL:-1}"
 DEBUG_POLL="${DEBUG_POLL:-0}"

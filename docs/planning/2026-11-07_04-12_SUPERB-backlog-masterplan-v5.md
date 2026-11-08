@@ -12,6 +12,7 @@
 | P1 "land the pending deploy" | Landed twice, orphaned once: 12:03 = gen 984 live; 00:43 activated WITHOUT a generation and was eaten by the 01:06 reboot (freeze-#51, owner power cut) — the recovery question is now v5-V1 |
 | P19 "183-unharvested burn-down" | Still open, worse: 203. Promoted to the 1% tier (V3) |
 | v4's flake-check-era premises | Several [blocked:deploy] rows may describe pre-gen-984 state — the stale-claims sweep (V4) exists because 10/33 closures in the 02:33 grind were stale rows |
+| *(post-v5)* nix-native modernization | **EXECUTED 2026-11-08** as its own plan (`2026-11-08_06-31_SUPERB-nix-native-modernization-pareto-plan.md`): manifest bridge (eval truth → `/etc/systemnix/integration-manifest.json` → data-driven post-deploy probes), script-port-audit eval gate, generated registry matrix + drift check, ports.nix range guard. Any v5 row touching scripts/docs port truth should consume the manifest instead of re-hardcoding — see the plan's §10 execution record |
 
 ---
 

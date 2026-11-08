@@ -1,7 +1,7 @@
 # SUPERB: Nix-Native Modernization — Pareto Plan
 
 **Created:** 2026-11-08 06:31 · **HEAD:** `74e96d9f` · **Status:** PLANNED (awaiting owner go / dispatch)
-**EXECUTING (instance full-wave execution session, owner GO directive, 2026-11-08 07:18 CET, HEAD `9a37d2ee2`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (instance T1-T14 executed; T8/T10 collapsed to errata; D4 held for owner, 2026-11-08 11:42 CET, HEAD `66fb1e864`):** execution finished
 **Trigger:** owner question "How can we do things in a more nix native/smarter way? Don't forget nix is a PROGRAMMING LANGUAGE!" (2026-11-08 session) → this plan.
 **Premise:** SystemNix is already native where it counts (integration-registry fan-out, eval-guard army, features-drift re-derivation). The remaining frontier is **surfaces that duplicate data Nix already owns** — operational scripts, embedded unit scripts, and prose docs. Nix becomes the single owner of that data; everything else becomes a pure consumer.
 
@@ -225,3 +225,76 @@ Queued at authoring time (queue + library, both surfaces):
 2. `docs/todo/pipeline.md` — full-context library row for the same
 
 Remaining tasks harvest later via docs-health HARVEST (the plan is the snapshot; the queue is the living source).
+
+---
+
+## §10 Execution record (2026-11-08, full-wave session)
+
+**Status: EXECUTED.** T1–T7, T10, T11, 12.1 landed; T8/T10 collapsed to errata
+(see below); T13 executed as 13.1 only (D4 held for the owner — see E3).
+Deploy + live post-deploy battery ran same-day.
+
+### Errata (premises that collapsed under live verification, per house style)
+
+- **E1 — T8's V9 premise was STALE**: all 7 `readFile` embeds were ALREADY
+  `writeShellApplication` with pinned `runtimeInputs` (a prior wave migrated
+  them; snapshots.nix even documents the fixture-parity rationale). The wave
+  collapsed to 8.7 (dns-update intentional-tree-access comment added) + 8.8
+  (scrubGuard bare-interpolation grep: zero hits tree-wide).
+- **E2 — T10's "5 scripts hardcode LAN IPs" was HALF-STALE**: the deployed
+  units (dual-wan.nix, wifi-failover.nix) already inject
+  `config.networking.local.{lanIP,gateway}` as env; the script literals are
+  manual-tree-run fallbacks only. Provenance comments added to the 3 scripts;
+  no behavioral change. D2's "environment facts" answer was already the
+  implemented reality.
+- **E3 — D4 stays an owner gate**: the reap domain is already single-sourced
+  (reap-names.sh + Nix parser); the remaining surfaces (direnv guard, fish
+  init, KNOWN_CACHE_ENTRIES) are semantically distinct, parity-guarded
+  protection code with no recommendation in either plan. pipeline.md's
+  [decision] row refreshed with the verified inventory + costs (13.1). Not
+  executed without explicit ratification.
+- **E4 — V1 count refined**: 34 host-form literals converted (33 `localhost:N`
+  + 1 `127.0.0.1:9090` dnsblockd CSRF probe). `check_local`'s port-as-arg
+  literals were deliberately left (different form, registered numbers, out of
+  the plan's mechanical set). Grep proof: zero `localhost:[0-9]` remain.
+- **E5 — first-sweep true positives** (script-port-audit's first run):
+  verify-deployment.sh probing gatus at retired 9110 (dead 12 days — the
+  exact V5 drift class) and llama-rag-soak's unregistered 18848 (registered
+  as llama-soak).
+
+### Verified evidence (per §8 doctrine)
+
+- Wave 1: shape-selftest green (stub contract); evo-x2 manifest BUILT
+  (checkPhase jq on real data: 78 ports / 88 services); rpi3-dns manifest
+  evals; BOTH toplevels eval green; loader selftest 8/8 (absent/malformed/
+  drift/real legs as STANDING check `integration-manifest-loader-selftest`);
+  live battery parity: byte-identical verdicts pre/post conversion (167→168
+  PASS environmental; FAIL set unchanged, all baseline-matched); degradation
+  battery: WARN + section SKIPs fired, zero new FAILs.
+- Wave 2: `CASES=scriptport` negative legs 3/3 (stale-9110 regression shape,
+  fresh 59999 hardcode, comment immunity); the gate fired on its own harness
+  file during development (fixed by the documented name-exclusion).
+- Wave 3: registry-matrix drift check green (doc == eval) + red leg proven
+  (corrupted port → "STALE", restored byte-clean).
+- Extras: ports.nix range guard red/green (out-of-range throws with name);
+  shellcheck rc=0 on all touched scripts; VHOST_PROBE_TIMEOUT derivation
+  live-verified (floor 20 → manifest max 30).
+
+### Task → landing map
+
+| Task | Outcome | Surface |
+|---|---|---|
+| T1 manifest v1 | DONE | lib/integration-manifest.nix + checks shape-selftest |
+| T2 runtime exposure | DONE | modules/nixos/services/integration-manifest.nix (etc + build); rpi3-dns import |
+| T3 battery conversion | DONE | scripts/post-deploy-check.sh (+ scripts/lib/integration-manifest-loader.sh extraction for testability) |
+| T4 degrade/drift legs | DONE | loader WARN-skip + drift WARN + standing selftest check |
+| T5 script-port-audit | DONE | modules/nixos/services/script-port-audit.nix + CASES=scriptport; scanner zero-pad fix in lib/default.nix |
+| T6 vHost timeout | DONE | manifest-derived max(client.timeout), 20s floor; pipeline.md:407 + queue row ticked |
+| T7 doctrine docs | DONE | integration-registry.md §Manifest Bridge + AGENTS critical-rule amendment |
+| T8 hermeticity | COLLAPSED (E1) | 8.7 comment + 8.8 clean grep |
+| T9 registry matrix | DONE | lib/registry-matrix.nix + checks.registry-matrix-drift + packages.registry-matrix + doc table |
+| T10 LAN-IP scripts | COLLAPSED (E2) | provenance comments ×3 |
+| T11 mkPort | DONE (as import-time range guard, zero call-site churn) | lib/ports.nix |
+| 12.1 tmux | DONE+ (all 6 dead `just` bindings rewired to flake apps) | platforms/common/programs/tmux.nix |
+| T13 cache-names | 13.1 DONE (inventory refresh); D4 held | docs/todo/pipeline.md [decision] row |
+| T14 closure | DONE | this section + CHANGELOG + masterplan-v5 errata line |

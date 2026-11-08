@@ -14,6 +14,8 @@
 
 set -euo pipefail
 
+# Deployed unit injects ENO1_IP from config.networking.local.lanIP (dual-wan.nix);
+# this default is a manual-tree-run fallback only.
 ENO1_IP="${ENO1_IP:-192.168.1.150}"
 ENO1_IF="${ENO1_IF:-eno1}"
 WIFI_IF="${WIFI_IF:-wlan0}"

@@ -182,5 +182,28 @@
 
             echo "integration-manifest-shape-selftest: contract pinned (union view, same-name merge, URL resolution, timeout, disabled-filter)" > $out
           '';
+
+      # T4.3 standing legs: the loader's degrade/drift contract (absent
+      # manifest WARN-skip, malformed JSON, unknown-port drift, real
+      # resolution) pinned by fixture — runs the selftest against the
+      # repo loader + the real generation manifest so the tested
+      # artifacts are the bytes the battery sources, never a copy.
+      checks.integration-manifest-loader-selftest =
+        let
+          host = inputs.self.nixosConfigurations.evo-x2;
+          manifest = host.config.system.build.integration-manifest;
+        in
+        pkgs.runCommand "integration-manifest-loader-selftest"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          }
+          ''
+            bash ${root + "/scripts/test-integration-manifest-loader.sh"} ${manifest} > $out
+            tail -1 $out | grep -q "0 failed" || {
+              cat $out >&2
+              echo "integration-manifest-loader-selftest: fixture legs failed" >&2
+              exit 1
+            }
+          '';
     };
 }
