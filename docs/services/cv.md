@@ -163,7 +163,7 @@ devshell and EVERY timer run false-drifts rc 1.
 blockers like the 2026-08-29 eligibility axis), run once:
 
 ```bash
-key=$(sudo cat /run/secrets/cv-env 2>/dev/null | cut -d= -f2)   # or read from sops
+key=$(sudo awk -F= '$1=="CV_API_KEY"{print $2}' /run/secrets/rendered/cv-env)   # or read from sops
 curl -s -X POST -H "X-API-Key: $key" -H 'Content-Type: application/json' \
   -d '{"force":true,"workers":8}' http://localhost:8098/api/pipeline/evaluate-tracked
 ```
