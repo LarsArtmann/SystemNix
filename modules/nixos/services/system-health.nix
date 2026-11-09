@@ -873,7 +873,7 @@ _: {
             # journal counts are DEAD-INVISIBLE when papdashboard itself is
             # down (0 lines = quiet, not alive). 1 = refused/dark.
             local outfile="$1" status=1
-            timeout 5 bash -c 'exec 3<>"/dev/tcp/127.0.0.1/${toString ports.papdashboard}"' 2>/dev/null && status=0
+            timeout 5 ${pkgs.bash}/bin/bash -c 'exec 3<>"/dev/tcp/127.0.0.1/${toString ports.papdashboard}"' 2>/dev/null && status=0
             printf '%s\n' "$status" > "$outfile"
           }
           if [ "$collect_papdashboard_ingest" = "true" ]; then
