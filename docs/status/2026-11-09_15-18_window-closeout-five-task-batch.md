@@ -1,27 +1,58 @@
 # Window closeout: five task completions (stability, io-attribution, dnsblockd, §17 gate, monitoring) — 2026-11-09
 
-*Skeleton committed first per checkpoint protocol; filled in below.*
+**Window:** task completions 2026-11-07 15:53 → 2026-11-09 (five `[ready]` queue items, each with a closeout report under `docs/status/tasks/` except the §17 gate task, closed via its TODO_LIST tick).
+**Method:** every verdict below read from the task's own closeout report first, then spot-verified against the repo (commit existence via `git log`, TODO_LIST/library row states, tick narratives). No code touched.
 
 ## a) FULLY DONE
-(placeholder)
+
+1. **`DEPLOY_FORCE_PRESSURE=1` no longer bypasses the trip-recency gate** (task …b65edbd7, commit set `10b8f2ec6`…`ecc2ce66c`): `deploy_trip_recency_gate` zone-6 vetoes force levels 0 AND 1; a trip-recent window now requires `DEPLOY_FORCE_PRESSURE=2` with the freeze-#40 evidence lines in the refusal text. 7 new assertions in `scripts/test-deploy-pipeline.sh` (42/42 green). The same batch landed `scripts/io-attribution.sh` (186 lines, measured-window tags, verified diskstats field map), the guard DISARMED counter (parse-green, sim-verified), and two doc tasks (unevictable≈shmem identity, chromium 1.4 TiB anatomy) — 5/5 items, one footer commit each, verified in the closeout + this session's commit greps.
+2. **io-attribution selftest full fixture `run()` pass — and it caught two REAL production bugs** (task …b6880eb0, `249789b4c`): 6→11 selftest legs; the fixture pass proved both snapshot joins had been silently ALWAYS-EMPTY since the script landed (the `NR==FNR` two-file idiom applied to ONE piped stream — FNR never resets, the comparison branch never ran) plus a broken `IFS= read` in the device loop. Both fixed; live run now emits real rows. The prior session's "live run green" claim was exit-0-only — the exact "assert WHICH question your evidence answers" class, re-learned at script scale. Same batch: DISARMED fire-once gate (`f560526de`, 3-way negative-tested as `guard-disarmed-fire-once-selftest`), the "4 × ~1.45 TiB" figure re-verified against the Oct-28 kill table, and the #39 CH-census reconciliation (24 = 9+10+5, four consistent views of one population). Item 5 (post-float integration verify) BLOCKED — see (b).
+3. **dnsblockd stability batch, 5 items** (task …b83e2c6e, commits `50eec2ee6`/`035a3b7f3`/`a72135389`/`72c395fb1`/`c572b0fb5`, all footer-bearing; it was itself a re-dispatch takeover of a dead prior fire): allowlist-backup freshness signal verified at eval (deploy-gated), render-fixture pins (8 eval asserts/greps, zero failures), the 4318 filter + `:53` gate LIVE-verified on the host (refusals Nov 7+ = 0, both burst windows attributed to signoz-collector restarts to the second, observer counters green), agent-docs sweep landed, and the gateway-disable attribution chain traced (mangled `# atewayEnabled` in `8001259f0` + decrypt lists emptied in `4bccc4646`). All footer commits verified present by this session.
+4. **Pre-deploy §17 negative-path fixture selftest** (task …b8a2e24d; implementation via daemon commits `3ff374ca9`/`c32357809`, closed `8b84d6de6`): `scripts/lib/zombie-mount-gate.sh` + `scripts/test-zombie-mount-gate.sh` — 7 legs / 14 assertions, FAIL verdicts asserted on zombie-device AND dead-real-IO fixtures, green controls, autofs filter, wiring tripwire — green 14/14, wired as `checks.x86_64-linux.zombie-mount-gate-selftest` + CI. TODO_LIST + stability.md rows ticked; both commits verified present.
+5. **Monitoring batch, 5 items** (task …bbff7cc5, `444150316`/`4b70ae273`/`91ae6c4bb` + recovery `c51d9e73a`; another re-dispatch finding most work already landed footless via daemon sweeps): re-dispatch protocol executed, the I/O Stall retune VERIFIED before closing (two-tier emitter: `node_psi_io_warning` observability-only vs `node_psi_io_alert` PAGE tier with disk-%util corroboration; the `== 0` check fails closed; eval gates green, gatus 283 = README stamp at the time), both rows ticked with provenance, follow-ups harvested. The companion task …bdadc729 (README provenance verification) landed `120151da1` + the Nix Store Usage / Gatus Chronic Red checks (`283→284→285` re-stamps, doc-counts catch).
 
 ## b) PARTIALLY DONE
-(placeholder)
+
+1. **Post-float integration verify of the guard DISARMED + ladder changes** (…b6880eb0 item 3) — BLOCKED by the lock-float eval gate, honestly marked: the float grew from the reported "cv/templ" 2 inputs to **16 drifted inputs** (live 2026-11-07 ~16:0x). Module parse + both selftest checks build green (checks eval bypasses the nixosConfigurations audit); host eval, flake check, and post-deploy metric steady-state all unreachable until the float proof runs. Queued (TODO_LIST:3374). Still true at this report's time: no deploy has carried the guard/ladder changes (deployed system still the Nov-05 build per the 11-08 closeout).
+2. **dnsblockd batch item 4 (gateway drill)** — correctly FULL-blocked, zero legs runnable: every leg presupposes the armed gateway lie that the disable removed. The ruling request rides the `[decision]` fixture-reconciliation row. Not "partially executed" — structurally unreachable.
+3. **I/O Stall retune + Enabled-but-inactive net: config-only until the next deploy.** The rendered host still runs the old single-tier check; post-deploy green-band confirmation queued (TODO_LIST:363) alongside the ioPause journal-surface live-verify (3384).
+4. **§17 zombie-mount gate: the selftest is done, the GATE itself still rides the next deploy** (like everything else in the deploy train the 16-input float is holding).
+5. **Monitoring batch item 4's llama-embeddings story is messier than its tick** — stability.md:489 records a manual calm-gate admission at 00:26 Nov 8 (unit ACTIVE) while the 18:32 close-out saw it dark since 09:14 the same day; recurring-refusal disposition is an owner question.
 
 ## c) NOT STARTED
-(placeholder)
+
+Nothing owed by the five tasks was silently skipped (each task's own residue is ticked, blocked-marked, or queued). Standing queue rows adjacent to this window that no task touched, in priority order: the 16-input float proof (3374 — the single unblock for the whole deploy train), the stale `DEPLOY_FORCE_PRESSURE=1` doc-row sweep (185), the storm-runbook pointer to io-attribution.sh (186), guard/sev1 VM-test scenarios (183/184), the refault-phase flag (182), the guard stateDir persistence audit (3375), non-empty-output selftest legs repo-wide (3376), and the dnsblockd false-red-on-empty-allowlist fix BEFORE the next deploy arms it (224).
 
 ## d) TOTALLY FUCKED UP
-(placeholder)
+
+1. **The io-attribution script shipped silently broken and was certified green** — the 15-53 session's own "live 2s run green" was an exit-code-only check; both output sections had been ALWAYS EMPTY since the script landed hours earlier. Caught only when the next dispatch's fixture pass demanded row-level assertions. One instance of a now-thrice-repeated class (2026-09-18 browser-history gate, 2026-11-07 io-attribution): verification claims must assert the OUTPUT, not the exit code.
+2. **The 16-input lock float is the repo's central blocker and nobody owns it** — it grew 2→16 between two same-day reports, blocks every eval-gated .nix commit AND the entire deploy train (guard/ladder changes, freshness metric, §17 gate, I/O Stall retune, fixture fix are all tree-only), and the float-proof ownership question has been asked twice with no answer.
+3. **Footless daemon-swept landings keep burning paid re-dispatches** — the monitoring batch found 3 of its 5 items already done with no footer and no report (one required full git-archaeology reconstruction); the §17 task likewise landed via daemon commits. The tq harness still has no fallback provenance channel (pipeline.md footer-gap row open).
+4. **The amend-as-retry blunder (monitoring batch §d)**: a hook-rejected commit attempt triggered a reflex `git commit --amend` that absorbed staged work into the PREVIOUS commit and dropped its Task-Queue-ID footer; three amends to repair. Root cause encoded: after a rejection HEAD is still the old commit — re-run the commit, never amend.
+5. **Process debt is consistent and known**: skipped runbook pre-read (dnsblockd batch), skipped re-dispatch protocol step 3, ticking a metric without probing the live input state (minted the false-red defect, §b.4 of that closeout), hostile-daemon commit races costing ~15 min/session, two 73-char subjects per session. Every one is narrated in a closeout; none has a mechanical guard yet.
 
 ## e) WHAT WE SHOULD IMPROVE
-(placeholder)
+
+1. **Row-count assertions for report-producing scripts, mechanically**: the io-attribution bug class (silently-empty output, exit 0) needs `grep -c . >= N` legs in EVERY selftest whose script emits a report — queued repo-wide (3376); until then, closeouts claiming "live run green" should be distrusted without a row quote.
+2. **Cheap-eval-first before ticking landed code**: probe the LIVE state a new metric will read (file existence, counter semantics) — the dnsblockd false-red shipped inside a tick because one 30-second `ls` was skipped. The garbage-in check should be a pre-tick reflex.
+3. **Float-proof ordering note in queue items**: any `[ready]` touching .nix should carry "blocked on the float proof" explicitly until 3374 closes, so batches stop rediscovering the gate mid-commit (the pre-commit eval leg ate two commit attempts in one session).
+4. **Daemon-hostile commit pattern, codified**: stage nothing → edit → soft-reset if swept → message-only amend → pathspec commit, in ONE background command; rebases are structurally unusable while the daemon runs (two ref-lock failures prove it). Already narrated in 16-37 §e.2; belongs in CONTRIBUTING.
+5. **Interrupted sessions need a stub-report convention** — three sessions this window did 90% of their work and died before any narrative; the reconstructing dispatch cost a full paid run each time. A three-line stub report over silence.
+6. **Commit-subject pre-count** (`echo -n "$subject" | wc -c` before invoking the hook): four hook cycles across the window were pure 73/78-char rejections.
+7. **Provenance labeling for inherited numbers**: "(inherited from `<commit>`)" markers on quoted-but-not-re-measured figures (the monitoring batch's storm-band numbers) — zero-cost honesty, partially applied, make systematic.
 
 ## f) NEXT THINGS
-(placeholder)
+
+All high-value follow-ups from the five closeouts are ALREADY harvested into TODO_LIST (verified line-by-line this session: 3374-3377, 3384, 224, 225, 183-186, 182, 363, 364, the gateway ruling row). New items this report mints are the small residue below — see the TODO_LIST append (5 new items, dedup-checked).
+
+Top of the existing queue, for the next dispatch round: float proof (3374) → post-float verify battery (3384 + 363) → false-red fix pre-deploy (224) → guard/sev1 VM tests (183/184) → stateDir audit (3375) → non-empty-output legs (3376) → stale-pressure-doc sweep (185) → two-tier fixture leg (364).
 
 ## g) OWNER QUESTIONS
-(placeholder)
+
+1. **Two-tier I/O page bar ratification** — PAGE at some avg300 >40% AND disk %util ≥10, warning-only above 10%: engineering-derived from calm-gate internals by a now-anonymous parallel session, never owner-ratified. Deploy will carry it; now is the cheap moment to adjust the bars.
+2. **DISARMED fire-once: unconditional (as shipped) or toggle option** — the 15-53 report promised an "option"; 16-37 shipped unconditional (metric carries the condition every scrape; journal line is duplication). If per-trip SEV1 lines are wanted for forensics, say so and it flips to default-on option.
+3. **Gateway-disable ruling (dnsblockd)** — ratified disable vs accidental corruption of `8001259f0`/`4bccc4646`: settles the drill row, the fixture reconciliation, SearXNG (725), and host-protection (726) in one pass. (Pre-existing decision row; restated here because four rows hang on it.)
 
 ## h) BAND DRIFT
-(placeholder)
+
+**None recorded.** `tq facts --type task.reprioritized` returns 0 facts for the whole journal (and 0 facts overall from the default DB), so no priority movement is explainable — or occurred — in this window's timespan. The window's five tasks were harvested at their original `[ready]` priority with no marker-, AI-, unblock-, or importance-driven moves.
