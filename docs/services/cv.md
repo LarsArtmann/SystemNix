@@ -168,6 +168,16 @@ route through `OnFailure` (Discord).
   independent proof (`exit 3` = still invalid). `systemctl status cv-relogin`
   shows `exit 10` as green (SuccessExitStatus) — unseeded is a pending owner
   act, not a failure.
+- **Metrics** (`cv-credentials-metrics`, 6-hourly textfile): read the loop's
+  state from `cv_stored_logins{platform,kind}` (rows in the sealed store's
+  read model — counts only, never secret material) and
+  `cv_relogin_last_result{platform}` (0 refreshed/not-due · 10 unseeded or
+  lost login · 20 failed) with `cv_relogin_last_result_age_seconds` for
+  staleness. `cv_credentials_scrape_errors=1` = the collector cannot read the
+  store (fail-closed). SigNoz drafts: "CV Relogin Loop Unseeded" (zero
+  kind=password rows for the configured platforms) and "CV Credentials Scrape
+  Broken". Raw file:
+  `/var/lib/prometheus-node-exporter/textfile_collectors/cv-credentials.prom`.
 - **Agent boundary (deliberate)**: the sealed store + master key are
   `cv`-owned 0700 and `cv-relogin` is a SYSTEM unit (agent sessions get
   polkit-denied), so an agent can neither read a password nor trigger a login.

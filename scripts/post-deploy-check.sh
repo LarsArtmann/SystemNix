@@ -700,6 +700,24 @@ if $cv_enabled; then
   else
     report_skip "CV - browser render smoke (cv checkout or bun absent on host)"
   fi
+  # Credentials-loop visibility (2026-11-09): the cv-credentials textfile
+  # collector must be emitting — the SigNoz loop-unseeded rule reads exactly
+  # this metric, so an absent .prom on a deployed collector is a blind
+  # alert. First-window WARN: the deploy INTRODUCING the collector may run
+  # post-deploy-check before its first timer window (trigger it or wait 6h).
+  # An empty-but-readable store is GREEN (scrape_errors=0, zero series).
+  if systemctl list-unit-files 'cv-credentials-metrics*' --no-legend 2>/dev/null | grep -q cv-credentials-metrics; then
+    cv_prom=/var/lib/prometheus-node-exporter/textfile_collectors/cv-credentials.prom
+    if [ -f "$cv_prom" ] && grep -q '^cv_credentials_scrape_errors' "$cv_prom"; then
+      if grep -q '^cv_credentials_scrape_errors 1' "$cv_prom"; then
+        report_fail "CV - credentials metrics scraping broken (cv_credentials_scrape_errors=1 in $cv_prom) - sealed store unreadable by the collector (journalctl -u cv-credentials-metrics -n 30)"
+      else
+        report_pass "CV - credentials metrics publishing (cv_stored_logins + cv_relogin_last_result textfile)"
+      fi
+    else
+      report_warn "CV - credentials metrics absent ($cv_prom missing) - collector deployed but not yet emitted; run: systemctl start cv-credentials-metrics"
+    fi
+  fi
 else
   report_skip "CV - service disabled (units absent from systemd)"
 fi

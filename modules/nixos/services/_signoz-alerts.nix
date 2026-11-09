@@ -493,6 +493,39 @@ in
       target = 1;
       interval = "1m";
     };
+    # Credentials-loop visibility (SUPERB plan P4, 2026-11-09): metrics from
+    # the cv-credentials textfile collector. Two drafts:
+    #   - loop-unseeded: zero kind=password rows for the CONFIGURED relogin
+    #     platforms (the `or vector(0)` keeps it firing when no series
+    #     exists at all — an empty store emits no cv_stored_logins series,
+    #     and absent-series is exactly the state to alert on). The relogin
+    #     unit itself WARN-skips green (exit 10), so this rule is the ONLY
+    #     thing that turns "the loop has nothing to do" into a signal.
+    #   - scrape-broken: the collector could not read the store — real
+    #     breakage (missing db / bad schema), fail-closed class.
+    "signoz/rules/cv-relogin-loop-unseeded.json".source = mkRule {
+      name = "CV Relogin Loop Unseeded";
+      description = "No kind=password credential stored for any configured relogin platform for a week — the expiry-gated login loop has nothing to log in with (seed at cv.home.lan/admin/credentials/)";
+      query =
+        ''sum(cv_stored_logins{kind="password",platform=~"ateam|freelancermap|gun.io"}) or vector(0)'';
+      step = 300;
+      op = "below";
+      target = 1;
+      # Daily gate, weekly persistence: evaluated hourly; with the 5m step a
+      # drop alerts within the hour. Tune the pending window in SigNoz to 7d
+      # if the hourly cadence proves noisy (draft, 2026-11-09).
+      interval = "1h";
+      severity = "warning";
+    };
+    "signoz/rules/cv-credentials-scrape-broken.json".source = mkRule {
+      name = "CV Credentials Scrape Broken";
+      description = "The cv-credentials metrics collector cannot read the sealed store (missing db or unreadable schema) — credential-loop visibility is down";
+      query = "cv_credentials_scrape_errors";
+      step = 300;
+      op = "above_or_equal";
+      target = 1;
+      interval = "30m";
+    };
     "signoz/rules/service-failed-spike.json".source = mkRule {
       name = "Service Failure Spike";
       description = "Multiple systemd units in failed state simultaneously — possible systemic issue";

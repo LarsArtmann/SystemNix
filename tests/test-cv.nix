@@ -255,7 +255,7 @@ in
     #     it GREEN (SuccessExitStatus), and the stub cv is NEVER invoked.
     machine.succeed("mkdir -p /var/lib/cv/data/credentials-store")
     machine.succeed(
-        sqliteBin
+        "${sqliteBin}"
         + " /var/lib/cv/data/credentials-store/credentials.db"
         + " 'CREATE TABLE IF NOT EXISTS meta_planned_credentials_by_platform(platform TEXT, kind TEXT)'"
     )
@@ -275,7 +275,7 @@ in
     #     NOT freelancermap (fresh + far expiry), proving the loop is
     #     EXPIRY-driven, not calendar-driven.
     machine.succeed(
-        sqliteBin
+        "${sqliteBin}"
         + " /var/lib/cv/data/credentials-store/credentials.db"
         + " \"INSERT INTO meta_planned_credentials_by_platform VALUES ('ateam','password'),('freelancermap','password'),('gun.io','password')\""
     )
