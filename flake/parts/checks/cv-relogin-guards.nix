@@ -86,5 +86,37 @@
           touch $out
           echo "ok: cv-relogin env contract holds (NODE_PATH resolves playwright)"
         '';
+
+      # Playwright pin contract (F9.3): the relogin unit runs nixpkgs
+      # playwright through NODE_PATH while the CV repo's package.json pins
+      # the version its bun scripts were written against. Runtime resolution
+      # ignores the range (NODE_PATH, no install step), so drift is INVISIBLE
+      # until a script calls an API that moved. HARD-fail on major drift
+      # (breaking-change class); loud-print minor drift (today: nixpkgs
+      # 1.64.x vs CV ^1.65.0 — tolerated, but named in every flake check
+      # until nixpkgs catches up or CV re-pins).
+      checks.cv-relogin-playwright-pin =
+        let
+          nixpkgsVersion = pkgs.playwright.version;
+          cvPackageJson = "${inputs.cv}/package.json";
+        in
+        pkgs.runCommand "cv-relogin-playwright-pin"
+          {
+            nativeBuildInputs = [ pkgs.jq ];
+          }
+          ''
+            pin="$(jq -r '.devDependencies.playwright // .dependencies.playwright // ""' ${cvPackageJson})"
+            [ -n "$pin" ] || { echo "FAIL: CV package.json no longer pins playwright — the relogin runtime contract changed, revisit NODE_PATH provisioning" >&2; exit 1; }
+            want_major="$(printf '%s' "$pin" | grep -oE '[0-9]+' | head -1)"
+            have_major="$(printf '%s' "${nixpkgsVersion}" | grep -oE '^[0-9]+' | head -1)"
+            if [ "$want_major" != "$have_major" ]; then
+              echo "FAIL: playwright MAJOR drift — CV pins '$pin' (major $want_major) but the relogin unit runs nixpkgs ${nixpkgsVersion} (major $have_major); a major gap is the breaking-change class, fix one side deliberately" >&2
+              exit 1
+            fi
+            if ! printf '%s' "$pin" | grep -q "${nixpkgsVersion}"; then
+              echo "NOTE: playwright minor drift — CV pins '$pin', unit runs ${nixpkgsVersion} (same major, tolerated; bun resolves the NODE_PATH copy without range checks)"
+            fi
+            touch $out
+          '';
     };
 }
