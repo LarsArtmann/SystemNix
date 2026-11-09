@@ -275,6 +275,17 @@
           default = cfg.package;
           description = "CV derivation the relogin loop invokes (the due gate's accounts listing AND the relogin verb). Tests substitute a stub to assert the invoke path without a browser or a real portal login.";
         };
+
+        metrics = {
+          enable = lib.mkEnableOption ''
+            Textfile metrics for the credentials loop: cv_stored_logins per
+            platform+kind from the sealed store's read model, and
+            cv_relogin_last_result / cv_relogin_last_result_age_seconds per
+            platform from the relogin run's status file (data/relogin-status.tsv
+            under the state dir). Written to the node_exporter textfile dir as
+            cv-credentials.prom — counts only, never secret material.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -1316,96 +1327,114 @@
               # failures and hit onFailure.
               SuccessExitStatus = [ 10 ];
               ExecStart = pkgs.writeShellScript "cv-relogin" ''
-                set -euo pipefail
-                # Exit contract (mirrors the unit comment):
-                #   0 ok · 10 skipped-unseeded · 20 relogin failed · 30 broken
-                store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.stateDir}/data/credentials-store}"
-                store_db="$store_dir/credentials.db"
-                sqlite_bin="${lib.getExe pkgs.sqlite}"
-                jq_bin="${lib.getExe pkgs.jq}"
-                cv_bin="${lib.getExe cfg.relogin.package}"
-                # Command indirection through a function (nullglob-audit
-                # class A/B: a $var in command position is banned here).
-                run_cv() { "$cv_bin" "$@"; }
-                # Generated scripts live OUTSIDE the content dirs: the sync
-                # overwrites shipped files inside the eight data/<content>
-                # dirs on every start, and these are runtime artifacts.
-                out_dir="${cfg.stateDir}/data/relogin-scripts"
-                mkdir -p "$out_dir"
+                                set -euo pipefail
+                                # Exit contract (mirrors the unit comment):
+                                #   0 ok · 10 skipped-unseeded · 20 relogin failed · 30 broken
+                                store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.stateDir}/data/credentials-store}"
+                                store_db="$store_dir/credentials.db"
+                                sqlite_bin="${lib.getExe pkgs.sqlite}"
+                                jq_bin="${lib.getExe pkgs.jq}"
+                                cv_bin="${lib.getExe cfg.relogin.package}"
+                                # Command indirection through a function (nullglob-audit
+                                # class A/B: a $var in command position is banned here).
+                                run_cv() { "$cv_bin" "$@"; }
+                                # Generated scripts live OUTSIDE the content dirs: the sync
+                                # overwrites shipped files inside the eight data/<content>
+                                # dirs on every start, and these are runtime artifacts.
+                                out_dir="${cfg.stateDir}/data/relogin-scripts"
+                                mkdir -p "$out_dir"
 
-                if [ ! -f "$store_db" ]; then
-                  echo "cv-relogin: sealed store missing at $store_db (it boots from the sops master key; cv-server creates it) — cannot re-login" >&2
-                  exit 30
-                fi
+                                if [ ! -f "$store_db" ]; then
+                                  echo "cv-relogin: sealed store missing at $store_db (it boots from the sops master key; cv-server creates it) — cannot re-login" >&2
+                                  exit 30
+                                fi
 
-                # The DUE gate's input: the probe's own session classification.
-                # A listing failure means we cannot classify safely — fail closed.
-                if ! accounts="$(run_cv profile accounts --json)"; then
-                  echo "cv-relogin: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
-                  exit 30
-                fi
+                                # The DUE gate's input: the probe's own session classification.
+                                # A listing failure means we cannot classify safely — fail closed.
+                                if ! accounts="$(run_cv profile accounts --json)"; then
+                                  echo "cv-relogin: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
+                                  exit 30
+                                fi
 
-                deadline=$(( $(date +%s) + ${toString cfg.relogin.leadDays} * 86400 ))
-                seeded_any=0
-                failed=0
-                for platform in ${lib.escapeShellArgs cfg.relogin.platforms}; do
-                  # Seed gate first: no kind=password credential = nothing to
-                  # log in with YET (owner seeding step) → WARN + skip. An
-                  # unreadable store is a real failure (bad key/schema) → 30.
-                  if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
-                    "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
-                    echo "cv-relogin: could not read the store read model at $store_db" >&2
-                    exit 30
-                  fi
-                  state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
-                    '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
-                  expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
-                    '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
-                  if [ "$seeded" = "0" ]; then
-                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (unseeded; seed at https://cv.${domain}/admin/credentials/ — platform + kind password)" >&2
-                    continue
-                  fi
-                  seeded_any=1
+                                deadline=$(( $(date +%s) + ${toString cfg.relogin.leadDays} * 86400 ))
+                                seeded_any=0
+                                failed=0
+                                # Per-platform results for the metrics collector (tsv written
+                                # atomically at the END of a completed sweep; a broken-store
+                                # run exits before this and leaves the previous file aging).
+                                status_file="${cfg.stateDir}/data/relogin-status.tsv"
+                                status_lines=""
+                                for platform in ${lib.escapeShellArgs cfg.relogin.platforms}; do
+                                  # Seed gate first: no kind=password credential = nothing to
+                                  # log in with YET (owner seeding step) → WARN + skip. An
+                                  # unreadable store is a real failure (bad key/schema) → 30.
+                                  if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
+                                    "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
+                                    echo "cv-relogin: could not read the store read model at $store_db" >&2
+                                    exit 30
+                                  fi
+                                  state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                                    '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
+                                  expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                                    '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
+                                  if [ "$seeded" = "0" ]; then
+                                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (unseeded; seed at https://cv.${domain}/admin/credentials/ — platform + kind password)" >&2
+                                    status_lines="$status_lines$platform|skipped-unseeded|$(date +%s)
+                "
+                                    continue
+                                  fi
+                                  seeded_any=1
 
-                  # Due rule: not-fresh is due; fresh-but-expiring inside the
-                  # lead window is due too. An unparsable expiry counts as due
-                  # (safe side: attempt the refresh).
-                  due=1
-                  reason="state=$state"
-                  if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
-                    exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
-                    if [ "$exp_epoch" -gt "$deadline" ]; then
-                      due=0
-                    else
-                      reason="expiry=$expiry"
-                    fi
-                  fi
-                  if [ "$due" != "1" ]; then
-                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (not due)"
-                    continue
-                  fi
+                                  # Due rule: not-fresh is due; fresh-but-expiring inside the
+                                  # lead window is due too. An unparsable expiry counts as due
+                                  # (safe side: attempt the refresh).
+                                  due=1
+                                  reason="state=$state"
+                                  if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
+                                    exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
+                                    if [ "$exp_epoch" -gt "$deadline" ]; then
+                                      due=0
+                                    else
+                                      reason="expiry=$expiry"
+                                    fi
+                                  fi
+                                  if [ "$due" != "1" ]; then
+                                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (not due)"
+                                    status_lines="$status_lines$platform|skipped-not-due|$(date +%s)
+                "
+                                    continue
+                                  fi
 
-                  echo "cv-relogin: $platform $reason expiry=''${expiry:--} -> refresh (headless)"
-                  # tee streams live to the journal while keeping a copy for
-                  # the ErrNoStoredLogin classification (a credential lost
-                  # between gate and run is WARN-class, not a page).
-                  if out="$(run_cv profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
-                    echo "cv-relogin: $platform refreshed"
-                  elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
-                    echo "cv-relogin: WARN — '$platform' lost its stored login between the gate and the run (ErrNoStoredLogin); the next run re-gates" >&2
-                  else
-                    echo "cv-relogin: '$platform' relogin FAILED — the typed reason is in the journal lines ABOVE (2FA/SSO needing a human, or a drifted login form); runbook: docs/services/cv.md §Credential storage" >&2
-                    failed=1
-                  fi
-                done
+                                  echo "cv-relogin: $platform $reason expiry=''${expiry:--} -> refresh (headless)"
+                                  # tee streams live to the journal while keeping a copy for
+                                  # the ErrNoStoredLogin classification (a credential lost
+                                  # between gate and run is WARN-class, not a page).
+                                  if out="$(run_cv profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
+                                    echo "cv-relogin: $platform refreshed"
+                                    status_lines="$status_lines$platform|refreshed|$(date +%s)
+                "
+                                  elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
+                                    echo "cv-relogin: WARN — '$platform' lost its stored login between the gate and the run (ErrNoStoredLogin); the next run re-gates" >&2
+                                    status_lines="$status_lines$platform|lost-login|$(date +%s)
+                "
+                                  else
+                                    echo "cv-relogin: '$platform' relogin FAILED — the typed reason is in the journal lines ABOVE (2FA/SSO needing a human, or a drifted login form); runbook: docs/services/cv.md §Credential storage" >&2
+                                    status_lines="$status_lines$platform|failed|$(date +%s)
+                "
+                                    failed=1
+                                  fi
+                                done
 
-                if [ "$failed" -ne 0 ]; then
-                  exit 20
-                fi
-                if [ "$seeded_any" -eq 0 ]; then
-                  exit 10
-                fi
-                exit 0
+                                printf '%s' "$status_lines" > "$status_file.tmp"
+                                mv "$status_file.tmp" "$status_file"
+
+                                if [ "$failed" -ne 0 ]; then
+                                  exit 20
+                                fi
+                                if [ "$seeded_any" -eq 0 ]; then
+                                  exit 10
+                                fi
+                                exit 0
               '';
             }
             (harden {
@@ -1429,6 +1458,113 @@
             OnCalendar = cfg.relogin.schedule;
             Persistent = true;
             Unit = "cv-relogin.service";
+          };
+        };
+
+        # Credentials-loop textfile collector (SUPERB plan P4, 2026-11-09):
+        # makes "the store is empty" and "relogin keeps failing" VISIBLE
+        # outside the journal (AC4). Runs as the cv user — the store dir is
+        # 0700 cv:cv, so this is the identity that can read it without
+        # capability games — and publishes COUNTS only, never secret
+        # material:
+        #   cv_stored_logins{platform,kind}     rows in the store read model
+        #   cv_relogin_last_result{platform}    0 ok/not-due · 10 unseeded or
+        #                                       lost login · 20 failed (the
+        #                                       unit exit-contract mirror)
+        #   cv_relogin_last_result_age_seconds  staleness of the last sweep
+        #   cv_credentials_scrape_errors        1 = read failed (fail-closed,
+        #                                       never a phantom green)
+        # Sticky-1777 textfile doctrine: mktemp inside the dir + atomic mv
+        # (boot-metrics / forgejo-mirror pattern); absent dir = WARN skip.
+        systemd.services.cv-credentials-metrics = lib.mkIf cfg.relogin.metrics.enable {
+          description = "CV credentials-loop metrics collector (textfile)";
+          startLimitBurst = 3;
+          startLimitIntervalSec = 1800;
+          inherit onFailure;
+          path = [
+            pkgs.coreutils
+            pkgs.sqlite
+          ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = cfg.user;
+              Group = cfg.group;
+              TimeoutStartSec = 60;
+            }
+            (harden {
+              ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+              MemoryMax = "64M";
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+            out_dir="/var/lib/prometheus-node-exporter/textfile_collectors"
+            if [ ! -d "$out_dir" ]; then
+              echo "cv-credentials-metrics: textfile dir absent — skipping prom publish" >&2
+              exit 0
+            fi
+            out="$out_dir/cv-credentials.prom"
+            tmp="$(mktemp "$out_dir/cv-credentials.prom.XXXXXX")"
+            chmod 644 "$tmp"
+            trap 'rm -f "$tmp"' EXIT
+
+            errors=0
+            sqlite_bin="${lib.getExe pkgs.sqlite}"
+            store_db="${cfg.stateDir}/data/credentials-store/credentials.db"
+            status_file="${cfg.stateDir}/data/relogin-status.tsv"
+            now="$(date +%s)"
+
+            {
+              echo "# HELP cv_stored_logins Sealed credential rows per platform and kind (read-model counts; no secret material)"
+              echo "# TYPE cv_stored_logins gauge"
+              if [ -f "$store_db" ]; then
+                rows="$("$sqlite_bin" "file:$store_db?mode=ro" "select platform || '|' || kind || '|' || count(*) from meta_planned_credentials_by_platform group by platform, kind;" 2>/dev/null)" || errors=1
+                if [ -n "$rows" ]; then
+                  printf '%s\n' "$rows" | while IFS='|' read -r p k n; do
+                    [ -n "$p" ] || continue
+                    echo "cv_stored_logins{platform=\"$p\",kind=\"$k\"} $n"
+                  done
+                fi
+              else
+                errors=1
+              fi
+
+              echo "# HELP cv_relogin_last_result Last sweep result per platform (0 refreshed/not-due, 10 unseeded or lost login, 20 failed)"
+              echo "# TYPE cv_relogin_last_result gauge"
+              echo "# HELP cv_relogin_last_result_age_seconds Seconds since the last completed sweep recorded this platform"
+              echo "# TYPE cv_relogin_last_result_age_seconds gauge"
+              if [ -f "$status_file" ]; then
+                cat "$status_file" | while IFS='|' read -r p r ts; do
+                  [ -n "$p" ] || continue
+                  [ -n "$ts" ] || ts="$now"
+                  case "$r" in
+                    refreshed|skipped-not-due) code=0 ;;
+                    skipped-unseeded|lost-login) code=10 ;;
+                    *) code=20 ;;
+                  esac
+                  echo "cv_relogin_last_result{platform=\"$p\"} $code"
+                  echo "cv_relogin_last_result_age_seconds{platform=\"$p\"} $(( now - ts ))"
+                done
+              fi
+
+              echo "# HELP cv_credentials_scrape_errors 1 when the store read failed this run (fail-closed, never a phantom green)"
+              echo "# TYPE cv_credentials_scrape_errors gauge"
+              echo "cv_credentials_scrape_errors $errors"
+            } > "$tmp"
+            mv "$tmp" "$out"
+            echo "cv-credentials-metrics: published $out"
+          '';
+        };
+
+        systemd.timers.cv-credentials-metrics = lib.mkIf cfg.relogin.metrics.enable {
+          description = "CV credentials-loop metrics (6-hourly textfile)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = "*-*-* 00/6:25:00";
+            Persistent = true;
+            Unit = "cv-credentials-metrics.service";
           };
         };
 

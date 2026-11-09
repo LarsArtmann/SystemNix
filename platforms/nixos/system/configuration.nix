@@ -1167,15 +1167,21 @@ in
         # went invalid → onPage failures, alerting instead of apply-time
         # surprises. Adds chromium to the closure (accepted 2026-08-30).
         profileProbe.enable = true;
-        # Weekly re-login from the SEALED credentials store (Mon 09:11, 30
-        # min before the probe proves the fresh session). This is the app's
-        # own login loop: portal passwords live ONLY in
+        # Daily expiry-gated re-login from the SEALED credentials store
+        # (09:11, 30 min before the probe proves the fresh session; the run
+        # only ACTS on sessions not fresh or expiring within leadDays). This
+        # is the app's own login loop: portal passwords live ONLY in
         # /var/lib/cv/data/credentials-store (sops carries the master key),
         # so once the owner seeds a password at
         # https://cv.home.lan/admin/credentials/ every later refresh is
-        # unattended. Unseeded platforms are skipped with a journal WARN,
-        # never paged — inert-safe until the seeding step happens.
-        relogin.enable = true;
+        # unattended. Unseeded platforms exit 10 (green via
+        # SuccessExitStatus, journal WARN) — never paged.
+        relogin = {
+          enable = true;
+          # cv_stored_logins / cv_relogin_last_result textfile metrics — the
+          # store's emptiness stays VISIBLE instead of journal-only.
+          metrics.enable = true;
+        };
       };
 
       # cvagent — daily scan + mesh export into the CV checkout

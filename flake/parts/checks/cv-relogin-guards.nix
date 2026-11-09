@@ -32,9 +32,7 @@
           host = inputs.self.nixosConfigurations.evo-x2.config;
           platforms = host.services.cv-server.relogin.platforms;
           specsDir = "${host.services.cv-server.package}/share/cv/data/freelance-platforms";
-          platformList = pkgs.writeText "cv-relogin-platforms" (
-            lib.concatStringsSep "\n" platforms
-          );
+          platformList = pkgs.writeText "cv-relogin-platforms" (lib.concatStringsSep "\n" platforms);
         in
         pkgs.runCommand "cv-relogin-specs" { } ''
           fail() { echo "FAIL: $*" >&2; exit 1; }
@@ -42,8 +40,8 @@
           while IFS= read -r p; do
             f="${specsDir}/$p.yaml"
             [ -f "$f" ] || fail "relogin platform '$p' has no spec at $f (share dir of the locked cv package)"
-            grep -q 'login_url' "$f" || fail "$p: automation_spec.login_url missing — relogin cannot open the login page"
-            grep -q 'session_cookie' "$f" || fail "$p: automation_spec.session_cookie missing — relogin cannot record the session"
+            grep -Eq '^[[:space:]]*login_url:' "$f" || fail "$p: automation_spec.login_url missing — relogin cannot open the login page"
+            grep -Eq '^[[:space:]]*session_cookie:' "$f" || fail "$p: automation_spec.session_cookie missing — relogin cannot record the session"
             echo "ok: $p carries login_url + session_cookie"
           done < ${platformList}
           touch $out
@@ -51,20 +49,27 @@
 
       checks.cv-relogin-env =
         let
-          unit =
-            inputs.self.nixosConfigurations.evo-x2.config.systemd.services.cv-relogin.serviceConfig;
-          envLines = pkgs.writeText "cv-relogin-env" (
-            lib.concatStringsSep "\n" unit.Environment
-          );
+          unit = inputs.self.nixosConfigurations.evo-x2.config.systemd.services.cv-relogin.serviceConfig;
+          envLines = pkgs.writeText "cv-relogin-env" (lib.concatStringsSep "\n" unit.Environment);
           # Eval-time pins: a regression in these changes loop behavior
           # silently, so they fail at flake-check, not at the first Monday.
           pin = cond: msg: lib.optionalString (!cond) "echo 'FAIL: ${msg}' >&2; exit 1;";
           pins =
-            pin (unit.SuccessExitStatus == [ 10 ]) "cv-relogin must keep SuccessExitStatus=10 (unseeded exits green, never pages)"
-            + pin (unit.TimeoutStartSec == 1200) "cv-relogin TimeoutStartSec must stay 1200 (3 platforms x 240s cookie wait + slack)"
-            + pin (unit.MemoryMax == "3G") "cv-relogin MemoryMax must stay 3G (the 512M harden default throttles chromium to death)"
-            + pin (unit.User == "cv") "cv-relogin must run as the cv service user (the only identity that can decrypt AND write the served session)"
-            + pin (unit ? EnvironmentFile && unit.EnvironmentFile != [ ]) "cv-relogin lost its EnvironmentFile (the store master key injection)";
+            pin (
+              unit.SuccessExitStatus == [ 10 ]
+            ) "cv-relogin must keep SuccessExitStatus=10 (unseeded exits green, never pages)"
+            + pin (
+              unit.TimeoutStartSec == 1200
+            ) "cv-relogin TimeoutStartSec must stay 1200 (3 platforms x 240s cookie wait + slack)"
+            + pin (
+              unit.MemoryMax == "3G"
+            ) "cv-relogin MemoryMax must stay 3G (the 512M harden default throttles chromium to death)"
+            +
+              pin (unit.User == "cv")
+                "cv-relogin must run as the cv service user (the only identity that can decrypt AND write the served session)"
+            + pin (
+              unit ? EnvironmentFile && unit.EnvironmentFile != [ ]
+            ) "cv-relogin lost its EnvironmentFile (the store master key injection)";
         in
         pkgs.runCommand "cv-relogin-env" { } ''
           ${pins}
