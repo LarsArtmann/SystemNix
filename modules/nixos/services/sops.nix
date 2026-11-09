@@ -921,16 +921,29 @@ in
                 // lib.optionalAttrs cvMailboxStaged {
                   CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
                 }
-                // {
-                  # go-credentials-store master key (2026-11-06): env-wins
-                  # over the master-key-v1.b64 state-file fallback. CV boots
-                  # the store fail-closed when CV_CREDENTIALS_STORE_ENABLED=1
-                  # and NO usable key resolves, so this placeholder and the
-                  # flag in cv.nix MUST land in the same deploy (the
-                  # openaicompat FLIP-TIMING rule).
-                  CREDENTIALS_MASTER_KEY_V1 = config.sops.placeholder.cv_credentials_master_key;
-                }
               );
+            };
+
+            # Store master key, SCOPED (2026-11-09, SUPERB plan P6): the key
+            # used to live in cv-env, which cv-scan and cv-agent also read —
+            # neither ever calls the credentials store, so the key was
+            # over-exposed. Only cv-server and cv-relogin boot the store;
+            # they and only they get this template.
+            "cv-store-key-env" = {
+              owner = "cv";
+              group = "cv";
+              mode = "0400";
+              restartUnits = [
+                "cv-server.service"
+                "cv-relogin.service"
+              ];
+              content = lib.generators.toKeyValue { } {
+                # go-credentials-store master key (2026-11-06): env-wins
+                # over the master-key-v1.b64 state-file fallback. CV boots
+                # the store fail-closed when CV_CREDENTIALS_STORE_ENABLED=1
+                # and NO usable key resolves.
+                CREDENTIALS_MASTER_KEY_V1 = config.sops.placeholder.cv_credentials_master_key;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "attic-config") {
