@@ -236,6 +236,38 @@ in
                 group = "audible-sync";
               } [ "audible_sync_auth_json" ]
             )
+            // lib.optionalAttrs (svcEnabled "pim-sync") (
+              # Flip scaffold (2026-11-10): keys landed WITH the file as
+              # PLACEHOLDER values (audible-sync precedent) so the owner's
+              # paste has a fixed target and sops-key-audit passes at the
+              # enable flip. Token files are SEEDS — the upstream seedScript
+              # copies them only into empty slots; runtime state owns them
+              # after the first refresh (7-day-rotation lesson). Ladder:
+              # docs/services/pim-sync.md.
+              mkSecrets "pim-sync.yaml" {
+                owner = "pim-sync";
+                group = "pim-sync";
+                restartUnits = [ "pim-sync.service" ];
+              } [
+                "pim_sync_oauth_client_secret"
+                "pim_sync_token_personal"
+                "pim_sync_token_work"
+                "pim_sync_token_personal_calendar"
+                "pim_sync_token_work_calendar"
+                "pim_sync_stalwart_dav_user"
+                "pim_sync_stalwart_dav_pass"
+              ]
+              // {
+                # tokenSeedDir needs a DIRECTORY of <account>.json files —
+                # give each seed its own rendered path under one seed dir
+                # (sops-nix renders per-secret paths; the wrapper points
+                # services.pim-sync.tokenSeedDir at this dir).
+                pim_sync_token_personal.path = "/var/lib/pim-sync-seed/personal.json";
+                pim_sync_token_work.path = "/var/lib/pim-sync-seed/work.json";
+                pim_sync_token_personal_calendar.path = "/var/lib/pim-sync-seed/personal-calendar.json";
+                pim_sync_token_work_calendar.path = "/var/lib/pim-sync-seed/work-calendar.json";
+              }
+            )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
               # real Wise token and is decryptable only with the host key
