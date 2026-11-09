@@ -1513,6 +1513,30 @@ _: {
                   alerts = discordAlert "storage-collector unhealthy (health gauge != 0) or its textfile vanished — filesystem capacity + IO gauge observability is DOWN and the verify timer just lost its subject. Check: systemctl status storage-collector storage-collector-verify.timer; journalctl -u storage-collector -n 30; ls -la /var/lib/prometheus-node-exporter/textfile_collectors/storage-collector.prom";
                 })
               ]
+              # PapDashboard ingest freshness (2026-11-09): the 11-07 window
+              # sat ingest REFUSED all day and the only signal was per-alert
+              # "Failed to send" gatus journal lines — the alerting channel
+              # to papdashboard IS the thing that died, so its own alerts
+              # cannot report it. These textfile gauges break the circle:
+              # reachable (direct TCP, dead ≠ quiet) + last-ok timestamp
+              # (unbounded journal window, survives quiet periods).
+              # Deliberately Discord-only: when this fires, the papdashboard
+              # ingest provider is down and every custom-provider send fails.
+              ++ lib.optionals papIngestEnabled [
+                (mkHttpCheck {
+                  name = "PapDashboard Ingest";
+                  group = "Monitoring";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*system_papdashboard_ingest_reachable 1*)"
+                    "[BODY] == pat(*system_papdashboard_ingest_scrape_errors 0*)"
+                    "[BODY] == pat(*system_papdashboard_ingest_last_ok_timestamp *)"
+                  ];
+                  alerts = discordAlert "PapDashboard ingest (localhost:${toString ports.papdashboard}) is REFUSED/DARK or its freshness textfile broke — every gatus alert->papdashboard custom-provider send is being dropped (gatus journal shows 'Failed to send ... connection refused'). Dashboard pages/alerts go stale until papdashboard recovers. Check: systemctl status papdashboard; journalctl -u papdashboard -n 30; SigNoz trend: system_papdashboard_ingest_last_ok_timestamp / system_papdashboard_ingest_reachable.";
+                })
+              ]
               # T-007: the relay gate sits on every Discord alert's path —
               # its death means gatus keeps evaluating but every send
               # fails silently (gatus does not retry provider sends).

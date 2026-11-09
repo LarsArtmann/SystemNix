@@ -20,6 +20,7 @@ _: {
       ...
     }:
     let
+      inherit (import ../../../lib/ports.nix) ports;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceOneshotDefaults
@@ -854,12 +855,34 @@ _: {
           collect_papdashboard_ingest=${lib.boolToString (config.services.papdashboard.enable or false)}
           PAPDASHBOARD_INGEST_OK_1H=""
           PAPDASHBOARD_INGEST_TOTAL_1H=""
+          PAPDASHBOARD_INGEST_LAST_OK=""
           PAPDASHBOARD_INGEST_SCRAPE_ERRORS=1
+          pap_last_ok() {
+            # Timestamp (unix seconds) of the NEWEST status=200 ingest line,
+            # unbounded window — freshness must survive quiet periods, so a
+            # fixed lookback would fake staleness (11-07 class: ingest sat
+            # REFUSED all day while every walk windowed to 1h showed zeros,
+            # indistinguishable from a quiet hour).
+            local outfile="$1" ts="" status=0
+            ts=$(timeout 30 journalctl -u papdashboard.service --grep 'path=/api/ingest status=200' --output export --no-pager -n 1 2>/dev/null | sed -n 's/^__REALTIME_TIMESTAMP=//p') || status=$?
+            ts=$(( ''${ts:-0} / 1000000 ))
+            printf '%s %s\n' "$status" "$ts" > "$outfile"
+          }
+          pap_reachable() {
+            # Direct TCP connect to the ingest port — the whole point is that
+            # journal counts are DEAD-INVISIBLE when papdashboard itself is
+            # down (0 lines = quiet, not alive). 1 = refused/dark.
+            local outfile="$1" status=1
+            timeout 5 bash -c 'exec 3<>"/dev/tcp/127.0.0.1/${toString ports.papdashboard}"' 2>/dev/null && status=0
+            printf '%s\n' "$status" > "$outfile"
+          }
           if [ "$collect_papdashboard_ingest" = "true" ]; then
             PAPDASHBOARD_INGEST_SCRAPE_ERRORS=0
             PAPDASHBOARD_WALKS_LAUNCHED=1
             walk_journal "$WALK_DIR/pap-ok" papdashboard.service "-1h" "path=/api/ingest status=200" 30 &
             walk_journal "$WALK_DIR/pap-total" papdashboard.service "-1h" "path=/api/ingest status=[0-9]" 30 &
+            pap_last_ok "$WALK_DIR/pap-last" &
+            pap_reachable "$WALK_DIR/pap-reachable" &
           fi
 
           # === Kernel memcg OOM kills (freeze-#28 class) ===
@@ -1339,16 +1362,24 @@ _: {
             if [ "''${PAPDASHBOARD_WALKS_LAUNCHED:-0}" = 1 ]; then
               pap_ok_status=2
               pap_total_status=2
+              pap_last_status=2
+              pap_reach_status=1
               read -r pap_ok_status PAPDASHBOARD_INGEST_OK_1H < "$WALK_DIR/pap-ok" 2>/dev/null || { pap_ok_status=2; PAPDASHBOARD_INGEST_OK_1H=""; }
               read -r pap_total_status PAPDASHBOARD_INGEST_TOTAL_1H < "$WALK_DIR/pap-total" 2>/dev/null || { pap_total_status=2; PAPDASHBOARD_INGEST_TOTAL_1H=""; }
-              if [ "''${pap_ok_status:-2}" -le 1 ] && [ "''${pap_total_status:-2}" -le 1 ]; then
+              read -r pap_last_status PAPDASHBOARD_INGEST_LAST_OK < "$WALK_DIR/pap-last" 2>/dev/null || { pap_last_status=2; PAPDASHBOARD_INGEST_LAST_OK=""; }
+              read -r pap_reach_status < "$WALK_DIR/pap-reachable" 2>/dev/null || pap_reach_status=1
+              if [ "''${pap_ok_status:-2}" -le 1 ] && [ "''${pap_total_status:-2}" -le 1 ] && [ "''${pap_last_status:-2}" -le 1 ]; then
                 PAPDASHBOARD_INGEST_OK_1H="''${PAPDASHBOARD_INGEST_OK_1H:-0}"
                 PAPDASHBOARD_INGEST_TOTAL_1H="''${PAPDASHBOARD_INGEST_TOTAL_1H:-0}"
+                PAPDASHBOARD_INGEST_LAST_OK="''${PAPDASHBOARD_INGEST_LAST_OK:-0}"
+                PAPDASHBOARD_INGEST_REACHABLE=$(( 1 - ''${pap_reach_status:-1} ))
               else
-                echo "system-health: papdashboard ingest journal scan failed (status ok=''${pap_ok_status:-?} total=''${pap_total_status:-?})" >&2
+                echo "system-health: papdashboard ingest journal scan failed (status ok=''${pap_ok_status:-?} total=''${pap_total_status:-?} last=''${pap_last_status:-?})" >&2
                 PAPDASHBOARD_INGEST_OK_1H=""
                 PAPDASHBOARD_INGEST_TOTAL_1H=""
+                PAPDASHBOARD_INGEST_LAST_OK=""
                 PAPDASHBOARD_INGEST_SCRAPE_ERRORS=1
+                PAPDASHBOARD_INGEST_REACHABLE=""
               fi
             fi
 
@@ -1680,6 +1711,14 @@ _: {
               echo "# HELP system_papdashboard_ingest_scrape_errors Scrape status of the papdashboard ingest journal scan: 0 = OK, 1 = journalctl failed/timeout (fail-closed)"
               echo "# TYPE system_papdashboard_ingest_scrape_errors gauge"
               echo "system_papdashboard_ingest_scrape_errors ''${PAPDASHBOARD_INGEST_SCRAPE_ERRORS}"
+
+              echo "# HELP system_papdashboard_ingest_reachable 1 when a TCP connect to the ingest port succeeds right now — the dead-service signal journal counts cannot give (0 lines = quiet, not alive; the 11-07 REFUSED window was invisible to every count)"
+              echo "# TYPE system_papdashboard_ingest_reachable gauge"
+              echo "system_papdashboard_ingest_reachable ''${PAPDASHBOARD_INGEST_REACHABLE:-}"
+
+              echo "# HELP system_papdashboard_ingest_last_ok_timestamp Unix seconds of the newest status=200 ingest line on record (0 = none ever) — freshness = now minus this; stale-with-reachable-1 means alerts land but nothing flows"
+              echo "# TYPE system_papdashboard_ingest_last_ok_timestamp gauge"
+              echo "system_papdashboard_ingest_last_ok_timestamp ''${PAPDASHBOARD_INGEST_LAST_OK:-}"
             fi
             # Absent pair + scrape_errors=1 is the documented fail-closed
             # design (same contract as pocket-id above).
