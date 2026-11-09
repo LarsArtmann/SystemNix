@@ -135,6 +135,20 @@ route through `OnFailure` (Discord).
   username = the login email, secret = the password. The admin UI is the ONLY
   write path (the store SDK exposes no public create/rotate API), so seeding
   is a HUMAN act — never an agent one, never chat/CLI/plaintext.
+- **Seeding walkthrough (exact clicks)**:
+  1. Open `https://cv.home.lan/admin/credentials/` (Pocket-ID passkey; the
+     API key works via the `X-API-Key` header for scripted checks).
+  2. "New credential" → platform: pick the slug EXACTLY (`ateam`,
+     `freelancermap`, `gun.io` — the loop matches slugs, not display names).
+  3. kind: `password`. Username: the portal login email. Secret: the portal
+     password (pasted into the form field — it never touches a shell).
+  4. Save. Expect the row to appear in the list with kind `password`; within
+     one collector window (≤6h) `cv_stored_logins{platform="<slug>",kind="password"}`
+     flips to 1 in `/var/lib/prometheus-node-exporter/textfile_collectors/cv-credentials.prom`.
+  5. No deploy needed: the next daily 09:11 run picks it up. Verify with
+     `journalctl -u cv-relogin -n 10` after the window.
+  6. Rotate = re-seed the row (admin UI) — there is no in-place rotate API
+     yet (upstream row in `docs/todo/upstream.md`).
 - **Unseeded = WARN, not page**: before each platform the unit counts
   `kind=password` rows for it in the store's read model; `0` ⇒ journal WARN +
   skip (the pending owner act). An *unreadable* store (bad key/schema) FAILS
@@ -185,9 +199,31 @@ route through `OnFailure` (Discord).
   is bearer-grade — never print it, never copy it out of the state dir.
 - **Backup**: `cv-backup` (03:17) snapshots BOTH `pipeline.sqlite` and
   `credentials.db` (`credentials-<ts>.sqlite`, 14-day retention, read-only
-  `.backup`). The artifact is ciphertext — useless without the sops master
+  `.backup`, 0600 artifacts). The artifact is ciphertext — useless without the sops master
   key — and it retires the "state dir lost ⇒ re-seed every login" failure
   mode the store's write-API gap made permanent.
+- **Restore drill (PROVEN 2026-11-09, F7 legs)**:
+  1. `cp /mnt/pool/backups/cv/credentials-<ts>.sqlite <scratch>/credentials.db`
+     + `chown -R cv:cv <scratch>` — the restored db MUST be cv-owned: SQLite
+     writes a `-shm`/`-wal` companion on open (even read-URI), so a
+     non-writable dir fails with `attempt to write a readonly database`
+     (a dir artifact, NOT corruption — root reads of the artifact stay green).
+  2. Parity: `sqlite3 'file:.../credentials.db?mode=ro' 'select count(*)
+     from meta_stream_log;'` == the live count at snapshot time (a live store
+     that moved on since shows a HIGHER count — expected drift, not mismatch).
+  3. Decryptability proof: as cv, with `CV_CREDENTIALS_STORE_DIR=<scratch>`
+     and `CV_CREDENTIALS_STORE_ENABLED=1` (fatal-on-failure), run
+     `cv profile relogin --platform ateam --headless`. Expected:
+     typed `No stored login credentials …` — that error PROVES the store
+     booted + decrypted the restored copy and then missed the ateam row
+     (never seeded). A store-boot/decrypt failure errors differently and
+     exits nonzero under StoreOn.
+- **Losing the store WITH a rotated key = re-seed** (the failure mode to
+  know): backups are ciphertext under the key that sealed them. If the sops
+  key is rotated AFTER a backup, older snapshots decrypt to garbage — keep
+  the pre-rotation backup + the old key together (sops revision history), or
+  take a fresh `cv-backup` immediately after every rotation (runbook above
+  links the rotation procedure).
 - **Master-key rotation**: `sudo sops --set` a new
   `cv_credentials_master_key` … note the file was created public-key-only
   (bank-sync-encryption pattern) while the host key still decrypts it at
