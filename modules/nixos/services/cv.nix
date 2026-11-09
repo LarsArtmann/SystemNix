@@ -269,6 +269,12 @@
           default = pkgs.playwright;
           description = "playwright-core JS package exposed on NODE_PATH as node_modules/playwright (the served state dir has no node_modules).";
         };
+
+        package = lib.mkOption {
+          type = lib.types.package;
+          default = cfg.package;
+          description = "CV derivation the relogin loop invokes (the due gate's accounts listing AND the relogin verb). Tests substitute a stub to assert the invoke path without a browser or a real portal login.";
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -1317,7 +1323,7 @@
                 store_db="$store_dir/credentials.db"
                 sqlite_bin="${lib.getExe pkgs.sqlite}"
                 jq_bin="${lib.getExe pkgs.jq}"
-                cv_bin="${lib.getExe cfg.package}"
+                cv_bin="${lib.getExe cfg.relogin.package}"
                 # Command indirection through a function (nullglob-audit
                 # class A/B: a $var in command position is banned here).
                 run_cv() { "$cv_bin" "$@"; }
