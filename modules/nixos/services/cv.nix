@@ -226,7 +226,8 @@
           accounts` and the ateam verb chain read. Inert-safe before the
           owner seeds a password credential: an unseeded platform is SKIPPED
           with a WARN instead of paging (a seeded-but-failing relogin DOES
-          fail the unit into onFailure).
+          fail the unit into onFailure — same for a broken store, while a
+          fully-unseeded store exits 10 which SuccessExitStatus keeps green).
         '';
 
         platforms = lib.mkOption {
@@ -247,8 +248,14 @@
 
         schedule = lib.mkOption {
           type = lib.types.str;
-          default = "Mon *-*-* 09:11:00";
-          description = "OnCalendar for the refresh run (default 30 minutes before the Monday session probe, so the probe verifies the FRESH session).";
+          default = "*-*-* 09:11:00";
+          description = "OnCalendar for the expiry-gated refresh sweep (daily default, 09:11 — 30 min before the session probe so it verifies the FRESH session). Each run only ACTS on platforms whose session is not fresh or expires within relogin.leadDays.";
+        };
+
+        leadDays = lib.mkOption {
+          type = lib.types.ints.positive;
+          default = 7;
+          description = "Refresh lead time in days: a due platform (sessionState not fresh, or earliestExpiry inside this window) is re-logged-in on the daily run; fresh sessions with far expiry are skipped without launching a browser.";
         };
 
         chromiumPackage = lib.mkOption {
@@ -1239,10 +1246,10 @@
           };
         };
 
-        # Scheduled re-login from the SEALED credentials store (2026-11-09):
-        # this is the app's OWN login loop. The store is the only place a
-        # portal password lives — sops carries just its master key — so the
-        # operator seeds a password ONCE at
+        # Scheduled re-login from the SEALED credentials store (2026-11-09,
+        # expiry-gated since 2026-11-09 v2): this is the app's OWN login loop.
+        # The store is the only place a portal password lives — sops carries
+        # just its master key — so the operator seeds a password ONCE at
         # https://cv.<domain>/admin/credentials/ and every later session
         # refresh is unattended (which is also why no agent ever needs the
         # plaintext: the unit holds the key, the agent reads the journal).
@@ -1251,9 +1258,13 @@
         # dir/key and every session file are cv-owned 0700, and the operator
         # checkout is closed to this user — so this is the only identity that
         # can both decrypt the credential and write the session the served
-        # CLI reads. The seed gate keeps an unseeded store from paging (WARN
-        # + skip); a seeded platform whose relogin fails (2FA/SSO, drifted
-        # login form) fails the unit into onFailure.
+        # CLI reads. The DUE gate reads `cv profile accounts --json` (the
+        # probe's own sessionState/earliestExpiry classification): only
+        # not-fresh or expiring-within-leadDays platforms launch a browser.
+        # Exit contract (SuccessExitStatus=10 keeps unseeded green):
+        #   0 refreshed/nothing due · 10 skipped-unseeded (WARN, no page)
+        #   20 a due relogin failed (2FA/SSO, drifted form) · 30 store/gate
+        #   broken (fail-closed — pages via onFailure).
         systemd.services.cv-relogin = lib.mkIf cfg.relogin.enable {
           description = "CV platform re-login from the sealed credentials store";
           inherit onFailure;
@@ -1288,15 +1299,24 @@
                   lib.makeBinPath [
                     pkgs.bun
                     pkgs.coreutils
+                    pkgs.gnugrep
+                    pkgs.jq
                     pkgs.sqlite
                   ]
                 }"
               ];
+              # Exit 10 (skipped-unseeded) is a GREEN run: an unseeded
+              # store is a pending owner act, never a page. 20/30 stay
+              # failures and hit onFailure.
+              SuccessExitStatus = [ 10 ];
               ExecStart = pkgs.writeShellScript "cv-relogin" ''
                 set -euo pipefail
+                # Exit contract (mirrors the unit comment):
+                #   0 ok · 10 skipped-unseeded · 20 relogin failed · 30 broken
                 store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.stateDir}/data/credentials-store}"
                 store_db="$store_dir/credentials.db"
                 sqlite_bin="${lib.getExe pkgs.sqlite}"
+                jq_bin="${lib.getExe pkgs.jq}"
                 cv_bin="${lib.getExe cfg.package}"
                 # Generated scripts live OUTSIDE the content dirs: the sync
                 # overwrites shipped files inside the eight data/<content>
@@ -1306,33 +1326,77 @@
 
                 if [ ! -f "$store_db" ]; then
                   echo "cv-relogin: sealed store missing at $store_db (it boots from the sops master key; cv-server creates it) — cannot re-login" >&2
-                  exit 1
+                  exit 30
                 fi
 
+                # The DUE gate's input: the probe's own session classification.
+                # A listing failure means we cannot classify safely — fail closed.
+                if ! accounts="$($cv_bin profile accounts --json)"; then
+                  echo "cv-relogin: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
+                  exit 30
+                fi
+
+                deadline=$(( $(date +%s) + ${toString cfg.relogin.leadDays} * 86400 ))
+                seeded_any=0
                 failed=0
                 for platform in ${lib.escapeShellArgs cfg.relogin.platforms}; do
-                  # Gate on the store's own read model: no kind=password
-                  # credential = nothing to log in with YET (owner seeding
-                  # step), which must WARN, not page. An unreadable store is
-                  # a real failure (bad key/schema) and must page.
+                  # Seed gate first: no kind=password credential = nothing to
+                  # log in with YET (owner seeding step) → WARN + skip. An
+                  # unreadable store is a real failure (bad key/schema) → 30.
                   if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
                     "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
                     echo "cv-relogin: could not read the store read model at $store_db" >&2
-                    exit 1
+                    exit 30
                   fi
+                  state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                    '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
+                  expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                    '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
                   if [ "$seeded" = "0" ]; then
-                    echo "cv-relogin: WARN — no kind=password credential for '$platform' in the sealed store; seed it at https://cv.${domain}/admin/credentials/ (platform + kind password) — skipping" >&2
+                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (unseeded; seed at https://cv.${domain}/admin/credentials/ — platform + kind password)" >&2
+                    continue
+                  fi
+                  seeded_any=1
+
+                  # Due rule: not-fresh is due; fresh-but-expiring inside the
+                  # lead window is due too. An unparsable expiry counts as due
+                  # (safe side: attempt the refresh).
+                  due=1
+                  reason="state=$state"
+                  if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
+                    exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
+                    if [ "$exp_epoch" -gt "$deadline" ]; then
+                      due=0
+                    else
+                      reason="expiry=$expiry"
+                    fi
+                  fi
+                  if [ "$due" != "1" ]; then
+                    echo "cv-relogin: $platform state=$state expiry=''${expiry:--} -> skip (not due)"
                     continue
                   fi
 
-                  echo "cv-relogin: refreshing '$platform' from the sealed credentials store (headless)"
-                  if ! "$cv_bin" profile relogin --platform "$platform" --headless --output-dir "$out_dir"; then
-                    echo "cv-relogin: '$platform' relogin FAILED — the typed reason is in the journal lines ABOVE (no sealed credential for the platform, 2FA/SSO needing a human, or a drifted login form); runbook: docs/services/cv.md §Credential storage" >&2
+                  echo "cv-relogin: $platform $reason expiry=''${expiry:--} -> refresh (headless)"
+                  # tee streams live to the journal while keeping a copy for
+                  # the ErrNoStoredLogin classification (a credential lost
+                  # between gate and run is WARN-class, not a page).
+                  if out="$($cv_bin profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
+                    echo "cv-relogin: $platform refreshed"
+                  elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
+                    echo "cv-relogin: WARN — '$platform' lost its stored login between the gate and the run (ErrNoStoredLogin); the next run re-gates" >&2
+                  else
+                    echo "cv-relogin: '$platform' relogin FAILED — the typed reason is in the journal lines ABOVE (2FA/SSO needing a human, or a drifted login form); runbook: docs/services/cv.md §Credential storage" >&2
                     failed=1
                   fi
                 done
 
-                exit "$failed"
+                if [ "$failed" -ne 0 ]; then
+                  exit 20
+                fi
+                if [ "$seeded_any" -eq 0 ]; then
+                  exit 10
+                fi
+                exit 0
               '';
             }
             (harden {
@@ -1350,7 +1414,7 @@
         };
 
         systemd.timers.cv-relogin = lib.mkIf cfg.relogin.enable {
-          description = "Weekly CV platform re-login (Mon 09:11, 30 min before the session probe)";
+          description = "Daily expiry-gated CV platform re-login (09:11, 30 min before the session probe)";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnCalendar = cfg.relogin.schedule;
