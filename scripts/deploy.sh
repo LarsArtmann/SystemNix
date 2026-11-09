@@ -228,7 +228,7 @@ deploy_pressure_gate() {
       # (2026-10-14 ghostty root cause: waiters sleep TASK_INTERRUPTIBLE with
       # in_iowait=1, so no D state, no io.stat, PSI ~100% anyway). Name it so
       # the operator kills idle terminals instead of hunting dead mounts.
-      d_state_count=$(ps -eo stat | grep -c '^D' || true)
+      d_state_count=$(ps -eo stat --no-headers 2>/dev/null | awk '$1 ~ /^D/' | wc -l)
       if [ "${d_state_count:-0}" -le 1 ]; then
         echo "  ≤1 D-state task with idle disks — io_uring CQ-waiter signature (interactive terminal holding never-completing ring requests; zero io.stat): close/kill idle terminal sessions (ghostty) before forcing"
       fi
