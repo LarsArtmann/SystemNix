@@ -1,6 +1,10 @@
 # SUPERB plan — CV credential & session management: from "good bones" to genuinely superb
 
 - **Date:** 2026-11-09 19:45 CET
+
+**Created:** 2026-11-09 19:45 CET
+**EXECUTING (instance executing P1-P11 agent-doable scope, 2026-11-09 21:43 CET, HEAD `5ddd650a9`):** executing (see AGENTS.md plan-execution tombstone)
+
 - **Status:** PLANNED (not executing yet — owner gates below)
 - **Author:** Crush session (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)
 - **Inputs (source of truth for the item list):**
@@ -431,7 +435,7 @@ flowchart TD
 
     subgraph P9["P9 — docs/rubric/process (≈1.5 h)"]
       I1[F9.1 runbook v2] --> I2[F9.2 seeding walkthrough]
-      I3[F9.3 playwright pin] 
+      I3[F9.3 playwright pin]
       I4[F9.4 rubric] --> I5[F9.5/F9.6 lessons]
       I6[F9.7 gate hint]
     end
