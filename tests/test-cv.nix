@@ -143,8 +143,16 @@ in
   testScript = ''
     machine.start()
 
-    # 1. Server starts without crash-looping
-    machine.wait_for_unit("cv-server.service")
+    # 1. Server starts without crash-looping. On failure, dump the unit's
+    #    own view (status + journal tail) so the log names the boot breaker
+    #    instead of a bare "inactive, no pending jobs".
+    try:
+        machine.wait_for_unit("cv-server.service")
+    except Exception:
+        machine.succeed("systemctl status cv-server.service --no-pager || true")
+        machine.succeed("journalctl -u cv-server.service -b --no-pager | tail -40 || true")
+        machine.succeed("systemctl list-jobs --no-pager || true")
+        raise
 
     # 2. Health probe responds (content sync + Go boot can take a moment)
     machine.wait_for_open_port(${toString cvPort}, timeout=120)

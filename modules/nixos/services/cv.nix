@@ -1007,6 +1007,7 @@
                 else
                   dst="${backupDir}/pipeline-$ts.sqlite"
                   ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                  chmod 600 "$dst"
                   # 14-day retention (pocket-id-backup pattern): the online
                   # .backup rewrites every page, so nothing is shared between
                   # nights — without pruning the pool dir grows forever.
@@ -1023,6 +1024,7 @@
                 if [ -f "$store" ]; then
                   sdst="${backupDir}/credentials-$ts.sqlite"
                   ${lib.getExe pkgs.sqlite} "file:$store?mode=ro" ".backup '$sdst'"
+                  chmod 600 "$sdst"
                   find "${backupDir}" -name "credentials-*.sqlite" -mtime +14 -delete
                   echo "cv-backup: wrote $sdst"
                 else
