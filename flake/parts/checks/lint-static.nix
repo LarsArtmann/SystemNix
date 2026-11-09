@@ -422,6 +422,15 @@
                 "ai_meter_ttft_seconds.sum"
                 "ai_meter_ttft_seconds.count"
                 "system_forgejo_mirror_sync_stale.count"
+                # Dead LEGACY schema tables, not just dead metric names
+                # (2026-11-09 live probe: 0 rows, nothing writes either, no
+                # materialized view targets them — time_series_v4 replaced
+                # v2 wholesale in the metrics-schema migration). Any
+                # panel/rule still keying on the v2 table name is a phantom
+                # by construction; the 2026-11-09 sweep found zero live
+                # references, this list keeps it that way.
+                "time_series_v2"
+                "distributed_time_series_v2"
               ];
               # Store-verified LIVE underscore names (the same sweep):
               # standalone counters/gauges that trap 2 must NOT flag —
