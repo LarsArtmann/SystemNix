@@ -564,11 +564,23 @@ gantt
 $ date
 Mon Nov  9 07:41:41 PM CET 2026
 
-$ sudo -u cv sh -c 'cd /var/lib/cv && HOME=/var/lib/cv PATH=/run/current-system/sw/bin cv profile accounts --json'
-[ { "platform": "10x-team", "name": "10x.Team", "sessionState": "none" },
-  { "platform": "ateam", "name": "A.Team", "sessionState": "none",
-    "loginUrl": "https://platform.a.team/" },
-  … ]                       # exit 0 — gate data available, all sessions "none"
+$ sudo -u cv sh -c 'cd /var/lib/cv && HOME=/var/lib/cv PATH=/run/current-system/sw/bin cv profile accounts --json'   # F1.1, re-captured 21:5x
+[ {"platform":"10x-team","name":"10x.Team","sessionState":"none"},
+  {"platform":"ateam","name":"A.Team","sessionState":"none","loginUrl":"https://platform.a.team/"},
+  {"platform":"braintrust","name":"Braintrust","sessionState":"none"},
+  {"platform":"contra","name":"Contra","sessionState":"none"},
+  {"platform":"freelance-de","name":"freelance.de","sessionState":"none","loginUrl":"https://www.freelance.de/login.php"},
+  {"platform":"freelancermap","name":"Freelancermap","sessionState":"none","loginUrl":"https://www.freelancermap.com/login"},
+  {"platform":"gulp","name":"GULP","sessionState":"none","loginUrl":"https://www.gulp.de/user/login"},
+  {"platform":"gun.io","name":"Gun.io","sessionState":"none"},   # mid-output, order as emitted
+  {"platform":"malt","name":"Malt","sessionState":"none"},
+  {"platform":"toptal","name":"Toptal","sessionState":"none"},
+  {"platform":"upwork","name":"Upwork","sessionState":"none"},
+  {"platform":"wellfound","name":"Wellfound","sessionState":"none"},
+  {"platform":"xing","name":"XING","sessionState":"none","loginUrl":"https://login.xing.com"},
+  {"platform":"yc-workatastartup","name":"YC Work at a Startup","sessionState":"none"} ]
+# exit 0 — gate data available; all 16 platforms sessionState "none" (no served
+# sessions yet); earliestExpiry omitted everywhere (no sessions to expire)
 
 $ rg 'ExpiringWithin|EarliestFutureExpiry' (non-test)
 internal/features/admin/handlers/admin_handler.go:857      # display only

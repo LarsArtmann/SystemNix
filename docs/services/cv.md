@@ -102,15 +102,21 @@ env var wins; this deployment provisions only the env key.
 
 ### The app's own login loop (`cv-relogin`, 2026-11-09)
 
-`cv-relogin.timer` (Mon 09:11 — 30 min BEFORE `cv-profile-probe` at 09:41, so
+`cv-relogin.timer` (**daily 09:11** — 30 min BEFORE `cv-profile-probe` at 09:41, so
 the probe verifies the *fresh* session) runs `cv-relogin.service` as the **cv**
-user from `/var/lib/cv`: `cv profile relogin --platform <id> --headless` for
+user from `/var/lib/cv`. The run is **expiry-gated**: it first reads `cv profile
+accounts --json` (the probe's own `sessionState`/`earliestExpiry`
+classification) and only launches a browser for a platform that is seeded AND
+due — `sessionState` not `fresh`, or `earliestExpiry` inside
+`services.cv-server.relogin.leadDays` (default 7). Due platforms run `cv
+profile relogin --platform <id> --headless` for
 `services.cv-server.relogin.platforms` (default `ateam`, `freelancermap`,
 `gun.io` — the three specs carrying `login_url` + `session_cookie`). It
 resolves each login from the sealed store (master key via the
 systemd-injected `cv-env` template) and rewrites
-`<stateDir>/data/accounts/<platform>/state.json`. Failures route through
-`OnFailure` (Discord).
+`<stateDir>/data/accounts/<platform>/state.json`. One journal line per
+platform: `<platform> state=<s> expiry=<date|-> -> refresh|skip(...)`. Failures
+route through `OnFailure` (Discord).
 
 > **Deploy state (2026-11-09 12:0x, gen-992):** LIVE. `cv-relogin.timer` is
 > active (next Mon 09:11) and a hand-run `systemctl start cv-relogin` proved
@@ -134,6 +140,12 @@ systemd-injected `cv-env` template) and rewrites
   skip (the pending owner act). An *unreadable* store (bad key/schema) FAILS
   the unit — that is real breakage. Seed later and the next tick starts
   working with no deploy.
+- **Exit contract (2026-11-09 v2)**: `0` ok (refreshed / nothing due) · `10`
+  skipped-unseeded — `SuccessExitStatus=10` keeps it a GREEN run, never a page ·
+  `20` a due relogin failed (2FA/SSO, drifted form, bad credential — pages) ·
+  `30` store/gate broken: store missing/unreadable or `accounts --json` failed
+  (fail-closed — pages). A credential lost *between gate and run*
+  (`ErrNoStoredLogin` in the output) is WARN-class like unseeded.
 - **Which identity, and why**: the store dir/key and every session file are
   `cv`-owned 0700, and the operator checkout is closed to that user — so this
   service user is the only identity that can both decrypt the credential and
@@ -152,8 +164,10 @@ systemd-injected `cv-env` template) and rewrites
   `node_modules`; verified live 2026-11-09 as the `cv` user). `MemoryMax 3G` /
   `CPUQuota 200%` — the harden default 512M throttles a browser.
 - **Verify**: `journalctl -u cv-relogin -n 30` (one line per platform) and
-  `cv profile accounts` for the freshness verdict; the Monday probe is the
-  independent proof (`exit 3` = still invalid).
+  `cv profile accounts` for the freshness verdict; the probe is the
+  independent proof (`exit 3` = still invalid). `systemctl status cv-relogin`
+  shows `exit 10` as green (SuccessExitStatus) — unseeded is a pending owner
+  act, not a failure.
 - **Agent boundary (deliberate)**: the sealed store + master key are
   `cv`-owned 0700 and `cv-relogin` is a SYSTEM unit (agent sessions get
   polkit-denied), so an agent can neither read a password nor trigger a login.

@@ -1318,6 +1318,9 @@
                 sqlite_bin="${lib.getExe pkgs.sqlite}"
                 jq_bin="${lib.getExe pkgs.jq}"
                 cv_bin="${lib.getExe cfg.package}"
+                # Command indirection through a function (nullglob-audit
+                # class A/B: a $var in command position is banned here).
+                run_cv() { "$cv_bin" "$@"; }
                 # Generated scripts live OUTSIDE the content dirs: the sync
                 # overwrites shipped files inside the eight data/<content>
                 # dirs on every start, and these are runtime artifacts.
@@ -1331,7 +1334,7 @@
 
                 # The DUE gate's input: the probe's own session classification.
                 # A listing failure means we cannot classify safely — fail closed.
-                if ! accounts="$($cv_bin profile accounts --json)"; then
+                if ! accounts="$(run_cv profile accounts --json)"; then
                   echo "cv-relogin: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
                   exit 30
                 fi
@@ -1380,7 +1383,7 @@
                   # tee streams live to the journal while keeping a copy for
                   # the ErrNoStoredLogin classification (a credential lost
                   # between gate and run is WARN-class, not a page).
-                  if out="$($cv_bin profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
+                  if out="$(run_cv profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
                     echo "cv-relogin: $platform refreshed"
                   elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
                     echo "cv-relogin: WARN — '$platform' lost its stored login between the gate and the run (ErrNoStoredLogin); the next run re-gates" >&2
