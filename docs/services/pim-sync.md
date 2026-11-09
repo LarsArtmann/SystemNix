@@ -2,16 +2,22 @@
 
 > Module: `modules/nixos/services/pim-sync.nix` (thin wrapper around upstream `inputs.pim-sync.nixosModules.default`). Upstream repo: `github:LarsArtmann/pim-sync` (PRIVATE, git+ssh input, ref-tracked `refs/heads/master`, lock-pinned — monitor365/media-atlas pattern).
 
-## State: flip-ready DISABLED (2026-11-04)
+## State: flip-ready DISABLED (2026-11-04); sops scaffold LANDED (2026-11-10)
 
 `services.pim-sync.enable = false` in `platforms/nixos/system/configuration.nix` (dormant cluster, audible-sync precedent). The wrapper pre-wires everything that is safe to pre-wire: the package pin, OnFailure routing, the integration entry (`monitored`, headless — no vHost/subdomain/port/tile), and the unconditional catalog entry. Nothing else exists at enable=false (upstream config is entirely `mkIf cfg.enable` — zero eval footprint).
+
+**2026-11-10 sops scaffold:** the full secret wiring landed as PLACEHOLDER (audible-sync precedent) — `platforms/nixos/secrets/pim-sync.yaml` holds 7 keys (`pim_sync_oauth_client_secret`, `pim_sync_token_{personal,work}{,_calendar}`, `pim_sync_stalwart_dav_{user,pass}`); the wrapper renders the DAV env template, points `secretFile`/`environmentFile`/`tokenSeedDir` (`/var/lib/pim-sync-seed`, per-secret rendered paths in sops.nix) and adds a config-check ExecStartPre that fails loudly with this checklist while any placeholder remains. **Enabling with placeholders is still forbidden** (alert storm) — the owner paste below is the gate.
 
 **Why disabled:** upstream has NO idle no-op — `discoverAccounts` errors on an empty tokensDir (`cmd/pim-sync/sync.go:359`), so an enabled unit without token files fails every 5 min and rides OnFailure into an alert storm (plus the failed-unit exit-4 deploy trap, dmarc-monitor class).
 
 ## Flip ladder (owner-gated — plan: docs/planning/2026-11-04_19-35_pim-sync-systemnix-integration-wave.md)
 
-1. 🧑 **Owner gates**: GCP OAuth client secret (publishing mode "In production" — testing-mode tokens die after 7 days, the InboxClean lesson) + Stalwart DAV creds (`PIMSYNC_DAV_USER`/`PIMSYNC_DAV_PASS`) + per-account browser-consent tokens. Path contract: `~/projects/pim-sync` `docs/oauth-setup.md`. sops declarations land ONLY together with the values (sops-key-audit throws on declared-but-missing keys).
-2. **agent**: wire sops (`environmentFile`/`secretFile`/`tokenSeedDir`), set `enable = true`, keep `live = false` (dry-run timer) → deploy → first dry-run journal review 🧑 (Stalwart-single-truth plan §7.5 gate).
+1. 🧑 **Owner gates** (values into the landed scaffold — sops editor, never a command line):
+   - GCP OAuth client secret JSON (publishing mode "In production" — testing-mode tokens die after 7 days, the InboxClean lesson) → `pim_sync_oauth_client_secret`. Path contract: `~/projects/pim-sync` `docs/oauth-setup.md` §2.
+   - Stalwart DAV creds — dedicated `bot:pim-sync` account (or app password) on `pbx.artmann.tech`, never the owner login → `pim_sync_stalwart_dav_user` / `pim_sync_stalwart_dav_pass`.
+   - Per-account consents (client JSON must land first): run in the owner's terminal
+     `mkdir -p ~/.config/pim-sync-tokens && PIMSYNC_SECRET=<downloaded-client-json> PIMSYNC_TOKENS_DIR=~/.config/pim-sync-tokens nix run ~/projects/pim-sync#pim-sync -- auth --account personal` (repeat `work`, plus `--calendar` variants) → the agent ingests the 4 token JSONs into `pim_sync_token_*` (runtime-variable expansion, never inline).
+2. **agent**: wire sops — DONE 2026-11-10 as the placeholder scaffold (environmentFile template / secretFile / tokenSeedDir + config-check). Remaining at flip: set `enable = true`, keep `live = false` (dry-run timer) → deploy → first dry-run journal review 🧑 (Stalwart-single-truth plan §7.5 gate).
 3. 🧑 **GO** → **agent**: `live = true` + `maxChanges` cap + `metricsFile` textfile wiring + Gatus freshness check on `pimsync_leg_last_success_unix{leg,account}` (anchored-pat doctrine; dry-run never settles it — 0 = never — hence deferred to this step). Textfile dir precedent: `btrfs-health.nix` (`/var/lib/prometheus-node-exporter/textfile_collectors`); metrics file is mode 0600 owned by the service user — collector readability needs the shared-group pattern from that precedent.
 4. Real Twenty import stays its own owner gate (docs/todo/services.md).
 

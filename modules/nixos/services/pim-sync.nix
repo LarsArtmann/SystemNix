@@ -21,27 +21,75 @@
 # secrets = failed oneshot every 5min + OnFailure alert storm + the
 # failed-unit exit-4 deploy trap (dmarc-monitor class).
 #
-# sops wiring is INTENTIONALLY ABSENT until the owner provides values
-# (sops-key-audit throws on declared-but-missing keys). At flip time wire:
-#   environmentFile → sops-rendered env (PIMSYNC_DAV_USER/PIMSYNC_DAV_PASS)
-#   secretFile      → OAuth client secret JSON (publishing mode "In
-#                     production" — testing-mode tokens die after 7 days,
-#                     the InboxClean lesson)
-#   tokenSeedDir    → per-account consent tokens (<account>.json; seeded
-#                     ONLY into empty slots — state owns them after first
-#                     refresh, the 7-day-rotation lesson)
-# Path contract: ~/projects/pim-sync docs/oauth-setup.md.
+# sops wiring landed 2026-11-10 as the flip scaffold (audible-sync
+# precedent): platforms/nixos/secrets/pim-sync.yaml + the guarded
+# declarations hold PLACEHOLDER values, so sops-key-audit passes while the
+# enable=false posture stays inert. The unit's config-check ExecStartPre
+# fails loudly with the go-live checklist while any placeholder remains.
+# Wire-up: DAV env via sops template, OAuth client JSON via secretFile,
+# token seeds via per-secret paths (tokenSeedDir = /var/lib/pim-sync-seed;
+# upstream seeds into writable state only-into-empty-slots, then owns the
+# rotation). Path contract: ~/projects/pim-sync docs/oauth-setup.md.
 { inputs, ... }: {
   flake.nixosModules.pim-sync =
     {
       config,
       lib,
       options,
+      pkgs,
       ...
     }:
     let
       inherit (import ../../../lib/default.nix lib) onFailure;
       cfg = config.services.pim-sync;
+
+      # Fail fast with an actionable message while the sops scaffold still
+      # holds PLACEHOLDER values (the module ships disabled for exactly
+      # this reason) and sanity-check the pasted shapes — otherwise the
+      # oneshot buries the cause in OAuth/API errors every 5 min
+      # (audible-sync config-check pattern). Runs after the upstream seed
+      # script (module-system list concatenation).
+      configCheck = pkgs.writeShellApplication {
+        name = "pim-sync-config-check";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.gnugrep
+          pkgs.jq
+        ];
+        text = ''
+          set -euo pipefail
+          shopt -s nullglob
+
+          clientSecret=${config.sops.secrets.pim_sync_oauth_client_secret.path}
+          davEnv=${config.sops.templates."pim-sync-dav-env".path}
+
+          fail_placeholder () {
+            echo "pim-sync: sops material still PLACEHOLDER: $1" >&2
+            echo "pim-sync: Go-live checklist (docs/services/pim-sync.md):" >&2
+            echo "pim-sync:   1. Owner: GCP project -> People API + OAuth Desktop client, publishing status IN PRODUCTION (~/projects/pim-sync docs/oauth-setup.md)" >&2
+            echo "pim-sync:   2. Owner: paste the client secret JSON into platforms/nixos/secrets/pim-sync.yaml key pim_sync_oauth_client_secret (sops editor, never a command line)" >&2
+            echo "pim-sync:   3. Owner: dedicated Stalwart DAV account for bot:pim-sync on pbx.artmann.tech -> pim_sync_stalwart_dav_user / pim_sync_stalwart_dav_pass" >&2
+            echo "pim-sync:   4. Owner: consents (pim-sync auth --account personal|work [--calendar]) -> paste token JSONs into pim_sync_token_*" >&2
+            echo "pim-sync:   5. Redeploy (nix run .#deploy); dry-run timer first, then live=true + maxChanges cap." >&2
+            exit 1
+          }
+
+          for f in "$clientSecret" "$davEnv" ${cfg.tokenSeedDir}/*.json; do
+            grep -q PLACEHOLDER "$f" && fail_placeholder "$f"
+          done
+
+          jq -e '.installed.client_id != null' "$clientSecret" > /dev/null || {
+            echo "pim-sync: $clientSecret is not a GCP Desktop OAuth client JSON (missing .installed.client_id)" >&2
+            exit 1
+          }
+          for f in ${cfg.tokenSeedDir}/*.json; do
+            jq -e '.refresh_token != null' "$f" > /dev/null || {
+              echo "pim-sync: $f is not a Google OAuth token JSON (missing .refresh_token)" >&2
+              exit 1
+            }
+          done
+        '';
+      };
     in
     {
       imports = [
@@ -66,10 +114,32 @@
         }
 
         (lib.mkIf cfg.enable {
+          # sops materialization (flip scaffold, 2026-11-10): the rendered
+          # values are PLACEHOLDER until the owner paste — the config-check
+          # ExecStartPre below turns that into a loud, actionable failure
+          # instead of buried OAuth errors (audible-sync pattern).
+          sops.templates."pim-sync-dav-env" = {
+            owner = "pim-sync";
+            group = "pim-sync";
+            mode = "0400";
+            restartUnits = [ "pim-sync.service" ];
+            content = lib.generators.toKeyValue { } {
+              PIMSYNC_DAV_USER = config.sops.placeholder.pim_sync_stalwart_dav_user;
+              PIMSYNC_DAV_PASS = config.sops.placeholder.pim_sync_stalwart_dav_pass;
+            };
+          };
+
+          services.pim-sync = {
+            environmentFile = config.sops.templates."pim-sync-dav-env".path;
+            secretFile = config.sops.secrets.pim_sync_oauth_client_secret.path;
+            tokenSeedDir = "/var/lib/pim-sync-seed";
+          };
+
           # docs/agents/integration-registry.md step 5: OnFailure Discord
           # routing (upstream sets the start-limit bounds itself).
           systemd.services.pim-sync = {
             inherit onFailure;
+            serviceConfig.ExecStartPre = [ (lib.getExe configCheck) ];
           };
 
           # Registry fan-out: no vHost/subdomain/port (no HTTP surface —
