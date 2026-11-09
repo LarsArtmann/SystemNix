@@ -1528,11 +1528,15 @@ _: {
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
                   interval = "60s";
+                  # Line-anchored VALUE forms (phantom-green fix, the
+                  # storage_collector_health idiom): the reachable gauge's own
+                  # HELP comment contains "reachable 1 when…", so a bare
+                  # pat(*reachable 1*) stays green even at 0.
                   conditions = [
                     "[STATUS] == 200"
-                    "[BODY] == pat(*system_papdashboard_ingest_reachable 1*)"
-                    "[BODY] == pat(*system_papdashboard_ingest_scrape_errors 0*)"
-                    "[BODY] == pat(*system_papdashboard_ingest_last_ok_timestamp *)"
+                    "[BODY] == pat(*\nsystem_papdashboard_ingest_reachable 1\n*)"
+                    "[BODY] == pat(*\nsystem_papdashboard_ingest_scrape_errors 0\n*)"
+                    "[BODY] == pat(*\nsystem_papdashboard_ingest_last_ok_timestamp *)"
                   ];
                   alerts = discordAlert "PapDashboard ingest (localhost:${toString ports.papdashboard}) is REFUSED/DARK or its freshness textfile broke — every gatus alert->papdashboard custom-provider send is being dropped (gatus journal shows 'Failed to send ... connection refused'). Dashboard pages/alerts go stale until papdashboard recovers. Check: systemctl status papdashboard; journalctl -u papdashboard -n 30; SigNoz trend: system_papdashboard_ingest_last_ok_timestamp / system_papdashboard_ingest_reachable.";
                 })
