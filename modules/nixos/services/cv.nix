@@ -494,6 +494,40 @@
                   url = "https://remoteok.com/api";
                   provider = "remoteok";
                 }
+                # HORNBACH technology career site (hornbach scanner, CV
+                # config.yaml sync 2026-11-09): talentsconnect SSR pages,
+                # robots-permitted, schema.org JobPosting JSON-LD per detail
+                # page. All five technologie categories — jobs can open
+                # anywhere; the funnel's evaluation decides fit. Permanent-
+                # employee postings (the employment facet is the
+                # contract-vs-permanent signal). The company override keeps
+                # CRM find-or-create deduped against the DIRECT-application
+                # rows (broker-channel rows carry the AGENCY name).
+                {
+                  url = "https://karriere.hornbach.de/technologie/category/software-development/c7900a33-3b96-4d7d-a847-c9b7ebdecd83";
+                  company = "HORNBACH Baumarkt AG";
+                  provider = "hornbach";
+                }
+                {
+                  url = "https://karriere.hornbach.de/technologie/category/infrastructure-cloud/f493ad79-60c9-4e84-9258-58d01b1e669c";
+                  company = "HORNBACH Baumarkt AG";
+                  provider = "hornbach";
+                }
+                {
+                  url = "https://karriere.hornbach.de/technologie/category/projektmanager-consulting/61554db1-c4f7-4843-a74a-e0feae24139c";
+                  company = "HORNBACH Baumarkt AG";
+                  provider = "hornbach";
+                }
+                {
+                  url = "https://karriere.hornbach.de/technologie/category/data-analytics-security/1afd37a9-42f4-45d8-887e-7db807ed8c61";
+                  company = "HORNBACH Baumarkt AG";
+                  provider = "hornbach";
+                }
+                {
+                  url = "https://karriere.hornbach.de/technologie/category/services-admin/5beffea5-d1a3-4c98-b6a6-ab6eedd8502b";
+                  company = "HORNBACH Baumarkt AG";
+                  provider = "hornbach";
+                }
               ];
               # One-click funnel tail. LIVE 2026-10-17 (gate Q1 decided:
               # local-relay SMTP, not agentmail — the AgentMail API key was
@@ -526,6 +560,13 @@
                 # older than 7 days when the driver flips live — the 379
                 # queued dry-run-era approvals must NOT all fire at once.
                 max_approval_age_days = 7;
+                # Fallback recipient when the posting names no contact email
+                # (typed send error "no application recipient" otherwise —
+                # 28 sendErrors by 2026-11-09 were exactly this). The
+                # monitored applications mailbox: the machine-composed
+                # application for portal-less postings lands somewhere
+                # reviewable instead of erroring forever.
+                default_to = "applications@artmann.tech";
                 never_reapply_rejected_companies = true;
                 # Recruiter replies must not hit the no-reply From (the
                 # relay's sending domain has no inbound mailbox). The
