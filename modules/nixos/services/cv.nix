@@ -1143,6 +1143,22 @@
                   esac
                 }
 
+                # Auto-approve variant (owner directive 2026-11-09: the
+                # manual review process does not work for the operator —
+                # the funnel runs 100% autonomously): grants every pending
+                # approval scoring >= min, and the event-driven send
+                # manager dispatches each grant. Same 200/409-ok,
+                # 503-warn shape as the funnel tail.
+                post_auto_approve() {
+                  code=$("$curl_bin" -sS -o /dev/null -w '%{http_code}' -X POST \
+                    -H "X-API-Key: $key" -H 'Content-Type: application/json' "$1")
+                  case "$code" in
+                    200|409) echo "cv-scan: $1 -> $code (ok)" ;;
+                    503) echo "cv-scan: $1 -> 503 (approve-above not on the deployed server — stale flake pin, warn only)" ;;
+                    *) echo "cv-scan: $1 -> $code (unexpected)" >&2; exit 1 ;;
+                  esac
+                }
+
                 post "$base/api/pipeline/scan"
                 post "$base/api/pipeline/evaluate-tracked"
                 # Funnel tail (2026-09-02, gate Q2): tailor the top
@@ -1155,6 +1171,18 @@
                 # approved-pending-send through the local-relay SMTP
                 # transport — bounded by max_per_pass=5 + the 7-day
                 # staleness cap.)
+                # Auto-approve (LIVE 2026-11-09, owner directive — the
+                # review workbench never got used, so the approval gate is
+                # now the score bar itself): everything the tail queues is
+                # recommendation-filtered [apply, worth-trying], so
+                # min=2.9 (scoreMid, the worth-trying floor) grants
+                # exactly what the machine itself queued. Sends stay
+                # bounded: max_per_pass=5 new tailors per tick, the 7-day
+                # max_approval_age_days cap withholds stale grants,
+                # never_reapply_rejected_companies keeps closed doors
+                # closed, and recipient-less postings fail safe
+                # (ErrNoRecipient — approval stays, nothing is sent).
+                post_auto_approve "$base/api/pipeline/approve-above?min=2.9"
               '';
             }
             (harden { })
