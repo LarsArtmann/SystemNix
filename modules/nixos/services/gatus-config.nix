@@ -977,6 +977,30 @@ _: {
                   alerts = discordAlert "Root filesystem >=93% used (collector scale, statvfs) — approaching the 97.3% health-fail cliff. Follow docs/operations/disk-cleanup-proposal-2026-09-28.md (btrfs snapshot/retention audit is the biggest lever), the coredump vacuum (~958MB), nix-gc (auto-blocked below 5GiB btrfs unalloc), and btrbk snapshot retention. Live value: storage_collector_fs_used_percent mount_point=/.";
                 })
                 (mkHttpCheck {
+                  name = "Nix Store Usage";
+                  group = "Filesystem";
+                  url = "http://localhost:${toString nodePort}/metrics";
+                  interval = "5m";
+                  # /nix (Samsung tlc subvol) previously had NO threshold check:
+                  # the 7d GC retention change (2026-09-29, de0feb7e) makes store
+                  # growth the cost side of the rollback-depth tradeoff, and the
+                  # only backstop was nix min-free = 5GB (a cliff, not a warning).
+                  # Threshold 90 leaves headroom above the live ~83% (2026-11-09)
+                  # for GC-retention growth while firing well before min-free
+                  # blocks a full store. Order-immune anchored form (2026-10-27
+                  # S7 phantom-green lesson): node_exporter sorts textfile labels
+                  # alphabetically (device,fstype,mount_point), so mount_point is
+                  # pinned LAST after a wildcard — immune to label reordering —
+                  # and the presence leg fails closed if the metric line vanishes.
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} *)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 9[0-9]*)"
+                    "[BODY] != pat(*storage_collector_fs_used_percent{*,mount_point=\"/nix\"} 100*)"
+                  ];
+                  alerts = discordAlert "/nix (Samsung) crossed 90% used — store growth is now the cost side of the 7d GC-retention tradeoff and min-free 5GB is the next backstop (a cliff, not a warning). Levers: nix-collect-garbage --delete-older-than 3d (owner decision on retention), flake input sweeps, check what grew: du -xsh /nix/store 2>/dev/null | head, btrfs filesystem usage /nix. Live value: storage_collector_fs_used_percent mount_point=/nix.";
+                })
+                (mkHttpCheck {
                   name = "Root Auto-Prune Floor (90%)";
                   group = "Monitoring";
                   url = "http://localhost:${toString nodePort}/metrics";
