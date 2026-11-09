@@ -49,6 +49,36 @@ let
 
   # For seeding a REAL sqlite store the backup unit can .backup from.
   sqliteBin = "${pkgs.sqlite}/bin/sqlite3";
+
+  # cv-relogin leg (SUPERB plan P3, 2026-11-09): a stub cv keeps the portal
+  # logins OUT of the VM and lets the assertions observe GATE semantics —
+  # which platforms were invoked, which skipped, which exit code — without a
+  # browser. The stub answers the due gate's accounts listing with a fixed
+  # matrix (ateam stale = due by state; freelancermap fresh + far expiry =
+  # not due; gun.io fresh + 2-day expiry = due by expiry window) and RECORDS
+  # relogin argv into the state dir — /tmp is PrivateTmp inside the unit's
+  # sandbox, the state dir is its only shared writable surface.
+  stubCv = pkgs.writeShellScriptBin "cv" ''
+    if [ "''${1:-}" = "profile" ] && [ "''${2:-}" = "accounts" ]; then
+      far=$(date -u -d "+365 days" +%Y-%m-%dT%H:%M:%SZ)
+      near=$(date -u -d "+2 days" +%Y-%m-%dT%H:%M:%SZ)
+      printf '[{"platform":"ateam","name":"A.Team","sessionState":"stale"},{"platform":"freelancermap","name":"Freelancermap","sessionState":"fresh","earliestExpiry":"%s"},{"platform":"gun.io","name":"Gun.io","sessionState":"fresh","earliestExpiry":"%s"}]' "$far" "$near"
+      exit 0
+    fi
+    if [ "''${1:-}" = "profile" ] && [ "''${2:-}" = "relogin" ]; then
+      echo "stub-cv $*" >> /var/lib/cv/data/relogin-stub-argv.log
+      exit 0
+    fi
+    exit 1
+  '';
+
+  # Stub playwright package: satisfies the unit's NODE_PATH shape without
+  # pulling real playwright into the VM closure (the REAL resolution is
+  # pinned by checks.cv-relogin-env on the host config).
+  pwStub = pkgs.runCommand "cv-pw-stub" { } ''
+    mkdir -p $out/lib/node_modules/playwright
+    echo "// playwright stub" > $out/lib/node_modules/playwright/index.js
+  '';
 in
 {
   name = "cv";
@@ -89,6 +119,18 @@ in
         enable = true;
         chromiumPackage = pkgs.hello;
       };
+
+      # Relogin loop leg (SUPERB plan P3): same stub philosophy — no browser,
+      # no portal login, gate semantics observable via the stub's argv log.
+      # The timer is kept OFF the boot path so the legs control every run;
+      # production cadence is asserted on the host (F5.5).
+      services.cv-server.relogin = {
+        enable = true;
+        package = stubCv;
+        chromiumPackage = pkgs.hello;
+        playwrightPackage = pwStub;
+      };
+      systemd.timers.cv-relogin.wantedBy = lib.mkForce [ ];
 
       systemd.services.cv-server.serviceConfig.EnvironmentFile = lib.mkForce [
         "${mockCvEnv}"
@@ -197,6 +239,66 @@ in
     machine.fail("journalctl -u cv-backup.service -b --no-pager | grep -q 'no pipeline.sqlite'")
     machine.succeed("test -f /mnt/pool/backups/cv/pipeline-*.sqlite")
     machine.fail("systemctl is-failed --quiet cv-backup.service")
+
+    # 11. cv-relogin unit SHAPE (P3/F3.4): exit contract + sandbox surface —
+    #     a regression in any of these changes loop behavior silently.
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'SuccessExitStatus=10'")
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'User=cv'")
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'TimeoutStartSec=1200'")
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'MemoryMax=3G'")
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'NODE_PATH='")
+    machine.succeed("systemctl cat cv-relogin.service | grep -q 'EnvironmentFile='")
+    machine.succeed("systemctl cat cv-relogin.timer | grep -q 'OnCalendar='")
+
+    # 12. Seed-gate skip leg (P3/F3.5): fixture store with an EMPTY read
+    #     model — every platform WARN-skips, the run exits 10, systemd keeps
+    #     it GREEN (SuccessExitStatus), and the stub cv is NEVER invoked.
+    machine.succeed("mkdir -p /var/lib/cv/data/credentials-store")
+    machine.succeed(
+        sqliteBin
+        + " /var/lib/cv/data/credentials-store/credentials.db"
+        + " 'CREATE TABLE IF NOT EXISTS meta_planned_credentials_by_platform(platform TEXT, kind TEXT)'"
+    )
+    machine.succeed("chown -R cv:cv /var/lib/cv/data/credentials-store")
+    machine.systemctl("start cv-relogin.service")
+    machine.succeed("journalctl -u cv-relogin.service -b --no-pager | grep -q 'skip (unseeded)'")
+    machine.succeed(
+        "test \"$(journalctl -u cv-relogin.service -b --no-pager | grep -c 'skip (unseeded)')\" -eq 3"
+    )
+    status = machine.succeed("systemctl show -p ExecMainStatus cv-relogin.service").strip()
+    assert status == "ExecMainStatus=10", "unseeded run must exit 10, got " + status
+    machine.fail("systemctl is-failed --quiet cv-relogin.service")
+    machine.fail("test -f /var/lib/cv/data/relogin-stub-argv.log")
+
+    # 13. Invoke leg (P3/F3.6): seed all three platforms — the due gate must
+    #     refresh ateam (state=stale) and gun.io (expiry inside leadDays) but
+    #     NOT freelancermap (fresh + far expiry), proving the loop is
+    #     EXPIRY-driven, not calendar-driven.
+    machine.succeed(
+        sqliteBin
+        + " /var/lib/cv/data/credentials-store/credentials.db"
+        + " \"INSERT INTO meta_planned_credentials_by_platform VALUES ('ateam','password'),('freelancermap','password'),('gun.io','password')\""
+    )
+    machine.systemctl("start cv-relogin.service")
+    argv = machine.succeed("cat /var/lib/cv/data/relogin-stub-argv.log")
+    assert "--platform ateam" in argv, "stale platform must be refreshed"
+    assert "--platform gun.io" in argv, "expiring-inside-lead platform must be refreshed"
+    assert "freelancermap" not in argv, "fresh + far-expiry platform must NOT run a browser"
+    assert "--headless" in argv, "relogin must stay headless under the timer"
+    machine.succeed("journalctl -u cv-relogin.service -b --no-pager | grep -q 'ateam state=stale.*-> refresh'")
+    machine.succeed("journalctl -u cv-relogin.service -b --no-pager | grep -q 'gun.io state=fresh.*-> refresh'")
+    machine.succeed("journalctl -u cv-relogin.service -b --no-pager | grep -q 'freelancermap state=fresh.*-> skip (not due)'")
+    status = machine.succeed("systemctl show -p ExecMainStatus cv-relogin.service").strip()
+    assert status == "ExecMainStatus=0", "successful sweep must exit 0, got " + status
+
+    # 14. Broken-store leg (P3/F3.7): a corrupt db must FAIL the unit with
+    #     exit 30 (fail-closed class — real breakage pages via OnFailure).
+    machine.succeed("echo this-is-not-sqlite > /var/lib/cv/data/credentials-store/credentials.db")
+    machine.succeed("systemctl start cv-relogin.service || true")
+    machine.succeed("systemctl is-failed --quiet cv-relogin.service")
+    status = machine.succeed("systemctl show -p ExecMainStatus cv-relogin.service").strip()
+    assert status == "ExecMainStatus=30", "broken store must exit 30, got " + status
+    machine.succeed("journalctl -u cv-relogin.service -b --no-pager | grep -q 'could not read the store read model'")
 
     print("CV server verified — starts, health responds, config generated, content synced, PDF export works, scan timer wired, timer-shaped scan-POST live-proven, session-probe timer wired, pool backup dir self-creates + backup lands")
   '';

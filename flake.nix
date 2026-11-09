@@ -1597,6 +1597,7 @@
         ./flake/parts/checks/doc-counts.nix
         ./flake/parts/checks/features-drift.nix
         ./flake/parts/checks/dnsblockd-guards.nix
+        ./flake/parts/checks/cv-relogin-guards.nix
         ./flake/parts/checks/vm-tests.nix
       ]
       ++ discoveredModulePaths;
