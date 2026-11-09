@@ -1425,8 +1425,9 @@
                                   fi
                                 done
 
-                                printf '%s' "$status_lines" > "$status_file.tmp"
-                                mv "$status_file.tmp" "$status_file"
+                                tmp_status="$(mktemp "''${status_file}.XXXXXX")"
+                                printf '%s' "$status_lines" > "$tmp_status"
+                                mv "$tmp_status" "$status_file"
 
                                 if [ "$failed" -ne 0 ]; then
                                   exit 20

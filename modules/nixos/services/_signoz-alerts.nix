@@ -506,8 +506,7 @@ in
     "signoz/rules/cv-relogin-loop-unseeded.json".source = mkRule {
       name = "CV Relogin Loop Unseeded";
       description = "No kind=password credential stored for any configured relogin platform for a week — the expiry-gated login loop has nothing to log in with (seed at cv.home.lan/admin/credentials/)";
-      query =
-        ''sum(cv_stored_logins{kind="password",platform=~"ateam|freelancermap|gun.io"}) or vector(0)'';
+      query = ''sum(cv_stored_logins{kind="password",platform=~"ateam|freelancermap|gun.io"}) or vector(0)'';
       step = 300;
       op = "below";
       target = 1;
