@@ -602,6 +602,7 @@ _: {
           GATUS_META_ERRORS=1
           GATUS_ENDPOINTS_LONG_FAIL=""
           GATUS_RESULTS_STALE=""
+          GATUS_CHRONIC_RED=""
           if [ "$collect_gatus" = "true" ] && [ -r "${cfg.gatus.dbPath}" ]; then
             GATUS_ENDPOINTS_LONG_FAIL=$(sqlite3 -readonly "${cfg.gatus.dbPath}" "SELECT COUNT(*) FROM endpoints e WHERE EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id) AND NOT EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id AND r.success = 1)" 2>/dev/null) || GATUS_ENDPOINTS_LONG_FAIL=""
             if [ -n "$GATUS_ENDPOINTS_LONG_FAIL" ]; then
@@ -614,6 +615,19 @@ _: {
               GATUS_RESULTS_STALE=0
               if [ $((NOW_EPOCH - GATUS_FRESH_EPOCH)) -ge 900 ]; then
                 GATUS_RESULTS_STALE=1
+              fi
+              # Chronic-red escalation (the 2026-10-01 mr-sync lesson: a check
+              # sat RED 15 days with an active alert configured and NOTHING
+              # acted — per-flap alerts are noise, a never-acted red is a
+              # PATTERN). Chronic = the endpoint reported within the last
+              # 30 min (gatus alive + check still running) AND has zero
+              # successful results in the trailing 24h. Schema verified against
+              # the deployed gatus binary's embedded CREATE TABLE (v5.38.0):
+              # endpoints(endpoint_id, endpoint_name, endpoint_group),
+              # endpoint_results(endpoint_id, success BOOLEAN, timestamp TIMESTAMP).
+              GATUS_CHRONIC_RED=$(sqlite3 -readonly "${cfg.gatus.dbPath}" "SELECT COUNT(*) FROM endpoints e WHERE EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id AND r.timestamp > datetime('now', '-30 minutes')) AND NOT EXISTS (SELECT 1 FROM endpoint_results r WHERE r.endpoint_id = e.endpoint_id AND r.success = 1 AND r.timestamp > datetime('now', '-24 hours'))" 2>/dev/null) || GATUS_CHRONIC_RED=""
+              if [ -z "$GATUS_CHRONIC_RED" ]; then
+                GATUS_META_ERRORS=1
               fi
             fi
           fi
@@ -1540,6 +1554,10 @@ _: {
               echo "# HELP system_gatus_results_stale 1 if the gatus result DB has had no writes for >15 minutes, 0 otherwise"
               echo "# TYPE system_gatus_results_stale gauge"
               echo "system_gatus_results_stale ''${GATUS_RESULTS_STALE}"
+
+              echo "# HELP system_gatus_chronic_red_checks Count of Gatus endpoints currently red with NO successful result in the trailing 24h (chronic-red escalation — the mr-sync 15-days-unacted class)"
+              echo "# TYPE system_gatus_chronic_red_checks gauge"
+              echo "system_gatus_chronic_red_checks ''${GATUS_CHRONIC_RED}"
             fi
 
             if [ "$collect_forgejo_mirrors" = "true" ]; then
@@ -2948,6 +2966,33 @@ _: {
                   "[BODY] == pat(*system_gatus_results_stale 0*)"
                 ];
                 alert = "Gatus self-check failed: either endpoints have sustained failures (zero successes in retention), the result DB is stale (>15 min no writes = gatus wedged), or the meta-scrape itself errored (DB unreadable). Check: Gatus dashboard, journalctl -u gatus, /var/lib/private/gatus/gatus.db mtime.";
+              }
+              {
+                name = "Gatus Chronic Red";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "15m";
+                # SEPARATE from Gatus Sustained Failures (which owns zero-
+                # successes-in-retention + staleness): this is the ESCALATION
+                # signal for a red nobody acted on — endpoint still reporting,
+                # zero successes in 24h. Deliberately 15m interval + its own
+                # alert episode so a chronic red pages as a PATTERN (mr-sync
+                # Dashboard sat red 15 days, 2026-09-16..10-01) instead of
+                # riding the per-flap 5m noise of the failing check itself.
+                # POLARITY (house rule: conditions hold in the HEALTHY state):
+                # healthy = count 0, so the value condition asserts 0 — and
+                # because gatus pat() is a SUBSTRING match the count must be
+                # anchored: a bare "checks 0" would also match a red 10
+                # (…checks 10 contains no " 0" suffix… but …checks 0… inside
+                # "100"? "checks 100" contains "checks 1" — no match — however
+                # "\n" line-anchoring keeps a HELP-text lookalike or a future
+                # sibling metric name from satisfying the value leg vacuously;
+                # the mirror-image trap is the 2026-10-27 root-disk pat class).
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_gatus_chronic_red_checks 0\n*)"
+                ];
+                alert = "A Gatus check has been RED for over 24h without resolution (chronic-red escalation — the mr-sync Dashboard 15-days-unacted class). This is a pattern, not a flap: the underlying check has fired its own alerts repeatedly with nothing acted. Open the Gatus dashboard, find the culprit behind the non-zero count (each check's own alert carries the details), and either FIX it or make a deliberate mute decision — an unacted red for a day means the alert path or the triage loop is broken.";
               }
               {
                 name = "Memory Events Thrash";
