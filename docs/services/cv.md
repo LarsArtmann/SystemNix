@@ -69,31 +69,111 @@ Resume/CV generator (`cv serve`, Go + Typst) from the private
 - `data/` ROOT files (`pipeline.sqlite`, `dead-portals.json`,
   `graphrag.sqlite`) are runtime-mutable and never touched by the sync.
 
-## Credentials store (A.Team stored-login, 2026-11-06)
+## Credential storage — three tiers, one rule
 
-`CV_CREDENTIALS_STORE_ENABLED=1` + `CV_CREDENTIALS_STORE_DIR=/var/lib/cv/data/credentials-store`
-(cv.nix `services.cv-server.environment`) + `CREDENTIALS_MASTER_KEY_V1` (sops
-`cv-credentials-store.yaml` → `cv-env` template; env WINS over the
-`master-key-v1.b64` state-file fallback). Boots fail-closed: flag on + no
-usable key = service refuses to start.
+**Rule: no secret value ever lives in the repo, in a chat message, in a CLI
+flag, or in a file an agent can read.** Which tier holds a credential is
+decided by *who generates it* and *who must rotate it*:
 
-- **Sealing credentials** (A.Team email+password first): `/admin/credentials/`
-  on https://cv.home.lan (Pocket-ID passkey or API-key guard) → New credential
-  → platform `ateam`, kind `password`, username = login email, secret =
-  password. The admin UI is the ONLY write path (the store SDK has no public
-  write API). Secrets NEVER ride chat/CLI flags/plaintext files.
-- **State**: `credentials.db` lives under `data/` ROOT (sync-untouched,
-  survives restarts) but is NOT covered by `cv-backup` (pipeline.sqlite only)
-  — a lost state dir means re-seeding via the admin UI.
-- **Key rotation** = `sudo sops --set` a new value in cv.yaml-class files …
-  note: `cv-credentials-store.yaml` was created public-key-only
-  (bank-sync-encryption pattern) but the host key still decrypts it at
-  activation; rotating via `sops --set` needs the host PRIVATE key (sudo).
-  Losing the key = sealed credentials undecryptable (re-seed).
-- **Consumers**: server-side `credentials.Active()` resolution (the
-  `cv profile relogin --platform ateam` operator flow reads the password
-  credential; relogin itself runs operator-side with the same env vars, not
-  as this service).
+| Tier                         | Holds                                                                                                                                                                                | At rest                                                                                                                | Reader                                                                                | Rotation                                                                 |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **sops-nix**                 | machine secrets: `CV_API_KEY`, the funnel LLM keys, the Stalwart mailbox password, evaluation citizenships, and the credentials-store MASTER KEY                                       | age-encrypted in `platforms/nixos/secrets/cv*.yaml` → `/run/secrets/rendered/cv-env` (0400 `cv:cv`)                     | systemd injects the env var; the process never opens the file                         | owner edits sops + deploy (`restartUnits` rolls the service)             |
+| **sealed store** (`go-credentials-store`) | HUMAN logins: portal username+password (`kind=password`) and captured sessions (`kind=session_blob`)                                                                       | `credentials.db`, AES-GCM sealed, `data/credentials-store/` (0700 `cv:cv`) — useless without the sops master key         | only a process holding `CREDENTIALS_MASTER_KEY_V1` (cv-server, cv-relogin)             | admin UI write; relogin rewrites sessions; master key rotates via sops   |
+| **session files**            | the storageState JSON a successful login/capture writes                                                                                                                              | `data/accounts/<platform>/state.json` (0600, service user)                                                              | `cv profile accounts/apply/relogin`, the A.Team cookie chain (`CV_ATEAM_SESSION_COOKIE_FILE`) | rewritten by every successful (re)login; disposable                      |
+
+**Why not sops for the portal passwords too?** A job-portal password is a
+*user* credential: it has to be re-sealed per platform, rotated when the site
+password changes, and consumed by a browser flow — not handed to a process env
+that `ps`, journald and backups can see. Keeping it out of sops means the
+plaintext exists only inside the sealed store and, for the seconds a login
+runs, in the generated script's child-process env (`CV_RELOGIN_USER` /
+`CV_RELOGIN_PASSWORD` — never in the script file, a flag, or a log line).
+
+Live state (verified 2026-11-09): `CV_CREDENTIALS_STORE_ENABLED=1` +
+`CV_CREDENTIALS_STORE_DIR=/var/lib/cv/data/credentials-store` (cv.nix
+`services.cv-server.environment`) with `CREDENTIALS_MASTER_KEY_V1` from the
+sops `cv-env` template; the journal proves the boot
+(`credentials store booted activeKeyID=v1 keys=1`, 2026-11-08 17:57) and the
+flag is fail-closed (flag on + unusable key = the service refuses to start).
+The prod store is still **EMPTY** (`meta_stream_log` 0 events) — seeding is
+the first owner act, and the login loop below is inert until it happens. The
+older `master-key-v1.b64` state-file fallback still exists upstream but the
+env var wins; this deployment provisions only the env key.
+
+### The app's own login loop (`cv-relogin`, 2026-11-09)
+
+`cv-relogin.timer` (Mon 09:11 — 30 min BEFORE `cv-profile-probe` at 09:41, so
+the probe verifies the *fresh* session) runs `cv-relogin.service` as the **cv**
+user from `/var/lib/cv`: `cv profile relogin --platform <id> --headless` for
+`services.cv-server.relogin.platforms` (default `ateam`, `freelancermap`,
+`gun.io` — the three specs carrying `login_url` + `session_cookie`). It
+resolves each login from the sealed store (master key via the
+systemd-injected `cv-env` template) and rewrites
+`<stateDir>/data/accounts/<platform>/state.json`. Failures route through
+`OnFailure` (Discord).
+
+> **Deploy state (2026-11-09 12:0x, gen-992):** LIVE. `cv-relogin.timer` is
+> active (next Mon 09:11) and a hand-run `systemctl start cv-relogin` proved
+> the loop end-to-end: the unit ran as `cv`, read the sealed store's read
+> model and WARN-skipped all three platforms (unseeded) with exit 0 — no page,
+> exactly the designed inert state. `cv-backup` also proved its new leg
+> (`credentials-20261109T120405.sqlite` beside the pipeline snapshot). Landing
+> required reverting the 08:02 unproven blanket float first (see the
+> 2026-11-09 CHANGELOG entry): the host toplevel proof was red on a
+> nested-nixpkgs `patchelf-0.15.2` patch failure and a go-taskqueue vendorHash
+> re-stale.
+
+- **Seed once, then unattended**: `/admin/credentials/` on
+  https://cv.home.lan (Pocket-ID passkey or API key) → New credential →
+  platform = `ateam` / `freelancermap` / `gun.io`, kind = `password`,
+  username = the login email, secret = the password. The admin UI is the ONLY
+  write path (the store SDK exposes no public create/rotate API), so seeding
+  is a HUMAN act — never an agent one, never chat/CLI/plaintext.
+- **Unseeded = WARN, not page**: before each platform the unit counts
+  `kind=password` rows for it in the store's read model; `0` ⇒ journal WARN +
+  skip (the pending owner act). An *unreadable* store (bad key/schema) FAILS
+  the unit — that is real breakage. Seed later and the next tick starts
+  working with no deploy.
+- **Which identity, and why**: the store dir/key and every session file are
+  `cv`-owned 0700, and the operator checkout is closed to that user — so this
+  service user is the only identity that can both decrypt the credential and
+  write the session the *served* CLI reads. Sessions refreshed here are
+  read by cv-run consumers (the served CLI; any system job that sets
+  `CV_ATEAM_SESSION_COOKIE_FILE=<stateDir>/data/accounts/ateam/state.json`).
+  The operator's own `/home/lars/projects/CV/data/accounts` ledger stays
+  separate by design (it is not readable by `cv`, and vice versa).
+- **2FA/SSO platforms fail headless** — that is the honest verdict, not a
+  bug: run `cv profile relogin --platform <id>` headed from the checkout and
+  finish the challenge by hand. A drifted login form fails the same way; pin
+  `automation_spec.login_fill` selectors after one capture.
+- **Runtime deps are pinned in the unit, not implicit**: `pkgs.bun`, system
+  `chromium` (`CHROMIUM_EXECUTABLE_PATH`), nixpkgs `playwright-core` exposed as
+  `node_modules/playwright` on `NODE_PATH` (the served state dir has no
+  `node_modules`; verified live 2026-11-09 as the `cv` user). `MemoryMax 3G` /
+  `CPUQuota 200%` — the harden default 512M throttles a browser.
+- **Verify**: `journalctl -u cv-relogin -n 30` (one line per platform) and
+  `cv profile accounts` for the freshness verdict; the Monday probe is the
+  independent proof (`exit 3` = still invalid).
+- **Agent boundary (deliberate)**: the sealed store + master key are
+  `cv`-owned 0700 and `cv-relogin` is a SYSTEM unit (agent sessions get
+  polkit-denied), so an agent can neither read a password nor trigger a login.
+  Agents read journals/metrics; humans seed; the app logs in. Session material
+  is bearer-grade — never print it, never copy it out of the state dir.
+- **Backup**: `cv-backup` (03:17) snapshots BOTH `pipeline.sqlite` and
+  `credentials.db` (`credentials-<ts>.sqlite`, 14-day retention, read-only
+  `.backup`). The artifact is ciphertext — useless without the sops master
+  key — and it retires the "state dir lost ⇒ re-seed every login" failure
+  mode the store's write-API gap made permanent.
+- **Master-key rotation**: `sudo sops --set` a new
+  `cv_credentials_master_key` … note the file was created public-key-only
+  (bank-sync-encryption pattern) while the host key still decrypts it at
+  activation; `sops --set` needs the host PRIVATE key (sudo). Losing the key =
+  sealed credentials undecryptable (re-seed).
+- **Not wired (honest gaps)**: post-relogin `session_blob` rotation INSIDE the
+  store needs the upstream public write API (`cv profile relogin` refreshes
+  the accounts file, not the sealed blob — rows in `docs/todo/upstream.md`),
+  and the Tailor/coach funnel LLM keys are still unprovisioned.
+
 
 ## Continuous funnel automation
 

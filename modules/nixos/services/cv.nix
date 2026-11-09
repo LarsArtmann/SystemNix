@@ -34,6 +34,17 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
+      # Playwright is a JS package and the SERVED state dir carries no
+      # node_modules (the CV checkout that has them is lars-owned and closed
+      # to the service user). Expose nixpkgs' playwright-core as
+      # node_modules/playwright so bun's NODE_PATH resolution finds it and
+      # the relogin unit can drive a browser as cv (mechanism verified live
+      # 2026-11-09: bun 1.4.4 + playwright-core 1.64.1 + the system
+      # chromium launch headless as this user).
+      playwrightModules = pkgs.runCommand "cv-playwright-node-modules" { } ''
+        mkdir -p $out/lib/node_modules
+        ln -s ${cfg.relogin.playwrightPackage} $out/lib/node_modules/playwright
+      '';
       # cv vendorHash shim DROPPED (2026-10-12): its own drop condition met
       # ("the lock moves past an upstream-fixed rev") — the lock moved
       # e425ffa → 533ddc9 and upstream 533ddc9 bakes a GREEN through-our-lock
@@ -152,9 +163,15 @@
       # SIXTEENTH RE-STALE 2026-11-07 20:04 lock float: cv@da7f3cbc spec
       # aCVmXAeF, got EKiWDhsV (first-hand keep-going,
       # ~/.cache/lockfloat/float-proof-20261107-200453.log).
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-EKiWDhsVySFVWRkUOaQRYHIAHDn9JQIujb3LjrMN/rw=";
-      };
+      # SHIM DROPPED 2026-11-09 (seventeenth entry, first-hand): the lock
+      # moved to cv@ff70e6a in 3b46b915d and the EKiWDhs… shim FOD-failed
+      # with `got: sha256-khUW8NWGXB3YdZrmYUV2vFhzYYldBhBsOYHrYreayKY=`.
+      # Upstream nix/packages.nix:79 AT THAT REV bakes exactly that hash
+      # (`git show ff70e6a:nix/packages.nix` — the 2026-11-08 pareto-P15
+      # upstream re-pin), so the documented drop condition is met: the shim
+      # was tracking a rev whose node graph upstream had already re-baked.
+      # Re-add ONLY via fresh first-hand nix-hash-fix evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [
@@ -195,6 +212,55 @@
           type = lib.types.str;
           default = "/home/lars/projects/CV";
           description = "CV checkout the probe runs from; session state (data/accounts) and the generated bun probe scripts live under it.";
+        };
+      };
+
+      options.services.cv-server.relogin = {
+        enable = lib.mkEnableOption ''
+          Scheduled platform re-login: a oneshot runs
+          `cv profile relogin --platform <id> --headless` as the cv service
+          user from the served state dir, resolving each platform login from
+          the SEALED credentials store (sops carries only the master key).
+          The refreshed session lands in the state dir's
+          data/accounts/<id>/state.json — the same seam `cv profile
+          accounts` and the ateam verb chain read. Inert-safe before the
+          owner seeds a password credential: an unseeded platform is SKIPPED
+          with a WARN instead of paging (a seeded-but-failing relogin DOES
+          fail the unit into onFailure).
+        '';
+
+        platforms = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [
+            "ateam"
+            "freelancermap"
+            "gun.io"
+          ];
+          description = ''
+            Platform slugs to refresh. Each needs a deployed spec carrying
+            automation_spec.login_url + session_cookie under
+            data/freelance-platforms/ AND a kind=password credential in the
+            sealed store; either half missing skips that platform with a
+            WARN (all three ship both spec fields since CV 2026-11-07).
+          '';
+        };
+
+        schedule = lib.mkOption {
+          type = lib.types.str;
+          default = "Mon *-*-* 09:11:00";
+          description = "OnCalendar for the refresh run (default 30 minutes before the Monday session probe, so the probe verifies the FRESH session).";
+        };
+
+        chromiumPackage = lib.mkOption {
+          type = lib.types.package;
+          default = pkgs.chromium;
+          description = "Chromium exported as CHROMIUM_EXECUTABLE_PATH to Playwright (tests substitute a stub to keep the VM closure light).";
+        };
+
+        playwrightPackage = lib.mkOption {
+          type = lib.types.package;
+          default = pkgs.playwright;
+          description = "playwright-core JS package exposed on NODE_PATH as node_modules/playwright (the served state dir has no node_modules).";
         };
       };
 
@@ -889,18 +955,34 @@
               ExecStart = pkgs.writeShellScript "cv-backup" ''
                 set -euo pipefail
                 db="/var/lib/cv/data/pipeline.sqlite"
+                store="/var/lib/cv/data/credentials-store/credentials.db"
+                ts=$(date +%Y%m%dT%H%M%S)
                 if [ ! -f "$db" ]; then
                   echo "cv-backup: no pipeline.sqlite yet — nothing to back up"
-                  exit 0
+                else
+                  dst="${backupDir}/pipeline-$ts.sqlite"
+                  ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
+                  # 14-day retention (pocket-id-backup pattern): the online
+                  # .backup rewrites every page, so nothing is shared between
+                  # nights — without pruning the pool dir grows forever.
+                  find "${backupDir}" -name "pipeline-*.sqlite" -mtime +14 -delete
+                  echo "cv-backup: wrote $dst"
                 fi
-                ts=$(date +%Y%m%dT%H%M%S)
-                dst="${backupDir}/pipeline-$ts.sqlite"
-                ${lib.getExe pkgs.sqlite} "$db" ".backup '$dst'"
-                # 14-day retention (pocket-id-backup pattern): the online
-                # .backup rewrites every page, so nothing is shared between
-                # nights — without pruning the pool dir grows forever.
-                find "${backupDir}" -name "pipeline-*.sqlite" -mtime +14 -delete
-                echo "cv-backup: wrote $dst"
+                # SEALED credentials store (2026-11-09): the portal logins the
+                # cv-relogin unit decrypts. The artifact is ciphertext — the
+                # master key lives only in sops — but losing it costs a manual
+                # re-seed of every login (the store SDK has no public write
+                # API, so the server cannot restore it), which is exactly what
+                # a nightly copy prevents. Read-only URI: the live server owns
+                # the WAL writer.
+                if [ -f "$store" ]; then
+                  sdst="${backupDir}/credentials-$ts.sqlite"
+                  ${lib.getExe pkgs.sqlite} "file:$store?mode=ro" ".backup '$sdst'"
+                  find "${backupDir}" -name "credentials-*.sqlite" -mtime +14 -delete
+                  echo "cv-backup: wrote $sdst"
+                else
+                  echo "cv-backup: no credentials store yet — skipped"
+                fi
               '';
               ReadWritePaths = [
                 backupDir
@@ -1154,6 +1236,126 @@
             OnCalendar = "Mon *-*-* 09:41:00";
             Persistent = true;
             Unit = "cv-profile-probe.service";
+          };
+        };
+
+        # Scheduled re-login from the SEALED credentials store (2026-11-09):
+        # this is the app's OWN login loop. The store is the only place a
+        # portal password lives — sops carries just its master key — so the
+        # operator seeds a password ONCE at
+        # https://cv.<domain>/admin/credentials/ and every later session
+        # refresh is unattended (which is also why no agent ever needs the
+        # plaintext: the unit holds the key, the agent reads the journal).
+        #
+        # Runs as the SERVICE user from the state dir on purpose: the store
+        # dir/key and every session file are cv-owned 0700, and the operator
+        # checkout is closed to this user — so this is the only identity that
+        # can both decrypt the credential and write the session the served
+        # CLI reads. The seed gate keeps an unseeded store from paging (WARN
+        # + skip); a seeded platform whose relogin fails (2FA/SSO, drifted
+        # login form) fails the unit into onFailure.
+        systemd.services.cv-relogin = lib.mkIf cfg.relogin.enable {
+          description = "CV platform re-login from the sealed credentials store";
+          inherit onFailure;
+          startLimitBurst = 3;
+          startLimitIntervalSec = 1800;
+
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = cfg.user;
+              Group = cfg.group;
+              WorkingDirectory = cfg.stateDir;
+              # 3 platforms × the script's 240s cookie wait + browser start,
+              # with slack; the timer slot has no successor to overlap.
+              TimeoutStartSec = 1200;
+              # The systemd manager injects the sops template (the store's
+              # CREDENTIALS_MASTER_KEY_V1 among it) — the sandbox never
+              # touches the secret file itself, same shape as cv-scan.
+              EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [
+                cfg.environmentFile
+              ];
+              Environment = [
+                "HOME=${cfg.stateDir}"
+                # Explicit fail-closed posture (production): a broken master
+                # key must kill this unit, never silently degrade to the env
+                # seam — the server's flag carries the same contract.
+                "CV_CREDENTIALS_STORE_ENABLED=1"
+                "CV_CREDENTIALS_STORE_DIR=${cfg.stateDir}/data/credentials-store"
+                "CHROMIUM_EXECUTABLE_PATH=${cfg.relogin.chromiumPackage}/bin/chromium"
+                "NODE_PATH=${playwrightModules}/lib/node_modules"
+                "PATH=${
+                  lib.makeBinPath [
+                    pkgs.bun
+                    pkgs.coreutils
+                    pkgs.sqlite
+                  ]
+                }"
+              ];
+              ExecStart = pkgs.writeShellScript "cv-relogin" ''
+                set -euo pipefail
+                store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.stateDir}/data/credentials-store}"
+                store_db="$store_dir/credentials.db"
+                sqlite_bin="${lib.getExe pkgs.sqlite}"
+                cv_bin="${lib.getExe cfg.package}"
+                # Generated scripts live OUTSIDE the content dirs: the sync
+                # overwrites shipped files inside the eight data/<content>
+                # dirs on every start, and these are runtime artifacts.
+                out_dir="${cfg.stateDir}/data/relogin-scripts"
+                mkdir -p "$out_dir"
+
+                if [ ! -f "$store_db" ]; then
+                  echo "cv-relogin: sealed store missing at $store_db (it boots from the sops master key; cv-server creates it) — cannot re-login" >&2
+                  exit 1
+                fi
+
+                failed=0
+                for platform in ${lib.escapeShellArgs cfg.relogin.platforms}; do
+                  # Gate on the store's own read model: no kind=password
+                  # credential = nothing to log in with YET (owner seeding
+                  # step), which must WARN, not page. An unreadable store is
+                  # a real failure (bad key/schema) and must page.
+                  if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
+                    "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
+                    echo "cv-relogin: could not read the store read model at $store_db" >&2
+                    exit 1
+                  fi
+                  if [ "$seeded" = "0" ]; then
+                    echo "cv-relogin: WARN — no kind=password credential for '$platform' in the sealed store; seed it at https://cv.${domain}/admin/credentials/ (platform + kind password) — skipping" >&2
+                    continue
+                  fi
+
+                  echo "cv-relogin: refreshing '$platform' from the sealed credentials store (headless)"
+                  if ! "$cv_bin" profile relogin --platform "$platform" --headless --output-dir "$out_dir"; then
+                    echo "cv-relogin: '$platform' relogin FAILED — the typed reason is in the journal lines ABOVE (no sealed credential for the platform, 2FA/SSO needing a human, or a drifted login form); runbook: docs/services/cv.md §Credential storage" >&2
+                    failed=1
+                  fi
+                done
+
+                exit "$failed"
+              '';
+            }
+            (harden {
+              # Chromium runs a renderer per tab; the 512M default throttles
+              # it to death (the 2026-10-08 watermark class).
+              MemoryMax = "3G";
+              CPUQuota = "200%";
+              # The state dir is the only writable surface (session files,
+              # generated scripts, the store's WAL).
+              ReadWritePaths = [ cfg.stateDir ];
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
+        };
+
+        systemd.timers.cv-relogin = lib.mkIf cfg.relogin.enable {
+          description = "Weekly CV platform re-login (Mon 09:11, 30 min before the session probe)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.relogin.schedule;
+            Persistent = true;
+            Unit = "cv-relogin.service";
           };
         };
 
