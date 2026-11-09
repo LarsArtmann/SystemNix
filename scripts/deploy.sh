@@ -223,6 +223,15 @@ deploy_pressure_gate() {
       echo "✗ I/O PSI some avg10 = ${io_psi_avg10}% (>= 20%) with IDLE disks (busy = ${disk_busy}%) — D-state phantom on a dead automount (corpse-pile signature, crash3):"
       echo "  top D-state processes:"
       ps -eo pid,stat,wchan:30,comm | awk '$2 ~ /D/' | head -8 | sed 's/^/    /' || true
+      # Phantom-class discriminator (2026-11-09): D-state ≈ 0 with idle disks
+      # is NOT the automount corpse pile — it is the io_uring CQ-waiter class
+      # (2026-10-14 ghostty root cause: waiters sleep TASK_INTERRUPTIBLE with
+      # in_iowait=1, so no D state, no io.stat, PSI ~100% anyway). Name it so
+      # the operator kills idle terminals instead of hunting dead mounts.
+      d_state_count=$(ps -eo stat | grep -c '^D' || true)
+      if [ "${d_state_count:-0}" -le 1 ]; then
+        echo "  ≤1 D-state task with idle disks — io_uring CQ-waiter signature (interactive terminal holding never-completing ring requests; zero io.stat): close/kill idle terminal sessions (ghostty) before forcing"
+      fi
       echo "  PSI still means tasks are stalled — activation restarts units INTO it and strands more corpses. Verify the missing device / corpse pile before forcing."
     fi
     # Device-truth crosscheck beside the PSI line (2026-10-13 class): that

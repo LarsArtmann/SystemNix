@@ -610,3 +610,25 @@ $ nix eval nixpkgs#playwright.version → 1.64.1
 - No touching `cv`'s server code in this plan (C14 is a spec, not code).
 - No hidden privilege escalation (`sudo` in agent sessions stays unusable;
   everything is a systemd unit).
+
+---
+
+## 10) Owner decision pack — single session store of record (Q1, F10.1)
+
+_Prepared 2026-11-09 during execution. Grading context: D3 "no divergent
+copies" is the one dimension the plan cannot close alone (§1.5's three
+homes). Pick A, B, or C — C13/C15 implementation follows the pick._
+
+| | A: sealed blob canonical | B: state.json file canonical | C: staggered (status quo, formalized) |
+| --- | --- | --- | --- |
+| **Shape** | blob is the source of truth; files are projections regenerated from it | files stay the source (what cv-run reads today); blob stays a backup-only capture | file serves cv-run; blob serves the ateam chain; both refreshed per run |
+| **Requires** | upstream write API + blob rotation (spec §2) + a projector on boot | nothing upstream; formalize "blob = second-class backup" in docs + ateam chain keeps 4th source LAST | nothing upstream; document precedence + add drift alarm |
+| **Risk** | projector bugs mint stale files; blob rotation failure poisons everything (mitigated by spec §2.3's fail rule) | blob rots forever (status quo's live rot: freelancermap 2026-09-14); ateam chain's 4th source serves stale cookies with no signal | two homes forever; every audit re-litigates D3 |
+| **Plaintext exposure** | lowest — cookie sealed at rest both places it exists | session cookie sits 0600-PLAINTEXT in the state dir (bearer-grade at rest) | same as B for the file |
+| **Cost when chosen** | ~1 upstream wave + lock bump + VM-test leg for the projector | ~0 (docs only) + accept the rot | ~0 (docs + one drift metric: `cv_relogin_last_result` vs blob age) |
+| **Verdict** | superb; needs upstream first | honest but leaves bearer plaintext + rot | acceptable bridge; NOT superb |
+
+**Recommendation: C now, A the moment the upstream write API lands** (C's
+drift alarm becomes A's migration smoke test). Q2 (refresh aggressiveness)
+and Q3 (ateam live session for auth_marker) fold into the next owner
+interaction — see §8.
