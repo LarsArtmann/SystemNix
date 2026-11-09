@@ -110,6 +110,9 @@ in
       ];
 
       sops.templates."cv-env" = { };
+      # P6 key split: cv.nix references the scoped key template
+      # unconditionally (cv-server + cv-relogin EnvironmentFile).
+      sops.templates."cv-store-key-env" = { };
 
       services.cv-server.enable = true;
 

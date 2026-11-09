@@ -34,6 +34,11 @@
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
+      # Scoped store-master-key template (P6 split, 2026-11-09): only
+      # cv-server + cv-relogin reference it — the two units that boot the
+      # sealed credentials store. cv-scan/cv-agent keep cv-env WITHOUT the
+      # key (they never call the store).
+      cvStoreKeyEnvFile = config.sops.templates."cv-store-key-env".path;
       # Playwright is a JS package and the SERVED state dir carries no
       # node_modules (the CV checkout that has them is lars-owned and closed
       # to the service user). Expose nixpkgs' playwright-core as
@@ -829,11 +834,27 @@
                 # mkForce: upstream sets EnvironmentFile as a plain single-value
                 # list from services.cv-server.environmentFile (the sops
                 # cv-env template); this wrapper EXTENDS it with the OIDC
-                # bridge's env file. cfg.environmentFile is this wrapper's
-                # own mkDefault (the sops template), so no duplication.
+                # bridge's env file AND the scoped store-key template
+                # (cv-store-key-env, the P6 split). cfg.environmentFile is
+                # this wrapper's own mkDefault (the sops template), so no
+                # duplication.
                 EnvironmentFile = lib.mkForce [
                   cfg.environmentFile
                   oidcEnvFile
+                  cvStoreKeyEnvFile
+                ];
+              }
+            )
+            (lib.mkIf
+              (!(
+                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+              ))
+              {
+                # Non-OIDC shape still gets the key template (P6): the store
+                # must boot wherever cv-server runs.
+                EnvironmentFile = lib.mkForce [
+                  cfg.environmentFile
+                  cvStoreKeyEnvFile
                 ];
               }
             )
@@ -1297,12 +1318,11 @@
               # 3 platforms × the script's 240s cookie wait + browser start,
               # with slack; the timer slot has no successor to overlap.
               TimeoutStartSec = 1200;
-              # The systemd manager injects the sops template (the store's
-              # CREDENTIALS_MASTER_KEY_V1 among it) — the sandbox never
-              # touches the secret file itself, same shape as cv-scan.
-              EnvironmentFile = lib.mkIf (cfg.environmentFile != null) [
-                cfg.environmentFile
-              ];
+              # The systemd manager injects the SCOPED key template
+              # (cv-store-key-env) — the store's CREDENTIALS_MASTER_KEY_V1 is
+              # this unit's ONLY secret env (it needs nothing else from
+              # cv-env; the P6 split, 2026-11-09).
+              EnvironmentFile = [ cvStoreKeyEnvFile ];
               Environment = [
                 "HOME=${cfg.stateDir}"
                 # Explicit fail-closed posture (production): a broken master
