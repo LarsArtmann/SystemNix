@@ -2,7 +2,7 @@
 
 > Module: `modules/nixos/services/audible-sync.nix`. Created 2026-11-01 (owner ask: "download ALL books I ever bought and or listened to to the HDD, fully automated, at least once a week check").
 
-## STATUS: DORMANT — NOT deployed. `services.audible-sync.enable = false`; no units exist on evo-x2. Go-live is a USER sequence (ONE interactive Amazon login + a sops paste), see the checklist below. Do not trust this file as describing a live service until the flip lands.
+## STATUS: GO-LIVE 2026-11-10 (enable = true; deploy-gated at authoring time). Owner completed the ONE interactive Amazon login (`audible-quickstart`); the two device credentials were ingested into `platforms/nixos/secrets/audible-sync.yaml` agent-side via runtime-variable expansion (minimal `{"adp_token", "device_private_key"}` shape — sops --set value must be a JSON literal; a bare JSON object gets stored as a nested YAML map, the ingest trap of record). The eval gates caught the module's two unit-level gaps at the flip (main unit lacked `RequiresMountsFor`, dirs unit lacked an ioTier — it had never been eval-exercised at enable=true); both fixed 2026-11-10. The unit's `audible-sync-config-check` ExecStartPre keeps failing loudly if the credential shape regresses.
 
 **Module:** `modules/nixos/services/audible-sync.nix` (`services.audible-sync`) — weekly oneshot (Sunday 05:00, `schedule` option) that syncs the ENTIRE Audible account library to `/mnt/pool/services/audible/`:
 
