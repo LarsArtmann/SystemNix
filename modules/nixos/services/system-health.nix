@@ -1586,9 +1586,11 @@ _: {
               echo "# TYPE system_gatus_results_stale gauge"
               echo "system_gatus_results_stale ''${GATUS_RESULTS_STALE}"
 
-              echo "# HELP system_gatus_chronic_red_checks Count of Gatus endpoints currently red with NO successful result in the trailing 24h (chronic-red escalation — the mr-sync 15-days-unacted class)"
-              echo "# TYPE system_gatus_chronic_red_checks gauge"
-              echo "system_gatus_chronic_red_checks ''${GATUS_CHRONIC_RED}"
+              if [ -n "$GATUS_CHRONIC_RED" ]; then
+                echo "# HELP system_gatus_chronic_red_checks Count of Gatus endpoints currently red with NO successful result in the trailing 24h (chronic-red escalation — the mr-sync 15-days-unacted class)"
+                echo "# TYPE system_gatus_chronic_red_checks gauge"
+                echo "system_gatus_chronic_red_checks ''${GATUS_CHRONIC_RED}"
+              fi
             fi
 
             if [ "$collect_forgejo_mirrors" = "true" ]; then
