@@ -73,7 +73,7 @@
   home-manager = "82ce401aa350502897c3f2e85f384d61cd3b0b6d";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
   homebrew-cask = "537583104b7ae150431435208e3440f7c2bdd891";
-  inboxclean = "e553c510cafe335f659030331d8b4d120d6c1826";
+  inboxclean = "0f1511f602135d68a75acedfef3a9a2ba0e06ac0";
   index = "f7e28a0e716dfbb29bcffcc6c67e889d651ec172";
   invoices = "f72f78e0332b655ded4c37c87f274d9f50513c85";
   journal = "4a63e7fd3ddd3aefcc92bfbcc959ce5918a63303";

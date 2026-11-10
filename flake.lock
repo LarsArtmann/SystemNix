@@ -7544,16 +7544,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1793909466,
-        "narHash": "sha256-+LdPpN/7igQes/Yc9TkA04LGkYKyn49VnEp7c/N/qPw=",
+        "lastModified": 1794326125,
+        "narHash": "sha256-OeuboebI/kgIxQDtDlfN62ZtNiNXuTP0lPmZI3ErAVk=",
         "ref": "refs/heads/master",
-        "rev": "e553c510cafe335f659030331d8b4d120d6c1826",
-        "revCount": 1913,
+        "rev": "0f1511f602135d68a75acedfef3a9a2ba0e06ac0",
+        "revCount": 2035,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/InboxClean"
       },
       "original": {
-        "rev": "e553c510cafe335f659030331d8b4d120d6c1826",
+        "ref": "refs/heads/master",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/InboxClean"
       }
@@ -8243,22 +8243,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-unstable_2": {
-      "locked": {
-        "lastModified": 1791048980,
-        "narHash": "sha256-KgItSKML8Xvte0B7/uGnBDsYzSnnKHcOaiUbgWBXLXw=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "a7868a727837f3c09cee2ce0ca671c76b1589fed",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs_10": {
       "locked": {
         "lastModified": 1791031588,
@@ -8389,16 +8373,16 @@
     },
     "nixpkgs_5": {
       "locked": {
-        "lastModified": 1791031588,
-        "narHash": "sha256-/FGDr01siZ8txrVzkOz6CYjiz0XR27JuVJP+aWchi4s=",
+        "lastModified": 1792773339,
+        "narHash": "sha256-rZLrzrC6i+jnTAlvPZHogKDulY7WWDEv9hJeHieO7Zw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "825e2028c29b702a4a5f085f08095d12099784f2",
+        "rev": "3ec636362e1816bc2f0888fa0fa2c69f1bc9e504",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-26.05",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -9917,7 +9901,7 @@
       "inputs": {
         "gitignore": "gitignore_4",
         "nixpkgs": "nixpkgs_10",
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "nixpkgs-unstable": "nixpkgs-unstable",
         "version": "version_4"
       },
       "locked": {
@@ -10126,20 +10110,19 @@
       "inputs": {
         "gitignore": "gitignore_2",
         "nixpkgs": "nixpkgs_5",
-        "nixpkgs-unstable": "nixpkgs-unstable",
         "version": "version_2"
       },
       "locked": {
-        "lastModified": 1791126376,
-        "narHash": "sha256-9H5X5eiBP1n9CFlWtor3ZdF6uCNPoQdkoi90cyU+kxA=",
-        "ref": "refs/tags/v0.3.1070",
-        "rev": "07dfb6e0c7c47f56c6e8ed6601ecd65b18e210dc",
-        "revCount": 1070,
+        "lastModified": 1793004651,
+        "narHash": "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=",
+        "ref": "refs/tags/v0.3.1100",
+        "rev": "ed4e7663123ae9169ff5b378b055a99012ba5f5a",
+        "revCount": 1100,
         "type": "git",
         "url": "https://github.com/a-h/templ"
       },
       "original": {
-        "ref": "refs/tags/v0.3.1070",
+        "ref": "refs/tags/v0.3.1100",
         "type": "git",
         "url": "https://github.com/a-h/templ"
       }

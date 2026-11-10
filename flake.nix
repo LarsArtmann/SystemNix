@@ -290,15 +290,12 @@
       # Floats on upstream master (owner directive 2026-10-25: "inboxclean
       # should never be pinned"). The go.mod 1.27.3 toolchain floor is met
       # via the nixpkgs-unstable follow, not by holding this rev back.
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; see the
-      # allowlist block in lib/flake-input-pin-audit.nix): upstream
-      # e553c510 is the last internally consistent shape — 5f4722cd
-      # "align templ stack at v0.3.1100" flipped go.mod to templ 0.3.1100
-      # while the workspace still consumed go-cqrs-lite/catalog v4.12.0,
-      # whose generated docserver uses templ.JoinURLErrs (removed in
-      # 0.3.1100). LIFT: catalog is regenerated at 0.3.1100 (or the app
-      # bumps catalog) and `.#inboxclean` compiles; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/InboxClean?rev=e553c510cafe335f659030331d8b4d120d6c1826";
+      # The 2026-11-06 templ-API hard pin (e553c510, go-cqrs-lite/catalog
+      # docserver vs templ 0.3.1100 JoinURLErrs removal) was LIFTED
+      # 2026-11-10: upstream tip 0f1511f6 ships the regenerated catalog
+      # and `.#inboxclean` compiles at tip (pre-deploy-check green before
+      # the switch). Allowlist row removed per the pin-audit lift rule.
+      url = "git+ssh://git@github.com/LarsArtmann/InboxClean?ref=refs/heads/master";
     };
 
     # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (Go):
