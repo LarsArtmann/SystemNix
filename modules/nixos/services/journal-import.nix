@@ -223,7 +223,10 @@
             # re-derives scope. A verdict-agnostic parse (any `balance <id>`
             # row), so a balance does not fall out of scope when its verdict
             # upgrades from blind to covered.
-            MAPPED=$("$JOURNAL" --config journal.yaml status | sed -n 's/^[[:space:]]*balance \([0-9][0-9]*\) .*/\1/p' | sort -u)
+            # journal status prints EVERYTHING to stderr (verified 2026-11-10:
+            # stdout 0 bytes, stderr 720) — capture 2>&1 or the parse sees an
+            # empty stream and the fail-loud guard fires every tick.
+            MAPPED=$("$JOURNAL" --config journal.yaml status 2>&1 | sed -n 's/^[[:space:]]*balance \([0-9][0-9]*\) .*/\1/p' | sort -u | tr '\n' ' ')
             if [ -z "$MAPPED" ]; then
               echo "journal-import: coverage table parsed EMPTY — status format drift? refusing to filter staged facts (fail loud, nothing deleted)"
               exit 1
@@ -259,7 +262,7 @@
             # the pipeline, never the judgment.
             "$JOURNAL" --config journal.yaml reconcile >/dev/null
             echo "journal-import: imported $imported file(s), kept $kept failed, unmapped skipped:[$skipped ]"
-            "$JOURNAL" --config journal.yaml status | sed -n '1,11p'
+            "$JOURNAL" --config journal.yaml status 2>&1 | sed -n '1,11p'
           '';
         };
 
