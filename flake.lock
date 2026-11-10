@@ -7544,11 +7544,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794326125,
-        "narHash": "sha256-OeuboebI/kgIxQDtDlfN62ZtNiNXuTP0lPmZI3ErAVk=",
+        "lastModified": 1794327449,
+        "narHash": "sha256-zkIjhO32obwxFbwhbXiKI4mB/03dxlDH4dvVXyvfwts=",
         "ref": "refs/heads/master",
-        "rev": "0f1511f602135d68a75acedfef3a9a2ba0e06ac0",
-        "revCount": 2035,
+        "rev": "5021c9270bf1739c10bf631a5c0ffa1e0cfee9cb",
+        "revCount": 2041,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/InboxClean"
       },

@@ -292,7 +292,7 @@
       # via the nixpkgs-unstable follow, not by holding this rev back.
       # The 2026-11-06 templ-API hard pin (e553c510, go-cqrs-lite/catalog
       # docserver vs templ 0.3.1100 JoinURLErrs removal) was LIFTED
-      # 2026-11-10: upstream tip 0f1511f6 ships the regenerated catalog
+      # 2026-11-10: upstream master (5021c927) ships the regenerated catalog
       # and `.#inboxclean` compiles at tip (pre-deploy-check green before
       # the switch). Allowlist row removed per the pin-audit lift rule.
       url = "git+ssh://git@github.com/LarsArtmann/InboxClean?ref=refs/heads/master";

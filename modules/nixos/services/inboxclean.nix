@@ -140,10 +140,18 @@
       # 2026-10-25; last-green e2f68e0 is GONE from origin after an
       # upstream history rewrite). LIFT when the templ stack aligns
       # upstream (5f4722cd attempted it; insufficient as of d1b06e6).
+      # PIN LIFTED + RE-SHIMMED (2026-11-10): input floats master again
+      # (templ stack aligned upstream; LIFT condition met). First float
+      # re-shimmed to UKBW2VAE — inboxclean@0f1511f's own flake.nix:508
+      # bakes exactly that value (their T138 freshness guard makes it
+      # self-healing; first-hand: inboxclean-0f1511f-go-modules spec
+      # pexiMrou got UKBW2VAE, float-proof-20261110-170949.log). Drop the
+      # shim outright when the override is verified bit-neutral under the
+      # followed nixpkgs.
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-pexiMroulQauVvYOL0rXqU/9HydtswRouYvMz+Vmm9Y=";
+            vendorHash = "sha256-UKBW2VAE0SaulRGXREnBWGkLtDFZmhIoK4IJ4+d6z3c";
           };
     in
     {
