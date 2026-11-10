@@ -274,9 +274,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-02 04:12 lock float (9ff1d1645+3709f06b0): at
   # go-humanize-linter@8ac99125 spec k7GyCaMU, got v6zJv2bV (first-hand
   # keep-going, ~/.cache/lockfloat/float-proof-20261102-043225-lars.log).
-  go-humanize-linter =
-    flakePkgShim inputs.go-humanize-linter "default"
-      "sha256-uIKgy0BrF/lRYqpIz8L08NOaJbgQ7iTWRMrt/8h2N7I=";
+  # shim DROPPED (2026-11-10 lock float, first-hand evidence): upstream
+  # flake.nix:52 at the locked rev 6f794637 now bakes exactly the got
+  # hash (2tOFS9U1…, from the same failing FOD) — the plain package
+  # reproduces; re-add ONLY via nix-hash-fix evidence, never by hand.
+  go-humanize-linter = flakePkg inputs.go-humanize-linter;
   # go-structure-linter shim DROPPED (2026-10-18): upstream vendorHash.nix
   # at tip 25b9f6a7 bakes the shim's own O2hpYHSc… value — bit-neutral
   # override (graph verified identical tip-vs-lock). Re-add ONLY via
