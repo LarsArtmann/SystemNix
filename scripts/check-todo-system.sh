@@ -33,7 +33,11 @@
 #      finding / fix f9652db3 made the marker the convention — this leg
 #      makes it a gate). Historical timestamp mentions ("notifying at
 #      08:36", "nightly … 03:00" schedule context) are NOT matches — the
-#      signals are the wait-imperative forms only.
+#      signals are the wait-imperative forms only. Possessive event
+#      references ("tonight's commit races") are retrospective narrative,
+#      not wait-imperatives, and are stripped before the match (2026-11-10:
+#      three same-evening false FPs, each freezing ALL commits — the gate
+#      reads the working tree, so one bad row blocks every session).
 #   6. Verbatim duplicate open rows (2026-10-06): a double-applied edit
 #      shipped byte-identical queue rows past this gate — it returned
 #      "structure clean" WITH the duplicates present; caught only because
@@ -132,7 +136,8 @@ selftest() {
   # timegate leg: a [ready] row with wait-language and no BLOCKED marker must FAIL
   tmp=$(mktemp)
   cp "$TODO" "$tmp"
-  printf -- '- [ ] [ready] **Selftest timegate row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — verification run fires 2026-10-04 23:50 btrbk-pool-clean; re-dispatch after.\n' >>"$tmp"
+  printf -- '- [ ] [ready] **Selftest timegate row** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — verification run fires 2026-10-04 23:50 btrbk-pool-clean; re-dispatch after; bare tonight.
+' >>"$tmp"
   out=$(TODO_FILE="$tmp" CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp" 2>&1) && rc=0 || rc=$?
   if [ "$rc" -eq 0 ] || ! printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
     rm -f "$tmp"
@@ -147,6 +152,18 @@ selftest() {
   rm -f "$tmp" "$tmp2"
   if printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
     echo "SELFTEST FAIL: BLOCKED-marked time-gated row must not be flagged"
+    exit 1
+  fi
+  # possessive-retrospective exemption leg: "tonight's X" is event-noun
+  # narrative, not wait-language (2026-11-10 FP class — three same-evening
+  # tree-wide commit freezes; the gate reads the working tree)
+  tmp3=$(mktemp)
+  cp "$TODO" "$tmp3"
+  printf -- $'- [ ] [ready] **Selftest timegate row (possessive)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) — codifies the git-trap pair from tonight\'s commit races; pre-dating yesterday\'s pushes.\n' >>"$tmp3"
+  out=$(TODO_FILE="$tmp3" CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp3" 2>&1) && rc=0 || rc=$?
+  rm -f "$tmp3"
+  if [ "$rc" -ne 0 ] || printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
+    echo "SELFTEST FAIL: possessive-retrospective time ref must not be flagged"
     exit 1
   fi
   # duplicate-row leg: a verbatim-duplicated open row must FAIL (the 2026-10-06
@@ -171,7 +188,7 @@ selftest() {
     echo "SELFTEST FAIL: single-instance row must not be flagged as duplicate"
     exit 1
   fi
-  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt) + duplicate open rows"
+  echo "SELFTEST OK: title-less rows + dead links + entry drift (warn/strict) + harvest coverage (warn, case-forgiving marker-exempt) + time-gated [ready] rows (marker-exempt, possessive-exempt) + duplicate open rows"
   exit 0
 }
 
@@ -224,8 +241,11 @@ scan_file() {
   # time-gated [ready] rows without a BLOCKED marker read as dispatchable
   # and get harvested early. Signals are wait-imperative forms only — see
   # header note 5. Historical "at HH:MM" mentions must not trip this.
+  # Possessive event refs ("tonight's races") are stripped first —
+  # retrospective narrative, not wait-language (2026-11-10 FP class).
   local timegate_hits
   timegate_hits=$(grep -E '^- \[ \] \[ready\]' "$f" 2>/dev/null |
+    sed -E "s/(tonight|yesterday|today)'s/<past-event>/g" |
     grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]*[0-9]{1,2}:[0-9]{2}' |
     grep -v 'BLOCKED' || true)
   if [ -n "$timegate_hits" ]; then
