@@ -52,6 +52,10 @@
       "vendorHash validated against upstream's own locked nixpkgs (go 1.27.2 toolchain; first-hand probe 2026-10-19 at ba60fe0d); following would re-tool the go-modules FOD on every root-nixpkgs bump — the pdg wave class";
     "cvagent.nixpkgs" =
       "vendorHash validated against upstream's own locked nixpkgs (go_1_27 toolchain; first-hand probe 2026-11-01 at ee31793 built clean through its own pins); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
+    "timesheets.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (go 1.27.2 tarball pin; first-hand probe 2026-11-10 at 0304e2a, builds green with tests); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
+    "invoices.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (baked upstream; first-hand probe 2026-11-10 at f72f78e via detached worktree); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
   },
 }:
 let

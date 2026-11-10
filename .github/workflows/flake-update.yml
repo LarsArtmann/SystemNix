@@ -37,15 +37,19 @@ jobs:
           # offered and returns "Repository not found" for every other repo.
           # So each key gets its own Host alias (IdentitiesOnly) plus a
           # insteadOf rewrite per repo URL. New private input = append
-          # `@REPO <name>` + key to the secret, zero workflow edits.
+          # `@REPO <name>` + key to NIX_DEPLOY_KEYS_BUNDLE_2 — bundle 1's
+          # private material was trashed 2026-10-29 (only its live secret
+          # holds the keys), so bundle 2 is where new repos land; the split
+          # loop below concatenates both bundles.
           NIX_DEPLOY_KEYS_BUNDLE: ${{ secrets.NIX_DEPLOY_KEYS_BUNDLE }}
+          NIX_DEPLOY_KEYS_BUNDLE_2: ${{ secrets.NIX_DEPLOY_KEYS_BUNDLE_2 }}
         run: |
           while IFS= read -r line; do
             case "$line" in
               "@REPO "*) repo="${line#@REPO }"; kf="/tmp/nix-dk-$repo"; : > "$kf";;
               *) [ -n "${kf:-}" ] && printf '%s\n' "$line" >> "$kf";;
             esac
-          done < <(printf '%s\n' "$NIX_DEPLOY_KEYS_BUNDLE")
+          done < <(printf '%s\n%s\n' "$NIX_DEPLOY_KEYS_BUNDLE" "$NIX_DEPLOY_KEYS_BUNDLE_2")
           chmod 600 /tmp/nix-dk-*
           mkdir -p ~/.ssh
           : > ~/.ssh/nixci-config

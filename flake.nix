@@ -1287,6 +1287,17 @@
     # b9f0acf): cvagent's go-humanize-linter dep locks go-nix-helpers, whose
     # treefmt-nix deep copy regrows — eval-only, follow the root pin.
     cvagent.inputs.go-humanize-linter.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
+    # timesheets + invoices (2026-11-10 deployment): flake-parts + treefmt-nix
+    # (+ git-hooks, invoices only) are eval-only for the consumed packages
+    # (both packages.default are buildGoModule — none in the closure), so the
+    # infra follows are safe; their nixpkgs stay on upstream's own pins
+    # (vendorHashes probe-verified at the locked revs, deliberate list in
+    # lib/lock-audit.nix).
+    timesheets.inputs.flake-parts.follows = "flake-parts";
+    timesheets.inputs.treefmt-nix.follows = "treefmt-nix";
+    invoices.inputs.flake-parts.follows = "flake-parts";
+    invoices.inputs.treefmt-nix.follows = "treefmt-nix";
+    invoices.inputs.git-hooks.follows = "git-hooks";
     file-and-image-renamer.inputs.go-nix-helpers.follows = "go-nix-helpers";
     file-and-image-renamer.inputs.nixpkgs.follows = "nixpkgs";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
