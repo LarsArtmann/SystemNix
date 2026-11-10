@@ -335,9 +335,28 @@ let
       clickhouse
       ;
   };
+  # taskchampionPkgConfigOverlay (2026-11-10 lock float — nixpkgs f4a03c0
+  # regression, first-hand proof log ~/.cache/lockfloat/float-proof-20261110-041602.log):
+  # the vendored zstd-sys and libsqlite3-sys crates probe system libs via
+  # pkg-config at build time, but the nixpkgs module no longer ships
+  # pkg-config on PATH — zstd-sys build.rs panics ("Can't probe for zstd in
+  # pkg-config: could not be found") and libsqlite3-sys dies `-lsqlite3:
+  # No such file or directory`. Inject the probe toolchain plus the two
+  # system libs it links against. Remove when nixpkgs ships them again
+  # (probe: `nix build nixpkgs#taskchampion-sync-server` — green WITHOUT
+  # this overlay means LIFT).
+  taskchampionPkgConfigOverlay = _final: prev: {
+    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (
+      old: {
+        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+        buildInputs = (old.buildInputs or [ ]) ++ [ _final.sqlite _final.zstd ];
+      }
+    );
+  };
 in
 [
   clickhouseVersionPinOverlay
+  taskchampionPkgConfigOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default

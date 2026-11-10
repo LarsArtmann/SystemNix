@@ -1067,6 +1067,11 @@ in
         "application/json" = [ "dev.zed.Zed.desktop" ];
         "application/x-yaml" = [ "dev.zed.Zed.desktop" ];
 
+        # PDF — Helium (Chromium's built-in PDFium viewer; no dedicated PDF
+        # viewer installed)
+        "application/pdf" = [ "helium.desktop" ];
+        "application/x-pdf" = [ "helium.desktop" ];
+
         # Images
         "image/avif" = [ "helium.desktop" ];
         "image/bmp" = [ "helium.desktop" ];
