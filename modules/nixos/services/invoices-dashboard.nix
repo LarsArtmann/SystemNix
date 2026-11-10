@@ -211,9 +211,17 @@
                 # root and only needs to READ the DB + config —
                 # ProtectHome=read-only keeps /home visible read-only while
                 # the pool dir carries the only RW hole.
+                # CAP_DAC_READ_SEARCH: /home/<user> itself is 0700, and
+                # harden{}'s empty default CapabilityBoundingSet strips
+                # root's DAC bypass, so without this cap the unit cannot
+                # even STAT the DB (live 2026-11-10: "no DB — nothing to
+                # back up" while the file existed; cv-backup precedent).
+                # READ_SEARCH grants traversal+read only — pool writes stay
+                # ordinary root-owner DAC (cv.nix backup pattern).
                 (harden {
                   MemoryMax = "1G";
                   ProtectHome = "read-only";
+                  CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
                 })
                 (serviceOneshotDefaults { })
                 ioTier.background
