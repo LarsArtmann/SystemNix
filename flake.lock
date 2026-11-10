@@ -8468,11 +8468,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794272531,
-        "narHash": "sha256-HLiec0fpcIYMOc2D+GY8nXEX7HDI0PI2zyXOQciI+xI=",
+        "lastModified": 1794281558,
+        "narHash": "sha256-EFoJhYqpC8sYlUU5zDTFKfIvrfFqWKq2/EwLGmczExg=",
         "owner": "LarsArtmann",
         "repo": "offline-banner",
-        "rev": "55121b20acad9885e93474388bd3960899e665da",
+        "rev": "a5673f72db3e15008b76ff52f5fe0941fdb58c05",
         "type": "github"
       },
       "original": {
