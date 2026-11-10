@@ -263,6 +263,23 @@ Both endpoints are async + 409-guarded, so an overlap with a
 dashboard-triggered run is harmless. Failures (non-200/409, e.g. a wrong
 key after rotation) fail the unit → onFailure alert.
 
+4. `POST /api/pipeline/approve-above?min=2.9` — owner directive
+   2026-11-09 (100% autonomy): the score bar IS the approval gate. The
+   2026-11-10 00:15 run of this step bulk-granted ~670 approvals at once
+   and, with `default_to` (since removed) mis-configured that same night,
+   produced the [CATCHALL] incident: 727 send-marks, 535 unrecorded
+   transport successes, 165 applications mailed to the owner's own
+   catchall, and 2-3 duplicate applications to ~20 real recruiters before
+   the Resend daily quota capped the bleed. Post-incident contract
+   (owner rulings 2026-11-10): **From is `applications@artmann.tech`**
+   (replies land natively at Google where the owner reads them; DNS
+   verification records live in the domains repo `resend_artmann_tech`),
+   **no `default_to` ever again** (email-less postings fail safe with
+   ErrNoRecipient; portal rows wait for `cv portal-apply`), and the CV
+   repo carries the code-side hardening (send semaphore cap 2,
+   unrecorded-send resend block, HTML alternative MIME part — rides the
+   NEXT cv-input lock bump, owner-gated push).
+
 ## Weekly gun.io check (user timer, no root)
 
 `scripts/gunio-weekly-check.sh` (CV checkout) is the monitoring cluster's
