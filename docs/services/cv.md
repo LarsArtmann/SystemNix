@@ -279,6 +279,22 @@ key after rotation) fail the unit → onFailure alert.
    repo carries the code-side hardening (send semaphore cap 2,
    unrecorded-send resend block, HTML alternative MIME part — rides the
    NEXT cv-input lock bump, owner-gated push).
+5. **At-most-once send claims (2026-11-10 evening, owner ruling "1 proper
+   email per project per recruiter, ever" — CV repo commit `be687de00`,
+   ADR `docs/adr/2026-11-10_at-most-once-send-claims.md`, rides the same
+   owner-gated push):** every real send is durably claimed
+   (`send.claimed` event) BEFORE the transport runs; claimed approvals
+   are excluded from the sweep/boot-replay source, survive restarts, and
+   release only on definitive non-delivery — the storm's re-mail engines
+   (recording failure → re-armed approval → sweep/boot-replay resend)
+   are structurally dead. A cross-application (project, recipient)
+   ledger refuses sends to a pair any application already mailed or
+   claimed, INCLUDING the storm's historical sends (protected
+   retroactively after the first post-deploy restart folds them).
+   Ambiguous outcomes (context timeout mid-transaction) park the row in
+   `send_claimed` for operator resolution — grep
+   `journalctl -u cv-server` for `AMBIGUOUS` / `SendClaimed` triage;
+   resolution tooling is queued (docs/todo/services.md).
 
 ## Weekly gun.io check (user timer, no root)
 

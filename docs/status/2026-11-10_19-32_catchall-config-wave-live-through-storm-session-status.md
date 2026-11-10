@@ -83,3 +83,50 @@
 ---
 
 **State at 19:32:** config wave LIVE + anchored + behavior-proven; all documentation surfaces synced; refire loop retired; my background jobs all reaped; the box still carries a sibling-battery IO storm (last seen avg10 ~50). **Now waiting for instructions.**
+
+## Addendum 21:4x — owner answered Q2 with a demand; the structural fix is IMPLEMENTED
+
+The owner's response to §g2 (2026-11-10 ~20:0x): *"How the fuck do we just make
+sure this never ever happens again and we only ever send out 1 fucking proper
+e-mail per project per recruiter???"* — treated as the directive it is.
+
+**Landed: at-most-once send claims (CV repo commit `be687de00`, ADR
+`docs/adr/2026-11-10_at-most-once-send-claims.md`).** Root cause of the
+duplicates was an ORDERING flaw: the only durable "already sent" state landed
+AFTER the transport send, so recording failures under storm re-armed the
+approval and sweep/boot-replay/restarts re-mailed. The fix inverts it:
+
+1. `send.claimed` event appended BEFORE any real transport; the fold parks the
+   approval in `send_claimed`, excluded from `ApprovedPendingSend` — the sweep
+   and boot replay structurally cannot re-drive it. Survives restarts,
+   multi-writer conflicts (revalidate-and-retry, fail closed), and stream
+   merges (claims never import across stores).
+2. Release only on DEFINITIVE non-delivery (relay refused before accepting);
+   ambiguous outcomes (ctx timeout mid-transaction) park for operator triage.
+3. Cross-application (project, recipient) ledger — normalized company+role key
+   (single-sourced with the dedupe advisory, exact key not seniority-near) +
+   recipient — refuses claims on occupied pairs, folding HISTORICAL
+   `application.sent`/`application.submitted` events: the ~71 already-duped
+   recruiters are protected retroactively on the first post-deploy restart.
+4. Dry-run never claims; the interim in-process `unrecorded` map is REMOVED
+   (superseded — its "restarts still re-arm" clause is dead).
+
+**Verified:** `TestFlow_StormSweepNeverResendsAcrossRestarts` reproduces the
+exact storm shape (3 approved apps, transport succeeding, every recording
+failing, restart + two sweeps) → exactly ONE delivery per application, all
+others parked `send_claimed`. Plus the unit battery: claim-precedes-transport
+ordering, restart-safety, definitive-failure retry, ambiguous-hold, cross-app
+refusal, different-project negative control, legacy-ledger rebuild, dry-run
+no-claim, concurrent-blocked. Touched packages green: career-pipeline root,
+eventstore (full suite incl. catalog/fold/merge/library-parity ratchets),
+sender, applyflow, pipeline handlers. Scoped golangci findings fixed
+(complexity, catalog length, godoc); gofmt clean.
+
+**Rides the §g1 owner-gated push** (wave grew: be687de00 + ADR + funnel.md
+contract + runbook + todo rows in both surfaces; follow-up queued: claim
+resolution tooling + live-Submitted ledger occupancy, services.md).
+
+**Shared-tree foreign reds observed, NOT mine:** `internal/cli/ateam/cookie.go`
+unused import (sibling-committed broken — blocks root go vet + the 2 CLI
+tests), templ-runtime drift (pre-existing per the 12:30 report), profileagent
+fixture failures (pre-existing, first full run before my edits).
