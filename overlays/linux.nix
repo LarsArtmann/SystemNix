@@ -335,25 +335,14 @@ let
       clickhouse
       ;
   };
-  # taskchampionPkgConfigOverlay (2026-11-10 lock float — nixpkgs f4a03c0
-  # regression, first-hand proof log ~/.cache/lockfloat/float-proof-20261110-041602.log):
-  # the vendored zstd-sys and libsqlite3-sys crates probe system libs via
-  # pkg-config at build time, but the nixpkgs module no longer ships
-  # pkg-config on PATH — zstd-sys build.rs panics ("Can't probe for zstd in
-  # pkg-config: could not be found") and libsqlite3-sys dies `-lsqlite3:
-  # No such file or directory`. Inject the probe toolchain plus the two
-  # system libs it links against. Remove when nixpkgs ships them again
-  # (probe: `nix build nixpkgs#taskchampion-sync-server` — green WITHOUT
-  # this overlay means LIFT).
-  taskchampionPkgConfigOverlay = _final: prev: {
-    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-      buildInputs = (old.buildInputs or [ ]) ++ [
-        _final.sqlite
-        _final.zstd
-      ];
-    });
-  };
+  # taskchampionPkgConfigOverlay LIFTED 2026-11-10 (the self-removal contract
+  # was met: bare probe `nix build github:NixOS/nixpkgs/f9a75f41#taskchampion-sync-server`
+  # green WITHOUT the overlay — taskchampion-sync-server-0.7.1, ah978vnf…,
+  # proof log ~/.cache/lockfloat/taskchampion-lift-probe-20261110.log; the
+  # pkg-config/zstd/sqlite loss was f4a03c00-only and the pin holds f9a75f41,
+  # whose module ships pkg-config again). If the re-float pair ever lands on
+  # a rev with the loss (docs/todo/pipeline.md), re-add: nativeBuildInputs
+  # += pkg-config, buildInputs += sqlite + zstd.
   # patchelfDefaultRestoreOverlay LIFTED 2026-11-10 (the self-removal contract
   # was met: the nixpkgs pin re-landed on f9a75f41, whose default patchelf is
   # 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
@@ -365,7 +354,6 @@ let
 in
 [
   clickhouseVersionPinOverlay
-  taskchampionPkgConfigOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
