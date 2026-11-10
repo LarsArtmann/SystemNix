@@ -25,6 +25,11 @@ EVAL_RELEVANT_PATHS=(
   # (§11's VENDOR_FRESHNESS_EVAL_PATHS already listed overlays/; this array
   # was the odd one out.)
   overlays
+  # systems/ = the thin host assemblies (flake.nix "assembled in
+  # systems/*.nix") — a host-file edit moves that host's toplevel drv.
+  # Found 2026-11-10 evening while a sibling's systems/evo-x2.nix edit
+  # was in flight: both consumers were blind to it.
+  systems
   # scripts/lib/buildcache-reap-names.sh is the one file outside the directory
   # roots whose CONTENT can fail a --no-build eval: lib/buildcache-cache-names.nix
   # readFile+regex PARSES it and throws on a missing/malformed assignment

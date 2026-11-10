@@ -202,3 +202,34 @@ verify-before-filing gate; #9/#14 fold into #2; #10 → lessons candidate noted 
    idle). Is that terminal session yours to simply close, or should the queued corpse-remediation
    row be promoted (it would need to identify-and-kill user scopes autonomously — a policy
    call only you can make)?
+
+---
+
+## ADDENDUM (2026-11-10 19:4x–20:3x): gen-997 first live cycle + the staging-relocation fix
+
+**Gen-997 deployed by the other session's ceremony (their 19:32 closeout, float gate GREEN) and
+it CARRIES journal-import** — verified live: `/run/current-system` = `system-997-link`
+(`3yhv8kp50…`, anchored ✓), `journal-import.timer` active/waiting on the host.
+
+**First live cycle (19:41, manually triggered + two timer ticks at 19:15/19:30):**
+- `journal-sync-export` ✅ GREEN — 20 staging files exported atomically (every Wise balance).
+- `journal-import` ❌ **imported 0, unmapped skipped []** — the glob saw ZERO files: staging
+  lived INSIDE the bank-sync dataDir, which is **0700 bank-sync**, so the primary-user import
+  could not traverse to the (world-readable) staging subdir. The rehearsal could not catch
+  this: its staging lived in /tmp (traversable). Cycles are silent no-ops (import exits 0,
+  no toasts) — no harm, no coverage loss (the 7 morning records persist in the kernel).
+
+**Fix (landed in-tree, eval-clean, rides the NEXT deploy gen-998):** staging moved to
+`/var/lib/journal-sync` via `StateDirectory` on the export unit (systemd creates+owns it
+bank-sync-owned BEFORE namespace setup — also kills the 226/NAMESPACE first-run chicken-egg
+that RequiredMountsFor-over-a-missing-dir caused on the very first timer tick), both
+`RequiresMountsFor` dropped (no /mnt coupling → mount-gating + pool-recovery assertions no
+longer apply), pool-recovery exemptions removed, DAC posture preserved where it matters (the
+DB stays bank-sync-private; the mesh files are the shared interface).
+
+**Deploy of gen-998: BLOCKED by a sustained real I/O storm** — 45 min of watcher (19:51→20:35):
+disk pegged 90–106% util, PSI 43–63, zero calm windows (the other session's proof-builds).
+The pressure gate correctly refuses; forcing at =1 into THIS signature is the documented WDT
+freeze class. Next session: re-arm the calm-wait (psi<20 + util<20 ×2 rounds → `nix run
+.#deploy`), then run the services.md verification battery — expected first-cycle result:
+`imported=7 unmapped=13` and staging-left=13 in `/var/lib/journal-sync`.
