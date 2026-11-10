@@ -7317,11 +7317,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794272848,
-        "narHash": "sha256-dOV98VKPB9euPG5gn/uVSJ0RE0XeY8g8cSXi7PmZTto=",
+        "lastModified": 1794257934,
+        "narHash": "sha256-uHNuBOmSOsoUfHtdqaVXMxBs7BvqY+xvr5ho9XuCxpw=",
         "owner": "LarsArtmann",
         "repo": "hermes-agent",
-        "rev": "b3746e35ddd32079697728e2df57a9d78f1e9e32",
+        "rev": "84f30c73bf17c89ec10842eb0def15a404283134",
         "type": "github"
       },
       "original": {
