@@ -170,7 +170,7 @@ in
                 {
                   owner = primaryUser;
                   group = "users";
-                  restartUnits = [ "cvagent-scan.service" ];  # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
+                  restartUnits = [ "cvagent-scan.service" ]; # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
                 }
                 {
                   cvagent_ai_api_key = "glm_api_key";
@@ -244,19 +244,21 @@ in
               # copies them only into empty slots; runtime state owns them
               # after the first refresh (7-day-rotation lesson). Ladder:
               # docs/services/pim-sync.md.
-              mkSecrets "pim-sync.yaml" {
-                owner = "pim-sync";
-                group = "pim-sync";
-                restartUnits = [ "pim-sync.service" ];
-              } [
-                "pim_sync_oauth_client_secret"
-                "pim_sync_token_personal"
-                "pim_sync_token_work"
-                "pim_sync_token_personal_calendar"
-                "pim_sync_token_work_calendar"
-                "pim_sync_stalwart_dav_user"
-                "pim_sync_stalwart_dav_pass"
-              ]
+              mkSecrets "pim-sync.yaml"
+                {
+                  owner = "pim-sync";
+                  group = "pim-sync";
+                  restartUnits = [ "pim-sync.service" ];
+                }
+                [
+                  "pim_sync_oauth_client_secret"
+                  "pim_sync_token_personal"
+                  "pim_sync_token_work"
+                  "pim_sync_token_personal_calendar"
+                  "pim_sync_token_work_calendar"
+                  "pim_sync_stalwart_dav_user"
+                  "pim_sync_stalwart_dav_pass"
+                ]
               // {
                 # tokenSeedDir needs a DIRECTORY of <account>.json files —
                 # give each seed its own rendered path under one seed dir
@@ -475,16 +477,14 @@ in
               # /var/lib/cv/data/credentials-store becomes undecryptable
               # (they re-seed via the admin UI; the funnel itself never
               # depends on the store).
-              mkSecrets "cv-credentials-store.yaml"
-                {
-                  owner = "root";
-                  group = "root";
-                  restartUnits = [
-                    "cv-server.service"
-                    "cv-agent.service"
-                  ];
-                }
-                [ "cv_credentials_master_key" ]
+              mkSecrets "cv-credentials-store.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [
+                  "cv-server.service"
+                  "cv-agent.service"
+                ];
+              } [ "cv_credentials_master_key" ]
             )
             // lib.optionalAttrs (svcEnabled "inboxclean") (
               # Raw Google OAuth client credentials.json; the upstream module's
@@ -654,7 +654,7 @@ in
               owner = primaryUser;
               group = "users";
               mode = "0400";
-              restartUnits = [ "cvagent-scan.service" ];  # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
+              restartUnits = [ "cvagent-scan.service" ]; # renamed with the 2026-11-08 upstream delegation (combined scan+mesh unit)
               content = lib.generators.toKeyValue { } {
                 OPENAI_API_KEY = config.sops.placeholder.cvagent_ai_api_key;
               };
