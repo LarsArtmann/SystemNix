@@ -16,7 +16,12 @@ in
   # in platforms/nixos/programs/chrome.nix
   programs.chromium = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
     enable = true;
-    package = pkgs.brave; # Use Brave as primary Chromium-based browser for extension support
+    # Privacy-hardened Chromium for declarative extension support. Was
+    # pkgs.brave: REMOVED from nixpkgs at the f4a03c00 float ("no
+    # committers among its maintainers to unblock security issues");
+    # ungoogled-chromium is the surviving hardened-Chromium option HM can
+    # manage extensions for. Revisit if brave is ever re-added.
+    package = pkgs.ungoogled-chromium;
 
     # Command-line arguments for performance and privacy
     commandLineArgs = [

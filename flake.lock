@@ -1021,11 +1021,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794287073,
-        "narHash": "sha256-zqw4Fdl11ceM0OhvESSCdsaU3HsU5JUhraf+eOWGubk=",
+        "lastModified": 1794301848,
+        "narHash": "sha256-ZaJbwtXG3YeA8fikqV2WDw9BZ6KSzIqa8nuchhioXKE=",
         "ref": "refs/heads/master",
-        "rev": "c65e2558f590a0f42284fe98bfb70d6375b969d2",
-        "revCount": 10315,
+        "rev": "ae8adb819770452f25f810e1a2e713080cf58ab5",
+        "revCount": 10347,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -3729,16 +3729,16 @@
     "go-credentials-store": {
       "flake": false,
       "locked": {
-        "lastModified": 1794268264,
-        "narHash": "sha256-h7WYBPs6FWZZTUxeuInCic3zo4RLUzeKMqTSPqokISs=",
+        "lastModified": 1794289539,
+        "narHash": "sha256-dEJl5p6cs9OjjD1H8Xi5dhiT065pjwuXLr9qa3DAQFY=",
         "ref": "refs/heads/master",
-        "rev": "c830daca9ede4cf7f152f3048821e8ec16145de9",
-        "revCount": 481,
+        "rev": "e3697ed432c8689e4fc8909d7d7ce426afce8102",
+        "revCount": 488,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       },
       "original": {
-        "rev": "c830daca9ede4cf7f152f3048821e8ec16145de9",
+        "rev": "e3697ed432c8689e4fc8909d7d7ce426afce8102",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       }

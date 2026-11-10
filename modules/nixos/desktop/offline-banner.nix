@@ -26,6 +26,7 @@
 }: {
   flake.nixosModules.offline-banner =
     {
+      config,
       ...
     }:
     {
