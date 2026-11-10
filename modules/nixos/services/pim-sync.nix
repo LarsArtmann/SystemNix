@@ -63,6 +63,12 @@
           clientSecret=${config.sops.secrets.pim_sync_oauth_client_secret.path}
           davEnv=${config.sops.templates."pim-sync-dav-env".path}
 
+          fail_missing () {
+            echo "pim-sync: sops material MISSING: $1" >&2
+            echo "pim-sync: (the sops-nix render did not produce this path — check the sops decls and the boot decrypt log)" >&2
+            exit 1
+          }
+
           fail_placeholder () {
             echo "pim-sync: sops material still PLACEHOLDER: $1" >&2
             echo "pim-sync: Go-live checklist (docs/services/pim-sync.md):" >&2
@@ -75,6 +81,7 @@
           }
 
           for f in "$clientSecret" "$davEnv" ${cfg.tokenSeedDir}/*.json; do
+            [ -f "$f" ] || fail_missing "$f"
             grep -q PLACEHOLDER "$f" && fail_placeholder "$f"
           done
 
@@ -127,6 +134,16 @@
               PIMSYNC_DAV_USER = config.sops.placeholder.pim_sync_stalwart_dav_user;
               PIMSYNC_DAV_PASS = config.sops.placeholder.pim_sync_stalwart_dav_pass;
             };
+          };
+
+          # Single-source the seed dir (2026-11-10): the seed paths AND
+          # tokenSeedDir live HERE together — one rename flips them
+          # together instead of silently apart across two files.
+          sops.secrets = {
+            pim_sync_token_personal.path = "/var/lib/pim-sync-seed/personal.json";
+            pim_sync_token_work.path = "/var/lib/pim-sync-seed/work.json";
+            pim_sync_token_personal_calendar.path = "/var/lib/pim-sync-seed/personal-calendar.json";
+            pim_sync_token_work_calendar.path = "/var/lib/pim-sync-seed/work-calendar.json";
           };
 
           services.pim-sync = {

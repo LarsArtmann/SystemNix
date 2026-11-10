@@ -264,16 +264,9 @@ in
                   "pim_sync_stalwart_dav_user"
                   "pim_sync_stalwart_dav_pass"
                 ]
-              // {
-                # tokenSeedDir needs a DIRECTORY of <account>.json files —
-                # give each seed its own rendered path under one seed dir
-                # (sops-nix renders per-secret paths; the wrapper points
-                # services.pim-sync.tokenSeedDir at this dir).
-                pim_sync_token_personal.path = "/var/lib/pim-sync-seed/personal.json";
-                pim_sync_token_work.path = "/var/lib/pim-sync-seed/work.json";
-                pim_sync_token_personal_calendar.path = "/var/lib/pim-sync-seed/personal-calendar.json";
-                pim_sync_token_work_calendar.path = "/var/lib/pim-sync-seed/work-calendar.json";
-              }
+              # Seed-dir path overrides moved to the wrapper (2026-11-10,
+              # single-source: they live next to services.pim-sync.tokenSeedDir
+              # so one rename flips them together).
             )
             // lib.optionalAttrs (svcEnabled "bank-sync") (
               # The AES key lives in its own file: bank-sync.yaml holds the
