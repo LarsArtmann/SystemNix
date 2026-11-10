@@ -315,6 +315,13 @@ lib.filterAttrs (_: v: v != null) {
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
       "sha256-u/j9KmmOir/3eOCwDy9fjm+2njmdTtVpAaHS2QW6e3w=";
+  # invoices — billing CLI + dashboard backend (`invoices dashboard`,
+  # deployed as the invoices-dashboard unit since 2026-11-10: loopback
+  # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
+  # runbook docs/services/invoices-dashboard.md). NON-FOLLOWER input (own
+  # nixpkgs lock, no follows): upstream-baked vendorHash probed green at the
+  # locked rev 5c8c6b17 — no consumer shim, re-probe on float, never re-pin.
+  invoices = flakePkg inputs.invoices;
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback
@@ -567,6 +574,13 @@ lib.filterAttrs (_: v: v != null) {
   # keep their OWN templ inputs pinned to their go.mod runtimes, so this
   # binary never leaks into their builds.
   templ = flakePkg inputs.templ;
+  # timesheets — timesheet CLI (`timesheet serve` deployed as the timesheets
+  # unit since 2026-11-10: loopback 127.0.0.1:8109 behind the protected
+  # registry vHost timesheets.home.lan; the CLI writes the same SQLite event
+  # store via --db — this PATH binary and the unit share one store path;
+  # runbook docs/services/timesheets.md). NON-FOLLOWER input (own nixpkgs
+  # lock): upstream-baked vendorHash probed green at locked rev 0304e2ae.
+  timesheets = flakePkg inputs.timesheets;
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
   # null-safe guard below): the 2026-10-01 root-nixpkgs bump moved its
   # followed bun 1.4.1→1.4.2, which re-hashed the deps FOD (pinned
