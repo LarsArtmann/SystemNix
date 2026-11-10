@@ -26,15 +26,20 @@ let
       }
     );
 
-  # cv_pipeline_mailbox_password (2026-10-27, recut-10 T2): the key is SET
-  # in cv.yaml (strong random, generated + sops-set by the executor on
-  # owner directive "handle it properly" — the value lives ONLY in the
-  # encrypted file). Remaining owner step: create the
-  # applications@larsartmann.cloud Stalwart account WITH this password
-  # (pbx-artmann hosts/pbx/mail.nix plan; or rotate: sops-set a new value
-  # + rebuild). History: the declaring session left the key unset with
-  # every deploy wedged behind the sops-key-audit gate — briefly shipped
-  # as a stage-guarded OFF declaration until the key landed same day.
+  # cv_pipeline_mailbox_password (2026-10-27, recut-10 T2; ROTATED
+  # 2026-11-10): a Stalwart APP PASSWORD (minted via admin JMAP
+  # x:AppPassword/set on the pbx loopback), NOT a plain password — the
+  # pbx OIDC flip (2026-11-06) kills plain-password Basic auth, which
+  # 401'd every CV reply-loop poll for four days until the rotation. The
+  # applications@larsartmann.cloud account is provisioned (pbx-artmann
+  # hosts/pbx/mail.nix plan). Rotation runbook (never hand-edit the
+  # value): mint app password via admin JMAP → sops set this key →
+  # restart cv-server / deploy; destroy the old object via
+  # x:AppPassword/set destroy. Full recipe incl. revocation: CV
+  # docs/planning/2026-11-10_01-45_centralized-project-email-plan.md §3.
+  # History: the declaring session left the key unset with every deploy
+  # wedged behind the sops-key-audit gate — briefly shipped as a
+  # stage-guarded OFF declaration until the key landed same day.
   cvMailboxStaged = true;
 in
 {
@@ -451,12 +456,11 @@ in
                     # class was exactly enabled-with-empty-key).
                     "cv_openaicompat_api_key"
                   ]
-                  # Funnel reply-loop mailbox (2026-10-27, recut-10 T2):
-                  # the applications@larsartmann.cloud Stalwart account
-                  # password. OFF until the owner sets it (sudo sops
-                  # platforms/nixos/secrets/cv.yaml) AND cvMailboxStaged
-                  # flips true — a declared-but-missing key hard-blocks
-                  # eval (sops-key-audit, the mail-relay placeholder
+                  # Funnel reply-loop mailbox (2026-10-27, recut-10 T2;
+                  # key set + rotated 2026-11-10 — doctrine comment atop
+                  # this file): guarded by cvMailboxStaged — a
+                  # declared-but-missing key hard-blocks eval
+                  # (sops-key-audit, the mail-relay placeholder
                   # precedent; the CV poller stays inert without the env
                   # var, so the unit itself is safe).
                   ++ lib.optionals cvMailboxStaged [ "cv_pipeline_mailbox_password" ]
@@ -940,15 +944,17 @@ in
                   # sudo to modify; same value, different file). Runbook:
                   # crm repo docs/ops/CV-SYNC.md "Running it under systemd".
                   CV_CRM_API_KEY = config.sops.placeholder.crm_api_token;
-                  # Funnel reply-loop mailbox (2026-10-27): the Stalwart JMAP
-                  # password for pipeline.mailbox (username
-                  # applications@larsartmann.cloud; account provisioned in the
-                  # pbx-artmann hosts/pbx/mail.nix plan). The password value
-                  # is SET in cv.yaml (2026-10-27). Remaining owner step:
-                  # create the Stalwart account WITH that password (webadmin
-                  # https://mail.artmann.tech/ — or rotate: sops-set a new
-                  # value + rebuild). The poller self-enables once the
-                  # account answers JMAP.
+                  # Funnel reply-loop mailbox (2026-10-27; rotated
+                  # 2026-11-10): the Stalwart JMAP APP PASSWORD for
+                  # pipeline.mailbox (username
+                  # applications@larsartmann.cloud; account provisioned in
+                  # the pbx-artmann hosts/pbx/mail.nix plan). Plain
+                  # passwords are DEAD under the pbx OIDC flip — mint/rotate
+                  # app passwords via admin JMAP (x:AppPassword/set), never
+                  # webadmin password-set. Rotation: mint → sops set →
+                  # restart/deploy (doctrine comment atop this file; CV plan
+                  # doc §3). The poller self-enables once the account
+                  # answers JMAP.
                 }
                 // lib.optionalAttrs cvMailboxStaged {
                   CV_PIPELINE_MAILBOX_PASSWORD = config.sops.placeholder.cv_pipeline_mailbox_password;
