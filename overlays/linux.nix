@@ -365,7 +365,21 @@ let
   # nixpkgs routes `patchelf` back to the 0.19 line (probe:
   # `nix eval nixpkgs#patchelf.version` → 0.19.* means LIFT).
   patchelfDefaultRestoreOverlay = _final: prev: {
-    patchelf = prev.patchelfUnstable;
+    # Stage-aware guard (2026-11-10, probe-proven this session): a bare
+    # `patchelf = prev.patchelfUnstable` broke perSystem apps eval —
+    # `.#apps.x86_64-linux.deploy.program` died "expected a set but found a
+    # function: lambda @ customisation.nix:873" inside fetchurl/boot.nix
+    # (the boot fixed-point exposes patchelfUnstable as an unapplied
+    # callPackage lambda). Neutralizing the line eval'd the deploy app GREEN
+    # (rc=0, store path) — one-line flip, restored, this guard is the
+    # durable form: final-stage consumers get 0.19.2 as before; boot-stage
+    # resolution falls back to the stage's own patchelf (the pre-overlay
+    # behavior for everything the bootstrap builds).
+    patchelf =
+      let
+        p = prev.patchelfUnstable or null;
+      in
+      if p == null || builtins.isFunction p then prev.patchelf else p;
   };
 in
 [
