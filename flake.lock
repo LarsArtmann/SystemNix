@@ -8427,11 +8427,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794267032,
-        "narHash": "sha256-mXrlivc20BtGMU6MlXbu9oPZDV3loeVdXgR9MmvXSm4=",
+        "lastModified": 1794272531,
+        "narHash": "sha256-HLiec0fpcIYMOc2D+GY8nXEX7HDI0PI2zyXOQciI+xI=",
         "owner": "LarsArtmann",
         "repo": "offline-banner",
-        "rev": "ade97790fce4b1dede77f0b718f4bd1e38eb5b67",
+        "rev": "55121b20acad9885e93474388bd3960899e665da",
         "type": "github"
       },
       "original": {
