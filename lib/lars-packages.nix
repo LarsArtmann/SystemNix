@@ -469,9 +469,17 @@ lib.filterAttrs (_: v: v != null) {
   # (first-hand, float-proof-20261106-225127.log — the crm pin-wave proof
   # enumerated it; the project-meta input floated again via the peer
   # daemon commits).
+  # RE-STALE 2026-11-10 ~11:15: spec HfNEpdS, got hmFRcgHq (first-hand,
+  # deploy-run-2.log — the nh os switch keep-going enumeration). NEW
+  # DRIVER CLASS: not an upstream float — the nixpkgs pin re-land on
+  # f9a75f41 (the f4a03c00 patchelf-regression revert) moved the shared
+  # Go toolchain project-meta builds with, changing its go-modules FOD
+  # content. The input follows our nixpkgs, so pin-level re-lands now
+  # re-stale prepared-source vendorHashes; expect the whole consumer
+  # family to re-probe after any future pin move.
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-HfNEpdSDAQfbjae/rp9arxLqvVx4586QNHmtrdl/3/s=";
+      "sha256-hmFRcgHqk35rEpYBKnQyK6jMI2466vhmODSHp3z9Vc0=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at
