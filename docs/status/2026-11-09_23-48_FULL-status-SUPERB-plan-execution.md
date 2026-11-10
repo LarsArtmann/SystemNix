@@ -122,6 +122,8 @@
 
 ## f) Next things (ordered, up to 50 — ready unless marked)
 
+HARVESTED 2026-11-10 05:33: every §f item below was EXECUTED (not queued — this §f was the resume-steps list for the deploy continuation): items 1–13 landed via the gen-995 deploy + live battery + VM-test fix; execution record + evidence: docs/status/2026-11-10_05-33_SUPERB-P5-P6-live-close-out.md (item 7's driver run rides CI — parallel lock drift blocked the local run; fix committed 4a1e40967).
+
 1. Wait for the 23:37 parallel deploy to conclude (RED proof ⇒ it must
    revert lock+registry together or fix upstream-first).
 2. After the tree settles (clean + no eval-relevant mtime < 5 min × 4
