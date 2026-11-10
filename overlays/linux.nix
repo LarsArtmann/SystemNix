@@ -354,48 +354,18 @@ let
       ];
     });
   };
-  # patchelfDefaultRestoreOverlay (2026-11-10 lock float — nixpkgs f4a03c00
-  # regression, first-hand proof log ~/.cache/lockfloat/float-proof-20261110-043731.log):
-  # f4a03c00 mis-routes the default `patchelf` attr to ancient 0.15.2 while
-  # `patchelfUnstable` carries the real 0.19.2 line (the 2026-11-05 tree
-  # shipped 0.19.2 as the default). The regression breaks every consumer
-  # that patches patchelf against 0.19-era sources — first-hand:
-  # hermes-agent's pm-packages #672 patch (the NixOS/patchelf#674 fix)
-  # fails 4/6 hunks on 0.15.2 and cascades to its prebuilt
-  # ripgrep/node/pnpm/npm/ffmpeg. Restore the 0.19.2 default. Remove when
-  # nixpkgs routes `patchelf` back to the 0.19 line (probe:
-  # `nix eval nixpkgs#patchelf.version` → 0.19.* means LIFT).
-  patchelfDefaultRestoreOverlay = _final: prev: {
-    # Final-set-only gate (2026-11-10, full-trace-proven). User overlays are
-    # applied inside EVERY nixpkgs bootstrap stage, not just the final set:
-    # pkgs/stdenv/linux/default.nix stageFun passes `inherit overlays` into
-    # all-packages.nix per stage. In a bootstrap stage patchelfUnstable
-    # CANNOT evaluate (its fetchFromGitHub src has no fetchurl-backed
-    # fetcher there; stage fetchurl = fetchurl/boot.nix), which broke every
-    # perSystem app eval: .#apps.x86_64-linux.deploy.program → writeShell
-    # Application → bash → bootstrap-stage2 gcc → binutils-patchelfed-ld →
-    # patchelfUnstable src → "expected a set but found a function: lambda @
-    # customisation.nix:873". The earlier isFunction guard was ineffective:
-    # stages expose patchelfUnstable as a fully-applied callPackage
-    # derivation (isFunction=false), so the guard passed it through and the
-    # breakage survived at HEAD (that guard's "probe-proven green" claim did
-    # not reproduce). Gate on the stage stdenv name instead: "stdenv-linux"
-    # is the final package set (the same idiom nixpkgs' own patchelf
-    # default.nix uses for doCheck); bootstrap stages (bootstrap-stage*)
-    # keep their own patchelf, the pre-overlay behavior for everything the
-    # bootstrap builds.
-    patchelf =
-      let
-        p = prev.patchelfUnstable or null;
-        inFinalSet = prev.stdenv.name or "" == "stdenv-linux";
-      in
-      if inFinalSet && p != null && !(builtins.isFunction p) then p else prev.patchelf;
-  };
+  # patchelfDefaultRestoreOverlay LIFTED 2026-11-10 (the self-removal contract
+  # was met: the nixpkgs pin rolled back to 1d060086, whose default patchelf
+  # is 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
+  # final-set gate also never covered hermes-agent: its overlay is a pure
+  # alias for their own legacyPackages-built package, so no consumer-side
+  # overlay reaches it — a future f4a03c00-style float must be answered by
+  # reverting the pin (or an upstream hermes patchelf-arg fix), not by this
+  # overlay.
 in
 [
   clickhouseVersionPinOverlay
   taskchampionPkgConfigOverlay
-  patchelfDefaultRestoreOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
