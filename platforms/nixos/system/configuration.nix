@@ -1202,7 +1202,9 @@ in
       };
 
       # cvagent — daily scan + mesh export into the CV checkout
-      # (Code-To-CV-Agent). Runbook: docs/services/cvagent.md.
+      # (Code-To-CV-Agent) PLUS the read-only dashboard (cvagent.home.lan,
+      # protected vHost — owner directive 2026-11-10). Runbook:
+      # docs/services/cvagent.md.
       cvagent.enable = true;
 
       # InboxClean — Gmail AI assistant dashboard (inbox.home.lan).
@@ -1784,6 +1786,7 @@ in
           "pma=http://127.0.0.1:${toString ports.pma-health}/readyz"
           "dnsblockd=http://127.0.0.1:${toString ports.dns-blocker-stats}/readyz"
           "nsfw=http://127.0.0.1:${toString ports.nsfw}/health"
+          "cvagent=http://127.0.0.1:${toString ports.cvagent-dashboard}/health"
         ];
       };
 

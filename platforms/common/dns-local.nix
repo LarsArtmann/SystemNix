@@ -42,6 +42,7 @@
     "map"
     "timesheets"
     "invoices"
+    "cvagent"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is

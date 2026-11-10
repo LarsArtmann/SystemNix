@@ -29,14 +29,22 @@
 #     glm_api_key exposed as cvagent_ai_api_key + the cvagent-env template.
 #     AI failures fall back to rule-based extraction automatically
 #     (extractor name recorded per fact).
-#   - No HTTP endpoint: daemon-less-unit doctrine — failure alerting rides
-#     OnFailure (Discord) + the system-health state metrics.
+#   - No HTTP endpoint on the SCAN unit: daemon-less-unit doctrine — failure
+#     alerting rides OnFailure (Discord) + the system-health state metrics.
+#   - Dashboard (owner directive 2026-11-10 "deploy the website on evo-x2"):
+#     the upstream serve unit (cvagent.service, `cvagent serve`) is ON,
+#     loopback-bound; the registry vHost cvagent.home.lan (protected layer,
+#     oauth2-proxy for external, LAN bypass) fronts it — the journal-serve
+#     posture for an UNAUTHENTICATED dashboard that names repositories,
+#     file paths, and authors. Read-only by construction (upstream: GET-only
+#     routes, no command dispatch), reads the same sqlite db the scan writes.
 { inputs, ... }: {
   flake.nixosModules.cvagent =
     {
       config,
       pkgs,
       lib,
+      options,
       ...
     }:
     let
@@ -44,16 +52,20 @@
       primaryUser = config.users.primaryUser or "lars";
       inherit (import ../../../lib/default.nix lib)
         harden
+        serviceDefaults
         serviceOneshotDefaults
         onFailure
         ioTier
+        ports
         ;
     in
     {
       imports = [ inputs.cvagent.nixosModules.default ];
 
-      config = lib.mkIf cfg.enable {
-        services.cvagent = {
+      config = lib.mkIf cfg.enable (
+        lib.mkMerge [
+          {
+            services.cvagent = {
           package = lib.mkDefault inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
           # Operator identity (cv-profile-probe precedent): the scan reads
@@ -63,9 +75,14 @@
           group = "users";
           dataDir = "/home/${primaryUser}/.local/state/cvagent";
 
-          # No dashboard deployed (daemon-less doctrine); the CLI reaches
-          # the service database on PATH via the upstream module.
-          serve.enable = false;
+          # Dashboard ON (owner directive 2026-11-10): loopback bind, the
+          # registry vHost (protected layer) fronts it. allowPublic stays
+          # false — the binary refuses non-loopback without it, and the
+          # vHost + forward-auth is the ONLY sanctioned exposure.
+          serve = {
+            enable = true;
+            addr = "127.0.0.1:${toString ports.cvagent-dashboard}";
+          };
 
           scan = {
             enable = true;
@@ -157,12 +174,87 @@
           ];
         };
 
-        # Daemon-less unit: no HTTP endpoint to probe, so monitoring is
+        # Dashboard unit (upstream serve unit `cvagent`): fleet lifecycle +
+        # hardening layer. ProtectHome=false is SAFE to set as a plain
+        # attr inside harden because the upstream serve unit declares NO
+        # ProtectHome (unlike the scan unit) — the db lives under /home and
+        # only ReadWritePaths (upstream plain, = dataDir) needs access.
+        # MemoryMax mkForce: the harden{} argument drives the derived
+        # MemoryHigh watermark (llama-chat 410M-orphan class).
+        systemd.services.cvagent = {
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            (harden {
+              ProtectHome = false;
+              MemoryMax = lib.mkForce "512M";
+            })
+            (serviceDefaults { RestartSec = "10s"; })
+            ioTier.background
+          ];
+        };
+
+        # Daemon-less SCAN unit: no HTTP endpoint to probe, so monitoring is
         # OnFailure (Discord) + the system-health state metrics. The unit
         # name changed cvagent → cvagent-scan with the 2026-11-08 delegation.
         services.system-health.extraMonitoredServices = lib.mkAfter [
           "cvagent-scan"
         ];
-      };
-    };
+      }
+
+      # Service-integration registry entry (journal-serve posture): fans out
+      # to the Caddy vHost (Layer 2 protected — the pages name repositories,
+      # file paths, and authors), the Gatus checks, the homepage tile, and
+      # the system-health monitored-unit row for the long-running dashboard.
+      (lib.optionalAttrs (options ? services.integration) {
+        services.integration = lib.mkIf cfg.enable {
+          cvagent = {
+            inherit (cfg)
+              enable
+              ;
+            port = ports.cvagent-dashboard;
+            subdomain = "cvagent";
+            vHost.layer = "protected";
+            monitored = true;
+            checks = [
+              {
+                name = "cvagent Dashboard";
+                group = "Productivity";
+                url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                  # Functional, not just liveness: the shared page shell
+                  # (views/pages.templ footer) renders this sentence on
+                  # EVERY page — an error shell would not.
+                  "[BODY] == pat(*Nothing on this page mutates it.*)"
+                ];
+                alert = "cvagent dashboard down — the code-derived CV facts UI at cvagent.home.lan is unreachable. Check: systemctl status cvagent, journalctl -u cvagent -n 50.";
+              }
+              {
+                name = "cvagent Health";
+                group = "Productivity";
+                url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/health";
+                interval = "60s";
+                conditions = [
+                  # go-health aggregate: 200 pass/warn, 503 any check failed
+                  # (git/sqlite/AI-key). Cached probe — fast.
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alert = "cvagent health checks failing — git, the sqlite store, or the AI key is degraded (cvagent.home.lan). Check: cvagent health, systemctl status cvagent.";
+              }
+            ];
+            homepage = {
+              name = "CV Agent";
+              group = "Development";
+              description = "Code-derived CV facts — scanned repos, evidence, generated CV";
+              icon = "mdi-source-branch";
+            };
+          };
+        };
+      })
+      ]
+    );
+  };
 }

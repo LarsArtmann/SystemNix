@@ -293,6 +293,49 @@
         };
       };
 
+      options.services.cv-server.reloginDesktop = {
+        enable = lib.mkEnableOption ''
+          HEADED desktop re-login fallback: a user-level expiry-gated sweep
+          that opens a VISIBLE browser for the operator's OWN checkout
+          sessions (data/accounts under the checkout dir) when a platform is
+          seeded in the CHECKOUT credentials store and its session is missing
+          or stale. The sealed username+password are typed automatically; the
+          operator only finishes an interactive step (2FA/SSO) in the open
+          window. This is the machine answer to "the program already has my
+          credentials — it should log in by itself": the system cv-relogin
+          covers the SERVER store headlessly; this unit covers the checkout
+          sessions the weekly probe and local CLI verbs read. Politeness: the
+          due gate keeps it rare, and a popup can kill an ACTIVE same-platform
+          browser session (one-session platforms) — schedule it outside
+          active-browsing hours. Failures surface in the journal + status
+          file, never as a system-level page.
+        '';
+
+        operatorUser = lib.mkOption {
+          type = lib.types.str;
+          default = "lars";
+          description = "User whose graphical session hosts the headed browser and whose checkout the unit maintains.";
+        };
+
+        checkoutDir = lib.mkOption {
+          type = lib.types.str;
+          default = "/home/lars/projects/CV";
+          description = "CV checkout whose sessions the unit maintains (data/accounts + the checkout credentials store live under it).";
+        };
+
+        platforms = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ "ateam" ];
+          description = "Platform slugs to refresh headed. Each needs a kind=password credential in the CHECKOUT store (seed via the dev server's /admin/credentials/) — unseeded platforms skip with a WARN.";
+        };
+
+        schedule = lib.mkOption {
+          type = lib.types.str;
+          default = "*-*-* 09:05:00";
+          description = "OnCalendar for the due-gated sweep (default 09:05 — before the system relogin 09:11 and the probe 09:41).";
+        };
+      };
+
       config = lib.mkIf cfg.enable {
         # The cv CLI on the machine PATH. The systemd unit ExecStarts the
         # store binary directly — invisible to interactive shells — and the
@@ -1554,6 +1597,133 @@
             OnCalendar = cfg.relogin.schedule;
             Persistent = true;
             Unit = "cv-relogin.service";
+          };
+        };
+
+        # HEADED desktop fallback (owner demand 2026-11-10: "the program
+        # already has the username and password — it should log in by
+        # itself"): a user-level due-gated sweep for the CHECKOUT sessions.
+        # The browser is visible by design — the sealed creds are typed
+        # automatically and only an interactive step (2FA/SSO) needs hands.
+        # The checkout store boots from its own master-key state file, so no
+        # sops env here. DISPLAY falls back to probing /tmp/.X11-unix when
+        # the user manager has not imported the session env.
+        systemd.user.services.cv-relogin-desktop = lib.mkIf cfg.reloginDesktop.enable {
+          description = "CV platform re-login, HEADED, from the checkout credentials store";
+          unitConfig.ConditionUser = cfg.reloginDesktop.operatorUser;
+          serviceConfig = {
+            Type = "oneshot";
+            WorkingDirectory = cfg.reloginDesktop.checkoutDir;
+            TimeoutStartSec = 900;
+            Environment = [
+              "HOME=/home/${cfg.reloginDesktop.operatorUser}"
+              "CV_CREDENTIALS_STORE_ENABLED=1"
+              "CV_CREDENTIALS_STORE_DIR=${cfg.reloginDesktop.checkoutDir}/data/credentials-store"
+              "CHROMIUM_EXECUTABLE_PATH=${cfg.relogin.chromiumPackage}/bin/chromium"
+              "NODE_PATH=${playwrightModules}/lib/node_modules"
+              "PATH=${lib.makeBinPath [
+                pkgs.bun
+                pkgs.coreutils
+                pkgs.gnugrep
+                pkgs.jq
+                pkgs.sqlite
+              ]}"
+            ];
+            # Exit contract mirrors cv-relogin: 0 ok · 10 nothing due/unseeded ·
+            # 20 a due relogin failed · 30 broken store/gate.
+            SuccessExitStatus = [ 10 ];
+            ExecStart = pkgs.writeShellScript "cv-relogin-desktop" ''
+                                set -euo pipefail
+                                store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.reloginDesktop.checkoutDir}/data/credentials-store}"
+                                store_db="$store_dir/credentials.db"
+                                sqlite_bin="${lib.getExe pkgs.sqlite}"
+                                jq_bin="${lib.getExe pkgs.jq}"
+                                cv_bin="${lib.getExe cvPkg}"
+                                run_cv() { "$cv_bin" "$@"; }
+                                out_dir="${cfg.reloginDesktop.checkoutDir}/data/relogin-scripts"
+                                mkdir -p "$out_dir"
+
+                                if [ ! -f "$store_db" ]; then
+                                  echo "cv-relogin-desktop: no checkout store at $store_db — seed via the dev server's /admin/credentials/ first" >&2
+                                  exit 30
+                                fi
+
+                                if ! accounts="$(run_cv profile accounts --json)"; then
+                                  echo "cv-relogin-desktop: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
+                                  exit 30
+                                fi
+
+                                deadline=$(( $(date +%s) + 7 * 86400 ))
+                                seeded_any=0
+                                failed=0
+                                for platform in ${lib.concatStringsSep " " cfg.reloginDesktop.platforms}; do
+                                  if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
+                                    "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
+                                    echo "cv-relogin-desktop: could not read the checkout store read model" >&2
+                                    exit 30
+                                  fi
+                                  state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                                    '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
+                                  expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                                    '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
+                                  if [ "$seeded" = "0" ]; then
+                                    echo "cv-relogin-desktop: $platform state=$state -> skip (unseeded in the CHECKOUT store)" >&2
+                                    continue
+                                  fi
+                                  seeded_any=1
+                                  due=1
+                                  if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
+                                    exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
+                                    if [ "$exp_epoch" -gt "$deadline" ]; then
+                                      due=0
+                                    fi
+                                  fi
+                                  if [ "$due" != "1" ]; then
+                                    echo "cv-relogin-desktop: $platform state=$state -> skip (not due)"
+                                    continue
+                                  fi
+                                  echo "cv-relogin-desktop: $platform -> HEADED refresh (a browser window opens; finish 2FA/SSO there if asked)"
+                                  if [ -z "''${DISPLAY:-}" ]; then
+                                    d=$(ls /tmp/.X11-unix/X* 2>/dev/null | sed 's/.*\/X//' | sort -n | head -1)
+                                    if [ -n "$d" ]; then
+                                      export DISPLAY=":$d"
+                                    fi
+                                  fi
+                                  if [ -z "''${DISPLAY:-}" ]; then
+                                    echo "cv-relogin-desktop: no X display available — logged out? skipping" >&2
+                                    failed=1
+                                    continue
+                                  fi
+                                  out="$(run_cv profile relogin --platform "$platform" --output-dir "$out_dir" 2>&1)" && rc=0 || rc=$?
+                                  printf '%s\n' "$out" >&2
+                                  if [ "$rc" -eq 0 ]; then
+                                    echo "cv-relogin-desktop: $platform refreshed"
+                                  elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
+                                    echo "cv-relogin-desktop: WARN — '$platform' lost its stored login between gate and run" >&2
+                                  else
+                                    echo "cv-relogin-desktop: '$platform' relogin FAILED — typed reason above" >&2
+                                    failed=1
+                                  fi
+                                done
+
+                                if [ "$failed" -ne 0 ]; then
+                                  exit 20
+                                fi
+                                if [ "$seeded_any" -eq 0 ]; then
+                                  exit 10
+                                fi
+                                exit 0
+            '';
+          };
+        };
+
+        systemd.user.timers.cv-relogin-desktop = lib.mkIf cfg.reloginDesktop.enable {
+          description = "Daily due-gated HEADED CV platform re-login on the operator desktop";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.reloginDesktop.schedule;
+            Persistent = true;
+            Unit = "cv-relogin-desktop.service";
           };
         };
 

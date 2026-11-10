@@ -289,6 +289,14 @@
         # by upstream design; Caddy proxies invoices.home.lan to it
         # (protected layer — billing data).
         invoices-dashboard = 8110;
+
+        # cvagent dashboard — read-only CV-facts web UI (`cvagent serve`,
+        # upstream nixosModules serve unit), loopback-only; Caddy proxies
+        # cvagent.home.lan to it (protected layer — names repositories,
+        # file paths, authors). 8787 is the upstream CLI/module default,
+        # registered so the eval-enforced port registry is the owner of
+        # record (quotaboard precedent).
+        cvagent-dashboard = 8787;
       };
       inRange = p: builtins.isInt p && p >= 1 && p <= 65535;
       invalid = builtins.concatLists (
