@@ -297,7 +297,12 @@ _: {
             }
             (harden {
               MemoryMax = "128M";
-              ReadWritePaths = [ poolDir ];
+              # Namespace setup (ReadWritePaths) runs BEFORE this script, so
+              # it must point at the EXISTING parent — pointing it at the
+              # leaf ${poolDir} this script creates 226s the unit in a
+              # chicken-and-egg (google-sync-dirs points at /mnt/pool/backups
+              # for the same reason; live 2026-11-10).
+              ReadWritePaths = [ "/mnt/pool/services" ];
             })
             (serviceOneshotDefaults { })
             ioTier.background
