@@ -1497,10 +1497,14 @@
                                   fi
 
                                   echo "cv-relogin: $platform $reason expiry=''${expiry:--} -> refresh (headless)"
-                                  # tee streams live to the journal while keeping a copy for
-                                  # the ErrNoStoredLogin classification (a credential lost
-                                  # between gate and run is WARN-class, not a page).
-                                  if out="$(run_cv profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1 | tee /dev/stderr)"; then
+                                  # Capture FIRST, echo after: a systemd unit has no
+                                  # addressable /dev/stderr (the old `| tee /dev/stderr`
+                                  # died with ENXIO and swallowed every failure's typed
+                                  # reason); this keeps the journal line AND the $out
+                                  # copy for the ErrNoStoredLogin classification.
+                                  out="$(run_cv profile relogin --platform "$platform" --headless --output-dir "$out_dir" 2>&1)" && rc=0 || rc=$?
+                                  printf '%s\n' "$out" >&2
+                                  if [ "$rc" -eq 0 ]; then
                                     echo "cv-relogin: $platform refreshed"
                                     status_lines="$status_lines$platform|refreshed|$(date +%s)
                 "
