@@ -125,3 +125,5 @@ Owner instruction: execute the whole f)-list. Results:
 - f10/f12 stay owner-gated (ears on / evening captures); g1–g3 still unanswered — no behavior changed on them.
 
 Not yet landed at addendum time: SystemNix commits (wrapper strengthening + DMS plugin + docs) blocked on the teeth battery finishing; upstream commits (vm-smoke rework + probe-transitions shape asserts + sound surfacing + website) blocked on probe-transitions + vm-smoke local green + astro check/build; the first teeth battery's mkOverride lesson is recorded here so it is not relearned.
+
+LANDED (same evening, 22:1x): SystemNix `f19870289` (teeth + DMS plugin + doc flips; CI green) · upstream `ab56830` (ladder asserts + vm-smoke scope fix + sound stderr + website sync; local emulated aarch64 probe-transitions green pre-push, Checks CI green) · upstream `e03cb15` (website lockfile regen — six-dep manifest/lockfile drift had been failing frozen installs unseen) · upstream `320be2a` (live-stale FIREBASE secret evidence — deploy auth is the one owner-gated leg left). The gateway-icmp diagnosis lane gained a full design: docs/planning/2026-11-10_gateway-icmp-policing-diagnosis-design.md.
