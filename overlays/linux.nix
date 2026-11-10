@@ -353,10 +353,25 @@ let
       }
     );
   };
+  # patchelfDefaultRestoreOverlay (2026-11-10 lock float — nixpkgs f4a03c00
+  # regression, first-hand proof log ~/.cache/lockfloat/float-proof-20261110-043731.log):
+  # f4a03c00 mis-routes the default `patchelf` attr to ancient 0.15.2 while
+  # `patchelfUnstable` carries the real 0.19.2 line (the 2026-11-05 tree
+  # shipped 0.19.2 as the default). The regression breaks every consumer
+  # that patches patchelf against 0.19-era sources — first-hand:
+  # hermes-agent's pm-packages #672 patch (the NixOS/patchelf#674 fix)
+  # fails 4/6 hunks on 0.15.2 and cascades to its prebuilt
+  # ripgrep/node/pnpm/npm/ffmpeg. Restore the 0.19.2 default. Remove when
+  # nixpkgs routes `patchelf` back to the 0.19 line (probe:
+  # `nix eval nixpkgs#patchelf.version` → 0.19.* means LIFT).
+  patchelfDefaultRestoreOverlay = _final: prev: {
+    patchelf = prev.patchelfUnstable;
+  };
 in
 [
   clickhouseVersionPinOverlay
   taskchampionPkgConfigOverlay
+  patchelfDefaultRestoreOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
