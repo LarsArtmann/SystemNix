@@ -31,7 +31,7 @@
     {
       imports = [ inputs.offline-banner.nixosModules.default ];
 
-      services.offline-banner.layerNamespace = "systemnix:offline-banner";
+      config.services.offline-banner.layerNamespace = "systemnix:offline-banner";
 
       # Consumer-side pin (queue row 1453, executed 2026-11-10): the
       # RESOLVED unit's Environment must keep the probe contract — the env
