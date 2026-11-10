@@ -677,15 +677,23 @@ in
       # 2026-10-29; see the module's llmUpstream option). Loopback-only
       # (:8106, no auth in the embedded UI), token runtime-minted.
       # AI-max plan A8 (2026-10-02); fields/extraction wiring = A9.
-      # DISABLED 2026-11-03 with llama-chat (its only viable upstream —
-      # the module assertion is correct): extraction needs the always-on
-      # 32k-context server that the freeze #41-#44 chain just retired
-      # (owner ruling: crashes stop). Documents queue un-enriched;
-      # paperless itself and the triage gate (ai-meter-backed) are
-      # unaffected. Re-enable TOGETHER with llama-chat's on-demand
-      # activation design (freeze-41 report item 30) — never re-enable
+      # AUTO-FOLLOW (owner directive 2026-11-10, supersedes the manual
+      # re-enable flip): enable tracks the EFFECTIVE llmUpstream —
+      # llama-chat (default, the only viable extraction upstream: FastFlowLM
+      # hangs + SIGABRTs above ~1k prompt tokens, live-proven 2026-10-29),
+      # fastflowlm only once llmUpstream is re-pointed AND its heap bug is
+      # fixed. History: DISABLED 2026-11-03 with llama-chat — extraction
+      # needs the always-on 32k-context server the freeze #41-#44 chain
+      # retired (owner ruling: crashes stop). Documents queue un-enriched
+      # while off; paperless itself and the triage gate (ai-meter-backed)
+      # are unaffected. The freeze-41 item-30 on-demand-activation design
+      # remains the precondition for llama-chat's OWN return — never
       # against an always-on cold-loading llama-chat.
-      paperless-gpt.enable = false;
+      paperless-gpt.enable =
+        if (config.services.paperless-gpt.llmUpstream or "llama-chat") == "llama-chat" then
+          config.services.llama-chat.enable or false
+        else
+          config.services.fastflowlm.enable or false;
       # paperless-triage — confidence gate IN FRONT of paperless-gpt
       # (decision-triage productionization P1, 2026-10-27): local
       # llama-chat margin verdicts admit documents to the auto tag;
