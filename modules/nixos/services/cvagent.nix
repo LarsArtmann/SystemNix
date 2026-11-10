@@ -66,195 +66,195 @@
         lib.mkMerge [
           {
             services.cvagent = {
-          package = lib.mkDefault inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
+              package = lib.mkDefault inputs.cvagent.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
-          # Operator identity (cv-profile-probe precedent): the scan reads
-          # the whole projects tree and the mesh writes the CV checkout and
-          # ~/.local/state — a system user with home protection cannot.
-          user = lib.mkDefault primaryUser;
-          group = "users";
-          dataDir = "/home/${primaryUser}/.local/state/cvagent";
+              # Operator identity (cv-profile-probe precedent): the scan reads
+              # the whole projects tree and the mesh writes the CV checkout and
+              # ~/.local/state — a system user with home protection cannot.
+              user = lib.mkDefault primaryUser;
+              group = "users";
+              dataDir = "/home/${primaryUser}/.local/state/cvagent";
 
-          # Dashboard ON (owner directive 2026-11-10): loopback bind, the
-          # registry vHost (protected layer) fronts it. allowPublic stays
-          # false — the binary refuses non-loopback without it, and the
-          # vHost + forward-auth is the ONLY sanctioned exposure.
-          serve = {
-            enable = true;
-            addr = "127.0.0.1:${toString ports.cvagent-dashboard}";
-          };
+              # Dashboard ON (owner directive 2026-11-10): loopback bind, the
+              # registry vHost (protected layer) fronts it. allowPublic stays
+              # false — the binary refuses non-loopback without it, and the
+              # vHost + forward-auth is the ONLY sanctioned exposure.
+              serve = {
+                enable = true;
+                addr = "127.0.0.1:${toString ports.cvagent-dashboard}";
+              };
 
-          scan = {
-            enable = true;
-            # meta list --sort-by importance, owner directive 2026-11-04
-            # ("all that changed, by importance"): importance >= 80, real code
-            # checkouts; templates/forks and the CV export target itself
-            # excluded. Order follows the meta ranking. buildflow (95) is NOT
-            # here: meta lists it but no local checkout exists
-            # (~/projects/buildflow missing, first cycle failed on stat —
-            # 2026-11-05 08:40).
-            repositories = [
-              "/home/lars/projects/go-composable-business-types" # 96
-              "/home/lars/projects/go-commit" # 95
-              "/home/lars/projects/ai-router-implementation" # 92
-              "/home/lars/projects/cmdguard" # 92
-              "/home/lars/projects/universal-workflow" # 92
-              "/home/lars/projects/timesheets" # 91
-              "/home/lars/projects/gogenfilter" # 90
-              "/home/lars/projects/SystemNix" # 90
-              "/home/lars/projects/erraudit" # 90
-              "/home/lars/projects/invoices" # 90
-              "/home/lars/projects/go-filewatcher" # 90
-              "/home/lars/projects/go-output" # 90
-              "/home/lars/projects/go-auto-upgrade" # 90
-              "/home/lars/projects/project-discovery-sdk" # 87
-              "/home/lars/projects/terraform-to-d2" # 85
-              "/home/lars/projects/terraform-diagrams-aggregator" # 85
-              "/home/lars/projects/md-go-validator" # 82
-              "/home/lars/projects/project-meta" # 80
-              "/home/lars/projects/go-business-rules" # 80
-              "/home/lars/projects/go-cqrs-lite" # 70
-              "/home/lars/projects/Code-To-CV-Agent"
-              "/home/lars/projects/go-aichat"
-              "/home/lars/projects/monitor365"
-            ];
-            useAI = true;
-            aiModel = "glm-5.3-flash";
-            aiBaseUrl = "https://api.z.ai/api/coding/paas/v4";
-            # Owner credit ceiling (2026-11-05): one run-level gate. If today
-            # already holds >= cap AI facts, the ENTIRE run goes rule-based —
-            # spend is bounded even on manual triggers/double runs. Calls ≈
-            # facts/20 and linear in credits, so a fact cap is a spend cap.
-            # Normal day ≈ 500 AI facts (24 repos × ~20); 600 trips only on
-            # anomalies. The fleet-visible meter (ai-meter proxy routing) is a
-            # queued follow-up; today cvagent hits z.ai directly.
-            aiDailyFactCap = 600;
-            # Scan budget: 24 repos at ~2.5 min per repo WITH AI (live
-            # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
-            # facts in 2.6 min; the 20min budget killed the run at repo
-            # ~13/24, OnFailure paged). Sequential AI calls ≈ 60 min for
-            # the full list — 90 min is the generous bound. Bulk work in
-            # the 05:53 slot is off-peak by design (ioTier.background).
-            timeoutStartSec = "90min";
-            calendar = "*-*-* 05:53:00";
-            randomizedDelaySec = 600;
-            # AI key via sops-rendered env file; OPENAI_API_KEY is read
-            # directly by cvagent outside the CVAGENT_* koanf namespace.
-            environmentFile = config.sops.templates."cvagent-env".path;
-          };
-
-          mesh = {
-            enable = true;
-            # Combined unit (upstream mesh.runWithScan): scan + mesh in ONE
-            # timer, ONE start budget, mesh failure fails the unit, per-repo
-            # scan tolerance preserved.
-            runWithScan = true;
-            targetDir = "/home/lars/projects/CV";
-            minConfidence = 0.6;
-          };
-        };
-
-        systemd.services.cvagent-scan = {
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            {
-              Environment = [ "HOME=/home/${primaryUser}" ];
-            }
-            # The export writes the CV checkout and the fact store under
-            # /home, and scans read across the projects tree — the
-            # cv-profile-probe precedent: home protection must not apply.
-            # mkForce: the upstream scan unit sets ProtectHome=read-only
-            # (plain priority beats mkDefault — registry CPUQuota trap).
-            (harden {
-              ProtectHome = lib.mkForce false;
-              MemoryMax = lib.mkForce "512M";
-            })
-            (serviceOneshotDefaults { })
-            ioTier.background
-          ];
-        };
-
-        # Dashboard unit (upstream serve unit `cvagent`): fleet lifecycle +
-        # hardening layer. ProtectHome=false is SAFE to set as a plain
-        # attr inside harden because the upstream serve unit declares NO
-        # ProtectHome (unlike the scan unit) — the db lives under /home and
-        # only ReadWritePaths (upstream plain, = dataDir) needs access.
-        # MemoryMax mkForce: the harden{} argument drives the derived
-        # MemoryHigh watermark (llama-chat 410M-orphan class).
-        systemd.services.cvagent = {
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            (harden {
-              ProtectHome = false;
-              MemoryMax = lib.mkForce "512M";
-            })
-            (serviceDefaults { RestartSec = "10s"; })
-            ioTier.background
-          ];
-        };
-
-        # Daemon-less SCAN unit: no HTTP endpoint to probe, so monitoring is
-        # OnFailure (Discord) + the system-health state metrics. The unit
-        # name changed cvagent → cvagent-scan with the 2026-11-08 delegation.
-        services.system-health.extraMonitoredServices = lib.mkAfter [
-          "cvagent-scan"
-        ];
-      }
-
-      # Service-integration registry entry (journal-serve posture): fans out
-      # to the Caddy vHost (Layer 2 protected — the pages name repositories,
-      # file paths, and authors), the Gatus checks, the homepage tile, and
-      # the system-health monitored-unit row for the long-running dashboard.
-      (lib.optionalAttrs (options ? services.integration) {
-        services.integration = lib.mkIf cfg.enable {
-          cvagent = {
-            inherit (cfg)
-              enable
-              ;
-            port = ports.cvagent-dashboard;
-            subdomain = "cvagent";
-            vHost.layer = "protected";
-            monitored = true;
-            checks = [
-              {
-                name = "cvagent Dashboard";
-                group = "Productivity";
-                url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                  # Functional, not just liveness: the shared page shell
-                  # (views/pages.templ footer) renders this sentence on
-                  # EVERY page — an error shell would not.
-                  "[BODY] == pat(*Nothing on this page mutates it.*)"
+              scan = {
+                enable = true;
+                # meta list --sort-by importance, owner directive 2026-11-04
+                # ("all that changed, by importance"): importance >= 80, real code
+                # checkouts; templates/forks and the CV export target itself
+                # excluded. Order follows the meta ranking. buildflow (95) is NOT
+                # here: meta lists it but no local checkout exists
+                # (~/projects/buildflow missing, first cycle failed on stat —
+                # 2026-11-05 08:40).
+                repositories = [
+                  "/home/lars/projects/go-composable-business-types" # 96
+                  "/home/lars/projects/go-commit" # 95
+                  "/home/lars/projects/ai-router-implementation" # 92
+                  "/home/lars/projects/cmdguard" # 92
+                  "/home/lars/projects/universal-workflow" # 92
+                  "/home/lars/projects/timesheets" # 91
+                  "/home/lars/projects/gogenfilter" # 90
+                  "/home/lars/projects/SystemNix" # 90
+                  "/home/lars/projects/erraudit" # 90
+                  "/home/lars/projects/invoices" # 90
+                  "/home/lars/projects/go-filewatcher" # 90
+                  "/home/lars/projects/go-output" # 90
+                  "/home/lars/projects/go-auto-upgrade" # 90
+                  "/home/lars/projects/project-discovery-sdk" # 87
+                  "/home/lars/projects/terraform-to-d2" # 85
+                  "/home/lars/projects/terraform-diagrams-aggregator" # 85
+                  "/home/lars/projects/md-go-validator" # 82
+                  "/home/lars/projects/project-meta" # 80
+                  "/home/lars/projects/go-business-rules" # 80
+                  "/home/lars/projects/go-cqrs-lite" # 70
+                  "/home/lars/projects/Code-To-CV-Agent"
+                  "/home/lars/projects/go-aichat"
+                  "/home/lars/projects/monitor365"
                 ];
-                alert = "cvagent dashboard down — the code-derived CV facts UI at cvagent.home.lan is unreachable. Check: systemctl status cvagent, journalctl -u cvagent -n 50.";
-              }
-              {
-                name = "cvagent Health";
-                group = "Productivity";
-                url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/health";
-                interval = "60s";
-                conditions = [
-                  # go-health aggregate: 200 pass/warn, 503 any check failed
-                  # (git/sqlite/AI-key). Cached probe — fast.
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 2000"
-                ];
-                alert = "cvagent health checks failing — git, the sqlite store, or the AI key is degraded (cvagent.home.lan). Check: cvagent health, systemctl status cvagent.";
-              }
-            ];
-            homepage = {
-              name = "CV Agent";
-              group = "Development";
-              description = "Code-derived CV facts — scanned repos, evidence, generated CV";
-              icon = "git.png";
+                useAI = true;
+                aiModel = "glm-5.3-flash";
+                aiBaseUrl = "https://api.z.ai/api/coding/paas/v4";
+                # Owner credit ceiling (2026-11-05): one run-level gate. If today
+                # already holds >= cap AI facts, the ENTIRE run goes rule-based —
+                # spend is bounded even on manual triggers/double runs. Calls ≈
+                # facts/20 and linear in credits, so a fact cap is a spend cap.
+                # Normal day ≈ 500 AI facts (24 repos × ~20); 600 trips only on
+                # anomalies. The fleet-visible meter (ai-meter proxy routing) is a
+                # queued follow-up; today cvagent hits z.ai directly.
+                aiDailyFactCap = 600;
+                # Scan budget: 24 repos at ~2.5 min per repo WITH AI (live
+                # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
+                # facts in 2.6 min; the 20min budget killed the run at repo
+                # ~13/24, OnFailure paged). Sequential AI calls ≈ 60 min for
+                # the full list — 90 min is the generous bound. Bulk work in
+                # the 05:53 slot is off-peak by design (ioTier.background).
+                timeoutStartSec = "90min";
+                calendar = "*-*-* 05:53:00";
+                randomizedDelaySec = 600;
+                # AI key via sops-rendered env file; OPENAI_API_KEY is read
+                # directly by cvagent outside the CVAGENT_* koanf namespace.
+                environmentFile = config.sops.templates."cvagent-env".path;
+              };
+
+              mesh = {
+                enable = true;
+                # Combined unit (upstream mesh.runWithScan): scan + mesh in ONE
+                # timer, ONE start budget, mesh failure fails the unit, per-repo
+                # scan tolerance preserved.
+                runWithScan = true;
+                targetDir = "/home/lars/projects/CV";
+                minConfidence = 0.6;
+              };
             };
-          };
-        };
-      })
-      ]
-    );
-  };
+
+            systemd.services.cvagent-scan = {
+              inherit onFailure;
+              serviceConfig = lib.mkMerge [
+                {
+                  Environment = [ "HOME=/home/${primaryUser}" ];
+                }
+                # The export writes the CV checkout and the fact store under
+                # /home, and scans read across the projects tree — the
+                # cv-profile-probe precedent: home protection must not apply.
+                # mkForce: the upstream scan unit sets ProtectHome=read-only
+                # (plain priority beats mkDefault — registry CPUQuota trap).
+                (harden {
+                  ProtectHome = lib.mkForce false;
+                  MemoryMax = lib.mkForce "512M";
+                })
+                (serviceOneshotDefaults { })
+                ioTier.background
+              ];
+            };
+
+            # Dashboard unit (upstream serve unit `cvagent`): fleet lifecycle +
+            # hardening layer. ProtectHome=false is SAFE to set as a plain
+            # attr inside harden because the upstream serve unit declares NO
+            # ProtectHome (unlike the scan unit) — the db lives under /home and
+            # only ReadWritePaths (upstream plain, = dataDir) needs access.
+            # MemoryMax mkForce: the harden{} argument drives the derived
+            # MemoryHigh watermark (llama-chat 410M-orphan class).
+            systemd.services.cvagent = {
+              inherit onFailure;
+              serviceConfig = lib.mkMerge [
+                (harden {
+                  ProtectHome = false;
+                  MemoryMax = lib.mkForce "512M";
+                })
+                (serviceDefaults { RestartSec = "10s"; })
+                ioTier.background
+              ];
+            };
+
+            # Daemon-less SCAN unit: no HTTP endpoint to probe, so monitoring is
+            # OnFailure (Discord) + the system-health state metrics. The unit
+            # name changed cvagent → cvagent-scan with the 2026-11-08 delegation.
+            services.system-health.extraMonitoredServices = lib.mkAfter [
+              "cvagent-scan"
+            ];
+          }
+
+          # Service-integration registry entry (journal-serve posture): fans out
+          # to the Caddy vHost (Layer 2 protected — the pages name repositories,
+          # file paths, and authors), the Gatus checks, the homepage tile, and
+          # the system-health monitored-unit row for the long-running dashboard.
+          (lib.optionalAttrs (options ? services.integration) {
+            services.integration = lib.mkIf cfg.enable {
+              cvagent = {
+                inherit (cfg)
+                  enable
+                  ;
+                port = ports.cvagent-dashboard;
+                subdomain = "cvagent";
+                vHost.layer = "protected";
+                monitored = true;
+                checks = [
+                  {
+                    name = "cvagent Dashboard";
+                    group = "Productivity";
+                    url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/";
+                    interval = "60s";
+                    conditions = [
+                      "[STATUS] == 200"
+                      "[RESPONSE_TIME] < 1000"
+                      # Functional, not just liveness: the shared page shell
+                      # (views/pages.templ footer) renders this sentence on
+                      # EVERY page — an error shell would not.
+                      "[BODY] == pat(*Nothing on this page mutates it.*)"
+                    ];
+                    alert = "cvagent dashboard down — the code-derived CV facts UI at cvagent.home.lan is unreachable. Check: systemctl status cvagent, journalctl -u cvagent -n 50.";
+                  }
+                  {
+                    name = "cvagent Health";
+                    group = "Productivity";
+                    url = "http://127.0.0.1:${toString ports.cvagent-dashboard}/health";
+                    interval = "60s";
+                    conditions = [
+                      # go-health aggregate: 200 pass/warn, 503 any check failed
+                      # (git/sqlite/AI-key). Cached probe — fast.
+                      "[STATUS] == 200"
+                      "[RESPONSE_TIME] < 2000"
+                    ];
+                    alert = "cvagent health checks failing — git, the sqlite store, or the AI key is degraded (cvagent.home.lan). Check: cvagent health, systemctl status cvagent.";
+                  }
+                ];
+                homepage = {
+                  name = "CV Agent";
+                  group = "Development";
+                  description = "Code-derived CV facts — scanned repos, evidence, generated CV";
+                  icon = "git.png";
+                };
+              };
+            };
+          })
+        ]
+      );
+    };
 }

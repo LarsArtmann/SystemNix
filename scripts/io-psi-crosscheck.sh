@@ -327,17 +327,41 @@ selftest() {
   # 5b. verdict classifier unit cases (pure function, fixed inputs; the
   # thresholds and precedence live in stability.md's phantom shortcuts).
   out="$(verdict_classify 0.4 3 0)"
-  case "$out" in "PHANTOM"*) ;; *) echo "FAIL verdict phantom shape: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "PHANTOM"*) ;; *)
+    echo "FAIL verdict phantom shape: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
   out="$(verdict_classify 45.2 0 0)"
-  case "$out" in "REAL STORM"*) ;; *) echo "FAIL verdict real-storm shape: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "REAL STORM"*) ;; *)
+    echo "FAIL verdict real-storm shape: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
   out="$(verdict_classify 0.4 2 1)"
-  case "$out" in "INCONCLUSIVE: D-state"*) ;; *) echo "FAIL verdict d-state precedence: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "INCONCLUSIVE: D-state"*) ;; *)
+    echo "FAIL verdict d-state precedence: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
   out="$(verdict_classify 45 1 2)"
-  case "$out" in "INCONCLUSIVE: D-state"*) ;; *) echo "FAIL verdict d-state outranks real: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "INCONCLUSIVE: D-state"*) ;; *)
+    echo "FAIL verdict d-state outranks real: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
   out="$(verdict_classify 12 0 0)"
-  case "$out" in "INCONCLUSIVE: max util"*) ;; *) echo "FAIL verdict between-thresholds shape: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "INCONCLUSIVE: max util"*) ;; *)
+    echo "FAIL verdict between-thresholds shape: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
   out="$(verdict_classify 3 0 0)"
-  case "$out" in "INCONCLUSIVE: max util"*) ;; *) echo "FAIL verdict low-util-no-waiters inconclusive: '$out'"; fails=$((fails + 1)) ;; esac
+  case "$out" in "INCONCLUSIVE: max util"*) ;; *)
+    echo "FAIL verdict low-util-no-waiters inconclusive: '$out'"
+    fails=$((fails + 1))
+    ;;
+  esac
 
   # 6. static tripwire: deploy.sh must still wire the crosscheck beside the
   # PSI refusal line (a deleted call would go phantom-green otherwise).

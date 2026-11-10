@@ -268,7 +268,7 @@ let
   # when upstream bakes the got hash or the lock moves past an
   # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence, never by
   # hand.
-  fleetVendorHashShims = _final: prev: {
+  fleetVendorHashShims = _final: _prev: {
     # crush-daily shim DROPPED (2026-11-02 04:12 lock float, bit-neutral):
     # upstream 85b1d7a1 bakes iPis8A3A… — the exact value this shim forced
     # since 2026-10-29 (verified by reading upstream's vendorHash.nix at the

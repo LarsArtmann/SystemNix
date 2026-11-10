@@ -2104,7 +2104,7 @@ in
       # it can only read files the state-dir owner owns.
       chown "$owner" "$UUID_FILE" "$TOKEN_FILE"
       chmod 0400 "$UUID_FILE" "$TOKEN_FILE"
-      echo "provision: connection identity written (uuid ${uuid:0:8}…)"
+      echo "provision: connection identity written (uuid ${"uuid:0:8"}…)"
     '';
   };
 

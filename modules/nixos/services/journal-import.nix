@@ -39,7 +39,7 @@
 # hash shim is deliberately NOT copied here — the journal package is consumed
 # from journal-serve's option (and the bank-sync binary from bank-sync's), so
 # the "edit ALL THREE" shim surfaces stay three.
-{ inputs, ... }: {
+_: {
   flake.nixosModules.journal-import =
     {
       config,

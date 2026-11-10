@@ -159,8 +159,8 @@ in
         wants = serviceDeps;
         unitConfig.RequiresMountsFor = [ backupDir ];
         onFailure = onFailureDeps;
-        startLimitBurst = startLimitBurst;
-        startLimitIntervalSec = startLimitIntervalSec;
+        inherit startLimitBurst;
+        inherit startLimitIntervalSec;
         serviceConfig = lib.mkMerge (
           [
             {
@@ -253,8 +253,8 @@ in
     {
       services.${name} = {
         inherit description;
-        startLimitBurst = startLimitBurst;
-        startLimitIntervalSec = startLimitIntervalSec;
+        inherit startLimitBurst;
+        inherit startLimitIntervalSec;
         onFailure = onFailureDeps;
         path = [ pkgs.coreutils ] ++ extraPath;
         serviceConfig = lib.mkMerge [
@@ -290,7 +290,7 @@ in
       timers.${name} = {
         description = "${description} (timer)";
         wantedBy = [ "timers.target" ];
-        timerConfig = timerConfig;
+        inherit timerConfig;
       };
     };
 

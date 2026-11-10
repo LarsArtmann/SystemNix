@@ -40,9 +40,7 @@
 # `systemctl stop post-crash-calm-gate` stops the whole gated fleet in one
 # command (the containment that survives reboots AND deploys — freeze-4
 # rule; stopping individual units never survives either).
-{
-  ...
-}:
+_:
 {
   flake.nixosModules.post-crash-calm-gate =
     {

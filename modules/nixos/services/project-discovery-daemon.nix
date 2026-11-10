@@ -72,10 +72,9 @@
           # (spec OW+eyw, got hxcotRZ, float-proof-20261106-004759.log);
           # lars-packages surface re-shimmed in the same wave — edit BOTH.
           package = lib.mkDefault (
-            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
-              }
+            inputs.project-discovery-daemon.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+              vendorHash = "sha256-Rd4vxqsiyY1JuHthGNhbHxnsRHe9sQTF9oZzLIWFCXE=";
+            }
           );
           # Discovery runs git inside the search-path repos and reads
           # ~/.mrconfig: it must be the primary user (dedicated service

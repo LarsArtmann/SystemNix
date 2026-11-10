@@ -81,9 +81,9 @@
       # lives under ~/projects — fail loud when the Samsung subvol mount is
       # absent (never serve from the stale @ shadow). Conditional on the
       # mount being declared.
-      projectsMountGate =
-        lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems)
-          [ "/home/lars/projects" ];
+      projectsMountGate = lib.optionals (builtins.hasAttr "/home/lars/projects" config.fileSystems) [
+        "/home/lars/projects"
+      ];
     in
     {
       imports = [ inputs.nsfw-classifier.nixosModules.default ];

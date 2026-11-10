@@ -96,7 +96,8 @@ let
       # it; moved to serviceConfig 2026-11-05 after the switch journal's
       # "Unknown key 'TimeoutStartSec' in section [Unit]" notice).
       name = "cold-start-timeout-budget";
-      pass = (enabledConfig.systemd.services.nsfw-classifier.serviceConfig.TimeoutStartSec or "") == "10min";
+      pass =
+        (enabledConfig.systemd.services.nsfw-classifier.serviceConfig.TimeoutStartSec or "") == "10min";
     }
     {
       name = "pairing-token-auto";

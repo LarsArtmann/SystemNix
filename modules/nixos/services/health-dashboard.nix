@@ -113,7 +113,9 @@
 
       config = lib.mkIf cfg.enable {
         services.health-dashboard = {
-          package = lib.mkDefault inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.health-hub;
+          package =
+            lib.mkDefault
+              inputs.go-health-dashboard.packages.${pkgs.stdenv.hostPlatform.system}.health-hub;
           # Loopback from the port registry — never a literal (the raw
           # port must not reach the LAN; the protected vHost fronts it).
           addr = "127.0.0.1:${toString ports.health-dashboard}";

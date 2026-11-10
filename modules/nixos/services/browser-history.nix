@@ -762,7 +762,7 @@
               name = "browser-history-backup";
               description = "Browser History DB backup (online sqlite .backup)";
               dbPath = "/var/lib/browser-history/data.db";
-              backupDir = backupDir;
+              inherit backupDir;
               prefix = "browser-history-db-";
               retentionDays = 14;
               # 02:15 — staggered off paperless-db (02:00 + 10m jitter) and

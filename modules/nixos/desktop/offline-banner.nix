@@ -21,9 +21,9 @@
 {
   inputs,
   lib,
-  config,
   ...
-}: {
+}:
+{
   flake.nixosModules.offline-banner =
     {
       config,

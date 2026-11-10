@@ -105,9 +105,10 @@
           inherit user group;
           port = ports.crm;
           inherit stateDir;
-          environmentFiles =
-            [ config.sops.templates."crm-server-env".path ]
-            ++ lib.optionals pocketIdProvisioned [ oidcEnvFile ];
+          environmentFiles = [
+            config.sops.templates."crm-server-env".path
+          ]
+          ++ lib.optionals pocketIdProvisioned [ oidcEnvFile ];
           auth.enable = true;
           oidc = lib.optionalAttrs pocketIdProvisioned {
             issuer = "https://auth.${domain}";

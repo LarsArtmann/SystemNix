@@ -155,7 +155,7 @@ selftest() {
   printf '259 3 nvme0n1 1 0 40960 0 0 0 0 0 0 500 0 500\n8 0 sdb 1 0 100 0 1 1 2 10 0 10 0 112\n' >"$tmp/diskstats1"
   mkdir -p "$tmp/by-id"
   ln -s ../nvme0n1 "$tmp/by-id/ata-fake-qlc-disk"
-  : >"$tmp/nvme0n1"   # link target must EXIST or load_by_id skips the dangling link
+  : >"$tmp/nvme0n1" # link target must EXIST or load_by_id skips the dangling link
 
   # The DELTA-MATH legs below pin the numbers, the field map, and
   # the measured-window annotation against these fixtures.

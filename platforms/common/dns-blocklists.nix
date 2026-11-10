@@ -8,7 +8,9 @@ let
   # HaGeZi-hoster-raw (specified mME4che8, got BBE5rsFW). A moving ref with a
   # pinned hash is a self-arming deploy bomb; bump this commit + every hash
   # together (same doctrine as the paperless-gpt tag pin).
-  hagezi = subpath: "https://gitlab.com/hagezi/mirror/-/raw/f8c1f9f8121b91e264ef15e5aed011f226200799/dns-blocklists/${subpath}";
+  hagezi =
+    subpath:
+    "https://gitlab.com/hagezi/mirror/-/raw/f8c1f9f8121b91e264ef15e5aed011f226200799/dns-blocklists/${subpath}";
 in
 {
   blocklists = [

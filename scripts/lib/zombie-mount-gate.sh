@@ -50,7 +50,7 @@ zm_scan() {
       "$ZM_FAIL" "ZOMBIE/DEAD MOUNT $zm_mnt: real-IO probe failed (EIO / shutdown superblock) while findmnt still lists it — the 2026-08-16 phantom-green signature. Recovery: sudo umount -l $zm_mnt, restart the automount, then run scripts/das-link-recovery-check.sh"
       zm_tripped=1
     fi
-  done <<< "$zm_targets"
+  done <<<"$zm_targets"
   if [ "$zm_tripped" -eq 0 ]; then
     "$ZM_PASS" "no zombie mounts — every live /mnt/* mount has an existing device and answers real IO"
   fi
