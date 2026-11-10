@@ -74,6 +74,8 @@ nixpkgs.lib.nixosSystem {
             # RE-ADDED 2026-11-06 lock float: bank-sync@fab9306 upstream
             # iJg1bJqr… stale through our lock (got Cgy7/6Oa…,
             # float-proof-20261106-000533.log); mirrored on both surfaces.
+            # RE-STALENED 2026-11-10 float: upstream 40c1feb still bakes
+            # iJg1bJqr; got 65/NbAtF… (float-proof-20261110-043731.log).
             package = inputs.bank-sync.packages.x86_64-linux.default.overrideAttrs {
               vendorHash = "sha256-65/NbAtFKmETnHvnfuzziO1d92yQCadp+uw/+fpryAM=";
             };

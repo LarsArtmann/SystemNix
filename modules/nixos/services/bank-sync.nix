@@ -153,10 +153,12 @@
             # RE-ADDED 2026-11-06 lock float: bank-sync@fab9306's upstream
             # iJg1bJqr… went stale through our lock (got Cgy7/6Oa…,
             # float-proof-20261106-000533.log) — fresh first-hand got-hash,
-            # mirrored at the HM surface.
+            # mirrored at the HM surface. RE-STALENED 2026-11-10 float:
+            # upstream 40c1feb still bakes iJg1bJqr; got 65/NbAtF…
+            # (float-proof-20261110-043731.log).
             package = lib.mkDefault (
               inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                vendorHash = "sha256-Cgy7/6Oa6fr8QmFguL5czRBfGhl4t9Fo0C9DTvbw1yA=";
+                vendorHash = "sha256-65/NbAtFKmETnHvnfuzziO1d92yQCadp+uw/+fpryAM=";
               }
             );
           };
