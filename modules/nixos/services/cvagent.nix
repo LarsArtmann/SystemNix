@@ -60,7 +60,23 @@
         ;
     in
     {
-      imports = [ inputs.cvagent.nixosModules.default ];
+      imports = [
+        inputs.cvagent.nixosModules.default
+        # Platform-truth catalog entry (ADR-008): unconditional — the dashboard
+        # exists platform-wide even where serve is disabled. Declared in an
+        # imports-position module WITHOUT reading `options` (infinite-recursion
+        # trap, flake-check-proven 2026-09-23); the catalog OPTION comes from
+        # nixosModules.catalog, auto-discovered with every module in this
+        # directory, so a missing import fails LOUDLY at eval.
+        {
+          services.catalog.cvagent = {
+            subdomain = "cvagent";
+            port = ports.cvagent-dashboard;
+            description = "Code-derived CV facts dashboard (read-only scan evidence)";
+            healthPath = "/health";
+          };
+        }
+      ];
 
       config = lib.mkIf cfg.enable (
         lib.mkMerge [
