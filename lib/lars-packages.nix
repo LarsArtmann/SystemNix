@@ -540,7 +540,7 @@ lib.filterAttrs (_: v: v != null) {
   # carries the same value.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-Sie0CMRWBgeFH5wfLpVQ3XKRe+zxU7OYslpcmthS9gA=";
+      "sha256-7BFFSpExN2lPrB3+lc9fMi45/YDSwgW1Wfp8pd5tCYg=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -620,6 +620,6 @@ lib.filterAttrs (_: v: v != null) {
     # 4zISVNEX, got wtkejgEG (first-hand,
     # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Drop when
     # upstream bakes wtkejgEG; re-add ONLY via nix-hash-fix evidence.
-    vendorHash = "sha256-WI3MDA8XlAVR9gCb2LND6GJoFDx3g+FFE2WRMwSxUA8=";
+    vendorHash = "sha256-+JIm293yLjRrZGzaZV2d+OEjfyDyL0judEoReC1Ir+Q=";
   });
 }

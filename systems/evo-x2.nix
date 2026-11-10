@@ -75,7 +75,7 @@ nixpkgs.lib.nixosSystem {
             # iJg1bJqr… stale through our lock (got Cgy7/6Oa…,
             # float-proof-20261106-000533.log); mirrored on both surfaces.
             package = inputs.bank-sync.packages.x86_64-linux.default.overrideAttrs {
-              vendorHash = "sha256-Cgy7/6Oa6fr8QmFguL5czRBfGhl4t9Fo0C9DTvbw1yA=";
+              vendorHash = "sha256-65/NbAtFKmETnHvnfuzziO1d92yQCadp+uw/+fpryAM=";
             };
           };
           services.docs-archive-stats = {
