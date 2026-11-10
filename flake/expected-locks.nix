@@ -90,7 +90,7 @@
   nix-homebrew = "52bc87da3f30c2261a6d1cfef3c892097b53daeb";
   nix-ssh-config = "8c083ed1e823de2f00447468d077ca411b7673ee";
   nixos-hardware = "919c16cf46a7acf9b44b2c2444bc39aa094eaa85";
-  nixpkgs = "1d060086d60cb76a40cf37109f979d88a5bd6396";
+  nixpkgs = "f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
   nixpkgs-llama-rag = "0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
   nsfw-classifier = "695da95de2aafda3d99c445bbfec1979a221f79b";
   nur = "8995636e08c6cca6a3056acfd22f3fc45105d712";
