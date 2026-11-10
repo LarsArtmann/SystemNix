@@ -174,6 +174,7 @@ drift red. Regenerate after any registry change:
 | alerts | alerts | — | — | — | — | — |
 | architecture-catalog | catalog | — | protected | architecture-catalog-sync | 3 | — |
 | attic | cache | 8200 | plain | attic | 2 | — |
+| audible-sync | — | — | none | audible-sync | — | — |
 | auth | auth | 1411 | — | — | — | — |
 | backup-coordination | — | — | none | backup-coordination | 1 | — |
 | bank-sync | banksync | 8097 | protected | bank-sync | 4 | — |
@@ -188,6 +189,7 @@ drift red. Regenerate after any registry change:
 | crush-daily | daily | 8081 | protected | crush-daily | 1 | /mnt/pool/backups/crush-daily |
 | crush-events | — | — | none | crush-events-collector | 1 | — |
 | cv | cv | 8098 | plain | cv | 10 | /mnt/pool/backups/cv |
+| cvagent | cvagent | 8787 | protected | cvagent | 2 | — |
 | discordsync | discordsync | 8085 | protected | discordsync | 4 | /mnt/pool/backups/discordsync |
 | dmarc-monitor | — | — | — | — | — | — |
 | dnsblock | dnsblock | — | — | — | — | — |
@@ -203,6 +205,7 @@ drift red. Regenerate after any registry change:
 | immich | immich | 2283 | protected | immich | — | /mnt/pool/services/immich/database-backup |
 | inboxclean | inbox | 8099 | protected | inboxclean | 6 | /mnt/pool/backups/inboxclean |
 | indexer-web | index | 8105 | protected | indexer-web | 2 | — |
+| invoices-dashboard | invoices | 8110 | protected | invoices-dashboard | 2 | /mnt/pool/backups/invoices |
 | journal-serve | journal | 8484 | protected | journal-serve | 1 | — |
 | lan-nic-watchdog | — | — | none | lan-nic-watchdog | — | — |
 | llama-embeddings | — | — | none | llama-embeddings | — | — |
@@ -246,12 +249,13 @@ drift red. Regenerate after any registry change:
 | signoz | signoz | 8080 | protected | signoz | 3 | /mnt/pool/backups/clickhouse |
 | storage-collector-freshness | — | — | none | storage-collector-freshness | 1 | — |
 | storage-history | — | — | none | storage-history | — | /mnt/pool/backups/restic-storage-history |
-| system-health | — | — | none | system-health | 42 | — |
+| system-health | — | — | none | system-health | 43 | — |
 | systemd-graph | graph | 8847 | plain | systemd-graph | 1 | — |
 | systemd-timer-monitor | timers | — | none | systemd-timer-monitor | 1 | — |
 | taskchampion-sync-server | tasks | 10222 | none | taskchampion-sync-server | — | — |
 | tasks | tasks | 10222 | — | — | — | — |
 | tika | — | — | none | tika | — | — |
+| timesheets | timesheets | 8109 | protected | timesheets | 2 | /mnt/pool/backups/timesheets |
 | tq-agent-pool | — | — | none | tq-agent-pool | 1 | — |
 | tq-bootstrap | — | — | none | tq-bootstrap | — | — |
 | tq-serve | tq | 8100 | protected | tq-serve | 1 | — |
