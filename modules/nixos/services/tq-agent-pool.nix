@@ -71,7 +71,12 @@ _: {
             # spec 4zISVNEX, got wtkejgEG (first-hand,
             # ~/.cache/lockfloat/float-proof-20261102-043225-lars.log). Same
             # value as the lars-packages `tq` surface — update BOTH together.
-            vendorHash = "sha256-WI3MDA8XlAVR9gCb2LND6GJoFDx3g+FFE2WRMwSxUA8=";
+            # RE-STALE 2026-11-10 nixpkgs-pin revert wave: at go-taskqueue@1f6932f2
+            # spec WI3MDA8Xl, got +JIm293yLj (first-hand keep-going,
+            # ~/.cache/toplevel-build-20261110-f.log). Same value as the
+            # lars-packages `tq` surface (already updated there) — update BOTH
+            # together. Drop when upstream bakes +JIm293yLj.
+            vendorHash = "sha256-+JIm293yLjRrZGzaZV2d+OEjfyDyL0judEoReC1Ir+Q=";
           });
       inherit (import ../../../lib/default.nix lib)
         harden
