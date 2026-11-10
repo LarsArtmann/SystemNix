@@ -1,6 +1,7 @@
 # SUPERB — LarsArtmann NixOS Module Collection (`github:LarsArtmann/nixos-modules`)
 
 **Created:** 2026-11-10 05:07
+**EXECUTING (instance owner GO directive 2026-11-11: execute whole list; repo create+push sanctioned (dms-paste precedent), 2026-11-11 00:47 CET, HEAD `3d7ad3978`):** executing (see AGENTS.md plan-execution tombstone)
 **Status:** PLANNED (not executing — marker protocol per docs/CONTRIBUTING + AGENTS.md plan-execution tombstone applies before ANY execution of this file)
 **Author:** collection-design session (trigger: owner question "how much code is wifi-failover / worth a dedicated repo?" → "nixosModules sound interesting, how would that look?" → "REALLY STUDY the NixOS ecosystem, then present a plan")
 **Sibling plans:** `2026-11-08_03-30_SUPERB-own-project-module-upstreaming-completion.md` + `2026-11-08_10-44_SUPERB-upstreaming-completion-phase2.md` (project-owned modules → product repos). THIS plan is the complement: **project-LESS pattern modules, the audit gates, and the systemd lib spine → ONE dedicated collection repo.**

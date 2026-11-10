@@ -303,6 +303,11 @@ _: {
               # chicken-and-egg (google-sync-dirs points at /mnt/pool/backups
               # for the same reason; live 2026-11-10).
               ReadWritePaths = [ "/mnt/pool/services" ];
+              # harden{}'s empty bounding set strips CAP_CHOWN from root, so
+              # the owner chown EPERMs inside the namespace (mkPoolDirUnit
+              # invariant, lib/default.nix; 2026-09-22 EPERM class — live
+              # again 2026-11-10 23:43 after the 226 fix).
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
             })
             (serviceOneshotDefaults { })
             ioTier.background
