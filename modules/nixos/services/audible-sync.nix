@@ -300,6 +300,7 @@ _: {
               ReadWritePaths = [ poolDir ];
             })
             (serviceOneshotDefaults { })
+            ioTier.background
           ];
           script = ''
             for d in library downloads books; do
@@ -317,6 +318,13 @@ _: {
           inherit onFailure;
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+          # Fail loudly on a detached pool — this unit OWNS the
+          # ReadWritePaths entry at ${poolDir}, so it must gate the mount
+          # itself (the dirs unit gates it too; both legs were caught by
+          # the mount-gating + io-tier eval audits at the 2026-11-10
+          # enable flip — the module had never been eval-exercised at
+          # enable=true).
+          unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "1G";
