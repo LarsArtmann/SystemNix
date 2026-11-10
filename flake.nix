@@ -518,6 +518,34 @@
       flake = false;
     };
 
+    # timesheets — timesheet CLI + HTTP API server (PRIVATE repo: git+ssh
+    # + CI deploy key, journal pattern). Event-sourced timesheets
+    # (go-cqrs-lite v4, SQLite via --db); `timesheet serve` exposes the
+    # REST/SSE API + go-health probes (timesheets-serve unit: loopback
+    # 127.0.0.1:8109 behind the protected registry vHost
+    # timesheets.home.lan — billing data, no app auth until usermgmt
+    # ships). NON-FOLLOWER class: packages.default added upstream
+    # 0304e2a with the go-modules vendorHash probed under its own lock
+    # (go 1.27.2 source-tarball pin; first-hand probe 2026-11-10), so no
+    # follows and no consumer shim.
+    timesheets = {
+      url = "git+ssh://git@github.com/LarsArtmann/timesheets?ref=refs/heads/master";
+    };
+
+    # invoices — multi-client invoice & timesheet generator CLI
+    # (PRIVATE repo: git+ssh + CI deploy key). `invoices dashboard` is the
+    # read-model dashboard over the invoice SQLite DB (invoices-dashboard
+    # unit: loopback 127.0.0.1:8110 by upstream design — single-user CLI
+    # dashboard, never LAN-exposed — behind the protected registry vHost
+    # invoices.home.lan). NON-FOLLOWER class: upstream packages.default
+    # bakes a vendorHash that reproduces under its own lock (first-hand
+    # path: probe 2026-11-10); the dashboard REQUIRES config.yaml in the
+    # CWD (viper ".", no --config flag), so the unit's WorkingDirectory
+    # is the data dir ~/invoices holding the production config of record.
+    invoices = {
+      url = "git+ssh://git@github.com/LarsArtmann/invoices?ref=refs/heads/master";
+    };
+
     # index — project documentation indexer; the docs-archive-stats
     # home-manager timer records the dated-docs history TSV (which lives in
     # the index repo and rides its auto-commit) daily at 06:15.
