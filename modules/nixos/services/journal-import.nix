@@ -147,7 +147,9 @@
               Type = "oneshot";
               User = "bank-sync";
               Group = "bank-sync";
-              WorkingDirectory = cfg.stagingDir;
+              # No WorkingDirectory: staging may not exist on the very first
+              # run and systemd resolves it before the script's mkdir -p —
+              # the script uses absolute paths only.
               Environment = [ "HOME=/var/lib/bank-sync" ];
               Nice = 10;
               IOSchedulingClass = "idle";
