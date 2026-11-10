@@ -18,6 +18,13 @@ EVAL_RELEVANT_PATHS=(
   flake
   lib
   pkgs
+  # overlays/ shapes the pkgs instance (flake.nix "overlays = import ./overlays
+  # inputs") — an overlay edit moves the toplevel drv. 2026-11-10 live catch:
+  # the taskchampion-overlay LIFT commit rode this gap — the pre-commit hook
+  # judged overlays/linux.nix eval-irrelevant and skipped its flake-check leg.
+  # (§11's VENDOR_FRESHNESS_EVAL_PATHS already listed overlays/; this array
+  # was the odd one out.)
+  overlays
   # scripts/lib/buildcache-reap-names.sh is the one file outside the directory
   # roots whose CONTENT can fail a --no-build eval: lib/buildcache-cache-names.nix
   # readFile+regex PARSES it and throws on a missing/malformed assignment
