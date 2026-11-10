@@ -135,6 +135,14 @@ in
       };
       systemd.timers.cv-relogin.wantedBy = lib.mkForce [ ];
 
+      # cv-server hangs off late-applications.target in production (the
+      # 2026-10-26 boot-critical-chain trim); the VM imports only the flake
+      # module, so that target does not exist here and nothing pulls the
+      # unit — "inactive, no pending jobs". Broken since the 10-26 flip
+      # (checks run --no-build, so the VM never executed). Pull it via
+      # multi-user.target so the boot legs observe it.
+      systemd.services.cv-server.wantedBy = lib.mkForce [ "multi-user.target" ];
+
       systemd.services.cv-server.serviceConfig.EnvironmentFile = lib.mkForce [
         "${mockCvEnv}"
       ];
