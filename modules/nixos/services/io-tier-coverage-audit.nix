@@ -122,6 +122,7 @@
             "geometrikks-db-provision"
             "hermes-github-verify"
             "inboxclean-backup-dir"
+            "invoices-dashboard-backup-dir"
             "indexer-web-secret-key"
             "media-atlas-backup-dir"
             "miniflux-backup-dir"
@@ -134,6 +135,7 @@
             "signoz-clickhouse-log-ttl"
             "tq-bootstrap"
             "tq-storage-dir"
+            "timesheets-backup-dir"
             # ── repo one-shot system tweaks: trivial writes at boot.
             "btrfs-emergency-reserve"
             "mglru-thrash-protection"

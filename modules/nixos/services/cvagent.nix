@@ -249,7 +249,7 @@
               name = "CV Agent";
               group = "Development";
               description = "Code-derived CV facts — scanned repos, evidence, generated CV";
-              icon = "mdi-source-branch";
+              icon = "git.png";
             };
           };
         };
