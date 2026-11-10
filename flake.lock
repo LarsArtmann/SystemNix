@@ -1021,11 +1021,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794299258,
-        "narHash": "sha256-6YazaiUEdCO5tEtCxnK4aH0YWiMFoZmfB9CpjNILl7I=",
+        "lastModified": 1794287073,
+        "narHash": "sha256-zqw4Fdl11ceM0OhvESSCdsaU3HsU5JUhraf+eOWGubk=",
         "ref": "refs/heads/master",
-        "rev": "32e6d0ebfe3c782fd0c951b3433c66cb80c3b989",
-        "revCount": 10335,
+        "rev": "c65e2558f590a0f42284fe98bfb70d6375b969d2",
+        "revCount": 10315,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -3729,16 +3729,16 @@
     "go-credentials-store": {
       "flake": false,
       "locked": {
-        "lastModified": 1794289539,
-        "narHash": "sha256-dEJl5p6cs9OjjD1H8Xi5dhiT065pjwuXLr9qa3DAQFY=",
+        "lastModified": 1794268264,
+        "narHash": "sha256-h7WYBPs6FWZZTUxeuInCic3zo4RLUzeKMqTSPqokISs=",
         "ref": "refs/heads/master",
-        "rev": "e3697ed432c8689e4fc8909d7d7ce426afce8102",
-        "revCount": 488,
+        "rev": "c830daca9ede4cf7f152f3048821e8ec16145de9",
+        "revCount": 481,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       },
       "original": {
-        "rev": "e3697ed432c8689e4fc8909d7d7ce426afce8102",
+        "rev": "c830daca9ede4cf7f152f3048821e8ec16145de9",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-credentials-store"
       }
@@ -10214,11 +10214,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794284603,
-        "narHash": "sha256-UbsV6R8fXIKQX0mc28XzVnUzL2dvvrjgl8EOcqftSqU=",
+        "lastModified": 1794303084,
+        "narHash": "sha256-XoUIlzMFo0s6dj8We2/vR2TbWLUOWQ41njhgv+d+ClQ=",
         "ref": "refs/heads/master",
-        "rev": "0304e2ae1194aba16054465b5d07e289e496d3c3",
-        "revCount": 1025,
+        "rev": "e415cd3ac22f266ca97a5b9b108887da28b2850a",
+        "revCount": 1026,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/timesheets"
       },

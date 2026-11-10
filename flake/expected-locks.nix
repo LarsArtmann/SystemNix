@@ -118,7 +118,7 @@
   superfile = "2328e2ecb643ac11198e7a39555484388dfa4785";
   systems = "d36eeed142f88b5a636f2e3856a53c61654cf29b";
   templ = "dd6c9861fa78fb6d602da9b1ed1dc54ae7752ffe";
-  timesheets = "0304e2ae1194aba16054465b5d07e289e496d3c3";
+  timesheets = "e415cd3ac22f266ca97a5b9b108887da28b2850a";
   todo-list-ai = "2365fa243a89862bd834ab7cb29cabc0e8087ed4";
   treefmt-full-flake = "d4817f5494feca3c5e927b58032ddcd718dbfdff";
   treefmt-nix = "0d6d739a833ba9a9c93034862e4a7b061a062a1c";
