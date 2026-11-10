@@ -278,6 +278,17 @@
         # 9233; 9234 is an ocis HTTP service); NATS_PORT is a NO-OP. Registered
         # so the listener has an owner of record.
         opencloud-nats = 9233;
+
+        # timesheets — event-sourced timesheet API server (services.timesheets,
+        # `timesheet serve`), loopback-only; Caddy proxies
+        # timesheets.home.lan to it (protected layer — billing data).
+        timesheets = 8109;
+
+        # invoices-dashboard — read-model dashboard over the invoice SQLite
+        # DB (services.invoices-dashboard, `invoices dashboard`), loopback-only
+        # by upstream design; Caddy proxies invoices.home.lan to it
+        # (protected layer — billing data).
+        invoices-dashboard = 8110;
       };
       inRange = p: builtins.isInt p && p >= 1 && p <= 65535;
       invalid = builtins.concatLists (

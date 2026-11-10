@@ -40,6 +40,8 @@
     "cloud"
     "journal"
     "map"
+    "timesheets"
+    "invoices"
   ];
 
   # Public hosts living UNDER the split-horizon cloud zone. dnsblockd is
