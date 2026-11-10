@@ -840,14 +840,15 @@ in
       drive-paperless.enable = config.services.google-sync.enable;
       # Audible library → HDD pool archive (audible-cli, weekly full-library
       # download of every book in the Audible account + DRM-free M4B
-      # conversion). DORMANT until the go-live checklist completes
-      # (docs/services/audible-sync.md): ONE interactive Amazon login
-      # (`audible-quickstart`), paste the two device credentials into
-      # platforms/nixos/secrets/audible-sync.yaml via the sops editor, then
-      # flip audible-sync.enable + deploy. The unit's config-check
-      # ExecStartPre fails fast with the checklist pointer while the
-      # placeholder remains.
-      audible-sync.enable = false;
+      # conversion). LIVE 2026-11-10: owner ran `audible-quickstart`; the
+      # two device credentials landed in
+      # platforms/nixos/secrets/audible-sync.yaml (agent-side sops ingest
+      # via runtime-variable expansion, minimal {"adp_token",
+      # "device_private_key"} shape). First seed downloads the WHOLE
+      # library (48h timeout); weekly runs converge in minutes. The unit's
+      # config-check ExecStartPre keeps failing loudly if the credential
+      # shape regresses.
+      audible-sync.enable = true;
       # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (oneshot
       # + 5min jittered timer; Stalwart single truth, Google a sync edge).
       # DORMANT until the owner gates complete (docs/services/pim-sync.md):
