@@ -28,7 +28,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **Config-wave deploy** — attempted twice, correctly REFUSED both times by the deploy lock (a sibling session's `nh os switch` ran ~12:2x→13:0x, generation system-996 landed; my commit bdf610bdd missed their eval window — verified their deployed `cv-config.yaml` still carries `from: noreply@…` + `default_to`). A background wait-loop (lock-free → 3×60s quiescence polls) is RUNNING now; deploy fires after it clears. **Not deployed as of 13:29.**
+1. **Config-wave deploy** — attempted twice, correctly REFUSED both times by the deploy lock (a sibling session's `nh os switch` ran ~12:2x→13:0x, generation system-996 landed; my commit bdf610bdd missed their eval window — verified their deployed `cv-config.yaml` still carries `from: noreply@…` + `default_to`). **Third attempt 15:5x (wait-loop had cleared: LOCK-FREE, QUIET-POLLS=3/3) was REFUSED by the deploy ENTRY I/O-pressure gate — the correct outcome under the freeze-prevention doctrine.** Addendum (16:15): a live IO-PSI storm was and is running — `some avg10` 45→56% sustained, guard Zone-6 trip #8772 at 16:08:51 with an EMPTY pausable tree. Attribution (sanctioned S-0035 probe set, stability.md): per-pid 6s delta showed NO writer >4.1 MB/s; cgroup 10s delta named **nix-daemon at 20.9 MB/s** (~2.4 KB avg IO = small-IO build churn at 87% Samsung util) — drivers are SIBLING build batteries (a `buildflow --fix --build-mode=full` run + `nix build .#checks.…format` + `.#checks.…telephony-voicemail`), not mine, not touchable (attribution-first/report-only doctrine). Per the freeze-#5 rule (queue the deploy when Zone 6 tripped within the hour — never race dips), the deploy is QUEUED behind the storm: a gated auto-refire loop is armed (fires only on 2×60s consecutive `avg10<20` + zero Zone-6 trips in 60 min + lock free; deploy.sh's own entry gates backstop it). **Not deployed as of 16:15; config wave still not live.**
 2. **From-flip end-to-end proof** — MAIL FROM accepted; the end-of-DATA 250 verdict is blocked on the Resend daily quota reset (probe row queued).
 3. **CV code wave reach-prod** — commits live locally (daemon carriers 67a87f27a, e5989fdc0, 8e2f7d4cc — verified to contain exactly my 5 files); origin push + `nix flake lock --update-input cv` + vendorHash + deploy = owner-gated (blocked:push row).
 
@@ -93,3 +93,5 @@
 ---
 
 **State at 13:29:** background wait-loop (lock + quiescence) RUNNING; deploy not yet fired; everything else per sections a–c. **Now waiting for instructions.**
+
+**Addendum 16:15:** wait-loop cleared → deploy attempt #3 REFUSED by the ENTRY I/O-pressure gate (live Zone-6 storm, trip #8772; attribution: sibling nix build batteries at 20.9 MB/s small-IO churn). Deploy QUEUED behind the storm behind a gated auto-refire loop (avg10<20 ×2 + no Zone-6 trip 60 min + lock free). Still waiting for instructions on §g 1–3; the refire loop is the ONLY action that will run without them.
