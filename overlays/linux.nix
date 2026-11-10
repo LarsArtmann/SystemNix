@@ -355,8 +355,8 @@ let
     });
   };
   # patchelfDefaultRestoreOverlay LIFTED 2026-11-10 (the self-removal contract
-  # was met: the nixpkgs pin rolled back to 1d060086, whose default patchelf
-  # is 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
+  # was met: the nixpkgs pin re-landed on f9a75f41, whose default patchelf is
+  # 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
   # final-set gate also never covered hermes-agent: its overlay is a pure
   # alias for their own legacyPackages-built package, so no consumer-side
   # overlay reaches it — a future f4a03c00-style float must be answered by
