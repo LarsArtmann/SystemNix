@@ -30,7 +30,7 @@ repository, its facts, scan outcomes, and the generated CV. Review findings at
 | Reads   | `~/.local/state/cvagent/cvagent.db` — the scan unit's store; GET-only routes, zero write handlers  |
 | Checks  | Gatus "cvagent Dashboard" (`/` functional footer body) + "cvagent Health" (`/health` go-health)   |
 | Health  | `/health` is a go-health document (git/sqlite/AI-key) — federated into health.home.lan            |
-| Tile    | Homepage `CV Agent` (Development group, mdi-source-branch)                                        |
+| Tile    | Homepage `CV Agent` (Development group, `git.png` dashboard-icons pack — upstream serves no favicon route, so the crush-daily own-brand pattern does not apply) |
 
 Security posture = journal-serve: the dashboard is UNAUTHENTICATED by design and
 names repositories, file paths, and authors, so it binds loopback ONLY (upstream

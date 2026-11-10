@@ -1,0 +1,129 @@
+# Status — 2026-11-10 morning float-wave repair arc + evening post-rollback verification
+
+**Session:** 2026-11-10 ~03:30→05:0x CET (morning arc, interrupted mid-proof) + 19:27→19:44 CET (resume, re-orientation, close-out).
+**Trigger:** owner paste of `nix flake update && DEPLOY_FORCE_PRESSURE=1 nix run .#deploy` whose deploy leg died on the concurrent-deploy lock while a sibling deploy (02:07, exited code=3 at 03:30 with a NEW Bank-Sync smoke fail) was still finishing; the updated `flake.lock` (30 inputs) sat in the tree unlandable.
+**HEAD at authoring:** `34b95d7d7` (evening; the tree turned over ~20 daemon commits during the 14 h interruption gap).
+**Companion reports (read before this one):** `2026-11-10_19-32_deploy-997-float-gate-green-closeout.md` (the deploy-997 arc, sibling hands), `2026-11-10_13-25_timesheets-invoices-deploy-resume-floatgate-blocker.md` (the float-gate marathon), `2026-11-10_07-47_pdf-mime-helium-default-float-observer-status.md` (the session that out-diagnosed my patchelf overlay), `2026-11-10_06-04_journal-zero-rootcause-first-pipeline-run.md` (rootcause run cited by the overlay row).
+
+## Verdict up front
+
+The morning float wave did NOT land as a wave. Between my interrupted morning arc and tonight, four other sessions turned the tree over: most inputs were re-floated **further** than my morning revs and formally registered (sibling green proof 17:27, 19 drifted inputs), **nixpkgs was re-landed back at `f9a75f41`** (patchelf 0.19.2 — the triple-break at `f4a03c00` is documented below), and **dnsblockd was reverted to `696c73e8`** (its upstream-fixed artifacts are tailwind-coupled to the nixpkgs rev — they invert at the old nixpkgs). Deploy **gen-997** landed 19:12:35 exit 0 (168 PASS / 7 FAIL all baseline-matched advisory / 1 STORM-SUSPECT) and is **anchored**. The tree evaluates green (`nix eval …toplevel.drvPath` rc=0 at 19:3x, `mi21wp6g…`). What remains un-landed is now a **deliberate, queued hold-back pair** (nixpkgs+dnsblockd), not an accident.
+
+## a) FULLY DONE (this session's hands, verified)
+
+| # | Item | Evidence |
+| - | ---- | -------- |
+| a1 | **Post-mortem of the 02:07 sibling deploy**: exited code=3 at 03:30:05 after 4946 s; 5 FAILs, ONLY Bank-Sync NEW vs baseline; gen-995 anchored; host ran the OLD lock (`…20261105.f9a75f4` embedded in the system name) — proving the float still needed a deploy | `/var/log/systemnix-deploys/2026-11-10_02-07-39.log`; `readlink`/`nix-store -q --deriver` |
+| a2 | **Bank-Sync smoke FAIL triaged live**: `bank_sync_sync_errors_total 1` of 279 cycles, `consecutive_failures{wise} 0`, latest cycle green 04:08; the one error class is benign ( Wise SCA challenge → degraded transfers-only fallback, WARN-level, owner-actionable via `bank-sync sca approve`); journal's only ERROR since 02:00 is a benign dashboard `context canceled` | metrics probe `~/.cache/systemnix-probe/banksync-metrics.sh`; `journalctl -u bank-sync` |
+| a3 | **Float proof #1 root enumeration** (keep-going, log captured first): 4 vendorHash stales (go-taskqueue, bank-sync, pma, cv) + dnsblockd stale-css build guard + taskchampion-sync-server compile break | `~/.cache/lockfloat/float-proof-20261110-041602.log`, roots file 042340 |
+| a4 | **3 in-tree vendorHash fixes applied** via the sanctioned `scripts/fod-hash-diff.sh --apply` (lib/lars-packages.nix ×2, pma module, systems/evo-x2.nix) — content verified in HEAD after daemon sweep | `rg` post-apply; daemon commits 582b271fb/9265a23c5 |
+| a5 | **taskchampionPkgConfigOverlay written + LIFT probe pinned** (vendored zstd-sys/libsqlite3-sys need pkg-config probing; injected pkg-config + sqlite + zstd) — passes isolation eval, harmless at the current lock, kept in-tree by the later sessions as the mask for the next f4a03c00 attempt | `overlays/linux.nix:348`; isolation eval `0.7.1` |
+| a6 | **dnsblockd upstream repaired and pushed** (`9fe62ce7`): root-caused the stale `app.min.css` to a **tailwind version coupling** — their own flake.lock nixpkgs was a month stale (tailwind 4.3.3 devshell) while the SystemNix build overrides nixpkgs to root (4.3.4); bumped their nixpkgs input to `f4a03c00`, re-ran their canonical `scripts/regen-ui.sh`, their pre-commit byte-fresh gate passed, committed+pushed; re-locked here | `~/projects/dnsblockd` git log; float-proof-043731 no dnsblockd root after |
+| a7 | **CV upstream half-done bump COMPLETED and pushed**: their master (3cd6f7e4) called `adminui.WithHostLinks` while their own `?rev=` pin held go-credentials-store `99d5b95e` (Oct 30, lacks the API) and their baked vendorHash was stale; verified the API at store tip `c830daca9`, bumped their URL pin + refreshed their vendorHash literal (`2oTY536…`), their package built GREEN, pushed (`615fba24f`), re-locked | `~/projects/CV` git log; `nix build .#packages.x86_64-linux.default` rc=0 |
+| a8 | **bank-sync daemon-surface shim fixed** — `fod-hash-diff` had classified `modules/nixos/services/bank-sync.nix` "comment only" but the LIVE shim literal (`Cgy7/6Oa…`) sat at line 159; updated to the first-hand got `65/NbAtF…` + dated provenance comment on BOTH surfaces (the mirrored-surfaces doctrine) | `bank-sync.nix:155-160`, `systems/evo-x2.nix:74-80` |
+| a9 | **patchelf root isolated to a precise mechanism** (later superseded by the 07:5x session's deeper finding — see d2/e2): failing drv `hcs1ifln` = patchelf 0.15.2 + hermes pm-packages' #672 fetchpatch, 4/6 hunks failing; root nixpkgs `f4a03c00` mis-routes default `patchelf` to 0.15.2 while `patchelfUnstable` = 0.19.2-unstable-2026-10-20 (the 3-day-older lock `f9a75f41` shipped 0.19.2 as default — a regression, not an evolution); wrote `patchelfDefaultRestoreOverlay` | derivation diffs (patches [] vs [patch]); `nix eval` version probes both revs |
+| a10 | **Evening re-orientation + verification battery**: content-pin re-read after the 14 h gap (found the day's rollback + 4 sibling reports); confirmed registry↔lock sync (no drift), fresh `nix eval` toplevel **rc=0**, gen-997 anchored (997 == current-system == `3yhv8kp…`), smoke exit 0 | `flake/expected-locks.nix` vs `jq flake.lock`; `~/.cache/landable-probe-1927.txt` rc=0 |
+| a11 | **The hold-back pair QUEUED on both todo surfaces**: `docs/todo/pipeline.md` + `TODO_LIST.md` row "Re-float the nixpkgs+dnsblockd COHERENT PAIR when unstable's tip moves past f4a03c00 with patchelf re-routed to 0.19.x" — coupling (tailwind artifacts), pre-reqs (stage-scoped overlay fix, patchelf.version probe), and the taskchampion-overlay drop condition all pinned | both files, appended 19:4x |
+| a12 | **Coordinated with the live tree, not against it**: identified the in-flight audible-sync/cvagent session (staged files, hot docs), declined a pathspec commit of my todo rows mid-collision (their hunks share `TODO_LIST.md`), left the rows to the daemon sweep per the documented repair protocol | `git status` evolution 19:27→19:44 |
+
+## b) PARTIALLY DONE
+
+| # | Item | Missing |
+| - | ---- | -------- |
+| b1 | **The nixpkgs+dnsblockd pair float** | Held back BY DESIGN (queued row a11). Blocked on upstream: unstable tip is STILL `f4a03c00` tonight (same broken rev — nothing newer-and-safe exists), plus the stage-scoped overlay fix (pre-existing pipeline row, unsolved). |
+| b2 | **taskchampionPkgConfigOverlay LIFT verification** | Kept in-tree; its pinned LIFT probe (`nix build nixpkgs#taskchampion-sync-server` green BARE) never ran at f4a03c00 because the nixpkgs float itself was rolled back first. |
+| b3 | **My two todo rows' attribution** | Written but uncommitted — the concurrent session is mid-write on `TODO_LIST.md`/`CHANGELOG.md`/`cvagent` docs; a pathspec commit risked sweeping their half-done hunks. They ride the daemon sweep (the known footless-commit class; repair protocol is a standing queue row). |
+| b4 | **"update EVERYTHING TO LATEST" completeness audit** | Every input is at latest EXCEPT the held-back pair — but I verified current revs only via the registry rows I sampled (cv, dnsblockd, nixpkgs + the 13-row registry dump); hermes' registry rev `b27d1995` vs upstream tip was never proven newer-or-older by me. |
+| b5 | **Bank-sync shim staleness at the re-floated rev** | The shim literal (`65/NbAtF…`, probed at bank-sync `40c1feb` + nixpkgs `f4a03c00`) now rides bank-sync `4b0be19c` — empirically green via gen-997's build, but the stale-wrong-shim A/B (upstream's own baked hash at that rev) was never run. Covered in spirit by the existing "single-source vendorHash pins" row, not explicitly. |
+
+## c) NOT STARTED (out of this session's scope, noticed along the way)
+
+- The stage-scoped patchelf overlay fix itself (pre-existing pipeline row; the 07:5x session's "stage-guarded candidate" apparently never landed — the tree carries NO patchelf overlay tonight, only the LIFT comment).
+- Filing the nixpkgs `f4a03c00` patchelf mis-routing upstream (verify-before-filing gated; sibling report marks the breakage "known recurring" since the gen-992 arc on Nov 9).
+- Everything in the day's other sessions' queues: Resend quota re-probe, CATCHALL 165-row re-dispatch, CV code-wave push (owner-gated), cvagent dashboard deploy (owner go + wrapper; live /health 503 startup-latch finding from the sibling closeout), timesheets/invoices first-backup verification (timers armed for tonight 03:29/03:58).
+
+## d) TOTALLY FUCKED UP (own mistakes this session, all self-caught)
+
+| # | Mistake | Cost / lesson |
+| - | ------- | ------------- |
+| d1 | **`patchelfDefaultRestoreOverlay` was unsound and I shipped it after the WRONG test** — my "isolation" evals imported nixpkgs directly and only forced the package layer; the real tree's stdenv **bootstrap consumes patchelf inside the stage fixed-point** (binutils-patchelfed-ld-wrapper), where any global patchelf overlay poisons the build. Proof #3 died `expected a set but found a function: lambda @ customisation.nix:873`. I never ran the cheap real-tree A/B (`nix eval .#apps…deploy.program`) that the 07:5x session used; they out-diagnosed me by finding the bootstrap consumer while I was still theorizing about `.override` call shapes. | One full proof cycle wasted; the overlay sat in the tree until the day session lifted it per its own self-removal contract. Lesson: package-layer isolation evals are NOT evidence for stdenv-touching overlays — A/B in the real tree first. |
+| d2 | **I hit the `rg -rn` trap myself** (hook blocked it) at the patch-origin search step — the flag is documented in AGENTS.md with two prior strikes on this host, and I typed it anyway during a reflexive "recursive + line numbers" moment. | Third documented strike became mine. `rg -n`; recursion is the default. |
+| d3 | **I pushed the dnsblockd artifact fix keyed to the NEW nixpkgs without documenting the pair-coupling at the time** — the fix regenerates their committed css at tailwind 4.3.4 (root nixpkgs), which INVERTS against 4.3.3 if nixpkgs rolls back. The day session then had to revert dnsblockd's lock to keep the old-nixpkgs tree buildable. The coupling was foreseeable from my own finding ("the build's tailwind comes from the consumer's root nixpkgs"); I only wrote the pair-dependency down in the evening queue row, 14 hours later. | The dnsblockd hold-back (and part of the day's rollback churn) traces to an undocumented coupling I created. Lesson: any upstream fix keyed to a consumer-side rev gets a pair-dependency note AT PUSH TIME. |
+| d4 | **Three full proof cycles before batching the cheap probes** — each keep-going proof is ~8 min; a targeted FOD probe batch at the locked revs (the buildflow nix-hash-fix pattern) would have enumerated the four hash stales before proof #1. The domino rule (--keep-going enumeration first) was followed, but the probe-first alternative was never considered. | ~20 min + three RED cycles. |
+| d5 | **The morning arc ended without a status report** — the interruption cut it mid-proof, and the discipline says reports are written at arc boundaries precisely so a resume session doesn't have to reverse-engineer 14 hours of four other sessions' work. Tonight's re-orientation cost a full report-skim sweep (19:32/19:10/13-25/13-35/13-29/12-30/07-47/06-25/06-10) to reconstruct state that a morning stub report would have pinned. | Re-orientation cost; risk of contradicting sibling reports from ignorance. |
+| d6 | **Malformed jq one-liner** in the rev inventory (iterated `.nodes[$i].inputs[]?` wrong) produced a wall of 27 jq errors and zero data before I fell back to reading the registry directly. | Noise, one wasted call. |
+| d7 | **fod-hash-diff's "comment only, not rewritten" classification was trusted for the bank-sync surface** and I did not hand-verify the module file until proof #2 failed on the SAME drv byte-identically — the LIVE shim literal was hiding under a comment-classified site. The tool is batch-repair, not truth; the drv-name identity (`z4dkdgqz…` across proofs) was the tell I should have read after proof #1. | One full proof cycle. |
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Real-tree A/B before tree-touching overlays**: a single `nix eval .#apps.x86_64-linux.deploy.program` (or toplevel drvPath) green/red check beats any package-layer isolation test when the overlay can touch stdenv/boot paths. Codify in docs/agents/nix-flakes.md.
+2. **Status reports at EVERY arc boundary** — the interruption-proofing rule. A morning stub (5 lines: state, in-flight proof, next step) would have saved the evening a nine-report reconstruction sweep.
+3. **Probe-before-proof for known hash classes**: when a float moves N LarsArtmann Go inputs, run the buildflow-style FOD probe batch at the locked revs BEFORE the first keep-going proof.
+4. **Pair-dependency notes at push time**: upstream fixes keyed to a consumer-side rev (dnsblockd↔nixpkgs tailwind) get the coupling documented in the SAME commit wave, not retrospectively.
+5. **fod-hash-diff output is a lead, not a verdict**: after any apply, re-grep the failing drv names from the proof log against the edited files (the byte-identical-drv tell).
+6. **Resume protocol**: after any >minutes gap, re-pin in this order — `git rev-parse` + status → registry↔lock drift check → newest docs/status reports → deploy-log tails → THEN act. Worked tonight; worth a line in CONTRIBUTING.
+7. **The sweep-vs-landability doctrine**: the day proved full sweeps land as "re-float + deliberate hold-back pair" outputs. Codify that output shape (hold-back pair row + probes + coupling) in docs/agents/nix-flakes.md so future sweep sessions produce it by default instead of fighting the gate.
+
+## f) NEXT THINGS (up to 50; [new] = this session's direct follow-ups, [existing] = already queued by another session/arc — do NOT duplicate)
+
+1. [new] **Land the stage-scoped patchelf overlay fix** — pre-req for ANY f4a03c00+ float (pipeline row exists; their 07:5x "stage-guarded candidate" never landed — confirm whether it survives in any worktree/notes before re-deriving).
+2. [new] **Re-float the nixpkgs+dnsblockd coherent pair** when unstable tip ≠ f4a03c00 with `patchelf.version` → 0.19.* — queued tonight on both surfaces (pipeline + TODO_LIST).
+3. [new] **Audit the morning hash literals at their CURRENT revs** — bank-sync shim `65/NbAtF…` @ `4b0be19c` (read upstream's baked hash there; drop the shim if neutral), my `+JIm293y` go-taskqueue literal @ `f19a4f0a`, my pma literal @ `da285ff9` — the stale-wrong-shim class (bit-neutral check per the drop protocol).
+4. [new] **Bank-Sync smoke check metric redesign** — `bank_sync_sync_errors_total` is monotonic: ONE failed cycle fails the smoke check until restart; consider switching the check to `bank_sync_sync_consecutive_failures` (resets on success) or an errors-rate window. [decision] — upstream (bank-sync) or check-side (post-deploy-check.sh).
+5. [new] **File the nixpkgs patchelf mis-routing upstream** (verify-before-filing + github-voice): `f4a03c00` ships default `patchelf` = 0.15.2 while `patchelfUnstable` = 0.19.2-unstable-2026-10-20 and the prior rev shipped 0.19.2 — downstream (hermes-class pm-packages + the bootstrap's patchelfed-ld) breaks. Known recurring since gen-992 (Nov 9).
+6. [new] **dnsblockd upstream devshell-nixpkgs staleness design** — their own lock was a month stale (Oct 10) and their artifacts track the CONSUMER's nixpkgs tailwind; consider having dnsblockd pin tailwindcss explicitly (input-level) so consumer floats stop re-breaking their byte-fresh gate.
+7. [new] **CV repo flake.lock hygiene** — my `git add flake.lock` produced a 2-file commit (lock seemingly ignored/lost); if CV's own lock doesn't persist, their CI pins never reproduce locally-locked graphs. Investigate `.gitignore` + their daemon, flag upstream if real.
+8. [new] **hermes-agent rev audit** — registry holds `b27d1995`; verify newer-than-tip status and whether pm-packages still carries the #672 patch (feeds the pair-float plan).
+9. [new] **Document the bootstrap-consumes-patchelf constraint + the float-closeout checklist** (pair-coupling note, registry-sync check, real-tree A/B) in docs/agents/nix-flakes.md — today's hardest-won facts live only in a pipeline row and this report.
+10. [new] **Re-run post-deploy-check.sh in a calm window** to clear tonight's 1 STORM-SUSPECT (downgraded check = UNVERIFIED, not passing).
+11. [existing] Bank-Sync Wise SCA approval (owner-held `bank-sync sca approve`) — the degraded transfers-only fallback persists until then.
+12. [existing] Health Hub /readyz 503 (a remote dark — `HEALTH_HUB_REMOTES` in the unit) — standing smoke FAIL.
+13. [existing] Offsite Borg tripwire binary missing FAIL — standing smoke FAIL.
+14. [existing] Service Sanity CPU: crm-server 203% + tq-agent-pool 203% — standing smoke FAIL.
+15. [existing] Service Sanity journal: prometheus-node-exporter 554 lines/min — standing smoke FAIL.
+16. [existing] cvagent dashboard deploy battery (owner go + wrapper; sibling found `/health` 503 startup-latch + git-not-on-PATH live).
+17. [existing] CV code wave push (20 commits, owner-gated) + re-lock + deploy.
+18. [existing] Resend quota-reset end-of-DATA acceptance probe.
+19. [existing] CATCHALL 165 self-mailed rows re-dispatch.
+20. [existing] Timesheets/invoices first-backup verification — timers elapse TONIGHT ≈03:29/03:58 CET; check in the morning.
+21. [existing] Single-source per-input vendorHash pins (the 07-47 session's row; my b5 folds into it).
+22. [existing] The overlay-fix pipeline row (patchelf) — now the PAIR row's explicit pre-req.
+23. [new] **Nixpkgs-node census after tonight's churn** — the sibling closeout flagged `.nodes.nixpkgs_9` as ORPHANED (root lives at `nixpkgs_8`); cheap jq census for further orphans (pin-audit surface-3 class).
+24. [new] **Read the 07-47 float-observer report properly** — I cited it secondhand via the pipeline row; its own §f may hold unharvested follow-ups from the session that worked my exact problem.
+25. [new] **Smoke-baseline digest** — the 7 advisory FAILs + 19 WARNs of gen-997 deserve a one-pass triage for anything that quietly graduated (baseline file: `~/.local/state/systemnix/smoke-fail-baseline.txt`).
+26. [new] **InboxClean Gmail auth_expired WARN** — standing OAuth runbook item (present in both today's smoke runs).
+27. [new] **Bank-Sync dashboard `context canceled` render errors** — benign client-disconnect noise; consider upstream suppression so the journal stays triage-clean.
+28. [existing] dnsblockd upstream: templ v0.3.1100-class regeneration waves (their repo tracks consumer toolchains — rows exist upstream).
+29. [new] **taskchampion overlay generalization check** — if the pair-float lands on a nixpkgs that STILL lacks pkg-config for taskchampion-sync-server, decide: keep the consumer overlay, or file upstream and drop.
+30. [new] **Morning-session attribution sweep** — my morning daemon-swept edits (hash fixes a4) rode heuristic commits; run the documented footless-commit audit against the specific batch ids touching lib/lars-packages.nix + systems/evo-x2.nix from 04:2x-04:3x.
+31. [new] **The 15:51 proof's cause #2** (sibling report): `Could not resolve host: cache.nixos.org` during the 4-session IO storm — if the local resolver starvation recurs during builds, the Build-Storm runbook gains a "substituter DNS" symptom entry.
+32. [new] **gen-997's +6 enabled units** (192→198 across today's deploys: timesheets+invoices+cvagent wiring) — confirm each landed unit has its §-numbered smoke coverage in the battery, not just unit-shape render.
+33. [new] **README/docs: none of today's lessons touched the user-facing docs** — check whether bank-sync.md's runbook documents the SCA-approval path prominent enough for the owner (the smoke FAIL text already points at it — verify the runbook matches the live command name).
+34. [new] **`docs/agents/nix-flakes.md` lock-rev half-life**: today the lock turned over ~20 daemon commits in 14 h across 4+ sessions — the doc's "stale in HOURS" line is now "stale in MINUTES during multi-session days"; sharpen it.
+35. [new] **Pipeline row hygiene**: the overlay-fix row's PROGRESS note references a worktree candidate that no longer exists anywhere I could find — annotate the row with the candidate's fate so the next session doesn't hunt for it.
+36. [existing] The timesheets/invoices module-shape eval error saga (`:anon-2290…unsupported attribute 'services'`) — the 13:25 session's b1/b2; resolved in practice by later deploys, but the ROOT CAUSE was never pinned — worth a post-mortem row before it recurs.
+37. [new] **Verify tonight's timer fires**: post-crash-calm-gate FAILED at its 60-min cap during gen-997 (sibling report) — confirm the gate's failure mode is the documented 2026-11-10-morning pattern and not a new threshold breach class.
+38. [new] **My `~/.cache/lockfloat/` proof logs (041602/043731) are first-hand evidence** for two queued rows — they are cache-resident (durable per house rule) but NOT in git; the rows cite them — consider quoting the decisive excerpts into the rows or a status doc if cache eviction is a concern.
+39. [new] **crush-config input floated during the day** (b387487 → later rev in registry) — my session ran under the older one; a crush restart tonight would swap Crush's own config mid-session for any live session — note for session stability.
+40. [new] **Post-resume the `question` tool exists for owner decisions** — the 13:25 session ran "under silence" with documented judgment calls; my session had the owner present at both ends — no improvement needed, recorded as a contrast.
+
+Items 41-50 deliberately withheld: the remaining ideas (upstream filings, CI additions, doc restructures) all reduce to items 5/7/9/22/24 above or belong to other sessions' active arcs — adding them as separate rows would duplicate queued work (the harvest rule: one ask, one row, no parallel entries).
+
+## Self-harvest record (authoring-time, per AGENTS.md TODO-system rule)
+
+Landed NOW alongside this report (TODO_LIST one-liner + domain-library row, both surfaces):
+- Row 3 → `docs/todo/services.md` + TODO_LIST (audit morning hash literals at current revs).
+- Row 4 → `docs/todo/pipeline.md` ([decision] — check-side vs upstream metric redesign; no queue one-liner: decisions are not tq-harvestable).
+- Row 5 → `docs/todo/upstream.md` + TODO_LIST (patchelf mis-routing upstream filing, verify-before-filing gated).
+- Row 6 → `docs/todo/upstream.md` + TODO_LIST (dnsblockd tailwind pinning design).
+- Row 7 → `docs/todo/upstream.md` + TODO_LIST (CV flake.lock hygiene investigation).
+- Row 8 → `docs/todo/upstream.md` + TODO_LIST (hermes rev audit).
+- Row 9 → `docs/todo/pipeline.md` + TODO_LIST (nix-flakes.md doc additions).
+- Rows 1, 2, 10, 23-27, 30-39: 1/2 already landed tonight (a11); the rest are noted here deliberately-not-harvested because they are either one-line checks inside existing queued arcs, verification notes on OTHER sessions' deliverables, or doc-touch work that belongs to the docs-health pass — re-derivable from this report's §f citations.
+- Rows 11-21, 22, 28, 36: existing rows/other sessions' arcs — deliberately not duplicated.
+
+## g) QUESTIONS FOR THE OWNER (cannot self-answer)
+
+1. **Bank-Sync Wise SCA**: will you run the `bank-sync sca approve` ceremony (owner-held token), or should the account stay on the degraded transfers-only fallback? This decides whether the Bank-Sync smoke FAIL stays in the accepted baseline or gets fixed this week.
+2. **The 7 baseline smoke FAILs** (Health Hub 503, Offsite Borg tripwire, crm-server CPU, tq-agent-pool CPU, node-exporter journal rate, Bank-Sync counter, + the storm-suspect): accepted-as-known indefinitely, or give me a triage order to actually clear them?
+3. **When unstable's tip moves past `f4a03c00` with patchelf re-routed**: re-float the nixpkgs+dnsblockd pair immediately (accepting another full battery + rebuild), or hold for a quiet window (the deploy that lands it will re-enter the calm-gate fight on a multi-session day)? And do you want the nixpkgs patchelf mis-routing filed upstream (item 5), or left internal?

@@ -27,12 +27,14 @@
 #   - the export side needs no balance list: it exports every Wise balance
 #     the daemon knows (bounded, tiny files, atomically renamed) and lets
 #     the import side filter. No Nix-side duplicate of journal.yaml.
-#   - staging lives INSIDE bank-sync's dataDir (DAC-private to the bank-sync
-#     user by the money-data posture): the export unit runs as the bank-sync
-#     user (reads its own DB, writes its own dir), the import unit as the
-#     primary user (read-only on staging via 0644 files, RW only on books).
-#     Exports go to tmp + rename so the import never reads a half-written
-#     file.
+#   - staging lives at /var/lib/journal-sync (StateDirectory, bank-sync
+#     user-owned, 0755/0644): the export unit runs as the bank-sync user
+#     (reads its own DAC-private DB, writes the shared staging), the import
+#     unit as the primary user (read-only on staging, RW only on books).
+#     LIVE LESSON 2026-11-10 (gen-997): staging inside the bank-sync dataDir
+#     blocked the import — the dataDir is 0700, so the primary user could
+#     not traverse to it. Exports go to tmp + rename so the import never
+#     reads a half-written file.
 #
 # Sibling patterns: journal-backup.nix (books-home contract, condition-skip,
 # oneshot discipline) and journal-serve.nix (protected surface). The vendor-
@@ -73,13 +75,19 @@ _: {
 
         stagingDir = lib.mkOption {
           type = lib.types.str;
-          default = "${config.services.bank-sync.dataDir}/journal-exports";
+          default = "/var/lib/journal-sync";
           description = ''
             Where per-balance transactions.v1 files land between export and
-            import. Lives inside the bank-sync dataDir so the DAC-private
-            money-data posture is preserved (bank-sync user writes, primary
-            user reads). Files are overwritten per cycle, so staging is
-            bounded by the daemon's balance count.
+            import. Owned by the bank-sync user via StateDirectory (0755, files
+            0644), so the export side writes and the primary-user import side
+            reads. LIVE LESSON 2026-11-10 19:41 (gen-997 first cycle): staging
+            inside the bank-sync dataDir looked like the DAC-pure choice but
+            BLOCKED the import — the dataDir itself is 0700 bank-sync, so the
+            primary user could not traverse to the (world-readable) staging
+            subdir and the glob saw zero files (imported 0, skipped []). The
+            DB stays DAC-private; the mesh files are the shared interface.
+            Files are overwritten per cycle, so staging is bounded by the
+            daemon's balance count.
           '';
         };
 
@@ -108,14 +116,9 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
-        # Pool-bound oneshots: the remount self-heal restarts always-on
-        # daemons; a timer-driven oneshot converges itself on its next tick,
-        # so it rides restartUnitsExempt (pool-recovery asserts every unit
-        # with RequiresMountsFor under the pool is in ONE of the two lists).
-        services.pool-recovery.restartUnitsExempt = [
-          "journal-sync-export"
-          "journal-import"
-        ];
+        # (no pool-recovery exemption needed: neither unit touches /mnt —
+        # staging moved to /var/lib/journal-sync after the 2026-11-10 19:41
+        # gen-997 first-cycle lesson; see stagingDir description)
 
         systemd.services.journal-sync-export = {
           description = "journal mesh export: refresh per-balance transactions.v1 staging files from the bank-sync DB";
@@ -128,9 +131,6 @@ _: {
           # Pool detached (or DB absent) → clean condition-skip, never a
           # failed unit: the shadow path under /mnt/pool carries no data.db.
           unitConfig.ConditionPathExists = [ "${config.services.bank-sync.dataDir}/data.db" ];
-          # Mount-gating audit: ReadWritePaths under /mnt/ gates loudly on a
-          # detached pool instead of writing the root-fs shadow.
-          unitConfig.RequiresMountsFor = [ cfg.stagingDir ];
           # Chain: import runs only when export actually ran + succeeded
           # (condition-skips and failures both suppress it).
           unitConfig.OnSuccess = [ "journal-import.service" ];
@@ -138,9 +138,12 @@ _: {
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "1G";
-              # Only the staging dir is writable; the DB is read via
-              # mode=ro through its DAC-private directory (bank-sync user).
+              # StateDirectory creates+owns /var/lib/journal-sync before the
+              # script runs (no first-run mkdir chicken-egg — the 19:41
+              # gen-997 226/NAMESPACE lesson: RequiresMountsFor over a
+              # not-yet-created dir dies at namespace setup).
               ReadWritePaths = [ cfg.stagingDir ];
+              StateDirectory = "journal-sync";
             })
             (serviceOneshotDefaults { })
             {
@@ -188,7 +191,6 @@ _: {
             "${cfg.booksDir}/journal.yaml"
             cfg.stagingDir
           ];
-          unitConfig.RequiresMountsFor = [ cfg.stagingDir ];
 
           serviceConfig = lib.mkMerge [
             (harden {

@@ -1,5 +1,48 @@
 # cvagent dashboard deploy wiring + the pre-existing evo-x2 eval breakage (2026-11-10 14:59)
 
+> **CONTINUATION ADDENDUM (2026-11-10 ~17:4x, same-day second session)** — the §f next-list
+> executed, minus the two owner-gated legs:
+> - **§f.1 DONE** — `services.catalog.cvagent` added (cv.nix imports-position pattern,
+>   unconditional, no `options` read); the derived-DNS warning no longer names cvagent (legacy
+>   24 remain, accepted debt per catalog.nix census). NOTE the §f.1 premise was half-wrong: the
+>   catalog entry is NOT what makes cvagent.home.lan resolve — dns-local.nix's hand-list (already
+>   landed) is the DNS source until the T05/T06 deletion; the catalog entry is the registry debt,
+>   not a DNS fix.
+> - **§f.2 DONE** — registry-matrix regenerated (`bn00hjvpc`), block pasted byte-exact, drift
+>   check green; the diff also absorbed 4 parallel-session rows (audible-sync, invoices-dashboard,
+>   timesheets, system-health 42→43) that had landed unstamped.
+> - **§f.3 DONE (no-op)** — direct `lib/lock-float-audit.nix` eval: zero violations; the sibling
+>   float waves (through 44e380e55, nixpkgs → f9a75f41/patchelf 0.19.2) already absorbed the
+>   drift; no float-register run needed on a clean registry.
+> - **§f.4/§f.11 DONE** — treefmt over the touched files: 0 changed; check battery green
+>   (doc-counts, registry-matrix-drift, features-drift, statix, deadnix); gatus eval truth = 295
+>   = the sibling's 13:23 stamp (it already counted this entry's 2 checks — no re-stamp needed).
+> - **§f.7 DONE (attribution, empirically bisected)** — RED at `865e40703` AND `403063023`,
+>   GREEN at `06079542e` (13:23), each proven by registry-neutralized worktree evals (the lock
+>   gate fires first on historical revs; neutralizing flake/expected-locks.nix from each commit's
+>   own lock exposes the true error). THE FIX: `modules/nixos/desktop/offline-banner.nix` — a
+>   config-shorthand `services.offline-banner.layerNamespace` key sitting alongside an explicit
+>   `config.assertions` key in one module (checkUnmatched: "unsupported attribute `services`");
+>   06079542e moved it under `config.` and relocated the `config` module-arg binding to the inner
+>   module. Owner question g.3 answered: the fix rode a 21-file auto-commit (queue row 1453
+>   consumer-side pin wave), no single named session.
+> - **§f.8/§f.9/§f.10 DONE** — runbook icon cell corrected (mdi-source-branch → git.png; no
+>   favicon route upstream, so the crush-daily own-brand pattern does not apply), CHANGELOG
+>   entry added, §f.13 rows 3372/3386 ticked + RESOLVED, row 189's stale BLOCKED annotated
+>   UNBLOCKED, row 3437 (patchelf overlay) ticked RESOLVED (lift + 44e380e55 re-land), new
+>   deploy-chain row appended; /tmp worktree + scratch files already reaped (worktree registration
+>   pruned).
+> - **§f.5/§f.6 (deploy + battery) STILL OWNER-GATED** — the toplevel build was RED at the
+>   f4a03c00 float-back window (patchelf-0.15.2 patchPhase, 4/6 hunks — nixpkgs-internal patch,
+>   not fleet-defined; cascade ffmpeg→node→pnpm→ripgrep→npm→hermes-tui→HM); 44e380e55 re-landed
+>   f9a75f41 and the REBUILD LANDED GREEN this session (keep-going, exit 0; realized toplevel
+>   `15c5szyl7kpvn3rx69dwdl9r8cq7hnp9-nixos-system-evo-x2-26.11.20261105.f9a75f4` — the full
+>   closure incl. this entry's 2 Gatus checks). Deploy additionally needs the sudo-capable flow
+>   and the owner's go (§g.1/§g.2 remain open; §g.3 answered above).
+> - **Upstream nicety noticed, not fixed**: cvagent pages embed `<link rel="icon"
+>   href="/favicon.svg">` but no route serves it (internal/web/server.go route table) — harmless
+>   404; a favicon route+asset is a tiny upstream product decision (Code-To-CV-Agent).
+
 Session: cvagent dashboard (`cvagent serve`) deployment onto evo-x2 via SystemNix, triggered by the
 owner directive "it must be deployed on SystemNix evo-x2". The session wired the dashboard
 end-to-end at the config layer, chased an eval breakage that turned out to predate the session,

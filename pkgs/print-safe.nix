@@ -94,14 +94,37 @@ writeShellApplication {
     open(dst, 'wb').write(png)
     EOF
 
-    # imagetoraster exits 1 from a known free() crash AFTER writing valid output,
-    # so its exit code is ignored and the output is validated instead.
-    { bash -c "'$FILTER_DIR/imagetoraster' 1 lars print-safe 1 'media=A4 ColorModel=RGB' \
-      '$WORK/bw.png' > '$WORK/page.raster'" 2>/dev/null; } 2>/dev/null || true
-
-    head -c 3 "$WORK/page.raster" | grep -q '3Sa' || { echo "print-safe: invalid CUPS raster (bad magic)" >&2; exit 1; }
-    RASTER_SIZE="$(stat -c%s "$WORK/page.raster")"
-    [ "$RASTER_SIZE" -gt 50000000 ] || { echo "print-safe: raster suspiciously small ($RASTER_SIZE bytes)" >&2; exit 1; }
+    # imagetoraster exits 1 from a known free() crash, and since the
+    # 2026-11-10 incident it sometimes crashes BEFORE or MID-WRITE (0-byte
+    # and truncated outputs observed) with its stderr swallowed above -- so
+    # the exit code is ignored and the output is validated, with retries.
+    ATTEMPTS=0
+    while :; do
+      ATTEMPTS=$((ATTEMPTS + 1))
+      rm -f "$WORK/page.raster"
+      { bash -c "'$FILTER_DIR/imagetoraster' 1 lars print-safe 1 'media=A4 ColorModel=RGB' \
+        '$WORK/bw.png' > '$WORK/page.raster'" 2>/dev/null; } 2>/dev/null || true
+      if python3 - "$WORK/page.raster" <<'PYEOF' 2>/dev/null
+    import struct, sys
+    d = open(sys.argv[1], 'rb').read()
+    if d[:3] != b'3Sa':
+        sys.exit(1)
+    height = struct.unpack('<I', d[380:384])[0]
+    bytes_per_line = struct.unpack('<I', d[396:400])[0]
+    expected = 1800 + height * bytes_per_line
+    print(f"print-safe: raster {len(d)} bytes (expected {expected}, page {height} x {bytes_per_line})")
+    sys.exit(0 if len(d) == expected else 1)
+    PYEOF
+      then
+        break
+      fi
+      if [ "$ATTEMPTS" -ge 5 ]; then
+        echo "print-safe: imagetoraster produced an invalid/incomplete raster after $ATTEMPTS attempts" >&2
+        exit 1
+      fi
+      echo "print-safe: imagetoraster attempt $ATTEMPTS failed validation, retrying..." >&2
+      sleep 1
+    done
 
     "$FILTER_DIR/rastertogutenprint.5.3" 1 lars print-safe 1 \
       'media=A4 ColorModel=RGB' "$WORK/page.raster" > "$WORK/printer.bin" 2>/dev/null
