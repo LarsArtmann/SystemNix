@@ -46,7 +46,9 @@ writeShellApplication {
 
     PRINTER="Canon_MG2500_series"
     COPIES="''${2:-1}"
-    FILTER_DIR="/var/lib/cups/path/lib/cups/filter"
+    # Overridable for fault-injection tests (stub filter dir); production
+    # keeps the host CUPS filter path.
+    FILTER_DIR="''${PRINT_SAFE_FILTER_DIR:-/var/lib/cups/path/lib/cups/filter}"
     export PPD="/etc/cups/ppd/''${PRINTER}.ppd"
 
     [ -f "$1" ] || { echo "print-safe: file not found: $1" >&2; exit 1; }
