@@ -1878,6 +1878,22 @@ in
         enable = true;
       };
 
+      # Timesheet API server (timesheet serve) — event-sourced timesheet
+      # store in ~/timesheets, loopback 8109 behind the protected registry
+      # vHost timesheets.home.lan (journal-serve posture: billing data, no
+      # app auth). Runbook: docs/services/timesheets.md.
+      timesheets = {
+        enable = true;
+      };
+
+      # Invoice dashboard (invoices dashboard) — invoice SQLite store +
+      # production config.yaml of record in ~/invoices, loopback 8110 by
+      # upstream design behind the protected registry vHost
+      # invoices.home.lan. Runbook: docs/services/invoices-dashboard.md.
+      invoices-dashboard = {
+        enable = true;
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
