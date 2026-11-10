@@ -98,10 +98,14 @@
           # RE-STALE 2026-11-06 lock float: PMA@f598fc9 spec R0Vv8yx, got
           # ErtiXt04 (float-proof-20261106-000533.log); both surfaces
           # updated in the same pass.
+          # RE-STALE 2026-11-10 nixpkgs-pin revert wave: at pma@da285ff spec
+          # 7BFFSpEx, got qs1NJm2K (first-hand keep-going,
+          # ~/.cache/toplevel-build-20261110-h.log); both surfaces updated.
+          # Drop when upstream bakes qs1NJm2K.
           package =
             inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
               {
-                vendorHash = "sha256-7BFFSpExN2lPrB3+lc9fMi45/YDSwgW1Wfp8pd5tCYg=";
+                vendorHash = "sha256-qs1NJm2K593qeX4U1icn7Hbu3hqdCeLh5EC5XB9FzEo=";
               };
           user = primaryUser;
           group = "users";

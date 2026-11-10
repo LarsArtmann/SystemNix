@@ -553,9 +553,13 @@ lib.filterAttrs (_: v: v != null) {
   # got ErtiXt04 (float-proof-20261106-000533.log). The service module
   # (modules/nixos/services/projects-management-automation.nix)
   # carries the same value.
+  # RE-STALE 2026-11-10 nixpkgs-pin revert wave: at pma@da285ff spec
+  # 7BFFSpEx, got qs1NJm2K (first-hand keep-going,
+  # ~/.cache/toplevel-build-20261110-h.log). Both surfaces updated.
+  # Drop when upstream bakes qs1NJm2K.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-7BFFSpExN2lPrB3+lc9fMi45/YDSwgW1Wfp8pd5tCYg=";
+      "sha256-qs1NJm2K593qeX4U1icn7Hbu3hqdCeLh5EC5XB9FzEo=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

@@ -603,35 +603,48 @@
                 # older than 7 days when the driver flips live — the 379
                 # queued dry-run-era approvals must NOT all fire at once.
                 max_approval_age_days = 7;
-                # Fallback recipient when the posting names no contact email
-                # (typed send error "no application recipient" otherwise —
-                # 28 sendErrors by 2026-11-09 were exactly this). The
-                # monitored applications mailbox: the machine-composed
-                # application for portal-less postings lands somewhere
-                # reviewable instead of erroring forever.
-                default_to = "applications@artmann.tech";
+                # NO default_to (owner ruling 2026-11-10, the [CATCHALL]
+                # incident): a posting without a contact email must NEVER be
+                # mailed to the operator's own address — that marks the row
+                # "applied" while nothing reached the employer (165 such
+                # self-addressed applications landed in the catchall
+                # 2026-11-10 02:32-03:00, UBDS among them). The honest state
+                # is the typed ErrNoRecipient sendError (portal-form rows are
+                # already refused by the portal guard; email-less non-portal
+                # rows wait for portal-apply coverage). Re-adding a
+                # default_to pointing at ANY own address is forbidden.
                 never_reapply_rejected_companies = true;
-                # Recruiter replies must not hit the no-reply From (the
-                # relay's sending domain has no inbound mailbox). The
+                # Recruiter replies must not hit a no-reply From. The
                 # PERMANENT public identity is applications@artmann.tech
-                # (owner ruling 2026-10-27, fam.22.1 — gate-Q3: switching
-                # reply_to later orphans SentTo reply matching, so this is
-                # the ONE-TIME cutover, free while zero real sends carry
-                # it). artmann.tech MX stays Google Workspace: the address
-                # is a Google-side alias/forward (owner action, zero DNS)
-                # funneling into the polled Stalwart mailbox below; until
-                # that forward exists, replies to this address rest at
-                # Google — nothing is lost while no live application
-                # carries it.
+                # (owner ruling 2026-10-27, fam.22.1) — and since 2026-11-10
+                # it is the From itself (owner: "just send it from
+                # applications@artmann.tech"), so replies land natively at
+                # Google where the owner reads them. reply_to stays set to
+                # the SAME address: harmless once identical to From, and it
+                # preserves the SentTo reply-matching contract (fam.22.1
+                # gate-Q3 — switching identities later orphans matching).
+                # artmann.tech MX stays Google Workspace (owner ruling): the
+                # Google-side forward into the polled Stalwart mailbox below
+                # is the remaining owner leg (TODO_LIST O1 row); until it
+                # exists replies rest at Google — read by the owner, invisible
+                # to the reply loop.
                 reply_to = "applications@artmann.tech";
               };
               # Send transport: SMTP through the LOCAL postfix null client
               # (127.0.0.1:25, loopback-trusted, no AUTH) → smtp.resend.com
-              # (mail-relay module, live since 2026-09-18: real key,
-              # test send `status=sent (250)`, larsartmann.cloud verified
-              # via the send./rsend. CNAMEs). NO sops secret rides the CV
-              # unit — apps never hold the upstream credential (that is
-              # the whole point of the shared relay).
+              # (mail-relay module, live since 2026-09-18). NO sops secret
+              # rides the CV unit — apps never hold the upstream credential
+              # (that is the whole point of the shared relay).
+              # From = the public identity applications@artmann.tech (owner
+              # directive 2026-11-10, the "No reply?" complaint):
+              # artmann.tech is a Resend sending domain (domains repo
+              # resend_artmann_tech: DKIM TXT + rsend/send CNAMEs live in
+              # DNS, dig-verified 2026-11-10; MAIL FROM accepted by the
+              # relay — the end-of-DATA verdict probe still owes a re-run
+              # after the daily quota reset: the 2026-11-10 approve-above
+              # storm exhausted it). If Resend ever rejects it at DATA, the
+              # sends defer and the Gatus "Mail Relay Queue" check fires —
+              # the designed pending signal.
               # AgentMail stays a LEGACY reply surface, not the send
               # transport — its API key was never provisioned, and the
               # relay path needs zero.
@@ -641,7 +654,7 @@
                 port = 25;
                 username = "";
                 password = "";
-                from = "noreply@larsartmann.cloud";
+                from = "applications@artmann.tech";
               };
               # Reply loop + calendar feed (interview replies → /pipeline
               # Interviews stage → /calendar/interviews.ics). enabled=true
@@ -930,9 +943,11 @@
               }
             )
             (lib.mkIf
-              (!(
-                (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
-              ))
+              (
+                !(
+                  (cfg.settings.oidc.enabled or false) && (config.services.pocket-id-config.provision.enable or false)
+                )
+              )
               {
                 # Non-OIDC shape still gets the key template (P6): the store
                 # must boot wherever cv-server runs.
@@ -1621,98 +1636,100 @@
               "CV_CREDENTIALS_STORE_DIR=${cfg.reloginDesktop.checkoutDir}/data/credentials-store"
               "CHROMIUM_EXECUTABLE_PATH=${cfg.relogin.chromiumPackage}/bin/chromium"
               "NODE_PATH=${playwrightModules}/lib/node_modules"
-              "PATH=${lib.makeBinPath [
-                pkgs.bun
-                pkgs.coreutils
-                pkgs.gnugrep
-                pkgs.jq
-                pkgs.sqlite
-              ]}"
+              "PATH=${
+                lib.makeBinPath [
+                  pkgs.bun
+                  pkgs.coreutils
+                  pkgs.gnugrep
+                  pkgs.jq
+                  pkgs.sqlite
+                ]
+              }"
             ];
             # Exit contract mirrors cv-relogin: 0 ok · 10 nothing due/unseeded ·
             # 20 a due relogin failed · 30 broken store/gate.
             SuccessExitStatus = [ 10 ];
             ExecStart = pkgs.writeShellScript "cv-relogin-desktop" ''
-                                set -euo pipefail
-                                store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.reloginDesktop.checkoutDir}/data/credentials-store}"
-                                store_db="$store_dir/credentials.db"
-                                sqlite_bin="${lib.getExe pkgs.sqlite}"
-                                jq_bin="${lib.getExe pkgs.jq}"
-                                cv_bin="${lib.getExe cvPkg}"
-                                run_cv() { "$cv_bin" "$@"; }
-                                out_dir="${cfg.reloginDesktop.checkoutDir}/data/relogin-scripts"
-                                mkdir -p "$out_dir"
+              set -euo pipefail
+              store_dir="''${CV_CREDENTIALS_STORE_DIR:-${cfg.reloginDesktop.checkoutDir}/data/credentials-store}"
+              store_db="$store_dir/credentials.db"
+              sqlite_bin="${lib.getExe pkgs.sqlite}"
+              jq_bin="${lib.getExe pkgs.jq}"
+              cv_bin="${lib.getExe cvPkg}"
+              run_cv() { "$cv_bin" "$@"; }
+              out_dir="${cfg.reloginDesktop.checkoutDir}/data/relogin-scripts"
+              mkdir -p "$out_dir"
 
-                                if [ ! -f "$store_db" ]; then
-                                  echo "cv-relogin-desktop: no checkout store at $store_db — seed via the dev server's /admin/credentials/ first" >&2
-                                  exit 30
-                                fi
+              if [ ! -f "$store_db" ]; then
+                echo "cv-relogin-desktop: no checkout store at $store_db — seed via the dev server's /admin/credentials/ first" >&2
+                exit 30
+              fi
 
-                                if ! accounts="$(run_cv profile accounts --json)"; then
-                                  echo "cv-relogin-desktop: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
-                                  exit 30
-                                fi
+              if ! accounts="$(run_cv profile accounts --json)"; then
+                echo "cv-relogin-desktop: 'cv profile accounts --json' failed — cannot classify due platforms" >&2
+                exit 30
+              fi
 
-                                deadline=$(( $(date +%s) + 7 * 86400 ))
-                                seeded_any=0
-                                failed=0
-                                for platform in ${lib.concatStringsSep " " cfg.reloginDesktop.platforms}; do
-                                  if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
-                                    "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
-                                    echo "cv-relogin-desktop: could not read the checkout store read model" >&2
-                                    exit 30
-                                  fi
-                                  state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
-                                    '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
-                                  expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
-                                    '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
-                                  if [ "$seeded" = "0" ]; then
-                                    echo "cv-relogin-desktop: $platform state=$state -> skip (unseeded in the CHECKOUT store)" >&2
-                                    continue
-                                  fi
-                                  seeded_any=1
-                                  due=1
-                                  if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
-                                    exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
-                                    if [ "$exp_epoch" -gt "$deadline" ]; then
-                                      due=0
-                                    fi
-                                  fi
-                                  if [ "$due" != "1" ]; then
-                                    echo "cv-relogin-desktop: $platform state=$state -> skip (not due)"
-                                    continue
-                                  fi
-                                  echo "cv-relogin-desktop: $platform -> HEADED refresh (a browser window opens; finish 2FA/SSO there if asked)"
-                                  if [ -z "''${DISPLAY:-}" ]; then
-                                    d=$(ls /tmp/.X11-unix/X* 2>/dev/null | sed 's/.*\/X//' | sort -n | head -1)
-                                    if [ -n "$d" ]; then
-                                      export DISPLAY=":$d"
-                                    fi
-                                  fi
-                                  if [ -z "''${DISPLAY:-}" ]; then
-                                    echo "cv-relogin-desktop: no X display available — logged out? skipping" >&2
-                                    failed=1
-                                    continue
-                                  fi
-                                  out="$(run_cv profile relogin --platform "$platform" --output-dir "$out_dir" 2>&1)" && rc=0 || rc=$?
-                                  printf '%s\n' "$out" >&2
-                                  if [ "$rc" -eq 0 ]; then
-                                    echo "cv-relogin-desktop: $platform refreshed"
-                                  elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
-                                    echo "cv-relogin-desktop: WARN — '$platform' lost its stored login between gate and run" >&2
-                                  else
-                                    echo "cv-relogin-desktop: '$platform' relogin FAILED — typed reason above" >&2
-                                    failed=1
-                                  fi
-                                done
+              deadline=$(( $(date +%s) + 7 * 86400 ))
+              seeded_any=0
+              failed=0
+              for platform in ${lib.concatStringsSep " " cfg.reloginDesktop.platforms}; do
+                if ! seeded=$("$sqlite_bin" "file:$store_db?mode=ro" \
+                  "select count(*) from meta_planned_credentials_by_platform where platform = '$platform' and kind = 'password';"); then
+                  echo "cv-relogin-desktop: could not read the checkout store read model" >&2
+                  exit 30
+                fi
+                state=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                  '([.[] | select(.platform == $p)][0] // {}) | .sessionState // "unknown"')
+                expiry=$(printf '%s' "$accounts" | "$jq_bin" -r --arg p "$platform" \
+                  '([.[] | select(.platform == $p)][0] // {}) | .earliestExpiry // ""')
+                if [ "$seeded" = "0" ]; then
+                  echo "cv-relogin-desktop: $platform state=$state -> skip (unseeded in the CHECKOUT store)" >&2
+                  continue
+                fi
+                seeded_any=1
+                due=1
+                if [ "$state" = "fresh" ] && [ -n "$expiry" ]; then
+                  exp_epoch=$(date -d "$expiry" +%s 2>/dev/null || echo 0)
+                  if [ "$exp_epoch" -gt "$deadline" ]; then
+                    due=0
+                  fi
+                fi
+                if [ "$due" != "1" ]; then
+                  echo "cv-relogin-desktop: $platform state=$state -> skip (not due)"
+                  continue
+                fi
+                echo "cv-relogin-desktop: $platform -> HEADED refresh (a browser window opens; finish 2FA/SSO there if asked)"
+                if [ -z "''${DISPLAY:-}" ]; then
+                  d=$(ls /tmp/.X11-unix/X* 2>/dev/null | sed 's/.*\/X//' | sort -n | head -1)
+                  if [ -n "$d" ]; then
+                    export DISPLAY=":$d"
+                  fi
+                fi
+                if [ -z "''${DISPLAY:-}" ]; then
+                  echo "cv-relogin-desktop: no X display available — logged out? skipping" >&2
+                  failed=1
+                  continue
+                fi
+                out="$(run_cv profile relogin --platform "$platform" --output-dir "$out_dir" 2>&1)" && rc=0 || rc=$?
+                printf '%s\n' "$out" >&2
+                if [ "$rc" -eq 0 ]; then
+                  echo "cv-relogin-desktop: $platform refreshed"
+                elif printf '%s' "$out" | grep -q "no stored login credentials for relogin"; then
+                  echo "cv-relogin-desktop: WARN — '$platform' lost its stored login between gate and run" >&2
+                else
+                  echo "cv-relogin-desktop: '$platform' relogin FAILED — typed reason above" >&2
+                  failed=1
+                fi
+              done
 
-                                if [ "$failed" -ne 0 ]; then
-                                  exit 20
-                                fi
-                                if [ "$seeded_any" -eq 0 ]; then
-                                  exit 10
-                                fi
-                                exit 0
+              if [ "$failed" -ne 0 ]; then
+                exit 20
+              fi
+              if [ "$seeded_any" -eq 0 ]; then
+                exit 10
+              fi
+              exit 0
             '';
           };
         };
