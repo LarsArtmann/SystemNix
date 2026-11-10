@@ -27,6 +27,7 @@
   flake.nixosModules.offline-banner =
     {
       config,
+      pkgs,
       ...
     }:
     {
@@ -39,13 +40,19 @@
       # keys the live recipes and drop-in docs name, and a PATH whose
       # getent actually resolves (gen-995 shipped pkgs.glibc where this
       # nixpkgs keeps getent as its own package; the dns leg failed all
-      # 1448 probes while upstream's name-grep check stayed green).
+      # 1448 probes while upstream's name-grep check stayed green). The
+      # getent leg is EXACT (a real PATH entry, not a substring) so a
+      # store path merely CONTAINING "getent" cannot satisfy it; and
+      # referencing pkgs.getent here means a nixpkgs that stops shipping
+      # it fails THIS eval loudly instead of silently re-importing a
+      # phantom through a relock.
       config.assertions = [
         {
           assertion =
             let
               env = config.systemd.user.services.offline-banner.environment;
               path = env.PATH or "";
+              pathEntries = lib.splitString ":" path;
               requiredKeys = [
                 "OFFLINE_BANNER_INTERVAL"
                 "OFFLINE_BANNER_PROBE_HOST"
@@ -58,10 +65,10 @@
               ];
             in
             lib.all (k: lib.hasAttr k env) requiredKeys
-            && lib.hasInfix "getent" path
+            && lib.elem "${pkgs.getent}/bin" pathEntries
             && lib.hasInfix "coreutils" path
             && lib.hasInfix "iputils" path;
-          message = "offline-banner: the resolved unit lost the OFFLINE_BANNER_* env contract or its PATH cannot supply the probe tools (getent/coreutils/iputils — the gen-995 PATH-phantom class: the dns leg fails every probe)";
+          message = "offline-banner: the resolved unit lost the OFFLINE_BANNER_* env contract or its PATH cannot supply the probe tools (exact ${pkgs.getent}/bin entry + coreutils/iputils — the gen-995 PATH-phantom class: the dns leg fails every probe)";
         }
       ];
     };

@@ -6,6 +6,7 @@
   dankMaterialShell,
   dmsPaste,
   quotaboard,
+  offlineBanner,
   ...
 }:
 let
@@ -257,6 +258,18 @@ in
         systemnix-dual-wan = {
           src = ../../../pkgs/dms-plugins/systemnix-dual-wan;
           settings = { };
+        };
+        systemnix-banner = {
+          src = ../../../pkgs/dms-plugins/systemnix-banner;
+          # The bar-level offline-banner consumer runs the UPSTREAM script
+          # straight from the flake input (single-sourced logic — stale
+          # tell, degraded legs, offline age; the waybar.nix surface is
+          # retired, DMS is the bar, so this plugin is the live wiring of
+          # the consumer the upstream repo ships for bars).
+          settings = {
+            consumerPath = "${offlineBanner}/contrib/offline-banner-waybar";
+            maxAge = "15";
+          };
         };
         systemnix-npu = {
           src = ../../../pkgs/dms-plugins/systemnix-npu;

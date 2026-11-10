@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-banner",
+  "name": "Offline Banner",
+  "description": "Bar-level mirror of the offline-banner phase ladder: silent while fine, degraded legs while usable-but-impaired, offline age while down, and a red banner? tell when the unit's heartbeat goes stale",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "wifi_off",
+  "type": "widget",
+  "component": "./BannerWidget.qml",
+  "settings": "./BannerSettings.qml",
+  "permissions": ["settings_read"]
+}

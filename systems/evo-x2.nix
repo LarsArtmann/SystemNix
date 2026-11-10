@@ -94,6 +94,9 @@ nixpkgs.lib.nixosSystem {
           inherit (inputs) dankMaterialShell;
           dmsPaste = inputs.dms-paste;
           inherit (inputs) quotaboard;
+          # Bar-level offline-banner consumer runs the upstream script from
+          # the flake input (systemnix-banner DMS plugin, quickshell.nix).
+          offlineBanner = inputs.offline-banner;
         };
       };
     }
