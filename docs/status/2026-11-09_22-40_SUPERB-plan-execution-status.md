@@ -46,10 +46,7 @@
 
 ## 3) Deploy + live verification (P5/P6 live legs)
 
-_FILLED AFTER THE DEPLOY: generation, anchor check, timer cadence, gated
-hand-run journal lines + exit code, collector unit state, key-split proofs
-(cv-server shows BOTH env files; cv-scan/cv-agent WITHOUT the key), VM-test
-driver result, post-deploy smoke CV legs._
+**LANDED 2026-11-10 (superseded in full by docs/status/2026-11-10_05-33_SUPERB-P5-P6-live-close-out.md):** gen-995 switch 02:24 (anchor OK); daily 09:11 timer active; gated hand-run exit 10 with per-platform `skip (unseeded)` journal lines; cv-credentials-metrics collector live (cv_stored_logins{freelance-de}=1, result mirrors age 0–1s); key-split verified per unit file (cv-server = cv-env + cv-oidc + cv-store-key-env; cv-relogin = cv-store-key-env only; cv-scan/cv-agent keyless); store booted activeKeyID=v1; post-deploy smoke CV textfile leg PASS; VM driver local-run blocked by parallel lock drift — fix committed 4a1e40967, run rides CI.
 
 ## 4) Owner gates still open (unchanged from plan §8)
 
