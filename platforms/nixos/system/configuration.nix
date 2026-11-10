@@ -566,6 +566,14 @@ in
         # repo-scoped sync PAT suffices (media-atlas precedent). Phase 5
         # attaches the push mirror on the next deploy.
         "pim-sync"
+        # Native-since-inception (2026-11-10): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # Only .github/dependabot.yml (no workflow files), so the
+        # repo-scoped sync PAT suffices (pim-sync precedent). Push mirror
+        # attached by hand at creation (phase-5-identical API call, 8h +
+        # sync_on_commit) and verified flowing; phase 5 stays idempotent.
+        "business-networking"
       ];
       immich.enable = true;
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
