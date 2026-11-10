@@ -4,6 +4,7 @@
 
 **Created:** 2026-11-09 19:45 CET
 **EXECUTING (instance executing P1-P11 agent-doable scope, 2026-11-09 21:43 CET, HEAD `5ddd650a9`):** executing (see AGENTS.md plan-execution tombstone)
+**EXECUTED (P5+P6 landed 2026-11-10 02:24 CET, gen-995):** deploy rode the pressure-gate retry loop after the failed-float blockade was pinned back (lock → aeb919bbf pairing, committed); live battery 05:22 green — daily timer, exit-10 unseeded semantics, credentials collector + .prom, key-split per unit file, store boot on the scoped key, smoke textfile leg PASS. Close-out: docs/status/2026-11-10_05-33_SUPERB-P5-P6-live-close-out.md. Owner gates (§10 decision pack, seeding, auth_marker) remain open by design.
 
 - **Status:** PLANNED (not executing yet — owner gates below)
 - **Author:** Crush session (hf:deepseek-ai/DeepSeek-V4.1-Flash-1017)

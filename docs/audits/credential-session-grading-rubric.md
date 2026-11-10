@@ -48,6 +48,11 @@ sanity-check one known value through the same pipeline first
 | D5 | 0 (zero pins) | 8 (VM leg + 2 eval checks + negative proof) |
 | D6 | 6 (UI works; no walkthrough) | 8 (walkthrough + restore drill documented; no CLI rotate yet) |
 
-_The "after" column becomes official when the deploy + live verification
-(P5) lands; until then those grades are design claims, evidence class
-`read`._
+_The "after" column is OFFICIAL since 2026-11-10 02:24 (gen-995 switch;
+live battery 05:22): D1/D2/D4 now carry evidence class `probed` (key-split
+verified per live unit file + cv-env keyless grep + store boot on the
+scoped key; daily 09:11 timer + unseeded exit-10 semantics + per-platform
+journal lines observed; textfile metrics scraped with the post-deploy
+smoke leg PASS), D5 keeps `pinned` (VM legs + eval checks, negative-proven),
+D6 keeps `ran` (drills). D3 stays owner-gated (single-source-of-truth
+decision pack §10)._
