@@ -346,12 +346,13 @@ let
   # (probe: `nix build nixpkgs#taskchampion-sync-server` — green WITHOUT
   # this overlay means LIFT).
   taskchampionPkgConfigOverlay = _final: prev: {
-    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (
-      old: {
-        nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-        buildInputs = (old.buildInputs or [ ]) ++ [ _final.sqlite _final.zstd ];
-      }
-    );
+    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+      buildInputs = (old.buildInputs or [ ]) ++ [
+        _final.sqlite
+        _final.zstd
+      ];
+    });
   };
   # patchelfDefaultRestoreOverlay (2026-11-10 lock float — nixpkgs f4a03c00
   # regression, first-hand proof log ~/.cache/lockfloat/float-proof-20261110-043731.log):
@@ -365,21 +366,30 @@ let
   # nixpkgs routes `patchelf` back to the 0.19 line (probe:
   # `nix eval nixpkgs#patchelf.version` → 0.19.* means LIFT).
   patchelfDefaultRestoreOverlay = _final: prev: {
-    # Stage-aware guard (2026-11-10, probe-proven this session): a bare
-    # `patchelf = prev.patchelfUnstable` broke perSystem apps eval —
-    # `.#apps.x86_64-linux.deploy.program` died "expected a set but found a
-    # function: lambda @ customisation.nix:873" inside fetchurl/boot.nix
-    # (the boot fixed-point exposes patchelfUnstable as an unapplied
-    # callPackage lambda). Neutralizing the line eval'd the deploy app GREEN
-    # (rc=0, store path) — one-line flip, restored, this guard is the
-    # durable form: final-stage consumers get 0.19.2 as before; boot-stage
-    # resolution falls back to the stage's own patchelf (the pre-overlay
-    # behavior for everything the bootstrap builds).
+    # Final-set-only gate (2026-11-10, full-trace-proven). User overlays are
+    # applied inside EVERY nixpkgs bootstrap stage, not just the final set:
+    # pkgs/stdenv/linux/default.nix stageFun passes `inherit overlays` into
+    # all-packages.nix per stage. In a bootstrap stage patchelfUnstable
+    # CANNOT evaluate (its fetchFromGitHub src has no fetchurl-backed
+    # fetcher there; stage fetchurl = fetchurl/boot.nix), which broke every
+    # perSystem app eval: .#apps.x86_64-linux.deploy.program → writeShell
+    # Application → bash → bootstrap-stage2 gcc → binutils-patchelfed-ld →
+    # patchelfUnstable src → "expected a set but found a function: lambda @
+    # customisation.nix:873". The earlier isFunction guard was ineffective:
+    # stages expose patchelfUnstable as a fully-applied callPackage
+    # derivation (isFunction=false), so the guard passed it through and the
+    # breakage survived at HEAD (that guard's "probe-proven green" claim did
+    # not reproduce). Gate on the stage stdenv name instead: "stdenv-linux"
+    # is the final package set (the same idiom nixpkgs' own patchelf
+    # default.nix uses for doCheck); bootstrap stages (bootstrap-stage*)
+    # keep their own patchelf, the pre-overlay behavior for everything the
+    # bootstrap builds.
     patchelf =
       let
         p = prev.patchelfUnstable or null;
+        inFinalSet = prev.stdenv.name or "" == "stdenv-linux";
       in
-      if p == null || builtins.isFunction p then prev.patchelf else p;
+      if inFinalSet && p != null && !(builtins.isFunction p) then p else prev.patchelf;
   };
 in
 [
