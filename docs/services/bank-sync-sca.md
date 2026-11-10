@@ -59,7 +59,7 @@ uses:
 
    ```bash
    BIN=$(systemctl cat bank-sync.service | sed -n 's/^ExecStart=//p' | awk '{print $1}')
-   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/bank-sync-env)" \
+   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/rendered/bank-sync-env)" \
      "$BIN" sca status
    ```
 
@@ -77,7 +77,7 @@ uses:
    prompt; sends SMS/WhatsApp/voice to the registered phone):
 
    ```bash
-   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/bank-sync-env)" \
+   sudo env "BANK_SYNC_WISE_API_KEY=$(sudo sed -n 's/^BANK_SYNC_WISE_API_KEY=//p' /run/secrets/rendered/bank-sync-env)" \
      "$BIN" sca approve
    ```
 
