@@ -1878,6 +1878,16 @@ in
         enable = true;
       };
 
+      # FULL auto-sync: bank-sync's synced bank facts flow into the journal
+      # kernel every 15 min (mesh-contract export as the bank-sync user →
+      # atomic staging → kernel import + reconcile as the primary user).
+      # Booking judgment stays human (tier-3 Exceptions queue); the pipeline
+      # itself is unattended. Owner directive 2026-11-10 ("make FULL
+      # auto-sync work"). Runbook: docs/services/journal.md.
+      journal-import = {
+        enable = true;
+      };
+
       # Timesheet API server (timesheet serve) — event-sourced timesheet
       # store in ~/timesheets, loopback 8109 behind the protected registry
       # vHost timesheets.home.lan (journal-serve posture: billing data, no
