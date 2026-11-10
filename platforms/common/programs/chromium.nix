@@ -14,42 +14,46 @@ in
   # NOTE: This Home Manager module is only used on Darwin (macOS).
   # On NixOS, extension management is handled system-wide via programs.chromium
   # in platforms/nixos/programs/chrome.nix
-  programs.chromium = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    enable = true;
-    # Privacy-hardened Chromium for declarative extension support. Was
-    # pkgs.brave: REMOVED from nixpkgs at the f4a03c00 float ("no
-    # committers among its maintainers to unblock security issues");
-    # ungoogled-chromium is the surviving hardened-Chromium option HM can
-    # manage extensions for. Revisit if brave is ever re-added.
-    package = pkgs.ungoogled-chromium;
+  # PARKED on darwin (2026-11-10, nixpkgs f4a03c00 float): nixpkgs removed
+  # brave AND has no Chromium-family browser on aarch64-darwin at all
+  # (chromium + ungoogled-chromium are platforms = linux only; vivaldi too;
+  # HM extension management does not work with Google Chrome). The tryEval
+  # gate parks the whole block while brave is a removed-package throw alias
+  # (a bare `pkgs ? brave` is TRUE for throw aliases) and self-revives it
+  # the day brave returns.
+  programs.chromium =
+    lib.mkIf (pkgs.stdenv.hostPlatform.isDarwin && (builtins.tryEval pkgs.brave).success)
+      {
+        enable = true;
+        package = pkgs.brave; # Use Brave as primary Chromium-based browser for extension support
 
-    # Command-line arguments for performance and privacy
-    commandLineArgs = [
-      "--enable-features=AcceleratedVideoEncoder,VaapiVideoDecoder"
-      "--ignore-gpu-blocklist"
-      "--enable-zero-copy"
-      "--disable-background-timer-throttling"
-      "--disable-backgrounding-occluded-windows"
-      "--disable-renderer-backgrounding"
-    ];
+        # Command-line arguments for performance and privacy
+        commandLineArgs = [
+          "--enable-features=AcceleratedVideoEncoder,VaapiVideoDecoder"
+          "--ignore-gpu-blocklist"
+          "--enable-zero-copy"
+          "--disable-background-timer-throttling"
+          "--disable-backgrounding-occluded-windows"
+          "--disable-renderer-backgrounding"
+        ];
 
-    # Extensions to install declaratively
-    extensions = [
-      # YouTube Shorts Blocker - hides Shorts from homepage, subscriptions, search
-      { inherit (ytShortsBlocker) id; }
+        # Extensions to install declaratively
+        extensions = [
+          # YouTube Shorts Blocker - hides Shorts from homepage, subscriptions, search
+          { inherit (ytShortsBlocker) id; }
 
-      # uBlock Origin - ad blocker (optional, uncomment if desired)
-      # { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; }
+          # uBlock Origin - ad blocker (optional, uncomment if desired)
+          # { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; }
 
-      # Dark Reader - dark mode for all websites (optional)
-      # { id = "eimadpbcbfnmbkopoojfkbdbjgkahlgl"; }
-    ];
+          # Dark Reader - dark mode for all websites (optional)
+          # { id = "eimadpbcbfnmbkopoojfkbdbjgkahlgl"; }
+        ];
 
-    # Dictionaries for spell checking
-    dictionaries = [
-      pkgs.hunspellDictsChromium.en_US
-    ];
-  };
+        # Dictionaries for spell checking
+        dictionaries = [
+          pkgs.hunspellDictsChromium.en_US
+        ];
+      };
 
   # Alternative: Configure ungoogled-chromium instead of Brave
   # programs.chromium.package = pkgs.ungoogled-chromium;
