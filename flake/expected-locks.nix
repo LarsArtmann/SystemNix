@@ -26,7 +26,7 @@
 {
   art-dupl = "5412d55d439e8d3b50ddf04d3a2f874db9a574fc";
   art-dupl-src = "5412d55d439e8d3b50ddf04d3a2f874db9a574fc";
-  bank-sync = "4b0be19c81086b68492e61d2b7607448b3513f30";
+  bank-sync = "12ca5df254212a23b0316112ae486bc2810cdac0";
   branching-flow = "440ab6a99930f557771ef240ff16bdd3a32d7e0b";
   brandid-lint = "cf71d5d24ed89e6a97289726d388159992e3c2b0";
   browser-history = "27134e8d5a01f5b3b34642c4bea561205e4aa21b";

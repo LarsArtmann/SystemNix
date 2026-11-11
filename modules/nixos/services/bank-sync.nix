@@ -285,15 +285,16 @@
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = [ (lib.getExe checkEncryptionKey) ];
-                # Wise Strong Customer Authentication (SCA) one-time token (OTT).
-                # Wise gates SCA-protected endpoints (balance statements for
-                # UK/EEA profiles) behind a 403 challenge roughly every 90 days;
-                # approval happens in the Wise app and the OTT is single-use, so
-                # it must never live in sops or the nix store. The leading "-"
-                # makes the absent file a no-op; systemd reads EnvironmentFile
-                # as PID 1, so the drop-in can be root-owned 0400. mkMerge
-                # appends to upstream's EnvironmentFile list.
-                EnvironmentFile = [ "-/var/lib/bank-sync-sca/token.env" ];
+                # SCA break-glass OTT drop-in REMOVED (2026-11-11, the
+                # stale-token poison law): presenting a stale token makes Wise
+                # answer 403 REJECTED with NO fresh OTT — byte-identical to a
+                # "tokenless" challenge — which cost ~6,300 unapprovable
+                # challenges from 2026-09-14 to 2026-11-10 while a 2-month-old
+                # token.env sat here. Break-glass tokens are single-session:
+                # the file was renamed away on the host, the unit no longer
+                # loads it, and approvals happen in the Wise app / dashboard
+                # panel. If a future break-glass window ever needs an env
+                # token again, it MUST be removed in the same session.
               }
               (harden {
                 MemoryMax = "512M";
@@ -337,12 +338,11 @@
                 # concatenation (the 2026-08-29 draft's ExecStart bug).
                 ExecStart = "${lib.getExe cfg.package} canary --provider all --json";
                 # Same secret env as the daemon (Wise key; the encryption key
-                # rides along harmlessly) plus the optional SCA OTT drop-in so
-                # a pending approval clears the canary exactly like the daemon.
-                EnvironmentFile = [
-                  envTemplate.path
-                  "-/var/lib/bank-sync-sca/token.env"
-                ];
+                # rides along harmlessly). The SCA OTT drop-in was removed with
+                # the daemon's (stale-token poison law, 2026-11-11) — a canary
+                # carrying a stale token reports tokenless challenges exactly
+                # like the daemon did, masking real approvals.
+                EnvironmentFile = [ envTemplate.path ];
                 # Post-mortem report next to the DB (bank-sync-owned dataDir;
                 # weekly JSON lines, btrbk-pool snapshots it with the DB).
                 StandardOutput = "append:${cfg.dataDir}/canary-last.json";
@@ -543,12 +543,11 @@
                       "BANK_SYNC_PAPERLESS_URL=http://127.0.0.1:${toString ports.paperless}"
                     ];
                     # Wise key + encryption key from the daemon env, the archive
-                    # token from the runtime-minted tmpfs env file, optional SCA
-                    # OTT drop-in (statements ride the same challenge flow).
+                    # token from the runtime-minted tmpfs env file. The SCA OTT
+                    # drop-in was removed with the daemon's (poison law, 2026-11-11).
                     EnvironmentFile = [
                       envTemplate.path
                       "/run/bank-sync-paperless/env"
-                      "-/var/lib/bank-sync-sca/token.env"
                     ];
                   }
                   (harden {
@@ -1026,6 +1025,25 @@
                     "[BODY] == pat(*\nbank_sync_sca_approval_pending 0\n*)"
                   ];
                   alert = "Bank-Sync: a Wise SCA approval is pending — statements paused while the dashboard stays green. Approve via the dashboard approval flow or the Wise app (~90-day cadence, runbook docs/services/bank-sync-sca.md); the one-time token is never surfaced here.";
+                }
+                # Tokenless-streak sentinel (M11.3/M4): the gauge counts
+                # consecutive cycles whose SCA challenges carried NO one-time
+                # token — the stale-break-glass signature (a presented token
+                # Wise keeps rejecting without issuing a fresh one). Any
+                # non-zero value breaks the anchored zero-line pattern, so the
+                # alert fires on the FIRST poisoned cycle, not a threshold
+                # later. The remediation text names the audit order the law
+                # requires (environ + EnvironmentFiles before blaming Wise).
+                {
+                  name = "Bank-Sync SCA Tokenless Streak";
+                  group = "Finance";
+                  url = "http://localhost:${toString ports.bank-sync}/metrics";
+                  interval = "5m";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[BODY] == pat(*\nbank_sync_sca_tokenless_streak_cycles 0\n*)"
+                  ];
+                  alert = "Bank-Sync: an SCA challenge cycle carried NO one-time token — the stale-break-glass signature (a presented token Wise rejects without issuing a fresh OTT; the 2026-09..11 incident class). Audit /proc/<pid>/environ and every EnvironmentFile for a stale wise.sca_approval_token BEFORE blaming Wise; runbook docs/services/bank-sync-sca.md.";
                 }
                 # Sustained-outage sentinel: bank_sync_sync_sustained_failure
                 # flips to 1 once any provider fails >= 4 consecutive sync
