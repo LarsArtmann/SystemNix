@@ -135,6 +135,13 @@ bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2
   (committed; dry-run default, `--apply`, exact-size verified; fixture-tested ×3 legs) folds Google-named
   files into `part-NN.zip`; the `takeout-g1-rename` systemd --user loop applies it every 5 min, exits at
   23/23 → G1 green → `takeout-verify.sh` (G2). `takeout-g1-watch` STOPPED 17:44 (superseded).
+- **20:15 root cause CLOSURED: the 302 is a `rart` re-auth interstitial** (Location params: passive/osid/
+  continue/followup/rart) — Google demands INTERACTIVE account re-verification ("Verify it's you") for
+  Takeout downloads regardless of client: curl, curl+SAPISIDHASH, headless chromium (cookies verified
+  applied), and `curl_chrome150` (Chrome TLS/HTTP2 impersonation via nixpkgs curl-impersonate 2.1.1) ALL
+  land on the same wall with the same shape. The step-up is password-interactive by design — only the
+  owner can clear it, in their browser, likely prompted on the FIRST click. D3d flow unchanged; expected
+  UX: first click may prompt "Verify it's you" → complete once → the rest download plain.
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
 re-fetch completed parts. If a link exhausts its download count: request a NEW export (same selection)
