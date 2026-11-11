@@ -132,11 +132,15 @@ let
 
   cases = [
     {
-      name = "oneshot-carries-daemon-env-minted-token-plus-sca-dropin";
+      # The SCA token.env drop-in was RETIRED with the poison law
+      # (f129d9ba9: the 2-month-old stale token cost ~6,300 unapprovable
+      # transactions) — this leg now asserts its ABSENCE so it can never
+      # silently return.
+      name = "oneshot-carries-daemon-env-minted-token-sca-dropin-retired";
       pass =
         builtins.elem "/run/secrets/rendered/bank-sync-env" envFiles
         && builtins.elem "/run/bank-sync-paperless/env" envFiles
-        && builtins.elem "-/var/lib/bank-sync-sca/token.env" envFiles
+        && !(builtins.elem "-/var/lib/bank-sync-sca/token.env" envFiles)
         && !(builtins.elem "/run/secrets/rendered/bank-sync-paperless-env" envFiles);
     }
     {
