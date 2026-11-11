@@ -1,6 +1,7 @@
 # SUPERB — Send-Hardening Residue & Mail-Restore Closure Pareto Plan
 
 **Created:** 2026-11-11 11:38 CET
+**EXECUTING (instance residue-execution session, e9c748be0, 2026-11-11 11:43 CET, HEAD `e9c748be0`):** executing (see AGENTS.md plan-execution tombstone)
 **Status:** PLANNED (owner gate embedded at the head — G-RESEND is theirs)
 **Author:** the 2026-11-11 send-hardening closure session (supersedes the residue sections of `docs/status/2026-11-11_09-20_send-hardening-closure-full-session-status.md` §f).
 **Scope:** the send-hardening / mail-restore residue ONLY. The at-most-once chain is LIVE (gen-1000, anchored, exit 0, shadow-warns zero) — this plan ships the REMAINDER: the misroute tooling, the Resend domain restore, the triage execution, and the observability/polish. Foreign reds (crm-server CPU, node-exporter journal-rate, portalapply lint, ateam cookie.go, portal-probe binary churn) are FLAGGED to owning sessions, never planned here.
