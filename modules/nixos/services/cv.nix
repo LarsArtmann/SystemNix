@@ -176,7 +176,14 @@
       # upstream re-pin), so the documented drop condition is met: the shim
       # was tracking a rev whose node graph upstream had already re-baked.
       # Re-add ONLY via fresh first-hand nix-hash-fix evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # NEW shim 2026-11-11 (pin-lift proof): the cv float to 2c25d0a3
+      # re-staled the FOD under our graph — spec 78uA13Cb (upstream-baked at
+      # that rev, correct for its own lock context), got ivrMAI3D (toplevel
+      # keep-going, pin-lift proof3). Drop when upstream bakes the
+      # through-our-lock hash.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-ivrMAI3DMTcjSWYXYoqMdWYU+7kTw7Xa2fet1oQhvAo=";
+      };
     in
     {
       imports = [

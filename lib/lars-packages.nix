@@ -399,9 +399,11 @@ lib.filterAttrs (_: v: v != null) {
   # NEW shim 2026-11-05 float wave: at library-policy@72ed2d4 spec
   # jKv5SHgJ, got mHS57Ha6 (float-proof-20261106-000533.log). Drop when
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
+  # RE-STALE 2026-11-11 pin-lift wave: at 088aaf2 spec mHS57Ha6,
+  # got xOKxcFQm (pin-lift toplevel keep-going proof).
   library-policy =
     flakePkgShim inputs.library-policy "default"
-      "sha256-mHS57Ha68nHslctC9qB/sE1OCKaZDTXt3lBeT6t5S8E=";
+      "sha256-xOKxcFQmN20CCGF/LY3D4Y2iLFyC+3HM2AirgBfY6N8=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -434,9 +436,13 @@ lib.filterAttrs (_: v: v != null) {
   # keep-going, ~/.cache/lockfloat/float-proof-20261026-161006.log).
   # RE-STALE 2026-11-05 float wave: at project-dependency-graph@8335670
   # spec oS6SRESQ, got S6Brmn7w (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-11 pin-lift wave: at 05e5b1a spec S6Brmn7w,
+  # got EQqX6jma (pin-lift toplevel keep-going proof — note this EQUALS the
+  # hash upstream's own vendorHash.nix now bakes; the shim survives because
+  # pdg's go-nix-helpers/nixpkgs edges re-derive the FOD under our graph).
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-S6Brmn7wvBqU29AmZ3e6nc+z9CJ7bdUdYIOmZD7YaL4=";
+      "sha256-EQqX6jmabKmZzEP3mf07oTjk1GQI4TCgt9RhkjkJz14=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
