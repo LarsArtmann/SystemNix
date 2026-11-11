@@ -2199,8 +2199,7 @@ in
       EMAILS_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-user-emails.json" (builtins.toJSON cfg.userEmails))}
 
       existing_keys=$(mktemp)
-      existing_emails=$(mktemp)
-      trap 'rm -f "$existing_keys" "$existing_emails"' EXIT
+      trap 'rm -f "$existing_keys"' EXIT
 
       for user in $(jq -r 'keys[]' "$KEYS_FILE"); do
         echo "Syncing SSH keys for Forgejo user: $user"
@@ -2244,42 +2243,47 @@ in
       done
 
       # The forge verifies signed commits by resolving the COMMITTER EMAIL to
-      # an account and then to that account's registered keys — an email
-      # missing from the account renders every SSH-signed commit
-      # "No known key found for this signature in database" even when the
-      # signing key itself is registered (webphone-android, 2026-11-11).
-      # Emails are only ever ADDED here; removal (and the primary address)
-      # stays a manual account-settings decision.
+      # an account (an activated email_address row) BEFORE any key is
+      # consulted — an email missing from the account renders every
+      # SSH-signed commit "No known key found for this signature in
+      # database" even when the signing key is registered and verified
+      # (webphone-android, 2026-11-11). Forgejo 15 has NO API to add emails
+      # (the admin route allows GET/DELETE only — POST 405s, probed
+      # 2026-11-11), so missing rows are INSERTed directly in the forge DB:
+      # activated, never primary. Emails are only ever ADDED here; removal
+      # (and the primary address) stays a manual account-settings decision.
+      DB="${stateDir}/data/forgejo.db"
       for user in $(jq -r 'keys[]' "$EMAILS_FILE"); do
         echo "Syncing commit emails for Forgejo user: $user"
 
-        curl -sf --compressed -H "Authorization: token $FORGEJO_TOKEN" \
-          "${forgejoUrl}/api/v1/admin/users/$user/emails" > "$existing_emails"
+        user_id=$(curl -sf --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+          "${forgejoUrl}/api/v1/users/$user" | jq -r '.id')
+        if ! [[ "$user_id" =~ ^[0-9]+$ ]]; then
+          echo "  ✗ Could not resolve forge user id for '$user' (got: '$user_id')"
+          exit 1
+        fi
 
         mapfile -t emails < <(jq -r --arg user "$user" '.[$user][]' "$EMAILS_FILE")
 
         for email in "''${emails[@]}"; do
           [[ -z "$email" ]] && continue
+          if [[ "$email" == *"'"* ]]; then
+            echo "  ✗ Email contains a quote, refusing to interpolate: $email"
+            exit 1
+          fi
 
-          if [ "$(jq --arg email "$email" 'any(.[]; .email == $email)' "$existing_emails")" = "true" ]; then
+          state=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
+          if [ "$state" = "present" ]; then
             echo "  ✓ Email already exists: $email"
             continue
           fi
 
-          response=$(curl -s --compressed -w "\n%{http_code}" \
-            -X POST \
-            -H "Authorization: token $FORGEJO_TOKEN" \
-            -H "Content-Type: application/json" \
-            "${forgejoUrl}/api/v1/admin/users/$user/emails" \
-            -d "$(jq -n --arg email "$email" '{emails: [$email]}')")
-
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
-
-          if [[ "$http_code" == "200" || "$http_code" == "201" ]]; then
-            echo "  ✓ Added email: $email"
+          sqlite3 "$DB" "PRAGMA busy_timeout=5000; INSERT INTO email_address (uid, email, lower_email, is_activated, is_primary) SELECT $user_id, '$email', lower('$email'), 1, 0 WHERE NOT EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email'));"
+          state=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
+          if [ "$state" = "present" ]; then
+            echo "  ✓ Added email (activated): $email"
           else
-            echo "  ✗ Failed to add email (HTTP $http_code): $body"
+            echo "  ✗ Failed to add email: $email"
             exit 1
           fi
         done
@@ -2298,7 +2302,6 @@ in
       # phases above own existence.
       VERIFIED_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-verified-signing-keys.json" (builtins.toJSON cfg.verifiedSigningKeys))}
 
-      DB="${stateDir}/data/forgejo.db"
       for user in $(jq -r 'keys[]' "$VERIFIED_FILE"); do
         echo "Marking signing keys verified for Forgejo user: $user"
         mapfile -t fps < <(jq -r --arg user "$user" '.[$user][]' "$VERIFIED_FILE")
