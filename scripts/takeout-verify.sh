@@ -117,18 +117,21 @@ size_band() {
     LESS1MB) echo "1 1600000"; return ;;
     '')
       echo "expected-size string empty (absent product)"; return 1 ;;
+    *[!0-9]*)
+      amount=$(echo "$spec" | awk '{print $1}')
+      unit=$(echo "$spec" | awk '{print $2}')
+      case $unit in
+        GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
+        MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
+        KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
+        *) die "unknown size unit: $spec" ;;
+      esac
+      lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
+      hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
+      echo "$lo $hi"
+      ;;
+    *) echo "$spec $spec" ;;  # plain integer = EXACT size (ingested from the page)
   esac
-  amount=$(echo "$spec" | awk '{print $1}')
-  unit=$(echo "$spec" | awk '{print $2}')
-  case $unit in
-    GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
-    MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
-    KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
-    *) die "unknown size unit: $spec" ;;
-  esac
-  lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
-  hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
-  echo "$lo $hi"
 }
 
 write_products_tsv() {

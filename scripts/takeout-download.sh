@@ -57,12 +57,14 @@ readonly PARTS_MANIFEST='
 22 50 GB
 23 49 GB'
 
-# expected-size-string -> bytes_lo bytes_hi (band is sanity-only; CRC is truth)
+# expected-size-spec -> bytes_lo bytes_hi. Plain integers (from the page's
+# data-size attributes) are EXACT: lo == hi. String units get a ±15% band;
+# CRC + count gates in takeout-verify.sh are the real integrity check.
 size_band() {
   local spec=$1 lo hi
   case $spec in
     LESS1MB) lo=1; hi=1600000 ;;
-    *)
+    ''|*[!0-9]*)
       local amount unit
       amount=$(echo "$spec" | awk '{print $1}')
       unit=$(echo "$spec" | awk '{print $2}')
@@ -75,6 +77,7 @@ size_band() {
       lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
       hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
       ;;
+    *) lo=$spec; hi=$spec ;;
   esac
   echo "$lo $hi"
 }
@@ -98,38 +101,62 @@ init_staging() {
   log "staging ready at $root (parts.tsv: $nparts_total parts)"
 }
 
-# build urls.txt from a saved Takeout page if the owner dropped links.html
+# build urls.txt from a saved Takeout page if the owner dropped links.html.
+# Prefers data-download-uri attributes (exactly the part buttons, page order,
+# excludes the href-only "See report" link); falls back to href forms.
 extract_links() {
-  local root=$1 html urls
-  html=$root/links.html
-  urls=$root/urls.txt
-  local n
+  local root=$1 html=$root/links.html urls=$root/urls.txt n uris
   n=$(grep -c '^[[:space:]]*https\?://' "$urls" 2>/dev/null || true)
   [ "$n" -gt 0 ] && return 0
   [ -f "$html" ] || return 1
-  {
-    echo '# extracted from links.html (page order preserved) — hand-verify the count'
-    grep -o 'https://takeout\.google\.com/takeout/download/[^"'\''<> ]*' "$html" \
-      | sed 's/&amp;/\&/g' | awk '!seen[$0]++'
-  } > "$urls"
+  uris=$(grep -o 'data-download-uri="[^"]*"' "$html" \
+    | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g')
+  if [ -z "$uris" ]; then
+    uris=$(grep -o 'https\?://takeout\.google\.com/takeout/download[^"'\''<> ]*' "$html" \
+      | sed 's/&amp;/\&/g' | awk '!seen[$0]++')
+    [ -n "$uris" ] || { log "WARN: no takeout download links found in $html"; return 1; }
+    log "WARN: page carried only href forms — verify the count excludes the See-report link"
+  fi
+  uris=$(echo "$uris" | sed 's#^takeout/#https://takeout.google.com/takeout/#')
+  { echo '# extracted from links.html (page order preserved) — hand-verify the count'; echo "$uris"; } > "$urls"
   chmod 600 "$urls"
   log "extracted $(grep -c '^[[:space:]]*https' "$urls" || true) download link(s) from links.html -> urls.txt"
 }
 
+# ingest a saved manage-archives page INTO exact manifests: rewrites urls.txt
+# AND parts.tsv from the data-download-uri / data-size / data-filename triplets
+# (exact byte sizes beat the embedded rounded manifest; filenames recorded).
+ingest_html() {
+  local root=$1 html=$root/links.html triples count
+  [ -f "$html" ] || die "no $html to ingest"
+  chmod 600 "$html"
+  triples=$(paste -d'\t' \
+    <(grep -o 'data-download-uri="[^"]*"' "$html" | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g; s#^takeout/#https://takeout.google.com/takeout/#') \
+    <(grep -o 'data-size="[^"]*"' "$html" | sed 's/^data-size="//; s/"$//') \
+    <(grep -o 'data-filename="[^"]*"' "$html" | sed 's/^data-filename="//; s/"$//'))
+  count=$(echo "$triples" | wc -l)
+  [ "$count" -ge 1 ] || die "no data-download-uri triplets in $html (is this the manage-archives page?)"
+  { echo '# one download link per line, Takeout page order (ingested from links.html)'; echo "$triples" | awk -F'\t' '{print $1}'; } > "$root/urls.txt"
+  printf '# part\texpected\tfilename\n' > "$root/parts.tsv"
+  echo "$triples" | awk -F'\t' '{ printf "%d\t%s\t%s\n", NR, $2, $3 }' >> "$root/parts.tsv"
+  chmod 600 "$root/urls.txt" "$root/parts.tsv"
+  log "ingested $count part(s) from links.html: urls.txt + parts.tsv (exact sizes + filenames)"
+}
+
 cmd_status() {
-  local root=$1 total=0 ok=0 spec lo hi size name state
+  local root=$1 total=0 ok=0 spec lo hi size name state filename
   [ -d "$root/zips" ] || die "no staging at $root (run init first)"
-  while IFS=$'\t' read -r part spec; do
+  while IFS=$'	' read -r part spec filename; do
     case $part in ''|'#'*) continue ;; esac
     total=$((total + 1))
     name=$(printf 'part-%02d.zip' "$part")
     size=0
     [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
-    read -r lo hi <<< "$(size_band "$spec")"
+    read -r lo hi <<< "$(size_band "$(echo "$spec" | awk '{print $1}')")"
     if [ "$size" -ge "$lo" ] && [ "$size" -le "$hi" ]; then state=OK; ok=$((ok + 1))
     elif [ "$size" -eq 0 ]; then state=MISSING
     else state="IN-BAND? ($size bytes, band $lo..$hi)"; fi
-    printf '%-14s %12s bytes  %s\n' "$name" "$size" "$state"
+    printf '%-14s %12s bytes  %-8s %s\n' "$name" "$size" "$state" "${filename:-}"
   done < "$root/parts.tsv"
   log "parts in band: $ok/$total"
   [ "$ok" -eq "$total" ]
@@ -154,12 +181,12 @@ cmd_start() {
     log "WARN: no cookies.txt — proceeding WITHOUT auth (works only for pre-signed links)"
   fi
 
-  local part spec name url attempt rc size lo hi
-  while IFS=$'\t' read -r part spec; do
+  local part spec filename name url attempt rc size lo hi
+  while IFS=$'\t' read -r part spec filename; do
     case $part in ''|'#'*) continue ;; esac
     name=$(printf 'part-%02d.zip' "$part")
     url=$(sed -n '/^[[:space:]]*https\?:\/\//p' "$urls" | sed -n "${part}p")
-    read -r lo hi <<< "$(size_band "$spec")"
+    read -r lo hi <<< "$(size_band "$(echo "$spec" | awk '{print $1}')")"
 
     size=0
     [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
@@ -214,6 +241,7 @@ main() {
   local root=$1 cmd=$2
   case $cmd in
     init) init_staging "$root" ;;
+    ingest-html) init_staging "$root"; ingest_html "$root" ;;
     start)
       local attempts=$DEFAULT_ATTEMPTS
       [ "${3:-}" = "--attempts" ] && attempts=${4:-$DEFAULT_ATTEMPTS}
