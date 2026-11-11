@@ -87,6 +87,17 @@ echo "$OUT" | grep -q "VACUUM skipped, headroom" &&
 [ ! -f "$D6/.retention-vacuum-stamp" ] &&
   pass "leg6 no stamp on skip" || fail "leg6 stamp written on skip"
 
+# ── Leg 7: batch size 1 forces the multi-batch loop to converge ──
+D7=$(mktemp -d)
+make_db "$D7/monitor365.duckdb" TIMESTAMP
+OUT=$(run_retention "$D7" RETENTION_BATCH_SIZE=1 RETENTION_MAX_BATCHES=10)
+echo "$OUT" | grep -q "batch 1 deleted 1" &&
+  pass "leg7 per-batch line" || fail "leg7 per-batch line missing: $OUT"
+echo "$OUT" | grep -q "batches: 2; deleted: 2" &&
+  pass "leg7 loop converged in 2 batches" || fail "leg7 convergence wrong: $OUT"
+echo "$OUT" | grep -q "rows remaining: 1" &&
+  pass "leg7 rows remaining" || fail "leg7 rows wrong: $OUT"
+
 if [ "$FAILURES" -eq 0 ]; then
   echo "monitor365-retention fixture: ALL LEGS GREEN"
   exit 0

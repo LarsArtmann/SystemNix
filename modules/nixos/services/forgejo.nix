@@ -240,6 +240,23 @@ _: {
           '';
         };
 
+        services.forgejo.verifiedSigningKeys = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+          default = { };
+          description = ''
+            SSH key fingerprints (SHA256:…) marked verified for
+            commit-signature verification. The forge skips public_key rows
+            with verified=false when resolving signed commits, and that
+            flag flips ONLY through the web UI's token-signing challenge —
+            no API or CLI exposes a setter (source-verified 2026-11-11:
+            services/asymkey/commit.go gates on k.Verified;
+            models/asymkey/ssh_key_verify.go VerifySSHKey is web-only).
+            Declared fingerprints are converged directly in the forge DB by
+            the forgejo-ssh-keys sync; a fingerprint matching no registered
+            key WARNs (drift, not failure).
+          '';
+        };
+
         services.forgejo.dedicatedSubvolume = lib.mkEnableOption ''
           a dedicated BTRFS subvolume (subvol=hot/forgejo on the Samsung TLC
           disk, by-label tlc) mounted AT the existing stateDir — Set-B
@@ -278,6 +295,25 @@ _: {
         services.forgejo = {
           sshKeys = lib.mkDefault {
             ${primaryUser} = config.users.users.${primaryUser}.openssh.authorizedKeys.keys;
+          };
+
+          # The webphone-android commit identity: every SSH-signed commit in
+          # lars's repos carries this email, and without it on the account
+          # the forge's GetUserByEmail lookup fails BEFORE keys are ever
+          # consulted (the "No known key found" badge's primary gate).
+          userEmails = lib.mkDefault {
+            ${primaryUser} = [ "git@lars.software" ];
+          };
+
+          # lars@evo-x2 (~/.ssh/id_ed25519) — THE signing identity for every
+          # webphone-android commit; registered on the forge as
+          # lars-evo-x2-id_ed25519 (2026-10-16) but stuck verified=false
+          # (admin/API-added keys never carry the flag), so the forge
+          # skipped it even with the email gate fixed.
+          verifiedSigningKeys = lib.mkDefault {
+            ${primaryUser} = [
+              "SHA256:1hFd8eVRpqKqgzmT6ZDG6RxkE9KdPiNabX5yHZPVTMw"
+            ];
           };
 
           package = pkgs.forgejo-lts;

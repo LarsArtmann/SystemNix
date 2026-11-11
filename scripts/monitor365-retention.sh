@@ -12,6 +12,9 @@
 # Env:
 #   STATE_DIR          (required) monitor365-server state dir
 #   RETENTION_DAYS     (default 90)   delete events older than this
+#   RETENTION_BATCH_SIZE (default 5000000) rows per delete batch
+#   RETENTION_MAX_BATCHES (default 8)   batches per fire (bounds the
+#                                      quiesce window; next fire continues)
 #   VACUUM_INTERVAL_S  (default 604800 = 7d) stamp-gated VACUUM cadence
 #   VACUUM_HEADROOM_B  (default 5368709120 = 5 GiB) free space required
 #                                      on top of the current DB size
@@ -46,11 +49,40 @@ fi
 
 CUTOFF=$(date -d "-$RETENTION_DAYS days" '+%Y-%m-%d %H:%M:%S')
 BEFORE=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null || echo "?")
-if ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>&1 >/dev/null); then
-  echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; window ${RETENTION_DAYS}d)"
-else
-  echo "monitor365-retention: WARNING — DELETE failed (boundary-count attempt: $BEFORE; DB left as-is; tonight's export is intact)"
-  printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
+
+# A single-transaction DELETE over the backlog era is unbounded: it OOM'd
+# at 5.5 GiB (6G limit), still OOM'd with threads=2 +
+# preserve_insertion_order=false, and SIGABRT'd at 9.3 GiB (10GB limit) —
+# the working set scales with the limit because the whole delete set
+# lives in one txn's undo structures (proven live 2026-11-11 on a
+# reflink copy of the 39G export). Rowid-batched deletes of
+# RETENTION_BATCH_SIZE rows fit at 6G (~4.5 min/batch); one fresh duckdb
+# process per batch keeps allocator state from high-watering across
+# batches (the index-rebuild lesson).
+RETENTION_BATCH_SIZE=${RETENTION_BATCH_SIZE:-5000000}
+RETENTION_MAX_BATCHES=${RETENTION_MAX_BATCHES:-8}
+TOTAL_DELETED=0
+BATCH_NO=0
+DELETE_FAILED=0
+while [ "$BATCH_NO" -lt "$RETENTION_MAX_BATCHES" ]; do
+  BEFORE_BATCH=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo 0)
+  ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE rowid IN (SELECT rowid FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF' LIMIT $RETENTION_BATCH_SIZE);" 2>&1 >/dev/null) || DELETE_FAILED=1
+  if [ "$DELETE_FAILED" -ne 0 ]; then
+    echo "monitor365-retention: WARNING — DELETE batch $((BATCH_NO + 1)) failed (boundary count: $BEFORE; deleted so far: $TOTAL_DELETED; DB left consistent — the next fire continues); tonight's export is intact"
+    printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
+    break
+  fi
+  AFTER_BATCH=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "$BEFORE_BATCH")
+  DELETED=$((BEFORE_BATCH - AFTER_BATCH))
+  if [ "$DELETED" -le 0 ]; then
+    break
+  fi
+  BATCH_NO=$((BATCH_NO + 1))
+  TOTAL_DELETED=$((TOTAL_DELETED + DELETED))
+  echo "monitor365-retention: batch $BATCH_NO deleted $DELETED (total $TOTAL_DELETED)"
+done
+if [ "$DELETE_FAILED" -eq 0 ]; then
+  echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; batches: $BATCH_NO; deleted: $TOTAL_DELETED; window ${RETENTION_DAYS}d)"
 fi
 REMAINING=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
 echo "monitor365-retention: rows remaining: $REMAINING"
