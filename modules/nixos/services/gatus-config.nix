@@ -262,6 +262,26 @@ _: {
         })
       ];
 
+      # CV reply-funnel health (2026-11-11 centralized-email endgame):
+      # /health is the go-health projection where a FAIL row 503s — the
+      # replyloop Poller's HealthCheck now reports BOTH a wedged ticker
+      # AND consecutive failed polls (the silent-401 class: attempts kept
+      # firing while every JMAP read failed, invisible to liveness). Not
+      # doctrine-violating on purpose: cv-server health currently reads
+      # warn (the Resend-down row warns, and warn stays 200), but the
+      # KNOWN-RED alert doctrine above still applies — the check ships
+      # WITHOUT discordAlert until it has read green in prod; then wire
+      #   alerts = discordAlert "CV /health carries a FAIL row — the reply funnel (poller/store) or a monitored resource is broken. Check: curl -s http://localhost:${toString ports.cv}/health | jq -r '.checks[] | select(.status != \"pass\") | [.name, .status, .detail]'; journalctl -u cv-server -n 50 — the poller failure names its JMAP error; credential fixes: sops cv.yaml → CV_PIPELINE_MAILBOX_PASSWORD.";
+      cvChecks = [
+        (mkHttpCheck {
+          name = "CV Server Health";
+          group = "CV";
+          url = "http://localhost:${toString ports.cv}/health";
+          interval = "5m";
+          conditions = [ "[STATUS] == 200" ];
+        })
+      ];
+
       # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
       # runs pocket-id-config.provision, which writes the client secret to the
       # file below. systemd LoadCredential reads it as root (DynamicUser means the
@@ -1568,6 +1588,7 @@ _: {
               ++ netbirdControlPlaneChecks
               ++ mailChecks
               ++ onpremChecks
+              ++ cvChecks
               # Registry fan-out (services.integration.<name>.checks) — inside
               # the withPapIngest pass so registry endpoints get the
               # PapDashboard ingest alert appended like every built-in one.

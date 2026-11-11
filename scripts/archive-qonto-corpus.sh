@@ -636,7 +636,7 @@ COUNT_ATTACHMENTS=0
 COUNT_INVOICES=0
 COUNT_LEDGER=0
 
-while IFS=$'\t' read -r kind org path sha created title fieldname fieldvalue doctype txid txdate bal wstart wend fname extra; do
+while IFS=$'\t' read -r kind org path sha created title _fieldname fieldvalue doctype txid txdate bal wstart wend fname extra; do # _fieldname: positional placeholder (SC2034 fix, residue session 2026-11-11)
   if ((LIMIT > 0 && COUNT_UPLOADED >= LIMIT)); then
     log "limit reached ($LIMIT uploads); stopping - re-run to continue"
     break
