@@ -1,5 +1,7 @@
 # SUPERB — Send-Hardening Closure Pareto Plan
 
+**Created:** 2026-11-11 01:10 CET
+**EXECUTING (instance send-hardening-closure 2026-11-11, owner directive execute-until-done = G1 GO; T2 gated on ~07:00 CET quota reset, 2026-11-11 01:57 CET, HEAD `07957f0fa`):** executing (see AGENTS.md plan-execution tombstone)
 **Date:** 2026-11-11 01:10 CET · **Status:** PLANNED (not executing — owner gates embedded) · **Author:** the 2026-11-10/11 send-claims + email-native-dedup sessions
 **Directive:** owner pareto directive (20%/4%/1% breakdown, 30-100min plan → ≤12min micros, table views, no verschlimmbessern).
 **Scope:** the send-hardening / mail-storm work-stream ONLY — the residue of the 2026-11-10 [CATCHALL] incident chain. Inputs read: `docs/status/2026-11-11_00-58_email-native-dedup-verdict-transport-identity-self-review.md` (§a-g), `docs/status/2026-11-10_23-30_at-most-once-send-claims-implementation-self-review.md`, the open CV/SystemNix TODO rows for this chain. Foreign domains (siblings' audible-sync, sca-handoff, module-collection plans) are OUT of scope.
