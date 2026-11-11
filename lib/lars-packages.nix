@@ -314,9 +314,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-05 float wave: at
   # golangci-lint-auto-configure@28340f6 spec DIO+MXPj, got u/j9KmmO
   # (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-11 pin-lift wave: at 41e6ed1 spec u/j9KmmO,
+  # got 617A34e5 (pin-lift toplevel keep-going proof).
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-u/j9KmmOir/3eOCwDy9fjm+2njmdTtVpAaHS2QW6e3w=";
+      "sha256-617A34e5BtsY1qNUVaj5QLxwNhWyN3FDBk+zEQhXAXQ=";
   # invoices — billing CLI + dashboard backend (`invoices dashboard`,
   # deployed as the invoices-dashboard unit since 2026-11-10: loopback
   # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
@@ -346,9 +348,11 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-05 float wave: at journal@4a63e7f spec 1JuET6kA,
   # got 65uOOb5j (float-proof-20261106-000533.log). Mirrored in
   # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
+  # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
+  # got OBIY8Nxi (pin-lift toplevel keep-going proof).
   journal =
     flakePkgShim inputs.journal "default"
-      "sha256-KW+poESPwKFh7GQDG6s+BYW5VrBwHUnIH5eA7ANOBgs=";
+      "sha256-OBIY8Nxi6XBYLWi4HXnG1xOberKgMgLTbE/GOaTT30I=";
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale

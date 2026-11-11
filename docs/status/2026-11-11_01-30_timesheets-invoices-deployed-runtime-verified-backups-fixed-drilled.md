@@ -24,14 +24,14 @@
 | a12 | **The bundle-2 sops archive is now git-TRACKED** (`41afb72b3`, force-add past the `secrets*` ignore per the tracked-siblings convention) — it had lived UNTRACKED on disk since 06:59 (the daemon never `git add`s new files; the 13:25 report's "committed" claim was wrong for this file). Extended with `cvagent_key`; full chain proven: archive bytes == generated private key, derived pub fingerprint == GitHub-registered pub (`SHA256:i0JRSVHH…`) | commit + fingerprint run |
 | a13 | **CHANGELOG entry landed** (rode daemon sweep `abb8a979c`): go-live, integration surface, DAC trap, bundle-2 completion | rg count 1 |
 | a14 | **Upstream AGENTS.md deployment notes** appended in BOTH product repos (~/projects/timesheets: unit/port/data-dir/serve flags + fileset contract; ~/projects/invoices: the config.yaml CWD boot contract as config-of-record + vendorHash staleness note) | both files |
-| a15 | **Cleanup** — `~/.cache/invoices-lockprobe` worktree already gone; svcprobe + sopswork plaintexts (bundle2-plain, cvagent-plain.key, enc outputs, append fragment) trashed; dk-* key files + bundle2.txt KEPT pending the CI green (§g.3 default: trash after first green run) | trash + ls |
+| a15 | **Cleanup** — `~/.cache/invoices-lockprobe` worktree already gone; svcprobe + sopswork plaintexts + the ENTIRE `~/.cache/systemnix-ci-keys/` dir (dk-* keys, bundle2.txt, reg body) trashed AFTER the CI fetch receipts landed (a11): a green vm-test job's log shows `From ssh://nixci-timesheets/…`, `From ssh://nixci-invoices/…`, `From ssh://nixci-Code-To-CV-Agent/…` — bundle-2 proven end-to-end in CI, the sops archive (git-tracked, round-trip-verified) is the durable copy | trash + green-job log grep |
 | a16 | **TODO queue hygiene** — the sibling's gate-failing [ready] row (my services' first timer firing) rewritten to `[blocked:deploy]` with updated truth + a matching `docs/todo/services.md` library entry (queue/library drift closed) | TODO_LIST.md:3448 + services.md tail |
 
 ## b) PARTIALLY DONE
 
 | # | Item | Missing |
 |---|------|---------|
-| b1 | **CI green run** | The rerun (42871668924, old commit + new secret) proves auth+fetch everywhere; `nix-check` job verdict still pending at report time; two VM tests (cv, sev1-escalation) fail at RUNTIME on that old commit (not fetch/build — pre-existing flake class, outside my change's blast radius). The CURRENT master CI additionally fails on the sibling's pushed red float (vm-tests "Cannot build" on crm/journal FOD mismatches) — sibling domain |
+| b1 | **CI green run** | Bundle-2 is PROVEN end-to-end in CI: the "Configure private flake-input auth" step went green in all 20 matrix jobs of the rerun (42871668924), structure/statix/deadnix/format steps green, and a GREEN vm-test job's log carries the actual fetch receipts for all three private repos through the `nixci-*` aliases. The rerun's `nix-check` eval step was CANCELLED by runner infra at ~35 min (log upload died too — infra class, not eval red); the cv + sev1-escalation VM tests fail at RUNTIME on that old commit (pre-existing baseline class). CURRENT master CI separately fails on the sibling's pushed red float (crm/journal FOD "Cannot build") — sibling domain |
 | b2 | **Negative-check (disabled fan-out)** | Blocked by the re-armed lock-float gate (host eval dead until the float lands). Structural truth holds by construction (`lib.mkIf cfg.enable` + `optionalAttrs (options ? services.integration)` wrap every fan-out); the throwaway extendModules expr sits ready at ~/.cache/negative-check.nix for the first post-float window |
 
 ## c) NOT DONE (blocked or deliberately deferred)
@@ -59,9 +59,8 @@
 
 1. (sibling) crm/journal vendorHash repair → float-register green → deploy — my cap fix + tonight's fixed timers ride it
 2. After deploy: journalctl both backup units for clean timer-driven firings (the [blocked:deploy] row owns the full procedure)
-3. First fully-green CI run → trash `~/.cache/systemnix-ci-keys/` key files (bundle2.txt + dk-*; the sops archive is the durable copy)
-4. First calm window post-float: run ~/.cache/negative-check.nix (disabled-fan-out proof), delete the scratch after
-5. Owner browser smoke from the desk: timesheets.home.lan + invoices.home.lan (LAN bypass; WAN answers the oauth2 gate)
+3. First calm window post-float: run ~/.cache/negative-check.nix (disabled-fan-out proof), delete the scratch after
+4. Owner browser smoke from the desk: timesheets.home.lan + invoices.home.lan (LAN bypass; WAN answers the oauth2 gate)
 
 ## g) QUESTIONS — none new. The 13:25 §g defaults all held under "keep going": (1) the foreign eval break self-resolved before I touched it; (2) the three silence-defaults stand verified live (config of record boots the dashboard, LAN bypass serves both vHosts, both locked revs byte-proven in the running processes); (3) key trash stays deferred to the first green CI run.
 

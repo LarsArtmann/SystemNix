@@ -72,10 +72,13 @@
       # the 2026-11-08 pin roll f32f4c0 (float-proof-20261108-172105.log,
       # spec k0Inp4g got EzVPIaj — the doc+module commits shifted the
       # vendored set through the module graph, the catalog-bump class).
+      # RE-STALE 2026-11-11 roll to f2d1726: spec EzVPIaj, got shQ6i+l+
+      # (pin-lift toplevel keep-going proof; the wave-1 close-out commits
+      # shifted the vendored set again).
       # Drop when upstream bakes the hash and the lock moves past an
       # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
       crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-EzVPIajPg1tS3PW4eEzPUEv+4H8c1o+eHQKg13xKji0=";
+        vendorHash = "sha256-shQ6i+l+E/a/Q+QemT2ncrvC/NjWJNyHCmpytlbCVIg=";
       };
       twentyEnabled = config.services.twenty.enable or false;
     in

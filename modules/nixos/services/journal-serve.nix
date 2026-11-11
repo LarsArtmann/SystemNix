@@ -72,8 +72,11 @@
           # RE-STALE 2026-11-06 lock float: journal@4a63e7f spec 1JuET6kA,
           # got 65uOOb5j (float-proof-20261106-000533.log); all three
           # surfaces updated in the same pass.
+          # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
+          # got OBIY8Nxi (pin-lift toplevel keep-going proof); all three
+          # surfaces updated in the same pass.
           default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-KW+poESPwKFh7GQDG6s+BYW5VrBwHUnIH5eA7ANOBgs=";
+            vendorHash = "sha256-OBIY8Nxi6XBYLWi4HXnG1xOberKgMgLTbE/GOaTT30I=";
           };
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to serve the dashboard with.";
