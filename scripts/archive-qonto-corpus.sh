@@ -584,14 +584,14 @@ patch_document() {
 ledger_statement() {
   # ledger_statement <balance> <window_start> <window_end> <checksum> <docid> <filename>
   local bal=$1 ws=$2 we=$3 sha=$4 docid=$5 fname=$6
-  sqlite3 -batch "$DB" ".timeout 15000
+  sqlite3 -batch "$DB" "PRAGMA busy_timeout=15000;
     INSERT OR IGNORE INTO paperless_uploads
       (provider, balance_id, window_start, window_end, currency, checksum,
        document_id, duplicate, filename, uploaded_at)
     VALUES ('qonto', $bal, $(sql_quote "$ws 00:00:00+00:00"),
             $(sql_quote "$we 00:00:00+00:00"), 'EUR',
             $(sql_quote "$sha"), $docid, 0, $(sql_quote "$fname"),
-            strftime('%Y-%m-%d %H:%M:%S+00:00','now'));"
+            strftime('%Y-%m-%d %H:%M:%S+00:00','now'));" >/dev/null
 }
 
 ledger_receipt() {
@@ -599,13 +599,13 @@ ledger_receipt() {
   local txid=$1 sha=$2 docid=$3 fname=$4 txdate=$5
   local txdate_sql=null
   [[ -n $txdate && $txdate != - ]] && txdate_sql=$(sql_quote "$txdate")
-  sqlite3 -batch "$DB" ".timeout 15000
+  sqlite3 -batch "$DB" "PRAGMA busy_timeout=15000;
     INSERT OR IGNORE INTO paperless_receipt_uploads
       (provider, external_id, kind, checksum, document_id, duplicate,
        filename, tx_date, uploaded_at)
     VALUES ('qonto', $(sql_quote "$txid"), 'receipt', $(sql_quote "$sha"),
             $docid, 0, $(sql_quote "$fname"), $txdate_sql,
-            strftime('%Y-%m-%d %H:%M:%S+00:00','now'));"
+            strftime('%Y-%m-%d %H:%M:%S+00:00','now'));" >/dev/null
 }
 
 # ── execute ──────────────────────────────────────────────────────────────
