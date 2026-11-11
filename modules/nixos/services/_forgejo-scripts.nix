@@ -2212,7 +2212,12 @@ in
         for key in "''${keys[@]}"; do
           [[ -z "$key" ]] && continue
 
-          if jq -e --arg key "$key" '.[] | select(.key == $key)' "$existing_keys" >/dev/null 2>&1; then
+          # Dedup by exact-match ANY (string test), never `jq -e '.[] | select(...)'`:
+          # select-no-match still exits 0 (verified 2026-11-11 — jq -e keys on
+          # the LAST OUTPUT VALUE and zero outputs is not 4), so the select
+          # shape answers "exists" to EVERYTHING and never adds a key once the
+          # user has one.
+          if [ "$(jq --arg key "$key" 'any(.[]; .key == $key)' "$existing_keys")" = "true" ]; then
             echo "  ✓ Key already exists"
             continue
           fi
@@ -2255,7 +2260,7 @@ in
         for email in "''${emails[@]}"; do
           [[ -z "$email" ]] && continue
 
-          if jq -e --arg email "$email" '.[] | select(.email == $email)' "$existing_emails" >/dev/null 2>&1; then
+          if [ "$(jq --arg email "$email" 'any(.[]; .email == $email)' "$existing_emails")" = "true" ]; then
             echo "  ✓ Email already exists: $email"
             continue
           fi

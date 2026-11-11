@@ -52,20 +52,15 @@ _: {
         hostname = apiHost;
       };
 
-      # The `decrypt` plugin command is NOT shipped in the audible-cli wheel
-      # (plugin_cmds/ lives outside src/ upstream) — vendored from the
-      # pinned upstream rev, verified API-compatible with nixpkgs
-      # audible-cli 0.3.3 (pass_session + AudibleCliException both exist
-      # there; plugins.py loads cmd_*.py from AUDIBLE_PLUGIN_DIR).
-      decryptPlugin = pkgs.fetchurl {
-        url = "https://raw.githubusercontent.com/mkb79/audible-cli/274539eba80a63ddccb79a9ec4f59b2fe911e232/plugin_cmds/cmd_decrypt.py";
-        hash = "sha256-uvni0qj29UGw0PNG4DiB/oD8bYmwN5P0GixpYWfW6XQ=";
-      };
-
-      pluginDir = pkgs.runCommand "audible-sync-plugins" { } ''
-        mkdir -p $out
-        cp ${decryptPlugin} $out/cmd_decrypt.py
-      '';
+      # AAX pipeline (2026-11-11 pivot): Audible's license server refuses
+      # AAXC voucher grants for this customer under EVERY auth shape (two-key
+      # minimal AND the full quickstart auth — License not granted for ALL
+      # 86 asins while covers/chapters/PDFs succeed), but plain AAX download
+      # works and decrypts via ffmpeg + activation_bytes, so the AAXC
+      # plugin path is retired. activation_bytes live in the sops-rendered
+      # auth; fetch them once per device registration with
+      # `AUDIBLE_CONFIG_DIR=<cfg> audible activation-bytes` (null there =
+      # the WebPlayer-cookie fetch has not run for this auth yet).
 
       configToml = pkgs.writeText "audible-sync-config.toml" ''
         [APP]
@@ -159,41 +154,63 @@ _: {
           # 2. Download everything. Default is skip-if-exists (--overwrite
           #    would re-download), so weekly runs are incremental after the
           #    first seed. --ignore-errors keeps one bad book from blocking
-          #    the rest of the library; the command STILL exits non-zero if
-          #    any job failed (raise_for_errors), which set -e turns into a
-          #    failed unit → last_success NOT touched → backup-coordination
-          #    alerts → OnFailure Discord names the ASIN from the journal.
-          echo "audible-sync: downloading full library (AAXC + voucher + cover + chapters + pdf)"
-          # Flags verified against the built audible-cli 0.3.3 --help (live
-          # 2026-11-11: --no-progress does NOT exist in this version —
-          # first seed start died status=2/INVALIDARGUMENT at phase 2).
-          audible download --all --aaxc --chapter --cover --cover-size ${toString cfg.coverSize} --pdf \
+          #    the rest of the library; NOTE (live 2026-11-11): with every
+          #    audio download refused the command still exited 0 and only
+          #    the summary line told the truth — hence the explicit
+          #    zero-download guard below, mandatory under --ignore-errors.
+          #    AAX chosen over AAXC: Audible's license server refuses AAXC
+          #    voucher grants for this customer under every auth shape,
+          #    while the AAX activation-bytes path works.
+          echo "audible-sync: downloading full library (AAX + cover + chapters + pdf)"
+          audible download --all --aax --chapter --cover --cover-size ${toString cfg.coverSize} --pdf \
             --ignore-errors -y -j ${toString cfg.jobs} \
             --filename-mode ${cfg.filenameMode} -o "$dlDir"
 
-          dlCount=$(find "$dlDir" -name '*.aaxc' | wc -l)
-          echo "audible-sync: $dlCount AAXC files present (library: $libItems items; podcasts count as multiple episode files)"
+          dlCount=$(find "$dlDir" -name '*.aax' | wc -l)
+          echo "audible-sync: $dlCount AAX files present (library: $libItems items; podcasts count as multiple episode files)"
 
-          # 3. Decrypt to DRM-free M4B. Per-file loop: the plugin has NO
-          #    error handling (its own docstring) — one corrupt file would
-          #    abort a plain --all pass at the same point every week and
-          #    silently starve every book after it. Chapters are rebuilt
-          #    from the API metadata (-r), tolerating mismatches (-t).
-          #    The raw AAXC + voucher stay in downloads/ either way.
+          # Files persist across runs (skip-if-exists), so dlCount only
+          # reads 0 with a non-empty library when EVERY audio download was
+          # refused — fail loud instead of touching last_success with zero
+          # books (the 14:51 freshness-lie class).
+          if [ "$dlCount" -eq 0 ] && [ "$libItems" -gt 0 ]; then
+            echo "audible-sync: 0 AAX files downloaded for $libItems library items — failing the unit" >&2
+            echo "audible-sync: recovery: check the journal for per-asin download errors (docs/services/audible-sync.md)" >&2
+            exit 1
+          fi
+
+          # 3. Decrypt to DRM-free M4B: plain ffmpeg remux with the account
+          #    activation bytes (AAX's RC4 key material) — stream copied,
+          #    not re-encoded. Per-file loop: one corrupt file must not
+          #    starve the rest of the library. On success the raw AAX is
+          #    deleted (the M4B holds the same audio; keeping both doubles
+          #    pool usage across the whole library); on failure it stays
+          #    for next week's retry.
           echo "audible-sync: decrypting to DRM-free M4B (books/)"
+          authFile="''${AUDIBLE_SYNC_AUTH_FILE:?AUDIBLE_SYNC_AUTH_FILE not set}"
+          activationBytes=$(jq -er '.activation_bytes | select(. != null and length > 0)' < "$authFile") || {
+            echo "audible-sync: activation_bytes missing in $authFile — fetch once with: AUDIBLE_CONFIG_DIR=<cfg> audible activation-bytes" >&2
+            exit 1
+          }
           failures=0
+          decrypted=0
           while IFS= read -r -d "" f; do
-            audible decrypt "$f" -d "$bookDir" -r -t || {
-              echo "audible-sync: DECRYPT FAILED: $f (raw AAXC + voucher kept in $dlDir)"
+            out="$bookDir/$(basename "''${f%.aax}").m4b"
+            if ffmpeg -loglevel error -activation_bytes "$activationBytes" -i "$f" -c copy -movflags use_metadata_tags "$out"; then
+              rm -f "$f"
+              decrypted=$((decrypted + 1))
+            else
+              echo "audible-sync: DECRYPT FAILED: $f (raw AAX kept in $dlDir)"
+              rm -f "$out"
               failures=$((failures + 1))
-            }
-          done < <(find "$dlDir" -name '*.aaxc' -print0)
+            fi
+          done < <(find "$dlDir" -name '*.aax' -print0)
           bookCount=$(find "$bookDir" -name '*.m4b' | wc -l)
-          echo "audible-sync: $bookCount M4B in books/, $failures decrypt failures"
+          echo "audible-sync: $bookCount M4B in books/, $decrypted newly decrypted, $failures decrypt failures"
 
           if [ "$failures" -gt 0 ]; then
             echo "audible-sync: $failures book(s) failed to decrypt — failing the unit so the shortfall is visible"
-            echo "audible-sync: recovery: delete the corrupt .aaxc + .voucher in $dlDir so next week re-downloads it (docs/services/audible-sync.md)"
+            echo "audible-sync: recovery: delete the corrupt .aax in $dlDir so next week re-downloads it (docs/services/audible-sync.md)"
             exit 1
           fi
 
@@ -362,7 +379,6 @@ _: {
               TimeoutStartSec = cfg.timeout;
               Environment = [
                 "AUDIBLE_CONFIG_DIR=${stateDir}/config"
-                "AUDIBLE_PLUGIN_DIR=${pluginDir}"
                 "AUDIBLE_SYNC_AUTH_FILE=${config.sops.secrets.audible_sync_auth_json.path}"
               ];
               ExecStartPre = [ (lib.getExe configCheck) ] ++ dnsGate.serviceConfig.ExecStartPre;
