@@ -102,7 +102,11 @@ override_candidates() {
   esac
 }
 
-norm() { echo "$1" | tr -d '[:punct:][:space:]' | tr '[:upper:]' '[:lower:]'; }
+norm() {
+  local r
+  r=$(printf '%s' "$1" | tr -d '[:punct:][:space:]' | tr '[:upper:]' '[:lower:]')
+  printf '%s\n' "$r"
+}
 
 # normalize harder for fuzzy compare: also drop a leading "google"
 norm2() { local n; n=$(norm "$1"); n=${n#google}; echo "$n"; }
@@ -206,7 +210,7 @@ run_verify() {
       sub(/^Takeout\//, "", name)
       split(name, seg, "/")
       prod = seg[1]
-      np = prod; gsub(/[^a-z0-9]/, "", np); np = tolower(np)
+      np = tolower(prod); gsub(/[^a-z0-9]/, "", np)
       if (np != "googlephotos") next
       m = split(name, segs, "/"); fname = segs[m]
       n = split(fname, fp, "."); ext = (n > 1 ? tolower(fp[n]) : "")
@@ -345,58 +349,71 @@ selftest() {
 
   leg=happy
   build_fixture
-  if run_verify_selftest_quiet "$fx"; then
-    if [ "$(awk -F'\t' '$1=="google_photos_media_files"{print $2}' "$fx/photos-media-count.txt")" = "2" ] \
-      && [ -s "$fx/SHA256SUMS" ] && [ -s "$fx/inventory.tsv" ]; then
-      echo "PASS: $leg (gates green, inventory + media counts + hashes written)"
+  if run_verify_selftest_quiet "$fx" > "$fx/leg-happy.log" 2>&1 \
+    && grep -q 'G2 GREEN' "$fx/leg-happy.log"; then
+    local media_count extras
+    media_count=$(awk -F'\t' '$1=="google_photos_media_files"{print $2}' "$fx/photos-media-count.txt")
+    extras=$(grep -c '^EXTRA' "$fx/logs/coverage.tsv" || true)
+    if [ "${media_count:-x}" = "2" ] \
+      && [ -s "$fx/SHA256SUMS" ] && [ -s "$fx/inventory.tsv" ] \
+      && [ "$extras" = "0" ]; then
+      echo "PASS: $leg (gates green, inventory + media counts + hashes written, no phantom extras)"
     else
-      echo "FAIL: $leg (outputs incomplete)"; rc=1
+      echo "FAIL: $leg (outputs incomplete: media=$media_count extras=$extras sha=$(wc -l < "$fx/SHA256SUMS" 2>/dev/null || echo 0) inv=$(wc -l < "$fx/inventory.tsv" 2>/dev/null || echo 0))"
+      rc=1
     fi
   else
-    echo "FAIL: $leg (verify did not pass on a good fixture)"; rc=1
+    echo "FAIL: $leg (verify did not pass on a good fixture — see $fx/leg-happy.log)"
+    rc=1
   fi
 
   leg=crc
   build_fixture
   truncate -s 40 "$fx/zips/part-02.zip"
-  if run_verify_selftest_quiet "$fx" > "$fx/neg.log" 2>&1; then
+  if run_verify_selftest_quiet "$fx" > "$fx/leg-crc.log" 2>&1; then
     echo "FAIL: $leg (truncated zip passed)"; rc=1
-  elif grep -q 'CRC' "$fx/neg.log"; then
+  elif grep -q 'CRC' "$fx/leg-crc.log"; then
     echo "PASS: $leg (truncated zip caught by CRC gate)"
   else
-    echo "FAIL: $leg (failed but not via CRC gate — see $fx/neg.log)"; rc=1
+    echo "FAIL: $leg (failed but not via CRC gate — see $fx/leg-crc.log)"; rc=1
   fi
 
   leg=coverage
   build_fixture
-  ( cd "$fx/tk" && zip -qr "$fx/zips/part-02.zip" Takeout/Mail && rm -rf Takeout/Mail && rm "$fx/zips/part-02.zip" \
+  ( cd "$fx/tk" && rm -rf Takeout/Mail && rm "$fx/zips/part-02.zip" \
     && zip -qr "$fx/zips/part-02.zip" Takeout/Drive )
-  if run_verify_selftest_quiet "$fx" > "$fx/neg.log" 2>&1; then
+  if run_verify_selftest_quiet "$fx" > "$fx/leg-coverage.log" 2>&1; then
     echo "FAIL: $leg (missing product passed)"; rc=1
-  elif grep -q 'expected-present product NOT FOUND' "$fx/neg.log"; then
+  elif grep -q 'expected-present product NOT FOUND' "$fx/leg-coverage.log"; then
     echo "PASS: $leg (missing product caught)"
   else
-    echo "FAIL: $leg (failed but not via coverage gate — see $fx/neg.log)"; rc=1
+    echo "FAIL: $leg (failed but not via coverage gate — see $fx/leg-coverage.log)"; rc=1
   fi
 
   leg=missing-part
   build_fixture
   rm "$fx/zips/part-02.zip"
-  if run_verify_selftest_quiet "$fx" > "$fx/neg.log" 2>&1; then
+  if run_verify_selftest_quiet "$fx" > "$fx/leg-missing.log" 2>&1; then
     echo "FAIL: $leg (missing part passed)"; rc=1
-  elif grep -q 'not in size band' "$fx/neg.log"; then
+  elif grep -q 'not in size band' "$fx/leg-missing.log"; then
     echo "PASS: $leg (missing part caught)"
   else
-    echo "FAIL: $leg (failed but not via completeness gate — see $fx/neg.log)"; rc=1
+    echo "FAIL: $leg (failed but not via completeness gate — see $fx/leg-missing.log)"; rc=1
   fi
 
-  rm -rf "$fx"
-  if [ "$rc" -eq 0 ]; then echo "SELFTEST GREEN"; else echo "SELFTEST RED"; fi
+  if [ "$rc" -eq 0 ]; then
+    rm -rf "$fx"
+    echo "SELFTEST GREEN"
+  else
+    echo "SELFTEST RED (fixture kept at $fx for inspection)"
+  fi
   return $rc
 }
 
 run_verify_selftest_quiet() {
-  run_verify "$1" 1 > /dev/null 2>&1
+  # subshell: run_verify's die() on negative legs must not kill the selftest driver.
+  # Output is NOT discarded here — the caller redirects to a per-leg log and greps it.
+  ( run_verify "$1" 1 )
 }
 
 main() {

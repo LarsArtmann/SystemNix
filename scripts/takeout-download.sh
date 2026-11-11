@@ -82,10 +82,15 @@ init_staging() {
   chmod 700 "$root" "$root"/{zips,logs,extracted}
   if [ ! -f "$root/parts.tsv" ]; then
     printf '# part\texpected\n' > "$root/parts.tsv"
-    while IFS= read -r mline; do echo "${mline// /$'\t'}" >> "$root/parts.tsv"; done <<< "$PARTS_MANIFEST"
+    while IFS= read -r mline; do
+      [ -n "$mline" ] || continue
+      echo "${mline/ /$'\t'}" >> "$root/parts.tsv"
+    done <<< "$PARTS_MANIFEST"
   fi
   [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' > "$root/urls.txt"
-  log "staging ready at $root (parts.tsv: $(grep -vc '^#' "$root/parts.tsv") parts)"
+  local nparts_total
+  nparts_total=$(awk 'NF && !/^#/ { n++ } END { print n + 0 }' "$root/parts.tsv")
+  log "staging ready at $root (parts.tsv: $nparts_total parts)"
 }
 
 cmd_status() {
@@ -114,7 +119,7 @@ cmd_start() {
   local nurls
   nurls=$(grep -c '^[[:space:]]*https\?://' "$urls" || true)
   local nparts
-  nparts=$(grep -vc '^#' "$root/parts.tsv" || true)
+  nparts=$(awk 'NF && !/^#/ { n++ } END { print n + 0 }' "$root/parts.tsv")
   [ "$nurls" -eq "$nparts" ] || die "urls.txt has $nurls links but manifest expects $nparts parts"
   local cookie_args=()
   if [ -f "$cookies" ]; then
