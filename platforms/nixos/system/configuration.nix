@@ -373,6 +373,12 @@ in
       # Android platform tools (adb/fastboot). The programs.adb module was
       # removed from nixpkgs: systemd 258 ships the android udev rules with
       # uaccess tags, granting the active seat user device ACLs directly.
+      # INTENTIONAL 0.0.0.0:5353 exposure (verified 2026-11-11): any running
+      # adb server starts its mDNS backend for wireless-debugging discovery,
+      # binding 0.0.0.0:5353 x4 + *:5353 (IPv6). LAN-visible by design — eno1
+      # is firewall-trusted and the listener serves Pixel6/webphone-android
+      # work (owner-run, not a service). Disable via ADB_MDNS=0 if ever
+      # unwanted; adb's 5037 control socket binds loopback only.
       pkgs.android-tools
       # CLI tools replacing hand-installed ~/.local/bin binaries (2026-09-16
       # audit: uv{,x}, shfmt, the `exec bun` node shim, and the raw buildflow
