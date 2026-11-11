@@ -319,13 +319,16 @@ that single polite GET). Registered 2026-09-08 as a systemd USER timer
   system-timer shape + absence alerting queued (docs/todo/services.md).
 
 AI-integration state snapshot (2026-11-08 audit,
-`docs/status/2026-11-08_17-45_cv-ai-jev-integration-audit.md`): agent brain +
-cv-site chat are the ONLY live LLM surfaces; the funnel's autonomous SEND path
-(tailor + cover letter) runs heuristic/template fallbacks because
-`CV_TAILOR_API_KEY`/coaching keys were never provisioned; Jev/TypeSafe is NOT
+`docs/status/2026-11-08_17-45_cv-ai-jev-integration-audit.md`; letter half
+updated 2026-11-11): agent brain + cv-site chat are the ONLY live LLM surfaces;
+the funnel's autonomous SEND path (tailor + cover letter) runs heuristic/template
+fallbacks because `CV_TAILOR_API_KEY`/coaching keys were never provisioned —
+the 2026-11-10 storm then sent every letter as the SILENT template fallback
+(the "Go, JSON, Peppol" Nivelo letter class; template now posting-anchored,
+fallback logged at startup, CV `84f225259`; enabling real LLM letters is the
+[blocked:user] coaching row in docs/todo/services.md); Jev/TypeSafe is NOT
 wired into the funnel at all (dormant decisionmodel module, mock provider,
-empty ledger); zero application emails have ever been sent (stale approval
-queue over the 7d age cap).
+empty ledger).
 
 Registration env (the user manager has NO devshell env — verified by live
 runs 2026-09-08): `WorkingDirectory=/home/lars/projects/CV`,
