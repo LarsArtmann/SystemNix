@@ -289,7 +289,8 @@ discriminator stays as the tripwire for recurrence-despite-gate.
 (first full-pool trim); fstrim + the deploy's converge wave pinned disk PSI
 at ~50% for 40+ min. dnsblockd's `server_init` — which READS the 9.7G
 journal.db + 3.3G tracking.db on the hot tier — ran at ~1.6MB/s effective
-and FOUR consecutive starts (restart counter 1-4) died at the 300s gate with
+and the starts (final count: TEN, restart counter 1-10 through 03:31; the
+initial report froze the number at 4) died at the 300s gate with
 init still incomplete: a start needing >300s under load can NEVER complete
 while `Restart=always` + the gate recycle it (clean restarts at 00:45,
 00:51, 00:56, 01:01, 01:07; the 19:01:54 start the same day needed 220.2s
@@ -299,6 +300,25 @@ storm-slowed init can finish; the cost of a TRUE wedge grows 5→10min per
 cycle. Residual watch: init cost scales with journal.db size — if it keeps
 growing, quiet-IO starts approach 600s next and the LAZY-init/upstream
 question opens.
+
+**RESOLUTION (2026-11-11, appended by the 13-05 review):** self-healed
+03:34:33 — the 03:31:18 start completed all 5 phases at `server_init`
+192.7s, still under the OLD 300s gate, while fstrim was still running (it
+ended 04:02:11 after 3h32m; the loop broke on fstrim's varying intensity,
+not its end). The 600s budget deployed with gen-998 (07:33) and is verified
+LIVE on the rendered unit (`TimeoutStartSec=660s`) AND the deployed
+wait-listener script (`:-600` default; the `DNSBLOCKD_LISTENER_WAIT_BUDGET`
+env is a test seam, never rendered). Three clean starts since (07:49
+162.2s / 08:50 129.9s / 10:32 105.7s, NRestarts=0). Page fatigue: contained
+by design — the notify-failure-p0 1/h rate limit held the whole outage to 3
+Discord sends (00:51/01:55/02:59) across ~35 OnFailure fires. VRRP failover:
+probed live 2026-11-11 ~13:00, `dig @192.168.1.53 auth.home.lan` answers
+(the .53 VIP was serving through the outage window). Storm collateral of the
+same day: the box-wide IO storm ALSO killed the UPSTREAM DoT forwarder path
+for ~4.5h (08:23→~12:50, 5177 `forwarder query failed … :853 i/o timeout`
+lines) while cached names kept answering — invisible to every existing
+check; the "DNS Forwarder Cold" gatus probe (in-tree 2026-11-11,
+deploy-gated) closes that blind spot.
 
 **Monitoring coverage (what catches this):** gatus probes the resolver three
 ways — "DNS Resolver" (DNS query via `127.0.0.1`), "DNS Resolver TCP"
