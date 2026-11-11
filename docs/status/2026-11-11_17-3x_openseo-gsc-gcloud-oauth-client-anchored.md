@@ -28,6 +28,7 @@
 3. **Org brand support email must be a Workspace address** — gmail support email → INVALID_ARGUMENT on brand create.
 4. **Client secrets print to stdout on create AND reset-secret** — rotate-on-create into a 0600 capture file when the create output touched a transcript; the printed value dies at reset.
 5. **The deploy anchor gap is REAL and bit today**: a code-0 deploy left profile+boot-default 4h stale. The 2026-10-23 procedure ("wait for full process tree, compare by gen number") caught it exactly as designed; repair procedure worked verbatim. Investigation queued (§f.2).
+6. **Owner asked "can't you do all the reset?" → second exhaustive pass (post-consent-banner paste)**: the new `gcloud alpha iam oauth-clients` API DOES accept `--allowed-redirect-uris` at create — but its REQUIRED `--allowed-scopes` validator rejected every Google-data scope (`Valid: [openid]` only; webmasters/userinfo all invalid), and its `describe` cannot even see the IAP-created client (separate registry). Conclusion UNCHANGED and now airtight: consent-screen config + redirect-URI registration are console-only. OpenSEO requests exactly `https://www.googleapis.com/auth/webmasters.readonly` (grepped from the store build, 3 copies). Console secret mask `****aMu6` byte-matches the rotated sops value (last-4 shape check, 2026-11-11 17:4x) — after the URI lands, NO further secret work is needed.
 
 ## c. Residual owner work (the ONLY ask)
 
