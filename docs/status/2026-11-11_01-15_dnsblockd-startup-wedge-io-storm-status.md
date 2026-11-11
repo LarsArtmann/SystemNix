@@ -39,6 +39,8 @@
 
 ## NOT verified / open
 
+**Provenance note (added 01:35):** the daemon's `cde293860` (01:31:24, "13 changed file(s)") carried this wave's five files (module + runbook + both todo surfaces + this report) in one footless heuristic commit alongside UNRELATED sibling work (flake.nix, `lib/flake-input-pin-audit.nix`, `.gitignore`, a 648MB `cvagent.db.pre-g02-backup` binary, the audible-dirs + pipeline.md rows). Not amended: the amend would absorb the siblings' files into this commit's message. Owner actions embedded there: the 648MB binary should never live in git history (rewrite before push or revert), and the staged `D cvagent.db.pre-g02-backup` deletion belongs to the sibling session that owns it.
+
 - Whether fstrim's trim actually finishes before the next attempt's gate kill — monitored through 01:30, still running (PSI avg60 slowly falling: 58 → 41).
 - The `[watch]` row's upstream question (`initJournal` runs inside `server.New` pre-listeners; cost scales with journal.db) — needs an upstream look, not this repo.
 - The four sibling `crush -y` sessions (one owns the 23:34 deploy + SCA arc, see its 00:48 report) were NOT contacted — the notify-failure-p0 Discord pages have been carrying the outage signal since 00:51.

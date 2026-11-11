@@ -180,7 +180,6 @@
     # ResolveAttributeValue (v0.3.1070 runtime.go:697 does); local probes:
     # library-policy@fca47ff + templ v0.3.1070 builds green, @v0.3.1100
     # dies "undefined: templ.ResolveAttributeValue".
-    discordsync = "REV-PINNED at ea6c444c (the rev before upstream 2f3b275 bumped templ 0.3.1070 -> 0.3.1100 and discordgo in one daemon commit, breaking both the generated-template API and the CacheGuild handler signature). LIFT: upstream regenerates its templates with the v0.3.1100 generator (or pins templ back to 0.3.1070) and the discordgo handlers compile; then drop the pin and re-lock.";
     # Same class, one pin per app: each daemon "chore(deps)" commit bumped
     # the templ require line without regenerating that repo's templates.
     # library-policy, journal and golangci-lint-auto-configure rows REMOVED
