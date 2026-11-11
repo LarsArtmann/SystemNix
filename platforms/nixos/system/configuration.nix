@@ -1287,7 +1287,12 @@ in
       };
 
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
-      openseo.enable = true;
+      # GSC OAuth client lives in gcloud project toms-343020 (org project — see docs/services/openseo.md)
+      openseo = {
+        enable = true;
+        googleSearchConsole.enable = true;
+        aiFeatures.enable = true;
+      };
 
       # SearXNG — privacy-focused metasearch engine
       searx.enable = true;
