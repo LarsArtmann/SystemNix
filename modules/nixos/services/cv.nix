@@ -181,8 +181,14 @@
       # that rev, correct for its own lock context), got ivrMAI3D (toplevel
       # keep-going, pin-lift proof3). Drop when upstream bakes the
       # through-our-lock hash.
+      # RE-STALE 2026-11-11 04:2x (send-hardening closure code wave): cv
+      # 300bb9e77 (role-key canonicalization + claims verb + live submission
+      # occupancy + claim arbitration) moved the module graph again — spec
+      # ivrMAI3D, got ZfCh3W9k (float-proof-20261111-042752.log). Source
+      # churn re-hashes the FOD through the prepared source; update rides
+      # the same treadmill until upstream graph parity.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-ivrMAI3DMTcjSWYXYoqMdWYU+7kTw7Xa2fet1oQhvAo=";
+        vendorHash = "sha256-ZfCh3W9kLzLljIIlTP/GlR4eijk1dQEUMkRp23hdP90=";
       };
     in
     {
