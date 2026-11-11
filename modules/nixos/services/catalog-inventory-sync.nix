@@ -86,8 +86,12 @@ _: {
           inherit onFailure;
 
           # The unit runs TWO scripts that both call bare commands: the hub's
-          # generate-inventory.sh (`bash`, `date`, `mktemp`, `grep`, `jq`) and
-          # our scripts/catalog-inventory.sh (`jq`, `nix eval`). The default
+          # generate-inventory.sh (`bash`, `date`, `mktemp`, `grep`, `jq`,
+          # `python3` — the content-identity no-op guard compares exports
+          # ignoring the generatedAt stamp, and its 2026-11-11-era runs died
+          # "python3: command not found", silently voiding the <24h no-op so
+          # every hourly run rewrote inventory.json and churned hub commits)
+          # and our scripts/catalog-inventory.sh (`jq`, `nix eval`). The default
           # system-unit PATH carries only coreutils/findutils/grep/sed/systemd
           # — no bash, no jq, no nix — so this service died at
           # generate-inventory.sh:159 with "bash: command not found" (status
@@ -104,6 +108,7 @@ _: {
             pkgs.nix
             pkgs.coreutils
             pkgs.gnugrep
+            pkgs.python3
           ];
 
           serviceConfig = lib.mkMerge [
