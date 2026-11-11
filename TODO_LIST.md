@@ -3494,3 +3494,5 @@
 - [ ] [ready] **Runtime canary start in deploy battery (start new/changed oneshots post-switch, fail deploy on non-zero)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: docs/status/2026-11-11_15-55_audible-seed-aax-pivot-four-runtime-bugs-status.md §d.1)
 - [ ] [ready] **`nix run .#stamp-counts` helper (mechanical README/FEATURES count re-stamping)** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §e.3)
 - [ ] [ready] **Shared deploy-claim file so multi-agent deploy storms wait instead of colliding on nh's lock** → [docs/todo/pipeline.md](docs/todo/pipeline.md) (Source: same report §e.5)
+- [ ] [ready] **Continuous end-to-end auth-flow check (fresh-login canary)** → [docs/todo/monitoring.md](docs/todo/monitoring.md) (Source: docs/status/2026-11-11_17-38_phone-ca-immich-login-oauth2-proxy-stale-secret.md §f.1)
+- [ ] [ready] **Couple client-secrets consumers to pocket-id cycles (close stale-secret class)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-11-11_17-38_phone-ca-immich-login-oauth2-proxy-stale-secret.md §f.2)
