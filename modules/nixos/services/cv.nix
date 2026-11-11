@@ -434,14 +434,28 @@
                 # the highest-paying project class was invisible to the
                 # production funnel (upstream issue #563).
                 {
-                  url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Google+Cloud%22+OR+CGP+OR+%22Google+Cloud+Platform%22%29&sort=1&pagenr=1";
+                  url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Google+Cloud%22+OR+GCP+OR+%22Google+Cloud+Platform%22%29&sort=1&pagenr=1";
                   company = "Freelancermap";
                   provider = "freelancermap";
                 }
-                # German defense/clearance GCP search (Sicherheitsüberprüfung,
-                # Verteidigung, Bundeswehr, Rüstung — upstream config.yaml
-                # 2026-09-12): same freelancermap surface as the primary
+                # 2026-11-10 Deutsche-Bank channel: DB itself posts freelance
+                # work NOWHERE (verified: zero "Deutsche Bank" rows across the
+                # whole prod funnel); bank-shaped work flows broker-mediated
+                # and ANONYMIZED on this board ("Bankkunde", "Großbank": the
+                # sector is the discoverable signal, the engine scores GCP fit
+                # per posting). Query verified live 2026-11-10: freelancermap
+                # echoes queryParts and returns contracting listings. Kept
+                # byte-identical to the CV repo's config.yaml portals.
+                {
+                  url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Banking%22+OR+%22Bank%22+OR+%22Finanz%22+OR+%22Kreditinstitut%22%29&sort=1&pagenr=1";
+                  company = "Freelancermap";
+                  provider = "freelancermap";
+                }
                 # search, second query axis.
+                # 2026-11-10 DB-channel wave: "CGP" was a typo for "GCP"
+                # (introduced 61fcd5d24, 2026-09-01): postings naming only
+                # the acronym never matched the board search. Fixed here to
+                # mirror the CV repo's config.yaml byte-for-byte.
                 {
                   url = "https://www.freelancermap.de/projekte/web-und-softwareentwicklung?categories%5B0%5D=8&categories%5B1%5D=11&projectContractTypes%5B0%5D=contracting&query=%28%22Sicherheits%C3%BCberpr%C3%BCfung%22+OR+%22Verteidigung%22+OR+%22Bundeswehr%22+OR+%22R%C3%BCstung%22%29&sort=1&pagenr=1";
                   company = "Freelancermap";
