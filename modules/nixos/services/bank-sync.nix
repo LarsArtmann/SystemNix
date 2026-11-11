@@ -122,7 +122,7 @@
           pkgs.gnugrep
           pkgs.gnused
           pkgs.jq
-          pkgs.poppler_utils
+          pkgs.poppler-utils # renamed from poppler_utils in pinned nixpkgs f9a75f41 (eval fix, residue session 2026-11-11)
           pkgs.rsync
           pkgs.sqlite
         ];
