@@ -372,6 +372,24 @@
               }/bin/ai-stack-status";
               meta.description = "AI-stack status in one command: unit states, port bind ownership (foreign-listener check), memory-guard freshness + leak gauges; exit 1 on red (--format json for agents)";
             };
+
+          archive-qonto-corpus =
+            mkApp "archive-qonto-corpus"
+              "Reconcile the full Qonto corpus (statements, transaction attachments, fee invoices) into Paperless-ngx and wire document<->transaction links (idempotent, checksum-driven)"
+              [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.curl
+                pkgs.findutils
+                pkgs.gawk
+                pkgs.gnugrep
+                pkgs.gnused
+                pkgs.jq
+                pkgs.poppler_utils
+                pkgs.rsync
+                pkgs.sqlite
+              ]
+              (root + "/scripts/archive-qonto-corpus.sh");
         };
     };
 }

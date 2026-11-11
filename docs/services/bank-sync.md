@@ -37,25 +37,93 @@ The 2026-10-14 hard pin (`67dd64526`) is LIFTED. The ceiling existed only becaus
 
 **If a future rev breaks the key basis again:** same remedy, new archive suffix — bump the marker date in the oneshot (the unit is the template), rehearse on empty scratch, deploy. Never float against a journal the new binary cannot read; never bypass the preflight.
 
-## Qonto historical statements (2026-10-19)
+## Qonto corpus: statements + attachments + fee invoices (2026-11-11)
 
-The Qonto era lives as frozen exports in the bank-sync repo checkout (`data/historical/qonto/`; root-staged into the dataDir because `/home/lars` is DAC-private). Three convergent oneshots landed them in the live deployment:
+The pre-Wise Qonto era now lives in Paperless-ngx as a **complete,
+convergent corpus** rather than a one-shot upload:
 
-- **`bank-sync-qonto-stage.service`** (root): copies the FOUR transaction CSVs + the `statements/<org>/<year>/` PDF tree from the repo checkout into `<dataDir>/qonto-import/` (repo commit 0ccc3a9b; the corpus is the owner's Drive exports from 2025-02-24).
-- **`bank-sync-qonto-import.service`** (bank-sync user, ConditionPathExists-gated on the staged CSVs): runs `bank-sync import` per org+file — profiles "Artmann Technologies GmbH" + "Artmann Holding GmbH", account "Hauptkonto", EUR, **explicit `BANK_SYNC_DATABASE_PATH`** (the 2026-10-17 side-DB trap). Idempotent by construction (deterministic FNV-1a transaction IDs, stable derived profile/balance IDs) — re-runs and reboots skip known rows. Ordered `after bank-sync.service` so a restarting daemon and the import never replay the same uncheckpointed journal events in one activation window. The FULL-history CSVs (`*_full_2025-02-24.csv`, converted from the Drive OFX exports by `data/historical/qonto/ofx_to_qonto_csv.py`) bridge the 132 fragment rows onto their original UUIDs (match key: local timestamp-to-the-minute + abs amount) so the overlap skips instead of duplicating; live result 2026-10-20: 859+89 imported, 132 skipped, 0 errors, dashboard serves 963+117 rows (Tech 2023-01-04→2025-02-24, Holding 2022-12-07→2025-02-05). Known cosmetic: the technologies FRAGMENT export carries a trailing junk row → skipped with `errors=1` in the log; the frozen source file is deliberately untouched.
-- **`bank-sync-qonto-paperless.service`** (requires the archival token mint, lives under `paperlessArchive.enable`): uploads the 40 monthly statement PDFs to Paperless-ngx with per-file metadata derived from the staged tree — title "Qonto Statement - <legal entity> - YYYY-MM", `created` = first day of the statement month, correspondent "Qonto", document type "Bank Statement", tags `bank-sync` + `qonto`. PER-SET markers: `qonto-paperless-import.done` (the two span CSV extracts, archived 2026-10-19 08:59) and `qonto-statements-paperless.done` (the 40 PDFs, archived + count-verified 2026-10-20 10:18). Org directory names and YYYY-MM prefixes are validated — an unexpected tree is a loud failure, not a misfiled document.
+- **Staging**: `<dataDir>/qonto-corpus/` (233 MB, 1028 documents; btrbk-pool
+  snapshotted with the DB). Layout: `statements/{technologies,holding}/` (40
+  monthly PDFs), `attachments/{technologies,holding}/` (956 per-transaction
+  scans + 32 Qonto fee invoices). Seeded from the owner's Drive export
+  (`~/Downloads/drive-extract-20261019`); `--source` re-stages a fresh export.
+- **Reconciler**: `scripts/archive-qonto-corpus.sh` (= `nix run
+  .#archive-qonto-corpus`, or the `bank-sync-qonto-corpus` oneshot, boot +
+  weekly Sun 05:00). It is checksum-driven: each file is looked up by SHA-256
+  in Paperless before upload, so re-runs never duplicate; metadata patches are
+  diffed (a converged run issues zero writes); ledger inserts are
+  `INSERT OR IGNORE`. It heals the archive after a Paperless DB loss — the
+  property the old marker-gated unit lacked.
+- **Metadata**: correspondent `Qonto`, document types `Bank Statement` /
+  `Bank Receipt` / `Invoice`, tags `bank-sync` + `qonto` (unmatched docs also
+  get `bank-sync-unmatched`).
 
-Split-brain note: the import writes events + read tables as a second process against the running daemon's SQLite (WAL-serialized, qonto streams never touched by Wise syncs) — the same proven-safe shape as the 2026-10-17 CLI import; the dashboard serves the rows without a daemon restart. The sync-state counter cosmetic (counter vs read model after non-daemon imports) applies to qonto balances too.
+### Bidirectional linkage
 
-**Qonto ATTACHMENT receipts are NOT archived:** `bank-sync paperless --provider qonto --receipts` (transaction attachments via the Qonto Business API) needs `BANK_SYNC_QONTO_ORGANIZATION` / `BANK_SYNC_QONTO_SECRET` / `BANK_SYNC_QONTO_IBAN` — no credentials exist in sops yet. ALTERNATIVE: the Drive zip carries the FULL `qonto_archive/` attachment sets (~1000 PDFs/PNGs named `YYYY-MM-DD - Counterparty - EUR amt - hash`) for both orgs — a bulk archival unit over those local files would not need any credentials (follow-up row in docs/todo/services.md). Until then the archive holds the 40 monthly statement PDFs + the 2 span CSV extracts.
+Every linked document carries a custom field pointing at the bank-sync
+transaction, and every matched transaction has a ledger row pointing at the
+document:
 
-### Statement archival verification (2026-10-20)
+| Direction | Store | Value |
+| --- | --- | --- |
+| document → transaction | Paperless custom field `bank_sync_receipt` | `qonto/receipt/<transaction-uuid>` |
+| document → transaction (clickable) | Paperless custom field `bank_sync_tx_url` (URL type) | `https://banksync.home.lan/partials/transaction?id=<uuid>&provider=qonto` |
+| document → statement month | Paperless custom field `bank_sync_statement` | `qonto/<balance-id>/<YYYY-MM>` |
+| transaction → document | bank-sync `paperless_receipt_uploads` | `(provider=qonto, external_id=<uuid>, kind=receipt, document_id, checksum, filename, tx_date)` |
+| statement month → document | bank-sync `paperless_uploads` | `(provider=qonto, balance_id, window_start/end, document_id, checksum)` |
 
-Both archival sets are DONE and marker-gated. Verification lives in the journal only (never hand-curl with the token):
+Attachments/invoices are matched deterministically and locally:
+filename date (Europe/Berlin, ±1 day) + absolute amount + counterparty text;
+ties resolve least-used so same-day/same-amount documents spread across their
+transactions. Fee invoices extract the paid total from the PDF
+(`Bezahlter Betrag`, falling back to `Gesamtbetrag`) and match the invoice
+month or the following charge month. Unmatched documents are still archived;
+they carry `qonto/receipt-local/<hash>` or `qonto/invoice/<hash>` and the
+`bank-sync-unmatched` tag, so nothing is silently misfiled.
+
+**Known limit**: the Paperless custom field gives Paperless → bank-sync
+navigation (the URL field is clickable). The reverse click (bank-sync
+dashboard row → Paperless document) needs an upstream bank-sync template
+change; the ledger already carries the document id, but the deployed dashboard
+does not render it yet.
+
+### Verification
 
 ```console
-journalctl -u bank-sync-qonto-paperless -n 60    # "uploading ... (created YYYY-MM-01)" x40, "verified 40 Qonto statement documents", marker written
-journalctl -u bank-sync-qonto-import -n 20        # "imported=859 skipped=104" / "imported=89 skipped=28" (fragments) then full-history lines
+nix run .#archive-qonto-corpus -- --dry-run          # plan + link counts, no writes
+nix run .#archive-qonto-corpus                        # converge the live archive
+journalctl -u bank-sync-qonto-corpus -n 40
+systemctl start bank-sync-qonto-corpus                # manual heal
+
+# Corpus completeness (checksums, live)
+sudo -u postgres psql -d paperless -Atc \
+  "select lower(checksum) from documents_document where checksum is not null" | sort -u > /tmp/pl
+# compare against the staged corpus' sha256sum set; 1028/1028 expected
+
+# Ledger rows (bank-sync DB)
+sqlite3 -readonly /mnt/pool/services/bank-sync/data.db \
+  "select count(*) from paperless_uploads where provider='qonto';"        # 40
+sqlite3 -readonly /mnt/pool/services/bank-sync/data.db \
+  "select count(*) from paperless_receipt_uploads where provider='qonto';" # one per matched transaction
 ```
 
-Re-runs are marker-gated no-ops ("marker present" / "statements marker present" lines).
+`bank-sync paperless --provider qonto --verify` (statements) and
+`--verify --receipts` (receipts) are the upstream drift tripwires: they read
+these ledger rows and fail if any recorded checksum is gone from the archive.
+
+### History (why the old unit was replaced)
+
+The 2026-10-20 archival uploaded all 40 statements into the Wave-6 **blank**
+Postgres cluster (the hot-db mount landed on an empty subvol). The 2026-10-21
+01:51 recovery copied the pre-incident cluster back, wiping those rows; the
+`qonto-statements-paperless.done` marker survived and made every later run a
+no-op — a silent archive hole. The corpus also contains 12 tech statements
+(2024-01→2025-02) that never existed in the earlier staged tree, and ~700
+attachment scans that were never archived. The 2026-11-11 reconciliation
+re-uploaded the full 1028-document set (the 26 holding statements were
+re-ingested by the drive corpus import in the meantime, untagged) and replaced
+the marker gate with checksum convergence.
+
+Qonto **Business API** credentials are still not wired:
+`bank-sync paperless --provider qonto --receipts` remains optional for future
+live attachment syncs, but the historical archive no longer depends on them.

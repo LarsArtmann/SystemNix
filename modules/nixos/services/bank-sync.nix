@@ -105,6 +105,29 @@
       qontoStageTechFull = "${cfg.dataDir}/qonto-import/technologies_gmbh_full_2025-02-24.csv";
       qontoStageHoldingFull = "${cfg.dataDir}/qonto-import/holding_gmbh_full_2025-02-24.csv";
       qontoStageStatements = "${cfg.dataDir}/qonto-import/statements";
+      # Durable full-corpus staging (statements + transaction attachments +
+      # Qonto fee invoices) for the convergent Paperless reconciliation.
+      # Seeded once from the owner's Drive export and snapshotted with the
+      # dataDir; the archiver is idempotent (checksum lookups, INSERT OR
+      # IGNORE ledgers), so boot + weekly runs only heal gaps.
+      qontoCorpusRoot = "${cfg.dataDir}/qonto-corpus";
+      qontoCorpusArchiver = pkgs.writeShellApplication {
+        name = "archive-qonto-corpus";
+        runtimeInputs = [
+          pkgs.bash
+          pkgs.coreutils
+          pkgs.curl
+          pkgs.findutils
+          pkgs.gawk
+          pkgs.gnugrep
+          pkgs.gnused
+          pkgs.jq
+          pkgs.poppler_utils
+          pkgs.rsync
+          pkgs.sqlite
+        ];
+        text = builtins.readFile ../../scripts/archive-qonto-corpus.sh;
+      };
     in
     {
       options.services.bank-sync.paperlessArchive = {
@@ -955,6 +978,69 @@
                   (serviceOneshotDefaults { })
                   ioTier.service
                 ];
+              };
+
+          # Convergent full-corpus reconciliation for the pre-Wise Qonto era:
+          # every statement/attachment/fee-invoice document into Paperless
+          # with canonical metadata, document -> transaction provenance in
+          # the bank_sync_receipt / bank_sync_statement custom fields, and
+          # transaction -> document rows in the bank-sync ledgers. The old
+          # marker-gated qonto-paperless unit above uploads statements once
+          # and can never heal a lost archive; this one re-derives the
+          # archive state from checksums on every run.
+          systemd.services.bank-sync-qonto-corpus =
+            lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled)
+              {
+                description = "Bank-Sync Qonto full corpus -> Paperless-ngx reconciliation (convergent)";
+                wantedBy = [ "multi-user.target" ];
+                after = [
+                  "network-online.target"
+                  "bank-sync-storage-dir.service"
+                  "bank-sync-paperless-token.service"
+                  "paperless-web.service"
+                ];
+                wants = [
+                  "network-online.target"
+                  "bank-sync-storage-dir.service"
+                  "paperless-web.service"
+                ];
+                requires = [ "bank-sync-paperless-token.service" ];
+                inherit onFailure;
+                startLimitBurst = 5;
+                startLimitIntervalSec = 300;
+                unitConfig = {
+                  RequiresMountsFor = [ cfg.dataDir ];
+                  ConditionPathExists = [ "${qontoCorpusRoot}/statements" ];
+                };
+                serviceConfig = lib.mkMerge [
+                  {
+                    Type = "oneshot";
+                    User = "root";
+                    ExecStart = "${qontoCorpusArchiver}/bin/archive-qonto-corpus --staging ${qontoCorpusRoot} --db ${cfg.dataDir}/data.db --url http://127.0.0.1:${toString ports.paperless} --token-file /run/bank-sync-paperless/env";
+                    TimeoutStartSec = "2h";
+                  }
+                  (harden {
+                    # Root reads the bank-sync-owned dataDir (0750) and
+                    # writes the SQLite ledgers next to the DB.
+                    CapabilityBoundingSet = "CAP_DAC_OVERRIDE";
+                    ReadWritePaths = [ cfg.dataDir ];
+                    MemoryMax = "1G";
+                  })
+                  (serviceOneshotDefaults { })
+                  ioTier.maintenance
+                ];
+              };
+
+          systemd.timers.bank-sync-qonto-corpus =
+            lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled)
+              {
+                description = "Weekly Bank-Sync Qonto corpus reconciliation timer";
+                wantedBy = [ "timers.target" ];
+                timerConfig = {
+                  OnCalendar = "Sun *-*-* 05:00:00";
+                  Persistent = true;
+                  RandomizedDelaySec = "15m";
+                };
               };
         })
         # Service-integration registry entry: fans out to the Caddy vHost
