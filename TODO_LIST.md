@@ -3469,3 +3469,6 @@
 - [ ] [ready] **Root-cause forgejo-github-sync exit 6/NOTCONFIGURED (missing credential?)** → [docs/todo/services.md](docs/todo/services.md) (Source: same report §b.2)
 - [ ] [ready] **Diagnose forgejo-runner ensure-timer non-convergence (claim live-false 60+ min)** → [docs/todo/services.md](docs/todo/services.md) (Source: same report §b.3)
 - [ ] [ready] **Root-cause tq-agent-pool cgroup escape (children outlive stop) + 32.7G swap peak** → [docs/todo/services.md](docs/todo/services.md) (Source: same report §b.5)
+- [ ] [ready] **Fix audible owner-facing auth filename (runbook + module echo say ~/.audible/auth.json; quickstart wrote audible.json)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-11-11_09-26_audible-diagnosis-session-storm-standoff-selfreview-status.md §a.5)
+- [ ] [ready] **Refactor audible-sync-dirs onto mkPoolDirUnit (caps invariant single-sourced)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-11-11_09-26_audible-diagnosis-session-storm-standoff-selfreview-status.md §e.1)
+- [ ] [ready] **Attribute audible-sync-dirs re-fire mechanism (12:23 + 18:00 runs match no gen link; 08:47:26 same question)** → [docs/todo/services.md](docs/todo/services.md) (Source: docs/status/2026-11-11_09-26_audible-diagnosis-session-storm-standoff-selfreview-status.md §f.6)
