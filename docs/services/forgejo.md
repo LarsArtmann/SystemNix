@@ -320,6 +320,7 @@ Knowledge below moved verbatim from the root AGENTS.md restructure — it is the
 
 - **Forgejo SSH keys** — Forgejo doesn't read NixOS `openssh.authorizedKeys.keys`. Provisioned via admin API (`forgejo-ssh-keys` oneshot).
 - **Forgejo `GET /admin/users/{u}/keys` → 405** — Use public `GET /api/v1/users/{u}/keys` for dedup. POST stays on admin path.
+- **Commit-signature verification needs the committer EMAIL on the account** — the forge resolves a signed commit via committer email → account → that account's registered keys; an email missing from the account renders every SSH-signed commit "No known key found for this signature in database" even when the signing key itself is registered (found 2026-11-11 on webphone-android: key present, `git@lars.software` not, vs the provisioning default `lars@local`). Declarative: `services.forgejo.userEmails`, ensured idempotently by the same `forgejo-ssh-keys` oneshot. Unlike keys, `GET /admin/users/{u}/emails` EXISTS (401 auth-gated, probed 2026-11-11).
 
 ---
 

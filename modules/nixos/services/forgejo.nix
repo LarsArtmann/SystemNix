@@ -960,7 +960,7 @@ _: {
         };
 
         systemd.services.forgejo-ssh-keys = {
-          description = "Add declarative SSH keys to Forgejo users";
+          description = "Add declarative SSH keys and commit emails to Forgejo users";
           after = [
             "forgejo.service"
             "forgejo-generate-token.service"
