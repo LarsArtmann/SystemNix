@@ -116,6 +116,12 @@ bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2
   (browser saved original source instead of DOM): DevTools console
   `copy([...document.querySelectorAll('[data-download-uri]')].map(e=>[e.getAttribute('data-download-uri'),e.getAttribute('data-size'),e.getAttribute('data-filename')].join('\t')).join('\n'))`
   → paste into `<staging>/triplets.tsv`.
+- **16:07 watcher ARMED** (systemd --user unit `takeout-g1-watch` running the committed
+  `scripts/takeout-watch.sh`; probe: `scripts/takeout-probe.sh`; commit `ddf40c737`): the D3c save now
+  AUTO-FIRES G1 — quiescence → validate (23 triplets, exact multiset vs `parts.tsv.known`) → `ingest-html`
+  → probe part 12 → `start`, all under the unit; refusals exit loud to `logs/watcher.log` and re-arm
+  manually. Do NOT hand-run a second `start`/watcher while the unit lives (`pgrep -f takeout-watch.sh`).
+  Self-tested: positive DRY leg + two refusal legs (22 attrs; size-mutated) all behave.
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
 re-fetch completed parts. If a link exhausts its download count: request a NEW export (same selection)
