@@ -36,8 +36,8 @@ Export facts (from the Takeout summary page, paste 2026-11-11):
 | Takeout product | Destination | Mechanism | Metadata fidelity |
 | --- | --- | --- | --- |
 | Google Photos (336 GB) | **Immich** | `immich-go upload from-google-photos` directly on the zips | Albums (`--sync-albums`), descriptions, GPS, timestamps from JSON sidecars; `--include-unmatched` REQUIRED (modern Takeouts ship no sidecar for unedited photos — skipping unmatched would be mass data loss) |
-| Drive (543 GB) | **OpenCloud** + pool mirror | **D1 decision** — (A) rclone live-Drive seed via `google-sync` go-live → mirror → WebDAV into OpenCloud; (B) Takeout extract → WebDAV into OpenCloud | A: mtimes + full tree + shared-with-me forest preserved (recommended). B: mtimes LOST (zip export-time), shared-with-me NOT included |
-| Drive documents (pdf/office/txt/eml/…) | **Paperless** | `drive-paperless` pipeline over the canonical Drive tree (D1 A = mirror, B = extract) — account-named correspondents, per-remote tags, batched, journal-idempotent | designed semantics; byte-identical dedup server-side |
+| Drive (543 GB) | **OpenCloud** + pool archive | **D1 = B (owner, 2026-11-11):** Takeout extract → WebDAV (rclone, vendor=owncloud) into OpenCloud; the rclone live-mirror is the queued ROADMAP fidelity upgrade | B's known losses on record (mtimes, shared-with-me); zip entries carry original timestamps where Google provides them |
+| Drive documents (pdf/office/txt/eml/…) | **Paperless** | `drive-paperless` pipeline over the canonical Drive tree (the D1-B extract) — account-named correspondents, per-remote tags, batched, journal-idempotent; **D4 = ALL docs (owner)** | designed semantics; byte-identical dedup server-side |
 | Drive raster images | **Immich** | same pipeline with `ingestImages = true` (extension routing, `fileCreatedAt/fileModifiedAt` from Drive mtime) | needs the `drive_paperless_immich_api_key` sops go-live (sub-checklist in google-sync.md) |
 | Mail (1.74 GB mbox) | pool archive (cold) | keep as archive | successor: mail-host import is a separate decision (mesh proposal), NOT this pipeline |
 | Contacts (vCard) / Calendar (ICS) / Keep / Tasks / Maps / Fit / everything else | pool archive (cold) | keep as archive; `takeout-verify.sh` proves completeness | successor: D1-mesh PIM import (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) consumes these on decision |
@@ -47,12 +47,13 @@ Export facts (from the Takeout summary page, paste 2026-11-11):
 (extract staging, only on D1-B) + ~336 (Immich) + ~543 (OpenCloud + mirror on D1-A) ≈ **≤ 2.7 TB peak,
 ~1.8 TB steady** — fits the 11 TB free with margin. Nothing ever touches QLC (`/` 60 G free, `/data` 363 G).
 
-## Open decisions (owner)
+## Decisions (owner, answered 2026-11-11)
 
-- **D1 — Drive ingest path** (recommend **A**): A = rclone live mirror (needs one OAuth ceremony: GCP client "In production" + `rclone authorize` per account; preserves mtimes, includes shared-with-me; Takeout zips still downloaded as the raw fallback). B = Takeout-only (zero ceremony; mtime loss + shared-with-me NOT in Takeout = real data-loss risk if anything was shared-to and never added to My Drive).
-- **D2 — staging root** (recommend yes): `/mnt/pool/archive/google-takeout/2026-11-10-main/` — created by ONE owner sudo command (agent shells cannot sudo; archive/ is root-owned).
-- **D3 — link handoff** (recommend file drop): owner places `urls.txt` (23 links, page order) + `cookies.txt` (Netscape format, takeout.google.com session, exported with a local-only browser extension) into the staging root at 0600. Never paste cookies into chat/shell history.
-- **D4 — Paperless scope** (recommend all): all Drive document-types flow to Paperless via the batched pipeline (bounded 200/run). Alternative: curated subset only (a manual first pass over the extract).
+- **D1 — Drive ingest path: B, Takeout-only for this retirement** (owner answer). The rclone live-mirror (path A: mtimes + shared-with-me fidelity) is queued as a ROADMAP item instead. **Accepted B risks, on record:** Drive file mtimes are LOST (zip export-time), and shared-with-me files never added to My Drive are NOT in the Takeout — before account deletion the owner should eyeball https://drive.google.com → "Shared with me" once.
+- **D2 — staging root:** `/mnt/pool/archive/google-takeout/racedriver8k-2026-11-10/` (account named for the multi-account retirement; created by ONE owner sudo command).
+- **D3 — link handoff: save-the-page flow.** Owner (logged in as racedriver8k) opens the Takeout "manage archives" page, `Ctrl+S` saves it as `links.html` into the staging root; `takeout-download.sh start` extracts the 23 download hrefs into `urls.txt` itself (page order, entities decoded — fixture-tested 23/23 with noise links excluded). `cookies.txt` (Netscape format, local-only browser exporter) rides along at 0600. Fallback if extraction ≠ 23: right-click → Copy Link Address × 23 into `urls.txt`.
+- **D4 — Paperless scope: ALL Drive document-types** via the batched drive-paperless pipeline.
+- **Raw archive: the 23 zips are kept permanently** on `/mnt/pool/archive` (owner answer) — the escape-hatch cold copy.
 
 ## Phases and gates
 
@@ -64,19 +65,22 @@ Export facts (from the Takeout summary page, paste 2026-11-11):
 4. `scripts/takeout-ingest-photos.sh` — immich-go wrapper (port via integration manifest, key from staging file, `-u` pinned, `--dry-run` passthrough). ✅
 5. shellcheck + selftest green, TODO harvest, CHANGELOG. ✅
 
-### Phase 1 — staging + download (owner: D2 mkdir + D3 links; deadline-aware)
+### Phase 1 — staging + download (owner: D2 mkdir + D3 links.html + cookies; deadline-aware)
 
 ```bash
-# owner, once:
-sudo install -d -o lars -g users -m 700 /mnt/pool/archive/google-takeout/2026-11-10-main
-# owner drops urls.txt (23 links in page order) + cookies.txt there, then:
-install -m 600 urls.txt cookies.txt /mnt/pool/archive/google-takeout/2026-11-10-main/
+# owner, once (agent shells cannot sudo; archive/ is root-owned):
+sudo install -d -o lars -g users -m 700 /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10
 ```
+
+Owner, logged in as racedriver8k on takeout.google.com → manage-archives page:
+1. `Ctrl+S` → save the page as `links.html` INTO the staging dir above.
+2. Export `cookies.txt` (Netscape format) for takeout.google.com with a LOCAL-ONLY
+   browser cookie exporter, drop it in the same dir.
 
 ```bash
 # agent or owner, in tmux (runs 1–3 days):
-bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/2026-11-10-main start
-bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/2026-11-10-main status
+bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10 start
+bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10 status
 ```
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
@@ -86,7 +90,7 @@ re-fetch completed parts. If a link exhausts its download count: request a NEW e
 ### Phase 2 — completeness verification
 
 ```bash
-bash scripts/takeout-verify.sh /mnt/pool/archive/google-takeout/2026-11-10-main
+bash scripts/takeout-verify.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10
 ```
 
 Gate G2 (ALL must pass before ANY deletion anywhere):
@@ -109,18 +113,19 @@ enough for immich-go album creation — create a FULL-access key for the migrati
 error-count == expected media count from `inventory.tsv` (Photos product); albums present in Immich;
 `--on-errors continue` NEVER used silently — the wrapper stops on first error by default.
 
-### Phase 4 — Drive → OpenCloud (+ pool mirror)
+### Phase 4 — Drive → OpenCloud (Takeout path, D1 = B)
 
-On D1-A (recommended): owner OAuth go-live checklist (`docs/services/google-sync.md` STATUS section) →
-seed ~543 GB to `/mnt/pool/backups/google-drive/<remote>` (48h budget unit) → `rclone check` clean →
-owner creates an OpenCloud app password (web UI → Devices & apps) → `rclone copy` mirror → WebDAV
-(`cloud.home.lan`, vendor=owncloud, mtime preserved) → `rclone check` clean.
-On D1-B: extract Drive zips to `<staging>/extracted/` → same rclone → WebDAV leg (mtime loss documented).
+Extract the Drive zips to `<staging>/extracted/` → owner creates an OpenCloud app
+password (web UI → Devices & apps) → `rclone copy` extract → WebDAV (`cloud.home.lan`,
+vendor=owncloud) → `rclone check` clean. Known fidelity losses on record (mtimes,
+shared-with-me — see Decisions). The rclone live-mirror fidelity upgrade is the queued
+ROADMAP item and can run ANY TIME before the account is deleted (it does not gate this
+pipeline).
 Gate G4: `rclone check` zero diffs; file count == inventory Drive row.
 
 ### Phase 5 — Drive docs → Paperless (+ images → Immich)
 
-`services.drive-paperless` sources point at the canonical Drive tree (mirror on A, extract on B),
+`services.drive-paperless` sources point at the canonical Drive tree (the D1-B extract),
 `ingestImages` per owner preference; deploy; watch the hourly batches drain (200/run → days at scale);
 journal + `last_success` + backup-coordination row green. Gate G5: journal upload-count converges to
 inventory doc-type count; zero `failed.log` entries.

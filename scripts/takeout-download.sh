@@ -14,12 +14,15 @@
 #   bash scripts/takeout-download.sh <staging-dir> start    # download/resume all missing parts
 #   bash scripts/takeout-download.sh <staging-dir> status   # per-part size-band report
 #
-# Owner handoff (D3): place into the staging root BEFORE start:
-#   urls.txt     23 download links, one per line, in Takeout page order
-#   cookies.txt  Netscape-format cookies for takeout.google.com (0600)
-# Never paste cookies into a shell/chat. Links have a limited re-download
-# count — this script resumes byte ranges and never re-fetches completed
-# parts.
+# Owner handoff (D3): place into the staging root BEFORE start — EITHER:
+#   urls.txt     23 download links, one per line, in Takeout page order, OR
+#   links.html   the saved Takeout "manage archives" page (Ctrl+S while logged
+#               in as the account) — `start` extracts the download hrefs into
+#                urls.txt itself (page order preserved, entities decoded)
+#   cookies.txt  Netscape-format cookies for takeout.google.com (0600; export
+#               with a LOCAL-ONLY browser cookie exporter while on the page)
+# Never paste links/cookies into a shell/chat. Links have a limited re-download
+# count — this script resumes byte ranges and never re-fetches completed parts.
 set -euo pipefail
 
 readonly DEFAULT_ATTEMPTS=40
@@ -88,9 +91,29 @@ init_staging() {
     done <<< "$PARTS_MANIFEST"
   fi
   [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' > "$root/urls.txt"
+  [ -f "$root/urls.txt" ] && chmod 600 "$root/urls.txt" 2>/dev/null || true
+  [ -f "$root/links.html" ] && chmod 600 "$root/links.html" 2>/dev/null || true
   local nparts_total
   nparts_total=$(awk 'NF && !/^#/ { n++ } END { print n + 0 }' "$root/parts.tsv")
   log "staging ready at $root (parts.tsv: $nparts_total parts)"
+}
+
+# build urls.txt from a saved Takeout page if the owner dropped links.html
+extract_links() {
+  local root=$1 html urls
+  html=$root/links.html
+  urls=$root/urls.txt
+  local n
+  n=$(grep -c '^[[:space:]]*https\?://' "$urls" 2>/dev/null || true)
+  [ "$n" -gt 0 ] && return 0
+  [ -f "$html" ] || return 1
+  {
+    echo '# extracted from links.html (page order preserved) — hand-verify the count'
+    grep -o 'https://takeout\.google\.com/takeout/download/[^"'\''<> ]*' "$html" \
+      | sed 's/&amp;/\&/g' | awk '!seen[$0]++'
+  } > "$urls"
+  chmod 600 "$urls"
+  log "extracted $(grep -c '^[[:space:]]*https' "$urls" || true) download link(s) from links.html -> urls.txt"
 }
 
 cmd_status() {
@@ -115,7 +138,8 @@ cmd_status() {
 cmd_start() {
   local root=$1 attempts=${2:-$DEFAULT_ATTEMPTS}
   local urls=$root/urls.txt cookies=$root/cookies.txt
-  [ -f "$urls" ] || die "urls.txt missing in $root — owner handoff (D3) not done"
+  extract_links "$root" || true
+  [ -f "$urls" ] || die "urls.txt missing in $root — owner handoff (D3) not done (links.html not found either)"
   local nurls
   nurls=$(grep -c '^[[:space:]]*https\?://' "$urls" || true)
   local nparts
