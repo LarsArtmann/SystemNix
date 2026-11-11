@@ -868,6 +868,28 @@ _: {
                   conditions = [ "[CONNECTED] == true" ];
                   alerts = discordAlert "Mullvad DoT upstream unreachable — DNS-over-TLS path broken";
                 }
+                # 2026-11-11 forwarder-outage class (4.5h invisible): the
+                # google.com probes above pass on CACHED answers while every
+                # cold upstream query fails (storm packet loss starving the
+                # DoT dials to 1.1.1.1/9.9.9.9:853), and Upstream Quad9
+                # carries no alerts. This probe asks a name only an upstream
+                # round-trip can answer: a nonexistent subdomain of a real
+                # zone, live-verified NOERROR+NODATA via both 127.0.0.1 and
+                # 1.1.1.1 (2026-11-11). Never positively cacheable; at worst
+                # dnsblockd negative-caches it for one SOA TTL, bounding
+                # detection latency instead of leaving the outage invisible.
+                {
+                  name = "DNS Forwarder Cold";
+                  group = "Infrastructure";
+                  url = "127.0.0.1";
+                  dns = {
+                    query-name = "gatus-cold-probe.example.com";
+                    query-type = "A";
+                  };
+                  interval = "60s";
+                  conditions = [ "[DNS_RCODE] == NOERROR" ];
+                  alerts = discordAlert "dnsblockd forwarder path dead: cold queries fail while cached names still serve (upstream DoT/UDP egress broken or storm-starved, 2026-11-11 class)";
+                }
                 {
                   name = "DNS Blocking Active";
                   group = "Infrastructure";
