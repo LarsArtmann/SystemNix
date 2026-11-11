@@ -2272,14 +2272,14 @@ in
             exit 1
           fi
 
-          state=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
+          state=$(sqlite3 -cmd '.timeout 5000' "$DB" "SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
           if [ "$state" = "present" ]; then
             echo "  ✓ Email already exists: $email"
             continue
           fi
 
-          sqlite3 "$DB" "PRAGMA busy_timeout=5000; INSERT INTO email_address (uid, email, lower_email, is_activated, is_primary) SELECT $user_id, '$email', lower('$email'), 1, 0 WHERE NOT EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email'));"
-          state=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
+          sqlite3 -cmd '.timeout 5000' "$DB" "INSERT INTO email_address (uid, email, lower_email, is_activated, is_primary) SELECT $user_id, '$email', lower('$email'), 1, 0 WHERE NOT EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email'));"
+          state=$(sqlite3 -cmd '.timeout 5000' "$DB" "SELECT CASE WHEN EXISTS (SELECT 1 FROM email_address WHERE lower_email = lower('$email')) THEN 'present' ELSE 'missing' END;")
           if [ "$state" = "present" ]; then
             echo "  ✓ Added email (activated): $email"
           else
@@ -2311,8 +2311,8 @@ in
             echo "  ✗ Malformed fingerprint (expected SHA256:<base64>): $fp" >&2
             exit 1
           fi
-          sqlite3 "$DB" "PRAGMA busy_timeout=5000; UPDATE public_key SET verified=1 WHERE fingerprint='$fp';"
-          STATE=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM public_key WHERE fingerprint='$fp' AND verified=1) THEN 'verified' ELSE 'not-registered' END;")
+          sqlite3 -cmd '.timeout 5000' "$DB" "UPDATE public_key SET verified=1 WHERE fingerprint='$fp';"
+          STATE=$(sqlite3 -cmd '.timeout 5000' "$DB" "SELECT CASE WHEN EXISTS (SELECT 1 FROM public_key WHERE fingerprint='$fp' AND verified=1) THEN 'verified' ELSE 'not-registered' END;")
           if [ "$STATE" = "verified" ]; then
             echo "  ✓ Signing key verified: $fp"
           else
