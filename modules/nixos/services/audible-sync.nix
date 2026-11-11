@@ -72,7 +72,13 @@ _: {
         primary_profile = "default"
 
         [profile.default]
-        auth_file = "auth.json"
+        # ABSOLUTE path REQUIRED: audible-cli's Config.dirname resolves the
+        # config path with pathlib .resolve() (follows symlinks), so a
+        # RELATIVE auth_file joined against the symlinked config.toml's
+        # realpath lands in /nix/store/auth.json (live 2026-11-11 09:30
+        # first-start failure, status=3/NOTIMPLEMENTED). pathlib join with
+        # an absolute operand replaces the base, defeating the symlink.
+        auth_file = "${stateDir}/config/auth.json"
         country_code = "${cfg.countryCode}"
       '';
 
