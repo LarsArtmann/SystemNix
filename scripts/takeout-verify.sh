@@ -208,7 +208,8 @@ run_verify() {
       prod = seg[1]
       np = prod; gsub(/[^a-z0-9]/, "", np); np = tolower(np)
       if (np != "googlephotos") next
-      n = split(seg[2], parts, "."); ext = (n > 1 ? tolower(parts[n]) : "")
+      m = split(name, segs, "/"); fname = segs[m]
+      n = split(fname, fp, "."); ext = (n > 1 ? tolower(fp[n]) : "")
       if (ext == "json") json++
       else if (ext ~ /^(jpg|jpeg|png|heic|heif|webp|gif|bmp|tif|tiff|avif|dng|cr2|cr3|nef|arw|raf|raw|mp4|mov|avi|mkv|webm|m4v|3gp|mpg|mts|m2ts|wmv)$/) media++
       else other++
@@ -220,28 +221,42 @@ run_verify() {
     }' "$names_tsv" > "$pmc"
 
   # --- G2.3 coverage ---
-  local product expect_size present norm_prod n2 found_folders match cand cand_list
+  local found_folders
   found_folders=$(awk -F'\t' 'NR > 1 { print $1 }' "$inv")
   local coverage_tsv=$root/logs/coverage.tsv
   : > "$coverage_tsv"
+  # normalized expected-name set (raw + google-stripped forms) for the extras check
+  local expected_norms=$root/logs/expected-names.txt
+  {
+    while IFS=$'\t' read -r product _present; do
+      case $product in ''|'#'*) continue ;; esac
+      norm "$product"; norm2 "$product"
+    done < "$root/products.tsv"
+  } > "$expected_norms"
+  # folder match for one product: line-safe (names contain spaces), fuzzy, then overrides
+  match_folder() {
+    local product=$1 folder cand np n2s
+    np=$(norm "$product"); n2s=$(norm2 "$product")
+    while IFS= read -r folder; do
+      [ -n "$folder" ] || continue
+      if [ "$(norm "$folder")" = "$np" ] || [ "$(norm2 "$folder")" = "$n2s" ]; then
+        printf '%s' "$folder"; return
+      fi
+    done <<< "$found_folders"
+    for cand in $(override_candidates "$product" | tr ';' ' '); do
+      while IFS= read -r folder; do
+        [ -n "$folder" ] || continue
+        if [ "$(norm "$folder")" = "$(norm "$cand")" ]; then
+          printf '%s' "$folder"; return
+        fi
+      done <<< "$found_folders"
+    done
+    return 1
+  }
+  local product expect_size present match
   while IFS=$'\t' read -r product expect_size present; do
     case $product in ''|'#'*) continue ;; esac
-    norm_prod=$(norm "$product")
-    n2=$(norm2 "$product")
-    match=''
-    for folder in $found_folders; do
-      if [ "$(norm "$folder")" = "$norm_prod" ] || [ "$(norm2 "$folder")" = "$n2" ]; then
-        match=$folder; break
-      fi
-    done
-    if [ -z "$match" ]; then
-      cand_list=$(override_candidates "$product")
-      for cand in ${cand_list//;/ }; do
-        for folder in $found_folders; do
-          if [ "$(norm "$folder")" = "$(norm "$cand")" ]; then match=$folder; break 2; fi
-        done
-      done
-    fi
+    match=$(match_folder "$product") || match=''
     if [ "$present" = "1" ]; then
       if [ -n "$match" ]; then
         printf 'OK\t%s\t-> %s\n' "$product" "$match" >> "$coverage_tsv"
@@ -259,15 +274,11 @@ run_verify() {
     fi
   done < "$root/products.tsv"
   # extras (folders with no expected product)
+  local fnorm fn2
   while IFS= read -r folder; do
-    match=''
-    while IFS=$'\t' read -r product _ present; do
-      case $product in ''|'#'*) continue ;; esac
-      if [ "$(norm "$folder")" = "$(norm "$product")" ] || [ "$(norm2 "$folder")" = "$(norm2 "$product")" ]; then
-        match=$product; break
-      fi
-    done < "$root/products.tsv"
-    if [ -z "$match" ]; then
+    [ -n "$folder" ] || continue
+    fnorm=$(norm "$folder"); fn2=$(norm2 "$folder")
+    if ! grep -qxF "$fnorm" "$expected_norms" && ! grep -qxF "$fn2" "$expected_norms"; then
       echo "WARN G2.3: folder in zips with no matching expected product: $folder" >&2
       printf 'EXTRA\t?\t%s\n' "$folder" >> "$coverage_tsv"
       warnings=$((warnings + 1))
@@ -318,6 +329,9 @@ selftest() {
   build_fixture() {
     rm -rf "$fx"/{zips,logs}; mkdir -p "$fx"/{zips,logs}
     printf '# part\texpected\n1\t3 MB\n2\tLESS1MB\n' > "$fx/parts.tsv"
+    printf '# product\texpected-size\tpresent\n' > "$fx/products.tsv"
+    printf '%s\n' 'Drive|543 GB|1' 'Google Photos|336 GB|1' 'Mail|1.74 GB|1' 'Blogger||0' \
+      | tr '|' '\t' >> "$fx/products.tsv"
     dd if=/dev/urandom of="$fx/blob" bs=1024 count=900 2>/dev/null
     ( cd "$fx" && mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail \
       && cp blob 'tk/Takeout/Drive/a file.pdf' \
