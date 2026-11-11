@@ -1022,11 +1022,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794363020,
-        "narHash": "sha256-6wW8Wl0QOjTlSviHgIH9ovCF6kF3x1VOWXSLLnCliWc=",
+        "lastModified": 1794365404,
+        "narHash": "sha256-SwSZrQVSsMTBb0JBk8iK8ct8k1CylUZEvxx8PqynQio=",
         "ref": "refs/heads/master",
-        "rev": "2c25d0a3934bbb85a81f8c848ddacf142f662b81",
-        "revCount": 10470,
+        "rev": "b684a00c3a140a5f1fd41c14f0396d6d5b11eeaa",
+        "revCount": 10478,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
