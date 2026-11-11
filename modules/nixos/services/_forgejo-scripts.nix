@@ -2179,6 +2179,7 @@ in
       pkgs.curl
       pkgs.jq
       pkgs.coreutils
+      pkgs.sqlite
     ];
     text = ''
       set -euo pipefail
@@ -2280,6 +2281,39 @@ in
           else
             echo "  ✗ Failed to add email (HTTP $http_code): $body"
             exit 1
+          fi
+        done
+      done
+
+      # The verified-flag gate: the forge's commit-signature verification
+      # (services/asymkey/commit.go parseCommitWithSSHSignature) skips
+      # public_key rows with verified=false, and the flag flips ONLY via
+      # the web UI's token-signing challenge (models/asymkey/
+      # ssh_key_verify.go VerifySSHKey) — no API or CLI exposes a setter,
+      # so declared fingerprints (services.forgejo.verifiedSigningKeys)
+      # are converged directly in the forge DB. Fingerprints are globally
+      # unique in public_key (one key = at most one account), so the
+      # UPDATE needs no user join. A fingerprint matching no row is DRIFT
+      # (declared key not registered) — WARN, not fail: the keys/emails
+      # phases above own existence.
+      VERIFIED_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-verified-signing-keys.json" (builtins.toJSON cfg.verifiedSigningKeys))}
+
+      DB="${stateDir}/data/forgejo.db"
+      for user in $(jq -r 'keys[]' "$VERIFIED_FILE"); do
+        echo "Marking signing keys verified for Forgejo user: $user"
+        mapfile -t fps < <(jq -r --arg user "$user" '.[$user][]' "$VERIFIED_FILE")
+        for fp in "''${fps[@]}"; do
+          [[ -z "$fp" ]] && continue
+          if ! [[ "$fp" =~ ^SHA256:[A-Za-z0-9+/]+=*$ ]]; then
+            echo "  ✗ Malformed fingerprint (expected SHA256:<base64>): $fp" >&2
+            exit 1
+          fi
+          sqlite3 "$DB" "PRAGMA busy_timeout=5000; UPDATE public_key SET verified=1 WHERE fingerprint='$fp';"
+          STATE=$(sqlite3 "$DB" "PRAGMA busy_timeout=5000; SELECT CASE WHEN EXISTS (SELECT 1 FROM public_key WHERE fingerprint='$fp' AND verified=1) THEN 'verified' ELSE 'not-registered' END;")
+          if [ "$STATE" = "verified" ]; then
+            echo "  ✓ Signing key verified: $fp"
+          else
+            echo "  WARN: fingerprint not registered on the forge: $fp" >&2
           fi
         done
       done
