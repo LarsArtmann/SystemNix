@@ -86,3 +86,7 @@ New from THIS report (the three [decision] rows are already appended to TODO_LIS
 ## h) BAND DRIFT
 
 **None recorded.** The production tq journal (`/home/lars/projects/tasks.db`, `facts` table, queried 2026-11-11 06:2x via sqlite3) holds ZERO rows of any type — no `task.reprioritized` facts exist for this window or ever, consistent with every prior window report's finding. No priority moved; nothing to explain after the fact.
+
+---
+
+**RE-FIRE ANNOTATION (2026-11-11 06:2x):** this report IS the completed close of done-prompt `000001a1c2e674da8a550bf5f53000000000` (skeleton `61dded91d`, amended here as `fcbb0e1c1`). The queue re-fired the task; the 2nd fire verified this close unchanged against HEAD and recorded the verdict — see `docs/status/2026-11-11_06-26_monitoring-window-closeout-refire-verification.md`.
