@@ -243,6 +243,28 @@ in
       interval = "30m";
       severity = "warning";
     };
+    # Chronic memory-throttle tripwire (2026-11-11): §17 only sweeps memory
+    # throttle counters AT DEPLOY TIME, so a between-deploy thrasher (the
+    # mr-sync-dashboard 149k class, 2026-10-10) was invisible again the
+    # moment the deploy window closed. system-health's collector now emits
+    # the kernel `high` counter per monitored service every 2min; this rule
+    # fires when a unit accrues >1000 new reclaim passes in 1h (startup
+    # blips are tens; mr-sync-dashboard peaked ~1.6k/min). The `unless
+    # on(service)` join is the per-unit allowlist: designed throttle-only
+    # units (MemoryHigh set, NO MemoryMax — the watermark firing IS their
+    # intended behavior, e.g. btrbk) carry
+    # system_service_memory_throttle_designed 1 and never page. The
+    # absent() leg keeps collector death from reading as healthy
+    # (or-absent convention, git-push-lag pattern).
+    "signoz/rules/memory-throttle-chronic.json".source = mkRule {
+      name = "Chronic Memory Throttle (>1000 MemoryHigh passes in 1h)";
+      description = "Unit {{.Labels.service}} accrued >1000 new MemoryHigh reclaim passes in 1h — it is thrashing against its memory ceiling between deploys (llama-chat 2026-10-08 throttled 46k times while staying green). Budget fix or justify; designed throttle-only units are excluded by the designed flag.";
+      query = "(increase(system_service_memory_events_throttle_high[1h]) unless on(service) (system_service_memory_throttle_designed == 1)) > 1000 or absent(system_service_memory_events_throttle_high)";
+      target = 1;
+      step = 300;
+      interval = "10m";
+      severity = "warning";
+    };
     "signoz/rules/dnsblockd-down.json".source = mkRule {
       name = "DNS Blocker Down";
       description = "dnsblockd service unit is not active";

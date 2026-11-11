@@ -1488,15 +1488,25 @@ _: {
             echo "# HELP system_service_memory_events_high 1 if service memory.events max exceeds ${toString memoryEventsMaxThreshold}, 0 otherwise"
             echo "# TYPE system_service_memory_events_high gauge"
 
+            echo "# HELP system_service_memory_events_throttle_high Cgroup memory.events high counter (kernel reclaim passes under MemoryHigh) — the chronic-throttler observability leg: §17 only sweeps at deploy time, so a between-deploy thrasher (mr-sync-dashboard 149k class, 2026-10-10) is invisible without this"
+            echo "# TYPE system_service_memory_events_throttle_high gauge"
+
+            echo "# HELP system_service_memory_throttle_designed 1 if the unit is throttle-only BY DESIGN (MemoryHigh set, no MemoryMax — e.g. btrbk class: the watermark firing IS the intended behavior), 0 otherwise. The SigNoz throttle rule excludes designed units via this flag"
+            echo "# TYPE system_service_memory_throttle_designed gauge"
+
             any_events_high=0
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
               events_file="/sys/fs/cgroup/system.slice/''${svc}.service/memory.events"
               max_events=0
+              high_events=0
+              throttle_designed=0
               if [ -f "$events_file" ]; then
                 max_events=$(awk '/^max / {print $2}' "$events_file" 2>/dev/null) || max_events=0
+                high_events=$(awk '/^high / {print $2}' "$events_file" 2>/dev/null) || high_events=0
               fi
               max_events="''${max_events:-0}"
+              high_events="''${high_events:-0}"
               echo "system_service_memory_events_max{service=\"$svc\"} ''${max_events}"
               events_high=0
               if [ "$max_events" -gt ${toString memoryEventsMaxThreshold} ] 2>/dev/null; then
@@ -1504,6 +1514,16 @@ _: {
               fi
               echo "system_service_memory_events_high{service=\"$svc\"} ''${events_high}"
               if [ "$events_high" = "1" ]; then any_events_high=1; fi
+              # cgroupfs reads (cheap, no systemctl forks): "max" = unset.
+              # Designed throttle-only = MemoryHigh present, MemoryMax absent.
+              cg_dir="/sys/fs/cgroup/system.slice/''${svc}.service"
+              cg_max="$(cat "''${cg_dir}/memory.max" 2>/dev/null || echo max)"
+              cg_high="$(cat "''${cg_dir}/memory.high" 2>/dev/null || echo max)"
+              if [ "''${cg_max:-max}" = "max" ] && [ "''${cg_high:-max}" != "max" ]; then
+                throttle_designed=1
+              fi
+              echo "system_service_memory_events_throttle_high{service=\"$svc\"} ''${high_events}"
+              echo "system_service_memory_throttle_designed{service=\"$svc\"} ''${throttle_designed}"
             '') allMonitoredServices}
 
             echo "# HELP system_memory_events_any_high 1 if ANY monitored service exceeds the memory.events max threshold, 0 otherwise"
