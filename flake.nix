@@ -655,6 +655,17 @@
       url = "github:LarsArtmann/go-health-dashboard?ref=master";
     };
 
+    # io-surface: the I/O surface manifest gate for Go trees. Extracts every
+    # I/O call site and checks both directions against a CUE manifest (gate
+    # face) or runs manifestless detector rules (lint face). Public repo;
+    # ?ref=master per the pin policy. Flakes its own packages.default
+    # (go-standard, go_1_27, own baked vendorHash); nixpkgs and
+    # go-nix-helpers deliberately NOT followed (FOD stability, cvagent
+    # class). Consumed by lars-packages (PATH CLI via base.nix attrValues).
+    io-surface = {
+      url = "github:LarsArtmann/io-surface?ref=master";
+    };
+
     # erraudit — Error handling pattern analyzer for Go projects
     # (GitHub renamed the repo from hierarchical-errors; the input name and
     # the mkLarsPackages attr follow the new name. 2026-09-17.)
@@ -1017,7 +1028,12 @@
       # lock-free package probe green at this rev. Note: a live session was
       # mid-work in the crm checkout (uncommitted templ/CSS churn) — the
       # NEXT roll must re-probe the newer tip.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=f2d17263610b783e5fcd6ee2720166a11262ad5f";
+      # 2026-11-11 ROLL-FORWARD to e383ba9 (the journal-words + machine-tag
+      # endpoint + gate-repair session close-out: crm's go-cqrs-lite pin
+      # completed to 3a334f909 /v4 + cmdguard v5.0.0, vendorHash chased,
+      # verify-pinned FULL green): lock-free package probe green at this
+      # rev.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=e383ba9c28226ab4aa4b3db57358607f89b9eb6e";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
@@ -1152,6 +1168,8 @@
     go-structure-linter.inputs.flake-parts.follows = "flake-parts";
     go-taskqueue.inputs.flake-parts.follows = "flake-parts";
     golangci-lint-auto-configure.inputs.flake-parts.follows = "flake-parts";
+    io-surface.inputs.flake-parts.follows = "flake-parts";
+    io-surface.inputs.go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";
     inboxclean.inputs.flake-parts.follows = "flake-parts";
     inboxclean.inputs.treefmt-nix.follows = "treefmt-nix";
     inboxclean.inputs.git-hooks.follows = "git-hooks";

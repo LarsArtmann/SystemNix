@@ -46,8 +46,7 @@ fi
 
 CUTOFF=$(date -d "-$RETENTION_DAYS days" '+%Y-%m-%d %H:%M:%S')
 BEFORE=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null || echo "?")
-ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>&1 >/dev/null)
-if [ $? -eq 0 ]; then
+if ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>&1 >/dev/null); then
   echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; window ${RETENTION_DAYS}d)"
 else
   echo "monitor365-retention: WARNING — DELETE failed (boundary-count attempt: $BEFORE; DB left as-is; tonight's export is intact)"

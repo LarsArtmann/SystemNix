@@ -326,6 +326,12 @@ lib.filterAttrs (_: v: v != null) {
   # nixpkgs lock, no follows): upstream-baked vendorHash probed green at the
   # locked rev 5c8c6b17 — no consumer shim, re-probe on float, never re-pin.
   invoices = flakePkg inputs.invoices;
+  # io-surface: the I/O surface manifest gate CLI (init/check/render/lint;
+  # fleet I/O-BOM gate, InboxClean pilot consumer). NON-FOLLOWER input (own
+  # nixpkgs lock, no follows): upstream-baked vendorHash probed green at the
+  # locked rev (nix build .#io-surface, 2026-11-11); no consumer shim,
+  # re-probe on float, never re-pin.
+  io-surface = flakePkg inputs.io-surface;
   # journal — the accounting kernel CLI (chart, double-entry journal,
   # reconciliation, VAT) + in-repo Hauptbuch web dashboard (`journal serve`
   # — deployed as the journal-serve unit since 2026-10-26: loopback

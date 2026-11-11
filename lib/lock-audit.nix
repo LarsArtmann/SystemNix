@@ -56,6 +56,8 @@
       "vendorHash validated against upstream's own locked nixpkgs (go 1.27.2 tarball pin; first-hand probe 2026-11-10 at 0304e2a, builds green with tests); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
     "invoices.nixpkgs" =
       "vendorHash validated against upstream's own locked nixpkgs (baked upstream; first-hand probe 2026-11-10 at f72f78e via detached worktree); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
+    "io-surface.nixpkgs" =
+      "vendorHash validated against upstream's own locked nixpkgs (go_1_27 via go-standard; first-hand probe 2026-11-11 built green through its own pins); following would re-tool the go-modules FOD on every root-nixpkgs bump — the journal wave class";
   },
 }:
 let

@@ -164,8 +164,11 @@ _: {
           #    failed unit → last_success NOT touched → backup-coordination
           #    alerts → OnFailure Discord names the ASIN from the journal.
           echo "audible-sync: downloading full library (AAXC + voucher + cover + chapters + pdf)"
+          # Flags verified against the built audible-cli 0.3.3 --help (live
+          # 2026-11-11: --no-progress does NOT exist in this version —
+          # first seed start died status=2/INVALIDARGUMENT at phase 2).
           audible download --all --aaxc --chapter --cover --cover-size ${toString cfg.coverSize} --pdf \
-            --ignore-errors -y --no-progress -j ${toString cfg.jobs} \
+            --ignore-errors -y -j ${toString cfg.jobs} \
             --filename-mode ${cfg.filenameMode} -o "$dlDir"
 
           dlCount=$(find "$dlDir" -name '*.aaxc' | wc -l)
