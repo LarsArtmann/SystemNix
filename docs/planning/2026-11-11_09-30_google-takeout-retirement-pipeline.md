@@ -91,18 +91,31 @@ bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2
 bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10 status
 ```
 
-**Intake log (2026-11-11 14:48, agent):** D2 done by owner. Links arrived as a page PASTE (not Ctrl+S):
-reconstructed `links.html` from the 23 `data-download-uri`/`data-size`/`data-filename` triplets →
-`ingest-html` → `urls.txt` + `parts.tsv` EXACT (23/23, sum 944,513,645,689 B = 879.65 GiB, matches the
-page; 0600). Cookies arrived as `cookies.json` (JS cookieStore export, 8 cookies, NO HttpOnly family) →
-converted to Netscape `cookies.txt`. **Probe RED (14:52): part-13 fetch → http 200 but final host
-`accounts.google.com`, 947,743 B login HTML — the `rapt` token alone does NOT authorize, and cookieStore
-exports cannot work by construction.** D3b (owner, blocking, the ONLY missing item): overwrite
-`<staging>/cookies.txt` with a full Netscape export INCLUDING HttpOnly cookies (HSID, SSID,
-`__Secure-1PSID`, `__Secure-3PSID`, PSIDTS — e.g. a local-only cookies.txt browser extension while on
-takeout.google.com); then re-probe via part 12 (`~/.cache/takeout-probe/probe.sh`, 176,785 B exact,
-installs on green) and fire `start` detached. Part 13 (565 B) already held exact; no re-download budget
-burned (the probe fetched a real part).
+**Intake log (2026-11-11, agent; latest state LAST):**
+- **14:48** Links arrived as a page PASTE (not Ctrl+S): reconstructed `links.html` from the 23
+  `data-download-uri`/`data-size`/`data-filename` triplets → `ingest-html` → `urls.txt` + `parts.tsv` EXACT
+  (23/23, sum 944,513,645,689 B = 879.65 GiB, matches the page; 0600). Cookies arrived as `cookies.json`
+  (JS cookieStore export, 8 cookies, NO HttpOnly family) → converted to Netscape `cookies.txt`.
+- **14:52 Probe RED:** part fetch → http 200 but final host `accounts.google.com`, login HTML — cookieStore
+  exports cannot work by construction. **CORRECTION of an earlier draft of this log: NO part is held — RED
+  probes exit before install; `zips/` is EMPTY and no re-download budget was burned (all probe fetches
+  landed on login pages, not part bytes).**
+- **15:14–15:45 round 2 (owner dropped full browser jar, 295 cookies incl. HttpOnly):** jar is a VALID
+  session — `curl` renders both the downloads and manage-archives pages authed (export visible, user id
+  matches). Download URIs STILL bounce to `accounts.google.com`. Forensics: server-rendered HTML carries NO
+  `rapt` param at all (113-char URI; the app bundle adds `rapt` client-side at click time) — the paste's
+  token had gone stale. Probe without rapt: RED. Headless chromium (playwright + nixpkgs chromium, full
+  jar imported, 86 HttpOnly): **challenged** by Google bot detection. Jar trimmed to Google-only (295→126
+  rows; GitHub/eTrade/LinkedIn etc. dropped — owner should also delete the exporter's cookies.txt from
+  their Downloads folder).
+- **BLOCKING ask D3c (replaces the cookie ask — cookies are FINE now):** owner, in the REAL logged-in
+  browser on the manage-archives page, `Ctrl+S` → "Webpage, Complete" → save as `links.html` OVERWRITING
+  the one in the staging root, then ping. The saved DOM carries freshly minted `rapt`'d URIs; agent then
+  `ingest-html` (verify 23/23 sizes/filenames unchanged) → probe part 12 → `start` detached, immediately
+  (rapt freshness window unknown — treat as minutes-to-hours). Fallback if the save yields 0 triplets
+  (browser saved original source instead of DOM): DevTools console
+  `copy([...document.querySelectorAll('[data-download-uri]')].map(e=>[e.getAttribute('data-download-uri'),e.getAttribute('data-size'),e.getAttribute('data-filename')].join('\t')).join('\n'))`
+  → paste into `<staging>/triplets.tsv`.
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
 re-fetch completed parts. If a link exhausts its download count: request a NEW export (same selection)
