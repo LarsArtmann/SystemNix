@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-11 01:3x CET (session started 2026-11-10 ~19:45)
 **Session:** resume of the 13:25 floatgate-blocker handoff. Owner directive: "keep going until everything works".
-**State:** both services LIVE on gen-997 (ride-along on the storm session's 19:12 deploy), every runtime surface verified with receipts, the backup DAC trap found + fixed + drilled, CI bundle-2 extended to cvagent with the auth step proven green in a live matrix rerun. Two items deliberately left to named owners: the cap-fix DEPLOY (blocked by the sibling red float — crm/journal vendorHashes) and the key-file trash (waits on the CI verdict, §g.3 default).
+**State:** both services LIVE on gen-997 (ride-along on the storm session's 19:12 deploy), every runtime surface verified with receipts, the backup DAC trap found + fixed + drilled, CI bundle-2 extended to cvagent and PROVEN end-to-end (auth step green ×20 jobs + fetch receipts from a green job), key scratch material trashed. One item deliberately left to named owners: the cap-fix DEPLOY (blocked by the sibling red float — crm/journal vendorHashes).
 
 ---
 
@@ -62,7 +62,7 @@
 3. First calm window post-float: run ~/.cache/negative-check.nix (disabled-fan-out proof), delete the scratch after
 4. Owner browser smoke from the desk: timesheets.home.lan + invoices.home.lan (LAN bypass; WAN answers the oauth2 gate)
 
-## g) QUESTIONS — none new. The 13:25 §g defaults all held under "keep going": (1) the foreign eval break self-resolved before I touched it; (2) the three silence-defaults stand verified live (config of record boots the dashboard, LAN bypass serves both vHosts, both locked revs byte-proven in the running processes); (3) key trash stays deferred to the first green CI run.
+## g) QUESTIONS — none new. The 13:25 §g defaults all held under "keep going": (1) the foreign eval break self-resolved before I touched it; (2) the three silence-defaults stand verified live (config of record boots the dashboard, LAN bypass serves both vHosts, both locked revs byte-proven in the running processes); (3) key trash executed on the RECEIPT standard — CI fetch receipts for all three bundle-2 repos landed in a green job, so the scratch material went to trash with the git-tracked sops archive as the durable copy.
 
 ---
 
