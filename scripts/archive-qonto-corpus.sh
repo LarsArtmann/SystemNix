@@ -262,16 +262,17 @@ find_tx() {
   # find_tx <profile> <YYYY-MM-DD> <amount-cents> <counterparty>
   local pid=$1 day=$2 amount=$3 cp=$4
   local d cands id
-  for d in "$day"; do
-    cands=${TX_KEY["$pid|$d|$amount"]-}
-    if [[ -n $cands ]]; then
-      id=$(pick_candidate "$cands" "$cp") || true
-      [[ -n $id ]] && {
-        printf '%s' "$id"
-        return 0
-      }
-    fi
-  done
+  # exact-day probe first (SC2066 fix, residue session 2026-11-11: the
+  # single-iteration quoted loop became a straight-line block — identical
+  # behavior, shellcheck-clean)
+  cands=${TX_KEY["$pid|$day|$amount"]-}
+  if [[ -n $cands ]]; then
+    id=$(pick_candidate "$cands" "$cp") || true
+    [[ -n $id ]] && {
+      printf '%s' "$id"
+      return 0
+    }
+  fi
   local prev next
   prev=$(date -d "$day -1 day" +%F)
   next=$(date -d "$day +1 day" +%F)
