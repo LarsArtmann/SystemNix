@@ -350,6 +350,8 @@ in
     # lands on the provisioner's next run after this host shows up as a peer.
     services.netbird-client.enable = true;
 
+    services.ssh-server.bannerText = null;
+
     # EMEET PIXY webcam auto-activation
     hardware.emeet-pixy = {
       enable = true;
