@@ -46,10 +46,12 @@ fi
 
 CUTOFF=$(date -d "-$RETENTION_DAYS days" '+%Y-%m-%d %H:%M:%S')
 BEFORE=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null || echo "?")
-if duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>/dev/null; then
+ERR=$(duckdb "$DB" -c "$DUCK_SESSION DELETE FROM events WHERE try_cast(timestamp AS TIMESTAMP) < TIMESTAMP '$CUTOFF';" 2>&1 >/dev/null)
+if [ $? -eq 0 ]; then
   echo "monitor365-retention: deleted events older than $CUTOFF (boundary count: $BEFORE; window ${RETENTION_DAYS}d)"
 else
-  echo "monitor365-retention: WARNING — DELETE failed (DB left as-is; tonight's export is intact)"
+  echo "monitor365-retention: WARNING — DELETE failed (boundary-count attempt: $BEFORE; DB left as-is; tonight's export is intact)"
+  printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
 fi
 REMAINING=$(duckdb "$DB" -noheader -list -c "$DUCK_SESSION SELECT COUNT(*) FROM events;" 2>/dev/null || echo "?")
 echo "monitor365-retention: rows remaining: $REMAINING"
@@ -62,11 +64,13 @@ if [ $((NOW_S - LAST_S)) -ge "$VACUUM_INTERVAL_S" ]; then
   AVAIL_BYTES=$(df -B1 --output=avail "$STATE_DIR" | tail -1)
   NEEDED_BYTES=$((DB_BYTES + VACUUM_HEADROOM_B))
   if [ "$AVAIL_BYTES" -gt "$NEEDED_BYTES" ]; then
-    if duckdb "$DB" -c "$DUCK_SESSION VACUUM;" 2>/dev/null; then
+    ERR=$(duckdb "$DB" -c "$DUCK_SESSION VACUUM;" 2>&1 >/dev/null)
+    if [ $? -eq 0 ]; then
       date +%s >"$STAMP"
       echo "monitor365-retention: VACUUM done — file $DB_BYTES -> $(stat -c %s "$DB") bytes"
     else
       echo "monitor365-retention: WARNING — VACUUM failed (stamp NOT updated; retries next window)"
+      printf '%s\n' "$ERR" | tail -n 5 | sed 's/^/monitor365-retention:   duckdb: /'
     fi
   else
     echo "monitor365-retention: WARNING — VACUUM skipped, headroom $AVAIL_BYTES < needed $NEEDED_BYTES; retries next window"
