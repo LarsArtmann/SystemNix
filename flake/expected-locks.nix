@@ -35,7 +35,7 @@
   crm = "f2d17263610b783e5fcd6ee2720166a11262ad5f";
   crush-config = "2f25a6f5c332899b5b4e3f5096b22f20af8dbf1d";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
-  cv = "2c25d0a3934bbb85a81f8c848ddacf142f662b81";
+  cv = "b684a00c3a140a5f1fd41c14f0396d6d5b11eeaa";
   cvagent = "e6a9ff36793a4ac3a2ba7e0c59cefa38fbf9c9c8";
   dankMaterialShell = "e46ccbc1d58930d6a189cd1c90b276db2d64bf42";
   discordsync = "79e622ab5c3bfc55fdf6f094de8dd6824d413e95";
