@@ -29,7 +29,7 @@ log() { echo "[$(date '+%F %T')] $*"; }
 
 # --- embedded export manifest (from the Takeout summary page 2026-11-10) ---
 # part <space> expected-size-string (units as printed by Google; band-checked)
-readonly PARTS_MANIFEST='\
+readonly PARTS_MANIFEST='
 1 550.6 MB
 2 43.34 GB
 3 44.41 GB
@@ -82,7 +82,7 @@ init_staging() {
   chmod 700 "$root" "$root"/{zips,logs,extracted}
   if [ ! -f "$root/parts.tsv" ]; then
     printf '# part\texpected\n' > "$root/parts.tsv"
-    echo "$PARTS_MANIFEST" | sed 's/ /\t/' >> "$root/parts.tsv"
+    while IFS= read -r mline; do echo "${mline// /$'\t'}" >> "$root/parts.tsv"; done <<< "$PARTS_MANIFEST"
   fi
   [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' > "$root/urls.txt"
   log "staging ready at $root (parts.tsv: $(grep -vc '^#' "$root/parts.tsv") parts)"

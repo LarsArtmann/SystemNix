@@ -22,7 +22,7 @@ die() { echo "takeout-verify: ERROR: $*" >&2; exit 1; }
 log() { echo "[$(date '+%F %T')] $*"; }
 
 # --- embedded product manifest (Takeout summary page 2026-11-10; 1=present, 0=no data found) ---
-readonly PRODUCTS_MANIFEST='\
+readonly PRODUCTS_MANIFEST='
 Access Log Activity|7.2 MB|1
 Alerts|<1 MB|1
 Android Device Configuration Service||0
@@ -131,7 +131,7 @@ write_products_tsv() {
   local root=$1
   if [ ! -f "$root/products.tsv" ]; then
     printf '# product\texpected-size\tpresent\n' > "$root/products.tsv"
-    echo "$PRODUCTS_MANIFEST" | tr '|' '\t' >> "$root/products.tsv"
+    while IFS= read -r pline; do echo "${pline//|/$'\t'}" >> "$root/products.tsv"; done <<< "$PRODUCTS_MANIFEST"
   fi
 }
 
@@ -317,7 +317,7 @@ selftest() {
 
   build_fixture() {
     rm -rf "$fx"/{zips,logs}; mkdir -p "$fx"/{zips,logs}
-    printf '# part\texpected\n1\t1 MB\n2\tLESS1MB\n' > "$fx/parts.tsv"
+    printf '# part\texpected\n1\t3 MB\n2\tLESS1MB\n' > "$fx/parts.tsv"
     dd if=/dev/urandom of="$fx/blob" bs=1024 count=900 2>/dev/null
     ( cd "$fx" && mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail \
       && cp blob 'tk/Takeout/Drive/a file.pdf' \
@@ -376,7 +376,7 @@ selftest() {
     echo "FAIL: $leg (failed but not via completeness gate — see $fx/neg.log)"; rc=1
   fi
 
-  rm -rf "$fx" "$fx"
+  rm -rf "$fx"
   if [ "$rc" -eq 0 ]; then echo "SELFTEST GREEN"; else echo "SELFTEST RED"; fi
   return $rc
 }
