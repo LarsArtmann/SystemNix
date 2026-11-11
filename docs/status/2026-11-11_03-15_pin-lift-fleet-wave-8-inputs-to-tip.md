@@ -51,10 +51,11 @@ Tests: full suite green (build, bot, web after golden refresh for templ-componen
 - Every lifted input: lock-free `builtins.getFlake` package probe green at the EXACT locked rev (remote fetch, not local tree).
 - discordsync/overview/pdg: full local test suites green + remote probes green at pushed revs.
 - `nix run .#float-register`: no drift (registry == lock). Eval probe of evo-x2 toplevel: green.
-- Toplevel keep-going build: see §f (verdict appended below when the run completes).
+- **Toplevel keep-going build: GREEN (rc=0, zero hash mismatches)** after two shim waves — 7 consumer shims re-pasted with first-hand spec/got pairs: golangci-lint-auto-configure, journal (×3 surfaces), discordsync, crm, library-policy, project-dependency-graph, bank-sync (×2 surfaces, the parallel session's 12ca5df2 float), plus a NEW cv shim (the parallel session's 2c25d0a3 float; upstream-baked hash stale under our graph).
 
 ## f. Follow-ups (harvested)
 
 - go-nix-helpers mkPreparedSource explicit-subModules /v4-dir fix + consumer sweep (crm/pma/inboxclean) → docs/todo/upstream.md [ready].
 - file-and-image-renamer vendor/ refresh (waits on the live cmdguard session) → docs/todo/upstream.md [watch].
-- Deploy obligation: the new lock (8 inputs at tip) is proven by the toplevel build; the actual `nix run .#deploy` is the owner's call (another session deployed timesheets+invoices at ~01:30 — the 2026-11-10 bundle-2 wave).
+- Deploy obligation: the new lock is PROVEN (toplevel green) — the actual `nix run .#deploy` is the owner's call (another session deployed timesheets+invoices at ~01:30 and is mid-wave on bank-sync's SCA sentinel + cv/bank-sync floats; their floats rode my proof green).
+- **Anchoring reminder**: after the next deploy, verify `readlink /run/current-system` == the newest system-N-link per the 2026-10-23 procedure.
