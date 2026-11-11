@@ -2195,9 +2195,11 @@ in
       fi
 
       KEYS_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-ssh-keys.json" (builtins.toJSON cfg.sshKeys))}
+      EMAILS_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-user-emails.json" (builtins.toJSON cfg.userEmails))}
 
       existing_keys=$(mktemp)
-      trap 'rm -f "$existing_keys"' EXIT
+      existing_emails=$(mktemp)
+      trap 'rm -f "$existing_keys" "$existing_emails"' EXIT
 
       for user in $(jq -r 'keys[]' "$KEYS_FILE"); do
         echo "Syncing SSH keys for Forgejo user: $user"
@@ -2230,6 +2232,48 @@ in
             echo "  ✓ Added key"
           else
             echo "  ✗ Failed to add key (HTTP $http_code): $body"
+            exit 1
+          fi
+        done
+      done
+
+      # The forge verifies signed commits by resolving the COMMITTER EMAIL to
+      # an account and then to that account's registered keys — an email
+      # missing from the account renders every SSH-signed commit
+      # "No known key found for this signature in database" even when the
+      # signing key itself is registered (webphone-android, 2026-11-11).
+      # Emails are only ever ADDED here; removal (and the primary address)
+      # stays a manual account-settings decision.
+      for user in $(jq -r 'keys[]' "$EMAILS_FILE"); do
+        echo "Syncing commit emails for Forgejo user: $user"
+
+        curl -sf --compressed -H "Authorization: token $FORGEJO_TOKEN" \
+          "${forgejoUrl}/api/v1/admin/users/$user/emails" > "$existing_emails"
+
+        mapfile -t emails < <(jq -r --arg user "$user" '.[$user][]' "$EMAILS_FILE")
+
+        for email in "''${emails[@]}"; do
+          [[ -z "$email" ]] && continue
+
+          if jq -e --arg email "$email" '.[] | select(.email == $email)' "$existing_emails" >/dev/null 2>&1; then
+            echo "  ✓ Email already exists: $email"
+            continue
+          fi
+
+          response=$(curl -s --compressed -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            "${forgejoUrl}/api/v1/admin/users/$user/emails" \
+            -d "$(jq -n --arg email "$email" '{emails: [$email]}')")
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          if [[ "$http_code" == "200" || "$http_code" == "201" ]]; then
+            echo "  ✓ Added email: $email"
+          else
+            echo "  ✗ Failed to add email (HTTP $http_code): $body"
             exit 1
           fi
         done

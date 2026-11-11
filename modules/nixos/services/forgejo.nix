@@ -225,6 +225,21 @@ _: {
           '';
         };
 
+        services.forgejo.userEmails = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+          default = { };
+          description = ''
+            Declarative commit-identity email addresses for Forgejo users.
+            The forge verifies signed commits by resolving the committer
+            email to an account and then to that account's registered keys
+            (sshKeys), so an email that is not on the account renders every
+            signed commit "No known key found for this signature in
+            database" even when the signing key itself is registered.
+            Idempotent: only missing emails are added; existing ones
+            (including the primary) are left unchanged.
+          '';
+        };
+
         services.forgejo.dedicatedSubvolume = lib.mkEnableOption ''
           a dedicated BTRFS subvolume (subvol=hot/forgejo on the Samsung TLC
           disk, by-label tlc) mounted AT the existing stateDir — Set-B
