@@ -101,24 +101,34 @@ init_staging() {
   log "staging ready at $root (parts.tsv: $nparts_total parts)"
 }
 
+# relative takeout URIs (takeout/download?...) -> absolute, line-wise, no-op for http(s)
+absolutize() {
+  awk '{ if ($0 ~ /^https?:/) print; else printf "https://takeout.google.com/%s\n", $0 }'
+}
+
 # build urls.txt from a saved Takeout page if the owner dropped links.html.
 # Prefers data-download-uri attributes (exactly the part buttons, page order,
 # excludes the href-only "See report" link); falls back to href forms.
 extract_links() {
-  local root=$1 html=$root/links.html urls=$root/urls.txt n uris
+  local root=$1
+  local html=$root/links.html
+  local urls=$root/urls.txt
+  local n uris
   n=$(grep -c '^[[:space:]]*https\?://' "$urls" 2>/dev/null || true)
   [ "$n" -gt 0 ] && return 0
   [ -f "$html" ] || return 1
   uris=$(grep -o 'data-download-uri="[^"]*"' "$html" \
-    | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g')
+    | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g' | absolutize)
   if [ -z "$uris" ]; then
-    uris=$(grep -o 'https\?://takeout\.google\.com/takeout/download[^"'\''<> ]*' "$html" \
-      | sed 's/&amp;/\&/g' | awk '!seen[$0]++')
+    uris=$(grep -o 'takeout/download?[^"'\''<> ]*' "$html" \
+      | sed 's/&amp;/\&/g' | awk '!seen[$0]++' | absolutize)
     [ -n "$uris" ] || { log "WARN: no takeout download links found in $html"; return 1; }
     log "WARN: page carried only href forms — verify the count excludes the See-report link"
   fi
-  uris=$(echo "$uris" | sed 's#^takeout/#https://takeout.google.com/takeout/#')
-  { echo '# extracted from links.html (page order preserved) — hand-verify the count'; echo "$uris"; } > "$urls"
+  {
+    echo '# extracted from links.html (page order preserved) — hand-verify the count'
+    echo "$uris"
+  } > "$urls"
   chmod 600 "$urls"
   log "extracted $(grep -c '^[[:space:]]*https' "$urls" || true) download link(s) from links.html -> urls.txt"
 }
@@ -127,16 +137,21 @@ extract_links() {
 # AND parts.tsv from the data-download-uri / data-size / data-filename triplets
 # (exact byte sizes beat the embedded rounded manifest; filenames recorded).
 ingest_html() {
-  local root=$1 html=$root/links.html triples count
+  local root=$1
+  local html=$root/links.html
+  local triples count
   [ -f "$html" ] || die "no $html to ingest"
   chmod 600 "$html"
   triples=$(paste -d'\t' \
-    <(grep -o 'data-download-uri="[^"]*"' "$html" | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g; s#^takeout/#https://takeout.google.com/takeout/#') \
+    <(grep -o 'data-download-uri="[^"]*"' "$html" | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g' | absolutize) \
     <(grep -o 'data-size="[^"]*"' "$html" | sed 's/^data-size="//; s/"$//') \
     <(grep -o 'data-filename="[^"]*"' "$html" | sed 's/^data-filename="//; s/"$//'))
   count=$(echo "$triples" | wc -l)
   [ "$count" -ge 1 ] || die "no data-download-uri triplets in $html (is this the manage-archives page?)"
-  { echo '# one download link per line, Takeout page order (ingested from links.html)'; echo "$triples" | awk -F'\t' '{print $1}'; } > "$root/urls.txt"
+  {
+    echo '# one download link per line, Takeout page order (ingested from links.html)'
+    echo "$triples" | awk -F'\t' '{print $1}'
+  } > "$root/urls.txt"
   printf '# part\texpected\tfilename\n' > "$root/parts.tsv"
   echo "$triples" | awk -F'\t' '{ printf "%d\t%s\t%s\n", NR, $2, $3 }' >> "$root/parts.tsv"
   chmod 600 "$root/urls.txt" "$root/parts.tsv"
