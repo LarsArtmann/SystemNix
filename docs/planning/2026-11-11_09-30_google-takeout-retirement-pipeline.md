@@ -43,9 +43,17 @@ Export facts (from the Takeout summary page, paste 2026-11-11):
 | Contacts (vCard) / Calendar (ICS) / Keep / Tasks / Maps / Fit / everything else | pool archive (cold) | keep as archive; `takeout-verify.sh` proves completeness | successor: D1-mesh PIM import (`docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`) consumes these on decision |
 | All 23 zips (880 GB) | **kept forever** (default) as the immutable raw archive on `/mnt/pool/archive` | — | the "escape hatch" cold copy; deletion is a later owner decision |
 
-**Duplication is by design:** zips (raw) + services copies (curated). Peak pool need ≈ 880 (zips) + ~880
-(extract staging, only on D1-B) + ~336 (Immich) + ~543 (OpenCloud + mirror on D1-A) ≈ **≤ 2.7 TB peak,
-~1.8 TB steady** — fits the 11 TB free with margin. Nothing ever touches QLC (`/` 60 G free, `/data` 363 G).
+**Duplication is by design — and capped at one raw copy + one working copy per service.** Peak pool need ≈ 880
+(zips) + ~880 (extract staging, D1-B only, deleted again after G4+G5) + ~336 (Immich) + ~543 (OpenCloud) ≈
+**≤ 2.7 TB peak, ~1.8 TB steady** — fits the 11 TB free with margin. Nothing ever touches QLC (`/` 60 G
+free, `/data` 363 G). Anti-15× rules: (1) the zips are the ONLY raw copy — cold products
+(Mail/Contacts/Calendar/…) are never extracted outside on-demand reads; (2) each service holds exactly ONE
+working copy in its own datadir (Immich, OpenCloud, Paperless under `/mnt/pool/services/…`) — no second
+mirror (D1-A declined), no agent-side caches; (3) services dedup server-side (Immich by checksum, Paperless
+byte-identical rejection), so Photos∩Drive overlap costs nothing extra; (4) `<staging>/extracted/` is
+TRANSIENT — deleted once G4 (`rclone check` clean) AND G5 (Paperless converged) are green, since OpenCloud
+then holds the files, Paperless the docs, and the zips everything; (5) optional later: a pool-level BTRFS
+reflink dedup pass (duperemove) if steady-state ever needs shaving — never required for fit.
 
 ## Decisions (owner, answered 2026-11-11)
 
@@ -82,6 +90,19 @@ Owner, logged in as racedriver8k on takeout.google.com → manage-archives page:
 bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10 start
 bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2026-11-10 status
 ```
+
+**Intake log (2026-11-11 14:48, agent):** D2 done by owner. Links arrived as a page PASTE (not Ctrl+S):
+reconstructed `links.html` from the 23 `data-download-uri`/`data-size`/`data-filename` triplets →
+`ingest-html` → `urls.txt` + `parts.tsv` EXACT (23/23, sum 944,513,645,689 B = 879.65 GiB, matches the
+page; 0600). Cookies arrived as `cookies.json` (JS cookieStore export, 8 cookies, NO HttpOnly family) →
+converted to Netscape `cookies.txt`. **Probe RED (14:52): part-13 fetch → http 200 but final host
+`accounts.google.com`, 947,743 B login HTML — the `rapt` token alone does NOT authorize, and cookieStore
+exports cannot work by construction.** D3b (owner, blocking, the ONLY missing item): overwrite
+`<staging>/cookies.txt` with a full Netscape export INCLUDING HttpOnly cookies (HSID, SSID,
+`__Secure-1PSID`, `__Secure-3PSID`, PSIDTS — e.g. a local-only cookies.txt browser extension while on
+takeout.google.com); then re-probe via part 12 (`~/.cache/takeout-probe/probe.sh`, 176,785 B exact,
+installs on green) and fire `start` detached. Part 13 (565 B) already held exact; no re-download budget
+burned (the probe fetched a real part).
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
 re-fetch completed parts. If a link exhausts its download count: request a NEW export (same selection)
