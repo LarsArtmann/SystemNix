@@ -182,14 +182,13 @@
     # dies "undefined: templ.ResolveAttributeValue".
     # Same class, one pin per app: each daemon "chore(deps)" commit bumped
     # the templ require line without regenerating that repo's templates.
-    # ALL templ-class rows REMOVED 2026-11-11 (discordsync,
-    # library-policy, journal, project-dependency-graph,
-    # golangci-lint-auto-configure, overview, file-and-image-renamer's
-    # parse variant): every upstream tip was fixed AT SOURCE (regen at
-    # templ v0.3.1100, the disgo v0.20 CacheGuild migration, dedup/v4 +
-    # cmdguard/v5 deps-map wiring, generator-parity pins) and lock-free
-    # package probes are green at the pushed revs — lift ritual complete
-    # per input.
+    # Rows REMOVED 2026-11-11 (discordsync, library-policy, journal,
+    # project-dependency-graph, golangci-lint-auto-configure, overview):
+    # every upstream tip was fixed AT SOURCE (regen at templ v0.3.1100, the
+    # disgo v0.20 CacheGuild migration, dedup/v4 + cmdguard/v5 deps-map
+    # wiring, generator-parity pins) and lock-free package probes are green
+    # at the pushed revs — lift ritual complete per input.
+    file-and-image-renamer = "REV-PINNED at 973dd383 (2026-11-11 re-verified: tip 5a319ea6 still fails — its committed vendor/ tree carries the PRE-REGEN templ-components (svg_templ.go calls templ.ResolveAttributeValue), and a live session is mid-migration in that checkout (cmdguard v4→v5), so the vendor refresh is not safe to land concurrently. LIFT: upstream commits a vendor/ refresh over a regenerated templ-components (or the live session's wave carries it) and the package builds at tip; then drop the pin and re-lock.";
     crm = "REV-PINNED at f2d1726 (2026-11-11 roll-forward; prior f32f4c0 2026-11-08 wave — that pin's LIFT was SATISFIED by upstream's own templ-1100 pin wave: cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf both in the committed flake.lock, source green rev-pinned). Deliberate policy pin (not ?ref=master): the 10-14 master-tracking window proved the consumer-side vendorHash treadmill returns on every upstream float; the tip probe (lock-free package build) is green at this rev. Re-roll on the next crm pin wave.";
   },
 }:

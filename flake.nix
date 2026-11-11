@@ -428,9 +428,14 @@
       # update Go dependencies" bumped a-h/parse to the 2026-10-27
       # pseudo-version, whose Parser API does not implement
       # parse.Parser[T].Match, so compiling templ v0.3.1100's jstokenizer
-      # dies. 973dd383 is the pre-bump rev. LIFT: upstream pins a
-      # parse/templ pair that compiles and the package builds at tip;
-      # then unpin and re-lock.
+      # dies. 973dd383 is the pre-bump rev. 2026-11-11 tip 5a319ea6 probe:
+      # the committed vendor/ tree still carries the PRE-REGEN
+      # templ-components (svg_templ.go calls templ.ResolveAttributeValue,
+      # deleted in 0.3.1100), and a live session is mid-migration in that
+      # checkout (cmdguard v4→v5) — the vendor refresh is not safe to land
+      # concurrently. LIFT: upstream commits a vendor/ refresh over a
+      # regenerated templ-components (or the live session's wave carries
+      # it) and the package builds at tip; then unpin and re-lock.
       url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?rev=973dd383ba98ae8b6e3b4b3a95f690c627bb49ab";
     };
 
