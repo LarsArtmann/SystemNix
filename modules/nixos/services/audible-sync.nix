@@ -196,7 +196,7 @@ _: {
           decrypted=0
           while IFS= read -r -d "" f; do
             out="$bookDir/$(basename "''${f%.aax}").m4b"
-            if ffmpeg -loglevel error -activation_bytes "$activationBytes" -i "$f" -c copy -movflags use_metadata_tags "$out"; then
+            if ffmpeg -nostdin -loglevel error -activation_bytes "$activationBytes" -i "$f" -c copy -movflags use_metadata_tags "$out"; then
               rm -f "$f"
               decrypted=$((decrypted + 1))
             else
