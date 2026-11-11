@@ -491,16 +491,27 @@ in
       # + docs/services/forgejo.md (Storage).
       forgejo.dedicatedSubvolume = true;
       # Commit-signature verification: the forge links a signed commit to a
-      # user (and their registered keys) only when the COMMITTER EMAIL is on
-      # the account. The provisioning default (lars@local) matches none of
-      # the real git identities, so every SSH-signed commit rendered as
-      # "No known key found for this signature in database" despite the
-      # signing key being registered (found 2026-11-11 on webphone-android).
-      # Registered here: the global git identity and the GitHub-noreply
-      # address SystemNix commits carry.
+      # user (and their keys) only when the COMMITTER EMAIL is on the
+      # account AND the signing key carries verified=1. The provisioning
+      # default (lars@local) matched no real git identity, and
+      # admin/API-added keys land verified=0 — together every SSH-signed
+      # commit rendered "No known key found for this signature in database"
+      # (found 2026-11-11 on webphone-android). Registered here: the global
+      # git identity + the GitHub-noreply address SystemNix commits carry,
+      # and BOTH signing identities (evo-x2 id_ed25519, the MacBook
+      # nix-declared key — it signs SystemNix commits as the noreply
+      # identity).
       forgejo.userEmails.lars = [
         "git@lars.software"
         "larsartmann@users.noreply.github.com"
+      ];
+      forgejo.verifiedSigningKeys.lars = [
+        # lars@evo-x2 ~/.ssh/id_ed25519 (forgejo title:
+        # lars-evo-x2-id_ed25519) — webphone-android signing identity
+        "SHA256:1hFd8eVRpqKqgzmT6ZDG6RxkE9KdPiNabX5yHZPVTMw"
+        # lars@Lars-MacBook-Air (forgejo title: nix-declared) — signs
+        # SystemNix commits as larsartmann@users.noreply.github.com
+        "SHA256:QVJtlfmvWcR/n1LXc/PVAu021ffHBrZYT1rOkSXPAhE"
       ];
       # First PRIMARY repos (owner decisions 2026-10-16): `domains` (GitHub
       # Actions billing-dead since 2026-09-08; CI moves to the native
