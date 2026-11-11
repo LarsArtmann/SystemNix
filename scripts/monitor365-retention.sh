@@ -63,8 +63,7 @@ if [ $((NOW_S - LAST_S)) -ge "$VACUUM_INTERVAL_S" ]; then
   AVAIL_BYTES=$(df -B1 --output=avail "$STATE_DIR" | tail -1)
   NEEDED_BYTES=$((DB_BYTES + VACUUM_HEADROOM_B))
   if [ "$AVAIL_BYTES" -gt "$NEEDED_BYTES" ]; then
-    ERR=$(duckdb "$DB" -c "$DUCK_SESSION VACUUM;" 2>&1 >/dev/null)
-    if [ $? -eq 0 ]; then
+    if ERR=$(duckdb "$DB" -c "$DUCK_SESSION VACUUM;" 2>&1 >/dev/null); then
       date +%s >"$STAMP"
       echo "monitor365-retention: VACUUM done — file $DB_BYTES -> $(stat -c %s "$DB") bytes"
     else

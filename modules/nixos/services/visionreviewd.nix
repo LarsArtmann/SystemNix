@@ -41,7 +41,7 @@
           # detached-worktree `nix build .#visionreviewd` green at that
           # rev; the 2026-10-07 shim value q+Mb6q… had gone stale the
           # other way — it overrode the now-correct upstream hash and was
-          # the sole float-register RED of the 2026-11-03 lift wave).
+          # the sole RED of the 2026-11-03 lift wave).
           # Re-add ONLY via nix-hash-fix evidence, never by hand.
           # RE-ADDED 2026-11-06 lock float: vision-review-agent@4520467
           # upstream-baked oPfsexE… stale through our lock (got NAkDPYu…,

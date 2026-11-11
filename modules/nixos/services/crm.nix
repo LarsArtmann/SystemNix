@@ -75,11 +75,12 @@
       # RE-STALE 2026-11-11 roll to f2d1726: spec EzVPIaj, got shQ6i+l+
       # (pin-lift toplevel keep-going proof; the wave-1 close-out commits
       # shifted the vendored set again).
-      # Drop when upstream bakes the hash and the lock moves past an
-      # upstream-fixed rev; re-add ONLY via nix-hash-fix evidence.
-      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-shQ6i+l+E/a/Q+QemT2ncrvC/NjWJNyHCmpytlbCVIg=";
-      };
+      # 2026-11-11 roll to e383ba9: the override is DROPPED — upstream now
+      # bakes the correct hash at this rev (sha256-GcpvSz2l…, chased via
+      # buildflow nix-hash-fix with 2/2 nix targets green; the lock-free
+      # tip probe built the store path with no override).
+      # Re-add ONLY via nix-hash-fix evidence.
+      crmPkg = inputs.crm.packages.${pkgs.stdenv.hostPlatform.system}.default;
       twentyEnabled = config.services.twenty.enable or false;
     in
     {
