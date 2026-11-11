@@ -250,8 +250,15 @@ _: {
               esac
               # Idempotent by kernel contract: a re-import of the same facts
               # dedups. Keep the file on failure so the next tick retries.
+              # LIVE LESSON 2026-11-11 01:45 (gen-998): do NOT rm the file
+              # after import — the import runs as the primary user and the
+              # staging dir is bank-sync-owned (rm needs dir-write); the rm
+              # failed Permission-denied → set -e killed the unit → an
+              # OnFailure toast EVERY 15 min. Files persist and are
+              # overwritten per cycle; "imported" counts still verify the
+              # filter, and a failed file is indistinguishable from a fresh
+              # one (re-import dedups either way).
               if "$JOURNAL" --config journal.yaml import bank-sync --file "$f" >/dev/null; then
-                rm -f "$f"
                 imported=$((imported + 1))
               else
                 kept=$((kept + 1))
