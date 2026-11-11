@@ -1031,17 +1031,15 @@
                 ];
               };
 
-          systemd.timers.bank-sync-qonto-corpus =
-            lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled)
-              {
-                description = "Weekly Bank-Sync Qonto corpus reconciliation timer";
-                wantedBy = [ "timers.target" ];
-                timerConfig = {
-                  OnCalendar = "Sun *-*-* 05:00:00";
-                  Persistent = true;
-                  RandomizedDelaySec = "15m";
-                };
-              };
+          systemd.timers.bank-sync-qonto-corpus = lib.mkIf (cfg.paperlessArchive.enable && paperlessEnabled) {
+            description = "Weekly Bank-Sync Qonto corpus reconciliation timer";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "Sun *-*-* 05:00:00";
+              Persistent = true;
+              RandomizedDelaySec = "15m";
+            };
+          };
         })
         # Service-integration registry entry: fans out to the Caddy vHost
         # (Layer 2 — money data minimum exposure), the two Gatus checks

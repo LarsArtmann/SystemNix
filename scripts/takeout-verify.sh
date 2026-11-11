@@ -18,7 +18,10 @@
 #   bash scripts/takeout-verify.sh --selftest   # synthetic fixture battery in ~/.cache
 set -euo pipefail
 
-die() { echo "takeout-verify: ERROR: $*" >&2; exit 1; }
+die() {
+  echo "takeout-verify: ERROR: $*" >&2
+  exit 1
+}
 log() { echo "[$(date '+%F %T')] $*"; }
 
 # --- embedded product manifest (Takeout summary page 2026-11-10; 1=present, 0=no data found) ---
@@ -95,10 +98,10 @@ YouTube and YouTube Music|2.18 MB|1'
 # display-name -> candidate Takeout folder names (first match wins)
 override_candidates() {
   case "$1" in
-    'Maps (your places)') echo 'Maps' ;;
-    'Google Play Movies & TV') echo 'Google Play Movies;Google Play Movies & TV' ;;
-    'Google Business Profile') echo 'Google My Business;Google Business Profile' ;;
-    *) echo '' ;;
+  'Maps (your places)') echo 'Maps' ;;
+  'Google Play Movies & TV') echo 'Google Play Movies;Google Play Movies & TV' ;;
+  'Google Business Profile') echo 'Google My Business;Google Business Profile' ;;
+  *) echo '' ;;
   esac
 }
 
@@ -109,36 +112,46 @@ norm() {
 }
 
 # normalize harder for fuzzy compare: also drop a leading "google"
-norm2() { local n; n=$(norm "$1"); n=${n#google}; echo "$n"; }
+norm2() {
+  local n
+  n=$(norm "$1")
+  n=${n#google}
+  echo "$n"
+}
 
 size_band() {
   local spec=$1 lo hi amount unit
   case $spec in
-    LESS1MB) echo "1 1600000"; return ;;
-    '')
-      echo "expected-size string empty (absent product)"; return 1 ;;
-    *[!0-9]*)
-      amount=$(echo "$spec" | awk '{print $1}')
-      unit=$(echo "$spec" | awk '{print $2}')
-      case $unit in
-        GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
-        MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
-        KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
-        *) die "unknown size unit: $spec" ;;
-      esac
-      lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
-      hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
-      echo "$lo $hi"
-      ;;
-    *) echo "$spec $spec" ;;  # plain integer = EXACT size (ingested from the page)
+  LESS1MB)
+    echo "1 1600000"
+    return
+    ;;
+  '')
+    echo "expected-size string empty (absent product)"
+    return 1
+    ;;
+  *[!0-9]*)
+    amount=$(echo "$spec" | awk '{print $1}')
+    unit=$(echo "$spec" | awk '{print $2}')
+    case $unit in
+    GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
+    MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
+    KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
+    *) die "unknown size unit: $spec" ;;
+    esac
+    lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
+    hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
+    echo "$lo $hi"
+    ;;
+  *) echo "$spec $spec" ;; # plain integer = EXACT size (ingested from the page)
   esac
 }
 
 write_products_tsv() {
   local root=$1
   if [ ! -f "$root/products.tsv" ]; then
-    printf '# product\texpected-size\tpresent\n' > "$root/products.tsv"
-    while IFS= read -r pline; do echo "${pline//|/$'\t'}" >> "$root/products.tsv"; done <<< "$PRODUCTS_MANIFEST"
+    printf '# product\texpected-size\tpresent\n' >"$root/products.tsv"
+    while IFS= read -r pline; do echo "${pline//|/$'\t'}" >>"$root/products.tsv"; done <<<"$PRODUCTS_MANIFEST"
   fi
 }
 
@@ -154,27 +167,27 @@ run_verify() {
   # --- G2.1 completeness ---
   local part spec name size lo hi complete=0 total=0
   while IFS=$'\t' read -r part spec; do
-    case $part in ''|'#'*) continue ;; esac
+    case $part in '' | '#'*) continue ;; esac
     total=$((total + 1))
     name=$(printf 'part-%02d.zip' "$part")
     size=0
     [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
-    read -r lo hi <<< "$(size_band "$spec")"
+    read -r lo hi <<<"$(size_band "$spec")"
     if [ "$size" -ge "$lo" ] && [ "$size" -le "$hi" ]; then
       complete=$((complete + 1))
     else
       echo "FAIL G2.1: $name not in size band ($size bytes, band $lo..$hi)" >&2
       failures=$((failures + 1))
     fi
-  done < "$root/parts.tsv"
+  done <"$root/parts.tsv"
   log "G2.1 completeness: $complete/$total parts in band"
 
   # --- G2.2 CRC integrity + listings pass (single read per zip) ---
   local zip names_tsv=$root/logs/zip-entries.tsv
-  : > "$names_tsv"
+  : >"$names_tsv"
   for zip in "$root"/zips/part-*.zip; do
     [ -f "$zip" ] || continue
-    if ! unzip -tqq "$zip" > "$root/logs/crc-$(basename "$zip").log" 2>&1; then
+    if ! unzip -tqq "$zip" >"$root/logs/crc-$(basename "$zip").log" 2>&1; then
       echo "FAIL G2.2: $(basename "$zip") failed the unzip CRC test (see logs/)" >&2
       failures=$((failures + 1))
       continue
@@ -184,9 +197,9 @@ run_verify() {
       NF >= 4 && $1 ~ /^[0-9]+$/ && $4 != "" {
         name = substr($0, index($0, $4))
         if (name !~ /\/$/) printf "%s\t%s\n", $1, name
-      }' >> "$names_tsv"
+      }' >>"$names_tsv"
   done
-  log "G2.2 integrity: CRC-clean zips listed into logs/zip-entries.tsv ($(wc -l < "$names_tsv") entries)"
+  log "G2.2 integrity: CRC-clean zips listed into logs/zip-entries.tsv ($(wc -l <"$names_tsv") entries)"
 
   # --- inventory per product (top-level folder under Takeout/) ---
   local inv=$root/inventory.tsv
@@ -202,8 +215,8 @@ run_verify() {
     END {
       printf "# product\tfiles\tbytes\n"
       for (i = 1; i <= n; i++) { p = order[i]; printf "%s\t%d\t%d\n", p, files[p], bytes[p] }
-    }' "$names_tsv" > "$inv"
-  log "G2.4 inventory: $(wc -l < "$inv") product rows -> inventory.tsv"
+    }' "$names_tsv" >"$inv"
+  log "G2.4 inventory: $(wc -l <"$inv") product rows -> inventory.tsv"
 
   # --- media counts for the Google Photos product (G3 reconciliation base) ---
   local pmc=$root/photos-media-count.txt
@@ -225,79 +238,84 @@ run_verify() {
       printf "google_photos_media_files\t%d\n", media + 0
       printf "google_photos_json_sidecars\t%d\n", json + 0
       printf "google_photos_other_files\t%d\n", other + 0
-    }' "$names_tsv" > "$pmc"
+    }' "$names_tsv" >"$pmc"
 
   # --- G2.3 coverage ---
   local found_folders
   found_folders=$(awk -F'\t' 'NR > 1 { print $1 }' "$inv")
   local coverage_tsv=$root/logs/coverage.tsv
-  : > "$coverage_tsv"
+  : >"$coverage_tsv"
   # normalized expected-name set (raw + google-stripped forms) for the extras check
   local expected_norms=$root/logs/expected-names.txt
   {
     while IFS=$'\t' read -r product _present; do
-      case $product in ''|'#'*) continue ;; esac
-      norm "$product"; norm2 "$product"
-    done < "$root/products.tsv"
-  } > "$expected_norms"
+      case $product in '' | '#'*) continue ;; esac
+      norm "$product"
+      norm2 "$product"
+    done <"$root/products.tsv"
+  } >"$expected_norms"
   # folder match for one product: line-safe (names contain spaces), fuzzy, then overrides
   match_folder() {
     local product=$1 folder cand np n2s
-    np=$(norm "$product"); n2s=$(norm2 "$product")
+    np=$(norm "$product")
+    n2s=$(norm2 "$product")
     while IFS= read -r folder; do
       [ -n "$folder" ] || continue
       if [ "$(norm "$folder")" = "$np" ] || [ "$(norm2 "$folder")" = "$n2s" ]; then
-        printf '%s' "$folder"; return
+        printf '%s' "$folder"
+        return
       fi
-    done <<< "$found_folders"
+    done <<<"$found_folders"
     for cand in $(override_candidates "$product" | tr ';' ' '); do
       while IFS= read -r folder; do
         [ -n "$folder" ] || continue
         if [ "$(norm "$folder")" = "$(norm "$cand")" ]; then
-          printf '%s' "$folder"; return
+          printf '%s' "$folder"
+          return
         fi
-      done <<< "$found_folders"
+      done <<<"$found_folders"
     done
     return 1
   }
   local product expect_size present match
   while IFS=$'\t' read -r product expect_size present; do
-    case $product in ''|'#'*) continue ;; esac
+    case $product in '' | '#'*) continue ;; esac
     match=$(match_folder "$product") || match=''
     if [ "$present" = "1" ]; then
       if [ -n "$match" ]; then
-        printf 'OK\t%s\t-> %s\n' "$product" "$match" >> "$coverage_tsv"
+        printf 'OK\t%s\t-> %s\n' "$product" "$match" >>"$coverage_tsv"
       else
         echo "FAIL G2.3: expected-present product NOT FOUND in any zip: $product (expected size: $expect_size)" >&2
-        printf 'MISSING\t%s\t(expected %s)\n' "$product" "$expect_size" >> "$coverage_tsv"
+        printf 'MISSING\t%s\t(expected %s)\n' "$product" "$expect_size" >>"$coverage_tsv"
         failures=$((failures + 1))
       fi
     else
       if [ -n "$match" ]; then
-        printf 'SURPRISE\t%s\t-> %s (page said no data)\n' "$product" "$match" >> "$coverage_tsv"
+        printf 'SURPRISE\t%s\t-> %s (page said no data)\n' "$product" "$match" >>"$coverage_tsv"
       else
-        printf 'ABSENT\t%s\t(as expected)\n' "$product" >> "$coverage_tsv"
+        printf 'ABSENT\t%s\t(as expected)\n' "$product" >>"$coverage_tsv"
       fi
     fi
-  done < "$root/products.tsv"
+  done <"$root/products.tsv"
   # extras (folders with no expected product)
   local fnorm fn2
   while IFS= read -r folder; do
     [ -n "$folder" ] || continue
-    fnorm=$(norm "$folder"); fn2=$(norm2 "$folder")
+    fnorm=$(norm "$folder")
+    fn2=$(norm2 "$folder")
     if ! grep -qxF "$fnorm" "$expected_norms" && ! grep -qxF "$fn2" "$expected_norms"; then
       echo "WARN G2.3: folder in zips with no matching expected product: $folder" >&2
-      printf 'EXTRA\t?\t%s\n' "$folder" >> "$coverage_tsv"
+      printf 'EXTRA\t?\t%s\n' "$folder" >>"$coverage_tsv"
       warnings=$((warnings + 1))
     fi
-  done <<< "$found_folders"
+  done <<<"$found_folders"
   log "G2.3 coverage: see logs/coverage.tsv ($(grep -c '^OK' "$coverage_tsv") matched, $(grep -c '^MISSING' "$coverage_tsv") missing)"
 
   # --- G2.4 SHA256SUMS ---
   if [ "$do_hash" = "1" ]; then
     log "G2.4 hashing zips (reads every byte again — expect ~1-2 h for 880 GB)..."
-    ( cd "$root/zips" && sha256sum part-*.zip ) > "$root/SHA256SUMS"
-    log "G2.4 SHA256SUMS: $(wc -l < "$root/SHA256SUMS") entries"
+    (cd "$root/zips" && sha256sum part-*.zip) >"$root/SHA256SUMS"
+    log "G2.4 SHA256SUMS: $(wc -l <"$root/SHA256SUMS") entries"
   fi
 
   # --- report ---
@@ -318,7 +336,7 @@ run_verify() {
     echo
     echo '## Coverage'
     cat "$coverage_tsv"
-  } > "$report"
+  } >"$report"
   log "report: $report"
 
   if [ "$failures" -gt 0 ]; then
@@ -331,38 +349,40 @@ run_verify() {
 selftest() {
   local fx=${XDG_CACHE_HOME:-$HOME/.cache}/takeout-verify-selftest
   local rc=0 leg
-  rm -rf "$fx"; mkdir -p "$fx"/{zips,logs}
+  rm -rf "$fx"
+  mkdir -p "$fx"/{zips,logs}
 
   build_fixture() {
-    rm -rf "$fx"/{zips,logs}; mkdir -p "$fx"/{zips,logs}
-    printf '# part\texpected\n1\t3 MB\n2\tLESS1MB\n' > "$fx/parts.tsv"
-    printf '# product\texpected-size\tpresent\n' > "$fx/products.tsv"
-    printf '%s\n' 'Drive|543 GB|1' 'Google Photos|336 GB|1' 'Mail|1.74 GB|1' 'Blogger||0' \
-      | tr '|' '\t' >> "$fx/products.tsv"
+    rm -rf "$fx"/{zips,logs}
+    mkdir -p "$fx"/{zips,logs}
+    printf '# part\texpected\n1\t3 MB\n2\tLESS1MB\n' >"$fx/parts.tsv"
+    printf '# product\texpected-size\tpresent\n' >"$fx/products.tsv"
+    printf '%s\n' 'Drive|543 GB|1' 'Google Photos|336 GB|1' 'Mail|1.74 GB|1' 'Blogger||0' |
+      tr '|' '\t' >>"$fx/products.tsv"
     dd if=/dev/urandom of="$fx/blob" bs=1024 count=900 2>/dev/null
-    ( cd "$fx" && mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail \
-      && cp blob 'tk/Takeout/Drive/a file.pdf' \
-      && cp blob 'tk/Takeout/Google Photos/IMG_0001.jpg' \
-      && echo '{}' > 'tk/Takeout/Google Photos/IMG_0001.jpg.json' \
-      && cp blob 'tk/Takeout/Google Photos/vid 2.mp4' \
-      && echo hello > tk/Takeout/Mail/mbox.txt \
-      && ( cd tk && zip -qr "$fx/zips/part-01.zip" Takeout/Drive 'Takeout/Google Photos' ) \
-      && ( cd tk && zip -qr "$fx/zips/part-02.zip" Takeout/Mail ) )
+    (cd "$fx" && mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail &&
+      cp blob 'tk/Takeout/Drive/a file.pdf' &&
+      cp blob 'tk/Takeout/Google Photos/IMG_0001.jpg' &&
+      echo '{}' >'tk/Takeout/Google Photos/IMG_0001.jpg.json' &&
+      cp blob 'tk/Takeout/Google Photos/vid 2.mp4' &&
+      echo hello >tk/Takeout/Mail/mbox.txt &&
+      (cd tk && zip -qr "$fx/zips/part-01.zip" Takeout/Drive 'Takeout/Google Photos') &&
+      (cd tk && zip -qr "$fx/zips/part-02.zip" Takeout/Mail))
   }
 
   leg=happy
   build_fixture
-  if run_verify_selftest_quiet "$fx" > "$fx/leg-happy.log" 2>&1 \
-    && grep -q 'G2 GREEN' "$fx/leg-happy.log"; then
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-happy.log" 2>&1 &&
+    grep -q 'G2 GREEN' "$fx/leg-happy.log"; then
     local media_count extras
     media_count=$(awk -F'\t' '$1=="google_photos_media_files"{print $2}' "$fx/photos-media-count.txt")
     extras=$(grep -c '^EXTRA' "$fx/logs/coverage.tsv" || true)
-    if [ "${media_count:-x}" = "2" ] \
-      && [ -s "$fx/SHA256SUMS" ] && [ -s "$fx/inventory.tsv" ] \
-      && [ "$extras" = "0" ]; then
+    if [ "${media_count:-x}" = "2" ] &&
+      [ -s "$fx/SHA256SUMS" ] && [ -s "$fx/inventory.tsv" ] &&
+      [ "$extras" = "0" ]; then
       echo "PASS: $leg (gates green, inventory + media counts + hashes written, no phantom extras)"
     else
-      echo "FAIL: $leg (outputs incomplete: media=$media_count extras=$extras sha=$(wc -l < "$fx/SHA256SUMS" 2>/dev/null || echo 0) inv=$(wc -l < "$fx/inventory.tsv" 2>/dev/null || echo 0))"
+      echo "FAIL: $leg (outputs incomplete: media=$media_count extras=$extras sha=$(wc -l <"$fx/SHA256SUMS" 2>/dev/null || echo 0) inv=$(wc -l <"$fx/inventory.tsv" 2>/dev/null || echo 0))"
       rc=1
     fi
   else
@@ -373,35 +393,41 @@ selftest() {
   leg=crc
   build_fixture
   truncate -s 40 "$fx/zips/part-02.zip"
-  if run_verify_selftest_quiet "$fx" > "$fx/leg-crc.log" 2>&1; then
-    echo "FAIL: $leg (truncated zip passed)"; rc=1
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-crc.log" 2>&1; then
+    echo "FAIL: $leg (truncated zip passed)"
+    rc=1
   elif grep -q 'CRC' "$fx/leg-crc.log"; then
     echo "PASS: $leg (truncated zip caught by CRC gate)"
   else
-    echo "FAIL: $leg (failed but not via CRC gate — see $fx/leg-crc.log)"; rc=1
+    echo "FAIL: $leg (failed but not via CRC gate — see $fx/leg-crc.log)"
+    rc=1
   fi
 
   leg=coverage
   build_fixture
-  ( cd "$fx/tk" && rm -rf Takeout/Mail && rm "$fx/zips/part-02.zip" \
-    && zip -qr "$fx/zips/part-02.zip" Takeout/Drive )
-  if run_verify_selftest_quiet "$fx" > "$fx/leg-coverage.log" 2>&1; then
-    echo "FAIL: $leg (missing product passed)"; rc=1
+  (cd "$fx/tk" && rm -rf Takeout/Mail && rm "$fx/zips/part-02.zip" &&
+    zip -qr "$fx/zips/part-02.zip" Takeout/Drive)
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-coverage.log" 2>&1; then
+    echo "FAIL: $leg (missing product passed)"
+    rc=1
   elif grep -q 'expected-present product NOT FOUND' "$fx/leg-coverage.log"; then
     echo "PASS: $leg (missing product caught)"
   else
-    echo "FAIL: $leg (failed but not via coverage gate — see $fx/leg-coverage.log)"; rc=1
+    echo "FAIL: $leg (failed but not via coverage gate — see $fx/leg-coverage.log)"
+    rc=1
   fi
 
   leg=missing-part
   build_fixture
   rm "$fx/zips/part-02.zip"
-  if run_verify_selftest_quiet "$fx" > "$fx/leg-missing.log" 2>&1; then
-    echo "FAIL: $leg (missing part passed)"; rc=1
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-missing.log" 2>&1; then
+    echo "FAIL: $leg (missing part passed)"
+    rc=1
   elif grep -q 'not in size band' "$fx/leg-missing.log"; then
     echo "PASS: $leg (missing part caught)"
   else
-    echo "FAIL: $leg (failed but not via completeness gate — see $fx/leg-missing.log)"; rc=1
+    echo "FAIL: $leg (failed but not via completeness gate — see $fx/leg-missing.log)"
+    rc=1
   fi
 
   if [ "$rc" -eq 0 ]; then
@@ -416,12 +442,12 @@ selftest() {
 run_verify_selftest_quiet() {
   # subshell: run_verify's die() on negative legs must not kill the selftest driver.
   # Output is NOT discarded here — the caller redirects to a per-leg log and greps it.
-  ( run_verify "$1" 1 )
+  (run_verify "$1" 1)
 }
 
 main() {
   if [ "${1:-}" = "--selftest" ]; then
-    command -v zip > /dev/null || die "selftest needs zip on PATH (nix shell nixpkgs#zip)"
+    command -v zip >/dev/null || die "selftest needs zip on PATH (nix shell nixpkgs#zip)"
     selftest
     return
   fi

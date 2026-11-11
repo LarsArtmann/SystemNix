@@ -1633,8 +1633,7 @@
       flake = {
         lib = import ./lib { inherit (nixpkgs) lib; };
 
-        darwinConfigurations."Lars-MacBook-Air" = (
-          import ./systems/darwin.nix {
+        darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
             inherit
               inputs
               mkLarsPackages
@@ -1642,11 +1641,9 @@
               sharedHomeManagerConfig
               sharedHomeManagerSpecialArgs
               ;
-          }
-        );
+          };
 
-        nixosConfigurations."evo-x2" = (
-          import ./systems/evo-x2.nix {
+        nixosConfigurations."evo-x2" = import ./systems/evo-x2.nix {
             inherit
               inputs
               mkLarsPackages
@@ -1657,25 +1654,20 @@
               sharedHomeManagerConfig
               sharedHomeManagerSpecialArgs
               ;
-          }
-        );
+          };
 
-        nixosConfigurations."zfs-vm" = (
-          import ./systems/zfs-vm.nix {
+        nixosConfigurations."zfs-vm" = import ./systems/zfs-vm.nix {
             inherit inputs;
-          }
-        );
+          };
 
-        nixosConfigurations."rpi3-dns" = (
-          import ./systems/rpi3-dns.nix {
+        nixosConfigurations."rpi3-dns" = import ./systems/rpi3-dns.nix {
             inherit
               inputs
               linuxOnlyOverlays
               sharedHomeManagerConfig
               sharedHomeManagerSpecialArgs
               ;
-          }
-        );
+          };
       };
     };
 }

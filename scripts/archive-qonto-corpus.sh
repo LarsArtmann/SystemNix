@@ -65,22 +65,49 @@ die() {
 
 while (($#)); do
   case "$1" in
-    --staging) STAGING=${2:?}; shift 2 ;;
-    --db) DB=${2:?}; shift 2 ;;
-    --url) URL=${2:?}; shift 2 ;;
-    --token-file) TOKEN_FILE=${2:?}; shift 2 ;;
-    --source) SOURCE=${2:?}; shift 2 ;;
-    --only) ONLY=${2:?}; shift 2 ;;
-    --limit) LIMIT=${2:?}; shift 2 ;;
-    --dry-run) DRY_RUN=1; shift ;;
-    -h | --help) usage; exit 0 ;;
-    *) die "unknown argument: $1 (see --help)" ;;
+  --staging)
+    STAGING=${2:?}
+    shift 2
+    ;;
+  --db)
+    DB=${2:?}
+    shift 2
+    ;;
+  --url)
+    URL=${2:?}
+    shift 2
+    ;;
+  --token-file)
+    TOKEN_FILE=${2:?}
+    shift 2
+    ;;
+  --source)
+    SOURCE=${2:?}
+    shift 2
+    ;;
+  --only)
+    ONLY=${2:?}
+    shift 2
+    ;;
+  --limit)
+    LIMIT=${2:?}
+    shift 2
+    ;;
+  --dry-run)
+    DRY_RUN=1
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *) die "unknown argument: $1 (see --help)" ;;
   esac
 done
 
 case "$ONLY" in
-  all | statements | attachments | invoices) ;;
-  *) die "--only must be one of: all statements attachments invoices" ;;
+all | statements | attachments | invoices) ;;
+*) die "--only must be one of: all statements attachments invoices" ;;
 esac
 [[ -r $DB ]] || die "database not readable: $DB"
 command -v curl >/dev/null || die "curl not found"
@@ -324,20 +351,20 @@ enumerate_statements() {
       continue
     }
     case "$f" in
-      */statements/technologies/*)
-        org=technologies
-        entity="Artmann Technologies GmbH"
-        bal=$BIZ_BALANCE
-        ;;
-      */statements/holding/*)
-        org=holding
-        entity="Artmann Holding GmbH"
-        bal=$HOLDING_BALANCE
-        ;;
-      *)
-        warn "statement outside a known org tree: $f"
-        continue
-        ;;
+    */statements/technologies/*)
+      org=technologies
+      entity="Artmann Technologies GmbH"
+      bal=$BIZ_BALANCE
+      ;;
+    */statements/holding/*)
+      org=holding
+      entity="Artmann Holding GmbH"
+      bal=$HOLDING_BALANCE
+      ;;
+    *)
+      warn "statement outside a known org tree: $f"
+      continue
+      ;;
     esac
     sha=$(sha_of "$f")
     wstart="${month}-01"
@@ -355,15 +382,15 @@ enumerate_attachments() {
   while IFS= read -r -d '' f; do
     base=${f##*/}
     case "$f" in
-      */attachments/technologies/*)
-        org=technologies
-        profile=$BIZ_PROFILE
-        ;;
-      */attachments/holding/*)
-        org=holding
-        profile=$HOLDING_PROFILE
-        ;;
-      *) continue ;;
+    */attachments/technologies/*)
+      org=technologies
+      profile=$BIZ_PROFILE
+      ;;
+    */attachments/holding/*)
+      org=holding
+      profile=$HOLDING_PROFILE
+      ;;
+    *) continue ;;
     esac
     if [[ $ONLY != invoices ]] && [[ $base =~ ^([0-9]{4}-[0-9]{2}-[0-9]{2})\ -\ (.*)\ -\ ([A-Z]{3})\ ([0-9.]+)[_,]([0-9]{2})\ -\ ([0-9a-f]{8})\.(pdf|png)$ ]]; then
       date=${BASH_REMATCH[1]}
@@ -412,8 +439,8 @@ enumerate_attachments() {
         tx=""
       fi
       case "$org" in
-        technologies) entity="Artmann Technologies GmbH" ;;
-        holding) entity="Artmann Holding GmbH" ;;
+      technologies) entity="Artmann Technologies GmbH" ;;
+      holding) entity="Artmann Holding GmbH" ;;
       esac
       if [[ -n $tx ]]; then
         TX_LINKS["$tx"]=$((${TX_LINKS["$tx"]:-0} + 1))
@@ -436,19 +463,19 @@ enumerate_attachments() {
 
 SKIPPED_DATA=0
 case "$ONLY" in
-  all)
-    enumerate_statements
-    enumerate_attachments
-    ;;
-  statements) enumerate_statements ;;
-  attachments | invoices) enumerate_attachments ;;
+all)
+  enumerate_statements
+  enumerate_attachments
+  ;;
+statements) enumerate_statements ;;
+attachments | invoices) enumerate_attachments ;;
 esac
 
 if [[ ! -s $PLAN ]]; then
   die "no documents planned - check --staging ($STAGING)"
 fi
 
-log "plan built: $(( $(wc -l <"$PLAN") )) documents, $SKIPPED_DATA non-document files skipped"
+log "plan built: $(($(wc -l <"$PLAN"))) documents, $SKIPPED_DATA non-document files skipped"
 if ((DRY_RUN == 1)); then
   awk -F'\t' '
     { n[$1]++; if ($10 != "-") linked[$1]++ }
@@ -478,7 +505,7 @@ ensure_named() {
     log "created $endpoint '$name' (id $id)"
   fi
   case "$id" in
-    "" | *[!0-9]*) die "non-numeric id for $endpoint '$name': '$id'" ;;
+  "" | *[!0-9]*) die "non-numeric id for $endpoint '$name': '$id'" ;;
   esac
   printf '%s' "$id"
 }
@@ -508,21 +535,21 @@ wait_task() {
     api_call GET "/api/tasks/?task_id=$task"
     status=$(jq -r '.results[0].status // empty' <<<"$API_BODY")
     case "$status" in
-      success)
-        docid=$(jq -r '.results[0].result_data.document_id // (.results[0].related_document_ids[0] // empty)' <<<"$API_BODY")
-        [[ -n $docid ]] || die "task $task succeeded without a document id"
+    success)
+      docid=$(jq -r '.results[0].result_data.document_id // (.results[0].related_document_ids[0] // empty)' <<<"$API_BODY")
+      [[ -n $docid ]] || die "task $task succeeded without a document id"
+      printf '%s' "$docid"
+      return 0
+      ;;
+    failure)
+      docid=$(jq -r '.results[0].result_data.duplicate_of // empty' <<<"$API_BODY")
+      if [[ -n $docid ]]; then
         printf '%s' "$docid"
         return 0
-        ;;
-      failure)
-        docid=$(jq -r '.results[0].result_data.duplicate_of // empty' <<<"$API_BODY")
-        if [[ -n $docid ]]; then
-          printf '%s' "$docid"
-          return 0
-        fi
-        warn "task $task failed: $(jq -c '.results[0].result_data // {}' <<<"$API_BODY")"
-        return 1
-        ;;
+      fi
+      warn "task $task failed: $(jq -c '.results[0].result_data // {}' <<<"$API_BODY")"
+      return 1
+      ;;
     esac
   done
   warn "task $task did not finish within 10 minutes"
@@ -642,9 +669,9 @@ while IFS=$'\t' read -r kind org path sha created title _fieldname fieldvalue do
     break
   fi
   case "$kind" in
-    statement) COUNT_STATEMENTS=$((COUNT_STATEMENTS + 1)) ;;
-    attachment) COUNT_ATTACHMENTS=$((COUNT_ATTACHMENTS + 1)) ;;
-    invoice) COUNT_INVOICES=$((COUNT_INVOICES + 1)) ;;
+  statement) COUNT_STATEMENTS=$((COUNT_STATEMENTS + 1)) ;;
+  attachment) COUNT_ATTACHMENTS=$((COUNT_ATTACHMENTS + 1)) ;;
+  invoice) COUNT_INVOICES=$((COUNT_INVOICES + 1)) ;;
   esac
 
   fieldid=$FIELD_RECEIPT
@@ -652,10 +679,10 @@ while IFS=$'\t' read -r kind org path sha created title _fieldname fieldvalue do
 
   # The plan carries the human document-type name; the API needs the id.
   case "$doctype" in
-    "Bank Statement") dtype_id=$DOCTYPE_STATEMENT ;;
-    "Bank Receipt") dtype_id=$DOCTYPE_RECEIPT ;;
-    Invoice) dtype_id=$DOCTYPE_INVOICE ;;
-    *) die "unknown document type in plan: $doctype" ;;
+  "Bank Statement") dtype_id=$DOCTYPE_STATEMENT ;;
+  "Bank Receipt") dtype_id=$DOCTYPE_RECEIPT ;;
+  Invoice) dtype_id=$DOCTYPE_INVOICE ;;
+  *) die "unknown document type in plan: $doctype" ;;
   esac
 
   extra_tag=""
@@ -676,9 +703,9 @@ while IFS=$'\t' read -r kind org path sha created title _fieldname fieldvalue do
   patch_rc=0
   patch_document "$docid" "$title" "$created" "$dtype_id" "$fieldid" "$fieldvalue" "$extra_tag" || patch_rc=$?
   case "$patch_rc" in
-    0) COUNT_PATCHED=$((COUNT_PATCHED + 1)) ;;
-    2) COUNT_CANONICAL=$((COUNT_CANONICAL + 1)) ;;
-    *) COUNT_FAILURES=$((COUNT_FAILURES + 1)) ;;
+  0) COUNT_PATCHED=$((COUNT_PATCHED + 1)) ;;
+  2) COUNT_CANONICAL=$((COUNT_CANONICAL + 1)) ;;
+  *) COUNT_FAILURES=$((COUNT_FAILURES + 1)) ;;
   esac
 
   if [[ $kind == statement ]]; then

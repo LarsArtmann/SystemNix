@@ -27,7 +27,10 @@ set -euo pipefail
 
 readonly DEFAULT_ATTEMPTS=40
 
-die() { echo "takeout-download: ERROR: $*" >&2; exit 1; }
+die() {
+  echo "takeout-download: ERROR: $*" >&2
+  exit 1
+}
 log() { echo "[$(date '+%F %T')] $*"; }
 
 # --- embedded export manifest (from the Takeout summary page 2026-11-10) ---
@@ -63,21 +66,27 @@ readonly PARTS_MANIFEST='
 size_band() {
   local spec=$1 lo hi
   case $spec in
-    LESS1MB) lo=1; hi=1600000 ;;
-    ''|*[!0-9]*)
-      local amount unit
-      amount=$(echo "$spec" | awk '{print $1}')
-      unit=$(echo "$spec" | awk '{print $2}')
-      case $unit in
-        GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
-        MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
-        KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
-        *) die "unknown size unit in manifest: $spec" ;;
-      esac
-      lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
-      hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
-      ;;
-    *) lo=$spec; hi=$spec ;;
+  LESS1MB)
+    lo=1
+    hi=1600000
+    ;;
+  '' | *[!0-9]*)
+    local amount unit
+    amount=$(echo "$spec" | awk '{print $1}')
+    unit=$(echo "$spec" | awk '{print $2}')
+    case $unit in
+    GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
+    MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
+    KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
+    *) die "unknown size unit in manifest: $spec" ;;
+    esac
+    lo=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 0.85 }')
+    hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
+    ;;
+  *)
+    lo=$spec
+    hi=$spec
+    ;;
   esac
   echo "$lo $hi"
 }
@@ -87,13 +96,13 @@ init_staging() {
   mkdir -p "$root"/{zips,logs,extracted}
   chmod 700 "$root" "$root"/{zips,logs,extracted}
   if [ ! -f "$root/parts.tsv" ]; then
-    printf '# part\texpected\n' > "$root/parts.tsv"
+    printf '# part\texpected\n' >"$root/parts.tsv"
     while IFS= read -r mline; do
       [ -n "$mline" ] || continue
-      echo "${mline/ /$'\t'}" >> "$root/parts.tsv"
-    done <<< "$PARTS_MANIFEST"
+      echo "${mline/ /$'\t'}" >>"$root/parts.tsv"
+    done <<<"$PARTS_MANIFEST"
   fi
-  [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' > "$root/urls.txt"
+  [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' >"$root/urls.txt"
   [ -f "$root/urls.txt" ] && chmod 600 "$root/urls.txt" 2>/dev/null || true
   [ -f "$root/links.html" ] && chmod 600 "$root/links.html" 2>/dev/null || true
   local nparts_total
@@ -117,18 +126,21 @@ extract_links() {
   n=$(grep -c '^[[:space:]]*https\?://' "$urls" 2>/dev/null || true)
   [ "$n" -gt 0 ] && return 0
   [ -f "$html" ] || return 1
-  uris=$(grep -o 'data-download-uri="[^"]*"' "$html" \
-    | sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g' | absolutize)
+  uris=$(grep -o 'data-download-uri="[^"]*"' "$html" |
+    sed 's/^data-download-uri="//; s/"$//; s/&amp;/\&/g' | absolutize)
   if [ -z "$uris" ]; then
-    uris=$(grep -o 'takeout/download?[^"'\''<> ]*' "$html" \
-      | sed 's/&amp;/\&/g' | awk '!seen[$0]++' | absolutize)
-    [ -n "$uris" ] || { log "WARN: no takeout download links found in $html"; return 1; }
+    uris=$(grep -o 'takeout/download?[^"'\''<> ]*' "$html" |
+      sed 's/&amp;/\&/g' | awk '!seen[$0]++' | absolutize)
+    [ -n "$uris" ] || {
+      log "WARN: no takeout download links found in $html"
+      return 1
+    }
     log "WARN: page carried only href forms — verify the count excludes the See-report link"
   fi
   {
     echo '# extracted from links.html (page order preserved) — hand-verify the count'
     echo "$uris"
-  } > "$urls"
+  } >"$urls"
   chmod 600 "$urls"
   log "extracted $(grep -c '^[[:space:]]*https' "$urls" || true) download link(s) from links.html -> urls.txt"
 }
@@ -151,9 +163,9 @@ ingest_html() {
   {
     echo '# one download link per line, Takeout page order (ingested from links.html)'
     echo "$triples" | awk -F'\t' '{print $1}'
-  } > "$root/urls.txt"
-  printf '# part\texpected\tfilename\n' > "$root/parts.tsv"
-  echo "$triples" | awk -F'\t' '{ printf "%d\t%s\t%s\n", NR, $2, $3 }' >> "$root/parts.tsv"
+  } >"$root/urls.txt"
+  printf '# part\texpected\tfilename\n' >"$root/parts.tsv"
+  echo "$triples" | awk -F'\t' '{ printf "%d\t%s\t%s\n", NR, $2, $3 }' >>"$root/parts.tsv"
   chmod 600 "$root/urls.txt" "$root/parts.tsv"
   log "ingested $count part(s) from links.html: urls.txt + parts.tsv (exact sizes + filenames)"
 }
@@ -162,17 +174,20 @@ cmd_status() {
   local root=$1 total=0 ok=0 spec lo hi size name state filename
   [ -d "$root/zips" ] || die "no staging at $root (run init first)"
   while IFS=$'	' read -r part spec filename; do
-    case $part in ''|'#'*) continue ;; esac
+    case $part in '' | '#'*) continue ;; esac
     total=$((total + 1))
     name=$(printf 'part-%02d.zip' "$part")
     size=0
     [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
-    read -r lo hi <<< "$(size_band "$(echo "$spec" | awk '{print $1}')")"
-    if [ "$size" -ge "$lo" ] && [ "$size" -le "$hi" ]; then state=OK; ok=$((ok + 1))
-    elif [ "$size" -eq 0 ]; then state=MISSING
+    read -r lo hi <<<"$(size_band "$(echo "$spec" | awk '{print $1}')")"
+    if [ "$size" -ge "$lo" ] && [ "$size" -le "$hi" ]; then
+      state=OK
+      ok=$((ok + 1))
+    elif [ "$size" -eq 0 ]; then
+      state=MISSING
     else state="IN-BAND? ($size bytes, band $lo..$hi)"; fi
     printf '%-14s %12s bytes  %-8s %s\n' "$name" "$size" "$state" "${filename:-}"
-  done < "$root/parts.tsv"
+  done <"$root/parts.tsv"
   log "parts in band: $ok/$total"
   [ "$ok" -eq "$total" ]
 }
@@ -198,10 +213,10 @@ cmd_start() {
 
   local part spec filename name url attempt rc size lo hi
   while IFS=$'\t' read -r part spec filename; do
-    case $part in ''|'#'*) continue ;; esac
+    case $part in '' | '#'*) continue ;; esac
     name=$(printf 'part-%02d.zip' "$part")
     url=$(sed -n '/^[[:space:]]*https\?:\/\//p' "$urls" | sed -n "${part}p")
-    read -r lo hi <<< "$(size_band "$(echo "$spec" | awk '{print $1}')")"
+    read -r lo hi <<<"$(size_band "$(echo "$spec" | awk '{print $1}')")"
 
     size=0
     [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
@@ -218,7 +233,7 @@ cmd_start() {
         --silent --show-error \
         -A 'Mozilla/5.0 (X11; Linux x86_64) Takeout-bulk-download' \
         "${cookie_args[@]}" \
-        --output "$root/zips/$name.part" "$url" 2>> "$root/logs/download.log"; then
+        --output "$root/zips/$name.part" "$url" 2>>"$root/logs/download.log"; then
         rc=0
       else
         rc=$?
@@ -236,7 +251,7 @@ cmd_start() {
       if [ "$rc" -eq 0 ] && [ "$size" -gt "$hi" ]; then
         die "$name: oversize ($size > band $hi) — refusing to re-fetch (link quota); inspect manually"
       fi
-      log "$name: attempt $attempt/$attempts ended rc=$rc size=$size — resuming in 15s" >> "$root/logs/download.log"
+      log "$name: attempt $attempt/$attempts ended rc=$rc size=$size — resuming in 15s" >>"$root/logs/download.log"
       log "$name: attempt $attempt rc=$rc size=$size bytes; resuming"
       attempt=$((attempt + 1))
       sleep 15
@@ -246,7 +261,7 @@ cmd_start() {
     if [ "$size" -lt "$lo" ] || [ "$size" -gt "$hi" ]; then
       die "$name: incomplete after $attempts attempts ($size bytes, band $lo..$hi) — rerun start to resume; if the link is exhausted, request a NEW export (plan Phase 1)"
     fi
-  done < "$root/parts.tsv"
+  done <"$root/parts.tsv"
   log "all parts within size band — run scripts/takeout-verify.sh $root next"
   cmd_status "$root"
 }
@@ -255,16 +270,19 @@ main() {
   [ $# -ge 2 ] || die "usage: $0 <staging-dir> init|start|status [--attempts N]"
   local root=$1 cmd=$2
   case $cmd in
-    init) init_staging "$root" ;;
-    ingest-html) init_staging "$root"; ingest_html "$root" ;;
-    start)
-      local attempts=$DEFAULT_ATTEMPTS
-      [ "${3:-}" = "--attempts" ] && attempts=${4:-$DEFAULT_ATTEMPTS}
-      init_staging "$root"
-      cmd_start "$root" "$attempts"
-      ;;
-    status) cmd_status "$root" ;;
-    *) die "unknown command: $cmd (init|start|status)" ;;
+  init) init_staging "$root" ;;
+  ingest-html)
+    init_staging "$root"
+    ingest_html "$root"
+    ;;
+  start)
+    local attempts=$DEFAULT_ATTEMPTS
+    [ "${3:-}" = "--attempts" ] && attempts=${4:-$DEFAULT_ATTEMPTS}
+    init_staging "$root"
+    cmd_start "$root" "$attempts"
+    ;;
+  status) cmd_status "$root" ;;
+  *) die "unknown command: $cmd (init|start|status)" ;;
   esac
 }
 

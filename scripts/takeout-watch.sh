@@ -30,15 +30,15 @@ STAMP=${ROOT}/watcher.stamp
 LOG=${ROOT}/logs/watcher.log
 DRY_STOP=${DRY_STOP:-0}
 
-log() { echo "[$(date '+%F %T')] $*" >> "$LOG"; }
+log() { echo "[$(date '+%F %T')] $*" >>"$LOG"; }
 
 validate() {
   # $1 = links.html candidate; prints sorted size<TAB>filename multiset
   local html=$1
   paste -d'\t' \
     <(grep -o 'data-size="[^"]*"' "$html" | sed 's/^data-size="//; s/"$//') \
-    <(grep -o 'data-filename="[^"]*"' "$html" | sed 's/^data-filename="//; s/"$//') \
-    | sort
+    <(grep -o 'data-filename="[^"]*"' "$html" | sed 's/^data-filename="//; s/"$//') |
+    sort
 }
 
 known_multiset() {
@@ -46,8 +46,11 @@ known_multiset() {
 }
 
 main() {
-  [ -f "$KNOWN" ] || { log "FATAL: no frozen manifest $KNOWN"; exit 1; }
-  date '+%F %T' > "$STAMP"
+  [ -f "$KNOWN" ] || {
+    log "FATAL: no frozen manifest $KNOWN"
+    exit 1
+  }
+  date '+%F %T' >"$STAMP"
   log "watching $ROOT for a links.html newer than $(cat "$STAMP") (probe: $REPO/scripts/takeout-probe.sh)"
   while :; do
     sleep 20
@@ -58,32 +61,41 @@ main() {
     s1=$(stat -c %s "$ROOT/links.html")
     sleep 10
     s2=$(stat -c %s "$ROOT/links.html")
-    [ "$s1" = "$s2" ] || { log "still writing (size drift) — next cycle"; continue; }
+    [ "$s1" = "$s2" ] || {
+      log "still writing (size drift) — next cycle"
+      continue
+    }
     local n
     n=$(grep -c 'data-download-uri=' "$ROOT/links.html" || true)
-    [ "$n" -eq 23 ] || { log "REFUSED: $n data-download-uri attrs (want 23) — not a valid page save; fix and re-save, watcher exiting"; exit 2; }
+    [ "$n" -eq 23 ] || {
+      log "REFUSED: $n data-download-uri attrs (want 23) — not a valid page save; fix and re-save, watcher exiting"
+      exit 2
+    }
     if ! diff -q <(validate "$ROOT/links.html") <(known_multiset) >/dev/null; then
       log "REFUSED: size/filename multiset mismatch vs frozen manifest — watcher exiting"
       exit 3
     fi
     log "validation GREEN (23 triplets, exact multiset) — ingesting"
-    [ "$DRY_STOP" = 1 ] && { log "DRY_STOP: would ingest+probe+start here"; exit 0; }
-    bash "$REPO/scripts/takeout-download.sh" "$ROOT" ingest-html >> "$LOG" 2>&1
+    [ "$DRY_STOP" = 1 ] && {
+      log "DRY_STOP: would ingest+probe+start here"
+      exit 0
+    }
+    bash "$REPO/scripts/takeout-download.sh" "$ROOT" ingest-html >>"$LOG" 2>&1
     if ! diff -q <(awk -F'\t' 'NF && !/^#/ { print $2 "\t" $3 }' "$ROOT/parts.tsv" | sort) <(known_multiset) >/dev/null; then
       log "FATAL: post-ingest manifest drifted vs known — watcher exiting"
       exit 4
     fi
     chmod 600 "$ROOT/urls.txt" "$ROOT/parts.tsv" "$ROOT/links.html"
     log "ingested; probing part 12"
-    if bash "$REPO/scripts/takeout-probe.sh" "$ROOT" >> "$LOG" 2>&1; then
+    if bash "$REPO/scripts/takeout-probe.sh" "$ROOT" >>"$LOG" 2>&1; then
       log "probe GREEN — starting download (G1)"
     else
       log "probe RED — NOT starting; watcher exiting (see probe output above)"
       exit 5
     fi
-    date '+%F %T' > "$ROOT/watcher.started"
+    date '+%F %T' >"$ROOT/watcher.started"
     log "start: takeout-download.sh start (supervised by this watcher, unit takeout-g1-watch)"
-    if bash "$REPO/scripts/takeout-download.sh" "$ROOT" start >> "$ROOT/logs/download-driver.log" 2>&1; then
+    if bash "$REPO/scripts/takeout-download.sh" "$ROOT" start >>"$ROOT/logs/download-driver.log" 2>&1; then
       log "download script exited 0 (all parts in band — run takeout-verify.sh next)"
     else
       log "download script exited rc=$? — check logs/download-driver.log"

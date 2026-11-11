@@ -21,12 +21,15 @@ STUB="$(mktemp -d /tmp/print-safe-fault.XXXXXX)"
 trap 'rm -rf "$STUB" "$WORK"' EXIT
 WORK="$(mktemp -d /tmp/print-safe-fault-work.XXXXXX)"
 
-fail() { echo "FAULT-TEST FAIL: $*" >&2; exit 1; }
+fail() {
+  echo "FAULT-TEST FAIL: $*" >&2
+  exit 1
+}
 
 # Stub dir: rastertogutenprint delegates straight through; imagetoraster
 # injects two failures then delegates.
 ln -s "$REAL_FILTER_DIR/rastertogutenprint.5.3" "$STUB/rastertogutenprint.5.3"
-cat > "$STUB/imagetoraster" << 'STUB'
+cat >"$STUB/imagetoraster" <<'STUB'
 #!/usr/bin/env bash
 COUNT_FILE="${PS_FAULT_COUNT:?PS_FAULT_COUNT must be set}"
 REAL="/var/lib/cups/path/lib/cups/filter/imagetoraster"
@@ -43,7 +46,7 @@ STUB
 chmod +x "$STUB/imagetoraster"
 
 # Minimal blank single-page PDF (renders a white A4-ish page).
-cat > "$WORK/blank.pdf" << 'PDF'
+cat >"$WORK/blank.pdf" <<'PDF'
 %PDF-1.4
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
@@ -56,12 +59,12 @@ PDF
 
 COUNT=0
 export PS_FAULT_COUNT="$STUB/count"
-echo 0 > "$PS_FAULT_COUNT"
+echo 0 >"$PS_FAULT_COUNT"
 
 OUT="$WORK/out"
 export PRINT_SAFE_FILTER_DIR="$STUB"
-PRINT_SAFE_DRY_RUN=1 "$PS" "$WORK/blank.pdf" > "$OUT.stdout" 2> "$OUT.stderr" \
-  && PASS=1 || PASS=0
+PRINT_SAFE_DRY_RUN=1 "$PS" "$WORK/blank.pdf" >"$OUT.stdout" 2>"$OUT.stderr" &&
+  PASS=1 || PASS=0
 unset PRINT_SAFE_FILTER_DIR
 
 grep -q "attempt 1 failed validation" "$OUT.stderr" || fail "no retry log for attempt 1 (empty-output crash)"

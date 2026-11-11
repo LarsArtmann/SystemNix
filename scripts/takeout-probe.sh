@@ -20,14 +20,20 @@ part=${2:-12}
 
 url=$(grep -E '^[[:space:]]*https://' "$root/urls.txt" | sed -n "${part}p")
 expected=$(awk -F'\t' -v p="$part" '$1 == p { print $2 }' "$root/parts.tsv")
-[ -n "$url" ] && [ -n "$expected" ] || { echo "PROBE: no line-$part url/expected in staging"; exit 1; }
+[ -n "$url" ] && [ -n "$expected" ] || {
+  echo "PROBE: no line-$part url/expected in staging"
+  exit 1
+}
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 meta=$(curl -sS -o "$tmp" -w '%{http_code}\t%{url_effective}\t%{size_download}' \
   --location --max-redirs 5 --connect-timeout 30 --max-time 300 \
   -A 'Mozilla/5.0 (X11; Linux x86_64) Takeout-bulk-download' \
-  -b "$root/cookies.txt" "$url") || { echo "PROBE: curl failed rc=$?"; exit 1; }
+  -b "$root/cookies.txt" "$url") || {
+  echo "PROBE: curl failed rc=$?"
+  exit 1
+}
 code=$(cut -f1 <<<"$meta")
 host=$(cut -f2 <<<"$meta" | awk -F/ '{print $3}')
 dl=$(cut -f3 <<<"$meta")
@@ -35,9 +41,15 @@ size=$(stat -c %s "$tmp")
 magic=$(head -c 2 "$tmp" | od -An -c | tr -d ' \n')
 echo "PROBE: http=$code final_host=$host bytes=$size (downloaded=$dl) magic='$magic'"
 case $magic in
-  PK) echo "PROBE: zip magic OK" ;;
-  \<*) echo "PROBE: HTML body — auth page, cookies INSUFFICIENT"; exit 2 ;;
-  *) echo "PROBE: unexpected magic"; exit 3 ;;
+PK) echo "PROBE: zip magic OK" ;;
+\<*)
+  echo "PROBE: HTML body — auth page, cookies INSUFFICIENT"
+  exit 2
+  ;;
+*)
+  echo "PROBE: unexpected magic"
+  exit 3
+  ;;
 esac
 if [ "$size" -eq "$expected" ]; then
   install -m 600 "$tmp" "$root/zips/part-$(printf '%02d' "$part").zip"

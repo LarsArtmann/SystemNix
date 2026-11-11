@@ -23,7 +23,10 @@
 #   bash scripts/takeout-ingest-photos.sh <staging-dir> [--dry-run]
 set -euo pipefail
 
-die() { echo "takeout-ingest-photos: ERROR: $*" >&2; exit 2; }
+die() {
+  echo "takeout-ingest-photos: ERROR: $*" >&2
+  exit 2
+}
 log() { echo "[$(date '+%F %T')] $*"; }
 
 main() {
@@ -42,11 +45,11 @@ main() {
   local manifest="${SYSTEMNIX_MANIFEST:-/etc/systemnix/integration-manifest.json}"
   [ -f "$manifest" ] || die "integration manifest missing at $manifest — run on evo-x2 (deployed host)"
   local port
-  port=$(jq -r '.ports["immich"] // empty' < "$manifest")
+  port=$(jq -r '.ports["immich"] // empty' <"$manifest")
   [ -n "$port" ] || die "immich port not found in manifest — is immich enabled?"
 
   local immich_go_bin=""
-  if command -v immich-go > /dev/null 2>&1; then
+  if command -v immich-go >/dev/null 2>&1; then
     immich_go_bin=immich-go
   else
     log "immich-go not on PATH — resolving via nix shell nixpkgs#immich-go (0.32.0 pinned by flake lock at eval time)"
@@ -55,7 +58,8 @@ main() {
 
   mkdir -p "$root/logs"
   chmod 700 "$root/logs"
-  log "expected media (from Gate G2 inventory):"; cat "$root/photos-media-count.txt"
+  log "expected media (from Gate G2 inventory):"
+  cat "$root/photos-media-count.txt"
   [ "${INGEST_TRASHED:-0}" = "1" ] && extra+=(--include-trashed)
 
   log "starting immich-go (dry-run: ${dry:-no}) — log: logs/immich-go.log"
