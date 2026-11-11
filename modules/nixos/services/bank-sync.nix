@@ -126,7 +126,7 @@
           pkgs.rsync
           pkgs.sqlite
         ];
-        text = builtins.readFile ../../scripts/archive-qonto-corpus.sh;
+        text = builtins.readFile ../../../scripts/archive-qonto-corpus.sh; # path fix (residue session 2026-11-11): ../../ resolved to modules/scripts/
       };
     in
     {
