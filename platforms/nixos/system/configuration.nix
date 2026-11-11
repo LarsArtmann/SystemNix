@@ -509,9 +509,9 @@ in
         # lars@evo-x2 ~/.ssh/id_ed25519 (forgejo title:
         # lars-evo-x2-id_ed25519) — webphone-android signing identity
         "SHA256:1hFd8eVRpqKqgzmT6ZDG6RxkE9KdPiNabX5yHZPVTMw"
-        # lars@Lars-MacBook-Air (forgejo title: nix-declared) — signs
-        # SystemNix commits as larsartmann@users.noreply.github.com
-        "SHA256:QVJtlfmvWcR/n1LXc/PVAu021ffHBrZYT1rOkSXPAhE"
+        # lars@Lars-MacBook-Air-2026-04 (forgejo title: nix-declared) —
+        # signs SystemNix commits as larsartmann@users.noreply.github.com
+        "SHA256:PCt1vyHm3QHeGoRO0rM8UER3gyEXRDOxX4fNuZPNURs"
       ];
       # First PRIMARY repos (owner decisions 2026-10-16): `domains` (GitHub
       # Actions billing-dead since 2026-09-08; CI moves to the native

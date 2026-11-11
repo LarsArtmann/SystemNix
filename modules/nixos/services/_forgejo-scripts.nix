@@ -2212,12 +2212,16 @@ in
         for key in "''${keys[@]}"; do
           [[ -z "$key" ]] && continue
 
-          # Dedup by exact-match ANY (string test), never `jq -e '.[] | select(...)'`:
-          # select-no-match still exits 0 (verified 2026-11-11 — jq -e keys on
-          # the LAST OUTPUT VALUE and zero outputs is not 4), so the select
-          # shape answers "exists" to EVERYTHING and never adds a key once the
-          # user has one.
-          if [ "$(jq --arg key "$key" 'any(.[]; .key == $key)' "$existing_keys")" = "true" ]; then
+          # Dedup by key BLOB (second field), never by exact string: the
+          # forge stores keys comment-stripped, so an authorized_keys line
+          # carrying a comment never string-matches its stored twin and the
+          # add would 422 ("Key content has been used as non-deploy key",
+          # found 2026-11-11). And never `jq -e '.[] | select(...)'` for
+          # existence: select-no-match still exits 0 (jq -e keys on the
+          # LAST OUTPUT VALUE and zero outputs is not 4), so the select
+          # shape answers "exists" to EVERYTHING.
+          key_blob=$(echo "$key" | awk '{print $2}')
+          if [ "$(jq --arg blob "$key_blob" 'any(.[]; (.key | split(" ")[1] // "") == $blob)' "$existing_keys")" = "true" ]; then
             echo "  ✓ Key already exists"
             continue
           fi
