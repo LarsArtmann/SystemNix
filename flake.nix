@@ -403,21 +403,14 @@
     # vendorHash refreshed; FOD + package verified). Bumps flow via
     # `nix flake lock --update-input library-policy --refresh`.
     library-policy = {
-      # UNPINNED 2026-11-03: the go-health-dashboard v0.12.2 fix (the
-      # uncompilable status.go:309 InstanceID change) landed on origin/master
-      # (a7aa44d); pin f3651092 dropped, the lars-packages vendorHash shim
-      # re-probed at the new rev, toplevel proof green same day.
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
-      # block in lib/flake-input-pin-audit.nix): fca47ff is a daemon
-      # "chore: auto-commit" that flipped the indirect templ require to
-      # v0.3.1100 while this repo's flake.lock still pins the pre-regen
-      # templ-components (938dbd97), whose generated svg_templ.go calls
-      # templ.ResolveAttributeValue (deleted in 0.3.1100). Proven both ways
-      # by worktree probe: fca47ff + templ 0.3.1070 builds, + 0.3.1100 dies
-      # "undefined: templ.ResolveAttributeValue". LIFT: upstream regenerates
-      # its templates at 0.3.1100 (or pins templ back) and the package
-      # compiles at tip; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/library-policy?rev=7fc09832355ee5f43dc7784b4a5510d57ccb0abd";
+      # UNPINNED 2026-11-03 (go-health-dashboard fix) and re-pinned
+      # 2026-11-06 for the templ-API-removal class; PIN LIFTED AGAIN
+      # 2026-11-11: upstream tip 088aaf2 regenerated at templ v0.3.1100 —
+      # lock-free probe builds the package green (its own lock carries the
+      # regenerated templ-components). Floats on ?ref=refs/heads/master;
+      # bumps flow via `nix flake lock --update-input library-policy
+      # --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=refs/heads/master";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -495,14 +488,12 @@
     # follows overrides and no consumer-side shim. Its lock's only private
     # dep node is go-cqrs-lite (CI key already exists).
     journal = {
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
-      # block in lib/flake-input-pin-audit.nix): 5604c6f is a daemon
-      # "chore: commit 6 pending file(s)" that bumped the templ require to
-      # v0.3.1100 while the flake.lock-pinned templ-components stays
-      # pre-regen (generated code calls templ.ResolveAttributeValue, gone
-      # in 0.3.1100). LIFT: upstream regenerates at 0.3.1100 (or pins
-      # templ back) and `.#journal` compiles at tip; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/journal?rev=4a63e7fd3ddd3aefcc92bfbcc959ce5918a63303";
+      # PIN LIFTED 2026-11-11 (templ-API-removal class): upstream regenerated
+      # at templ v0.3.1100 (tip 0663476 lock-free probe builds the package
+      # green, incl. the regenerated templ-components deps). Floats on
+      # ?ref=refs/heads/master per the pin policy; bumps flow via
+      # `nix flake lock --update-input journal --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/journal?ref=refs/heads/master";
     };
 
     # go-paperless — journal's own lock pins this dep to a LOCAL
@@ -636,14 +627,12 @@
     # the goModules vendorHash is probed per lock move and shimmed in
     # lib/lars-packages.nix when stale under the followed nixpkgs graph.
     golangci-lint-auto-configure = {
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
-      # block in lib/flake-input-pin-audit.nix): f20cd92 "chore(deps):
-      # update Go dependencies" bumped templ to v0.3.1100 while its
-      # pkg/report/report_templ.go still calls templ.ResolveAttributeValue
-      # (deleted in 0.3.1100). 28340f6 is the pre-bump rev. LIFT: upstream
-      # regenerates its templates at 0.3.1100 (or pins templ back) and the
-      # package compiles at tip; then unpin and re-lock.
-      url = "github:LarsArtmann/golangci-lint-auto-configure?rev=28340f6352b629bdf2225c88f1c7f64308279f67";
+      # PIN LIFTED 2026-11-11 (templ-API-removal class): upstream tip
+      # 41e6ed1 regenerated at templ v0.3.1100 — lock-free probe builds the
+      # package green. Floats on ?ref=master per the pin policy; the
+      # goModules vendorHash is probed per lock move and shimmed in
+      # lib/lars-packages.nix when stale under the followed nixpkgs graph.
+      url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -1027,7 +1016,12 @@
       # per roll. Keep pinned (not ?ref=master): the 10-14 master-tracking
       # window showed the vendorHash treadmill returns on every upstream
       # float; re-roll this rev per crm pin wave instead.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=f32f4c0beab95011e5f3b71f1e07826cb336da99";
+      # 2026-11-11 ROLL-FORWARD to f2d1726 (latest origin/master at roll
+      # time; upstream had moved past f32f4c0 with the wave-1 close-out):
+      # lock-free package probe green at this rev. Note: a live session was
+      # mid-work in the crm checkout (uncommitted templ/CSS churn) — the
+      # NEXT roll must re-probe the newer tip.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=f2d17263610b783e5fcd6ee2720166a11262ad5f";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)

@@ -268,8 +268,8 @@ suffix match on `":<port>"`, so `:5355` never satisfies `:53`.
 fixture listener maps (a `:80`-only map and a `:5355`-only map must both
 FAIL; `:53` both transports passes silently; UDP-only and a broken probe
 must pass with a warning) — the gate can no longer regress to a proxy port
-without a red check. 300s bounded (inside
-`TimeoutStartSec=330s`; an eval assertion pins budget < envelope), fail-OPEN
+without a red check. 600s bounded (inside
+`TimeoutStartSec=660s`; an eval assertion pins budget < envelope), fail-OPEN
 if the probe tooling cannot run in the sandbox — a monitoring blind spot must
 never kill the sole resolver. The budget is JOURNAL-MEASURED, not a guess:
 the healthy start→listeners tail spans 61.5s to **255.5s** (2026-10-18
@@ -283,6 +283,22 @@ toast + `notify-failure-p0@` Discord page + the SigNoz `DNS Blocker Down`
 rule (unit-state based) fires — wedge paging stays on the gatus/SigNoz legs
 (~1-2 min), so the longer gate budget costs no paging latency. The
 discriminator stays as the tripwire for recurrence-despite-gate.
+
+**The 300s budget itself became the outage (2026-11-11 00:45-01:12+).** The
+23:34 deploy switched at 00:45:40 and started `fstrim.service` as a NEW unit
+(first full-pool trim); fstrim + the deploy's converge wave pinned disk PSI
+at ~50% for 40+ min. dnsblockd's `server_init` — which READS the 9.7G
+journal.db + 3.3G tracking.db on the hot tier — ran at ~1.6MB/s effective
+and FOUR consecutive starts (restart counter 1-4) died at the 300s gate with
+init still incomplete: a start needing >300s under load can NEVER complete
+while `Restart=always` + the gate recycle it (clean restarts at 00:45,
+00:51, 00:56, 01:01, 01:07; the 19:01:54 start the same day needed 220.2s
+in `server_init` under MODERATE load — only 80s of budget headroom even
+then). Budget re-sized 300→600s (envelope 330→660s, same 30s margin) so a
+storm-slowed init can finish; the cost of a TRUE wedge grows 5→10min per
+cycle. Residual watch: init cost scales with journal.db size — if it keeps
+growing, quiet-IO starts approach 600s next and the LAZY-init/upstream
+question opens.
 
 **Monitoring coverage (what catches this):** gatus probes the resolver three
 ways — "DNS Resolver" (DNS query via `127.0.0.1`), "DNS Resolver TCP"
@@ -335,7 +351,7 @@ the firewall path; the errors are noise, not breakage (fired all day
 
 ## Size profile (2026-10-27 storage audit S17; corrected 2026-10-28)
 
-`/var/lib/dnsblockd` (Samsung `hot/dnsblockd` subvol, btrfs `compress=zstd:3` — CORRECT tier): journal.db 4.6G (operator WAL, 30d retention, enabled 2026-10-07 — expect ~2× growth to steady state), tracking.db 2.55G + WALs, `trust-anchor.db` + `trust-anchor-tombstones.db` (0600 root, small), temp-allowlist* legacy stubs. Growth does not threaten the QLC root.
+`/var/lib/dnsblockd` (Samsung `hot/dnsblockd` subvol, btrfs `compress=zstd:3` — CORRECT tier): journal.db 9.7G (operator WAL, 30d retention, enabled 2026-10-07; the ~2× steady state the 2026-10-27 audit predicted ARRIVED by 2026-11-11 — and `server_init`'s read cost scales with it, see the gate section's 2026-11-11 storm case), tracking.db 3.3G + 74M WAL, `trust-anchor.db` + `trust-anchor-tombstones.db` (0600 root, small), temp-allowlist* legacy stubs. Growth does not threaten the QLC root.
 
 **Retention is NOT all 30d** — the wrapper renders no `retention_*` keys, so upstream defaults apply: request tracks **30d**, aggregated metrics **90d**, block-rate trend **365d**, journal **30d**. Same table, with the decision context, in `docs/services/dnsblockd-tracking-dial.md`.
 

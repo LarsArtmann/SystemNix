@@ -495,21 +495,28 @@ _: {
       );
 
       # dnsblockd-wait-listener poll budget (seconds) — the ExecStartPost
-      # readiness gate below. 300s is JOURNAL-MEASURED, not a guess: healthy
+      # readiness gate below. 600s is JOURNAL-MEASURED, not a guess: healthy
       # storm-profile starts routinely run the 3.9M-entry blocklist load far
       # past the original 60s guess — observed healthy tail (start→listeners
       # wall time): 255.5s (2026-10-18 01:42:40 boot, server_init 246.4s),
-      # 115.5s (2026-10-19 04:05:12 boot, server_init 109.8s), plus a 61-79s
-      # cluster on 10-18/10-19. Both the original 60s AND a 150s first re-size
-      # sat INSIDE the healthy distribution and would have killed the resolver
-      # mid-load → restart churn → StartLimitBurst → sole-resolver downtime
-      # caused by its own guard. 300s = observed worst +44.5s (~17%) headroom,
-      # strictly inside the start-job envelope (assertion pins it). The gate
-      # still converts a NEVER-completing init (the 2026-10-12 wedged class:
-      # server_init never logs) into restart churn + alerts; wedge PAGING is
-      # the gatus/SigNoz legs (~1-2 min), not this budget.
-      listenerWaitBudgetSec = 300;
-      timeoutStartBudgetSec = 330;
+      # 115.5s (2026-10-19 04:05:12 boot, server_init 109.8s), 220s
+      # (2026-11-10 19:01:54, server_init 220.2s), plus a 61-79s cluster on
+      # 10-18/10-19. The original 60s AND a 150s first re-size sat INSIDE the
+      # healthy distribution and would have killed the resolver mid-load →
+      # restart churn → StartLimitBurst → sole-resolver downtime caused by its
+      # own guard; the same trap bit at 300s on 2026-11-11 00:45-01:12: with
+      # fstrim (new unit, first full-pool trim) + deploy converge pinning disk
+      # PSI at ~50%, init read at ~1.6MB/s against a 9.7G journal.db + 3.3G
+      # tracking.db and FOUR consecutive starts died at the gate with
+      # server_init still incomplete — a start needing >300s under load can
+      # NEVER complete while Restart=always + the gate recycle it. 600s =
+      # 2.3× the observed healthy worst; the cost of a TRUE wedge (the
+      # 2026-10-12 never-completing class) grows 5→10min per cycle, acceptable
+      # against an unrecoverable-under-load outage, and wedge PAGING stays on
+      # the gatus/SigNoz legs (~1-2 min), not this budget. Strictly inside
+      # the start-job envelope (assertion pins it).
+      listenerWaitBudgetSec = 600;
+      timeoutStartBudgetSec = 660;
 
       # Pool-side copy target for the permanent allowlist (see the
       # dnsblockd-allowlist-backup unit below).

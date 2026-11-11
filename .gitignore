@@ -173,6 +173,7 @@ download_glm_model.py
 *.db
 *.db-shm
 *.db-wal
+*.db.pre-*
 
 ## Operating systems
 ._*
