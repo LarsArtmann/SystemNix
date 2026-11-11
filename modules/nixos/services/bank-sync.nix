@@ -155,10 +155,12 @@
             # float-proof-20261106-000533.log) — fresh first-hand got-hash,
             # mirrored at the HM surface. RE-STALENED 2026-11-10 float:
             # upstream 40c1feb still bakes iJg1bJqr; got 65/NbAtF…
-            # (float-proof-20261110-043731.log).
+            # (float-proof-20261110-043731.log). RE-STALENED
+            # 2026-11-11 float to 12ca5df2 (SCA-sentinel wave): got f080YRMG
+            # (pin-lift toplevel proof5, first-hand).
             package = lib.mkDefault (
               inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                vendorHash = "sha256-65/NbAtFKmETnHvnfuzziO1d92yQCadp+uw/+fpryAM=";
+                vendorHash = "sha256-f080YRMGXux2GFk0v6hLgNKlbFY0HgbYe4Arf13ZLFY=";
               }
             );
           };
