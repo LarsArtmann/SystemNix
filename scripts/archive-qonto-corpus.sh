@@ -521,6 +521,7 @@ upload_document() {
   local file=$1 title=$2 created=$3 doctype=$4 fieldid=$5 value=$6 extra=${7-}
   local out="$TMPDIR_RUN/upload-body" code task
   local args=(-sS -o "$out" -w '%{http_code}' -X POST
+    "$URL/api/documents/post_document/"
     -F "document=@$file"
     -F "title=$title"
     -F "created=$created"
@@ -583,7 +584,7 @@ patch_document() {
 ledger_statement() {
   # ledger_statement <balance> <window_start> <window_end> <checksum> <docid> <filename>
   local bal=$1 ws=$2 we=$3 sha=$4 docid=$5 fname=$6
-  sqlite3 "$DB" "PRAGMA busy_timeout=15000;
+  sqlite3 -batch "$DB" ".timeout 15000
     INSERT OR IGNORE INTO paperless_uploads
       (provider, balance_id, window_start, window_end, currency, checksum,
        document_id, duplicate, filename, uploaded_at)
@@ -598,7 +599,7 @@ ledger_receipt() {
   local txid=$1 sha=$2 docid=$3 fname=$4 txdate=$5
   local txdate_sql=null
   [[ -n $txdate && $txdate != - ]] && txdate_sql=$(sql_quote "$txdate")
-  sqlite3 "$DB" "PRAGMA busy_timeout=15000;
+  sqlite3 -batch "$DB" ".timeout 15000
     INSERT OR IGNORE INTO paperless_receipt_uploads
       (provider, external_id, kind, checksum, document_id, duplicate,
        filename, tx_date, uploaded_at)
@@ -636,6 +637,14 @@ while IFS=$'\t' read -r kind org path sha created title fieldname fieldvalue doc
   fieldid=$FIELD_RECEIPT
   [[ $kind == statement ]] && fieldid=$FIELD_STATEMENT
 
+  # The plan carries the human document-type name; the API needs the id.
+  case "$doctype" in
+    "Bank Statement") dtype_id=$DOCTYPE_STATEMENT ;;
+    "Bank Receipt") dtype_id=$DOCTYPE_RECEIPT ;;
+    Invoice) dtype_id=$DOCTYPE_INVOICE ;;
+    *) die "unknown document type in plan: $doctype" ;;
+  esac
+
   extra_tag=""
   [[ $extra == bank-sync-unmatched ]] && extra_tag=$TAG_UNMATCHED
 
@@ -643,7 +652,7 @@ while IFS=$'\t' read -r kind org path sha created title fieldname fieldvalue doc
   if [[ -n $docid ]]; then
     COUNT_PRESENT=$((COUNT_PRESENT + 1))
   else
-    docid=$(upload_document "$path" "$title" "$created" "$doctype" "$fieldid" "$fieldvalue" "$extra_tag") || {
+    docid=$(upload_document "$path" "$title" "$created" "$dtype_id" "$fieldid" "$fieldvalue" "$extra_tag") || {
       COUNT_FAILURES=$((COUNT_FAILURES + 1))
       continue
     }
@@ -652,7 +661,7 @@ while IFS=$'\t' read -r kind org path sha created title fieldname fieldvalue doc
   fi
 
   patch_rc=0
-  patch_document "$docid" "$title" "$created" "$doctype" "$fieldid" "$fieldvalue" "$extra_tag" || patch_rc=$?
+  patch_document "$docid" "$title" "$created" "$dtype_id" "$fieldid" "$fieldvalue" "$extra_tag" || patch_rc=$?
   case "$patch_rc" in
     0) COUNT_PATCHED=$((COUNT_PATCHED + 1)) ;;
     2) COUNT_CANONICAL=$((COUNT_CANONICAL + 1)) ;;
