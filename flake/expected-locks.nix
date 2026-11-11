@@ -32,7 +32,7 @@
   browser-history = "27134e8d5a01f5b3b34642c4bea561205e4aa21b";
   buildflow = "858e1c96ba1a418e58663836663619e680314376";
   cmdguard = "0ef84ddd682a3b4c504052aa88e3abce2e7efca3";
-  crm = "f32f4c0beab95011e5f3b71f1e07826cb336da99";
+  crm = "f2d17263610b783e5fcd6ee2720166a11262ad5f";
   crush-config = "2f25a6f5c332899b5b4e3f5096b22f20af8dbf1d";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
   cv = "bce44b6bdf7226a41d5967a812eed745d9540e6d";
@@ -66,7 +66,7 @@
   go-structure-linter = "784064d065ecc48681234c9bb7150ce7b010dfd7";
   go-taskqueue = "f19a4f0a36c6845be8e0e2362a9f4b5277613065";
   gogenfilter = "c088b323e8bdb082caf9f313431eca67b1aa476b";
-  golangci-lint-auto-configure = "28340f6352b629bdf2225c88f1c7f64308279f67";
+  golangci-lint-auto-configure = "41e6ed110fe82d6422f196937b25aadbbafe6e9a";
   helium = "ef91010a4fcc551b5cb24f52608dc8d45c527d9d";
   herdr = "ee5bfb5041bb3e4a49d591c72308aae3c81ecdde";
   hermes-agent = "b27d1995492be96651c3ae5b644959ab7130b513";
@@ -76,8 +76,8 @@
   inboxclean = "5021c9270bf1739c10bf631a5c0ffa1e0cfee9cb";
   index = "61471a87f57d1ebf0ccbcbb3c28f183f0b313a5f";
   invoices = "f72f78e0332b655ded4c37c87f274d9f50513c85";
-  journal = "4a63e7fd3ddd3aefcc92bfbcc959ce5918a63303";
-  library-policy = "7fc09832355ee5f43dc7784b4a5510d57ccb0abd";
+  journal = "0663476deae2baad0f0f022caf15c1a612088db5";
+  library-policy = "088aaf28d9cc1d260c752713390f5aff974c4b9a";
   md-go-validator = "c7fc05afe1cf6d67cf7b4ab6cb49f4720b3e0a1e";
   media-atlas = "3b8c7f9eb7693e597319213781b93bdd9321984f";
   monitor365 = "164e159a4b6c02a933ca911094e6c5e58dfdd86a";
