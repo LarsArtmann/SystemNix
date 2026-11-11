@@ -45,7 +45,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **The automated seed run** — module rewritten + committed, but NOT yet activated: every deploy window this afternoon was won by foreign sessions (nh locks, half-staged trees breaking etc.drv). Works: everything up to the pipeline (chain proven manually). Remains: deploy gen with `6fcc00df0`, start `audible-sync.service`, watch 86 AAX downloads (~11GB) + remux. Blocker: foreign deploy-storm (a quiescence-gated loop is running). Effort: S once a window opens.
+1. **The automated seed run — ✅ CLOSED at 18:12 (annotation 2026-11-11 18:1x):** gen-1003 landed 17:32 (a foreign deploy carried HEAD, anchored), the seed ran with the AAX pipeline — **65 M4B in books/ (28GB), 64 newly decrypted + the Propaganda test book, 0 decrypt failures, raw AAX cleaned up, `last_success` touched with real books behind it**. ~21 of 86 library items were not downloadable (Plus-borrowal/podcast class — §g2). Library: `ls /mnt/pool/services/audible/books/` (Atomic Habits, Dopamine Nation, Beyond Order, …). Playback: `mpv "/mnt/pool/services/audible/books/<file>.m4b"`.
 2. **Library coverage** — owned titles proven downloadable; Plus-borrowal titles inside the 86 untested under AAX. Remains: one seed run to see the real per-title results.
 3. **tq-agent-pool / forgejo-github-sync / forgejo-runner** (flagged in the 09:13 report) — untouched; bank-sync now also shows a NEW failed unit (`bank-sync-qonto-corpus.service`, foreign wave).
 4. **This arc's queue harvest** — the sops-age recipe landed in the runbook; moving it into the project's sops skill + the doc-counts stamping-discipline row remain open.
