@@ -290,10 +290,18 @@ find_tx() {
 
 find_invoice_tx() {
   # find_invoice_tx <profile> <YYYY-MM> <amount-cents>
+  # Qonto issues the invoice at month end but charges in the following
+  # days; try the invoice month, then the next month.
   local pid=$1 month=$2 amount=$3
-  local cands=${TX_MONTH["$pid|$month|$amount"]-}
-  [[ -n $cands ]] || return 1
-  pick_candidate "$cands" ""
+  local m cands next
+  next=$(date -d "$month-01 +1 month" +%Y-%m)
+  for m in "$month" "$next"; do
+    cands=${TX_MONTH["$pid|$m|$amount"]-}
+    [[ -n $cands ]] || continue
+    pick_candidate "$cands" ""
+    return 0
+  done
+  return 1
 }
 
 # ── plan ─────────────────────────────────────────────────────────────────
@@ -388,11 +396,15 @@ enumerate_attachments() {
       # inside the PDF identifies the fee transaction.
       local month="${BASH_REMATCH[1]}-${BASH_REMATCH[2]}"
       hash=${BASH_REMATCH[3]}
-      amt=$(pdftotext -layout "$f" - 2>/dev/null |
-        grep -A1 'Bezahlter Betrag' | tail -n1 |
-        grep -oE '€ ?[0-9.]+,[0-9]{2}' | tail -n1 |
-        sed -E 's/€ ?//; s/\.//g; s/,//' || true)
-      if [[ -n $amt ]]; then
+      # Two invoice layouts exist: old ones put the paid total on the
+      # line after "Bezahlter Betrag", new ones on the same line
+      # ("Bezahlter Betrag (MwSt.) 24,00 €"). Match the block, take the
+      # last German-formatted amount.
+      block=$(pdftotext -layout "$f" - 2>/dev/null |
+        grep -A1 -E 'Bezahlter Betrag|Gesamtbetrag' | tr '\n' ' ' || true)
+      amt_str=$(printf '%s' "$block" | grep -oE '[0-9.]+,[0-9]{2}' | tail -n1 || true)
+      if [[ -n $amt_str ]]; then
+        amt=$(printf '%s' "$amt_str" | sed -E 's/\.//g; s/,//')
         amt=$((10#$amt))
         tx=$(find_invoice_tx "$profile" "$month" "$amt") || tx=""
       else
@@ -561,7 +573,7 @@ patch_document() {
     | (($cf | map(select(.field != $fid))) + [{"field": $fid, "value": $val}])
     | sort_by(.field)' <<<"$current")
   if [[ $(jq -c '.tags // [] | sort' <<<"$current") == "$(jq -c 'sort' <<<"$tags_json")" ]] &&
-    [[ $(jq -c '(.custom_fields // []) | sort_by(.field)' <<<"$current") == "$cf_json" ]] &&
+    [[ $(jq -S -c '(.custom_fields // []) | sort_by(.field)' <<<"$current") == "$(jq -S -c '.' <<<"$cf_json")" ]] &&
     [[ $(jq -r '.title' <<<"$current") == "$title" ]] &&
     [[ $(jq -r '.created' <<<"$current") == "$created" ]] &&
     [[ $(jq -r '.correspondent // 0' <<<"$current") == "$CORR" ]] &&
