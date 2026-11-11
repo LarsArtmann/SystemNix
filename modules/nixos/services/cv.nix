@@ -187,8 +187,12 @@
       # ivrMAI3D, got ZfCh3W9k (float-proof-20261111-042752.log). Source
       # churn re-hashes the FOD through the prepared source; update rides
       # the same treadmill until upstream graph parity.
+      # SEVENTEENTH-RE-STALE 2026-11-11 residue float (misroute wave
+      # def2cd74e→7c81dc944: application.misrouted + cv misroute + cv
+      # claims verb): spec ZfCh3W9k, got kJ19EtgX (first-hand keep-going,
+      # float-proof-20261111-115852.log). Same source-churn treadmill.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-ZfCh3W9kLzLljIIlTP/GlR4eijk1dQEUMkRp23hdP90=";
+        vendorHash = "sha256-kJ19EtgXzcnLylAAxPzvXt973DOJrxoMslgOGzJiRw0=";
       };
     in
     {
