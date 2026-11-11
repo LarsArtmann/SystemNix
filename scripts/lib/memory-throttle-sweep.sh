@@ -15,6 +15,14 @@
 # pressure-report.sh):
 #   systemnix_memory_throttle_sweep [slice_dir] [warn_threshold]
 #
+# With NO slice_dir argument the sweep covers BOTH nets: system.slice AND
+# the HM user-unit chain (user.slice/user-<uid>.slice/user@<uid>.service/
+# app.slice + session.slice — the 2026-10-10 gap: §17 read system.slice
+# only, so an HM unit throttle was invisible; llama-chat was a system
+# unit, the HM class was uncovered). cgroupfs user-unit dirs are
+# world-readable, no root needed. Explicit-arg calls scan ONLY that dir
+# (fixture-test contract unchanged).
+#
 # Semantics (advisory WARN, decided 2026-10-09 — revisit on
 # docs/todo/monitoring.md): counters RESET on unit restart, so a unit this
 # deploy just restarted reads 0 by construction, and a pre-existing throttle
@@ -26,30 +34,40 @@
 # 46k, a startup blip is tens) warns per-unit; sub-threshold counts land on
 # one compact advisory line; zero throttle anywhere is a PASS.
 systemnix_memory_throttle_sweep() {
-  local slice_dir="${1:-/sys/fs/cgroup/system.slice}"
+  local slice_dir="${1:-}"
   local warn_threshold="${2:-${SYSTEMNIX_THROTTLE_WARN_THRESHOLD:-1000}}"
-  if [ ! -d "$slice_dir" ]; then
-    report_skip "Memory throttle sweep — $slice_dir not available"
-    return 0
+  local uid dirs dir warned=0 scanned=0 throttled_small=""
+  if [ -n "$slice_dir" ]; then
+    dirs="$slice_dir"
+  else
+    uid="$(id -u 2>/dev/null || echo 1000)"
+    dirs="/sys/fs/cgroup/system.slice /sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service/app.slice /sys/fs/cgroup/user.slice/user-${uid}.slice/user@${uid}.service/session.slice"
   fi
-  local events_file unit count warned=0 throttled_small=""
-  for events_file in "$slice_dir"/*.service/memory.events; do
-    [ -e "$events_file" ] || continue
-    unit="$(basename "$(dirname "$events_file")")"
-    count="$(awk '/^high / { print $2 }' "$events_file" 2>/dev/null)"
-    count="${count:-0}"
-    [ "$count" -gt 0 ] 2>/dev/null || continue
-    if [ "$count" -ge "$warn_threshold" ]; then
-      report_warn "Memory throttle — $unit hit its MemoryHigh watermark $count times since start (kernel reclaim-thrash; probe: cat $events_file — counters reset on restart; llama-chat 2026-10-08 was 46k)"
-      warned=$((warned + 1))
-    else
-      throttled_small="$throttled_small $unit=$count"
+  for dir in $dirs; do
+    if [ ! -d "$dir" ]; then
+      report_skip "Memory throttle sweep — $dir not available"
+      continue
     fi
+    scanned=1
+    local events_file unit count
+    for events_file in "$dir"/*.service/memory.events; do
+      [ -e "$events_file" ] || continue
+      unit="$(basename "$(dirname "$events_file")")"
+      count="$(awk '/^high / { print $2 }' "$events_file" 2>/dev/null)"
+      count="${count:-0}"
+      [ "$count" -gt 0 ] 2>/dev/null || continue
+      if [ "$count" -ge "$warn_threshold" ]; then
+        report_warn "Memory throttle — $unit hit its MemoryHigh watermark $count times since start (kernel reclaim-thrash; probe: cat $events_file — counters reset on restart; llama-chat 2026-10-08 was 46k)"
+        warned=$((warned + 1))
+      else
+        throttled_small="$throttled_small $unit=$count"
+      fi
+    done
   done
   if [ -n "$throttled_small" ]; then
     report_warn "Memory throttle — sub-threshold (advisory, below $warn_threshold):$throttled_small"
   fi
-  if [ "$warned" -eq 0 ] && [ -z "$throttled_small" ]; then
+  if [ "$warned" -eq 0 ] && [ -z "$throttled_small" ] && [ "$scanned" -eq 1 ]; then
     report_pass "Memory throttle sweep — no service hit its MemoryHigh watermark since start"
   fi
 }
