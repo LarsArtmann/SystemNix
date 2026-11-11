@@ -182,14 +182,15 @@
     # dies "undefined: templ.ResolveAttributeValue".
     # Same class, one pin per app: each daemon "chore(deps)" commit bumped
     # the templ require line without regenerating that repo's templates.
-    # library-policy, journal and golangci-lint-auto-configure rows REMOVED
-    # 2026-11-11: all three upstream tips regenerated at templ v0.3.1100
-    # (lock-free package probes green; lift ritual complete).
-    discordsync = "REV-PINNED at ea6c444c (the rev before upstream 2f3b275 bumped templ 0.3.1070 -> 0.3.1100 and discordgo in one daemon commit, breaking both the generated-template API and the CacheGuild handler signature). LIFT: upstream regenerates its templates with the v0.3.1100 generator (or pins templ back to 0.3.1070) and the discordgo handlers compile; then drop the pin and re-lock.";
-    project-dependency-graph = "REV-PINNED at 8335670e (parent of 21259fa6 'chore(deps): update Go dependencies', same templ 0.3.1100 bump; its committed renderer/graph_templ.go calls templ.ResolveAttributeValue). LIFT: upstream regenerates at 0.3.1100 (or pins templ back) and the package compiles at tip.";
+    # ALL templ-class rows REMOVED 2026-11-11 (discordsync,
+    # library-policy, journal, project-dependency-graph,
+    # golangci-lint-auto-configure, overview, file-and-image-renamer's
+    # parse variant): every upstream tip was fixed AT SOURCE (regen at
+    # templ v0.3.1100, the disgo v0.20 CacheGuild migration, dedup/v4 +
+    # cmdguard/v5 deps-map wiring, generator-parity pins) and lock-free
+    # package probes are green at the pushed revs — lift ritual complete
+    # per input.
     crm = "REV-PINNED at f2d1726 (2026-11-11 roll-forward; prior f32f4c0 2026-11-08 wave — that pin's LIFT was SATISFIED by upstream's own templ-1100 pin wave: cqrs-htmx b55d95b3 + go-cqrs-lite f79e37fcf both in the committed flake.lock, source green rev-pinned). Deliberate policy pin (not ?ref=master): the 10-14 master-tracking window proved the consumer-side vendorHash treadmill returns on every upstream float; the tip probe (lock-free package build) is green at this rev. Re-roll on the next crm pin wave.";
-    file-and-image-renamer = "REV-PINNED at 973dd383 (parent of 0fc16c68 'chore(deps): update Go dependencies', which bumped a-h/parse to a pseudo-version that does not implement parse.Parser[T].Match, so templ v0.3.1100's jstokenizer no longer compiles). LIFT: upstream lands a compiling parse/templ pair and the package builds at tip.";
-    overview = "REV-PINNED at 67b2fac9 (parent of 84d8979b, which added go-cqrs-lite/dedup/v4 to go.mod without wiring it in the flake mkPreparedSource deps map, so the prepared source refuses 'modules without local replace'). LIFT: upstream wires dedup (or drops the requirement) and the prepared source builds at tip.";
   },
 }:
 let

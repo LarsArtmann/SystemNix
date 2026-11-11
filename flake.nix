@@ -831,15 +831,14 @@
     # following re-tools the FOD under SystemNix's nixpkgs and re-hashes it
     # on every root-nixpkgs bump (the 2026-10-05 a7868a7 wave class).
     project-dependency-graph = {
-      # TEMPORARY HARD PIN 2026-11-06 (templ-API-removal class; allowlist
-      # block in lib/flake-input-pin-audit.nix): 21259fa6 "chore(deps):
-      # update Go dependencies" bumped templ to v0.3.1100 while its
-      # renderer's committed graph_templ.go still calls
-      # templ.ResolveAttributeValue (deleted in 0.3.1100). 8335670e is the
-      # pre-bump rev (the rev the deployed generation shipped). LIFT:
-      # upstream regenerates its templates at 0.3.1100 (or pins templ
-      # back) and the package compiles at tip; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?rev=8335670e8e46e103cefce3e94f57fcc878720a3f";
+      # PIN LIFTED 2026-11-11 (templ-API-removal class + cmdguard/v5 wiring):
+      # the daemon dep bump moved go.mod to cmdguard/v5 while the flake deps
+      # map still served v4 (private module without replace) — fixed upstream
+      # 6b80811f; the templ-1100 regen + vendorHash rode the same wave.
+      # Lock-free probe green at 05e5b1ae. Floats on ?ref=refs/heads/master;
+      # bumps flow via `nix flake lock --update-input project-dependency-graph
+      # --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/project-dependency-graph?ref=refs/heads/master";
     };
 
     # project-meta — Per-project metadata management CLI
@@ -855,15 +854,14 @@
     # go.mod bumps, module.nix and vendorHash.nix — no .templ source.
     # overview now consumes its own templ-cli pin (v0.3.1070 tag).
     overview = {
-      # TEMPORARY HARD PIN 2026-11-06 (private-dep wiring gap; allowlist
-      # block in lib/flake-input-pin-audit.nix): 84d8979b "chore(deps):
-      # update Go dependencies" added the indirect requirement
-      # github.com/larsartmann/go-cqrs-lite/dedup/v4 v4.3.0 without adding
-      # it to the flake's mkPreparedSource deps map, so the prepared source
-      # dies "modules without local replace: .../dedup/v4". 67b2fac9 is the
-      # pre-bump rev. LIFT: upstream wires dedup (or drops the requirement)
-      # and the prepared source builds at tip; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/overview?rev=67b2fac96799f269348f51eca78903df6c14dcc8";
+      # PIN LIFTED 2026-11-11 (private-dep wiring gap + generator parity):
+      # the dedup/v4 indirect require is wired in publicDeps (635f832d), the
+      # Nix-side templ-cli generator bumped to the go.mod's v0.3.1100 (the
+      # nixpkgs generator emitted calls to the deleted ResolveAttributeValue
+      # APIs), stale app.css rebuilt, vendorHash re-probed — lock-free probe
+      # green at f90c9a73. Floats on ?ref=refs/heads/master; bumps flow via
+      # `nix flake lock --update-input overview --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=refs/heads/master";
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -882,25 +880,18 @@
     # fails AFTER its FOD ("updates to go.mod needed" — go-cqrs-lite cmd
     # module drift); SystemNix consumes only packages.default, green.
     discordsync = {
-      # INTERIM-ROLLBACK (2026-09-23): the wave re-locked discordsync to
-      # 605efc28, whose prepared source fails mkPreparedSource's private-dep
-      # validation (go-sqlitestore in go.mod without a flake deps wiring) —
-      # unfixable SystemNix-side. The lock node was rolled back to b3077aa2,
-      # the gen-797-proven rev currently deployed (upstream nixpkgs NOT
-      # followed, so the FOD is a cache hit). Do NOT update-input until
-      # upstream wires go-sqlitestore and the FOD + package probe green.
-      # HARD PIN 2026-11-06 (templ API removal): upstream 2f3b275 "chore(deps):
-      # update Go dependencies" bumped a-h/templ 0.3.1070 -> 0.3.1100 and
-      # discordgo in one commit. templ 0.3.1100 REMOVED
-      # templ.ResolveAttributeValue / templ.JoinURLErrs, which every *_templ.go
-      # generated before the v0.3.1100 generator wave still calls, and the
-      # newer discordgo no longer accepts CacheGuild where the handler code
-      # passes event.Guild. 2f3b275 IS current master with no fix behind it:
-      # the parent ea6c444c is the last internally consistent rev (the rev
-      # every deploy before today shipped). LIFT: upstream regenerates its
-      # templates with the v0.3.1100 generator (or pins templ back) AND the
-      # discordgo handlers compile; then drop this pin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?rev=ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
+      # PIN LIFTED 2026-11-11 (templ-API-removal class, fixed UPSTREAM at tip):
+      # the disgo v0.20 CacheGuild seeding migration (2a3613e9), the
+      # templ-cli build generator pinned at go.mod's v0.3.1100 (nixpkgs'
+      # stale generator emitted calls to the deleted APIs), catalog bumped
+      # to the regenerated v4.14.0, templ-components deps map at the
+      # v1.27.0 tag rev, go-cqrs-lite tree at a master rev covering the
+      # post-restructure /v4 dirs — remote probe green at 79e622ab. Floats
+      # on ?ref=refs/heads/master; bumps flow via
+      # `nix flake lock --update-input discordsync --refresh` — the
+      # --refresh is LOAD-BEARING after ref-ahead pushes (daemon fetch
+      # cache; see 2026-09-17).
+      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=refs/heads/master";
     };
 
     # media-atlas — the MediaAtlas federation hub (`atlas` binary, repo

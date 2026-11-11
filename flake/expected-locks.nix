@@ -35,10 +35,10 @@
   crm = "f2d17263610b783e5fcd6ee2720166a11262ad5f";
   crush-config = "2f25a6f5c332899b5b4e3f5096b22f20af8dbf1d";
   crush-daily = "e8db4d3154d9469df76cb1974ee735a6df76a928";
-  cv = "bce44b6bdf7226a41d5967a812eed745d9540e6d";
+  cv = "5fce3e29655c450f70943bc1f75b19ac76326ea7";
   cvagent = "e6a9ff36793a4ac3a2ba7e0c59cefa38fbf9c9c8";
   dankMaterialShell = "e46ccbc1d58930d6a189cd1c90b276db2d64bf42";
-  discordsync = "ea6c444c06284584d34fbbeb1ffa7d12f80a897f";
+  discordsync = "79e622ab5c3bfc55fdf6f094de8dd6824d413e95";
   disko = "cedd626e11b635470fa6f9fdb8ad79b0075dd7f9";
   dms-paste = "e8928d213c2dd1f992963fca3d49b69385511cb2";
   dnsblockd = "696c73e80f381740165c5155966f2cdcf8763fb8";
@@ -73,7 +73,7 @@
   home-manager = "82ce401aa350502897c3f2e85f384d61cd3b0b6d";
   homebrew-bundle = "a3265c84b232e13048ecbf6fc18a2eedfadbeb08";
   homebrew-cask = "88b5485cb721837a6a3e615c9932f98ad6e3c832";
-  inboxclean = "5021c9270bf1739c10bf631a5c0ffa1e0cfee9cb";
+  inboxclean = "e9d55c92f214a4135923e70ed15e17944a936888";
   index = "61471a87f57d1ebf0ccbcbb3c28f183f0b313a5f";
   invoices = "f72f78e0332b655ded4c37c87f274d9f50513c85";
   journal = "0663476deae2baad0f0f022caf15c1a612088db5";
@@ -96,11 +96,11 @@
   nur = "98e12bbd3c8892731f5844a225e89320801dbea1";
   offline-banner = "d2599e8459ee265ea30442b21ce494f9ffba913f";
   otel-tui = "d43d3f9edbe2c4c61380a10030df4ad02ffc3206";
-  overview = "67b2fac96799f269348f51eca78903df6c14dcc8";
+  overview = "f90c9a7373e0b2b7049d4f068495d8020c749873";
   papdashboard = "287f6951cf7c3995ca9cf92b12d4919fe095fbbb";
   paperless-gpt-src = "49c425596b846ae98d630f4087e8223c188032db";
   pim-sync = "6dd733a27a35d9e61b63e5c290a964a0e6af9a17";
-  project-dependency-graph = "8335670e8e46e103cefce3e94f57fcc878720a3f";
+  project-dependency-graph = "05e5b1aebc187303ae8e83c1343c3029c46d47d6";
   project-discovery-daemon = "ffbbc79f558f1f52a46b51aa1a8008601245ddf6";
   project-meta = "50770ad5a1f407fa11e61e6a3d7ee38ac0b64ea9";
   projects-management-automation = "da285ff97297f73862d486f2846cc2e5c9149838";
