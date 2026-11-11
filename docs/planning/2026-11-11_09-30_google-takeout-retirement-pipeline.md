@@ -1,6 +1,6 @@
 # Google Account Retirement — Takeout 880 GB Pipeline
 
-**EXECUTING marker: see `scripts/plan-marker.sh` line below (Phase 0 in flight since 2026-11-11).**
+**EXECUTING (instance takeout-retirement session (Phase 0), HEAD 59967d2ec, 2026-11-11 11:54 CET, HEAD `59967d2ec`):** executing (see AGENTS.md plan-execution tombstone)
 
 ## Trigger and deadline
 
