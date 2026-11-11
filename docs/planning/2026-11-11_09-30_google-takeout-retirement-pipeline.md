@@ -122,6 +122,19 @@ bash scripts/takeout-download.sh /mnt/pool/archive/google-takeout/racedriver8k-2
   → probe part 12 → `start`, all under the unit; refusals exit loud to `logs/watcher.log` and re-arm
   manually. Do NOT hand-run a second `start`/watcher while the unit lives (`pgrep -f takeout-watch.sh`).
   Self-tested: positive DRY leg + two refusal legs (22 attrs; size-mutated) all behave.
+- **17:37–17:55 round 3 — every agent-side client is BLOCKED by Google; PIVOT D3d = owner's real
+  browser downloads.** The owner's DOM save ("Google Takeout.html") carries all 23 parts as href-form
+  `takeout/download?…&rapt=…` links (i=0..23, one shared FRESH rapt, user id matches) — extracted into
+  `urls.txt` i-ordered (an earlier numeric-sort bug shipped i=10 at line 12; fixed with tab-key
+  `sort -k1,1n`). Despite the fresh rapt: curl RED; curl + SAPISIDHASH Authorization + Origin/Referer +
+  Chrome UA RED; headless chromium with cookies VERIFIED applied (21 visible for takeout.google.com) +
+  real-Chrome UA, direct-to-URL navigation: RED (accounts.google.com) — the download is bound to the
+  real browser environment beyond cookies/headers. **Owner flow (D3d):** open
+  `<staging>/download-all.html` in the logged-in browser, point the browser's download dir at
+  `<staging>/zips`, click the 23 links top-to-bottom TODAY (rapt window). `scripts/takeout-browser-rename.sh`
+  (committed; dry-run default, `--apply`, exact-size verified; fixture-tested ×3 legs) folds Google-named
+  files into `part-NN.zip`; the `takeout-g1-rename` systemd --user loop applies it every 5 min, exits at
+  23/23 → G1 green → `takeout-verify.sh` (G2). `takeout-g1-watch` STOPPED 17:44 (superseded).
 
 Gate G1: 23/23 parts present, every size within band, SHA256SUMS complete. Re-run resumes; do NOT
 re-fetch completed parts. If a link exhausts its download count: request a NEW export (same selection)
