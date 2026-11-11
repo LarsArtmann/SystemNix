@@ -292,9 +292,37 @@ key after rotation) fail the unit → onFailure alert.
    claimed, INCLUDING the storm's historical sends (protected
    retroactively after the first post-deploy restart folds them).
    Ambiguous outcomes (context timeout mid-transaction) park the row in
-   `send_claimed` for operator resolution — grep
-   `journalctl -u cv-server` for `AMBIGUOUS` / `SendClaimed` triage;
-   resolution tooling is queued (docs/todo/services.md).
+   `send_claimed` for operator resolution — resolved through the CV
+   repo's `cv claims` verb (recipe below, landed 2026-11-11).
+
+## AMBIGUOUS send-claim triage recipe (the `cv claims` verb, 2026-11-11)
+
+An `AMBIGUOUS` journal line means a transport call died with the context
+cancelled mid-transaction — the relay may STILL have delivered. The row
+parks in `send_claimed` forever by design; the resolution is a human
+decision, made through the CV repo's `cv claims` verb (store-direct, so
+it exits 16 while the live server owns the store — stop the server
+first or run after it exits):
+
+```bash
+# 1. See the parked rows (app, company/role, recipient, claim age)
+cv claims
+
+# 2. Pull the transport evidence around the claim time
+journalctl -u cv-server --since '<claimed-at from the list>'
+
+# 3a. Verified NOT delivered (relay refused / journal shows rejection)?
+#     Back to approved; the next auto-apply sweep re-drives the send.
+cv claims --release app-939 --reason "relay journal: 550 before DATA"
+
+# 3b. Verified delivered (recruiter reply / mailbox copy)?
+#     Records the send + consumes the approval; the pair stays occupied.
+cv claims --confirm-sent app-939
+```
+
+Never resolve on a guess — release on an actually-delivered mail
+re-mails the recruiter (the one unrecoverable funnel failure);
+confirm-sent on an undelivered mail burns the pair forever.
 
 ## Weekly gun.io check (user timer, no root)
 
