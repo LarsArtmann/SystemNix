@@ -368,20 +368,23 @@ let
     # taskwarrior3 leg 2026-11-12 (fixwave2/3 proofs): the actual consumers
     # (programs.taskwarrior package override + the backup runtimeInputs)
     # take taskwarrior3, whose 3.5.0 build dies at the taskchampion cxx
-    # bridge under f4a03c00 — first `-lsqlite3`, then undefined
-    # `sqlite3_*` symbols at the CMake final link (corrosion's static
-    # archive loses the Rust-side linkage; fixwave3b). The CMake linker
-    # flag closes it for the raw surface; the programs.taskwarrior
-    # consumer was also fixed to MERGE cmakeFlags so this survives.
+    # bridge under f4a03c00 (undefined `sqlite3_*` at the CMake final link —
+    # corrosion's static archive loses the Rust-side -lsqlite3). This is the
+    # exact nixpkgs 5884fa73 backport ("taskwarrior3: fix build with system
+    # SQLite", 2026-11-10, three days AFTER our pin): upstream patch
+    # GothenburgBitFactory/taskwarrior#4223 propagates system SQLite through
+    # the CMake/Rust bridge when LIBSQLITE3_SYS_USE_PKG_CONFIG is set. Drop
+    # when the root pin lifts past 5884fa73 (bare probe).
     taskwarrior3 = prev.taskwarrior3.overrideAttrs (old: {
+      patches = (old.patches or [ ]) ++ [
+        (_final.fetchpatch {
+          url = "https://github.com/GothenburgBitFactory/taskwarrior/commit/bd86de7a6e99b1bc8d1a8f5704a08571afd2cdef.patch";
+          hash = "sha256-6IAQlY5bExL9oCswIfs9D3MrcZKtQcSoNrEnAL46VXA=";
+        })
+      ];
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
-      buildInputs = (old.buildInputs or [ ]) ++ [
-        _final.sqlite
-        _final.zstd
-      ];
-      cmakeFlags = (old.cmakeFlags or [ ]) ++ [
-        "-DCMAKE_EXE_LINKER_FLAGS=-L${_final.sqlite}/lib -lsqlite3"
-      ];
+      buildInputs = (old.buildInputs or [ ]) ++ [ _final.sqlite ];
+      LIBSQLITE3_SYS_USE_PKG_CONFIG = "1";
     });
     trunk = prev.trunk.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
