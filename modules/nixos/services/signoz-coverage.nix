@@ -10,7 +10,11 @@
 #   - dnsblockd: otlp_endpoint YAML key was never set (traces silently off)
 #     + the exporter forced TLS. RESOLVED: key live since 2026-08-31,
 #     scheme-aware fix shipped upstream (dnsblockd 70ca2ea, pushed), spans
-#     verified flowing 2026-09-13 (flipped to wiring "config")
+#     verified flowing 2026-09-13 (flipped to wiring "config"). dnsblockd
+#     ALSO ships native OTLP logs (SDK-set trace_id/span_id fields,
+#     21.7k trace'd lines/24h live 2026-11-12; log→trace pivot to
+#     signoz_traces.signoz_index_v3 verified) — the fleet's only
+#     working drilldown; the rest of the fleet is 0%.
 #   - bank-sync: cqrsotel.Setup wired for stdout/noop only. RESOLVED
 #     2026-08-31: OTLP/HTTP export added upstream (901978e), flipped to
 #     "env", spans reporting
