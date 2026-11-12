@@ -260,9 +260,13 @@ lib.filterAttrs (_: v: v != null) {
   # the got hash; re-add ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-11-05 float wave: at go-auto-upgrade@e7f0307 spec
   # pUk8kT+7, got qfknf/Oa (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-12 cache-eviction re-enumeration: at go-auto-upgrade
+  # @dd5816c8 spec z0Na65DP, got gPZpkw4v (cqrs-shim-toplevel-proof.log;
+  # cache-hit-green FODs re-exposed stale after store eviction). Drop when
+  # upstream bakes the got hash.
   go-auto-upgrade =
     flakePkgShim inputs.go-auto-upgrade "default"
-      "sha256-z0Na65DPX2BMxOTSxqwRbA0moL/YiZ6w6oNhvWOq16E=";
+      "sha256-gPZpkw4vcIYKmRKsCirDOag9sBIsrvrRtZ6tSyiV+bk=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11): the lock moved
   # 4cee06df → 7f9b7b19, whose flake bakes the shim's OWN JrBhDyCx… value
   # (git show 7f9b7b19:flake.nix) — the override was bit-neutral at the
@@ -450,9 +454,12 @@ lib.filterAttrs (_: v: v != null) {
   # got EQqX6jma (pin-lift toplevel keep-going proof — note this EQUALS the
   # hash upstream's own vendorHash.nix now bakes; the shim survives because
   # pdg's go-nix-helpers/nixpkgs edges re-derive the FOD under our graph).
+  # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 0faa5414 spec
+  # EQqX6jma, got h6T875PJ (cqrs-shim-toplevel-proof.log). Same follower
+  # re-derivation class. Drop when upstream bakes the got hash.
   project-dependency-graph =
     flakePkgShim inputs.project-dependency-graph "default"
-      "sha256-EQqX6jmabKmZzEP3mf07oTjk1GQI4TCgt9RhkjkJz14=";
+      "sha256-h6T875PJxvvhn5K1EpU6LNd5dA6ohCW+Ztwkmm4zkh8=";
   # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   # RE-STALE 2026-10-26 lock float: spec yB73mr06, got TENDT6NZ (first-hand
@@ -461,9 +468,12 @@ lib.filterAttrs (_: v: v != null) {
   # keep-going, ~/.cache/lockfloat/float-proof-20261027-172949.log).
   # RE-STALE 2026-11-05 float wave: at mr-sync@ffae30f spec p4C0Ob7i,
   # got z7ABeNjz (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 6df95cc9 spec
+  # 1M7bvzM3, got kwqwPdAi (cqrs-shim-toplevel-proof.log). The module
+  # surface (modules/nixos/services/mr-sync.nix) carries the same value.
   mr-sync =
     flakePkgShim inputs.mr-sync "default"
-      "sha256-1M7bvzM3uazJKDxk2LguOBGDLRCrdAufayP8QzglhHE=";
+      "sha256-kwqwPdAiXcgtSOhmzsmowsu8ARmljdeYCXxBqPW0yjc=";
   # mr-sync shim DROPPED (2026-10-17 wave): upstream flake.nix:126 at tip
   # 71d6b0d4 bakes the shim's own KaDlWefE… value — bit-neutral override
   # (lock == tip; module surface dropped in the same pass). Re-add ONLY
@@ -579,9 +589,12 @@ lib.filterAttrs (_: v: v != null) {
   # 7BFFSpEx, got qs1NJm2K (first-hand keep-going,
   # ~/.cache/toplevel-build-20261110-h.log). Both surfaces updated.
   # Drop when upstream bakes qs1NJm2K.
+  # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 5723954f spec
+  # qs1NJm2K, got f8YgjTEG (cqrs-shim-toplevel-proof.log). Both surfaces
+  # updated. Drop when upstream bakes f8YgjTEG.
   projects-management-automation =
     flakePkgShim inputs.projects-management-automation "default"
-      "sha256-qs1NJm2K593qeX4U1icn7Hbu3hqdCeLh5EC5XB9FzEo=";
+      "sha256-f8YgjTEGB8sh6rrS5G6uNfuZ5lYA6HNqnYTq0+A4IsQ=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,
@@ -597,9 +610,12 @@ lib.filterAttrs (_: v: v != null) {
   # ONLY via nix-hash-fix evidence, never by hand.
   # RE-STALE 2026-11-05 float wave: at samber-linter@5795e92 spec
   # zrjjUEyK, got w2Ejmery (float-proof-20261106-000533.log).
+  # RE-STALE 2026-11-12 cache-eviction re-enumeration: at f0990463 spec
+  # ddUyLNLv, got GLiro+Z0 (cqrs-shim-toplevel-proof.log). Drop when
+  # upstream bakes the got hash.
   samber-linter =
     flakePkgShim inputs.samber-linter "default"
-      "sha256-ddUyLNLvRXiX0M0MqMTDJi4M5atciWfhj4ndtwtcZnY=";
+      "sha256-GLiro+Z0D35Cp0kda9J2mj4bIvV5bfgxFykrbUOg4vE=";
   # templ: the flake input (github:a-h/templ, floats on main per the owner
   # ALWAYS-LATEST directive) replaces nixpkgs' pkgs.templ, which still ships
   # 0.3.1020 at the rev-pinned nixpkgs — a generator whose output no longer

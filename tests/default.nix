@@ -113,7 +113,7 @@ in
   inboxclean-paperless = import ./test-inboxclean-paperless.nix { inherit pkgs inputs system; };
   bank-sync-paperless = import ./test-bank-sync-paperless.nix { inherit pkgs inputs system; };
   mail-relay = makeTest (import ./test-mail-relay.nix { inherit pkgs; });
-  wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit pkgs; });
+  wifi-failover = makeTest (import ./test-wifi-failover.nix { inherit pkgs inputs; });
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
