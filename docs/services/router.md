@@ -9,7 +9,7 @@
 |         |                                                                                                                                                                                                    |
 | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Model   | Compal **DMC7002KLG** (Vodafone Station v2 class), FW **2.9.13**, DOCSIS 3.0 8x4, BPI+                                                                                                             |
-| Address | `192.168.1.1/24` (static LAN; repo pins this — `local-network.nix`, `wifi-failover-watch.sh`)                                                                                                      |
+| Address | `192.168.1.1/24` (static LAN; repo pins this — `local-network.nix` feeds the collection wifi-failover module's `gateway` option)                                                                   |
 | Admin   | HTTP only (no TLS listener), realm `Horizon`, user `admin`. **Password rotated 2026-10-30** — value in `~/.config/router-credentials/gateway-admin.txt` (0600, off-repo; move to password manager) |
 | WAN     | DHCP from ISP, public `89.65.239.240/22`, lease 7d                                                                                                                                                 |
 | Radios  | 5 GHz SSID `UPC504705697` (7 clients) + 2.4 GHz `UPC244705697`, WPA2, DFS ch 52 on 5 GHz                                                                                                           |

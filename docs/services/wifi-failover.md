@@ -1,6 +1,6 @@
 # WiFi Failover (eno1 → wlan0 standby) — Agent Notes
 
-> Module: `modules/nixos/services/wifi-failover.nix`. Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
+> Owning module: [github:LarsArtmann/nixos-modules](https://github.com/LarsArtmann/nixos-modules) → `modules/wifi-failover/` (options, watch script, unit, hardening, dual-wan assertion; VM-tested in the collection's own `checks.wifi-failover-vm`). `modules/nixos/services/wifi-failover.nix` is the SystemNix delegation layer (gateway feed from `networking.local.gateway` + integration-registry entry only). Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
 
 ## WiFi Failover (eno1 → wlan0 standby, enabled 2026-09-06)
 
