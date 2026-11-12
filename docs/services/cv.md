@@ -77,7 +77,7 @@ decided by *who generates it* and *who must rotate it*:
 
 | Tier                         | Holds                                                                                                                                                                                | At rest                                                                                                                | Reader                                                                                | Rotation                                                                 |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **sops-nix**                 | machine secrets: `CV_API_KEY`, the funnel LLM keys, the Stalwart mailbox password, evaluation citizenships, and the credentials-store MASTER KEY                                       | age-encrypted in `platforms/nixos/secrets/cv*.yaml` → `/run/secrets/rendered/cv-env` (0400 `cv:cv`)                     | systemd injects the env var; the process never opens the file                         | owner edits sops + deploy (`restartUnits` rolls the service)             |
+| **sops-nix**                 | machine secrets: `CV_API_KEY`, the agent brain + chat LLM keys, the Stalwart mailbox password, evaluation citizenships, and the credentials-store MASTER KEY. Coaching/tailor keys are NOT here — they are runtime-minted ai-meter client keys (rotate = reboot or delete `/run/ai-meter-keys/cv-*` + restart `ai-meter-keys`) | age-encrypted in `platforms/nixos/secrets/cv*.yaml` → `/run/secrets/rendered/cv-env` (0400 `cv:cv`); minted proxy keys → `/run/ai-meter-keys/cv-{coaching,tailor}.env` (0400 `cv:cv`) | systemd injects the env vars; the process never opens the files                        | sops keys: owner edits sops + deploy; proxy keys: boot-time mint (`restartUnits` rolls the service on the sops half)       |
 | **sealed store** (`go-credentials-store`) | HUMAN logins: portal username+password (`kind=password`) and captured sessions (`kind=session_blob`)                                                                       | `credentials.db`, AES-GCM sealed, `data/credentials-store/` (0700 `cv:cv`) — useless without the sops master key         | only a process holding `CREDENTIALS_MASTER_KEY_V1` (cv-server, cv-relogin)             | admin UI write; relogin rewrites sessions; master key rotates via sops   |
 | **session files**            | the storageState JSON a successful login/capture writes                                                                                                                              | `data/accounts/<platform>/state.json` (0600, service user)                                                              | `cv profile accounts/apply/relogin`, the A.Team cookie chain (`CV_ATEAM_SESSION_COOKIE_FILE`) | rewritten by every successful (re)login; disposable                      |
 
@@ -348,15 +348,23 @@ that single polite GET). Registered 2026-09-08 as a systemd USER timer
 
 AI-integration state snapshot (2026-11-08 audit,
 `docs/status/2026-11-08_17-45_cv-ai-jev-integration-audit.md`; letter half
-updated 2026-11-11): agent brain + cv-site chat are the ONLY live LLM surfaces;
-the funnel's autonomous SEND path (tailor + cover letter) runs heuristic/template
-fallbacks because `CV_TAILOR_API_KEY`/coaching keys were never provisioned —
-the 2026-11-10 storm then sent every letter as the SILENT template fallback
-(the "Go, JSON, Peppol" Nivelo letter class; template now posting-anchored,
-fallback logged at startup, CV `84f225259`; enabling real LLM letters is the
-[blocked:user] coaching row in docs/todo/services.md); Jev/TypeSafe is NOT
-wired into the funnel at all (dormant decisionmodel module, mock provider,
-empty ledger).
+updated 2026-11-11; coaching+tailor wired 2026-11-12): agent brain + cv-site
+chat + the funnel coaching/tailor sections are live LLM surfaces. Coaching +
+tailor ride Synthetic (`syn:large:text`) THROUGH the ai-meter proxy
+(`/v1/synthetic` route, owner decision 2026-11-11 "wire synthetic.new via our
+ai-meter proxy"): keys are the runtime-minted ai-meter client keys
+(`CV_COACHING_API_KEY` / `CV_TAILOR_API_KEY` in
+`/run/ai-meter-keys/cv-{coaching,tailor}.env`, NOT sops — the mint files are
+OPTIONAL systemd EnvironmentFiles on cv-server so a dead ai-meter degrades to
+the 503 shape instead of blocking the boot), and every letter/tailoring call
+is token-metered per client (`cv-coaching` / `cv-tailor` in the ai-meter
+ledger + SigNoz). The coaching key ALSO flips the cover-letter writer to LLM
+drafting (`provideLetterWriter` gates on exactly this key — the 2026-11-10
+template-storm class is closed) plus LLM reply-classification refinement and
+the alert router's refiner. cv-site chat still rides its DIRECT synthetic sops
+key (2026-11-02 wiring, unmetered — migrating it through the proxy is the
+queued follow-up). Jev/TypeSafe is NOT wired into the funnel at all (dormant
+decisionmodel module, mock provider, empty ledger).
 
 Registration env (the user manager has NO devshell env — verified by live
 runs 2026-09-08): `WorkingDirectory=/home/lars/projects/CV`,
@@ -577,8 +585,10 @@ Collect these BEFORE starting so the drill never half-completes:
 - **`cv` CLI not on PATH**: the sqlite event store takes one writer per
   file; CLI + server on the same DSN fail-fast (lease) by design. Server
   writes go through HTTP; bulk CLI work happens in the dev checkout.
-- **GraphRAG/CRM/AI coaching off**: 503-with-hint until their config keys
-  are set (each would need its own sops entry).
+- **GraphRAG/CRM off**: 503-with-hint until their config keys are set (each
+  would need its own sops entry). AI coaching/tailor LEFT this list
+  2026-11-12 (synthetic via ai-meter, `coaching:`/`tailor:` blocks live); the
+  /api/coaching/salary endpoint never needed a key (heuristic predictor).
 - **Operator sign-in (since the 2026-09-11 deploy, cv 68e5f99)**: the guarded
   operator pages (`/admin`, `/pipeline`) authorize the browser via the
   session cookie from one sign-in at `https://cv.home.lan/admin` (paste the

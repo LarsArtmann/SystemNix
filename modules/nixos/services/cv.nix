@@ -31,6 +31,11 @@
       cfg = config.services.cv-server;
       domain = config.networking.domain;
       backupDir = "/mnt/pool/backups/cv";
+      # ai-meter metering proxy present (evo-x2): the funnel LLM sections
+      # route through it (coaching/tailor, 2026-11-11). Absent on hosts/VM
+      # tests without the module — sections then stay 503-disabled (the
+      # empty-key yaml shape), never fatal.
+      aiMeterEnabled = (config.services.ai-meter.enable or false);
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
@@ -923,6 +928,15 @@
           # started-but-not-yet-listening gap.
           ++ lib.optionals (config.services.crm-server.enable or false) [
             "crm-server.service"
+          ]
+          # ai-meter ordering (paperless-gpt pattern): after the proxy
+          # (which REQUIRES the key-mint oneshot) so the minted funnel LLM
+          # env files exist before the server reads its environment.
+          # wants = weak: a dead ai-meter degrades coaching/tailor to the
+          # 503 shape (optional env files below), it never blocks the CV
+          # boot.
+          ++ lib.optionals aiMeterEnabled [
+            "ai-meter.service"
           ];
           wants = [
             "sops-nix.service"
@@ -938,6 +952,9 @@
               ]
           ++ lib.optionals (config.services.crm-server.enable or false) [
             "crm-server.service"
+          ]
+          ++ lib.optionals aiMeterEnabled [
+            "ai-meter.service"
           ];
           inherit onFailure;
 
@@ -994,12 +1011,20 @@
                 # bridge's env file AND the scoped store-key template
                 # (cv-store-key-env, the P6 split). cfg.environmentFile is
                 # this wrapper's own mkDefault (the sops template), so no
-                # duplication.
-                EnvironmentFile = lib.mkForce [
-                  cfg.environmentFile
-                  oidcEnvFile
-                  cvStoreKeyEnvFile
-                ];
+                # duplication. The ai-meter minted files come LAST: they
+                # must win over cv-env if both ever carried the same var
+                # (systemd: later EnvironmentFile overrides earlier).
+                EnvironmentFile = lib.mkForce (
+                  [
+                    cfg.environmentFile
+                    oidcEnvFile
+                    cvStoreKeyEnvFile
+                  ]
+                  ++ lib.optionals aiMeterEnabled [
+                    "-/run/ai-meter-keys/cv-coaching.env"
+                    "-/run/ai-meter-keys/cv-tailor.env"
+                  ]
+                );
               }
             )
             (lib.mkIf
@@ -1011,10 +1036,16 @@
               {
                 # Non-OIDC shape still gets the key template (P6): the store
                 # must boot wherever cv-server runs.
-                EnvironmentFile = lib.mkForce [
-                  cfg.environmentFile
-                  cvStoreKeyEnvFile
-                ];
+                EnvironmentFile = lib.mkForce (
+                  [
+                    cfg.environmentFile
+                    cvStoreKeyEnvFile
+                  ]
+                  ++ lib.optionals aiMeterEnabled [
+                    "-/run/ai-meter-keys/cv-coaching.env"
+                    "-/run/ai-meter-keys/cv-tailor.env"
+                  ]
+                );
               }
             )
           ];
