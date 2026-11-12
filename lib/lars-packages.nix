@@ -655,7 +655,7 @@ lib.filterAttrs (_: v: v != null) {
   # tip (proof5-final.log, [FAILED] 423.280s); and rev 0304e2ae is
   # EVAL-DEAD here (upstream deleted go.sum; mkPreparedSource filesets
   # over it). Re-enable checks when the suite is sandbox-safe.
-  timesheets = inputs.timesheets.packages.${pkgs.system}.default.overrideAttrs {
+  timesheets = inputs.timesheets.packages.${system}.default.overrideAttrs {
     doCheck = false;
   };
   # todo-list-ai TEMPORARILY DROPPED (2026-10-03, null → filtered by the
