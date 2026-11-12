@@ -166,6 +166,18 @@ selftest() {
     echo "SELFTEST FAIL: possessive-retrospective time ref must not be flagged"
     exit 1
   fi
+  # far-timestamp FP control: a DESCRIPTIVE "fires" + a Source-citation
+  # timestamp far downstream must not trip the span (2026-11-12 live class:
+  # the signoz-provision jq row blocked all queue commits)
+  tmp4=$(mktemp)
+  cp "$TODO" "$tmp4"
+  printf -- '- [ ] [ready] **Selftest timegate row (far-timestamp FP)** → [docs/todo/services.md](docs/todo/services.md) — "jq: parse error" fires before each rule-create yet rules create OK (HTTP 200); fix the endpoint → (Source: deploy smoke, unit journal 21:47:35)\n' >>"$tmp4"
+  out=$(TODO_FILE="$tmp4" CHECK_TODO_STATUS_DIR=/nonexistent "$0" --scan-file "$tmp4" 2>&1) && rc=0 || rc=$?
+  rm -f "$tmp4"
+  if [ "$rc" -ne 0 ] || printf '%s\n' "$out" | grep -q 'FAIL: time-gated'; then
+    echo "SELFTEST FAIL: descriptive fires + far Source timestamp must not be flagged"
+    exit 1
+  fi
   # duplicate-row leg: a verbatim-duplicated open row must FAIL (the 2026-10-06
   # "structure clean with duplicates present" class) …
   tmp=$(mktemp)
@@ -246,7 +258,11 @@ scan_file() {
   local timegate_hits
   timegate_hits=$(grep -E '^- \[ \] \[ready\]' "$f" 2>/dev/null |
     sed -E "s/(tonight|yesterday|today)'s/<past-event>/g" |
-    grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]*[0-9]{1,2}:[0-9]{2}' |
+    # The `fires` span is BOUNDED (40 chars): an unbounded span reached a
+    # Source-citation timestamp 200+ chars downstream and false-positived a
+    # descriptive "fires before each rule-create" row (2026-11-12 live FP
+    # that blocked every queue-touching commit).
+    grep -E 'tonight|tomorrow|re-dispatch after|after the [a-z0-9 -]+ run|after [0-9]{1,2}:[0-9]{2}|\bfires [^|]{0,40}[0-9]{1,2}:[0-9]{2}' |
     grep -v 'BLOCKED' || true)
   if [ -n "$timegate_hits" ]; then
     echo "FAIL: time-gated [ready] row(s) without a ' — BLOCKED:' marker — wait-language reads as dispatchable (early-harvest class, 2026-10-04):"
