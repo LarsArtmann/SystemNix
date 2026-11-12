@@ -1066,6 +1066,16 @@
       url = "github:ogulcancelik/herdr";
     };
 
+    # nixos-modules — the LarsArtmann NixOS module collection (pattern
+    # modules, eval-time audit gates, the systemd hardening lib spine).
+    # Extracted from this tree 2026-11-11 (plan: docs/planning/
+    # 2026-11-10_05-07_SUPERB-nixos-module-collection-extraction.md). First
+    # consumer: services/wifi-failover.nix (delegation layer). Floats on
+    # master like the other LarsArtmann flakes; probe-before-lock applies.
+    nixos-modules = {
+      url = "github:LarsArtmann/nixos-modules";
+    };
+
     # rust-overlay — herdr's Rust toolchain provider. Declared as a root
     # input purely to pin herdr's transitive resolve (see herdr block) at a
     # rev with the stdenv.hostPlatform.* migration.
@@ -1377,6 +1387,8 @@
     nix-ssh-config.inputs.nixpkgs.follows = "nixpkgs";
     nix-ssh-config.inputs.treefmt-nix.follows = "treefmt-nix";
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-modules.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-modules.inputs.treefmt-nix.follows = "treefmt-nix";
     nur.inputs.flake-parts.follows = "flake-parts";
     nur.inputs.nixpkgs.follows = "nixpkgs";
     otel-tui.inputs.flake-utils.follows = "flake-utils";

@@ -21,22 +21,26 @@
 #   4. Cable back (peer up): daemon re-adds the metric-0 primary.
 #   5. Unit survives everything: still active, journal carries FAILOVER and
 #      RESTORE markers.
-_: {
+{ pkgs, inputs }:
+{
   name = "wifi-failover";
 
   nodes.machine =
     { lib, ... }:
     {
       imports = [
-        # flake-parts wrapper (top-level lambda) — apply, then pull the
-        # NixOS module out of the flake.nixosModules option it declares.
-        ((import ../modules/nixos/services/wifi-failover.nix) { }).flake.nixosModules.wifi-failover
-        # The module reads config.networking.local.gateway (SystemNix-specific
-        # option, normally provided by platforms/nixos/system/local-network.nix).
+        # Delegation-layer wrapper (top-level lambda) — apply WITH the real
+        # inputs so the layer can import the collection module
+        # (inputs.nixos-modules.nixosModules.wifi-failover), then pull the
+        # composed NixOS module out of the flake.nixosModules option.
+        ((import ../modules/nixos/services/wifi-failover.nix) { inherit inputs; }).flake.nixosModules.wifi-failover
+        # The delegation layer feeds services.wifi-failover.gateway from
+        # config.networking.local.gateway (SystemNix-specific option,
+        # normally provided by platforms/nixos/system/local-network.nix).
         (import ../platforms/nixos/system/local-network.nix)
-        # wifi-failover declares a services.integration registry entry
-        # (mkIf-wrapped options?-guard caveat, 2026-09-15): the guard does
-        # NOT survive the enclosing mkIf cfg.enable with enable=true — the
+        # The delegation layer declares a services.integration registry entry
+        # guarded by options? — the guard does NOT survive the enclosing
+        # mkIf cfg.enable with enable=true (2026-09-15 caveat): the
         # integration module must be co-imported or the option stays
         # undeclared and the whole driver eval fails.
         (import ../modules/nixos/services/integration.nix { }).flake.nixosModules.integration

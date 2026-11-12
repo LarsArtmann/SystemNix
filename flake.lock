@@ -8282,6 +8282,29 @@
         "type": "github"
       }
     },
+    "nixos-modules": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794357962,
+        "narHash": "sha256-b5AHaD/t1pdLqwPeIiCj8Y6kyi6l0hSic7CmjBO6GlM=",
+        "owner": "LarsArtmann",
+        "repo": "nixos-modules",
+        "rev": "0a8d9731bbf769dd7e8083b672bba81a386ec598",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "nixos-modules",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1794042290,
@@ -9530,6 +9553,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-ssh-config": "nix-ssh-config",
         "nixos-hardware": "nixos-hardware",
+        "nixos-modules": "nixos-modules",
         "nixpkgs": "nixpkgs_10",
         "nixpkgs-llama-rag": "nixpkgs-llama-rag",
         "nsfw-classifier": "nsfw-classifier",
