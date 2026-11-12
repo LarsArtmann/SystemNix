@@ -297,6 +297,14 @@ key after rotation) fail the unit → onFailure alert.
 
 ## AMBIGUOUS send-claim triage recipe (the `cv claims` verb, 2026-11-11)
 
+**Misroute-wave live-state breadcrumb (2026-11-12):** the `cv misroute` verb
+(`application.misrouted` correction event) shipped through cv@`7c81dc944`
+(FOD shim `kJ19EtgX…`, float-proof-20261111-115852) and is verified live on
+the host through the later float `76f8e41` (deriver + `cv misroute --help`
+smoke, 2026-11-12 22:01). The R3.1 store enumeration (536 catchall apps,
+zero real-recipient overlap) predates later store churn — RE-ENUMERATE from
+a fresh live snapshot before any misroute batch.
+
 An `AMBIGUOUS` journal line means a transport call died with the context
 cancelled mid-transaction — the relay may STILL have delivered. The row
 parks in `send_claimed` forever by design; the resolution is a human
