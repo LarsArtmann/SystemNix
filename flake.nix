@@ -26,7 +26,14 @@
     # (five go-1.27.3-floor consumers collapsed back onto this root) and
     # lifts the hermes-agent patchelf#672 blocker (unstable patchelf
     # contains the fix its patchelfFixed patch targets).
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # REV-PINNED 2026-11-12 at f9a75f41 (the gen-1003 proven graph):
+    # the f4a03c00 float's default patchelf regressed to 0.15.2 (pre-#672)
+    # and broke hermes-agent's patchelfFixed patch (4/6 hunks) plus the
+    # taskchampion pkg-config/zstd/sqlite loss class; unstable TIP still
+    # ships 0.15.2 (probed 2026-11-12) so floating forward cannot fix it.
+    # Same go_1_27 (1.27.3) on both revs — the 2026-11-12 FOD got-hash
+    # sweep survives the rollback. Allowlist row: lib/flake-input-pin-audit.nix.
+    nixpkgs.url = "github:NixOS/nixpkgs/f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
     # nixpkgs-unstable follow input REMOVED 2026-11-06: created 2026-10-25
     # (inboxclean go-1.27.3 floor vs the pinned root's go_1_27 1.27.2),
     # extended 2026-11-06 to file-and-image-renamer, go-taskqueue,
