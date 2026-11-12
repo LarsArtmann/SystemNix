@@ -102,6 +102,13 @@
             # mkDefault trap; proven via rendered-unit parity).
             (harden {
               MemoryMax = lib.mkForce "8G";
+              # Explicit 7G high (was the derived 80% = 6.4G, which sat BELOW
+              # the measured ~7GB discovery spike): the 2026-10-10 §17 triage
+              # re-read found memory.peak pinned exactly at the 6.4G clip —
+              # every full discovery paid reclaim churn at the ceiling while
+              # the 8G hard bound had 1.6G it never touched. 7G passes the
+              # measured spike; 8G stays the OOM bound.
+              MemoryHigh = lib.mkForce "7G";
               CPUQuota = lib.mkForce "400%";
               ProtectHome = lib.mkForce "read-only";
             })

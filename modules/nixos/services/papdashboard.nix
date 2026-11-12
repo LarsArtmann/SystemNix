@@ -830,8 +830,14 @@
             # ProtectSystem/ProtectHome passed INTO harden so they match the
             # upstream unit's own mkDefault strict/read-only — equal values
             # merge clean (strict vs the old full is the upstream contract).
+            # 640M (was 512M): the 2026-10-10 §17 runtime-throttle triage
+            # re-read found the render working set pinned at the old 410M
+            # MemoryHigh (cur 405M, peak 412M, ~23k throttle events in the
+            # first post-restart hour) — every panel render paid reclaim
+            # churn at the ceiling. 512M high (80% of 640M) clears the
+            # pinned set with real headroom.
             (harden {
-              MemoryMax = "512M";
+              MemoryMax = "640M";
               ProtectSystem = "strict";
               ProtectHome = "read-only";
             })
