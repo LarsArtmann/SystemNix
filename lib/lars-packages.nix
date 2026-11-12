@@ -197,9 +197,13 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-06 evening (lock now at 254e4839): spec 6mUToa7K, got
   # jxGg7Xa (first-hand, float-proof-20261106-225127.log — the crm
   # pin-wave proof enumerated it).
+  # RE-STALE 2026-11-12 (lock at d17d29d8 after the 2026-11-11 float plus
+  # today's tip re-float): spec jxGg7XaL, got 144yHjI2, first-hand from the
+  # deploy6 keep-going enumeration (drv cqrs-lint-d17d29d8…-go-modules,
+  # rev-matched). Two lock moves since the last paste.
   cqrs-lint =
     flakePkgShim inputs.go-cqrs-lite "cqrs-lint"
-      "sha256-jxGg7XaLM0TYgmqzB/5XC84PDdkkpOeWHWogbVL5zJY=";
+      "sha256-144yHjI2pE6zybH4rTNhOBTUG1iHKh9/ag9j6dYCvUU=";
   # docs-gates — the docs-health battery gates (freshness / annotate /
   # routing / cadence / strike) as one stdlib-only multi-call binary;
   # packages.default = the binary + the five legacy-name wrappers
