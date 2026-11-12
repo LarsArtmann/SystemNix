@@ -196,9 +196,13 @@
       # def2cd74e→7c81dc944: application.misrouted + cv misroute + cv
       # claims verb): spec ZfCh3W9k, got kJ19EtgX (first-hand keep-going,
       # float-proof-20261111-115852.log). Same source-churn treadmill.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-kJ19EtgXzcnLylAAxPzvXt973DOJrxoMslgOGzJiRw0=";
-      };
+      # shim DROPPED (2026-11-12, drop-protocol): upstream master 14f419d14
+      # bakes dAxD05Cg (go.sum re-sync + jev-slice churn re-pin) and the
+      # through-our-lock FOD probe exits 0 with NO override
+      # (cv-fod-ourlock-proof.log) — the go-tarball toolchain pin made the
+      # builder graph context-independent. Re-add ONLY via nix-hash-fix
+      # evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [
