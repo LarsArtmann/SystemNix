@@ -134,7 +134,9 @@ let
     src = srcPatched;
     # RE-PINNED 2026-10-07 wave (got 4SEPk/O9… at locked signoz rev
     # bb62c9c; same enumeration as collectorVendorHash above).
-    vendorHash = "sha256-4SEPk/O9Nf2FgVOEs0z4RKhO3SwintKDUiSyDAhw2TE=";
+    # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 88e9ad7 spec
+    # 4SEPk/O9, got GBAtMNzj (cqrs-shim-toplevel-proof.log).
+    vendorHash = "sha256-GBAtMNzjRvM2tJTB1/TBymn+YiNDst0fd7Cml3KCsp8=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];

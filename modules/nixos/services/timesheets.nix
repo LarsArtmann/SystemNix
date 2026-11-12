@@ -65,7 +65,13 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          default = inputs.timesheets.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # RE-STALE 2026-11-12 cache-eviction re-enumeration: upstream bakes
+          # JgMgW7v+ at c2acd98 which no longer reproduces under our graph;
+          # got XAx3aw3b (cqrs-shim-toplevel-proof.log). Shim added first-hand;
+          # drop when upstream bakes the got hash.
+          default = inputs.timesheets.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+            vendorHash = "sha256-XAx3aw3bqYIqT/AIk2Ekj5/lKhuNLwTjk9G5lB1buw8=";
+          };
           defaultText = lib.literalExpression "inputs.timesheets.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "timesheet package to serve the API with.";
         };

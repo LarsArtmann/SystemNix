@@ -148,10 +148,12 @@
       # pexiMrou got UKBW2VAE, float-proof-20261110-170949.log). Drop the
       # shim outright when the override is verified bit-neutral under the
       # followed nixpkgs.
+      # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 59c7de1 spec
+      # UKBW2VAE, got sALQiidZ (cqrs-shim-toplevel-proof.log).
       inboxcleanPkg =
         inputs.inboxclean.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
           {
-            vendorHash = "sha256-UKBW2VAE0SaulRGXREnBWGkLtDFZmhIoK4IJ4+d6z3c";
+            vendorHash = "sha256-sALQiidZgJvSOU3TS+K/yXvWLjwSKGuU1Wkt6kWCNw8=";
           };
     in
     {

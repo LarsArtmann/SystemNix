@@ -77,8 +77,11 @@
           # RE-STALE 2026-11-06 lock float: mr-sync@ffae30f spec p4C0Ob7i,
           # got z7ABeNjz (float-proof-20261106-000533.log); both surfaces
           # updated in the same pass.
+          # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 6df95cc9
+          # spec 1M7bvzM3, got kwqwPdAi (cqrs-shim-toplevel-proof.log); both
+          # surfaces updated in the same pass.
           package = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-1M7bvzM3uazJKDxk2LguOBGDLRCrdAufayP8QzglhHE=";
+            vendorHash = "sha256-kwqwPdAiXcgtSOhmzsmowsu8ARmljdeYCXxBqPW0yjc=";
           };
           user = primaryUser;
           port = ports.mr-sync;
