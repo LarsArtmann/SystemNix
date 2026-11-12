@@ -909,6 +909,23 @@ in
       interval = "5m";
       severity = "critical";
     };
+
+    # Outbound mail bouncing at the relay (2026-11-11 Resend outage class,
+    # send-hardening residue plan R5): artmann.tech silently lost domain
+    # verification and EVERY outbound application mail bounced (550) for
+    # hours while the pipeline recorded success — the postfix client 250
+    # is local truth only; the relay-hop journal line is the transport
+    # verdict (3 recruiter pairs burned, app-9802/9839/9871). The
+    # mail-relay-metrics textfile collector feeds this counter; ANY bounce
+    # in 10m pages (target=1).
+    "signoz/rules/mail-relay-bounced.json".source = mkRule {
+      name = "Outbound Mail Bounced at Relay";
+      description = "Relay rejected outbound mail (node_mail_relay_bounced_total increased) — the 2026-11-11 class: Resend silently un-verified artmann.tech and every application mail bounced while the pipeline read success. Check: resend.com → Domains → artmann.tech (re-verify, DNS records), journalctl -u postfix for the relay-hop 550 lines, cv misroute --reason non-delivery for burned ledger pairs";
+      query = "increase(node_mail_relay_bounced_total[10m])";
+      target = 1;
+      interval = "5m";
+      severity = "critical";
+    };
   };
 
   dashboards = {
