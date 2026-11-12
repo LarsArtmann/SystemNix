@@ -136,7 +136,10 @@ let
     # bb62c9c; same enumeration as collectorVendorHash above).
     # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 88e9ad7 spec
     # 4SEPk/O9, got GBAtMNzj (cqrs-shim-toplevel-proof.log).
-    vendorHash = "sha256-GBAtMNzjRvM2tJTB1/TBymn+YiNDst0fd7Cml3KCsp8=";
+    # RE-STALE 2026-11-12 daemon float: at d00471c spec GBAtMNzj, got
+    # 5o/Yfxo3 (toplevel-proof-20261112-drop.log). Tree-side hash —
+    # SigNoz is not ours; this file is the fix locus.
+    vendorHash = "sha256-5o/Yfxo3yFKO0IQTsf9zTUUTGNFalh7QQl/Ro6BGIS8=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];

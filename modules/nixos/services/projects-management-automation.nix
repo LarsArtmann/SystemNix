@@ -105,11 +105,13 @@
           # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 5723954f
           # spec qs1NJm2K, got f8YgjTEG (cqrs-shim-toplevel-proof.log); both
           # surfaces updated. Drop when upstream bakes f8YgjTEG.
+          # SHIM DROPPED 2026-11-12: drop condition met the SAME DAY — the
+          # daemon float moved pma to b1c9f8bc, whose upstream flake
+          # ALREADY BAKES the new got 7yqBeT02 (got==bake); the morning's
+          # f8YgjTEG paste re-staled within hours. Both surfaces
+          # un-shimmed in the same pass.
           package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs
-              {
-                vendorHash = "sha256-f8YgjTEGB8sh6rrS5G6uNfuZ5lYA6HNqnYTq0+A4IsQ=";
-              };
+            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

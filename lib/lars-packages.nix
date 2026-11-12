@@ -242,9 +242,12 @@ lib.filterAttrs (_: v: v != null) {
   # upstream bakes /Va1XfKr…; re-add ONLY via nix-hash-fix evidence.
   # RE-STALE 2026-11-05 float wave: at erraudit@3d1f7ed spec /Va1XfKr,
   # got skC3yysE (float-proof-20261106-000533.log).
-  erraudit =
-    flakePkgShim inputs.erraudit "default"
-      "sha256-xoynVQs/ZHme0tB7RZXtiFIpZv/lM85PxqMoCqyuY2A=";
+  # DROPPED 2026-11-12 (treadmill drop-protocol): the daemon float to
+  # d577858a re-staled xoynVQs (got prAXFWSn, toplevel-proof-
+  # 20261112-drop.log), and upstream d577858a ALREADY BAKES exactly
+  # prAXFWSn — got==bake, so the plain package reproduces under our
+  # graph. Re-add ONLY via nix-hash-fix evidence, never by hand.
+  erraudit = flakePkg inputs.erraudit;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
@@ -324,9 +327,14 @@ lib.filterAttrs (_: v: v != null) {
   # (float-proof-20261106-000533.log).
   # RE-STALE 2026-11-11 pin-lift wave: at 41e6ed1 spec u/j9KmmO,
   # got 617A34e5 (pin-lift toplevel keep-going proof).
+  # RE-STALE 2026-11-12 daemon float: at d338a0d1 spec 617A34e5, got
+  # tXX142O1 (toplevel-proof-20261112-drop.log). Upstream vendorHash.nix
+  # at d338a0d1 is STILL stale (buildflow-managed, paste pushed this
+  # session) — shim carries the got-hash until a re-lock carries the
+  # bake, then drop. Re-add ONLY via nix-hash-fix evidence, never by hand.
   golangci-lint-auto-configure =
     flakePkgShim inputs.golangci-lint-auto-configure "default"
-      "sha256-617A34e5BtsY1qNUVaj5QLxwNhWyN3FDBk+zEQhXAXQ=";
+      "sha256-tXX142O1SZhTSIB5BTlZQXcql+0bi6Fuu8Dh9RemwI4=";
   # invoices — billing CLI + dashboard backend (`invoices dashboard`,
   # deployed as the invoices-dashboard unit since 2026-11-10: loopback
   # 127.0.0.1:8110 behind the protected registry vHost invoices.home.lan;
@@ -364,9 +372,12 @@ lib.filterAttrs (_: v: v != null) {
   # journal-serve.nix + journal-backup.nix package defaults — edit ALL THREE.
   # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
   # got OBIY8Nxi (pin-lift toplevel keep-going proof).
-  journal =
-    flakePkgShim inputs.journal "default"
-      "sha256-OBIY8Nxi6XBYLWi4HXnG1xOberKgMgLTbE/GOaTT30I=";
+  # DROPPED 2026-11-12 (treadmill drop-protocol): the daemon float to
+  # 0ed74483 re-staled OBIY8Nxi (got ANZD3eOm, toplevel-proof-
+  # 20261112-drop.log), and upstream 0ed74483 ALREADY BAKES exactly
+  # ANZD3eOm (got==bake). All THREE surfaces un-shimmed in the same
+  # pass (lars-packages.nix + journal-serve.nix + journal-backup.nix).
+  journal = flakePkg inputs.journal;
   # library-policy shim DROPPED (2026-10-09): its drop condition ("lock
   # moves past an upstream-fixed rev") is met — the lock holds 5d2a670,
   # whose flake bakes vendorHash Qey6w74G… (the same "got" hash the stale
@@ -415,9 +426,12 @@ lib.filterAttrs (_: v: v != null) {
   # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence.
   # RE-STALE 2026-11-11 pin-lift wave: at 088aaf2 spec mHS57Ha6,
   # got xOKxcFQm (pin-lift toplevel keep-going proof).
-  library-policy =
-    flakePkgShim inputs.library-policy "default"
-      "sha256-xOKxcFQmN20CCGF/LY3D4Y2iLFyC+3HM2AirgBfY6N8=";
+  # DROPPED 2026-11-12 (treadmill drop-protocol, the 2026-10-09/17 drop
+  # conditions met a third time): the daemon float to e7a084ce re-staled
+  # xOKxcFQm (got nh/9sRXW, toplevel-proof-20261112-drop.log), and
+  # upstream e7a084ce ALREADY BAKES exactly nh/9sRXW (got==bake).
+  # Re-add ONLY via nix-hash-fix evidence, never by hand.
+  library-policy = flakePkg inputs.library-policy;
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream 3f466de bakes the through-our-lock got hash
   # e+jOFi3m… (specified uF0J63iQ vs got e+jOFi3m, first-hand keep-going
@@ -471,9 +485,13 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 6df95cc9 spec
   # 1M7bvzM3, got kwqwPdAi (cqrs-shim-toplevel-proof.log). The module
   # surface (modules/nixos/services/mr-sync.nix) carries the same value.
-  mr-sync =
-    flakePkgShim inputs.mr-sync "default"
-      "sha256-kwqwPdAiXcgtSOhmzsmowsu8ARmljdeYCXxBqPW0yjc=";
+  # DROPPED 2026-11-12 daemon-float re-stale (treadmill drop-protocol):
+  # the go-cqrs-lite float moved mr-sync to 2ed7e7d1, re-staling
+  # kwqwPdAi hours after this morning's paste (got bARGjKuO,
+  # toplevel-proof-20261112-drop.log), and upstream 2ed7e7d1 ALREADY
+  # BAKES exactly bARGjKuO (got==bake). Both surfaces un-shimmed in the
+  # same pass. Re-add ONLY via nix-hash-fix evidence, never by hand.
+  mr-sync = flakePkg inputs.mr-sync;
   # mr-sync shim DROPPED (2026-10-17 wave): upstream flake.nix:126 at tip
   # 71d6b0d4 bakes the shim's own KaDlWefE… value — bit-neutral override
   # (lock == tip; module surface dropped in the same pass). Re-add ONLY
@@ -592,9 +610,12 @@ lib.filterAttrs (_: v: v != null) {
   # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 5723954f spec
   # qs1NJm2K, got f8YgjTEG (cqrs-shim-toplevel-proof.log). Both surfaces
   # updated. Drop when upstream bakes f8YgjTEG.
-  projects-management-automation =
-    flakePkgShim inputs.projects-management-automation "default"
-      "sha256-f8YgjTEGB8sh6rrS5G6uNfuZ5lYA6HNqnYTq0+A4IsQ=";
+  # DROPPED 2026-11-12: drop condition met the SAME DAY — the daemon
+  # float moved pma to b1c9f8bc, whose upstream flake ALREADY BAKES the
+  # new got 7yqBeT02 (toplevel-proof-20261112-drop.log, got==bake); the
+  # morning's f8YgjTEG paste re-staled within hours. Both surfaces
+  # un-shimmed in the same pass. Re-add ONLY via nix-hash-fix evidence.
+  projects-management-automation = flakePkg inputs.projects-management-automation;
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 613725e7 ALREADY bakes the got
   # hash wH3k7WiK… (first-hand keep-going enumeration,

@@ -80,9 +80,12 @@
           # RE-STALE 2026-11-12 cache-eviction re-enumeration: at 6df95cc9
           # spec 1M7bvzM3, got kwqwPdAi (cqrs-shim-toplevel-proof.log); both
           # surfaces updated in the same pass.
-          package = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-kwqwPdAiXcgtSOhmzsmowsu8ARmljdeYCXxBqPW0yjc=";
-          };
+          # SHIM DROPPED 2026-11-12 daemon-float re-stale (treadmill
+          # drop-protocol): the go-cqrs-lite float moved mr-sync to
+          # 2ed7e7d1, re-staling kwqwPdAi hours after this morning's
+          # paste (got bARGjKuO), and upstream 2ed7e7d1 ALREADY BAKES
+          # exactly bARGjKuO — both surfaces un-shimmed in the same pass.
+          package = inputs.mr-sync.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           port = ports.mr-sync;
           githubTokenFile = config.sops.secrets.mr_sync_github_token.path;

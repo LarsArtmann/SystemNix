@@ -75,9 +75,11 @@
           # RE-STALE 2026-11-11 pin-lift wave: at 0663476 spec KW+poESP,
           # got OBIY8Nxi (pin-lift toplevel keep-going proof); all three
           # surfaces updated in the same pass.
-          default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-OBIY8Nxi6XBYLWi4HXnG1xOberKgMgLTbE/GOaTT30I=";
-          };
+          # SHIM DROPPED 2026-11-12 (treadmill drop-protocol): the daemon
+          # float to 0ed74483 re-staled OBIY8Nxi (got ANZD3eOm), and
+          # upstream 0ed74483 ALREADY BAKES exactly ANZD3eOm — all three
+          # surfaces un-shimmed in the same pass.
+          default = inputs.journal.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression "inputs.journal.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "journal package to serve the dashboard with.";
         };
