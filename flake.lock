@@ -10436,9 +10436,13 @@
     },
     "timesheets": {
       "inputs": {
-        "flake-parts": "flake-parts_19",
-        "nixpkgs": "nixpkgs_14",
-        "treefmt-nix": "treefmt-nix_2"
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": "nixpkgs_16",
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
       },
       "locked": {
         "lastModified": 1794284603,
