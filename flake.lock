@@ -8005,7 +8005,7 @@
         "hardware-identity": "hardware-identity",
         "mic-monitor": "mic-monitor",
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-hermes"
         ],
         "printer-monitor": "printer-monitor",
         "rust-overlay": "rust-overlay",

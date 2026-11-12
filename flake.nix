@@ -1413,7 +1413,17 @@
     domains.inputs.git-hooks.follows = "git-hooks";
     domains.inputs.nixpkgs.follows = "nixpkgs";
     domains.inputs.treefmt-nix.follows = "treefmt-nix";
-    monitor365.inputs.nixpkgs.follows = "nixpkgs";
+    # 2026-11-12: retargeted to nixpkgs-hermes (llama-rag follower-skew
+    # pattern). The durable f4a03c00 root pin broke vanilla trunk's
+    # zstd-sys pkg-config probe, and monitor365's flake imports the
+    # followed nixpkgs WITHOUT our overlays (the hermes legacyPackages
+    # class — consumer overlays cannot reach it), so the taskchampion
+    # overlay is unreachable from here. f9a75f41 is the proven monitor365
+    # graph: green as root until the pin move, and the first failing
+    # proof (2026-11-12 16:33 nh deploy) carried zero monitor365
+    # failures. LIFT: root's trunk packaging probes clean bare on the
+    # pinned rev — collapse back to "nixpkgs".
+    monitor365.inputs.nixpkgs.follows = "nixpkgs-hermes";
     mr-sync.inputs.flake-parts.follows = "flake-parts";
     mr-sync.inputs.go-nix-helpers.follows = "go-nix-helpers";
     mr-sync.inputs.nixpkgs.follows = "nixpkgs";

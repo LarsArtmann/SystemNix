@@ -365,6 +365,18 @@ let
     taskwarrior2 = prev.taskwarrior2.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
     });
+    # taskwarrior3 leg 2026-11-12 (fixwave2 proof): the actual consumers
+    # (programs.taskwarrior package override + the backup runtimeInputs)
+    # take taskwarrior3, whose 3.5.0 build dies `-lsqlite3` at the
+    # taskchampion cxx bridge under f4a03c00 — the taskwarrior2 leg above
+    # never touches that drv (its hash was unchanged across two proofs).
+    taskwarrior3 = prev.taskwarrior3.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+      buildInputs = (old.buildInputs or [ ]) ++ [
+        _final.sqlite
+        _final.zstd
+      ];
+    });
     trunk = prev.trunk.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
       buildInputs = (old.buildInputs or [ ]) ++ [ _final.zstd ];
