@@ -8,9 +8,16 @@ let
   # HaGeZi-hoster-raw (specified mME4che8, got BBE5rsFW). A moving ref with a
   # pinned hash is a self-arming deploy bomb; bump this commit + every hash
   # together (same doctrine as the paperless-gpt tag pin).
+  # 2026-11-12: the 11-06 pin (f8c1f9f8) started serving DRIFTING snapshots —
+  # the --hashes-only re-pin at 05:5x (AKy6BbjT) mismatched again within the
+  # hour at the SAME commit (got c1sqvguO; the 10-16 "oscillation" class) —
+  # GitLab edge nodes serve inconsistent snapshots of old commits. Bumped the
+  # pin to current HEAD (7700a113) + rehashed in the same breath; if this
+  # recurs, the durable fix is a flake-input fetch (git fetches are immutable
+  # in the store) per docs/todo/pipeline.md.
   hagezi =
     subpath:
-    "https://gitlab.com/hagezi/mirror/-/raw/f8c1f9f8121b91e264ef15e5aed011f226200799/dns-blocklists/${subpath}";
+    "https://gitlab.com/hagezi/mirror/-/raw/7700a1136399ec841ec6c92f36b5db105be79a63/dns-blocklists/${subpath}";
 in
 {
   blocklists = [
