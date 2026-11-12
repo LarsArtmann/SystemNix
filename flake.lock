@@ -597,11 +597,11 @@
     "cmdguard_8": {
       "flake": false,
       "locked": {
-        "lastModified": 1794411671,
-        "narHash": "sha256-ViY6NQOCudaLrS0qF+9Bg/vRhxiPva/wkMA6d0xCIQ4=",
+        "lastModified": 1794424821,
+        "narHash": "sha256-R2U5/+Y4wYxak0PR1X19IoiC3NTwWz5v4PhP9dehl28=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "ba6a7a8fb55baf6ac22a83d146877208d3546004",
+        "rev": "a66a97e6d436498def4c324d4bd65261e9c5380d",
         "type": "github"
       },
       "original": {
@@ -3726,11 +3726,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794413342,
-        "narHash": "sha256-9DUkBGhqFiTgFWioVk1hbphgs11FxKsMX5ql4OvZ5qM=",
+        "lastModified": 1794441120,
+        "narHash": "sha256-z1SVhzoPGdKV6Z1BvJXVnXgYHAz+Zj+OiiV07UZomM8=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "57982df48bb57043d6b535f50dbdaf64528e9460",
+        "rev": "d17d29d8b602ea654f79f45643f57d3065df1822",
         "type": "github"
       },
       "original": {
