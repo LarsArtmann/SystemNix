@@ -28,6 +28,8 @@
 | D4 | Exemplars parsed by receiver, dropped at ClickHouse writer                                    | monitoring.md:57 + G1           | None — G1 confirms the storage half live                        |
 | D5 | Memory-PSI rule likely reads the wrong PSI file                                               | monitoring.md todo              | An actively-WONG rule fires on IO storms (2026-10-08)           |
 
+**UPDATE 2026-11-12 (P0 close-out battery, live-verified):** D1 resolved — the traces pipeline carries signozspanmetrics/delta + servicegraph (deployed); D2 superseded — the traces dashboard is provisioned (10 dashboards live per the v2 API); D3 resolved — the GCP receiver re-arm is LIVE (receivers authenticate + pull descriptors since the 2026-11-12 20:47 restart; ~25k distinct googleapis series in 24h), the panels question settled in favor of keep; D4 still true (no exemplar columns in the store); D5 resolved — the memory-PSI emitter reads PERCENT thresholds, live-verified calm (node_psi_memory_alert 0) and pinned by checks.psi-percent-semantics-selftest. NEW finding at close: signoz-provision.service FAILED since the 2026-11-12 signoz package move — the query-service API moved (v1 rules list/per-id mutations gone; /api/v3/rules paginated list + /api/v2/dashboards live) and the provisioner's v1 converge hits the SPA catch-all; the provisioned STATE stayed green (61 rules exact-set, 10 dashboards) — root cause recorded on TODO_LIST row signoz-provision jq parse errors.
+
 **The lesson encoded in this plan's shape:** the previous session's self-review found the #1 failure was asserting capability from docs without probes. Therefore **T1 (ground-truth battery) gates every build task**, and no dashboard/rule work starts before its verdict.
 
 ---
