@@ -173,18 +173,17 @@
             # only with a fresh first-hand got-hash (never invented) and
             # mirror it at the HM surface (systems/evo-x2.nix
             # programs.bank-sync) or the two surfaces build different drvs.
-            # RE-ADDED 2026-11-06 lock float: bank-sync@fab9306's upstream
-            # iJg1bJqr… went stale through our lock (got Cgy7/6Oa…,
-            # float-proof-20261106-000533.log) — fresh first-hand got-hash,
-            # mirrored at the HM surface. RE-STALENED 2026-11-10 float:
-            # upstream 40c1feb still bakes iJg1bJqr; got 65/NbAtF…
-            # (float-proof-20261110-043731.log). RE-STALENED
-            # 2026-11-11 float to 12ca5df2 (SCA-sentinel wave): got f080YRMG
-            # (pin-lift toplevel proof5, first-hand).
+            # RE-ADDED 2026-11-06 (float wave), re-stalened 2026-11-10 and
+            # 2026-11-11 — three waves of consumer-side treadmill.
+            # DROPPED 2026-11-12: the daemon lock float to c21b018b re-staled
+            # f080YRMG (got vqgbVyKF, 16:33 nh deploy log), and upstream's
+            # own flake at c21b018b ALREADY BAKES exactly vqgbVyKF (their
+            # nix-hash-fix flow) — context-aligned (same nixpkgs lock node
+            # d4f25a3e; go-nix-helpers is eval-only for bank-sync, absent
+            # from go.mod replaces). The upstream-owned hash re-stales on
+            # upstream source touches: re-probe first, never re-pin blindly.
             package = lib.mkDefault (
-              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-                vendorHash = "sha256-f080YRMGXux2GFk0v6hLgNKlbFY0HgbYe4Arf13ZLFY=";
-              }
+              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default
             );
           };
 
