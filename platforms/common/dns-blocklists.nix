@@ -107,13 +107,17 @@ in
     {
       name = "HaGeZi-dyndns";
       url = hagezi "dnsmasq/dyndns.txt";
-      # Re-pinned 2026-10-16: upstream reverted to an older content state
-      # (matches the store output of a pre-sEWGDR5z build, byte-identical),
-      # so this value may flip back on a future mismatch — if it does,
-      # upstream is oscillating and the list needs a commit-pinned URL
-      # instead of hash bumps. Probed STABLE twice 20s apart via
-      # nix store prefetch-file before this edit.
-      hash = "sha256-yb9EEGbSJ2wRwgUW0MqrU1PlCg7oPouVk2+EbPxun3E=";
+      # Re-pinned 2026-11-12: this hash was STALE SINCE the 2026-11-06
+      # commit-pin wave — it kept the 2026-10-16 branch-era value, and the
+      # wave never re-measured it because the old content's store path was
+      # still warm (FOD sat "satisfied" without fetching). A GC collected the
+      # path and the 05:24 deploy's build exposed the truth: content at
+      # f8c1f9f8 is c1sqvguO, not the pinned yb9EEGbS. Full pin-set audited
+      # against the commit the same day (see 2026-11-12 status); probed
+      # STABLE twice 20s apart via nix store prefetch-file before this edit.
+      # Commit-pinned URLs are immutable, so no oscillation is possible —
+      # future mismatches here mean GitLab history rewrite, not drift.
+      hash = "sha256-c1sqvguOZndY1QsIzo1+37AutdqBJwebQFjVA0vu7lg=";
     }
     {
       name = "HaGeZi-hoster";
