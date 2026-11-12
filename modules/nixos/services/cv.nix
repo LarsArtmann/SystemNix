@@ -795,6 +795,35 @@
               tts.enabled = false; # Groq-shaped default unusable on Synthetic
               stt.enabled = false; # whisper default unusable on Synthetic
             };
+            # Funnel LLM sections (2026-11-11, owner decision "wire
+            # synthetic.new via the ai-meter proxy" — closes the
+            # blocked:user coaching row): coaching powers /api/coaching/*
+            # AND the cover-letter writer (provideLetterWriter gates on
+            # exactly this key — CV 84f225259's startup log flips to an
+            # LLM letter writer here), LLM reply-classification
+            # refinement, and the alert router's refiner; tailor powers
+            # the autonomous JD tailoring pass. Keys ride the
+            # runtime-minted ai-meter client env files (CV_COACHING_API_KEY
+            # / CV_TAILOR_API_KEY, /run/ai-meter-keys/cv-*.env — env-file
+            # beats the empty yaml value via the pull-model env bridge),
+            # so every letter/tailoring call is token-metered per client
+            # (cv-coaching / cv-tailor in the ai-meter ledger). The
+            # proxy strips NOTHING: openaicompat protocol is transparent,
+            # base_url just points at /v1/synthetic. Defaults carry NO
+            # api_key here — without the minted files the sections stay
+            # 503-disabled (the pre-2026-11-11 shape), never fatal.
+            coaching = {
+              api_key = ""; # rides CV_COACHING_API_KEY (ai-meter mint)
+              provider = "openaicompat";
+              model = "syn:large:text";
+              base_url = "http://127.0.0.1:${toString ports.ai-meter}/v1/synthetic";
+            };
+            tailor = {
+              api_key = ""; # rides CV_TAILOR_API_KEY (ai-meter mint)
+              provider = "openaicompat";
+              model = "syn:large:text";
+              base_url = "http://127.0.0.1:${toString ports.ai-meter}/v1/synthetic";
+            };
             # Absolute state-dir path: the default (data/graphrag.sqlite) is
             # CWD-relative, which happens to resolve correctly today but only
             # because WorkingDirectory = /var/lib/cv. Pin it so graphrag can

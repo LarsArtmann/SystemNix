@@ -747,7 +747,8 @@ in
       # /var/lib/ai-meter/usage.jsonl). Clients: crush (crushrc extraRc),
       # paperless-gpt (→ fastflowlm upstream), inboxclean (→ llama-chat
       # upstream), browser-history (→ llama-chat upstream; root-owned key —
-      # DynamicUser server, systemd reads the env file as root).
+      # DynamicUser server, systemd reads the env file as root),
+      # cv-coaching/cv-tailor (→ synthetic upstream).
       # Runbook: docs/services/ai-meter.md.
       ai-meter.enable = true;
       ai-meter.clients = {
@@ -794,6 +795,24 @@ in
         browser-history = {
           user = "root";
           envKey = "LLM_API_KEY";
+        };
+      }
+      // lib.optionalAttrs config.services.cv-server.enable {
+        # CV funnel LLM surfaces ride the synthetic upstream through the
+        # proxy (2026-11-11 owner decision: Synthetic is the outbound-
+        # drafting provider). Two clients = separate token/cost
+        # attribution for coaching (letters + reply refinement + alert
+        # refiner) vs tailor (JD tailoring); the minted env files carry
+        # the exact CV_* override vars the pull-model env bridge reads.
+        # Chat stays on its direct-synthetic sops key (2026-11-02
+        # wiring) — migrating it here is the queued follow-up.
+        cv-coaching = {
+          user = "cv";
+          envKey = "CV_COACHING_API_KEY";
+        };
+        cv-tailor = {
+          user = "cv";
+          envKey = "CV_TAILOR_API_KEY";
         };
       };
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops

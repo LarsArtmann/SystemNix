@@ -102,6 +102,20 @@ _: {
           auth_style = "x-goog-api-key";
         }
         {
+          # Synthetic (synthetic.new) — OpenAI-compatible, Bearer default.
+          # Same base_url the CV openaicompat chat rides direct today
+          # (cv.nix 2026-11-02 wiring); the proxy copy meters the CV
+          # coaching + tailor surfaces routed here (cv-coaching /
+          # cv-tailor clients, 2026-11-11 owner decision: Synthetic is
+          # the outbound-drafting provider). syn:large:text deliberately
+          # has NO costs entry — no verified synthetic.new pricing exists
+          # and invented prices are banned (the zai reference-price
+          # doctrine); tokens meter exactly, cost stays $0.
+          name = "synthetic";
+          base_url = "https://api.synthetic.new/openai/v1";
+          api_key = "${config.sops.placeholder.ai-meter-synthetic-key}";
+        }
+        {
           name = "llama-chat";
           base_url = "http://127.0.0.1:${toString ports.llama-chat}/v1";
           api_key = "unused";
@@ -351,6 +365,15 @@ _: {
               {
                 name = "gemini";
                 key = "gemini_api_key";
+              }
+              {
+                # Remapped copy of crush-daily.yaml's synthetic_api_key
+                # (the same key CV's openaicompat chat copied into
+                # cv.yaml — one subscription, three declarations). The
+                # sops-key-audit validates the yaml key exists.
+                name = "synthetic";
+                key = "synthetic_api_key";
+                sopsFile = ../../../platforms/nixos/secrets/crush-daily.yaml;
               }
             ]
         );
