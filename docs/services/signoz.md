@@ -56,7 +56,11 @@ scripts/metric-sweep.sh
 python3 -c "import urllib.request,json,urllib.parse; print(len(json.load(urllib.request.urlopen('http://localhost:8080/api/v1/query?'+urllib.parse.urlencode({'query':'count(METRIC_NAME')})))['data']['result']))"
 
 # Log→trace pivot health (lines carrying trace_id vs total, 7d)
-clickhouse-client --query "SELECT countIf(trace_id != ''), count() FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 7 DAY)"
+# `trace_id != ''` is the zero-trace form — the journald fleet stores
+# unlinked lines' trace_id as the EMPTY string, so never compare against
+# the 32-zeros literal (it false-positives every journald line as traced,
+# 2026-11-12). length(trace_id)=32 is the strict real-W3C-id form.
+clickhouse-client --query "SELECT countIf(length(trace_id) = 32), countIf(trace_id != ''), count() FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 7 DAY)"
 
 # Rule/policy parity (live vs _signoz-alerts.nix; policies keyed by rule UUID)
 python3 -c "import urllib.request,json; r=json.load(urllib.request.urlopen('http://localhost:8080/api/v1/rules',timeout=15))['data']['rules']; print(len(r), [x['alert'] for x in r if x['state']!='inactive'])"

@@ -55,14 +55,14 @@
 # The dependency is expressed on the consumer unit (wants/after): unit-level
 # ordering applies to EVERY start job regardless of trigger, so the timer's
 # catch-up job waits for the fixture too.
-{ pkgs }:
+{ pkgs, inputs }:
 let
   # The flake-parts wrapper form: the file evaluates to
-  # `{ flake.nixosModules.crush-hot-db = <NixOS module>; }` (two-statement
-  # select — the `(import f) { }.attr` one-liner does not parse as
-  # apply-then-select, test-miniflux precedent).
+  # `{ flake.nixosModules.crush-hot-db = <NixOS module>; }` — a FUNCTION taking
+  # `inputs` since the W3b delegation (the layer imports the collection
+  # module; apply-then-select, test-wifi-failover precedent).
   crushHotDbModule =
-    (import ../modules/nixos/services/crush-hot-db.nix).flake.nixosModules.crush-hot-db;
+    ((import ../modules/nixos/services/crush-hot-db.nix) {inherit inputs;}).flake.nixosModules.crush-hot-db;
 
   # Fixture tree created BEFORE the migrate unit starts (After= ordering):
   # the unit's ReadWritePaths on /home/lars/projects aborts 226/NAMESPACE if

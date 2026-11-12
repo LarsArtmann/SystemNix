@@ -117,10 +117,13 @@ in
   miniflux = makeTest (import ./test-miniflux.nix { inherit pkgs; });
   hot-db = makeTest (import ./test-hot-db.nix { inherit pkgs; });
   hot-db-assertions = import ./test-hot-db-assertions.nix { inherit pkgs inputs system; };
-  journal-hot = makeTest (import ./test-journal-hot.nix { inherit pkgs; });
+  # journal-hot + caddy-logs-hot VM tests RETIRED (2026-11-12, W3b): the
+  # boot-behavior coverage moved to the collection (checks hot-tier-journal-vm
+  # + hot-tier-caddy-vm drive the delegated services.hot-tier options); the
+  # delegation layers themselves are pinned by rendered-unit parity + the
+  # host-eval selftests.
   root-prune-guard = makeTest (import ./test-root-prune-guard.nix { inherit pkgs; });
-  caddy-logs-hot = makeTest (import ./test-caddy-logs-hot.nix { inherit pkgs; });
-  crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs; });
+  crush-hot-db = makeTest (import ./test-crush-hot-db.nix { inherit pkgs inputs; });
   crush-daily = makeTest (import ./test-crush-daily.nix { inherit pkgs inputs; });
   crush-config = import ./test-crush-config.nix { inherit pkgs inputs; };
   ai-meter-vm = makeTest (import ./test-ai-meter.nix { inherit pkgs; });
