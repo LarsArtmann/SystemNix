@@ -182,9 +182,7 @@
             # d4f25a3e; go-nix-helpers is eval-only for bank-sync, absent
             # from go.mod replaces). The upstream-owned hash re-stales on
             # upstream source touches: re-probe first, never re-pin blindly.
-            package = lib.mkDefault (
-              inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default
-            );
+            package = lib.mkDefault (inputs.bank-sync.packages.${pkgs.stdenv.hostPlatform.system}.default);
           };
 
           # The pool mounts nofail — systemd-tmpfiles could create the dir on the

@@ -31,7 +31,8 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.crush-hot-db =
     {
       config,
@@ -43,7 +44,7 @@
       primaryUser = config.users.primaryUser or "lars";
     in
     {
-      imports = [inputs.nixos-modules.nixosModules.hot-dir-migrate];
+      imports = [ inputs.nixos-modules.nixosModules.hot-dir-migrate ];
 
       options.services.crush-hot-db = {
         enable = lib.mkEnableOption "relocate per-project crush session DBs to the hot-DB disk";

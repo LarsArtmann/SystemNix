@@ -62,7 +62,8 @@ let
   # `inputs` since the W3b delegation (the layer imports the collection
   # module; apply-then-select, test-wifi-failover precedent).
   crushHotDbModule =
-    ((import ../modules/nixos/services/crush-hot-db.nix) {inherit inputs;}).flake.nixosModules.crush-hot-db;
+    ((import ../modules/nixos/services/crush-hot-db.nix) { inherit inputs; })
+    .flake.nixosModules.crush-hot-db;
 
   # Fixture tree created BEFORE the migrate unit starts (After= ordering):
   # the unit's ReadWritePaths on /home/lars/projects aborts 226/NAMESPACE if

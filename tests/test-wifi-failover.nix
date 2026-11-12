@@ -33,7 +33,8 @@
         # inputs so the layer can import the collection module
         # (inputs.nixos-modules.nixosModules.wifi-failover), then pull the
         # composed NixOS module out of the flake.nixosModules option.
-        ((import ../modules/nixos/services/wifi-failover.nix) { inherit inputs; }).flake.nixosModules.wifi-failover
+        ((import ../modules/nixos/services/wifi-failover.nix) { inherit inputs; })
+        .flake.nixosModules.wifi-failover
         # The delegation layer feeds services.wifi-failover.gateway from
         # config.networking.local.gateway (SystemNix-specific option,
         # normally provided by platforms/nixos/system/local-network.nix).

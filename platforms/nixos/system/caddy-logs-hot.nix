@@ -29,8 +29,9 @@
 {
   inputs,
   ...
-}: {
-  imports = [inputs.nixos-modules.nixosModules.hot-tier];
+}:
+{
+  imports = [ inputs.nixos-modules.nixosModules.hot-tier ];
 
   config = {
     services.hot-tier = {

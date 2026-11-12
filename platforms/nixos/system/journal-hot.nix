@@ -29,8 +29,9 @@
 {
   inputs,
   ...
-}: {
-  imports = [inputs.nixos-modules.nixosModules.hot-tier];
+}:
+{
+  imports = [ inputs.nixos-modules.nixosModules.hot-tier ];
 
   config = {
     services.hot-tier = {
@@ -45,7 +46,7 @@
         # after/wants wiring only (empty attrset): `wants`, NOT requires — a
         # failed mount job (Samsung detached) degrades journald into the QLC
         # shadow dir, never a journald-less boot.
-        services.systemd-journald = {};
+        services.systemd-journald = { };
       };
     };
   };

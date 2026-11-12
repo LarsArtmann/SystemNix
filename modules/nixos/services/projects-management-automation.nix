@@ -110,8 +110,7 @@
           # ALREADY BAKES the new got 7yqBeT02 (got==bake); the morning's
           # f8YgjTEG paste re-staled within hours. Both surfaces
           # un-shimmed in the same pass.
-          package =
-            inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
           user = primaryUser;
           group = "users";
           home = "/home/${primaryUser}";

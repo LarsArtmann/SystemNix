@@ -19,13 +19,16 @@ set -euo pipefail
 root=${1:?usage: takeout-browser-rename.sh <staging-root> [--apply]}
 apply=${2:-}
 zips=$root/zips
-[ -d "$zips" ] || { echo "no $zips"; exit 1; }
+[ -d "$zips" ] || {
+  echo "no $zips"
+  exit 1
+}
 
 mapped=0
 renamed=0
 skipped=0
 while IFS=$'\t' read -r part expected filename; do
-  case $part in ''|'#'*) continue ;; esac
+  case $part in '' | '#'*) continue ;; esac
   src=$zips/$filename
   dst=$(printf '%s/part-%02d.zip' "$zips" "$part")
   mapped=$((mapped + 1))
@@ -49,14 +52,14 @@ while IFS=$'\t' read -r part expected filename; do
     renamed=$((renamed + 1))
   fi
   echo "part $part: OK $filename ($size bytes)${apply:+ → renamed}"
-done < "$root/parts.tsv"
+done <"$root/parts.tsv"
 
 echo "---"
 echo "parts mapped: $mapped, already present: $skipped, renamed now: $renamed$([ "$apply" != "--apply" ] && echo ' (DRY RUN — pass --apply to rename)')"
 for f in "$zips"/*; do
   [ -f "$f" ] || continue
   case $(basename "$f") in
-    part-[0-9][0-9].zip|*.crdownload|*.part) ;;
-    *) echo "unmapped leftover: $(basename "$f")" ;;
+  part-[0-9][0-9].zip | *.crdownload | *.part) ;;
+  *) echo "unmapped leftover: $(basename "$f")" ;;
   esac
 done

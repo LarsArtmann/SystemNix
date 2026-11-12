@@ -23,8 +23,9 @@
   options,
   lib,
   ...
-}: {
-  imports = [inputs.nixos-modules.nixosModules.boot-mirror];
+}:
+{
+  imports = [ inputs.nixos-modules.nixosModules.boot-mirror ];
 
   config = {
     services.boot-mirror = {
@@ -39,7 +40,7 @@
     # fleet, but the guard keeps the layer importable in isolated evals
     # (tests) where the option tree lacks it.
     services.system-health = lib.optionalAttrs (options ? services.system-health) {
-      extraMonitoredServices = ["boot-mirror-sync"];
+      extraMonitoredServices = [ "boot-mirror-sync" ];
     };
   };
 }
