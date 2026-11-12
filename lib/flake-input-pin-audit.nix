@@ -64,20 +64,18 @@
     nixpkgs-llama-rag = "REV-PINNED nixpkgs holding the llama.cpp 0.3.0 build (last build proven serving on gfx1150 before the 0.4.0 mid-model-load CPU-spin regression, live 2026-09-14). LIFT: 0.4.0+ spin regression fixed upstream + re-verified live — drop the input entirely, do not update it.";
     paperless-gpt-src = "TAG-PINNED at v0.31.0 (bumped from v0.28.0 2026-11-06) so the vendorHash + npmDepsHash in pkgs/paperless-gpt.nix stay reproducible (a moving ref re-breaks the FODs on every lock update). LIFT: bump tag + both hashes together deliberately.";
     qmd = "TAG-PINNED at v2.8.3. LIFT: bump the tag deliberately and re-verify the CLI + `qmd mcp` (upstream's nodeModules FOD is only valid per-tag).";
-    # ── 2026-11-12 deploy-unblock pin (the f4a03c00 patchelf regression) ──
-    # An unproven blanket float between 2026-11-10 and 2026-11-12 re-landed
-    # the root nixpkgs on f4a03c00, whose default patchelf REGRESSED to
-    # 0.15.2 (pre-#672) — hermes-agent's patchelfFixed patch now rejects
-    # 4/6 hunks and cascades through ffmpeg/node/pnpm/hermes/system-path.
-    # Unstable TIP (probed 2026-11-12) still ships 0.15.2, so floating
-    # forward cannot fix it; f9a75f41 (the gen-1003 proven graph, live
-    # since 2026-11-05) ships patchelf 0.19.2. Same go_1_27 (1.27.3) on
-    # both revs, so the 2026-11-12 FOD got-hash sweep survives. This is
-    # the 2026-10-23 deploy-rollback pattern: pin the broken input to its
-    # last build-proven rev. LIFT: unstable's patchelf back to >= 0.19.2
-    # (probe `nix eval nixos-unstable#patchelf.version`) AND a keep-going
+    # ── 2026-11-12 deploy-unblock pin (the recurring hermes patchelf leg) ──
+    # The poisoned patchelf-0.15.2 + executable-header-load-overlap pair
+    # lives in hermes-agent's OWN nested lock, not the root nixpkgs: at
+    # d1db1bc6 the pair rejects 4/6 hunks and poisons the
+    # ffmpeg/node/pnpm/hermes chain (the 2026-11-09 gen-992 arc,
+    # recurring; 2026-11-10 deploy-997 named it "known recurring; float
+    # onto this graph = guaranteed red"). 21ae0e12 is the gen-992/gen-997
+    # deployment-proven rev (live 2026-11-09/10) and carries the
+    # env-bridge blessing (31561e37 is an ancestor). LIFT: upstream
+    # re-syncs their nested patchelf packaging/patch pair + keep-going
     # toplevel proof with hermes-agent realized on the floated rev.
-    nixpkgs = "REV-PINNED at f9a75f41 (2026-11-12): the f4a03c00 float's patchelf regressed to 0.15.2 and breaks hermes-agent's patchelfFixed patch (4/6 hunks) plus the taskchampion pkg-config/zstd/sqlite loss class. LIFT: nixos-unstable patchelf >= 0.19.2 + keep-going toplevel proof on the floated rev.";
+    hermes-agent = "REV-PINNED at 21ae0e12 (2026-11-12): upstream's nested patchelfFixed pair rejects 4/6 hunks (the 2026-11-09 gen-992 arc recurring). LIFT: upstream re-syncs their nested patchelf packaging + keep-going toplevel proof on the floated rev.";
     # ── 2026-10-23 deploy-rollback set (two of the original five remain) ─
     # The 2026-10-20 nixos-unstable tip broke the toplevel build in five
     # independent places at once and re-staled ten FOD hashes downstream.

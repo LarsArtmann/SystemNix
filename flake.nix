@@ -26,14 +26,15 @@
     # (five go-1.27.3-floor consumers collapsed back onto this root) and
     # lifts the hermes-agent patchelf#672 blocker (unstable patchelf
     # contains the fix its patchelfFixed patch targets).
-    # REV-PINNED 2026-11-12 at f9a75f41 (the gen-1003 proven graph):
-    # the f4a03c00 float's default patchelf regressed to 0.15.2 (pre-#672)
-    # and broke hermes-agent's patchelfFixed patch (4/6 hunks) plus the
-    # taskchampion pkg-config/zstd/sqlite loss class; unstable TIP still
-    # ships 0.15.2 (probed 2026-11-12) so floating forward cannot fix it.
-    # Same go_1_27 (1.27.3) on both revs — the 2026-11-12 FOD got-hash
-    # sweep survives the rollback. Allowlist row: lib/flake-input-pin-audit.nix.
-    nixpkgs.url = "github:NixOS/nixpkgs/f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
+    # 2026-11-12: the f4a03c00 patchelf regression (0.15.2) proved
+    # ROOT-INDEPENDENT — the poisoned patchelf-0.15.2+patch pair comes from
+    # hermes-agent's OWN nested lock, so the remedy is the hermes-agent
+    # pin (21ae0e12, gen-992/997-proven), not a root rollback. The root
+    # stays branch-governed on nixos-unstable; f4a03c00's newer stdenv is
+    # REQUIRED by the 2026-11-11 tool floats (proof3 under f9a75f41 broke
+    # cvagent/journal/pma/discordsync/dnsblockd/timesheet that proof2
+    # proved green under f4a03c00).
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     # nixpkgs-unstable follow input REMOVED 2026-11-06: created 2026-10-25
     # (inboxclean go-1.27.3 floor vs the pinned root's go_1_27 1.27.2),
     # extended 2026-11-06 to file-and-image-renamer, go-taskqueue,
@@ -249,7 +250,17 @@
       # upstream 5a5aa9a+'s patchelfFixed patch applies and pm-ripgrep/
       # pm-node patchPhase must come back green in the toplevel proof — the
       # proof is the gate for this re-float).
-      url = "github:NousResearch/hermes-agent";
+      # RE-PINNED 2026-11-12 at 21ae0e12 (the gen-992/gen-997-proven rev,
+      # live in both deployed generations): upstream d1db1bc6's nested
+      # patchelfFixed packaging regressed AGAIN (their patchelf-0.15.2 +
+      # patch pair rejects 4/6 hunks, poisoning the ffmpeg/node/pnpm/
+      # hermes chain — the 2026-11-09 gen-992 arc, recurring). 21ae0e12's
+      # own nested lock is self-consistent (deployment-proven) and carries
+      # the env-bridge blessing (31561e37, 2026-08-20, is an ancestor).
+      # LIFT: upstream re-syncs their nested patchelf packaging/patch pair
+      # + keep-going toplevel proof with hermes-agent realized on the
+      # floated rev.
+      url = "github:NousResearch/hermes-agent/21ae0e1238fdf466fa52a85a6ebf75d6899e49da";
     };
 
     # monitor365 — Device monitoring agent (Rust)
