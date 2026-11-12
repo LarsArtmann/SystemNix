@@ -343,6 +343,28 @@ let
   # whose module ships pkg-config again). If the re-float pair ever lands on
   # a rev with the loss (docs/todo/pipeline.md), re-add: nativeBuildInputs
   # += pkg-config, buildInputs += sqlite + zstd.
+  # RE-ADDED 2026-11-12 (the predicted re-float landed: the durable
+  # f4a03c00 root pin re-exposes the loss, first-hand proof5-final.log —
+  # taskchampion zstd-sys probe panic, taskwarrior "Could NOT find
+  # PkgConfig", trunk zstd-sys custom-build failure; same three-package
+  # family). Remove when the root pin lifts (LIFT: the pin-audit nixpkgs
+  # row's condition — probe each package bare on the floated rev).
+  taskchampionPkgConfigOverlay = _final: prev: {
+    taskchampion-sync-server = prev.taskchampion-sync-server.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+      buildInputs = (old.buildInputs or [ ]) ++ [
+        _final.sqlite
+        _final.zstd
+      ];
+    });
+    taskwarrior = prev.taskwarrior.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+    });
+    trunk = prev.trunk.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
+      buildInputs = (old.buildInputs or [ ]) ++ [ _final.zstd ];
+    });
+  };
   # patchelfDefaultRestoreOverlay LIFTED 2026-11-10 (the self-removal contract
   # was met: the nixpkgs pin re-landed on f9a75f41, whose default patchelf is
   # 0.19.2 — the 0.15.2 mis-routing lived only in f4a03c00). The overlay's
@@ -354,6 +376,7 @@ let
 in
 [
   clickhouseVersionPinOverlay
+  taskchampionPkgConfigOverlay
   niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default

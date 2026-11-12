@@ -65,13 +65,14 @@
 
         package = lib.mkOption {
           type = lib.types.package;
-          # RE-STALE 2026-11-12 cache-eviction re-enumeration: upstream bakes
-          # JgMgW7v+ at c2acd98 which no longer reproduces under our graph;
-          # got XAx3aw3b (cqrs-shim-toplevel-proof.log). Shim added first-hand;
-          # drop when upstream bakes the got hash.
-          default = inputs.timesheets.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-            vendorHash = "sha256-XAx3aw3bqYIqT/AIk2Ekj5/lKhuNLwTjk9G5lB1buw8=";
-          };
+          # shim DROPPED 2026-11-12 (treadmill drop-protocol): the daemon
+          # float moved timesheets c2acd98 → 0304e2ae, the parallel
+          # session's drop-proof probed upstream-baked green at 0304e2ae
+          # (lib surface, toplevel-proof-20261112-drop.log era), and this
+          # service surface consumed the SAME drv — the morning shim
+          # (XAx3aw3b, measured at c2acd98) would mismatch at the new rev.
+          # Re-add ONLY via nix-hash-fix evidence, never by hand.
+          default = inputs.timesheets.packages.${pkgs.stdenv.hostPlatform.system}.default;
           defaultText = lib.literalExpression "inputs.timesheets.packages.\${pkgs.stdenv.hostPlatform.system}.default";
           description = "timesheet package to serve the API with.";
         };

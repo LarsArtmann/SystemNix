@@ -935,6 +935,16 @@
       # `nix flake lock --update-input discordsync --refresh` — the
       # --refresh is LOAD-BEARING after ref-ahead pushes (daemon fetch
       # cache; see 2026-09-17).
+      # RE-PINNED 2026-11-12 (LOCK-HELD pin, the media-atlas pattern — the
+      # URL stays branch-tracked and the LOCKED REV holds the pin): the
+      # 15:57-16:03-era graph proved c471b7ee green (proof2); the daemon's
+      # 16:20 re-lock floated to 0cff4484 whose checkPhase fails upstream's
+      # own config_view_wire_test in-sandbox (proof5-final.log builder
+      # failure, NOT a vendorHash class). This is the 2026-10-23
+      # rollback-set pattern: hold the last build-proven rev in the lock.
+      # LIFT: a deliberate re-lock (`nix flake lock --update-input
+      # discordsync --refresh`) once upstream 0cff4484+ passes its own
+      # checkPhase in the sandbox.
       url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=refs/heads/master";
     };
 
