@@ -31,8 +31,7 @@
 # the gpu-gtt rule already proves. Gatus does NOT get a leg: it probes
 # endpoints, not metrics; the SigNoz rule is the paging surface
 # (emeet-pixyd precedent).
-_:
-{
+_: {
   flake.nixosModules.mail-relay-verdicts =
     {
       config,
