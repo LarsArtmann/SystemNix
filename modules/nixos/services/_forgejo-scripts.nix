@@ -2180,6 +2180,11 @@ in
       pkgs.jq
       pkgs.coreutils
       pkgs.sqlite
+      # gawk 2026-11-12: line 46 keys-sync path (`awk '{print $2}'` over the
+      # authorized_keys blob) died exit-127 "awk: command not found" on the
+      # first run that reached it (the f4a03c0 deploy's post-switch battery
+      # caught it — earlier runs never hit the differing-keys branch).
+      pkgs.gawk
     ];
     text = ''
       set -euo pipefail
