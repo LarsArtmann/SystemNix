@@ -500,16 +500,21 @@ pap_section16() {
     if [ -z "$PAP_ICONS_DIR_VAL" ]; then
       fail "papdashboard unit has NO PAP_ICONS_DIR — the icon pack is not wired into the to-be-deployed config (stale module? partial revert?)"
     elif [ ! -d "$PAP_ICONS_DIR_VAL" ]; then
-      # Derived-but-never-realized class, THIRD occurrence (2026-10-23,
-      # 2026-10-27, 2026-11-05): eval derives the subset path but no build has
-      # realized it (new tiles => new subset drv; the running generation only
-      # anchors the OLD path). Realize it here instead of blocking — it is a
-      # cheap runCommand (~40 file copies, seconds) — and fail loudly only if
-      # the realize itself breaks (hash mismatch, broken iconPackSrc).
-      if nix build --no-link "$PAP_ICONS_DIR_VAL" >/dev/null 2>&1 && [ -d "$PAP_ICONS_DIR_VAL" ]; then
-        warn "PAP_ICONS_DIR was derived but never realized — built the subset on the fly ($PAP_ICONS_DIR_VAL); recurring class, see 2026-11-05 status"
+      # Derived-but-never-realized class, FOURTH occurrence (2026-10-23,
+      # 2026-10-27, 2026-11-05, 2026-11-12): eval derives the subset path but
+      # no build has realized it (new tiles => new subset drv; the running
+      # generation only anchors the OLD path). Realize it here instead of
+      # blocking — it is a cheap runCommand (~40 file copies, seconds) — and
+      # fail loudly only if the realize itself breaks (hash mismatch, broken
+      # iconPackSrc). 2026-11-12 root cause of the realize failing on a
+      # HEALTHY build: `nix build <bare out-path>` only works when the drv is
+      # already registered in the store DB ("don't know how to build these
+      # paths" otherwise); building the flake attrpath evaluates the drv and
+      # realizes it in one step, regardless of registration state.
+      if nix build --no-link .#nixosConfigurations.evo-x2.config.services.papdashboard.iconsDir >/dev/null 2>&1 && [ -d "$PAP_ICONS_DIR_VAL" ]; then
+        warn "PAP_ICONS_DIR was derived but never realized — built the subset on the fly via the flake attr ($PAP_ICONS_DIR_VAL); recurring class, see 2026-11-05 + 2026-11-12 status"
       else
-        fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory (and the realize attempt failed — run the nix build by hand for the real error)"
+        fail "PAP_ICONS_DIR $PAP_ICONS_DIR_VAL does not exist as a directory (realize via .#nixosConfigurations.evo-x2.config.services.papdashboard.iconsDir failed — run that nix build by hand for the real error)"
       fi
     else
       PAP_ICON_NAMES=$(
