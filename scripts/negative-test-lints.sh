@@ -720,22 +720,14 @@ eval_case pastebot plugin-dropped fail 'pastebot-parity-audit: the paste-snippet
   'sed:platforms/nixos/desktop/quickshell.nix:s|programs.dms-paste.enable = true;|programs.dms-paste.enable = false;|'
 
 # ── boot-mirror-path-trigger: the 2026-10-17 gen-922 stale-boot class ──
-# The check (selftests.nix) pins the rendered path-unit trigger + the
-# wants-not-requires posture. Each mutation recreates one regression shape
-# and proves the matching leg fires. Mutations keep eval valid so the
-# CHECK's guard fires (not an eval accident).
-# Leg 1: the raw-stc bypass itself — the watcher pointed at a dead dir
-# (any gen-install outside deploy.sh leaves the Samsung ESP stale).
-run_case bootmirror watcher-dropped boot-mirror-path-trigger fail 'PathChanged must watch /boot/loader/entries' \
-  'sed:platforms/nixos/system/boot-mirror.nix:s|"/boot/loader/entries"|"/boot/loader/entriez"|'
-# Leg 2: the condition-skip posture — a trigger with an unmounted Samsung
-# must condition-skip, never fail (this would boot-break nofail's promise).
-run_case bootmirror condition-dropped boot-mirror-path-trigger fail 'must condition-skip, never fail' \
-  'sed:platforms/nixos/system/boot-mirror.nix:s|ConditionPathIsMountPoint = mirrorPath;|ConditionPathIsMountPoint = "/boot";|'
-# Leg 3: the nofail half of wants-not-requires — a detached Samsung must
-# degrade, never block boot.
-run_case bootmirror nofail-dropped boot-mirror-path-trigger fail 'must stay nofail' \
-  'sed:platforms/nixos/system/boot-mirror.nix:s|"nofail"|"nofail-mutated"|'
+# MOVED 2026-11-12 to the collection repo (tests/negative/run.sh, group
+# `bootmirror`): the module source these legs mutated was delegated to
+# inputs.nixos-modules (nixosModules.boot-mirror), so sed mutations can no
+# longer reach it from THIS tree — a no-op mutation here is a phantom leg.
+# The CHECK (selftests.nix boot-mirror-path-trigger) stays SystemNix-side:
+# it evals the HOST config through the delegation, so a collection
+# regression cannot slip past this lock unnoticed. The fail-on-bug-shape
+# legs live with the module now.
 
 say ""
 
@@ -778,12 +770,15 @@ eval_case shapeaudit isactive-oneshot-probe fail 'is-active` probe\(s\) against 
 
 # ── io-tier-coverage-audit: boot-gated units must carry an IO tier ──
 # The llama-chat/compsize class (untiered bulk boot I/O on the QLC). Leg 1
-# strips a landed tier from a boot-gated unit (boot-mirror-sync); leg 2
-# removes an allowlist entry (gatus — steady daemon, justified exemption).
-# Both must throw the audit marker; the legs also prove the audit module is
-# imported by evo-x2 auto-discovery (an absent module would let both PASS).
+# strips a landed tier from a boot-gated unit; leg 2 removes an allowlist
+# entry (gatus — steady daemon, justified exemption). Both must throw the
+# audit marker; the legs also prove the audit module is imported by evo-x2
+# auto-discovery (an absent module would let both PASS).
+# Leg 1 retargeted 2026-11-12 from boot-mirror-sync (delegated to the
+# collection — source no longer mutable from this tree) to
+# bank-sync-storage-dir, the same boot-gated tiered-oneshot shape.
 eval_case iotier tier-stripped fail 'boot-gated unit\(s\) without an IO tier' \
-  'sed:platforms/nixos/system/boot-mirror.nix:s|      ioTier.background|      # tier stripped for negative test|'
+  'sed:modules/nixos/services/bank-sync.nix:s|^              ioTier.background$|              # tier stripped for negative test|'
 eval_case iotier allowlist-entry-removed fail 'boot-gated unit\(s\) without an IO tier' \
   'sed:modules/nixos/services/io-tier-coverage-audit.nix:s|            "gatus"|            # "gatus" removed for negative test|'
 
