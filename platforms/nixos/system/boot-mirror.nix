@@ -19,7 +19,6 @@
 # boot-mirror gate (fleet boot-chain auditor).
 {
   inputs,
-  config,
   options,
   lib,
   ...

@@ -35,7 +35,7 @@
       # route through it (coaching/tailor, 2026-11-11). Absent on hosts/VM
       # tests without the module — sections then stay 503-disabled (the
       # empty-key yaml shape), never fatal.
-      aiMeterEnabled = (config.services.ai-meter.enable or false);
+      aiMeterEnabled = config.services.ai-meter.enable or false;
       # Where the cv-oidc-env bridge writes CV_OIDC_CLIENT_SECRET (the
       # StateDirectory below owns /var/lib/cv-oidc; dnsblockd pattern).
       oidcEnvFile = "/var/lib/cv-oidc/client-secret.env";
