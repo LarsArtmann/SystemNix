@@ -44,13 +44,16 @@ in
 {
   programs.taskwarrior = {
     enable = true;
-    package = pkgs.taskwarrior3.overrideAttrs {
+    package = pkgs.taskwarrior3.overrideAttrs (old: {
       doCheck = false;
-      cmakeFlags = [
+      # MERGE, not replace (2026-11-12 fixwave3b): the taskchampion
+      # pkg-config overlay carries a CMAKE_EXE_LINKER_FLAGS leg that the
+      # attrset form here silently dropped.
+      cmakeFlags = (old.cmakeFlags or [ ]) ++ [
         (pkgs.lib.cmakeBool "SYSTEM_CORROSION" true)
         (pkgs.lib.cmakeBool "ENABLE_TLS_NATIVE_ROOTS" true)
       ];
-    };
+    });
 
     config = {
       confirmation = false;

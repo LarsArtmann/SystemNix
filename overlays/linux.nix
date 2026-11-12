@@ -365,16 +365,22 @@ let
     taskwarrior2 = prev.taskwarrior2.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
     });
-    # taskwarrior3 leg 2026-11-12 (fixwave2 proof): the actual consumers
+    # taskwarrior3 leg 2026-11-12 (fixwave2/3 proofs): the actual consumers
     # (programs.taskwarrior package override + the backup runtimeInputs)
-    # take taskwarrior3, whose 3.5.0 build dies `-lsqlite3` at the
-    # taskchampion cxx bridge under f4a03c00 — the taskwarrior2 leg above
-    # never touches that drv (its hash was unchanged across two proofs).
+    # take taskwarrior3, whose 3.5.0 build dies at the taskchampion cxx
+    # bridge under f4a03c00 — first `-lsqlite3`, then undefined
+    # `sqlite3_*` symbols at the CMake final link (corrosion's static
+    # archive loses the Rust-side linkage; fixwave3b). The CMake linker
+    # flag closes it for the raw surface; the programs.taskwarrior
+    # consumer was also fixed to MERGE cmakeFlags so this survives.
     taskwarrior3 = prev.taskwarrior3.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
       buildInputs = (old.buildInputs or [ ]) ++ [
         _final.sqlite
         _final.zstd
+      ];
+      cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+        "-DCMAKE_EXE_LINKER_FLAGS=-L${_final.sqlite}/lib -lsqlite3"
       ];
     });
     trunk = prev.trunk.overrideAttrs (old: {
