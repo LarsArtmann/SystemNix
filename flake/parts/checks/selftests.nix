@@ -1208,6 +1208,16 @@
           touch $out
         '';
 
+        # The PSI emitter's percent semantics must never drift back to
+        # fractions (the T4 class: /proc/pressure speaks PERCENT, a 0.50
+        # fraction threshold stood red for 8 days; 2026-11-12 fixture).
+        # Drives the REAL collector body extracted from the staged module
+        # (never a hand-copied twin) with kernel-shaped pressure fixtures.
+        psi-percent-semantics-selftest = pkgs.runCommand "psi-percent-semantics-selftest" { } ''
+          ${pkgs.bash}/bin/bash ${root}/scripts/test-psi-percent-semantics.sh ${root}/modules/nixos/services/_signoz-metrics.nix
+          touch $out
+        '';
+
         # The §18 service-sanity sweep must never go silent (the
         # DiscordSync class: 121% CPU + ~640 journal lines/min for hours,
         # every liveness gate green). Fixture-driven through the SAME
