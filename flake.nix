@@ -26,15 +26,16 @@
     # (five go-1.27.3-floor consumers collapsed back onto this root) and
     # lifts the hermes-agent patchelf#672 blocker (unstable patchelf
     # contains the fix its patchelfFixed patch targets).
-    # 2026-11-12: the f4a03c00 patchelf regression (0.15.2) proved
-    # ROOT-INDEPENDENT — the poisoned patchelf-0.15.2+patch pair comes from
-    # hermes-agent's OWN nested lock, so the remedy is the hermes-agent
-    # pin (21ae0e12, gen-992/997-proven), not a root rollback. The root
-    # stays branch-governed on nixos-unstable; f4a03c00's newer stdenv is
-    # REQUIRED by the 2026-11-11 tool floats (proof3 under f9a75f41 broke
-    # cvagent/journal/pma/discordsync/dnsblockd/timesheet that proof2
-    # proved green under f4a03c00).
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # 2026-11-12 DURABLE PIN at f4a03c00 (the deploy-997 §f.16 design, now
+    # forced by evidence): unstable tip still ships patchelf 0.15.2
+    # (probed 2026-11-12) which mispairs hermes's patchelfFixed — neutralized
+    # for hermes via the dedicated nixpkgs-hermes input below — AND tip's
+    # newer stdenv broke the 2026-11-11 tool floats (cvagent/journal/
+    # discordsync/pma: proof4 red under tip, proof2 green under f4a03c00).
+    # f4a03c00 is the proof2-proven graph. LIFT: unstable ships patchelf
+    # >= 0.19 again AND the floated tools build green on the floated rev
+    # (keep-going toplevel proof).
+    nixpkgs.url = "github:NixOS/nixpkgs/f4a03c008967841f2a0b3cb7c436fc6fc31671f6";
     # nixpkgs-unstable follow input REMOVED 2026-11-06: created 2026-10-25
     # (inboxclean go-1.27.3 floor vs the pinned root's go_1_27 1.27.2),
     # extended 2026-11-06 to file-and-image-renamer, go-taskqueue,
@@ -49,6 +50,15 @@
     # --update-input nixpkgs-llama-rag` — drop this input entirely once the
     # 0.4.0+ spin regression is fixed upstream and re-verified live.
     nixpkgs-llama-rag.url = "github:NixOS/nixpkgs/0968519e14f7aa7d3e9b389682bd74d2b51c8ce8";
+    # 2026-11-12: hermes-agent's patchelfFixed patch targets 0.19-era
+    # patchelf source; unstable's default regressed to 0.15.2 (f4a03c00 and
+    # tip both ship it), so routing hermes's nested nixpkgs to the root
+    # mispairs the pair (4/6 hunks) and poisons the ffmpeg/node chain under
+    # it. This dedicated input hands hermes the gen-992/gen-997-proven
+    # graph (f9a75f41, patchelf 0.19.2) while the root serves everything
+    # else — the 2026-10-25 follower-toolchain-skew pattern (nixpkgs-llama-rag
+    # precedent). Drop when unstable's patchelf is >= 0.19 again.
+    nixpkgs-hermes.url = "github:NixOS/nixpkgs/f9a75f41be3a74eab55d3a7679d34ad6cc0da977";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
     };
@@ -1365,7 +1375,12 @@
     # pin (master, migrated to stdenv.hostPlatform.*).
     herdr.inputs.rust-overlay.follows = "rust-overlay";
     hermes-agent.inputs.flake-parts.follows = "flake-parts";
-    hermes-agent.inputs.nixpkgs.follows = "nixpkgs";
+    # 2026-11-12: the root's patchelf matters ONLY via this follows edge
+    # (hermes's patchelfFixed pairs against it); rerouted to nixpkgs-hermes
+    # above, so the root serves the rest of the fleet on the f4a03c00 pin
+    # below (proof2-proven for every floated tool; tip's newer stdenv broke
+    # cvagent/journal/discordsync/pma in proof4).
+    hermes-agent.inputs.nixpkgs.follows = "nixpkgs-hermes";
     # Upstream pins its own uv2nix (2026-07-28) whose lib/build.nix still
     # uses the deprecated stdenv.isDarwin/isLinux accessors — eval warnings
     # on every hermes eval. Follow our root pin (a24323e9, migrated to
