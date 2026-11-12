@@ -104,9 +104,20 @@ makes old plaintext residue in session DBs inert.
 (Samsung TLC) and leaves a symlink. NESTED checkouts are covered too (`archived/<repo>`,
 `games/<repo>`, … — bounded `find -maxdepth 3`, names map relatively, parent dirs are created;
 the 2026-09-16 review fix for the 35 nested dirs the original top-level-only glob missed).
-The `crush-hot-db-migrate` unit is enabled via
-`multi-user.target` — a static unit would silently skip deploy.sh's is-enabled-gated provisioner
-loop — and runs at boot + daily 04:10 + every deploy.
+The `crush-hot-db-migrate` unit is TIMER-PULLED (OnBootSec=2min boot convergence + daily
+04:10 Persistent timer + every deploy via deploy.sh's explicit restart block — the 2026-10-06
+boot-speed restructure; a boot-gated unit delayed the login screen).
+
+**DELEGATED to the nixos-modules collection (2026-11-12, W3b):** the migrate engine lives
+at `modules/hot-dir-migrate/` in [github:LarsArtmann/nixos-modules](https://github.com/LarsArtmann/nixos-modules)
+(SystemNix locks it; `modules/nixos/services/crush-hot-db.nix` is the fleet layer: the historical
+unit name, projectsDir/owner facts, `CRUSH_HOT_DB_DRY_RUN`). The delegation carried the
+**2026-11-12 live-defect fix**: under host yama `ptrace_scope=1`, reading foreign
+`/proc/<pid>/fd` symlink targets requires `CAP_SYS_PTRACE` even for root — the historical
+3-cap set silently blinded the per-project liveness guard (live sessions were relocated,
+e.g. monitor365-ui-sdk 2026-11-12 21:48); the unit now carries the cap, and the collection's
+contract check + `cap-stripped` negative leg pin it. DBG forensics lines (`scanning … pid`,
+`readlink FAILED`) stay in the script — they are what exposed the blindness.
 
 **First migration: RAN 2026-09-18** (started 15:41 inside the freeze-#6 recovery window,
 interrupted ~2/3 by the crash, converged across reboots — `~/projects/.crush →
@@ -130,9 +141,13 @@ everything not held open):**
 ```text
 skip <project>: live crush session holds it open
 skip <project>: crush.db written in the last 10 minutes
-crush-hot-db: N project(s) relocated
-WARN: .crush deeper than discovery depth 3 (stays on the QLC root): <path>
+crush-hot-db-migrate: N project(s) relocated
+WARN: .crush deeper than discovery depth 3 (stays on the OS disk): <path>
 ```
+
+(the summary line prefix changed `crush-hot-db:` → `crush-hot-db-migrate:` with the 2026-11-12
+collection delegation — it now carries the unit name; pre-delegation journal greps for the old
+prefix stop at the generation boundary)
 
 The legacy whole-run line `skip: crush session(s) active (N) — next run converges` belongs
 to the pre-2026-09-21 blanket guard and no longer appears on the deployed 2026-09-22+
@@ -158,7 +173,8 @@ DRY_RUN, OnFailure) is LIVE on the deployed 2026-09-22 generation — verified 2
 (deployed migrate script greps + `crush-hot-db-migrate` present in BOTH the rendered
 `services.system-health.extraMonitoredServices` and the DEPLOYED system-health collector).
 
-Runbook/source: `modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
+Runbook/source: the collection module (`hot-dir-migrate`) + the fleet layer
+`modules/nixos/services/crush-hot-db.nix`; see the `services.hot-db` Phase-2 plan
 (`docs/planning/archived/2026-09-14_13-27_SAMSUNG-PHASE2-HOT-DB-NATIVE-PARETO-PLAN.md`) for the long-term home.
 
 ## crush-debug (error-to-agent launcher, 2026-09-29)

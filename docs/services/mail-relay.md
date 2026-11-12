@@ -137,6 +137,22 @@ vars, stored in its PostgreSQL. The polling task runs every 10 min by default
   fixed `.tmp` name or a hardcoded `/run/secrets-rendered` path — real sops
   renders under `/run/secrets/rendered`, and the SASL path must stay
   interpolated from the sops template definition.
+- **Transport verdicts (2026-11-12, residue-plan R5)**: the SEPARATE
+  `services.mail-relay-verdicts` collector (root, journal access, writes
+  `mail-relay-verdicts.prom` — do NOT confuse with this service's own
+  postfix-user `mail-relay-metrics` unit writing `mail-relay.prom`; one
+  owner per file) folds relay-hop `postfix/smtp` journal verdicts into
+  `node_mail_relay_{sent,bounced,deferred}_total`, rejection classes, and
+  the held-queue gauge. Born from the 2026-11-11 Resend outage: every
+  outbound application mail bounced `550 domain not verified` for hours
+  while the pipeline recorded success at the client 250 hop (3 recruiter
+  pairs burned). Pages via SigNoz "Outbound Mail Bounced at Relay"
+  (`increase(node_mail_relay_bounced_total[10m]) >= 1`). Triage:
+  resend.com → Domains → artmann.tech re-verify, then
+  `journalctl -u postfix` relay-hop lines, then `cv misroute --reason
+  non-delivery` for ledger pairs the bounce burned. Fixture selftest:
+  `scripts/test-mail-relay-verdicts-collector.sh` +
+  `mail-relay-verdicts-selftest` flake check.
 
 **Verification**: `tests/test-mail-relay.nix` (VM: loopback-only listener, null-client
 config, sender+recipient rewrite E2E, collector fail-closed) and

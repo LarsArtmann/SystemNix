@@ -110,16 +110,16 @@
           touch $out
         '';
 
-        # mail-relay-metrics collector fixture selftest (2026-11-12, R5 of
+        # mail-relay-verdicts collector fixture selftest (2026-11-12, R5 of
         # the send-hardening residue plan): counters, rolling-window
         # pruning, rejection-class mapping, held-queue counting, resume
         # math, and the fail-closed scrape-error path, driven through stub
         # journalctl/postqueue against the SAME repo file the unit runs.
-        mail-relay-metrics-selftest = pkgs.runCommand "mail-relay-metrics-selftest" { } ''
+        mail-relay-verdicts-selftest = pkgs.runCommand "mail-relay-verdicts-selftest" { } ''
           scratch=$(mktemp -d)
-          cp ${root}/scripts/mail-relay-collector.sh "$scratch/mail-relay-collector.sh"
-          cp ${root}/scripts/test-mail-relay-collector.sh "$scratch/test-mail-relay-collector.sh"
-          ${pkgs.bash}/bin/bash "$scratch/test-mail-relay-collector.sh"
+          cp ${root}/scripts/mail-relay-verdicts-collector.sh "$scratch/mail-relay-verdicts-collector.sh"
+          cp ${root}/scripts/test-mail-relay-verdicts-collector.sh "$scratch/test-mail-relay-verdicts-collector.sh"
+          ${pkgs.bash}/bin/bash "$scratch/test-mail-relay-verdicts-collector.sh"
           touch $out
         '';
 

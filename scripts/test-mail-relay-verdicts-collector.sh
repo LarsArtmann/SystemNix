@@ -6,7 +6,7 @@
 set -uo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-COLLECTOR="${1:-$HERE/mail-relay-collector.sh}"
+COLLECTOR="${1:-$HERE/mail-relay-verdicts-collector.sh}"
 failures=0
 
 assert_eq() {
@@ -20,7 +20,7 @@ assert_eq() {
 }
 
 run_case() {
-  local name="$1" journal_fixture="$2" queue_fixture="$3"
+  local journal_fixture="$2" queue_fixture="$3"
   local dir
   dir="$(mktemp -d)"
   mkdir -p "$dir/textfile"
@@ -39,7 +39,7 @@ cat "$queue_fixture"
 EOF
   chmod +x "$dir/postqueue"
 
-  OUT="$dir/textfile/mail-relay.prom" \
+  OUT="$dir/textfile/mail-relay-verdicts.prom" \
     TEXTFILE_DIR="$dir/textfile" \
     STATE_DIR="$dir/state" \
     THRESHOLD=1 \
@@ -50,7 +50,7 @@ EOF
   echo "$dir"
 }
 
-metric() { grep -E "^$1 " "$2/textfile/mail-relay.prom" | awk '{ print $2 }'; }
+metric() { grep -E "^$1 " "$2/textfile/mail-relay-verdicts.prom" | awk '{ print $2 }'; }
 
 NOW="$(date +%s)"
 export NOW
@@ -114,10 +114,10 @@ cat >"$d4/postqueue" <<'EOF'
 exit 1
 EOF
 chmod +x "$d4/postqueue"
-OUT="$d4/textfile/mail-relay.prom" TEXTFILE_DIR="$d4/textfile" STATE_DIR="$d4/state" \
+OUT="$d4/textfile/mail-relay-verdicts.prom" TEXTFILE_DIR="$d4/textfile" STATE_DIR="$d4/state" \
   THRESHOLD=1 WINDOW=3600 JOURNALCTL="$d4/journalctl" POSTQUEUE="$d4/postqueue" \
   bash "$COLLECTOR" >/dev/null 2>&1
-assert_eq "failclosed: prom written" 1 "$(test -f "$d4/textfile/mail-relay.prom" && echo 1 || echo 0)"
+assert_eq "failclosed: prom written" 1 "$(test -f "$d4/textfile/mail-relay-verdicts.prom" && echo 1 || echo 0)"
 assert_eq "failclosed: scrape_errors 1" 1 "$(metric node_mail_relay_scrape_errors "$d4")"
 
 # ── case 5: delta accumulation across runs (state resume) ───────────────────
@@ -129,7 +129,7 @@ d5="$(run_case resume-seed "$JOURNAL_FIXTURE" "$QUEUE_FIXTURE")"
   echo "$((NOW - 10)).000000 evo-x2 postfix/smtp[511]: L1: to=<a@b.c>, relay=r[1.2.3.4]:587, status=sent (250)"
   echo "$((NOW - 9)).000000 evo-x2 postfix/smtp[512]: L2: to=<b@b.c>, relay=r[1.2.3.4]:587, status=bounced (550 x)"
 } >"$JOURNAL_FIXTURE"
-OUT="$d5/textfile/mail-relay.prom" TEXTFILE_DIR="$d5/textfile" STATE_DIR="$d5/state" \
+OUT="$d5/textfile/mail-relay-verdicts.prom" TEXTFILE_DIR="$d5/textfile" STATE_DIR="$d5/state" \
   THRESHOLD=1 WINDOW=3600 JOURNALCTL="$d5/journalctl" POSTQUEUE="$d5/postqueue" \
   bash "$COLLECTOR" >/dev/null 2>&1
 assert_eq "resume: sent_total 1" 1 "$(metric node_mail_relay_sent_total "$d5")"

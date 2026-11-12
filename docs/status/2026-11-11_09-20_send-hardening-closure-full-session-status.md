@@ -26,7 +26,7 @@ owner-authorized confirmation deploy is in flight.
 | T8 `cv claims` verb | **LANDED + LIVE** | list / `--release --reason` / `--confirm-sent`; 9 tests; runbook recipe in `docs/services/cv.md`; deviation from plan documented (single-verb shape — cmdguard parents share flag structs) |
 | G3 mistake modeling | **LANDED (post-999, rides next deploy)** | `application.misrouted` event + `RecordMisroute` command + `cv misroute` verb; all 5 ratchets; end-to-end re-drive test; ADR "Mistake Modeling" section |
 | G2 apology | **DECIDED: rest** | draft + 51-recipient list archived `~/.cache/send-hardening/` (first-hand postfix-journal extraction; earlier "~71" overcounted) |
-| T2 quota probe | **EXECUTED — verdict INVERTED (see d.1)** | postfix accepts locally, **Resend 550: artmann.tech domain NOT verified** — outbound is NOT restored; owner g-1 action with live evidence |
+| T2 quota probe | **EXECUTED — verdict INVERTED (see d.1)** | postfix accepts locally, **Resend 550: artmann.tech domain NOT verified** — outbound is NOT restored; owner g-1 action with live evidence. Re-probed 2026-11-12 23:18 CET (residue continuation): **STILL 550**; larsartmann.cloud contrast-proven working the same minute (20/20 flushed held mails `status=sent` via the generic-map from-address) |
 | T3 E2E idempotency | **SEND-SIDE DONE, blocked at Resend** | same-key probe pair relayed; both bounced on the unverified domain before any key logic could engage |
 | T16 race pass | **CLEAN** | `-race` over eventstore/sender/applyflow: zero findings |
 | T14 agentmail parity / T15 capability-scan rule | **LANDED** | ADR sections + CV AGENTS.md trap entry |

@@ -2263,12 +2263,13 @@ in
       # signal (Gatus "USB Flap Rate" check).
       usb-flap-metrics.enable = true;
 
-      # Mail-relay outcome metrics (postfix relay-hop journal → textfile):
+      # Mail-relay transport VERDICTS (postfix relay-hop journal → textfile):
       # the 2026-11-11 Resend outage class — every outbound application
       # mail bounced at the relay (550 domain not verified) for hours
-      # while the pipeline read success at the client 250 hop. Makes the
-      # relay verdict observable (SigNoz "Outbound Mail Bounced at Relay").
-      mail-relay-metrics.enable = true;
+      # while the pipeline read success at the client 250 hop. Sibling of
+      # services.mail-relay's queue/credential collector (different prom
+      # file + unit). Pages via SigNoz "Outbound Mail Bounced at Relay".
+      mail-relay-verdicts.enable = true;
 
       # Scoped polkit rule (freeze-7 diagnosing-agent class): members of
       # wheel may stop/start/restart the allowlisted storm/convergence units

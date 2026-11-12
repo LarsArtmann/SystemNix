@@ -1,6 +1,6 @@
 # Journal on the Samsung Hot Tier — Agent Notes
 
-> Module: `platforms/nixos/system/journal-hot.nix`. Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
+> Module: `platforms/nixos/system/journal-hot.nix` (fleet layer since the 2026-11-12 W3b delegation — the mount family lives at `modules/hot-tier/` in [github:LarsArtmann/nixos-modules](https://github.com/LarsArtmann/nixos-modules), contract-checked + VM-tested there as `checks.hot-tier-contract` / `checks.hot-tier-journal-vm`; SystemNix layers the Samsung device + journal facts). Body migrated verbatim from AGENTS.md on 2026-10-01 (restructure) — treat the section below as authoritative agent notes for this service.
 
 ## Journal on the Samsung Hot Tier (`journal-hot`, migrated 2026-09-29)
 

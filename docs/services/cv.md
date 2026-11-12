@@ -305,6 +305,31 @@ smoke, 2026-11-12 22:01). The R3.1 store enumeration (536 catchall apps,
 zero real-recipient overlap) predates later store churn — RE-ENUMERATE from
 a fresh live snapshot before any misroute batch.
 
+**Batch executed + the invocation trap (2026-11-12 23:0x–23:2x):** ALL 539
+corrections are LIVE (536 catchall + 3 non-delivery relay-bounce pairs;
+`vacated` confirmed per row, fold-demoted to ready, server rehydrated
+49,513 events). The v1 batch failed 536/536 CLEAN because the CLI ran as
+lars: agent shells resolve NO config.yaml (CWD has none, no
+`~/.cv/config.yaml`) and cannot read the cv:cv 0700 store anyway — every
+row died `ErrNeedsEventStore`. The working invocation (store-direct, needs
+cv-server STOPPED for the lease):
+
+```
+sudo -n -u cv env CV_PIPELINE_MAILBOX_PASSWORD=validation-only \
+  CV_OIDC_CLIENT_SECRET=validation-only \
+  sh -c "cd /var/lib/cv && /run/current-system/sw/bin/cv misroute app-X \
+    --reason catchall --to applications@artmann.tech --note '<evidence>'"
+```
+
+(CWD `/var/lib/cv` resolves the generated config.yaml, which carries the
+ABSOLUTE event-store DSN; the two dummy env values only satisfy config
+validation — misroute never uses mailbox/oidc, and no real secret is
+touched.) Batch discipline that worked: 1-row dry-run → fresh-snapshot
+event + real-decider fold verify (`ApplyApplicationEvent`) → full batch →
+rehydration-count check (+N events exactly). Post-batch, the dashboard's
+per-app events endpoint renders "Misrouted correction (reason) — vacated
+<addr>" lines live (verified 200 + markers on `76f8e41`).
+
 An `AMBIGUOUS` journal line means a transport call died with the context
 cancelled mid-transaction — the relay may STILL have delivered. The row
 parks in `send_claimed` forever by design; the resolution is a human

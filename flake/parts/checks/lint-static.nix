@@ -491,12 +491,15 @@
                                           fi
 
                                           # 2. underscore histogram/summary suffixes are stored DOTTED
-                                          # (googleapis_com exemption: GCP-native metric names like
-                                          # storage_googleapis_com_api_request_count END in _count by
-                                          # GCP convention — not Prometheus histogram components;
-                                          # underscoreLive exemption: store-verified standalone
-                                          # counters/gauges stored verbatim — dotting them is the
-                                          # 2026-10-17 regression class).
+                                          # (googleapis exemption: GCP-native metric names like
+                                          # storage.googleapis.com/storage/v2/total_count END in
+                                          # _count by GCP convention — not Prometheus histogram
+                                          # components; the [._] form covers the dotted store
+                                          # spelling (2026-11-12 gcp.json rewrite) and the legacy
+                                          # underscore spelling; underscoreLive exemption:
+                                          # store-verified standalone counters/gauges stored
+                                          # verbatim — dotting them is the 2026-10-17 regression
+                                          # class).
                                           strip_allow() {
                                             if [ -n "$allowNames" ]; then
                                               grep -vE "\b$(echo "$allowNames" | tr ' ' '|')\b"
@@ -504,7 +507,7 @@
                                               cat
                                             fi
                                           }
-                                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -v 'googleapis_com' | strip_allow >lint_hits; then
+                                          if stream "$f" | grep -nE '[a-z_0-9]+_(sum|count|bucket)\b' | grep -vE 'googleapis[._]com' | strip_allow >lint_hits; then
                                             echo "FAIL [$label] $f: underscore histogram suffix (metric_sum/_count/_bucket)."
                                             echo "  SigNoz stores suffixes DOTTED for histogram FAMILIES: metric.sum,"
                                             echo "  metric.count, metric.bucket. A STANDALONE counter/gauge ending in"

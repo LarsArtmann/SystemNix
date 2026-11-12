@@ -10,7 +10,7 @@
   "spec": {
     "display": {
       "name": "GCP Fleet (Cloud Run / Functions / Storage)",
-      "description": "Google Cloud Monitoring metrics pulled by the SigNoz collector's googlecloudmonitoring receivers (projects keyed by the Google-Cloud-Inventory reports). Queries use SigNoz's dot->underscore metric naming and need live verification at go-live (runbook: docs/services/signoz-gcp-monitoring.md)"
+      "description": "Google Cloud Monitoring metrics pulled by the SigNoz collector's googlecloudmonitoring receivers (projects keyed by the Google-Cloud-Inventory reports). Metric names are stored verbatim DOTTED (run.googleapis.com/...): panel queries MUST use the {__name__=\"...\"} selector form, and the receiver is DELTA-only so every counter/latency family is PromQL-blind (engine-verified 2026-11-12) — this dashboard ships only the four gauge families that render. Runbook: docs/services/signoz-gcp-monitoring.md"
     },
     "panels": {
       "5254ff30-0691-5493-b3f2-fc78091435ab": {

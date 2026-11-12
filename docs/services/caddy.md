@@ -214,6 +214,13 @@ duration is also in every access-log line (`duration` field).
   per-host default) — see `modules/nixos/services/geometrikks.nix`.
 - **Access-log ingestion** (filelog receiver) now targets the per-vHost
   files — `docs/todo/monitoring.md`.
+- **The `/var/log/caddy` mount is delegated (2026-11-12, W3b)**: the Samsung
+  hot-tier mount family (subvol mount + dropLogsDirectory neutralization +
+  ownership heal) lives at `modules/hot-tier/` in
+  [github:LarsArtmann/nixos-modules](https://github.com/LarsArtmann/nixos-modules)
+  (VM-tested there as `checks.hot-tier-caddy-vm`, incl. the Samsung-absent
+  degraded node); `platforms/nixos/system/caddy-logs-hot.nix` is the fleet
+  layer (device + subvol + caddy facts).
 
 ## Error pages
 

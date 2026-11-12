@@ -145,24 +145,31 @@ GCP's 1M free Monitoring API reads per billing account/month ($0 beyond;
 prorated $0.01/1k if the project list grows). Keep the free-tier margin in
 mind when adding projects: each extra fast project ≈ +50k/month.
 
-## SigNoz query notes
+## SigNoz query notes (LIVE-VERIFIED 2026-11-12 — supersedes the mangling premise)
 
-- Metric names arrive **dot→underscore mangled**: `run.googleapis.com/
-  request_count` → `run_googleapis_com_request_count` (storage/functions
-  likewise). Dashboard queries already use the mangled forms.
-- Delta sums: query with `sum by (...) (metric)` directly — values ARE the
-  interval deltas. Never `rate()` (non-monotonic delta sums at every
-  collector version; `rate()` is only for the cumulative class we don't
-  scrape).
-- Histograms (request_latencies) expose dotted suffix series (`.sum`) in
-  SigNoz. The dashboard shows total latency; refine to quantiles after
-  go-live once live label shapes are verified.
-- Label names: `service_name` (Cloud Run), `function_name` (Functions),
-  `bucket_name` (Storage), plus `location` etc. **The dashboard queries
-  have NOT been verified against live data yet** (impossible pre-go-live);
-  first go-live session must check Metrics Explorer for actual label keys
-  and adjust `gcp.json` (deterministic uuid5 regeneration: `uuid5(
-  NAMESPACE_URL, "systemnix-gcp/<slug>")`).
+- Metric names are stored **verbatim DOTTED** — the store holds
+  `run.googleapis.com/request_count` exactly as GCP names it. The old
+  dot→underscore mangling premise was FALSIFIED live: underscore queries
+  (`run_googleapis_com_request_count`) match ZERO series, and bare dotted
+  identifiers fail PromQL parsing outright (`unexpected character: '.'`).
+  The renderable form is the `__name__` selector:
+  `{__name__="run.googleapis.com/request_count"}`.
+- **DELTA = PromQL-blind (engine-verified via v3 query_range A/B):** the
+  PromQL engine returns ZERO series for every Delta-temporality family
+  (request_count, request_latencies.bucket/.count, container/network/*,
+  billable_instance_time, function/execution_* — all Delta). Only the
+  gauge families render: container/containers, storage/v2/total_bytes,
+  storage/v2/total_count, function/active_instances. Since the receiver
+  is DELTA-only (below), counter/latency panels CANNOT render — gcp.json
+  ships only the four gauge panels. Delta values via the query-BUILDER
+  path (Temporality field) still work; PromQL dashboards/rules never do.
+- Label names (live): `service_name` (Cloud Run), `function_name`
+  (Functions), `bucket_name` + `storage_class` (Storage), plus
+  `project_id`, `location`, `response_code`/`route`/`revision_name` (on
+  request_count). Panel queries verified: containers 8 series, functions
+  1, storage bytes 43, objects 44 (6h window).
+- Dashboard uuid5 regeneration unchanged: `uuid5(NAMESPACE_URL,
+  "systemnix-gcp/<slug>")`.
 
 ## Operations
 

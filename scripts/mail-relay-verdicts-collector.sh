@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Mail-relay outcome collector body (textfile collector), shared by the
-# mail-relay-metrics systemd unit and its fixture selftest
-# (scripts/test-mail-relay-collector.sh + the mail-relay-metrics-selftest
+# mail-relay-verdicts systemd unit and its fixture selftest
+# (scripts/test-mail-relay-verdicts-collector.sh + the mail-relay-verdicts-selftest
 # flake check — the tested artifact is the SAME repo file the unit runs).
 #
 # The 2026-11-11 Resend outage class: artmann.tech silently lost domain
@@ -11,7 +11,7 @@
 # session, docs/status/2026-11-11_09-20 §d.1). The postfix CLIENT 250 is
 # local truth only; the relay-hop journal line is the verdict. This
 # collector reads those verdicts from the persistent journal between the
-# stored resume point and NOW, and renders mail-relay.prom:
+# stored resume point and NOW, and renders mail-relay-verdicts.prom:
 #
 #   node_mail_relay_sent_total            cumulative relay-accepted sends (state file)
 #   node_mail_relay_bounced_total         cumulative relay rejections (state file)
@@ -46,7 +46,7 @@ WINDOW="${WINDOW:?WINDOW required}"
 : "${POSTQUEUE:=postqueue}"
 
 mkdir -p "${TEXTFILE_DIR}"
-TMP="$(mktemp "${TEXTFILE_DIR}/mail-relay.prom.XXXXXX")"
+TMP="$(mktemp "${TEXTFILE_DIR}/mail-relay-verdicts.prom.XXXXXX")"
 chmod 644 "$TMP"
 STATE="$STATE_DIR/state"
 STATE_TMP="$(mktemp)"

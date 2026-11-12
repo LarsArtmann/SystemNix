@@ -226,9 +226,11 @@ systemd.exec "Automatic Dependencies": ANY of `WorkingDirectory=`,
 equivalent to `RequiresMountsFor=`. A service whose dataDir carries such a
 setting therefore HARD-REQUIRES the hot-db mount: a detached Samsung fails
 the unit instead of degrading it (VM-test-proven on caddy's
-`LogsDirectory=` — `tests/test-caddy-logs-hot.nix`, degraded node; fix
-pattern there = `serviceConfig.<X>Directory = mkForce []` + tmpfiles
-existence + `+`-prefixed ExecStartPre chown). Rendered-config sweep of the
+`LogsDirectory=` — the collection's `checks.hot-tier-caddy-vm` degraded node
+since the 2026-11-12 W3b delegation, previously `tests/test-caddy-logs-hot.nix`;
+fix pattern there = `dropLogsDirectory` (mkForce []) + tmpfiles
+existence + `+`-privileged ExecStartPre chown, all owned by the collection's
+`hot-tier` module now). Rendered-config sweep of the
 five wave services (evo-x2, 2026-10-01):
 
 | Service         | Settings carrying the trap                                                     | Consequence at cutover                        |
