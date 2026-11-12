@@ -1022,11 +1022,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794523891,
-        "narHash": "sha256-m0OFThELXAXm079zkb3muanS0ENWoyqivoFqIEc/RIY=",
+        "lastModified": 1794526436,
+        "narHash": "sha256-OC3nFp49a3Em/KnLmbAkt0HrDu5rGWq7FGuNgad6Wns=",
         "ref": "refs/heads/master",
-        "rev": "a2755cd31d6510b9475634034c6ebaa942b9703d",
-        "revCount": 10753,
+        "rev": "a57378a1e0cb6ad262a85b8b5b0c9f1772c49b3d",
+        "revCount": 10765,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -1052,11 +1052,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794524183,
-        "narHash": "sha256-cp/OHXQbPFnC00MGIA8ufXD1Mkt/XkpbnV8RcGz707Y=",
+        "lastModified": 1794524509,
+        "narHash": "sha256-JEoOww91UWu8K0aNmK0lYR+y/LcIYeAvWlo/hCMYYzU=",
         "ref": "refs/heads/master",
-        "rev": "b82ade3a00ddc679019697cb37fab40beb9685a0",
-        "revCount": 511,
+        "rev": "205c188c079c8f936cd6dddb7b80829f807688df",
+        "revCount": 512,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       },
@@ -1094,11 +1094,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794516787,
-        "narHash": "sha256-+6ll+U3qF9YjhYgGzOGkntU1wNokrzkyjz8Gbh67pa4=",
+        "lastModified": 1794526020,
+        "narHash": "sha256-AMGllHZjQmShq7fZng0Dz8lfT23qdhY2uaiszQQpaS4=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "80f116bebaf454f57d7a9115bb0aa4f75aff8d13",
+        "rev": "64740c1e56eb0efe4aab08970094ae736cd21c9b",
         "type": "github"
       },
       "original": {
@@ -7521,11 +7521,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1794522158,
-        "narHash": "sha256-9uSEcmgAG7zQEslpJZhZpkfbShsoki6RjsctE6afmMo=",
+        "lastModified": 1794525353,
+        "narHash": "sha256-bv/hrsQNw5zYwty1ycjm/WbnTDCv/bkQ7CpBJPH94iU=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "c9a49f5718f1dd5d527487e9528d37370732221a",
+        "rev": "c5c5940b1b6760722e02b2e2913b441afbe53f5a",
         "type": "github"
       },
       "original": {
@@ -8731,11 +8731,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794523824,
-        "narHash": "sha256-CWxaJdouui183uoh2jAHK7P1l3pjZGGdNXQEZ+q/V94=",
+        "lastModified": 1794526552,
+        "narHash": "sha256-KkmH+NULoWPXzin+nclSyD4KiKioy0Yvrl6hkQfturA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "acf2bbff45908113588ee32fea7159388b03323d",
+        "rev": "9e0d112b0b2af5c04deb22694c3ea99723fc23a2",
         "type": "github"
       },
       "original": {
