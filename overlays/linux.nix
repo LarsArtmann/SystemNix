@@ -357,7 +357,7 @@ let
         _final.zstd
       ];
     });
-    taskwarrior = prev.taskwarrior.overrideAttrs (old: {
+    taskwarrior2 = prev.taskwarrior2.overrideAttrs (old: {
       nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ _final.pkg-config ];
     });
     trunk = prev.trunk.overrideAttrs (old: {
