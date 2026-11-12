@@ -1699,40 +1699,40 @@
         lib = import ./lib { inherit (nixpkgs) lib; };
 
         darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
-            inherit
-              inputs
-              mkLarsPackages
-              sharedOverlays
-              sharedHomeManagerConfig
-              sharedHomeManagerSpecialArgs
-              ;
-          };
+          inherit
+            inputs
+            mkLarsPackages
+            sharedOverlays
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
+        };
 
         nixosConfigurations."evo-x2" = import ./systems/evo-x2.nix {
-            inherit
-              inputs
-              mkLarsPackages
-              sharedOverlays
-              linuxOnlyOverlays
-              pythonTest
-              discoveredModules
-              sharedHomeManagerConfig
-              sharedHomeManagerSpecialArgs
-              ;
-          };
+          inherit
+            inputs
+            mkLarsPackages
+            sharedOverlays
+            linuxOnlyOverlays
+            pythonTest
+            discoveredModules
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
+        };
 
         nixosConfigurations."zfs-vm" = import ./systems/zfs-vm.nix {
-            inherit inputs;
-          };
+          inherit inputs;
+        };
 
         nixosConfigurations."rpi3-dns" = import ./systems/rpi3-dns.nix {
-            inherit
-              inputs
-              linuxOnlyOverlays
-              sharedHomeManagerConfig
-              sharedHomeManagerSpecialArgs
-              ;
-          };
+          inherit
+            inputs
+            linuxOnlyOverlays
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
+        };
       };
     };
 }
