@@ -219,7 +219,13 @@
     # go-health, go-health-dashboard, go-datastar, go-sse). Aligned pins +
     # re-derived vendorHash -> clean package build green; input now floats
     # on ?ref=refs/heads/master.
-    crm = "REV-PINNED at 98cd15c (2026-11-13 roll-forward to the funnel-completion plan commit, on top of the daemon doc/close-out churn; prior 9d96dad 2026-11-12 login auto-forward wave). Deliberate policy pin (not ?ref=master): the 10-14 master-tracking window proved the consumer-side vendorHash treadmill returns on every upstream float; the tip probe (lock-free FULL package build) is green at this rev, no override — upstream bakes the hash. Re-roll on the next crm pin wave.";
+    # crm row REMOVED 2026-11-13 (owner directive: always latest): the
+    # deliberate policy pin is lifted and the input floats on
+    # ?ref=refs/heads/master. Rationale in flake.nix: the "vendorHash
+    # treadmill" that motivated the 10-14 pin is dead — upstream's own
+    # vendorHash.nix bakes the correct hash from c626704 onward, and the
+    # last four roll probes (through f6ccd43) built green with no
+    # consumer-side override.
   },
 }:
 let

@@ -1043,44 +1043,23 @@
     # (go.mod floor 1.27.1), so NO nixpkgs follows — it must consume its
     # own build environment. Consumed by modules/nixos/services/crm.nix
     # (services.crm-server unit); the CV syncer targets its REST surface.
-    # ?ref=master since 2026-10-14 (owner master-tracking directive lifted
-    # the same-day rollback pin 1ee70909): non-follower class, so upstream
-    # pushes genuinely fix stale hashes; until each lands, the goModules
-    # vendorHash is shimmed consumer-side in crm.nix (nix-hash-fix evidence
-    # only, re-measured on upstream source moves).
+    # FLOATS ON MASTER since 2026-11-13 (owner directive: always latest).
+    # The pin era is over: master-tracking is safe now because crm's own
+    # vendorHash.nix bakes the correct hash (proven from c626704 onward —
+    # consecutive roll probes build green with NO consumer-side override),
+    # so the "vendorHash treadmill" that motivated the 10-14 policy pin no
+    # longer exists. Non-follower class (own go-nix-helpers/nixpkgs lock):
+    # bumps flow via `nix flake lock --update-input crm --refresh`; a stale
+    # upstream-baked hash surfaces as a deploy-time FOD mismatch and gets
+    # fixed upstream (house doctrine), never via a consumer shim.
     crm = {
-      # TEMPORARY HARD PIN rolled forward 2026-11-06 (same templ-API-removal
-      # class; allowlist block in lib/flake-input-pin-audit.nix). LIFTED by
-      # the upstream pin wave: 0ce5ecc carries crm's own double pin —
-      # cqrs-htmx b55d95b3 (templ v0.3.1100 regeneration) + go-cqrs-lite
-      # f79e37fcf (docserver in the templ-1100 form + the MaxOpenConns
-      # field the read-pool wave consumes) — BOTH in the committed
-      # flake.lock (the b57a94c attempt missed the lock hunk), PLUS the
-      # /search truth wave + group caps and the catalog v4.13.0 alignment.
-      # Source builds green rev-pinned; consumer-side float-proof re-proves
-      # per roll. Keep pinned (not ?ref=master): the 10-14 master-tracking
-      # window showed the vendorHash treadmill returns on every upstream
-      # float; re-roll this rev per crm pin wave instead.
-      # 2026-11-11 ROLL-FORWARD to f2d1726 (latest origin/master at roll
-      # time; upstream had moved past f32f4c0 with the wave-1 close-out):
-      # lock-free package probe green at this rev. Note: a live session was
-      # mid-work in the crm checkout (uncommitted templ/CSS churn) — the
-      # NEXT roll must re-probe the newer tip.
-      # 2026-11-11 ROLL-FORWARD to e383ba9 (the journal-words + machine-tag
-      # endpoint + gate-repair session close-out: crm's go-cqrs-lite pin
-      # completed to 3a334f909 /v4 + cmdguard v5.0.0, vendorHash chased,
-      # verify-pinned FULL green): lock-free package probe green at this
-      # rev.
-      # 2026-11-12 ROLL-FORWARD to 9d96dad (the login auto-forward wave:
-      # bare GET /login 303s straight to Pocket ID in the passkeys-only
-      # posture, error/manual query escape keeps the interactive page; also
-      # carries the oauth2/sqlite bumps with upstream's own vendorHash chase
-      # c626704): lock-free package probe green at this rev, no override.
-      # 2026-11-13 ROLL-FORWARD to 98cd15c (the funnel-completion plan
-      # commit on top of the daemon's doc/close-out churn): lock-free FULL
-      # package build green at this rev (goModules FOD + package, no
-      # consumer-side override — upstream bakes the hash).
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=98cd15c318d522cef9fc537c1a780c65f43e53a2";
+      # Pin history (compressed): 197bdf1 (2026-11-06 templ-API hard pin) →
+      # f2d1726 → e383ba9 → 9d96dad (login auto-forward) → 98cd15c
+      # (2026-11-13 funnel plan). Every roll probe-built green, the 98cd15c
+      # roll with a FULL lock-free package build and no override. The pin is
+      # dropped: within hours master had moved to f6ccd43 (also probed
+      # green) — the rev pin was only ever buying staleness.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?ref=refs/heads/master";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
