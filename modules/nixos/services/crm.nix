@@ -509,45 +509,46 @@
         # changes only event ordering, and the journal is the truth), which
         # makes the ordering coupling unnecessary. `After=pim-sync.service`
         # keeps the common case ordered when both queue together.
-        sops.secrets.crm_stalwart_dav_password =
-          lib.mkIf cfg.carddavProjection.enable {
-            sopsFile = ../../../platforms/nixos/secrets/crm.yaml;
-            restartUnits = [ "crm-carddav-projection.service" ];
+        sops.secrets.crm_stalwart_dav_password = lib.mkIf cfg.carddavProjection.enable {
+          sopsFile = ../../../platforms/nixos/secrets/crm.yaml;
+          restartUnits = [ "crm-carddav-projection.service" ];
+        };
+
+        sops.templates."crm-carddav-dav-env" = lib.mkIf cfg.carddavProjection.enable {
+          # The projection unit runs as the operator user (it writes the
+          # live journal in $HOME), so the env file is user-owned —
+          # unlike the root-owned crm-server-env above.
+          owner = user;
+          group = group;
+          mode = "0400";
+          restartUnits = [ "crm-carddav-projection.service" ];
+          content = lib.generators.toKeyValue { } {
+            CRM_CARDDAV_PASSWORD = config.sops.placeholder.crm_stalwart_dav_password;
           };
+        };
 
-        sops.templates."crm-carddav-dav-env" =
-          lib.mkIf cfg.carddavProjection.enable {
-            # The projection unit runs as the operator user (it writes the
-            # live journal in $HOME), so the env file is user-owned —
-            # unlike the root-owned crm-server-env above.
-            owner = user;
-            group = group;
-            mode = "0400";
-            restartUnits = [ "crm-carddav-projection.service" ];
-            content = lib.generators.toKeyValue { } {
-              CRM_CARDDAV_PASSWORD = config.sops.placeholder.crm_stalwart_dav_password;
-            };
-          };
+        systemd.services."crm-carddav-projection" = lib.mkIf cfg.carddavProjection.enable {
+          description = "Kith CRM — Stalwart → journal people projection (T13)";
+          inherit onFailure;
+          after = [ "pim-sync.service" ];
+          environmentFile = config.sops.templates."crm-carddav-dav-env".path;
 
-        systemd.services."crm-carddav-projection" =
-          lib.mkIf cfg.carddavProjection.enable {
-            description = "Kith CRM — Stalwart → journal people projection (T13)";
-            inherit onFailure;
-            after = [ "pim-sync.service" ];
-            environmentFile = config.sops.templates."crm-carddav-dav-env".path;
-
-            serviceConfig = lib.mkMerge [
-              {
-                Type = "oneshot";
-                User = user;
-                Group = group;
-                # Placeholder refusal (pim-sync config-check pattern): a
-                # PLACEHOLDER password would auth-fail against Stalwart
-                # and bury the cause. Fail loudly, name the paste step.
-                ExecStartPre = let
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = user;
+              Group = group;
+              # Placeholder refusal (pim-sync config-check pattern): a
+              # PLACEHOLDER password would auth-fail against Stalwart
+              # and bury the cause. Fail loudly, name the paste step.
+              ExecStartPre =
+                let
                   check = pkgs.writeShellApplication {
                     name = "crm-carddav-projection-config-check";
-                    runtimeInputs = [ pkgs.coreutils pkgs.gnugrep ];
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.gnugrep
+                    ];
                     text = ''
                       set -euo pipefail
                       envFile=${config.sops.templates."crm-carddav-dav-env".path}
@@ -559,8 +560,10 @@
                       fi
                     '';
                   };
-                in [ (lib.getExe check) ];
-                ExecStart = let
+                in
+                [ (lib.getExe check) ];
+              ExecStart =
+                let
                   run = pkgs.writeShellApplication {
                     name = "crm-carddav-projection-run";
                     runtimeInputs = [ pkgs.coreutils ];
@@ -583,23 +586,23 @@
                       fi
                     '';
                   };
-                in [ (lib.getExe run) ];
-                TimeoutStartSec = "10min";
-              }
-              (serviceOneshotDefaults { })
-            ];
-          };
+                in
+                [ (lib.getExe run) ];
+              TimeoutStartSec = "10min";
+            }
+            (serviceOneshotDefaults { })
+          ];
+        };
 
-        systemd.timers."crm-carddav-projection" =
-          lib.mkIf cfg.carddavProjection.enable {
-            description = "Kith CRM Stalwart people projection schedule (T13)";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnCalendar = cfg.carddavProjection.schedule;
-              RandomizedDelaySec = "5min";
-              Persistent = true;
-            };
+        systemd.timers."crm-carddav-projection" = lib.mkIf cfg.carddavProjection.enable {
+          description = "Kith CRM Stalwart people projection schedule (T13)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.carddavProjection.schedule;
+            RandomizedDelaySec = "5min";
+            Persistent = true;
           };
+        };
       };
     };
 }

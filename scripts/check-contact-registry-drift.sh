@@ -27,46 +27,46 @@ cd "$(dirname "$0")/.." || exit 1
 
 REGISTRY="docs/agents/data-ownership.md"
 strict=0
-[[ "${1:-}" == "--strict" ]] && strict=1
+[[ ${1:-} == "--strict" ]] && strict=1
 
 drifts=0
 
 warn() {
-	echo "WARN: contact-registry drift: $1"
-	drifts=$((drifts + 1))
+  echo "WARN: contact-registry drift: $1"
+  drifts=$((drifts + 1))
 }
 
 # ── 1. the banned DAV server family in eval modules ────────────────────
 while IFS= read -r match; do
-	[[ -z "$match" ]] && continue
-	warn "banned DAV server family referenced in eval module: $match (registry invariant 3)"
+  [[ -z $match ]] && continue
+  warn "banned DAV server family referenced in eval module: $match (registry invariant 3)"
 done < <(grep -rilE 'services\.(radicale|baikal|davical|sabredav)\b' modules/ platforms/ systems/ overlays/ 2>/dev/null)
 
 # ── 2. every known surface module name still classified ───────────────
 # The registry's own row names (lowercased module stems). A missing name
 # means the registry lost its classification of that surface.
 known_surfaces=(
-	"pim-sync"
-	"crm"
-	"webphone"
-	"inboxclean"
-	"paperless"
-	"opencloud"
-	"stalwart"
+  "pim-sync"
+  "crm"
+  "webphone"
+  "inboxclean"
+  "paperless"
+  "opencloud"
+  "stalwart"
 )
 
 for surface in "${known_surfaces[@]}"; do
-	if ! grep -qi "$surface" "$REGISTRY"; then
-		warn "registry no longer classifies surface '$surface' (docs/agents/data-ownership.md lost its row?)"
-	fi
+  if ! grep -qi "$surface" "$REGISTRY"; then
+    warn "registry no longer classifies surface '$surface' (docs/agents/data-ownership.md lost its row?)"
+  fi
 done
 
 # ── verdict ─────────────────────────────────────────────────────────────
 if ((drifts > 0)); then
-	echo "contact-registry drift: $drifts finding(s)"
-	((strict == 1)) && exit 1
-	echo "(advisory — rerun with --strict to fail; promotion to blocker is an owner decision)"
-	exit 0
+  echo "contact-registry drift: $drifts finding(s)"
+  ((strict == 1)) && exit 1
+  echo "(advisory — rerun with --strict to fail; promotion to blocker is an owner decision)"
+  exit 0
 fi
 
 echo "contact-registry drift: clean"

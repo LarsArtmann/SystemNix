@@ -87,6 +87,33 @@ restart-loops into start-limit-hit, Gatus catches the 502, and §20 of
 post-deploy-check flags the missing `oidc sign-in enabled` line. Fix
 Pocket ID, then restart crm-server.
 
+## Stalwart people projection (T13, flip-ready DISABLED 2026-11-13)
+
+`services.crm-server.carddavProjection` (option + one-shot + timer in
+`modules/nixos/services/crm.nix`) runs the crm repo's read-only
+`-carddav-projection` one-shot (Stalwart book → journal events, actor
+`carddav-projection`, deletions = notes). It is deliberately NOT chained to
+the pim-sync timer: pim-sync runs every 5 min when live, so the projection
+relies on being IDEMPOTENT (journal converge) instead of scheduling; the
+`After=pim-sync.service` ordering covers the common queue case.
+
+Flip ladder (plan graph T5 → T9 → T13 — books must exist first):
+
+1. 🧑 Owner: paste the `bot:pim-sync` DAV password into
+   `platforms/nixos/secrets/crm.yaml` key `crm_stalwart_dav_password`
+   (sops editor, never a command line). The scaffold holds a PLACEHOLDER;
+   the unit's config-check ExecStartPre refuses it loudly.
+2. **agent**: flip `carddavProjection.enable = true` (set `url`,
+   `davUser`, `book` to the pim-sync book convention) → deploy → verify
+   the first one-shot's journal line + a manual `-carddav-projection`
+   dry pass.
+3. **agent**: freshness metric + Gatus check land HERE, not before —
+   `crm_projection_last_success_unix` is written best-effort by the
+   wrapper shell; the collector group wiring follows the btrfs-health
+   textfile precedent, and the Gatus anchored-pat freshness check rides
+   the same flip (a freshness alarm before the first real run would red
+   permanently — the pim-sync metrics doctrine, mirrored).
+
 ## Traps
 
 - **Pocket ID login bounces back to the login page = token_exchange/invalid_client, i.e. the bridge file's secret is not in Pocket ID's DB.** Diagnose: `journalctl -u crm-server | grep oauth_login_failed` (CRM side) + `journalctl -u pocket-id | grep invalid_client` (IdP side — client auth fails BEFORE grant/PKCE checks, so an `invalid_client` there is always the shared secret, never redirect/PKCE wiring). 2026-10-14 root cause: the crm client row was created THREE times on Oct 10 (Pocket ID crashed exit-1 twice under SQLite contention; each crash-recovery lost the just-created row while the provisioner's secret FILE survived outside the DB) — every re-create minted a fresh auto-secret and the skip-if-exists guard kept the orphaned file forever. Heal is declarative: `pocket-id-config.provision.regenerateSecretsFor = [ "crm" ]` → deploy → verify → REMOVE the entry (its guard fails later provision runs past the 24h window). Never hand-edit either side.
