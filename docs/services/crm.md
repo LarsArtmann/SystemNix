@@ -6,6 +6,11 @@ LarsArtmann's own event-sourced personal CRM (Go + go-cqrs-lite) at
 disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 `docs/ops/` there: CV-SYNC.md, PASSKEY-RECOVERY.md, RESTORE-DRILL.md).
 
+**Contacts ownership (2026-11-13):** Stalwart owns people (registry:
+`docs/agents/data-ownership.md` §Contact surfaces). This service owns
+relations, deals and tasks, and serves a read-only people projection plus
+`/api/contacts` to webphone and InboxClean. It never writes back to Stalwart.
+
 **Delegated (2026-11-08, SUPERB phase-2 F1):** the product deployment
 contract (options + the crm-server unit — loopback bind, the sqlite pair,
 auth/OIDC flags, the DNS gate, portable hardening) lives upstream at

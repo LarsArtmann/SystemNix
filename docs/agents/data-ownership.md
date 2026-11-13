@@ -169,7 +169,7 @@ Fix the second test before adding new surfaces, not after.
   routes in `docs/todo/services.md:366`); the Google sync ladder
   (`docs/todo/services.md:367`) is superseded by pim-sync + its own GCP OAuth
   client (Pareto task 8). The crm gcontacts/carddav legs retire re-pointed.
-- **`webphone` is no longer unexamined (2026-11-13)**: it holds a live,
+- **`webphone` is classified (2026-11-13)**: it holds a live,
   writable local address book (CQRS projection + `/api/contacts`, 500 cap,
   per-owner streams) plus a deploy-time shared list served pre-auth by
   `/config.js`. It is classified **local** in the registry above and must not
