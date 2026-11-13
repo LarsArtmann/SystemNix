@@ -184,7 +184,7 @@ VM torn down (PID killed, port 18080 released).
 | 4 | plan-file ticks | DONE — `7336e2c62`: 60 rows QUEUED→truthful + dated §8 addendum with commit-hash evidence; zero QUEUED rows remain |
 | 5/6 | T11.1/T11.3 | DONE — pbx-artmann `92c394ca`: device-local classification + the four caller-ID paths table + the gap-1 dialect answer |
 | 7 | pim-sync publish | DONE — pushed (`be8ce8c..74bf91a`); SystemNix input re-locked to `74bf91a`; wrapper `receiptsDir = "/var/lib/pim-sync/receipts"` restored from the flip-note |
-| 8 | webphone push + CI | pushed state verified (no pending commits); **CI is RED on main** — 2 art-dupl clone groups, both MY code (contacts digit-loop vs ids.go; ServedFromCache chip vs MoreDeals block). The OTHER session is mid-fix on exactly those files (`domain.DigitsOf` helper in their working tree) — I stayed off the files per multi-agent rules; verify green after they land |
+| 8 | webphone push + CI | RESOLVED GREEN 20:10: the other session's dedup landed and run 43497710619 (the fix tree) completed success; the watch row was removed after verifying — 2 art-dupl clone groups, both MY code (contacts digit-loop vs ids.go; ServedFromCache chip vs MoreDeals block). The OTHER session is mid-fix on exactly those files (`domain.DigitsOf` helper in their working tree) — I stayed off the files per multi-agent rules; verify green after they land |
 | 9 | §f harvest | this addendum's follow-ups queued below |
 | 10 | SystemNix CI | the daemon commits ride main; the eval gate is covered by the hook on every commit |
 
@@ -201,6 +201,19 @@ VM torn down (PID killed, port 18080 released).
   passed tests/lint/tsc — the ratchet is the only red.
 - go-cqrs-lite ADR-0141 landed (`c357d69b6`); the InboxClean `go.work`
   regen check (§f40) remains open.
+
+### CI verdict on the pushed SystemNix commits (20:01 batch)
+
+Every red leg is inherited, none introduced: nix-check + the
+sev1-escalation/btrbk-rescue/miniflux/cv VM legs failed on every run that
+day (run 43482296281 at 18:24 shows a strict SUPERSET of failures,
+including hermes + memory-emergency-guard which the repaired eval turned
+GREEN); go-deps-audit, secret-history-scan and negative-tests are
+likewise all-day reds on clean daemon commits. All five debts are queued
+in docs/todo/pipeline.md (commits `484cd8049`, `0b7c2c866`). shellcheck,
+the drift gate, port-uniqueness, gatus-patterns, boot, browser-history,
+searxng and attic VM legs are green on this tree. The cv vendorHash FOD
+(build-time only) stays the cv session's queued debt.
 
 ### New follow-ups from this addendum (for the harvest)
 
