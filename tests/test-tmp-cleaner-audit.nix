@@ -23,10 +23,11 @@
 let
   lib = inputs.nixpkgs.lib;
 
-  # The module file is a flake-parts wrapper (top-level lambda `_:`) —
-  # apply it, then pull the NixOS module out of flake.nixosModules.
+  # The module file is a delegation layer (top-level lambda takes inputs —
+  # A1a shape) — apply it, then pull the NixOS module out of flake.nixosModules.
   audit =
-    ((import ../modules/nixos/services/tmp-cleaner-audit.nix) { }).flake.nixosModules.tmp-cleaner-audit;
+    ((import ../modules/nixos/services/tmp-cleaner-audit.nix) {inherit inputs;})
+    .flake.nixosModules.tmp-cleaner-audit;
   scheduledTasks = import ../platforms/nixos/system/scheduled-tasks.nix;
   primaryUserModule = import ../platforms/nixos/system/primary-user.nix;
 
