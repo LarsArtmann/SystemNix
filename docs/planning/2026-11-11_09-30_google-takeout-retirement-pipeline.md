@@ -19,6 +19,13 @@ prepared). Same gates G1–G7, same rart owner-browser flow. Sequencing: request
 (~5 min owner action), then do the racedriver8k 23 clicks while #2 prepares — the 2026-11-18 deadline
  outranks export-prep wait time.
 
+**Fleet plan (2026-11-13):** multi-account retirement + 2-monthly incremental backup (further accounts,
+~3 TB total) is specified in
+[2026-11-13_multi-account-takeout-fleet-plan.md](./2026-11-13_multi-account-takeout-fleet-plan.md);
+the machine-readable account registry lives in `scripts/takeout-accounts.tsv`, and the fleet-wide
+content-identity ledger is `scripts/takeout-dedup.sh` (global ledger under
+`/mnt/pool/archive/google-takeout/.ledger/`). This document remains the canonical racedriver8k baseline.
+
 Export facts (from the Takeout summary page, paste 2026-11-11):
 
 - 23 parts: `550.6 MB · 43.34 · 44.41 · 41.83 GB · 839 MB · 50.01 · 50 · 50 · 50 · 49.62 GB · 226.2 MB · <1 MB · <1 MB · 49.97 · 50 · 49.96 · 49.94 · 50 · 50 · 49.98 · 50 · 50 GB · 49 GB`
