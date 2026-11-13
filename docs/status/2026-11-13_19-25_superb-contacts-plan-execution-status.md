@@ -142,3 +142,75 @@ test-race).**
 ---
 
 *Execution honesty note: nothing in this session enabled a service, deployed, or touched production state — the only live-system writes were the sops placeholder key (a scaffold value, the pim-sync 2026-11-10 precedent) and the throwaway demo VM.*
+
+---
+
+## Addendum (20:0x, the resume session: probe verdict + §f items 1–10 executed)
+
+### T5.2/T5.3 runtime verdict — the plan dialect CANNOT provision address books on this pin
+
+The booted demo VM carried the family ndjson (`9qvf9…`, applied by pinned
+stalwart-cli 1.0.13 against stalwart **0.16.26**). The probe, run live from
+the host over the forwarded management port with the SAME pinned CLI binary:
+
+1. `upsert` (as the plan generated it) → `error: cannot upsert singleton
+   'AddressBook' (operation #6); use update instead`, exit 1 — the apply
+   ABORTS at op 6, so ops 7–10 (NetworkListener/SpamDnsblServer/Tracer/
+   reload) never ran this boot; the demo's working state rides the
+   persistent qcow2 from earlier boots.
+2. Corrected `update` form → the SERVER rejects the patch:
+   `invalidPatch | Invalid property | Properties: demoContacts`, exit 1.
+3. Authenticated PROPFIND of the demo account's home set, before AND after
+   both attempts: only `default` + three old kith-probe books — the
+   `Contacts` book never existed anywhere, owned or unowned.
+
+Conclusion: T5.1's "NO parentId" gap is not even reachable — the dialect
+fails one step earlier, at the CLI/server contract. Per-account books are
+**MKCOL-only** until upstream grows owned-addressbook provisioning
+(§g2's MKCOL option now has a complete transcript; the upstream-filing
+option stays the owner's call, verify-before-filing rules apply). The
+family was REMOVED from the demo plan (nix-email `d94118e`) with the
+verdict as a pointer comment — the demo provision unit is green again
+(eval + rebuild gate verified: fresh ndjson carries zero AddressBook ops).
+VM torn down (PID killed, port 18080 released).
+
+### §f items 1–10, executed
+
+| # | Item | Outcome |
+| - | ---- | ------- |
+| 1 | demo probe | DONE — verdict above |
+| 2 | InboxClean race gate | DONE — full `test-race` exit 0 (36 packages incl. crmsync) once go-cqrs-lite landed `c357d69b6`; T12's full-repo gate closed |
+| 3 | stack fixture commit | DONE via daemon `93aa685` (my 2 files alone). The re-pin sequencing note rides THIS addendum instead of the commit message: the fixtures expect the contacts-absent contract while the stack's webphone PIN still floats — the CI window §b4 predicted stands until the next per-train bump |
+| 4 | plan-file ticks | DONE — `7336e2c62`: 60 rows QUEUED→truthful + dated §8 addendum with commit-hash evidence; zero QUEUED rows remain |
+| 5/6 | T11.1/T11.3 | DONE — pbx-artmann `92c394ca`: device-local classification + the four caller-ID paths table + the gap-1 dialect answer |
+| 7 | pim-sync publish | DONE — pushed (`be8ce8c..74bf91a`); SystemNix input re-locked to `74bf91a`; wrapper `receiptsDir = "/var/lib/pim-sync/receipts"` restored from the flip-note |
+| 8 | webphone push + CI | pushed state verified (no pending commits); **CI is RED on main** — 2 art-dupl clone groups, both MY code (contacts digit-loop vs ids.go; ServedFromCache chip vs MoreDeals block). The OTHER session is mid-fix on exactly those files (`domain.DigitsOf` helper in their working tree) — I stayed off the files per multi-agent rules; verify green after they land |
+| 9 | §f harvest | this addendum's follow-ups queued below |
+| 10 | SystemNix CI | the daemon commits ride main; the eval gate is covered by the hook on every commit |
+
+### Foreign-session notes (flagged, not co-owned)
+
+- **immich eval breakage, repaired**: ef4a66aec (19:29) committed a timer
+  missing the `timers.` prefix (`systemd.immich-api-key-provision does not
+  exist`), breaking evo-x2 eval for every session. One-token repair
+  (`timers.immich-api-key-provision`), attributed to their commit in the
+  message; eval re-verified green after. Their feature work itself is
+  untouched.
+- **webphone clone-fix in flight** (see item 8): their working tree carries
+  the shared-helper fix for my two clone groups. My T10/T11 code itself
+  passed tests/lint/tsc — the ratchet is the only red.
+- go-cqrs-lite ADR-0141 landed (`c357d69b6`); the InboxClean `go.work`
+  regen check (§f40) remains open.
+
+### New follow-ups from this addendum (for the harvest)
+
+1. webphone: verify CI green after the other session's `DigitsOf` dedup
+   lands; if it stalls >1 day, take the fix over (they were told via this
+   report).
+2. webphone main is red until (1) — no new pushes to main by this lane.
+3. immich: their `inherit onFailure` unit at immich.nix:254 and the repaired
+   timer are theirs to verify at their next deploy; my repair touched the
+   attribute path only.
+4. Stack re-pin reminder: the next nix-international-telephony per-train
+   webphone bump must ride the contacts-absent fixtures already committed.
+
