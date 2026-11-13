@@ -36,6 +36,21 @@ All three provisioned by `pocket-id-config.provision` (`isPublic = true`, `pkceE
 
 `OC_INSECURE` is NOT set (a 2026-10-25 draft claimed "module default true" — wrong, live-verified against the unit env 2026-11-02): outbound verification to `auth.home.lan` uses real TLS against the dnsblockd CA, which the whole system trusts via `security.pki.certificates` in `platforms/nixos/system/dns-blocker-config.nix`. The loopback proxy port itself is plain HTTP (PROXY_TLS=false, trap #11) — TLS terminates at Caddy.
 
+## Web apps (extensions)
+
+| App         | Version | Source                                       |
+| ----------- | ------- | -------------------------------------------- |
+| JSON Viewer | 2.1.0   | `pkgs/opencloud-web-apps.nix` (release asset) |
+| Unzip       | 2.2.0   | same                                         |
+
+Installed declaratively: the derivation fetches the official `opencloud-eu/web-extensions` release archives (the same artifacts the in-app App Store downloads) and `WEB_ASSET_APPS_PATH` points at that read-only store tree — no imperative copy into `$OC_DATA_DIR/web/assets/apps`, so a rebuild is the only install step. The web service auto-discovers the tree at startup (`services/web/pkg/server/http/server.go`: `apps.List` → `external_apps` in `config.json`) and serves it at `/assets/apps/<name>/`; a restart is the only activation step.
+
+**Version pinning rule (trap):** apps share module-federation packages with the running web line. opencloud-production 7.2.4 ships **web 7.1.5**, so an app tag must build against `@opencloud-eu/web-client ^7` — that is json-viewer ≤ 2.1.0 and unzip ≤ 2.2.0 (json-viewer 2.2.0+, unzip 2.2.1+ target ^8 and will not load). Check the tag's `package.json` `devDependencies` before bumping.
+
+**Excalidraw — NOT installable on this line:** every release tag builds against web ^8 and the app requires web ≥ 8.1.0 (shared Yjs runtime, opencloud-eu/web#3398) plus a Yjs server (`WEB_OPTION_YJS_SERVER_URL`) for collaboration. It becomes installable when opencloud-production reaches 8.x, or on a deliberate switch to the rolling line (which forfeits the production line's downgrade guarantee).
+
+Verify: `GET https://cloud.home.lan/assets/apps/json-viewer/manifest.json` → 200 with `"name":"json-viewer"`; `GET /config.json` lists it under `external_apps`; the App Store shows it as installed.
+
 ## Traps
 
 1. **`rsync -X` or lose the filesystem:** the posix driver stores metadata (trash, versions, shares) in **xattrs** — a plain `rsync -a` copy of the state tree silently drops them. Always `rsync -aX` (btrfs send/receive preserves them natively; btrbk-pool is safe).
