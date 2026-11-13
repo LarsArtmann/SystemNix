@@ -6,6 +6,7 @@ _: {
       config,
       options,
       lib,
+      pkgs,
       ...
     }:
     let
@@ -14,9 +15,12 @@ _: {
         serviceDefaults
         serviceOneshotDefaults
         ioTier
+        mkImmichApiKeyProvision
         onFailure
         ports
         ;
+      cfg = config.services.immich;
+      keyDir = "/var/lib/immich-api-keys";
       provisionEnabled = config.services.pocket-id-config.provision.enable or false;
       clientSecretPath =
         if provisionEnabled then
@@ -25,6 +29,76 @@ _: {
           config.sops.secrets.immich_oauth_client_secret.path;
     in
     {
+      options.services.immich.apiKeys = lib.mkOption {
+        type = lib.types.attrsOf (
+          lib.types.submodule (
+            { name, ... }:
+            {
+              options = {
+                permissions = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [
+                    "asset.read"
+                    "asset.upload"
+                  ];
+                  description = ''
+                    Immich Permission enum values inserted verbatim into the
+                    generated key's api_key.permissions. Scope each consumer as
+                    tightly as its job allows; "all" is accepted by Immich but
+                    stays exceptional.
+                  '';
+                };
+                keyFile = lib.mkOption {
+                  type = lib.types.str;
+                  default = "${keyDir}/${name}.env";
+                  defaultText = lib.literalExpression ''"${keyDir}/<name>.env"'';
+                  description = ''
+                    Rendered secret, 0400. Carries IMMICH_URL + IMMICH_API_KEY
+                    when `url` is set (env-file format), otherwise the bare
+                    token — which fits tools that take the key as an argument.
+                  '';
+                };
+                owner = lib.mkOption {
+                  type = lib.types.str;
+                  default = "root";
+                  description = "Owner of the rendered key file.";
+                };
+                group = lib.mkOption {
+                  type = lib.types.str;
+                  default = "root";
+                  description = "Group of the rendered key file.";
+                };
+                url = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Immich base URL baked into env-file format keys. null =
+                    plain token file.
+                  '';
+                };
+                restartUnits = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [ ];
+                  description = ''
+                    Units try-restarted after a FRESH mint only (a converged
+                    key never restarts consumers).
+                  '';
+                };
+              };
+            }
+          )
+        );
+        default = { };
+        description = ''
+          Immich API keys managed by the root converger
+          (`immich-api-key-provision`): minted directly into Immich's api_key
+          table via peer-auth postgres (Immich is OIDC-only, so no API-level
+          bootstrap exists) and rendered to a 0400 file. Key material never
+          lives in a sops file, a data directory, or a command line.
+          Rotation: rm the key file + restart immich-api-key-provision.
+        '';
+      };
+
       config = lib.mkIf config.services.immich.enable {
         services = {
           immich = {

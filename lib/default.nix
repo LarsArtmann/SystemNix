@@ -29,6 +29,12 @@ in
   # fastflowlm.nix (:52626 corpse/rogue class, 5 recurrences unguarded).
   mkPortGuard = import ./port-guard.nix lib;
 
+  # Canonical Immich API-key converger (direct api_key INSERT via peer-auth
+  # postgres + 0400 key file). Consumers declare keys through
+  # `services.immich.apiKeys.<name>` (modules/nixos/services/immich.nix);
+  # the discordsync + media-atlas bespoke provisioners predate this helper.
+  mkImmichApiKeyProvision = import ./immich-api-key-provision.nix lib;
+
   mkStateDir =
     path: mode: user: group:
     "d ${path} ${mode} ${user} ${group} -";
