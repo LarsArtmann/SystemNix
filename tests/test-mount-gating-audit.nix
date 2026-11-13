@@ -24,7 +24,8 @@ let
   lib = inputs.nixpkgs.lib;
 
   audit =
-    (import ../modules/nixos/services/mount-gating-audit.nix).flake.nixosModules.mount-gating-audit;
+    ((import ../modules/nixos/services/mount-gating-audit.nix) { inherit inputs; })
+    .flake.nixosModules.mount-gating-audit;
 
   evalAssertions =
     extraModules:
