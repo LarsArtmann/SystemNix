@@ -1,0 +1,17 @@
+# Google Takeout fleet registry — single source of truth for accounts, modes,
+# staging roots and retention. Fleet plan:
+# docs/planning/2026-11-13_multi-account-takeout-fleet-plan.md
+#
+# mode:   retire = one-shot baseline export, zips kept forever, the account
+#                  itself is deleted later by the owner (never by automation)
+#         keep   = recurring export every 2 months; zips are transport, only
+#                  the newest N cycles are retained
+# status: g0-requested | g1-downloading | g1-owner-clicks | g2-verify |
+#         g3-photos | g4-files | g5-docs | g7-soak | done
+# retain: baseline (= zips forever, retire mode) | <N> = keep the newest N cycles
+# One physical line per account.
+account	mode	staging_root	cadence	status	retain	notes
+racedriver8k	retire	/mnt/pool/archive/google-takeout/racedriver8k-2026-11-10	one-shot	g1-owner-clicks	baseline	880 GB / 23 parts; export expires 2026-11-18 03:13; owner browser clicks outstanding (rart wall)
+lars@helpless.ai	keep	/mnt/pool/archive/google-takeout/lars-helpless-ai-2026-11-13	2-monthly	g1-downloading	2	7 parts / 22 GB on disk, unzip -t clean 2026-11-13; expected part list still unknown — owner must save the Takeout exports page into the staging root (parts.tsv + products.tsv fuel G2)
+# --- template (append real accounts as the owner names them) ---
+# <account>	<retire|keep>	/mnt/pool/archive/google-takeout/<account>-<YYYY-MM-DD>	<one-shot|2-monthly>	<status>	<baseline|N>	<notes>
