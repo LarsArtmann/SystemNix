@@ -15,9 +15,13 @@
 # content; default OFF to keep Immich clean — count them first via
 # logs/zip-entries.tsv if in doubt).
 #
-# Prereqs: Gate G2 green (scripts/takeout-verify.sh), owner-created Immich API
-# key (FULL access — album creation needs more than asset.read+asset.upload;
-# delete the key after the migration) at <staging>/immich-api-key (0600).
+# Prereqs: Gate G2 green (scripts/takeout-verify.sh) and an Immich API key
+# rendered by the `immich-api-key-provision` converger from
+# services.immich.apiKeys.takeout-import (0400 env file, default
+# /var/lib/immich-api-keys/takeout-import.env; override with
+# TAKEOUT_IMMICH_ENV). No key ever lives in the staging directory: the
+# converger owns minting, scope, and rotation. IMMICH_API_KEY in the
+# environment wins over the file (ephemeral/override runs).
 #
 # Usage:
 #   bash scripts/takeout-ingest-photos.sh <staging-dir> [--dry-run]
@@ -36,17 +40,40 @@ main() {
 
   [ -d "$root/zips" ] || die "no staging at $root"
   [ -f "$root/photos-media-count.txt" ] || die "run scripts/takeout-verify.sh first (Gate G2) — photos-media-count.txt is the reconciliation base"
-  local keyfile=$root/immich-api-key
-  [ -f "$keyfile" ] || die "Immich API key missing at $keyfile — owner: Immich -> Account Settings -> API Keys (full access), then: install -m 600 <keyfile-with-value> $keyfile"
-  [ "$(stat -c %a "$keyfile")" = "600" ] || die "$keyfile must be 0600 (secret-at-rest rule)"
 
-  # manifest bridge: port NAME, never a literal (script-port-audit; degrade = fail loud here,
-  # a wrong-port upload is worse than a stopped run)
-  local manifest="${SYSTEMNIX_MANIFEST:-/etc/systemnix/integration-manifest.json}"
-  [ -f "$manifest" ] || die "integration manifest missing at $manifest — run on evo-x2 (deployed host)"
-  local port
-  port=$(jq -r '.ports["immich"] // empty' <"$manifest")
-  [ -n "$port" ] || die "immich port not found in manifest — is immich enabled?"
+  # Immich key: converger-rendered env file (services.immich.apiKeys.takeout-import).
+  # Scope lives in Nix, never here — this script only consumes the rendered file.
+  local envfile=${TAKEOUT_IMMICH_ENV:-/var/lib/immich-api-keys/takeout-import.env}
+  local apikey="" apiurl=""
+  if [ -n "${IMMICH_API_KEY:-}" ]; then
+    apikey=$IMMICH_API_KEY
+    log "using IMMICH_API_KEY from the environment (converger env file not consulted)"
+  elif [ -r "$envfile" ]; then
+    [ "$(stat -c %a "$envfile")" = "400" ] ||
+      die "$envfile must be 0400 (secret-at-rest rule) — it is $(stat -c %a "$envfile"); re-run: sudo systemctl restart immich-api-key-provision"
+    apikey=$(sed -n 's/^IMMICH_API_KEY=//p' "$envfile")
+    apiurl=$(sed -n 's/^IMMICH_URL=//p' "$envfile")
+    [ -n "$apikey" ] || die "$envfile has no IMMICH_API_KEY line — re-render: sudo systemctl restart immich-api-key-provision"
+    log "using converger key from $envfile"
+  else
+    die "no Immich API key: $envfile absent and IMMICH_API_KEY unset.
+  The key is machine-minted (Immich is OIDC-only) by the root converger:
+    sudo systemctl start immich-api-key-provision
+  Declared scope: services.immich.apiKeys.takeout-import (platforms/nixos/system/configuration.nix).
+  Rotation: rm $envfile && sudo systemctl restart immich-api-key-provision"
+  fi
+
+  # URL: the converger bakes IMMICH_URL into env-format keys. Manifest port
+  # lookup is only a fallback (plain-format keys), never a hardcoded literal
+  # (script-port-audit).
+  if [ -z "$apiurl" ]; then
+    local manifest="${SYSTEMNIX_MANIFEST:-/etc/systemnix/integration-manifest.json}"
+    [ -f "$manifest" ] || die "integration manifest missing at $manifest — run on evo-x2 (deployed host)"
+    local port
+    port=$(jq -r '.ports["immich"] // empty' <"$manifest")
+    [ -n "$port" ] || die "immich port not found in manifest — is immich enabled?"
+    apiurl="http://localhost:$port"
+  fi
 
   local immich_go_bin=""
   if command -v immich-go >/dev/null 2>&1; then
@@ -68,8 +95,8 @@ main() {
     cd "$root"
     # shellcheck disable=SC2086 # immich_go_bin is a deliberately word-split command prefix
     $immich_go_bin \
-      -server "http://localhost:$port" \
-      -api-key "$(cat "$keyfile")" \
+      -server "$apiurl" \
+      -api-key "$apikey" \
       --no-ui \
       --client-timeout 30m \
       --log-file logs/immich-go.log \
