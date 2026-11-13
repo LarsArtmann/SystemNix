@@ -33,6 +33,24 @@ let
       modules = [
         audit
         { system.stateVersion = "26.11"; }
+        # Class 7 deliberately includes nixpkgs-generated units in scope,
+        # and even the bare nixosSystem base set carries unbounded
+        # boot-blocking oneshots (linger-users, logrotate-checkconf,
+        # post-boot, resolvconf). The real fleet floors these via
+        # serviceOneshotDefaults' 5min mkDefault; a bare eval has no house
+        # defaults, so floor them the same way — NOT via
+        # allowUnboundedOneshot: when the nixpkgs pin moves and the base
+        # set grows a NEW unbounded oneshot, this check must go red on
+        # purpose (same idiom as the collection's systemd-shape-audit
+        # contract check, which floors the same four on unstable).
+        {
+          systemd.services = {
+            linger-users.serviceConfig.TimeoutStartSec = "5min";
+            logrotate-checkconf.serviceConfig.TimeoutStartSec = "5min";
+            post-boot.serviceConfig.TimeoutStartSec = "5min";
+            resolvconf.serviceConfig.TimeoutStartSec = "5min";
+          };
+        }
       ]
       ++ extraModules;
     }).config.assertions;
