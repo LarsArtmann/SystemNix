@@ -11,6 +11,14 @@ Immich (photos), OpenCloud (files), Paperless-ngx (documents), with everything e
 **Hard deadline: the export expires 2026-11-18 03:13 (7 days).** After that the links are dead and a new
 export must be requested. Download must START within ~48h to leave verification + ingestion buffer.
 
+**Account #2 activated (owner directive 2026-11-13):** `lars@helpless.ai` — the account currently logged
+into the evo-x2 browser — gets the same full backup + self-hosted integration. Staging armed at
+`/mnt/pool/archive/google-takeout/lars-helpless-ai-2026-11-13/` (OWNER-STEPS.md inside; zips/logs/extracted,
+header-only parts.tsv/urls.txt — manifest fills from the owner's DOM save once the export is requested and
+prepared). Same gates G1–G7, same rart owner-browser flow. Sequencing: request the #2 export first
+(~5 min owner action), then do the racedriver8k 23 clicks while #2 prepares — the 2026-11-18 deadline
+ outranks export-prep wait time.
+
 Export facts (from the Takeout summary page, paste 2026-11-11):
 
 - 23 parts: `550.6 MB · 43.34 · 44.41 · 41.83 GB · 839 MB · 50.01 · 50 · 50 · 50 · 49.62 GB · 226.2 MB · <1 MB · <1 MB · 49.97 · 50 · 49.96 · 49.94 · 50 · 50 · 49.98 · 50 · 50 GB · 49 GB`
