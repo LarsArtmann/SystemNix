@@ -519,7 +519,7 @@
           # live journal in $HOME), so the env file is user-owned —
           # unlike the root-owned crm-server-env above.
           owner = user;
-          group = group;
+          inherit group;
           mode = "0400";
           restartUnits = [ "crm-carddav-projection.service" ];
           content = lib.generators.toKeyValue { } {

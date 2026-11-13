@@ -19,12 +19,11 @@
 # Authority stays where it was: journal.yaml owns source mappings; the
 # consumer ingests exactly the balances the producer sends, and unmapped
 # balances surface as per-row rejections in the journal log (never silent).
-{ inputs, ... }: {
+_: {
   flake.nixosModules.journal-mesh =
     {
       config,
       lib,
-      pkgs,
       ...
     }:
     let

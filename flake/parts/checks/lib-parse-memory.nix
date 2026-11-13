@@ -22,7 +22,6 @@
 # bare-byte form, explicit MemoryHigh passthrough, and the unparsable
 # fallback ("80%" stays literal).
 {
-  inputs,
   root,
   ...
 }:

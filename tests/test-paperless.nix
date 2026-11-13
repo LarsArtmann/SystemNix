@@ -30,7 +30,6 @@
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
 # carry their own coverage, and the gatus endpoints verify them on the host.
 {
-  pkgs,
   inputs,
 }:
 let
