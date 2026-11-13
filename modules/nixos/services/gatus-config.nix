@@ -1440,8 +1440,11 @@ _: {
                   conditions = [
                     "[STATUS] == 200"
                     "[BODY] == pat(*node_psi_memory_alert 0*)"
+                    "[BODY] == pat(*node_psi_scrape_errors 0*)"
+                    "[BODY] != pat(*system_psi_metrics_fresh 0\n*)"
+                    "[BODY] == pat(*\nsystem_psi_metrics_fresh *)"
                   ];
-                  alerts = discordAlert "Memory pressure CRITICAL — node_psi_memory_alert is 1 (some avg10 >50 or full avg10 >10, kernel PERCENT values — NOT 0-1 fractions) OR the metric/scrape is unreachable even with a 15s budget (storm-timeout class: verify psi.prom freshness before diagnosing memory). Risk of OOM cascade. Check Helium/Electron processes.";
+                  alerts = discordAlert "Memory pressure CRITICAL — node_psi_memory_alert is 1 (some avg10 >50 or full avg10 >10, kernel PERCENT values — NOT 0-1 fractions) OR the metric/scrape is unreachable even with a 15s budget (storm-timeout class: verify psi.prom freshness before diagnosing memory). Risk of OOM cascade. Check Helium/Electron processes. node_psi_scrape_errors 1 = a /proc/pressure file went MISSING (fail-visible leg, 2026-11-13); system_psi_metrics_fresh 0 = psi.prom frozen >300s (collector dead — the derived gauges read phantom-calm).";
                 })
                 (mkHttpCheck {
                   name = "I/O Stall Rate";

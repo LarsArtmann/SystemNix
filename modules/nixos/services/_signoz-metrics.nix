@@ -296,12 +296,23 @@ lib.mkIf cfg.components.nodeExporter {
                     trap 'rm -f "$TMP"' EXIT
 
                     PSI="/proc/pressure/memory"
-                    [ -f "$PSI" ] || exit 0
-
-                    some_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' "$PSI")
-                    full_avg10=$(awk '/^full/ {split($2, a, "="); print a[2]}' "$PSI")
-                    some_avg60=$(awk '/^some/ {split($3, a, "="); print a[2]}' "$PSI")
-                    some_avg60="''${some_avg60:-0}"
+                    # Fail-visible (2026-11-13): a missing PSI file used to
+                    # exit 0 SILENTLY, so a missing-PSI host read phantom-calm
+                    # on every derived gauge forever (node_exporter would
+                    # serve nothing at all — the absence is invisible to the
+                    # value-0 pats). Now it writes a scrape_errors=1 prom.
+                    scrape_errors=0
+                    some_avg10=0
+                    full_avg10=0
+                    some_avg60=0
+                    if [ -f "$PSI" ]; then
+                      some_avg10=$(awk '/^some/ {split($2, a, "="); print a[2]}' "$PSI")
+                      full_avg10=$(awk '/^full/ {split($2, a, "="); print a[2]}' "$PSI")
+                      some_avg60=$(awk '/^some/ {split($3, a, "="); print a[2]}' "$PSI")
+                      some_avg60="''${some_avg60:-0}"
+                    else
+                      scrape_errors=1
+                    fi
 
                     # Derived alert: 1 when >50% of tasks stalled on memory (10s avg),
                     # or >10% fully stalled — early warning before OOM cascade.
@@ -346,6 +357,14 @@ lib.mkIf cfg.components.nodeExporter {
                     io_full_avg300=0
                     io_warning=0
                     io_storm=0
+                    # Initialized OUTSIDE the IO_PSI branch: when the io file
+                    # is absent these still reach the emission block (an unset
+                    # var renders an EMPTY value — invalid prom line — and
+                    # node_exporter rejects the whole file).
+                    io_disk_corroborated=0
+                    io_corroborated=0
+                    io_phantom=0
+                    disk_busy_max=0
                     IO_PSI="/proc/pressure/io"
                     if [ -f "$IO_PSI" ]; then
                       io_some_avg300=$(awk '/^some/ {split($4, a, "="); print a[2]}' "$IO_PSI")
@@ -391,9 +410,14 @@ lib.mkIf cfg.components.nodeExporter {
                         io_corroborated=1
                       fi
                     fi
+                    else
+                      scrape_errors=1
                     fi
 
                     {
+                      echo "# HELP node_psi_scrape_errors 1 when a /proc/pressure file was ABSENT (fail-visible: a missing-PSI host reads phantom-calm on every derived gauge without this leg)"
+                      echo "# TYPE node_psi_scrape_errors gauge"
+                      echo "node_psi_scrape_errors ''${scrape_errors}"
                       echo "# HELP node_psi_memory_some_avg10 Proportion of last 10s where some tasks stalled on memory"
                       echo "# TYPE node_psi_memory_some_avg10 gauge"
                       echo "node_psi_memory_some_avg10 ''${some_avg10}"

@@ -1189,6 +1189,21 @@ _: {
             fi
           fi
 
+          # === psi-metrics collector freshness (2026-11-13, the missing-PSI
+          # phantom-calm class) === psi.prom rewrites every 15s tick; a dead
+          # timer/collector freezes it and node_exporter serves the last
+          # values forever — the derived gauges (alert/warning/phantom) read
+          # calm while NOTHING is measuring pressure. Same mtime composite
+          # budget as the three collectors above (300s = 20 missed ticks).
+          PSI_FRESH=0
+          PSI_PROM="${textfileDir}/psi.prom"
+          if [ -f "$PSI_PROM" ]; then
+            psi_age=$(( $(date +%s) - $(stat -c %Y "$PSI_PROM" 2>/dev/null || echo 0) ))
+            if [ "$psi_age" -ge 0 ] && [ "$psi_age" -le 300 ]; then
+              PSI_FRESH=1
+            fi
+          fi
+
           # === systemd-oomd kills tracking ===
           # systemd-oomd kills (nix-daemon, Twenty worker) went completely
           # undetected. This counts kill events from the journal in the
@@ -1900,6 +1915,9 @@ _: {
               echo "# HELP system_memory_guard_metrics_fresh 1 if the memory-emergency-guard textfile was rewritten within 300s (guard ALIVE), 0 if frozen/stale (guard DEAD — node_exporter serves the last content forever, so the guard's own presence pats cannot see its death; 2026-09-15 gap)"
               echo "# TYPE system_memory_guard_metrics_fresh gauge"
               echo "system_memory_guard_metrics_fresh ''${GUARD_FRESH}"
+              echo "# HELP system_psi_metrics_fresh 1 if psi.prom was rewritten within 300s (collector ALIVE; 15s tick, 20-missed-tick budget), 0 if frozen/missing — node_exporter serves the last textfile forever, so the derived PSI gauges read phantom-calm on collector death (2026-11-13)"
+              echo "# TYPE system_psi_metrics_fresh gauge"
+              echo "system_psi_metrics_fresh ''${PSI_FRESH}"
             fi
 
             if [ -f "$NIRI_PROM" ]; then

@@ -101,3 +101,14 @@ Prioritized by impact. Items 1–15 are actionable; 16–25 are lower-rung hygie
 ## g) Top #1 question I cannot figure out myself
 
 **Which Google account holds the GSC properties OpenSEO should track — `lartyhd@gmail.com` or `lars@helpless.ai`?** The org-internal consent screen FORCES a helpless.ai Workspace account, so if the properties verify under the gmail account, they must first be delegated to lars@helpless.ai in GSC Settings → Users — otherwise the Connect flow succeeds but the site list comes back empty. (Still open since the 2026-10-26 report §g.1; also parked there: the artmann.tech fallback if Google ever refuses `.lan` origins — the redirect URI registration is accepted for internal apps, so this looks moot unless the console rejects it.)
+
+---
+
+## Correction (2026-11-12 23:5x): the §b/§f GSC "console step" premise was wrong twice
+
+Re-attacked live after the owner pushed back on the owner-only step:
+
+1. **The console surface moved** — OAuth clients now live under **Google Auth Platform → Clients** (`console.cloud.google.com/auth-platform/clients`), not APIs & Services → Credentials (April 2025 Google Auth Platform reorg). The 2026-11-11 runbook path can't find the client because that page no longer owns it.
+2. **The client is LOCKED, not just API-unwritable** — per Google docs (iap/docs/programmatic-oauth-clients): API-created clients cannot be edited in the console either ("locked for IAP usage only", no redirect-URI updates anywhere). Re-probed live: PATCH of `allowedRedirectUris` 404s on BOTH `clientauthconfig.googleapis.com` and `iap.googleapis.com` (the 2026-11-11 session's raw-REST finding confirmed, now against the correct hosts).
+
+**Revised fix path** (recorded in the TODO row + runbook): owner opens Auth Platform → Clients (`?project=toms-343020`) → tries editing "OpenSEO GSC" (expected locked) → creates a FRESH console-managed Web client with the redirect URI verbatim → agent-side: `gcloud iap oauth-clients delete` the locked client, swap `google_client_id`/`google_client_secret` in openseo.yaml, redeploy, verify the Connect flow. Corrected surfaces: docs/services/openseo.md (redirect-URI bullet), TODO_LIST + docs/todo/services.md GSC rows. The 2026-11-11 status report is history — corrected via this addendum, not rewritten.

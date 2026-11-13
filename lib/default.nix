@@ -427,14 +427,21 @@ in
             StandardOutput = "journal";
             StandardError = "journal";
           }
+          # NOTE (bug found by the nixos-modules collection's tests/lib-eval.nix,
+          # 2026-11-13): this call was `hardenFn (lib.mkMerge [base extraHarden])`
+          # — a merge-WRAPPER as call arguments. Named-arg binding never saw
+          # ProtectHome/NoNewPrivileges (params fell back to their defaults —
+          # the exact OPPOSITE of the intended neutralization), the result
+          # carried `_type`/`contents` garbage, and the option merge unwrapping
+          # it silently DISCARDED every harden default. Plain attrset union is
+          # the correct input-merge shape; identical fix applied in the
+          # collection's lib/default.nix.
           (hardenFn (
-            lib.mkMerge [
-              {
-                ProtectHome = false;
-                NoNewPrivileges = false;
-              }
-              extraHarden
-            ]
+            {
+              ProtectHome = false;
+              NoNewPrivileges = false;
+            }
+            // extraHarden
           ))
           extraServiceConfig
         ];

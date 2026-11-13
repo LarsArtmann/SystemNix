@@ -67,6 +67,12 @@ let
     let
       s = toString (memoryValue v);
       match = builtins.match "([0-9]+)(K|M|G|T)?" s;
+      # builtins.match yields null (not "") for a non-participating optional
+      # group — a bare-byte value ("5242880") must resolve to multiplier 1,
+      # not crash the dynamic select (found by the nixos-modules collection's
+      # tests/lib-eval.nix 2026-11-12; identical forked-during-migration code
+      # here, same fix applied to both).
+      suffix = builtins.elemAt match 1;
       multiplier =
         if match == null then
           null
@@ -78,7 +84,7 @@ let
             T = 1024 * 1024 * 1024 * 1024;
             "" = 1;
           }
-          .${builtins.elemAt match 1};
+          .${if suffix == null then "" else suffix};
     in
     if match == null then null else (lib.toInt (builtins.elemAt match 0)) * multiplier;
   defaultMemoryHigh =
