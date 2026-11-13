@@ -9,11 +9,13 @@
 #
 # The lib is imported through `root` with the perSystem lib — the house
 # idiom for check-side lib access (same as features-drift /
-# registry-matrix). NOTE: pulling it via the `flake.lib` output instead
-# evaluates a lib whose `harden` closure lacks plain nixpkgs functions
-# (`lib.genAttrs` missing at systemd.nix's lifecycle guard when called) —
-# a pre-existing flake-output anomaly, unrelated to this fix, flagged for
-# the owner; perSystem-arg lib imports do not share it.
+# registry-matrix). The `flake.lib` output suffered a long-standing
+# "anomaly" (helpers failing with `attribute 'genAttrs' missing`) that
+# was root-caused 2026-11-13: flake.nix passed `{ inherit (nixpkgs)
+# lib; }` to a lib/default.nix whose parameter is the SIMPLE `lib:` form,
+# so the whole wrapper attrset bound to the parameter. Fixed in flake.nix
+# (`import ./lib lib`); this perSystem idiom was always correct and stays
+# the house style.
 #
 # This check pins the fix through the PUBLIC surface (harden's derived
 # MemoryHigh), never by re-importing the internals: suffixed forms, the

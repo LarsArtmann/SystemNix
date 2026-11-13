@@ -171,11 +171,11 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1794582886,
-        "narHash": "sha256-LDuQEjHeG/uHOXEdHT0fBygUho86yquTsaz8K/k7Fdg=",
+        "lastModified": 1794595390,
+        "narHash": "sha256-oC3UZNWF8VzFe/D/yWG2fsIMjFh4+/3l0lHJti+cYaA=",
         "ref": "refs/heads/master",
-        "rev": "bde051ea1d73286a6427cdcde2c832c892576e23",
-        "revCount": 2569,
+        "rev": "90a260c74dabe5560a7ca6c172ddf1136e5e0c02",
+        "revCount": 2574,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       },
@@ -1023,11 +1023,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794577980,
-        "narHash": "sha256-hOUHOuNDEIt2HTlUszeTyBeJ5SKY22CMkMFQFeQQei8=",
+        "lastModified": 1794595881,
+        "narHash": "sha256-1bzoPCXGr62eTFWuIqaQtKj2Ux7NFoRitj9gRhUESOY=",
         "ref": "refs/heads/master",
-        "rev": "640df5888f81504fba4592297b9921cc45f0c633",
-        "revCount": 10823,
+        "rev": "10a919932df6e0f7e3bef2133ba571e33cb0599a",
+        "revCount": 10825,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -1095,11 +1095,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794592031,
-        "narHash": "sha256-1lcq8iocXIs5N5acUPg3IcQkTv+72mE1pk5clQslzFQ=",
+        "lastModified": 1794599666,
+        "narHash": "sha256-+RoOROikHANO9CAdv5jODWa+7yb+U2v56ATi+9mUefc=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "a8d51864e41c74c8b0d860ea75c0cda2f109bb5e",
+        "rev": "cfea859d6cf08f4e8067f40914d0e52c49d7d2e2",
         "type": "github"
       },
       "original": {
@@ -8322,11 +8322,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794567267,
-        "narHash": "sha256-rNEpg5aWAPgBPdF1vhhwztYtV7hgzE3fQiby+FZMuCQ=",
+        "lastModified": 1794597451,
+        "narHash": "sha256-bUkc9dMpCFiJuuf5Efr7pnCDs5q18aA8zJah+MYZl9w=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "75206a855c8de3bc71f8b513edf29ca427941c3a",
+        "rev": "eb3c90bd715f7a9a28719bb014f53d309ccb2fc8",
         "type": "github"
       },
       "original": {
@@ -8345,11 +8345,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794585919,
-        "narHash": "sha256-uUwFA6GSfyjUGBCYzmK4LfDg40lx8iUM/WLk4PVLgmo=",
+        "lastModified": 1794594999,
+        "narHash": "sha256-s8Gm5+rBW/Sx+IbwNGVle4uPyd/FyYRWtr1WEjYSO+o=",
         "owner": "LarsArtmann",
         "repo": "nixos-modules",
-        "rev": "c2c813b76ab5cc572350aaf7d3f84cfc33b5d92f",
+        "rev": "59dbd3ab7e894ab3f891082c8151d4f64d848546",
         "type": "github"
       },
       "original": {
@@ -8732,11 +8732,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794593927,
-        "narHash": "sha256-BJBIFfQeuOLIVX+RF/WbkjWrpPeQgC8iLXsJ/7Pa4UI=",
+        "lastModified": 1794598576,
+        "narHash": "sha256-IE0L1HtuStuUeW9Fe4Bmp1bGMuqZsaCW4G+rv1UZtmY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "a85093b8e667b2b26bc2bf3681369acfc6a5fd30",
+        "rev": "1e13cdc9dda5af1da570ddd3316505c0b81d62f1",
         "type": "github"
       },
       "original": {
@@ -9952,11 +9952,11 @@
     "signoz-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794590186,
-        "narHash": "sha256-3T9GBtV/8NOoOIcgHtcz+uKWxdwLK6THHPmqAnydLZo=",
+        "lastModified": 1794597630,
+        "narHash": "sha256-BDjlueuqDGbRqPk4YFSy4rCGEfAFpH/nhNYrEub4tr8=",
         "owner": "SigNoz",
         "repo": "signoz",
-        "rev": "d03840747501c827bc0a09c595124e18372e8794",
+        "rev": "ca7daf8ea974b879379101c7f7d8cb420da6acc7",
         "type": "github"
       },
       "original": {

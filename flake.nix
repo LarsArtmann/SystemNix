@@ -1685,7 +1685,16 @@
 
       # System configurations — assembled in systems/*.nix (thin host files)
       flake = {
-        lib = import ./lib { inherit (nixpkgs) lib; };
+        # NOTE: lib/default.nix takes the lib as a SIMPLE parameter (`lib:`),
+        # so it must be imported with the lib itself — `import ./lib lib`
+        # (the let above binds it from the nixpkgs input). The historical
+        # `import ./lib { inherit (nixpkgs) lib; }` form silently bound the
+        # WRAPPER attrset `{ lib = … }` to the parameter (simple params take
+        # the whole argument; only `{ lib }:` patterns select the field),
+        # and every helper downstream failed with `attribute 'genAttrs'
+        # missing`-class errors — the "flake.lib anomaly" root-caused
+        # 2026-11-13.
+        lib = import ./lib lib;
 
         darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
           inherit
