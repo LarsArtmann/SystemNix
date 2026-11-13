@@ -34,11 +34,12 @@
       pkgs.diffutils
     ];
     text = ''
-      echo "signoz-provision: starting (v7 — converge rules + route policies + dashboards: skip-unchanged, PUT in place, verified deletes)"
+      echo "signoz-provision: starting (v8 — v2 rules API: v3 list, v2 CRUD, v1→v2alpha1 conversion per upstream migration 145: converge rules + route policies + dashboards: skip-unchanged, PUT in place, verified deletes)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
       RESP=$(mktemp)
+      LIST_RESP=$(mktemp)
 
       # http METHOD PATH [JSON_BODY] → HTTP status in $HTTP_STATUS, body in $RESP.
       # Never or-true state mutations: every caller checks the status.
@@ -121,15 +122,77 @@
       #   removed from nix  → DELETE (verified)
       #   final             → convergence assertion on names + counts
       echo "Deploying alert rules (converge)..."
-      RULES_PATH="/api/v1/rules"
+      # The 2026-11-12 signoz package move removed the v1 rules routes (each
+      # serves the SPA index.html with HTTP 200 — jq died at `<!doctype`, the
+      # unit exit 5 under errexit). v3 lists (summary objects, paginated —
+      # pass a limit), v2 CRUDs (full rule objects). Contract verified at the
+      # locked rev (pkg/apiserver/signozapiserver/ruler.go) + live 2026-11-13:
+      # GET /api/v3/rules?limit=N, GET/PUT/DELETE /api/v2/rules/{id}, POST
+      # /api/v2/rules; /api/v1/route_policies + /api/v1/channels stay v1.
+      RULES_PATH="/api/v2/rules"
+      RULES_LIST="/api/v3/rules?limit=100"
 
       # Canonical projection of the fields we own. The live GET adds
       # id/state/timestamps and injects query-spec defaults (disabled,
       # stats, legend); projecting both sides through the same filter makes
       # "unchanged" actually detectable.
-      CANON='{alert, ruleType, disabled, description, evalWindow, frequency, labels, annotations: (.annotations // {}), preferredChannels, condition: (.condition | {op, target, matchType, selectedQueryName, compositeQuery: (.compositeQuery | {queryType, panelType, queries: [.queries[] | {type, spec: {name: .spec.name, query: .spec.query, step: .spec.step}}]})})}'
+      CANON='{alert, ruleType, disabled, description, labels, annotations: (.annotations // {}), evaluation: {kind: .evaluation.kind, spec: {evalWindow: .evaluation.spec.evalWindow, frequency: .evaluation.spec.frequency}}, condition: {selectedQueryName: .condition.selectedQueryName, compositeQuery: (.condition.compositeQuery | {queryType, panelType, queries: [.queries[] | {type, spec: {name: .spec.name, query: .spec.query, step: .spec.step}}]}), thresholds: {kind: .condition.thresholds.kind, spec: [.condition.thresholds.spec[] | {name, target, targetUnit, recoveryTarget, matchType, op, channels}]}}}'
+
+      # v1 flat postable rule (stdin) -> v2alpha1 payload (stdout). Mirrors
+      # upstream sqlmigration 145_migrate_rules_v1_to_v2alpha1.convertRule():
+      # threshold name = severity label (default critical), channels =
+      # preferredChannels, evaluation relocated, notificationSettings
+      # synthesized, v1-only fields dropped (source/version are legacy keys
+      # the server stores + echoes as sent).
+      rule_to_v2() {
+        jq '(.labels // {}) as $l | (.condition // {}) as $c | ($l.severity // "critical") as $sev | (.preferredChannels // []) as $ch |
+          {
+            alert, alertType, description, ruleType,
+            labels: $l, annotations: (.annotations // {}), disabled: (.disabled // false),
+            source, version,
+            condition: ($c | del(.op, .target, .matchType, .targetUnit) + {
+              thresholds: {
+                kind: "basic",
+                spec: [{
+                  name: $sev,
+                  target: $c.target,
+                  targetUnit: ($c.targetUnit // ""),
+                  recoveryTarget: null,
+                  matchType: $c.matchType,
+                  op: $c.op,
+                  channels: $ch
+                }]
+              }
+            }),
+            evaluation: {kind: "rolling", spec: {evalWindow: .evalWindow, frequency: .frequency}},
+            notificationSettings: {
+              renotify: {
+                enabled: true,
+                interval: "4h",
+                alertStates: (if ($c.alertOnAbsent // false) then ["firing", "nodata"] else ["firing"] end)
+              },
+              usePolicy: false
+            },
+            schemaVersion: "v2alpha1"
+          }'
+      }
 
       DESIRED_NAMES=()
+
+      RULES_LISTED=0
+      http GET "$RULES_LIST"
+      if ! ok; then
+        fail "list rules (HTTP $HTTP_STATUS)"
+      else
+        LISTED=$(jq -r '.data.total // (.data.rules | length)' "$RESP")
+        RETURNED=$(jq -r '.data.rules | length' "$RESP")
+        if [ "$RETURNED" -lt "$LISTED" ]; then
+          fail "rule list truncated (returned $RETURNED of $LISTED — raise the list limit)"
+        else
+          cp "$RESP" "$LIST_RESP"
+          RULES_LISTED=1
+        fi
+      fi
 
       for rule_file in /etc/signoz/rules/*.json; do
         [ -f "$rule_file" ] || continue
@@ -139,26 +202,28 @@
           continue
         fi
         DESIRED_NAMES+=("$RULE_NAME")
-
-        http GET "$RULES_PATH"
-        if ! ok; then
-          fail "list rules before $RULE_NAME (HTTP $HTTP_STATUS)"
+        if [ "$RULES_LISTED" = 0 ]; then
           continue
         fi
+        DESIRED_OBJ=$(rule_to_v2 < "$rule_file")
+        DESIRED_CANON=$(jq -S "$CANON" <<<"$DESIRED_OBJ")
 
         # ids of ALL live copies of this name (catches zombie duplicates)
-        mapfile -t IDS < <(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .id' "$RESP")
-        DESIRED_CANON=$(jq -S "$CANON" "$rule_file")
+        mapfile -t IDS < <(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .id' "$LIST_RESP")
 
         if [ "''${#IDS[@]}" -eq 1 ]; then
-          LIVE_OBJ=$(jq -c --arg n "$RULE_NAME" '[.data.rules[]? | select(.alert == $n)][0]' "$RESP")
-          LIVE_CANON=$(jq -S "$CANON" <<<"$LIVE_OBJ")
+          http GET "$RULES_PATH/''${IDS[0]}"
+          if ! ok; then
+            fail "get rule $RULE_NAME (HTTP $HTTP_STATUS)"
+            continue
+          fi
+          LIVE_CANON=$(jq -S "$CANON" <<<"$(jq -c '.data' "$RESP")")
           if [ "$LIVE_CANON" = "$DESIRED_CANON" ]; then
             echo "  Unchanged: $RULE_NAME — skipping"
             continue
           fi
           echo "  Updating in place: $RULE_NAME (''${IDS[0]})"
-          http PUT "$RULES_PATH/''${IDS[0]}" "$(cat "$rule_file")"
+          http PUT "$RULES_PATH/''${IDS[0]}" "$DESIRED_OBJ"
           if ok; then
             echo "  OK rule updated: $RULE_NAME (HTTP $HTTP_STATUS)"
           else
@@ -168,7 +233,7 @@
               fail "delete $RULE_NAME before recreate (HTTP $HTTP_STATUS)"
               continue
             fi
-            http POST "$RULES_PATH" "$(cat "$rule_file")"
+            http POST "$RULES_PATH" "$DESIRED_OBJ"
             if ok; then
               echo "  OK rule recreated: $RULE_NAME (HTTP $HTTP_STATUS)"
             else
@@ -185,7 +250,7 @@
             fi
           done
           echo "  Creating: $RULE_NAME"
-          http POST "$RULES_PATH" "$(cat "$rule_file")"
+          http POST "$RULES_PATH" "$DESIRED_OBJ"
           if ok; then
             echo "  OK rule created: $RULE_NAME (HTTP $HTTP_STATUS)"
           else
@@ -195,7 +260,7 @@
       done
 
       # Delete live rules that no longer exist in /etc/signoz/rules/
-      http GET "$RULES_PATH"
+      http GET "$RULES_LIST"
       if ! ok; then
         fail "list rules for removal pass (HTTP $HTTP_STATUS)"
       else
@@ -219,13 +284,17 @@
 
       # ---------------- Convergence assertion ----------------
       echo "Verifying rule convergence..."
-      http GET "$RULES_PATH"
+      http GET "$RULES_LIST"
       if ! ok; then
         fail "convergence check could not list rules (HTTP $HTTP_STATUS)"
       else
+        LISTED=$(jq -r '.data.total // (.data.rules | length)' "$RESP")
         LIVE_NAMES=$(jq -r '.data.rules[]?.alert' "$RESP" | sort)
         LIVE_TOTAL=$(jq -r '.data.rules | length' "$RESP")
         LIVE_UNIQUE=$(jq -r '.data.rules[]?.alert' "$RESP" | sort -u)
+        if [ "$LIVE_TOTAL" -lt "$LISTED" ]; then
+          fail "convergence list truncated (returned $LIVE_TOTAL of $LISTED — raise the list limit)"
+        fi
         DESIRED_SORTED=$(printf '%s\n' "''${DESIRED_NAMES[@]}" | sort)
         if [ "$LIVE_NAMES" = "$DESIRED_SORTED" ] && [ "$LIVE_UNIQUE" = "$LIVE_NAMES" ] && [ "$LIVE_TOTAL" -eq "''${#DESIRED_NAMES[@]}" ]; then
           echo "  OK $LIVE_TOTAL rules provisioned, exact desired set, zero duplicates"
@@ -250,7 +319,7 @@
       POLICIES_PATH="/api/v1/route_policies"
       OWNED_TAG="systemnix"
 
-      http GET "$RULES_PATH"
+      http GET "$RULES_LIST"
       if ! ok; then
         fail "policy convergence could not list rules (HTTP $HTTP_STATUS)"
       else
@@ -450,7 +519,7 @@
         fi
       fi
 
-      rm -f "$RESP"
+      rm -f "$RESP" "$LIST_RESP"
 
       if [ "$FAILED" -gt 0 ]; then
         echo "Provisioning FAILED: $FAILED errors. See stderr above." >&2

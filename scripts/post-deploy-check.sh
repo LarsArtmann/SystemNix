@@ -1583,8 +1583,8 @@ else
 fi
 
 # SigNoz: alert rules must be provisioned (>15 rules expected)
-if [ -n "$PORT_SIGNOZ" ] && signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_SIGNOZ}/api/v1/rules" 2>/dev/null); then
-  RULE_COUNT=$(echo "$signoz_rules" | jq -r '.data.rules | length' 2>/dev/null || echo "0")
+if [ -n "$PORT_SIGNOZ" ] && signoz_rules=$(curl -s --compressed --max-time 5 "http://localhost:${PORT_SIGNOZ}/api/v3/rules?limit=100" 2>/dev/null); then
+  RULE_COUNT=$(echo "$signoz_rules" | jq -r '.data.total // (.data.rules | length)' 2>/dev/null || echo "0")
   RULE_COUNT="${RULE_COUNT:-0}"
   if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
     echo -e "${GREEN}PASS${NC} SigNoz alert rules provisioned ($RULE_COUNT rules)"

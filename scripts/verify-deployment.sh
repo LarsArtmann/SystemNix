@@ -146,7 +146,7 @@ fi
 
 # Check alert rules
 log_info "Checking SigNoz alert rules..."
-RULE_COUNT=$(curl -sf --max-time 10 --compressed http://localhost:8080/api/v1/rules 2>/dev/null | grep -o '"id"' | wc -l) || true
+RULE_COUNT=$(curl -sf --max-time 10 --compressed "http://localhost:8080/api/v3/rules?limit=100" 2>/dev/null | grep -o '"id"' | wc -l) || true
 RULE_COUNT="${RULE_COUNT:-0}"
 if [ "$RULE_COUNT" -gt 0 ]; then
   log_pass "SigNoz alert rules active: $RULE_COUNT"

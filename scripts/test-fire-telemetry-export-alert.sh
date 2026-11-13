@@ -72,7 +72,7 @@ leg() {
 
 echo "== Preflight: rule + route policy + channel =="
 
-http GET "/api/v1/rules"
+http GET "/api/v3/rules?limit=100"
 ok || die "SigNoz rules API unreachable (HTTP $HTTP_STATUS) — is signoz.service up?"
 RULE_ID=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .id' <<<"$HTTP_BODY" | head -1)
 [ -n "$RULE_ID" ] || die "rule '$RULE_NAME' not provisioned — run the signoz provisioner first"
@@ -140,7 +140,7 @@ FIRED=""
 # through a 4-min poll and fired minutes later. Poll a full 10 minutes.
 for _ in $(seq 1 40); do
   sleep 15
-  http GET "/api/v1/rules"
+  http GET "/api/v3/rules?limit=100"
   STATE=$(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .state' <<<"$HTTP_BODY" | head -1)
   if [ "$STATE" = "firing" ]; then
     FIRED=1
@@ -169,8 +169,6 @@ THROWAWAY_JSON=$(jq -n \
     version: "v5",
     description: $desc,
     annotations: {description: ($desc + " (current: {{$value}})")},
-    evalWindow: "1m",
-    frequency: "1m",
     disabled: false,
     source: "RULE",
     condition: {
@@ -180,12 +178,15 @@ THROWAWAY_JSON=$(jq -n \
         queries: [{type: "promql", spec: {name: "A", query: $query, step: 60}}]
       },
       selectedQueryName: "A",
-      op: "above_or_equal",
-      target: 1,
-      matchType: "last"
+      thresholds: {
+        kind: "basic",
+        spec: [{name: "warning", target: 1, targetUnit: "", recoveryTarget: null, matchType: "last", op: "above_or_equal", channels: ["Discord Alerts"]}]
+      }
     },
     labels: {severity: "warning"},
-    preferredChannels: ["Discord Alerts"]
+    evaluation: {kind: "rolling", spec: {evalWindow: "1m", frequency: "1m"}},
+    notificationSettings: {renotify: {enabled: true, interval: "4h", alertStates: ["firing"]}, usePolicy: false},
+    schemaVersion: "v2alpha1"
   }')
 
 # shellcheck disable=SC2329
@@ -193,7 +194,7 @@ THROWAWAY_JSON=$(jq -n \
 cleanup() {
   local rc=$?
   if [ -n "${THROWAWAY_ID:-}" ]; then
-    http DELETE "/api/v1/rules/$THROWAWAY_ID"
+    http DELETE "/api/v2/rules/$THROWAWAY_ID"
     ok || echo "  WARN: throwaway rule delete returned HTTP $HTTP_STATUS (the provisioner's orphan pass will remove it)" >&2
   fi
   if [ -n "${THROWAWAY_POLICY_ID:-}" ]; then
@@ -204,7 +205,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-http POST "/api/v1/rules" "$THROWAWAY_JSON"
+http POST "/api/v2/rules" "$THROWAWAY_JSON"
 ok || die "throwaway rule create failed (HTTP $HTTP_STATUS): $(head -c 300 <<<"$HTTP_BODY")"
 THROWAWAY_ID=$(jq -r '.data.id // empty' <<<"$HTTP_BODY")
 [ -n "$THROWAWAY_ID" ] || die "throwaway rule created but no id returned"
