@@ -661,6 +661,14 @@ _: {
                   conditions = [ "[CONNECTED] == true" ];
                   alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
                 }
+                {
+                  name = "NATS JetStream";
+                  group = "Infrastructure";
+                  url = "tcp://127.0.0.1:${toString ports.nats}";
+                  interval = "60s";
+                  conditions = [ "[CONNECTED] == true" ];
+                  alerts = discordAlert "NATS broker down — journal mesh real-time ingestion degraded (bank-sync publishes fail after sync cycles; the 15-min file pipeline stays break-glass). Check: journalctl -u nats -n 50";
+                }
                 (mkHttpCheck {
                   name = "SigNoz";
                   group = "Monitoring";

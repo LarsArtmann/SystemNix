@@ -24,6 +24,15 @@
 #   projects empty subvol over shadow   -> FAIL (wave-6 signature), rc 1
 #   projects prepared copy / parity     -> PASS rc 0 / WARN rc 0
 #   shadow unreadable (EACCES)          -> WARN, rc 0
+#   shadow hidden by 0700 parent, no
+#     privilege prefix                   -> WARN (degraded probe), rc 0
+#   shadow hidden by 0700 parent, WITH
+#     a working SS_PRIV                  -> real verdict (PASS/FAIL per
+#                                          content) — the "re-run with a
+#                                          sudo ticket" recipe must be
+#                                          able to succeed (2026-11-13:
+#                                          it could not — only du was
+#                                          privileged, -d never was)
 #   no entries at all                   -> PASS, rc 0
 # Run: bash scripts/test-predeploy-shadow-split.sh
 set -uo pipefail
@@ -47,7 +56,8 @@ expect() {
 
 run_case() {
   # $1 label · $2 shadow-prep command · $3 subvol-prep command · $4 entry JSON
-  local label="$1" shadow_prep="$2" subvol_prep="$3" json="$4"
+  # $5 optional SS_PRIV override (default "" — the degraded-probe mode)
+  local label="$1" shadow_prep="$2" subvol_prep="$3" json="$4" priv="${5:-}"
   local tmp out rc
   tmp=$(mktemp -d)
   mkdir -p "$tmp/shadow" "$tmp/hot"
@@ -63,10 +73,14 @@ run_case() {
     rm -rf "$tmp"
     return 0
   }
-  out=$(SS_PRIV="" SS_SHADOW_ROOT="$tmp/shadow" SS_HOT_ROOT="$tmp/hot" \
+  out=$(SS_PRIV="$priv" SS_SHADOW_ROOT="$tmp/shadow" SS_HOT_ROOT="$tmp/hot" \
     SS_ENTRIES_JSON="$json" bash "$GATE" 2>&1)
   rc=$?
   printf '%s\n' "$out" | sed 's/^/       /' | sed -n '1,12p'
+  # Root-owned fixture trees (the privileged cases) need root to unlock
+  # before the invoking user can rm -rf the sandbox (a+rwX — u only helps
+  # root, the new owner, not the invoking user doing the rm).
+  [ -z "$priv" ] || sudo -n chmod -R a+rwX "$tmp" 2>/dev/null || true
   chmod -R u+rwX "$tmp" 2>/dev/null || true
   rm -rf "$tmp"
   VerdictRC="$rc"
@@ -78,6 +92,9 @@ JSON_CACHE_EMPTY='{"ucEnable":true,"uc":{"x":{"subvol":"users/t/cache/x","mountP
 JSON_PREPARED='{"ucEnable":false,"uc":[],"hdbEnable":true,"hdb":{"pg":{"path":"/var/lib/postgresql","cow":false,"unit":"postgresql.service"}}}'
 JSON_NODATA='{"ucEnable":false,"uc":[],"hdbEnable":false,"hdb":{}}'
 JSON_PROJECTS='{"ucEnable":false,"uc":[],"hdbEnable":false,"hdb":{},"projectsMount":true}'
+# The DynamicUser shape: shadow behind a root-owned 0700 parent, so an
+# unprivileged -d cannot even resolve the path (the /var/lib/private class).
+JSON_PRIV='{"ucEnable":false,"uc":[],"hdbEnable":true,"hdb":{"mydb":{"path":"/var/lib/private/mydb","cow":false,"unit":"mydb.service"}}}'
 
 echo "shadow-split gate fixtures"
 
@@ -189,6 +206,30 @@ run_case "projects parity WARN" \
   "$JSON_PROJECTS"
 expect "rc 0 (warn-only)" "$VerdictRC" "0"
 expect "projects parity WARN" "$(printf '%s' "$VerdictOut" | grep -c '<25% of shadow' || true)" "1"
+
+# 16. shadow hidden behind an unreadable (chmod 000) parent, NO privilege
+#     prefix -> degraded WARN, never a false verdict (runs everywhere).
+run_case "hidden shadow ticketless WARN" \
+  "mkdir -p shadow/var/lib/private/mydb && dd if=/dev/zero of=shadow/var/lib/private/mydb/base bs=1k count=10 2>/dev/null && chmod 000 shadow/var/lib/private" \
+  "mkdir -p hot/hot/mydb && dd if=/dev/zero of=hot/hot/mydb/base bs=1k count=10 2>/dev/null" \
+  "$JSON_PRIV"
+expect "rc 0 (degraded warn)" "$VerdictRC" "0"
+expect "degraded WARN emitted" "$(printf '%s' "$VerdictOut" | grep -c 'unreadable' || true)" "1"
+
+# 17. same shape WITH a working privilege prefix -> a REAL verdict: the
+#     "re-run with a sudo ticket" recipe must succeed. Skipped where no
+#     passwordless sudo exists (bare CI runners keep case 16 as coverage).
+if sudo -n true 2>/dev/null; then
+  run_case "hidden shadow privileged real verdict" \
+    "mkdir -p shadow/var/lib/private/mydb && dd if=/dev/zero of=shadow/var/lib/private/mydb/base bs=1k count=10 2>/dev/null && chmod 000 shadow/var/lib/private && sudo -n chown -R root:root shadow/var/lib/private" \
+    "mkdir -p hot/hot/mydb && dd if=/dev/zero of=hot/hot/mydb/base bs=1k count=10 2>/dev/null" \
+    "$JSON_PRIV" "sudo -n"
+  expect "rc 0 (real verdict)" "$VerdictRC" "0"
+  expect "no unreadable WARN" "$(printf '%s' "$VerdictOut" | grep -c 'unreadable' || true)" "0"
+  expect "privileged PASS verdict" "$(printf '%s' "$VerdictOut" | grep -c 'prepared-copy shape holds' || true)" "1"
+else
+  echo "  skip [case 17] privileged probe leg (no passwordless sudo here)"
+fi
 
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then

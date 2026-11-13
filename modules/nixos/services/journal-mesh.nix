@@ -139,6 +139,13 @@
               # the journal-serve posture — no vHost, no external client).
               settings.host = "127.0.0.1";
             };
+
+            # nixpkgs-rendered unit: overlay the IO tier here (the audit's
+            # stock-unit overlay pattern). JetStream fsyncs every message
+            # batch to /var/lib/nats (QLC root); the broker is the mesh's
+            # latency-critical transport, so it queues above its own
+            # BE/6 consumer (journal-mesh) but below desktop (BE/3).
+            systemd.services.nats.serviceConfig = ioTier.heavyDB;
           })
 
           {

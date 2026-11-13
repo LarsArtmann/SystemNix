@@ -43,7 +43,8 @@
 #   SS_ENTRIES_JSON  inline entries document instead of nix eval
 #   SS_SHADOW_ROOT   prefix for shadow paths (default "")
 #   SS_HOT_ROOT      prefix for subvol paths  (default /mnt/hot)
-#   SS_PRIV          privilege prefix for root-owned probes; default
+#   SS_PRIV          privilege prefix for root-owned probes (existence,
+#                    readability, du, find — ALL of them); default
 #                    auto-detects `sudo -n` and falls back to "" — the
 #                    owner's interactive deploy shell has the ticket, bare
 #                    agent shells degrade to WARN verdicts by design.
@@ -87,13 +88,22 @@ ss_pass() {
 # dir_size <path> -> echoes "bytes files" or "unknown unknown" when unreadable
 dir_size() {
   local dir="$1"
-  if [ ! -d "$dir" ]; then
+  # The existence test runs through $SS_PRIV too: root-owned 0700 parents
+  # (the DynamicUser /var/lib/private/* trees) make an unprivileged -d false
+  # for a dir that EXISTS — if only the du leg is privileged, a live sudo
+  # ticket never reaches the probe and the "re-run with a sudo ticket"
+  # recipe can never clear the WARN (2026-11-13: browser-history/gatus
+  # warned WITH a working ticket for exactly this reason).
+  if ! $SS_PRIV test -d "$dir" 2>/dev/null; then
     # Permission-shaped absence: an unreadable PARENT makes -d false for a
     # dir that exists (root-owned 700 trees like /var/lib/private/*). Report
-    # unknown, never absent, when the parent cannot be read.
+    # unknown, never absent, when the parent cannot be read — including by
+    # the privilege prefix (a dead mid-run ticket degrades to WARN, by
+    # design). Under a WORKING prefix the -r fallback is always true, so a
+    # genuinely absent dir reports absent (root's -d is authoritative).
     local parent
     parent=$(dirname "$dir")
-    if [ -d "$parent" ] && [ ! -r "$parent" ]; then
+    if [ -d "$parent" ] && [ ! -r "$parent" ] && ! $SS_PRIV test -r "$parent" 2>/dev/null; then
       echo "unknown unknown"
     else
       echo "absent absent"
