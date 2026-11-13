@@ -1071,7 +1071,12 @@
       # completed to 3a334f909 /v4 + cmdguard v5.0.0, vendorHash chased,
       # verify-pinned FULL green): lock-free package probe green at this
       # rev.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=e383ba9c28226ab4aa4b3db57358607f89b9eb6e";
+      # 2026-11-12 ROLL-FORWARD to 9d96dad (the login auto-forward wave:
+      # bare GET /login 303s straight to Pocket ID in the passkeys-only
+      # posture, error/manual query escape keeps the interactive page; also
+      # carries the oauth2/sqlite bumps with upstream's own vendorHash chase
+      # c626704): lock-free package probe green at this rev, no override.
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=9d96dadc2c060c23dd39f5c6710758a316ee24e1";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
