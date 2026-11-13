@@ -29,7 +29,10 @@
 # Tika/Gotenberg are NOT enabled in this test (configureTika = false) —
 # their closure (chromium + libreoffice) is multi-GB; the nixpkgs modules
 # carry their own coverage, and the gatus endpoints verify them on the host.
-_:
+{
+  pkgs,
+  inputs,
+}:
 let
   paperlessFlakeOutput = (import ../modules/nixos/services/paperless.nix) { };
   paperlessNixosModule = paperlessFlakeOutput.flake.nixosModules.paperless;
