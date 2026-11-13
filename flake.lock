@@ -7521,11 +7521,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1794525353,
-        "narHash": "sha256-bv/hrsQNw5zYwty1ycjm/WbnTDCv/bkQ7CpBJPH94iU=",
+        "lastModified": 1794526770,
+        "narHash": "sha256-4cBs+/WbW4Q15w9LyaaQbUripUa+VAkpDwLPSF27bs8=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "c5c5940b1b6760722e02b2e2913b441afbe53f5a",
+        "rev": "3be59a621a64931d1946b8bddbd69747019d43db",
         "type": "github"
       },
       "original": {
@@ -8731,11 +8731,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794526552,
-        "narHash": "sha256-KkmH+NULoWPXzin+nclSyD4KiKioy0Yvrl6hkQfturA=",
+        "lastModified": 1794528634,
+        "narHash": "sha256-f34E5mKuOZyvMlxh8rx4ux5WDMJDPqSlAIzPIXbzMG4=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "9e0d112b0b2af5c04deb22694c3ea99723fc23a2",
+        "rev": "0128d29d77ae00626703958393ccbbf9212deb0b",
         "type": "github"
       },
       "original": {
@@ -9523,11 +9523,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794482313,
-        "narHash": "sha256-V8Pd1tlweuLlRIfPCg6mXm4j+47LK/ZVClCwx7Fx410=",
+        "lastModified": 1794528706,
+        "narHash": "sha256-VEh+M01OB6SYhX05WLmP6wxIuQn+bkfqHWG+oHwisHQ=",
         "ref": "refs/heads/master",
-        "rev": "fcdd14e53a5db6363a254cb2463e60158a021c00",
-        "revCount": 214,
+        "rev": "b4249e0cc1396d0465eb3a8ff2a93b7577e5ccf0",
+        "revCount": 275,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/quotaboard"
       },
