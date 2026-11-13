@@ -9,8 +9,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.start-limit-audit = {
-    imports = [inputs.nixos-modules.nixosModules.start-limit-audit];
+    imports = [ inputs.nixos-modules.nixosModules.start-limit-audit ];
   };
 }

@@ -12,8 +12,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.timeout-audit = {
-    imports = [inputs.nixos-modules.nixosModules.timeout-audit];
+    imports = [ inputs.nixos-modules.nixosModules.timeout-audit ];
   };
 }

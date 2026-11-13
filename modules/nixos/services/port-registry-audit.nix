@@ -16,9 +16,10 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.port-registry-audit = {
-    imports = [inputs.nixos-modules.nixosModules.port-registry-audit];
+    imports = [ inputs.nixos-modules.nixosModules.port-registry-audit ];
 
     services.port-registry-audit = {
       enable = true;

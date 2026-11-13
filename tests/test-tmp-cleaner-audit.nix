@@ -26,7 +26,7 @@ let
   # The module file is a delegation layer (top-level lambda takes inputs —
   # A1a shape) — apply it, then pull the NixOS module out of flake.nixosModules.
   audit =
-    ((import ../modules/nixos/services/tmp-cleaner-audit.nix) {inherit inputs;})
+    ((import ../modules/nixos/services/tmp-cleaner-audit.nix) { inherit inputs; })
     .flake.nixosModules.tmp-cleaner-audit;
   scheduledTasks = import ../platforms/nixos/system/scheduled-tasks.nix;
   primaryUserModule = import ../platforms/nixos/system/primary-user.nix;

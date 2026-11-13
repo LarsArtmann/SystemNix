@@ -32,10 +32,19 @@ intake() {
   local account='' from='' dry=0
   while [ $# -gt 0 ]; do
     case $1 in
-      --account) account=$2; shift 2 ;;
-      --from) from=$2; shift 2 ;;
-      --dry-run) dry=1; shift ;;
-      *) die "unknown argument: $1" ;;
+    --account)
+      account=$2
+      shift 2
+      ;;
+    --from)
+      from=$2
+      shift 2
+      ;;
+    --dry-run)
+      dry=1
+      shift
+      ;;
+    *) die "unknown argument: $1" ;;
     esac
   done
   [ -n "$account" ] || die "--account is required"
@@ -50,8 +59,8 @@ intake() {
   local f
   while IFS= read -r f; do
     case ${f,,} in
-      *.html | *.htm) ;;
-      *) continue ;;
+    *.html | *.htm) ;;
+    *) continue ;;
     esac
     if grep -qE 'data-download-uri="takeout/download|takeout/download\?' "$f" 2>/dev/null; then
       candidate=$f
@@ -123,9 +132,9 @@ main() {
     exit 0
   }
   case $1 in
-    --selftest) selftest ;;
-    -h | --help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' ;;
-    *) intake "$@" ;;
+  --selftest) selftest ;;
+  -h | --help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) intake "$@" ;;
   esac
 }
 

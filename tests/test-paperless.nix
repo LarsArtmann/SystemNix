@@ -48,7 +48,8 @@ let
   # definition). On real hosts auto-discovery provides it; this minimal
   # eval must import the audit module itself.
   gatusCoverageAuditModule =
-    (import ../modules/nixos/services/gatus-coverage-audit.nix).flake.nixosModules.gatus-coverage-audit;
+    ((import ../modules/nixos/services/gatus-coverage-audit.nix) { inherit inputs; })
+    .flake.nixosModules.gatus-coverage-audit;
 
   # Option-only mock for the OIDC gate: paperless.nix reads
   # `services.pocket-id-config.enable or false` and falls back to
@@ -107,6 +108,10 @@ let
       };
     };
 in
+{
+  pkgs,
+  inputs,
+}:
 {
   name = "paperless";
 

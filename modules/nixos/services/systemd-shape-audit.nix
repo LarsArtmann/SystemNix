@@ -17,8 +17,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.systemd-shape-audit = {
-    imports = [inputs.nixos-modules.nixosModules.systemd-shape-audit];
+    imports = [ inputs.nixos-modules.nixosModules.systemd-shape-audit ];
   };
 }

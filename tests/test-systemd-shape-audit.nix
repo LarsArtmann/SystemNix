@@ -23,7 +23,7 @@ let
   # Delegation layer (top-level lambda takes inputs) — apply it, then pull
   # the composed NixOS module out of flake.nixosModules (A1a shape).
   audit =
-    ((import ../modules/nixos/services/systemd-shape-audit.nix) {inherit inputs;})
+    ((import ../modules/nixos/services/systemd-shape-audit.nix) { inherit inputs; })
     .flake.nixosModules.systemd-shape-audit;
 
   evalAssertions =

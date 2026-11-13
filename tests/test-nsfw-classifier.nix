@@ -45,7 +45,8 @@ let
   # the option or every definition errors — same reasoning as
   # integrationModule above.
   gatusCoverageAuditModule =
-    (import ../modules/nixos/services/gatus-coverage-audit.nix).flake.nixosModules.gatus-coverage-audit;
+    ((import ../modules/nixos/services/gatus-coverage-audit.nix) { inherit inputs; })
+    .flake.nixosModules.gatus-coverage-audit;
 
   evalConfig =
     extra:

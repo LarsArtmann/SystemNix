@@ -22,7 +22,8 @@ let
   lib = inputs.nixpkgs.lib;
 
   audit =
-    (import ../modules/nixos/services/port-registry-audit.nix).flake.nixosModules.port-registry-audit;
+    ((import ../modules/nixos/services/port-registry-audit.nix) { inherit inputs; })
+    .flake.nixosModules.port-registry-audit;
 
   evalAssertions =
     extraModules:

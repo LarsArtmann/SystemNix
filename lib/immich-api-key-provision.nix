@@ -34,8 +34,7 @@
 let
   # Shell-safe: Immich permissions are dotted identifiers with no quoting needs.
   permissionsSql =
-    permissions:
-    "ARRAY[" + lib.concatMapStringsSep "," (p: "'${p}'") permissions + "]::varchar[]";
+    permissions: "ARRAY[" + lib.concatMapStringsSep "," (p: "'${p}'") permissions + "]::varchar[]";
 
   keyCall =
     name: spec:
@@ -44,7 +43,9 @@ let
       format = if url == null then "plain" else "env";
       restarts = lib.concatStringsSep " " (spec.restartUnits or [ ]);
     in
-    ''provision "${name}" "${spec.keyFile}" "${spec.owner}" "${spec.group}" "${format}" "${if url == null then "" else url}" "${permissionsSql spec.permissions}" "${restarts}" || fail=1'';
+    ''provision "${name}" "${spec.keyFile}" "${spec.owner}" "${spec.group}" "${format}" "${
+      if url == null then "" else url
+    }" "${permissionsSql spec.permissions}" "${restarts}" || fail=1'';
 in
 pkgs.writeShellApplication {
   name = unitName;

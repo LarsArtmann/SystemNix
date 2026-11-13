@@ -15,9 +15,10 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.gatus-coverage-audit = {
-    imports = [inputs.nixos-modules.nixosModules.gatus-coverage-audit];
+    imports = [ inputs.nixos-modules.nixosModules.gatus-coverage-audit ];
 
     services.gatus-coverage-audit = {
       enable = true;

@@ -70,11 +70,23 @@ cmd_index() {
   local dir='' account='' cycle='' force=0
   while [ $# -gt 0 ]; do
     case $1 in
-      --from-extract) dir=$2; shift 2 ;;
-      --account) account=$2; shift 2 ;;
-      --cycle) cycle=$2; shift 2 ;;
-      --force) force=1; shift ;;
-      *) die "index: unknown argument: $1" ;;
+    --from-extract)
+      dir=$2
+      shift 2
+      ;;
+    --account)
+      account=$2
+      shift 2
+      ;;
+    --cycle)
+      cycle=$2
+      shift 2
+      ;;
+    --force)
+      force=1
+      shift
+      ;;
+    *) die "index: unknown argument: $1" ;;
     esac
   done
   [ -d "$dir" ] || die "index: --from-extract DIR missing or not a directory: '$dir'"
@@ -96,7 +108,10 @@ cmd_index() {
   while IFS= read -r -d '' f; do
     rel=${f#"$dir"/}
     case $rel in
-      *$'\t'*) log "WARN: tab in path, not indexable: $rel"; continue ;;
+    *$'\t'*)
+      log "WARN: tab in path, not indexable: $rel"
+      continue
+      ;;
     esac
     size=$(stat -c %s "$f")
     hash=$(hash_file "$f")
@@ -110,7 +125,10 @@ cmd_index() {
     grep -v $'^ALGO\tHASH\t' "$LEDGER" || true
     cat "$tmp"
   } | LC_ALL=C sort -u >"$tmp.merged"
-  { printf '%s\n' "$LEDGER_HEADER"; cat "$tmp.merged"; } >"$tmp.next"
+  {
+    printf '%s\n' "$LEDGER_HEADER"
+    cat "$tmp.merged"
+  } >"$tmp.next"
   mv "$tmp.next" "$LEDGER"
   rm -f "$tmp" "$tmp.merged"
   after=$(wc -l <"$LEDGER")
@@ -122,11 +140,23 @@ cmd_plan() {
   local dir='' account='' cycle='' out=''
   while [ $# -gt 0 ]; do
     case $1 in
-      --from-extract) dir=$2; shift 2 ;;
-      --account) account=$2; shift 2 ;;
-      --cycle) cycle=$2; shift 2 ;;
-      --out) out=$2; shift 2 ;;
-      *) die "plan: unknown argument: $1" ;;
+    --from-extract)
+      dir=$2
+      shift 2
+      ;;
+    --account)
+      account=$2
+      shift 2
+      ;;
+    --cycle)
+      cycle=$2
+      shift 2
+      ;;
+    --out)
+      out=$2
+      shift 2
+      ;;
+    *) die "plan: unknown argument: $1" ;;
     esac
   done
   [ -n "$account" ] || die "plan: --account is required"
@@ -189,8 +219,8 @@ cmd_plan() {
       ext=${rel##*.}
       ext=$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')
       case " $photosdocs " in
-        *" $ext "*) printf '%s\n' "$rel" >>"$out/photos.txt" ;;
-        *) printf '%s\n' "$rel" >>"$out/other.txt" ;;
+      *" $ext "*) printf '%s\n' "$rel" >>"$out/photos.txt" ;;
+      *) printf '%s\n' "$rel" >>"$out/other.txt" ;;
       esac
     done <"$out/new-files.txt"
   fi
@@ -220,11 +250,23 @@ cmd_balance() {
   local staging='' account='' cycle='' skip=''
   while [ $# -gt 0 ]; do
     case $1 in
-      --staging) staging=$2; shift 2 ;;
-      --account) account=$2; shift 2 ;;
-      --cycle) cycle=$2; shift 2 ;;
-      --skip-products) skip=$2; shift 2 ;;
-      *) die "balance: unknown argument: $1" ;;
+    --staging)
+      staging=$2
+      shift 2
+      ;;
+    --account)
+      account=$2
+      shift 2
+      ;;
+    --cycle)
+      cycle=$2
+      shift 2
+      ;;
+    --skip-products)
+      skip=$2
+      shift 2
+      ;;
+    *) die "balance: unknown argument: $1" ;;
     esac
   done
   [ -n "$staging" ] || die "balance: --staging is required"
@@ -336,7 +378,7 @@ selftest() {
   printf 'bin\n' >"$fx/c1/d.bin"
   printf 'alpha\n' >"$fx/c2/a.txt"
   printf 'pdf-two\n' >"$fx/c2/c.pdf"
-  printf 'bin\n' >"$fx/c2/e.txt"   # new path, content already known from c1/d.bin
+  printf 'bin\n' >"$fx/c2/e.txt" # new path, content already known from c1/d.bin
 
   check() { # name expected actual
     if [ "$2" = "$3" ]; then
@@ -363,8 +405,14 @@ selftest() {
   check plan2-unchanged 1 "$(wc -l <"$fx/out2/unchanged.txt")"
   check plan2-vanished 2 "$(wc -l <"$fx/out2/vanished-since-prev-cycle.txt")"
   check plan2-contentdup 1 "$(wc -l <"$fx/out2/cross-cycle-content-dups.tsv")"
-  if grep -qx 'e.txt' "$fx/out2/new-files.txt"; then echo "leg plan2-e-new: OK"; else echo "leg plan2-e-new: FAIL"; rc=1; fi
-  if grep -qx 'c.pdf' "$fx/out2/new-files.txt"; then echo "leg plan2-c-changed: OK"; else echo "leg plan2-c-changed: FAIL"; rc=1; fi
+  if grep -qx 'e.txt' "$fx/out2/new-files.txt"; then echo "leg plan2-e-new: OK"; else
+    echo "leg plan2-e-new: FAIL"
+    rc=1
+  fi
+  if grep -qx 'c.pdf' "$fx/out2/new-files.txt"; then echo "leg plan2-c-changed: OK"; else
+    echo "leg plan2-c-changed: FAIL"
+    rc=1
+  fi
 
   "$0" plan --from-extract "$fx/c2" --account acctA --cycle 2026-03-01 --out "$fx/out2" >/dev/null
   check plan2-rerun-idempotent 2 "$(wc -l <"$fx/out2/new-files.txt")"
@@ -398,13 +446,25 @@ selftest() {
 main() {
   [ $# -gt 0 ] || usage
   case $1 in
-    index) shift; cmd_index "$@" ;;
-    plan) shift; cmd_plan "$@" ;;
-    balance) shift; cmd_balance "$@" ;;
-    report) shift; cmd_report "$@" ;;
-    --selftest) selftest ;;
-    -h | --help) usage ;;
-    *) die "unknown command: $1 (index|plan|balance|report|--selftest)" ;;
+  index)
+    shift
+    cmd_index "$@"
+    ;;
+  plan)
+    shift
+    cmd_plan "$@"
+    ;;
+  balance)
+    shift
+    cmd_balance "$@"
+    ;;
+  report)
+    shift
+    cmd_report "$@"
+    ;;
+  --selftest) selftest ;;
+  -h | --help) usage ;;
+  *) die "unknown command: $1 (index|plan|balance|report|--selftest)" ;;
   esac
 }
 

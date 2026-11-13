@@ -23,7 +23,8 @@ let
   lib = inputs.nixpkgs.lib;
 
   audit =
-    (import ../modules/nixos/services/gatus-coverage-audit.nix).flake.nixosModules.gatus-coverage-audit;
+    ((import ../modules/nixos/services/gatus-coverage-audit.nix) { inherit inputs; })
+    .flake.nixosModules.gatus-coverage-audit;
 
   # No mock needed: nixpkgs' own services/monitoring/gatus.nix (part of
   # every nixosSystem eval) already declares services.gatus.enable and

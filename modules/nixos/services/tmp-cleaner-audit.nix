@@ -13,8 +13,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.tmp-cleaner-audit = {
-    imports = [inputs.nixos-modules.nixosModules.tmp-cleaner-audit];
+    imports = [ inputs.nixos-modules.nixosModules.tmp-cleaner-audit ];
   };
 }
