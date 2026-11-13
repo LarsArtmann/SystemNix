@@ -12,8 +12,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.capability-grant-audit = {
-    imports = [inputs.nixos-modules.nixosModules.capability-grant-audit];
+    imports = [ inputs.nixos-modules.nixosModules.capability-grant-audit ];
   };
 }

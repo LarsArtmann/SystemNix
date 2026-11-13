@@ -13,8 +13,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.mount-gating-audit = {
-    imports = [inputs.nixos-modules.nixosModules.mount-gating-audit];
+    imports = [ inputs.nixos-modules.nixosModules.mount-gating-audit ];
   };
 }

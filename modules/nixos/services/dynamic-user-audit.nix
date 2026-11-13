@@ -12,8 +12,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.dynamic-user-audit = {
-    imports = [inputs.nixos-modules.nixosModules.dynamic-user-audit];
+    imports = [ inputs.nixos-modules.nixosModules.dynamic-user-audit ];
   };
 }

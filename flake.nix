@@ -1430,6 +1430,14 @@
     nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
     nixos-modules.inputs.nixpkgs.follows = "nixpkgs";
     nixos-modules.inputs.treefmt-nix.follows = "treefmt-nix";
+    # docs-gates (added 2026-11-13) is eval-only for the collection; its
+    # own nixpkgs pin floats unstable — follow ours (the 177d0540 deep
+    # copy the lock-audit gate rejected).
+    nixos-modules.inputs.docs-gates.inputs.nixpkgs.follows = "nixpkgs";
+    # erraudit's go-nix-helpers locks its own treefmt-nix deep copy —
+    # eval-only formatter dep, always safe to follow ours.
+    nixos-modules.inputs.docs-gates.inputs.erraudit.inputs.go-nix-helpers.inputs.treefmt-nix.follows =
+      "treefmt-nix";
     nur.inputs.flake-parts.follows = "flake-parts";
     nur.inputs.nixpkgs.follows = "nixpkgs";
     otel-tui.inputs.flake-utils.follows = "flake-utils";

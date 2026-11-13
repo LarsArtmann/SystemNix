@@ -12,8 +12,9 @@
 {
   inputs,
   ...
-}: {
+}:
+{
   flake.nixosModules.memory-watermark-audit = {
-    imports = [inputs.nixos-modules.nixosModules.memory-watermark-audit];
+    imports = [ inputs.nixos-modules.nixosModules.memory-watermark-audit ];
   };
 }
