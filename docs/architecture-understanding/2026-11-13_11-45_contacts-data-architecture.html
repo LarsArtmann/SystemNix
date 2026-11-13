@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contacts data architecture — deep review (2026-11-13)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>DATA-ARCHITECTURE REVIEW</span>
+      <span>2026-11-13</span>
+      <span>SYSTEMNIX &middot; CRM &middot; PBX-ARTMANN &middot; INBOXCLEAN &middot; PIM-SYNC</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">00 Summary</a>
+          <a href="#log">01 Is there a log?</a>
+          <a href="#inventory">02 Surface inventory</a>
+          <a href="#scorecard">03 Scorecard</a>
+          <a href="#findings">04 Findings</a>
+          <a href="#oss">05 OSS landscape</a>
+          <a href="#target">06 Target architecture</a>
+          <a href="#roadmap">07 Roadmap</a>
+          <a href="#verification">08 Verification</a>
+          <a href="#decisions">09 Decisions</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Deep Review &middot; Contacts Data Architecture</div>
+          <h1>Seven surfaces, one declared owner, zero runs.</h1>
+          <p class="hero-subtitle">
+            The Mesh B doctrine (Stalwart owns contacts, Google is an edge,
+            Kith is a relation store) is sound. What exists on disk is
+            different: the owner is unprovisioned, a second live address book
+            sits inside webphone, and the glue that was supposed to connect
+            everything has never executed on evo-x2.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">7</div>
+            <div class="stat-label">Named contact surfaces</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Live write authorities</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Production sync runs</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Run receipts / logs</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">2.6</div>
+            <div class="stat-label">Architecture score /5</div>
+          </div>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Verdict</h4>
+          <p>
+            The architecture you are asking for already exists on paper: one
+            DAV hub (Stalwart), one glue service per external edge (pim-sync
+            for Google People and Calendar), and read-only consumers (Kith,
+            webphone, InboxClean, devices). The failure is execution and
+            inventory, not design. Stalwart's address books are declared but
+            not provisioned; pim-sync is flip-ready but <em>disabled</em>;
+            webphone quietly runs an independent contacts store with a write
+            API; InboxClean is a writer of people observations, not just a
+            reader. Adding Radicale would make this worse, not better.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Recommendation in one paragraph</h4>
+          <p>
+            Keep Stalwart as the only contact truth. Do not deploy a second
+            DAV server (Radicale, Ba&iuml;kal, DAViCal). Make pim-sync stay
+            exactly what it is, glue, and give it the two things it lacks: an
+            append-only run receipt per execution and a doctor command. Then
+            classify every other surface in one registry as truth, edge,
+            projection, consumer, or cache, and retire the write authority
+            that does not belong (webphone's local book) or declare it
+            explicitly as device-local.
+          </p>
+        </div>
+
+        <h2 id="log"><span class="num">01</span>Do we have a log of what it did?</h2>
+
+        <div class="card card-problem">
+          <h4>No. There is nothing to log yet.</h4>
+          <p>
+            pim-sync has never run on evo-x2. The enable flag is false
+            (<code>platforms/nixos/system/configuration.nix:917</code>), no
+            unit exists in the running system, and no state directory,
+            metrics file, token or receipt exists on the host. Upstream is
+            also explicit that an enabled unit without tokens would fail
+            every five minutes, which is why the disable is deliberate
+            (<code>docs/services/pim-sync.md</code>).
+          </p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Evidence searched</th>
+              <th>Result</th>
+              <th>What it proves</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>pim-sync.enable</code></td>
+              <td><span class="badge badge-critical">false</span></td>
+              <td>No unit, timer, or secret is rendered into the system closure</td>
+            </tr>
+            <tr>
+              <td><code>/run/current-system/etc/systemd/system/pim-sync*</code></td>
+              <td>absent</td>
+              <td>Never activated on this generation</td>
+            </tr>
+            <tr>
+              <td><code>/var/lib/pim-sync*</code></td>
+              <td>absent</td>
+              <td>No runtime state, no token seed, no quarantine</td>
+            </tr>
+            <tr>
+              <td>Textfile metrics (<code>pimsync_leg_*</code>)</td>
+              <td>absent</td>
+              <td>The observability contract exists in code, not on disk</td>
+            </tr>
+            <tr>
+              <td>Run receipts / audit ledger</td>
+              <td>none by design</td>
+              <td>No per-run, per-change record exists even in the design</td>
+            </tr>
+            <tr>
+              <td>Git receipts of dry-runs</td>
+              <td>present, prose only</td>
+              <td>The 139-person import rehearsal is documented, not replayable</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card card-warning">
+          <h4>What will be the log after the flip</h4>
+          <p>
+            Three sources, none of them a change ledger: per-leg counters in a
+            Prometheus textfile (<code>changes</code>, <code>conflicts</code>,
+            <code>quarantined</code>, <code>quarantine_depth</code>,
+            <code>last_success_unix</code>); per-account atomic 0600 JSON state
+            holding sync tokens, quarantines and provenance; and
+            <code>journalctl -u pim-sync</code> for run output
+            (<code>pim-sync/docs/CONTRACT.md</code> &sect;Observability,
+            <code>docs/CONTRACT.md:75</code>).
+          </p>
+          <p>
+            That answers &ldquo;did it run and how much&rdquo;, not &ldquo;who
+            changed which card at 10:42&rdquo;. Mesh B deliberately traded the
+            Kith journal's actor-attributed provenance for a cleaner storage
+            boundary; the lineage has to be rebuilt somewhere, or the first
+            disputed contact has no evidence behind it.
+          </p>
+        </div>
+
+        <div class="callout callout-solution">
+          <strong>Fix</strong>
+          Emit one append-only JSON receipt per run (leg, account, counts,
+          UIDs touched, cap/quarantine decisions, actor) and either ship it to
+          the CRM journal as audit events (<code>bot:pim-sync:&lt;acct&gt;</code>)
+          or keep it as a rotated file with a Gatus freshness check. Truth
+          stays in Stalwart; lineage comes back.
+        </div>
+
+        <h2 id="inventory"><span class="num">02</span>The seven surfaces, classified</h2>
+
+        <p>
+          The list feels like seven peers. Only three of them can accept a
+          write today, and only one of those is yours. The rest are edges,
+          projections, consumers or caches, and the architecture only works
+          once each one is named that way.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Surface</th>
+              <th>Class today</th>
+              <th>Write authority</th>
+              <th>State / evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><strong>Stalwart</strong> (pbx.artmann.tech)</td>
+              <td><span class="badge badge-fixed">Declared truth</span></td>
+              <td>Stalwart accounts</td>
+              <td>
+                Provisioning absent: the mail host plan has six object families
+                and none is an address book (<code>pbx-artmann/docs/architecture/data-ownership.md:118</code>).
+                CardDAV probe 17/18 PASS at pin 0.16.26; no restore drill yet.
+              </td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><strong>Google personal</strong></td>
+              <td><span class="badge badge-high">External edge</span></td>
+              <td>Google</td>
+              <td>
+                pim-sync <code>contacts-in</code>/<code>contacts-out</code> legs
+                are code-complete; no GCP client, no consent tokens, never run
+                (<code>docs/services/pim-sync.md:13-22</code>).
+              </td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><strong>Google work</strong></td>
+              <td><span class="badge badge-high">External edge</span></td>
+              <td>Google</td>
+              <td>Same legs, second account; account-scoped UIDs prevent key collisions.</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><strong>Kith CRM</strong></td>
+              <td><span class="badge badge-low">Relations truth + read-only projection</span></td>
+              <td>Journal (relations); Stalwart (people)</td>
+              <td>
+                Live journal holds no people projection tables; projection is
+                off by default (<code>crm/docs/ops/CARDDAV-PROJECTION.md</code>).
+                Serves <code>/api/contacts</code> to webphone and InboxClean.
+              </td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><strong>webphone</strong> (pbx.artmann.tech)</td>
+              <td><span class="badge badge-critical">Second live address book</span></td>
+              <td>webphone itself</td>
+              <td>
+                Event-sourced per-owner contact streams, write API
+                <code>/api/contacts</code>, 500-contact cap, rename keeps ID
+                (<code>webphone/internal/cqrs/contacts.go:1-40,197-228</code>;
+                <code>internal/readmodels/contactsgate.go:19</code>).
+                No sync in or out.
+              </td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><strong>InboxClean</strong></td>
+              <td><span class="badge badge-low">Consumer + people writer</span></td>
+              <td>CRM via HTTP</td>
+              <td>
+                No contact table at all. Pushes sender observations in 500-row
+                batches to <code>POST /api/email-sync/people</code>, reads the
+                CRM roster for routing, and keeps a shadow
+                <code>crmpeople:extracted</code> KV list
+                (<code>internal/crmsync/people.go</code>,
+                <code>internal/crmfeed/feed.go:34-50</code>).
+              </td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><strong>OpenCloud</strong></td>
+              <td><span class="badge badge-low">Files platform</span></td>
+              <td>n/a</td>
+              <td>
+                Deployed pilot is file sync and share, LAN/VPN only
+                (<code>docs/services/opencloud.md:1-10</code>); no contacts
+                app is declared anywhere in the repo.
+              </td>
+            </tr>
+            <tr>
+              <td>&mdash;</td>
+              <td><strong>Twenty dump</strong> (staging)</td>
+              <td><span class="badge badge-low">Dead source</span></td>
+              <td>n/a</td>
+              <td>
+                139 people + 61 companies staged as CSVs; target is the
+                Stalwart <code>Twenty import</code> book; the import has not
+                run (<code>docs/todo/services.md:367</code>).
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card card-warning">
+          <h4>The number to remember</h4>
+          <p>
+            Seven names, <strong>three writers</strong>: Google personal,
+            Google work, and webphone's own event store. Stalwart is a fourth
+            writer that has not been provisioned yet. Every design decision
+            below is about collapsing that set to one, without pretending the
+            other surfaces do not exist.
+          </p>
+        </div>
+
+        <h2 id="scorecard"><span class="num">03</span>Scorecard</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Score</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Truth naming</td>
+              <td><span class="badge badge-fixed">4 / 5</span></td>
+              <td>Stalwart was named before any bytes landed; the cheapest possible amendment was taken.</td>
+            </tr>
+            <tr>
+              <td>Single-writer invariant</td>
+              <td><span class="badge badge-critical">2 / 5</span></td>
+              <td>Three live writers today; the declared owner writes nothing yet; webphone was never classified.</td>
+            </tr>
+            <tr>
+              <td>Observability / audit</td>
+              <td><span class="badge badge-critical">1 / 5</span></td>
+              <td>Zero runs, zero receipts, no doctor, metrics only as a contract. The journal lineage that Mesh A had was traded away.</td>
+            </tr>
+            <tr>
+              <td>Restore path</td>
+              <td><span class="badge badge-high">2 / 5</span></td>
+              <td>Stalwart has a nightly whole-store archive; the PII drill is still pending (Pareto 7). webphone's contacts inherit its own backup story, never audited as contact data.</td>
+            </tr>
+            <tr>
+              <td>Surface inventory</td>
+              <td><span class="badge badge-critical">2 / 5</span></td>
+              <td>7 surfaces, 1 documented as a contact surface. <code>docs/agents/data-ownership.md:107</code> still calls webphone &ldquo;an unexamined fourth surface&rdquo;.</td>
+            </tr>
+            <tr>
+              <td>Wire format / composability</td>
+              <td><span class="badge badge-fixed">4 / 5</span></td>
+              <td>vCard 4.0 and VEVENT at the DAV boundary, People API at the edge, one conversion seam per spoke. Native formats stay native.</td>
+            </tr>
+            <tr>
+              <td>Identity / dedupe semantics</td>
+              <td><span class="badge badge-critical">2 / 5</span></td>
+              <td>Per-account UIDs prevent collisions but also prevent merging. The same human in two Google accounts is two cards with no link rule.</td>
+            </tr>
+            <tr>
+              <td>Doctrine / ops maturity</td>
+              <td><span class="badge badge-fixed">4 / 5</span></td>
+              <td>DATA-MESH is ratified, principles are numbered, the four-artifact rule exists. Execution lags the document.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          <strong>Weighted reading: 2.6 / 5.</strong> This is a well-governed
+          design that has not yet met production. The score is not a criticism
+          of the doctrine; it is the gap between the doctrine and the running
+          system.
+        </p>
+
+        <h2 id="findings"><span class="num">04</span>Findings</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Blocking</span>
+          <h3>F1 &middot; webphone is a second, live address book</h3>
+          <div class="where">webphone/internal/cqrs/contacts.go:1-40,197-228 &middot; internal/server/contacts_api_test.go &middot; package/options.nix:22</div>
+          <p>
+            Contacts are a real aggregate in webphone's event store: per-owner
+            streams, an upsert keyed by (owner, phone), delete by ID, a
+            500-contact cap, and a rename that keeps identity. State lives under
+            <code>/var/lib/webphone</code>. Nothing syncs it anywhere. Its CRM
+            lane is separate and read-only: a memoized, fail-open
+            <code>GET /api/contacts/{ref}/context</code> resolver
+            (<code>internal/crm/context.go:84-88</code>).
+          </p>
+          <p>
+            This is the single largest architectural fact in this review, and
+            it is not in the mesh document. A naive sync between this book and
+            Stalwart would create a feedback loop: two writable stores, two
+            ID spaces, one human.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Decide explicitly: either (a) device-local/private book, never
+            synced, with the UI saying so, or (b) a retired writer whose tab
+            reads the canonical store. Do not build a bidirectional spoke
+            between two writable books.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Blocking</span>
+          <h3>F2 &middot; The declared truth is not provisioned</h3>
+          <div class="where">pbx-artmann/docs/architecture/data-ownership.md:118 &middot; docs/agents/data-ownership.md:34</div>
+          <p>
+            Stalwart owns contacts by decision, but the mail host's declarative
+            plan carries no address-book object family. The collections exist,
+            if at all, as runtime state inside the store and are pinned by no
+            gate. The nightly archive exists; the PII restore drill does not.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Provision address books declaratively (demo VM first, then the
+            host), then run the restore drill and stamp the receipt into the
+            data-ownership row. A truth you cannot restore is a second copy of
+            Google with extra steps.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Blocking</span>
+          <h3>F3 &middot; Zero runtime evidence for the whole mesh</h3>
+          <div class="where">platforms/nixos/system/configuration.nix:917 &middot; pim-sync/docs/CONTRACT.md:75</div>
+          <p>
+            Not one leg has executed against a live Google account or a live
+            Stalwart book. The code is tested against fakes and a demo VM, and
+            the 139-person rehearsal was a documented dry-run.
+            <code>pim-sync doctor</code> (pre-flight: tokens present, DAV
+            reachable, discovery) is still an open TODO, so the first live
+            failure will be diagnosed from a failed oneshot journal.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Ship the receiver before the sender: receipts + metrics + doctor,
+            then a dry-run timer, then one live leg with a change cap.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Important</span>
+          <h3>F4 &middot; InboxClean writes people, and keeps side identities</h3>
+          <div class="where">InboxClean/internal/crmsync/people.go &middot; internal/crmfeed/feed.go:34-50 &middot; internal/papersync/pipeline_upload.go:65</div>
+          <p>
+            InboxClean owns no contact store, but it is not passive either: it
+            aggregates senders and recipients, optionally enriches them with an
+            LLM, and pushes 500-observation batches to the CRM. It also keeps
+            a shadow list of already-extracted addresses in
+            <code>cqrs_kv</code> and creates Paperless correspondents from
+            sender display names. The matching ladder lives in the CRM, which
+            is the right place, but the side lists are unowned identity data.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Classify it as a hint source with a cap and an actor, delete the
+            per-sender shadow list once the canonical store can answer
+            &ldquo;known person?&rdquo;, and treat Paperless correspondents as
+            presentation labels, never as the booking of a person.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Important</span>
+          <h3>F5 &middot; Two Google accounts produce duplicate humans, by construction</h3>
+          <div class="where">pim-sync/docs/CONTRACT.md:35-40 &middot; crm/docs/DATA-MESH.md:47</div>
+          <p>
+            UID = a stable hash of <code>google:&lt;account&gt;/resourceName</code>,
+            scoped per account. That is correct for collision safety and wrong
+            for identity: the same person in personal and work Google becomes
+            two vCards, two projections and two phone owners. Nothing in the
+            mesh defines a cross-account link rule.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Adopt an explicit identity rule at the projection layer: one person
+            per normalized email/phone, cards linked not merged
+            (<code>RELATED</code>/external IDs), with a duplicate report the
+            owner can review. Do not merge cards inside Stalwart.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Important</span>
+          <h3>F6 &middot; Consumers read a projection of a projection, with no freshness bound</h3>
+          <div class="where">webphone/internal/crm/context.go:165-191 &middot; crm/docs/ops/CARDDAV-PROJECTION.md:57</div>
+          <p>
+            Caller-ID in webphone resolves through the CRM's
+            <code>/api/contacts</code> context endpoint; the CRM's people are a
+            read-only projection of Stalwart. That is three stores between a
+            phone number and a name, with a documented cache and no staleness
+            SLO. It fails open, which is good for calls and bad for trust:
+            a missing name looks like an unknown caller.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Declare the chain and its bound: projection runs after each pim-sync
+            window, a freshness metric per hop, and a UI hint when the
+            projection is older than N minutes.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Nice to have</span>
+          <h3>F7 &middot; OpenCloud is not a contact surface, and Radicale is not the missing app</h3>
+          <div class="where">docs/services/opencloud.md:1-10 &middot; radicale.org v3 documentation</div>
+          <p>
+            OpenCloud is deployed as a file platform. Radicale is a
+            CalDAV/CardDAV <em>server</em> with filesystem storage, htpasswd /
+            LDAP / IMAP / OAuth2-relay authentication, sharing and Git-versioned
+            collections. It has no contacts application; its documentation
+            delegates the UI to clients (DAVx5, GNOME, Evolution, KDE PIM,
+            Thunderbird, InfCloud). Deploying it would add a fourth DAV
+            endpoint, a fourth auth path and a fourth backup leg to solve a UI
+            problem.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Keep OpenCloud files-only. If a web contact UI is the actual need,
+            pick a client (the already-deployed Stalwart webmail reads JMAP
+            contacts; InfCloud or CardDavMATE can front CardDAV) and never a
+            second store.
+          </div>
+        </div>
+
+        <h2 id="oss"><span class="num">05</span>The open-source landscape, judged against the invariant</h2>
+
+        <p>
+          The invariant is one write authority per entity plus one glue process
+          per external edge. Everything below is scored on that, not on
+          popularity.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>What it is</th>
+              <th>Verdict for this fleet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Stalwart</strong> (already deployed)</td>
+              <td>Mail + JMAP + CardDAV + CalDAV, one store, one archive, Pocket ID directory</td>
+              <td><span class="badge badge-fixed">Keep as the hub</span> Provision the books, run the drill, leave it as the only DAV endpoint.</td>
+            </tr>
+            <tr>
+              <td><strong>Radicale</strong> (radicale.org)</td>
+              <td>Small CalDAV/CardDAV server; filesystem storage; htpasswd/LDAP/IMAP/OAuth2 relay; sharing; no contacts app</td>
+              <td><span class="badge badge-critical">Reject as a second store</span> It duplicates Stalwart's DAV role and adds auth + backup. Only revisit if Stalwart fails a measured requirement.</td>
+            </tr>
+            <tr>
+              <td><strong>Ba&iuml;kal, DAViCal, SabreDAV</strong></td>
+              <td>Same class: protocol servers, not contact products</td>
+              <td><span class="badge badge-critical">Reject for the same reason</span> A second DAV server is a second truth, whatever its quality.</td>
+            </tr>
+            <tr>
+              <td><strong>vdirsyncer</strong></td>
+              <td>Mature CardDAV/CalDAV to CardDAV/CalDAV synchronizer</td>
+              <td><span class="badge badge-high">Wrong edge</span> No Google People API support and no field-level merge/caps/quarantine. It would replace pim-sync's DAV-to-DAV legs and none of the Google ones.</td>
+            </tr>
+            <tr>
+              <td><strong>pim-sync</strong> (yours)</td>
+              <td>People API + CalDAV/CardDAV legs, dry-run default, change caps, deletion quarantine, per-account state</td>
+              <td><span class="badge badge-fixed">Keep as glue</span> Add receipts, doctor, and a cross-account duplicate report. Do not grow it into a store.</td>
+            </tr>
+            <tr>
+              <td><strong>Google People API</strong></td>
+              <td>External truth for the two Google accounts</td>
+              <td><span class="badge badge-high">Edge, never owner</span> One-way in always; out only field-scoped, capped, dry-run first.</td>
+            </tr>
+            <tr>
+              <td><strong>InfCloud / CardDavMATE / webmail</strong></td>
+              <td>Web clients over DAV or JMAP</td>
+              <td><span class="badge badge-fixed">The right shape for a UI</span> Clients read the hub; they do not store.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card card-problem">
+          <h4>On &ldquo;a dedicated service where pim-sync is only glue&rdquo;</h4>
+          <p>
+            That is exactly the current design, and it is correct. The
+            dedicated service is Stalwart; pim-sync is the adapter. What is
+            missing is not another daemon but the operational layer around the
+            existing pair: provisioning, receipts, a duplicate report, and a
+            declared consumer contract. Adding Radicale would invert the
+            pattern, giving you two dedicated services and no single truth.
+          </p>
+        </div>
+
+        <h2 id="target"><span class="num">06</span>Target architecture</h2>
+
+        <div class="dep-tree">
+          <span class="root">Stalwart CardDAV/CalDAV (pbx) — the ONLY contact writer</span><br />
+          &nbsp;&nbsp;&#9500;&#9472;&#9472; pim-sync glue &rarr; Google personal (People API, in + field-scoped out, caps, quarantine)<br />
+          &nbsp;&nbsp;&#9500;&#9472;&#9472; pim-sync glue &rarr; Google work (same contract, separate state)<br />
+          &nbsp;&nbsp;&#9500;&#9472;&#9472; Kith projection (read-only links; relations, deals, calls stay in the journal)<br />
+          &nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&nbsp;&#9500;&#9472;&#9472; webphone caller context (read-only, memoized, freshness-bounded)<br />
+          &nbsp;&nbsp;&#9474;&nbsp;&nbsp;&nbsp;&nbsp;&#9492;&#9472;&#9472; InboxClean routing (roster read; people hints flow the other way, capped)<br />
+          &nbsp;&nbsp;&#9500;&#9472;&#9472; Devices: phone / desktop via CardDAV (DAVx5, GNOME, Thunderbird)<br />
+          &nbsp;&nbsp;&#9500;&#9472;&#9472; Webmail (JMAP contacts: agenda, birthdays)<br />
+          &nbsp;&nbsp;&#9492;&#9472;&#9472; Audit spine: run receipts &rarr; journal events (bot:pim-sync:&lt;acct&gt;)<br />
+          <br />
+          <span class="unwanted">webphone local book</span> &mdash; decide: device-local, or retire writes<br />
+          <span class="unwanted">Radicale / second DAV server</span> &mdash; not deployed<br />
+          <span class="unwanted">Paperless correspondents</span> &mdash; display labels, never person identity
+        </div>
+
+        <div class="card card-solution">
+          <h4>Four rules that make the diagram enforceable</h4>
+          <p>
+            1. Exactly one write authority per entity type, named in the
+            registry before the first line of client code.<br />
+            2. Every edge has a direction, an actor, a change cap and a
+            deletion quarantine &mdash; no exceptions for &ldquo;small&rdquo;
+            accounts.<br />
+            3. Every consumer is read-only and declares its maximum staleness.
+            A consumer that needs to write becomes a spoke or it does not
+            write.<br />
+            4. Every run leaves a receipt. Aggregated counters are not
+            evidence of what changed.
+          </p>
+        </div>
+
+        <h2 id="roadmap"><span class="num">07</span>Roadmap</h2>
+
+        <div class="migration-step">
+          <div class="migration-num">P0</div>
+          <div class="migration-content">
+            <h4>Stop the bleeding: classify and freeze surfaces</h4>
+            <p>
+              Add all seven rows to <code>docs/agents/data-ownership.md</code>
+              with class (truth / edge / projection / consumer / cache),
+              direction, actor and kill switch. Decide webphone's book in the
+              same change. This is documentation only, and it is the highest
+              leverage hour in the project.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P0</div>
+          <div class="migration-content">
+            <h4>Provision the truth and prove the restore</h4>
+            <p>
+              Declare the address books (and calendars) in the mail host plan,
+              demo VM first; then run the PII restore drill and record the
+              receipt. Until this lands, &ldquo;Stalwart owns contacts&rdquo; is
+              a sentence, not a fact.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P0</div>
+          <div class="migration-content">
+            <h4>Give pim-sync a memory</h4>
+            <p>
+              Ship per-run JSON receipts (leg, account, counts, UIDs, caps,
+              quarantines, actor), the quarantine-depth gauge, and
+              <code>pim-sync doctor</code> before the first enabled timer. Then
+              flip it dry-run only.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P1</div>
+          <div class="migration-content">
+            <h4>Define person identity across accounts</h4>
+            <p>
+              Normalized email/phone as the link key; one person, many cards;
+              duplicates reported, never silently merged. Run the report against
+              the 139 staged people and both Google accounts before enabling
+              outbound writes.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P1</div>
+          <div class="migration-content">
+            <h4>Fix the consumer chain</h4>
+            <p>
+              Webphone: local book becomes device-local or is retired; caller
+              context keeps its read-only path with a freshness bound.
+              InboxClean: hint source with a cap; delete the shadow extracted
+              list once the hub can answer by email.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P2</div>
+          <div class="migration-content">
+            <h4>One Google account, outbound, behind a canary</h4>
+            <p>
+              Field-scoped writes, per-run cap, deletion quarantine, dry-run
+              diff reviewed by the owner. Second account only after the first
+              has run clean through one full sync cycle.
+            </p>
+          </div>
+        </div>
+
+        <div class="migration-step">
+          <div class="migration-num">P3</div>
+          <div class="migration-content">
+            <h4>Re-evaluate Radicale only against a written requirement</h4>
+            <p>
+              If a device or client cannot speak Stalwart's DAV dialect, write
+              the failing requirement down first. If Stalwart satisfies it,
+              there is nothing to deploy.
+            </p>
+          </div>
+        </div>
+
+        <h2 id="verification"><span class="num">08</span>What was verified, and what was not</h2>
+
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Live host state</strong>
+              <span>
+                No pim-sync unit, state directory, seed or metrics file exists
+                on evo-x2; the enable flags for pim-sync and google-sync are
+                false in the working tree.
+              </span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Code-level write authorities</strong>
+              <span>
+                webphone's contacts aggregate and API, InboxClean's push/read
+                seams, pim-sync's leg table and state model, and the CRM
+                projection seam were read in their own repos, not inferred
+                from docs.
+              </span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Doctrine cross-check</strong>
+              <span>
+                The 2026-10-29 Mesh B decision, the pbx data-ownership page and
+                the CRM DATA-MESH contract agree on the owner and disagree only
+                on how much lineage to keep.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Explicitly unverified</h4>
+          <p>
+            No live read of Google or Stalwart contact counts was performed:
+            no consent tokens exist and the PII was not fetched for a review.
+            The CardDAV probe result (17/18) and the 139/61 rehearsal counts are
+            cited from the project's own reports. Whether the pinned OpenCloud
+            release ships a contacts app is unverified; the deployed module
+            configures none.
+          </p>
+        </div>
+
+        <h2 id="decisions"><span class="num">09</span>Decisions for the owner</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Question</th>
+              <th>Default if you do nothing</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>D1</td>
+              <td>Is webphone's contacts tab a device-local book, or must it read the hub?</td>
+              <td>It stays a second live truth, unsynced and unowned</td>
+            </tr>
+            <tr>
+              <td>D2</td>
+              <td>Where does contact lineage live: a receipts file, CRM journal audit events, or both?</td>
+              <td>Nowhere. The first disputed card has no evidence</td>
+            </tr>
+            <tr>
+              <td>D3</td>
+              <td>Does OpenCloud need contacts at all, and if so as a client of which server?</td>
+              <td>No contacts in OpenCloud, which is the honest current state</td>
+            </tr>
+            <tr>
+              <td>D4</td>
+              <td>What deletes a person, and after what quarantine?</td>
+              <td>Nothing deletes automatically; holds accumulate silently</td>
+            </tr>
+            <tr>
+              <td>D5</td>
+              <td>Approve field-scoped outbound writes to one Google account?</td>
+              <td>Google stays read-only and drifts from the hub</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-amber">
+          <strong>Series note</strong>
+          This review continues the 2026-10-29 contacts/calendar line
+          (Mesh A vs Mesh B, decision D1 = Mesh B, Stalwart owner). It does not
+          reopen that decision; it records that the decision is still
+          unexecuted and that one surface the earlier inventory called
+          &ldquo;unexamined&rdquo; turns out to be a live writer.
+        </div>
+
+        <footer class="footer">
+          Generated 2026-11-13 &middot; Claims cite file:line in the owning repo
+          &middot; Live state checked on evo-x2, contact counts deliberately not
+          fetched
+        </footer>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
