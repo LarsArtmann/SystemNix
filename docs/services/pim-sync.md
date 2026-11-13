@@ -40,13 +40,47 @@ Verified against the pim-sync source at the locked rev; the review is
   `--clear-deletion` is the only way a held deletion may propagate, keyed
   `contact:<uid>` / `event:<iCalUID>`.
 - **Dry-runs leave nothing behind.** No state mutation, no receipt; the report
-  goes to stdout and is not persisted (`cmd/pim-sync/report.go:10-45`). The
-  only durable per-run record is the overwritten `last_report` in each
-  account's state file. There is no per-change audit ledger yet.
+  goes to stdout and is not persisted (`cmd/pim-sync/report.go:10-45`).
+- **Live runs append one receipt** (landed 2026-11-13, pim-sync `74e91f2`):
+  `internal/receipt` appends one 0600 JSONL line per run to
+  `--receipts <dir>/<command>.jsonl` — actor (`bot:pim-sync`), mode, per-leg
+  counts, capped UID + quarantine-key lists, resolved exit code — with an
+  fsync per append and a 5 MiB rotation to `<file>.1`. A receipt failure
+  warns, never fails the run.
+- **Receipt sink decision (T7.6): rotated JSONL file + Gatus freshness —
+  NOT journal audit events.** Rationale: the trail must survive even when
+  the journal pipeline is the thing being debugged, the rotation bounds it
+  by construction, and the existing metrics textfile + Gatus pattern
+  (anchored-pat doctrine) already covers freshness alarms. A journal
+  event sink would add a second ingest path without adding durability the
+  file lacks. The dir is wired at the flip via the upstream
+  `services.pim-sync.receiptsDir` option (pim-sync `74bf91a`; the wrapper
+  sets `/var/lib/pim-sync/receipts`).
 - **Run `pim-sync doctor` before the first flip.** It exists
   (`cmd/pim-sync/doctor.go:16-45`, registered at `main.go:44`), checks token
   shapes, state dir and DAV books, and deliberately makes no Google API call;
-  it has not yet run against real credentials.
+  it has not yet run against real credentials. Its pass/fail contract is
+  machine-pinned end-to-end (2026-11-13, pim-sync `74e91f2`): runtime-built
+  fixture trees + byte-exact transcript goldens
+  (`cmd/pim-sync/testdata/doctor/*.golden`). The GREEN fixture transcript —
+  paths and DAV URL are fixture-relative — reads:
+
+  ```
+  ok:   oauth client secret <secret> parses
+  ok:   contacts accounts: personal
+  ok:   contacts token <fixtures>/tokens/personal.json (refresh token present)
+  ok:   calendar accounts: personal
+  ok:   calendar token <fixtures>/tokens/personal-calendar.json (refresh token present)
+  ok:   carddav discovery at <dav>
+  ok:   addressbook "Contacts" at /dav/card/user%40example.test/Contacts/
+  ok:   caldav discovery at <dav>
+  ok:   calendar "Personal" at /dav/cal/user%40example.test/Personal/
+  doctor: all checks passed
+  ```
+
+  The FAILING fixture exits 1 naming its failure count; the transcript
+  shows each check's verdict line (`FAIL: contacts token …: no refresh
+  token — run pim-sync auth --account broken`).
 - **One DAV endpoint and one Stalwart credential pair.** Multiple Google
   accounts are token stems (`personal`, `work`) processed sequentially; there
   is no second CardDAV server option. Do not add one.

@@ -84,6 +84,18 @@ Definitive gatus state (root): `sudo sqlite3 -readonly /var/lib/private/gatus/ga
 
 **Recommended closure (not yet implemented — needs user go, Q2 answer was "unsure"):** Caddy-level, zero app change — under `/api/*`, respond 403 when `Authorization` starts with `Basic` (header-prefix matcher), plus an exact block of `/api/token/`. Token consumers (`Authorization: Token …`) pass untouched. Side effect: the official mobile app's password login breaks (it uses `/api/token/`); if the mobile app matters, keep `/api/token/` open and accept Basic being closed only. Ask: "Do you use, or plan to use, the paperless mobile app or any password-based API client?"
 
+## Correspondents are presentation labels, never person identity (2026-11-13)
+
+Paperless correspondents (the `{{ correspondent }}` filename segment and the
+classifier's sender prediction) are DOCUMENT presentation: who a paper came
+from, spelled the way that paper spells it. They are NOT a contact store and
+must never be treated as one — no contact lookup, dedupe, or sync ever keys
+on them, and a correspondent name disagreeing with the contacts registry
+(Stalwart truth, Kith projection, InboxClean observations) is EXPECTED, not
+drift to fix. The contacts registry lives in
+`docs/agents/data-ownership.md` ("Contact surfaces"); a person's identity
+has exactly one owner and Paperless is not it.
+
 ## Classifier / auto-matching semantics (2026-09-06 incident)
 
 The hourly **Train Classifier** task (`PAPERLESS_TRAIN_TASK_CRON`, default
