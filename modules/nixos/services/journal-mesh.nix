@@ -134,6 +134,10 @@
               jetstream = true;
               port = ports.nats;
               dataDir = cfg.broker.dataDir;
+              # The nixpkgs module binds 0.0.0.0 unless told otherwise; this
+              # broker is single-host transport, so loopback ONLY (matching
+              # the journal-serve posture — no vHost, no external client).
+              settings.host = "127.0.0.1";
             };
           })
 

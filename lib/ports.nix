@@ -33,9 +33,9 @@
         forgejo = 3000;
 
         # NATS JetStream — the ADR-0009 mesh broker (services.nats, brought up
-        # by journal-mesh.nix). 4222 is the NATS client default; loopback-only
-        # (the nixpkgs module binds all interfaces, so the firewall keeps it
-        # private — no Caddy vHost exists or should exist).
+        # by journal-mesh.nix). 4222 is the NATS client default; journal-mesh
+        # pins settings.host = 127.0.0.1 (loopback ONLY — no vHost, no
+        # external client, and the binding does not rely on the firewall).
         nats = 4222;
 
         # SMTP submission from local services to the Postfix null-client relay
