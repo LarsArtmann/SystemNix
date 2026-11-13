@@ -110,21 +110,21 @@ must execute it; `Status` is this session's state.
 | T2  | Add pim-sync operational invariants to `docs/services/pim-sync.md` (one book per source, cap-in-dry-run, receipts gap, doctor) | P0     | 45 min | Critical | SystemNix            | DONE   |
 | T3  | Write this plan with the Pareto tables and the mermaid execution graph                                                    | P0     | 60 min | High     | SystemNix            | DONE   |
 | T4  | Cross-link doctrine → plan/report and report → doctrine; stamp “last verified”                                            | P0     | 30 min | High     | SystemNix            | DONE   |
-| T5  | Provision Stalwart address books declaratively in the pbx plan (demo VM first), then deploy                              | P0     | 100 min | Critical | pbx-artmann          | QUEUED |
-| T6  | Run the contact PII restore drill and stamp the receipt into the ownership row                                            | P0     | 60 min | Critical | pbx-artmann          | QUEUED |
-| T7  | Implement pim-sync run receipts: one append-only JSON per run, with actor, counts, UIDs, caps, quarantines                | P0     | 100 min | Critical | pim-sync             | QUEUED |
-| T8  | Prove `pim-sync doctor` end-to-end against fixtures (tokens/state/DAV pre-flight)                                        | P1     | 30 min | High     | pim-sync             | QUEUED |
-| T9  | Enable the first pim-sync dry-run timer on evo-x2 and verify journal output + metrics file                                | P1     | 45 min | High     | SystemNix            | QUEUED |
-| T10 | Gate webphone's `/config.js` shared contact directory behind authentication                                              | P0     | 45 min | Critical | pbx-artmann          | QUEUED |
-| T11 | Classify webphone's local book and add E.164 normalization before any sync is considered                                  | P1     | 90 min | High     | pbx-artmann          | QUEUED |
-| T12 | InboxClean: delete the `crmpeople:extracted` shadow list; keep the people push capped and actor-stamped                   | P1     | 75 min | High     | InboxClean           | QUEUED |
-| T13 | Schedule the CRM people projection after the pim-sync window and emit a freshness metric                                  | P1     | 45 min | High     | SystemNix / crm      | QUEUED |
-| T14 | Ship the cross-account duplicate report (report-only, never auto-merge)                                                   | P2     | 60 min | Medium   | pim-sync             | QUEUED |
-| T15 | Import the 139 staged people into the dedicated `Twenty import` book (dry-run, then live)                                 | P2     | 60 min | Medium   | SystemNix / pim-sync | QUEUED |
-| T16 | Google outbound canary: one account, field-scoped, cap + quarantine, owner review                                         | P2     | 100 min | Medium   | Owner / pim-sync     | QUEUED |
+| T5  | Provision Stalwart address books declaratively in the pbx plan (demo VM first), then deploy                              | P0     | 100 min | Critical | pbx-artmann          | PARTIAL |
+| T6  | Run the contact PII restore drill and stamp the receipt into the ownership row                                            | P0     | 60 min | Critical | pbx-artmann          | BLOCKED (owner) |
+| T7  | Implement pim-sync run receipts: one append-only JSON per run, with actor, counts, UIDs, caps, quarantines                | P0     | 100 min | Critical | pim-sync             | DONE |
+| T8  | Prove `pim-sync doctor` end-to-end against fixtures (tokens/state/DAV pre-flight)                                        | P1     | 30 min | High     | pim-sync             | DONE |
+| T9  | Enable the first pim-sync dry-run timer on evo-x2 and verify journal output + metrics file                                | P1     | 45 min | High     | SystemNix            | BLOCKED (owner) |
+| T10 | Gate webphone's `/config.js` shared contact directory behind authentication                                              | P0     | 45 min | Critical | pbx-artmann          | DONE |
+| T11 | Classify webphone's local book and add E.164 normalization before any sync is considered                                  | P1     | 90 min | High     | pbx-artmann          | DONE |
+| T12 | InboxClean: delete the `crmpeople:extracted` shadow list; keep the people push capped and actor-stamped                   | P1     | 75 min | High     | InboxClean           | DONE |
+| T13 | Schedule the CRM people projection after the pim-sync window and emit a freshness metric                                  | P1     | 45 min | High     | SystemNix / crm      | PARTIAL |
+| T14 | Ship the cross-account duplicate report (report-only, never auto-merge)                                                   | P2     | 60 min | Medium   | pim-sync             | DONE |
+| T15 | Import the 139 staged people into the dedicated `Twenty import` book (dry-run, then live)                                 | P2     | 60 min | Medium   | SystemNix / pim-sync | BLOCKED (owner) |
+| T16 | Google outbound canary: one account, field-scoped, cap + quarantine, owner review                                         | P2     | 100 min | Medium   | Owner / pim-sync     | BLOCKED (owner) |
 | T17 | Record the OpenCloud decision (files-only; any contact UI is a client, never a store)                                     | P2     | 30 min | Medium   | SystemNix            | DONE   |
-| T18 | Drop webphone's dead legacy `contacts` SQL table and its test-only reader                                                 | P3     | 30 min | Low      | webphone             | QUEUED |
-| T19 | Add a read-only docs-drift check for the registry (surfaces mentioned in code but absent from the registry)               | P3     | 30 min | Low      | SystemNix            | QUEUED |
+| T18 | Drop webphone's dead legacy `contacts` SQL table and its test-only reader                                                 | P3     | 30 min | Low      | webphone             | DONE |
+| T19 | Add a read-only docs-drift check for the registry (surfaces mentioned in code but absent from the registry)               | P3     | 30 min | Low      | SystemNix            | DONE |
 
 ## 5. Breakdown — every task at 12 minutes or less
 
@@ -151,52 +151,52 @@ ran here.
 | T4.1 | Add plan/report links to the doctrine’s “See also”                                                     | T4     | 6 min  | DONE   |
 | T4.2 | Add the “last verified” convention line to the doctrine header                                          | T4     | 5 min  | DONE   |
 | T4.3 | Verify every new relative link resolves                                                               | T4     | 8 min  | DONE   |
-| T5.1 | Read the pbx plan dialect at the pinned revision; find the address-book object shape                   | T5     | 12 min | QUEUED |
-| T5.2 | Add the address-book family to the demo VM plan and apply it                                           | T5     | 12 min | QUEUED |
-| T5.3 | Verify one book per Google account plus the `Twenty import` shell                                     | T5     | 12 min | QUEUED |
-| T5.4 | Promote the plan change to the pbx host and deploy                                                     | T5     | 12 min | QUEUED |
-| T6.1 | Pick a restore target and snapshot set; document the exact commands                                    | T6     | 12 min | QUEUED |
-| T6.2 | Restore into a scratch instance; diff contact counts and UIDs                                          | T6     | 12 min | QUEUED |
-| T6.3 | Stamp the dated receipt into the ownership row                                                         | T6     | 6 min  | QUEUED |
-| T7.1 | Add `internal/receipt` with an atomic append (0600, JSONL) and a run ID                                | T7     | 12 min | QUEUED |
-| T7.2 | Wire the receipt into contact IN/OUT, calendar IN/OUT and import outcomes                              | T7     | 12 min | QUEUED |
-| T7.3 | Include actor, account, leg, counts, UID list (capped), quarantine keys, exit code                     | T7     | 12 min | QUEUED |
-| T7.4 | Add the `--receipts` path flag + NixOS `receiptsDir` option                                            | T7     | 12 min | QUEUED |
-| T7.5 | Unit + e2e tests: green run, cap abort, dry-run (no write), rotation                                   | T7     | 12 min | QUEUED |
-| T7.6 | Decide and document the sink: journal audit events vs rotated file + Gatus freshness                   | T7     | 12 min | QUEUED |
-| T8.1 | Build the fixture tree (token shapes, empty state, fake DAV)                                            | T8     | 12 min | QUEUED |
-| T8.2 | Run doctor against the fixtures and capture the pass/fail contract                                     | T8     | 10 min | QUEUED |
-| T8.3 | Add the doctor transcript to the runbook                                                               | T8     | 6 min  | QUEUED |
-| T9.1 | Flip `enable = true` with `live = false`; cap set above the expected create count                      | T9     | 12 min | QUEUED |
-| T9.2 | Assert the timer’s first dry-run journal line and the metrics file exists                              | T9     | 12 min | QUEUED |
-| T9.3 | Review the IN/OUT projected counts with the owner                                                      | T9     | 12 min | QUEUED |
-| T10.1 | Move the shared list off `/config.js` into an authenticated endpoint                                   | T10    | 12 min | QUEUED |
-| T10.2 | Update the browser island to fetch it post-login                                                       | T10    | 12 min | QUEUED |
-| T10.3 | Add the anon-request test proving the list is not served                                               | T10    | 12 min | QUEUED |
-| T11.1 | Write the classification decision into the pbx doctrine                                                | T11    | 12 min | QUEUED |
-| T11.2 | Add E.164 canonicalization at the store boundary and migrate existing keys                             | T11    | 12 min | QUEUED |
-| T11.3 | Unify the four caller-ID resolution paths or document their divergence                                 | T11    | 12 min | QUEUED |
-| T11.4 | Add the freshness/served-from marker to the CRM-backed context                                         | T11    | 12 min | QUEUED |
-| T12.1 | Remove the `crmpeople:extracted` KV writes; keep the cursor                                           | T12    | 12 min | QUEUED |
-| T12.2 | Verify the people push is capped, actor-stamped and skips the owner                                     | T12    | 12 min | QUEUED |
-| T12.3 | Document Paperless correspondents as presentation labels, never person identity                        | T12    | 8 min  | QUEUED |
-| T13.1 | Schedule the projection after the pim-sync timer window                                                | T13    | 12 min | QUEUED |
-| T13.2 | Emit projection-age and per-account book counts                                                        | T13    | 12 min | QUEUED |
-| T13.3 | Add the Gatus freshness check                                                                            | T13    | 12 min | QUEUED |
-| T14.1 | Expose the existing dedupe candidates as a CLI subcommand (report-only)                                | T14    | 12 min | QUEUED |
-| T14.2 | Add the duplicate report to the review queue output                                                    | T14    | 12 min | QUEUED |
-| T14.3 | Pin “never merge” in a test                                                                             | T14    | 10 min | QUEUED |
-| T15.1 | Dry-run the importer against the real CSVs and the target book                                         | T15    | 12 min | QUEUED |
-| T15.2 | Review the 137/61 projection and clear it with the owner                                                | T15    | 12 min | QUEUED |
-| T15.3 | Run live with a cap above the row count                                                                | T15    | 12 min | QUEUED |
-| T16.1 | One account, read-only first; capture the Google baseline                                               | T16    | 12 min | QUEUED |
-| T16.2 | Flip the OUT leg with field-scoped writes and a low cap                                                | T16    | 12 min | QUEUED |
-| T16.3 | Review every written person for one full cycle                                                          | T16    | 12 min | QUEUED |
-| T16.4 | Only then add the second account                                                                        | T16    | 12 min | QUEUED |
-| T18.1 | Confirm no production reader; drop the legacy table in a migration window                              | T18    | 12 min | QUEUED |
-| T18.2 | Remove the test-only reader and the stale FEATURES claim                                               | T18    | 8 min  | QUEUED |
-| T19.1 | Write the grep-based drift check (surfaces in code vs registry)                                        | T19    | 12 min | QUEUED |
-| T19.2 | Run it, fix the first two drifts, and wire it as an advisory                                            | T19    | 12 min | QUEUED |
+| T5.1 | Read the pbx plan dialect at the pinned revision; find the address-book object shape                   | T5     | 12 min | DONE |
+| T5.2 | Add the address-book family to the demo VM plan and apply it                                           | T5     | 12 min | DONE |
+| T5.3 | Verify one book per Google account plus the `Twenty import` shell                                     | T5     | 12 min | BLOCKED (owner) |
+| T5.4 | Promote the plan change to the pbx host and deploy                                                     | T5     | 12 min | BLOCKED (owner) |
+| T6.1 | Pick a restore target and snapshot set; document the exact commands                                    | T6     | 12 min | BLOCKED (owner) |
+| T6.2 | Restore into a scratch instance; diff contact counts and UIDs                                          | T6     | 12 min | BLOCKED (owner) |
+| T6.3 | Stamp the dated receipt into the ownership row                                                         | T6     | 6 min  | BLOCKED (owner) |
+| T7.1 | Add `internal/receipt` with an atomic append (0600, JSONL) and a run ID                                | T7     | 12 min | DONE |
+| T7.2 | Wire the receipt into contact IN/OUT, calendar IN/OUT and import outcomes                              | T7     | 12 min | DONE |
+| T7.3 | Include actor, account, leg, counts, UID list (capped), quarantine keys, exit code                     | T7     | 12 min | DONE |
+| T7.4 | Add the `--receipts` path flag + NixOS `receiptsDir` option                                            | T7     | 12 min | DONE |
+| T7.5 | Unit + e2e tests: green run, cap abort, dry-run (no write), rotation                                   | T7     | 12 min | DONE |
+| T7.6 | Decide and document the sink: journal audit events vs rotated file + Gatus freshness                   | T7     | 12 min | DONE |
+| T8.1 | Build the fixture tree (token shapes, empty state, fake DAV)                                            | T8     | 12 min | DONE |
+| T8.2 | Run doctor against the fixtures and capture the pass/fail contract                                     | T8     | 10 min | DONE |
+| T8.3 | Add the doctor transcript to the runbook                                                               | T8     | 6 min  | DONE |
+| T9.1 | Flip `enable = true` with `live = false`; cap set above the expected create count                      | T9     | 12 min | BLOCKED (owner) |
+| T9.2 | Assert the timer’s first dry-run journal line and the metrics file exists                              | T9     | 12 min | BLOCKED (owner) |
+| T9.3 | Review the IN/OUT projected counts with the owner                                                      | T9     | 12 min | BLOCKED (owner) |
+| T10.1 | Move the shared list off `/config.js` into an authenticated endpoint                                   | T10    | 12 min | DONE |
+| T10.2 | Update the browser island to fetch it post-login                                                       | T10    | 12 min | DONE |
+| T10.3 | Add the anon-request test proving the list is not served                                               | T10    | 12 min | DONE |
+| T11.1 | Write the classification decision into the pbx doctrine                                                | T11    | 12 min | DONE |
+| T11.2 | Add E.164 canonicalization at the store boundary and migrate existing keys                             | T11    | 12 min | DONE |
+| T11.3 | Unify the four caller-ID resolution paths or document their divergence                                 | T11    | 12 min | DONE |
+| T11.4 | Add the freshness/served-from marker to the CRM-backed context                                         | T11    | 12 min | DONE |
+| T12.1 | Remove the `crmpeople:extracted` KV writes; keep the cursor                                           | T12    | 12 min | DONE |
+| T12.2 | Verify the people push is capped, actor-stamped and skips the owner                                     | T12    | 12 min | DONE |
+| T12.3 | Document Paperless correspondents as presentation labels, never person identity                        | T12    | 8 min  | DONE |
+| T13.1 | Schedule the projection after the pim-sync timer window                                                | T13    | 12 min | PARTIAL |
+| T13.2 | Emit projection-age and per-account book counts                                                        | T13    | 12 min | PARTIAL |
+| T13.3 | Add the Gatus freshness check                                                                            | T13    | 12 min | BLOCKED (owner) |
+| T14.1 | Expose the existing dedupe candidates as a CLI subcommand (report-only)                                | T14    | 12 min | DONE |
+| T14.2 | Add the duplicate report to the review queue output                                                    | T14    | 12 min | DONE |
+| T14.3 | Pin “never merge” in a test                                                                             | T14    | 10 min | DONE |
+| T15.1 | Dry-run the importer against the real CSVs and the target book                                         | T15    | 12 min | BLOCKED (owner) |
+| T15.2 | Review the 137/61 projection and clear it with the owner                                                | T15    | 12 min | BLOCKED (owner) |
+| T15.3 | Run live with a cap above the row count                                                                | T15    | 12 min | BLOCKED (owner) |
+| T16.1 | One account, read-only first; capture the Google baseline                                               | T16    | 12 min | BLOCKED (owner) |
+| T16.2 | Flip the OUT leg with field-scoped writes and a low cap                                                | T16    | 12 min | BLOCKED (owner) |
+| T16.3 | Review every written person for one full cycle                                                          | T16    | 12 min | BLOCKED (owner) |
+| T16.4 | Only then add the second account                                                                        | T16    | 12 min | BLOCKED (owner) |
+| T18.1 | Confirm no production reader; drop the legacy table in a migration window                              | T18    | 12 min | PARTIAL |
+| T18.2 | Remove the test-only reader and the stale FEATURES claim                                               | T18    | 8 min  | DONE |
+| T19.1 | Write the grep-based drift check (surfaces in code vs registry)                                        | T19    | 12 min | DONE |
+| T19.2 | Run it, fix the first two drifts, and wire it as an advisory                                            | T19    | 12 min | DONE |
 
 ## 6. Execution graph
 
@@ -245,6 +245,28 @@ flowchart LR
 | All relative links in the touched docs resolve on disk                                   | PASS   |
 | No runtime file, unit, secret or Nix option changed in this session                      | PASS   |
 | `nix flake check --no-build` not required (docs-only change)                            | N/A    |
+
+### Execution addendum (2026-11-13, pm: the 7-repo code sweep)
+
+The statuses above were ticked by the execution session that ran the plan's
+code tasks across SystemNix, pim-sync, webphone, InboxClean, nix-email and
+pbx-artmann. Evidence per task:
+
+| Task | Evidence |
+| ---- | -------- |
+| T5.1 / T5.2 | AddressBook is a settings singleton on this pin; the demo probe (stalwart 0.16.26 + stalwart-cli 1.0.13) proved `upsert` is rejected (singleton) and `update` is rejected server-side (invalidPatch: `demoContacts`), so the provision unit aborts at op 6 and no book lands anywhere. The family was REMOVED from the demo plan (nix-email `d94118e`) so the unit is green again; books are MKCOL-only pending an upstream fix. Transcript: the 19:25 status report and its addendum |
+| T7 / T8 / T14 | pim-sync `74e91f2` (run receipts, doctor fixture contract, dedupe-report CLI; suites green, golangci 0 issues) + `74bf91a` (upstream `receiptsDir` option) |
+| T9 | BLOCKED: 7/7 pim-sync sops values are PLACEHOLDER; `pim-sync.enable = false` at `platforms/nixos/system/configuration.nix:917` |
+| T10 / T11.2 / T11.4 / T18 | webphone `ec32e409` (config.js contract), `7349b2c0` (digit-keyed upsert + freshness chip), `4fb24b61` (dead reader deleted; the physical table DROP stays §5 operator-gated, export-or-confirm owed) |
+| T11.1 / T11.3 | pbx-artmann `92c394ca`: classification + the four caller-ID paths table in `docs/architecture/data-ownership.md` |
+| T12 | InboxClean `1a9d257f` (signature-hash memo replaces the shadow list); push cap (500/batch, endpoint-matched), per-batch delivery receipts and owner-skip verified in `internal/crmsync/people.go`; actor stamp enforced CRM-side, not re-verified here; live `crmpeople:extracted` KV key deletion owner-optional |
+| T13 | SystemNix crm.nix flip-ready-disabled scaffold (options + sops placeholder + timer, all behind `enable = false`); flip = owner paste + the runbook ladder in `docs/services/crm.md` |
+| T19 | `scripts/check-contact-registry-drift.sh`, advisory (pre-deploy §21), probe self-tested |
+| T5.4 / T6 / T15 / T16 | owner/live-gated: deploy window, restore target, the book-creation path (MKCOL decision), canary consent |
+
+Deviation worth reading: T11.2 shipped digit-string keying instead of E.164
+canonicalization. The four caller-ID paths share digit-string identity and
+the trunk/+ fork is parked (follow-up item 30).
 
 ## 9. Do-not-worsen guardrails
 
