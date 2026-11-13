@@ -82,3 +82,18 @@ Repo hygiene noticed during gates (pre-existing, not this session's):
 1. **Deploy now or hold?** Push crm master + bump the SystemNix `crm` lock + deploy the auto-forward tonight, or batch it with the next deploy window?
 2. **Chooser-page fate:** with auto-forward live, the button page exists only at `/login?manual=1` and nothing advertises it. Acceptable for a single-user CRM, or do you want a visible fallback link rendered somewhere?
 3. **Scope:** is Kith the only sign-in surface you want auto-forwarding to Pocket ID, or should the same bare-login pattern be evaluated for the other Layer-1 native-OIDC services (CV, Browser History, Paperless, Gatus, Forgejo)?
+
+---
+
+## ADDENDUM (2026-11-13 01:45) — owner answers + the deploy arc so far
+
+**Owner rulings (01:1x):** deploy NOW; chooser-page question returned "I don't really get the problem" (left as-is — `?manual=1` stays the only escape, nothing advertised; the question meant: with auto-forward live, a bare-visit user can never see the button page without knowing the hidden query param — acceptable for a single-user CRM); auto-forward evaluation EXTENDED to the other sole-OIDC services.
+
+**Row landed:** `e4e6ae7ca` — TODO_LIST queue one-liner + docs/todo/services.md library entry for the evaluation sweep (both surfaces, one commit, cites this report §c.4).
+
+**Deploy chain discovered + executed so far:**
+1. **The crm feature was ALREADY PUSHED** — the parallel session swept crm master to `9d96dad` (includes my `43f9e64` + an upstream oauth2/sqlite vendorHash chase `c626704`). Two newer machineapi commits (`c87013b`, `e691417`) remained local/unpushed — that session was still mid-wave.
+2. **crm is HARD-PINNED in SystemNix** (`flake.nix` `?rev=`, the deliberate no-master-tracking policy): `nix flake update crm` correctly did NOT move it (the silent-NO-OP pin class). Roll executed per protocol: lock-free package probe built `kith-crm-9d96dadc…` green with NO override (upstream bakes the hash post-`c626704`) → pin rolled in flake.nix + the allowlist row in lib/flake-input-pin-audit.nix (also fixing that row's STALE `f2d1726` text — the e383ba9 roll had updated flake.nix but missed the row) → lock moved to `9d96dad`, toplevel evals green. Commit rode daemon `4ab8170eb` (content HEAD-verified).
+3. **First deploy attempt: PSI gate refused (exit 12)** — io some avg10 ~24-41, disks genuinely busy (29% nvme): the CV repo's tq-agent batch (`buildflow --fix --build-mode=full`, `nix build .#cv`, test batteries) plus applyflow tests. NOT forced.
+4. **Second attempt: deploy LOCK (exit 13)** — a parallel SystemNix session's deploy was mid-flight; it then **FAILED its own pre-deploy** (exit 1 after 533s): `nix flake check` died at `checks.x86_64-linux.wifi-failover` on that session's UNCOMMITTED cvagent/forgejo edits, which landed as `d7963ea` mid-battery and voided its §11 tree-stamp. At current HEAD `wifi-failover` evals GREEN (probed directly) — the failure was their transient mid-edit state, healed by their own commit.
+5. **Quiescence + watcher:** two clean quiescence polls after their wave committed (`0e5c4f593`); PSI oscillates 19-41 — the CV batch keeps bursting. A watcher script (`~/.cache/deploy-autofwd-watch.sh`, log `~/.cache/deploy-autofwd-auto.log`) polls io-PSI and fires the deploy automatically on two consecutive <12 samples, then verifies the anchor and live-probes `GET /login` (expect 303 → auth.home.lan) — verdicts land in that log.
