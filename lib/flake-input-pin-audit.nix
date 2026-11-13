@@ -210,7 +210,15 @@
     # disgo v0.20 CacheGuild migration, dedup/v4 + cmdguard/v5 deps-map
     # wiring, generator-parity pins) and lock-free package probes are green
     # at the pushed revs — lift ritual complete per input.
-    file-and-image-renamer = "REV-PINNED at 973dd383 (2026-11-11 re-verified: tip 5a319ea6 still fails — its committed vendor/ tree carries the PRE-REGEN templ-components (svg_templ.go calls templ.ResolveAttributeValue), and a live session is mid-migration in that checkout (cmdguard v4→v5), so the vendor refresh is not safe to land concurrently. LIFT: upstream commits a vendor/ refresh over a regenerated templ-components (or the live session's wave carries it) and the package builds at tip; then drop the pin and re-lock.";
+    # file-and-image-renamer row REMOVED 2026-11-13: pin lifted after the
+    # upstream pin-alignment wave (cc4ed62a). The 2026-11-11 diagnosis was
+    # wrong about the mechanism: vendor/ is GITIGNORED in that repo, so no
+    # committed vendor refresh was ever the LIFT condition — the repo's
+    # per-dep *-src flake pins had lagged its go.mod (templ-components
+    # v1.26.0 vs v1.27.0, cqrs-htmx 357cdfc vs v4.16.0, cmdguard, go-output,
+    # go-health, go-health-dashboard, go-datastar, go-sse). Aligned pins +
+    # re-derived vendorHash -> clean package build green; input now floats
+    # on ?ref=refs/heads/master.
     crm = "REV-PINNED at 98cd15c (2026-11-13 roll-forward to the funnel-completion plan commit, on top of the daemon doc/close-out churn; prior 9d96dad 2026-11-12 login auto-forward wave). Deliberate policy pin (not ?ref=master): the 10-14 master-tracking window proved the consumer-side vendorHash treadmill returns on every upstream float; the tip probe (lock-free FULL package build) is green at this rev, no override — upstream bakes the hash. Re-roll on the next crm pin wave.";
   },
 }:

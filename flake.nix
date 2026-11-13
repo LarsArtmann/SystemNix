@@ -451,20 +451,20 @@
       # via the NIX_DEPLOY_KEY_FILE_AND_IMAGE_RENAMER read-only deploy key.
       # Branch-ref governed (pin policy 2026-09-16: ?ref=master as much as
       # possible; the lock holds the exact rev until an explicit update).
-      # TEMPORARY HARD PIN 2026-11-06 (templ/parse skew class; allowlist
-      # block in lib/flake-input-pin-audit.nix): 0fc16c68 "chore(deps):
-      # update Go dependencies" bumped a-h/parse to the 2026-10-27
-      # pseudo-version, whose Parser API does not implement
-      # parse.Parser[T].Match, so compiling templ v0.3.1100's jstokenizer
-      # dies. 973dd383 is the pre-bump rev. 2026-11-11 tip 5a319ea6 probe:
-      # the committed vendor/ tree still carries the PRE-REGEN
-      # templ-components (svg_templ.go calls templ.ResolveAttributeValue,
-      # deleted in 0.3.1100), and a live session is mid-migration in that
-      # checkout (cmdguard v4→v5) — the vendor refresh is not safe to land
-      # concurrently. LIFT: upstream commits a vendor/ refresh over a
-      # regenerated templ-components (or the live session's wave carries
-      # it) and the package builds at tip; then unpin and re-lock.
-      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?rev=973dd383ba98ae8b6e3b4b3a95f690c627bb49ab";
+      # PIN LIFTED 2026-11-13 (was a TEMPORARY HARD PIN 2026-11-06 on the
+      # templ-API-removal class, then re-diagnosed 2026-11-11). The real
+      # blocker was NOT a stale committed vendor/ tree — vendor/ is
+      # GITIGNORED here (`.gitignore:102`), so the nix build re-vendors
+      # every time; what was stale were the repo's per-dep `*-src` flake
+      # pins lagging its own go.mod (templ-components v1.26.0 vs v1.27.0,
+      # cqrs-htmx rev-357cdfc vs v4.16.0, plus cmdguard/go-output/
+      # go-health/go-health-dashboard/go-datastar/go-sse). Upstream fix
+      # 2026-11-13 (cc4ed62a): every pin aligned to the go.mod requirement
+      # + vendorHash re-derived; clean-tree package build green, lock-free
+      # probe at that rev green. Floats on ?ref=refs/heads/master; bumps
+      # flow via `nix flake lock --update-input file-and-image-renamer
+      # --refresh`.
+      url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=refs/heads/master";
     };
 
     # nsfw-classifier — Go/ONNX NSFW image classifier. Backend for the

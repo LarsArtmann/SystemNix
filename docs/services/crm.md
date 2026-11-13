@@ -10,7 +10,7 @@ disposable. Upstream repo: `/home/lars/projects/crm` (runbooks in
 contract (options + the crm-server unit — loopback bind, the sqlite pair,
 auth/OIDC flags, the DNS gate, portable hardening) lives upstream at
 `crm/nix/nixos-module.nix`, imported via `inputs.crm.nixosModules.default`
-(rev-pinned `f32f4c0`). `modules/nixos/services/crm.nix` layers only site
+(rev-pinned `98cd15c`, 2026-11-13). `modules/nixos/services/crm.nix` layers only site
 specifics: the vendorHash shim, primary-user identity, the sops API-token
 template, the Pocket ID client-secret bridge, pool backups, alarms, and
 the catalog + integration fan-out.
