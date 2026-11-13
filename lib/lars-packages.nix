@@ -527,9 +527,15 @@ lib.filterAttrs (_: v: v != null) {
   # content. The input follows our nixpkgs, so pin-level re-lands now
   # re-stale prepared-source vendorHashes; expect the whole consumer
   # family to re-probe after any future pin move.
+  # RE-STALE 2026-11-13 09:37 (deploy #2 nh build): at project-meta@63fcf0ff
+  # (float 50770ad5→63fcf0ff, revCount 906→908, upstream lastModified
+  # 2026-11-12) spec hmFRcgHq, got TQB8jwNI (first-hand,
+  # /var/log/systemnix-deploys/2026-11-13_09-17-57.log:16367). Drop when
+  # upstream bakes the got hash; re-add ONLY via nix-hash-fix evidence,
+  # never by hand.
   project-meta =
     flakePkgShim inputs.project-meta "default"
-      "sha256-hmFRcgHqk35rEpYBKnQyK6jMI2466vhmODSHp3z9Vc0=";
+      "sha256-TQB8jwNI5N12IKiI+TWsMMIGu6K/I3kiPRGb9hu5o58=";
   # TEMPORARY vendorHash shim DROPPED (2026-10-11, fix-upstream-and-re-lock
   # protocol): upstream ea6e8ce bakes the got hash 6ZDAkBB… (specified
   # 8kSXYjwa vs got Mrn25ftf at 1f9b57c, then re-measured 6ZDAkBB at

@@ -16,7 +16,12 @@
 # Optional features (declarative via module options):
 #   - Google Search Console: services.openseo.googleSearchConsole.enable
 #     Requires google_client_id, google_client_secret, better_auth_secret in openseo.yaml.
-#     GSC redirect URI: https://seo.<domain>/api/gsc/oauth/callback
+#     GSC redirect URI: https://seo.<cloudDomain>/api/gsc/oauth/callback — the
+#     CLOUD origin, not home.lan: Google rejects .lan redirect URIs at client
+#     creation ("must end with a public top-level domain", live 2026-11-13),
+#     and the app derives redirect_uri from the request origin, so Connect
+#     must happen while browsing https://seo.<cloudDomain>. The alias twin
+#     (DNS record + Caddy vHost + dual-zone cert) is fleet-preexisting.
 #     Validated at startup (ExecStartPre) — service refuses to start if keys are empty.
 #   - AI agent (SAM): services.openseo.aiFeatures.enable
 #     Requires openrouter_api_key in openseo.yaml.
@@ -33,6 +38,20 @@ _: {
     let
       cfg = config.services.openseo;
       inherit (config.networking) domain;
+      # Split-horizon cloud alias zone (caddy.nix pattern): the same vHost
+      # twin exists at seo.<cloudDomain>, and GSC OAuth REQUIRES a
+      # public-TLD origin — Google rejects .lan redirect URIs (console:
+      # "must end with a public top-level domain", live 2026-11-13). The
+      # app derives redirect_uri from the REQUEST origin (getPublicOrigin),
+      # so Connect must happen while browsing the cloud URL; vite preview's
+      # host allowlist is fed by ALLOWED_HOST + BETTER_AUTH_URL's hostname
+      # (vite.config.ts allowedHosts array — upstream-native two-slot form,
+      # no patch). Guard mirrors caddy.nix for configs without networking.local.
+      cloudDomain =
+        if builtins.hasAttr "local" options.networking && options.networking.local ? cloudDomain then
+          config.networking.local.cloudDomain
+        else
+          null;
       libHelpers = import ../../../lib/default.nix lib;
       inherit (libHelpers)
         harden
@@ -242,6 +261,16 @@ _: {
                 "PORT=${toString cfg.port}"
                 "AUTH_MODE=local_noauth"
                 "ALLOWED_HOST=seo.${domain}"
+              ]
+              # GSC connect origin: vite preview's allowedHosts second slot.
+              # BETTER_AUTH_URL is NOT in the vite envPrefix, so it stays
+              # server-side (never inlined into the client bundle); auth is
+              # disabled (local_noauth), so the variable's only live consumer
+              # is the host allowlist.
+              ++ lib.optionals (cloudDomain != null) [
+                "BETTER_AUTH_URL=https://seo.${cloudDomain}"
+              ]
+              ++ [
                 "VITE_SHOW_DEVTOOLS=false"
                 "NODE_OPTIONS=--max-old-space-size=1536"
                 "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
