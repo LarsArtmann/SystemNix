@@ -1,6 +1,7 @@
 # Takeout fleet completion + Immich key converger — comprehensive plan
 
 **Created:** 2026-11-13 19:27 CET
+**EXECUTING (instance takeout-key-converger finish (K3/K5/H1 + 4% tier), 2026-11-14 00:56 CET, HEAD `adee6f18c`):** executing (see AGENTS.md plan-execution tombstone)
 **HEAD at authoring:** `c9b5e96b9` (1 commit ahead of origin, 0 behind)
 **Supersedes nothing** — this is the execution plan ON TOP of
 `docs/planning/2026-11-13_multi-account-takeout-fleet-plan.md` (fleet shape,
@@ -22,9 +23,11 @@ its ordering**.
   re-request, never data loss.
 - **Destinations listening:** Immich 2283, OpenCloud 9500 (+NATS 9233),
   Paperless 2892. Nothing has been sent to any of them.
-- **The one unblocked technical item** is the Immich key: the converger module
-  is half-landed (`472b84e4a`: option + helper, no unit, no declaration, ingest
-  script still reads `<staging>/immich-api-key`).
+- **The one unblocked technical item** is the Immich key. Its converger chain
+  is now COMPLETE (`472b84e4a` helper+option, unit+timer, `takeout-import`
+  declaration, and the 2026-11-14 repoint of `scripts/takeout-ingest-photos.sh`
+  at `/var/lib/immich-api-keys/takeout-import.env`) — key material never
+  touches the staging directory.
 - **Hard constraints:** never worsen the tree (`nix flake check` must stay
   green), no secret in a data dir or on a command line, one transient extract
   at a time, capacity rule `free ≥ 1.2×extract + 500 GB`.
@@ -145,6 +148,14 @@ unblocked subset (K1–K5, V1–V2, C1–C2, X1, L1, T1–T3, H1) ≈ 10 h.
 | K3.4 | Drop the `<staging>/immich-api-key` requirement and the "delete the key after migration" comment | 4 |
 | K3.5 | Source `IMMICH_URL` from the env file, manifest only as fallback | 8 |
 | K3.6 | Shellcheck (`nix shell nixpkgs#shellcheck -- shellcheck -x`) | 5 |
+
+**DONE 2026-11-14 00:55** — all six legs landed in `scripts/takeout-ingest-photos.sh`
+(converger env file + `TAKEOUT_IMMICH_ENV`, env-key override, 0400 assertion,
+converger/rotation error text, `IMMICH_URL` with manifest fallback). Functional
+proof, 5 fixture legs: missing key → converger+rotation die text; 0644 file →
+rejected; 0400 file → `-server http://127.0.0.1:2283 -api-key TOK`; env key
+without a file → manifest fallback URL; env key winning over a present file.
+`shellcheck -x` clean, `bash -n` clean.
 
 ### K4 — deploy wiring
 
