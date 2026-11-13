@@ -148,7 +148,7 @@ cmd_plan() {
   #   NEW:       relpath unseen, or hash != prior hash (changed content)
   #   UNCHANGED: relpath seen in a prior cycle with the same hash -> skip
   #   vanished:  relpath seen in a prior cycle, absent now -> report only
-  awk -F'\t' -v a="$account" -v c="$cycle" -v out="$out" '
+  awk -F'\t' -v OFS='\t' -v a="$account" -v c="$cycle" -v out="$out" '
     NR == 1 { next }
     $4 == a && $5 == c { cur_hash[$6] = $2; cur_size[$6] = $3; seen[$6] = 1; next }
     {
@@ -355,6 +355,7 @@ selftest() {
   "$0" plan --from-extract "$fx/c1" --account acctA --cycle 2026-01-01 --out "$fx/out1" >/dev/null
   check plan1-new 4 "$(wc -l <"$fx/out1/new-files.txt")"
   check plan1-unchanged 0 "$(wc -l <"$fx/out1/unchanged.txt")"
+  check plan1-tsv-tab-separated 4 "$(awk -F'\t' 'NF == 3' "$fx/out1/new-files.tsv" | wc -l)"
 
   "$0" index --from-extract "$fx/c2" --account acctA --cycle 2026-03-01 >/dev/null
   "$0" plan --from-extract "$fx/c2" --account acctA --cycle 2026-03-01 --out "$fx/out2" >/dev/null

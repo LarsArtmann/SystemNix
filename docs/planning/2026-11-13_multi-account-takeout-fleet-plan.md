@@ -48,7 +48,7 @@ Same gates as the baseline plan; G2.5 is new and is what makes the fleet scale.
 | G4 | Drive tree → OpenCloud | extract ONLY the needed members (`unzip -q -o <staging>/zips/*.zip 'Takeout/Drive/*' -d <staging>/extracted`; cold products are never extracted) → rclone WebDAV (vendor=owncloud) using `dedup/new-files.txt` as `--files-from` (cycle 1: the whole tree) |
 | G5 | Docs → Paperless | drive-paperless over the extract; byte-identical rejection is server-side |
 | G6 | **reconciliation** | `bash scripts/takeout-dedup.sh balance --staging <s> --account <a> --cycle <c>`: every EXTRACTED product must match the zips file-for-file and byte-for-byte (COLD products pass by design; any MISMATCH blocks G4/G5 and all deletion). Destination confirmations join the identity: `immich-go` uploaded+duplicate counts, `rclone check` clean, Paperless ingest counts; write the balance into the per-account verification report |
-| G7 | retention / close | retire: 7-day soak + **deletion-readiness gate (§4b)** → data-ownership flip, secrets shred, account deletion stays with the owner. keep: trash cycles older than N only after the NEXT cycle's G6 is green (never the previous cycle straight after its own import) |
+| G7 | retention / close | retire: 7-day soak + **deletion-readiness gate (§4b — future only; deletion is NOT planned, owner 2026-11-13)** → data-ownership flip, secrets shred, account deletion only when the owner schedules it. keep: trash cycles older than N only after the NEXT cycle's G6 is green (never the previous cycle straight after its own import) |
 
 Staging layout per export dir (already the convention): `zips/ logs/ extracted/ dedup/
 parts.tsv urls.txt products.tsv OWNER-STEPS.md`. The dedup **ledger is global**:
@@ -117,9 +117,13 @@ peak (≈10.8 TB with one 3 TB Drive extract) under the 11 TB free only because 
 transient and the big account is processed while working copies are still small — verify
 `df` at every G4.
 
-## 4b. Deletion readiness — the gate the baseline plan did not have
+## 4b. Deletion readiness — a FUTURE gate, not a blocker on today's work
 
-RAID1 is not a backup. Today every copy of a retired account's data would live on **one
+**Owner directive 2026-11-13: no Google account will be deleted anytime soon.** The active
+objective is extraction + self-hosted ingest; accounts stay alive and remain the master copy
+throughout. Everything below matters only when deletion is eventually scheduled.
+
+RAID1 is not a backup. Today every copy of a retiring account's data would live on **one
 chassis**: the zips and the Immich/OpenCloud/Paperless datadirs are all on `/mnt/pool`;
 btrbk mirrors root+data onto the **same pool** (`/mnt/pool/backups`); and the offsite Borg
 leg is **deployed but DORMANT** (`services.offsite-borg.enable = false`, system-796) — its
@@ -127,14 +131,18 @@ go-live waits on owner-held StorageBox inputs (hostname/username + host-key pin)
 `docs/services/offsite-borg.md`. The base plan's 7-day soak protects against mistakes, not
 against losing the pool.
 
-**No retiring account may be deleted from Google until one of these is recorded:**
+**When deletion is eventually scheduled (not now), one of these must be recorded first:**
 
 1. offsite Borg go-live green (nightly job successful, restore drill run), **or**
 2. an explicit owner-signed risk acceptance in the status report: single-site, single-pool,
    no offsite copy — with the reclaim date decided.
 
-Until then a retired account stays alive: it *is* the third copy. This is the cheapest
-insurance available and costs nothing but the account itself.
+Until then the account stays alive: it *is* the third copy. This is the cheapest insurance
+available and costs nothing but keeping the account.
+
+Consequence for today's work: the 7-day export expiry is **not** a data-loss risk — if the
+links die, a fresh export can be requested at will; the only cost is another download cycle.
+Download promptly to save that effort, not to save the data.
 
 ## 5. The semi-manual 2-monthly rhythm (keep mode)
 
@@ -185,16 +193,18 @@ NEXT cycle's G6 is green (registry `retain` column, `trash`, never `rm`). When D
 
 1. **Name the remaining accounts** (~3 TB total) and their modes (retire vs keep) so the
    registry can hold them; per-account Drive size drives the §4 capacity check.
-2. **Deletion readiness (§4b)** — offsite Borg go-live (StorageBox inputs) vs a signed
-   single-site risk acceptance. Blocks EVERY retire-mode account deletion.
+2. **Deletion readiness (§4b) — future, non-blocking.** Owner directive 2026-11-13: no
+deletions anytime soon; revisit when one is scheduled (offsite Borg go-live vs signed
+single-site acceptance).
 3. **Keep-mode sources** — confirm the source matrix: Drive via `google-sync` (its OAuth
    go-live row), Mail via IMAP/InboxClean, Takeout for Photos + small products. If the owner
    prefers Takeout-only for keep accounts, say so: it costs a full re-download per cycle.
 4. **Retention window** for keep accounts — default 2 cycles (4 months of raw zips).
 5. **Mail end-state** — cold archive vs mail-host mesh; drives whether mbox cycles need
    Message-ID dedup at all.
-6. **Insurance export** for `racedriver8k` — request a second export now (parallel 7-day
-   clock) or only on failure? Its deadline (2026-11-18 03:13) is the fleet's tightest.
+6. **Insurance export** for `racedriver8k` — **moot while the account stays alive** (Google
+   remains master; an expired export is re-requestable at will). Keep only as a parallel
+   clock if the download keeps slipping.
 7. **PIM import** (Contacts/Calendar/Keep) — pending the 2026-10-29 mesh proposal; until
    decided these are cold-archive only, and each cycle's ICS/vCard snapshots are small.
 8. **Shared-with-me eyeball** before each retiring account is deleted (Takeout cannot
