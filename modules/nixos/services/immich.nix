@@ -242,6 +242,48 @@ _: {
                 echo "immich-db-backup: completed -> immich-$stamp.sql"
               '';
             };
+
+            # Root converger for every declared `services.immich.apiKeys.<name>`
+            # (lib/immich-api-key-provision.nix): Immich is OIDC-only, so the
+            # key is inserted straight into api_key via peer-auth postgres and
+            # rendered to a 0400 file — key material never lands in a sops
+            # file, a data directory, or a command line. One unit converges all
+            # keys so a new consumer needs no unit/timer/deploy.sh churn.
+            # Boot + daily timer cover DB-restore healing; the deploy.sh
+            # provisioner loop re-converges on every deploy.
+            immich-api-key-provision = lib.mkIf (cfg.apiKeys != { }) {
+              description = "Immich API-key converger (direct api_key table insert via peer-auth postgres)";
+              after = [ "postgresql.service" ];
+              wants = [ "postgresql.service" ];
+              wantedBy = [ "multi-user.target" ];
+              inherit onFailure;
+              serviceConfig = lib.mkMerge [
+                (harden { MemoryMax = "128M"; })
+                (serviceOneshotDefaults { })
+                {
+                  Type = "oneshot";
+                  RemainAfterExit = true;
+                  ExecStart = lib.getExe (
+                    mkImmichApiKeyProvision {
+                      inherit pkgs config;
+                      keys = cfg.apiKeys;
+                    }
+                  );
+                  TimeoutStartSec = "2min";
+                  # Root BY DESIGN: peer-auth postgres via runuser (no secret
+                  # exists to authenticate with), key-file writes for other
+                  # owners, and try-restart of the declared consumer units.
+                  # NoNewPrivileges stays OFF — runuser is setuid.
+                  NoNewPrivileges = false;
+                  ProtectSystem = "strict";
+                  ReadWritePaths = lib.unique (
+                    [ keyDir ] ++ lib.mapAttrsToList (_: spec: builtins.dirOf spec.keyFile) cfg.apiKeys
+                  );
+                  PrivateTmp = true;
+                }
+                ioTier.background
+              ];
+            };
           };
           timers.immich-db-backup = {
             description = "Daily Immich database backup";
@@ -250,6 +292,15 @@ _: {
               OnCalendar = "*-*-* 01:00:00";
               Persistent = true;
               RandomizedDelaySec = "10m";
+            };
+          };
+          immich-api-key-provision = lib.mkIf (cfg.apiKeys != { }) {
+            description = "Daily Immich API-key convergence (DB-restore self-heal)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = "daily";
+              Persistent = true;
+              RandomizedDelaySec = "6h";
             };
           };
         };
