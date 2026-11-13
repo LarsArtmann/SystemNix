@@ -150,11 +150,12 @@
             environmentFile = config.sops.templates."pim-sync-dav-env".path;
             secretFile = config.sops.secrets.pim_sync_oauth_client_secret.path;
             tokenSeedDir = "/var/lib/pim-sync-seed";
-            # Append-only run receipts (mesh invariant 5: auditability
-            # comes from receipts, never from last_report). Live runs
-            # append one 0600 JSONL line each; dry runs never write.
-            # Under dataDir so the upstream StateDirectory picks it up.
-            receiptsDir = "/var/lib/pim-sync/receipts";
+            # Append-only run receipts (mesh invariant 5): the upstream
+            # `receiptsDir` option EXISTS in the local pim-sync checkout
+            # (pim-sync 74bf91a) but not yet in the PINNED rev — set it
+            # at the flip, after the pim-sync push lands and this input
+            # re-locks (pins track pushed revs). Value:
+            #   receiptsDir = "/var/lib/pim-sync/receipts";
           };
 
           # docs/agents/integration-registry.md step 5: OnFailure Discord

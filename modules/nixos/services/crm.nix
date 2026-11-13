@@ -84,6 +84,46 @@
       twentyEnabled = config.services.twenty.enable or false;
     in
     {
+      # T13 (2026-11-13 contacts plan): the Stalwart → Kith people
+      # projection (crm `carddav-projection` one-shot), flip-ready
+      # DISABLED. Everything below only exists once this is flipped AND
+      # the pim-sync books exist (plan graph: T5 → T9 → T13) — enabling
+      # it before a real book is on pbx.artmann.tech just produces
+      # failing one-shots.
+      options.services.crm-server.carddavProjection = {
+        enable = lib.mkEnableOption "the Stalwart → Kith people projection timer";
+
+        schedule = lib.mkOption {
+          type = lib.types.str;
+          default = "hourly";
+          description = "systemd OnCalendar for the projection run.";
+        };
+
+        url = lib.mkOption {
+          type = lib.types.str;
+          default = "";
+          description = "Stalwart DAV base URL (e.g. https://pbx.artmann.tech). Required at flip.";
+        };
+
+        davUser = lib.mkOption {
+          type = lib.types.str;
+          default = "default";
+          description = "Stalwart DAV login the projection authenticates as (the bot account — its PASSWORD rides the sops env file).";
+        };
+
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = "default";
+          description = "Stalwart account whose book is projected (pim-sync token stem).";
+        };
+
+        book = lib.mkOption {
+          type = lib.types.str;
+          default = "Contacts";
+          description = "Address book to project (pim-sync book convention).";
+        };
+      };
+
       imports = [
         inputs.crm.nixosModules.default
         # Platform-truth catalog entry (ADR-008): unconditional — the
@@ -456,6 +496,110 @@
             monitored = true;
           };
         };
+
+        # ── T13: Stalwart → Kith people projection (flip-ready DISABLED) ──
+        #
+        # Runs the crm repo's one-shot `-carddav-projection` (read-only IN
+        # leg: Stalwart book → journal events, actor carddav-projection,
+        # deletions = notes). Scheduling is deliberately NOT chained to the
+        # pim-sync timer: pim-sync runs every 5 min when live, so no
+        # wall-clock slot is strictly "after the latest sync" — instead the
+        # projection is IDEMPOTENT by construction (it converges the
+        # journal toward the book; replaying it before or after a sync
+        # changes only event ordering, and the journal is the truth), which
+        # makes the ordering coupling unnecessary. `After=pim-sync.service`
+        # keeps the common case ordered when both queue together.
+        sops.secrets.crm_stalwart_dav_password =
+          lib.mkIf cfg.carddavProjection.enable {
+            sopsFile = ../../../platforms/nixos/secrets/crm.yaml;
+            restartUnits = [ "crm-carddav-projection.service" ];
+          };
+
+        sops.templates."crm-carddav-dav-env" =
+          lib.mkIf cfg.carddavProjection.enable {
+            # The projection unit runs as the operator user (it writes the
+            # live journal in $HOME), so the env file is user-owned —
+            # unlike the root-owned crm-server-env above.
+            owner = user;
+            group = group;
+            mode = "0400";
+            restartUnits = [ "crm-carddav-projection.service" ];
+            content = lib.generators.toKeyValue { } {
+              CRM_CARDDAV_PASSWORD = config.sops.placeholder.crm_stalwart_dav_password;
+            };
+          };
+
+        systemd.services."crm-carddav-projection" =
+          lib.mkIf cfg.carddavProjection.enable {
+            description = "Kith CRM — Stalwart → journal people projection (T13)";
+            inherit onFailure;
+            after = [ "pim-sync.service" ];
+            environmentFile = config.sops.templates."crm-carddav-dav-env".path;
+
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                User = user;
+                Group = group;
+                # Placeholder refusal (pim-sync config-check pattern): a
+                # PLACEHOLDER password would auth-fail against Stalwart
+                # and bury the cause. Fail loudly, name the paste step.
+                ExecStartPre = let
+                  check = pkgs.writeShellApplication {
+                    name = "crm-carddav-projection-config-check";
+                    runtimeInputs = [ pkgs.coreutils pkgs.gnugrep ];
+                    text = ''
+                      set -euo pipefail
+                      envFile=${config.sops.templates."crm-carddav-dav-env".path}
+                      if grep -q PLACEHOLDER "$envFile"; then
+                        echo "crm-carddav-projection: sops value still PLACEHOLDER" >&2
+                        echo "crm-carddav-projection: paste the bot:pim-sync DAV password into" >&2
+                        echo "crm-carddav-projection:   platforms/nixos/secrets/crm.yaml key crm_stalwart_dav_password (sops editor, never a command line)" >&2
+                        exit 1
+                      fi
+                    '';
+                  };
+                in [ (lib.getExe check) ];
+                ExecStart = let
+                  run = pkgs.writeShellApplication {
+                    name = "crm-carddav-projection-run";
+                    runtimeInputs = [ pkgs.coreutils ];
+                    text = ''
+                      set -euo pipefail
+                      ${crmPkg}/bin/crm-server \
+                        -carddav-projection \
+                        -db ${stateDir}/ledger.db \
+                        -carddav-url ${cfg.carddavProjection.url} \
+                        -carddav-user "$CRM_CARDDAV_USER_PLACEHOLDER" \
+                        -carddav-in-account ${cfg.carddavProjection.user} \
+                        -carddav-in-book ${cfg.carddavProjection.book}
+                      # Freshness metric (T13.2, flip step): best-effort
+                      # textfile write; the collector group wiring is the
+                      # runbook's flip step 3 (btrfs-health precedent).
+                      metricDir=/var/lib/prometheus-node-exporter/textfile_collectors
+                      if [ -w "$metricDir" ] || [ -d "$metricDir" ]; then
+                        printf 'crm_projection_last_success_unix %s\n' "$(date +%s)" \
+                          > "$metricDir/crm-carddav-projection.prom" 2>/dev/null || true
+                      fi
+                    '';
+                  };
+                in [ (lib.getExe run) ];
+                TimeoutStartSec = "10min";
+              }
+              (serviceOneshotDefaults { })
+            ];
+          };
+
+        systemd.timers."crm-carddav-projection" =
+          lib.mkIf cfg.carddavProjection.enable {
+            description = "Kith CRM Stalwart people projection schedule (T13)";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnCalendar = cfg.carddavProjection.schedule;
+              RandomizedDelaySec = "5min";
+              Persistent = true;
+            };
+          };
       };
     };
 }
