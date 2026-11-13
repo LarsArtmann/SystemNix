@@ -263,12 +263,10 @@ _: {
                 {
                   Type = "oneshot";
                   RemainAfterExit = true;
-                  ExecStart = lib.getExe (
-                    mkImmichApiKeyProvision {
-                      inherit pkgs config;
-                      keys = cfg.apiKeys;
-                    }
-                  );
+                  ExecStart = lib.getExe (mkImmichApiKeyProvision {
+                    inherit pkgs config;
+                    keys = cfg.apiKeys;
+                  });
                   TimeoutStartSec = "2min";
                   # Root BY DESIGN: peer-auth postgres via runuser (no secret
                   # exists to authenticate with), key-file writes for other
@@ -294,7 +292,7 @@ _: {
               RandomizedDelaySec = "10m";
             };
           };
-          immich-api-key-provision = lib.mkIf (cfg.apiKeys != { }) {
+          timers.immich-api-key-provision = lib.mkIf (cfg.apiKeys != { }) {
             description = "Daily Immich API-key convergence (DB-restore self-heal)";
             wantedBy = [ "timers.target" ];
             timerConfig = {
