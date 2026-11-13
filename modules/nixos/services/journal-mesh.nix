@@ -61,19 +61,33 @@
         subject = lib.mkOption {
           type = lib.types.str;
           default = "mesh.banksync.transactions.v1";
-          description = "Seam subject. ADR-0009 names it mesh.<producer>.<fact>.v1.";
+          description = ''
+            Seam subject. ADR-0009 names it mesh.<producer>.<fact>.v1.
+            Cross-surface contract: keep in sync with journal's
+            internal/mesh pin test and bank-sync's
+            TestMeshSeamCoordinatesAgreeWithJournal.
+          '';
         };
 
         stream = lib.mkOption {
           type = lib.types.str;
           default = "TRANSACTIONS_V1";
-          description = "JetStream stream that stores the seam subject.";
+          description = ''
+            JetStream stream that stores the seam subject. Same
+            cross-surface contract as the subject option.
+          '';
         };
 
         durable = lib.mkOption {
           type = lib.types.str;
-          default = "journal-transactions-v1";
-          description = "Durable consumer name — one per journal book.";
+          default = "";
+          description = ''
+            Durable consumer name override; empty (the default) lets the
+            kernel derive one per books database
+            (journal-transactions-v1-<db-path hash>). Two books homes
+            sharing one durable would steal each other's deliveries —
+            leave this empty unless a seam shares books across hosts.
+          '';
         };
 
         reconcile = lib.mkOption {
@@ -179,17 +193,19 @@
                   Group = "users";
                   WorkingDirectory = cfg.booksDir;
                   Environment = [ "HOME=/home/${primaryUser}" ];
-                  ExecStart = lib.concatStringsSep " " [
-                    "${lib.getExe' cfg.package "journal"}"
-                    "--config journal.yaml"
-                    "mesh subscribe"
-                    "--url ${cfg.url}"
-                    "--subject ${cfg.subject}"
-                    "--stream ${cfg.stream}"
-                    "--durable ${cfg.durable}"
-                    "--reconcile=${lib.boolToString cfg.reconcile}"
-                    "--reconcile-debounce ${cfg.reconcileDebounce}"
-                  ];
+                  ExecStart = lib.concatStringsSep " " (
+                    [
+                      "${lib.getExe' cfg.package "journal"}"
+                      "--config journal.yaml"
+                      "mesh subscribe"
+                      "--url ${cfg.url}"
+                      "--subject ${cfg.subject}"
+                      "--stream ${cfg.stream}"
+                      "--reconcile=${lib.boolToString cfg.reconcile}"
+                      "--reconcile-debounce ${cfg.reconcileDebounce}"
+                    ]
+                    ++ lib.optionals (cfg.durable != "") [ "--durable ${cfg.durable}" ]
+                  );
                   RestartSec = "5s";
                 }
               ];

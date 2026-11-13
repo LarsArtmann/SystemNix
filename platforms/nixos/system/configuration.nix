@@ -606,7 +606,44 @@ in
         # sync_on_commit) and verified flowing; phase 5 stays idempotent.
         "business-networking"
       ];
-      immich.enable = true;
+      immich = {
+        enable = true;
+
+        # Takeout migration key (2026-11-13). Google Photos -> Immich
+        # (immich-go 0.32.0, scripts/takeout-ingest-photos.sh) needs a scoped
+        # key — NOT a key file dropped into the archive staging dir on the
+        # pool. The root converger `immich-api-key-provision` inserts it
+        # directly into Immich's api_key table (peer-auth postgres; Immich is
+        # OIDC-only, so no API bootstrap exists) and renders the 0400 env file
+        # the script reads. Scope = immich-go's documented permission set
+        # (docs/installation.md "API Permissions") MINUS asset.delete: an
+        # archive import must never carry a delete capability. Rotation:
+        # rm /var/lib/immich-api-keys/takeout-import.env + restart
+        # immich-api-key-provision (runbook: docs/services/immich.md).
+        apiKeys.takeout-import = {
+          permissions = [
+            "album.create"
+            "album.read"
+            "albumAsset.create"
+            "asset.copy"
+            "asset.download"
+            "asset.read"
+            "asset.statistics"
+            "asset.update"
+            "asset.upload"
+            "job.create"
+            "job.read"
+            "server.about"
+            "stack.create"
+            "tag.asset"
+            "tag.create"
+            "user.read"
+          ];
+          owner = "lars";
+          group = "users";
+          url = "http://127.0.0.1:${toString ports.immich}";
+        };
+      };
       # MediaAtlas federation hub GROUNDWORK (v0.1 plan L11 + L03 enabler,
       # repo ~/projects/media-atlas): read-only media_atlas PG role on the
       # immich DB (smart_search) + Immich external-library read access to
