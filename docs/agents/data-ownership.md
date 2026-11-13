@@ -4,6 +4,11 @@ One page that answers "who owns X?" for every personal-data domain this fleet
 touches. Written 2026-10-29 from the Contacts/Calendar question; every claim is
 grep-verified at the cited line — rows marked `?` are NOT verified and say so.
 
+**Last verified: 2026-11-13** against the
+[contacts deep review](../architecture-understanding/2026-11-13_11-45_contacts-data-architecture.html)
+and source reads in `pim-sync`, `webphone`, `InboxClean`, `crm` and
+`pbx-artmann`. Touching a row re-stamps this line.
+
 ## The rule
 
 You own data when you have all three:
@@ -54,6 +59,67 @@ and a separate Kith CRM identity DB (`identity-YYYY-MM-DD.db`, mode 0600) that
 holds passkey/session bearer material (`crm.md:20`). Deliberate or not, know
 which one a given login is answering to before migrating either.
 
+## Contact surfaces (registry, 2026-11-13)
+
+Seven surfaces are called "contacts". Only one is allowed to be the truth, and
+only one of the rest may ever write to it. Classify every surface out loud —
+**truth**, **edge** (external system, one writer per leg), **mirror** (one-way
+copy), **projection** (derived read model), **consumer** (read-only client) or
+**cache** (rebuildable) — so the next reader does not have to infer it.
+
+| Surface                            | Class                                     | Write authority                                     | Direction & actor                                                                          | Restore / export                                                              | Kill switch                                                       |
+| ---------------------------------- | ----------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Stalwart CardDAV (pbx.artmann.tech) | **truth** (declared 2026-10-29, provisioning + drill PENDING) | Stalwart accounts; `bot:pim-sync:<acct>` only via one-writer legs | Hub. Edges point at it; devices speak DAV. Nothing else writes it.                         | Nightly whole-store archive on pbx; contact PII drill still pending (Pareto 7) | Stop `pim-sync.timer`; DAV clients keep talking to the store      |
+| Google personal (People API)       | **edge**                                  | Google                                              | IN always (read-only scope); OUT only field-scoped, capped, dry-run first                   | Google Takeout / People export (external, not a fleet restore path)           | Remove its token from the seed dir; disable the OUT leg           |
+| Google work (People API)           | **edge**                                  | Google                                              | Same contract, separate state and book                                                      | Same as above                                                                  | Same as above                                                     |
+| Kith CRM (`crm-server`)            | **projection** for people; **truth** for relations | Journal (relations); Stalwart (people)      | IN only: `bot:carddav-projection`, read-only links, projection off by default               | `crm-backup` sqlite snapshots + drilled restore (ledger); identity.db separate | Disable the projection flag; relations keep working                |
+| webphone (pbx.artmann.tech)        | **local book** — cache/device-local by DEFAULT, owner decision pending | webphone itself                       | None. No sync in or out; CRM lane is read-only (`GET /api/contacts/by-phone` + context)    | vCard 3.0 export (lossy: first TEL only) + zip portability export              | Keep it local (no sync), or retire tab writes in favour of the hub |
+| InboxClean                         | **consumer + hint source**                | CRM via HTTP                                        | Reads the CRM roster; pushes sender observations in capped batches; no local contact store | Its own DB backups (correspondence, not contacts)                              | Drop `[crm]` config; hints stop, mail flow unaffected              |
+| OpenCloud                          | **not a contact surface** (files platform) | n/a                                                 | None                                                                                        | Pool subvolume + btrbk + restic app dumps                                      | n/a                                                               |
+| Twenty dump (staging)              | **dead source**                           | n/a                                                 | CSV → `Twenty import` book only, one-way                                                    | The CSVs themselves                                                           | Delete the staging files after the import                          |
+
+### Contact invariants
+
+1. **One contact writer: Stalwart.** A second CalDAV/CardDAV server is a second
+truth, not redundancy.
+2. **One book per source.** Never share a book across accounts or sources: a
+full Google listing quarantines every book card absent from it, explicitly
+including foreign and hand-made cards, and clearing that hold deletes them
+(`pim-sync/internal/contactsin/quarantine.go:45`). `--book` applies to every
+account in one invocation, so an override can collapse two accounts onto one
+book (`pim-sync/cmd/pim-sync/account.go:169-172`).
+3. **Consumers are read-only and declare a maximum staleness.** A consumer that
+needs to write becomes a spoke or does not write.
+4. **Every edge has a direction, an actor, a change cap and a deletion
+quarantine.** Dry-run is the default; `--live` is an explicit opt-in
+(`pim-sync/internal/guard/guard.go`).
+5. **Every run leaves a receipt.** Until pim-sync emits one, the fleet has no
+per-change evidence; aggregated gauges and `last_report` are not a log.
+6. **Identity is the link key.** Normalized email and E.164 phone link one
+person to many cards; cards are linked, never merged; duplicates are reported
+and never auto-merged.
+7. **Classification is mandatory.** A surface that is not in this table is a
+finding, not an exemption.
+8. **No second DAV server without a measured requirement.** Radicale (evaluated
+2026-11-13) is a CalDAV/CardDAV server with filesystem storage,
+htpasswd/LDAP/IMAP/OAuth2-relay auth, sharing and Git-versioned collections —
+but no contacts application and no merge engine. It would duplicate Stalwart's
+DAV role, auth path and backup leg. A web contact UI is a **client** (the
+deployed webmail already reads JMAP contacts; InfCloud/CardDavMATE front
+CardDAV), never a store.
+
+### The webphone decision (default recorded, owner may change it)
+
+webphone's CQRS book (`/var/lib/webphone/system.db`, `/api/contacts`, 500 cap,
+per-owner streams) and its deploy-time shared list (`config.contacts[]` in
+`pbx-artmann/hosts/pbx/default.nix:934-948`) are classified **local**. Nothing
+syncs them. Syncing two writable books would create a feedback loop with two ID
+spaces for one human, so the default is: no sync, no automatic merge, and the
+shared list must move behind authentication (it is currently served by the
+unauthenticated `/config.js`). If the owner instead wants the tab to read the
+canonical store, that is a spoke with one writer and a freshness bound — not a
+bidirectional sync.
+
 ## The offsite hole
 
 Ownership's second test (a restore path you have run) currently stops at the
@@ -103,14 +169,19 @@ Fix the second test before adding new surfaces, not after.
   routes in `docs/todo/services.md:366`); the Google sync ladder
   (`docs/todo/services.md:367`) is superseded by pim-sync + its own GCP OAuth
   client (Pareto task 8). The crm gcontacts/carddav legs retire re-pointed.
-- **`webphone` (pbx.artmann.tech) lists "contacts"** as a feature — an
-  unexamined fourth surface with no stated direction relative to Kith
-  (`catalog-platform.nix:67`).
+- **`webphone` is no longer unexamined (2026-11-13)**: it holds a live,
+  writable local address book (CQRS projection + `/api/contacts`, 500 cap,
+  per-owner streams) plus a deploy-time shared list served pre-auth by
+  `/config.js`. It is classified **local** in the registry above and must not
+  be synced until the owner picks device-local vs hub-reader (review §04-F1,
+  §04-F8).
 - **Task restore path unverified** — the `?` row above is a to-do, not a
   finding.
 
 ## See also
 
+- [2026-11-13 contacts data-architecture review](../architecture-understanding/2026-11-13_11-45_contacts-data-architecture.html) — the seven-surface inventory, 10 findings, OSS verdicts
+- [2026-11-13 SUPERB plan](../planning/2026-11-13_12-05_SUPERB-contacts-data-architecture.md) — Pareto breakdown, 30-100 min tasks, 12-min subtasks, execution graph
 - `docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html` — the
   bidirectional contacts+calendar proposal built on this doctrine (6 decisions,
   two end-states, and the doctrine collision with the CRM/pbx reps)
