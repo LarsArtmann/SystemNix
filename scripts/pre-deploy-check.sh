@@ -1362,6 +1362,27 @@ else
   pass "no home Trash dir"
 fi
 
+# 21. Contact-registry drift (advisory; T19, the 2026-11-13 contacts
+# data-architecture plan). The registry in docs/agents/data-ownership.md
+# is the ONE classification of every contacts surface; this leg surfaces
+# silent drift (a banned DAV server family entering an eval module, a
+# registry row lost) at the deploy window, WARN-first — promotion to a
+# blocker is an owner decision after a quarantine window.
+echo ""
+echo "21. Contact-registry drift (advisory)"
+if [ -f "${_BS_DIR}/check-contact-registry-drift.sh" ]; then
+  drift_out=$("${_BS_DIR}/check-contact-registry-drift.sh" 2>&1)
+  if [ $? -ne 0 ]; then
+    warn "contact-registry drift check failed: $drift_out"
+  elif echo "$drift_out" | grep -q "drift: [1-9]"; then
+    warn "contact-registry drift (advisory): $drift_out"
+  else
+    pass "contact registry clean"
+  fi
+else
+  warn "check-contact-registry-drift.sh missing (degrade: WARN, never FAIL)"
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

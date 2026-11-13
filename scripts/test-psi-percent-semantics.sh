@@ -28,14 +28,21 @@
 #   io-phantom       io some avg300 = 45.2 with an empty block-device dir —
 #                    io_storm computed 1 but zero disk corroboration ⇒
 #                    phantom 1, alert 0, disk_busy_percent_max 0.0
+#   io-boundary-40   io some avg300 = 40.00 exactly WITH a live (mutating)
+#                    disk — strict `>` keeps io_storm 0, so corroboration
+#                    alone cannot page: alert 0, phantom 0
+#   io-boundary-401  40.01 over the bar with corroboration ⇒ alert 1 (pins
+#                    the >40 storm bar from both sides)
+#   corroborated-    45.2% io PSI + mid-run-mutating io_ticks (the io-psi-
+#     storm          crosscheck snapshot pattern) ⇒ the full alert path
+#   mutation         the extracted body with thresholds REGRESSED to the
+#                    0.50/0.10/0.20/0.40 fraction form ⇒ memory_alert,
+#                    memory_warning, io_warning, io_phantom all fire —
+#                    proves every alert/warning leg is live (a leg that
+#                    fails to fire under regression is dead)
 #
 # Static legs pin the threshold LITERALS: no `0.xxx` fraction comparison may
 # reappear, and the percent literals (50/10/20/40) must stay present.
-#
-# NOT covered here: the disk-corroborated io_alert path (needs a stat file
-# whose io_ticks mutate between the emitter's two 1s-apart reads — a timed
-# fixture; the delta-sampling pattern's coverage lives with
-# io-psi-crosscheck's selftest).
 set -uo pipefail
 
 MODULE="${1:?usage: test-psi-percent-semantics.sh <path/to/_signoz-metrics.nix>}"
@@ -49,6 +56,11 @@ bad() {
 }
 assert_line() { # assert_line <desc> <prom-file> <exact-metric-line>
   if grep -qxF "$3" "$2" 2>/dev/null; then ok; else bad "$1: expected line /$3/ in $(basename "$2")"; fi
+}
+assert_ge() { # assert_ge <desc> <prom-file> <metric> <min> (busy_max is timing-dependent, exact-line pinning would flake)
+  local got
+  got="$(grep -m1 "^$3 " "$2" 2>/dev/null | awk '{print $2}')"
+  if [ -n "$got" ] && awk "BEGIN{exit !($got >= $4)}"; then ok; else bad "$1: expected $3 >= $4, got /$got/"; fi
 }
 
 WORK="$(mktemp -d)"
@@ -77,23 +89,46 @@ SED
 sed -f "$WORK/unescape.sed" "$WORK/body.raw" >"$WORK/body.bash"
 bash -n "$WORK/body.bash" || bad "rendered collector fails bash -n"
 
-render_case() { # render_case <out.sh> <workdir>
+render_case() { # render_case <out.sh> <workdir> [<body.sh>]
   sed -e "s|/var/lib/prometheus-node-exporter/textfile_collectors|$2/tfd|g" \
     -e "s|PSI=\"/proc/pressure/memory\"|PSI=\"$2/pressure-memory\"|" \
     -e "s|IO_PSI=\"/proc/pressure/io\"|IO_PSI=\"$2/pressure-io\"|" \
     -e "s|for d in /sys/block/sd\* /sys/block/nvme\*n\* /sys/block/vd\*; do|for d in $2/block/*; do|" \
-    "$WORK/body.bash" >"$1"
+    "${3:-$WORK/body.bash}" >"$1"
   bash -n "$1" || bad "rendered case fails bash -n"
 }
 
-run_case() { # run_case <name> <mem-file> <io-file> ; echoes the .prom path
-  local name="$1" memfile="$2" iofile="$3"
+run_case() { # run_case <name> <mem-file> <io-file> [<body.sh>] ; echoes the .prom path
+  local name="$1" memfile="$2" iofile="$3" body="${4:-$WORK/body.bash}"
   local wd="$WORK/$name"
   mkdir -p "$wd/tfd" "$wd/block"
   cp "$memfile" "$wd/pressure-memory"
   cp "$iofile" "$wd/pressure-io"
+  render_case "$wd/run.sh" "$wd" "$body"
+  bash "$wd/run.sh" || bad "$name: collector exited nonzero"
+  echo "$wd/tfd/psi.prom"
+}
+
+run_case_corroborated() { # like run_case but plants ONE live-mutating nvme stat (the io-psi-crosscheck snapshot pattern): io_ticks climb ~1000 ms per real second, so the emitter's 1s-apart reads corroborate a real stall
+  local name="$1" memfile="$2" iofile="$3"
+  local wd="$WORK/$name"
+  mkdir -p "$wd/tfd" "$wd/block/nvme0n1"
+  cp "$memfile" "$wd/pressure-memory"
+  cp "$iofile" "$wd/pressure-io"
+  (
+    v=5000
+    while :; do
+      v=$((v + 50))
+      printf '8 0 100 200 0 0 0 0 0 %d 0 0 0 0 0 0 0 0 0 0\n' "$v" >"$wd/block/nvme0n1/stat.tmp"
+      mv "$wd/block/nvme0n1/stat.tmp" "$wd/block/nvme0n1/stat"
+      sleep 0.05
+    done
+  ) &
+  local mupd=$!
   render_case "$wd/run.sh" "$wd"
   bash "$wd/run.sh" || bad "$name: collector exited nonzero"
+  kill "$mupd" 2>/dev/null
+  wait "$mupd" 2>/dev/null
   echo "$wd/tfd/psi.prom"
 }
 
@@ -179,6 +214,51 @@ assert_line "io-phantom" "$prom" "node_psi_io_warning 1"
 assert_line "io-phantom" "$prom" "node_psi_io_alert 0"
 assert_line "io-phantom" "$prom" "node_psi_io_phantom 1"
 assert_line "io-phantom" "$prom" "node_disk_busy_percent_max 0.0"
+
+# io-boundary-40 — avg300 = 40.00 exactly with a LIVE disk: strict `>` keeps
+# io_storm 0, so corroboration alone cannot page (phantom 0 — the disk IS
+# corroborating, the storm bar just is not crossed)
+B40="$WORK/fx-io-b40"
+cat >"$B40" <<'EOF'
+some avg10=52.00 avg60=48.00 avg300=40.00 total=1000
+full avg10=30.00 avg60=20.00 avg300=15.00 total=1000
+EOF
+prom="$(run_case_corroborated io-boundary-40 "$CALM_MEM" "$B40")"
+assert_line "io-boundary-40" "$prom" "node_psi_io_warning 1"
+assert_line "io-boundary-40" "$prom" "node_psi_io_alert 0"
+assert_line "io-boundary-40" "$prom" "node_psi_io_phantom 0"
+
+# io-boundary-401 — one hundredth over the bar, same live disk: alert 1
+# (pins the >40 storm bar from BOTH sides at the exact boundary)
+B401="$WORK/fx-io-b401"
+cat >"$B401" <<'EOF'
+some avg10=52.00 avg60=48.00 avg300=40.01 total=1000
+full avg10=30.00 avg60=20.00 avg300=15.00 total=1000
+EOF
+prom="$(run_case_corroborated io-boundary-401 "$CALM_MEM" "$B401")"
+assert_line "io-boundary-401" "$prom" "node_psi_io_warning 1"
+assert_line "io-boundary-401" "$prom" "node_psi_io_alert 1"
+assert_line "io-boundary-401" "$prom" "node_psi_io_phantom 0"
+assert_ge "io-boundary-401" "$prom" "node_disk_busy_percent_max" 10.0
+
+# corroborated-storm — 45.2% io PSI plus a mid-run-mutating io_ticks stat:
+# the FULL alert path the io-phantom case can never reach
+prom="$(run_case_corroborated corroborated-storm "$CALM_MEM" "$IO_P")"
+assert_line "corroborated-storm" "$prom" "node_psi_io_alert 1"
+assert_line "corroborated-storm" "$prom" "node_psi_io_phantom 0"
+
+# mutation — regress every threshold to the T4 fraction form and prove each
+# alert/warning leg FIRES (a leg that stays 0 under regression is dead code,
+# and the positive legs above would then be pinning nothing)
+MUT="$WORK/body-mutated.bash"
+sed -e 's/> 50/> 0.50/g' -e 's/> 10/> 0.10/g' -e 's/>= 20/>= 0.20/g' -e 's/> 40/> 0.40/g' \
+  "$WORK/body.bash" >"$MUT"
+prom="$(run_case mutation "$CALM_MEM" "$CALM_IO" "$MUT")"
+assert_line "mutation" "$prom" "node_psi_memory_alert 1"
+assert_line "mutation" "$prom" "node_psi_memory_warning 1"
+assert_line "mutation" "$prom" "node_psi_io_warning 1"
+assert_line "mutation" "$prom" "node_psi_io_phantom 1"
+assert_line "mutation" "$prom" "node_psi_io_alert 0"
 
 # ── Static legs: the threshold literals themselves ───────────────────────
 if grep -qE '(>|\>=) *0\.[0-9]' "$WORK/body.bash"; then

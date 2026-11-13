@@ -1225,7 +1225,10 @@
         # fractions (the T4 class: /proc/pressure speaks PERCENT, a 0.50
         # fraction threshold stood red for 8 days; 2026-11-12 fixture).
         # Drives the REAL collector body extracted from the staged module
-        # (never a hand-copied twin) with kernel-shaped pressure fixtures.
+        # (never a hand-copied twin) with kernel-shaped pressure fixtures,
+        # strict-`>` boundary cases on both io bars, the disk-corroborated
+        # alert path (live-mutating io_ticks fixture), and a threshold-
+        # regression mutation leg proving every alert/warning leg is live.
         psi-percent-semantics-selftest = pkgs.runCommand "psi-percent-semantics-selftest" { } ''
           ${pkgs.bash}/bin/bash ${root}/scripts/test-psi-percent-semantics.sh ${root}/modules/nixos/services/_signoz-metrics.nix
           touch $out
