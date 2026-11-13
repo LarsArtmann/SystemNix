@@ -1076,7 +1076,11 @@
       # posture, error/manual query escape keeps the interactive page; also
       # carries the oauth2/sqlite bumps with upstream's own vendorHash chase
       # c626704): lock-free package probe green at this rev, no override.
-      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=9d96dadc2c060c23dd39f5c6710758a316ee24e1";
+      # 2026-11-13 ROLL-FORWARD to 98cd15c (the funnel-completion plan
+      # commit on top of the daemon's doc/close-out churn): lock-free FULL
+      # package build green at this rev (goModules FOD + package, no
+      # consumer-side override — upstream bakes the hash).
+      url = "git+ssh://git@github.com/LarsArtmann/crm?rev=98cd15c318d522cef9fc537c1a780c65f43e53a2";
     };
 
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
