@@ -8912,11 +8912,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794567562,
-        "narHash": "sha256-tRhzYWFCGsiBTB+nnGGbl92ndTCgLzKHvq76am/st3U=",
+        "lastModified": 1794586603,
+        "narHash": "sha256-lVFUarY6j8mbQHEeHgFBxmh94CYgQYMFkPMCMh3dHFU=",
         "ref": "refs/heads/master",
-        "rev": "be8ce8c07f1bf6841c387cbecffc802e0df29e53",
-        "revCount": 183,
+        "rev": "74bf91a165edb2ebfa84bac9d3b0ab57b1abcab9",
+        "revCount": 185,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/pim-sync"
       },
