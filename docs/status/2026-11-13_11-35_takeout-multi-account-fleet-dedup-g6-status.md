@@ -352,3 +352,26 @@ Owner-gated / decision-gated (deliberately **not** queued per queue policy):
 
 **Top risk right now:** racedriver8k's export clock (2026-11-18 03:13) with 0/23 clicks,
 followed by the verify-manifest trap (d9) that would corrupt account #2's first G2 result.
+
+---
+
+## Addendum (2026-11-13 ~11:55) — priority directive: no deletions, extraction-first
+
+Owner directive after this report: **no Google account will be deleted anytime soon**; the
+only goal is getting the data out and into owned infrastructure. Consequences and work done:
+
+- §4b demoted from blocker to `[watch]` (fleet plan §4b/§7 + both TODO surfaces): deletion
+  readiness only matters when a deletion is scheduled. Export expiry is therefore **not** a
+  data-loss risk — an expired export is re-requestable at will; the live account remains the
+  third copy.
+- Executed on `lars@helpless.ai` (zips already CRC-clean): extracted ONLY `Takeout/Drive/*`
+  (1,300 files, 1.5 GB) → `takeout-dedup.sh index` (13.9 s, sha256 fallback) → first **1,300
+  production ledger rows** → `plan` (1,300 NEW, 0 unchanged) → `balance` **BALANCED** (Drive
+  1,528,919,192 B on both sides, rc 0).
+- Ledger `report` already finds **80 content-duplicate sets / 91,235,063 redundant bytes**
+  inside the Drive tree (intra-account, different paths) — first real dedup signal.
+- Destination readiness probed: Immich `127.0.0.1:2283`, OpenCloud `127.0.0.1:9500` (+NATS
+  9233), Paperless `127.0.0.1:2892` all LISTEN. Ingest is blocked only on credentials: no
+  `<staging>/immich-api-key`, no OpenCloud app password, and `rclone` is not on PATH.
+- New bug found by the real run and fixed: `plan` wrote `new-files.tsv` space-separated
+  (missing `OFS='\t'`), so byte sums read 0; patched + selftest leg `NF == 3` added (16 legs).
