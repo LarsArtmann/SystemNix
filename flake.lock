@@ -8328,11 +8328,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794563043,
-        "narHash": "sha256-prb0cEvPnYEYPxc+OUwEeyYqelDHtyP/lqT6OxlsH1k=",
+        "lastModified": 1794581780,
+        "narHash": "sha256-3KX/Krqjb/hhcXL/6mGIAiHsBWKY0Qd3fUYgwkfqAq4=",
         "owner": "LarsArtmann",
         "repo": "nixos-modules",
-        "rev": "46e36b754f5e6a0d9d4247beccfcf8eb0530d0c1",
+        "rev": "73462d6991ce3584aa8e146ba16712c1c2f00e99",
         "type": "github"
       },
       "original": {

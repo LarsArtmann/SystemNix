@@ -1,99 +1,28 @@
 # Eval-time audit: every TCP port literal in systemd unit text must be a
-# value from lib/ports.nix — the "never hardcode localhost:PORT" Critical
-# Rule, finally ENFORCED instead of remembered.
+# value from the port registry — the "never hardcode localhost:PORT"
+# Critical Rule, finally ENFORCED instead of remembered.
 #
-# Why this exists: port collisions and forgotten ports are the "missing
-# config" class. lib/default.nix already throws on duplicate VALUES within
-# the registry (port-uniqueness), but NOTHING checked the other half — that
-# ports actually USED by services are IN the registry. A new service wiring
-# `127.0.0.1:8150` inline collides with nothing at eval time and is only
-# discovered at runtime.
+# DELEGATED (2026-11-13, SUPERB T14): the module body lives in the
+# collection (github:LarsArtmann/nixos-modules, modules/port-registry-audit
+# — contract check + negative legs travel with it). This layer imports it
+# and feeds the fleet registry; the evo-x2 host consumes it via the
+# modules/nixos auto-discovery map, exactly as before (allowPorts consumers
+# in service modules keep working unchanged).
 #
-# What is scanned per service: Exec{Start,StartPre,StartPost,Stop,StopPost,
-# Reload,Condition} and Environment (list or attrset form), stringified.
-# Extraction forms (mirrors how this repo actually writes ports):
-#   host-form   127.0.0.1:8099 / localhost 25 / 0.0.0.0:53
-#   colon-form  <non-alnum>:<digits>   (listen=:8100, http://host:8080/x)
-#   flag-form   --port 8100 / --port=8100
-# Deliberately NOT scanned: EnvironmentFile contents, Caddy/gatus/compose
-# configs (own modules), anything inside script bodies (opaque).
-#
-# Justified exceptions (upstream-owned units etc.):
-#   services.port-registry-audit.allowPorts = [ 8150 ];  # + comment why
-#
-# Non-goals: UDP ranges written space-separated, ports in nested config
-# files. This is a regression guard over the dominant literal forms, not a
-# total net — a port that slips past every form is invisible to this audit.
-# The one known FALSE-POSITIVE class: word:NNN tokens whose NNN collides
-# with no registered port ("DELAY:300") fire; host:port and word:NNN are
-# lexically identical, so allowPorts is the sanctioned escape.
+# Fleet-agnostic change carried by the delegation: the collection module
+# takes the registry as an OPTION (it never hardcodes fleet ports — the
+# split contract, collection lib/README); this layer wires lib/ports.nix
+# in, so registry membership + collision enforcement stay identical.
 {
-  flake.nixosModules.port-registry-audit =
-    {
-      config,
-      lib,
-      ...
-    }:
-    let
-      cfg = config.services.port-registry-audit;
-      inherit (import ../../../lib/default.nix lib)
-        unitExecText
-        extractPortLiterals
-        ;
+  inputs,
+  ...
+}: {
+  flake.nixosModules.port-registry-audit = {
+    imports = [inputs.nixos-modules.nixosModules.port-registry-audit];
 
-      registeredPorts = builtins.attrValues (import ../../../lib/ports.nix).ports;
-      allowedPorts = registeredPorts ++ cfg.allowPorts;
-
-      # tryEval: a unit whose Exec text cannot be coerced (exotic
-      # self-referential config) must never break eval — it is skipped.
-      offenders = lib.filterAttrs (
-        _name: svc:
-        let
-          text = builtins.tryEval (unitExecText svc);
-          unregistered =
-            if !text.success then [ ] else lib.subtractLists allowedPorts (extractPortLiterals text.value);
-        in
-        unregistered != [ ]
-      ) config.systemd.services;
-
-      offenderReport = lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (
-          name: svc:
-          let
-            text = builtins.tryEval (unitExecText svc);
-            unregistered = lib.subtractLists allowedPorts (extractPortLiterals text.value);
-          in
-          "  ${name}: ${lib.concatStringsSep ", " (map toString unregistered)}"
-        ) offenders
-      );
-    in
-    {
-      options.services.port-registry-audit = {
-        allowPorts = lib.mkOption {
-          type = lib.types.listOf lib.types.int;
-          default = [ ];
-          description = ''
-            Port numbers exempt from the registry requirement (upstream-owned
-            units, protocol-fixed ports that do not belong in lib/ports.nix).
-            Every entry MUST carry a justification comment where it is set.
-          '';
-        };
-      };
-
-      config.assertions = [
-        {
-          assertion = offenders == { };
-          message = ''
-            port-registry-audit: port literal(s) not registered in lib/ports.nix:
-            ${offenderReport}
-            Every port a service binds or dials must live in lib/ports.nix so
-            collisions are caught at eval time and the port map stays complete.
-            Fix: add the port to lib/ports.nix and reference it, or — for a
-            justified exemption — extend:
-              services.port-registry-audit.allowPorts = [ <port> ];
-            with a comment explaining why it must stay out of the registry.
-          '';
-        }
-      ];
+    services.port-registry-audit = {
+      enable = true;
+      registry = (import ../../../lib/ports.nix).ports;
     };
+  };
 }
