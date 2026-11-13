@@ -202,7 +202,7 @@
               serviceConfig = lib.mkMerge [
                 (harden {
                   ProtectHome = false;
-                  MemoryMax = lib.mkForce "512M";
+                  MemoryMax = lib.mkForce "1G";
                 })
                 (serviceDefaults { RestartSec = "10s"; })
                 ioTier.background

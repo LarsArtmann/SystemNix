@@ -546,6 +546,11 @@ _: {
               (harden {
                 ProtectHome = lib.mkForce false;
                 NoNewPrivileges = false;
+                # 2026-11-12 live cgroup re-read: 95%-of-high graze
+                # (21k events/52min, cur 389MB of the 429MB derived
+                # high) — 512M harden default is undersized for the
+                # main app unit.
+                MemoryMax = "1G";
               })
               (serviceDefaults { })
               {
