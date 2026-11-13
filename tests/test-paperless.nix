@@ -112,10 +112,6 @@ let
     };
 in
 {
-  pkgs,
-  inputs,
-}:
-{
   name = "paperless";
 
   nodes.machine =

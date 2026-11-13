@@ -1472,6 +1472,32 @@ _: {
               ExecStartPre = lib.mkForce [
                 ("+" + lib.getExe genRunnerToken)
                 ("+" + lib.getExe provisionRunner)
+                # Root leg: provision the shared cache root for the group
+                # (run #235 class — see the UMask comment above). Setgid so
+                # every job-created subdir inherits gitea-runner-cache;
+                # the recursive chgrp/chmod repairs files left by a DEAD
+                # DynamicUser uid so the new job user keeps write access.
+                (
+                  "+"
+                  + pkgs.writeShellScript "forgejo-provision-runner-cache" ''
+                    install -d -o root -g gitea-runner-cache -m 2770 \
+                      /mnt/buildcache/ci-runner-cache \
+                      /mnt/buildcache/ci-runner-cache/ec-hub \
+                      /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+                    # The WALK is bounded to the two small job state roots:
+                    # chowning the whole cache (gomodcache et al) on every
+                    # start would cost minutes; their old-uid entries are
+                    # hash-keyed read-only hits that Go/npm tolerate, and
+                    # setgid on the root makes every NEW subdir inherit the
+                    # group anyway.
+                    chgrp -R gitea-runner-cache \
+                      /mnt/buildcache/ci-runner-cache/ec-hub \
+                      /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+                    chmod -R g+rwX \
+                      /mnt/buildcache/ci-runner-cache/ec-hub \
+                      /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+                  ''
+                )
                 # Root leg: render connection-config.yaml from the store
                 # placeholder yaml + the provisioned identity pair (see the
                 # render comment above serviceConfig).
@@ -1497,6 +1523,18 @@ _: {
               TimeoutStartSec = "3min";
               MemoryMax = "16G";
               SupplementaryGroups = [ "gitea-runner-cache" ];
+              # Durable uid-fragility fix (eventcatalog-hub run #235 class,
+              # 2026-11-08): a NixOS switch renumbers the DynamicUser, and
+              # cache dirs owned by the DEAD uid became unwritable to the
+              # new job user ("Build-state root ... missing or unwritable
+              # after 6 retries"). The group carries the permission from
+              # now on: UMask=002 makes everything the job creates
+              # group-writable, setgid on the cache root makes every
+              # subdir inherit gitea-runner-cache, and the root ExecStartPre
+              # leg below re-asserts owner/group/mode and repairs legacy
+              # old-uid entries on every start (idempotent; the walk is
+              # cache-disk cheap).
+              UMask = "002";
               # Kill any LoadCredential the module would generate from a
               # secrets attr (currently none): systemd sets up credentials
               # BEFORE ExecStartPre, but the identity files are written
