@@ -902,8 +902,9 @@
             inventory, not design. Stalwart's address books are declared but
             not provisioned; pim-sync is flip-ready but <em>disabled</em>;
             webphone quietly runs an independent contacts store with a write
-            API; InboxClean is a writer of people observations, not just a
-            reader. Adding Radicale would make this worse, not better.
+            API, a deploy-time shared list, and no phone normalization;
+            InboxClean is a writer of people observations, not just a reader.
+            Adding Radicale would make this worse, not better.
           </p>
         </div>
 
@@ -1074,11 +1075,14 @@
               <td><span class="badge badge-critical">Second live address book</span></td>
               <td>webphone itself</td>
               <td>
-                Event-sourced per-owner contact streams, write API
-                <code>/api/contacts</code>, 500-contact cap, rename keeps ID
-                (<code>webphone/internal/cqrs/contacts.go:1-40,197-228</code>;
-                <code>internal/readmodels/contactsgate.go:19</code>).
-                No sync in or out.
+                Event-sourced per-owner contact streams projected into
+                <code>system.db</code> (<code>webphone/internal/app/cqrs.go:83-90</code>),
+                write API <code>/api/contacts</code>, 500-contact cap, rename
+                keeps ID (<code>internal/cqrs/contacts.go:1-40,197-228</code>;
+                <code>internal/readmodels/contactsgate.go:19,37-43</code>).
+                Plus a deploy-time shared list in <code>config.contacts[]</code>
+                (<code>pbx-artmann/hosts/pbx/default.nix:934-948</code>) and a
+                lossy vCard 3.0 import/export (first TEL only). No sync in or out.
               </td>
             </tr>
             <tr>
@@ -1201,11 +1205,22 @@
           <p>
             Contacts are a real aggregate in webphone's event store: per-owner
             streams, an upsert keyed by (owner, phone), delete by ID, a
-            500-contact cap, and a rename that keeps identity. State lives under
-            <code>/var/lib/webphone</code>. Nothing syncs it anywhere. Its CRM
-            lane is separate and read-only: a memoized, fail-open
-            <code>GET /api/contacts/{ref}/context</code> resolver
-            (<code>internal/crm/context.go:84-88</code>).
+            500-contact cap, and a rename that keeps identity. The projection
+            lives in <code>/var/lib/webphone/system.db</code>
+            (<code>webphone/internal/app/cqrs.go:83-90</code>), and a second,
+            deploy-time shared list lives in <code>config.contacts[]</code>
+            (<code>pbx-artmann/hosts/pbx/default.nix:934-948</code>). Import
+            and export are vCard 3.0, deliberately lossy: first TEL only, no
+            emails, and the full name is written into the family-name slot
+            (<code>internal/vcard/vcard.go:16-19,78-97</code>). Nothing syncs
+            either copy anywhere. The CRM lane is separate and read-only: a
+            memoized <code>GET /api/contacts/by-phone</code> lookup (6 h
+            positive / 5 min negative cache, no invalidation) plus a
+            fail-open context resolver
+            (<code>internal/crm/resolver.go:18-22,120-170</code>,
+            <code>internal/crm/context.go:84-88</code>); webphone logs calls
+            onto existing CRM contacts but never mints them
+            (<code>internal/crm/client.go:276-311</code>).
           </p>
           <p>
             This is the single largest architectural fact in this review, and
@@ -1291,7 +1306,12 @@
             scoped per account. That is correct for collision safety and wrong
             for identity: the same person in personal and work Google becomes
             two vCards, two projections and two phone owners. Nothing in the
-            mesh defines a cross-account link rule.
+            mesh defines a cross-account link rule. Underneath it, webphone has
+            no phone canonicalization either: the store key is the sanitized
+            string, so <code>+4930&hellip;</code> and <code>030&hellip;</code>
+            are two different contacts
+            (<code>webphone/internal/domain/ids.go:63-101</code>, exact-string
+            server lookup at <code>internal/server/crm.go:62-68</code>).
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
@@ -1307,12 +1327,19 @@
           <h3>F6 &middot; Consumers read a projection of a projection, with no freshness bound</h3>
           <div class="where">webphone/internal/crm/context.go:165-191 &middot; crm/docs/ops/CARDDAV-PROJECTION.md:57</div>
           <p>
-            Caller-ID in webphone resolves through the CRM's
-            <code>/api/contacts</code> context endpoint; the CRM's people are a
-            read-only projection of Stalwart. That is three stores between a
-            phone number and a name, with a documented cache and no staleness
-            SLO. It fails open, which is good for calls and bad for trust:
-            a missing name looks like an unknown caller.
+            Caller-ID in webphone resolves through the CRM by phone number,
+            cached for 6 hours with no invalidation hook; the CRM's people are
+            a read-only projection of Stalwart. That is three stores between a
+            phone number and a name, with no staleness SLO. It fails open,
+            which is good for calls and bad for trust: a missing name looks
+            like an unknown caller. The surfaces also disagree with each other
+            &mdash; call history prefers the PBX-supplied caller name, list
+            views try personal contacts before the CRM, the in-call panel reads
+            the CRM only, and the mobile ring push carries no name at all
+            (<code>internal/pbx/client.go:96-107</code>,
+            <code>internal/server/crm.go:46-101</code>,
+            <code>internal/server/livecontext.go:40-75</code>,
+            <code>internal/push/push.go:86-88</code>).
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
@@ -1322,9 +1349,50 @@
           </div>
         </div>
 
+        <div class="issue issue-important">
+          <span class="severity severity-important">Important</span>
+          <h3>F7 &middot; Identity exists in four places in the PBX deployment alone</h3>
+          <div class="where">pbx-artmann/hosts/pbx/default.nix:934-948,977-988 &middot; webphone/internal/store/db.go:218-225</div>
+          <p>
+            The deployed host defines people three times before any contact
+            store is involved: the shared contact list, the passkey-user map,
+            and the Pocket ID / Stalwart account roster. webphone adds a fourth
+            (the CQRS projection) plus a dead legacy SQL <code>contacts</code>
+            table that is still created on every fresh database and has no
+            production reader. Its ROADMAP also declares contact depth to be
+            Ledger's domain while the surface people actually edit keeps
+            writing locally, with no write path into the CRM.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            One identity map per deployment, referenced by all four surfaces; a
+            deterministic link key (normalized E.164 + email); and a scheduled
+            DROP for the dead legacy table so nobody reintroduces it as a
+            &ldquo;migration&rdquo;.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Security</span>
+          <h3>F8 &middot; The shared contact list is served before authentication</h3>
+          <div class="where">webphone/internal/server/server.go:683,870 &middot; internal/server/platform/configjs.go:86</div>
+          <p>
+            <code>/config.js</code> is mounted on the unauthenticated mux and
+            embeds the operator's shared directory (names and numbers). That is
+            personal data with no session gate, and it is also a second copy of
+            identity that no contact review would find unless it looks at the
+            deploy config rather than the database.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Serve the shared directory only to authenticated sessions, or move
+            it behind the CRM/directory read path entirely.
+          </div>
+        </div>
+
         <div class="issue issue-nice">
           <span class="severity severity-nice">Nice to have</span>
-          <h3>F7 &middot; OpenCloud is not a contact surface, and Radicale is not the missing app</h3>
+          <h3>F9 &middot; OpenCloud is not a contact surface, and Radicale is not the missing app</h3>
           <div class="where">docs/services/opencloud.md:1-10 &middot; radicale.org v3 documentation</div>
           <p>
             OpenCloud is deployed as a file platform. Radicale is a
@@ -1506,10 +1574,12 @@
           <div class="migration-content">
             <h4>Fix the consumer chain</h4>
             <p>
-              Webphone: local book becomes device-local or is retired; caller
-              context keeps its read-only path with a freshness bound.
-              InboxClean: hint source with a cap; delete the shadow extracted
-              list once the hub can answer by email.
+              Webphone: local book becomes device-local or is retired; E.164
+              normalization lands before any sync; the shared config list moves
+              behind authentication; caller context keeps its read-only path
+              with a freshness bound. InboxClean: hint source with a cap;
+              delete the shadow extracted list once the hub can answer by
+              email.
             </p>
           </div>
         </div>
@@ -1642,6 +1712,8 @@
           &middot; Live state checked on evo-x2, contact counts deliberately not
           fetched
         </footer>
+      </main>
+    </div>
 
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
     <script>
