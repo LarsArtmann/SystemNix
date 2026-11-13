@@ -13,7 +13,7 @@ Fleet telemetry backbone: traces/metrics/logs from every OTel-instrumented servi
 | `:8888/metrics`        | none (loopback) | Collector self-metrics (export failures, receiver liveness incl. GCP)  |
 | `:9363/metrics`        | none (loopback) | ClickHouse prometheus endpoint (parts, merges, memory)                 |
 | `:9193`                | none (loopback) | cAdvisor (`--docker_only`, docker-engine container metrics)            |
-| `:8080/api/v1/rules`   | impersonation   | Alert rules + states (used by probes; see monitoring.md)               |
+| `:8080/api/v3/rules`   | impersonation   | Alert rules + states (used by probes; see monitoring.md). **`/api/v1/rules` now serves the SPA's index.html** (package move, live-verified 2026-11-13) — the v3 endpoint is the data path: paginated (default page = 20, pass `limit=100`), and `data.total` = the exact rule count for parity checks |
 
 ## Ops
 
@@ -63,7 +63,32 @@ python3 -c "import urllib.request,json,urllib.parse; print(len(json.load(urllib.
 clickhouse-client --query "SELECT countIf(length(trace_id) = 32), countIf(trace_id != ''), count() FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= toUnixTimestamp64Nano(now64(9) - INTERVAL 7 DAY)"
 
 # Rule/policy parity (live vs _signoz-alerts.nix; policies keyed by rule UUID)
-python3 -c "import urllib.request,json; r=json.load(urllib.request.urlopen('http://localhost:8080/api/v1/rules',timeout=15))['data']['rules']; print(len(r), [x['alert'] for x in r if x['state']!='inactive'])"
+# /api/v1/rules serves SPA HTML since the package move — use v3 + limit=100
+# (default page is 20); data.total is the exact parity count.
+python3 -c "import urllib.request,json; d=json.load(urllib.request.urlopen('http://localhost:8080/api/v3/rules?limit=100',timeout=15))['data']; print(d['total'], [x['alert'] for x in d['rules'] if x['state']!='inactive'])"
+
+# Historical/instant queries through the v3 dashboard-panel path (query_range).
+# The v3 payload shape the dashboard panels actually speak (derived 2026-11-12
+# after ~6 failed probes; start/end are epoch MILLISECONDS, step is INT64
+# SECONDS — a string step fails `cannot unmarshal string into ... step of
+# type int64`):
+#   compositeQuery: {panelType: "graph", queryType: "promql",
+#                    promQueries: {"a": {query: "...", legend: "..."}}}
+# Results land under data.result[<i>].series[] keyed by queryName (not the
+# v1-style flat result set). The v1-era `Queries []QueryEnvelope` list form
+# still parses as a field but routes NOWHERE (400 `unknown field "query"` on
+# the inner payload, live-verified 2026-11-13) — only promQueries works.
+python3 - <<'PYEOF'
+import urllib.request, json, time
+now = int(time.time()*1000)
+p = {"start": now-15*60*1000, "end": now, "step": 60,
+     "compositeQuery": {"panelType": "graph", "queryType": "promql",
+       "promQueries": {"a": {"query": "system_service_memory_throttle_designed"}}}}
+req = urllib.request.Request('http://localhost:8080/api/v3/query_range',
+    data=json.dumps(p).encode(), headers={'Content-Type': 'application/json'})
+r = json.load(urllib.request.urlopen(req, timeout=20))
+print(sum(len(x.get('series', [])) for x in r['data']['result']), 'series')
+PYEOF
 ```
 
 **PromQL is DELTA-BLIND (live-verified 2026-10-10):** the v1 query API returns 0 series for Delta-temporality metrics — `signoz_calls_total`, `signoz_latency.*` (the `signozspanmetrics/delta` connector output) are unreachable from PromQL dashboards/alerts despite fresh samples (check `temporality` in `distributed_time_series_v4`). Only **Cumulative** metrics (`traces_service_graph_*`, node_exporter, all scraped prometheus metrics) are PromQL-reachable; the native Services page reads delta via the query-builder fine. Consequence: dashboards/alerts must consume the cumulative family or scraped metrics — `dashboards/traces.json` is built entirely on `traces_service_graph_*` for this reason.
