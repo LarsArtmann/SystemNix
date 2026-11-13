@@ -151,6 +151,13 @@ _: {
             WEBFINGER_DESKTOP_OIDC_CLIENT_SCOPES = "openid profile email offline_access groups";
             WEBFINGER_ANDROID_OIDC_CLIENT_ID = "OpenCloudAndroid";
             WEBFINGER_ANDROID_OIDC_CLIENT_SCOPES = "openid profile email offline_access groups";
+
+            # ── web apps (extensions): JSON Viewer + Unzip ──
+            # Served read-only from a Nix store tree — the upstream docs'
+            # imperative `$OC_DATA_DIR/web/assets/apps` copy is not usable
+            # here. Pins and the web-7/web-8 compatibility rule live in
+            # pkgs/opencloud-web-apps.nix.
+            WEB_ASSET_APPS_PATH = "${pkgs.opencloud-web-apps}/apps";
           };
 
           # Consumed by opencloud-init-config (root oneshot) when it runs

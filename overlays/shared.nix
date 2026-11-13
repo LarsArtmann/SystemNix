@@ -63,6 +63,8 @@
     # (freeze-6 rule (a) automation; wired live 2026-11-05 after freezes
     # #47/#48 — the package sat unwired since 2026-10-17).
     post-crash-calm-gate = prev.callPackage ../pkgs/post-crash-calm-gate.nix { };
+    # Web apps served to OpenCloud via WEB_ASSET_APPS_PATH (JSON Viewer, Unzip).
+    opencloud-web-apps = prev.callPackage ../pkgs/opencloud-web-apps.nix { };
   })
 
   (

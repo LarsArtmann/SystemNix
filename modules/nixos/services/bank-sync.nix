@@ -291,8 +291,14 @@
           };
 
           systemd.services.bank-sync = {
-            after = [ "bank-sync-storage-dir.service" ];
-            wants = [ "bank-sync-storage-dir.service" ];
+            after = [
+              "bank-sync-storage-dir.service"
+              "nats.service"
+            ];
+            wants = [
+              "bank-sync-storage-dir.service"
+              "nats.service"
+            ];
             # docs/agents/integration-registry.md step 5: every service sets start-limit bounds + onFailure.
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -304,6 +310,13 @@
             # Enforced by services.signoz-coverage (wiring "upstream" → "env"
             # after the input bump lands spans).
             environment.OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+            # ADR-0009 mesh producer: every completed sync cycle publishes
+            # its transactions.v1 envelopes to the local JetStream broker,
+            # so the journal kernel ingests in real time instead of polling
+            # export files. Broker loss degrades latency only (publishes are
+            # logged and skipped); bank-sync's sync + dashboard never fail.
+            environment.BANK_SYNC_MESH_ENABLED = "true";
+            environment.BANK_SYNC_MESH_NATS_URL = "nats://127.0.0.1:${toString ports.nats}";
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = [ (lib.getExe checkEncryptionKey) ];

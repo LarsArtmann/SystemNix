@@ -1936,14 +1936,24 @@ in
         enable = true;
       };
 
-      # FULL auto-sync: bank-sync's synced bank facts flow into the journal
-      # kernel every 15 min (mesh-contract export as the bank-sync user →
-      # atomic staging → kernel import + reconcile as the primary user).
-      # Booking judgment stays human (tier-3 Exceptions queue); the pipeline
-      # itself is unattended. Owner directive 2026-11-10 ("make FULL
-      # auto-sync work"). Runbook: docs/services/journal.md.
-      journal-import = {
+      # Real-time mesh ingress (ADR-0009): bank-sync publishes each sync
+      # cycle's transactions.v1 envelopes onto NATS JetStream and the
+      # journal kernel ingests them through the same import path the file
+      # drop uses. No timer, no staging directory, no shell glue — reconcile
+      # follows a quiet window, booking judgment stays human (tier-3
+      # Exceptions queue). This unit also brings up the local JetStream
+      # broker. Runbook: docs/services/journal.md.
+      journal-mesh = {
         enable = true;
+      };
+
+      # Break-glass file pipeline, now DISABLED by default: the 15-min
+      # export → staging → import timer is the fallback when the broker is
+      # down or a replay from files is wanted. Enabling it alongside
+      # journal-mesh is safe (both paths are idempotent) but doubles the
+      # work, so it stays an explicit opt-in.
+      journal-import = {
+        enable = false;
       };
 
       # Timesheet API server (timesheet serve) — event-sourced timesheet
