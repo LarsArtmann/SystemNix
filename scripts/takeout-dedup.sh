@@ -9,8 +9,9 @@
 # report cross-account duplicate content, and never propagate deletions.
 #
 # Commands:
-#   index  --from-extract DIR --account A --cycle C [--force]
-#   plan   --from-extract DIR --account A --cycle C [--out DIR]
+#   index   --from-extract DIR --account A --cycle C [--force]
+#   plan    --from-extract DIR --account A --cycle C [--out DIR]
+#   balance --staging S --account A --cycle C [--skip-products "Mail,YouTube"]
 #   report
 #   --selftest
 #
@@ -210,6 +211,79 @@ cmd_plan() {
   cat "$out/SUMMARY.txt"
 }
 
+# --- balance: Gate G6 accounting — zips (ground truth) vs indexed extract ---
+# Every product that was EXTRACTED must match the zip side file-for-file and
+# byte-for-byte; products deliberately not extracted show as COLD. A mismatch
+# means the extract is incomplete (or the wrong member filter ran) and no
+# destination import may proceed.
+cmd_balance() {
+  local staging='' account='' cycle='' skip=''
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --staging) staging=$2; shift 2 ;;
+      --account) account=$2; shift 2 ;;
+      --cycle) cycle=$2; shift 2 ;;
+      --skip-products) skip=$2; shift 2 ;;
+      *) die "balance: unknown argument: $1" ;;
+    esac
+  done
+  [ -n "$staging" ] || die "balance: --staging is required"
+  [ -n "$account" ] || die "balance: --account is required"
+  [ -n "$cycle" ] || die "balance: --cycle is required"
+  [ -d "$staging/zips" ] || die "balance: no $staging/zips"
+  ensure_ledger
+
+  local ztmp ltmp rc=0 z
+  ztmp=$(mktemp)
+  ltmp=$(mktemp)
+  for z in "$staging"/zips/*.zip; do
+    [ -f "$z" ] || continue
+    unzip -l "$z" | awk '
+      /^ *[0-9]+ / && $0 !~ /\/$/ && match($0, /Takeout\/([^\/]+)\//, m) { f[m[1]]++; b[m[1]] += $1 }
+      END { for (p in f) printf "%s\t%d\t%d\n", p, f[p], b[p] }
+    ' >>"$ztmp"
+  done
+  awk -F'\t' -v a="$account" -v c="$cycle" '
+    NR > 1 && $4 == a && $5 == c {
+      rel = $6
+      sub(/^Takeout\//, "", rel)
+      n = split(rel, parts, "/")
+      p = (n > 1) ? parts[1] : "(root)"
+      f[p]++
+      b[p] += $3
+    }
+    END { for (p in f) printf "%s\t%d\t%d\n", p, f[p], b[p] }
+  ' "$LEDGER" >"$ltmp"
+
+  awk -F'\t' -v skip="$skip" '
+    FNR == NR { zf[$1] = $2; zb[$1] = $3; zp[$1] = 1; next }
+    { lf[$1] = $2; lb[$1] = $3; lp[$1] = 1 }
+    END {
+      nskip = split(skip, s, ",")
+      for (i = 1; i <= nskip; i++) if (s[i] != "") sk[s[i]] = 1
+      printf "%-30s %8s %18s %8s %18s  %s\n", "PRODUCT", "zip#", "zip bytes", "idx#", "idx bytes", "status"
+      bad = 0
+      for (p in zp) {
+        if (p in sk) { printf "%-30s %8d %18d %8s %18s  SKIPPED\n", p, zf[p], zb[p], "-", "-"; continue }
+        if (!(p in lp)) { printf "%-30s %8d %18d %8s %18s  COLD (not extracted)\n", p, zf[p], zb[p], "-", "-"; continue }
+        st = (zf[p] == lf[p] && zb[p] == lb[p]) ? "OK" : "MISMATCH"
+        if (st == "MISMATCH") bad++
+        printf "%-30s %8d %18d %8d %18d  %s\n", p, zf[p], zb[p], lf[p], lb[p], st
+      }
+      for (p in lp) if (!(p in zp)) {
+        printf "%-30s %8s %18s %8d %18d  EXTRACT-ONLY\n", p, "-", "-", lf[p], lb[p]
+        bad++
+      }
+      print ""
+      if (bad > 0) print "RESULT: MISMATCH (" bad " product(s)) — reconcile before any import or deletion"
+      else print "RESULT: BALANCED — every extracted product matches the zips byte-for-byte"
+      exit (bad > 0 ? 1 : 0)
+    }
+  ' "$ztmp" "$ltmp" || rc=$?
+  rm -f "$ztmp" "$ltmp"
+  return "$rc"
+}
+
 # --- report: ledger-wide totals + duplicate content accounting ---
 cmd_report() {
   ensure_ledger
@@ -299,6 +373,23 @@ selftest() {
   check plan3-accountB-all-new 4 "$(wc -l <"$fx/out3/new-files.txt")"
   check plan3-accountB-crossacct-dup 4 "$(wc -l <"$fx/out3/cross-cycle-content-dups.tsv")"
 
+  if command -v zip >/dev/null 2>&1; then
+    mkdir -p "$fx/bal/zips" "$fx/bal/extracted/Takeout/Drive"
+    printf 'one\n' >"$fx/bal/extracted/Takeout/Drive/a.txt"
+    printf 'two\n' >"$fx/bal/extracted/Takeout/Drive/b.txt"
+    (cd "$fx/bal/extracted" && zip -qr "$fx/bal/zips/t.zip" Takeout/Drive)
+    bash "$0" index --from-extract "$fx/bal/extracted" --account balAcct --cycle 2030-01-01 >/dev/null
+    check balance-balanced 0 "$(bash "$0" balance --staging "$fx/bal" --account balAcct --cycle 2030-01-01 >/dev/null 2>&1 && echo 0 || echo 1)"
+
+    mkdir -p "$fx/bal2/zips" "$fx/bal2/extracted/Takeout/Drive"
+    cp "$fx/bal/zips/t.zip" "$fx/bal2/zips/"
+    printf 'one\n' >"$fx/bal2/extracted/Takeout/Drive/a.txt"
+    bash "$0" index --from-extract "$fx/bal2/extracted" --account balAcct2 --cycle 2030-01-01 >/dev/null
+    check balance-mismatch-detected 1 "$(bash "$0" balance --staging "$fx/bal2" --account balAcct2 --cycle 2030-01-01 >/dev/null 2>&1 && echo 0 || echo 1)"
+  else
+    echo "leg balance: SKIPPED (no zip binary on PATH)"
+  fi
+
   if [ "$rc" -eq 0 ]; then echo "takeout-dedup selftest: PASS"; else echo "takeout-dedup selftest: FAIL"; fi
   return "$rc"
 }
@@ -308,10 +399,11 @@ main() {
   case $1 in
     index) shift; cmd_index "$@" ;;
     plan) shift; cmd_plan "$@" ;;
+    balance) shift; cmd_balance "$@" ;;
     report) shift; cmd_report "$@" ;;
     --selftest) selftest ;;
     -h | --help) usage ;;
-    *) die "unknown command: $1 (index|plan|report|--selftest)" ;;
+    *) die "unknown command: $1 (index|plan|balance|report|--selftest)" ;;
   esac
 }
 
