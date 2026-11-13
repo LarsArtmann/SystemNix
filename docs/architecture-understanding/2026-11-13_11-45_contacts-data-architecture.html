@@ -972,9 +972,9 @@
               <td>No per-run, per-change record exists even in the design</td>
             </tr>
             <tr>
-              <td>Git receipts of dry-runs</td>
-              <td>present, prose only</td>
-              <td>The 139-person import rehearsal is documented, not replayable</td>
+              <td>Rehearsal receipts</td>
+              <td>present, in-memory only</td>
+              <td>The 139-person import was verified against a fake CardDAV server in a test; no production book was touched</td>
             </tr>
           </tbody>
         </table>
@@ -997,6 +997,16 @@
             Kith journal's actor-attributed provenance for a cleaner storage
             boundary; the lineage has to be rebuilt somewhere, or the first
             disputed contact has no evidence behind it.
+          </p>
+          <p>
+            Two details make the gap sharper than it looks. Dry-run is the
+            default and <code>--live</code> is the only write switch, so a
+            dry-run writes nothing at all &mdash; no state, no receipt, no
+            journal entry beyond stdout. The per-account report is printed to
+            stdout and never persisted (<code>cmd/pim-sync/report.go:10-45</code>),
+            so yesterday's run is gone. Logging is operator-facing slog text on
+            stderr, not a change record; the durable evidence is the textfile
+            gauges plus whatever systemd captured.
           </p>
         </div>
 
@@ -1258,15 +1268,51 @@
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Blocking</span>
+          <h3>F2b &middot; &ldquo;One book per source&rdquo; is load-bearing, not a preference</h3>
+          <div class="where">pim-sync/internal/contactsin/quarantine.go:45,65,124 &middot; cmd/pim-sync/account.go:169-172 &middot; internal/guard/guard.go:80-100 &middot; cmd/pim-sync/sync.go:30</div>
+          <p>
+            The IN leg treats the whitelisted book as <em>its</em> book: a full
+            Google listing quarantines every card present in the book but absent
+            from that listing. A card that belongs to another source, or one the
+            owner typed by hand, becomes a deletion hold &mdash; and clearing it
+            deletes the card. The <code>--book</code> override applies to every
+            Google account at once, so two accounts can be collapsed onto one
+            book and both then claim the whole collection. In addition, the
+            change cap is enforced in dry-run too, and it defaults to 50: a
+            fresh book projecting more than 50 creates aborts with exit 3 even
+            without <code>--live</code> (<code>internal/guard/guard.go:80-100</code>,
+            <code>cmd/pim-sync/sync.go:30</code>).
+          </p>
+          <p>
+            This is the structural reason not to merge several sources into one
+            address book, and the reason a multi-source DAV server looks
+            attractive and is a trap: it invites exactly the shared-collection
+            model this glue cannot safely own.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Keep one book per source (personal, work, twenty, imports), never
+            share a book across accounts, and set the first run's cap above the
+            card count so an import cannot block the flip. Record the rule in
+            the runbook before anyone &ldquo;tidies&rdquo; the books together.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Blocking</span>
           <h3>F3 &middot; Zero runtime evidence for the whole mesh</h3>
           <div class="where">platforms/nixos/system/configuration.nix:917 &middot; pim-sync/docs/CONTRACT.md:75</div>
           <p>
             Not one leg has executed against a live Google account or a live
             Stalwart book. The code is tested against fakes and a demo VM, and
-            the 139-person rehearsal was a documented dry-run.
-            <code>pim-sync doctor</code> (pre-flight: tokens present, DAV
-            reachable, discovery) is still an open TODO, so the first live
-            failure will be diagnosed from a failed oneshot journal.
+            the 139-person rehearsal ran against an in-memory fake CardDAV
+            server, not the production book. <code>pim-sync doctor</code> now
+            exists (read-only pre-flight: token shapes, state dir, caps;
+            <code>cmd/pim-sync/doctor.go:16-45</code>, registered at
+            <code>cmd/pim-sync/main.go:44</code>)
+            but it deliberately makes no Google API call and has never run with
+            real credentials, so the first live failure still lands in a
+            oneshot's stdout.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
@@ -1318,7 +1364,10 @@
             Adopt an explicit identity rule at the projection layer: one person
             per normalized email/phone, cards linked not merged
             (<code>RELATED</code>/external IDs), with a duplicate report the
-            owner can review. Do not merge cards inside Stalwart.
+            owner can review. Do not merge cards inside Stalwart: pim-sync has
+            no merge and never invents data, duplicates are reported only, and
+            conflicting values are counted, not queued for review
+            (<code>pim-sync/README.md:138</code>, <code>docs/CONTRACT.md:63-65</code>).
           </div>
         </div>
 
