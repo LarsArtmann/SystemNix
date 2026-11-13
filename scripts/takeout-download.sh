@@ -92,15 +92,17 @@ size_band() {
 }
 
 init_staging() {
-  local root=$1
+  local root=$1 seed=${2:-}
   mkdir -p "$root"/{zips,logs,extracted}
   chmod 700 "$root" "$root"/{zips,logs,extracted}
   if [ ! -f "$root/parts.tsv" ]; then
-    printf '# part\texpected\n' >"$root/parts.tsv"
-    while IFS= read -r mline; do
-      [ -n "$mline" ] || continue
-      echo "${mline/ /$'\t'}" >>"$root/parts.tsv"
-    done <<<"$PARTS_MANIFEST"
+    printf '# part\texpected\tfilename\n' >"$root/parts.tsv"
+    if [ "$seed" != "--no-manifest" ]; then
+      while IFS= read -r mline; do
+        [ -n "$mline" ] || continue
+        echo "${mline/ /$'\t'}" >>"$root/parts.tsv"
+      done <<<"$PARTS_MANIFEST"
+    fi
   fi
   [ -f "$root/urls.txt" ] || printf '# one download link per line, Takeout page order (owner handoff)\n' >"$root/urls.txt"
   [ -f "$root/urls.txt" ] && chmod 600 "$root/urls.txt" 2>/dev/null || true
@@ -267,10 +269,10 @@ cmd_start() {
 }
 
 main() {
-  [ $# -ge 2 ] || die "usage: $0 <staging-dir> init|start|status [--attempts N]"
+  [ $# -ge 2 ] || die "usage: $0 <staging-dir> init [--no-manifest]|start|status [--attempts N]"
   local root=$1 cmd=$2
   case $cmd in
-  init) init_staging "$root" ;;
+  init) init_staging "$root" "${3:-}" ;;
   ingest-html)
     init_staging "$root"
     ingest_html "$root"

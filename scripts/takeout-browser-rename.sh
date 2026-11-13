@@ -47,6 +47,20 @@ while IFS=$'\t' read -r part expected filename; do
     continue
   fi
   if [ "$apply" = "--apply" ]; then
+    # Size alone proves the download finished; CRC proves the bytes survived.
+    # A 50 GB part is only tested once (post-fold it counts as present), so a
+    # failed test drops a marker to avoid re-reading it every 5-min cycle.
+    crc_marker=$zips/.crc-failed-$filename
+    if [ -f "$crc_marker" ]; then
+      echo "part $part: CRC PREVIOUSLY FAILED ($filename) — delete the file and download this part again"
+      continue
+    fi
+    if ! unzip -t "$src" >/dev/null 2>&1; then
+      : >"$crc_marker"
+      echo "part $part: CRC FAIL $filename — zip test failed, NOT renamed (re-download this part)"
+      continue
+    fi
+    rm -f "$crc_marker"
     mv -f "$src" "$dst"
     chmod 600 "$dst"
     renamed=$((renamed + 1))
