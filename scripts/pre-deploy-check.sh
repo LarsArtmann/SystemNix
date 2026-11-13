@@ -1304,10 +1304,10 @@ zm_scan
 # nonempty-shadow = wave-6 signature (FAIL), PG_VERSION presence parity
 # (FAIL), prepared-copy parity bands + EACCES degradation (WARN). Body lives
 # in shadow_split_section18() above so --section-18-only can loop it cheaply.
-# Fixture-tested by scripts/test-predeploy-shadow-split.sh (flake-check
-# wiring deferred: selftests.nix carries a parallel session's in-flight edits
-# as of authoring — wire `predeploy-shadow-split-selftest` when the file is
-# quiescent).
+# Fixture-tested by scripts/test-predeploy-shadow-split.sh via the
+# `shadow-split-gate-selftest` flake check (31 cases: verdict ladders +
+# STRICT legs + the 0700-parent hidden-shadow class — ticketless degrade
+# WARN vs privileged real verdict, 2026-11-13).
 shadow_split_section18
 
 # 19. Sops manifest check-mode (pipeline.md superb-v3 S-0002; source:
