@@ -1465,6 +1465,13 @@ _: {
             # stoppable-churn class — an interrupted receive self-heals on
             # the next 8h slot (own btrbk config, NOT btrbk-pool-clean's).
             "btrbk-forgejo.service"
+            # Projects subvol leg (2026-11-14, band-80 day): same stoppable
+            # class — with the admission band at 80 a send can legitimately
+            # be mid-flight when a storm peaks; a guard stop wastes only the
+            # partial send (next run self-heals, pool-clean heals the
+            # receive side), while an unstoppably-running send feeds the
+            # storm the stop list exists to cut.
+            "btrbk-projects.service"
             "btrfs-balance-metadata.service"
             "btrfs-balance-data.service"
             # btrfs-scrub TEMPLATE INSTANCES (2026-09-29 scrub-stop phantom):
@@ -1520,6 +1527,12 @@ _: {
             "btrbk-data.service"
             "btrbk-pool.service"
             "btrbk-forgejo.service"
+            # Projects subvol leg (2026-11-14): the 6/6-night admission
+            # refusal streak (Nov 8-13, 40-87% storm nights) starved this
+            # leg with NO catch-up path — enrolled so the starvation slot
+            # pairs with the raised admission band as the automatic
+            # calm-window catch-up (io avg60 <50 slot + avg10 <80 gate).
+            "btrbk-projects.service"
           ];
           description = "Backup-class churn units: stopped on trip like the other ioChurnUnits, but additionally tracked for starvation. When a sustained I/O storm keeps them stopped past backupStarvationSeconds (the 2026-09-26..28 class: multi-day Zone-6 trips, zero re-arms, three missed nightly pool receives), the guard grants a bounded catch-up slot — the units are started once io PSI drains under backupCatchupResumePercent and are protected from trip stops for backupCatchupProtectSeconds. An interrupted btrbk send self-heals incrementally on the next run";
         };
