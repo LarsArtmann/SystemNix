@@ -229,6 +229,7 @@ let
     pkgs.pnpm # Fast, disk space-efficient package manager
     pkgs.vtsls # TypeScript language server for IDE LSP support
     pkgs.esbuild # Fast JavaScript bundler and minifier
+    pkgs.tailwindcss_4 # Tailwind CSS v4 CLI, 4.3.4 (BuildFlow codegen step; ex imperative profile 2026-11-14)
 
     # Go development
     # go_1_27: pinned ahead of the nixpkgs default (1.26.7). The ecosystem
@@ -246,6 +247,7 @@ let
     pkgs.golangci-lint-langserver
     pkgs.go-arch-lint
     pkgs.gofumpt
+    pkgs.gci # Go import formatter/linter, 0.14.0 (BuildFlow fleet toolchain; ex imperative profile 2026-11-14)
     pkgs.gotests
     pkgs.mockgen
     pkgs.sqlc
@@ -273,6 +275,14 @@ let
     # Code quality
     pkgs.scc # Sloc, Cloc and Code: fast lines of code counter
     pkgs.jscpd # Copy/paste detector for source code
+
+    # BuildFlow fleet toolchain — buildflow invokes these from PATH (Tier-1 beats
+    # its per-call `nix run nixpkgs#…` fallback); moved from the imperative user
+    # nix profile 2026-11-14, which held them across 4 divergent nixpkgs lock revs
+    pkgs.cue # Cue config-language CLI (buildflow cue-vet), 0.17.1
+    pkgs.dprint # Multi-language formatter (json/yaml/md/toml/Dockerfile), 0.64.3
+    pkgs.ruff # Python linter + formatter, 0.17.4
+    pkgs.typos # Source-code spell checker, 1.51.1
 
     # Infrastructure as Code
     pkgs.terraform # Infrastructure as Code tool from HashiCorp
