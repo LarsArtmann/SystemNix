@@ -195,16 +195,17 @@
         "wise-go": "wise-go"
       },
       "locked": {
-        "lastModified": 1794644700,
-        "narHash": "sha256-v1QrnWmc8AeK7PW4i8RyBqh4I4VCl0XvZ09oNllPeJQ=",
+        "lastModified": 1794606761,
+        "narHash": "sha256-btDMrPf1Uprm+nNjjyjVZ/WRdGcAZBGJ3Kgz+O/CDAI=",
         "ref": "refs/heads/master",
-        "rev": "93ead5fc20a5ca2953c95bc232feb6e145e802ba",
-        "revCount": 2591,
+        "rev": "ad8a90c9bee13363d1429b104fa87804a1fdf567",
+        "revCount": 2588,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "ad8a90c9bee13363d1429b104fa87804a1fdf567",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/bank-sync"
       }

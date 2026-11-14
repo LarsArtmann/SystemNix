@@ -13,7 +13,7 @@
 # Name-coverage, deliberately NOT a count leg (row count == file count can
 # pass while one file is swapped for another); §f.36 offered the count form
 # and per-file coverage subsumes it.
-{ inputs, root, ... }:
+{ root, ... }:
 {
   perSystem =
     {

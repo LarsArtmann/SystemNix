@@ -518,7 +518,18 @@
       # from Wise via the full-history backfill after the SCA re-approval.
       # Floating master per the pin policy. Re-pin ONLY with a fresh
       # first-hand documented reason (the allowlist-traced class).
-      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master";
+      # REV-PINNED 2026-11-14 at ad8a90c9 (deploy-blocker rollback): the
+      # lock wave's 93ead5fc crash-loops exit-65 journal_snapshot_divergence
+      # against the PROD journal ("Snapshots reference event history the
+      # journal does not contain", 10 restarts since the 13:53 switch;
+      # first-hand journalctl) — the SAME cqrs-bump divergence class as the
+      # 2026-10-14 d15e0a48 pin, whose owner-ratified fix was the fresh-start
+      # cutover. This time the binary rollback restores service with ZERO
+      # data risk (the new binary refuses writes; prod data untouched);
+      # adopting 93ead5fc again needs the owner's fresh-start/migrate call
+      # per docs/runbooks/migrate-journal.md. LIFT: owner rules on the
+      # 93ead5fc adoption — then float and drop the rev.
+      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master&rev=ad8a90c9bee13363d1429b104fa87804a1fdf567";
     };
 
     # journal — the accounting kernel: chart of accounts, double-entry
