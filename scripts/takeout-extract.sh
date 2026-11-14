@@ -40,9 +40,6 @@ die() {
 }
 log() { echo "[$(date '+%F %T')] $*"; }
 
-HEADROOM=${TAKEOUT_EXTRACT_HEADROOM_BYTES:-536870912000}
-MARGIN_PCT=${TAKEOUT_EXTRACT_MARGIN_PCT:-20}
-
 usage() {
   sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
@@ -50,14 +47,15 @@ usage() {
 
 # --- listing: reuse logs/zip-entries.tsv (verify's format: len<TAB>name,
 # directory entries skipped); regenerate only when absent. DRY_RUN=1 keeps the
-# regenerated listing in a temp file that the caller must clean up.
+# regenerated listing in a temp file that run_main cleans up.
 LISTING=
 LISTING_TMP=
 prepare_listing() {
-  local root=$1 zip persistent=$root/logs/zip-entries.tsv
+  local root=$1 zip persistent
+  persistent=$root/logs/zip-entries.tsv
   if [ -s "$persistent" ]; then
     LISTING=$persistent
-    LISTING_REUSED=1
+    log "listing reused: $persistent (zips not re-listed)"
     return 0
   fi
   LISTING_TMP=$(mktemp)
@@ -78,7 +76,6 @@ prepare_listing() {
     LISTING=$persistent
     log "listing regenerated -> $persistent (run takeout-verify.sh to also prove CRC integrity)"
   fi
-  LISTING_REUSED=0
 }
 
 # glob -> anchored awk regex; only * and ? are wildcards, everything else
@@ -96,11 +93,12 @@ EXPECTED=
 EXP_COUNT=0
 EXP_BYTES=0
 build_expected() {
-  local patfile
+  local patfile totals
   patfile=$(mktemp)
   local p
   for p in "${PATTERNS[@]}"; do printf '%s\n' "$(glob_to_re "$p")" >>"$patfile"; done
   EXPECTED=$(mktemp)
+  totals=$(mktemp)
   awk -F'\t' -v OFS='\t' -v out="$EXPECTED" '
     NR == FNR { pats[++np] = "^" $0 "$"; next }
     {
@@ -116,16 +114,16 @@ build_expected() {
         }
     }
     END { printf "%d\t%d\n", cnt + 0, bytes + 0 > "/dev/stderr" }
-  ' "$patfile" "$LISTING" 2>"$EXPECTED.totals" || true
-  read -r EXP_COUNT EXP_BYTES <"$EXPECTED.totals"
-  rm -f "$patfile" "$EXPECTED.totals"
+  ' "$patfile" "$LISTING" 2>"$totals"
+  read -r EXP_COUNT EXP_BYTES <"$totals"
+  rm -f "$patfile" "$totals"
   [ "$EXP_COUNT" -gt 0 ] || {
     echo "takeout-extract: ERROR: no members matched the given patterns (${PATTERNS[*]}) - wrong scope or wrong staging root" >&2
     exit 2
   }
 }
 
-# First existing ancestor of $1 (df target must exist).
+# First existing ancestor of $1 (df targets must exist).
 df_target() {
   local t=$1
   while [ ! -e "$t" ]; do t=$(dirname "$t"); done
@@ -133,10 +131,13 @@ df_target() {
 }
 
 capacity_gate() {
+  # resolved HERE (not at startup) so per-invocation env overrides work
+  local headroom=${TAKEOUT_EXTRACT_HEADROOM_BYTES:-536870912000}
+  local margin_pct=${TAKEOUT_EXTRACT_MARGIN_PCT:-20}
   local dest=$1 free need
   free=$(df -B1 --output=avail "$(df_target "$dest")" | tail -1)
-  need=$((EXP_BYTES + EXP_BYTES * MARGIN_PCT / 100 + HEADROOM))
-  log "capacity: need >= $need bytes ($EXP_BYTES extract + ${MARGIN_PCT}% margin + $HEADROOM headroom), free: $free bytes"
+  need=$((EXP_BYTES + EXP_BYTES * margin_pct / 100 + headroom))
+  log "capacity: need >= $need bytes ($EXP_BYTES extract + ${margin_pct}% margin + $headroom headroom), free: $free bytes"
   if [ "$free" -lt "$need" ]; then
     echo "takeout-extract: ERROR: CAPACITY INSUFFICIENT - free $free < required $need; free space or narrow --members" >&2
     exit 2
@@ -158,11 +159,11 @@ pattern_roots() {
 }
 
 run_extract() {
-  local root=$1 dest=$2 zip rc failed=0 skipped=0
+  local root=$1 dest=$2 zip zlog rc failed=0 skipped=0
   mkdir -p "$dest"
   for zip in "$root"/zips/part-*.zip; do
     [ -f "$zip" ] || continue
-    local zlog=$root/logs/extract-$(basename "$zip").log
+    zlog=$root/logs/extract-$(basename "$zip").log
     if unzip -o -qq "$zip" "${PATTERNS[@]}" -d "$dest" >"$zlog" 2>&1; then
       log "extracted $(basename "$zip")"
     else
@@ -185,8 +186,9 @@ run_extract() {
 
 # Exact-set + byte reconciliation against the listing expectation.
 reconcile() {
-  local dest=$1 root disk names missing extra exp_bytes disk_bytes r
-  local diskset=$(mktemp) expset=$(mktemp)
+  local dest=$1 diskset expset r missing extra disk_count disk_bytes
+  diskset=$(mktemp)
+  expset=$(mktemp)
   cut -f1 "$EXPECTED" | LC_ALL=C sort >"$expset"
   : >"$diskset"
   while IFS= read -r r; do
@@ -195,13 +197,14 @@ reconcile() {
   LC_ALL=C sort -o "$diskset" "$diskset"
   missing=$(comm -23 "$expset" "$diskset" | wc -l)
   extra=$(comm -13 "$expset" "$diskset" | wc -l)
+  disk_count=$(wc -l <"$diskset")
   disk_bytes=$(
     while IFS= read -r r; do
       (cd "$dest" && find "$r" -type f -printf '%s\n' 2>/dev/null)
     done < <(pattern_roots) | awk '{ s += $1 } END { printf "%.0f", s + 0 }'
   )
   rm -f "$diskset" "$expset"
-  log "reconcile: expected $EXP_COUNT files / $EXP_BYTES bytes, disk has $(wc -l <"$dest/.extract-disk-count" 2>/dev/null || echo ?) files / $disk_bytes bytes (missing $missing, extra $extra)"
+  log "reconcile: expected $EXP_COUNT files / $EXP_BYTES bytes; disk $disk_count files / $disk_bytes bytes (missing $missing, extra $extra)"
   if [ "$missing" -gt 0 ] || [ "$extra" -gt 0 ] || [ "$disk_bytes" -ne "$EXP_BYTES" ]; then
     echo "takeout-extract: ERROR: RECONCILE FAILED - missing $missing, extra $extra, bytes disk=$disk_bytes vs expected=$EXP_BYTES; do not import" >&2
     exit 2
@@ -210,10 +213,10 @@ reconcile() {
 }
 
 run_main() {
-  local root=$1 dest=${DEST:-$1/extracted}
+  local root=$1 dest p
+  dest=${DEST:-$1/extracted}
   [ -d "$root/zips" ] || die "no $root/zips staging root (takeout-download.sh init first)"
   ls "$root"/zips/part-*.zip >/dev/null 2>&1 || die "no part zips under $root/zips"
-  local p
   for p in "${PATTERNS[@]}"; do
     case $p in
     Takeout/*) ;;
@@ -227,18 +230,18 @@ run_main() {
   if [ "$DRY_RUN" = "1" ]; then
     echo "DRY-RUN extract: $EXP_COUNT members / $EXP_BYTES bytes (patterns: ${PATTERNS[*]})"
     echo "DRY-RUN: capacity OK, nothing written"
+    [ -n "$LISTING_TMP" ] && rm -f "$LISTING_TMP"
     return 0
   fi
   run_extract "$root" "$dest"
   reconcile "$dest"
   {
     echo "# takeout-extract report $(date '+%F %T')"
-    echo "patterns\tfiles\tbytes"
+    printf 'patterns\tfiles\tbytes\n'
     printf '%s\t%s\t%s\n' "${PATTERNS[*]}" "$EXP_COUNT" "$EXP_BYTES"
   } >"$root/logs/extract-report.tsv"
   log "EXTRACT: OK - $EXP_COUNT files / $EXP_BYTES bytes -> $dest"
   log "next: takeout-dedup.sh index --from-extract $dest --account <acct> --cycle <YYYY-MM-DD>, then plan, then 'balance --preflight'"
-  [ -n "$LISTING_TMP" ] && rm -f "$LISTING_TMP"
 }
 
 # --- selftest (hermetic fixtures under XDG_CACHE_HOME; needs zip + unzip) ---
@@ -249,8 +252,8 @@ selftest() {
   mkdir -p "$fx"
 
   build_fixture() {
-    rm -rf "$fx"/{zips,logs,extracted}
-    mkdir -p "$fx"/{zips,logs}
+    rm -rf "$fx"/zips "$fx/logs" "$fx/extracted"
+    mkdir -p "$fx"/zips "$fx/logs"
     (
       cd "$fx" &&
         mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail &&
@@ -265,11 +268,14 @@ selftest() {
     )
   }
   # 5 members / 27 bytes total (Takeout/*); Drive alone = 2 files / 12 bytes.
-  run_selftest_quiet() { (PATTERNS=("$@") run_main "$fx"); }
+  # Every call is a SUBSHELL with plain assignments: run_main's die()/exit-2
+  # on negative legs must never kill the selftest driver, and array variables
+  # cannot ride an env-prefix assignment (PATTERNS=(...) cmd is a syntax
+  # error) - set them as statements instead.
 
   leg=dry-run-no-write
   build_fixture
-  if PATTERNS=('Takeout/*') DRY_RUN=1 run_main "$fx" >"$fx/leg-$leg.log" 2>&1 &&
+  if (PATTERNS=('Takeout/*'); DRY_RUN=1; run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'DRY-RUN extract: 5 members / 27 bytes' "$fx/leg-$leg.log" &&
     [ ! -e "$fx/extracted" ] && [ ! -s "$fx/logs/zip-entries.tsv" ]; then
     echo "PASS: $leg (totals correct, zero writes, listing not persisted)"
@@ -280,8 +286,7 @@ selftest() {
 
   leg=capacity-block
   build_fixture
-  if TAKEOUT_EXTRACT_HEADROOM_BYTES=999999999999999 PATTERNS=('Takeout/*') DRY_RUN=1 \
-    run_main "$fx" >"$fx/leg-$leg.log" 2>&1; then
+  if (PATTERNS=('Takeout/*'); DRY_RUN=1; export TAKEOUT_EXTRACT_HEADROOM_BYTES=999999999999999; run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (huge headroom passed)"
     rc=1
   elif grep -q 'CAPACITY INSUFFICIENT' "$fx/leg-$leg.log" &&
@@ -294,7 +299,7 @@ selftest() {
 
   leg=members-root-guard
   build_fixture
-  if PATTERNS=('Drive/*') DRY_RUN=1 run_main "$fx" >"$fx/leg-$leg.log" 2>&1; then
+  if (PATTERNS=('Drive/*'); DRY_RUN=1; run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (unrooted pattern accepted)"
     rc=1
   elif grep -q 'rooted at Takeout/' "$fx/leg-$leg.log"; then
@@ -306,7 +311,7 @@ selftest() {
 
   leg=extract-happy
   build_fixture
-  if PATTERNS=('Takeout/*') run_main "$fx" >"$fx/leg-$leg.log" 2>&1 &&
+  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'EXTRACT: OK - 5 files / 27 bytes' "$fx/leg-$leg.log" &&
     grep -q 'pdf-a' "$fx/extracted/Takeout/Drive/a file.pdf" &&
     grep -q 'RECONCILE: OK' "$fx/leg-$leg.log" &&
@@ -319,10 +324,10 @@ selftest() {
 
   leg=member-scope
   build_fixture
-  if PATTERNS=('Takeout/Drive/*') run_main "$fx" >"$fx/leg-$leg.log" 2>&1 &&
+  if (PATTERNS=('Takeout/Drive/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'EXTRACT: OK - 2 files / 12 bytes' "$fx/leg-$leg.log" &&
     [ -f "$fx/extracted/Takeout/Drive/b.pdf" ] &&
-    [ ! -e "$fx/extracted/Takeout/Mail ]" 2>/dev/null &&
+    [ ! -e "$fx/extracted/Takeout/Mail" ] &&
     [ ! -e "$fx/extracted/Takeout/Google Photos" ]; then
     echo "PASS: $leg (only Drive extracted, other products untouched)"
   else
@@ -340,10 +345,10 @@ selftest() {
 
   leg=corrupt-zip-fail
   build_fixture
-  PATTERNS=('Takeout/*') run_main "$fx" >/dev/null 2>&1
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
   truncate -s 40 "$fx/zips/part-02.zip"
   rm -rf "$fx/extracted"
-  if PATTERNS=('Takeout/*') run_main "$fx" >"$fx/leg-$leg.log" 2>&1; then
+  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (corrupt zip passed)"
     rc=1
   elif grep -q 'EXTRACT FAILED' "$fx/leg-$leg.log" && grep -q 'part-02.zip' "$fx/leg-$leg.log"; then
@@ -355,9 +360,9 @@ selftest() {
 
   leg=reconcile-extra-fail
   build_fixture
-  PATTERNS=('Takeout/*') run_main "$fx" >/dev/null 2>&1
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
   printf 'stray\n' >"$fx/extracted/Takeout/Mail/stray.txt"
-  if PATTERNS=('Takeout/*') run_main "$fx" >"$fx/leg-$leg.log" 2>&1; then
+  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (stray extra file passed)"
     rc=1
   elif grep -q 'RECONCILE FAILED' "$fx/leg-$leg.log" && grep -q 'extra 1' "$fx/leg-$leg.log"; then
@@ -369,9 +374,9 @@ selftest() {
 
   leg=listing-reuse
   build_fixture
-  PATTERNS=('Takeout/*') run_main "$fx" >/dev/null 2>&1
-  touch -d '2000-01-01 00:00:00' "$fx/logs/zip-entries.tsv"
-  if PATTERNS=('Takeout/*') run_main "$fx" >"$fx/leg-$leg.log" 2>&1 &&
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
+  touch -d '@946684800' "$fx/logs/zip-entries.tsv"
+  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
     [ "$(stat -c %Y "$fx/logs/zip-entries.tsv")" = "946684800" ]; then
     echo "PASS: $leg (zip-entries.tsv reused, zips not re-listed)"
   else
@@ -394,7 +399,7 @@ DEST=
 
 main() {
   if [ "${1:-}" = "--selftest" ]; then
-    command -v zip >/dev/null || die "selftest needs zip + unzip on PATH (nix shell nixpkgs#zip nixpkgs#unzip)"
+    command -v zip >/dev/null || die "selftest needs zip on PATH (nix shell nixpkgs#zip)"
     command -v unzip >/dev/null || die "selftest needs unzip on PATH"
     selftest
     return
