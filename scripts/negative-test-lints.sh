@@ -603,6 +603,15 @@ eval_case inputpin sha-path-pin fail 'go-taskqueue: hard REV pin' \
 eval_case inputpin lifted-pin-stale-allowlist fail 'matches no live pin' \
   'sed:flake.nix:s|github:tobi/qmd/v2.8.3|github:tobi/qmd|' \
   'jq:flake.lock:.nodes["qmd"].original = {"owner":"tobi","repo":"qmd","type":"github"}'
+# Leg 3: owner-repo doctrine (user directive 2026-11-14) — a LarsArtmann/*
+# input pinned at a 40-hex rev must fail with the doctrine marker. The
+# ownerPinViolations path sits OUTSIDE the allowlist filter, so even a
+# row in lib/flake-input-pin-audit.nix could not register this class
+# (structuring an allowlisted variant here would need lib surgery; the
+# code path makes it structurally impossible — enforced, not just tested).
+eval_case inputpin owner-repo-pin-refused fail 'LarsArtmann inputs are NEVER pinned' \
+  'sed:flake.nix:s|url = "github:LarsArtmann/go-paperless";|url = "github:LarsArtmann/go-paperless/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";|' \
+  'jq:flake.lock:.nodes["go-paperless"].original = {"owner":"LarsArtmann","repo":"go-paperless","rev":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","type":"github"}'
 
 # ── papdashboard tile-icon gates: the 2026-10-17 "logos went dark" class ──
 # The module ships two gates; each leg mutates ONE tile icon in the

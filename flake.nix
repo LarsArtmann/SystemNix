@@ -507,29 +507,21 @@
 
     # bank-sync — Wise/Qonto bank transaction sync into SQLite + dashboard
     bank-sync = {
-      # PIN LIFTED 2026-10-16 (owner-ratified fresh-start cutover). The
-      # 2026-10-14 hard pin (67dd64526 ceiling) existed because the d15e0a48
-      # go-cqrs-lite key rendering crash-loops the daemon against the PROD
-      # journal (exit-65 journal_snapshot_divergence). Resolved by moving the
-      # prod dataDir aside ONCE (bank-sync-fresh-start oneshot in
-      # modules/nixos/services/bank-sync.nix; archive
-      # bank-sync-pre-keybump-20261016, nothing deleted) so the floated binary
-      # boots on an empty journal under the new key basis; history re-fetches
-      # from Wise via the full-history backfill after the SCA re-approval.
-      # Floating master per the pin policy. Re-pin ONLY with a fresh
-      # first-hand documented reason (the allowlist-traced class).
-      # REV-PINNED 2026-11-14 at ad8a90c9 (deploy-blocker rollback): the
-      # lock wave's 93ead5fc crash-loops exit-65 journal_snapshot_divergence
-      # against the PROD journal ("Snapshots reference event history the
-      # journal does not contain", 10 restarts since the 13:53 switch;
-      # first-hand journalctl) — the SAME cqrs-bump divergence class as the
-      # 2026-10-14 d15e0a48 pin, whose owner-ratified fix was the fresh-start
-      # cutover. This time the binary rollback restores service with ZERO
-      # data risk (the new binary refuses writes; prod data untouched);
-      # adopting 93ead5fc again needs the owner's fresh-start/migrate call
-      # per docs/runbooks/migrate-journal.md. LIFT: owner rules on the
-      # 93ead5fc adoption — then float and drop the rev.
-      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master&rev=ad8a90c9bee13363d1429b104fa87804a1fdf567";
+      # PIN LIFTED 2026-11-14 (owner directive: LarsArtmann inputs are
+      # NEVER pinned — fix upstream). The 2026-11-14 "crash-loop" was a
+      # FALSE-POSITIVE in bank-sync's journal preflight: cqrs keys streams
+      # bare since the 2026-10-17 disk-truth wave while the prod journal
+      # still holds pre-wave display-form keys ("<type>:StreamMarker:<id>",
+      # 123k rows at v2700), and the preflight counted only the bare form —
+      # every healthy stream read "journal has 0 event(s)" and the daemon
+      # refused to boot despite the engine's sticky legacy-key fallback
+      # serving that journal perfectly. The rollback pin NEVER RESTORED
+      # SERVICE (the pressure gate blocked its deploy; service down 5h+).
+      # Fixed upstream at 8e170d05: resolveJournalCount mirrors
+      # resolveStreamKey (legacy form first, bare fallback); genuine
+      # divergence still refuses. Regression test pins the prod key shape.
+      # Floats on ?ref=refs/heads/master per the pin policy.
+      url = "git+ssh://git@github.com/LarsArtmann/bank-sync?ref=refs/heads/master";
     };
 
     # journal — the accounting kernel: chart of accounts, double-entry
@@ -1069,44 +1061,21 @@
     # its own go 1.26.6 from the go.dev tarball (nixpkgs has 1.26.5 while the
     # go.mod floor is 1.26.6), so it must consume its own build environment.
     cv = {
-      # REV-PINNED 2026-11-03 at 16a656f4 for build-hash stability only
-      # (bPvMOBEz); PIN LIFTED 2026-11-06 (owner directive "everything
-      # latest") — the pin guarded NOTHING runtime-side: the cv-server
-      # SIGSEGV loop is REV-INDEPENDENT (nil-deref at
-      # ChatstoreSessions.HealthCheck, sessions_chatstore.go:112; pipeline
-      # _events outgrew the 5 s sqliteOperationTimeout on full-scan boot
-      # rehydration). cv-server crash-loops at EVERY rev until upstream
-      # lands the nil-guard + chunked rehydration fix; this float does not
-      # change that. vendorHash re-measure rides the proof.
-      # REV-PINNED 2026-11-14 round 2 at 9e3687b9 — the pushed go-sum tidy
-      # fix itself. Morning timeline: the 066f76c rollback pin (master
-      # f25e54c5's vendor FOD tripped CV's fail-closed go-sum tidy guard —
-      # stale httputil v1.8.0 entries) was LIFTED when the fix landed
-      # upstream (9e3687b97, 10:00Z), the input re-floated to master… and
-      # tip eb951951 (12:30Z, "restore module-graph go.sum entries")
-      # immediately re-tripped the SAME guard — the restore re-added
-      # entries the module graph drops (committed go.sum ~166 lines fat
-      # of tidy, first-hand keep-going ~/.cache/cv-lift-keepgoing2.log).
-      # 9e3687b9 is the only build-proven candidate between the two
-      # broken tips. LIFT: a master tip ≥ eb951951 whose go-modules FOD
-      # builds with the guard green — then drop this rev.
-      # REV-PINNED 2026-11-14 round 3 at 066f76c (rollback-deploy session,
-      # first-hand compile evidence): 9e3687b9 does NOT build through our
-      # graph — its vendored go-credentials-store (CV's OWN hard pin
-      # e3697ed4, pre-templ-1100) calls templ.JoinURLErrs /
-      # templ.ResolveAttributeValue, DELETED in templ 0.3.1100
-      # (cv-9e3687b.drv build log, ~/.cache/signoz-fod-fix/
-      # cv-pkg-build.log; the templ-1100-API-removal class, pin-audit
-      # 2026-11-06 section). The fix is CV-side: bump CV's g-c-s pin to
-      # the regenerated upstream tip cb8dea5 (0.4.3 "templ 1100 wave",
-      # JoinURLErrs/ResolveAttributeValue count = 0 there) — the g-c-s
-      # wave session's queued work. 066f76c is the gen-1004-deployed rev
-      # whose tidied go.sum makes the FOD deterministic (no proxy drift —
-      # it reproduced green TODAY, keepgoing-post4.log).
-      # LIFT: CV master carries BOTH the guard-green go.sum AND the
-      # templ-1100-aligned vendored g-c-s; float + toplevel keep-going
-      # green, then drop this rev.
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=066f76c79c8dd01fca1561710951ad0006cfd9df";
+      # PIN LIFTED 2026-11-14 (owner directive: LarsArtmann inputs are
+      # NEVER pinned — fix upstream). The round-3 pin's two blockers both
+      # landed upstream (fix 4ae2d928b + vendorHash re-bake e85a847d3): (a) the prepared-source g-c-s pin
+      # derefs the v0.4.3 tag (cb8dea55, templ-1100 wave) matching the
+      # go.mod require — the v0.3.1-era tree's generated templates called
+      # templ.JoinURLErrs/ResolveAttributeValue, deleted in templ 0.3.1100;
+      # (b) go.sum tidied (174 module-graph-restore lines dropped that
+      # tripped the fail-closed FOD guard); vendorHash re-baked via the
+      # repo's own refresh-vendor-hash (yh2mTzRPtC…, vendor-hash check +
+      # package build green first-hand). Runtime note carried from the
+      # lifted pin: the cv-server boot-rehydration SIGSEGV loop is
+      # REV-INDEPENDENT (nil-guard + chunked rehydration fix stays the
+      # upstream cure; tracked in the cv repo's TODO). Floats on
+      # ?ref=refs/heads/master per the pin policy.
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:

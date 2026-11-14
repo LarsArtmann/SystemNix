@@ -57,6 +57,11 @@
 # an allowlist entry whose input is no longer pinned is a VIOLATION
 # (stale entry — the pin was lifted, remove the row and re-verify
 # upstream green per the pin policy).
+#
+# OWNER-REPO DOCTRINE (user directive 2026-11-14): LarsArtmann/* inputs
+# can NEVER be pinned — not even via the allowlist. Whatever breaks gets
+# fixed in the upstream repo and the input floats again. Enforced
+# unconditionally below (ownerPinViolations).
 {
   flakeSource,
   lock,
@@ -235,7 +240,14 @@
     # therefore re-pinned at 9e3687b97 ITSELF — the pushed fix rev (pure
     # go.sum drop), the only build-proven candidate between two broken
     # tips (f25e54c5 pre-fix, eb951951 post-restore).
-    cv = "REV-PINNED at 066f76c (2026-11-14, round 3): 9e3687b9 (the go-sum tidy fix) is GUARD-green but COMPILE-broken through our graph — its vendored go-credentials-store (CV's own hard pin e3697ed4, pre-templ-1100) calls templ.JoinURLErrs/ResolveAttributeValue, deleted in templ 0.3.1100; and tip eb951951 re-trips the go-sum guard. 066f76c = gen-1004-deployed, FOD-deterministic, reproduced green today. LIFT: a master tip with BOTH the guard-green go.sum AND the templ-1100-aligned vendored g-c-s (CV bumps its g-c-s pin to upstream cb8dea5) — float + toplevel keep-going green, then drop the rev.";
+    # cv row REMOVED 2026-11-14 (owner directive: LarsArtmann inputs are
+    # NEVER pinned — fix upstream): both round-3 blockers landed upstream
+    # at CV 4ae2d928b (g-c-s flake pin derefs the v0.4.3 tag cb8dea55 per
+    # the Same rev-pin lockstep contract — the v0.3.1-era tree's generated
+    # templates called the templ 0.3.1100-deleted APIs — and go.sum tidied,
+    # 174 restore lines dropped); vendorHash re-baked via the repo's own
+    # refresh-vendor-hash, vendor-hash check + package build green
+    # first-hand. Input floats on ?ref=refs/heads/master.
     # ── 2026-11-14 deploy-blocker rollback → FIXED-tip repin ────────────
     # Tip caf9970 was BROKEN upstream: cmd/health-hub imports
     # go-health-dashboard/internal/env, but the package never reached
@@ -257,7 +269,17 @@
     # e5ea1549 (file tracked + `!internal/db/turso/*.sql.go` negation),
     # package build green through the repo's own flake; input floats on
     # ?ref=refs/heads/master.
-    bank-sync = "REV-PINNED at ad8a90c9 (2026-11-14): the floated 93ead5fc crash-loops exit-65 journal_snapshot_divergence against the PROD journal (the 2026-10-14 d15e0a48 class recurring; new binary refuses writes, data untouched). LIFT: owner rules on adopting 93ead5fc via the fresh-start cutover or migrate-journal (docs/runbooks/migrate-journal.md) — then float and drop the rev.";
+    # bank-sync row REMOVED 2026-11-14 (owner directive: LarsArtmann
+    # inputs are NEVER pinned — fix upstream): the 2026-11-14 exit-65
+    # "crash-loop" was a FALSE-POSITIVE preflight verdict — cqrs keys
+    # streams bare since the 2026-10-17 disk-truth wave, the prod journal
+    # still holds display-form keys (123k rows at v2700), and the
+    # preflight counted only the bare form so every healthy stream read
+    # "journal has 0 event(s)". The rollback pin never restored service
+    # (pressure gate blocked its deploy). Fixed upstream at 8e170d05
+    # (resolveJournalCount mirrors the engine's sticky legacy-key
+    # resolution; regression test pins the prod key shape). Input floats
+    # on ?ref=refs/heads/master.
   },
 }:
 let
@@ -465,6 +487,24 @@ let
       ) rootInputs
     );
 
+  # ── owner-repo doctrine (user directive 2026-11-14) ──────────────────
+  # LarsArtmann/* inputs are NEVER pinned. A broken owner tip gets FIXED
+  # UPSTREAM and the input re-floated; pinning our own repos only hides
+  # upstream breakage behind a lock no-op (`--update-input` silently does
+  # nothing) while the deploy drifts from origin. Four such pins lived on
+  # 2026-11-14 (bank-sync, cv, go-health-dashboard, invoices) — all lifted
+  # the same day once their upstream fixes landed. The allowlist CANNOT
+  # register this class: any pin on an owner-repo URL fails the eval.
+  ownerRepoPin =
+    url:
+    match "(github:|git\\+ssh://git@github\\.com/|git\\+https://github\\.com/|https://github\\.com/)LarsArtmann/[^/?#]+([/?#].*)?" url
+    != null;
+
+  ownerPinViolations = map (
+    f:
+    "${f.name}: LarsArtmann inputs are NEVER pinned (owner directive 2026-11-14) — fix the upstream repo, push, re-float the input; the allowlist cannot register owner-repo pins"
+  ) (filter (f: ownerRepoPin f.url && (classifyUrl f.url) != [ ]) declaredInputs);
+
   # ── dedup per input, split allowlisted vs violations ────────────────
 
   findingsByInput = foldl' (
@@ -476,7 +516,8 @@ let
   ) { } (declaredFindings ++ lockFindings);
 
   violations =
-    lockIntegrityViolations
+    ownerPinViolations
+    ++ lockIntegrityViolations
     ++ map (name: "${name}: ${concatStringsSep "; " findingsByInput.${name}}") (
       filter (name: !hasAttr name allowlist) (attrNames findingsByInput)
     )
