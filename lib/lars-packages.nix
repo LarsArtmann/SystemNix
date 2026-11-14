@@ -253,7 +253,9 @@ lib.filterAttrs (_: v: v != null) {
   # 11-12 upstream bake, stale for the new rev), got POIy8+72 (first-hand
   # keep-going, ~/.cache/signoz-fod-fix/keepgoing-post5.log). Drop when
   # upstream bakes POIy8+72; re-add ONLY via first-hand evidence.
-  erraudit = flakePkgShim inputs.erraudit "default" "sha256-POIy8+72rjYmP+FMhXim8MbV8tu6NetX9M0m4BsEGWM=";
+  erraudit =
+    flakePkgShim inputs.erraudit "default"
+      "sha256-POIy8+72rjYmP+FMhXim8MbV8tu6NetX9M0m4BsEGWM=";
   # vendorHash shim DROPPED (2026-10-07 wave — drop-protocol,
   # docs/agents/nix-flakes.md): upstream 74baca53 ALREADY bakes the got
   # hash G0hMfZId… (first-hand keep-going enumeration,
