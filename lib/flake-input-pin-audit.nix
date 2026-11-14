@@ -236,13 +236,16 @@
     # go.sum drop), the only build-proven candidate between two broken
     # tips (f25e54c5 pre-fix, eb951951 post-restore).
     cv = "REV-PINNED at 066f76c (2026-11-14, round 3): 9e3687b9 (the go-sum tidy fix) is GUARD-green but COMPILE-broken through our graph — its vendored go-credentials-store (CV's own hard pin e3697ed4, pre-templ-1100) calls templ.JoinURLErrs/ResolveAttributeValue, deleted in templ 0.3.1100; and tip eb951951 re-trips the go-sum guard. 066f76c = gen-1004-deployed, FOD-deterministic, reproduced green today. LIFT: a master tip with BOTH the guard-green go.sum AND the templ-1100-aligned vendored g-c-s (CV bumps its g-c-s pin to upstream cb8dea5) — float + toplevel keep-going green, then drop the rev.";
-    # ── 2026-11-14 deploy-blocker rollback (health-hub broken tip) ──────
-    # Tip caf9970 is BROKEN upstream: cmd/health-hub imports
-    # go-health-dashboard/internal/env, which no module in its graph
-    # provides (compile failure in the go-modules FOD, first-hand
-    # ~/.cache/signoz-fod-fix/keepgoing-post5.log). 30dee8fe is the last
-    # build-proven rev (green through the full toplevel pre-float).
-    go-health-dashboard = "REV-PINNED at 30dee8fe (2026-11-14): tip caf9970 is broken upstream (cmd/health-hub imports internal/env, no module provides it — FOD compile failure). LIFT: a master tip whose health-hub package builds green through the toplevel keep-going — float, prove, drop the rev.";
+    # ── 2026-11-14 deploy-blocker rollback → FIXED-tip repin ────────────
+    # Tip caf9970 was BROKEN upstream: cmd/health-hub imports
+    # go-health-dashboard/internal/env, but the package never reached
+    # GitHub: a bare `env/` pattern in the global git ignore silently
+    # excluded internal/env/, so the import landed and the package did
+    # not (FOD compile failure, first-hand
+    # ~/.cache/signoz-fod-fix/keepgoing-post5.log:89). Fixed same day:
+    # package tracked + pushed at 169e946, go build ./... + go vet green
+    # first-hand before the push.
+    go-health-dashboard = "REV-PINNED at 169e946 (2026-11-14): tip caf9970 was broken upstream (cmd/health-hub imported internal/env but a global-gitignore env/ pattern kept the package untracked, import landed without it; FOD compile failure, deploy blocker). Fixed upstream same day: package pushed at 169e946, local go build + go vet green first-hand. LIFT: float + toplevel keep-going green, then drop the rev.";
     invoices = "REV-PINNED at ee4d6ee4 (2026-11-14, second de-float): tip 9496b1d8 has the sqlc half-regen compile break (undefined UpsertPaylinkAssignmentParams, querier.go:457 — fix not landed upstream). LIFT: upstream master lands the regen completion — float + toplevel keep-going green, then drop the rev.";
     bank-sync = "REV-PINNED at ad8a90c9 (2026-11-14): the floated 93ead5fc crash-loops exit-65 journal_snapshot_divergence against the PROD journal (the 2026-10-14 d15e0a48 class recurring; new binary refuses writes, data untouched). LIFT: owner rules on adopting 93ead5fc via the fresh-start cutover or migrate-journal (docs/runbooks/migrate-journal.md) — then float and drop the rev.";
   },

@@ -714,15 +714,17 @@
     # Consumed for its packages.health-hub buildGoModule output (the flake
     # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
     go-health-dashboard = {
-      # REV-PINNED 2026-11-14 at 30dee8fe (deploy-blocker rollback, the
-      # documented-ceiling form): tip caf9970 is BROKEN upstream — its
-      # cmd/health-hub imports internal/env, which no module provides
-      # (first-hand FOD log, ~/.cache/signoz-fod-fix/keepgoing-post5.log).
-      # 30dee8fe is the last build-proven rev (green through the full
-      # toplevel at the 4b22e4ca0-era tree).
-      # LIFT: upstream ships a rev whose health-hub package builds green
-      # through our toplevel — float + keep-going proof, then drop the rev.
-      url = "github:LarsArtmann/go-health-dashboard/30dee8febc22356ff25193aecb04a2f3356b1542";
+      # REV-PINNED 2026-11-14 at 169e946 (the FIXED tip). History: tip
+      # caf9970 imported cmd/health-hub -> internal/env, but the package
+      # never reached GitHub: a bare `env/` pattern in the global git
+      # ignore silently excluded internal/env/, so the import landed and
+      # the package did not (FOD compile failure, deploy blocker,
+      # ~/.cache/signoz-fod-fix/keepgoing-post5.log:89). Fixed same day:
+      # env.go tracked + pushed at 169e946, go build ./... + go vet green
+      # first-hand before the push.
+      # LIFT: float + keep-going proof, then drop the rev (float policy
+      # decision still open, TODO_LIST dispatch queue).
+      url = "github:LarsArtmann/go-health-dashboard/169e946dcdb70976fde84c036105e659f86500ce";
     };
 
     # io-surface: the I/O surface manifest gate for Go trees. Extracts every
