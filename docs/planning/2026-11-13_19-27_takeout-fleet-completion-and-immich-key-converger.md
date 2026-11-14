@@ -194,12 +194,21 @@ red leg, unrelated to this work and self-evident from the error).
 | V1.4 | Keep the manifest as an optional `--manifest racedriver8k` explicit opt-in only | 8 |
 | V1.5 | Run `--selftest` (4 existing legs) | 8 |
 
+**DONE 2026-11-14 01:1x** (`d516d2c26` + `7f6c5179d`) — expectation now
+self-derived from the zip listings with a loud WARN + report line
+("Expectation source: … UNPROVEN"); the embedded manifest survives only as
+`--manifest racedriver8k` explicit opt-in. Evidence: 04-11 report §a6.
+
 ### V2 — leakage selftest
 
 | # | Micro-task | Est |
 | --- | --- | --- |
 | V2.1 | Add fixture with a foreign staging root | 6 |
 | V2.2 | Assert generated `products.tsv` contains zero racedriver8k rows | 6 |
+
+**DONE 2026-11-14 01:1x** — as verify's `manifest-leak` leg (foreign staging
+root → zero racedriver8k rows + WARN + report marker) plus `manifest-optin`
+(explicit opt-in still seeds, still fails a foreign fixture); 6/6 green.
 
 ### C1 / C2 — CI wiring
 
@@ -211,6 +220,14 @@ red leg, unrelated to this work and self-evident from the error).
 | C1.4 | Add CRC corruption fixture leg for `takeout-browser-rename.sh` | 10 |
 | C1.5 | Run the two selftests locally to confirm exit 0 | 10 |
 
+**DONE 2026-11-14 01:13, extended 11:44** — `checks.x86_64-linux.takeout-selftests`
+(hermetic: `HOME`/`XDG_CACHE_HOME` under the sandbox scratch, shebangs rewritten
+because `/usr/bin/env` is absent in the sandbox, one `--selftest` run per
+battery): verify/dedup/intake/browser-rename wired first (41 legs), then
+`takeout-extract` added (9 legs, 50 total) plus a per-battery leg-count
+assertion (6/21/7/7/9, measured not guessed) so a silently deleted or renamed
+leg fails the build. Built green via `nix build .#checks.x86_64-linux.takeout-selftests`.
+
 ### X1 — extraction tool
 
 | # | Micro-task | Est |
@@ -220,6 +237,20 @@ red leg, unrelated to this work and self-evident from the error).
 | X1.3 | Member-scoped `unzip -o` loop with rc-11 handling and per-member failure capture | 12 |
 | X1.4 | Post-extract count/byte reconciliation vs member listing | 8 |
 | X1.5 | Shellcheck + a dry-run against the helpless.ai staging | 10 |
+
+**DONE 2026-11-14** — `scripts/takeout-extract.sh` (9/9 selftest legs,
+`shellcheck -x` clean): member-scoped `unzip -o` from `logs/zip-entries.tsv`
+(reused when present, regenerated only when absent; `--dry-run` persists
+NOTHING), patterns must root at `Takeout/`, capacity gate `free ≥ 1.2×extract +
+500 GiB` (env knobs `TAKEOUT_EXTRACT_HEADROOM_BYTES`/`TAKEOUT_EXTRACT_MARGIN_PCT`
+resolved at gate time), `unzip` rc 11 = logged skip, exact-set reconciliation
+(missing AND extra both fail, scoped to pattern roots), exit 0/1/2. X1.5 live
+dry-run on the helpless.ai staging green and read-only: 7496 members /
+27,374,907,654 bytes, capacity need 569,720,801,184 B vs free 11,758,197,886,976
+B, listing not persisted. Live fact root-caused: extract's 7496 vs balance's
+7495 = exactly the root-level `Takeout/archive_browser.html` member, which
+balance's per-product bucketing skips by design. Evidence:
+docs/status/2026-11-14_10-16_takeout-extract-x1-tool-live-dryrun-status.md.
 
 ### L1 — ledger normalization
 
