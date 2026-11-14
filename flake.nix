@@ -1057,7 +1057,7 @@
       # keep-going proof the same day, upstream's own baked vendorHash
       # governing (nineteenth-entry drop-safety carried over). Floats on
       # master under ?ref=refs/heads/master (crm precedent).
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master";
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=9e3687b97ef71694e00b7270270137fbe27ac416";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:

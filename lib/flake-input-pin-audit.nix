@@ -226,14 +226,16 @@
     # vendorHash.nix bakes the correct hash from c626704 onward, and the
     # last four roll probes (through f6ccd43) built green with no
     # consumer-side override.
-    # ── 2026-11-14 cv pin lift (guard fix pushed upstream) ──────────────
-    # The 2026-11-14 cv row is GONE: the deploy-blocker rollback pin
-    # (066f76c) existed only because master f25e54c5's vendor FOD tripped
-    # CV's fail-closed go-sum tidy guard while the fix sat unpushed. The
-    # fix landed (CV 9e3687b97, 10:00Z), the input re-floated to master
-    # (?ref=refs/heads/master), and eb951951 passed the toplevel
-    # keep-going proof (FOD guard green) the same day. Rationale in
-    # flake.nix.
+    # ── 2026-11-14 cv rollback pin round 2 (guard fix pushed, tip re-trips) ──
+    # The morning's 066f76c row was briefly LIFTED when the owner pushed
+    # the go-sum tidy fix (CV 9e3687b97, 10:00Z) — but master tip
+    # eb951951 (12:30Z, "restore module-graph go.sum entries") re-added
+    # entries the module graph drops (committed go.sum runs ~166 lines
+    # fat of tidy), tripping the same fail-closed FOD guard. The input is
+    # therefore re-pinned at 9e3687b97 ITSELF — the pushed fix rev (pure
+    # go.sum drop), the only build-proven candidate between two broken
+    # tips (f25e54c5 pre-fix, eb951951 post-restore).
+    cv = "REV-PINNED at 9e3687b9 (2026-11-14): the pushed go-sum tidy fix itself — master tip eb951951 re-trips CV's fail-closed go-sum tidy guard by restoring module-graph entries. LIFT: a master tip at or past eb951951 whose go-modules FOD builds with the guard green (nix build of the cv go-modules FOD or toplevel keep-going) — drop the rev.";
   },
 }:
 let
