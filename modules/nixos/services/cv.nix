@@ -212,9 +212,19 @@
       # rev move. Re-drop when upstream bakes UxsjqEGG… (paste-upstream →
       # push → re-lock, docs/todo/upstream.md); re-add ONLY via first-hand
       # evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-UxsjqEGGX7/c7ex5IjiIdc7tl14IadyEycLdHRDsDdc=";
-      };
+      # NINETEENTH entry 2026-11-14 rollback-deploy session: input rolled
+      # back to 066f76c (the gen-1004-deployed rev; master f25e54c5 trips
+      # CV's own vendor-FOD go-sum tidy guard — fix committed in CV
+      # 9e3687b97, unpushed, owner-push gated). The eighteenth shim value
+      # UxsjqEGG… mismatched at the rolled-back rev (spec UxsjqEGG…, got
+      # H8atokSb…, first-hand keep-going,
+      # ~/.cache/signoz-fod-fix/keepgoing-post3.log) and the drop-safety
+      # test passes: upstream nix/packages.nix:87 AT 066f76c bakes exactly
+      # H8atokSb… (`git show 066f76c:nix/packages.nix` — the 2026-11-10
+      # v0.4.2 re-pin), so the shim is DROPPED and upstream's own hash
+      # governs again. Re-add ONLY via fresh first-hand nix-hash-fix
+      # evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [
