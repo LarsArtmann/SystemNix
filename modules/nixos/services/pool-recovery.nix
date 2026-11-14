@@ -174,6 +174,13 @@
             # /mnt/pool/services/opencloud) — a remount dropout leaves it
             # failed/inactive and needs the converge like the rest.
             "opencloud.service"
+            # audiblesync (the AudibleSync WebUI) is pool-bound
+            # (RequiresMountsFor /mnt/pool; its Sync-now child writes
+            # /mnt/pool/services/audible) — same remount-dropout class.
+            # NOTE: the roster lives HERE, in this default — a consumer-side
+            # `services.pool-recovery.restartUnits = [...]` REPLACES the
+            # list wholesale (never extend from the consumer module).
+            "audiblesync.service"
           ];
           description = ''
             Pool consumers to converge once the pool mount is healthy: FAILED

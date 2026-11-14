@@ -189,9 +189,10 @@ drift red. Regenerate after any registry change:
 | architecture-catalog | catalog | — | protected | architecture-catalog-sync | 3 | — |
 | attic | cache | 8200 | plain | attic | 2 | — |
 | audible-sync | — | — | none | audible-sync | — | — |
+| audiblesync | audiblesync | 8481 | protected | audiblesync | 2 | /mnt/pool/backups/audiblesync |
 | auth | auth | 1411 | — | — | — | — |
 | backup-coordination | — | — | none | backup-coordination | 1 | — |
-| bank-sync | banksync | 8097 | protected | bank-sync | 4 | — |
+| bank-sync | banksync | 8097 | protected | bank-sync | 5 | — |
 | browser-history | history | 8087 | plain | browser-history | 3 | /mnt/pool/backups/browser-history |
 | browser-history-agent | — | — | none | browser-history-agent | — | — |
 | btrfs-balance-watch | — | — | none | btrfs-balance-watch | 1 | — |
