@@ -8110,17 +8110,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1794566800,
-        "narHash": "sha256-OrQ7Mwcqbc2tX5NaOHSmjzsSWtN0e2dJHJlx/nRiqJw=",
+        "lastModified": 1794678481,
+        "narHash": "sha256-wyebLkKlQok1fqWQDFTE3jG5wGjtW0+UVPZsrNf0/ak=",
         "ref": "refs/heads/master",
-        "rev": "ee4d6ee4e38140c5ec8e0c702736bef01282b055",
-        "revCount": 1694,
+        "rev": "e5ea15493c44017108d1da73130c35b420d926b5",
+        "revCount": 1707,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/invoices"
       },
       "original": {
         "ref": "refs/heads/master",
-        "rev": "ee4d6ee4e38140c5ec8e0c702736bef01282b055",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/invoices"
       }

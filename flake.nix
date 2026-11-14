@@ -589,16 +589,17 @@
     # CWD (viper ".", no --config flag), so the unit's WorkingDirectory
     # is the data dir ~/invoices holding the production config of record.
     invoices = {
-      # REV-PINNED 2026-11-14 at ee4d6ee4 (deploy-blocker rollback, the
-      # documented-ceiling form; second de-float — the morning's one was
-      # re-floated by a later lock wave): tip 9496b1d8 has the sqlc
-      # half-regen compile break — querier.go:457 undefined
-      # UpsertPaylinkAssignmentParams (first-hand keepgoing-post7.log;
-      # ls-remote confirms tip == 9496b1d8, fix not landed). LIFT:
-      # upstream master lands the sqlc regen completion — float +
-      # toplevel keep-going green, then drop the rev. Reason row lives in
-      # lib/flake-input-pin-audit.nix.
-      url = "git+ssh://git@github.com/LarsArtmann/invoices?ref=refs/heads/master&rev=ee4d6ee4e38140c5ec8e0c702736bef01282b055";
+      # PIN LIFTED 2026-11-14 (owner directive: LarsArtmann inputs are
+      # NEVER pinned — fix upstream). The 2026-11-14 "sqlc half-regen
+      # compile break" was the global-gitignore footgun class: the
+      # freshly generated paylink_assignments.sql.go stayed silently
+      # untracked (~/.config/git/ignore `*.sql.go`), so only clean
+      # checkouts (flake FOD, CI) failed. Fixed upstream at e5ea1549:
+      # file tracked + repo-local `!internal/db/turso/*.sql.go`
+      # negation makes the class unrepeatable here; package build green
+      # through the repo's own flake first-hand. Floats on
+      # ?ref=refs/heads/master per the pin policy.
+      url = "git+ssh://git@github.com/LarsArtmann/invoices?ref=refs/heads/master";
     };
 
     # index — project documentation indexer; the docs-archive-stats

@@ -249,7 +249,14 @@
     # LarsArtmann inputs are NEVER pinned — fix upstream): the fix sat at
     # origin/master == the pinned rev 169e946, so the pin guarded nothing
     # anymore; input floats on ?ref=master, FOD-proven per float.
-    invoices = "REV-PINNED at ee4d6ee4 (2026-11-14, second de-float): tip 9496b1d8 has the sqlc half-regen compile break (undefined UpsertPaylinkAssignmentParams, querier.go:457 — fix not landed upstream). LIFT: upstream master lands the regen completion — float + toplevel keep-going green, then drop the rev.";
+    # invoices row REMOVED 2026-11-14 (owner directive: LarsArtmann
+    # inputs are NEVER pinned — fix upstream): the "sqlc half-regen
+    # compile break" was the global-gitignore footgun — the generated
+    # paylink_assignments.sql.go stayed untracked (~/.config/git/ignore
+    # `*.sql.go`), failing only clean checkouts. Fixed upstream at
+    # e5ea1549 (file tracked + `!internal/db/turso/*.sql.go` negation),
+    # package build green through the repo's own flake; input floats on
+    # ?ref=refs/heads/master.
     bank-sync = "REV-PINNED at ad8a90c9 (2026-11-14): the floated 93ead5fc crash-loops exit-65 journal_snapshot_divergence against the PROD journal (the 2026-10-14 d15e0a48 class recurring; new binary refuses writes, data untouched). LIFT: owner rules on adopting 93ead5fc via the fresh-start cutover or migrate-journal (docs/runbooks/migrate-journal.md) — then float and drop the rev.";
   },
 }:
