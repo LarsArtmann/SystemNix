@@ -263,6 +263,14 @@ _: {
                 {
                   Type = "oneshot";
                   RemainAfterExit = true;
+                  # StateDirectory creates /var/lib/immich-api-keys BEFORE the
+                  # mount namespace is assembled — without it ReadWritePaths
+                  # references a nonexistent path and every start dies
+                  # 226/NAMESPACE (the google-sync class; the script's own
+                  # mkdir runs only AFTER namespace setup, too late). Custom
+                  # keyFile paths outside keyDir still require their dir to
+                  # pre-exist.
+                  StateDirectory = "immich-api-keys";
                   ExecStart = lib.getExe (mkImmichApiKeyProvision {
                     inherit pkgs config;
                     keys = cfg.apiKeys;

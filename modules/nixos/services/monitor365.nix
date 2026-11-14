@@ -757,7 +757,41 @@
           systemd.services.monitor365 = {
             startLimitBurst = 10;
             startLimitIntervalSec = 300;
-            serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents CB busy-loop runaway
+            serviceConfig =
+              lib.mkMerge [
+                { CPUQuota = "200%"; } # Cap at 2 cores — prevents CB busy-loop runaway
+
+                # Kernel ring-buffer read grant (2026-11-14, the freeze-#46
+                # "SEV1 UNIT CRASH LOOP" attribution): the host-hardening
+                # collector's dmesg fallback (selinux.rs — MAC/audit lines
+                # when /var/log/audit + kern.log are absent, i.e. THIS host)
+                # spawns dmesg once per agent start and died SIGSYS syscall
+                # 103 (klogctl): the upstream module sets ProtectKernelLogs
+                # = true + SystemCallFilter = "@system-service" — neither
+                # permits syslog(2), and kernel.dmesg_restrict=1 additionally
+                # requires CAP_SYSLOG for a non-root reader. All three must
+                # move together or the read fails: grant the syscall, drop
+                # the deny filter, carry the cap alongside upstream's
+                # CAP_NET_RAW/CAP_SYS_PTRACE (mkForce repeats them — a
+                # consumer-side list replaces wholesale).
+                {
+                  ProtectKernelLogs = lib.mkForce false;
+                  SystemCallFilter = lib.mkForce [
+                    "@system-service"
+                    "syslog"
+                  ];
+                  AmbientCapabilities = lib.mkForce [
+                    "CAP_NET_RAW"
+                    "CAP_SYS_PTRACE"
+                    "CAP_SYSLOG"
+                  ];
+                  CapabilityBoundingSet = lib.mkForce [
+                    "CAP_NET_RAW"
+                    "CAP_SYS_PTRACE"
+                    "CAP_SYSLOG"
+                  ];
+                }
+              ];
             # Detached DAS fails the agent loudly instead of writing the event
             # buffer onto the root filesystem under the /mnt/pool mountpoint
             # (same RequiresMountsFor mount-gating semantics the deleted

@@ -656,10 +656,25 @@ in
       # so the slice name silently becomes "user-" — the limits are applied to a
       # nonexistent slice and user-1000.slice runs uncapped. This caused the
       # 2026-08-03 WDT crash: user processes grew unbounded for 2 days → OOM → WDT.
+      # 2026-11-14 freeze #54: MemoryHigh/MemoryMax alone are swap-blind —
+      # swapped pages LEAVE memory.current, so a session hog (77.9G RAM +
+      # 53.6G swap in ONE login session) stayed under the 80G ceiling while
+      # draining global zram to 100% for 5h33m; the kernel global OOM then
+      # picked adj-300 collateral (helium) and oomd pressure-killed the
+      # desktop unit-by-unit (niri included) instead of the hog. The missing
+      # bound is swap itself: at 48G of user swap the slice's OWN memcg OOM
+      # kills its biggest task (rss+swap badness = the hog, not the
+      # compositor), leaving ~14G of the 62G zram for system.slice + kernel.
+      # Deliberately NOT arming ManagedOOMSwap=kill here: oomd's swap kill
+      # executes the WHOLE marked unit — on this single-user box that is the
+      # entire desktop (all sessions + niri), strictly worse than the memcg
+      # bound. SwapUsedLimit=90% stays global-only (no unit carries the
+      # property — dead policy otherwise, documented in the freeze-54 report).
       "user-1000" = {
         sliceConfig = {
           MemoryHigh = "80G";
           MemoryMax = "90G";
+          MemorySwapMax = "48G";
         };
       };
     };

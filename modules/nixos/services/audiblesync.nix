@@ -187,7 +187,14 @@
                   Environment = [
                     "AUDIBLESYNC_ADDR=127.0.0.1:${toString ports.audiblesync}"
                     "AUDIBLESYNC_DB=${stateDir}/audiblesync.db"
-                    "AUDIBLESYNC_SYNC_CMD=${lib.getExe audibleBookSync} {asin}"
+                    # The value contains a SPACE — systemd's Environment= is a
+                    # space-separated assignment list, so an unquoted value
+                    # splits at " {asin}" (the app then rejects the template:
+                    # "sync command template must contain {asin}", start-limit
+                    # on both boots of 2026-11-14). The inner double quotes
+                    # make it ONE assignment; upstream substitutes {asin}
+                    # textually per book (executor.go ASINPlaceholder).
+                    "AUDIBLESYNC_SYNC_CMD=\"${lib.getExe audibleBookSync} {asin}\""
                   ]
                   ++ lib.optionals archiveEnabled [
                     # The sync child reuses the archive's rendered

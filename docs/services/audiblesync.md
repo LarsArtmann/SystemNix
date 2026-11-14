@@ -34,6 +34,7 @@ The flake exports `packages.default` ONLY — no `nixosModules` — so the Syste
 
 ## Upstream traps already paid for (do not relearn)
 
+- **`AUDIBLESYNC_SYNC_CMD` carries a SPACE — quote it for systemd (fixed 2026-11-14, crash-loop fix wave):** `Environment=` is a space-separated assignment list; an unquoted `…/audible-book-sync {asin}` splits at the space, the app receives only the bare path, and its template validation (`must contain {asin}`, `internal/app/executor.go`) exits 1 → start-limit-hit on EVERY boot since first deploy. The module inner-quotes the value (`"… {asin}"`); any future multi-word env for this unit needs the same quoting.
 - **flake.nix `self`-binding deadnix strip (3rd recurrence, fixed `e8ef419` 2026-11-14):** the auto-commit daemon swept a deadnix run that removed the schema-mandated `self` argument AND the `.buildflow.yml` deadnix-skip guard in one commit — flake eval + every consumer died with `function 'outputs' called with unexpected argument 'self'`. The push of that broken rev rode this session's lock wave. `.buildflow.yml` is restored upstream-side; keep it.
 - **`nix build` needs files git-tracked** (git-tree fetcher) — upstream-side rule; `git add` before any build claim.
 - **Single-instance flock** — the app holds an exclusive DB lock; a second instance fails fast (`ErrAnotherInstance`). Don't run a manual instance against the prod DB path while the unit is up.

@@ -1045,6 +1045,28 @@ _: {
             CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_shmem_bytes{cgroup="%s"} %s' "$label" "''${shmem:-0}")"$'\n'
             CENSUS_SAMPLE+="$(printf 'system_cgroup_mem_unevictable_bytes{cgroup="%s"} %s' "$label" "''${unevict:-0}")"$'\n'
           done <<<"$CENSUS_ENTRIES"
+          # === Top-N process memory census (2026-11-14, freeze #54) ===
+          # The cgroup census named session-115.scope (77.9G) but NOT the
+          # process inside it — the leader died with the boot and the
+          # journal keeps no session-leader line. Per-task RSS+swap (comm
+          # ONLY: argv carries secrets, the 2026-10-22 monitor365
+          # --jwt-secret class) rides the same CENSUS_SAMPLE so it lands in
+          # the .prom AND the durability ring — the next freeze names the
+          # hog from the dashboard. /proc/*/status values are kB; the
+          # >1 MiB threshold keeps the list bounded to real hogs.
+          PROC_CENSUS_ENTRIES=$(
+            for s in /proc/[0-9]*/status; do
+              awk '/^Name:/ {n=$2} /^Pid:/ {p=$2} /^VmRSS:/ {r=$2} /^VmSwap:/ {w=$2} END { if (r+w > 1024) printf "%d %d %s\n", (r+w)*1024, p, n }' "$s" 2>/dev/null
+            done | sort -rn | head -12
+          )
+          # Herestring (NOT a pipe): the loop must mutate CENSUS_SAMPLE in
+          # THIS shell — a pipe would run it in a subshell and lose it.
+          while read -r pbytes ppid pcomm; do
+            [ -n "$pcomm" ] || continue
+            pcomm=''${pcomm//\\/\\\\}
+            pcomm=''${pcomm//\"/\\\"}
+            CENSUS_SAMPLE+="$(printf 'system_process_mem_bytes{pid="%s",comm="%s"} %s' "$ppid" "$pcomm" "$pbytes")"$'\n'
+          done <<<"$PROC_CENSUS_ENTRIES"
           # Durability ring: local rotate-last-N fallback so per-cgroup
           # memory at OOM time survives a SigNoz-ingest outage AND a
           # timeout-killed run. Non-fatal on failure — the ring is forensic
@@ -2044,6 +2066,27 @@ _: {
               echo "system_unit_enabled_inactive{manager=\"''${iu%%:*}\",unit=\"$unit\"} 1"
             done
           } > "$TMP"
+          # === Publish gate (2026-11-14, freeze #54: 4th whole-file rejection) ===
+          # node_exporter rejects the ENTIRE textfile on one malformed line —
+          # at 14:45:11, mid-death-window, `line 926: expected float as value,
+          # got ""` blinded EVERY system_* metric (4th incident of the class:
+          # 2026-09-20, 10-03, 10-12, 11-14). Gate AFTER write, BEFORE
+          # publish: drop malformed lines (that ONE metric goes missing for a
+          # cycle — visible, recoverable) instead of blinding the whole file,
+          # count them in a gauge, log the offenders to the journal. Valid
+          # line: comment, blank, or NAME[{labels}] VALUE with a bare float —
+          # every known failure shape (empty value, value glued to label,
+          # missing newline) fails the mandatory [[:space:]]+VALUE suffix.
+          PROM_VALID_LINE='^(#.*|[[:space:]]*|[a-zA-Z_:][a-zA-Z0-9_:]*(\{.*\})?[[:space:]]+[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?)$'
+          PROM_DROPPED=$(grep -cvE "$PROM_VALID_LINE" "$TMP" || true)
+          if [ "$PROM_DROPPED" -gt 0 ]; then
+            echo "system-health: WARN publish gate dropping $PROM_DROPPED malformed line(s):" >&2
+            grep -nvE "$PROM_VALID_LINE" "$TMP" | head -5 >&2
+            grep -vE "$PROM_VALID_LINE" "$TMP" > "$TMP.gate" && mv "$TMP.gate" "$TMP"
+          fi
+          echo "# HELP system_health_prom_dropped_lines Lines dropped by the publish gate this run (nonzero = an emitter glitched; the named metric is missing for one cycle, NOT the whole file)" >> "$TMP"
+          echo "# TYPE system_health_prom_dropped_lines gauge" >> "$TMP"
+          echo "system_health_prom_dropped_lines ''${PROM_DROPPED:-0}" >> "$TMP"
           mv "$TMP" "$OUT"
         '';
       };

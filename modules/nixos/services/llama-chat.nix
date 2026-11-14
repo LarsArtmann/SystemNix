@@ -227,6 +227,17 @@ _: {
               Group = cfg.group;
               Restart = "on-failure";
               RestartSec = "10";
+              # Crash-loop backoff (2026-11-14, the flm ×5 SIGABRT pile-driver
+              # class; documented OOM→restart→re-OOM loop 2026-11-02): a fixed
+              # RestartSec=10 lets a crash-loop re-fire the FULL 23.4 GB model
+              # page-in every 10s under an IO storm. RestartSteps raises the
+              # delay exponentially (10s→…→15min cap) over 5 consecutive
+              # restarts; a stable run resets the step counter. Matches the
+              # fastflowlm / llama-vlm / llama-rag 5-step/15min pattern; no
+              # RestartRandomizedDelaySec jitter to keep restart timing
+              # deterministic for probes (same choice flm/vlm/rag made).
+              RestartSteps = 5;
+              RestartMaxDelaySec = "15min";
               OOMScoreAdjust = 300;
               # Quota matches threads (12 of 16 cores): threads share the CPU
               # time the quota grants, so a 400% quota would silently quarter
