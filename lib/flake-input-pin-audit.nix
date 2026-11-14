@@ -245,7 +245,10 @@
     # ~/.cache/signoz-fod-fix/keepgoing-post5.log:89). Fixed same day:
     # package tracked + pushed at 169e946, go build ./... + go vet green
     # first-hand before the push.
-    go-health-dashboard = "REV-PINNED at 169e946 (2026-11-14): tip caf9970 was broken upstream (cmd/health-hub imported internal/env but a global-gitignore env/ pattern kept the package untracked, import landed without it; FOD compile failure, deploy blocker). Fixed upstream same day: package pushed at 169e946, local go build + go vet green first-hand. LIFT: float + toplevel keep-going green, then drop the rev.";
+    # go-health-dashboard row REMOVED 2026-11-14 (owner directive:
+    # LarsArtmann inputs are NEVER pinned — fix upstream): the fix sat at
+    # origin/master == the pinned rev 169e946, so the pin guarded nothing
+    # anymore; input floats on ?ref=master, FOD-proven per float.
     invoices = "REV-PINNED at ee4d6ee4 (2026-11-14, second de-float): tip 9496b1d8 has the sqlc half-regen compile break (undefined UpsertPaylinkAssignmentParams, querier.go:457 — fix not landed upstream). LIFT: upstream master lands the regen completion — float + toplevel keep-going green, then drop the rev.";
     bank-sync = "REV-PINNED at ad8a90c9 (2026-11-14): the floated 93ead5fc crash-loops exit-65 journal_snapshot_divergence against the PROD journal (the 2026-10-14 d15e0a48 class recurring; new binary refuses writes, data untouched). LIFT: owner rules on adopting 93ead5fc via the fresh-start cutover or migrate-journal (docs/runbooks/migrate-journal.md) — then float and drop the rev.";
   },

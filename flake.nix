@@ -714,17 +714,15 @@
     # Consumed for its packages.health-hub buildGoModule output (the flake
     # owns the go_1_27 + GOEXPERIMENT=jsonv2 toolchain wiring).
     go-health-dashboard = {
-      # REV-PINNED 2026-11-14 at 169e946 (the FIXED tip). History: tip
-      # caf9970 imported cmd/health-hub -> internal/env, but the package
-      # never reached GitHub: a bare `env/` pattern in the global git
-      # ignore silently excluded internal/env/, so the import landed and
-      # the package did not (FOD compile failure, deploy blocker,
-      # ~/.cache/signoz-fod-fix/keepgoing-post5.log:89). Fixed same day:
-      # env.go tracked + pushed at 169e946, go build ./... + go vet green
-      # first-hand before the push.
-      # LIFT: float + keep-going proof, then drop the rev (float policy
-      # decision still open, TODO_LIST dispatch queue).
-      url = "github:LarsArtmann/go-health-dashboard/169e946dcdb70976fde84c036105e659f86500ce";
+      # PIN LIFTED 2026-11-14 (owner directive: LarsArtmann inputs are
+      # NEVER pinned — fix upstream instead). The same-day rev pin held
+      # fix tip 169e946 after caf9970 imported a gitignored internal/env
+      # package (global-gitignore footgun, docs/status/
+      # 2026-11-14_15-45_health-hub-fix-upstream-pushed-repin-proven.md);
+      # origin/master == 169e946 at lift, so the float is rev-identical.
+      # Floats on ?ref=master per the pin policy; each float is proven by
+      # the §11 vendor-freshness FOD gate.
+      url = "github:LarsArtmann/go-health-dashboard?ref=master";
     };
 
     # io-surface: the I/O surface manifest gate for Go trees. Extracts every

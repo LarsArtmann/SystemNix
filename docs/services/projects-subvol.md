@@ -81,6 +81,15 @@ sudo bash scripts/migrate-projects-subvol.sh finalize
 #   (--no-block; receipt = journalctl -u btrbk-projects exit summary).
 
 # Phase F — after ≥7d burn-in + ≥5 green nightly sends:
+#   STATUS 2026-11-14: burn-in SATISFIED — 10 green pool receives
+#   (projects.20261028T1803 → projects.20261107T2310, 17d live). Since
+#   2026-11-08 every 23:10 run is REFUSED by btrbk-admission on storm nights
+#   (designed skip; admission band raised 20→80 by owner directive 2026-11-14,
+#   commit 5013fd42c). Remaining sequence: (1) one quiet-window green run
+#   (io PSI <80 ∧ guard trip-free — manual `sudo systemctl start
+#   btrbk-projects`, the 23:10 timer, or the enrolled catch-up slot) so the
+#   pool brackets a ≤24h state; (2) owner runs shadow-cleanup. Shadow: 132G at
+#   /mnt/btrfs-root/@/home/lars/projects, frozen at pre-cutover state.
 sudo bash scripts/migrate-projects-subvol.sh shadow-cleanup
 #   refuses unless mount live + Samsung-served + ≥5 pool receives;
 #   archives the QLC shadow to

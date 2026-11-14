@@ -5599,8 +5599,8 @@
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "go-health-dashboard",
-        "rev": "169e946dcdb70976fde84c036105e659f86500ce",
         "type": "github"
       }
     },
