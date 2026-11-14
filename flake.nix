@@ -1049,16 +1049,15 @@
       # rehydration). cv-server crash-loops at EVERY rev until upstream
       # lands the nil-guard + chunked rehydration fix; this float does not
       # change that. vendorHash re-measure rides the proof.
-      # REV-PINNED 2026-11-14 at 066f76c (deploy-blocker rollback, the
-      # documented-ceiling form): master f25e54c5's vendor FOD trips the
-      # fail-closed go-sum tidy guard (stale httputil v1.8.0 go.sum
-      # entries; fix committed in CV 9e3687b97, UNPUSHED — owner push
-      # gates the float). 066f76c is the gen-1004-deployed rev,
-      # build-proven under the current templ 9a0eb3c1 + nixpkgs f4a03c00
-      # graph (the running system carries its binary).
-      # LIFT: owner pushes CV >= 9e3687b97, `nix flake update cv`,
-      # toplevel keep-going green (FOD guard passes) — drop this rev.
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=066f76c79c8dd01fca1561710951ad0006cfd9df";
+      # REV-PINNED 2026-11-14 at 066f76c (deploy-blocker rollback: master
+      # f25e54c5's vendor FOD tripped CV's fail-closed go-sum tidy guard —
+      # stale httputil v1.8.0 go.sum entries). PIN LIFTED 2026-11-14:
+      # the guard fix landed upstream (CV 9e3687b97, pushed 10:00Z) and
+      # master floats again — eb951951 built green through the toplevel
+      # keep-going proof the same day, upstream's own baked vendorHash
+      # governing (nineteenth-entry drop-safety carried over). Floats on
+      # master under ?ref=refs/heads/master (crm precedent).
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:
