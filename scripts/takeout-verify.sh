@@ -356,6 +356,11 @@ run_verify() {
     echo "- CRC failures: see G2.2 output above"
     echo "- Coverage: $(grep -c '^OK' "$coverage_tsv") OK / $(grep -c '^MISSING' "$coverage_tsv") MISSING / $(grep -c '^EXTRA' "$coverage_tsv") extra / $(grep -c '^SURPRISE' "$coverage_tsv") surprise-data"
     echo "- Hard failures: $failures; warnings: $warnings"
+    if [ "$manifest_derived" = "1" ]; then
+      echo "- Expectation source: SELF-DERIVED from the zip listings — part integrity proven, completeness vs the Takeout export page UNPROVEN"
+    else
+      echo "- Expectation source: products.tsv (account manifest)"
+    fi
     echo
     echo '## Inventory'
     column -t -s $'\t' "$inv" 2>/dev/null || cat "$inv"
@@ -459,6 +464,35 @@ selftest() {
     rc=1
   fi
 
+  # 2026-11-14: another account's staging root must NEVER inherit the
+  # racedriver8k manifest (it did, silently, before this leg existed).
+  leg=manifest-leak
+  build_fixture
+  rm "$fx/products.tsv"
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-leak.log" 2>&1 &&
+    grep -q 'SELF-DERIVED' "$fx/leg-leak.log" &&
+    ! grep -q '543.33 GB\|YouTube and YouTube Music' "$fx/products.tsv" &&
+    grep -q 'completeness vs the Takeout export page UNPROVEN' "$fx/verification-report.md"; then
+    echo "PASS: $leg (no foreign manifest; expectations self-derived + WARNed)"
+  else
+    echo "FAIL: $leg (foreign manifest leaked or derivation missing — see $fx/leg-leak.log)"
+    rc=1
+  fi
+
+  leg=manifest-optin
+  build_fixture
+  rm "$fx/products.tsv"
+  if run_verify_selftest_quiet "$fx" racedriver8k >"$fx/leg-optin.log" 2>&1; then
+    echo "FAIL: $leg (racedriver8k manifest passed a foreign fixture)"
+    rc=1
+  elif grep -q 'expected-present product NOT FOUND' "$fx/leg-optin.log" &&
+    grep -q '543.33 GB' "$fx/products.tsv"; then
+    echo "PASS: $leg (explicit --manifest racedriver8k opt-in still works)"
+  else
+    echo "FAIL: $leg (opt-in did not seed/apply the manifest — see $fx/leg-optin.log)"
+    rc=1
+  fi
+
   if [ "$rc" -eq 0 ]; then
     rm -rf "$fx"
     echo "SELFTEST GREEN"
@@ -471,7 +505,8 @@ selftest() {
 run_verify_selftest_quiet() {
   # subshell: run_verify's die() on negative legs must not kill the selftest driver.
   # Output is NOT discarded here — the caller redirects to a per-leg log and greps it.
-  (run_verify "$1" 1)
+  # $2 = manifest mode (auto | racedriver8k).
+  (run_verify "$1" 1 "${2:-auto}")
 }
 
 main() {
@@ -480,10 +515,30 @@ main() {
     selftest
     return
   fi
-  [ $# -ge 1 ] || die "usage: $0 <staging-dir> [--no-hash] | --selftest"
-  local do_hash=1
-  [ "${2:-}" = "--no-hash" ] && do_hash=0
-  run_verify "$1" "$do_hash"
+  local root="" do_hash=1 manifest_mode=auto
+  while [ $# -gt 0 ]; do
+    case $1 in
+    --no-hash) do_hash=0 ;;
+    --manifest)
+      shift
+      [ $# -gt 0 ] || die "--manifest needs a value (racedriver8k)"
+      manifest_mode=$1
+      ;;
+    --manifest=*) manifest_mode=${1#*=} ;;
+    -*) die "unknown option: $1" ;;
+    *)
+      [ -z "$root" ] || die "unexpected argument: $1"
+      root=$1
+      ;;
+    esac
+    shift
+  done
+  [ -n "$root" ] || die "usage: $0 <staging-dir> [--no-hash] [--manifest racedriver8k] | --selftest"
+  case $manifest_mode in
+  auto | racedriver8k) ;;
+  *) die "unknown manifest '$manifest_mode' (accepts: racedriver8k)" ;;
+  esac
+  run_verify "$root" "$do_hash" "$manifest_mode"
 }
 
 main "$@"
