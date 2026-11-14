@@ -60,7 +60,7 @@ prepare_listing() {
   fi
   LISTING_TMP=$(mktemp)
   : >"$LISTING_TMP"
-  for zip in "$root"/zips/part-*.zip; do
+  for zip in "$root"/zips/*.zip; do
     [ -f "$zip" ] || continue
     unzip -l "$zip" | awk '
       NF >= 4 && $1 ~ /^[0-9]+$/ && $4 != "" {
@@ -79,11 +79,14 @@ prepare_listing() {
 }
 
 # glob -> anchored awk regex; only * and ? are wildcards, everything else
-# (dots, parens, spaces, brackets) matches literally.
+# (dots, parens, spaces, brackets) matches literally. ERE metachars are
+# escaped one-by-one: a bracket-class sed idiom proved fragile here.
 glob_to_re() {
   printf '%s' "$1" |
     sed -e 's/\\/\\\\/g' -e 's/\*/@STAR@/g' -e 's/?/@QUEST@/g' \
-      -e 's/[][.^$+(){}|]/\\&/g' \
+      -e 's/\./\\./g' -e 's/\$/\\$/g' -e 's/\^/\\^/g' -e 's/\+/\\+/g' \
+      -e 's/(/\\(/g' -e 's/)/\\)/g' -e 's/{/\\{/g' -e 's/}/\\}/g' \
+      -e 's/\[/\\[/g' -e 's/\]/\\]/g' -e 's/|/\\|/g' \
       -e 's/@STAR@/.*/g' -e 's/@QUEST@/./g'
 }
 
@@ -161,7 +164,7 @@ pattern_roots() {
 run_extract() {
   local root=$1 dest=$2 zip zlog rc failed=0 skipped=0
   mkdir -p "$dest"
-  for zip in "$root"/zips/part-*.zip; do
+  for zip in "$root"/zips/*.zip; do
     [ -f "$zip" ] || continue
     zlog=$root/logs/extract-$(basename "$zip").log
     if unzip -o -qq "$zip" "${PATTERNS[@]}" -d "$dest" >"$zlog" 2>&1; then
@@ -216,7 +219,7 @@ run_main() {
   local root=$1 dest p
   dest=${DEST:-$1/extracted}
   [ -d "$root/zips" ] || die "no $root/zips staging root (takeout-download.sh init first)"
-  ls "$root"/zips/part-*.zip >/dev/null 2>&1 || die "no part zips under $root/zips"
+  ls "$root"/zips/*.zip >/dev/null 2>&1 || die "no zips under $root/zips (both part-NN.zip and raw browser takeout-*.zip names are accepted)"
   for p in "${PATTERNS[@]}"; do
     case $p in
     Takeout/*) ;;
@@ -250,6 +253,9 @@ selftest() {
   local rc=0 leg
   rm -rf "$fx"
   mkdir -p "$fx"
+  # the 500 GiB fleet headroom would fail every real-run leg on a small test
+  # filesystem; pin it tiny here (the capacity-block leg overrides it to huge)
+  export TAKEOUT_EXTRACT_HEADROOM_BYTES=1024
 
   build_fixture() {
     rm -rf "$fx"/zips "$fx/logs" "$fx/extracted"
@@ -267,7 +273,7 @@ selftest() {
         rm -rf tk
     )
   }
-  # 5 members / 27 bytes total (Takeout/*); Drive alone = 2 files / 12 bytes.
+  # 5 members / 28 bytes total (Takeout/*); Drive alone = 2 files / 12 bytes.
   # Every call is a SUBSHELL with plain assignments: run_main's die()/exit-2
   # on negative legs must never kill the selftest driver, and array variables
   # cannot ride an env-prefix assignment (PATTERNS=(...) cmd is a syntax
@@ -276,7 +282,7 @@ selftest() {
   leg=dry-run-no-write
   build_fixture
   if (PATTERNS=('Takeout/*'); DRY_RUN=1; run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
-    grep -q 'DRY-RUN extract: 5 members / 27 bytes' "$fx/leg-$leg.log" &&
+    grep -q 'DRY-RUN extract: 5 members / 28 bytes' "$fx/leg-$leg.log" &&
     [ ! -e "$fx/extracted" ] && [ ! -s "$fx/logs/zip-entries.tsv" ]; then
     echo "PASS: $leg (totals correct, zero writes, listing not persisted)"
   else
@@ -312,7 +318,7 @@ selftest() {
   leg=extract-happy
   build_fixture
   if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
-    grep -q 'EXTRACT: OK - 5 files / 27 bytes' "$fx/leg-$leg.log" &&
+    grep -q 'EXTRACT: OK - 5 files / 28 bytes' "$fx/leg-$leg.log" &&
     grep -q 'pdf-a' "$fx/extracted/Takeout/Drive/a file.pdf" &&
     grep -q 'RECONCILE: OK' "$fx/leg-$leg.log" &&
     [ -s "$fx/logs/extract-report.tsv" ]; then
@@ -345,7 +351,7 @@ selftest() {
 
   leg=corrupt-zip-fail
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
   truncate -s 40 "$fx/zips/part-02.zip"
   rm -rf "$fx/extracted"
   if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
@@ -360,7 +366,7 @@ selftest() {
 
   leg=reconcile-extra-fail
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
   printf 'stray\n' >"$fx/extracted/Takeout/Mail/stray.txt"
   if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (stray extra file passed)"
@@ -374,7 +380,7 @@ selftest() {
 
   leg=listing-reuse
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1
+  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
   touch -d '@946684800' "$fx/logs/zip-entries.tsv"
   if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
     [ "$(stat -c %Y "$fx/logs/zip-entries.tsv")" = "946684800" ]; then
