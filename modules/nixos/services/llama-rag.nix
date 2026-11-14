@@ -83,6 +83,16 @@ _: {
         NoNewPrivileges = false;
         Restart = "on-failure";
         RestartSec = "10";
+        # Crash-loop backoff (2026-11-14, the flm ×5 SIGABRT pile-driver
+        # class): a fixed RestartSec=10 lets a crash-loop fire five FULL
+        # model loads in ~50s under an IO storm. RestartSteps raises the
+        # delay exponentially (10s→…→15min cap) over 5 consecutive restarts;
+        # a stable run resets the step counter. Matches the fastflowlm /
+        # llama-vlm units' 5-step/15min pattern; no RestartRandomizedDelaySec
+        # jitter (systemd 262 supports it) to keep restart timing
+        # deterministic for probes (same choice flm/vlm made).
+        RestartSteps = 5;
+        RestartMaxDelaySec = "15min";
         OOMScoreAdjust = 300;
         CPUQuota = "200%";
         # Bounded stop budget. A restart while the disk is saturated can

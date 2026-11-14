@@ -162,6 +162,16 @@
             serviceConfig = lib.mkMerge [
               (serviceDefaults { })
               ioTier.background
+              # Crash-loop backoff (2026-11-14): serviceDefaults' fixed
+              # RestartSec=5s would pile-driver the ONNX ensemble cold load
+              # five times in ~25s on a crash-loop (the flm ×5 SIGABRT
+              # pile-driver class). RestartSteps raises the delay
+              # exponentially to a 15min cap over 5 consecutive restarts;
+              # a stable run resets. systemd ≥254 required, 262 verified.
+              {
+                RestartSteps = 5;
+                RestartMaxDelaySec = "15min";
+              }
             ];
             # TimeoutStartSec: upstream-owned since the 2026-11-08 fix
             # (serviceConfig section, 10min — the old unitConfig copy was
