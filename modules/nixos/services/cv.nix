@@ -202,7 +202,19 @@
       # (cv-fod-ourlock-proof.log) — the go-tarball toolchain pin made the
       # builder graph context-independent. Re-add ONLY via nix-hash-fix
       # evidence, never by hand.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # EIGHTEENTH RE-STALE 2026-11-14 lock float (daemon 1df77611d, CV
+      # 14f419d14→73040cd): spec n50Kg2cN (upstream-baked at that rev), got
+      # UxsjqEGGX7/c7ex5IjiIdc7tl14IadyEycLdHRDsDdc= (first-hand keep-going
+      # enumeration, ~/.cache/audiblesync-integration/keepgoing.log — the
+      # audiblesync integration deploy's toplevel build hit it; single root
+      # failure, cv + fish-completions + cv-relogin dependents). The
+      # context-independence from the 2026-11-12 drop did NOT survive the
+      # rev move. Re-drop when upstream bakes UxsjqEGG… (paste-upstream →
+      # push → re-lock, docs/todo/upstream.md); re-add ONLY via first-hand
+      # evidence, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-UxsjqEGGX7/c7ex5IjiIdc7tl14IadyEycLdHRDsDdc=";
+      };
     in
     {
       imports = [
