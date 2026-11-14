@@ -55,7 +55,7 @@ Ubiquitous language for the SystemNix infrastructure domain. Terms used consiste
 | **btrbk**     | Automated BTRFS snapshot tool. Daily snapshots at 23:00, 14-day + 4-week retention                                       |
 | **Subvolume** | BTRFS named subdivision. `@` is root, `/data` is toplevel (subvolid=5)                                                   |
 | **Scrub**     | BTRFS integrity check that verifies checksums across all data/metadata. Monthly via `autoScrub`                          |
-| **ZRAM swap** | Compressed swap in RAM (~16 GiB). Replaces disk-based swap                                                               |
+| **ZRAM swap** | Compressed swap in RAM (62 GiB, `/dev/zram0`; live `/proc/swaps` 2026-11-14 — was ~16 GiB in early docs). Replaces disk-based swap |
 | **GPUActive** | TTM buffer objects consuming system RAM. The #1 memory consumer on Strix Halo (51+ GiB). Only visible in `/proc/meminfo` |
 
 ## Desktop
