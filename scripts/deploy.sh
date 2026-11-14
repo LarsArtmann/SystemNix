@@ -73,6 +73,44 @@ phase() {
 # or beaten by fd inheritance (children like nh/nix/sudo keep the lock alive
 # after the recorded process is gone).
 deploy_lock=/tmp/.systemnix-deploy.lock
+# Stale-lock self-heal (2026-11-14, funnel-closeout §f16): fs.protected_regular=1
+# makes root's `exec 9>>` FAIL with EACCES when the lock file is owned by a
+# non-root user in sticky /tmp (a non-sudo probe once created it, and two
+# deploys died before any check ran). Heal ONLY when the file provably has no
+# live holder: no /proc fd table points at it, every recorded holder PID is
+# dead, and the file is older than the acquire grace window — otherwise the
+# unlink could split the flock onto a fresh inode and admit a concurrent
+# deploy beside a live one.
+if [ -e "$deploy_lock" ] && [ "$(id -u)" = "0" ] && [ ! -O "$deploy_lock" ]; then
+  foreign_lock_live=""
+  for proc_dir in /proc/[0-9]*; do
+    foreign_pid=${proc_dir##*/}
+    if [ "$foreign_pid" = "$$" ]; then continue; fi
+    for fd_link in "$proc_dir"/fd/*; do
+      if [ "$(readlink "$fd_link" 2>/dev/null)" = "$deploy_lock" ]; then
+        foreign_lock_live="$foreign_lock_live $foreign_pid"
+        break
+      fi
+    done
+  done
+  for recorded_pid in $(cat "$deploy_lock" 2>/dev/null || true); do
+    case "$recorded_pid" in *[!0-9]*) continue ;; esac
+    if ps -o pid= -p "$recorded_pid" >/dev/null 2>&1; then
+      foreign_lock_live="$foreign_lock_live $recorded_pid"
+    fi
+  done
+  foreign_age=$(( $(date +%s) - $(stat -c %Y "$deploy_lock") ))
+  if [ -z "$foreign_lock_live" ] && [ "$foreign_age" -gt 300 ]; then
+    echo "self-heal: stale foreign-owned lock (age ${foreign_age}s, no live holder, fs.protected_regular) — unlinking"
+    rm -f -- "$deploy_lock"
+  fi
+  if [ -e "$deploy_lock" ]; then
+    echo "❌ Lock $deploy_lock is foreign-owned and live-or-young (fs.protected_regular blocks root's reopen)."
+    echo "   Holders:[$foreign_lock_live] age:${foreign_age}s. Wait it out; if you have verified no holder:"
+    echo "   sudo rm -- '$deploy_lock'"
+    exit 14
+  fi
+fi
 # Open in APPEND mode: `>` (O_TRUNC) would wipe the holder's recorded PID
 # before flock even runs, so the abort message always showed an empty PID.
 exec 9>>"$deploy_lock"
