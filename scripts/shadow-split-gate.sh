@@ -7,9 +7,25 @@
 # cluster, and four co-tenant DBs ran empty for 2.5 days undetected
 # (docs/status/2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md).
 #
-# For every hot entry in the to-be-deployed config this gate checks the
-# live shadow dir (the path the subvolume will mount over) against the
-# target subvol content:
+# For every hot entry in the to-be-deployed config the gate first asks
+# whether the shadow path (the path the subvolume will mount over) is
+# ALREADY a live mountpoint — because a content probe through a live
+# mount reads the SUBVOL through the mount and compares it to itself:
+#   mounted, fsroot == declared subvol
+#                       -> PASS — the subvol is demonstrably serving; the
+#                          shadow dir is hidden beneath the mount and no
+#                          content probe applies (before 2026-11-14 every
+#                          steady-state line was a self-comparison PASS
+#                          that read like "data on both disks")
+#   mounted from a foreign fsroot
+#                       -> FAIL (data class) / WARN (cache class) —
+#                          something other than the declared subvol covers
+#                          the service path; investigate before deploying
+#   automount stack whose backing does not resolve (trigger + re-probe)
+#                       -> WARN — hot root detached / backing broken;
+#                          cannot-verify != verified-safe
+#   NOT mounted          -> the wave-6 ladder against the REAL shadow dir
+#                          (the only state where it has signal):
 #   shadow empty/absent                  -> PASS (fresh service, nothing to lose)
 #   shadow non-empty + subvol EMPTY      -> FAIL (data class) / WARN (cache class)
 #                                           — the exact wave-6 signature
@@ -43,6 +59,9 @@
 #   SS_ENTRIES_JSON  inline entries document instead of nix eval
 #   SS_SHADOW_ROOT   prefix for shadow paths (default "")
 #   SS_HOT_ROOT      prefix for subvol paths  (default /mnt/hot)
+#   SS_MOUNTS_FILE   space-separated mount table "target fstype source fsroot"
+#                    replacing the findmnt probe (fixtures simulate
+#                    mounted/foreign/automount states; production never sets it)
 #   SS_PRIV          privilege prefix for root-owned probes (existence,
 #                    readability, du, find — ALL of them); default
 #                    auto-detects `sudo -n` and falls back to "" — the
@@ -122,10 +141,75 @@ dir_size() {
   fi
 }
 
+# mount_rows <path> -> one "fstype source fsroot" line per mount whose
+# TARGET is exactly <path> (an automounted path legitimately yields TWO
+# rows: the autofs mount plus the real fs it triggers). Test hook:
+# SS_MOUNTS_FILE replaces findmnt with a space-separated table — same
+# output shape, no findmnt dependency inside the Nix sandbox.
+# NOTE: no awk here on purpose — unit scripts must list every binary they
+# exec, and awk has caused two phantom-green incidents (storage.md
+# 2026-08-18 findings) when it silently went missing.
+mount_rows() {
+  local path="$1"
+  if [ -n "${SS_MOUNTS_FILE:-}" ]; then
+    local target fstype source fsroot
+    while read -r target fstype source fsroot; do
+      [ -n "$target" ] || continue
+      [ "$target" = "$path" ] || continue
+      printf '%s %s %s\n' "$fstype" "$source" "$fsroot"
+    done < "$SS_MOUNTS_FILE"
+  else
+    findmnt -n -o FSTYPE,SOURCE,FSROOT "$path" 2>/dev/null || true
+  fi
+}
+
 emit_entry_verdict() {
   # $1 class (data|cache) · $2 name · $3 shadow dir · $4 subvol dir
   # $5 strict ("true" for nofail mounts — missing subvol FAILs, see header)
   local class="$1" name="$2" shadow="$3" subvol="$4" strict="${5:-false}"
+
+  # Mount-state prelude: if the shadow path is already a live mountpoint,
+  # every content probe below would read the SUBVOL through the mount and
+  # compare it to itself — so judge the mount itself instead (fsroot match
+  # against the declared subvol path, device-independent) and only fall
+  # through to the shadow ladder when nothing is mounted there.
+  local rel="${subvol#"$SS_HOT_ROOT"}"
+  local rows
+  rows=$(mount_rows "$shadow")
+  if [ -n "$rows" ]; then
+    local fstype source fsroot matched=false matched_src="" autofs=false first_src="" first_fsroot=""
+    while read -r fstype source fsroot; do
+      [ -n "${fstype:-}" ] || continue
+      if [ -z "$first_src" ]; then first_src="$source"; first_fsroot="$fsroot"; fi
+      if [ "$fstype" = "autofs" ] || [ "$source" = "systemd-1" ]; then autofs=true; fi
+      if [ "$fsroot" = "$rel" ]; then matched=true; matched_src="$source"; fi
+    done <<<"$rows"
+    if [ "$matched" = true ]; then
+      ss_pass "$class/$name: $shadow is live-mounted on the declared hot-tier subvol (fsroot $rel, source $matched_src) — shadow dir hidden beneath the mount, no shadow-split exposure"
+      return 0
+    fi
+    if [ "$autofs" = true ]; then
+      # Automount stack whose real fs is not visible yet: trigger it (any
+      # lookup through the autofs mounts the backing fs) and re-probe once.
+      $SS_PRIV test -d "$shadow" 2>/dev/null || true
+      while read -r fstype source fsroot; do
+        if [ "${fsroot:-}" = "$rel" ]; then matched=true; matched_src="$source"; fi
+      done <<<"$(mount_rows "$shadow")"
+      if [ "$matched" = true ]; then
+        ss_pass "$class/$name: $shadow is automounted on the declared hot-tier subvol (fsroot $rel, source $matched_src) — shadow dir hidden beneath the mount, no shadow-split exposure"
+        return 0
+      fi
+      ss_warn "$class/$name: automount present at $shadow but the backing mount did not resolve to $subvol — hot root detached or backing broken; verify by hand before deploying"
+      return 0
+    fi
+    if [ "$class" = "data" ]; then
+      ss_fail "$class/$name: shadow path $shadow is mounted from $first_src (fsroot $first_fsroot), NOT the declared hot subvol $rel — a foreign mount covers the service path; investigate/unmount before deploying"
+    else
+      ss_warn "$class/$name: shadow path $shadow is mounted from $first_src (fsroot $first_fsroot), NOT the declared hot subvol $rel — cache class (regenerable), still a foreign mount over the cache path"
+    fi
+    return 0
+  fi
+
   local s_bytes s_count
   read -r s_bytes s_count <<<"$(dir_size "$shadow")"
   if [ "$s_bytes" = "absent" ]; then
