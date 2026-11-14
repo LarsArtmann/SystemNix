@@ -99,7 +99,7 @@ if [ -e "$deploy_lock" ] && [ "$(id -u)" = "0" ] && [ ! -O "$deploy_lock" ]; the
       foreign_lock_live="$foreign_lock_live $recorded_pid"
     fi
   done
-  foreign_age=$(( $(date +%s) - $(stat -c %Y "$deploy_lock") ))
+  foreign_age=$(($(date +%s) - $(stat -c %Y "$deploy_lock")))
   if [ -z "$foreign_lock_live" ] && [ "$foreign_age" -gt 300 ]; then
     echo "self-heal: stale foreign-owned lock (age ${foreign_age}s, no live holder, fs.protected_regular) — unlinking"
     rm -f -- "$deploy_lock"
