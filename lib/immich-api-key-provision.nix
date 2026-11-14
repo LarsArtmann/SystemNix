@@ -66,7 +66,13 @@ pkgs.writeShellApplication {
     db="${config.services.immich.database.name or "immich"}"
     fail=0
     log() { echo "${unitName}: $*"; }
-    psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
+    # setpriv, NOT runuser: runuser opens a PAM session, and under
+    # ProtectSystem=strict that dies "cannot open session: Permission
+    # denied" (utmp/wtmp are read-only) even with CAP_SETUID/SETGID —
+    # first live 2026-11-14 gen-1009 after the caps fix cleared the
+    # earlier "cannot set groups" leg. setpriv switches uid/gid with the
+    # same caps and no PAM; peer-auth postgres only needs the uid.
+    psql() { setpriv --reuid postgres --regid postgres --init-groups -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
 
     # Schema guard (loud, not silent): the INSERT below is coupled to Immich's
     # api_key shape — `key` is BYTEA holding the raw sha256 digest of the

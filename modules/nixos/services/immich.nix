@@ -258,14 +258,15 @@ _: {
               wantedBy = [ "multi-user.target" ];
               inherit onFailure;
               serviceConfig = lib.mkMerge [
-                # runuser (peer-auth postgres as postgres + key-file writes
-                # for other owners) needs setuid/setgid; harden's empty
-                # default dies "runuser: cannot set groups: Operation not
-                # permitted" (live 2026-11-14, gen after the StateDirectory
-                # fix cleared the earlier 226/NAMESPACE leg). CAP_SYS_RESOURCE
-                # clears the NEXT leg: pam_limits raising RLIMIT_MEMLOCK
-                # ("Could not set limit for 'memlock'" → "cannot open
-                # session: Permission denied", live 23:20 gen-1009).
+                # setpriv (peer-auth postgres as postgres — the script's
+                # setpriv note) + key-file writes for other owners need
+                # setuid/setgid; harden's empty default died "runuser:
+                # cannot set groups" (live 2026-11-14, the StateDirectory
+                # fix's next layer), then "cannot open session" (PAM under
+                # ProtectSystem=strict, gen-1009). CAP_SYS_RESOURCE was
+                # added for runuser's pam_limits memlock leg (23:20
+                # gen-1009) — inert spare under setpriv (no PAM), kept
+                # until a cleanup pass proves it unused.
                 (harden {
                   MemoryMax = "128M";
                   CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE";
