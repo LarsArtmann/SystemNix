@@ -1064,16 +1064,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1794622661,
-        "narHash": "sha256-QoC1UjXvPROLpdCAuSdcrvDo7E36rWfftoDF3g0vYgA=",
+        "lastModified": 1794556497,
+        "narHash": "sha256-qio5WjlLVXvrt7nqNAvGw2kIhJKOjbB0dRh9H2dMYQM=",
         "ref": "refs/heads/master",
-        "rev": "f25e54c57e9e4970e71ebbfbcd95931b262d8117",
-        "revCount": 10891,
+        "rev": "066f76c79c8dd01fca1561710951ad0006cfd9df",
+        "revCount": 10790,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
       "original": {
         "ref": "refs/heads/master",
+        "rev": "066f76c79c8dd01fca1561710951ad0006cfd9df",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       }
@@ -3905,17 +3906,17 @@
     "go-cqrs-lite_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1794425143,
-        "narHash": "sha256-2gJsvIt7Gr8fPknccXDAVuOMl2zi2R6VDR21IUg6dFI=",
+        "lastModified": 1791779234,
+        "narHash": "sha256-kporJSEIzjSPP9bbBXBagTPWqBPkLAgyRCaM1K0I3Q4=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "8d84d4b6095199aab8b353b5c2d9e6f6ca58f6ee",
+        "rev": "ae6998c95bc7131c5d8192a407b52b18143e4270",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "8d84d4b6095199aab8b353b5c2d9e6f6ca58f6ee",
+        "rev": "ae6998c95bc7131c5d8192a407b52b18143e4270",
         "type": "github"
       }
     },

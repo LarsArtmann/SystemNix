@@ -226,6 +226,15 @@
     # vendorHash.nix bakes the correct hash from c626704 onward, and the
     # last four roll probes (through f6ccd43) built green with no
     # consumer-side override.
+    # ── 2026-11-14 deploy-blocker rollback (CV go-sum tidy guard) ──────
+    # master f25e54c5's vendor FOD trips CV's own fail-closed guard: go
+    # mod tidy removes stale httputil v1.8.0 go.sum entries the cqrs
+    # train alignment left behind — a consumer shim CANNOT fix it (the
+    # builder refuses before any hash comparison). The fix is committed
+    # in CV 9e3687b97 but agents never push, so the float is
+    # owner-gated. 066f76c is the gen-1004-deployed rev, build-proven
+    # under the current templ + nixpkgs graph (running system binary).
+    cv = "REV-PINNED at 066f76c (2026-11-14): master trips CV's vendor-FOD fail-closed go-sum tidy guard (stale httputil v1.8.0 entries; fix committed in CV 9e3687b97, owner-push gated). LIFT: owner pushes CV >= 9e3687b97, nix flake update cv, toplevel keep-going green (guard passes) — drop the rev.";
   },
 }:
 let
