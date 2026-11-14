@@ -2,8 +2,12 @@
 
 One row per report in this directory: subject, date, and the trigger that
 should refresh it. Sorted newest-first. Maintained by hand — add a row when
-you add a report (the row's refresh-trigger is what keeps these from rotting;
-`checks.doc-counts` does NOT police this file yet).
+you add a report (the row's refresh-trigger is what keeps these from rotting).
+`checks.research-index` polices this file at eval time, both directions:
+every file here needs a row, and every row's link must resolve — a report
+landed without a row fails `nix flake check` (the 2026-11-05 misfiling
+class, mechanized 2026-11-14; `checks.doc-counts` covers only the README/
+FEATURES counts, not this index).
 
 Doctrine (F08 errata, 2026-10-26): every audit-style deep dive MUST include
 a live-probe phase — curl the library's live API/metrics/journal surface
@@ -27,6 +31,7 @@ before scoring a finding. Config presence proves intent, not behavior.
 | Report                                                                                   | Date       | Subject                           | Refresh trigger                                        |
 | ---------------------------------------------------------------------------------------- | ---------- | --------------------------------- | ------------------------------------------------------ |
 | [2026-11-06_kensaku-vs-local-search-stack.md](2026-11-06_kensaku-vs-local-search-stack.md) | 2026-11-06 | kensaku vs OpenCloud × Paperless × renamer × qmd × launchers — WATCH verdict (whole-disk OCR+semantic launcher; no nix packaging, probe path = kensaku-cli binary) | kensaku flake/nixpkgs package, stable 1.x+ line, or owner CLI probe |
+| [2026-10-27_paperless-decision-bench-results.html](2026-10-27_paperless-decision-bench-results.html) | 2026-10-27 | Jev Decision Model × Paperless bench results — decision input for the paperless AI pipeline rework | paperless AI pipeline rework / Jev model change |
 | [2026-09-29_signoz-grafana-gap-analysis.md](2026-09-29_signoz-grafana-gap-analysis.md)   | 2026-09-29 | SigNoz vs Grafana gaps            | SigNoz major bump / dashboard pain that Grafana solves |
 | [coroot-evaluation.md](coroot-evaluation.md)                                             | —          | Coroot observability evaluation   | only if SigNoz is ever questioned                      |
 | [deepflow-evaluation.md](deepflow-evaluation.md)                                         | —          | DeepFlow observability evaluation | only if SigNoz is ever questioned                      |
@@ -39,6 +44,7 @@ before scoring a finding. Config presence proves intent, not behavior.
 | Report                                                                                                                           | Date       | Subject                                                                                                                                                                                                                 | Refresh trigger                                                                |
 | -------------------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | [2026-11-05_ai-deployment-research.md](2026-11-05_ai-deployment-research.md)                                                     | 2026-11-05 | AI deployment practices vs canon (demand classification, cold-load mechanics, restart backoff, ingest idempotency, admission control, IO enforcement) — verdict-per-theme; spawned the RestartSteps + calm-window-batch + demand-profile follow-ups | next AI-stack freeze cluster, llama.cpp/nixpkgs AI-unit policy change, or a new resident service |
+| [2026-11-02_service-module-cross-pollination.md](2026-11-02_service-module-cross-pollination.md)                                 | 2026-11-02 | crush-daily + browser-history cross-pollination review — which host concerns each service solved, parity gap list across the shared SystemNix module contract | service-module contract change / integration-registry rework |
 | [2026-11-01_dprint-wasm-plugins-via-nix.md](2026-11-01_dprint-wasm-plugins-via-nix.md)                                           | 2026-11-01 | Hermetic dprint plugin resolution via Nix (nixpkgs `dprint-plugins` vs per-plugin `fetchurl`), upstream facts verified, treefmt wiring options — decision support for the wire-or-delete row in `docs/todo/pipeline.md` | dprint major bump / wire-or-delete decision landing                            |
 | [2026-10-28_nfs-fscache-learnings-assessment.md](2026-10-28_nfs-fscache-learnings-assessment.md)                                 | 2026-10-28 | NFS FS-Cache technique (video) vs this fleet — no NFS today; recipe for a future `/data/models` share                                                                                                                   | NFS enters the fleet, big-model cold-reload profiling, cachefilesd module move |
 | [2026-10-11_decentralized-offsite-backup-review.md](2026-10-11_decentralized-offsite-backup-review.md)                           | 2026-10-11 | Offsite backup design review                                                                                                                                                                                            | storage architecture change                                                    |

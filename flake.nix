@@ -1727,6 +1727,7 @@
         ./flake/parts/checks/fixtures-drive-ingest.nix
         ./flake/parts/checks/selftests.nix
         ./flake/parts/checks/doc-counts.nix
+        ./flake/parts/checks/research-index.nix
         ./flake/parts/checks/features-drift.nix
         ./flake/parts/checks/dnsblockd-guards.nix
         ./flake/parts/checks/lib-parse-memory.nix
