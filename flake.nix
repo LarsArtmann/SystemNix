@@ -578,7 +578,16 @@
     # CWD (viper ".", no --config flag), so the unit's WorkingDirectory
     # is the data dir ~/invoices holding the production config of record.
     invoices = {
-      url = "git+ssh://git@github.com/LarsArtmann/invoices?ref=refs/heads/master";
+      # REV-PINNED 2026-11-14 at ee4d6ee4 (deploy-blocker rollback, the
+      # documented-ceiling form; second de-float — the morning's one was
+      # re-floated by a later lock wave): tip 9496b1d8 has the sqlc
+      # half-regen compile break — querier.go:457 undefined
+      # UpsertPaylinkAssignmentParams (first-hand keepgoing-post7.log;
+      # ls-remote confirms tip == 9496b1d8, fix not landed). LIFT:
+      # upstream master lands the sqlc regen completion — float +
+      # toplevel keep-going green, then drop the rev. Reason row lives in
+      # lib/flake-input-pin-audit.nix.
+      url = "git+ssh://git@github.com/LarsArtmann/invoices?ref=refs/heads/master&rev=ee4d6ee4e38140c5ec8e0c702736bef01282b055";
     };
 
     # index — project documentation indexer; the docs-archive-stats

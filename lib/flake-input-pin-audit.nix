@@ -243,6 +243,7 @@
     # ~/.cache/signoz-fod-fix/keepgoing-post5.log). 30dee8fe is the last
     # build-proven rev (green through the full toplevel pre-float).
     go-health-dashboard = "REV-PINNED at 30dee8fe (2026-11-14): tip caf9970 is broken upstream (cmd/health-hub imports internal/env, no module provides it — FOD compile failure). LIFT: a master tip whose health-hub package builds green through the toplevel keep-going — float, prove, drop the rev.";
+    invoices = "REV-PINNED at ee4d6ee4 (2026-11-14, second de-float): tip 9496b1d8 has the sqlc half-regen compile break (undefined UpsertPaylinkAssignmentParams, querier.go:457 — fix not landed upstream). LIFT: upstream master lands the regen completion — float + toplevel keep-going green, then drop the rev.";
   },
 }:
 let
