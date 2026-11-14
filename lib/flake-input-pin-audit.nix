@@ -236,6 +236,13 @@
     # go.sum drop), the only build-proven candidate between two broken
     # tips (f25e54c5 pre-fix, eb951951 post-restore).
     cv = "REV-PINNED at 9e3687b9 (2026-11-14): the pushed go-sum tidy fix itself — master tip eb951951 re-trips CV's fail-closed go-sum tidy guard by restoring module-graph entries. LIFT: a master tip at or past eb951951 whose go-modules FOD builds with the guard green (nix build of the cv go-modules FOD or toplevel keep-going) — drop the rev.";
+    # ── 2026-11-14 deploy-blocker rollback (health-hub broken tip) ──────
+    # Tip caf9970 is BROKEN upstream: cmd/health-hub imports
+    # go-health-dashboard/internal/env, which no module in its graph
+    # provides (compile failure in the go-modules FOD, first-hand
+    # ~/.cache/signoz-fod-fix/keepgoing-post5.log). 30dee8fe is the last
+    # build-proven rev (green through the full toplevel pre-float).
+    go-health-dashboard = "REV-PINNED at 30dee8fe (2026-11-14): tip caf9970 is broken upstream (cmd/health-hub imports internal/env, no module provides it — FOD compile failure). LIFT: a master tip whose health-hub package builds green through the toplevel keep-going — float, prove, drop the rev.";
   },
 }:
 let

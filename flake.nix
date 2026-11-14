@@ -702,7 +702,7 @@
       # toplevel at the 4b22e4ca0-era tree).
       # LIFT: upstream ships a rev whose health-hub package builds green
       # through our toplevel — float + keep-going proof, then drop the rev.
-      url = "github:LarsArtmann/go-health-dashboard?ref=master&rev=30dee8febc22356ff25193aecb04a2f3356b1542";
+      url = "github:LarsArtmann/go-health-dashboard/30dee8febc22356ff25193aecb04a2f3356b1542";
     };
 
     # io-surface: the I/O surface manifest gate for Go trees. Extracts every

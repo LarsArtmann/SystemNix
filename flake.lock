@@ -5589,17 +5589,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1794622695,
-        "narHash": "sha256-V9QilVl8S1QBAap0r5eooWg86A7xoW315w4XqWv/1OM=",
+        "lastModified": 1794495385,
+        "narHash": "sha256-mNTMk2S8Uj/wC6jFvobs/nSPks/HSF3P8gXL32tWDAg=",
         "owner": "LarsArtmann",
         "repo": "go-health-dashboard",
-        "rev": "caf9970f1d39537cde8e10e80559f6ba3734df8d",
+        "rev": "30dee8febc22356ff25193aecb04a2f3356b1542",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "go-health-dashboard",
+        "rev": "30dee8febc22356ff25193aecb04a2f3356b1542",
         "type": "github"
       }
     },
