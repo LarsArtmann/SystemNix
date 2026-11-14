@@ -45,3 +45,17 @@
 - services.md: SECCOMP row resolved with full mechanism; new [blocked:deploy] library entry (the full battery incl. bank-sync repin verification).
 - Runbooks: audiblesync.md (env-quoting trap), immich.md (StateDirectory + custom-keyFile caveat), monitor365.md (kernel-log grant section).
 - CHANGELOG: wave entry. Deliberately NOT harvested: the alert-leg row (already exists at TODO_LIST:598), the storm/deploy decision (no row can act for the owner).
+
+## Addendum (17:10, follow-up session) — census orphans attributed + deploy coordination
+
+### c) Census-orphan attribution (closed)
+
+1. **x2dx2 (14 restarts) = `forgejo-runner-evo\x2dx2.service` start-pre timeout loop** — since 13:58 (0 attempts yesterday), 27+ by 16:31, CI runner down all day: genToken + provision legs finish in ~1s (`provision: connection identity present — nothing to do`), then the `+forgejo-provision-runner-cache` leg's `chgrp -R gitea-runner-cache /mnt/buildcache/ci-runner-cache/{ec-hub,gf-logs}` walk starves under the IO storm and hits `TimeoutStartSec=3min` → `Failed with result 'timeout'` → the 5-min ensure timer refires. Caught in-flight (PID 2476106, chgrp mid-walk). Storm-collateral with a structural flaw (unbounded-TIME walk inside the timeout-budgeted start chain) → `[ready]` row in TODO_LIST + services.md.
+2. **cvagent (4 restarts) = systemd-oomd kills** (13:21/13:43 + exit-2 at 14:04/15:27; 897 MB peak, 157 GB disk reads lifetime) — freeze-#54-session collateral, their P0 row owns the fix (their 15:41 line is the boot re-arm per their own correction note). Corroborated, not re-filed.
+3. **User-manager failed sweep (census blind spot)**: `nextd-refresh.service` = the nextd daemon's `/refresh` returns 500 on every 15-min tick since its 15:33 watchdog SIGABRT (main goroutine blocked in select 363 min) → `[watch]` row, fix lives in the nextd repo. `push-stall-watch.service` = BY-DESIGN stall detector firing on the 26+ unpushed owner-gated commits — working as intended, resolves with the owner's push ruling.
+4. **`systemd-analyze syscall-filter @system-service` verification**: `syslog` is NOT a member (exact-list grep rc=1; full dump shows it only under `@known`) — the monitor365.nix comment stands as written, no correction needed. Battery item closed.
+5. **bank-sync pre-start backup sizing**: upstream design is `cp -f` onto a single rolling `data.db.pre-start.bak` (207 MB, overwritten every start — /home/lars/projects/bank-sync/deploy/nixos/bank-sync.nix:283-300) — the 39-restart loop grew NOTHING. The 4 dated pre-qonto-import .baks (~408 MB) remain owner-reclaim (existing services.md decision row updated with this verification + the 750 permission-blind note).
+
+### Deploy coordination (open)
+
+The parallel freeze-#54 session's armed calm-window waiter (`~/.cache/band-deploy2.log`, io<20 ∧ mem<20 ∧ trip-free ≥15 min) owns the next deploy — the same master tree carries this wave, so the waiter's fire deploys the fixes + the bank-sync repin. Takeover condition (this session): if the storm drains but the waiter log goes stale past its horizon without a fire, this session re-arms and fires per the standard protocol. Storm evidence at 17:05: 96 ld.mold linkers, IDENTICAL PID set across 3 min (zero completions), sdb aggregate write ~495 KB/s — the session-26 SSH build battery (monitor365 cargo-nextest, started 15:46:58 post-boot) is crawling in write-starvation; owner stop/let-finish ruling (freeze-#54 session §g.1) gates every deploy. The verification battery stays queued in the `[blocked:deploy]` row.
