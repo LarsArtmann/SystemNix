@@ -224,11 +224,13 @@
       # v0.4.2 re-pin), so the shim is DROPPED and upstream's own hash
       # governs again. Re-add ONLY via fresh first-hand nix-hash-fix
       # evidence, never by hand.
-      # TWENTIETH entry 2026-11-14 pin lift: the guard fix landed upstream
-      # (CV 9e3687b97, pushed 10:00Z), the input re-floated to master
-      # (?ref=refs/heads/master), and eb951951 passed the toplevel
-      # keep-going proof the same day — upstream's own baked vendorHash
-      # governs, shim stays dropped.
+      # TWENTIETH entry 2026-11-14 re-pin at the pushed fix: the guard fix
+      # landed upstream (CV 9e3687b97, 10:00Z) and the morning's 066f76c
+      # pin was briefly lifted — but tip eb951951 ("restore module-graph
+      # go.sum entries") immediately re-tripped the SAME guard, so the
+      # input is REV-PINNED at 9e3687b97 (the fix rev) until a master tip
+      # builds with the guard green again. Upstream's own baked vendorHash
+      # governs; shim stays dropped.
       cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {

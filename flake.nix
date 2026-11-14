@@ -1049,14 +1049,18 @@
       # rehydration). cv-server crash-loops at EVERY rev until upstream
       # lands the nil-guard + chunked rehydration fix; this float does not
       # change that. vendorHash re-measure rides the proof.
-      # REV-PINNED 2026-11-14 at 066f76c (deploy-blocker rollback: master
+      # REV-PINNED 2026-11-14 round 2 at 9e3687b9 — the pushed go-sum tidy
+      # fix itself. Morning timeline: the 066f76c rollback pin (master
       # f25e54c5's vendor FOD tripped CV's fail-closed go-sum tidy guard —
-      # stale httputil v1.8.0 go.sum entries). PIN LIFTED 2026-11-14:
-      # the guard fix landed upstream (CV 9e3687b97, pushed 10:00Z) and
-      # master floats again — eb951951 built green through the toplevel
-      # keep-going proof the same day, upstream's own baked vendorHash
-      # governing (nineteenth-entry drop-safety carried over). Floats on
-      # master under ?ref=refs/heads/master (crm precedent).
+      # stale httputil v1.8.0 entries) was LIFTED when the fix landed
+      # upstream (9e3687b97, 10:00Z), the input re-floated to master… and
+      # tip eb951951 (12:30Z, "restore module-graph go.sum entries")
+      # immediately re-tripped the SAME guard — the restore re-added
+      # entries the module graph drops (committed go.sum ~166 lines fat
+      # of tidy, first-hand keep-going ~/.cache/cv-lift-keepgoing2.log).
+      # 9e3687b9 is the only build-proven candidate between the two
+      # broken tips. LIFT: a master tip ≥ eb951951 whose go-modules FOD
+      # builds with the guard green — then drop this rev.
       url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=9e3687b97ef71694e00b7270270137fbe27ac416";
     };
 
