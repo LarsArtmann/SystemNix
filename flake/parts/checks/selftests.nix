@@ -194,8 +194,13 @@
         # shadow-split deploy gate fixtures (pre-deploy §18): the wave-6
         # signature + degradation ladders + the 2026-10-28 STRICT projects
         # legs (empty-subvol FAIL, missing-subvol FAIL for the nofail
-        # mount, prepared PASS, parity WARN). Fixtures drive the gate via
-        # SS_ENTRIES_JSON — no nix eval runs inside the check.
+        # mount, prepared PASS, parity WARN) + the 2026-11-14 mount-state
+        # prelude (live-mounted PASS with the content ladder skipped,
+        # foreign-mount FAIL/WARN, automount resolved/unresolved via the
+        # phase-2 "after:" table rows). Fixtures drive the gate via
+        # SS_ENTRIES_JSON + SS_MOUNTS_FILE — no nix eval runs inside the
+        # check; util-linux keeps the findmnt branch available should a
+        # fixture ever drop the mount-table hook.
         shadow-split-gate-selftest =
           pkgs.runCommand "shadow-split-gate-selftest"
             {
@@ -204,6 +209,7 @@
                 coreutils
                 findutils
                 jq
+                util-linux
               ];
             }
             ''

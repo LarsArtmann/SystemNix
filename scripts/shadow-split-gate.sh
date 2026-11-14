@@ -141,24 +141,38 @@ dir_size() {
   fi
 }
 
-# mount_rows <path> -> one "fstype source fsroot" line per mount whose
-# TARGET is exactly <path> (an automounted path legitimately yields TWO
-# rows: the autofs mount plus the real fs it triggers). Test hook:
+# mount_rows <path> [phase] -> one "fstype source fsroot" line per mount
+# whose TARGET is exactly <path> (an automounted path legitimately yields
+# TWO rows: the autofs mount plus the real fs it triggers). Test hook:
 # SS_MOUNTS_FILE replaces findmnt with a space-separated table — same
-# output shape, no findmnt dependency inside the Nix sandbox.
+# output shape, no findmnt dependency inside the Nix sandbox. Rows whose
+# target is prefixed "after:" belong to phase 2 (post-trigger): they model
+# a backing fs that only becomes visible once the automount is triggered,
+# which a static table otherwise cannot express.
 # NOTE: no awk here on purpose — unit scripts must list every binary they
 # exec, and awk has caused two phantom-green incidents (storage.md
 # 2026-08-18 findings) when it silently went missing.
 mount_rows() {
-  local path="$1"
+  local path="$1" phase="${2:-1}"
   if [ -n "${SS_MOUNTS_FILE:-}" ]; then
     local target fstype source fsroot
     while read -r target fstype source fsroot; do
       [ -n "$target" ] || continue
+      if [ "${target#after:}" != "$target" ]; then
+        [ "$phase" = "2" ] || continue
+        target="${target#after:}"
+      fi
       [ "$target" = "$path" ] || continue
       printf '%s %s %s\n' "$fstype" "$source" "$fsroot"
     done < "$SS_MOUNTS_FILE"
   else
+    # Loud, not silent: a missing findmnt would make every mount-state
+    # probe return empty and silently degrade to the shadow ladder —
+    # the exact phantom-green class storage.md 2026-08-18 documents.
+    if ! command -v findmnt >/dev/null 2>&1; then
+      echo "ERROR: findmnt not available — cannot probe mount state" >&2
+      exit 2
+    fi
     findmnt -n -o FSTYPE,SOURCE,FSROOT "$path" 2>/dev/null || true
   fi
 }
@@ -190,11 +204,12 @@ emit_entry_verdict() {
     fi
     if [ "$autofs" = true ]; then
       # Automount stack whose real fs is not visible yet: trigger it (any
-      # lookup through the autofs mounts the backing fs) and re-probe once.
+      # lookup through the autofs mounts the backing fs) and re-probe once
+      # (phase 2 in fixture tables: rows marked "after:").
       $SS_PRIV test -d "$shadow" 2>/dev/null || true
       while read -r fstype source fsroot; do
         if [ "${fsroot:-}" = "$rel" ]; then matched=true; matched_src="$source"; fi
-      done <<<"$(mount_rows "$shadow")"
+      done <<<"$(mount_rows "$shadow" 2)"
       if [ "$matched" = true ]; then
         ss_pass "$class/$name: $shadow is automounted on the declared hot-tier subvol (fsroot $rel, source $matched_src) — shadow dir hidden beneath the mount, no shadow-split exposure"
         return 0

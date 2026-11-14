@@ -34,6 +34,17 @@
 #                                          it could not — only du was
 #                                          privileged, -d never was)
 #   no entries at all                   -> PASS, rc 0
+#   mount-state prelude (2026-11-14 — the self-comparison fix; probes
+#   through a live mount read the SUBVOL through the mount, so mounted
+#   entries are judged by their mount, not by content):
+#   mounted, fsroot == declared subvol   -> PASS even with an EMPTY subvol
+#                                          fixture + populated shadow —
+#                                          the content ladder must be
+#                                          SKIPPED (anti-theater leg)
+#   mounted from a foreign fsroot (data) -> FAIL, rc 1
+#   mounted from a foreign fsroot (cache) -> WARN, rc 0
+#   automount stack, backing resolvable  -> PASS (both rows in table)
+#   automount stack, backing unresolved  -> WARN, rc 0
 # Run: bash scripts/test-predeploy-shadow-split.sh
 set -uo pipefail
 
@@ -57,10 +68,17 @@ expect() {
 run_case() {
   # $1 label · $2 shadow-prep command · $3 subvol-prep command · $4 entry JSON
   # $5 optional SS_PRIV override (default "" — the degraded-probe mode)
-  local label="$1" shadow_prep="$2" subvol_prep="$3" json="$4" priv="${5:-}"
+  # $6 optional mount-table body (space rows "target fstype source fsroot";
+  # @SHADOW@ expands to the fixture shadow root — simulates mounted states)
+  local label="$1" shadow_prep="$2" subvol_prep="$3" json="$4" priv="${5:-}" mounts="${6:-}"
   local tmp out rc
   tmp=$(mktemp -d)
   mkdir -p "$tmp/shadow" "$tmp/hot"
+  # Always hand the gate a mount table (empty = nothing mounted — the
+  # steady fixtures) so the fixture code path is identical to the
+  # mount-state cases; production uses findmnt instead.
+  mounts="${mounts//@SHADOW@/$tmp/shadow}"
+  printf '%s\n' "$mounts" > "$tmp/mounts.tsv"
   (cd "$tmp" && eval "$shadow_prep") || {
     echo "  FAIL [setup] $label: shadow prep failed"
     TEST_FAILURES=$((TEST_FAILURES + 1))
@@ -74,7 +92,7 @@ run_case() {
     return 0
   }
   out=$(SS_PRIV="$priv" SS_SHADOW_ROOT="$tmp/shadow" SS_HOT_ROOT="$tmp/hot" \
-    SS_ENTRIES_JSON="$json" bash "$GATE" 2>&1)
+    SS_MOUNTS_FILE="$tmp/mounts.tsv" SS_ENTRIES_JSON="$json" bash "$GATE" 2>&1)
   rc=$?
   printf '%s\n' "$out" | sed 's/^/       /' | sed -n '1,12p'
   # Root-owned fixture trees (the privileged cases) need root to unlock
@@ -230,6 +248,62 @@ if sudo -n true 2>/dev/null; then
 else
   echo "  skip [case 17] privileged probe leg (no passwordless sudo here)"
 fi
+
+# 18. mount-state prelude: shadow path live-mounted on the DECLARED subvol
+#     -> PASS and the content ladder SKIPPED — populated shadow + EMPTY
+#     subvol fixture would trip wave-6 if the gate still compared content
+#     through the mount (the pre-2026-11-14 self-comparison theater).
+run_case "mounted-on-declared-subvol PASS (content ladder skipped)" \
+  "mkdir -p shadow/srv/mydb && dd if=/dev/zero of=shadow/srv/mydb/base bs=1k count=10 2>/dev/null" \
+  "mkdir -p hot/hot/mydb" \
+  "$JSON_DATA_EMPTY" "" \
+  "@SHADOW@/srv/mydb btrfs /dev/fake[/hot/mydb] /hot/mydb"
+expect "rc 0 (pass)" "$VerdictRC" "0"
+expect "live-mounted PASS emitted" "$(printf '%s' "$VerdictOut" | grep -c 'live-mounted on the declared hot-tier subvol' || true)" "1"
+expect "no wave-6 verdict through the mount" "$(printf '%s' "$VerdictOut" | grep -c 'WAVE-6' || true)" "0"
+
+# 19. foreign mount over a data shadow path -> FAIL: the declared subvol
+#     is NOT what is serving the service path.
+run_case "foreign mount data FAIL" \
+  "mkdir -p shadow/srv/mydb && dd if=/dev/zero of=shadow/srv/mydb/base bs=1k count=10 2>/dev/null" \
+  "mkdir -p hot/hot/mydb && dd if=/dev/zero of=hot/hot/mydb/base bs=1k count=5 2>/dev/null" \
+  "$JSON_DATA_EMPTY" "" \
+  "@SHADOW@/srv/mydb ext4 /dev/rescue[/other] /other"
+expect "rc 1 (fail)" "$VerdictRC" "1"
+expect "foreign-mount FAIL emitted" "$(printf '%s' "$VerdictOut" | grep -c 'foreign mount covers the service path' || true)" "1"
+
+# 20. foreign mount over a cache path -> WARN (regenerable), never fail.
+run_case "foreign mount cache WARN" \
+  "mkdir -p shadow/srv/x && printf data > shadow/srv/x/f1" \
+  "mkdir -p hot/users/t/cache/x && printf data > hot/users/t/cache/x/f1" \
+  "$JSON_CACHE_EMPTY" "" \
+  "@SHADOW@/srv/x ext4 /dev/xx /"
+expect "rc 0 (warn-only)" "$VerdictRC" "0"
+expect "foreign-mount WARN emitted" "$(printf '%s' "$VerdictOut" | grep -c 'foreign mount over the cache path' || true)" "1"
+
+# 21. automount stack whose backing resolves only after the trigger: the
+#     phase-1 table holds just the autofs row, the "after:" row models the
+#     backing fs the trigger mounts — -> PASS via the automount branch.
+#     (A stack whose backing is ALREADY visible matches in the first
+#     branch and PASSes as "live-mounted" — case 18's shape.)
+run_case "automount resolved PASS" \
+  "mkdir -p shadow/srv/x && printf data > shadow/srv/x/f1" \
+  "mkdir -p hot/users/t/cache/x" \
+  "$JSON_CACHE_EMPTY" "" \
+  "@SHADOW@/srv/x autofs systemd-1 /
+after:@SHADOW@/srv/x btrfs /dev/fake[/users/t/cache/x] /users/t/cache/x"
+expect "rc 0 (pass)" "$VerdictRC" "0"
+expect "automounted PASS emitted" "$(printf '%s' "$VerdictOut" | grep -c 'automounted on the declared hot-tier subvol' || true)" "1"
+
+# 22. automount stack whose backing never resolves -> WARN (cannot-verify),
+#     never a content verdict through the autofs.
+run_case "automount unresolved WARN" \
+  "mkdir -p shadow/srv/x && printf data > shadow/srv/x/f1" \
+  "mkdir -p hot/users/t/cache/x" \
+  "$JSON_CACHE_EMPTY" "" \
+  "@SHADOW@/srv/x autofs systemd-1 /"
+expect "rc 0 (degraded warn)" "$VerdictRC" "0"
+expect "unresolved-automount WARN emitted" "$(printf '%s' "$VerdictOut" | grep -c 'backing mount did not resolve' || true)" "1"
 
 echo ""
 if [ "$TEST_FAILURES" -gt 0 ]; then
