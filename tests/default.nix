@@ -58,7 +58,7 @@ in
   ksm = makeTest (import ./test-ksm.nix { inherit pkgs; });
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
-  paperless = makeTest (import ./test-paperless.nix { inherit pkgs inputs; });
+  paperless = makeTest (import ./test-paperless.nix { inherit inputs; });
   paperless-gpt = makeTest (import ./test-paperless-gpt.nix { inherit inputs; });
   paperless-triage = makeTest (import ./test-paperless-triage.nix { inherit pkgs; });
   hermes = makeTest (import ./test-hermes.nix { inherit pkgs inputs; });

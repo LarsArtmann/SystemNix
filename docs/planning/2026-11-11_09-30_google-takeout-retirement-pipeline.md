@@ -182,9 +182,10 @@ bash scripts/takeout-ingest-photos.sh <staging> --dry-run
 bash scripts/takeout-ingest-photos.sh <staging>
 ```
 
-Needs: owner-created Immich API key (Account Settings → API Keys; scope asset.read+asset.upload is NOT
-enough for immich-go album creation — create a FULL-access key for the migration, delete it after) at
-`<staging>/immich-api-key` 0600. Gate G3: immich-go exit 0; uploaded-count + duplicate-count +
+Needs: **SUPERSEDED 2026-11-14 — no owner-created key and no key file in the staging tree.** The key is
+machine-minted by the root converger `immich-api-key-provision` from `services.immich.apiKeys.takeout-import`
+(immich-go's documented scope minus `asset.delete`) to `/var/lib/immich-api-keys/takeout-import.env` 0400, which
+`scripts/takeout-ingest-photos.sh` reads. See docs/services/immich.md "API-key lifecycle". Gate G3: immich-go exit 0; uploaded-count + duplicate-count +
 error-count == expected media count from `inventory.tsv` (Photos product); albums present in Immich;
 `--on-errors continue` NEVER used silently — the wrapper stops on first error by default.
 
@@ -218,7 +219,7 @@ the mesh proposal later. No service ingestion (deliberate: contacts/calendar own
 
 ## Security rules (binding)
 
-- `urls.txt`/`cookies.txt`/`immich-api-key`/app passwords: 0600, live ONLY inside the 0700 staging root, never in the repo, never on a command line, never in chat. Shred cookies + API key when their phase is green (`truncate -s 0` + `trash`, or `sops` if made permanent).
+- `urls.txt`/`cookies.txt`/app passwords: 0600, live ONLY inside the 0700 staging root, never in the repo, never on a command line, never in chat. Shred cookies when their phase is green (`truncate -s 0` + `trash`). (The Immich key is NOT a staging secret since 2026-11-14: it lives at `/var/lib/immich-api-keys/` under converger ownership — do not re-introduce a copy in the staging tree.)
 - The staging tree contains Mail + My Activity + full PII: never web-served, never copied off the pool, `chmod -R go-rwx` enforced by the scripts.
 - Nothing in this pipeline ever writes a secret value into a commit, log line, or journal.
 
