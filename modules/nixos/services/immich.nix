@@ -258,7 +258,15 @@ _: {
               wantedBy = [ "multi-user.target" ];
               inherit onFailure;
               serviceConfig = lib.mkMerge [
-                (harden { MemoryMax = "128M"; })
+                # runuser (peer-auth postgres as postgres + key-file writes
+                # for other owners) needs setuid/setgid; harden's empty
+                # default dies "runuser: cannot set groups: Operation not
+                # permitted" (live 2026-11-14, gen after the StateDirectory
+                # fix cleared the earlier 226/NAMESPACE leg).
+                (harden {
+                  MemoryMax = "128M";
+                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID";
+                })
                 (serviceOneshotDefaults { })
                 {
                   Type = "oneshot";
