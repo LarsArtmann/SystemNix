@@ -70,6 +70,13 @@ in
       GOPRIVATE = privateGoPattern;
 
       GONOSUMDB = privateGoPattern;
+
+      # BuildFlow's dprint lane: the locally built plugin bundle kills the
+      # one-time remote-plugin fetch on cold runs. The result symlink is the
+      # stable path (its store target bumps with the BuildFlow flake input);
+      # rebuild it with `nix build .#dprint-plugins -o ~/.local/state/buildflow/dprint-plugins`
+      # from the BuildFlow checkout.
+      BUILDFLOW_DPRINT_PLUGINS = "${config.home.homeDirectory}/.local/state/buildflow/dprint-plugins/share/dprint-plugins";
     };
 
     # Home Manager version for compatibility
