@@ -38,14 +38,16 @@
           ) entries;
 
           # reverse: every relative link target must exist in the directory.
-          # builtins.split yields matched parts as lists [ whole capture ];
-          # plain strings are the unmatched interstitials. Literal ] is
-          # spelled as the bracket class []] — a bare \] is an invalid ERE
-          # here (invalid regular expression, live-tested 2026-11-14).
+          # builtins.split yields matched parts as lists carrying the capture
+          # groups ONLY (nix 2.34 live semantics: element 0 IS the first
+          # capture — no whole-match element); plain strings are the
+          # unmatched interstitials. Literal ] is spelled as the bracket
+          # class []] — a bare \] is an invalid ERE here (invalid regular
+          # expression, live-tested 2026-11-14).
           linkTargets = builtins.concatMap (
             part:
             let
-              target = builtins.elemAt part 1;
+              target = builtins.elemAt part 0;
             in
             if target != null && target != "" then [ target ] else [ ]
           ) (builtins.filter builtins.isList (builtins.split "[]]\\(([^) ]+)\\)" indexedText));

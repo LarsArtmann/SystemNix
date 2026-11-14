@@ -379,7 +379,7 @@ build_case() {
 
 # ── green controls: pristine copy, every touched check must build ──
 if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]]; then
-  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract doc-counts btrbk-data-gate-fixture; do
+  for check in signoz-query-lint gatus-pattern-lint module-shape-lint binary-coverage-lint dead-guard-lint with-pkgs-lint gitleaks-coverage-selftest scrub-exit-contract bridge-exit-contract doc-counts research-index btrbk-data-gate-fixture; do
     dir=$(make_copy "pristine-$check")
     out=$(build_check "$dir" "$check") || status=$? || true
     status=${status:-0}
@@ -829,6 +829,16 @@ run_case doccounts features-packages doc-counts fail 'doc-counts: FEATURES packa
 # the "anchor missing" branch must fire (never silently pass).
 run_case doccounts anchor-missing doc-counts fail 'doc-counts: README gatus endpoints assertion anchor missing' \
   'sed:README.md:s|` → 247;|` → two-hundred;|'
+
+# ── researchindex: docs/research/ README-row coverage gate (misfiling class) ──
+# BOTH directions must fail loudly with their own marker: an unindexed file
+# (the 2026-11-05 misfiling class) and a row whose link target has vanished
+# (stale-row rot). Mutations ADD a bad shape without removing coverage, so
+# each case trips exactly one direction.
+run_case researchindex unindexed-file research-index fail 'research-index: docs/research/zz-unindexed-negative-test.md has no README index row' \
+  'append:docs/research/zz-unindexed-negative-test.md:created by harness'
+run_case researchindex dangling-row research-index fail 'research-index: docs/research/README.md links to zz-dangling-negative-test.md which does not exist' \
+  'append:docs/research/README.md:| [zz-dangling-negative-test.md](zz-dangling-negative-test.md) | — | dangling-row negative test | never |'
 
 # ── metricnames: LIVE store-truth sweep (opt-in ONLY — CI has no store access) ──
 # The nightly workflow sets no CASES, so this group never runs in CI: it needs

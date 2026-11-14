@@ -244,6 +244,7 @@
     # build-proven rev (green through the full toplevel pre-float).
     go-health-dashboard = "REV-PINNED at 30dee8fe (2026-11-14): tip caf9970 is broken upstream (cmd/health-hub imports internal/env, no module provides it — FOD compile failure). LIFT: a master tip whose health-hub package builds green through the toplevel keep-going — float, prove, drop the rev.";
     invoices = "REV-PINNED at ee4d6ee4 (2026-11-14, second de-float): tip 9496b1d8 has the sqlc half-regen compile break (undefined UpsertPaylinkAssignmentParams, querier.go:457 — fix not landed upstream). LIFT: upstream master lands the regen completion — float + toplevel keep-going green, then drop the rev.";
+    bank-sync = "REV-PINNED at ad8a90c9 (2026-11-14): the floated 93ead5fc crash-loops exit-65 journal_snapshot_divergence against the PROD journal (the 2026-10-14 d15e0a48 class recurring; new binary refuses writes, data untouched). LIFT: owner rules on adopting 93ead5fc via the fresh-start cutover or migrate-journal (docs/runbooks/migrate-journal.md) — then float and drop the rev.";
   },
 }:
 let
