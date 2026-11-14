@@ -1403,7 +1403,15 @@ _: {
 
         systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}" = {
           after = [ "forgejo.service" ];
-          wants = [ "forgejo.service" ];
+          wants = [
+            "forgejo.service"
+            # Parallel pull of the repair walks (see the cache-repair unit
+            # below): every runner START re-fires a fresh repair run, so a
+            # switch-renumbered DynamicUser uid is fixed at the same moment
+            # the runner comes back — with NO ordering edge, so a starved
+            # repair never delays the runner's start chain.
+            "forgejo-runner-${utils.escapeSystemdPath hostName}-cache-repair.service"
+          ];
           # wantedBy forgejo.service, NOT the nixpkgs default multi-user.target:
           # a long-running unit in multi-user.wants gets an implicit
           # Before=multi-user.target, which together with after=forgejo here and
@@ -1484,18 +1492,17 @@ _: {
                       /mnt/buildcache/ci-runner-cache \
                       /mnt/buildcache/ci-runner-cache/ec-hub \
                       /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
-                    # The WALK is bounded to the two small job state roots:
-                    # chowning the whole cache (gomodcache et al) on every
-                    # start would cost minutes; their old-uid entries are
-                    # hash-keyed read-only hits that Go/npm tolerate, and
-                    # setgid on the root makes every NEW subdir inherit the
-                    # group anyway.
-                    chgrp -R gitea-runner-cache \
-                      /mnt/buildcache/ci-runner-cache/ec-hub \
-                      /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
-                    chmod -R g+rwX \
-                      /mnt/buildcache/ci-runner-cache/ec-hub \
-                      /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+                    # The chgrp -R/chmod -R repair walks used to live HERE
+                    # (inside TimeoutStartSec=3min). Under the 2026-11-14 IO
+                    # storm (PSI 99) the walk starved, the start timed out,
+                    # and the 5-min ensure timer refired it all day — the
+                    # walk also held the boot transaction open, which
+                    # blocked systemd-analyze (boot-metrics) and thus every
+                    # deploy (§10 phantom-metric gate). The walks moved to
+                    # forgejo-runner-…-cache-repair.service: a timer-driven
+                    # oneshot with its own 30-min budget + a stale-uid
+                    # guard, PARALLEL to this start chain (wants, no
+                    # ordering) — the runner never waits on a repair again.
                   ''
                 )
                 # Root leg: render connection-config.yaml from the store
@@ -1618,6 +1625,60 @@ _: {
           timerConfig = {
             OnBootSec = "5min";
             OnUnitActiveSec = "5min";
+            AccuracySec = "1min";
+          };
+        };
+
+        # Repair walks for the shared ci-runner-cache group ownership,
+        # DECOUPLED from the runner's start chain (2026-11-14 storm class:
+        # the chgrp -R leg starved at IO PSI 99 inside TimeoutStartSec=3min
+        # → start-pre timeout → ensure-timer refire loop all day; the stuck
+        # start job also held the boot transaction open, blinding
+        # boot-metrics and blocking deploys via the §10 phantom-metric
+        # gate). Design: timer-driven oneshot (the timer IS the retry —
+        # oneshot+Restart is an eval-invalid shape), 30-min budget of its
+        # own, stale-uid guard so the clean case costs one metadata scan
+        # and zero mutating walks, pulled PARALLEL at runner start via
+        # wants (no ordering edge — the runner never waits on a repair;
+        # a failed/timeout repair cannot fail the runner).
+        systemd.services."forgejo-runner-${utils.escapeSystemdPath hostName}-cache-repair" = {
+          description = "Repair ci-runner-cache group ownership (stale DynamicUser-uid files) — decoupled from the runner start chain";
+          unitConfig = {
+            RequiresMountsFor = [ "/mnt/buildcache/ci-runner-cache" ];
+            ConditionPathExists = subvolMigratedCondition;
+          };
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = "+${pkgs.writeShellScript "forgejo-runner-cache-repair" ''
+              # Stale-uid guard: the mutating walks run ONLY when at least
+              # one entry in the two job state roots is outside the
+              # gitea-runner-cache group (dirty trees exit at the FIRST
+              # offender via -quit; clean trees pay one metadata scan and
+              # skip). Old-uid entries elsewhere (gomodcache et al) stay
+              # tolerated read-only hits, as before.
+              if ! find /mnt/buildcache/ci-runner-cache/ec-hub \
+                     /mnt/buildcache/ci-runner-cache/gf-logs \
+                     \( ! -group gitea-runner-cache \) -print -quit 2>/dev/null | grep -q .; then
+                echo "forgejo-runner-cache-repair: job state roots group-clean — no walk needed"
+                exit 0
+              fi
+              chgrp -R gitea-runner-cache \
+                /mnt/buildcache/ci-runner-cache/ec-hub \
+                /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+              chmod -R g+rwX \
+                /mnt/buildcache/ci-runner-cache/ec-hub \
+                /mnt/buildcache/ci-runner-cache/gf-logs 2>/dev/null || true
+            ''}";
+            TimeoutStartSec = "30min";
+          };
+        };
+
+        systemd.timers."forgejo-runner-${utils.escapeSystemdPath hostName}-cache-repair" = {
+          description = "Periodic ci-runner-cache group-ownership repair (stale-uid guard makes the clean case near-free)";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "10min";
+            OnUnitActiveSec = "15min";
             AccuracySec = "1min";
           };
         };
