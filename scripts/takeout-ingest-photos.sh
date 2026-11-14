@@ -3,7 +3,10 @@
 # docs/planning/2026-11-11_09-30_google-takeout-retirement-pipeline.md).
 #
 # Wraps immich-go 0.32.0 (`upload from-google-photos` eats the Takeout ZIPs
-# directly — no extraction). Pinned flags and why:
+# directly — no extraction; the zip list is verify's DECLARED list from
+# parts.tsv's filename column, name-tolerant, never a part-*.zip glob — raw
+# browser names would leave the glob empty and immich-go uploading nothing).
+# Pinned flags and why:
 #   --include-unmatched   REQUIRED for no-data-loss: modern Takeouts ship no
 #                         JSON sidecar for unedited photos; without this flag
 #                         immich-go would SKIP most of the library.
@@ -85,6 +88,27 @@ main() {
 
   mkdir -p "$root/logs"
   chmod 700 "$root/logs"
+
+  # Zip list (name-tolerant — the verify G2.1 doctrine): logs/declared-zips.txt
+  # is verify's authoritative list (parts.tsv filename column, legacy
+  # part-%02d.zip synthesis otherwise). A part-*.zip glob would match nothing on
+  # raw-browser-name stagings (helpless.ai) and silently upload an empty set.
+  local ziplist=() name
+  if [ -s "$root/logs/declared-zips.txt" ]; then
+    while IFS= read -r name; do
+      [ -n "$name" ] || continue
+      [ -f "$root/zips/$name" ] || die "declared part missing from zips/: $name (re-run scripts/takeout-verify.sh)"
+      ziplist+=("zips/$name")
+    done <"$root/logs/declared-zips.txt"
+  else
+    for name in "$root"/zips/part-*.zip; do
+      [ -f "$name" ] || continue
+      ziplist+=("zips/$(basename "$name")")
+    done
+  fi
+  [ ${#ziplist[@]} -gt 0 ] || die "no zips to feed immich-go (no logs/declared-zips.txt, no zips/part-*.zip) — run scripts/takeout-verify.sh first"
+  log "feeding immich-go ${#ziplist[@]} declared zip(s) (name-tolerant list)"
+
   log "expected media (from Gate G2 inventory):"
   cat "$root/photos-media-count.txt"
   [ "${INGEST_TRASHED:-0}" = "1" ] && extra+=(--include-trashed)
@@ -110,7 +134,7 @@ main() {
       --takeout-tag \
       --on-errors stop \
       "${extra[@]}" \
-      zips/part-*.zip
+      "${ziplist[@]}"
   ) || rc=$?
 
   if [ "$rc" -ne 0 ]; then
