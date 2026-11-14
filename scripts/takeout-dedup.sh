@@ -102,7 +102,7 @@ cmd_index() {
     return 0
   fi
 
-  local tmp files=0
+  local tmp files=0 bytes=0
   tmp=$(mktemp)
   local f rel size hash
   while IFS= read -r -d '' f; do
@@ -117,6 +117,12 @@ cmd_index() {
     hash=$(hash_file "$f")
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$ALGO" "$hash" "$size" "$account" "$cycle" "$rel" >>"$tmp"
     files=$((files + 1))
+    bytes=$((bytes + size))
+    # Progress every 250 files: a 3 TB fleet index is a multi-hour run with no
+    # other output, and "is it alive?" was unanswerable without a heartbeat.
+    if [ $((files % 250)) -eq 0 ]; then
+      log "indexing… $files files / $bytes bytes hashed"
+    fi
   done < <(find "$dir" -type f -print0)
 
   local before after

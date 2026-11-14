@@ -1617,6 +1617,54 @@
               touch $out
             '';
 
+        # Google Takeout pipeline selftests (2026-11-14): the fleet tools will
+        # touch ~3 TB across several accounts, and a silent regression there
+        # costs a corrupted archive rather than a visible failure — so their
+        # fixture batteries run on every `nix flake check` instead of by hand.
+        # Every leg is hermetic (fixtures under XDG_CACHE_HOME, no pool/no
+        # network). The scripts re-invoke THEMSELVES (`"$0" index …`), hence
+        # the copy + shebang rewrite (/usr/bin/env is absent in the sandbox).
+        # Legs: verify 6 (incl. the foreign-manifest leak class), dedup 16
+        # (index/plan/balance/account isolation), intake 7 (registry + page
+        # discovery), browser-rename 6 (dry-run, promote, same-size CRC
+        # corruption, marker persistence, size mismatch, leftover reporting).
+        takeout-selftests =
+          pkgs.runCommand "takeout-selftests"
+            {
+              nativeBuildInputs = with pkgs; [
+                bash
+                coreutils
+                findutils
+                gawk
+                gnugrep
+                gnused
+                unzip
+                zip
+              ];
+            }
+            ''
+              scratch=$(mktemp -d)
+              export HOME="$scratch"
+              export XDG_CACHE_HOME="$scratch/cache"
+              mkdir -p "$XDG_CACHE_HOME"
+              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename"
+              for s in $scripts; do
+                cp ${root}/scripts/"$s".sh "$scratch/$s.sh"
+                sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/$s.sh"
+                chmod +x "$scratch/$s.sh"
+              done
+              rc=0
+              {
+                for s in $scripts; do
+                  echo "=== $s ==="
+                  ${pkgs.bash}/bin/bash "$scratch/$s.sh" --selftest || rc=1
+                done
+              } >selftest.log 2>&1
+              cat selftest.log
+              [ "$rc" -eq 0 ] || exit 1
+              cp selftest.log $out
+            '';
+
       };
     };
 }
