@@ -174,6 +174,16 @@ without a file → manifest fallback URL; env key winning over a present file.
 | K5.4 | Inspect the rendered permissions SQL string for the declared key | 5 |
 | K5.5 | `nix flake check --no-build` (or scoped eval) green | 12 |
 
+**DONE 2026-11-14 01:0x** — K5.1–K5.5 green: `ExecStart` =
+`…-immich-api-key-provision/bin/immich-api-key-provision`, timer `OnCalendar=daily`;
+negative leg needed `lib.mkForce {}` (a bare `{}` merges as identity into the attrsOf,
+so the first probe was a false positive) and then proved `zeroSvc=false, zeroTmr=false`;
+rendered SQL = the 16 declared permissions, no `asset.delete`; full
+`nix flake check --no-build` → `all checks passed!` after repairing a foreign
+one-line break (`tests/default.nix` passed `pkgs` to a `test-paperless.nix` lambda that a
+parallel session had just shrank to `{ inputs }` — the paperless VM check was the sole
+red leg, unrelated to this work and self-evident from the error).
+
 ### V1 — verify trap
 
 | # | Micro-task | Est |

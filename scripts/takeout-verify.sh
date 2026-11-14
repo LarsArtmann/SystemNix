@@ -7,14 +7,20 @@
 # Gates:
 #   G2.1 completeness  — every manifest part present and inside its size band
 #   G2.2 integrity     — `unzip -t` CRC-clean for every part (reads all bytes)
-#   G2.3 coverage      — every expected-PRESENT product (39) found in the zip
-#                        listings (fuzzy name match + override candidates);
-#                        missing product = FAIL, unexpected folder = WARN
+# G2.3 coverage — every expected-PRESENT product found in the zip listings
+#                        (fuzzy name match + override candidates); missing
+#                        product = FAIL, unexpected folder = WARN. The
+#                        expectation source MATTERS: a staging root with no
+#                        products.tsv is self-derived from the zip listings
+#                        (integrity still proven, completeness UNPROVEN —
+#                        loud WARN), because the embedded 68-product manifest
+#                        below describes ONE account (racedriver8k). Opt in
+#                        explicitly with `--manifest racedriver8k`.
 #   G2.4 inventory     — inventory.tsv (product, files, bytes) +
 #                        photos-media-count.txt + SHA256SUMS + verification-report.md
 #
 # Usage:
-#   bash scripts/takeout-verify.sh <staging-dir> [--no-hash]
+#   bash scripts/takeout-verify.sh <staging-dir> [--no-hash] [--manifest racedriver8k]
 #   bash scripts/takeout-verify.sh --selftest   # synthetic fixture battery in ~/.cache
 set -euo pipefail
 
@@ -147,22 +153,41 @@ size_band() {
   esac
 }
 
-write_products_tsv() {
+# The embedded manifest describes the racedriver8k export ONLY (summary page
+# 2026-11-10). It is OPT-IN (`--manifest racedriver8k`) — silently seeding it
+# for another account's staging root produced confidently wrong coverage
+# (2026-11-14).
+seed_manifest_products_tsv() {
   local root=$1
-  if [ ! -f "$root/products.tsv" ]; then
-    printf '# product\texpected-size\tpresent\n' >"$root/products.tsv"
-    while IFS= read -r pline; do echo "${pline//|/$'\t'}" >>"$root/products.tsv"; done <<<"$PRODUCTS_MANIFEST"
-  fi
+  [ -f "$root/products.tsv" ] && return 0
+  printf '# product\texpected-size\tpresent\n' >"$root/products.tsv"
+  while IFS= read -r pline; do echo "${pline//|/$'\t'}" >>"$root/products.tsv"; done <<<"$PRODUCTS_MANIFEST"
+}
+
+# No manifest for this account: derive the expectation set from the zip
+# listings themselves. Integrity/completeness of the PARTS is still proven;
+# "nothing dropped relative to the export page" is NOT — hence the WARN.
+derive_products_tsv_from_inventory() {
+  local root=$1
+  [ -f "$root/products.tsv" ] && return 0
+  {
+    printf '# product\texpected-size\tpresent\n'
+    awk -F'\t' 'NR > 1 && $1 != "" { printf "%s\t%s\t1\n", $1, $3 }' "$root/inventory.tsv"
+  } >"$root/products.tsv"
+  manifest_derived=1
+  echo "WARN G2.3: NO products manifest for this staging root — expectation set SELF-DERIVED from the zip listings ($(($(wc -l <"$root/products.tsv") - 1)) products). Part integrity is proven; completeness against the Takeout export page is UNPROVEN. Save the exports page or pass --manifest <account> for a real expectation." >&2
 }
 
 run_verify() {
-  local root=$1 do_hash=${2:-1}
+  local root=$1 do_hash=${2:-1} manifest_mode=${3:-auto}
   [ -d "$root/zips" ] || die "no staging at $root (takeout-download.sh init first)"
   [ -f "$root/parts.tsv" ] || die "$root/parts.tsv missing (takeout-download.sh init first)"
-  write_products_tsv "$root"
+  if [ "$manifest_mode" = "racedriver8k" ]; then
+    seed_manifest_products_tsv "$root"
+  fi
   mkdir -p "$root/logs"
 
-  local failures=0 warnings=0
+  local failures=0 warnings=0 manifest_derived=0
 
   # --- G2.1 completeness ---
   local part spec name size lo hi complete=0 total=0
@@ -217,6 +242,10 @@ run_verify() {
       for (i = 1; i <= n; i++) { p = order[i]; printf "%s\t%d\t%d\n", p, files[p], bytes[p] }
     }' "$names_tsv" >"$inv"
   log "G2.4 inventory: $(wc -l <"$inv") product rows -> inventory.tsv"
+  derive_products_tsv_from_inventory "$root"
+  if [ "$manifest_derived" = "1" ]; then
+    warnings=$((warnings + 1))
+  fi
 
   # --- media counts for the Google Photos product (G3 reconciliation base) ---
   local pmc=$root/photos-media-count.txt
