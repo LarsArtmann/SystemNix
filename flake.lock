@@ -1064,11 +1064,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794608443,
-        "narHash": "sha256-RmvW7/OuyKxRiJv0LDpA33p6xpaYb3/IBOI/SW6S9ek=",
+        "lastModified": 1794595881,
+        "narHash": "sha256-1bzoPCXGr62eTFWuIqaQtKj2Ux7NFoRitj9gRhUESOY=",
         "ref": "refs/heads/master",
-        "rev": "73040cd2553a3f0f31319f17bb37b3bdcf5b60e3",
-        "revCount": 10876,
+        "rev": "10a919932df6e0f7e3bef2133ba571e33cb0599a",
+        "revCount": 10825,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -8108,11 +8108,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794603878,
-        "narHash": "sha256-lF4CbsfFxWLcLOzj81uBaM6tIWwTvLT3i+IHxqvtTA8=",
+        "lastModified": 1794566800,
+        "narHash": "sha256-OrQ7Mwcqbc2tX5NaOHSmjzsSWtN0e2dJHJlx/nRiqJw=",
         "ref": "refs/heads/master",
-        "rev": "9496b1d8a680d4ad4c07c27cc533ed831e7feac9",
-        "revCount": 1706,
+        "rev": "ee4d6ee4e38140c5ec8e0c702736bef01282b055",
+        "revCount": 1694,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/invoices"
       },
@@ -10354,11 +10354,11 @@
     "signoz-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794597630,
-        "narHash": "sha256-BDjlueuqDGbRqPk4YFSy4rCGEfAFpH/nhNYrEub4tr8=",
+        "lastModified": 1794590186,
+        "narHash": "sha256-3T9GBtV/8NOoOIcgHtcz+uKWxdwLK6THHPmqAnydLZo=",
         "owner": "SigNoz",
         "repo": "signoz",
-        "rev": "ca7daf8ea974b879379101c7f7d8cb420da6acc7",
+        "rev": "d03840747501c827bc0a09c595124e18372e8794",
         "type": "github"
       },
       "original": {
