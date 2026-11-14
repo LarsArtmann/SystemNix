@@ -224,13 +224,6 @@
       # v0.4.2 re-pin), so the shim is DROPPED and upstream's own hash
       # governs again. Re-add ONLY via fresh first-hand nix-hash-fix
       # evidence, never by hand.
-      # TWENTIETH entry 2026-11-14 re-pin at the pushed fix: the guard fix
-      # landed upstream (CV 9e3687b97, 10:00Z) and the morning's 066f76c
-      # pin was briefly lifted — but tip eb951951 ("restore module-graph
-      # go.sum entries") immediately re-tripped the SAME guard, so the
-      # input is REV-PINNED at 9e3687b97 (the fix rev) until a master tip
-      # builds with the guard green again. Upstream's own baked vendorHash
-      # governs; shim stays dropped.
       # TWENTY-FIRST entry 2026-11-14 rollback-deploy session: the "governs"
       # claim was falsified at 9e3687b (spec ejjizmFe==bake, got IX/nWy4A) —
       # but the DEEPER blocker ended the pin's life anyway: 9e3687b's
