@@ -1624,10 +1624,14 @@
         # Every leg is hermetic (fixtures under XDG_CACHE_HOME, no pool/no
         # network). The scripts re-invoke THEMSELVES (`"$0" index …`), hence
         # the copy + shebang rewrite (/usr/bin/env is absent in the sandbox).
-        # Legs: verify 6 (incl. the foreign-manifest leak class), dedup 16
-        # (index/plan/balance/account isolation), intake 7 (registry + page
-        # discovery), browser-rename 6 (dry-run, promote, same-size CRC
-        # corruption, marker persistence, size mismatch, leftover reporting).
+        # Legs (asserted below; measured 2026-11-14, do not guess): verify 6
+        # (incl. the foreign-manifest leak class), dedup 21 (index/plan/
+        # balance/account isolation), intake 7 (registry + page discovery),
+        # browser-rename 7 (dry-run, promote, same-size CRC corruption, marker
+        # persistence, size mismatch, leftover reporting), extract 9
+        # (dry-run-no-write, capacity gate, pattern root guard, happy path,
+        # member scoping, rc11 skip, corrupt zip, extra-file reconciliation,
+        # listing reuse).
         takeout-selftests =
           pkgs.runCommand "takeout-selftests"
             {
@@ -1647,20 +1651,37 @@
               export HOME="$scratch"
               export XDG_CACHE_HOME="$scratch/cache"
               mkdir -p "$XDG_CACHE_HOME"
-              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename"
+              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename takeout-extract"
               for s in $scripts; do
                 cp ${root}/scripts/"$s".sh "$scratch/$s.sh"
                 sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/$s.sh"
                 chmod +x "$scratch/$s.sh"
               done
               rc=0
-              {
-                for s in $scripts; do
-                  echo "=== $s ==="
-                  ${pkgs.bash}/bin/bash "$scratch/$s.sh" --selftest || rc=1
-                done
-              } >selftest.log 2>&1
+              for s in $scripts; do
+                echo "=== $s ==="
+                ${pkgs.bash}/bin/bash "$scratch/$s.sh" --selftest >"$scratch/$s.log" 2>&1 || rc=1
+                cat "$scratch/$s.log"
+              done >selftest.log 2>&1
               cat selftest.log
+              # Leg-count floor (2026-11-14): a leg silently deleted, renamed,
+              # or with its marker idiom changed must fail the build instead
+              # of passing vacuously. Re-measure before touching this table.
+              for s in $scripts; do
+                pass=$(grep -c '^PASS' "$scratch/$s.log" || true)
+                legs=$(grep -c '^leg .*: OK' "$scratch/$s.log" || true)
+                case "$s" in
+                  takeout-verify) want_pass=6; want_legs=0 ;;
+                  takeout-dedup) want_pass=0; want_legs=21 ;;
+                  takeout-intake) want_pass=0; want_legs=7 ;;
+                  takeout-browser-rename) want_pass=5; want_legs=2 ;;
+                  takeout-extract) want_pass=9; want_legs=0 ;;
+                esac
+                if [ "$pass" -ne "$want_pass" ] || [ "$legs" -ne "$want_legs" ]; then
+                  echo "LEG-COUNT MISMATCH: $s expected $want_pass PASS + $want_legs leg-OK, got $pass + $legs"
+                  rc=1
+                fi
+              done
               [ "$rc" -eq 0 ] || exit 1
               cp selftest.log $out
             '';
