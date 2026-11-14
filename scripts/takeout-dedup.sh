@@ -12,8 +12,17 @@
 #   index   --from-extract DIR --account A --cycle C [--force]
 #   plan    --from-extract DIR --account A --cycle C [--out DIR]
 #   balance --staging S --account A --cycle C [--skip-products "Mail,YouTube"]
+#           [--summary | --preflight]   summary = one aggregate line,
+#           preflight = the same gate in PASS/FAIL form for import scripts
 #   report
 #   --selftest
+#
+# RELPATH is stored WITHOUT the `Takeout/` prefix (normalized 2026-11-14):
+# `Takeout/Drive/a.pdf` is ledgered as `Drive/a.pdf`, so a second cycle with a
+# different archive layout cannot fork the identity space. Recovery, if a
+# hand-edit ever goes wrong: delete the account's rows (`awk` on col 4) or the
+# whole ledger, then re-run `index` — the ledger is derived state, the zips
+# are ground truth.
 #
 # Ledger: $TAKEOUT_LEDGER
 #   default /mnt/pool/archive/google-takeout/.ledger/ledger.tsv
@@ -199,12 +208,18 @@ cmd_plan() {
       for (rel in cur_hash) {
         if (rel in prior_hash && prior_hash[rel] == cur_hash[rel]) {
           print rel >> (out "/unchanged.txt")
+          unch_bytes += cur_size[rel]
         } else {
           print rel >> (out "/new-files.txt")
           print rel, cur_hash[rel], cur_size[rel] >> (out "/new-files.tsv")
-          if (cur_hash[rel] in known_hash) print rel, cur_hash[rel] >> (out "/cross-cycle-content-dups.tsv")
+          new_bytes += cur_size[rel]
+          if (cur_hash[rel] in known_hash) {
+            print rel, cur_hash[rel] >> (out "/cross-cycle-content-dups.tsv")
+            dup_bytes += cur_size[rel]
+          }
         }
       }
+      printf "new-bytes\t%d\nunchanged-bytes\t%d\ndup-bytes\t%d\n", new_bytes, unch_bytes, dup_bytes > (out "/totals.tsv")
       for (rel in prior_cycle)
         if (!(rel in seen)) print rel >> (out "/vanished-since-prev-cycle.txt")
     }
@@ -231,18 +246,21 @@ cmd_plan() {
     done <"$out/new-files.txt"
   fi
 
-  local nnew nunch nvan ndup
+  local nnew nunch nvan ndup newb unchb dupb
   nnew=$(wc -l <"$out/new-files.txt")
   nunch=$(wc -l <"$out/unchanged.txt")
   nvan=$(wc -l <"$out/vanished-since-prev-cycle.txt")
   ndup=$(wc -l <"$out/cross-cycle-content-dups.tsv")
+  newb=$(awk -F'\t' '$1 == "new-bytes" { print $2 }' "$out/totals.tsv" 2>/dev/null || echo 0)
+  unchb=$(awk -F'\t' '$1 == "unchanged-bytes" { print $2 }' "$out/totals.tsv" 2>/dev/null || echo 0)
+  dupb=$(awk -F'\t' '$1 == "dup-bytes" { print $2 }' "$out/totals.tsv" 2>/dev/null || echo 0)
   {
     printf 'account: %s\ncycle:   %s\n' "$account" "$cycle"
-    printf 'new (import):            %s\n' "$nnew"
-    printf 'unchanged (skip):        %s\n' "$nunch"
+    printf 'new (import):            %s files / %s bytes\n' "$nnew" "${newb:-0}"
+    printf 'unchanged (skip):        %s files / %s bytes\n' "$nunch" "${unchb:-0}"
     printf 'vanished (report only):  %s\n' "$nvan"
-    printf 'new-but-content-known:   %s\n' "$ndup"
-    printf '\nOutputs in %s:\n  new-files.txt / .tsv  (rclone --files-from, immich pre-filter)\n  photos.txt, other.txt (destination buckets)\n  unchanged.txt, vanished-since-prev-cycle.txt, cross-cycle-content-dups.tsv\n' "$out"
+    printf 'new-but-content-known:   %s files / %s bytes (already held elsewhere — still import; destinations dedup server-side)\n' "$ndup" "${dupb:-0}"
+    printf '\nOutputs in %s:\n  new-files.txt / .tsv  (rclone --files-from, immich pre-filter)\n  photos.txt, other.txt (destination buckets)\n  unchanged.txt, vanished-since-prev-cycle.txt, cross-cycle-content-dups.tsv, totals.tsv\n' "$out"
   } >"$out/SUMMARY.txt"
   cat "$out/SUMMARY.txt"
 }
@@ -253,7 +271,7 @@ cmd_plan() {
 # means the extract is incomplete (or the wrong member filter ran) and no
 # destination import may proceed.
 cmd_balance() {
-  local staging='' account='' cycle='' skip=''
+  local staging='' account='' cycle='' skip='' mode=table
   while [ $# -gt 0 ]; do
     case $1 in
     --staging)
@@ -271,6 +289,14 @@ cmd_balance() {
     --skip-products)
       skip=$2
       shift 2
+      ;;
+    --summary)
+      mode=summary
+      shift
+      ;;
+    --preflight)
+      mode=preflight
+      shift
       ;;
     *) die "balance: unknown argument: $1" ;;
     esac
@@ -303,28 +329,56 @@ cmd_balance() {
     END { for (p in f) printf "%s\t%d\t%d\n", p, f[p], b[p] }
   ' "$LEDGER" >"$ltmp"
 
-  awk -F'\t' -v skip="$skip" '
-    FNR == NR { zf[$1] = $2; zb[$1] = $3; zp[$1] = 1; next }
+  awk -F'\t' -v skip="$skip" -v mode="$mode" '
+    # ARGV[1] (not FNR == NR): an EMPTY zip listing leaves FNR == NR true on
+    # the first ledger record, which silently promoted the LEDGER to the zip
+    # side and made an empty staging root report BALANCED (2026-11-14).
+    FILENAME == ARGV[1] { zf[$1] = $2; zb[$1] = $3; zp[$1] = 1; next }
     { lf[$1] = $2; lb[$1] = $3; lp[$1] = 1 }
     END {
       nskip = split(skip, s, ",")
       for (i = 1; i <= nskip; i++) if (s[i] != "") sk[s[i]] = 1
-      printf "%-30s %8s %18s %8s %18s  %s\n", "PRODUCT", "zip#", "zip bytes", "idx#", "idx bytes", "status"
+      if (mode == "table") printf "%-30s %8s %18s %8s %18s  %s\n", "PRODUCT", "zip#", "zip bytes", "idx#", "idx bytes", "status"
       bad = 0
+      np = 0
+      nok = ncold = nskipn = 0
+      zf_t = zb_t = lb_t = 0
       for (p in zp) {
-        if (p in sk) { printf "%-30s %8d %18d %8s %18s  SKIPPED\n", p, zf[p], zb[p], "-", "-"; continue }
-        if (!(p in lp)) { printf "%-30s %8d %18d %8s %18s  COLD (not extracted)\n", p, zf[p], zb[p], "-", "-"; continue }
+        np++
+        if (p in sk) {
+          nskipn++
+          if (mode == "table") printf "%-30s %8d %18d %8s %18s  SKIPPED\n", p, zf[p], zb[p], "-", "-"
+          continue
+        }
+        zf_t += zf[p]
+        zb_t += zb[p]
+        if (!(p in lp)) {
+          ncold++
+          if (mode == "table") printf "%-30s %8d %18d %8s %18s  COLD (not extracted)\n", p, zf[p], zb[p], "-", "-"
+          continue
+        }
         st = (zf[p] == lf[p] && zb[p] == lb[p]) ? "OK" : "MISMATCH"
         if (st == "MISMATCH") bad++
-        printf "%-30s %8d %18d %8d %18d  %s\n", p, zf[p], zb[p], lf[p], lb[p], st
+        else nok++
+        lb_t += lb[p]
+        if (mode == "table") printf "%-30s %8d %18d %8d %18d  %s\n", p, zf[p], zb[p], lf[p], lb[p], st
       }
       for (p in lp) if (!(p in zp)) {
-        printf "%-30s %8s %18s %8d %18d  EXTRACT-ONLY\n", p, "-", "-", lf[p], lb[p]
+        if (mode == "table") printf "%-30s %8s %18s %8d %18d  EXTRACT-ONLY\n", p, "-", "-", lf[p], lb[p]
         bad++
       }
-      print ""
-      if (bad > 0) print "RESULT: MISMATCH (" bad " product(s)) — reconcile before any import or deletion"
-      else print "RESULT: BALANCED — every extracted product matches the zips byte-for-byte"
+      if (mode != "table") {
+        printf "products: %d (%d OK, %d COLD, %d SKIPPED, %d MISMATCH) — zip %d files / %d bytes, indexed %d bytes\n", np, nok, ncold, nskipn, bad, zf_t, zb_t, lb_t
+      } else print ""
+      # Fail-closed: an EMPTY zip side makes every check vacuously true, which
+      # is exactly how a "BALANCED" verdict can be a lie (no zips downloaded /
+      # wrong staging root). Zero products is never a pass.
+      if (np == 0) {
+        print (mode == "preflight" ? "PREFLIGHT: FAIL" : "RESULT: NO ZIP CONTENT") " — no Takeout/* members found in " (mode == "preflight" ? "the staging zips" : "any zip (wrong root or nothing downloaded yet)")
+        exit 2
+      }
+      if (bad > 0) print (mode == "preflight" ? "PREFLIGHT: FAIL" : "RESULT: MISMATCH") " (" bad " product(s)) — reconcile before any import or deletion"
+      else print (mode == "preflight" ? "PREFLIGHT: PASS" : "RESULT: BALANCED") " — every extracted product matches the zips byte-for-byte"
       exit (bad > 0 ? 1 : 0)
     }
   ' "$ztmp" "$ltmp" || rc=$?
@@ -404,6 +458,9 @@ selftest() {
   check plan1-new 4 "$(wc -l <"$fx/out1/new-files.txt")"
   check plan1-unchanged 0 "$(wc -l <"$fx/out1/unchanged.txt")"
   check plan1-tsv-tab-separated 4 "$(awk -F'\t' 'NF == 3' "$fx/out1/new-files.tsv" | wc -l)"
+  # byte totals (2026-11-14): 6+6+8+4 bytes for a.txt, b.txt, c.pdf, d.bin
+  check plan1-new-bytes 24 "$(awk -F'\t' '$1 == "new-bytes" { print $2 }' "$fx/out1/totals.tsv")"
+  check plan1-summary-bytes yes "$(grep -q 'new (import):            4 files / 24 bytes' "$fx/out1/SUMMARY.txt" && echo yes || echo no)"
 
   "$0" index --from-extract "$fx/c2" --account acctA --cycle 2026-03-01 >/dev/null
   "$0" plan --from-extract "$fx/c2" --account acctA --cycle 2026-03-01 --out "$fx/out2" >/dev/null
@@ -441,6 +498,27 @@ selftest() {
     printf 'one\n' >"$fx/bal2/extracted/Takeout/Drive/a.txt"
     bash "$0" index --from-extract "$fx/bal2/extracted" --account balAcct2 --cycle 2030-01-01 >/dev/null
     check balance-mismatch-detected 1 "$(bash "$0" balance --staging "$fx/bal2" --account balAcct2 --cycle 2030-01-01 >/dev/null 2>&1 && echo 0 || echo 1)"
+
+    sum_out=$(bash "$0" balance --staging "$fx/bal" --account balAcct --cycle 2030-01-01 --summary 2>&1) || true
+    check balance-summary-aggregate yes "$(printf '%s\n' "$sum_out" | grep -q '^products: 1 (1 OK' && printf '%s\n' "$sum_out" | grep -q 'RESULT: BALANCED' && echo yes || echo no)"
+    pf_out=$(bash "$0" balance --staging "$fx/bal" --account balAcct --cycle 2030-01-01 --preflight 2>&1) || true
+    check balance-preflight-pass yes "$(printf '%s\n' "$pf_out" | grep -q 'PREFLIGHT: PASS' && echo yes || echo no)"
+
+    # Fail-closed leg (2026-11-14): an empty zip side made every comparison
+    # vacuously true and reported BALANCED — a lying verdict for "nothing
+    # downloaded yet" / wrong staging root.
+    mkdir -p "$fx/bal3/zips" "$fx/bal3/extracted/Takeout/Drive"
+    printf 'one\n' >"$fx/bal3/extracted/Takeout/Drive/a.txt"
+    bash "$0" index --from-extract "$fx/bal3/extracted" --account emptyAcct --cycle 2030-01-01 >/dev/null
+    if bash "$0" balance --staging "$fx/bal3" --account emptyAcct --cycle 2030-01-01 >"$fx/bal3.log" 2>&1; then
+      echo "leg balance-empty-zips-fail-closed: FAIL (empty zip side reported BALANCED)"
+      rc=1
+    elif grep -q 'NO ZIP CONTENT' "$fx/bal3.log"; then
+      echo "leg balance-empty-zips-fail-closed: OK (no vacuous BALANCED)"
+    else
+      echo "leg balance-empty-zips-fail-closed: FAIL (wrong failure mode — see $fx/bal3.log)"
+      rc=1
+    fi
   else
     echo "leg balance: SKIPPED (no zip binary on PATH)"
   fi
