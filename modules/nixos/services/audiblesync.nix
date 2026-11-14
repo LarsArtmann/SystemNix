@@ -246,8 +246,6 @@
           })
         ];
 
-        services.pool-recovery.restartUnits = [ "audiblesync.service" ];
-
         # Service-integration registry entry: ONE declaration fans out the
         # Caddy vHost (protected layer — the app has NO auth of its own),
         # dnsblockd record, Gatus checks, PapDashboard tile, and backup
