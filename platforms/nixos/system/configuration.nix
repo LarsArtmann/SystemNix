@@ -605,6 +605,15 @@ in
         # attached by hand at creation (phase-5-identical API call, 8h +
         # sync_on_commit) and verified flowing; phase 5 stays idempotent.
         "business-networking"
+        # Native-since-inception (2026-11-14): the repo was local-only
+        # before (auto-commit daemon, no remotes). Created PRIVATE via SSH
+        # push-to-create, GitHub twin created PRIVATE and pushed by hand.
+        # Only .github/dependabot.yml (no workflow files), so the
+        # repo-scoped sync PAT suffices (pim-sync precedent). Push mirror
+        # NOT hand-attached (admin token root-only in that session);
+        # phase 5 attaches it (8h + sync_on_commit) on the next deploy —
+        # until then the twins are kept in sync by dual-push only.
+        "touchbase"
       ];
       immich = {
         enable = true;

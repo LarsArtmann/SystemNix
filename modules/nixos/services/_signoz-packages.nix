@@ -139,7 +139,11 @@ let
     # RE-STALE 2026-11-12 daemon float: at d00471c spec GBAtMNzj, got
     # 5o/Yfxo3 (toplevel-proof-20261112-drop.log). Tree-side hash —
     # SigNoz is not ours; this file is the fix locus.
-    vendorHash = "sha256-5o/Yfxo3yFKO0IQTsf9zTUUTGNFalh7QQl/Ro6BGIS8=";
+    # RE-STALE 2026-11-14 (rev-independent class): at d038407 spec
+    # 5o/Yfxo3, got 7NLbdQuy; IDENTICAL got at ca7daf8 too — the FOD
+    # re-resolves dep content from the module proxy, so it can go stale
+    # WITHOUT a rev move (keepgoing-pre.log + audiblesync triage 08-43).
+    vendorHash = "sha256-7NLbdQuyRysrYglotKTTtUMVHlQiNP5f51+m/L8+4HM=";
     subPackages = [ "cmd/community" ];
     proxyVendor = true;
     tags = [ "timetzdata" ];
