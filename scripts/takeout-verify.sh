@@ -190,13 +190,25 @@ run_verify() {
   local failures=0 warnings=0 manifest_derived=0
 
   # --- G2.1 completeness ---
-  local part spec name size lo hi complete=0 total=0
-  while IFS=$'\t' read -r part spec; do
+  # Declared zip set (authoritative): parts.tsv rows may carry an explicit
+  # filename column (raw browser names, e.g. takeout-20261110T…-001.zip —
+  # the 2026-11-14 zip-name divergence fix); without it the legacy
+  # part-%02d.zip synthesis applies.
+  local declared=$root/logs/declared-zips.txt
+  awk -F'\t' 'NF >= 2 && $1 !~ /^#/ {
+    printf "%s\n", ($3 != "" ? $3 : sprintf("part-%02d.zip", $1))
+  }' "$root/parts.tsv" >"$declared"
+  local part spec fname name size lo hi complete=0 total=0
+  while IFS=$'\t' read -r part spec fname; do
     case $part in '' | '#'*) continue ;; esac
     total=$((total + 1))
-    name=$(printf 'part-%02d.zip' "$part")
-    size=0
-    [ -f "$root/zips/$name" ] && size=$(stat -c %s "$root/zips/$name")
+    name=${fname:-$(printf 'part-%02d.zip' "$part")}
+    if [ ! -f "$root/zips/$name" ]; then
+      echo "FAIL G2.1: declared part missing from zips/: $name" >&2
+      failures=$((failures + 1))
+      continue
+    fi
+    size=$(stat -c %s "$root/zips/$name")
     read -r lo hi <<<"$(size_band "$spec")"
     if [ "$size" -ge "$lo" ] && [ "$size" -le "$hi" ]; then
       complete=$((complete + 1))
@@ -207,13 +219,14 @@ run_verify() {
   done <"$root/parts.tsv"
   log "G2.1 completeness: $complete/$total parts in band"
 
-  # --- G2.2 CRC integrity + listings pass (single read per zip) ---
+  # --- G2.2 CRC integrity + listings pass (single read per DECLARED zip) ---
   local zip names_tsv=$root/logs/zip-entries.tsv
   : >"$names_tsv"
-  for zip in "$root"/zips/part-*.zip; do
-    [ -f "$zip" ] || continue
-    if ! unzip -tqq "$zip" >"$root/logs/crc-$(basename "$zip").log" 2>&1; then
-      echo "FAIL G2.2: $(basename "$zip") failed the unzip CRC test (see logs/)" >&2
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    zip=$root/zips/$name
+    if ! unzip -tqq "$zip" >"$root/logs/crc-$name.log" 2>&1; then
+      echo "FAIL G2.2: $name failed the unzip CRC test (see logs/)" >&2
       failures=$((failures + 1))
       continue
     fi
@@ -223,6 +236,15 @@ run_verify() {
         name = substr($0, index($0, $4))
         if (name !~ /\/$/) printf "%s\t%s\n", $1, name
       }' >>"$names_tsv"
+  done <"$declared"
+  # undeclared zips (present in zips/ but not in parts.tsv): cannot be
+  # assessed — WARN, never silently hashed or skipped invisibly
+  for zip in "$root"/zips/*.zip; do
+    [ -f "$zip" ] || continue
+    if ! grep -qxF "$(basename "$zip")" "$declared"; then
+      echo "WARN G2.2: zip not declared in parts.tsv (skipped): $(basename "$zip")" >&2
+      warnings=$((warnings + 1))
+    fi
   done
   log "G2.2 integrity: CRC-clean zips listed into logs/zip-entries.tsv ($(wc -l <"$names_tsv") entries)"
 
@@ -343,7 +365,7 @@ run_verify() {
   # --- G2.4 SHA256SUMS ---
   if [ "$do_hash" = "1" ]; then
     log "G2.4 hashing zips (reads every byte again — expect ~1-2 h for 880 GB)..."
-    (cd "$root/zips" && sha256sum part-*.zip) >"$root/SHA256SUMS"
+    (cd "$root/zips" && while IFS= read -r name; do sha256sum "$name"; done <"$declared") >"$root/SHA256SUMS"
     log "G2.4 SHA256SUMS: $(wc -l <"$root/SHA256SUMS") entries"
   fi
 
@@ -457,7 +479,7 @@ selftest() {
   if run_verify_selftest_quiet "$fx" >"$fx/leg-missing.log" 2>&1; then
     echo "FAIL: $leg (missing part passed)"
     rc=1
-  elif grep -q 'not in size band' "$fx/leg-missing.log"; then
+  elif grep -q 'declared part missing from zips' "$fx/leg-missing.log"; then
     echo "PASS: $leg (missing part caught)"
   else
     echo "FAIL: $leg (failed but not via completeness gate — see $fx/leg-missing.log)"
@@ -490,6 +512,49 @@ selftest() {
     echo "PASS: $leg (explicit --manifest racedriver8k opt-in still works)"
   else
     echo "FAIL: $leg (opt-in did not seed/apply the manifest — see $fx/leg-optin.log)"
+    rc=1
+  fi
+
+  # 2026-11-14 (zip-name divergence): parts.tsv may carry an explicit
+  # filename column so raw browser-named zips verify without a rename pass.
+  leg=raw-names
+  build_fixture
+  mv "$fx/zips/part-01.zip" "$fx/zips/takeout-20261110T224436Z-001.zip"
+  mv "$fx/zips/part-02.zip" "$fx/zips/takeout-20261110T224438Z-1-001.zip"
+  printf '# part\texpected\tfilename\n1\t3 MB\ttakeout-20261110T224436Z-001.zip\n2\tLESS1MB\ttakeout-20261110T224438Z-1-001.zip\n' >"$fx/parts.tsv"
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-rawnames.log" 2>&1 &&
+    grep -q 'G2 GREEN' "$fx/leg-rawnames.log"; then
+    echo "PASS: $leg (raw browser zip names verify via the filename column)"
+  else
+    echo "FAIL: $leg (raw-named zips did not pass — see $fx/leg-rawnames.log)"
+    rc=1
+  fi
+
+  leg=raw-names-missing
+  build_fixture
+  mv "$fx/zips/part-01.zip" "$fx/zips/takeout-20261110T224436Z-001.zip"
+  mv "$fx/zips/part-02.zip" "$fx/zips/takeout-20261110T224438Z-1-001.zip"
+  printf '# part\texpected\tfilename\n1\t3 MB\ttakeout-20261110T224436Z-001.zip\n2\tLESS1MB\ttakeout-20261110T224438Z-1-001.zip\n' >"$fx/parts.tsv"
+  rm "$fx/zips/takeout-20261110T224438Z-1-001.zip"
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-rawmissing.log" 2>&1; then
+    echo "FAIL: $leg (declared raw-named part missing but passed)"
+    rc=1
+  elif grep -q 'declared part missing from zips' "$fx/leg-rawmissing.log"; then
+    echo "PASS: $leg (declared raw-named part missing fails explicitly)"
+  else
+    echo "FAIL: $leg (failed but not via the missing-part gate — see $fx/leg-rawmissing.log)"
+    rc=1
+  fi
+
+  leg=undeclared-zip
+  build_fixture
+  cp "$fx/zips/part-01.zip" "$fx/zips/takeout-stray-999.zip"
+  if run_verify_selftest_quiet "$fx" >"$fx/leg-undeclared.log" 2>&1 &&
+    grep -q 'not declared in parts.tsv' "$fx/leg-undeclared.log" &&
+    grep -q 'G2 GREEN' "$fx/leg-undeclared.log"; then
+    echo "PASS: $leg (undeclared zip WARNs, run stays green)"
+  else
+    echo "FAIL: $leg (undeclared zip not warned or run wrongly failed — see $fx/leg-undeclared.log)"
     rc=1
   fi
 

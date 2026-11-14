@@ -1630,8 +1630,9 @@
         # Every leg is hermetic (fixtures under XDG_CACHE_HOME, no pool/no
         # network). The scripts re-invoke THEMSELVES (`"$0" index …`), hence
         # the copy + shebang rewrite (/usr/bin/env is absent in the sandbox).
-        # Legs (asserted below; measured 2026-11-14, do not guess): verify 6
-        # (incl. the foreign-manifest leak class), dedup 21 (index/plan/
+        # Legs (asserted below; measured, do not guess): verify 9
+        # (incl. the foreign-manifest leak class + raw-zip-name tolerance),
+        # dedup 21 (index/plan/
         # balance/account isolation), intake 7 (registry + page discovery),
         # browser-rename 7 (dry-run, promote, same-size CRC corruption, marker
         # persistence, size mismatch, leftover reporting), extract 9
@@ -1677,7 +1678,7 @@
                 pass=$(grep -c '^PASS' "$scratch/$s.log" || true)
                 legs=$(grep -c '^leg .*: OK' "$scratch/$s.log" || true)
                 case "$s" in
-                  takeout-verify) want_pass=6; want_legs=0 ;;
+                  takeout-verify) want_pass=9; want_legs=0 ;;
                   takeout-dedup) want_pass=0; want_legs=21 ;;
                   takeout-intake) want_pass=0; want_legs=7 ;;
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
