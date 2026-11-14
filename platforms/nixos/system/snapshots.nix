@@ -289,13 +289,21 @@ let
   # Deliberately NOT gated: btrbk-pool-clean (the fail-safe retention prune
   # — it deletes snapshots, so skipping it during multi-day storms feeds
   # the QLC-full class instead of the freeze class).
+  # Owner directive 2026-11-14: the standing 20% IO band refused the btrbk
+  # sends night after night on this box's chronic 40-87% IO storms
+  # (btrbk-projects: 6/6 nights since Nov 8, nightly-only schedule, no
+  # catch-up mechanism) — "PSI <20 is unrealistic! <80 is fine". Only the
+  # btrbk send wrapper moves: the shared maintenance-entry-gate default
+  # stays 20 (gc-guard, migrate scripts, psi-wait-gate, deploy gate), and
+  # the 60-min guard-trip window is untouched — a trip is still hard
+  # evidence whatever the PSI bar says.
   btrbkAdmission = pkgs.writeShellApplication {
     name = "btrbk-admission";
     runtimeInputs = [ pkgs.maintenance-entry-gate ];
     text = ''
       set -uo pipefail
       rc=0
-      maintenance-entry-gate "$@" || rc=$?
+      maintenance-entry-gate --psi-max 80 "$@" || rc=$?
       case "$rc" in
         0) exit 0 ;;
         1) exit 1 ;;
