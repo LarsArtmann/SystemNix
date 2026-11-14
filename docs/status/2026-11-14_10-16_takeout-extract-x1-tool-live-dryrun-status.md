@@ -177,3 +177,17 @@ browser-rename 5 `^PASS` + 2 `^leg …: OK` (= 7 legs), extract 9 `^PASS`.
 3. **Account #2 (carried over):** which Google account next, keep-alive vs
    retire, and when does the 2-monthly export cadence start? racedriver8k is
    still 0/23 (export expires 2026-11-18, account stays alive either way).
+
+---
+
+**HARVEST 2026-11-14 12:1x (resumption session):** §f1 EXECUTED — CI wiring +
+leg-count assertion landed (50 legs, derivation built green, stale comment fixed);
+§f2 CHANGELOG landed (whole-arc entry); §f3 rows 442/443 ticked both surfaces;
+§f5 deployrestart negative group landed (2/2 green); §f6 + §e(ingest-photos
+CI legs) + the 04-11 §f11-19/33-34 harvest landed as seven new queue + library
+rows (consolidation, drive-paperless pairing, post-deploy battery, verify
+trio, status one-liner, ingest-photos legs, zip-name divergence) + the row-490
+supersede clause; §e(selftests comment) fixed by the rewrite; §f21 satisfied by
+the plan's C1/C2 DONE block (battery counts documented). §f7 executing now
+(final whole-flake gate + push). §f8-11 stay owner-gated/plan-tracked (queue
+rows 439-441 + plan L1/G1). No deliberately-unharvested remainder.
