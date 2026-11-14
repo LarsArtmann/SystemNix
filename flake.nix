@@ -1069,7 +1069,23 @@
       # 9e3687b9 is the only build-proven candidate between the two
       # broken tips. LIFT: a master tip ≥ eb951951 whose go-modules FOD
       # builds with the guard green — then drop this rev.
-      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=9e3687b97ef71694e00b7270270137fbe27ac416";
+      # REV-PINNED 2026-11-14 round 3 at 066f76c (rollback-deploy session,
+      # first-hand compile evidence): 9e3687b9 does NOT build through our
+      # graph — its vendored go-credentials-store (CV's OWN hard pin
+      # e3697ed4, pre-templ-1100) calls templ.JoinURLErrs /
+      # templ.ResolveAttributeValue, DELETED in templ 0.3.1100
+      # (cv-9e3687b.drv build log, ~/.cache/signoz-fod-fix/
+      # cv-pkg-build.log; the templ-1100-API-removal class, pin-audit
+      # 2026-11-06 section). The fix is CV-side: bump CV's g-c-s pin to
+      # the regenerated upstream tip cb8dea5 (0.4.3 "templ 1100 wave",
+      # JoinURLErrs/ResolveAttributeValue count = 0 there) — the g-c-s
+      # wave session's queued work. 066f76c is the gen-1004-deployed rev
+      # whose tidied go.sum makes the FOD deterministic (no proxy drift —
+      # it reproduced green TODAY, keepgoing-post4.log).
+      # LIFT: CV master carries BOTH the guard-green go.sum AND the
+      # templ-1100-aligned vendored g-c-s; float + toplevel keep-going
+      # green, then drop this rev.
+      url = "git+ssh://git@github.com/LarsArtmann/CV?ref=refs/heads/master&rev=066f76c79c8dd01fca1561710951ad0006cfd9df";
     };
 
     # Kith CRM — LarsArtmann's own event-sourced CRM (PRIVATE repo:

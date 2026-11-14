@@ -232,16 +232,17 @@
       # builds with the guard green again. Upstream's own baked vendorHash
       # governs; shim stays dropped.
       # TWENTY-FIRST entry 2026-11-14 rollback-deploy session: the "governs"
-      # claim above is FALSIFIED first-hand — at 9e3687b the FOD
-      # hash-mismatches (spec ejjizmFe == upstream's own bake at that rev,
-      # `git show 9e3687b:nix/packages.nix`; got IX/nWy4A under our graph;
-      # ~/.cache/signoz-fod-fix/keepgoing-post5.log). spec==bake but
-      # got≠bake = the non-drop-safe class (nix-flakes.md drop-safety:
-      # only got==bake proves the plain package reproduces). Shim with the
-      # got; drop when upstream bakes IX/nWy4A or a tip builds plain green.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
-        vendorHash = "sha256-IX/nWy4ACSxe1/9K/axJkFQZaOGO8qbOMu0wIogILKI=";
-      };
+      # claim was falsified at 9e3687b (spec ejjizmFe==bake, got IX/nWy4A) —
+      # but the DEEPER blocker ended the pin's life anyway: 9e3687b's
+      # vendored go-credentials-store (CV's own e3697ed4 pin, pre-templ-1100)
+      # calls templ.JoinURLErrs/ResolveAttributeValue, deleted in templ
+      # 0.3.1100 (cv-pkg-build.log) — the pin was compile-broken regardless
+      # of any hash. Input rolled BACK to 066f76c (round 3), whose tidied
+      # go.sum makes the FOD deterministic: plain package reproduced green
+      # today (keepgoing-post4.log), so the shim STAYS DROPPED and
+      # upstream's own H8atokSb bake governs. Re-add ONLY via fresh
+      # first-hand nix-hash-fix evidence AT THE LOCKED REV, never by hand.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
     in
     {
       imports = [

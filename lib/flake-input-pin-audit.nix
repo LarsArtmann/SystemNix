@@ -235,7 +235,7 @@
     # therefore re-pinned at 9e3687b97 ITSELF — the pushed fix rev (pure
     # go.sum drop), the only build-proven candidate between two broken
     # tips (f25e54c5 pre-fix, eb951951 post-restore).
-    cv = "REV-PINNED at 9e3687b9 (2026-11-14): the pushed go-sum tidy fix itself — master tip eb951951 re-trips CV's fail-closed go-sum tidy guard by restoring module-graph entries. LIFT: a master tip at or past eb951951 whose go-modules FOD builds with the guard green (nix build of the cv go-modules FOD or toplevel keep-going) — drop the rev.";
+    cv = "REV-PINNED at 066f76c (2026-11-14, round 3): 9e3687b9 (the go-sum tidy fix) is GUARD-green but COMPILE-broken through our graph — its vendored go-credentials-store (CV's own hard pin e3697ed4, pre-templ-1100) calls templ.JoinURLErrs/ResolveAttributeValue, deleted in templ 0.3.1100; and tip eb951951 re-trips the go-sum guard. 066f76c = gen-1004-deployed, FOD-deterministic, reproduced green today. LIFT: a master tip with BOTH the guard-green go.sum AND the templ-1100-aligned vendored g-c-s (CV bumps its g-c-s pin to upstream cb8dea5) — float + toplevel keep-going green, then drop the rev.";
     # ── 2026-11-14 deploy-blocker rollback (health-hub broken tip) ──────
     # Tip caf9970 is BROKEN upstream: cmd/health-hub imports
     # go-health-dashboard/internal/env, which no module in its graph
