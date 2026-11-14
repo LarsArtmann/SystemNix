@@ -1,3 +1,17 @@
+## Live pool addendum (2026-11-14 09:41)
+
+New live report: `2026-11-14_09-23_task-queue-window-closeout.md`
+— 4th-fire closeout of the five-task window (2026-11-10 → 14): two
+reviewer-finding fixes (time_series_v2 tick drift `377a242f7`, gatus
+count drift `64c124592`), adb mDNS 0.0.0.0:5353 verified intentional
+(`316362190`), cvagent/forgejo `MemoryMax` 1G bumps (`d7963ea17`,
+deploy pending behind the row-3596 foreign-breakage block), and the
+ai-stack 5-item batch (pid churn verdict, restart backoff, re-embed
+design, ClickHouse demand profile, 645G write attribution). Predecessor
+fires 08-42 (full report, verdict lost) + 09-14 (skeleton + verdict-loss
+row) folded into the canonical file with annotations; verdict recorded.
+Band drift: none recorded (0 `task.reprioritized` facts).
+
 ## Live pool addendum (2026-10-23 07:49)
 
 New live reports: `2026-10-23_07-55_monitor365-data-governance-batch.md` (named ~7 min ahead of wall clock — committed 07:35), `2026-10-23_07-05`→plan not report, `2026-10-23_04-20_monitor365-session-self-review-status.md`, `2026-10-23_03-55_monitor365-rendered-fixture-deploy-deferral-3.md`

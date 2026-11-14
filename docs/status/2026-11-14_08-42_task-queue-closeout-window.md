@@ -1,5 +1,7 @@
 # Task-Queue Closeout Window Status Report — 2026-11-14 08:42
 
+> **Folded into** `2026-11-14_09-23_task-queue-window-closeout.md` (canonical, 4th fire): this instance landed its full report, CHANGELOG entry, and 5 TODO_LIST rows (commit `19cce5de3`) but died before the tq verdict write; the queue re-fired. Claims re-verified at HEAD `d425c69f9` by the 4th fire and re-stated there; this report's §f/§g legs landed as TODO_LIST 3597–3601. Verdict recorded from the canonical file.
+
 Window: 5 completed tasks spanning 2026-11-10 → 2026-11-14, verdict task `000001a1d8cbc3ff68f9d852788500000000`.
 Tasks covered:
 
