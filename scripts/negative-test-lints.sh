@@ -951,5 +951,20 @@ eval_case scriptport fresh-unregistered-hardcode fail 'script-port-audit: host-f
 eval_case scriptport comment-control pass '' \
   'append:scripts/io-psi-forensics.sh:# negative-test immunity control'
 
+# ── deploy-restart-audit (2026-11-14): the immich-api-key-provision
+# converger class. switch-to-configuration NEVER restarts a
+# oneshot+RemainAfterExit unit, so a converger missing from deploy.sh's
+# provisioner loop is a deployed fix that silently never re-runs (the
+# takeout-import key would never converge post-deploy). The mutation
+# renames EVERY occurrence of the unit name in deploy.sh (the loop entry
+# AND the explanatory comments — hasInfix would still match a surviving
+# comment and the case would go phantom-green) to a name no unit carries;
+# the toplevel eval must throw the audit. Comment leg is the immunity
+# control.
+eval_case deployrestart immich-key-provision-dropped fail 'deploy-restart-audit: converger oneshot\(s\) missing' \
+  'sed:scripts/deploy.sh:s|immich-api-key-provision|immich-api-key-converge|g'
+eval_case deployrestart comment-control pass '' \
+  'append:scripts/deploy.sh:# negative-test immunity control'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]
