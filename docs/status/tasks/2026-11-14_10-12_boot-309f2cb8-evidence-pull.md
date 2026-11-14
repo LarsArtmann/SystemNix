@@ -20,12 +20,13 @@ All numbers below were measured this session (journal greps cached under `~/.cac
 - psi-wait-gate final lines: `WAIT: llama-vlm-cap — IO PSI some avg10=42.42% >= 30% (check 26, 750s elapsed)` at 09:20:00 (storm onset ~09:07:30)
 - Gatus CPU Thermal Alert TRIGGERED 09:07:52 + 09:12:55 (Discord)
 - Last journal lines 09:20:19: discordsync/file-renamer `/health` 200s, crm-server polling — mid-traffic, zero ceremony
-- pstore empty; no kernel reset-reason line in boots -1/0
+- pstore empty; **reset reason DECODED from boot -1's kernel log**: `x86/amd: Previous system reset reason [0x00080800]: software wrote 0x6 to reset control register 0xCF9` = software warm reset (panic-reboot path), NOT the hardware WDT
 
 ## Freeze #53 measured facts (boot -1)
 
 - 1 guard trip (`trip #9852`); 0 ENTERs (died before the throttle band); calm-gate REFUSE 09:21:26 (memory-guard 1 min prior), 09:21:41 (PSI 56.17%), 09:27:12 (PSI 67.35%)
 - Last journal lines 09:27:13: granian/paperless matching + celery OpenAI retry (retry 5/10) — mid-traffic
+- **Reset reason (boot 0 kernel log): `x86/amd: Previous system reset reason [0x02000800]: hardware watchdog timer expired`** — the 90 s-WDT era, matching the 159 s gap
 
 ## Boot 0 at T+40 min (10:09–10:12)
 
@@ -43,6 +44,8 @@ journalctl -b -2 --no-pager | grep -c "DEEP THROTTLE ENTER"       # 3594
 journalctl -b -2 --no-pager | grep "DEEP THROTTLE" | tail -4      # last ENTER/DROP pre-cut
 journalctl -b -2 --since "2026-11-14 09:15" --no-pager | tail -30 # death window
 journalctl -b -1 --no-pager | tail -5                             # cut #53
+journalctl -b -1 -k --no-pager | grep -i "reset reason"           # 0x00080800 software CF9 (cut #52)
+journalctl -b 0 -k --no-pager | grep -i "reset reason"           # 0x02000800 hardware WDT (cut #53)
 ls /var/log/systemnix-deploys/ | grep 2026-11-14                  # 8 attempts
 readlink /run/current-system; readlink /nix/var/nix/profiles/system-1006-link  # anchor
 ```

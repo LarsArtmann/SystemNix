@@ -1,6 +1,6 @@
 # Freeze #52 + #53 — thermal-ceiling morning agent storm, double cut (Nov 14, 09:20 + 09:27)
 
-**Verdict: Branch C (chronic storm), thermal-led double cut.** The 7-day boot `309f2cb8` (freeze-#51 recovery) died instantly at 09:20:19 mid-traffic after a morning of stacked load — sustained 95–99 °C k10temp ceiling (chronic ALL boot: 3594 throttle ENTERs since Nov 7 01:11), a ramping IO storm (psi-wait-gate holding llama-vlm-cap for 750 s to the death line), and EIGHT failed deploy attempts (03:02→09:43, exit 1/12, none activated). The 6-minute recovery boot `aaffd03f` re-armed the fleet and died identically at 09:27:13 (textbook #48 never-cooled class). Boot 0 `abaf0f51` re-stormed too (98 °C, IO PSI avg10 80% at 09:50) and survived to authoring time ONLY because the guard stack kept refusing — **freeze-#54 risk is live and unresolved at T+42 min.** Reset mechanism of #52 is UNRESOLVED: 59 s cut→boot gap is BELOW the 90 s-WDT floor (the #49/#50 signature gaps were 151–160 s); #53's 159 s gap DOES match the WDT era.
+**Verdict: Branch C (chronic storm), thermal-led double cut.** The 7-day boot `309f2cb8` (freeze-#51 recovery) died instantly at 09:20:19 mid-traffic after a morning of stacked load — sustained 95–99 °C k10temp ceiling (chronic ALL boot: 3594 throttle ENTERs since Nov 7 01:11), a ramping IO storm (psi-wait-gate holding llama-vlm-cap for 750 s to the death line), and EIGHT failed deploy attempts (03:02→09:43, exit 1/12, none activated). The 6-minute recovery boot `aaffd03f` re-armed the fleet and died identically at 09:27:13 (textbook #48 never-cooled class). Boot 0 `abaf0f51` re-stormed too (98 °C, IO PSI avg10 80% at 09:50) and survived to authoring time ONLY because the guard stack kept refusing — **freeze-#54 risk is live and unresolved at T+42 min.** Reset mechanisms DECODED from the next boots' kernel reset-reason lines: **#52 = software warm reset (`0x00080800`, "software wrote 0x6 to reset control register 0xCF9" — the kernel panic-reboot path on a lockup with `nmi_watchdog=panic`/`softlockup_panic=1`; NOT the hardware WDT, explains the 59 s gap), #53 = hardware watchdog expired (`0x02000800`, matching the 159 s cut→boot gap and the 151–160 s #49/#50 signature).**
 
 ## §a Timeline (CET, Nov 14)
 
@@ -15,12 +15,12 @@
 | 09:20:07 | Last DEEP THROTTLE ENTER @ 99 °C | boot -2 journal |
 | 09:20:17 | Final DEEP THROTTLE DROP ("cool band reached") — **2 s before the cut** (the freeze-#8 instant-cut trigger shape; #33 had 5 s) | same |
 | 09:20:19 | **CUT #52** — journal stops mid-traffic (discordsync/file-renamer health 200s, crm polling); zero shutdown ceremony, no pstore record | `journalctl -b -2 \| tail` |
-| 09:21:18 | Boot -1 `aaffd03f` first entry (cut→boot gap **59 s**) | `journalctl --list-boots` |
+| 09:21:18 | Boot -1 `aaffd03f` first entry (cut→boot gap **59 s**); its kernel log decodes the reset: **`0x00080800` — "software wrote 0x6 to reset control register 0xCF9"** = software warm reset, the panic-reboot path (`nmi_watchdog=panic` + `softlockup_panic=1` on the cmdline) | `journalctl --list-boots`; `journalctl -b -1 -k \| grep "reset reason"` |
 | 09:21:26 + 09:21:41 | post-crash-calm-gate REFUSE ×2 (memory-guard trip 1 min prior; then IO PSI avg10 56.17%) — gate WORKED | `journalctl -b -1 \| grep calm-gate` |
 | 09:23 | A task-queue session (riding across the cut) authors the 09:23 window-closeout report | `docs/status/2026-11-14_09-23_*` |
 | 09:27:12 | calm-gate REFUSE #3 (IO PSI avg10 67.35%); guard trip #9852 logged | boot -1 journal |
 | 09:27:13 | **CUT #53** — same instant-cut shape, 5 m 55 s into the boot | `journalctl -b -1 \| tail` |
-| 09:29:52 | Boot 0 `abaf0f51` first entry (gap **159 s** — matches the 90 s-WDT era signature) | `journalctl --list-boots` |
+| 09:29:52 | Boot 0 `abaf0f51` first entry (gap **159 s**); its kernel log decodes cut #53: **`0x02000800` — "hardware watchdog timer expired"** (the 90 s-WDT era, #49/#50 class) | `journalctl --list-boots`; `journalctl -b 0 -k \| grep "reset reason"` |
 | 09:30:06–09:30:51 | calm-gate REFUSE ×3 more (memory-trip window; PSI 46.9/58.6/55.5%); psi-wait-gate admits llama-vlm-cap only at PSI 13.86 | boot 0 journal |
 | 09:43:43 | Deploy 8 starts; **FAILS exit 1 at 10:08:35 after 1492 s** ("nh os switch FAILED — config NOT activated") — this is the double `nix flake check --no-build` + rustc load observed at 09:50 | `/var/log/systemnix-deploys/2026-11-14_09-43-43.log` |
 | ~10:09 | Boot 0 still at ceiling: k10temp 98 °C, acpitz 98 °C, IO PSI avg60 65%, trips #9853→#9864, 17 ENTERs | live probes |
@@ -34,7 +34,7 @@
 | DEEP THROTTLE ENTERs | **3594** (first 01:11:19 Nov 7 @ 98 °C — never-cooled; last 09:20:07 Nov 14 @ 99 °C; final DROP 2 s pre-cut) |
 | OOM | 3 invocations (Nov 11 07:20 nix; Nov 13 00:35 nix; Nov 13 02:17 GC-marker-11) — **none in the death window**; hung_task = 0 |
 | trips/h | 11.5 (inside the 1.3–11.7 chronic storm band, #39 row) |
-| Reset mechanism | **UNRESOLVED** — 59 s gap < 90 s-WDT floor; candidates: owner manual cycle (sessions were active), platform thermal reset at the chronic ceiling, or a reconfigured sub-90 s watchdog (unverified) |
+| Reset mechanism | **DECODED: software warm reset `0x00080800` (0x6 → 0xCF9)** — boot -1's kernel `x86/amd: Previous system reset reason` line; the kernel panic-reboot path on a lockup (hard/soft lockup under `nmi_watchdog=panic`/`softlockup_panic=1` at the thermal ceiling), NOT the hardware WDT (59 s gap < 90 s floor) and NOT a power cut; pstore captured nothing (console record armed but empty — the family's standing no-panic-record pattern) |
 
 Death-minute composition: the morning stacked (1) the tq autonomous agent fleet, (2) eight deploy attempts each burning 15–25 min of eval/build CPU at the ceiling, (3) crm-server's by-phone read storm (see §c), (4) the standing amplifier fleet held correctly by psi-wait-gate — onto a boot that had cycled the thermal governor every ~3 min for a week.
 
@@ -63,7 +63,7 @@ Boot 0's 09:46:26Z forensic bundle (`/var/tmp/io-psi-forensics-20261114T084622Z/
 
 - **[f.1] crm-server by-phone read-volume storm** (§c) — [ready] row: root-cause the ~500 KB/request read amplification (crm repo cache/index fix) + extend the alarm to read volume. **Harvested** → TODO_LIST + stability.md.
 - **[f.2] deploy-build thermal entry gate** — [ready] row: refuse NEW deploy attempts (exit-12 class, pre-build) while k10temp sits in the ≥95 °C sustained band (thermal-pstate-guard's 6-hot-tick shape); 8 attempts burned 15–25 min each at the ceiling today, all failed anyway. **Harvested** → TODO_LIST + stability.md.
-- **[f.3] freeze-#52 reset mechanism** — [watch] row: 59 s gap excludes the 90 s WDT; identify the reset-reason source (EC/efivar/firmware) to classify manual vs thermal-trip vs platform reset. **Harvested** → stability.md (watch, not queue-actionable).
+- **[f.3] freeze-#52 reset mechanism** — **ANSWERED at authoring time**: boot -1's kernel line `x86/amd: Previous system reset reason [0x00080800]: software wrote 0x6 to reset control register 0xCF9` = software warm reset (panic-reboot path on a lockup); #53 decoded `0x02000800` hardware WDT. No row minted. NOTE the near-miss: an earlier 5-line-truncated kernel grep in this same session read as "no reset-reason line" — the line exists; head-truncation almost shipped a false claim.
 
 ## Evidence
 
