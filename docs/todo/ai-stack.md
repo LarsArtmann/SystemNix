@@ -142,3 +142,8 @@ Tag legend: `[ready]` agent-actionable · `[blocked:user]` needs sudo/browser/ex
 - [ ] [ready] **Doc note that VL GGUFs cannot hit the embedding assert** **Source:** docs/status/2026-11-06_00-08_dio-falsification-batch-status.md §f.13
 - [ ] [ready] **Queue the 2027-01-02 Paperless quarterly AI re-audit** **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.21
 - [ ] [decision] **Renamer local llama.cpp vision-provider trial on the 8060S** **Source:** docs/status/2026-11-06_03-28_kensaku-eval-session-status.md §f.24
+- [ ] [ready] **Cross-link the Vulkan-experiment row to the 2026-11-14 spin attribution** (#29894 "Vulkan clean on identical hardware" is its strongest premise; the two rows hold halves of one evidence chain with no pointer) **Source:** docs/status/tasks/2026-11-14_08-06_task-000001a1d8cbc255e490e7655eec00000000.md §f.4
+- [ ] [ready] **Verify the pinned 0.3.0 build accepts `--no-mmap`/`--direct-io` (`llama-server --help` grep) before the A/B soak runbook assumes it** **Source:** same report §f.23
+- [ ] [decision] **Check whether ROCm 7.2.4 ships the ROCr AsyncEventsLoop spin fixes (rocm-systems#12674 says main/10.1.0-only) — if not, the nixpkgs-llama-rag unpin alone does NOT fix the runtime layer** **Source:** same report §f.7
+- [ ] [ready] **Cite llama.cpp #19482/#29894 in docs/services/llama-rag.md's spin section + docs/agents/monitoring.md GPU section (fingerprint + issue pointers) so freeze triage recognizes the class in seconds** **Source:** same report §f.5 + §f.39
+- [ ] [watch] **Watch llama.cpp #19482 for closure or a merged #25212-class fix (the fix PR was closed UNMERGED — nobody owns it upstream); re-evaluate the unpin on landing** **Source:** same report §f.6
