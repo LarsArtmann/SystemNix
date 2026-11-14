@@ -17,12 +17,15 @@
 #   report
 #   --selftest
 #
-# RELPATH is stored WITHOUT the `Takeout/` prefix (normalized 2026-11-14):
-# `Takeout/Drive/a.pdf` is ledgered as `Drive/a.pdf`, so a second cycle with a
-# different archive layout cannot fork the identity space. Recovery, if a
-# hand-edit ever goes wrong: delete the account's rows (`awk` on col 4) or the
-# whole ledger, then re-run `index` — the ledger is derived state, the zips
-# are ground truth.
+# RELPATH: the live ledger still stores the `Takeout/` prefix (index walks the
+# extract root, so `Takeout/Drive/a.pdf` is ledgered verbatim) — `balance`
+# strips it defensively on read, `plan` emits it verbatim because the
+# new-files lists are consumed relative to the extract root by rclone. The
+# intended schema is prefix-free; the migration is queued BEFORE a second
+# cycle exists, because afterwards it is a data migration rather than an
+# edit. Recovery, if a hand-edit ever goes wrong: delete the account's rows
+# (`awk` on col 4) or the whole ledger, then re-run `index` — the ledger is
+# derived state, the zips are ground truth.
 #
 # Ledger: $TAKEOUT_LEDGER
 #   default /mnt/pool/archive/google-takeout/.ledger/ledger.tsv
