@@ -1205,10 +1205,13 @@ in
           continue
         fi
         branch=$(echo "$repo" | jq -r '.default_branch')
+        # Forgejo v15 renamed the route to the plural /branch_protections; the
+        # singular path is gone entirely (404 page not found). The list DTO
+        # echoes both rule_name and branch_name, so accept either here.
         protected=$(curl -sf --compressed \
           -H "Authorization: token $FORGEJO_TOKEN" \
-          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protection" \
-          | jq --arg branch "$branch" '[.[] | select(.branch_name == $branch)] | length') || protected=0
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protections" \
+          | jq --arg branch "$branch" '[.[] | select(((.rule_name // .branch_name) == $branch))] | length') || protected=0
         if [ "''${protected:-0}" != "0" ]; then
           echo "✓ $name: $branch already protected"
           continue
@@ -1216,9 +1219,9 @@ in
         code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
           -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
-          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protection" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/branch_protections" \
           -d "$(jq -n --arg branch "$branch" \
-            '{branch_name: $branch, enable_push: true}')")
+            '{rule_name: $branch, enable_push: true}')")
         if [[ "$code" == "200" || "$code" == "201" ]]; then
           echo "✓ $name: $branch protected (push open, force-push/delete blocked)"
         else
@@ -1332,11 +1335,12 @@ in
         report "push mirror attached" 1 " (listing not an array)"
       fi
 
-      # 5. Default branch protected (same endpoint as forgejo-branch-protect).
+      # 5. Default branch protected (same endpoint as forgejo-branch-protect;
+      #    plural path — Forgejo v15 renamed /branch_protection away).
       prot=$(curl -s --compressed -H "Authorization: token $FORGEJO_TOKEN" \
-        "$api/branch_protection")
+        "$api/branch_protections")
       if echo "$prot" | jq -e 'type == "array"' >/dev/null; then
-        prot_hit=$(echo "$prot" | jq --arg b "$branch" '[.[] | select(.branch_name == $b)] | length')
+        prot_hit=$(echo "$prot" | jq --arg b "$branch" '[.[] | select(((.rule_name // .branch_name) == $b))] | length')
         if [ "$prot_hit" -ge 1 ]; then
           report "branch protection ($branch)" 0 ""
         else

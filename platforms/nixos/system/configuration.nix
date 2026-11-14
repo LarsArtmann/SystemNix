@@ -936,6 +936,14 @@ in
       # config-check ExecStartPre keeps failing loudly if the credential
       # shape regresses.
       audible-sync.enable = true;
+      # audiblesync — the AudibleSync WebUI (audiblesync.home.lan,
+      # protected layer): event-sourced tracker over the SAME pool tree +
+      # audible-cli auth as the archive oneshot above (shared
+      # `audible-sync` identity — the module asserts co-enable). Its
+      # "Sync now" runs one ASIN through the proven AAX pipeline; the
+      # library state lives in a small SQLite DB backed up nightly to
+      # /mnt/pool/backups/audiblesync. LIVE with the 2026-11-14 deploy.
+      audiblesync.enable = true;
       # pim-sync — Google People ↔ Stalwart CardDAV contacts sync (oneshot
       # + 5min jittered timer; Stalwart single truth, Google a sync edge).
       # DORMANT until the owner gates complete (docs/services/pim-sync.md):

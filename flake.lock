@@ -131,6 +131,30 @@
         "url": "https://github.com/LarsArtmann/art-dupl"
       }
     },
+    "audiblesync": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794619385,
+        "narHash": "sha256-16Z/VibLJQ45/WBvj8XmYOo30kvTxbGjOIjXLbFDibI=",
+        "owner": "LarsArtmann",
+        "repo": "audiblesync",
+        "rev": "e8ef41940ec3331366f89f22aeaa1f69de6859f6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "master",
+        "repo": "audiblesync",
+        "type": "github"
+      }
+    },
     "bank-sync": {
       "inputs": {
         "cqrs-htmx": "cqrs-htmx",
@@ -9902,6 +9926,7 @@
       "inputs": {
         "art-dupl": "art-dupl",
         "art-dupl-src": "art-dupl-src",
+        "audiblesync": "audiblesync",
         "bank-sync": "bank-sync",
         "branching-flow": "branching-flow",
         "brandid-lint": "brandid-lint",

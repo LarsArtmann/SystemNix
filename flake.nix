@@ -340,6 +340,20 @@
       url = "git+ssh://git@github.com/LarsArtmann/pim-sync?ref=refs/heads/master";
     };
 
+    # audiblesync — event-sourced Audible library tracker WebUI (Go +
+    # templ + go-cqrs-lite system/metaengine + cqrs-htmx): per-book sync
+    # state, activity feed, SSE live updates, /healthz. Companion to the
+    # audible-sync archive oneshot — its Sync now delegates to audible-cli
+    # against the SAME pool dirs + sops auth (module: modules/nixos/services/
+    # audiblesync.nix; the flake exports packages.default only, NO
+    # nixosModules, so the wrapper hand-rolls the unit). PUBLIC repo →
+    # plain github URL (emeet-pixyd pattern); probe-before-lock discipline:
+    # build the rev outside the lock BEFORE re-locking (PapDashboard CI
+    # retirement doctrine).
+    audiblesync = {
+      url = "github:LarsArtmann/audiblesync?ref=master";
+    };
+
     # NixOS hardware profiles (Raspberry Pi, etc.)
     nixos-hardware = {
       url = "github:NixOS/nixos-hardware";
@@ -1195,6 +1209,10 @@
     dms-paste.inputs.nixpkgs.follows = "nixpkgs";
     dms-paste.inputs.treefmt-nix.follows = "treefmt-nix";
     erraudit.inputs.flake-parts.follows = "flake-parts";
+    # audiblesync consumes only nixpkgs + flake-utils; both follow so the
+    # input adds ZERO lock nodes (the infra-follows gate counts them).
+    audiblesync.inputs.nixpkgs.follows = "nixpkgs";
+    audiblesync.inputs.flake-utils.follows = "flake-utils";
     go-auto-upgrade.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.flake-parts.follows = "flake-parts";
     go-nix-helpers.inputs.treefmt-nix.follows = "treefmt-nix";

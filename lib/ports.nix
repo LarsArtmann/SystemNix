@@ -303,6 +303,14 @@
         # registered so the eval-enforced port registry is the owner of
         # record (quotaboard precedent).
         cvagent-dashboard = 8787;
+
+        # audiblesync — event-sourced Audible library tracker WebUI
+        # (services.audiblesync, single Go binary), loopback-only; Caddy
+        # proxies audiblesync.home.lan to it (protected layer — the app has
+        # no auth of its own, cqrs-htmx Path A). 8481 is the upstream CLI
+        # default, registered so the eval-enforced port registry is the
+        # owner of record (cvagent-dashboard precedent).
+        audiblesync = 8481;
       };
       inRange = p: builtins.isInt p && p >= 1 && p <= 65535;
       invalid = builtins.concatLists (

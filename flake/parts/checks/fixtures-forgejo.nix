@@ -617,27 +617,27 @@
               # Happy: repo native, default branch unprotected -> POST.
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy.GET.1.code"
               printf '{"default_branch":"master","mirror":false}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy.GET.1.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.GET.1.code"
-              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.GET.1.body"
-              printf 201 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.POST.1.code"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protections.GET.1.code"
+              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protections.GET.1.body"
+              printf 201 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-happy_branch_protections.POST.1.code"
               FORGEJO_TOKEN=fxtok FORGEJO_URL=http://localhost:3000 \
                 FORGEJO_CANONICAL_REPOS=prot-happy run "$PROTECT"
               need_rc prot-happy 0
               need_has prot-happy "master protected"
-              jq -e '.branch_name == "master" and .enable_push == true' \
-                "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-happy_branch_protection.POST.1.json" > /dev/null \
+              jq -e '.rule_name == "master" and .enable_push == true' \
+                "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-happy_branch_protections.POST.1.json" > /dev/null \
                 || { echo "FAIL branch-protect: POST payload"; exit 1; }
 
               # Idempotent: protection already present -> skip, no POST.
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem.GET.1.code"
               printf '{"default_branch":"main","mirror":false}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem.GET.1.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.GET.1.code"
-              printf '[{"branch_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.GET.1.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protections.GET.1.code"
+              printf '[{"rule_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_prot-idem_branch_protections.GET.1.body"
               FORGEJO_TOKEN=fxtok FORGEJO_URL=http://localhost:3000 \
                 FORGEJO_CANONICAL_REPOS=prot-idem run "$PROTECT"
               need_rc prot-idem 0
               need_has prot-idem "already protected"
-              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-idem_branch_protection.POST.1.json" ] \
+              [ ! -f "$STUB_STATE/req.localhost_3000_api_v1_repos_lars_prot-idem_branch_protections.POST.1.json" ] \
                 || { echo "FAIL branch-protect: idem must not POST"; exit 1; }
 
               # Refuse mirrors (protection is for primaries).
@@ -660,8 +660,8 @@
               printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_contents_.forgejo_workflows.GET.body"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_push_mirrors.GET.code"
               printf '[{"id":1}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_push_mirrors.GET.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protection.GET.code"
-              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protection.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protections.GET.code"
+              printf '[{"rule_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-happy_branch_protections.GET.body"
               run "$VERIFY" pv-happy; need_rc pv-happy 0
               need_has pv-happy "failures=0"
 
@@ -678,8 +678,8 @@
               printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_contents_.forgejo_workflows.GET.body"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_push_mirrors.GET.code"
               printf '[{"id":2}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_push_mirrors.GET.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protection.GET.code"
-              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protection.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protections.GET.code"
+              printf '[{"rule_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions_branch_protections.GET.body"
               run "$VERIFY" pv-actions; need_rc pv-actions 1
               need_has pv-actions "re-run with"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-actions.PATCH.code"
@@ -696,8 +696,8 @@
               printf '{"message":"Not Found"}' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_contents_.forgejo_workflows.GET.body"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_push_mirrors.GET.code"
               printf '[{"id":3}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_push_mirrors.GET.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protection.GET.code"
-              printf '[{"branch_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protection.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protections.GET.code"
+              printf '[{"rule_name":"master"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-wf_branch_protections.GET.body"
               run "$VERIFY" pv-wf; need_rc pv-wf 1
               need_has pv-wf "workflows"
 
@@ -708,8 +708,8 @@
               printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_contents_.forgejo_workflows.GET.body"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_push_mirrors.GET.code"
               printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_push_mirrors.GET.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protection.GET.code"
-              printf '[{"branch_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protection.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protections.GET.code"
+              printf '[{"rule_name":"main"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-nomirror_branch_protections.GET.body"
               run "$VERIFY" pv-nomirror; need_rc pv-nomirror 1
               need_has pv-nomirror "push mirror attached"
 
@@ -720,8 +720,8 @@
               printf '[{"name":"ci.yml"},{"name":"release.yml"}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_contents_.forgejo_workflows.GET.body"
               printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_push_mirrors.GET.code"
               printf '[{"id":4}]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_push_mirrors.GET.body"
-              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protection.GET.code"
-              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protection.GET.body"
+              printf 200 > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protections.GET.code"
+              printf '[]' > "$STUB_HTTP/localhost_3000_api_v1_repos_lars_pv-noprot_branch_protections.GET.body"
               run "$VERIFY" pv-noprot; need_rc pv-noprot 1
               need_has pv-noprot "branch protection (main)"
 
