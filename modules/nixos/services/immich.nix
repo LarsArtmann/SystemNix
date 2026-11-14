@@ -262,10 +262,13 @@ _: {
                 # for other owners) needs setuid/setgid; harden's empty
                 # default dies "runuser: cannot set groups: Operation not
                 # permitted" (live 2026-11-14, gen after the StateDirectory
-                # fix cleared the earlier 226/NAMESPACE leg).
+                # fix cleared the earlier 226/NAMESPACE leg). CAP_SYS_RESOURCE
+                # clears the NEXT leg: pam_limits raising RLIMIT_MEMLOCK
+                # ("Could not set limit for 'memlock'" → "cannot open
+                # session: Permission denied", live 23:20 gen-1009).
                 (harden {
                   MemoryMax = "128M";
-                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID";
+                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE";
                 })
                 (serviceOneshotDefaults { })
                 {
