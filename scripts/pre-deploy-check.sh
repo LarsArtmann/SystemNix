@@ -1371,8 +1371,7 @@ fi
 echo ""
 echo "21. Contact-registry drift (advisory)"
 if [ -f "${_BS_DIR}/check-contact-registry-drift.sh" ]; then
-  drift_out=$("${_BS_DIR}/check-contact-registry-drift.sh" 2>&1)
-  if [ $? -ne 0 ]; then
+  if ! drift_out=$("${_BS_DIR}/check-contact-registry-drift.sh" 2>&1); then
     warn "contact-registry drift check failed: $drift_out"
   elif echo "$drift_out" | grep -q "drift: [1-9]"; then
     warn "contact-registry drift (advisory): $drift_out"
