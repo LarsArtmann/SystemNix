@@ -63,6 +63,8 @@
 
 ## f) NEXT (up to 50; derived strictly from this session)
 
+**Self-harvest (authoring-time, per house rule):** items 8/9, 20/21/22, 16 → TODO_LIST.md `[ready]` + `docs/todo/stability.md` full rows; items 24–28 → one consolidated `[decision]` library row; items 1–7 ride the existing `[blocked:deploy]` verification row; item 23 (fmt) was executed at self-review time (0 changed — canonical), item 31 verified coherent when the #54 row landed. Everything else stays report-only until triaged.
+
 1. Deploy the freeze-54 hardening (rides the crash-loop wave's calm window; both `[blocked:deploy]` rows name the checkpoints).
 2. Post-deploy verify: `memory.swap.max` reads 48G.
 3. Post-deploy verify: `system_process_mem_bytes` in SigNoz after one collector run.
