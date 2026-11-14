@@ -231,7 +231,17 @@
       # input is REV-PINNED at 9e3687b97 (the fix rev) until a master tip
       # builds with the guard green again. Upstream's own baked vendorHash
       # governs; shim stays dropped.
-      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      # TWENTY-FIRST entry 2026-11-14 rollback-deploy session: the "governs"
+      # claim above is FALSIFIED first-hand — at 9e3687b the FOD
+      # hash-mismatches (spec ejjizmFe == upstream's own bake at that rev,
+      # `git show 9e3687b:nix/packages.nix`; got IX/nWy4A under our graph;
+      # ~/.cache/signoz-fod-fix/keepgoing-post5.log). spec==bake but
+      # got≠bake = the non-drop-safe class (nix-flakes.md drop-safety:
+      # only got==bake proves the plain package reproduces). Shim with the
+      # got; drop when upstream bakes IX/nWy4A or a tip builds plain green.
+      cvPkg = inputs.cv.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs {
+        vendorHash = "sha256-IX/nWy4ACSxe1/9K/axJkFQZaOGO8qbOMu0wIogILKI=";
+      };
     in
     {
       imports = [
