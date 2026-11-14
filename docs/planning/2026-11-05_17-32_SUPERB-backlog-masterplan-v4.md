@@ -1,7 +1,7 @@
 # SUPERB Backlog Masterplan v4 — Post-Storm Pareto Plan
 
 **Authored:** 2026-11-05 17:32 CET · **Supersedes:** v3 (2026-11-03_17-10) — v3's S-#### index remains the reference for the gated tail except the errata below.
-**Context delta since v3 (5 days):** freeze cluster Nov 2–5 (10 freezes, worst on record), calm-gate + psi-wait-gates WIRED and live (gen 983), fastflowlm disabled TREE-ONLY (deploy pending, sudo-gated; re-armed live at 09:56 — storm live at PSI ~38 % at 16:56), memory-guard observe-only (tree), AI-deployment research verdict landed (docs/planning/2026-11-05_ai-deployment-research.md), SUPERB storage pareto plan + data-redesign latency-first plan authored 11-03.
+**Context delta since v3 (5 days):** freeze cluster Nov 2–5 (10 freezes, worst on record), calm-gate + psi-wait-gates WIRED and live (gen 983), fastflowlm disabled TREE-ONLY (deploy pending, sudo-gated; re-armed live at 09:56 — storm live at PSI ~38 % at 16:56), memory-guard observe-only (tree), AI-deployment research verdict landed (docs/research/2026-11-05_ai-deployment-research.md), SUPERB storage pareto plan + data-redesign latency-first plan authored 11-03.
 
 **Inventory (live counts, 17:32):** libraries = 2,179 open rows (ai 43 · desktop 98 · monitoring 176 · pipeline 586 · pixel6 18 · security 16 · services 629 · stability 212 · storage 197 · upstream 204); tags: ready ~1,660 · blocked:user ~197 · blocked:push ~79 · blocked:deploy ~85 · watch ~218 · decision ~250. Queue (`TODO_LIST.md`) mirrors 1,157 ready + tagged rows = 1,686. **No double-counting** (queue ⊂ libraries).
 

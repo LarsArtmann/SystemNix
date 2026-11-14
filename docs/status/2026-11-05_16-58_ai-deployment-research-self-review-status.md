@@ -62,7 +62,7 @@
 | Item | Evidence |
 |---|---|
 | "What is wrong with how we deploy/use AI" — properly researched answer with 6 external canon probes + internal grounding + live verification | delivered in chat; owner got the researched verdict |
-| Research report with sources, verdict-per-theme, ranked deltas | `docs/planning/2026-11-05_ai-deployment-research.md` (committed in `b4606800a`) |
+| Research report with sources, verdict-per-theme, ranked deltas | `docs/research/2026-11-05_ai-deployment-research.md` (committed in `b4606800a`) |
 | 4 substantive corrections to my own first answer surfaced (vlm already socket-activated; scale-to-zero often a liability; BFQ+ioTier enforced; warmup = by-design cold reads) | research doc §1/§2/§6 |
 | TODO harvest: 5 rows (restart backoff, ingest-job extraction, demand profiling, 465 GB attribution → ai-stack; ghost-package detector → pipeline) in queue + libraries, same pass | TODO_LIST.md `### ai-stack` + `### pipeline`; docs/todo/{ai-stack,pipeline}.md |
 | Live state stamps for this report (boot age, PSI, unit states, schedulers) | commands in Scope |

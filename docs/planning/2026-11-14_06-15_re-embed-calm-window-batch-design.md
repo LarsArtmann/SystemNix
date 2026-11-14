@@ -1,7 +1,7 @@
 # Design: calm-window idempotent re-embed batch job (llama-embeddings backlog extraction)
 
 **Status:** design (unimplemented). **Date:** 2026-11-14.
-**Source rows:** docs/todo/ai-stack.md re-embed-backlog row; docs/planning/2026-11-05_ai-deployment-research.md §4.
+**Source rows:** docs/todo/ai-stack.md re-embed-backlog row; docs/research/2026-11-05_ai-deployment-research.md §4.
 **Measured problem size (see docs/status/2026-11-14_06-15_ai-demand-profile-and-write-attribution.md):**
 the re-embed backlog runs at ~1,500 req/h for 14-hour stretches (18k req/h peak hour, 2026-11-05/06/07)
 against an 8-11 req/h query baseline — while the serving unit's cgroup write amplification hit
