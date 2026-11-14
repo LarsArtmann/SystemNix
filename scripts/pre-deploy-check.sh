@@ -585,11 +585,11 @@ shadow_split_section18() {
     elif grep -q 'nothing to shadow-split' <<<"$ss_out"; then
       pass "shadow-split gate: no enabled hot-tier entries in the to-be-deployed config"
     else
-      pass "shadow-split gate: every populated shadow dir has a demonstrably prepared target subvol"
+      pass "shadow-split gate: every hot-tier entry verified — live mounts serve their declared subvols; unmounted shadows have prepared target subvols"
     fi
     grep -E '^(PASS|WARN):' <<<"$ss_out" | sed 's/^/    /' || true
   elif [ "$ss_rc" -eq 1 ]; then
-    fail "shadow-split gate REFUSED — a hot-tier mount would land over a non-empty service data dir without a prepared target subvol (wave-6 shadow-split class, docs/status/2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md). Run the wave's prepare/cutover step first; never deploy over it:"
+    fail "shadow-split gate REFUSED — a hot-tier entry failed (wave-6 split over live data, a foreign mount over the service path, or a missing prepared copy; docs/status/2026-10-21_01-55_immich-wizard-pg-cluster-shadow-split.md). Run the wave's prepare/cutover step or investigate the mount first; never deploy over it:"
     printf '%s\n' "$ss_out" | sed 's/^/    /'
   else
     warn "shadow-split gate could not enumerate entries (nix eval / jq failed) — verify the hot-tier entries by hand before deploying"
@@ -1299,15 +1299,23 @@ zm_scan
 # 18. Shadow-split gate (2026-10-26 wave-6 class; storage.md ready row 1).
 # A hot-tier mount landing over a NON-empty service data dir must be caught
 # BEFORE the switch: wave 6 mounted an EMPTY /hot/postgres over live
-# /var/lib/postgresql and four co-tenant DBs ran empty 2.5 days. The gate
-# checks every hot entry in the to-be-deployed config: empty-subvol-over-
-# nonempty-shadow = wave-6 signature (FAIL), PG_VERSION presence parity
-# (FAIL), prepared-copy parity bands + EACCES degradation (WARN). Body lives
-# in shadow_split_section18() above so --section-18-only can loop it cheaply.
+# /var/lib/postgresql and four co-tenant DBs ran empty 2.5 days. Since
+# 2026-11-14 the gate is mount-state aware: a shadow path that is ALREADY
+# a live mountpoint is judged by its mount (fsroot must equal the declared
+# subvol — content probes through a live mount read the subvol through
+# the mount and compare it to itself, which made every steady-state line
+# a self-comparison PASS that read like "data on both disks"); foreign
+# mounts FAIL (data) / WARN (cache); only NOT-yet-mounted shadows run the
+# content ladder (empty-subvol-over-nonempty-shadow = wave-6 signature
+# FAIL, PG_VERSION presence parity FAIL, prepared-copy parity bands +
+# EACCES degradation WARN). Body lives in shadow_split_section18() above
+# so --section-18-only can loop it cheaply.
 # Fixture-tested by scripts/test-predeploy-shadow-split.sh via the
-# `shadow-split-gate-selftest` flake check (31 cases: verdict ladders +
+# `shadow-split-gate-selftest` flake check (42 cases: verdict ladders +
 # STRICT legs + the 0700-parent hidden-shadow class — ticketless degrade
-# WARN vs privileged real verdict, 2026-11-13).
+# WARN vs privileged real verdict, 2026-11-13 — and the mount-state
+# prelude: live-mounted PASS with the content ladder skipped, foreign
+# FAIL/WARN, automount resolved/unresolved, 2026-11-14).
 shadow_split_section18
 
 # 19. Sops manifest check-mode (pipeline.md superb-v3 S-0002; source:
