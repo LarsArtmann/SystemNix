@@ -2084,9 +2084,11 @@ _: {
             grep -nvE "$PROM_VALID_LINE" "$TMP" | head -5 >&2
             grep -vE "$PROM_VALID_LINE" "$TMP" > "$TMP.gate" && mv "$TMP.gate" "$TMP"
           fi
-          echo "# HELP system_health_prom_dropped_lines Lines dropped by the publish gate this run (nonzero = an emitter glitched; the named metric is missing for one cycle, NOT the whole file)" >> "$TMP"
-          echo "# TYPE system_health_prom_dropped_lines gauge" >> "$TMP"
-          echo "system_health_prom_dropped_lines ''${PROM_DROPPED:-0}" >> "$TMP"
+          {
+            echo "# HELP system_health_prom_dropped_lines Lines dropped by the publish gate this run (nonzero = an emitter glitched; the named metric is missing for one cycle, NOT the whole file)"
+            echo "# TYPE system_health_prom_dropped_lines gauge"
+            echo "system_health_prom_dropped_lines ''${PROM_DROPPED:-0}"
+          } >> "$TMP"
           mv "$TMP" "$OUT"
         '';
       };
