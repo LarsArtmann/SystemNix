@@ -202,12 +202,24 @@
               ];
             };
 
-            services.audiblesync-backup-dir = mkPoolDirUnit {
-              description = "Create AudibleSync DB backup directory on the HDD pool";
-              directory = backupDir;
-              owner = "audible-sync";
-            };
+            services.audiblesync-backup-dir = lib.mkMerge [
+              (mkPoolDirUnit {
+                description = "Create AudibleSync DB backup directory on the HDD pool";
+                directory = backupDir;
+                owner = "audible-sync";
+              })
+              # mkPoolDirUnit bakes no IO tier; the boot-transaction audit
+              # requires one on every wantedBy multi-user unit
+              # (audible-sync-dirs carries ioTier.background for the same
+              # reason).
+              { serviceConfig = ioTier.background; }
+            ];
           }
+
+          # A stale-mount remount stops every pool-bound daemon and NOTHING
+          # converges them back (2026-10-04 paperless-gpt class) — audiblesync
+          # is pool-bound (RequiresMountsFor /mnt/pool), so it rides
+          # pool-recovery's restartUnits.
 
           # Nightly WAL-safe SQLite online backup (lib generator, plan E1):
           # 02:35 — staggered off paperless-db (02:00), browser-history
@@ -233,6 +245,8 @@
             extraServiceConfig = [ ioTier.background ];
           })
         ];
+
+        services.pool-recovery.restartUnits = [ "audiblesync.service" ];
 
         # Service-integration registry entry: ONE declaration fans out the
         # Caddy vHost (protected layer — the app has NO auth of its own),
