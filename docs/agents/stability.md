@@ -79,6 +79,7 @@ Rules:
 - pstore and vmcore are empty across ALL branches (a livelock pets the WDT "eventually"; the reset lands before any panic path) — **absence of kdump is NOT evidence of thermal**.
 - The reset-reason line lives in the NEXT boot's kernel messages, never in the dying boot's journal.
 - Drivers named by io.stat attribution survive the branch classification: IO writers route to the standing-writer/placement fixes, thermal legs route to the cooling floor (BIOS fans/PPT) — the two ladders are complementary, not rival diagnoses.
+- **The cooling floor is firmware-only since 2026-11-14 (owner verdict on the freeze-54 plan, T01 m1–m3): physical remediation — fans/dust, heatsink/paste, airflow — is WAIVED ("can't change"; stability row 143, 17 baits, verdict recorded there).** The standing deficit is a permanent constraint, not a fixable defect. Thermal legs now route to the BIOS fan-curve walk (this board exposes no OS-side PPT/platform-profile control) and otherwise TERMINATE in software containment: thermal-pstate-guard rungs + shed-load, deploy thermal gate, build admission gates. Nothing downstream may assume the physical deficit is fixable, and no future report may re-ask for the physical inspection — the answer is on record.
 
 ### Freeze census — trips/boot vs the escalation thresholds (F52, 2026-10-28; regenerate with `scripts/crash-triage.sh --boots 6`)
 

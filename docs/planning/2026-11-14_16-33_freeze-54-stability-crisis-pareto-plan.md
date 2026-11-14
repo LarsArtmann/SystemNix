@@ -6,7 +6,7 @@
 
 - **54 documented freezes; 3 today (Nov 14)** — #52 thermal-led morning storm, #53 never-cooled recovery (5m55s), #54 memory-cliff via a single 78 GB session hog + the swap-escape of every RAM bound + oomd executing the desktop. Family = 100% Branch C (thermal ceiling + IO storm ± memory cliff) since #33. The box has NOT gone 5 days without a cut since Sep 29 (cadence study).
 - **Two eval-green fix waves are in-tree and storm-gated**: the crash-loop wave (monitor365 SIGSYS, audiblesync, immich-key, bank-sync repin, llama-chat backoff) and the freeze-54 wave (MemorySwapMax=48G, .prom publish gate, process census). They protect NOTHING until a calm-window deploy lands.
-- **The root physical fix is owner-gated and 7+ freezes old**: the cooling inspection ([blocked:user], row 143) — every software mitigation since #8 has failed to close a standing physical deficit (thermal-pstate-guard live since 10-04; the family crashed straight through it 20+ times).
+- **The root physical fix is owner-gated and 7+ freezes old**: the cooling inspection ([blocked:user], row 143) — every software mitigation since #8 has failed to close a standing physical deficit (thermal-pstate-guard live since 10-04; the family crashed straight through it 20+ times). **UPDATE 2026-11-14 evening: physical remediation WAIVED by owner ("can't change") — see Owner verdicts below; this bullet is the pre-verdict state.**
 - **Live at authoring**: IO PSI some avg10 **98.98%** with NO measurable process writer (top pid 0.8 MB/s — the device-wedge class; a containment session owns live triage, this plan only records it). 30 commits unpushed.
 
 ## Scope
@@ -20,6 +20,15 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 - `TODO_LIST.md` shows 3,352 checkbox lines — the queue file is overdue a prune ([x] rows → CHANGELOG per the 2026-10-25 protocol; dry-run-first, expect WARN rise).
 - Freeze-54 items (rows 190–196) verified open and current — authored this session.
 
+## Owner verdicts (post-authoring, 2026-11-14 evening)
+
+- **T01 m1–m3 physical remediation WAIVED — owner cannot change fans/dust, heatsink/paste, or airflow** (verbatim: "can't change", given on this plan's m1–m3). The standing deficit (17 counted baits, freezes #13–#36) is a **permanent constraint, not a fixable defect**. T01 shrinks to m4 (BIOS fan-curve walk — firmware, not physical) + m5 (1h Tctl baseline).
+- Consequences applied to this plan:
+  - The 1%-tier thermal lever is gone; **T02 (deploy both waves) + T03 (storm containment) are now the top of the stack**. T01-residue drops to the 20% tier — the curve walk may shave degrees off the ceiling; it cannot close a dead-fan-class deficit.
+  - **T18 m2 is effectively forced**: accept 95–98 °C ceiling-riding + contain in software, unless the m4 fan-curve walk measurably lowers the ceiling. The separate a/b admission-gate decision (stability row 137 — gate compiles at ≥95 °C vs accept) remains the owner's throughput call, and now also inherits row 143's "no heavy builds until inspection" gate, whose premise ("until answered") is now answered.
+  - **T21's `T01 verdict` dependency is satisfied** — design premise: the ceiling is permanent; the guard's job is containment + shed-load escalation, never cure. Proceed without waiting for m4.
+- Surfaces updated with this verdict: `docs/todo/stability.md` row 143 (verdict appended, [blocked:user] residue = the fan-curve walk), `docs/agents/stability.md` (thermal-leg routing rule), `docs/services/thermal-pstate-guard.md` (both "only the inspection fixes it" claims).
+
 ---
 
 ## Pareto breakdown
@@ -28,7 +37,7 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 
 | # | The one thing | Why it is THE thing |
 |---|---|---|
-| 1 | **Owner physical cooling inspection** (T01, row 143) | The thermal leg rides in nearly every Branch-C death since #8; k10temp sat at 98 °C for a WEEK straight on boot `309f2cb8`. No software layer can close a physical deficit — 20+ crashes proved it. One hour of owner hands-on kills the ceiling that names the death second in a dozen ledgers. |
+| 1 | **Owner physical cooling inspection** (T01, row 143) | **WAIVED 2026-11-14: owner cannot change fans/dust, heatsink/paste, airflow ("can't change") — physical remediation is permanently off the table.** Residue = BIOS fan-curve walk + Tctl baseline (20%-tier at best). The 1%-tier levers are now #2 + #3 below. Pre-verdict reasoning, kept for the record: the thermal leg rode nearly every Branch-C death since #8; k10temp sat at 98 °C for a WEEK straight on boot `309f2cb8`; no software layer can close a physical deficit — 20+ crashes proved it. |
 | 2 | **The calm-window deploy of both waves** (T02) | All fixes are in-tree, eval-green, doing nothing. Switching them on is the difference between "fixed" and "documented". |
 | 3 | **Storm-fuel discipline: nothing heavy while hot** (T03, T07) | Every cut of the Nov cluster had agent/build batteries as fuel. The gates police fleets, not interactively-launched builds — the discipline gap is where the fuel enters. |
 
@@ -67,7 +76,7 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 
 | ID | Task | Pareto tier | Impact | Effort | Hands | Depends on |
 |---|---|---|---|---|---|---|
-| T01 | Physical cooling inspection (fans, mounts, paste, airflow, BIOS curve) + post-fix 1h Tctl baseline | 1% | 10 | 60m | **owner** | — |
+| T01 | ~~Physical cooling inspection (fans, mounts, paste, airflow)~~ WAIVED 2026-11-14 → BIOS fan-curve walk (m4) + 1h Tctl baseline (m5) | 20% | 6 | 25m | owner+agent | — |
 | T02 | Calm-window deploy of BOTH waves + 6-point verify battery | 1% | 10 | 60m | agent+owner | PSI-calm window |
 | T03 | Live storm containment: name the PSI-99-no-writer wedge; hold all session load | 1% | 9 | 30m | agent | — |
 | T18 | Owner architecture verdicts: role-split, thermal acceptance, concurrency cap | 4% | 9 | 30m | **owner** | — |
@@ -79,7 +88,7 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 | T15 | btrbk starvation catch-up + RPO verdict (projects 7d stale) | 4% | 7 | 45m | agent+owner | quiet window |
 | T11 | Recovery-boot amplifier containment (dnsblockd, monitor365, resumable readers) | 20% | 7 | 100m | agent | T02 |
 | T20 | Guard Zone-7 (user-swap) + trip-line top-5 IO deltas + loadavg | 20% | 6 | 90m | agent | T05 |
-| T21 | thermal-pstate-guard: restore hysteresis + shed-load rung | 20% | 6 | 90m | agent | T01 verdict |
+| T21 | thermal-pstate-guard: restore hysteresis + shed-load rung | 20% | 7 | 90m | agent | — (T01 verdict landed 2026-11-14: contain, don't cure) |
 | T13 | SEV1 escalation decisions + implementation (re-arm, latch, tiers) | 20% | 6 | 60m | owner+agent | T04 |
 | T09 | Fixture legs: promgate CASES + census + calm-gate VM | 20% | 6 | 90m | agent | — |
 | T24 | Owner containment policy: llama-chat de-gating, re-arm vs stops | 20% | 5 | 30m | **owner** | — |
@@ -97,10 +106,10 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 
 | Parent | Micro-tasks (each ≤12 min) |
 |---|---|
-| T01 | m1: visual+spin check of all fans & dust (5m) · m2: heatsink mount pressure / paste state (10m) · m3: airflow path + ambient temp check (5m) · m4: BIOS fan-curve walk, one setting per boot (12m) · m5: agent — 1h Tctl ceiling watch vs the 98 °C baseline, ledger the delta (12m) |
+| T01 | ~~m1: visual+spin check of all fans & dust (5m)~~ · ~~m2: heatsink mount pressure / paste state (10m)~~ · ~~m3: airflow path + ambient temp check (5m)~~ — all three WAIVED 2026-11-14 (owner cannot change the physical cooling) · m4: BIOS fan-curve walk, one setting per boot (12m) · m5: agent — 1h Tctl ceiling watch vs the 98 °C baseline, ledger the delta (12m) |
 | T02 | m1: quiescence poll — PSI avg10<20 ×4×60s, tree clean, no eval-relevant mtime<5min (12m) · m2: `nix run .#deploy` (12m) · m3: verify `memory.swap.max`=48G (2m) · m4: verify process census + dropped_lines=0 + zero node_exporter parse errors (10m) · m5: verify crash-loop wave — monitor365 no SIGSYS, bank-sync healed, audiblesync single-start, immich-key no 226 (12m) · m6: anchor check + `post-deploy-check.sh` (12m) |
 | T03 | m1: device-truth probe — `/sys/block/*/stat` field-10 + write-sector deltas 5s (10m) · m2: hold ALL session load (discipline, 0m) · m3: if a cut follows, ledger it + capture boot evidence (5m) |
-| T18 | m1: role-split verdict — second box vs one-box-with-gates (10m) · m2: thermal acceptance verdict — fan control vs 95–98 °C accepted (5m) · m3: agent-session concurrency-cap verdict (5m) |
+| T18 | m1: role-split verdict — second box vs one-box-with-gates (10m) · m2: thermal acceptance verdict — fan control vs 95–98 °C accepted (5m) (forced 2026-11-14: physical fix waived — accept+contain unless the T01-m4 BIOS curve walk moves the ceiling; row 137's a/b admission-gate call stays open) · m3: agent-session concurrency-cap verdict (5m) |
 | T04 | m1: Q1 — what ran in session-115 (~10:02)? (2m) · m2: Q2 — may a session exceed 48G swap ever? (2m) · m3: Q3 — banner policy >40G scope (2m) · m4: triage design bundle rows 24–28 into [ready]/rejected with rationale (12m) |
 | T05 | m1: read `memory.swap.current` into the census loop (10m) · m2: bash -n + escaping check of the change (5m) · m3: gatus check — user-slice swap >35G sustained (10m) · m4: gatus check — dropped_lines > 0 (8m) · m5: gatus check — oomd kills >3/10min (10m) · m6: eval + library row tick (10m) |
 | T06 | m1: enumerate cold-load units + their QLC read classes (8m) · m2: heavy-job slot wrapper for model loads (12m) · m3: psi-wait-gate ExecStartPre on llama-vlm-cap + llama-embeddings + nsfw-classifier (12m) · m4: one gate verified against a fake-PSI stub (12m) |
@@ -132,7 +141,7 @@ OUT (named, not planned): ~250-row long-tail forensics/hygiene backlog in `docs/
 ```mermaid
 flowchart TD
     subgraph P0["PHASE 0 — owner hands (parallel, this week)"]
-        T01["T01 cooling inspection<br/>(root physical fix)"]
+        T01["T01 BIOS fan-curve + Tctl baseline<br/>(physical legs WAIVED 2026-11-14)"]
         T18["T18 architecture verdicts"]
         T04["T04 freeze-54 Q1-Q3 answers"]
         T24["T24 containment policy"]

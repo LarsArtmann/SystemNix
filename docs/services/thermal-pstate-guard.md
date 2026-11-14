@@ -21,7 +21,7 @@ Default sensors (`services.thermal-pstate-guard.sensors`): k10temp 95/80 °C, nv
 
 Freezes #8–#14 (2026-10-01 → 10-04): Tctl pinned ~99 °C on a standing cooling deficit under the chronic zone-6 IO storm, instant EC power cut mid-traffic. The pstate configuration pinned max clocks under any load, so every storm rode the ceiling. The board exposes **no OS-side PPT control** (no ryzen_smu for Strix Halo, no RAPL, no BIOS platform profile), making the driver mode the only frequency lever. A written "no heavy builds" gate was violated within the hour it was written (freeze-14's death-minute nix burst) — this guard enforces the thermal ceiling in code.
 
-**It does not replace the physical cooling inspection** (docs/todo/stability.md cooling row): if the firmware's guided policy is as weak as its fan control, only the inspection fixes the deficit. Zero fan telemetry + 81.5 °C at 46 W idle-ish remains the smoking gun for dead/clogged fans.
+**The physical cooling inspection this guard long pointed to is WAIVED (owner verdict 2026-11-14: cannot change fans/dust, heatsink/paste, airflow — docs/todo/stability.md row 143 records it).** The deficit is a permanent constraint; this guard + the admission/deploy gates ARE the terminal thermal defense. The only remaining ceiling-moving lever is the BIOS fan-curve walk (firmware; this board exposes no OS-side PPT/platform-profile control). Zero fan telemetry + 81.5 °C at 46 W idle-ish remains the evidence for dead/clogged fans — now an accepted permanent condition to contain, not an inspection trigger.
 
 ## State + metrics
 
@@ -38,7 +38,7 @@ Freezes #8–#14 (2026-10-01 → 10-04): Tctl pinned ~99 °C on a standing cooli
 
 ## Post-deploy effectiveness criterion (2026-10-14, freeze-16/17 row)
 
-**The guard is "mitigating" only if, while `thermal_pstate_guard_throttled == 1`, no k10temp sample reaches ≥95 °C at load.** Over any full boot: `max_over_time(thermal_pstate_guard_sensor_celsius{sensor="k10temp"}[1h])` sampled while throttled must stay <95 °C. If ≥95 °C samples persist across a whole boot even with `thermal_pstate_guard_deep_throttled == 1`, the guard is **deficit-masking, not mitigating** — the physical cooling inspection is the only remaining fix. The criterion would have flagged rung-1 insufficiency on day one of freeze #16.
+**The guard is "mitigating" only if, while `thermal_pstate_guard_throttled == 1`, no k10temp sample reaches ≥95 °C at load.** Over any full boot: `max_over_time(thermal_pstate_guard_sensor_celsius{sensor="k10temp"}[1h])` sampled while throttled must stay <95 °C. If ≥95 °C samples persist across a whole boot even with `thermal_pstate_guard_deep_throttled == 1`, the guard is **deficit-masking, not mitigating** — and since the 2026-11-14 owner waiver of physical remediation, deficit-masking is the accepted terminal state: the response is shed-load/admission escalation (never an inspection ask). The criterion would have flagged rung-1 insufficiency on day one of freeze #16.
 
 ## Verification
 
