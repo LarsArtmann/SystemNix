@@ -1,7 +1,7 @@
 # Runbook: docs/services/crowdsec.md
 # CrowdSec security engine — agent + LAPI on the pinned nixpkgs module
 # (services.crowdsec, crowdsec 1.8.1). Stage 1 of the staged adoption
-# (docs/planning/2026-10-14_20-25_crowdsec-nixos-study.md): detection +
+# (docs/research/2026-10-14_20-25_crowdsec-nixos-study.md): detection +
 # decisions + metrics + monitoring; stage 2 (geometrikks bouncer identity)
 # is DECLARATIVE here since 2026-10-16 (crowdsec-bouncer-register, below);
 # stage 3 (firewall-bouncer ENFORCEMENT) is still NOT enabled (banning is

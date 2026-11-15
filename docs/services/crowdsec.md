@@ -3,7 +3,7 @@
 **Status:** Stage 1 LIVE (detection only — NO bouncer/enforcement).
 **Ports:** LAPI `127.0.0.1:8082` (`crowdsec-lapi`) · Prometheus `127.0.0.1:6061` (`crowdsec-metrics`)
 **Module:** `modules/nixos/services/crowdsec.nix` (layers nixpkgs `services.crowdsec`, crowdsec 1.8.1)
-**Adoption decision + staged plan:** `docs/planning/2026-10-14_20-25_crowdsec-nixos-study.md`
+**Adoption decision + staged plan:** `docs/research/2026-10-14_20-25_crowdsec-nixos-study.md`
 
 ## What runs
 

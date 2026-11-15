@@ -477,7 +477,7 @@ in
       # CrowdSec engine (agent + LAPI on loopback:8082, metrics :6061).
       # Stage 1: detection only — sshd + Caddy acquis, LAN whitelisted, NO
       # bouncer yet. Runbook: docs/services/crowdsec.md; adoption decision
-      # + staged plan: docs/planning/2026-10-14_20-25_crowdsec-nixos-study.md
+      # + staged plan: docs/research/2026-10-14_20-25_crowdsec-nixos-study.md
       crowdsec.enable = true;
       caddy.enable = true;
       forgejo.enable = true;

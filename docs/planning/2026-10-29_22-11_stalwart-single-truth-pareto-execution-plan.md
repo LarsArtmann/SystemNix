@@ -11,7 +11,7 @@
 **Sources:** the two 2026-10-29 proposals (SystemNix
 `docs/planning/2026-10-29_21-18_contacts-calendar-mesh-proposal.html`,
 pbx-artmann `docs/research/2026-10-29_contacts-calendar-data-mesh-proposal.html`),
-the step-up brief (`docs/planning/2026-10-29_21-45_contacts-calendar-what-exists-and-the-step-up.html`),
+the step-up brief (`docs/research/2026-10-29_21-45_contacts-calendar-what-exists-and-the-step-up.html`),
 and a session-wide re-verification of every load-bearing claim (2026-10-29 ~21:45–22:11).
 
 ---

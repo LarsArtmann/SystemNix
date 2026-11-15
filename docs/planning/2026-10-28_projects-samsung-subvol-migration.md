@@ -23,7 +23,7 @@ Path-invariant mount: every consumer path, symlink, unit WorkingDirectory, and f
 
 ## 2. Doctrine fit (decided from the ratified framework)
 
-Per `docs/planning/2026-09-15_per-service-btrfs-subvolumes-analysis.md` (Set taxonomy §6, triggers §7): **Set B — own subvol + own btrbk entry + bounded pool target.**
+Per `docs/research/2026-09-15_per-service-btrfs-subvolumes-analysis.md` (Set taxonomy §6, triggers §7): **Set B — own subvol + own btrbk entry + bounded pool target.**
 
 - Satisfies triggers: "retention need > root's 3d" (unpushed work deserves >3d), "migration planned", "deploy-paired state rollback".
 - **NOT Set C** (`+C`, unsnapshotted): projects hold irreplaceable unpushed branches, sops-encrypted secrets, and reports; forfeiting snapshots/pool sends for CoW-write-amp savings is the wrong trade here. `nodatacow` rejected for the same reason hermes rejected it (trades away checksums). Git's own hashing (`git fsck`) is the integrity layer for `.git`, but the working trees and non-git state have no such layer.

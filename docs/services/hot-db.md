@@ -3,7 +3,7 @@
 Per-service BTRFS subvolumes on the Samsung 970 EVO Plus TLC (`tlc` label,
 `/mnt/hot` toplevel mount), mounted **AT each service's existing dataDir** —
 the service configs themselves stay untouched. Doctrine C
-(`docs/planning/2026-09-15_per-service-btrfs-subvolumes-analysis.md`):
+(`docs/research/2026-09-15_per-service-btrfs-subvolumes-analysis.md`):
 unsnapshotted, CoW (the 2026-09-21 fsync matrix measured nodatacow worthless
 on TLC — cow keeps btrfs checksums for free, the /data silent-corruption
 doctrine), dump-only RPO.

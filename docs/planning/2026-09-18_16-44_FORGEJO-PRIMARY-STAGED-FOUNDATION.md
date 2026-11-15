@@ -293,7 +293,7 @@ flowchart TD
 - `docs/status/2026-09-18_16-45_forgejo-mirror-continuation-hardening-metrics-live-bugfix-deployed.md` (done-baseline, leftovers)
 - `docs/brainstorming/2026-07-22_forgejo-runners-github-sync.md` (sync layers, why issues don't sync, no-daemon verdict)
 - `docs/research/2026-09-18_forgejo-deep-research.html` + `docs/status/2026-09-18_07-47_*` (roadmap R1-R19, 50-item list)
-- AGENTS.md: Forgejo GitHub Mirror Sync section, per-service-subvolume doctrine, `docs/planning/2026-09-15_per-service-btrfs-subvolumes-analysis.md` (Set A/B/C)
+- AGENTS.md: Forgejo GitHub Mirror Sync section, per-service-subvolume doctrine, `docs/research/2026-09-15_per-service-btrfs-subvolumes-analysis.md` (Set A/B/C)
 - This conversation (2026-09-18): staged-goal directive, storage requirements, both-ways end-state
 
 ---

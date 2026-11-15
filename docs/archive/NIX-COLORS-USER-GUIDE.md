@@ -106,7 +106,7 @@ Planned additions:
 
 - [nix-colors GitHub](https://github.com/Misterio77/nix-colors)
 - [Base16 Gallery](https://tinted-themes.github.io/base16-gallery/)
-- [Research Report](./NIX-COLORS-INTEGRATION-RESEARCH.md)
+- [Research Report](../research/NIX-COLORS-INTEGRATION-RESEARCH.md)
 
 ---
 

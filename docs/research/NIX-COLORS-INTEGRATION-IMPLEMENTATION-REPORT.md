@@ -170,7 +170,7 @@ Popular choices:
    - Popular color schemes list
    - Troubleshooting guide
 
-2. **Research Report**: `docs/planning/NIX-COLORS-INTEGRATION-RESEARCH.md`
+2. **Research Report**: `NIX-COLORS-INTEGRATION-RESEARCH.md` (same directory)
    - Comprehensive analysis (pre-implementation)
    - Implementation plan
    - Cost-benefit analysis

@@ -87,7 +87,7 @@
 ~~12. Re-check `btrfs filesystem usage` — target metadata < 90%~~ done at `metadata relief verified; CHANGELOG chunk-unalloc gate CLEARED 222 GiB 2026-09-02`
 ~~13. Check `system_gatus_meta_scrape_errors`/Gatus didn't fire phantom alerts during the outage window (16:35–19:00); annotate if so~~ **Won't implement — one-shot usage recheck; window passed.**
 ~~14. Audit WHICH deploy raced (PMA auto-commit daemon? user?) — the hardware-configuration.nix edit went out with an auto-commit; confirm the daemon didn't ALSO deploy it independently~~ **Won't implement — one-shot deploy-race forensics; window passed.**
-~~15. Mark `docs/planning/2026-08-17_rustfs-evaluation.md` untouched-by-me (it was in git status pre-session — not mine)~~ **Won't implement — one-shot doc attribution mark; window passed.**
+~~15. Mark `docs/research/2026-08-17_rustfs-evaluation.md` untouched-by-me (it was in git status pre-session — not mine)~~ **Won't implement — one-shot doc attribution mark; window passed.**
 
 **This week:**
 16. ~~After 2–3 stable boots: `sudo rm -rf /mnt/btrfs-root/@/nix` (old dir) — the 102 G unpinned-from-future-snapshots milestone~~ done (AGENTS.md: old @/nix deleted post-verification)
