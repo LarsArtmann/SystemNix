@@ -118,13 +118,14 @@ main() {
   (
     cd "$root"
     # shellcheck disable=SC2086 # immich_go_bin is a deliberately word-split command prefix
-    # Connection flags attach to the `upload` subcommand (immich-go 0.32.0 has
-    # NO root -server/-api-key — root-level placement made the URL parse as a
-    # command: 'unknown command "http://…"', caught by the 2026-11-15 dry-run).
+    # Connection flags attach to the `upload` subcommand, in DOUBLE-DASH
+    # form (immich-go 0.32.0 has NO root -server/-api-key, and pflag parses
+    # single-dash long names as shorthand clusters: `-api-key` died as
+    # `unknown shorthand flag: 'a'` — caught by the 2026-11-15 dry-runs).
     $immich_go_bin \
       upload \
-      -server "$apiurl" \
-      -api-key "$apikey" \
+      --server "$apiurl" \
+      --api-key "$apikey" \
       --no-ui \
       --client-timeout 30m \
       --log-file logs/immich-go.log \
