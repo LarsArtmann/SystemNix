@@ -1,0 +1,31 @@
+# Audible extraction wave LIVE: audiblesync owns both services upstream, ONE dashboard tile
+
+**Session window:** 2026-11-15 ~07:35 → 12:2x (deploy rode a parallel session's 10:13 switch)
+**Trigger:** the owner asked why dash.home.lan showed both "Audible Sync" and "AudibleSync" — answer: two genuinely different services (weekly archive oneshot vs tracker WebUI) sharing an icon and near-identical names; the owner then asked to combine them into ONE system with most code (Nix included) in `/home/lars/projects/audiblesync`.
+
+## What landed
+
+**Upstream `github:LarsArtmann/audiblesync` @ `0b55ba9` (pushed):** `nix/module.nix` exports `nixosModules.default` owning BOTH services — WebUI tracker (`audiblesync.service`) + weekly full-library archive (`audible-sync.service` + `audible-sync-dirs` + `audible-sync.timer`) — as one system sharing the `audible-sync` identity (co-enable asserted at eval). Every fleet fact became an option (`poolDir`, `dataDir`, `authFile`, `addr`, `onFailureUnits`, DNS-gate hooks); mount gating derives from a `/mnt` prefix on `poolDir`; unit names unchanged so deploy.sh's provisioner list, pool-recovery's roster, sops.nix's `svcEnabled` gating, and both runbooks hold without edits. Eval gate: `checks.nixos-module-evals` forces a full nixos toplevel eval (assertions included) — **mutation-proven**: archive enabled without `authFile` fails eval with the intended assertion. Upstream docs updated (ROADMAP OQ2 resolved, CHANGELOG, FEATURES, AGENTS.md; `.buildflow.yml` deadnix-skip comment refreshed for the second `.nix` file).
+
+**SystemNix @ `a857118ac`:** `modules/nixos/services/audiblesync.nix` shrank 310 → ~250 lines of pure fleet layer (sops authFile, ports.nix addr, DNS-gate hooks, `onFailure`, `harden{}`/ioTier/serviceDefaults ceilings, the nightly SQLite backup pair, backup-coordination freshness) and carries the ONE "AudibleSync" tile — the second "Audible Sync" tile merged into its description. `modules/nixos/services/audible-sync.nix` (426 lines) deleted. Input re-locked `f756683` → `0b55ba9` **probe-before-lock** (GitHub build of the pushed rev green first). FEATURES/README counts re-stamped 156→155 modules / 161→160 files; both runbooks re-owned to the upstream module (and audible-sync.md's stale AAXC pipeline lines corrected to the 2026-11-11 AAX pivot — pre-existing drift found while rewriting the header).
+
+## Verification (all green)
+
+- **Eval:** full `nix flake check --no-build` battery rc=0 (docs-counts gate caught the README 156-stamp mid-run — re-stamped, re-ran green). evo-x2 toplevel evals clean — every eval audit (mount-gating, io-tier, port-registry, memory-watermark, deploy-restart, tile-coverage) passes against the upstream-rendered units.
+- **Parity (the recipe's hard gate):** baseline renders captured BEFORE any edit (`~/.cache/parity/audiblesync/before-*.json`), after-renders from the final tree, store-hashes stripped, JSON normalized. **Timers byte-identical; services differ only in 4 generic description strings (host text moved to options upstream) + one explicit `Type = "simple"` on the WebUI (systemd's default, zero behavioral delta).** Key-level proof: all 32/29/30 serviceConfig keys identical per unit — MemoryMax/MemoryHigh/CPUQuota/ReadWritePaths/CapabilityBoundingSet/ProtectSystem/ProtectHome all unchanged (the 2026-11-08 silently-dropped-hardening class: zero hits).
+- **Registry:** `{"audiblesync":{"sub":"audiblesync","tile":"AudibleSync"}}` — the `audible-sync` homepage-only entry GONE (eval proof of the one-tile outcome; §16 tile-pack gate green inside the deploying battery).
+- **Live (gen 1012, `pf9iri4b`, anchor `readlink /run/current-system` == newest `system-1012-link`):** units carry the upstream descriptions; WebUI `active/running` (store path `bnfr31gh…-audiblesync-0.1.0` — the new src build); `healthz` via openssl → `HTTP/1.1 200` + `{"status":"ok","version":"0.1.0","books":0}` (Caddy security headers intact; `books:0` is the tracker's DATA — the owner has imported no rows yet, not a health field); `audible-sync-dirs` active (converger); `audible-sync` inactive/dead = correct idle oneshot.
+- **Sunday 05:06 run (under the pre-wave gen, parity-identical scripts):** Result=success, exit 0 — **71 books newly decrypted, 72 M4B total in books/, 0 decrypt failures, last_success updated**; 29m34s wall, 51.5G written, 5min39s CPU. The scary-looking journal `error:` lines are audible-cli chatter (skip-if-exists "already exists. Exiting." + Amazon anti-bot JS payloads on cover/PDF fetches), not failures.
+
+## Deploy forensics (why it took 3 attempts)
+
+1. `09:12` rc=13 — flock held by a **parallel session's deploy** started 07:47 (its entry gate caught the I/O storm at avg10 98.8% and it crawled the battery for 88 min); two other sessions' attempts bounced the same way (08:50, 10:47).
+2. The 07:47 holder finished 09:16:29 **having switched its pre-wave toplevel** (`nlaspicv…`, gen 1010 — its eval predated my commit) — expected; its `post-deploy` self-repaired the profile anchor.
+3. `09:17` rc=12 — PSI gate refused (io some avg10 66%, real storm; NOT overriding — the forced-deploy WDT class). My storm-watcher then burned 2h on a malformed probe (`grep '^io ' /proc/pressure/io` matches NOTHING — the file's lines start with `some`/`full`; empty readings are never evidence, self-inflicted trap, now recorded).
+4. A parallel session's 10:13 deploy (rc=3 after 4553s — post-check D-state-phantom warnings on the storm, nothing audible) evaluated the tree AFTER my commit and **switched my wave** as gen 1012. Anchor verified; no further deploy owed (drv-equality: the wave content is the running system).
+
+## §f Direct follow-ups (self-harvested at authoring time)
+
+1. **[watch] Owner eyeballs dash.home.lan** for exactly ONE "AudibleSync" Media tile (render is eval-proven + §16-gate-passed; the human check is the acceptance). → TODO_LIST + docs/todo/services.md
+2. **[ready] audiblesync tracker adoption:** healthz reports `books:0` — the owner tracks no books yet in the new WebUI; if that's unexpected (he HAS books on disk), the Local-files page naming-mismatch row (already queued, services.md) is the likely cause. No new row — it strengthens the existing one. → noted on the existing row
+3. No upstream.md/CHANGELOG debt: done-row added to docs/todo/upstream.md, CHANGELOG entry written this session.
