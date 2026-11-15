@@ -115,3 +115,21 @@ The single pasted signoz hash mismatch unrolled into a **four-layer blockage** (
 - **Updated** the stale "[blocked:deploy] Fleet deploy path blocked by 3 foreign input breakages" row in BOTH TODO_LIST.md and docs/todo/services.md → resolved verdict (signoz by a1, cv by the wave on top of a4, invoices by upstream fix + wave float; all green on gen-1010).
 - **Added** rows: bank-sync overnight-resolution verification (→ services.md, [blocked:user]), CV g-c-s bump (→ upstream.md, [ready], §g.2-gated), psi-gate boot-transaction design fix (→ services.md, [decision]), deploy-quiescence script (→ pipeline.md, [ready]), pin-row-replacement guard (→ pipeline.md, [ready]).
 - **Deliberately NOT harvested**: §f.7–40 — each is either owned by an active wave (CV g-c-s details beyond f.2, gen-1010 smoke triage), owner-gated (bank-sync adoption mechanics), vague/long-term (monitoring redesigns), or pure hygiene notes recorded here; per the TODO-system rule they would rot as undifferentiated queue rows.
+
+## Outcome appendix (2026-11-15 08:1x — the follow-up session, ~1h later)
+
+### §g questions — resolved with evidence
+
+1. **bank-sync (§g.1): ANSWERED — upstream-fix float, divergence was a FALSE POSITIVE.** The owner-pin-doctrine wave (docs/status/2026-11-14_19-45_owner-pin-doctrine-lift-wave.md) fixed the false-positive journal preflight IN bank-sync itself (resolveJournalCount miscount + sticky-key count + regression test, `8e170d05`), floated the input per the no-pin doctrine, and the overnight calm-window waiter deployed it 02:28:46. The 13:53→02:28 outage ended with the existing 123k-row journal served AS-IS — the store was never inconsistent; the divergence text was the buggy preflight lying. Live re-verification this session: ZERO divergence lines since 2026-11-14 23:00 (5358-line journal capture), zero restarts in 3h, sync completed 07:00:29, unit active; the post-deploy battery's Bank-Sync (HTTPS) check PASSED on re-run (the first run's FAIL was a 98%-io-PSI storm transient — direct probe 192.168.1.150:443 → 200 + "Bank-Sync Dashboard" content). Rows ticked in TODO_LIST + services.md.
+2. **CV g-c-s bump (§g.2): ANSWERED — already landed by the templ-1100 wave before I asked.** CV `4ae2d928b` bumped the pin `e3697ed4`→`cb8dea5` (v0.4.3 lockstep) + 174-line go.sum tidy; `e85a847d3` re-baked the vendorHash green first-hand (both in the 19:45 wave report — which predates my 07:12 report; I failed to sweep for it before declaring the question open). SystemNix's cv input floats at `e85a847d3` (lock-verified) with nested g-c-s `cb8dea55e`; gen-1010 built green through that graph. Row ticked in TODO_LIST + upstream.md.
+3. **psi-gate design (§g.3): STILL OPEN** — [decision], owner-gated, untouched.
+
+### Follow-up session deliverables (this appendix's session)
+
+- `c99ad93bb` — quiescence made loud: deploy.sh §0.5 WARN-only advisory (`DEPLOY_SKIP_QUIESCENCE_ADVISORY=1` skip) + `deploy-when-quiescent.sh` gains `--probe`, rc=13/flock loop-back (bounded), DISARM-LIST on stop exits (§d2/§e.2 rows executed); new pre-commit guard `scripts/audit-pin-row-replacement.sh` (§e.5 row executed; hook-env-scrubbed selftest — the GIT_DIR hook trap caught and fixed same session). AGENTS.md race paragraph updated.
+- §b1 post-deploy smoke leg CLOSED: full battery run twice (167-168 PASS, 5 FAIL); Bank-Sync confirmed green; remaining FAILs classified pre-existing/foreign-owned (Health Hub 503, Kith CRM 303 = the crm auto-forward wave's stale expectation, Offsite Borg tripwire, tq pool state) + 1 storm-suspect (CV render, io PSI 98%).
+- Harvest ticks landed across TODO_LIST/services/upstream/pipeline (partly via daemon sweep `31aee9f24` + takeout-session sweep `7e5965d58` — contents verified).
+
+### Owned-failure addendum
+
+- **§d trap recurrence, this session**: typed `rg -rn` twice more (the §e.5-class display-replace trap — the hook blocked both; `rg -n` is the fix). Also: my §g.2 question was answerable from the 19:45 wave report BEFORE I asked it — the status-report pre-read discipline (rg docs/status/ first) was skipped for a QUESTION-formulation step, costing a redundant open question.
