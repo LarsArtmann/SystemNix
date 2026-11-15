@@ -261,3 +261,36 @@ storm. Session now WAITING for instructions.
 ~90 s cadence, auto-stops when their push lands or after ~30 min); current HEAD eval green
 (`cxcjl5janp`); SystemNix commits unpushed: `75263afcb` (lock float, daemon), `95f24b149`,
 `5f1494666`, + this report's commit; audiblesync `b04bf5b` pushed (0.1.1).
+
+## Resolution (2026-11-15 ~14:40)
+
+Owner answered the report with the standing keep-going directive ("execute and verify one
+step at a time… keep going until everything works") — that resolves §g by action:
+
+1. **Q1 (auto-populate): proceeding with (b) reconcile importer** — decision row 1181
+   re-tagged `[decision]` → `[ready]`. Implementation starts on the audiblesync tree
+   once the parallel session's 6 unpushed commits push (their main.go/server.go are
+   inside the unpushed delta — clean integration waits for their base).
+2. **Q2 (monitor365 unblock): RESOLVED BY EVENTS** — they pushed (`9e332361`, storage
+   -collector 0.2 re-vendored) and floated the SystemNix lock themselves (`d1eed8cd9`,
+   13:39). My toplevel build with the floated lock went green first try (exit 0) — the
+   breakage is dead, no racing needed.
+3. **Q3 (deploy pressure): RESOLVED BY EVENTS** — their 13:52:04 deploy carried gen
+   -1013 through the gate with `DEPLOY_FORCE_PRESSURE=1` (moderate band: PSI 41.19% /
+   disk 101.7% at gate time — within the =1 envelope, not the ≥80/≥80 twice-fatal band).
+   No exemption was needed from THIS session.
+
+**Live battery (14:07 restart, all green):**
+
+| Check | Result |
+| ----- | ------ |
+| Unit env | `AUDIBLESYNC_LIBRARY_DIR=/mnt/pool/services/audible/books` present in live unit |
+| Binary | `audiblesync-0.1.1` ExecStart, PID restarted 14:07:00 |
+| healthz | `{"status":"ok","version":"0.1.1","books":0}` — counters honestly 0 pending Q1 |
+| `/files` inventory | All 72 rows render (ASIN-prefix + B-ASIN + `Propaganda - Bernard Woolner (B0741DTNNT).m4b` tail shapes), ASIN extraction correct on every row, `orphan` badges honest |
+| Journal | Clean — INFO http-request lines only |
+| Anchor | Pending: `switch-to-configuration test` (17+ min) holds behind `post-crash-calm-gate` (60-min no-trip window; memory-emergency-guard re-trips reset it). Profile still `system-1012-link`, current-system flipped to the new toplevel. Watcher live — flip to gen-1013 closes the battery |
+
+Residual risk while unanchored: a reboot before the profile flip reverts the switch.
+The calm gate + guard machinery is the parallel session's deploy tail and self-resolves
+when the storm drains; watcher job polls stc completion + their audiblesync push.
