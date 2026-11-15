@@ -309,11 +309,14 @@ in
               # First run seeds the whole irreplaceable set over WAN.
               TimeoutStartSec = "2d";
               MemoryMax = "4G";
-              # writeShellScript yields a SINGLE-FILE derivation — getExe'
-              # would append /bin/<name> onto a file and 203/EXEC at first
-              # start (caught live by the offsite-borg smoke 2026-11-07,
-              # unit carried <file>/bin/borg-offsite-golive-check).
-              ExecStartPre = lib.getExe goliveCheck;
+              # writeShellScript yields a SINGLE-FILE derivation: interpolate
+              # the file path directly. lib.getExe AND lib.getExe' append
+              # /bin/<name> onto a single-file drv and 203/EXEC every start
+              # (the 2026-11-07 getExe' to getExe swap was a no-op; nine
+              # nightly runs died 203/EXEC Nov 07-15, journal-verified,
+              # backup_ever_succeeded stayed 0). Shape guard:
+              # offsite-borg-positive-render asserts no "/bin/" infix.
+              ExecStartPre = "${goliveCheck}";
               # Freshness marker for backup-coordination — only after create +
               # prune + compact all succeeded.
               ExecStartPost = "${pkgs.coreutils}/bin/touch /var/lib/borg-offsite/.last_success";

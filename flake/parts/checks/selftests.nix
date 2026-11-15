@@ -1374,6 +1374,11 @@
               assert svc.IOSchedulingClass == "best-effort";
               assert toString svc.IOSchedulingPriority == "6";
               assert lib.hasInfix "borg-offsite-golive-check" (execLines svc.ExecStartPre);
+              # writeShellScript single-file drv: ExecStartPre must route to
+              # the flat store file. lib.getExe AND lib.getExe' render
+              # <file>/bin/<name>, which 203/EXECs every start (the nine-night
+              # Nov 07-15 borg outage class).
+              assert !lib.hasInfix "/bin/" (execLines svc.ExecStartPre);
               assert lib.hasInfix "/var/lib/borg-offsite/.last_success" (execLines svc.ExecStartPost);
               assert execLines svc.EnvironmentFile == envTemplate;
               assert lib.hasSuffix "borg-env" envTemplate;

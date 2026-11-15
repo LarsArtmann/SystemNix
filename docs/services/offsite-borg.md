@@ -88,6 +88,12 @@ recovery-copy policy is still an open owner decision (`docs/todo/storage.md`).
    finished missed `/data/.snapshots` = 13 T nominal). The go-live
    tripwire (`borg-offsite-golive-check` ExecStartPre) fails the run with
    instructions if any placeholder survived.
+   TRIPWIRE PATH SHAPE: it is a `writeShellScript` single-file derivation,
+   so the unit's ExecStartPre must interpolate the flat store file
+   (`ExecStartPre = "${goliveCheck}"`). lib.getExe AND lib.getExe' append
+   `/bin/<name>` onto a single-file drv, which 203/EXECs every start (the
+   Nov 07-15 nine-night outage class; the `offsite-borg-positive-render`
+   check asserts no `/bin/` infix on ExecStartPre).
 6. **First run**: `systemctl start borgbackup-job-hetzner` (or wait for the
    06:30 timer). `doInit` creates the repo on first connect; the first
    archive seeds the whole irreplaceable set over WAN — hours, `TimeoutStartSec`
