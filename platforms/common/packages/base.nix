@@ -242,6 +242,11 @@ let
     pkgs.gosec # Go security checker (nixpkgs 2.29.0)
     pkgs.govulncheck # Go vulnerability scanner against the Go vuln DB (nixpkgs 1.9.0)
     pkgs.actionlint # GitHub Actions workflow linter (nixpkgs 1.7.12)
+    # Shell linter on GLOBAL PATH (2026-11-15): bench/lint tools invoking
+    # shellcheck paid a `nix develop` round-trip that blew their formatter
+    # budget (AI-von-Art-Bench WARN: devShell resolution > 20s); global PATH
+    # also lets actionlint auto-run its shellcheck integration.
+    pkgs.shellcheck
     pkgs.gopls
     pkgs.golangci-lint
     pkgs.golangci-lint-langserver

@@ -35,7 +35,7 @@ _: {
             source = "${pkgs.iotop-c}/bin/iotop-c";
             owner = "root";
             group = "root";
-            capabilities = "cap_net_admin+ep";
+            capabilities = "cap_net_admin+eip";
           };
         };
 
