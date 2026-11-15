@@ -11,6 +11,19 @@
 - **`~/invoices/config.yaml` is the production config OF RECORD** (0600, `environment: "PRODUCTION"`, `debug: false`, a generated `jwt_secret` — NOT the repo placeholder). The repo checkout's `config.yaml` (`environment: "DEVELOPMENT"`) stays the dev copy; editing production config means editing `~/invoices/config.yaml` and `systemctl restart invoices-dashboard`.
 - The dashboard **bootstraps a fresh DB** (inline schema + read-model backfill) when `--db` points at a missing file — first boot creates `invoices.db` from nothing.
 
+## Schema heal: pre-2026-11-13 invoices tables (fixed 2026-11-15)
+
+`InitializeSchema` heals databases whose `invoices` table predates the PARTLY paylinks status: SQLite cannot ALTER a CHECK constraint, so the table is rebuilt. That heal **crash-looped the dashboard on 2026-11-14** (exit 75 → `start-limit-hit` → 502 at the vHost) for two reasons, both fixed upstream in `invoices` 935a044d:
+
+- the rebuild replayed `CREATE INDEX idx_invoices_invoice_number …` while the BOOT path had already created that index (index names survive a table rename), so every boot died on `index idx_invoices_invoice_number already exists`;
+- the embedded migration SQL was a splintered copy that could not have parsed past that point.
+
+The rebuild now follows SQLite's documented table-rebuild procedure in Go (`internal/db/connection/turso.go` → `rebuildInvoicesForPartlyStatus`): drop legacy artifacts, `PRAGMA foreign_keys=OFF` on a dedicated connection (else dropping the referenced table cascades into `invoice_work_entries`), build `invoices_new`, copy through an intersected column list (primary keys preserved), swap, recreate indexes, gate on `PRAGMA foreign_key_check`. One DDL template feeds both the fresh-boot path and the rebuild, and `schema_heal_internal_test.go` fails on drift with `sql/sqlite/migrations/2026-11-13_partly_status.sql`.
+
+**Triage shortcut:** `exit 75/TEMPFAIL` + an `already exists` line in `journalctl -u invoices-dashboard` = this class; the fix belongs upstream, never in a pinned input (owner-pin doctrine).
+
+**Known split brain (not yet fixed):** `sql/sqlite/migrations/../schema/invoices.sql` still differs from the runtime bootstrap — its `invoice_type` CHECK lists `FAKTURA` but not `REVERSE_CHARGE`, and it adds an unused FTS5 mirror plus five extra indexes that no boot path creates. Nothing queries `invoices_fts`.
+
 ## Integration surfaces
 
 | Surface              | Where                                                                                                     | Notes                                                                                                                                                                                          |
