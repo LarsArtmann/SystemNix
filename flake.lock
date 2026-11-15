@@ -9925,11 +9925,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794752746,
-        "narHash": "sha256-+p4jNr2NrdW7Eunv5nif8TMs6JUMz5O2WrTqMIwOBLE=",
+        "lastModified": 1794758361,
+        "narHash": "sha256-zrBgvR9R4bdbnzmIdL3kpsVevxiY59FIeaF5fJj+8ug=",
         "ref": "refs/heads/master",
-        "rev": "ef9ed1f268a002fe7f6f2c8e64e8ff0e54f78d60",
-        "revCount": 321,
+        "rev": "c5d5643dfb0ddb147c98cd3c2e2f65e11a480101",
+        "revCount": 323,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/quotaboard"
       },
