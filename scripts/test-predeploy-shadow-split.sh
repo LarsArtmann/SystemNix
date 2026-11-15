@@ -78,7 +78,7 @@ run_case() {
   # steady fixtures) so the fixture code path is identical to the
   # mount-state cases; production uses findmnt instead.
   mounts="${mounts//@SHADOW@/$tmp/shadow}"
-  printf '%s\n' "$mounts" > "$tmp/mounts.tsv"
+  printf '%s\n' "$mounts" >"$tmp/mounts.tsv"
   (cd "$tmp" && eval "$shadow_prep") || {
     echo "  FAIL [setup] $label: shadow prep failed"
     TEST_FAILURES=$((TEST_FAILURES + 1))

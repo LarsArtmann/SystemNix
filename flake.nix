@@ -351,7 +351,7 @@
     # build the rev outside the lock BEFORE re-locking (PapDashboard CI
     # retirement doctrine).
     audiblesync = {
-      url = "github:LarsArtmann/audiblesync?ref=master";
+      url = "git+ssh://git@github.com/LarsArtmann/audiblesync?ref=refs/heads/master";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)

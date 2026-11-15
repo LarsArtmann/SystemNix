@@ -281,7 +281,11 @@ selftest() {
 
   leg=dry-run-no-write
   build_fixture
-  if (PATTERNS=('Takeout/*'); DRY_RUN=1; run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
+  if (
+    PATTERNS=('Takeout/*')
+    DRY_RUN=1
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'DRY-RUN extract: 5 members / 28 bytes' "$fx/leg-$leg.log" &&
     [ ! -e "$fx/extracted" ] && [ ! -s "$fx/logs/zip-entries.tsv" ]; then
     echo "PASS: $leg (totals correct, zero writes, listing not persisted)"
@@ -292,7 +296,12 @@ selftest() {
 
   leg=capacity-block
   build_fixture
-  if (PATTERNS=('Takeout/*'); DRY_RUN=1; export TAKEOUT_EXTRACT_HEADROOM_BYTES=999999999999999; run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
+  if (
+    PATTERNS=('Takeout/*')
+    DRY_RUN=1
+    export TAKEOUT_EXTRACT_HEADROOM_BYTES=999999999999999
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (huge headroom passed)"
     rc=1
   elif grep -q 'CAPACITY INSUFFICIENT' "$fx/leg-$leg.log" &&
@@ -305,7 +314,11 @@ selftest() {
 
   leg=members-root-guard
   build_fixture
-  if (PATTERNS=('Drive/*'); DRY_RUN=1; run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
+  if (
+    PATTERNS=('Drive/*')
+    DRY_RUN=1
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (unrooted pattern accepted)"
     rc=1
   elif grep -q 'rooted at Takeout/' "$fx/leg-$leg.log"; then
@@ -317,7 +330,10 @@ selftest() {
 
   leg=extract-happy
   build_fixture
-  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
+  if (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'EXTRACT: OK - 5 files / 28 bytes' "$fx/leg-$leg.log" &&
     grep -q 'pdf-a' "$fx/extracted/Takeout/Drive/a file.pdf" &&
     grep -q 'RECONCILE: OK' "$fx/leg-$leg.log" &&
@@ -330,7 +346,10 @@ selftest() {
 
   leg=member-scope
   build_fixture
-  if (PATTERNS=('Takeout/Drive/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
+  if (
+    PATTERNS=('Takeout/Drive/*')
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1 &&
     grep -q 'EXTRACT: OK - 2 files / 12 bytes' "$fx/leg-$leg.log" &&
     [ -f "$fx/extracted/Takeout/Drive/b.pdf" ] &&
     [ ! -e "$fx/extracted/Takeout/Mail" ] &&
@@ -351,10 +370,16 @@ selftest() {
 
   leg=corrupt-zip-fail
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
+  (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >/dev/null 2>&1 || true
   truncate -s 40 "$fx/zips/part-02.zip"
   rm -rf "$fx/extracted"
-  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
+  if (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (corrupt zip passed)"
     rc=1
   elif grep -q 'EXTRACT FAILED' "$fx/leg-$leg.log" && grep -q 'part-02.zip' "$fx/leg-$leg.log"; then
@@ -366,9 +391,15 @@ selftest() {
 
   leg=reconcile-extra-fail
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
+  (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >/dev/null 2>&1 || true
   printf 'stray\n' >"$fx/extracted/Takeout/Mail/stray.txt"
-  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1; then
+  if (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1; then
     echo "FAIL: $leg (stray extra file passed)"
     rc=1
   elif grep -q 'RECONCILE FAILED' "$fx/leg-$leg.log" && grep -q 'extra 1' "$fx/leg-$leg.log"; then
@@ -380,9 +411,15 @@ selftest() {
 
   leg=listing-reuse
   build_fixture
-  (PATTERNS=('Takeout/*'); run_main "$fx") >/dev/null 2>&1 || true
+  (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >/dev/null 2>&1 || true
   touch -d '@946684800' "$fx/logs/zip-entries.tsv"
-  if (PATTERNS=('Takeout/*'); run_main "$fx") >"$fx/leg-$leg.log" 2>&1 &&
+  if (
+    PATTERNS=('Takeout/*')
+    run_main "$fx"
+  ) >"$fx/leg-$leg.log" 2>&1 &&
     [ "$(stat -c %Y "$fx/logs/zip-entries.tsv")" = "946684800" ]; then
     echo "PASS: $leg (zip-entries.tsv reused, zips not re-listed)"
   else

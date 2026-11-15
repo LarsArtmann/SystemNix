@@ -54,17 +54,13 @@
           dangling = builtins.filter (
             target: lib.strings.hasSuffix ".md" target || lib.strings.hasSuffix ".html" target
           ) (builtins.filter (target: !(lib.strings.hasPrefix "http" target)) linkTargets);
-          missingTargets = builtins.filter (
-            target: !(builtins.pathExists (dir + ("/" + target)))
-          ) dangling;
+          missingTargets = builtins.filter (target: !(builtins.pathExists (dir + ("/" + target)))) dangling;
 
           guards =
             if unindexed != [ ] then
-              throw
-                "research-index: docs/research/${builtins.head unindexed} has no README index row (${toString (builtins.length unindexed)} unindexed) — add a row to docs/research/README.md (the 2026-11-05 misfiling class)"
+              throw "research-index: docs/research/${builtins.head unindexed} has no README index row (${toString (builtins.length unindexed)} unindexed) — add a row to docs/research/README.md (the 2026-11-05 misfiling class)"
             else if missingTargets != [ ] then
-              throw
-                "research-index: docs/research/README.md links to ${builtins.head missingTargets} which does not exist (${toString (builtins.length missingTargets)} dangling) — fix or remove the stale row"
+              throw "research-index: docs/research/README.md links to ${builtins.head missingTargets} which does not exist (${toString (builtins.length missingTargets)} dangling) — fix or remove the stale row"
             else
               "research-index ok: ${toString (builtins.length entries)} files indexed";
         in

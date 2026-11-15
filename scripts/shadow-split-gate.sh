@@ -164,7 +164,7 @@ mount_rows() {
       fi
       [ "$target" = "$path" ] || continue
       printf '%s %s %s\n' "$fstype" "$source" "$fsroot"
-    done < "$SS_MOUNTS_FILE"
+    done <"$SS_MOUNTS_FILE"
   else
     # Loud, not silent: a missing findmnt would make every mount-state
     # probe return empty and silently degrade to the shadow ladder —
@@ -194,9 +194,15 @@ emit_entry_verdict() {
     local fstype source fsroot matched=false matched_src="" autofs=false first_src="" first_fsroot=""
     while read -r fstype source fsroot; do
       [ -n "${fstype:-}" ] || continue
-      if [ -z "$first_src" ]; then first_src="$source"; first_fsroot="$fsroot"; fi
+      if [ -z "$first_src" ]; then
+        first_src="$source"
+        first_fsroot="$fsroot"
+      fi
       if [ "$fstype" = "autofs" ] || [ "$source" = "systemd-1" ]; then autofs=true; fi
-      if [ "$fsroot" = "$rel" ]; then matched=true; matched_src="$source"; fi
+      if [ "$fsroot" = "$rel" ]; then
+        matched=true
+        matched_src="$source"
+      fi
     done <<<"$rows"
     if [ "$matched" = true ]; then
       ss_pass "$class/$name: $shadow is live-mounted on the declared hot-tier subvol (fsroot $rel, source $matched_src) — shadow dir hidden beneath the mount, no shadow-split exposure"
@@ -208,7 +214,10 @@ emit_entry_verdict() {
       # (phase 2 in fixture tables: rows marked "after:").
       $SS_PRIV test -d "$shadow" 2>/dev/null || true
       while read -r fstype source fsroot; do
-        if [ "${fsroot:-}" = "$rel" ]; then matched=true; matched_src="$source"; fi
+        if [ "${fsroot:-}" = "$rel" ]; then
+          matched=true
+          matched_src="$source"
+        fi
       done <<<"$(mount_rows "$shadow" 2)"
       if [ "$matched" = true ]; then
         ss_pass "$class/$name: $shadow is automounted on the declared hot-tier subvol (fsroot $rel, source $matched_src) — shadow dir hidden beneath the mount, no shadow-split exposure"
