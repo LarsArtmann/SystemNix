@@ -630,6 +630,11 @@
                   name = "Immich ML (media-atlas search dependency)";
                   group = "Media";
                   url = "tcp://127.0.0.1:${toString ports.immich-ml}";
+                  # TCP probes never produce an HTTP status: the registry's
+                  # [STATUS] == 200 condition default cannot pass on tcp:// —
+                  # chronic red since the check landed (0/100 results in the
+                  # week to 2026-11-15). Same shape as the Mail Relay check.
+                  conditions = [ "[CONNECTED] == true" ];
                 }
                 {
                   name = "MediaAtlas map plate";
