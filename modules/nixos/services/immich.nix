@@ -123,9 +123,32 @@ _: {
                 accel = "vaapi";
                 accelDecode = true;
               };
-              image.progressiveJpeg.enabled = true;
+              # Progressive JPEG for Preview Images. The pre-3.x
+              # image.progressiveJpeg key no longer exists in 3.3.6 and was
+              # logging an unknown-key warning on every config load.
+              image.preview.progressive = true;
               metadata.faces.import = true;
               passwordLogin.enabled = false;
+              # IMMICH_CONFIG_FILE REPLACES the DB config entirely (admin-UI
+              # config saves throw "Cannot update configuration while
+              # IMMICH_CONFIG_FILE is in use"), so every admin surface this
+              # host wants must be declared here — defaults fill the rest.
+              user.deleteDelay = 3650;
+              trash.days = 365;
+              notifications = lib.optionalAttrs config.services.mail-relay.enable {
+                smtp = {
+                  enabled = true;
+                  from = "immich@larsartmann.cloud";
+                  transport = {
+                    host = "127.0.0.1";
+                    port = ports.mail-relay;
+                    secure = false;
+                    # username/password unset → immich (nodemailer) submits
+                    # UNAUTHENTICATED — the postfix null-client contract
+                    # (docs/services/mail-relay.md); TLS happens relay→Resend.
+                  };
+                };
+              };
               oauth = {
                 enabled = true;
                 issuerUrl = "https://auth.${config.networking.domain}";

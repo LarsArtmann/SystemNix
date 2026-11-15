@@ -32,6 +32,7 @@ residential egress has no rDNS — every provider rejects it.
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
 | Paperless-ngx    | `PAPERLESS_EMAIL_*` → 127.0.0.1:25 (paperless.nix, relay-gated)                                                                                                                                                                                              | Share links, password-protected archives, account mail |
 | Forgejo          | `[mailer]` plain SMTP → 127.0.0.1:25 (forgejo.nix, relay-gated)                                                                                                                                                                                              | Issue/PR notifications                                 |
+| Immich           | `services.immich.settings.notifications.smtp` → 127.0.0.1:25 (immich.nix, relay-gated; username/password unset = nodemailer sends unauthenticated)                                                                                                            | Album invites/updates, test mail                       |
 | System/cron mail | `recipient_canonical_maps` rewrites root@/postmaster@ recipients → `systemMailRecipient` (default `fromAddress`); `smtp_generic_maps` rewrites senders. aliases(5) is INERT on a null client (local(8) never runs) — the canonical map is the real mechanism | cron failure output reaches the inbox                  |
 
 **Pocket ID is deliberately NOT on the relay** — its go-kit emailer fails CLOSED
@@ -39,10 +40,14 @@ residential egress has no rDNS — every provider rejects it.
 keeps direct Resend implicit-TLS `:465` and needs its own NEW API key (the old
 one was revoked 2026-08-18; one new key can be pasted into both sops files).
 
-**Immich has no SMTP module options** (verified in nixpkgs) — notifications are
-admin-UI-only: _Administration → Settings → Notification settings_, point them at
-`127.0.0.1:25`, no auth, from = your verified from address. This survives deploys
-(the config lives in Immich's DB).
+**Immich notifications are DECLARATIVE since 2026-11-15** (`services.immich.settings.notifications.smtp`
+in immich.nix, relay-gated like forgejo): 127.0.0.1:25, no auth, from `immich@larsartmann.cloud`
+(the Resend-verified nix-email domain; generic maps don't touch it — they only rewrite
+`@home.lan`/`@evo-x2` forms). Correction of the pre-2026-11-15 claim below-history: with
+`IMMICH_CONFIG_FILE` in use the settings FILE **replaces** the DB config entirely — admin-UI
+config saves throw "Cannot update configuration while IMMICH_CONFIG_FILE is in use" and UI-era
+DB values are ignored; nothing "lives in Immich's DB". Any future admin surface Immich wants
+must be declared in the Nix settings block (defaults fill the rest).
 
 ## Go-live (operator, ~10 min)
 
