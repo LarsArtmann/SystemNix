@@ -996,5 +996,21 @@ eval_case deployrestart immich-key-provision-dropped fail 'deploy-restart-audit:
 eval_case deployrestart comment-control pass '' \
   'append:scripts/deploy.sh:# negative-test immunity control'
 
+# ── backoff: the crash-loop backoff contract check (2026-11-15 review
+# finding on the 2026-11-14 RestartSteps commit) ──
+# selftests.nix crash-loop-backoff-contract pins RestartSteps=5 +
+# RestartMaxDelaySec=15min on the llama-embeddings / llama-reranker /
+# nsfw-classifier serviceConfigs (the flm x5 SIGABRT pile-driver class).
+# These legs drop the lines per file so the check's own pins must FAIL —
+# proving the gate is not phantom-green. run_case (check build), not
+# eval_case: the gate is a checks.* derivation, not a config assertion.
+run_case backoff rag-steps-dropped crash-loop-backoff-contract fail 'crash-loop-backoff-contract: llama-embeddings lost serviceConfig.RestartSteps' \
+  'sed:modules/nixos/services/llama-rag.nix:s|^        RestartSteps = 5;$||'
+run_case backoff rag-maxdelay-dropped crash-loop-backoff-contract fail 'crash-loop-backoff-contract: llama-embeddings lost serviceConfig.RestartMaxDelaySec' \
+  'sed:modules/nixos/services/llama-rag.nix:s|^        RestartMaxDelaySec = "15min";$||'
+run_case backoff nsfw-pair-dropped crash-loop-backoff-contract fail 'crash-loop-backoff-contract: nsfw-classifier' \
+  'sed:modules/nixos/services/nsfw-classifier.nix:s|^                RestartSteps = 5;$||' \
+  'sed:modules/nixos/services/nsfw-classifier.nix:s|^                RestartMaxDelaySec = "15min";$||'
+
 say "=== negative-test-lints: $passed passed, $failed failed (case log: $LOG) ==="
 [ "$failed" -eq 0 ]

@@ -1520,6 +1520,53 @@
             ''
           );
 
+        # Crash-loop backoff contract (2026-11-15, review finding on the
+        # 2026-11-14 RestartSteps commit): llama-rag's embeddings/reranker
+        # units and nsfw-classifier gained RestartSteps=5 +
+        # RestartMaxDelaySec=15min (the flm x5 SIGABRT pile-driver class)
+        # with NO gate — a refactor dropping the two lines passed every
+        # existing check. This pins the RENDERED serviceConfig on every
+        # `nix flake check` (incl. --no-build): the throws fire at eval
+        # time, so the gate cannot be skipped by a no-build run.
+        # llama-reranker + nsfw-classifier are disabled on evo-x2 (reranker
+        # leg off since 2026-10-02; classifier enable commented out), so
+        # both force-enable through ONE extendModules throwaway — the
+        # never-touches-the-tree pattern (offsite-borg-positive-render
+        # above). Negative-proven by scripts/negative-test-lints.sh
+        # (backoff group).
+        crash-loop-backoff-contract =
+          let
+            evo = inputs.self.nixosConfigurations.evo-x2.config;
+            forceEnabled = inputs.self.nixosConfigurations.evo-x2.extendModules {
+              modules = [
+                { services.llama-rag.reranker.enable = lib.mkOverride 50 true; }
+                { services.nsfw-classifier.enable = lib.mkOverride 50 true; }
+              ];
+            };
+            unitCfgs = {
+              llama-embeddings = evo.systemd.services.llama-embeddings.serviceConfig;
+              llama-reranker = forceEnabled.config.systemd.services.llama-reranker.serviceConfig;
+              nsfw-classifier = forceEnabled.config.systemd.services.nsfw-classifier.serviceConfig;
+            };
+            pin =
+              unit: attr: want:
+              lib.throwIfNot (unitCfgs.${unit}.${attr} or null == want)
+                "crash-loop-backoff-contract: ${unit} lost serviceConfig.${attr} = ${toString want} — a fixed RestartSec lets a crash-loop fire five FULL model loads in ~50s under an IO storm (the flm x5 SIGABRT pile-driver class)"
+                true;
+            backoffGuards =
+              (pin "llama-embeddings" "RestartSteps" 5)
+              && (pin "llama-embeddings" "RestartMaxDelaySec" "15min")
+              && (pin "llama-reranker" "RestartSteps" 5)
+              && (pin "llama-reranker" "RestartMaxDelaySec" "15min")
+              && (pin "nsfw-classifier" "RestartSteps" 5)
+              && (pin "nsfw-classifier" "RestartMaxDelaySec" "15min");
+          in
+          builtins.deepSeq backoffGuards (
+            pkgs.runCommand "crash-loop-backoff-contract-check" { } ''
+              echo "crash-loop backoff contract OK (RestartSteps=5 + RestartMaxDelaySec=15min on llama-embeddings, llama-reranker, nsfw-classifier)" > $out
+            ''
+          );
+
         # Gitleaks positive-coverage selftest (2026-09-15, closes the
         # 40-hex saga): turns the retracted TODO rows 357/361 claims
         # into tested invariants. CORRECTED ATTRIBUTION (the harvested
