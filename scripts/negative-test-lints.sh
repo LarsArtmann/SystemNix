@@ -399,7 +399,7 @@ fi
 # toplevel eval, so the pristine copy must eval green. Also pulled in by
 # CASES=memory / CASES=inputpin so the audit's group never runs without
 # its control.
-if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]] || [[ ",$FILTER," == *,usertmpguard,* ]]; then
+if [ -z "$FILTER" ] || [[ ",$FILTER," == *,controls,* ]] || [[ ",$FILTER," == *,memory,* ]] || [[ ",$FILTER," == *,inputpin,* ]] || [[ ",$FILTER," == *,tilecoverage,* ]] || [[ ",$FILTER," == *,vhostregistry,* ]] || [[ ",$FILTER," == *,caddy,* ]] || [[ ",$FILTER," == *,usertmpguard,* ]] || [[ ",$FILTER," == *,tcpcheck,* ]]; then
   dir=$(make_copy "pristine-toplevel-eval")
   out=$(eval_toplevel "$dir") || status=$? || true
   status=${status:-0}
@@ -652,6 +652,17 @@ warn_case tilecoverage icon-stripped 'without an icon (rendering monogram fallba
 # instead of silently rendering the tile beside a "no tile" justification.
 eval_case tilecoverage optout-with-tile fail 'noDashboardTile = true AND a homepage tile' \
   'sed:modules/nixos/services/miniflux.nix:s|^            monitored = true;$|            monitored = true;\n            noDashboardTile = true;|'
+
+# ── integration tcp-check conditions: the 2026-11-15 Immich ML chronic-red class ──
+# tcp:// probes never see an HTTP status; the registry's [STATUS] == 200
+# conditions default therefore fails on EVERY result — the media-atlas
+# Immich ML dependency check sat at 0/100 results for its whole life while
+# the port answered CONNECTED all along (integration.nix eval gate now
+# enforces the Mail Relay pattern). Leg: strip the explicit [CONNECTED]
+# condition from the (18-space-indented) media-atlas check — mail-relay's
+# 16-space line must survive — and the eval gate must name the entry.
+eval_case tcpcheck connected-stripped fail 'tcp:// checks must carry explicit' \
+  'sed:modules/nixos/services/media-atlas.nix:/^                  conditions = \[ "\[CONNECTED\] == true" \];$/d'
 
 # ── hot-user-caches ⇄ disko cross-guard (2026-10-27 plan S20) ──
 # A cache entry whose subvol is missing from the disko geometry would mount

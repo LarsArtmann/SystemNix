@@ -493,6 +493,20 @@ _: {
                 && e.vHost.layer != "none"
                 && (e.subdomain == null || ((e.port == null) == (e.vHost.root == null)));
               checkWithoutPort = e: e.enable && builtins.any (c: c.url == null) e.checks && e.port == null;
+              # tcp:// probes never see an HTTP status, so the [STATUS] == 200
+              # conditions default evaluates false on EVERY result — the check
+              # sits at 100% failure forever while the port is perfectly
+              # healthy (2026-11-15 Immich ML class: the media-atlas Immich ML
+              # dependency check was 0/100 across its whole life). A tcp check
+              # must carry the [CONNECTED] condition explicitly (Mail Relay
+              # pattern).
+              tcpCheckMissingConnected =
+                e:
+                e.enable
+                && builtins.any (
+                  c:
+                  c.url != null && lib.hasPrefix "tcp://" c.url && !builtins.elem "[CONNECTED] == true" c.conditions
+                ) e.checks;
             in
             [
               {
@@ -513,6 +527,12 @@ _: {
                 assertion = lib.all (e: !checkWithoutPort e) (builtins.attrValues cfg);
                 message = "integration: relative-path checks need the entry's port: ${
                   lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: checkWithoutPort) cfg))
+                }";
+              }
+              {
+                assertion = lib.all (e: !tcpCheckMissingConnected e) (builtins.attrValues cfg);
+                message = "integration: tcp:// checks must carry explicit [CONNECTED] == true conditions — the [STATUS] == 200 default can never pass on a TCP probe (no HTTP status exists; chronic red that masks real outages — the 2026-11-15 Immich ML class). Give the check `conditions = [ \"[CONNECTED] == true\" ];` (Mail Relay pattern): ${
+                  lib.concatStringsSep ", " (lib.attrNames (lib.filterAttrs (_: tcpCheckMissingConnected) cfg))
                 }";
               }
             ];
