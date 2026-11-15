@@ -8401,11 +8401,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1794742022,
-        "narHash": "sha256-ka+k/zAMqsQhQRF8uD7Q2i9OQ+5R5XwisWzcDI7Slr4=",
+        "lastModified": 1794746308,
+        "narHash": "sha256-Pl2b9H1LDygl8ys3jMeoNzo+gYVrFjBctbbycuRilek=",
         "ref": "refs/heads/master",
-        "rev": "93bd84749a3873ccfca9b64865d3cb105553018c",
-        "revCount": 4640,
+        "rev": "9e33236145f803f87d0ba94c7964d2da417471ba",
+        "revCount": 4654,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -10056,11 +10056,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794646145,
-        "narHash": "sha256-rpqDyUM/d5fACYB8W+wKxxO57ICWjjalzb2X25oFFkY=",
+        "lastModified": 1794733384,
+        "narHash": "sha256-VaXNWDU+9dXckN4BlZbrcYTTd9pIscLeiknbhHX4+lk=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "5b87ee0513c29127a01ad06e9cb362ea5ce91e78",
+        "rev": "67f1944c7c99d8dbb57fa3d83043bc0a92cbcc56",
         "type": "github"
       },
       "original": {
@@ -10445,16 +10445,16 @@
     "storage-collector": {
       "flake": false,
       "locked": {
-        "lastModified": 1792452608,
-        "narHash": "sha256-9b4S2aFYjAl+/ezxRUuoxj+/Ul3pJfT8ggbmx9TJHrY=",
+        "lastModified": 1794744294,
+        "narHash": "sha256-2v4KrMxEXbRByhrTLsbGTcxqa2zfqi4GgdOjBopqcXw=",
         "ref": "refs/heads/master",
-        "rev": "0569c46c3ca4c2959e711a5cf8f0d3545f912436",
-        "revCount": 243,
+        "rev": "4a9360e8c53c819d2236c6ebd1368a910805027c",
+        "revCount": 251,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/storage-collector"
       },
       "original": {
-        "rev": "0569c46c3ca4c2959e711a5cf8f0d3545f912436",
+        "rev": "4a9360e8c53c819d2236c6ebd1368a910805027c",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/storage-collector"
       }
