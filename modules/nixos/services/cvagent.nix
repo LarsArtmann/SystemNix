@@ -133,6 +133,20 @@
                   "/home/lars/projects/Code-To-CV-Agent"
                   "/home/lars/projects/go-aichat"
                   "/home/lars/projects/monitor365"
+                  # Artmann-Minecraft org (2026-11-15): below the importance
+                  # cutoff but owner-added for CV evidence — the 2018-2020
+                  # game-server era (MINECRAFT-WORK-BREAKDOWN.md, 21-repo
+                  # git/API mining) now has 7 standalone curated CV entries
+                  # deduping the mesh. The 8 repos with CV stories only;
+                  # teammate satellites and websites stay unscanned.
+                  "/home/lars/projects/minecraft/DarkBedrock"
+                  "/home/lars/projects/minecraft/GunGame"
+                  "/home/lars/projects/minecraft/ServerCore"
+                  "/home/lars/projects/minecraft/SpaceCloud"
+                  "/home/lars/projects/minecraft/PlanetSystem"
+                  "/home/lars/projects/minecraft/MC-Data"
+                  "/home/lars/projects/minecraft/Dialogues"
+                  "/home/lars/projects/minecraft/DarkBlocks"
                 ];
                 useAI = true;
                 aiModel = "glm-5.3-flash";
@@ -141,17 +155,19 @@
                 # already holds >= cap AI facts, the ENTIRE run goes rule-based —
                 # spend is bounded even on manual triggers/double runs. Calls ≈
                 # facts/20 and linear in credits, so a fact cap is a spend cap.
-                # Normal day ≈ 500 AI facts (24 repos × ~20); 600 trips only on
-                # anomalies. The fleet-visible meter (ai-meter proxy routing) is a
-                # queued follow-up; today cvagent hits z.ai directly.
-                aiDailyFactCap = 600;
-                # Scan budget: 24 repos at ~2.5 min per repo WITH AI (live
+                # 32 repos since 2026-11-15 (24 + 8 minecraft-era): normal day
+                # ≈ 640 AI facts (32 × ~20), so the cap moved 600 → 800; it
+                # still trips on anomalies/double runs. The fleet-visible
+                # meter (ai-meter proxy routing) is a queued follow-up; today
+                # cvagent hits z.ai directly.
+                aiDailyFactCap = 800;
+                # Scan budget: 32 repos at ~2.5 min per repo WITH AI (live
                 # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
                 # facts in 2.6 min; the 20min budget killed the run at repo
-                # ~13/24, OnFailure paged). Sequential AI calls ≈ 60 min for
-                # the full list — 90 min is the generous bound. Bulk work in
+                # ~13/24, OnFailure paged). Sequential AI calls ≈ 80 min for
+                # the full list — 110 min is the generous bound. Bulk work in
                 # the 05:53 slot is off-peak by design (ioTier.background).
-                timeoutStartSec = "90min";
+                timeoutStartSec = "110min";
                 calendar = "*-*-* 05:53:00";
                 randomizedDelaySec = 600;
                 # AI key via sops-rendered env file; OPENAI_API_KEY is read
