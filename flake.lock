@@ -10472,11 +10472,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794742623,
-        "narHash": "sha256-berXlAgwCVj15XbvIPCYvmPkJmPfMj0Igu9dCrADY9c=",
+        "lastModified": 1794744294,
+        "narHash": "sha256-2v4KrMxEXbRByhrTLsbGTcxqa2zfqi4GgdOjBopqcXw=",
         "ref": "refs/heads/master",
-        "rev": "d36799e96947613e77da3458b47fc6ffa418eac5",
-        "revCount": 249,
+        "rev": "4a9360e8c53c819d2236c6ebd1368a910805027c",
+        "revCount": 251,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/storage-collector"
       },

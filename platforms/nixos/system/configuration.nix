@@ -614,6 +614,17 @@ in
         # phase 5 attaches it (8h + sync_on_commit) on the next deploy —
         # until then the twins are kept in sync by dual-push only.
         "touchbase"
+        # Flipped 2026-11-15 (forgejo-flip@audiblesync): the repo migrated
+        # OFF GitHub Actions (billing blocked every job from starting — no
+        # CI step ever executed there) to Forgejo Actions on this runner.
+        # `.forgejo/workflows/ci.yml` (BuildFlow full gate + test-count,
+        # runs-on native) was pushed to GitHub master FIRST so the
+        # full-import flip preserves it, and `.github/workflows/` was
+        # DELETED (dnsblockd pilot pattern) so the sync PAT never hits the
+        # missing-`workflow`-scope freeze that stalled domains at 114
+        # commits. Local dev origin = forgejo@evo-x2.home.lan, `github`
+        # remote = fallback mirror target.
+        "audiblesync"
       ];
       immich = {
         enable = true;
