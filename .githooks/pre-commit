@@ -116,6 +116,23 @@ if ! pushprot_out=$(scripts/audit-push-protection-literals.sh 2>&1); then
     exit 1
 fi
 
+# Fast guard: WARN when a pin-audit allowlist row is replaced within 24h of
+# its previous edit — concurrent sessions pinning the same input silently
+# overwrite each other's row (the 2026-11-14 cv-row class: swapped twice
+# hours apart, both without seeing the other's evidence). WARN-only by
+# design; the --selftest leg proves both the fire and the stay-silent path.
+# Milliseconds when the pin file is not staged.
+if ! pinrow_out=$(scripts/audit-pin-row-replacement.sh --selftest 2>&1 && scripts/audit-pin-row-replacement.sh 2>&1); then
+    echo "$pinrow_out" >&2
+    log_error "pin-row-replacement guard failed (selftest or git query errored) — see scripts/audit-pin-row-replacement.sh."
+    exit 1
+else
+    # WARN lines print to the committer, never block (if-form: set -e-safe).
+    if [ -n "$pinrow_out" ]; then
+        echo "$pinrow_out"
+    fi
+fi
+
 # Fast guard: TODO queue/library structural integrity (2026-09-19 split).
 # Rejects title-less queue rows (the lost-harvest `**Source:**` class —
 # 63 purged that day) and queue links to nonexistent library files.

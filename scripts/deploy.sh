@@ -604,6 +604,34 @@ if nix run .#pre-deploy-check; then
   deploy_trip_recency_gate
 
   echo ""
+  echo "=== Quiescence advisory (deploy-vs-executor, 2026-10-25 gen-949; 2026-11-15) ==="
+  # WARN-only single-shot probe: firing into a live parallel executor voids
+  # §11 mid-battery and burns the whole battery (2026-11-14 deploy #3 into
+  # the 12:30-12:52 lock wave — the documented hand-rolled check was skipped
+  # under pressure). This advisory makes skipping it LOUD. The blocking /
+  # patient path is scripts/deploy-when-quiescent.sh (>=4x60s polls +
+  # green-eval, --fire); skippable like every advisory:
+  #   DEPLOY_SKIP_QUIESCENCE_ADVISORY=1 nix run .#deploy
+  if [ "${DEPLOY_SKIP_QUIESCENCE_ADVISORY:-0}" = "1" ]; then
+    echo "  skipped (DEPLOY_SKIP_QUIESCENCE_ADVISORY=1)"
+  elif [ -x "scripts/deploy-when-quiescent.sh" ]; then
+    probe_out=$(timeout 60 bash scripts/deploy-when-quiescent.sh --probe --stale-secs 300 2>&1) && probe_rc=0 || probe_rc=$?
+    if [ "$probe_rc" -eq 0 ]; then
+      echo "  ${probe_out}"
+    elif [ "$probe_rc" -eq 1 ]; then
+      while IFS= read -r probe_line; do
+        [ -n "$probe_line" ] && echo "⚠ ${probe_line}"
+      done <<<"$probe_out"
+      echo "⚠ tree NOT quiescent — a parallel executor may be mid-flight; ANY eval-relevant mid-battery change voids §11 and wastes this battery."
+      echo "⚠ Patient path: bash scripts/deploy-when-quiescent.sh --fire   (skip this advisory: DEPLOY_SKIP_QUIESCENCE_ADVISORY=1)"
+    else
+      echo "  (quiescence probe failed rc=${probe_rc} — advisory degraded, continuing)"
+    fi
+  else
+    echo "  (scripts/deploy-when-quiescent.sh not executable — advisory skipped)"
+  fi
+
+  echo ""
   echo "=== FastFlowLM wedged-backend guard (EADDRINUSE corpse class, 2026-09-09) ==="
   # A dead flm thread group (Z+X pair) pins the backend port :52626 until the
   # next REBOOT; every backend start then dies "bind: Address already in use"

@@ -28,17 +28,32 @@
 #   default (dry):       report WOULD-FIRE and exit 0
 #   --fire:              exec `nix run .#deploy` and classify the outcome:
 #                          rc=0                                  -> exit 0
+#                          rc=13 / flock-conflict                -> loop back
+#                           to polling with bounded retries (2026-10-28
+#                           opencloud-deploy8 UPDATE: deploy #8 lost a 51 s
+#                           race to a predecessor sequencer's own fire and
+#                           simply died)
 #                          rc=1 + §11-void/eval class in output  -> exit 3
 #                           (EXPECTED race under a live executor; re-arm)
 #                          anything else                         -> exit 1
 #                           (stop for human review)
+# Every stop/handoff exit carries a DISARM-LIST of other armed watchers
+# (2026-10-28 UPDATE: two armed sequencers for the same payload raced at
+# 23:31 because the earlier stop never disarmed the first one).
+#   --probe:             single-shot gates A+B, verdict to STDOUT only, no
+#                         polling, never fires; exit 0 clean+cold / 1
+#                         dirty-or-hot (deploy.sh's §0.5 advisory is the
+#                         in-tree consumer, 2026-11-15: make skipping the
+#                         quiescence check LOUD instead of silent)
+#   --probe-eval:        --probe plus gate C; exit 2 when the eval fails
 #
 # PSI/memory/pressure gates are deliberately NOT here: deploy.sh's own
 # entry gates own those, and this watcher must not duplicate (or widen,
 # via an extra §11 probe) the window it tries to shrink.
 #
-# Usage: deploy-when-quiescent.sh [--fire] [--poll-interval SEC]
-#        [--min-stable N] [--stale-secs SEC] [--host NAME] [--log FILE]
+# Usage: deploy-when-quiescent.sh [--fire] [--probe] [--probe-eval]
+#        [--poll-interval SEC] [--min-stable N] [--stale-secs SEC]
+#        [--host NAME] [--log FILE]
 # Run:   bash scripts/deploy-when-quiescent.sh            (observe mode)
 set -uo pipefail
 
@@ -47,6 +62,10 @@ REPO_ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 source "$REPO_ROOT/scripts/lib/eval-relevant-paths.sh"
 
 FIRE=false
+PROBE=false
+PROBE_EVAL=false
+LOCK_RETRIES=0
+MAX_LOCK_RETRIES="${MAX_LOCK_RETRIES:-3}"
 POLL_INTERVAL=60
 MIN_STABLE=4
 STALE_SECS=300
@@ -56,6 +75,11 @@ LOG_FILE="${HOME}/.cache/deploy-when-quiescent.log"
 while [ $# -gt 0 ]; do
   case "$1" in
   --fire) FIRE=true ;;
+  --probe) PROBE=true ;;
+  --probe-eval)
+    PROBE=true
+    PROBE_EVAL=true
+    ;;
   --poll-interval)
     POLL_INTERVAL="${2:?--poll-interval needs seconds}"
     shift
@@ -106,6 +130,54 @@ green_eval() {
     ".#nixosConfigurations.$HOST.config.system.build.toplevel.drvPath" \
     >/dev/null 2>&1
 }
+
+print_disarm_list() {
+  # 2026-10-28 opencloud-deploy8 UPDATE: every stop/handoff must carry a
+  # DISARM-LIST of armed sibling automation — two armed sequencers for the
+  # same payload raced at 23:31 because the earlier stop never disarmed the
+  # first watcher. pgrep output goes through redact-argv.sh (secrets ride
+  # argv — the 2026-10-22 monitor365 --jwt-secret class).
+  local others
+  others=$(pgrep -af 'deploy-when-quiescent' 2>/dev/null | grep -v "^$$ " || true)
+  if [ -n "$others" ]; then
+    if [ -x "$REPO_ROOT/scripts/redact-argv.sh" ]; then
+      others=$(printf '%s\n' "$others" | "$REPO_ROOT/scripts/redact-argv.sh" 2>/dev/null || true)
+    fi
+    log "DISARM-LIST — other armed quiescence watchers (verify + kill before arming a replacement):"
+    while IFS= read -r watcher_line; do
+      [ -n "$watcher_line" ] && log "  $watcher_line"
+    done <<<"$others"
+  else
+    log "DISARM-LIST: no other armed quiescence watchers found"
+  fi
+}
+
+if [ "$PROBE" = true ]; then
+  # Single-shot snapshot for callers (deploy.sh §0.5 advisory, 2026-11-15):
+  # gates A+B evaluated ONCE, verdict to STDOUT only (no log file — the
+  # caller's output is the surface), no sleep loop, never fires. Exit 0 =
+  # clean + cold, 1 = dirty tree and/or hot eval-relevant paths, 2 = gate C
+  # (--probe-eval) eval red, 64 = usage.
+  probe_fail=0
+  if ! clean_tree; then
+    echo "PROBE-DIRTY: $(git -C "$REPO_ROOT" status --porcelain | wc -l | tr -d ' ') working-tree entries (untracked files under module dirs break evals — the tracked-files trap)"
+    probe_fail=1
+  fi
+  probe_hot=$(hot_tree)
+  if [ -n "$probe_hot" ]; then
+    echo "PROBE-HOT: eval-relevant path(s) touched <${STALE_SECS}s ago: $(echo "$probe_hot" | tr '\n' ' ')"
+    probe_fail=1
+  fi
+  if [ "$probe_fail" -eq 0 ]; then
+    echo "PROBE-QUIESCENT: tree clean + cold for ${STALE_SECS}s"
+    if [ "$PROBE_EVAL" = true ] && ! green_eval; then
+      echo "PROBE-EVAL-RED: toplevel drvPath eval failed — mid-executor half-wave is the prime suspect"
+      exit 2
+    fi
+    exit 0
+  fi
+  exit 1
+fi
 
 stable=0
 log "deploy-when-quiescent: start (fire=$FIRE poll=${POLL_INTERVAL}s min-stable=$MIN_STABLE stale=${STALE_SECS}s host=$HOST)"
@@ -158,11 +230,28 @@ while true; do
     fi
     # Classify THIS run's output only (the log accumulates across runs —
     # grepping it would classify the last watcher's race as this one's).
+    # rc=13 / flock-conflict first (2026-10-28 deploy8 UPDATE): a
+    # predecessor sequencer's own fire legitimately holds the lock — loop
+    # back to polling with a bounded retry budget instead of dying.
+    if [ "$deploy_rc" -eq 13 ] || grep -q 'Another deploy is already running' <<<"$deploy_out"; then
+      LOCK_RETRIES=$((LOCK_RETRIES + 1))
+      if [ "$LOCK_RETRIES" -gt "$MAX_LOCK_RETRIES" ]; then
+        log "deploy rc=13/flock-conflict — retry budget (${MAX_LOCK_RETRIES}) exhausted; STOP for human review"
+        print_disarm_list
+        exit 1
+      fi
+      log "deploy rc=13 (flock held by another deploy) — looping back to polling (retry $LOCK_RETRIES/$MAX_LOCK_RETRIES)"
+      stable=0
+      sleep "$POLL_INTERVAL"
+      continue
+    fi
     if grep -qE 'MUTATED|evaluation failed|flake check' <<<"$deploy_out"; then
       log "deploy rc=$deploy_rc with §11-void/eval signature — EXPECTED race class under a live executor; re-arm the watcher"
+      print_disarm_list
       exit 3
     fi
     log "deploy rc=$deploy_rc — NOT a recognized race signature; STOP for human review (tail $LOG_FILE)"
+    print_disarm_list
     exit 1
   else
     log "WOULD-FIRE (dry mode) — re-run with --fire to deploy"
