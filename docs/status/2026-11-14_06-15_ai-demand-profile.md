@@ -2,8 +2,14 @@
 
 **Window:** 2026-11-14 ~06:15-07:00 CET, session task 000001a1d5d871644a2dac5d586a00000000 (item 4).
 **Method:** ClickHouse HTTP (:8123, `signoz_metrics.samples_v4 ⋈ time_series_v4`) — per-day and
-per-hour request deltas of `ai_meter_requests_total` over 2026-10-17→11-08 (full retained window,
-longer than the asked 7 days). This also ANSWERS the research follow-up premise ("ai-meter meters
+per-hour request deltas of `ai_meter_requests_total` over 2026-10-17→11-08. **CORRECTION
+(2026-11-15):** that range is the retained-data span, NOT a queried bound — the 8-day filter in
+the first query (`unix_milli > now64(3) - INTERVAL 8 DAY`) silently no-oped against the Int64
+column (10-17 rows appeared anyway) and the final per-hour query dropped the filter entirely, so
+the window is what the data happened to cover, not what was asked for (closeout §d.1:
+docs/status/tasks/2026-11-14_07-04_task-000001a1d5d871644a2dac5d586a00000000.md). The conclusions
+survive — the classification is shape-based, not window-based. This also ANSWERS the research
+follow-up premise ("ai-meter meters
 the API proxy, maybe not local llama-server traffic"): local services routed through the proxy
 (paperless→llama-embeddings, paperless-gpt→llama-chat/flm) ARE metered; the browser extension's
 direct :8104 nsfw traffic is NOT.
