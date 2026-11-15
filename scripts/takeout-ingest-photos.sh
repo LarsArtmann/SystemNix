@@ -15,8 +15,14 @@
 #   --on-errors stop      (immich-go default) — a failing upload FAILS the run;
 #                         never bulk-continue silently
 # Env opt-ins: INGEST_TRASHED=1 adds --include-trashed (deleted-in-Google
-# content; default OFF to keep Immich clean — count them first via
-# logs/zip-entries.tsv if in doubt).
+#   content; default OFF to keep Immich clean — count them first via
+#   logs/zip-entries.tsv if in doubt). INGEST_ON_ERRORS overrides the pinned
+#   --on-errors stop (valid: stop|continue|accept N) — use `continue` ONLY to
+#   complete a run whose sole failures are the designed 403s: the key scope
+#   has NO asset.delete, so immich-go's quality-upgrade path (upload better +
+#   DELETE the old server asset) is refused and both versions are kept — a
+#   human decides deletions, never the importer (2026-11-15 live: 22 upgrade
+#   conflicts left old+new side by side while 876 uploads waited behind stop).
 #
 # Prereqs: Gate G2 green (scripts/takeout-verify.sh) and an Immich API key
 # rendered by the `immich-api-key-provision` converger from
@@ -137,7 +143,7 @@ main() {
       --sync-albums \
       --people-tag \
       --takeout-tag \
-      --on-errors stop \
+      --on-errors "${INGEST_ON_ERRORS:-stop}" \
       "${extra[@]}" \
       "${ziplist[@]}"
   ) || rc=$?
