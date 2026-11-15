@@ -828,9 +828,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>PARETO PLAN</span>
+      <span>2026-11-15</span>
+      <span>CV family / Crush</span>
     </div>
 
     <div class="layout">
@@ -839,10 +839,11 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#pareto">Pareto tiers</a>
+          <a href="#graph">Execution graph</a>
+          <a href="#table">All 46 tasks</a>
+          <a href="#gates">Gates + owner</a>
+          <a href="#provenance">Provenance</a>
         </nav>
       </aside>
 
@@ -855,22 +856,22 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Execution Plan</div>
+          <h1>CV Family — 28 TODOs, 46 Subtasks</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Every open TODO from the 2026-11-15 CV health check, split into tasks of at most 12 minutes, sorted by impact / effort / customer value.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
+<nav class="toc">
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#pareto">Pareto tiers</a></li>
+            <li><a href="#graph">Execution graph</a></li>
+            <li><a href="#table">All 46 tasks</a></li>
+            <li><a href="#gates">Gates + owner</a></li>
+            <li><a href="#provenance">Provenance</a></li>
           </ul>
         </nav>
 
@@ -878,156 +879,172 @@
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">28</div>
+            <div class="stat-label">Open TODOs (all covered)</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">46</div>
+            <div class="stat-label">Subtasks ≤ 12 min</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Tier 1% tasks (≈51% value)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">11</div>
+            <div class="stat-label">Gated / owner / decision</div>
           </div>
         </div>
+        <p>Scope: every open TODO surfaced by the 2026-11-15 CV health check
+        (<a href="status">docs/status/2026-11-15_14-35</a>) — 5 new verification rows + 23
+        pre-existing CV/cvagent/CRM rows. Each row re-verified open against live state the same
+        day. Total effort ≈ 6.4 h across 46 tasks, none longer than 12 minutes.</p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
+        <h2 id="pareto"><span class="num">01</span>Pareto tiers</h2>
         <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <h3>1% → ≈51% of the value (12 tasks, ≈2.0 h)</h3>
+          <p>The 13:52 deploy wave close-out (anchor + canonical battery) — a reboot before the
+          profile-set lands reverts the box (UNANCHORED class). Then the ONLY broken
+          user-facing surface: the cvagent dashboard read-scan — cache + latch fix upstream,
+          proof-float back into SystemNix.</p>
         </div>
-
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+          <h3>4% → ≈64% cumulative (15 tasks, ≈1.7 h)</h3>
+          <p>Cheap high-certainty probes that close every verification gap (latch watch, backups
+          depth, alert-routing proof, throttle re-reads) plus the highest-value small fixes:
+          cv-server real-readiness assertion (today re-proved the need — "active" 15 min with
+          :8098 unbound), serve-unit git PATH, scan preflight, post-deploy §-leg, PSI-gated
+          render leg.</p>
+        </div>
+        <div class="card">
+          <h3>20% → ≈80% cumulative (19 tasks, ≈2.7 h)</h3>
+          <p>Owner decisions prepared as one-glance cards, the remaining upstream coding tail
+          (boot-sync bind-first, StreamMarker leak, VM assertion, MaxCommitSample, ai-meter
+          routing), and gated work (seeding → relogin proof, CRM dedupe, clean-window rerun,
+          device identification).</p>
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="graph"><span class="num">02</span>Execution graph</h2>
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 1284 774"><svg class="d2-1591122273 d2-svg" width="1284" height="774" viewBox="-101 -101 1284 774"><rect x="-101" y="-101" width="1284" height="774" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-1591122273 .text-bold {
+	font-family: "d2-1591122273-font-bold";
+}
+@font-face {
+	font-family: d2-1591122273-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-1591122273 .text-italic {
+	font-family: "d2-1591122273-font-italic";
+}
+@font-face {
+	font-family: d2-1591122273-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
 
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
+		.d2-1591122273 .fill-N1{fill:#0A0F25;}
+		.d2-1591122273 .fill-N2{fill:#676C7E;}
+		.d2-1591122273 .fill-N7{fill:#FFFFFF;}
+		.d2-1591122273 .fill-B1{fill:#0D32B2;}
+		.d2-1591122273 .stroke-B1{stroke:#0D32B2;}
+		.d2-1591122273 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="dzE="><g class="shape" ><rect x="22" y="158" width="178" height="98" stroke="#0D32B2" fill="#ff6b6b" class=" stroke-B1" style="stroke-width:2;" /></g><text x="111" y="196.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="111" dy="0">1% Wave close-out</tspan><tspan x="111" dy="17.666667">T01-T03</tspan><tspan x="111" dy="17.666667">anchor + battery</tspan></text></g><g class="dzI="><g class="shape" ><rect x="0" y="474" width="221" height="98" stroke="#0D32B2" fill="#ff6b6b" class=" stroke-B1" style="stroke-width:2;" /></g><text x="110.5" y="512.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="110.5" dy="0">1% cvagent read-scan fix</tspan><tspan x="110.5" dy="17.666667">T06-T12</tspan><tspan x="110.5" dy="17.666667">upstream + re-float</tspan></text></g><g class="cDE="><g class="shape" ><rect x="395" y="316" width="197" height="98" stroke="#0D32B2" fill="#6eb5ff" class=" stroke-B1" style="stroke-width:2;" /></g><text x="493.5" y="354.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="493.5" dy="0">4% Probes</tspan><tspan x="493.5" dy="17.666667">T04-05, T13-16, T46</tspan><tspan x="493.5" dy="17.666667">latch, backups, alerts</tspan></text></g><g class="cDI="><g class="shape" ><rect x="413" y="158" width="160" height="98" stroke="#0D32B2" fill="#6eb5ff" class=" stroke-B1" style="stroke-width:2;" /></g><text x="493" y="196.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="493" dy="0">4% CV readiness</tspan><tspan x="493" dy="17.666667">T17-T20</tspan><tspan x="493" dy="17.666667">wait-for-port</tspan></text></g><g class="cDM="><g class="shape" ><rect x="383" y="0" width="220" height="98" stroke="#0D32B2" fill="#6eb5ff" class=" stroke-B1" style="stroke-width:2;" /></g><text x="493" y="38.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="493" dy="0">4% Small fixes</tspan><tspan x="493" dy="17.666667">T21-T27</tspan><tspan x="493" dy="17.666667">git PATH, preflight, §-leg</tspan></text></g><g class="dDE="><g class="shape" ><rect x="878" y="0" width="204" height="98" stroke="#0D32B2" fill="#f4d35e" class=" stroke-B1" style="stroke-width:2;" /></g><text x="980" y="38.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="980" dy="0">20% Decisions</tspan><tspan x="980" dy="17.666667">T28-29, T44</tspan><tspan x="980" dy="17.666667">DB, graphrag, cadence</tspan></text></g><g class="dDI="><g class="shape" ><rect x="374" y="474" width="238" height="98" stroke="#0D32B2" fill="#f4d35e" class=" stroke-B1" style="stroke-width:2;" /></g><text x="493" y="512.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="493" dy="0">20% Upstream tail</tspan><tspan x="493" dy="17.666667">T32-34, T39-40</tspan><tspan x="493" dy="17.666667">boot-sync, VM, MaxCommit</tspan></text></g><g class="dDM="><g class="shape" ><rect x="887" y="237" width="187" height="98" stroke="#0D32B2" fill="#f4d35e" class=" stroke-B1" style="stroke-width:2;" /></g><text x="980.5" y="275.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="980.5" dy="0">20% Owner-gated</tspan><tspan x="980.5" dy="17.666667">T30-31, T35-36</tspan><tspan x="980.5" dy="17.666667">seed, dedupe, rerun</tspan></text></g><g class="KHcxIC0mZ3Q7IHAxKVswXQ=="><marker id="mk-d2-1591122273-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 170.027671 257.290822 C 271.700012 343.200012 316.899994 365 390.5 365" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /></g><g class="KHcxIC0mZ3Q7IHAyKVswXQ=="><path d="M 201.5 207 C 277.899994 207 320.700012 207 409.5 207" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /></g><g class="KHcxIC0mZ3Q7IHAzKVswXQ=="><path d="M 170.027671 156.709178 C 271.700012 70.800003 314.700012 49 379.5 49" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /></g><g class="KHcyIC0mZ3Q7IHQyKVswXQ=="><path d="M 222.5 523 C 282.100006 523 312.899994 523 370.5 523" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /></g><g class="KHAzIC0mZ3Q7IHQxKVswXQ=="><path d="M 605 49 C 716.599976 49 771.599976 49 874 49" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /></g><g class="KHAxIC0mZ3Q7IHQzKVswXQ=="><path d="M 594.5 365 C 714.5 365 773.299988 355.485992 882.708511 318.705603" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /><text x="742.5" y="366" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">05:58 + 24h gates</text></g><g class="KHAyIC0mZ3Q7IHQzKVswXQ=="><path d="M 575 207 C 710.599976 207 773.299988 216.513 882.708511 253.29339" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-1591122273-3488378134)" mask="url(#d2-1591122273)" /><text x="732.5" y="216" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">next deploy</text></g><mask id="d2-1591122273" maskUnits="userSpaceOnUse" x="-101" y="-101" width="1284" height="774">
+<rect x="-101" y="-101" width="1284" height="774" fill="white"></rect>
+<rect x="684" y="350" width="117" height="21" fill="black"></rect>
+<rect x="692" y="200" width="81" height="21" fill="black"></rect>
+</mask></svg></svg>
 
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
-        </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="table"><span class="num">03</span>All tasks — sorted by impact / effort / value</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>Task (≤12 min)</th><th>TODO</th><th>Type</th><th>Tier</th><th>Min</th><th>Gate / depends on</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
+            <tr><td>T01</td><td>Verify wave drain: <code>pgrep -f switch-to-configuration</code> empty + ListJobs minimal</td><td>N1</td><td><span class="badge badge-critical">probe</span></td><td><span class="badge badge-critical">1%</span></td><td>3</td><td>—</td></tr>
+            <tr><td>T02</td><td>Anchor equality: <code>readlink /run/current-system</code> == newest <code>system-N-link</code>; repair ladder on mismatch</td><td>N1</td><td><span class="badge badge-critical">verify</span></td><td><span class="badge badge-critical">1%</span></td><td>6</td><td>T01</td></tr>
+            <tr><td>T03</td><td>Run <code>scripts/post-deploy-check.sh</code> full battery, WARN-aware reading</td><td>N1</td><td><span class="badge badge-critical">probe</span></td><td><span class="badge badge-critical">1%</span></td><td>10</td><td>T02</td></tr>
+            <tr><td>T06</td><td>Upstream CV-agent: reproduce — time 20 renders, identify the slow query path</td><td>E8</td><td><span class="badge badge-critical">upstream</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T07</td><td>Upstream: cache design note (TTL vs event-invalidate vs startup-once)</td><td>E8</td><td><span class="badge badge-critical">design</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T06</td></tr>
+            <tr><td>T08</td><td>Upstream: implement the read-model cache</td><td>E8</td><td><span class="badge badge-critical">upstream</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T07</td></tr>
+            <tr><td>T09</td><td>Upstream: startup latch = set on first successful render/load</td><td>E8</td><td><span class="badge badge-critical">upstream</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T08</td></tr>
+            <tr><td>T10</td><td>Upstream: tests + CI green on the cache/latch change</td><td>E8</td><td><span class="badge badge-critical">upstream</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T09</td></tr>
+            <tr><td>T11</td><td>Upstream: bake vendorHash, push (owner permission)</td><td>E8</td><td><span class="badge badge-critical">release</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T10</td></tr>
+            <tr><td>T12</td><td>SystemNix: re-float cvagent input + FOD probe + toplevel proof</td><td>E8</td><td><span class="badge badge-critical">integrate</span></td><td><span class="badge badge-critical">1%</span></td><td>12</td><td>T11</td></tr>
+            <tr><td>T04</td><td>Pull today's cvagent-scan <code>scanned=23 failed=?</code> line from the 05:53 journal</td><td>N2</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-critical">1%</span></td><td>5</td><td>—</td></tr>
+            <tr><td>T05</td><td>Re-probe cvagent <code>/health</code> — does the latch set after a fresh scan?</td><td>N2/E8</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-critical">1%</span></td><td>2</td><td>GATE: 2026-11-16 05:58</td></tr>
+            <tr><td>T13</td><td>Dead-letter journal grep (<code>journalctl -u cv-server | grep -i dead-letter</code>) + fold into battery</td><td>N3</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-high">4%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T14</td><td>Read <code>backup_healthy{cv}</code> metric + count 14-day retention window</td><td>N4</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-high">4%</span></td><td>5</td><td>—</td></tr>
+            <tr><td>T15</td><td>Proof Monday's exit-3 OnFailure reached a delivery surface (notify vs fallback)</td><td>N5</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-high">4%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T16</td><td>cvagent throttle counters 24 h re-read at the 1G cap + verdict</td><td>E25</td><td><span class="badge badge-high">probe</span></td><td><span class="badge badge-high">4%</span></td><td>5</td><td>GATE: ≥24 h post-restart</td></tr>
+            <tr><td>T17</td><td>Read cv-server unit shape + pick the wait-for-port probe pattern</td><td>E10</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>6</td><td>—</td></tr>
+            <tr><td>T18</td><td>Write ExecStartPost wait-for-:8098 probe (timeout budget, no Restart race)</td><td>E10</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>10</td><td>T17</td></tr>
+            <tr><td>T19</td><td>Eval + <code>nix flake check --no-build</code> the unit change</td><td>E10</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>8</td><td>T18</td></tr>
+            <tr><td>T20</td><td>Verify "activating" state during a real restart (the actual product claim)</td><td>E10</td><td><span class="badge badge-high">verify</span></td><td><span class="badge badge-high">4%</span></td><td>8</td><td>GATE: next deploy</td></tr>
+            <tr><td>T21</td><td>Upstream: add git to the serve-unit PATH (mirror the scan-unit 2026-11-04 fix)</td><td>E9</td><td><span class="badge badge-high">upstream</span></td><td><span class="badge badge-high">4%</span></td><td>10</td><td>—</td></tr>
+            <tr><td>T22</td><td>SystemNix: site-side PATH override eval if upstream stalls</td><td>E9</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>5</td><td>GATE: T21 stalls</td></tr>
+            <tr><td>T23</td><td>Write the cvagent §-leg into post-deploy-check.sh (unit result + scanned= + mesh artifacts)</td><td>E19</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>12</td><td>T03 pattern</td></tr>
+            <tr><td>T24</td><td>cvagent scan unit: preflight <code>cvagent health</code> before the loop</td><td>E20</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>10</td><td>—</td></tr>
+            <tr><td>T25</td><td>Gate the render leg to WARN under io PSI (mirror the shell-check treatment)</td><td>E12</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>10</td><td>—</td></tr>
+            <tr><td>T26</td><td>Upstream crm-server: env-read or <code>-api-token-file</code> for the token</td><td>E15</td><td><span class="badge badge-high">upstream</span></td><td><span class="badge badge-high">4%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T27</td><td>SystemNix: drop <code>-api-token</code> from ExecStart (rides the CV rev bump)</td><td>E15</td><td><span class="badge badge-high">fix</span></td><td><span class="badge badge-high">4%</span></td><td>5</td><td>GATE: T26 + rev bump</td></tr>
+            <tr><td>T28</td><td>Analytics DB one-glance decision card (provision Turso vs accept warn)</td><td>E16</td><td><span class="badge badge-medium">decision</span></td><td><span class="badge badge-medium">20%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T29</td><td>graphrag provider decision card (hash embedder vs llama-rag bge-m3)</td><td>E17</td><td><span class="badge badge-medium">decision</span></td><td><span class="badge badge-medium">20%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T30</td><td>Seeding walkthrough card for the owner (admin UI steps, 3 platforms)</td><td>E6</td><td><span class="badge badge-medium">owner</span></td><td><span class="badge badge-medium">20%</span></td><td>5</td><td>owner executes</td></tr>
+            <tr><td>T31</td><td>Post-seed relogin success proof checklist (refreshing → cookie captured)</td><td>E7</td><td><span class="badge badge-medium">verify</span></td><td><span class="badge badge-medium">20%</span></td><td>5</td><td>GATE: seeding done</td></tr>
+            <tr><td>T32</td><td>Upstream CV: reproduce boot-sync-before-bind under load</td><td>E11</td><td><span class="badge badge-medium">upstream</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T33</td><td>Upstream CV: bind-first fix (sync after :8098 up)</td><td>E11</td><td><span class="badge badge-medium">upstream</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>T32</td></tr>
+            <tr><td>T34</td><td>Upstream CV: StreamMarker-leak trace into the create path</td><td>E11</td><td><span class="badge badge-medium">upstream</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T35</td><td>CRM dedupe dry-run script prep (Ledger API, diff reviewed first)</td><td>E14</td><td><span class="badge badge-medium">fix</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>GATE: checkpoint fix deployed</td></tr>
+            <tr><td>T36</td><td>CV browser render smoke rerun in a clean-pressure window</td><td>E13</td><td><span class="badge badge-medium">probe</span></td><td><span class="badge badge-medium">20%</span></td><td>10</td><td>GATE: io PSI &lt; 20</td></tr>
+            <tr><td>T37</td><td>Optionify cv.nix:86 <code>/home/lars/projects/CV</code> default</td><td>E18</td><td><span class="badge badge-medium">fix</span></td><td><span class="badge badge-medium">20%</span></td><td>10</td><td>—</td></tr>
+            <tr><td>T38</td><td>Optionify nsfw-classifier path + "deliberate: host-pinned" comments</td><td>E18</td><td><span class="badge badge-medium">fix</span></td><td><span class="badge badge-medium">20%</span></td><td>8</td><td>T37 pattern</td></tr>
+            <tr><td>T39</td><td>Upstream cvagent: module-level VM YAML-parse assertion</td><td>E21</td><td><span class="badge badge-medium">upstream</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T40</td><td>Upstream cvagent: MaxCommitSample koanf key + defaults wiring</td><td>E22</td><td><span class="badge badge-medium">upstream</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T41</td><td>Route cvagent z.ai calls through the ai-meter proxy</td><td>E23</td><td><span class="badge badge-medium">fix</span></td><td><span class="badge badge-medium">20%</span></td><td>12</td><td>—</td></tr>
+            <tr><td>T42</td><td>Verify ai-meter now sees the cvagent traffic</td><td>E23</td><td><span class="badge badge-medium">verify</span></td><td><span class="badge badge-medium">20%</span></td><td>5</td><td>GATE: T41</td></tr>
+            <tr><td>T43</td><td>by-phone 30 s io-delta measurement (read-storm premise hardening)</td><td>E24</td><td><span class="badge badge-medium">probe</span></td><td><span class="badge badge-medium">20%</span></td><td>10</td><td>—</td></tr>
+            <tr><td>T44</td><td>Federation 2 Hz cadence decision prep (journal-volume vs freshness)</td><td>E26</td><td><span class="badge badge-medium">decision</span></td><td><span class="badge badge-medium">20%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T45</td><td>Identify <code>sdc</code> via /dev/disk/by-id (saturation-job row)</td><td>E27</td><td><span class="badge badge-medium">probe</span></td><td><span class="badge badge-medium">20%</span></td><td>8</td><td>—</td></tr>
+            <tr><td>T46</td><td>cv-server throttle counters 24 h re-read (baseline: high=634)</td><td>E25</td><td><span class="badge badge-medium">probe</span></td><td><span class="badge badge-medium">20%</span></td><td>3</td><td>GATE: ≥24 h post-restart</td></tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+        <h2 id="gates"><span class="num">04</span>Gated + owner work (cannot run today)</h2>
+        <div class="card card-problem">
+          <h3>Hard gates</h3>
+          <ul>
+            <li><strong>Time:</strong> T05 (after 2026-11-16 05:58 scan), T16/T46 (≥24 h post-restart), T36 (io PSI &lt; 20 window).</li>
+            <li><strong>Deploy:</strong> T20 (next switch), T27 (rides CV rev bump), T35 (checkpoint fix + deploy first).</li>
+            <li><strong>Owner:</strong> T30 (admin-UI seeding — passkey session, agent cannot do it), T11/T21 upstream pushes (owner permission).</li>
+            <li><strong>Decision:</strong> T28, T29, T44 — prepared as one-glance cards, then owner picks.</li>
+          </ul>
         </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="card card-solution">
+          <h3>Already green (no work needed)</h3>
+          <ul>
+            <li>cv-server on cv-e6fb98c: /health/live 200, PDF export 0.24 s, vHost 200s, timers armed, backups fresh.</li>
+            <li>SIGSEGV loop dormant (0 events/24 h), MemoryMax fixes live (cvagent 1G cap confirmed post-restart).</li>
+          </ul>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
-        </div>
+        <h2 id="provenance"><span class="num">05</span>Provenance + errata</h2>
+        <p>All 28 parent TODOs verified open 2026-11-15 against live state (probes in
+        docs/status/2026-11-15_14-35, §a–§c). Rows cited: services.md (N1–N5, 295, 296, 363, 440,
+        637–641, 1081–1084), TODO_LIST.md (693, 1872, 1873), upstream.md (252 + the two
+        c4cd41538 rows), stability.md (46 — /health half answered; io-delta half open),
+        monitoring.md (190 adjacent), storage.md (217). No stale rows found; nothing dropped.
+        Plan is a snapshot — living source remains TODO_LIST.md + docs/todo/*.</p>
 
-        <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
-        </footer>
       </main>
     </div>
 
