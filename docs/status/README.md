@@ -1,3 +1,16 @@
+## Live pool addendum (2026-11-15 14:2x)
+
+New live report: `2026-11-15_14-21_task-queue-window-reverification.md`
+— 5th fire of the 2026-11-10 → 14 five-task window, run as the mandated
+VERIFICATION-ONLY pass (dispatch-time dedup hit: the 2026-11-14 09:23
+canonical report already closed this window). All §a landings re-grepped
+green at HEAD; llama-chat backoff found landed since (row 3605); new
+findings: the closeout chain grew a 5th artifact despite a recorded
+verdict (rows 1479/1778 reproducer), and dispatched shells cannot read
+the live tq journal (TQ_DB stripped — the canonical §h "verified live"
+band-drift claim corrected to design-limited; new blocked row minted).
+One shell trap lesson recorded in docs/agents/shell-devtools.md.
+
 ## Live pool addendum (2026-11-14 09:41)
 
 New live report: `2026-11-14_09-23_task-queue-window-closeout.md`
