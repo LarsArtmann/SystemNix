@@ -905,8 +905,13 @@ _: {
             MEMCG_OOM_SCRAPE_ERRORS=0
             MEMCG_OOM_WALK_LAUNCHED=1
             (
-              timeout 30 journalctl -k --since "-24h" --grep "oom-kill:constraint=CONSTRAINT_MEMCG" --output cat --no-pager > "$MEMCG_OOM_RAW" 2>/dev/null
-              echo "\$?" > "$MEMCG_OOM_STATUS_FILE"
+              # Real exit code, errexit-surviving: journalctl exits 1 on a
+              # quiet window (valid empty per the contract above), and the
+              # earlier "\$?" form wrote the LITERAL $? into the status file,
+              # failing the -le 1 integer test every run (2026-11-15).
+              memcg_walk_rc=0
+              timeout 30 journalctl -k --since "-24h" --grep "oom-kill:constraint=CONSTRAINT_MEMCG" --output cat --no-pager > "$MEMCG_OOM_RAW" 2>/dev/null || memcg_walk_rc=$?
+              echo "$memcg_walk_rc" > "$MEMCG_OOM_STATUS_FILE"
             ) &
           fi
 
@@ -1057,7 +1062,9 @@ _: {
           PROC_CENSUS_ENTRIES=$(
             for s in /proc/[0-9]*/status; do
               awk '/^Name:/ {n=$2} /^Pid:/ {p=$2} /^VmRSS:/ {r=$2} /^VmSwap:/ {w=$2} END { if (r+w > 1024) printf "%d %d %s\n", (r+w)*1024, p, n }' "$s" 2>/dev/null
-            done | sort -rn | head -12
+            # || true: head closes the pipe once 12 lines are found and
+            # sort's flush fails exit-2 under pipefail+errexit (storm class).
+            done | sort -rn | head -12 || true
           )
           # Herestring (NOT a pipe): the loop must mutate CENSUS_SAMPLE in
           # THIS shell — a pipe would run it in a subshell and lose it.
