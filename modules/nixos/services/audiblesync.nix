@@ -1,23 +1,33 @@
-# Runbook: docs/services/audiblesync.md
-# audiblesync — AudibleSync WebUI (event-sourced Audible library tracker).
+# Runbook: docs/services/audiblesync.md (+ docs/services/audible-sync.md for
+# the weekly archive oneshot).
+# audiblesync — SystemNix layer over the UPSTREAM nixosModules.default
+# (github:LarsArtmann/audiblesync; extraction wave 2026-11-15 per
+# docs/agents/integration-registry.md "Extraction recipe").
 #
-# The companion UI to the audible-sync archive oneshot: a long-running Go
-# WebUI (templ + HTMX, go-cqrs-lite system + metaengine over SQLite, SSE
-# live updates) tracking the Audible library and each book's LOCAL sync
-# state. Its "Sync now" button delegates to audible-cli for a SINGLE ASIN
-# against the SAME pool dirs + sops auth the weekly archive oneshot uses —
-# the two services intentionally share the `audible-sync` identity, which
-# is why this module ASSERTS co-enable instead of declaring a second user.
+# The upstream module owns BOTH services — the WebUI tracker
+# (audiblesync.service) AND the weekly full-library archive oneshot
+# (audible-sync.service + audible-sync-dirs + audible-sync.timer) — as ONE
+# system sharing the `audible-sync` identity, the sops-rendered auth, and the
+# archive tree. Unit names are unchanged, so deploy.sh's provisioner list,
+# pool-recovery's roster, sops.nix's svcEnabled gating, and both runbooks
+# keep working unchanged. The fleet facts (poolDir, authFile, addr, alert
+# routing, DNS gate) are PLAIN-priority assignments here — the upstream
+# module declares them as mkDefault options, so plain beats mkDefault
+# without force (CPUQuota-trap direction inverted: upstream PLAIN would need
+# mkForce downstream; its mkDefaults don't).
 #
-# Upstream (github:LarsArtmann/audiblesync) exports packages.default ONLY —
-# no nixosModules — so this wrapper hand-rolls the unit (bank-sync wrapper
-# pattern, pre-upstreaming state; the extraction recipe in
-# docs/agents/integration-registry.md applies when upstream grows a module).
+# This file layers ONLY the SystemNix-specific concerns (the recipe's "What
+# to layer" list): sops authFile wiring, lib/ports.nix addr, DNS gate,
+# onFailure alert routing, harden{} + ioTier + serviceDefaults ceilings, the
+# nightly SQLite backup pair, backup-coordination freshness, and the ONE
+# PapDashboard tile — the old second "Audible Sync" tile merged away (the
+# 2-tile dash.home.lan duplication was this extraction's trigger).
 #
-# The app ships WITHOUT auth of its own (cqrs-htmx Path A: the CSRF guard
-# only closes cross-site form-POSTs), so the vHost sits at the PROTECTED
-# layer (oauth2-proxy forward-auth, LAN bypass). The loopback bind is the
-# sole backend; Caddy is the only entry point.
+# NOTE on ReadWritePaths: upstream derives it mkDefault from poolDir, and
+# harden{} always adds its own mkDefault [] — wrapper passes NO
+# ReadWritePaths into harden so each unit keeps exactly ONE non-empty
+# definition (a second non-empty mkDefault list would CONCAT, duplicating
+# the path in the rendered unit).
 { inputs, ... }: {
   flake.nixosModules.audiblesync =
     {
@@ -31,280 +41,192 @@
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ports
         ioTier
+        mkDnsGate
         mkPoolDirUnit
         mkSqliteBackupUnit
         ;
 
       cfg = config.services.audiblesync;
+      archiveCfg = config.services.audible-sync;
 
-      # The WebUI and the weekly archive oneshot share ONE identity: the
-      # `audible-sync` user (sops auth file owner + pool dir owner). Both
-      # modules ship enabled together on evo-x2; flipping audiblesync on
-      # without the archive would leave the sync button auth-less and the
-      # unit without its user — fail the eval instead.
-      archivePresent = options ? services.audible-sync;
-      archiveEnabled = archivePresent && config.services.audible-sync.enable;
+      apiHost = "api.audible.${archiveCfg.countryCode}";
 
-      poolDir = "/mnt/pool/services/audible";
-      backupDir = "/mnt/pool/backups/audiblesync";
-      stateDir = "/var/lib/audiblesync";
-
-      # Single-book sync runner the WebUI shells out to (the app runs the
-      # configured command via `sh -c`, substituting {asin} textually).
-      # Mirrors the archive oneshot's PROVEN AAX pipeline (AAXC vouchers
-      # are refused for this account under every auth shape — audible-sync
-      # runbook): skip-if-on-disk, single-ASIN download, ffmpeg remux with
-      # the account activation bytes, raw AAX dropped on success.
-      audibleBookSync = pkgs.writeShellApplication {
-        name = "audible-book-sync";
-        runtimeInputs = [
-          pkgs.audible-cli
-          pkgs.ffmpeg
-          pkgs.coreutils
-          pkgs.findutils
-          pkgs.jq
-        ];
-        text = ''
-          set -euo pipefail
-
-          asin="''${1:-}"
-          if [[ ! "$asin" =~ ^[0-9A-Z]{10}$ ]]; then
-            echo "audible-book-sync: not a valid ASIN: '$asin' (expected 10 chars [0-9A-Z])" >&2
-            exit 2
-          fi
-
-          bookDir="${poolDir}/books"
-          dlDir="${poolDir}/downloads"
-
-          # Idempotent: the archive names files ASIN-prefixed
-          # (--filename-mode asin_ascii), so a prefix glob is the
-          # on-disk test. Already present = nothing to sync.
-          if compgen -G "$bookDir/''${asin}*.m4b" > /dev/null; then
-            echo "audible-book-sync: $asin already in $bookDir"
-            exit 0
-          fi
-
-          # AAX path (proven for this account; audible-cli skip-if-exists
-          # is a no-op for previously downloaded side files). One book, no
-          # --ignore-errors: the WebUI records the failure verdict from
-          # this exit code, so any refusal must FAIL here.
-          audible download -a "$asin" --aax --chapter --cover --pdf \
-            --filename-mode asin_ascii -y -j 1 -o "$dlDir"
-
-          authFile="''${AUDIBLE_SYNC_AUTH_FILE:?AUDIBLE_SYNC_AUTH_FILE not set}"
-          activationBytes=$(jq -er '.activation_bytes | select(. != null and length > 0)' < "$authFile") || {
-            echo "audible-book-sync: activation_bytes missing in $authFile — fetch once with: AUDIBLE_CONFIG_DIR=<cfg> audible activation-bytes" >&2
-            exit 1
-          }
-
-          aax=$(find "$dlDir" -maxdepth 1 -name "''${asin}*.aax" -type f -printf '%T@ %p\n' \
-            | sort -n | tail -1 | cut -d' ' -f2-)
-          if [ -z "$aax" ]; then
-            echo "audible-book-sync: no AAX for $asin appeared in $dlDir (download refused? see journal)" >&2
-            exit 1
-          fi
-
-          out="$bookDir/$(basename "''${aax%.aax}").m4b"
-          if ffmpeg -nostdin -loglevel error -activation_bytes "$activationBytes" \
-            -i "$aax" -c copy -movflags use_metadata_tags "$out"; then
-            rm -f "$aax"
-            echo "audible-book-sync: $asin synced to $out"
-          else
-            rm -f "$out"
-            echo "audible-book-sync: decrypt FAILED for $aax (raw AAX kept for retry)" >&2
-            exit 1
-          fi
-        '';
+      dnsGate = mkDnsGate {
+        inherit pkgs;
+        serviceName = "audible-sync";
+        hostname = apiHost;
       };
     in
     {
-      options.services.audiblesync = {
-        enable = lib.mkEnableOption "AudibleSync WebUI (Audible library tracker)";
+      imports = [ inputs.audiblesync.nixosModules.default ];
+      config = lib.mkMerge [
+        (lib.mkIf archiveCfg.enable {
+          # Fleet facts for the upstream module (PLAIN — beats upstream
+          # mkDefault; see header). authFile under this mkIf stays lazy on
+          # hosts without sops (the secret only exists when this service is
+          # enabled — sops.nix gates on the same flag).
+          services.audible-sync = {
+            poolDir = "/mnt/pool/services/audible";
+            dataDir = "/var/lib/audible-sync";
+            authFile = config.sops.secrets.audible_sync_auth_json.path;
+            onFailureUnits = onFailure;
+            extraAfter = dnsGate.after;
+            extraWants = dnsGate.wants;
+            extraExecStartPre = dnsGate.serviceConfig.ExecStartPre;
+          };
 
-        package = lib.mkOption {
-          type = lib.types.package;
-          description = ''
-            The audiblesync package (single Go binary, templ + HTMX
-            embedded). Defaults to the locked flake input; the
-            vendorHash is upstream-owned — re-probe before re-pinning
-            (bank-sync treadmill doctrine).
-          '';
-        };
-      };
+          # Ceilings + fleet audits (io-tier, timeout floors via the
+          # oneshot defaults). NO ReadWritePaths here — upstream owns it
+          # (header note). NO CapabilityBoundingSet on the sync unit.
+          systemd.services.audible-sync.serviceConfig = lib.mkMerge [
+            (harden { MemoryMax = "1G"; })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
 
-      config = lib.mkIf cfg.enable {
-        assertions = [
-          {
-            assertion = archiveEnabled;
-            message = ''
-              services.audiblesync requires services.audible-sync.enable: the two
-              services share the `audible-sync` user, the sops-rendered Audible
-              auth (audible_sync_auth_json), and the /mnt/pool/services/audible
-              tree. Enable the archive oneshot alongside the WebUI — or split
-              the identity deliberately (new user + secret grant) instead of
-              loosening this assertion.
-            '';
-          }
-        ];
+          # The dirs converger runs as ROOT and chowns the pool leaves —
+          # harden{}'s empty bounding set strips CAP_CHOWN from root, so the
+          # chown EPERMs inside the namespace without this (mkPoolDirUnit
+          # invariant, lib/default.nix; 2026-09-22 EPERM class — live again
+          # 2026-11-10 23:43 after the 226 fix).
+          systemd.services.audible-sync-dirs.serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "128M";
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
+            })
+            (serviceOneshotDefaults { })
+            ioTier.background
+          ];
 
-        services.audiblesync.package =
-          lib.mkDefault
-            inputs.audiblesync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          # Archive freshness (Gatus alerts via the global backup_all_healthy
+          # check when this goes stale). The upstream oneshot touches
+          # last_success only when download AND every decrypt passed.
+          services.backup-coordination.backups.audible-sync = {
+            directory = archiveCfg.dataDir;
+            filePattern = "last_success";
+            inherit (archiveCfg) maxAgeHours;
+          };
+        })
 
-        systemd = lib.mkMerge [
-          {
-            services.audiblesync = {
-              description = "AudibleSync — Audible library tracker WebUI (audiblesync.home.lan)";
-              # audible-sync-dirs creates the pool leaf dirs the sync
-              # child writes into; the namespace setup (ReadWritePaths)
-              # needs them EXISTING at unit start (226 class).
-              after = [ "audible-sync-dirs.service" ];
-              wants = [ "audible-sync-dirs.service" ];
-              inherit onFailure;
-              startLimitBurst = 5;
-              startLimitIntervalSec = 300;
-              # The pool mounts nofail — a detached DAS fails the unit as
-              # a clean dependency error instead of a 226/NAMESPACE
-              # (mount-gating audit; the WebUI tracks books ON the pool).
-              unitConfig.RequiresMountsFor = [ "/mnt/pool" ];
-              serviceConfig = lib.mkMerge [
-                (harden {
-                  MemoryMax = "1G";
-                  # The "Sync now" child writes downloads/ + books/ under
-                  # the archive tree; the SQLite DB lives in the
-                  # StateDirectory below (auto-writable).
-                  ReadWritePaths = [ poolDir ];
-                })
-                (serviceDefaults { })
-                ioTier.service
-                {
-                  User = "audible-sync";
-                  Group = "audible-sync";
-                  StateDirectory = "audiblesync";
-                  Environment = [
-                    "AUDIBLESYNC_ADDR=127.0.0.1:${toString ports.audiblesync}"
-                    "AUDIBLESYNC_DB=${stateDir}/audiblesync.db"
-                    # The value contains a SPACE — systemd's Environment= is a
-                    # space-separated assignment list, so an unquoted value
-                    # splits at " {asin}" (the app then rejects the template:
-                    # "sync command template must contain {asin}", start-limit
-                    # on both boots of 2026-11-14). The inner double quotes
-                    # make it ONE assignment; upstream substitutes {asin}
-                    # textually per book (executor.go ASINPlaceholder).
-                    "AUDIBLESYNC_SYNC_CMD=\"${lib.getExe audibleBookSync} {asin}\""
-                  ]
-                  ++ lib.optionals archiveEnabled [
-                    # The sync child reuses the archive's rendered
-                    # audible-cli config (auth.json symlink farm in
-                    # /var/lib/audible-sync/config, created by the
-                    # archive unit's config-check ExecStartPre).
-                    "AUDIBLE_CONFIG_DIR=/var/lib/audible-sync/config"
-                    "AUDIBLE_SYNC_AUTH_FILE=${config.sops.secrets.audible_sync_auth_json.path}"
-                  ];
-                  ExecStart = lib.getExe cfg.package;
-                }
-              ];
-            };
-
-            services.audiblesync-backup-dir = lib.mkMerge [
-              (mkPoolDirUnit {
-                description = "Create AudibleSync DB backup directory on the HDD pool";
-                directory = backupDir;
-                owner = "audible-sync";
-              })
-              # mkPoolDirUnit bakes no IO tier; the boot-transaction audit
-              # requires one on every wantedBy multi-user unit
-              # (audible-sync-dirs carries ioTier.background for the same
-              # reason).
-              { serviceConfig = ioTier.background; }
-            ];
-          }
-
-          # A stale-mount remount stops every pool-bound daemon and NOTHING
-          # converges them back (2026-10-04 paperless-gpt class) — audiblesync
-          # is pool-bound (RequiresMountsFor /mnt/pool), so it rides
-          # pool-recovery's restartUnits.
+        (lib.mkIf cfg.enable {
+          services.audiblesync = {
+            # The upstream module declares `package` with NO default (its
+            # flake can't self-reference across consumer locks) — supply it
+            # from this input, overridable per-host (bank-sync pattern).
+            package = lib.mkDefault inputs.audiblesync.packages.${pkgs.stdenv.hostPlatform.system}.default;
+            # Loopback-only (upstream default shape); the port comes from the
+            # registry (8481) so a registry change propagates.
+            addr = "127.0.0.1:${toString ports.audiblesync}";
+            dataDir = "/var/lib/audiblesync";
+            onFailureUnits = onFailure;
+          };
 
           # Nightly WAL-safe SQLite online backup (lib generator, plan E1):
           # 02:35 — staggered off paperless-db (02:00), browser-history
           # (02:15), and miniflux (02:45). Root reads the audible-sync-owned
           # StateDirectory directly (no DynamicUser 0700 — no caps needed).
-          (mkSqliteBackupUnit {
-            inherit pkgs;
-            name = "audiblesync-backup";
-            description = "AudibleSync DB backup (online sqlite .backup)";
-            dbPath = "${stateDir}/audiblesync.db";
-            inherit backupDir;
-            prefix = "audiblesync-db-";
-            retentionDays = 14;
-            startAt = {
-              OnCalendar = "*-*-* 02:35:00";
-            };
-            serviceDeps = [
-              "audiblesync.service"
-              "audiblesync-backup-dir.service"
-            ];
-            timerAfter = [ "mnt-pool.mount" ];
-            onFailureDeps = onFailure;
-            extraServiceConfig = [ ioTier.background ];
-          })
-        ];
+          systemd = lib.mkMerge [
+            {
+              services.audiblesync.serviceConfig = lib.mkMerge [
+                (harden { MemoryMax = "1G"; })
+                (serviceDefaults { })
+                ioTier.service
+              ];
 
-        # Service-integration registry entry: ONE declaration fans out the
-        # Caddy vHost (protected layer — the app has NO auth of its own),
-        # dnsblockd record, Gatus checks, PapDashboard tile, and backup
-        # freshness (integration.nix; miniflux is the reference entry).
-        services.integration = lib.optionalAttrs (options ? services.integration) {
-          audiblesync = {
-            inherit (cfg) enable;
-            port = ports.audiblesync;
-            subdomain = "audiblesync";
-            vHost.layer = "protected";
-            monitored = true;
-            checks = [
-              {
-                name = "AudibleSync health";
+              services.audiblesync-backup-dir = lib.mkMerge [
+                (mkPoolDirUnit {
+                  description = "Create AudibleSync DB backup directory on the HDD pool";
+                  directory = "/mnt/pool/backups/audiblesync";
+                  owner = "audible-sync";
+                })
+                # mkPoolDirUnit bakes no IO tier; the boot-transaction audit
+                # requires one on every wantedBy multi-user unit
+                # (audible-sync-dirs carries ioTier.background for the same
+                # reason).
+                { serviceConfig = ioTier.background; }
+              ];
+            }
+
+            (mkSqliteBackupUnit {
+              inherit pkgs;
+              name = "audiblesync-backup";
+              description = "AudibleSync DB backup (online sqlite .backup)";
+              dbPath = "/var/lib/audiblesync/audiblesync.db";
+              backupDir = "/mnt/pool/backups/audiblesync";
+              prefix = "audiblesync-db-";
+              retentionDays = 14;
+              startAt = {
+                OnCalendar = "*-*-* 02:35:00";
+              };
+              serviceDeps = [
+                "audiblesync.service"
+                "audiblesync-backup-dir.service"
+              ];
+              timerAfter = [ "mnt-pool.mount" ];
+              onFailureDeps = onFailure;
+              extraServiceConfig = [ ioTier.background ];
+            })
+          ];
+
+          # Service-integration registry entry: ONE declaration fans out the
+          # Caddy vHost (protected layer — the app has NO auth of its own),
+          # dnsblockd record, Gatus checks, the PapDashboard tile, and backup
+          # freshness (integration.nix; miniflux is the reference entry).
+          # This is the ONE Audible tile: the archive oneshot has no vHost
+          # and no port, so its former "Audible Sync" tile (Sync & Backup
+          # group) merged into this entry's description instead.
+          services.integration = lib.optionalAttrs (options ? services.integration) {
+            audiblesync = {
+              inherit (cfg) enable;
+              port = ports.audiblesync;
+              subdomain = "audiblesync";
+              vHost.layer = "protected";
+              monitored = true;
+              checks = [
+                {
+                  name = "AudibleSync health";
+                  group = "Media";
+                  path = "/healthz";
+                  conditions = [
+                    "[STATUS] == 200"
+                    # Honest health: /healthz pings the system composition
+                    # root AND the read model (503 + "error" status on
+                    # failure), so the body shape proves both legs.
+                    "[BODY] == pat(*\"status\":\"ok\"*)"
+                  ];
+                }
+                {
+                  name = "AudibleSync dashboard";
+                  group = "Media";
+                  path = "/";
+                  interval = "60s";
+                  conditions = [
+                    "[STATUS] == 200"
+                    "[RESPONSE_TIME] < 1000"
+                  ];
+                }
+              ];
+              homepage = {
+                name = "AudibleSync";
                 group = "Media";
-                path = "/healthz";
-                conditions = [
-                  "[STATUS] == 200"
-                  # Honest health: /healthz pings the system composition
-                  # root AND the read model (503 + "error" status on
-                  # failure), so the body shape proves both legs.
-                  "[BODY] == pat(*\"status\":\"ok\"*)"
-                ];
-              }
-              {
-                name = "AudibleSync dashboard";
-                group = "Media";
-                path = "/";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 1000"
-                ];
-              }
-            ];
-            homepage = {
-              name = "AudibleSync";
-              group = "Media";
-              description = "Audible library sync tracker";
-              # No Audible glyph exists in the dashboard-icons pack (checked
-              # upstream 2026-11-01 for the archive tile); openaudible.png
-              # is the nearest semantic one and the same one the archive
-              # pool tile already renders.
-              icon = "openaudible.png";
-            };
-            backup = {
-              directory = backupDir;
-              filePattern = "audiblesync-db-*.sqlite";
-              maxAgeHours = 25;
+                description = "Audible library archive + sync tracker (weekly archive = audible-sync.timer)";
+                # No Audible glyph exists in the dashboard-icons pack (checked
+                # upstream 2026-11-01); openaudible.png is the nearest
+                # semantic one — both former Audible tiles already used it.
+                icon = "openaudible.png";
+              };
+              backup = {
+                directory = "/mnt/pool/backups/audiblesync";
+                filePattern = "audiblesync-db-*.sqlite";
+                maxAgeHours = 25;
+              };
             };
           };
-        };
-      };
+        })
+      ];
     };
 }

@@ -1,6 +1,6 @@
 # AudibleSync (Audible library tracker WebUI) — Agent Notes
 
-> Module: `modules/nixos/services/audiblesync.nix`. Created 2026-11-14 (wrapper-first; see "Upstreaming state" below). Upstream: `github:LarsArtmann/audiblesync` (Go + templ + go-cqrs-lite system/metaengine + cqrs-htmx, v0.1.0).
+> Module: **upstream** — `github:LarsArtmann/audiblesync` `nixosModules.default` (`nix/module.nix`), consumed by the SystemNix layer `modules/nixos/services/audiblesync.nix` (extraction wave 2026-11-15 — the wrapper no longer hand-rolls any unit; it layers fleet facts only and carries the ONE "AudibleSync" tile, the former second "Audible Sync" tile merged into its description). Upstream: `github:LarsArtmann/audiblesync` (Go + templ + go-cqrs-lite system/metaengine + cqrs-htmx, v0.1.0). Created 2026-11-14 (wrapper-first).
 
 ## STATUS: INTEGRATED 2026-11-14 (enable = true; locked at upstream `e8ef419`, probe-built green before the lock per probe-before-lock). Deploy-gated at authoring time — verify the deploy anchor + live probes below before trusting anything runtime-shaped.
 
@@ -28,9 +28,9 @@ The WebUI and the weekly archive oneshot **share the `audible-sync` identity on 
 - **Local files page is OFF** (no `AUDIBLESYNC_LIBRARY_DIR`): the app scans for files named EXACTLY `<ASIN>.m4b` (`^([0-9A-Z]{10})\.m4b$`, `internal/app/files.go`), while the archive's `asin_ascii` naming is `<ASIN>_<title>.m4b`. Pointing the knob at `books/` would render the page permanently empty. Fix paths: an upstream pattern-configuration option, or a symlink-farm oneshot — not wired yet (cosmetic page; the library table carries the real state).
 - **OTel not wired:** the app has no OTel instrumentation of its own (indirect deps only; its own library-review verdict: "no telemetry backend exists" for a LAN tool). No `OTEL_EXPORTER_OTLP_ENDPOINT` → no signoz-coverage registration needed (the audit only gates units carrying the env).
 
-## Upstreaming state (2026-11-08 doctrine: product repos own their modules)
+## Upstreaming state (DONE 2026-11-15 — the extraction recipe ran)
 
-The flake exports `packages.default` ONLY — no `nixosModules` — so the SystemNix wrapper hand-rolls the unit (bank-sync/crm interim). The portable set is NOT small (options + unit shape + the `audible-book-sync` script), so the extraction recipe in `docs/agents/integration-registry.md` applies: extract `nixosModules.default` upstream, then delegate the wrapper to `imports = [ inputs.audiblesync.nixosModules.default ]` + rendered-unit parity. What stays fleet-side NO MATTER WHAT: the integration registry entry (tile/checks/vHost/backup freshness — fleet-side always), `lib/ports.nix`, `dns-local.nix`, sops wiring, `ioTier`/`onFailure`, the backup generators, deploy.sh provisioning, and the co-enable assertion with the archive oneshot.
+The upstream flake exports `nixosModules.default` (`nix/module.nix`) owning BOTH Audible services — this WebUI AND the weekly archive oneshot + its dirs converger + timer (option namespaces `services.audiblesync` / `services.audible-sync` unchanged; unit names unchanged). The SystemNix wrapper delegates via `imports = [ inputs.audiblesync.nixosModules.default ]` and layers ONLY the fleet set (the recipe's "What to layer" list): sops authFile, `lib/ports.nix` addr, DNS gate hooks, `ioTier`/`onFailure`, harden ceilings, backup generators, deploy.sh provisioning, and the integration registry entry (fleet-side always). Rendered-unit parity was gated before deploy (baseline captures in `~/.cache/parity/audiblesync/`).
 
 ## Upstream traps already paid for (do not relearn)
 

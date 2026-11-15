@@ -342,11 +342,11 @@
 
     # audiblesync — event-sourced Audible library tracker WebUI (Go +
     # templ + go-cqrs-lite system/metaengine + cqrs-htmx): per-book sync
-    # state, activity feed, SSE live updates, /healthz. Companion to the
-    # audible-sync archive oneshot — its Sync now delegates to audible-cli
-    # against the SAME pool dirs + sops auth (module: modules/nixos/services/
-    # audiblesync.nix; the flake exports packages.default only, NO
-    # nixosModules, so the wrapper hand-rolls the unit). PUBLIC repo →
+    # state, activity feed, SSE live updates, /healthz. Exports
+    # nixosModules.default owning BOTH Audible services (WebUI + weekly
+    # archive oneshot + dirs + timer; extraction wave 2026-11-15 — the
+    # wrapper modules/nixos/services/audiblesync.nix now only layers the
+    # fleet concerns and carries the ONE dashboard tile). PUBLIC repo →
     # plain github URL (emeet-pixyd pattern); probe-before-lock discipline:
     # build the rev outside the lock BEFORE re-locking (PapDashboard CI
     # retirement doctrine).

@@ -141,11 +141,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794621147,
-        "narHash": "sha256-x0mq99d72udQ/Unh4eofdDa4kKPc7hjHAFysEb1FCAc=",
+        "lastModified": 1794728074,
+        "narHash": "sha256-3gjDSs3a9yGusFJxBkLI5zaTjT8jT9QIiciJg6M3W1E=",
         "owner": "LarsArtmann",
         "repo": "audiblesync",
-        "rev": "f75668303b72dbf7d6ca99f0c55916db0c629b3c",
+        "rev": "0b55ba94b1b00d1413e8208cf65e1baa6766aea3",
         "type": "github"
       },
       "original": {
@@ -8346,11 +8346,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794411284,
-        "narHash": "sha256-5qFWo6KE6e2rKXy75uc73kDSpn0GFDMyFLl/HRezR8M=",
+        "lastModified": 1794728204,
+        "narHash": "sha256-vRIf3hPXKUTpc7uUnVXIQSDzPYhIACEWAu+zhjkWYNs=",
         "ref": "refs/heads/master",
-        "rev": "ad7dce0f108f1e4b6235eccad7d1b8787ef4e250",
-        "revCount": 374,
+        "rev": "3e3c3eaa4359cf3fb6d3b322086a623873b8d33e",
+        "revCount": 394,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/media-atlas"
       },
