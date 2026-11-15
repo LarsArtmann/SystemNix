@@ -22,17 +22,23 @@
 #   transaction_open_seconds_past_graphical (age of the open transaction;
 #                                  0 when closed — makes the class MEASURED)
 #
-# Storm-boot tolerance: `systemd-analyze` refuses to answer ("Bootup is not
-# yet finished") until userspace target completes — 13min on the measured
-# storm boot. The script retries (2min sleep, bounded) instead of failing,
-# so storm boots still get captured. A single run is still a bounded window:
-# the 2026-10-15 watchdog-reset storm boot finished userspace at 47m48s —
-# AFTER the 24min single-run budget — leaving the prom phase-less (only the
-# fail-closed scrape_errors=1) for the whole boot, which the pre-deploy
-# phantom-metric gate then trips on every deploy that day. The timer
-# therefore re-fires on `reEmitInterval` (OnUnitActiveSec): systemd-analyze
-# is boot-relative and stable once the boot finishes, so the re-run
-# converges the sample idempotently (boot_uptime_seconds carries sample age).
+# Probe-per-fire tolerance: `systemd-analyze` refuses to answer ("Bootup is not
+# yet finished") until the boot startup transaction completes — 13min on the
+# measured storm boot. Each run is ONE bounded probe (seconds): if the
+# transaction is still open the run writes the fail-closed transaction gauges
+# and EXITS; the timer re-fires every `reEmitInterval` while the transaction
+# stays open, and once the full sample converges (systemd-analyze answers) the
+# service stops the timer — the sample is boot-relative and stable, so
+# re-running it can add nothing until the next reboot re-arms the timer.
+#
+# WHY NOT AN IN-UNIT RETRY (the 2026-11-14 self-hold livelock): a start job
+# enqueued while the boot transaction is open MERGES INTO that transaction, so
+# the old 45min sleep-loop held FinishTimestampMonotonic at 0 — the emitter
+# waited on a boot it was itself keeping unfinished (busctl ListJobs: its own
+# start job was the ONLY pending job in the manager). First phases landed only
+# on the second 30min re-fire, leaving the pre-deploy phantom-metric gate
+# blocked for the first ~30min of every storm boot. A ~seconds job can join a
+# transaction only transiently; it can never be the long pole holding it open.
 #
 # mktemp in the sticky textfile dir + CAP_FOWNER (mail-relay 2026-09-02..06
 # foreign-owned-prom class), buildcache/pool-smart collector pattern.
@@ -78,21 +84,14 @@
           description = "OnBootSec delay before the first emission attempt (boot must reach the timer target first).";
         };
 
-        maxRetries = lib.mkOption {
-          type = lib.types.int;
-          default = 12;
-          description = "Retry budget while systemd-analyze reports the boot as unfinished (2min sleep per retry — 12 covers ~26min userspace boots).";
-        };
-
         reEmitInterval = lib.mkOption {
           type = lib.types.str;
-          default = "30min";
+          default = "2min";
           description = ''
-            OnUnitActiveSec re-fire interval (convergence path for boots that
-            finish AFTER the single-run retry budget — see header). Re-runs
-            are idempotent for the current boot: systemd-analyze output is
-            boot-relative and stable post-boot; boot_uptime_seconds carries
-            the sample age between reboots.
+            OnUnitActiveSec re-probe interval while the boot startup
+            transaction is still open (each run is a single bounded probe —
+            see the header for the 2026-11-14 self-hold livelock fix; the
+            timer stops itself once the full sample converges).
           '';
         };
       };
@@ -120,8 +119,9 @@
             {
               Type = "oneshot";
               User = "root";
-              # maxRetries × 120s sleep + parse margin.
-              TimeoutStartSec = "45min";
+              # One bounded probe + parse (the old 45min retry budget died with
+              # the 2026-11-14 self-hold livelock — see header).
+              TimeoutStartSec = "5min";
             }
             (harden {
               ReadWritePaths = [ textfileDir ];
@@ -147,10 +147,10 @@
             # reached yet). systemctl show is in-repo-precedented under
             # harden{} (btrfs-verify-snapshots probes unit state the same
             # way); a missing/unparseable property degrades to uptime.
-            # DEFINED ABOVE ITS FIRST CALL SITE (the retry loop below): a
-            # helper defined after the call is not yet a command when the
-            # loop body runs, and the 127 takes `set -e` down with it — the
-            # 2026-10-18 failure where the open-transaction gauge this loop
+            # DEFINED ABOVE ITS FIRST CALL SITE (the probe case below): a
+            # helper defined after the call is not yet a command when its
+            # caller runs, and the 127 takes `set -e` down with it — the
+            # 2026-10-18 failure where the open-transaction gauge this probe
             # exists to emit was never written on exactly the boots it is
             # for (systemd-analyze refusing).
             open_age_secs() {
@@ -164,39 +164,28 @@
               fi
             }
 
-            # ── systemd-analyze with bounded retry for storm boots ──────────
-            analysis=""
-            attempt=0
-            while [ "$attempt" -lt ${toString cfg.maxRetries} ]; do
-              attempt=$((attempt + 1))
-              analysis="$(${pkgs.systemd}/bin/systemd-analyze --no-pager 2>&1 || true)"
-              case "$analysis" in
-                *"Bootup is not yet finished"*|*"Bootup is not yet complete"*)
-                  echo "boot-metrics: boot unfinished (attempt $attempt/${toString cfg.maxRetries}), retrying in 120s" >&2
-                  # MEASURE the open transaction instead of only sleeping on
-                  # it: write the gauge mid-wait so an infinite-boot box
-                  # surfaces a number within the first retry cycle (the
-                  # 2026-10-17 class was invisible to blame + systemd-analyze
-                  # for 55+ min). Atomic textfile write per house doctrine.
-                  open_age="$(open_age_secs)"
-                  {
-                    echo "# HELP transaction_open 1 while the boot startup transaction is still open (systemd-analyze refuses), 0 once finished"
-                    echo "# TYPE transaction_open gauge"
-                    echo "transaction_open 1"
-                    echo "# HELP transaction_open_seconds_past_graphical Seconds past graphical.target activation while the transaction stays open (uptime fallback pre-graphical); 0 when closed"
-                    echo "# TYPE transaction_open_seconds_past_graphical gauge"
-                    echo "transaction_open_seconds_past_graphical $open_age"
-                    echo "# HELP boot_uptime_seconds Sample age (see above)"
-                    echo "# TYPE boot_uptime_seconds gauge"
-                    echo "boot_uptime_seconds $(awk '{ printf "%.0f", $1 }' /proc/uptime)"
-                  } > "$TMP"
-                  mv "$TMP" "$OUT"
-                  echo "boot-metrics: transaction OPEN at ''${open_age}s past graphical — gauge written, retrying" >&2
-                  sleep 120
-                  ;;
-                *) break ;;
-              esac
-            done
+            # ── ONE systemd-analyze probe per run (2026-11-14 livelock fix) ──
+            # The old in-unit retry loop (12 × sleep 120) made this job the
+            # long pole holding the boot transaction open — see header. The
+            # transaction_open gauges below still measure the open-transaction
+            # class (the netbird 2026-10-17 holder): every probe re-writes the
+            # full fail-closed sample, so an infinite-boot box surfaces a
+            # fresh age every ${toString cfg.reEmitInterval} instead of a
+            # stale one per 2min internal sleep.
+            analysis="$(${pkgs.systemd}/bin/systemd-analyze --no-pager 2>&1 || true)"
+            case "$analysis" in
+              *"Bootup is not yet finished"*|*"Bootup is not yet complete"*)
+                # Refusal is the EXPECTED pre-convergence state, not a scrape
+                # error: scrape_errors stays 0, no phase parse is attempted.
+                tx_open=1
+                tx_open_age="$(open_age_secs)"
+                echo "boot-metrics: boot transaction still open (''${tx_open_age}s past graphical) — probe sample written, re-probe in ${toString cfg.reEmitInterval}" >&2
+                ;;
+              *)
+                tx_open=0
+                tx_open_age=0
+                ;;
+            esac
 
             # to_seconds "1h 29min 25.454s" | "12min 57.314s" | "4.036s" → seconds (3 decimals).
             # Hours case added 2026-10-17: the leftmost-longest substring match
@@ -231,20 +220,23 @@
               fi
             }
 
-            phase_body="$(printf '%s\n' "$analysis" | sed -n 's/^Startup finished in //p' | sed 's/ = .*//')"
-            if [ -n "$phase_body" ]; then
-              for phase in firmware loader kernel initrd userspace; do
-                emit_phase "$phase" "$phase_body"
-              done
-              # [[:space:]]*: systemd-analyze ends the summary line with a
-              # trailing space; a bare $ anchor never matched (total absent
-              # from every prom since launch, 2026-10-15).
-              total="$(printf '%s\n' "$analysis" | grep -oE '= [0-9]+h [0-9]+min [0-9.]+s[[:space:]]*$|= [0-9]+min [0-9.]+s[[:space:]]*$|= [0-9.]+s[[:space:]]*$' | head -1 || true)"
-              if [ -n "$total" ]; then
-                echo "boot_total_duration_seconds $(to_seconds "''${total#= }")" >> "$METRICS"
+            phase_body=""
+            if [ "$tx_open" -eq 0 ]; then
+              phase_body="$(printf '%s\n' "$analysis" | sed -n 's/^Startup finished in //p' | sed 's/ = .*//')"
+              if [ -n "$phase_body" ]; then
+                for phase in firmware loader kernel initrd userspace; do
+                  emit_phase "$phase" "$phase_body"
+                done
+                # [[:space:]]*: systemd-analyze ends the summary line with a
+                # trailing space; a bare $ anchor never matched (total absent
+                # from every prom since launch, 2026-10-15).
+                total="$(printf '%s\n' "$analysis" | grep -oE '= [0-9]+h [0-9]+min [0-9.]+s[[:space:]]*$|= [0-9]+min [0-9.]+s[[:space:]]*$|= [0-9.]+s[[:space:]]*$' | head -1 || true)"
+                if [ -n "$total" ]; then
+                  echo "boot_total_duration_seconds $(to_seconds "''${total#= }")" >> "$METRICS"
+                fi
+              else
+                scrape_errors=1
               fi
-            else
-              scrape_errors=1
             fi
 
             userspace_line="$(grep '^boot_phase_duration_seconds{phase="userspace"} ' "$METRICS" 2>/dev/null || true)"
@@ -271,21 +263,6 @@
             esac
 
             uptime_secs="$(awk '{ printf "%.0f", $1 }' /proc/uptime)"
-
-            # Closed-transaction state for the final sample — or the FINAL
-            # open age when the retry budget ran out (the give-up path keeps
-            # the class visible: transaction_open 1 + last age + scrape_errors
-            # below, instead of a bare phase-less error).
-            case "$analysis" in
-              *"Bootup is not yet finished"*|*"Bootup is not yet complete"*)
-                tx_open=1
-                tx_open_age="$(open_age_secs)"
-                ;;
-              *)
-                tx_open=0
-                tx_open_age=0
-                ;;
-            esac
 
             {
               echo "# HELP boot_phase_duration_seconds Duration of one boot phase (systemd-analyze), current boot only — sample age = boot_uptime_seconds"
@@ -316,11 +293,20 @@
             mv "$TMP" "$OUT"
             trap - EXIT
             echo "boot-metrics: wrote $OUT ($(wc -l < "$OUT") lines)"
+            if [ "$tx_open" -eq 0 ]; then
+              # Converged: the sample is boot-relative and stable, so further
+              # runs this boot add nothing — stop the re-probe timer (next
+              # reboot re-arms it via timers.target). Best-effort: a denied
+              # stop only degrades to idempotent re-probes, never to a
+              # missing sample.
+              systemctl stop boot-metrics-emit.timer 2>/dev/null || true
+              echo "boot-metrics: boot transaction closed — sample converged, timer stopped"
+            fi
           '';
         };
 
         systemd.timers.boot-metrics-emit = {
-          description = "Emit boot-duration metrics (boot-start attempt + interval re-sample)";
+          description = "Probe + emit boot-duration metrics (single probe per fire; re-probes until the boot transaction closes, stops itself on convergence)";
           wantedBy = [ "timers.target" ];
           timerConfig = {
             OnBootSec = cfg.emitDelay;

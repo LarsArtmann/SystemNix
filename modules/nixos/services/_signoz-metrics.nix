@@ -40,6 +40,21 @@ lib.mkIf cfg.components.nodeExporter {
     {
       tmpfiles.rules = [
         (mkStateDir "/var/lib/prometheus-node-exporter/textfile_collectors" "1777" "nobody" "nogroup")
+        # Janitor for the sticky textfile dir (2026-11-14 census: ~60
+        # mktemp leftovers — vm-top ×16, crowdsec-counts ×12, psi ×7,
+        # memory-emergency-guard ×8, niri ×5, buildcache ×4,
+        # forgejo-mirror-health ×3…): a writer that dies mid-write (the
+        # I/O-storm class) leaks its temp forever. EVERY collector's
+        # temp is `<name>.prom.XXXXXX` (or `.prom.tmp.*`), and real
+        # textfiles end at `.prom` — so the glob structurally cannot
+        # touch a live file, and the 1d age leg (v262 semantics: oldest
+        # of mtime/atime/ctime must ALL be older; node_exporter only
+        # reads `*.prom`, so nothing touches a leaked temp) makes even a
+        # pattern false-positive harmless. R+glob+age needs systemd
+        # >=262 — live here (v262). Cleanup rides the daily
+        # systemd-tmpfiles-clean pass (--clean is what the age leg
+        # needs), so a deploy carrying this rule IS the purge.
+        "R /var/lib/prometheus-node-exporter/textfile_collectors/*.prom.* - - - 1d"
       ];
     }
     {
