@@ -4,6 +4,7 @@
 
 ## BOOT CONTRACT (live-probed 2026-11-10)
 
+
 `invoices dashboard` **REQUIRES `config.yaml` in the CWD** (viper `AddConfigPath "."`; NO `--config` flag exists) and **exits 69** without it (`[SYSTEM_CONFIGURATION_ERROR]`). Consequences:
 
 - The unit's `WorkingDirectory` is the data dir `~/invoices`, and the unit carries `ConditionPathExists = ~/invoices/config.yaml` → a missing config is a CLEAN skip, not a crash loop.
