@@ -263,13 +263,15 @@ _: {
                 # setuid/setgid; harden's empty default died "runuser:
                 # cannot set groups" (live 2026-11-14, the StateDirectory
                 # fix's next layer), then "cannot open session" (PAM under
-                # ProtectSystem=strict, gen-1009). CAP_SYS_RESOURCE was
-                # added for runuser's pam_limits memlock leg (23:20
-                # gen-1009) — inert spare under setpriv (no PAM), kept
-                # until a cleanup pass proves it unused.
+                # ProtectSystem=strict, gen-1009). CAP_CHOWN + CAP_FOWNER
+                # cover the key-file handoff leg (chown to the consumer's
+                # uid, then chmod 0400 on the now-foreign-owned file —
+                # live 02:21 gen-1010 after INSERT already succeeded).
+                # CAP_SYS_RESOURCE was runuser's pam_limits memlock leg —
+                # inert spare under setpriv, kept until a cleanup pass.
                 (harden {
                   MemoryMax = "128M";
-                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE";
+                  CapabilityBoundingSet = "CAP_SETUID CAP_SETGID CAP_SYS_RESOURCE CAP_CHOWN CAP_FOWNER";
                 })
                 (serviceOneshotDefaults { })
                 {
