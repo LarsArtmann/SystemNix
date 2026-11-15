@@ -1094,11 +1094,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794740997,
-        "narHash": "sha256-q6NYwvINLIbN87rninaXT8Ysp7ioI+pX08te8bpnG6A=",
+        "lastModified": 1794741917,
+        "narHash": "sha256-HtdP1dzXDUeSIEgtvKddCvURDM31Zg6dHDbi50hRDoI=",
         "ref": "refs/heads/master",
-        "rev": "fd2997e70bb01333c3065419b71bb798745ed771",
-        "revCount": 642,
+        "rev": "ed807315edaa25620ab414b01c7a9e69e5bbe64c",
+        "revCount": 644,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/Code-To-CV-Agent"
       },
