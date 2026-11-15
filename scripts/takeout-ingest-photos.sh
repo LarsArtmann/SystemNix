@@ -118,14 +118,18 @@ main() {
   (
     cd "$root"
     # shellcheck disable=SC2086 # immich_go_bin is a deliberately word-split command prefix
+    # Connection flags attach to the `upload` subcommand (immich-go 0.32.0 has
+    # NO root -server/-api-key — root-level placement made the URL parse as a
+    # command: 'unknown command "http://…"', caught by the 2026-11-15 dry-run).
     $immich_go_bin \
+      upload \
       -server "$apiurl" \
       -api-key "$apikey" \
       --no-ui \
       --client-timeout 30m \
       --log-file logs/immich-go.log \
       --log-level INFO \
-      upload from-google-photos \
+      from-google-photos \
       --include-unmatched \
       --include-archived \
       --include-partner \
