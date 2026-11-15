@@ -2,6 +2,7 @@
 
 **Session window:** 2026-11-14 ~07:30-08:00 CET, task 000001a1d8cbc255e490e7655eec00000000 (item 3 of the ai-stack batch).
 **Ask:** "Bisect the llama.cpp 0.3.0 mid-load CPU-spin upstream (ROCm runtime / kernel / GPU-state — upstream of llama.cpp)" — the gate for the paperless RAG item.
+**F08 doctrine exception (annotated 2026-11-15):** the research README's F08 errata requires every audit-style deep dive to run a live-probe phase; THIS report's upstream-research leg deliberately probed NO live surface of our own units (no journal/CPU-time/metrics pull) — the box was mid-storm and IO discipline banned the reads (the §Flip-path A/B soak is the designated live-probe leg, owner-gated, quiet window). Findings about OUR units cite the freeze-#5/#48 incident record; findings about upstream cite primary-source issue/PR reads. Doctrine audits reading this header should not flag the missing live-probe phase.
 
 ## Verdict
 
