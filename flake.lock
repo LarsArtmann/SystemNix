@@ -14,11 +14,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794732664,
-        "narHash": "sha256-0J5B3ZdC/L61A64JD0Kih2aerbyV/ac802IRFv0ozv4=",
+        "lastModified": 1794742633,
+        "narHash": "sha256-hYsHlAYo5A+yiFcHv7w4GFdSc/J391iK1iT0vWYsrFU=",
         "ref": "refs/heads/fork",
-        "rev": "e2464aedd26a34ab632782ec308fda7d83ef355a",
-        "revCount": 2767,
+        "rev": "8ce90a478980f66e0e2e402a0e3123cb8dc46e27",
+        "revCount": 2770,
         "type": "git",
         "url": "https://github.com/LarsArtmann/art-dupl"
       },
@@ -31,11 +31,11 @@
     "art-dupl-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1794732664,
-        "narHash": "sha256-0J5B3ZdC/L61A64JD0Kih2aerbyV/ac802IRFv0ozv4=",
+        "lastModified": 1794742633,
+        "narHash": "sha256-hYsHlAYo5A+yiFcHv7w4GFdSc/J391iK1iT0vWYsrFU=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "e2464aedd26a34ab632782ec308fda7d83ef355a",
+        "rev": "8ce90a478980f66e0e2e402a0e3123cb8dc46e27",
         "type": "github"
       },
       "original": {
@@ -955,11 +955,11 @@
         "nixpkgs-dprint": "nixpkgs-dprint"
       },
       "locked": {
-        "lastModified": 1794645793,
-        "narHash": "sha256-CJEBKHieDvNe7yYwyoaS3be9JQxvj0l/Qy3aHmyiYrs=",
+        "lastModified": 1794736791,
+        "narHash": "sha256-h0DL96bDaoo7mYJCkgrdd2oPe9+egO2a77+SWv9V1js=",
         "ref": "refs/heads/master",
-        "rev": "cd0f5339810bcc79768bc3cecd445ce3d7f97482",
-        "revCount": 1343,
+        "rev": "b7f86159e6f984873b7f14f40232dfc7056c6957",
+        "revCount": 1344,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crm"
       },
@@ -982,11 +982,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794736090,
-        "narHash": "sha256-L4vKbA8a4lZxdSe8qRp8c0v9GABCed++Wrggi3PIFwI=",
+        "lastModified": 1794738006,
+        "narHash": "sha256-HSOs+PF/VWwCSldmPJrOfpczIBmCOgtW88yNIDE7mBs=",
         "ref": "refs/heads/master",
-        "rev": "ff2f902f780a1423e95ff1813ea9124a18fe7605",
-        "revCount": 413,
+        "rev": "dca0211d01220d1a668bcf501b05049c2097be5a",
+        "revCount": 416,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       },
@@ -1064,11 +1064,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794726744,
-        "narHash": "sha256-NV98VLi9OhGj0oCGZC5q4/hgjstByfcu2HNu0qCFadA=",
+        "lastModified": 1794742351,
+        "narHash": "sha256-XeGU2efe096k35QZ1tlUWjr6Jb9yOGFWmWGmR7oDha8=",
         "ref": "refs/heads/master",
-        "rev": "bf7b1dfa4e1ef0ec3b9f6fc441e54e2e57db62bc",
-        "revCount": 10994,
+        "rev": "44018356c07bb512fc9de025ca7216aca4929c36",
+        "revCount": 11002,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -1299,11 +1299,11 @@
         "templ-src": "templ-src"
       },
       "locked": {
-        "lastModified": 1794281806,
-        "narHash": "sha256-4W+5ChN2Qq5NTlGd8LmJzmf5NV58boAQomr4LpZAUAA=",
+        "lastModified": 1794742133,
+        "narHash": "sha256-DWGRktCcIn7K3p5GQVYddZDrW6kSn/FJXX6pbTXlvtw=",
         "ref": "refs/heads/master",
-        "rev": "9fe62ce75946419d45aac21d812528bbb9862eda",
-        "revCount": 3114,
+        "rev": "1ba01db88a4ceaba3c03110e6bef375d428ed1c7",
+        "revCount": 3183,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -1416,11 +1416,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794635107,
-        "narHash": "sha256-WWfSVO7H5myMV7b2TzovFS+IVN2VURP5Y4Mw4x3HaUg=",
+        "lastModified": 1794741540,
+        "narHash": "sha256-JB5lvnZq68001XkvOaHD8igLlv0qqtna6vY/Xf2ksGg=",
         "ref": "refs/heads/master",
-        "rev": "1fca6cd86ea4b9cbce55a9a964fd6b6f66bfdd5b",
-        "revCount": 473,
+        "rev": "6462f1e37f96a62ee8ced27313700ee10619ea8f",
+        "revCount": 474,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/domains"
       },
@@ -3616,16 +3616,16 @@
     "go-cqrs-lite-metaengine": {
       "flake": false,
       "locked": {
-        "lastModified": 1793984833,
-        "narHash": "sha256-kuPQgEF5OCqm9rux3SqNl05CkT169ZVwAegrhJzLOgI=",
+        "lastModified": 1794726425,
+        "narHash": "sha256-Ji0+hq/PKHHbs7ybtFNCick1Irc6aL2OdMNt+NPpmIw=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "7ea626c8368c74345f57975e956f855d924ad36b",
+        "rev": "de6e0d90392c2ddebb3856065e95734ccec4beac",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "metaengine/v4.22.0",
+        "ref": "metaengine/v4.25.0",
         "repo": "go-cqrs-lite",
         "type": "github"
       }
@@ -3769,16 +3769,16 @@
     "go-cqrs-lite-sqliteengine": {
       "flake": false,
       "locked": {
-        "lastModified": 1793984912,
-        "narHash": "sha256-ezc9nZCq7vffaS1I+ZjXSZHhHL78O/zosSB04sDfYN4=",
+        "lastModified": 1794726472,
+        "narHash": "sha256-GlaVeuX3CSFDu+oqKm4QRw8SrMcWzCQnAoOJeN2s6jA=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "a0a987901b5b51d1850e09c3e314337cf10b8956",
+        "rev": "9586802cf84e8a38637ae15d2c6dc209e25b2657",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "metaengine/sqliteengine/v4.7.1",
+        "ref": "metaengine/sqliteengine/v4.9.1",
         "repo": "go-cqrs-lite",
         "type": "github"
       }
@@ -3963,11 +3963,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794731460,
-        "narHash": "sha256-CQj+AQdg8xPVKbtDKoAYSHA204z+TGJi7GbfdEtcjPs=",
+        "lastModified": 1794742551,
+        "narHash": "sha256-VynBQNC7WUnVxKKl8O02C6bqDWfLOCmgSg8tFdPSV2c=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "4d5cc66ab5bb293177360f598ca9991aa0b19800",
+        "rev": "263714b04e45b08821062c39a5f28a457b2bec5e",
         "type": "github"
       },
       "original": {
@@ -8401,11 +8401,11 @@
         "wireguard-collector": "wireguard-collector"
       },
       "locked": {
-        "lastModified": 1794729039,
-        "narHash": "sha256-euAlQYWEEiP+MvTJMcaYFkq9RRpwCPyYuY6Kw/GGd7s=",
+        "lastModified": 1794742022,
+        "narHash": "sha256-ka+k/zAMqsQhQRF8uD7Q2i9OQ+5R5XwisWzcDI7Slr4=",
         "ref": "refs/heads/master",
-        "rev": "29ff1e4018ceabda2bf459e5a41e37f223c3f0ed",
-        "revCount": 4621,
+        "rev": "93bd84749a3873ccfca9b64865d3cb105553018c",
+        "revCount": 4640,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -8416,6 +8416,23 @@
       }
     },
     "monitor365-ui-sdk": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794669879,
+        "narHash": "sha256-mQNb9PgMl/scSkNJeYVCYCu1LZqgCfuaurbl7HbMbec=",
+        "ref": "refs/tags/v0.2.0",
+        "rev": "7e9c83b9c06d79db904def3e0dc90127547a04a9",
+        "revCount": 42,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/monitor365-ui-sdk"
+      },
+      "original": {
+        "ref": "refs/tags/v0.2.0",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/monitor365-ui-sdk"
+      }
+    },
+    "monitor365-ui-sdk_2": {
       "flake": false,
       "locked": {
         "lastModified": 1794669879,
@@ -9099,11 +9116,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794741237,
-        "narHash": "sha256-JHEpECVbndMrya5X//9Vju2Fz9QUtouPymMyejh0ksA=",
+        "lastModified": 1794743354,
+        "narHash": "sha256-z3SJHhxUUaRUMFpAbRAPxygr5Y3Tg1FJKbr6nIynm3A=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "3d91f12910e6294eba926fe265a50d46e3866f82",
+        "rev": "120e4c0318c176c64c1e60c7ea56477adc797ae0",
         "type": "github"
       },
       "original": {
@@ -9146,11 +9163,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793838226,
-        "narHash": "sha256-4AismAzYYw2VFf6BXxfxpsppXq84f/vlGlMeVjseJVc=",
+        "lastModified": 1794742467,
+        "narHash": "sha256-FPzqumU5Fs8ZMolqSw0z+uovxcsW7qVl39rjYQ8XjZg=",
         "owner": "ymtdzzz",
         "repo": "otel-tui",
-        "rev": "d43d3f9edbe2c4c61380a10030df4ad02ffc3206",
+        "rev": "f4105f0843e0e5c152a81d09a4d6f7860f0359e0",
         "type": "github"
       },
       "original": {
@@ -10449,16 +10466,17 @@
         "flake-parts": [
           "flake-parts"
         ],
+        "monitor365-ui-sdk": "monitor365-ui-sdk_2",
         "nixpkgs": [
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1794055348,
-        "narHash": "sha256-po499NCIvN5PklGlrEmaQTTjSrmu2FBODlSpQzY6V2o=",
+        "lastModified": 1794742623,
+        "narHash": "sha256-berXlAgwCVj15XbvIPCYvmPkJmPfMj0Igu9dCrADY9c=",
         "ref": "refs/heads/master",
-        "rev": "6a6705677b35dd87db84502ef61e024beeed0844",
-        "revCount": 245,
+        "rev": "d36799e96947613e77da3458b47fc6ffa418eac5",
+        "revCount": 249,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/storage-collector"
       },
