@@ -1727,7 +1727,9 @@
         # Legs (asserted below; measured, do not guess): verify 9
         # (incl. the foreign-manifest leak class + raw-zip-name tolerance),
         # dedup 21 (index/plan/
-        # balance/account isolation), intake 7 (registry + page discovery),
+        # balance/account isolation), intake 12 (registry + page discovery +
+        # account-email gate: wrong-account rejected, email-less rejected,
+        # --force override, --list, --ingest chain),
         # browser-rename 7 (dry-run, promote, same-size CRC corruption, marker
         # persistence, size mismatch, leftover reporting), extract 9
         # (dry-run-no-write, capacity gate, pattern root guard, happy path,
@@ -1752,7 +1754,7 @@
               export HOME="$scratch"
               export XDG_CACHE_HOME="$scratch/cache"
               mkdir -p "$XDG_CACHE_HOME"
-              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename takeout-extract"
+              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename takeout-extract takeout-rename-loop"
               for s in $scripts; do
                 cp ${root}/scripts/"$s".sh "$scratch/$s.sh"
                 sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/$s.sh"
@@ -1774,7 +1776,7 @@
                 case "$s" in
                   takeout-verify) want_pass=9; want_legs=0 ;;
                   takeout-dedup) want_pass=0; want_legs=21 ;;
-                  takeout-intake) want_pass=0; want_legs=7 ;;
+                  takeout-intake) want_pass=0; want_legs=12 ;;
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
                   takeout-extract) want_pass=9; want_legs=0 ;;
                 esac
