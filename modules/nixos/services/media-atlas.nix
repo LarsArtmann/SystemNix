@@ -7,18 +7,18 @@
 # SystemNix layers ONLY site specifics:
 #   1. media_atlas PG role with READ-ONLY access to the immich DB
 #      (smart_search embeddings for the hub's vector store) — converged by
-#      a root oneshot (peer-auth postgres via runuser, the
-#      discordsync-immich-key-provision pattern).
+#      a root oneshot (peer-auth postgres via runuser, the shared
+#      immich-api-key-provision pattern).
 #   2. Optional: Immich read-only access to the DiscordSync attachment
 #      archive (DiscordSync ADR-061 external-library runbook): the immich
 #      user joins the discordsync group for DAC read, and
 #      BindReadOnlyPaths enforces RO at the namespace level.
-#   3. The media-atlas-key-provision converger that mints both API keys
-#      (inbound hub key + outbound Immich key with asset.read/view/
-#      statistics + tag.read + library.read) the discordsync-immich-key-
-#      provision way: DB-level INSERT, idempotent by key name,
-#      file-first reconcile, secret only ever in a 0400 file under the
-#      state dir.
+#   3. The media-atlas-key-provision converger that mints the INBOUND hub
+#      API key (idempotent, secret only ever in a 0400 file under the
+#      state dir); the OUTBOUND Immich key is DECLARED via
+#      services.immich.apiKeys.media-atlas-hub and minted by the shared
+#      root converger immich-api-key-provision (scopes asset.read/view/
+#      statistics + tag.read + library.read).
 #   4. Fleet layer ON the upstream-owned units: harden bounds (serve 1G /
 #      poll+lane 512M / umap 2G), ioTier.background (NOT on umap — its
 #      idle-class nightly knobs come from upstream), onFailure toasts,
@@ -151,112 +151,44 @@
         '';
       };
 
-      # Root converger for BOTH API keys (discordsync-immich-key-provision
-      # pattern — DB-level INSERT, idempotent, file-first reconcile):
-      #   hub-api-key — the INBOUND key the serve unit requires on /api,
-      #     /events and /thumb (OQ-5 single-key posture). Generated once;
-      #     rotation = delete the file + restart this unit (the serve unit
-      #     restarts via try-restart below).
-      #   immich-key — the OUTBOUND key the hub's pulls and nightly timers
-      #     use against Immich, minted as the api_key row
-      #     "media-atlas-hub (nix-managed)" with the hub's least-privilege
-      #     scope set (asset.read/view/statistics + tag.read for the NSFW
-      #     lane join + library.read for scan-status checks).
+      # INBOUND hub-key converger only (generated once; rotation = delete
+      # the file + restart this unit — the serve unit restarts via
+      # try-restart below). The OUTBOUND Immich key (immich-key, scopes
+      # asset.read/view/statistics + tag.read for the NSFW lane join +
+      # library.read for scan-status checks) moved onto the shared Immich
+      # converger `immich-api-key-provision` via
+      # services.immich.apiKeys.media-atlas-hub (declared in the hub
+      # config block below) — same key name, same plain-token file path,
+      # so an existing file + api_key row converge as a no-op.
       keyProvision = pkgs.writeShellApplication {
         name = "media-atlas-key-provision";
         runtimeInputs = [
           pkgs.coreutils
           pkgs.gnugrep
-          pkgs.gawk
-          pkgs.openssl
           pkgs.util-linux
           pkgs.systemd
-          # psql CLIENT from pkgs (not config.services.postgresql.package):
-          # no value when postgres is disabled and eval must not break on
-          # immich-less hosts (discordsync provisioner rationale).
-          pkgs.postgresql
         ];
         text = ''
           set -euo pipefail
           state="${stateDir}"
           hubkey="$state/hub-api-key"
-          immkey="$state/immich-key"
-          keyname="media-atlas-hub (nix-managed)"
-          db="${config.services.immich.database.name or "immich"}"
-          psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
 
           install -d -o ${cfg.user} -g ${cfg.user} -m 0750 "$state"
 
-          # Schema guard (loud): the INSERT below couples to Immich's api_key
-          # shape — key is BYTEA holding the raw sha256 digest of the token
-          # (api_keys renamed api_key by StandardizeNames; verified live on
-          # 3.3.3 by the discordsync converger, 2026-10-25).
-          key_type=$(psql -At -c "SELECT data_type FROM information_schema.columns WHERE table_name = 'api_key' AND column_name = 'key'")
-          if [ "$key_type" != "bytea" ]; then
-            echo "media-atlas-key-provision: FAIL api_key.key is '$key_type', expected bytea — Immich schema drifted past this converger" >&2
-            exit 1
-          fi
-          uid=$(psql -At -c "SELECT id FROM \"user\" WHERE \"isAdmin\" IS TRUE ORDER BY \"createdAt\" LIMIT 1" || true)
-          if [ -z "$uid" ]; then
-            echo "media-atlas-key-provision: FAIL no admin user in Immich DB" >&2
-            exit 1
-          fi
-
-          # --- inbound hub key: generate once, never rotate silently ---
-          if [ ! -s "$hubkey" ]; then
-            token=$(openssl rand -base64 32 | tr -d '/+=')
-            case "$token" in
-              *[!A-Za-z0-9]*) echo "media-atlas-key-provision: FAIL generated hub key contains unexpected characters" >&2; exit 1 ;;
-            esac
-            tmp=$(mktemp "$state/.hub-api-key.XXXXXX")
-            printf '%s' "$token" > "$tmp"
-            chown ${cfg.user}:${cfg.user} "$tmp"
-            chmod 0400 "$tmp"
-            mv -f "$tmp" "$hubkey"
-            echo "media-atlas-key-provision: minted hub API key"
-          else
+          if [ -s "$hubkey" ]; then
             echo "media-atlas-key-provision: hub API key present (rotation = rm the file + restart this unit)"
+            exit 0
           fi
-
-          # --- outbound Immich key: file-first reconcile ---
-          token=""
-          if [ -r "$immkey" ]; then
-            token=$(cat "$immkey")
-          fi
-
-          insert_key() {
-            psql -c "INSERT INTO api_key (name, key, \"userId\", permissions) VALUES ('$keyname', decode('$1', 'hex'), '$uid', ARRAY['asset.read','asset.view','asset.statistics','tag.read','library.read']::varchar[])"
-          }
-
-          if [ -n "$token" ]; then
-            hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
-            cnt=$(psql -At -c "SELECT count(*) FROM api_key WHERE key = decode('$hex', 'hex')")
-            if [ "$cnt" -ge 1 ]; then
-              echo "media-atlas-key-provision: converged (immich-key file + api_key row consistent)"
-              systemctl try-restart media-atlas.service || true
-              exit 0
-            fi
-            echo "media-atlas-key-provision: immich-key file present but row missing (DB restore?) — re-inserting from file plaintext"
-            insert_key "$hex"
-          else
-            token=$(openssl rand -base64 32 | tr -d '/+=')
-            case "$token" in
-              *[!A-Za-z0-9]*) echo "media-atlas-key-provision: FAIL generated Immich token contains unexpected characters" >&2; exit 1 ;;
-            esac
-            hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
-            # Drop stale rows of THIS key name (orphaned hashes from a
-            # deleted file can never re-validate; other keys are untouched).
-            for rid in $(psql -At -c "SELECT id FROM api_key WHERE name = '$keyname'"); do
-              psql -c "DELETE FROM api_key WHERE id = '$rid'"
-            done
-            insert_key "$hex"
-            tmp=$(mktemp "$state/.immich-key.XXXXXX")
-            printf '%s' "$token" > "$tmp"
-            chown ${cfg.user}:${cfg.user} "$tmp"
-            chmod 0400 "$tmp"
-            mv -f "$tmp" "$immkey"
-            echo "media-atlas-key-provision: minted Immich API key ($keyname)"
-          fi
+          token=$(openssl rand -base64 32 | tr -d '/+=')
+          case "$token" in
+            *[!A-Za-z0-9]*) echo "media-atlas-key-provision: FAIL generated hub key contains unexpected characters" >&2; exit 1 ;;
+          esac
+          tmp=$(mktemp "$state/.hub-api-key.XXXXXX")
+          printf '%s' "$token" > "$tmp"
+          chown ${cfg.user}:${cfg.user} "$tmp"
+          chmod 0400 "$tmp"
+          mv -f "$tmp" "$hubkey"
+          echo "media-atlas-key-provision: minted hub API key"
           systemctl try-restart media-atlas.service || true
         '';
       };
@@ -408,8 +340,27 @@
             ];
           };
 
+          # Declare the OUTBOUND Immich key onto the shared Immich converger
+          # (same key name "media-atlas-hub (nix-managed)", same plain-token
+          # file path, same scopes as the retired leg of
+          # media-atlas-key-provision — existing file + row converge as a
+          # no-op, so the migration is seamless).
+          services.immich.apiKeys.media-atlas-hub = {
+            permissions = [
+              "asset.read"
+              "asset.view"
+              "asset.statistics"
+              "tag.read"
+              "library.read"
+            ];
+            keyFile = "${stateDir}/immich-key";
+            owner = cfg.user;
+            group = cfg.user;
+            restartUnits = [ "media-atlas.service" ];
+          };
+
           systemd.services.media-atlas-key-provision = lib.mkIf hubCfg.enable {
-            description = "MediaAtlas API key provisioner (inbound hub key + outbound Immich key, idempotent converger)";
+            description = "MediaAtlas inbound hub-key provisioner (idempotent converger; the outbound Immich key lives on immich-api-key-provision)";
             after = [
               "postgresql.service"
               "media-atlas-pg-ro.service"
@@ -453,12 +404,19 @@
             after = [
               "postgresql.service"
               "media-atlas-key-provision.service"
+              "immich-api-key-provision.service"
             ];
             wants = [ "postgresql.service" ];
             # The provisioner must have converged (it owns the key files the
             # serve flags point at); if it failed, onFailure pages instead of
-            # the hub flapping on a missing key file.
-            requires = [ "media-atlas-key-provision.service" ];
+            # the hub flapping on a missing key file. immich-api-key-provision
+            # renders the outbound Immich key the same way — hard ordering
+            # (not just wants) so a failed converger never boots a hub with a
+            # half-key set.
+            requires = [
+              "media-atlas-key-provision.service"
+              "immich-api-key-provision.service"
+            ];
             serviceConfig = lib.mkMerge [
               # ProtectSystem/ProtectHome passed INTO harden (not left at
               # its full/true defaults) so they match the upstream unit's

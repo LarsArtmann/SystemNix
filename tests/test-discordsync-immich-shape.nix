@@ -50,6 +50,13 @@ let
         # (observed 2026-10-25).
         inputs.sops-nix.nixosModules.sops
         (mod "discordsync.nix" "discordsync")
+        # immich.nix is imported for the services.immich.apiKeys OPTION the
+        # discordsync module now declares its key through (2026-11-16
+        # converger consolidation). Only the option declarations evaluate —
+        # services.immich.enable stays false, so the converger unit under
+        # test comes from the apiKeys declaration's effect, not immich's
+        # own config.
+        (mod "immich.nix" "immich")
         (mod "sops.nix" "sops")
         # sops.nix reads users.primaryUser (declared by the host layer's
         # primary-user.nix, not part of this import set) for template
@@ -73,7 +80,8 @@ let
 
   enabledTemplate = enabled.sops.templates."discordsync-env";
   disabledTemplate = disabled.sops.templates."discordsync-env";
-  provisionUnit = "discordsync-immich-key-provision";
+  provisionUnit = "immich-api-key-provision";
+  lookupKey = enabled.services.immich.apiKeys.discordsync-lookup or null;
   verifyUnit = "discordsync-immich-verify";
   enabledEnvFile = "${enabled.services.discordsync.dataDir}/immich-api-env";
   disabledEnvFile = "${disabled.services.discordsync.dataDir}/immich-api-env";
@@ -91,13 +99,21 @@ let
         && !lib.hasInfix "IMMICH_API_KEY" enabledTemplate.content;
     }
     {
-      name = "enabled-provision-unit-exists";
-      pass = enabled.systemd.services ? ${provisionUnit};
+      name = "enabled-apikey-declared";
+      pass =
+        lookupKey != null
+        &&
+          lookupKey.permissions == [
+            "asset.read"
+            "asset.upload"
+          ]
+        && lookupKey.keyFile == enabledEnvFile;
     }
-    {
-      name = "enabled-provision-timer-exists";
-      pass = enabled.systemd.timers ? ${provisionUnit};
-    }
+    # The converger UNIT/TIMER existence itself is immich.nix's shape and is
+    # pinned by the full-host eval (evo-x2: services.immich.apiKeys != {} ⇒
+    # systemd.services.immich-api-key-provision exists — lib/immich-api-key-
+    # provision.nix contract). This harness keeps services.immich dark, so it
+    # pins the DECLARATION + ordering instead.
     {
       name = "enabled-envfile-lists-provisioned-file";
       pass = builtins.elem enabledEnvFile enabledEnvFiles;
@@ -115,11 +131,18 @@ let
       pass = enabled.systemd.timers ? ${verifyUnit};
     }
     # --- immich DISABLED: every conditional surface dark ---
+    # (the converger unit/timer need not be asserted dark here: with the
+    # apiKeys declaration gone, the shared converger collapses to {} by
+    # construction — mkIf (cfg.apiKeys != { }) in immich.nix.)
     {
       name = "disabled-template-free-of-immich-keys";
       pass =
         !lib.hasInfix "IMMICH_URL" disabledTemplate.content
         && !lib.hasInfix "IMMICH_API_KEY" disabledTemplate.content;
+    }
+    {
+      name = "disabled-apikey-undeclared";
+      pass = !(disabled.services.immich.apiKeys ? discordsync-lookup);
     }
     {
       name = "disabled-provision-unit-absent";
@@ -158,12 +181,12 @@ if broken == [ ] then
 else
   throw ''
     discordsync-immich-shape regression: ${toString broken}
-    The immich.enable gate must move the provisioned env file, the provision
-    unit/timer, and the verify unit/timer TOGETHER — while the sops env
-    template stays Immich-free in both shapes (the key is machine-minted by
-    discordsync-immich-key-provision into Immich's api_key table; the paste
-    path no longer exists). Re-verify against
-    modules/nixos/services/discordsync.nix (provision + verify units, daemon
-    EnvironmentFile/after) + modules/nixos/services/sops.nix
-    (discordsync-env template).
+    The immich.enable gate must move the provisioned env file, the
+    services.immich.apiKeys.discordsync-lookup declaration, and the verify
+    unit/timer TOGETHER — while the sops env template stays Immich-free in
+    both shapes (the key is machine-minted by immich-api-key-provision into
+    Immich's api_key table; the paste path no longer exists). Re-verify
+    against modules/nixos/services/discordsync.nix (apiKeys declaration +
+    verify units, daemon EnvironmentFile/after) + modules/nixos/services/
+    sops.nix (discordsync-env template).
   ''

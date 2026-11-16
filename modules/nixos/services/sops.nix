@@ -399,10 +399,12 @@ in
                 }
             //
               # discordsync_immich_api_key REMOVED 2026-10-25: the Immich
-              # lookup key is now minted by the root converger oneshot
-              # discordsync-immich-key-provision (direct api_key table insert
-              # via peer-auth postgres — no secret exists to store; see
-              # docs/services/discordsync.md "Immich cross-archive" section).
+              # lookup key is now minted by the shared root converger
+              # immich-api-key-provision via
+              # services.immich.apiKeys.discordsync-lookup (direct api_key
+              # table insert via peer-auth postgres — no secret exists to
+              # store; see docs/services/discordsync.md "Immich
+              # cross-archive" section).
               lib.optionalAttrs (svcEnabled "dns-failover") (
                 mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
               )

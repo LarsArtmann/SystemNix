@@ -22,7 +22,7 @@ Values below are eval-proven against the evo-x2 topology; the upstream module de
 
 ## Secrets
 
-`discordsync-env` (sops template, owner `discordsync`, 0400): `DISCORD_TOKEN`, `TURSO_URL`, `TURSO_AUTH_TOKEN`, `DISCORDSYNC_WEBHOOK_URL`. Raw values live in `platforms/nixos/secrets/discordsync.yaml`. The Immich lookup key is NOT a sops secret — it is machine-minted by `discordsync-immich-key-provision` (below).
+`discordsync-env` (sops template, owner `discordsync`, 0400): `DISCORD_TOKEN`, `TURSO_URL`, `TURSO_AUTH_TOKEN`, `DISCORDSYNC_WEBHOOK_URL`. Raw values live in `platforms/nixos/secrets/discordsync.yaml`. The Immich lookup key is NOT a sops secret — it is machine-minted by the shared root converger `immich-api-key-provision` (declared via `services.immich.apiKeys.discordsync-lookup`; see below).
 
 **sops edits run as your user** with the SOPS_AGE_KEY one-liner (docs/agents/secrets.md, Sops + Age section). Plain `sudo sops` FAILS (root has no age identity).
 
@@ -36,13 +36,13 @@ Wiring on evo-x2:
 - `services.discordsync.immich.url` defaults to `http://127.0.0.1:<ports.immich>` (loopback — co-located, no Caddy/DNS/TLS dependency on the lookup path)
 - The API key never leaves the server process; scope it in Immich to **`asset.read` + `asset.upload` ONLY** (bulk-upload-check's permission guard demands `asset.upload` even though nothing is uploaded — never grant delete/update)
 
-### Key lifecycle (nix-managed converger, 2026-10-25)
+### Key lifecycle (nix-managed converger, 2026-10-25; consolidated onto the shared converger 2026-11-16)
 
-The lookup key is minted by `discordsync-immich-key-provision` (root oneshot, boot + daily timer + deploy.sh provisioner loop): it inserts the key DIRECTLY into Immich's `api_key` table via peer-auth postgres (`runuser -u postgres` — a privilege root already holds; Immich itself is OIDC-only, so no API-level bootstrap exists) and renders `/var/lib/discordsync/immich-api-env` (0400 discordsync) with `IMMICH_URL` + `IMMICH_API_KEY`. The daemon reads it as a second EnvironmentFile; the verify unit reads it too and is try-restarted after every fresh mint — a bad mint pages within seconds.
+The lookup key is DECLARED as `services.immich.apiKeys.discordsync-lookup` and minted by the shared root converger `immich-api-key-provision` (one unit for every Immich key; boot + daily timer + deploy.sh provisioner loop): it inserts the key DIRECTLY into Immich's `api_key` table via peer-auth postgres (`runuser -u postgres` — a privilege root already holds; Immich itself is OIDC-only, so no API-level bootstrap exists) and renders `/var/lib/discordsync/immich-api-env` (0400 discordsync) with `IMMICH_URL` + `IMMICH_API_KEY`. The daemon reads it as a second EnvironmentFile; the verify unit reads it too and is try-restarted after every fresh mint — a bad mint pages within seconds.
 
 - **Convergence states**: file+row consistent → no-op; DB lost the row (restore/migration) → re-insert from the file's plaintext (no restart); file missing → mint + insert + write + restart both consumers.
 - **Schema guard**: the script asserts `api_key.key` is bytea (live-verified 3.3.3 shape: table renamed `api_keys`→`api_key` by StandardizeNames; key = raw 32-byte sha256 digest of the token; permissions `varchar[]`). Schema drift → exit 1 + OnFailure — never force.
-- **Rotate**: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart discordsync-immich-key-provision` — mints a fresh key, drops stale same-name rows, restarts the daemon + verify.
+- **Rotate**: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart immich-api-key-provision` — mints a fresh key, drops stale same-name rows, restarts the daemon + verify.
 - **Do NOT delete the key in the Immich UI**: the row is resurrected from the env file on the next run BY DESIGN (the name carries "(nix-managed)"). Rotate instead.
 - **No user action exists anymore**: the 2026-09-19 "create key in UI → sops paste" go-live is retired (see the corrected adjudication below); a deploy converges the whole feature.
 
@@ -55,7 +55,7 @@ The lookup key is minted by `discordsync-immich-key-provision` (root oneshot, bo
 
 The probe hits `POST /api/assets/bulk-upload-check` — the daemon's actual /lookup consumer endpoint — with a sha1-of-empty checksum (Immich 3.3.3 `assets:[{id,checksum}]` contract; live-verified 2026-11-03, a 200 proves key + scope regardless of accept/reject action). It deliberately does NOT hit `/api/users/me`: the key is scoped to `asset.read`+`asset.upload` only, and users/me 403s it with "Missing required permission: user.read" on a perfectly VALID key (the 2026-11-03 00:43 first-daily-tick failure — 4 same-day deploys then masked it as "success but unexpected journal line" because the exit-4 global reset-failed resets Result without a re-run; deploy.sh now captures the pre-reset failed set for its restart legs, and post-deploy-check classifies on the unit's own script lines).
 
-Rotation: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart discordsync-immich-key-provision` (the provisioner's restart covers the verify unit).
+Rotation: `sudo rm /var/lib/discordsync/immich-api-env && sudo systemctl restart immich-api-key-provision` (the converger's `restartUnits` covers the verify unit).
 
 ## Monitoring
 

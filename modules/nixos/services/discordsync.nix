@@ -68,9 +68,11 @@
           };
       sopsEnvPath = config.sops.templates."discordsync-env".path;
       # Immich lookup key pair (IMMICH_URL/IMMICH_API_KEY), rendered by the
-      # discordsync-immich-key-provision converger — NOT a sops template:
-      # the token is machine-minted (direct api_key table insert via
-      # peer-auth postgres), so there is no secret to encrypt.
+      # shared root converger `immich-api-key-provision` — the key is
+      # declared below via services.immich.apiKeys.discordsync-lookup.
+      # NOT a sops template: the token is machine-minted (direct api_key
+      # table insert via peer-auth postgres), so there is no secret to
+      # encrypt.
       provisionedEnvPath = "${cfg.dataDir}/immich-api-env";
 
       dbBackupDir = "/mnt/pool/backups/discordsync";
@@ -307,10 +309,11 @@
       };
 
       # Verify the Immich API key wired for the /lookup page's cross-archive
-      # comparison (ADR-062). The key itself is minted by
-      # discordsync-immich-key-provision (below) straight into Immich's
-      # api_key table — this script is the end-to-end pager: it proves the
-      # rendered env file actually authenticates against the live Immich.
+      # comparison (ADR-062). The key itself is minted by the shared root
+      # converger immich-api-key-provision (services.immich.apiKeys.
+      # discordsync-lookup, below) straight into Immich's api_key table —
+      # this script is the end-to-end pager: it proves the rendered env
+      # file actually authenticates against the live Immich.
       # Exit semantics:
       #   0 = key verified, env file not rendered yet (provision has not
       #       run — it owns paging for its own failures), or Immich
@@ -327,7 +330,7 @@
           key=""
           [ -r "$env_file" ] && key=$(sed -n 's/^IMMICH_API_KEY=//p' "$env_file")
           if [ -z "$key" ]; then
-            echo "discordsync-immich-verify: env file $env_file missing/empty — provision oneshot has not converged; check discordsync-immich-key-provision"
+            echo "discordsync-immich-verify: env file $env_file missing/empty — provision oneshot has not converged; check immich-api-key-provision"
             exit 0
           fi
           if ! curl -sf --max-time 10 "$url/api/server/ping" -o /dev/null; then
@@ -367,101 +370,6 @@
         '';
       };
 
-      # Root converger for the Immich lookup key (2026-10-25 — replaces the
-      # sops PLACEHOLDER paste path entirely). Immich is OIDC-only (no local
-      # password an API-level provisioner could authenticate with), but its
-      # Postgres runs on the same host with peer auth for the postgres OS
-      # user — a privilege root ALREADY holds, so this converger grants no
-      # new trust. It inserts the scoped key (asset.read + asset.upload,
-      # matching the service's bulk-upload-check permission guard) directly
-      # into Immich's api_key table and renders the 0400 env file the daemon
-      # and the verify unit read. Convergence states:
-      #   file exists + hash in DB  -> no-op (idempotent)
-      #   file exists, row gone     -> re-insert from file plaintext (DB
-      #                                restore/migration); file unchanged,
-      #                                no restart needed
-      #   file missing              -> mint token, insert, write file,
-      #                                try-restart daemon + verify
-      # The verify unit is restarted after every fresh mint, closing the
-      # loop end-to-end (a bad mint pages within seconds, not a day).
-      # Rotation: rm the env file + restart THIS unit (a UI-side deletion is
-      # resurrected by the file-reinsert path BY DESIGN — the key is
-      # nix-managed; rotate, don't revoke).
-      immichKeyProvision = pkgs.writeShellApplication {
-        name = "discordsync-immich-key-provision";
-        runtimeInputs = [
-          pkgs.coreutils
-          pkgs.gawk
-          pkgs.openssl
-          pkgs.util-linux
-          pkgs.systemd
-          # psql CLIENT from pkgs (not config.services.postgresql.package):
-          # that option has no value when postgres is disabled, which would
-          # break the EVAL of this module on immich-less hosts. Client/server
-          # version skew is immaterial for one INSERT/SELECT.
-          pkgs.postgresql
-        ];
-        text = ''
-          set -euo pipefail
-          keyfile="${provisionedEnvPath}"
-          url="${cfg.immich.url}"
-          keyname="discordsync-lookup (nix-managed)"
-          db="${config.services.immich.database.name or "immich"}"
-          psql() { runuser -u postgres -- psql -d "$db" -v ON_ERROR_STOP=1 "$@"; }
-
-          # Schema guard (loud, not silent): the INSERT below is coupled to
-          # Immich's api_key shape. Verified live 2026-10-25 against 3.3.3
-          # (table renamed api_keys -> api_key by StandardizeNames; key is
-          # BYTEA holding the raw sha256 digest of the token).
-          key_type=$(psql -At -c "SELECT data_type FROM information_schema.columns WHERE table_name = 'api_key' AND column_name = 'key'")
-          if [ "$key_type" != "bytea" ]; then
-            echo "discordsync-immich-key-provision: FAIL api_key.key is '$key_type', expected bytea — Immich schema drifted past this converger; resurrect the sops paste path (runbook) instead of forcing" >&2
-            exit 1
-          fi
-          uid=$(psql -At -c "SELECT id FROM \"user\" WHERE \"isAdmin\" IS TRUE ORDER BY \"createdAt\" LIMIT 1" || true)
-          if [ -z "$uid" ]; then
-            echo "discordsync-immich-key-provision: FAIL no admin user in Immich DB" >&2
-            exit 1
-          fi
-
-          token=""
-          if [ -r "$keyfile" ]; then
-            token=$(sed -n 's/^IMMICH_API_KEY=//p' "$keyfile" || true)
-          fi
-
-          if [ -n "$token" ]; then
-            hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
-            cnt=$(psql -At -c "SELECT count(*) FROM api_key WHERE key = decode('$hex', 'hex')")
-            if [ "$cnt" -ge 1 ]; then
-              echo "discordsync-immich-key-provision: converged (env file + api_key row consistent)"
-              exit 0
-            fi
-            echo "discordsync-immich-key-provision: env file present but row missing (DB restore?) — re-inserting from file plaintext"
-            psql -c "INSERT INTO api_key (name, key, \"userId\", permissions) VALUES ('$keyname', decode('$hex', 'hex'), '$uid', ARRAY['asset.read','asset.upload']::varchar[])"
-            exit 0
-          fi
-
-          token=$(openssl rand -base64 32 | tr -d '/+=')
-          case "$token" in
-            *[!A-Za-z0-9]*) echo "discordsync-immich-key-provision: FAIL generated token contains unexpected characters" >&2; exit 1 ;;
-          esac
-          hex=$(printf '%s' "$token" | openssl dgst -sha256 -hex | awk '{print $NF}')
-          # Drop stale rows of THIS key name (orphaned hashes from a deleted
-          # env file can never re-validate; other keys are untouched).
-          for rid in $(psql -At -c "SELECT id FROM api_key WHERE name = '$keyname'"); do
-            psql -c "DELETE FROM api_key WHERE id = '$rid'"
-          done
-          psql -c "INSERT INTO api_key (name, key, \"userId\", permissions) VALUES ('$keyname', decode('$hex', 'hex'), '$uid', ARRAY['asset.read','asset.upload']::varchar[])"
-          mkdir -p "$(dirname "$keyfile")"
-          tmp=$(mktemp "$(dirname "$keyfile")/.immich-api-env.XXXXXX")
-          printf 'IMMICH_URL=%s\nIMMICH_API_KEY=%s\n' "$url" "$token" > "$tmp"
-          chown ${cfg.user}:${cfg.group} "$tmp"
-          chmod 0400 "$tmp"
-          mv -f "$tmp" "$keyfile"
-          echo "discordsync-immich-key-provision: minted new Immich API key + rendered $keyfile — restarting consumer units"
-          systemctl try-restart discordsync.service discordsync-immich-verify.service
-        '';
-      };
     in
     {
       imports = [ inputs.discordsync.nixosModules.default ];
@@ -681,50 +589,27 @@
           };
         };
 
-        systemd.services.discordsync-immich-key-provision = lib.mkIf cfg.immich.enable {
-          description = "DiscordSync Immich lookup key provisioner (root; direct api_key table insert via peer-auth postgres)";
-          after = [ "postgresql.service" ];
-          wants = [ "postgresql.service" ];
-          # multi-user-wanted (crowdsec-setup pattern): the deploy.sh
-          # provisioner loop's is-enabled gate admits it, so every deploy
-          # re-converges the key. Boot-time run covers DB-restore healing.
-          wantedBy = [ "multi-user.target" ];
-          inherit onFailure;
-          serviceConfig = lib.mkMerge [
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = lib.getExe immichKeyProvision;
-              TimeoutStartSec = "2min";
-              # Root BY DESIGN: peer-auth postgres via runuser (no secret exists
-              # to authenticate with), discordsync-owned env file write, and a
-              # try-restart of the consumer units. NoNewPrivileges stays OFF —
-              # runuser is setuid and the script legitimately needs it.
-              NoNewPrivileges = false;
-              ProtectSystem = "strict";
-              ReadWritePaths = [ cfg.dataDir ];
-              PrivateTmp = true;
-            }
-            # ioTier.background (mkMerge, the db-heal idiom): the
-            # io-tier-coverage-audit requires every boot-gated unit to carry
-            # a tier — added 2026-10-25 when this unit's missing tier
-            # blocked the whole tree's eval mid float-landing.
-            ioTier.background
+        # Declare the lookup key onto the shared Immich converger (one unit
+        # for every Immich key — no per-consumer provisioner unit/timer,
+        # deploy.sh already restarts immich-api-key-provision). Same key
+        # name ("discordsync-lookup (nix-managed)"), same env-file path,
+        # same 0400 discordsync:discordsync ownership and
+        # asset.read+asset.upload scope as the retired
+        # discordsync-immich-key-provision — an existing key file + row
+        # converge as a no-op, so the migration is seamless.
+        services.immich.apiKeys.discordsync-lookup = lib.mkIf cfg.immich.enable {
+          permissions = [
+            "asset.read"
+            "asset.upload"
           ];
-        };
-
-        systemd.timers.discordsync-immich-key-provision = lib.mkIf cfg.immich.enable {
-          description = "Daily DiscordSync Immich key convergence (DB-restore self-heal)";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnCalendar = "daily";
-            Persistent = true;
-            # Anywhere in the 00:00-06:00 window: must precede nothing; the
-            # verify unit (00:00 + 1h jitter) may run before or after it —
-            # a 401 from a DB-restored key self-heals at THIS unit's next
-            # run and pages via the verify's FAIL in between.
-            RandomizedDelaySec = "6h";
-          };
+          keyFile = provisionedEnvPath;
+          owner = cfg.user;
+          group = cfg.group;
+          url = cfg.immich.url;
+          restartUnits = [
+            "discordsync.service"
+            "discordsync-immich-verify.service"
+          ];
         };
 
         # Daemon-less verification: no HTTP endpoint, so monitoring is
@@ -740,10 +625,6 @@
           lib.mkAfter (
             lib.optionals cfg.immich.enable [
               "discordsync-immich-verify"
-              # The key provisioner is ALSO daemon-less (no HTTP endpoint):
-              # state metrics + OnFailure routing for its schema-guard and
-              # insert failures, same github-auto-assign pattern.
-              "discordsync-immich-key-provision"
             ]
             ++ lib.optionals cfg.dbBackup.enable [ "discordsync-db-restore-drill" ]
           )
@@ -752,9 +633,10 @@
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
           # DB-heal oneshot runs independently (not blocking deploy activation).
-          # immich-key-provision: the daemon's second EnvironmentFile is
-          # rendered by that oneshot — a missing file FAILS the unit at
-          # start, so the order is load-bearing (immich shape only).
+          # immich-key-provision (the shared immich-api-key-provision): the
+          # daemon's second EnvironmentFile is rendered by that oneshot —
+          # a missing file FAILS the unit at start, so the order is
+          # load-bearing (immich shape only).
           after = [
             "sops-nix.service"
             "dnsblockd.service"
@@ -764,7 +646,7 @@
             "discordsync-attachments-dir.service"
           ]
           ++ lib.optionals cfg.immich.enable [
-            "discordsync-immich-key-provision.service"
+            "immich-api-key-provision.service"
           ];
           wants = [
             "sops-nix.service"
@@ -775,7 +657,7 @@
             "discordsync-attachments-dir.service"
           ]
           ++ lib.optionals cfg.immich.enable [
-            "discordsync-immich-key-provision.service"
+            "immich-api-key-provision.service"
           ];
           inherit onFailure;
           startLimitBurst = lib.mkForce 10; # SystemNix uses 10 (upstream is 5)
