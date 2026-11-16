@@ -13,9 +13,14 @@
 # scripts/mail-relay-verdicts-collector.sh so the fixture selftest
 # (scripts/test-mail-relay-verdicts-collector.sh + the
 # mail-relay-verdicts-selftest flake check) exercises the SAME file the unit
-# runs. Journal read needs root (systemd-journal membership via User=root);
-# postqueue needs root. mktemp in the sticky textfile dir + CAP_FOWNER
+# runs. Journal read needs root (systemd-journal membership via User=root).
+# mktemp in the sticky textfile dir + CAP_FOWNER
 # (mail-relay 2026-09-02..06 foreign-owned-prom class).
+# 2026-11-16: the postqueue/held-count leg was REMOVED — queue depth is
+# mail-relay-metrics' concern (mail_relay_queue_messages), and postqueue's
+# showq socket sits under a 0750 postfix:postdrop dir this root unit
+# (CAP_FOWNER-only bounding set) can never traverse, so it fail-closed
+# scrape_errors on EVERY run. No consumer ever read held_count.
 #
 # SPLIT with services.mail-relay's own mail-relay-metrics unit (different
 # concern, different user, different prom file — one owner per file, the
@@ -84,7 +89,6 @@ _: {
             pkgs.gnugrep
             pkgs.gawk
             pkgs.coreutils
-            pkgs.postfix
           ];
           serviceConfig = lib.mkMerge [
             {

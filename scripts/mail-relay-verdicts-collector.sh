@@ -22,9 +22,19 @@
 #   node_mail_relay_last_rejection_class  0 none/other, 1 domain-unverified,
 #                                         2 quota/rate-limit, 3 invalid-from
 #   node_mail_relay_last_bounce_epoch     unix epoch of the newest rejection (0 = none)
-#   node_mail_queue_held_count            mails currently on HOLD in the postfix queue
-#   node_mail_relay_scrape_errors         1 = journal/queue read failed (fail-closed:
+#   node_mail_relay_scrape_errors         1 = journal read failed (fail-closed:
 #                                         never a silently frozen collector)
+#                                         (the queue-depth leg was REMOVED
+#                                         2026-11-16: queue depth is
+#                                         services.mail-relay's mail-relay-metrics
+#                                         concern (mail_relay_queue_messages), and
+#                                         postqueue's showq socket lives under a
+#                                         0750 postfix:postdrop dir this root unit
+#                                         (CAP_FOWNER-only bounding set) can never
+#                                         traverse — it failed EVERY run with
+#                                         EACCES and held scrape_errors at 1
+#                                         permanently, masking real scrape
+#                                         failures)
 #
 # Configuration via environment:
 #   OUT         destination .prom path (atomic via mktemp+mv)
@@ -33,7 +43,6 @@
 #   THRESHOLD   bounce_over flips to 1 at this many rejections in the window
 #   WINDOW      rolling window length in seconds
 #   JOURNALCTL  optional override for tests (defaults to journalctl on PATH)
-#   POSTQUEUE   optional override for tests (defaults to postqueue on PATH)
 set -eu
 
 OUT="${OUT:?OUT required}"
@@ -43,7 +52,6 @@ THRESHOLD="${THRESHOLD:?THRESHOLD required}"
 WINDOW="${WINDOW:?WINDOW required}"
 
 : "${JOURNALCTL:=journalctl}"
-: "${POSTQUEUE:=postqueue}"
 
 mkdir -p "${TEXTFILE_DIR}"
 TMP="$(mktemp "${TEXTFILE_DIR}/mail-relay-verdicts.prom.XXXXXX")"
@@ -142,18 +150,6 @@ esac
 over=0
 [ "$bounces_window" -ge "$THRESHOLD" ] && over=1 || true
 
-# Held-mail count (the 2026-11-10 storm's frozen-queue state was only
-# visible by hand). postqueue emits JSON entries; count them.
-held=0
-if queue_json="$("$POSTQUEUE" -j 2>/dev/null)"; then
-  if [ -n "$queue_json" ]; then
-    held="$(printf '%s\n' "$queue_json" | grep -c . || true)"
-    case "$held" in *[!0-9]*) held=0 ;; esac
-  fi
-else
-  scrape_errors=1
-fi
-
 sent_total=$((sent_total + sent_delta))
 bounced_total=$((bounced_total + bounced_delta))
 deferred_total=$((deferred_total + deferred_delta))
@@ -183,10 +179,7 @@ deferred_total=$((deferred_total + deferred_delta))
   echo "# HELP node_mail_relay_last_bounce_epoch Unix epoch of the most recent relay rejection (0 = none)"
   echo "# TYPE node_mail_relay_last_bounce_epoch gauge"
   echo "node_mail_relay_last_bounce_epoch $last_bounce_epoch"
-  echo "# HELP node_mail_queue_held_count Mails currently in the postfix queue (held or pending)"
-  echo "# TYPE node_mail_queue_held_count gauge"
-  echo "node_mail_queue_held_count $held"
-  echo "# HELP node_mail_relay_scrape_errors Nonzero when the journal or queue read failed (fail-closed)"
+  echo "# HELP node_mail_relay_scrape_errors Nonzero when the journal read failed (fail-closed)"
   echo "# TYPE node_mail_relay_scrape_errors gauge"
   echo "node_mail_relay_scrape_errors $scrape_errors"
 } >"$TMP"

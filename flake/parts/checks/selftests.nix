@@ -1249,10 +1249,23 @@
         # gate (fresh orphan survives 1d, dies at 0 — fixture ctimes are
         # unforgeable unprivileged, so the >1d positive leg is asserted
         # mechanism-side), and an age-leg mutation check. 2026-11-16.
-        prom-tmp-janitor-selftest = pkgs.runCommand "prom-tmp-janitor-selftest" { } ''
-          PATH=${pkgs.systemd}/bin:$PATH ${pkgs.bash}/bin/bash ${root}/scripts/test-prom-tmp-janitor.sh ${root}/modules/nixos/services/_signoz-metrics.nix
-          touch $out
-        '';
+        prom-tmp-janitor-selftest =
+          # The check RUNS the real systemd-tmpfiles binary, so it can only
+          # exist where systemd exists: a darwin eval of pkgs.systemd throws
+          # ("Refusing to evaluate ... not available on the requested
+          # hostPlatform"), breaking the WHOLE aarch64-darwin leg of
+          # `nix flake check --all-systems` (the pre-commit hook's walk).
+          # On darwin the attr stays present as a named no-op so the check
+          # name set is stable across systems. 2026-11-16.
+          if pkgs.stdenv.hostPlatform.isLinux then
+            pkgs.runCommand "prom-tmp-janitor-selftest" { } ''
+              PATH=${pkgs.systemd}/bin:$PATH ${pkgs.bash}/bin/bash ${root}/scripts/test-prom-tmp-janitor.sh ${root}/modules/nixos/services/_signoz-metrics.nix
+              touch $out
+            ''
+          else
+            pkgs.runCommand "prom-tmp-janitor-selftest-linux-only-noop" { } ''
+              echo "skipped: runs the real systemd-tmpfiles, linux-only" > $out
+            '';
 
         # The system-health freshness composites (memory-guard / niri /
         # thermal-guard / psi) are the ONLY collector-death detector their
