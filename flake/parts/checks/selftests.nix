@@ -1734,7 +1734,9 @@
         # persistence, size mismatch, leftover reporting), extract 9
         # (dry-run-no-write, capacity gate, pattern root guard, happy path,
         # member scoping, rc11 skip, corrupt zip, extra-file reconciliation,
-        # listing reuse).
+        # listing reuse), rename-loop 8 (--once complete/incomplete, bounded
+        # completion, same-size CRC corruption times out honestly + marker +
+        # log evidence).
         takeout-selftests =
           pkgs.runCommand "takeout-selftests"
             {
@@ -1779,6 +1781,7 @@
                   takeout-intake) want_pass=0; want_legs=12 ;;
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
                   takeout-extract) want_pass=9; want_legs=0 ;;
+                  takeout-rename-loop) want_pass=0; want_legs=8 ;;
                 esac
                 if [ "$pass" -ne "$want_pass" ] || [ "$legs" -ne "$want_legs" ]; then
                   echo "LEG-COUNT MISMATCH: $s expected $want_pass PASS + $want_legs leg-OK, got $pass + $legs"

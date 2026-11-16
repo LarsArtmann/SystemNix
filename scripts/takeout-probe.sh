@@ -36,12 +36,14 @@ expected=$(awk -F'\t' -v p="$part" '$1 == p { print $2 }' "$root/parts.tsv")
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
 
-# Step 1: rart-first diagnostic on the FIRST export url — a 302 whose Location
-# carries `rart=` is the interactive re-auth wall; say so and stop.
-first_url=$(grep -E '^[[:space:]]*https://' "$root/urls.txt" | sed -n '1p')
-if [ -n "$first_url" ]; then
-  diag=$(curl -sS -o /dev/null -D - --max-redirs 0 --connect-timeout 30 --max-time 60 \
-    -b "$root/cookies.txt" "$first_url" 2>/dev/null || true)
+# Step 1: rart-first diagnostic on the SAME url the bulk probe targets — a 302
+# whose Location carries `rart=` is the interactive re-auth wall; say so and stop.
+diag_rc=0
+diag=$(curl -sS -o /dev/null -D - --max-redirs 0 --connect-timeout 30 --max-time 60 \
+  -b "$root/cookies.txt" "$url" 2>/dev/null) || diag_rc=$?
+if [ "$diag_rc" -ne 0 ]; then
+  echo "PROBE: diag fetch failed rc=$diag_rc (network/cookies/timeout) — NOT evidence of no-redirect; continuing bulk probe"
+else
   dcode=$(sed -n '1s/^HTTP[^ ]* \([0-9]*\).*/\1/p' <<<"$diag")
   dloc=$(awk 'tolower($1) == "location:" { print $2 }' <<<"$diag" | tr -d '\r')
   if [ "${dcode:-}" = "302" ]; then
@@ -53,7 +55,7 @@ if [ -n "$first_url" ]; then
     fi
     echo "PROBE: 302 without rart (params: ${params:-none}) — continuing bulk probe"
   else
-    echo "PROBE: diag http=${dcode:-?} (no redirect) — continuing bulk probe"
+    echo "PROBE: diag http=${dcode:-?} (no redirect on part-$part url) — continuing bulk probe"
   fi
 fi
 
