@@ -196,9 +196,13 @@ NEXT cycle's G6 is green (registry `retain` column, `trash`, never `rm`). When D
 2. **Deletion readiness (§4b) — future, non-blocking.** Owner directive 2026-11-13: no
 deletions anytime soon; revisit when one is scheduled (offsite Borg go-live vs signed
 single-site acceptance).
-3. **Keep-mode sources** — confirm the source matrix: Drive via `google-sync` (its OAuth
-   go-live row), Mail via IMAP/InboxClean, Takeout for Photos + small products. If the owner
-   prefers Takeout-only for keep accounts, say so: it costs a full re-download per cycle.
+3. **Keep-mode sources** — **ADOPTED as pipeline default 2026-11-16 (agent dispatch,
+   owner may veto):** the §1 source matrix stands — Drive via `google-sync` (its OAuth
+   go-live row), Mail via IMAP/InboxClean, Takeout for Photos + small products. Rationale:
+   Takeout-only for a keep account costs a full Drive re-download per cycle, loses mtimes,
+   and hits the rart wall every time (docs/services/takeout.md); the live mirror avoids all
+   three. Veto path: say "Takeout-only for keep accounts" and §5's rhythm widens to the
+   full export per cycle.
 4. **Retention window** for keep accounts — default 2 cycles (4 months of raw zips).
 5. **Mail end-state** — cold archive vs mail-host mesh; drives whether mbox cycles need
    Message-ID dedup at all.
