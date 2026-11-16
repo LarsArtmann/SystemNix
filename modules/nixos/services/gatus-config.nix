@@ -934,7 +934,12 @@ _: {
                   interval = "30m";
                   conditions = [
                     "[DNS_RCODE] == NOERROR"
-                    "[BODY] == pat(*p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvR0rYzDbRWi7WthgCLkPTpDsLktzIXbzP3/MgpRZFX4BY4M32g4Gx/rne0guACZQMpYhxQEo2CYQoiZnXkREh1lP6/BSjgICINct0z1amDifWl5dVdfaYg5/9svCKXGfLyufKwWevIUWe19m22D1hd/y2P6G36moXDvJvHez6JQIDAQAB*)"
+                    # Anchor the key PREFIX and TAIL (both deliberately
+                    # slash-free: gatus's pattern.Match strips "/" —
+                    # monitoring.md escape-layers trap) so a replaced OR
+                    # truncated key fails the value match.
+                    "[BODY] == pat(*p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvR0rYzDbRWi7WthgCLkPTpDsLktzIXbzP3*)"
+                    "[BODY] == pat(*y2P6G36moXDvJvHez6JQIDAQAB*)"
                   ];
                   alerts = discordAlert "resend._domainkey.artmann.tech serves the WRONG DKIM key — value drift from the domains repo resend module (the 2026-11-15 stale-retired-key outage class): Resend signatures fail and every relayed send hard-bounces. Fix: update the dkim_value in domains repo artmann.tech.tf from the Resend dashboard, redeploy the DNS records, verify with dig +short TXT resend._domainkey.artmann.tech";
                 }
