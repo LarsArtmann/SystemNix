@@ -260,9 +260,10 @@ _: {
         services.forgejo.dedicatedSubvolume = lib.mkEnableOption ''
           a dedicated BTRFS subvolume (subvol=hot/forgejo on the Samsung TLC
           disk, by-label tlc) mounted AT the existing stateDir — Set-B
-          storage per docs/planning/2026-09-15_per-service-btrfs-subvolumes-
-          analysis.md: primary-grade state that rides its OWN btrbk
-          snapshot/send leg (8h) instead of the QLC @ snapshots.
+          storage per
+          docs/research/2026-09-15_per-service-btrfs-subvolumes-analysis.md:
+          primary-grade state that rides its OWN btrbk snapshot/send leg
+          (8h) instead of the QLC @ snapshots.
 
           Ships INERT. Enable ONLY after scripts/migrate-forgejo-subvol.sh
           `finalize` has moved the data — mounting over the un-migrated dir
