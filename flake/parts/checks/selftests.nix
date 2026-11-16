@@ -1240,6 +1240,20 @@
           touch $out
         '';
 
+        # The textfile_collectors tmpfile janitor (R *.prom.* 1d) must stay
+        # glob-anchored: a one-character drift toward `*prom*` would delete
+        # REAL metrics at the daily clean pass (the 2026-11-14 census: ~60
+        # dead-writer mktemp leaks in the sticky dir). Fixture-pins the REAL
+        # rule (extracted from the staged module) through systemd-tmpfiles:
+        # remove-mode glob immunity for a 2d-old real .prom, clean-mode age
+        # gate (fresh orphan survives 1d, dies at 0 — fixture ctimes are
+        # unforgeable unprivileged, so the >1d positive leg is asserted
+        # mechanism-side), and an age-leg mutation check. 2026-11-16.
+        prom-tmp-janitor-selftest = pkgs.runCommand "prom-tmp-janitor-selftest" { } ''
+          PATH=${pkgs.systemd}/bin:$PATH ${pkgs.bash}/bin/bash ${root}/scripts/test-prom-tmp-janitor.sh ${root}/modules/nixos/services/_signoz-metrics.nix
+          touch $out
+        '';
+
         # The §18 service-sanity sweep must never go silent (the
         # DiscordSync class: 121% CPU + ~640 journal lines/min for hours,
         # every liveness gate green). Fixture-driven through the SAME

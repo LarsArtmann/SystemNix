@@ -58,8 +58,8 @@ ok
 RULE="${RULE_RAW#\"}"
 RULE="${RULE%\"}"
 case "$RULE" in
-  *" - - - 1d") ok ;;
-  *) bad "wiring: rule age leg is not 1d (got: $RULE) — the purge cadence changed without this test being updated" ;;
+*" - - - 1d") ok ;;
+*) bad "wiring: rule age leg is not 1d (got: $RULE) — the purge cadence changed without this test being updated" ;;
 esac
 
 WORK="$(mktemp -d)"
