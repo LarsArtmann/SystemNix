@@ -561,40 +561,25 @@ in
               } [ "google_sync_rclone_config" ]
             )
             //
-              lib.optionalAttrs
-                ((svcEnabled "drive-paperless") && (config.services.drive-paperless.ingestImages or false))
-                (
-                  # Immich API key for the Drive-image route (drive-paperless
-                  # ingestImages): x-api-key auth against POST /api/assets, scope
-                  # asset.read + asset.upload. Own encrypted file so agent
-                  # sessions can scaffold it with the public age key. Root-owned
-                  # — PID 1 reads the EnvironmentFile, the ingest user never
-                  # opens the file. Ships as PLACEHOLDER; the ingest run fails
-                  # loudly with the runbook pointer until the real key is
-                  # sops-set. (DiscordSync's sibling key left the sops world
-                  # 2026-10-25 for a direct-DB provisioner — see
-                  # discordsync.nix; this consumer keeps the paste path until
-                  # it adopts the same converger.)
-                  mkSecrets "drive-paperless-immich.yaml" {
-                    owner = "root";
-                    group = "root";
-                    restartUnits = [ "drive-paperless.service" ];
-                  } [ "drive_paperless_immich_api_key" ]
-                )
-            // lib.optionalAttrs (svcEnabled "mail-relay") (
-              # Upstream submission credential for the Postfix null client
-              # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
-              # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
-              # (paste the Resend re_... API key as mail_relay_password), then
-              # postfix restarts via the template's restartUnits. Raw secret is
-              # root-owned: only the rendered template (owner postfix) is read
-              # by the daemon.
-              mkSecrets "mail-relay.yaml" {
-                owner = "root";
-                group = "root";
-                restartUnits = [ "postfix.service" ];
-              } [ "mail_relay_password" ]
-            )
+              # drive_paperless_immich_api_key REMOVED 2026-11-16: the
+              # Drive-image key moved onto the shared Immich converger
+              # (services.immich.apiKeys.drive-paperless — see
+              # modules/nixos/services/drive-paperless.nix); no human
+              # transports an Immich key anymore.
+              lib.optionalAttrs (svcEnabled "mail-relay") (
+                # Upstream submission credential for the Postfix null client
+                # (mail-relay.nix). Ships as a PLACEHOLDER — go-live is an
+                # interactive `sudo sops platforms/nixos/secrets/mail-relay.yaml`
+                # (paste the Resend re_... API key as mail_relay_password), then
+                # postfix restarts via the template's restartUnits. Raw secret is
+                # root-owned: only the rendered template (owner postfix) is read
+                # by the daemon.
+                mkSecrets "mail-relay.yaml" {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "postfix.service" ];
+                } [ "mail_relay_password" ]
+              )
             // lib.optionalAttrs (svcEnabled "offsite-borg") (
               # Offsite Borg leg (platforms/nixos/system/backup.nix): the
               # passphrase (repokey-blake2 recovery secret), the dedicated

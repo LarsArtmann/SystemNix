@@ -23,6 +23,11 @@
                 system = "x86_64-linux";
                 modules = [
                   inputs.self.nixosModules.drive-paperless
+                  # our immich module: declares services.immich.apiKeys, the
+                  # option drive-paperless references when ingestImages is on
+                  # (converger consolidation 2026-11-16). enable stays false
+                  # here — only the OPTION declaration is needed.
+                  inputs.self.nixosModules.immich
                   inputs.self.nixosModules.backup-coordination
                   inputs.self.nixosModules.integration
                   paperlessModule
@@ -61,6 +66,11 @@
                 inputs.self.nixosModules.integration
                 paperlessModule
                 immichModule
+                # our immich module declares services.immich.apiKeys — the
+                # option services.drive-paperless now defines its key through
+                # (converger consolidation 2026-11-16). Its config activates
+                # under services.immich.enable = true (same as on evo-x2).
+                inputs.self.nixosModules.immich
                 (root + "/tests/mock-sops.nix")
                 {
                   services.paperless.enable = true;
@@ -87,7 +97,6 @@
                       }
                     ];
                   };
-                  sops.secrets.drive_paperless_immich_api_key = { };
                 }
               ];
             };
@@ -157,8 +166,8 @@
                   | grep -q "IMMICH_URL=http://127.0.0.1:2283" || {
                   echo "FAIL: IMMICH_URL must derive from ports.nix (immich=2283)" >&2; exit 1; }
                 echo "${toString imgSvc.serviceConfig.EnvironmentFile}" \
-                  | grep -q "drive_paperless_immich_api_key" || {
-                  echo "FAIL: ingestImages must wire the sops API key as EnvironmentFile" >&2; exit 1; }
+                  | grep -q "immich-api-keys/drive-paperless.env" || {
+                  echo "FAIL: ingestImages must wire the converger Immich env file as EnvironmentFile" >&2; exit 1; }
                 echo "${lib.concatMapStringsSep " " (e: if lib.hasInfix "immich" e then e else "") imgSvc.after}" \
                   | grep -q "immich-server.service" || {
                   echo "FAIL: images ingest must be ordered after immich-server" >&2; exit 1; }

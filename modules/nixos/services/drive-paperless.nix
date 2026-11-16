@@ -278,13 +278,7 @@ _: {
 
           if [ "$IMAGES_ENABLED" = "1" ]; then
             IMMICH_URL="''${IMMICH_URL:?IMMICH_URL not set (ingestImages requires Immich)}"
-            IMMICH_API_KEY="''${IMMICH_API_KEY:?IMMICH_API_KEY not set (ingestImages requires the drive_paperless_immich_api_key sops secret)}"
-            case "$IMMICH_API_KEY" in
-              PLACEHOLDER*)
-                echo "drive-paperless: IMMICH_API_KEY is still a PLACEHOLDER — create an Immich API key (Account Settings → API Keys, scope asset.read + asset.upload) and sops --set it into platforms/nixos/secrets/drive-paperless-immich.yaml (runbook: docs/services/google-sync.md)" >&2
-                exit 1
-                ;;
-            esac
+            IMMICH_API_KEY="''${IMMICH_API_KEY:?IMMICH_API_KEY not set — the converger env file has not converged; check the immich-api-key-provision journal}"
             # Preflight: docs + images are ONE pipeline — an unreachable or
             # key-rejecting Immich fails the whole run loudly (onFailure)
             # instead of silently skipping half the payload.
@@ -294,7 +288,7 @@ _: {
             fi
             key_code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 -H "x-api-key: $IMMICH_API_KEY" "$IMMICH_URL/api/users/me" || echo 000)"
             if [ "$key_code" != "200" ]; then
-              echo "drive-paperless: Immich rejected the API key (HTTP $key_code) — wrong secret or missing asset.read/asset.upload scope; see drive-paperless-immich.yaml" >&2
+              echo "drive-paperless: Immich rejected the API key (HTTP $key_code) — wrong secret or missing asset.read/asset.upload scope; rotate via: rm /var/lib/immich-api-keys/drive-paperless.env && systemctl restart immich-api-key-provision" >&2
               exit 1
             fi
           fi
@@ -376,11 +370,11 @@ _: {
             Immich via its /api/assets endpoint instead of skipping them;
             documents keep going to Paperless and images NEVER land in
             Paperless through this pipeline. OFF by default: requires the
-            drive_paperless_immich_api_key sops secret
-            (platforms/nixos/secrets/drive-paperless-immich.yaml) to carry a
-            real key — Immich → Account Settings → API Keys, scope
-            asset.read + asset.upload. The run fails loudly while the
-            secret still holds its PLACEHOLDER.
+            machine-minted key from the shared Immich converger
+            (services.immich.apiKeys.drive-paperless, rendered to
+            /var/lib/immich-api-keys/drive-paperless.env by
+            immich-api-key-provision — scope asset.read + asset.upload). The
+            run fails loudly if the env file has not converged yet.
           '';
         };
 
@@ -416,6 +410,29 @@ _: {
       };
 
       config = lib.mkIf cfg.enable {
+        # Declare the Immich image-ingest key onto the shared Immich converger
+        # (2026-11-16 — replaces the drive_paperless_immich_api_key sops
+        # paste path entirely, placeholder scaffold deleted with it). Same
+        # scope recipe (asset.read + asset.upload); the rendered env file
+        # carries IMMICH_URL + IMMICH_API_KEY and is wired as the ingest
+        # unit's second EnvironmentFile. The options?-guard mirrors the
+        # immichPresent convention: isolated evals that co-import nixpkgs'
+        # immich module (drive-ingest-fixture) do not carry our apiKeys
+        # option — there the declaration is skipped and only the unit's
+        # exec shape is under test.
+        services.immich.apiKeys.drive-paperless = lib.mkIf ((options.services.immich or { }) ? apiKeys) (
+          lib.mkIf (cfg.ingestImages && immichPresent && config.services.immich.enable) {
+            permissions = [
+              "asset.read"
+              "asset.upload"
+            ];
+            owner = cfg.user;
+            group = cfg.group;
+            url = "http://127.0.0.1:${toString ports.immich}";
+            restartUnits = [ "drive-paperless.service" ];
+          }
+        );
+
         assertions = [
           {
             assertion = paperlessPresent && config.services.paperless.enable;
@@ -441,7 +458,7 @@ _: {
         ++ lib.optionals cfg.ingestImages [
           {
             assertion = immichPresent && config.services.immich.enable;
-            message = "drive-paperless.ingestImages requires services.immich.enable: images upload via its /api/assets endpoint authenticated by the drive_paperless_immich_api_key sops secret";
+            message = "drive-paperless.ingestImages requires services.immich.enable: images upload via its /api/assets endpoint authenticated by the machine-minted services.immich.apiKeys.drive-paperless key";
           }
         ];
 
@@ -518,6 +535,7 @@ _: {
           ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
           ++ lib.optionals (cfg.ingestImages && immichPresent && config.services.immich.enable) [
             "immich-server.service"
+            "immich-api-key-provision.service"
           ]
           ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [
             "google-sync.service"
@@ -528,6 +546,7 @@ _: {
           ++ lib.optionals paperlessEnabled [ "paperless-web.service" ]
           ++ lib.optionals (cfg.ingestImages && immichPresent && config.services.immich.enable) [
             "immich-server.service"
+            "immich-api-key-provision.service"
           ]
           ++ lib.optionals (googleSyncPresent && config.services.google-sync.enable) [
             "google-sync.service"
@@ -552,15 +571,15 @@ _: {
               ++ lib.optionals cfg.ingestImages [
                 "IMMICH_URL=http://127.0.0.1:${toString ports.immich}"
               ];
-              # sops path read by PID 1 (EnvironmentFile semantics) — the
-              # secret is declared gated in sops.nix; isolated evals
-              # co-import tests/mock-sops.nix and declare it (google-sync
-              # pattern).
+              # The Immich env file is rendered by the shared converger
+              # immich-api-key-provision (key declared below as
+              # services.immich.apiKeys.drive-paperless); the unit orders
+              # after it so a fresh mint lands before the first run.
               EnvironmentFile = [
                 runEnv
               ]
-              ++ lib.optionals cfg.ingestImages [
-                config.sops.secrets.drive_paperless_immich_api_key.path
+              ++ lib.optionals (cfg.ingestImages && immichPresent && config.services.immich.enable) [
+                "/var/lib/immich-api-keys/drive-paperless.env"
               ];
               # systemd creates + owns /var/lib/drive-paperless (pre-namespace,
               # before ReadWritePaths processing — the 226 class). Without

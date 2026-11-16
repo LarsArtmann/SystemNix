@@ -337,16 +337,15 @@ env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
 [ -f "$state7f/last_success" ] && fail "leg7c: last_success must NOT be touched on immich failures"
 [ -s "$state7f/failed.log" ] || fail "leg7c: failed.log must record immich failures"
 
-echo "== leg 8: placeholder immich key rejected =="
+echo "== leg 8: missing immich key (unconverged env file) rejected =="
 state8="$scratch/state-images-ph"
 mkdir -p "$state8"
 reset_log
-out="$(env DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
+out="$(env -u IMMICH_API_KEY DRIVE_PAPERLESS_URL="http://127.0.0.1:1" DRIVE_PAPERLESS_TOKEN=t \
   DRIVE_PAPERLESS_STATE="$state8" IMMICH_URL="http://127.0.0.1:1" \
-  IMMICH_API_KEY=PLACEHOLDER-create-immich-api-key \
   CURL_LOG="$log" CURL_COUNTER="$counter" \
-  bash "$scratch/images1.sh" 2>&1)" && fail "leg8: PLACEHOLDER key must fail the run"
-echo "$out" | grep -q 'PLACEHOLDER' || fail "leg8: failure must explain the placeholder + runbook pointer"
-[ "$(assets_uploaded)" -eq 0 ] || fail "leg8: no immich uploads may happen with a placeholder key"
+  bash "$scratch/images1.sh" 2>&1)" && fail "leg8: missing key must fail the run"
+echo "$out" | grep -q 'immich-api-key-provision' || fail "leg8: failure must point at the converger (immich-api-key-provision)"
+[ "$(assets_uploaded)" -eq 0 ] || fail "leg8: no immich uploads may happen without a key"
 
 echo "PASS: drive-paperless fixture all legs green"
