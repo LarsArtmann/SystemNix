@@ -1294,6 +1294,20 @@ in
       # Sops: platforms/nixos/secrets/cv.yaml (cv_api_key → CV_API_KEY).
       cv-server = {
         enable = true;
+        # Decision gate (2026-11-16 federation batch item 5): ON under the
+        # mock provider (hermetic fixtures, zero egress) so the boot
+        # decision-gate health surface is live. The W0 unlock flips
+        # provider to "jev" AND adds the credential in the SAME change —
+        # the eval-time guard refuses a live provider with no delivery
+        # path (apiKeyFile / environmentFile / environment entry), so a
+        # half-wired config fails the build BY DESIGN. Runbook for the
+        # flip: a `jev_api_key` entry in platforms/nixos/secrets/cv.yaml
+        # (owner-only sops material — the agent lanes cannot mint it) +
+        # decisionmodel.apiKeyFile = config.sops.secrets.<name>.path
+        # (the path rides LoadCredential; never interpolate it into a
+        # derivation input).
+        decisionmodel.enable = true;
+        decisionmodel.provider = "mock";
         # Weekly session-validity probe (Mon 09:41): `cv profile accounts
         # --probe --all` against the operator checkout; exit 3 = a session
         # went invalid → onPage failures, alerting instead of apply-time

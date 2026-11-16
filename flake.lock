@@ -1064,11 +1064,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794766966,
-        "narHash": "sha256-SKBF9Ox96tnO/6u6iYkiGUmUI9j9gqbpaiT/vJ2ktco=",
+        "lastModified": 1794816098,
+        "narHash": "sha256-lQjgeJgrnU5g8F7E+eegcCjJx8C7oEI2e69iRJQTAYU=",
         "ref": "refs/heads/master",
-        "rev": "8dc0d8b25dd26d2dc7cc6cb787f5d12963abdebd",
-        "revCount": 11039,
+        "rev": "12ba214b2abffb83235de678647eb0a1e56229a3",
+        "revCount": 11090,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/CV"
       },
@@ -2438,16 +2438,16 @@
     "go-aichat_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1791037770,
-        "narHash": "sha256-Pm9QP/yzZRGyNc6ydvzjj8cxdcUZpJWEcN3bHDNkpPg=",
+        "lastModified": 1793835671,
+        "narHash": "sha256-OqwPtFlEx7C1QTutVdc5SgolBiSjUw13dYWSh0eR0/w=",
         "ref": "refs/heads/master",
-        "rev": "3587b9ddfe2b551936654352214634dd40605fb4",
-        "revCount": 205,
+        "rev": "2a7ad19b432d51d97d255a4bee0ab3cf0a2be9aa",
+        "revCount": 398,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-aichat"
       },
       "original": {
-        "rev": "3587b9ddfe2b551936654352214634dd40605fb4",
+        "rev": "2a7ad19b432d51d97d255a4bee0ab3cf0a2be9aa",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-aichat"
       }
