@@ -13,6 +13,14 @@
 #                   176,785 B)
 # Stdout carries ONLY http code / final host / size / magic — never URLs or
 # cookie values.
+#
+# Rart-first diagnostic (step 1): a 302 whose Location carries `rart=` is the
+# interactive re-auth interstitial — every non-browser client bounces on it
+# identically (3 h of client arms-race proved this on racedriver8k, 2026-11-11;
+# docs/status/2026-11-11_20-58_takeout-g1-auth-marathon-full-status.md §e3).
+# The probe dumps the 302's Location param-names FIRST and short-circuits with
+# that verdict instead of downloading a bounce page. Runbook:
+# docs/services/takeout.md
 set -euo pipefail
 
 root=${1:?usage: takeout-probe.sh <staging-root> [part]}
@@ -27,6 +35,28 @@ expected=$(awk -F'\t' -v p="$part" '$1 == p { print $2 }' "$root/parts.tsv")
 
 tmp=$(mktemp)
 trap 'rm -f "$tmp"' EXIT
+
+# Step 1: rart-first diagnostic on the FIRST export url — a 302 whose Location
+# carries `rart=` is the interactive re-auth wall; say so and stop.
+first_url=$(grep -E '^[[:space:]]*https://' "$root/urls.txt" | sed -n '1p')
+if [ -n "$first_url" ]; then
+  diag=$(curl -sS -o /dev/null -D - --max-redirs 0 --connect-timeout 30 --max-time 60 \
+    -b "$root/cookies.txt" "$first_url" 2>/dev/null || true)
+  dcode=$(sed -n '1s/^HTTP[^ ]* \([0-9]*\).*/\1/p' <<<"$diag")
+  dloc=$(awk 'tolower($1) == "location:" { print $2 }' <<<"$diag" | tr -d '\r')
+  if [ "${dcode:-}" = "302" ]; then
+    params=$(tr '?&' '\n\n' <<<"$dloc" | cut -d= -f1 | grep -v '^$' | sort -u | paste -sd,)
+    if grep -q 'rart=' <<<"$dloc"; then
+      echo "PROBE: RART WALL — 302 Location params: ${params:-none}"
+      echo "PROBE: interactive re-auth required — non-browser clients will ALL bounce; use the owner-browser flow (docs/services/takeout.md)"
+      exit 5
+    fi
+    echo "PROBE: 302 without rart (params: ${params:-none}) — continuing bulk probe"
+  else
+    echo "PROBE: diag http=${dcode:-?} (no redirect) — continuing bulk probe"
+  fi
+fi
+
 meta=$(curl -sS -o "$tmp" -w '%{http_code}\t%{url_effective}\t%{size_download}' \
   --location --max-redirs 5 --connect-timeout 30 --max-time 300 \
   -A 'Mozilla/5.0 (X11; Linux x86_64) Takeout-bulk-download' \
