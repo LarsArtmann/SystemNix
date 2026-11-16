@@ -1254,6 +1254,21 @@
           touch $out
         '';
 
+        # The system-health freshness composites (memory-guard / niri /
+        # thermal-guard / psi) are the ONLY collector-death detector their
+        # Gatus consumers have (node_exporter serves a frozen textfile
+        # forever); all four shipped fixture-less — the thermal sibling was
+        # hand-tested at three states during the 2026-10-19 stability trio,
+        # the rest never. Pins the REAL mtime-composite blocks (extracted
+        # from the staged module, ${textfileDir} seam run as a shell var)
+        # across fresh / 300s-inclusive boundary / 301s / stale / missing /
+        # future-mtime (clock-skew) states, plus gauge-name and budget
+        # wiring pins. 2026-11-16.
+        system-health-freshness-selftest = pkgs.runCommand "system-health-freshness-selftest" { } ''
+          ${pkgs.bash}/bin/bash ${root}/scripts/test-system-health-freshness.sh ${root}/modules/nixos/services/system-health.nix
+          touch $out
+        '';
+
         # The §18 service-sanity sweep must never go silent (the
         # DiscordSync class: 121% CPU + ~640 journal lines/min for hours,
         # every liveness gate green). Fixture-driven through the SAME
