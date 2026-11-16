@@ -12,6 +12,7 @@
 - [Collector & journal hygiene (journalctl/awk/timeout traps)](#collector--journal-hygiene)
 - [Telemetry hardware keys (nvme/smartd enumeration traps)](#telemetry-hardware-keys)
 - [GPU/APU telemetry (Strix Halo: amdgpu fdinfo, nvtop, KFD/ROCm)](#gpuapu-telemetry-strix-halo-amdgpu-fdinfo-nvtop-kfdrocm)
+- [External-exposure posture (IPv6 inventory)](#external-exposure-posture-ipv6-inventory)
 
 ## Gatus Health Check Design Patterns
 
@@ -125,3 +126,23 @@ Identification query (v4 labels — PRIMARY since the 2026-11-09 dead-v2 finding
 - **KFD/ROCm workloads emit ZERO `drm-engine-*` lines — even at 100% busy.** `amdgpu_show_fdinfo()` only emits engine lines when `amdgpu_ctx_mgr_usage()` is nonzero, and KFD (ROCm compute) queues do not feed it: the probe3.sh experiment (412-token embedding, `gpu_busy_percent` 99-100% for ~7 s, utime delta + liveness asserted) found zero engine lines before/during/after. SCOPE: the gap is KFD/ROCm-SPECIFIC — DRM-context processes (niri, helium) DO accumulate `drm-engine-*` ns (the early "no process has engine data" claim was falsified and retracted; see the 03-51 report §d.1). Kernel-side gap tracked by Alex Deucher's "Accelerator/GPU top" dri-devel thread (2026-02-05, no patches yet); nvtop's author cannot test ROCm.
 - **nvtop master (post-3.3.2) build recipe + gotchas** — working rev `71094a9` (`~/.cache/amdgpu-upstream/nvtop`): cmake needs libsystemd; the binary lands at `build/src/nvtop`; at runtime it dlopens `libdrm_amdgpu.so.1` → put the NON-dev libdrm output on `LD_LIBRARY_PATH` or the amdgpu backend silently loads nothing. Live-verified on master: per-process memory correct (llama 819,884,032 B; nsfw 4,627,083,264 B). Packaging decision + nixpkgs-≥3.4.0 drop live in the desktop.md row.
 - **Workload-probe discipline (the keeper pattern)** — llama services cycle PIDs by design: resolve the serving PID at probe start via the unit's MainPID (never a port scan) and post-assert liveness before quoting utime/GTT deltas (`llama_still_alive`; full pattern in the llama-server PID-churn bullet under "Collector & journal hygiene"). Per-process GTT alerting (e.g. "nsfw-classifier GTT > X") is measurable since the fdinfo probe exists — deliberately NOT wired (no consumer asked for it); revisit only with a named consumer.
+
+## External-exposure posture (IPv6 inventory)
+
+> **Read when:** ANY attack-surface/exposure/Shodan work — IPv6 belongs in EVERY exposure answer (§e.4, docs/status/2026-10-19_01-40_shodan-exposure-monitoring-advisory-session.md; inventoried 2026-11-16 closing that report's §f.D.37 queue row) — or before claiming a host has/hasn't a global-v6 face.
+
+**Headline (2026-11-16): NEITHER site has a global IPv6 face — Shodan Monitor has zero v6 prefixes to register today.** Homelab exposure is IPv4-only via the WAN firewall; pbx-artmann is IPv4-only because its Hetzner /64 was deliberately left unpinned. Both stay that way until the owner flips a leg (conditions below).
+
+| Host | Global v6? | Evidence |
+| ---- | ---------- | -------- |
+| **evo-x2** (.150) | **NO** | Live `/proc/net/if_inet6` full capture (unprivileged agent shell, lars): `eno1` fe80 link-local only, `lo` ::1, `nb-evox2` ONE `fd65:b780:e7dc:d37e::/64` ULA (NetBird overlay — fd00::/8 is never internet-routable), `wlan0` stack-on no addresses. NO default v6 route (`/proc/net/ipv6_route` `::/0` row empty). `disable_ipv6=0` everywhere — the stack is ENABLED, so the absence is the router's doing: an RA would sprout global addrs without any host config change. Declarative corroboration: `dnsIPv6Enabled = false; # evo-x2 has no global IPv6` (platforms/nixos/system/dns-blocker-config.nix:220). |
+| **rpi3-dns** (.151) | **NO** (config-corroborated) | Same LAN, same RA absence; `dnsIPv6Enabled = false` on the rpi3 platform too (platforms/nixos/rpi3/default.nix:157). Direct SSH probe skipped: the rpi3-dns.home.lan name resolves to the .53 VRRP VIP path and the probe hit a host-key mismatch — probe the REAL address (.151) directly if ever needed. |
+| **Lars-MacBook-Air** | presumed **NO** | Same LAN, no RA reaching evo-x2 (an always-on host) ⇒ none for any LAN client. Live probe blocked: ssh publickey-DENIED from evo-x2 (the Mac does not hold this box's key). Owner one-liner on the Mac: `ifconfig en0 | grep inet6`. |
+| **LAN router** (.1) | RA/DHCPv6-PD source | Currently announcing NOTHING — that is WHY every LAN host is v6-less. **Owner leg**: whether the ISP/router ever hands out a prefix. |
+| **pbx-artmann** (Hetzner hel1) | **NO** (deliberate) | The Hetzner-assigned /64 exists ONLY in the Hetzner panel; `networking.interfaces.ens3.ipv6.addresses` left UNPINNED since the 2026-09-16 recreate — hosts/pbx/default.nix (~449-467) carries the paste-in recipe + the warning that the old `2a01:4f9:c015:c081::1` prefix is dead (Hetzner reassigns ranges per server; a recreate orphans it). No AAAA record; ACME rides the v4 path. Defensive belt already in place: unconditional `ip6tables DROP` for 5060/5061 inserted ahead of the telephony module's blanket accept (default.nix ~420-423), so a future pin cannot silently expose SIP over v6. |
+
+**Shodan Monitor wake-up conditions (both owner-gated; nothing to add until then):**
+- **Homelab prefix** → register only after the router leg starts announcing v6 — then EVERY LAN host sprouts global addrs at once: re-run this inventory (recipe below), add the LAN /64 as its own Monitor asset.
+- **pbx /64** → register the panel range the moment it gets pinned into hosts/pbx/default.nix (that comment block names the exact paste shape + the AAAA `<prefix>::1` record in the domains repo). Until then there is literally no v6 asset to watch — the "classic forgot-to-firewall /64" cannot leak while the OS has no v6 address at all.
+
+**Agent re-probe recipe (no sudo, any host):** `cat /proc/net/if_inet6` — any address whose scope column is `00` that is NOT `fd`-prefixed (ULA) or `::1` (loopback) is global; `awk '$2=="00000000000000000000000000000000" && $3=="00"' /proc/net/ipv6_route` — non-empty ⇒ a v6 default route (a router leg) exists. Absence claims must quote the full capture (no head-truncation reads) and name the privilege level (rule: 2026-11-14 freeze-#52 class). NB the `ip` binary is guard-blocked in agent shells — procfs is the way.

@@ -18,7 +18,7 @@ Deep domain knowledge lives in referenced files — **read the relevant one BEFO
 | SSO/OIDC layers, Pocket ID, oauth2-proxy, Caddy vHosts                       | [docs/agents/sso-dns.md](./docs/agents/sso-dns.md)                                                           |
 | Secrets: sops/age workflow, rotations, the 2026-08-18 leak history           | [docs/agents/secrets.md](./docs/agents/secrets.md)                                                           |
 | Desktop: DMS/Quickshell, niri, session manager, audio routing, Helium        | [docs/agents/desktop.md](./docs/agents/desktop.md)                                                           |
-| Gatus checks, SigNoz rules/dashboards, textfile collectors, phantom metrics  | [docs/agents/monitoring.md](./docs/agents/monitoring.md)                                                     |
+| Gatus checks, SigNoz rules/dashboards, textfile collectors, phantom metrics, external-exposure/IPv6 posture | [docs/agents/monitoring.md](./docs/agents/monitoring.md)                                                     |
 | Shell scripts, direnv/fish/zellij, GOBIN shadowing, qmd MCP                  | [docs/agents/shell-devtools.md](./docs/agents/shell-devtools.md)                                             |
 | Git recovery, history rewrites, GitHub push protection                       | [docs/agents/git.md](./docs/agents/git.md)                                                                   |
 | "Who owns X?" — data ownership, truth vs mirror vs projection, restore paths | [docs/agents/data-ownership.md](./docs/agents/data-ownership.md)                                             |
