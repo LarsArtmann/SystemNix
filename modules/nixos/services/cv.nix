@@ -2219,6 +2219,58 @@
                 ];
                 alert = "CV approvals API unreachable — the approval queue surface regressed or the server is down (cv.home.lan). Check: journalctl -u cv-server --since -15min; GET /api/pipeline/approvals with the CV API key.";
               }
+              # Outbound email channel (2026-11-15 funnel-reactivation batch;
+              # recipes: CV docs/operations/health-alerting.md §"Outbound
+              # email channel"). Both November 2026 outages (quota 550, then
+              # `domain not verified` 550) were invisible for days: postfix
+              # accepted every send locally, CV folded rows "applied", and
+              # nothing watched the relay. This check string-matches the
+              # bounce verdict sse-stats derives from the reply loop's
+              # bounce-DSN folds (byte shape pinned by CV's
+              # TestGatusParity_Outbound{Healthy,Bouncing}): the flag fires
+              # when a bounce DSN folded onto a sent application within 24h
+              # (four 6h accrual ticks — a bouncing relay re-arms every
+              # tick). Same 30s client ceiling as Funnel Freshness (the
+              # endpoint scans the whole event log per call).
+              {
+                name = "CV Outbound Bounce";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
+                interval = "30m";
+                client.timeout = "30s";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"outboundBounced\":false*)"
+                ];
+                alert = "CV outbound mail is BOUNCING — a delivery-failure DSN folded onto a sent application in the last 24h (relay rejected upstream: Resend quota/domain/credential). Triage with the reply-loop bounce counter: curl -s -H 'X-API-Key: …' http://localhost:8091/api/pipeline/sse-stats | jq '.outboundBounced, .bouncedSends24h, .lastBounceAgeSeconds, .replyLoop.bounceMatches'; journalctl -u cv-server | grep -i bounce. Queue-depth distinction: the Mail Relay Queue check firing TOO means mail is STUCK locally (DSNs held in postfix never reach the reply loop) — 'stuck' and 'bounced' are different incidents.";
+              }
+              # Reply-loop telemetry second opinion (same recipe): the
+              # bounceMatches counter is process-lifetime cumulative, so
+              # this is PRESENCE-only — a value pat would page forever
+              # after the first real bounce (the value-threshold trap
+              # documented on the metrics checks above). Absence means the
+              # replyLoop wire object regressed out of sse-stats. A RISE
+              # here without the outboundBounced flip means bounces landed
+              # on OLD sends (24h window cleared) or the loop restarted —
+              # triage both fields together, it is not a page on its own.
+              {
+                name = "CV Reply Loop Telemetry";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.cv}/api/pipeline/sse-stats";
+                interval = "30m";
+                client.timeout = "30s";
+                headers = {
+                  X-API-Key = "$CV_API_KEY";
+                };
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*\"bounceMatches\"*)"
+                ];
+                alert = "CV reply-loop telemetry missing from sse-stats — the replyLoop wire object regressed (key rename or loop-wiring drop), leaving the outbound bounce verdict without its second opinion (cv.home.lan). Check: journalctl -u cv-server --since -15min; CV tests/integration/outbound_bounce_gatus_parity_test.go pins the wire shape.";
+              }
             ];
             homepage = {
               name = "CV";

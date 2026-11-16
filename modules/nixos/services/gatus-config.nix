@@ -910,6 +910,64 @@ _: {
                   conditions = [ "[BODY] == ${config.services.dns-blocker.blockIP}" ];
                   alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
                 }
+                # Outbound email channel DNS record set (2026-11-15
+                # funnel-reactivation batch; recipe: CV
+                # docs/operations/health-alerting.md §"Outbound email
+                # channel"). The 11-15 outage class was a VALUE drift:
+                # existence stayed true through the outage while a STALE
+                # retired-account DKIM key served, so every check here pins
+                # the EXPECTED value, not record presence. Value truth is
+                # the domains repo (~/projects/domains
+                # artmann.tech.tf module "resend_artmann_tech" — the IaC
+                # copy of the Resend dashboard's demanded records); if the
+                # dashboard's current values ever differ from the repo,
+                # THIS check pages exactly that drift. dig-verified green
+                # against live DNS at authoring time (2026-11-16).
+                {
+                  name = "Resend DKIM Record";
+                  group = "Infrastructure";
+                  url = "127.0.0.1";
+                  dns = {
+                    query-name = "resend._domainkey.artmann.tech";
+                    query-type = "TXT";
+                  };
+                  interval = "30m";
+                  conditions = [
+                    "[DNS_RCODE] == NOERROR"
+                    "[BODY] == pat(*p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCvR0rYzDbRWi7WthgCLkPTpDsLktzIXbzP3/MgpRZFX4BY4M32g4Gx/rne0guACZQMpYhxQEo2CYQoiZnXkREh1lP6/BSjgICINct0z1amDifWl5dVdfaYg5/9svCKXGfLyufKwWevIUWe19m22D1hd/y2P6G36moXDvJvHez6JQIDAQAB*)"
+                  ];
+                  alerts = discordAlert "resend._domainkey.artmann.tech serves the WRONG DKIM key — value drift from the domains repo resend module (the 2026-11-15 stale-retired-key outage class): Resend signatures fail and every relayed send hard-bounces. Fix: update the dkim_value in domains repo artmann.tech.tf from the Resend dashboard, redeploy the DNS records, verify with dig +short TXT resend._domainkey.artmann.tech";
+                }
+                {
+                  name = "Resend send CNAME";
+                  group = "Infrastructure";
+                  url = "127.0.0.1";
+                  dns = {
+                    query-name = "send.artmann.tech";
+                    query-type = "CNAME";
+                  };
+                  interval = "30m";
+                  conditions = [
+                    "[DNS_RCODE] == NOERROR"
+                    "[BODY] == pat(*send.forge.rmta.net*)"
+                  ];
+                  alerts = discordAlert "send.artmann.tech CNAME drift — the Resend return-path/SPF routing record no longer points at send.forge.rmta.net (value truth: domains repo resend_artmann_tech module). MAIL FROM alignment breaks; expect bounces/delivery degradation";
+                }
+                {
+                  name = "Resend rsend CNAME";
+                  group = "Infrastructure";
+                  url = "127.0.0.1";
+                  dns = {
+                    query-name = "rsend.artmann.tech";
+                    query-type = "CNAME";
+                  };
+                  interval = "30m";
+                  conditions = [
+                    "[DNS_RCODE] == NOERROR"
+                    "[BODY] == pat(*rsend-euw1.forge.rmta.net*)"
+                  ];
+                  alerts = discordAlert "rsend.artmann.tech CNAME drift — the Resend SPF-routing record no longer points at rsend-euw1.forge.rmta.net (value truth: domains repo resend_artmann_tech module); Resend domain verification degrades";
+                }
                 (mkHttpCheck {
                   name = "External HTTPS";
                   group = "Infrastructure";
