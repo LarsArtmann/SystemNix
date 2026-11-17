@@ -546,7 +546,9 @@ selftest() {
     rc=1
   fi
 
-  if [ "$rc" -eq 0 ]; then
+  # 2026-11-14 (zip-name divergence): parts.tsv may carry an explicit
+  # filename column so raw browser-named zips verify without a rename pass.
+  leg=raw-names
   build_fixture
   mv "$fx/zips/part-01.zip" "$fx/zips/takeout-20261110T224436Z-001.zip"
   mv "$fx/zips/part-02.zip" "$fx/zips/takeout-20261110T224438Z-1-001.zip"
@@ -599,8 +601,8 @@ selftest() {
 run_verify_selftest_quiet() {
   # subshell: run_verify's die() on negative legs must not kill the selftest driver.
   # Output is NOT discarded here — the caller redirects to a per-leg log and greps it.
-  # $2 = manifest mode (auto | racedriver8k).
-  (run_verify "$1" 1 "${2:-auto}")
+  # $2 = do_hash (1|0), $3 = manifest file path (empty = self-derive).
+  (run_verify "$1" "${2:-1}" "${3:-}")
 }
 
 main() {
@@ -609,16 +611,16 @@ main() {
     selftest
     return
   fi
-  local root="" do_hash=1 manifest_mode=auto
+  local root="" do_hash=1 manifest_file=""
   while [ $# -gt 0 ]; do
     case $1 in
     --no-hash) do_hash=0 ;;
     --manifest)
       shift
-      [ $# -gt 0 ] || die "--manifest needs a value (racedriver8k)"
-      manifest_mode=$1
+      [ $# -gt 0 ] || die "--manifest needs a value (path to a products manifest, e.g. scripts/takeout-manifests/<account>.products.tsv)"
+      manifest_file=$1
       ;;
-    --manifest=*) manifest_mode=${1#*=} ;;
+    --manifest=*) manifest_file=${1#*=} ;;
     -*) die "unknown option: $1" ;;
     *)
       [ -z "$root" ] || die "unexpected argument: $1"
@@ -627,12 +629,8 @@ main() {
     esac
     shift
   done
-  [ -n "$root" ] || die "usage: $0 <staging-dir> [--no-hash] [--manifest racedriver8k] | --selftest"
-  case $manifest_mode in
-  auto | racedriver8k) ;;
-  *) die "unknown manifest '$manifest_mode' (accepts: racedriver8k)" ;;
-  esac
-  run_verify "$root" "$do_hash" "$manifest_mode"
+  [ -n "$root" ] || die "usage: $0 <staging-dir> [--no-hash] [--manifest <products-tsv>] | --selftest"
+  run_verify "$root" "$do_hash" "$manifest_file"
 }
 
 main "$@"
