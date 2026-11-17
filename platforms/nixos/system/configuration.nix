@@ -405,8 +405,14 @@ in
       # qmd — global on-device RAG/hybrid search CLI (BM25 + vectors + LLM
       # rerank) over markdown/code collections; also the binary Crush spawns
       # for the `qmd` MCP server (crushrc). Upstream flake pin — see flake.nix
-      # input for why nixpkgs is not followed.
-      inputs.qmd.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # input for why nixpkgs is not followed. Wrapped via pkgs/qmd-gpu.nix:
+      # the upstream node-llama-cpp vulkan prebuilt is broken (silent CPU
+      # fallback, root-cause header in the package file) — the wrapper
+      # patches the plugin + puts bun on the system loader so embed/search
+      # inference uses the iGPU instead of ~13 CPU cores.
+      (pkgs.callPackage ../../../pkgs/qmd-gpu.nix {
+        qmd = inputs.qmd.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      })
       # Partitioning for user-run sudo migration scripts (sgdisk). NOT in the
       # system env before 2026-08-22 — the first migrate-clickhouse-xfs.sh
       # prepare run died at "sgdisk: command not found" after stopping the

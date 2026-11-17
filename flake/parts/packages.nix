@@ -89,6 +89,15 @@
           paperless-gpt = pkgs.callPackage (root + "/pkgs/paperless-gpt.nix") {
             src = inputs.paperless-gpt-src;
           };
+          # qmd-gpu — the flake-input qmd with a WORKING Vulkan backend
+          # (iGPU inference for embed/rerank/expansion; upstream's vulkan
+          # prebuilt is broken and silently falls back to CPU — see the
+          # root-cause header in pkgs/qmd-gpu.nix). Consumed by
+          # configuration.nix systemPackages in place of the raw input
+          # package; same bin name `qmd` (crushrc MCP spawns `qmd mcp`).
+          qmd-gpu = pkgs.callPackage (root + "/pkgs/qmd-gpu.nix") {
+            qmd = inputs.qmd.packages.${system}.default;
+          };
           # ai-meter — in-tree Go source (pkgs/ai-meter/), stdlib only,
           # vendorHash = null forever (no FOD, no toolchain-skew re-hash
           # waves). Same callPackage + src on the module side → identical
