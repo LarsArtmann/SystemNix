@@ -282,7 +282,15 @@ _: {
                   # cold-load fleet at once). The @ bridges queue client
                   # connections in the socket backlog meanwhile — slow
                   # answer, never a refused one. 15-min wait + 10-min load.
-                  ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-vlm-${name} --psi-max 30 --max-wait-sec 900";
+                  # on-exhausted refuse (freeze #56, 2026-11-17): the
+                  # idle-TTL reload treadmill (visionreviewd's 10-min probes
+                  # never reset the idle clock, so the backend unloads and
+                  # the next probe cold-loads 9 G — 47 reloads across the
+                  # death boot) made "proceed after budget" storm fuel: the
+                  # 15:10:49 exhausted proceed admitted a 9 G read 7 s
+                  # before the cut. Exhaustion now fails the unit; restart
+                  # backoff (60→900 s) retries, the backlog still queues.
+                  ExecStartPre = "${lib.getExe pkgs.psi-wait-gate} --name llama-vlm-${name} --psi-max 30 --max-wait-sec 900 --on-exhausted refuse";
                   TimeoutStartSec = "25min";
                 }
                 (harden { })

@@ -13,6 +13,14 @@
 #     the freeze #20 stacked-reader class, but the service may not die
 #     either — so it waits, bounded by --max-wait-sec, then proceeds with a
 #     loud WAIT-BUDGET-EXHAUSTED line (slow answer beats dead service).
+#   --on-exhausted refuse (added 2026-11-17, freeze #56): inverts the
+#     budget-exhaustion verdict for socket-activated model backends whose
+#     cold load is itself storm fuel — the 15:10:49 WAIT-BUDGET-EXHAUSTED
+#     proceed admitted llama-vlm-cap's 9 G GGUF read into a 68 % IO PSI
+#     death window (7 s before the cut; the third reload of the afternoon,
+#     each paging 26 min against a saturated disk). Refusing fails
+#     ExecStartPre; systemd's restart backoff retries later and the socket
+#     backlog still queues clients — a DELAYED answer beats a dead box.
 #
 # Checks per round (same semantics as maintenance-entry-gate):
 #   1. IO pressure: /proc/pressure/io `some avg10` >= --psi-max (default 30,
@@ -22,7 +30,8 @@
 #      a memory-emergency-guard trip inside the window keeps the wait going
 #      even at calm PSI (episodic-storm dips, freeze #5/#21).
 #
-# exit 0 = admitted or budget-exhausted-proceeding (the only success shape);
+# exit 0 = admitted or budget-exhausted-proceeding; exit 1 = budget
+# exhaustion under --on-exhausted refuse (the only refuse shape);
 # exit 64 = usage error. Fixture flags (--psi-file/--trip-state-file) exist
 # for the selftest — same pattern as maintenance-entry-gate.
 {
@@ -44,6 +53,7 @@ writeShellApplication {
     INTERVAL_SEC="30"
     MAX_WAIT_SEC="1200"
     TRIP_WINDOW_MIN="0"
+    ON_EXHAUSTED="proceed"
     PSI_FILE="/proc/pressure/io"
     TRIP_STATE_FILE="/var/lib/memory-emergency-guard/last-trip"
     SELFTEST=0
@@ -51,9 +61,12 @@ writeShellApplication {
     usage() {
       echo "usage: psi-wait-gate [--name LABEL] [--psi-max N] [--interval-sec N]" >&2
       echo "                     [--max-wait-sec N] [--trip-window-min N]" >&2
+      echo "                     [--on-exhausted proceed|refuse]" >&2
       echo "                     [--psi-file PATH] [--trip-state-file PATH] [selftest]" >&2
       echo "  waits for IO PSI some avg10 < --psi-max (re-checking every --interval-sec)," >&2
-      echo "  then exits 0. Budget exhaustion (--max-wait-sec) PROCEEDS, never refuses." >&2
+      echo "  then exits 0. Budget exhaustion PROCEEDS by default; --on-exhausted" >&2
+      echo "  refuse exits 1 instead (freeze #56: storm-fuel cold loads must not" >&2
+      echo "  ride an exhausted budget into the storm they feed)." >&2
       exit 64
     }
 
@@ -82,6 +95,18 @@ writeShellApplication {
       --trip-window-min)
         [ "$#" -ge 2 ] || usage
         TRIP_WINDOW_MIN=$2
+        shift 2
+        ;;
+      --on-exhausted)
+        [ "$#" -ge 2 ] || usage
+        case "$2" in
+        proceed | refuse)
+          ON_EXHAUSTED=$2
+          ;;
+        *)
+          usage
+          ;;
+        esac
         shift 2
         ;;
       --psi-file)
@@ -149,7 +174,8 @@ writeShellApplication {
     }
 
     # The wait loop. Every verdict line goes to stderr (stdout stays empty —
-    # callers may pipe it). Always exits 0.
+    # callers may pipe it). Exits 0 on admit/proceed; exits 1 ONLY at budget
+    # exhaustion under --on-exhausted refuse.
     wait_loop() {
       local start checks
       start=$(date +%s)
@@ -166,6 +192,10 @@ writeShellApplication {
           return 0
         fi
         if [ "$(( $(date +%s) - start ))" -ge "$MAX_WAIT_SEC" ]; then
+          if [ "$ON_EXHAUSTED" = "refuse" ]; then
+            echo "WAIT-BUDGET-REFUSED: $GATE_NAME — refusing after ''${MAX_WAIT_SEC}s budget (last IO PSI some avg10=''${RET_PSI}%). on-exhausted=refuse: a cold load into this storm is storm fuel (freeze #56 — the 15:10:49 exhausted proceed admitted a 9 G read 7 s before the cut); the unit fails, restart backoff retries later, and the socket backlog keeps clients queued (see pkgs/psi-wait-gate.nix)." >&2
+            return 1
+          fi
           echo "WAIT-BUDGET-EXHAUSTED: $GATE_NAME — proceeding anyway after ''${MAX_WAIT_SEC}s budget (last IO PSI some avg10=''${RET_PSI}%). The waiting gate never refuses: the socket backlog keeps clients queued, and a slow answer beats a dead service (see pkgs/psi-wait-gate.nix)." >&2
           return 0
         fi
@@ -175,7 +205,7 @@ writeShellApplication {
 
     if [ "$SELFTEST" = "1" ]; then
       PASS=0
-      EXPECT=9
+      EXPECT=11
       ok() {
         PASS=$((PASS + 1))
       }
@@ -224,6 +254,17 @@ writeShellApplication {
           fi
         else
           fail "$1: budget exhaustion must still exit 0 (never refuse), got $?"
+        fi
+      }
+      must_refuse() {
+        if out=$(wait_loop 2>&1); then
+          fail "$1: refuse mode must exit 1 at budget exhaustion, got 0: $out"
+        else
+          if printf '%s' "$out" | grep -qF "WAIT-BUDGET-REFUSED: $GATE_NAME"; then
+            ok
+          else
+            fail "$1: refusal verdict line missing: $out"
+          fi
         fi
       }
 
@@ -283,6 +324,22 @@ writeShellApplication {
       rc=0
       ( usage ) >/dev/null 2>&1 || rc=$?
       if [ "$rc" -eq 64 ]; then ok; else fail "selftest 9 (usage must exit 64, got $rc)"; fi
+
+      # 10: on-exhausted=refuse fails the unit at budget instead of
+      # proceeding into the storm (the freeze-#56 inversion)
+      printf 'some avg10=30.00 avg60=9.00\n' >"$PSI_F"
+      ON_EXHAUSTED=refuse
+      MAX_WAIT_SEC=2
+      must_refuse "selftest 10 (refuse mode: exhaustion exits 1)"
+      MAX_WAIT_SEC=1200
+      ON_EXHAUSTED=proceed
+
+      # 11: refuse mode still ADMITS when calm — refusal is
+      # exhaustion-only, never admission-policy
+      printf 'some avg10=5.00 avg60=1.00\n' >"$PSI_F"
+      ON_EXHAUSTED=refuse
+      must_admit_now "selftest 11 (refuse mode admits when calm)"
+      ON_EXHAUSTED=proceed
 
       if [ "$PASS" -ne "$EXPECT" ]; then
         fail "selftest count drift: $PASS PASS vs $EXPECT expected"
