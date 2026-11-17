@@ -11,6 +11,7 @@ Journal timeline (`journalctl -u llama-vlm-cap.service -n 30`):
 - 19:42:14 — a probe re-activated it **19 s later**; the deployed (Nov 7 gen) psi-wait-gate began WAIT-ing: **21 consecutive checks at IO PSI some avg10 81-99 %** (630+ s of the 900 s budget consumed at capture time, ~19:52).
 - Deployed unit confirmed WITHOUT the refuse flag: `grep ExecStartPre /etc/systemd/system/llama-vlm-cap.service` → `--psi-max 30 --max-wait-sec 900` (no `--on-exhausted refuse`). At budget exhaustion (~19:57) the deployed behavior **proceeds**: a 9.1 G GGUF read into a pinned-99 %-PSI storm — the exact freeze-#56 fatal step (13:10:49 reload, 35→75 % PSI), ~4 h 45 m after the freeze.
 - e4b cycles the same treadmill: loaded 15:44:42 → idle-stopped 15:56:47 (12 min resident, **8 G read**, 248 KB swap peak, 6 s CPU).
+  **CORRECTION (2026-11-17 21:0x, close-out self-review):** the "same treadmill" attribution for e4b is RETRACTED — its observed cycle is the DESIGNED on-demand behavior (one short use ≈ 6 s CPU, correct idle-stop at the 10-min minimum with no processing in the 1 h keepAlive window); the treadmill mechanism requires repeated probe-driven restarts that never register as keep-alive, which was only evidenced for cap (whose probes never produce "processing task" lines). e4b's 8 G read is the legitimate per-use cost unless a sub-1 h probe source emerges (watch item). Full re-derivation: docs/status/2026-11-17_21-09_llama-vlm-treadmill-swap-session-closeout-self-review.md §d.3.
 
 ## b. Attribution snapshot at ~19:5x (the box was NOT calm)
 
