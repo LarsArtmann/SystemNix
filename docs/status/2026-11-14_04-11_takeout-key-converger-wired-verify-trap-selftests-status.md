@@ -192,9 +192,23 @@ time, and `takeout-extract.sh` + the ledger normalization were not started.
 
 **Verify/quality:**
 17. Replace `--manifest racedriver8k` with a per-account manifest path.
+    **DONE 2026-11-17:** `--manifest <file>` takes a per-account products.tsv
+    path (`scripts/takeout-manifests/`, header-validated; racedriver8k is the
+    first resident); the bare literal no longer resolves to anything.
 18. Add a verify leg proving a *partial* products.tsv (some rows, wrong sizes) still fails.
+    **DONE 2026-11-17:** `partial-manifest` leg — some correct rows + one
+    wrong-size row must FAIL via the size-band gate AND the
+    no-matching-expected-product extras gate.
 19. `takeout-verify.sh --no-hash` path has no selftest leg — add one.
+    **DONE 2026-11-17:** `no-hash` leg — `--no-hash` stays GREEN and writes
+    no SHA256SUMS. Verify battery 9→11 legs; CI leg-count floor raised to 11;
+    `nix build .#checks.x86_64-linux.takeout-selftests` green (78 legs total
+    across the battery floors, re-verified independently after the status
+    battery landed alongside).
 20. Check `size_band` on real ranges from the racedriver8k parts.tsv (LESS1MB, GB forms).
+    **HARVESTED 2026-11-17** into TODO_LIST/docs/todo (queue commit
+    8a79b83e2: "size_band real-range check ... still load-bearing now that
+    the product-size gate enforces manifest rows against zip bytes").
 21. Add `--selftest` counts to `docs/agents/*` or a README so a future session knows the battery exists.
 22. Re-run the `takeout-verify.sh --selftest` after the next edit to `norm`/`size_band`.
 
