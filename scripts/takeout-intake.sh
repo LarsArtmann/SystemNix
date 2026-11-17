@@ -8,6 +8,7 @@
 #
 # Usage:
 #   bash scripts/takeout-intake.sh --account <account> [--from DIR] [--dry-run]
+#   bash scripts/takeout-intake.sh --account <account> --allow-local-part ...
 #   bash scripts/takeout-intake.sh --selftest
 #
 # Registry: scripts/takeout-accounts.tsv (override TAKEOUT_REGISTRY).
@@ -29,10 +30,14 @@ staging_for() {
   awk -F'\t' -v a="$1" '$1 == a { print $3; exit }' "$REGISTRY"
 }
 
-# non-dying gate predicate: echoes the verdict (MATCH|MISMATCH|NO-EMAIL) and
-# returns 0 only on MATCH
+# non-dying gate predicate: echoes the verdict (MATCH|MATCH-LOCAL|MISMATCH|NO-EMAIL)
+# and returns 0 only on MATCH/MATCH-LOCAL. Full-email match by default;
+# a same-local-part/different-domain email only passes with allow_local=1
+# (the --allow-local-part opt-in) — that class is the realistic
+# wrong-account-save (owner logged into a different Google account that
+# shares the local part).
 account_gate_verdict() {
-  local page=$1 account=$2
+  local page=$1 account=$2 allow_local=${3:-0}
   local emails e
   emails=$(grep -oiE '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' "$page" 2>/dev/null | sort -u | head -5)
   if [ -z "$emails" ]; then
@@ -43,9 +48,13 @@ account_gate_verdict() {
   a_local=${account%%@*}
   while IFS= read -r e; do
     [ -n "$e" ] || continue
-    e_local=${e%%@*}
-    if [ "${e,,}" = "${account,,}" ] || [ "${e_local,,}" = "${a_local,,}" ]; then
+    if [ "${e,,}" = "${account,,}" ]; then
       echo MATCH
+      return 0
+    fi
+    e_local=${e%%@*}
+    if [ "$allow_local" -eq 1 ] && [ "${e_local,,}" = "${a_local,,}" ]; then
+      echo "MATCH-LOCAL ($e)"
       return 0
     fi
   done <<<"$emails"
@@ -54,11 +63,14 @@ account_gate_verdict() {
 }
 
 verify_account_page() {
-  local page=$1 account=$2 verdict
-  verdict=$(account_gate_verdict "$page" "$account")
+  local page=$1 account=$2 allow_local=$3 verdict
+  verdict=$(account_gate_verdict "$page" "$account" "$allow_local")
   case $verdict in
   MATCH)
     log "account gate: page email matches account '$account'"
+    ;;
+  MATCH-LOCAL*)
+    log "WARN: account gate passed on LOCAL-PART match only: page email '${verdict#MATCH-LOCAL (}' vs --account '$account' — domains differ; verify this is not the wrong Google account"
     ;;
   NO-EMAIL)
     die "no account email found on $page — cannot prove whose exports these are (save the page WHILE LOGGED IN as $account, or pass --force)"
@@ -70,7 +82,7 @@ verify_account_page() {
 }
 
 intake() {
-  local account='' from='' dry=0 do_ingest=0 do_list=0 force=0
+  local account='' from='' dry=0 do_ingest=0 do_list=0 force=0 allow_local=0
   while [ $# -gt 0 ]; do
     case $1 in
     --account)
@@ -87,6 +99,10 @@ intake() {
       ;;
     --ingest)
       do_ingest=1
+      shift
+      ;;
+    --allow-local-part)
+      allow_local=1
       shift
       ;;
     --list)
@@ -129,7 +145,7 @@ intake() {
     gate=FORCED
     log "WARN: --force set — skipping the account-email gate"
   else
-    gate=$(account_gate_verdict "$candidate" "$account") || true
+    gate=$(account_gate_verdict "$candidate" "$account" "$allow_local") || true
   fi
 
   if [ "$do_list" -eq 1 ]; then
@@ -138,7 +154,7 @@ intake() {
   fi
 
   if [ "$gate" != FORCED ]; then
-    verify_account_page "$candidate" "$account"
+    verify_account_page "$candidate" "$account" "$allow_local"
   fi
 
   if [ -f "$staging/links.html" ] && cmp -s "$candidate" "$staging/links.html"; then
@@ -186,6 +202,8 @@ STUB
   mkdir -p "$fx"/dl-foreign "$fx"/dl-emailless "$fx"/empty
   printf '<div>someone-else@other.org</div><a data-download-uri="takeout/download?y=2" data-size="2 MB" data-filename="b.zip">y</a>\n' >"$fx/dl-foreign/Google Takeout.html"
   printf '<a data-download-uri="takeout/download?z=3" data-size="3 MB" data-filename="c.zip">z</a>\n' >"$fx/dl-emailless/Google Takeout.html"
+  mkdir -p "$fx/dl-samelocal"
+  printf '<div>testacct@other.org</div><a data-download-uri="takeout/download?w=4" data-size="4 MB" data-filename="d.zip">w</a>\n' >"$fx/dl-samelocal/Google Takeout.html"
 
   check() { # name expected actual
     if [ "$2" = "$3" ]; then
@@ -218,6 +236,13 @@ STUB
 
   bash "$0" --account testacct --from "$fx/dl-emailless" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check emailless-page-rejected 1 "$rc_bad"
+
+  bash "$0" --account testacct --from "$fx/dl-samelocal" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
+  check same-local-diff-domain-rejected 1 "$rc_bad"
+
+  rm -f "$fx/stage/links.html"
+  bash "$0" --account testacct --from "$fx/dl-samelocal" --allow-local-part --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
+  check same-local-optin-accepted 0 "$rc_ok"
 
   rm -f "$fx/stage/links.html"
   bash "$0" --account testacct --from "$fx/dl-foreign" --force --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
