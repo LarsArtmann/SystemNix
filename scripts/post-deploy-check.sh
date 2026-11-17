@@ -2637,6 +2637,15 @@ case "$_cv_health_code" in
 "") report_fail "cvagent dashboard - no HTTP answer on 127.0.0.1:$_cv_port (unit active but dark)" ;;
 *) report_fail "cvagent dashboard - /health unexpected answer: $_cv_health_code" ;;
 esac
+
+# Dead-letter sentinel: the CRM-mirror health signal also rides the
+# cv-server journal line (the X-API-Key-gated endpoint is agent-unreadable
+# by design, the journal line carries the same signal).
+if journalctl -u cv-server.service --since '-26 hours' --grep 'dead-letter' -o cat 2>/dev/null | grep -q .; then
+  report_warn "cv-server - dead-letter lines in 26h (CRM mirror dropped writes; journalctl -u cv-server.service --since '-26 hours' | grep -i dead-letter)"
+else
+  report_pass "cv-server - no dead-letter lines in 26h (CRM mirror clean)"
+fi
 unset _cv_port _cv_scan_done _cv_failed _cv_scanned _cv_mesh_dir _cv_health_code
 
 # --- Summary ---
