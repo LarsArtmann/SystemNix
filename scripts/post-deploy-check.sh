@@ -2722,7 +2722,16 @@ else
       report_skip "Takeout dedup preflight ($_tk_acct) - no zips downloaded yet at $_tk_root (G1 outstanding; the preflight gate owns import-time honesty, download completeness is G2's)"
       continue
     fi
-    _tk_cycle="$(basename "$_tk_root" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}$' || echo unknown)"
+    _tk_cycle="$(basename "$_tk_root" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}$' || true)"
+    if [ -z "$_tk_cycle" ] && [ -f "${TAKEOUT_LEDGER:-/mnt/pool/archive/google-takeout/.ledger/ledger.tsv}" ]; then
+      # No date suffix on the staging root: fall back to the LATEST cycle the
+      # ledger holds for this account. A bare "unknown" filters the ledger to
+      # zero rows and balance reports a VACUOUS PASS (the empty-side lie
+      # balance itself guards against; same fix as takeout-status.sh,
+      # 2026-11-17 — the battery leg initially shipped WITHOUT it).
+      _tk_cycle="$(awk -F'\t' -v a="$_tk_acct" 'NR > 1 && $4 == a && $5 > latest { latest = $5 } END { print latest }' "${TAKEOUT_LEDGER:-/mnt/pool/archive/google-takeout/.ledger/ledger.tsv}")"
+    fi
+    _tk_cycle="${_tk_cycle:-unknown}"
     if _tk_out="$(bash "$_tk_dedup" balance --staging "$_tk_root" --account "$_tk_acct" --cycle "$_tk_cycle" --preflight 2>&1)"; then
       report_pass "Takeout dedup preflight ($_tk_acct) - $(printf '%s' "$_tk_out" | tail -n1)"
     else
