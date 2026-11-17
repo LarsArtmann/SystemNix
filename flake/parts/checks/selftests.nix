@@ -1725,10 +1725,12 @@
         # Every leg is hermetic (fixtures under XDG_CACHE_HOME, no pool/no
         # network). The scripts re-invoke THEMSELVES (`"$0" index …`), hence
         # the copy + shebang rewrite (/usr/bin/env is absent in the sandbox).
-        # Legs (asserted below; measured, do not guess): verify 9
-        # (incl. the foreign-manifest leak class + raw-zip-name tolerance),
+        # Legs (asserted below; measured, do not guess): verify 11
+        # (incl. the self-derivation WARN contract, the per-account manifest
+        # path, the partial/wrong-size manifest negative, --no-hash, and
+        # raw-zip-name tolerance),
         # dedup 21 (index/plan/
-        # balance/account isolation), intake 12 (registry + page discovery +
+        # balance/account isolation), intake 14 (registry + page discovery +
         # account-email gate: wrong-account rejected, email-less rejected,
         # --force override, --list, --ingest chain),
         # browser-rename 7 (dry-run, promote, same-size CRC corruption, marker
@@ -1737,7 +1739,9 @@
         # member scoping, rc11 skip, corrupt zip, extra-file reconciliation,
         # listing reuse), rename-loop 8 (--once complete/incomplete, bounded
         # completion, same-size CRC corruption times out honestly + marker +
-        # log evidence).
+        # log evidence), status 8 (parts count, ledger stats, preflight
+        # pass/fail/skip, verify stamps green+fail, missing staging +
+        # missing root).
         takeout-selftests =
           pkgs.runCommand "takeout-selftests"
             {
@@ -1757,7 +1761,7 @@
               export HOME="$scratch"
               export XDG_CACHE_HOME="$scratch/cache"
               mkdir -p "$XDG_CACHE_HOME"
-              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename takeout-extract takeout-rename-loop"
+              scripts="takeout-verify takeout-dedup takeout-intake takeout-browser-rename takeout-extract takeout-rename-loop takeout-status"
               for s in $scripts; do
                 cp ${root}/scripts/"$s".sh "$scratch/$s.sh"
                 sed -i "1s|.*|#!${pkgs.bash}/bin/bash|" "$scratch/$s.sh"
@@ -1783,6 +1787,7 @@
                   takeout-browser-rename) want_pass=5; want_legs=2 ;;
                   takeout-extract) want_pass=9; want_legs=0 ;;
                   takeout-rename-loop) want_pass=0; want_legs=8 ;;
+                  takeout-status) want_pass=0; want_legs=8 ;;
                 esac
                 if [ "$pass" -ne "$want_pass" ] || [ "$legs" -ne "$want_legs" ]; then
                   echo "LEG-COUNT MISMATCH: $s expected $want_pass PASS + $want_legs leg-OK, got $pass + $legs"

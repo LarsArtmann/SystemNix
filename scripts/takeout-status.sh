@@ -90,6 +90,16 @@ preflight_verdict() {
     return
   fi
   cycle=$(basename "$root" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}$' || true)
+  if [ -z "$cycle" ] && [ -f "$LEDGER" ]; then
+    # No date suffix on the staging root: fall back to the LATEST cycle the
+    # ledger holds for this account. A bare "unknown" here would filter the
+    # ledger to zero rows and make balance report a VACUOUS PASS (the same
+    # empty-side lie balance itself guards against) — live-caught in the
+    # selftest 2026-11-17.
+    cycle=$(awk -F'\t' -v a="$account" '
+      NR > 1 && $4 == a && $5 > latest { latest = $5 }
+      END { print latest }' "$LEDGER")
+  fi
   cycle=${cycle:-unknown}
   if out=$(bash "$DEDUP" balance --staging "$root" --account "$account" --cycle "$cycle" --preflight 2>&1); then
     echo "PASS"
