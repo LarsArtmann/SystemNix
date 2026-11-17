@@ -16,6 +16,9 @@
 6. **3-probe converger acceptance** — all green after the parallel session's gen-1011/1012 deploys: env file `400 lars:users` (11:24:21 mint), `takeout-import (nix-managed)|16` in api_key (live psql), ingest preflight ran.
 7. **immich-go 0.32.0 invocation bugs fixed live** — (i) connection flags belong to the `upload` subcommand, not root (`unknown command "http://…"`); (ii) long flags need double-dash (pflag shorthand-cluster trap: `-api-key` → `unknown shorthand flag: 'a'`); (iii) `--on-errors` env override added (`INGEST_ON_ERRORS`, default stays `stop`) after the no-`asset.delete` scope × quality-upgrade path collided. Commit `27612ccf2`. All caught by dry-runs BEFORE the real import; real dry-run rc=0 with exact accounting: 2,896 assets = 2,640 with-metadata + 256 unmatched.
 8. **THE IMPORT (Gate G3) — complete, rc=0 both passes** — pass 1 (stop policy): 1,128 uploaded (2.5 GB), 889 metadata, 890 album adds, stopped at 22 designed `DeleteAsset 403`s with 876 pending. Pass 2 (`INGEST_ON_ERRORS=continue`, the documented escape): 875 uploaded (12.1 GB), 2,001 metadata updated, 1,135 server-dup discards, finished clean 13:10:26. **Total new assets uploaded: 2,003 of 2,004 predicted** (the 1 delta = the upgrade-class asset absorbed as duplicate); 886-891 local (in-takeout album-copy) duplicates discarded per pass; 0 upload errors.
+
+> **[ANNOTATED 2026-11-17 (resumption session):]** the "upgrade-class absorbed" attribution did not hold — per-file multiplicity forensics found the real mechanism: error-on-response, commit-on-server, dup-on-rescan (the `PXL_20260731_133808477.RAW-01.COVER.jpg` committed server-side despite its client error, then absorbed as a server-duplicate on rescan). Net effect identical: 2,004/2,004 predicted assets are in Immich, DB-verified. Evidence: `docs/status/2026-11-15_15-17_coverjpg-forensics-drive-photos-already-in-immich-staging-freshened-ci-verdicts.md` §b1/§d3.
+
 9. **Album verification** — this takeout contains exactly ONE genuine album ("All", 1,775 members); live API shows it in Immich with 888 assets (= members minus the album-copy duplicate class); the 9 other Immich albums are pre-existing library albums. Year folders ("Photos from 2021"…2026) are Google date buckets, correctly NOT created as albums.
 10. **Branch pushed** (07:02, `ae3075a1d..7e5965d58`) — remote carried the parallel sessions' pushes before mine; my commits landed on top.
 
@@ -54,6 +57,8 @@
 1. Tick the import `[blocked:deploy]` row (both surfaces) + registry → post-import status + CHANGELOG import entry.
 2. **Owner decision: the 22 kept upgrade pairs** — immich-go uploaded the takeout's better version and (correctly, per scope) could NOT delete the old server asset; both versions now coexist. Options: owner reviews/deletes manually in the UI, or a one-time supervised delete window (NOT a permanent scope change).
 3. **Owner decision: 243 Drive-product photos** (`dedup/photos.txt` bucket) — import to Immich as well, or leave for G4 (Drive→OpenCloud) only?
+
+> **[ANNOTATED 2026-11-17 (resumption session):]** premise reshaped — see the g.2 annotation: all 243 are already in Immich.
 4. G6 full balance run (destination counts into the report) — closes the gate formally.
 5. Watch Immich ML job completion (2,003 new assets processing; thumbnails/ML on CPU/GTT).
 6. G4: Drive → OpenCloud via rclone `--files-from dedup/new-files.txt` (1,300 files, cycle-1 = whole tree).
@@ -71,4 +76,6 @@
 
 1. **The 22 upgrade pairs: keep both, review manually, or grant a one-time delete window?** The importer must never hold `asset.delete` (standing directive, correctly enforced); deciding which version survives is a human data decision.
 2. **Do the 243 Drive photos go to Immich too, or only through Drive→OpenCloud (G4)?** The plan buckets them as "immich pre-filter" but importing them duplicates G4's tree role unless the owner wants photos unified in Immich.
+
+> **[ANNOTATED 2026-11-17 (resumption session):]** premise reshaped by forensics: all 243 Drive photos are ALREADY in Immich (238 uploaded during the import + 5 absorbed as server-dups). The live question is the inverse of the original: keep Immich-only (the dedup plan's current shape — they are excluded from G4's `new-files.txt`) or ALSO copy them through G4 into OpenCloud. Evidence: the 15:17 forensics report §d3.
 3. **Is the racedriver8k browser-click window (expires 2026-11-18 03:13) still planned this weekend, or should the fleet treat it as expired-and-re-request?** Only the owner can click the rart wall; the decision changes whether racedriver8k queue rows stay `[blocked:user]` with a deadline or move to re-request posture.
