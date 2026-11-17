@@ -2648,6 +2648,87 @@ else
 fi
 unset _cv_port _cv_scan_done _cv_failed _cv_scanned _cv_mesh_dir _cv_health_code
 
+# --- §25 Takeout Immich key converger + dedup preflight ---
+# 2026-11-17: the Immich keys are machine-minted by the root converger
+# immich-api-key-provision (services.immich.apiKeys.*) — but nothing in this
+# battery asserted its output, so a converger that stopped converging (DB
+# restore, schema drift, a dead postgres) would surface only when an import
+# script failed mid-run. The leg asserts the takeout-import consumer end-to-end:
+# rendered env file (0400, non-empty, key line present), the api_key DB row
+# with its declared permission count, the convergence journal markers (a fresh
+# "minted" line = key minted this deploy), and the takeout-dedup balance
+# --preflight gate per registry staging root (the honest "nothing to import
+# yet" check). DB probes need postgres peer-auth via sudo+setpriv; without
+# working sudo they degrade to WARN-skip (the battery must stay runnable on
+# unprivileged shells), never silent.
+echo ""
+echo "=== §25 Takeout Immich key converger + dedup preflight ==="
+
+if systemctl is-active --quiet immich-api-key-provision.service 2>/dev/null; then
+  report_pass "Takeout Immich converger - unit active (immich-api-key-provision)"
+else
+  report_fail "Takeout Immich converger - unit not active (journalctl -u immich-api-key-provision -n 50)"
+fi
+
+_takeout_env="/var/lib/immich-api-keys/takeout-import.env"
+if [ ! -f "$_takeout_env" ]; then
+  report_fail "Takeout Immich key - env file missing: $_takeout_env (rm + restart immich-api-key-provision to mint)"
+elif [ "$(stat -c %a "$_takeout_env" 2>/dev/null)" != "400" ]; then
+  report_fail "Takeout Immich key - env file not 0400: $(stat -c %a "$_takeout_env" 2>/dev/null) ($_takeout_env)"
+elif ! grep -q '^IMMICH_API_KEY=.' "$_takeout_env" 2>/dev/null; then
+  report_fail "Takeout Immich key - env file has no IMMICH_API_KEY line ($_takeout_env)"
+else
+  report_pass "Takeout Immich key - env file 0400 with key material ($_takeout_env)"
+fi
+
+if sudo -n true 2>/dev/null; then
+  _tk_row="$(sudo -n setpriv --reuid postgres --regid postgres --init-groups -- psql -d immich -At -c "SELECT count(*) || '/' || coalesce(array_length(permissions, 1), 0) FROM api_key WHERE name = 'takeout-import (nix-managed)'" 2>/dev/null || echo "")"
+  case "$_tk_row" in
+    "1/16") report_pass "Takeout Immich key - api_key row present with 16 permissions (takeout-import (nix-managed))" ;;
+    "") report_warn "Takeout Immich key - DB probe unavailable (sudo ok but psql failed; is the immich DB up?)" ;;
+    *) report_fail "Takeout Immich key - api_key row/count/permissions wrong: '$_tk_row' (expected 1 row / 16 permissions; converger re-converges via systemctl restart immich-api-key-provision)" ;;
+  esac
+  unset _tk_row
+else
+  report_warn "Takeout Immich key - DB row probe skipped (sudo unavailable in this shell; run the battery from the deploy terminal for the api_key check)"
+fi
+
+# Journal markers: a fresh "minted takeout-import" line means THIS deploy
+# window minted the key (restartUnits fired); otherwise a converged line in
+# 26h proves the last convergence pass saw file+row consistent.
+if journalctl -u immich-api-key-provision.service --since '-2 hours' --grep 'minted takeout-import' -o cat 2>/dev/null | grep -q .; then
+  report_pass "Takeout Immich key - minted THIS deploy window (journal marker, <2h)"
+elif journalctl -u immich-api-key-provision.service --since '-26 hours' --grep "converged (takeout-import" -o cat 2>/dev/null | grep -q .; then
+  report_pass "Takeout Immich key - converged clean (file + api_key row consistent, <26h)"
+else
+  report_warn "Takeout Immich key - no mint/converge journal line in 26h (daily timer 6h jitter may simply not have fired yet; systemctl start immich-api-key-provision to force)"
+fi
+
+# balance --preflight per registry staging root: PASS = zips reconcile
+# (extracted products match byte-for-byte, cold products allowed); FAIL =
+# mismatch (reconcile before any import); no zips yet = SKIP.
+_tk_dedup="$(dirname "${BASH_SOURCE[0]}")/takeout-dedup.sh"
+_tk_registry="$(dirname "${BASH_SOURCE[0]}")/takeout-accounts.tsv"
+if [ ! -f "$_tk_registry" ] || [ ! -f "$_tk_dedup" ]; then
+  report_warn "Takeout dedup preflight - registry or dedup script missing (skipped)"
+else
+  while IFS=$'\t' read -r _tk_acct _tk_mode _tk_root _tk_rest; do
+    case $_tk_acct in '' | '#'*) continue ;; esac
+    [ "$_tk_acct" = "account" ] && continue
+    if [ ! -d "$_tk_root/zips" ] || ! ls "$_tk_root"/zips/*.zip >/dev/null 2>&1; then
+      report_skip "Takeout dedup preflight ($_tk_acct) - no zips downloaded yet at $_tk_root (G1 outstanding; the preflight gate owns import-time honesty, download completeness is G2's)"
+      continue
+    fi
+    _tk_cycle="$(basename "$_tk_root" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}$' || echo unknown)"
+    if _tk_out="$(bash "$_tk_dedup" balance --staging "$_tk_root" --account "$_tk_acct" --cycle "$_tk_cycle" --preflight 2>&1)"; then
+      report_pass "Takeout dedup preflight ($_tk_acct) - $(printf '%s' "$_tk_out" | tail -n1)"
+    else
+      report_fail "Takeout dedup preflight ($_tk_acct) - $(printf '%s' "$_tk_out" | tail -n1)"
+    fi
+  done <"$_tk_registry"
+  unset _tk_acct _tk_mode _tk_root _tk_rest _tk_cycle _tk_out _tk_dedup _tk_registry
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="

@@ -72,6 +72,14 @@
 11. Harvest §f (this list) into TODO_LIST/domain libraries or record explicit non-harvest verdicts — per the queue rules, this line is the obligation.
 12. (Inherited, referenced not re-derived) freeze-#56 ledger row, #55 backfill, evidence-pull urgency — open at the 15:24 report; listed here so §f of THIS report doesn't orphan them.
 
+---
+
+## Addendum (same session, ~17:43 — third disconnect wave, supersedes the §Verdict/§f driver picture above)
+
+Owner reported 3 simultaneous client timeouts + a 2m18s command stall at ~17:41–43. Verified live: **same boot** (`783f2d13…`, up 2:31 — NOT a crash; boot identity re-checked per the reboot-signature rule), zero link events since 17:20, CPU PSI 5%, but IO PSI avg300 spiked to **75.8% some / 68.7% full** — a ~5-minute near-total IO stall at exactly the disconnect window; 10 fresh SSH reconnects since 17:20.
+
+**Corrected driver attribution (cgroup io.stat 12 s delta — catches what /proc/*/io missed because these are system.slice/root-owned):** `cvagent.service` ~120 MB/s (51 rd + 69 wr) + `tq-agent-pool.service` ~102 MB/s pure reads = **~275 MB/s aggregate**, both NVMe devices 40–60 requests deep. The earlier "crush 98 MB/s" reader (PID 69393) is no longer in any census — the load shifted to these two system services between 16:25 and 17:43. **New fact for the freeze-56 §f.27 read-amplifier census: `tq-agent-pool` was absent from that report's final-hour reader list** (its systemd-Consumed-lines census missed system.slice units the cgroup delta catches) — the census method should be cgroup `io.stat` deltas, not Consumed lines. Both services run unthrottled (no IO ceiling; IO-PAUSE disarmed). Stopping either is an owner action (agent shells cannot mutate system units).
+
 ## g) Questions I cannot figure out myself
 
 1. **Which Mac application owns the long-stalled SSH sessions** (peer ports 62981/61873, 55–56 KB unread for 30+ min)? Only visible from the Mac (`lsof -i :62981`); from evo-x2 it's just an unread socket.
