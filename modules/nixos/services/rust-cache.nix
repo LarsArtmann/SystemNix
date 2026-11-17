@@ -106,15 +106,42 @@
         };
 
         gc = {
-          enable = lib.mkEnableOption "weekly Rust cache garbage collection (stale target dirs)";
+          enable = lib.mkEnableOption "weekly Rust cache garbage collection";
 
           maxAgeDays = lib.mkOption {
             type = lib.types.int;
             default = 14;
             description = ''
-              Rust target/ dirs under <mountPoint>/rust untouched for this many
-              days are deleted. Safe with sccache: a deleted target dir rebuilds
-              from sccache hits without re-invoking rustc for dependencies.
+              Orphaned cache dirs (rust/<name> with no matching ~/projects/<name>
+              dir) older than this are deleted whole. Resident projects are
+              NEVER whole-dir pruned — reclaiming their space is a placement
+              decision, not a GC decision.
+            '';
+          };
+
+          sweepMaxAgeDays = lib.mkOption {
+            type = lib.types.int;
+            default = 21;
+            description = ''
+              Age threshold for the per-artifact sweep: deps/root artifact
+              files deleted together with their companion
+              .fingerprint/<stem> dirs, plus stale incremental session dirs.
+            '';
+          };
+
+          aggressiveAgeDays = lib.mkOption {
+            type = lib.types.int;
+            default = 7;
+            description = "Sweep age used once usage is at or above actThresholdPercent.";
+          };
+
+          actThresholdPercent = lib.mkOption {
+            type = lib.types.int;
+            default = 80;
+            description = ''
+              Usage at which the GC escalates to the aggressive sweep age
+              (usageThresholdPercent stays the Gatus alert threshold — the
+              two numbers are deliberately separate).
             '';
           };
 
@@ -333,13 +360,29 @@
           };
         };
 
-        # Weekly Rust cache GC. Runs as the primary user (all cache dirs are
-        # user-owned). rm on stale rust targets instead of trash is deliberate:
-        # trashing tens of GB of rebuildable cache would write it to the NVMe
-        # trash - the exact I/O this SSD exists to keep OFF the NVMe. Cache data
-        # only, never user data; paths are anchored under the mount point.
+        # Weekly Rust cache GC: (1) per-artifact aged sweep inside resident
+        # target dirs — artifact file deleted TOGETHER with its companion
+        # .fingerprint/<stem> dir (deleting one without the other makes cargo
+        # relink redundantly or fail at link time); plus stale incremental
+        # session dirs. cargo keeps old build-dir and dep variants forever,
+        # so this is the only reclaim they ever get. (2) Orphan-dir prune:
+        # rust/<name> whose project tree is gone. (3) Threshold ladder to a
+        # more aggressive sweep age. Runs as the primary user (all cache dirs
+        # are user-owned). rm instead of trash is deliberate: trashing tens
+        # of GB of rebuildable cache would write it to the NVMe trash — the
+        # exact I/O this SSD exists to keep OFF the NVMe. Cache data only,
+        # never user data; paths anchored under the mount point.
+        #
+        # 2026-11-18 redesign: the old cold-prune-ALL leg is GONE. Measured
+        # on monitor365 (199G/224G, the only resident that ever mattered):
+        # ZERO bytes older than 7d — the working set churns in place
+        # (same-hash artifacts overwrite, refreshing mtimes), so age-based
+        # reclamation finds ~0, and "cold-prune ALL" only ever destroyed
+        # ACTIVE caches to buy a rebuild storm on a 24 MB/s USB SSD.
+        # Reclaiming a resident project's space is a placement decision
+        # (cargo clean / move the target), never a GC decision.
         systemd.services.rust-cache-gc = lib.mkIf cfg.gc.enable {
-          description = "Rust cache garbage collection (stale target dirs, high-watermark prune)";
+          description = "Rust cache garbage collection (aged artifact sweep, orphan prune, threshold ladder)";
           startLimitBurst = 3;
           startLimitIntervalSec = 300;
           unitConfig = {
@@ -371,30 +414,91 @@
             set -eu
             mnt="${cfg.mountPoint}"
             max_age=${toString cfg.gc.maxAgeDays}
-            watermark=${toString cfg.usageThresholdPercent}
+            sweep_age=${toString cfg.gc.sweepMaxAgeDays}
+            aggressive_age=${toString cfg.gc.aggressiveAgeDays}
+            act=${toString cfg.gc.actThresholdPercent}
+            projects_root="${homeDir}/projects"
 
             usage() {
               df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9'
             }
 
-            echo "rust-cache-gc: start at $(usage)% usage"
+            # Aged artifact sweep across every resident target dir.
+            sweep() {
+              age=$1
+              local t debug base stem n
+              for t in "$mnt"/rust/*; do
+                [ -d "$t" ] || continue
+                debug="$t/debug"
+                [ -d "$debug" ] || continue
+                if [ -d "$debug/incremental" ]; then
+                  n=$(find "$debug/incremental" -mindepth 1 -maxdepth 1 -type d -mtime "+$age" | wc -l)
+                  if [ "$n" -gt 0 ]; then
+                    find "$debug/incremental" -mindepth 1 -maxdepth 1 -type d -mtime "+$age" -exec rm -rf {} +
+                    echo "rust-cache-gc: swept $n stale incremental session dirs under $(basename "$t")"
+                  fi
+                fi
+                for artifact_dir in "$debug/deps" "$debug"; do
+                  [ -d "$artifact_dir" ] || continue
+                  while IFS= read -r -d '' f; do
+                    base=$(basename "$f")
+                    case "$base" in
+                      *.rlib|*.rmeta|*.d|*.so|*.dylib|*.bin) stem="''${base%.*}" ;;
+                      *) stem="$base" ;;
+                    esac
+                    rm -f -- "$f"
+                    rm -rf -- "$debug/.fingerprint/$stem"
+                  done < <(find "$artifact_dir" -maxdepth 1 -type f -mtime "+$age" -print0)
+                done
+                # Orphan fingerprint dirs: aged fingerprint whose artifact is
+                # gone (failed companion rm, prior manual deletes). Kept
+                # fingerprints without artifacts would block rebuilds.
+                if [ -d "$debug/.fingerprint" ]; then
+                  while IFS= read -r -d '' fp; do
+                    stem=$(basename "$fp")
+                    if ! compgen -G "$debug/deps/$stem.*" >/dev/null && ! compgen -G "$debug/$stem.*" >/dev/null; then
+                      rm -rf -- "$fp"
+                    fi
+                  done < <(find "$debug/.fingerprint" -mindepth 1 -maxdepth 1 -type d -mtime "+$age" -print0)
+                fi
+              done
+            }
 
-            # Stale target dirs - cheap to lose with sccache.
-            find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -mtime "+$max_age" -print -exec rm -rf -- {} + || true
+            echo "rust-cache-gc: start at $(usage)% usage (sweep ''${sweep_age}d, aggressive ''${aggressive_age}d, act ''${act}%)"
 
+            # Leg 1: normal aged sweep.
+            sweep "$sweep_age"
+
+            # Leg 2: orphaned cache dirs — project tree gone. The dir's OWN
+            # mtime must be older than max_age (a freshly recreated shadow is
+            # kept for its grace window).
+            for t in "$mnt"/rust/*; do
+              [ -d "$t" ] || continue
+              p=$(basename "$t")
+              if [ ! -d "$projects_root/$p" ]; then
+                if [ -z "$(find "$t" -maxdepth 0 -mtime "-$max_age" -print)" ]; then
+                  rm -rf -- "$t"
+                  echo "rust-cache-gc: pruned orphaned cache dir rust/$p (no project dir at projects/$p)"
+                fi
+              fi
+            done
+
+            # Leg 3: threshold ladder — escalate the sweep age once.
             pct=$(usage)
-            if [ -z "''${pct:-}" ]; then
+            if [ -z "$pct" ]; then
               echo "rust-cache-gc: usage unavailable - mount vanished mid-run?" >&2
               exit 1
             fi
-            echo "rust-cache-gc: after pruning at ''${pct}% usage"
-            if [ "$pct" -ge "$watermark" ]; then
-              echo "rust-cache-gc: usage >= $watermark% - cold-pruning ALL target dirs (rebuildable via sccache + recompile)"
-              find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -print -exec rm -rf -- {} + || true
-              echo "rust-cache-gc: post-prune usage: $(usage)%"
+            if [ "$pct" -ge "$act" ] && [ "$sweep_age" -ne "$aggressive_age" ]; then
+              echo "rust-cache-gc: at ''${pct}% >= act ''${act}% - aggressive sweep at ''${aggressive_age}d"
+              sweep "$aggressive_age"
+              pct=$(usage)
             fi
 
-            echo "rust-cache-gc: done"
+            echo "rust-cache-gc: done at ''${pct}% usage"
+            if [ "$pct" -ge "$act" ]; then
+              echo "rust-cache-gc: WARNING still >= ''${act}% - remaining usage is held by RESIDENT projects; GC never wipes active caches. Reclaim = cargo clean <project> or move the target (placement decision), see docs/agents/storage.md"
+            fi
           '';
         };
 
@@ -440,7 +544,7 @@
                   "[BODY] == pat(*\nrustcache_mounted *)"
                   "[BODY] == pat(*\nrustcache_usage_over_threshold 0*)"
                 ];
-                alert = "Rust cache SSD exceeds 85% - the 240 GB drive is filling. Prune: find /mnt/rust-cache/rust -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} +; sccache --stop-server && rm -rf /mnt/rust-cache/sccache/*.";
+                alert = "Rust cache SSD exceeds 85% - the 240 GB drive is filling. Reclaim: systemctl start rust-cache-gc (escalates to the aggressive sweep at actThresholdPercent), or cargo clean a specific project. GC never wipes resident projects wholesale; moving a big target (e.g. monitor365) off the SSD is a capacity decision - see docs/agents/storage.md.";
               }
             ];
           };
