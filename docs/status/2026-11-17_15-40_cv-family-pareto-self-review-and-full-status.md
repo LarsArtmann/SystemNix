@@ -221,6 +221,16 @@ underneath me). Plan: docs/planning/2026-11-15_15-16-cv-family-pareto-plan.html
     the daemon sweep my main.go.
 19. Eval-verify the T41 module render on HEAD (`nix eval` the cvagent-scan
     environmentFile + the mint client list) — closes §b.4.
+    **RESOLVED 2026-11-17 (parallel batch session):** the eval-verify CAUGHT
+    the render broken — the 15:04 dash-prefixed `-/run/ai-meter-keys/…` in
+    `scan.environmentFile` violates the upstream option's `nullOr path` type
+    (every evo-x2 eval failed; daemon sweeps bypassed the hook that would
+    have caught it at commit time). Fix: option left at default `null`, the
+    optional-load dash moved to the unit layer
+    (`systemd.services.cvagent-scan.serviceConfig.EnvironmentFile =
+    lib.mkForce [ "-/run/ai-meter-keys/cvagent.env" ]`) with the intent
+    preserved (missing mint degrades to rule-based, never fails the unit);
+    full `nix flake check --no-build --all-systems --keep-going` green.
 20. Run the upstream VM test (`nix flake check` in Code-To-CV-Agent or the
     vm-test attr) — closes §b.5.
 

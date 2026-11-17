@@ -165,8 +165,17 @@ let
       (
         let
           relay = relayCfg.services.stalwart.provision.objects.MtaRoute.objects."smarthost";
+          # Stalwart 1.x renames the MtaRouteRelay plan key address -> host
+          # (SCHEMA_CHANGES 3.1); the wrapper renders version-aware and the
+          # upstream relay e2e asserts the DEFAULT package's dialect — mirror
+          # that here (the 2026-11-15 owner flip made 1.0.3 the default;
+          # `address` stays for a consumer-pinned 0.16 line).
+          relayAddressKey =
+            if lib.versionAtLeast relayCfg.services.stalwart.package.version "1.0"
+            then "host"
+            else "address";
         in
-        relay.address == "smtp.resend.com"
+        relay.${relayAddressKey} == "smtp.resend.com"
         && relay.authUsername == "resend"
         && relay.authSecret."@type" == "File"
         && relay.authSecret.filePath == "/run/credentials/stalwart.service/mail-server-relay"
