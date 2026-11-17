@@ -156,8 +156,24 @@ let
         link="$projects_root/$p/target"
         cache_dir="$cache_root/$p"
 
+        # Stale seed names (project deleted since eval): skip — without this
+        # guard the ln below aborts the whole run under set -e and blocks
+        # the discovery walk behind it.
+        if [ ! -d "$projects_root/$p" ]; then
+          echo "rust-cache-links: skipping $p (no project dir at $projects_root/$p)"
+          return 0
+        fi
+
         if [ -L "$link" ]; then
           if [ "$(readlink -- "$link")" = "$cache_dir" ]; then
+            # Repair-class: the GC cold-prune can wipe rust/* while links
+            # stay path-correct — cargo would ENOENT through the dangling
+            # link. Recreate the dir (empty; rebuilds via sccache).
+            if [ ! -d "$cache_dir" ]; then
+              mkdir -p -- "$cache_dir"
+              echo "rust-cache-links: recreated missing cache dir $cache_dir (post-GC)"
+              repaired=$((repaired + 1))
+            fi
             return 0
           fi
           ln -sfn -- "$cache_dir" "$link"
@@ -748,6 +764,23 @@ in
       "d /mnt/pool/backups/projects-subvol 0755 root root -"
     ];
 
+    # Daily discovery pass: a newly created ~/projects/*/Cargo.toml gets its
+    # target/ linked onto the rust-cache SSD without a redeploy (the seed
+    # list only covers projects known at eval time). 04:40 is clear of
+    # buildcache-gc (05:00) and rust-cache-gc (Sun 05:15); Persistent
+    # catches up a missed run after downtime. Boot-time convergence stays
+    # with the unit in services below (wantedBy multi-user); the
+    # provisioner's flock serializes the two paths.
+    timers.rust-cache-projects-links = {
+      description = "Daily rust-cache target-link discovery pass";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "*-*-* 04:40:00";
+        Persistent = true;
+        Unit = "rust-cache-projects-links.service";
+      };
+    };
+
     services = {
       # btrbk units are Type=oneshot with the global 3min
       # DefaultTimeoutStartSec — far too short for send phases. Observed
@@ -991,23 +1024,6 @@ in
           ioTier.background
           (serviceOneshotDefaults { })
         ];
-      };
-
-      # Daily discovery pass: a newly created ~/projects/*/Cargo.toml gets its
-      # target/ linked onto the rust-cache SSD without a redeploy (the seed
-      # list only covers projects known at eval time). 04:40 is clear of
-      # buildcache-gc (05:00) and rust-cache-gc (Sun 05:15); Persistent
-      # catches up a missed run after downtime. Boot-time convergence stays
-      # with the unit above (wantedBy multi-user); the provisioner's flock
-      # serializes the two paths.
-      systemd.timers.rust-cache-projects-links = {
-        description = "Daily rust-cache target-link discovery pass";
-        wantedBy = [ "timers.target" ];
-        timerConfig = {
-          OnCalendar = "*-*-* 04:40:00";
-          Persistent = true;
-          Unit = "rust-cache-projects-links.service";
-        };
       };
 
       # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
