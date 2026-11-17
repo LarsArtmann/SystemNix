@@ -3837,11 +3837,11 @@
     "go-cqrs-lite_10": {
       "flake": false,
       "locked": {
-        "lastModified": 1794032969,
-        "narHash": "sha256-6PDDBMUjPuYL09RrfkvpqgJN9skqqmyJzDhWjWALmvA=",
+        "lastModified": 1794766837,
+        "narHash": "sha256-iseCbh4cKJM0ENu+Q6SH1OlqoW1t1z8bL1zMgDsZxnU=",
         "owner": "larsartmann",
         "repo": "go-cqrs-lite",
-        "rev": "3429f2be507b351fcdda10dd1c738381a858c538",
+        "rev": "cc597bb319fd9d7ae05611d4cfb1ba7c34aae58a",
         "type": "github"
       },
       "original": {
@@ -9252,11 +9252,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794154178,
-        "narHash": "sha256-YKpapaTihyZ6WKZCOOyyhn0lDppJ3eaqtbbcX202TDY=",
+        "lastModified": 1794909236,
+        "narHash": "sha256-CG0nw7InyHZ/1g9zXLmQUqfmpB+an+mfeUBmqpl64lM=",
         "ref": "refs/heads/master",
-        "rev": "287f6951cf7c3995ca9cf92b12d4919fe095fbbb",
-        "revCount": 1527,
+        "rev": "c18dbb2c9d08bb9eccdcd03be93d8129dc72745f",
+        "revCount": 1548,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/PapDashboard"
       },

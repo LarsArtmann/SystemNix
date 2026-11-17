@@ -128,6 +128,23 @@ in
       target = 0.1;
       severity = "warning";
     };
+    # F3.1d crit leg (federation plan 2026-11-16 00-37): the primary's
+    # forwarder failing repeatedly means replication is NOT progressing —
+    # dead peer, key mismatch, or atomic gap rejections. Wire name carries
+    # the exporter namespace double underscore (live-verified family style,
+    # papdashboard__events_published_total). >5 failures per 5m: single
+    # transient blips do not page, a dead peer (~30/min at the 2s poll)
+    # fires within one window. EXPECTED-RED between the evo-x2 primary
+    # deploy and the pbx-artmann replica deploy (handover in
+    # docs/services/papdashboard.md) — the series itself only exists once
+    # the new binary records its first error.
+    "signoz/rules/papdashboard-fed-errors.json".source = mkRule {
+      name = "PapDashboard Federation Forward Failures";
+      description = "papdashboard federation forwarder failing repeatedly (>5 in 5m) — the pbx replica is not accepting batches: peer down, key mismatch, or version-gap rejections. Expected-red UNTIL the pbx-artmann replica deploy lands (see docs/services/papdashboard.md handover); after that: check curl -s localhost:8088/api/health | jq .federation and journalctl -u papdashboard | grep -i fed";
+      query = ''increase(papdashboard__fed_errors_total[5m])'';
+      target = 5;
+      severity = "critical";
+    };
     "signoz/rules/tmp-tmpfs-high.json".source = mkRule {
       name = "/tmp TmpFS Usage High (>80%)";
       description = "/tmp tmpfs usage above 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation risking exhaustion";

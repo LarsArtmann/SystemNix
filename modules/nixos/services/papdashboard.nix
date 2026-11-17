@@ -98,11 +98,17 @@
       # the sole root once the crm pin wave cleared the earlier layers).
       # RE-STALE 2026-11-07 float wave: papdashboard@382ba7c spec ktjyNhwo,
       # got L4OLuG1F (first-hand, float-proof-20261107-192958.log).
-      papdashboardPkg =
-        inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server.overrideAttrs
-          {
-            vendorHash = "sha256-L4OLuG1FB2OCBtcoemKWeUeCWfmJYSiU3OsWpZHbKzQ=";
-          };
+      # The vendorHash shim history (2026-10-23 → 2026-11-07 float waves,
+      # each RE-STALE entry recording spec-vs-got hashes first-hand) is
+      # superseded 2026-11-17: upstream bakes the correct hash again
+      # (PapDashboard vendorHash.nix = DvH8r4DP… at c18dbb2, proven by the
+      # 77bf82c hermetic build with an unchanged go.sum since), so the
+      # override is dropped — the last shim value (L4OLuG1F for 382ba7c)
+      # was stale the moment the metaengine relock moved go.sum. Re-add the
+      # shim pattern only when a future lock bump hits a fresh FOD mismatch
+      # upstream has not baked yet (class comment: lib/lars-packages.nix
+      # flakePkgShim).
+      papdashboardPkg = inputs.papdashboard.packages.${pkgs.stdenv.hostPlatform.system}.server;
 
       checkEnv = mkSecretCheck pkgs {
         name = "papdashboard-env";
