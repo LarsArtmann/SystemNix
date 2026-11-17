@@ -150,16 +150,19 @@
                 ];
                 useAI = true;
                 aiModel = "glm-5.3-flash";
-                aiBaseUrl = "https://api.z.ai/api/coding/paas/v4";
+                # Routed through the ai-meter proxy (2026-11-17, the queued
+                # metering follow-up): path-based routing keeps the model
+                # vocabulary identical, only the base URL changes. The real
+                # zai key rides ai-meter's upstream copy; the unit env file
+                # carries the runtime-minted CLIENT key instead.
+                aiBaseUrl = "http://127.0.0.1:${toString ports.ai-meter}/v1/zai";
                 # Owner credit ceiling (2026-11-05): one run-level gate. If today
                 # already holds >= cap AI facts, the ENTIRE run goes rule-based —
                 # spend is bounded even on manual triggers/double runs. Calls ≈
                 # facts/20 and linear in credits, so a fact cap is a spend cap.
                 # 32 repos since 2026-11-15 (24 + 8 minecraft-era): normal day
                 # ≈ 640 AI facts (32 × ~20), so the cap moved 600 → 800; it
-                # still trips on anomalies/double runs. The fleet-visible
-                # meter (ai-meter proxy routing) is a queued follow-up; today
-                # cvagent hits z.ai directly.
+                # still trips on anomalies/double runs.
                 aiDailyFactCap = 800;
                 # Scan budget: 32 repos at ~2.5 min per repo WITH AI (live
                 # 2026-11-05 02:1x battery: gogenfilter 926 commits → 28 AI
@@ -170,9 +173,14 @@
                 timeoutStartSec = "110min";
                 calendar = "*-*-* 05:53:00";
                 randomizedDelaySec = 600;
-                # AI key via sops-rendered env file; OPENAI_API_KEY is read
-                # directly by cvagent outside the CVAGENT_* koanf namespace.
-                environmentFile = config.sops.templates."cvagent-env".path;
+                # AI key: the ai-meter runtime mint (cvagent client,
+                # OPENAI_API_KEY) — the direct-sops key stopped being read
+                # when routing moved behind the proxy; the sops cvagent-env
+                # template stays declared but unconsumed (rotate/remove is
+                # an owner secrets decision). Dash-prefix: a missing minted
+                # file (ai-meter-keys not yet run) must not fail the unit —
+                # AI extraction then falls back to rule-based per repo.
+                environmentFile = "-/run/ai-meter-keys/cvagent.env";
               };
 
               mesh = {
@@ -188,6 +196,17 @@
 
             systemd.services.cvagent-scan = {
               inherit onFailure;
+              # Weak ordering on the metering chain (cv-server doctrine): a
+              # dead ai-meter degrades AI extraction to rule-based, it never
+              # blocks a scan. ai-meter-keys orders before ai-meter itself.
+              wants = [
+                "ai-meter-keys.service"
+                "ai-meter.service"
+              ];
+              after = [
+                "ai-meter-keys.service"
+                "ai-meter.service"
+              ];
               serviceConfig = lib.mkMerge [
                 {
                   Environment = [ "HOME=/home/${primaryUser}" ];

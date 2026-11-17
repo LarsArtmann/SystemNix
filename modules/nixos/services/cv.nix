@@ -1036,6 +1036,21 @@
               ExecStartPre = lib.optionals (config.services.crm-server.enable or false) [
                 "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 120)); until (exec 3<>\"/dev/tcp/127.0.0.1/${toString ports.crm}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"cv-server: crm-server 127.0.0.1:${toString ports.crm} not reachable within 120s — starting anyway (CRM sync backfill waits for the next restart)\" >&2; exit 0; fi; sleep 1; done'"
               ];
+              # Post-start port gate: the unit stays "activating" until the
+              # server actually LISTENS, so health checks and the boot
+              # transaction see honest state instead of active-but-dark
+              # (E10: the upstream boot-sync runs before the bind — a wedged
+              # sync holds the port dark for minutes; live startup observed
+              # 15m13s restart→bind on 2026-11-15, so the 20min budget clears
+              # it with margin and fail-CLOSED past the deadline — a wedged
+              # server belongs in the Restart=on-failure loop, not in silent
+              # dark). TimeoutStartSec MUST exceed the wait: for Type=simple
+              # it bounds ExecStartPost, and the default 90s would kill the
+              # gate long before its own deadline.
+              TimeoutStartSec = "21min";
+              ExecStartPost = [
+                "${pkgs.bash}/bin/bash -c 'deadline=$$((SECONDS + 1200)); until (exec 3<>\"/dev/tcp/127.0.0.1/${toString ports.cv}\") 2>/dev/null; do if [ \"$$SECONDS\" -ge \"$$deadline\" ]; then echo \"cv-server: 127.0.0.1:${toString ports.cv} not listening within 20min — failing into Restart=on-failure (wedged boot-sync class)\" >&2; exit 1; fi; sleep 2; done'"
+              ];
             }
             (lib.mkIf
               (

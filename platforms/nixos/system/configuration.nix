@@ -871,6 +871,16 @@ in
           user = "cv";
           envKey = "CV_TAILOR_API_KEY";
         };
+        # cvagent scan AI extraction (→ zai coding upstream, 2026-11-17):
+        # the 05:53 run's sampled per-repo GLM calls meter under their own
+        # client name; the minted env file carries OPENAI_API_KEY, the same
+        # var the direct-sops wiring used, so the unit's EnvironmentFile
+        # just repoints at /run/ai-meter-keys/cvagent.env. Runs as the
+        # primary user (the scan unit writes the CV checkout under /home).
+        cvagent = {
+          user = config.users.primaryUser;
+          envKey = "OPENAI_API_KEY";
+        };
       };
       # Miniflux RSS reader (rss.home.lan). Admin password rides sops
       # platforms/nixos/secrets/miniflux.yaml — retrieve with the Sops + Age
