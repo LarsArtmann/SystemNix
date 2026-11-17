@@ -783,6 +783,11 @@ _: {
           PMA_GENERATE_TIMEOUTS_24H=""
           FLM_COREDUMPS_24H=""
           FLM_CRASH_TRIGGER_PAIR=""
+          # 2026-11-17: set when the flm walk itself fails — feeds the
+          # system_health_collector_errors aggregate (empty-value class:
+          # a timed-out walk left the composite UNSET while the count
+          # read "0", emitting a value-less line that poisoned the file)
+          FLM_SCAN_ERRORS=0
           PMA_COMMIT_SCRAPE_ERRORS=1
           # flm coredump walk is UNCONDITIONAL (2026-10-24 decoupling): the
           # coredump count is fastflowlm telemetry that stands alone —
@@ -858,13 +863,33 @@ _: {
           PAPDASHBOARD_INGEST_LAST_OK=""
           PAPDASHBOARD_INGEST_SCRAPE_ERRORS=1
           pap_last_ok() {
-            # Timestamp (unix seconds) of the NEWEST status=200 ingest line,
-            # unbounded window — freshness must survive quiet periods, so a
-            # fixed lookback would fake staleness (11-07 class: ingest sat
-            # REFUSED all day while every walk windowed to 1h showed zeros,
-            # indistinguishable from a quiet hour).
+            # Timestamp (unix seconds) of the NEWEST status=200 ingest
+            # line. BOUNDED + REVERSED (2026-11-17 IO-storm postmortem):
+            # this walk used to be the collector's ONLY completely
+            # unbounded journal read — `-n 1` iterates the match set
+            # FORWARD and keeps the last hit, so it read papdashboard's
+            # ENTIRE retained journal every sweep. papdashboard logs
+            # ~282k entries/24h (10x every other walked unit combined,
+            # measured live 2026-11-17), and the unit's 256M MemoryMax
+            # charges the journal page cache to the cgroup — reclaim
+            # evicts it between sweeps, so every sweep re-read those
+            # scattered pages from disk: 4.4-6.7 GB read per 2-min sweep
+            # through the death window (9.1 GB worst), the monitoring
+            # collector as a top-3 disk reader while the box died.
+            #   --reverse: stop at the FIRST match from the tail — when
+            #     the pipeline is healthy the newest 200 is minutes old
+            #     and the walk reads a handful of entries instead of the
+            #     whole window.
+            #   --since -72h: cap the no-200-anywhere worst case
+            #     (error-ingest storms, the 2026-10-12 401 class) at 3
+            #     days of ONE unit's entries instead of the whole
+            #     journal. 72h keeps the "survives quiet periods"
+            #     contract (a long-weekend of all-green gatus = zero
+            #     alert ingests is legitimate); past it the metric
+            #     freezes at 0 = "stale", which after 3 days without a
+            #     single successful ingest IS the correct verdict.
             local outfile="$1" ts="" status=0
-            ts=$(timeout 30 journalctl -u papdashboard.service --grep 'path=/api/ingest status=200' --output export --no-pager -n 1 2>/dev/null | sed -n 's/^__REALTIME_TIMESTAMP=//p') || status=$?
+            ts=$(timeout 30 journalctl -u papdashboard.service --since "-72h" --reverse --grep 'path=/api/ingest status=200' --output export --no-pager -n 1 2>/dev/null | sed -n 's/^__REALTIME_TIMESTAMP=//p') || status=$?
             ts=$(( ''${ts:-0} / 1000000 ))
             printf '%s %s\n' "$status" "$ts" > "$outfile"
           }
@@ -1385,6 +1410,22 @@ _: {
                 if [ "''${PMA_GENERATE_TIMEOUTS_24H:-}" -gt 0 ] 2>/dev/null && [ "$FLM_COREDUMPS_24H" -gt 0 ] 2>/dev/null; then
                   FLM_CRASH_TRIGGER_PAIR=1
                 fi
+              else
+                # 2026-11-17 empty-value class, live in the 15:10 death
+                # window: on a timed-out walk (status 124) the read above
+                # still yields count "0" — non-empty — while
+                # FLM_CRASH_TRIGGER_PAIR stayed UNSET, so the emission
+                # gate (-n COREDUMPS) emitted
+                # `system_flm_crash_trigger_pair_24h ` with NO value and
+                # node_exporter rejected the ENTIRE textfile. Clear BOTH
+                # (and flag the aggregate): absence is the documented
+                # fail-closed shape for the anchored gatus pats, and a
+                # timed-out walk must not report a phantom `coredumps 0`
+                # green either.
+                echo "system-health: flm coredump journal scan failed (status ''${flm_core_status:-?})" >&2
+                FLM_COREDUMPS_24H=""
+                FLM_CRASH_TRIGGER_PAIR=""
+                FLM_SCAN_ERRORS=1
               fi
             fi
 
@@ -1778,13 +1819,27 @@ _: {
               echo "# TYPE system_papdashboard_ingest_scrape_errors gauge"
               echo "system_papdashboard_ingest_scrape_errors ''${PAPDASHBOARD_INGEST_SCRAPE_ERRORS}"
 
-              echo "# HELP system_papdashboard_ingest_reachable 1 when a TCP connect to the ingest port succeeds right now — the dead-service signal journal counts cannot give (0 lines = quiet, not alive; the 11-07 REFUSED window was invisible to every count)"
-              echo "# TYPE system_papdashboard_ingest_reachable gauge"
-              echo "system_papdashboard_ingest_reachable ''${PAPDASHBOARD_INGEST_REACHABLE:-}"
+              # 2026-11-17 empty-value class: these two used `:-` EMPTY
+              # defaults, so a timed-out walk (status 124, twice in the
+              # death window) emitted `..._reachable ` / `..._timestamp `
+              # with NO value — one such line makes node_exporter reject
+              # the ENTIRE textfile (every system_* metric dark, SigNoz
+              # "SYSTEM MONITORING STALE" SEV1). NEVER emit a value-less
+              # line: gate on non-empty; absence + scrape_errors=1 is the
+              # documented fail-closed contract, and the gatus
+              # "PapDashboard Ingest" presence legs fail red on exactly
+              # that shape.
+              if [ -n "$PAPDASHBOARD_INGEST_REACHABLE" ]; then
+                echo "# HELP system_papdashboard_ingest_reachable 1 when a TCP connect to the ingest port succeeds right now — the dead-service signal journal counts cannot give (0 lines = quiet, not alive; the 11-07 REFUSED window was invisible to every count)"
+                echo "# TYPE system_papdashboard_ingest_reachable gauge"
+                echo "system_papdashboard_ingest_reachable ''${PAPDASHBOARD_INGEST_REACHABLE}"
+              fi
 
-              echo "# HELP system_papdashboard_ingest_last_ok_timestamp Unix seconds of the newest status=200 ingest line on record (0 = none ever) — freshness = now minus this; stale-with-reachable-1 means alerts land but nothing flows"
-              echo "# TYPE system_papdashboard_ingest_last_ok_timestamp gauge"
-              echo "system_papdashboard_ingest_last_ok_timestamp ''${PAPDASHBOARD_INGEST_LAST_OK:-}"
+              if [ -n "$PAPDASHBOARD_INGEST_LAST_OK" ]; then
+                echo "# HELP system_papdashboard_ingest_last_ok_timestamp Unix seconds of the newest status=200 ingest line on record (0 = none in the 72h lookback) — freshness = now minus this; stale-with-reachable-1 means alerts land but nothing flows"
+                echo "# TYPE system_papdashboard_ingest_last_ok_timestamp gauge"
+                echo "system_papdashboard_ingest_last_ok_timestamp ''${PAPDASHBOARD_INGEST_LAST_OK}"
+              fi
             fi
             # Absent pair + scrape_errors=1 is the documented fail-closed
             # design (same contract as pocket-id above).
@@ -2084,19 +2139,67 @@ _: {
           # line: comment, blank, or NAME[{labels}] VALUE with a bare float —
           # every known failure shape (empty value, value glued to label,
           # missing newline) fails the mandatory [[:space:]]+VALUE suffix.
-          PROM_VALID_LINE='^(#.*|[[:space:]]*|[a-zA-Z_:][a-zA-Z0-9_:]*(\{.*\})?[[:space:]]+[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?)$'
+          # NaN/Inf spellings are legal exposition values (Go ParseFloat
+          # accepts them case-insensitively) and must not be dropped.
+          PROM_VALID_LINE='^(#.*|[[:space:]]*|[a-zA-Z_:][a-zA-Z0-9_:]*(\{.*\})?[[:space:]]+([+-]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][+-]?[0-9]+)?|NaN|nan|[+-]?(Inf|inf)))$'
           PROM_DROPPED=$(grep -cvE "$PROM_VALID_LINE" "$TMP" || true)
+          PROM_DROPPED="''${PROM_DROPPED:-0}"
           if [ "$PROM_DROPPED" -gt 0 ]; then
             echo "system-health: WARN publish gate dropping $PROM_DROPPED malformed line(s):" >&2
-            grep -nvE "$PROM_VALID_LINE" "$TMP" | head -5 >&2
-            grep -vE "$PROM_VALID_LINE" "$TMP" > "$TMP.gate" && mv "$TMP.gate" "$TMP"
+            grep -nvE "$PROM_VALID_LINE" "$TMP" | head -5 >&2 || true
+            # KEEP the VALID lines (grep -E, no -v). The 2026-11-14 gate
+            # shipped with an inverted -v: whenever any line was malformed
+            # it published ONLY the malformed lines + the gauge below —
+            # live 2026-11-17 the file was 6 lines with
+            # `system_flm_crash_trigger_pair_24h ` (empty value) as LINE
+            # 1, node_exporter rejected it 3,569 times in one morning
+            # ("text format parsing error in line 1: expected float as
+            # value"), and every system_* metric went dark while the
+            # sweeps kept "successfully" reading gigabytes of journal.
+            if grep -E "$PROM_VALID_LINE" "$TMP" > "$TMP.gate"; then
+              mv "$TMP.gate" "$TMP"
+            else
+              rm -f "$TMP.gate"
+              echo "system-health: WARN publish gate found NO valid lines — publishing unfiltered" >&2
+            fi
           fi
+          # 2026-11-17 IO-storm postmortem, the loudness leg: aggregate
+          # every section-level failure flag into ONE gauge and FLIP THE
+          # EXIT CODE. During the 15:10 death window the unit kept
+          # reporting "Deactivated successfully" while journal walks
+          # timed out (status 124) and the gate dropped lines — only the
+          # SigNoz stale-SEV1 noticed. Gating below matches each
+          # section's own metric-emission gate: a collector disabled for
+          # a missing service keeps its standing init-1 flag and must
+          # NOT fail the unit on hosts without that service.
+          collector_errors=0
+          [ "$PROM_DROPPED" -gt 0 ] && collector_errors=$((collector_errors + 1))
+          [ "$INACTIVE_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$OOMD_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "''${FLM_WALKS_LAUNCHED:-0}" = 1 ] && [ "$FLM_SCAN_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_gatus" = "true" ] && [ "$GATUS_META_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_forgejo_mirrors" = "true" ] && [ "$FORGEJO_MIRROR_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_pma_commits" = "true" ] && [ "$PMA_COMMIT_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_pocket_id_busy" = "true" ] && [ "$POCKET_ID_BUSY_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_papdashboard_ingest" = "true" ] && [ "$PAPDASHBOARD_INGEST_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
+          [ "$collect_memcg_oom" = "true" ] && [ "$MEMCG_OOM_SCRAPE_ERRORS" = 1 ] && collector_errors=$((collector_errors + 1))
           {
             echo "# HELP system_health_prom_dropped_lines Lines dropped by the publish gate this run (nonzero = an emitter glitched; the named metric is missing for one cycle, NOT the whole file)"
             echo "# TYPE system_health_prom_dropped_lines gauge"
             echo "system_health_prom_dropped_lines ''${PROM_DROPPED:-0}"
+            echo "# HELP system_health_collector_errors Failed collector sections this sweep (journal-walk timeouts, sqlite/journal scan failures, publish-gate line drops). 0 = complete sweep; nonzero ALSO exits the unit non-zero so systemctl shows Failed instead of Deactivated successfully (2026-11-17: a silently-degrading collector masked itself through a whole IO storm)"
+            echo "# TYPE system_health_collector_errors gauge"
+            echo "system_health_collector_errors ''${collector_errors}"
           } >> "$TMP"
           mv "$TMP" "$OUT"
+          if [ "$collector_errors" -gt 0 ]; then
+            # AFTER the mv on purpose: the partial file is published
+            # (metrics keep flowing, the timer keeps its cadence —
+            # OnUnitActiveSec re-fires failed oneshots) and the unit
+            # state + onFailure hook make the degradation loud.
+            echo "system-health: WARN incomplete sweep: $collector_errors failed section(s) — partial file published, exiting non-zero" >&2
+            exit 1
+          fi
         '';
       };
       lanNicWatchdog = pkgs.writeShellApplication {
