@@ -2682,7 +2682,7 @@ else
 fi
 
 if sudo -n true 2>/dev/null; then
-  _tk_row="$(sudo -n setpriv --reuid postgres --regid postgres --init-groups -- psql -d immich -At -c "SELECT count(*) || '/' || coalesce(array_length(permissions, 1), 0) FROM api_key WHERE name = 'takeout-import (nix-managed)'" 2>/dev/null || echo "")"
+  _tk_row="$(sudo -n setpriv --reuid postgres --regid postgres --init-groups -- psql -d immich -At -c "SELECT count(*) || '/' || coalesce(max(array_length(permissions, 1)), 0) FROM api_key WHERE name = 'takeout-import (nix-managed)'" 2>/dev/null || echo "")"
   case "$_tk_row" in
     "1/16") report_pass "Takeout Immich key - api_key row present with 16 permissions (takeout-import (nix-managed))" ;;
     "") report_warn "Takeout Immich key - DB probe unavailable (sudo ok but psql failed; is the immich DB up?)" ;;
@@ -2694,14 +2694,17 @@ else
 fi
 
 # Journal markers: a fresh "minted takeout-import" line means THIS deploy
-# window minted the key (restartUnits fired); otherwise a converged line in
-# 26h proves the last convergence pass saw file+row consistent.
-if journalctl -u immich-api-key-provision.service --since '-2 hours' --grep 'minted takeout-import' -o cat 2>/dev/null | grep -q .; then
+# window minted the key (restartUnits fired); otherwise a mint/converge line
+# inside 30h (daily timer + 6h RandomizedDelaySec = worst-case 30h gap)
+# proves the last convergence pass saw file+row consistent. Patterns avoid
+# regex metacharacters — an unescaped paren made the converged probe match
+# nothing (live 2026-11-17, caught by the pre-commit live probe).
+if journalctl -u immich-api-key-provision.service --since='-2 hours' --grep='minted takeout-import' -o cat 2>/dev/null | grep -q .; then
   report_pass "Takeout Immich key - minted THIS deploy window (journal marker, <2h)"
-elif journalctl -u immich-api-key-provision.service --since '-26 hours' --grep "converged (takeout-import" -o cat 2>/dev/null | grep -q .; then
-  report_pass "Takeout Immich key - converged clean (file + api_key row consistent, <26h)"
+elif journalctl -u immich-api-key-provision.service --since='-30 hours' --grep='takeout-import: key file' -o cat 2>/dev/null | grep -q .; then
+  report_pass "Takeout Immich key - converged/minted clean (<30h; file + api_key row consistent)"
 else
-  report_warn "Takeout Immich key - no mint/converge journal line in 26h (daily timer 6h jitter may simply not have fired yet; systemctl start immich-api-key-provision to force)"
+  report_warn "Takeout Immich key - no mint/converge journal line in 30h (daily timer + 6h jitter may simply not have fired yet; systemctl start immich-api-key-provision to force)"
 fi
 
 # balance --preflight per registry staging root: PASS = zips reconcile

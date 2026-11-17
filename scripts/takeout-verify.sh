@@ -7,20 +7,27 @@
 # Gates:
 #   G2.1 completeness  — every manifest part present and inside its size band
 #   G2.2 integrity     — `unzip -t` CRC-clean for every part (reads all bytes)
-# G2.3 coverage — every expected-PRESENT product found in the zip listings
+#   G2.3 coverage — every expected-PRESENT product found in the zip listings
 #                        (fuzzy name match + override candidates); missing
-#                        product = FAIL, unexpected folder = WARN. The
-#                        expectation source MATTERS: a staging root with no
-#                        products.tsv is self-derived from the zip listings
-#                        (integrity still proven, completeness UNPROVEN —
-#                        loud WARN), because the embedded 68-product manifest
-#                        below describes ONE account (racedriver8k). Opt in
-#                        explicitly with `--manifest racedriver8k`.
+#                        product = FAIL, folder with no expected product =
+#                        FAIL when a manifest is in play (the manifest is
+#                        then proven incomplete vs the zips), WARN on the
+#                        self-derived path (where extras are impossible by
+#                        construction). Expected sizes are ENFORCED: a
+#                        matched product's actual bytes must sit inside its
+#                        size band, so a stale/partial/wrong-size manifest
+#                        fails loudly instead of certifying completeness.
+#                        The expectation source MATTERS: a staging root with
+#                        no products.tsv is self-derived from the zip
+#                        listings (integrity still proven, completeness
+#                        UNPROVEN — loud WARN). Opt in explicitly with
+#                        `--manifest <file>` (per-account manifest path,
+#                        e.g. scripts/takeout-manifests/<account>.products.tsv).
 #   G2.4 inventory     — inventory.tsv (product, files, bytes) +
 #                        photos-media-count.txt + SHA256SUMS + verification-report.md
 #
 # Usage:
-#   bash scripts/takeout-verify.sh <staging-dir> [--no-hash] [--manifest racedriver8k]
+#   bash scripts/takeout-verify.sh <staging-dir> [--no-hash] [--manifest <products-tsv>]
 #   bash scripts/takeout-verify.sh --selftest   # synthetic fixture battery in ~/.cache
 set -euo pipefail
 
@@ -30,76 +37,13 @@ die() {
 }
 log() { echo "[$(date '+%F %T')] $*"; }
 
-# --- embedded product manifest (Takeout summary page 2026-11-10; 1=present, 0=no data found) ---
-readonly PRODUCTS_MANIFEST='
-Access Log Activity|7.2 MB|1
-Alerts|<1 MB|1
-Android Device Configuration Service||0
-Android Studio||0
-Arts & Culture||0
-Assignments||0
-Blogger||0
-Calendar|474.3 KB|1
-Chrome|273.2 KB|1
-Classroom||0
-Contacts|27.4 MB|1
-Content returned from your appeal||0
-Discover|<1 MB|1
-Drive|543.33 GB|1
-Firebase Dynamic Links||0
-Fit|409.4 MB|1
-Flow||0
-Gemini|<1 MB|1
-Gemini in Workspace||0
-Google Account|13.2 KB|1
-Google Ads||0
-Google Business Profile|283.5 MB|1
-Google Chat|<1 MB|1
-Google Cloud Search||0
-Google Developers|<1 MB|1
-Google Earth||0
-Google Feedback||0
-Google Finance|<1 MB|1
-Google Help Communities||0
-Google Meet|<1 MB|1
-Google One||0
-Google Pay|153.2 KB|1
-Google Photos|336.02 GB|1
-Google Play Books|<1 MB|1
-Google Play Console|74.5 KB|1
-Google Play Games Services|27.7 KB|1
-Google Play Movies & TV|<1 MB|1
-Google Play Store|195.8 KB|1
-Google Product Surveys||0
-Google Shopping||0
-Google Store|<1 MB|1
-Google Translator Toolkit||0
-Google Wallet|222.9 KB|1
-Google Workspace Marketplace|<1 MB|1
-Groups|12.7 KB|1
-Home App|133.8 KB|1
-Keep|2.2 MB|1
-Mail|1.74 GB|1
-Maps|216.3 MB|1
-Maps (your places)|62.6 KB|1
-My Activity|3.3 MB|1
-My Maps||0
-Nest||0
-News||0
-NotebookLM||0
-Phone Audio||0
-Pinpoint||0
-Pixel||0
-Profile|62.4 KB|1
-Saved|13.9 KB|1
-Search Contributions|4.1 KB|1
-Search Notifications|<1 MB|1
-Street View||0
-Tasks|<1 MB|1
-Tenor||0
-Timeline|<1 MB|1
-Workspace Studio||0
-YouTube and YouTube Music|2.18 MB|1'
+# Per-account product manifests live as DATA, not script literals: pass
+# `--manifest scripts/takeout-manifests/<account>.products.tsv`. The
+# racedriver8k manifest (Takeout summary page 2026-11-10; 1=present,
+# 0=no data found) is the first resident there. A manifest keyed by a
+# hardcoded account name in THIS script was the 2026-11-14 trap's fuel:
+# adding account #2 meant editing code, and the literal invited silent
+# cross-account reuse.
 
 # display-name -> candidate Takeout folder names (first match wins)
 override_candidates() {
@@ -136,6 +80,19 @@ size_band() {
     echo "expected-size string empty (absent product)"
     return 1
     ;;
+  \<*)
+    # "<1 MB" (export-page "less than" sizes): 1 byte .. value × 1.15
+    amount=$(echo "$spec" | tr -d '<' | awk '{print $1}')
+    unit=$(echo "$spec" | tr -d '<' | awk '{print $2}')
+    case $unit in
+    GB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000000 }') ;;
+    MB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000000 }') ;;
+    KB) amount=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1000 }') ;;
+    *) die "unknown size unit: $spec" ;;
+    esac
+    hi=$(awk -v a="$amount" 'BEGIN { printf "%.0f", a * 1.15 }')
+    echo "1 $hi"
+    ;;
   *[!0-9]*)
     amount=$(echo "$spec" | awk '{print $1}')
     unit=$(echo "$spec" | awk '{print $2}')
@@ -153,15 +110,18 @@ size_band() {
   esac
 }
 
-# The embedded manifest describes the racedriver8k export ONLY (summary page
-# 2026-11-10). It is OPT-IN (`--manifest racedriver8k`) — silently seeding it
-# for another account's staging root produced confidently wrong coverage
-# (2026-11-14).
+# Manifest seeding is FILE-based: `--manifest <path>` copies the per-account
+# manifest (scripts/takeout-manifests/<account>.products.tsv shape) into the
+# staging root's products.tsv. The path form replaced the hardcoded
+# `--manifest racedriver8k` literal (2026-11-17) — silently seeding another
+# account's manifest produced confidently wrong coverage (2026-11-14).
 seed_manifest_products_tsv() {
-  local root=$1
+  local root=$1 manifest=$2
   [ -f "$root/products.tsv" ] && return 0
-  printf '# product\texpected-size\tpresent\n' >"$root/products.tsv"
-  while IFS= read -r pline; do echo "${pline//|/$'\t'}" >>"$root/products.tsv"; done <<<"$PRODUCTS_MANIFEST"
+  [ -f "$manifest" ] || die "manifest file not found: $manifest (--manifest <path-to-products-tsv>; see scripts/takeout-manifests/)"
+  awk 'NR == 1 { exit ($0 == "# product\texpected-size\tpresent") ? 0 : 1 }' "$manifest" \
+    || die "manifest $manifest must start with the '# product<TAB>expected-size<TAB>present' header line"
+  cp "$manifest" "$root/products.tsv"
 }
 
 # No manifest for this account: derive the expectation set from the zip
@@ -179,11 +139,11 @@ derive_products_tsv_from_inventory() {
 }
 
 run_verify() {
-  local root=$1 do_hash=${2:-1} manifest_mode=${3:-auto}
+  local root=$1 do_hash=${2:-1} manifest_file=${3:-}
   [ -d "$root/zips" ] || die "no staging at $root (takeout-download.sh init first)"
   [ -f "$root/parts.tsv" ] || die "$root/parts.tsv missing (takeout-download.sh init first)"
-  if [ "$manifest_mode" = "racedriver8k" ]; then
-    seed_manifest_products_tsv "$root"
+  if [ -n "$manifest_file" ]; then
+    seed_manifest_products_tsv "$root" "$manifest_file"
   fi
   mkdir -p "$root/logs"
 
@@ -296,6 +256,16 @@ run_verify() {
   found_folders=$(awk -F'\t' 'NR > 1 { print $1 }' "$inv")
   local coverage_tsv=$root/logs/coverage.tsv
   : >"$coverage_tsv"
+  # folder -> actual bytes, for the G2.3 product-size band gate (a manifest
+  # row whose expected size contradicts the zip bytes must FAIL, not just
+  # decorate the failure message — that is exactly how a partial/stale
+  # manifest would otherwise certify completeness).
+  local -A inv_bytes=()
+  local ip ifiles ibytes
+  while IFS=$'	' read -r ip ifiles ibytes; do
+    case $ip in '' | '#'*) continue ;; esac
+    inv_bytes[$ip]=$ibytes
+  done <"$inv"
   # normalized expected-name set (raw + google-stripped forms) for the extras check
   local expected_norms=$root/logs/expected-names.txt
   {
@@ -329,12 +299,21 @@ run_verify() {
     return 1
   }
   local product expect_size present match
-  while IFS=$'\t' read -r product expect_size present; do
+  while IFS=$'	' read -r product expect_size present; do
     case $product in '' | '#'*) continue ;; esac
     match=$(match_folder "$product") || match=''
     if [ "$present" = "1" ]; then
       if [ -n "$match" ]; then
         printf 'OK\t%s\t-> %s\n' "$product" "$match" >>"$coverage_tsv"
+        if [ -n "${expect_size:-}" ]; then
+          local actual=${inv_bytes[$match]:-} lo hi
+          read -r lo hi <<<"$(size_band "$expect_size")"
+          if [ -n "$actual" ] && { [ "$actual" -lt "$lo" ] || [ "$actual" -gt "$hi" ]; }; then
+            echo "FAIL G2.3: product size out of band: $product (actual $actual bytes, expected $expect_size, band $lo..$hi) — the manifest disagrees with the zips; reconcile before ingesting" >&2
+            printf 'SIZE\t%s\t(actual %s, expected %s)\n' "$product" "$actual" "$expect_size" >>"$coverage_tsv"
+            failures=$((failures + 1))
+          fi
+        fi
       else
         echo "FAIL G2.3: expected-present product NOT FOUND in any zip: $product (expected size: $expect_size)" >&2
         printf 'MISSING\t%s\t(expected %s)\n' "$product" "$expect_size" >>"$coverage_tsv"
@@ -348,16 +327,25 @@ run_verify() {
       fi
     fi
   done <"$root/products.tsv"
-  # extras (folders with no expected product)
+  # extras (folders with no expected product). With a manifest in play an
+  # extra folder means the manifest is PARTIAL vs the zips — FAIL (a partial
+  # manifest must never certify completeness); on the self-derived path an
+  # extra is impossible (expectations = the inventory), so the WARN stays
+  # purely defensive.
   local fnorm fn2
   while IFS= read -r folder; do
     [ -n "$folder" ] || continue
     fnorm=$(norm "$folder")
     fn2=$(norm2 "$folder")
     if ! grep -qxF "$fnorm" "$expected_norms" && ! grep -qxF "$fn2" "$expected_norms"; then
-      echo "WARN G2.3: folder in zips with no matching expected product: $folder" >&2
+      if [ "$manifest_derived" = "1" ]; then
+        echo "WARN G2.3: folder in zips with no matching expected product: $folder" >&2
+        warnings=$((warnings + 1))
+      else
+        echo "FAIL G2.3: folder in zips with no matching expected product: $folder (manifest coverage incomplete — reconcile the manifest against the zips)" >&2
+        failures=$((failures + 1))
+      fi
       printf 'EXTRA\t?\t%s\n' "$folder" >>"$coverage_tsv"
-      warnings=$((warnings + 1))
     fi
   done <<<"$found_folders"
   log "G2.3 coverage: see logs/coverage.tsv ($(grep -c '^OK' "$coverage_tsv") matched, $(grep -c '^MISSING' "$coverage_tsv") missing)"
@@ -412,8 +400,11 @@ selftest() {
     rm -rf "$fx"/{zips,logs}
     mkdir -p "$fx"/{zips,logs}
     printf '# part\texpected\n1\t3 MB\n2\tLESS1MB\n' >"$fx/parts.tsv"
+    # products.tsv sizes MUST match what the fixture zips actually hold —
+    # G2.3 enforces product size bands since 2026-11-17 (blob = 900 KB,
+    # so Drive carries 921600 bytes, Photos 2×blob + a json sidecar, Mail 6).
     printf '# product\texpected-size\tpresent\n' >"$fx/products.tsv"
-    printf '%s\n' 'Drive|543 GB|1' 'Google Photos|336 GB|1' 'Mail|1.74 GB|1' 'Blogger||0' |
+    printf '%s\n' 'Drive|900 KB|1' 'Google Photos|1.8 MB|1' 'Mail|LESS1MB|1' 'Blogger||0' |
       tr '|' '\t' >>"$fx/products.tsv"
     dd if=/dev/urandom of="$fx/blob" bs=1024 count=900 2>/dev/null
     (cd "$fx" && mkdir -p tk/Takeout/Drive tk/'Takeout/Google Photos' tk/Takeout/Mail &&
@@ -486,38 +477,76 @@ selftest() {
     rc=1
   fi
 
-  # 2026-11-14: another account's staging root must NEVER inherit the
-  # racedriver8k manifest (it did, silently, before this leg existed).
+  # 2026-11-14: another account's staging root must NEVER inherit another
+  # account's manifest. The embedded manifest is gone (data file now), but
+  # the derivation WARN contract still holds: no --manifest => self-derived
+  # expectations + loud UNPROVEN caveat, never a foreign product list.
   leg=manifest-leak
   build_fixture
   rm "$fx/products.tsv"
   if run_verify_selftest_quiet "$fx" >"$fx/leg-leak.log" 2>&1 &&
     grep -q 'SELF-DERIVED' "$fx/leg-leak.log" &&
-    ! grep -q '543.33 GB\|YouTube and YouTube Music' "$fx/products.tsv" &&
     grep -q 'completeness vs the Takeout export page UNPROVEN' "$fx/verification-report.md"; then
-    echo "PASS: $leg (no foreign manifest; expectations self-derived + WARNed)"
+    echo "PASS: $leg (no manifest given; expectations self-derived + WARNed)"
   else
-    echo "FAIL: $leg (foreign manifest leaked or derivation missing — see $fx/leg-leak.log)"
+    echo "FAIL: $leg (self-derivation missing or the WARN contract broke — see $fx/leg-leak.log)"
     rc=1
   fi
 
-  leg=manifest-optin
+  # 2026-11-17 (per-account manifest path): --manifest now takes a FILE
+  # path (scripts/takeout-manifests/<account>.products.tsv shape). A
+  # manifest listing exactly what the zips hold must pass.
+  leg=manifest-path
   build_fixture
   rm "$fx/products.tsv"
-  if run_verify_selftest_quiet "$fx" racedriver8k >"$fx/leg-optin.log" 2>&1; then
-    echo "FAIL: $leg (racedriver8k manifest passed a foreign fixture)"
-    rc=1
-  elif grep -q 'expected-present product NOT FOUND' "$fx/leg-optin.log" &&
-    grep -q '543.33 GB' "$fx/products.tsv"; then
-    echo "PASS: $leg (explicit --manifest racedriver8k opt-in still works)"
+  printf '# product\texpected-size\tpresent\n' >"$fx/manifest.products.tsv"
+  printf '%s\n' 'Drive|900 KB|1' 'Google Photos|1.8 MB|1' 'Mail|LESS1MB|1' 'Blogger||0' |
+    tr '|' '\t' >>"$fx/manifest.products.tsv"
+  if run_verify_selftest_quiet "$fx" 1 "$fx/manifest.products.tsv" >"$fx/leg-manpath.log" 2>&1 &&
+    grep -q 'G2 GREEN' "$fx/leg-manpath.log" &&
+    grep -q 'Drive' "$fx/products.tsv"; then
+    echo "PASS: $leg (--manifest <file> seeds and passes a matching manifest)"
   else
-    echo "FAIL: $leg (opt-in did not seed/apply the manifest — see $fx/leg-optin.log)"
+    echo "FAIL: $leg (file-based manifest seeding failed — see $fx/leg-manpath.log)"
     rc=1
   fi
 
-  # 2026-11-14 (zip-name divergence): parts.tsv may carry an explicit
-  # filename column so raw browser-named zips verify without a rename pass.
-  leg=raw-names
+  # 2026-11-17 (partial-manifest negative): SOME correct rows + one wrong
+  # size + one omitted product must STILL FAIL — via the size band gate AND
+  # the manifest-coverage extras gate. A partial manifest must never
+  # certify completeness.
+  leg=partial-manifest
+  build_fixture
+  rm "$fx/products.tsv"
+  printf '# product\texpected-size\tpresent\n' >"$fx/manifest.products.tsv"
+  printf '%s\n' 'Drive|900 KB|1' 'Mail|543 GB|1' |
+    tr '|' '\t' >>"$fx/manifest.products.tsv"
+  if run_verify_selftest_quiet "$fx" 1 "$fx/manifest.products.tsv" >"$fx/leg-partial.log" 2>&1; then
+    echo "FAIL: $leg (a partial + wrong-size manifest passed)"
+    rc=1
+  elif grep -q 'product size out of band' "$fx/leg-partial.log" &&
+    grep -q 'FAIL G2.3: folder in zips with no matching expected product' "$fx/leg-partial.log"; then
+    echo "PASS: $leg (wrong size caught by the band gate + omitted product caught by the extras gate)"
+  else
+    echo "FAIL: $leg (failed but not via the size-band + extras gates — see $fx/leg-partial.log)"
+    rc=1
+  fi
+
+  # 2026-11-17 (--no-hash leg): the hash skip path was untested — it must
+  # still gate everything else and skip ONLY the SHA256SUMS write.
+  leg=no-hash
+  build_fixture
+  rm -f "$fx/SHA256SUMS"
+  if run_verify_selftest_quiet "$fx" 0 >"$fx/leg-nohash.log" 2>&1 &&
+    grep -q 'G2 GREEN' "$fx/leg-nohash.log" &&
+    [ ! -e "$fx/SHA256SUMS" ]; then
+    echo "PASS: $leg (--no-hash stays green and writes no SHA256SUMS)"
+  else
+    echo "FAIL: $leg (--no-hash run failed or hashed anyway — see $fx/leg-nohash.log)"
+    rc=1
+  fi
+
+  if [ "$rc" -eq 0 ]; then
   build_fixture
   mv "$fx/zips/part-01.zip" "$fx/zips/takeout-20261110T224436Z-001.zip"
   mv "$fx/zips/part-02.zip" "$fx/zips/takeout-20261110T224438Z-1-001.zip"
