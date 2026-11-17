@@ -2577,6 +2577,68 @@ EOF_UNITS
   unset _un_root _un_link _un_name _un_file _un_broken _un_enabled _un_masked
 fi
 
+# --- §24 cvagent (scan freshness, dashboard liveness, mesh export) ---
+# 2026-11-15 CV health check: the dashboard's per-request read-scan made
+# renders 17-44s, flapped /health 503 via the engines-check 5s deadline, and
+# logged 8.6M MemoryHigh trips in 44h — while this battery never looked at
+# cvagent at all. The leg closes the blind spot: dashboard unit liveness, a
+# fresh clean scan (daily 05:53 timer + 10m jitter, ~100min runtime), the
+# mesh export line's target freshness, and a loopback /health answer. Port
+# comes from the eval-truth manifest (degrade contract: absent manifest =
+# registry-constant fallback, never a FAIL).
+echo ""
+echo "=== §24 cvagent (scan freshness, dashboard liveness, mesh export) ==="
+_cv_port="$(python3 -c 'import json;print(json.load(open("/etc/systemnix/integration-manifest.json"))["ports"]["cvagent-dashboard"])' 2>/dev/null || echo "8787")"
+
+if systemctl is-active --quiet cvagent.service 2>/dev/null; then
+  report_pass "cvagent - dashboard unit active"
+else
+  report_fail "cvagent - dashboard unit not active (journalctl -u cvagent -n 50)"
+fi
+
+# Scan freshness: the combined scan+mesh unit must have converged once in
+# the last 26h (the timer window plus the ~100min runtime budget).
+_cv_scan_done="$(journalctl -u cvagent-scan.service --since '-26 hours' --grep 'done: scanned=' -o cat 2>/dev/null | tail -n1)"
+if [ -n "$_cv_scan_done" ]; then
+  _cv_failed="$(printf '%s' "$_cv_scan_done" | sed -n 's/.*failed=\([0-9]*\).*/\1/p')"
+  _cv_scanned="$(printf '%s' "$_cv_scan_done" | sed -n 's/.*scanned=\([0-9]*\).*/\1/p')"
+  if [ "${_cv_scanned:-0}" -eq 0 ]; then
+    report_warn "cvagent scan - last run scanned=0 repositories (discovery empty or search paths broken)"
+  elif [ "${_cv_failed:-1}" -gt 0 ]; then
+    report_warn "cvagent scan - last run had per-repo failures ($_cv_scan_done; the WARN lines above it name them)"
+  else
+    report_pass "cvagent scan - fresh clean run ($_cv_scan_done)"
+  fi
+else
+  report_fail "cvagent scan - no 'done: scanned=' line in 26h (nightly never converged; journalctl -u cvagent-scan.service --since '-26 hours' | tail -50)"
+fi
+
+# Mesh export: the export line names the CV checkout; some artifact under
+# it must be younger than the same 26h window.
+_cv_mesh_dir="$(journalctl -u cvagent-scan.service --since '-26 hours' --grep 'exported variant patch' -o cat 2>/dev/null | tail -n1 | sed -n 's/.*to //p')"
+if [ -n "$_cv_mesh_dir" ] && [ -d "$_cv_mesh_dir" ]; then
+  if [ -n "$(find "$_cv_mesh_dir" -type f -mmin '-1560' -print -quit 2>/dev/null)" ]; then
+    report_pass "cvagent mesh export - artifacts fresh under $_cv_mesh_dir"
+  else
+    report_warn "cvagent mesh export - target exists but nothing younger than 26h ($_cv_mesh_dir)"
+  fi
+else
+  report_warn "cvagent mesh export - no export line in 26h or target dir missing (${_cv_mesh_dir:-none}; is mesh.runWithScan on?)"
+fi
+
+# Dashboard loopback answer: /health must answer 200 (warn bodies stay 200
+# per the go-health mapping; a 503 = the engines-check fail flap class).
+# The port rides an env var so the single-quoted inner bash sees it (the
+# §12 banner idiom with a dynamic port).
+# shellcheck disable=SC2016 # $_cv_p must expand INSIDE the inner bash
+_cv_health_code="$(timeout 8 env _cv_p="$_cv_port" bash -c 'exec 3<>"/dev/tcp/127.0.0.1/$_cv_p" && printf "GET /health HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" >&3 && head -n1 <&3' 2>/dev/null | tr -d '\r' || true)"
+case "$_cv_health_code" in
+*" 200"*) report_pass "cvagent dashboard - /health answers 200 on loopback :$_cv_port" ;;
+"") report_fail "cvagent dashboard - no HTTP answer on 127.0.0.1:$_cv_port (unit active but dark)" ;;
+*) report_fail "cvagent dashboard - /health unexpected answer: $_cv_health_code" ;;
+esac
+unset _cv_port _cv_scan_done _cv_failed _cv_scanned _cv_mesh_dir _cv_health_code
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
