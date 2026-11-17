@@ -135,7 +135,7 @@ derive_products_tsv_from_inventory() {
     awk -F'\t' 'NR > 1 && $1 != "" { printf "%s\t%s\t1\n", $1, $3 }' "$root/inventory.tsv"
   } >"$root/products.tsv"
   manifest_derived=1
-  echo "WARN G2.3: NO products manifest for this staging root — expectation set SELF-DERIVED from the zip listings ($(($(wc -l <"$root/products.tsv") - 1)) products). Part integrity is proven; completeness against the Takeout export page is UNPROVEN. Save the exports page or pass --manifest <account> for a real expectation." >&2
+  echo "WARN G2.3: NO products manifest for this staging root — expectation set SELF-DERIVED from the zip listings ($(($(wc -l <"$root/products.tsv") - 1)) products). Part integrity is proven; completeness against the Takeout export page is UNPROVEN. Save the exports page or pass --manifest <file> for a real expectation." >&2
 }
 
 run_verify() {
@@ -261,11 +261,11 @@ run_verify() {
   # decorate the failure message — that is exactly how a partial/stale
   # manifest would otherwise certify completeness).
   local -A inv_bytes=()
-  local ip ifiles ibytes
-  while IFS=$'	' read -r ip ifiles ibytes; do
+  local ip ibytes
+  while IFS=$'	' read -r ip ibytes; do
     case $ip in '' | '#'*) continue ;; esac
     inv_bytes[$ip]=$ibytes
-  done <"$inv"
+  done < <(awk -F'	' 'NR > 1 && $1 !~ /^#/ { print $1 "	" $3 }' "$inv")
   # normalized expected-name set (raw + google-stripped forms) for the extras check
   local expected_norms=$root/logs/expected-names.txt
   {
@@ -481,7 +481,7 @@ selftest() {
   # account's manifest. The embedded manifest is gone (data file now), but
   # the derivation WARN contract still holds: no --manifest => self-derived
   # expectations + loud UNPROVEN caveat, never a foreign product list.
-  leg=manifest-leak
+  leg=leak-manifest
   build_fixture
   rm "$fx/products.tsv"
   if run_verify_selftest_quiet "$fx" >"$fx/leg-leak.log" 2>&1 &&
@@ -496,7 +496,7 @@ selftest() {
   # 2026-11-17 (per-account manifest path): --manifest now takes a FILE
   # path (scripts/takeout-manifests/<account>.products.tsv shape). A
   # manifest listing exactly what the zips hold must pass.
-  leg=manifest-path
+  leg=file-manifest
   build_fixture
   rm "$fx/products.tsv"
   printf '# product\texpected-size\tpresent\n' >"$fx/manifest.products.tsv"
