@@ -147,6 +147,10 @@ icon = null                   →  monogram fallback (registry tiles: eval WARNI
   unknown → first probe resolves. Gatus owns actual uptime history (`status.home.lan`).
 - Latency shown in the dot tooltip is the server-side probe round trip.
 
+## Journal noise class (2026-11-17)
+
+The SSE route's eventMap must always register the `events.Event` envelope (`"message": events.Event{}`): the stream only ever sends the envelope (the frontend routes on `data.type` inside the default message), and huma's stream writer prints `error: unknown event type` + a full `debug.PrintStack()` to stderr for every unregistered payload — the 11-08 smoke's "674 lines/min journal noise" (D1 report §f.25; measured ~6.3k lines/h at idle churn, scaling with tile-flap event rate). Fixed upstream `47ceb66` (oci-go-standard-pilot, regression test `internal/api/sse_stream_test.go`); reaches the fleet only after that branch lands on `origin/master` and the flake input floats. Residual after the fix: 4 projection unhandled-event WARNs per broadcast event + huma write-deadline notices. The D1 smoke's journal-noise PAIR was papdashboard + node-exporter (D1 §b); node-exporter is silent as of 2026-11-17 (1 line/h).
+
 ## Deploy verification (built into post-deploy-check)
 
 `scripts/post-deploy-check.sh` probes the surface on every deploy (all no-key, status-code +
