@@ -186,7 +186,7 @@ selftest() {
   local rc=0
   rm -rf "$fx"
   mkdir -p "$fx"/{dl,stage}
-  printf '# fixture registry\naccount\tmode\tstaging_root\tcadence\tstatus\tretain\tnotes\ntestacct\tkeep\t%s\t2-monthly\tg1\te\tfixture\n' "$fx/stage" >"$fx/registry.tsv"
+  printf '# fixture registry\naccount\tmode\tstaging_root\tcadence\tstatus\tretain\tnotes\ntestacct@gmail.com\tkeep\t%s\t2-monthly\tg1\te\tfixture\n' "$fx/stage" >"$fx/registry.tsv"
   export TAKEOUT_REGISTRY=$fx/registry.tsv
   export TAKEOUT_DOWNLOAD=$fx/fake-download.sh
   cat >"$fx/fake-download.sh" <<'STUB'
@@ -214,44 +214,44 @@ STUB
     fi
   }
 
-  bash "$0" --account testacct --from "$fx/dl" --dry-run >/dev/null
+  bash "$0" --account testacct@gmail.com --from "$fx/dl" --dry-run >/dev/null
   check dryrun-no-install no "$([ -f "$fx/stage/links.html" ] && echo yes || echo no)"
 
-  bash "$0" --account testacct --from "$fx/dl" >/dev/null
+  bash "$0" --account testacct@gmail.com --from "$fx/dl" >/dev/null
   check install-exists yes "$([ -f "$fx/stage/links.html" ] && echo yes || echo no)"
   check install-mode 600 "$(stat -c %a "$fx/stage/links.html")"
   check install-content same "$(cmp -s "$fx/dl/Google Takeout.html" "$fx/stage/links.html" && echo same || echo diff)"
 
-  check rerun-idempotent 0 "$(bash "$0" --account testacct --from "$fx/dl" >/dev/null && echo 0 || echo 1)"
+  check rerun-idempotent 0 "$(bash "$0" --account testacct@gmail.com --from "$fx/dl" >/dev/null && echo 0 || echo 1)"
 
   bash "$0" --account nosuch --from "$fx/dl" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check unknown-account-rejected 1 "$rc_bad"
 
   mkdir -p "$fx/empty"
-  bash "$0" --account testacct --from "$fx/empty" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
+  bash "$0" --account testacct@gmail.com --from "$fx/empty" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check no-candidate-rejected 1 "$rc_bad"
 
-  bash "$0" --account testacct --from "$fx/dl-foreign" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl-foreign" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check wrong-account-page-rejected 1 "$rc_bad"
 
-  bash "$0" --account testacct --from "$fx/dl-emailless" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl-emailless" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check emailless-page-rejected 1 "$rc_bad"
 
-  bash "$0" --account testacct --from "$fx/dl-samelocal" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl-samelocal" >/dev/null 2>&1 && rc_bad=0 || rc_bad=1
   check same-local-diff-domain-rejected 1 "$rc_bad"
 
   rm -f "$fx/stage/links.html"
-  bash "$0" --account testacct --from "$fx/dl-samelocal" --allow-local-part --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl-samelocal" --allow-local-part --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
   check same-local-optin-accepted 0 "$rc_ok"
 
   rm -f "$fx/stage/links.html"
-  bash "$0" --account testacct --from "$fx/dl-foreign" --force --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl-foreign" --force --dry-run >/dev/null 2>&1 && rc_ok=0 || rc_ok=1
   check force-overrides-gate 0 "$rc_ok"
 
-  bash "$0" --account testacct --from "$fx/dl" --list >/dev/null 2>&1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl" --list >/dev/null 2>&1
   check list-no-install no "$([ -f "$fx/stage/links.html" ] && echo yes || echo no)"
 
-  bash "$0" --account testacct --from "$fx/dl" --ingest >/dev/null 2>&1
+  bash "$0" --account testacct@gmail.com --from "$fx/dl" --ingest >/dev/null 2>&1
   check ingest-chained chained "$([ -f "$fx/download-calls.log" ] && grep -q 'ingest-html' "$fx/download-calls.log" && echo chained || echo not-called)"
 
   if [ "$rc" -eq 0 ]; then echo "takeout-intake selftest: PASS"; else echo "takeout-intake selftest: FAIL"; fi
