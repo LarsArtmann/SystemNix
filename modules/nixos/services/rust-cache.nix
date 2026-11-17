@@ -440,7 +440,7 @@
                 fi
                 for artifact_dir in "$debug/deps" "$debug"; do
                   [ -d "$artifact_dir" ] || continue
-                  while IFS= read -r -d '' f; do
+                  while IFS= read -r -d ''' f; do
                     base=$(basename "$f")
                     case "$base" in
                       *.rlib|*.rmeta|*.d|*.so|*.dylib|*.bin) stem="''${base%.*}" ;;
@@ -454,7 +454,7 @@
                 # gone (failed companion rm, prior manual deletes). Kept
                 # fingerprints without artifacts would block rebuilds.
                 if [ -d "$debug/.fingerprint" ]; then
-                  while IFS= read -r -d '' fp; do
+                  while IFS= read -r -d ''' fp; do
                     stem=$(basename "$fp")
                     if ! compgen -G "$debug/deps/$stem.*" >/dev/null && ! compgen -G "$debug/$stem.*" >/dev/null; then
                       rm -rf -- "$fp"
