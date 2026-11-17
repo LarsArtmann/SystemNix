@@ -798,6 +798,24 @@
           # bare host:port). Noop until the binary links the otel package.
           otelEndpoint = "localhost:${toString ports.signoz-otlp-http}";
           extraEnvironment.GOMEMLIMIT = "384MiB";
+          # Two-node federation posture (plan 2026-11-16 00-37): this host is
+          # the PRIMARY — it runs the side-effectful workers and forwards its
+          # event log to the pbx-artmann replica over the NetBird mesh (F0.1
+          # live-confirmed: pbx 100.112.17.187, P2P direct). The peer key is
+          # the replica's own PAP_API_KEY (one machine key guards every keyed
+          # route), rendered by sops as a LoadCredential — the module passes
+          # it as PAP_FED_KEY_FILE=%d/pap-fed-key, never into the store.
+          # Until the pbx deploy lands, the forwarder retry-loops against a
+          # dead peer: papdashboard_fed_errors_total climbs and the gatus
+          # replica tile stays red — the expected transitional state (the
+          # handover command is in docs/services/papdashboard.md).
+          federation = {
+            enable = true;
+            role = "primary";
+            peerUrl = "http://100.112.17.187:${toString ports.papdashboard-pbx-replica}";
+            nodeId = "evo-x2";
+            keyFile = config.sops.secrets."papdashboard_federation_key".path;
+          };
         };
 
         # Eval-time gate on the tile-icon FORM (existence is checked by
@@ -919,6 +937,37 @@
                   "[BODY] == pat(*\npapdashboard_services_json_icons_ok *)"
                 ];
                 alert = "PapDashboard services.json drift — rendered config missing, unparsable, empty, or a tile lost its icon coverage, so the Services tab serves no (or logo-less) tiles until the unit restarts. Check: systemctl status papdashboard-services-json-check; ls -la /etc/papdashboard/services.json; curl -s localhost:9100/metrics | grep papdashboard_services_json_icons";
+              }
+              {
+                # F3.1d warn leg: replication lag over 60s means the replica
+                # is falling behind the primary (dead/slow peer, wedged
+                # forwarder). The lag gauge is quiet-log-aware upstream, so
+                # an idle dashboard can never trip this — firing means real
+                # backlog. Reads stay available on the replica up to the
+                # watermark; freshness beyond 60s is the degradation.
+                name = "PapDashboard Federation Lag";
+                group = "Monitoring";
+                url = "http://localhost:${toString cfg.port}/api/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY].federation.lagSeconds < 60"
+                ];
+                alert = "PapDashboard federation lag over 60s — the pbx replica is falling behind (dead peer, wedged forwarder, or SQLite contention). Check: curl -s localhost:${toString cfg.port}/api/health | jq .federation; journalctl -u papdashboard -n 50 | grep -i fed";
+              }
+              {
+                # F2.2c: the PRIMARY observes the REPLICA over the mesh. RED
+                # until the pbx-artmann deploy lands (handover pending — see
+                # docs/services/papdashboard.md); after that, red means the
+                # always-readable dashboard is unreachable.
+                name = "PapDashboard Replica (pbx)";
+                group = "Monitoring";
+                url = "http://100.112.17.187:${toString ports.papdashboard-pbx-replica}/api/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                ];
+                alert = "PapDashboard pbx replica unreachable over the NetBird mesh. EXPECTED-RED until the pbx-artmann papdashboard deploy is run (handover in docs/services/papdashboard.md). After deploy: check netbird status on both nodes, then ssh pbx systemctl status papdashboard";
               }
             ];
           };

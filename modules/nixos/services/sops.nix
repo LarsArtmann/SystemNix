@@ -364,6 +364,20 @@ in
               } [ "papdashboard_api_key" ]
             )
             // lib.optionalAttrs (svcEnabled "papdashboard") (
+              # Federation peer key (two-node posture, plan 2026-11-16 00-37):
+              # the SAME key pbx-artmann's replica validates on its keyed
+              # /api/federation/events route (it doubles as the replica's
+              # PAP_API_KEY — one machine key guards all keyed routes). Own
+              # file so creating/rotating it never needs the age private key
+              # against the papdashboard.yaml blob (fresh-file sops -e is
+              # public-key-only).
+              mkSecrets "papdashboard-federation.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "papdashboard.service" ];
+              } [ "papdashboard_federation_key" ]
+            )
+            // lib.optionalAttrs (svcEnabled "papdashboard") (
               # Dedicated insights-channel webhook (channel 1539383848549486632) —
               # raw Gatus alerts keep the shared discord_alert_webhook_url, so
               # the two streams land in two different Discord channels.

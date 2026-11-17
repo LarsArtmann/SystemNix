@@ -124,6 +124,13 @@
 
         papdashboard = 8088;
 
+        # pbx-artmann's PapDashboard REPLICA (federation two-node posture,
+        # plan 2026-11-16 00-37): the replica listens on its NetBird mesh IP
+        # only; evo-x2's forwarder POSTs here and gatus probes it over the
+        # mesh. Registered so the mesh URLs in papdashboard.nix don't trip
+        # the port-registry audit.
+        papdashboard-pbx-replica = 8412;
+
         searxng = 8889;
 
         # journal (Hauptbuch dashboard) — `journal serve` systemd unit binds
