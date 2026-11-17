@@ -78,26 +78,134 @@ let
     };
   };
 
-  # Rust projects whose target/ dirs should live on the USB cache SSD — avoids
-  # COW fragmentation from 85K+ small files and keeps them out of btrbk
-  # snapshots. Target dirs moved from the old /rust-cache NVMe partition (p9) to
-  # the build cache SSD on 2026-08-14, then to the DEDICATED Rust cache SSD
+  # Rust projects whose target/ dirs live on the USB cache SSD — avoids COW
+  # fragmentation from 85K+ small files and keeps them out of btrbk snapshots.
+  # Target dirs moved from the old /rust-cache NVMe partition (p9) to the build
+  # cache SSD on 2026-08-14, then to the DEDICATED Rust cache SSD
   # (/mnt/rust-cache, services.rust-cache) on 2026-10-06: removes build churn
   # from the QLC NVMe entirely and keeps Rust's target/ churn off the
-  # Go/JS/Python buildcache disk. Dirs are created by rust-cache-init (post-
-  # mount); only the ~/projects/<p>/target symlinks are managed here.
-  rustCacheProjects = [ "monitor365" ];
+  # Go/JS/Python buildcache disk. 2026-11-17: extended from [ "monitor365" ]
+  # to every top-level Rust project in ~/projects (live census); the seed list
+  # feeds rust-cache-init dir provisioning AND the link provisioner below —
+  # the provisioner additionally discovers new Cargo.toml roots at runtime
+  # (daily timer), so this list only seeds boot-time convergence.
+  rustCacheProjects = [
+    "clipboard-monitor"
+    "collector-utils"
+    "hardware-identity"
+    "mic-monitor"
+    "monitor365"
+    "monitor365-ui-sdk"
+    "niri-session-manager"
+    "printer-monitor"
+    "segment-buffer"
+    "ssh-key-monitor"
+    "storage-collector"
+    "tracing-flight-recorder"
+    "WatchSsss"
+    "wireguard-collector"
+  ];
 
-  rustCacheLinks = builtins.map (
-    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/rust-cache/rust/${p}"
-  ) rustCacheProjects;
+  # Converges ~/projects/<p>/target → <rust-cache>/rust/<p> for the seed list
+  # above PLUS any top-level ~/projects/*/Cargo.toml found at runtime.
+  # Replaces the old bare tmpfiles L+ rules (2026-11-17): live-probed tmpfiles
+  # semantics — L+ REPLACES a real directory at the link path (exit 0,
+  # content destroyed), so pointing the extended list at the 13 projects
+  # whose target/ is still a real dir would have deleted ~15G of warm cache
+  # at the next boot. This provisioner RENAMES a real target aside instead
+  # (same-fs rename: instant, atomic, build-safe) and never deletes.
+  # Moved-aside `target.migrated-<ts>` dirs are owner-cleanable rebuildable
+  # cache (sccache retains the compile artifacts).
+  #
+  # NOT realtime (project-discovery-daemon SSE was considered and rejected):
+  # linking/moving build trees on live FS events races in-flight cargo
+  # builds; daily + boot + deploy.sh convergence matches the event rate.
+  #
+  # Space guard: at >= rust-cache usage threshold, provisioning (dir
+  # creation, move-aside, fresh link) DEFERS to the next run — the disk sat
+  # at 92% on 2026-11-17 (monitor365 target alone: 199G of 224G) and fresh
+  # targets on a nearly-full 240G USB SSD are an ENOSPC cascade. Symlink
+  # repairs (wrong/dangling target) always run: fixing a link costs nothing.
+  rustCacheLinkProjects = pkgs.writeShellApplication {
+    name = "rust-cache-link-projects";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.util-linux
+    ];
+    text = ''
+      set -euo pipefail
 
-  # The same rules, executed by the mount-gated rust-cache-projects-links
-  # unit instead of global tmpfiles (see the unit's comment) — exact L+
-  # semantics preserved by feeding them back through systemd-tmpfiles.
-  rustCacheLinksConf = pkgs.writeText "rust-cache-projects-links.conf" (
-    builtins.concatStringsSep "\n" (rustCacheLinks ++ [ "" ])
-  );
+      projects_root="/home/${primaryUser}/projects"
+      cache_root="${config.services.rust-cache.mountPoint}/rust"
+      threshold=${toString config.services.rust-cache.usageThresholdPercent}
+
+      exec 9>"''${XDG_RUNTIME_DIR:?user unit requires XDG_RUNTIME_DIR}/rust-cache-projects-links.lock"
+      flock 9
+
+      usage_pct() {
+        df --output=pcent "${config.services.rust-cache.mountPoint}" | tail -n 1 | tr -dc '0-9'
+      }
+
+      provisioned=0
+      repaired=0
+      deferred=0
+
+      link_project() {
+        p=$1
+        link="$projects_root/$p/target"
+        cache_dir="$cache_root/$p"
+
+        if [ -L "$link" ]; then
+          if [ "$(readlink -- "$link")" = "$cache_dir" ]; then
+            return 0
+          fi
+          ln -sfn -- "$cache_dir" "$link"
+          echo "rust-cache-links: repaired symlink $link -> $cache_dir"
+          repaired=$((repaired + 1))
+          return 0
+        fi
+
+        if [ "$(usage_pct)" -ge "$threshold" ]; then
+          echo "rust-cache-links: deferred $p (rust-cache at $(usage_pct)% >= threshold ''${threshold}%)"
+          deferred=$((deferred + 1))
+          return 0
+        fi
+
+        mkdir -p -- "$cache_dir"
+        if [ -e "$link" ]; then
+          mv -- "$link" "$link.migrated-$(date +%Y%m%d-%H%M%S)"
+          echo "rust-cache-links: moved real target aside for $p (rebuilds via sccache)"
+        fi
+        ln -s -- "$cache_dir" "$link"
+        echo "rust-cache-links: linked $link -> $cache_dir"
+        provisioned=$((provisioned + 1))
+      }
+
+      # Eval-declared seed list first, then runtime discovery of top-level
+      # Cargo.toml roots (workspace members share the root target dir; nested
+      # layouts like activitywatch/aw-server-rust keep local targets by
+      # design).
+      for p in "$@"; do
+        link_project "$p"
+      done
+      for cargo_toml in "$projects_root"/*/Cargo.toml; do
+        [ -e "$cargo_toml" ] || continue
+        link_project "$(basename "$(dirname "$cargo_toml")")"
+      done
+
+      # Dangling links (project dir deleted after linking): WARN only —
+      # removal belongs to the owner, never this provisioner.
+      for link in "$projects_root"/*/target; do
+        [ -L "$link" ] || continue
+        if [ ! -e "$link" ]; then
+          echo "rust-cache-links: WARN dangling symlink $link (project deleted? owner cleanup)"
+        fi
+      done
+
+      echo "rust-cache-links: done (linked=$provisioned repaired=$repaired deferred=$deferred, rust-cache at $(usage_pct)%)"
+    '';
+  };
 
   # ~/projects dedicated subvolume on the Samsung (2026-10-28,
   # docs/planning/2026-10-28_projects-samsung-subvol-migration.md): armed
@@ -605,15 +713,15 @@ in
       ];
     };
 
-    # Rust target dirs now live on the dedicated Rust cache SSD (see
-    # rustCacheLinks above). rust-cache-init creates the directories after the
-    # mount is up.
+    # Rust target dirs now live on the dedicated Rust cache SSD (seeded via
+    # rustCacheProjects above). rust-cache-init creates the directories after
+    # the mount is up.
     rust-cache.rustProjects = rustCacheProjects;
   };
 
   systemd = {
-    # rustCacheLinks moved to the mount-gated rust-cache-projects-links unit
-    # below (2026-10-28 projects-subvol plan): global tmpfiles runs even with
+    # The target symlinks live in the mount-gated rust-cache-projects-links
+    # unit below (2026-10-28 projects-subvol plan): global tmpfiles runs even with
     # the projects mount absent (nofail + detached Samsung), and L+ rules
     # would then create the links on the unmounted @ shadow — hidden beneath
     # the mount once it returns, never healed.
@@ -852,29 +960,54 @@ in
         '';
       };
 
-      # ~/projects/<p>/target → /mnt/rust-cache symlinks, executed from the
-      # rustCacheLinksConf rule file above instead of global tmpfiles (the
-      # 2026-09-20..29 shadow-dir class: L+ under an unmounted mountpoint
+      # ~/projects/<p>/target → /mnt/rust-cache symlinks, converged by the
+      # rust-cache-link-projects provisioner above instead of global tmpfiles
+      # (the 2026-09-20..29 shadow-dir class: L+ under an unmounted mountpoint
       # writes the @ shadow and the links hide beneath the mount, never
       # healing). Mount-gated: fail-loud, the same stance as every other
-      # projects writer. Exact L+ semantics preserved by feeding the same
-      # rules through systemd-tmpfiles --create.
+      # projects writer. 2026-11-17: bare tmpfiles L+ replaced by the
+      # provisioner — live-probed L+ semantics DELETE a real directory at the
+      # link path, so extending the eval list to all 14 Rust projects would
+      # have wiped ~15G of warm target caches at the next boot; the
+      # provisioner renames real dirs aside and defers provisioning while the
+      # cache SSD is over the usage threshold. Runs as the primary user (all
+      # touched trees are user-owned; the old root-run tmpfiles leg is gone).
       rust-cache-projects-links = lib.mkIf projectsSubvolArmed {
         description = "rust-cache target symlinks inside ~/projects (mount-gated)";
         wantedBy = [ "multi-user.target" ];
-        unitConfig.RequiresMountsFor = [
-          "/home/${primaryUser}/projects"
-          "/mnt/rust-cache"
-        ];
+        unitConfig = {
+          RequiresMountsFor = [
+            "/home/${primaryUser}/projects"
+            "/mnt/rust-cache"
+          ];
+          ConditionPathIsMountPoint = "/mnt/rust-cache";
+        };
         serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";
-            TimeoutStartSec = "1min";
-            ExecStart = "${lib.getExe' pkgs.systemd "systemd-tmpfiles"} --create ${rustCacheLinksConf}";
+            User = primaryUser;
+            ExecStart = "${lib.getExe rustCacheLinkProjects} ${lib.concatStringsSep " " rustCacheProjects}";
           }
           ioTier.background
           (serviceOneshotDefaults { })
         ];
+      };
+
+      # Daily discovery pass: a newly created ~/projects/*/Cargo.toml gets its
+      # target/ linked onto the rust-cache SSD without a redeploy (the seed
+      # list only covers projects known at eval time). 04:40 is clear of
+      # buildcache-gc (05:00) and rust-cache-gc (Sun 05:15); Persistent
+      # catches up a missed run after downtime. Boot-time convergence stays
+      # with the unit above (wantedBy multi-user); the provisioner's flock
+      # serializes the two paths.
+      systemd.timers.rust-cache-projects-links = {
+        description = "Daily rust-cache target-link discovery pass";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "*-*-* 04:40:00";
+          Persistent = true;
+          Unit = "rust-cache-projects-links.service";
+        };
       };
 
       # ── scrub deferral (2026-08-31 freeze lesson) ─────────────────────────
