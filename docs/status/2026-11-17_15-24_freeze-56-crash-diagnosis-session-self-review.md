@@ -129,4 +129,55 @@ Systemic (all noticed live this session):
 
 ---
 
-*Reported 2026-11-17 15:24 CET. Waiting for instructions.*
+---
+
+# FOLLOW-UP EXECUTION (same session chain, 15:25–17:45 CET — owner's "do more / fix it / leverage subagents" directive)
+
+## Evidence infrastructure (closed §c.3/§d.1)
+
+One-pass forensic capture to `~/.cache/systemnix-forensics/boot-7096665b-freeze56/` (capture-once discipline PRACTICED after being violated in the diagnosis phase): `census.log` (whole-boot grep census, 35,388 lines), `death-window.log` (full-fidelity 14:30→cut, 49,617 lines / 10.3 MB), `boundary.log`, `ramp-timers.log` (11:45–14:35 unit-lifecycle). Journal at 7.6 G on the Samsung hot tier (82 % used — rotation risk real but space OK). **Deploy anchor INTACT**: `readlink /run/current-system` = `system-1015-link` = newest profile by number.
+
+## Root causes CLOSED (the §b/§c gaps, now answered)
+
+1. **Storm attribution** (subagent, zai pool, 51 tool calls): PRIMARY driver = **the llama-vlm-cap idle-TTL reload treadmill** — the idle check only counts "processing task" journal lines as keep-alive, so visionreviewd's 10-min `/v1/models` probes (which queue as @-bridge pairs) never reset it; the TTL unloads the model, the next probe cold-loads 9 G (26-min loads under load). 47 budget-exhausted reloads across the boot; the 13:10:49 reload is THE fatal step (IO PSI 35 %→75 % in 60 s, hour 13 nix-quiet, the 15:00–15:09 dip exactly matches the no-load window, re-spike at the 15:10:49 reload 7 s pre-cut). Confidence: high. The FLOOR that made every step irreversible: **system-health-metrics 62.1 G/40 min** (20 sweeps, 1.2–6.7 G each) + **the observability verdict fleet ~61 G combined** (mail-relay-verdicts 23.2 G, inboxclean-canary 15.8 G, signoz-deadman 12.3 G, usb-flap 3.5 G, niri 2.2 G, coverage 2.1 G, crm-alarm-byphone 1.9 G). The morning 10:18 99 %-PSI storm = a BuildFlow agent build battery (172 nix errors in hour 10; the 15:0x session = 258 nix-daemon connections, all cancelled by agent timeouts). monitor365: mostly victim (DuckDB pool timeouts, HTTP 000000, WAL heal; its 8.5 G was lifetime accounting, ~0.5 G in-window).
+2. **IO-PAUSE disarm** (self-executed after both subagent attempts died — see Lessons): DISARMED latched since **Nov 7 21:22:03** (`io-pause-nomatch.fired` epoch) and the no-match streak **count file survives reboots** — boot `7096665b` inherited a 2307-streak 58 s in; 2811→2824 live through today. Not persistence-of-decision: pure pattern-gap — the death-window top readers sat outside every `ioPause.cgroupPattern` (third #38-class blind-list strike), disarmed across freezes #52–#56 while the lever's own SEV1 line begged for pattern extension.
+3. **system-health amplifier + poisoned prom** (subagent kieran — died unreported mid-flight, work recovered by audit; see Lessons): the 5–6 G/sweep was `pap_last_ok()` — an UNBOUNDED forward-iterating journal walk (`-n 1` keeping the LAST match) reading papdashboard's ENTIRE retained journal every sweep (282k entries/24 h, 10× every other walked unit; its 256 M MemoryMax evicts the page cache between sweeps so every sweep re-reads from disk). The empty-value lines: timed-out walks left composite vars UNSET while counts read "0" → value-less lines; the 2026-11-14 publish gate shipped with an INVERTED `-v` (published ONLY malformed lines — the live 6-line poisoned file, node_exporter rejecting it 3,569 times) and the unit kept exiting "successfully" through all of it.
+4. **Broken panic-evidence chain** (subagent mateus): (a) the crash kernel NEVER loads — `kexec_file_load failed: Cannot assign requested address` at every boot (`kexec_crash_loaded=0` live; the 128 M reservation cannot place kernel + the ~65 MB initrd), so every panic fell through to `kernel.panic=10` → `0x6`→`0xCF9` — this also explains the `0x00080800` reset signature mechanism end-to-end; (b) nixpkgs `boot.crashDump` has NO capture side (nothing ever wrote `/var/crash`); (c) `pstore.backend=efi` strcmp-REJECTS this board's only backend (it registers as `efi_pstore`; `pstore_register()` returns -EBUSY on name mismatch — the misleading "already in use" line) leaving pstore with NO backend at all.
+
+## Fixes LANDED (in-tree, committed, verified — deploy-gated)
+
+| Fix | File | Verification |
+| --- | --- | --- |
+| Guard patterns extended (+`llama-vlm-cap.service`, `system-health-metrics.service`, `crm-server.service`, + evidence lineage in the option description) | `modules/nixos/services/memory-emergency-guard.nix` | drvPath eval green; content grep in HEAD |
+| `--on-exhausted refuse` gate mode (default `proceed`; fastflowlm unchanged) + selftest scenarios 10/11 | `pkgs/psi-wait-gate.nix` | **selftest 11/11 green** via `checks.x86_64-linux.psi-wait-gate-selftest` build |
+| Refuse wired on every llama-vlm backend ExecStartPre | `modules/nixos/services/llama-vlm.nix` | **rendered ExecStartProve via `nix eval` carries the flag** through the live host config |
+| kieran's 133-line set: bounded+reversed 72h papdashboard walk, fail-closed emitters (flm pair + papdashboard pair), NaN/Inf-aware keep-valid publish gate, `system_health_collector_errors` aggregate + non-zero exit | `modules/nixos/services/system-health.nix` | `system-health-rendered-unique` check rc=0 — which also BUILT `system-health-metrics.drv` = shellcheck green |
+| Crash-evidence chain: `crashDump.reservedMemory = "512M"` (kernel+initrd fit), `pstore.backend=efi` dropped (sole backend self-registers), `/proc/vmcore`-conditioned capture unit (vmcore-dmesg + capture-boot dmesg racing the 90 s WDT), `/var/crash` tmpfiles | `platforms/nixos/system/boot.nix` (+75/−2) | drvPath eval green; inline script `bash -n` OK via `nix eval …services.kdump-save.script` |
+| Selftest comment 9→11 scenarios | `flake/parts/checks/selftests.nix` | trivial |
+
+Central verification: `nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` rc=0 (covers ALL module edits incl. boot.nix). Post-deploy proofs (owner/gated): `kexec_crash_loaded` must read **1**, kernel log must show `Registered efi_pstore as persistent store backend`, first matching zone-6 pause must reset the streak + clear DISARMED, one real `WAIT-BUDGET-REFUSED` line on a storm day.
+
+## Docs/queue harvest (closed §c.4)
+
+`docs/agents/stability.md`: ledger rows #55 (backfilled, evidence-unpulled) + #56 (full census) landed by the docs subagent. `docs/todo/stability.md` + `TODO_LIST.md`: psi-wait-gate and IO-PAUSE rows minted then NARROWED to `[blocked:deploy]` verify-only after the fixes landed; NEW rows: observability-fleet read-amplifier census `[ready]`, visionreviewd probe-vs-TTL upstream fix `[blocked:push]`, freeze #55 autopsy `[blocked:user]`; the existing boot-boundary sweep row extended with the ledger-lint leg (the mechanical backstop that would have caught #55).
+
+## LIVE at report close (17:40–17:45): the recovery boot is re-running the recipe
+
+IO PSI some avg10 70.5 % / **avg300 78.7 %** (worse than the death window), guard tripped ~17:25, streak 2824 — and the treadmill fired twice more on the UN-DEPLOYED config: `WAIT-BUDGET-EXHAUSTED: llama-vlm-cap — proceeding anyway` at 16:57:15 (**PSI 87.3 %**) and 17:27:14 (73.6 %). Thermal absent this time (0 throttles since 16:30). **The fix wave stops this leg the moment it deploys; deploys stay refused until the calm-gate window opens** (trip-free ≥60 min).
+
+## Brutal addenda — what the follow-up itself got wrong
+
+1. **Subagent pool economics**: 5 parallel subagents on zai saturated the pool — 3 of 5 died on "too many requests", and **huggingface is paywalled live** (`payment required` on gpt-oss-120b:cerebras) — the AGENTS.md subagent-pool note needs updating: ONLY zai works, and it tolerates ~2-3 parallel, stagger retries.
+2. **kieran died SILENTLY with 48 tool calls of unreported work daemon-committed into the tree** — recovered only because I audited provenance (`git log`/`git show` of the sweep commit) before editing its file. A dead agent's unreported diff has no verification narrative; the daemon-committed state had to be reverse-engineered from git. Standing hazard of the fan-out pattern: always `git show` the sweep commit before trusting "failed" means "did nothing".
+3. I typed `rg -rn` (the REPLACE trap, hook-blocked — third strike on this host per the hook's own count) and a leading-`--` git-grep pattern that silently matched nothing (read as "work lost" for one beat until re-verified with `-e`). Shell discipline is still the weakest link; the hooks caught both.
+4. The original report's "offered instead of acted" critique got re-earned in miniature: the guard-disarm investigation sat in a failed subagent queue for ~15 min before I just did it myself — 4 tool calls. Escalate-to-self earlier when a task is small and the pool is saturated.
+
+## g) Questions — UPDATED
+
+1. **(unchanged)** What were YOU doing 15:00–15:10 — desktop, VLM captions, the BuildFlow build? Intent decides whether any of it needs a policy leg beyond what landed.
+2. **(unchanged)** Freeze #55: full backfill autopsy or ledger-row close?
+3. **(refined)** The fix wave (6 files) is verified in-tree and deploy-gated, and the box is re-storming NOW on the old config. Deploy at the FIRST green calm-gate window even if the wave is small, or hold and batch? (The treadmill keeps firing ~every 30 min while un-deployed.)
+
+---
+
+*Reported 15:24 CET; follow-up executed and closed 17:45 CET. All changes committed (daemon-swept + verified in HEAD), eval-green, selftests green. Waiting for instructions.*
